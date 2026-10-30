@@ -1,0 +1,146 @@
+# Known-unmodelled baseline for `melee diff` (docs/rust-port/notes/diff.md): fields/lines the native sim does not keep
+# like the C build at golden-matching frames. Built with --baseline-out; a hashed field is never listed.
+Fighter bf_221c
+Fighter bury_grkind
+Fighter coll_data.x38
+Fighter cpu.kind
+Fighter cpu.x54.y
+Fighter cpu.x64.y
+Fighter dmg.x1854_collpos.x
+Fighter dmg.x1854_collpos.y
+Fighter dmg.x1854_collpos.z
+Fighter dmg.x18A4_knockbackMagnitude
+Fighter dmg.x18C0
+Fighter dmg.x18C8
+Fighter dmg.x18d4.bf_2
+Fighter dmg.x18d4.x1
+Fighter dmg.x18d4.x3
+Fighter dmg.x18d8.x0
+Fighter dmg.x18d8.x4
+Fighter dmg.x18d8.xC
+Fighter dmg.x18ec_instancehitby
+Fighter dmg.x1930.x0.x
+Fighter dmg.x1930.x0.y
+Fighter dmg.x1930.x0.z
+Fighter dmg.x1930.xC.x
+Fighter dmg.x1930.xC.y
+Fighter dmg.x1930.xC.z
+Fighter dobj_list.count
+Fighter dynamic_bone_sets[].bone_id
+Fighter dynamic_bone_sets[].dyn_desc.count
+Fighter dynamic_bone_sets[].dyn_desc.pos.x
+Fighter dynamic_bone_sets[].dyn_desc.pos.y
+Fighter dynamic_bone_sets[].dyn_desc.pos.z
+Fighter dynamics_num
+Fighter facing_dir1
+Fighter smash_attrs.x2135
+Fighter tobj_list.n_costume_tobjs
+Fighter wall_jump_input_timer
+Fighter x1064_thrownHitbox.scale
+Fighter x1064_thrownHitbox.state
+Fighter x1064_thrownHitbox.x4C.x
+Fighter x1064_thrownHitbox.x4C.y
+Fighter x1064_thrownHitbox.x4C.z
+Fighter x1064_thrownHitbox.x58.x
+Fighter x1064_thrownHitbox.x58.y
+Fighter x1064_thrownHitbox.x58.z
+Fighter x1614[].x0
+Fighter x1614[].x14.x
+Fighter x1614[].x14.y
+Fighter x1614[].x8.x
+Fighter x1614[].x8.y
+Fighter x166C
+Fighter x1670[].v1.y
+Fighter x1670[].v2
+Fighter x1670[].x18.x
+Fighter x1670[].x18.y
+Fighter x1670[].x18.z
+Fighter x1670[].x24
+Fighter x18
+Fighter x19BC_shieldDamageTaken3
+Fighter x1A6C
+Fighter x1A70.y
+Fighter x1A70.z
+Fighter x203C.count
+Fighter x206C_attack_instance
+Fighter x2074.x2074_vec.x
+Fighter x2074.x207C.y
+Fighter x2074.x2088
+Fighter x2090
+Fighter x2098
+Fighter x20A4.bf_0
+Fighter x213C
+Fighter x2144
+Fighter x214C
+Fighter x2158
+Fighter x215C
+Fighter x2160
+Fighter x2188.x
+Fighter x2188.y
+Fighter x294_itPickup.air_light_offset.w
+Fighter x294_itPickup.air_light_offset.x
+Fighter x294_itPickup.air_light_offset.y
+Fighter x294_itPickup.air_light_offset.z
+Fighter x294_itPickup.gr_heavy_offset.w
+Fighter x294_itPickup.gr_heavy_offset.x
+Fighter x294_itPickup.gr_heavy_offset.y
+Fighter x294_itPickup.gr_heavy_offset.z
+Fighter x294_itPickup.gr_light_offset.w
+Fighter x294_itPickup.gr_light_offset.x
+Fighter x294_itPickup.gr_light_offset.y
+Fighter x294_itPickup.gr_light_offset.z
+Fighter x2EC
+Fighter x408.x2C_hex.a
+Fighter x408.x2C_hex.b
+Fighter x408.x2C_hex.g
+Fighter x408.x2C_hex.r
+Fighter x408.x30_color_red
+Fighter x408.x34_color_green
+Fighter x408.x38_color_blue
+Fighter x408.x3C_color_alpha
+Fighter x408.x40_colorblend_red
+Fighter x408.x44_colorblend_green
+Fighter x408.x48_colorblend_blue
+Fighter x408.x4C_colorblend_alpha
+Fighter x408.x74_light_rot_x
+Fighter x488.x0_timer
+Fighter x488.x2C_hex.a
+Fighter x488.x2C_hex.b
+Fighter x488.x2C_hex.g
+Fighter x488.x2C_hex.r
+Fighter x488.x30_color_red
+Fighter x488.x34_color_green
+Fighter x488.x38_color_blue
+Fighter x488.x3C_color_alpha
+Fighter x488.x78_light_rot_yz
+Fighter x58C
+Fighter x5AC.cleared
+Fighter x5AC.model_num
+Fighter x618_player_id
+Fighter x619_costume_id
+Fighter x61C
+Fighter x61D
+Fighter x8A4_animBlendFrames
+Fighter x8A8_anim_frame
+Fighter x8B0[].x10
+Fighter x8B0[].x11
+Fighter x8_spawnNum
+model aobj_globals 0
+model aobj_globals 12
+model aobj_globals 6
+model dptcl* joint
+model effect* life
+model effect* track
+model ground fnv
+model joint_mtx 0x*
+model next_effect_instance 1
+model next_effect_instance 20
+model next_effect_instance 5
+model p* dash
+model p* entry
+model p* fall
+model p* tree
+model p* tree*
+model p* walk
+model ps link*
+model stale counters

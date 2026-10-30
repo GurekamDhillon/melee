@@ -4,18 +4,7 @@
 use melee_core::fp::fmadds;
 use melee_types::HSD_JObj;
 
-/// lbrefract.c `my_fmodf` (static inline): `a - b * (s64)(a / b)`, or `a` when |b| > |a|.
-/// The shipping build contracts the last step into one fused site: fmuladd(-b, (float) q, a).
-/// `(s64)` of a non-finite or out-of-range quotient saturates (gwtool's lowering, Rust `as`).
-pub fn my_fmodf(a: f32, b: f32) -> f32 {
-    let fa = a.abs();
-    let fb = b.abs();
-    if fb > fa {
-        return a;
-    }
-    let quotient = (a / b) as i64;
-    fmadds(-b, quotient as f32, a)
-}
+pub use melee_runtime::tu::lbrefract::my_fmodf;
 
 /// lb_00B0.c `lb_8000B074`: the joint has an AObj that is not AOBJ_NO_ANIM.
 pub fn lb_8000B074(jobj: &HSD_JObj) -> bool {

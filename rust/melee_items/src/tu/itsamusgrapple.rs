@@ -185,7 +185,7 @@ pub const it_803B8674: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 /// `samus_grapple_fighter_compare` (static inline)
 #[inline]
-fn samus_grapple_fighter_compare(id: FtMotionId) -> bool {
+pub fn samus_grapple_fighter_compare(id: FtMotionId) -> bool {
     id == 0x165 || id == 0x166 || id == 0xD4 || id == 0xD6
 }
 

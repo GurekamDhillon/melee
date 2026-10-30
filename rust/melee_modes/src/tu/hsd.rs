@@ -77,11 +77,7 @@ pub unsafe fn get_jobj(g: *mut HSD_GObj) -> *mut HSD_JObj {
 pub unsafe fn get_hsd_obj(g: *mut HSD_GObj) -> *mut c_void {
     (*g).hsd_obj
 }
-/// `HSD_JObjGetChild`.
-#[inline]
-pub unsafe fn jobj_child(j: *mut HSD_JObj) -> *mut HSD_JObj {
-    if j.is_null() { core::ptr::null_mut() } else { (*j).child }
-}
+pub use melee_items::tu::itparasol::jobj_child;
 /// `HSD_JObjGetNext`.
 #[inline]
 pub unsafe fn jobj_next(j: *mut HSD_JObj) -> *mut HSD_JObj {

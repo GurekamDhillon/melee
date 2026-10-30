@@ -176,7 +176,7 @@ pub unsafe extern "C" fn it_802874F0(gobj: *mut Item_GObj) {
 
 /// `inline_fabsf` (ittaru.c, static inline)
 #[inline]
-fn inline_fabsf(x: f32) -> f32 {
+pub fn inline_fabsf(x: f32) -> f32 {
     if x < 0.0 { -x } else { x }
 }
 

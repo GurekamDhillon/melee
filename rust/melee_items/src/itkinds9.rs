@@ -59,10 +59,7 @@ pub fn sqrtf_store(x: f32, y: &mut f32) -> f32 {
     x
 }
 
-/// `itzako_sqrtf` (itzako.c): 3 steps.
-pub fn itzako_sqrtf(x: f32) -> f32 {
-    sqrt_n(x, 3)
-}
+pub use crate::tu::itzako::itzako_sqrtf;
 
 /// `_tyDisplay_80318CB4_sqrt_store` (tydisplay.c): 3 steps (`0.5F` / `3.0F` promote to the same
 /// doubles), result stored through `rounded`.
@@ -98,10 +95,7 @@ pub fn my_sqrtf(x: f32) -> f32 {
     sqrt_n(x, 3)
 }
 
-/// `my_sqrtf_accurate` (itlugia.c): 4 steps.
-pub fn my_sqrtf_accurate(x: f32) -> f32 {
-    sqrt_n(x, 4)
-}
+pub use crate::tu::itlugia::my_sqrtf_accurate;
 
 /// `_Toy_80309338` (toy.c): distance between two points; a `None` point is the origin
 /// (`_Toy_803B88D4 = { 0 }`). `dy*dy`, then `dx*dx + _` and `dz*dz + _` fused (f32).

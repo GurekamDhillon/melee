@@ -140,15 +140,8 @@ fn wrap(a: f32) -> f32 {
     }
 }
 
-/// `lbvector_sin` (static).
-pub fn lbvector_sin(angle: f32) -> f32 {
-    quintic(wrap(angle))
-}
-/// `lbvector_cos` (static).
-pub fn lbvector_cos(angle: f32) -> f32 {
-    let a = (angle as f64 + M_PI / 2.0) as f32;
-    quintic(wrap(a))
-}
+pub use crate::tu::lbvector::lbvector_sin;
+pub use crate::tu::lbvector::lbvector_cos;
 
 /// `lbVector_RotateAboutUnitAxis` (8000D8F4).
 pub fn rotate_about_unit_axis(v: &mut Vec3, axis: &Vec3, angle: f32) {

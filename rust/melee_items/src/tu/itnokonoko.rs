@@ -343,7 +343,7 @@ pub unsafe extern "C" fn it_802DCFBC(gobj: *mut Item_GObj) {
 
 /// `lt_zero` (static inline)
 #[inline]
-fn lt_zero(val: f32) -> f32 {
+pub fn lt_zero(val: f32) -> f32 {
     if val < 0.0 {
         -1.0
     } else {

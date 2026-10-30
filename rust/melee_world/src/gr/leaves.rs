@@ -48,10 +48,7 @@ pub fn grmc_distance_squared(a: &Vec3, b: &Vec3) -> f32 {
     fmadds(dz, dz, fmadds(dx, dx, dy * dy))
 }
 
-/// grZebes_Subtract (gr/grzebes.c, static inline).
-pub fn grzebes_subtract(lhs: f32, rhs: f32) -> f32 {
-    lhs - rhs
-}
+pub use crate::tu::grzebes::grZebes_Subtract as grzebes_subtract;
 
 /// fabsf_inline (gr/grinishie1.c, static inline). `-0.0` stays `-0.0`, NaN keeps its sign.
 pub fn grinishie1_fabsf_inline(x: f32) -> f32 {

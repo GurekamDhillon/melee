@@ -2371,7 +2371,7 @@ pub unsafe extern "C" fn grZebes_801DB3CC(gobj: *mut HSD_GObj) -> i32 {
 }
 
 #[inline(always)]
-fn grZebes_Subtract(lhs: f32, rhs: f32) -> f32 {
+pub fn grZebes_Subtract(lhs: f32, rhs: f32) -> f32 {
     lhs - rhs
 }
 

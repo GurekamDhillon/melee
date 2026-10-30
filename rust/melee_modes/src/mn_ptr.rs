@@ -209,36 +209,6 @@ pub fn mnStageSw_CountEnabled(user_data: &[u8]) -> i32 {
     user_data[2..2 + 29].iter().filter(|&&b| b != 0).count() as i32
 }
 
-/// mn_22EC.c `mn_8022F410`: step `*x` toward `*target` by `dx`; returns the direction.
-pub fn mn_8022F410(x: &mut f32, target: &f32, dx: f32) -> i32 {
-    let t = *target;
-    if *x == t {
-        return 0;
-    }
-    if *x < t {
-        let a = *x + dx;
-        *x = if a > t { t } else { a };
-        1
-    } else {
-        let a = *x - dx;
-        *x = if a < t { t } else { a };
-        -1
-    }
-}
+pub use crate::tu::mn_22EC::mn_8022F410;
 
-/// mn_22EC.c `mn_8022F470`: the integer version (`-fwrapv`).
-pub fn mn_8022F470(x: &mut i32, target: &i32, dx: i32) -> i32 {
-    let t = *target;
-    if *x == t {
-        return 0;
-    }
-    if *x < t {
-        let a = x.wrapping_add(dx);
-        *x = if a > t { t } else { a };
-        1
-    } else {
-        let a = x.wrapping_sub(dx);
-        *x = if a < t { t } else { a };
-        -1
-    }
-}
+pub use crate::tu::mn_22EC::mn_8022F470;

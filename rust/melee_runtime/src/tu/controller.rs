@@ -293,7 +293,7 @@ unsafe fn HSD_PadClamp(mp: &mut HSD_PadStatus) {
 
 /// `sq` (static inline).
 #[inline]
-fn sq(x: f32) -> f32 {
+pub fn sq(x: f32) -> f32 {
     x * x
 }
 

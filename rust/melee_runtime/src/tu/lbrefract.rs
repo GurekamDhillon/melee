@@ -131,7 +131,7 @@ unsafe fn lbRefract_WriteTexCoord(cb: *mut lbRefract_CallbackData, row: i32, col
 }
 
 /// `my_fmodf` (static inline): `a - b * (s64)(a / b)` (one fused site), or `a` when |b| > |a|.
-fn my_fmodf(a: f32, b: f32) -> f32 {
+pub fn my_fmodf(a: f32, b: f32) -> f32 {
     let fa = a.abs();
     let fb = b.abs();
     if fb > fa {

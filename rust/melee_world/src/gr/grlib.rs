@@ -163,55 +163,13 @@ pub fn grlib_801c96e8(gp: &Ground) -> bool {
     gp.x10_flags.b4() != 0
 }
 
-/// grLib_801C96F8
-pub fn grlib_801c96f8(w: &StageWorld, h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, arg2: &Vec3) -> *mut HSD_Generator {
-    let g = h.hsd_8039f05c(0, arg1, arg0);
-    if !g.is_null() {
-        unsafe {
-            let mut srt = (*g).appsrt;
-            if srt.is_null() {
-                srt = h.ps_add_generator_app_srt_begin(g, 1);
-            } else {
-                (*srt).xA2 = 0;
-            }
-            if srt.is_null() {
-                h.hsd_8039d4dc(g);
-                return core::ptr::null_mut();
-            }
-            (*srt).translate = Vec { x: arg2.x, y: arg2.y, z: arg2.z };
-            let scale = w.ground_801c0498();
-            (*srt).scale.x *= scale;
-            (*srt).scale.y *= scale;
-            (*srt).scale.z *= scale;
-            (*g).pos.z = 0.0;
-            (*g).pos.y = 0.0;
-            (*g).pos.x = 0.0;
-        }
-    }
-    g
-}
+pub use crate::tu::grlib::grLib_801C96F8 as grlib_801c96f8;
 
-/// grLib_801C97DC
-pub fn grlib_801c97dc(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) {
-    h.hsd_8039f6cc(0, arg1, arg0, j);
-}
-/// grLib_801C9808
-pub fn grlib_801c9808(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) -> *mut HSD_Generator {
-    h.hsd_8039efac(0, arg1, arg0, j)
-}
-/// grLib_801C9834
-pub fn grlib_801c9834(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
-    h.hsd_8039d4dc(g);
-}
-/// grLib_801C9854
-pub fn grlib_801c9854(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
-    h.hsd_8039d5dc(j);
-}
-/// grLib_801C9874
-pub fn grlib_801c9874(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
-    unsafe { (*g).r#type |= 0x80 };
-    h.hsd_8039d4dc(g);
-}
+pub use crate::tu::grlib::grLib_801C97DC as grlib_801c97dc;
+pub use crate::tu::grlib::grLib_801C9808 as grlib_801c9808;
+pub use crate::tu::grlib::grLib_801C9834 as grlib_801c9834;
+pub use crate::tu::grlib::grLib_801C9854 as grlib_801c9854;
+pub use crate::tu::grlib::grLib_801C9874 as grlib_801c9874;
 
 fn kill_generators_on(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
     let mut cur = h.generator_list_head();
@@ -249,14 +207,7 @@ pub fn grlib_801c9908(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
     }
 }
 
-/// grLib_801C99C0
-pub fn grlib_801c99c0(h: &mut dyn GrLibHooks, bank: i32, gfx_id: i32, j: *mut HSD_JObj, flag: i32) {
-    if flag != 0 {
-        h.hsd_8039efac(0, bank, gfx_id, j);
-    } else {
-        h.hsd_8039f6cc(0, bank, gfx_id, j);
-    }
-}
+pub use crate::tu::grlib::grLib_801C99C0 as grlib_801c99c0;
 
 impl GrLib {
     /// grLib_801C9A10: fills the four points; returns the matrix (the C returns its address).
@@ -275,20 +226,9 @@ impl GrLib {
     }
 }
 
-/// grLib_801C9B20
-pub fn grlib_801c9b20(h: &mut dyn GrLibHooks, j: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: *mut DynamicsDesc) {
-    let count = unsafe { (*a1).count };
-    h.lb_8000fd48(j, a2, count as i32);
-    h.lb_80011710(a1, a2);
-}
-/// grLib_801C9B6C
-pub fn grlib_801c9b6c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
-    h.lb_8000fd18(a);
-}
-/// grLib_801C9B8C
-pub fn grlib_801c9b8c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
-    h.lb_8001044c_zero(a);
-}
+pub use crate::tu::grlib::grLib_801C9B20 as grlib_801c9b20;
+pub use crate::tu::grlib::grLib_801C9B6C as grlib_801c9b6c;
+pub use crate::tu::grlib::grLib_801C9B8C as grlib_801c9b8c;
 
 /// grLib_801C9BC8 (static proc, loop quake)
 pub fn grlib_801c9bc8(h: &mut dyn GrLibHooks, gobj: *mut HSD_GObj) {

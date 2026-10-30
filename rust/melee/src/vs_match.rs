@@ -771,14 +771,7 @@ impl BgmUnlocks for SaveUnlocks {
     }
 }
 
-/// gmvs.c `direction`: face the stage centre.
-fn direction(x: f32) -> f32 {
-    if x >= 0.0 {
-        -1.0
-    } else {
-        1.0
-    }
-}
+use melee_modes::tu::gmvs::direction;
 
 /// `p1=fox/cpu9` of the scene string: the player table's slot type, CPU kind (4 = the retail
 /// level-select CPU) and level, set before the match is built (Player_GetCpuType / GetCpuLevel
@@ -5479,43 +5472,7 @@ fn ftaction_80071028(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     ftco_8009f834(p, rand, gfx, part, offset, range)
 }
 
-/// `ftAction_8007121C`: create (or refresh) hitbox `id` on a part (`ftParts_GetBoneIndex` for
-/// common bone ids); `x2219_b3` set on a new one; `ftCommon_80080484`. Damage staling and the
-/// rest of the HitCapsule are not modelled (read only by hit detection).
-fn ftaction_8007121c(p: &mut Player) -> Result<(), String> {
-    let w = [0u32, 4, 8, 12, 16].map(|o| be32(&p.pdat, p.script + o));
-    // spawn_hitbox_skip.xF_b4: byte 0xF (word 3's low byte) bit 4 (MSB first) = 0x08.
-    if w[3] & 0x08 != 0 && unsafe { p.fp.x1064_thrownHitbox.anon_134.owner.is_null() } {
-        p.script += 20;
-        return Ok(());
-    }
-    let id = ((w[0] >> 23) & 7) as usize;
-    let hit_group = (w[0] >> 20) & 7;
-    let bone = ((w[0] >> 11) & 0xFF) as usize;
-    let common = (w[0] >> 10) & 1 != 0;
-    if id >= 4 {
-        return Err(format!("hitbox id {id} (PC slot remap) not wired"));
-    }
-    let part = if common { bone_index(p, bone as u32) } else { bone };
-    let size = (w[1] >> 16) as f32;
-    let z = ((w[1] & 0xFFFF) as i16) as f32;
-    let y = ((w[2] >> 16) as i16) as f32;
-    let x = ((w[2] & 0xFFFF) as i16) as f32;
-    let k = 0.003906f32;
-    let fresh = match &p.hitboxes[id] {
-        None => true,
-        Some(h) => h.hit_group != hit_group,
-    };
-    if fresh {
-        p.fp.set_x2219_b3(1);
-    }
-    p.hitboxes[id] = Some(Hitbox { part, scale: k * size, offset: Vec3 { x: k * z, y: k * y, z: k * x }, hit_group });
-    if p.fp.smash_attrs.x2138_smashSinceHitbox == -1.0 {
-        p.fp.smash_attrs.x2138_smashSinceHitbox = 0.0;
-    }
-    p.script += 20;
-    Ok(())
-}
+use melee_fighter::tu::ftaction::ftAction_8007121C as ftaction_8007121c;
 
 /// `ftAction_80071B50`: behaviours 0-6 play `sfx` (word 2) on a channel, 10-15 stop one; no
 /// audio here. Only `ft_PlaySFX` (behaviour 0) draws from the RNG, `HSD_Randi(200)` for a

@@ -16,11 +16,7 @@ impl JObjDirty for Dirty {
     }
 }
 
-/// `HSD_JObjGetChild`: NULL-safe.
-#[inline]
-pub fn jobj_child(j: *mut HSD_JObj) -> *mut HSD_JObj {
-    if j.is_null() { core::ptr::null_mut() } else { unsafe { (*j).child } }
-}
+pub use melee_items::tu::itparasol::jobj_child;
 /// `HSD_JObjGetNext`: NULL-safe.
 #[inline]
 pub fn jobj_next(j: *mut HSD_JObj) -> *mut HSD_JObj {

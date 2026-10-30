@@ -152,20 +152,7 @@ pub fn acosf(x: f32) -> f32 {
     M_PI_2 as f32 - atanf(x * result)
 }
 
-/// `lb_sqrtf` (static): despite the name it returns the refined reciprocal square root.
-fn lb_sqrtf(x: f32) -> f32 {
-    if x > 0.0 {
-        let mut guess = frsqrte(x as f64) as f32;
-        guess = nr_step_f(guess, x);
-        guess = nr_step_f(guess, x);
-        guess = nr_step_f(guess, x);
-        return guess;
-    }
-    if x != 0.0 {
-        return f32::from_bits(NAN);
-    }
-    f32::from_bits(INF)
-}
+use crate::tu::lbtrigf::lb_sqrtf;
 
 /// `asinf`: `atanf(x * lb_sqrtf(-(x * x - 1.0f)))`, the inner `x*x - 1` fused.
 pub fn asinf(x: f32) -> f32 {

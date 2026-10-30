@@ -121,7 +121,7 @@ fn approximatelyZero(x: f32) -> bool {
     x < 0.00001f32 && x > -0.00001f32
 }
 #[inline]
-fn isSmall(x: f32) -> bool {
+pub fn isSmall(x: f32) -> bool {
     x < 0.00001f32 && x > -0.00001f32
 }
 /// `z*z + (x*x + y*y)` and `x*x + y*y + z*z` (both contract to the same pair of fusions).

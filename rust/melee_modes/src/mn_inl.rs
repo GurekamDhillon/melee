@@ -43,18 +43,7 @@ pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *con
     }
 }
 
-/// `lb_80011E24(jobj, &out, idx0, idx1, ..., -1)` (lb/lb_00B0.c, not ported): finds the joint at the
-/// child-index path; `path` includes the `-1` terminator.
-pub unsafe fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, path: &[i32]) -> i32 {
-    match crate::tu::ext_hook::EXT_HOOK {
-        Some(h) => {
-            let mut a: std::vec::Vec<u64> = std::vec![jobj as usize as u64, out as usize as u64];
-            a.extend(path.iter().map(|v| *v as i64 as u64));
-            h("lb_80011E24", &a) as i32
-        }
-        None => { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(jobj as _, out as _, path as _) as _ }; },
-    }
-}
+pub use melee_runtime::tu::lbspdisplay::lb_80011E24;
 
 /// `HSD_ForeachAnim(obj, type, mask, func, arg_type, ...)` (baselib/aobj.c, not ported): the
 /// variadic tail is passed as integer bits.

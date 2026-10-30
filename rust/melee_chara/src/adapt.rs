@@ -316,39 +316,21 @@ fn cam() -> &'static mut melee_world::cm::camera::CameraWorld {
     }
     w
 }
-pub fn Camera_8002E6FC(slot: i32) {
-    cam().camera_8002e6fc(slot)
-}
+pub use melee_world::tu::cmcamera::Camera_8002E6FC;
 pub fn Camera_8002E948(cb: unsafe extern "C" fn(*mut Vec3) -> bool) {
     cam().camera_8002e948(cb)
 }
-pub fn Camera_8002EB5C(v: f32) {
-    cam().camera_8002eb5c(v)
-}
-pub fn Camera_8002EC7C(v: f32) {
-    cam().camera_8002ec7c(v)
-}
-pub fn Camera_8002ED9C(v: f32) {
-    cam().camera_8002ed9c(v)
-}
-pub fn Camera_8002EEC8(fov: f32) {
-    cam().camera_8002eec8(fov)
-}
-pub fn Camera_8002EF14() {
-    cam().camera_8002ef14()
-}
-pub fn Camera_8002F0E4(frames: i32) {
-    cam().camera_8002f0e4(frames)
-}
+pub use melee_world::tu::cmcamera::Camera_8002EB5C;
+pub use melee_world::tu::cmcamera::Camera_8002EC7C;
+pub use melee_world::tu::cmcamera::Camera_8002ED9C;
+pub use melee_world::tu::cmcamera::Camera_8002EEC8;
+pub use melee_world::tu::cmcamera::Camera_8002EF14;
+pub use melee_world::tu::cmcamera::Camera_8002F0E4;
 pub fn Camera_8002F260() -> bool {
     cam().camera_8002f260()
 }
-pub fn Camera_8002F274() {
-    cam().camera_8002f274()
-}
-pub fn Camera_SetModeToStandard() {
-    cam().camera_set_mode_to_standard()
-}
+pub use melee_world::tu::cmcamera::Camera_8002F274;
+pub use melee_world::tu::cmcamera::Camera_SetModeToStandard;
 pub unsafe fn Camera_RequestQuake<P>(kind: impl Into<i64>, pos: *const P) {
     let p = if pos.is_null() { None } else { Some(*(pos as *const Vec3)) };
     cam().camera_request_quake(kind.into() as u32, p)
@@ -502,9 +484,7 @@ pub fn ftCommon_InitGrab(fp: *mut Fighter, a: i32, b: f32) {
 pub fn ftCommon_SetAccessory(fp: *mut Fighter, joint: *mut HSD_Joint) {
     melee_fighter::ftcommon3::set_accessory(unsafe { &mut *fp }, joint)
 }
-pub fn ft_800892A0(g: G) {
-    melee_fighter::stale::renew_attack_instance(unsafe { fighter_of(g) })
-}
+pub use melee_fighter::tu::ft_0881::ft_800892A0;
 pub fn ft_PlaySFX(fp: *mut Fighter, sfx: i32, vol: u8, pan: u8) {
     melee_fighter::ft0877::play_sfx(unsafe { &mut *fp }, sfx, vol, pan)
 }

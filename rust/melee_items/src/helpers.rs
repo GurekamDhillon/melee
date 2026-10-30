@@ -27,11 +27,7 @@ pub fn product_xy(a: &GcVec, b: &GcVec) -> f32 {
     fmadds(a.x, b.x, a.y * b.y)
 }
 
-/// `product_xyz` (itzako.c, static inline). 2 fused sites.
-pub fn product_xyz(a: &GcVec, b: &GcVec) -> f32 {
-    let xy = fmadds(a.x, b.x, a.y * b.y);
-    fmadds(a.z, b.z, xy)
-}
+pub use crate::tu::itzako::product_xyz;
 
 /// `neg_dot` (itleadead.c, static inline): `-(ax*bx) - (ay*by) - (az*bz)`.
 /// Clang folds it into 2 fused sites: `fmadds(-ax, bx, -(ay*by))`, then `fmadds(-az, bz, _)`.
@@ -45,10 +41,7 @@ pub fn ty_display_calc_dist_sq(dz: f32, dx: f32) -> f32 {
     fmadds(dx, dx, dz * dz)
 }
 
-/// `it_link_lerp` (itlinkhookshot.c, static inline). 1 site: `fmadds(t, a, (1-t)*b)`.
-pub fn it_link_lerp(a: f32, b: f32, t: f32) -> f32 {
-    fmadds(t, a, (1.0 - t) * b)
-}
+pub use crate::tu::itlinkhookshot::it_link_lerp;
 
 // ---- angles ----------------------------------------------------------------------------
 
@@ -124,25 +117,13 @@ pub fn link_boomerang_add_clamp(mut x: f32, y: f32, max: f32) -> f32 {
     x
 }
 
-/// `fsign_inline` (itlinkbomb.c, static inline).
-pub fn fsign_inline(x: f32) -> f32 {
-    if x >= 0.0 { 1.0 } else { -1.0 }
-}
+pub use crate::tu::itlinkbomb::fsign_inline;
 
-/// `float_sign_int_inline` (itlinkbomb.c, static inline).
-pub fn float_sign_int_inline(x: f32) -> i32 {
-    if x == -1.0 { -1 } else { 1 }
-}
+pub use crate::tu::itlinkbomb::float_sign_int_inline;
 
-/// `inline_fabsf` (ittaru.c, static inline). `+x` keeps a NaN or -0.0 as is.
-pub fn inline_fabsf(x: f32) -> f32 {
-    if x < 0.0 { -x } else { x }
-}
+pub use crate::tu::ittaru::inline_fabsf;
 
-/// `lt_zero` (itnokonoko.c, static inline).
-pub fn lt_zero(val: f32) -> f32 {
-    if val < 0.0 { -1.0 } else { 1.0 }
-}
+pub use crate::tu::itnokonoko::lt_zero;
 
 /// `getX` (itoctarockstone.c, static inline): |x1 - x2| by compare-negate.
 pub fn octarock_stone_get_x(x1: f32, x2: f32) -> f32 {

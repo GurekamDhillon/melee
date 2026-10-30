@@ -1306,31 +1306,8 @@ fn ftco_800b9f90(cx: &mut Cx, fp: &mut Fighter) {
     }
 }
 
-/// `ftCo_800BA160` / `ftCo_800BA224`: roll right / left.
-fn ftco_800ba160(fp: &mut Fighter) {
-    neutral_stick(fp);
-    cmd0(fp, CpuCmd_ReleaseR);
-    cmd1(fp, CpuCmd_WaitFor, 1);
-    cmd1(fp, CpuCmd_SetLstickX, 0x7F);
-    cmd0(fp, CpuCmd_PressR);
-    cmd1(fp, CpuCmd_WaitFor, 2);
-    cmd0(fp, CpuCmd_ReleaseR);
-    cmd1(fp, CpuCmd_WaitFor, 5);
-    cmd1(fp, CpuCmd_SetLstickX, 0);
-    done(fp);
-}
-fn ftco_800ba224(fp: &mut Fighter) {
-    neutral_stick(fp);
-    cmd0(fp, CpuCmd_ReleaseR);
-    cmd1(fp, CpuCmd_WaitFor, 1);
-    cmd1(fp, CpuCmd_SetLstickX, -0x7F);
-    cmd0(fp, CpuCmd_PressR);
-    cmd1(fp, CpuCmd_WaitFor, 2);
-    cmd0(fp, CpuCmd_ReleaseR);
-    cmd1(fp, CpuCmd_WaitFor, 5);
-    cmd1(fp, CpuCmd_SetLstickX, 0);
-    done(fp);
-}
+use melee_fighter::tu::ftcpuattack::ftCo_800BA160 as ftco_800ba160;
+use melee_fighter::tu::ftcpuattack::ftCo_800BA224 as ftco_800ba224;
 
 /// `ftCo_800A2A70`: distance to the island's end (left when `left`), -1 when airborne / no island.
 fn ftco_800a2a70(cx: &Cx, fp: &Fighter, left: bool) -> f32 {
@@ -1597,18 +1574,7 @@ fn ftco_800b77e8(cx: &mut Cx, fp: &mut Fighter) -> R {
     Ok(())
 }
 
-/// `ftCo_800B885C`: the level-gated 'pause' window.
-fn ftco_800b885c(fp: &Fighter) -> bool {
-    let c = &fp.cpu;
-    match c.level {
-        0 => c.x80 % 300 <= 240,
-        1 => c.x80 % 300 <= 180,
-        2 => c.x80 % 300 <= 120,
-        3 => c.x80 % 240 <= 120,
-        4 => c.x80 % 240 <= 60,
-        _ => false,
-    }
-}
+use melee_fighter::tu::ftcpuattack::ftCo_800B885C as ftco_800b885c;
 
 /// `ftCo_800B89CC`: the CPU is allowed to attack from the air.
 fn ftco_800b89cc(cx: &Cx, fp: &Fighter) -> bool {

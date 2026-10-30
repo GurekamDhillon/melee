@@ -1580,7 +1580,7 @@ pub unsafe fn fn_8016DCC0(arg0: *mut StartMeleeData) {
     }
 }
 
-fn direction(x: f32) -> f32 {
+pub fn direction(x: f32) -> f32 {
     if x >= 0.0 {
         -1.0
     } else {

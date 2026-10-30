@@ -440,13 +440,13 @@ pub unsafe extern "C" fn itLinkbomb_UnkMotion3_Coll(gobj: *mut HSD_GObj) -> bool
 
 /// `static inline fsign_inline`
 #[inline]
-fn fsign_inline(x: f32) -> f32 {
+pub fn fsign_inline(x: f32) -> f32 {
     if x >= 0.0 { 1.0 } else { -1.0 }
 }
 
 /// `static inline float_sign_int_inline`
 #[inline]
-fn float_sign_int_inline(x: f32) -> i32 {
+pub fn float_sign_int_inline(x: f32) -> i32 {
     if x == -1.0 { -1 } else { 1 }
 }
 

@@ -27,15 +27,9 @@ pub fn getIconOffset(icon_idx: u32) -> i32 {
     icon_idx.wrapping_mul(CSS_ICON_SIZE) as i32
 }
 
-/// mncount.c `inline_is_row_time` (POWER_TIME..COMBINED_VS_PLAY_TIME = 1..5).
-pub fn inline_is_row_time(row: i32) -> bool {
-    (1..=5).contains(&row)
-}
+pub use crate::tu::mncount::inline_is_row_time;
 
-/// mncount.c `inline_is_row_char` (LONGEST_TIME..DISASTER_MASTER = 20..29).
-pub fn inline_is_row_char(row: i32) -> bool {
-    (20..=29).contains(&row)
-}
+pub use crate::tu::mncount::inline_is_row_char;
 
 /// mndiagram2.c `mnDiagram2_IsTimeStat` (VSSTAT_PLAY_TIME = 11).
 pub fn mnDiagram2_IsTimeStat(stat_type: u8) -> bool {

@@ -51,24 +51,7 @@ unsafe fn item_of<'a>(gobj: *mut HSD_GObj) -> Option<&'a mut Item> {
 
 // ---- it_2725.c --------------------------------------------------------------------------
 
-/// `get_bone_by_id` (static inline): as `it_80272CC0` (bone table when the model has bones,
-/// else `bone_id` NULL-safe child steps from the root JObj).
-/// # Safety
-/// As `it_80272CC0`.
-pub unsafe fn get_bone_by_id(gobj: *mut HSD_GObj, mut bone_id: i32) -> *mut HSD_JObj {
-    let ip = &*((*gobj).user_data as *mut Item);
-    let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
-    if (*(*ip.xC4_article_data).x10_modelDesc).x4_bone_count != 0 {
-        jobj = (*ip.xBBC_dynamicBoneTable).bones[bone_id as usize];
-    } else if bone_id != 0 {
-        while bone_id > 0 {
-            bone_id -= 1;
-            jobj = if jobj.is_null() { null_mut() } else { (*jobj).child };
-        }
-        // C's `while (bone_id-- > 0)` leaves bone_id at -1; unused after.
-    }
-    jobj
-}
+pub use crate::tu::it_2725::get_bone_by_id;
 
 // ---- itanimlist.c -----------------------------------------------------------------------
 
@@ -134,18 +117,8 @@ pub unsafe fn fn_80280974_inline(ip: &mut Item) {
     it_80275444(ip);
 }
 
-/// itclimbersstring.c `it_802C248C_joint24`: `attrs->x24_joint`.
-/// # Safety
-/// The special attributes are an `itClimbersStringAttributes`.
-pub unsafe fn it_802c248c_joint24(ip: &Item) -> *mut HSD_Joint {
-    sa::<itClimbersStringAttributes>(ip).x24_joint
-}
-/// itclimbersstring.c `it_802C248C_joint28`: `attrs->x28_joint`.
-/// # Safety
-/// As `it_802c248c_joint24`.
-pub unsafe fn it_802c248c_joint28(ip: &Item) -> *mut HSD_Joint {
-    sa::<itClimbersStringAttributes>(ip).x28_joint
-}
+pub use crate::tu::itclimbersstring::it_802C248C_joint24 as it_802c248c_joint24;
+pub use crate::tu::itclimbersstring::it_802C248C_joint28 as it_802c248c_joint28;
 
 /// itcrazyhandbomb.c `it_802F1340`: empty.
 pub fn it_802f1340() {}
@@ -159,10 +132,7 @@ pub unsafe fn it_dosei_get_jobj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
     (*gobj).hsd_obj as *mut HSD_JObj
 }
 
-/// ithitodeman.c `it_802D472C_inline`: `ip->xC4_article_data`.
-pub fn it_802d472c_inline(ip: &Item) -> *mut Article {
-    ip.xC4_article_data
-}
+pub use crate::tu::ithitodeman::it_802D472C_inline as it_802d472c_inline;
 
 /// itlikelike.c `likelikeVelocity`: within `attrs->x0.x0_f32->y * multiplier` of `x20` on both
 /// axes, swap velocity every fifth frame (counter `x48`); else reset the counter.
@@ -317,9 +287,4 @@ pub unsafe fn zgshell_get_attrs(ip: &Item) -> *mut core::ffi::c_void {
     (*ip.xC4_article_data).x4_specialAttributes as *mut core::ffi::c_void
 }
 
-/// itparasol.c `jobj_child`: `jobj->child`, NULL-safe.
-/// # Safety
-/// `jobj` NULL or valid.
-pub unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
-    if jobj.is_null() { null_mut() } else { (*jobj).child }
-}
+pub use crate::tu::itparasol::jobj_child;

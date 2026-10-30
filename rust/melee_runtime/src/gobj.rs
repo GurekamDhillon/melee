@@ -262,18 +262,9 @@ impl<F: Copy, O: Copy> Default for GObjSystem<F, O> {
 
 /// `HSD_GObj_804085F0` / `HSD_GObj_80390EB8` (render-pass flag table).
 pub const HSD_GOBJ_804085F0: [i32; 4] = [1, 4, 2, 0];
-/// `HSD_GObj_80390EB8`.
-pub fn hsd_gobj_80390eb8(i: i32) -> u32 {
-    HSD_GOBJ_804085F0[i as usize] as u32
-}
+pub use crate::tu::gobj::HSD_GObj_80390EB8 as hsd_gobj_80390eb8;
 
-/// `HSD_GObj_803912A8`: append `add` to the funcs chain; returns the number of functions in
-/// the chain before it (a `u8` sum, as the C).
-pub fn hsd_gobj_803912a8<F>(data: &mut HsdGObjLibInitData<F>, add: Vec<KindFunc<F>>) -> u8 {
-    let n = data.funcs.iter().fold(0u8, |a, l| a.wrapping_add(l.len() as u8));
-    data.funcs.push(add);
-    n
-}
+pub use crate::tu::gobj::HSD_GObj_803912A8 as hsd_gobj_803912a8;
 
 impl<F: Copy, O: Copy> GObjSystem<F, O> {
     /// The state before `HSD_GObjInit` (all globals zero).

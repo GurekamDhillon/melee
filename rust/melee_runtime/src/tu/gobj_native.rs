@@ -827,11 +827,7 @@ pub unsafe fn HSD_GObj_RunProcs() {
 pub static mut HSD_RandRenderBegin: Option<fn()> = None;
 pub static mut HSD_RandRenderEnd: Option<fn()> = None;
 
-/// `HSD_GObj_80390EB8` (`GObj_GetFlagFromArray`).
-pub fn HSD_GObj_80390EB8(i: i32) -> u32 {
-    const HSD_GOBJ_804085F0: [u32; 4] = [1, 4, 2, 0];
-    HSD_GOBJ_804085F0[i as usize]
-}
+pub use crate::tu::gobj::HSD_GObj_80390EB8;
 
 /// `HSD_GObj_80390ED0` (`GObj_SetTextureCamera`): call the render callbacks of every GX link the
 /// camera `gobj` selects (`gxlink_prios`), for each camera index set in `mask`.

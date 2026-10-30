@@ -124,17 +124,9 @@ pub unsafe fn HSD_ChanGetAllocData() -> *mut HSD_ObjAllocData {
     addr_of_mut!(chan_alloc_data)
 }
 
-fn CompareRGB(c0: &GXColor, c1: &GXColor) -> bool {
-    c0.r != c1.r || c0.g != c1.g || c0.b != c1.b
-}
-fn CompareRGBA(c0: &GXColor, c1: &GXColor) -> bool {
-    c0.r != c1.r || c0.g != c1.g || c0.b != c1.b || c0.a != c1.a
-}
-fn CopyRGB(dst: &mut GXColor, src: &GXColor) {
-    dst.r = src.r;
-    dst.g = src.g;
-    dst.b = src.b;
-}
+use crate::tu::tev::CompareRGB;
+use crate::tu::tev::CompareRGBA;
+use crate::tu::tev::CopyRGB;
 
 /// `HSD_SetupChannel`.
 pub unsafe fn HSD_SetupChannel(ch: *mut HSD_Chan) {
@@ -318,43 +310,13 @@ pub unsafe fn HSD_SetupTevStageAll(desc: *mut HSD_TevDesc) {
     current_tev = 0;
 }
 
-/// `HSD_Channel2Num`.
-pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 {
-    match chan {
-        0 => 1,
-        1 => 2,
-        2 => 1,
-        3 => 2,
-        4 => 1,
-        5 => 2,
-        0xFF => 0,
-        _ => panic!("tev.c:656 0"),
-    }
-}
+pub use crate::tu::tev::HSD_Channel2Num;
 
-/// `HSD_Index2TevStage`.
-pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 {
-    match idx {
-        0..=15 => idx,
-        _ => panic!("tev.c:709 0"),
-    }
-}
+pub use crate::tu::tev::HSD_Index2TevStage;
 
-/// `HSD_TevStage2Index`.
-pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 {
-    match stage {
-        0..=15 => stage,
-        _ => panic!("tev.c:762 0"),
-    }
-}
+pub use crate::tu::tev::HSD_TevStage2Index;
 
-/// `HSD_TevStage2Num`.
-pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 {
-    match stage {
-        0..=15 => stage + 1,
-        _ => panic!("tev.c:793 0"),
-    }
-}
+pub use crate::tu::tev::HSD_TevStage2Num;
 
 /// `HSD_SetTevRegAll`.
 pub unsafe fn HSD_SetTevRegAll() {
@@ -375,14 +337,7 @@ pub unsafe fn HSD_SetTevRegAll() {
     }
 }
 
-/// `HSD_TexCoordID2Num`.
-pub unsafe fn HSD_TexCoordID2Num(id: i32) -> i32 {
-    match id {
-        0..=7 => id + 1,
-        0xFF => 0,
-        _ => panic!("tev.c:1010 0"),
-    }
-}
+pub use crate::tu::tev::HSD_TexCoordID2Num;
 
 /// `ChanUpdateFunc`.
 pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {

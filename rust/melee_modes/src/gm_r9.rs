@@ -57,10 +57,7 @@ melee_core::gc_layout!(StaffEntryData, "StaffEntryData", size 0x14, align 4, [
     pad_13 @ 0x13: 1 "u8",
 ]);
 
-/// gmstaffroll.c `gm_801AB200_HasCheck`.
-pub fn gm_801AB200_HasCheck(entry_data: &StaffEntryData) -> u8 {
-    entry_data.has_check
-}
+pub use crate::tu::gmstaffroll::gm_801AB200_HasCheck;
 
 /// gmevent.c `gm_801BAB40_src`: one event match's player entry.
 #[repr(C)]

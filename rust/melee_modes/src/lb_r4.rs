@@ -216,61 +216,7 @@ pub fn lb_8001204C(root: Option<&HSD_JObj>, result: Option<&mut [*mut HSD_JObj]>
     found
 }
 
-/// lb_00CE.c `lb_8000D148`: is point 2 within `threshold` of the segment point0..point1
-/// (distance to the line, then the endpoint cases)? Five fused sites, as the shipping build.
-pub fn lb_8000D148(point0_x: f32, point0_y: f32, point1_x: f32, point1_y: f32, point2_x: f32, point2_y: f32,
-                   threshold: f32) -> i32 {
-    let mut dist_01;
-    let mut var_f0;
-    {
-        let diff_01_x = point1_x - point0_x;
-        let diff_01_y = point0_y - point1_y;
-        let mut cross = point0_y * point1_x;
-        dist_01 = fmadds(diff_01_x, diff_01_x, diff_01_y * diff_01_y);
-        cross = fmadds(point0_x, point1_y, -cross);
-        if dist_01 < 0.00001 {
-            return 0;
-        }
-        dist_01 = sqrtf(dist_01);
-        var_f0 = cross + fmadds(diff_01_x, point2_x, diff_01_y * point2_y);
-        if var_f0 < 0.0 {
-            var_f0 = -var_f0;
-        }
-    }
-    if var_f0 / dist_01 <= threshold {
-        let dx0 = point0_x - point2_x;
-        let dy0 = point0_y - point2_y;
-        let dist_squared_02 = fmadds(dx0, dx0, dy0 * dy0);
-        let threshold_squared = threshold * threshold;
-        let dx1 = point1_x - point2_x;
-        let dy1 = point1_y - point2_y;
-        let dist_squared_12 = fmadds(dx1, dx1, dy1 * dy1);
-        if dist_squared_02 < threshold_squared {
-            if dist_squared_12 > threshold_squared {
-                return 1;
-            }
-            if dist_squared_12 < threshold_squared {
-                return 0;
-            }
-            return 1;
-        }
-        if dist_squared_02 > threshold_squared {
-            if dist_squared_12 > threshold_squared {
-                if (point0_x > point2_x && point1_x < point2_x)
-                    || (point0_x < point2_x && point1_x > point2_x)
-                    || (point0_y > point2_y && point1_y < point2_y)
-                    || (point0_y < point2_y && point1_y > point2_y)
-                {
-                    return 1;
-                }
-                return 0;
-            }
-            return 1;
-        }
-        return 1;
-    }
-    0
-}
+pub use melee_runtime::tu::lb_00CE::lb_8000D148;
 
 /// lb_00F9.c `groundHeight` (static inline).
 pub fn groundHeight(data: &DynamicsData, floor_point: &Vec3) -> f32 {

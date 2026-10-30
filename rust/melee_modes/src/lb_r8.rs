@@ -77,14 +77,4 @@ pub unsafe fn lb_8000B134(jobj: *const HSD_JObj) -> bool {
     jobj_tree_any(jobj, |f| f & (1 << 26) != 0)
 }
 
-/// lbspdisplay.c `lb_80011B74`: OR `flags` into the render mode of every DObj's MObj, last DObj
-/// in the `next` chain first (the C recurses before it writes).
-///
-/// # Safety
-/// `dobj`'s `next` chain ends in NULL and each DObj's `mobj` is live.
-pub unsafe fn lb_80011B74(dobj: &mut HSD_DObj, flags: u32) {
-    if let Some(n) = dobj.next.as_mut() {
-        lb_80011B74(n, flags);
-    }
-    (*dobj.mobj).rendermode |= flags;
-}
+pub use melee_runtime::tu::lbspdisplay::lb_80011B74;

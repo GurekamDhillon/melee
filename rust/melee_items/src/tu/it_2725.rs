@@ -1067,7 +1067,7 @@ pub unsafe extern "C" fn it_80274F28(item: *mut Item, arg1: i8, arg2: HSD_GObjEv
 }
 
 /// `get_bone_by_id` (static inline): the jobj of bone `bone_id` (the dynamic bone table, else the child walk).
-unsafe fn get_bone_by_id(item_gobj: *mut HSD_GObj, bone_id: i32) -> *mut HSD_JObj {
+pub unsafe fn get_bone_by_id(item_gobj: *mut HSD_GObj, bone_id: i32) -> *mut HSD_JObj {
     let item = item_of(item_gobj);
     let mut jobj = jobj_of(item_gobj);
     if (*(*(*item).xC4_article_data).x10_modelDesc).x4_bone_count != 0 {

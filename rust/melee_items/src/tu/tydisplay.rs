@@ -548,7 +548,7 @@ pub unsafe fn _tyDisplay_80318B1C(arg0: i32) {
 
 /// `dx*dx + dz*dz` with the shipping contraction `fmuladd(dx, dx, dz*dz)`.
 #[inline]
-fn _tyDisplay_80318CB4_calc_dist_sq(dz: f32, dx: f32) -> f32 {
+pub fn _tyDisplay_80318CB4_calc_dist_sq(dz: f32, dx: f32) -> f32 {
     fmadds(dx, dx, dz * dz) // fused
 }
 

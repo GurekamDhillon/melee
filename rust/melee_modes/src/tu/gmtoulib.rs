@@ -1741,7 +1741,7 @@ pub unsafe extern "C" fn fn_8018F888() {
 }
 
 #[inline]
-fn fn_8018FA24_inline0(char_kind: i32) -> i32 {
+pub fn fn_8018FA24_inline0(char_kind: i32) -> i32 {
     if char_kind < CKind_Seak as i32 {
         return char_kind;
     }
@@ -1934,7 +1934,7 @@ pub unsafe extern "C" fn fn_80190520(x: f32, y: f32, z: f32) {
 }
 
 #[inline]
-fn gm_801905F0_inline0(c_kind: i32) -> i32 {
+pub fn gm_801905F0_inline0(c_kind: i32) -> i32 {
     if c_kind < CKind_Seak as i32 {
         return c_kind;
     }

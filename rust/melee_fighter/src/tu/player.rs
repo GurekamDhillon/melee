@@ -187,7 +187,7 @@ pub fn Player_80031848(slot: i32) {
 }
 
 /// `func_8008688C_wrapper` (static)
-fn func_8008688C_wrapper(player: &mut StaticPlayer) {
+pub fn func_8008688C_wrapper(player: &mut StaticPlayer) {
     if player.pkind == Gm_PKind_Human || player.pkind == Gm_PKind_Cpu {
         for i in 0..SUB {
             if !ent(player, i).is_null() {

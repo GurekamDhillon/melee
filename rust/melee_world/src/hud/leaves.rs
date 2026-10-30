@@ -43,53 +43,13 @@ pub fn devtext_num_to_str(mut num: i32, out: &mut [u8]) {
     }
 }
 
-/// DevText_Clamp (if/textlib.c, static inline). `max - 1` wraps.
-pub fn devtext_clamp(val: i32, max: i32) -> i32 {
-    if max <= val {
-        max.wrapping_sub(1)
-    } else if val < 0 {
-        0
-    } else {
-        val
-    }
-}
+pub use crate::tu::textlib::DevText_Clamp as devtext_clamp;
 
-/// ifStock_802F89F8_count (if/ifstock.c, static inline): decimal digit count, 0 for 0.
-pub fn ifstock_802f89f8_count(mut coins: i32) -> i32 {
-    for i in 0..32 {
-        if coins == 0 {
-            return i;
-        }
-        coins = sdiv(coins, 10);
-    }
-    0
-}
+pub use crate::tu::ifstock::ifStock_802F89F8_count as ifstock_802f89f8_count;
 
-/// ifStock_802F89F8_divisor (if/ifstock.c, static inline): `10^position`, wrapping.
-pub fn ifstock_802f89f8_divisor(position: i32) -> i32 {
-    let mut divisor = 1i32;
-    if position != 0 {
-        for _ in 0..position {
-            divisor = divisor.wrapping_mul(10);
-        }
-    }
-    divisor
-}
+pub use crate::tu::ifstock::ifStock_802F89F8_divisor as ifstock_802f89f8_divisor;
 
-/// ifStock_802F89F8_digit (if/ifstock.c, static inline): the `position`-th decimal digit
-/// (1-based) of `coins`, signed like C `%`.
-pub fn ifstock_802f89f8_digit(coins: i32, position: i32) -> i32 {
-    if position.wrapping_sub(1) == 0 {
-        return srem(coins, 10);
-    }
-    let mut divisor = 1i32;
-    let mut i = 0;
-    while i < position.wrapping_sub(1) {
-        divisor = divisor.wrapping_mul(10);
-        i += 1;
-    }
-    srem(sdiv(coins, divisor), 10)
-}
+pub use crate::tu::ifstock::ifStock_802F89F8_digit as ifstock_802f89f8_digit;
 
 /// inlineA1 (if/ifnametag.c, static inline).
 pub fn ifnametag_inline_a1(f: f32) -> f32 {

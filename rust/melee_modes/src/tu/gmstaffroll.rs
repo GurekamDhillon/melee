@@ -878,7 +878,7 @@ unsafe fn gm_801AB200_GetTrigger(pad_idx: u8) -> u32 {
 }
 
 #[inline(always)]
-fn gm_801AB200_HasCheck(entry_data: &StaffEntryData) -> u8 {
+pub fn gm_801AB200_HasCheck(entry_data: &StaffEntryData) -> u8 {
     entry_data.has_check
 }
 

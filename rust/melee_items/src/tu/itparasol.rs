@@ -107,7 +107,7 @@ pub unsafe extern "C" fn it_8028B17C(item_gobj: *mut Item_GObj) {
 
 /// `jobj_child` (static inline)
 #[inline]
-unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+pub unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
     if jobj.is_null() {
         null_mut()
     } else {

@@ -11,21 +11,11 @@ pub fn get_min_life() -> f32 {
     1.0
 }
 
-/// `it_802A13EC_inline` (itlinkboomerang.c, static inline): `ip->pos.x`.
-pub fn it_802a13ec_inline(ip: &Item) -> f32 {
-    ip.pos.x
-}
+pub use crate::tu::itlinkboomerang::it_802A13EC_inline as it_802a13ec_inline;
 
-/// `it_802A20E8_inline` (itlinkboomerang.c, static inline): `ip->pos.x`.
-pub fn it_802a20e8_inline(ip: &Item) -> f32 {
-    ip.pos.x
-}
+pub use crate::tu::itlinkboomerang::it_802A20E8_inline as it_802a20e8_inline;
 
-/// `it_802EAAEC_inline` (itleadead.c, static inline): `leadead.x3C`.
-pub fn it_802eaaec_inline(ip2: &Item) -> f32 {
-    // SAFETY: plain-data union member.
-    unsafe { ip2.xDD4_itemVar.leadead.x3C }
-}
+pub use crate::tu::itleadead::it_802EAAEC_inline as it_802eaaec_inline;
 
 /// itstarrod.c's TU-local `StarRodAttributes` (GC layout: `x0` @ 0x0, `x4` @ 0x4, size 0x10).
 #[repr(C)]

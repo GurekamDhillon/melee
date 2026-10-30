@@ -461,10 +461,7 @@ pub unsafe fn Camera_80028F5C(mut subject: *mut CmSubject, mut state: CmSubjectS
     }
 }
 
-/// `Camera_80029020`
-pub unsafe fn Camera_80029020() -> *mut CmSubject {
-    return Camera_80029044(0);
-}
+pub use crate::tu::camera::Camera_80029020;
 
 /// `Camera_80029044`
 pub unsafe fn Camera_80029044(mut arg0: i32) -> *mut CmSubject {
@@ -487,21 +484,7 @@ pub unsafe fn Camera_80029044(mut arg0: i32) -> *mut CmSubject {
     return subject;
 }
 
-/// `Camera_800290D4`
-pub unsafe fn Camera_800290D4(mut subject: *mut CmSubject) {
-    if !(*subject).next.is_null() {
-        (*(*subject).next).prev = (*subject).prev;
-    } else {
-        cm_804D6468 = (*subject).prev;
-    }
-    if !(*subject).prev.is_null() {
-        (*(*subject).prev).next = (*subject).next;
-    } else {
-        cm_804D6460 = (*subject).next;
-    }
-    (*subject).prev = cm_804D6458;
-    cm_804D6458 = subject;
-}
+pub use crate::tu::camera::Camera_800290D4;
 
 /// `Camera_80029124`
 pub unsafe fn Camera_80029124(mut subject_pos: *mut Vec, mut distance: i32) -> u32 {

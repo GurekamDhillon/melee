@@ -582,25 +582,6 @@ pub fn test_comp(vec0: &mut GcVec, vec1: &GcVec, vec2: &GcVec, arg2: f32) {
     vec0.z = fmadds(vec2.z, arg2, vec1.z);
 }
 
-/// `it_link_attr_math` (itlinkhookshot.c, static inline): scale the hookshot attributes.
-pub fn it_link_attr_math(attr: &mut itLinkHookshotAttributes, arg2: i32, arg8: f32) {
-    let f0 = if arg2 != 0 { attr.x50 } else { attr.x4C };
-    attr.x30 = attr.x10 * arg8;
-    attr.x34 = attr.x14 * arg8;
-    attr.x38 = f0 * (attr.x18 * arg8);
-    attr.x3C = attr.x1C * arg8;
-    attr.x40 = f0 * (attr.x20 * arg8);
-    attr.x44 = f0 * (attr.x24 * arg8);
-    attr.x48 = attr.x28 * arg8;
-    let f1 = if arg8 > 1.0 {
-        it_link_lerp(attr.xC as f32 * attr.x30, attr.xC as f32 * attr.x10, attr.x8)
-    } else {
-        attr.xC as f32 * attr.x30
-    };
-    attr.x2C = ((f1 * f0) / attr.x30) as i32;
-}
+pub use crate::tu::itlinkhookshot::it_link_attr_math;
 
-/// `samus_grapple_fighter_compare` (itsamusgrapple.c, static inline): one of the four motions.
-pub fn samus_grapple_fighter_compare(id: i32) -> bool {
-    id == 0x165 || id == 0x166 || id == 0xD4 || id == 0xD6
-}
+pub use crate::tu::itsamusgrapple::samus_grapple_fighter_compare;

@@ -998,7 +998,7 @@ pub unsafe extern "C" fn it_802EA9FC(pos: *mut Vec3, facing_dir: i32) -> *mut It
 
 /// `static inline it_802EAAEC_inline`
 #[inline]
-unsafe fn it_802EAAEC_inline(ip2: *mut Item) -> f32 {
+pub unsafe fn it_802EAAEC_inline(ip2: *mut Item) -> f32 {
     (*ip2).xDD4_itemVar.leadead.x3C
 }
 

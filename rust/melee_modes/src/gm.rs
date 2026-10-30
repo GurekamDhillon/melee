@@ -20,14 +20,7 @@ const FT_KIND_MASTERH: i32 = 27;
 const FT_KIND_CREZYH: i32 = 28;
 const GM_PKIND_HUMAN: u8 = 0;
 
-/// gmevent.c `gm_GetNextColor`.
-pub fn gm_GetNextColor(color: u8) -> u8 {
-    if color <= 2 {
-        color + 1
-    } else {
-        0
-    }
-}
+pub use crate::tu::gmevent::gm_GetNextColor;
 
 /// gmmain_lib.c `bitset_mask`.
 pub fn bitset_mask(bit: u32) -> u32 {
@@ -125,41 +118,16 @@ pub fn fn_8018F71C(arg0: i32, arg1: i32) -> f32 {
     arg0.wrapping_add(arg1.wrapping_mul(0x1E)) as f32
 }
 
-/// gmtoulib.c `fn_8018FA24_inline0`.
-pub fn fn_8018FA24_inline0(char_kind: i32) -> i32 {
-    if char_kind < CKIND_SEAK {
-        return char_kind;
-    }
-    if char_kind == CKIND_GKOOPS {
-        return 5;
-    }
-    char_kind.wrapping_add(1)
-}
+pub use crate::tu::gmtoulib::fn_8018FA24_inline0;
 
-/// gmtoulib.c `gm_801905F0_inline0`.
-pub fn gm_801905F0_inline0(c_kind: i32) -> i32 {
-    if c_kind < CKIND_SEAK {
-        return c_kind;
-    }
-    if c_kind == CKIND_GKOOPS {
-        return CKIND_KOOPA;
-    }
-    c_kind.wrapping_add(1)
-}
+pub use crate::tu::gmtoulib::gm_801905F0_inline0;
 
 /// gmtou_0.c `fn_801953C8_GetPreviousPosition`.
 pub fn fn_801953C8_GetPreviousPosition(offset: i32, position: i32) -> i32 {
     position.wrapping_sub(offset)
 }
 
-/// gmvs.c `direction` (NaN -> +1).
-pub fn direction(x: f32) -> f32 {
-    if x >= 0.0 {
-        -1.0
-    } else {
-        1.0
-    }
-}
+pub use crate::tu::gmvs::direction;
 
 /// gm_1601.c `gm_801601C4` (a pan/volume curve).
 pub fn gm_801601C4(arg0: i8) -> i32 {

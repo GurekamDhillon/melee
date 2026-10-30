@@ -153,7 +153,7 @@ fn pl_CheckIfSameTeam(slot_a: i32, slot_b: i32) -> bool {
 
 /// `unk_cond` (static inline)
 #[inline]
-fn unk_cond(arg0: i32, temp_r23: i32) -> bool {
+pub fn unk_cond(arg0: i32, temp_r23: i32) -> bool {
     temp_r23 == 6 || temp_r23 == arg0 || pl_CheckIfSameTeam(arg0, temp_r23)
 }
 

@@ -47,42 +47,13 @@ fn human_or_cpu(p: &StaticPlayer) -> bool {
     p.pkind == Gm_PKind_Human || p.pkind == Gm_PKind_Cpu
 }
 
-/// `Player_80031790`.
-pub fn player_80031790(slot: i32) {
-    let p = player(slot);
-    if human_or_cpu(p) {
-        for i in 0..2 {
-            let e = ent(p, i);
-            if !e.is_null() {
-                h::ftlib_800867e8(e);
-            }
-        }
-    }
-}
+pub use crate::tu::player::Player_80031790 as player_80031790;
 
-/// `func_8008688C_wrapper` (static).
-fn func_8008688c_wrapper(p: &StaticPlayer) {
-    if human_or_cpu(p) {
-        for i in 0..2 {
-            let e = ent(p, i);
-            if !e.is_null() {
-                h::ftlib_8008688c(e);
-            }
-        }
-    }
-}
+use crate::tu::player::func_8008688C_wrapper as func_8008688c_wrapper;
 
-/// `Player_80031848`.
-pub fn player_80031848(slot: i32) {
-    func_8008688c_wrapper(player(slot));
-}
+pub use crate::tu::player::Player_80031848 as player_80031848;
 
-/// `Player_80031900`.
-pub fn player_80031900() {
-    for slot in 0..PLAYER_NUM_MAX as i32 {
-        func_8008688c_wrapper(player(slot));
-    }
-}
+pub use crate::tu::player::Player_80031900 as player_80031900;
 
 /// `Player_800319C4(slot, arg1)`: arg1 -> both entities exist; !arg1 -> neither does.
 pub fn player_800319c4(slot: i32, arg1: i32) -> bool {
@@ -93,10 +64,7 @@ pub fn player_800319c4(slot: i32, arg1: i32) -> bool {
     (0..2).all(|i| ent(p, i).is_null())
 }
 
-/// `Player_80031DA8`.
-pub fn player_80031da8(a: i32, b: i32) {
-    h::ftkb_specialn_800eed50(a, b);
-}
+pub use crate::tu::player::Player_80031DA8 as player_80031da8;
 
 /// `Player_80031DC8(func)`.
 pub fn player_80031dc8(mut func: impl FnMut(i32, i32)) {
@@ -112,29 +80,9 @@ pub fn player_80031dc8(mut func: impl FnMut(i32, i32)) {
     }
 }
 
-/// `Player_80031EBC`.
-pub fn player_80031ebc(slot: i32) {
-    for i in 0..2 {
-        let p = player(slot);
-        let e = ent(p, i);
-        if !e.is_null() {
-            if !h::ftlib_8008701c(e) {
-                h::ftco_800d4f24(ent(p, i), 1);
-            }
-            h::hsd_gobj_free(ent(p, i));
-        }
-    }
-}
+pub use crate::tu::player::Player_80031EBC as player_80031ebc;
 
-/// `Player_80031FB0`.
-pub fn player_80031fb0(slot: i32, entity_index: i32) {
-    let p = player(slot);
-    let t = p.transformed[entity_index as usize] as usize;
-    p.player_entity[t] = core::ptr::null_mut();
-    if p.flags.b2() == 0 || player_800319c4(slot, 0) {
-        player(slot).player_state = 0;
-    }
-}
+pub use crate::tu::player::Player_80031FB0 as player_80031fb0;
 
 /// `Player_80032070`.
 pub fn player_80032070(slot: i32, bool_arg: i32) {
@@ -152,15 +100,9 @@ pub fn player_80032070(slot: i32, bool_arg: i32) {
     }
 }
 
-/// `Player_8003219C`.
-pub fn player_8003219c(slot: i32) -> bool {
-    h::ftlib_8008701c(ent(player(slot), 0))
-}
+pub use crate::tu::player::Player_8003219C as player_8003219c;
 
-/// `Player_8003221C`.
-pub fn player_8003221c(slot: i32) -> bool {
-    get_player_state(slot) == 2 && !h::ftlib_8008701c(ent(player(slot), 0))
-}
+pub use crate::tu::player::Player_8003221C as player_8003221c;
 
 /// `Player_GetPlayerState`.
 pub fn get_player_state(slot: i32) -> i32 {
@@ -175,11 +117,7 @@ pub fn set_player_character(slot: i32, v: CharacterKind) {
     player(slot).ckind = v;
 }
 
-/// `Player_8003248C` over the real mapping table (the night-1 form is `stale::slot_type_for`).
-pub fn player_8003248c(slot: i32, arg1: i32) -> Gm_PKind {
-    let p = player(slot);
-    crate::stale::slot_type_for(slot, arg1 == 1, mapping(p.ckind).has_transformation != 0)
-}
+pub use crate::tu::player::Player_8003248C as player_8003248c;
 
 /// `Player_800325C8(kind, b)`.
 pub fn player_800325c8(kind: CharacterKind, b: i32) -> i8 {
@@ -192,10 +130,7 @@ pub fn player_800325c8(kind: CharacterKind, b: i32) -> i8 {
     }
 }
 
-/// `Player_80032610(slot, arg1)`.
-pub fn player_80032610(slot: i32, arg1: i32) -> i8 {
-    player_800325c8(player(slot).ckind, arg1)
-}
+pub use crate::tu::player::Player_80032610 as player_80032610;
 
 #[inline]
 fn poses(p: &mut StaticPlayer) -> &mut [Vec3; 4] {
@@ -259,12 +194,7 @@ pub fn set_player_and_entity_facing_direction(slot: i32, dir: f32) {
         }
     }
 }
-/// `Player_80032BB0`.
-pub fn player_80032bb0(slot: i32) -> f32 {
-    let p = player(slot);
-    let t = h::ftlib_800869f8(ent(p, 0));
-    t / p.model_scale
-}
+pub use crate::tu::player::Player_80032BB0 as player_80032bb0;
 /// `Player_SetScale`.
 pub fn set_scale(slot: i32, scale: f32) {
     let p = player(slot);
@@ -292,14 +222,8 @@ pub fn get_some_pos(slot: i32) -> Vec3 {
 pub fn set_some_pos(slot: i32, v: &Vec3) {
     player(slot).player_poses.byVecName.some_other_player_pos = *v;
 }
-/// `Player_80032F30` (unk4E, s8 sign-extended).
-pub fn player_80032f30(slot: i32) -> i32 {
-    player(slot).unk4E as i32
-}
-/// `Player_80032FA4`.
-pub fn player_80032fa4(slot: i32, arg: i32) {
-    player(slot).unk4E = arg as i8;
-}
+pub use crate::tu::player::Player_80032F30 as player_80032f30;
+pub use crate::tu::player::Player_80032FA4 as player_80032fa4;
 /// `Player_GetFacingDirection`.
 pub fn get_facing_direction(slot: i32) -> f32 {
     player(slot).facing_direction
@@ -414,10 +338,7 @@ pub fn get_model_scale(slot: i32) -> f32 {
 pub fn set_model_scale(slot: i32, v: f32) {
     player(slot).model_scale = v;
 }
-/// `Player_80033BB8`.
-pub fn player_80033bb8(slot: i32) -> i32 {
-    h::gm_8016c5c0(slot)
-}
+pub use crate::tu::player::Player_80033BB8 as player_80033bb8;
 /// `Player_GetP1Stock` (no slot check).
 pub fn get_p1_stock() -> i32 {
     unsafe { crate::stale::PLAYER_SLOTS[0].stocks as i32 }
@@ -649,11 +570,7 @@ pub fn inc_self_destructs(slot: i32, condition: i32) {
         h::ifstatus_802f6c04(slot);
     }
 }
-/// `Player_800353BC`.
-pub fn player_800353bc(slot: i32) -> bool {
-    let p = player(slot);
-    p.player_state == 2 && p.flags.b0() != 0
-}
+pub use crate::tu::player::Player_800353BC as player_800353bc;
 /// `Player_8003544C`.
 pub fn player_8003544c(slot: i32, condition: i32) -> bool {
     condition == 0 && player_800353bc(slot)
@@ -682,14 +599,8 @@ pub fn get_unk4c(slot: i32) -> i32 {
 pub fn set_unk4c(slot: i32, v: u8) {
     player(slot).unk4C = v as i8;
 }
-/// `Player_80036058`.
-pub fn player_80036058(slot: i32) -> bool {
-    h::ftlib_80086f4c(ent(player(slot), 0))
-}
-/// `Player_800360D8`.
-pub fn player_800360d8(slot: i32) -> f32 {
-    h::ftlib_80086f80(ent(player(slot), 0))
-}
+pub use crate::tu::player::Player_80036058 as player_80036058;
+pub use crate::tu::player::Player_800360D8 as player_800360d8;
 /// `Player_SetStructFunc`.
 pub fn set_struct_func(slot: i32, f: Option<unsafe extern "C" fn(i32)>) {
     player(slot).struct_func = f;
@@ -702,16 +613,8 @@ pub fn get_unk6a8_ptr(slot: i32) -> &'static mut pl_x5EC_t {
 pub fn get_stale_move_table_index_ptr2(slot: i32) -> *mut pl_StaleMoveTableExt_t {
     &mut player(slot).stale_moves as *mut StaleMoveTable as *mut pl_StaleMoveTableExt_t
 }
-/// `Player_80036394`: the main entity's fighter kind, or -1.
-pub fn player_80036394(slot: i32) -> FighterKind {
-    let e = ent(player(slot), 0);
-    if e.is_null() { (-1i32) as FighterKind } else { h::ftlib_get_kind(e) }
-}
-/// `Player_80036428`.
-pub fn player_80036428(slot: i32) -> i32 {
-    let e = ent(player(slot), 0);
-    if e.is_null() { 6 } else { h::ftlib_80087300(e) }
-}
+pub use crate::tu::player::Player_80036394 as player_80036394;
+pub use crate::tu::player::Player_80036428 as player_80036428;
 /// `Player_SetUnk45`.
 pub fn set_unk45(slot: i32, v: i32) {
     player(slot).unk45 = v as u8;
@@ -742,26 +645,11 @@ fn each_entity(slot: i32, mut f: impl FnMut(*mut HSD_GObj)) {
         }
     }
 }
-/// `Player_800366DC`.
-pub fn player_800366dc(slot: i32, arg: i32) {
-    each_entity(slot, |e| h::ft_80087ac0(e, arg));
-}
-/// `Player_80036790`.
-pub fn player_80036790(slot: i32, arg: f32) {
-    each_entity(slot, |e| h::ftlib_80086a4c(e, arg));
-}
-/// `Player_80036844`.
-pub fn player_80036844(slot: i32, arg: i32) {
-    each_entity(slot, |e| h::ft_80087bac(e, arg));
-}
-/// `Player_800368F8`.
-pub fn player_800368f8(slot: i32) -> bool {
-    h::ftlib_80086bb4(ent(player(slot), 0))
-}
-/// `Player_80036978`.
-pub fn player_80036978(slot: i32, pos: &mut Vec3) {
-    h::ftlib_80086b90(ent(player(slot), 0), pos);
-}
+pub use crate::tu::player::Player_800366DC as player_800366dc;
+pub use crate::tu::player::Player_80036790 as player_80036790;
+pub use crate::tu::player::Player_80036844 as player_80036844;
+pub use crate::tu::player::Player_800368F8 as player_800368f8;
+pub use crate::tu::player::Player_80036978 as player_80036978;
 
 /// `Player_MexSetMapping(ckind, fkind)` (TARGET_PC).
 pub fn mex_set_mapping(ckind: i32, fkind: i32) {

@@ -81,10 +81,7 @@ impl Default for GroundColl {
     }
 }
 
-#[inline]
-fn sq(x: f32) -> f32 {
-    x * x
-}
+use melee_runtime::tu::controller::sq;
 
 /// Which side of the line graph a walk follows.
 #[derive(Clone, Copy, PartialEq, Eq)]

@@ -588,14 +588,14 @@ pub unsafe extern "C" fn it_2725_Logic9_Destroyed(item_gobj: *mut HSD_GObj) {
 
 /// `product_xyz` (static inline): a.x*b.x + a.y*b.y + a.z*b.z, with the fused products of the C build.
 #[inline(always)]
-fn product_xyz(a: &Vec3, b: &Vec3) -> f32 {
+pub fn product_xyz(a: &Vec3, b: &Vec3) -> f32 {
     // ((x*x + y*y) + z*z): the inner add fuses its left multiply, the outer add fuses z*z
     fmadds(a.z, b.z, fmadds(a.x, b.x, a.y * b.y))
 }
 
 /// `itzako_sqrtf` (static inline): three Newton steps on `__frsqrte`, as in the C build.
 #[inline(always)]
-fn itzako_sqrtf(x: f32) -> f32 {
+pub fn itzako_sqrtf(x: f32) -> f32 {
     if x > 0.0 {
         let mut guess = frsqrte(x as f64);
         guess = 0.5 * guess * ((-(guess * guess)).mul_add(x as f64, 3.0));

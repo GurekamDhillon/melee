@@ -96,10 +96,7 @@ impl Kind {
     }
 }
 
-#[inline]
-fn sq(x: f32) -> f32 {
-    x * x
-}
+use melee_runtime::tu::controller::sq;
 
 /// C `ABS(x) > 0.0001` (f32 ABS, double compare).
 #[inline]

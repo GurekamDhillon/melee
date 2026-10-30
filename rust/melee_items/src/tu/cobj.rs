@@ -25,19 +25,9 @@ unsafe fn half_tan(c: *mut HSD_CObj) -> f32 {
     tanf(0.5f32 * deg_to_rad((*c).projection_param.perspective.fov))
 }
 
-pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
-    if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
-        return 0.0;
-    }
-    (*cobj).projection_param.perspective.fov
-}
+pub use melee_runtime::tu::cobj_world::HSD_CObjGetFov;
 
-pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
-    if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
-        return;
-    }
-    (*cobj).projection_param.perspective.fov = fov;
-}
+pub use melee_runtime::tu::cobj::HSD_CObjSetFov;
 
 pub unsafe fn HSD_CObjGetTop(cobj: *mut HSD_CObj) -> f32 {
     if cobj.is_null() {
@@ -132,25 +122,13 @@ pub unsafe fn HSD_CObjSetRight(cobj: *mut HSD_CObj, right: f32) {
     }
 }
 
-pub unsafe fn HSD_CObjGetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
-    assert!(!cobj.is_null(), "HSD_ASSERT(709, cobj)");
-    HSD_WObjGetPosition(HSD_CObjGetInterestWObj(cobj), interest as *mut _);
-}
+pub use melee_runtime::tu::cobj_world::HSD_CObjGetInterest;
 
-pub unsafe fn HSD_CObjSetInterest(cobj: *mut HSD_CObj, interest: *mut Vec) {
-    assert!(!cobj.is_null(), "HSD_ASSERT(721, cobj)");
-    HSD_WObjSetPosition(HSD_CObjGetInterestWObj(cobj), interest as *mut _);
-}
+pub use melee_runtime::tu::cobj_world::HSD_CObjSetInterest;
 
-pub unsafe fn HSD_CObjGetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
-    assert!(!cobj.is_null(), "HSD_ASSERT(733, cobj)");
-    HSD_WObjGetPosition(HSD_CObjGetEyePositionWObj(cobj), position as *mut _);
-}
+pub use melee_runtime::tu::cobj_world::HSD_CObjGetEyePosition;
 
-pub unsafe fn HSD_CObjSetEyePosition(cobj: *mut HSD_CObj, position: *mut Vec) {
-    assert!(!cobj.is_null(), "HSD_ASSERT(745, cobj)");
-    HSD_WObjSetPosition(HSD_CObjGetEyePositionWObj(cobj), position as *mut _);
-}
+pub use melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition;
 
 pub unsafe fn HSD_CObjGetEyeDistance(cobj: *mut HSD_CObj) -> f32 {
     if cobj.is_null() {

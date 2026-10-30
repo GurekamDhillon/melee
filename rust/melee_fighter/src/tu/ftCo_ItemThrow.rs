@@ -90,10 +90,7 @@ pub unsafe extern "C" fn ftCo_80096498_c(g: G) {
     ftCo_80096498(g)
 }
 
-#[inline(always)]
-fn absf(x: f32) -> f32 {
-    if x < 0.0 { -x } else { x }
-}
+use melee_runtime::tu::lb_00F9::absf;
 
 pub fn ftCo_80094E54(f: &mut Fighter) -> bool {
     f.input.pressed_buttons & HSD_PAD_A != 0

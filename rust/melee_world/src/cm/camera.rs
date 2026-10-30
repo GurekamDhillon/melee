@@ -148,17 +148,7 @@ pub fn world() -> &'static mut CameraWorld {
     unsafe { WORLD.get_or_insert_with(CameraWorld::default) }
 }
 
-/// `Camera_80030A50`: the camera GObj, after an auto-view refresh of its CObj (TARGET_PC).
-///
-/// # Safety
-/// `game_camera.gobj` is NULL or a live camera GObj.
-pub unsafe fn Camera_80030A50() -> *mut melee_types::HSD_GObj {
-    let gobj = world().game_camera.gobj;
-    if !gobj.is_null() {
-        melee_runtime::tu::cobj::HSD_CObjUpdateView((*gobj).hsd_obj.cast());
-    }
-    gobj
-}
+pub use crate::tu::cmcamera::Camera_80030A50;
 
 /// `Camera_RequestQuake(kind, pos)` on the process camera world, with the real `grLib_801C9CEC`.
 ///

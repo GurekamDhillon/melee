@@ -1900,9 +1900,81 @@ fn ftco_800b2790(cx: &mut Cx, me: *mut Fighter) -> R {
         2 => ftco_800b658c(cx, fp)?,
         3 => ftco_800b9020(cx, fp)?,
         7 => ftco_800ba9a0(cx, fp)?,
+        10 => ftco_800acd5c(cx, fp)?,
         c => return Err(format!("ftCo_800B2790: behaviour {c} not ported")),
     }
     cs::ftco_800b49f4(fp);
+    Ok(())
+}
+
+/// `ftCo_800BA674`: roll away from (or toward) the enemy depending on the island end distance.
+fn ftco_800ba674(cx: &Cx, fp: &mut Fighter, enemy: &Fighter) {
+    let t = cx.dist_thresh.get(fp.kind as usize).copied().unwrap_or(0.0);
+    if (fp.cur_pos.x - enemy.cur_pos.x) as f64 > 0.0 {
+        if ftco_800a2a70(cx, fp, false) as f64 > 2.0 * t as f64 {
+            ftco_800ba160(fp);
+        } else {
+            ftco_800ba224(fp);
+        }
+    } else if ftco_800a2a70(cx, fp, true) as f64 > 2.0 * t as f64 {
+        ftco_800ba224(fp);
+    } else {
+        ftco_800ba160(fp);
+    }
+}
+
+/// `ftCo_800ACD5C`: behaviour 10 (hold a special / answer a lost lead): the rank-change tap, then the charge checks.
+fn ftco_800acd5c(cx: &mut Cx, fp: &mut Fighter) -> R {
+    if b(fp.cpu.xF9_b1()) {
+        let enemy = fp.cpu.x44;
+        if !enemy.is_null() && b(fp.cpu.xF8_b6()) {
+            fp.cpu.set_xF8_b6(0);
+            let e = unsafe { &*enemy };
+            ftco_800ba674(cx, fp, e);
+            return Ok(());
+        }
+    }
+    if fp.cpu.x88 > 0 {
+        // (gm_GetCurrentGameMode() != GM_TRAINING in VS)
+        neutral_stick(fp);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd0(fp, CpuCmd_PressUp);
+        cmd1(fp, CpuCmd_WaitFor, 1);
+        cmd0(fp, CpuCmd_ReleaseUp);
+        done(fp);
+        fp.cpu.x88 = 0;
+        // gm_8016C75C: the standings rank (no change modelled, see ftco_800ade48).
+        fp.cpu.x8C = 0;
+        return Ok(());
+    }
+    if fp.cpu.kind == 0xB && fp.item_gobj.is_null() {
+        cs::ftco_800b4880(fp, 0x26);
+        return Ok(());
+    }
+    if !ftco_800a3554(cx, fp, 1.0)? {
+        fp.cpu.x18 = fp.cpu.x1C;
+        done(fp);
+        return Ok(());
+    }
+    if (fp.kind == Ft_Kind_Zelda || fp.kind == Ft_Kind_Seak) && b(fp.cpu.xF8_b5()) {
+        cs::ftco_800b4880(fp, 0x26);
+        fp.cpu.set_xF8_b5(0);
+        return Ok(());
+    }
+    if !ftco_800a2c08(fp) {
+        turn_around(fp);
+        return Ok(());
+    }
+    if fp.cpu.level < 5 {
+        neutral_stick(fp);
+        done(fp);
+        return Ok(());
+    }
+    if matches!(fp.kind, Ft_Kind_Donkey | Ft_Kind_Samus | Ft_Kind_Mewtwo | Ft_Kind_Kirby) {
+        return Err(format!("ftCo_800ACD5C: charge checks of kind {} not ported", fp.kind));
+    }
+    neutral_stick(fp);
+    done(fp);
     Ok(())
 }
 

@@ -586,6 +586,9 @@ void ftCo_800A0DA4(Fighter* fp)
     for (i = 0; i < fp->hurt_capsules_len; i++) {
         hurt = &fp->hurt_capsules[i];
         lbColl_800083C4(&hurt->capsule);
+        { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); /* RUSTPORT_TMP */
+          if (rp_ecb_on()) rp_ecb_log("HC p%d i%d a %08X %08X %08X b %08X %08X %08X sc %08X f %08X\n", (int) fp->player_id, i, *(unsigned*)&hurt->capsule.a_pos.x, *(unsigned*)&hurt->capsule.a_pos.y, *(unsigned*)&hurt->capsule.a_pos.z, *(unsigned*)&hurt->capsule.b_pos.x, *(unsigned*)&hurt->capsule.b_pos.y, *(unsigned*)&hurt->capsule.b_pos.z, *(unsigned*)&hurt->capsule.scale, *(unsigned*)&fp->facing_dir); }
+        { extern int rp_ecb_on(void); if (rp_ecb_on() && i == 12) { extern void rp_ecb_log(const char* fmt, ...); HSD_JObj* jb = hurt->capsule.bone; int lv; for (lv = 0; lv < 4 && jb != NULL; lv++, jb = jb->parent) rp_ecb_log("HB p%d l%d r %08X %08X %08X %08X t %08X %08X %08X s %08X %08X %08X\n", (int) fp->player_id, lv, *(unsigned*)&jb->rotate.x, *(unsigned*)&jb->rotate.y, *(unsigned*)&jb->rotate.z, *(unsigned*)&jb->rotate.w, *(unsigned*)&jb->translate.x, *(unsigned*)&jb->translate.y, *(unsigned*)&jb->translate.z, *(unsigned*)&jb->scale.x, *(unsigned*)&jb->scale.y, *(unsigned*)&jb->scale.z); } }
 
         dx = hurt->capsule.a_pos.x - fp->cur_pos.x;
         dy = hurt->capsule.a_pos.y - fp->cur_pos.y;

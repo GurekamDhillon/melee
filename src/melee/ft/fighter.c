@@ -4452,6 +4452,7 @@ static u32 nh_CpuFlags(const struct CpuFighter* c)
     return w;
 }
 
+extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); /* RUSTPORT_TMP */
 static u32 nh_Fighter(Fighter* fp, int slot)
 {
     u32 h = 0x811C9DC5u;
@@ -4508,7 +4509,10 @@ static u32 nh_Fighter(Fighter* fp, int slot)
         h = nh_Mix(h, (u32) c->command_duration);
         h = nh_Mix(h, off);
         h = nh_Mix(h, nh_CpuFlags(c));
+        if (rp_ecb_on()) rp_ecb_log("CPU s%d btn %X st %08X tr %X k %d lv %d x14 %d x18 %d x1C %d x20 %d x24 %d x28 %d x2C %d x30 %d x34 %d x38 %08X x3C %08X x40 %08X x7C %d x80 %d x84 %d xC8 %d xEC %d cd %d off %d fl %08X\n", slot, (int) c->buttons, ((u32) (u8) c->lstick.x << 24) | ((u32) (u8) c->lstick.y << 16) | ((u32) (u8) c->cstick.x << 8) | (u32) (u8) c->cstick.y, ((u32) c->ltrigger << 8) | (u32) c->rtrigger, (int) c->kind, (int) c->level, (int) c->x14, (int) c->x18, (int) c->x1C, (int) c->x20, (int) c->x24, (int) c->x28, (int) c->x2C, (int) c->x30, (int) c->x34, ftRb_Bits(c->x38), ftRb_Bits(c->x3C), ftRb_Bits(c->x40), (int) c->x7C, (int) c->x80, (int) c->x84, (int) c->xC8, (int) c->xEC, (int) c->command_duration, (int) off, nh_CpuFlags(c));
+        if (rp_ecb_on()) rp_ecb_log("EXT s%d %08X %08X %08X %08X %08X\n", slot, ftRb_Bits(c->x55C), ftRb_Bits(c->x560), ftRb_Bits(c->x564), ftRb_Bits(c->x568), ftRb_Bits(c->x56C));
     }
+    if (rp_ecb_on()) { rp_ecb_log("FT s%d m%d p %08X %08X %08X v %08X %08X pct %08X f %08X ga %d kb %08X %08X gv %08X hl %08X b5 %d sh %08X fc %08X j %d H %08X\n", slot, (int) fp->motion_id, ftRb_Bits(fp->cur_pos.x), ftRb_Bits(fp->cur_pos.y), ftRb_Bits(fp->cur_pos.z), ftRb_Bits(fp->self_vel.x), ftRb_Bits(fp->self_vel.y), ftRb_Bits(fp->dmg.x1830_percent), ftRb_Bits(fp->facing_dir), (int) fp->ground_or_air, ftRb_Bits(fp->x8c_kb_vel.x), ftRb_Bits(fp->x8c_kb_vel.y), ftRb_Bits(fp->gr_vel), ftRb_Bits(fp->dmg.x195c_hitlag_frames), (int) fp->x2219_b5, ftRb_Bits(fp->shield_health), ftRb_Bits(fp->x3E4_fighterCmdScript.frame_count), (int) fp->x1968_jumpsUsed, h); } /* RUSTPORT_TMP */
     return h;
 }
 
@@ -4562,6 +4566,7 @@ u32 RB_NeutralHash(void)
         ih = nh_Mix(ih, ftRb_Bits(ip->x40_vel.z));
         sum += ih;
         n++;
+        if (rp_ecb_on()) { int hb; for (hb = 0; hb < 4; hb++) { HitCapsule* hc = &ip->x5D4_hitboxes[hb].hit; u8* bb = (u8*) hc; rp_ecb_log("ITH k%d hb%d st %d x4 %u dmg %08X sc %08X off %08X %08X %08X ang %d g %u w %u b %u el %u s34 %d sev %d sk %d fl %02X%02X%02X%02X o %d\n", (int) ip->kind, hb, (int) hc->state, hc->x4, ftRb_Bits(hc->damage), ftRb_Bits(hc->scale), ftRb_Bits(hc->b_offset.x), ftRb_Bits(hc->b_offset.y), ftRb_Bits(hc->b_offset.z), hc->kb_angle, hc->x24, hc->x28, hc->x2C, hc->element, hc->x34, hc->sfx_severity, (int) hc->sfx_kind, bb[0x40], bb[0x41], bb[0x42], bb[0x43], (int) ip->owner != 0); } } /* RUSTPORT_TMP */
     }
     out[2] = n;
     out[3] = sum;

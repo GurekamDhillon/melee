@@ -1680,3 +1680,9 @@ int gw_Slippi_FrozenStadium(void) {
     }
     return live;
 }
+
+/* RUSTPORT_TMP_ECB */
+#include <stdarg.h>
+static FILE* rp_ecb_f; static int rp_ecb_init;
+int gw_rp_ecb_on(void) { if (!rp_ecb_init) { const char* e = getenv("RP_FTLOG"); rp_ecb_init = 1; if (e) rp_ecb_f = fopen(e, "w"); } return rp_ecb_f != NULL; }
+void gw_rp_ecb_log(const char* fmt, ...) { va_list ap; if (!gw_rp_ecb_on()) return; va_start(ap, fmt); vfprintf(rp_ecb_f, fmt, ap); va_end(ap); fflush(rp_ecb_f); }

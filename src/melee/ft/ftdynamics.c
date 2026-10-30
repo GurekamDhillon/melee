@@ -29,6 +29,8 @@ static inline void ftCo_8009CB40_inline(struct DynamicsData* data)
     data->desc.lb_unk0.unk_2C.y = data->desc.lb_unk0.jobj->mtx[1][3];
     data->desc.lb_unk0.unk_2C.z = data->desc.lb_unk0.jobj->mtx[2][3];
     data->desc.lb_unk0.unk_44 = 0.0f;
+    { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); /* RUSTPORT_TMP */
+      if (rp_ecb_on()) rp_ecb_log("CB j%d p2c %08X %08X %08X\n", 0, *(unsigned*)&data->desc.lb_unk0.unk_2C.x, *(unsigned*)&data->desc.lb_unk0.unk_2C.y, *(unsigned*)&data->desc.lb_unk0.unk_2C.z); }
     HSD_JObjSetTranslate(data->desc.lb_unk0.jobj,
                          &data->desc.lb_unk0.translate);
     HSD_JObjSetScale(data->desc.lb_unk0.jobj, &data->desc.lb_unk0.scale);

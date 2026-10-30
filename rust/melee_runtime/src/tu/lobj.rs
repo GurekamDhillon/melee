@@ -180,7 +180,7 @@ pub use crate::lobj::{HsdLObj, LObjSystem};
 /// Unlike its DAT-only approximation, this interface implements the complete C TU.
 pub use native::*;
 #[allow(non_snake_case, non_upper_case_globals)]
-mod native {
+pub mod native {
     use crate::mtx::{self, Mtx, Vec3};
     use core::{ffi::c_void, ptr::null_mut};
     use melee_types::{

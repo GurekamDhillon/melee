@@ -21,7 +21,7 @@ use crate::mtx::{self, Mtx};
 pub use native::*;
 
 #[allow(non_snake_case, non_upper_case_globals, unused_variables, unused_imports, static_mut_refs)]
-mod native {
+pub mod native {
 use melee_types::*;
 use core::{ffi::c_void, mem::size_of, ptr::{null_mut, addr_of_mut}};
 use melee_core::fp::fmadds;

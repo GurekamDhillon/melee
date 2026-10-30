@@ -12,7 +12,7 @@
 [workspace]
 resolver = "2"
 members = ["melee_core", "melee_types", "melee_runtime", "melee_world", "melee_fighter",
-           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee",
+           "melee_chara", "melee_items", "melee_modes", "melee_platform", "melee_gx", "melee_audio", "melee_net", "melee_data", "melee_script", "melee_link", "melee",
            "../tools/mex-import"]
 
 [workspace.package]
@@ -30,6 +30,7 @@ melee_fighter = { path = "melee_fighter" }
 melee_chara = { path = "melee_chara" }
 melee_items = { path = "melee_items" }
 melee_modes = { path = "melee_modes" }
+melee_link = { path = "melee_link" }
 
 # Determinism: game logic must match the C build bit for bit. Rust never contracts a*b+c on its
 # own, but the C build DOES (clang -ffp-contract=on + gwtool -> melee_core::fp::fmadds), so ports

@@ -1,0 +1,16 @@
+[package]
+name = "melee_link"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+melee_core.workspace = true
+melee_types.workspace = true
+melee_runtime.workspace = true
+melee_world.workspace = true
+melee_fighter.workspace = true
+melee_chara.workspace = true
+melee_items.workspace = true
+melee_modes.workspace = true

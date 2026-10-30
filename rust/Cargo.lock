@@ -1221,6 +1221,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "melee_link"
+version = "0.1.0"
+dependencies = [
+ "melee_chara",
+ "melee_core",
+ "melee_fighter",
+ "melee_items",
+ "melee_modes",
+ "melee_runtime",
+ "melee_types",
+ "melee_world",
+]
+
+[[package]]
 name = "melee_modes"
 version = "0.1.0"
 dependencies = [

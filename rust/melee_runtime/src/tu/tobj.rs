@@ -333,7 +333,7 @@ impl HsdRender {
 
 // Native pointer API, matching the complete C translation unit.
 #[allow(non_snake_case, non_upper_case_globals, unused_variables, dead_code, static_mut_refs)]
-mod native {
+pub mod native {
 use melee_types::*;
 use core::ffi::c_void;
 use core::mem::size_of;

@@ -2494,9 +2494,7 @@ impl VsMatch {
                 }
                 m if m == FTCO_MS_LANDING || is_landing_air(m) || m == FTCO_MS_WAIT || (FTCO_MS_WALK_SLOW..=FTCO_MS_WALK_FAST).contains(&m) => {
                     // ftCo_Landing_Coll / ftCo_Wait_Coll / ftCo_Walk_Coll -> ft_80084280.
-                    if p.fp.xF8_playerNudgeVel.x != 0.0 && p.fp.xF8_playerNudgeVel.x * p.fp.facing_dir < 0.0 {
-                        return Err("ft_800827A0 (pushed by another fighter) not ported".into());
-                    }
+                    let pushed = p.fp.xF8_playerNudgeVel.x != 0.0 && p.fp.xF8_playerNudgeVel.x * p.fp.facing_dir < 0.0;
                     let joints = {
                         let d = p.ecb_desc;
                         ecb_joints(&mut p.skel, &d)
@@ -2504,11 +2502,16 @@ impl VsMatch {
                     let fp = &mut *p.fp;
                     fp.coll_data.last_pos = fp.coll_data.cur_pos;
                     fp.coll_data.cur_pos = fp.cur_pos;
-                    fp.coll_data.lstick_x = fp.input.lstick[0].x;
-                    // ftGetFacingDirInt.
-                    mc::mp_coll_set_facing_dir(&mut fp.coll_data, if fp.facing_dir < 0.0 { -1 } else { 1 });
-                    let r = mc::mp_coll_8004b4b0(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
-                        .map_err(|e| format!("{} not ported", e.0))?;
+                    let r = if pushed {
+                        // ft_800827A0 (pushed by another fighter): mpColl_8004B2DC.
+                        mc::mp_coll_8004b2dc(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                    } else {
+                        fp.coll_data.lstick_x = fp.input.lstick[0].x;
+                        // ftGetFacingDirInt.
+                        mc::mp_coll_set_facing_dir(&mut fp.coll_data, if fp.facing_dir < 0.0 { -1 } else { 1 });
+                        mc::mp_coll_8004b4b0(&mut self.ground, &mut self.cg, &mut fp.coll_data, &joints)
+                    }
+                    .map_err(|e| format!("{} not ported", e.0))?;
                     fp.cur_pos = fp.coll_data.cur_pos;
                     if !r {
                         if fp.coll_data.env_flags & mc::COLLIDE_EDGE != 0 {

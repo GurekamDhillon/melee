@@ -219,6 +219,28 @@ impl VsMatch {
     pub(super) fn damage_proc(&mut self, pi: usize, which: Proc) -> Result<(), String> {
         let g: *mut HSD_GObj = &mut *self.players[pi].gobj;
         let m = self.players[pi].fp.motion_id as i32;
+        if m == FTCO_MS_DAMAGE_FALL {
+            // ftCo_DamageFall_*: Anim is empty; IASA, Phys (ft_80084DB0) and Coll (ft_8008370C) natively.
+            let r: Result<(), String> = match which {
+                Proc::Anim => Ok(()),
+                Proc::Iasa => damage_fall_iasa(&mut self.players[pi], &mut self.rand),
+                Proc::Phys => {
+                    melee_fighter::ft084e::ft_80084db0(g);
+                    Ok(())
+                }
+                Proc::Coll => match damage_fall_coll(&mut self.ground, &mut self.cg, &mut self.players[pi]) {
+                    // ftCo_80090984: passive stand / down attack / DownBound checks.
+                    Ok(true) => {
+                        self.with_sim(|_| melee_fighter::tu::ftCo_DamageIce::ftCo_80090984(g));
+                        Ok(())
+                    }
+                    Ok(false) => Ok(()),
+                    Err(e) => Err(e),
+                },
+            };
+            r?;
+            return self.take_dmg_err();
+        }
         self.with_sim(|_| match (which, m) {
             (Proc::Anim, 75..=86) => dm::ftCo_Damage_Anim(g),
             (Proc::Anim, 87..=90) => dm::ftCo_DamageFly_Anim(g),
@@ -334,21 +356,76 @@ pub(super) fn install_state_hooks() {
                 }
             }
         });
-        dm::ext::hook::ftCo_80090780 = Some(|_| sim().dmg_fail("ftCo_80090780 (DamageFall) is not ported"));
-        dm::ext::hook::ftCo_Fall_IASA_Inner = Some(|_| {
-            sim().dmg_fail("ftCo_Fall_IASA_Inner from the damage states is not ported");
+        dm::ext::hook::ftCo_80090780 = Some(|g| {
+            // ftCo_80090780: off the floor, then DamageFall.
+            let s = sim();
+            let pi = s.player_of(g);
+            let r = (|| -> Result<(), String> {
+                let p = &mut s.players[pi];
+                if p.fp.ground_or_air == melee_types::GA_Ground {
+                    melee_fighter::ftcommon2::ftcommon_8007d5d4(&mut p.fp);
+                }
+                if matches!(p.fp.kind, melee_types::Ft_Kind_Peach | melee_types::Ft_Kind_Kirby) {
+                    return Err("ftGetParasolStatus (Peach / Kirby) not ported".into());
+                }
+                let smid = common_smid(FTCO_MS_DAMAGE_FALL)?;
+                let row = load_row(p, smid)?;
+                change_motion_state_flags(p, FTCO_MS_DAMAGE_FALL, row.as_ref(), 0.0, 1.0, 0x18001, &mut s.rand)?;
+                melee_fighter::ftcommon::clamp_air_drift(&mut p.fp);
+                melee_fighter::ftcommon2::ftcommon_8007ebac(&mut p.fp, 8, 0);
+                Ok(())
+            })();
+            if let Err(e) = r {
+                s.dmg_fail(e);
+            }
+        });
+        dm::ext::hook::ftCo_Fall_IASA_Inner = Some(|g| {
+            let s = sim();
+            let pi = s.player_of(g);
+            match fall_iasa_checks(&mut s.players[pi], &mut s.rand) {
+                Ok(r) => r,
+                Err(e) => {
+                    s.dmg_fail(e);
+                    false
+                }
+            }
+        });
+        dm::ext::hook::ftCo_800CB870 = Some(|g| {
+            let s = sim();
+            let pi = s.player_of(g);
+            match ftco_800cb870(&mut s.players[pi], &mut s.rand) {
+                Ok(r) => r,
+                Err(e) => {
+                    s.dmg_fail(e);
+                    false
+                }
+            }
+        });
+        dm::ext::hook::ftCo_800CB8E0 = Some(|g| {
+            // ftCo_800C5240 (hammer: none), then the aerial jump check.
+            let s = sim();
+            let pi = s.player_of(g);
+            let fp = &s.players[pi].fp;
+            if !fp.item_gobj.is_null() || fp.can_multijump() != 0 {
+                s.dmg_fail("ftCo_800CB8E0 with an item / multi-jump not ported");
+                return false;
+            }
+            let cd = melee_fighter::hooks::common_data();
+            let tap = fp.input.lstick[0].y >= cd.tap_jump_threshold && (fp.active_timer.lstick.y as i32) < cd.tap_jump_window as i32;
+            if (fp.x1968_jumpsUsed as i32) < fp.co_attrs.max_jumps as i32 && (tap || fp.input.pressed_buttons & input::HSD_PAD_XY != 0) {
+                s.dmg_fail("ftCo_800CB8E0: an aerial jump from the damage state not ported");
+            }
             false
         });
-        dm::ext::hook::ftCo_800CB870 = Some(|_| {
-            sim().dmg_fail("ftCo_800CB870 from the damage states is not ported");
-            false
-        });
-        dm::ext::hook::ftCo_800CB8E0 = Some(|_| {
-            sim().dmg_fail("ftCo_800CB8E0 is not ported");
-            false
-        });
-        dm::ext::hook::ftCo_800D69C4 = Some(|_| {
-            sim().dmg_fail("ftCo_800D69C4 is not ported");
+        dm::ext::hook::ftCo_800D69C4 = Some(|g| {
+            // ftCo_800D69C4: up-B in the air (x686 == 0 and x68B >= x1C).
+            let s = sim();
+            let pi = s.player_of(g);
+            let fp = &s.players[pi].fp;
+            let cd = melee_fighter::hooks::common_data();
+            if fp.x686 == 0 && i32::from(fp.x68B) >= cd.x1C {
+                s.dmg_fail("ftCo_800D69C4: an up-B from the damage state not ported");
+            }
             false
         });
         // un_803224DC: out of the floor box +- horiz_margin with a knockback category plays a crowd gasp

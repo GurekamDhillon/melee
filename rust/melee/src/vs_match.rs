@@ -1884,6 +1884,7 @@ impl VsMatch {
                         ft_8008a2bc(p, &mut self.rand)?;
                     }
                 }
+                m if (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => attack100_anim(p, &mut self.rand)?,
                 m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
                     // ftCo_Attack11/12/13_Anim: ft_8008A2BC when the animation ends.
                     if !p.skel.frames_remaining() {
@@ -2126,7 +2127,7 @@ impl VsMatch {
                     fc::calc_ground_accel_deaccel(f, friction);
                     fc::set_self_movement_from_grounded_movement(f);
                 }
-                m if is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                m if is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) || (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => {
                     // ftCo_Attack1x_Phys / ftCo_AttackS4_Phys -> ft_80084FA8 -> ft_80085030(friction, facing_dir).
                     let f = &mut *p.fp;
                     let mut fr = f.co_attrs.ground_friction;
@@ -2336,7 +2337,7 @@ impl VsMatch {
                         ft_80082b1c(&mut self.ground, p, c_common, &mut self.rand)?;
                     }
                 }
-                m if m == FTCO_MS_CATCH || m == FTCO_MS_CATCH_DASH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => {
+                m if m == FTCO_MS_CATCH || m == FTCO_MS_CATCH_DASH || is_tilt_motion(m) || is_s4_motion(m) || (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) || (FTCO_MS_ATTACK100_START..=FTCO_MS_ATTACK100_END).contains(&m) => {
                     // ftCo_Attack1x_Coll -> ft_80084104: ft_800827A0 (mpColl_8004B2DC), else Fall;
                     // ftCo_Catch_Coll -> ft_800841B8(fn_800D8E30): the same, the grab cleanup first.
                     let joints = {
@@ -3363,6 +3364,15 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         }
         m if is_s4_motion(m) => attack_s4_iasa(p, rand),
         m if (FTCO_MS_ATTACK11..=FTCO_MS_ATTACK11 + 2).contains(&m) => attack1_iasa(p, rand),
+        FTCO_MS_ATTACK100_START | FTCO_MS_ATTACK100_END => Ok(()), // NULL IASA
+        FTCO_MS_ATTACK100_LOOP => {
+            // ftCo_Attack100Loop_IASA: an A press or release arms the next loop.
+            let fp = &mut *p.fp;
+            if (fp.input.pressed_buttons | fp.input.released_buttons) & input::HSD_PAD_A != 0 {
+                a100(fp).x4 = 1;
+            }
+            Ok(())
+        }
         FTCO_MS_CATCH | FTCO_MS_CATCH_DASH => Ok(()), // ftCo_Catch_IASA / ftCo_CatchDash_IASA are empty
         FTCO_MS_DEAD_DOWN => Ok(()), // input_cb NULL
         rebirth::FTCO_MS_SLEEP | rebirth::FTCO_MS_REBIRTH => Ok(()), // empty IASAs
@@ -3752,6 +3762,70 @@ fn attack1n_enter(p: &mut Player, rand: &mut HsdRand, msid: i32) -> Result<(), S
     Ok(())
 }
 
+/// `fp->mv.co.attack100` (the motion variables union).
+fn a100(fp: &mut Fighter) -> &mut melee_types::ftCommon_MotionVars_attack100 {
+    unsafe { &mut fp.mv.co.attack100 }
+}
+
+/// `fn_800D6AC4` -> `fn_800D6B8C` -> `ftCo_800D6B00(gobj, ftCo_MS_Attack100Start)`.
+fn attack100_enter(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if p.fp.kind == melee_types::Ft_Kind_GameWatch {
+        return Err("ftGw_Attack100Start_Enter not ported".into());
+    }
+    if !p.fp.item_gobj.is_null() {
+        return Err("ftpickupitem_80094790 with an item not ported".into());
+    }
+    p.fp.anon_2210.throw_flags = 0;
+    let row = load_row(p, melee_types::ftCo_SM_Attack100Start as u32)?;
+    change_motion_state(p, FTCO_MS_ATTACK100_START, row.as_ref(), rand)?;
+    anim_step(p, rand)?;
+    a100(&mut *p.fp).x0 = 0;
+    a100(&mut *p.fp).x4 = 0;
+    Ok(())
+}
+
+/// `ftCo_Attack100Start_Anim` / `Loop_Anim` / `End_Anim` (`ftCo_800D6C60`).
+fn attack100_anim(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    let msid = p.fp.motion_id;
+    if msid == FTCO_MS_ATTACK100_END {
+        if !p.skel.frames_remaining() {
+            ft_8008a2bc(p, rand)?;
+        }
+        return Ok(());
+    }
+    if msid == FTCO_MS_ATTACK100_START && !p.skel.frames_remaining() {
+        let row = load_row(p, melee_types::ftCo_SM_Attack100Loop as u32)?;
+        return change_motion_state_flags(p, FTCO_MS_ATTACK100_LOOP, row.as_ref(), 0.0, 1.0, melee_types::Ft_MF_SkipAttackCount as u32, rand);
+    }
+    if msid == FTCO_MS_ATTACK100_START {
+        // Start's callback is only the frame check above (ftCo_Attack100Start_Anim); the loop's body below is Loop_Anim.
+        return Ok(());
+    }
+    let g: *mut melee_types::HSD_GObj = &mut *p.gobj;
+    {
+        let fp = &mut *p.fp;
+        if fp.cur_anim_frame >= 0.0 && fp.cur_anim_frame < fp.frame_speed_mul {
+            a100(fp).x0 = 1;
+            let _ = melee_fighter::stale::renew_attack_instance(fp);
+            melee_fighter::ft0892::ft_80089824(g);
+        }
+    }
+    let fp = &mut *p.fp;
+    let flag = unsafe { fp.anon_2210.anon_0.throw_flags_b3() } != 0;
+    if flag {
+        unsafe { fp.anon_2210.anon_0.set_throw_flags_b3(0) };
+        if a100(fp).x0 != 0 && a100(fp).x4 == 0 {
+            let row = load_row(p, melee_types::ftCo_SM_Attack100End as u32)?;
+            return change_motion_state(p, FTCO_MS_ATTACK100_END, row.as_ref(), rand);
+        }
+        if !p.fp.item_gobj.is_null() {
+            return Err("ftpickupitem_80094790 with an item not ported".into());
+        }
+        a100(&mut *p.fp).x4 = 0;
+    }
+    Ok(())
+}
+
 /// `ftCo_Attack11_IASA` / `ftCo_Attack12_IASA` (Attack13's is `ftCo_Attack_800D6A50` + Wait's).
 fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     let allow = p.fp.allow_interrupt() != 0;
@@ -3768,7 +3842,7 @@ fn attack1_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
             fp.x1A54 += 1;
         }
         if fp.x1A54 >= fp.co_attrs.rapid_jab_window && fp.x2218_b2() != 0 {
-            return Err(format!("player {}: rapid jab (fn_800D6AC4) not ported", p.slot + 1));
+            return attack100_enter(p, rand);
         }
     }
     if p.fp.motion_id == FTCO_MS_ATTACK11 + 2 {
@@ -4623,6 +4697,11 @@ const PAD_STICK_DIRS: u32 = 0xF_0000;
 /// [`VsMatch::hit_guard`]'s margin around a fighter (a fighter's hurtboxes reach about 20
 /// units from its position).
 const HIT_GUARD_MARGIN: f32 = 30.0;
+
+/// `ftCo_MS_Attack100Start` (47), Loop, End.
+const FTCO_MS_ATTACK100_START: i32 = 47;
+const FTCO_MS_ATTACK100_LOOP: i32 = 48;
+const FTCO_MS_ATTACK100_END: i32 = 49;
 
 /// `ftCo_MS_Catch` (212).
 const FTCO_MS_CATCH: i32 = 212;

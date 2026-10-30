@@ -150,14 +150,8 @@ pub fn world() -> &'static mut CameraWorld {
 
 pub use crate::tu::cmcamera::Camera_80030A50;
 
-/// `Camera_RequestQuake(kind, pos)` on the process camera world, with the real `grLib_801C9CEC`.
-///
-/// # Safety
-/// `pos` is NULL or points to a `Vec3`.
 pub unsafe fn Camera_RequestQuake(kind: CmQuakeKind, pos: *mut Vec3) {
-    world().camera_request_quake_with(kind, if pos.is_null() { None } else { Some(*pos) }, |k| unsafe {
-        crate::tu::grlib::grLib_801C9CEC(k)
-    });
+    unsafe { crate::tu::cmcamera::Camera_RequestQuake(kind, pos as _) }
 }
 
 impl CameraWorld {
@@ -809,17 +803,14 @@ pub struct CmScriptPose {
     pub roll: f32,
 }
 
-/// `cm_script_float`: the int bit pattern as an f32.
 pub fn cm_script_float(bits: i32) -> f32 {
-    f32::from_bits(bits as u32)
+    unsafe { crate::tu::cmcamera::cm_script_float(bits) }
 }
-/// `cm_script_bits`: the f32 bit pattern as an int.
 pub fn cm_script_bits(value: f32) -> i32 {
-    value.to_bits() as i32
+    unsafe { crate::tu::cmcamera::cm_script_bits(value) }
 }
-/// `cm_script_lerp`: `a + (b - a) * t`, one fused site.
 pub fn cm_script_lerp(a: f32, b: f32, t: f32) -> f32 {
-    fmadds(b - a, t, a)
+    unsafe { crate::tu::cmcamera::cm_script_lerp(a, b, t) }
 }
 /// `cm_script_blend`: field-wise lerp.
 pub fn cm_script_blend(a: &CmScriptPose, b: &CmScriptPose, t: f32) -> CmScriptPose {
@@ -835,21 +826,8 @@ pub fn cm_script_blend(a: &CmScriptPose, b: &CmScriptPose, t: f32) -> CmScriptPo
         roll: l(a.roll, b.roll),
     }
 }
-/// `cm_script_ease`: 1 ease-in, 2 ease-out, 3 ease-in-out (its second branch fuses), else
-/// linear.
 pub fn cm_script_ease(t: f32, ease: i32) -> f32 {
-    match ease {
-        1 => t * t,
-        2 => t * (2.0 - t),
-        3 => {
-            if t < 0.5 {
-                2.0 * t * t
-            } else {
-                fmadds(-(2.0 * (1.0 - t)), 1.0 - t, 1.0)
-            }
-        }
-        _ => t,
-    }
+    unsafe { crate::tu::cmcamera::cm_script_ease(t, ease) }
 }
 
 impl CameraWorld {

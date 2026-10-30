@@ -135,9 +135,8 @@ unsafe fn Item_UpdateZakoVelocity(gobj: *mut Item_GObj, ip: *mut Item) {
     ext::it_802762BC(ip);
 }
 
-#[inline(always)]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itLikelikeAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLikelikeAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 /// `ItemStateTable it_803F8468[]`

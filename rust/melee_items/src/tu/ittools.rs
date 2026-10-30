@@ -84,9 +84,8 @@ unsafe fn motion(attrs: *mut itToolsAttributes, idx: i32) -> *mut itToolsMotionA
     (*attrs).motions.as_mut_ptr().offset(idx as isize)
 }
 
-#[inline]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itToolsAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itToolsAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 /// `itReflectItemAndUpdateRotation` (it/kinds/inlines.h, static inline)

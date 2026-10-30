@@ -58,9 +58,8 @@ pub mod ext {
 crate::inl_it_core!();
 crate::inl_it_fall!();
 
-#[inline(always)]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itLipstickAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLipstickAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 pub static mut it_803F6310: [ItemStateTable; 6] = [

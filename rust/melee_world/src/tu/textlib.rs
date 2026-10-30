@@ -54,10 +54,8 @@ pub mod ext {
 /// (OSReport, in another crate, formats with it too).
 pub use melee_runtime::cformat::{c_format, PrintfArg};
 
-/// `memzero(ptr, size)`: zero fill (the size is an `int`; the C converts it to `size_t`).
-#[inline]
 unsafe fn memzero(p: *mut u8, n: i32) {
-    core::ptr::write_bytes(p, 0, n as u32 as usize);
+    unsafe { melee_runtime::tu::lb_00B0::memzero(p as _, n) }
 }
 
 /// `static inline DevText* find_by_id(char id)`: the draw-list entry with that id.

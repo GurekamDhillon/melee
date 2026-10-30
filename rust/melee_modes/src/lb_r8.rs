@@ -61,20 +61,12 @@ unsafe fn jobj_tree_any(mut jobj: *const HSD_JObj, hit: impl Fn(u32) -> bool) ->
     false
 }
 
-/// lb_00B0.c `lb_8000B09C`: some joint in the tree has an AObj without AOBJ_NO_ANIM.
-///
-/// # Safety
-/// See `jobj_tree_any`.
 pub unsafe fn lb_8000B09C(jobj: *const HSD_JObj) -> bool {
-    jobj_tree_any(jobj, |f| f & (1 << 30) == 0)
+    unsafe { melee_runtime::tu::lb_00B0::lb_8000B09C(jobj as _) }
 }
 
-/// lb_00B0.c `lb_8000B134`: some joint in the tree has an AObj with AOBJ_REWINDED.
-///
-/// # Safety
-/// See `jobj_tree_any`.
 pub unsafe fn lb_8000B134(jobj: *const HSD_JObj) -> bool {
-    jobj_tree_any(jobj, |f| f & (1 << 26) != 0)
+    unsafe { melee_runtime::tu::lb_00B0::lb_8000B134(jobj as _) }
 }
 
 pub use melee_runtime::tu::lbspdisplay::lb_80011B74;

@@ -2051,7 +2051,7 @@ pub unsafe extern "C" fn fn_80194F30(state_ptr: *mut i32, buttons: u32, trigger:
 }
 
 #[inline]
-unsafe fn fn_801953C8_GetPreviousPosition(offset: i32, position: i32) -> i32 {
+pub unsafe fn fn_801953C8_GetPreviousPosition(offset: i32, position: i32) -> i32 {
     position - offset
 }
 

@@ -83,10 +83,8 @@ unsafe fn Item_TickLifetime(ip: *mut Item) -> bool {
     false
 }
 
-/// `Item_SetEffectHitlagCallbacks` is not used here; `GET_ATTRS(it)`
-#[inline]
 unsafe fn GET_ATTRS(it: *mut Item) -> *mut itTosakinto_Attrs {
-    (*(*it).xC4_article_data).x4_specialAttributes as *mut itTosakinto_Attrs
+    unsafe { crate::tu::itzgshell::get_attrs(it) as _ }
 }
 
 pub unsafe extern "C" fn it_802C8F4C(gobj: *mut Item_GObj) {

@@ -29,7 +29,66 @@ def reach(ec, hc):
     return True  # melee bin, script, etc. depend on everything we care about (checked by compiler)
 
 
-def plan():
+
+def split_top(s):
+    s = s.replace('->', '@ARROW@')
+    out, cur, d = [], '', 0
+    for ch in s:
+        if ch in '([{<': d += 1
+        elif ch in ')]}>': d -= 1
+        if ch == ',' and d == 0: out.append(cur); cur = ''
+        else: cur += ch
+    if cur.strip(): out.append(cur)
+    return [x.replace('@ARROW@', '->').strip() for x in out]
+
+
+def parse_sig(sig):
+    m = re.match(r'(?:pub(?:\([a-z: ]+\))?\s+)?(unsafe\s+)?(?:extern\s+"C"\s+)?fn\s+(\w+)\s*\(', sig)
+    if not m: return None
+    i = m.end(); d = 1; j = i
+    while j < len(sig) and d:
+        if sig[j] == '(': d += 1
+        elif sig[j] == ')': d -= 1
+        j += 1
+    params = split_top(sig[i:j - 1])
+    ret = sig[j:].strip()
+    ret = ret[2:].strip() if ret.startswith('->') else ''
+    ps = []
+    for p in params:
+        mm = re.match(r'(?:mut\s+)?(\w+)\s*:\s*(.*)$', p, re.S)
+        if not mm or mm.group(1) == '_': return None
+        ps.append((mm.group(1), mm.group(2).strip()))
+    return dict(unsafe=bool(m.group(1)), name=m.group(2), params=ps, ret=ret.split(' where ')[0].strip(), ptext=sig[i:j - 1])
+
+
+def tclass(t):
+    t = re.sub(r'\s+', '', t)
+    if t.startswith('*mut') or t.startswith('*const'): return 'ptr'
+    if re.fullmatch(r'[iu](8|16|32|64|size)', t): return 'int'
+    if t in ('f32', 'f64'): return 'float'
+    return None
+
+
+def fwd_text(c, es, hs):
+    e, h = parse_sig(es), parse_sig(hs)
+    if not e or not h or len(e['params']) != len(h['params']): return None
+    args = []
+    for (en, et), (hn, ht) in zip(e['params'], h['params']):
+        if re.sub(r'\s+', '', et) == re.sub(r'\s+', '', ht): args.append(en)
+        elif tclass(et) and tclass(et) == tclass(ht): args.append(en + ' as _')
+        else: return None
+    rr = re.sub(r'\s+', '', e['ret']); hr = re.sub(r'\s+', '', h['ret'])
+    if bool(rr) != bool(hr): return None
+    cast = ''
+    if rr and rr != hr:
+        if tclass(rr) and tclass(rr) == tclass(hr): cast = ' as _'
+        else: return None
+    path = re.sub(r'^(pub(\([a-z: ]+\))?\s+)?use\s+', '', c['use']).split(' as ')[0].rstrip(';').strip()
+    kw = (c['vis'] + ' ' if c['vis'] else '') + ('unsafe ' if e['unsafe'] else '')
+    return '%sfn %s(%s)%s {\n    unsafe { %s(%s)%s }\n}' % (kw, e['name'], e['ptext'], (' -> ' + e['ret']) if e['ret'] else '', path, ', '.join(args), cast)
+
+
+def plan(mode='use'):
     defs, canon, bodies, r5 = L.analyze()
     cands = []  # dicts
     skipped = collections.Counter()
@@ -80,6 +139,9 @@ def plan():
             if b['crate'] == hcrate: path = 'crate::tu::%s::%s' % (hmod, name)
             else: path = '%s::tu::%s::%s' % (hcrate, hmod, name)
             use = '%s%suse %s%s;' % (vis, ' ' if vis else '', path, alias)
+            if mode == 'fwd':
+                use = fwd_text(dict(use=use, vis=vis), b['sig'], h['sig'])
+                if use is None: skipped['fwd_sig'] += 1; continue
             cands.append(dict(name=name, ename=b['name'], rel=b['rel'], crate=b['crate'], start=st, end=end, use=use,
                               home=home, hstart=h['start'], hsig=h['sig'], key='%s|%s' % (b['rel'], b['name'])))
     return cands, skipped, srcs
@@ -188,10 +250,11 @@ def main():
     ap.add_argument('--state', required=True)
     ap.add_argument('--target', required=True)
     ap.add_argument('--dry', action='store_true')
+    ap.add_argument('--mode', default='use')
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--crates')
     a = ap.parse_args()
-    cands, skipped, srcs = plan()
+    cands, skipped, srcs = plan(a.mode)
     if a.crates: cands = [c for c in cands if c['crate'] in a.crates.split(',')]
     if a.limit: cands = cands[:a.limit]
     print('candidates', len(cands), 'skipped', dict(skipped), flush=True)

@@ -67,33 +67,20 @@ pub fn fn_80038700(arg0: &[i32], arg1: i32, arg2: i32) -> i32 {
     sum
 }
 
-/// `pl_80038788`.
 pub fn pl_80038788(player: i32, kind: i32, arg2: i32) {
-    set_point_value(player, kind, arg2 as u32);
+    unsafe { crate::tu::plbonus::pl_80038788(player, kind, arg2) }
 }
 
-/// `pl_80038824`.
 pub fn pl_80038824(player: i32, kind: i32) {
-    let t = ext(player);
-    hsd_assert(92, h::gm_decision_get_type(kind) == GM_DEC_TYPE_POINT, "gmDecisionGetType(kind) == Gm_DecType_Point");
-    let v = &mut t.x0_staleMoveTable.x904[kind as usize];
-    *v = v.wrapping_add(1);
+    unsafe { crate::tu::plbonus::pl_80038824(player, kind) }
 }
 
-/// `pl_80038898`.
 pub fn pl_80038898(player: i32, kind: i32) {
-    let t = ext(player);
-    hsd_assert(103, h::gm_decision_get_type(kind) == GM_DEC_TYPE_POINT, "gmDecisionGetType(kind) == Gm_DecType_Point");
-    let cur = t.x0_staleMoveTable.x904[kind as usize];
-    if cur == 0 {
-        return;
-    }
-    t.x0_staleMoveTable.x904[kind as usize] = cur - 1;
+    unsafe { crate::tu::plbonus::pl_80038898(player, kind) }
 }
 
-/// `pl_80038914`: the `pl_804D6470` constants pointer.
 pub fn pl_80038914() -> *const pl_804D6470_t {
-    unsafe { h::PL_804D6470 }
+    unsafe { crate::tu::plbonus::pl_80038914() as _ }
 }
 
 pub use crate::tu::plbonus::pl_80038F10 as pl_80038f10;
@@ -110,9 +97,8 @@ pub use crate::tu::plbonus::pl_8003906C as pl_8003906c;
 
 pub use crate::tu::plbonus::pl_80039238;
 
-/// `pl_80039418`.
 pub fn pl_80039418(player: i32, kind: i32) -> u32 {
-    ext(player).x0_staleMoveTable.x904[kind as usize]
+    unsafe { crate::tu::plbonus::pl_80039418(player, kind) }
 }
 
 /// `resetBonuses` (static inline): clears every flag-type bonus.

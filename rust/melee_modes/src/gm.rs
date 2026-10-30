@@ -122,9 +122,8 @@ pub use crate::tu::gmtoulib::fn_8018FA24_inline0;
 
 pub use crate::tu::gmtoulib::gm_801905F0_inline0;
 
-/// gmtou_0.c `fn_801953C8_GetPreviousPosition`.
 pub fn fn_801953C8_GetPreviousPosition(offset: i32, position: i32) -> i32 {
-    position.wrapping_sub(offset)
+    unsafe { crate::tu::gmtou_0::fn_801953C8_GetPreviousPosition(offset, position) }
 }
 
 pub use crate::tu::gmvs::direction;
@@ -243,9 +242,8 @@ pub fn fn_8017AD78(arg0: i32) -> i32 {
     clamp_sym(arg0, 99999)
 }
 
-/// gm_17C0.c `BossHook_Kind` (TARGET_PC): the HP bosses driven by the 1P controller.
 pub fn BossHook_Kind(kind: i32) -> i32 {
-    (kind == FT_KIND_MASTERH || kind == FT_KIND_CREZYH) as i32
+    unsafe { crate::tu::gm_17c0::BossHook_Kind(kind) }
 }
 
 /// gm_1A3F.c `gm_Is1PMode`.

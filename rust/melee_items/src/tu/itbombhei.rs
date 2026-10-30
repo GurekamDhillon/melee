@@ -129,9 +129,8 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
     (*spawn).x40 = 0;
 }
 
-#[inline]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itBombHeiAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBombHeiAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 /// `itBombhei_UpdateStatePreserveBone` (itbombhei.static.h)

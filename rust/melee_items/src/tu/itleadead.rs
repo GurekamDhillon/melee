@@ -161,9 +161,8 @@ pub static mut it_803F8EB0: [ItemStateTable; 18] = [
     st_row(-1, pred_b(itLeadead_UnkMotion17_Anim), Some(itLeadead_UnkMotion17_Phys), Some(itLeadead_UnkMotion17_Coll)),
 ];
 
-#[inline(always)]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itLeadeadAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itLeadeadAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 #[inline(always)]

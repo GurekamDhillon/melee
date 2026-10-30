@@ -212,9 +212,8 @@ pub mod ext {
     }
 }
 
-/// `memzero(mem, size)` (lb/lb_00B0.c, ported in `lb_r6`).
 unsafe fn memzero(mem: *mut u8, size: usize) {
-    crate::lb_r6::memzero(core::slice::from_raw_parts_mut(mem, size), size as isize);
+    unsafe { melee_runtime::tu::lb_00B0::memzero(mem as _, size as _) }
 }
 
 /// `GET_JOBJ(gobj)` (gobj.h): `gobj->hsd_obj`.

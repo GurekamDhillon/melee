@@ -93,9 +93,8 @@ unsafe fn Item_StopAndEnterState(gobj: *mut Item_GObj, ip: *mut Item, msid: i32)
     ext::Item_80268E5C(gobj, msid, ITEM_ANIM_UPDATE);
 }
 
-#[inline]
 unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itSScopeAttributes {
-    (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSScopeAttributes
+    unsafe { crate::tu::itzgshell::get_attrs(ip) as _ }
 }
 
 /// `ItemStateTable it_803F5F40[]`

@@ -69,23 +69,8 @@ pub unsafe fn un_80302EA4(mut arg0: *const Entry) -> i32 {
     if x > z { x.wrapping_add(1) } else { z.wrapping_add(1) }
 }
 
-/// textlib_1.c `un_80302FFC_maxlen` (static inline): widest label (x0 not 0/1) plus one, at least 1.
-///
-/// # Safety
-/// As `un_80302EA4` (only x8 is read).
 pub unsafe fn un_80302FFC_maxlen(mut thing: *const Entry) -> i32 {
-    let mut cursor_x = 1i32;
-    while (*thing).x0 != 9 {
-        let e = &*thing;
-        if e.x0 != 0 && e.x0 != 1 {
-            let len = DevText_StrLen(cstr(e.x8));
-            if len.wrapping_add(1) > cursor_x {
-                cursor_x = len.wrapping_add(1);
-            }
-        }
-        thing = thing.add(1);
-    }
-    cursor_x
+    unsafe { melee_world::tu::textlib_1::un_80302FFC_maxlen(thing as _) }
 }
 
 /// soundtest.c `un_802FFCD0`: fill `arr[0..count]` with `arr[count]`.

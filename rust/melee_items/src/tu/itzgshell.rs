@@ -280,7 +280,7 @@ pub unsafe extern "C" fn it_802DDD38(gobj: *mut Item_GObj) {
 
 /// `get_attrs` (permuterslop static inline)
 #[inline]
-unsafe fn get_attrs(arg0: *mut Item) -> *mut itGShell_Attrs {
+pub unsafe fn get_attrs(arg0: *mut Item) -> *mut itGShell_Attrs {
     attrs_of(arg0)
 }
 

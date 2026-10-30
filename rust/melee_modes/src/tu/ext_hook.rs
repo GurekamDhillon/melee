@@ -61,23 +61,8 @@ macro_rules! val_fnptr {
 }
 val_fnptr!((), (A0), (A0, A1), (A0, A1, A2), (A0, A1, A2, A3), (A0, A1, A2, A3, A4), (A0, A1, A2, A3, A4, A5));
 
-/// Declare stubs for callees in TUs that are not ported yet.
-///
-/// ```ignore
-/// ext_fns! {
-///     fn pl_80039450(a0: i32);                       // TODO: panics until the callee's TU is ported
-///     fn gm_GetCurrentGameMode() -> u8;
-///     fn fn_8017AD04(a0: i32, a1: i32) -> i32 = crate::gm::fn_8017AD04;   // ported elsewhere: called
-/// }
-/// ```
-/// Under a test hook ([`EXT_HOOK`]) every stub goes to the hook, ported or not, so the state
-/// oracles can mock the callee exactly as the C oracle does.
-/// MSL `memzero(void*, ssize_t)`: the real behaviour, used by ext stubs when no hook is installed.
-///
-/// # Safety
-/// `p` is valid for `n` bytes.
 pub unsafe fn memzero(p: *mut core::ffi::c_void, n: i32) {
-    core::ptr::write_bytes(p as *mut u8, 0, n as usize);
+    unsafe { melee_runtime::tu::lb_00B0::memzero(p as _, n) }
 }
 
 impl Val for () {

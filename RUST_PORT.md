@@ -1029,3 +1029,26 @@ mplib/mpcoll/mpisland (`tu::{mplib,mpcoll,mpisland}`, `tests/tu_mp.rs` plus mele
 shipping-contraction C. `Camera_SetQuakeOffset` / `Camera_SetBackgroundColor` of grlib, grlast, ground and grpura now default to
 `tu::cmcamera` (they wrote the hand-port `cm::camera::world()` state, a different `game_camera` from the one tu::cmcamera renders).
 Rows that are static helpers (`update_bounds`, `cm_script_update`, `fn_801C8EF8_inline`, ...) are verified through their callers' ops.
+
+## melee_fighter trace verification (port/pre-melee_fighter, 2026-10-25)
+`docs/rust-port/trace/pad_falcon_fox_fd.csv` listed 225 `melee_fighter` rows as stub / missing / ported-unverified. 176 were already
+covered by the committed ref/state oracles (fighter, ftanim, ftaction, ftcoll, ftdynamics, ft_081b/0c31/0c88/0c8c/0d31/0d4d, ftparts,
+ftCo_09f4, ftCo_Turn, player/stale, ftcommon) and were only never flipped; this pass flipped them and closed most of the rest:
+- `tests/tu_ftcpuattack.rs` (ftCo_800B9704), `tu_player_vs_c.rs` (ops 144-146 on `gen/cref/player2_ref.c`; `player_ref.c` / `player.txt`
+  stay at 144 ops for the crate-level `player_ref.rs`), `ftleaf_ref.rs` op 50 (mpClearFloorSkip), `Camera_ScriptState` seam of fighter.rs now
+  defaults to melee_world's oracle-checked `tu::cmcamera` port.
+- Unity oracles (`MTU_UNITY=1`, `gen/cref/tu/*_unity.c`): `tu_plbonus_vs_c.rs` (player.c + plattack.c + plbonus.c + plbonuslib.c + ft_0892.c vs
+  `tu::plbonus` / `tu::plbonuslib`), `tu_ftdrawcommon_vs_c.rs` (ftdrawcommon.c + mtx_pc.c; `script_motion_draw_begin` is now a real port),
+  `tu_crowdsfx_vs_c.rs`. `gen/mtu/stubs.py` takes several port modules (`a.rs,b.rs,c.rs` -> `m`, `m2`, `m3`), the `=>` ext form and
+  `[f32; 4]` return types; `gen_tu.py` treats every #included game `.c` as the TU under `MTU_UNITY`.
+- `tu_ftdata_vs_c.rs` (spec from `gen/mtu/mk_ftdata_spec.py`): ft_800852B0, ftData_800855C8, ftData_80085B10, ftData_80085CD8 and the
+  pc/geno `GenoDefine_InitKinds / CaptureBase / RestPoseTree / BindFighter` / `ResetDescriptors`, which are now real ports in `tu::ftdata`
+  (the platform hooks default to them; the registry queries `Geno_Define*` are `ext` hooks that default to "no define registered").
+  Every per-kind table of the TU is filled and hashed (pointer-sized words by pool id). Not covered: the `Geno_DefineThrownAs` stand-in
+  legs of ftData_80085B10 (`as != kind` calls ftData_ThrownStandInPrepare -> ftData_8008572C; the oracle returns -1 or the kind).
+- `tu_ftparts_class.rs` (JObjInfoInit, IntpJObjInfoInit, PObjInfoInit, ftParts_80073758, IntpJObjLoad, JObjMakePositionMtx against the real
+  class.c / mtx.c / mtx_pc.c; parent classes synthetic), `tu_ftparts_pobj.rs` (ftParts_PObjSetupMtx z-scale paths).
+- Traps: a Python string with `\n` written through the tool's shell lands as a real newline in the C (use the Edit tool); the oracle C is
+  native, so `size_t` is the 4-byte `gc_size_t` while Rust `usize` is 8 (hash `(u32)`); native x86 bitfields are LSB-first, so raw-byte
+  readers (`FT_DRAW_FLAG` reads `x21FC_flag.byte`) need the byte set on both sides after the field-wise fill; fused sites of
+  `fn_8003F654` / `fn_8003F294` / `script_motion_draw_begin` mutation checks: only the last is discriminated by the generated inputs.

@@ -15,6 +15,8 @@ def main():
     R.BUILD.mkdir(parents=True, exist_ok=True)
     R.DATA.mkdir(parents=True, exist_ok=True)
     for n in sys.argv[1:]:
+        if n in R.EXTRACTS:  # functions cut verbatim from other game files into <n>_extract.inc (run.py EXTRACTS)
+            R.extract(n)
         exe = R.BUILD / f"{n}_ref.exe"
         lls = []
         for src in (R.HERE / f"{n}_ref.c", R.ROOT / "pc/gameworld/gekko_fp.c"):

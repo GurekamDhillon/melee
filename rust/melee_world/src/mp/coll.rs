@@ -642,6 +642,20 @@ pub fn mp_coll_800471f8(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollD
     run_air(g, st, cd, 0, &mut None)
 }
 
+/// `mpColl_800477E0`: JObj ECB (flags 6), `inline0(coll, 1, true)`.
+pub fn mp_coll_800477e0(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 6, joints)?;
+    run_air(g, st, cd, 1, &mut None)
+}
+
+/// `mpColl_800473CC`: JObj ECB (flags 6), `inline0(coll, 4, true)`.
+pub fn mp_coll_800473cc(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
+    mp_coll_prev(cd);
+    mp_coll_load_ecb_inline(cd, 6, joints)?;
+    run_air(g, st, cd, 4, &mut None)
+}
+
 /// `mpColl_80048654`: JObj ECB (flags 5), `inline0(coll, 0, true)`.
 pub fn mp_coll_80048654(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, joints: &[Vec3; 6]) -> R<bool> {
     mp_coll_prev(cd);

@@ -259,6 +259,14 @@ pub(super) fn install_state_hooks() {
                 s.dmg_fail(e);
             }
         });
+        dm::ext::hook::ftCo_Landing_Enter_Basic = Some(|g| {
+            let s = sim();
+            let pi = s.player_of(g);
+            let c = s.common;
+            if let Err(e) = landing_enter_basic(&mut s.ground, &mut s.players[pi], c, &mut s.rand) {
+                s.dmg_fail(e);
+            }
+        });
         dm::ext::hook::ftCo_Wait_IASA = Some(|g| {
             let s = sim();
             let pi = s.player_of(g);
@@ -313,11 +321,18 @@ pub(super) fn install_state_hooks() {
             }
         });
         // The airborne leaves.
-        dm::ext::hook::ft_80084DB0 = Some(|_| sim().dmg_fail("ft_80084DB0 (a hit fighter in the air) is not ported"));
-        dm::ext::hook::ft_80084EEC = Some(|_| sim().dmg_fail("ft_80084EEC (a hit fighter in the air) is not ported"));
-        dm::ext::hook::ft_80081DD4 = Some(|_| {
-            sim().dmg_fail("ft_80081DD4 (a hit fighter in the air) is not ported");
-            false
+        dm::ext::hook::ft_80084DB0 = Some(melee_fighter::ft084e::ft_80084db0);
+        dm::ext::hook::ft_80084EEC = Some(melee_fighter::ft084e::ft_80084eec);
+        dm::ext::hook::ft_80081DD4 = Some(|g| {
+            let s = sim();
+            let pi = s.player_of(g);
+            match ft_80081dd4(&mut s.ground, &mut s.cg, &mut s.players[pi]) {
+                Ok(r) => r,
+                Err(e) => {
+                    s.dmg_fail(e);
+                    false
+                }
+            }
         });
         dm::ext::hook::ftCo_80090780 = Some(|_| sim().dmg_fail("ftCo_80090780 (DamageFall) is not ported"));
         dm::ext::hook::ftCo_Fall_IASA_Inner = Some(|_| {
@@ -336,6 +351,28 @@ pub(super) fn install_state_hooks() {
             sim().dmg_fail("ftCo_800D69C4 is not ported");
             false
         });
+        // un_803224DC: out of the floor box +- horiz_margin with a knockback category plays a crowd gasp
+        // (un_8032201C: audio + stats, and the caller then clears x18A4); anything else returns false.
+        unsafe {
+            melee_fighter::hooks::MPLIB_8004D164_LINE_COUNT = Some(|| Some(sim().ground.line_count as i32));
+            melee_fighter::hooks::FT_80084A18 = Some(|g| {
+                let s = sim();
+                let pi = s.player_of(g);
+                let line = s.players[pi].fp.coll_data.floor.index;
+                s.ground.mp_lib_80054ed8(line)
+            });
+            melee_fighter::hooks::UN_803224DC = Some(|_spawn, x, kb| {
+                let s = sim();
+                let cc = unsafe { &*(melee_fighter::tu::fighter::gCrowdConfig as *const melee_types::CrowdConfig) };
+                let b = s.ground.coll_box[1];
+                let oob = x < cc.horiz_margin + b.left || x > b.right - cc.horiz_margin;
+                let cat = if kb >= cc.kb_threshold_high { 3 } else if kb >= cc.kb_threshold_mid { 2 } else if kb >= cc.kb_threshold_low { 1 } else { 0 };
+                if oob && cat != 0 {
+                    s.dmg_fail("un_8032201C (the crowd gasp of a hit fighter out of bounds) is not ported");
+                }
+                false
+            });
+        }
         melee_fighter::tu::ftcoll::ext::FTCO_800BFFD0 = Some(|_, _, _| false);
     }
 }

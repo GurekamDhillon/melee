@@ -1052,3 +1052,25 @@ ftCo_09f4, ftCo_Turn, player/stale, ftcommon) and were only never flipped; this 
   native, so `size_t` is the 4-byte `gc_size_t` while Rust `usize` is 8 (hash `(u32)`); native x86 bitfields are LSB-first, so raw-byte
   readers (`FT_DRAW_FLAG` reads `x21FC_flag.byte`) need the byte set on both sides after the field-wise fill; fused sites of
   `fn_8003F654` / `fn_8003F294` / `script_motion_draw_begin` mutation checks: only the last is discriminated by the generated inputs.
+## Trace status regenerated after the pre-melee_* merges (2026-10-25)
+`rust_status`/`rust_crate` of `docs/rust-port/trace/pad_falcon_fox_fd.csv` were re-derived against the current tree with the
+`calltrace.py` rules (`index_rust` + `tested_names` + `missing.md`; the function list and counters are unchanged, 2625 rows).
+Status is name-level: "verified" = a real-bodied Rust fn plus a `rust/*/tests` file naming it, so it also counts
+delegating wrappers; the per-agent notes above are the finer-grained claim.
+
+| crate | ported+verified | ported-unverified | stub | missing | total |
+|---|---:|---:|---:|---:|---:|
+| melee | 13 | 2 | 0 | 0 | 15 |
+| melee_audio | 1 | 0 | 0 | 0 | 1 |
+| melee_chara | 88 | 0 | 0 | 0 | 88 |
+| melee_fighter | 524 | 137 | 2 | 6 | 669 |
+| melee_items | 160 | 1 | 0 | 0 | 161 |
+| melee_modes | 447 | 0 | 0 | 0 | 447 |
+| melee_runtime | 723 | 41 | 1 | 0 | 765 |
+| melee_types | 1 | 0 | 0 | 0 | 1 |
+| melee_world | 475 | 3 | 0 | 0 | 478 |
+| **total** | **2432** | **184** | **3** | **6** | **2625** |
+
+Before: 1989 verified, 525 unverified, 55 stub, 56 missing (melee_runtime 378/314/39/37, melee_fighter 444/190/16/19). The
+remaining 9 stub/missing rows are melee_fighter (8) and melee_runtime (1). Note the earlier melee_runtime report counted 41 unported audio/devcom rows; the CSV
+now reads them as ported-unverified because same-name Rust fns with real bodies exist (name-level, not a test claim).

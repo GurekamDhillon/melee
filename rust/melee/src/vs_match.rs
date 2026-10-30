@@ -3217,6 +3217,35 @@ fn ft_80081a00(_fp: &mut Fighter) -> bool {
     false
 }
 
+/// `ft_80081DD4`: the air collision of a hit fighter (stays airborne while in hitlag with SDI allowed).
+pub(super) fn ft_80081dd4(g: &mut GroundColl, cg: &mut CollGlobals, p: &mut Player) -> Result<bool, String> {
+    let joints = {
+        let d = p.ecb_desc;
+        ecb_joints(&mut p.skel, &d)
+    };
+    let snap = p.ecb_desc.ledge_snap_height;
+    let fp = &mut *p.fp;
+    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+    fp.coll_data.cur_pos = fp.cur_pos;
+    let r = if fp.allow_sdi() != 0 {
+        mc::mp_coll_800477e0(g, cg, &mut fp.coll_data, &joints)
+    } else if fp.x2064_ledgeCooldown != 0 || fp.x2224_b2() != 0 {
+        mc::mp_coll_800471f8(g, cg, &mut fp.coll_data, &joints)
+    } else {
+        // ledge_snap_height * scale.y * x1CC around mpColl_800473CC (the ECB source is the JObj one).
+        fp.coll_data.ledge_snap_height = snap * fp.x34_scale.y * melee_fighter::hooks::common_data().x1CC;
+        let r = mc::mp_coll_800473cc(g, cg, &mut fp.coll_data, &joints);
+        fp.coll_data.ledge_snap_height = snap * fp.x34_scale.y;
+        r
+    }
+    .map_err(|e| format!("{} not ported", e.0))?;
+    fp.cur_pos = fp.coll_data.cur_pos;
+    if ft_80081a00(fp) {
+        return Ok(false);
+    }
+    Ok(r)
+}
+
 /// `ft_800831CC(gobj, ftCo_80096CC8, cb)` up to the callback: true when `cb` (the landing) runs.
 /// `ftWallJump_8008169C` / `ftCliffCommon_80081298` stop the run when their trigger flags are set.
 fn ft_800831cc(g: &mut GroundColl, cg: &mut CollGlobals, p: &mut Player) -> Result<bool, String> {

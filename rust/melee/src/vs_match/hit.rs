@@ -334,8 +334,8 @@ impl VsMatch {
             if fp.dmg.x189C_unk_num_frames > 0.0 {
                 return Err("Fighter_ProcessHit_8006D1EC: x189C (ftColl_8007BE3C) is not ported".into());
             }
-            if fp.dmg.x18a0 != 0.0 || fp.x19A4 != 0 || fp.dmg.int_value != 0 || fp.dmg.x1914 != 0 || fp.dmg.x1924 != 0 {
-                return Err("Fighter_ProcessHit_8006D1EC: a shield / dealt-damage / reflect branch is not ported".into());
+            if fp.dmg.x18a0 != 0.0 || fp.x19A4 != 0 || fp.dmg.int_value != 0 {
+                return Err(format!("Fighter_ProcessHit_8006D1EC: a shield / dealt-damage / reflect branch is not ported (x18a0 {} x19A4 {} int_value {} x1914 {} x1924 {})", fp.dmg.x18a0, fp.x19A4, fp.dmg.int_value, fp.dmg.x1914, fp.dmg.x1924));
             }
         }
         let msid = self.players[pi].fp.motion_id as i32;
@@ -373,7 +373,24 @@ impl VsMatch {
             let d = fp.dmg.x1838_percentTemp;
             melee_fighter::ftcommon2::ftcommon_8007ed50(fp, d as i32);
             b1 = applied;
-        } else if self.players[pi].fp.dmg.x1838_percentTemp != 0.0 {
+        } else if self.players[pi].fp.dmg.x1914 != 0 {
+            // The attacker side of a hit: deal_dmg_cb, the rumble.
+            let g: *mut HSD_GObj = &mut *self.players[pi].gobj;
+            if let Some(cb) = self.players[pi].fp.deal_dmg_cb {
+                self.with_sim(|_| unsafe { cb(g) });
+                self.take_dmg_err()?;
+            }
+            let fp = &mut self.players[pi].fp;
+            b1 = fp.dmg.x1914;
+            if unsafe { fp.x2070.anon_0.x2073 } == 0x46 {
+                melee_fighter::ftcommon2::ftcommon_8007ebac(fp, 0xE, 0);
+            } else {
+                melee_fighter::ftcommon2::ftcommon_8007ee0c(fp, b1);
+            }
+        } else if self.players[pi].fp.dmg.x1924 != 0 {
+            b1 = self.players[pi].fp.dmg.x1924;
+        }
+        if force == 0.0 && self.players[pi].fp.dmg.x1838_percentTemp != 0.0 {
             // (the no-knockback hit: Fighter_UnkTakeDamage_8006CC30, ftKb_SpecialN_800F5C34 (Kirby only),
             // ftCommon_800804FC)
             let fp = &mut self.players[pi].fp;

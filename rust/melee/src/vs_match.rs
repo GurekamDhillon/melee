@@ -130,8 +130,11 @@ const FTCO_MS_LANDING_AIR_N: i32 = 70;
 const FTCO_SM_LANDING_AIR_N: u32 = 73;
 /// `ftCo_MS_DamageHi1` .. `ftCo_MS_DamageFlyRoll`.
 fn is_damage_motion(m: i32) -> bool {
-    (75..=91).contains(&m)
+    (75..=91).contains(&m) || m == FTCO_MS_DAMAGE_FALL
 }
+
+/// `ftCo_MS_DamageFall` (38).
+pub(super) const FTCO_MS_DAMAGE_FALL: i32 = 38;
 
 fn is_landing_air(m: i32) -> bool {
     (FTCO_MS_LANDING_AIR_N..FTCO_MS_LANDING_AIR_N + 5).contains(&m)
@@ -3398,11 +3401,16 @@ fn input_cb(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// jump) or the C-stick (`ftCo_800DF478`); the jump also fires on a tap of the stick up
 /// (`ftCo_JumpAerial_CheckInput`). Any of those stops the run.
 fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    fall_iasa_checks(p, rand).map(|_| ())
+}
+
+/// `ftCo_Fall_IASA_Inner` (and the shared head of `ftCo_DamageFall_IASA`): true when a state was entered.
+fn fall_iasa_checks(p: &mut Player, rand: &mut HsdRand) -> Result<bool, String> {
     if !p.fp.item_gobj.is_null() {
         return Err("ftCo_Fall_IASA with an item not ported".into());
     }
     if special_air_check(p, rand)? {
-        return Ok(());
+        return Ok(true);
     }
     let fp = &*p.fp;
     let i = &fp.input;
@@ -3415,7 +3423,7 @@ fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         return Err(format!("player {}: ftCo_Fall_IASA with a press {:#x}: not ported", p.slot + 1, i.pressed_buttons));
     }
     if attackair::check_input(p, rand)? {
-        return Ok(());
+        return Ok(true);
     }
     let fp = &*p.fp;
     let i = &fp.input;
@@ -3423,7 +3431,63 @@ fn fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         return Err(format!("player {}: ftCo_Fall_IASA with a press {:#x} / C-stick ({}, {}): not ported", p.slot + 1, i.pressed_buttons, i.cstick[0].x, i.cstick[0].y));
     }
     // ftCo_800CB870: the double jump.
-    ftco_800cb870(p, rand).map(|_| ())
+    ftco_800cb870(p, rand)
+}
+
+/// `ftCo_DamageFall_IASA`: the Fall checks, then a stick out of the dead zone inside the window falls.
+fn damage_fall_iasa(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
+    if !p.fp.item_gobj.is_null() {
+        return Err("ftCo_DamageFall_IASA with an item not ported".into());
+    }
+    if fall_iasa_checks(p, rand)? {
+        return Ok(());
+    }
+    let cd = melee_fighter::hooks::common_data();
+    let fp = &*p.fp;
+    if fc::abs_c(fp.input.lstick[0].x) >= cd.x210 && (fp.active_timer.lstick.x as i32) < cd.x214 as i32 {
+        return fall_enter(p, rand);
+    }
+    // ftCo_800C5DDC / ftCo_800C5CD4: the hammer (x2338.y).
+    if fp.x2338.y != 0 {
+        return Err("ftCo_800C5DDC (hammer fall) not ported".into());
+    }
+    Ok(())
+}
+
+/// `ftCo_DamageFall_Coll`: `ft_8008370C(gobj, ftCo_80090984)`; true when the floor was reached.
+pub(super) fn damage_fall_coll(g: &mut GroundColl, cg: &mut CollGlobals, p: &mut Player) -> Result<bool, String> {
+    let joints = {
+        let d = p.ecb_desc;
+        ecb_joints(&mut p.skel, &d)
+    };
+    let fp = &mut *p.fp;
+    let dir = if fp.facing_dir < 0.0 { -1 } else { 1 };
+    fp.coll_data.last_pos = fp.coll_data.cur_pos;
+    fp.coll_data.cur_pos = fp.cur_pos;
+    let r = if fp.x2064_ledgeCooldown != 0 || fp.x2224_b2() != 0 {
+        mc::mp_coll_800471f8(g, cg, &mut fp.coll_data, &joints)
+    } else {
+        mc::mp_coll_set_facing_dir(&mut fp.coll_data, dir);
+        mc::mp_coll_800473cc(g, cg, &mut fp.coll_data, &joints)
+    }
+    .map_err(|e| format!("{} not ported", e.0))?;
+    fp.cur_pos = fp.coll_data.cur_pos;
+    if ft_80081a00(fp) {
+        return Ok(false);
+    }
+    if r {
+        return Ok(true);
+    }
+    let env = fp.coll_data.env_flags;
+    if fp.can_walljump() != 0 && env & (mc::COLLIDE_RIGHT_WALL_HUG | mc::COLLIDE_LEFT_WALL_HUG) != 0 {
+        return Err("ftWallJump_8008169C with a wall hug: not ported".into());
+    }
+    if !(fp.input.lstick[0].y <= -melee_fighter::hooks::common_data().x480)
+        && env & (mc::COLLIDE_LEFT_LEDGE_GRAB | mc::COLLIDE_RIGHT_LEDGE_GRAB) != 0
+    {
+        return Err("ftCliffCommon_80081298: ledge grab not ported".into());
+    }
+    Ok(false)
 }
 
 /// `ftCo_Landing_IASA`.

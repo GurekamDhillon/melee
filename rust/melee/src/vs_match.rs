@@ -48,7 +48,7 @@ mod rebirth;
 mod samus;
 mod sheik;
 pub mod rollback;
-mod snapshot;
+pub(crate) mod snapshot;
 mod snapshot_ps;
 mod snapshot_fx;
 pub mod sound;

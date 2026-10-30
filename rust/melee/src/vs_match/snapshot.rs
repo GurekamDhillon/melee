@@ -93,6 +93,11 @@ fn part_line(p: &melee_runtime::particle::Particle) -> String {
 }
 
 impl VsMatch {
+    /// `melee diff`: the live items (kind, msid, pos, vel) and the respawn spots' countdowns.
+    pub fn diff_items(&self) -> (Vec<(i32, i32, [f32; 3], [f32; 3])>, [i32; 6]) {
+        (self.items.iter().map(|i| (i.kind, i.msid, [i.pos.x, i.pos.y, i.pos.z], [i.vel.x, i.vel.y, i.vel.z])).collect(), self.respawn_busy)
+    }
+
     /// One line per component: what is live (a diagnostic for choosing what the loader must cover).
     pub fn state_summary(&self) -> String {
         let mut s = format!("frame {} seed {:08X}\n", self.frame, self.rand.logic_seed());

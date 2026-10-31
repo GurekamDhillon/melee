@@ -10,16 +10,21 @@
 use crate::spline::{self, Spline};
 use melee_types::{HSD_Spline, Vec};
 
+/// A table pointer the data file may leave NULL (the C only reads the tables its spline type uses).
+unsafe fn sl<'a, T>(p: *const T, n: usize) -> &'a [T] {
+    if p.is_null() { &[] } else { core::slice::from_raw_parts(p, n) }
+}
+
 unsafe fn view<'a>(s: *mut HSD_Spline) -> Spline<'a> {
     let n = ((*s).numcv.max(0) as usize).max(1);
     Spline {
         ty: (*s).r#type,
         numcv: (*s).numcv,
         tension: (*s).tension,
-        cv: core::slice::from_raw_parts((*s).cv as *const crate::mtx::Vec3, n * 3 + 4),
+        cv: sl((*s).cv as *const crate::mtx::Vec3, n * 3 + 4),
         total_length: (*s).totalLength,
-        seg_length: core::slice::from_raw_parts((*s).segLength, n + 1),
-        seg_poly: core::slice::from_raw_parts((*s).segPoly as *const [f32; 5], n + 1),
+        seg_length: sl((*s).segLength, n + 1),
+        seg_poly: sl((*s).segPoly as *const [f32; 5], n + 1),
     }
 }
 

@@ -9,7 +9,7 @@ use melee_types::*;
 use super::gmtoulib::PAD_BUTTON_START;
 
 pub mod ext {
-    pub static mut DbLevel: u32 = 0;
+    pub use melee_runtime::shared::DbLevel;
     crate::gmtou_ext! {
         fn lbDvd_SetupVsPreloadCache();
         fn gm_SetPendingGameMode(mode: i32);

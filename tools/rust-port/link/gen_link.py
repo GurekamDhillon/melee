@@ -217,11 +217,11 @@ def parse_hooks():
     hooks = []
     for crate, f, rel in tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
-        if 'ext_fns' not in raw and 'stubs!' not in raw: continue
+        if 'ext_fns' not in raw and 'stubs!' not in raw and 'hooks!' not in raw: continue
         t = blank(raw)
         c, mp = modpath_of(f)
         # classify macro definitions in this file
-        dm = re.search(r'macro_rules!\s+(?:ext_fns|stubs)\s*\{', t)
+        dm = re.search(r'macro_rules!\s+(?:ext_fns|stubs|hooks)\s*\{', t)
         kind = 'none'
         if dm:
             end = match_close(t, dm.end() - 1)
@@ -231,7 +231,7 @@ def parse_hooks():
             else: kind = 'other'
         else:
             kind = 'mod_hook' if re.search(r'ext_fns_[ch]\b', t) else 'external_macro'
-        for im in re.finditer(r'\b(?:ext_fns(?:_[ch])?|stubs)!\s*\{', t):
+        for im in re.finditer(r'\b(?:ext_fns(?:_[ch])?|stubs|hooks)!\s*\{', t):
             if dm and dm.start() <= im.start() <= match_close(t, dm.end() - 1): continue
             if t[max(0, im.start()-20):im.start()].strip().endswith('$crate::'): pass
             op = im.end() - 1

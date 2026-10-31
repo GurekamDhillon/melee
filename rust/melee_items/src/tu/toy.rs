@@ -210,7 +210,7 @@ pub mod ext {
         }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;

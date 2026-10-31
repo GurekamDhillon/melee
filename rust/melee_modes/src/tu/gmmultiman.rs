@@ -570,7 +570,7 @@ pub static mut gm_804D68F1: i8 = 0;
 
 /// PC-only port toggle: when true in Target Test, the C-stick performs smash attacks and aerials
 /// instead of controlling the camera. Defaults to false (camera), matching console behaviour.
-pub static mut gm_CStickSmashTargetTest: i32 = 0;
+pub use melee_runtime::shared::gm_CStickSmashTargetTest;
 
 /// `{ -1 }` / `{ 0xFF }`: the table terminator (`id` = 0xFF, everything else zero).
 const STATE_END: GameModeState = GameModeState {

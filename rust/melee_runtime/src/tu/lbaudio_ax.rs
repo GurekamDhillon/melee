@@ -109,7 +109,7 @@ pub mod ext {
     fn Mex_GrAudioFirst() -> i32;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjPLinkHead: [*mut HSD_GObj; 64] = [null_mut(); 64];
+    pub use crate::tu::gobj_native::HSD_GObjPLinkHead;
 }
 
 unsafe extern "C" fn lb_800195D0_cb() {
@@ -2821,7 +2821,7 @@ pub unsafe extern "C" fn lbAudioAx_80026510(target: *mut HSD_GObj) -> bool {
     melee_core::ct!("lbAudioAx_80026510");
     let mut count = 0;
     if !target.is_null() {
-        let mut cur = ext::HSD_GObjPLinkHead[PLINK_AUDIO_AX as usize];
+        let mut cur = *ext::HSD_GObjPLinkHead.add(PLINK_AUDIO_AX as usize);
         while !cur.is_null() {
             let ud = ud_of(cur);
             let next = (*cur).next;
@@ -2842,7 +2842,7 @@ pub unsafe extern "C" fn lbAudioAx_80026510(target: *mut HSD_GObj) -> bool {
 
 pub unsafe extern "C" fn lbAudioAx_800265C4(target_obj: *mut HSD_GObj, voice: i32) -> bool {
     melee_core::ct!("lbAudioAx_800265C4");
-    let mut cur = ext::HSD_GObjPLinkHead[PLINK_AUDIO_AX as usize];
+    let mut cur = *ext::HSD_GObjPLinkHead.add(PLINK_AUDIO_AX as usize);
     while !cur.is_null() {
         let ud = ud_of(cur);
         if !ud.is_null() && (*ud).owner == target_obj && (*ud).voice_id != -1 && (*ud).voice_id == voice {

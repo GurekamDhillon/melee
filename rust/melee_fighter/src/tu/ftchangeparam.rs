@@ -10,11 +10,11 @@ use melee_core::fp::fmadds;
 pub mod ext {
     use crate::types::*;
     /// TODO(move-to-core ftdata) `Fighter_804D6524` (PlCo pData: size-scaling exponents).
-    pub static mut Fighter_804D6524: *const Fighter_804D6524_t = core::ptr::null();
+    pub use melee_runtime::shared::Fighter_804D6524;
     /// TODO(move-to-core ftdata) `Fighter_804D651C` (metal multipliers).
-    pub static mut Fighter_804D651C: *const Fighter_804D651C_t = core::ptr::null();
+    pub use melee_runtime::shared::Fighter_804D651C;
     /// TODO(move-to-core ftdata) `Fighter_804D6518` (x2229_b1 multipliers).
-    pub static mut Fighter_804D6518: *const Fighter_804D6518_t = core::ptr::null();
+    pub use melee_runtime::shared::Fighter_804D6518;
     /// TODO(pc/geno) `Geno_ApplyAttrs(fp)` (TARGET_PC).
     pub static mut Geno_ApplyAttrs: Option<fn(&mut Fighter)> = None;
     /// TODO(pc mex) `Mex_OnReapplyAttrDispatch(kind, gobj, ftKindCalcIndiviParamTable[kind])`;

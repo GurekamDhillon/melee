@@ -207,6 +207,50 @@ impl<'a> GcDecoder<'a> {
         p as *mut T
     }
 
+    /// The pointer word at `at` read as a pointer to an ARRAY of `n` `T`s (the length is another field of the
+    /// record; the generated `GcDecode` of a field listed in `melee_types/gen/arrays.tsv` calls this). Shared per
+    /// (target, T, n). `n` = 0 still yields a pointer to a one-element allocation so the pointer stays non-null
+    /// like the C's. In raw mode the word is returned as the guest address.
+    pub fn ptr_array<T: GcDecode>(&mut self, at: u32, n: usize) -> *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct ArrayKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<ArrayKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut T;
+        }
+        let p = self.array::<T>(t, n.max(1)) as *mut u8;
+        self.memo.insert(key, p);
+        p as *mut T
+    }
+
+    /// The pointer word at `at` read as a pointer to a NULL-TERMINATED table of `T*` (a `T**` the C walks until it
+    /// finds NULL, or indexes within a count the bytes do not state): consecutive relocated words are followed, the first
+    /// word that is not relocated ends the table and is kept as the terminating NULL. Shared per target.
+    pub fn ptr_table<T: GcPointee>(&mut self, at: u32) -> *mut *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct TableKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<TableKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut *mut T;
+        }
+        let mut n = 0u32;
+        while self.relocs.contains(&(t + 4 * n)) {
+            n += 1;
+        }
+        let v: Vec<*mut T> = (0..=n).map(|i| self.ptr::<T>(t + 4 * i)).collect();
+        let len = v.len();
+        let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.memo.insert(key, p);
+        p as *mut *mut T
+    }
+
     /// The NUL-terminated string at `target`, copied (with its NUL) into the arena; shared.
     pub fn c_string(&mut self, target: u32) -> *mut u8 {
         let key = (target, TypeId::of::<CStr>());

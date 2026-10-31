@@ -121,7 +121,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_SObjLib_803A49E0(a0: *mut HSD_GObj, a1: i32) { super::HSD_SObjLib_803A49E0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
     pub static mut db_804D4AF8: i32 = unsafe { core::mem::zeroed() };
     pub static mut db_804D6B88: i32 = unsafe { core::mem::zeroed() };
     pub static mut db_build_timestamp: [i8; 1] = unsafe { core::mem::zeroed() };

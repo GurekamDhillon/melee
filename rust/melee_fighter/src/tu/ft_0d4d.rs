@@ -19,7 +19,7 @@ pub mod ext {
     use crate::types::*;
     use core::ffi::c_void;
     /// fighter.c globals (set by Fighter_LoadCommonData).
-    pub static mut Fighter_804D6534: *mut *mut c_void = core::ptr::null_mut();
+    pub use melee_runtime::shared::Fighter_804D6534;
     pub static mut H_Stage_GetCamBoundsBottomOffset: Option<fn() -> f32> = None;
     pub fn Stage_GetCamBoundsBottomOffset() -> f32 { match unsafe { H_Stage_GetCamBoundsBottomOffset } { Some(f) => f(), None => unsafe { melee_world::tu::stage::Stage_GetCamBoundsBottomOffset() } } }
     pub static mut H_Stage_80224E38: Option<fn(&mut Vec3, i32)> = None;
@@ -207,7 +207,7 @@ pub fn ftCo_800D4FF4(g: G) {
     f.set_x221D_b5(1);
     h::ftco_800bffd0(f, 0xA, 0);
     if f.is_sub_fighter() == 0 {
-        let tbl = unsafe { ext::Fighter_804D6534 };
+        let tbl = unsafe { ext::Fighter_804D6534 } as *mut *mut core::ffi::c_void;
         ext::ftCommon_SetAccessory(crate::mtu_ptr::ptr(&(f)), crate::mtu_ptr::ptr(&(unsafe { *tbl } as *mut HSD_Joint)));
         let s = f.x34_scale.y * f.co_attrs.respawn_platform_scale;
         let scale = Vec3 { x: s, y: s, z: s };

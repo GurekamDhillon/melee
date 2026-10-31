@@ -466,7 +466,7 @@ pub mod ext {
     hook_or!(H_Stage_GetBlastZoneTopOffset, Stage_GetBlastZoneTopOffset, crate::tu::stage::Stage_GetBlastZoneTopOffset, () -> f32);
     hook_or!(H_Stage_GetBlastZoneBottomOffset, Stage_GetBlastZoneBottomOffset, crate::tu::stage::Stage_GetBlastZoneBottomOffset, () -> f32);
     // ---- extern globals ----
-    pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 // @ext-end
@@ -549,7 +549,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grVe_StageCallbacks: [StageCallbacks; 16] = [

@@ -111,10 +111,10 @@ pub mod ext {
     /// `HSD_GObj* HSD_GObj_804D7814` (the gobj being drawn).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_804D7814;
     /// `HSD_TObj* tobj_shadows` / `tobj_toon` (baselib/tobj.c).
-    pub static mut tobj_shadows: *mut HSD_TObj = core::ptr::null_mut();
-    pub static mut tobj_toon: *mut HSD_TObj = core::ptr::null_mut();
+    pub use melee_runtime::tu::mobj::native::tobj_shadows;
+    pub use melee_runtime::tu::mobj::native::tobj_toon;
     /// `HSD_MObjInfo hsdMObj` (baselib/mobj.c).
-    pub static mut hsdMObj: HSD_MObjInfo = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::mobj::native::hsdMObj;
 }
 
 /// `struct grMaterial_MObjInfo` (file-local): the stage MObj class info.

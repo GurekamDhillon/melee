@@ -27,7 +27,7 @@ pub static mut CostumeListsForeachCharacter: [UnkCostumeList; Ft_Kind_Max as usi
 /// controller.c `HSD_PadStatus HSD_PadCopyStatus[4]` (the pads as the frame's logic reads them).
 pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
 /// db.c `/* 4D4A08 */ DbLKind DbLevel`.
-pub static mut DbLevel: DbLKind = 0;
+pub use melee_runtime::shared::DbLevel;
 /// random.c `u32* HSD_RandSeedPtr`.
 pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
 /// os `u32 __OSBusClock` (the bus clock in Hz; `OS_TIMER_CLOCK` is a quarter of it).

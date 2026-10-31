@@ -38,6 +38,7 @@ pub mod ext {
     hook!(HSD_RObjAnimAll, ROBJ_ANIM_ALL, (r: *mut HSD_RObj));
     hook!(HSD_RObjAddAnimAll, ROBJ_ADD_ANIM_ALL, (r: *mut HSD_RObj, a: *mut HSD_RObjAnimJoint));
     hook!(HSD_RObjReqAnimAllByFlags, ROBJ_REQ, (r: *mut HSD_RObj, frame: f32, flags: u32));
+    hook!(HSD_RObjRemoveAnimAllByFlags, ROBJ_REMOVE_ANIM, (r: *mut HSD_RObj, flags: u32));
     hook!(HSD_RObjGetByType, ROBJ_BY_TYPE, (r: *mut HSD_RObj, ty: u32, x: u32) -> *mut HSD_RObj);
 }
 
@@ -438,6 +439,60 @@ pub unsafe fn HSD_JObjReqAnimAllByFlags(jobj: *mut HSD_JObj, flags: u32, frame: 
 pub unsafe fn HSD_JObjReqAnimAll(jobj: *mut HSD_JObj, frame: f32) {
     melee_core::ct!("HSD_JObjReqAnimAll");
     HSD_JObjReqAnimAllByFlags(jobj, 0x7FF, frame);
+}
+
+pub unsafe fn HSD_JObjRemoveAnimByFlags(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjRemoveAnimByFlags");
+    if jobj.is_null() {
+        return;
+    }
+    if flags & 1 != 0 {
+        super::aobj::HSD_AObjRemove((*jobj).aobj);
+        (*jobj).aobj = null_mut();
+    }
+    if union_type_dobj(jobj) {
+        super::dobj::hsd::HSD_DObjRemoveAnimAllByFlags((*jobj).u.dobj, flags);
+    }
+    if !(*jobj).robj.is_null() {
+        ext::HSD_RObjRemoveAnimAllByFlags((*jobj).robj, flags);
+    }
+}
+
+pub unsafe fn HSD_JObjRemoveAnimAllByFlags(jobj: *mut HSD_JObj, flags: u32) {
+    melee_core::ct!("HSD_JObjRemoveAnimAllByFlags");
+    if jobj.is_null() {
+        return;
+    }
+    HSD_JObjRemoveAnimByFlags(jobj, flags);
+    if (*jobj).flags & INSTANCE == 0 {
+        let mut c = (*jobj).child;
+        while !c.is_null() {
+            HSD_JObjRemoveAnimAllByFlags(c, flags);
+            c = (*c).next;
+        }
+    }
+}
+
+pub unsafe fn HSD_JObjRemoveAnim(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjRemoveAnim");
+    HSD_JObjRemoveAnimByFlags(jobj, 0x7FF);
+}
+
+pub unsafe fn HSD_JObjRemoveAnimAll(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjRemoveAnimAll");
+    HSD_JObjRemoveAnimAllByFlags(jobj, 0x7FF);
+}
+
+/// `HSD_JObjSetupMatrixSub`: rebuild this joint's matrix (and its dirty ancestors') over the native tree bridge.
+pub unsafe fn HSD_JObjSetupMatrixSub(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjSetupMatrixSub");
+    super::jobj::native_setup_sub(jobj);
+}
+
+/// `HSD_JObjMakeMatrix`: the default class's matrix build.
+pub unsafe fn HSD_JObjMakeMatrix(jobj: *mut HSD_JObj) {
+    melee_core::ct!("HSD_JObjMakeMatrix");
+    super::jobj::native_make_matrix_pub(jobj);
 }
 
 /// `JObjSortAnim`: the first JOBJ-type track moves to the front.

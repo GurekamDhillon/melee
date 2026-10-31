@@ -74,7 +74,7 @@ pub static mut grTCLink_StageCallbacks: [StageCallbacks; 4] = [
         callback1: Some(grTCLink_8022015C),
         gobj_proc: Some(stageGObj2_GObjProc),
         callback3: Some(grTCLink_80220198),
-        anon_10: StageCallbacks_anon_135 { flags: (1 << 30) | (1 << 31) },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
     StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } },
 ];

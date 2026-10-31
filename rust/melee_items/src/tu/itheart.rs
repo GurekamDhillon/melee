@@ -47,7 +47,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut gm_80473A18: UnkAllstarData = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::gm_80473A18;
 }
 // END GENERATED EXT
 

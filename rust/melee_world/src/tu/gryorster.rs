@@ -265,7 +265,7 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 // @ext-end
 
@@ -316,7 +316,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grYt_StageCallbacks: [StageCallbacks; 2] = [

@@ -61,10 +61,32 @@ EXTRA_SOURCES = [
 # member); the hand impl calls it and then fixes the union.
 HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc"}
 
+# Pointer fields that point at an ARRAY whose length is another field (or a constant): `gen/arrays.tsv`,
+# lines `Struct.field<TAB>count` where count is a sibling field name or an integer. The GcDecode of such a field
+# decodes `count` consecutive elements (`GcDecoder::ptr_array`) instead of the single pointee the bytes alone imply.
+def load_array_fields():
+    out = {}
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "arrays.tsv")
+    if os.path.exists(path):
+        for ln in open(path, encoding="utf8"):
+            ln = ln.split("#", 1)[0].strip()
+            if ln:
+                parts = ln.split()
+                out[parts[0]] = (parts[1], parts[2] if len(parts) > 2 else None)
+    return out
+ARRAY_FIELDS = load_array_fields()
+# Integer fields the C stores a relocated POINTER in (HSD_IDKey is pointer sized): when the word is in the relocation
+# table the native field holds the decoded pointee's address (`usize`), else the plain value. `Struct.field` -> pointee type.
+POINTER_KEY_FIELDS = {"HSD_AObjDesc.obj_id": "HSD_Joint"}
+# `void*` fields that hold a pointer to a known record (the C casts at the use): decode the pointee so pointer identity
+# with the typed views of the same object holds.
+VOID_TYPED_FIELDS = {"UnkStageDat_x0_entry.joint": "HSD_Joint"}
+
 # TU-local records needed by native ports. Parse the original declarations on both
 # targets rather than copying their fields into Rust or a second layout generator.
 # Selector is a record/typedef name, or a variable whose element type is the record.
 TU_RECORDS = {
+    "src/melee/gr/ground.c": {"LightOverrideEntry": "LightOverrideEntry"},
     "src/melee/lb/lbdvd.c": {"lbDvd_803B72C0_t": "lbDvd_803B72C0_t"},
     "src/melee/lb/lbcollision.c": {"lbColl_803B9928": "LbCollColorPair"},
     "src/sysdolphin/baselib/pobj.c": {"GenoPalPObj": "GenoPalPObj"},
@@ -325,6 +347,16 @@ def write_probe():
     if match is None:
         raise RuntimeError("missing state.c matstate record")
     synth_local.append(match.group().replace("static struct {", "struct HSD_MaterialState {", 1).replace("} matstate;", "};"))
+    # ground.c Ground_801C34AC: the anonymous per-joint record `UnkStageDat.unk0` (a `void*`) points at, named here
+    # for the native stage-DAT decode (arrays.tsv). Ground_801C5940 reads the same bytes as {pad, {s16 a,b}*, count}.
+    body = (ROOT / "src/melee/gr/ground.c").read_text(encoding="utf-8")
+    k = body.find("void* joint;")
+    s0 = body.rfind("struct {", 0, k)
+    e0 = body.find("}* entry;", k)
+    if k < 0 or s0 < 0 or e0 < 0:
+        raise RuntimeError("missing ground.c Ground_801C34AC entry record")
+    synth_local.append("/* Extracted from src/melee/gr/ground.c (Ground_801C34AC). */" + chr(10) +
+                       body[s0:e0 + 1].replace("struct {", "struct UnkStageDat_x0_entry {", 1) + ";")
     from local_records import source_records
     # A few TUs keep their records private rather than in a header. Pull the actual
     # declarations into this same dual-target probe: there must still be only one
@@ -939,6 +971,35 @@ class Gen:
             e("    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {")
         e("        let mut v = Self::zeroed();")
         for fn_, off, ty in live:
+            vt = VOID_TYPED_FIELDS.get(f"{nm}.{fn_}")
+            if vt is not None:
+                e(f"        v.{fn_} = d.ptr::<{vt}>(at + 0x{off:X}) as {ty};")
+                continue
+            pk = POINTER_KEY_FIELDS.get(f"{nm}.{fn_}")
+            if pk is not None:
+                e(f"        v.{fn_} = if d.is_reloc(at + 0x{off:X}) {{ d.ptr::<{pk}>(at + 0x{off:X}) as usize }} else {{ <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X}) }};")
+                continue
+            cnt, over = ARRAY_FIELDS.get(f"{nm}.{fn_}", (None, None))
+            if cnt is not None and (ty.startswith("*mut ") or ty.startswith("*const ")):
+                inner = over or ty.split(" ", 1)[1]
+                if cnt == "null":
+                    # NULL-terminated `T**` table
+                    if not inner.startswith("*mut "):
+                        raise SystemExit(f"arrays.tsv: {nm}.{fn_}: `null` needs a T** field, not {ty}")
+                    e(f"        v.{fn_} = d.ptr_table::<{inner.split(' ', 1)[1]}>(at + 0x{off:X}) as {ty};")
+                    continue
+                if cnt.isdigit():
+                    cexpr = cnt
+                else:
+                    # a count expression over sibling fields: `line_count`, `numcv.max(1)*3+4`, ...
+                    def sibread(mm):
+                        sib = next((x for x in dec if x[0] == mm.group(0)), None)
+                        if sib is None:
+                            raise SystemExit(f"arrays.tsv: {nm}.{fn_}: no sibling field {mm.group(0)} in `{cnt}`")
+                        return f"(<{sib[2]} as GcDecode>::gc_decode(d, at + 0x{sib[1]:X}) as i64)"
+                    cexpr = "(" + re.sub(r"(?<![.\w])[A-Za-z_]\w*(?!\()", lambda mm: sibread(mm), cnt) + ").max(0) as usize"
+                e(f"        {{ let n = {cexpr}; v.{fn_} = d.ptr_array::<{inner}>(at + 0x{off:X}, n) as {ty}; }}")
+                continue
             e(f"        v.{fn_} = <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X});")
         if uni:
             (pf, po, pt), (sf, so, st) = uni

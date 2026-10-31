@@ -83,7 +83,7 @@ pub mod ext {
     fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
 }
 
 #[repr(C)]

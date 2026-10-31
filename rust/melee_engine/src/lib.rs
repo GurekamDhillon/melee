@@ -3,6 +3,7 @@
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
 pub mod archive;
 pub mod cdata;
+pub mod crash;
 pub mod dat_custom;
 pub mod dat_types;
 pub mod dvd;

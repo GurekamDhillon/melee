@@ -10230,7 +10230,7 @@ impl GcDecode for HSD_AObjDesc {
         v.flags = <u32 as GcDecode>::gc_decode(d, at + 0x0);
         v.end_frame = <f32 as GcDecode>::gc_decode(d, at + 0x4);
         v.fobjdesc = <*mut _HSD_FObjDesc as GcDecode>::gc_decode(d, at + 0x8);
-        v.obj_id = <HSD_IDKey as GcDecode>::gc_decode(d, at + 0xC);
+        v.obj_id = if d.is_reloc(at + 0xC) { d.ptr::<HSD_Joint>(at + 0xC) as usize } else { <HSD_IDKey as GcDecode>::gc_decode(d, at + 0xC) };
         v
     }
 }
@@ -14340,10 +14340,10 @@ impl GcDecode for HSD_Spline {
         v.r#type = <u8 as GcDecode>::gc_decode(d, at + 0x0);
         v.numcv = <i16 as GcDecode>::gc_decode(d, at + 0x2);
         v.tension = <f32 as GcDecode>::gc_decode(d, at + 0x4);
-        v.cv = <*mut Vec as GcDecode>::gc_decode(d, at + 0x8);
+        { let n = ((<i16 as GcDecode>::gc_decode(d, at + 0x2) as i64).max(1)*3+4).max(0) as usize; v.cv = d.ptr_array::<Vec>(at + 0x8, n) as *mut Vec; }
         v.totalLength = <f32 as GcDecode>::gc_decode(d, at + 0xC);
-        v.segLength = <*mut f32 as GcDecode>::gc_decode(d, at + 0x10);
-        v.segPoly = <*mut [f32; 5] as GcDecode>::gc_decode(d, at + 0x14);
+        { let n = ((<i16 as GcDecode>::gc_decode(d, at + 0x2) as i64).max(1)+1).max(0) as usize; v.segLength = d.ptr_array::<f32>(at + 0x10, n) as *mut f32; }
+        { let n = ((<i16 as GcDecode>::gc_decode(d, at + 0x2) as i64).max(1)+1).max(0) as usize; v.segPoly = d.ptr_array::<[f32; 5]>(at + 0x14, n) as *mut [f32; 5]; }
         v
     }
 }
@@ -67548,14 +67548,14 @@ impl GcDecode for UnkStageDat_x8_t {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.unk0 = <*mut HSD_Joint as GcDecode>::gc_decode(d, at + 0x0);
-        v.unk4 = <*mut *mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x4);
-        v.unk8 = <*mut *mut HSD_MatAnimJoint as GcDecode>::gc_decode(d, at + 0x8);
-        v.unkC = <*mut *mut HSD_ShapeAnimJoint as GcDecode>::gc_decode(d, at + 0xC);
+        v.unk4 = d.ptr_table::<HSD_AnimJoint>(at + 0x4) as *mut *mut HSD_AnimJoint;
+        v.unk8 = d.ptr_table::<HSD_MatAnimJoint>(at + 0x8) as *mut *mut HSD_MatAnimJoint;
+        v.unkC = d.ptr_table::<HSD_ShapeAnimJoint>(at + 0xC) as *mut *mut HSD_ShapeAnimJoint;
         v.x10 = <*mut HSD_CameraDescPerspective as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x14);
-        v.x18 = <*mut *mut LightList as GcDecode>::gc_decode(d, at + 0x18);
+        v.x18 = d.ptr_table::<LightList>(at + 0x18) as *mut *mut LightList;
         v.x1C = <*mut HSD_FogDesc as GcDecode>::gc_decode(d, at + 0x1C);
-        v.unk20 = <*mut GrJoint as GcDecode>::gc_decode(d, at + 0x20);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x24) as i64)).max(0) as usize; v.unk20 = d.ptr_array::<GrJoint>(at + 0x20, n) as *mut GrJoint; }
         v.unk24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
         v.x28 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <*mut i16 as GcDecode>::gc_decode(d, at + 0x2C);
@@ -67648,17 +67648,17 @@ impl GcDecode for UnkStageDat {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.unk0 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x0);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x4) as i64)).max(0) as usize; v.unk0 = d.ptr_array::<UnkStageDat_x0_entry>(at + 0x0, n) as *mut c_void; }
         v.unk4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
-        v.unk8 = <*mut UnkStageDat_x8_t as GcDecode>::gc_decode(d, at + 0x8);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0xC) as i64)).max(0) as usize; v.unk8 = d.ptr_array::<UnkStageDat_x8_t>(at + 0x8, n) as *mut UnkStageDat_x8_t; }
         v.unkC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
-        v.unk10 = <*mut *mut HSD_Spline as GcDecode>::gc_decode(d, at + 0x10);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x14) as i64)).max(0) as usize; v.unk10 = d.ptr_array::<*mut HSD_Spline>(at + 0x10, n) as *mut *mut HSD_Spline; }
         v.unk14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
-        v.unk18 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x18);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x1C) as i64)).max(0) as usize; v.unk18 = d.ptr_array::<LightOverrideEntry>(at + 0x18, n) as *mut c_void; }
         v.unk1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
-        v.unk20 = <*mut GroundShadowEntry as GcDecode>::gc_decode(d, at + 0x20);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x24) as i64)).max(0) as usize; v.unk20 = d.ptr_array::<GroundShadowEntry>(at + 0x20, n) as *mut GroundShadowEntry; }
         v.unk24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
-        v.unk28 = <*mut *mut UnkStageDatInternal as GcDecode>::gc_decode(d, at + 0x28);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x2C) as i64)).max(0) as usize; v.unk28 = d.ptr_array::<*mut UnkStageDatInternal>(at + 0x28, n) as *mut *mut UnkStageDatInternal; }
         v.unk2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v
     }
@@ -84671,12 +84671,12 @@ impl GcDecode for MapCollData {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.verts = <*mut Vec2 as GcDecode>::gc_decode(d, at + 0x0);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x4) as i64)).max(0) as usize; v.verts = d.ptr_array::<Vec2>(at + 0x0, n) as *mut Vec2; }
         v.vert_count = <i32 as GcDecode>::gc_decode(d, at + 0x4);
-        v.lines = <*mut MapLine as GcDecode>::gc_decode(d, at + 0x8);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0xC) as i64)).max(0) as usize; v.lines = d.ptr_array::<MapLine>(at + 0x8, n) as *mut MapLine; }
         v.line_count = <i32 as GcDecode>::gc_decode(d, at + 0xC);
         v.ranges = <[MapLineRange; 5] as GcDecode>::gc_decode(d, at + 0x10);
-        v.joints = <*mut MapJoint as GcDecode>::gc_decode(d, at + 0x24);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x28) as i64)).max(0) as usize; v.joints = d.ptr_array::<MapJoint>(at + 0x24, n) as *mut MapJoint; }
         v.joint_count = <i32 as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v
@@ -97351,7 +97351,42 @@ impl GcLayout for HSD_MaterialState {
 }
 const _: () = assert!(core::mem::size_of::<HSD_MaterialState>() == 20);
 
-/// C `FlyCursor` (rust/melee_types/gen/all_types.c:1413); GameCube size 0x3C, align 4.
+/// C `UnkStageDat_x0_entry` (rust/melee_types/gen/all_types.c:1414); GameCube size 0xC, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct UnkStageDat_x0_entry {
+    pub joint: *mut c_void,
+    pub pairs: *mut i16,
+    pub pair_count: i32,
+}
+impl UnkStageDat_x0_entry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for UnkStageDat_x0_entry {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.joint = d.ptr::<HSD_Joint>(at + 0x0) as *mut c_void;
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x8) as i64)*2).max(0) as usize; v.pairs = d.ptr_array::<i16>(at + 0x4, n) as *mut i16; }
+        v.pair_count = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for UnkStageDat_x0_entry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<UnkStageDat_x0_entry>(t) } }
+impl GcLayout for UnkStageDat_x0_entry {
+    const GC_NAME: &'static str = "UnkStageDat_x0_entry";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("joint", 0x0, 4, "void *"),
+        GcField::new("pairs", 0x4, 4, "s16 *"),
+        GcField::new("pair_count", 0x8, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<UnkStageDat_x0_entry>() == 24);
+
+/// C `FlyCursor` (rust/melee_types/gen/all_types.c:1419); GameCube size 0x3C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct FlyCursor {
@@ -97421,6 +97456,58 @@ impl GcLayout for FlyCursor {
     ];
 }
 const _: () = assert!(core::mem::size_of::<FlyCursor>() == 64);
+
+/// C `LightOverrideEntry` (src/melee/gr/ground.c:1727); GameCube size 0x8, align 4.
+#[repr(C, align(8))]
+#[derive(Clone, Copy)]
+pub struct LightOverrideEntry {
+    pub desc: *mut HSD_LightDesc,
+    /// bitfield bytes GC +0x4..+0x5, GameCube byte order
+    pub bf_4: [u8; 1],
+    pub _pad: [u8; 3],
+}
+impl LightOverrideEntry {
+    /// C bitfield `a:1` at GC +0x4 bit 0 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn a(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 7, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_a(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 7, 1, (v as u64) & 0x1) } }
+    /// C bitfield `b:1` at GC +0x4 bit 1 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn b(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 6, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_b(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 6, 1, (v as u64) & 0x1) } }
+    /// C bitfield `c:1` at GC +0x4 bit 2 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn c(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 5, 1) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set_c(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 5, 1, (v as u64) & 0x1) } }
+    /// C bitfield `_:5` at GC +0x4 bit 3 (MSB = 0)
+    #[inline] #[allow(unused_unsafe)] pub fn __(&self) -> u8 { unsafe { melee_core_bits_get(&self.bf_4, 0, 5) as u8 } }
+    #[inline] #[allow(unused_unsafe)] pub fn set__(&mut self, v: u8) { unsafe { melee_core_bits_set(&mut self.bf_4, 0, 5, (v as u64) & 0x1F) } }
+}
+impl LightOverrideEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for LightOverrideEntry {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.desc = <*mut HSD_LightDesc as GcDecode>::gc_decode(d, at + 0x0);
+        v.bf_4 = <[u8; 1] as GcDecode>::gc_decode(d, at + 0x4);
+        v._pad = <[u8; 3] as GcDecode>::gc_decode(d, at + 0x5);
+        v
+    }
+}
+impl GcPointee for LightOverrideEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<LightOverrideEntry>(t) } }
+impl GcLayout for LightOverrideEntry {
+    const GC_NAME: &'static str = "LightOverrideEntry";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("desc", 0x0, 4, "HSD_LightDesc *"),
+        GcField::bitfield("a", 0x4, 1, 0, 1, "u8"),
+        GcField::bitfield("b", 0x4, 1, 1, 1, "u8"),
+        GcField::bitfield("c", 0x4, 1, 2, 1, "u8"),
+        GcField::bitfield("_", 0x4, 1, 3, 5, "u8"),
+        GcField::new("_pad", 0x5, 3, "u8[3]"),
+    ];
+}
 
 /// C `lbDvd_803B72C0_t` (src/melee/lb/lbdvd.c:553); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
@@ -108136,7 +108223,9 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<SfxLoadStreamNode as GcLayout>::GC_NAME, <SfxLoadStreamNode as GcLayout>::GC_SIZE, <SfxLoadStreamNode as GcLayout>::GC_ALIGN, <SfxLoadStreamNode as GcLayout>::GC_FIELDS),
     (<HSD_SynthVoiceEntry as GcLayout>::GC_NAME, <HSD_SynthVoiceEntry as GcLayout>::GC_SIZE, <HSD_SynthVoiceEntry as GcLayout>::GC_ALIGN, <HSD_SynthVoiceEntry as GcLayout>::GC_FIELDS),
     (<HSD_MaterialState as GcLayout>::GC_NAME, <HSD_MaterialState as GcLayout>::GC_SIZE, <HSD_MaterialState as GcLayout>::GC_ALIGN, <HSD_MaterialState as GcLayout>::GC_FIELDS),
+    (<UnkStageDat_x0_entry as GcLayout>::GC_NAME, <UnkStageDat_x0_entry as GcLayout>::GC_SIZE, <UnkStageDat_x0_entry as GcLayout>::GC_ALIGN, <UnkStageDat_x0_entry as GcLayout>::GC_FIELDS),
     (<FlyCursor as GcLayout>::GC_NAME, <FlyCursor as GcLayout>::GC_SIZE, <FlyCursor as GcLayout>::GC_ALIGN, <FlyCursor as GcLayout>::GC_FIELDS),
+    (<LightOverrideEntry as GcLayout>::GC_NAME, <LightOverrideEntry as GcLayout>::GC_SIZE, <LightOverrideEntry as GcLayout>::GC_ALIGN, <LightOverrideEntry as GcLayout>::GC_FIELDS),
     (<lbDvd_803B72C0_t as GcLayout>::GC_NAME, <lbDvd_803B72C0_t as GcLayout>::GC_SIZE, <lbDvd_803B72C0_t as GcLayout>::GC_ALIGN, <lbDvd_803B72C0_t as GcLayout>::GC_FIELDS),
     (<LbCollColorPair as GcLayout>::GC_NAME, <LbCollColorPair as GcLayout>::GC_SIZE, <LbCollColorPair as GcLayout>::GC_ALIGN, <LbCollColorPair as GcLayout>::GC_FIELDS),
     (<GenoPalPObj as GcLayout>::GC_NAME, <GenoPalPObj as GcLayout>::GC_SIZE, <GenoPalPObj as GcLayout>::GC_ALIGN, <GenoPalPObj as GcLayout>::GC_FIELDS),

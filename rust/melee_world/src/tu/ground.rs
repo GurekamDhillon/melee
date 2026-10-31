@@ -289,7 +289,7 @@ pub mod ext {
     pub use crate::tu::gryorster::grYt_StageData;
     pub use crate::tu::grzebesroute::grZe_Route_StageData;
     pub use crate::tu::grzebes::grZe_StageData;
-    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::it_804D6D38;
     pub use crate::tu::mpcoll::mpColl_804D64AC;
 }
 // END GENERATED EXT
@@ -909,7 +909,8 @@ pub unsafe extern "C" fn Ground_801C0800(pair: *mut StageIdPair) {
             let mut i = 1isize;
             while !(*stage_info.ald_yaku_all.offset(i)).is_null() {
                 let a = *ext::it_804D6D38.offset((It_PKind_Random - It_Kind_Kuriboh) as isize);
-                (*(*a).xC_itemStates).x0_itemStateDesc[i as usize].xC_script = *stage_info.ald_yaku_all.offset(i) as *mut c_void;
+                // the C indexes past the declared extent of x0_itemStateDesc (the table is as long as the item has states)
+                (*(*(*a).xC_itemStates).x0_itemStateDesc.as_mut_ptr().offset(i)).xC_script = *stage_info.ald_yaku_all.offset(i) as *mut c_void;
                 i += 1;
             }
         }
@@ -1600,24 +1601,6 @@ pub unsafe extern "C" fn Ground_801C2090(color: *mut _GXColor) -> i32 {
 pub unsafe extern "C" fn Ground_801C20D0() -> f32 {
     melee_core::ct!("Ground_801C20D0");
     stage_info.cam_info.cam_vertical_tilt
-}
-
-/// `LightOverrideEntry`: `{ HSD_LightDesc* desc; u8 a:1, b:1, c:1, _:5; u8 _pad[3]; }`; the bitfield
-/// byte is in the GameCube (MSB-first) order like every other record's bitfields.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct LightOverrideEntry {
-    pub desc: *mut HSD_LightDesc,
-    pub bf: u8,
-    pub _pad: [u8; 3],
-}
-impl LightOverrideEntry {
-    #[inline] pub fn a(&self) -> u8 { (self.bf >> 7) & 1 }
-    #[inline] pub fn b(&self) -> u8 { (self.bf >> 6) & 1 }
-    #[inline] pub fn c(&self) -> u8 { (self.bf >> 5) & 1 }
-    #[inline] pub fn set_a(&mut self, v: u8) { self.bf = (self.bf & !0x80) | ((v & 1) << 7) }
-    #[inline] pub fn set_b(&mut self, v: u8) { self.bf = (self.bf & !0x40) | ((v & 1) << 6) }
-    #[inline] pub fn set_c(&mut self, v: u8) { self.bf = (self.bf & !0x20) | ((v & 1) << 5) }
 }
 
 pub unsafe extern "C" fn find_light_override(archive: *mut UnkArchiveStruct, desc: *mut HSD_LightDesc, b6: *mut i32, b7: *mut i32, b5: *mut i32) -> i32 {

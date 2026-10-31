@@ -88,8 +88,8 @@ pub mod ext {
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use crate::tu::ft_3c61::ftCo_803C6594;
     pub use melee_world::tu::mpisland::mpIsland_80458E88;
-    pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::p_ftCommonData;
+    pub use melee_world::tu::ground::stage_info;
 }
 
 pub static mut ftCo_803C5A68: [i32; 35] = [1, 0, 0, 1, 0, 0, 0, 1, 7, 6, 5, 4, 4, 3, 1, 1, 2, 1, 5, 2, 2, 2, 3, 3, 3, 4, 0, 0, 8, 4, 1, 4, 4, 5, 5];

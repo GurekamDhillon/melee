@@ -124,7 +124,7 @@ pub mod ext {
         pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut HSD_GObj, a1: i32) { super::grDisplay_801C5DB0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 // END GENERATED EXT
 
@@ -308,7 +308,7 @@ const fn cbs(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HS
     c.callback1 = callback1;
     c.gobj_proc = gobj_proc;
     c.callback3 = callback3;
-    c.anon_10 = StageCallbacks_anon_135 { flags };
+    c.anon_10 = StageCallbacks_anon_135 { flags: u32::to_be(flags) };
     c
 }
 

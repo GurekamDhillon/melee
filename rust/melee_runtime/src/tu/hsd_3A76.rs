@@ -29,7 +29,7 @@ pub mod ext {
     #![allow(non_snake_case, unused_variables)]
     use super::*;
     /// `HSD_SisLib_FontAtlas` base (sislib_font.c): 287 glyph textures of 0x200 bytes.
-    pub static mut HSD_SisLib_FontAtlas: *mut u8 = core::ptr::null_mut();
+    pub use crate::tu::sislib_font::HSD_SisLib_FontAtlas;
     /// A GameCube pointer stored in a SIS stream (host memory model).
     pub fn gc_ptr_to_u32(p: *const u8) -> u32 { todo!("gc_ptr_to_u32 (guest address of a SIS stream position)") }
     pub fn gc_u32_to_ptr(a: u32) -> *mut u8 { todo!("gc_u32_to_ptr (SIS stream position of a guest address)") }
@@ -428,7 +428,7 @@ unsafe fn sis_render_text(gobj: *mut HSD_GObj, text: *mut HSD_Text) {
     let mut max_x: f32 = 0.0;
     let mut max_y: f32 = 0.0;
 
-    let data: *mut u8 = ext::HSD_SisLib_FontAtlas;
+    let data: *mut u8 = ext::HSD_SisLib_FontAtlas as *mut u8;
     let default_kerning: *const u8 = HSD_SisLib_8040CB00.as_ptr();
 
     if (*text).hidden == 0 && !(*text).sis_buffer.is_null() {

@@ -9,7 +9,7 @@ use melee_runtime::gekko::{cosf, sinf};
 pub mod ext {
     use crate::types::*;
     /// TODO(move-to-core ftdata) `Fighter_804D64FC` (PlCo CPU tables; set by Fighter_LoadCommonData).
-    pub static mut Fighter_804D64FC: *const Fighter_804D64FC_t = core::ptr::null();
+    pub use melee_runtime::shared::Fighter_804D64FC;
     pub static mut LB_8000D008: Option<fn(f32, f32) -> f32> = None;
     /// `lb_8000D008` (atan2 with dead zone), ported in melee_modes::lb (upward crate): hook.
     pub fn lb_8000D008(y: f32, x: f32) -> f32 {

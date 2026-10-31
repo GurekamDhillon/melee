@@ -35,7 +35,7 @@ melee_core::gc_layout!(ClassicStageEntry, "ClassicStageEntry", size 0x10, align 
 const _: () = assert!(core::mem::size_of::<ClassicStageEntry>() == 0x10);
 
 /// `UnkAllstarData gm_80473A18` (shared with other gm TUs).
-pub static mut gm_80473A18: UnkAllstarData = unsafe { core::mem::zeroed() };
+pub use melee_runtime::shared::gm_80473A18;
 
 /// `gmTraining_ClassicStages[65]`.
 pub static gmTraining_ClassicStages: [ClassicStageEntry; 65] = [

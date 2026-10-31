@@ -89,7 +89,7 @@ pub mod ext {
     // Data defined in other TUs (the tests set them).
     pub use crate::tu::it_3F14::it_804D6D28;
     pub use crate::tu::it_3F14::it_804D6D40;
-    pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::p_ftCommonData;
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

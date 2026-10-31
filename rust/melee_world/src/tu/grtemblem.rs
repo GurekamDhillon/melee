@@ -88,7 +88,7 @@ fn init_tables() {
             callback1: Some(grTRoy_8022460C),
             gobj_proc: Some(stageGObj2_GObjProc),
             callback3: Some(grTRoy_80224648),
-            anon_10: StageCallbacks_anon_135 { flags: 0xC0000000 },
+            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
         };
         CALLBACKS.write(t);
         let mut sd: StageData = core::mem::zeroed();

@@ -92,7 +92,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 // END GENERATED EXT
 
@@ -194,7 +194,7 @@ pub static mut yakumono_param: *mut grOnett_StageParam = null_mut();
 pub static mut grOt_804D69C4: i32 = 0;
 
 const fn cb(on_init: HSD_GObjEvent, callback1: HSD_GObjPredicate, gobj_proc: HSD_GObjEvent, callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>, flags: u32) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
 }
 
 /// `grOt_803E27E0` (3E27E0)

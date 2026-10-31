@@ -170,8 +170,8 @@ pub mod ext {
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
     pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
-    pub static mut gm_CStickSmashTargetTest: i32 = unsafe { core::mem::zeroed() };
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::gm_CStickSmashTargetTest;
+    pub use crate::tu::ground::stage_info;
 }
 
 #[repr(C)]

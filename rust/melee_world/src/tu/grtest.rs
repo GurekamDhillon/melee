@@ -201,7 +201,7 @@ fn init_tables() {
             callback1: Some(grTest_802071BC),
             gobj_proc: Some(grTest_802071C4),
             callback3: Some(grTest_802073AC),
-            anon_10: StageCallbacks_anon_135 { flags: 0xC0000000 },
+            anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
         };
         t[3] = StageCallbacks {
             on_init: None,

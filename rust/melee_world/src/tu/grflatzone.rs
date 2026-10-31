@@ -90,7 +90,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_Randi(a0: i32) -> i32 { super::HSD_Randi(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 // END GENERATED EXT
 
@@ -124,7 +124,7 @@ const fn row(
     callback3: HSD_GObjEvent,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
 }
 
 /// `static StageCallbacks grFz_StageCallbacks[]`

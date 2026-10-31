@@ -95,9 +95,9 @@ const GX_LINESTRIP: u32 = 0xB0;
 const GX_TO_ONE: u32 = 5;
 
 /// 4D3760
-pub static mut lb_ColorWhite: GXColor = GXColor { r: 255, g: 255, b: 255, a: 255 };
+pub use melee_runtime::shared::lb_ColorWhite;
 /// 4D3764
-pub static mut lb_ColorBlack: GXColor = GXColor { r: 0, g: 0, b: 0, a: 255 };
+pub use melee_runtime::shared::lb_ColorBlack;
 /// 4D3768 (static)
 pub static mut red: GXColor = GXColor { r: 255, g: 0, b: 0, a: 255 };
 /// 4D376C (static)

@@ -1060,7 +1060,7 @@ pub static mut grRc_StageCallbacks: [StageCallbacks; 7] = [
         callback1: Some(grRCruise_801FF6CC),
         gobj_proc: Some(grRCruise_801FF6D4),
         callback3: Some(grRCruise_801FF738),
-        anon_10: StageCallbacks_anon_135 { flags: 0xC0000000 },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be(0xC0000000) },
     },
     StageCallbacks {
         on_init: Some(grRCruise_801FF3F0),

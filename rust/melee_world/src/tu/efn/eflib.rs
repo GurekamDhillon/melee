@@ -91,7 +91,7 @@ pub mod ext {
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
     pub static mut hsd_804D7900: Option<unsafe extern "C" fn(*mut HSD_Generator)> = unsafe { core::mem::zeroed() };
-    pub static mut ptclref_804D0E5C: [*mut *mut _HSD_PSCmdList; 65] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::particle::ptclref_804D0E5C;
 }
 
 pub static mut lbl_803BF810: [Option<unsafe extern "C" fn(*mut HSD_Particle)>; 3] = [Some(efLib_Cb_ParticleRender), None, None];

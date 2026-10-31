@@ -142,7 +142,7 @@ pub mod ext {
         FTCO_800BFFD0 ftCo_800BFFD0(fp: F, a: i32, b: i32) -> bool = unsafe { crate::tu::ftcolanim::ftco_800bffd0(&mut *fp, a, b) };
     }
     /// `it_804D6D28` (ItemCommonData; set by the item loader). TODO(group5 it) move to the item crate.
-    pub static mut it_804D6D28: *const ItemCommonData = core::ptr::null();
+    pub use melee_runtime::shared::it_804D6D28;
     /// `ScriptStageHostHidden` (TARGET_PC).
     pub static mut ScriptStageHostHidden: i32 = 0;
     pub fn icd() -> &'static ItemCommonData {

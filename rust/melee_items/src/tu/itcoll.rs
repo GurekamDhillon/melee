@@ -73,7 +73,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut Fighter_804D6524: *mut Fighter_804D6524_t = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::Fighter_804D6524;
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use crate::tu::item::Item_804A0CCC;
     pub static mut it_804A0E70: [DamageLogEntry; 15] = unsafe { core::mem::zeroed() };

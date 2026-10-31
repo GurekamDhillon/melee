@@ -152,7 +152,7 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 // @ext-end
 

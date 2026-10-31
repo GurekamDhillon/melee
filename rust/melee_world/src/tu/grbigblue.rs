@@ -417,7 +417,7 @@ macro_rules! cbs {
             callback1: Some($b),
             gobj_proc: Some($c),
             callback3: Some($d),
-            anon_10: StageCallbacks_anon_135 { flags: $flags },
+            anon_10: StageCallbacks_anon_135 { flags: u32::to_be($flags) },
         }
     };
 }

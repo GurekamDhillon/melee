@@ -9,7 +9,8 @@ use core::ffi::c_void;
 use melee_core::gcdecode::{GcDecode, GcDecoder, GcPointee};
 use melee_types::{
     FighterPartsTable, Fighter_804D64FC_t, Fighter_804D651C_t, Fighter_804D6518_t, Fighter_804D6520_t, Fighter_804D6524_t,
-    Fighter_804D653C_t, Fighter_804D6540_t, Fighter_ShakeTable_t, HSD_Joint, Vec2, ftCommonData,
+    Fighter_804D653C_t, Fighter_804D6540_t, Fighter_ShakeTable_t, HSD_Joint, Vec2, ftCommonData, Article, ItemCommonData,
+    it_804D6D20_t, it_804D6D40_t,
 };
 
 /// Sorted data offsets where something starts: every relocation target, every public, the end of the data.
@@ -61,6 +62,9 @@ fn one<T: GcPointee>(d: &mut GcDecoder<'_>, at: u32) -> *mut c_void {
 pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bounds) -> *mut c_void {
     match name {
         "plco" => plco(d, b, off),
+        "itco" => itco(d, b, off),
+        "ptrtable_itemdata" => ptrtable::<melee_types::GroundItemData>(d, b, off),
+        "ptrtable_lightlist" => ptrtable::<melee_types::LightList>(d, b, off),
         "rawptrs" => {
             // a null terminated table of pointers to raw (big-endian) data, kept as native pointers into the raw image
             let n = (b.extent(off) / 4).max(1);
@@ -112,4 +116,33 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     out[22] = parr::<Fighter_804D64FC_t>(d, b, at(22));
     // the root is a pointer to the table (`void** pData` after `lbArchive_LoadSymbols`)
     Box::leak(out.into_boxed_slice()).as_mut_ptr() as *mut c_void
+}
+
+/// A table of `T*` (`T**`), one record per entry (null entry = null pointer), sized by the next boundary.
+fn rtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut T {
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    let n = (b.extent(t) / 4).max(1);
+    let v: Vec<*mut T> = (0..n).map(|i| d.ptr::<T>(t + 4 * i)).collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr()
+}
+
+/// `itPublicData` (ItCo.dat / ItCoUS.dat): `it_804D6D20_t`, whose `Article**` tables run to the next boundary.
+fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    let at = |i: u32| off + 4 * i;
+    let mut r = it_804D6D20_t::zeroed();
+    r.x0 = d.ptr::<ItemCommonData>(at(0));
+    r.x4 = rtable::<Article>(d, b, at(1));
+    r.x8 = rtable::<Article>(d, b, at(2));
+    r.xC = rtable::<Article>(d, b, at(3));
+    r.x10 = d.ptr::<it_804D6D40_t>(at(4));
+    r.x14 = parr::<Fighter_804D653C_t>(d, b, at(5)) as *mut Fighter_804D653C_t;
+    Box::leak(Box::new(r)) as *mut _ as *mut c_void
+}
+
+/// A root that is a table of `T*` (C `T**`), one record per entry, running to the next boundary. The root is the
+/// table itself (`HSD_ArchiveGetPublicAddress` returns the address of the first slot).
+fn ptrtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    let n = (b.extent(off) / 4).max(1);
+    let v: Vec<*mut T> = (0..n).map(|i| d.ptr::<T>(off + 4 * i)).collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
 }

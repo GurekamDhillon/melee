@@ -30,13 +30,13 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "map_head" { return Some(rt("UnkStageDat")); }
     if name == "coll_data" { return Some(rt("MapCollData")); }
     if name == "grGroundParam" { return Some(rt("GroundParam")); }
-    if name == "itemdata" { return Some(rt("*GroundItemData")); }
-    if name == "map_plit" { return Some(rt("*LightList")); }
+    if name == "itemdata" { return Some(RootType::Custom("ptrtable_itemdata")); }
+    if name == "map_plit" { return Some(RootType::Custom("ptrtable_lightlist")); }
     if name == "quake_model_set" { return Some(rt("DynamicModelDesc")); }
     if name == "map_ptcl" { return Some(RootType::Raw); }
     if name == "map_texg" { return Some(RootType::Raw); }
     if name == "yakumono_param" { return Some(RootType::Raw); }
-    if name == "itPublicData" { return Some(rt("it_804D6D20_t")); }
+    if name == "itPublicData" { return Some(RootType::Custom("itco")); }
     if name == "effCommonDataTable" { return Some(rt("EF_DAT_Entry")); }
     if name == "lbRumbleData" { return Some(rt("Fighter_804D653C_t[]")); }
     if name == "ftLoadCommonData" { return Some(RootType::Custom("plco")); }
@@ -71,7 +71,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
             "ftData" => d.object::<ftData>(off) as *mut c_void,
-            "it_804D6D20_t" => d.object::<it_804D6D20_t>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),
         },
         RootType::Array(n) => match n {
@@ -79,8 +78,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             _ => panic!("dat_types: no decoder for array of {n}"),
         },
         RootType::PtrTo(n) => match n {
-            "GroundItemData" => d.object::<*mut GroundItemData>(off) as *mut c_void,
-            "LightList" => d.object::<*mut LightList>(off) as *mut c_void,
             "pl_804D6470_t" => d.object::<*mut pl_804D6470_t>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for pointer to {n}"),
         },

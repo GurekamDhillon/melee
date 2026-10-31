@@ -18,9 +18,9 @@ def ret_types():
     out = {}
     for crate, f, rel in g.tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
-        if 'ext_fns' not in raw and 'stubs!' not in raw: continue
+        if 'ext_fns' not in raw and 'stubs!' not in raw and 'hooks!' not in raw: continue
         t = g.blank(raw)
-        for im in re.finditer(r'\bext_fns(?:_[ch])?!\s*\{', t):
+        for im in re.finditer(r'\b(?:ext_fns(?:_[ch])?|hooks)!\s*\{', t):
             cl = g.match_close(t, im.end() - 1)
             if cl < 0: continue
             for ent in g.split_top(t[im.end():cl], ';'):

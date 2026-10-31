@@ -57,7 +57,7 @@ pub mod ext {
     fn lb_800195D0();
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut DbLevel: DbLKind = 0;
+    pub use crate::shared::DbLevel;
 }
 
 const SIZEOF_HSD_ARCHIVE: usize = 0x44;

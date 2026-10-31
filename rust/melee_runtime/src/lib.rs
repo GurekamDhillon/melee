@@ -42,6 +42,7 @@ pub mod particle;
 pub mod pobj;
 pub mod quatlib;
 pub mod random;
+pub mod shared;
 pub mod robj;
 pub mod spline;
 pub mod tobj;

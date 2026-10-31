@@ -59,7 +59,7 @@ pub mod ext {
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
-    pub static mut ftData_UnkBytePerCharacter: [u8; 1024] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::ftData_UnkBytePerCharacter;
 }
 
 static mut efAsync_MexMiss_seen: [i32; 256] = [0; 256];

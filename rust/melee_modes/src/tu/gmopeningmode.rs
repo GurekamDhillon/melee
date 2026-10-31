@@ -313,7 +313,7 @@ pub mod ext {
     pub use melee_items::tu::vi1101::un_804D6FD8;
     pub use melee_items::tu::vi1201v1::un_804D7004;
     pub use melee_items::tu::vi1201v2::un_804D7038;
-    pub static mut DbLevel: u32 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
 }
 

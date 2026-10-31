@@ -99,7 +99,7 @@ const fn cb(
         callback1: Some(callback1),
         gobj_proc: Some(gobj_proc),
         callback3: Some(callback3),
-        anon_10: StageCallbacks_anon_135 { flags },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) },
     }
 }
 

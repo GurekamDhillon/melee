@@ -180,7 +180,7 @@ pub mod ext {
     }
     /// The console clock the C reads as `__OSBusClock` (u32 at 0x800000F8): 162 MHz.
     pub use melee_runtime::tu::perf::__OSBusClock;
-    pub static mut DbLevel: u32 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
     pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
     pub use crate::tu::globals::HSD_RandSeedPtr;
     pub use melee_runtime::tu::sobjlib::HSD_SObjLib_8040C3A4;

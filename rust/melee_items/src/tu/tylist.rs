@@ -134,8 +134,8 @@ pub mod ext {
     pub use crate::tu::toy::Toy_sbss_804D6EDC;
     pub use crate::tu::toy::Toy_sbss_804D6EE0;
     pub static mut Toy_str_ScMenFigure_cam_int1_camera: [i8; 1] = unsafe { core::mem::zeroed() };
-    pub static mut lb_ColorBlack: GXColor = unsafe { core::mem::zeroed() };
-    pub static mut lb_ColorWhite: GXColor = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::lb_ColorBlack;
+    pub use melee_runtime::shared::lb_ColorWhite;
 }
 // END GENERATED EXT
 

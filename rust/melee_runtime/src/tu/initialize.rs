@@ -471,7 +471,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut GXNtsc480IntDf: GXRenderModeObj = unsafe { core::mem::zeroed() };
-    pub static mut HSD_Synth_804D6018: i32 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::synth::HSD_Synth_804D6018;
     pub use crate::tu::video::HSD_VIData;
     pub static mut __OSCurrHeap: i32 = unsafe { core::mem::zeroed() };
 }

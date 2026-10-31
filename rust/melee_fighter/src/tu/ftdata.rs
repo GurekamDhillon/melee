@@ -192,11 +192,7 @@ const fn bytes(v: [u8; 33]) -> [u8; KMAX] {
     }
     out
 }
-/// `ftData_UnkBytePerCharacter` (`-1` entries are 0xFF).
-pub static mut ftData_UnkBytePerCharacter: [u8; KMAX] = bytes([
-    1, 3, 4, 8, 5, 12, 6, 17, 10, 15, 14, 14, 7, 2, 9, 11, 13, 18, 16, 17, 6, 1, 3, 7, 0xFF, 19,
-    49, 0xFF, 0xFF, 0xFF, 0xFF, 12, 0xFF,
-]);
+pub use melee_runtime::shared::ftData_UnkBytePerCharacter;
 
 pub static mut ftData_Table_Unk1: [Event; KMAX] = [None; KMAX];
 pub static mut ftData_OnLoad: [HSD_GObjEvent; KMAX] = [None; KMAX];

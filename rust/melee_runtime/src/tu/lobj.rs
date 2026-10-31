@@ -1032,176 +1032,53 @@ pub mod native {
         (*c).load = Some(LObjLoad);
     }
 
-    /// Unported cross-TU ABI boundaries. Install a deterministic hook for oracle tests or
-    /// a native host implementation; absent hooks fail loudly rather than fabricate state.
+    /// Cross-TU boundaries, in the `ext_fns!` form every TU uses (linked to the canonical TU function by
+    /// `melee_link::install`; the GX light calls are host seams).
     pub mod ext {
         use super::*;
-        use melee_types::{
-            HSD_AObj, HSD_AObjDesc, HSD_WObjAnim, HSD_WObjDesc, _GXLightObj,
-        };
-        pub type Hook = unsafe fn(&str, &[usize]) -> usize;
-        thread_local! {static HOOK:Cell<Option<Hook>>=const{Cell::new(None)};}
-        pub fn set_hook(h: Option<Hook>) {
-            HOOK.with(|x| x.set(h));
+        use melee_types::{HSD_AObj, HSD_AObjDesc, HSD_WObjAnim, HSD_WObjDesc, _GXLightObj};
+        macro_rules! ext_fns {
+            ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(= $def:expr)?;)*) => {
+                pub mod hook {
+                    use super::*;
+                    $( pub static mut $name: Option<fn($($t),*) $(-> $r)?> = None; )*
+                }
+                $( pub fn $name($($a: $t),*) $(-> $r)? {
+                    match unsafe { hook::$name } {
+                        Some(f) => f($($a),*),
+                        None => crate::tu::hookmac::fallback!(stringify!($name) $(, $def)?),
+                    }
+                } )*
+            };
         }
-        unsafe fn call(n: &str, a: &[usize]) -> usize {
-            let h = HOOK.with(Cell::get);
-            match h {
-                Some(h) => h(n, a),
-                None => todo!("native cross-TU {n}"),
-            }
+        ext_fns! {
+        fn GXInitLightAttn(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32);
+        fn GXInitLightColor(a0: *mut _GXLightObj, a1: _GXColor);
+        fn GXInitLightDir(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+        fn GXInitLightDistAttn(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: i32);
+        fn GXInitLightPos(a0: *mut _GXLightObj, a1: f32, a2: f32, a3: f32);
+        fn GXInitLightSpot(a0: *mut _GXLightObj, a1: f32, a2: i32);
+        fn GXLoadLightObjImm(a0: *mut _GXLightObj, a1: u32);
+        fn HSD_AObjInterpretAnim(a0: *mut HSD_AObj, a1: *mut c_void, a2: unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData));
+        fn HSD_AObjLoadDesc(a0: *mut HSD_AObjDesc) -> *mut HSD_AObj;
+        fn HSD_AObjRemove(a0: *mut HSD_AObj);
+        fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32);
+        fn HSD_WObjAddAnim(a0: *mut HSD_WObj, a1: *mut HSD_WObjAnim);
+        fn HSD_WObjAlloc() -> *mut HSD_WObj;
+        fn HSD_WObjGetPosition(a0: *mut HSD_WObj, a1: *mut melee_types::Vec);
+        fn HSD_WObjInterpretAnim(a0: *mut HSD_WObj);
+        fn HSD_WObjLoadDesc(a0: *mut HSD_WObjDesc) -> *mut HSD_WObj;
+        fn HSD_WObjReqAnim(a0: *mut HSD_WObj, a1: f32);
+        fn HSD_WObjSetPosition(a0: *mut HSD_WObj, a1: *const melee_types::Vec);
+        fn HSD_WObjUnref(a0: *mut HSD_WObj);
+        fn hsdInitClassInfo(a0: *mut _HSD_ClassInfo, a1: *mut _HSD_ClassInfo, a2: *const i8, a3: *const i8, a4: i32, a5: i32);
+        fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32;
+        fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
+        fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
         }
-        macro_rules! stub {($n:ident($($a:ident:$t:ty),*)->$r:ty)=>{pub unsafe fn $n($($a:$t),*)->$r{call(stringify!($n),&[$($a as usize),*]) as $r}};}
-        stub!(hsdObj()->*mut _HSD_ClassInfo);
-        stub!(hsdNew(c:*mut _HSD_ClassInfo)->*mut c_void);
-        stub!(hsdSearchClassInfo(n:*const i8)->*mut _HSD_ClassInfo);
-        stub!(hsdIsDescendantOf(a:*mut c_void,b:*mut c_void)->i32);
-        pub unsafe fn hsdInitClassInfo(
-            c: *mut _HSD_ClassInfo,
-            p: *mut _HSD_ClassInfo,
-            l: *const i8,
-            n: *const i8,
-            i: i32,
-            o: i32,
-        ) {
-            call(
-                "hsdInitClassInfo",
-                &[
-                    c as usize, p as usize, l as usize, n as usize,
-                    i as usize, o as usize,
-                ],
-            );
-        }
-        stub!(HSD_WObjAlloc()->*mut HSD_WObj);
-        stub!(HSD_WObjLoadDesc(d:*mut HSD_WObjDesc)->*mut HSD_WObj);
-        stub!(HSD_AObjLoadDesc(d:*mut HSD_AObjDesc)->*mut HSD_AObj);
-        pub unsafe fn HSD_AObjRemove(a: *mut HSD_AObj) {
-            call("HSD_AObjRemove", &[a as usize]);
-        }
-        pub unsafe fn HSD_WObjUnref(w: *mut HSD_WObj) {
-            call("HSD_WObjUnref", &[w as usize]);
-        }
-        pub unsafe fn HSD_WObjSetPosition(
-            w: *mut HSD_WObj,
-            v: *const melee_types::Vec,
-        ) {
-            call("HSD_WObjSetPosition", &[w as usize, v as usize]);
-        }
-        pub unsafe fn HSD_WObjGetPosition(
-            w: *mut HSD_WObj,
-            v: *mut melee_types::Vec,
-        ) {
-            call("HSD_WObjGetPosition", &[w as usize, v as usize]);
-        }
-        pub unsafe fn HSD_AObjInterpretAnim(
-            a: *mut HSD_AObj,
-            o: *mut c_void,
-            f: unsafe extern "C" fn(*mut c_void, i32, *mut HSD_ObjData),
-        ) {
-            call(
-                "HSD_AObjInterpretAnim",
-                &[a as usize, o as usize, f as usize],
-            );
-        }
-        pub unsafe fn HSD_WObjInterpretAnim(w: *mut HSD_WObj) {
-            call("HSD_WObjInterpretAnim", &[w as usize]);
-        }
-        pub unsafe fn HSD_AObjReqAnim(a: *mut HSD_AObj, f: f32) {
-            call("HSD_AObjReqAnim", &[a as usize, f.to_bits() as usize]);
-        }
-        pub unsafe fn HSD_WObjReqAnim(w: *mut HSD_WObj, f: f32) {
-            call("HSD_WObjReqAnim", &[w as usize, f.to_bits() as usize]);
-        }
-        pub unsafe fn HSD_WObjAddAnim(w: *mut HSD_WObj, a: *mut HSD_WObjAnim) {
-            call("HSD_WObjAddAnim", &[w as usize, a as usize]);
-        }
-        pub unsafe fn GXInitLightColor(l: *mut _GXLightObj, c: _GXColor) {
-            call(
-                "GXInitLightColor",
-                &[
-                    l as usize,
-                    u32::from_be_bytes([c.r, c.g, c.b, c.a]) as usize,
-                ],
-            );
-        }
-        pub unsafe fn GXInitLightPos(
-            l: *mut _GXLightObj,
-            x: f32,
-            y: f32,
-            z: f32,
-        ) {
-            call(
-                "GXInitLightPos",
-                &[
-                    l as usize,
-                    x.to_bits() as usize,
-                    y.to_bits() as usize,
-                    z.to_bits() as usize,
-                ],
-            );
-        }
-        pub unsafe fn GXInitLightDir(
-            l: *mut _GXLightObj,
-            x: f32,
-            y: f32,
-            z: f32,
-        ) {
-            call(
-                "GXInitLightDir",
-                &[
-                    l as usize,
-                    x.to_bits() as usize,
-                    y.to_bits() as usize,
-                    z.to_bits() as usize,
-                ],
-            );
-        }
-        pub unsafe fn GXInitLightAttn(
-            l: *mut _GXLightObj,
-            a: f32,
-            b: f32,
-            c: f32,
-            d: f32,
-            e: f32,
-            f: f32,
-        ) {
-            call(
-                "GXInitLightAttn",
-                &[
-                    l as usize,
-                    a.to_bits() as usize,
-                    b.to_bits() as usize,
-                    c.to_bits() as usize,
-                    d.to_bits() as usize,
-                    e.to_bits() as usize,
-                    f.to_bits() as usize,
-                ],
-            );
-        }
-        pub unsafe fn GXInitLightDistAttn(
-            l: *mut _GXLightObj,
-            d: f32,
-            b: f32,
-            f: i32,
-        ) {
-            call(
-                "GXInitLightDistAttn",
-                &[
-                    l as usize,
-                    d.to_bits() as usize,
-                    b.to_bits() as usize,
-                    f as usize,
-                ],
-            );
-        }
-        pub unsafe fn GXInitLightSpot(l: *mut _GXLightObj, c: f32, f: i32) {
-            call(
-                "GXInitLightSpot",
-                &[l as usize, c.to_bits() as usize, f as usize],
-            );
-        }
-        pub unsafe fn GXLoadLightObjImm(l: *mut _GXLightObj, i: u32) {
-            call("GXLoadLightObjImm", &[l as usize, i as usize]);
+        /// `&hsdObj` (object.c): the parent class info.
+        pub unsafe fn hsdObj() -> *mut _HSD_ClassInfo {
+            core::ptr::addr_of_mut!(crate::tu::object::hsdObj) as *mut _HSD_ClassInfo
         }
     }
 }

@@ -121,7 +121,7 @@ pub static mut grSh_StageCallbacks: [StageCallbacks; 3] = [
         callback1: Some(grShrine_80201F14),
         gobj_proc: Some(grShrine_80201F1C),
         callback3: Some(grShrine_80201F40),
-        anon_10: StageCallbacks_anon_135 { flags: (1 << 30) | (1 << 31) },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
 ];
 

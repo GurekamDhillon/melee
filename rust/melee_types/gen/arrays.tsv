@@ -1,0 +1,23 @@
+# Pointer fields that point at an array; the second column is the sibling field that holds its length (or an integer).
+# Read by gen_types.py; the decoder allocates that many elements contiguously (GcDecoder::ptr_array).
+# Evidence: the C loops that index the pointer with that count.
+MapCollData.verts	vert_count
+MapCollData.lines	line_count
+MapCollData.joints	joint_count
+UnkStageDat.unk8	unkC
+UnkStageDat.unk10	unk14
+UnkStageDat.unk20	unk24
+UnkStageDat.unk28	unk2C
+# UnkStageDat_x8_t: per-model tables (stage .dat model set), NULL terminated `T**`; unk20 runs unk24 entries
+UnkStageDat_x8_t.unk4	null
+UnkStageDat_x8_t.unk8	null
+UnkStageDat_x8_t.unkC	null
+UnkStageDat_x8_t.x18	null
+UnkStageDat_x8_t.unk20	unk24
+UnkStageDat.unk18	unk1C	LightOverrideEntry
+# baselib/spline.c reads 3*numcv+4 control points and numcv+1 segments (numcv >= 1)
+HSD_Spline.cv	numcv.max(1)*3+4
+HSD_Spline.segLength	numcv.max(1)+1
+HSD_Spline.segPoly	numcv.max(1)+1
+UnkStageDat.unk0	unk4	UnkStageDat_x0_entry
+UnkStageDat_x0_entry.pairs	pair_count*2

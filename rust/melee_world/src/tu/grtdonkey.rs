@@ -68,7 +68,7 @@ pub static mut grTDk_StageCallbacks: [StageCallbacks; 4] = [
         callback1: Some(grTDonkey_80220440),
         gobj_proc: Some(stageGObj2_GObjProc),
         callback3: Some(grTDonkey_8022047C),
-        anon_10: StageCallbacks_anon_135 { flags: (1 << 30) | (1 << 31) },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
     StageCallbacks { on_init: None, callback1: None, gobj_proc: None, callback3: None, anon_10: StageCallbacks_anon_135 { flags: 0 } },
 ];

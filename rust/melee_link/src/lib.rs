@@ -3,6 +3,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 pub mod cabi;
+pub mod manual;
 pub mod retail;
 pub mod retail_ms;
 pub mod strs;
@@ -46,6 +47,7 @@ pub(crate) unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
 /// Point every linkable hook at its canonical TU function. Idempotent. Not called by `melee golden` yet.
 pub fn install() {
     gen_table::install_all();
+    manual::install();
 }
 
 /// ftdata.c's static initialisers: the per-kind tables and every MotionState table. Call once at boot, after

@@ -414,7 +414,7 @@ pub mod ext {
     hook!(H_HSD_JObjReqAnimAll, HSD_JObjReqAnimAll, (a0: *mut melee_types::HSD_JObj, a1: f32));
     hook!(H_HSD_JObjAnimAll, HSD_JObjAnimAll, (a0: *mut melee_types::HSD_JObj));
     // ---- extern globals ----
-    pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
     pub use melee_runtime::tu::gobj_native::HSD_GObjGXLinkHead;
 }
 // @ext-end
@@ -635,7 +635,7 @@ const fn cb(
     callback3: Option<unsafe extern "C" fn(*mut Ground_GObj)>,
     flags: u32,
 ) -> StageCallbacks {
-    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags } }
+    StageCallbacks { on_init, callback1, gobj_proc, callback3, anon_10: StageCallbacks_anon_135 { flags: u32::to_be(flags) } }
 }
 
 pub static mut grZe_callbacks: [StageCallbacks; 12] = [

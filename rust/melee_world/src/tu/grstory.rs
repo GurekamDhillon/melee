@@ -228,7 +228,7 @@ pub static mut grSt_StageCallbacks: [StageCallbacks; 4] = [
         callback1: Some(grStory_801E332C),
         gobj_proc: Some(grStory_801E3334),
         callback3: Some(grStory_801E336C),
-        anon_10: StageCallbacks_anon_135 { flags: (1 << 30) | (1 << 31) },
+        anon_10: StageCallbacks_anon_135 { flags: u32::to_be((1 << 30) | (1 << 31)) },
     },
 ];
 

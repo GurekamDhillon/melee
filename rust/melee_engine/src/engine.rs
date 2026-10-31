@@ -62,6 +62,7 @@ impl Engine {
     }
 
     fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
+        crate::crash::install();
         Host::boot(disc, mem_size)?;
         melee_link::install();
         melee_link::install_retail();

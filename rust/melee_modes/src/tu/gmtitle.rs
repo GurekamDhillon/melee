@@ -20,7 +20,7 @@ pub mod ext {
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
     pub use crate::tu::gmopening::gm_804D67EC;
     pub use crate::tu::gmopening::gm_804D67F0;
-    pub static mut DbLevel: u32 = 0;
+    pub use melee_runtime::shared::DbLevel;
     pub static mut db_build_timestamp: [c_char; 64] = [0; 64];
 
     crate::gmtou_ext! {

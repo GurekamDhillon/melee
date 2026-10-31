@@ -109,10 +109,10 @@ pub mod ext {
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::shared::DbLevel;
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use crate::tu::cmcamera::cm_804D6468;
-    pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::ground::stage_info;
 }
 
 pub static mut mpLib_StageRow_warned: i32 = (-1_i32);

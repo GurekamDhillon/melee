@@ -65,7 +65,7 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
 3. `melee play` covers 7 fighters / 4 stages; retail `mn*` scenes are stand-ins (notes/play.md).
-4. Engine (`--engine tu`): both pad scenarios reach 1801 frames with hash + seed identical to the golden (step 11); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. The CPU scenarios do not run on it yet (steps 14 / 15), sound is a no-op seam, `melee diff --engine tu` and engine snapshots are step 17 (notes/consolidation.md).
+4. Engine (`--engine tu`): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl reaches 950 (blocker A), cpu_peach_samus_ys_items 0 (blocker B); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
 5. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
 
 ## Writing notes (merge-friendly: other branches append concurrently)
@@ -83,3 +83,19 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 - notes/render.md, notes/audio.md, notes/net.md, notes/script.md, notes/play.md, notes/platform.md, notes/menus.md.
 - notes/consolidation.md: plan to run matches on the real loop + tu/ dedupe.
 - notes/traps.md: index of traps.   Other: docs/rust-port/inventory.md, neutral-hash.md, group-*.md, tools/rust-port/snap/README.md.
+
+
+## Current blockers (engine, 2026-10-31)
+- A. cpu_fox_falco_dl on `--engine tu`: matches 0..949, hash differs from 950 (s2, P2 = Falco). The first state difference is Falco's dynamic bone
+  chain (`Dynamics P1 bone set 0`, melee_fighter ftdynamics -> `lb_8001044C` in lb_00F9.rs) at frame 947; frame 946 equals the C snapshot in every
+  fighter / item / JObj SRT field. In C the call `lbVector_Angle` is made once more at 947 (counts C 16, engine 15; `countdiff.py` frames
+  931-950) and `lbVector_RotateAboutUnitAxis` once more, so a branch of the chain sim goes the other way: its inputs outside the Fighter record
+  are the wind list (`lb_804D63B0`, `lb_800101C8`), `lb_803B7280.v0` and the `fp->x1670` colliders. Not yet checked: the wind entries
+  (`lb_800115F4` runs the same number of times on both sides). Tried: render pass on (142 -> 950), vanilla m-ex dispatch (hand pose), snapshot
+  diffs 920..950, call-count diffs. Next: dump the wind list and colliders of both sides at 946/947.
+  After the fix the next stop is a segfault at frame ~1207 in `efSync_Spawn` from `it_80270E30` (`efLib_Create_Attach_Pos` gets a bad jobj; the
+  variadic words of `efSync_Spawn` are probably passed in the wrong slot for that effect id).
+- B. cpu_peach_samus_ys_items on `--engine tu`: crash while loading (`ftData_800855C8`, null `ftData_803C2360[13]`): Samus has no retail tables
+  on the engine because `ftsamus.c` is not a tu/ module (only `ftSs_Init_80128428` is; the data tables, MotionStateTable and the Init_* callbacks
+  exist only in `melee_chara/src/raw/.../ftsamus.rs`). Port ftsamus.c to `melee_chara/src/tu/ftsamus.rs`, regenerate retail.rs / retail_ms.rs,
+  then step 15 (Shy Guys etc. are the next stops).

@@ -131,9 +131,9 @@ From step 7 the engine path is the one being moved forward.
 | 9 (DONE 2026-10-31, partial: stage procs and mp collision run and are bit-exact where the fighter pose allows; the 600-frame target waits on step 8 fall/landing pose) | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
 | 10 (DONE 2026-10-31; effect/particle diff needs `melee diff --engine tu`, not there yet) | Effects and particles | `efLib_Create` / `efAsync` / `efSync` (pick `tu/eflib.rs` vs `tu/efn/eflib.rs`: the one with the C oracle wins, and the other is deleted), `psappsrt` / `generator` / `particle` driven from their gobjs. Target: effect and particle diff subsystems at 0. |
 | 11 (DONE 2026-10-31; both pad scenarios reach 1801 on the engine; camera / HUD procs ran as they were, sound is still the forced no-op seam) | Camera, HUD, sound | `cmcamera` procs, `ifStatus` / `ifStock` / `ifTime` procs, and `lbAudioAx` through the audio seam (the `ft_PlaySFX` RNG draw stays exact). Target: **pad_falcon_fox_fd 1801 on the engine**. |
-| 12 | Fighter hit detection | Real `ftcoll` on real joints (no pseudo `JOINTS`), `Fighter_ProcessHit`, `ftCo_Damage*`, shields and clanks, through the `s_link` 13 and 14 procs. Target: pad_marth_sheik_bf to its first item use. |
-| 13 | Items engine | `Item_Create` / `Item_80268E5C` / item procs and `it_26B1` registration, then `itseakneedleheld` / `itseakneedlethrown`, `itfoxblaster` / `itfoxlaser`, `itsamusmissile`, and item-vs-fighter hits (`ftColl_8007925C`). Target: **pad_marth_sheik_bf 1801 on the engine**. Item diff subsystem at 0. |
-| 14 | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
+| 12 (DONE 2026-10-31; both pad scenarios reach 1801 on the engine, fighter fields equal to the C snapshots at 600/1200/1700) | Fighter hit detection | Real `ftcoll` on real joints (no pseudo `JOINTS`), `Fighter_ProcessHit`, `ftCo_Damage*`, shields and clanks, through the `s_link` 13 and 14 procs. Target: pad_marth_sheik_bf to its first item use. |
+| 13 (DONE 2026-10-31; pad_marth_sheik_bf 1801 on the engine, item rows equal in `melee diff --engine tu`) | Items engine | `Item_Create` / `Item_80268E5C` / item procs and `it_26B1` registration, then `itseakneedleheld` / `itseakneedlethrown`, `itfoxblaster` / `itfoxlaser`, `itsamusmissile`, and item-vs-fighter hits (`ftColl_8007925C`). Target: **pad_marth_sheik_bf 1801 on the engine**. Item diff subsystem at 0. |
+| 14 (PARTIAL 2026-10-31: cpu_fox_falco_dl 950 frames on the engine, target 370 passed; first divergence 950 in the dynamic-bone sim, see STATUS.md blockers) | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
 | 15 | Hazard stages | `grStory` and `grGreens` procs through their map gobjs, plus `Ground_UpdateMapColl`. Target: cpu_peach_samus_ys_items 120 or more on the engine. |
 | 16 | Rebirth, death, stocks | `ftCo_800BFD9C` / `gm_80167320` / `fn_8016719C` / `ftCo_800D4FF4`, blast zones from the real `Stage` data, and `gmMainLib` stocks. Every KO in the four goldens takes the engine path (re-check all four counts). |
 | 17 | Engine snapshot, rollback and diff | `Engine::state()` and the C-snapshot overlay. Port `melee diff`, `synctest`, `--from-snapshot` and `--dump-state` to the engine, and delete the model-state section. Target: rollback synctest clean over 1800 frames on pad_falcon_fox_fd. |
@@ -985,3 +985,24 @@ what stopped the engine was not camera, HUD or sound but the item path the two s
 * Tried and dropped: a c2rs port of ftlib.c as `tu/ftlib.rs` (103 fns, `rust/melee_world/gen/mtu/c2rs.py src/melee/ft/ftlib.c`) works, but it duplicates 93 oracle-checked bodies of `melee_fighter::ftlib` (still used by the legacy `vs_match`), which the lint counts as 60 new R2 violations. It belongs to step 21 (fold `ftlib.rs` into the tu file, keep `ftlib_ref`).
 * Debug aids added: `MELEE_ENGINE_ITEMS=1` (items and camera bounds per tick), `MELEE_ENGINE_DUMP` also writes the items and the camera bounds, `MELEE_ENGINE_FT` prints `cmd_vars` and the animation frame. `gate.sh --engine tu` now runs 1801 frames. Not done: sound (`lbAudioAx_*` still answers "nothing played": no pad scenario hashes a sound handle, but the `ft_PlaySFX` draw count is exact because the goldens match), a camera check beyond the hash (no golden column reads the camera), the CPU scenarios on the engine (cpu_fox_falco_dl reaches 216 frames with `--ignore-seed` before `ftFc_Init_OnLoad` -> `it_8026B3F8` writes through a null `it_804D6D38` on Dream Land; cpu_peach stops in `ftData_800855C8` for Samus: steps 14 / 15).
 
+
+## Round 1 (2026-10-31): the engine runs the retail draw callbacks
+
+- The C scene loop renders every frame, and the render pass has simulation effects: `HSD_JObjSetupMatrix` through the draw callbacks
+  rebuilds the world matrices that the next frame's logic reads (`jobj->mtx` in the dynamic-bone reset, hurt capsules, `ftCo_8009CB40`),
+  and the `x8B0` part animations. With `HEADLESS_RENDER` the engine skipped it and cpu_fox_falco_dl stopped at frame 142. It now runs
+  the draw callbacks (set `MELEE_ENGINE_HEADLESS=1` for the old behaviour): GX / display callees that no hook covers answer zero in
+  render-stub mode (`melee_core::ct::RENDER_STUB`, macro `melee_core::unported!`, replaces the `panic!("TODO ... not ported")` arms of the
+  `ext_fns!` macros; outside the render pass they still panic). The render pass uses the private render seed (`HSD_RandRenderBegin/End`),
+  and the golden hash is taken in `Script_FramePost` (after the logic procs, before the render), like the C build.
+- The m-ex dispatch seams (`MEX_ON_KNOCKBACK_ENTER/EXIT`, `ITEM_INVISIBLE/VISIBLE`, `ITEM_DROP/DROP_EXT/PICKUP2`, `REMOVE/APPLY_HEAD_ITEM`,
+  `ACTION_STATE_CHANGE`, `MODEL_RENDER`) were "feature off" no-ops. With no override registered `gw_Mex_*Dispatch` runs the vanilla per-kind
+  table entry; the engine seams now do (`melee_engine/src/seams.rs`; `MELEE_MEX_OFF=NAME,..` disables single ones for bisecting). Fox's and
+  Falco's knockback hand pose (`ftFx_Init_OnKnockbackEnter`) was missing before.
+- Tooling: the C call-trace build works again (`gw_calltrace.c` had literal newlines in three format strings); `seqdiff.py --anchor FN
+  [--auto-ignore N]` re-chunks both sides at a function (the C log frame starts after the render, the engine frame at the pad renew),
+  `countdiff.py` compares per-chunk call COUNTS and ignores names that differ in known-good frames (inlining noise). Traps: the C build logs
+  functions before inlining (inlined callees appear only in C), the engine draws no frame-boundary equal to C's, and only functions in `tu/`
+  are instrumented (`ftcommon2`, `ftcommon3`, `chars/` bodies are invisible to the trace).
+- `melee golden --engine tu` for the pad scenarios needs `MELEE_ENGINE_PRE_DRAWS=1` (tools/rust-port/engine/pre_draws.tsv); the CPU
+  scenarios need 0 and compare the seed column too.

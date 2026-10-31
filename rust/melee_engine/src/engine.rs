@@ -119,6 +119,10 @@ impl Engine {
         Host::boot(disc, mem_size)?;
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
+            // render draws (particle generators created while drawing) use the private render seed, not the logic stream
+            melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);
+            melee_runtime::tu::gobj_native::HSD_RandRenderEnd = Some(melee_runtime::tu::random::global::HSD_RandRenderEnd);
+            melee_modes::tu::gmscene::ext::FRAME_POST = Some(|| unsafe { FRAME_ROW = Some(Engine::compute_row()) });
             melee_core::ct::RENDER_STUB.store(!melee_runtime::tu::gobj_native::HEADLESS_RENDER, core::sync::atomic::Ordering::Relaxed);
             melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
@@ -175,6 +179,12 @@ impl Engine {
     /// The NHV1 golden row of the current state: `[hash, seed, items, itemsum, s0..s11]` (docs/rust-port/neutral-hash.md),
     /// from the real Fighter / Item records through the ported `RB_NeutralHash`.
     pub fn neutral_row(&self) -> [u32; 16] {
+        // the C build hashes in Script_FramePost (after the logic procs, before the render pass)
+        unsafe { if let Some(r) = FRAME_ROW { return r; } }
+        Self::compute_row()
+    }
+
+    fn compute_row() -> [u32; 16] {
         unsafe {
             melee_fighter::tu::fighter::RB_NeutralHash();
             let mut r = [0u32; 16];
@@ -411,6 +421,8 @@ impl Engine {
         more
     }
 }
+
+static mut FRAME_ROW: Option<[u32; 16]> = None;
 
 unsafe extern "C" fn gmmain_pad_setup() {
     gmmain::gmMain_8015FD24();

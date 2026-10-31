@@ -81,6 +81,25 @@ pub fn install() {
             sy::watch_page = Some(|_, _| {});
         }
 
+        // m-ex dispatch seams: with no override registered (vanilla game) each runs the per-kind vanilla table entry,
+        // as gw_Mex_*Dispatch does (`vanilla != NULL`).
+        {
+            use melee_fighter::tu::ftdata as d;
+            let k = |kind: i32| kind as usize;
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_KNOCKBACK_ENTER")) { melee_fighter::hooks::MEX_ON_KNOCKBACK_ENTER = Some(|kind, g| { if let Some(f) = d::ftData_OnKnockbackEnter[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_KNOCKBACK_EXIT")) { melee_fighter::hooks::MEX_ON_KNOCKBACK_EXIT = Some(|kind, g| { if let Some(f) = d::ftData_OnKnockbackExit[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_INVISIBLE")) { melee_fighter::hooks::MEX_ON_ITEM_INVISIBLE = Some(|kind, g| { if let Some(f) = d::ftData_OnItemInvisible[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_VISIBLE")) { melee_fighter::hooks::MEX_ON_ITEM_VISIBLE = Some(|kind, g| { if let Some(f) = d::ftData_OnItemVisible[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_REMOVE_HEAD_ITEM")) { melee_fighter::hooks::MEX_ON_REMOVE_HEAD_ITEM = Some(|kind, g| { if let Some(f) = d::ftData_UnkMotionStates2[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_APPLY_HEAD_ITEM")) { melee_fighter::hooks::MEX_ON_APPLY_HEAD_ITEM = Some(|kind, g| { if let Some(f) = d::ftData_UnkMotionStates1[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_DROP_EXT")) { melee_fighter::hooks::MEX_ON_ITEM_DROP_EXT = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemDropExt[kind as usize] { f(g as _, a) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_DROP")) { melee_fighter::hooks::MEX_ON_ITEM_DROP = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemDrop[kind as usize] { f(g as _, a) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ITEM_PICKUP2")) { melee_fighter::hooks::MEX_ON_ITEM_PICKUP2 = Some(|kind, g, a| { if let Some(f) = d::ftData_OnItemPickup[kind as usize] { f(g as _, a) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_ACTION_STATE_CHANGE_DISPATCH")) { melee_fighter::tu::ftcolanim::ext::MEX_ON_ACTION_STATE_CHANGE_DISPATCH = Some(|kind, g, _vanilla| { if let Some(f) = d::ftData_UnkMotionStates4[kind as usize] { f(g as _) } }); }
+            if std::env::var("MELEE_MEX_OFF").map_or(true, |v| !v.split(',').any(|x| x == "MEX_ON_MODEL_RENDER")) { melee_fighter::tu::ftdrawcommon::ext::MEX_ON_MODEL_RENDER = Some(|kind, g, a, m| { if let Some(f) = d::ftData_UnkMtxFunc0[kind as usize] { f(g as _, a, m as _) } }); }
+            let _ = k;
+        }
+
         use melee_modes::tu::lb_0195::ext::hook as l;
         l::OSCancelAlarm = Some(|_| {});
         l::OSCreateAlarm = Some(|_| {});

@@ -44,20 +44,20 @@ pub mod ext {
     /// Unported callees (TODO: rewire once their TUs are ported).
     pub struct Ext;
     impl Hsd3915Host for Ext {
-        fn GXBegin(&mut self, _: u32, _: u32, _: u32) { todo!("GXBegin (dolphin/gx)") }
-        fn GXPosition2f32(&mut self, _: f32, _: f32) { todo!("GXPosition2f32 (dolphin/gx)") }
-        fn GXColor4u8(&mut self, _: u8, _: u8, _: u8, _: u8) { todo!("GXColor4u8 (dolphin/gx)") }
+        fn GXBegin(&mut self, _: u32, _: u32, _: u32) { if melee_core::ct::render_stub() { return; } todo!("GXBegin") }
+        fn GXPosition2f32(&mut self, _: f32, _: f32) { if melee_core::ct::render_stub() { return; } todo!("GXPosition2f32") }
+        fn GXColor4u8(&mut self, _: u8, _: u8, _: u8, _: u8) { if melee_core::ct::render_stub() { return; } todo!("GXColor4u8") }
         fn HSD_ClearVtxDesc(&mut self) { todo!("HSD_ClearVtxDesc (baselib/state.c)") }
-        fn GXSetCurrentMtx(&mut self, _: u32) { todo!("GXSetCurrentMtx (dolphin/gx)") }
+        fn GXSetCurrentMtx(&mut self, _: u32) { if melee_core::ct::render_stub() { return; } todo!("GXSetCurrentMtx") }
         fn HSD_CObjGetCurrent(&mut self) -> *mut HSD_CObj { todo!("HSD_CObjGetCurrent (baselib/cobj.c)") }
         fn HSD_CObjGetViewingMtx(&mut self, _: *mut HSD_CObj, _: &mut Mtx) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
-        fn GXLoadPosMtxImm(&mut self, _: &Mtx, _: u32) { todo!("GXLoadPosMtxImm (dolphin/gx)") }
-        fn HSD_StateSetLineWidth(&mut self, _: u8, _: i32) { todo!("HSD_StateSetLineWidth (baselib/state.c)") }
-        fn HSD_StateSetPointSize(&mut self, _: i32, _: i32) { todo!("HSD_StateSetPointSize (baselib/state.c)") }
-        fn HSD_SetupRenderMode(&mut self, _: u32) { todo!("HSD_SetupRenderMode (baselib/state.c)") }
-        fn GXSetVtxAttrFmt(&mut self, _: u32, _: u32, _: u32, _: u32, _: u8) { todo!("GXSetVtxAttrFmt (dolphin/gx)") }
-        fn GXSetVtxDesc(&mut self, _: u32, _: u32) { todo!("GXSetVtxDesc (dolphin/gx)") }
-        fn HSD_StateSetCullMode(&mut self, _: u32) { todo!("HSD_StateSetCullMode (baselib/state.c)") }
+        fn GXLoadPosMtxImm(&mut self, _: &Mtx, _: u32) { if melee_core::ct::render_stub() { return; } todo!("GXLoadPosMtxImm") }
+        fn HSD_StateSetLineWidth(&mut self, _: u8, _: i32) { if melee_core::ct::render_stub() { return; } todo!("HSD_StateSetLineWidth") }
+        fn HSD_StateSetPointSize(&mut self, _: i32, _: i32) { if melee_core::ct::render_stub() { return; } todo!("HSD_StateSetPointSize") }
+        fn HSD_SetupRenderMode(&mut self, _: u32) { if melee_core::ct::render_stub() { return; } todo!("HSD_SetupRenderMode") }
+        fn GXSetVtxAttrFmt(&mut self, _: u32, _: u32, _: u32, _: u32, _: u8) { if melee_core::ct::render_stub() { return; } todo!("GXSetVtxAttrFmt") }
+        fn GXSetVtxDesc(&mut self, _: u32, _: u32) { if melee_core::ct::render_stub() { return; } todo!("GXSetVtxDesc") }
+        fn HSD_StateSetCullMode(&mut self, _: u32) { if melee_core::ct::render_stub() { return; } todo!("HSD_StateSetCullMode") }
     }
 }
 

@@ -726,7 +726,6 @@ pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, n
             }
         }
 
-        if std::env::var_os("DBG_DYN").is_some() { eprintln!("LB44C pos2c ({},{},{}) pos_y {pos_y} use_floor {use_floor_fn} first_active {first_active} part {part} node idx {loop_index} force_mag {force_mag} on_ground {on_ground} gc {ground_check} angle_diff {angle_diff} link {:?} unk44 {} unk48 {} nc {num_colliders}", d.unk_2C.x, d.unk_2C.y, d.unk_2C.z, (link_dir.x,link_dir.y,link_dir.z), d.unk_44, d.unk_48); }
         // update JObj rotation via quaternion
         if !(angle_diff < 0.00001 && angle_diff > -0.00001) {
             ext::PSMTXTranspose(mp(&mut parent_mtx), mp(&mut bone_mtx));

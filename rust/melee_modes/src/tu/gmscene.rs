@@ -122,7 +122,9 @@ pub mod ext {
     pub unsafe extern "C" fn Replay_Tick() -> i32 { if let Some(h) = HOOK { let r = h("Replay_Tick", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn SceneReport_Menu(kind: i32, hovered: i32, confirmed: i32) { if let Some(h) = HOOK { h("SceneReport_Menu", &[A::I(kind as u32 as u64), A::I(hovered as u32 as u64), A::I(confirmed as u32 as u64)]); return; } () }
     pub unsafe extern "C" fn ScriptGame_StageEnd() { if let Some(h) = HOOK { h("ScriptGame_StageEnd", &[]); return; } { unsafe { crate::tu::script_game::ScriptGame_StageEnd(); } return; } }
-    pub unsafe extern "C" fn Script_FramePost() { if let Some(h) = HOOK { h("Script_FramePost", &[]); return; } () }
+    /// `Script_FramePost`: the engine registers `FRAME_POST` (the golden hash is taken here, after the logic procs, before the render pass).
+    pub static mut FRAME_POST: Option<fn()> = None;
+    pub unsafe extern "C" fn Script_FramePost() { if let Some(h) = HOOK { h("Script_FramePost", &[]); return; } if let Some(f) = FRAME_POST { f() } }
     pub unsafe extern "C" fn Script_FramePre() { if let Some(h) = HOOK { h("Script_FramePre", &[]); return; } () }
     pub unsafe extern "C" fn Script_Iterations(count: i32) -> i32 { if let Some(h) = HOOK { let r = h("Script_Iterations", &[A::I(count as u32 as u64)]); return r as i32; } count }
     pub unsafe extern "C" fn Script_LaunchPending() -> i32 { if let Some(h) = HOOK { let r = h("Script_LaunchPending", &[]); return r as i32; } 0 }

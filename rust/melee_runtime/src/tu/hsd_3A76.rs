@@ -38,40 +38,40 @@ pub mod ext {
     pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { unsafe { crate::tu::state_native::HSD_StateSetZMode(enable as _, func as _, update as _); } }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
     pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
-    pub fn GXSetZMode(a: u32, b: u32, c: u32) { todo!("GXSetZMode (dolphin/gx)") }
-    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { todo!("GXSetViewport (dolphin/gx)") }
-    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { todo!("GXSetScissor (dolphin/gx)") }
+    pub fn GXSetZMode(a: u32, b: u32, c: u32) { }
+    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { }
+    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { }
     pub fn MTXOrtho(mtx: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, n: f32, f: f32) { unsafe { crate::tu::mtx44::raw::MTXOrtho(mtx as _, t as _, b as _, l as _, r as _, n as _, f as _); } }
-    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { todo!("GXSetProjection (dolphin/gx)") }
-    pub fn GXSetCurrentMtx(id: u32) { todo!("GXSetCurrentMtx (dolphin/gx)") }
+    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { }
+    pub fn GXSetCurrentMtx(id: u32) { }
     pub fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32) { unsafe { crate::tu::pobj::native::mx::GXLoadPosMtxImm(mtx as _, id as _); } }
-    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { todo!("GXSetTexCoordGen2 (dolphin/gx)") }
+    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { }
     pub fn HSD_StateSetNumChans(n: u32) { unsafe { crate::tu::tev_native::HSD_StateSetNumChans(n as _); } }
-    pub fn GXSetNumChans(n: u32) { todo!("GXSetNumChans (dolphin/gx)") }
-    pub fn GXClearVtxDesc() { todo!("GXClearVtxDesc (dolphin/gx)") }
-    pub fn GXSetCullMode(mode: u32) { todo!("GXSetCullMode (dolphin/gx)") }
-    pub fn GXSetNumTexGens(n: u32) { todo!("GXSetNumTexGens (dolphin/gx)") }
-    pub fn GXSetNumTevStages(n: u32) { todo!("GXSetNumTevStages (dolphin/gx)") }
-    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { todo!("GXSetVtxAttrFmt (dolphin/gx)") }
-    pub fn GXSetVtxDesc(attr: u32, ty: u32) { todo!("GXSetVtxDesc (dolphin/gx)") }
-    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { todo!("GXSetTevOrder (dolphin/gx)") }
-    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { todo!("GXSetBlendMode (dolphin/gx)") }
-    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { todo!("GXSetAlphaCompare (dolphin/gx)") }
-    pub fn GXSetColorUpdate(on: u32) { todo!("GXSetColorUpdate (dolphin/gx)") }
-    pub fn GXSetAlphaUpdate(on: u32) { todo!("GXSetAlphaUpdate (dolphin/gx)") }
-    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { todo!("GXSetTevColorIn (dolphin/gx)") }
-    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { todo!("GXSetTevColorOp (dolphin/gx)") }
-    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { todo!("GXSetTevAlphaOp (dolphin/gx)") }
-    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { todo!("GXSetTevAlphaIn (dolphin/gx)") }
-    pub fn GXSetTevColor(id: u32, color: GXColor) { todo!("GXSetTevColor (dolphin/gx)") }
-    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { todo!("GXSetTevKAlphaSel (dolphin/gx)") }
-    pub fn GXSetTevKColor(id: u32, color: GXColor) { todo!("GXSetTevKColor (dolphin/gx)") }
-    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { todo!("GXBegin (dolphin/gx)") }
-    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { todo!("GXPosition3f32 (dolphin/gx)") }
-    pub fn GXTexCoord2f32(s: f32, t: f32) { todo!("GXTexCoord2f32 (dolphin/gx)") }
+    pub fn GXSetNumChans(n: u32) { }
+    pub fn GXClearVtxDesc() { }
+    pub fn GXSetCullMode(mode: u32) { }
+    pub fn GXSetNumTexGens(n: u32) { }
+    pub fn GXSetNumTevStages(n: u32) { }
+    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { }
+    pub fn GXSetVtxDesc(attr: u32, ty: u32) { }
+    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { }
+    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { }
+    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { }
+    pub fn GXSetColorUpdate(on: u32) { }
+    pub fn GXSetAlphaUpdate(on: u32) { }
+    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
+    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
+    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
+    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
+    pub fn GXSetTevColor(id: u32, color: GXColor) { }
+    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { }
+    pub fn GXSetTevKColor(id: u32, color: GXColor) { }
+    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { }
+    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { }
+    pub fn GXTexCoord2f32(s: f32, t: f32) { }
     pub fn GXEnd() { unsafe { crate::tu::sobjlib::GXEnd() } }
-    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { todo!("GXInitTexObj (dolphin/gx)") }
-    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { todo!("GXLoadTexObj (dolphin/gx)") }
+    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { }
+    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { }
     pub fn HSD_StateInvalidate(mask: i32) { unsafe { crate::tu::state_native::HSD_StateInvalidate(mask as _); } }
     pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { unsafe { crate::tu::lbarchive::lbArchive_LoadArchive(path as _) } }
     pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { unsafe { crate::tu::lbarchive::lbArchive_80016EFC(archive) } }

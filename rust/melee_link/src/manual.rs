@@ -55,7 +55,7 @@ pub fn install() {
             use melee_fighter::tu::fighter::ext::hook as f;
             f::HSD_JObjRemoveAll = Some(|j| unsafe { melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(j as *mut melee_types::HSD_JObj) });
             // `ft_800895E0(fp, int)`: the int is the C's big-endian `union Struct2070` view of the motion state's flag word
-            f::ft_800895E0 = Some(|fp, flags| unsafe { melee_fighter::ft0892::ft_800895e0(&mut *(fp as *mut melee_types::Fighter), melee_fighter::ft0892::s2070_from_gc_int(flags)); });
+            if std::env::var_os("MELEE_NO_800895E0").is_none() { f::ft_800895E0 = Some(|fp, flags| unsafe { melee_fighter::ft0892::ft_800895e0(&mut *(fp as *mut melee_types::Fighter), melee_fighter::ft0892::s2070_from_gc_int(flags)); }); }
             f::stage_grkind = Some(|| unsafe { melee_world::tu::ground::stage_info.grkind as i32 });
             f::ftData_MotionStateList = Some(|| unsafe { (&raw mut crate::retail_ms::ftmotionstates::ftData_MotionStateList) as *mut melee_types::MotionState });
             f::pad_nml = Some(|port| unsafe {

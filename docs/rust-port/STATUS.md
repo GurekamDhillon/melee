@@ -96,10 +96,18 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
   render pass (see lead below). Not yet checked: JObj flags of the hand joints in the snapshot vs the engine (C 0x49, engine 0x09 on
   all joints at the snapshot point, so the snapshot point differs).
   Then: segfault at frame ~1207 in `efSync_Spawn` from `it_80270E30` (`efLib_Create_Attach_Pos` gets a bad jobj).
-- B. cpu_peach_samus_ys_items on `--engine tu`: 120 frames (the golden's own end, Shy Guys spawn `it_802D8618` not ported: the
-  engine has 1 item where the golden has 3 from frame 120). Samus is now in `melee_chara/src/tu/ftsamus*.rs` (c2rs, the oracle-checked
-  chars bodies re-exported), the sound-id lookups `lbAudioAx_800233EC/80023130` run for real (they gate the `ft_PlaySFX` RNG draw).
-  Peach's dress bone sets (`Dynamics P1 bone set 0`) are inactive in the C (bone_id 0x100) but run in the engine: not hashed, counts differ.
+- B. cpu_peach_samus_ys_items on `--engine tu`: 559 frames match (the legacy path stops at 120). Done this round: Samus in tu/ (c2rs plus the
+  oracle-checked chars bodies re-exported), the sound-id lookups run for real, `Mex_GrBind` identity, the `tu_ext` item/camera hooks wired to the
+  engine's TUs (their defaults were the legacy-state ports), stage-item articles word-swapped like the common ones, the Foods attribute rows
+  in GC layout with the joint in `itfoods::FOODS_JOINTS`, `ItCollDynamics` rebuilt from the image, `db_ItemSpawnsEnabled` set at boot
+  (the random item spawner never ran), and `EfArg` variadic words in `melee_link::va_words` (the `efSync_Spawn` crash at ~1207 on
+  cpu_fox_falco_dl and ~308 here). Next stop: frame 559, P1 (Peach) ECB `coll_data.desired_ecb` differs (the same class as A: a bone matrix).
+  Then a segfault at ~959. Peach's dress bone sets (`Dynamics P1 bone set 0`) are inactive in the C (bone_id 0x100) but run in the engine: not hashed.
+- Both A and B stop on the same thing: a joint's CACHED world matrix (`jobj->mtx`, clean flag, rotation part) differs between the C and the
+  engine at the time the hurt capsule / ECB reads it (`lb_8000B1CC`; translation, flags and the joint's own SRT are equal). Measured for
+  Fox's hands at frame 1196 by logging every `lb_8000B1CC` call into a C game global (last 256 calls) and the same values from the engine: 252 of
+  256 calls identical, the 3 differing ones are the hand joint. So who last wrote that joint's matrix (the render pass of an earlier frame, the
+  shadow pass, a hidden-joint skip) is what differs; next step is to log `HSD_JObjSetupMatrixSub` events for that joint on both sides.
 - c2rs trap: a declaration whose initialiser comes from a macro (`PUSH_ATTRS`, `COPY_ATTRS`) is emitted with a null initialiser. Check
   generated fighter inits (fixed by hand in `tu/ftsamus.rs`).
 - A (lead). The dynamic-bone sim and capsules read world matrices (`jobj->mtx`) that the C render pass leaves fresh; the engine's render

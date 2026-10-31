@@ -1021,3 +1021,9 @@ what stopped the engine was not camera, HUD or sound but the item path the two s
   `Mex_GrBind` is the identity on the engine; `lbAudioAx_800233EC/80023130` (pure table reads that decide the `ft_PlaySFX` draw) are no longer
   forced to 0 by seams.txt. The c2rs bug with macro-initialised declarations is in STATUS.md.
 - Not done in this step, left for the next: Shy Guys (`itheiho.c`, `it_802D8618`) and the random item spawner: the golden stops at 120 on both paths.
+- Step 15 continued (same day): cpu_peach_samus_ys_items 559 on the engine (see STATUS.md B). Items on the engine need three data fixes the pad
+  scenarios never hit: stage-item and common-item `x4_specialAttributes` blocks word-swapped (`dat_custom::fix_articles`), `x14_dynamics`
+  read as `ItCollDynamics {pad[8], count, descs}` (the header types it `ItemDynamics`, which is wrong), and the Foods rows keeping the GC
+  layout (`it_8028F9D8` reads them as `Vec4`) with the joints in a side table. The m-ex/stage `tu_ext` hooks must be wired to the engine's TUs:
+  their built-in defaults are the legacy-state ports (`crate::itacc`, `crate::cm::camera::world()`, `crate::ftlib`, `crate::pl`): `Player_*`,
+  `ftLib_*` and `ftCo_800C07F8` are still on those defaults.

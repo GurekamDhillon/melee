@@ -57,10 +57,10 @@ pub mod ext {
     pub static mut it_803F1ED8: [i8; 16] = unsafe { core::mem::zeroed() };
     pub static mut it_803F1EE4: [i8; 16] = unsafe { core::mem::zeroed() };
     pub static mut it_803F1EF0: [i8; 16] = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D04: *mut Fighter_804D653C_t = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D20: *mut it_804D6D20_t = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D04;
+    pub use crate::tu::it_3F14::it_804D6D20;
+    pub use crate::tu::it_3F14::it_804D6D24;
+    pub use crate::tu::it_3F14::it_804D6D28;
     pub use crate::tu::it_3F14::it_804D6D30;
     pub use crate::tu::it_3F14::it_804D6D38;
     pub use crate::tu::it_3F14::it_804D6D40;

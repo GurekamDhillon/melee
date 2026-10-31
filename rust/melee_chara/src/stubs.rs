@@ -276,7 +276,7 @@ pub static mut EFLIB_DESTROYALL: Option<fn(G)> = None;
     pub fn efLib_DestroyAll(g: G) {
         match unsafe { EFLIB_DESTROYALL } {
             Some(f) => f(g),
-            None => { unsafe { let _ = melee_world::tu::eflib::efLib_DestroyAll(g); } },
+            None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_DestroyAll(g); } },
         }
     }
 /// Group 5's verified `itIsHeavy` port (melee_items::itlib::it_is_heavy, reached through group 3's

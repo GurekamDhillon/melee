@@ -75,6 +75,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     assert!((src as usize) + file_size <= 0x1_0000_0000, "host_parse: the raw image must be below 4 GiB ({src:p})");
     let file = core::slice::from_raw_parts(src, file_size);
     if file_size < HEADER_BYTES || be32(file, 0) as usize != file_size {
+        eprintln!("engine: host_parse: header says {:#x} bytes, buffer {src:p} is {file_size:#x}", if file_size >= 4 { be32(file, 0) } else { 0 });
         melee_runtime::tu::lbext::OSReport(
             "host_parse: byte-order mismatch! Please check data format %x %x\n",
             &[
@@ -144,6 +145,22 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     // Native image: decode every public the table knows, in one shared graph.
     {
         let mut roots = HashMap::new();
+        let bounds = {
+            let data = &image.dat.data;
+            let mut v: Vec<u32> = image.dat.publics.iter().map(|q| q.offset).collect();
+            v.push(data.len() as u32);
+            for &r in &image.dat.relocs {
+                if let Some(w) = data.get(r as usize..r as usize + 4) {
+                    let t = u32::from_be_bytes(w.try_into().unwrap());
+                    if (t as usize) < data.len() {
+                        v.push(t);
+                    }
+                }
+            }
+            v.sort_unstable();
+            v.dedup();
+            crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
+        };
         let mut d = image.dat.decoder();
         for p in &image.dat.publics {
             match dat_types::type_of(&p.name) {
@@ -154,7 +171,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
                     // an array root runs to the next public, or the end of the data section
                     let next = image.dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
                     let extent = next.unwrap_or(image.dat.data.len() as u32) - p.offset;
-                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent);
+                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds);
                     roots.insert(p.name.clone(), Root::Native(r));
                 }
                 None => {}

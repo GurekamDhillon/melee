@@ -72,7 +72,7 @@ pub mod ext {
         pub unsafe extern "C" fn ftCo_Barrel_Enter(a0: *mut HSD_GObj, a1: *mut HSD_GObj) { super::ftCo_Barrel_Enter(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D28;
 }
 // END GENERATED EXT
 

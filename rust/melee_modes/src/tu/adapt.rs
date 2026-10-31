@@ -406,7 +406,7 @@ pub fn HSD_SObjLib_803A55DC__ba9596(a0: *mut HSD_GObj, a1: u16, a2: u16, a3: i32
 pub fn Item_80266FA8__f7386b() { melee_core::ct!("Item_80266FA8__f7386b"); unsafe { melee_items::tu::item::Item_80266FA8() } }
 pub fn Item_80266FCC__dfa49f() { melee_core::ct!("Item_80266FCC__dfa49f"); unsafe { melee_items::tu::item::Item_80266FCC() } }
 pub fn Stage_8022524C__8c7585() { melee_core::ct!("Stage_8022524C__8c7585"); unsafe { melee_world::tu::stage::Stage_8022524C() } }
-pub fn efLib_Init__0977f5() { melee_core::ct!("efLib_Init__0977f5"); unsafe { melee_world::tu::eflib::efLib_Init() } }
+pub fn efLib_Init__0977f5() { melee_core::ct!("efLib_Init__0977f5"); unsafe { melee_world::tu::efn::eflib::efLib_Init() } }
 pub fn Player_80031EBC__106f49(a0: i32) { melee_core::ct!("Player_80031EBC__106f49"); unsafe { melee_fighter::player::player_80031ebc(a0) } }
 pub fn Player_80032768__a41ef7(a0: i32, a1: *mut Vec3) { melee_core::ct!("Player_80032768__a41ef7"); unsafe { melee_fighter::player::player_80032768(a0, &*a1) } }
 pub fn Player_80032A04__beba94(a0: i32, a1: *mut Vec3) { melee_core::ct!("Player_80032A04__beba94"); unsafe { melee_fighter::player::player_80032a04(a0, &*a1) } }
@@ -1121,7 +1121,7 @@ pub fn mnName_80239EBC__737a0b(a0: *mut HSD_JObj, a1: f32) { melee_core::ct!("mn
 pub fn mnName_80239F5C__711f9f(a0: *mut HSD_JObj, a1: f32) { melee_core::ct!("mnName_80239F5C__711f9f"); unsafe { crate::tu::mnname::mnName_80239F5C(a0, a1) } }
 pub fn mnName_8023A9B4__53fde4(a0: u8) { melee_core::ct!("mnName_8023A9B4__53fde4"); unsafe { crate::tu::mnname::mnName_8023A9B4(a0) } }
 pub fn mn_80231F80__cd7b6f(a0: u8) -> i32 { melee_core::ct!("mn_80231F80__cd7b6f"); unsafe { crate::tu::mnmainrule::mn_80231F80(a0) } }
-pub fn efLib_DestroyAll__17a98a(a0: * mut HSD_GObj) { melee_core::ct!("efLib_DestroyAll__17a98a"); unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) } }
+pub fn efLib_DestroyAll__17a98a(a0: * mut HSD_GObj) { melee_core::ct!("efLib_DestroyAll__17a98a"); unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(a0) } }
 pub fn ftAnim_8006F484__1b854b(a0: * mut Fighter_GObj) -> :: core :: ffi :: c_float { melee_core::ct!("ftAnim_8006F484__1b854b"); unsafe { melee_fighter::tu::ftanim::ftAnim_8006F484(a0 as _) } }
 pub fn Fighter_UnkProcessDeath_80068354__0d8c62(a0: * mut Fighter_GObj) { melee_core::ct!("Fighter_UnkProcessDeath_80068354__0d8c62"); unsafe { melee_fighter::tu::fighter::Fighter_UnkProcessDeath_80068354(a0 as _) } }
 pub fn Fighter_ResetInputData_80068854__e11eca(a0: * mut Fighter_GObj) { melee_core::ct!("Fighter_ResetInputData_80068854__e11eca"); unsafe { melee_fighter::tu::fighter::Fighter_ResetInputData_80068854(a0 as _) } }

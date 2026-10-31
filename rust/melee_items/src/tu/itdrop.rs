@@ -51,7 +51,7 @@ pub mod ext {
     pub use crate::tu::item::Item_804A0C64;
     pub use crate::tu::itspawn::it_804A0E50;
     pub use crate::tu::itspawn::it_804A0E60;
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D28;
 }
 // END GENERATED EXT
 

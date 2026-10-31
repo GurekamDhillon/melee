@@ -11,7 +11,7 @@ pub mod ext {
     use melee_types::*;
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};
     crate::port_hook!(LB_8000B1CC, lb_8000B1CC, melee_runtime::tu::lb_00B0::lb_8000B1CC, (jobj: *mut HSD_JObj, off: *mut Vec3, out: *mut Vec3));
-    crate::port_hook!(EFLIB_DESTROYALL, efLib_DestroyAll, melee_world::tu::eflib::efLib_DestroyAll, (gobj: *mut HSD_GObj));
+    crate::port_hook!(EFLIB_DESTROYALL, efLib_DestroyAll, melee_world::tu::efn::eflib::efLib_DestroyAll, (gobj: *mut HSD_GObj));
     crate::port_hook!(IT_802B5974, it_802B5974, melee_items::tu::itsamuschargeshot::it_802B5974, (gobj: *mut HSD_GObj));
     crate::port_hook!(IT_802B62D0, it_802B62D0, crate::adapt::it_802B62D0, (gobj: *mut HSD_GObj, pos: *mut Vec3, is_smash: bool, dir: f32) -> *mut HSD_GObj);
 }

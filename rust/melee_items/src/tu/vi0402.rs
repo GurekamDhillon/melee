@@ -45,7 +45,7 @@ pub mod ext {
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn Player_InitAllPlayers();
     fn efAsync_LoadSync(a0: i32);
-    fn efLib_Init() => unsafe { melee_world::tu::eflib::efLib_Init() };
+    fn efLib_Init() => unsafe { melee_world::tu::efn::eflib::efLib_Init() };
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_801A4B60();
     fn lbAudioAx_800236DC() -> i32 => unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() };

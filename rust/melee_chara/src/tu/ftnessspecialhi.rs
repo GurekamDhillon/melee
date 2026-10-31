@@ -62,7 +62,7 @@ pub mod ext {
     pub fn efLib_DestroyAll(gobj: *mut HSD_GObj) {
         match unsafe { EFLIB_DESTROYALL } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_world::tu::eflib::efLib_DestroyAll(gobj as _); } },
+            None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_DestroyAll(gobj as _); } },
         }
     }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.

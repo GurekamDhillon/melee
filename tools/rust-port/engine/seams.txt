@@ -24,6 +24,7 @@ Ucf_PadLatch
 FighterControls_Apply
 Mex_SlotInternal	-1
 Mex_Enabled
+GXGetTexBufferSize	crate::seams::gx_tex_buffer_size($ARGS)
 GXInvalidate\w+
 db_CheckScreenshot
 db_TakeScreenshotIfPending
@@ -69,3 +70,20 @@ Lab[A-Z]\w+
 Frontend_\w+
 db_Setup
 db_RunEveryFrame
+DC[A-Z]\w+
+IC[A-Z]\w+
+VI[A-Z]\w+
+OS[A-Z]\w+
+AI[A-Z]\w+
+AX[A-Z]\w+
+DSP\w+
+EXI\w+
+# STEP 10 (effects and particles): baselib/particle.c, generator.c and psappsrt.c have no native (pointer) port yet,
+# only the owned-model one. Until step 10 lands them these answer "no particle system" (no generator, no RNG draw).
+!hsd_8039\w+
+!hsd_803A\w+
+!ps[A-Z]\w+
+HSD_JObjSetDPtclCallback
+HSD_JObjSetSPtclCallback
+# trophy (Toy) data is display only: TyDataf/Datai symbols are not typed yet (dat_symbols.tsv), the VS sim never reads them
+!tyDisplay_8031C2CC

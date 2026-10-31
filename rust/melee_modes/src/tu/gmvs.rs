@@ -212,7 +212,7 @@ pub mod ext {
         Camera_Create() = || { crate::tu::adapt::Camera_Create__cmc() };
         lbRefract_800222A4() = || { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_800222A4(); } };
         lb_8000FCDC() = || { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_8000FCDC(); } };
-        efLib_Init() = || { unsafe { let _ = melee_world::tu::eflib::efLib_Init(); } };
+        efLib_Init() = || { unsafe { let _ = melee_world::tu::efn::eflib::efLib_Init(); } };
         efAsync_LoadSync(a0: i32) = |_| todo!("TODO(port) efAsync_LoadSync (efasync.c)");
         Player_80036DD8() = || { unsafe { let _ = melee_fighter::tu::player::Player_80036DD8(); } };
         ftCo_800C06C0() = || { unsafe { let _ = melee_fighter::tu::ftdevice::ftco_800c06c0(); } };

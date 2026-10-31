@@ -9,8 +9,8 @@ pub static mut dlist_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed()
 
 pub unsafe fn HSD_ListInitAllocData() {
     melee_core::ct!("HSD_ListInitAllocData");
-    ext::HSD_ObjAllocInit(&raw mut slist_alloc_data, core::mem::size_of::<HSD_SList>(), 4);
-    ext::HSD_ObjAllocInit(&raw mut dlist_alloc_data, core::mem::size_of::<HSD_DList>(), 4);
+    ext::alloc_init(&raw mut slist_alloc_data, core::mem::size_of::<HSD_SList>(), 4);
+    ext::alloc_init(&raw mut dlist_alloc_data, core::mem::size_of::<HSD_DList>(), 4);
 }
 
 pub unsafe fn HSD_SListGetAllocData() -> *mut HSD_ObjAllocData {
@@ -25,7 +25,7 @@ pub unsafe fn HSD_DListGetAllocData() -> *mut HSD_ObjAllocData {
 
 pub unsafe fn HSD_SListAlloc() -> *mut HSD_SList {
     melee_core::ct!("HSD_SListAlloc");
-    let list = ext::HSD_ObjAlloc(HSD_SListGetAllocData()).cast::<HSD_SList>();
+    let list = ext::alloc(HSD_SListGetAllocData()).cast::<HSD_SList>();
     assert!(!list.is_null(), "list.c:76 list");
     list.write(HSD_SList::zeroed());
     list
@@ -69,7 +69,7 @@ pub unsafe fn HSD_SListRemove(list: *mut HSD_SList) -> *mut HSD_SList {
     melee_core::ct!("HSD_SListRemove");
     if !list.is_null() {
         let next = (*list).next;
-        ext::HSD_ObjFree(HSD_SListGetAllocData(), list.cast());
+        ext::free(HSD_SListGetAllocData(), list.cast());
         return next;
     }
     core::ptr::null_mut()

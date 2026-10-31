@@ -65,6 +65,7 @@ impl Engine {
         Host::boot(disc, mem_size)?;
         melee_link::install();
         melee_link::install_retail();
+        crate::cdata::install_cdata();
         crate::install();
         unsafe {
             PADS = Some(pads);

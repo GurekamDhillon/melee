@@ -1,0 +1,6 @@
+# C-initialised string data that a tu `ext` block declares as a zeroed static ("defined in another TU, the tests set it") and no
+# tu defines. Columns (tab separated): the Rust static (crate::module::NAME), the C source file, the C symbol.
+# gen_cdata.py reads the literal from the C file and writes rust/melee_engine/src/cdata.rs (install_cdata copies it in at boot).
+melee_items::tu::iteffect::ext::it_803F1ED8	src/melee/it/it_3F14.c	it_803F1ED8
+melee_items::tu::iteffect::ext::it_803F1EE4	src/melee/it/it_3F14.c	it_803F1EE4
+melee_items::tu::iteffect::ext::it_803F1EF0	src/melee/it/it_3F14.c	it_803F1EF0

@@ -79,7 +79,7 @@ pub mod ext {
     pub static mut it_804A0E70: [DamageLogEntry; 15] = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D18: u32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D1C: [u8; 4] = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D28;
 }
 // END GENERATED EXT
 

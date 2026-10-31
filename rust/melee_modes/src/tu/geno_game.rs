@@ -252,7 +252,7 @@ pub use crate::tu::script_game::hsd_804D0908;
 pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
 pub use melee_world::itacc::it_804A0F60;
 pub use crate::tu::script_game::it_804D6D24;
-pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+pub use melee_items::tu::it_3F14::it_804D6D28;
 }
 use ext::*;
 pub const M_PI: f64 = 3.14159265358979323846f64;

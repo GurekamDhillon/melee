@@ -72,7 +72,7 @@ pub mod ext {
     fn Stage_8022524C() => unsafe { melee_world::tu::stage::Stage_8022524C() };
     fn Stage_8022532C(a0: u32, a1: i32) => unsafe { melee_world::tu::stage::Stage_8022532C(a0, a1) };
     fn efAsync_LoadSync(a0: i32);
-    fn efLib_Init() => unsafe { melee_world::tu::eflib::efLib_Init() };
+    fn efLib_Init() => unsafe { melee_world::tu::efn::eflib::efLib_Init() };
     fn ftDemo_ObjAllocInit();
     fn gm_8016895C(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32);
     fn gm_801A4B60();

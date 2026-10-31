@@ -668,7 +668,7 @@ pub fn efAsync_LoadSync(a0: i32) {
 pub static mut HOOK_efLib_Init: Option<fn()> = None;
 /// C `efLib_Init` (melee/ef/eflib.h).
 pub fn efLib_Init() {
-    match unsafe { HOOK_efLib_Init } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::eflib::efLib_Init(); } return; } }
+    match unsafe { HOOK_efLib_Init } { Some(f) => f(), None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_Init(); } return; } }
 }
 pub static mut HOOK_fn_80160DE8: Option<fn(*mut HSD_JObj, u8, i32, u8, f32, f32)> = None;
 /// C `fn_80160DE8` (melee/gm/gm_1601.h).

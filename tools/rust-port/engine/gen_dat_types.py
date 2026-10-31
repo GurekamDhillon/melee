@@ -39,7 +39,7 @@ def decodable_types():
 
 def render(rows):
     ok = decodable_types()
-    types = sorted({r[2].lstrip("*").removesuffix("[]") for r in rows if r[2] != "raw"})
+    types = sorted({r[2].lstrip("*").removesuffix("[]") for r in rows if r[2] != "raw" and not r[2].startswith("custom:")})
     for t in types:
         if t not in ok:
             sys.exit(f"dat_symbols.tsv: type {t} has no GcDecode impl in melee_types")
@@ -61,6 +61,8 @@ def render(rows):
          "    Array(&'static str),",
          "    /// Bytes read straight from the raw image (C `void*`).",
          "    Raw,",
+         "    /// Decoded by the hand-written `dat_custom::decode` (tables of differently typed pointers).",
+         "    Custom(&'static str),",
          "}",
          "",
          "fn rt(t: &'static str) -> RootType {",
@@ -72,7 +74,7 @@ def render(rows):
          "pub fn type_of(name: &str) -> Option<RootType> {"]
     for k, s, t, _ in rows:
         if k == "sym":
-            v = "RootType::Raw" if t == "raw" else f'rt("{t}")'
+            v = "RootType::Raw" if t == "raw" else (f'RootType::Custom("{t[7:]}")' if t.startswith("custom:") else f'rt("{t}")')
             o.append(f'    if name == "{s}" {{ return Some({v}); }}')
     for k, s, t, _ in rows:
         if k == "prefix":
@@ -84,9 +86,10 @@ def render(rows):
     o += ["    None", "}", "",
           "/// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is",
           "/// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).",
-          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32) -> *mut c_void {",
+          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds) -> *mut c_void {",
           "    match ty {",
           "        RootType::Raw => core::ptr::null_mut(),",
+          "        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds),",
           "        RootType::Record(n) => match n {"]
     for t in types:
         if not any(r[2] == t or r[2] == t + "[]" for r in rows):

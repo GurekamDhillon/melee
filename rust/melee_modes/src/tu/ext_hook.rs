@@ -14,6 +14,10 @@ pub type ExtHook = unsafe fn(&'static str, &[u64]) -> u64;
 
 pub static mut EXT_HOOK: Option<ExtHook> = None;
 
+/// Answer for a callee that has no port and no default: the engine installs the "feature off" answers of its host
+/// seams here (`melee_engine::seams_gen::ext_fallback`); unset, the call panics with the callee's name.
+pub static mut EXT_FALLBACK: Option<ExtHook> = None;
+
 /// A scalar that crosses the hook as a `u64`.
 pub trait Val: Copy {
     fn to_u64(self) -> u64;
@@ -106,6 +110,22 @@ macro_rules! ext_default {
     };
 }
 
+/// The `None` arm of [`ext_fns!`]: the ported callee, else the engine's fallback, else the TODO panic.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! ext_none {
+    ([] ($($a:ident),*) $name:ident [$($r:ty)?]) => {
+        match $crate::tu::ext_hook::EXT_FALLBACK {
+            Some(f) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
+                f(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
+            None => panic!(concat!("TODO ext: ", stringify!($name), " is in a TU that is not ported yet")),
+        }
+    };
+    ([$def:path] ($($a:ident),*) $name:ident [$($r:ty)?]) => {
+        return $def($($a),*)
+    };
+}
+
 /// Default arm of a local `ext_fns!`: the verified port (`= path`), or the TODO panic.
 #[doc(hidden)]
 #[macro_export]
@@ -129,7 +149,7 @@ macro_rules! ext_fns {
             match $crate::tu::ext_hook::EXT_HOOK {
                 Some(h) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
                     h(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
-                None => { $crate::ext_default!([$($def)?] ($($a),*) $name) }
+                None => { $crate::ext_none!([$($def)?] ($($a),*) $name [$($r)?]) }
             }
         }
         $crate::ext_fns! { $($rest)* }
@@ -141,7 +161,7 @@ macro_rules! ext_fns {
             match $crate::tu::ext_hook::EXT_HOOK {
                 Some(h) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
                     h(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
-                None => { $crate::ext_default!([$($def)?] ($($a),*) $name) }
+                None => { $crate::ext_none!([$($def)?] ($($a),*) $name [$($r)?]) }
             }
         }
         $crate::ext_fns! { $($rest)* }

@@ -21,3 +21,9 @@ suffix	_shapeanim_joint	HSD_ShapeAnimJoint	tyfigupon.c:164 shapeanim_str
 suffix	_animjoint	HSD_AnimJoint	toy.c:1995 anim
 suffix	_joint	HSD_Joint	fighter.c / toy.c:2432 joint (HSD_JObjLoadJoint)
 sym	lbRumbleData	Fighter_804D653C_t[]	src/melee/lb/lb_013B.c:241 Fighter_804D653C_t* lb_804D63C0 (indexed by rumble id; the array runs to the end of the data section)
+sym	ftLoadCommonData	custom:plco	src/melee/ft/fighter.c:312 Fighter_LoadCommonData (23 differently typed pointers)
+sym	plLoadCommonData	*pl_804D6470_t	src/melee/pl/player.c Player_80036DD8 pl_804D6470 = *sp8
+sym	lbRefData	custom:lbrefdata	src/melee/lb/lbrefract.c:373
+sym	effBehaviorTable	raw	src/melee/ef/efasync.c (effect behavior table; typed by step 10)
+prefix	eff	EF_DAT_Entry	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
+sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)

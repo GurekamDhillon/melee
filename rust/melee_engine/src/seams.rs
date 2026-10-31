@@ -121,3 +121,32 @@ pub fn os_get_time() -> i64 {
     static T0: OnceLock<std::time::Instant> = OnceLock::new();
     (T0.get_or_init(std::time::Instant::now).elapsed().as_nanos() as i64) * 81 / 2000
 }
+
+/// `GXGetTexBufferSize` (dolphin SDK GXTexture.c): bytes a texture of `format` occupies, tile padded, with the mip
+/// chain when `mipmap` is set. The GX texture formats: I4 0, I8 1, IA4 2, IA8 3, RGB565 4, RGB5A3 5, RGBA8 6, C4 8, C8 9,
+/// C14X2 10, CMPR 14; Z8 0x11, Z16 0x13, Z24X8 0x16; copy formats 0x20.. (R4 0x20, RA4 0x22, RA8 0x23, A8 0x27, ...).
+pub fn gx_tex_buffer_size(width: u16, height: u16, format: u32, mipmap: u8, max_lod: u8) -> u32 {
+    let (sx, sy) = match format {
+        0 | 8 | 14 | 0x20 | 0x30 => (3, 3),                                    // I4 C4 CMPR R4 Z4: 8x8 texel tiles
+        1 | 2 | 9 | 0x11 | 0x22 | 0x27..=0x2A | 0x21 | 0x28..=0x2F => (3, 2), // 8 bit formats: 8x4
+        _ => (2, 2),                                                           // 16 / 32 bit formats: 4x4
+    };
+    let tile = if format == 6 || format == 0x16 { 64 } else { 32 };
+    let tiles = |w: u32, h: u32| ((w + (1 << sx) - 1) >> sx) * ((h + (1 << sy) - 1) >> sy);
+    let (mut w, mut h) = (width as u32, height as u32);
+    if mipmap == 0 {
+        return tiles(w, h) * tile;
+    }
+    let mut total = 0;
+    let mut lod = 0u32;
+    loop {
+        total += tiles(w, h) * tile;
+        if lod >= max_lod as u32 || (w == 1 && h == 1) {
+            break;
+        }
+        w = (w >> 1).max(1);
+        h = (h >> 1).max(1);
+        lod += 1;
+    }
+    total
+}

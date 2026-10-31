@@ -12,5 +12,11 @@ use melee_types::*;
 pub static mut it_804D6D40: *mut it_804D6D40_t = null_mut();
 /// `it_804D6D38`: article pointer table (`Article**`), set by the crate's init.
 pub static mut it_804D6D38: *mut *mut Article = null_mut();
+/// `it_804D6D04`, `it_804D6D20`, `it_804D6D24`, `it_804D6D28`: the item common-data globals iteffect.c fills from
+/// `itPublicData` (`it_8027870C`). One static each: every item TU's `ext` block aliases these.
+pub static mut it_804D6D04: *mut Fighter_804D653C_t = null_mut();
+pub static mut it_804D6D20: *mut it_804D6D20_t = null_mut();
+pub static mut it_804D6D24: *mut *mut Article = null_mut();
+pub static mut it_804D6D28: *mut ItemCommonData = null_mut();
 /// `it_804D6D30`: article pointer table (`Article**`), set by the crate's init.
 pub static mut it_804D6D30: *mut *mut Article = null_mut();

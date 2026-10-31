@@ -6,12 +6,12 @@ use melee_types::{Fighter, HSD_GObj};
 
 /// `efLib_PauseAll` (defined in ext).
 pub unsafe extern "C" fn ext__efLib_PauseAll(g: *mut HSD_GObj) {
-    melee_world::tu::eflib::efLib_PauseAll(g);
+    melee_world::tu::efn::eflib::efLib_PauseAll(g);
 }
 
 /// `efLib_ResumeAll` (defined in ext).
 pub unsafe extern "C" fn ext__efLib_ResumeAll(g: *mut HSD_GObj) {
-    melee_world::tu::eflib::efLib_ResumeAll(g);
+    melee_world::tu::efn::eflib::efLib_ResumeAll(g);
 }
 
 /// `ftCa_Init_800E28C8` (defined in src/melee/ft/kinds/ftCaptain/ftcaptain.c).

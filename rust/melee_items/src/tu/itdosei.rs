@@ -80,7 +80,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut attrs: *mut ItemAttr = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D28;
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

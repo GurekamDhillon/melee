@@ -46,7 +46,7 @@ pub mod ext {
     pub fn efLib_SetFlags(gobj: *mut HSD_GObj, flags: i32) {
         match unsafe { EFLIB_SETFLAGS } {
             Some(f) => f(gobj, flags),
-            None => { unsafe { let _ = melee_world::tu::eflib::efLib_SetFlags(gobj as _, flags as _); } },
+            None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_SetFlags(gobj as _, flags as _); } },
         }
     }
     pub static mut IT_8029BAB8: Option<fn(*mut HSD_GObj, *mut Vec3, f32) > = None;

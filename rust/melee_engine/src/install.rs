@@ -70,6 +70,33 @@ pub fn install() {
         // the save-data pointer lives in melee_world::gmmain, above melee_runtime
         melee_runtime::tu::lblanguage::ext::H_gmMainLib_804D3EE0 = Some(|| melee_world::gmmain::gmMainLib_804D3EE0);
 
+        // lbArchive_LoadSymbols (variadic in the C): the hooks that spell its arguments out
+        {
+            use core::ffi::c_char;
+            melee_runtime::tu::lbrefract::H_lbArchive_LoadSymbols = Some(|file: *const c_char, out: *mut c_void, sym: *const c_char| {
+                melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file, &[out, sym as *mut c_void, core::ptr::null_mut()]);
+            });
+            melee_fighter::tu::player::ext::hook::lbArchive_LoadSymbols = Some(
+                |file: *const c_char, out: *mut c_void, sym: *const c_char, _end: i32| {
+                    melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file, &[out, sym as *mut c_void, core::ptr::null_mut()])
+                },
+            );
+            melee_world::tu::efn::efasync::ext::hook::lbArchive_80017040 = Some(
+                |dst: *mut *mut melee_types::HSD_Archive, file: *const i8, out: *mut c_void, rest: &[*const c_void]| {
+                    let mut v: Vec<*mut c_void> = vec![out];
+                    v.extend(rest.iter().map(|p| *p as *mut c_void));
+                    melee_runtime::tu::lbarchive::lbArchive_80017040(dst, file, &v) as i32
+                },
+            );
+            melee_fighter::tu::fighter::ext::hook::lbArchive_LoadSymbols_PlCo = Some(|| {
+                static mut P: *mut *mut c_void = core::ptr::null_mut();
+                melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(
+                    c"PlCo.dat".as_ptr(),
+                    &[&raw mut P as *mut c_void, c"ftLoadCommonData".as_ptr() as *mut c_void, core::ptr::null_mut()],
+                );
+                P
+            });
+        }
         // the common and demo MotionState tables (ftmotionstates.c)
         melee_fighter::tu::fighter::ext::hook::ftData_MotionStateList =
             Some(|| &raw mut melee_link::retail_ms::ftmotionstates::ftData_MotionStateList as *mut melee_types::MotionState);

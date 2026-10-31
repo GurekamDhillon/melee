@@ -195,6 +195,16 @@ def index_defs():
 ENTRY_HEAD = re.compile(r'\s*(?:(?P<hook>[A-Za-z_]\w*)\s+(?=[A-Za-z_]\w*\s*\()|fn\s+)?(?P<name>[A-Za-z_]\w*)\s*\(')
 
 
+def _ptypes(text):
+    out = []
+    for x in split_top(text, ','):
+        x = x.strip()
+        if not x: continue
+        m = re.match(r'^(?:mut\s+)?\w+\s*:\s*(.*)$', x, re.S)
+        out.append(re.sub(r'\s+', ' ', (m.group(1) if m else x).strip()))
+    return out
+
+
 class _Swapped:
     """A regex match whose first two groups are exchanged (macros that take the C name before the static's name)."""
     def __init__(self, m): self.m = m
@@ -236,6 +246,7 @@ def parse_hooks():
             body = t[op+1:cl]
             for ent in split_top(body, ';'):
                 if not ent.strip(): continue
+                ent = re.sub(r'^\s*extern\s+', ' ', ent)
                 m = ENTRY_HEAD.match(ent)
                 if not m: continue
                 name = m.group('name'); hk = m.group('hook')
@@ -243,7 +254,8 @@ def parse_hooks():
                 p0 = m.end() - 1
                 p1 = match_close(ent, p0, '(', ')')
                 if p1 < 0: continue
-                npar = count_params(ent[p0+1:p1])
+                _pt = ent[p0+1:p1]
+                npar = count_params(_pt)
                 rest = ent[p1+1:]
                 rm = re.match(r'\s*->', rest)
                 hasret = bool(rm)
@@ -259,8 +271,9 @@ def parse_hooks():
                 else:
                     path = None
                 rt = re.match(r'\s*->\s*(.+?)\s*(?:(?<![=!<>])=>?(?![=>])|$)', rest, re.S)
-                hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
-                                  kind=kind, path=path, mod=mod_chain, ret=rt.group(1).strip() if rt else None))
+                hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
+                                  kind=kind, path=path, mod=mod_chain, ret=rt.group(1).strip() if rt else None,
+                                  byname=(kind == 'external_macro' and crate == 'melee_modes')))
     # `lb_hook!(H_NAME, NAME, (a: T, ..) -> R [= default]);` (melee_runtime lb* TUs): the static is `<mods>::H_NAME`
     for crate, f, rel in tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
@@ -274,7 +287,8 @@ def parse_hooks():
             m = re.match(r'\s*(\w+)\s*,\s*(\w+)\s*,\s*\(', body)
             if not m: continue
             p1 = match_close(body, m.end() - 1, '(', ')')
-            npar = count_params(body[m.end():p1])
+            _pt = body[m.end():p1]
+            npar = count_params(_pt)
             rest = body[p1 + 1:]
             hasret = bool(re.match(r'\s*->', rest))
             dm2 = re.search(r'(?<![=!<>])=(?![=>])', rest)
@@ -286,7 +300,7 @@ def parse_hooks():
                 if e < 0 or e > im.start(): chain.append(mm.group(1))
             mod_chain = '::'.join([mp] + chain)
             todo = ('todo!' in dflt or 'panic!' in dflt or 'unimplemented!' in dflt) or not dflt.strip()
-            hooks.append(dict(crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=todo,
+            hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=todo,
                               kind='lb_hook', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain,
                               ret=(re.match(r'\s*->\s*(.+?)\s*(?:=|$)', rest, re.S).group(1).strip() if hasret else None)))
     # `hook!(H_NAME, name, (a: T, ..) [-> R] [, default_path]);` (melee_modes gm* TUs): static `<mods>::H_NAME`
@@ -313,7 +327,8 @@ def parse_hooks():
             if not m or m.group(1).startswith('$'): continue
             if swap_args: m = _Swapped(m)
             p1 = match_close(body, m.end() - 1, '(', ')')
-            npar = count_params(body[m.end():p1])
+            _pt = body[m.end():p1]
+            npar = count_params(_pt)
             rest = body[p1 + 1:]
             rm = re.match(r'\s*->\s*(.+?)\s*(?:,\s*[\w:]+\s*)?$', rest, re.S)
             hasret = bool(re.match(r'\s*->', rest))
@@ -325,7 +340,7 @@ def parse_hooks():
                 e = match_close(t, o)
                 if e < 0 or e > im.start(): chain.append(mm.group(1))
             mod_chain = '::'.join([mp] + chain)
-            hooks.append(dict(crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=not has_default,
+            hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=not has_default,
                               kind='hook_macro', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain, ret=ret, cabi=macro_cabi, ref='&' in body[m.end():p1]))
     # generic pass: `pub static mut NAME: Option<fn(..) [-> R]> = None;` directly inside any `mod hook { }` (hand-written
     # hook modules and macro forms that expand to one), when no earlier form already produced that path.
@@ -351,10 +366,11 @@ def parse_hooks():
                 op = hm.end() + sm.end() - 1
                 cl = match_close(t, op, '(', ')')
                 if cl < 0: continue
-                npar = count_params(t[op + 1:cl])
+                _pt = t[op + 1:cl]
+                npar = count_params(_pt)
                 rest = t[cl + 1:cl + 200]
                 rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', rest, re.S)
-                hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
+                hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
                                   kind='mod_hook_static', path=path, mod=mod_chain, ret=rm.group(1).strip() if rm else None, cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
     # `pub static mut H_name: Option<[unsafe] [extern "C"] fn(..) [-> R]> = None;` next to a function `name` (the
     # hand-written / generated `H_` form of melee_world and melee_runtime TUs)
@@ -376,10 +392,40 @@ def parse_hooks():
             op = sm.end() - 1
             cl = match_close(t, op, '(', ')')
             if cl < 0: continue
-            npar = count_params(t[op + 1:cl])
+            _pt = t[op + 1:cl]
+            npar = count_params(_pt)
             rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', t[cl + 1:cl + 200], re.S)
-            hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
+            hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
                               kind='h_static', path=path, mod='::'.join([mp] + chain), ret=rm.group(1).strip() if rm else None, cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
+    # `pub static mut UPPER_NAME: Option<fn(..)> = None;` followed by `pub fn upper_name(..)` (case-insensitive name match)
+    have = {(h['crate'], h['path']) for h in hooks if h['path']}
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if not re.search(r'static\s+mut\s+[A-Z][A-Z0-9_]*\s*:\s*Option<', raw): continue
+        t = blank(raw)
+        c, mp = modpath_of(f)
+        fnames = {}
+        for fm in re.finditer(r'\bpub\s+(?:unsafe\s+)?(?:extern\s+)?fn\s+(\w+)\s*\(', t):
+            fnames.setdefault(fm.group(1).upper().replace('_', ''), fm.group(1))
+        for sm in re.finditer(r'pub\s+static\s+mut\s+([A-Z][A-Z0-9_]*)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', t):
+            nm = fnames.get(sm.group(1).replace('_', ''))
+            if not nm: continue
+            chain = []
+            for mm in re.finditer(r'(?:^|[^\w])mod\s+(\w+)\s*\{', t[:sm.start()]):
+                o = mm.end() - 1
+                e2 = match_close(t, o)
+                if e2 < 0 or e2 > sm.start(): chain.append(mm.group(1))
+            path = '::'.join([mp] + chain + [sm.group(1)])
+            if (c, path) in have: continue
+            op = sm.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            _pt = t[op + 1:cl]
+            npar = count_params(_pt)
+            rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', t[cl + 1:cl + 200], re.S)
+            hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=nm, npar=npar, hasret=bool(rm), todo=True,
+                              kind='upper_static', path=path, mod='::'.join([mp] + chain), ret=rm.group(1).strip() if rm else None,
+                              cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
     return hooks
 
 
@@ -406,6 +452,54 @@ def choose(cands, name, cmap, own_file):
     return None
 
 
+LB_FAMILY = {'lbArchive_LoadSymbols': ('LoadSymbols', 0), 'lbArchive_80016DBC': ('80016DBC', 0),
+             'lbArchive_80017040': ('80017040', 1), 'lbArchive_800171CC': ('800171CC', 1)}
+
+
+def variadic_adapter(h):
+    """Body for a hook that spells out the variadic `lbArchive_*(file, symbols, name, ..., NULL)` family with a fixed
+    parameter list or a slice: build the `rest` slice the native loader takes. None if the shape is not understood."""
+    kind, has_dst = LB_FAMILY[h['name']]
+    pt = h.get('ptypes')
+    if pt is None or len(pt) < 1 + has_dst: return None
+    npar = len(pt)
+    def cls(t):
+        t = t.replace('::core::ffi::c_char', 'i8').replace('core::ffi::c_char', 'i8').replace('c_char', 'i8')
+        if re.fullmatch(r'\*(?:const|mut) (?:i8|u8)', t): return 'str'
+        if re.fullmatch(r'\*mut \*mut [\w:]+', t): return 'dst'
+        if re.fullmatch(r'\*(?:const|mut) (?:::)?(?:core::ffi::)?c_void', t): return 'ptr'
+        if t in ('i32', 'u32', 'c_int'): return 'int'
+        if re.fullmatch(r'&\[\*(?:const|mut) (?:::)?(?:core::ffi::)?c_void\]', t): return 'slice'
+        if re.fullmatch(r'&\[\(\*mut c_void, \*const u8\)\]', t): return 'tuples'
+        return None
+    kinds = [cls(t) for t in pt]
+    if None in kinds: return None
+    i = 0
+    dst = 'core::ptr::null_mut()'
+    if has_dst:
+        if kinds[0] != 'dst': return None
+        dst = 'a0 as *mut *mut melee_types::HSD_Archive'
+        i = 1
+    if kinds[i] != 'str': return None
+    file = f'a{i} as *const core::ffi::c_char'
+    lines = ['let mut v: std::vec::Vec<*mut core::ffi::c_void> = std::vec::Vec::new();']
+    for j in range(i + 1, npar):
+        k = kinds[j]
+        if k in ('str', 'ptr'): lines.append(f'v.push(a{j} as *mut core::ffi::c_void);')
+        elif k == 'int': pass
+        elif k == 'slice': lines.append(f'v.extend(a{j}.iter().map(|p| *p as *mut core::ffi::c_void));')
+        elif k == 'tuples': lines.append(f'for (p, q) in a{j}.iter() {{ v.push(*p as *mut core::ffi::c_void); v.push(*q as *mut core::ffi::c_void); }}')
+        else: return None
+    lines.append('if v.last().map_or(true, |p| !p.is_null()) { v.push(core::ptr::null_mut()); }')
+    call = {'LoadSymbols': f'melee_runtime::tu::lbarchive::lbArchive_LoadSymbols({file}, &v)',
+            '80016DBC': f'melee_runtime::tu::lbarchive::lbArchive_80016DBC({file}, &v)',
+            '80017040': f'melee_runtime::tu::lbarchive::lbArchive_80017040({dst}, {file}, &v)',
+            '800171CC': f'melee_runtime::tu::lbarchive::lbArchive_800171CC({dst}, {file}, &v)'}[kind]
+    if not h['hasret']: lines.append(f'let _ = {call};')
+    else: lines.append(f'{call} as _')
+    return ' '.join(lines)
+
+
 def main():
     report = '--report' in sys.argv
     skip = set()
@@ -422,6 +516,12 @@ def main():
         if key in seen: continue
         seen.add(key)
         why = None
+        if h['name'] in LB_FAMILY and h['path'] and not (h.get('cabi') and h.get('ref')):
+            ad = variadic_adapter(h)
+            if ad:
+                h['custom'] = ad
+                linked.append(h)
+                continue
         if h['path'] is None:
             why = 'other'
         elif h.get('cabi') and h.get('ref'):
@@ -463,6 +563,15 @@ def main():
     for crate in LEAVES:
         out.append(f'fn install_{crate}() {{')
         for h in sorted(by_crate.get(crate, []), key=lambda x: x['path']):
+            if h.get('custom'):
+                npar = h['npar']
+                args = ', '.join(f'a{i}' for i in range(npar))
+                out.append(f'    // {h["file"]}')
+                if h.get('cabi'):
+                    out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{npar}(|{args}| unsafe {{ {h["custom"]} }})); }}')
+                else:
+                    out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(|{args}| unsafe {{ {h["custom"]} }}); }}')
+                continue
             cc, cmod, npar, hasret, _ = h['canon']
             args = ', '.join(f'a{i}' for i in range(npar))
             site += 1

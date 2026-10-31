@@ -464,7 +464,7 @@ pub unsafe extern "C" fn lbDvd_CachePreloadedFile(index: i32) {
         }
         (*pe).raw_data = ext::lbHeap_80015BD0((*pe).heap as i32, ((*pe).size + 31) & !31usize);
         if (*pe).r#type == 2 || (*pe).r#type == 3 || (*pe).r#type == 4 {
-            (*pe).archive = ext::lbHeap_80015BD0((*pe).heap as i32, SIZEOF_HSD_ARCHIVE);
+            (*pe).archive = ext::lbHeap_80015BD0((*pe).heap as i32, core::mem::size_of::<HSD_Archive>());
         }
         if (*pe).raw_data.is_null() {
             lbDvd_80017E64(0, index as usize, null_mut(), true);

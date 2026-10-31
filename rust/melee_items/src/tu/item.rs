@@ -73,7 +73,7 @@ pub mod ext {
     fn db_ShowItemPickupRange() -> u32 => unsafe { crate::tu::dbitem::db_ShowItemPickupRange() };
     fn efAsync_QueueClear(a0: *mut c_void);
     fn efAsync_QueueFlush(a0: *mut HSD_GObj, a1: *mut c_void);
-    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::eflib::efLib_DestroyAll(a0) };
+    fn efLib_DestroyAll(a0: *mut HSD_GObj) => unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(a0) };
     fn ftLib_80086724(a0: *mut HSD_GObj, a1: *mut HSD_GObj);
     fn ftLib_80086764(a0: *mut HSD_GObj);
     fn ftLib_800867A0(a0: *mut HSD_GObj, a1: *mut HSD_GObj) -> i32 => unsafe { crate::tu::ftlib::ftLib_800867A0(a0, a1) as _ };
@@ -193,13 +193,13 @@ pub mod ext {
     pub use crate::tu::itspawn::it_804A0E60;
     pub use melee_world::itacc::it_804A0F60;
     pub static mut it_804D6D00: i8 = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D04: *mut Fighter_804D653C_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D04;
     pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D10: u32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D14: u32 = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D24;
+    pub use crate::tu::it_3F14::it_804D6D28;
     pub use crate::tu::it_3F14::it_804D6D30;
     pub use crate::tu::it_3F14::it_804D6D38;
     pub static mut item_data: *mut Item = unsafe { core::mem::zeroed() };

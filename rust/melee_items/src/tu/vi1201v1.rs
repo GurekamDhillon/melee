@@ -34,7 +34,7 @@ pub mod ext {
     }
     todo_fns! {
         fn efAsync_LoadSync(a0: i32) -> i32;
-        fn efLib_Init() => unsafe { melee_world::tu::eflib::efLib_Init() };
+        fn efLib_Init() => unsafe { melee_world::tu::efn::eflib::efLib_Init() };
         fn efSync_Spawn(a0: i32, a1: *mut HSD_GObj, a2: *mut Vec, a3: *mut f32, a4: *mut f32, a5: u32, a6: u32) -> *mut c_void;
         fn ftDemo_ObjAllocInit();
         fn gm_801A4B60();

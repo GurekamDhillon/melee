@@ -44,7 +44,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D28;
 }
 // END GENERATED EXT
 

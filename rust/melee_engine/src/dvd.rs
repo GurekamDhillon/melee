@@ -9,7 +9,13 @@ use melee_types::{DVDFileInfo, HSD_DevComCallback};
 /// `DVDConvertPathToEntrynum`.
 pub fn DVDConvertPathToEntrynum(path: *const c_char) -> i32 {
     let p = unsafe { CStr::from_ptr(path) }.to_string_lossy();
-    Host::get().disc.entry_for_path(&p)
+    let n = Host::get().disc.entry_for_path(&p);
+    if n < 0 {
+        eprintln!("engine: disc has no file {p}");
+    } else if std::env::var_os("MELEE_ENGINE_LOG").is_some() {
+        eprintln!("engine: path {p} = entry {n}");
+    }
+    n
 }
 
 /// `DVDFastOpen`: fills `startAddr` (the entry number stands in for the disc offset) and `length`.
@@ -45,6 +51,10 @@ pub fn host_pump_disc() {}
 /// offset), zero-filling past the end of the file (the C rounds `size` up to 32), then run the callback.
 pub fn host_dev_com_request(file: i32, src: usize, dst: usize, size: usize, ty: i32, _pri: i32, cb: HSD_DevComCallback, args: usize) -> i32 {
     let h = Host::get();
+    if std::env::var_os("MELEE_ENGINE_LOG").is_some() {
+        eprintln!("engine: dev_com file {file} src {src:#x} dst {dst:#x} size {size:#x} type {ty:#x}");
+        h.disc.read_entry(file, 0, 16).map(|b| eprintln!("engine:   head {:02x?} flen {:#x}", b, h.disc.entry_len(file).unwrap_or(0))).ok();
+    }
     let flen = h.disc.entry_len(file).unwrap_or_else(|| panic!("host_dev_com_request: entry {file} is not a file")) as usize;
     let want = size.min(flen.saturating_sub(src));
     let bytes = h.disc.read_entry(file, src as u32, want).unwrap_or_else(|e| panic!("host_dev_com_request: {e}"));

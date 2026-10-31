@@ -16,6 +16,8 @@ pub enum RootType {
     Array(&'static str),
     /// Bytes read straight from the raw image (C `void*`).
     Raw,
+    /// Decoded by the hand-written `dat_custom::decode` (tables of differently typed pointers).
+    Custom(&'static str),
 }
 
 fn rt(t: &'static str) -> RootType {
@@ -37,7 +39,13 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "itPublicData" { return Some(rt("it_804D6D20_t")); }
     if name == "effCommonDataTable" { return Some(rt("EF_DAT_Entry")); }
     if name == "lbRumbleData" { return Some(rt("Fighter_804D653C_t[]")); }
+    if name == "ftLoadCommonData" { return Some(RootType::Custom("plco")); }
+    if name == "plLoadCommonData" { return Some(rt("*pl_804D6470_t")); }
+    if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
+    if name == "effBehaviorTable" { return Some(RootType::Raw); }
+    if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("ftData") { return Some(rt("ftData")); }
+    if name.starts_with("eff") { return Some(rt("EF_DAT_Entry")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
@@ -47,9 +55,10 @@ pub fn type_of(name: &str) -> Option<RootType> {
 
 /// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is
 /// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).
-pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32) -> *mut c_void {
+pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds) -> *mut c_void {
     match ty {
         RootType::Raw => core::ptr::null_mut(),
+        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
             "EF_DAT_Entry" => d.object::<EF_DAT_Entry>(off) as *mut c_void,
@@ -72,6 +81,7 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32) -
         RootType::PtrTo(n) => match n {
             "GroundItemData" => d.object::<*mut GroundItemData>(off) as *mut c_void,
             "LightList" => d.object::<*mut LightList>(off) as *mut c_void,
+            "pl_804D6470_t" => d.object::<*mut pl_804D6470_t>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for pointer to {n}"),
         },
     }

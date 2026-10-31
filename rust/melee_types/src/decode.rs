@@ -29,6 +29,8 @@ impl GcDecode for HSD_Joint {
     }
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::gc_decode_fields(d, at);
+        // `mtx` is the envelope matrix: jobj.c copies a whole `Mtx` (3 rows) from it, not the one row `MtxPtr` points at.
+        v.mtx = d.ptr_array::<[f32; 4]>(at + off::<HSD_Joint>("mtx"), 3);
         let u = at + off::<HSD_Joint>("u");
         v.u = HSD_Joint_u::zeroed();
         if v.flags & JOBJ_SPLINE != 0 {

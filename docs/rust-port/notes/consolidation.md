@@ -129,7 +129,7 @@ From step 7 the engine path is the one being moved forward.
 | 7 (DONE 2026-10-31, seed column pending step 10) | VS boot to frame 0 | Real `StartMelee`: Stage FD and BF, `Player_InitAllPlayers`, `Fighter_Create` for Falcon, Fox, Marth and Sheik. `melee golden --engine tu` frame 0 matches for both pad scenarios. `melee diff --engine tu --frame 0`: fighter and gobj subsystems at 0 non-baseline diffs. |
 | 8 | Fighter phase procs | The `Fighter_8006A1BC` / `8006A360` / `8006ABA0` / `8006AD10` / `8006C5F4` / `8006C80C` / `8006CB94` / `8006D1EC` s_links, `ftAnim`, `ftParts`, `ftCommon` and the ground states. Target: pad_falcon_fox_fd to GO (first input frames) and calltrace seqdiff clean to that frame. |
 | 9 (DONE 2026-10-31, partial: stage procs and mp collision run and are bit-exact where the fighter pose allows; the 600-frame target waits on step 8 fall/landing pose) | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
-| 10 | Effects and particles | `efLib_Create` / `efAsync` / `efSync` (pick `tu/eflib.rs` vs `tu/efn/eflib.rs`: the one with the C oracle wins, and the other is deleted), `psappsrt` / `generator` / `particle` driven from their gobjs. Target: effect and particle diff subsystems at 0. |
+| 10 (DONE 2026-10-31; effect/particle diff needs `melee diff --engine tu`, not there yet) | Effects and particles | `efLib_Create` / `efAsync` / `efSync` (pick `tu/eflib.rs` vs `tu/efn/eflib.rs`: the one with the C oracle wins, and the other is deleted), `psappsrt` / `generator` / `particle` driven from their gobjs. Target: effect and particle diff subsystems at 0. |
 | 11 | Camera, HUD, sound | `cmcamera` procs, `ifStatus` / `ifStock` / `ifTime` procs, and `lbAudioAx` through the audio seam (the `ft_PlaySFX` RNG draw stays exact). Target: **pad_falcon_fox_fd 1801 on the engine**. |
 | 12 | Fighter hit detection | Real `ftcoll` on real joints (no pseudo `JOINTS`), `Fighter_ProcessHit`, `ftCo_Damage*`, shields and clanks, through the `s_link` 13 and 14 procs. Target: pad_marth_sheik_bf to its first item use. |
 | 13 | Items engine | `Item_Create` / `Item_80268E5C` / item procs and `it_26B1` registration, then `itseakneedleheld` / `itseakneedlethrown`, `itfoxblaster` / `itfoxlaser`, `itsamusmissile`, and item-vs-fighter hits (`ftColl_8007925C`). Target: **pad_marth_sheik_bf 1801 on the engine**. Item diff subsystem at 0. |
@@ -881,9 +881,7 @@ subsystem migrates; the engine has no `Snapshot` layout yet).
 
 What the engine runs "off" until a later step lifts it, each one a single switch (grep the name):
 * render: `melee_runtime::tu::gobj_native::HEADLESS_RENDER` (the GObj render passes `HSD_GObj_80390FC0` / `80390ED0` return at once; the renderer step flips it).
-* effects: `melee_world::tu::efsync::EFFECTS_ENABLED` (step 10): `efSync_Spawn` creates nothing and draws no RNG. `efAsync_Dispatch` / `efAsync_MexResolve` are already wired to the
-  pointer-native `tu/efn/efasync.rs`; what stops them is the effect bank DAT decode (`efLib_Create` -> `HSD_JObjLoadJoint` on a bad joint pointer) and `ps*` / `hsd_8039*` /
-  `hsd_803A*` (forced no-op seams in `seams.txt`).
+* effects: lifted in step 10 (effects run from their gobjs; the `EFFECTS_ENABLED` switch and the `ps*` / `hsd_8039*` seams are gone).
 * audio (step 11): `lbAudioAx_*`, `HSD_Audio*`, `HSD_Synth*` forced no-ops.
 * PC add-ons (`ScriptGame_*`, `Mex_*`, `Geno_*`, `Replay_*`, `Netplay_*`...): `seams.txt` regexes, answered "off". `script_game.rs` now shares the real statics instead of private zeroed copies.
 
@@ -926,3 +924,41 @@ Step 9 result (stage and collision procs on the engine, 2026-10-31, branch port/
   `lbAnim_8001E7E8` -> `fn_8001E60C` (`lbanim.rs:109`, write to NULL), also anim data. Step 9 re-measure once step 8 merges: the landing needs `mpColl_80046904`'s floor hit with the real ECB (the new tests cover the
   collision half), then `ftCo_Landing_Enter` (`ftAction_80073240` -> `ftCo_8009F834` hook).
 * Gate: legacy goldens 1801 / 1801 / 370 / 120 unchanged, engine counts 64 / 74 / 0 / 0 unchanged (no drop), baselines 144, lint OK.
+
+Step 10 result (worktree `C:\melee-wt\cons-effects`, branch `port/cons-effects`: the E: drive was full, 0.16 GB free, so the worktree and its cargo target live on C:):
+the particle system and the effects run from their GObjs on the engine, and hash + seed match the C build for every frame the engine reaches:
+pad_falcon_fox_fd 64 frames, pad_marth_sheik_bf 74 (the same counts as without effects; both stop in step 8's code, the first Falcon landing /
+`lbAnim_8001E7E8` and the first Marth/Sheik fighter state). The 6000-odd `HSD_Rand` draws of those frames are the C's, in the C's order and frames.
+* `tu/generator.rs` and `tu/psappsrt.rs` (melee_runtime) are pointer-native ports on the real `HSD_Generator` / `HSD_psAppSRT` records and the real list
+  (`hsd_804D78FC`, the `hsd_804D78F8` cursor, `hsd_804D78F4` as a pointer; the C keeps pointers in `u32` globals). Fused sites are the ones the owned-model port
+  `crate::generator` (still the oracle, `tests/oracle_generator.rs`) marks. `psInitAppSRT(0, 0xA4)` pools `sizeof(native HSD_psAppSRT)`. `particle.rs` ext defaults call
+  the new ports; `hsd_804D78E8/EC/F4` are typed pointers; one `hsd_804D78FC` (script_game / grlib aliases).
+* Particle banks. The cmd / tex banks are blobs of GC records addressed by 32-bit offsets from the bank start (NOT archive relocations; `psInitDataBankLocate` adds the base).
+  `melee_engine/src/dat_custom.rs` rebuilds each into one native image (`ptcl_cmd`, `ptcl_tex`; `custom:ptclcmd` / `ptcltex` for the stage `map_ptcl` / `map_texg`,
+  `custom:efdat` for `effCommonDataTable` and every `eff*DataTable`: two bank pointers, then the native `EF_EffectDesc` array contiguous from byte 16, which is where
+  `efAsync_LoadSync` keeps `&entry->data`). Slots hold byte offsets from the image start and `psInitDataBankLocate` relocates them as the C does; texture / palette slots
+  hold `raw image address - image base` (wrapping). Version `0x40..0x43` banks: `num` is the index base (generator ids run from `num`, the list pointer is `3 - num` words before
+  the table), `count` the records. The command STREAM stays raw big-endian bytes: `particle::CMD_STREAM_BIG_ENDIAN` (set by the engine) makes `psReadFloat` / the bytecode
+  read floats MSB first; the synthetic oracle streams stay native-endian. Not handled: form banks (`psNumCmdList`, the callers pass null).
+* One eflib/efasync/efdata/efsync/efalt: `tu/efn/*` (c2rs.py ports with the C state oracle `tests/tu_ef.rs`) won. The hand `tu/{eflib,efasync,efdata,efsync,efalt}.rs` and their
+  smoke tests are deleted; `tu/mod.rs` re-exports `efn::*` at the old paths. `efn/efsync.rs` and `efn/efalt.rs` are new (`regen_ef.sh`; `c2rs.py` now handles `L: stmt; break;` and
+  `goto L; break;` in a switch). They have no C oracle yet (the hand ports had smoke tests only); the golden covers the ids the pad scenarios reach. This also removes the split-brain
+  between the hand `EF_DATA` / `efLib_AnimQueue` and efn's `efdata` statics. `HSD_JObjPrependRObj`, `DeleteRObj`, `SetDPtclCallback` are native (`tu/jobj.rs`).
+* Seed column. The C draws before match frame 0 in subsystems the engine does not run: the memory-card scene's trophy pick (`Toy_80305058`, 1), the stage init (`grLast_8021AC30` 4 on
+  FD, `grBattle_BG_Callback0` 1 on BF) and the BGM pick (`Stage_80225074` -> `Ground_801C24F8`, 1), found with the C build's `MELEE_RAND_TRACE` resolved against the map
+  (`tools/rust-port/trace/rand_resolve.py`, `rand_draws.py`). `tools/rust-port/engine/pre_draws.tsv` (FD 6, BF 3) makes the engine do that many dummy draws before its first tick
+  (`MELEE_ENGINE_PRE_DRAWS`) and `gate.sh --engine tu` compares hash and seed for those scenarios (no longer `--ignore-seed`). The rows must shrink to nothing as the boot flow / step 9
+  stage init draw for real. The CPU scenarios still compare without the seed (they fail at frame 0).
+* Latent bugs found on the way (random 1-in-10 engine crashes at boot, reads past the end of a Rust heap block that happened to end on a page): `HSD_Joint.mtx` decoded one matrix
+  row, jobj.c copies a whole `Mtx` (`decode.rs` now decodes 3 rows); `Fighter_804D64FC_t` kind tables decoded one entry, `ftCommonData_ExtendCpuTables` reads `Ft_Kind_Mex0`
+  (`plco` now decodes them as pointer tables of at least 33). Debug aids: `MELEE_GUARD_ALLOC[=min bytes]` (every allocation of that size ends at a no-access page; below ~256 bytes it
+  runs out of memory), `MELEE_LEAK_ALLOC=1` (no frees: use-after-free test), engine `MELEE_RAND_TRACE=<file>` (every draw with its callers) and `MELEE_PS_TRACE=1` (generators created
+  / emitting). 60 consecutive BF runs and 40 FD runs are clean.
+* Shared code touched: `particle.rs` (types, ext defaults, stream byte order), `jobj.rs`, `decode.rs` (melee_types), `script_game.rs` / `grlib.rs` (alias `hsd_804D78FC`), `melee_chara` effect fallbacks
+  (`adapt.rs` and six `ft*` defaults), `melee_link/manual.rs`, `seams.txt` (the step-10 lines), `dat_symbols.tsv`, `gate.sh`. `gen_table.rs` is regenerated (`gen_link.py`): after merging
+  another branch, regenerate it instead of merging it.
+* Not done: `melee diff --engine tu` (so the effect / particle diff subsystems cannot be measured on the engine), a C oracle for efsync / efalt, the user shape hooks `hsd_804D78E8/EC`
+  (retail sets none), m-ex effect data (`effBehaviorTable` stays raw).
+
+
+Merge note (port/cons-stage + port/cons-effects): step 9 made the Toy trophy draw (`Engine::boot_vs`) and the stage init draws real, so `pre_draws.tsv` is now 1 (the BGM pick) for both pad scenarios; verified against golden frame 0 hash + seed. Engine counts 64 / 74 unchanged.

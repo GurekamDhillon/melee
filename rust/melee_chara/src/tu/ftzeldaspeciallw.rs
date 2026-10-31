@@ -57,7 +57,7 @@ pub mod ext {
     pub fn efSync_Spawn(gfx_id: i32, gobj: *mut HSD_GObj, joint: *mut c_void) -> *mut c_void {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(gfx_id, gobj, joint),
-            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(gfx_id as _, gobj as _, &mut *(joint as *mut _)) as _ } },
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(gfx_id as _, gobj as _, &[joint as *const core::ffi::c_void]) as _ } },
         }
     }
     // `lb_8000B1CC(jobj, pos0, pos1)` and `lb_800119DC(v, n, a, b, c)` (lb/lb_00B0.c, lb_00F9.c).

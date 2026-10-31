@@ -1471,6 +1471,8 @@ class Tr:
             arms = []
             # a labelled block that ends a case group and is jumped to from earlier groups (`case A: x = 1; goto L;
             # ... case C: x = 3; L: { ...; break; }`): the arms set a flag and the block runs once after the match
+            # `L: stmt; break;` at the end of a group is the same as a labelled block that ends the group
+            groups = [(pj, (sj[:-1] if (len(sj) >= 2 and sj[-1].kind == K.BREAK_STMT and sj[-2].kind in (K.LABEL_STMT, K.GOTO_STMT)) else sj)) for pj, sj in groups]
             labtail = {}   # group index -> (label stmt, flag)
             gotoflag = {}  # group index -> flag
             for gi, (pats, sts) in enumerate(groups):

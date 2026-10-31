@@ -37,7 +37,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, jobj),
-            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, gobj as _, &mut *(jobj as *mut _)); } },
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, gobj as _, &[jobj as *const core::ffi::c_void]); } },
         }
     }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;

@@ -90,7 +90,7 @@ pub mod ext {
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
-    pub static mut hsd_804D7900: Option<unsafe extern "C" fn(*mut HSD_Generator)> = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::generator::hsd_804D7900;
     pub use melee_runtime::tu::particle::ptclref_804D0E5C;
 }
 

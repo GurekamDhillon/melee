@@ -45,6 +45,7 @@ Env: `export GW_ISO_VANILLA=...` via the workspace `.env`. Run from the repo roo
   (CPU scenarios need idle pads; `melee diff` sets that itself.)
 - Field diff vs the C build: `melee diff --scenario <scn> --frame N` or `--first` (notes/diff.md). Snapshots come from
   `tools/rust-port/snap/dump.sh <scn> <frames>` (needs a C exe in a private build root; README there).
+- Engine debugging: `MELEE_RAND_TRACE=<file>` (each draw with callers), `MELEE_PS_TRACE=1`, `MELEE_GUARD_ALLOC[=bytes]`, `MELEE_LEAK_ALLOC=1`; C draws: `tools/rust-port/trace/rand_resolve.py`, `rand_draws.py`.
 - Resume mid-match: `melee golden --from-snapshot FILE.snap --start N` (notes/snapshots.md).
 - Viewers: `melee view-golden --scenario pad_falcon_fox_fd` (sim drawn through melee_gx), `melee play` (title to results,
   scripts `tools/rust-port/play/`), `cargo run -p melee_platform --bin gx_viewer -- --stage GrNLa.dat`.
@@ -64,7 +65,8 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
 3. `melee play` covers 7 fighters / 4 stages; retail `mn*` scenes are stand-ins (notes/play.md).
-4. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
+4. Engine (`--engine tu`): hash + seed match for 64 (FD) / 74 (BF) frames; the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws until the boot flow and stage init draw for real (notes/consolidation.md step 10).
+5. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
 
 ## Writing notes (merge-friendly: other branches append concurrently)
 - Put detail in the matching `docs/rust-port/notes/<topic>.md` (append a dated section; do not touch STATUS.md unless a

@@ -33,11 +33,11 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "itemdata" { return Some(RootType::Custom("ptrtable_itemdata")); }
     if name == "map_plit" { return Some(RootType::Custom("ptrtable_lightlist")); }
     if name == "quake_model_set" { return Some(rt("DynamicModelDesc")); }
-    if name == "map_ptcl" { return Some(RootType::Raw); }
-    if name == "map_texg" { return Some(RootType::Raw); }
+    if name == "map_ptcl" { return Some(RootType::Custom("ptclcmd")); }
+    if name == "map_texg" { return Some(RootType::Custom("ptcltex")); }
     if name == "yakumono_param" { return Some(RootType::Raw); }
     if name == "itPublicData" { return Some(RootType::Custom("itco")); }
-    if name == "effCommonDataTable" { return Some(rt("EF_DAT_Entry")); }
+    if name == "effCommonDataTable" { return Some(RootType::Custom("efdat")); }
     if name == "Stc_scemdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name == "Stc_rarwmdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name == "lupe" { return Some(RootType::Custom("ptrtable_dynmodel")); }
@@ -51,7 +51,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("SIS_") { return Some(rt("SIS")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
-    if name.starts_with("eff") { return Some(rt("EF_DAT_Entry")); }
+    if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
@@ -70,7 +70,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
         RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
-            "EF_DAT_Entry" => d.object::<EF_DAT_Entry>(off) as *mut c_void,
             "FigaTree" => d.object::<FigaTree>(off) as *mut c_void,
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,

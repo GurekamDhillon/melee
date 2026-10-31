@@ -1,11 +1,6 @@
 mod inl;
 pub mod cmsnap;
 pub mod camera;
-pub mod efdata;
-pub mod eflib;
-pub mod efsync;
-pub mod efasync;
-pub mod efalt;
 pub mod grdynamicattr;
 pub mod grdisplay;
 pub mod grfigure1;
@@ -108,6 +103,8 @@ pub mod grzebes;
 pub mod mplib;
 pub mod cmcamera;
 pub mod efn;
+// The effect TUs live in `efn/` (mechanical ports with the C state oracle); these are the canonical paths.
+pub use efn::{efalt, efasync, efdata, eflib, efsync};
 pub mod va;
 pub mod mpisland;
 pub mod mpcoll;

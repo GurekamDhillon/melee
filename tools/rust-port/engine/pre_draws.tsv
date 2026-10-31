@@ -1,0 +1,7 @@
+# scenario	N: HSD_Rand draws the C build makes before match frame 0 that belong to subsystems the engine does not run yet.
+# The engine makes N dummy draws before its first tick (MELEE_ENGINE_PRE_DRAWS) so the seed column can be compared now.
+# After step 9 the memory-card trophy draw (Engine::boot_vs) and the stage init draws (grLast_8021AC30 4 on FD, grBattle_BG_Callback0 1 on BF)
+# are real; what is left is the BGM pick (Stage_80225074 -> Ground_801C24F8, 1) on both.
+# Every row must shrink as those steps land (boot flow); delete the file when empty.
+pad_falcon_fox_fd	1
+pad_marth_sheik_bf	1

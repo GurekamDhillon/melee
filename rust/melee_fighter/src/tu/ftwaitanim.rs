@@ -38,7 +38,6 @@ pub fn ftCo_8008A6D8(gobj: *mut HSD_GObj, anim_id: i32) {
 /// The body shared by ftCo_8008A6D8 and the manually inlined copy in ftCo_8008A7A8.
 fn set_wait_anim(gobj: *mut HSD_GObj, anim_id: i32) {
     let f = fp(gobj);
-    if std::env::var("DBG_ANIM").is_ok() { eprintln!("DBGWA kind {} anim_id {} cur {} x24 {:p}", f.kind, anim_id, f.anim_id, f.x24); }
     let anim = unsafe { &*f.x24.offset(anim_id as isize) };
     let blend = unsafe { f.x28.offset(anim_id as isize) };
     ext::ftData_80085CD8(f, f, anim_id);
@@ -67,7 +66,6 @@ pub fn get_anim_id_with(mut table: *const WaitStruct, roll: i32) -> i32 {
     let max = roll + 1;
     let mut count = 0i32;
     unsafe {
-        if std::env::var("DBG_ANIM").is_ok() { let w = table as *const u32; let mut v = vec![]; for k in 0..12isize { v.push(format!("{:08X}", *w.offset(k))); } eprintln!("DBGWT table {:p} roll {} words {} sz {}", table, roll, v.join(" "), core::mem::size_of::<WaitStruct>()); }
         while (*table).u.i.x != -1 {
             count = count.wrapping_add((*table).u.i.y);
             if max <= count {

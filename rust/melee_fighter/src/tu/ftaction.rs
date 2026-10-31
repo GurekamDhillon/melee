@@ -907,7 +907,6 @@ pub fn ftAction_80073240(g: G) {
         let speed = fp.frame_speed_mul;
         let cmd = &mut fp.x3E4_fighterCmdScript;
         cmd.frame_count = fpm(g).cur_anim_frame + fpm(g).x898_unk;
-        if std::env::var("DBG_ANIM").is_ok() { eprintln!("DBG80073240 g {:p} fp {:p} u {:p} timer {} loop {}", g, cmd, cmd.anon_8.u, cmd.timer, cmd.loop_count); }
         if cmd.anon_8.u.is_null() {
             return;
         }
@@ -919,7 +918,6 @@ pub fn ftAction_80073240(g: G) {
                 break;
             }
             let op = opcode(cmd);
-            if std::env::var("DBG_ANIM").is_ok() { eprintln!("DBGOP op {} u {:p}", op, cmd.anon_8.u); }
             if !ext::Command_Execute(cmd, op) {
                 if op == GENO_FTCMD_OP {
                     ext::Geno_FtCmd(g, cmd, GENO_MODE_EXEC);

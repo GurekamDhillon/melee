@@ -12,3 +12,4 @@ The traps found along the way live in the topic note of the work that hit them. 
 - render.md: the game calls GXInit (aurora_initialize does not); `std::cos(float)` in Aurora on x86 MSVC is double cos.
 - script.md: an error raised by a Rust callback reaches Lua `pcall` as a userdata; write files with Write/Edit, not heredocs.
 - integration.md: C evaluates call arguments right to left on the MSVC target.
+- consolidation.md (step 8): a `T**` / `T*` the C indexes must be an array in `arrays.tsv` (a 1-element decode reads uninitialised memory: the run then depends on the environment size); a native `i32` store over a GC bitfield word needs `to_be_bytes()`; raw command streams are 4-byte BE words (`CmdUnion` is 4 bytes).

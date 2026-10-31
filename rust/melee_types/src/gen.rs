@@ -51946,7 +51946,7 @@ impl GcDecode for ftData_x20 {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.x0 = <*mut *mut HSD_Joint as GcDecode>::gc_decode(d, at + 0x0);
+        { let n = 3; v.x0 = d.ptr_array::<*mut HSD_Joint>(at + 0x0, n) as *mut *mut HSD_Joint; }
         v.x8 = <f32 as GcDecode>::gc_decode(d, at + 0x4);
         v
     }
@@ -57406,7 +57406,7 @@ impl GcDecode for ftDynamics {
         v.anon_0 = <ftDynamics_anon_1979 as GcDecode>::gc_decode(d, at + 0x0);
         v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
         { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x8) as i64)).max(0) as usize; v.x8 = d.ptr_array::<ftData_x38>(at + 0xC, n) as *mut ftData_x38; }
-        v.x10 = <*mut *mut *mut FigaTree as GcDecode>::gc_decode(d, at + 0x10);
+        { let n = (10).max(0) as usize; v.x10 = d.ptr_table_extent_arrays_n::<*mut FigaTree>(at + 0x10, n) as *mut *mut *mut FigaTree; }
         v
     }
 }

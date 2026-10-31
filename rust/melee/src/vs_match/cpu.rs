@@ -1373,7 +1373,7 @@ fn ftco_800ba2e8(cx: &Cx, fp: &mut Fighter, target: &Fighter) -> bool {
 }
 
 /// `ftCo_800A0098` (the walk-away script).
-fn ftco_800a0098(fp: &mut Fighter) {
+fn legacy_cmdscript_defaults_800a0098(fp: &mut Fighter) {
     cmd1(fp, 0x80, 0);
     cmd1(fp, 0x81, 0);
     cmd1(fp, 0x8E, 1);
@@ -2138,7 +2138,7 @@ fn ftco_800b658c(cx: &mut Cx, fp: &mut Fighter) -> R {
     }
     if fp.cpu.xA4 == 0 {
         if fp.ground_or_air == GA_Ground as _ && !ftco_800a2c08(fp) {
-            ftco_800a0098(fp);
+            legacy_cmdscript_defaults_800a0098(fp);
             return Ok(());
         }
         if !ftco_800b8a9c(cx, fp)? {

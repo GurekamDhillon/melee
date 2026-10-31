@@ -14,7 +14,6 @@ static mut ALARM: Option<AlarmHandler> = None;
 /// One alarm period elapsed.
 pub fn fire_alarm() {
     unsafe {
-        if std::env::var_os("MELEE_PAD_DBG").is_some() { eprintln!("FIREALARM set={}", ALARM.is_some()); }
         if let Some(h) = ALARM {
             h(core::ptr::null_mut(), core::ptr::null_mut());
         }
@@ -179,4 +178,14 @@ unsafe fn ar_addr(addr: u32, len: usize) -> *mut u8 {
         return aram.as_mut_ptr().add(addr as usize);
     }
     addr as usize as *mut u8
+}
+
+/// By-name `ext_fns!` callees (the `melee_modes::tu::ext_hook` form) that are real canonical functions, not "feature off":
+/// `ext_fallback` asks here first. Arguments and results are the hook's 64-bit words (floats as their bits).
+pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
+    Some(match name {
+        "__frsqrte" => melee_runtime::tu::gekko_fp::__frsqrte(f64::from_bits(args[0])).to_bits(),
+        "__fres" => melee_runtime::tu::gekko_fp::__fres(f64::from_bits(args[0])).to_bits(),
+        _ => return None,
+    })
 }

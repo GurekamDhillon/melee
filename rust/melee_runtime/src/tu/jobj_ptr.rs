@@ -578,8 +578,8 @@ pub unsafe fn HSD_JObjAddAnimAll(
 pub type JObjWalkTreeCallback = Option<unsafe extern "C" fn(*mut HSD_JObj, *mut *mut f32, i32)>;
 
 /// `HSD_JObjWalkTree0` (baselib/jobj.c): `cb(jobj, args, 1 or 2)` for `jobj` (1 = first child of its parent), then its subtree.
-pub unsafe fn HSD_JObjWalkTree0(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, cb_args: *mut *mut f32) {
-    melee_core::ct!("HSD_JObjWalkTree0");
+pub unsafe fn HSD_JObjWalkTree0_ptr(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, cb_args: *mut *mut f32) {
+    melee_core::ct!("HSD_JObjWalkTree0_ptr");
     if jobj.is_null() {
         return;
     }
@@ -591,15 +591,15 @@ pub unsafe fn HSD_JObjWalkTree0(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, c
     if (*jobj).flags & INSTANCE == 0 {
         let mut child = (*jobj).child;
         while !child.is_null() {
-            HSD_JObjWalkTree0(child, cb, cb_args);
+            HSD_JObjWalkTree0_ptr(child, cb, cb_args);
             child = (*child).next;
         }
     }
 }
 
 /// `HSD_JObjWalkTree` (baselib/jobj.c): `cb(jobj, args, 0)` for the root, then the subtrees of its children.
-pub unsafe fn HSD_JObjWalkTree(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, cb_args: *mut *mut f32) {
-    melee_core::ct!("HSD_JObjWalkTree");
+pub unsafe fn HSD_JObjWalkTree_ptr(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, cb_args: *mut *mut f32) {
+    melee_core::ct!("HSD_JObjWalkTree_ptr");
     if jobj.is_null() {
         return;
     }
@@ -609,7 +609,7 @@ pub unsafe fn HSD_JObjWalkTree(jobj: *mut HSD_JObj, cb: JObjWalkTreeCallback, cb
     if (*jobj).flags & INSTANCE == 0 {
         let mut child = (*jobj).child;
         while !child.is_null() {
-            HSD_JObjWalkTree0(child, cb, cb_args);
+            HSD_JObjWalkTree0_ptr(child, cb, cb_args);
             child = (*child).next;
         }
     }

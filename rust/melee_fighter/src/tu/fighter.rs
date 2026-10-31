@@ -1436,7 +1436,6 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
             }
             fp.x3E4_fighterCmdScript.anon_8.u = (*wait).xC as _;
             fp.x3E4_fighterCmdScript.loop_count = 0;
-            if std::env::var("DBG_ANIM").is_ok() { let w = (*wait).xC as *const u32; let mut v = vec![]; if !w.is_null() { for k in 0..8isize { v.push(format!("{:08X}", *w.offset(k))); } } eprintln!("DBGMS kind {} anim {} state {} script {:p} words {}", fp.kind, fp.anim_id, fp.motion_id, w, v.join(" ")); }
             let row0 = (*bytes)[0];
             if anim_start != 0.0 {
                 if !fp.x590.is_null() {

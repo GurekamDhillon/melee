@@ -1231,7 +1231,10 @@ pub fn install_gen() {
 }
 
 /// `melee_modes::tu::ext_hook::EXT_FALLBACK`: the by-name `ext_fns!` callees answered "feature off".
-pub unsafe fn ext_fallback(name: &str, _args: &[u64]) -> u64 {
+pub unsafe fn ext_fallback(name: &str, args: &[u64]) -> u64 {
+    if let Some(v) = crate::seams::ext_real(name, args) {
+        return v;
+    }
     match name {
         "GXBegin" | "GXClearVtxDesc" | "GXColor4u8" | "GXFlush" | "GXLoadPosMtxImm" | "GXPosition1x8" => 0x0,
         "GXPosition3f32" | "GXSetArray" | "GXSetCullMode" | "GXSetCurrentMtx" | "GXSetNumTevStages" | "GXSetTevAlphaIn" => 0x0,

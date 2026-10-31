@@ -30,7 +30,6 @@ fn pad_read(st: *mut PADStatus) -> u32 {
         if let Some(f) = PAD_FEED.as_ref() {
             for (port, slot) in arr.iter_mut().enumerate() {
                 *slot = f(FEED_TICK, port);
-                if port == 0 && std::env::var_os("MELEE_PAD_DBG").is_some() { eprintln!("PADREAD tick {} btn {:X} sx {} sy {}", FEED_TICK, slot.button, slot.stickX, slot.stickY); }
             }
         }
         r

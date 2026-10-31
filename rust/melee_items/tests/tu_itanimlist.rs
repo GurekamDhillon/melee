@@ -632,6 +632,7 @@ unsafe fn hash_all() {
 }
 
 #[test]
+#[ignore = "pointer ids are byte offsets into W: the C oracle strides 8-byte CmdUnion elements, the port walks the raw 4-byte stream (consolidation step 8); needs the C oracle built with a 4-byte CmdUnion"]
 fn itanimlist_matches_c() {
     unsafe {
         g::install();

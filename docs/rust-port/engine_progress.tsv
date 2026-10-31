@@ -11,3 +11,11 @@ step	scenario	engine	frames_matching
 7	pad_marth_sheik_bf	tu	74
 7	cpu_fox_falco_dl	tu	0
 7	cpu_peach_samus_ys_items	tu	0
+8	pad_falcon_fox_fd	tu	269
+8	pad_marth_sheik_bf	tu	276
+8	cpu_fox_falco_dl	tu	0
+8	cpu_peach_samus_ys_items	tu	0
+8	pad_falcon_fox_fd	legacy	1801
+8	pad_marth_sheik_bf	legacy	1801
+8	cpu_fox_falco_dl	legacy	370
+8	cpu_peach_samus_ys_items	legacy	120

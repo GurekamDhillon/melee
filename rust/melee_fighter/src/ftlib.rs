@@ -225,7 +225,6 @@ pub fn ftlib_80086824() {
 }
 pub fn ftlib_8008688c(g: G) { fp(g).set_x221D_b4(0); }
 pub fn ftlib_800868a4() {
-    if std::env::var("DBG_ANIM").is_ok() { eprintln!("DBGUNLOCK ftLib_800868A4"); }
     each(|c| {
         h::ftlib_8008688c(c);
         false

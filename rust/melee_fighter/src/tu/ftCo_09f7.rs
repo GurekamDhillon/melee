@@ -1,9 +1,11 @@
 //! src/melee/ft/kinds/ftCommon/ftCo_09F7.c: `ftCo_8009F834`, the fighter effect spawner behind the
 //! `ftAction` effect command (queues an `efAsync` effect on a body part, with the C's RNG draws for the
 //! randomised offset), and `ftCo_800A0098`, the cmd-script defaults. Every effect goes through the
-//! canonical `melee_world::tu::efn::efasync` queue (variadic tail passed as words, `Va`). Calls
-//! `HSD_Randf` on the game's real RNG. Float sites: `2*r*(rand-0.5)+off` has no fused multiply-add
-//! the compiler contracts except the `spA8.x += ...` adds (fmadds, see `fma`).
+//! canonical `melee_world::tu::efn::efasync` queue (variadic tail passed as words, `Va`). Draws
+//! `HSD_Randf` from the game's real RNG, in the C's order (x, y, z). Fused sites (clang
+//! `-ffp-contract=on`): `off += 2*range * (rand - 0.5)` is `fmadds(2*range, rand - 0.5, off)`.
+//! Not C-oracle tested yet (the TU is reached by the engine's pad_falcon_fox_fd run, whose
+//! `Landing`/`Wait` effects take the `< 0x250` branch); the TARGET_PC Geno guard is kept.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
 use crate::types::*;

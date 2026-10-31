@@ -145,7 +145,6 @@ pub unsafe fn HSD_PadRenewRawStatus(err_check: bool) {
     let p: *mut PadLibData = &mut HSD_PadLibData;
     let mut now = HSD_PadData::zeroed();
 
-    if std::env::var_os("MELEE_PAD_DBG").is_some() { eprintln!("RAWSTATUS err_check {err_check} padread hook set {}", unsafe { ext::hook::PADRead.is_some() }); }
     ext::HSD_PadRumbleInterpret();
     ext::PADRead(now.stat.as_mut_ptr());
     for i in 0..4 {

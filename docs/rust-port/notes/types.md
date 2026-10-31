@@ -38,3 +38,8 @@ Details: `docs/rust-port/group-0 types + GC layout table.md`.
   both parses. No `TARGET_PC` appears in `ft/kinds/*/types.h`, so character records are unaffected.
 - Not done: the gitignored `melee_fighter` `c2r` feature (fix_raw.py output) still carries per-TU
   type copies; it was not rebuilt.
+
+## 2026-10-31 (consolidation step 8): generator switches
+- `gen_types.py`: `STREAM_WORD_TYPES` (CmdUnion, Command_05, Command_07: 4 bytes / align 4, jump targets `u32` big-endian), `RAW_STREAM_TYPES` (a `CmdUnion*` read from an archive points into the raw image),
+  `UNION_LIVE_MEMBER` (which member of a union the data files use: `WaitStruct_u` -> `i`), `NATIVE_FIELD_TYPES` (`ftData.x24` -> `WaitStruct*`).
+- `arrays.tsv` additions: `ftData_x1C.x8`, `ftData.x24/x28` (`until=0xFFFFFFFF`), `ftData_x20.x0` (3), `ftDynamics.x10` (`tab[10]`).

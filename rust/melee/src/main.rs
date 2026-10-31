@@ -359,11 +359,49 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
     };
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
+    let calltrace_out = get("--calltrace");
+    if calltrace_out.is_some() && !melee_core::ct::ENABLED {
+        eprintln!("melee: --calltrace needs a build with `--features calltrace`");
+        return ExitCode::from(2);
+    }
+    if let Some((a, b)) = get("--calltrace-frames").and_then(|v| v.split_once('-').map(|(a, b)| (a.to_string(), b.to_string()))) {
+        if let (Ok(a), Ok(b)) = (a.parse::<i64>(), b.parse::<i64>()) {
+            melee_core::ct::set_range(a, b);
+        }
+    }
     for f in 0..frames {
+        melee_core::ct::begin_frame(f as i64);
         if !e.tick() {
             break;
         }
         let r = e.neutral_row();
+        if let Ok(spec) = std::env::var("MELEE_ENGINE_DUMP") {
+            // MELEE_ENGINE_DUMP=FRAME:FILE: the Fighter records in the legacy `--dump-state` form ("p1 fp.NAME HEX"), to diff by field.
+            if let Some((n, file)) = spec.split_once(':') {
+                if n.parse::<usize>().ok() == Some(f) {
+                    let mut t = String::new();
+                    t.push_str(&e.debug_tree(0));
+                    t.push_str(&e.debug_map_gobjs());
+                    for slot in 0..2 {
+                        if let Some(b) = e.fighter_bytes(slot) {
+                            let mut fl: Vec<(&str, usize)> = fighter_fields::FIGHTER_FIELDS.to_vec();
+                            fl.sort_by_key(|x| x.1);
+                            for (k, (name, off)) in fl.iter().enumerate() {
+                                let end = fl.get(k + 1).map_or(b.len(), |x| x.1);
+                                t.push_str(&format!("p{} fp.{name} ", slot + 1));
+                                for x in &b[*off..end] { t.push_str(&format!("{x:02x}")); }
+                                t.push('\n');
+                            }
+                        }
+                    }
+                    let _ = std::fs::write(file, t);
+                }
+            }
+        }
+        if std::env::var_os("MELEE_ENGINE_FT").is_some() {
+            eprintln!("f{f} {}", e.debug_fighter(0));
+            eprintln!("f{f} {}", e.debug_fighter(1));
+        }
         csv.push_str(&format!("{f},{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]));
         for w in &r[4..16] {
             csv.push_str(&format!(",{w:08X}"));
@@ -371,6 +409,12 @@ fn golden_engine(args: &[String]) -> ExitCode {
         csv.push('\n');
         // written every frame: a crash later in the run keeps the frames that were produced
         let _ = std::fs::write(&out, &csv);
+    }
+    if let Some(p) = &calltrace_out {
+        match melee_core::ct::write(p) {
+            Ok(n) => eprintln!("melee: {n} calls written to {p}"),
+            Err(er) => eprintln!("melee: {p}: {er}"),
+        }
     }
     if let Err(er) = std::fs::write(&out, csv) {
         eprintln!("melee: {out}: {er}");

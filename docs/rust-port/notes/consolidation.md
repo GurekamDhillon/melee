@@ -128,7 +128,7 @@ From step 7 the engine path is the one being moved forward.
 | 6 (DONE 2026-10-30, empty scene only) | Scene loop tick | Split `gm_801A4D34` into a tick, then add `Engine::tick()`. Boot the real `HSD_GObjInit` / `gmMainLib` and the pad feed (`MELEE_PAD_SCRIPT` into `HSD_PadRenewStatus`). Smoke-test 60 frames of an empty scene with no panic. |
 | 7 (DONE 2026-10-31, seed column pending step 10) | VS boot to frame 0 | Real `StartMelee`: Stage FD and BF, `Player_InitAllPlayers`, `Fighter_Create` for Falcon, Fox, Marth and Sheik. `melee golden --engine tu` frame 0 matches for both pad scenarios. `melee diff --engine tu --frame 0`: fighter and gobj subsystems at 0 non-baseline diffs. |
 | 8 | Fighter phase procs | The `Fighter_8006A1BC` / `8006A360` / `8006ABA0` / `8006AD10` / `8006C5F4` / `8006C80C` / `8006CB94` / `8006D1EC` s_links, `ftAnim`, `ftParts`, `ftCommon` and the ground states. Target: pad_falcon_fox_fd to GO (first input frames) and calltrace seqdiff clean to that frame. |
-| 9 | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
+| 9 (DONE 2026-10-31, partial: stage procs and mp collision run and are bit-exact where the fighter pose allows; the 600-frame target waits on step 8 fall/landing pose) | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
 | 10 | Effects and particles | `efLib_Create` / `efAsync` / `efSync` (pick `tu/eflib.rs` vs `tu/efn/eflib.rs`: the one with the C oracle wins, and the other is deleted), `psappsrt` / `generator` / `particle` driven from their gobjs. Target: effect and particle diff subsystems at 0. |
 | 11 | Camera, HUD, sound | `cmcamera` procs, `ifStatus` / `ifStock` / `ifTime` procs, and `lbAudioAx` through the audio seam (the `ft_PlaySFX` RNG draw stays exact). Target: **pad_falcon_fox_fd 1801 on the engine**. |
 | 12 | Fighter hit detection | Real `ftcoll` on real joints (no pseudo `JOINTS`), `Fighter_ProcessHit`, `ftCo_Damage*`, shields and clanks, through the `s_link` 13 and 14 procs. Target: pad_marth_sheik_bf to its first item use. |
@@ -901,3 +901,28 @@ Seams for steps 8, 9 and 10 (develop in separate worktrees; each touches only it
   that are still private zeroed duplicates (split-brain risks, e.g. `gmMainLib_8046B0F0` in the gm* ext blocks); `fix_ext_statics.py NAME CRATE MODULE` repairs one.
 * Debugging aids: `MELEE_CRASH_TRACE=1` (vectored handler: fault address plus backtrace), `MELEE_DAT_ISSUES=1` / `MELEE_DAT_LIST=1` (decode issues, public names per archive), the
   `guard` feature of melee_engine (canary allocator, `cargo test -p melee_engine --features guard --test vs_boot`), `--features melee_core/calltrace` for the `ct` sequence.
+
+Step 9 result (stage and collision procs on the engine, 2026-10-31, branch port/cons-stage):
+* The ground gobjs, the `grLast` / `grBattle` procs and `mpLib` / `mpColl` already ran through the real `Ground_*` init and `HSD_GObj_RunProcs` after step 7 (calltrace of
+  `pad_falcon_fox_fd` ticks 0..73: `Ground_801C1D84/1CD0/1D38/461C`, `Ground_UpdateMapColl`, `mpLib_80055E9C`, `mpJointUpdateDynamics`, `mpIsland_*`, `grLast_8021A914..B28C`,
+  `mpColl_8004730C` / `mpColl_80043754` / `mpColl_80046904` with the line checks). `stage_anim()` / `stage.rs` are not on the engine path (the engine never links them): nothing to retire there.
+* Found by comparing the engine's `Ground.u.last` (the Final Destination sway state, map gobj 7) with the legacy `last_bg` at frames 0, 30 and 64: the sway rates `xD4`/`xD8` were wrong because
+  (1) `melee_runtime::tu::globals::rand()` returned a PRIVATE unseeded `HsdRand` (split-brain with `random::global::state()`, which the engine seeds with 12345 and `HSD_RandSeedPtr` points at);
+  `grlast.rs` and about 60 other `hook_or!(... globals::rand())` sites read it. `globals::rand()` now returns `random::global::state()` (shared engine-code change, one function).
+  (2) the C boot makes one `HSD_Randi` before any stage code (`gmMainLib_8015F600(1, 0)` on a fresh save: `Toy_80305058(2, 0x63, 0, 100.0f)`); the engine skipped the card scene, so `boot_vs` makes that
+  one draw (`random::global::HSD_Rand()`; the trophy tables are not loaded on the engine path, so the real call would panic in `lbarchive` -- the selected id is not hashed).
+  After both, `xC4..xDC` equal the legacy (= C) values bit for bit at frames 0, 30 and 64 (the seed column of the engine run is still off by the step-10 particle draws).
+* New engine tests `melee_engine/tests/stage_coll_fd.rs` and `stage_coll_bf.rs` (need the disc, vacuous without; one engine boot per test binary, a second boot in one process crashes, `stage_common/mod.rs`):
+  a free `CollData` with a fixed ECB box (`mpColl_8004730C`, no fighter) falls onto the stage StartMelee loaded: FD floor at y 0 (free fall above, stop on the floor, no floor at x 400); BF main floor, side and top
+  platforms (landing from above) and free fall between them. They exercise the DAT line/vertex decode, `mpCheckFloor` & co, the step loop and the floor callback on the native stage data.
+* Debug aids added to `melee golden --engine tu`: `--calltrace OUT [--calltrace-frames A-B]` (build with `--features melee_core/calltrace`), `MELEE_ENGINE_FT=1` (per-tick motion id / position / velocity / ECB joint
+  world positions of slots 0 and 1), `MELEE_ENGINE_DUMP=FRAME:FILE` (slot 0 JObj tree in preorder as `jN rot x y z w trans x y z`, the Ground user data of the map gobjs, and both Fighter records as `p1 fp.NAME HEX`
+  in the legacy `--dump-state` field order, so `diff <(grep '^p1 fp' legacy.txt) <(grep '^p1 fp' engine.txt)` is a field diff against the golden-exact legacy state; legacy `melee golden --frames N --dump-state N:FILE`).
+* Why the count stays 64 (pad_falcon_fox_fd) / 74 (marth_sheik_bf): the first divergence is NOT stage or collision. At tick 64 Falcon leaves Entry for Fall (`msid 29`); the position of the engine and of the
+  legacy are identical before collision (`self_vel`, `prev_pos`, `x28_vec`), but the six ECB joints differ: the engine's fighter JObj tree has 54 of 63 joints with different ROTATIONS (translations equal; legacy
+  `j5 rot 3f10ac00 be066000 bf11b800` vs engine `00000000 3c23d70a 00000000`), only `j1..j4` and the root pose agree. So `desired_ecb` is top 15.81 / bottom 1.70 instead of the C's 10.78 / 1.99,
+  `mpColl_80043754` makes 3 steps instead of the C's 4 (`x` 14.38 vs > 18) and `cur_pos.y` ends at `0x411ECC68` instead of `0x411ECC66` (two ulp, the whole s0 word). That is the Fall pose after
+  `Fighter_ChangeMotionState` (`ftAnim_8006EBE8` / `ftAnim_8006FCE4`, AJ figatree decode): step 8's territory, left to port/cons-fighter. After the Falcon landing at tick 76 the engine panics in
+  `lbAnim_8001E7E8` -> `fn_8001E60C` (`lbanim.rs:109`, write to NULL), also anim data. Step 9 re-measure once step 8 merges: the landing needs `mpColl_80046904`'s floor hit with the real ECB (the new tests cover the
+  collision half), then `ftCo_Landing_Enter` (`ftAction_80073240` -> `ftCo_8009F834` hook).
+* Gate: legacy goldens 1801 / 1801 / 370 / 120 unchanged, engine counts 64 / 74 / 0 / 0 unchanged (no drop), baselines 144, lint OK.

@@ -51,6 +51,11 @@ impl Engine {
         Self::boot_host(disc, mem_size, pads)?;
         crate::scenario::install(scn);
         unsafe {
+            // The C boot runs the memory-card scene on a fresh save before the menus: `gmMainLib_8015F600(1, 0)` draws one
+            // `HSD_Randi` (`Toy_80305058(2, 0x63, 0, 100.0f)` picks the new trophy). The golden seed, and every later draw
+            // (grLast's sway rates, the item spawner), depend on that one RNG step. The trophy tables (ty, `Toy_803124BC`)
+            // are not loaded on the engine path yet, so only the draw is made (the selected id is unused for the hash).
+            let _ = melee_runtime::tu::random::global::HSD_Rand();
             gm_1A3F::gm_801A4510_init(Some(melee_types::GM_VS as u8));
             let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
             eprintln!("vs mode {:p} kind {} states {:p} curr_state {}", mode, (*mode).kind, (*mode).states, gm_1A3F::state_machine.routing.curr_state_id);
@@ -117,6 +122,87 @@ impl Engine {
             let mut r = [0u32; 16];
             for (i, w) in r.iter_mut().enumerate() { *w = melee_fighter::tu::fighter::RB_NeutralHashWord(i as i32); }
             r
+        }
+    }
+
+    /// Debug: a slot's fighter JObj tree in preorder, "jN rot x y z w trans x y z" (bit patterns), like the legacy `--dump-state` tree lines.
+    pub fn debug_tree(&self, slot: i32) -> String {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            if g.is_null() {
+                return String::new();
+            }
+            let mut out = String::new();
+            let mut stack = vec![(*g).hsd_obj as *mut melee_types::HSD_JObj];
+            let mut n = 0;
+            while let Some(j) = stack.pop() {
+                if j.is_null() {
+                    continue;
+                }
+                let r = &(*j).rotate;
+                let t = &(*j).translate;
+                out += &format!("j{n} rot {:08x} {:08x} {:08x} {:08x} trans {:08x} {:08x} {:08x}
+", r.x.to_bits(), r.y.to_bits(), r.z.to_bits(), r.w.to_bits(), t.x.to_bits(), t.y.to_bits(), t.z.to_bits());
+                n += 1;
+                stack.push((*j).next);
+                stack.push((*j).child);
+            }
+            out
+        }
+    }
+
+    /// Debug: the stage map gobjs (p_link 5): "map_id N [c4..e0 as f32 bits]" per gobj (compare with the legacy `last_bg`).
+    pub fn debug_map_gobjs(&self) -> String {
+        unsafe {
+            let mut out = String::new();
+            let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(5);
+            while !g.is_null() {
+                let gp = (*g).user_data as *const melee_types::Ground;
+                if !gp.is_null() {
+                    let l = &(*gp).u.last;
+                    out += &format!("map_id {}: {:08x} {:08x} {:08x} {:08x} {:08x} {:08x} {:08x}
+", (*gp).map_id as i32, l.xC4.to_bits(), l.xC8.to_bits(), l.xCC.to_bits(), l.xD0.to_bits(), l.xD4.to_bits(), l.xD8.to_bits(), l.xDC.to_bits());
+                }
+                g = (*g).next;
+            }
+            out
+        }
+    }
+
+    /// The raw bytes of a slot's native `Fighter` record (debug dumps).
+    pub fn fighter_bytes(&self, slot: i32) -> Option<Vec<u8>> {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            if g.is_null() || (*g).user_data.is_null() {
+                return None;
+            }
+            let n = core::mem::size_of::<melee_types::Fighter>();
+            Some(core::slice::from_raw_parts((*g).user_data as *const u8, n).to_vec())
+        }
+    }
+
+    /// Debug aid (`MELEE_ENGINE_FT=1` in `melee golden --engine tu`): motion id, position, velocity and ground/air of a slot's fighter.
+    pub fn debug_fighter(&self, slot: i32) -> String {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            if g.is_null() || (*g).user_data.is_null() {
+                return format!("slot {slot}: none");
+            }
+            let fp = &*((*g).user_data as *const melee_types::Fighter);
+            let mut js = String::new();
+            for i in 0..6 {
+                let j = fp.coll_data.ecb_source.anon_4.anon_0.x10C_joint[i];
+                let mut v: melee_types::Vec = core::mem::zeroed();
+                if !j.is_null() {
+                    melee_runtime::tu::lb_00B0::lb_8000B1CC(j, core::ptr::null_mut(), &mut v);
+                }
+                js += &format!(" j{i}({:.3},{:.3})", v.x, v.y);
+            }
+            format!(
+                "{js} slot {slot}: msid {} pos ({:.4},{:.4}) vel ({:.4},{:.4}) goa {} env {:08X} x{}",
+                fp.motion_id as i32, fp.cur_pos.x, fp.cur_pos.y, fp.self_vel.x, fp.self_vel.y,
+                fp.ground_or_air as i32, fp.coll_data.env_flags, 0
+            )
         }
     }
 

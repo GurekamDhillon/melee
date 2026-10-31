@@ -25,7 +25,6 @@ R1	rust/melee/src/vs_match.rs	ftCo_800923B4
 R1	rust/melee/src/vs_match.rs	ftCo_800925A4
 R1	rust/melee/src/vs_match.rs	ftCo_800939B4
 R1	rust/melee/src/vs_match.rs	ftCo_80093BC0
-R1	rust/melee/src/vs_match.rs	ftCo_8009F834
 R1	rust/melee/src/vs_match.rs	ftCo_800CB024
 R1	rust/melee/src/vs_match.rs	ftCo_800CB870
 R1	rust/melee/src/vs_match.rs	ftCommon_8007D7FC
@@ -42,7 +41,6 @@ R1	rust/melee/src/vs_match.rs	ft_80083E64
 R1	rust/melee/src/vs_match.rs	ft_80085088
 R1	rust/melee/src/vs_match.rs	ft_8008A2BC
 R1	rust/melee/src/vs_match.rs	gm_80164600
-R1	rust/melee/src/vs_match/cpu.rs	ftCo_800A0098
 R1	rust/melee/src/vs_match/cpu.rs	ftCo_800A0148
 R1	rust/melee/src/vs_match/cpu.rs	ftCo_800A0384
 R1	rust/melee/src/vs_match/cpu.rs	ftCo_800A08F0
@@ -266,10 +264,6 @@ R1	rust/melee_chara/src/chars/ftPurin.rs	ftPr_SpecialAirNStart_Phys
 R1	rust/melee_chara/src/chars/ftPurin.rs	ftPr_SpecialNEnd_Phys
 R1	rust/melee_chara/src/chars/ftPurin.rs	ftPr_SpecialNHit_Phys
 R1	rust/melee_chara/src/chars/ftPurin.rs	ftPr_SpecialNStart_Phys
-R1	rust/melee_chara/src/chars/ftSamus.rs	ftSs_SpecialAirLwBomb_Phys
-R1	rust/melee_chara/src/chars/ftSamus.rs	ftSs_SpecialAirLw_Phys
-R1	rust/melee_chara/src/chars/ftSamus.rs	ftSs_SpecialLw_80129158
-R1	rust/melee_chara/src/chars/ftSamus.rs	ftSs_SpecialN_801291A8
 R1	rust/melee_chara/src/chars/ftSeak.rs	ftSk_SpecialAirHiStart_0_Phys
 R1	rust/melee_chara/src/chars/ftSeak.rs	ftSk_SpecialAirHi_Phys
 R1	rust/melee_chara/src/chars/ftSeak.rs	ftSk_SpecialAirLw2_Phys
@@ -6768,7 +6762,6 @@ R2	rust/melee_modes/src/mn.rs	mn_GetDigitAt
 R2	rust/melee_modes/src/mn.rs	mn_GetDigitCount
 R2	rust/melee_modes/src/mn.rs	signedCharactersEqual
 R2	rust/melee_modes/src/mn.rs	unsignedCharacter
-R2	rust/melee_modes/src/mn_inl.rs	HSD_ForeachAnim
 R2	rust/melee_modes/src/mn_inl.rs	HSD_SisLib_803A6B98
 R2	rust/melee_modes/src/mn_inl.rs	__assert
 R2	rust/melee_modes/src/mn_inl.rs	lbArchive_LoadSections

@@ -624,7 +624,6 @@ pub fn install_gen() {
     unsafe { if melee_items::tu::item::ext::hook::Mex_ItemNotInitialized.is_none() { melee_items::tu::item::ext::hook::Mex_ItemNotInitialized = Some(|_| ()); } }
     unsafe { if melee_items::tu::item::ext::hook::Mex_SpawnArticleKind.is_none() { melee_items::tu::item::ext::hook::Mex_SpawnArticleKind = Some(|_, _, _| 0); } }
     unsafe { if melee_items::tu::item::ext::hook::Mex_SsmForPortKind.is_none() { melee_items::tu::item::ext::hook::Mex_SsmForPortKind = Some(|_| 0); } }
-    unsafe { melee_items::tu::item::ext::hook::lbAudioAx_800233EC = Some(|_| 0); }
     unsafe { melee_items::tu::item::ext::hook::lbAudioAx_800236B8 = Some(|_| 0); }
     unsafe { melee_items::tu::item::ext::hook::lbAudioAx_800237A8 = Some(|_, _, _| 0); }
     unsafe { melee_items::tu::item::ext::hook::lbAudioAx_80026510 = Some(|_| 0); }
@@ -1153,8 +1152,6 @@ pub fn install_gen() {
     unsafe { if melee_items::tu::tylist::ext::OSReport_hook.is_none() { melee_items::tu::tylist::ext::OSReport_hook = Some(|_| ()); } }
     unsafe { if melee_fighter::hooks::GENO_DEFINE_BASE_KIND.is_none() { melee_fighter::hooks::GENO_DEFINE_BASE_KIND = Some(|_| -1); } }
     unsafe { if melee_fighter::hooks::MEX_SSM_FOR_PORT_KIND.is_none() { melee_fighter::hooks::MEX_SSM_FOR_PORT_KIND = Some(|_| 0); } }
-    unsafe { melee_fighter::hooks::LBAUDIOAX_800233EC = Some(|_| 0); }
-    unsafe { melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|_| 0); }
     unsafe { melee_fighter::hooks::LBAUDIOAX_800230C8 = Some(|_, _, _| 0); }
     unsafe { melee_fighter::hooks::LBAUDIOAX_80023220 = Some(|_| 0); }
     unsafe { melee_fighter::hooks::LBAUDIOAX_80024DC4 = Some(|_| ()); }

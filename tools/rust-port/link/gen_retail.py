@@ -72,6 +72,8 @@ def pick_fn(cands, name, cmap):
 class Gen:
     def __init__(self):
         self.defs = g.index_defs()
+        self.defs_lc = {}
+        for k, v in self.defs.items(): self.defs_lc.setdefault(k.lower().replace('_', ''), (k, v))
         self.statics = static_index()
         self.consts = const_index()
         self.cmap = g.cfile_map()
@@ -81,7 +83,10 @@ class Gen:
 
     def fn_expr(self, name, args_text, ret_text, where):
         cands = self.defs.get(name, [])
-        c = pick_fn(cands, name, self.cmap)
+        real = name
+        if not cands and name.lower().replace('_', '') in self.defs_lc:  # a tu spells the C name in lower case (ftco_aircatch_anim)
+            real, cands = self.defs_lc[name.lower().replace('_', '')]
+        c = pick_fn(cands, real, self.cmap)
         if c is None:
             self.unres.append(f'fn {name} ({where}): ' + ('ambiguous' if cands else 'no canonical'))
             return None
@@ -93,7 +98,7 @@ class Gen:
         S = self.site * 100
         params = ', '.join(f'a{i}' for i in range(narg))
         call_args = ', '.join(f'cast::<_, _, {S + i + 1}>(a{i})' for i in range(narg))
-        callee = f'{c[0]}::{c[1]}::{name}'
+        callee = f'{c[0]}::{c[1]}::{real}'
         unit = (ret_text is None) or ret_text.strip() in ('()', '')
         if unit:
             body = f'let _ = {callee}({call_args});'

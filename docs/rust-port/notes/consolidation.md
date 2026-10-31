@@ -133,8 +133,8 @@ From step 7 the engine path is the one being moved forward.
 | 11 (DONE 2026-10-31; both pad scenarios reach 1801 on the engine; camera / HUD procs ran as they were, sound is still the forced no-op seam) | Camera, HUD, sound | `cmcamera` procs, `ifStatus` / `ifStock` / `ifTime` procs, and `lbAudioAx` through the audio seam (the `ft_PlaySFX` RNG draw stays exact). Target: **pad_falcon_fox_fd 1801 on the engine**. |
 | 12 (DONE 2026-10-31; both pad scenarios reach 1801 on the engine, fighter fields equal to the C snapshots at 600/1200/1700) | Fighter hit detection | Real `ftcoll` on real joints (no pseudo `JOINTS`), `Fighter_ProcessHit`, `ftCo_Damage*`, shields and clanks, through the `s_link` 13 and 14 procs. Target: pad_marth_sheik_bf to its first item use. |
 | 13 (DONE 2026-10-31; pad_marth_sheik_bf 1801 on the engine, item rows equal in `melee diff --engine tu`) | Items engine | `Item_Create` / `Item_80268E5C` / item procs and `it_26B1` registration, then `itseakneedleheld` / `itseakneedlethrown`, `itfoxblaster` / `itfoxlaser`, `itsamusmissile`, and item-vs-fighter hits (`ftColl_8007925C`). Target: **pad_marth_sheik_bf 1801 on the engine**. Item diff subsystem at 0. |
-| 14 (PARTIAL 2026-10-31: cpu_fox_falco_dl 950 frames on the engine, target 370 passed; first divergence 950 in the dynamic-bone sim, see STATUS.md blockers) | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
-| 15 | Hazard stages | `grStory` and `grGreens` procs through their map gobjs, plus `Ground_UpdateMapColl`. Target: cpu_peach_samus_ys_items 120 or more on the engine. |
+| 14 (DONE 2026-10-31: cpu_fox_falco_dl 1197 frames on the engine, target 370 passed; first divergence 1196, STATUS.md blocker A) | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
+| 15 (DONE 2026-10-31; cpu_peach_samus_ys_items 120 on the engine, the golden stops there at the Shy Guys spawn; Samus ported to tu/, retail tables resolve) | Hazard stages | `grStory` and `grGreens` procs through their map gobjs, plus `Ground_UpdateMapColl`. Target: cpu_peach_samus_ys_items 120 or more on the engine. |
 | 16 | Rebirth, death, stocks | `ftCo_800BFD9C` / `gm_80167320` / `fn_8016719C` / `ftCo_800D4FF4`, blast zones from the real `Stage` data, and `gmMainLib` stocks. Every KO in the four goldens takes the engine path (re-check all four counts). |
 | 17 | Engine snapshot, rollback and diff | `Engine::state()` and the C-snapshot overlay. Port `melee diff`, `synctest`, `--from-snapshot` and `--dump-state` to the engine, and delete the model-state section. Target: rollback synctest clean over 1800 frames on pad_falcon_fox_fd. |
 | 18 | Cutover | `--engine tu` becomes the default for `golden`, `diff`, `view-golden`, `play` and `netplay`. All four goldens are at or above their legacy counts on the engine. The legacy path remains reachable only with `--engine legacy`. |
@@ -1006,3 +1006,18 @@ what stopped the engine was not camera, HUD or sound but the item path the two s
   are instrumented (`ftcommon2`, `ftcommon3`, `chars/` bodies are invisible to the trace).
 - `melee golden --engine tu` for the pad scenarios needs `MELEE_ENGINE_PRE_DRAWS=1` (tools/rust-port/engine/pre_draws.tsv); the CPU
   scenarios need 0 and compare the seed column too.
+
+## Round 2 (2026-10-31): steps 14 and 15
+
+- Step 14: the cpu_fox_falco_dl engine count went 950 -> 1197. The method that found it: the call-sequence/count tools (seqdiff/countdiff) only showed
+  inlining noise for the dynamic-bone divergence, so the inputs of `lb_8001044C` were stored per call in a C global (`gw_dyn_buf`, snapshot reads it
+  back) and compared with the same values printed by the engine: the first stage that differs was the collider avoidance, whose collider
+  came from `Fighter_x1670_t` memory read through the GC `lb_Collider` layout (native `jobj` pointer is 8 bytes). Then CPU walk-in
+  `dx` (`ftCo_800A9CB4`): c2rs dropped the `__frsqrte(x)` seed of its `sqrtf_store` macro (guess = 0.0). Both fixed.
+- Step 15: Samus on the engine. `ftsamus.c`, `ftsamusspecial{hi,lw0,lw1,n,s}.c` are tu modules now (rust/melee_world/gen/mtu/c2rs.py with
+  `--sib` / `--head rust/melee_chara/gen_head_samus.rs`, merged into the hand-written files; the gobj-signature chars bodies that the
+  `chars_dispatch` oracle tests cover are `pub use` re-exports, the four fp-signature ones are thin wrappers). Data strings are consts in
+  `tu/ftsamus.rs`. `gen_retail.py` resolves a C name against lower-case / underscore-free tu spellings (`ftco_aircatch_anim`).
+  `Mex_GrBind` is the identity on the engine; `lbAudioAx_800233EC/80023130` (pure table reads that decide the `ft_PlaySFX` draw) are no longer
+  forced to 0 by seams.txt. The c2rs bug with macro-initialised declarations is in STATUS.md.
+- Not done in this step, left for the next: Shy Guys (`itheiho.c`, `it_802D8618`) and the random item spawner: the golden stops at 120 on both paths.

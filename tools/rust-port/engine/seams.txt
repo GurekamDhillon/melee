@@ -62,8 +62,9 @@ OSGetResetCode
 OSDisableInterrupts
 OSRestoreInterrupts
 OSEnableInterrupts
+# the two sound-id lookups (pure table reads, they gate the ft_PlaySFX RNG draw) run for real; the rest of audio is a seam.
 # audio is step 11: until then every sound call is answered "nothing played" (forced: overrides the link layer)
-!lbAudioAx_\w+
+!lbAudioAx_(?!800233EC|80023130)\w+
 !HSD_Audio\w+
 !HSD_Synth\w+
 !AXDriver\w*

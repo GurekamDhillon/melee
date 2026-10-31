@@ -13,6 +13,7 @@ ambiguous HSD_JObjGetScale melee_chara/tu/ftkirbyyoshiegg.rs 1
 ambiguous HSD_JObjSetRotation melee_fighter/tu/ftparts.rs 0
 ambiguous HSD_JObjGetChild melee_chara/tu/ftpopospecials.rs 1
 ambiguous HSD_JObjGetNext melee_chara/tu/ftpopospecials.rs 1
+ambiguous ftCommon_UpdateFacing melee_chara/tu/ftsamusspecialhi.rs 1
 ambiguous sfxForward melee_modes/tu/gmhowto.rs 1
 ambiguous SceneLaunch_HudCount melee_modes/tu/gmvsmelee.rs 0
 cabiref OSReport melee_modes/tu/mnhyaku.rs 1
@@ -277,8 +278,6 @@ nodef HSD_MtxQuat melee_fighter/tu/ftCo_DamageIce.rs 0
 nodef ftCommon_UnlockECB melee_fighter/tu/ftCo_DamageIce.rs 0
 nodef ft_GetGroundFrictionMultiplier melee_fighter/tu/ftCo_Dash.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_Escape.rs 0
-nodef ftSs_SpecialLw_8012AEBC melee_fighter/tu/ftCo_Escape.rs 1
-nodef ftSs_SpecialLw_8012AF38 melee_fighter/tu/ftCo_Escape.rs 1
 nodef ftCommon_UseAllJumps melee_fighter/tu/ftCo_FallSpecial.rs 0
 nodef Geno_DefineBaseKind melee_fighter/tu/ftCo_Guard.rs 0
 nodef Geno_DefineTemplateSkeleton melee_fighter/tu/ftCo_Guard.rs 0
@@ -314,7 +313,6 @@ nodef Mex_Enabled melee_fighter/tu/ftCo_SquatRv.rs 0
 nodef Geno_DefineBaseKind melee_fighter/tu/ftCo_Throw.rs 0
 nodef Geno_DefineTemplateSkeleton melee_fighter/tu/ftCo_Throw.rs 0
 nodef ftCommon_UnlockECB melee_fighter/tu/ftCo_Throw.rs 0
-nodef ftSs_Init_CreateThrowGrappleBeam melee_fighter/tu/ftCo_Throw.rs 1
 nodef Geno_DefineKirbyCopy melee_fighter/tu/ftCo_ThrownKirby.rs 0
 nodef OSReport_GenoKirbyCopy melee_fighter/tu/ftCo_ThrownKirby.rs 0
 nodef Replay_RawStickBack melee_fighter/tu/ftCo_Turn.rs 0
@@ -830,12 +828,7 @@ nodef efSync_Spawn_N melee_items/tu/itlinkhookshot.rs 1
 nodef efSync_Spawn_N melee_items/tu/itlipstickspore.rs 1
 nodef efSync_Spawn_N melee_items/tu/itlizardon.rs 1
 nodef HSD_MtxGetRotation melee_items/tu/itmewtwoshadowball.rs 0
-nodef ftSs_Init_80128944 melee_items/tu/itsamusbomb.rs 1
-nodef ftSs_Init_80128A1C melee_items/tu/itsamusbomb.rs 1
 nodef HSD_MtxGetRotation melee_items/tu/itsamuschargeshot.rs 0
-nodef ftSs_SpecialLw_80129100 melee_items/tu/itsamuschargeshot.rs 1
-nodef ftSs_SpecialN_801291F0 melee_items/tu/itsamuschargeshot.rs 1
-nodef ftSs_SpecialS_8012A068 melee_items/tu/itsamusmissile.rs 1
 nodef HSD_MtxGetRotation melee_runtime/tu/jobj.rs 1
 nodef HSD_MtxSRT melee_runtime/tu/jobj.rs 1
 nodef PSVECScale melee_runtime/tu/jobj.rs 1

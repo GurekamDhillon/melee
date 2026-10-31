@@ -1,57 +1,46 @@
-//! Samus (src/melee/ft/kinds/ftSamus).
+//! Samus (src/melee/ft/kinds/ftSamus). The four entry points below take the fighter (not the gobj) for the
+//! `chars_dispatch` oracle tests; the bodies are the TU ports (`tu::ftsamusspeciallw0/1`), called through a stand-in gobj.
+
+use melee_types::{Fighter, HSD_GObj};
+
+/// A gobj whose `user_data` is `fp` (what `GET_FIGHTER` reads); NULL for a missing fighter.
+fn gobj_for(fp: *const Fighter) -> HSD_GObj {
+    let mut g: HSD_GObj = unsafe { core::mem::zeroed() };
+    g.user_data = fp as *mut core::ffi::c_void;
+    g
+}
 
 pub mod ftsamusspeciallw0 {
-    use crate::chars::da;
-    use melee_fighter::ftcommon as co;
-    use melee_types::{ftSs_DatAttrs, Fighter};
+    use super::gobj_for;
+    use melee_types::Fighter;
 
     pub fn ftSs_SpecialAirLw_Phys(fp: &mut Fighter) {
-        let a: &ftSs_DatAttrs = da(fp);
-        co::fall_basic(fp);
-        co::calc_self_accel_drift_simple(
-            fp,
-            0.0,
-            fp.co_attrs.ground_to_air_jump_momentum_multiplier * a.x10,
-            fp.co_attrs.jump_h_max_velocity * a.x10,
-        );
+        unsafe { crate::tu::ftsamusspeciallw0::ftSs_SpecialAirLw_Phys(&mut gobj_for(fp)) }
     }
 
     /// The gobj may be NULL (then 1).
     pub fn ftSs_SpecialLw_80129158(fp: Option<&Fighter>) -> i32 {
-        if let Some(fp) = fp {
-            match fp.motion_id as i32 {
-                0x157..=0x15C => return (unsafe { fp.x2070.anon_0.x2071_b6() } != 0) as i32,
-                _ => return 1,
-            }
-        }
-        1
+        unsafe { crate::tu::ftsamusspeciallw0::ftSs_SpecialLw_80129158(opt_gobj(fp)) }
     }
 
     /// The gobj may be NULL (then 1).
     pub fn ftSs_SpecialN_801291A8(fp: Option<&Fighter>) -> i32 {
-        if let Some(fp) = fp {
-            return match fp.motion_id as i32 {
-                0x157 | 0x158 | 0x15A | 0x15B | 0x15C => 0,
-                _ => 1,
-            };
+        unsafe { crate::tu::ftsamusspeciallw0::ftSs_SpecialN_801291A8(opt_gobj(fp)) }
+    }
+
+    fn opt_gobj(fp: Option<&Fighter>) -> *mut melee_types::HSD_GObj {
+        match fp {
+            Some(f) => Box::leak(Box::new(gobj_for(f))),
+            None => core::ptr::null_mut(),
         }
-        1
     }
 }
 
 pub mod ftsamusspeciallw1 {
-    use crate::chars::da;
-    use melee_fighter::ftcommon as co;
-    use melee_types::{ftSs_DatAttrs, Fighter};
+    use super::gobj_for;
+    use melee_types::Fighter;
 
     pub fn ftSs_SpecialAirLwBomb_Phys(fp: &mut Fighter) {
-        let a: &ftSs_DatAttrs = da(fp);
-        co::fall_basic(fp);
-        co::calc_self_accel_drift_simple_no_friction(
-            fp,
-            0.0,
-            fp.co_attrs.air_drift_stick_mul * a.x68,
-            fp.co_attrs.air_drift_max * a.x60,
-        );
+        unsafe { crate::tu::ftsamusspeciallw1::ftSs_SpecialAirLwBomb_Phys(&mut gobj_for(fp)) }
     }
 }

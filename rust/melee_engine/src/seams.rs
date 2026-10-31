@@ -38,6 +38,11 @@ pub fn install() {
         // canonical statics the gen_link table does not reach (the `hook!` form of gmmain.rs)
         m::HSD_PADLIBDATA = Some(|| &raw mut melee_runtime::tu::controller::HSD_PadLibData);
 
+        // sound-id lookups (pure table reads; they decide whether ft_PlaySFX draws from the RNG): the real functions
+        melee_fighter::hooks::LBAUDIOAX_800233EC = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_800233EC(id));
+        melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_80023130(id));
+        // a stage's callback table entry is a native pointer here (no guest code): the m-ex bind is the identity
+        melee_world::tu_ext::HOOK_Mex_GrBind = Some(|p| p);
         melee_runtime::tu::memory::ext::hook::PcTraceHeapEnabled = Some(|| 0);
         melee_runtime::tu::memory::ext::hook::Snap_NoteMem = Some(|_, _, _, _| {});
 

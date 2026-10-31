@@ -1148,18 +1148,18 @@ pub fn un_802FD28C(a0: i32) {
 }
 
 /// extern global `HSD_GObj_804D783C` (owner TU is elsewhere)
-pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
 /// extern global `HSD_GObj_CameraKind` (owner TU is elsewhere)
-pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
 /// extern global `HSD_GObj_FogKind` (owner TU is elsewhere)
-pub static mut HSD_GObj_FogKind: i8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
 /// extern global `HSD_GObj_JObjKind` (owner TU is elsewhere)
-pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 /// extern global `HSD_GObj_LightKind` (owner TU is elsewhere)
-pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
 /// extern global `HSD_PadCopyStatus` (owner TU is elsewhere)
-pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 /// extern global `HSD_SObjLib_804D7960` (owner TU is elsewhere)
-pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
 /// extern global `HSD_identityMtx` (owner TU is elsewhere)
 pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };

@@ -327,6 +327,8 @@ pub unsafe fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD
 pub unsafe fn HSD_GObjFree(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObjFree");
     hsd_assert!("gobjplink.c", 0x171, !gobj.is_null());
+    if std::env::var_os("MELEE_DBG_FREE").is_some() { eprintln!("GObjFree {:p} class {} p_link {}
+{}", gobj, (*gobj).classifier, (*gobj).p_link, std::backtrace::Backtrace::force_capture()); }
     if HSD_GObj_DelayedProcInfo.flags & DelayedProcInfo::IN_DELAYED_PROC == 0 && gobj == HSD_GObj_CurrentInvokedProcGObj {
         HSD_GObj_DelayedProcInfo.flags |= DelayedProcInfo::DELAY_REMOVE_GOBJ;
         return;

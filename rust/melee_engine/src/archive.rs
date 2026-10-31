@@ -185,6 +185,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
             }
         }
         let (arena, issues) = d.finish();
+        crate::dat_custom::fix_articles();
         image.roots = roots;
         image._arena = Some(arena);
         if std::env::var_os("MELEE_DAT_ISSUES").is_some() {

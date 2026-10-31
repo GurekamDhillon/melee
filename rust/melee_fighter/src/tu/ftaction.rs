@@ -339,6 +339,7 @@ pub fn ftAction_80071820(g: G, cmd: &mut CommandInfo) {
     unsafe {
         let w = &u(cmd).set_cmd_var;
         let i = w.idx();
+        if std::env::var_os("MELEE_DBG_CMD").is_some() { eprintln!("setcmdvar p{} msid {} frame {:.1} idx {} value {}", fpm(g).player_id, fpm(g).motion_id as i32, fpm(g).cur_anim_frame, i, w.value()); }
         if i < 4 {
             fpm(g).cmd_vars[i as usize] = w.value();
         }

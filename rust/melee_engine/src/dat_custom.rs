@@ -157,6 +157,61 @@ fn rtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut
     Box::leak(v.into_boxed_slice()).as_mut_ptr()
 }
 
+
+/// Article tables whose `x4_specialAttributes` blocks still point into the big-endian image: (table, entries, image
+/// base, boundaries). Filled while decoding (an object's fields exist only after the decoder ran), applied by
+/// [`fix_articles`] right after `finish()`.
+static mut ARTICLE_TABLES: Vec<(usize, usize, usize, Vec<u32>)> = Vec::new();
+
+/// `rtable::<Article>`; see [`fix_articles`].
+fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut melee_types::Article {
+    let tbl = rtable::<melee_types::Article>(d, b, at);
+    if let Some(t) = d.target(at) {
+        let n = (b.extent(t) / 4).max(1) as usize;
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, n, b.1, b.0.clone())) };
+    }
+    tbl
+}
+
+/// The C reads an article's special attributes as `s32` / `f32` fields of the kind's attribute struct, but the pointer
+/// is a `void*` into the big-endian image. Each block (up to the next boundary) is copied with its 32-bit words
+/// swapped; articles sharing a block share the copy.
+pub fn fix_articles() {
+    use std::collections::HashMap;
+    let tables = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TABLES)) };
+    for (tbl, n, base, bounds) in tables {
+        let b = Bounds(bounds, base);
+        let end = base + b.0.last().copied().unwrap_or(0) as usize;
+        let tbl = tbl as *mut *mut melee_types::Article;
+        let mut done: HashMap<usize, usize> = HashMap::new();
+        for i in 0..n {
+            unsafe {
+                let a = *tbl.add(i);
+                if a.is_null() || (*a).x4_specialAttributes.is_null() {
+                    continue;
+                }
+                let raw = (*a).x4_specialAttributes as usize;
+                if raw < base || raw >= end {
+                    continue; // already rebuilt (a shared article)
+                }
+                let copy = *done.entry(raw).or_insert_with(|| {
+                    let off = (raw - base) as u32;
+                    let len = (b.extent(off) as usize + 3) / 4 * 4;
+                    let src = core::slice::from_raw_parts(raw as *const u8, len);
+                    let mut v: Vec<u8> = Vec::with_capacity(len);
+                    for w in src.chunks(4) {
+                        let mut x = [0u8; 4];
+                        x[..w.len()].copy_from_slice(w);
+                        v.extend_from_slice(&u32::from_be_bytes(x).to_ne_bytes());
+                    }
+                    Box::leak(v.into_boxed_slice()).as_ptr() as usize
+                });
+                (*a).x4_specialAttributes = copy as *mut c_void;
+            }
+        }
+    }
+}
+
 /// `rtable` with at least `min` entries (missing ones are null), for tables the C indexes by a count the bytes do not state.
 fn rtable_min<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: u32) -> *mut *mut T {
     let Some(t) = d.target(at) else { return core::ptr::null_mut() };
@@ -172,9 +227,9 @@ fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     let at = |i: u32| off + 4 * i;
     let mut r = it_804D6D20_t::zeroed();
     r.x0 = d.ptr::<ItemCommonData>(at(0));
-    r.x4 = rtable::<Article>(d, b, at(1));
-    r.x8 = rtable::<Article>(d, b, at(2));
-    r.xC = rtable::<Article>(d, b, at(3));
+    r.x4 = rtable_articles(d, b, at(1));
+    r.x8 = rtable_articles(d, b, at(2));
+    r.xC = rtable_articles(d, b, at(3));
     r.x10 = d.ptr::<it_804D6D40_t>(at(4));
     r.x14 = parr::<Fighter_804D653C_t>(d, b, at(5)) as *mut Fighter_804D653C_t;
     Box::leak(Box::new(r)) as *mut _ as *mut c_void
@@ -209,7 +264,7 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
     v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
-    v.x48_items = rtable::<melee_types::Article>(d, b, at("x48_items")) as *mut *mut c_void;
+    v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut *mut c_void;
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
         v.ext_attr = p;

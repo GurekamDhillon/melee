@@ -617,10 +617,10 @@ pub fn mpLineGetKind(a0: i32) -> i32 {
 }
 
 /// extern global `HSD_GObjGXLinkHead` (owner TU is elsewhere)
-pub static mut HSD_GObjGXLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObjGXLinkHead;
 /// extern global `HSD_GObjPLinkHead` (owner TU is elsewhere)
-pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 /// extern global `HSD_GObj_LightKind` (owner TU is elsewhere)
-pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
 /// extern global `stage_info` (owner TU is elsewhere)
-pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
+pub use crate::tu::ground::stage_info;

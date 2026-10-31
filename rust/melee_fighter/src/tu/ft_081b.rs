@@ -405,7 +405,9 @@ pub fn ft_80082a68(g: G) -> bool {
     f.coll_data.last_pos = f.coll_data.cur_pos;
     f.coll_data.last_pos.y += 10.0;
     f.coll_data.cur_pos.y -= 10.0;
-    if ext::mpColl_800471F8(&mut f.coll_data) {
+    let hit = ext::mpColl_800471F8(&mut f.coll_data);
+    if std::env::var_os("MELEE_DBG_PROBE").is_some() { eprintln!("probe pos {:?} hit {hit} cur {:?}", (f.cur_pos.x, f.cur_pos.y), (f.coll_data.cur_pos.x, f.coll_data.cur_pos.y)); }
+    if hit {
         end(g);
         true
     } else {

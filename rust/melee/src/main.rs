@@ -511,6 +511,9 @@ fn golden_engine(args: &[String]) -> ExitCode {
                 }
             }
         }
+        if std::env::var_os("MELEE_ENGINE_ITEMS").is_some() {
+            for l in e.debug_items().lines() { eprintln!("f{f} {l}"); }
+        }
         if std::env::var_os("MELEE_ENGINE_FT").is_some() {
             eprintln!("f{f} {}", e.debug_fighter(0));
             eprintln!("f{f} {}", e.debug_fighter(1));

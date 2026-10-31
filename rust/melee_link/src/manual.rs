@@ -134,6 +134,25 @@ pub fn install() {
                 melee_runtime::tu::objalloc::HSD_ObjAlloc(&raw mut melee_fighter::tu::fighter::fighter_x59C_alloc_data) as *mut melee_types::Fighter_x59C_t
             });
         }
+        // fighter hooks (melee_fighter::hooks) the generator cannot link: pointer-native HSD calls and the port's
+        // extension queries answering "not present" (vanilla match: no m-ex fighter, no Geno define, no Slippi)
+        {
+            use melee_fighter::hooks as h;
+            h::HSD_JOBJ_ADD_ANIM_ALL = Some(|j, a| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(j, a, core::ptr::null_mut(), core::ptr::null_mut()) });
+            h::GENO_DEFINE_BASE_KIND = Some(|_| -1);
+            h::MEX_SSM_FOR_PORT_KIND = Some(|_| -1);
+            h::SLIPPI_CODES = Some(|| 0);
+            h::MEX_ON_APPLY_HEAD_ITEM = Some(|_, _| {});
+            h::MEX_ON_ITEM_DROP = Some(|_, _, _| {});
+            h::MEX_ON_ITEM_DROP_EXT = Some(|_, _, _| {});
+            h::MEX_ON_ITEM_INVISIBLE = Some(|_, _| {});
+            h::MEX_ON_ITEM_PICKUP2 = Some(|_, _, _| {});
+            h::MEX_ON_ITEM_VISIBLE = Some(|_, _| {});
+            h::MEX_ON_KNOCKBACK_ENTER = Some(|_, _| {});
+            h::MEX_ON_KNOCKBACK_EXIT = Some(|_, _| {});
+            h::MEX_ON_REMOVE_HEAD_ITEM = Some(|_, _| {});
+            h::FTDEMO_SET_FACING_DIRECTION = Some(|g, d| unsafe { melee_fighter::tu::ftdemo::ftdemo_set_facing_direction(g as _, d as _) });
+        }
         // texp.c's DAG calls take the texpdag.c host trait; the game's host is `texpdag::Ext`
         use melee_runtime::tu::{texp::ext::hook as te, texpdag};
         te::HSD_TExpMakeDag = Some(|root, list| unsafe { texpdag::HSD_TExpMakeDag(&mut texpdag::Ext, root, list) });

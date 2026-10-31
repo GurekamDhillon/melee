@@ -212,10 +212,16 @@ impl Engine {
     pub fn debug_items(&self) -> String {
         unsafe {
             let mut out = String::new();
+            let ci = &melee_world::tu::ground::stage_info.cam_info;
+            out += &format!("cam top {:08x} bottom {:08x} left {:08x} right {:08x} xoff {:08x} yoff {:08x}
+", ci.cam_bounds.top.to_bits(), ci.cam_bounds.bottom.to_bits(),
+                ci.cam_bounds.left.to_bits(), ci.cam_bounds.right.to_bits(), ci.cam_x_offset.to_bits(), ci.cam_y_offset.to_bits());
             let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize);
             let mut n = 0;
             while !g.is_null() {
                 let ip = (*g).user_data as *mut melee_types::Item;
+                if ip.is_null() { out += &format!("gobj {:p} no user data
+", g); }
                 if !ip.is_null() {
                     let (p, v) = (&(*ip).pos, &(*ip).x40_vel);
                     out += &format!("item{n} kind {} msid {} pos {:08x} {:08x} {:08x} vel {:08x} {:08x} {:08x}
@@ -277,9 +283,9 @@ impl Engine {
                 js += &format!(" j{i}({:.3},{:.3})", v.x, v.y);
             }
             format!(
-                "{js} slot {slot}: msid {} pos ({:.4},{:.4}) vel ({:.4},{:.4}) goa {} env {:08X} x{}",
+                "{js} slot {slot}: msid {} pos ({:.4},{:.4}) vel ({:.4},{:.4}) goa {} env {:08X} x{} cmd {:?} frame {:.2}",
                 fp.motion_id as i32, fp.cur_pos.x, fp.cur_pos.y, fp.self_vel.x, fp.self_vel.y,
-                fp.ground_or_air as i32, fp.coll_data.env_flags, 0
+                fp.ground_or_air as i32, fp.coll_data.env_flags, 0, fp.cmd_vars, fp.cur_anim_frame
             )
         }
     }

@@ -99,3 +99,9 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
   on the engine because `ftsamus.c` is not a tu/ module (only `ftSs_Init_80128428` is; the data tables, MotionStateTable and the Init_* callbacks
   exist only in `melee_chara/src/raw/.../ftsamus.rs`). Port ftsamus.c to `melee_chara/src/tu/ftsamus.rs`, regenerate retail.rs / retail_ms.rs,
   then step 15 (Shy Guys etc. are the next stops).
+- A (lead). The dynamic-bone sim reads world matrices (`jobj->mtx`, `ftCo_8009CB40`) that the C render pass leaves fresh, and the engine's
+  render pass is incomplete: per frame (frame 946) the C build runs `HSD_JObjDispSub` 122x, `HSD_DObjDisp` 374x and `HSD_StartRender` 3x
+  (the `lbShadow` / `ifMagnify` offscreen passes are seams that do nothing, `seams_gen.rs`), the engine 24x / 0x / 1x. Fighter model draws are
+  equal (`ftParts_pobjsetupmtx` 169 = 169). Make the offscreen passes real (at least their matrix-setup effect) and re-check.
+  `MELEE_DIFF_MTX=1 melee diff --engine tu` compares world matrices too; the C snapshot is taken at another point of the frame than the
+  engine state, so only differences that persist over several frames mean something.

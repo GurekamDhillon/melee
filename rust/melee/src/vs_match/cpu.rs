@@ -739,6 +739,7 @@ fn ftco_800a75dc(cx: &mut Cx, me: *mut Fighter, target: *mut Fighter) -> R {
     let fp = unsafe { &mut *me };
     let t = unsafe { &*target };
     let tol = fp.cpu.x56C + t.cpu.x564;
+    if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("tol {} = x56C {} + x564 {} (p{} -> p{})", tol, fp.cpu.x56C, t.cpu.x564, fp.player_id, t.player_id); }
     if t.ground_or_air == GA_Air as _ {
         // The floor under the target (hazard lines dropped).
         let hit = cx.probe(t.cur_pos.x, dadd(10.0, t.cur_pos.y), t.cur_pos.x, t.cur_pos.y - 1000.0f32, 0.0)?;

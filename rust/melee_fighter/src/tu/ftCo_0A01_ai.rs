@@ -891,6 +891,7 @@ pub unsafe fn ftCo_800A1F3C(mut fp: *mut Fighter, mut arg1: f32, mut arg2: f32, 
         (*data).x54.x = arg1;
         (*data).x54.y = arg2;
         (*data).x38 = arg3;
+        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set1 {} p{} t {:?} x56C {} ", arg3, (*fp).player_id, ((*data).x54.x, (*data).x54.y), (*data).x56C); }
         ftCo_800A1CC4(fp, ext::ftCo_803C6594[ext::stage_info.grkind as usize]);
     }
 }
@@ -907,6 +908,7 @@ unsafe fn ftCo_800A75DC_set_target(mut fp: *mut Fighter, mut x60: *const i32, mu
         (*data).x54.x = arg1;
         (*data).x54.y = arg2;
         (*data).x38 = arg3;
+        if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("x38 set2 {} p{} t {:?}", arg3, (*fp).player_id, ((*data).x54.x, (*data).x54.y)); }
         ftCo_ApplyStageEntry(fp, ext::stage_info.grkind);
     }
 }
@@ -5554,7 +5556,14 @@ unsafe fn ftCo_800ADE48_inline1(mut fp: *mut Fighter) -> *mut CpuFighter {
 }
 
 /// `ftCo_800ADE48`
-unsafe fn ftCo_800ADE48(mut fp: *mut Fighter) -> i32 {
+unsafe fn ftCo_800ADE48(fp: *mut Fighter) -> i32 {
+    let b = (*fp).cpu.x38.to_bits();
+    let r = ftCo_800ADE48_impl(fp);
+    if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("    ADE48 ret {} x38 {:08X} -> {:08X} x54 {:?} x60 {}", r, b, (*fp).cpu.x38.to_bits(), ((*fp).cpu.x54.x, (*fp).cpu.x54.y), (*fp).cpu.x60); }
+    r
+}
+
+unsafe fn ftCo_800ADE48_impl(mut fp: *mut Fighter) -> i32 {
     let mut switch_cmd: i32 = 0;
     let mut data: *mut CpuFighter = null_mut();
     let mut ip: *mut Item = null_mut();
@@ -7278,23 +7287,36 @@ pub unsafe fn ftCo_800B24B8(mut fp: *mut Fighter) {
     let mut sp28: Vec3 = unsafe { core::mem::zeroed() };
     let mut cmd: i32 = 0;
     let mut target: *mut Fighter = null_mut();
+    macro_rules! st { ($n:expr) => { if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("    B24B8 {} x38 {:08X}", $n, (*fp).cpu.x38.to_bits()); } } }
+    st!("entry");
     cmd = ftCo_800A229C(fp, core::ptr::addr_of_mut!(sp28) as *mut Vec);
+    st!("229C");
     if cmd != 0 {
+        st!("cmd!=0");
         ftCo_800AE7AC(fp, core::ptr::addr_of_mut!(sp28) as *mut Vec, cmd);
+        st!("AE7AC");
         return;
     }
     target = ftCo_800A5CE0(fp);
     (*data).x44 = target;
     if !target.is_null() {
         ftCo_CpuSetTargetFlags(data);
+        st!("flags");
         ftCo_CpuTargetAct(fp);
+        st!("TargetAct");
         let _ = ftCo_800ADE48(fp);
+        st!("ADE48");
         return;
     }
+    st!("notarget");
     ftCo_CpuInitNoTarget(fp, 1);
+    st!("InitNoTarget");
     ftCo_CpuUpdateCommonItemTarget(fp);
+    st!("common");
     ftCo_CpuUpdateSpecialItemTarget(fp);
+    st!("special");
     ftCo_CpuActOnNoTarget(fp, data);
+    st!("ActOnNoTarget");
 }
 
 /// `ftCo_800B2790`
@@ -7495,7 +7517,9 @@ pub unsafe fn ftCo_800B2AFC(mut fp: *mut Fighter) {
                             ftCo_800A1F3C_noinline2(fp, floor_x, floor_y, 5.0f32);
                         }
                     }
+                    if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("  B2AFC kind0 before ADE48 x38 {:08X}", (*fp).cpu.x38.to_bits()); }
                     let _ = ftCo_800ADE48(fp);
+                    if std::env::var_os("MELEE_DBG_CPU").is_some() { eprintln!("  B2AFC kind0 after ADE48 x38 {:08X}", (*fp).cpu.x38.to_bits()); }
                     return;
                 }
             }
@@ -8007,11 +8031,19 @@ pub unsafe fn ftCo_800B3900(mut gobj: *mut HSD_GObj) {
             return;
         }
     }
+    let dbg = std::env::var_os("MELEE_DBG_CPU").is_some();
+    macro_rules! st { ($n:expr) => { if dbg { eprintln!("cpu p{} x7C {} {} x38 {:08X}", (*fp).player_id, (*fp).cpu.x7C, $n, (*fp).cpu.x38.to_bits()); } } }
+    st!("start");
     ftCo_800B33B0(fp);
+    st!("33B0");
     ftCo_800B2AFC(fp);
+    st!("2AFC");
     ftCo_800B2790(fp);
+    st!("2790");
     super::ftcmdscript::ftCo_800B3E04(fp);
+    st!("3E04");
     ftCo_800B0AF4(fp);
+    st!("0AF4");
     (*fp).cpu.x7C = (*fp).cpu.x7C + 1;
 }
 

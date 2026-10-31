@@ -19,6 +19,9 @@ known = set(re.findall(r'(?m)^pub (?:struct|type|union) (\w+)', gen))
 
 PAT = [re.compile(r'(?:COPY_ATTRS|PUSH_ATTRS)\(\s*\w+\s*,\s*(\w+)\s*\)'),
        re.compile(r'(\w+)\s*\*\s*\w+\s*=\s*(?:\(\w+\s*\*\))?\s*[\w>\-\(\)]*ext_attr')]
+# the clone characters' own files only forward to the base character's code (their attribute block has the base layout)
+CLONES = {'falco': 'ftFox_DatAttrs', 'drmario': 'ftMario_DatAttrs', 'emblem': 'MarsAttributes', 'ganon': 'ftCaptain_DatAttrs',
+          'pichu': 'ftPikachuAttributes'}
 rows = []
 skipped = []
 for d in sorted(glob.glob(os.path.join(KINDS, 'ft*'))):
@@ -33,6 +36,8 @@ for d in sorted(glob.glob(os.path.join(KINDS, 'ft*'))):
         if m:
             ty = m.group(1)
             break
+    if ty is None and name.lower() in CLONES:
+        ty = CLONES[name.lower()]
     if ty is None:
         skipped.append(f'{name}: no ext_attr type found')
         continue

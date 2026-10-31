@@ -5583,6 +5583,7 @@ tu::ftcpuattack::ext::HSD_RANDF
 tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE
 tu::ftcpuattack::ext::SCRIPT_GAME_CAPS_MAX_JUMPS
 tu::ftcpuattack::ext::STAGE_INFO_GRKIND
+tu::ftcpuattack::ext::PLINK_HEAD
 tu::ftcpuattack::ext::FTCO_800A0C8C
 tu::ftcpuattack::ext::FTCO_800A0098
 tu::ftcpuattack::ext::FTCO_800A05F4

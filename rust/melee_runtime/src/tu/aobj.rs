@@ -286,18 +286,18 @@ pub unsafe extern "C" fn HSD_AObjFree(aobj: *mut HSD_AObj) {
 }
 
 unsafe fn callbackForeachFunc(aobj: *mut HSD_AObj, obj: *mut c_void, type_: HSD_Type, func: *mut c_void, arg_type: AObj_Arg_Type, arg: *mut CallbackArg) {
-    type Fa = unsafe extern "C" fn(*mut HSD_AObj);
-    type Faf = unsafe extern "C" fn(*mut HSD_AObj, f32);
-    type Fav = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void);
-    type Fau = unsafe extern "C" fn(*mut HSD_AObj, u32);
-    type Fao = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void);
-    type Faot = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, HSD_Type);
-    type Faof = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, f32);
-    type Faov = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, *mut c_void);
-    type Faou = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, u32);
-    type Faotf = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, HSD_Type, f32);
-    type Faotv = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, HSD_Type, *mut c_void);
-    type Faotu = unsafe extern "C" fn(*mut HSD_AObj, *mut c_void, HSD_Type, u32);
+    type Fa = unsafe extern "C-unwind" fn(*mut HSD_AObj);
+    type Faf = unsafe extern "C-unwind" fn(*mut HSD_AObj, f32);
+    type Fav = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void);
+    type Fau = unsafe extern "C-unwind" fn(*mut HSD_AObj, u32);
+    type Fao = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void);
+    type Faot = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, HSD_Type);
+    type Faof = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, f32);
+    type Faov = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, *mut c_void);
+    type Faou = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, u32);
+    type Faotf = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, HSD_Type, f32);
+    type Faotv = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, HSD_Type, *mut c_void);
+    type Faotu = unsafe extern "C-unwind" fn(*mut HSD_AObj, *mut c_void, HSD_Type, u32);
     match arg_type {
         AOBJ_ARG_A => core::mem::transmute::<*mut c_void, Fa>(func)(aobj),
         AOBJ_ARG_AF => core::mem::transmute::<*mut c_void, Faf>(func)(aobj, (*arg).f),
@@ -424,7 +424,7 @@ unsafe fn JObjForeachAnim(mut obj: *mut HSD_JObj, mask: HSD_TypeMask, func: *mut
 }
 
 /// `HSD_ForeachAnim(obj, type, mask, func, arg_type, ...)`: `arg` is the optional variadic argument.
-pub unsafe extern "C" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type, mut arg: CallbackArg) {
+pub unsafe extern "C-unwind" fn HSD_ForeachAnim(obj: *mut c_void, type_: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type, mut arg: CallbackArg) {
     melee_core::ct!("HSD_ForeachAnim");
     if obj.is_null() {
         return;

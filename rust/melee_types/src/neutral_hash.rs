@@ -111,7 +111,17 @@ pub fn nh_dump(fp: &Fighter, slot: i32, stocks: i32) -> String {
         bits(fp.dmg.x195c_hitlag_frames), fp.x2219_b5() as u32, bits(fp.shield_health), bits(fp.x3E4_fighterCmdScript.frame_count),
         fp.x1968_jumpsUsed as u32, fp.x67F as u32, fp.x680 as u32, stocks as u32,
     ];
-    v.iter().map(|w| format!("{w:08X}")).collect::<Vec<_>>().join(" ")
+    let c = &fp.cpu;
+    let cpu = [
+        c.buttons as u32, ((c.lstick.x as u8 as u32) << 24) | ((c.lstick.y as u8 as u32) << 16) | ((c.cstick.x as u8 as u32) << 8) | (c.cstick.y as u8 as u32),
+        ((c.ltrigger as u32) << 8) | c.rtrigger as u32, c.kind as u32, c.level as u32, c.x14 as u32, c.x18 as u32, c.x1C as u32, c.x20 as u32, c.x24 as u32,
+        c.x28 as u32, c.x2C as u32, c.x30 as u32, c.x34 as u32, bits(c.x38), bits(c.x3C), bits(c.x40), c.x7C as u32, c.x80 as u32, c.x84 as u32,
+        c.xC8 as u32, c.xEC as u32, c.command_duration, cs_offset(c), nh_cpu_flags(c),
+    ];
+    let mut out = v.iter().map(|w| format!("{w:08X}")).collect::<Vec<_>>().join(" ");
+    out.push_str(" | ");
+    out.push_str(&cpu.iter().map(|w| format!("{w:08X}")).collect::<Vec<_>>().join(" "));
+    out
 }
 
 /// One item's word (the body of RB_NeutralHash's item loop); the frame sums these, wrapping.

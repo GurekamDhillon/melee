@@ -13,8 +13,12 @@ pub fn decode(sym: &str, d: &mut GcDecoder<'_>, at: u32) -> Option<*mut c_void> 
         "captain" => d.ptr::<ftCaptain_DatAttrs>(at) as *mut c_void,
         "crazyhand" => d.ptr::<ftCrazyHand_DatAttrs>(at) as *mut c_void,
         "donkey" => d.ptr::<ftDonkeyAttributes>(at) as *mut c_void,
+        "drmario" => d.ptr::<ftMario_DatAttrs>(at) as *mut c_void,
+        "emblem" => d.ptr::<MarsAttributes>(at) as *mut c_void,
+        "falco" => d.ptr::<ftFox_DatAttrs>(at) as *mut c_void,
         "fox" => d.ptr::<ftFox_DatAttrs>(at) as *mut c_void,
         "gamewatch" => d.ptr::<ftGameWatchAttributes>(at) as *mut c_void,
+        "ganon" => d.ptr::<ftCaptain_DatAttrs>(at) as *mut c_void,
         "kirby" => d.ptr::<ftKb_DatAttrs>(at) as *mut c_void,
         "koopa" => d.ptr::<ftKoopaAttributes>(at) as *mut c_void,
         "link" => d.ptr::<ftLk_DatAttrs>(at) as *mut c_void,
@@ -26,6 +30,7 @@ pub fn decode(sym: &str, d: &mut GcDecoder<'_>, at: u32) -> Option<*mut c_void> 
         "nana" => d.ptr::<ftIceClimberAttributes>(at) as *mut c_void,
         "ness" => d.ptr::<ftNessAttributes>(at) as *mut c_void,
         "peach" => d.ptr::<ftPe_DatAttrs>(at) as *mut c_void,
+        "pichu" => d.ptr::<ftPikachuAttributes>(at) as *mut c_void,
         "pikachu" => d.ptr::<ftPikachuAttributes>(at) as *mut c_void,
         "popo" => d.ptr::<ftIceClimberAttributes>(at) as *mut c_void,
         "purin" => d.ptr::<ftPurinAttributes>(at) as *mut c_void,
@@ -38,9 +43,4 @@ pub fn decode(sym: &str, d: &mut GcDecoder<'_>, at: u32) -> Option<*mut c_void> 
 }
 
 // not generated:
-//   DrMario: no ext_attr type found
-//   Emblem: no ext_attr type found
-//   Falco: no ext_attr type found
-//   Ganon: no ext_attr type found
-//   Pichu: no ext_attr type found
 //   Sandbag: ftSandbagAttributes is not a melee_types record

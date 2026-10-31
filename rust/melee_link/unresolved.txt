@@ -355,7 +355,6 @@ nodef Script_EnemyGameEvent melee_fighter/tu/ftcoll.rs 1
 nodef Script_GameEvent melee_fighter/tu/ftcoll.rs 1
 nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftcoll.rs 0
 nodef Geno_DefineAiLike melee_fighter/tu/ftcpuattack.rs 1
-nodef plink_head melee_fighter/tu/ftcpuattack.rs 1
 nodef EF_BANK_MAX melee_fighter/tu/ftdata.rs 1
 nodef GenoDefine_Load melee_fighter/tu/ftdata.rs 1
 nodef Geno_DefineBaseKind melee_fighter/tu/ftdata.rs 0

@@ -13591,6 +13591,8 @@ fn install_melee_fighter() {
     unsafe { melee_fighter::tu::ftcpuattack::ext::MP_CHECK_ALL = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 677500>(melee_world::tu::mplib::mpCheckAll(cast::<_, _, 677501>(a0), cast::<_, _, 677502>(a1), cast::<_, _, 677503>(a2), cast::<_, _, 677504>(a3), cast::<_, _, 677505>(a4), cast::<_, _, 677506>(a5), cast::<_, _, 677507>(a6), cast::<_, _, 677508>(a7), cast::<_, _, 677509>(a8), cast::<_, _, 677510>(a9))) }); }
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::MP_CHECK_CEILING = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 677600>(melee_world::tu::mplib::mpCheckCeiling(cast::<_, _, 677601>(a0), cast::<_, _, 677602>(a1), cast::<_, _, 677603>(a2), cast::<_, _, 677604>(a3), cast::<_, _, 677605>(a4), cast::<_, _, 677606>(a5), cast::<_, _, 677607>(a6), cast::<_, _, 677608>(a7), cast::<_, _, 677609>(a8), cast::<_, _, 677610>(a9))) }); }
+    // tu/ftcpuattack.rs: link_alias.tsv
+    unsafe { melee_fighter::tu::ftcpuattack::ext::PLINK_HEAD = Some(|a0| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(a0 as usize) as _ }); }
     // tu/ftcpuattack.rs
     unsafe { melee_fighter::tu::ftcpuattack::ext::SCRIPT_GAME_CAPS_MAX_JUMPS = Some(|a0| unsafe { cast::<_, _, 677700>(melee_modes::tu::script_game::ScriptGame_CapsMaxJumps(cast::<_, _, 677701>(a0))) }); }
     // tu/ftcpuattack.rs: link_alias.tsv
@@ -33455,6 +33457,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpIsland_8005ACE8", "melee_fighter::tu::ftcpuattack::ext::MPISLAND_8005ACE8", true, true),
     ("mpCheckAll", "melee_fighter::tu::ftcpuattack::ext::MP_CHECK_ALL", true, true),
     ("mpCheckCeiling", "melee_fighter::tu::ftcpuattack::ext::MP_CHECK_CEILING", true, true),
+    ("plink_head", "melee_fighter::tu::ftcpuattack::ext::PLINK_HEAD", true, true),
     ("ScriptGame_CapsMaxJumps", "melee_fighter::tu::ftcpuattack::ext::SCRIPT_GAME_CAPS_MAX_JUMPS", true, true),
     ("stage_info_grkind", "melee_fighter::tu::ftcpuattack::ext::STAGE_INFO_GRKIND", true, true),
     ("efAsync_LoadAsync", "melee_fighter::tu::ftdata::ext::EFASYNC_LOAD_ASYNC", true, true),
@@ -44563,7 +44566,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Script_GameEvent", "melee_fighter::tu::ftcoll::ext::SCRIPT_GAME_EVENT", false, true),
     ("ftCo_CalcYScaledKnockback", "melee_fighter::tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK", false, false),
     ("Geno_DefineAiLike", "melee_fighter::tu::ftcpuattack::ext::GENO_DEFINE_AI_LIKE", false, true),
-    ("plink_head", "melee_fighter::tu::ftcpuattack::ext::PLINK_HEAD", false, true),
     ("EF_BANK_MAX", "melee_fighter::tu::ftdata::ext::EF_BANK_MAX_", false, true),
     ("GenoDefine_CaptureBase", "melee_fighter::tu::ftdata::ext::GENO_DEFINE_CAPTURE_BASE", false, false),
     ("GenoDefine_InitKinds", "melee_fighter::tu::ftdata::ext::GENO_DEFINE_INIT_KINDS", false, false),

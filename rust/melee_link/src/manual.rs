@@ -170,6 +170,27 @@ pub fn install() {
             h::MEX_ON_REMOVE_HEAD_ITEM = Some(|_, _| {});
             h::FTDEMO_SET_FACING_DIRECTION = Some(|g, d| unsafe { melee_fighter::tu::ftdemo::ftdemo_set_facing_direction(g as _, d as _) });
         }
+        melee_fighter::tu::ftcpuattack::ext::GENO_DEFINE_AI_LIKE = Some(|_| -1);
+        // granime.c hands the variadic of HSD_ForeachAnim over as machine words; the callback argument is a pointer there (AOBJ_ARG_AV)
+        melee_world::tu::granime::ext::HSD_FOREACHANIM = Some(|obj, ty, mask, func, arg_type, va| unsafe {
+            let arg = match arg_type as u32 {
+                t if t == AOBJ_ARG_AF as u32 => CallbackArg { f: f64::from_bits(va.first().copied().unwrap_or(0) as u64) as f32 },
+                t if t == AOBJ_ARG_AU as u32 => CallbackArg { d: va.first().copied().unwrap_or(0) as u32 },
+                _ => CallbackArg { v: va.first().copied().unwrap_or(0) as *mut c_void },
+            };
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func, arg_type as _, arg);
+        });
+        // the C variadic spelled with its fixed value: HSD_ForeachAnim(.., HSD_AObjSetFlags, AOBJ_ARG_AU, AOBJ_LOOP) in grlib / grizumi
+        melee_world::tu::grlib::ext::HSD_FOREACHANIM = Some(|obj, ty, mask, func, arg_type| unsafe {
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func, arg_type as _, CallbackArg { d: AOBJ_LOOP as u32 });
+        });
+        melee_world::tu::grizumi::ext::HSD_FOREACHANIM = Some(|obj, ty, mask, func, arg_type| unsafe {
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func, arg_type as _, CallbackArg { d: AOBJ_LOOP as u32 });
+        });
+        // gmcamera.c: HSD_ForeachAnim(jobj, JOBJ_TYPE, TOBJ_MASK, HSD_AObjStopAnim, AOBJ_ARG_AOV, 0)
+        melee_modes::tu::gmcamera::ext::HSD_FOREACHANIM = Some(|obj, ty, mask, func, arg_type, _a, _b| unsafe {
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func as *mut c_void, arg_type as _, CallbackArg { v: core::ptr::null_mut() });
+        });
         // item TUs: effect spawns with their own EfArg tails
         {
             use melee_items::tu::{iteffect, itclimbersice, it_2725, it_279C, itspawn, itcoll};

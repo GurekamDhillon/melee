@@ -11,3 +11,4 @@ efSync_Spawn	variadicw:melee_world::tu::efn::efsync::efSync_Spawn:2
 ftLib_GetKind	|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }
 ftLib_SetScale	|a0, a1| unsafe { melee_fighter::ftlib::set_scale(a0 as _, a1 as _) }
 ftLib_GetItem	|a0| unsafe { melee_fighter::ftlib::get_item(a0 as _) as _ }
+plink_head	|a0| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(a0 as usize) as _ }

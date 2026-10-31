@@ -31,22 +31,28 @@ stages, items and music), and can be scripted in **Lua**.
 
 > **Status: public test build (0.2.2), for Windows x64 and Linux x86_64.** Download it
 > (`GDMelee-<version>-win64.zip` or `GDMelee-<version>-linux-x86_64.tar.xz`), and read the project
-> overview, the full feature list and the screenshots, in the workspace repo:
+> overview, the full feature list and screenshots, in the workspace repo:
 > **[GurekamDhillon/gd-melee-workspace](https://github.com/GurekamDhillon/gd-melee-workspace)**
 > ([latest release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest)). You
 > supply your own legally dumped disc image; nothing disc-derived is distributed. Windows and Linux
 > 0.2.2 play each other online, but not 0.2.1 or earlier.
 
-<table>
-  <tr>
-    <td width="50%"><img alt="Online lobby, game 1 stage striking over the starters, with the counterpick opening from game 2" src="pc/docs/readme/lobby_strikes.png"></td>
-    <td width="50%"><img alt="A Fox vs Marth match on Battlefield rendered at 3x" src="pc/docs/readme/match_hd.jpg"></td>
-  </tr>
-  <tr>
-    <td><img alt="The port's character select on the Akaneia disc, with the m-ex fighters in the grid" src="pc/docs/readme/css.png"></td>
-    <td><img alt="The kit_hud example script: a gd.kit panel drawn over a match" src="pc/docs/readme/kit_hud.jpg"></td>
-  </tr>
-</table>
+## The Rust port (in progress)
+
+The game is being ported to **native Rust** in [`rust/`](rust/): one Rust function per decomp C
+function, with native little-endian data and no emulation or retargeting. The C build stays as the
+correctness reference until the Rust build passes it, and then the Rust build replaces it.
+
+- **How it is checked.** Each ported function is tested against the compiled C. Whole matches are
+  checked frame by frame against recordings from the C build: a gameplay hash, the random seed, and
+  a field-by-field state diff.
+- **Where it is.** Two-player matches (Captain Falcon vs Fox on Final Destination, Marth vs Sheik
+  on Battlefield) run all 1,801 frames on the real game loop with the same hash and seed as the C
+  build. CPU opponents, hazard stages and the rest of the game modes are being moved over now.
+- **Status and plan:** [`docs/rust-port/STATUS.md`](docs/rust-port/STATUS.md).
+
+Rendering (wgpu), audio, input, rollback netplay between Rust builds, replays and m-ex import run
+natively in Rust. The online lobby and settings menus are being redesigned and are not ported yet.
 
 ## What's here
 

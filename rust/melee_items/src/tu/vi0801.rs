@@ -80,10 +80,10 @@ pub mod ext {
         { return unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(filename as _, args as _) as _ }; }
     }
     // Data defined in other TUs.
-    pub static mut HSD_GObj_JObjKind: u8 = 0;
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
-    pub static mut HSD_GObj_FogKind: i8 = 0;
-    pub static mut HSD_GObj_LightKind: i8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
 }
 
 static mut un_804D6FB8: *mut SceneDesc = null_mut();

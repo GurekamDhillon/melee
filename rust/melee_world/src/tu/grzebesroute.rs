@@ -223,7 +223,7 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_GObj_SetupProc(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj)>, a2: u8) -> *mut melee_types::HSD_GObjProc { match H_HSD_GObj_SetupProc { Some(f) => f(a0, a1, a2), None => unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ } } }
     // ---- extern globals ----
     pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjGXLinkHead: *mut *mut melee_types::HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjGXLinkHead;
 }
 // @ext-end
 

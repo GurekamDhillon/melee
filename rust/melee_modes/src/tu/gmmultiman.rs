@@ -550,7 +550,7 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut gmMainLib_804D3EE0: *mut melee_types::gmm_x0 = unsafe { core::mem::zeroed() };
+    pub use melee_world::gmmain::gmMainLib_804D3EE0;
 }
 
 pub static mut gm_80490960: CSSData = unsafe { core::mem::zeroed() };

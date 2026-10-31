@@ -91,8 +91,8 @@ pub mod ext {
         pub unsafe extern "C" fn mn_8022EB04(a0: *mut c_void) { super::mn_8022EB04(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 // END GENERATED EXT
 

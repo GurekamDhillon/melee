@@ -76,7 +76,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut it_804D6D40: *mut it_804D6D40_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D40;
 }
 // END GENERATED EXT
 

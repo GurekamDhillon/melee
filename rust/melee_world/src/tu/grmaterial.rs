@@ -109,7 +109,7 @@ pub mod ext {
     hook!(LB_80014498, lb_80014498, (a0: *mut ColorOverlay));
     // Data owned by other TUs.
     /// `HSD_GObj* HSD_GObj_804D7814` (the gobj being drawn).
-    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = core::ptr::null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D7814;
     /// `HSD_TObj* tobj_shadows` / `tobj_toon` (baselib/tobj.c).
     pub static mut tobj_shadows: *mut HSD_TObj = core::ptr::null_mut();
     pub static mut tobj_toon: *mut HSD_TObj = core::ptr::null_mut();

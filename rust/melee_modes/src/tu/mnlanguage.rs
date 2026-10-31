@@ -458,7 +458,7 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
                 }
             }
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
 }

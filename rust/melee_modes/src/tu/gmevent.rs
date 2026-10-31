@@ -153,7 +153,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = unsafe { core::mem::zeroed() };
+    pub use melee_world::gmmain::gmMainLib_804D3EE0;
 }
 // END GENERATED EXT
 

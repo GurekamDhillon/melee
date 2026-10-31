@@ -113,9 +113,9 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 // @ext-end
 

@@ -102,16 +102,16 @@ pub mod ext {
         extern "C" fn HSD_Free(ptr: *mut c_void) = crate::tu::adapt::HSD_Free__3ee311;
         fn HSD_MemAlloc(size: isize) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__849f1b;
     }
-    pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut MenMainConRl_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainCursorRl_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainCursorTr01_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainCursorTr02_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainCursorTr03_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainCursorTr04_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainNmRl_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut mn_803EB6B0: [MenuKindData; 0] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use crate::tu::mnmain::MenMainConRl_Top;
+    pub use crate::tu::mnmain::MenMainCursorRl_Top;
+    pub use crate::tu::mnmain::MenMainCursorTr01_Top;
+    pub use crate::tu::mnmain::MenMainCursorTr02_Top;
+    pub use crate::tu::mnmain::MenMainCursorTr03_Top;
+    pub use crate::tu::mnmain::MenMainCursorTr04_Top;
+    pub use crate::tu::mnmain::MenMainNmRl_Top;
+    pub use crate::tu::mnmain::mn_803EB6B0;
 }
 use ext::*;
 

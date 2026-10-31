@@ -73,7 +73,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

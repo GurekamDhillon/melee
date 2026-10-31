@@ -5,7 +5,8 @@ use core::ptr::null_mut;
 use melee_types::*;
 
 /// gmmain_lib.c `/* 4D3EE0 */ struct gmm_x0* gmMainLib_804D3EE0` (the save data).
-pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = null_mut();
+/// One static for the world and mode crates (it used to be two copies; the engine sets the canonical one).
+pub use melee_world::gmmain::gmMainLib_804D3EE0;
 /// gm_1884.c `/* 473814 */ CssSubStruct gm_80473814`.
 pub static mut gm_80473814: CssSubStruct = unsafe { core::mem::zeroed() };
 
@@ -28,6 +29,6 @@ pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroe
 /// db.c `/* 4D4A08 */ DbLKind DbLevel`.
 pub static mut DbLevel: DbLKind = 0;
 /// random.c `u32* HSD_RandSeedPtr`.
-pub static mut HSD_RandSeedPtr: *mut u32 = null_mut();
+pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
 /// os `u32 __OSBusClock` (the bus clock in Hz; `OS_TIMER_CLOCK` is a quarter of it).
 pub static mut __OSBusClock: u32 = 0;

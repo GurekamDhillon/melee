@@ -58,7 +58,7 @@ pub mod ext {
     fn sprintf(a0: *mut i8, a1: *const i8, a2: &[*const c_void]) -> i32;
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub static mut ftData_UnkBytePerCharacter: [u8; 1024] = unsafe { core::mem::zeroed() };
 }
 

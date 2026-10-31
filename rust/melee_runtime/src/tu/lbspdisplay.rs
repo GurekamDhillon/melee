@@ -282,7 +282,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gobj_native::HSD_GObj_CameraKind;
 }
 // END GENERATED EXT
 

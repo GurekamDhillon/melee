@@ -84,10 +84,10 @@ pub mod ext {
     fn ftLib_800872BC(a0: *mut HSD_GObj) -> i32;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjGXLinkHead: *mut *mut HSD_GObj = null_mut();
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
-    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = null_mut();
-    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gobj_native::HSD_GObjGXLinkHead;
+    pub use crate::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use crate::tu::gobj_native::HSD_GObj_804D7814;
+    pub use crate::tu::perf::HSD_PerfCurrentStat;
     pub static mut HSD_identityMtx: [[f32; 4]; 3] = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0]];
 }
 

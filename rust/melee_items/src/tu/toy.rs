@@ -211,12 +211,12 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_FogKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 }
 // END GENERATED EXT
 

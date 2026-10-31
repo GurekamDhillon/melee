@@ -22,6 +22,7 @@ RenderTest_\w+
 LabPad_\w+
 Ucf_PadLatch
 FighterControls_Apply
+Mex_SlotInternal	-1
 Mex_Enabled
 GXInvalidate\w+
 db_CheckScreenshot
@@ -43,3 +44,28 @@ diag_\w+
 Geno_\w+
 ScriptParts_\w+
 hsd_80391A04
+# step 7 (VS boot): m-ex / skins / Geno extension queries answer "not present"
+Geno_DefineBaseCK	-1
+Skins\w*
+Mex_\w+
+Geno_\w+
+OSGetResetCode
+OSDisableInterrupts
+OSRestoreInterrupts
+OSEnableInterrupts
+# audio is step 11: until then every sound call is answered "nothing played" (forced: overrides the link layer)
+!lbAudioAx_\w+
+!HSD_Audio\w+
+!HSD_Synth\w+
+!AXDriver\w*
+StageSkin_\w+
+Env\w*
+OSReport
+Ui_\w+
+Fad_\w+
+FighterControls_\w+
+Pc[A-Z]\w+
+Lab[A-Z]\w+
+Frontend_\w+
+db_Setup
+db_RunEveryFrame

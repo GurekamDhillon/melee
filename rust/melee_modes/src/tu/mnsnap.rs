@@ -235,8 +235,8 @@ pub mod ext {
         fn HSD_GObjFree(a0: *mut HSD_GObj);
         fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8) -> *mut HSD_GObjProc;
     }
-    pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 use ext::*;
 

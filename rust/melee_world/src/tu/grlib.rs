@@ -92,9 +92,9 @@ pub mod ext {
     hook!(PSADDGENERATORAPPSRT_BEGIN, psAddGeneratorAppSRT_begin, (a0: *mut HSD_Generator, a1: s32) -> *mut HSD_psAppSRT);
     // Externs that are data, not code: `HSD_GObj** HSD_GObjPLinkHead` (the C global is a pointer to
     // the array of per-p_link list heads) and `HSD_Generator* hsd_804D78FC` (generator list head).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub static mut hsd_804D78FC: *mut HSD_Generator = core::ptr::null_mut();
-    pub static mut HSD_GObj_JObjKind: u8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 
 /// `static VecMtx grLib_8049EF58` (49EF58).

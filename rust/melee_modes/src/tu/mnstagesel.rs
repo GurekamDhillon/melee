@@ -220,12 +220,12 @@ pub mod ext {
         fn Mex_GrKindForExt(ext: i32) -> i32;
         fn Mex_GrFile(grkind: i32) -> *const c_char;
     }
-    pub static mut HSD_GObj_FogKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut MenMain_cam: *mut HSD_CObjDesc = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use crate::tu::mnmain::MenMain_cam;
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 }
 use ext::*;
 

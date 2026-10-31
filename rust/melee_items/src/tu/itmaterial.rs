@@ -51,7 +51,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D7814;
     pub static mut hsdMObj: HSD_MObjInfo = unsafe { core::mem::zeroed() };
     pub static mut tobj_shadows: *mut HSD_TObj = unsafe { core::mem::zeroed() };
     pub static mut tobj_toon: *mut HSD_TObj = unsafe { core::mem::zeroed() };

@@ -415,7 +415,7 @@ pub mod ext {
     hook!(H_HSD_JObjAnimAll, HSD_JObjAnimAll, (a0: *mut melee_types::HSD_JObj));
     // ---- extern globals ----
     pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjGXLinkHead: *mut *mut melee_types::HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjGXLinkHead;
 }
 // @ext-end
 

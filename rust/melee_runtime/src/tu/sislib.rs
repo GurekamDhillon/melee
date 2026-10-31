@@ -767,6 +767,6 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_SisLib_803A84BC(a0: *mut HSD_GObj, a1: i32) { super::HSD_SisLib_803A84BC(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gobj_native::HSD_GObj_CameraKind;
 }
 // END GENERATED EXT

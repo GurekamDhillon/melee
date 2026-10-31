@@ -14,12 +14,12 @@ use super::gmtoulib::PAD_BUTTON_START;
 pub mod ext {
     use super::*;
 
-    pub static mut HSD_GObj_JObjKind: u8 = 0;
-    pub static mut HSD_GObj_FogKind: i8 = 0;
-    pub static mut HSD_GObj_LightKind: i8 = 0;
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
-    pub static mut gm_804D67EC: u32 = 0;
-    pub static mut gm_804D67F0: *mut HSD_SObjDesc = null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use crate::tu::gmopening::gm_804D67EC;
+    pub use crate::tu::gmopening::gm_804D67F0;
     pub static mut DbLevel: u32 = 0;
     pub static mut db_build_timestamp: [c_char; 64] = [0; 64];
 

@@ -7,49 +7,25 @@ use crate::{
 };
 use melee_types::HSD_ObjAllocData;
 
-/// Allocator initialization remains an external call until objalloc.c is ported.
-pub mod ext {
-    #![allow(non_upper_case_globals)]
-    use melee_types::HSD_ObjAllocData;
-    pub static mut HSD_ObjAllocInit: unsafe fn(
-        *mut HSD_ObjAllocData,
-        u32,
-        u32,
-    ) = missing;
-    unsafe fn missing(_: *mut HSD_ObjAllocData, _: u32, _: u32) {
-        panic!("TODO HSD_ObjAllocInit")
-    }
-}
+/// `robj_alloc_data` / `rvalue_alloc_data` (robj.c): the native pools of the engine path.
+pub static mut robj_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
+pub static mut rvalue_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
 
-pub unsafe fn HSD_RObjInitAllocData(
-    robj: &mut HSD_ObjAllocData,
-    rvalue: &mut HSD_ObjAllocData,
-) {
+/// `HSD_RObjInitAllocData()`.
+pub unsafe fn HSD_RObjInitAllocData() {
     melee_core::ct!("HSD_RObjInitAllocData");
-    unsafe {
-        (ext::HSD_ObjAllocInit)(
-            robj,
-            core::mem::size_of::<melee_types::HSD_RObj>() as u32,
-            4,
-        );
-        (ext::HSD_ObjAllocInit)(
-            rvalue,
-            core::mem::size_of::<melee_types::HSD_Rvalue>() as u32,
-            4,
-        );
-    }
+    crate::tu::objalloc::HSD_ObjAllocInit(&raw mut robj_alloc_data, core::mem::size_of::<melee_types::HSD_RObj>(), 4);
+    crate::tu::objalloc::HSD_ObjAllocInit(&raw mut rvalue_alloc_data, core::mem::size_of::<melee_types::HSD_Rvalue>(), 4);
 }
-pub fn HSD_RObjGetAllocData(
-    data: &mut HSD_ObjAllocData,
-) -> &mut HSD_ObjAllocData {
+/// `HSD_RObjGetAllocData()`.
+pub unsafe fn HSD_RObjGetAllocData() -> *mut HSD_ObjAllocData {
     melee_core::ct!("HSD_RObjGetAllocData");
-    data
+    &raw mut robj_alloc_data
 }
-pub fn HSD_RvalueObjGetAllocData(
-    data: &mut HSD_ObjAllocData,
-) -> &mut HSD_ObjAllocData {
+/// `HSD_RvalueObjGetAllocData()`.
+pub unsafe fn HSD_RvalueObjGetAllocData() -> *mut HSD_ObjAllocData {
     melee_core::ct!("HSD_RvalueObjGetAllocData");
-    data
+    &raw mut rvalue_alloc_data
 }
 /// The native arena owns allocations; freeing transfers ownership to drop.
 pub fn HSD_RObjFree(slot: &mut Option<HsdRObj>) {
@@ -63,11 +39,17 @@ pub fn jobj_parent<D: Copy + PartialEq, R: Copy + PartialEq>(
     melee_core::ct!("jobj_parent");
     tree.parent_of(jobj)
 }
-pub fn _HSD_RObjForgetMemory(g: &mut RObjGlobals, low: usize, high: usize) {
+/// `static float* arg_buf; static u32 arg_buf_size;` (robj.c): the expression argument buffer.
+pub static mut arg_buf: *mut f32 = core::ptr::null_mut();
+pub static mut arg_buf_size: u32 = 0;
+
+/// `_HSD_RObjForgetMemory(low, high)`.
+pub unsafe fn _HSD_RObjForgetMemory(low: *mut core::ffi::c_void, high: *mut core::ffi::c_void) {
     melee_core::ct!("_HSD_RObjForgetMemory");
-    let ptr = g.arg_buf.as_ref().map_or(0, |b| b.as_ptr() as usize);
-    if low <= ptr && ptr < high {
-        g.forget_memory();
+    let p = arg_buf as *mut core::ffi::c_void;
+    if low <= p && p < high {
+        arg_buf = core::ptr::null_mut();
+        arg_buf_size = 0;
     }
 }
 

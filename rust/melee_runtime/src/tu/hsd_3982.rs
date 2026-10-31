@@ -13,7 +13,7 @@ pub mod ext {
     #![allow(non_snake_case, unused_variables)]
     use super::*;
     /// `HSD_GObj_CameraKind` (gobj.c: assigned at `HSD_GObjInit`; the test harness sets it).
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
+    pub use crate::tu::gobj_native::HSD_GObj_CameraKind;
     pub fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) { unsafe { { let _ = crate::tu::cobj::HSD_CObjSetCurrent(cobj); } } }
     pub fn fn_80392934() { todo!("fn_80392934 (baselib/hsd_392A.c)") }
     pub fn hsd_8039254C() { todo!("hsd_8039254C (baselib/hsd_3924.c)") }

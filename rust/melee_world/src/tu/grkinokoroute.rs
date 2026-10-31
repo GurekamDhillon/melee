@@ -287,7 +287,7 @@ pub mod ext {
         match unsafe { MPLIB_80058560 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::mplib::mpLib_80058560(); } return; } }
     }
     /// `HSD_GObj** HSD_GObjPLinkHead` (the array of per-p_link list heads).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 
 /// The file-local anonymous `static struct { int x0; grZakoGenerator_SpawnDesc x4; }* yakumono_param`.

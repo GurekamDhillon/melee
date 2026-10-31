@@ -73,7 +73,7 @@ pub mod ext {
         pub unsafe extern "C" fn efLib_ResumeAll(a0: *mut HSD_GObj) { super::efLib_ResumeAll(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 // END GENERATED EXT
 

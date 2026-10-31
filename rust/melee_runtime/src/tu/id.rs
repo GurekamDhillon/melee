@@ -14,7 +14,7 @@ pub unsafe fn HSD_IDGetAllocData() -> *mut HSD_ObjAllocData {
 
 pub unsafe fn HSD_IDInitAllocData() {
     melee_core::ct!("HSD_IDInitAllocData");
-    ext::HSD_ObjAllocInit(HSD_IDGetAllocData(), core::mem::size_of::<IDEntry>(), 4);
+    ext::alloc_init(HSD_IDGetAllocData(), core::mem::size_of::<IDEntry>(), 4);
 }
 
 pub unsafe fn HSD_IDSetup() {
@@ -30,7 +30,7 @@ pub fn hash(id: HSD_IDKey) -> u32 {
 
 pub unsafe fn IDEntryAlloc() -> *mut IDEntry {
     melee_core::ct!("IDEntryAlloc");
-    let entry = ext::HSD_ObjAlloc(HSD_IDGetAllocData()).cast::<IDEntry>();
+    let entry = ext::alloc(HSD_IDGetAllocData()).cast::<IDEntry>();
     assert!(!entry.is_null(), "id.c:67 entry");
     entry.write(IDEntry::zeroed());
     entry
@@ -38,7 +38,7 @@ pub unsafe fn IDEntryAlloc() -> *mut IDEntry {
 
 pub unsafe fn IDEntryFree(entry: *mut IDEntry) {
     melee_core::ct!("IDEntryFree");
-    ext::HSD_ObjFree(HSD_IDGetAllocData(), entry.cast());
+    ext::free(HSD_IDGetAllocData(), entry.cast());
 }
 
 unsafe fn table_or_default(table: *mut HSD_IDTable) -> *mut HSD_IDTable {
@@ -120,13 +120,13 @@ pub mod ext {
     pub static mut INIT: Option<unsafe fn(*mut HSD_ObjAllocData, usize, u32)> = None;
     pub static mut ALLOC: Option<unsafe fn(*mut HSD_ObjAllocData) -> *mut c_void> = None;
     pub static mut FREE: Option<unsafe fn(*mut HSD_ObjAllocData, *mut c_void)> = None;
-    pub unsafe fn HSD_ObjAllocInit(d: *mut HSD_ObjAllocData, size: usize, align: u32) {
-        if let Some(f) = INIT { f(d, size, align) } else { todo!("HSD_ObjAllocInit (baselib/objalloc.c)") }
+    pub unsafe fn alloc_init(d: *mut HSD_ObjAllocData, size: usize, align: u32) {
+        if let Some(f) = INIT { f(d, size, align) } else { crate::tu::objalloc::HSD_ObjAllocInit(d, size, align) }
     }
-    pub unsafe fn HSD_ObjAlloc(d: *mut HSD_ObjAllocData) -> *mut c_void {
-        if let Some(f) = ALLOC { f(d) } else { todo!("HSD_ObjAlloc (baselib/objalloc.c)") }
+    pub unsafe fn alloc(d: *mut HSD_ObjAllocData) -> *mut c_void {
+        if let Some(f) = ALLOC { f(d) } else { crate::tu::objalloc::HSD_ObjAlloc(d) }
     }
-    pub unsafe fn HSD_ObjFree(d: *mut HSD_ObjAllocData, p: *mut c_void) {
-        if let Some(f) = FREE { f(d, p) } else { todo!("HSD_ObjFree (baselib/objalloc.c)") }
+    pub unsafe fn free(d: *mut HSD_ObjAllocData, p: *mut c_void) {
+        if let Some(f) = FREE { f(d, p) } else { crate::tu::objalloc::HSD_ObjFree(d, p) }
     }
 }

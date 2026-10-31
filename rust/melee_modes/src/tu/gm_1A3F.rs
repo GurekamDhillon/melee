@@ -402,9 +402,25 @@ pub unsafe fn findMode(kind: u8) -> *mut GameMode {
     core::ptr::null_mut()
 }
 
+/// What `gm_801A4014` keeps between entering a scene and leaving it (the engine runs the loop itself, one tick at a time).
+pub struct SceneRun {
+    pub mode: *mut GameMode,
+    pub state: *mut GameModeState,
+    pub scene: *mut GameScene,
+    pub info: *mut GameSceneInfo,
+    pub frame_fn: Option<unsafe extern "C" fn()>,
+}
+
 /// `gm_801A4014(mode)`: run one scene of the current state of `mode` and advance the state.
 pub unsafe fn gm_801A4014(mode: *mut GameMode) {
     melee_core::ct!("gm_801A4014");
+    let run = gm_801A4014_enter(mode);
+    ext::gm_801A4D34(run.frame_fn, run.info);
+    gm_801A4014_leave(run);
+}
+
+/// `gm_801A4014` up to the scene loop (TARGET_PC split, consolidation step 7): state lookup, preload, `on_enter`s.
+pub unsafe fn gm_801A4014_enter(mode: *mut GameMode) -> SceneRun {
     let state = findState((*mode).states);
     state_machine.routing.curr_state_id = (*state).id;
 
@@ -437,7 +453,12 @@ pub unsafe fn gm_801A4014(mode: *mut GameMode) {
     if ext::Ui_ScenePolicy(kind as i32) == 1 || ext::Ui_ToyProbe() != 0 {
         frame_fn = ext::Fad_OverlayWrap(kind, (*scene).on_frame);
     }
-    ext::gm_801A4D34(frame_fn, info);
+    SceneRun { mode, state, scene, info, frame_fn }
+}
+
+/// `gm_801A4014` after the scene loop: `on_exit`s, state advance, and the reset path.
+pub unsafe fn gm_801A4014_leave(run: SceneRun) {
+    let SceneRun { mode, state, scene, info, .. } = run;
     ext::SceneReport_State(1, (*mode).kind as i32, (*state).id as i32, (*info).scene_kind as i32);
     if !ext::gmMainLib_8046B0F0_resetting() {
         if let Some(f) = (*scene).on_exit {
@@ -566,6 +587,12 @@ pub fn gm_SetGameModeOverride(mode: Option<unsafe extern "C" fn() -> u8>) {
 /// return the pending mode.
 pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
     melee_core::ct!("runGameMode");
+    let mode = runGameMode_load(mode_kind);
+    runGameMode_scenes(mode)
+}
+
+/// `runGameMode` up to the scene loop (TARGET_PC split): reset the routing and run the mode's `on_load`.
+pub unsafe fn runGameMode_load(mode_kind: u8) -> *mut GameMode {
     let mode = findMode(mode_kind);
 
     state_machine.pending_mode_change = 0;
@@ -576,6 +603,10 @@ pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
     if let Some(f) = (*mode).on_load {
         f();
     }
+    mode
+}
+
+unsafe fn runGameMode_scenes(mode: *mut GameMode) -> u8 {
     while state_machine.pending_mode_change == 0 {
         let mut over = GM_COUNT_U8;
         let has = match state_machine.get_override {
@@ -611,6 +642,12 @@ pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
 /// `gm_801A4510()` (UnclePunch: `Scene_Main`): initialise the modes and run them forever (it never returns).
 pub unsafe fn gm_801A4510() {
     melee_core::ct!("gm_801A4510");
+    gm_801A4510_init(None);
+    gm_801A4510_loop();
+}
+
+/// `gm_801A4510` up to its mode loop: init every mode and pick the first (`first`: the engine's override of `GM_BOOT`).
+pub unsafe fn gm_801A4510_init(first: Option<u8>) {
     ext::gm_GetAllGameModes();
     state_machine = core::mem::zeroed();
     let modes = ext::gm_GetAllGameModes();
@@ -621,7 +658,9 @@ pub unsafe fn gm_801A4510() {
         }
         i += 1;
     }
-    if ext::VIGetDTVStatus() != 0
+    if let Some(m) = first {
+        state_machine.routing.curr_mode = m;
+    } else if ext::VIGetDTVStatus() != 0
         && ((ext::db_gameLaunchButtonState() as u32 & HSD_PAD_B) != 0 || ext::OSGetProgressiveMode() == 1)
     {
         state_machine.routing.curr_mode = GM_PROGRESSIVE_SCAN as u8;
@@ -629,7 +668,9 @@ pub unsafe fn gm_801A4510() {
         state_machine.routing.curr_mode = GM_BOOT as u8;
     }
     state_machine.routing.prev_mode = GM_COUNT_U8;
+}
 
+unsafe fn gm_801A4510_loop() {
     loop {
         let mut next_mode = runGameMode(state_machine.routing.curr_mode);
         if ext::gmMainLib_8046B0F0_resetting() {

@@ -46,7 +46,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D38;
 }
 // END GENERATED EXT
 

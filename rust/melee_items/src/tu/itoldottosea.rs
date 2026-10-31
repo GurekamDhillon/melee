@@ -100,7 +100,7 @@ pub mod ext {
         pub unsafe extern "C" fn itOldottosea_UnkMotion9_Phys(a0: *mut HSD_GObj) { super::itOldottosea_UnkMotion9_Phys(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut it_804D6D40: *mut it_804D6D40_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D40;
 }
 // END GENERATED EXT
 

@@ -74,8 +74,8 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut Fighter_804D6524: *mut Fighter_804D6524_t = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut Item_804A0CCC: Item_FtTrack = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use crate::tu::item::Item_804A0CCC;
     pub static mut it_804A0E70: [DamageLogEntry; 15] = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D18: u32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D1C: [u8; 4] = unsafe { core::mem::zeroed() };

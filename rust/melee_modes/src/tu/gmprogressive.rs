@@ -198,8 +198,8 @@ pub mod ext {
             }
     // ---- extern globals ----
     pub static mut gmMainLib_8046B0F0: melee_types::gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 
 pub static mut gm_80480D70: ProgScanState = unsafe { core::mem::zeroed() };

@@ -30,28 +30,28 @@ pub mod ext {
     }
     todo_fns! {
         // dolphin/os, dvd, ax, axfx
-        fn powf(a0: f32, a1: f32) -> f32; // MSL powf (math.h): not ported
-        fn OSDisableInterrupts() -> bool;
-        fn OSRestoreInterrupts(a0: bool) -> bool;
-        fn DVDConvertPathToEntrynum(a0: *const i8) -> i32;
-        fn DVDFastOpen(a0: i32, a1: *mut DVDFileInfo) -> i32;
-        fn DVDReadAsyncPrio(a0: *mut DVDFileInfo, a1: *mut c_void, a2: i32, a3: i32, a4: Option<unsafe extern "C" fn(i32, *mut DVDFileInfo)>, a5: i32) -> i32;
-        fn DVDClose(a0: *mut DVDFileInfo) -> i32;
-        fn AXRegisterAuxACallback(a0: *mut c_void, a1: *mut c_void);
-        fn AXRegisterAuxBCallback(a0: *mut c_void, a1: *mut c_void);
-        fn AXFXSetHooks(a0: Option<unsafe extern "C" fn(usize) -> *mut c_void>, a1: Option<unsafe extern "C" fn(*mut c_void)>);
-        fn AXFXReverbHiInit(a0: *mut AXFX_REVERBHI) -> i32;
-        fn AXFXReverbHiShutdown(a0: *mut AXFX_REVERBHI) -> i32;
-        fn AXFXReverbHiCallback(a0: *mut c_void, a1: *mut c_void);
-        fn AXFXReverbStdInit(a0: *mut AXFX_REVERBSTD) -> i32;
-        fn AXFXReverbStdShutdown(a0: *mut AXFX_REVERBSTD) -> i32;
-        fn AXFXReverbStdCallback(a0: *mut c_void, a1: *mut c_void);
-        fn AXFXChorusInit(a0: *mut AXFX_CHORUS) -> i32;
-        fn AXFXChorusShutdown(a0: *mut AXFX_CHORUS) -> i32;
-        fn AXFXChorusCallback(a0: *mut c_void, a1: *mut c_void);
-        fn AXFXDelayInit(a0: *mut AXFX_DELAY) -> i32;
-        fn AXFXDelayShutdown(a0: *mut AXFX_DELAY) -> i32;
-        fn AXFXDelayCallback(a0: *mut c_void, a1: *mut c_void);
+        fn powf(a0: f32, a1: f32) -> f32 = a0.powf(a1); // MSL powf (math.h)
+        fn OSDisableInterrupts() -> bool = false;
+        fn OSRestoreInterrupts(a0: bool) -> bool = a0;
+        fn DVDConvertPathToEntrynum(a0: *const i8) -> i32 = -1;
+        fn DVDFastOpen(a0: i32, a1: *mut DVDFileInfo) -> i32 = 0;
+        fn DVDReadAsyncPrio(a0: *mut DVDFileInfo, a1: *mut c_void, a2: i32, a3: i32, a4: Option<unsafe extern "C" fn(i32, *mut DVDFileInfo)>, a5: i32) -> i32 = 0;
+        fn DVDClose(a0: *mut DVDFileInfo) -> i32 = 1;
+        fn AXRegisterAuxACallback(a0: *mut c_void, a1: *mut c_void) = ();
+        fn AXRegisterAuxBCallback(a0: *mut c_void, a1: *mut c_void) = ();
+        fn AXFXSetHooks(a0: Option<unsafe extern "C" fn(usize) -> *mut c_void>, a1: Option<unsafe extern "C" fn(*mut c_void)>) = ();
+        fn AXFXReverbHiInit(a0: *mut AXFX_REVERBHI) -> i32 = 0;
+        fn AXFXReverbHiShutdown(a0: *mut AXFX_REVERBHI) -> i32 = 0;
+        fn AXFXReverbHiCallback(a0: *mut c_void, a1: *mut c_void) = ();
+        fn AXFXReverbStdInit(a0: *mut AXFX_REVERBSTD) -> i32 = 0;
+        fn AXFXReverbStdShutdown(a0: *mut AXFX_REVERBSTD) -> i32 = 0;
+        fn AXFXReverbStdCallback(a0: *mut c_void, a1: *mut c_void) = ();
+        fn AXFXChorusInit(a0: *mut AXFX_CHORUS) -> i32 = 0;
+        fn AXFXChorusShutdown(a0: *mut AXFX_CHORUS) -> i32 = 0;
+        fn AXFXChorusCallback(a0: *mut c_void, a1: *mut c_void) = ();
+        fn AXFXDelayInit(a0: *mut AXFX_DELAY) -> i32 = 0;
+        fn AXFXDelayShutdown(a0: *mut AXFX_DELAY) -> i32 = 0;
+        fn AXFXDelayCallback(a0: *mut c_void, a1: *mut c_void) = ();
         // baselib synth
         fn HSD_AudioMalloc(a0: usize) -> *mut c_void = crate::tu::synth::HSD_AudioMalloc(a0);
         fn HSD_AudioFree(a0: *mut c_void) = crate::tu::synth::HSD_AudioFree(a0);
@@ -66,27 +66,27 @@ pub mod ext {
         fn HSD_SynthSFXSetPriority(a0: i32, a1: i32) = crate::tu::synth::HSD_SynthSFXSetPriority(a0, a1);
         fn HSD_SynthSFXSetVolumeFade(a0: i32, a1: u8, a2: i32) = crate::tu::synth::HSD_SynthSFXSetVolumeFade(a0, a1, a2);
         fn HSD_SynthSFXSetDriverInactivatedCallback(a0: Option<unsafe extern "C" fn(i32)>) = crate::tu::synth::HSD_SynthSFXSetDriverInactivatedCallback(a0);
-        fn HSD_SynthSFXSetDriverMasterClockCallback(a0: Option<unsafe extern "C" fn()>);
+        fn HSD_SynthSFXSetDriverMasterClockCallback(a0: Option<unsafe extern "C" fn()>) = ();
         fn HSD_SynthSFXSetDriverPauseCallback(a0: Option<unsafe extern "C" fn(i32)>) = crate::tu::synth::HSD_SynthSFXSetDriverPauseCallback(a0);
         fn HSD_SynthPStreamStart(a0: i32, a1: u8, a2: u8, a3: i32) -> i32 = crate::tu::synth::HSD_SynthPStreamStart(a0, a1, a2, a3);
         fn HSD_SynthSFXPlayWithGroup(a0: i32, a1: u8, a2: u8, a3: u8, a4: i32, a5: i32, a6: i32, a7: f32, a8: f32, a9: f32, a10: f32, a11: f32) -> i32 = crate::tu::synth::HSD_SynthSFXPlayWithGroup(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
         // TARGET_PC Geno-Lab / rollback hooks
-        fn Snap_SuppressSfx() -> i32;
-        fn Snap_SfxTake(a0: i32) -> i32;
-        fn Snap_SfxPut(a0: i32, a1: i32);
-        fn Snap_SfxAdd(a0: i32, a1: i32);
-        fn LabSfx_Replay(a0: i32) -> i32;
-        fn LabSfx_Handle() -> i32;
-        fn LabSfx_Record(a0: i32, a1: i32);
-        fn LabSfx_Map(a0: i32, a1: i32);
-        fn LabAudio_Replay(a0: i32, a1: i32) -> i32;
-        fn LabAudio_Value() -> i32;
-        fn LabAudio_Real() -> i32;
-        fn LabAudio_Record(a0: i32, a1: i32, a2: i32);
+        fn Snap_SuppressSfx() -> i32 = 0;
+        fn Snap_SfxTake(a0: i32) -> i32 = 0;
+        fn Snap_SfxPut(a0: i32, a1: i32) = ();
+        fn Snap_SfxAdd(a0: i32, a1: i32) = ();
+        fn LabSfx_Replay(a0: i32) -> i32 = 0;
+        fn LabSfx_Handle() -> i32 = 0;
+        fn LabSfx_Record(a0: i32, a1: i32) = ();
+        fn LabSfx_Map(a0: i32, a1: i32) = ();
+        fn LabAudio_Replay(a0: i32, a1: i32) -> i32 = 0;
+        fn LabAudio_Value() -> i32 = 0;
+        fn LabAudio_Real() -> i32 = 0;
+        fn LabAudio_Record(a0: i32, a1: i32, a2: i32) = ();
     }
     /// `OSReport` (variadic; only plain messages are used here).
     pub unsafe fn OSReport(msg: &str) {
-        panic!("TODO: OSReport is not ported: {msg}")
+        let _ = msg; // the headless engine does not log
     }
 }
 

@@ -201,15 +201,15 @@ pub static mut lbl_8046E3AC: lbl_8046E3AC_t = unsafe { core::mem::zeroed() };
 pub mod ext {
     use super::*;
     pub static mut lbl_8046DBE8: ResultsData = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_LightKind: i8 = 0;
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
     pub static mut lbl_803B7B68: ResultsPlayerConfig = unsafe { core::mem::zeroed() };
     pub static mut gmResultCameraDesc: HSD_CameraDescPerspective = unsafe { core::mem::zeroed() };
     pub static mut gmResultPlayerColors: [u32; 4] = [0; 4];
     /// 32 rows (the C declares an unsized array; the results tables have 32 rows)
     pub static mut gmResultCharacterScaleData: [CharScaleEntry; 32] = unsafe { core::mem::zeroed() };
     pub static mut gmResultCharacterData: ResultsCharacterData = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
     pub static mut gmResultScoreTableInit: [u32; 8] = [0; 8];
     pub static mut gmResultX22F4Init: [u32; 8] = [0; 8];
     ext_fns! {

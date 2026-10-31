@@ -61,9 +61,9 @@ pub mod ext {
     pub static mut it_804D6D20: *mut it_804D6D20_t = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D30: *mut *mut Article = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D40: *mut it_804D6D40_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D30;
+    pub use crate::tu::it_3F14::it_804D6D38;
+    pub use crate::tu::it_3F14::it_804D6D40;
 }
 // END GENERATED EXT
 

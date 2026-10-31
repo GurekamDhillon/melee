@@ -438,7 +438,7 @@ pub static mut it_804D6D30: * mut * mut Article = unsafe { core::mem::zeroed() }
 pub static mut it_804D6D38: * mut * mut Article = unsafe { core::mem::zeroed() };
 pub static mut Item_804A0C64: HSD_ObjAllocUnk = unsafe { core::mem::zeroed() };
 pub static mut gx_suppress_draws: :: core :: ffi :: c_int = unsafe { core::mem::zeroed() };
-pub static mut HSD_RandSeedPtr: * mut :: core :: ffi :: c_uint = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
 pub static mut grPushOn_803E7CCC: [:: core :: ffi :: c_float ; 13] = unsafe { core::mem::zeroed() };
 pub static mut ft_80459A68: [ftDeviceUnk3 ; 1] = unsafe { core::mem::zeroed() };
 pub static mut ftDevice_BuryThings: [ftDeviceUnk5 ; 2] = unsafe { core::mem::zeroed() };

@@ -869,7 +869,7 @@ pub mod ext {
         pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::object::hsdObj;
     /// Tests (C oracle) run on the `hsdObj` copy above; the engine uses the one `object::hsdObj`.
     pub static mut use_ext_data: bool = false;
     pub unsafe fn obj_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(hsdObj) } else { core::ptr::addr_of_mut!(crate::tu::object::hsdObj) } }

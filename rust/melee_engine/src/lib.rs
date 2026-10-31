@@ -10,6 +10,7 @@ pub mod host;
 pub mod install;
 pub mod lowmem;
 pub mod os;
+pub mod scenario;
 pub mod seams;
 pub mod seams_gen;
 

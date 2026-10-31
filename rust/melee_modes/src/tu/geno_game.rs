@@ -233,11 +233,11 @@ fn Geno_DefineVoiceState(a0: i32, a1: u32, a2: i32) -> i32;
 fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
 fn HSD_ForeachAnim(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64) = crate::tu::adapt::HSD_ForeachAnim__175c67;
 }
-pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
-pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
-pub static mut mpColl_LedgeLevelOK: i32 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+pub use crate::tu::script_game::ftPartsTable;
+pub use crate::tu::script_game::p_ftCommonData;
+pub use melee_world::tu::mpcoll::mpColl_LedgeLevelOK;
 pub static mut ftData_MotionStateList: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftMr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftCa_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
@@ -247,11 +247,11 @@ pub static mut ftMs_Init_MotionStateTable: [MotionState; 400] = unsafe { core::m
 pub static mut ftPr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut hsd_804D78FC: *mut HSD_Generator = unsafe { core::mem::zeroed() };
-pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
+pub use crate::tu::script_game::hsd_804D78FC;
+pub use crate::tu::script_game::hsd_804D0908;
 pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
-pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
-pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
+pub use melee_world::itacc::it_804A0F60;
+pub use crate::tu::script_game::it_804D6D24;
 pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
 }
 use ext::*;

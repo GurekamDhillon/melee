@@ -17,8 +17,8 @@ use super::ft_0d4d::{fn_800D4DD4_cb, ftCo_800D4E50};
 pub mod ext {
     use crate::types::*;
     /// fighter.c globals (colour tables loaded with the common data).
-    pub static mut Fighter_804D650C: *mut u8 = core::ptr::null_mut();
-    pub static mut Fighter_804D6508: *mut u8 = core::ptr::null_mut();
+    pub use crate::tu::fighter::Fighter_804D650C;
+    pub use crate::tu::fighter::Fighter_804D6508;
     pub static mut H_Stage_GetBlastZoneRightOffset: Option<fn() -> f32> = None;
     pub fn Stage_GetBlastZoneRightOffset() -> f32 { match unsafe { H_Stage_GetBlastZoneRightOffset } { Some(f) => f(), None => unsafe { melee_world::tu::stage::Stage_GetBlastZoneRightOffset() } } }
     pub static mut H_Stage_GetBlastZoneLeftOffset: Option<fn() -> f32> = None;

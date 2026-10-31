@@ -162,8 +162,8 @@ pub unsafe fn lbHeap_80015900() {
         if (*bounds_heap).transient == 0 {
             match (*bounds_heap).r#type {
                 1 => {
-                    // `s32 temp_r0 = start + size;` compared/assigned as a sign extended uintptr_t
-                    let temp_r0 = (*bounds_heap).start.wrapping_add((*bounds_heap).size as usize) as u32 as i32 as isize as usize;
+                    // `s32 temp_r0 = start + size;` GameCube uintptr_t is 32 bits: zero extended (the guest addresses are 0x80000000 and up)
+                    let temp_r0 = (*bounds_heap).start.wrapping_add((*bounds_heap).size as usize) as u32 as usize;
                     if arena_lo < temp_r0 {
                         arena_lo = temp_r0;
                     }
@@ -174,7 +174,7 @@ pub unsafe fn lbHeap_80015900() {
                     }
                 }
                 4 => {
-                    let temp_r0 = (*bounds_heap).start.wrapping_add((*bounds_heap).size as usize) as u32 as i32 as isize as usize;
+                    let temp_r0 = (*bounds_heap).start.wrapping_add((*bounds_heap).size as usize) as u32 as usize;
                     if aram_lo < temp_r0 {
                         aram_lo = temp_r0;
                     }

@@ -52,11 +52,11 @@ pub mod ext {
     pub unsafe extern "C" fn lbAudioAx_8002702C(flags: u32, mask: u64) { if let Some(h) = HOOK { h("lbAudioAx_8002702C", &[A::I(flags as u32 as u64), A::I(mask as u64 as u64)]); return; } { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(flags as _, mask as _); } return; } }
     pub unsafe extern "C" fn lbAudioAx_80027168() { if let Some(h) = HOOK { h("lbAudioAx_80027168", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168(); } return; } }
     pub unsafe extern "C" fn lbDvd_SetupVsPreloadCache() { if let Some(h) = HOOK { h("lbDvd_SetupVsPreloadCache", &[]); return; } { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_SetupVsPreloadCache(); } return; } }
-    pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_CssData: CSSData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_SssData: SSSData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_VsExitInfo: MatchExitInfo = unsafe { core::mem::zeroed() };
+    pub use melee_world::gmmain::gmMainLib_804D3EE0;
+    pub use crate::tu::gmvsmelee::gmVsMelee_CssData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_SssData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_StartData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_VsExitInfo;
 }
 // @@ext-end
 

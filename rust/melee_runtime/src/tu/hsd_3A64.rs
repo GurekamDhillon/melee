@@ -17,7 +17,7 @@ pub mod ext {
     #![allow(non_snake_case, unused_variables)]
     use super::*;
     /// `HSD_SisLib_804D1124[5]` (sislib.c): the loaded font SIS tables.
-    pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = [core::ptr::null_mut(); 5];
+    pub use crate::tu::sislib::HSD_SisLib_804D1124;
     /// `HSD_SisLib_Alloc(size)` (sislib.c).
     pub fn HSD_SisLib_Alloc(size: i32) -> *mut c_void { todo!("HSD_SisLib_Alloc (baselib/sislib.c)") }
     /// `HSD_SisLib_Free(ptr)` (sislib.c).

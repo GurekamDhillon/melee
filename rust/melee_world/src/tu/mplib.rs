@@ -110,8 +110,8 @@ pub mod ext {
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
     pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut cm_804D6468: *mut CmSubject = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use crate::tu::cmcamera::cm_804D6468;
     pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 }
 

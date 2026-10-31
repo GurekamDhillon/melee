@@ -112,7 +112,7 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };

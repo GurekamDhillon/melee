@@ -148,10 +148,10 @@ pub mod ext {
         pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_804D7814: *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gobj_native::HSD_GObj_804D7814;
+    pub use crate::tu::perf::HSD_PerfCurrentStat;
     pub static mut gx_suppress_draws: i32 = unsafe { core::mem::zeroed() };
-    pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::class::hsdClass;
 }
 // END GENERATED EXT
 pub static mut hsdPObj:HSD_PObjInfo={let mut i:HSD_PObjInfo=unsafe {core::mem::zeroed()};i.parent.head.info_init=Some(PObjInfoInit);i};

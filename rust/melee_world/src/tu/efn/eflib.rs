@@ -88,8 +88,8 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) { super::HSD_GObj_JObjCallback(a0, a1) }
         pub unsafe extern "C" fn hsd_8039D688(a0: *mut HSD_JObj, a1: *mut *mut f32, a2: i32) { super::hsd_8039D688(a0, a1, a2) }
     }
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
     pub static mut hsd_804D7900: Option<unsafe extern "C" fn(*mut HSD_Generator)> = unsafe { core::mem::zeroed() };
     pub static mut ptclref_804D0E5C: [*mut *mut _HSD_PSCmdList; 65] = unsafe { core::mem::zeroed() };
 }

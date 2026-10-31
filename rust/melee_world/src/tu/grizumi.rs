@@ -245,8 +245,8 @@ pub mod ext {
         }
     }
     /// `HSD_GObj** HSD_GObjPLinkHead`, `u8 HSD_GObj_CameraKind`.
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
 }
 
 /// `struct grIzumi_YakumonoParam` (file-local in the C).

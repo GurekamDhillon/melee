@@ -195,7 +195,7 @@ pub mod ext {
             }
     // ---- extern globals ----
     pub static mut un_803F9FA4: [u8; 656] = unsafe { core::mem::zeroed() };
-    pub static mut mnSnap_804A0B90: [*mut melee_types::mnSnap_804A0B90_t; 4] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::mnsnap::mnSnap_804A0B90;
 }
 
 /* 4D68B0 */ pub static mut debug_enter_data: DebugSoundTestData = DebugSoundTestData { x0: null_mut(), x4: 0 };

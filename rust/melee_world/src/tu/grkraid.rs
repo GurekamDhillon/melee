@@ -108,7 +108,7 @@ pub mod ext {
         match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     /// `HSD_PadStatus HSD_PadMasterStatus[4]` (baselib/controller.c).
-    pub static mut HSD_PadMasterStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
 }
 
 /// `struct grKraid_YakumonoParam` (file-local in the C).

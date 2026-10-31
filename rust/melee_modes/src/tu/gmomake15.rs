@@ -167,8 +167,8 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
-    pub static mut gm_804D6724: Option<unsafe extern "C" fn()> = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
+    pub use crate::tu::gmscene::gm_804D6724;
     pub static mut gmMainLib_8046B0F0: melee_types::gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
 }
 

@@ -244,7 +244,7 @@ pub mod ext {
     }
     hook_or!(SPLARCLENGTHPOINT, splArcLengthPoint, (a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32), |a0: *mut Vec3, a1: *mut HSD_Spline, a2: f32| { unsafe { let _ = melee_runtime::tu::spline_world::splArcLengthPoint(a0 as _, a1 as _, a2 as _); } });
     /// `HSD_GObj** HSD_GObjPLinkHead`.
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = core::ptr::null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 
 /// `struct grKongo_YakumonoParam` (grkongo.h; native layout like the C compiled natively).

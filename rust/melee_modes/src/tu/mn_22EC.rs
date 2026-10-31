@@ -45,7 +45,7 @@ pub mod ext {
     fn mn_8022EBDC() = crate::tu::adapt::mn_8022EBDC__a19b61;
     }
     /// `HSD_GObjPLinkHead` (baselib/gobjplink.c data): the per-link GObj list heads.
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 
 /// `PAD_LR_START` (dolphin/pad.h)

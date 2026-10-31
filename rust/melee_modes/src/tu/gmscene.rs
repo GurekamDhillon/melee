@@ -179,14 +179,14 @@ pub mod ext {
         panic!("TODO(group6): OSReport is not ported")
     }
     /// The console clock the C reads as `__OSBusClock` (u32 at 0x800000F8): 162 MHz.
-    pub static mut __OSBusClock: u32 = 162_000_000;
+    pub use melee_runtime::tu::perf::__OSBusClock;
     pub static mut DbLevel: u32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadMasterStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-    pub static mut HSD_RandSeedPtr: *mut u32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_SObjLib_8040C3A4: GObjFuncs = unsafe { core::mem::zeroed() };
-    pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
+    pub use crate::tu::globals::HSD_RandSeedPtr;
+    pub use melee_runtime::tu::sobjlib::HSD_SObjLib_8040C3A4;
+    pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
     pub static mut gmMainLib_8046B0F0: gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
-    pub static mut mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
+    pub use crate::mn_inl::mn_804A04F0;
 }
 // @@ext-end
 

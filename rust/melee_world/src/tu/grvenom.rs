@@ -467,7 +467,7 @@ pub mod ext {
     hook_or!(H_Stage_GetBlastZoneBottomOffset, Stage_GetBlastZoneBottomOffset, crate::tu::stage::Stage_GetBlastZoneBottomOffset, () -> f32);
     // ---- extern globals ----
     pub static mut stage_info: melee_types::StageInfo = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjPLinkHead: *mut *mut melee_types::HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 // @ext-end
 

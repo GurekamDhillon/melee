@@ -168,8 +168,8 @@ pub mod ext {
     fn tanf(a0: f32) -> f32 = |a0: f32| unsafe { melee_runtime::gekko::tanf(a0 as _) as _ };
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
     pub static mut gm_CStickSmashTargetTest: i32 = unsafe { core::mem::zeroed() };
     pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 }

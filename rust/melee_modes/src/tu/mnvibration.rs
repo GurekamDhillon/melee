@@ -148,10 +148,10 @@ pub mod ext {
         fn GetNameCount() -> i32 = crate::tu::adapt::GetNameCount__b961fe;
         fn lbCardGame_SaveChanges() = crate::tu::adapt::lbCardGame_SaveChanges__0fc9e6;
     }
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 }
 use ext::*;
 

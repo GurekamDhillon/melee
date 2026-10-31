@@ -88,13 +88,13 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use melee_world::itacc::it_804A0F60;
     pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D38;
 }
 // END GENERATED EXT
 

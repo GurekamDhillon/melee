@@ -59,7 +59,7 @@ pub mod ext {
         mpColl_80043680(a0: *mut CollData, a1: *mut Vec) = |a0: *mut CollData, a1: *mut Vec| { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80043680(a0 as _, a1 as _); } };
         plStale_IncrementAttackInstance() -> u16 = || melee_fighter::stale::increment_attack_instance();
     }
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use crate::tu::globals::gm_80473814;
     pub use crate::tu::gmvsmelee::{gmVsMelee_CssData, gmVsMelee_SssData, gmVsMelee_StartData, gmVsMelee_VsExitInfo};
     pub fn OSReport(message: &str) { eprint!("{message}"); }

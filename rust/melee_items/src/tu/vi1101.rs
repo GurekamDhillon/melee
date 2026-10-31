@@ -90,9 +90,9 @@ pub mod ext {
     pub unsafe fn lbArchive_LoadSymbols(filename: *const i8, args: &[*mut c_void]) -> *mut HSD_Archive {
         { return unsafe { melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(filename as _, args as _) as _ }; }
     }
-    pub static mut HSD_GObj_JObjKind: u8 = 0;
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
-    pub static mut HSD_GObj_LightKind: i8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
 }
 
 /// `vi_RunCamera` (vi/vi.h, static inline).

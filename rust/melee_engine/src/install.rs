@@ -15,10 +15,20 @@ fn arena_hi() -> *mut c_void { os().arena_hi() }
 fn phys_size() -> u32 { os().physical_mem_size() }
 fn init_alloc(lo: *mut c_void, hi: *mut c_void, n: i32) -> *mut c_void { os().init_alloc(lo, hi, n) }
 fn set_arena_lo(p: *mut c_void) { os().set_arena_lo(p) }
-fn create_heap(a: *mut c_void, b: *mut c_void) -> i32 { os().create_heap(a, b) }
+fn create_heap(a: *mut c_void, b: *mut c_void) -> i32 {
+    let id = os().create_heap(a, b);
+    eprintln!("engine: OSCreateHeap({a:p}, {b:p}) = {id} ({:#x} bytes)", b as usize - a as usize);
+    id
+}
 fn destroy_heap(id: i32) { os().destroy_heap(id) }
 fn set_current(id: i32) -> i32 { os().set_current_heap(id) }
-fn alloc_from(id: i32, n: u32) -> *mut c_void { os().alloc_from_heap(id, n) }
+fn alloc_from(id: i32, n: u32) -> *mut c_void {
+    let p = os().alloc_from_heap(id, n);
+    if p.is_null() {
+        eprintln!("engine: OSAllocFromHeap(heap {id}, {n:#x}) failed; heap has {:#x} free", os().check_heap(id));
+    }
+    p
+}
 fn free_to(id: i32, p: *mut c_void) { os().free_to_heap(id, p) }
 fn check_heap(id: i32) -> i32 { os().check_heap(id) }
 
@@ -45,6 +55,26 @@ pub fn install() {
         lbheap::ext::H_OSCheckHeap = Some(check_heap);
         lbheap::ext::H_OSDisableInterrupts = Some(dvd::OSDisableInterrupts);
         lbheap::ext::H_OSRestoreInterrupts = Some(dvd::OSRestoreInterrupts);
+
+        // ARAM (lbMemory_8001564C): the arena starts at the audio-free base and runs to 32 MB (the port's ARAM size)
+        static mut AR_CUR: u32 = 0x4000;
+        melee_runtime::tu::lbmemory::ext::H_ARAlloc = Some(|n| { let p = AR_CUR; AR_CUR += n; p });
+        melee_runtime::tu::lbmemory::ext::H_ARFree = Some(|sz| { *sz = AR_CUR - 0x4000; AR_CUR = 0x4000; 0x4000 });
+        melee_runtime::tu::lbmemory::ext::H_ARGetSize = Some(|| 0x0200_0000);
+
+        melee_modes::tu::gmmain_lib::ext::DVDCONVERTPATHTOENTRYNUM = Some(|p: &str| {
+            let c = std::ffi::CString::new(p).unwrap();
+            dvd::DVDConvertPathToEntrynum(c.as_ptr())
+        });
+
+        // the save-data pointer lives in melee_world::gmmain, above melee_runtime
+        melee_runtime::tu::lblanguage::ext::H_gmMainLib_804D3EE0 = Some(|| melee_world::gmmain::gmMainLib_804D3EE0);
+
+        // the common and demo MotionState tables (ftmotionstates.c)
+        melee_fighter::tu::fighter::ext::hook::ftData_MotionStateList =
+            Some(|| &raw mut melee_link::retail_ms::ftmotionstates::ftData_MotionStateList as *mut melee_types::MotionState);
+        melee_fighter::tu::ftdemo::ext::FTDATA_803C52A0 =
+            Some(|| &raw mut melee_link::retail_ms::ftmotionstates::ftData_803C52A0 as *mut melee_types::MotionState);
 
         lbfile::ext::H_lb_800195D0 = Some(dvd::host_pump_disc);
         lbfile::ext::H_HSD_DevComRequest = Some(dvd::host_dev_com_request);

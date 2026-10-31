@@ -135,21 +135,21 @@ pub mod ext {
         fn HSD_MemAlloc(size: isize) -> *mut c_void = crate::tu::adapt::HSD_MemAlloc__849f1b;
         fn HSD_Randi(max_val: i32) -> i32;
     }
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut MenMainBack_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMainPanel_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMain_lights: *mut *mut LightList = unsafe { core::mem::zeroed() };
-    pub static mut MenMain_fog: *mut HSD_FogDesc = unsafe { core::mem::zeroed() };
-    pub static mut MenMain_cam: *mut HSD_CObjDesc = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use crate::tu::mnmain::MenMainBack_Top;
+    pub use crate::tu::mnmain::MenMainPanel_Top;
+    pub use crate::tu::mnmain::MenMain_lights;
+    pub use crate::tu::mnmain::MenMain_fog;
+    pub use crate::tu::mnmain::MenMain_cam;
     pub static mut NotAllowedNamesList: *mut *mut c_char = unsafe { core::mem::zeroed() };
     pub static mut AutoNamesList: *mut *mut u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_804A06F0: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_804A0700: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_804A0710: StaticModelDesc = unsafe { core::mem::zeroed() };
-    pub static mut mnNameNew_804A0720: [StaticModelDesc; 2] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::sislib::HSD_SisLib_804D1124;
+    pub use crate::tu::mnname::mnNameNew_804A06F0;
+    pub use crate::tu::mnname::mnNameNew_804A0700;
+    pub use crate::tu::mnname::mnNameNew_804A0710;
+    pub use crate::tu::mnname::mnNameNew_804A0720;
 }
 use ext::*;
 

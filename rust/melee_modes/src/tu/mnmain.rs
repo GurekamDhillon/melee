@@ -5473,12 +5473,12 @@ pub mod ext {
                     None => { return unsafe { crate::tu::gmfrontend::gmFrontend_NativeReturn(a0 as _, a1 as _) as _ }; },
                 }
             }
-    pub static mut HSD_GObj_CurrentInvokedProcGObj: *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProcGObj;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_FogKind: s8 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_LightKind: s8 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_CameraKind: u8_0 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 }

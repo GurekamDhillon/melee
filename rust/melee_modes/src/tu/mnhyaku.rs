@@ -507,7 +507,7 @@ pub mod ext {
                 }
             }
     hook!(H_gm_801677E8, gm_801677E8, ());
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
 }

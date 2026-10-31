@@ -826,6 +826,6 @@ pub mod ext {
     hook!(H_HSD_GObj_SetupProc, HSD_GObj_SetupProc, (a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8_0) -> *mut HSD_GObjProc);
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-    pub static mut DbLevel: DbLKind = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
+    pub use crate::tu::globals::DbLevel;
 }

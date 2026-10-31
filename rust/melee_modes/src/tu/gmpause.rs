@@ -112,8 +112,8 @@ pub mod ext {
             }
     hook!(H_HSD_JObjSetMtxDirtySub, HSD_JObjSetMtxDirtySub, (a0: *mut melee_types::HSD_JObj));
     // ---- extern globals ----
-    pub static mut HSD_PadMasterStatus: [melee_types::HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 
 pub static mut lbl_80479B10: PauseData = unsafe { core::mem::zeroed() };

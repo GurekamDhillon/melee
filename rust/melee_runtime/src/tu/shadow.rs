@@ -93,7 +93,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_PerfCurrentStat: HSD_PerfStat = unsafe { core::mem::zeroed() };
+    pub use crate::tu::perf::HSD_PerfCurrentStat;
     pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

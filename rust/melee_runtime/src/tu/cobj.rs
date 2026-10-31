@@ -113,8 +113,8 @@ pub mod ext {
         pub unsafe extern "C" fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void { super::hsdNew(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_VIData: HSD_VIInfo = unsafe { core::mem::zeroed() };
-    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::video::HSD_VIData;
+    pub use crate::tu::object::hsdObj;
 }
 // END GENERATED EXT
 

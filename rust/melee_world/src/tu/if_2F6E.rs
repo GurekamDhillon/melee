@@ -57,7 +57,7 @@ pub mod ext {
         pub unsafe extern "C" fn if_802F74D0(a0: *mut HSD_GObj) { super::if_802F74D0(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 // END GENERATED EXT
 

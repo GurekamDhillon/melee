@@ -128,7 +128,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub static mut gmClassic_80470708: [*mut c_void; 1] = unsafe { core::mem::zeroed() };
-    pub static mut gmClassic_80470850: DebugGameOverData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gm_17c0::gmClassic_80470850;
     pub static mut gmClassic_8047086C: *mut c_void = unsafe { core::mem::zeroed() };
     pub static mut gmClassic_80472AF8: *mut c_void = unsafe { core::mem::zeroed() };
 }

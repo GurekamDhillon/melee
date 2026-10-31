@@ -32,10 +32,10 @@ mod sys {
     const MEM_RESERVE: u32 = 0x2000;
     const PAGE_READWRITE: u32 = 0x04;
     pub fn alloc_low(len: usize) -> Option<*mut u8> {
-        // A 64-bit process has no low addresses by default: probe 64 KiB-aligned hints from 16 MiB up to
-        // the 2 GiB line (the C's pointers must also fit a *signed* i32 in a few places).
-        let mut hint: usize = 0x0100_0000;
-        while hint + len <= 0x8000_0000 {
+        // A 64-bit process has no low addresses by default: probe 16 MiB-stepped hints from 2 GiB + 16 MiB up to
+        // 4 GiB. Guest main-RAM addresses are 0x80000000 and up (the C tells ARAM from MEM1 by that bit).
+        let mut hint: usize = 0x8100_0000;
+        while hint + len <= 0x1_0000_0000 {
             let p = unsafe { VirtualAlloc(hint as *mut c_void, len, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE) };
             if !p.is_null() {
                 return Some(p as *mut u8);
@@ -58,14 +58,14 @@ mod sys {
         const FLAGS: i32 = 0x02 | 0x20 | 0x40; // MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT
         #[cfg(not(target_os = "linux"))]
         const FLAGS: i32 = 0x0002 | 0x1000; // MAP_PRIVATE | MAP_ANON (macOS/BSD: hint-probed below)
-        let mut hint: usize = 0x1000_0000;
+        let mut hint: usize = 0x8100_0000;
         loop {
             let p = unsafe { mmap(hint as *mut c_void, len, PROT_RW, FLAGS, -1, 0) };
             if p as isize != -1 && (p as usize) + len <= 0x1_0000_0000 {
                 return Some(p as *mut u8);
             }
             hint += 0x0100_0000;
-            if hint + len > 0x8000_0000 {
+            if hint + len > 0x1_0000_0000 {
                 return None;
             }
         }

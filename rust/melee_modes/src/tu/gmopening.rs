@@ -389,11 +389,11 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut gm_804D6724: Option<unsafe extern "C" fn()> = unsafe { core::mem::zeroed() };
-    pub static mut HSD_SObjLib_804D7960: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use crate::tu::gmscene::gm_804D6724;
+    pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
     pub static mut gmMainLib_8046B0F0: melee_types::gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
-    pub static mut __OSBusClock: u32 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::perf::__OSBusClock;
 }
 
 /// `gm_803B7D68` / `gm_803B7D74` (static const Vec3): the camera eye and interest.

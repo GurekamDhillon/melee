@@ -86,14 +86,14 @@ static mut DRIVE_TICK: i32 = 0;
 /// Callees (and data) in TUs that are not ported yet.
 pub mod ext {
     use super::*;
-    pub static mut DbLevel: DbLKind = 0;
+    pub use crate::tu::globals::DbLevel;
     /// gmregcommon.c: the table of internal character ids the 1P opponents are picked from (24 ids, ends with
     /// `ChKind_None`).
     pub static mut lbl_803D79F0: [u8; 24] = [
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20, 21, 22, 24, 25, 33,
     ];
     /// gm_18A1.c
-    pub static mut gm_80473A18: UnkAllstarData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gm_18A1::gm_80473A18;
     ext_fns! {
         fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec);
         fn Camera_SetQuakeScale(a0: f32) = crate::tu::adapt::Camera_SetQuakeScale__cmc;

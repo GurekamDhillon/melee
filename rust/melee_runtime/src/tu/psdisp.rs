@@ -84,7 +84,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::particle::hsd_804D0908;
     pub static mut psNumCmdList: [*mut *mut _HSD_PSFormGroup; 65] = unsafe { core::mem::zeroed() };
     pub static mut psTexGroupArray: [*mut *mut _HSD_PSTexGroup; 65] = unsafe { core::mem::zeroed() };
 }

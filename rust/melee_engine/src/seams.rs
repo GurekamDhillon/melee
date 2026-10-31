@@ -20,8 +20,19 @@ pub fn fire_alarm() {
     }
 }
 
+/// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`): the
+/// headless engine only stores them in `HSD_VIData`, so zeroed records stand in.
+static mut RMODES: [melee_types::GXRenderModeObj; 4] = unsafe { core::mem::zeroed() };
+
 pub fn install() {
     unsafe {
+        {
+            use melee_modes::tu::gmmain_lib::ext as g;
+            g::GXNTSC480PROG = Some(|| (&raw mut RMODES[0]) as *mut core::ffi::c_void);
+            g::GXNTSC480INTDF = Some(|| (&raw mut RMODES[1]) as *mut core::ffi::c_void);
+            g::GXNTSC480INT = Some(|| (&raw mut RMODES[2]) as *mut core::ffi::c_void);
+            g::GMMAINLIB_803D4A80 = Some(|| (&raw mut RMODES[3]) as *mut core::ffi::c_void);
+        }
         use melee_modes::tu::gmmain::ext as m;
         m::PADSETSPEC = Some(|_| {});
         // canonical statics the gen_link table does not reach (the `hook!` form of gmmain.rs)

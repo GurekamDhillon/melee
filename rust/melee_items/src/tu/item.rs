@@ -179,7 +179,7 @@ pub mod ext {
         pub unsafe extern "C" fn it_8026EECC(a0: *mut HSD_GObj, a1: i32) { super::it_8026EECC(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
     pub static mut it_803F1418: [sdata_ItemGXLink; 43] = unsafe { core::mem::zeroed() };
     pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
     pub static mut it_803F2310: [sdata_ItemGXLink; 47] = unsafe { core::mem::zeroed() };
@@ -188,10 +188,10 @@ pub mod ext {
     pub static mut it_803F3100: [ItemLogicTable; 118] = unsafe { core::mem::zeroed() };
     pub static mut it_803F4CA8: [sdata_ItemGXLink; 30] = unsafe { core::mem::zeroed() };
     pub static mut it_803F4D20: [ItemLogicTable; 30] = unsafe { core::mem::zeroed() };
-    pub static mut it_804A0E30: RandomItemSpawner = unsafe { core::mem::zeroed() };
-    pub static mut it_804A0E50: ItemPickTable = unsafe { core::mem::zeroed() };
-    pub static mut it_804A0E60: ItemPickTable = unsafe { core::mem::zeroed() };
-    pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::itspawn::it_804A0E30;
+    pub use crate::tu::itspawn::it_804A0E50;
+    pub use crate::tu::itspawn::it_804A0E60;
+    pub use melee_world::itacc::it_804A0F60;
     pub static mut it_804D6D00: i8 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D04: *mut Fighter_804D653C_t = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
@@ -200,8 +200,8 @@ pub mod ext {
     pub static mut it_804D6D14: u32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D30: *mut *mut Article = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D38: *mut *mut Article = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D30;
+    pub use crate::tu::it_3F14::it_804D6D38;
     pub static mut item_data: *mut Item = unsafe { core::mem::zeroed() };
     pub static mut result: i32 = unsafe { core::mem::zeroed() };
 }

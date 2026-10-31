@@ -55,7 +55,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
     pub static mut un_803FA258: [i32; 128] = unsafe { core::mem::zeroed() };
     pub static mut un_803FA4E0: [un_80304138_objalloc_t_x8; 1] = unsafe { core::mem::zeroed() };
     pub static mut un_803FA790: [un_80304138_objalloc_t_x8; 4] = unsafe { core::mem::zeroed() };

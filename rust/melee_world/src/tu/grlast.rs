@@ -254,7 +254,7 @@ pub mod ext {
         match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     /// `u32* HSD_RandSeedPtr` (baselib/random.c).
-    pub static mut HSD_RandSeedPtr: *mut u32 = core::ptr::null_mut();
+    pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
 }
 
 /// `static struct grLast_YakumonoParam { void* x0; void* x4; void* x8; void* xC; }* yakumono_param`.

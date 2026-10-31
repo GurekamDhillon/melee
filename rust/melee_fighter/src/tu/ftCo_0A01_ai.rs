@@ -84,10 +84,10 @@ pub mod ext {
     fn mpIsland_8005ACE8(a0: *mut mp_UnkStruct0, a1: *mut Vec, a2: *mut Vec);
     fn mpLineGetFlags(a0: i32) -> u32;
     }
-    pub static mut Fighter_804D64FC: *mut Fighter_804D64FC_t = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-    pub static mut ftCo_803C6594: [*mut ftCo_803C6594_t; 221] = unsafe { core::mem::zeroed() };
-    pub static mut mpIsland_80458E88: mpIsland_80458E88_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::fighter::Fighter_804D64FC;
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use crate::tu::ft_3c61::ftCo_803C6594;
+    pub use melee_world::tu::mpisland::mpIsland_80458E88;
     pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
     pub static mut stage_info: StageInfo = unsafe { core::mem::zeroed() };
 }

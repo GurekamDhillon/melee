@@ -75,11 +75,11 @@ pub mod ext {
         pub unsafe extern "C" fn gm_CameraModeVSGetPauser() -> i32 { super::gm_CameraModeVSGetPauser() }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut gmMainLib_804D3EE0: *mut gmm_x0 = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_CssData: CSSData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_SssData: SSSData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
-    pub static mut gmVsMelee_VsExitInfo: MatchExitInfo = unsafe { core::mem::zeroed() };
+    pub use melee_world::gmmain::gmMainLib_804D3EE0;
+    pub use crate::tu::gmvsmelee::gmVsMelee_CssData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_SssData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_StartData;
+    pub use crate::tu::gmvsmelee::gmVsMelee_VsExitInfo;
 }
 // END GENERATED EXT
 

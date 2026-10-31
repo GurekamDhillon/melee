@@ -166,7 +166,7 @@ pub mod ext {
     pub unsafe extern "C" fn it_8026C1E8(a0: *mut melee_types::HSD_GObj) -> i32 { match H_it_8026C1E8 { Some(f) => f(a0), None => unsafe { crate::itacc::it_8026C1E8(a0 as _) as _ } } }
     hook!(H_Item_8026A8EC, Item_8026A8EC, (a0: *mut melee_types::HSD_GObj));
     // ---- extern globals ----
-    pub static mut HSD_GObjPLinkHead: *mut *mut melee_types::HSD_GObj = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 }
 // @ext-end
 

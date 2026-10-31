@@ -121,33 +121,85 @@ def tu_files():
             yield crate, f, rel
 
 
-DEF_RE = re.compile(r'(?m)^[ \t]*pub\s+(?:unsafe\s+)?(?:extern\s+"C"\s+)?fn\s+(\w+)\s*\(')
+DEF_RE = re.compile(r'(?m)^[ 	]*pub\s+(?:unsafe\s+)?(?:extern\s+)?fn\s+(\w+)\s*\(')  # blank() erases the "C"
+
+
+MOD_RE = re.compile(r'(?m)^[ 	]*(pub(?:\([a-z]+\))?\s+)?mod\s+(\w+)\s*\{')
+BAD_MODS = {'ext', 'cb', 'tests', 'test', 'hook', 'oracle', 'oracles', 'c', 'mtu'}
+
+
+def nested_defs(t):
+    """Yield (name, mod_chain, open_paren_index) of `pub fn`s at the top level or inside nested `pub mod`s (not ext/cb/tests)."""
+    mods = []  # (start, end, name, is_pub)
+    for m in MOD_RE.finditer(t):
+        e = match_close(t, m.end() - 1)
+        if e > 0: mods.append((m.start(), e, m.group(2), bool(m.group(1))))
+    for m in DEF_RE.finditer(t):
+        enc = [x for x in mods if x[0] < m.start() < x[1]]
+        enc.sort()
+        if any((not x[3]) or x[2] in BAD_MODS or x[2].startswith('test') for x in enc): continue
+        # braces of anything else (impl blocks, fn bodies) between the innermost mod and the def are not allowed
+        lo = enc[-1][0] if enc else 0
+        seg = t[lo:m.start()]
+        base = seg.count('{') - seg.count('}')
+        if enc and base != 1: continue
+        if not enc and base != 0: continue
+        yield m, [x[2] for x in enc]
 
 
 def index_defs():
     defs = collections.defaultdict(list)   # name -> [(crate, modpath, nparams, hasret, file)]
     for crate, f, rel in tu_files():
-        if not rel.startswith('tu/'): continue
+        if not rel.startswith('tu/') or 'test' in rel: continue
         t = blank(open(f, encoding='utf8', errors='replace').read())
-        depth_at = {}
-        d = 0; last = 0
-        for m in DEF_RE.finditer(t):
-            d += t.count('{', last, m.start()) - t.count('}', last, m.start()); last = m.start()
-            if d != 0: continue
-            # make sure #[no_mangle] sits right before this fn (no `}` in between guaranteed by [^{;]*?)
+        for m, chain in nested_defs(t):
+            op = m.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            plist = t[op+1:cl]
+            if '...' in plist: continue
+            if '<' in t[m.start():op] and re.search(r'fn\s+\w+\s*<', t[m.start():op+1]): continue   # generic: no hook can call it
+            after = t[cl+1:cl+80].lstrip()
+            hasret = after.startswith('->') and not re.match(r'->\s*!', after)
+            c, mp = modpath_of(f)
+            defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
+    # `pub use path::{a, b};` in a tu file re-exports a function defined outside tu/ (melee_world::gm ...): the hook can
+    # be pointed at the re-export, with the signature of the original (found anywhere in the crates, if unique).
+    allf = collections.defaultdict(list)
+    for crate, f, rel in tu_files():
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        for m, _chain in nested_defs(t):
             op = m.end() - 1
             cl = match_close(t, op, '(', ')')
             if cl < 0: continue
             plist = t[op+1:cl]
             if '...' in plist: continue
             after = t[cl+1:cl+80].lstrip()
-            hasret = after.startswith('->') and not re.match(r'->\s*!', after)
-            c, mp = modpath_of(f)
-            defs[m.group(1)].append((c, mp, count_params(plist), hasret, rel))
+            allf[m.group(1)].append((count_params(plist), after.startswith('->') and not re.match(r'->\s*!', after)))
+    for crate, f, rel in tu_files():
+        if not rel.startswith('tu/') or 'test' in rel: continue
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        c, mp = modpath_of(f)
+        for m in re.finditer(r'(?m)^pub\s+use\s+([\w:]+)::(\{[^}]*\}|\w+)\s*;', t):
+            names = [x.strip() for x in m.group(2).strip('{}').split(',') if x.strip()]
+            for n in names:
+                if ' as ' in n or n == '*' or n.startswith('self'): continue
+                if n in defs and any(d[1] == mp for d in defs[n]): continue
+                sig = set(allf.get(n, []))
+                if len(sig) == 1:
+                    npar, hasret = next(iter(sig))
+                    defs[n].append((c, mp, npar, hasret, rel))
     return defs
 
 
 ENTRY_HEAD = re.compile(r'\s*(?:(?P<hook>[A-Za-z_]\w*)\s+(?=[A-Za-z_]\w*\s*\()|fn\s+)?(?P<name>[A-Za-z_]\w*)\s*\(')
+
+
+class _Swapped:
+    """A regex match whose first two groups are exchanged (macros that take the C name before the static's name)."""
+    def __init__(self, m): self.m = m
+    def group(self, i): return self.m.group({1: 2, 2: 1}.get(i, i))
+    def end(self): return self.m.end()
 
 
 def parse_hooks():
@@ -155,21 +207,21 @@ def parse_hooks():
     hooks = []
     for crate, f, rel in tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
-        if 'ext_fns!' not in raw: continue
+        if 'ext_fns' not in raw and 'stubs!' not in raw: continue
         t = blank(raw)
         c, mp = modpath_of(f)
         # classify macro definitions in this file
-        dm = re.search(r'macro_rules!\s+ext_fns\s*\{', t)
+        dm = re.search(r'macro_rules!\s+(?:ext_fns|stubs)\s*\{', t)
         kind = 'none'
         if dm:
             end = match_close(t, dm.end() - 1)
             body = t[dm.start():end]
             if 'pub mod hook' in body: kind = 'mod_hook'
-            elif '$hook' in body: kind = 'static_hook'
+            elif '$hook' in body or re.search(r'pub\s+static\s+mut\s+\$stat\b', body): kind = 'static_hook'
             else: kind = 'other'
         else:
-            kind = 'external_macro'
-        for im in re.finditer(r'\bext_fns!\s*\{', t):
+            kind = 'mod_hook' if re.search(r'ext_fns_[ch]\b', t) else 'external_macro'
+        for im in re.finditer(r'\b(?:ext_fns(?:_[ch])?|stubs)!\s*\{', t):
             if dm and dm.start() <= im.start() <= match_close(t, dm.end() - 1): continue
             if t[max(0, im.start()-20):im.start()].strip().endswith('$crate::'): pass
             op = im.end() - 1
@@ -187,6 +239,7 @@ def parse_hooks():
                 m = ENTRY_HEAD.match(ent)
                 if not m: continue
                 name = m.group('name'); hk = m.group('hook')
+                if hk == 'fn': hk = None
                 p0 = m.end() - 1
                 p1 = match_close(ent, p0, '(', ')')
                 if p1 < 0: continue
@@ -205,8 +258,9 @@ def parse_hooks():
                     path = f'{mod_chain}::{hk}'
                 else:
                     path = None
+                rt = re.match(r'\s*->\s*(.+?)\s*(?:(?<![=!<>])=>?(?![=>])|$)', rest, re.S)
                 hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=hasret, todo=todo,
-                                  kind=kind, path=path, mod=mod_chain))
+                                  kind=kind, path=path, mod=mod_chain, ret=rt.group(1).strip() if rt else None))
     # `lb_hook!(H_NAME, NAME, (a: T, ..) -> R [= default]);` (melee_runtime lb* TUs): the static is `<mods>::H_NAME`
     for crate, f, rel in tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
@@ -233,7 +287,99 @@ def parse_hooks():
             mod_chain = '::'.join([mp] + chain)
             todo = ('todo!' in dflt or 'panic!' in dflt or 'unimplemented!' in dflt) or not dflt.strip()
             hooks.append(dict(crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=todo,
-                              kind='lb_hook', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain))
+                              kind='lb_hook', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain,
+                              ret=(re.match(r'\s*->\s*(.+?)\s*(?:=|$)', rest, re.S).group(1).strip() if hasret else None)))
+    # `hook!(H_NAME, name, (a: T, ..) [-> R] [, default_path]);` (melee_modes gm* TUs): static `<mods>::H_NAME`
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if not re.search(r'(?<![\w!])hook!\s*\(', raw): continue
+        t = blank(raw)
+        dm = re.search(r'macro_rules!\s+hook\s*\{', t)
+        swap_args = False
+        if dm:
+            mb = t[dm.start():match_close(t, dm.end() - 1)]
+            first = re.search(r'\(\s*\$(\w+)\s*:\s*ident\s*,\s*\$(\w+)\s*:\s*ident', mb)
+            st = re.search(r'pub\s+static\s+mut\s+\$(\w+)', mb)
+            if first and st and st.group(1) == first.group(2): swap_args = True
+        macro_cabi = bool(dm and re.search(r'Option<\s*unsafe\s+extern', t[dm.start():match_close(t, dm.end() - 1)]))
+        if dm:
+            if not re.search(r'pub\s+static\s+mut\s+\$\w+', t[dm.start():match_close(t, dm.end() - 1)]): continue
+        elif not re.search(r'hookmac::(?:\{[^}]*\bhook\b[^}]*\}|hook\b)', t): continue
+        c, mp = modpath_of(f)
+        for im in re.finditer(r'(?<![\w!])hook!\s*\(', t):
+            cl = match_close(t, im.end() - 1, '(', ')')
+            body = t[im.end():cl]
+            m = re.match(r'\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*,\s*\(', body)
+            if not m or m.group(1).startswith('$'): continue
+            if swap_args: m = _Swapped(m)
+            p1 = match_close(body, m.end() - 1, '(', ')')
+            npar = count_params(body[m.end():p1])
+            rest = body[p1 + 1:]
+            rm = re.match(r'\s*->\s*(.+?)\s*(?:,\s*[\w:]+\s*)?$', rest, re.S)
+            hasret = bool(re.match(r'\s*->', rest))
+            ret = rm.group(1).strip() if rm else None
+            has_default = bool(re.search(r',\s*[A-Za-z_][\w:]*\s*$', rest))
+            chain = []
+            for mm in re.finditer(r'\bmod\s+(\w+)\s*\{', t[:im.start()]):
+                o = mm.end() - 1
+                e = match_close(t, o)
+                if e < 0 or e > im.start(): chain.append(mm.group(1))
+            mod_chain = '::'.join([mp] + chain)
+            hooks.append(dict(crate=c, file=rel, name=m.group(2), npar=npar, hasret=hasret, todo=not has_default,
+                              kind='hook_macro', path=f'{mod_chain}::{m.group(1)}', mod=mod_chain, ret=ret, cabi=macro_cabi, ref='&' in body[m.end():p1]))
+    # generic pass: `pub static mut NAME: Option<fn(..) [-> R]> = None;` directly inside any `mod hook { }` (hand-written
+    # hook modules and macro forms that expand to one), when no earlier form already produced that path.
+    have = {(h['crate'], h['path']) for h in hooks if h['path']}
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if 'mod hook' not in raw: continue
+        t = blank(raw)
+        c, mp = modpath_of(f)
+        for hm in re.finditer(r'(?:pub\s+)?mod\s+hook\s*\{', t):
+            e = match_close(t, hm.end() - 1)
+            if e < 0: continue
+            chain = []
+            for mm in re.finditer(r'(?:^|[^\w])mod\s+(\w+)\s*\{', t[:hm.start()]):
+                o = mm.end() - 1
+                e2 = match_close(t, o)
+                if e2 < 0 or e2 > hm.start(): chain.append(mm.group(1))
+            mod_chain = '::'.join([mp] + chain + ['hook'])
+            for sm in re.finditer(r'pub\s+static\s+mut\s+(\w+)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', t[hm.end():e]):
+                name = sm.group(1)
+                path = f'{mod_chain}::{name}'
+                if (c, path) in have: continue
+                op = hm.end() + sm.end() - 1
+                cl = match_close(t, op, '(', ')')
+                if cl < 0: continue
+                npar = count_params(t[op + 1:cl])
+                rest = t[cl + 1:cl + 200]
+                rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', rest, re.S)
+                hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
+                                  kind='mod_hook_static', path=path, mod=mod_chain, ret=rm.group(1).strip() if rm else None, cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
+    # `pub static mut H_name: Option<[unsafe] [extern "C"] fn(..) [-> R]> = None;` next to a function `name` (the
+    # hand-written / generated `H_` form of melee_world and melee_runtime TUs)
+    have = {(h['crate'], h['path']) for h in hooks if h['path']}
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if 'static mut H_' not in raw: continue
+        t = blank(raw)
+        c, mp = modpath_of(f)
+        for sm in re.finditer(r'pub\s+static\s+mut\s+H_(\w+)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', t):
+            name = sm.group(1)
+            chain = []
+            for mm in re.finditer(r'(?:^|[^\w])mod\s+(\w+)\s*\{', t[:sm.start()]):
+                o = mm.end() - 1
+                e2 = match_close(t, o)
+                if e2 < 0 or e2 > sm.start(): chain.append(mm.group(1))
+            path = '::'.join([mp] + chain + ['H_' + name])
+            if (c, path) in have: continue
+            op = sm.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            npar = count_params(t[op + 1:cl])
+            rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', t[cl + 1:cl + 200], re.S)
+            hooks.append(dict(crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
+                              kind='h_static', path=path, mod='::'.join([mp] + chain), ret=rm.group(1).strip() if rm else None, cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
     return hooks
 
 
@@ -278,6 +424,8 @@ def main():
         why = None
         if h['path'] is None:
             why = 'other'
+        elif h.get('cabi') and h.get('ref'):
+            why = 'cabiref'
         else:
             cands = defs.get(h['name'], [])
             if not cands: why = 'nodef'
@@ -323,7 +471,10 @@ def main():
             callee = f'{cc}::{cmod}::{h["name"]}'
             body = f'cast::<_, _, {S}>({callee}({call_args}))' if hasret else f'{callee}({call_args})'
             out.append(f'    // {h["file"]}')
-            out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(|{args}| unsafe {{ {body} }}); }}')
+            if h.get('cabi'):
+                out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{npar}(|{args}| unsafe {{ {body} }})); }}')
+            else:
+                out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(|{args}| unsafe {{ {body} }}); }}')
         out.append('}')
         out.append('')
     out.append('pub fn install_all() {')

@@ -123,16 +123,16 @@ pub mod ext {
         }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_LightKind: i8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
-    pub static mut HSD_SisLib_804D1124: [*mut SIS; 5] = unsafe { core::mem::zeroed() };
-    pub static mut Toy_804A284C: [u16; 302] = unsafe { core::mem::zeroed() };
-    pub static mut Toy_sbss_804D6ED8: *mut ToyED8Data = unsafe { core::mem::zeroed() };
-    pub static mut Toy_sbss_804D6EDC: *mut i16 = unsafe { core::mem::zeroed() };
-    pub static mut Toy_sbss_804D6EE0: *mut TyDisplayData = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
+    pub use melee_runtime::tu::sislib::HSD_SisLib_804D1124;
+    pub use crate::tu::toy::Toy_804A284C;
+    pub use crate::tu::toy::Toy_sbss_804D6ED8;
+    pub use crate::tu::toy::Toy_sbss_804D6EDC;
+    pub use crate::tu::toy::Toy_sbss_804D6EE0;
     pub static mut Toy_str_ScMenFigure_cam_int1_camera: [i8; 1] = unsafe { core::mem::zeroed() };
     pub static mut lb_ColorBlack: GXColor = unsafe { core::mem::zeroed() };
     pub static mut lb_ColorWhite: GXColor = unsafe { core::mem::zeroed() };

@@ -85,8 +85,8 @@ pub mod ext {
         pub unsafe extern "C" fn it_802A24A0(a0: *mut HSD_GObj, a1: i32) { super::it_802A24A0(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut item_link_alloc_data: HSD_ObjAllocData = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use crate::tu::item::item_link_alloc_data;
 }
 // END GENERATED EXT
 

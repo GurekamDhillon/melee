@@ -42,8 +42,8 @@ pub mod ext {
         MEX_ON_ACTION_STATE_CHANGE_DISPATCH Mex_OnActionStateChangeDispatch(kind: i32, gobj: G, vanilla: *mut core::ffi::c_void);
     }
     /// TODO(move-to-core ftdata) PlCo colanim tables (`Fighter_804D653C`, spycloak `Fighter_804D6538`).
-    pub static mut Fighter_804D653C: *mut Fighter_804D653C_t = core::ptr::null_mut();
-    pub static mut Fighter_804D6538: *mut Fighter_804D653C_t = core::ptr::null_mut();
+    pub use crate::tu::fighter::Fighter_804D653C;
+    pub use crate::tu::fighter::Fighter_804D6538;
     /// TODO(move-to-core ftdata) `ftData_UnkMotionStates4` (per-kind onActionStateChange).
     pub static mut ftData_UnkMotionStates4: *const *mut core::ffi::c_void = core::ptr::null();
     pub fn ftCo_800D4F24(g: G, i: i32) {

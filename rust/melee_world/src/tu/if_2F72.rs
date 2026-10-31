@@ -65,8 +65,8 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut ifStatus_803F9628: [Element_803F9628; 8] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use crate::tu::if_2F6E::ifStatus_803F9628;
 }
 // END GENERATED EXT
 

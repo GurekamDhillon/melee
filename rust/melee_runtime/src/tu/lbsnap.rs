@@ -93,7 +93,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut __OSBusClock: u32 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::perf::__OSBusClock;
 }
 // END GENERATED EXT
 

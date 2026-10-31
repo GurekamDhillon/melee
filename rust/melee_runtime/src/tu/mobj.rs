@@ -679,7 +679,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::class::hsdClass;
     /// Tests (C oracle) run on the `hsdClass` copy above; the engine uses the one `class::hsdClass`.
     pub static mut use_ext_data: bool = false;
     pub unsafe fn hsd_class_ptr() -> *mut HSD_ClassInfo { if use_ext_data { core::ptr::addr_of_mut!(hsdClass) } else { core::ptr::addr_of_mut!(crate::tu::class::hsdClass) } }

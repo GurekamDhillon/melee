@@ -18,9 +18,9 @@ def ret_types():
     out = {}
     for crate, f, rel in g.tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
-        if 'ext_fns!' not in raw: continue
+        if 'ext_fns' not in raw and 'stubs!' not in raw: continue
         t = g.blank(raw)
-        for im in re.finditer(r'\bext_fns!\s*\{', t):
+        for im in re.finditer(r'\bext_fns(?:_[ch])?!\s*\{', t):
             cl = g.match_close(t, im.end() - 1)
             if cl < 0: continue
             for ent in g.split_top(t[im.end():cl], ';'):
@@ -41,6 +41,8 @@ def off_body(ty, name):
     if ty.startswith('Option<'): return 'None'
     if ty in ('f32', 'f64'): return '0.0'
     if re.fullmatch(r'[iu](8|16|32|64|size)', ty): return '0'
+    if re.fullmatch(r'(?:::)?(?:core::ffi|std::os::raw|libc)::c_(?:u?(?:char|short|int|long|longlong)|schar)', ty): return '0'
+    if re.fullmatch(r'(?:::)?core::ffi::c_(?:float|double)', ty): return '0.0'
     return None
 
 
@@ -49,7 +51,8 @@ def main():
     for l in open(os.path.join(HERE, 'seams.txt')):
         if not l.strip() or l.startswith('#'): continue
         f = l.rstrip(chr(10)).split(chr(9))
-        pats.append((re.compile(f[0].strip()), f[1].strip() if len(f) > 1 else None))
+        force = f[0].startswith('!')
+        pats.append((re.compile(f[0].strip().lstrip('!')), f[1].strip() if len(f) > 1 else None, force))
     skip = {l.split()[0] for l in open(os.path.join(HERE, '..', 'link', 'link_skip.txt')) if l.strip() and not l.startswith('#')}
     defs = g.index_defs()
     hooks = g.parse_hooks()
@@ -61,19 +64,23 @@ def main():
            'pub fn install_gen() {']
     seen = set(); n = 0; bad = []
     for h in hooks:
-        if h['path'] is None or h['path'] in linked_paths: continue
-        hit = [o for p, o in pats if p.fullmatch(h['name'])]
+        if h['path'] is None or (h.get('cabi') and h.get('ref')): continue
+        hit = [(o, fo) for p, o, fo in pats if p.fullmatch(h['name'])]
         if not hit: continue
+        force = hit[0][1]
+        if h['path'] in linked_paths and not force: continue
+        hit = [o for o, _ in hit]
         key = h['crate'] + '::' + h['path']
         if key in seen: continue
         seen.add(key)
-        rty = rts.get((h['file'], h['name']))
+        rty = h['ret'] if 'ret' in h else rts.get((h['file'], h['name']))
         body = off_body(rty, h['name'])
         if hit[0] is not None and rty is not None: body = hit[0]
         if body is None:
-            bad.append((key, rts.get((h['file'], h['name'])))); continue
+            bad.append((key, rty)); continue
         args = ', '.join(f'a{i}' if body == 'a0' and i == 0 else '_' for i in range(h['npar']))
-        out.append(f'    unsafe {{ if {key}.is_none() {{ {key} = Some(|{args}| {body}); }} }}')
+        clo = f'melee_link::cabi::c{h["npar"]}(|{args}| {body})' if h.get('cabi') else f'|{args}| {body}'
+        out.append(f'    unsafe {{ {key} = Some({clo}); }}' if force else f'    unsafe {{ if {key}.is_none() {{ {key} = Some({clo}); }} }}')
         n += 1
     out.append('}')
     print(f'{n} seam hooks; {len(bad)} with an unsupported return type: {bad[:5]}')

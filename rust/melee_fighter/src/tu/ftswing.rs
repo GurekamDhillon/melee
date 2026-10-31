@@ -18,7 +18,7 @@ pub mod ext {
     pub fn ftCo_800CD4E0(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd4e0(gobj as _, a as _, b as _, f as _); } return; } }
     pub fn ftCo_800CD5A8(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd5a8(gobj as _, a as _, b as _, f as _); } return; } }
     /// `Fighter_804D654C` (fighter.c, `float (*)[5]`, set from the common data at load).
-    pub static mut Fighter_804D654C: *mut [f32; 5] = core::ptr::null_mut();
+    pub use crate::tu::fighter::Fighter_804D654C;
 }
 
 /// `lbl_803C6D70[6][5]`: swing motion per swing type x swing (`-1`: smash 4 is per character).

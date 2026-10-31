@@ -61,10 +61,22 @@ pub mod global {
     pub static mut STATE: HsdRand =
         HsdRand { seed: 1, seed_ptr: SeedSlot::Default, render_seed: 0, render_depth: 0, trace: None };
 
+    /// `u32* HSD_RandSeedPtr` (random.c): the word the next draw advances. Starts at `STATE.seed`; a stage may
+    /// redirect it into its own memory (the C assigns this pointer), which `state()` mirrors into `seed_ptr`.
+    pub static mut HSD_RandSeedPtr: *mut u32 = core::ptr::null_mut();
+
     #[allow(static_mut_refs)]
     #[inline]
     pub fn state() -> &'static mut HsdRand {
-        unsafe { &mut *core::ptr::addr_of_mut!(STATE) }
+        unsafe {
+            let st = &mut *core::ptr::addr_of_mut!(STATE);
+            let own = core::ptr::addr_of_mut!(STATE.seed);
+            if HSD_RandSeedPtr.is_null() {
+                HSD_RandSeedPtr = own;
+            }
+            st.seed_ptr = if HSD_RandSeedPtr == own { SeedSlot::Default } else { SeedSlot::Redirected(HSD_RandSeedPtr) };
+            st
+        }
     }
     pub fn HSD_Rand() -> i32 {
         state().rand()

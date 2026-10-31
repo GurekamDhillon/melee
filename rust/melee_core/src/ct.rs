@@ -18,7 +18,12 @@ mod imp {
     }
     static ST: Mutex<State> = Mutex::new(State { frame: -1, lo: i64::MIN, hi: i64::MAX, seq: 0, rows: Vec::new() });
 
+    static LIVE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     pub fn enter(name: &'static str) {
+        // MELEE_CT_LIVE=1 prints every entry (to find the function a crash happens in)
+        if *LIVE.get_or_init(|| std::env::var_os("MELEE_CT_LIVE").is_some()) {
+            eprintln!("ct {name}");
+        }
         if let Ok(mut s) = ST.lock() {
             if s.frame >= s.lo && s.frame <= s.hi {
                 let (f, q) = (s.frame, s.seq);

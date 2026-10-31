@@ -30,7 +30,7 @@ pub mod ext {
     }
     // `HSD_PadLibData` belongs to controller.c. The port reads it from there; a test that owns its own copy
     // sets `use_own_libdata` and fills `HSD_PadLibData` here.
-    pub static mut HSD_PadLibData: PadLibData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::controller::HSD_PadLibData;
     pub static mut use_own_libdata: bool = false;
 }
 unsafe fn disable() -> i32 {

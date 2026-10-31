@@ -3,13 +3,12 @@
 //! itself is `melee_runtime::random::HsdRand` (checked against the C there).
 #![allow(non_snake_case, static_mut_refs)]
 
-use melee_runtime::random::{HsdRand, SeedSlot};
+use melee_runtime::random::HsdRand;
 
-static mut STATE: HsdRand = HsdRand { seed: 1, seed_ptr: SeedSlot::Default, render_seed: 0, render_depth: 0, trace: None };
 
 /// The global state (for savestate / seeding by the match setup).
 pub fn state() -> &'static mut HsdRand {
-    unsafe { &mut STATE }
+    melee_runtime::tu::random::global::state()
 }
 
 /// `HSD_Randi(max)`.

@@ -67,7 +67,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut Item_804A0C64: HSD_ObjAllocUnk = unsafe { core::mem::zeroed() };
+    pub use crate::tu::item::Item_804A0C64;
     pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
 }
 // END GENERATED EXT

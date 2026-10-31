@@ -306,15 +306,15 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut un_804D6F3C: [u8; 8] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D6F60: [u8; 8] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D6F84: [u8; 8] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D6FA8: [*mut melee_types::ViCharaDesc; 2] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D6FD8: [u8; 8] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D7004: [u8; 8] = unsafe { core::mem::zeroed() };
-    pub static mut un_804D7038: [u8; 8] = unsafe { core::mem::zeroed() };
+    pub use melee_items::tu::vi0102::un_804D6F3C;
+    pub use melee_items::tu::vi0401::un_804D6F60;
+    pub use melee_items::tu::vi0501::un_804D6F84;
+    pub use melee_items::tu::vi0502::un_804D6FA8;
+    pub use melee_items::tu::vi1101::un_804D6FD8;
+    pub use melee_items::tu::vi1201v1::un_804D7004;
+    pub use melee_items::tu::vi1201v2::un_804D7038;
     pub static mut DbLevel: u32 = unsafe { core::mem::zeroed() };
-    pub static mut gmMainLib_804D3EE0: *mut melee_types::gmm_x0 = unsafe { core::mem::zeroed() };
+    pub use melee_world::gmmain::gmMainLib_804D3EE0;
 }
 
 /* 49C188 */ pub static mut vs_enter_data: StartMeleeData = unsafe { core::mem::zeroed() };

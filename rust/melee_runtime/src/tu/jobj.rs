@@ -110,7 +110,7 @@ pub mod ext {
         pub unsafe extern "C" fn hsdIsDescendantOf(a0: *mut c_void, a1: *mut c_void) -> i32 { super::hsdIsDescendantOf(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut hsdObj: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::object::hsdObj;
 }
 // END GENERATED EXT
 /// Tests that own their copy of other TUs' data set this; the game uses the owning TU's statics.

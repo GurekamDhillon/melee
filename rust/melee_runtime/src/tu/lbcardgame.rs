@@ -68,9 +68,9 @@ pub mod ext {
         pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) { super::HSD_JObjSetMtxDirtySub(a0) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut HSD_GObj_CameraKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-    pub static mut OS_BusClock: u32 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use crate::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use crate::tu::perf::__OSBusClock as OS_BusClock;
 }
 // END GENERATED EXT
 

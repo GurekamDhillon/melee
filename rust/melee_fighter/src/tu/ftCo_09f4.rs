@@ -19,7 +19,7 @@ use melee_runtime::tu::lobj as lo;
 pub mod ext {
     use super::*;
     /// `HSD_GObj_LightKind` (baselib/gobjobject.c): set by the engine's init; the light GObj object kind.
-    pub static mut HSD_GObj_LightKind: i8 = 0;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
     macro_rules! ext_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? = $d:expr;)*) => {
             pub mod hook {

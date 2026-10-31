@@ -5,7 +5,7 @@
 use crate::gcm::Gcm;
 use crate::host::Host;
 use core::ffi::c_void;
-use melee_modes::tu::{gmmain, gmmain_lib, gmscene};
+use melee_modes::tu::{gm_1A3F, gmmain, gmmain_lib, gmscene};
 use melee_platform::PadSystem;
 use melee_runtime::tu::{controller, initialize};
 use melee_types::{GameSceneInfo, PADStatus};
@@ -37,8 +37,34 @@ impl Engine {
     /// Host, link layer, host seams, the libraries `main` brings up (heap, pad, gmMainLib), then the scene
     /// setup `gm_801A4BD4` (which runs the real `HSD_GObjInit`) and the loop's pre-loop part.
     pub fn boot(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<Engine, String> {
+        Self::boot_host(disc, mem_size, pads)?;
+        unsafe {
+            gmscene::gm_801A4BD4();
+            gmscene::gm_801A4D34_begin(core::ptr::null_mut());
+        }
+        Ok(Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false })
+    }
+
+    /// Step 7: boot the host, then start the VS mode the way `main` -> `gm_801A4510` -> `runGameMode` -> `gm_801A4014` does
+    /// (the VS mode's `on_load` seeds the match from `scn`, entry state 2 = the match), up to the first scene tick.
+    pub fn boot_vs(disc: Gcm, mem_size: usize, pads: PadSystem, scn: crate::scenario::Scenario) -> Result<Engine, String> {
+        Self::boot_host(disc, mem_size, pads)?;
+        crate::scenario::install(scn);
+        unsafe {
+            gm_1A3F::gm_801A4510_init(Some(melee_types::GM_VS as u8));
+            let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
+            eprintln!("vs mode {:p} kind {} states {:p} curr_state {}", mode, (*mode).kind, (*mode).states, gm_1A3F::state_machine.routing.curr_state_id);
+            { let mut j = 0; while j < 12 { let st = (*mode).states.add(j); eprintln!("  state[{j}] id {}", (*st).id); if (*st).id == 0xFF { break; } j += 1; } }
+            let run = gm_1A3F::gm_801A4014_enter(mode);
+            gmscene::gm_801A4D34_begin(run.info);
+            Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false })
+        }
+    }
+
+    fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         Host::boot(disc, mem_size)?;
         melee_link::install();
+        melee_link::install_retail();
         crate::install();
         unsafe {
             PADS = Some(pads);
@@ -53,13 +79,28 @@ impl Engine {
             crate::seams::install();
             crate::seams_gen::install_gen();
             gmmain_lib::gmMainLib_init_statics();
+            melee_runtime::tu::perf::__OSBusClock = 162_000_000; // OS_BUS_CLOCK (low memory 0xF8 on a GameCube)
             initialize::HSD_OSInit();
+            // *HSD_RandSeedPtr = InitialSeed() (MELEE_TEST_SEED=12345 for the goldens)
+            melee_runtime::tu::random::global::state().set_logic_seed(
+                std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345),
+            );
             // lb_80019AAC(&gmMain_8015FD24): pad library setup and the sampling period
             melee_modes::tu::lb_0195::lb_80019AAC(Some(gmmain_pad_setup));
-            gmscene::gm_801A4BD4();
-            gmscene::gm_801A4D34_begin(core::ptr::null_mut());
+            // the rest of `main` after the pad setup (gm/gmmain.c)
+            melee_runtime::tu::lbmemory::lbMemory_8001564C();
+            melee_runtime::tu::lbheap::lbHeap_80015F3C();
+            melee_runtime::tu::lbdvd::lbDvd_80018F68();
+            melee_runtime::tu::lbarq::lbArq_80014D2C();
+            melee_runtime::tu::lbcardnew::lbCardNew_Init();
+            melee_runtime::tu::lbcardgame::lbCardGame_Init();
+            melee_runtime::tu::lbsnap::lbSnap_8001E290();
+            gmmain_lib::gmMainLib_8015FCC0();
+            melee_runtime::tu::lbmthp::lbMthp_8001F87C();
+            melee_runtime::tu::sislib::HSD_SisLib_803A6048(0xC000);
+            gmmain_lib::gmMainLib_8015FBA4();
         }
-        Ok(Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false })
+        Ok(())
     }
 
     /// Exactly one iteration of the scene loop (pad queue, logic frame(s), `HSD_GObj_RunProcs`, render).

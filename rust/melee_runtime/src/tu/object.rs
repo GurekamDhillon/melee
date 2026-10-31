@@ -37,7 +37,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut hsdClass: HSD_ClassInfo = unsafe { core::mem::zeroed() };
+    pub use crate::tu::class::hsdClass;
 }
 // END GENERATED EXT
 pub unsafe extern "C" fn ObjInfoInit() {

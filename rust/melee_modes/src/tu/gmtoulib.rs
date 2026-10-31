@@ -145,12 +145,12 @@ macro_rules! gmtou_ext {
 pub mod ext {
     use super::*;
 
-    pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = null_mut();
-    pub static mut HSD_GObj_FogKind: i8 = 0;
-    pub static mut HSD_GObj_JObjKind: u8 = 0;
-    pub static mut HSD_GObj_LightKind: i8 = 0;
-    pub static mut HSD_GObj_CameraKind: u8 = 0;
-    pub static mut HSD_PadMasterStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
+    pub use melee_runtime::tu::controller::HSD_PadMasterStatus;
 
     crate::gmtou_ext! {
         fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, arg1: i32);

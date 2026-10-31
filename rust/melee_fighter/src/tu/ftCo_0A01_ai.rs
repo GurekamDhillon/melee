@@ -4146,7 +4146,7 @@ pub unsafe fn ftCo_800A9904(mut fp: *mut Fighter) {
         } else if x_time < terminal_time {
             {
                 if x_time > 0.0f32 {
-                    let mut guess: f64 = 0.0;
+                    let mut guess: f64 = melee_runtime::gekko::frsqrte(x_time as f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
@@ -4160,7 +4160,7 @@ pub unsafe fn ftCo_800A9904(mut fp: *mut Fighter) {
         } else {
             {
                 if terminal_time > 0.0f32 {
-                    let mut guess: f64 = 0.0;
+                    let mut guess: f64 = melee_runtime::gekko::frsqrte(terminal_time as f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);
                     guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);
@@ -4319,7 +4319,7 @@ pub unsafe fn ftCo_800A9CB4(mut fp: *mut Fighter) {
     } else if x_time < terminal_time {
         {
             if x_time > 0.0f32 {
-                let mut guess: f64 = 0.0;
+                let mut guess: f64 = melee_runtime::gekko::frsqrte(x_time as f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(x_time as f64, 3.0f64);
@@ -4333,7 +4333,7 @@ pub unsafe fn ftCo_800A9CB4(mut fp: *mut Fighter) {
     } else {
         {
             if terminal_time > 0.0f32 {
-                let mut guess: f64 = 0.0;
+                let mut guess: f64 = melee_runtime::gekko::frsqrte(terminal_time as f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);
                 guess = (0.5f64 * guess) * (-(guess * guess)).mul_add(terminal_time as f64, 3.0f64);

@@ -577,7 +577,7 @@ pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, n
         // collider avoidance
         if num_colliders != 0 {
             ext::lbVector_Normalize(&mut link_dir);
-            let mut collider = colliders_raw as *mut lb_Collider;
+            let mut collider = colliders_raw as *mut melee_types::Fighter_x1670_t;
             let mut ci = 0;
             while ci < num_colliders {
                 let mut next_bone_pos: Vec = core::mem::zeroed();
@@ -586,20 +586,20 @@ pub unsafe fn lb_8001044C(desc: *mut DynamicsDesc, colliders_raw: *mut c_void, n
                 next_bone_pos.z = fmadds(link_dir.z, d.unk_48, d.unk_2C.z);
 
                 let mut coll_dir: Vec = core::mem::zeroed();
-                coll_dir.x = (*collider).position.x - d.unk_2C.x;
-                coll_dir.y = (*collider).position.y - d.unk_2C.y;
-                coll_dir.z = (*collider).position.z - d.unk_2C.z;
+                coll_dir.x = (*collider).x18.x - d.unk_2C.x;
+                coll_dir.y = (*collider).x18.y - d.unk_2C.y;
+                coll_dir.z = (*collider).x18.z - d.unk_2C.z;
 
                 let coll_dist = crate::gekko::sqrtf(fmadds(coll_dir.z, coll_dir.z,
                     fmadds(coll_dir.x, coll_dir.x, coll_dir.y * coll_dir.y)));
                 let mut collision_point: Vec = core::mem::zeroed();
-                if coll_dist > (*collider).radius
-                    && ext::lbColl_80005C44(&d.unk_2C, &next_bone_pos, &(*collider).position,
-                                            &mut collision_point, 0.1, (*collider).radius) != 0
+                if coll_dist > (*collider).v2
+                    && ext::lbColl_80005C44(&d.unk_2C, &next_bone_pos, &(*collider).x18,
+                                            &mut collision_point, 0.1, (*collider).v2) != 0
                 {
                     let coll_angle = ext::lbVector_Angle(&mut coll_dir, &mut link_dir);
                     if 0.0 != coll_angle {
-                        let adj_radius = (0.1f64 + (*collider).radius as f64) as f32;
+                        let adj_radius = (0.1f64 + (*collider).v2 as f64) as f32;
                         let side_sq = crate::gekko::sqrtf(fmsubs(coll_dist, coll_dist, adj_radius * adj_radius));
                         let mut avoidance_angle = ext::atan2f(adj_radius, side_sq);
                         if avoidance_angle < 0.0 { avoidance_angle = -avoidance_angle; }

@@ -1598,6 +1598,7 @@ impl VsMatch {
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
+            if let Ok(v) = std::env::var("MELEE_NH_DUMP") { if v.parse::<i32>().ok() == Some(s) { eprintln!("NHD {}", melee_types::neutral_hash::nh_dump(&p.fp, s, stale::stocks(p.slot))); } }
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5));
             if std::env::var_os("MELEE_GOLDEN_FT").is_some() {
                 let f = &p.fp;
@@ -5476,7 +5477,7 @@ fn ftaction_80071028(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
         b if common => bone_index(p, b),
         b => b as usize,
     };
-    ftco_8009f834(p, rand, gfx, part, offset, range)
+    legacy_effect_spawn_8009f834(p, rand, gfx, part, offset, range)
 }
 
 /// `ftAction_8007121C`: create (or refresh) hitbox `id` on a part (`ftParts_GetBoneIndex` for
@@ -5596,7 +5597,7 @@ fn ftaction_80072e4c(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
     if gfx_id == -1 {
         gfx_id = (w0 & 0xFFFF) as i32;
     }
-    ftco_8009f834(p, rand, gfx_id as u32, 0, Vec3 { x: 0.0, y: 0.0, z: 0.0 }, Vec3 { x: 0.0, y: 0.0, z: 0.0 })?;
+    legacy_effect_spawn_8009f834(p, rand, gfx_id as u32, 0, Vec3 { x: 0.0, y: 0.0, z: 0.0 }, Vec3 { x: 0.0, y: 0.0, z: 0.0 })?;
     if sp60 != 0 {
         sound::play_sfx(p, rand, 0x46, 0x7F, 0x40);
         if cmd_flag == 0 {
@@ -5614,7 +5615,7 @@ fn ftaction_80072e4c(p: &mut Player, rand: &mut HsdRand) -> Result<(), String> {
 /// `ftCo_8009F834(gobj, gfx_id, part, 0, 0, offset, range, 0)` for the effect ids the wired
 /// scripts reach: three HSD_Randf jitter draws (`x += 2 * range * (r - 0.5)`, one fused site
 /// each), then the per-id efAsync_Spawn.
-fn ftco_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, offset: Vec3, range: Vec3) -> Result<(), String> {
+fn legacy_effect_spawn_8009f834(p: &mut Player, rand: &mut HsdRand, gfx_id: u32, part: usize, offset: Vec3, range: Vec3) -> Result<(), String> {
     if gfx_id < 0x250 || gfx_id / 1000 == 0x1E {
         return Err(format!("ftCo_8009F834 gfx {gfx_id:#x} (< 0x250 path) not wired"));
     }

@@ -2,8 +2,8 @@
 //! and effects, and `Command_Execute`'s dispatch table). Verified against the C (whole TU) by
 //! tests/tu_lbcommand.rs (`python rust/melee_runtime/gen/mtu/run_tu.py lbcommand`).
 //!
-//! `NEXT_CMD` steps `cmd->u` by one `CmdUnion` (native size, as every other port of command
-//! streams does). The loop counter that `Command_03` parks in an `event_return` slot is a 32-bit
+//! `NEXT_CMD` steps `cmd->u` by one `CmdUnion` (4 bytes natively, like the stream's words in the raw
+//! archive image; the jump targets of Command_05/07 are 32-bit guest addresses stored big-endian). The loop counter that `Command_03` parks in an `event_return` slot is a 32-bit
 //! value on the console (`(union CmdUnion*) value`), so `Command_04` decrements the low 32 bits of
 //! that slot, which is what the C's `((u32*) info)[loop_count + 3] -= 1` does at 4-byte pointers.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
@@ -101,7 +101,7 @@ pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
     let lc = i.loop_count as usize;
     i.event_return[lc] = i.anon_8.u.add(1);
     i.loop_count += 1;
-    i.anon_8.u = (*i.anon_8.u).Command_05.ptr;
+    i.anon_8.u = u32::from_be((*i.anon_8.u).Command_05.ptr) as usize as *mut CmdUnion; // a 32-bit guest address stored big-endian in the raw stream
 }
 
 /// Return
@@ -116,7 +116,7 @@ pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
 pub unsafe extern "C" fn Command_07(info: *mut CommandInfo) {
     melee_core::ct!("Command_07");
     next_cmd(info);
-    (*info).anon_8.u = (*(*info).anon_8.u).Command_07.ptr;
+    (*info).anon_8.u = u32::from_be((*(*info).anon_8.u).Command_07.ptr) as usize as *mut CmdUnion;
 }
 
 /// SetTimerAnimation

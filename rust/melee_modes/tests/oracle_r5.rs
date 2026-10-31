@@ -139,6 +139,9 @@ fn group6_round5_nested_ptr_leaves_match_c() {
         let (want_r, want_h) = (u64::from_str_radix(want_r, 16).unwrap(), u64::from_str_radix(want_h, 16).unwrap());
         let mut it = lhs.split(' ');
         let name = it.next().unwrap();
+        // lbcommand.c's Command_xx walk raw 4-byte command words (CmdUnion is 4 bytes); the C oracle's native union is 8 bytes
+        // (tests/lbcommand_raw.rs in melee_runtime covers them)
+        if name.starts_with("Command_") { continue; }
         let (mut s, mut bufs, mut links) = (Vec::new(), Vec::new(), Vec::new());
         for t in it {
             let v: Vec<u64> = t[2..].split(':').map(|x| u64::from_str_radix(x, 16).unwrap()).collect();
@@ -191,5 +194,5 @@ fn group6_round5_nested_ptr_leaves_match_c() {
     }
     let bad: Vec<_> = per.iter().filter(|(_, v)| v.1 > 0).collect();
     assert!(bad.is_empty(), "mismatches {bad:?}\n{}", first_bad.join("\n"));
-    assert_eq!(per.len(), 10, "functions covered (round 5)");
+    assert_eq!(per.len(), 7, "functions covered (round 5, minus Command_04/05/07)");
 }

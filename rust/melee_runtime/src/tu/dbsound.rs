@@ -65,6 +65,9 @@ pub mod ext {
     }
 }
 
+/// `int db_804D4AF8 = 1;` (dbsound.c): the one shared global (ft_0899.c reads it; the sound test menu points at it).
+pub static mut db_804D4AF8: i32 = 1;
+
 /// The globals of dbsound.c. The DevText keeps a pointer into `text_buf`: keep this in place
 /// once [`DbSound::fn_SetupSoundInfo`] has run.
 #[derive(Clone, Debug)]

@@ -1424,7 +1424,8 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
             wait = fp.x24.offset(lab_pose_row as isize);
             bytes = fp.x28.offset(lab_pose_row as isize);
         }
-        fp.anon_594.x594_s32 = (*wait).x10_animCurrFlags as i32;
+        // whole s32 over the bitfield word: the bitfield bytes are kept in GC (big-endian) order
+        fp.anon_594.anon_0_0.bf_0 = ((*wait).x10_animCurrFlags as u32).to_be_bytes();
         e::ftCo_8009E7B4(fp, bytes);
         if !mf(flags, Ft_MF_SkipAnim) {
             if !arg3.is_null() {
@@ -3235,6 +3236,7 @@ pub unsafe fn RB_NeutralHash() -> u32 {
             let stocks = ext::Player_GetStocks(fp.player_id as i32);
             let cpu = ext::ftCo_IsCpuControlled(fp);
             let w = nh_fighter(fp, i * 2 + j, stocks, cpu);
+            if let Ok(v) = std::env::var("MELEE_NH_DUMP") { if v.parse::<i32>().ok() == Some(i * 2 + j) { eprintln!("NHD {}", melee_types::neutral_hash::nh_dump(fp, i * 2 + j, stocks)); } }
             nh_out[(4 + i * 2 + j) as usize] = w;
             h = nh_mix(h, w);
         }

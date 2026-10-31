@@ -878,6 +878,7 @@ tu::efn::eflib::ext::hook::HSD_JObjSetFlagsAll
 tu::efn::eflib::ext::hook::HSD_JObjSetMtxDirtySub
 tu::efn::eflib::ext::hook::HSD_JObjSetSPtclCallback
 tu::efn::eflib::ext::hook::HSD_JObjSetupMatrixSub
+tu::efn::eflib::ext::hook::HSD_JObjWalkTree
 tu::efn::eflib::ext::hook::HSD_MObjGetTObj
 tu::efn::eflib::ext::hook::HSD_MtxGetScale
 tu::efn::eflib::ext::hook::HSD_ObjAlloc
@@ -1194,6 +1195,7 @@ tu::grgreens::ext::hook::HSD_MemAlloc
 tu::grgreens::ext::hook::HSD_Randf
 tu::grgreens::ext::hook::HSD_Randi
 tu::grgreens::ext::hook::Stage_GetBlastZoneTopOffset
+tu::grgreens::ext::hook::efSync_Spawn
 tu::grgreens::ext::hook::ftCo_800C06E8
 tu::grgreens::ext::hook::ftLib_80086644
 tu::grgreens::ext::hook::grAnime_801C8138
@@ -3096,6 +3098,7 @@ tu::ftCo_Bury::ext::hook::ftCommon_8007E2F4
 tu::ftCo_Bury::ext::hook::ft_80084CB0
 tu::ftCo_Bury::ext::hook::lb_8000B1CC
 tu::ftCo_Bury::ext::hook::ftParts_GetBoneIndex
+tu::ftCo_Bury::ext::hook::efSync_Spawn
 tu::ftCo_Bury::ext::hook::ftCommon_GrabMash
 tu::ftCo_Bury::ext::hook::mpLib_80054ED8
 tu::ftCo_Bury::ext::hook::mpLineGetNormal
@@ -3686,6 +3689,7 @@ tu::ftCo_DownBound::ext::hook::atan2f
 tu::ftCo_DownBound::ext::hook::efAsync_Spawn
 tu::ftCo_DownBound::ext::hook::ft_PlaySFX
 tu::ftCo_DownBound::ext::hook::ft_80084C74
+tu::ftCo_DownBound::ext::hook::ftCo_8009F834
 tu::ftCo_DownBound::ext::hook::Camera_RequestQuake
 tu::ftCo_DownBound::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_DownBound::ext::hook::ftCommon_8007E2F4
@@ -3843,6 +3847,7 @@ tu::ftCo_Guard::ext::hook::ftAnim_80070010
 tu::ftCo_Guard::ext::hook::ftAnim_8006FA58
 tu::ftCo_Guard::ext::hook::Player_GetUnk45
 tu::ftCo_Guard::ext::hook::Fighter_804D650C
+tu::ftCo_Guard::ext::hook::efSync_Spawn
 tu::ftCo_Guard::ext::hook::ftColl_8007B1B8
 tu::ftCo_Guard::ext::hook::ft_PlaySFX
 tu::ftCo_Guard::ext::hook::ftYs_Init_8012BECC
@@ -4029,6 +4034,7 @@ tu::ftCo_ItemScopeFire::ext::hook::ft_80082C74
 tu::ftCo_ItemScopeFire::ext::hook::ft_PlaySFX
 tu::ftCo_ItemScopeFire::ext::hook::it_80291CCC
 tu::ftCo_ItemScopeFire::ext::hook::it_80291FA8
+tu::ftCo_ItemScopeFire::ext::hook::efSync_Spawn
 tu::ftCo_ItemScopeRapid::ext::hook::fn_800D769C
 tu::ftCo_ItemScopeRapid::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_ItemScopeRapid::ext::hook::ftCommon_ClampAirDrift
@@ -4854,6 +4860,7 @@ tu::ft_07c6::ext::FTCOLL_8007B868
 tu::ft_07c6::ext::LBCOLL_80007B78
 tu::ft_07c6::ext::IT_802E5EF4
 tu::ft_07c6::ext::LBAUDIOAX_80023870
+tu::ft_07c6::ext::EFSYNC_SPAWN
 tu::ft_07c6::ext::ITEM_8026A8EC
 tu::ft_0819::ext::LB_80014638
 tu::ft_0819::ext::FTCO_800C703C
@@ -4923,6 +4930,7 @@ tu::ft_0899::ext::MP_LINE_GET_NORMAL
 tu::ft_0899::ext::LBBGFLASH_80021410
 tu::ft_0899::ext::LBBGFLASH_80020E38
 tu::ft_0899::ext::FT_PART_SET_ROT_X
+tu::ft_0899::ext::DB_804D4AF8
 tu::ft_08a1::ext::FTMH_MS_389_80151018
 tu::ft_08a1::ext::FTCH_GRABUNK1_8015BC88
 tu::ft_08a1::ext::FTCO_DOWNSPOT_ENTER
@@ -5023,6 +5031,7 @@ tu::ftaction::ext::hook::ft_80088828
 tu::ftaction::ext::hook::ft_80088770
 tu::ftaction::ext::hook::ft_80088884
 tu::ftaction::ext::hook::ftParts_GetBoneIndex
+tu::ftaction::ext::hook::ftCo_8009F834
 tu::ftaction::ext::hook::ftColl_800768A0
 tu::ftaction::ext::hook::ftColl_8007ABD0
 tu::ftaction::ext::hook::ftColl_8007AC9C
@@ -5221,6 +5230,7 @@ tu::ftcoll::ext::LBCOLL_8000805C
 tu::ftcoll::ext::LBCOLL_80007DD8
 tu::ftcoll::ext::LBCOLL_80008248
 tu::ftcoll::ext::LBCOLL_80008D30
+tu::ftcoll::ext::EFSYNC_SPAWN
 tu::ftcoll::ext::FTCO_80094138
 tu::ftcoll::ext::PL_8003E150
 tu::ftcoll::ext::PL_8003E17C
@@ -5269,6 +5279,7 @@ tu::ftcpuattack::ext::FTKB_MEX_KIRBY_LIKE
 tu::ftcpuattack::ext::SCRIPT_GAME_CAPS_MAX_JUMPS
 tu::ftcpuattack::ext::STAGE_INFO_GRKIND
 tu::ftcpuattack::ext::FTCO_800A0C8C
+tu::ftcpuattack::ext::FTCO_800A0098
 tu::ftcpuattack::ext::FTCO_800A05F4
 tu::ftcpuattack::ext::FTCO_800A0798
 tu::ftcpuattack::ext::FTCO_800A0FB0
@@ -6045,6 +6056,7 @@ tu::itcerebi::ext::hook::Item_80268E5C
 tu::itcerebi::ext::hook::Stage_GetBlastZoneTopOffset
 tu::itcerebi::ext::hook::efLib_PauseAll
 tu::itcerebi::ext::hook::efLib_ResumeAll
+tu::itcerebi::ext::hook::efSync_Spawn
 tu::itcerebi::ext::hook::it_8026B894
 tu::itcerebi::ext::hook::it_80272C6C
 tu::itcerebi::ext::hook::it_80273454
@@ -6646,6 +6658,7 @@ tu::itfoxblaster::ext::hook::Item_8026AB54
 tu::itfoxblaster::ext::hook::Item_8026AE84
 tu::itfoxblaster::ext::hook::atan2f
 tu::itfoxblaster::ext::hook::efLib_DestroyAll
+tu::itfoxblaster::ext::hook::efSync_Spawn
 tu::itfoxblaster::ext::hook::ftCo_800BF228
 tu::itfoxblaster::ext::hook::ftFx_SpecialN_CheckBlasterAction
 tu::itfoxblaster::ext::hook::ftFx_SpecialN_CheckRemoveBlaster
@@ -7517,6 +7530,7 @@ tu::itlgunbeam::ext::hook::Item_802694CC
 tu::itlgunbeam::ext::hook::atan2f
 tu::itlgunbeam::ext::hook::db_80225DD8
 tu::itlgunbeam::ext::hook::efLib_DestroyAll
+tu::itlgunbeam::ext::hook::efSync_Spawn
 tu::itlgunbeam::ext::hook::it_8026B3A8
 tu::itlgunbeam::ext::hook::it_8026B894
 tu::itlgunbeam::ext::hook::it_8026BB68
@@ -7611,6 +7625,7 @@ tu::itlinkarrow::ext::hook::Item_8026AB54
 tu::itlinkarrow::ext::hook::Item_8026AE84
 tu::itlinkarrow::ext::hook::atan2f
 tu::itlinkarrow::ext::hook::db_80225DD8
+tu::itlinkarrow::ext::hook::efSync_Spawn
 tu::itlinkarrow::ext::hook::ftCo_80094098
 tu::itlinkarrow::ext::hook::ftKb_SpecialNLk800FB418
 tu::itlinkarrow::ext::hook::ftKb_SpecialNLk800FB470
@@ -8005,6 +8020,7 @@ tu::itmarumine::ext::hook::Item_80268E5C
 tu::itmarumine::ext::hook::Item_8026AE84
 tu::itmarumine::ext::hook::efLib_PauseAll
 tu::itmarumine::ext::hook::efLib_ResumeAll
+tu::itmarumine::ext::hook::efSync_Spawn
 tu::itmarumine::ext::hook::it_8026B390
 tu::itmarumine::ext::hook::it_8026B3A8
 tu::itmarumine::ext::hook::it_8026B894
@@ -8063,6 +8079,7 @@ tu::itmatadogas::ext::hook::Item_80268E5C
 tu::itmatadogas::ext::hook::Item_8026AE84
 tu::itmatadogas::ext::hook::efLib_PauseAll
 tu::itmatadogas::ext::hook::efLib_ResumeAll
+tu::itmatadogas::ext::hook::efSync_Spawn
 tu::itmatadogas::ext::hook::it_8026B3A8
 tu::itmatadogas::ext::hook::it_8026B894
 tu::itmatadogas::ext::hook::it_8026BB88
@@ -8820,6 +8837,7 @@ tu::itraikou::ext::hook::Item_8026AE84
 tu::itraikou::ext::hook::efLib_DestroyAll
 tu::itraikou::ext::hook::efLib_PauseAll
 tu::itraikou::ext::hook::efLib_ResumeAll
+tu::itraikou::ext::hook::efSync_Spawn
 tu::itraikou::ext::hook::it_8026B894
 tu::itraikou::ext::hook::it_8026D62C
 tu::itraikou::ext::hook::it_8026E248
@@ -8940,6 +8958,7 @@ tu::itsamusgrapple::ext::hook::PSMTXCopy
 tu::itsamusgrapple::ext::hook::PSMTXIdentity
 tu::itsamusgrapple::ext::hook::ScriptGame_HitRuleCreate
 tu::itsamusgrapple::ext::hook::ScriptGame_HitRuleForget
+tu::itsamusgrapple::ext::hook::efSync_Spawn
 tu::itsamusgrapple::ext::hook::ftCliffCommon_80081370
 tu::itsamusgrapple::ext::hook::ftCo_80090780
 tu::itsamusgrapple::ext::hook::ftCo_8009B390
@@ -9214,6 +9233,7 @@ tu::itsuikun::ext::hook::Item_8026AE84
 tu::itsuikun::ext::hook::efLib_DestroyAll
 tu::itsuikun::ext::hook::efLib_PauseAll
 tu::itsuikun::ext::hook::efLib_ResumeAll
+tu::itsuikun::ext::hook::efSync_Spawn
 tu::itsuikun::ext::hook::it_8026B894
 tu::itsuikun::ext::hook::it_8026D62C
 tu::itsuikun::ext::hook::it_8026E248
@@ -9314,6 +9334,7 @@ tu::itthunder::ext::hook::Item_80268E5C
 tu::itthunder::ext::hook::Stage_GetBlastZoneTopOffset
 tu::itthunder::ext::hook::efLib_PauseAll
 tu::itthunder::ext::hook::efLib_ResumeAll
+tu::itthunder::ext::hook::efSync_Spawn
 tu::itthunder::ext::hook::it_8026B894
 tu::itthunder::ext::hook::it_8026E15C
 tu::itthunder::ext::hook::it_80272C6C
@@ -11966,6 +11987,7 @@ tu::lb_00B0::ext::hook::HSD_JObjPrependRObj
 tu::lb_00B0::ext::hook::HSD_JObjSetFlags
 tu::lb_00B0::ext::hook::HSD_JObjSetMtxDirtySub
 tu::lb_00B0::ext::hook::HSD_JObjSetupMatrixSub
+tu::lb_00B0::ext::hook::HSD_JObjWalkTree
 tu::lb_00B0::ext::hook::HSD_LObjGetFlags
 tu::lb_00B0::ext::hook::HSD_QuatLib_8037EF28
 tu::lb_00B0::ext::hook::HSD_RObjAlloc

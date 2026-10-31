@@ -13,13 +13,26 @@ use melee_types::{GameSceneInfo, PADStatus};
 /// The pad source `PADRead` reads (a hook is a plain `fn`, so the system is a global like the C's SI registers).
 static mut PADS: Option<PadSystem> = None;
 
+/// A scripted pad source (the golden harness's `pad_fixed.lua` cycles): `(tick, port) -> PADStatus`. It stands in for
+/// the Lua pad of the C golden run, i.e. it replaces what `PADRead` returns, before the game's own `HSD_PadRenewStatus`.
+type PadFeed = Box<dyn Fn(u32, usize) -> PADStatus>;
+static mut PAD_FEED: Option<PadFeed> = None;
+/// The tick the next `PADRead` belongs to (the engine's frame counter).
+static mut FEED_TICK: u32 = 0;
+
 fn pad_read(st: *mut PADStatus) -> u32 {
     unsafe {
         let arr = &mut *(st as *mut [PADStatus; 4]);
-        match PADS.as_mut() {
+        let r = match PADS.as_mut() {
             Some(p) => p.read(arr),
             None => 0,
+        };
+        if let Some(f) = PAD_FEED.as_ref() {
+            for (port, slot) in arr.iter_mut().enumerate() {
+                *slot = f(FEED_TICK, port);
+            }
         }
+        r
     }
 }
 
@@ -249,6 +262,11 @@ impl Engine {
         }
     }
 
+    /// Drive the pads from a script instead of `PadSystem` (`feed(tick, port)`; tick 0 is the first `tick()`).
+    pub fn set_pad_feed(&mut self, feed: impl Fn(u32, usize) -> PADStatus + 'static) {
+        unsafe { PAD_FEED = Some(Box::new(feed)) };
+    }
+
     /// Exactly one iteration of the scene loop (pad queue, logic frame(s), `HSD_GObj_RunProcs`, render).
     /// Returns false once the scene has ended.
     pub fn tick(&mut self) -> bool {
@@ -256,6 +274,7 @@ impl Engine {
             return false;
         }
         unsafe { RAND_FRAME = self.frames as i32; }
+        unsafe { FEED_TICK = self.frames };
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
         self.frames += 1;

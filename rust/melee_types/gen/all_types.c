@@ -1393,7 +1393,7 @@ struct SfxLoadStreamNode {
     /* 0x10 */ s32 x10;
     /* 0x14 */ s32 x14;
 };
-/* Extracted from src/sysdolphin/baselib/synth.c:560. */
+/* Extracted from src/sysdolphin/baselib/synth.c:570. */
 struct HSD_SynthVoiceEntry {
     void* next;
     int unk4; // sound ID
@@ -1410,6 +1410,12 @@ struct HSD_MaterialState {
     u8 alpha;
     f32 shininess;
 };
+/* Extracted from src/melee/gr/ground.c (Ground_801C34AC). */
+struct UnkStageDat_x0_entry {
+        void* joint;
+        s16* pairs;
+        s32 pair_count;
+    };
 typedef struct {
     Fighter* fighter;
     int target, attack, damage, pulses;

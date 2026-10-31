@@ -31,7 +31,7 @@ fn ftCo_Wait_matches_c() {
             case(op, k);
             unsafe {
                 *fdp = core::mem::zeroed();
-                (*fdp).x24 = igo() as *mut core::ffi::c_void;
+                (*fdp).x24 = igo() as *mut WaitStruct;
             }
             let fr = f();
             fr.ft_data = fdp;

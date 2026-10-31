@@ -101,7 +101,10 @@ def main():
             names[h['name']] = 0
     out.append('')
     out.append('/// `melee_modes::tu::ext_hook::EXT_FALLBACK`: the by-name `ext_fns!` callees answered "feature off".')
-    out.append('pub unsafe fn ext_fallback(name: &str, _args: &[u64]) -> u64 {')
+    out.append('pub unsafe fn ext_fallback(name: &str, args: &[u64]) -> u64 {')
+    out.append('    if let Some(v) = crate::seams::ext_real(name, args) {')
+    out.append('        return v;')
+    out.append('    }')
     out.append('    match name {')
     by_val = {}
     for k, v in sorted(names.items()): by_val.setdefault(v, []).append(k)

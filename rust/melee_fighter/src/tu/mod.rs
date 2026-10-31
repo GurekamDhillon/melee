@@ -43,6 +43,7 @@ pub mod ftparts;
 pub mod ftparts_render;
 pub mod ftmaterial;
 pub mod ftCo_09f4;
+pub mod ftCo_09f7;
 pub mod ftcoll;
 pub mod ft_08a1;
 pub mod ft_0bec;

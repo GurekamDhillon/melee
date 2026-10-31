@@ -103,6 +103,17 @@ pub fn nh_fighter(fp: &Fighter, slot: i32, stocks: i32, is_cpu: bool) -> u32 {
     h
 }
 
+/// Debug aid (`MELEE_NH_DUMP=<slot>`): the 21 inputs of `nh_fighter` as hex words, one line, for diffing two runs.
+pub fn nh_dump(fp: &Fighter, slot: i32, stocks: i32) -> String {
+    let v = [
+        slot as u32 + 0x100, fp.motion_id as u32, bits(fp.cur_pos.x), bits(fp.cur_pos.y), bits(fp.cur_pos.z), bits(fp.self_vel.x), bits(fp.self_vel.y),
+        bits(fp.dmg.x1830_percent), bits(fp.facing_dir), fp.ground_or_air as u32, bits(fp.x8c_kb_vel.x), bits(fp.x8c_kb_vel.y), bits(fp.gr_vel),
+        bits(fp.dmg.x195c_hitlag_frames), fp.x2219_b5() as u32, bits(fp.shield_health), bits(fp.x3E4_fighterCmdScript.frame_count),
+        fp.x1968_jumpsUsed as u32, fp.x67F as u32, fp.x680 as u32, stocks as u32,
+    ];
+    v.iter().map(|w| format!("{w:08X}")).collect::<Vec<_>>().join(" ")
+}
+
 /// One item's word (the body of RB_NeutralHash's item loop); the frame sums these, wrapping.
 pub fn nh_item(ip: &Item) -> u32 {
     let mut ih = nh_mix(0x4954_454D, ip.kind as u32);

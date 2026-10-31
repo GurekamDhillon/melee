@@ -1204,6 +1204,7 @@ pub unsafe fn ext_fallback(name: &str, args: &[u64]) -> u64 {
         "Script_StageTextByte" | "Script_StageWanted" | "Script_TargetBroken" | "Script_WarmModelDraw" | "Script_WarmSync" | "Wb_RenderActive" => 0x0,
         "Wb_RenderOption" => 0x0,
         "Geno_DefineBaseKind" | "Geno_ProfileForKind" => 0xffffffffffffffff,
+        _ if melee_core::ct::render_stub() => 0, // retail draw callbacks run headless: display calls answer zero
         _ => panic!("TODO ext: {name} is in a TU that is not ported yet"),
     }
 }

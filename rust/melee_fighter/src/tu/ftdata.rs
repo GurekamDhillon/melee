@@ -42,7 +42,7 @@ pub mod ext {
             pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { $stat } {
                     Some(f) => f($($a),*),
-                    None => { $( return $d; )? panic!(concat!("TODO stub: ", stringify!($name))) }
+                    None => { $( return $d; )? melee_core::unported!(concat!("TODO stub: ", stringify!($name))) }
                 }
             }
         )*};

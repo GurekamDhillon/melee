@@ -35,22 +35,22 @@ pub mod ext {
         pub static mut lb_8001C4A8: Option<fn(*mut c_void, *mut c_void) -> i32> = None;
     }
     pub fn CARDProbe(a0: i32) -> i32 {
-        match unsafe { hook::CARDProbe } { Some(f) => f(a0), None => { panic!("TODO: CARDProbe is not ported") } }
+        match unsafe { hook::CARDProbe } { Some(f) => f(a0), None => { melee_core::unported!("TODO: CARDProbe is not ported") } }
     }
     pub fn DCFlushRange(a0: *mut c_void, a1: u32) {
-        match unsafe { hook::DCFlushRange } { Some(f) => f(a0, a1), None => { panic!("TODO: DCFlushRange is not ported") } }
+        match unsafe { hook::DCFlushRange } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: DCFlushRange is not ported") } }
     }
     pub fn OSGetTime() -> i64 {
-        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { panic!("TODO: OSGetTime is not ported") } }
+        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { melee_core::unported!("TODO: OSGetTime is not ported") } }
     }
     pub fn OSTicksToCalendarTime(a0: i64, a1: *mut OSCalendarTime) {
-        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { panic!("TODO: OSTicksToCalendarTime is not ported") } }
+        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: OSTicksToCalendarTime is not ported") } }
     }
     pub fn ft_GetFtKindMask() -> i32 {
-        match unsafe { hook::ft_GetFtKindMask } { Some(f) => f(), None => { panic!("TODO: ft_GetFtKindMask is not ported") } }
+        match unsafe { hook::ft_GetFtKindMask } { Some(f) => f(), None => { melee_core::unported!("TODO: ft_GetFtKindMask is not ported") } }
     }
     pub fn gm_GetStKind() -> u16 {
-        match unsafe { hook::gm_GetStKind } { Some(f) => f(), None => { panic!("TODO: gm_GetStKind is not ported") } }
+        match unsafe { hook::gm_GetStKind } { Some(f) => f(), None => { melee_core::unported!("TODO: gm_GetStKind is not ported") } }
     }
     pub fn hsd_803B51C8(a0: i32, a1: i32, a2: i32, a3: *mut i8, a4: i32) -> i32 {
         match unsafe { hook::hsd_803B51C8 } { Some(f) => f(a0, a1, a2, a3, a4), None => { { return unsafe { crate::tu::hsd_3B34::hsd_803B51C8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ }; } } }
@@ -62,10 +62,10 @@ pub mod ext {
         match unsafe { hook::hsd_803B6BE4 } { Some(f) => f(a0, a1, a2), None => { { return unsafe { crate::tu::hsd_3B5C::hsd_803B6BE4(a0 as _, a1 as _, a2 as _) as _ }; } } }
     }
     pub fn it_8026C47C(a0: *mut it_8026C47C_arg0_t) {
-        match unsafe { hook::it_8026C47C } { Some(f) => f(a0), None => { panic!("TODO: it_8026C47C is not ported") } }
+        match unsafe { hook::it_8026C47C } { Some(f) => f(a0), None => { melee_core::unported!("TODO: it_8026C47C is not ported") } }
     }
     pub fn lbArchive_80016DBC(a0: *const i8, a1: *mut c_void, a2: *const i8, a3: i32) -> *mut HSD_Archive {
-        match unsafe { hook::lbArchive_80016DBC } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: lbArchive_80016DBC is not ported") } }
+        match unsafe { hook::lbArchive_80016DBC } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: lbArchive_80016DBC is not ported") } }
     }
     pub fn lbCardNew_DeleteSnap(a0: i32, a1: *const i8, a2: *mut c_void) -> i32 {
         match unsafe { hook::lbCardNew_DeleteSnap } { Some(f) => f(a0, a1, a2), None => { { return unsafe { crate::tu::lbcardnew::lbCardNew_DeleteSnap(a0 as _, a1 as _, a2 as _) as _ }; } } }

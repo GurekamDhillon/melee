@@ -193,12 +193,12 @@ pub fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const core::ffi::c
 pub static mut HOOK_HSD_DObjClearFlags: Option<fn(*mut HSD_DObj, u32)> = None;
 /// C `HSD_DObjClearFlags` (sysdolphin/baselib/dobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_DObjClearFlags(a0: *mut HSD_DObj, a1: u32) {
-    match HOOK_HSD_DObjClearFlags { Some(f) => f(a0, a1), None => panic!("TODO: HSD_DObjClearFlags is not ported") }
+    match HOOK_HSD_DObjClearFlags { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_DObjClearFlags is not ported") }
 }
 pub static mut HOOK_HSD_DObjSetFlags: Option<fn(*mut HSD_DObj, u32)> = None;
 /// C `HSD_DObjSetFlags` (sysdolphin/baselib/dobj.h); referenced as a function value, so it is `extern "C"`.
 pub unsafe extern "C" fn HSD_DObjSetFlags(a0: *mut HSD_DObj, a1: u32) {
-    match HOOK_HSD_DObjSetFlags { Some(f) => f(a0, a1), None => panic!("TODO: HSD_DObjSetFlags is not ported") }
+    match HOOK_HSD_DObjSetFlags { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: HSD_DObjSetFlags is not ported") }
 }
 pub static mut HOOK_HSD_GObj_SetupProc: Option<fn(*mut HSD_GObj, HSD_GObjEvent, u8) -> *mut HSD_GObjProc> = None;
 /// C `HSD_GObj_SetupProc` (sysdolphin/baselib/gobjproc.h).
@@ -288,7 +288,7 @@ pub fn HSD_Randi(a0: i32) -> i32 { match unsafe { HOOK_HSD_Randi } { Some(f) => 
 pub static mut HOOK_Mex_GrBind: Option<fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void> = None;
 /// C `Mex_GrBind` (melee/gr/inlines.h).
 pub fn Mex_GrBind(a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
-    match unsafe { HOOK_Mex_GrBind } { Some(f) => f(a0), None => panic!("TODO: Mex_GrBind is not ported") }
+    match unsafe { HOOK_Mex_GrBind } { Some(f) => f(a0), None => melee_core::unported!("TODO: Mex_GrBind is not ported") }
 }
 /// One argument of the variadic C `OSReport` (the gr TUs pass `%d`/`%s` values only).
 #[derive(Clone, Copy, Debug)]
@@ -300,12 +300,12 @@ pub fn OSReport(fmt: *const core::ffi::c_char, args: &[OsArg]) { match unsafe { 
 pub static mut HOOK_Player_80031790: Option<fn(i32)> = None;
 /// C `Player_80031790` (melee/pl/player.h).
 pub fn Player_80031790(a0: i32) {
-    match unsafe { HOOK_Player_80031790 } { Some(f) => f(a0), None => panic!("TODO: Player_80031790 is not ported") }
+    match unsafe { HOOK_Player_80031790 } { Some(f) => f(a0), None => melee_core::unported!("TODO: Player_80031790 is not ported") }
 }
 pub static mut HOOK_Player_80031900: Option<fn()> = None;
 /// C `Player_80031900` (melee/pl/player.h).
 pub fn Player_80031900() {
-    match unsafe { HOOK_Player_80031900 } { Some(f) => f(), None => panic!("TODO: Player_80031900 is not ported") }
+    match unsafe { HOOK_Player_80031900 } { Some(f) => f(), None => melee_core::unported!("TODO: Player_80031900 is not ported") }
 }
 pub static mut HOOK_Player_GetEntity: Option<fn(i32) -> *mut HSD_GObj> = None;
 /// C `Player_GetEntity` (melee/pl/player.h).
@@ -364,7 +364,7 @@ pub static mut HOOK_efSync_Spawn: Option<fn(i32, *mut HSD_GObj, *mut HSD_JObj, *
 /// C `efSync_Spawn(gfx_id, gobj, ...)` (melee/ef/efsync.h) is variadic; grshrineroute.c passes the joint
 /// and a `f32*` scale.
 pub fn efSync_Spawn(gfx_id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, scale: *mut f32) -> *mut core::ffi::c_void {
-    match unsafe { HOOK_efSync_Spawn } { Some(h) => h(gfx_id, gobj, jobj, scale), None => panic!("TODO: efSync_Spawn is not ported") }
+    match unsafe { HOOK_efSync_Spawn } { Some(h) => h(gfx_id, gobj, jobj, scale), None => melee_core::unported!("TODO: efSync_Spawn is not ported") }
 }
 pub static mut HOOK_ftCo_800C07F8: Option<fn(*mut Ground_GObj, u32, *mut core::ffi::c_void)> = None;
 /// C `ftCo_800C07F8` (melee/ft/ftdevice.h).
@@ -381,7 +381,7 @@ pub fn ftLib_80086BE0(a0: *mut HSD_GObj) -> u8 { match unsafe { HOOK_ftLib_80086
 pub static mut HOOK_ftLib_80086C18: Option<fn(*mut HSD_GObj, i32, i32)> = None;
 /// C `ftLib_80086C18` (melee/ft/ftlib.h).
 pub fn ftLib_80086C18(a0: *mut HSD_GObj, a1: i32, a2: i32) {
-    match unsafe { HOOK_ftLib_80086C18 } { Some(f) => f(a0, a1, a2), None => panic!("TODO: ftLib_80086C18 is not ported") }
+    match unsafe { HOOK_ftLib_80086C18 } { Some(f) => f(a0, a1, a2), None => melee_core::unported!("TODO: ftLib_80086C18 is not ported") }
 }
 pub static mut HOOK_ftLib_80086EC0: Option<fn(*mut HSD_GObj) -> i32> = None;
 /// C `ftLib_80086EC0` (melee/ft/ftlib.h).
@@ -398,23 +398,23 @@ pub fn ftLib_8008732C(a0: *mut HSD_GObj) -> i32 { match unsafe { HOOK_ftLib_8008
 pub static mut HOOK_gm_801674C4: Option<fn(i8, u8, i8, i8, GmRouteCallback)> = None;
 /// C `gm_801674C4` (melee/gm/gm_1601.h).
 pub fn gm_801674C4(a0: i8, a1: u8, a2: i8, a3: i8, a4: GmRouteCallback) {
-    match unsafe { HOOK_gm_801674C4 } { Some(f) => f(a0, a1, a2, a3, a4), None => panic!("TODO: gm_801674C4 is not ported") }
+    match unsafe { HOOK_gm_801674C4 } { Some(f) => f(a0, a1, a2, a3, a4), None => melee_core::unported!("TODO: gm_801674C4 is not ported") }
 }
 pub static mut HOOK_gm_GetDbPauseFlag: Option<fn(i32) -> i32> = None;
 /// C `gm_GetDbPauseFlag` (melee/gm/gmscene.h).
 pub fn gm_GetDbPauseFlag(a0: i32) -> i32 {
-    match unsafe { HOOK_gm_GetDbPauseFlag } { Some(f) => f(a0), None => panic!("TODO: gm_GetDbPauseFlag is not ported") }
+    match unsafe { HOOK_gm_GetDbPauseFlag } { Some(f) => f(a0), None => melee_core::unported!("TODO: gm_GetDbPauseFlag is not ported") }
 }
 pub static mut HOOK_gm_MexVanillaKind: Option<fn(i32, i32) -> i32> = None;
 /// C `gm_MexVanillaKind` (melee/gr/grpushon.c).
 pub fn gm_MexVanillaKind(a0: i32, a1: i32) -> i32 {
-    match unsafe { HOOK_gm_MexVanillaKind } { Some(f) => f(a0, a1), None => panic!("TODO: gm_MexVanillaKind is not ported") }
+    match unsafe { HOOK_gm_MexVanillaKind } { Some(f) => f(a0, a1), None => melee_core::unported!("TODO: gm_MexVanillaKind is not ported") }
 }
 pub static mut HOOK_grAnime_801C752C: Option<fn(*mut HSD_JObj, i32, i32, *mut core::ffi::c_void, u32, u32)> = None;
 /// C `grAnime_801C752C(jobj, a, b, fn, n, ...)` (melee/gr/granime.h) is variadic; every caller passes
 /// exactly one more `u32` (the flags) after `n`.
 pub fn grAnime_801C752C(jobj: *mut HSD_JObj, a: i32, b: i32, f: *mut core::ffi::c_void, n: u32, flags: u32) {
-    match unsafe { HOOK_grAnime_801C752C } { Some(h) => h(jobj, a, b, f, n, flags), None => panic!("TODO: grAnime_801C752C is not ported") }
+    match unsafe { HOOK_grAnime_801C752C } { Some(h) => h(jobj, a, b, f, n, flags), None => melee_core::unported!("TODO: grAnime_801C752C is not ported") }
 }
 pub static mut HOOK_grAnime_801C7A04: Option<fn(*mut HSD_GObj, i32, u32, f32)> = None;
 /// C `grAnime_801C7A04` (melee/gr/granime.h).
@@ -528,7 +528,7 @@ pub fn it_8026B3C0(a0: i32) -> i32 { match unsafe { HOOK_it_8026B3C0 } { Some(f)
 pub static mut HOOK_it_802D8618: Option<fn(i32, *mut Vec3, i32, i32)> = None;
 /// C `it_802D8618` (melee/it/kinds/itheiho.h).
 pub fn it_802D8618(a0: i32, a1: *mut Vec3, a2: i32, a3: i32) {
-    match unsafe { HOOK_it_802D8618 } { Some(f) => f(a0, a1, a2, a3), None => panic!("TODO: it_802D8618 is not ported") }
+    match unsafe { HOOK_it_802D8618 } { Some(f) => f(a0, a1, a2, a3), None => melee_core::unported!("TODO: it_802D8618 is not ported") }
 }
 pub static mut HOOK_lbVector_Add: Option<fn(*mut Vec3, *mut Vec3) -> *mut Vec3> = None;
 /// C `lbVector_Add` (melee/lb/lbvector.h).

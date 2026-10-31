@@ -63,6 +63,11 @@ def main():
     ap.add_argument('--only-rust-names', action='store_true', help='(default) restrict C to names the Rust side logged')
     ap.add_argument('--filter', default=None)
     ap.add_argument('--ignore-inlined', default=None)
+    ap.add_argument('--auto-ignore', type=int, default=0, metavar='N', help='with --anchor: when exactly one call is extra on one side at the first '
+                    'difference (a function one compiler inlines and the other does not), add it to the ignore set and go on, up to N times; '
+                    'the names are printed so the list can be reviewed')
+    ap.add_argument('--anchor', default=None, help='re-chunk both sides at each call of this function (frame phases differ: the C log '
+                    'frame starts after render, the engine log at the pad renew); chunk k of C is compared with chunk k of Rust')
     a = ap.parse_args()
     c, r = read_c(a.c, a.map), read_rust(a.rust)
     lo, hi = (None, None)
@@ -76,12 +81,56 @@ def main():
     if a.ignore_inlined:
         ign = {norm(l.strip()) for l in Path(a.ignore_inlined).read_text().splitlines() if l.strip()}
     rx = re.compile(a.filter, re.I) if a.filter else None
-    scope = None if a.all else {n for f in frames for n in r[f]}
+    scope = None if a.all else {n for f in frames for n in r[f]} & {n for f in frames for n in c[f]}
 
     def keep(n):
         return n not in ign and (scope is None or n in scope) and (rx is None or rx.search(n))
 
     total = 0
+    if a.anchor:
+        anc = norm(a.anchor)
+
+        def chunks(d):
+            out, cur, fid = [], None, None
+            for f in frames:
+                for n in d[f]:
+                    if n == anc:
+                        cur = []
+                        out.append((f, cur))
+                    if cur is not None and keep(n):
+                        cur.append(n)
+            return out
+        cc, rc = chunks(c), chunks(r)
+        auto = []
+        for k in range(min(len(cc), len(rc))):
+            (fc, cs), (fr, rs) = cc[k], rc[k]
+            while cs != rs and len(auto) < a.auto_ignore:
+                i = next((j for j in range(min(len(cs), len(rs))) if cs[j] != rs[j]), min(len(cs), len(rs)))
+                if i < len(rs) and i + 1 <= len(cs) and rs[i + 1:i + 2] == cs[i:i + 1] and i < len(cs):
+                    nm = rs[i]
+                elif i < len(cs) and cs[i + 1:i + 2] == rs[i:i + 1] and i < len(rs):
+                    nm = cs[i]
+                else:
+                    break
+                auto.append(nm)
+                ign.add(nm)
+                cs = [n for n in cs if n != nm]
+                rs = [n for n in rs if n != nm]
+            if auto and k == 0:
+                pass
+            if cs != rs:
+                if auto:
+                    print('auto-ignored:', ' '.join(auto))
+                i = next((j for j in range(min(len(cs), len(rs))) if cs[j] != rs[j]), min(len(cs), len(rs)))
+                print(f'first difference: chunk {k} (C frame {fc}, Rust frame {fr}) position {i} (C {len(cs)} calls, Rust {len(rs)} calls)')
+                print('  C   :', ' '.join(cs[max(0, i - 8):i + 8]))
+                print('  Rust:', ' '.join(rs[max(0, i - 8):i + 8]))
+                return 1
+            total += len(cs)
+        if auto:
+            print('auto-ignored:', ' '.join(auto))
+        print(f'anchored sequences identical over {min(len(cc), len(rc))} chunks (C {len(cc)}, Rust {len(rc)}), {total} calls')
+        return 0
     for f in frames:
         cs = [n for n in c[f] if keep(n)]
         rs = [n for n in r[f] if keep(n)]

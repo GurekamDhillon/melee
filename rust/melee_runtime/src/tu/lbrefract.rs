@@ -91,7 +91,7 @@ pub mod ext {
 pub static mut H_lbArchive_LoadSymbols: Option<fn(*const c_char, *mut c_void, *const c_char)> = None;
 pub fn lbArchive_LoadSymbols(file: *const c_char, out: *mut c_void, sym: *const c_char) {
     melee_core::ct!("lbArchive_LoadSymbols");
-    match unsafe { H_lbArchive_LoadSymbols } { Some(f) => f(file, out, sym), None => panic!("TODO: lbArchive_LoadSymbols is not ported") }
+    match unsafe { H_lbArchive_LoadSymbols } { Some(f) => f(file, out, sym), None => melee_core::unported!("TODO: lbArchive_LoadSymbols is not ported") }
 }
 
 const FILE: &str = "src/melee/lb/lbrefract.c";

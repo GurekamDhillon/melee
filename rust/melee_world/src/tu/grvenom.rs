@@ -30,7 +30,7 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
                 }
             }
         };
@@ -118,7 +118,7 @@ pub mod ext {
                 }
             }
     pub static mut H_HSD_ForeachAnim: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, u32, *mut core::ffi::c_void, i32, u64)> = None;
-    pub unsafe extern "C" fn HSD_ForeachAnim(a0: *mut core::ffi::c_void, a1: i32, a2: u32, a3: *mut core::ffi::c_void, a4: i32, a5: u64) { match H_HSD_ForeachAnim { Some(f) => f(a0, a1, a2, a3, a4, a5), None => panic!("TODO: HSD_ForeachAnim is not ported") } }
+    pub unsafe extern "C" fn HSD_ForeachAnim(a0: *mut core::ffi::c_void, a1: i32, a2: u32, a3: *mut core::ffi::c_void, a4: i32, a5: u64) { match H_HSD_ForeachAnim { Some(f) => f(a0, a1, a2, a3, a4, a5), None => melee_core::unported!("TODO: HSD_ForeachAnim is not ported") } }
     pub static mut H_grZakoGenerator_801CAE04: Option<unsafe extern "C" fn(*mut melee_types::grZakoGenerator_SpawnDesc) -> *mut melee_types::HSD_GObj> = None;
             pub unsafe extern "C" fn grZakoGenerator_801CAE04(a0: *mut melee_types::grZakoGenerator_SpawnDesc) -> *mut melee_types::HSD_GObj {
                 match H_grZakoGenerator_801CAE04 {

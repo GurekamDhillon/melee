@@ -21,7 +21,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
+                    None => { $( return $fb; )? melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };
@@ -1357,7 +1357,7 @@ pub unsafe extern "C" fn Item_80268E5C(gobj: *mut HSD_GObj, msid: enum_t, flags:
 
     if temp_r0 != -1 {
         let temp_r29: *mut ItemStateDesc =
-            (&raw mut (*(*(*item_data).xC4_article_data).xC_itemStates).x0_itemStateDesc[temp_r0 as usize]) as *mut ItemStateDesc;
+            ((&raw mut (*(*(*item_data).xC4_article_data).xC_itemStates).x0_itemStateDesc) as *mut ItemStateDesc).add(temp_r0 as usize); // the C array is open-ended
         (*item_data).xD0_itemStateDesc = temp_r29;
         let temp_r23 = (*item_data).xD0_itemStateDesc;
 

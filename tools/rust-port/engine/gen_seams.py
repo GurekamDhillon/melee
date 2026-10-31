@@ -111,6 +111,7 @@ def main():
     for v, ks in sorted(by_val.items()):
         for i in range(0, len(ks), 6):
             out.append('        ' + ' | '.join(f'"{k}"' for k in ks[i:i + 6]) + f' => {v:#x},')
+    out.append('        _ if melee_core::ct::render_stub() => 0, // retail draw callbacks run headless: display calls answer zero')
     out.append('        _ => panic!("TODO ext: {name} is in a TU that is not ported yet"),')
     out.append('    }')
     out.append('}')

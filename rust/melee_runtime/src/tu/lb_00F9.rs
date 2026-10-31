@@ -55,85 +55,85 @@ pub mod ext {
         pub static mut sinf: Option<fn(f32) -> f32> = None;
     }
     pub fn EulerToQuat(a0: *mut Vec, a1: *mut Quaternion) -> i32 {
-        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
+        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: EulerToQuat is not ported") } }
     }
     pub fn GXBegin(a0: u32, a1: u32, a2: u16) {
-        match unsafe { hook::GXBegin } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXBegin is not ported") } }
+        match unsafe { hook::GXBegin } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GXBegin is not ported") } }
     }
     pub fn GXColor4u8(a0: u8, a1: u8, a2: u8, a3: u8) {
-        match unsafe { hook::GXColor4u8 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GXColor4u8 is not ported") } }
+        match unsafe { hook::GXColor4u8 } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: GXColor4u8 is not ported") } }
     }
     pub fn GXLoadPosMtxImm(a0: *mut [f32; 4], a1: u32) {
-        match unsafe { hook::GXLoadPosMtxImm } { Some(f) => f(a0, a1), None => { panic!("TODO: GXLoadPosMtxImm is not ported") } }
+        match unsafe { hook::GXLoadPosMtxImm } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXLoadPosMtxImm is not ported") } }
     }
     pub fn GXPosition3f32(a0: f32, a1: f32, a2: f32) {
-        match unsafe { hook::GXPosition3f32 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXPosition3f32 is not ported") } }
+        match unsafe { hook::GXPosition3f32 } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GXPosition3f32 is not ported") } }
     }
     pub fn GXSetLineWidth(a0: u8, a1: u32) {
-        match unsafe { hook::GXSetLineWidth } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetLineWidth is not ported") } }
+        match unsafe { hook::GXSetLineWidth } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXSetLineWidth is not ported") } }
     }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
         match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } } }
     }
     pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
-        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetViewingMtx is not ported") } }
+        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetViewingMtx is not ported") } }
     }
     pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) {
-        match unsafe { hook::HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjClearFlagsAll is not ported") } }
+        match unsafe { hook::HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjClearFlagsAll is not ported") } }
     }
     pub fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj {
-        match unsafe { hook::HSD_JObjGetDObj } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjGetDObj is not ported") } }
+        match unsafe { hook::HSD_JObjGetDObj } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjGetDObj is not ported") } }
     }
     pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
-        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
+        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
     }
     pub fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj) {
-        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
+        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
     }
     pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
         match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::memory::HSD_MemAlloc(a0 as _) as _ }; } } }
     }
     pub fn HSD_QuatLib_8037EB28(a0: *mut [f32; 4], a1: *mut Vec) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EB28 } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_QuatLib_8037EB28 is not ported") } }
+        match unsafe { hook::HSD_QuatLib_8037EB28 } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_QuatLib_8037EB28 is not ported") } }
     }
     pub fn HSD_QuatLib_8037EC4C(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EC4C } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037EC4C is not ported") } }
+        match unsafe { hook::HSD_QuatLib_8037EC4C } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_QuatLib_8037EC4C is not ported") } }
     }
     pub fn HSD_QuatLib_8037ECE0(a0: *mut Vec, a1: *mut Quaternion, a2: f32) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037ECE0 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_QuatLib_8037ECE0 is not ported") } }
+        match unsafe { hook::HSD_QuatLib_8037ECE0 } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_QuatLib_8037ECE0 is not ported") } }
     }
     pub fn HSD_StateInitDirect(a0: i32, a1: u32) {
-        match unsafe { hook::HSD_StateInitDirect } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_StateInitDirect is not ported") } }
+        match unsafe { hook::HSD_StateInitDirect } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_StateInitDirect is not ported") } }
     }
     pub fn PSMTXConcat(a0: *mut [f32; 4], a1: *mut [f32; 4], a2: *mut [f32; 4]) {
-        match unsafe { hook::PSMTXConcat } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXConcat is not ported") } }
+        match unsafe { hook::PSMTXConcat } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: PSMTXConcat is not ported") } }
     }
     pub fn PSMTXCopy(a0: *mut [f32; 4], a1: *mut [f32; 4]) {
-        match unsafe { hook::PSMTXCopy } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXCopy is not ported") } }
+        match unsafe { hook::PSMTXCopy } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: PSMTXCopy is not ported") } }
     }
     pub fn PSMTXIdentity(a0: *mut [f32; 4]) {
-        match unsafe { hook::PSMTXIdentity } { Some(f) => f(a0), None => { panic!("TODO: PSMTXIdentity is not ported") } }
+        match unsafe { hook::PSMTXIdentity } { Some(f) => f(a0), None => { melee_core::unported!("TODO: PSMTXIdentity is not ported") } }
     }
     pub fn PSMTXMultVec(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec) {
-        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXMultVec is not ported") } }
+        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: PSMTXMultVec is not ported") } }
     }
     pub fn PSMTXQuat(a0: *mut [f32; 4], a1: *mut Quaternion) {
-        match unsafe { hook::PSMTXQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXQuat is not ported") } }
+        match unsafe { hook::PSMTXQuat } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: PSMTXQuat is not ported") } }
     }
     pub fn PSMTXScale(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32) {
-        match unsafe { hook::PSMTXScale } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: PSMTXScale is not ported") } }
+        match unsafe { hook::PSMTXScale } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: PSMTXScale is not ported") } }
     }
     pub fn PSMTXTrans(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32) {
-        match unsafe { hook::PSMTXTrans } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: PSMTXTrans is not ported") } }
+        match unsafe { hook::PSMTXTrans } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: PSMTXTrans is not ported") } }
     }
     pub fn PSMTXTranspose(a0: *mut [f32; 4], a1: *mut [f32; 4]) {
-        match unsafe { hook::PSMTXTranspose } { Some(f) => f(a0, a1), None => { panic!("TODO: PSMTXTranspose is not ported") } }
+        match unsafe { hook::PSMTXTranspose } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: PSMTXTranspose is not ported") } }
     }
     pub fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) {
-        match unsafe { hook::PSVECCrossProduct } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSVECCrossProduct is not ported") } }
+        match unsafe { hook::PSVECCrossProduct } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: PSVECCrossProduct is not ported") } }
     }
     pub fn __frsqrte(a0: f64) -> f64 {
-        match unsafe { hook::__frsqrte } { Some(f) => f(a0), None => { panic!("TODO: __frsqrte is not ported") } }
+        match unsafe { hook::__frsqrte } { Some(f) => f(a0), None => { melee_core::unported!("TODO: __frsqrte is not ported") } }
     }
     pub fn atan2f(a0: f32, a1: f32) -> f32 {
         match unsafe { hook::atan2f } { Some(f) => f(a0, a1), None => { { return unsafe { crate::lbtrigf::atan2f(a0 as _, a1 as _) as _ }; } } }
@@ -163,7 +163,7 @@ pub mod ext {
         match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } return; } } }
     }
     pub fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 {
-        match unsafe { hook::mpCheckFloor } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13), None => { panic!("TODO: mpCheckFloor is not ported") } }
+        match unsafe { hook::mpCheckFloor } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13), None => { melee_core::unported!("TODO: mpCheckFloor is not ported") } }
     }
     pub fn sinf(a0: f32) -> f32 {
         match unsafe { hook::sinf } { Some(f) => f(a0), None => { { return unsafe { crate::gekko::sinf(a0 as _) as _ }; } } }

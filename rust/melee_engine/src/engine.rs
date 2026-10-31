@@ -118,7 +118,8 @@ impl Engine {
         crate::crash::install();
         Host::boot(disc, mem_size)?;
         unsafe {
-            melee_runtime::tu::gobj_native::HEADLESS_RENDER = true;
+            melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
+            melee_core::ct::RENDER_STUB.store(!melee_runtime::tu::gobj_native::HEADLESS_RENDER, core::sync::atomic::Ordering::Relaxed);
             melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
             

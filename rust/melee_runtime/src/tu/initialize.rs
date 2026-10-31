@@ -35,11 +35,11 @@ static HSD_Init_804D5E1C: GXColor = GXColor { r: 0, g: 0, b: 0, a: 0 };
 pub static mut use_ext_data: bool = false;
 /// `GXNtsc480IntDf`, the default render mode (no Rust owner yet outside the oracle).
 unsafe fn ntsc480_int_df() -> *mut GXRenderModeObj {
-    if use_ext_data { core::ptr::addr_of_mut!(ext::GXNtsc480IntDf) } else { panic!("TODO: GXNtsc480IntDf is not ported") }
+    if use_ext_data { core::ptr::addr_of_mut!(ext::GXNtsc480IntDf) } else { melee_core::unported!("TODO: GXNtsc480IntDf is not ported") }
 }
 /// `__OSCurrHeap`.
 unsafe fn os_curr_heap() -> OSHeapHandle {
-    if use_ext_data { ext::__OSCurrHeap } else { panic!("TODO: __OSCurrHeap is not ported") }
+    if use_ext_data { ext::__OSCurrHeap } else { melee_core::unported!("TODO: __OSCurrHeap is not ported") }
 }
 unsafe fn current_rmode() -> *mut GXRenderModeObj {
     if rmode.is_null() { ntsc480_int_df() } else { rmode }

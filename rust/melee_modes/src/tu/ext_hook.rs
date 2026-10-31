@@ -103,7 +103,7 @@ macro_rules! ext_rty {
 #[macro_export]
 macro_rules! ext_default {
     ([] ($($a:ident),*) $name:ident) => {
-        panic!(concat!("TODO ext: ", stringify!($name), " is in a TU that is not ported yet"))
+        melee_core::unported!(concat!("TODO ext: ", stringify!($name), " is in a TU that is not ported yet"))
     };
     ([$def:path] ($($a:ident),*) $name:ident) => {
         return $def($($a),*)
@@ -118,7 +118,7 @@ macro_rules! ext_none {
         match $crate::tu::ext_hook::EXT_FALLBACK {
             Some(f) => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64(
                 f(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
-            None => panic!(concat!("TODO ext: ", stringify!($name), " is in a TU that is not ported yet")),
+            None => melee_core::unported!(concat!("TODO ext: ", stringify!($name), " is in a TU that is not ported yet")),
         }
     };
     ([$def:path] ($($a:ident),*) $name:ident [$($r:ty)?]) => {
@@ -131,7 +131,7 @@ macro_rules! ext_none {
 #[macro_export]
 macro_rules! ext_dflt {
     ([] ($($a:ident),*) $name:ident) => {
-        panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+        melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported"))
     };
     ([$def:path] ($($a:ident),*) $name:ident) => {
         return $def($($a),*)

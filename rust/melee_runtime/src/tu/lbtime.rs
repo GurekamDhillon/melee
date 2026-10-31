@@ -17,10 +17,10 @@ pub mod ext {
         pub static mut OSTicksToCalendarTime: Option<fn(i64, *mut OSCalendarTime)> = None;
     }
     pub fn OSGetTime() -> i64 {
-        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { panic!("TODO: OSGetTime is not ported") } }
+        match unsafe { hook::OSGetTime } { Some(f) => f(), None => { melee_core::unported!("TODO: OSGetTime is not ported") } }
     }
     pub fn OSTicksToCalendarTime(a0: i64, a1: *mut OSCalendarTime) {
-        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { panic!("TODO: OSTicksToCalendarTime is not ported") } }
+        match unsafe { hook::OSTicksToCalendarTime } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: OSTicksToCalendarTime is not ported") } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

@@ -80,115 +80,115 @@ pub mod ext {
         pub static mut lbDvd_GetPreloadedArchive: Option<fn(i32) -> *mut c_void> = None;
     }
     pub fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj {
-        match unsafe { hook::GObj_Create } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GObj_Create is not ported") } }
+        match unsafe { hook::GObj_Create } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GObj_Create is not ported") } }
     }
     pub fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) {
-        match unsafe { hook::GObj_InitUserData } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GObj_InitUserData is not ported") } }
+        match unsafe { hook::GObj_InitUserData } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: GObj_InitUserData is not ported") } }
     }
     pub fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) {
-        match unsafe { hook::GObj_SetupGXLinkMax } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GObj_SetupGXLinkMax is not ported") } }
+        match unsafe { hook::GObj_SetupGXLinkMax } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GObj_SetupGXLinkMax is not ported") } }
     }
     pub fn GXBegin(a0: u32, a1: u32, a2: u16) {
-        match unsafe { hook::GXBegin } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXBegin is not ported") } }
+        match unsafe { hook::GXBegin } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GXBegin is not ported") } }
     }
     pub fn GXClearVtxDesc() {
-        match unsafe { hook::GXClearVtxDesc } { Some(f) => f(), None => { panic!("TODO: GXClearVtxDesc is not ported") } }
+        match unsafe { hook::GXClearVtxDesc } { Some(f) => f(), None => { melee_core::unported!("TODO: GXClearVtxDesc is not ported") } }
     }
     pub fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32 {
-        match unsafe { hook::GXGetTexBufferSize } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: GXGetTexBufferSize is not ported") } }
+        match unsafe { hook::GXGetTexBufferSize } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: GXGetTexBufferSize is not ported") } }
     }
     pub fn GXGetTexObjFmt(a0: *const _GXTexObj) -> u32 {
-        match unsafe { hook::GXGetTexObjFmt } { Some(f) => f(a0), None => { panic!("TODO: GXGetTexObjFmt is not ported") } }
+        match unsafe { hook::GXGetTexObjFmt } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXGetTexObjFmt is not ported") } }
     }
     pub fn GXGetTexObjHeight(a0: *const _GXTexObj) -> u16 {
-        match unsafe { hook::GXGetTexObjHeight } { Some(f) => f(a0), None => { panic!("TODO: GXGetTexObjHeight is not ported") } }
+        match unsafe { hook::GXGetTexObjHeight } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXGetTexObjHeight is not ported") } }
     }
     pub fn GXGetTexObjWidth(a0: *const _GXTexObj) -> u16 {
-        match unsafe { hook::GXGetTexObjWidth } { Some(f) => f(a0), None => { panic!("TODO: GXGetTexObjWidth is not ported") } }
+        match unsafe { hook::GXGetTexObjWidth } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXGetTexObjWidth is not ported") } }
     }
     pub fn GXInitTexObj(a0: *mut _GXTexObj, a1: *mut c_void, a2: u16, a3: u16, a4: u32, a5: u32, a6: u32, a7: u8) {
-        match unsafe { hook::GXInitTexObj } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { panic!("TODO: GXInitTexObj is not ported") } }
+        match unsafe { hook::GXInitTexObj } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7), None => { melee_core::unported!("TODO: GXInitTexObj is not ported") } }
     }
     pub fn GXLoadPosMtxImm(a0: *mut [f32; 4], a1: u32) {
-        match unsafe { hook::GXLoadPosMtxImm } { Some(f) => f(a0, a1), None => { panic!("TODO: GXLoadPosMtxImm is not ported") } }
+        match unsafe { hook::GXLoadPosMtxImm } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXLoadPosMtxImm is not ported") } }
     }
     pub fn GXLoadTexObj(a0: *mut _GXTexObj, a1: u32) {
-        match unsafe { hook::GXLoadTexObj } { Some(f) => f(a0, a1), None => { panic!("TODO: GXLoadTexObj is not ported") } }
+        match unsafe { hook::GXLoadTexObj } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXLoadTexObj is not ported") } }
     }
     pub fn GXPosition2f32(a0: f32, a1: f32) {
-        match unsafe { hook::GXPosition2f32 } { Some(f) => f(a0, a1), None => { panic!("TODO: GXPosition2f32 is not ported") } }
+        match unsafe { hook::GXPosition2f32 } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXPosition2f32 is not ported") } }
     }
     pub fn GXSetAlphaCompare(a0: u32, a1: u8, a2: u32, a3: u32, a4: u8) {
-        match unsafe { hook::GXSetAlphaCompare } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: GXSetAlphaCompare is not ported") } }
+        match unsafe { hook::GXSetAlphaCompare } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: GXSetAlphaCompare is not ported") } }
     }
     pub fn GXSetBlendMode(a0: u32, a1: u32, a2: u32, a3: u32) {
-        match unsafe { hook::GXSetBlendMode } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GXSetBlendMode is not ported") } }
+        match unsafe { hook::GXSetBlendMode } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: GXSetBlendMode is not ported") } }
     }
     pub fn GXSetColorUpdate(a0: u8) {
-        match unsafe { hook::GXSetColorUpdate } { Some(f) => f(a0), None => { panic!("TODO: GXSetColorUpdate is not ported") } }
+        match unsafe { hook::GXSetColorUpdate } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXSetColorUpdate is not ported") } }
     }
     pub fn GXSetCullMode(a0: u32) {
-        match unsafe { hook::GXSetCullMode } { Some(f) => f(a0), None => { panic!("TODO: GXSetCullMode is not ported") } }
+        match unsafe { hook::GXSetCullMode } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXSetCullMode is not ported") } }
     }
     pub fn GXSetCurrentMtx(a0: u32) {
-        match unsafe { hook::GXSetCurrentMtx } { Some(f) => f(a0), None => { panic!("TODO: GXSetCurrentMtx is not ported") } }
+        match unsafe { hook::GXSetCurrentMtx } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXSetCurrentMtx is not ported") } }
     }
     pub fn GXSetNumTevStages(a0: u8) {
-        match unsafe { hook::GXSetNumTevStages } { Some(f) => f(a0), None => { panic!("TODO: GXSetNumTevStages is not ported") } }
+        match unsafe { hook::GXSetNumTevStages } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXSetNumTevStages is not ported") } }
     }
     pub fn GXSetNumTexGens(a0: u8) {
-        match unsafe { hook::GXSetNumTexGens } { Some(f) => f(a0), None => { panic!("TODO: GXSetNumTexGens is not ported") } }
+        match unsafe { hook::GXSetNumTexGens } { Some(f) => f(a0), None => { melee_core::unported!("TODO: GXSetNumTexGens is not ported") } }
     }
     pub fn GXSetScissor(a0: u32, a1: u32, a2: u32, a3: u32) {
-        match unsafe { hook::GXSetScissor } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GXSetScissor is not ported") } }
+        match unsafe { hook::GXSetScissor } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: GXSetScissor is not ported") } }
     }
     pub fn GXSetTevAlphaIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) {
-        match unsafe { hook::GXSetTevAlphaIn } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: GXSetTevAlphaIn is not ported") } }
+        match unsafe { hook::GXSetTevAlphaIn } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: GXSetTevAlphaIn is not ported") } }
     }
     pub fn GXSetTevAlphaOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32) {
-        match unsafe { hook::GXSetTevAlphaOp } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { panic!("TODO: GXSetTevAlphaOp is not ported") } }
+        match unsafe { hook::GXSetTevAlphaOp } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { melee_core::unported!("TODO: GXSetTevAlphaOp is not ported") } }
     }
     pub fn GXSetTevColor(a0: u32, a1: _GXColor) {
-        match unsafe { hook::GXSetTevColor } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetTevColor is not ported") } }
+        match unsafe { hook::GXSetTevColor } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXSetTevColor is not ported") } }
     }
     pub fn GXSetTevColorIn(a0: u32, a1: u32, a2: u32, a3: u32, a4: u32) {
-        match unsafe { hook::GXSetTevColorIn } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: GXSetTevColorIn is not ported") } }
+        match unsafe { hook::GXSetTevColorIn } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: GXSetTevColorIn is not ported") } }
     }
     pub fn GXSetTevColorOp(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32) {
-        match unsafe { hook::GXSetTevColorOp } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { panic!("TODO: GXSetTevColorOp is not ported") } }
+        match unsafe { hook::GXSetTevColorOp } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { melee_core::unported!("TODO: GXSetTevColorOp is not ported") } }
     }
     pub fn GXSetTevKColor(a0: u32, a1: _GXColor) {
-        match unsafe { hook::GXSetTevKColor } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetTevKColor is not ported") } }
+        match unsafe { hook::GXSetTevKColor } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXSetTevKColor is not ported") } }
     }
     pub fn GXSetTevKColorSel(a0: u32, a1: u32) {
-        match unsafe { hook::GXSetTevKColorSel } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetTevKColorSel is not ported") } }
+        match unsafe { hook::GXSetTevKColorSel } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXSetTevKColorSel is not ported") } }
     }
     pub fn GXSetTevOrder(a0: u32, a1: u32, a2: u32, a3: u32) {
-        match unsafe { hook::GXSetTevOrder } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: GXSetTevOrder is not ported") } }
+        match unsafe { hook::GXSetTevOrder } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: GXSetTevOrder is not ported") } }
     }
     pub fn GXSetTevSwapMode(a0: u32, a1: u32, a2: u32) {
-        match unsafe { hook::GXSetTevSwapMode } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXSetTevSwapMode is not ported") } }
+        match unsafe { hook::GXSetTevSwapMode } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GXSetTevSwapMode is not ported") } }
     }
     pub fn GXSetTexCoordGen2(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8, a5: u32) {
-        match unsafe { hook::GXSetTexCoordGen2 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { panic!("TODO: GXSetTexCoordGen2 is not ported") } }
+        match unsafe { hook::GXSetTexCoordGen2 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { melee_core::unported!("TODO: GXSetTexCoordGen2 is not ported") } }
     }
     pub fn GXSetVtxAttrFmt(a0: u32, a1: u32, a2: u32, a3: u32, a4: u8) {
-        match unsafe { hook::GXSetVtxAttrFmt } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: GXSetVtxAttrFmt is not ported") } }
+        match unsafe { hook::GXSetVtxAttrFmt } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: GXSetVtxAttrFmt is not ported") } }
     }
     pub fn GXSetVtxDesc(a0: u32, a1: u32) {
-        match unsafe { hook::GXSetVtxDesc } { Some(f) => f(a0, a1), None => { panic!("TODO: GXSetVtxDesc is not ported") } }
+        match unsafe { hook::GXSetVtxDesc } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXSetVtxDesc is not ported") } }
     }
     pub fn GXSetZMode(a0: u8, a1: u32, a2: u8) {
-        match unsafe { hook::GXSetZMode } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: GXSetZMode is not ported") } }
+        match unsafe { hook::GXSetZMode } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: GXSetZMode is not ported") } }
     }
     pub fn GXTexCoord2f32(a0: f32, a1: f32) {
-        match unsafe { hook::GXTexCoord2f32 } { Some(f) => f(a0, a1), None => { panic!("TODO: GXTexCoord2f32 is not ported") } }
+        match unsafe { hook::GXTexCoord2f32 } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: GXTexCoord2f32 is not ported") } }
     }
     pub fn HSD_CObjAlloc() -> *mut HSD_CObj {
         match unsafe { hook::HSD_CObjAlloc } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjAlloc() as _ }; } } }
     }
     pub fn HSD_CObjGetAuthoredAspect(a0: *mut HSD_CObj) -> f32 {
-        match unsafe { hook::HSD_CObjGetAuthoredAspect } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjGetAuthoredAspect is not ported") } }
+        match unsafe { hook::HSD_CObjGetAuthoredAspect } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_CObjGetAuthoredAspect is not ported") } }
     }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj {
         match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } } }
@@ -197,28 +197,28 @@ pub mod ext {
         match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjGetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) {
-        match unsafe { hook::HSD_CObjGetScissor } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetScissor is not ported") } }
+        match unsafe { hook::HSD_CObjGetScissor } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetScissor is not ported") } }
     }
     pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
-        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetViewingMtx is not ported") } }
+        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetViewingMtx is not ported") } }
     }
     pub fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj {
         match unsafe { hook::HSD_CObjLoadDesc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjSetAspect(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetAspect } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetAspect is not ported") } }
+        match unsafe { hook::HSD_CObjSetAspect } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjSetAspect is not ported") } }
     }
     pub fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 {
         match unsafe { hook::HSD_CObjSetCurrent } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) {
-        match unsafe { hook::HSD_CObjSetEyePosition } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetEyePosition is not ported") } }
+        match unsafe { hook::HSD_CObjSetEyePosition } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjSetEyePosition is not ported") } }
     }
     pub fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) {
         match unsafe { hook::HSD_CObjSetFar } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetFar(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) {
-        match unsafe { hook::HSD_CObjSetInterest } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetInterest is not ported") } }
+        match unsafe { hook::HSD_CObjSetInterest } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjSetInterest is not ported") } }
     }
     pub fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32) {
         match unsafe { hook::HSD_CObjSetNear } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetNear(a0 as _, a1 as _); } return; } } }
@@ -227,10 +227,10 @@ pub mod ext {
         match unsafe { hook::HSD_CObjSetOrtho } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { crate::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32) {
-        match unsafe { hook::HSD_CObjSetProjectionType } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetProjectionType is not ported") } }
+        match unsafe { hook::HSD_CObjSetProjectionType } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjSetProjectionType is not ported") } }
     }
     pub fn HSD_CObjSetRoll(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetRoll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetRoll is not ported") } }
+        match unsafe { hook::HSD_CObjSetRoll } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjSetRoll is not ported") } }
     }
     pub fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) {
         match unsafe { hook::HSD_CObjSetScissor } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetScissor(a0 as _, a1 as _); } return; } } }
@@ -242,37 +242,37 @@ pub mod ext {
         match unsafe { hook::HSD_Free } { Some(f) => f(a0), None => { { unsafe { crate::tu::memory::HSD_Free(a0 as _); } return; } } }
     }
     pub fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) {
-        match unsafe { hook::HSD_GObjObject_80390A70 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_GObjObject_80390A70 is not ported") } }
+        match unsafe { hook::HSD_GObjObject_80390A70 } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_GObjObject_80390A70 is not ported") } }
     }
     pub fn HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) {
         match unsafe { hook::HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { crate::tu::tobj::HSD_ImageDescCopyFromEFB(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_LObjAddAnimAll(a0: *mut HSD_LObj, a1: *mut HSD_LightAnim) {
-        match unsafe { hook::HSD_LObjAddAnimAll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_LObjAddAnimAll is not ported") } }
+        match unsafe { hook::HSD_LObjAddAnimAll } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_LObjAddAnimAll is not ported") } }
     }
     pub fn HSD_LObjLoadDesc(a0: *mut HSD_LightDesc) -> *mut HSD_LObj {
-        match unsafe { hook::HSD_LObjLoadDesc } { Some(f) => f(a0), None => { panic!("TODO: HSD_LObjLoadDesc is not ported") } }
+        match unsafe { hook::HSD_LObjLoadDesc } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_LObjLoadDesc is not ported") } }
     }
     pub fn HSD_MemAlloc(a0: i32) -> *mut c_void {
         match unsafe { hook::HSD_MemAlloc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::memory::HSD_MemAlloc(a0 as _) as _ }; } } }
     }
     pub fn HSD_SetupChannel(a0: *mut HSD_Chan) {
-        match unsafe { hook::HSD_SetupChannel } { Some(f) => f(a0), None => { panic!("TODO: HSD_SetupChannel is not ported") } }
+        match unsafe { hook::HSD_SetupChannel } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_SetupChannel is not ported") } }
     }
     pub fn HSD_StateInvalidate(a0: i32) {
-        match unsafe { hook::HSD_StateInvalidate } { Some(f) => f(a0), None => { panic!("TODO: HSD_StateInvalidate is not ported") } }
+        match unsafe { hook::HSD_StateInvalidate } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_StateInvalidate is not ported") } }
     }
     pub fn HSD_StateSetNumChans(a0: i32) {
-        match unsafe { hook::HSD_StateSetNumChans } { Some(f) => f(a0), None => { panic!("TODO: HSD_StateSetNumChans is not ported") } }
+        match unsafe { hook::HSD_StateSetNumChans } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_StateSetNumChans is not ported") } }
     }
     pub fn HSD_StateSetZMode(a0: i32, a1: i32, a2: i32) {
-        match unsafe { hook::HSD_StateSetZMode } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_StateSetZMode is not ported") } }
+        match unsafe { hook::HSD_StateSetZMode } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_StateSetZMode is not ported") } }
     }
     pub fn __builtin_va_end(a0: c_void /* char *& */) {
-        match unsafe { hook::__builtin_va_end } { Some(f) => f(a0), None => { panic!("TODO: __builtin_va_end is not ported") } }
+        match unsafe { hook::__builtin_va_end } { Some(f) => f(a0), None => { melee_core::unported!("TODO: __builtin_va_end is not ported") } }
     }
     pub fn __va_arg(a0: *mut i8, a1: u32) -> *mut c_void {
-        match unsafe { hook::__va_arg } { Some(f) => f(a0, a1), None => { panic!("TODO: __va_arg is not ported") } }
+        match unsafe { hook::__va_arg } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: __va_arg is not ported") } }
     }
     pub fn lbDvd_GetPreloadedArchive(a0: i32) -> *mut c_void {
         match unsafe { hook::lbDvd_GetPreloadedArchive } { Some(f) => f(a0), None => { { return unsafe { crate::tu::lbdvd::lbDvd_GetPreloadedArchive(a0 as _) as _ }; } } }

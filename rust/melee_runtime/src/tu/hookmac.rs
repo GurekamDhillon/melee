@@ -11,7 +11,7 @@ macro_rules! hook {
         pub fn $name($($a: $t),*) $(-> $r)? {
             match unsafe { $hook } {
                 Some(f) => f($($a),*),
-                None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
             }
         }
     };
@@ -36,7 +36,7 @@ pub(crate) use hook_or;
 /// Fallback arm of the `ext_fns!` / `todo_fns!` macros: with an `= expr` clause the unset hook runs
 /// that expression (a call to the native port), without one it panics as before.
 macro_rules! fallback {
-    ($n:expr) => { panic!("TODO: {} is not ported", $n) };
+    ($n:expr) => { melee_core::unported!(format!("TODO: {} is not ported", $n)) };
     ($n:expr, $def:expr) => {{
         #[allow(unused_unsafe)]
         let r = unsafe { $def };

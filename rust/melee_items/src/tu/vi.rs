@@ -19,7 +19,7 @@ pub mod ext {
             $( pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => { $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported")) }
+                    None => { $( return $fb; )? melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")) }
                 }
             } )*
         };

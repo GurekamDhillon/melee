@@ -29,7 +29,7 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
                 }
             }
         };

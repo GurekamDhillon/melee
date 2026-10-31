@@ -39,7 +39,7 @@ pub mod ext {
         pub static mut PSMTXMultVec: Option<fn(*mut [f32; 4], *mut Vec, *mut Vec)> = None;
     }
     pub fn EulerToQuat(a0: *mut Vec, a1: *mut Quaternion) -> i32 {
-        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { panic!("TODO: EulerToQuat is not ported") } }
+        match unsafe { hook::EulerToQuat } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: EulerToQuat is not ported") } }
     }
     pub fn HSD_AObjReqAnim(a0: *mut HSD_AObj, a1: f32) {
         match unsafe { hook::HSD_AObjReqAnim } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::aobj::HSD_AObjReqAnim(a0 as _, a1 as _); } return; } } }
@@ -48,55 +48,55 @@ pub mod ext {
         match unsafe { hook::HSD_AObjSetRate } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::aobj::HSD_AObjSetRate(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_JObjAddAnimAll(a0: *mut HSD_JObj, a1: *mut HSD_AnimJoint, a2: *mut HSD_MatAnimJoint, a3: *mut HSD_ShapeAnimJoint) {
-        match unsafe { hook::HSD_JObjAddAnimAll } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: HSD_JObjAddAnimAll is not ported") } }
+        match unsafe { hook::HSD_JObjAddAnimAll } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: HSD_JObjAddAnimAll is not ported") } }
     }
     pub fn HSD_JObjClearFlags(a0: *mut HSD_JObj, a1: u32) {
-        match unsafe { hook::HSD_JObjClearFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjClearFlags is not ported") } }
+        match unsafe { hook::HSD_JObjClearFlags } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjClearFlags is not ported") } }
     }
     pub fn HSD_JObjDeleteRObj(a0: *mut HSD_JObj, a1: *mut HSD_RObj) {
-        match unsafe { hook::HSD_JObjDeleteRObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjDeleteRObj is not ported") } }
+        match unsafe { hook::HSD_JObjDeleteRObj } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjDeleteRObj is not ported") } }
     }
     pub fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 {
-        match unsafe { hook::HSD_JObjGetFlags } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjGetFlags is not ported") } }
+        match unsafe { hook::HSD_JObjGetFlags } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjGetFlags is not ported") } }
     }
     pub fn HSD_JObjPrependRObj(a0: *mut HSD_JObj, a1: *mut HSD_RObj) {
-        match unsafe { hook::HSD_JObjPrependRObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjPrependRObj is not ported") } }
+        match unsafe { hook::HSD_JObjPrependRObj } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjPrependRObj is not ported") } }
     }
     pub fn HSD_JObjSetFlags(a0: *mut HSD_JObj, a1: u32) {
-        match unsafe { hook::HSD_JObjSetFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_JObjSetFlags is not ported") } }
+        match unsafe { hook::HSD_JObjSetFlags } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjSetFlags is not ported") } }
     }
     pub fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) {
-        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
+        match unsafe { hook::HSD_JObjSetMtxDirtySub } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjSetMtxDirtySub is not ported") } }
     }
     pub fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj) {
-        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { panic!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
+        match unsafe { hook::HSD_JObjSetupMatrixSub } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_JObjSetupMatrixSub is not ported") } }
     }
     pub fn HSD_JObjWalkTree(a0: *mut HSD_JObj, a1: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut *mut f32, i32)>, a2: *mut *mut f32) {
-        match unsafe { hook::HSD_JObjWalkTree } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_JObjWalkTree is not ported") } }
+        match unsafe { hook::HSD_JObjWalkTree } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_JObjWalkTree is not ported") } }
     }
     pub fn HSD_LObjGetFlags(a0: *mut HSD_LObj) -> u32 {
-        match unsafe { hook::HSD_LObjGetFlags } { Some(f) => f(a0), None => { panic!("TODO: HSD_LObjGetFlags is not ported") } }
+        match unsafe { hook::HSD_LObjGetFlags } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_LObjGetFlags is not ported") } }
     }
     pub fn HSD_QuatLib_8037EF28(a0: *mut Quaternion, a1: *mut Quaternion, a2: *mut Quaternion, a3: f32) -> i32 {
-        match unsafe { hook::HSD_QuatLib_8037EF28 } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: HSD_QuatLib_8037EF28 is not ported") } }
+        match unsafe { hook::HSD_QuatLib_8037EF28 } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: HSD_QuatLib_8037EF28 is not ported") } }
     }
     pub fn HSD_RObjAlloc() -> *mut HSD_RObj {
-        match unsafe { hook::HSD_RObjAlloc } { Some(f) => f(), None => { panic!("TODO: HSD_RObjAlloc is not ported") } }
+        match unsafe { hook::HSD_RObjAlloc } { Some(f) => f(), None => { melee_core::unported!("TODO: HSD_RObjAlloc is not ported") } }
     }
     pub fn HSD_RObjGetByType(a0: *mut HSD_RObj, a1: u32, a2: u32) -> *mut HSD_RObj {
-        match unsafe { hook::HSD_RObjGetByType } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_RObjGetByType is not ported") } }
+        match unsafe { hook::HSD_RObjGetByType } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: HSD_RObjGetByType is not ported") } }
     }
     pub fn HSD_RObjRemove(a0: *mut HSD_RObj) {
-        match unsafe { hook::HSD_RObjRemove } { Some(f) => f(a0), None => { panic!("TODO: HSD_RObjRemove is not ported") } }
+        match unsafe { hook::HSD_RObjRemove } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_RObjRemove is not ported") } }
     }
     pub fn HSD_RObjSetConstraintObj(a0: *mut HSD_RObj, a1: *mut c_void) {
-        match unsafe { hook::HSD_RObjSetConstraintObj } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_RObjSetConstraintObj is not ported") } }
+        match unsafe { hook::HSD_RObjSetConstraintObj } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_RObjSetConstraintObj is not ported") } }
     }
     pub fn HSD_RObjSetFlags(a0: *mut HSD_RObj, a1: u32) {
-        match unsafe { hook::HSD_RObjSetFlags } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_RObjSetFlags is not ported") } }
+        match unsafe { hook::HSD_RObjSetFlags } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_RObjSetFlags is not ported") } }
     }
     pub fn PSMTXMultVec(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec) {
-        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: PSMTXMultVec is not ported") } }
+        match unsafe { hook::PSMTXMultVec } { Some(f) => f(a0, a1, a2), None => { melee_core::unported!("TODO: PSMTXMultVec is not ported") } }
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

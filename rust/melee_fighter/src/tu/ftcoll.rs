@@ -38,7 +38,7 @@ pub mod ext {
                     None => {
                         // a callee with a port in this crate runs it; the rest are unset seams
                         $( return $d; )?
-                        panic!(concat!("TODO: ", stringify!($name), " not ported"))
+                        melee_core::unported!(concat!("TODO: ", stringify!($name), " not ported"))
                     }
                 }
             }

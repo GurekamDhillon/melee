@@ -89,8 +89,7 @@ static int ct_on(void)
             strcpy(ct_seq_path, q);
             ct_seq_file = fopen(ct_seq_path, "w");
             if (ct_seq_file != NULL)
-                fprintf(ct_seq_file, "#calltrace-seq,v1,base=%lx
-", (unsigned long) (uintptr_t) GetModuleHandleA(NULL));
+                fprintf(ct_seq_file, "#calltrace-seq,v1,base=%lx\n", (unsigned long) (uintptr_t) GetModuleHandleA(NULL));
             if (r != NULL) sscanf(r, "%ld-%ld", &ct_seq_lo, &ct_seq_hi);
         }
         if (ct_path[0] == 0 && ct_seq_file == NULL) {
@@ -141,13 +140,11 @@ void gw_calltrace_set_frame(int match_frame)
         if (match_frame >= 0 && match_frame >= ct_seq_lo && match_frame <= ct_seq_hi) {
             LONG i;
             if (n > (LONG) CT_SEQ_MAX) {
-                fprintf(ct_seq_file, "#overflow,%d,%ld
-", match_frame, (long) n);
+                fprintf(ct_seq_file, "#overflow,%d,%ld\n", match_frame, (long) n);
                 n = CT_SEQ_MAX;
             }
             for (i = 0; i < n; i++)
-                fprintf(ct_seq_file, "%d,%lx,%ld
-", match_frame, (unsigned long) (ct_seq_buf[i] - (uint32_t) base), (long) i);
+                fprintf(ct_seq_file, "%d,%lx,%ld\n", match_frame, (unsigned long) (ct_seq_buf[i] - (uint32_t) base), (long) i);
             fflush(ct_seq_file);
         }
         ct_seq_n = 0;

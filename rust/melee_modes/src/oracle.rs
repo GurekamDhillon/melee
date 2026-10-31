@@ -824,7 +824,7 @@ macro_rules! oext_fns {
         )*
     };
     (@body $name:ident ( $($a:ident),* ) = $fwd:path) => { $fwd($($a),*) };
-    (@body $name:ident ( $($a:ident),* )) => { panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported")) };
+    (@body $name:ident ( $($a:ident),* )) => { melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported")) };
 }
 
 /// Declares variadic callees whose varargs have fixed kinds:
@@ -840,7 +840,7 @@ macro_rules! ext_vk {
                         &[$($crate::oracle::arg($a)),*], $kinds, va, <$r as $crate::oracle::OVal>::K) {
                     return <$r as $crate::oracle::OVal>::from_bits(v);
                 }
-                panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+                melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
             }
         )*
     };
@@ -859,7 +859,7 @@ macro_rules! ext_va {
                         &[$($crate::oracle::arg($a)),*], $fmt, va, <$r as $crate::oracle::OVal>::K) {
                     return <$r as $crate::oracle::OVal>::from_bits(v);
                 }
-                panic!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+                melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
             }
         )*
     };

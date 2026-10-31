@@ -28,7 +28,7 @@ pub mod ext {
     macro_rules! todo_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
             $( pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
-                $( return $fb; )? panic!(concat!("TODO: ", stringify!($name), " is not ported"))
+                $( return $fb; )? melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported"))
             } )*
         };
     }

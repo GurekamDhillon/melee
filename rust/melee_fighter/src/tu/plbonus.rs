@@ -25,7 +25,7 @@ pub mod ext {
             $( #[allow(unreachable_code)] pub fn $name($($a: $t),*) $(-> $r)? {
                 match unsafe { hook::$name } {
                     Some(f) => f($($a),*),
-                    None => { $( return $fb; )? #[allow(unreachable_code)] { panic!(concat!("TODO: ", stringify!($name), " is not ported")) } }
+                    None => { $( return $fb; )? #[allow(unreachable_code)] { melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")) } }
                 }
             } )*
         };

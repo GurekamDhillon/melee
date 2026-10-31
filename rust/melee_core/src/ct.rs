@@ -100,3 +100,24 @@ macro_rules! ct {
 macro_rules! ct {
     ($n:expr) => {};
 }
+
+/// Render-stub mode (the headless engine running the retail draw callbacks): an unported callee that no hook covers
+/// (GX / display calls with no effect on the simulation) answers zero instead of panicking. Off by default.
+pub static RENDER_STUB: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+#[inline]
+pub fn render_stub() -> bool {
+    RENDER_STUB.load(core::sync::atomic::Ordering::Relaxed)
+}
+
+/// `panic!` for an unported callee unless render-stub mode is on (then `return` a zeroed value of the fn's type).
+#[macro_export]
+macro_rules! unported {
+    ($msg:expr) => {{
+        if $crate::ct::render_stub() {
+            #[allow(unreachable_code)]
+            return unsafe { core::mem::zeroed() };
+        }
+        panic!("{}", $msg)
+    }};
+}

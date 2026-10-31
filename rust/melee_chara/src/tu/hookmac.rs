@@ -10,7 +10,7 @@ macro_rules! hook {
         pub fn $name($($a: $t),*) $(-> $r)? {
             match unsafe { $hook } {
                 Some(f) => f($($a),*),
-                None => panic!(concat!("TODO: ", stringify!($name), " is not ported")),
+                None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
             }
         }
     };

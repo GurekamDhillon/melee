@@ -35,31 +35,31 @@ pub mod ext {
         pub static mut atan2f: Option<fn(f32, f32) -> f32> = None;
     }
     pub fn C_MTXLookAt(a0: *mut [f32; 4], a1: *mut Vec, a2: *mut Vec, a3: *mut Vec) {
-        match unsafe { hook::C_MTXLookAt } { Some(f) => f(a0, a1, a2, a3), None => { panic!("TODO: C_MTXLookAt is not ported") } }
+        match unsafe { hook::C_MTXLookAt } { Some(f) => f(a0, a1, a2, a3), None => { melee_core::unported!("TODO: C_MTXLookAt is not ported") } }
     }
     pub fn GXProject(a0: f32, a1: f32, a2: f32, a3: *mut [f32; 4], a4: *mut f32, a5: *mut f32, a6: *mut f32, a7: *mut f32, a8: *mut f32) {
-        match unsafe { hook::GXProject } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8), None => { panic!("TODO: GXProject is not ported") } }
+        match unsafe { hook::GXProject } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8), None => { melee_core::unported!("TODO: GXProject is not ported") } }
     }
     pub fn HSD_CObjGetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) {
-        match unsafe { hook::HSD_CObjGetEyePosition } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetEyePosition is not ported") } }
+        match unsafe { hook::HSD_CObjGetEyePosition } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetEyePosition is not ported") } }
     }
     pub fn HSD_CObjGetInterest(a0: *mut HSD_CObj, a1: *mut Vec) {
-        match unsafe { hook::HSD_CObjGetInterest } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetInterest is not ported") } }
+        match unsafe { hook::HSD_CObjGetInterest } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetInterest is not ported") } }
     }
     pub fn HSD_CObjGetProjectionType(a0: *mut HSD_CObj) -> i32 {
         match unsafe { hook::HSD_CObjGetProjectionType } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetProjectionType(a0 as _) as _ }; } } }
     }
     pub fn HSD_CObjGetUpVector(a0: *mut HSD_CObj, a1: *mut Vec) -> i32 {
-        match unsafe { hook::HSD_CObjGetUpVector } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjGetUpVector is not ported") } }
+        match unsafe { hook::HSD_CObjGetUpVector } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetUpVector is not ported") } }
     }
     pub fn HSD_CObjGetViewingMtxPtr(a0: *mut HSD_CObj) -> *mut [f32; 4] {
-        match unsafe { hook::HSD_CObjGetViewingMtxPtr } { Some(f) => f(a0), None => { panic!("TODO: HSD_CObjGetViewingMtxPtr is not ported") } }
+        match unsafe { hook::HSD_CObjGetViewingMtxPtr } { Some(f) => f(a0), None => { melee_core::unported!("TODO: HSD_CObjGetViewingMtxPtr is not ported") } }
     }
     pub fn MTXOrtho(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) {
-        match unsafe { hook::MTXOrtho } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { panic!("TODO: MTXOrtho is not ported") } }
+        match unsafe { hook::MTXOrtho } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6), None => { melee_core::unported!("TODO: MTXOrtho is not ported") } }
     }
     pub fn MTXPerspective(a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32, a4: f32) {
-        match unsafe { hook::MTXPerspective } { Some(f) => f(a0, a1, a2, a3, a4), None => { panic!("TODO: MTXPerspective is not ported") } }
+        match unsafe { hook::MTXPerspective } { Some(f) => f(a0, a1, a2, a3, a4), None => { melee_core::unported!("TODO: MTXPerspective is not ported") } }
     }
     pub fn PSVECCrossProduct(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) {
         match unsafe { hook::PSVECCrossProduct } { Some(f) => f(a0, a1, a2), None => { return unsafe { psvec_cross_default(a0, a1, a2) } } }

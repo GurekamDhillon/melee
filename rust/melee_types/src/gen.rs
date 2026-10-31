@@ -23755,7 +23755,7 @@ impl GcDecode for WaitStruct_u {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.p = <WaitStruct_u_p as GcDecode>::gc_decode(d, at + 0x0);
+        v.i = <WaitStruct_u_i as GcDecode>::gc_decode(d, at + 0x0);
         v
     }
 }
@@ -30333,10 +30333,10 @@ impl GcLayout for Command_04 {
 const _: () = assert!(core::mem::size_of::<Command_04>() == 4);
 
 /// C `Command_05` (src/melee/lb/types.h:541); GameCube size 0x4, align 4.
-#[repr(C, align(8))]
+#[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Command_05 {
-    pub ptr: *mut CmdUnion,
+    pub ptr: u32,
 }
 impl Command_05 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -30346,7 +30346,7 @@ impl GcDecode for Command_05 {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.ptr = <*mut CmdUnion as GcDecode>::gc_decode(d, at + 0x0);
+        v.ptr = <u32 as GcDecode>::gc_decode(d, at + 0x0);
         v
     }
 }
@@ -30359,13 +30359,12 @@ impl GcLayout for Command_05 {
         GcField::new("ptr", 0x0, 4, "CmdUnion *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Command_05>() == 8);
 
 /// C `Command_07` (src/melee/lb/types.h:544); GameCube size 0x4, align 4.
-#[repr(C, align(8))]
+#[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct Command_07 {
-    pub ptr: *mut CmdUnion,
+    pub ptr: u32,
 }
 impl Command_07 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -30375,7 +30374,7 @@ impl GcDecode for Command_07 {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.ptr = <*mut CmdUnion as GcDecode>::gc_decode(d, at + 0x0);
+        v.ptr = <u32 as GcDecode>::gc_decode(d, at + 0x0);
         v
     }
 }
@@ -30388,7 +30387,6 @@ impl GcLayout for Command_07 {
         GcField::new("ptr", 0x0, 4, "CmdUnion *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Command_07>() == 8);
 
 /// C `Command_09` (src/melee/lb/types.h:547); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -33480,7 +33478,7 @@ impl GcLayout for wind_fx_3 {
 }
 
 /// C `CmdUnion` (src/melee/lb/types.h:924); GameCube size 0x4, align 4.
-#[repr(C, align(8))]
+#[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub union CmdUnion {
     pub Command_00: Command_00,
@@ -33574,7 +33572,7 @@ impl GcDecode for CmdUnion {
         v
     }
 }
-impl GcPointee for CmdUnion { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<CmdUnion>(t) } }
+impl GcPointee for CmdUnion { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { match d.raw_addr(t) { Some(p) => p as *mut Self, None => d.object::<CmdUnion>(t) } } }
 impl GcLayout for CmdUnion {
     const GC_NAME: &'static str = "CmdUnion";
     const GC_SIZE: u32 = 0x4;
@@ -52052,7 +52050,7 @@ impl GcDecode for ftData_x1C {
         v.x0 = <u16 as GcDecode>::gc_decode(d, at + 0x0);
         v.x2 = <u16 as GcDecode>::gc_decode(d, at + 0x2);
         v.x4 = <*mut u8 as GcDecode>::gc_decode(d, at + 0x4);
-        v.x8 = <*mut *mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x8);
+        v.x8 = d.ptr_table::<HSD_AnimJoint>(at + 0x8) as *mut *mut HSD_AnimJoint;
         v
     }
 }
@@ -52608,7 +52606,7 @@ pub struct ftData {
     pub x18: *mut [u8; 2],
     pub x1C: *mut *mut ftData_x1C,
     pub x20: *mut ftData_x20,
-    pub x24: *mut c_void,
+    pub x24: *mut WaitStruct,
     pub x28: *mut WaitStruct,
     pub x2C: *mut ftDynamics,
     pub x30: *mut ftData_x30,
@@ -52641,8 +52639,8 @@ impl GcDecode for ftData {
         v.x18 = <*mut [u8; 2] as GcDecode>::gc_decode(d, at + 0x18);
         v.x1C = d.ptr_table::<ftData_x1C>(at + 0x1C) as *mut *mut ftData_x1C;
         v.x20 = <*mut ftData_x20 as GcDecode>::gc_decode(d, at + 0x20);
-        v.x24 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x24);
-        v.x28 = <*mut WaitStruct as GcDecode>::gc_decode(d, at + 0x28);
+        v.x24 = d.ptr_array_until_word::<WaitStruct>(at + 0x24, 0xFFFFFFFF) as *mut WaitStruct;
+        v.x28 = d.ptr_array_until_word::<WaitStruct>(at + 0x28, 0xFFFFFFFF) as *mut WaitStruct;
         v.x2C = <*mut ftDynamics as GcDecode>::gc_decode(d, at + 0x2C);
         v.x30 = <*mut ftData_x30 as GcDecode>::gc_decode(d, at + 0x30);
         v.x34 = <*mut ftData_x34 as GcDecode>::gc_decode(d, at + 0x34);
@@ -52691,7 +52689,6 @@ impl GcLayout for ftData {
         GcField::new("x5C", 0x5C, 4, "HSD_Joint *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftData>() == 192);
 
 /// C `ftData_x8` (src/melee/ft/types.h:874); GameCube size 0x18, align 4.
 #[repr(C, align(8))]

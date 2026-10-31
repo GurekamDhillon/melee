@@ -1598,6 +1598,7 @@ impl VsMatch {
         for p in &self.players {
             // Slot = player*2 + follower; is_cpu false (human scenario).
             let s = p.slot * 2 + p.follower as i32;
+            if let Ok(v) = std::env::var("MELEE_NH_DUMP") { if v.parse::<i32>().ok() == Some(s) { eprintln!("NHD {}", melee_types::neutral_hash::nh_dump(&p.fp, s, stale::stocks(p.slot))); } }
             w.slots[s as usize] = Some(nh_fighter(&p.fp, s, stale::stocks(p.slot), stale::slot_type(p.slot) == melee_types::Gm_PKind_Cpu && p.fp.cpu.kind != 5));
             if std::env::var_os("MELEE_GOLDEN_FT").is_some() {
                 let f = &p.fp;

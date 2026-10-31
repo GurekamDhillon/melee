@@ -502,6 +502,7 @@ pub unsafe fn ftAnim_IsFramesRemaining(gobj: G) -> bool {
     for i in 0..parts_num(fp) {
         let b = bone(fp, i);
         if b1(b) && !b0(b) && !b5(b) && ext::lb_8000B074(if blend { b.x4_jobj2 } else { b.joint }) {
+            if std::env::var("DBG_ANIM").is_ok() { let a = (*(if blend { b.x4_jobj2 } else { b.joint })).aobj; eprintln!("DBGFR part {} flags {:X} cur {} rew {} end {} rate {} kind {} motion {}", i, (*a).flags, (*a).curr_frame, (*a).rewind_frame, (*a).end_frame, (*a).framerate, fp.kind, fp.motion_id); }
             return true;
         }
     }
@@ -1019,6 +1020,7 @@ pub unsafe fn ftAnim_ApplyPartAnim(gobj: G, arg1: i32, arg2: i32, arg3: f32) {
     s.x4 = arg3;
     s.x8 = 0.0;
     s.xC = if arg3 != 0.0 { ext::lb_8000BFF0(*(*d).x8.add(arg2 as usize)) / arg3 } else { 0.0 };
+    if std::env::var("DBG_ANIM").is_ok() { eprintln!("DBGPA arg1 {} arg2 {} d {:p} x0 {} x8 {:p} aj {:p} x1C {:p}", arg1, arg2, d, (*d).x0, (*d).x8, *(*d).x8.add(arg2 as usize), (*fp.ft_data).x1C); }
     ftAnim_80070904(fp, (*d).x0 as i32, *(*d).x8.add(arg2 as usize));
 }
 

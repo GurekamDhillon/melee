@@ -28,6 +28,11 @@ HSD_ShapeSetDesc.normal_desc	until=0xFF
 HSD_ShapeSetDesc.vertex_idx_list	nb_shape
 HSD_ShapeSetDesc.normal_idx_list	nb_shape
 ftData.x1C	null
+# ftanim.c ftAnim_ApplyPartAnim: x8[arg2] is indexed by a script operand; the AnimJoint pointers are consecutive relocated words
+ftData_x1C.x8	null
+# ftwaitanim.c getAnimID: {anim id, weight} pairs until x == -1
+ftData.x24	until=0xFFFFFFFF
+ftData.x28	until=0xFFFFFFFF
 # ft/dobjlist.h: a lookup has x0 TempS entries, each TempS names x0 DObj indices (raw bytes)
 FtPartsVisLookup.x4	x0
 FigaTree.tracks	extent

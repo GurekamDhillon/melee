@@ -273,19 +273,19 @@ pub unsafe fn efAsync_LoadSync(id: i32) {
 }
 /// `efAsync_Spawn(gobj, head, kind, gfx, jobj)` with no variadic tail.
 pub unsafe fn efAsync_Spawn_plain(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[])
+    melee_world::tu::efn::efasync::efAsync_Spawn(gobj, q, kind, gfx, jobj, &[])
 }
 /// ... with one pointer tail argument.
 pub unsafe fn efAsync_Spawn_ptr<T>(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, arg: *const T) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[arg as *mut c_void])
+    melee_world::tu::efn::efasync::efAsync_Spawn(gobj, q, kind, gfx, jobj, &[arg as *const c_void])
 }
 /// ... the `(gobj, head, i32 kind, i32 id, jobj, pos)` shape.
 pub unsafe fn efAsync_Spawn_i32<T>(gobj: G, q: *mut c_void, kind: i32, id: i32, jobj: *mut HSD_JObj, arg: *mut T) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind as u32, id as u32, jobj, &[arg as *mut c_void])
+    melee_world::tu::efn::efasync::efAsync_Spawn(gobj, q, kind as u32, id as u32, jobj, &[arg as *const c_void])
 }
 /// ... the shape whose trailing slice starts with the JObj.
 pub unsafe fn efAsync_Spawn_slice(gobj: G, q: *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, args[0] as *mut HSD_JObj, &args[1..])
+    melee_world::tu::efn::efasync::efAsync_Spawn(gobj, q, kind, gfx, args[0] as *mut HSD_JObj, &args[1..].iter().map(|&p| p as *const c_void).collect::<std::vec::Vec<_>>())
 }
 /// ... the slice shape with the queue head passed as `*mut *mut c_void`.
 pub unsafe fn efAsync_Spawn_slice_pp(gobj: G, q: *mut *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {

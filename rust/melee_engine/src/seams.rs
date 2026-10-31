@@ -14,6 +14,7 @@ static mut ALARM: Option<AlarmHandler> = None;
 /// One alarm period elapsed.
 pub fn fire_alarm() {
     unsafe {
+        if std::env::var_os("MELEE_PAD_DBG").is_some() { eprintln!("FIREALARM set={}", ALARM.is_some()); }
         if let Some(h) = ALARM {
             h(core::ptr::null_mut(), core::ptr::null_mut());
         }

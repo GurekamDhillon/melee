@@ -23,6 +23,7 @@ from collections import OrderedDict
 from pathlib import Path
 import clang.cindex as ci
 
+RAW_STREAM_TYPES = {"CmdUnion"}
 LLVM = Path(os.environ.get("LLVM_DIR", r"C:\Program Files\LLVM"))
 ci.Config.set_library_file(str(LLVM / "bin" / "libclang.dll"))
 import ctypes
@@ -198,7 +199,18 @@ def tu_record_declarations():
 
 # Integer slots that the C trophy code uses exclusively for native addresses.
 # Their GameCube field tables still come from the unmodified PPC declaration.
+# Fighter/item/effect command streams (lbcommand.c, CmdUnion) are walked as raw big-endian 4-byte words
+# in the archive's raw image; the two jump targets are 32-bit guest addresses there (readable as native
+# addresses: the raw image lives below 4 GiB), kept big-endian as stored: `u32::from_be(w) as usize`.
+# CmdUnion is therefore 4 bytes / align 4 natively, so `u.add(1)` is the C's NEXT_CMD.
+# unions whose bytes do not say which member is live: the member the data files use (ftwaitanim.h: {anim id, weight} ints)
+UNION_LIVE_MEMBER = {"WaitStruct_u": "i"}
+STREAM_WORD_TYPES = {"Command_05", "Command_07", "CmdUnion"}
 NATIVE_FIELD_TYPES = {
+    ("ftData", "x24"): "*mut WaitStruct",  # ftwaitanim.c: the wait-animation table ({anim id, weight} pairs, x == -1 ends it)
+    ("Command_05", "ptr"): "u32",
+    ("Command_07", "ptr"): "u32",
+} | {
     ("un_804D6EF4_t", n): "usize" for n in ("x00", "x08", "x0C")
 } | {
     ("TyFiguponED4", n): "usize" for n in ("x0", "x4", "xC")
@@ -924,7 +936,7 @@ class Gen:
             i += 1
         kw = "union" if union else "struct"
         nat = self.native_size.get(loc(c))
-        rep = "C, packed" if packed else f"C, align({nat[1]})" if nat and nat[1] > 0 else "C"
+        rep = "C, packed" if packed else "C, align(4)" if nm in STREAM_WORD_TYPES else f"C, align({nat[1]})" if nat and nat[1] > 0 else "C"
         e = self.emit
         e(f"/// C `{c.spelling or nm}` ({src}:{c.location.line}); GameCube size 0x{size:X}, align {align}.")
         e(f"#[repr({rep})]")
@@ -946,6 +958,8 @@ class Gen:
         # first member, see melee_core::gcdecode).
         live = [x for x in dec if "fn(" not in x[2]]
         uni = None
+        if union and nm in UNION_LIVE_MEMBER:
+            live = sorted(live, key=lambda x: x[0] != UNION_LIVE_MEMBER[nm])
         if union:
             # Which member is live is not in the bytes; the relocation table says whether the
             # first word is a pointer. Pointer member if it is, else a pointer-free scalar one.
@@ -1043,7 +1057,12 @@ class Gen:
         e("        v")
         e("    }")
         e("}")
-        e(f"impl GcPointee for {nm} {{ fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {{ d.object::<{nm}>(t) }} }}")
+        if nm in RAW_STREAM_TYPES:
+            # a byte stream the C walks with pointer arithmetic (fighter command scripts): when a raw archive image is
+            # attached, a pointer to it points into that image (big-endian bytes, read through the bitfield accessors)
+            e(f"impl GcPointee for {nm} {{ fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {{ match d.raw_addr(t) {{ Some(p) => p as *mut Self, None => d.object::<{nm}>(t) }} }} }}")
+        else:
+            e(f"impl GcPointee for {nm} {{ fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {{ d.object::<{nm}>(t) }} }}")
         e(f"impl GcLayout for {nm} {{")
         e(f'    const GC_NAME: &\'static str = "{c.spelling or nm}";')
         e(f"    const GC_SIZE: u32 = 0x{size:X};")

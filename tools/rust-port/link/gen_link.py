@@ -730,7 +730,19 @@ def main():
                     site += 1
                     fixed = ", ".join((f"cast::<_, _, {site * 100 + i + 1}>(a{i})" if wordy else f"a{i}") for i in range(nfix))
                     rest = ", ".join((f"crate::va_word(a{i})" if wordy else f"a{i}") for i in range(nfix, n))
-                    al = f"|{ps}| unsafe {{ {cpath}({fixed}, &[{rest}]) }}"
+                    pts = h.get("ptypes") or []
+                    if wordy and n == nfix + 1 and len(pts) == n and pts[-1].strip().startswith("&["):
+                        # the hook already carries the variadic tail as a slice: its words, not the slice reference
+                        tail = f"&crate::va_words(a{nfix})"
+                    else:
+                        tail = f"&[{rest}]"
+                    call = f"{cpath}({fixed}, {tail})"
+                    if wordy and h["hasret"]:
+                        site += 1
+                        call = f"cast::<_, _, {site * 100}>({call})"
+                    elif wordy:
+                        call = f"{{ let _ = {call}; }}"
+                    al = f"|{ps}| unsafe {{ {call} }}"
                 if h.get('cabi'):
                     out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{h["npar"]}({al})); }}')
                 else:

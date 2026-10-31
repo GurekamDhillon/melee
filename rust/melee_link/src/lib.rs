@@ -10,6 +10,12 @@ pub mod strs;
 mod gen_table;
 pub use gen_table::HOOKS;
 
+/// A variadic tail the hook already carries as a slice: one machine word per element (see [`va_word`]).
+#[inline(always)]
+pub(crate) unsafe fn va_words<A: Copy>(a: &[A]) -> std::vec::Vec<*const core::ffi::c_void> {
+    a.iter().map(|&x| va_word(x)).collect()
+}
+
 /// One variadic argument as the machine word `melee_world::tu::va::Va` steps over: pointers and references as they are,
 /// integers sign- or zero-extended by their type, an `f32` widened to a double (passed by its bits), like C's default
 /// argument promotions.

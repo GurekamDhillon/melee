@@ -521,3 +521,9 @@ unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDir_va(id: i32, j: J, va: &mut V
     g
 }
 
+
+/// `efSync_Spawn(gfx_id, gobj, ...)` with the variadic tail as machine words (the link layer's call form, `melee_link`).
+pub unsafe fn efSync_Spawn_words(gfx_id: i32, gobj: G, words: &[*const core::ffi::c_void]) -> Obj {
+    let v: std::vec::Vec<Obj> = words.iter().map(|&p| p as Obj).collect();
+    efSync_Spawn(gfx_id, gobj, &mut Va::new(&v))
+}

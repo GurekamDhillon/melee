@@ -39,7 +39,7 @@ pub fn Command_05(info: &mut CommandInfo) {
         info.anon_8.u = u;
         info.event_return[info.loop_count as usize] = u.wrapping_add(1);
         info.loop_count = info.loop_count.wrapping_add(1);
-        info.anon_8.u = (*u).Command_05.ptr;
+        info.anon_8.u = u32::from_be((*u).Command_05.ptr) as usize as *mut CmdUnion;
     }
 }
 
@@ -49,6 +49,6 @@ pub fn Command_07(info: &mut CommandInfo) {
     unsafe {
         let u = info.anon_8.u.wrapping_add(1);
         info.anon_8.u = u;
-        info.anon_8.u = (*u).Command_07.ptr;
+        info.anon_8.u = u32::from_be((*u).Command_07.ptr) as usize as *mut CmdUnion;
     }
 }

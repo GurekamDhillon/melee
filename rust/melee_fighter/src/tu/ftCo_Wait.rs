@@ -63,7 +63,7 @@ pub fn ftCo_Wait_Anim(g: G) {
         ext::ftCo_DownSpot_Enter(g);
     } else {
         let ws = unsafe { (*f.ft_data).x24 };
-        ext::ftCo_8008A7A8(g, ws);
+        ext::ftCo_8008A7A8(g, ws as *mut core::ffi::c_void);
     }
 }
 

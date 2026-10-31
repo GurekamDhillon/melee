@@ -262,8 +262,10 @@ pub fn apply_staling(fp: &Fighter, attack_id: i32, _arg2: i32, damage: f32) -> f
         return damage;
     }
     let dec = unsafe {
-        assert!(!STALE_DECREMENTS.is_null(), "Fighter_804D6548 not loaded");
-        core::slice::from_raw_parts(STALE_DECREMENTS, 9)
+        // the engine loads PlCo through Fighter_LoadCommonData (`Fighter_804D6548`); only the legacy driver sets the shim
+        let p = if STALE_DECREMENTS.is_null() { crate::tu::fighter::Fighter_804D6548 as *const f32 } else { STALE_DECREMENTS };
+        assert!(!p.is_null(), "Fighter_804D6548 not loaded");
+        core::slice::from_raw_parts(p, 9)
     };
     let mut d = damage;
     let m = stale_multiplier(stale_table(fp.player_id as i32), attack_id, dec);

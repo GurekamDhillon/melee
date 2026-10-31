@@ -358,10 +358,29 @@ fn golden_engine(args: &[String]) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
+    if scenario.starts_with("pad_") {
+        e.set_pad_feed(|tick, port| {
+            let r = vs_match::input::pad_fixed(port, tick as i32);
+            let mut st = melee_types::PADStatus::zeroed();
+            st.button = r.button as u16;
+            st.stickX = r.stick_x;
+            st.stickY = r.stick_y;
+            st.substickX = r.sub_x;
+            st.substickY = r.sub_y;
+            st.triggerLeft = r.analog_l;
+            st.triggerRight = r.analog_r;
+            st
+        });
+    }
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     for f in 0..frames {
         if !e.tick() {
             break;
+        }
+        if std::env::var_os("MELEE_PAD_DBG").is_some() {
+            let q = unsafe { &melee_runtime::tu::controller::HSD_PadGameStatus[0] };
+            eprintln!("PADDBG tick {f} btn {:X} sx {} sy {} nx {} ny {}", q.button, q.stickX, q.stickY, q.nml_stickX, q.nml_stickY);
         }
         let r = e.neutral_row();
         csv.push_str(&format!("{f},{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]));

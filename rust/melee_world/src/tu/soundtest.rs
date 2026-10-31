@@ -122,7 +122,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::shared::DbLevel;
-    pub static mut db_804D4AF8: i32 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::dbsound::db_804D4AF8;
     pub static mut db_804D6B88: i32 = unsafe { core::mem::zeroed() };
     pub static mut db_build_timestamp: [i8; 1] = unsafe { core::mem::zeroed() };
     pub static mut gmMainLib_8045A6C0: [u8; 73728] = unsafe { core::mem::zeroed() };

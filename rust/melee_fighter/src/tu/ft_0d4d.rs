@@ -229,7 +229,7 @@ pub fn ftCo_800D4FF4(g: G) {
 pub fn ftCo_Rebirth_Anim(g: G) {
     melee_core::ct!("ftCo_Rebirth_Anim");
     let f = fp(g);
-    ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 });
+    ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 as *mut core::ffi::c_void });
     let f = fp(g);
     unsafe {
         f.mv.co.common.x0 -= 1;
@@ -348,7 +348,7 @@ pub fn ftCo_800D5600(g: G) {
 pub fn ftCo_RebirthWait_Anim(g: G) {
     melee_core::ct!("ftCo_RebirthWait_Anim");
     let f = fp(g);
-    ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 });
+    ext::ftCo_8008A7A8(g, unsafe { (*f.ft_data).x24 as *mut core::ffi::c_void });
     let f = fp(g);
     unsafe {
         f.mv.co.common.x0 -= 1;

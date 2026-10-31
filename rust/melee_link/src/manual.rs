@@ -57,6 +57,46 @@ pub fn install() {
                 }
             });
         }
+        // ftdata.c `ftData_CharacterStateTables[]`: each kind's own MotionState rows (the retail_ms tables the install fills)
+        {
+            let t = &raw mut melee_fighter::tu::ftdata::ftData_CharacterStateTables;
+            (*t)[0] = crate::retail_ms::ftmario::ftMr_Init_MotionStateTable.as_mut_ptr();
+            (*t)[1] = crate::retail_ms::ftfox::ftFx_Init_MotionStateTable.as_mut_ptr();
+            (*t)[2] = crate::retail_ms::ftcaptain::ftCa_Init_MotionStateTable.as_mut_ptr();
+            (*t)[3] = crate::retail_ms::ftdonkey::ftDk_Init_MotionStateTable.as_mut_ptr();
+            (*t)[4] = crate::retail_ms::ftkirby::ftKb_Init_MotionStateTable.as_mut_ptr();
+            (*t)[5] = crate::retail_ms::ftkoopa::ftKp_Init_MotionStateTable.as_mut_ptr();
+            (*t)[6] = crate::retail_ms::ftlink::ftLk_Init_MotionStateTable.as_mut_ptr();
+            (*t)[7] = crate::retail_ms::ftseak::ftSk_Init_MotionStateTable.as_mut_ptr();
+            (*t)[8] = crate::retail_ms::ftness::ftNs_Init_MotionStateTable.as_mut_ptr();
+            (*t)[9] = crate::retail_ms::ftpeach::ftPe_Init_MotionStateTable.as_mut_ptr();
+            (*t)[10] = crate::retail_ms::ftpopo::ftPp_Init_MotionStateTable.as_mut_ptr();
+            (*t)[11] = crate::retail_ms::ftnana::ftNn_Init_MotionStateTable.as_mut_ptr();
+            (*t)[12] = crate::retail_ms::ftpikachu::ftPk_Init_MotionStateTable.as_mut_ptr();
+            (*t)[13] = crate::retail_ms::ftsamus::ftSs_Init_MotionStateTable.as_mut_ptr();
+            (*t)[14] = crate::retail_ms::ftyoshi::ftYs_Init_MotionStateTable.as_mut_ptr();
+            (*t)[15] = crate::retail_ms::ftpurin::ftPr_Init_MotionStateTable.as_mut_ptr();
+            (*t)[16] = crate::retail_ms::ftmewtwo::ftMt_Init_MotionStateTable.as_mut_ptr();
+            (*t)[17] = crate::retail_ms::ftluigi::ftLg_Init_MotionStateTable.as_mut_ptr();
+            (*t)[18] = crate::retail_ms::ftmars::ftMs_Init_MotionStateTable.as_mut_ptr();
+            (*t)[19] = crate::retail_ms::ftzelda::ftZd_Init_MotionStateTable.as_mut_ptr();
+            (*t)[20] = crate::retail_ms::ftclink::ftCl_Init_MotionStateTable.as_mut_ptr();
+            (*t)[21] = crate::retail_ms::ftdrmario::ftDr_Init_MotionStateTable.as_mut_ptr();
+            (*t)[22] = crate::retail_ms::ftfalco::ftFc_Init_MotionStateTable.as_mut_ptr();
+            (*t)[23] = crate::retail_ms::ftpichu::ftPc_Init_MotionStateTable.as_mut_ptr();
+            (*t)[24] = crate::retail_ms::ftgamewatch::ftGw_Init_MotionStateTable.as_mut_ptr();
+            (*t)[25] = crate::retail_ms::ftganon::ftGn_Init_MotionStateTable.as_mut_ptr();
+            (*t)[26] = crate::retail_ms::ftemblem::ftFe_Init_MotionStateTable.as_mut_ptr();
+            (*t)[27] = crate::retail_ms::ftmasterhand::ftMh_Init_MotionStateTable.as_mut_ptr();
+            (*t)[28] = crate::retail_ms::ftcrazyhand::ftCh_Init_MotionStateTable.as_mut_ptr();
+            (*t)[31] = crate::retail_ms::ftgkoopa::ftGk_Init_MotionStateTable.as_mut_ptr();
+            (*t)[32] = crate::retail_ms::ftsandbag::ftSb_Init_MotionStateTable.as_mut_ptr();
+        }
+        // hooks.rs `mpLib_8004D164()->line_count`, or None for a NULL map (the generator would cast the MapCollData*)
+        melee_fighter::hooks::MPLIB_8004D164_LINE_COUNT = Some(|| unsafe {
+            let m = melee_world::tu::mplib::mpLib_8004D164();
+            if m.is_null() { None } else { Some((*m).line_count as i32) }
+        });
         // ftcolanim.c reads ftdata.c's table through its own pointer-typed `ext` static
         melee_fighter::tu::ftcolanim::ext::ftData_UnkMotionStates4 = (&raw const melee_fighter::tu::ftdata::ftData_UnkMotionStates4) as *const *mut c_void;
         // ftdata.c: the kind tables' file loads (variadic lbArchive_80017040 spread over fixed slots) and the helpers

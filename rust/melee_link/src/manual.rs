@@ -17,6 +17,23 @@ unsafe fn foreach_anim_fu(obj: *mut c_void, ty: i32, mask: u32, func: *mut c_voi
     melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func, arg_type as _, arg);
 }
 
+/// The item TUs spell the variadic tail of `efSync_Spawn` / `efAsync_Spawn` as a slice of their own `EfArg` enum (one
+/// copy per TU); the effect system reads machine words (`melee_world::tu::va::Va`).
+macro_rules! ef_arg_words {
+    ($m:ident) => {
+        |a: &[melee_items::tu::$m::EfArg]| -> std::vec::Vec<*const c_void> {
+            a.iter()
+                .map(|x| match *x {
+                    melee_items::tu::$m::EfArg::Int(i) => i as isize as *const c_void,
+                    melee_items::tu::$m::EfArg::Ptr(p) => p as *const c_void,
+                    melee_items::tu::$m::EfArg::F32P(p) => p as *const c_void,
+                    melee_items::tu::$m::EfArg::Vec3P(p) => p as *const c_void,
+                })
+                .collect()
+        }
+    };
+}
+
 pub fn install() {
     unsafe {
         // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice (efsync.c builds its own `Va` from it)
@@ -152,6 +169,16 @@ pub fn install() {
             h::MEX_ON_KNOCKBACK_EXIT = Some(|_, _| {});
             h::MEX_ON_REMOVE_HEAD_ITEM = Some(|_, _| {});
             h::FTDEMO_SET_FACING_DIRECTION = Some(|g, d| unsafe { melee_fighter::tu::ftdemo::ftdemo_set_facing_direction(g as _, d as _) });
+        }
+        // item TUs: effect spawns with their own EfArg tails
+        {
+            use melee_items::tu::{iteffect, itclimbersice, it_2725, it_279C, itspawn, itcoll};
+            iteffect::ext::hook::efSync_Spawn = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &(ef_arg_words!(iteffect))(c)) });
+            iteffect::ext::hook::efAsync_Spawn = Some(|a, b, c, d, e, f| unsafe { melee_world::tu::efn::efasync::efAsync_Spawn(a as _, b, c, d, e as _, &(ef_arg_words!(iteffect))(f)) });
+            itclimbersice::ext::hook::efAsync_Spawn = Some(|a, b, c, d, e, f| unsafe { melee_world::tu::efn::efasync::efAsync_Spawn(a as _, b, c, d, e as _, &(ef_arg_words!(itclimbersice))(f)) });
+            it_2725::ext::hook::efSync_Spawn = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &(ef_arg_words!(it_2725))(c)) });
+            it_279C::ext::hook::efSync_Spawn = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &(ef_arg_words!(it_279C))(c)) });
+            itspawn::ext::hook::efSync_Spawn = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &(ef_arg_words!(itspawn))(c)) });
         }
         // texp.c's DAG calls take the texpdag.c host trait; the game's host is `texpdag::Ext`
         use melee_runtime::tu::{texp::ext::hook as te, texpdag};

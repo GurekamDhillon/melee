@@ -549,10 +549,6 @@ def choose(cands, name, cmap, own_file):
         norm = lambda s: s.lower().replace('_', '')
         pick = [c for c in cands if norm(os.path.splitext(os.path.basename(c[4]))[0]) == norm(stem)]
         if len(pick) == 1: return pick[0]
-        # a TU whose leaf accessors are also copied into a lower crate (melee_items/tu/ftlib.rs): the crate that holds
-        # the whole TU is the highest of the same-stem candidates
-        if len(pick) > 1 and len({c[0] for c in pick}) == len(pick):
-            return max(pick, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else -1)
     low = sorted(cands, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else 99)
     if low and (len(low) == 1 or low[0][0] != low[1][0]) and low[0][0] == 'melee_runtime':
         return low[0]
@@ -668,6 +664,8 @@ def main():
                 cands = [c for k, v in defs.items() if k.lower() == h['name'].lower() for c in v]  # ftColl_8007AF60 vs ftcoll_8007af60
             if not cands:
                 cands = legacy.get(h['name'], [])  # pre-consolidation home outside tu/ (until steps 21 / 23)
+            if not cands:
+                cands = [c for k, v in legacy.items() if k.lower() == h['name'].lower() for c in v]  # ftLib_8008702C vs ftlib_8008702c
             sc = statics.get(h['name'], [])
             if not cands and sc and h['npar'] == 0 and h['hasret'] and key not in skip:
                 # a function-shaped hook for a C global (`HSD_GObj_JObjKind()`): read the canonical static
@@ -766,7 +764,7 @@ def main():
             site += 1
             S = site * 100
             call_args = ', '.join(f'cast::<_, _, {S + i + 1}>(a{i})' for i in range(npar))
-            real = next((k for k, v in defs.items() if (cc, cmod, npar, hasret, h['canon'][4]) in v and k.lower() == h['name'].lower()), h['name'])
+            real = next((k for k, v in list(defs.items()) + list(legacy.items()) if (cc, cmod, npar, hasret, h['canon'][4]) in v and k.lower() == h['name'].lower()), h['name'])
             callee = f'{cc}::{cmod}::{real}'
             body = f'cast::<_, _, {S}>({callee}({call_args}))' if h['hasret'] else (f'let _ = {callee}({call_args});' if hasret else f'{callee}({call_args})')
             out.append(f'    // {h["file"]}')

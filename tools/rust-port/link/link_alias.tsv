@@ -8,3 +8,6 @@ efAsync_Spawn	variadicw:melee_world::tu::efn::efasync::efAsync_Spawn:5
 efLib_DestroyAll	|a0| unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(a0 as _) }
 HSD_JObjWalkTree	|a0, a1, a2| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjWalkTree_ptr(a0 as _, a1, a2) }
 efSync_Spawn	variadicw:melee_world::tu::efn::efsync::efSync_Spawn:2
+ftLib_GetKind	|a0| unsafe { melee_fighter::ftlib::get_kind(a0 as _) as _ }
+ftLib_SetScale	|a0, a1| unsafe { melee_fighter::ftlib::set_scale(a0 as _, a1 as _) }
+ftLib_GetItem	|a0| unsafe { melee_fighter::ftlib::get_item(a0 as _) as _ }

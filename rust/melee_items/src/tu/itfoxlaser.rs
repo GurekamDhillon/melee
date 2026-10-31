@@ -219,12 +219,10 @@ pub unsafe extern "C" fn it_8029C504(parent: *mut HSD_GObj, pos: *mut Vec, msid:
     }
     Item_InitSpawnCommonFields(&mut spawn, parent, if right_facing { 1.0 } else { -1.0 }, true);
     let item_gobj = ext::Item_80268B18(&mut spawn);
-    if std::env::var_os("MELEE_DBG_CMD").is_some() { eprintln!("laser spawn kind {kind} msid {msid} -> {:p}", item_gobj); }
     if !item_gobj.is_null() {
         let item = item_of(item_gobj);
         let attr = (*(*item).xC4_article_data).x4_specialAttributes as *mut FoxLaserAttr;
-        if std::env::var_os("MELEE_DBG_CMD").is_some() { eprintln!("laser attr lifetime {} scale {} x8 {}", (*attr).lifetime, (*attr).scale, (*attr).x8); }
-        ext::Item_80268E5C(item_gobj, msid, ITEM_ANIM_UPDATE);
+            ext::Item_80268E5C(item_gobj, msid, ITEM_ANIM_UPDATE);
         ext::it_80275158(item_gobj, (*attr).lifetime);
         (*item).xDD4_itemVar.foxlaser.scale = 0.0;
         (*item).xDD4_itemVar.foxlaser.angle = angle;

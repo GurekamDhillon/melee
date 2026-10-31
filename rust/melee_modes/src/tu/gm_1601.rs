@@ -2539,7 +2539,6 @@ pub unsafe fn fn_8016719C(slot: i32, subchar: i32) {
         }
     }
     respawn_pos.x += offset.x;
-    if std::env::var_os("MELEE_DBG_PROBE").is_some() { eprintln!("fn_8016719C slot {slot} b5 {} var_r30 {var_r30}", stage_info.unk8C.b5()); }
     ext::Player_SetSpawnPlatformPos(slot, &mut respawn_pos);
 
     if stage_info.unk8C.b5() == 0 {

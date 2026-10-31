@@ -11,7 +11,9 @@ static mut RENDER: Option<HsdRender> = None;
 /// random.c's `seed` / render seed / forget-memory range.
 pub fn rand() -> &'static mut HsdRand {
     melee_core::ct!("rand");
-    unsafe { RAND.get_or_insert_with(HsdRand::default) }
+    // The ONE process-wide state is random.rs's `global::state()` (the engine seeds it and `HSD_RandSeedPtr` points into it);
+    // a private `RAND` here was a split-brain copy (grlast's Randf read an unseeded state).
+    crate::tu::random::global::state()
 }
 
 /// state.c's / tev.c's statics (`HsdRender`).

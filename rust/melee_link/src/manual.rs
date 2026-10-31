@@ -19,8 +19,8 @@ unsafe fn foreach_anim_fu(obj: *mut c_void, ty: i32, mask: u32, func: *mut c_voi
 
 pub fn install() {
     unsafe {
-        // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice; efsync.c reads them through its own `Va`
-        melee_world::tu::efn::efasync::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { melee_world::tu::efsync::efSync_Spawn(a0, a1, &mut melee_world::tu::efsync::Va::new(core::slice::from_raw_parts(a2.as_ptr() as *const *mut core::ffi::c_void, a2.len()))) });
+        // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice (efsync.c builds its own `Va` from it)
+        melee_world::tu::efn::efasync::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { melee_world::tu::efsync::efSync_Spawn(a0, a1, a2) });
         // fighter.c: hooks spelled differently from their C functions (accessor / out-parameter / return-ness)
         {
             use melee_fighter::tu::fighter::ext::hook as f;

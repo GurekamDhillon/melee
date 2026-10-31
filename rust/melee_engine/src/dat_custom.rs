@@ -82,6 +82,9 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             }
             Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
         }
+        "efdat" => efdat(d, b, off),
+        "ptclcmd" => ptcl_cmd(d, b, off),
+        "ptcltex" => ptcl_tex(d, b, off),
         "lbrefdata" => {
             // lbrefract.c `static struct { u8 x0; f32* x4; }* refract_data`
             let r = melee_runtime::tu::lbrefract::RefractData { x0: d.u8_at(off), x4: parr::<f32>(d, b, off + 4) as *mut f32 };
@@ -184,4 +187,168 @@ fn ftdata(d: &mut GcDecoder<'_>, off: u32, sym: &str) -> *mut c_void {
         v.ext_attr = p;
     }
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
+}
+
+// ---- particle banks (baselib/particle.c: psInitDataBankLocate / psInitDataBankLoad) ----------------------------
+//
+// The cmd and tex banks are blobs of GameCube-layout records addressed by 32-bit offsets relative to the bank start
+// (NOT archive relocations: `psInitDataBankLocate` adds the bank address to them). The native `tu::particle` reads
+// pointer-sized slots and native records, so each bank is rebuilt into one native image whose slots hold byte
+// offsets relative to the image start, which `psInitDataBankLocate` then relocates exactly as the C does. What
+// stays raw: the command STREAM of each record (opcodes and big-endian operands, read byte-wise;
+// `particle::CMD_STREAM_BIG_ENDIAN`) and the texture/palette image bytes (pointers into the raw archive image).
+
+use std::collections::HashMap;
+
+static mut BANKS: Option<HashMap<(usize, u32), usize>> = None;
+
+#[allow(static_mut_refs)]
+fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
+    let m = unsafe { BANKS.get_or_insert_with(HashMap::new) };
+    if let Some(&p) = m.get(&key) {
+        return p as *mut c_void;
+    }
+    let p = make();
+    unsafe { BANKS.as_mut().unwrap().insert(key, p as usize) };
+    p
+}
+
+/// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.
+fn native_buf(n: usize) -> *mut u8 {
+    Box::leak(vec![0u64; (n + 7) / 8].into_boxed_slice()).as_mut_ptr() as *mut u8
+}
+
+/// The particle command bank starting at data offset `off`: `{ version, count.., offsets }` + `HSD_PSCmdList` records.
+pub fn ptcl_cmd(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    use melee_types::HSD_PSCmdList;
+    memo((b.1, off), || {
+        let version = d.u16_at(off);
+        // (slot count of the header, index of the first record slot, record count)
+        let (hdr, first, count) = match version {
+            0 => (2usize, 2usize, d.u32_at(off + 4) as usize),
+            // versions 0x40..0x43: `num` is the index base (generator ids run from `num`; the C points the list `3 - num` words
+            // before the table), `count` the number of records
+            0x40..=0x43 => (3, 3, d.u32_at(off + 8) as usize),
+            v => panic!("particle cmd bank {off:#x}: unknown version {v:#x}"),
+        };
+        let slots = hdr + count;
+        let rel: Vec<u32> = (0..count).map(|i| d.u32_at(off + 4 * (first + i) as u32)).collect();
+        let mut starts: Vec<u32> = rel.iter().copied().filter(|&r| r != 0).collect();
+        starts.sort_unstable();
+        starts.dedup();
+        let end_of_bank = off + b.extent(off);
+        const HDR: usize = 0x3C; // HSD_PSCmdList up to `cmdList`
+        let rec_len = |r: u32| -> usize {
+            let at = off + r;
+            let stop = match starts.binary_search(&r) {
+                Ok(i) => starts.get(i + 1).map_or(end_of_bank, |n| off + n),
+                Err(_) => end_of_bank,
+            };
+            (stop.max(at + HDR as u32) - at) as usize
+        };
+        let total = slots * 8 + starts.iter().map(|&r| (rec_len(r) + 7) & !7).sum::<usize>();
+        let img = native_buf(total);
+        let w = |at: usize, v: isize| unsafe { (img.add(at) as *mut isize).write(v) };
+        w(0, version as isize);
+        if version == 0 {
+            w(8, count as isize);
+        } else {
+            w(8, d.u32_at(off + 4) as isize);
+            w(16, count as isize);
+        }
+        let mut cur = slots * 8;
+        let mut placed: HashMap<u32, usize> = HashMap::new();
+        for &r in &starts {
+            let len = rec_len(r);
+            let rec = <HSD_PSCmdList as GcDecode>::gc_decode(d, off + r);
+            unsafe {
+                core::ptr::copy_nonoverlapping(&rec as *const HSD_PSCmdList as *const u8, img.add(cur), HDR);
+                for k in HDR..len {
+                    *img.add(cur + k) = d.u8_at(off + r + k as u32);
+                }
+            }
+            placed.insert(r, cur);
+            cur += (len + 7) & !7;
+        }
+        for (i, &r) in rel.iter().enumerate() {
+            w(8 * (first + i), if r == 0 { 0 } else { placed[&r] as isize });
+        }
+        img as *mut c_void
+    })
+}
+
+/// The particle texture bank at data offset `off`: `{ group count, group offsets }` + `HSD_PSTexGroup` records whose
+/// texture / palette slots become offsets from the image start to the (raw, big-endian) image bytes.
+pub fn ptcl_tex(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    memo((b.1, off), || {
+        let n = d.u32_at(off) as usize;
+        let rel: Vec<u32> = (0..n).map(|i| d.u32_at(off + 4 + 4 * i as u32)).collect();
+        // slot count of group record `g`: `num`, plus the palette entries `psInitDataBankLocate` relocates
+        let slots_of = |d: &mut GcDecoder<'_>, g: u32| -> usize {
+            let num = d.u32_at(off + g);
+            let fmt = d.u32_at(off + g + 4);
+            let palnum = d.u16_at(off + g + 0x14) as u32;
+            let palflag = d.u16_at(off + g + 0x16) as u32;
+            let end = if fmt != 8 && fmt.wrapping_sub(9) > 1 {
+                num
+            } else if palflag & 1 != 0 {
+                num + 1
+            } else if palnum != 0 {
+                num + palnum
+            } else {
+                num.wrapping_mul(2)
+            };
+            end as usize
+        };
+        let sizes: Vec<usize> = rel.iter().map(|&g| if g == 0 { 0 } else { 24 + 8 * slots_of(d, g).max(1) }).collect();
+        let total = 8 + 8 * n + sizes.iter().sum::<usize>();
+        let img = native_buf(total);
+        let base = img as usize;
+        unsafe { (img as *mut isize).write(n as isize) };
+        let mut cur = 8 + 8 * n;
+        for (i, &g) in rel.iter().enumerate() {
+            if g == 0 {
+                continue;
+            }
+            unsafe { (img.add(8 + 8 * i) as *mut isize).write(cur as isize) };
+            let slots = slots_of(d, g);
+            let at = off + g;
+            unsafe {
+                for (o, src) in [(0usize, 0u32), (4, 4), (8, 8), (12, 12), (16, 16)] {
+                    (img.add(cur + o) as *mut u32).write(d.u32_at(at + src));
+                }
+                (img.add(cur + 20) as *mut u16).write(d.u16_at(at + 0x14));
+                (img.add(cur + 22) as *mut u16).write(d.u16_at(at + 0x16));
+                for k in 0..slots {
+                    let t = d.u32_at(at + 0x18 + 4 * k as u32);
+                    // `psInitDataBankLocate` adds the image base: store (raw image address - base)
+                    let v: isize = if t == 0 { 0 } else { (b.raw_addr(off + t) as usize).wrapping_sub(base) as isize };
+                    (img.add(cur + 24 + 8 * k) as *mut isize).write(v);
+                }
+            }
+            cur += sizes[i];
+        }
+        img as *mut c_void
+    })
+}
+
+/// An effect bank root (`effCommonDataTable`, `effFoxDataTable`, ...): C `struct { cmd bank*, tex bank*, EF_EffectDesc descs[] }`
+/// (`EF_DAT_Entry` for the first two words; `efAsync_LoadSync` keeps `&entry->data` as the `EF_EffectDesc` table). Native:
+/// two converted bank pointers, then the native `EF_EffectDesc` array, contiguous from byte 16 (= `offsetof(EF_DAT_Entry, data)`).
+fn efdat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    use melee_types::EF_EffectDesc;
+    let cmd = d.target(off).map_or(core::ptr::null_mut(), |t| ptcl_cmd(d, b, t));
+    let tex = d.target(off + 4).map_or(core::ptr::null_mut(), |t| ptcl_tex(d, b, t));
+    let n = (b.extent(off + 8) / <EF_EffectDesc as GcDecode>::GC_BYTES) as usize;
+    let sz = core::mem::size_of::<EF_EffectDesc>();
+    let img = native_buf(16 + n.max(1) * sz);
+    unsafe {
+        (img as *mut *mut c_void).write(cmd);
+        (img.add(8) as *mut *mut c_void).write(tex);
+        if n > 0 {
+            let descs = d.array::<EF_EffectDesc>(off + 8, n);
+            core::ptr::copy_nonoverlapping(descs as *const u8, img.add(16), n * sz);
+        }
+    }
+    img as *mut c_void
 }

@@ -21,11 +21,11 @@ pub static mut numPeakParticles: u16 = 0;
 pub static mut hsd_804D78DE: u16 = 0 as u16;
 pub static mut hsd_804D78E0: u16 = 0 as u16;
 pub static mut hsd_804D78E2: u16 = 0;
-pub static mut hsd_804D78E8: u32 = 0 as u32;
-pub static mut hsd_804D78EC: u32 = 0 as u32;
+pub static mut hsd_804D78E8: Option<unsafe extern "C" fn(*mut HSD_Generator, *mut [f32; 4])> = None;
+pub static mut hsd_804D78EC: Option<unsafe extern "C" fn(*mut HSD_Generator)> = None;
 pub static mut psCamera: *mut HSD_CObj = ::core::ptr::null::<HSD_CObj>()
     as *mut HSD_CObj;
-pub static mut hsd_804D78F4: u32 = 0 as u32;
+pub static mut hsd_804D78F4: *mut HSD_SList = ::core::ptr::null_mut();
 pub static mut hsd_804D08E8: [*mut HSD_JObj; 8] = [::core::ptr::null::<HSD_JObj>()
     as *mut HSD_JObj; 8];
 pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = [::core::ptr::null::<
@@ -720,9 +720,18 @@ pub unsafe extern "C" fn hsd_8039D0A0(mut gen: *mut HSD_Generator) {
     }
 }
 
+/// Byte order of the float operands in a command stream. The stream is raw game data: opcodes and operands are read
+/// byte-wise, and the C (big-endian memory) assembles a float from its four bytes MSB first. The engine's banks keep
+/// the DAT's stream bytes as they are, so it sets this; the synthetic oracle streams are native-endian (default).
+pub static mut CMD_STREAM_BIG_ENDIAN: bool = false;
+#[inline]
+unsafe fn stream_word(b: [u8; 4]) -> u32 {
+    if CMD_STREAM_BIG_ENDIAN { u32::from_be_bytes(b) } else { u32::from_ne_bytes(b) }
+}
+
 pub unsafe extern "C" fn psReadFloat(stream: *mut *mut u8) {
     melee_core::ct!("psReadFloat");
-    hsd_804D78D0 = u32::from_ne_bytes([**stream, *(*stream).add(1), *(*stream).add(2), *(*stream).add(3)]);
+    hsd_804D78D0 = stream_word([**stream, *(*stream).add(1), *(*stream).add(2), *(*stream).add(3)]);
     *stream=(*stream).add(4);
 }
 
@@ -937,7 +946,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
             () => {{
                 let b = [*list.add(pc as usize), *list.add(pc as usize + 1), *list.add(pc as usize + 2), *list.add(pc as usize + 3)];
                 pc += 4;
-                hsd_804D78D0=u32::from_ne_bytes(b); f32::from_bits(hsd_804D78D0)
+                hsd_804D78D0=stream_word(b); f32::from_bits(hsd_804D78D0)
             }};
         }
         // A count byte with the 0x80 two-byte extension.
@@ -1711,11 +1720,11 @@ pub mod ext {
     fn ScriptGame_StageSlotParticleBegin(a0: i32) -> i32;
     fn ScriptGame_StageSlotProcEnd();
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
-    fn hsd_8039D1EC() -> u16;
-    fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator;
-    fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32;
-    fn psAttachParticleAppSRT(a0: *mut HSD_Particle, a1: *mut HSD_psAppSRT) -> i32;
-    fn psRemoveParticleAppSRT(a0: *mut HSD_Particle) -> i32;
+    fn hsd_8039D1EC() -> u16 = unsafe { crate::tu::generator::hsd_8039D1EC() };
+    fn hsd_8039F05C(a0: i32, a1: i32, a2: i32) -> *mut HSD_Generator = unsafe { crate::tu::generator::hsd_8039F05C(a0, a1, a2) };
+    fn psAttachGeneratorAppSRT(a0: *mut HSD_Generator, a1: *mut HSD_psAppSRT) -> i32 = unsafe { crate::tu::psappsrt::psAttachGeneratorAppSRT(a0, a1) };
+    fn psAttachParticleAppSRT(a0: *mut HSD_Particle, a1: *mut HSD_psAppSRT) -> i32 = unsafe { crate::tu::psappsrt::psAttachParticleAppSRT(a0, a1) };
+    fn psRemoveParticleAppSRT(a0: *mut HSD_Particle) -> i32 = unsafe { crate::tu::psappsrt::psRemoveParticleAppSRT(a0) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

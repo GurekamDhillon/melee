@@ -93,7 +93,7 @@ pub mod ext {
     // Externs that are data, not code: `HSD_GObj** HSD_GObjPLinkHead` (the C global is a pointer to
     // the array of per-p_link list heads) and `HSD_Generator* hsd_804D78FC` (generator list head).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
-    pub static mut hsd_804D78FC: *mut HSD_Generator = core::ptr::null_mut();
+    pub use melee_runtime::tu::generator::hsd_804D78FC;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }
 

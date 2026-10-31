@@ -452,7 +452,7 @@ pub use melee_runtime::tu::particle::psCmdListArray;
 pub use melee_runtime::tu::particle::ptclref_804D0E5C;
 pub use melee_runtime::tu::particle::hsd_804D78F4;
 pub use melee_runtime::tu::particle::hsd_804D0F60;
-pub static mut hsd_804D78FC: * mut HSD_Generator = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::generator::hsd_804D78FC;
 pub use melee_runtime::tu::particle::hsd_804D0908;
 pub use melee_runtime::tu::particle::hsd_804D78E2;
 pub use melee_runtime::tu::particle::hsd_804D0948;
@@ -33976,7 +33976,7 @@ pub unsafe extern "C" fn script_retail_particles() {
             if !prevnode.is_null() {
                 (*prevnode).next = next as *mut _HSD_SList;
             } else {
-                hsd_804D78F4 = next as ::core::ffi::c_uint;
+                hsd_804D78F4 = next;
             }
             node = next;
         } else {

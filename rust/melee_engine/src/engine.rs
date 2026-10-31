@@ -23,6 +23,33 @@ fn pad_read(st: *mut PADStatus) -> u32 {
     }
 }
 
+/// `MELEE_RAND_TRACE=<file>`: one line per `HSD_Rand*` draw (`frame draw# stream callers...`), for finding where the
+/// engine's draw sequence leaves the C build's (the golden `seed` column counts them).
+static mut RAND_TRACE: Option<std::fs::File> = None;
+static mut RAND_FRAME: i32 = -1;
+static mut RAND_N: u32 = 0;
+
+fn rand_trace(_seed: u32, stream: i32) {
+    use std::io::Write;
+    unsafe {
+        RAND_N += 1;
+        let bt = std::backtrace::Backtrace::force_capture().to_string();
+        let mut names: Vec<&str> = Vec::new();
+        for l in bt.lines() {
+            let l = l.trim();
+            if let Some((_, rest)) = l.split_once(": ") {
+                if rest.starts_with("melee_") && !rest.contains("random::") && !rest.contains("rand_trace") && !rest.contains("ext::") {
+                    names.push(rest.trim_start_matches("melee_"));
+                }
+            }
+        }
+        names.truncate(6);
+        if let Some(f) = (&raw mut RAND_TRACE).as_mut().and_then(|f| f.as_mut()) {
+            let _ = writeln!(f, "{} {} s{} {}", RAND_FRAME, RAND_N, stream, names.join(" < "));
+        }
+    }
+}
+
 pub struct Engine {
     /// Frames ticked since `begin_scene`.
     pub frames: u32,
@@ -57,6 +84,14 @@ impl Engine {
             { let mut j = 0; while j < 12 { let st = (*mode).states.add(j); eprintln!("  state[{j}] id {}", (*st).id); if (*st).id == 0xFF { break; } j += 1; } }
             let run = gm_1A3F::gm_801A4014_enter(mode);
             gmscene::gm_801A4D34_begin(run.info);
+            // Diagnostic: draws the C makes before frame 0 that belong to subsystems the engine has not taken over yet
+            // (the memory-card scene's trophy pick, the stage init: grLast 4 + the BGM pick). Only their COUNT matters
+            // to the particle system's draws, so the seed column can be checked before those steps land.
+            if let Some(n) = std::env::var("MELEE_ENGINE_PRE_DRAWS").ok().and_then(|v| v.parse::<u32>().ok()) {
+                for _ in 0..n {
+                    melee_runtime::tu::random::global::state().rand();
+                }
+            }
             Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false })
         }
     }
@@ -66,10 +101,18 @@ impl Engine {
         Host::boot(disc, mem_size)?;
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = true;
-            melee_world::tu::efsync::EFFECTS_ENABLED = false; // step 10 lifts this
+            melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
+            
         }
         melee_link::install();
         melee_link::install_retail();
+        unsafe { melee_runtime::tu::generator::GEN_TRACE = std::env::var_os("MELEE_PS_TRACE").is_some(); }
+        if let Some(path) = std::env::var_os("MELEE_RAND_TRACE") {
+            unsafe {
+                RAND_TRACE = std::fs::File::create(path).ok();
+                melee_runtime::tu::random::global::state().trace = Some(rand_trace);
+            }
+        }
         crate::cdata::install_cdata();
         crate::install();
         unsafe {
@@ -126,6 +169,7 @@ impl Engine {
         if self.ended {
             return false;
         }
+        unsafe { RAND_FRAME = self.frames as i32; }
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
         self.frames += 1;

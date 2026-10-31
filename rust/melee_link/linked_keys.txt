@@ -116,6 +116,7 @@ tu::fog::ext::hook::PSMTXCopy
 tu::fog::ext::hook::PSMTXIdentity
 tu::fog::ext::hook::hsdInitClassInfo
 tu::fog::ext::hook::hsdNew
+tu::generator::ext::hook::ScriptGame_StageSlotNativeContext
 tu::initialize::ext::hook::HSD_AObjGetAllocData
 tu::initialize::ext::hook::HSD_AObjInitAllocData
 tu::initialize::ext::hook::HSD_ChanGetAllocData
@@ -499,6 +500,11 @@ tu::particle::ext::hook::HSD_Randf
 tu::particle::ext::hook::ScriptGame_StageSlotParticleBegin
 tu::particle::ext::hook::ScriptGame_StageSlotProcEnd
 tu::particle::ext::hook::atan2f
+tu::particle::ext::hook::hsd_8039D1EC
+tu::particle::ext::hook::hsd_8039F05C
+tu::particle::ext::hook::psAttachGeneratorAppSRT
+tu::particle::ext::hook::psAttachParticleAppSRT
+tu::particle::ext::hook::psRemoveParticleAppSRT
 tu::pobj::native::ext::hook::HSD_AObjInterpretAnim
 tu::pobj::native::ext::hook::HSD_AObjLoadDesc
 tu::pobj::native::ext::hook::HSD_AObjRemove
@@ -831,6 +837,9 @@ tu::cmcamera::ext::hook::mpLib_DrawSpecialPoints
 tu::cmcamera::ext::hook::mpLib_DrawZones
 tu::cmcamera::ext::hook::tanf
 tu::cmcamera::ext::hook::OSReport
+tu::efn::efalt::ext::hook::HSD_JObjAnimAll
+tu::efn::efalt::ext::hook::HSD_JObjSetMtxDirtySub
+tu::efn::efalt::ext::hook::hsd_8039EFAC
 tu::efn::efasync::ext::hook::Camera_RequestQuake
 tu::efn::efasync::ext::hook::HSD_ArchiveGetPublicAddress
 tu::efn::efasync::ext::hook::HSD_JObjAnimAll
@@ -842,6 +851,7 @@ tu::efn::efasync::ext::hook::HSD_Randf
 tu::efn::efasync::ext::hook::HSD_Randi
 tu::efn::efasync::ext::hook::efSync_Spawn
 tu::efn::efasync::ext::hook::ftKb_MexKirbyLike
+tu::efn::efasync::ext::hook::hsd_8039EFAC
 tu::efn::efasync::ext::hook::lbArchive_80017040
 tu::efn::efasync::ext::hook::lbArchive_InitializeDAT
 tu::efn::efasync::ext::hook::lbDvd_800178E8
@@ -863,6 +873,7 @@ tu::efn::eflib::ext::hook::HSD_JObjClearFlagsAll
 tu::efn::eflib::ext::hook::HSD_JObjGetDObj
 tu::efn::eflib::ext::hook::HSD_JObjLoadJoint
 tu::efn::eflib::ext::hook::HSD_JObjReqAnimAll
+tu::efn::eflib::ext::hook::HSD_JObjSetDPtclCallback
 tu::efn::eflib::ext::hook::HSD_JObjSetFlagsAll
 tu::efn::eflib::ext::hook::HSD_JObjSetMtxDirtySub
 tu::efn::eflib::ext::hook::HSD_JObjSetSPtclCallback
@@ -878,12 +889,30 @@ tu::efn::eflib::ext::hook::ftCo_800C0FCC
 tu::efn::eflib::ext::hook::grLib_801C99C0
 tu::efn::eflib::ext::hook::hsd_80398A08
 tu::efn::eflib::ext::hook::hsd_8039CEAC
+tu::efn::eflib::ext::hook::hsd_8039D1E4
+tu::efn::eflib::ext::hook::hsd_8039D354
+tu::efn::eflib::ext::hook::hsd_8039D4DC
+tu::efn::eflib::ext::hook::hsd_8039D688
+tu::efn::eflib::ext::hook::hsd_8039EE24
+tu::efn::eflib::ext::hook::hsd_8039EFAC
+tu::efn::eflib::ext::hook::hsd_8039F05C
+tu::efn::eflib::ext::hook::hsd_8039F6CC
 tu::efn::eflib::ext::hook::lb_8000B1CC
 tu::efn::eflib::ext::hook::lb_8000C1C0
 tu::efn::eflib::ext::hook::lb_8000C290
 tu::efn::eflib::ext::hook::lb_80011C18
+tu::efn::eflib::ext::hook::psAddGeneratorAppSRT_begin
+tu::efn::eflib::ext::hook::psAddParticleAppSRT_begin
 tu::efn::eflib::ext::hook::psDispParticles
+tu::efn::eflib::ext::hook::psInitAppSRT
+tu::efn::eflib::ext::hook::psRemoveParticleAppSRT
 tu::efn::eflib::ext::hook::OSReport
+tu::efn::efsync::ext::hook::HSD_JObjAnimAll
+tu::efn::efsync::ext::hook::HSD_JObjSetMtxDirtySub
+tu::efn::efsync::ext::hook::HSD_Randf
+tu::efn::efsync::ext::hook::hsd_8039EFAC
+tu::efn::efsync::ext::hook::hsd_8039F05C
+tu::efn::efsync::ext::hook::lb_8000B1CC
 tu::grdisplay::ext::hook::Camera_80030A50
 tu::grdisplay::ext::hook::Camera_80030A78
 tu::grdisplay::ext::hook::Camera_80030AC4
@@ -1489,6 +1518,7 @@ tu::grmutecity::ext::hook::mpLib_8005667C
 tu::grmutecity::ext::hook::mpLib_80057424
 tu::grmutecity::ext::hook::mpLib_80057BC0
 tu::grmutecity::ext::hook::mpLineSetPos
+tu::grmutecity::ext::hook::psAddGeneratorAppSRT_begin
 tu::grmutecity::ext::hook::splGetSplinePoint
 tu::grmutecity::ext::hook::un_802FD604
 tu::grmutecity::ext::hook::un_802FD65C
@@ -3798,6 +3828,7 @@ tu::ftCo_Guard::ext::hook::ScriptGame_CapsActionAllowed
 tu::ftCo_Guard::ext::hook::ScriptGame_ModValue
 tu::ftCo_Guard::ext::hook::lb_8000D008
 tu::ftCo_Guard::ext::hook::HSD_JObjSetMtxDirtySub
+tu::ftCo_Guard::ext::hook::efLib_SetParamAlpha
 tu::ftCo_Guard::ext::hook::GenoDefine_RestPoseTree
 tu::ftCo_Guard::ext::hook::Geno_MotionAnimRow
 tu::ftCo_Guard::ext::hook::ftData_80085E50
@@ -6012,6 +6043,8 @@ tu::itcapsule::ext::hook::lb_800119DC
 tu::itcerebi::ext::hook::HSD_Randi
 tu::itcerebi::ext::hook::Item_80268E5C
 tu::itcerebi::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itcerebi::ext::hook::efLib_PauseAll
+tu::itcerebi::ext::hook::efLib_ResumeAll
 tu::itcerebi::ext::hook::it_8026B894
 tu::itcerebi::ext::hook::it_80272C6C
 tu::itcerebi::ext::hook::it_80273454
@@ -6061,6 +6094,7 @@ tu::itclimbersice::ext::hook::Item_80268E5C
 tu::itclimbersice::ext::hook::Item_8026A8EC
 tu::itclimbersice::ext::hook::db_80225DD8
 tu::itclimbersice::ext::hook::efAsync_Spawn
+tu::itclimbersice::ext::hook::efLib_DestroyAll
 tu::itclimbersice::ext::hook::ftKb_SpecialNIc_80108CE8
 tu::itclimbersice::ext::hook::ftPp_Init_8011F16C
 tu::itclimbersice::ext::hook::itColl_BounceOffShield
@@ -6383,6 +6417,7 @@ tu::item::ext::hook::db_80225DD8
 tu::item::ext::hook::db_ShowItemPickupRange
 tu::item::ext::hook::efAsync_QueueClear
 tu::item::ext::hook::efAsync_QueueFlush
+tu::item::ext::hook::efLib_DestroyAll
 tu::item::ext::hook::ftLib_800867A0
 tu::item::ext::hook::ftLib_800867CC
 tu::item::ext::hook::ftLib_80086960
@@ -6478,6 +6513,9 @@ tu::itentei::ext::hook::Camera_RequestQuake
 tu::itentei::ext::hook::HSD_Randi
 tu::itentei::ext::hook::Item_80268E5C
 tu::itentei::ext::hook::Item_8026AE84
+tu::itentei::ext::hook::efLib_DestroyAll
+tu::itentei::ext::hook::efLib_PauseAll
+tu::itentei::ext::hook::efLib_ResumeAll
 tu::itentei::ext::hook::it_8026B894
 tu::itentei::ext::hook::it_8026D62C
 tu::itentei::ext::hook::it_8026E248
@@ -6508,6 +6546,7 @@ tu::itevyoshiegg::ext::hook::it_802756D0
 tu::itfflower::ext::hook::Item_80268B18
 tu::itfflower::ext::hook::Item_80268E5C
 tu::itfflower::ext::hook::Item_8026AE60
+tu::itfflower::ext::hook::efLib_DestroyAll
 tu::itfflower::ext::hook::itColl_BounceOffShield
 tu::itfflower::ext::hook::itColl_BounceOffVictim
 tu::itfflower::ext::hook::it_8026B390
@@ -6540,6 +6579,8 @@ tu::itfflowerflame::ext::hook::it_80273130
 tu::itfflowerflame::ext::hook::it_80275158
 tu::itfire::ext::hook::Item_80268E5C
 tu::itfire::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itfire::ext::hook::efLib_PauseAll
+tu::itfire::ext::hook::efLib_ResumeAll
 tu::itfire::ext::hook::it_8026B894
 tu::itfire::ext::hook::it_8026E7E0
 tu::itfire::ext::hook::it_80272C6C
@@ -6604,6 +6645,7 @@ tu::itfoxblaster::ext::hook::Item_8026A8EC
 tu::itfoxblaster::ext::hook::Item_8026AB54
 tu::itfoxblaster::ext::hook::Item_8026AE84
 tu::itfoxblaster::ext::hook::atan2f
+tu::itfoxblaster::ext::hook::efLib_DestroyAll
 tu::itfoxblaster::ext::hook::ftCo_800BF228
 tu::itfoxblaster::ext::hook::ftFx_SpecialN_CheckBlasterAction
 tu::itfoxblaster::ext::hook::ftFx_SpecialN_CheckRemoveBlaster
@@ -6673,6 +6715,8 @@ tu::itfreeze::ext::hook::it_8027649C
 tu::itfreeze::ext::hook::it_802E37A4
 tu::itfreezer::ext::hook::Item_80268E5C
 tu::itfreezer::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itfreezer::ext::hook::efLib_PauseAll
+tu::itfreezer::ext::hook::efLib_ResumeAll
 tu::itfreezer::ext::hook::it_8026B894
 tu::itfreezer::ext::hook::it_8026E15C
 tu::itfreezer::ext::hook::it_80272C6C
@@ -6686,6 +6730,8 @@ tu::itfreezer::ext::hook::it_8027A118
 tu::itfreezer::ext::hook::it_8027ADEC
 tu::itfushigibana::ext::hook::Item_80268E5C
 tu::itfushigibana::ext::hook::Item_8026AE84
+tu::itfushigibana::ext::hook::efLib_PauseAll
+tu::itfushigibana::ext::hook::efLib_ResumeAll
 tu::itfushigibana::ext::hook::it_8026BDB4
 tu::itfushigibana::ext::hook::it_8026D62C
 tu::itfushigibana::ext::hook::it_8026E15C
@@ -6965,6 +7011,8 @@ tu::ithassam::ext::hook::HSD_JObjSetMtxDirtySub
 tu::ithassam::ext::hook::Item_80268E5C
 tu::ithassam::ext::hook::Item_8026AE84
 tu::ithassam::ext::hook::atan2f
+tu::ithassam::ext::hook::efLib_PauseAll
+tu::ithassam::ext::hook::efLib_ResumeAll
 tu::ithassam::ext::hook::gm_8016B168
 tu::ithassam::ext::hook::it_8026B894
 tu::ithassam::ext::hook::it_8026D62C
@@ -7031,6 +7079,9 @@ tu::ithinoarashi::ext::hook::Item_80268B18
 tu::ithinoarashi::ext::hook::Item_80268E5C
 tu::ithinoarashi::ext::hook::Item_8026AE60
 tu::ithinoarashi::ext::hook::Item_8026AE84
+tu::ithinoarashi::ext::hook::efLib_DestroyAll
+tu::ithinoarashi::ext::hook::efLib_PauseAll
+tu::ithinoarashi::ext::hook::efLib_ResumeAll
 tu::ithinoarashi::ext::hook::efSync_Spawn
 tu::ithinoarashi::ext::hook::it_8026B3A8
 tu::ithinoarashi::ext::hook::it_8026B894
@@ -7070,6 +7121,8 @@ tu::ithitodeman::ext::hook::HSD_Randi
 tu::ithitodeman::ext::hook::Item_80268B18
 tu::ithitodeman::ext::hook::Item_80268E5C
 tu::ithitodeman::ext::hook::Item_8026AE84
+tu::ithitodeman::ext::hook::efLib_PauseAll
+tu::ithitodeman::ext::hook::efLib_ResumeAll
 tu::ithitodeman::ext::hook::efSync_Spawn
 tu::ithitodeman::ext::hook::ftLib_80086644
 tu::ithitodeman::ext::hook::it_8026B3A8
@@ -7092,6 +7145,8 @@ tu::ithouou::ext::hook::Item_80268B18
 tu::ithouou::ext::hook::Item_80268E5C
 tu::ithouou::ext::hook::Stage_GetBlastZoneBottomOffset
 tu::ithouou::ext::hook::Stage_GetBlastZoneTopOffset
+tu::ithouou::ext::hook::efLib_PauseAll
+tu::ithouou::ext::hook::efLib_ResumeAll
 tu::ithouou::ext::hook::it_8026B3A8
 tu::ithouou::ext::hook::it_8026B894
 tu::ithouou::ext::hook::it_8026DA08
@@ -7120,6 +7175,8 @@ tu::itkabigon::ext::hook::Item_80268E5C
 tu::itkabigon::ext::hook::Item_8026AE84
 tu::itkabigon::ext::hook::Stage_GetBlastZoneBottomOffset
 tu::itkabigon::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itkabigon::ext::hook::efLib_PauseAll
+tu::itkabigon::ext::hook::efLib_ResumeAll
 tu::itkabigon::ext::hook::efSync_Spawn
 tu::itkabigon::ext::hook::it_8026B894
 tu::itkabigon::ext::hook::it_8026D62C
@@ -7136,6 +7193,8 @@ tu::itkamex::ext::hook::HSD_JObjSetMtxDirtySub
 tu::itkamex::ext::hook::Item_80268B18
 tu::itkamex::ext::hook::Item_80268E5C
 tu::itkamex::ext::hook::Item_8026AE84
+tu::itkamex::ext::hook::efLib_PauseAll
+tu::itkamex::ext::hook::efLib_ResumeAll
 tu::itkamex::ext::hook::it_8026B3A8
 tu::itkamex::ext::hook::it_8026B894
 tu::itkamex::ext::hook::it_8026BB88
@@ -7236,6 +7295,8 @@ tu::itkirbyyoshispecialn::ext::hook::lb_8000B1CC
 tu::itkireihana::ext::hook::HSD_Randi
 tu::itkireihana::ext::hook::Item_80268E5C
 tu::itkireihana::ext::hook::Item_8026AE84
+tu::itkireihana::ext::hook::efLib_PauseAll
+tu::itkireihana::ext::hook::efLib_ResumeAll
 tu::itkireihana::ext::hook::it_8026B894
 tu::itkireihana::ext::hook::it_8026DA08
 tu::itkireihana::ext::hook::it_8026E248
@@ -7275,6 +7336,7 @@ tu::itkoopaflame::ext::hook::Item_80268E5C
 tu::itkoopaflame::ext::hook::Item_802694CC
 tu::itkoopaflame::ext::hook::atan2f
 tu::itkoopaflame::ext::hook::db_80225DD8
+tu::itkoopaflame::ext::hook::efLib_DestroyAll
 tu::itkoopaflame::ext::hook::ftKb_SpecialNKp_800FA83C
 tu::itkoopaflame::ext::hook::ftKb_SpecialNKp_800FA878
 tu::itkoopaflame::ext::hook::ftKp_SpecialLw_80134DE0
@@ -7454,6 +7516,7 @@ tu::itlgunbeam::ext::hook::Item_80268E5C
 tu::itlgunbeam::ext::hook::Item_802694CC
 tu::itlgunbeam::ext::hook::atan2f
 tu::itlgunbeam::ext::hook::db_80225DD8
+tu::itlgunbeam::ext::hook::efLib_DestroyAll
 tu::itlgunbeam::ext::hook::it_8026B3A8
 tu::itlgunbeam::ext::hook::it_8026B894
 tu::itlgunbeam::ext::hook::it_8026BB68
@@ -7742,6 +7805,8 @@ tu::itlizardon::ext::hook::HSD_Randi
 tu::itlizardon::ext::hook::Item_80268B18
 tu::itlizardon::ext::hook::Item_80268E5C
 tu::itlizardon::ext::hook::Item_8026AE84
+tu::itlizardon::ext::hook::efLib_PauseAll
+tu::itlizardon::ext::hook::efLib_ResumeAll
 tu::itlizardon::ext::hook::it_8026B3A8
 tu::itlizardon::ext::hook::it_8026B894
 tu::itlizardon::ext::hook::it_8026BB88
@@ -7767,6 +7832,8 @@ tu::itlucky::ext::hook::HSD_Randi
 tu::itlucky::ext::hook::Item_80268B18
 tu::itlucky::ext::hook::Item_80268E5C
 tu::itlucky::ext::hook::Item_8026AE84
+tu::itlucky::ext::hook::efLib_PauseAll
+tu::itlucky::ext::hook::efLib_ResumeAll
 tu::itlucky::ext::hook::it_8026B390
 tu::itlucky::ext::hook::it_8026B894
 tu::itlucky::ext::hook::it_8026BDB4
@@ -7798,6 +7865,8 @@ tu::itlugia::ext::hook::Item_80268B18
 tu::itlugia::ext::hook::Item_80268E5C
 tu::itlugia::ext::hook::Item_8026AE84
 tu::itlugia::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itlugia::ext::hook::efLib_PauseAll
+tu::itlugia::ext::hook::efLib_ResumeAll
 tu::itlugia::ext::hook::it_8026B3A8
 tu::itlugia::ext::hook::it_8026B894
 tu::itlugia::ext::hook::it_8026BB88
@@ -7869,6 +7938,9 @@ tu::itmaplib::ext::hook::mpLinesConnected
 tu::itmaril::ext::hook::HSD_JObjSetMtxDirtySub
 tu::itmaril::ext::hook::Item_80268E5C
 tu::itmaril::ext::hook::Item_8026AE84
+tu::itmaril::ext::hook::efLib_DestroyAll
+tu::itmaril::ext::hook::efLib_PauseAll
+tu::itmaril::ext::hook::efLib_ResumeAll
 tu::itmaril::ext::hook::it_8026B894
 tu::itmaril::ext::hook::it_8026BD9C
 tu::itmaril::ext::hook::it_8026BDB4
@@ -7931,6 +8003,8 @@ tu::itmariofireball::ext::hook::it_8027781C
 tu::itmarumine::ext::hook::HSD_JObjSetFlagsAll
 tu::itmarumine::ext::hook::Item_80268E5C
 tu::itmarumine::ext::hook::Item_8026AE84
+tu::itmarumine::ext::hook::efLib_PauseAll
+tu::itmarumine::ext::hook::efLib_ResumeAll
 tu::itmarumine::ext::hook::it_8026B390
 tu::itmarumine::ext::hook::it_8026B3A8
 tu::itmarumine::ext::hook::it_8026B894
@@ -7987,6 +8061,8 @@ tu::itmatadogas::ext::hook::HSD_Randi
 tu::itmatadogas::ext::hook::Item_80268B18
 tu::itmatadogas::ext::hook::Item_80268E5C
 tu::itmatadogas::ext::hook::Item_8026AE84
+tu::itmatadogas::ext::hook::efLib_PauseAll
+tu::itmatadogas::ext::hook::efLib_ResumeAll
 tu::itmatadogas::ext::hook::it_8026B3A8
 tu::itmatadogas::ext::hook::it_8026B894
 tu::itmatadogas::ext::hook::it_8026BB88
@@ -8072,6 +8148,8 @@ tu::itmew::ext::hook::HSD_Randi
 tu::itmew::ext::hook::Item_80268E5C
 tu::itmew::ext::hook::Item_8026AE84
 tu::itmew::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itmew::ext::hook::efLib_PauseAll
+tu::itmew::ext::hook::efLib_ResumeAll
 tu::itmew::ext::hook::it_8026B894
 tu::itmew::ext::hook::it_80272C6C
 tu::itmew::ext::hook::it_80273454
@@ -8108,6 +8186,7 @@ tu::itmewtwoshadowball::ext::hook::Item_8026AB54
 tu::itmewtwoshadowball::ext::hook::Item_8026AE84
 tu::itmewtwoshadowball::ext::hook::Item_8026AF0C
 tu::itmewtwoshadowball::ext::hook::atan2f
+tu::itmewtwoshadowball::ext::hook::efLib_DestroyAll
 tu::itmewtwoshadowball::ext::hook::efSync_Spawn
 tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80106F44
 tu::itmewtwoshadowball::ext::hook::ftKb_SpecialNMt_80106F9C
@@ -8612,6 +8691,7 @@ tu::itpeachtoadspore::ext::hook::HSD_Randf
 tu::itpeachtoadspore::ext::hook::Item_80268B18
 tu::itpeachtoadspore::ext::hook::Item_80268E5C
 tu::itpeachtoadspore::ext::hook::db_80225DD8
+tu::itpeachtoadspore::ext::hook::efLib_DestroyAll
 tu::itpeachtoadspore::ext::hook::efSync_Spawn
 tu::itpeachtoadspore::ext::hook::itColl_BounceOffShield
 tu::itpeachtoadspore::ext::hook::it_8026B3A8
@@ -8676,6 +8756,7 @@ tu::itpikachutjoltground::ext::hook::Item_80268B18
 tu::itpikachutjoltground::ext::hook::Item_80268E5C
 tu::itpikachutjoltground::ext::hook::atan2f
 tu::itpikachutjoltground::ext::hook::db_80225DD8
+tu::itpikachutjoltground::ext::hook::efLib_DestroyAll
 tu::itpikachutjoltground::ext::hook::efSync_Spawn
 tu::itpikachutjoltground::ext::hook::it_8026B3A8
 tu::itpikachutjoltground::ext::hook::it_8026B894
@@ -8709,6 +8790,8 @@ tu::itpippi::ext::hook::it_8027A09C
 tu::itpippi::ext::hook::it_8027A118
 tu::itporygon2::ext::hook::Item_80268E5C
 tu::itporygon2::ext::hook::Item_8026AE84
+tu::itporygon2::ext::hook::efLib_PauseAll
+tu::itporygon2::ext::hook::efLib_ResumeAll
 tu::itporygon2::ext::hook::it_8026B894
 tu::itporygon2::ext::hook::it_8026DA08
 tu::itporygon2::ext::hook::it_80272C6C
@@ -8734,6 +8817,9 @@ tu::itraikou::ext::hook::Camera_RequestQuake
 tu::itraikou::ext::hook::HSD_Randi
 tu::itraikou::ext::hook::Item_80268E5C
 tu::itraikou::ext::hook::Item_8026AE84
+tu::itraikou::ext::hook::efLib_DestroyAll
+tu::itraikou::ext::hook::efLib_PauseAll
+tu::itraikou::ext::hook::efLib_ResumeAll
 tu::itraikou::ext::hook::it_8026B894
 tu::itraikou::ext::hook::it_8026D62C
 tu::itraikou::ext::hook::it_8026E248
@@ -8813,6 +8899,7 @@ tu::itsamuschargeshot::ext::hook::Item_80268E5C
 tu::itsamuschargeshot::ext::hook::Item_8026A8EC
 tu::itsamuschargeshot::ext::hook::Item_8026AB54
 tu::itsamuschargeshot::ext::hook::atan2f
+tu::itsamuschargeshot::ext::hook::efLib_DestroyAll
 tu::itsamuschargeshot::ext::hook::efSync_Spawn
 tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCC14
 tu::itsamuschargeshot::ext::hook::ftKb_SpecialNSs_800FCC6C
@@ -8888,6 +8975,7 @@ tu::itsamusmissile::ext::hook::Item_80268B18
 tu::itsamusmissile::ext::hook::Item_80268E5C
 tu::itsamusmissile::ext::hook::atan2f
 tu::itsamusmissile::ext::hook::db_80225DD8
+tu::itsamusmissile::ext::hook::efLib_DestroyAll
 tu::itsamusmissile::ext::hook::efSync_Spawn
 tu::itsamusmissile::ext::hook::itColl_BounceOffShield
 tu::itsamusmissile::ext::hook::it_8026B3A8
@@ -9006,6 +9094,8 @@ tu::itseakvanish::ext::hook::it_802751D8
 tu::itsonans::ext::hook::HSD_JObjSetMtxDirtySub
 tu::itsonans::ext::hook::Item_80268E5C
 tu::itsonans::ext::hook::Item_8026AE84
+tu::itsonans::ext::hook::efLib_PauseAll
+tu::itsonans::ext::hook::efLib_ResumeAll
 tu::itsonans::ext::hook::it_8026B894
 tu::itsonans::ext::hook::it_8026D62C
 tu::itsonans::ext::hook::it_8026E15C
@@ -9121,6 +9211,9 @@ tu::itsuikun::ext::hook::Camera_RequestQuake
 tu::itsuikun::ext::hook::HSD_Randi
 tu::itsuikun::ext::hook::Item_80268E5C
 tu::itsuikun::ext::hook::Item_8026AE84
+tu::itsuikun::ext::hook::efLib_DestroyAll
+tu::itsuikun::ext::hook::efLib_PauseAll
+tu::itsuikun::ext::hook::efLib_ResumeAll
 tu::itsuikun::ext::hook::it_8026B894
 tu::itsuikun::ext::hook::it_8026D62C
 tu::itsuikun::ext::hook::it_8026E248
@@ -9219,6 +9312,8 @@ tu::ittarucann::ext::hook::lbVector_AngleXY
 tu::ittarucann::ext::hook::lb_8000B804
 tu::itthunder::ext::hook::Item_80268E5C
 tu::itthunder::ext::hook::Stage_GetBlastZoneTopOffset
+tu::itthunder::ext::hook::efLib_PauseAll
+tu::itthunder::ext::hook::efLib_ResumeAll
 tu::itthunder::ext::hook::it_8026B894
 tu::itthunder::ext::hook::it_8026E15C
 tu::itthunder::ext::hook::it_80272C6C
@@ -9329,6 +9424,8 @@ tu::itunknown::ext::hook::Stage_GetBlastZoneTopOffset
 tu::itunknown::ext::hook::Stage_GetCamBoundsBottomOffset
 tu::itunknown::ext::hook::Stage_GetCamBoundsTopOffset
 tu::itunknown::ext::hook::atan2f
+tu::itunknown::ext::hook::efLib_PauseAll
+tu::itunknown::ext::hook::efLib_ResumeAll
 tu::itunknown::ext::hook::it_8026B3A8
 tu::itunknown::ext::hook::it_8026B894
 tu::itunknown::ext::hook::it_8026BB88
@@ -9434,6 +9531,7 @@ tu::itwstar::ext::hook::HSD_Randi
 tu::itwstar::ext::hook::Item_80268E5C
 tu::itwstar::ext::hook::Item_8026AE84
 tu::itwstar::ext::hook::efAsync_Spawn
+tu::itwstar::ext::hook::efLib_DestroyAll
 tu::itwstar::ext::hook::it_8026B390
 tu::itwstar::ext::hook::it_8026B3A8
 tu::itwstar::ext::hook::it_8026B894
@@ -9577,6 +9675,7 @@ tu::itzeldadinfire::ext::hook::HSD_JObjSetMtxDirtySub
 tu::itzeldadinfire::ext::hook::Item_80268B18
 tu::itzeldadinfire::ext::hook::Item_80268E5C
 tu::itzeldadinfire::ext::hook::db_80225DD8
+tu::itzeldadinfire::ext::hook::efLib_DestroyAll
 tu::itzeldadinfire::ext::hook::efSync_Spawn
 tu::itzeldadinfire::ext::hook::ftLib_800865D8
 tu::itzeldadinfire::ext::hook::ftZd_SpecialLw_8013B540
@@ -9597,6 +9696,7 @@ tu::itzeldadinfireexplode::ext::hook::Item_80268B18
 tu::itzeldadinfireexplode::ext::hook::Item_80268E5C
 tu::itzeldadinfireexplode::ext::hook::Item_802694CC
 tu::itzeldadinfireexplode::ext::hook::db_80225DD8
+tu::itzeldadinfireexplode::ext::hook::efLib_DestroyAll
 tu::itzeldadinfireexplode::ext::hook::efSync_Spawn
 tu::itzeldadinfireexplode::ext::hook::it_8026B3A8
 tu::itzeldadinfireexplode::ext::hook::it_8026B894
@@ -10071,6 +10171,7 @@ tu::vi0102::ext::hook::Stage_802251E8
 tu::vi0102::ext::hook::Stage_8022524C
 tu::vi0102::ext::hook::Stage_8022532C
 tu::vi0102::ext::hook::efAsync_LoadSync
+tu::vi0102::ext::hook::efLib_Init
 tu::vi0102::ext::hook::gm_8016895C
 tu::vi0102::ext::hook::gm_801A4B60
 tu::vi0102::ext::hook::lbAudioAx_800236DC
@@ -10126,6 +10227,7 @@ tu::vi0401::ext::hook::Stage_802251E8
 tu::vi0401::ext::hook::Stage_8022524C
 tu::vi0401::ext::hook::Stage_8022532C
 tu::vi0401::ext::hook::efAsync_LoadSync
+tu::vi0401::ext::hook::efLib_Init
 tu::vi0401::ext::hook::gm_8016895C
 tu::vi0401::ext::hook::gm_8017E430
 tu::vi0401::ext::hook::gm_801A4B60
@@ -10159,6 +10261,7 @@ tu::vi0402::ext::hook::HSD_JObjLoadJoint
 tu::vi0402::ext::hook::HSD_JObjReqAnimAll
 tu::vi0402::ext::hook::Player_InitAllPlayers
 tu::vi0402::ext::hook::efAsync_LoadSync
+tu::vi0402::ext::hook::efLib_Init
 tu::vi0402::ext::hook::gm_8016895C
 tu::vi0402::ext::hook::gm_801A4B60
 tu::vi0402::ext::hook::lbAudioAx_800236DC
@@ -10215,6 +10318,7 @@ tu::vi0501::ext::hook::Stage_802251E8
 tu::vi0501::ext::hook::Stage_8022524C
 tu::vi0501::ext::hook::Stage_8022532C
 tu::vi0501::ext::hook::efAsync_LoadSync
+tu::vi0501::ext::hook::efLib_Init
 tu::vi0501::ext::hook::gm_8016895C
 tu::vi0501::ext::hook::gm_801A4B60
 tu::vi0501::ext::hook::grLib_801C9A10
@@ -10271,6 +10375,7 @@ tu::vi0502::ext::hook::Stage_802251E8
 tu::vi0502::ext::hook::Stage_8022524C
 tu::vi0502::ext::hook::Stage_8022532C
 tu::vi0502::ext::hook::efAsync_LoadSync
+tu::vi0502::ext::hook::efLib_Init
 tu::vi0502::ext::hook::gm_8016895C
 tu::vi0502::ext::hook::gm_801A4B60
 tu::vi0502::ext::hook::grLib_801C9A10
@@ -10317,6 +10422,7 @@ tu::vi0601::ext::hook::Stage_802251E8
 tu::vi0601::ext::hook::Stage_8022524C
 tu::vi0601::ext::hook::Stage_8022532C
 tu::vi0601::ext::hook::efAsync_LoadSync
+tu::vi0601::ext::hook::efLib_Init
 tu::vi0601::ext::hook::gm_8016895C
 tu::vi0601::ext::hook::gm_801A4B60
 tu::vi0601::ext::hook::grCorneria_801E1BF0
@@ -10392,6 +10498,7 @@ tu::geno_game::ext::hook::db_80225DD8
 tu::geno_game::ext::hook::efAsync_QueueFlush
 tu::geno_game::ext::hook::efAsync_MexSpawn
 tu::geno_game::ext::hook::lb_8000B1CC
+tu::geno_game::ext::hook::hsd_8039D5DC
 tu::geno_game::ext::hook::HSD_CObjGetEyePosition
 tu::geno_game::ext::hook::HSD_CObjGetViewingMtxPtr
 tu::geno_game::ext::hook::HSD_CObjGetCurrent
@@ -11283,6 +11390,7 @@ tu::gmvs::ext::hook::Camera_Init
 tu::gmvs::ext::hook::Camera_Create
 tu::gmvs::ext::hook::lbRefract_800222A4
 tu::gmvs::ext::hook::lb_8000FCDC
+tu::gmvs::ext::hook::efLib_Init
 tu::gmvs::ext::hook::efAsync_LoadSync
 tu::gmvs::ext::hook::Player_80036DD8
 tu::gmvs::ext::hook::ftCo_800C06C0
@@ -11555,6 +11663,7 @@ tu::grcorneria::ext::GM_801883C0
 tu::grcorneria::ext::GM_GETDBPAUSEFLAG
 tu::grcorneria::ext::HSD_JOBJANIMALL
 tu::grcorneria::ext::HSD_JOBJREMOVEANIMALL
+tu::grcorneria::ext::HSD_8039D580
 tu::grcorneria::ext::ITEM_80268E5C
 tu::grcorneria::ext::IT_802E72E0
 tu::grcorneria::ext::IT_802E7654
@@ -11581,6 +11690,12 @@ tu::grlast::ext::GM_8016ECE8
 tu::grlib::ext::HSD_JOBJADDANIMALL
 tu::grlib::ext::HSD_JOBJANIMALL
 tu::grlib::ext::HSD_JOBJREQANIMALL
+tu::grlib::ext::HSD_8039D4DC
+tu::grlib::ext::HSD_8039D5DC
+tu::grlib::ext::HSD_8039EFAC
+tu::grlib::ext::HSD_8039F05C
+tu::grlib::ext::HSD_8039F6CC
+tu::grlib::ext::PSADDGENERATORAPPSRT_BEGIN
 tu::grmaterial::ext::HSD_SETMATERIALCOLOR
 tu::grmaterial::ext::HSD_SETMATERIALSHININESS
 tu::grmaterial::ext::HSD_SETUPRENDERMODEWITHCUSTOMPE
@@ -11677,6 +11792,7 @@ tu::gmlightning::ext::GMVSMELEE_ENTERVS
 tu::gmlightning::ext::GMVSMELEE_ENTERSUDDENDEATH
 tu::gmmain::ext::HSD_PADLIBDATA
 tu::gmmain::ext::DBLEVEL
+tu::gmmain::ext::HSD_ASSERT_HOOK
 tu::gmmain_lib::ext::HSD_RANDI
 tu::gmmain_lib::ext::GMMAINLIB_803D4A80
 tu::gmmain_lib::ext::DBLEVEL
@@ -11844,7 +11960,9 @@ tu::lb_00B0::ext::hook::HSD_AObjReqAnim
 tu::lb_00B0::ext::hook::HSD_AObjSetRate
 tu::lb_00B0::ext::hook::HSD_JObjAddAnimAll
 tu::lb_00B0::ext::hook::HSD_JObjClearFlags
+tu::lb_00B0::ext::hook::HSD_JObjDeleteRObj
 tu::lb_00B0::ext::hook::HSD_JObjGetFlags
+tu::lb_00B0::ext::hook::HSD_JObjPrependRObj
 tu::lb_00B0::ext::hook::HSD_JObjSetFlags
 tu::lb_00B0::ext::hook::HSD_JObjSetMtxDirtySub
 tu::lb_00B0::ext::hook::HSD_JObjSetupMatrixSub
@@ -13232,6 +13350,7 @@ stubs::FTCO_800957F4
 stubs::FTANIM_APPLYPARTANIM
 stubs::FTANIM_80070C48
 stubs::FTANIM_80070CC4
+stubs::EFLIB_DESTROYALL
 stubs::PLAYER_GETPLAYERSLOTTYPE
 stubs::FTCLIFFCOMMON_80081298
 tu::ftcaptainspecialhi::ext::FTCO_8009CA0C
@@ -13445,6 +13564,7 @@ tu::ftkirbyspecialgamewatch::ext::IT_802C74D8
 tu::ftkirbyspecialgamewatch::ext::IT_802C760C
 tu::ftkirbyspecialgamewatch::ext::IT_802C7658
 tu::ftkirbyspecialgamewatch::ext::IT_802C7678
+tu::ftkirbyspecialhi::ext::EFLIB_SETFLAGS
 tu::ftkirbyspecialhi::ext::IT_8029BAB8
 tu::ftkirbyspecialhi::ext::LB_8000B1CC
 tu::ftkirbyspecialhi::ext::FTCLIFFCOMMON_80081370
@@ -13468,6 +13588,7 @@ tu::ftkirbyspecialluigi::ext::LB_8000B1CC
 tu::ftkirbyspecialluigi::ext::IT_802C01AC
 tu::ftkirbyspecialluigi::ext::EFSYNC_SPAWN
 tu::ftkirbyspeciallw::ext::MPCHECKALLREMAP
+tu::ftkirbyspeciallw::ext::EFLIB_DESTROYALL
 tu::ftkirbyspeciallw::ext::EFSYNC_SPAWN
 tu::ftkirbyspeciallw::ext::FTPARTSETROTX
 tu::ftkirbyspecialmario::ext::LB_8000B1CC
@@ -13623,6 +13744,7 @@ tu::ftnessattacks4::ext::IT_802AD478
 tu::ftnessattacks4::ext::IT_802AD6B8
 tu::ftnessspecialhi::ext::LB_8000B1CC
 tu::ftnessspecialhi::ext::FTPARTSETROTX
+tu::ftnessspecialhi::ext::EFLIB_DESTROYALL
 tu::ftnessspecialhi::ext::IT_802AB3F0
 tu::ftnessspecialhi::ext::IT_802AB9C0
 tu::ftnessspecialhi::ext::IT_802AB58C
@@ -14159,6 +14281,7 @@ hooks::MP_LINE_GET_PREV
 hooks::FT_80084A18
 hooks::FTCO_FALL_ENTER
 hooks::FT_8008A2BC
+hooks::EFLIB_DESTROY_ALL
 hooks::HSD_JOBJ_SET_TRANSLATE
 hooks::HSD_JOBJ_SET_SCALE
 hooks::HSD_JOBJ_LOAD_JOINT

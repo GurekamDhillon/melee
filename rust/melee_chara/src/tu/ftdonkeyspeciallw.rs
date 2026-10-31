@@ -37,7 +37,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, g: G, jobj: *mut HSD_JObj) {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, g, jobj),
-            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, g, &mut *(jobj as *mut _)); } },
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, g, &[jobj as *const core::ffi::c_void]); } },
         }
     }
     crate::port_hook!(EFASYNC_SPAWN, efAsync_Spawn, crate::adapt::efAsync_Spawn_plain, (g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj));

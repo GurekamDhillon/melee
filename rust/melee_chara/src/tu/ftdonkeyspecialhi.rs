@@ -34,7 +34,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, g: G, jobj: *mut HSD_JObj) {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, g, jobj),
-            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, g, &mut *(jobj as *mut _)); } },
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, g, &[jobj as *const core::ffi::c_void]); } },
         }
     }
     pub static mut FTCLIFFCOMMON_80081370: Option<fn(G) > = None;

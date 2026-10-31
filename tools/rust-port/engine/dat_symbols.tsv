@@ -12,11 +12,11 @@ sym	grGroundParam	GroundParam	src/melee/gr/grdatfiles.c:69 stage_info.param
 sym	itemdata	custom:ptrtable_itemdata	src/melee/gr/types.h:6A8 itemdata
 sym	map_plit	custom:ptrtable_lightlist	src/melee/gr/types.h:6C4 map_plit
 sym	quake_model_set	DynamicModelDesc	src/melee/gr/types.h:6CC quake_model_set
-sym	map_ptcl	raw	src/melee/gr/grdatfiles.c:41 (HSD_Archive*, psInitDataBankLocate)
-sym	map_texg	raw	src/melee/gr/grdatfiles.c:42 (HSD_Archive*, psInitDataBankLocate)
+sym	map_ptcl	custom:ptclcmd	src/melee/gr/grdatfiles.c:41 (HSD_Archive*, psInitDataBankLocate)
+sym	map_texg	custom:ptcltex	src/melee/gr/grdatfiles.c:42 (HSD_Archive*, psInitDataBankLocate)
 sym	yakumono_param	raw	src/melee/gr/types.h:6C0 yakumono_param (void*)
 sym	itPublicData	custom:itco	src/melee/it/iteffect.c:19 it_804D6D20
-sym	effCommonDataTable	EF_DAT_Entry	src/melee/ef/efasync.c:1294 EF_DAT_Entry* (entry 0 decodes; later entries are read through the pointer table by index)
+sym	effCommonDataTable	custom:efdat	src/melee/ef/efasync.c:1294 EF_DAT_Entry* (entry 0 decodes; later entries are read through the pointer table by index)
 suffix	_matanim_joint	HSD_MatAnimJoint	model files, e.g. gmresultplayer.c:583 Eblm_matanim_joint
 suffix	_shapeanim_joint	HSD_ShapeAnimJoint	tyfigupon.c:164 shapeanim_str
 suffix	_figatree	FigaTree	lb/lbanim.c FigaTree: every fighter animation public of the PlXxAJ.dat files
@@ -34,5 +34,5 @@ sym	ftLoadCommonData	custom:plco	src/melee/ft/fighter.c:312 Fighter_LoadCommonDa
 sym	plLoadCommonData	*pl_804D6470_t	src/melee/pl/player.c Player_80036DD8 pl_804D6470 = *sp8
 sym	lbRefData	custom:lbrefdata	src/melee/lb/lbrefract.c:373
 sym	effBehaviorTable	raw	src/melee/ef/efasync.c (effect behavior table; typed by step 10)
-prefix	eff	EF_DAT_Entry	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
+prefix	eff	custom:efdat	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
 sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)

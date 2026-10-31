@@ -29,11 +29,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::debugconsole_main::ext::hook::OSClearContext.is_none() { melee_runtime::tu::debugconsole_main::ext::hook::OSClearContext = Some(|_| ()); } }
     unsafe { if melee_runtime::tu::debugconsole_main::ext::hook::OSGetPhysicalMemSize.is_none() { melee_runtime::tu::debugconsole_main::ext::hook::OSGetPhysicalMemSize = Some(|| 0); } }
     unsafe { if melee_runtime::tu::debugconsole_main::ext::hook::OSCreateAndResumeDebugThread.is_none() { melee_runtime::tu::debugconsole_main::ext::hook::OSCreateAndResumeDebugThread = Some(|_| ()); } }
-    unsafe { melee_runtime::tu::debugconsole_main::ext::hook::hsd_803941E8 = Some(|_, _| 0); }
-    unsafe { melee_runtime::tu::debugconsole_main::ext::hook::hsd_803921B8 = Some(|_, _, _, _, _, _, _, _| ()); }
-    unsafe { melee_runtime::tu::debugconsole_main::ext::hook::hsd_803922FC = Some(|_, _, _, _, _, _, _, _, _| ()); }
-    unsafe { melee_runtime::tu::debugconsole_main::ext::hook::hsd_80393E68 = Some(|_, _| ()); }
-    unsafe { melee_runtime::tu::debugconsole_main::ext::hook::hsd_80394068 = Some(|| 0); }
     unsafe { if melee_runtime::tu::devcom::ext::hook::OSDisableInterrupts.is_none() { melee_runtime::tu::devcom::ext::hook::OSDisableInterrupts = Some(|| 0); } }
     unsafe { if melee_runtime::tu::devcom::ext::hook::OSRestoreInterrupts.is_none() { melee_runtime::tu::devcom::ext::hook::OSRestoreInterrupts = Some(|_| ()); } }
     unsafe { if melee_runtime::tu::devcom::ext::hook::DCStoreRange.is_none() { melee_runtime::tu::devcom::ext::hook::DCStoreRange = Some(|_, _| ()); } }
@@ -164,8 +159,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::lbcardnew::ext::hook::CARDUnmount.is_none() { melee_runtime::tu::lbcardnew::ext::hook::CARDUnmount = Some(|_| -3); } }
     unsafe { if melee_runtime::tu::lbcardnew::ext::hook::OSDisableInterrupts.is_none() { melee_runtime::tu::lbcardnew::ext::hook::OSDisableInterrupts = Some(|| 0); } }
     unsafe { if melee_runtime::tu::lbcardnew::ext::hook::OSRestoreInterrupts.is_none() { melee_runtime::tu::lbcardnew::ext::hook::OSRestoreInterrupts = Some(|_| 0); } }
-    unsafe { melee_runtime::tu::lbcardnew::ext::hook::hsd_803AAA48 = Some(|| ()); }
-    unsafe { melee_runtime::tu::lbcardnew::ext::hook::hsd_803AC3E0 = Some(|_, _, _, _, _| ()); }
     unsafe { if melee_runtime::tu::lbcollision::ext::hook::GXBegin.is_none() { melee_runtime::tu::lbcollision::ext::hook::GXBegin = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbcollision::ext::hook::GXCallDisplayList.is_none() { melee_runtime::tu::lbcollision::ext::hook::GXCallDisplayList = Some(|_, _| ()); } }
     unsafe { if melee_runtime::tu::lbcollision::ext::hook::GXClearVtxDesc.is_none() { melee_runtime::tu::lbcollision::ext::hook::GXClearVtxDesc = Some(|| ()); } }
@@ -240,11 +233,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::objalloc::ext::hook::Snap_RenderPoolAt.is_none() { melee_runtime::tu::objalloc::ext::hook::Snap_RenderPoolAt = Some(|_| core::ptr::null_mut()); } }
     unsafe { if melee_runtime::tu::objalloc::ext::hook::Snap_RenderPoolCount.is_none() { melee_runtime::tu::objalloc::ext::hook::Snap_RenderPoolCount = Some(|| 0); } }
     unsafe { if melee_runtime::tu::objalloc::ext::hook::Snap_Resimulating.is_none() { melee_runtime::tu::objalloc::ext::hook::Snap_Resimulating = Some(|| 0); } }
-    unsafe { melee_runtime::tu::particle::ext::hook::hsd_8039D1EC = Some(|| 0); }
-    unsafe { melee_runtime::tu::particle::ext::hook::hsd_8039F05C = Some(|_, _, _| core::ptr::null_mut()); }
-    unsafe { melee_runtime::tu::particle::ext::hook::psAttachGeneratorAppSRT = Some(|_, _| 0); }
-    unsafe { melee_runtime::tu::particle::ext::hook::psAttachParticleAppSRT = Some(|_, _| 0); }
-    unsafe { melee_runtime::tu::particle::ext::hook::psRemoveParticleAppSRT = Some(|_| 0); }
     unsafe { if melee_runtime::tu::perf::ext::hook::OSGetTime.is_none() { melee_runtime::tu::perf::ext::hook::OSGetTime = Some(|| crate::seams::os_get_time()); } }
     unsafe { if melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette.is_none() { melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette = Some(|| ()); } }
     unsafe { if melee_runtime::tu::pobj::native::ext::hook::GXAuroraLoadPalette.is_none() { melee_runtime::tu::pobj::native::ext::hook::GXAuroraLoadPalette = Some(|_, _, _| ()); } }
@@ -311,9 +299,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::psdisp::ext::hook::GXSetZMode.is_none() { melee_runtime::tu::psdisp::ext::hook::GXSetZMode = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::psdisp::ext::hook::GXTexCoord1x8.is_none() { melee_runtime::tu::psdisp::ext::hook::GXTexCoord1x8 = Some(|_| ()); } }
     unsafe { if melee_runtime::tu::psdisp::ext::hook::GXTexCoord2f32.is_none() { melee_runtime::tu::psdisp::ext::hook::GXTexCoord2f32 = Some(|_, _| ()); } }
-    unsafe { melee_runtime::tu::psdisp::ext::hook::psSetupTev = Some(|_| ()); }
-    unsafe { melee_runtime::tu::psdisp::ext::hook::psSetupTevCommon = Some(|| ()); }
-    unsafe { melee_runtime::tu::psdisp::ext::hook::psSetupTevInvalidState = Some(|| ()); }
     unsafe { if melee_runtime::tu::psdisptev::ext::hook::GXSetNumTevStages.is_none() { melee_runtime::tu::psdisptev::ext::hook::GXSetNumTevStages = Some(|_| ()); } }
     unsafe { if melee_runtime::tu::psdisptev::ext::hook::GXSetNumTexGens.is_none() { melee_runtime::tu::psdisptev::ext::hook::GXSetNumTexGens = Some(|_| ()); } }
     unsafe { if melee_runtime::tu::psdisptev::ext::hook::GXSetTevAlphaIn.is_none() { melee_runtime::tu::psdisptev::ext::hook::GXSetTevAlphaIn = Some(|_, _, _, _, _| ()); } }
@@ -481,26 +466,6 @@ pub fn install_gen() {
     unsafe { if melee_world::tu::cmcamera::ext::hook::diag_game_camera.is_none() { melee_world::tu::cmcamera::ext::hook::diag_game_camera = Some(|_, _, _| ()); } }
     unsafe { if melee_world::tu::efn::efasync::ext::hook::Mex_EffectCount.is_none() { melee_world::tu::efn::efasync::ext::hook::Mex_EffectCount = Some(|| 0); } }
     unsafe { if melee_world::tu::efn::efasync::ext::hook::Mex_EffectString.is_none() { melee_world::tu::efn::efasync::ext::hook::Mex_EffectString = Some(|_, _| core::ptr::null_mut()); } }
-    unsafe { melee_world::tu::efn::efasync::ext::hook::hsd_8039EFAC = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::efasync::ext::hook::psInitDataBank = Some(|_, _, _, _, _| ()); }
-    unsafe { melee_world::tu::efn::efasync::ext::hook::psInitDataBankLoad = Some(|_, _, _, _, _| ()); }
-    unsafe { melee_world::tu::efn::efasync::ext::hook::psInitDataBankLocate = Some(|_, _, _| ()); }
-    unsafe { if melee_world::tu::efn::eflib::ext::hook::HSD_JObjSetDPtclCallback.is_none() { melee_world::tu::efn::eflib::ext::hook::HSD_JObjSetDPtclCallback = Some(|_| ()); } }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_80398A08 = Some(|_| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039CEAC = Some(|_| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D1E4 = Some(|_, _| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D354 = Some(|_| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D4DC = Some(|_| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039D688 = Some(|_, _, _| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039EE24 = Some(|_| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039EFAC = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039F05C = Some(|_, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::hsd_8039F6CC = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::psAddGeneratorAppSRT_begin = Some(|_, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::psAddParticleAppSRT_begin = Some(|_, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::psDispParticles = Some(|_, _| ()); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::psInitAppSRT = Some(|_, _| 0); }
-    unsafe { melee_world::tu::efn::eflib::ext::hook::psRemoveParticleAppSRT = Some(|_| 0); }
     unsafe { if melee_world::tu::grdisplay::ext::hook::Wb_RenderOption.is_none() { melee_world::tu::grdisplay::ext::hook::Wb_RenderOption = Some(|_, _| 0); } }
     unsafe { if melee_world::tu::grfigure1::ext::hook::Mex_GrBind.is_none() { melee_world::tu::grfigure1::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
     unsafe { if melee_world::tu::grfigure2::ext::hook::Mex_GrBind.is_none() { melee_world::tu::grfigure2::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
@@ -513,7 +478,6 @@ pub fn install_gen() {
     unsafe { melee_world::tu::grgreens::ext::hook::lbAudioAx_800237A8 = Some(|_, _, _| 0); }
     unsafe { melee_world::tu::grinishie1::ext::hook::lbAudioAx_80023F28 = Some(|_| 0); }
     unsafe { melee_world::tu::grmutecity::ext::hook::lbAudioAx_80024D78 = Some(|_| ()); }
-    unsafe { melee_world::tu::grmutecity::ext::hook::psAddGeneratorAppSRT_begin = Some(|_, _| core::ptr::null_mut()); }
     unsafe { if melee_world::tu::groldkongo::ext::hook::Mex_GrBind.is_none() { melee_world::tu::groldkongo::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
     unsafe { melee_world::tu::groldpupupu::ext::hook::lbAudioAx_800237A8 = Some(|_, _, _| 0); }
     unsafe { if melee_world::tu::groldyoshi::ext::hook::Mex_GrBind.is_none() { melee_world::tu::groldyoshi::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
@@ -547,7 +511,6 @@ pub fn install_gen() {
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_80023870 = Some(|_, _, _, _| 0); }
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_80024B1C = Some(|_, _| ()); }
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_80024B58 = Some(|_, _| ()); }
-    unsafe { melee_world::tu::ground::ext::hook::psInitDataBankLoad = Some(|_, _, _, _, _| ()); }
     unsafe { melee_world::tu::ground::ext::hook::tyDisplay_8031C2CC = Some(|| ()); }
     unsafe { if melee_world::tu::grpstadium::ext::hook::GXGetTexBufferSize.is_none() { melee_world::tu::grpstadium::ext::hook::GXGetTexBufferSize = Some(|a0, a1, a2, a3, a4| crate::seams::gx_tex_buffer_size(a0, a1, a2, a3, a4)); } }
     unsafe { melee_world::tu::if_2F6E::ext::hook::lbAudioAx_800237A8 = Some(|_, _, _| 0); }
@@ -792,7 +755,6 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_LuaCall.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_LuaCall = Some(|_, _, _, _| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideCount.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideCount = Some(|_| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideField.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideField = Some(|_, _, _| 0); } }
-    unsafe { melee_modes::tu::geno_game::ext::hook::hsd_8039D5DC = Some(|_| ()); }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ArticleParam.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ArticleParam = Some(|_, _, _| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitCount.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitCount = Some(|_, _| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitParam.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitParam = Some(|_, _, _, _| 0); } }
@@ -845,8 +807,6 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Geno_DefineBaseCK.is_none() { melee_modes::tu::gm_1601::ext::hook::Geno_DefineBaseCK = Some(|_| -1); } }
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Geno_DefineBaseKind.is_none() { melee_modes::tu::gm_1601::ext::hook::Geno_DefineBaseKind = Some(|_| -1); } }
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Mex_Enabled.is_none() { melee_modes::tu::gm_1601::ext::hook::Mex_Enabled = Some(|_| 0); } }
-    unsafe { melee_modes::tu::gm_1601::ext::hook::hsd_80398310 = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_modes::tu::gm_1601::ext::hook::hsd_80392528 = Some(|_| ()); }
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Geno_DefineHasArt.is_none() { melee_modes::tu::gm_1601::ext::hook::Geno_DefineHasArt = Some(|_, _, _| 0); } }
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Geno_DefineArtBaseCK.is_none() { melee_modes::tu::gm_1601::ext::hook::Geno_DefineArtBaseCK = Some(|_| -1); } }
     unsafe { if melee_modes::tu::gm_1601::ext::hook::Mex_AnnouncerForPortCKind.is_none() { melee_modes::tu::gm_1601::ext::hook::Mex_AnnouncerForPortCKind = Some(|_| 0); } }
@@ -1037,14 +997,7 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::card::ext::CARDSetStatusAsync_hook.is_none() { melee_runtime::tu::card::ext::CARDSetStatusAsync_hook = Some(melee_link::cabi::c4(|_, _, _, _| -3)); } }
     unsafe { if melee_runtime::tu::card::ext::CARDWriteAsync_hook.is_none() { melee_runtime::tu::card::ext::CARDWriteAsync_hook = Some(melee_link::cabi::c5(|_, _, _, _, _| -3)); } }
     unsafe { if melee_runtime::tu::card::ext::CARDWrite_hook.is_none() { melee_runtime::tu::card::ext::CARDWrite_hook = Some(melee_link::cabi::c4(|_, _, _, _| -3)); } }
-    unsafe { melee_world::tu::grcorneria::ext::HSD_8039D580 = Some(|_| ()); }
     unsafe { if melee_world::tu::grizumi::ext::GXGETTEXBUFFERSIZE.is_none() { melee_world::tu::grizumi::ext::GXGETTEXBUFFERSIZE = Some(|a0, a1, a2, a3, a4| crate::seams::gx_tex_buffer_size(a0, a1, a2, a3, a4)); } }
-    unsafe { melee_world::tu::grlib::ext::HSD_8039D4DC = Some(|_| ()); }
-    unsafe { melee_world::tu::grlib::ext::HSD_8039D5DC = Some(|_| ()); }
-    unsafe { melee_world::tu::grlib::ext::HSD_8039EFAC = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::grlib::ext::HSD_8039F05C = Some(|_, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::grlib::ext::HSD_8039F6CC = Some(|_, _, _, _| core::ptr::null_mut()); }
-    unsafe { melee_world::tu::grlib::ext::PSADDGENERATORAPPSRT_BEGIN = Some(|_, _| core::ptr::null_mut()); }
     unsafe { if melee_world::tu::ifall::ext::H_Wb_RenderOption.is_none() { melee_world::tu::ifall::ext::H_Wb_RenderOption = Some(melee_link::cabi::c2(|_, _| 0)); } }
     unsafe { if melee_world::tu::ifcoget::ext::H_Ui_RetailHidden.is_none() { melee_world::tu::ifcoget::ext::H_Ui_RetailHidden = Some(melee_link::cabi::c1(|_| 0)); } }
     unsafe { if melee_world::tu::stage::ext::H_Mex_GrExternalCount.is_none() { melee_world::tu::stage::ext::H_Mex_GrExternalCount = Some(melee_link::cabi::c0(|| 0)); } }
@@ -1067,7 +1020,6 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTCOUNT.is_none() { melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTCOUNT = Some(|| 0); } }
     unsafe { if melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTBGM.is_none() { melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTBGM = Some(|_| 0); } }
     unsafe { if melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTCHANCE.is_none() { melee_modes::tu::gmmain_lib::ext::MEX_MENUPLAYLISTCHANCE = Some(|_| 0); } }
-    unsafe { melee_modes::tu::gmopening::ext::H_hsd_80392528 = Some(melee_link::cabi::c1(|_| ())); }
     unsafe { if melee_modes::tu::gmpause::ext::H_Ui_RetailHidden.is_none() { melee_modes::tu::gmpause::ext::H_Ui_RetailHidden = Some(melee_link::cabi::c1(|_| 0)); } }
     unsafe { if melee_modes::tu::gmprogressive::ext::H_OSSetProgressiveMode.is_none() { melee_modes::tu::gmprogressive::ext::H_OSSetProgressiveMode = Some(melee_link::cabi::c1(|_| ())); } }
     unsafe { if melee_modes::tu::gmscmemcard::ext::SCENEREPORT_MEMCARD.is_none() { melee_modes::tu::gmscmemcard::ext::SCENEREPORT_MEMCARD = Some(|_, _| ()); } }
@@ -1166,9 +1118,6 @@ pub fn install_gen() {
     unsafe { melee_modes::tu::mnmainrule::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|_| ())); }
     unsafe { melee_modes::tu::mnname::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|_| ())); }
     unsafe { melee_world::tu::grcorneria::ext::LBAUDIOAX_800237A8 = Some(|_, _, _| 0); }
-    unsafe { melee_world::tu::grdatfiles::ext::PSINITDATABANK = Some(|_, _, _, _, _| ()); }
-    unsafe { melee_world::tu::grdatfiles::ext::PSINITDATABANKLOAD = Some(|_, _, _, _, _| ()); }
-    unsafe { melee_world::tu::grdatfiles::ext::PSINITDATABANKLOCATE = Some(|_, _, _| ()); }
     unsafe { melee_world::tu::grinishie2::ext::LBAUDIOAX_80023F28 = Some(|_| 0); }
     unsafe { melee_chara::tu::ftcrazyhandpoke::ext::LBAUDIOAX_800236B8 = Some(|_| 0); }
     unsafe { melee_chara::tu::ftcrazyhandtaggrab::ext::LBAUDIOAX_800236B8 = Some(|_| ()); }
@@ -1248,7 +1197,7 @@ pub unsafe fn ext_fallback(name: &str, _args: &[u64]) -> u64 {
         "Script_OnePStage" | "Script_SimByte" | "Script_SkillEvent" | "Script_StageArchiveInput" | "Script_StageIsolationAllowed" | "Script_StageIsolationReleased" => 0x0,
         "Script_StageModelDraw" | "Script_StageModelFor" | "Script_StageModelsReset" | "Script_StageRawStash" | "Script_StageResourceOwner" | "Script_StageResourceOwnerAlive" => 0x0,
         "Script_StageSlotMissionInput" | "Script_StageSlotVisual" | "Script_StageSlotsEnded" | "Script_StageTextByte" | "Script_StageWanted" | "Script_TargetBroken" => 0x0,
-        "Script_WarmModelDraw" | "Script_WarmSync" | "Wb_RenderActive" | "Wb_RenderOption" | "hsd_8039D3AC" | "psRemoveParticleAppSRT" => 0x0,
+        "Script_WarmModelDraw" | "Script_WarmSync" | "Wb_RenderActive" | "Wb_RenderOption" => 0x0,
         "Geno_DefineBaseKind" | "Geno_ProfileForKind" => 0xffffffffffffffff,
         _ => panic!("TODO ext: {name} is in a TU that is not ported yet"),
     }

@@ -255,8 +255,7 @@ pub unsafe fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDes
 
 /// `efSync_Spawn(gfx_id, gobj, ...)`: `args` is the variadic tail (pointers, in `va_arg` order).
 pub unsafe fn efSync_Spawn(id: i32, gobj: G, args: &[*mut c_void]) -> *mut c_void {
-    let mut va = melee_world::tu::efsync::Va::new(args);
-    melee_world::tu::efsync::efSync_Spawn(id, gobj, &mut va)
+    melee_world::tu::efsync::efSync_Spawn(id, gobj, core::slice::from_raw_parts(args.as_ptr() as *const *const c_void, args.len()))
 }
 /// Same, for the TUs that carry the tail as register-width integers.
 pub unsafe fn efSync_Spawn_usize(id: i32, gobj: G, args: &[usize]) -> *mut c_void {
@@ -266,26 +265,26 @@ pub unsafe fn efSync_Spawn_usize(id: i32, gobj: G, args: &[usize]) -> *mut c_voi
 
 type QPtr = *mut melee_types::EF_QueuedEffect;
 pub unsafe fn efAsync_LoadAsync(id: i32) {
-    melee_world::tu::efasync::efAsync_LoadAsync_native(id)
+    melee_world::tu::efasync::efAsync_LoadAsync(id)
 }
 pub unsafe fn efAsync_LoadSync(id: i32) {
-    melee_world::tu::efasync::efAsync_LoadSync_native(id)
+    melee_world::tu::efasync::efAsync_LoadSync(id)
 }
 /// `efAsync_Spawn(gobj, head, kind, gfx, jobj)` with no variadic tail.
 pub unsafe fn efAsync_Spawn_plain(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[])
+    melee_world::tu::efasync::efAsync_Spawn(gobj, q, kind, gfx, jobj, &[])
 }
 /// ... with one pointer tail argument.
 pub unsafe fn efAsync_Spawn_ptr<T>(gobj: G, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, arg: *const T) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, jobj, &[arg as *mut c_void])
+    melee_world::tu::efasync::efAsync_Spawn(gobj, q, kind, gfx, jobj, &[arg as *const c_void])
 }
 /// ... the `(gobj, head, i32 kind, i32 id, jobj, pos)` shape.
 pub unsafe fn efAsync_Spawn_i32<T>(gobj: G, q: *mut c_void, kind: i32, id: i32, jobj: *mut HSD_JObj, arg: *mut T) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind as u32, id as u32, jobj, &[arg as *mut c_void])
+    melee_world::tu::efasync::efAsync_Spawn(gobj, q, kind as u32, id as u32, jobj, &[arg as *const c_void])
 }
 /// ... the shape whose trailing slice starts with the JObj.
 pub unsafe fn efAsync_Spawn_slice(gobj: G, q: *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {
-    melee_world::tu::efasync::efAsync_Spawn_native(gobj, q as QPtr, kind, gfx, args[0] as *mut HSD_JObj, &args[1..])
+    melee_world::tu::efasync::efAsync_Spawn(gobj, q as QPtr as *mut c_void, kind, gfx, args[0] as *mut HSD_JObj, core::slice::from_raw_parts(args[1..].as_ptr() as *const *const c_void, args.len() - 1))
 }
 /// ... the slice shape with the queue head passed as `*mut *mut c_void`.
 pub unsafe fn efAsync_Spawn_slice_pp(gobj: G, q: *mut *mut c_void, kind: u32, gfx: u32, args: &[*mut c_void]) {

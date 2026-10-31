@@ -386,8 +386,32 @@ pub fn HSD_JObjAddNext<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree
 pub fn HSD_JObjGetPrev<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:Option<JObjId>)->Option<JObjId>{ melee_core::ct!("HSD_JObjGetPrev");t.get_prev(j)}
 pub fn HSD_JObjGetDObj<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:Option<JObjId>)->Option<D>{ melee_core::ct!("HSD_JObjGetDObj");t.get_dobj(j)}
 pub fn HSD_JObjAddDObj<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,d:Option<D>)->(){ melee_core::ct!("HSD_JObjAddDObj");t.add_dobj(j,d)}
-pub fn HSD_JObjPrependRObj<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,r:Option<R>)->(){ melee_core::ct!("HSD_JObjPrependRObj");t.prepend_robj(j,r)}
-pub fn HSD_JObjDeleteRObj<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,r:Option<R>)->(){ melee_core::ct!("HSD_JObjDeleteRObj");t.delete_robj(j,r)}
+/// `HSD_JObjPrependRObj`: `robj` becomes the head of the JObj's reference-object list.
+pub unsafe fn HSD_JObjPrependRObj(jobj: *mut HSD_JObj, robj: *mut HSD_RObj) {
+    melee_core::ct!("HSD_JObjPrependRObj");
+    if jobj.is_null() || robj.is_null() {
+        return;
+    }
+    (*robj).next = (*jobj).robj;
+    (*jobj).robj = robj;
+}
+/// `HSD_JObjDeleteRObj`: unlink `robj` from the JObj's list.
+pub unsafe fn HSD_JObjDeleteRObj(jobj: *mut HSD_JObj, robj: *mut HSD_RObj) {
+    melee_core::ct!("HSD_JObjDeleteRObj");
+    if jobj.is_null() || robj.is_null() {
+        return;
+    }
+    let mut cur_ptr: *mut *mut HSD_RObj = &raw mut (*jobj).robj;
+    while !(*cur_ptr).is_null() {
+        let cur = *cur_ptr;
+        if cur == robj {
+            *cur_ptr = (*cur).next;
+            (*robj).next = null_mut();
+            return;
+        }
+        cur_ptr = &raw mut (*cur).next;
+    }
+}
 pub fn HSD_JObjGetFlags<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:Option<JObjId>)->u32{ melee_core::ct!("HSD_JObjGetFlags");t.get_flags(j)}
 pub fn HSD_JObjSetFlags<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,f:u32)->(){ melee_core::ct!("HSD_JObjSetFlags");t.set_flags(j,f)}
 pub fn HSD_JObjSetFlagsAll<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,f:u32)->(){ melee_core::ct!("HSD_JObjSetFlagsAll");t.set_flags_all(j,f)}
@@ -418,7 +442,11 @@ pub fn JObjUpdateFunc<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Op
 pub fn resolveIKJoint1<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:JObjId){ melee_core::ct!("resolveIKJoint1");r.resolve_ik_joint1(t,j)}
 pub fn resolveIKJoint2<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:JObjId){ melee_core::ct!("resolveIKJoint2");r.resolve_ik_joint2(t,j)}
 pub fn jobj_get_effector_checked<X:JObjExt>(r:&JObjRt<X>,t:&JObjTree<X::D,u32>,j:Option<JObjId>)->Option<JObjId>{ melee_core::ct!("jobj_get_effector_checked");r.effector_checked(t,j)}
-pub fn HSD_JObjSetDPtclCallback<X:JObjExt>(r:&mut JObjRt<X>,cb:Option<crate::jobj_rt::DPtclCallback>){ melee_core::ct!("HSD_JObjSetDPtclCallback");r.set_dptcl_callback(cb)}
+/// `HSD_JObjSetDPtclCallback`: the callback JObj anim type 0x28 calls (`efLib_Cb_DPtcl`).
+pub unsafe fn HSD_JObjSetDPtclCallback(cb: Option<unsafe extern "C" fn(i32, i32, i32, *mut HSD_JObj)>) {
+    melee_core::ct!("HSD_JObjSetDPtclCallback");
+    crate::tu::jobj_ptr::dptcl_callback = cb;
+}
 
 /// Raw-pointer entry points over the native bridge above (callers hold game `HSD_JObj*`).
 /// `HSD_JObjSetupMatrix` (jobj.h inline): rebuild the matrix when dirty.

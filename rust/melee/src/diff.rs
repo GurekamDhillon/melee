@@ -57,6 +57,14 @@ struct Diff {
 
 struct Opts {
     unions: bool,
+    /// `--peek NAME`: also list fields whose name contains NAME when C and Rust agree.
+    peek: Option<String>,
+}
+
+impl Opts {
+    fn peeks(&self, name: &str) -> bool {
+        self.peek.as_deref().is_some_and(|p| name.contains(p))
+    }
 }
 
 fn rd(b: &[u8], size: usize) -> u64 {
@@ -94,19 +102,19 @@ fn walk(c: &[u8], r: &[u8], name: &str, gc: u32, nat: usize, size: usize, kind: 
         Kind::Union if !o.unions => {}
         Kind::F32 => {
             let (a, b) = (&c[nat..nat + 4], &r[nat..nat + 4]);
-            if a != b {
+            if a != b || o.peeks(name) {
                 sink(name.into(), gc, fnum(a), fnum(b));
             }
         }
         Kind::Int(sg) => {
             let (a, b) = (&c[nat..nat + size], &r[nat..nat + size]);
-            if a != b {
+            if a != b || o.peeks(name) {
                 sink(name.into(), gc, int_str(a, size, *sg), int_str(b, size, *sg));
             }
         }
         Kind::Blob | Kind::Union => {
             let (a, b) = (&c[nat..nat + size], &r[nat..nat + size]);
-            if a == b {
+            if a == b && !o.peeks(name) {
                 return;
             }
             if name.rsplit('.').next().is_some_and(|n| n.starts_with("bf_")) {
@@ -165,6 +173,8 @@ struct State {
     engine: bool,
     /// Engine only: per slot, the fighter's JObj tree in preorder as `[flags, rot x4, scale x3, translate x3, mtx 3x4]` bit patterns.
     joints: Vec<(i32, Vec<[u32; 26]>)>,
+    /// Engine only: per slot, the dynamic bone chains (`Engine::dyn_words`).
+    dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
 }
 
 fn capture(sim: &VsMatch, frame: i32) -> State {
@@ -180,6 +190,7 @@ fn capture(sim: &VsMatch, frame: i32) -> State {
         dump: sim.state_dump(),
         engine: false,
         joints: vec![],
+        dyns: vec![],
     }
 }
 
@@ -204,7 +215,8 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
         }
     }
     let joints = (0..2).map(|slot| (slot, e.joint_words(slot))).collect();
-    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: vec![], respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints })
+    let dyns = (0..2).map(|slot| (slot, e.dyn_words(slot))).collect();
+    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: e.item_rows(), respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints, dyns })
 }
 
 fn raw<T>(v: &T) -> &[u8] {
@@ -426,7 +438,7 @@ pub fn diff(args: &[String]) -> ExitCode {
         eprintln!("melee diff: {snap_path} is a snapshot of frame {}, not {frame}", snap.frame);
         return ExitCode::FAILURE;
     }
-    let opts = Opts { unions: has("--unions") };
+    let opts = Opts { unions: has("--unions"), peek: get("--peek") };
     let mut out: Vec<Diff> = Vec::new();
     if let Err(e) = compare(&snap, &st, &opts, &mut out) {
         eprintln!("melee diff: {e}");
@@ -649,15 +661,30 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
                 }
             }
         }
-        let seed = snap.u32(snap.must_sym("_seed")?);
-        if seed != st.seed {
-            push(3, (0, 0), "HSD_Rand", "rng".into(), "logic seed".into(), None, format!("{seed:08x}"), format!("{:08x}", st.seed));
+    }
+    if st.engine {
+        // The fighters' dynamic bone chains (tail / hair physics state): the internal state the Fighter record does not hold.
+        for (slot, sets) in &st.dyns {
+            let Some(fp_va) = gobjs.iter().map(|&g| snap.u32(g + 0x2c)).find(|&u| u != 0 && snap.u8(u + pid) as i32 == *slot) else { continue };
+            for (i, nodes) in sets.iter().enumerate() {
+                let mut n = snap.u32(fp_va + 0x2F0 + 0x18 * i as u32 + 4);
+                let mut idx = 0usize;
+                while n != 0 && idx < nodes.len() {
+                    for k in 1..36u32 {
+                        let (c, r) = (snap.u32(n + 4 * k), nodes[idx][k as usize - 1]);
+                        if c != r {
+                            push(0, (*slot as u32, (2 << 30) + (i as u32 * 64 + idx as u32) * 64 + k), "Dynamics", format!("P{} bone set {i} node {idx}", slot + 1), format!("word {k:#x} (gc +{:#x})", 4 * k), Some(4 * k), format!("{} ({c:08x})", f32::from_bits(c)), format!("{} ({r:08x})", f32::from_bits(r)));
+                        }
+                    }
+                    n = snap.u32(n + 0x90);
+                    idx += 1;
+                }
+            }
         }
-        return Ok(());
     }
     // Stocks.
     let slots = snap.must_sym("_player_slots")?;
-    for (slot, rs) in &st.stocks {
+    for (slot, rs) in st.stocks.iter().filter(|_| !st.engine) {
         let off = crate::vs_match::snapshot::gc_off::<melee_types::_StaticPlayer>("stocks");
         let cs = snap.u8(slots + 0xE90 * *slot as u32 + off) as i8 as i32;
         if cs != *rs {
@@ -694,7 +721,7 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
     }
     // Stage: the respawn spots' countdowns.
     let ctl = snap.must_sym("_controller")?;
-    for i in 0..6u32 {
+    for i in (0..6u32).filter(|_| !st.engine) {
         let cv = snap.u8(ctl + 0x38 + 14 * i + 8) as i32;
         if cv != st.respawn_busy[i as usize] {
             push(2, (i, 0), "SceneState", "stage".into(), format!("fighters[{i}].x8 (respawn_busy)"), Some(0x38 + 14 * i + 8), cv.to_string(), st.respawn_busy[i as usize].to_string());
@@ -706,7 +733,7 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
         push(3, (0, 0), "HSD_Rand", "rng".into(), "logic seed".into(), None, format!("{seed:08x}"), format!("{:08x}", st.seed));
     }
     let rseed = snap.u32(snap.must_sym("_render_seed")?);
-    if rseed != st.render_seed {
+    if rseed != st.render_seed && !st.engine {
         push(3, (1, 0), "HSD_Rand", "rng".into(), "render seed".into(), None, format!("{rseed:08x}"), format!("{:08x}", st.render_seed));
     }
     Ok(())

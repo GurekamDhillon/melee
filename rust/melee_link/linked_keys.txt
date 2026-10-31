@@ -2671,7 +2671,6 @@ tu::fighter::ext::hook::ftCommon_8007F9B4
 tu::fighter::ext::hook::ftCo_800C8540
 tu::fighter::ext::hook::ftCo_800C9034
 tu::fighter::ext::hook::Item_8026ABD8
-tu::fighter::ext::hook::ftCommon_8007FF74
 tu::fighter::ext::hook::ftCo_800C8A64
 tu::fighter::ext::hook::itGetKind
 tu::fighter::ext::hook::ftCo_800968C8
@@ -2714,7 +2713,6 @@ tu::fighter::ext::hook::Geno_ComboTick
 tu::fighter::ext::hook::ScriptGame_IntrWinTick
 tu::fighter::ext::hook::ftCommon_8007FFD8
 tu::fighter::ext::hook::ftCo_800DF0D0
-tu::fighter::ext::hook::ftCommon_8008031C
 tu::fighter::ext::hook::ftCo_800C0A98
 tu::fighter::ext::hook::ftCommon_SandbagKnockbackDeaccel
 tu::fighter::ext::hook::ftCommon_ApplyGroundedKnockbackFriction
@@ -2796,11 +2794,9 @@ tu::fighter::ext::hook::ftCommon_800804FC
 tu::fighter::ext::hook::ftCo_800C8D00
 tu::fighter::ext::hook::ftCommon_CalcHitlag
 tu::fighter::ext::hook::Geno_NoHitlag
-tu::fighter::ext::hook::ftCommon_8007E2A4
 tu::fighter::ext::hook::ftCo_800C2FD8
 tu::fighter::ext::hook::ftCo_800A0DA4
 tu::fighter::ext::hook::ftCo_8009E0A8
-tu::fighter::ext::hook::ftCommon_8008021C
 tu::fighter::ext::hook::Player_80032828
 tu::fighter::ext::hook::Player_SetFacingDirectionConditional
 tu::fighter::ext::hook::pl_8003FAA8
@@ -5438,7 +5434,6 @@ tu::ftco_800c7590::ext::FTCO_8009750C
 tu::ftco_800c7590::ext::FTCO_800DD168
 tu::ftco_800c7590::ext::FTCO_8008DCE0
 tu::ftco_800c7590::ext::FTCOMMON_8007D7FC
-tu::ftco_800c7590::ext::FTCOMMON_8007E2FC
 tu::ftco_800c7590::ext::PLAYER_80033BB8
 tu::ftco_800c7590::ext::PLAYER_GET_HANDICAP
 tu::ftco_800c7590::ext::FTCOMMON_INIT_GRAB

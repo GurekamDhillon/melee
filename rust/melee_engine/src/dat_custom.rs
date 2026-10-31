@@ -131,7 +131,7 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     out[6] = parr::<Fighter_804D653C_t>(d, b, at(6));
     out[7] = parr::<Fighter_804D653C_t>(d, b, at(7));
     // [17] UNK_T: no type in the C either; read as null
-    out[9] = ptable::<Vec2>(d, b, at(9)); // Vec2**
+    out[9] = shake_vec2_table(d, b, at(9)); // Vec2**: { Vec2[], frame count } x 3 (Fighter_804D6530)
     out[10] = parr::<Fighter_ShakeTable_t>(d, b, at(10));
     out[11] = parr::<Fighter_ShakeTable_t>(d, b, at(11));
     out[12] = parr::<Fighter_804D6524_t>(d, b, at(12));
@@ -177,6 +177,22 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     };
     // the root is a pointer to the table (`void** pData` after `lbArchive_LoadSymbols`)
     Box::leak(out.into_boxed_slice()).as_mut_ptr() as *mut c_void
+}
+
+/// `Fighter_804D6530` (`Vec2**` in the C): pairs of { `Vec2[]` shake offsets, the frame count as a plain integer in the pointer slot }.
+fn shake_vec2_table(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut c_void {
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    let n = ((b.extent(t) / 4).max(1)) as u32;
+    let v: Vec<*mut c_void> = (0..n)
+        .map(|i| {
+            if i % 2 == 0 {
+                parr::<Vec2>(d, b, t + 4 * i)
+            } else {
+                d.u32_at(t + 4 * i) as usize as *mut c_void
+            }
+        })
+        .collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
 }
 
 /// The block the pointer word at `at` targets as native 32-bit words (`min` words at least, to the next boundary), shared per target.

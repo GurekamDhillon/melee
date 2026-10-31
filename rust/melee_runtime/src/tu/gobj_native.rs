@@ -792,6 +792,27 @@ pub unsafe fn HSD_GObj_80390CD4(gobj: *mut HSD_GObj) {
 }
 
 /// `HSD_GObj_RunProcs` (the GObj_RunProcs of the frame): run every due proc in link order.
+/// Debug aid (`MELEE_WATCH_PROC=<hex addr>`): reports the u32 there whenever it changed across a gobj proc (priority and
+/// proc address), to find which proc overwrites a variable. Complements `MELEE_WATCH` (function entries, calltrace builds).
+static mut WATCH_PROC: Option<(usize, u32)> = None;
+static mut WATCH_PROC_INIT: bool = false;
+#[allow(static_mut_refs)]
+unsafe fn watch_proc(pri: i32, cb: usize, after: bool) {
+    if !WATCH_PROC_INIT {
+        WATCH_PROC_INIT = true;
+        if let Some(a) = std::env::var("MELEE_WATCH_PROC").ok().and_then(|v| usize::from_str_radix(v.trim_start_matches("0x"), 16).ok()) {
+            WATCH_PROC = Some((a, core::ptr::read_volatile(a as *const u32)));
+        }
+    }
+    if let Some((a, old)) = WATCH_PROC.as_mut() {
+        let now = core::ptr::read_volatile(*a as *const u32);
+        if now != *old {
+            eprintln!("watch-proc: {:#x} {:#010x} -> {:#010x} {} proc pri {pri} cb {cb:#x}", *a, *old, now, if after { "after" } else { "before" });
+            *old = now;
+        }
+    }
+}
+
 pub unsafe fn HSD_GObj_RunProcs() {
     melee_core::ct!("HSD_GObj_RunProcs");
     let var_r31: u64 = if !HSD_GObjLibInitData.unk_2.is_null() { *HSD_GObjLibInitData.unk_2 } else { 0 };
@@ -817,7 +838,9 @@ pub unsafe fn HSD_GObj_RunProcs() {
                     };
                     if ext::ScriptStageHostHidden == 0 || (*gobj).classifier != 3 || owned != 0 {
                         if let Some(cb) = (*proc).on_invoke {
+                            watch_proc(i, cb as usize, false);
                             cb((*proc).gobj);
+                            watch_proc(i, cb as usize, true);
                         }
                     }
                     if owned != 0 {

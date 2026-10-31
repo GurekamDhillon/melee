@@ -121,6 +121,9 @@ def tu_files():
             yield crate, f, rel
 
 
+# (crate, modpath, fn name) -> parameter list text of the indexed definitions (type-class check of a pick)
+PLIST = {}
+
 DEF_RE = re.compile(r'(?m)^[ 	]*pub\s+(?:unsafe\s+)?(?:extern\s+)?fn\s+(\w+)\s*\(')  # blank() erases the "C"
 
 
@@ -166,6 +169,7 @@ def index_legacy():
             after = t[cl+1:cl+80].lstrip()
             hasret = after.startswith('->') and not re.match(r'->\s*!', after)
             defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
+            PLIST[(c, '::'.join([mp] + chain), m.group(1))] = plist
     return defs
 
 
@@ -185,6 +189,7 @@ def index_defs():
             hasret = after.startswith('->') and not re.match(r'->\s*!', after)
             c, mp = modpath_of(f)
             defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
+            PLIST[(c, '::'.join([mp] + chain), m.group(1))] = plist
     # `pub use path::{a, b};` in a tu file re-exports a function defined outside tu/ (melee_world::gm ...): the hook can
     # be pointed at the re-export, with the signature of the original (found anywhere in the crates, if unique).
     allf = collections.defaultdict(list)
@@ -212,6 +217,26 @@ def index_defs():
                     npar, hasret = next(iter(sig))
                     defs[n].append((c, mp, npar, hasret, rel))
     return defs
+
+
+def tclass(t):
+    """Coarse class of a parameter type: 'gobj' (a GObj pointer), 'fighter', 'item', or None (anything else)."""
+    t = re.sub(r'\s+', '', t)
+    if 'GObj' in t or t in ('G', '*mutG', '*constG'): return 'gobj'
+    if re.search(r'(^|[&*:])(mut)?(Fighter|F)$', t) or re.search(r'(&|\*mut|\*const)(mut)?(Fighter|F)$', t): return 'fighter'
+    if re.search(r'(&|\*mut|\*const)(mut)?(Item|It)$', t): return 'item'
+    return None
+
+
+def class_mismatch(hook_ptypes, plist):
+    """True when a hook parameter and the canonical parameter at the same position are different object classes (a GObj
+    where the canonical takes the Fighter record, ...): a transmute cast between them reinterprets the pointer."""
+    ct = _ptypes(plist)
+    if not hook_ptypes or len(ct) != len(hook_ptypes): return False
+    for a, b in zip(hook_ptypes, ct):
+        ca, cb = tclass(a), tclass(b)
+        if ca and cb and ca != cb: return True
+    return False
 
 
 ENTRY_HEAD = re.compile(r'\s*(?:(?P<hook>[A-Za-z_]\w*)\s+(?=[A-Za-z_]\w*\s*\()|fn\s+)?(?P<name>[A-Za-z_]\w*)\s*\(')
@@ -686,6 +711,8 @@ def main():
                     why = 'ambiguous' if len([c for c in ok if c[4] != h['file']]) > 1 else ('selfdef' if cands and all(c[4] == h['file'] for c in cands) else 'sigmismatch')
                 elif key in skip or h['name'] in skip:
                     why = 'skipped'
+                elif any(class_mismatch(h.get('ptypes') or [], pl) for (kc, km, kn), pl in PLIST.items() if (kc, km) == (pick[0], pick[1]) and kn.lower() == h['name'].lower()):
+                    why = 'typeclass'
                 else:
                     h['canon'] = pick
         if (why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') or aliases.get(h['name'], '').startswith(('variadicw:', '!'))) and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
@@ -697,6 +724,8 @@ def main():
             unresolved.append((why, h))
         else:
             linked.append(h)
+    for w, h in unresolved:
+        if w == 'typeclass': print(f'  typeclass: {h["name"]} ({h["file"]}) hook types {h.get("ptypes")}')
     cnt = collections.Counter(w for w, _ in unresolved)
     print(f'hooks {len(seen)}: linked {len(linked)}; unresolved {dict(cnt)}')
     reached = set()

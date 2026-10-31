@@ -2538,3 +2538,8 @@ sigmismatch DevText_Printf melee_items/tu/toy.rs 1
 sigmismatch DevText_Printf melee_items/tu/tydisplay.rs 1
 sigmismatch DevText_Printf melee_items/tu/tyfigupon.rs 1
 sigmismatch HSD_SisLib_803A6B98 melee_items/tu/tylist.rs 1
+typeclass ftCommon_8007E2A4 melee_fighter/tu/fighter.rs 0
+typeclass ftCommon_8007FF74 melee_fighter/tu/fighter.rs 0
+typeclass ftCommon_8008021C melee_fighter/tu/fighter.rs 0
+typeclass ftCommon_8008031C melee_fighter/tu/fighter.rs 0
+typeclass ftCommon_8007E2FC melee_fighter/tu/ftco_800c7590.rs 0

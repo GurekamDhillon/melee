@@ -38,10 +38,24 @@ pub fn install() {
     unsafe {
         // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice (efsync.c builds its own `Va` from it)
         melee_world::tu::efn::efasync::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { melee_world::tu::efsync::efSync_Spawn(a0, a1, a2) });
+        // `&func` hooks: the callback table entries the C stores (`fp->pre_hitlag_cb = efLib_PauseAll`, ...) as extern "C" thunks
+        {
+            use melee_types::HSD_GObj;
+            melee_fighter::tu::ftCo_AttackS4::ext::hook::efLib_PauseAll_fn =
+                Some(|| Some(crate::cabi::c1(|g: *mut HSD_GObj| unsafe { melee_world::tu::efn::eflib::efLib_PauseAll(g) })));
+            melee_fighter::tu::ftCo_AttackS4::ext::hook::efLib_ResumeAll_fn =
+                Some(|| Some(crate::cabi::c1(|g: *mut HSD_GObj| unsafe { melee_world::tu::efn::eflib::efLib_ResumeAll(g) })));
+            melee_fighter::tu::ftCo_BarrelWait::ext::hook::ftCo_8009EAF8_fn =
+                Some(|| Some(crate::cabi::c1(|g: *mut HSD_GObj| unsafe { melee_fighter::tu::ftdynamics::ftCo_8009EAF8(g) })));
+            melee_fighter::tu::ftCo_CaptureCaptain::ext::hook::ftCo_800DB464_fn =
+                Some(|| Some(crate::cabi::c1(|g: *mut HSD_GObj| unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB464(g) })));
+        }
         // fighter.c: hooks spelled differently from their C functions (accessor / out-parameter / return-ness)
         {
             use melee_fighter::tu::fighter::ext::hook as f;
             f::HSD_JObjRemoveAll = Some(|j| unsafe { melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(j as *mut melee_types::HSD_JObj) });
+            // `ft_800895E0(fp, int)`: the int is the C's big-endian `union Struct2070` view of the motion state's flag word
+            f::ft_800895E0 = Some(|fp, flags| unsafe { melee_fighter::ft0892::ft_800895e0(&mut *(fp as *mut melee_types::Fighter), melee_fighter::ft0892::s2070_from_gc_int(flags)); });
             f::stage_grkind = Some(|| unsafe { melee_world::tu::ground::stage_info.grkind as i32 });
             f::ftData_MotionStateList = Some(|| unsafe { (&raw mut crate::retail_ms::ftmotionstates::ftData_MotionStateList) as *mut melee_types::MotionState });
             f::pad_nml = Some(|port| unsafe {

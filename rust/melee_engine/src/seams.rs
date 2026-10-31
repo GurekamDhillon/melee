@@ -43,6 +43,12 @@ pub fn install() {
         melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_80023130(id));
         // a stage's callback table entry is a native pointer here (no guest code): the m-ex bind is the identity
         melee_world::tu_ext::HOOK_Mex_GrBind = Some(|p| p);
+        // stage procs reach items and the camera through `tu_ext`, whose defaults are the legacy-state ports: run the engine's TUs
+        melee_world::tu_ext::HOOK_it_8026B3C0 = Some(|k| melee_items::tu::it_26B1::it_8026B3C0(k as _) as i32);
+        melee_world::tu_ext::HOOK_it_802D8618 = Some(|a, b, c, d| melee_items::tu::itheiho::it_802D8618(a, b, c, d));
+        melee_world::tu_ext::HOOK_Camera_8003010C = Some(|| melee_world::tu::cmcamera::Camera_8003010C());
+        melee_world::tu_ext::HOOK_Camera_80030AE0 = Some(|a| melee_world::tu::cmcamera::Camera_80030AE0(a));
+        melee_world::tu_ext::HOOK_Camera_8003118C = Some(|a, b| melee_world::tu::cmcamera::Camera_8003118C(a, b));
         melee_runtime::tu::memory::ext::hook::PcTraceHeapEnabled = Some(|| 0);
         melee_runtime::tu::memory::ext::hook::Snap_NoteMem = Some(|_, _, _, _| {});
 

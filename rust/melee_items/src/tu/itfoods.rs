@@ -163,15 +163,29 @@ pub unsafe extern "C" fn getRandMax(article: *mut Article) -> u32 {
     (*attr).x0 as u32
 }
 
+/// `FOODS_JOINTS[i]`: the native joint of food variant `i`. The attribute block keeps the GameCube row layout
+/// (`{s32 x0; HSD_Joint* x4; s32 x8; s32 xC}`, 16 bytes: `it_8028F9D8` reads the same rows as `Vec4`), so a pointer
+/// cannot sit in `x4`; the engine's archive decoder stores the variant index there and the pointer here.
+pub static mut FOODS_JOINTS: [*mut HSD_Joint; 32] = [core::ptr::null_mut(); 32];
+
+/// One 16-byte row of the Foods attribute block (GameCube layout; `x4` is a [`FOODS_JOINTS`] index).
+#[repr(C)]
+struct FoodsRow {
+    x0: i32,
+    x4: u32,
+    x8: i32,
+    xc: i32,
+}
+
 pub unsafe extern "C" fn itFoods_Logic18_Spawned(gobj: *mut HSD_GObj) {
     melee_core::ct!("itFoods_Logic18_Spawned");
     let ip = get_item(gobj);
-    let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itFoodsAttributes;
+    let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut FoodsRow;
     let rand = ext::HSD_Randi(getRandMax((*ip).xC4_article_data) as i32);
     (*ip).xDD4_itemVar.foods.heal_amount = (*attr.offset(rand as isize)).x8 as u32;
     (*ip).xDD4_itemVar.foods.x0 = rand as u32;
     let temp = rand;
-    ext::it_80273318(gobj, (*attr.offset(temp as isize)).x4);
+    ext::it_80273318(gobj, FOODS_JOINTS[(*attr.offset(temp as isize)).x4 as usize]);
     it_8028FC5C(gobj);
 }
 

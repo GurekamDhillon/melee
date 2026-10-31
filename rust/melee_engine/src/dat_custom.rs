@@ -67,12 +67,20 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "ptrtable_itemdata" => {
             // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
             let n = (b.extent(off) / 4).max(1);
+            let mut arts: Vec<*mut melee_types::Article> = Vec::new();
             for i in 0..n {
                 if let Some(rec) = d.target(off + 4 * i) {
                     if let Some(ta) = d.target(rec + 4) {
                         note_article_states(d, b, ta);
+                        arts.push(d.object::<melee_types::Article>(ta));
                     }
                 }
+            }
+            // the articles' special attributes are word-swapped like the common items' (`fix_articles`)
+            if !arts.is_empty() {
+                let cnt = arts.len();
+                let tbl = Box::leak(arts.into_boxed_slice()).as_mut_ptr();
+                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, cnt, b.1, b.0.clone())) };
             }
             ptrtable::<melee_types::GroundItemData>(d, b, off)
         }
@@ -280,6 +288,13 @@ fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
     }
 }
 
+/// Common-item articles whose special attributes hold `HSD_Joint*` fields the word swap cannot relocate (the Foods rows
+/// `{s32, HSD_Joint*, s32, s32}`): (raw block address, the decoded joint of every row). Patched by [`fix_articles`].
+static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<melee_types::itFoodsAttributes>)> = Vec::new();
+
+/// `ItemKind` of Foods (the index of its article in the common-item table).
+const KIND_FOODS: u32 = 18;
+
 /// `rtable::<Article>`; see [`fix_articles`].
 fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut melee_types::Article {
     let tbl = rtable::<melee_types::Article>(d, b, at);
@@ -289,6 +304,22 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
         for i in 0..n as u32 {
             if let Some(ta) = d.target(t + 4 * i) {
                 note_article_states(d, b, ta);
+                if i == KIND_FOODS && n > KIND_FOODS as usize {
+                    if let Some(sa) = d.target(ta + 4) {
+                        let rows = (b.extent(sa) / 0x10) as u32;
+                        let js: Vec<melee_types::itFoodsAttributes> = (0..rows)
+                            .map(|r| {
+                                let mut a = melee_types::itFoodsAttributes::zeroed();
+                                a.x0 = d.u32_at(sa + 0x10 * r) as i32;
+                                a.x4 = d.ptr::<HSD_Joint>(sa + 0x10 * r + 4);
+                                a.x8 = d.u32_at(sa + 0x10 * r + 8) as i32;
+                                a.xC = d.u32_at(sa + 0x10 * r + 12) as i32;
+                                a
+                            })
+                            .collect();
+                        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_JOINT_ROWS)).push((b.1 + sa as usize, js)) };
+                    }
+                }
             }
         }
     }
@@ -311,6 +342,7 @@ pub fn fix_articles() {
             (*a).xC_itemStates = buf as *mut melee_types::ItemStateArray;
         }
     }
+    let joint_rows = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_JOINT_ROWS)) };
     let tables = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TABLES)) };
     for (tbl, n, base, bounds) in tables {
         let b = Bounds(bounds, base);
@@ -337,7 +369,17 @@ pub fn fix_articles() {
                         x[..w.len()].copy_from_slice(w);
                         v.extend_from_slice(&u32::from_be_bytes(x).to_ne_bytes());
                     }
-                    Box::leak(v.into_boxed_slice()).as_ptr() as usize
+                    let out = Box::leak(v.into_boxed_slice()).as_mut_ptr();
+                    // Foods rows: the joint pointer of variant r lives in `FOODS_JOINTS[r]` (see itfoods.rs); the row keeps its index
+                    if let Some((_, rows)) = joint_rows.iter().find(|(a, _)| *a == raw) {
+                        for (r, row) in rows.iter().enumerate().take(32) {
+                            melee_items::tu::itfoods::FOODS_JOINTS[r] = row.x4;
+                            if r * 0x10 + 8 <= len {
+                                core::ptr::write_unaligned(out.add(r * 0x10 + 4) as *mut u32, r as u32);
+                            }
+                        }
+                    }
+                    out as usize
                 });
                 (*a).x4_specialAttributes = copy as *mut c_void;
             }

@@ -135,3 +135,6 @@ pub fn ftPc_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPc_Init_LoadSpecialAttrs");
     crate::tu::ftpikachu::ftPk_Init_LoadSpecialAttrs(gobj);
 }
+
+/// `ftPc_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPc_CostumeList[4]`), filled when the costumes load.
+pub static mut ftPc_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

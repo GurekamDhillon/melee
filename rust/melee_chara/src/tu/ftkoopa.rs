@@ -181,3 +181,6 @@ pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[0] = 0;
     }
 }
+
+/// `ftKp_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftKp_CostumeList[4]`), filled when the costumes load.
+pub static mut ftKp_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

@@ -318,3 +318,6 @@ pub fn ftCl_Init_80149318(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[1] = 0;
     }
 }
+
+/// `ftCl_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftCl_CostumeList[5]`), filled when the costumes load.
+pub static mut ftCl_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

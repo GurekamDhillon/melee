@@ -63,3 +63,71 @@ impl GcDecode for HSD_RObjDesc {
         v
     }
 }
+
+/// `HSD_PObjDesc.u` by `flags & POBJ_TYPE_MASK` (pobj.c `PObjLoad`): the shape set (0x1000), the envelope table
+/// (0x2000) or the joint (0).
+impl GcDecode for HSD_PObjDesc {
+    const GC_BYTES: u32 = <HSD_PObjDesc as melee_core::gc::GcLayout>::GC_SIZE;
+    fn gc_zeroed() -> Self {
+        Self::zeroed()
+    }
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::gc_decode_fields(d, at);
+        let u = at + off::<HSD_PObjDesc>("u");
+        v.u = HSD_PObjDesc_u::zeroed();
+        match v.flags & 0x3000 {
+            0x1000 => v.u.shape_set = d.ptr(u),
+            0x2000 => v.u.envelope_p = d.ptr_table_null_arrays::<HSD_EnvelopeDesc>(u),
+            _ => v.u.joint = d.ptr(u),
+        }
+        v
+    }
+}
+
+/// `FtPartsDesc` (ft/types.h): `vis_table` is `void* (*)[4]`, one row of four pointers per costume visibility
+/// row; every pointer addresses `model_num` `FtPartsVisLookup`s (ftparts.c `ftParts_8007487C` / `ftParts_80074B6C`).
+/// The row count is not in the data: the table runs to the next object.
+impl GcDecode for FtPartsDesc {
+    const GC_BYTES: u32 = <FtPartsDesc as melee_core::gc::GcLayout>::GC_SIZE;
+    fn gc_zeroed() -> Self {
+        Self::zeroed()
+    }
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.model_num = u32::gc_decode(d, at + off::<FtPartsDesc>("model_num"));
+        let tab = at + off::<FtPartsDesc>("vis_table");
+        if let Some(t) = d.target(tab) {
+            let rows = (d.extent(t) / 16).max(1) as usize;
+            let mut table: std::vec::Vec<[*mut core::ffi::c_void; 4]> = std::vec![[core::ptr::null_mut(); 4]; rows];
+            for (r, row) in table.iter_mut().enumerate() {
+                for (c, slot) in row.iter_mut().enumerate() {
+                    let w = t + (r * 16 + c * 4) as u32;
+                    if d.is_reloc(w) {
+                        *slot = d.ptr_array::<FtPartsVisLookup>(w, v.model_num as usize) as *mut core::ffi::c_void;
+                    }
+                }
+            }
+            v.vis_table = Box::leak(table.into_boxed_slice()).as_mut_ptr();
+        }
+        v
+    }
+}
+
+/// `HSD_CObjDesc` is the union of the camera descriptors (cobj.h); `projection_type` (u16 at +6, common to all of
+/// them) names the live one: 1 perspective, 2 frustum, 3 ortho.
+impl GcDecode for HSD_CObjDesc {
+    const GC_BYTES: u32 = <HSD_CObjDesc as melee_core::gc::GcLayout>::GC_SIZE;
+    fn gc_zeroed() -> Self {
+        Self::zeroed()
+    }
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        match d.u16_at(at + 6) {
+            1 => v.perspective = HSD_CameraDescPerspective::gc_decode(d, at),
+            2 => v.frustum = HSD_CameraDescFrustum::gc_decode(d, at),
+            3 => v.ortho = HSD_CameraDescFrustum::gc_decode(d, at),
+            _ => v.common = HSD_CameraDescCommon::gc_decode(d, at),
+        }
+        v
+    }
+}

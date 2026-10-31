@@ -179,3 +179,6 @@ fn ftPp_Init_8011F190(gobj: G) {
         ftPp_Init_8011F16C(gobj, (*fp).u.nn.x222C);
     }
 }
+
+/// `ftPp_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPp_CostumeList[4]`), filled when the costumes load.
+pub static mut ftPp_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

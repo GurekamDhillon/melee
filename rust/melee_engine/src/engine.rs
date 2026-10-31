@@ -64,6 +64,7 @@ impl Engine {
     fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         crate::crash::install();
         Host::boot(disc, mem_size)?;
+        unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER = true; }
         melee_link::install();
         melee_link::install_retail();
         crate::cdata::install_cdata();

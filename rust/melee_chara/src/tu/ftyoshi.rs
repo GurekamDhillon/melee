@@ -301,3 +301,6 @@ pub fn ftYs_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
     st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0);
     st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0);
 }
+
+/// `ftYs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftYs_CostumeList[6]`), filled when the costumes load.
+pub static mut ftYs_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };

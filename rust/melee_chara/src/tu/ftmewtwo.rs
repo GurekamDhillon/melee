@@ -140,3 +140,6 @@ pub fn ftMt_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftMt_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMt_CostumeList[4]`), filled when the costumes load.
+pub static mut ftMt_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

@@ -113,3 +113,6 @@ pub fn ftNs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_Init_LoadSpecialAttrs");
     unsafe { copy_attrs::<ftNessAttributes>(gobj) }
 }
+
+/// `ftNs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftNs_CostumeList[4]`), filled when the costumes load.
+pub static mut ftNs_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

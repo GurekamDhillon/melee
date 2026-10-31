@@ -108,3 +108,6 @@ pub fn ftZd_Init_801395C8(gobj: *mut HSD_GObj) {
         ext::ftParts_80074A4C(gobj, 1, -1);
     }
 }
+
+/// `ftZd_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftZd_CostumeList[5]`), filled when the costumes load.
+pub static mut ftZd_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

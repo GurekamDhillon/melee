@@ -78,6 +78,12 @@ pub mod raw {
     pub unsafe fn PSMTXScale(m: *mut [f32; 4], x: f32, y: f32, z: f32) {
         m.cast::<Mtx>().write(mtx::scale(x, y, z));
     }
+    /// `PSMTXMultVec(m, src, dst)`: `m * src` including the translation column (src and dst may be the same vector).
+    pub unsafe fn PSMTXMultVec(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
+        melee_core::ct!("PSMTXMultVec");
+        let r = mtx::mult_vec(core::slice::from_raw_parts(m, 3), &v3(src));
+        put(dst, r);
+    }
     /// `PSMTXMultVecSR(m, src, dst)`: the rotation / scale part of `m` only.
     pub unsafe fn PSMTXMultVecSR(m: *mut [f32; 4], src: *mut Vec, dst: *mut Vec) {
         let r = mtx::mult_vec_sr(core::slice::from_raw_parts(m, 3), &v3(src));

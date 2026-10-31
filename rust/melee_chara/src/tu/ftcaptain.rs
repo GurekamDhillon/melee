@@ -82,3 +82,6 @@ pub fn ftCa_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
         *((*fp).dat_attrs as *mut ftCaptain_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftCaptain_DatAttrs);
     }
 }
+
+/// `ftCa_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftCa_CostumeList[6]`), filled when the costumes load.
+pub static mut ftCa_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };

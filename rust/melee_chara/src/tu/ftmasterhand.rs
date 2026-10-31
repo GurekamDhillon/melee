@@ -90,3 +90,6 @@ pub fn ftMh_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
             *((*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs);
     }
 }
+
+/// `ftMh_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMh_CostumeList[1]`), filled when the costumes load.
+pub static mut ftMh_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };

@@ -4,7 +4,8 @@
 # type: a melee_types record (GcDecode); *T = the symbol is a pointer to T (C: `T**`); raw = the bytes stay in the
 #   raw image (C: `void*`, a nested archive or a blob read byte-wise).
 # gen_dat_types.py validates every type against rust/melee_types/src/gen.rs and writes rust/melee_engine/src/dat_types.rs.
-prefix	ftData	ftData	fighter public data: ft/kinds/*/ft*.c `*_Init_DataName` ("ftDataCaptain", "ftDataFox", ...), loaded by ftdata.c as struct ftData
+prefix	SIS_	SIS	sislib.c HSD_SisLib_803A62A0 SIS* sis (SdIntro.dat SIS_IntroData and the other text files)
+prefix	ftData	custom:ftdata	fighter public data: ft/kinds/*/ft*.c `*_Init_DataName` ("ftDataCaptain", "ftDataFox", ...), loaded by ftdata.c as struct ftData
 sym	map_head	UnkStageDat	src/melee/gr/grdatfiles.c:186 arc->unk4
 sym	coll_data	MapCollData	src/melee/gr/grdatfiles.c:67 stage_info.coll_data
 sym	grGroundParam	GroundParam	src/melee/gr/grdatfiles.c:69 stage_info.param
@@ -18,8 +19,16 @@ sym	itPublicData	custom:itco	src/melee/it/iteffect.c:19 it_804D6D20
 sym	effCommonDataTable	EF_DAT_Entry	src/melee/ef/efasync.c:1294 EF_DAT_Entry* (entry 0 decodes; later entries are read through the pointer table by index)
 suffix	_matanim_joint	HSD_MatAnimJoint	model files, e.g. gmresultplayer.c:583 Eblm_matanim_joint
 suffix	_shapeanim_joint	HSD_ShapeAnimJoint	tyfigupon.c:164 shapeanim_str
+suffix	_figatree	FigaTree	lb/lbanim.c FigaTree: every fighter animation public of the PlXxAJ.dat files
+sym	Stc_scemdls	custom:ptrtable_dynmodel	IfAll.dat DynamicModelDesc** (ifstock.c:1128)
+sym	Stc_rarwmdls	custom:ptrtable_dynmodel	IfAll.dat DynamicModelDesc** (if_2FD9.c:201)
+sym	lupe	custom:ptrtable_dynmodel	IfAll.dat DynamicModelDesc** (ifmagnify.c:748)
+sym	tdsce	custom:ptrtable_dynmodel	IfAll.dat DynamicModelDesc** (iftime.c:36)
+suffix	_scene_models	custom:ptrtable_dynmodel	if_2F6E.c:139 DynamicModelDesc** models (indexed table)
+suffix	_scene_data	SceneDesc	gmpause.c:92 SceneDesc* scene (every Sc*_scene_data root of the menu / HUD scene files)
 suffix	_animjoint	HSD_AnimJoint	toy.c:1995 anim
 suffix	_joint	HSD_Joint	fighter.c / toy.c:2432 joint (HSD_JObjLoadJoint)
+sym	lbBgFlashColAnimData	Fighter_804D653C_t[]	src/melee/lb/lb_0219.c:61 Fighter_804D653C_t* lbl_804D63DC (color anim rows; the array runs to the end of the data section)
 sym	lbRumbleData	Fighter_804D653C_t[]	src/melee/lb/lb_013B.c:241 Fighter_804D653C_t* lb_804D63C0 (indexed by rumble id; the array runs to the end of the data section)
 sym	ftLoadCommonData	custom:plco	src/melee/ft/fighter.c:312 Fighter_LoadCommonData (23 differently typed pointers)
 sym	plLoadCommonData	*pl_804D6470_t	src/melee/pl/player.c Player_80036DD8 pl_804D6470 = *sp8

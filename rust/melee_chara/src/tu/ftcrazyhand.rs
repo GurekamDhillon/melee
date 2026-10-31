@@ -118,3 +118,6 @@ pub fn ftCh_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
         *((*fp).dat_attrs as *mut ftCrazyHand_DatAttrs) = *((*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs);
     }
 }
+
+/// `ftCh_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftCh_CostumeList[1]`), filled when the costumes load.
+pub static mut ftCh_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };

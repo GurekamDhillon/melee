@@ -41,31 +41,13 @@ pub fn install() {
         melee_runtime::tu::memory::ext::hook::PcTraceHeapEnabled = Some(|| 0);
         melee_runtime::tu::memory::ext::hook::Snap_NoteMem = Some(|_, _, _, _| {});
 
-        // robj.c has no native port yet (tu/robj.rs keeps the owned model): only the NULL descriptor the DevText
-        // camera and wobj loads pass is answered; a real rig stops here until robj.c is ported (step 7).
-        fn robj_null(d: *mut melee_types::HSD_RObjDesc) -> *mut melee_types::HSD_RObj {
-            assert!(d.is_null(), "HSD_RObjLoadDesc: robj.c is not ported natively (consolidation step 7)");
-            core::ptr::null_mut()
+        // ARAM queue (shim_ar.c): the "ARAM" of the engine is main memory, a request is a memcpy and completes at once
+        {
+            use melee_runtime::tu::lbarq::ext::hook as q;
+            q::ARQPostRequest = Some(arq_post_request);
+            q::DCInvalidateRange = Some(|_, _| {});
+            q::wait_idle = Some(|| {});
         }
-        macro_rules! robj_walks {
-            ($m:ident) => {{
-                use melee_runtime::tu::$m::ext::hook as h;
-                h::HSD_RObjLoadDesc = Some(robj_null);
-                h::HSD_RObjRemoveAll = Some(|r| assert!(r.is_null(), "robj.c is not ported natively"));
-                h::HSD_RObjAddAnimAll = Some(|r, _| assert!(r.is_null(), "robj.c is not ported natively"));
-                h::HSD_RObjAnimAll = Some(|r| assert!(r.is_null(), "robj.c is not ported natively"));
-                h::HSD_RObjResolveRefsAll = Some(|r, _| assert!(r.is_null(), "robj.c is not ported natively"));
-            }};
-        }
-        robj_walks!(wobj);
-        robj_walks!(jobj);
-        melee_runtime::tu::wobj::ext::hook::HSD_RObjRemoveAnimAll = Some(|r| assert!(r.is_null()));
-        melee_runtime::tu::wobj::ext::hook::HSD_RObjReqAnimAll = Some(|r, _| assert!(r.is_null()));
-        melee_runtime::tu::jobj::ext::hook::HSD_RObjRemoveAnimAllByFlags = Some(|r, _| assert!(r.is_null()));
-        melee_runtime::tu::jobj::ext::hook::HSD_RObjReqAnimAllByFlags = Some(|r, _, _| assert!(r.is_null()));
-        melee_runtime::tu::jobj::ext::hook::HSD_RObjUpdateAll = Some(|r, _, _| assert!(r.is_null()));
-        melee_runtime::tu::jobj::ext::hook::HSD_RObjGetByType = Some(|r, _, _| { assert!(r.is_null()); r });
-        melee_runtime::tu::jobj::ext::hook::HSD_RObjGetGlobalPosition = Some(|r, _, _| { assert!(r.is_null()); 0 });
 
         // Variadic callees: the hook has fixed (symbols, name, terminator) parameters, the canonical takes the list.
         melee_modes::tu::lb_013B::ext::hook::lbArchive_80017040 = Some(|dst, file, sym, name, term| {
@@ -149,4 +131,51 @@ pub fn gx_tex_buffer_size(width: u16, height: u16, format: u32, mipmap: u8, max_
         lod += 1;
     }
     total
+}
+
+/// `gw_ARQPostRequest`: record the owner, copy `length` bytes from `source` to `dest` (addresses below 4 GiB: the
+/// engine's heaps and archive images are low memory) and run the completion callback.
+fn arq_post_request(
+    request: *mut melee_types::ARQRequest,
+    owner: u32,
+    ty: u32,
+    priority: u32,
+    source: u32,
+    dest: u32,
+    length: u32,
+    callback: Option<unsafe extern "C" fn(*mut melee_types::ARQRequest)>,
+) {
+    unsafe {
+        if !request.is_null() {
+            (*request).owner = owner;
+            (*request).r#type = ty;
+            (*request).priority = priority;
+            (*request).source = source;
+            (*request).dest = dest;
+            (*request).length = length;
+        }
+        if length != 0 && source != dest {
+            let s = ar_addr(source, length as usize);
+            let d = ar_addr(dest, length as usize);
+            core::ptr::copy(s as *const u8, d, length as usize);
+        }
+        if let Some(cb) = callback {
+            cb(request);
+        }
+    }
+}
+
+/// ARAM size of the port (shim_ar.c `gw_aram_size`): offsets below it address ARAM, anything else is a native pointer.
+const ARAM_SIZE: u32 = 32 << 20;
+
+/// `gw_ar_addr`: the host address of ARAM offset / pointer `addr` for a transfer of `len` bytes.
+unsafe fn ar_addr(addr: u32, len: usize) -> *mut u8 {
+    if addr < ARAM_SIZE {
+        let aram = &mut crate::host::Host::get().aram;
+        if aram.len() < ARAM_SIZE as usize {
+            aram.resize(ARAM_SIZE as usize, 0);
+        }
+        return aram.as_mut_ptr().add(addr as usize);
+    }
+    addr as usize as *mut u8
 }

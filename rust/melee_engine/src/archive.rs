@@ -142,6 +142,10 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     }
     (*archive).top_ptr = src as *mut c_void;
 
+    if std::env::var_os("MELEE_DAT_LIST").is_some() {
+        let names: Vec<&str> = image.dat.publics.iter().map(|p| p.name.as_str()).collect();
+        eprintln!("dat publics: {}", names.join(" "));
+    }
     // Native image: decode every public the table knows, in one shared graph.
     {
         let mut roots = HashMap::new();
@@ -162,6 +166,9 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
             crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
         };
         let mut d = image.dat.decoder();
+        d.set_bounds(bounds.0.clone());
+        d.set_raw_base(src as usize + HEADER_BYTES);
+        d.set_roots(image.dat.publics.iter().map(|q| q.offset).collect());
         for p in &image.dat.publics {
             match dat_types::type_of(&p.name) {
                 Some(RootType::Raw) => {
@@ -171,7 +178,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
                     // an array root runs to the next public, or the end of the data section
                     let next = image.dat.publics.iter().map(|q| q.offset).filter(|&o| o > p.offset).min();
                     let extent = next.unwrap_or(image.dat.data.len() as u32) - p.offset;
-                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds);
+                    let r = dat_types::decode_root(&mut d, ty, p.offset, extent, &bounds, &p.name);
                     roots.insert(p.name.clone(), Root::Native(r));
                 }
                 None => {}
@@ -180,6 +187,11 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         let (arena, issues) = d.finish();
         image.roots = roots;
         image._arena = Some(arena);
+        if std::env::var_os("MELEE_DAT_ISSUES").is_some() {
+            for i in issues.iter().take(40) {
+                eprintln!("dat issue ({} public(s), {} bytes): {i}", image.dat.publics.len(), image.dat.data.len());
+            }
+        }
         image.issues = issues;
     }
 
@@ -193,6 +205,12 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         }
     }
 
+    if Host::get().archives.contains_key(&(archive as usize)) {
+        // the C reused this HSD_Archive address: the old image's native graph stays alive (the game may still point into it)
+        eprintln!("engine: archive record {archive:p} re-parsed; keeping the previous native image alive");
+        let old = Host::get().archives.remove(&(archive as usize)).unwrap();
+        Host::get().retired.push(old);
+    }
     Host::get().archives.insert(archive as usize, image);
     0
 }

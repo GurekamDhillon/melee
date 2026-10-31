@@ -195,3 +195,6 @@ pub fn ftDk_Init_8010DB3C(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftDk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftDk_CostumeList[5]`), filled when the costumes load.
+pub static mut ftDk_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

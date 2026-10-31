@@ -147,6 +147,28 @@ def nested_defs(t):
         yield m, [x[2] for x in enc]
 
 
+def index_legacy():
+    """Second-tier homes: the pre-consolidation modules outside tu/ (melee_world/src/ftlib.rs ...). Used only when no tu/
+    file defines the name; step 21/23 of the plan folds them into their tu files."""
+    defs = collections.defaultdict(list)
+    for crate, f, rel in tu_files():
+        if rel.startswith('tu/') or rel.split('/')[0] in ('c2r', 'types', 'bin', 'tests', 'gen'): continue
+        if 'test' in rel or rel.startswith('tu_') or rel in ('lib.rs', 'compat.rs'): continue
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        c, mp = modpath_of(f)
+        for m, chain in nested_defs(t):
+            op = m.end() - 1
+            cl = match_close(t, op, '(', ')')
+            if cl < 0: continue
+            plist = t[op+1:cl]
+            if '...' in plist: continue
+            if re.search(r'fn\s+\w+\s*<', t[m.start():op+1]): continue
+            after = t[cl+1:cl+80].lstrip()
+            hasret = after.startswith('->') and not re.match(r'->\s*!', after)
+            defs[m.group(1)].append((c, '::'.join([mp] + chain), count_params(plist), hasret, rel))
+    return defs
+
+
 def index_defs():
     defs = collections.defaultdict(list)   # name -> [(crate, modpath, nparams, hasret, file)]
     for crate, f, rel in tu_files():
@@ -217,11 +239,11 @@ def parse_hooks():
     hooks = []
     for crate, f, rel in tu_files():
         raw = open(f, encoding='utf8', errors='replace').read()
-        if 'ext_fns' not in raw and 'stubs!' not in raw and 'hooks!' not in raw: continue
+        if 'ext_fns' not in raw and 'stubs!' not in raw and 'hooks!' not in raw and 'ext!' not in raw and 'extd!' not in raw: continue
         t = blank(raw)
         c, mp = modpath_of(f)
         # classify macro definitions in this file
-        dm = re.search(r'macro_rules!\s+(?:ext_fns|stubs|hooks)\s*\{', t)
+        dm = re.search(r'macro_rules!\s+(?:ext_fns|stubs|hooks|extd?)\s*\{', t)
         kind = 'none'
         if dm:
             end = match_close(t, dm.end() - 1)
@@ -231,7 +253,7 @@ def parse_hooks():
             else: kind = 'other'
         else:
             kind = 'mod_hook' if re.search(r'ext_fns_[ch]\b', t) else 'external_macro'
-        for im in re.finditer(r'\b(?:ext_fns(?:_[ch])?|stubs|hooks)!\s*\{', t):
+        for im in re.finditer(r'(?<![A-Za-z_])(?:ext_fns(?:_[ch])?|stubs|hooks|extd?)!\s*\{', t):
             if dm and dm.start() <= im.start() <= match_close(t, dm.end() - 1): continue
             if t[max(0, im.start()-20):im.start()].strip().endswith('$crate::'): pass
             op = im.end() - 1
@@ -426,7 +448,62 @@ def parse_hooks():
             hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=nm, npar=npar, hasret=bool(rm), todo=True,
                               kind='upper_static', path=path, mod='::'.join([mp] + chain), ret=rm.group(1).strip() if rm else None,
                               cabi=bool(sm.group(2)), ref='&' in t[op + 1:cl]))
+    # `pub static mut Name: Option<fn(..) [-> R]> = None;` directly in an `ext` module (the hand-written form of the
+    # older fighter / world TUs: `ext::Name.expect("TODO")`), linked by the static's own name
+    have = {(h['crate'], h['path']) for h in hooks if h['path']}
+    for crate, f, rel in tu_files():
+        raw = open(f, encoding='utf8', errors='replace').read()
+        if 'mod ext' not in raw: continue
+        t = blank(raw)
+        c, mp = modpath_of(f)
+        for em in re.finditer(r'pub\s+mod\s+ext\s*\{', t):
+            e = match_close(t, em.end() - 1)
+            if e < 0: continue
+            chain = []
+            for mm in re.finditer(r'(?:^|[^\w])mod\s+(\w+)\s*\{', t[:em.start()]):
+                o = mm.end() - 1
+                e2 = match_close(t, o)
+                if e2 < 0 or e2 > em.start(): chain.append(mm.group(1))
+            mod_chain = '::'.join([mp] + chain + ['ext'])
+            body = t[em.end():e]
+            for sm in re.finditer(r'pub\s+static\s+mut\s+(\w+)\s*:\s*Option<\s*(?:unsafe\s+)?(extern\s+)?fn\s*\(', body):
+                name = sm.group(1)
+                if name.isupper() or name.startswith('H_'): continue
+                path = f'{mod_chain}::{name}'
+                if (c, path) in have: continue
+                # skip statics nested in a deeper module of the ext block (hook / cb ...)
+                depth = body[:sm.start()].count('{') - body[:sm.start()].count('}')
+                if depth != 0: continue
+                op = sm.end() - 1
+                cl = match_close(body, op, '(', ')')
+                if cl < 0: continue
+                _pt = body[op + 1:cl]
+                npar = count_params(_pt)
+                rm = re.match(r'\s*->\s*(.+?)\s*>\s*=\s*None', body[cl + 1:cl + 200], re.S)
+                hooks.append(dict(ptypes=_ptypes(_pt), crate=c, file=rel, name=name, npar=npar, hasret=bool(rm), todo=True,
+                                  kind='ext_static', path=path, mod=mod_chain, ret=rm.group(1).strip() if rm else None,
+                                  cabi=bool(sm.group(2)), ref='&' in body[op + 1:cl]))
+    # `needed_hooks! { STAT fn_name(args) [-> R] = "TODO(group) CName"; }` of melee_fighter::hooks: no default, so
+    # linked / answered under the C name the message ends with
+    raw = open(os.path.join(RUST, 'melee_fighter', 'src', 'hooks.rs'), encoding='utf8', errors='replace').read()
+    tb = raw
+    for nm in re.finditer(r'needed_hooks!\s*\{', tb):
+        cl = match_close(tb, nm.end() - 1)
+        for em in re.finditer(r'(?m)^\s*([A-Z][A-Z0-9_]*)\s+(\w+)\s*\(', tb[nm.end():cl]):
+            body = tb[nm.end():cl]
+            op = nm.end() + em.end() - 1
+            p1 = match_close(tb, op, '(', ')')
+            if p1 < 0 or p1 > cl: continue
+            _pt = tb[op + 1:p1]
+            rest = tb[p1 + 1:p1 + 400]
+            rm = re.match(r'\s*->\s*(.+?)\s*=\s*"', rest, re.S)
+            mm = re.match(r'(?:\s*->\s*.+?)?\s*=\s*"[^"]*?(\w+)"\s*;', rest, re.S)
+            cname = mm.group(1) if mm else em.group(2)
+            hooks.append(dict(ptypes=_ptypes(_pt), crate='melee_fighter', file='hooks.rs', name=cname, npar=count_params(_pt),
+                              hasret=bool(rm), todo=True, kind='needed_hook', path='hooks::' + em.group(1), mod='hooks',
+                              ret=rm.group(1).strip() if rm else None, cabi=False, ref='&' in _pt))
     return hooks
+
 
 
 def cfile_map():
@@ -440,6 +517,24 @@ def cfile_map():
     return m
 
 
+_CSRC = {}
+
+
+def c_source_stem(name):
+    """Stem (lowercase) of the C file under src/ that DEFINES `name`, scanned once; None when not found."""
+    if not _CSRC:
+        pat = re.compile(r'(?m)^[A-Za-z_][\w 	*]*?\b(\w+)\s*\([^;{}]*\)\s*\n?\{')
+        for f in glob.glob(os.path.join(ROOT, 'src', '**', '*.c'), recursive=True):
+            stem = os.path.splitext(os.path.basename(f))[0].lower()
+            try:
+                txt = open(f, encoding='utf8', errors='replace').read()
+            except OSError:
+                continue
+            for m in pat.finditer(txt):
+                _CSRC.setdefault(m.group(1), stem)
+    return _CSRC.get(name)
+
+
 def choose(cands, name, cmap, own_file):
     cands = [c for c in cands if c[4] != own_file]
     if len(cands) == 1: return cands[0]
@@ -449,6 +544,14 @@ def choose(cands, name, cmap, own_file):
         pick = [c for c in cands if os.path.splitext(os.path.basename(c[4]))[0].lower() == stem
                 or os.path.splitext(os.path.basename(c[4]))[0].lower().replace('_', '') == stem.replace('_', '')]
         if len(pick) == 1: return pick[0]
+    stem = c_source_stem(name)
+    if stem:
+        norm = lambda s: s.lower().replace('_', '')
+        pick = [c for c in cands if norm(os.path.splitext(os.path.basename(c[4]))[0]) == norm(stem)]
+        if len(pick) == 1: return pick[0]
+    low = sorted(cands, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else 99)
+    if low and (len(low) == 1 or low[0][0] != low[1][0]) and low[0][0] == 'melee_runtime':
+        return low[0]
     return None
 
 
@@ -500,13 +603,42 @@ def variadic_adapter(h):
     return ' '.join(lines)
 
 
+STATIC_DECL = re.compile(r'(?m)^[ \t]*pub[ \t]+static[ \t]+mut[ \t]+(\w+)\s*:\s*([^=;]+?)\s*(?:=|;)')
+
+
+def static_index():
+    """name -> [(crate, path, type text)] for the top-level (and pub-mod nested) `pub static mut NAME: T` of the tu files."""
+    idx = collections.defaultdict(list)
+    for crate, f, rel in tu_files():
+        if not rel.startswith('tu/') and rel != 'shared.rs': continue
+        if 'test' in rel: continue
+        t = blank(open(f, encoding='utf8', errors='replace').read())
+        c, mp = modpath_of(f)
+        for m in STATIC_DECL.finditer(t):
+            # not inside an `ext` / `cb` / `hook` module or a function body
+            pre = t[:m.start()]
+            depth = pre.count('{') - pre.count('}')
+            if depth != 0: continue
+            idx[m.group(1)].append((c, mp + '::' + m.group(1), re.sub(r'\s+', ' ', m.group(2)).strip()))
+    return idx
+
+
 def main():
     report = '--report' in sys.argv
     skip = set()
     sp = os.path.join(os.path.dirname(__file__), 'link_skip.txt')
     if os.path.exists(sp):
         skip = {l.split()[0] for l in open(sp) if l.strip() and not l.startswith('#')}
+    aliases = {}
+    ap = os.path.join(os.path.dirname(__file__), 'link_alias.tsv')
+    if os.path.exists(ap):
+        for ln in open(ap, encoding='utf8'):
+            if ln.strip() and not ln.startswith('#'):
+                k, v = ln.rstrip(chr(10)).split(chr(9), 1)
+                aliases[k] = v
     defs = index_defs()
+    legacy = index_legacy()
+    statics = static_index()
     hooks = parse_hooks()
     cmap = cfile_map()
     linked = []; unresolved = []
@@ -528,9 +660,25 @@ def main():
             why = 'cabiref'
         else:
             cands = defs.get(h['name'], [])
+            if not cands:
+                cands = [c for k, v in defs.items() if k.lower() == h['name'].lower() for c in v]  # ftColl_8007AF60 vs ftcoll_8007af60
+            if not cands:
+                cands = legacy.get(h['name'], [])  # pre-consolidation home outside tu/ (until steps 21 / 23)
+            sc = statics.get(h['name'], [])
+            if not cands and sc and h['npar'] == 0 and h['hasret'] and key not in skip:
+                # a function-shaped hook for a C global (`HSD_GObj_JObjKind()`): read the canonical static
+                scrate, spath, sty = sorted(sc, key=lambda x: LEAVES.index(x[0]) if x[0] in LEAVES else 99)[0]
+                rty = (h.get('ret') or '').strip()
+                norm = lambda s: re.sub(r'(?:core::ffi::|::core::ffi::)', '', re.sub(r'\s+', '', s))
+                if rty.startswith('*') and norm(rty) != norm(sty):
+                    h['custom'] = f'cast::<_, _, 0>(&raw mut {scrate}::{spath})'
+                else:
+                    h['custom'] = f'cast::<_, _, 0>({scrate}::{spath})'
+                linked.append(h)
+                continue
             if not cands: why = 'nodef'
             else:
-                ok = [c for c in cands if c[2] == h['npar'] and c[3] == h['hasret']]
+                ok = [c for c in cands if c[2] == h['npar'] and (c[3] == h['hasret'] or (c[3] and not h['hasret']))]
                 pick = choose(ok, h['name'], cmap, h['file'])
                 if pick is None:
                     why = 'ambiguous' if len([c for c in ok if c[4] != h['file']]) > 1 else ('selfdef' if cands and all(c[4] == h['file'] for c in cands) else 'sigmismatch')
@@ -538,6 +686,11 @@ def main():
                     why = 'skipped'
                 else:
                     h['canon'] = pick
+        if why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
+            # hand-written closure from link_alias.tsv (an accessor spelled as a function, a variadic spread...)
+            h['alias'] = aliases[h['name']]
+            linked.append(h)
+            continue
         if why:
             unresolved.append((why, h))
         else:
@@ -563,6 +716,24 @@ def main():
     for crate in LEAVES:
         out.append(f'fn install_{crate}() {{')
         for h in sorted(by_crate.get(crate, []), key=lambda x: x['path']):
+            if h.get('alias'):
+                out.append(f'    // {h["file"]}: link_alias.tsv')
+                al = h["alias"]
+                if al.startswith("variadic:"):
+                    # variadic:<canonical path>:<fixed args> -- the rest of the hook's parameters become the slice argument
+                    _, cpath, nfix = al.split(":", 2)[0], al.split(":")[1] + "::" + al.split(":")[2] if False else None, None
+                    parts = al[len("variadic:"):].rsplit(":", 1)
+                    cpath, nfix = parts[0], int(parts[1])
+                    n = h["npar"]
+                    ps = ", ".join(f"a{i}" for i in range(n))
+                    fixed = ", ".join(f"a{i}" for i in range(nfix))
+                    rest = ", ".join(f"a{i}" for i in range(nfix, n))
+                    al = f"|{ps}| unsafe {{ {cpath}({fixed}, &[{rest}]) }}"
+                if h.get('cabi'):
+                    out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{h["npar"]}({al})); }}')
+                else:
+                    out.append(f'    unsafe {{ {crate}::{h["path"]} = Some({al}); }}')
+                continue
             if h.get('custom'):
                 npar = h['npar']
                 args = ', '.join(f'a{i}' for i in range(npar))
@@ -577,8 +748,9 @@ def main():
             site += 1
             S = site * 100
             call_args = ', '.join(f'cast::<_, _, {S + i + 1}>(a{i})' for i in range(npar))
-            callee = f'{cc}::{cmod}::{h["name"]}'
-            body = f'cast::<_, _, {S}>({callee}({call_args}))' if hasret else f'{callee}({call_args})'
+            real = next((k for k, v in defs.items() if (cc, cmod, npar, hasret, h['canon'][4]) in v and k.lower() == h['name'].lower()), h['name'])
+            callee = f'{cc}::{cmod}::{real}'
+            body = f'cast::<_, _, {S}>({callee}({call_args}))' if h['hasret'] else (f'let _ = {callee}({call_args});' if hasret else f'{callee}({call_args})')
             out.append(f'    // {h["file"]}')
             if h.get('cabi'):
                 out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{npar}(|{args}| unsafe {{ {body} }})); }}')

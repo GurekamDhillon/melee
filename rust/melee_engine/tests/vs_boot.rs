@@ -1,4 +1,10 @@
 //! Step 7: VS boot to frame 0 on the engine (needs GW_ISO_VANILLA; vacuous without).
+#[cfg(feature = "guard")]
+mod guard_alloc;
+#[cfg(feature = "guard")]
+#[global_allocator]
+static A: guard_alloc::Guard = guard_alloc::Guard;
+
 use melee_engine::{gcm::Gcm, scenario::Scenario, Engine};
 use melee_platform::PadSystem;
 

@@ -14,25 +14,10 @@ pub use crate::chars::r5::ftMario::ftmario::{ftMr_Init_OnDeath, ftMr_Init_OnKnoc
 pub use crate::chars::r6::ftMario::ftmario::{ftMr_Init_OnItemInvisible, ftMr_Init_OnItemVisible};
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
-pub const ftMr_Init_DatFilename: &str = "PlMr.dat";
-pub const ftMr_Init_DataName: &str = "ftDataMario";
-pub const ftMr_Init_AnimDatFilename: &str = "PlMrAJ.dat";
-/// `ftMr_Init_DemoMotionFilenames` (result, intro, ending, vi-wait).
-pub const ftMr_Init_DemoMotionFilenames: [&str; 4] = [
-    "ftDemoResultMotionFileMario",
-    "ftDemoIntroMotionFileMario",
-    "ftDemoEndingMotionFileMario",
-    "ftDemoViWaitMotionFileMario",
-];
-pub const ftMr_Init_DemoViMotionFilenames: [&str; 2] = ["ftDemoVi0102MotionFileMario", "ftDemoVi1101MotionFileMario"];
-/// `ftMr_Init_CostumeStrings`: (dat, joint, matanim joint) per costume.
-pub const ftMr_Init_CostumeStrings: [[&str; 3]; 5] = [
-    ["PlMrNr.dat", "PlyMario5K_Share_joint", "PlyMario5K_Share_matanim_joint"],
-    ["PlMrYe.dat", "PlyMario5KYe_Share_joint", "PlyMario5KYe_Share_matanim_joint"],
-    ["PlMrBk.dat", "PlyMario5KBk_Share_joint", "PlyMario5KBk_Share_matanim_joint"],
-    ["PlMrBu.dat", "PlyMario5KBu_Share_joint", "PlyMario5KBu_Share_matanim_joint"],
-    ["PlMrGr.dat", "PlyMario5KGr_Share_joint", "PlyMario5KGr_Share_matanim_joint"],
-];
+pub use super::ftmariostrings::{
+    ftMr_Init_AnimDatFilename, ftMr_Init_CostumeStrings, ftMr_Init_DataName, ftMr_Init_DatFilename, ftMr_Init_DemoMotionFilenames,
+    ftMr_Init_DemoViMotionFilenames,
+};
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {

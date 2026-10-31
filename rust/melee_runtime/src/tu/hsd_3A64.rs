@@ -19,11 +19,11 @@ pub mod ext {
     /// `HSD_SisLib_804D1124[5]` (sislib.c): the loaded font SIS tables.
     pub use crate::tu::sislib::HSD_SisLib_804D1124;
     /// `HSD_SisLib_Alloc(size)` (sislib.c).
-    pub fn HSD_SisLib_Alloc(size: i32) -> *mut c_void { todo!("HSD_SisLib_Alloc (baselib/sislib.c)") }
+    pub fn HSD_SisLib_Alloc(size: i32) -> *mut c_void { unsafe { crate::tu::sislib::HSD_SisLib_Alloc(size as _) } }
     /// `HSD_SisLib_Free(ptr)` (sislib.c).
     pub fn HSD_SisLib_Free(ptr: *mut c_void) { unsafe { crate::tu::sislib::HSD_SisLib_Free(ptr as _) } }
     pub fn HSD_SisLib_803A5ACC(font_idx: i32, context_id: i32, x: f32, y: f32, z: f32, w: f32, h: f32) -> *mut HSD_Text {
-        todo!("HSD_SisLib_803A5ACC (baselib/sislib.c)")
+        unsafe { crate::tu::sislib::HSD_SisLib_803A5ACC(font_idx, context_id, x, y, z, w, h) }
     }
     pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, a: i32) { unsafe { crate::tu::sislib::HSD_SisLib_803A6368(text, a as _) } }
 }

@@ -78,18 +78,18 @@ def render(rows):
             o.append(f'    if name == "{s}" {{ return Some({v}); }}')
     for k, s, t, _ in rows:
         if k == "prefix":
-            v = "RootType::Raw" if t == "raw" else f'rt("{t}")'
+            v = "RootType::Raw" if t == "raw" else (f'RootType::Custom("{t[7:]}")' if t.startswith("custom:") else f'rt("{t}")')
             o.append(f'    if name.starts_with("{s}") {{ return Some({v}); }}')
     for k, s, t, _ in sorted((r for r in rows if r[0] == "suffix"), key=lambda r: -len(r[1])):
-        v = "RootType::Raw" if t == "raw" else f'rt("{t}")'
+        v = "RootType::Raw" if t == "raw" else (f'RootType::Custom("{t[7:]}")' if t.startswith("custom:") else f'rt("{t}")')
         o.append(f'    if name.ends_with("{s}") {{ return Some({v}); }}')
     o += ["    None", "}", "",
           "/// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is",
           "/// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).",
-          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds) -> *mut c_void {",
+          "pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds, sym: &str) -> *mut c_void {",
           "    match ty {",
           "        RootType::Raw => core::ptr::null_mut(),",
-          "        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds),",
+          "        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),",
           "        RootType::Record(n) => match n {"]
     for t in types:
         if not any(r[2] == t or r[2] == t + "[]" for r in rows):

@@ -59,7 +59,7 @@ EXTRA_SOURCES = [
 # Records whose GcDecode is hand-written in src/decode.rs (a union chosen by a flags field).
 # The generator still emits `gc_decode_fields` for them (fields at GC offsets, union = first
 # member); the hand impl calls it and then fixes the union.
-HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc"}
+HAND_DECODE = {"HSD_Joint", "HSD_RObjDesc", "HSD_PObjDesc", "FtPartsDesc", "HSD_CObjDesc"}
 
 # Pointer fields that point at an ARRAY whose length is another field (or a constant): `gen/arrays.tsv`,
 # lines `Struct.field<TAB>count` where count is a sibling field name or an integer. The GcDecode of such a field
@@ -80,7 +80,7 @@ ARRAY_FIELDS = load_array_fields()
 POINTER_KEY_FIELDS = {"HSD_AObjDesc.obj_id": "HSD_Joint"}
 # `void*` fields that hold a pointer to a known record (the C casts at the use): decode the pointee so pointer identity
 # with the typed views of the same object holds.
-VOID_TYPED_FIELDS = {"UnkStageDat_x0_entry.joint": "HSD_Joint"}
+VOID_TYPED_FIELDS = {"UnkStageDat_x0_entry.joint": "HSD_Joint", "UnkStageDat_x8_t.x10": "HSD_CObjDesc"}
 
 # TU-local records needed by native ports. Parse the original declarations on both
 # targets rather than copying their fields into Rust or a second layout generator.
@@ -982,6 +982,41 @@ class Gen:
             cnt, over = ARRAY_FIELDS.get(f"{nm}.{fn_}", (None, None))
             if cnt is not None and (ty.startswith("*mut ") or ty.startswith("*const ")):
                 inner = over or ty.split(" ", 1)[1]
+                if cnt == "extent":
+                    e(f"        v.{fn_} = d.ptr_array_extent::<{inner}>(at + 0x{off:X}) as {ty};")
+                    continue
+                if cnt.startswith("until="):
+                    # array ended by the element whose first word is <value> (HSD_VtxDescList: attr == 0xFF)
+                    e(f"        v.{fn_} = d.ptr_array_until_word::<{inner}>(at + 0x{off:X}, {cnt[6:]}) as {ty};")
+                    continue
+                if cnt == "null[untilnull]":
+                    e(f"        v.{fn_} = d.ptr_table_null_arrays::<{inner.split(' ', 1)[1]}>(at + 0x{off:X}) as {ty};")
+                    continue
+                if cnt.startswith("tab[") and cnt.endswith("]"):
+                    # table of pointers to the next boundary, each entry an array of <expr> records
+                    def sibread3(mm):
+                        sib = next((x for x in dec if x[0] == mm.group(0)), None)
+                        if sib is None:
+                            raise SystemExit(f"arrays.tsv: {nm}.{fn_}: no sibling field {mm.group(0)} in `{cnt}`")
+                        return f"(<{sib[2]} as GcDecode>::gc_decode(d, at + 0x{sib[1]:X}) as i64)"
+                    cexpr3 = "(" + re.sub(r"(?<![.\w])[A-Za-z_]\w*(?!\()", sibread3, cnt[4:-1]) + ").max(0) as usize"
+                    e(f"        {{ let n = {cexpr3}; v.{fn_} = d.ptr_table_extent_arrays_n::<{inner.split(' ', 1)[1]}>(at + 0x{off:X}, n) as {ty}; }}")
+                    continue
+                if cnt.startswith("null[") and cnt != "null[]":
+                    # NULL-terminated `T**` table whose entries are arrays of `<expr>` records
+                    cnt_expr = cnt[5:-1]
+                    def sibread2(mm):
+                        sib = next((x for x in dec if x[0] == mm.group(0)), None)
+                        if sib is None:
+                            raise SystemExit(f"arrays.tsv: {nm}.{fn_}: no sibling field {mm.group(0)} in `{cnt}`")
+                        return f"(<{sib[2]} as GcDecode>::gc_decode(d, at + 0x{sib[1]:X}) as i64)"
+                    cexpr2 = "(" + re.sub(r"(?<![.\w])[A-Za-z_]\w*(?!\()", sibread2, cnt_expr) + ").max(0) as usize"
+                    e(f"        {{ let n = {cexpr2}; v.{fn_} = d.ptr_table_arrays_n::<{inner.split(' ', 1)[1]}>(at + 0x{off:X}, n) as {ty}; }}")
+                    continue
+                if cnt == "null[]":
+                    # NULL-terminated `T**` table whose entries are arrays of T running to the next boundary
+                    e(f"        v.{fn_} = d.ptr_table_arrays::<{inner.split(' ', 1)[1]}>(at + 0x{off:X}) as {ty};")
+                    continue
                 if cnt == "null":
                     # NULL-terminated `T**` table
                     if not inner.startswith("*mut "):

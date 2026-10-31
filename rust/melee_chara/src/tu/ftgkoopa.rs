@@ -127,3 +127,6 @@ pub fn ftGk_Init_GetMotionFileString(arg0: i32) -> Option<&'static str> {
     };
     Some(ftGk_Init_803D3984[(offset - 14) as usize])
 }
+
+/// `ftGk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftGk_CostumeList[1]`), filled when the costumes load.
+pub static mut ftGk_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };

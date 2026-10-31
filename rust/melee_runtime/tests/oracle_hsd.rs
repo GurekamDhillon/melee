@@ -102,20 +102,20 @@ fn hsd_math_matches_c_build() {
                 fl.m("MtxSRTQuat", ln, &hm::HSD_MtxSRTQuat(&s, &q, &t, None), &mut r);
                 fl.m("MtxSRTQuat ps", ln, &hm::HSD_MtxSRTQuat(&s, &q, &t, Some(&ps)), &mut r);
                 fl.m("MtxScaledAdd", ln, &hm::HSD_MtxScaledAdd(&a, &b, f), &mut r);
-                fl.q("MatToQuat", ln, quatlib::MatToQuat(&a), &mut r);
-                fl.v("QuatLib_8037EB28", ln, quatlib::HSD_QuatLib_8037EB28(&a), &mut r);
-                fl.q("QuatLib_8037EC4C", ln, quatlib::HSD_QuatLib_8037EC4C(&p, &q), &mut r);
+                fl.q("MatToQuat", ln, quatlib::MatToQuat_owned(&a), &mut r);
+                fl.v("QuatLib_8037EB28", ln, quatlib::HSD_QuatLib_8037EB28_owned(&a), &mut r);
+                fl.q("QuatLib_8037EC4C", ln, quatlib::HSD_QuatLib_8037EC4C_owned(&p, &q), &mut r);
                 let mut axis = s;
                 if (n_hm - 1) % 11 == 0 {
                     axis = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
                 }
                 let rc = r.i();
-                let res = quatlib::HSD_QuatLib_8037ECE0(&axis, rot.x);
+                let res = quatlib::HSD_QuatLib_8037ECE0_owned(&axis, rot.x);
                 fl.eq("QuatLib_8037ECE0 rc", ln, vec![res.is_none() as u32], vec![(rc == -1) as u32]);
                 let seven = Quaternion { x: 7.0, y: 7.0, z: 7.0, w: 7.0 };
                 fl.q("QuatLib_8037ECE0", ln, res.unwrap_or(seven), &mut r);
-                fl.q("EulerToQuat", ln, quatlib::EulerToQuat(&rot), &mut r);
-                fl.q("QuatLib_8037EF28", ln, quatlib::HSD_QuatLib_8037EF28(&p, &q, f * 0.5 + 0.5), &mut r);
+                fl.q("EulerToQuat", ln, quatlib::EulerToQuat_owned(&rot), &mut r);
+                fl.q("QuatLib_8037EF28", ln, quatlib::HSD_QuatLib_8037EF28_owned(&p, &q, f * 0.5 + 0.5), &mut r);
             }
             "spl" => {
                 n_spl += 1;

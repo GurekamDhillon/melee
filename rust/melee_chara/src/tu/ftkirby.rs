@@ -2645,3 +2645,6 @@ pub fn ftKb_MexCopyKindHat(dst: i32, src: i32, internal: i32) {
         ftKb_Init_803C9E54[d] = f(3);
     }
 }
+
+/// `ftKb_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftKb_CostumeList[6]`), filled when the costumes load.
+pub static mut ftKb_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };

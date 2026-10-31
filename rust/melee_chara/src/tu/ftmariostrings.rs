@@ -39,3 +39,6 @@ pub const ftMr_Init_CostumeStrings: [[&str; 3]; 5] = [
     [ftMr_Strings_803C58C4, ftMr_Strings_803C58D0, ftMr_Strings_803C58EC],
     [ftMr_Strings_803C5910, ftMr_Strings_803C591C, ftMr_Strings_803C5938],
 ];
+
+/// `ftMr_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMr_CostumeList[5]`), filled when the costumes load.
+pub static mut ftMr_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

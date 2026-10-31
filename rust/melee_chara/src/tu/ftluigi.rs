@@ -92,3 +92,6 @@ pub fn ftLg_Init_GetMotionFileString(arg0: i32) -> Option<&'static str> {
     };
     Some(ftLg_Init_803D0AAC[offset - 14])
 }
+
+/// `ftLg_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftLg_CostumeList[4]`), filled when the costumes load.
+pub static mut ftLg_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

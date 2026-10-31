@@ -123,3 +123,6 @@ pub fn ftSk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftSk_Init_LoadSpecialAttrs");
     unsafe { crate::tu::ftfox::copy_attrs::<ftSeakAttributes>(gobj) }
 }
+
+/// `ftSk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftSk_CostumeList[5]`), filled when the costumes load.
+pub static mut ftSk_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

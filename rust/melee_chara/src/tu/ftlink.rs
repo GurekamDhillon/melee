@@ -208,3 +208,6 @@ pub fn ftLk_800EB334(gobj: *mut HSD_GObj) {
         fh::play_sfx(fp, 160106, 127, 64);
     }
 }
+
+/// `ftLk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftLk_CostumeList[5]`), filled when the costumes load.
+pub static mut ftLk_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

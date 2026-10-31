@@ -53,7 +53,7 @@ pub mod ext {
     pub fn HSD_GObj_JObjKind() -> u8 { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_JObjKind } }
     pub fn efAsync_DatEntries_data(_bank: i32) -> *mut core::ffi::c_void { todo!("efAsync_DatEntries (ef/efasync.c)") }
     pub fn efAsync_DatEntries_clear() { todo!("efAsync_DatEntries (ef/efasync.c)") }
-    pub fn efAsync_QueueInit() { todo!("efAsync_QueueInit (ef/efasync.c)") }
+    pub fn efAsync_QueueInit() { unsafe { let _ = crate::tu::efn::efasync::efAsync_QueueInit(); } }
     pub fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } }
     pub fn HSD_ObjAlloc(_d: *mut HSD_ObjAllocData) -> *mut core::ffi::c_void { unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(_d as _) as _ } }
     pub fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut core::ffi::c_void) { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } }

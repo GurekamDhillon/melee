@@ -21,3 +21,5 @@ pub fn ftSs_Init_80128428(gobj: G) {
     ext::ftCo_800D9C98(gobj);
 }
 
+/// `ftSs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftSs_CostumeList[5]`), filled when the costumes load.
+pub static mut ftSs_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

@@ -48,3 +48,6 @@ pub fn ftBo_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftBo_Init_LoadSpecialAttrs");
     unsafe { ftinl::copy_attrs::<ftZakoboyAttributes>(gobj) }
 }
+
+/// `ftBo_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftBo_CostumeList[1]`), filled when the costumes load.
+pub static mut ftBo_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };

@@ -143,3 +143,6 @@ pub unsafe extern "C" fn cb_ftMs_SpecialN_8013666C(g: *mut HSD_GObj) {
     melee_core::ct!("cb_ftMs_SpecialN_8013666C");
     ftMs_SpecialN_8013666C(g);
 }
+
+/// `ftMs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMs_CostumeList[5]`), filled when the costumes load.
+pub static mut ftMs_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

@@ -13,6 +13,8 @@ pub struct Host {
     pub aram: Vec<u8>,
     /// Loaded archives by the address of their native `HSD_Archive` record.
     pub archives: HashMap<usize, ArchiveImage>,
+    /// Images whose archive record was reused by a later parse: never freed, native pointers into them may live on.
+    pub retired: Vec<ArchiveImage>,
     /// Archive file names loaded, in order (run log).
     pub loaded: Vec<String>,
 }
@@ -24,7 +26,7 @@ impl Host {
     pub fn boot(disc: Gcm, mem_size: usize) -> Result<&'static mut Host, String> {
         let os = Os::new(mem_size)?;
         unsafe {
-            HOST = Some(Host { os, disc, aram: Vec::new(), archives: HashMap::new(), loaded: Vec::new() });
+            HOST = Some(Host { os, disc, aram: Vec::new(), archives: HashMap::new(), retired: Vec::new(), loaded: Vec::new() });
             Ok(HOST.as_mut().unwrap())
         }
     }

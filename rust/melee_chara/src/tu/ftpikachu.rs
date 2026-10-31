@@ -125,3 +125,6 @@ pub fn ftPk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftPk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPk_CostumeList[4]`), filled when the costumes load.
+pub static mut ftPk_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

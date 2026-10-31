@@ -220,3 +220,6 @@ pub fn ftDr_Init_80149910(gobj: *mut HSD_GObj) {
         (*fp).cmd_vars[1] = 0;
     }
 }
+
+/// `ftDr_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftDr_CostumeList[5]`), filled when the costumes load.
+pub static mut ftDr_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

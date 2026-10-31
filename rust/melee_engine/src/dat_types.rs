@@ -38,30 +38,40 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "yakumono_param" { return Some(RootType::Raw); }
     if name == "itPublicData" { return Some(RootType::Custom("itco")); }
     if name == "effCommonDataTable" { return Some(rt("EF_DAT_Entry")); }
+    if name == "Stc_scemdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name == "Stc_rarwmdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name == "lupe" { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name == "tdsce" { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name == "lbBgFlashColAnimData" { return Some(rt("Fighter_804D653C_t[]")); }
     if name == "lbRumbleData" { return Some(rt("Fighter_804D653C_t[]")); }
     if name == "ftLoadCommonData" { return Some(RootType::Custom("plco")); }
     if name == "plLoadCommonData" { return Some(rt("*pl_804D6470_t")); }
     if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
-    if name.starts_with("ftData") { return Some(rt("ftData")); }
+    if name.starts_with("SIS_") { return Some(rt("SIS")); }
+    if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(rt("EF_DAT_Entry")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
+    if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name.ends_with("_scene_data") { return Some(rt("SceneDesc")); }
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
+    if name.ends_with("_figatree") { return Some(rt("FigaTree")); }
     if name.ends_with("_joint") { return Some(rt("HSD_Joint")); }
     None
 }
 
 /// Decode the record or pointer root at data offset `off` into the decoder's shared graph; the result is
 /// the native address of the root (a record pointer, or a pointer to the decoded pointer cell).
-pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds) -> *mut c_void {
+pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, bounds: &crate::dat_custom::Bounds, sym: &str) -> *mut c_void {
     match ty {
         RootType::Raw => core::ptr::null_mut(),
-        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds),
+        RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
             "EF_DAT_Entry" => d.object::<EF_DAT_Entry>(off) as *mut c_void,
+            "FigaTree" => d.object::<FigaTree>(off) as *mut c_void,
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
             "HSD_AnimJoint" => d.object::<HSD_AnimJoint>(off) as *mut c_void,
@@ -69,8 +79,9 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "HSD_MatAnimJoint" => d.object::<HSD_MatAnimJoint>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
+            "SIS" => d.object::<SIS>(off) as *mut c_void,
+            "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
-            "ftData" => d.object::<ftData>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),
         },
         RootType::Array(n) => match n {

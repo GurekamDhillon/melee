@@ -70,6 +70,7 @@ def main():
         if not hit: continue
         force = hit[0][1]
         if h['path'] in linked_paths and not force: continue
+        if not h['todo'] and not force: continue  # a real default body (the vanilla behaviour) stays
         hit = [o for o, _ in hit]
         key = h['crate'] + '::' + h['path']
         if key in seen: continue

@@ -246,3 +246,6 @@ pub fn ftGw_Init_OnAbsorb(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftGw_Init_OnAbsorb");
     slw::ftGw_SpecialLw_AbsorbThink_DecideAction(gobj);
 }
+
+/// `ftGw_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftGw_CostumeList[4]`), filled when the costumes load.
+pub static mut ftGw_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

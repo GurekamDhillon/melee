@@ -121,3 +121,6 @@ pub fn ftNn_Init_8012309C(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftNn_Init_8012309C");
     unsafe { crate::chars::ftNana::ftnana::ftNn_Init_8012309C(&*fpp(gobj)) }
 }
+
+/// `ftNn_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftNn_CostumeList[4]`), filled when the costumes load.
+pub static mut ftNn_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };

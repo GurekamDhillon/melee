@@ -190,3 +190,6 @@ pub fn ftPe_Init_8011B93C(gobj: *mut HSD_GObj) {
         st::ftParts_80074A4C(gobj, 2, -1);
     }
 }
+
+/// `ftPe_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPe_CostumeList[5]`), filled when the costumes load.
+pub static mut ftPe_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

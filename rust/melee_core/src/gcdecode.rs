@@ -92,6 +92,9 @@ unsafe fn fill<T: GcDecode>(d: &mut GcDecoder<'_>, target: u32, dst: *mut u8) {
 }
 
 /// Type-directed decoder over one archive's data block.
+/// Records decoded per entry of a `T**` table of arrays whose length is not in the data.
+pub const MAX_TABLE_ARRAY: usize = 64;
+
 pub struct GcDecoder<'a> {
     data: &'a [u8],
     relocs: &'a HashSet<u32>,
@@ -104,6 +107,15 @@ pub struct GcDecoder<'a> {
     /// Raw-pointer mode (memory images, see [`GcDecoder::new_raw`]): a pointer word is not followed
     /// but stored as its guest address (`addr as *mut T`; never dereferenced).
     raw: bool,
+    /// Sorted data offsets where some object starts (every relocation target, every public, the data end): lets a
+    /// pointer to an array of records whose length the bytes do not state run to the next boundary. Empty = unknown.
+    bounds: Vec<u32>,
+    /// Data offsets of the archive's publics (roots).
+    roots: Vec<u32>,
+    /// Address of the archive's RAW data block (the big-endian file bytes the C reads through pointers). When set,
+    /// byte-blob pointers (`char*`, `u8*`, `void*`: names, display lists, vertex arrays, image data, animation
+    /// streams) point into it instead of being copied or read as null.
+    raw_base: usize,
 }
 
 impl<'a> GcDecoder<'a> {
@@ -111,7 +123,7 @@ impl<'a> GcDecoder<'a> {
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
         Self { data, relocs, memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
-               issues: Vec::new(), cur: ("(root)", 0), raw: false }
+               issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
     /// Decoder over a MEMORY IMAGE (a savestate's bytes, not a relocated archive): `data` holds
@@ -122,6 +134,229 @@ impl<'a> GcDecoder<'a> {
         let mut d = Self::new(data, relocs);
         d.raw = true;
         d
+    }
+
+    /// Point blob pointers (`char*`, `u8*`, `void*`) at the raw archive image: `base` is the address of its data block.
+    pub fn set_raw_base(&mut self, base: usize) {
+        self.raw_base = base;
+    }
+
+    /// The raw-image address of data offset `t`, when a raw image is attached.
+    pub fn raw_addr(&self, t: u32) -> Option<*mut u8> {
+        (self.raw_base != 0).then(|| (self.raw_base + t as usize) as *mut u8)
+    }
+
+    /// Give the decoder the object boundaries of the archive (see the `bounds` field).
+    pub fn set_bounds(&mut self, mut b: Vec<u32>) {
+        b.sort_unstable();
+        b.dedup();
+        self.bounds = b;
+    }
+
+    /// Bytes from data offset `off` to the next boundary above it (at least 1; 1 when no bounds are set).
+    pub fn extent(&self, off: u32) -> u32 {
+        match self.bounds.binary_search(&off) {
+            Ok(i) => self.bounds.get(i + 1).map_or(1, |n| n - off),
+            Err(i) => self.bounds.get(i).map_or(1, |n| n - off),
+        }
+        .max(1)
+    }
+
+    /// Like [`GcDecoder::ptr_table`], but each non-null entry is an ARRAY of `T` (a `T**` whose entries the C indexes:
+    /// `table[set][part]`, with the part count nowhere in the data). Too short an array is a crash on the first
+    /// index past it, too long only decodes a few more records, so each array is `MAX_TABLE_ARRAY` records, cut at the
+    /// next public / the end of the data (`set_roots`).
+    pub fn ptr_table_arrays<T: GcDecode>(&mut self, at: u32) -> *mut *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct TableArraysKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<TableArraysKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut *mut T;
+        }
+        let mut n = 0u32;
+        while self.relocs.contains(&(t + 4 * n)) {
+            n += 1;
+        }
+        let v: Vec<*mut T> = (0..=n)
+            .map(|i| match self.target(t + 4 * i) {
+                Some(e) => {
+                    let room = self.root_room(e) / T::GC_BYTES;
+                    let cnt = (room as usize).clamp(1, MAX_TABLE_ARRAY);
+                    self.array_memo::<T>(e, cnt)
+                }
+                None => core::ptr::null_mut(),
+            })
+            .collect();
+        let len = v.len();
+        let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.memo.insert(key, p);
+        p as *mut *mut T
+    }
+
+    /// Give the decoder the data offsets of the archive's publics (roots); see [`GcDecoder::ptr_table_arrays`].
+    pub fn set_roots(&mut self, mut r: Vec<u32>) {
+        r.sort_unstable();
+        r.dedup();
+        self.roots = r;
+    }
+
+    /// Bytes from `off` to the next root above it, or to the end of the data block.
+    fn root_room(&self, off: u32) -> u32 {
+        let end = self.data.len() as u32;
+        let next = match self.roots.binary_search(&off) {
+            Ok(i) => self.roots.get(i + 1).copied(),
+            Err(i) => self.roots.get(i).copied(),
+        };
+        next.unwrap_or(end).min(end).saturating_sub(off).max(1)
+    }
+
+    /// Like [`GcDecoder::ptr_table`], but each non-null entry is an ARRAY of exactly `n` `T` (the length is a sibling
+    /// field of the record holding the table pointer).
+    pub fn ptr_table_arrays_n<T: GcDecode>(&mut self, at: u32, n: usize) -> *mut *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct TableArraysNKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<TableArraysNKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut *mut T;
+        }
+        let mut k = 0u32;
+        while self.relocs.contains(&(t + 4 * k)) {
+            k += 1;
+        }
+        let v: Vec<*mut T> = (0..=k)
+            .map(|i| match self.target(t + 4 * i) {
+                Some(e) => self.array_memo::<T>(e, n.max(1)),
+                None => core::ptr::null_mut(),
+            })
+            .collect();
+        let len = v.len();
+        let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.memo.insert(key, p);
+        p as *mut *mut T
+    }
+
+    /// The pointer word at `at` read as an array of `T` that ends with the first element whose FIRST word equals
+    /// `word` (that element is included): `HSD_VtxDescList[]` ends with `attr == GX_VA_NULL`.
+    pub fn ptr_array_until_word<T: GcDecode>(&mut self, at: u32, word: u32) -> *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct UntilKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<UntilKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut T;
+        }
+        let mut n = 0u32;
+        while t + n * T::GC_BYTES + 4 <= self.data.len() as u32 && self.u32_at(t + n * T::GC_BYTES) != word {
+            n += 1;
+        }
+        let p = self.array::<T>(t, n as usize + 1) as *mut u8;
+        self.memo.insert(key, p);
+        p as *mut T
+    }
+
+    /// An array of `T` ending with the first element whose FIRST word is not a pointer (null); that element is
+    /// included. `HSD_EnvelopeDesc[]` ends with `joint == NULL`.
+    pub fn array_until_null<T: GcDecode>(&mut self, target: u32) -> *mut T {
+        struct UntilNullKey<T>(core::marker::PhantomData<T>);
+        let key = (target, TypeId::of::<UntilNullKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut T;
+        }
+        let mut n = 0u32;
+        while self.relocs.contains(&(target + n * T::GC_BYTES)) {
+            n += 1;
+        }
+        let p = self.array::<T>(target, n as usize + 1) as *mut u8;
+        self.memo.insert(key, p);
+        p as *mut T
+    }
+
+    /// The pointer word at `at` read as a NULL-terminated table of pointers to arrays that each end with a
+    /// null-first-word element (`HSD_EnvelopeDesc**`).
+    pub fn ptr_table_null_arrays<T: GcDecode>(&mut self, at: u32) -> *mut *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct TableNullKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<TableNullKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut *mut T;
+        }
+        let mut k = 0u32;
+        while self.relocs.contains(&(t + 4 * k)) {
+            k += 1;
+        }
+        let v: Vec<*mut T> = (0..=k)
+            .map(|i| match self.target(t + 4 * i) {
+                Some(e) => self.array_until_null::<T>(e),
+                None => core::ptr::null_mut(),
+            })
+            .collect();
+        let len = v.len();
+        let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.memo.insert(key, p);
+        p as *mut *mut T
+    }
+
+    /// The pointer word at `at` read as an array of `T` that runs to the next object boundary (`set_bounds`): for
+    /// arrays nothing else points into and whose length is only implied by the layout of the file.
+    pub fn ptr_array_extent<T: GcDecode>(&mut self, at: u32) -> *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        let n = (self.extent(t) / T::GC_BYTES).max(1) as usize;
+        self.array_memo::<T>(t, n)
+    }
+
+    /// A table of pointers that runs to the next object boundary (null entries allowed), each non-null entry an
+    /// array of exactly `n` `T`: `ftData_x8_x8.xC`, one `u16[x8]` row per costume visibility row.
+    pub fn ptr_table_extent_arrays_n<T: GcDecode>(&mut self, at: u32, n: usize) -> *mut *mut T {
+        if self.raw {
+            return self.u32_at(at) as usize as *mut *mut T;
+        }
+        let Some(t) = self.target(at) else { return core::ptr::null_mut() };
+        struct TabExtKey<T>(core::marker::PhantomData<T>);
+        let key = (t, TypeId::of::<TabExtKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut *mut T;
+        }
+        let rows = (self.extent(t) / 4).max(1);
+        let v: Vec<*mut T> = (0..rows)
+            .map(|i| match self.target(t + 4 * i) {
+                Some(e) => self.array_memo::<T>(e, n.max(1)),
+                None => core::ptr::null_mut(),
+            })
+            .collect();
+        let len = v.len();
+        let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.memo.insert(key, p);
+        p as *mut *mut T
+    }
+
+    /// `n` consecutive `T`s at `target`, shared per (target, T).
+    fn array_memo<T: GcDecode>(&mut self, target: u32, n: usize) -> *mut T {
+        struct ArrKey<T>(core::marker::PhantomData<T>);
+        let key = (target, TypeId::of::<ArrKey<T>>());
+        if let Some(&p) = self.memo.get(&key) {
+            return p as *mut T;
+        }
+        let p = self.array::<T>(target, n) as *mut u8;
+        self.memo.insert(key, p);
+        p as *mut T
     }
 
     /// Record something the bytes could not say.
@@ -331,14 +566,21 @@ macro_rules! object_pointee {
 object_pointee!(u16, u32, u64, i16, i32, i64, f32, f64, usize, isize, bool);
 /// `char*` / `u8*` in a data file are strings (names, symbols).
 impl GcPointee for i8 {
-    fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.c_string(t) as *mut i8 }
+    fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {
+        match d.raw_addr(t) { Some(p) => p as *mut i8, None => d.c_string(t) as *mut i8 }
+    }
 }
 impl GcPointee for u8 {
-    fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.c_string(t) }
+    fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {
+        match d.raw_addr(t) { Some(p) => p, None => d.c_string(t) }
+    }
 }
 /// `void*`: the bytes do not say what is there.
 impl GcPointee for c_void {
     fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self {
+        if let Some(p) = d.raw_addr(t) {
+            return p as *mut c_void;
+        }
         d.issue(format!("void* to {t:#x}: untyped, read as null"));
         core::ptr::null_mut()
     }

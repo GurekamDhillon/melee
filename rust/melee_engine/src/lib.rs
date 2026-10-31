@@ -6,6 +6,7 @@ pub mod cdata;
 pub mod crash;
 pub mod dat_custom;
 pub mod dat_types;
+pub mod extattr;
 pub mod dvd;
 pub mod engine;
 pub mod gcm;

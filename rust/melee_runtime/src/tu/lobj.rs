@@ -1076,6 +1076,40 @@ pub mod native {
         fn hsdNew(a0: *mut _HSD_ClassInfo) -> *mut c_void;
         fn hsdSearchClassInfo(a0: *const i8) -> *mut _HSD_ClassInfo;
         }
+        // ---- C-oracle test shim: one string-dispatched hook (tests/oracle_lobj_complete.rs) -------------------
+        pub type Hook = unsafe fn(&str, &[usize]) -> usize;
+        thread_local! {static HOOK: core::cell::Cell<Option<Hook>> = const { core::cell::Cell::new(None) };}
+        unsafe fn call(n: &str, a: &[usize]) -> usize {
+            (HOOK.with(core::cell::Cell::get).expect("lobj ext hook"))(n, a)
+        }
+        /// Route every cross-TU callee through `h` (None: unset them again).
+        pub fn set_hook(h: Option<Hook>) {
+            HOOK.with(|x| x.set(h));
+            unsafe {
+                hook::GXInitLightAttn = if h.is_some() { Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { let _ = call("GXInitLightAttn", &[a0 as usize, a1.to_bits() as usize, a2.to_bits() as usize, a3.to_bits() as usize, a4.to_bits() as usize, a5.to_bits() as usize, a6.to_bits() as usize]); }) } else { None };
+                hook::GXInitLightColor = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("GXInitLightColor", &[a0 as usize, u32::from_be_bytes([a1.r, a1.g, a1.b, a1.a]) as usize]); }) } else { None };
+                hook::GXInitLightDir = if h.is_some() { Some(|a0, a1, a2, a3| unsafe { let _ = call("GXInitLightDir", &[a0 as usize, a1.to_bits() as usize, a2.to_bits() as usize, a3.to_bits() as usize]); }) } else { None };
+                hook::GXInitLightDistAttn = if h.is_some() { Some(|a0, a1, a2, a3| unsafe { let _ = call("GXInitLightDistAttn", &[a0 as usize, a1.to_bits() as usize, a2.to_bits() as usize, a3 as usize]); }) } else { None };
+                hook::GXInitLightPos = if h.is_some() { Some(|a0, a1, a2, a3| unsafe { let _ = call("GXInitLightPos", &[a0 as usize, a1.to_bits() as usize, a2.to_bits() as usize, a3.to_bits() as usize]); }) } else { None };
+                hook::GXInitLightSpot = if h.is_some() { Some(|a0, a1, a2| unsafe { let _ = call("GXInitLightSpot", &[a0 as usize, a1.to_bits() as usize, a2 as usize]); }) } else { None };
+                hook::GXLoadLightObjImm = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("GXLoadLightObjImm", &[a0 as usize, a1 as usize]); }) } else { None };
+                hook::HSD_AObjLoadDesc = if h.is_some() { Some(|a0| unsafe { call("HSD_AObjLoadDesc", &[a0 as usize]) as *mut HSD_AObj }) } else { None };
+                hook::HSD_AObjRemove = if h.is_some() { Some(|a0| unsafe { let _ = call("HSD_AObjRemove", &[a0 as usize]); }) } else { None };
+                hook::HSD_AObjReqAnim = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("HSD_AObjReqAnim", &[a0 as usize, a1.to_bits() as usize]); }) } else { None };
+                hook::HSD_WObjAddAnim = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("HSD_WObjAddAnim", &[a0 as usize, a1 as usize]); }) } else { None };
+                hook::HSD_WObjAlloc = if h.is_some() { Some(|| unsafe { call("HSD_WObjAlloc", &[]) as *mut HSD_WObj }) } else { None };
+                hook::HSD_WObjGetPosition = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("HSD_WObjGetPosition", &[a0 as usize, a1 as usize]); }) } else { None };
+                hook::HSD_WObjInterpretAnim = if h.is_some() { Some(|a0| unsafe { let _ = call("HSD_WObjInterpretAnim", &[a0 as usize]); }) } else { None };
+                hook::HSD_WObjLoadDesc = if h.is_some() { Some(|a0| unsafe { call("HSD_WObjLoadDesc", &[a0 as usize]) as *mut HSD_WObj }) } else { None };
+                hook::HSD_WObjReqAnim = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("HSD_WObjReqAnim", &[a0 as usize, a1.to_bits() as usize]); }) } else { None };
+                hook::HSD_WObjSetPosition = if h.is_some() { Some(|a0, a1| unsafe { let _ = call("HSD_WObjSetPosition", &[a0 as usize, a1 as usize]); }) } else { None };
+                hook::HSD_WObjUnref = if h.is_some() { Some(|a0| unsafe { let _ = call("HSD_WObjUnref", &[a0 as usize]); }) } else { None };
+                hook::hsdInitClassInfo = if h.is_some() { Some(|a0, a1, a2, a3, a4, a5| unsafe { let _ = call("hsdInitClassInfo", &[a0 as usize, a1 as usize, a2 as usize, a3 as usize, a4 as usize, a5 as usize]); }) } else { None };
+                hook::hsdIsDescendantOf = if h.is_some() { Some(|a0, a1| unsafe { call("hsdIsDescendantOf", &[a0 as usize, a1 as usize]) as i32 }) } else { None };
+                hook::hsdNew = if h.is_some() { Some(|a0| unsafe { call("hsdNew", &[a0 as usize]) as *mut c_void }) } else { None };
+                hook::hsdSearchClassInfo = if h.is_some() { Some(|a0| unsafe { call("hsdSearchClassInfo", &[a0 as usize]) as *mut _HSD_ClassInfo }) } else { None };
+            }
+        }
         /// `&hsdObj` (object.c): the parent class info.
         pub unsafe fn hsdObj() -> *mut _HSD_ClassInfo {
             core::ptr::addr_of_mut!(crate::tu::object::hsdObj) as *mut _HSD_ClassInfo

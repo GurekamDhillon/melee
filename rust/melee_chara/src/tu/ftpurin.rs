@@ -396,3 +396,6 @@ pub fn ftPr_Init_8013C94C(gobj: G) {
         (*fp).accessory4_cb = None;
     }
 }
+
+/// `ftPr_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPr_CostumeList[5]`), filled when the costumes load.
+pub static mut ftPr_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };

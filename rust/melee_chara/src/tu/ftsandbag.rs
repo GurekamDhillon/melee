@@ -139,3 +139,6 @@ pub fn ftSb_Init_8014FBA4(gobj: *mut HSD_GObj) {
 pub fn ftSb_WaitReverse_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_WaitReverse_Anim");}
 
 pub fn ftSb_WaitReverse_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_WaitReverse_IASA");}
+
+/// `ftSb_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftSb_CostumeList[1]`), filled when the costumes load.
+pub static mut ftSb_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };

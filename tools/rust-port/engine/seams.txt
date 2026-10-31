@@ -3,6 +3,14 @@
 # Every unlinked `ext_fns!` hook whose name matches gets the "feature off" body: 0 / null / false / None / no-op,
 # or (for `*_Iterations`) its first argument. Nothing here may carry game logic: port extensions (rollback, scripts,
 # replay, determinism, overlay), render/GX host calls and debug helpers only.
+# kind queries: -1 = not an m-ex / Geno definition (must precede the generic Geno_ row)
+Geno_DefineBaseCK	-1
+Geno_DefineBaseKind	-1
+Geno_DefineAiLike	-1
+Geno_ProfileForKind	-1
+Geno_DefineArtBaseCK	-1
+Geno_DefineKirbyCopy	-1
+Geno_DefineThrownAs	-1
 Snap_\w+
 PcTrace\w*
 Det_\w+
@@ -46,7 +54,6 @@ Geno_\w+
 ScriptParts_\w+
 hsd_80391A04
 # step 7 (VS boot): m-ex / skins / Geno extension queries answer "not present"
-Geno_DefineBaseCK	-1
 Skins\w*
 Mex_\w+
 Geno_\w+
@@ -87,3 +94,8 @@ HSD_JObjSetDPtclCallback
 HSD_JObjSetSPtclCallback
 # trophy (Toy) data is display only: TyDataf/Datai symbols are not typed yet (dat_symbols.tsv), the VS sim never reads them
 !tyDisplay_8031C2CC
+HeapCheck\w*
+# the headless engine draws nothing: the GObj render pass is the renderer step's (melee_gx sink) job
+!HSD_GObj_80390FC0
+!HSD_StartRender
+!HSD_Init_803755A8

@@ -59,11 +59,13 @@ fn one<T: GcPointee>(d: &mut GcDecoder<'_>, at: u32) -> *mut c_void {
 }
 
 /// Decode custom root `name` at data offset `off`; the result is the native address of the root.
-pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bounds) -> *mut c_void {
+pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bounds, sym: &str) -> *mut c_void {
     match name {
         "plco" => plco(d, b, off),
         "itco" => itco(d, b, off),
+        "ftdata" => ftdata(d, off, sym),
         "ptrtable_itemdata" => ptrtable::<melee_types::GroundItemData>(d, b, off),
+        "ptrtable_dynmodel" => ptrtable::<melee_types::DynamicModelDesc>(d, b, off),
         "ptrtable_lightlist" => ptrtable::<melee_types::LightList>(d, b, off),
         "rawptrs" => {
             // a null terminated table of pointers to raw (big-endian) data, kept as native pointers into the raw image
@@ -101,7 +103,7 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     out[5] = ptable::<Fighter_804D6540_t>(d, b, at(5));
     out[6] = parr::<Fighter_804D653C_t>(d, b, at(6));
     out[7] = parr::<Fighter_804D653C_t>(d, b, at(7));
-    // [8] UNK_T, [17] UNK_T, [21] crowd config: no type in the C either; read as null
+    // [17] UNK_T: no type in the C either; read as null
     out[9] = ptable::<Vec2>(d, b, at(9)); // Vec2**
     out[10] = parr::<Fighter_ShakeTable_t>(d, b, at(10));
     out[11] = parr::<Fighter_ShakeTable_t>(d, b, at(11));
@@ -113,6 +115,15 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     out[18] = parr::<u8>(d, b, at(18));
     out[19] = parr::<u8>(d, b, at(19));
     out[20] = one::<HSD_Joint>(d, at(20));
+    out[21] = one::<melee_types::CrowdConfig>(d, at(21)); // gCrowdConfig
+    {
+        // Fighter_804D6534: { respawn platform HSD_Joint*, its HSD_AnimJoint* } (ftCo_800D4FF4 reads tbl[0], tbl[1])
+        if let Some(t) = d.target(at(8)) {
+            let j = d.ptr::<HSD_Joint>(t) as *mut c_void;
+            let a = d.ptr::<melee_types::HSD_AnimJoint>(t + 4) as *mut c_void;
+            out[8] = Box::leak(vec![j, a].into_boxed_slice()).as_mut_ptr() as *mut c_void;
+        }
+    }
     out[22] = parr::<Fighter_804D64FC_t>(d, b, at(22));
     // the root is a pointer to the table (`void** pData` after `lbArchive_LoadSymbols`)
     Box::leak(out.into_boxed_slice()).as_mut_ptr() as *mut c_void
@@ -145,4 +156,32 @@ fn ptrtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c
     let n = (b.extent(off) / 4).max(1);
     let v: Vec<*mut T> = (0..n).map(|i| d.ptr::<T>(off + 4 * i)).collect();
     Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
+}
+
+/// A fighter's public data (`ftDataCaptain`, ...): the record plus the per-animation arrays whose length the C takes
+/// from the retail tables (`ftData_Table_Unk0` rows for `xC` / `x10`, `ftData_UnkIntPairs` rows for `x14` / `x18`).
+fn ftdata(d: &mut GcDecoder<'_>, off: u32, sym: &str) -> *mut c_void {
+    use melee_core::gc::GcLayout;
+    use melee_fighter::tu::ftdata as fd;
+    use melee_types::{ftData, Fighter_WaitAnimData};
+    let kind = unsafe {
+        (0..fd::ftData_803C1F40.len())
+            .find(|&k| {
+                let b = fd::ftData_803C1F40[k].b;
+                !b.is_null() && core::ffi::CStr::from_ptr(b).to_bytes() == sym.as_bytes()
+            })
+            .unwrap_or_else(|| panic!("dat_custom: `{sym}` is not a fighter data symbol of ftData_803C1F40"))
+    };
+    let (n, m) = unsafe { (fd::ftData_Table_Unk0[kind].count as usize, fd::ftData_UnkIntPairs[kind].count as usize) };
+    let at = |f: &str| off + ftData::gc_field(f).expect("ftData field").offset;
+    let mut v = <ftData as GcDecode>::gc_decode(d, off);
+    v.xC = d.ptr_array::<Fighter_WaitAnimData>(at("xC"), n);
+    v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
+    v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
+    v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
+    let lower = sym.trim_start_matches("ftData").to_lowercase();
+    if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
+        v.ext_attr = p;
+    }
+    Box::leak(Box::new(v)) as *mut ftData as *mut c_void
 }

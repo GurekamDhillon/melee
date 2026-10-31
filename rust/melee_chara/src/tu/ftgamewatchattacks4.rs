@@ -43,7 +43,7 @@ pub mod ext {
             pub fn itGamewatchFire_802C6A2C(item: *mut HSD_GObj)  {
                 match unsafe { ITGAMEWATCHFIRE_802C6A2C } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A2C(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A2C(item as _); } return; },
                 }
             }
     pub static mut ITGAMEWATCHFIRE_802C6A78: Option<fn(*mut HSD_GObj) > = None;
@@ -51,7 +51,7 @@ pub mod ext {
             pub fn itGamewatchFire_802C6A78(item: *mut HSD_GObj)  {
                 match unsafe { ITGAMEWATCHFIRE_802C6A78 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A78(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A78(item as _); } return; },
                 }
             }
     pub static mut ITGAMEWATCHFIRE_802C6A98: Option<fn(*mut HSD_GObj) > = None;
@@ -59,7 +59,7 @@ pub mod ext {
             pub fn itGamewatchFire_802C6A98(item: *mut HSD_GObj)  {
                 match unsafe { ITGAMEWATCHFIRE_802C6A98 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A98(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itgamewatchfire::itGamewatchFire_802C6A98(item as _); } return; },
                 }
             }
 }

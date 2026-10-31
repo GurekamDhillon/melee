@@ -63,7 +63,7 @@ pub mod ext {
     pub fn ftPartSetRotX(fp: *mut Fighter, part_idx: i32, rot: f32) {
         match unsafe { FTPARTSETROTX } {
             Some(f) => f(fp, part_idx, rot),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
         }
     }
 }

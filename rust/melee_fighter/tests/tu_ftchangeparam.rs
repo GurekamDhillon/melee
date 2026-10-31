@@ -24,8 +24,8 @@ fn ftchangeparam_vs_c() {
     let mut k1c: Box<Fighter_804D651C_t> = zeroed();
     let mut cd: Box<ftCommonData> = zeroed();
     unsafe {
-        c::ext::Fighter_804D6524 = &*k24;
-        c::ext::Fighter_804D651C = &*k1c;
+        c::ext::Fighter_804D6524 = &*k24 as *const _ as *mut _;
+        c::ext::Fighter_804D651C = &*k1c as *const _ as *mut _;
         hooks::FIGHTER_804D6520 = &*k20;
         hooks::P_FT_COMMON_DATA = &*cd;
     }
@@ -106,7 +106,7 @@ fn reload_smoke() {
     let mut go: Box<HSD_GObj> = zeroed();
     go.user_data = &mut *f as *mut Fighter as *mut _;
     unsafe {
-        c::ext::Fighter_804D6518 = &*k18;
+        c::ext::Fighter_804D6518 = &*k18 as *const _ as *mut _;
         c::ext::Geno_ApplyAttrs = Some(geno);
         c::ext::Mex_OnReapplyAttrDispatch = Some(mex);
         c::ext::ftKindCalcIndiviParamTable_present = Some(present);

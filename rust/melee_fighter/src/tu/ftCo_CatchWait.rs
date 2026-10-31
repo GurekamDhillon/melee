@@ -27,20 +27,20 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) = |_, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        fn_800DB6C8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB6C8(g as _); } };
+        fn_800DB6C8(g: G) = |g: G| { unsafe { crate::tu::ftCo_CaptureWait::fn_800DB6C8(g as _); } };
         fn_800DA054(g: G) = crate::tu::ftCo_CatchPull::fn_800DA054;
         fn_800DA4FC(g: G) = crate::tu::ftCo_CatchAttack::fn_800DA4FC;
         ftCo_800DD1E4(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Throw::ftCo_800DD1E4(g as _) as _ } };
-        it_802A7AAC(g: G) = |g: G| { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7AAC(g as _); } };
-        it_802BAC3C(g: G) = |g: G| { unsafe { let _ = melee_items::tu::itsamusgrapple::it_802BAC3C(g as _); } };
+        it_802A7AAC(g: G) = |g: G| { unsafe { melee_items::tu::itlinkhookshot::it_802A7AAC(g as _); } };
+        it_802BAC3C(g: G) = |g: G| { unsafe { melee_items::tu::itsamusgrapple::it_802BAC3C(g as _); } };
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
-        ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
+        ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
     }
 }

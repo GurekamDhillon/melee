@@ -30,16 +30,16 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
+        ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftCo_8009AE38(g: G) -> bool = crate::tu::ftCo_CliffAttack::ftCo_8009AE38;
         ftCo_8009AFD4(g: G) -> bool = crate::tu::ftCo_CliffAttack::ftCo_8009AFD4;
         ftCo_8009B170(g: G) -> bool = crate::tu::ftCo_CliffJump::ftCo_8009B170;
         ftCo_8009AA0C(g: G) -> bool = crate::tu::ftCo_CliffClimb::ftCo_8009AA0C;
         ftCo_CliffCatch_Phys(g: G) = crate::tu::ftcliffcommon::ftco_cliff_catch_phys;
         ftCo_CliffCatch_Coll(g: G) = crate::tu::ftcliffcommon::ftco_cliff_catch_coll;
-        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
+        ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
     }
 }
 

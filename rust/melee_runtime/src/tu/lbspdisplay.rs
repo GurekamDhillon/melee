@@ -215,16 +215,16 @@ pub mod ext {
         match unsafe { hook::HSD_CObjSetEyePosition } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetEyePosition is not ported") } }
     }
     pub fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetFar } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetFar(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::HSD_CObjSetFar } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetFar(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) {
         match unsafe { hook::HSD_CObjSetInterest } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetInterest is not ported") } }
     }
     pub fn HSD_CObjSetNear(a0: *mut HSD_CObj, a1: f32) {
-        match unsafe { hook::HSD_CObjSetNear } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetNear(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::HSD_CObjSetNear } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetNear(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) {
-        match unsafe { hook::HSD_CObjSetOrtho } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
+        match unsafe { hook::HSD_CObjSetOrtho } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { crate::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_CObjSetProjectionType(a0: *mut HSD_CObj, a1: u32) {
         match unsafe { hook::HSD_CObjSetProjectionType } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetProjectionType is not ported") } }
@@ -233,19 +233,19 @@ pub mod ext {
         match unsafe { hook::HSD_CObjSetRoll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_CObjSetRoll is not ported") } }
     }
     pub fn HSD_CObjSetScissor(a0: *mut HSD_CObj, a1: *mut _Scissor) {
-        match unsafe { hook::HSD_CObjSetScissor } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetScissor(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::HSD_CObjSetScissor } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetScissor(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) {
-        match unsafe { hook::HSD_CObjSetViewport } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::HSD_CObjSetViewport } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } return; } } }
     }
     pub fn HSD_Free(a0: *mut c_void) {
-        match unsafe { hook::HSD_Free } { Some(f) => f(a0), None => { { unsafe { let _ = crate::tu::memory::HSD_Free(a0 as _); } return; } } }
+        match unsafe { hook::HSD_Free } { Some(f) => f(a0), None => { { unsafe { crate::tu::memory::HSD_Free(a0 as _); } return; } } }
     }
     pub fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) {
         match unsafe { hook::HSD_GObjObject_80390A70 } { Some(f) => f(a0, a1, a2), None => { panic!("TODO: HSD_GObjObject_80390A70 is not ported") } }
     }
     pub fn HSD_ImageDescCopyFromEFB(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: u8, a4: i32) {
-        match unsafe { hook::HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { let _ = crate::tu::tobj::HSD_ImageDescCopyFromEFB(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
+        match unsafe { hook::HSD_ImageDescCopyFromEFB } { Some(f) => f(a0, a1, a2, a3, a4), None => { { unsafe { crate::tu::tobj::HSD_ImageDescCopyFromEFB(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } } }
     }
     pub fn HSD_LObjAddAnimAll(a0: *mut HSD_LObj, a1: *mut HSD_LightAnim) {
         match unsafe { hook::HSD_LObjAddAnimAll } { Some(f) => f(a0, a1), None => { panic!("TODO: HSD_LObjAddAnimAll is not ported") } }

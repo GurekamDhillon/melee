@@ -25,7 +25,7 @@ pub mod ext {
     pub fn it_802F0AE0(gobj: *mut HSD_GObj, prev_pos: *mut Vec3, pos: *mut Vec3, kind: ItemKind, msid: i32, facing_dir: f32, vel_x: f32, vel_y: f32) {
         match unsafe { IT_802F0AE0 } {
             Some(f) => f(gobj, prev_pos, pos, kind, msid, facing_dir, vel_x, vel_y),
-            None => { unsafe { let _ = melee_items::tu::itmasterhandbullet::it_802F0AE0(gobj as _, prev_pos as _, pos as _, kind, msid as _, facing_dir as _, vel_x as _, vel_y as _); } },
+            None => { unsafe { melee_items::tu::itmasterhandbullet::it_802F0AE0(gobj as _, prev_pos as _, pos as _, kind, msid as _, facing_dir as _, vel_x as _, vel_y as _); } },
         }
     }
     fn ftLib_80087120_port(gobj: *mut HSD_GObj) -> i32 {

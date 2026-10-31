@@ -36,11 +36,11 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_GetLStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_lstick_angle;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::tu::ft_08a1::ft_8008A2BC;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
+        ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

@@ -44,7 +44,7 @@ pub mod ext {
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3) {
         match unsafe { LB_8000B1CC } {
             Some(f) => f(jobj, pos0, pos1),
-            None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } },
+            None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } },
         }
     }
     pub static mut LBAUDIOAX_800236B8: Option<fn(i32) -> i32> = None;
@@ -68,7 +68,7 @@ pub mod ext {
     pub fn it_802F046C(gobj: *mut Item_GObj) {
         match unsafe { IT_802F046C } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } },
+            None => { unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } },
         }
     }
     // `ftMh_MS_389_80151018` (ftmasterhandwait12.c, not ported).
@@ -77,7 +77,7 @@ pub mod ext {
     pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
         match unsafe { FTMH_MS_389_80151018 } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
+            None => { unsafe { crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
         }
     }
     // `ftMh_CaptureWaitMasterHand_80155D1C` (ftmasterhandthrownmasterhand.c, not ported).
@@ -86,7 +86,7 @@ pub mod ext {
     pub fn ftMh_CaptureWaitMasterHand_80155D1C(gobj: *mut HSD_GObj) {
         match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D1C } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(gobj as _); } },
+            None => { unsafe { crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D1C(gobj as _); } },
         }
     }
 

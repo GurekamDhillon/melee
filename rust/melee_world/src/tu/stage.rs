@@ -62,7 +62,7 @@ pub mod ext {
             pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
                 match H___assert {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     pub static mut H_mpCheckMultiple: Option<unsafe extern "C" fn(f32, f32, f32, f32, *mut melee_types::Vec, *mut i32, *mut u32, *mut melee_types::Vec, u32, i32, i32) -> i32> = None;
@@ -95,14 +95,14 @@ pub mod ext {
             pub unsafe extern "C" fn Ground_801C5A84(a0: i32)  {
                 match H_Ground_801C5A84 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C5A84(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C5A84(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C5AA4: Option<unsafe extern "C" fn(i32) > = None;
             pub unsafe extern "C" fn Ground_801C5AA4(a0: i32)  {
                 match H_Ground_801C5AA4 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C5AA4(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C5AA4(a0 as _); } return; },
                 }
             }
     hook!(H_Mex_GrExternalCount, Mex_GrExternalCount, () -> i32);
@@ -113,42 +113,42 @@ pub mod ext {
             pub unsafe extern "C" fn Ground_801C06B8(a0: u32)  {
                 match H_Ground_801C06B8 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C06B8(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C06B8(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C0754: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
             pub unsafe extern "C" fn Ground_801C0754(a0: *mut melee_types::StageIdPair)  {
                 match H_Ground_801C0754 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0754(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C0754(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C0800: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
             pub unsafe extern "C" fn Ground_801C0800(a0: *mut melee_types::StageIdPair)  {
                 match H_Ground_801C0800 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0800(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C0800(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_OnLoad: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
             pub unsafe extern "C" fn Ground_OnLoad(a0: *mut melee_types::StageIdPair)  {
                 match H_Ground_OnLoad {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_OnLoad(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_OnLoad(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C0FB8: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair) > = None;
             pub unsafe extern "C" fn Ground_801C0FB8(a0: *mut melee_types::StageIdPair)  {
                 match H_Ground_801C0FB8 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C0FB8(a0 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C0FB8(a0 as _); } return; },
                 }
             }
     pub static mut H_Ground_DemoInit: Option<unsafe extern "C" fn(*mut melee_types::StageIdPair, i32) > = None;
             pub unsafe extern "C" fn Ground_DemoInit(a0: *mut melee_types::StageIdPair, a1: i32)  {
                 match H_Ground_DemoInit {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_DemoInit(a0 as _, a1 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_DemoInit(a0 as _, a1 as _); } return; },
                 }
             }
     // ---- extern globals ----

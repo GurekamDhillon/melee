@@ -34,7 +34,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         Mex_Enabled(name: &str) -> i32 = |name: &str| -> i32 { unsafe { crate::platform::Mex_Enabled(name) as i32 } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
@@ -52,7 +52,7 @@ pub mod ext {
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_Walk_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput(g as _) as _ } };
         ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
-        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
+        ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

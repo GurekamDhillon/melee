@@ -61,7 +61,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
@@ -69,7 +69,7 @@ pub mod ext {
             pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
                 match unsafe { FTCO_800DE2A8 } {
                     Some(f) => f(gobj, vic),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
                 }
             }
     pub static mut FTCO_800DE7C0: Option<fn(*mut HSD_GObj, i32, i32)> = None;
@@ -77,7 +77,7 @@ pub mod ext {
     pub fn ftCo_800DE7C0(gobj: *mut HSD_GObj, a: i32, b: i32) {
         match unsafe { FTCO_800DE7C0 } {
             Some(f) => f(gobj, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
+            None => { unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
         }
     }
 }

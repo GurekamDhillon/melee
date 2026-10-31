@@ -38,7 +38,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) => unsafe { let _ = melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); };
+    fn Stage_UnkSetVec3TCam_Offset(a0: *mut Vec3) => unsafe { melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(a0 as _); };
     fn ft_800877F8(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_800877f8(a0 as _, a1 as _) };
     fn ft_80087818(a0: *mut HSD_GObj, a1: i32) -> bool => unsafe { crate::ft0877::ft_80087818(a0 as _, a1 as _) };
     fn ft_80087858(a0: *mut HSD_GObj) -> bool => unsafe { crate::ft0877::ft_80087858(a0 as _) };

@@ -38,13 +38,13 @@ pub mod ext {
         fn Geno_DefineIsNone(_kind: i32) -> i32 = { unsafe { crate::platform::Geno_DefineIsNone(_kind) } };
         fn ftPartsPObjSetDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjSetDefaultClass") };
         fn ftPartsPObjClearDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjClearDefaultClass") };
-        fn ft_800C85B8(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } };
-        fn ft_800C80A4(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftco_800c7ca0::ft_800c80a4(_fp as _); } return; } };
-        fn ft_800C8170(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftmetal::ft_800C8170(_fp as _); } return; } };
-        fn ft_800C0098(_fp: &mut Fighter) = { { unsafe { let _ = crate::tu::ftcolanim::ft_800c0098(_fp as _); } return; } };
-        fn lbRefract_80022BB8() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_80022BB8(); } return; } };
-        fn lbRefract_800225D4() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_800225D4(); } return; } };
-        fn lbRefSetUnuse() = { { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefSetUnuse(); } return; } };
+        fn ft_800C85B8(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } };
+        fn ft_800C80A4(_fp: &mut Fighter) = { { unsafe { crate::tu::ftco_800c7ca0::ft_800c80a4(_fp as _); } return; } };
+        fn ft_800C8170(_fp: &mut Fighter) = { { unsafe { crate::tu::ftmetal::ft_800C8170(_fp as _); } return; } };
+        fn ft_800C0098(_fp: &mut Fighter) = { { unsafe { crate::tu::ftcolanim::ft_800c0098(_fp as _); } return; } };
+        fn lbRefract_80022BB8() = { { unsafe { melee_runtime::tu::lbrefract::lbRefract_80022BB8(); } return; } };
+        fn lbRefract_800225D4() = { { unsafe { melee_runtime::tu::lbrefract::lbRefract_800225D4(); } return; } };
+        fn lbRefSetUnuse() = { { unsafe { melee_runtime::tu::lbrefract::lbRefSetUnuse(); } return; } };
     }
 }
 

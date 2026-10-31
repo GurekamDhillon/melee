@@ -29,7 +29,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, pos0, pos1),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
                 }
             }
     pub static mut IT_802AA054: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3, f32, f32) > = None;
@@ -37,7 +37,7 @@ pub mod ext {
             pub fn it_802AA054(gobj: *mut HSD_GObj, pos: *mut Vec3, vel: *mut Vec3, dir: f32, rot: f32)  {
                 match unsafe { IT_802AA054 } {
                     Some(f) => f(gobj, pos, vel, dir, rot),
-                    None => { unsafe { let _ = melee_items::tu::itnesspkfire::it_802AA054(gobj as _, pos as _, vel as _, dir as _, rot as _); } return; },
+                    None => { unsafe { melee_items::tu::itnesspkfire::it_802AA054(gobj as _, pos as _, vel as _, dir as _, rot as _); } return; },
                 }
             }
 }

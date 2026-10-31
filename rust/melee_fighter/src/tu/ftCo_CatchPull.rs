@@ -32,21 +32,21 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        it_802A7840(g: *mut Item_GObj) = |g: *mut Item_GObj| { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7840(g as _); } };
-        it_802BAA94(g: *mut Item_GObj) = |g: *mut Item_GObj| { unsafe { let _ = melee_items::tu::itsamusgrapple::it_802BAA94(g as _); } };
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        it_802A7840(g: *mut Item_GObj) = |g: *mut Item_GObj| { unsafe { melee_items::tu::itlinkhookshot::it_802A7840(g as _); } };
+        it_802BAA94(g: *mut Item_GObj) = |g: *mut Item_GObj| { unsafe { melee_items::tu::itsamusgrapple::it_802BAA94(g as _); } };
         // TARGET_PC: a Geno fighter's own clip for this motion (row, or < 0).
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         fn_800DA1D8(g: G) = crate::tu::ftCo_CatchWait::fn_800DA1D8;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
-        ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
+        ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
-        lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } };
+        lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } };
         ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |f: &mut Fighter, p: u32| crate::ftdmgfall::ftparts_get_bone_index(f, p as i32) as u32;
         ftCo_800DA698(g: G, arg1: bool) = crate::tu::ftCo_CatchCut::ftCo_800DA698;
     }

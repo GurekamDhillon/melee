@@ -59,7 +59,7 @@ pub mod ext {
     pub fn ftAnim_8006FA58(fp: *mut Fighter, part: i32, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_8006FA58 } {
             Some(f) => f(fp, part, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
         }
     }
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, sfx: i32, vol: i32, pan: i32),

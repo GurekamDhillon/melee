@@ -42,14 +42,14 @@ pub mod ext {
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_Ground_GetYakumonoParam() -> *mut c_void { { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
-    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
+    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_mpJointFromLine(_line: i32) -> i32 { { return unsafe { crate::tu::mplib::mpJointFromLine(_line as _) as _ }; } }
     unsafe fn todo_mpLineGetKind(_line: i32) -> i32 { { return unsafe { crate::tu::mplib::mpLineGetKind(_line as _) as _ }; } }
     unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { { return unsafe { crate::tu::ground::Ground_801C3FA4(_g as _, _depth as _) as _ }; } }
-    unsafe fn todo_lb_8000B1CC(_j: *mut HSD_JObj, _a: *const Vec3, _out: *mut Vec3) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _a as _, _out as _); } return; } }
+    unsafe fn todo_lb_8000B1CC(_j: *mut HSD_JObj, _a: *const Vec3, _out: *mut Vec3) { { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _a as _, _out as _); } return; } }
     unsafe fn todo_Ground_801C32D4(_a: i32, _b: i32) -> i32 { { return unsafe { crate::tu::ground::Ground_801C32D4(_a as _, _b as _) as _ }; } }
-    unsafe fn todo_mpJointListAdd(_joint: i32) { { unsafe { let _ = crate::tu::mplib::mpJointListAdd(_joint as _); } return; } }
-    unsafe fn todo_mpLib_80057BC0(_joint: i32) { { unsafe { let _ = crate::tu::mplib::mpLib_80057BC0(_joint as _); } return; } }
+    unsafe fn todo_mpJointListAdd(_joint: i32) { { unsafe { crate::tu::mplib::mpJointListAdd(_joint as _); } return; } }
+    unsafe fn todo_mpLib_80057BC0(_joint: i32) { { unsafe { crate::tu::mplib::mpLib_80057BC0(_joint as _); } return; } }
     impl Hooks {
         pub const fn todo() -> Hooks {
             Hooks {

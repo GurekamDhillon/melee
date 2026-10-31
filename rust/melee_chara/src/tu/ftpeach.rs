@@ -77,7 +77,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     /// `ftPe_SpecialN_OnDeath2(gobj)` (ftpeachspecialn.c, not ported yet).
@@ -86,7 +86,7 @@ pub mod ext {
             pub fn ftPe_SpecialN_OnDeath2(gobj: *mut HSD_GObj)  {
                 match unsafe { FTPE_SPECIALN_ONDEATH2 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftpeachspecialn::ftPe_SpecialN_OnDeath2(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftpeachspecialn::ftPe_SpecialN_OnDeath2(gobj as _); } return; },
                 }
             }
     hook_or!(FTPARTS_80074A74, ftParts_80074A74, melee_fighter::ft0df::ftparts_80074a74, (gobj: *mut HSD_GObj, model_idx: i32) -> i32);

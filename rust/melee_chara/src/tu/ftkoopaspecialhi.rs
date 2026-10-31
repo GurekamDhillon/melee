@@ -32,7 +32,7 @@ pub mod ext {
     pub fn ftPartSetRotX(fp: *mut Fighter, part: i32, v: f32) {
         match unsafe { FTPARTSETROTX } {
             Some(f) => f(fp, part, v),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
         }
     }
     /// Recording hook; unset, the native `melee_fighter::tu::ftcliffcommon` port runs.

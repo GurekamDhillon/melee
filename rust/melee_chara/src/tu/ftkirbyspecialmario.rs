@@ -47,7 +47,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
@@ -56,7 +56,7 @@ pub mod ext {
             pub fn it_8029B6F8(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32)  {
                 match unsafe { IT_8029B6F8 } {
                     Some(f) => f(gobj, pos, kind, facing_dir),
-                    None => { unsafe { let _ = melee_items::tu::itmariofireball::it_8029B6F8(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
+                    None => { unsafe { melee_items::tu::itmariofireball::it_8029B6F8(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
                 }
             }
     crate::port_hook!(ITDRMARIOPILL_SPAWN, itDrMarioPill_Spawn, crate::adapt::itDrMarioPill_Spawn,

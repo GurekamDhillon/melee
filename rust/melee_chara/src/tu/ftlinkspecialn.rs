@@ -37,7 +37,7 @@ pub mod ext {
             pub fn it_802A8A7C(arrow: *mut Item_GObj)  {
                 match unsafe { IT_802A8A7C } {
                     Some(f) => f(arrow),
-                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
+                    None => { unsafe { melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
                 }
             }
     pub static mut IT_802AF304: Option<fn(*mut Item_GObj) > = None;
@@ -45,7 +45,7 @@ pub mod ext {
             pub fn it_802AF304(bow: *mut Item_GObj)  {
                 match unsafe { IT_802AF304 } {
                     Some(f) => f(bow),
-                    None => { unsafe { let _ = melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
+                    None => { unsafe { melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
                 }
             }
     crate::port_hook!(IT_802AF1A4, it_802AF1A4, crate::adapt::it_802AF1A4, (facing_dir: f32, owner: *mut HSD_GObj, pos: &Vec3, part: i32, x10: i32) -> *mut Item_GObj);

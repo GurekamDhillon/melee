@@ -29,7 +29,7 @@ pub mod ext {
     pub fn it_802F046C(gobj: *mut Item_GObj) {
         match unsafe { IT_802F046C } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } },
+            None => { unsafe { melee_items::tu::itmasterhandlaser::it_802F046C(gobj as _); } },
         }
     }
     pub static mut LBAUDIOAX_800236B8: Option<fn(i32) -> i32> = None;

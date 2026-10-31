@@ -36,7 +36,7 @@ pub mod ext {
             pub fn itPikachuThunderJolt_Spawn(gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32, kind: i32)  {
                 match unsafe { ITPIKACHUTHUNDERJOLT_SPAWN } {
                     Some(f) => f(gobj, pos, facing_dir, kind),
-                    None => { unsafe { let _ = melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(gobj as _, pos as _, facing_dir as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::itpikachutjoltground::itPikachuThunderJolt_Spawn(gobj as _, pos as _, facing_dir as _, kind as _); } return; },
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.

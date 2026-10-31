@@ -46,7 +46,7 @@ pub mod ext {
     pub fn mpFloorGetRight(line: i32, out: *mut Vec3) {
         match unsafe { MPFLOORGETRIGHT } {
             Some(f) => f(line, out),
-            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetRight(line as _, out as _); } },
+            None => { unsafe { melee_world::tu::mplib::mpFloorGetRight(line as _, out as _); } },
         }
     }
     // `HSD_PadMasterStatus[port].button` (baselib/controller.c).
@@ -59,7 +59,7 @@ pub mod ext {
             pub fn ftMh_MS_343_801510B0(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_343_801510B0 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandentry::ftMh_MS_343_801510B0(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandentry::ftMh_MS_343_801510B0(gobj as _); } return; },
                 }
             }
     // ftmasterhandpoke.c
@@ -68,7 +68,7 @@ pub mod ext {
             pub fn ftMh_MS_358_80152880(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_358_80152880 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandpoke::ftMh_MS_358_80152880(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandpoke::ftMh_MS_358_80152880(gobj as _); } return; },
                 }
             }
     // ftmasterhandfingergun.c
@@ -77,7 +77,7 @@ pub mod ext {
             pub fn ftMh_MS_363_801530A4(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_363_801530A4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandfingergun::ftMh_MS_363_801530A4(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandfingergun::ftMh_MS_363_801530A4(gobj as _); } return; },
                 }
             }
     // ftmasterhandbackcrush*.c
@@ -86,7 +86,7 @@ pub mod ext {
             pub fn ftMh_MS_371_801541C8(gobj: *mut HSD_GObj, cb: HSD_GObjEvent)  {
                 match unsafe { FTMH_MS_371_801541C8 } {
                     Some(f) => f(gobj, cb),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandbackcrush1::ftMh_MS_371_801541C8(gobj as _, cb as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandbackcrush1::ftMh_MS_371_801541C8(gobj as _, cb as _); } return; },
                 }
             }
     pub static mut FTMH_MS_369_80153B90: Option<fn(*mut HSD_GObj) > = None;
@@ -94,7 +94,7 @@ pub mod ext {
             pub fn ftMh_MS_369_80153B90(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_369_80153B90 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandbackairplane3::ftMh_MS_369_80153B90(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandbackairplane3::ftMh_MS_369_80153B90(gobj as _); } return; },
                 }
             }
     pub static mut FTMH_MS_370_80153D2C: Option<fn(*mut HSD_GObj) > = None;
@@ -102,7 +102,7 @@ pub mod ext {
             pub fn ftMh_MS_370_80153D2C(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_370_80153D2C } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandbackcrush0::ftMh_MS_370_80153D2C(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandbackcrush0::ftMh_MS_370_80153D2C(gobj as _); } return; },
                 }
             }
     // ftmasterhandgrab / throw start
@@ -111,7 +111,7 @@ pub mod ext {
             pub fn ftMh_MS_372_801542E0(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_372_801542E0 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandbackdisappear::ftMh_MS_372_801542E0(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandbackdisappear::ftMh_MS_372_801542E0(gobj as _); } return; },
                 }
             }
     // ftmasterhandslam.c / ftmasterhandwait11-12 combos
@@ -120,7 +120,7 @@ pub mod ext {
             pub fn ftMh_MS_380_80155194(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_380_80155194 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandslam::ftMh_MS_380_80155194(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandslam::ftMh_MS_380_80155194(gobj as _); } return; },
                 }
             }
     pub static mut FTMH_MS_383_80155484: Option<fn(*mut HSD_GObj) > = None;
@@ -128,7 +128,7 @@ pub mod ext {
             pub fn ftMh_MS_383_80155484(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_383_80155484 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandtagapplaud::ftMh_MS_383_80155484(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandtagapplaud::ftMh_MS_383_80155484(gobj as _); } return; },
                 }
             }
 }

@@ -50,7 +50,7 @@ pub mod ext {
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) {
         match unsafe { FTCO_800BFFD0 } {
             Some(f) => f(fp, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
         }
     }
     hook_or!(FTCO_LANDING_ENTER_BASIC, ftCo_Landing_Enter_Basic, (gobj: *mut HSD_GObj),
@@ -72,7 +72,7 @@ pub mod ext {
             pub fn it_802AFEA8(item: *mut HSD_GObj, owner: *mut HSD_GObj, arg: i32)  {
                 match unsafe { IT_802AFEA8 } {
                     Some(f) => f(item, owner, arg),
-                    None => { unsafe { let _ = melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, arg as _); } return; },
+                    None => { unsafe { melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, arg as _); } return; },
                 }
             }
     pub static mut IT_802B19AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, ItemKind, f32) -> *mut HSD_GObj> = None;

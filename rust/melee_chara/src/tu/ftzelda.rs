@@ -56,12 +56,12 @@ pub mod ext {
     pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32)> = None;
     #[allow(non_snake_case)]
     pub fn it_8026B3F8(article: *mut c_void, kind: i32) {
-        match unsafe { IT_8026B3F8 } { Some(f) => f(article, kind), None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; } }
+        match unsafe { IT_8026B3F8 } { Some(f) => f(article, kind), None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; } }
     }
     pub static mut FTZD_SPECIALLW_8013B5EC: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftZd_SpecialLw_8013B5EC(gobj: *mut HSD_GObj) {
-        match unsafe { FTZD_SPECIALLW_8013B5EC } { Some(f) => f(gobj), None => { unsafe { let _ = crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013B5EC(gobj as _); } return; } }
+        match unsafe { FTZD_SPECIALLW_8013B5EC } { Some(f) => f(gobj), None => { unsafe { crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013B5EC(gobj as _); } return; } }
     }
     hook_or!(FTPARTS_80074A4C, ftParts_80074A4C, (gobj: *mut HSD_GObj, model_idx: i32, val: i32), melee_fighter::ft0df::ftparts_80074a4c);
     hook_or!(FTPARTS_80074A74, ftParts_80074A74, (gobj: *mut HSD_GObj, model_idx: i32) -> i32, melee_fighter::ft0df::ftparts_80074a74);

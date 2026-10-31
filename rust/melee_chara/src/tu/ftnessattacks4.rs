@@ -35,7 +35,7 @@ pub mod ext {
             pub fn it_802AD6B8(bat: *mut HSD_GObj)  {
                 match unsafe { IT_802AD6B8 } {
                     Some(f) => f(bat),
-                    None => { unsafe { let _ = melee_items::tu::itnessbat::it_802AD6B8(bat as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessbat::it_802AD6B8(bat as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));

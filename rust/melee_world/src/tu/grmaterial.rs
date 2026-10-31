@@ -21,7 +21,7 @@ pub mod ext {
     pub static mut HSD_IDINSERTTOTABLE: Option<fn(*mut HSD_IDTable, HSD_IDKey, *mut c_void)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_IDInsertToTable(table: *mut HSD_IDTable, id: HSD_IDKey, data: *mut c_void) {
-        match unsafe { HSD_IDINSERTTOTABLE } { Some(f) => f(table, id, data), None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, id as _, data as _); } return; } }
+        match unsafe { HSD_IDINSERTTOTABLE } { Some(f) => f(table, id, data), None => { unsafe { melee_runtime::tu::id::HSD_IDInsertToTable(table as _, id as _, data as _); } return; } }
     }
     hook_or!(HSD_JOBJGETDOBJ, HSD_JObjGetDObj, (jobj: *mut HSD_JObj) -> *mut HSD_DObj, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetDObj(jobj as _) as _ });
     // rp3 HSD_MObjClearFlags
@@ -41,27 +41,27 @@ pub mod ext {
     pub static mut HSD_TEXPSETREG: Option<fn(*mut HSD_TExp)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_TExpSetReg(texp: *mut HSD_TExp) {
-        match unsafe { HSD_TEXPSETREG } { Some(f) => f(texp), None => { unsafe { let _ = melee_runtime::tu::texp::HSD_TExpSetReg(texp as _); } return; } }
+        match unsafe { HSD_TEXPSETREG } { Some(f) => f(texp), None => { unsafe { melee_runtime::tu::texp::HSD_TExpSetReg(texp as _); } return; } }
     }
     pub static mut HSD_TEXPSETUPTEV: Option<fn(*mut HSD_TExpTevDesc, *mut HSD_TExp)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_TExpSetupTev(a0: *mut HSD_TExpTevDesc, a1: *mut HSD_TExp) {
-        match unsafe { HSD_TEXPSETUPTEV } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::texp::HSD_TExpSetupTev(a0 as _, a1 as _); } return; } }
+        match unsafe { HSD_TEXPSETUPTEV } { Some(f) => f(a0, a1), None => { unsafe { melee_runtime::tu::texp::HSD_TExpSetupTev(a0 as _, a1 as _); } return; } }
     }
     pub static mut HSD_TOBJSETUP: Option<fn(*mut HSD_TObj)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_TObjSetup(tobj: *mut HSD_TObj) {
-        match unsafe { HSD_TOBJSETUP } { Some(f) => f(tobj), None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjSetup(tobj as _); } return; } }
+        match unsafe { HSD_TOBJSETUP } { Some(f) => f(tobj), None => { unsafe { melee_runtime::tu::tobj::HSD_TObjSetup(tobj as _); } return; } }
     }
     pub static mut HSD_TOBJSETUPTEXTURECOORDGEN: Option<fn(*mut HSD_TObj)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_TObjSetupTextureCoordGen(tobj: *mut HSD_TObj) {
-        match unsafe { HSD_TOBJSETUPTEXTURECOORDGEN } { Some(f) => f(tobj), None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjSetupTextureCoordGen(tobj as _); } return; } }
+        match unsafe { HSD_TOBJSETUPTEXTURECOORDGEN } { Some(f) => f(tobj), None => { unsafe { melee_runtime::tu::tobj::HSD_TObjSetupTextureCoordGen(tobj as _); } return; } }
     }
     pub static mut HSD_TOBJSETUPVOLATILETEV: Option<fn(*mut HSD_TObj, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_TObjSetupVolatileTev(tobj: *mut HSD_TObj, rendermode: u32) {
-        match unsafe { HSD_TOBJSETUPVOLATILETEV } { Some(f) => f(tobj, rendermode), None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjSetupVolatileTev(tobj as _, rendermode as _); } return; } }
+        match unsafe { HSD_TOBJSETUPVOLATILETEV } { Some(f) => f(tobj, rendermode), None => { unsafe { melee_runtime::tu::tobj::HSD_TObjSetupVolatileTev(tobj as _, rendermode as _); } return; } }
     }
     hook!(ITEM_80268E5C, Item_80268E5C, (gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags));
     hook!(ITEM_8026A8EC, Item_8026A8EC, (gobj: *mut HSD_GObj));
@@ -74,7 +74,7 @@ pub mod ext {
     pub static mut HSDINITCLASSINFO: Option<fn(*mut HSD_ClassInfo, *mut HSD_ClassInfo, *mut i8, *mut i8, s32, s32)> = None;
     #[allow(non_snake_case)]
     pub fn hsdInitClassInfo(class_info: *mut HSD_ClassInfo, parent_info: *mut HSD_ClassInfo, base_class_library: *mut i8, ty: *mut i8, info_size: s32, class_size: s32) {
-        match unsafe { HSDINITCLASSINFO } { Some(f) => f(class_info, parent_info, base_class_library, ty, info_size, class_size), None => { unsafe { let _ = melee_runtime::tu::class::hsdInitClassInfo(class_info as _, parent_info as _, base_class_library as _, ty as _, info_size as _, class_size as _); } return; } }
+        match unsafe { HSDINITCLASSINFO } { Some(f) => f(class_info, parent_info, base_class_library, ty, info_size, class_size), None => { unsafe { melee_runtime::tu::class::hsdInitClassInfo(class_info as _, parent_info as _, base_class_library as _, ty as _, info_size as _, class_size as _); } return; } }
     }
     hook!(IT_802725D4, it_802725D4, (a0: *mut HSD_GObj));
     hook_or!(IT_802756D0, it_802756D0, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::itacc::it_802756D0(a0 as _); } });

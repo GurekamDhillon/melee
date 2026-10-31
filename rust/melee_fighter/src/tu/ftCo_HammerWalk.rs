@@ -32,8 +32,8 @@ pub mod ext {
         ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
         // `Fighter_804D6524->xC`.
         Fighter_804D6524_xC() -> f32 = || crate::tu::ftchangeparam::ext::d6524().xC;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCo_800C54C4(f: &Fighter) -> u32 = crate::tu::ftCo_HammerWait::ftCo_800C54C4;
         ftCo_800C548C(f: &Fighter) -> f32 = crate::tu::ftCo_HammerWait::ftCo_800C548C;
         ftCo_800C4E94(f: &mut Fighter) = crate::tu::ftCo_HammerWait::ftCo_800C4E94;

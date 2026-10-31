@@ -38,14 +38,14 @@ pub mod ext {
         ScriptGame_ModJump(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModJump (pc/gameworld/script_game.c)");
         ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };
         ftCo_800C5A50(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerJump::ftCo_800C5A50(g as _) as _ } };
-        ftCo_KneeBend_Enter(g: G, input: i32) = |g: G, input: i32| { unsafe { let _ = crate::tu::ftCo_KneeBend::ftCo_KneeBend_Enter(g as _, input as _); } };
+        ftCo_KneeBend_Enter(g: G, input: i32) = |g: G, input: i32| { unsafe { crate::tu::ftCo_KneeBend::ftCo_KneeBend_Enter(g as _, input as _); } };
         ftCo_800DF910(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::ft0df::ftco_800df910(fp as _) as _ } };
         ft_800881D8(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_800881d8(fp as _, id as _, vol as _, pan as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_Fall_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Fall::ftCo_Fall_Enter(g as _); } };
+        ftCo_Fall_Enter(g: G) = |g: G| { unsafe { crate::tu::ftCo_Fall::ftCo_Fall_Enter(g as _); } };
         ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
         ftCo_80095328(g: G, out: *mut bool) -> bool = |g: G, out: *mut bool| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, out as _) as _ } };
         ftCo_800D7100(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D7100(g as _) as _ } };
@@ -58,9 +58,9 @@ pub mod ext {
         ftCo_800CB870(g: G) -> bool = crate::tu::ftCo_JumpAerial::ftCo_800CB870;
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
         ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
-        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

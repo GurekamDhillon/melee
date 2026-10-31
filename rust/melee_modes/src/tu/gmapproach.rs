@@ -63,7 +63,7 @@ pub mod ext {
             pub fn lbArchive_80016EFC(archive: *mut HSD_Archive)  {
                 match unsafe { LBARCHIVE_80016EFC } {
                     Some(f) => f(archive),
-                    None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(archive as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbarchive::lbArchive_80016EFC(archive as _); } return; },
                 }
             }
     /// `GObj_Create(classifier, p_link, priority)`.
@@ -107,7 +107,7 @@ pub mod ext {
             pub fn gm_8016895C(jobj: *mut HSD_JObj, model: *mut DynamicModelDesc, idx: i32)  {
                 match unsafe { GM_8016895C } {
                     Some(f) => f(jobj, model, idx),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, model as _, idx as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_8016895C(jobj as _, model as _, idx as _); } return; },
                 }
             }
     /// `HSD_JObjReqAnimAll(jobj, frame)`.
@@ -122,7 +122,7 @@ pub mod ext {
             pub fn HSD_TObjReqAnimAll(tobj: *mut HSD_TObj, start_frame: f32)  {
                 match unsafe { HSD_TOBJREQANIMALL } {
                     Some(f) => f(tobj, start_frame),
-                    None => { unsafe { let _ = melee_runtime::tu::tobj::HSD_TObjReqAnimAll(tobj as _, start_frame as _); } return; },
+                    None => { unsafe { melee_runtime::tu::tobj::HSD_TObjReqAnimAll(tobj as _, start_frame as _); } return; },
                 }
             }
     /// `HSD_AObjSetRate(aobj, rate)`.
@@ -131,7 +131,7 @@ pub mod ext {
             pub fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32)  {
                 match unsafe { HSD_AOBJSETRATE } {
                     Some(f) => f(aobj, rate),
-                    None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
+                    None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
                 }
             }
     /// `gm_801A4B60()` (gm/gmscene: the scene exit).
@@ -140,7 +140,7 @@ pub mod ext {
             pub fn gm_801A4B60()  {
                 match unsafe { GM_801A4B60 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B60(); } return; },
                 }
             }
     /// `lbAudioAx_80023F28(id)` / `lbAudioAx_800236DC()` (lb/lbaudio_ax.c).
@@ -173,10 +173,10 @@ pub mod ext {
     }
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): addresses only.
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _code as _); } return; };
+        { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _code as _); } return; };
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
+        { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

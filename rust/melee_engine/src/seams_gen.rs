@@ -610,6 +610,8 @@ pub fn install_gen() {
     unsafe { melee_fighter::tu::ft_0c31::ext::LBAUDIOAX_80024304 = Some(|_| 0); }
     unsafe { melee_fighter::tu::ftaction::ext::hook::lbAudioAx_800263E8 = Some(|_, _, _, _, _, _, _, _, _, _, _| core::ptr::null_mut()); }
     unsafe { melee_fighter::tu::ftaction::ext::hook::lbAudioAx_800264E4 = Some(|_| 0); }
+    unsafe { if melee_fighter::tu::ftco_aircatch::ext::MEX_HAS_ZAIR.is_none() { melee_fighter::tu::ftco_aircatch::ext::MEX_HAS_ZAIR = Some(|_| false); } }
+    unsafe { if melee_fighter::tu::ftco_aircatch::ext::MEX_ON_ZAIR.is_none() { melee_fighter::tu::ftco_aircatch::ext::MEX_ON_ZAIR = Some(|_, _| ()); } }
     unsafe { if melee_fighter::tu::ftcolanim::ext::MEX_ON_ACTION_STATE_CHANGE_DISPATCH.is_none() { melee_fighter::tu::ftcolanim::ext::MEX_ON_ACTION_STATE_CHANGE_DISPATCH = Some(|_, _, _| ()); } }
     unsafe { if melee_fighter::tu::ftcoll::ext::SCRIPT_GAME_EVENT.is_none() { melee_fighter::tu::ftcoll::ext::SCRIPT_GAME_EVENT = Some(|_, _, _, _, _| ()); } }
     unsafe { if melee_fighter::tu::ftcoll::ext::SCRIPT_ENEMY_GAME_EVENT.is_none() { melee_fighter::tu::ftcoll::ext::SCRIPT_ENEMY_GAME_EVENT = Some(|_, _, _, _, _, _| ()); } }

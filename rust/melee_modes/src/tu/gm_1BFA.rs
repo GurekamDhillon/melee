@@ -65,7 +65,7 @@ pub mod ext {
             pub fn gm_SetupRulesDefaults(rules: *mut StartMeleeRules)  {
                 match unsafe { GM_SETUPRULESDEFAULTS } {
                     Some(f) => f(rules),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } return; },
                 }
             }
     pub static mut GM_SETUPALLPLAYERDEFAULTS: Option<fn(*mut PlayerInitData) > = None;
@@ -73,7 +73,7 @@ pub mod ext {
             pub fn gm_SetupAllPlayerDefaults(players: *mut PlayerInitData)  {
                 match unsafe { GM_SETUPALLPLAYERDEFAULTS } {
                     Some(f) => f(players),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_SetupAllPlayerDefaults(players as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_SetupAllPlayerDefaults(players as _); } return; },
                 }
             }
     pub static mut GM_GETCHALLENGERSTKIND: Option<fn(SelectableCharacterKind) -> StKind> = None;
@@ -121,7 +121,7 @@ pub mod ext {
             pub fn gm_LoadRumbleEnabled(start: *mut StartMeleeData)  {
                 match unsafe { GM_LOADRUMBLEENABLED } {
                     Some(f) => f(start),
-                    None => { unsafe { let _ = crate::tu::gmvs::gm_LoadRumbleEnabled(start as _); } return; },
+                    None => { unsafe { crate::tu::gmvs::gm_LoadRumbleEnabled(start as _); } return; },
                 }
             }
     pub static mut GM_80162968: Option<fn(u32) -> i32> = None;
@@ -145,7 +145,7 @@ pub mod ext {
             pub fn gm_UnlockCKind(ckind: CharacterKind)  {
                 match unsafe { GM_UNLOCKCKIND } {
                     Some(f) => f(ckind),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_UnlockCKind(ckind as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_UnlockCKind(ckind as _); } return; },
                 }
             }
     pub static mut GMMAINLIB_8015DB2C: Option<fn(u8) > = None;
@@ -153,7 +153,7 @@ pub mod ext {
             pub fn gmMainLib_8015DB2C(a: u8)  {
                 match unsafe { GMMAINLIB_8015DB2C } {
                     Some(f) => f(a),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DB2C(a as _); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::gmMainLib_8015DB2C(a as _); } return; },
                 }
             }
     pub static mut GM_CKINDTOUNLOCKINDEX: Option<fn(CharacterKind) -> i8> = None;
@@ -169,7 +169,7 @@ pub mod ext {
             pub fn gm_80173EEC()  {
                 match unsafe { GM_80173EEC } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80173EEC(); } return; },
+                    None => { unsafe { crate::tu::gm_1736::gm_80173EEC(); } return; },
                 }
             }
     pub static mut GM_80172898: Option<fn(u16) -> i32> = None;
@@ -193,7 +193,7 @@ pub mod ext {
             pub fn gm_SetPendingGameMode(pending_mode: u8)  {
                 match unsafe { GM_SETPENDINGGAMEMODE } {
                     Some(f) => f(pending_mode),
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(pending_mode as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetPendingGameMode(pending_mode as _); } return; },
                 }
             }
     pub static mut GM_SETNEWGAMEMODEPENDING: Option<fn() > = None;
@@ -201,7 +201,7 @@ pub mod ext {
             pub fn gm_SetNewGameModePending()  {
                 match unsafe { GM_SETNEWGAMEMODEPENDING } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
                 }
             }
     pub static mut TOY_803124BC: Option<fn() > = None;
@@ -209,7 +209,7 @@ pub mod ext {
             pub fn Toy_803124BC()  {
                 match unsafe { TOY_803124BC } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_803124BC(); } return; },
                 }
             }
     pub static mut GM_8017219C: Option<fn(u32) -> bool> = None;
@@ -257,7 +257,7 @@ pub mod ext {
             pub fn gmMainLib_8015DA40(a: u32)  {
                 match unsafe { GMMAINLIB_8015DA40 } {
                     Some(f) => f(a),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DA40(a as _); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::gmMainLib_8015DA40(a as _); } return; },
                 }
             }
     pub static mut LBTIME_GETTIMEINSECONDS: Option<fn() -> u32> = None;
@@ -273,7 +273,7 @@ pub mod ext {
             pub fn Toy_SetUnlockState(id: enum_t, v: bool)  {
                 match unsafe { TOY_SETUNLOCKSTATE } {
                     Some(f) => f(id, v),
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_SetUnlockState(id as _, v as _); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_SetUnlockState(id as _, v as _); } return; },
                 }
             }
     pub static mut TOY_803048C0: Option<fn(i32) -> i32> = None;
@@ -289,7 +289,7 @@ pub mod ext {
             pub fn gm_80172174()  {
                 match unsafe { GM_80172174 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_80172174(); } return; },
+                    None => { unsafe { crate::tu::gm_16f1::gm_80172174(); } return; },
                 }
             }
     pub static mut GM_80174180: Option<fn() > = None;
@@ -297,7 +297,7 @@ pub mod ext {
             pub fn gm_80174180()  {
                 match unsafe { GM_80174180 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80174180(); } return; },
+                    None => { unsafe { crate::tu::gm_1736::gm_80174180(); } return; },
                 }
             }
     pub static mut HSD_MEMALLOC: Option<fn(isize) -> *mut c_void> = None;
@@ -314,7 +314,7 @@ pub mod ext {
             pub fn lbCardNew_AllocWorkArea()  {
                 match unsafe { LBCARDNEW_ALLOCWORKAREA } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
                 }
             }
     pub static mut LBCARDGAME_LOADARCHIVE: Option<fn(i32) > = None;
@@ -322,7 +322,7 @@ pub mod ext {
             pub fn lbCardGame_LoadArchive(a: i32)  {
                 match unsafe { LBCARDGAME_LOADARCHIVE } {
                     Some(f) => f(a),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
                 }
             }
     pub static mut LBCARDGAME_SAVECHANGES: Option<fn() > = None;
@@ -330,7 +330,7 @@ pub mod ext {
             pub fn lbCardGame_SaveChanges()  {
                 match unsafe { LBCARDGAME_SAVECHANGES } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
                 }
             }
     // Data of other TUs that the scene table points at (their addresses).

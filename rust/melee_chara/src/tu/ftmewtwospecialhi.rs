@@ -70,7 +70,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_8007B62C, ftColl_8007B62C, crate::adapt::ftColl_8007B62C, (gobj: *mut HSD_GObj, arg: i32));

@@ -79,7 +79,7 @@ pub mod ext {
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: u32, b: u32) {
         match unsafe { FTCO_800BFFD0 } {
             Some(f) => f(fp, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
         }
     }
     // `mpLib_80056C54(line_id, pos, line_id_out, vec_out, flags_out, normal_out, f1, f2)`

@@ -30,32 +30,32 @@ pub mod ext {
     }
     ext_fns! {
         ft_8008A1FC(g: G) -> bool = crate::ft084e::ft_8008a1fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        ftColl_8007AFF8(g: G) = |g: G| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
+        ftColl_8007AFF8(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ft_800892A0(g: G) = |g: G| { unsafe { let _ = crate::stale::renew_attack_instance(&mut *((*g).user_data as *mut Fighter)); } };
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
-        it_8027B070(i: I, g: G) = |i: I, g: G| { unsafe { let _ = melee_items::tu::it_279C::it_8027B070(i as _, g as _); } };
+        it_8027B070(i: I, g: G) = |i: I, g: G| { unsafe { melee_items::tu::it_279C::it_8027B070(i as _, g as _); } };
         ftCo_800C5A50(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerJump::ftCo_800C5A50(g as _) as _ } };
         ftCo_800C60C8(g: G) -> bool = crate::tu::ftco_0c60::ftco_800c60c8;
         ftCo_800C576C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerTurn::ftCo_800C576C(g as _) as _ } };
         ftCo_800C55CC(g: G) -> bool = crate::tu::ftCo_HammerWalk::ftCo_800C55CC;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_8008403C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008403c;
-        ftCo_800C5D34(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerFall::ftCo_800C5D34(g as _); } };
-        it_80293E34(i: I) = |i: I| { unsafe { let _ = melee_items::tu::ithammer::it_80293E34(i as _); } };
+        ftCo_800C5D34(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5D34(g as _); } };
+        it_80293E34(i: I) = |i: I| { unsafe { melee_items::tu::ithammer::it_80293E34(i as _); } };
         ftCommon_8007ECD4(f: &mut Fighter, a: i32) = crate::ftcommon2::ftcommon_8007ecd4;
-        Item_8026A8EC(i: I) = |i: I| { unsafe { let _ = melee_items::tu::item::Item_8026A8EC(i as _); } };
+        Item_8026A8EC(i: I) = |i: I| { unsafe { melee_items::tu::item::Item_8026A8EC(i as _); } };
         ft_80088110(f: &mut Fighter) = crate::ft0877::ft_80088110;
         ftCo_800C0694(f: &mut Fighter) -> i32 = crate::ft0df::ftco_800c0694;
         ftCommon_8007D92C(g: G) = crate::ftcommon3::ftcommon_8007d92c;
         ftCo_800C0200(f: &mut Fighter, a: i32) = crate::tu::ftcolanim::ftco_800c0200;
         itGetKind(i: I) -> i32 = |i: I| -> i32 { unsafe { melee_items::tu::it_26B1::itGetKind(i as _) as _ } };
         it_80293DCC(i: I) -> i32 = |i: I| -> i32 { unsafe { melee_items::tu::ithammer::it_80293DCC(i as _) as _ } };
-        pl_800403C0(slot: i32, sub: i32) = |slot: i32, sub: i32| { unsafe { let _ = crate::tu::plbonuslib::pl_800403C0(slot as _, sub as _); } };
+        pl_800403C0(slot: i32, sub: i32) = |slot: i32, sub: i32| { unsafe { crate::tu::plbonuslib::pl_800403C0(slot as _, sub as _); } };
         ft_800880AC(f: &mut Fighter) = crate::ft0877::ft_800880ac;
         ftCo_800BFFD0(f: &mut Fighter, a: i32, b: bool) -> bool = |f: &mut Fighter, a, b: bool| crate::tu::ftcolanim::ftco_800bffd0(f, a, b as i32);
-        it_8026C16C(i: I, headless: bool) = |i: I, headless: bool| { unsafe { let _ = melee_items::tu::it_26B1::it_8026C16C(i as _, headless as _); } };
+        it_8026C16C(i: I, headless: bool) = |i: I, headless: bool| { unsafe { melee_items::tu::it_26B1::it_8026C16C(i as _, headless as _); } };
     }
 }
 

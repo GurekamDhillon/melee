@@ -37,10 +37,10 @@ pub mod ext {
     ext_fns! {
         fn HSD_DObjSetFlags(dobj: *mut HSD_DObj, flags: u32) = unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(dobj as _, flags) };
         fn HSD_DObjClearFlags(dobj: *mut HSD_DObj, flags: u32) = unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(dobj as _, flags) };
-        fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) = unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotation(jobj as _, q as _); };
+        fn HSD_JObjSetRotation(jobj: *mut HSD_JObj, q: *const Vec4) = unsafe { melee_world::tu::grinl::HSD_JObjSetRotation(jobj as _, q as _); };
         fn HSD_JObjClearFlags(jobj: *mut HSD_JObj, flags: u32) = unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjClearFlags(jobj as _, flags) };
-        fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) = unsafe { let _ = melee_world::tu::grinl::HSD_JObjSetRotationX(jobj as _, v as _); };
-        fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) = unsafe { let _ = crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); };
+        fn HSD_JObjSetRotationX(jobj: *mut HSD_JObj, v: f32) = unsafe { melee_world::tu::grinl::HSD_JObjSetRotationX(jobj as _, v as _); };
+        fn HSD_JObjSetRotationY(jobj: *mut HSD_JObj, v: f32) = unsafe { crate::tu::ftCo_Lift::HSD_JObjSetRotationY(jobj as _, v as _); };
         fn HSD_JObjSetRotationZ(jobj: *mut HSD_JObj, v: f32) = unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetRotationZ(jobj as _, v) };
         fn Mex_CostumeVisIdx(fk: i32, costume: i32) -> i32 = melee_runtime::tu::mex_data::Mex_CostumeVisIdx(fk, costume);
         fn HSD_ObjAlloc(data: *mut c_void) -> *mut c_void = unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(data as _) as _ };

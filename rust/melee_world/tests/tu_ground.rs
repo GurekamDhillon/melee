@@ -45,7 +45,7 @@ static mut SPA: [i16; 8] = [0; 8];
 #[repr(C)] #[derive(Clone, Copy)] struct EntT { joint: *mut c_void, pairs: *mut i16, pair_count: i32 }
 static mut ENT: [EntT; 4] = unsafe { core::mem::zeroed() }; static mut PRS: [[i16; 8]; 4] = [[0; 8]; 4];
 static mut SPL: [HSD_Spline; 4] = unsafe { core::mem::zeroed() }; static mut SPLP: [*mut HSD_Spline; 4] = [null_mut(); 4];
-static mut LOE: [m::LightOverrideEntry; 6] = unsafe { core::mem::zeroed() }; static mut GSE: [GroundShadowEntry; 6] = unsafe { core::mem::zeroed() };
+static mut LOE: [melee_types::LightOverrideEntry; 6] = unsafe { core::mem::zeroed() }; static mut GSE: [GroundShadowEntry; 6] = unsafe { core::mem::zeroed() };
 static mut LD: [HSD_LightDesc; 6] = unsafe { core::mem::zeroed() }; static mut LAN: [HSD_LightAnim; 6] = unsafe { core::mem::zeroed() };
 static mut ANL: [[*mut HSD_LightAnim; 2]; 6] = [[null_mut(); 2]; 6]; static mut LL: [LightList; 6] = unsafe { core::mem::zeroed() };
 static mut LLP: [[*mut LightList; 8]; 3] = [[null_mut(); 8]; 3];

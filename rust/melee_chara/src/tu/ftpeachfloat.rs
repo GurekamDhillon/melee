@@ -62,7 +62,7 @@ pub mod ext {
             pub fn ft_80082B1C(gobj: *mut HSD_GObj)  {
                 match unsafe { FT_80082B1C } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80082b1c(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ft_081b::ft_80082b1c(gobj as _); } return; },
                 }
             }
     hook_or!(FTCO_JUMPAERIAL_PHYS_CB, ftCo_JumpAerial_Phys_Cb, melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Phys_Cb, (gobj: *mut HSD_GObj));

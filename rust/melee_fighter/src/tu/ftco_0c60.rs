@@ -11,9 +11,9 @@ pub mod ext {
     /// TODO(ftCo_Pass.c) `ftCo_80099F1C`.
     pub fn ftCo_80099F1C(_g: *mut Fighter_GObj) -> bool { { return unsafe { crate::tu::ftCo_Pass::ftCo_80099F1C(_g as _) as _ }; } }
     /// TODO(ftCo_Pass.c) `ftCo_8009A184(gobj, msid, flags, anim_start)`.
-    pub fn ftCo_8009A184(_g: *mut Fighter_GObj, _msid: i32, _flags: MotionFlags, _f: f32) { { unsafe { let _ = crate::tu::ftCo_Pass::ftCo_8009A184(_g as _, _msid as _, _flags as _, _f as _); } return; } }
+    pub fn ftCo_8009A184(_g: *mut Fighter_GObj, _msid: i32, _flags: MotionFlags, _f: f32) { { unsafe { crate::tu::ftCo_Pass::ftCo_8009A184(_g as _, _msid as _, _flags as _, _f as _); } return; } }
     /// TODO(ftCo_HammerWait.c) `ftCo_800C4E94(fp)`.
-    pub fn ftCo_800C4E94(_fp: &mut Fighter) { { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4E94(_fp as _); } return; } }
+    pub fn ftCo_800C4E94(_fp: &mut Fighter) { { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4E94(_fp as _); } return; } }
 }
 
 #[inline(always)]

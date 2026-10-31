@@ -148,7 +148,7 @@ pub mod ext {
             pub fn lbCardNew_AllocWorkArea()  {
                 match unsafe { LBCARDNEW_ALLOCWORKAREA } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
                 }
             }
     pub static mut LBCARDGAME_LOADARCHIVE: Option<fn(i32) > = None;
@@ -156,7 +156,7 @@ pub mod ext {
             pub fn lbCardGame_LoadArchive(a: i32)  {
                 match unsafe { LBCARDGAME_LOADARCHIVE } {
                     Some(f) => f(a),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a as _); } return; },
                 }
             }
     pub static mut LBCARDGAME_SETCARDSTATUS: Option<fn(i32) > = None;
@@ -164,7 +164,7 @@ pub mod ext {
             pub fn lbCardGame_SetCardStatus(status: i32)  {
                 match unsafe { LBCARDGAME_SETCARDSTATUS } {
                     Some(f) => f(status),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SetCardStatus(status as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_SetCardStatus(status as _); } return; },
                 }
             }
     pub static mut LBCARDGAME_SAVECHANGES: Option<fn() > = None;
@@ -172,7 +172,7 @@ pub mod ext {
             pub fn lbCardGame_SaveChanges()  {
                 match unsafe { LBCARDGAME_SAVECHANGES } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges(); } return; },
                 }
             }
     pub static mut LB_8001C87C: Option<fn() -> u32> = None;
@@ -229,7 +229,7 @@ pub mod ext {
             pub fn gmMainLib_8015FA34(v: i32)  {
                 match unsafe { GMMAINLIB_8015FA34 } {
                     Some(f) => f(v),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015FA34(v as _); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::gmMainLib_8015FA34(v as _); } return; },
                 }
             }
     pub static mut GM_801A4B60: Option<fn() > = None;
@@ -237,7 +237,7 @@ pub mod ext {
             pub fn gm_801A4B60()  {
                 match unsafe { GM_801A4B60 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B60(); } return; },
                 }
             }
     // lb/lbaudio_ax.c (the sfx inlines of mn/inlines.h), db/db.c, sysdolphin/baselib/controller.c
@@ -246,7 +246,7 @@ pub mod ext {
             pub fn lbAudioAx_80024030(id: i32)  {
                 match unsafe { LBAUDIOAX_80024030 } {
                     Some(f) => f(id),
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
                 }
             }
     hook!(DBLEVEL, DbLevel, () -> i32);

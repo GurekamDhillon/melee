@@ -39,8 +39,8 @@ pub mod ext {
         ftCo_800DF21C(fp: &Fighter) -> bool = crate::ft0df::ftco_800df21c;
         it_8026B30C(i: *mut Item_GObj) -> i32 = crate::hooks::it_8026b30c;
         it_8026B594(i: *mut Item_GObj) -> bool = |i: *mut Item_GObj| unsafe { melee_items::itlib::it_8026b594(&*((*i).user_data as *const Item)) };
-        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
-        ftCo_Attack_800CCF58(g: G, a: i32) = |g: G, a: i32| { unsafe { let _ = crate::tu::ftswing::ftCo_Attack_800CCF58(g as _, a as _); } };
+        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
+        ftCo_Attack_800CCF58(g: G, a: i32) = |g: G, a: i32| { unsafe { crate::tu::ftswing::ftCo_Attack_800CCF58(g as _, a as _); } };
         ftCo_Attack_800CDD14(g: G) = t!("ftCo_Attack_800CDD14 (ft_0CDD.c)");
         Mex_HasFSmashHook(kind: i32) -> bool = |kind: i32| -> bool { unsafe { crate::platform::Mex_HasFSmashHook(kind) } };
         Mex_OnFSmashDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_FSMASH, kind, g, vanilla); } };
@@ -50,7 +50,7 @@ pub mod ext {
         efLib_PauseAll_fn() -> HSD_GObjEvent = || todo!("TODO(port) &efLib_PauseAll (eflib.c)");
         efLib_ResumeAll_fn() -> HSD_GObjEvent = || todo!("TODO(port) &efLib_ResumeAll (eflib.c)");
         ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut ftData_80085FD4_ret = |fp: &mut Fighter, msid: i32| -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = t!("ftAnim_8006EBA4 (ftanim.c)");
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;

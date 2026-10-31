@@ -56,7 +56,7 @@ pub mod ext {
             pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKP_SPECIALS_80132E30 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkoopa::ftKp_SpecialS_80132E30(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkoopa::ftKp_SpecialS_80132E30(gobj as _); } return; },
                 }
             }
 }

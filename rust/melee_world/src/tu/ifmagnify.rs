@@ -31,14 +31,14 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_8002A4AC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } };
+    fn Camera_8002A4AC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } };
     fn Camera_80030130() -> i32 = || crate::cm::camera::world().camera_80030130() as i32;
     fn Camera_80030A50() -> *mut HSD_GObj = || unsafe { crate::cm::camera::Camera_80030A50() as _ };
     fn Camera_80030BBC(a0: *mut Vec, a1: *mut S32Vec2) -> i32;
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
-    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
+    fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn GObj_SetupGXLinkMax(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _); } };
     fn GXGetTexBufferSize(a0: u16, a1: u16, a2: u32, a3: u8, a4: u8) -> u32;
     fn Ground_801C0604() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0604() as _ };
     fn Ground_801C0618() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0618() as _ };
@@ -49,21 +49,21 @@ pub mod ext {
     fn Ground_801C067C() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C067C() as _ };
     fn Ground_801C0690() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C0690() as _ };
     fn Ground_801C06A4() -> *mut _GXColor = || unsafe { crate::tu::ground::Ground_801C06A4() as _ };
-    fn HSD_CObjEndCurrent() = || { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
-    fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) = |a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0 as _, a1 as _, a2 as _, a3 as _); } };
+    fn HSD_CObjEndCurrent() = || { unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
+    fn HSD_CObjEraseScreen(a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32) = |a0: *mut HSD_CObj, a1: i32, a2: i32, a3: i32| { unsafe { melee_runtime::tu::cobj::HSD_CObjEraseScreen(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn HSD_CObjGetOrtho(a0: *mut HSD_CObj, a1: *mut f32, a2: *mut f32, a3: *mut f32, a4: *mut f32);
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = |a0: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ };
-    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(a0 as _, a1 as _); } };
-    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetInterest(a0 as _, a1 as _); } };
-    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = |a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
+    fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(a0 as _, a1 as _); } };
+    fn HSD_CObjSetInterest(a0: *mut HSD_CObj, a1: *mut Vec) = |a0: *mut HSD_CObj, a1: *mut Vec| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjSetInterest(a0 as _, a1 as _); } };
+    fn HSD_CObjSetOrtho(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) = |a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32| { unsafe { melee_runtime::tu::cobj::HSD_CObjSetOrtho(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn HSD_CObjSetScissorx4(a0: *mut HSD_CObj, a1: u16, a2: u16, a3: u16, a4: u16);
-    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) = |a0: *mut HSD_CObj, a1: *mut _HSD_RectS16| { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } };
-    fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
-    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_CObjSetViewport(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) = |a0: *mut HSD_CObj, a1: *mut _HSD_RectS16| { unsafe { melee_runtime::tu::cobj::HSD_CObjSetViewport(a0 as _, a1 as _); } };
+    fn HSD_GObjFree(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjFree(a0 as _); } };
+    fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj = |a0: *mut HSD_Joint| unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0 as _) as _ };
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetEraseColor(a0: u8, a1: u8, a2: u8, a3: u8);
     fn Player_80036978(a0: i32, a1: *mut Vec);
@@ -95,8 +95,8 @@ pub mod ext {
     fn lb_800122C8(a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32) = |a0: *mut HSD_ImageDesc, a1: u16, a2: u16, a3: i32| unsafe { melee_runtime::tu::lbspdisplay::lb_800122C8(a0 as _, a1 as _, a2 as _, a3 != 0) };
     fn lb_80013B14(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj = |a0: *mut HSD_CameraDescPerspective| unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0 as _) as _ };
     fn memzero(a0: *mut c_void, a1: i32) = super::memzero_default;
-    fn un_802FD928(a0: u8, a1: u8, a2: *mut _GXColor) = |a0: u8, a1: u8, a2: *mut _GXColor| { unsafe { let _ = crate::tu::if_2FD9::un_802FD928(a0 as _, a1 as _, a2 as _); } };
-    fn un_802FD9D8(a0: u8) = |a0: u8| { unsafe { let _ = crate::tu::if_2FD9::un_802FD9D8(a0 as _); } };
+    fn un_802FD928(a0: u8, a1: u8, a2: *mut _GXColor) = |a0: u8, a1: u8, a2: *mut _GXColor| { unsafe { crate::tu::if_2FD9::un_802FD928(a0 as _, a1 as _, a2 as _); } };
+    fn un_802FD9D8(a0: u8) = |a0: u8| { unsafe { crate::tu::if_2FD9::un_802FD9D8(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

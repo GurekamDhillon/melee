@@ -50,7 +50,7 @@ pub mod ext {
             pub fn gm_InitVsMode(vs: *mut VsModeData)  {
                 match unsafe { GM_INITVSMODE } {
                     Some(f) => f(vs),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
                 }
             }
     /// `SceneLaunch_Active()` / `SceneLaunch_EnemyTeamColors()` (pc/platform/gw_runtime.c, TARGET_PC).

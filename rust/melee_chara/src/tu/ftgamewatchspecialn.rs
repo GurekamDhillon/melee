@@ -34,7 +34,7 @@ pub mod ext {
             pub fn it_802C837C(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, sausage: i32, facing: f32)  {
                 match unsafe { IT_802C837C } {
                     Some(f) => f(owner, pos, kind, sausage, facing),
-                    None => { unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(owner as _, pos as _, kind as _, sausage as _, facing as _); } return; },
+                    None => { unsafe { melee_items::tu::itgamewatchchef::it_802C837C(owner as _, pos as _, kind as _, sausage as _, facing as _); } return; },
                 }
             }
 }

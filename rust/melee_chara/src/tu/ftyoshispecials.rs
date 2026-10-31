@@ -52,17 +52,17 @@ pub mod ext {
     pub static mut FTANIM_SETANIMRATE: Option<fn(*mut HSD_GObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_SetAnimRate(gobj: *mut HSD_GObj, rate: f32) {
-        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(gobj, rate), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj as _, rate as _); } return; } }
+        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(gobj, rate), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj as _, rate as _); } return; } }
     }
     pub static mut FTPARTS_80074B0C: Option<fn(*mut HSD_GObj, i32, i32)> = None;
     #[allow(non_snake_case)]
     pub fn ftParts_80074B0C(gobj: *mut HSD_GObj, model_idx: i32, val: i32) {
-        match unsafe { FTPARTS_80074B0C } { Some(f) => f(gobj, model_idx, val), None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074B0C(gobj as _, model_idx as _, val as _); } return; } }
+        match unsafe { FTPARTS_80074B0C } { Some(f) => f(gobj, model_idx, val), None => { unsafe { melee_fighter::tu::ftparts::ftParts_80074B0C(gobj as _, model_idx as _, val as _); } return; } }
     }
     pub static mut FTYS_INIT_8012B918: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftYs_Init_8012B918(gobj: *mut HSD_GObj) {
-        match unsafe { FTYS_INIT_8012B918 } { Some(f) => f(gobj), None => { unsafe { let _ = crate::tu::ftyoshi::ftYs_Init_8012B918(gobj as _); } return; } }
+        match unsafe { FTYS_INIT_8012B918 } { Some(f) => f(gobj), None => { unsafe { crate::tu::ftyoshi::ftYs_Init_8012B918(gobj as _); } return; } }
     }
     hook_or!(FTCOMMON_8007F5CC, ftCommon_8007F5CC, (gobj: *mut Item_GObj, flag: i32), melee_fighter::ftcommon3::ftcommon_8007f5cc);
     hook_or!(FTPARTSETROTY, ftPartSetRotY, (fp: *mut Fighter, part: i32, v: f32),
@@ -74,7 +74,7 @@ pub mod ext {
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
-        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     hook_or!(FT_PLAYSFX, ft_PlaySFX, (fp: *mut Fighter, id: i32, vol: u8, pan: u8),
@@ -107,7 +107,7 @@ pub mod ext {
     pub static mut FTCO_80096900: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_80096900(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
-        match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
+        match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
     }
     crate::port_hook!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, crate::adapt::Camera_RequestQuake, (kind: i32, pos: *mut Vec3));
     pub static mut MPLIB_800569EC: Option<fn(u32) -> f32> = None;

@@ -45,7 +45,7 @@ pub mod ext {
         fn_800D2AD8(f: &mut Fighter) = k::fn_800d2ad8;
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         fn_800D290C(g: G) = k::fn_800d290c;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         fn_800D2CA0(f: &mut Fighter) = k::fn_800d2ca0;
         fn_800D2CD4(f: &mut Fighter) = k::fn_800d2cd4;
         fn_800D2A3C(g: G) -> bool = k::fn_800d2a3c;

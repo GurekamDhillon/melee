@@ -10,12 +10,12 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::ext_fns_c as ext_fns;
     ext_fns! {
-        lbCardNew_AllocWorkArea() = || { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } };
-        lbCardGame_LoadArchive(arg: i32) = |arg: i32| { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(arg as _); } };
+        lbCardNew_AllocWorkArea() = || { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } };
+        lbCardGame_LoadArchive(arg: i32) = |arg: i32| { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(arg as _); } };
         gm_80172898(arg: u16) -> i32 = |arg: u16| -> i32 { unsafe { crate::tu::gm_16f1::gm_80172898(arg as _) as _ } };
         gm_80173754(a: u8, b: u8) -> bool = |a: u8, b: u8| -> bool { unsafe { crate::tu::gm_1736::gm_80173754(a as _, b as _) != 0 } };
-        gm_SetPendingGameMode(mode: u8) = |mode: u8| { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } };
-        gm_SetNewGameModePending() = || { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } };
+        gm_SetPendingGameMode(mode: u8) = |mode: u8| { unsafe { crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } };
+        gm_SetNewGameModePending() = || { unsafe { crate::tu::gm_1A3F::gm_SetNewGameModePending(); } };
     }
 }
 

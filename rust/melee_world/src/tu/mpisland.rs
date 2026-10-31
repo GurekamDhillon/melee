@@ -33,7 +33,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } };
+    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { melee_runtime::tu::memory::HSD_Free(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     }
 }

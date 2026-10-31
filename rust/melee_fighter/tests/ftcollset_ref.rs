@@ -190,7 +190,7 @@ fn ftcollset_matches_c() {
             w.f.smash_attrs.x2118_frames = rg.rf();
             w.f.smash_attrs.x211C_holdFrame = rg.rf();
             d6524.x4 = rg.rf();
-            unsafe { cp::Fighter_804D6524 = &*d6524 };
+            unsafe { cp::Fighter_804D6524 = &*d6524 as *const _ as *mut _ };
             for i in 0..4 {
                 w.f.x914[i].state = (rg.rnd() % 2) as _;
                 for j in 0..12 {

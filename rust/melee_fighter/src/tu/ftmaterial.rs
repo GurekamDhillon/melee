@@ -44,11 +44,11 @@ pub mod ext {
         fn HSD_StateInitTev() = { super::mx::HSD_StateInitTev() };
         fn HSD_TObjSetup(_a0: *mut core::ffi::c_void) = { unsafe { let _ = super::mx::HSD_TObjSetup(_a0 as _); } };
         fn HSD_TObjSetupTextureCoordGen(_a0: *mut core::ffi::c_void) = { unsafe { let _ = super::mx::HSD_TObjSetupTextureCoordGen(_a0 as _); } };
-        fn ftCo_8009F75C(_a0: *mut core::ffi::c_void, _a1: i32) = { unsafe { let _ = crate::tu::ftCo_09f4::ftCo_8009F75C(_a0 as _, _a1 != 0); } };
+        fn ftCo_8009F75C(_a0: *mut core::ffi::c_void, _a1: i32) = { unsafe { crate::tu::ftCo_09f4::ftCo_8009F75C(_a0 as _, _a1 != 0); } };
         fn ftCo_800C0658(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { (crate::ft0df::ftco_800c0658(&mut *(_a0 as *mut Fighter))) as _ } };
-        fn hsdInitClassInfo(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void, _a2: *mut core::ffi::c_void, _a3: *mut core::ffi::c_void, _a4: i32, _a5: i32) = { unsafe { let _ = melee_runtime::tu::class::hsdInitClassInfo(_a0 as _, _a1 as _, _a2 as _, _a3 as _, _a4 as _, _a5 as _); } };
+        fn hsdInitClassInfo(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void, _a2: *mut core::ffi::c_void, _a3: *mut core::ffi::c_void, _a4: i32, _a5: i32) = { unsafe { melee_runtime::tu::class::hsdInitClassInfo(_a0 as _, _a1 as _, _a2 as _, _a3 as _, _a4 as _, _a5 as _); } };
         fn lbGetFreeColorRegister(_a0: i32, _a1: *mut core::ffi::c_void, _a2: *mut core::ffi::c_void) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lbGetFreeColorRegister(_a0 as _, _a1 as _, _a2 as _)) as _ } };
-        fn lbRefract_80022998(_a0: *mut core::ffi::c_void, _a1: u32, _a2: i32) = { unsafe { let _ = melee_runtime::tu::lbrefract::lbRefract_80022998(_a0 as _, _a1 as _, _a2 as _); } };
+        fn lbRefract_80022998(_a0: *mut core::ffi::c_void, _a1: u32, _a2: i32) = { unsafe { melee_runtime::tu::lbrefract::lbRefract_80022998(_a0 as _, _a1 as _, _a2 as _); } };
         fn lb_8000CC8C(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CC8C(_a0 as _)) as _ } };
         fn lb_8000CCA4(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CCA4(_a0 as _)) as _ } };
         fn lb_8000CD90(_a0: i32) -> i32 = { unsafe { (melee_runtime::tu::lb_00B0::lb_8000CD90(_a0 as _)) as _ } };

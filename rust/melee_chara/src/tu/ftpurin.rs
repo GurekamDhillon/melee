@@ -98,7 +98,7 @@ pub mod ext {
             pub fn HSD_ObjFree(data: *mut c_void, obj: *mut c_void)  {
                 match unsafe { HSD_OBJFREE } {
                     Some(f) => f(data, obj),
-                    None => { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
+                    None => { unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
                 }
             }
     crate::port_hook!(FTPARTSPOBJSETDEFAULTCLASS, ftPartsPObjSetDefaultClass, crate::adapt::ftPartsPObjSetDefaultClass, ());
@@ -120,7 +120,7 @@ pub mod ext {
     pub fn ftParts_80074CA0(vis: *mut FtPartsVis, idx: i32, list: *mut DObjList) {
         match unsafe { FTPARTS_80074CA0 } {
             Some(f) => f(vis, idx, list),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074CA0(&mut *(vis as *mut _), idx as _, list as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftParts_80074CA0(&mut *(vis as *mut _), idx as _, list as _); } },
         }
     }
     pub static mut FTPARTS_80074D7C: Option<fn(*mut FtPartsVis, i32, *mut DObjList)> = None;
@@ -128,7 +128,7 @@ pub mod ext {
     pub fn ftParts_80074D7C(vis: *mut FtPartsVis, idx: i32, list: *mut DObjList) {
         match unsafe { FTPARTS_80074D7C } {
             Some(f) => f(vis, idx, list),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftParts_80074D7C(&mut *(vis as *mut _), idx as _, list as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftParts_80074D7C(&mut *(vis as *mut _), idx as _, list as _); } },
         }
     }
     pub static mut FTCO_8009DC54: Option<fn(*mut Fighter)> = None;
@@ -136,7 +136,7 @@ pub mod ext {
     pub fn ftCo_8009DC54(fp: *mut Fighter) {
         match unsafe { FTCO_8009DC54 } {
             Some(f) => f(fp),
-            None => { unsafe { let _ = melee_fighter::tu::ftdynamics::ftCo_8009DC54(&mut *(fp as *mut _)); } },
+            None => { unsafe { melee_fighter::tu::ftdynamics::ftCo_8009DC54(&mut *(fp as *mut _)); } },
         }
     }
     crate::port_hook!(HSD_JOBJGETMTXPTR, HSD_JObjGetMtxPtr, crate::adapt::HSD_JObjGetMtxPtr, (jobj: *mut HSD_JObj) -> *mut [f32; 4]);
@@ -148,7 +148,7 @@ pub mod ext {
     pub fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32) {
         match unsafe { HSD_JOBJDISPALL } {
             Some(f) => f(jobj, vmtx, flags, rendermode),
-            None => { unsafe { let _ = melee_runtime::tu::jobj::HSD_JObjDispAll(jobj as _, &*(vmtx as *const _), flags as _, rendermode as _); } },
+            None => { unsafe { melee_runtime::tu::jobj::HSD_JObjDispAll(jobj as _, &*(vmtx as *const _), flags as _, rendermode as _); } },
         }
     }
     pub static mut HSD_GOBJ_80390EB8: Option<fn(i32) -> u32> = None;

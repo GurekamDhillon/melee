@@ -35,7 +35,7 @@ pub mod ext {
             pub fn ftCo_8009CA0C(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
                 match unsafe { FTCO_8009CA0C } {
                     Some(f) => f(gobj, vic),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_CaptureCaptain::ftCo_8009CA0C(gobj as _, vic as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_CaptureCaptain::ftCo_8009CA0C(gobj as _, vic as _); } return; },
                 }
             }
     pub static mut FT_80083B68: Option<fn(*mut HSD_GObj) > = None;
@@ -43,7 +43,7 @@ pub mod ext {
             pub fn ft_80083B68(gobj: *mut HSD_GObj)  {
                 match unsafe { FT_80083B68 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80083b68(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ft_081b::ft_80083b68(gobj as _); } return; },
                 }
             }
     pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj) > = None;
@@ -51,7 +51,7 @@ pub mod ext {
             pub fn ftCliffCommon_80081370(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCLIFFCOMMON_80081370 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
                 }
             }
     pub static mut FTCO_800DB368: Option<fn(*mut Fighter, *mut Fighter)> = None;
@@ -59,7 +59,7 @@ pub mod ext {
     pub fn ftCo_800DB368(vic_fp: *mut Fighter, fp: *mut Fighter) {
         match unsafe { FTCO_800DB368 } {
             Some(f) => f(vic_fp, fp),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(&mut *(vic_fp as *mut _), &mut *(fp as *mut _)); } },
+            None => { unsafe { melee_fighter::tu::ftCo_CapturePulled::ftCo_800DB368(&mut *(vic_fp as *mut _), &mut *(fp as *mut _)); } },
         }
     }
     pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
@@ -67,7 +67,7 @@ pub mod ext {
             pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
                 match unsafe { FTCO_800DE2A8 } {
                     Some(f) => f(gobj, vic),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
                 }
             }
     pub static mut FTCO_800DE7C0: Option<fn(*mut HSD_GObj, i32, i32)> = None;
@@ -75,7 +75,7 @@ pub mod ext {
     pub fn ftCo_800DE7C0(gobj: *mut HSD_GObj, a: i32, b: i32) {
         match unsafe { FTCO_800DE7C0 } {
             Some(f) => f(gobj, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
+            None => { unsafe { melee_fighter::tu::ftCo_Thrown::ftCo_800DE7C0(gobj as _, a as _, (b != 0)); } },
         }
     }
     /// Recording hook; unset, the native `melee_fighter::tu::ftparts` port runs.

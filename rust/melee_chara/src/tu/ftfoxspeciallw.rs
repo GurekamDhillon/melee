@@ -65,7 +65,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32) > = None;
@@ -73,7 +73,7 @@ pub mod ext {
             pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32)  {
                 match unsafe { LB_800119DC } {
                     Some(f) => f(pos, a, b, c, d),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_CREATEREFLECTHIT, ftColl_CreateReflectHit, crate::adapt::ftColl_CreateReflectHit, (gobj: *mut HSD_GObj, desc: *mut ReflectDesc, cb: HSD_GObjEvent));

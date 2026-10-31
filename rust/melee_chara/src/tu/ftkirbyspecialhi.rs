@@ -46,7 +46,7 @@ pub mod ext {
     pub fn efLib_SetFlags(gobj: *mut HSD_GObj, flags: i32) {
         match unsafe { EFLIB_SETFLAGS } {
             Some(f) => f(gobj, flags),
-            None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_SetFlags(gobj as _, flags as _); } },
+            None => { unsafe { melee_world::tu::efn::eflib::efLib_SetFlags(gobj as _, flags as _); } },
         }
     }
     pub static mut IT_8029BAB8: Option<fn(*mut HSD_GObj, *mut Vec3, f32) > = None;
@@ -54,7 +54,7 @@ pub mod ext {
             pub fn it_8029BAB8(gobj: *mut HSD_GObj, pos: *mut Vec3, facing_dir: f32)  {
                 match unsafe { IT_8029BAB8 } {
                     Some(f) => f(gobj, pos, facing_dir),
-                    None => { unsafe { let _ = melee_items::tu::itkirbycutterbeam::it_8029BAB8(gobj as _, pos as _, facing_dir as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirbycutterbeam::it_8029BAB8(gobj as _, pos as _, facing_dir as _); } return; },
                 }
             }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
@@ -62,7 +62,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     pub static mut FTCLIFFCOMMON_80081370: Option<fn(*mut HSD_GObj) > = None;
@@ -70,7 +70,7 @@ pub mod ext {
             pub fn ftCliffCommon_80081370(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCLIFFCOMMON_80081370 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081370(gobj as _); } return; },
                 }
             }
     hook_or!(FT_80082578, ft_80082578, melee_fighter::tu::ft_081b::ft_80082578, (gobj: *mut HSD_GObj) -> bool);

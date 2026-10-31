@@ -32,7 +32,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_8008A698(f: &Fighter) -> bool = crate::tu::ftwaitanim::ftCo_8008A698;
         // `ftData_80085FD4(fp, msid)->x8` (only that word is read here).
         ftData_80085FD4(f: &mut Fighter, msid: i32) -> usize = crate::tu::ftdata::ftData_80085FD4_x8;
@@ -58,7 +58,7 @@ pub mod ext {
         ftCo_SquatRv_CheckInput(g: G) -> bool = crate::tu::ftCo_SquatRv::ftCo_SquatRv_CheckInput;
         ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
         ftColl_8007AEE0(g: G) = crate::ft0df::ftcoll_8007aee0;
-        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
+        ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

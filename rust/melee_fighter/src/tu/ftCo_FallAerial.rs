@@ -26,7 +26,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_Fall_Anim_Inner(g: G, mv_x4: *mut f32, n: i32, f: i32, b: i32) = crate::tu::ftCo_Fall::ftCo_Fall_Anim_Inner;
         ftCo_800CC988(g: G, a: f32) = crate::tu::ftCo_Fall::ftCo_800CC988;
         ftCo_Fall_IASA_Inner(g: G) -> bool = crate::tu::ftCo_Fall::ftCo_Fall_IASA_Inner;

@@ -57,7 +57,7 @@ pub mod ext {
     pub fn grCorneria_801E2AF4() {
         match unsafe { GRCORNERIA_801E2AF4 } {
             Some(f) => f(),
-            None => { unsafe { let _ = melee_world::tu::grcorneria::grCorneria_801E2AF4(); } },
+            None => { unsafe { melee_world::tu::grcorneria::grCorneria_801E2AF4(); } },
         }
     }
     pub static mut GRCORNERIA_801E2B80: Option<fn() -> bool> = None;

@@ -80,7 +80,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     crate::port_hook!(FTMATERIAL_800BFB4C, ftMaterial_800BFB4C, crate::adapt::ftMaterial_800BFB4C, (gobj: *mut HSD_GObj, color: *const _GXColor));
@@ -89,7 +89,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
 

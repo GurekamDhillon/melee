@@ -51,7 +51,7 @@ pub mod ext {
             pub fn ftPp_Init_OnLoadForNana(fp: *mut Fighter)  {
                 match unsafe { FTPP_INIT_ONLOADFORNANA } {
                     Some(f) => f(fp),
-                    None => { unsafe { let _ = crate::tu::ftpopo::ftPp_Init_OnLoadForNana(fp as _); } return; },
+                    None => { unsafe { crate::tu::ftpopo::ftPp_Init_OnLoadForNana(fp as _); } return; },
                 }
             }
 }

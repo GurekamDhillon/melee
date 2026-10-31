@@ -61,7 +61,7 @@ pub mod ext {
             pub fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3)  {
                 match unsafe { HSD_JOBJSETSCALE } {
                     Some(f) => f(jobj, scale),
-                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetScale(jobj as _, scale as _); } return; },
+                    None => { unsafe { crate::tu::ftinl::HSD_JObjSetScale(jobj as _, scale as _); } return; },
                 }
             }
     pub static mut LB_8000C2F8: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
@@ -69,7 +69,7 @@ pub mod ext {
             pub fn lb_8000C2F8(jobj: *mut HSD_JObj, parent: *mut HSD_JObj)  {
                 match unsafe { LB_8000C2F8 } {
                     Some(f) => f(jobj, parent),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C2F8(jobj as _, parent as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(jobj as _, parent as _); } return; },
                 }
             }
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32) -> bool> = None;

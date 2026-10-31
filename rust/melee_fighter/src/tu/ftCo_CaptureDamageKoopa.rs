@@ -27,15 +27,15 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_800BCC20(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureWaitKoopa::ftCo_800BCC20(g as _); } };
-        ftCo_800BCD00(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_CaptureWaitKoopa::ftCo_800BCD00(g as _); } };
+        ftCo_800BCC20(g: G) = |g: G| { unsafe { crate::tu::ftCo_CaptureWaitKoopa::ftCo_800BCC20(g as _); } };
+        ftCo_800BCD00(g: G) = |g: G| { unsafe { crate::tu::ftCo_CaptureWaitKoopa::ftCo_800BCD00(g as _); } };
         ftCo_800BC458(g: G) = crate::tu::ftCo_CaptureKoopa::ftCo_800BC458;
         ftCo_800BC4A8(g: G) = crate::tu::ftCo_CaptureKoopa::ftCo_800BC4A8;
-        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
+        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
     }
 }

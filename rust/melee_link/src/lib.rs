@@ -10,6 +10,25 @@ pub mod strs;
 mod gen_table;
 pub use gen_table::HOOKS;
 
+/// One variadic argument as the machine word `melee_world::tu::va::Va` steps over: pointers and references as they are,
+/// integers sign- or zero-extended by their type, an `f32` widened to a double (passed by its bits), like C's default
+/// argument promotions.
+#[inline(always)]
+pub(crate) unsafe fn va_word<A>(a: A) -> *const core::ffi::c_void {
+    let n = core::any::type_name::<A>();
+    let a = core::mem::ManuallyDrop::new(a);
+    let sa = core::mem::size_of::<A>();
+    let mut raw = [0u8; 8];
+    core::ptr::copy_nonoverlapping(&*a as *const A as *const u8, raw.as_mut_ptr(), sa.min(8));
+    let v = u64::from_le_bytes(raw);
+    let w = match n {
+        "f32" => (f32::from_bits(v as u32) as f64).to_bits(),
+        "i8" | "i16" | "i32" => (v | (u64::MAX << (sa * 8))) * ((v >> (sa * 8 - 1)) & 1) + v * (1 - ((v >> (sa * 8 - 1)) & 1)),
+        _ => v,
+    };
+    w as usize as *const core::ffi::c_void
+}
+
 /// Bit copy between a hook's parameter/return type and the canonical function's (i32/u32, `&mut T`/`*mut T`,
 /// `Option<fn>`/`Option<extern fn>`). Same size: transmute. Different sizes can only be scalars (bool vs i32, u8
 /// vs i32...): converted the way a C integer conversion does (zero or sign extension by the source type, truncation,
@@ -21,7 +40,7 @@ pub(crate) unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
     if sa == sb {
         return core::mem::transmute_copy::<A, B>(&a);
     }
-    assert!(sa <= 8 && sb <= 8, "link cast: size mismatch");
+    assert!(sa <= 8 && sb <= 8, "link cast: size mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
     let scalar = |n: &str| matches!(n, "bool" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "usize" | "isize");
     assert!(
         scalar(core::any::type_name::<A>()) && scalar(core::any::type_name::<B>()),

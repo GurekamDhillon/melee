@@ -56,7 +56,7 @@ pub mod ext {
             pub fn it_802AFEA8(item: *mut Item_GObj, owner: *mut HSD_GObj, flag: i32)  {
                 match unsafe { IT_802AFEA8 } {
                     Some(f) => f(item, owner, flag),
-                    None => { unsafe { let _ = melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, flag as _); } return; },
+                    None => { unsafe { melee_items::tu::itseakneedlethrown::it_802AFEA8(item as _, owner as _, flag as _); } return; },
                 }
             }
     pub static mut IT_802B19AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, i32, f32) -> *mut Item_GObj> = None;

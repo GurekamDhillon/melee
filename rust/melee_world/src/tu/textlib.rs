@@ -40,7 +40,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn DevText_NumToStr(a0: i32, a1: *mut i8) = |a0: i32, a1: *mut i8| { unsafe { let _ = crate::tu::textdraw::DevText_NumToStr(a0 as _, a1 as _); } };
+    fn DevText_NumToStr(a0: i32, a1: *mut i8) = |a0: i32, a1: *mut i8| { unsafe { crate::tu::textdraw::DevText_NumToStr(a0 as _, a1 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

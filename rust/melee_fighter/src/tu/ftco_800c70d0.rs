@@ -34,7 +34,7 @@ pub mod ext {
     pub fn ft_8008521C(g: *mut HSD_GObj) {
         match unsafe { FT_8008521C } {
             Some(f) => f(g),
-            None => { unsafe { let _ = crate::tu::ftdata::ft_8008521C(g as _); } return; },
+            None => { unsafe { crate::tu::ftdata::ft_8008521C(g as _); } return; },
         }
     }
 }

@@ -31,16 +31,16 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800C54C4(fp: &mut Fighter) -> u32 = |fp: &mut Fighter| -> u32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C54C4(fp as _) as _ } };
         ftCo_800C548C(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C548C(fp as _) as _ } };
-        ftCo_800C4E94(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4E94(fp as _); } };
-        ftCo_800C4F64(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4F64(g as _); } };
+        ftCo_800C4E94(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4E94(fp as _); } };
+        ftCo_800C4F64(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4F64(g as _); } };
         ftCo_Jump_GetInput(g: G) -> u32 = |g: G| -> u32 { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_GetInput(g as _) as _ } };
         ftCo_800C5B88(g: G, e: i32) = crate::tu::ftCo_HammerKneeBend::ftCo_800C5B88;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCo_800CB110(g: G, b: bool, v: f32) = |g: G, b: bool, v: f32| { unsafe { let _ = crate::tu::ftCo_Jump::ftCo_800CB110(g as _, b as _, v as _); } };
-        ftCo_Jump_Phys_Inner(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Jump::ftCo_Jump_Phys_Inner(g as _); } };
+        ftCo_800CB110(g: G, b: bool, v: f32) = |g: G, b: bool, v: f32| { unsafe { crate::tu::ftCo_Jump::ftCo_800CB110(g as _, b as _, v as _); } };
+        ftCo_Jump_Phys_Inner(g: G) = |g: G| { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_Phys_Inner(g as _); } };
         ftCo_HammerFall_Coll(g: G) = crate::tu::ftCo_HammerFall::ftCo_HammerFall_Coll;
     }
 }

@@ -66,7 +66,7 @@ pub mod ext {
             pub fn lb_8000B1CC(j: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(j, pos0, pos1),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } return; },
                 }
             }
     pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32) > = None;
@@ -74,7 +74,7 @@ pub mod ext {
             pub fn lb_800119DC(v: *mut Vec3, n: i32, a: f32, b: f32, c: f32)  {
                 match unsafe { LB_800119DC } {
                     Some(f) => f(v, n, a, b, c),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(v as _, n as _, a as _, b as _, c as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(v as _, n as _, a as _, b as _, c as _); } return; },
                 }
             }
     // `it_802C3D44(item)` (it/kinds/itzeldadinfire.c).
@@ -83,7 +83,7 @@ pub mod ext {
             pub fn it_802C3D44(item: *mut HSD_GObj)  {
                 match unsafe { IT_802C3D44 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itzeldadinfire::it_802C3D44(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itzeldadinfire::it_802C3D44(item as _); } return; },
                 }
             }
     // `ftCommon_8007EFC8(gobj, cb)` (ft/ftcommon.c): group 3's verified port when unset.
@@ -91,7 +91,7 @@ pub mod ext {
         super::ftcommon_8007efc8_port);
     /// `ftSk_SpecialLw_80114758` (ft/kinds/ftSeak/ftseakspeciallw.c): not ported yet.
     pub fn ftSk_SpecialLw_80114758(_g: *mut HSD_GObj) {
-        { unsafe { let _ = crate::tu::ftseakspeciallw::ftSk_SpecialLw_80114758(_g as _); } return; };
+        { unsafe { crate::tu::ftseakspeciallw::ftSk_SpecialLw_80114758(_g as _); } return; };
     }
 }
 
@@ -128,7 +128,7 @@ unsafe fn set_effect_hitlag_cbs(fp: *mut Fighter) {
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): not ported yet (a callback address only here).
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftZd_Init_801393AC");
-    { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
+    { unsafe { crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
 /// `ftZd_SpecialLw_8013ADB4` (accessory callback: the transform's spark on the top joint).

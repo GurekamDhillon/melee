@@ -43,13 +43,13 @@ pub mod ext {
         ftCo_800D730C(g: G, arg1: bool) -> bool = crate::tu::ftCo_JumpAerialF1::ftCo_800D730C;
         ft_800D2D0C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_0d27::ft_800d2d0c(g as _) as _ } };
         ft_800D2E7C(g: G, v: &mut Vec3) = crate::tu::ftCo_ItemScrew::ft_800D2E7C;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80088770(fp: &mut Fighter) = crate::ft0881::ft_80088770;
         ft_80088328(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0881::ft_80088328(fp as _, id as _, vol as _, pan as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCo_FallAerial_Enter(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(g as _); } };
+        ftCo_FallAerial_Enter(g: G) = |g: G| { unsafe { crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(g as _); } };
         ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
         ftCo_80095328(g: G, out: *mut bool) -> bool = crate::tu::ftCo_ItemThrow::ftCo_80095328;
         ftCo_800D7100(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack100::ftCo_800D7100(g as _) as _ } };
@@ -64,9 +64,9 @@ pub mod ext {
         ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |fp: &mut Fighter, v: f32| { unsafe { let _ = crate::ftcommon::calc_self_accel_drift_from(fp, v as _); } };
         ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::calc_self_accel_drift(fp); } };
         ft_800851D0(g: G) = crate::ft084e::ft_800851d0;
-        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { let _ = crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
+        ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };
         ftCo_80096CC8(g: G, line: i32) -> bool = |g: G, line: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line as _) as _ } };
-        ft_80082B1C(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(g as _); } };
+        ft_80082B1C(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80082b1c(g as _); } };
     }
 }
 

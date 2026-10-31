@@ -35,7 +35,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     pub static mut IT_802ADC34: Option<fn(*mut Item_GObj) > = None;
@@ -43,7 +43,7 @@ pub mod ext {
             pub fn it_802ADC34(item: *mut Item_GObj)  {
                 match unsafe { IT_802ADC34 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itkirbyhammer::it_802ADC34(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirbyhammer::it_802ADC34(item as _); } return; },
                 }
             }
     pub static mut IT_802ADC54: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32) -> *mut Item_GObj> = None;
@@ -60,7 +60,7 @@ pub mod ext {
             pub fn __assert(file: &str, line: u32, cond: &str)  {
                 match unsafe { ASSERT } {
                     Some(f) => f(file, line, cond),
-                    None => { unsafe { let _ = melee_runtime::tu::lbext::__assert(file as _, line as _, cond as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbext::__assert(file as _, line as _, cond as _); } return; },
                 }
             }
 }

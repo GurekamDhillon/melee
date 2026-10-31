@@ -13,7 +13,7 @@ use melee_types::*;
 pub mod ext {
     use crate::tu::hookmac::{hook, hook_or};
     use melee_types::*;
-    hook_or!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(jobj as _); } });
+    hook_or!(HSD_JOBJSETMTXDIRTYSUB, HSD_JObjSetMtxDirtySub, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(jobj as _); } });
     // rp3 HSD_JObjSetMtxDirty
     hook_or!(HSD_JOBJSETMTXDIRTY, HSD_JObjSetMtxDirty, (jobj: *mut HSD_JObj), |jobj: *mut HSD_JObj| unsafe { crate::tu::grinl::HSD_JObjSetMtxDirty(jobj); });
     // rp3-end

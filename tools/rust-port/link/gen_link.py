@@ -249,7 +249,7 @@ def parse_hooks():
             end = match_close(t, dm.end() - 1)
             body = t[dm.start():end]
             if 'pub mod hook' in body: kind = 'mod_hook'
-            elif '$hook' in body or re.search(r'pub\s+static\s+mut\s+\$stat\b', body): kind = 'static_hook'
+            elif '$hook' in body or re.search(r'pub\s+static\s+mut\s+\$(?:stat|slot)\b', body): kind = 'static_hook'
             else: kind = 'other'
         else:
             kind = 'mod_hook' if re.search(r'ext_fns_[ch]\b', t) else 'external_macro'
@@ -686,9 +686,9 @@ def main():
                     why = 'skipped'
                 else:
                     h['canon'] = pick
-        if why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
+        if (why in ('nodef', 'sigmismatch', 'ambiguous', 'cabiref') or aliases.get(h['name'], '').startswith(('variadicw:', '!'))) and h['name'] in aliases and h['path'] and not (h.get('cabi') and h.get('ref')):
             # hand-written closure from link_alias.tsv (an accessor spelled as a function, a variadic spread...)
-            h['alias'] = aliases[h['name']]
+            h['alias'] = aliases[h['name']].lstrip('!')
             linked.append(h)
             continue
         if why:
@@ -719,15 +719,17 @@ def main():
             if h.get('alias'):
                 out.append(f'    // {h["file"]}: link_alias.tsv')
                 al = h["alias"]
-                if al.startswith("variadic:"):
+                if al.startswith("variadic:") or al.startswith("variadicw:"):
                     # variadic:<canonical path>:<fixed args> -- the rest of the hook's parameters become the slice argument
                     _, cpath, nfix = al.split(":", 2)[0], al.split(":")[1] + "::" + al.split(":")[2] if False else None, None
-                    parts = al[len("variadic:"):].rsplit(":", 1)
+                    wordy = al.startswith("variadicw:")
+                    parts = al[al.index(":") + 1:].rsplit(":", 1)
                     cpath, nfix = parts[0], int(parts[1])
                     n = h["npar"]
                     ps = ", ".join(f"a{i}" for i in range(n))
-                    fixed = ", ".join(f"a{i}" for i in range(nfix))
-                    rest = ", ".join(f"a{i}" for i in range(nfix, n))
+                    site += 1
+                    fixed = ", ".join((f"cast::<_, _, {site * 100 + i + 1}>(a{i})" if wordy else f"a{i}") for i in range(nfix))
+                    rest = ", ".join((f"crate::va_word(a{i})" if wordy else f"a{i}") for i in range(nfix, n))
                     al = f"|{ps}| unsafe {{ {cpath}({fixed}, &[{rest}]) }}"
                 if h.get('cabi'):
                     out.append(f'    unsafe {{ {crate}::{h["path"]} = Some(crate::cabi::c{h["npar"]}({al})); }}')

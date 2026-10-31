@@ -39,7 +39,7 @@ pub mod ext {
             pub fn lbColl_80008440(hit: *mut HitCapsule)  {
                 match unsafe { LBCOLL_80008440 } {
                     Some(f) => f(hit),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008440(hit as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(hit as _); } return; },
                 }
             }
     pub static mut LBCOLL_80008434: Option<fn(*mut HitCapsule) > = None;
@@ -47,7 +47,7 @@ pub mod ext {
             pub fn lbColl_80008434(hit: *mut HitCapsule)  {
                 match unsafe { LBCOLL_80008434 } {
                     Some(f) => f(hit),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008434(hit as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcollision::lbColl_80008434(hit as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_8007ABD0, ftColl_8007ABD0, crate::adapt::ftColl_8007ABD0, (hit: *mut HitCapsule, damage: u32, gobj: *mut HSD_GObj));
@@ -56,7 +56,7 @@ pub mod ext {
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: u32, b: u32) {
         match unsafe { FTCO_800BFFD0 } {
             Some(f) => f(fp, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
         }
     }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
@@ -64,7 +64,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     pub static mut MPCOLL_80041EE4: Option<fn(*mut CollData)> = None;
@@ -72,7 +72,7 @@ pub mod ext {
     pub fn mpColl_80041EE4(coll: *mut CollData) {
         match unsafe { MPCOLL_80041EE4 } {
             Some(f) => f(coll),
-            None => { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80041EE4(coll as _); } },
+            None => { unsafe { melee_world::tu::mpcoll::mpColl_80041EE4(coll as _); } },
         }
     }
     pub static mut MPCOLL_8004730C: Option<fn(*mut CollData, *mut ftCollisionBox) -> i32> = None;
@@ -88,7 +88,7 @@ pub mod ext {
             pub fn it_802BFE5C(gobj: *mut HSD_GObj, vel: *mut Vec3, x: f32)  {
                 match unsafe { IT_802BFE5C } {
                     Some(f) => f(gobj, vel, x),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BFE5C(gobj as _, vel as _, x as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BFE5C(gobj as _, vel as _, x as _); } return; },
                 }
             }
     pub static mut IT_802C0010: Option<fn(*mut HSD_GObj, *mut Vec3) > = None;
@@ -96,7 +96,7 @@ pub mod ext {
             pub fn it_802C0010(gobj: *mut HSD_GObj, pos: *mut Vec3)  {
                 match unsafe { IT_802C0010 } {
                     Some(f) => f(gobj, pos),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802C0010(gobj as _, pos as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802C0010(gobj as _, pos as _); } return; },
                 }
             }
     pub static mut IT_802BE5D8: Option<fn(*mut HSD_GObj, f32) > = None;
@@ -104,7 +104,7 @@ pub mod ext {
             pub fn it_802BE5D8(gobj: *mut HSD_GObj, v: f32)  {
                 match unsafe { IT_802BE5D8 } {
                     Some(f) => f(gobj, v),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BE5D8(gobj as _, v as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BE5D8(gobj as _, v as _); } return; },
                 }
             }
     pub static mut IT_802BFEC4: Option<fn(*mut HSD_GObj) > = None;
@@ -112,7 +112,7 @@ pub mod ext {
             pub fn it_802BFEC4(gobj: *mut HSD_GObj)  {
                 match unsafe { IT_802BFEC4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BFEC4(gobj as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BFEC4(gobj as _); } return; },
                 }
             }
     pub static mut IT_802BE958: Option<fn(*mut HSD_GObj) > = None;
@@ -120,7 +120,7 @@ pub mod ext {
             pub fn it_802BE958(gobj: *mut HSD_GObj)  {
                 match unsafe { IT_802BE958 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BE958(gobj as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BE958(gobj as _); } return; },
                 }
             }
     pub static mut IT_802BE9D8: Option<fn(*mut HSD_GObj, f32, *mut Vec3, i32) -> *mut HSD_GObj> = None;
@@ -136,7 +136,7 @@ pub mod ext {
             pub fn it_802BE598(gobj: *mut HSD_GObj)  {
                 match unsafe { IT_802BE598 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BE598(gobj as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BE598(gobj as _); } return; },
                 }
             }
     pub static mut IT_802BE5B8: Option<fn(*mut HSD_GObj) > = None;
@@ -144,7 +144,7 @@ pub mod ext {
             pub fn it_802BE5B8(gobj: *mut HSD_GObj)  {
                 match unsafe { IT_802BE5B8 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_items::tu::itnessyoyo::it_802BE5B8(gobj as _); } return; },
+                    None => { unsafe { melee_items::tu::itnessyoyo::it_802BE5B8(gobj as _); } return; },
                 }
             }
 }

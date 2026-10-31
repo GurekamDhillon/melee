@@ -39,7 +39,7 @@ pub mod ext {
             pub fn itMewtwoDisable_Logic67_Destroy(item: *mut HSD_GObj)  {
                 match unsafe { ITMEWTWODISABLE_LOGIC67_DESTROY } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_Destroy(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itmewtwodisable::itMewtwoDisable_Logic67_Destroy(item as _); } return; },
                 }
             }
     pub static mut ITMEWTWODISABLE_LOGIC67_SPAWNMEWTWODISABLE: Option<fn(*mut HSD_GObj, *const Vec3, f32) -> *mut HSD_GObj> = None;
@@ -55,7 +55,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
 }

@@ -397,14 +397,14 @@ pub fn HSD_JObjWalkTree<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,
 pub fn HSD_JObjWalkTree0<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:JObjId,cb:&mut dyn FnMut(JObjId,u32))->(){ melee_core::ct!("HSD_JObjWalkTree0");t.walk_tree0(j,cb)}
 pub fn JObjResetRST<D: Copy + PartialEq, R: Copy + PartialEq,S:JointSource>(t:&mut JObjTree<D,R>,j:Option<JObjId>,s:&S,d:Option<S::Id>){ melee_core::ct!("JObjResetRST");t.reset_rst_one(j,s,d)}
 pub fn HSD_JObjResetRST<D: Copy + PartialEq, R: Copy + PartialEq,S:JointSource>(t:&mut JObjTree<D,R>,j:Option<JObjId>,s:&S,d:Option<S::Id>){ melee_core::ct!("HSD_JObjResetRST");t.reset_rst(j,s,d)}
-pub fn HSD_JObjMakeMatrix<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjMakeMatrix");t.make_matrix(h,j)}
-pub fn HSD_JObjSetupMatrixSub<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjSetupMatrixSub");t.setup_matrix_sub(h,j)}
+pub fn HSD_JObjMakeMatrix_owned<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjMakeMatrix");t.make_matrix(h,j)}
+pub fn HSD_JObjSetupMatrixSub_owned<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjSetupMatrixSub");t.setup_matrix_sub(h,j)}
 pub fn HSD_JObjRemove<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:Option<JObjId>)->Option<JObjId>{ melee_core::ct!("HSD_JObjRemove");t.remove(h,j)}
 pub fn HSD_JObjRemoveAll<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:Option<JObjId>)->(){ melee_core::ct!("HSD_JObjRemoveAll");t.remove_all(h,j)}
-pub fn HSD_JObjRemoveAnimByFlags<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32){ melee_core::ct!("HSD_JObjRemoveAnimByFlags");r.remove_anim_by_flags(t,j,f)}
-pub fn HSD_JObjRemoveAnimAllByFlags<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32){ melee_core::ct!("HSD_JObjRemoveAnimAllByFlags");r.remove_anim_all_by_flags(t,j,f)}
-pub fn HSD_JObjRemoveAnim<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>){ melee_core::ct!("HSD_JObjRemoveAnim");r.remove_anim(t,j)}
-pub fn HSD_JObjRemoveAnimAll<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>){ melee_core::ct!("HSD_JObjRemoveAnimAll");r.remove_anim_all(t,j)}
+pub fn HSD_JObjRemoveAnimByFlags_owned<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32){ melee_core::ct!("HSD_JObjRemoveAnimByFlags");r.remove_anim_by_flags(t,j,f)}
+pub fn HSD_JObjRemoveAnimAllByFlags_owned<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32){ melee_core::ct!("HSD_JObjRemoveAnimAllByFlags");r.remove_anim_all_by_flags(t,j,f)}
+pub fn HSD_JObjRemoveAnim_owned<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>){ melee_core::ct!("HSD_JObjRemoveAnim");r.remove_anim(t,j)}
+pub fn HSD_JObjRemoveAnimAll_owned<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>){ melee_core::ct!("HSD_JObjRemoveAnimAll");r.remove_anim_all(t,j)}
 pub fn HSD_JObjReqAnimByFlags<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32,x:f32){ melee_core::ct!("HSD_JObjReqAnimByFlags");r.req_anim_by_flags(t,j,f,x)}
 pub fn HSD_JObjReqAnimAllByFlags<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,f:u32,x:f32){ melee_core::ct!("HSD_JObjReqAnimAllByFlags");r.req_anim_all_by_flags(t,j,f,x)}
 pub fn HSD_JObjReqAnim<X:JObjExt>(r:&mut JObjRt<X>,t:&mut JObjTree<X::D,u32>,j:Option<JObjId>,x:f32){ melee_core::ct!("HSD_JObjReqAnim");r.req_anim(t,j,x)}

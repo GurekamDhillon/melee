@@ -130,35 +130,35 @@ pub mod ext {
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetScale(_gfx_id: i32, _vl: VaList<'_>) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetScale") }
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetFacingDirScale(_gfx_id: i32, _vl: VaList<'_>) -> *mut HSD_Generator { panic!("TODO(group2 eflib) efLib_CreateGenerator_AppSRT_SetFacingDirScale") }
     pub unsafe fn efLib_CreateGenerator_AppSRT_SetPos(gfx_id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, pos: *mut Vec3) -> *mut EF_Effect { unsafe { crate::tu::eflib::efLib_CreateGenerator_AppSRT_SetPos(gfx_id as _, gobj as _, jobj as _, &*(pos as *const _)) as _ } }
-    pub unsafe fn efLib_SetTevKonstColor(_jobj: *mut HSD_JObj, _count: i32, _konst: u32, _color: u32) { { unsafe { let _ = crate::tu::eflib::efLib_SetTevKonstColor(_jobj as _, _count as _, _konst as _, _color as _); } return; } }
-    pub unsafe fn efLib_SetParamGfxId(_gobj: *mut HSD_GObj, _gfx_id: i32) { { unsafe { let _ = crate::tu::eflib::efLib_SetParamGfxId(_gobj as _, _gfx_id as _); } return; } }
+    pub unsafe fn efLib_SetTevKonstColor(_jobj: *mut HSD_JObj, _count: i32, _konst: u32, _color: u32) { { unsafe { crate::tu::eflib::efLib_SetTevKonstColor(_jobj as _, _count as _, _konst as _, _color as _); } return; } }
+    pub unsafe fn efLib_SetParamGfxId(_gobj: *mut HSD_GObj, _gfx_id: i32) { { unsafe { crate::tu::eflib::efLib_SetParamGfxId(_gobj as _, _gfx_id as _); } return; } }
     /// `((HSD_JObj**) efLib_AnimQueue)[i]` (eflib.c global).
     pub unsafe fn efLib_AnimQueue(_i: i32) -> *mut HSD_JObj { panic!("TODO(group2 eflib) efLib_AnimQueue") }
-    pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_ApplyStoredAlpha(_e as _); } return; } }
-    pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_Fall_FromParamY(_e as _); } return; } }
-    pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_SetScale_FromParamX(_e as _); } return; } }
-    pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(_e: *mut EF_Effect) { { unsafe { let _ = crate::tu::eflib::efLib_Cb_ftCo_Bury(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_ApplyStoredAlpha(_e: *mut EF_Effect) { { unsafe { crate::tu::eflib::efLib_Cb_ApplyStoredAlpha(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_Fall_FromParamY(_e: *mut EF_Effect) { { unsafe { crate::tu::eflib::efLib_Cb_Fall_FromParamY(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_SetScale_FromParamX(_e: *mut EF_Effect) { { unsafe { crate::tu::eflib::efLib_Cb_SetScale_FromParamX(_e as _); } return; } }
+    pub unsafe extern "C" fn efLib_Cb_ftCo_Bury(_e: *mut EF_Effect) { { unsafe { crate::tu::eflib::efLib_Cb_ftCo_Bury(_e as _); } return; } }
     pub unsafe fn hsd_8039EFAC(_link: i32, _bank: i32, _gfx_id: i32, _jobj: *mut HSD_JObj) -> *mut HSD_Generator { panic!("TODO(group1 generator) hsd_8039EFAC") }
     pub unsafe fn HSD_Randf() -> f32 { melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) }
     pub unsafe fn HSD_Randi(_max: i32) -> i32 { melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), _max) }
     pub unsafe fn HSD_JObjAnimAll(_jobj: *mut HSD_JObj) { panic!("TODO(group1 jobj) HSD_JObjAnimAll") }
-    pub unsafe fn HSD_JObjSetMtxDirtySub(_jobj: *mut HSD_JObj) { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(_jobj as _); } }
-    pub unsafe fn lb_8000B1CC(_jobj: *mut HSD_JObj, _ofs: *const Vec3, _out: *mut Vec3) { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(_jobj as _, _ofs as _, _out as _); } return; } }
+    pub unsafe fn HSD_JObjSetMtxDirtySub(_jobj: *mut HSD_JObj) { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(_jobj as _); } }
+    pub unsafe fn lb_8000B1CC(_jobj: *mut HSD_JObj, _ofs: *const Vec3, _out: *mut Vec3) { { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(_jobj as _, _ofs as _, _out as _); } return; } }
     pub unsafe fn efSync_Spawn(_gfx_id: i32, _gobj: *mut HSD_GObj, _args: &[VaArg]) -> *mut c_void { panic!("TODO(group2 efsync) efSync_Spawn") }
     pub unsafe fn Camera_RequestQuake(_kind: u32, _pos: *mut Vec3) { unsafe { crate::cm::camera::Camera_RequestQuake(_kind as _, _pos as _) } }
     pub unsafe fn HSD_ObjAlloc(_d: *mut HSD_ObjAllocData) -> *mut c_void { { return unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(_d as _) as _ }; } }
-    pub unsafe fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut c_void) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } return; } }
-    pub unsafe fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } return; } }
+    pub unsafe fn HSD_ObjFree(_d: *mut HSD_ObjAllocData, _p: *mut c_void) { { unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(_d as _, _p as _); } return; } }
+    pub unsafe fn HSD_ObjAllocInit(_d: *mut HSD_ObjAllocData, _size: u32, _align: u32) { { unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocInit(_d as _, _size as _, _align as _); } return; } }
     /// The global `HSD_GObj_CurrentInvokedProc` (gobj.c).
     pub unsafe fn HSD_GObj_CurrentInvokedProc() -> *mut HSD_GObjProc { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc } }
-    pub unsafe fn lbDvd_800178E8(_a: i32, _name: *const c_char, _b: i32, _c: i32, _d: i32, _e: i32, _f: i32, _g: u8, _idx: i32) { { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_800178E8(_a as _, _name as _, _b as _, _c as _, _d as _, _e as _, _f as _, _g as _, _idx as _); } return; } }
-    pub unsafe fn lbArchive_InitializeDAT(_ar: *mut c_void, _data: *mut u8, _len: u32) { { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(_ar as _, _data as _, _len as _); } return; } }
+    pub unsafe fn lbDvd_800178E8(_a: i32, _name: *const c_char, _b: i32, _c: i32, _d: i32, _e: i32, _f: i32, _g: u8, _idx: i32) { { unsafe { melee_runtime::tu::lbdvd::lbDvd_800178E8(_a as _, _name as _, _b as _, _c as _, _d as _, _e as _, _f as _, _g as _, _idx as _); } return; } }
+    pub unsafe fn lbArchive_InitializeDAT(_ar: *mut c_void, _data: *mut u8, _len: u32) { { unsafe { melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(_ar as _, _data as _, _len as _); } return; } }
     /// `lbArchive_80017040(dst, filename, &out, symbol, 0)`: one (out, symbol) pair.
     pub unsafe fn lbArchive_80017040(_dst: *mut *mut c_void, _file: *const c_char, _out: *mut *mut EF_DAT_Entry, _sym: *const c_char) -> bool { unsafe { let v: std::vec::Vec<*mut core::ffi::c_void> = std::vec![_out as *mut core::ffi::c_void, _sym as *mut core::ffi::c_void, core::ptr::null_mut()]; melee_runtime::tu::lbarchive::lbArchive_80017040(_dst as _, _file as _, &v) } }
     pub unsafe fn HSD_ArchiveGetPublicAddress(_ar: *mut c_void, _sym: *const c_char) -> *mut c_void { { return unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(_ar as _, _sym as _) as _ }; } }
-    pub unsafe fn psInitDataBankLocate(_cmd: *mut c_void, _tex: *mut c_void, _form: *mut i32) { { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLocate(_cmd as _, _tex as _, _form as _); } return; } }
-    pub unsafe fn psInitDataBankLoad(_bank: i32, _cmd: *const i32, _tex: *const i32, _r: *const u32, _form: *const i32) { { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(_bank as _, _cmd as _, _tex as _, _r as _, _form as _); } return; } }
-    pub unsafe fn psInitDataBank(_bank: i32, _cmd: *mut i32, _tex: *mut i32, _r: *mut u32, _form: *mut i32) { { unsafe { let _ = melee_runtime::tu::particle::psInitDataBank(_bank as _, _cmd as _, _tex as _, _r as _, _form as _); } return; } }
+    pub unsafe fn psInitDataBankLocate(_cmd: *mut c_void, _tex: *mut c_void, _form: *mut i32) { { unsafe { melee_runtime::tu::particle::psInitDataBankLocate(_cmd as _, _tex as _, _form as _); } return; } }
+    pub unsafe fn psInitDataBankLoad(_bank: i32, _cmd: *const i32, _tex: *const i32, _r: *const u32, _form: *const i32) { { unsafe { melee_runtime::tu::particle::psInitDataBankLoad(_bank as _, _cmd as _, _tex as _, _r as _, _form as _); } return; } }
+    pub unsafe fn psInitDataBank(_bank: i32, _cmd: *mut i32, _tex: *mut i32, _r: *mut u32, _form: *mut i32) { { unsafe { melee_runtime::tu::particle::psInitDataBank(_bank as _, _cmd as _, _tex as _, _r as _, _form as _); } return; } }
     pub unsafe fn Mex_EffectCount() -> i32 { panic!("TODO(pc/platform mex) Mex_EffectCount") }
     pub unsafe fn Mex_EffectString(_i: i32, _which: i32) -> *mut c_char { panic!("TODO(pc/platform mex) Mex_EffectString") }
     /// `ftData_UnkBytePerCharacter[kind]` (ft/ftdata.c).

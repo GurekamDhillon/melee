@@ -35,10 +35,10 @@ pub mod ext {
         fn HSD_DObjModifyFlags(dobj: *mut HSD_DObj, a: u32, b: u32) = { panic!("TODO(group1 dobj) HSD_DObjModifyFlags") };
         fn HSD_DObjLoadDesc(desc: *mut HSD_DObjDesc) -> *mut HSD_DObj = { panic!("TODO(group1 dobj) HSD_DObjLoadDesc") };
         fn HSD_DObjResolveRefsAll(dobj: *mut HSD_DObj, desc: *mut HSD_DObjDesc) = { panic!("TODO(group1 dobj) HSD_DObjResolveRefsAll") };
-        fn HSD_IDInsertToTable(table: *mut c_void, key: usize, data: *mut c_void) = { { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, data as _); } return; } };
-        fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) = { unsafe { let _ = crate::tu::ftanim::ftAnim_GetNextJointInTree(joint, depth); } };
-        fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj) = { { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; } };
-        fn hsdChangeClass(obj: *mut c_void, info: *mut c_void) = { { unsafe { let _ = melee_runtime::tu::class::hsdChangeClass(obj as _, info as _); } return; } };
+        fn HSD_IDInsertToTable(table: *mut c_void, key: usize, data: *mut c_void) = { { unsafe { melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, data as _); } return; } };
+        fn ftAnim_GetNextJointInTree(joint: &mut *mut HSD_Joint, depth: &mut i32) = { unsafe { crate::tu::ftanim::ftAnim_GetNextJointInTree(joint, depth); } };
+        fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj) = { { unsafe { melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; } };
+        fn hsdChangeClass(obj: *mut c_void, info: *mut c_void) = { { unsafe { melee_runtime::tu::class::hsdChangeClass(obj as _, info as _); } return; } };
         fn ftMObj() -> *mut c_void = { panic!("TODO(ftmaterial) ftMObj class info") };
     }
 }

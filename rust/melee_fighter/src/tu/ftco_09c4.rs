@@ -35,7 +35,7 @@ pub mod ext {
             pub fn ftCo_8009A184(g: *mut Fighter_GObj, msid: i32, flags: MotionFlags, anim_start: f32)  {
                 match unsafe { FTCO_8009A184 } {
                     Some(f) => f(g, msid, flags, anim_start),
-                    None => { unsafe { let _ = crate::tu::ftCo_Pass::ftCo_8009A184(g as _, msid as _, flags as _, anim_start as _); } return; },
+                    None => { unsafe { crate::tu::ftCo_Pass::ftCo_8009A184(g as _, msid as _, flags as _, anim_start as _); } return; },
                 }
             }
     pub static mut FTCO_8009C5A4: Option<fn(*mut Fighter_GObj, i32) > = None;
@@ -43,7 +43,7 @@ pub mod ext {
             pub fn ftCo_8009C5A4(g: *mut Fighter_GObj, msid: i32)  {
                 match unsafe { FTCO_8009C5A4 } {
                     Some(f) => f(g, msid),
-                    None => { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } return; },
+                    None => { unsafe { crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } return; },
                 }
             }
 }

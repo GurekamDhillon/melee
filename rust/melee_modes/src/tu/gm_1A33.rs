@@ -88,7 +88,7 @@ pub mod ext {
             pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, v: i32)  {
                 match unsafe { HSD_SISLIB_803A6368 } {
                     Some(f) => f(text, v),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
                 }
             }
     pub static mut HSD_SISLIB_803A6530: Option<fn(i32, i32, i32) -> *mut u8> = None;
@@ -104,7 +104,7 @@ pub mod ext {
             pub fn HSD_SisLib_803A660C(a: i32, b: i32, c: i32)  {
                 match unsafe { HSD_SISLIB_803A660C } {
                     Some(f) => f(a, b, c),
-                    None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a as _, b as _, c as _); } return; },
+                    None => { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a as _, b as _, c as _); } return; },
                 }
             }
     pub static mut HSD_SISLIB_803A5CC4: Option<fn(*mut HSD_Text) > = None;
@@ -112,7 +112,7 @@ pub mod ext {
             pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text)  {
                 match unsafe { HSD_SISLIB_803A5CC4 } {
                     Some(f) => f(text),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } return; },
                 }
             }
     // lb/lbsnap.c, mn/mnmain.c, gm/gmscene.c, lb/lbaudio_ax.c (the sfx inlines of mn/inlines.h)
@@ -137,7 +137,7 @@ pub mod ext {
             pub fn mn_8022F268()  {
                 match unsafe { MN_8022F268 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F268(); } return; },
+                    None => { unsafe { crate::tu::mn_22EC::mn_8022F268(); } return; },
                 }
             }
     pub static mut GM_801A4B60: Option<fn() > = None;
@@ -145,7 +145,7 @@ pub mod ext {
             pub fn gm_801A4B60()  {
                 match unsafe { GM_801A4B60 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B60(); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80024030: Option<fn(i32) > = None;
@@ -153,7 +153,7 @@ pub mod ext {
             pub fn lbAudioAx_80024030(id: i32)  {
                 match unsafe { LBAUDIOAX_80024030 } {
                     Some(f) => f(id),
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(id as _); } return; },
                 }
             }
 }

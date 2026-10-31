@@ -836,14 +836,14 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: ::core::ffi::c_int)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_lbAudioAx_80024030: Option<unsafe extern "C" fn(::core::ffi::c_int) > = None;
             pub unsafe extern "C" fn lbAudioAx_80024030(a0: ::core::ffi::c_int)  {
                 match H_lbAudioAx_80024030 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
                 }
             }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, va: &[usize]) -> ::core::ffi::c_int);
@@ -877,7 +877,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: s32)  {
                 match H_HSD_SisLib_803A6368 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_HSD_SisLib_803A5ACC: Option<unsafe extern "C" fn(::core::ffi::c_int, s32, f32_0, f32_0, f32_0, f32_0, f32_0) -> *mut HSD_Text> = None;
@@ -891,14 +891,14 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text)  {
                 match H_HSD_SisLib_803A5CC4 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } return; },
                 }
             }
     pub static mut H_gm_801692E8: Option<unsafe extern "C" fn(u32_0, *mut datetime) > = None;
             pub unsafe extern "C" fn gm_801692E8(a0: u32_0, a1: *mut datetime)  {
                 match H_gm_801692E8 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_801692E8(a0 as _, a1 as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_801692E8(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_gmMainLib_8015D804: Option<unsafe extern "C" fn(s32) -> *mut u32_0> = None;
@@ -919,7 +919,7 @@ pub mod ext {
             pub unsafe extern "C" fn un_802FE3F8(a0: ::core::ffi::c_int, a1: ::core::ffi::c_int, a2: *mut s16, a3: *mut s16)  {
                 match H_un_802FE3F8 {
                     Some(f) => f(a0, a1, a2, a3),
-                    None => { unsafe { let _ = melee_world::tu::ifprize::un_802FE3F8(a0 as _, a1 as _, a2 as _, a3 as _); } return; },
+                    None => { unsafe { melee_world::tu::ifprize::un_802FE3F8(a0 as _, a1 as _, a2 as _, a3 as _); } return; },
                 }
             }
     hook!(H_lbArchive_LoadSections, lbArchive_LoadSections, (a0: *mut HSD_Archive, a1: *mut *mut ::core::ffi::c_void, va: &[usize]));
@@ -954,7 +954,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_Free(a0: *mut ::core::ffi::c_void)  {
                 match H_HSD_Free {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
                 }
             }
     pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(ssize_t) -> *mut ::core::ffi::c_void> = None;

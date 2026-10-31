@@ -42,7 +42,7 @@ pub mod ext {
         fn Ground_801C2374(l: *mut HSD_LObj) = unsafe { melee_world::tu::ground::Ground_801C2374(l) };
         fn HSD_GObjObject_80390A70(g: *mut HSD_GObj, kind: u8, o: *mut c_void) = unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(g, kind, o) };
         fn GObj_SetupGXLink(g: *mut HSD_GObj, cb: GObj_RenderFunc, gx_link: u8, prio: u32) = unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(g, cb, gx_link, prio) };
-        fn HSD_GObj_SetupProc(g: *mut HSD_GObj, f: HSD_GObjEvent, prio: u8) = unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(g, f, prio); };
+        fn HSD_GObj_SetupProc(g: *mut HSD_GObj, f: HSD_GObjEvent, prio: u8) = unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(g, f, prio); };
         fn HSD_LObjAnimAll(l: *mut HSD_LObj) = unsafe { lo::HSD_LObjAnimAll(l) };
         fn HSD_LObjReqAnimAll(l: *mut HSD_LObj, f: f32) = unsafe { lo::HSD_LObjReqAnimAll(l, f) };
         fn HSD_LObj_803668EC(l: *mut HSD_LObj) = unsafe { lo::HSD_LObj_803668EC(l) };

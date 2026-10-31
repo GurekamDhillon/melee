@@ -126,7 +126,7 @@ From step 7 the engine path is the one being moved forward.
 | 4 (DONE 2026-10-30, partial: 617 trace-reached todo hooks left) | Link generator | Add `tools/rust-port/link/gen_link.py` and the `melee_link` crate. Its `install()` sets every hook to the canonical TU function, using the section-3 table. Its test lists the hooks still left at `todo!()` among trace-reached functions; the goal is 0. Nothing in the goldens changes. |
 | 5 (DONE 2026-10-30, host only: no heap census/ARAM beyond copies, synth heap hook not wired) | Engine host and DVD/archive | Add the `melee_engine` crate: heap arenas, the DVD seam on `melee::disc`, raw and native archive images, and `dat_types.rs`. The test loads `PlCa.dat`, `PlFx.dat`, `GrNFd.dat`, `ItCo.dat` and `EfCoData.dat`, and checks that the native decode equals `fighter_data`/`stage`'s decode (no disc data is committed). |
 | 6 (DONE 2026-10-30, empty scene only) | Scene loop tick | Split `gm_801A4D34` into a tick, then add `Engine::tick()`. Boot the real `HSD_GObjInit` / `gmMainLib` and the pad feed (`MELEE_PAD_SCRIPT` into `HSD_PadRenewStatus`). Smoke-test 60 frames of an empty scene with no panic. |
-| 7 | VS boot to frame 0 | Real `StartMelee`: Stage FD and BF, `Player_InitAllPlayers`, `Fighter_Create` for Falcon, Fox, Marth and Sheik. `melee golden --engine tu` frame 0 matches for both pad scenarios. `melee diff --engine tu --frame 0`: fighter and gobj subsystems at 0 non-baseline diffs. |
+| 7 (DONE 2026-10-31, seed column pending step 10) | VS boot to frame 0 | Real `StartMelee`: Stage FD and BF, `Player_InitAllPlayers`, `Fighter_Create` for Falcon, Fox, Marth and Sheik. `melee golden --engine tu` frame 0 matches for both pad scenarios. `melee diff --engine tu --frame 0`: fighter and gobj subsystems at 0 non-baseline diffs. |
 | 8 | Fighter phase procs | The `Fighter_8006A1BC` / `8006A360` / `8006ABA0` / `8006AD10` / `8006C5F4` / `8006C80C` / `8006CB94` / `8006D1EC` s_links, `ftAnim`, `ftParts`, `ftCommon` and the ground states. Target: pad_falcon_fox_fd to GO (first input frames) and calltrace seqdiff clean to that frame. |
 | 9 | Stage and collision procs | `Ground_*`, `grFinalDestination` / `grBattle` procs, `mpLib` / `mpColl` through the real ground gobjs. Retire `stage_anim()` / `stage.rs` from the engine path. Target: pad_falcon_fox_fd to 600 or more. |
 | 10 | Effects and particles | `efLib_Create` / `efAsync` / `efSync` (pick `tu/eflib.rs` vs `tu/efn/eflib.rs`: the one with the C oracle wins, and the other is deleted), `psappsrt` / `generator` / `particle` driven from their gobjs. Target: effect and particle diff subsystems at 0. |
@@ -867,3 +867,37 @@ nobody set them); hand-written ones in `seams.rs` (pad alarm, CARD = no card, lb
 `use_ext_data`-style flag so the engine uses the canonical `hsdClass`/`hsdObj` instead of their zeroed ext copies (the C-oracle tests set it); `dat_symbols.tsv`
 gained array roots (`T[]`) for `lbRumbleData`. Other hook forms (`hook!`, `hooks!`, `todo_fns!` in axdriver) are still outside the generators. gmscene.rs's
 generated `ext` block was edited by hand (gen.py would overwrite it).
+
+Step 7 result: `Engine::boot_vs(disc, mem, pads, Scenario)` runs the real `gm_801A4510_init` / `runGameMode_load` / `gm_801A4014_enter` / `gm_801A4D34_begin` from a
+`record.sh` scene string (`scenario.rs` answers the `SceneLaunch_*` queries: stage, 4 slots with fighter/human|cpuN, rules, item frequency). StartMelee loads the stage
+(GrNLa, GrNBa, GrGr, GrSt boot), items, camera, `Player_InitAllPlayers`, `Fighter_Create` for every slot (PlCo + PlXx + PlXxAJ + costumes), HUD (IfAll) and the effect
+data. `melee golden --engine tu [--scenario S] [--frames N] --out CSV` (main.rs `golden_engine`) ticks the engine and writes one NHV1 row per tick through the ported
+`RB_NeutralHash` (`Engine::neutral_row`), flushing each frame so a later crash keeps the count. `tools/rust-port/gate.sh --engine tu` compares those CSVs with
+`compare_golden.py --ignore-seed` (the hash and seed columns include the particle generators' RNG draws, which are step 10: the legacy run draws 41 values in frame 0
+that the engine does not make) and ratchets `engine_progress.tsv` (`ENGINE_FRAMES`, default 200). Frame 0: the fighter words (s0..s11), items and itemsum match the golden
+for pad_falcon_fox_fd (64 consecutive frames) and pad_marth_sheik_bf; the CPU scenarios still differ (CPU AI init and the item spawner are step 9/13 work: a fighter word
+for the Ice Climbers follower slot is wrongly non-zero and the dreamland items are missing). `melee diff --engine tu` is NOT done (gate skips it for the engine until the first
+subsystem migrates; the engine has no `Snapshot` layout yet).
+
+What the engine runs "off" until a later step lifts it, each one a single switch (grep the name):
+* render: `melee_runtime::tu::gobj_native::HEADLESS_RENDER` (the GObj render passes `HSD_GObj_80390FC0` / `80390ED0` return at once; the renderer step flips it).
+* effects: `melee_world::tu::efsync::EFFECTS_ENABLED` (step 10): `efSync_Spawn` creates nothing and draws no RNG. `efAsync_Dispatch` / `efAsync_MexResolve` are already wired to the
+  pointer-native `tu/efn/efasync.rs`; what stops them is the effect bank DAT decode (`efLib_Create` -> `HSD_JObjLoadJoint` on a bad joint pointer) and `ps*` / `hsd_8039*` /
+  `hsd_803A*` (forced no-op seams in `seams.txt`).
+* audio (step 11): `lbAudioAx_*`, `HSD_Audio*`, `HSD_Synth*` forced no-ops.
+* PC add-ons (`ScriptGame_*`, `Mex_*`, `Geno_*`, `Replay_*`, `Netplay_*`...): `seams.txt` regexes, answered "off". `script_game.rs` now shares the real statics instead of private zeroed copies.
+
+Seams for steps 8, 9 and 10 (develop in separate worktrees; each touches only its own files plus a seams.txt / link_alias.tsv line):
+* Step 8 (fighter): procs are registered by `Fighter_Create` through `HSD_GObj_SetupProc` (`melee_runtime::tu::gobj_native`) at the s_links listed in step 8, run by the real
+  `HSD_GObj_RunProcs`. Work in `rust/melee_fighter/src/tu/*` and `melee_chara`. The next blocker the engine run prints is the first unlinked `todo!` hook (currently
+  `ftCo_8009F834` from `ftAction_80073240` at the first Falcon landing, after frame 64); `melee_link/unresolved.txt` + `rust/melee_link/tests/hooks.rs` list all of them.
+  Fix a hook by porting the C function in its canonical `tu/` module (or `link_alias.tsv` for a differently spelled hook), then `python tools/rust-port/link/gen_link.py`.
+* Step 9 (stage/collision): ground gobjs are made by the real `Ground_801C...` init from `stage_info` (shared static `melee_world::tu::ground::stage_info`), data decoded by
+  `melee_engine/src/dat_types.rs` + `dat_custom.rs` (stage DAT arrays: `tools/rust-port/engine/dat_symbols.tsv`, `rust/melee_types/gen/arrays.tsv`). Collision: `mpLib` / `mpColl`.
+* Step 10 (effects/particles): flip `EFFECTS_ENABLED` (engine.rs `boot_host`) and the `!ps...` / `!hsd_8039...` lines of `seams.txt`; compare the RNG draw count per frame with the
+  legacy run (`MELEE_GOLDEN_RAND=1 melee golden`, lines `R <frame> <seed>`): the engine matches the golden seed column when the draws agree (54 draws from the test seed to frame 0's
+  hash for pad_falcon_fox_fd). Then drop `--ignore-seed` from the gate.
+* Shared state rule (traps.md): a global is one `pub static mut` in its canonical module; ext copies are `pub use`. `tools/rust-port/engine/audit_ext_statics.py` lists the copies
+  that are still private zeroed duplicates (split-brain risks, e.g. `gmMainLib_8046B0F0` in the gm* ext blocks); `fix_ext_statics.py NAME CRATE MODULE` repairs one.
+* Debugging aids: `MELEE_CRASH_TRACE=1` (vectored handler: fault address plus backtrace), `MELEE_DAT_ISSUES=1` / `MELEE_DAT_LIST=1` (decode issues, public names per archive), the
+  `guard` feature of melee_engine (canary allocator, `cargo test -p melee_engine --features guard --test vs_boot`), `--features melee_core/calltrace` for the `ct` sequence.

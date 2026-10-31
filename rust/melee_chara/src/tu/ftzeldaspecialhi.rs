@@ -40,7 +40,7 @@ pub mod ext {
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
-        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     hook_or!(COSF, cosf, (x: f32) -> f32, melee_runtime::gekko::cosf);
     hook_or!(SINF, sinf, (x: f32) -> f32, melee_runtime::gekko::sinf);
@@ -48,13 +48,13 @@ pub mod ext {
     pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32) {
-        match unsafe { LB_800119DC } { Some(f) => f(pos, a, b, c, d), None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; } }
+        match unsafe { LB_800119DC } { Some(f) => f(pos, a, b, c, d), None => { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; } }
     }
     crate::port_hook!(EFSYNC_SPAWN, efSync_Spawn, crate::adapt::efSync_Spawn, (gfx_id: i32, gobj: *mut HSD_GObj, args: &[*mut c_void]) -> *mut c_void);
     pub static mut FTANIM_SETANIMRATE: Option<fn(*mut HSD_GObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftAnim_SetAnimRate(gobj: *mut HSD_GObj, rate: f32) {
-        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(gobj, rate), None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj as _, rate as _); } return; } }
+        match unsafe { FTANIM_SETANIMRATE } { Some(f) => f(gobj, rate), None => { unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(gobj as _, rate as _); } return; } }
     }
     hook_or!(LBVECTOR_ANGLEXY, lbVector_AngleXY, (a: *mut Vec3, b: *mut Vec3) -> f32,
         |a: *mut Vec3, b: *mut Vec3| unsafe {
@@ -74,14 +74,14 @@ pub mod ext {
     pub static mut FTCO_80096900: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_80096900(gobj: *mut HSD_GObj, a: i32, b: i32, allow_interrupt: i32, mobility: f32, landing_lag: f32) {
-        match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { let _ = melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
+        match unsafe { FTCO_80096900 } { Some(f) => f(gobj, a, b, allow_interrupt, mobility, landing_lag), None => { unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096900(gobj as _, a as _, b as _, allow_interrupt as _, mobility as _, landing_lag as _); } return; } }
     }
     pub static mut FTCO_LANDINGFALLSPECIAL_ENTER: Option<fn(*mut HSD_GObj, i32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_LandingFallSpecial_Enter(gobj: *mut HSD_GObj, allow_interrupt: i32, landing_lag: f32) {
         match unsafe { FTCO_LANDINGFALLSPECIAL_ENTER } {
             Some(f) => f(gobj, allow_interrupt, landing_lag),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(gobj as _, (allow_interrupt != 0), landing_lag as _); } },
+            None => { unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(gobj as _, (allow_interrupt != 0), landing_lag as _); } },
         }
     }
 }

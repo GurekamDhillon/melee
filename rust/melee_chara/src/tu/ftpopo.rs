@@ -54,7 +54,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     crate::port_hook!(IT_802C17DC, it_802C17DC, crate::adapt::it_802C17DC, (item: *mut Item_GObj));

@@ -33,7 +33,7 @@ pub mod ext {
             pub fn lb_800119DC(pos: *mut Vec3, a: i32, b: f32, c: f32, d: f32)  {
                 match unsafe { LB_800119DC } {
                     Some(f) => f(pos, a, b, c, d),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.

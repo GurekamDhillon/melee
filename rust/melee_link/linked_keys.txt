@@ -2887,6 +2887,7 @@ tu::ftCo_Attack100::ext::hook::itGetKind
 tu::ftCo_Attack100::ext::hook::pl_8003E854
 tu::ftCo_Attack100::ext::hook::Item_8026AB54
 tu::ftCo_Attack100::ext::hook::ftpickupitem_8009447C
+tu::ftCo_Attack100::ext::hook::efAsync_Spawn
 tu::ftCo_Attack100::ext::hook::ftpickupitem_800942A0
 tu::ftCo_Attack100::ext::hook::ftKb_MexKirbyLike
 tu::ftCo_Attack100::ext::hook::ftKb_SpecialN_800F1CD8
@@ -3392,6 +3393,7 @@ tu::ftCo_CatchPull::ext::hook::lb_8000B1CC
 tu::ftCo_CatchPull::ext::hook::ftParts_GetBoneIndex
 tu::ftCo_CatchPull::ext::hook::ftCo_800DA698
 tu::ftCo_CatchWait::ext::hook::Fighter_ChangeMotionState
+tu::ftCo_CatchWait::ext::hook::efAsync_Spawn
 tu::ftCo_CatchWait::ext::hook::ftCommon_8007E2F4
 tu::ftCo_CatchWait::ext::hook::fn_800DB6C8
 tu::ftCo_CatchWait::ext::hook::fn_800DA054
@@ -3556,6 +3558,7 @@ tu::ftCo_DamageIce::ext::hook::lb_8000B1CC
 tu::ftCo_DamageIce::ext::hook::lbVector_Sub
 tu::ftCo_DamageIce::ext::hook::ft_80082638
 tu::ftCo_DamageIce::ext::hook::ft_80082888
+tu::ftCo_DamageIce::ext::hook::efAsync_Spawn
 tu::ftCo_DamageIce::ext::hook::ftCo_8009750C
 tu::ftCo_DamageIce::ext::hook::ftCo_800DD168
 tu::ftCo_DamageIce::ext::hook::Fighter_ChangeMotionState
@@ -3772,6 +3775,7 @@ tu::ftCo_FallSpecial::ext::hook::ft_8008A2BC
 tu::ftCo_FlyReflect::ext::hook::ftCo_800C23A0
 tu::ftCo_FlyReflect::ext::hook::ftCo_800C1D38
 tu::ftCo_FlyReflect::ext::hook::ftKb_SpecialN_800F1F1C
+tu::ftCo_FlyReflect::ext::hook::efAsync_Spawn
 tu::ftCo_FlyReflect::ext::hook::Camera_RequestQuake
 tu::ftCo_FlyReflect::ext::hook::atan2f
 tu::ftCo_FlyReflect::ext::hook::lbVector_Add_xy
@@ -4315,6 +4319,7 @@ tu::ftCo_Pass::ext::hook::ft_80082F28
 tu::ftCo_Passive::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_Passive::ext::hook::ft_PlaySFX
 tu::ftCo_Passive::ext::hook::ftCommon_SetGroundedKnockbackIfLanded
+tu::ftCo_Passive::ext::hook::efAsync_Spawn
 tu::ftCo_Passive::ext::hook::ftCo_800BFFD0
 tu::ftCo_Passive::ext::hook::ftAnim_IsFramesRemaining
 tu::ftCo_Passive::ext::hook::ft_8008A2BC
@@ -4335,6 +4340,7 @@ tu::ftCo_PassiveCeil::ext::hook::ft_80082B1C
 tu::ftCo_PassiveStand::ext::hook::ftCo_800986B0
 tu::ftCo_PassiveStand::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_PassiveStand::ext::hook::ft_PlaySFX
+tu::ftCo_PassiveStand::ext::hook::efAsync_Spawn
 tu::ftCo_PassiveStand::ext::hook::ftAnim_IsFramesRemaining
 tu::ftCo_PassiveStand::ext::hook::ft_8008A2BC
 tu::ftCo_PassiveStand::ext::hook::ft_80084104
@@ -4431,6 +4437,7 @@ tu::ftCo_ShieldBreakFall::ext::hook::ftCommon_ClampAirDrift
 tu::ftCo_ShieldBreakFall::ext::hook::ft_80082C74
 tu::ftCo_ShieldBreakFly::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_ShieldBreakFly::ext::hook::ftAnim_8006EBA4
+tu::ftCo_ShieldBreakFly::ext::hook::efAsync_Spawn
 tu::ftCo_ShieldBreakFly::ext::hook::ft_PlaySFX
 tu::ftCo_ShieldBreakFly::ext::hook::ftColl_8007B62C
 tu::ftCo_ShieldBreakFly::ext::hook::ftAnim_IsFramesRemaining
@@ -4763,6 +4770,7 @@ tu::ftCo_WarpStar::ext::hook::ftCommon_Fall
 tu::ftCo_WarpStar::ext::hook::ftCommon_CalcSelfAccel_AccelToVelClampedFrom
 tu::ftCo_WarpStar::ext::hook::ft_80083E64
 tu::ftCo_WarpStar::ext::hook::atan2f
+tu::ftCo_WarpStar::ext::hook::efAsync_Spawn
 tu::ftCo_WarpStar::ext::hook::Camera_RequestQuake
 tu::ftCo_YoshiEgg::ext::hook::ftColl_8007B62C
 tu::ftCo_YoshiEgg::ext::hook::Fighter_UpdateModelScale
@@ -5075,6 +5083,20 @@ tu::ftcliffcommon::ext::FTCO_8009A804
 tu::ftcliffcommon::ext::FT_800821DC
 tu::ftcliffcommon::ext::FT_80082B1C
 tu::ftcliffcommon::ext::FTCO_8009EF68
+tu::ftco_0d8e::ext::LB_8000B1CC
+tu::ftco_0d8e::ext::IT_802A2BA4
+tu::ftco_0d8e::ext::IT_802A2B10
+tu::ftco_0d8e::ext::IT_802A78B8
+tu::ftco_0d8e::ext::IT_802A77DC
+tu::ftco_0d8e::ext::HSD_JOBJ_SETUP_MATRIX_SUB
+tu::ftco_0d8e::ext::FTLK_INIT_BOOMERANG_EXISTS
+tu::ftco_0d95::ext::LB_8000B1CC
+tu::ftco_0d95::ext::IT_802B7C18
+tu::ftco_0d95::ext::IT_802B7B84
+tu::ftco_0d95::ext::IT_802BAAE4
+tu::ftco_0d95::ext::IT_802BAA58
+tu::ftco_0d95::ext::HSD_RANDF
+tu::ftco_0d95::ext::EF_SYNC_SPAWN
 tu::ftco_800c7590::ext::FTCO_8009750C
 tu::ftco_800c7590::ext::FTCO_800DD168
 tu::ftco_800c7590::ext::FTCO_8008DCE0
@@ -5090,6 +5112,7 @@ tu::ftco_800c7590::ext::IT_802EAE80
 tu::ftco_800c7590::ext::FT_8008403C
 tu::ftco_800c7590::ext::FTCO_80090780
 tu::ftco_800c7ca0::ext::FTKB_SPECIALN_800F1F1C
+tu::ftco_800c7ca0::ext::EFASYNC_SPAWN
 tu::ftco_800c7ca0::ext::CAMERA_REQUEST_QUAKE
 tu::ftco_800c7ca0::ext::FIGHTER_CHANGE_MOTION_STATE
 tu::ftco_800c7ca0::ext::FTCOLL_8007B760
@@ -5097,6 +5120,17 @@ tu::ftco_800c7ca0::ext::FTCO_80090780
 tu::ftco_800c7ca0::ext::FTCO_80097D88
 tu::ftco_800c7ca0::ext::FT_HSD_JOBJ_LOAD_JOINT
 tu::ftco_800c7ca0::ext::FT_HSD_JOBJ_GET_DOBJ
+tu::ftco_aircatch::ext::MPCOLL_80044164
+tu::ftco_aircatch::ext::MPCOLL_800443C4
+tu::ftco_aircatch::ext::SCRIPTGAME_CAPS
+tu::ftco_aircatch::ext::CHANGE_MOTION
+tu::ftco_aircatch::ext::FTCO_800968C8
+tu::ftco_aircatch::ext::IT_802A2BA4
+tu::ftco_aircatch::ext::IT_802A2B10
+tu::ftco_aircatch::ext::IT_802A78B8
+tu::ftco_aircatch::ext::IT_802A77DC
+tu::ftco_aircatch::ext::FT_80081D0C
+tu::ftco_aircatch::ext::LANDING_ENTER
 tu::ftcolanim::ext::FIGHTER_CHANGE_MOTION_STATE
 tu::ftcolanim::ext::PLAYER_GET_ENTITY_AT_INDEX
 tu::ftcolanim::ext::GM_80167320
@@ -7177,6 +7211,7 @@ tu::itkirbyhammer::ext::hook::Item_80268E5C
 tu::itkirbyhammer::ext::hook::Item_8026A8EC
 tu::itkirbyhammer::ext::hook::Item_8026AB54
 tu::itkirbyhammer::ext::hook::db_80225DD8
+tu::itkirbyhammer::ext::hook::efAsync_Spawn
 tu::itkirbyhammer::ext::hook::ftKb_SpecialAirLw_800F539C
 tu::itkirbyhammer::ext::hook::it_8026B894
 tu::itkirbyhammer::ext::hook::it_8026BB68
@@ -7784,6 +7819,7 @@ tu::itlugia::ext::hook::lb_8000B1CC
 tu::itluigifireball::ext::hook::Item_80268B18
 tu::itluigifireball::ext::hook::Item_80268E5C
 tu::itluigifireball::ext::hook::db_80225DD8
+tu::itluigifireball::ext::hook::efAsync_Spawn
 tu::itluigifireball::ext::hook::itColl_BounceOffShield
 tu::itluigifireball::ext::hook::it_8026B894
 tu::itluigifireball::ext::hook::it_8026BB68
@@ -7869,6 +7905,7 @@ tu::itmariocape::ext::hook::Item_802694CC
 tu::itmariocape::ext::hook::Item_8026A8EC
 tu::itmariocape::ext::hook::Item_8026AB54
 tu::itmariocape::ext::hook::db_80225DD8
+tu::itmariocape::ext::hook::efAsync_Spawn
 tu::itmariocape::ext::hook::ftLib_800865CC
 tu::itmariocape::ext::hook::ftMr_SpecialS_CheckItemCapeRemove
 tu::itmariocape::ext::hook::ftMr_SpecialS_Reset
@@ -7880,6 +7917,7 @@ tu::itmariofireball::ext::hook::Item_80268B18
 tu::itmariofireball::ext::hook::Item_80268E5C
 tu::itmariofireball::ext::hook::Item_8026AE84
 tu::itmariofireball::ext::hook::db_80225DD8
+tu::itmariofireball::ext::hook::efAsync_Spawn
 tu::itmariofireball::ext::hook::itColl_BounceOffShield
 tu::itmariofireball::ext::hook::it_8026B894
 tu::itmariofireball::ext::hook::it_8026BB68
@@ -7986,6 +8024,7 @@ tu::itmato::ext::hook::it_8027B730
 tu::itmato::ext::hook::lb_8000B1CC
 tu::itmball::ext::hook::Item_80268E5C
 tu::itmball::ext::hook::Item_8026AE84
+tu::itmball::ext::hook::efAsync_Spawn
 tu::itmball::ext::hook::itColl_BounceOffShield
 tu::itmball::ext::hook::itColl_BounceOffVictim
 tu::itmball::ext::hook::it_8026B390
@@ -10382,6 +10421,7 @@ tu::geno_game::ext::hook::ftCo_AttackAir_EnterFromMsid
 tu::geno_game::ext::hook::ftCo_JumpAerial_Enter_Basic
 tu::geno_game::ext::hook::ftCo_Jump_Enter
 tu::geno_game::ext::hook::__frsqrte
+tu::geno_game::ext::hook::efAsync_Spawn
 tu::geno_game::ext::hook::HSD_ForeachAnim
 tu::geno_lab_mode::ext::hook::Fighter_ChangeMotionState
 tu::geno_lab_mode::ext::hook::Player_GetEntity

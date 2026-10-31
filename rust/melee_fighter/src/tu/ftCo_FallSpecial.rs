@@ -38,8 +38,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007D60C(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d60c;
         ftCommon_UseAllJumps(fp: &mut Fighter) = crate::ftcommon2::use_all_jumps;
         un_80322598(spawn: i32, y: f32) -> i32 = |spawn: i32, y: f32| -> i32 { unsafe { crate::tu::crowdsfx::un_80322598(spawn as _, y as _) as _ } };
@@ -56,7 +56,7 @@ pub mod ext {
         ft_80083090(g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent) = |g: G, a: unsafe extern "C" fn(G, i32) -> bool, b: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_coll_ev(a, b, |a, b| crate::tu::ft_081b::ft_80083090(g as _, a, b)); } };
         mpLineGetFlags(line: i32) -> u32 = |line: i32| -> u32 { unsafe { melee_world::tu::mplib::mpLineGetFlags(line as _) } };
         ftCo_800D0EC8(fp: &Fighter) -> f32 = crate::tu::ftchangeparam::ftco_800d0ec8;
-        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
+        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
         ft_8008A2BC(g: G) = crate::tu::ft_08a1::ft_8008A2BC;
     }
 }

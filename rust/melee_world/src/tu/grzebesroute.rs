@@ -49,14 +49,14 @@ pub mod ext {
             pub unsafe extern "C" fn Ground_801C39C0()  {
                 match H_Ground_801C39C0 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C39C0(); } return; },
                 }
             }
     pub static mut H_Ground_801C3BB4: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn Ground_801C3BB4()  {
                 match H_Ground_801C3BB4 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; },
                 }
             }
     pub static mut H_grZakoGenerator_801CAE04: Option<unsafe extern "C" fn(*mut melee_types::grZakoGenerator_SpawnDesc) -> *mut melee_types::HSD_GObj> = None;
@@ -72,7 +72,7 @@ pub mod ext {
             pub unsafe extern "C" fn grZakoGenerator_801CAEB0(a0: i32, a1: i32)  {
                 match H_grZakoGenerator_801CAEB0 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } return; },
+                    None => { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAEB0(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C5840: Option<unsafe extern "C" fn() -> i32> = None;
@@ -93,14 +93,14 @@ pub mod ext {
             pub unsafe extern "C" fn grAnime_801C8138(a0: *mut melee_types::HSD_GObj, a1: i32, a2: i32)  {
                 match H_grAnime_801C8138 {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { crate::tu::granime::grAnime_801C8138(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     pub static mut H_mpJointSetCb1: Option<unsafe extern "C" fn(i32, *mut core::ffi::c_void, Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, *mut melee_types::CollData, i32, u32, f32)>) > = None;
             pub unsafe extern "C" fn mpJointSetCb1(a0: i32, a1: *mut core::ffi::c_void, a2: Option<unsafe extern "C" fn(*mut core::ffi::c_void, i32, *mut melee_types::CollData, i32, u32, f32)>)  {
                 match H_mpJointSetCb1 {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = crate::tu::mplib::mpJointSetCb1(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { crate::tu::mplib::mpJointSetCb1(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     pub static mut H_Ground_GetP1Fighter: Option<unsafe extern "C" fn() -> *mut melee_types::HSD_GObj> = None;
@@ -116,7 +116,7 @@ pub mod ext {
             pub unsafe extern "C" fn Ground_801C38BC(a0: f32, a1: f32)  {
                 match H_Ground_801C38BC {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = crate::tu::ground::Ground_801C38BC(a0 as _, a1 as _); } return; },
+                    None => { unsafe { crate::tu::ground::Ground_801C38BC(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_Camera_RequestQuake: Option<unsafe extern "C" fn(u32, *mut melee_types::Vec)> = None;
@@ -125,14 +125,14 @@ pub mod ext {
             pub unsafe extern "C" fn lb_800115F4()  {
                 match H_lb_800115F4 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00F9::lb_800115F4(); } return; },
                 }
             }
     pub static mut H___assert: Option<unsafe extern "C" fn(*const i8, u32, *const i8) > = None;
             pub unsafe extern "C" fn __assert(a0: *const i8, a1: u32, a2: *const i8)  {
                 match H___assert {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::debug::__assert(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     pub static mut H_Ground_801C0498: Option<unsafe extern "C" fn() -> f32> = None;
@@ -154,7 +154,7 @@ pub mod ext {
     // rp3-end
 
     pub static mut H_HSD_LObjSetColor: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, melee_types::GXColor)> = None;
-    pub unsafe extern "C" fn HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { match H_HSD_LObjSetColor { Some(f) => f(a0, a1), None => unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } } }
+    pub unsafe extern "C" fn HSD_LObjSetColor(a0: *mut melee_types::HSD_LObj, a1: melee_types::GXColor) { match H_HSD_LObjSetColor { Some(f) => f(a0, a1), None => unsafe { melee_runtime::tu::lobj::HSD_LObjSetColor(a0 as _, a1 as _); } } }
     // rp3 HSD_LObjSetPosition
     pub static mut H_HSD_LObjSetPosition: Option<unsafe extern "C" fn(*mut melee_types::HSD_LObj, *mut melee_types::Vec)> = None;
     #[allow(non_snake_case, unused_unsafe)]
@@ -209,12 +209,12 @@ pub mod ext {
     pub static mut H_OSReport: Option<unsafe fn(*const i8, &[u64])> = None;
     pub unsafe fn OSReport(f: *const i8, a: &[u64]) { match H_OSReport { Some(h) => h(f, a), None => unsafe { melee_runtime::tu::os_error::OSReport(f, &a.iter().map(|x| *x as usize).collect::<std::vec::Vec<usize>>()) } } }
     pub static mut H_GObj_SetupGXLink: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, u8, u32)> = None;
-    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
+    pub unsafe extern "C" fn GObj_SetupGXLink(a0: *mut melee_types::HSD_GObj, a1: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32)>, a2: u8, a3: u32) { match H_GObj_SetupGXLink { Some(f) => f(a0, a1, a2, a3), None => unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } } }
     pub static mut H_grDisplay_801C5DB0: Option<unsafe extern "C" fn(*mut melee_types::HSD_GObj, i32) > = None;
             pub unsafe extern "C" fn grDisplay_801C5DB0(a0: *mut melee_types::HSD_GObj, a1: i32)  {
                 match H_grDisplay_801C5DB0 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
+                    None => { unsafe { crate::tu::grdisplay::grDisplay_801C5DB0(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_Mex_GrBind: Option<unsafe extern "C" fn(*mut core::ffi::c_void) -> *mut core::ffi::c_void> = None;

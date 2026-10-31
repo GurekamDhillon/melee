@@ -49,7 +49,7 @@ pub mod ext {
     pub fn ftCommon_8007E5AC(fp: *mut Fighter) {
         match unsafe { FTCOMMON_8007E5AC } {
             Some(f) => f(fp),
-            None => { unsafe { let _ = melee_fighter::tu::ftcommon::ftcommon_8007e5ac(&mut *(fp as *mut _)); } },
+            None => { unsafe { melee_fighter::tu::ftcommon::ftcommon_8007e5ac(&mut *(fp as *mut _)); } },
         }
     }
 

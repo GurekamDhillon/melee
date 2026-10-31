@@ -64,7 +64,7 @@ pub mod ext {
             pub fn ftLk_Init_OnLoadForCLink(fp: *mut Fighter)  {
                 match unsafe { FTLK_INIT_ONLOADFORCLINK } {
                     Some(f) => f(fp),
-                    None => { unsafe { let _ = crate::tu::ftlink::ftLk_Init_OnLoadForCLink(fp as _); } return; },
+                    None => { unsafe { crate::tu::ftlink::ftLk_Init_OnLoadForCLink(fp as _); } return; },
                 }
             }
     pub static mut IT_8026B3F8: Option<fn(*mut c_void, i32) > = None;
@@ -72,7 +72,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     crate::port_hook!(FTPARTS_800753D4, ftParts_800753D4, crate::adapt::ftParts_800753D4, (fp: *mut Fighter, x0: *mut Fighter_804D6540_x0_t, item: *mut c_void));
@@ -81,7 +81,7 @@ pub mod ext {
             pub fn ftLk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
                 match unsafe { FTLK_INIT_LOADSPECIALATTRS } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftlink::ftLk_Init_LoadSpecialAttrs(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftlink::ftLk_Init_LoadSpecialAttrs(gobj as _); } return; },
                 }
             }
     pub static mut FTCO_80092ED8: Option<fn(i32, f32) -> f32> = None;
@@ -98,7 +98,7 @@ pub mod ext {
             pub fn ftCo_800DEAE8(gobj: *mut HSD_GObj, msid0: i32, msid1: i32)  {
                 match unsafe { FTCO_800DEAE8 } {
                     Some(f) => f(gobj, msid0, msid1),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(gobj as _, msid0 as _, msid1 as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_800DEAE8(gobj as _, msid0 as _, msid1 as _); } return; },
                 }
             }
     crate::port_hook!(IT_802C8C34, it_802C8C34, crate::adapt::it_802C8C34, (item: *mut Item_GObj));

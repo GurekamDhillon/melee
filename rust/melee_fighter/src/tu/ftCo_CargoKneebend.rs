@@ -32,12 +32,12 @@ fn x2cc<'a>(f: &Fighter) -> &'a _ftDonkeyAttributes {
 pub mod ext {
     use super::*;
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
-        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
+        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
         ftCo_8009BB64(g: G) = crate::tu::ftCo_CargoJump::ftCo_8009BB64;
         ftCo_8009BF3C(g: G) -> bool = crate::tu::ftCo_CargoThrow::ftCo_8009BF3C;
-        ftCo_KneeBend_Check_ShortHop(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _); } };
+        ftCo_KneeBend_Check_ShortHop(g: G) = |g: G| { unsafe { crate::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCo_CargoWait_Coll(g: G) = crate::tu::ftCo_CargoWait::ftCo_CargoWait_Coll;
     }

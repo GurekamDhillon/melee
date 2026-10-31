@@ -65,7 +65,7 @@ pub mod ext {
     pub fn efLib_DestroyAll(gobj: *mut HSD_GObj) {
         match unsafe { EFLIB_DESTROYALL } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_world::tu::efn::eflib::efLib_DestroyAll(gobj as _); } },
+            None => { unsafe { melee_world::tu::efn::eflib::efLib_DestroyAll(gobj as _); } },
         }
     }
     /// `efSync_Spawn(gfx_id, gobj, ...)` (variadic in C; `va` are the extra word arguments).

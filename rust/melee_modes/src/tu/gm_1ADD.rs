@@ -121,7 +121,7 @@ pub mod ext {
             pub fn HSD_Free(ptr: *mut c_void)  {
                 match unsafe { HSD_FREE } {
                     Some(f) => f(ptr),
-                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },
+                    None => { unsafe { melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },
                 }
             }
     // sysdolphin/baselib/sislib.c
@@ -138,7 +138,7 @@ pub mod ext {
             pub fn HSD_SisLib_803A6368(text: *mut HSD_Text, v: i32)  {
                 match unsafe { HSD_SISLIB_803A6368 } {
                     Some(f) => f(text, v),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(text as _, v as _); } return; },
                 }
             }
     hook!(HSD_SISLIB_803A62A0, HSD_SisLib_803A62A0, (a: i32, file: &str, sym: &str));
@@ -148,7 +148,7 @@ pub mod ext {
     pub fn HSD_SisLib_803A5CC4(text: *mut HSD_Text) {
         match unsafe { HSD_SISLIB_803A5CC4 } {
             Some(f) => f(text),
-            None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } },
+            None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(text as _); } },
         }
     }
     // sysdolphin/baselib/jobj.c, cobj.c, gobj*.c
@@ -196,7 +196,7 @@ pub mod ext {
             pub fn gm_8016895C(jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32)  {
                 match unsafe { GM_8016895C } {
                     Some(f) => f(jobj, mdl, idx),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
                 }
             }
     /// `HSD_PadMasterStatus[idx].err` and `HSD_PadCopyStatus[idx].trigger` (sysdolphin/baselib/controller.c).
@@ -208,7 +208,7 @@ pub mod ext {
         panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
+        { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

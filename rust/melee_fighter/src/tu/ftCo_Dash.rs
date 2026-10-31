@@ -34,16 +34,16 @@ pub mod ext {
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // TARGET_PC `FT_SCRIPT_VALUE(fp, field, base)` = `ScriptGame_ModValue(fp->player_id, ...)`.
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
-        ftCo_Turn_Enter_Smash(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Turn::ftCo_Turn_Enter_Smash(g as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        ftCo_Turn_Enter_Smash(g: G) = |g: G| { unsafe { crate::tu::ftCo_Turn::ftCo_Turn_Enter_Smash(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_800804A0(fp: &mut Fighter, v: f32) = crate::ftcommon2::ftcommon_800804a0;
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_80094E54(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80094E54(fp as _) as _ } };
-        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
+        ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ftCo_800D8A38(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Catch::ftCo_800D8A38(g as _) as _ } };
         ftCo_AttackS4_8008C114(g: G) -> bool = crate::tu::ftCo_AttackS4::ftCo_AttackS4_8008C114;
         ftCo_80099264(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Escape::ftCo_80099264(g as _) as _ } };
@@ -51,14 +51,14 @@ pub mod ext {
         ftCo_AttackDash_SetMv0(g: G) = crate::tu::ftCo_AttackDash::ftCo_AttackDash_SetMv0;
         ftCo_80091AD8(g: G, n: i32) -> bool = |g: G, n: i32| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091AD8(g as _, n as _) as _ } };
         ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
-        ftCo_80091B9C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Guard::ftCo_80091B9C(g as _); } };
+        ftCo_80091B9C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Guard::ftCo_80091B9C(g as _); } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         fn_800CAF78(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::fn_800CAF78(g as _) as _ } };
         fn_800CA5F0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Run::fn_800CA5F0(g as _) as _ } };
         ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
         ftCommon_CalcGroundAccel_DashRun(fp: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_ground_accel_dash_run;
         ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(super::fp(g));
-        ft_800844EC(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_800844ec(g as _); } };
+        ft_800844EC(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_800844ec(g as _); } };
     }
 }
 

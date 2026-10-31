@@ -27,12 +27,12 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(f: &mut Fighter) = crate::ftcommon::clamp_air_drift;
-        ftCo_DamageFall_IASA(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_DamageFall_IASA(g as _); } };
+        ftCo_DamageFall_IASA(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_DamageFall_IASA(g as _); } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
-        ftCo_80090984(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
+        ftCo_80090984(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
     }
 }
 

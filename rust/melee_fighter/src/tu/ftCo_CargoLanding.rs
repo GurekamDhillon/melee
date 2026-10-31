@@ -32,9 +32,9 @@ fn x2cc<'a>(f: &Fighter) -> &'a _ftDonkeyAttributes {
 pub mod ext {
     use super::*;
     ext_fns! {
-        ftCo_Landing_Enter(g: G, msid: i32, allow_interrupt: bool, flags: u32, start: f32, speed: f32) = |g: G, msid: i32, allow_interrupt: bool, flags: u32, start: f32, speed: f32| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_Landing_Enter(g as _, msid as _, allow_interrupt as _, flags as _, start as _, speed as _); } };
-        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
-        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
+        ftCo_Landing_Enter(g: G, msid: i32, allow_interrupt: bool, flags: u32, start: f32, speed: f32) = |g: G, msid: i32, allow_interrupt: bool, flags: u32, start: f32, speed: f32| { unsafe { crate::tu::ftCo_Landing::ftCo_Landing_Enter(g as _, msid as _, allow_interrupt as _, flags as _, start as _, speed as _); } };
+        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
+        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
         ftCo_8009B518(g: G) = crate::tu::ftCo_CargoWait::ftCo_8009B518;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCo_CargoWait_Coll(g: G) = crate::tu::ftCo_CargoWait::ftCo_CargoWait_Coll;

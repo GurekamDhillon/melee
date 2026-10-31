@@ -37,7 +37,7 @@ pub mod ext {
     pub fn efSync_Spawn(id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj) {
         match unsafe { EFSYNC_SPAWN } {
             Some(f) => f(id, gobj, jobj),
-            None => { unsafe { let _ = melee_world::tu::efsync::efSync_Spawn(id as _, gobj as _, &mut *(jobj as *mut _)); } },
+            None => { unsafe { melee_world::tu::efsync::efSync_Spawn(id as _, gobj as _, &mut *(jobj as *mut _)); } },
         }
     }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
@@ -45,7 +45,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     pub static mut LB_800119DC: Option<fn(*mut Vec3, i32, f32, f32, f32) > = None;
@@ -53,7 +53,7 @@ pub mod ext {
             pub fn lb_800119DC(v: *mut Vec3, a: i32, b: f32, c: f32, d: f32)  {
                 match unsafe { LB_800119DC } {
                     Some(f) => f(v, a, b, c, d),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(v as _, a as _, b as _, c as _, d as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(v as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
     crate::port_hook!(FTCOMMON_8007EFC8, ftCommon_8007EFC8, crate::adapt::ftCommon_8007EFC8, (gobj: *mut HSD_GObj, cb: HSD_GObjEvent));
@@ -63,7 +63,7 @@ pub mod ext {
             pub fn ftZd_SpecialLw_8013B4D8(gobj: *mut HSD_GObj)  {
                 match unsafe { FTZD_SPECIALLW_8013B4D8 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013B4D8(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftzeldaspeciallw::ftZd_SpecialLw_8013B4D8(gobj as _); } return; },
                 }
             }
 }

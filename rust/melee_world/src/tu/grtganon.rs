@@ -37,7 +37,7 @@ pub mod ext {
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_Ground_GetYakumonoParam() -> *mut c_void { { return unsafe { crate::tu::ground::Ground_GetYakumonoParam() as _ }; } }
-    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
+    unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_mpJointFromLine(_line: i32) -> i32 { { return unsafe { crate::tu::mplib::mpJointFromLine(_line as _) as _ }; } }
     unsafe fn todo_mpLineGetKind(_line: i32) -> i32 { { return unsafe { crate::tu::mplib::mpLineGetKind(_line as _) as _ }; } }
     impl Hooks {

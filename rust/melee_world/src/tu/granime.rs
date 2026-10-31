@@ -41,7 +41,7 @@ pub mod ext {
     pub static mut HSD_AOBJCLEARFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjClearFlags(aobj: *mut HSD_AObj, flags: u32) {
-        match unsafe { HSD_AOBJCLEARFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjClearFlags(aobj as _, flags as _); } return; } }
+        match unsafe { HSD_AOBJCLEARFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjClearFlags(aobj as _, flags as _); } return; } }
     }
     pub static mut HSD_AOBJGETFLAGS: Option<fn(*mut HSD_AObj) -> u32> = None;
     #[allow(non_snake_case)]
@@ -56,27 +56,27 @@ pub mod ext {
     pub static mut HSD_AOBJREMOVE: Option<fn(*mut HSD_AObj)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjRemove(aobj: *mut HSD_AObj) {
-        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
+        match unsafe { HSD_AOBJREMOVE } { Some(f) => f(aobj), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjRemove(aobj as _); } return; } }
     }
     pub static mut HSD_AOBJSETENDFRAME: Option<fn(*mut HSD_AObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjSetEndFrame(aobj: *mut HSD_AObj, frame: f32) {
-        match unsafe { HSD_AOBJSETENDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetEndFrame(aobj as _, frame as _); } return; } }
+        match unsafe { HSD_AOBJSETENDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetEndFrame(aobj as _, frame as _); } return; } }
     }
     pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
-        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
+        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
     }
     pub static mut HSD_AOBJSETRATE: Option<fn(*mut HSD_AObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32) {
-        match unsafe { HSD_AOBJSETRATE } { Some(f) => f(aobj, rate), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; } }
+        match unsafe { HSD_AOBJSETRATE } { Some(f) => f(aobj, rate), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; } }
     }
     pub static mut HSD_AOBJSETREWINDFRAME: Option<fn(*mut HSD_AObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjSetRewindFrame(aobj: *mut HSD_AObj, frame: f32) {
-        match unsafe { HSD_AOBJSETREWINDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRewindFrame(aobj as _, frame as _); } return; } }
+        match unsafe { HSD_AOBJSETREWINDFRAME } { Some(f) => f(aobj, frame), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRewindFrame(aobj as _, frame as _); } return; } }
     }
     /// `fn_801C82E8` may unwind out of this (the C `longjmp`s); `func` is an `extern "C-unwind" fn(*mut HSD_AObj, *mut c_void)`.
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, r#type: u32, mask: u32, func: *mut c_void, arg_type: u32, va: &[usize]));
@@ -101,27 +101,27 @@ pub mod ext {
     pub static mut GRMATERIAL_801C8B68: Option<fn(*mut HSD_JObj, i32)> = None;
     #[allow(non_snake_case)]
     pub fn grMaterial_801C8B68(a0: *mut HSD_JObj, a1: i32) {
-        match unsafe { GRMATERIAL_801C8B68 } { Some(f) => f(a0, a1), None => { unsafe { let _ = crate::tu::grmaterial::grMaterial_801C8B68(a0 as _, a1 as _); } return; } }
+        match unsafe { GRMATERIAL_801C8B68 } { Some(f) => f(a0, a1), None => { unsafe { crate::tu::grmaterial::grMaterial_801C8B68(a0 as _, a1 as _); } return; } }
     }
     pub static mut LBARCHIVE_80016EFC: Option<fn(*mut HSD_Archive)> = None;
     #[allow(non_snake_case)]
     pub fn lbArchive_80016EFC(a0: *mut HSD_Archive) {
-        match unsafe { LBARCHIVE_80016EFC } { Some(f) => f(a0), None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } return; } }
+        match unsafe { LBARCHIVE_80016EFC } { Some(f) => f(a0), None => { unsafe { melee_runtime::tu::lbarchive::lbArchive_80016EFC(a0 as _); } return; } }
     }
     pub static mut LBHEAP_80015CA8: Option<fn(i32, *mut c_void)> = None;
     #[allow(non_snake_case)]
     pub fn lbHeap_80015CA8(a0: i32, a1: *mut c_void) {
-        match unsafe { LBHEAP_80015CA8 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lbheap::lbHeap_80015CA8(a0 as _, a1 as _); } return; } }
+        match unsafe { LBHEAP_80015CA8 } { Some(f) => f(a0, a1), None => { unsafe { melee_runtime::tu::lbheap::lbHeap_80015CA8(a0 as _, a1 as _); } return; } }
     }
     pub static mut LB_8000B804: Option<fn(*mut HSD_JObj, *mut HSD_Joint)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B804(a0: *mut HSD_JObj, a1: *mut HSD_Joint) {
-        match unsafe { LB_8000B804 } { Some(f) => f(a0, a1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B804(a0 as _, a1 as _); } return; } }
+        match unsafe { LB_8000B804 } { Some(f) => f(a0, a1), None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B804(a0 as _, a1 as _); } return; } }
     }
     pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
     #[allow(non_snake_case)]
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
-        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
 
     // The engine functions the C passes as callbacks (`void* func`), in the uniform AnimCallback form.

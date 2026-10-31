@@ -60,7 +60,7 @@ pub mod ext {
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GXBegin(a0: GXPrimitive, a1: GXVtxFmt, a2: u16);
     fn GXClearVtxDesc();
-    fn GXEnd() = || { unsafe { let _ = melee_runtime::tu::sobjlib::GXEnd(); } };
+    fn GXEnd() = || { unsafe { melee_runtime::tu::sobjlib::GXEnd(); } };
     fn GXLoadPosMtxImm(a0: *mut [f32; 4], a1: u32);
     fn GXPosition3f32(a0: f32, a1: f32, a2: f32);
     fn GXSetCullMode(a0: GXCullMode);
@@ -76,7 +76,7 @@ pub mod ext {
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(a0 as _) as _ };
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { let _ = melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };
+    fn HSD_LObjSetupInit(a0: *mut HSD_CObj) = |a0: *mut HSD_CObj| { unsafe { melee_runtime::tu::lobj::HSD_LObjSetupInit(a0 as _); } };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_SetTevRegAll();
     fn HSD_SetupChannel(a0: *mut HSD_Chan);
@@ -104,8 +104,8 @@ pub mod ext {
     fn Stage_GetCamBoundsRightOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsRightOffset() as _ };
     fn Stage_GetCamBoundsTopOffset() -> f32 = || unsafe { crate::tu::stage::Stage_GetCamBoundsTopOffset() as _ };
     fn ftLib_80086984(a0: *mut HSD_GObj) -> *mut CollData = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_80086984(a0 as _) as _ };
-    fn grDynamicAttr_801CA0B4() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
-    fn grDynamicAttr_801CA224() = || { unsafe { let _ = crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
+    fn grDynamicAttr_801CA0B4() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA0B4(); } };
+    fn grDynamicAttr_801CA224() = || { unsafe { crate::tu::grdynamicattr::grDynamicAttr_801CA224(); } };
     fn itGetKind(a0: *mut HSD_GObj) -> ItemKind = |a0: *mut HSD_GObj| unsafe { crate::itacc::itGetKind(a0 as _) as _ };
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);
     }

@@ -32,13 +32,13 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |f: &mut Fighter, val: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(f as _, val as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_800D638C(g: G) = crate::tu::ftCo_SquatWait::ftCo_800D638C;
         mpColl_IsOnPlatform(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_IsOnPlatform(coll as *mut _ as *mut _) != 0 as _) } };
-        ftCo_8009A228(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Pass::ftCo_8009A228(g as _); } };
+        ftCo_8009A228(g: G) = |g: G| { unsafe { crate::tu::ftCo_Pass::ftCo_8009A228(g as _); } };
         ftCo_SpecialS_CheckInput(g: G) -> bool = crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput;
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
@@ -56,7 +56,7 @@ pub mod ext {
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_80099F9C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Pass::ftCo_80099F9C(g as _) as _ } };
         ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
-        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
+        ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

@@ -64,7 +64,10 @@ impl Engine {
     fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         crate::crash::install();
         Host::boot(disc, mem_size)?;
-        unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER = true; }
+        unsafe {
+            melee_runtime::tu::gobj_native::HEADLESS_RENDER = true;
+            melee_world::tu::efsync::EFFECTS_ENABLED = false; // step 10 lifts this
+        }
         melee_link::install();
         melee_link::install_retail();
         crate::cdata::install_cdata();
@@ -104,6 +107,17 @@ impl Engine {
             gmmain_lib::gmMainLib_8015FBA4();
         }
         Ok(())
+    }
+
+    /// The NHV1 golden row of the current state: `[hash, seed, items, itemsum, s0..s11]` (docs/rust-port/neutral-hash.md),
+    /// from the real Fighter / Item records through the ported `RB_NeutralHash`.
+    pub fn neutral_row(&self) -> [u32; 16] {
+        unsafe {
+            melee_fighter::tu::fighter::RB_NeutralHash();
+            let mut r = [0u32; 16];
+            for (i, w) in r.iter_mut().enumerate() { *w = melee_fighter::tu::fighter::RB_NeutralHashWord(i as i32); }
+            r
+        }
     }
 
     /// Exactly one iteration of the scene loop (pad queue, logic frame(s), `HSD_GObj_RunProcs`, render).

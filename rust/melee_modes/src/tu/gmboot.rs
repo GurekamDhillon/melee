@@ -77,7 +77,7 @@ pub mod ext {
             pub fn gm_801BF708(arg: i8)  {
                 match unsafe { GM_801BF708 } {
                     Some(f) => f(arg),
-                    None => { unsafe { let _ = crate::tu::gmopeningmode::gm_801BF708(arg as _); } return; },
+                    None => { unsafe { crate::tu::gmopeningmode::gm_801BF708(arg as _); } return; },
                 }
             }
     /// `Toy_803048C0(id)` (ty/toy.c; s32 in the C, bool-valued).
@@ -95,7 +95,7 @@ pub mod ext {
             pub fn Toy_803124BC()  {
                 match unsafe { TOY_803124BC } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_803124BC(); } return; },
                 }
             }
     /// `Toy_SetUnlockState(id, value)` (ty/toy.c).
@@ -104,7 +104,7 @@ pub mod ext {
             pub fn Toy_SetUnlockState(id: i32, value: bool)  {
                 match unsafe { TOY_SETUNLOCKSTATE } {
                     Some(f) => f(id, value),
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_SetUnlockState(id as _, value as _); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_SetUnlockState(id as _, value as _); } return; },
                 }
             }
     /// `lb_8001C2D8(chan, company, game_name, filename)` (lb/lbcardnew.c; 0 on success).
@@ -124,7 +124,7 @@ pub mod ext {
             pub fn gm_ChangeGameModeAfterCurrentScene(mode: i32)  {
                 match unsafe { GM_CHANGEGAMEMODEAFTERCURRENTSCENE } {
                     Some(f) => f(mode),
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(mode as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(mode as _); } return; },
                 }
             }
     /// `gm_SetGameModeOverride(fn)` (gm/gm_1A3F.c).
@@ -135,7 +135,7 @@ pub mod ext {
     pub fn gm_SetPendingGameMode(mode: u8) {
         match unsafe { GM_SETPENDINGGAMEMODE } {
             Some(f) => f(mode),
-            None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } },
+            None => { unsafe { crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } },
         }
     }
     /// `SceneLaunch_BootGameMode()` (gm/gmscenelaunch.c, TARGET_PC): -1 when unset.

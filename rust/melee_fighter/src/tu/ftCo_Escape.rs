@@ -42,9 +42,9 @@ pub mod ext {
         ftCo_800DF8B0(fp: &Fighter) -> bool = crate::ft0df::ftco_800df8b0;
         ftCo_800DF8E8(fp: &Fighter) -> bool = crate::ft0df::ftco_800df8e8;
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        ftParts_80074B0C(g: G, model_idx: i32, val: i32) = |g: G, model_idx: i32, val: i32| { unsafe { let _ = crate::tu::ftparts::ftParts_80074B0C(g as _, model_idx as _, val as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        ftParts_80074B0C(g: G, model_idx: i32, val: i32) = |g: G, model_idx: i32, val: i32| { unsafe { crate::tu::ftparts::ftParts_80074B0C(g as _, model_idx as _, val as _); } };
         ftYs_Init_8012BDA0(g: G) = |_| todo!("TODO(port) ftYs_Init_8012BDA0 (ftyoshi.c)");
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::tu::ft_08a1::ft_8008A2BC;
@@ -56,8 +56,8 @@ pub mod ext {
         ftCo_8009563C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_8009563C(g as _) as _ } };
         ft_80085004(g: G) = crate::ft084e::ft_80085004;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
-        ft_800847D0(g: G, b: *mut ftCollisionBox) = |g: G, b: *mut ftCollisionBox| { unsafe { let _ = crate::tu::ft_081b::ft_800847d0(g as _, b as _); } };
+        ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
+        ft_800847D0(g: G, b: *mut ftCollisionBox) = |g: G, b: *mut ftCollisionBox| { unsafe { crate::tu::ft_081b::ft_800847d0(g as _, b as _); } };
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
     }
 }

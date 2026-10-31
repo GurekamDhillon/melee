@@ -70,7 +70,7 @@ pub mod ext {
             pub fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj)  {
                 match unsafe { HSD_JOBJSETMTXDIRTY } {
                     Some(f) => f(jobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ft_0c31::HSD_JObjSetMtxDirty(jobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ft_0c31::HSD_JObjSetMtxDirty(jobj as _); } return; },
                 }
             }
     pub static mut HSD_COBJADDANIM: Option<fn(*mut HSD_CObj, *mut HSD_CameraAnim) > = None;
@@ -78,7 +78,7 @@ pub mod ext {
             pub fn HSD_CObjAddAnim(cobj: *mut HSD_CObj, anim: *mut HSD_CameraAnim)  {
                 match unsafe { HSD_COBJADDANIM } {
                     Some(f) => f(cobj, anim),
-                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAddAnim(cobj as _, anim as _); } return; },
+                    None => { unsafe { melee_runtime::tu::cobj::HSD_CObjAddAnim(cobj as _, anim as _); } return; },
                 }
             }
     pub static mut HSD_COBJREQANIM: Option<fn(*mut HSD_CObj, f32) > = None;
@@ -86,7 +86,7 @@ pub mod ext {
             pub fn HSD_CObjReqAnim(cobj: *mut HSD_CObj, frame: f32)  {
                 match unsafe { HSD_COBJREQANIM } {
                     Some(f) => f(cobj, frame),
-                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjReqAnim(cobj as _, frame as _); } return; },
+                    None => { unsafe { melee_runtime::tu::cobj::HSD_CObjReqAnim(cobj as _, frame as _); } return; },
                 }
             }
     pub static mut HSD_COBJANIM: Option<fn(*mut HSD_CObj) > = None;
@@ -94,7 +94,7 @@ pub mod ext {
             pub fn HSD_CObjAnim(cobj: *mut HSD_CObj)  {
                 match unsafe { HSD_COBJANIM } {
                     Some(f) => f(cobj),
-                    None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjAnim(cobj as _); } return; },
+                    None => { unsafe { melee_runtime::tu::cobj::HSD_CObjAnim(cobj as _); } return; },
                 }
             }
     // lb/lbspdisplay.c, lb/lb_00B0.c, gm/gm_1601.c, gm/gmevent.c, gm/gmregtyfall.c, gm/gmscene.c, mn/mnmain.c, ty/toy.c
@@ -119,7 +119,7 @@ pub mod ext {
             pub fn lb_8000C1C0(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
                 match unsafe { LB_8000C1C0 } {
                     Some(f) => f(jobj, constraint),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C1C0(jobj as _, constraint as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000C1C0(jobj as _, constraint as _); } return; },
                 }
             }
     pub static mut LB_8000C290: Option<fn(*mut HSD_JObj, *mut HSD_JObj) > = None;
@@ -127,7 +127,7 @@ pub mod ext {
             pub fn lb_8000C290(jobj: *mut HSD_JObj, constraint: *mut HSD_JObj)  {
                 match unsafe { LB_8000C290 } {
                     Some(f) => f(jobj, constraint),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000C290(jobj as _, constraint as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000C290(jobj as _, constraint as _); } return; },
                 }
             }
     pub static mut GM_8016895C: Option<fn(*mut HSD_JObj, *mut DynamicModelDesc, i32) > = None;
@@ -135,7 +135,7 @@ pub mod ext {
             pub fn gm_8016895C(jobj: *mut HSD_JObj, mdl: *mut DynamicModelDesc, idx: i32)  {
                 match unsafe { GM_8016895C } {
                     Some(f) => f(jobj, mdl, idx),
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_8016895C(jobj as _, mdl as _, idx as _); } return; },
                 }
             }
     pub static mut GM_801BEFB0: Option<fn() -> i32> = None;
@@ -167,7 +167,7 @@ pub mod ext {
             pub fn gm_801A9630()  {
                 match unsafe { GM_801A9630 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmregenddisp::gm_801A9630(); } return; },
+                    None => { unsafe { crate::tu::gmregenddisp::gm_801A9630(); } return; },
                 }
             }
     pub static mut MN_8022F0F0: Option<fn(i32) > = None;
@@ -175,7 +175,7 @@ pub mod ext {
             pub fn mn_8022F0F0(v: i32)  {
                 match unsafe { MN_8022F0F0 } {
                     Some(f) => f(v),
-                    None => { unsafe { let _ = crate::tu::mn_22EC::mn_8022F0F0(v as _); } return; },
+                    None => { unsafe { crate::tu::mn_22EC::mn_8022F0F0(v as _); } return; },
                 }
             }
     pub static mut TOY_803060BC: Option<fn(i32, i32) -> f32> = None;
@@ -190,13 +190,13 @@ pub mod ext {
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): the
     /// GX-link render callbacks; address only.
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _unused: i32) {
-        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
+        { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
     }
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
         panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
-        { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
+        { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };
     }
 }
 

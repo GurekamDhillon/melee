@@ -11,8 +11,8 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     pub fn ftpickupitem_80094790(_g: G) -> bool { { return unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(_g as _) as _ }; } }
-    pub fn ft_800D76B8(_g: G) { { unsafe { let _ = crate::tu::ftCo_ItemScopeStart::ft_800D76B8(_g as _); } return; } }
-    pub fn ft_800D7770(_g: G) { { unsafe { let _ = crate::tu::ftCo_ItemScopeStart::ft_800D7770(_g as _); } return; } }
+    pub fn ft_800D76B8(_g: G) { { unsafe { crate::tu::ftCo_ItemScopeStart::ft_800D76B8(_g as _); } return; } }
+    pub fn ft_800D7770(_g: G) { { unsafe { crate::tu::ftCo_ItemScopeStart::ft_800D7770(_g as _); } return; } }
     /// `MTXMultVec(HSD_JObjGetMtxPtr(jobj), src, dst)`.
     pub static mut MTX_MULT_VEC: Option<fn(*mut HSD_JObj, &Vec3, &mut Vec3)> = None;
     pub fn MTXMultVec_HSD_JObjGetMtxPtr(j: *mut HSD_JObj, src: &Vec3, dst: &mut Vec3) {

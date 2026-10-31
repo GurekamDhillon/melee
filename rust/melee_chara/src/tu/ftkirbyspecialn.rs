@@ -82,7 +82,7 @@ pub mod ext {
     pub fn mpUpdateFloorSkip(coll: *mut CollData) {
         match unsafe { MPUPDATEFLOORSKIP } {
             Some(f) => f(coll),
-            None => { unsafe { let _ = melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); } },
+            None => { unsafe { melee_world::tu::mpcoll::mpUpdateFloorSkip(coll as _); } },
         }
     }
     crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (n: i32) -> i32);
@@ -91,7 +91,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F19AC(g: G)  {
                 match unsafe { KB_800F19AC } {
                     Some(f) => f(g),
-                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F19AC(g as _); } return; },
+                    None => { unsafe { crate::tu::ftkirby::ftKb_SpecialN_800F19AC(g as _); } return; },
                 }
             }
     pub static mut KB_800F190C: Option<fn(G, i32) > = None;
@@ -99,7 +99,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F190C(g: G, kind: i32)  {
                 match unsafe { KB_800F190C } {
                     Some(f) => f(g, kind),
-                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F190C(g as _, kind as _); } return; },
+                    None => { unsafe { crate::tu::ftkirby::ftKb_SpecialN_800F190C(g as _, kind as _); } return; },
                 }
             }
     pub static mut KB_800EEEC4: Option<fn(G, i32) > = None;
@@ -107,7 +107,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800EEEC4(g: G, kind: i32)  {
                 match unsafe { KB_800EEEC4 } {
                     Some(f) => f(g, kind),
-                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800EEEC4(g as _, kind as _); } return; },
+                    None => { unsafe { crate::tu::ftkirby::ftKb_SpecialN_800EEEC4(g as _, kind as _); } return; },
                 }
             }
     pub static mut KB_800F1BAC: Option<fn(G, i32, bool) > = None;
@@ -115,7 +115,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F1BAC(g: G, x: i32, b: bool)  {
                 match unsafe { KB_800F1BAC } {
                     Some(f) => f(g, x, b),
-                    None => { unsafe { let _ = crate::tu::ftkirby::ftKb_SpecialN_800F1BAC(g as _, x as _, b as _); } return; },
+                    None => { unsafe { crate::tu::ftkirby::ftKb_SpecialN_800F1BAC(g as _, x as _, b as _); } return; },
                 }
             }
     pub static mut IT_802ADA1C: Option<fn(*mut Vec3, *mut Vec3, f32) > = None;
@@ -123,7 +123,7 @@ pub mod ext {
             pub fn it_802ADA1C(pos: *mut Vec3, vel: *mut Vec3, dir: f32)  {
                 match unsafe { IT_802ADA1C } {
                     Some(f) => f(pos, vel, dir),
-                    None => { unsafe { let _ = melee_items::tu::it_2ADA::it_802ADA1C(pos as _, vel as _, dir as _); } return; },
+                    None => { unsafe { melee_items::tu::it_2ADA::it_802ADA1C(pos as _, vel as _, dir as _); } return; },
                 }
             }
     pub static mut IT_802F23AC: Option<fn(*mut Item_GObj, *const Vec3) -> f64> = None;
@@ -139,7 +139,7 @@ pub mod ext {
             pub fn it_802F2810(item: *mut Item_GObj)  {
                 match unsafe { IT_802F2810 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F2810(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirby_2F23::it_802F2810(item as _); } return; },
                 }
             }
     pub static mut IT_802F23EC: Option<fn(*mut Item_GObj, G, f32) > = None;
@@ -147,7 +147,7 @@ pub mod ext {
             pub fn it_802F23EC(item: *mut Item_GObj, g: G, dir: f32)  {
                 match unsafe { IT_802F23EC } {
                     Some(f) => f(item, g, dir),
-                    None => { unsafe { let _ = melee_items::tu::itkirby_2F23::it_802F23EC(item as _, g as _, dir as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirby_2F23::it_802F23EC(item as _, g as _, dir as _); } return; },
                 }
             }
     crate::port_hook!(IT_802F28C8, it_802F28C8, crate::adapt::it_802F28C8, (item: *mut Item_GObj, flag: i32, f: f32));
@@ -166,7 +166,7 @@ pub mod ext {
     pub fn lb_8000B1CC(joint: *mut c_void, off: *const Vec3, out: *mut Vec3) {
         match unsafe { LB_8000B1CC } {
             Some(f) => f(joint, off, out),
-            None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } },
+            None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } },
         }
     }
     // `efAsync_Spawn(gobj, queue, kind, gfx_id, ...)` (ef/efasync.c, variadic): trailing pointers.

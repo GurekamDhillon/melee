@@ -28,7 +28,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "gate: GW_ISO_VANILLA not set" >&2; exit 2; }
 export MELEE_WINDOW_UNFOCUSED=1
-if [ "$engine" != legacy ]; then echo "gate: engine '$engine' does not exist before consolidation step 7" >&2; exit 2; fi
+case "$engine" in legacy|tu) ;; *) echo "gate: unknown engine '$engine' (legacy | tu)" >&2; exit 2 ;; esac
 exe="$repo/build/cargo/release/melee.exe"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
@@ -41,8 +41,16 @@ scenarios="pad_falcon_fox_fd pad_marth_sheik_bf cpu_fox_falco_dl cpu_peach_samus
 [ -n "$only" ] && scenarios="${only//,/ }"
 for s in $scenarios; do
   idle=""; case $s in cpu_*) idle="--idle-pads" ;; esac
+  if [ "$engine" = tu ]; then
+    # the consolidated engine (melee_engine): frames written as they are produced, so a later crash keeps the count.
+    # The seed/hash columns are compared once the particle system (step 10) draws its RNG values; until then the words are.
+    "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "${ENGINE_FRAMES:-200}" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1 || true
+    [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
+    n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short --ignore-seed --print-count 2>/dev/null | awk '/^COUNT/{print $2}'); n=${n:-0}
+  else
   "$exe" golden --iso "$GW_ISO_VANILLA" --scenario "$s" $idle --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short --print-count | awk '/^COUNT/{print $2}')
+  fi
   want=$(awk -F'\t' -v s="$s" -v e="$engine" 'NR>1 && $2==s && $3==e {w=$4} END{print w+0}' "$progress")
   counts[$s]=$n
   if [ "${n:-0}" -lt "$want" ]; then echo "FAIL golden $s: $n frames match, recorded $want"; fail=1; else echo "ok   golden $s: $n frames match (recorded $want)"; fi
@@ -56,6 +64,7 @@ while IFS=$'\t' read -r sub max; do
 done < "$bmax"
 echo "ok   baselines: $(cat tools/rust-port/diff/baseline/*.txt | grep -vc '^#\|^$') entries in total"
 # migrated subsystems: zero fields outside the baseline at the sampled frames
+if [ "$engine" = tu ]; then migrated=''; echo 'ok   diff: not run for the engine (melee diff --engine tu comes with the first migrated subsystem)'; else
 migrated=$(grep -v '^#' docs/rust-port/migrated.txt | tr -s ' \n' ',' | sed 's/^,//;s/,$//')
 if [ -n "$migrated" ]; then
   while IFS=$'\t' read -r s frames; do
@@ -76,6 +85,7 @@ if [ -n "$migrated" ]; then
   done
 else
   echo "ok   diff: no subsystem is marked migrated yet (docs/rust-port/migrated.txt)"
+fi
 fi
 if [ -f tools/rust-port/lint_logic.py ]; then
   python tools/rust-port/lint_logic.py || { echo "FAIL lint"; fail=1; }

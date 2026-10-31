@@ -42,7 +42,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     pub static mut IT_802AAA50: Option<fn(*mut HSD_GObj) > = None;
@@ -50,7 +50,7 @@ pub mod ext {
             pub fn it_802AAA50(item: *mut HSD_GObj)  {
                 match unsafe { IT_802AAA50 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itnesspkflash::it_802AAA50(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itnesspkflash::it_802AAA50(item as _); } return; },
                 }
             }
     pub static mut IT_802AA8C0: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut HSD_GObj> = None;
@@ -82,7 +82,7 @@ pub mod ext {
     pub fn ftPartSetRotX(fp: *mut Fighter, part: i32, v: f32) {
         match unsafe { FTPARTSETROTX } {
             Some(f) => f(fp, part, v),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part as _, v as _); } },
         }
     }
 }

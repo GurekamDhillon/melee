@@ -25,20 +25,20 @@ pub mod ext {
     pub static mut H_Stage_80224E38: Option<fn(&mut Vec3, i32)> = None;
     pub fn Stage_80224E38(out: &mut Vec3, i: i32) { match unsafe { H_Stage_80224E38 } { Some(f) => f(out, i), None => panic!("TODO(group2 stage) Stage_80224E38") } }
     pub static mut H_ftCamera_80076320: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcamera::ftcamera_80076320(g as _); } return; } } }
+    pub fn ftCamera_80076320(g: *mut HSD_GObj) { match unsafe { H_ftCamera_80076320 } { Some(f) => f(g), None => { unsafe { crate::tu::ftcamera::ftcamera_80076320(g as _); } return; } } }
     pub static mut H_ftCamera_80076018: Option<fn(*mut UnkFloat6_Camera, &mut UnkFloat6_Camera, f32)> = None;
     pub fn ftCamera_80076018(inp: *mut UnkFloat6_Camera, out: &mut UnkFloat6_Camera, mul: f32) { match unsafe { H_ftCamera_80076018 } { Some(f) => f(inp, out, mul), None => unsafe { crate::tu::ftcamera::ftcamera_80076018(&*(inp as *const _), out, mul as _) } } }
     pub static mut H_ftCo_800BFD04: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ftcolanim::ftco_800bfd04(g as _); } return; } } }
+    pub fn ftCo_800BFD04(g: *mut HSD_GObj) { match unsafe { H_ftCo_800BFD04 } { Some(f) => f(g), None => { unsafe { crate::tu::ftcolanim::ftco_800bfd04(g as _); } return; } } }
     /// efsync.c `efSync_Spawn(kind, gobj, ...)`; the variadic tail as raw words.
     pub static mut H_efSync_Spawn: Option<fn(i32, *mut HSD_GObj, &[usize]) -> *mut c_void> = None;
     pub fn efSync_Spawn(kind: i32, g: *mut HSD_GObj, va: &[usize]) -> *mut c_void { match unsafe { H_efSync_Spawn } { Some(f) => f(kind, g, va), None => panic!("TODO(group2 efsync) efSync_Spawn") } }
     pub static mut H_Fighter_ChangeMotionState: Option<fn(*mut HSD_GObj, i32, u32, f32, f32, f32, *mut HSD_GObj)> = None;
-    pub fn Fighter_ChangeMotionState(g: *mut HSD_GObj, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, item: *mut HSD_GObj) { match unsafe { H_Fighter_ChangeMotionState } { Some(f) => f(g, msid, flags, start, speed, blend, item), None => { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, item as _); } return; } } }
+    pub fn Fighter_ChangeMotionState(g: *mut HSD_GObj, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, item: *mut HSD_GObj) { match unsafe { H_Fighter_ChangeMotionState } { Some(f) => f(g, msid, flags, start, speed, blend, item), None => { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, item as _); } return; } } }
     pub static mut H_ftCo_8008A7A8: Option<fn(*mut HSD_GObj, *mut c_void)> = None;
-    pub fn ftCo_8008A7A8(g: *mut HSD_GObj, p: *mut c_void) { match unsafe { H_ftCo_8008A7A8 } { Some(f) => f(g, p), None => { unsafe { let _ = crate::tu::ftwaitanim::ftCo_8008A7A8(g as _, p as _); } return; } } }
+    pub fn ftCo_8008A7A8(g: *mut HSD_GObj, p: *mut c_void) { match unsafe { H_ftCo_8008A7A8 } { Some(f) => f(g, p), None => { unsafe { crate::tu::ftwaitanim::ftCo_8008A7A8(g as _, p as _); } return; } } }
     pub static mut H_ft_80083DCC: Option<fn(*mut HSD_GObj)> = None;
-    pub fn ft_80083DCC(g: *mut HSD_GObj) { match unsafe { H_ft_80083DCC } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::ft_081b::ft_80083dcc(g as _); } return; } } }
+    pub fn ft_80083DCC(g: *mut HSD_GObj) { match unsafe { H_ft_80083DCC } { Some(f) => f(g), None => { unsafe { crate::tu::ft_081b::ft_80083dcc(g as _); } return; } } }
     pub static mut H_ft_80083844: Option<fn(*mut HSD_GObj, HSD_GObjEvent)> = None;
     pub fn ft_80083844(g: *mut HSD_GObj, cb: HSD_GObjEvent) { match unsafe { H_ft_80083844 } { Some(f) => f(g, cb), None => unsafe { crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083844(g as _, ev)) } } }
     pub static mut H_mpColl_80043680: Option<fn(&mut CollData, &Vec3)> = None;

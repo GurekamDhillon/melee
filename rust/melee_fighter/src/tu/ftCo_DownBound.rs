@@ -42,7 +42,7 @@ pub mod ext {
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_SetGroundedKnockbackIfLanded(fp: &mut Fighter) = crate::ftcommon::set_grounded_knockback_if_landed;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
@@ -54,11 +54,11 @@ pub mod ext {
         ft_80082708(g: G) -> i32 = |g: G| -> i32 { unsafe { crate::tu::ft_081b::ft_80082708(g as _) as _ } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         ftCo_800C7CA0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_800c7ca0::ftco_800c7ca0(g as _) as _ } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        ftCo_80098160(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_DownStand::ftCo_80098160(g as _, msid as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        ftCo_80098160(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_DownStand::ftCo_80098160(g as _, msid as _); } };
         ftCo_800984D4(g: G) -> bool = crate::tu::ftCo_DownAttack::ftCo_800984D4;
         ftCo_800980BC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_DownStand::ftCo_800980BC(g as _) as _ } };
-        ft_80083F88(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80083f88(g as _); } };
+        ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }
 

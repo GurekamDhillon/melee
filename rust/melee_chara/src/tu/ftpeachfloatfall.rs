@@ -16,7 +16,7 @@ pub mod ext {
     pub fn ftCo_FallAerial_Enter(gobj: *mut HSD_GObj) {
         match unsafe { FTCO_FALLAERIAL_ENTER } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(gobj as _); } return; },
+            None => { unsafe { melee_fighter::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(gobj as _); } return; },
         }
     }
 }

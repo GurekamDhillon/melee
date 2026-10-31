@@ -18,7 +18,7 @@ pub mod ext {
     pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
         match unsafe { FTMH_MS_389_80151018 } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
+            None => { unsafe { crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } },
         }
     }
 }

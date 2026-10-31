@@ -9,14 +9,14 @@ use crate::types::*;
 #[allow(non_snake_case, unused_variables)]
 pub mod ext {
     use crate::types::*;
-    pub fn ft_800831CC(gobj: *mut HSD_GObj, a: fn(*mut HSD_GObj, i32) -> bool, b: fn(*mut HSD_GObj)) { { unsafe { let _ = crate::tu::ft_081b::ft_800831cc(gobj as _, a as _, b as _); } return; } }
+    pub fn ft_800831CC(gobj: *mut HSD_GObj, a: fn(*mut HSD_GObj, i32) -> bool, b: fn(*mut HSD_GObj)) { { unsafe { crate::tu::ft_081b::ft_800831cc(gobj as _, a as _, b as _); } return; } }
     pub fn ftCo_80096CC8(gobj: *mut HSD_GObj, line_id: i32) -> bool { { return unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(gobj as _, line_id as _) as _ }; } }
-    pub fn ft_80082B1C(gobj: *mut HSD_GObj) { { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(gobj as _); } return; } }
+    pub fn ft_80082B1C(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ft_081b::ft_80082b1c(gobj as _); } return; } }
     pub fn ftpickupitem_80094790(gobj: *mut HSD_GObj) -> bool { { return unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(gobj as _) as _ }; } }
-    pub fn ftCo_800CD350(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd350(gobj as _, a as _, b as _, f as _); } return; } }
-    pub fn ftCo_800CD418(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd418(gobj as _, a as _, b as _, f as _); } return; } }
-    pub fn ftCo_800CD4E0(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd4e0(gobj as _, a as _, b as _, f as _); } return; } }
-    pub fn ftCo_800CD5A8(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { let _ = crate::tu::ft_0cd3::ftco_800cd5a8(gobj as _, a as _, b as _, f as _); } return; } }
+    pub fn ftCo_800CD350(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { crate::tu::ft_0cd3::ftco_800cd350(gobj as _, a as _, b as _, f as _); } return; } }
+    pub fn ftCo_800CD418(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { crate::tu::ft_0cd3::ftco_800cd418(gobj as _, a as _, b as _, f as _); } return; } }
+    pub fn ftCo_800CD4E0(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { crate::tu::ft_0cd3::ftco_800cd4e0(gobj as _, a as _, b as _, f as _); } return; } }
+    pub fn ftCo_800CD5A8(gobj: *mut HSD_GObj, a: i32, b: i32, f: f32) { { unsafe { crate::tu::ft_0cd3::ftco_800cd5a8(gobj as _, a as _, b as _, f as _); } return; } }
     /// `Fighter_804D654C` (fighter.c, `float (*)[5]`, set from the common data at load).
     pub use crate::tu::fighter::Fighter_804D654C;
 }

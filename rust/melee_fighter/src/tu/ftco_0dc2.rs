@@ -13,14 +13,14 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: u32, _start: f32, _speed: f32, _blend: f32, _acc: G) {
-        { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _acc as _); } return; }
+        { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _acc as _); } return; }
     }
-    pub fn fn_800DB5D8(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB5D8(_g as _); } return; } }
-    pub fn fn_800DB8A4(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB8A4(_g as _); } return; } }
-    pub fn fn_800DB790(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DB790(_g as _); } return; } }
-    pub fn fn_800DBAE4(_g: G) { { unsafe { let _ = crate::tu::ftCo_CaptureWait::fn_800DBAE4(_g as _); } return; } }
+    pub fn fn_800DB5D8(_g: G) { { unsafe { crate::tu::ftCo_CaptureWait::fn_800DB5D8(_g as _); } return; } }
+    pub fn fn_800DB8A4(_g: G) { { unsafe { crate::tu::ftCo_CaptureWait::fn_800DB8A4(_g as _); } return; } }
+    pub fn fn_800DB790(_g: G) { { unsafe { crate::tu::ftCo_CaptureWait::fn_800DB790(_g as _); } return; } }
+    pub fn fn_800DBAE4(_g: G) { { unsafe { crate::tu::ftCo_CaptureWait::fn_800DBAE4(_g as _); } return; } }
     pub fn fn_800DAD18(_g: G) -> bool { { return unsafe { crate::tu::ftCo_CapturePulled::fn_800DAD18(_g as _) as _ }; } }
-    pub fn fn_800DAA40(_g: G, _victim: G) { { unsafe { let _ = crate::tu::ftCo_CapturePulled::fn_800DAA40(_g as _, _victim as _); } return; } }
+    pub fn fn_800DAA40(_g: G, _victim: G) { { unsafe { crate::tu::ftCo_CapturePulled::fn_800DAA40(_g as _, _victim as _); } return; } }
     pub fn ft_80083C00(_g: G, _cb: HSD_GObjEvent) { unsafe { let _ = crate::bridge::with_ev(_cb, |ev| crate::tu::ft_081b::ft_80083c00(_g as _, ev)); } }
     pub fn ft_8008403C(_g: G, _cb: HSD_GObjEvent) { unsafe { let _ = crate::bridge::with_ev(_cb, |ev| crate::tu::ft_081b::ft_8008403c(_g as _, ev)); } }
 }

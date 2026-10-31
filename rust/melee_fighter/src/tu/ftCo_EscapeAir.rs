@@ -41,8 +41,8 @@ pub mod ext {
         ftCommon_8007D9D4(fp: &Fighter) -> f32 = crate::ftcommon3::ftcommon_8007d9d4;
         cosf(x: f32) -> f32 = melee_runtime::gekko::cosf;
         sinf(x: f32) -> f32 = melee_runtime::gekko::sinf;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_80096900(g: G, a1: i32, a2: i32, ai: i32, mobility: f32, landing_lag: f32) = crate::tu::ftCo_FallSpecial::ftCo_80096900;
@@ -50,7 +50,7 @@ pub mod ext {
         ftCo_800C3B10(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_aircatch::ftco_800c3b10(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ft_80082C74(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80082c74(g as _, ev)); } };
-        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
+        ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: i32, landing_lag: f32) = |g: G, allow_interrupt: i32, landing_lag: f32| { unsafe { crate::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(g as _, (allow_interrupt != 0 as _), landing_lag as _); } };
     }
 }
 

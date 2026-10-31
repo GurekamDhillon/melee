@@ -14,12 +14,12 @@ fn fp<'a>(g: G) -> &'a mut Fighter {
 /// Calls into TUs that are not ported yet. Each panics until a later pass rewires it.
 pub mod ext {
     use super::G;
-    pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: i32, _start: f32, _speed: f32, _blend: f32, _cb: *mut core::ffi::c_void) { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _cb as _); } }
-    pub fn ftAnim_8006EBA4(_g: G) { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } }
-    pub fn ftCo_AttackS4_Anim(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Anim(_g as _); } }
-    pub fn ftCo_AttackS4_Phys(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Phys(_g as _); } }
-    pub fn ftCo_AttackS4_Coll(_g: G) { unsafe { let _ = crate::tu::ftCo_AttackS4::ftCo_AttackS4_Coll(_g as _); } }
-    pub fn ftCo_Wait_IASA(_g: G) { unsafe { let _ = crate::tu::ftCo_Wait::ftCo_Wait_IASA(_g as _); } }
+    pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: i32, _start: f32, _speed: f32, _blend: f32, _cb: *mut core::ffi::c_void) { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _cb as _); } }
+    pub fn ftAnim_8006EBA4(_g: G) { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } }
+    pub fn ftCo_AttackS4_Anim(_g: G) { unsafe { crate::tu::ftCo_AttackS4::ftCo_AttackS4_Anim(_g as _); } }
+    pub fn ftCo_AttackS4_Phys(_g: G) { unsafe { crate::tu::ftCo_AttackS4::ftCo_AttackS4_Phys(_g as _); } }
+    pub fn ftCo_AttackS4_Coll(_g: G) { unsafe { crate::tu::ftCo_AttackS4::ftCo_AttackS4_Coll(_g as _); } }
+    pub fn ftCo_Wait_IASA(_g: G) { unsafe { crate::tu::ftCo_Wait::ftCo_Wait_IASA(_g as _); } }
 }
 
 /// `ftCo_800CECE8`: A pressed during the combo window -> second hit.

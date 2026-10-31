@@ -66,7 +66,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     hook_or!(FTDATA_80085E50, ftData_80085E50, (fp: *mut Fighter, msid: i32) -> *mut FigaTree,
@@ -76,7 +76,7 @@ pub mod ext {
     pub fn ftAnim_8006F4C8(fp: *mut Fighter, arg1: bool, tree: *mut FigaTree) {
         match unsafe { FTANIM_8006F4C8 } {
             Some(f) => f(fp, arg1, tree),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006F4C8(&mut *(fp as *mut _), arg1 as _, tree as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006F4C8(&mut *(fp as *mut _), arg1 as _, tree as _); } },
         }
     }
     pub static mut FTANIM_80070710: Option<fn(*mut HSD_JObj, f32) > = None;
@@ -84,7 +84,7 @@ pub mod ext {
             pub fn ftAnim_80070710(jobj: *mut HSD_JObj, frame: f32)  {
                 match unsafe { FTANIM_80070710 } {
                     Some(f) => f(jobj, frame),
-                    None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070710(jobj as _, frame as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070710(jobj as _, frame as _); } return; },
                 }
             }
     pub static mut FTANIM_8006FB88: Option<fn(*mut Fighter, Fighter_Part, *mut HSD_Joint)> = None;
@@ -92,7 +92,7 @@ pub mod ext {
     pub fn ftAnim_8006FB88(fp: *mut Fighter, part: Fighter_Part, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_8006FB88 } {
             Some(f) => f(fp, part, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FB88(&mut *(fp as *mut _), part as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FB88(&mut *(fp as *mut _), part as _, joint as _); } },
         }
     }
     crate::port_hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, crate::adapt::HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
@@ -101,7 +101,7 @@ pub mod ext {
     pub fn ftAnim_80070108(fp: *mut Fighter, part: Fighter_Part, a: f32, b: f32, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_80070108 } {
             Some(f) => f(fp, part, a, b, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070108(&mut *(fp as *mut _), part as _, a as _, b as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070108(&mut *(fp as *mut _), part as _, a as _, b as _, joint as _); } },
         }
     }
     pub static mut FTANIM_8006FE9C: Option<fn(*mut Fighter, Fighter_Part, f32, f32)> = None;
@@ -109,7 +109,7 @@ pub mod ext {
     pub fn ftAnim_8006FE9C(fp: *mut Fighter, part: Fighter_Part, a: f32, b: f32) {
         match unsafe { FTANIM_8006FE9C } {
             Some(f) => f(fp, part, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FE9C(&mut *(fp as *mut _), part as _, a as _, b as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FE9C(&mut *(fp as *mut _), part as _, a as _, b as _); } },
         }
     }
     pub static mut FTANIM_8006FF74: Option<fn(*mut Fighter, Fighter_Part)> = None;
@@ -117,7 +117,7 @@ pub mod ext {
     pub fn ftAnim_8006FF74(fp: *mut Fighter, part: Fighter_Part) {
         match unsafe { FTANIM_8006FF74 } {
             Some(f) => f(fp, part),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FF74(&mut *(fp as *mut _), part as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FF74(&mut *(fp as *mut _), part as _); } },
         }
     }
     pub static mut FTANIM_80070010: Option<fn(*mut Fighter, Fighter_Part, f32, f32, *mut HSD_Joint)> = None;
@@ -125,7 +125,7 @@ pub mod ext {
     pub fn ftAnim_80070010(fp: *mut Fighter, part: Fighter_Part, a: f32, b: f32, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_80070010 } {
             Some(f) => f(fp, part, a, b, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_80070010(&mut *(fp as *mut _), part as _, a as _, b as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_80070010(&mut *(fp as *mut _), part as _, a as _, b as _, joint as _); } },
         }
     }
     pub static mut FTANIM_8006FA58: Option<fn(*mut Fighter, Fighter_Part, *mut HSD_Joint)> = None;
@@ -133,7 +133,7 @@ pub mod ext {
     pub fn ftAnim_8006FA58(fp: *mut Fighter, part: Fighter_Part, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_8006FA58 } {
             Some(f) => f(fp, part, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
         }
     }
     hook_or!(FTCOLL_8007B8A8, ftColl_8007B8A8, (hit: *mut HitCapsule, v: *mut Vec3),
@@ -143,7 +143,7 @@ pub mod ext {
     pub fn lbColl_80008428(hit: *mut HitCapsule) {
         match unsafe { LBCOLL_80008428 } {
             Some(f) => f(hit),
-            None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008428(hit as _); } },
+            None => { unsafe { melee_runtime::tu::lbcollision::lbColl_80008428(hit as _); } },
         }
     }
     pub static mut LBCOLL_80008434: Option<fn(*mut HitCapsule)> = None;
@@ -151,7 +151,7 @@ pub mod ext {
     pub fn lbColl_80008434(hit: *mut HitCapsule) {
         match unsafe { LBCOLL_80008434 } {
             Some(f) => f(hit),
-            None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008434(hit as _); } },
+            None => { unsafe { melee_runtime::tu::lbcollision::lbColl_80008434(hit as _); } },
         }
     }
     pub static mut LBCOLL_80008440: Option<fn(*mut HitCapsule)> = None;
@@ -159,7 +159,7 @@ pub mod ext {
     pub fn lbColl_80008440(hit: *mut HitCapsule) {
         match unsafe { LBCOLL_80008440 } {
             Some(f) => f(hit),
-            None => { unsafe { let _ = melee_runtime::tu::lbcollision::lbColl_80008440(hit as _); } },
+            None => { unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(hit as _); } },
         }
     }
     pub static mut FTNS_ATTACKHI4_YOYOCHECKENVCOLL: Option<fn(*mut HSD_GObj, *mut Vec3, *mut Vec3, f32) -> i32> = None;
@@ -176,7 +176,7 @@ pub mod ext {
     pub fn it_802BB20C(item: *mut HSD_GObj) {
         match unsafe { IT_802BB20C } {
             Some(f) => f(item),
-            None => { unsafe { let _ = melee_items::tu::itseakchain::it_802BB20C(item as _); } },
+            None => { unsafe { melee_items::tu::itseakchain::it_802BB20C(item as _); } },
         }
     }
     pub static mut IT_802BAEEC: Option<fn(*mut HSD_GObj)> = None;
@@ -184,7 +184,7 @@ pub mod ext {
     pub fn it_802BAEEC(item: *mut HSD_GObj) {
         match unsafe { IT_802BAEEC } {
             Some(f) => f(item),
-            None => { unsafe { let _ = melee_items::tu::itseakchain::it_802BAEEC(item as _); } },
+            None => { unsafe { melee_items::tu::itseakchain::it_802BAEEC(item as _); } },
         }
     }
     pub static mut IT_802BAF0C: Option<fn(*mut HSD_GObj)> = None;
@@ -192,7 +192,7 @@ pub mod ext {
     pub fn it_802BAF0C(item: *mut HSD_GObj) {
         match unsafe { IT_802BAF0C } {
             Some(f) => f(item),
-            None => { unsafe { let _ = melee_items::tu::itseakchain::it_802BAF0C(item as _); } },
+            None => { unsafe { melee_items::tu::itseakchain::it_802BAF0C(item as _); } },
         }
     }
     pub static mut ITSEAKCHAIN_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32) -> *mut HSD_GObj> = None;
@@ -208,7 +208,7 @@ pub mod ext {
     pub fn it_802BCFC4(item: *mut HSD_GObj, vel: *mut Vec3) {
         match unsafe { IT_802BCFC4 } {
             Some(f) => f(item, vel),
-            None => { unsafe { let _ = melee_items::tu::itseakchain::it_802BCFC4(item as _, vel as _); } },
+            None => { unsafe { melee_items::tu::itseakchain::it_802BCFC4(item as _, vel as _); } },
         }
     }
     pub static mut IT_802BCF84: Option<fn(*mut HSD_GObj)> = None;
@@ -216,7 +216,7 @@ pub mod ext {
     pub fn it_802BCF84(item: *mut HSD_GObj) {
         match unsafe { IT_802BCF84 } {
             Some(f) => f(item),
-            None => { unsafe { let _ = melee_items::tu::itseakchain::it_802BCF84(item as _); } },
+            None => { unsafe { melee_items::tu::itseakchain::it_802BCF84(item as _); } },
         }
     }
 }

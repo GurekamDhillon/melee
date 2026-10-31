@@ -29,7 +29,7 @@ pub mod ext {
             pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCH_GRABUNK1_8015BC88 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
                 }
             }
 }

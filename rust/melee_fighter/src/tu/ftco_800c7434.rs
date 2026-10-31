@@ -62,7 +62,7 @@ pub mod ext {
     pub fn it_802EADD8(i: *mut Item_GObj) {
         match unsafe { IT_802EADD8 } {
             Some(f) => f(i),
-            None => { unsafe { let _ = melee_items::tu::itleadead::it_802EADD8(i as _); } return; },
+            None => { unsafe { melee_items::tu::itleadead::it_802EADD8(i as _); } return; },
         }
     }
     /// TODO(group5 itleadead.c) `it_802EAF28`.

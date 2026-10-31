@@ -54,7 +54,7 @@ pub mod ext {
             pub fn HSD_ArchiveLocateExtern(archive: *mut HSD_Archive, name: *const c_char, addr: *mut c_void)  {
                 match unsafe { HSD_ARCHIVELOCATEEXTERN } {
                     Some(f) => f(archive, name, addr),
-                    None => { unsafe { let _ = crate::tu::archive::HSD_ArchiveLocateExtern(archive as _, name as _, addr as _); } return; },
+                    None => { unsafe { crate::tu::archive::HSD_ArchiveLocateExtern(archive as _, name as _, addr as _); } return; },
                 }
             }
     pub static mut HSD_ARCHIVEGETPUBLICADDRESS: Option<fn(*mut HSD_Archive, *const c_char) -> *mut c_void> = None;
@@ -78,7 +78,7 @@ pub mod ext {
             pub fn lbHeap_80015CA8(heap_id: i32, ptr: *mut c_void)  {
                 match unsafe { LBHEAP_80015CA8 } {
                     Some(f) => f(heap_id, ptr),
-                    None => { unsafe { let _ = crate::tu::lbheap::lbHeap_80015CA8(heap_id as _, ptr as _); } return; },
+                    None => { unsafe { crate::tu::lbheap::lbHeap_80015CA8(heap_id as _, ptr as _); } return; },
                 }
             }
     pub static mut LBFILEGETSIZE: Option<fn(*const c_char) -> usize> = None;
@@ -94,7 +94,7 @@ pub mod ext {
             pub fn lbFile_8001668C(basename: *const c_char, dst: *mut c_void, size: *mut usize)  {
                 match unsafe { LBFILE_8001668C } {
                     Some(f) => f(basename, dst, size),
-                    None => { unsafe { let _ = crate::tu::lbfile::lbFile_8001668C(basename as _, dst as _, size as _); } return; },
+                    None => { unsafe { crate::tu::lbfile::lbFile_8001668C(basename as _, dst as _, size as _); } return; },
                 }
             }
     pub static mut LBDVD_8001819C: Option<fn(*const c_char) -> *mut HSD_Archive> = None;

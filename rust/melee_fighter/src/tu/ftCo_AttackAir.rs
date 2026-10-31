@@ -34,13 +34,13 @@ pub mod ext {
     ext_fns! {
         ftCo_800DF478(fp: &Fighter) -> bool = crate::ft0df::ftco_800df478;
         it_8026B30C(i: *mut Item_GObj) -> i32 = crate::hooks::it_8026b30c;
-        ftCo_800CDDA0(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0cdd::ftco_800cdda0(g as _); } };
+        ftCo_800CDDA0(g: G) = |g: G| { unsafe { crate::tu::ft_0cdd::ftco_800cdda0(g as _); } };
         ftLk_AttackAir_Enter(g: G) = |_| todo!("TODO(port) ftLk_AttackAir_Enter (ftlink)");
         ftGw_AttackAirN_DecideAction(g: G) = |_| todo!("TODO(port) ftGw_AttackAirN_DecideAction (ftgamewatch)");
         ftCo_GetCStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_cstick_angle;
         ftCo_GetLStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_lstick_angle;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         ftCo_80095328(g: G, out: *mut i32) -> bool = |g: G, out: *mut i32| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, out as _) as _ } };
@@ -53,7 +53,7 @@ pub mod ext {
     }
     /// `ftCo_LandingAir_EnterWithLag` (ftCo_LandingAir.c), passed as a callback: a TODO stub.
     pub unsafe extern "C" fn ftCo_LandingAir_EnterWithLag(_g: *mut HSD_GObj) {
-        { unsafe { let _ = crate::tu::ftCo_LandingAir::ftCo_LandingAir_EnterWithLag(_g as _); } return; }
+        { unsafe { crate::tu::ftCo_LandingAir::ftCo_LandingAir_EnterWithLag(_g as _); } return; }
     }
 }
 

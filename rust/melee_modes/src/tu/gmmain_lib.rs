@@ -1353,7 +1353,7 @@ pub mod ext {
             pub fn Toy_80311960()  {
                 match unsafe { TOY_80311960 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_80311960(); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_80311960(); } return; },
                 }
             }
     pub static mut TOY_803124BC: Option<fn() > = None;
@@ -1361,7 +1361,7 @@ pub mod ext {
             pub fn Toy_803124BC()  {
                 match unsafe { TOY_803124BC } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803124BC(); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_803124BC(); } return; },
                 }
             }
     pub static mut TOY_80305058: Option<fn(i32, i32, i32, f32) -> i16> = None;
@@ -1377,7 +1377,7 @@ pub mod ext {
             pub fn Toy_SetUnlockState(a: i32, b: i32)  {
                 match unsafe { TOY_SETUNLOCKSTATE } {
                     Some(f) => unsafe { f(a, b) },
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_SetUnlockState(a as _, b as _); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_SetUnlockState(a as _, b as _); } return; },
                 }
             }
     pub static mut TOY_803048C0: Option<fn(i32) -> i32> = None;
@@ -1393,7 +1393,7 @@ pub mod ext {
             pub fn gm_IncrementPowerCount()  {
                 match unsafe { GM_INCREMENTPOWERCOUNT } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_IncrementPowerCount(); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_IncrementPowerCount(); } return; },
                 }
             }
     pub static mut GM_801623FC: Option<fn(i32) > = None;
@@ -1401,7 +1401,7 @@ pub mod ext {
             pub fn gm_801623FC(a: i32)  {
                 match unsafe { GM_801623FC } {
                     Some(f) => unsafe { f(a) },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_801623FC(a as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_801623FC(a as _); } return; },
                 }
             }
     pub static mut GM_80164430: Option<fn(u32) -> i32> = None;
@@ -1417,7 +1417,7 @@ pub mod ext {
             pub fn gm_80164504(a: u32)  {
                 match unsafe { GM_80164504 } {
                     Some(f) => unsafe { f(a) },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80164504(a as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_80164504(a as _); } return; },
                 }
             }
     pub static mut GM_80164F18: Option<fn() > = None;
@@ -1425,7 +1425,7 @@ pub mod ext {
             pub fn gm_80164F18()  {
                 match unsafe { GM_80164F18 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_80164F18(); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_80164F18(); } return; },
                 }
             }
     pub static mut GM_8016468C: Option<fn() > = None;
@@ -1433,7 +1433,7 @@ pub mod ext {
             pub fn gm_8016468C()  {
                 match unsafe { GM_8016468C } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016468C(); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_8016468C(); } return; },
                 }
             }
     pub static mut GM_8017297C: Option<fn() > = None;
@@ -1441,7 +1441,7 @@ pub mod ext {
             pub fn gm_8017297C()  {
                 match unsafe { GM_8017297C } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_8017297C(); } return; },
+                    None => { unsafe { crate::tu::gm_16f1::gm_8017297C(); } return; },
                 }
             }
     pub static mut GM_801741FC: Option<fn() > = None;
@@ -1449,7 +1449,7 @@ pub mod ext {
             pub fn gm_801741FC()  {
                 match unsafe { GM_801741FC } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1736::gm_801741FC(); } return; },
+                    None => { unsafe { crate::tu::gm_1736::gm_801741FC(); } return; },
                 }
             }
     pub static mut GM_8016505C: Option<fn() > = None;
@@ -1457,7 +1457,7 @@ pub mod ext {
             pub fn gm_8016505C()  {
                 match unsafe { GM_8016505C } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_8016505C(); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_8016505C(); } return; },
                 }
             }
     pub static mut GM_801647D0: Option<fn() > = None;
@@ -1465,7 +1465,7 @@ pub mod ext {
             pub fn gm_801647D0()  {
                 match unsafe { GM_801647D0 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_801647D0(); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_801647D0(); } return; },
                 }
             }
     pub static mut GM_801729EC: Option<fn() > = None;
@@ -1473,7 +1473,7 @@ pub mod ext {
             pub fn gm_801729EC()  {
                 match unsafe { GM_801729EC } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_16f1::gm_801729EC(); } return; },
+                    None => { unsafe { crate::tu::gm_16f1::gm_801729EC(); } return; },
                 }
             }
     pub static mut GM_80174238: Option<fn() > = None;
@@ -1481,7 +1481,7 @@ pub mod ext {
             pub fn gm_80174238()  {
                 match unsafe { GM_80174238 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1736::gm_80174238(); } return; },
+                    None => { unsafe { crate::tu::gm_1736::gm_80174238(); } return; },
                 }
             }
     pub static mut GM_80164600: Option<fn() -> bool> = None;
@@ -1522,7 +1522,7 @@ pub mod ext {
             pub fn lbLang_SetSavedLanguage(v: i32)  {
                 match unsafe { LBLANG_SETSAVEDLANGUAGE } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetSavedLanguage(v as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lblanguage::lbLang_SetSavedLanguage(v as _); } return; },
                 }
             }
     pub static mut LBLANG_SETLANGUAGESETTING: Option<fn(i32) > = None;
@@ -1530,7 +1530,7 @@ pub mod ext {
             pub fn lbLang_SetLanguageSetting(v: i32)  {
                 match unsafe { LBLANG_SETLANGUAGESETTING } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = melee_runtime::tu::lblanguage::lbLang_SetLanguageSetting(v as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lblanguage::lbLang_SetLanguageSetting(v as _); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80028690: Option<fn() > = None;
@@ -1538,7 +1538,7 @@ pub mod ext {
             pub fn lbAudioAx_80028690()  {
                 match unsafe { LBAUDIOAX_80028690 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80028690(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80028690(); } return; },
                 }
             }
     hook!(DVDCONVERTPATHTOENTRYNUM, DVDConvertPathToEntrynum, (path: &str) -> i32);
@@ -1548,7 +1548,7 @@ pub mod ext {
             pub fn HSD_VISetConfigure(mode: *mut c_void)  {
                 match unsafe { HSD_VISETCONFIGURE } {
                     Some(f) => unsafe { f(mode) },
-                    None => { unsafe { let _ = melee_runtime::tu::video::HSD_VISetConfigure(mode as _); } return; },
+                    None => { unsafe { melee_runtime::tu::video::HSD_VISetConfigure(mode as _); } return; },
                 }
             }
     hook!(GXNTSC480PROG, GXNtsc480Prog, () -> *mut c_void);

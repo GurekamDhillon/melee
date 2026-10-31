@@ -28,7 +28,7 @@ pub mod ext {
     pub static mut LBARCHIVE_INITIALIZEDAT: Option<fn(*mut HSD_Archive, *mut c_void, u32)> = None;
     #[allow(non_snake_case)]
     pub fn lbArchive_InitializeDAT(archive: *mut HSD_Archive, data: *mut c_void, length: u32) {
-        match unsafe { LBARCHIVE_INITIALIZEDAT } { Some(f) => f(archive, data, length), None => { unsafe { let _ = melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(archive as _, data as _, length as _); } return; } }
+        match unsafe { LBARCHIVE_INITIALIZEDAT } { Some(f) => f(archive, data, length), None => { unsafe { melee_runtime::tu::lbarchive::lbArchive_InitializeDAT(archive as _, data as _, length as _); } return; } }
     }
     pub static mut LBHEAP_80015BD0: Option<fn(i32, u32) -> *mut c_void> = None;
     #[allow(non_snake_case)]
@@ -38,14 +38,14 @@ pub mod ext {
     pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
     #[allow(non_snake_case)]
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
-        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
     pub static mut PSINITDATABANK: Option<fn(i32, *mut c_void, *mut c_void, *mut u32, *mut i32)> = None;
     #[allow(non_snake_case)]
     pub fn psInitDataBank(bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32) {
         match unsafe { PSINITDATABANK } {
             Some(f) => f(bank, cmdBank, texBank, r#ref, formBank),
-            None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBank(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
+            None => { unsafe { melee_runtime::tu::particle::psInitDataBank(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
         }
     }
     pub static mut PSINITDATABANKLOAD: Option<fn(i32, *mut c_void, *mut c_void, *mut u32, *mut i32)> = None;
@@ -53,13 +53,13 @@ pub mod ext {
     pub fn psInitDataBankLoad(bank: i32, cmdBank: *mut c_void, texBank: *mut c_void, r#ref: *mut u32, formBank: *mut i32) {
         match unsafe { PSINITDATABANKLOAD } {
             Some(f) => f(bank, cmdBank, texBank, r#ref, formBank),
-            None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
+            None => { unsafe { melee_runtime::tu::particle::psInitDataBankLoad(bank as _, cmdBank as _, texBank as _, r#ref as _, formBank as _); } },
         }
     }
     pub static mut PSINITDATABANKLOCATE: Option<fn(*mut HSD_Archive, *mut HSD_Archive, *mut i32)> = None;
     #[allow(non_snake_case)]
     pub fn psInitDataBankLocate(cmdBank: *mut HSD_Archive, texBank: *mut HSD_Archive, formBank: *mut i32) {
-        match unsafe { PSINITDATABANKLOCATE } { Some(f) => f(cmdBank, texBank, formBank), None => { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLocate(cmdBank as _, texBank as _, formBank as _); } return; } }
+        match unsafe { PSINITDATABANKLOCATE } { Some(f) => f(cmdBank, texBank, formBank), None => { unsafe { melee_runtime::tu::particle::psInitDataBankLocate(cmdBank as _, texBank as _, formBank as _); } return; } }
     }
 }
 

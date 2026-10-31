@@ -35,7 +35,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     pub static mut IT_802BDE18: Option<fn(*mut HSD_GObj, *mut Vec3, Fighter_Part, i32, f32) -> *mut Item_GObj> = None;
@@ -51,7 +51,7 @@ pub mod ext {
             pub fn it_802BE214(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing_dir: f32)  {
                 match unsafe { IT_802BE214 } {
                     Some(f) => f(gobj, pos, kind, facing_dir),
-                    None => { unsafe { let _ = melee_items::tu::itpeachtoadspore::it_802BE214(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachtoadspore::it_802BE214(gobj as _, pos as _, kind as _, facing_dir as _); } return; },
                 }
             }
     pub static mut IT_802BDF40: Option<fn(*mut Item_GObj) > = None;
@@ -59,7 +59,7 @@ pub mod ext {
             pub fn it_802BDF40(toad: *mut Item_GObj)  {
                 match unsafe { IT_802BDF40 } {
                     Some(f) => f(toad),
-                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDF40(toad as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachtoad::it_802BDF40(toad as _); } return; },
                 }
             }
     pub static mut IT_802BDFA0: Option<fn(*mut Item_GObj) > = None;
@@ -67,7 +67,7 @@ pub mod ext {
             pub fn it_802BDFA0(toad: *mut Item_GObj)  {
                 match unsafe { IT_802BDFA0 } {
                     Some(f) => f(toad),
-                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDFA0(toad as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachtoad::it_802BDFA0(toad as _); } return; },
                 }
             }
     pub static mut IT_802BDFC0: Option<fn(*mut Item_GObj) > = None;
@@ -75,7 +75,7 @@ pub mod ext {
             pub fn it_802BDFC0(toad: *mut Item_GObj)  {
                 match unsafe { IT_802BDFC0 } {
                     Some(f) => f(toad),
-                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BDFC0(toad as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachtoad::it_802BDFC0(toad as _); } return; },
                 }
             }
     pub static mut IT_802BE100: Option<fn(*mut Item_GObj) > = None;
@@ -83,7 +83,7 @@ pub mod ext {
             pub fn it_802BE100(toad: *mut Item_GObj)  {
                 match unsafe { IT_802BE100 } {
                     Some(f) => f(toad),
-                    None => { unsafe { let _ = melee_items::tu::itpeachtoad::it_802BE100(toad as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachtoad::it_802BE100(toad as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_8007B1B8, ftColl_8007B1B8, crate::adapt::ftColl_8007B1B8,

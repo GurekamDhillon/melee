@@ -64,7 +64,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     crate::port_hook!(HSD_RANDF, HSD_Randf, crate::adapt::HSD_Randf, () -> f32);
@@ -73,7 +73,7 @@ pub mod ext {
             pub fn HSD_JObjSetScale(jobj: *mut HSD_JObj, scale: *const Vec3)  {
                 match unsafe { HSD_JOBJSETSCALE } {
                     Some(f) => f(jobj, scale),
-                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetScale(jobj as _, scale as _); } return; },
+                    None => { unsafe { crate::tu::ftinl::HSD_JObjSetScale(jobj as _, scale as _); } return; },
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing pointers as a slice.

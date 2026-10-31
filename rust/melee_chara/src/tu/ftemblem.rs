@@ -55,7 +55,7 @@ pub mod ext {
             pub fn ftMs_Init_OnLoadForRoy(fp: *mut Fighter)  {
                 match unsafe { FTMS_INIT_ONLOADFORROY } {
                     Some(f) => f(fp),
-                    None => { unsafe { let _ = crate::tu::ftmars::ftMs_Init_OnLoadForRoy(fp as _); } return; },
+                    None => { unsafe { crate::tu::ftmars::ftMs_Init_OnLoadForRoy(fp as _); } return; },
                 }
             }
     pub static mut FTMS_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
@@ -63,7 +63,7 @@ pub mod ext {
             pub fn ftMs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMS_INIT_LOADSPECIALATTRS } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmars::ftMs_Init_LoadSpecialAttrs(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmars::ftMs_Init_LoadSpecialAttrs(gobj as _); } return; },
                 }
             }
 }

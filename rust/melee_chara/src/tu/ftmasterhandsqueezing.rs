@@ -20,7 +20,7 @@ pub mod ext {
     pub fn ftMh_CaptureWaitMasterHand_80155D6C(gobj: *mut HSD_GObj, msid: i32) {
         match unsafe { FTMH_CAPTUREWAITMASTERHAND_80155D6C } {
             Some(f) => f(gobj, msid),
-            None => { unsafe { let _ = crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D6C(gobj as _, msid as _); } },
+            None => { unsafe { crate::tu::ftmasterhandthrownmasterhand::ftMh_CaptureWaitMasterHand_80155D6C(gobj as _, msid as _); } },
         }
     }
 }

@@ -148,19 +148,19 @@ pub mod ext {
         match unsafe { hook::lbVector_Angle } { Some(f) => f(a0, a1), None => { { return unsafe { crate::tu::lbvector::lbVector_Angle(a0 as _, a1 as _) as _ }; } } }
     }
     pub fn lbVector_CreateEulerMatrix(a0: *mut [f32; 4], a1: *mut Quaternion) {
-        match unsafe { hook::lbVector_CreateEulerMatrix } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbvector::lbVector_CreateEulerMatrix(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::lbVector_CreateEulerMatrix } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::lbvector::lbVector_CreateEulerMatrix(a0 as _, a1 as _); } return; } } }
     }
     pub fn lbVector_Normalize(a0: *mut Vec) -> f32 {
         match unsafe { hook::lbVector_Normalize } { Some(f) => f(a0), None => { { return unsafe { crate::tu::lbvector::lbVector_Normalize(a0 as _) as _ }; } } }
     }
     pub fn lbVector_RotateAboutUnitAxis(a0: *mut Vec, a1: *mut Vec, a2: f32) {
-        match unsafe { hook::lbVector_RotateAboutUnitAxis } { Some(f) => f(a0, a1, a2), None => { { unsafe { let _ = crate::tu::lbvector::lbVector_RotateAboutUnitAxis(a0 as _, a1 as _, a2 as _); } return; } } }
+        match unsafe { hook::lbVector_RotateAboutUnitAxis } { Some(f) => f(a0, a1, a2), None => { { unsafe { crate::tu::lbvector::lbVector_RotateAboutUnitAxis(a0 as _, a1 as _, a2 as _); } return; } } }
     }
     pub fn lb_80011B74(a0: *mut HSD_DObj, a1: u32) {
-        match unsafe { hook::lb_80011B74 } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbspdisplay::lb_80011B74(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::lb_80011B74 } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::lbspdisplay::lb_80011B74(a0 as _, a1 as _); } return; } } }
     }
     pub fn lb_80011C18(a0: *mut HSD_JObj, a1: u32) {
-        match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { { unsafe { let _ = crate::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } return; } } }
+        match unsafe { hook::lb_80011C18 } { Some(f) => f(a0, a1), None => { { unsafe { crate::tu::lbspdisplay::lb_80011C18(a0 as _, a1 as _); } return; } } }
     }
     pub fn mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 {
         match unsafe { hook::mpCheckFloor } { Some(f) => f(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13), None => { panic!("TODO: mpCheckFloor is not ported") } }

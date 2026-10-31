@@ -30,7 +30,7 @@ pub mod ext {
         // TARGET_PC skill telemetry (pc/gameworld/script_skill.h), read-only.
         ScriptGame_SkillLanding(fp: &mut Fighter, mode: i32, lag: f32, lag_final: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_SkillLanding");
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_SetAnimRate(g: G, rate: f32) = |g, r| unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g, r) };
         ftAnim_8006F484(g: G) -> f32 = |g| unsafe { crate::tu::ftanim::ftAnim_8006F484(g) };
         ftCo_Landing_Enter_Basic(g: G) = crate::tu::ftCo_Landing::ftCo_Landing_Enter_Basic;

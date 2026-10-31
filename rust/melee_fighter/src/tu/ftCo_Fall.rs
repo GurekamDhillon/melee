@@ -37,19 +37,19 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
+        ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         ftCo_800C5240(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C5240(g as _) as _ } };
-        ftCo_800C5D34(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerFall::ftCo_800C5D34(g as _); } };
+        ftCo_800C5D34(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5D34(g as _); } };
         ftLib_GetKind(g: G) -> u32 = |g: G| -> u32 { unsafe { crate::ftlib::get_kind(g as _) as _ } };
         ftMh_MS_389_80151018(g: G) = |_| todo!("TODO(port) ftMh_MS_389_80151018 (ftmasterhand)");
         ftCh_GrabUnk1_8015BC88(g: G) = |_| todo!("TODO(port) ftCh_GrabUnk1_8015BC88 (ftcrazyhand)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         HSD_JObjAnimAll(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnimAll (jobj.c)");
-        ftAnim_8006FE9C(fp: &mut Fighter, part: u32, a: f32, b: f32) = |fp: &mut Fighter, part: u32, a: f32, b: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FE9C(fp as _, part as _, a as _, b as _); } };
-        ftAnim_8006FF74(fp: &mut Fighter, part: u32) = |fp: &mut Fighter, part: u32| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FF74(fp as _, part as _); } };
-        ftAnim_8006EDD0(fp: &mut Fighter, smid: i32, frame: f32, rate: f32) = |fp: &mut Fighter, smid: i32, frame: f32, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EDD0(fp as _, smid as _, frame as _, rate as _); } };
+        ftAnim_8006FE9C(fp: &mut Fighter, part: u32, a: f32, b: f32) = |fp: &mut Fighter, part: u32, a: f32, b: f32| { unsafe { crate::tu::ftanim::ftAnim_8006FE9C(fp as _, part as _, a as _, b as _); } };
+        ftAnim_8006FF74(fp: &mut Fighter, part: u32) = |fp: &mut Fighter, part: u32| { unsafe { crate::tu::ftanim::ftAnim_8006FF74(fp as _, part as _); } };
+        ftAnim_8006EDD0(fp: &mut Fighter, smid: i32, frame: f32, rate: f32) = |fp: &mut Fighter, smid: i32, frame: f32, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_8006EDD0(fp as _, smid as _, frame as _, rate as _); } };
         ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
         ftCo_80095328(g: G, b: *mut bool) -> bool = |g: G, b: *mut bool| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095328(g as _, b as _) as _ } };
         ftCo_800D7100(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D7100;
@@ -66,7 +66,7 @@ pub mod ext {
     }
     /// Address-taken only (passed to `ft_800831CC`); not called from this TU.
     pub extern "C" fn ft_80082B1C(_g: G) {
-        { unsafe { let _ = crate::tu::ft_081b::ft_80082b1c(_g as _); } return; }
+        { unsafe { crate::tu::ft_081b::ft_80082b1c(_g as _); } return; }
     }
 }
 

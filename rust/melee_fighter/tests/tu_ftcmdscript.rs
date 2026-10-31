@@ -46,7 +46,7 @@ fn ftcmdscript_vs_c() {
     tb.cmdscripts = scp.as_mut_ptr();
     let cd: Box<ftCommonData> = zeroed();
     unsafe {
-        c::ext::Fighter_804D64FC = &*tb;
+        c::ext::Fighter_804D64FC = &*tb as *const _ as *mut _;
         c::ext::LB_8000D008 = Some(lb);
         hooks::P_FT_COMMON_DATA = &*cd;
     }

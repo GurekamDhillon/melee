@@ -31,16 +31,16 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800DF644(fp: &Fighter) -> bool = crate::ft0df::ftco_800df644;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
+        ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
         // `HSD_GObjPLinkHead[link]`.
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
         ftCo_800C5240(g: G) -> bool = crate::hooks::ftco_800c5240;
-        ftCo_800987D0(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Passive::ftCo_800987D0(g as _); } };
+        ftCo_800987D0(g: G) = |g: G| { unsafe { crate::tu::ftCo_Passive::ftCo_800987D0(g as _); } };
     }
 }
 

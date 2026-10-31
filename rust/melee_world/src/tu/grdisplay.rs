@@ -42,18 +42,18 @@ pub mod ext {
     fn Ground_801C1E18() -> i32 = || unsafe { crate::tu::ground::Ground_801C1E18() as _ };
     fn Ground_801C1E84() -> *mut HSD_GObj = || unsafe { crate::tu::ground::Ground_801C1E84() as _ };
     fn Ground_801C2C8C(a0: *mut c_void) -> i32 = |a0: *mut c_void| unsafe { crate::tu::ground::Ground_801C2C8C(a0 as _) as _ };
-    fn HSD_CObjEndCurrent() = || { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
+    fn HSD_CObjEndCurrent() = || { unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = |a0: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ };
     fn HSD_FogSet(a0: *mut HSD_Fog);
     fn HSD_GObj_80390EB8(a0: i32) -> u32 = |a0: i32| unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0 as _) as _ };
-    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
-    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
+    fn HSD_GObj_80390ED0(a0: *mut HSD_GObj, a1: u32) = |a0: *mut HSD_GObj, a1: u32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _); } };
+    fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } };
     fn HSD_JObjDisp(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
-    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_world::HSD_MtxInverseConcat(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_MtxInverseConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { melee_runtime::tu::mtx_world::HSD_MtxInverseConcat(a0 as _, a1 as _, a2 as _); } };
     fn HSD_StateInvalidate(a0: i32);
-    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _); } };
+    fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void) = |a0: *mut c_void, a1: *mut c_void, a2: *mut c_void| { unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXConcat(a0 as _, a1 as _, a2 as _); } };
     fn ScriptGame_StageOriginalVisible() -> i32;
     fn ScriptGame_StageSlotOwned(a0: *mut HSD_GObj) -> i32;
     fn SurfaceBegin(a0: i32);
@@ -61,8 +61,8 @@ pub mod ext {
     fn Wb_RenderOption(a0: i32, a1: i32) -> i32;
     fn ftLib_80086644(a0: *mut HSD_GObj, a1: *mut Vec) = |a0: *mut HSD_GObj, a1: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(a0 as _, a1 as _); } };
     fn ftLib_800872B0(a0: *mut HSD_GObj) -> *mut LbShadow = |a0: *mut HSD_GObj| unsafe { crate::ftlib::ftLib_800872B0(a0 as _) as _ };
-    fn lbShadow_8000EEE0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EEE0(a0 as _); } };
-    fn lbShadow_8000EFEC() = || { unsafe { let _ = melee_runtime::tu::lbshadow::lbShadow_8000EFEC(); } };
+    fn lbShadow_8000EEE0(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000EEE0(a0 as _); } };
+    fn lbShadow_8000EFEC() = || { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000EFEC(); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

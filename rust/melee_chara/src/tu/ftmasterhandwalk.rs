@@ -37,7 +37,7 @@ pub mod ext {
             pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_389_80151018 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandwait12::ftMh_MS_389_80151018(gobj as _); } return; },
                 }
             }
     pub static mut FTMH_MS_349_80151CA8: Option<fn(*mut HSD_GObj) > = None;
@@ -45,7 +45,7 @@ pub mod ext {
             pub fn ftMh_MS_349_80151CA8(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMH_MS_349_80151CA8 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmasterhandslap::ftMh_MS_349_80151CA8(gobj as _); } return; },
                 }
             }
     pub static mut FTBOSSLIB_8015C244: Option<fn(*mut HSD_GObj, *const Vec3) -> *mut HSD_GObj> = None;
@@ -69,7 +69,7 @@ pub mod ext {
     pub fn mpFloorGetLeft(line: i32, out: *mut Vec3) {
         match unsafe { MPFLOORGETLEFT } {
             Some(f) => f(line, out),
-            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
+            None => { unsafe { melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
         }
     }
 }

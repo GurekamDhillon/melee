@@ -53,7 +53,7 @@ pub mod ext {
             pub fn HSD_JObjSetScale(j: *mut HSD_JObj, scale: *const Vec3)  {
                 match unsafe { HSD_JOBJSETSCALE } {
                     Some(f) => f(j, scale),
-                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetScale(j as _, scale as _); } return; },
+                    None => { unsafe { crate::tu::ftinl::HSD_JObjSetScale(j as _, scale as _); } return; },
                 }
             }
     pub static mut HSD_JOBJGETSCALE: Option<fn(*mut HSD_JObj, *mut Vec3) > = None;
@@ -61,7 +61,7 @@ pub mod ext {
             pub fn HSD_JObjGetScale(j: *mut HSD_JObj, scale: *mut Vec3)  {
                 match unsafe { HSD_JOBJGETSCALE } {
                     Some(f) => f(j, scale),
-                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjGetScale(j as _, scale as _); } return; },
+                    None => { unsafe { crate::tu::ftinl::HSD_JObjGetScale(j as _, scale as _); } return; },
                 }
             }
     pub static mut HSD_JOBJSETROTATIONY: Option<fn(*mut core::ffi::c_void, f32) > = None;
@@ -69,7 +69,7 @@ pub mod ext {
             pub fn HSD_JObjSetRotationY(j: *mut core::ffi::c_void, rot: f32)  {
                 match unsafe { HSD_JOBJSETROTATIONY } {
                     Some(f) => f(j, rot),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Lift::HSD_JObjSetRotationY(j as _, rot as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_Lift::HSD_JObjSetRotationY(j as _, rot as _); } return; },
                 }
             }
     crate::port_hook!(FTCOLL_8007AFF8, ftColl_8007AFF8, crate::adapt::ftColl_8007AFF8, (g: G));

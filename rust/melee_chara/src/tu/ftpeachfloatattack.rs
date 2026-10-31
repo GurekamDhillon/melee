@@ -58,7 +58,7 @@ pub mod ext {
             pub fn ftCo_800CDDA0(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCO_800CDDA0 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ft_0cdd::ftco_800cdda0(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ft_0cdd::ftco_800cdda0(gobj as _); } return; },
                 }
             }
     pub static mut FTCO_ATTACKAIR_ENTERFROMMSID: Option<fn(*mut HSD_GObj, i32) > = None;
@@ -66,7 +66,7 @@ pub mod ext {
             pub fn ftCo_AttackAir_EnterFromMsid(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCO_ATTACKAIR_ENTERFROMMSID } {
                     Some(f) => f(gobj, msid),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(gobj as _, msid as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(gobj as _, msid as _); } return; },
                 }
             }
     pub static mut FTCO_80095328: Option<fn(*mut HSD_GObj, *mut bool) -> bool> = None;

@@ -4,3 +4,4 @@ stage_info_grkind	|| unsafe { melee_world::tu::ground::stage_info.grkind as i32 
 lb_80011E24	variadic:melee_runtime::tu::lbspdisplay::lb_80011E24:2
 HSD_GObjPLinkHead	|a0| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(a0 as usize) as _ }
 plink_fighter_head	|| unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_FIGHTER as usize) as _ }
+efAsync_Spawn	variadicw:melee_world::tu::efn::efasync::efAsync_Spawn:5

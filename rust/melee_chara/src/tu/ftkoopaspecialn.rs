@@ -40,7 +40,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, ofs: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, ofs, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, ofs as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, ofs as _, out as _); } return; },
                 }
             }
     pub static mut ITKOOPAFLAME_SPAWN: Option<fn(*mut HSD_GObj, *mut Vec3, f32, u32, i32, i32, i32, i32) -> *mut HSD_GObj> = None;

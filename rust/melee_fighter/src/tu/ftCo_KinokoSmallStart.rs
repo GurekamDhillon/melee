@@ -34,8 +34,8 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800D27C4(f: &Fighter) -> bool = k::ftco_800d27c4;
-        ftCo_800D1BA0(g: G, arg1: i32) = |g: G, arg1: i32| { unsafe { let _ = crate::tu::ftCo_KinokoGiantEnd::ftCo_800D1BA0(g as _, arg1 as _); } };
-        ftCo_800D1D10(g: G, arg1: i32) = |g: G, arg1: i32| { unsafe { let _ = crate::tu::ftCo_KinokoGiantEnd::ftCo_800D1D10(g as _, arg1 as _); } };
+        ftCo_800D1BA0(g: G, arg1: i32) = |g: G, arg1: i32| { unsafe { crate::tu::ftCo_KinokoGiantEnd::ftCo_800D1BA0(g as _, arg1 as _); } };
+        ftCo_800D1D10(g: G, arg1: i32) = |g: G, arg1: i32| { unsafe { crate::tu::ftCo_KinokoGiantEnd::ftCo_800D1D10(g as _, arg1 as _); } };
         fn_800D2B04(f: &mut Fighter) = k::fn_800d2b04;
         fn_800D2BF8(g: G) = k::fn_800d2bf8;
         ftCo_800D2770(g: G, scale: f32) = k::ftco_800d2770;
@@ -47,7 +47,7 @@ pub mod ext {
         fn_800D2AD8(f: &mut Fighter) = k::fn_800d2ad8;
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         fn_800D290C(g: G) = k::fn_800d290c;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         fn_800D2CA0(f: &mut Fighter) = k::fn_800d2ca0;
         fn_800D2CD4(f: &mut Fighter) = k::fn_800d2cd4;
         fn_800D2A3C(g: G) -> bool = k::fn_800d2a3c;

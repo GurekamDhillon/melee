@@ -51,7 +51,7 @@ pub mod ext {
             pub fn lb_8000B1CC(j: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(j, pos0, pos1),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, pos0 as _, pos1 as _); } return; },
                 }
             }
     // `it_802C3BAC(gobj, vec, dir, x)` (it/kinds/itzeldadinfire.c): the Din's Fire item, or NULL.
@@ -78,7 +78,7 @@ pub mod ext {
     pub fn ftPartSetRotX(fp: *mut Fighter, part_idx: i32, rot: f32) {
         match unsafe { FTPARTSETROTX } {
             Some(f) => f(fp, part_idx, rot),
-            None => { unsafe { let _ = melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
+            None => { unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(&*(fp as *const _), part_idx as _, rot as _); } },
         }
     }
 }
@@ -104,7 +104,7 @@ unsafe fn joint(fp: *mut Fighter, part: usize) -> *mut core::ffi::c_void {
 /// `ftZd_Init_801393AC` (ft/kinds/ftZelda/ftzelda.c): not ported yet (a callback address only here).
 pub unsafe extern "C" fn ftZd_Init_801393AC(_gobj: *mut HSD_GObj) {
     melee_core::ct!("ftZd_Init_801393AC");
-    { unsafe { let _ = crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
+    { unsafe { crate::tu::ftzelda::ftZd_Init_801393AC(_gobj as _); } return; };
 }
 
 /// `ftZd_MF_SpecialSStart_Coll` is the coll TU's (r12); the Enter/Anim functions here use no flags.

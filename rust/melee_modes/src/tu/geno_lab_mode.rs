@@ -32,8 +32,8 @@ pub mod ext {
         SceneLaunch_BootGameMode() -> i32 = || todo!("TODO(port): SceneLaunch_BootGameMode");
         SceneLaunch_ItemFreq() -> i32 = || todo!("TODO(port): SceneLaunch_ItemFreq");
         SceneLaunch_SeedPlayers(a0: *mut VsModeData, a1: i32) -> i32 = |a0, a1| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedPlayers(a0, a1) };
-        SceneLaunch_SeedVs(a0: *mut VsModeData, a1: i32) = |a0, a1| unsafe { let _ = crate::tu::gmscenelaunch::SceneLaunch_SeedVs(a0, a1); };
-        ScriptGame_HitRuleCreate(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32) = |a0: *mut Fighter, a1: *mut HitCapsule, a2: i32| { unsafe { let _ = crate::tu::script_game::ScriptGame_HitRuleCreate(a0 as _, a1 as _, a2 as _); } };
+        SceneLaunch_SeedVs(a0: *mut VsModeData, a1: i32) = |a0, a1| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedVs(a0, a1); };
+        ScriptGame_HitRuleCreate(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32) = |a0: *mut Fighter, a1: *mut HitCapsule, a2: i32| { unsafe { crate::tu::script_game::ScriptGame_HitRuleCreate(a0 as _, a1 as _, a2 as _); } };
         Script_LabRequest() = || todo!("TODO(port): Script_LabRequest");
         ftAnim_IsFramesRemaining(a0: *mut HSD_GObj) -> i32 = |a0| unsafe { melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(a0) as i32 };
         ftAnim_SetAnimRate(a0: *mut HSD_GObj, a1: f32) = |a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(a0, a1) };
@@ -56,7 +56,7 @@ pub mod ext {
         gm_SetupAllPlayerDefaults(a0: *mut PlayerInitData) = |a0| unsafe { crate::tu::gm_1601::gm_SetupAllPlayerDefaults(a0) };
         lbColl_80008440(a0: *mut HitCapsule) = |a0| unsafe { crate::lb_ptr::lbColl_80008440(&mut *a0) };
         mpCheckFloor(a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj) -> i32 = |a0: f32, a1: f32, a2: f32, a3: f32, a4: f32, a5: *mut Vec, a6: *mut i32, a7: *mut u32, a8: *mut Vec, a9: i32, a10: i32, a11: i32, a12: Option<unsafe extern "C" fn(*mut HSD_GObj, i32) -> i32>, a13: *mut HSD_GObj| -> i32 { unsafe { melee_world::tu::mplib::mpCheckFloor(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _, a9 as _, a10 as _, a11 as _, a12 as _, a13 as _) as _ } };
-        mpColl_80043680(a0: *mut CollData, a1: *mut Vec) = |a0: *mut CollData, a1: *mut Vec| { unsafe { let _ = melee_world::tu::mpcoll::mpColl_80043680(a0 as _, a1 as _); } };
+        mpColl_80043680(a0: *mut CollData, a1: *mut Vec) = |a0: *mut CollData, a1: *mut Vec| { unsafe { melee_world::tu::mpcoll::mpColl_80043680(a0 as _, a1 as _); } };
         plStale_IncrementAttackInstance() -> u16 = || melee_fighter::stale::increment_attack_instance();
     }
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;

@@ -23,7 +23,7 @@ pub mod ext {
     pub fn ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
         match unsafe { FTDK_SPECIALLW_8010E148 } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = crate::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E148(gobj as _); } return; },
+            None => { unsafe { crate::tu::ftdonkeyspeciallw::ftDk_SpecialLw_8010E148(gobj as _); } return; },
         }
     }
     #[allow(non_snake_case)]

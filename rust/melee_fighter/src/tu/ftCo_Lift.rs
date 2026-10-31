@@ -32,12 +32,12 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_80094EA4(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80094EA4(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80085088(g: G) = crate::ft084e::ft_80085088;
-        Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, f: f32) = |item: *mut Item_GObj, pos: *mut Vec3, f: f32| { unsafe { let _ = melee_items::tu::item::Item_8026ABD8(item as _, pos as _, f as _); } };
-        ftCo_80090780(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
+        Item_8026ABD8(item: *mut Item_GObj, pos: *mut Vec3, f: f32) = |item: *mut Item_GObj, pos: *mut Vec3, f: f32| { unsafe { melee_items::tu::item::Item_8026ABD8(item as _, pos as _, f as _); } };
+        ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         ft_8008403C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008403c;
         ftAnim_8006EBA4(g: G) = |g| unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g) };
@@ -45,7 +45,7 @@ pub mod ext {
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftPartGetRotZ(f: &Fighter, part: i32) -> f32 = crate::tu::ftparts::ftPartGetRotZ;
         ftPartSetRotY(f: &Fighter, part: i32, v: f32) = crate::tu::ftparts::ftPartSetRotY;
-        HSD_JObjSetMtxDirty(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { let _ = crate::tu::ft_0c31::HSD_JObjSetMtxDirty(j as _); } };
+        HSD_JObjSetMtxDirty(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { crate::tu::ft_0c31::HSD_JObjSetMtxDirty(j as _); } };
         itIsHeavy(item: *mut Item_GObj) -> bool = |i: *mut Item_GObj| unsafe { melee_items::itlib::it_is_heavy(&*((*i).user_data as *mut Item)) };
     }
 }

@@ -29,7 +29,7 @@ pub mod ext {
     }
     ext_fns! {
         fn_800D769C(fp: &Fighter, msid: i32) -> i32 = crate::tu::ftCo_ItemScopeStart::fn_800D769C;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
@@ -42,8 +42,8 @@ pub mod ext {
         ft_800841B8(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_800841b8;
         ft_80082C74(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_80082c74;
         ft_PlaySFX(fp: &mut Fighter, sfx: i32, vol: i32, pan: i32) = crate::hooks::play_sfx;
-        it_80291CCC(item: *mut HSD_GObj, out: &mut Vec3) = |item: *mut HSD_GObj, out: &mut Vec3| { unsafe { let _ = melee_items::tu::itsscope::it_80291CCC(item as _, out as _); } };
-        it_80291FA8(item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32) = |item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32| { unsafe { let _ = melee_items::tu::itsscope::it_80291FA8(item as _, pos as _, n as _, facing as _); } };
+        it_80291CCC(item: *mut HSD_GObj, out: &mut Vec3) = |item: *mut HSD_GObj, out: &mut Vec3| { unsafe { melee_items::tu::itsscope::it_80291CCC(item as _, out as _); } };
+        it_80291FA8(item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32) = |item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32| { unsafe { melee_items::tu::itsscope::it_80291FA8(item as _, pos as _, n as _, facing as _); } };
         efSync_Spawn(id: i32, g: G, pos: &mut Vec3, facing: Option<&mut f32>) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c; variadic, facing = optional &fp->facing_dir)");
     }
 }

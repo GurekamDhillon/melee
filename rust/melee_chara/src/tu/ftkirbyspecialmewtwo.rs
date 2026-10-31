@@ -45,7 +45,7 @@ pub mod ext {
             pub fn it_802C573C(item: *mut Item_GObj)  {
                 match unsafe { IT_802C573C } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C573C(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itmewtwoshadowball::it_802C573C(item as _); } return; },
                 }
             }
     pub static mut IT_802C53F0: Option<fn(*mut Item_GObj, *const Vec3, f32, f32, f32) > = None;
@@ -53,7 +53,7 @@ pub mod ext {
             pub fn it_802C53F0(item: *mut Item_GObj, pos: *const Vec3, angle: f32, charge: f32, max: f32)  {
                 match unsafe { IT_802C53F0 } {
                     Some(f) => f(item, pos, angle, charge, max),
-                    None => { unsafe { let _ = melee_items::tu::itmewtwoshadowball::it_802C53F0(item as _, pos as _, angle as _, charge as _, max as _); } return; },
+                    None => { unsafe { melee_items::tu::itmewtwoshadowball::it_802C53F0(item as _, pos as _, angle as _, charge as _, max as _); } return; },
                 }
             }
     pub static mut IT_802C5000: Option<fn(G, *const Vec3, i32, i32, f32) -> *mut Item_GObj> = None;
@@ -69,7 +69,7 @@ pub mod ext {
     pub fn ftCo_800BFFAC(fp: *mut Fighter) {
         match unsafe { FTCO_800BFFAC } {
             Some(f) => f(fp),
-            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffac(&mut *(fp as *mut _)); } },
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffac(&mut *(fp as *mut _)); } },
         }
     }
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32) -> bool> = None;

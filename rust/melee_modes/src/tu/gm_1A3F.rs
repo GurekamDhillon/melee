@@ -60,7 +60,7 @@ pub mod ext {
             pub fn lbDvd_80018CF4(preload: i32)  {
                 match unsafe { LBDVD_80018CF4 } {
                     Some(f) => f(preload),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018CF4(preload as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018CF4(preload as _); } return; },
                 }
             }
     pub static mut LBDVD_GETPRELOADCACHESCENE: Option<fn() -> *mut PreloadedGameModeState> = None;
@@ -76,7 +76,7 @@ pub mod ext {
             pub fn lbDvd_80018254()  {
                 match unsafe { LBDVD_80018254 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
                 }
             }
     pub static mut LBDVD_80018F58: Option<fn(bool) > = None;
@@ -84,7 +84,7 @@ pub mod ext {
             pub fn lbDvd_80018F58(value: bool)  {
                 match unsafe { LBDVD_80018F58 } {
                     Some(f) => f(value),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018F58(value as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018F58(value as _); } return; },
                 }
             }
     pub static mut LBHEAP_80015BB8: Option<fn(i32) -> i32> = None;
@@ -100,7 +100,7 @@ pub mod ext {
             pub fn lbCardNew_ForgetMemory()  {
                 match unsafe { LBCARDNEW_FORGETMEMORY } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_ForgetMemory(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_ForgetMemory(); } return; },
                 }
             }
     pub static mut LBCARDGAME_RESET: Option<fn() > = None;
@@ -108,7 +108,7 @@ pub mod ext {
             pub fn lbCardGame_Reset()  {
                 match unsafe { LBCARDGAME_RESET } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_Reset(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_Reset(); } return; },
                 }
             }
     pub static mut LBSNAP_8001E27C: Option<fn() > = None;
@@ -116,7 +116,7 @@ pub mod ext {
             pub fn lbSnap_8001E27C()  {
                 match unsafe { LBSNAP_8001E27C } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbsnap::lbSnap_8001E27C(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E27C(); } return; },
                 }
             }
     pub static mut LB_8001CDB4: Option<fn() > = None;
@@ -124,7 +124,7 @@ pub mod ext {
             pub fn lb_8001CDB4()  {
                 match unsafe { LB_8001CDB4 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lb_8001CDB4(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lb_8001CDB4(); } return; },
                 }
             }
     pub static mut LBCARDNEW_COMPLETEALLTASKS: Option<fn(i32) -> i32> = None;
@@ -148,7 +148,7 @@ pub mod ext {
             pub fn lbMthp_8001F800()  {
                 match unsafe { LBMTHP_8001F800 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F800(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F800(); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80027DBC: Option<fn() > = None;
@@ -156,7 +156,7 @@ pub mod ext {
             pub fn lbAudioAx_80027DBC()  {
                 match unsafe { LBAUDIOAX_80027DBC } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DBC(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DBC(); } return; },
                 }
             }
     // ty/toy.c, ty/tydisplay.c
@@ -165,7 +165,7 @@ pub mod ext {
             pub fn Toy_803127D4()  {
                 match unsafe { TOY_803127D4 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_items::tu::toy::Toy_803127D4(); } return; },
+                    None => { unsafe { melee_items::tu::toy::Toy_803127D4(); } return; },
                 }
             }
     pub static mut TYDISPLAY_8031C8B8: Option<fn() > = None;
@@ -173,7 +173,7 @@ pub mod ext {
             pub fn tyDisplay_8031C8B8()  {
                 match unsafe { TYDISPLAY_8031C8B8 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_items::tu::tydisplay::tyDisplay_8031C8B8(); } return; },
+                    None => { unsafe { melee_items::tu::tydisplay::tyDisplay_8031C8B8(); } return; },
                 }
             }
     // sysdolphin/baselib: sislib.c, controller.c, devcom.c, video.c
@@ -182,7 +182,7 @@ pub mod ext {
             pub fn HSD_SisLib_803A6048(size: usize)  {
                 match unsafe { HSD_SISLIB_803A6048 } {
                     Some(f) => f(size),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6048(size as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6048(size as _); } return; },
                 }
             }
     pub static mut HSD_PADRESET: Option<fn() > = None;
@@ -190,7 +190,7 @@ pub mod ext {
             pub fn HSD_PadReset()  {
                 match unsafe { HSD_PADRESET } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::controller::HSD_PadReset(); } return; },
+                    None => { unsafe { melee_runtime::tu::controller::HSD_PadReset(); } return; },
                 }
             }
     pub static mut HSD_DEVCOMISBUSY: Option<fn(i32) -> bool> = None;
@@ -206,7 +206,7 @@ pub mod ext {
             pub fn HSD_VISetBlack(v: bool)  {
                 match unsafe { HSD_VISETBLACK } {
                     Some(f) => f(v),
-                    None => { unsafe { let _ = melee_runtime::tu::video::HSD_VISetBlack(v as _); } return; },
+                    None => { unsafe { melee_runtime::tu::video::HSD_VISetBlack(v as _); } return; },
                 }
             }
     // dolphin: dvd.c, os.c, vi.c
@@ -228,7 +228,7 @@ pub mod ext {
             pub fn gm_801A4BD4()  {
                 match unsafe { GM_801A4BD4 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4BD4(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4BD4(); } return; },
                 }
             }
     pub static mut GM_801A4B88: Option<fn(*mut GameSceneInfo) > = None;
@@ -236,7 +236,7 @@ pub mod ext {
             pub fn gm_801A4B88(info: *mut GameSceneInfo)  {
                 match unsafe { GM_801A4B88 } {
                     Some(f) => f(info),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B88(info as _); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B88(info as _); } return; },
                 }
             }
     pub static mut GM_801A4D34: Option<fn(SceneFn, *mut GameSceneInfo) > = None;
@@ -244,7 +244,7 @@ pub mod ext {
             pub fn gm_801A4D34(on_frame: SceneFn, info: *mut GameSceneInfo)  {
                 match unsafe { GM_801A4D34 } {
                     Some(f) => f(on_frame, info),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4D34(on_frame as _, info as _); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4D34(on_frame as _, info as _); } return; },
                 }
             }
     pub static mut GM_GETALLGAMEMODES: Option<fn() -> *mut GameMode> = None;
@@ -260,7 +260,7 @@ pub mod ext {
             pub fn gmMainLib_8015FBA4()  {
                 match unsafe { GMMAINLIB_8015FBA4 } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015FBA4(); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::gmMainLib_8015FBA4(); } return; },
                 }
             }
     /// `gmMainLib_8046B0F0.resetting` (gm/gmmain_lib.c): read, and cleared by `gm_801A4510`.
@@ -284,7 +284,7 @@ pub mod ext {
             pub fn gm_OnePInterstage()  {
                 match unsafe { GM_ONEPINTERSTAGE } {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_OnePInterstage(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_OnePInterstage(); } return; },
                 }
             }
     pub static mut GMFRONTEND_ROUTE: Option<fn(u8, u8) -> u8> = None;

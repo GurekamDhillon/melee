@@ -56,7 +56,7 @@ pub mod ext {
         match unsafe { hook::hsd_803B51C8 } { Some(f) => f(a0, a1, a2, a3, a4), None => { { return unsafe { crate::tu::hsd_3B34::hsd_803B51C8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _) as _ }; } } }
     }
     pub fn hsd_803B5C2C(a0: i32) {
-        match unsafe { hook::hsd_803B5C2C } { Some(f) => f(a0), None => { { unsafe { let _ = crate::tu::hsd_3B34::hsd_803B5C2C(a0 as _); } return; } } }
+        match unsafe { hook::hsd_803B5C2C } { Some(f) => f(a0), None => { { unsafe { crate::tu::hsd_3B34::hsd_803B5C2C(a0 as _); } return; } } }
     }
     pub fn hsd_803B6BE4(a0: *mut i8, a1: i32, a2: *mut c_void) -> i32 {
         match unsafe { hook::hsd_803B6BE4 } { Some(f) => f(a0, a1, a2), None => { { return unsafe { crate::tu::hsd_3B5C::hsd_803B6BE4(a0 as _, a1 as _, a2 as _) as _ }; } } }

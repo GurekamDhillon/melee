@@ -44,7 +44,7 @@ pub mod ext {
             pub fn it_802B5974(item: *mut c_void)  {
                 match unsafe { IT_802B5974 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itsamuschargeshot::it_802B5974(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itsamuschargeshot::it_802B5974(item as _); } return; },
                 }
             }
     pub static mut IT_802B56E4: Option<fn(*mut c_void, *const Vec3, f32, f32, f32) > = None;
@@ -52,7 +52,7 @@ pub mod ext {
             pub fn it_802B56E4(item: *mut c_void, pos: *const Vec3, angle: f32, charge: f32, max: f32)  {
                 match unsafe { IT_802B56E4 } {
                     Some(f) => f(item, pos, angle, charge, max),
-                    None => { unsafe { let _ = melee_items::tu::itsamuschargeshot::it_802B56E4(item as _, pos as _, angle as _, charge as _, max as _); } return; },
+                    None => { unsafe { melee_items::tu::itsamuschargeshot::it_802B56E4(item as _, pos as _, angle as _, charge as _, max as _); } return; },
                 }
             }
     pub static mut IT_802B55C8: Option<fn(G, *const Vec3, i32, i32, f32) -> *mut c_void> = None;

@@ -106,7 +106,7 @@ pub mod ext {
             pub fn gm_801BEFA4(v: u8)  {
                 match unsafe { GM_801BEFA4 } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFA4(v as _); } return; },
+                    None => { unsafe { crate::tu::gmgover::gm_801BEFA4(v as _); } return; },
                 }
             }
     pub static mut GM_801BEFC0: Option<fn(u8) > = None;
@@ -114,7 +114,7 @@ pub mod ext {
             pub fn gm_801BEFC0(v: u8)  {
                 match unsafe { GM_801BEFC0 } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFC0(v as _); } return; },
+                    None => { unsafe { crate::tu::gmgover::gm_801BEFC0(v as _); } return; },
                 }
             }
     pub static mut GM_801BF000: Option<fn(u8) > = None;
@@ -122,7 +122,7 @@ pub mod ext {
             pub fn gm_801BF000(v: u8)  {
                 match unsafe { GM_801BF000 } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BF000(v as _); } return; },
+                    None => { unsafe { crate::tu::gmgover::gm_801BF000(v as _); } return; },
                 }
             }
     pub static mut GM_801BEFE0: Option<fn(u8) > = None;
@@ -130,7 +130,7 @@ pub mod ext {
             pub fn gm_801BEFE0(v: u8)  {
                 match unsafe { GM_801BEFE0 } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BEFE0(v as _); } return; },
+                    None => { unsafe { crate::tu::gmgover::gm_801BEFE0(v as _); } return; },
                 }
             }
     pub static mut GM_801BF020: Option<fn(i32) > = None;
@@ -138,7 +138,7 @@ pub mod ext {
             pub fn gm_801BF020(v: i32)  {
                 match unsafe { GM_801BF020 } {
                     Some(f) => unsafe { f(v) },
-                    None => { unsafe { let _ = crate::tu::gmgover::gm_801BF020(v as _); } return; },
+                    None => { unsafe { crate::tu::gmgover::gm_801BF020(v as _); } return; },
                 }
             }
     pub static mut GM_801BF718: Option<fn() -> i32> = None;
@@ -154,7 +154,7 @@ pub mod ext {
             pub fn gm_SetGameModeStateId(id: i32)  {
                 match unsafe { GM_SETGAMEMODESTATEID } {
                     Some(f) => unsafe { f(id) },
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetGameModeStateId(id as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetGameModeStateId(id as _); } return; },
                 }
             }
 }

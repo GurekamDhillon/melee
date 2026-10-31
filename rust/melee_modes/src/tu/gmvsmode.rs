@@ -25,12 +25,12 @@ pub mod ext {
     ext_fns! {
         gm_GetGameModeStateEnterData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(state as _) as _ } };
         gm_GetGameModeStateExitData(state: *mut GameModeState) -> *mut c_void = |state: *mut GameModeState| -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(state as _) as _ } };
-        gm_SetNextGameModeStateId(id: u8) = |id: u8| { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } };
-        gm_SetupRulesDefaults(rules: *mut StartMeleeRules) = |rules: *mut StartMeleeRules| { unsafe { let _ = crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } };
-        gm_SetupPlayerDefaults(p: *mut PlayerInitData) = |p: *mut PlayerInitData| { unsafe { let _ = crate::tu::gm_1601::gm_SetupPlayerDefaults(p as _); } };
-        gm_LoadAnnouncer() = || { unsafe { let _ = crate::tu::gm_1601::gm_LoadAnnouncer(); } };
-        gmFrontend_SelectScene(state: *mut GameModeState, sss: i32) = |state: *mut GameModeState, sss: i32| { unsafe { let _ = crate::tu::gmfrontend::gmFrontend_SelectScene(state as _, sss as _); } };
-        gmFrontend_BeginLoading() = || { unsafe { let _ = crate::tu::gmfrontend::gmFrontend_BeginLoading(); } };
+        gm_SetNextGameModeStateId(id: u8) = |id: u8| { unsafe { crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } };
+        gm_SetupRulesDefaults(rules: *mut StartMeleeRules) = |rules: *mut StartMeleeRules| { unsafe { crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } };
+        gm_SetupPlayerDefaults(p: *mut PlayerInitData) = |p: *mut PlayerInitData| { unsafe { crate::tu::gm_1601::gm_SetupPlayerDefaults(p as _); } };
+        gm_LoadAnnouncer() = || { unsafe { crate::tu::gm_1601::gm_LoadAnnouncer(); } };
+        gmFrontend_SelectScene(state: *mut GameModeState, sss: i32) = |state: *mut GameModeState, sss: i32| { unsafe { crate::tu::gmfrontend::gmFrontend_SelectScene(state as _, sss as _); } };
+        gmFrontend_BeginLoading() = || { unsafe { crate::tu::gmfrontend::gmFrontend_BeginLoading(); } };
         gmVsMelee_GetVsData() -> *mut VsModeData = || unsafe { vm::gmVsMelee_GetVsData() };
         gmVsMelee_EnterCss(state: *mut GameModeState, vs: *mut VsModeData, mt: CSSMatchType) = |s, v, m| unsafe { vm::gmVsMelee_EnterCss(s, v, m) };
         gmVsMelee_ExitCss(state: *mut GameModeState, vs: *mut VsModeData) = |s, v| unsafe { vm::gmVsMelee_ExitCss(s, v) };
@@ -45,15 +45,15 @@ pub mod ext {
         gmVsMelee_EnterResults(state: *mut GameModeState) = |s| unsafe { vm::gmVsMelee_EnterResults(s) };
         gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeData, id: u8) = |s, v, i| unsafe { vm::gmVsMelee_ExitResults(s, v, i) };
         gm_80162A98(arg: i32) -> *mut gmm_x1868_1A8_t = |arg: i32| -> *mut gmm_x1868_1A8_t { unsafe { crate::tu::gm_1601::gm_80162A98(arg as _) as _ } };
-        gm_RecordSelfDestructs(amount: i32) = |amount: i32| { unsafe { let _ = crate::tu::gm_1601::gm_RecordSelfDestructs(amount as _); } };
+        gm_RecordSelfDestructs(amount: i32) = |amount: i32| { unsafe { crate::tu::gm_1601::gm_RecordSelfDestructs(amount as _); } };
         gm_80162A4C(amount: i32) -> i32 = |amount: i32| -> i32 { unsafe { crate::tu::gm_1601::gm_80162A4C(amount as _) as _ } };
         gm_WasMatchCanceled(outcome: u8) -> bool = crate::gm::gm_WasMatchCanceled;
         gm_801623A4(end: *mut MatchEnd) -> i32 = |end: *mut MatchEnd| -> i32 { unsafe { crate::tu::gm_1601::gm_801623A4(end as _) as _ } };
-        gm_ModeState_Approach_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { let _ = crate::tu::gm_1BFA::gm_ModeState_Approach_OnEnter(state as _); } };
-        gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { let _ = crate::tu::gm_1BFA::gm_ModeState_ApproachVs_OnEnter(state as _); } };
-        gm_ModeState_ApproachVs_OnExit(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { let _ = crate::tu::gmmovieend::gm_ModeState_ApproachVs_OnExit(state as _); } };
-        gm_ModeState_Prize_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { let _ = crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter(state as _); } };
-        gm_ModeState_Prize_OnExit(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { let _ = crate::tu::gmmovieend::gm_ModeState_Prize_OnExit(state as _); } };
+        gm_ModeState_Approach_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { crate::tu::gm_1BFA::gm_ModeState_Approach_OnEnter(state as _); } };
+        gm_ModeState_ApproachVs_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { crate::tu::gm_1BFA::gm_ModeState_ApproachVs_OnEnter(state as _); } };
+        gm_ModeState_ApproachVs_OnExit(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { crate::tu::gmmovieend::gm_ModeState_ApproachVs_OnExit(state as _); } };
+        gm_ModeState_Prize_OnEnter(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter(state as _); } };
+        gm_ModeState_Prize_OnExit(state: *mut GameModeState) = |state: *mut GameModeState| { unsafe { crate::tu::gmmovieend::gm_ModeState_Prize_OnExit(state as _); } };
     }
 }
 

@@ -37,8 +37,8 @@ pub mod ext {
         ftCo_GetCStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_cstick_angle;
         ftCo_800DF79C(fp: &Fighter) -> bool = crate::ft0df::ftco_800df79c;
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCo_CliffCatch_Phys(g: G) = crate::tu::ftcliffcommon::ftco_cliff_catch_phys;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
@@ -55,7 +55,7 @@ pub mod ext {
         ft_800821DC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_800821dc(g as _) as _ } };
         ftCo_8009AE14(g: G) = crate::tu::ftCo_CliffAttack::ftCo_8009AE14;
         ftCo_8009EF68(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_StopCeil::ftCo_8009EF68(g as _) as _ } };
-        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
+        ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

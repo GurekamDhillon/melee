@@ -34,22 +34,22 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftColl_8007B0C0(g: G, kind: i32) = |g: G, kind: i32| { unsafe { let _ = crate::tu::ftcoll::ftcoll_8007b0c0(g as _, kind as _); } };
+        ftColl_8007B0C0(g: G, kind: i32) = |g: G, kind: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b0c0(g as _, kind as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftYs_Init_8012BAC0(f: &mut Fighter) -> f32 = |f: &mut Fighter| -> f32 { unsafe { crate::chardata::ftYs_Init_8012BAC0(f) } };
         ftCommon_GetModelScale(f: &Fighter) -> f32 = crate::ftcommon2::get_model_scale;
-        ftColl_HurtboxInit(f: &mut Fighter, caps: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |f: &mut Fighter, caps: *mut FighterHurtCapsule, init: &ftHurtboxInit| { unsafe { let _ = crate::tu::ftcoll::ftcoll_hurtbox_init(f, caps as _, init); } };
+        ftColl_HurtboxInit(f: &mut Fighter, caps: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |f: &mut Fighter, caps: *mut FighterHurtCapsule, init: &ftHurtboxInit| { unsafe { crate::tu::ftcoll::ftcoll_hurtbox_init(f, caps as _, init); } };
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007D7FC(f: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_UnlockECB(f: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
-        it_802A7840(item: G) = |item: G| { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7840(item as _); } };
-        it_802BAA94(item: G) = |item: G| { unsafe { let _ = melee_items::tu::itsamusgrapple::it_802BAA94(item as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
-        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
+        it_802A7840(item: G) = |item: G| { unsafe { melee_items::tu::itlinkhookshot::it_802A7840(item as _); } };
+        it_802BAA94(item: G) = |item: G| { unsafe { melee_items::tu::itsamusgrapple::it_802BAA94(item as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
+        ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ft_80083C00(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083c00(g as _, ev)); } };
         ft_8008403C(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_8008403c(g as _, ev)); } };
     }

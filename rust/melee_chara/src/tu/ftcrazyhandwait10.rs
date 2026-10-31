@@ -36,7 +36,7 @@ pub mod ext {
             pub fn ftCh_GrabUnk1_8015B174(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCH_GRABUNK1_8015B174 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandgrabunk1b174::ftCh_GrabUnk1_8015B174(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandgrabunk1b174::ftCh_GrabUnk1_8015B174(gobj as _); } return; },
                 }
             }
     // `ftCh_GrabUnk1_8015BA34(gobj, cb, pos)` (ftcrazyhandtagcancel.c).
@@ -45,7 +45,7 @@ pub mod ext {
             pub fn ftCh_GrabUnk1_8015BA34(gobj: *mut HSD_GObj, cb: HSD_GObjEvent, pos: *const Vec3)  {
                 match unsafe { FTCH_GRABUNK1_8015BA34 } {
                     Some(f) => f(gobj, cb, pos),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BA34(gobj as _, cb as _, pos as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BA34(gobj as _, cb as _, pos as _); } return; },
                 }
             }
     pub static mut FTCH_INIT_80157DF8: Option<fn(*mut HSD_GObj) > = None;
@@ -53,7 +53,7 @@ pub mod ext {
             pub fn ftCh_Init_80157DF8(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCH_INIT_80157DF8 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandrockcrush0::ftCh_Init_80157DF8(gobj as _); } return; },
                 }
             }
     crate::port_hook!(FTCH_INIT_80158B3C, ftCh_Init_80158B3C, crate::tu::ftcrazyhandfingerbeam::ftCh_Init_80158B3C, (gobj: *mut HSD_GObj));
@@ -72,7 +72,7 @@ pub mod ext {
     pub fn mpFloorGetLeft(line: i32, out: *mut Vec3) {
         match unsafe { MPFLOORGETLEFT } {
             Some(f) => f(line, out),
-            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
+            None => { unsafe { melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
         }
     }
     // `HSD_PadMasterStatus[port].button` (baselib/controller.c).

@@ -28,6 +28,8 @@ pub struct Va<'a> {
 }
 impl<'a> Va<'a> {
     pub fn new(args: &'a [Obj]) -> Self { Self { args, at: 0 } }
+    /// the words not read yet (handed on as the `va_list` of another routine)
+    pub fn rest(&self) -> &[Obj] { &self.args[self.at..] }
     fn ptr(&mut self) -> Obj {
         let p = self.args[self.at];
         self.at += 1;
@@ -41,10 +43,18 @@ impl<'a> Va<'a> {
 /// Calls into TUs that are not ported yet. Each panics until a later pass rewires it.
 pub mod ext {
     use super::{Obj, Va, G};
-    pub fn efAsync_Dispatch(_gfx_id: i32, _gobj: G, _va: &mut Va) -> Obj { todo!("efAsync_Dispatch (ef/efasync.c)") }
+    pub fn efAsync_Dispatch(gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
+        let words: &[*const core::ffi::c_void] = unsafe { core::slice::from_raw_parts(va.rest().as_ptr() as *const *const core::ffi::c_void, va.rest().len()) };
+        let mut l = crate::tu::va::Va::new(words);
+        unsafe { crate::tu::efn::efasync::efAsync_Dispatch(gfx_id, gobj, &mut l) }
+    }
     pub fn efAlt_Spawn(_gfx_id: i32, _gobj: G, _va: &mut Va) -> Obj { todo!("efAlt_Spawn (ef/efalt.c)") }
     /// `efAsync_MexResolve(gobj, gfx_id, &id, &is_ptcl, &owner)` -> (type, id, is_ptcl, owner).
-    pub fn efAsync_MexResolve(_gobj: G, _gfx_id: i32) -> (i32, i32, bool, G) { todo!("efAsync_MexResolve (ef/efasync.c)") }
+    pub fn efAsync_MexResolve(gobj: G, gfx_id: i32) -> (i32, i32, bool, G) {
+        let (mut id, mut ptcl, mut owner) = (0i32, 0i32, core::ptr::null_mut());
+        let kind = unsafe { crate::tu::efn::efasync::efAsync_MexResolve(gobj, gfx_id, &mut id, &mut ptcl, &mut owner) };
+        (kind, id, ptcl != 0, owner)
+    }
     pub fn HSD_Randf() -> f32 { melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand()) }
 }
 
@@ -251,8 +261,15 @@ pub fn burst_params(rx: f32, ry: f32) -> Vec3 {
 }
 
 /// `efSync_Spawn`.
+/// Step 10 seam: the engine host keeps effect spawning off until the effect banks, generators and the particle system are native
+/// (`melee_engine` clears it at boot). While off, a spawn creates nothing and returns null (no RNG draw either).
+pub static mut EFFECTS_ENABLED: bool = true;
+
 pub unsafe fn efSync_Spawn(mut gfx_id: i32, gobj: G, va: &mut Va) -> Obj {
     melee_core::ct!("efSync_Spawn");
+    if !EFFECTS_ENABLED {
+        return core::ptr::null_mut();
+    }
     EF_DATA.load_kind = 0;
     EF_DATA.anim_count = 0;
     if gfx_id == 0x479 && l::ext::efAsync_DatEntries_data(1).is_null() {

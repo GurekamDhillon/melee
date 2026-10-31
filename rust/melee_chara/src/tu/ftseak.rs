@@ -52,7 +52,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     pub static mut FTCO_800BFFD0: Option<fn(*mut Fighter, i32, i32)> = None;
@@ -60,7 +60,7 @@ pub mod ext {
     pub fn ftCo_800BFFD0(fp: *mut Fighter, a: i32, b: i32) {
         match unsafe { FTCO_800BFFD0 } {
             Some(f) => f(fp, a, b),
-            None => { unsafe { let _ = melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
+            None => { unsafe { melee_fighter::tu::ftcolanim::ftco_800bffd0(&mut *(fp as *mut _), a as _, b as _); } },
         }
     }
 }

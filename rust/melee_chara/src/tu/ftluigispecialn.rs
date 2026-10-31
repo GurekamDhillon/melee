@@ -48,7 +48,7 @@ pub mod ext {
             pub fn lb_8000B1CC(joint: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(joint, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(joint as _, off as _, out as _); } return; },
                 }
             }
     pub static mut IT_802C01AC: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) > = None;
@@ -56,7 +56,7 @@ pub mod ext {
             pub fn it_802C01AC(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, facing: f32)  {
                 match unsafe { IT_802C01AC } {
                     Some(f) => f(gobj, pos, kind, facing),
-                    None => { unsafe { let _ = melee_items::tu::itluigifireball::it_802C01AC(gobj as _, pos as _, kind as _, facing as _); } return; },
+                    None => { unsafe { melee_items::tu::itluigifireball::it_802C01AC(gobj as _, pos as _, kind as _, facing as _); } return; },
                 }
             }
     // `efSync_Spawn(gfx_id, gobj, ...)` (ef/efsync.c, variadic): the trailing arguments as a slice.

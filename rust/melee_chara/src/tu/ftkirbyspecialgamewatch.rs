@@ -34,7 +34,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, offset, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } return; },
                 }
             }
     crate::port_hook!(HSD_RANDI, HSD_Randi, crate::adapt::HSD_Randi, (max: i32) -> i32);
@@ -43,7 +43,7 @@ pub mod ext {
             pub fn it_802C837C(gobj: *mut HSD_GObj, pos: *mut Vec3, kind: i32, sausage: i32, dir: f32)  {
                 match unsafe { IT_802C837C } {
                     Some(f) => f(gobj, pos, kind, sausage, dir),
-                    None => { unsafe { let _ = melee_items::tu::itgamewatchchef::it_802C837C(gobj as _, pos as _, kind as _, sausage as _, dir as _); } return; },
+                    None => { unsafe { melee_items::tu::itgamewatchchef::it_802C837C(gobj as _, pos as _, kind as _, sausage as _, dir as _); } return; },
                 }
             }
     pub static mut IT_802C74D8: Option<fn(*mut HSD_GObj, *mut Vec3, i32, f32) -> *mut Item_GObj> = None;
@@ -59,7 +59,7 @@ pub mod ext {
             pub fn it_802C760C(item: *mut Item_GObj)  {
                 match unsafe { IT_802C760C } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itkirbygamewatchchefpan::it_802C760C(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C760C(item as _); } return; },
                 }
             }
     pub static mut IT_802C7658: Option<fn(*mut Item_GObj) > = None;
@@ -67,7 +67,7 @@ pub mod ext {
             pub fn it_802C7658(item: *mut Item_GObj)  {
                 match unsafe { IT_802C7658 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itkirbygamewatchchefpan::it_802C7658(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7658(item as _); } return; },
                 }
             }
     pub static mut IT_802C7678: Option<fn(*mut Item_GObj) > = None;
@@ -75,7 +75,7 @@ pub mod ext {
             pub fn it_802C7678(item: *mut Item_GObj)  {
                 match unsafe { IT_802C7678 } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itkirbygamewatchchefpan::it_802C7678(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itkirbygamewatchchefpan::it_802C7678(item as _); } return; },
                 }
             }
 }

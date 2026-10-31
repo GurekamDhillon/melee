@@ -111,7 +111,7 @@ pub mod ext {
             pub fn gm_801A9DD0(gobj: *mut HSD_GObj, a: i32, b: i32, c: i32, d: i32)  {
                 match unsafe { GM_801A9DD0 } {
                     Some(f) => unsafe { f(gobj, a, b, c, d) },
-                    None => { unsafe { let _ = crate::tu::gmopening::gm_801A9DD0(gobj as _, a as _, b as _, c as _, d as _); } return; },
+                    None => { unsafe { crate::tu::gmopening::gm_801A9DD0(gobj as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, sobj: *mut c_void, p: *mut c_void));
@@ -123,7 +123,7 @@ pub mod ext {
             pub fn lbMthp_8001F624(gobj: *mut HSD_GObj, a: i32, b: i32)  {
                 match unsafe { LBMTHP_8001F624 } {
                     Some(f) => unsafe { f(gobj, a, b) },
-                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F624(gobj as _, a as _, b as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F624(gobj as _, a as _, b as _); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80023F28: Option<fn(i32) > = None;
@@ -131,7 +131,7 @@ pub mod ext {
             pub fn lbAudioAx_80023F28(a: i32)  {
                 match unsafe { LBAUDIOAX_80023F28 } {
                     Some(f) => unsafe { f(a) },
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a as _); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80024E50: Option<fn(i32)> = None;
@@ -139,7 +139,7 @@ pub mod ext {
     pub fn lbAudioAx_80024E50(a: i32) {
         match unsafe { LBAUDIOAX_80024E50 } {
             Some(f) => f(a),
-            None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a != 0)); } },
+            None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a != 0)); } },
         }
     }
     hook!(LBMTHP_8001F410, lbMthp_8001F410, (path: &str, table: *mut u32, a: i32, b: i32, c: i32));
@@ -148,7 +148,7 @@ pub mod ext {
     pub fn lbMthp_8001F578() {
         match unsafe { LBMTHP_8001F578 } {
             Some(f) => f(),
-            None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F578(); } },
+            None => { unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F578(); } },
         }
     }
     pub static mut LBMTHP_8001F5C4: Option<fn() > = None;
@@ -156,7 +156,7 @@ pub mod ext {
             pub fn lbMthp_8001F5C4()  {
                 match unsafe { LBMTHP_8001F5C4 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_runtime::tu::lbmthp::lbMthp_8001F5C4(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F5C4(); } return; },
                 }
             }
     pub static mut LBMTHP_8001F604: Option<fn() -> i32> = None;
@@ -172,7 +172,7 @@ pub mod ext {
             pub fn lbAudioAx_800236DC()  {
                 match unsafe { LBAUDIOAX_800236DC } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC(); } return; },
                 }
             }
     pub static mut LBAUDIOAX_80023694: Option<fn() > = None;
@@ -180,7 +180,7 @@ pub mod ext {
             pub fn lbAudioAx_80023694()  {
                 match unsafe { LBAUDIOAX_80023694 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694(); } return; },
                 }
             }
     pub static mut GM_801A4B74: Option<fn() > = None;
@@ -188,7 +188,7 @@ pub mod ext {
             pub fn gm_801A4B74()  {
                 match unsafe { GM_801A4B74 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B74(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B74(); } return; },
                 }
             }
     pub static mut GM_801A4B60: Option<fn() > = None;
@@ -196,7 +196,7 @@ pub mod ext {
             pub fn gm_801A4B60()  {
                 match unsafe { GM_801A4B60 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gmscene::gm_801A4B60(); } return; },
+                    None => { unsafe { crate::tu::gmscene::gm_801A4B60(); } return; },
                 }
             }
     pub static mut GM_GETBUTTONSTRIGGERED: Option<fn(i32) -> u32> = None;
@@ -212,7 +212,7 @@ pub mod ext {
             pub fn sfxForward()  {
                 match unsafe { SFXFORWARD } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::hsd::sfxForward(); } return; },
+                    None => { unsafe { crate::tu::hsd::sfxForward(); } return; },
                 }
             }
     pub static mut GM_SETPENDINGGAMEMODE: Option<fn(i32) > = None;
@@ -220,7 +220,7 @@ pub mod ext {
             pub fn gm_SetPendingGameMode(mode: i32)  {
                 match unsafe { GM_SETPENDINGGAMEMODE } {
                     Some(f) => unsafe { f(mode) },
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetPendingGameMode(mode as _); } return; },
                 }
             }
     pub static mut GM_SETNEWGAMEMODEPENDING: Option<fn() > = None;
@@ -228,7 +228,7 @@ pub mod ext {
             pub fn gm_SetNewGameModePending()  {
                 match unsafe { GM_SETNEWGAMEMODEPENDING } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
                 }
             }
     pub static mut GM_SETNEXTGAMEMODESTATEID: Option<fn(i32) > = None;
@@ -236,7 +236,7 @@ pub mod ext {
             pub fn gm_SetNextGameModeStateId(id: i32)  {
                 match unsafe { GM_SETNEXTGAMEMODESTATEID } {
                     Some(f) => unsafe { f(id) },
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetNextGameModeStateId(id as _); } return; },
                 }
             }
     pub static mut FN_801AA0E8: Option<fn() > = None;
@@ -244,7 +244,7 @@ pub mod ext {
             pub fn fn_801AA0E8()  {
                 match unsafe { FN_801AA0E8 } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gmopening::fn_801AA0E8(); } return; },
+                    None => { unsafe { crate::tu::gmopening::fn_801AA0E8(); } return; },
                 }
             }
     hook!(SET_GM_804D6724, set_gm_804D6724, (f: fn()));

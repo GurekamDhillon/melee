@@ -33,9 +33,9 @@ pub mod ext {
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // TARGET_PC `FT_SCRIPT_VALUE(fp, field, base)` = `ScriptGame_ModValue(fp->player_id, ...)`.
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
-        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
+        ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
         ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
         ftCo_Attack100_CheckInput(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_Attack100_CheckInput;
         ftCo_800D6824(g: G) -> bool = crate::tu::ftCo_Attack100::ftCo_800D6824;
@@ -44,8 +44,8 @@ pub mod ext {
         ftCo_AttackDash_CheckInput(g: G) -> bool = crate::tu::ftCo_AttackDash::ftCo_AttackDash_CheckInput;
         ftCo_AttackDash_SetMv0(g: G) = crate::tu::ftCo_AttackDash::ftCo_AttackDash_SetMv0;
         ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
-        ftCo_80091B90(g: G, v: i32) = |g: G, v: i32| { unsafe { let _ = crate::tu::ftCo_Guard::ftCo_80091B90(g as _, v as _); } };
-        ftCo_80091B9C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Guard::ftCo_80091B9C(g as _); } };
+        ftCo_80091B90(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftCo_Guard::ftCo_80091B90(g as _, v as _); } };
+        ftCo_80091B9C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Guard::ftCo_80091B9C(g as _); } };
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         fn_800CAF78(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::fn_800CAF78(g as _) as _ } };
         fn_800C9D40(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_TurnRun::fn_800C9D40(g as _) as _ } };

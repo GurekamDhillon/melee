@@ -49,23 +49,23 @@ pub mod ext {
     }
     ext_fns! {
         it_8026B594(item: *mut HSD_GObj) -> bool = |item: *mut HSD_GObj| -> bool { unsafe { crate::tu::ft_0cdf::it_8026b594(item as _) as _ } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007E79C(g: G, a: i32) = crate::ftcommon3::ftcommon_8007e79c;
         ftCommon_8007E7E4(g: G, a: i32) = crate::ftcommon3::ftcommon_8007e7e4;
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         it_80291DAC(item: *mut HSD_GObj, n: i32) -> i32 = |item: *mut HSD_GObj, n: i32| -> i32 { unsafe { melee_items::tu::itsscope::it_80291DAC(item as _, n as _) as _ } };
-        it_80291F14(item: *mut HSD_GObj, n: i32) = |item: *mut HSD_GObj, n: i32| { unsafe { let _ = melee_items::tu::itsscope::it_80291F14(item as _, n as _); } };
+        it_80291F14(item: *mut HSD_GObj, n: i32) = |item: *mut HSD_GObj, n: i32| { unsafe { melee_items::tu::itsscope::it_80291F14(item as _, n as _); } };
         it_80291CF4(item: *mut HSD_GObj, n: i32) -> i32 = |item: *mut HSD_GObj, n: i32| -> i32 { unsafe { melee_items::tu::itsscope::it_80291CF4(item as _, n as _) as _ } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         fn_800D7BDC(g: G) = crate::tu::ftCo_ItemScopeRapid::fn_800D7BDC;
         fn_800D7C60(g: G) = crate::tu::ftCo_ItemScopeRapid::fn_800D7C60;
-        fn_800D8140(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftCo_ItemScopeFire::fn_800D8140(g as _, n as _); } };
-        fn_800D81D0(g: G, n: i32) = |g: G, n: i32| { unsafe { let _ = crate::tu::ftCo_ItemScopeFire::fn_800D81D0(g as _, n as _); } };
+        fn_800D8140(g: G, n: i32) = |g: G, n: i32| { unsafe { crate::tu::ftCo_ItemScopeFire::fn_800D8140(g as _, n as _); } };
+        fn_800D81D0(g: G, n: i32) = |g: G, n: i32| { unsafe { crate::tu::ftCo_ItemScopeFire::fn_800D81D0(g as _, n as _); } };
         ftCo_800CDE54(g: G) = crate::tu::ft_0cdd::ftco_800cde54;
-        ftCo_800CDE74(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_0cdd::ftco_800cde74(g as _); } };
+        ftCo_800CDE74(g: G) = |g: G| { unsafe { crate::tu::ft_0cdd::ftco_800cde74(g as _); } };
         ft_800841B8(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_800841b8;
         ft_80082C74(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_80082c74;
     }

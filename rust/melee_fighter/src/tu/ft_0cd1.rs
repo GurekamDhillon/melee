@@ -57,16 +57,16 @@ pub fn ft_check_throw_b4(f: &mut Fighter) -> bool {
 pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
-    pub fn ftAnim_8006EBA4(_g: G) { { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } return; } }
+    pub fn ftAnim_8006EBA4(_g: G) { { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(_g as _); } return; } }
     pub fn ftAnim_IsFramesRemaining(_g: G) -> bool { { return unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(_g as _) as _ }; } }
-    pub fn ftAnim_80070734(_j: *mut HSD_JObj, _f: f32) { { unsafe { let _ = crate::tu::ftanim::ftAnim_80070734(_j as _, _f as _); } return; } }
+    pub fn ftAnim_80070734(_j: *mut HSD_JObj, _f: f32) { { unsafe { crate::tu::ftanim::ftAnim_80070734(_j as _, _f as _); } return; } }
     pub fn Fighter_ChangeMotionState(_g: G, _msid: i32, _flags: u32, _start: f32, _speed: f32, _blend: f32, _arg: G) {
-        { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _arg as _); } return; }
+        { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(_g as _, _msid as _, _flags as _, _start as _, _speed as _, _blend as _, _arg as _); } return; }
     }
     pub fn ft_800827A0(_g: G) -> bool { { return unsafe { crate::tu::ft_081b::ft_800827a0(_g as _) as _ }; } }
-    pub fn ft_8008A2BC(_g: G) { { unsafe { let _ = crate::tu::ft_08a1::ft_8008A2BC(_g as _); } return; } }
-    pub fn ftCo_Attack_800CCF58(_g: G, _i: i32) { { unsafe { let _ = crate::tu::ftswing::ftCo_Attack_800CCF58(_g as _, _i as _); } return; } }
-    pub extern "C" fn ftCo_Fall_Enter(_g: G) { { unsafe { let _ = crate::tu::ftCo_Fall::ftCo_Fall_Enter(_g as _); } return; } }
+    pub fn ft_8008A2BC(_g: G) { { unsafe { crate::tu::ft_08a1::ft_8008A2BC(_g as _); } return; } }
+    pub fn ftCo_Attack_800CCF58(_g: G, _i: i32) { { unsafe { crate::tu::ftswing::ftCo_Attack_800CCF58(_g as _, _i as _); } return; } }
+    pub extern "C" fn ftCo_Fall_Enter(_g: G) { { unsafe { crate::tu::ftCo_Fall::ftCo_Fall_Enter(_g as _); } return; } }
 }
 
 /// `ftCo_800CD140(gobj, msid, flags, kind, anim_speed)`: enter a swing state.

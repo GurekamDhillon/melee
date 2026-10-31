@@ -2689,7 +2689,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_GObj_JObjCallback(a0: *mut HSD_GObj, a1: ::core::ffi::c_int)  {
                 match H_HSD_GObj_JObjCallback {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0 as _, a1 as _); } return; },
                 }
             }
     hook!(H_HSD_GObj_80390CD4, HSD_GObj_80390CD4, (a0: *mut HSD_GObj));
@@ -2714,7 +2714,7 @@ pub mod ext {
             pub unsafe extern "C" fn lbAudioAx_80024030(a0: ::core::ffi::c_int)  {
                 match H_lbAudioAx_80024030 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } return; },
                 }
             }
     hook!(H_lb_80011E24, lb_80011E24, (a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, va: &[usize]) -> ::core::ffi::c_int);
@@ -2743,7 +2743,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_SisLib_803A74F0(a0: *mut HSD_Text, a1: s32, a2: *mut GXColor)  {
                 match H_HSD_SisLib_803A74F0 {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     hook!(H_HSD_SisLib_803A6B98, HSD_SisLib_803A6B98, (a0: *mut HSD_Text, a1: ::core::ffi::c_float, a2: ::core::ffi::c_float, a3: *const ::core::ffi::c_char, va: &[usize]) -> ::core::ffi::c_int);
@@ -2758,7 +2758,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: s32)  {
                 match H_HSD_SisLib_803A6368 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_HSD_SisLib_803A5ACC: Option<unsafe extern "C" fn(::core::ffi::c_int, s32, f32_0, f32_0, f32_0, f32_0, f32_0) -> *mut HSD_Text> = None;
@@ -2772,28 +2772,28 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text)  {
                 match H_HSD_SisLib_803A5CC4 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5CC4(a0 as _); } return; },
                 }
             }
     pub static mut H_HSD_SisLib_803A5D30: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn HSD_SisLib_803A5D30()  {
                 match H_HSD_SisLib_803A5D30 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::sislib::HSD_SisLib_803A5D30(); } return; },
+                    None => { unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5D30(); } return; },
                 }
             }
     pub static mut H_mnNameNew_MainInput: Option<unsafe extern "C" fn(*mut HSD_GObj) > = None;
             pub unsafe extern "C" fn mnNameNew_MainInput(a0: *mut HSD_GObj)  {
                 match H_mnNameNew_MainInput {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::mnnamenew::mnNameNew_MainInput(a0 as _); } return; },
+                    None => { unsafe { crate::tu::mnnamenew::mnNameNew_MainInput(a0 as _); } return; },
                 }
             }
     pub static mut H_mnNameNew_EnterFromMnName: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) > = None;
             pub unsafe extern "C" fn mnNameNew_EnterFromMnName(a0: *mut ::core::ffi::c_void)  {
                 match H_mnNameNew_EnterFromMnName {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::mnnamenew::mnNameNew_EnterFromMnName(a0 as _); } return; },
+                    None => { unsafe { crate::tu::mnnamenew::mnNameNew_EnterFromMnName(a0 as _); } return; },
                 }
             }
     pub static mut H_GetPersistentNameData: Option<unsafe extern "C" fn(s32) -> *mut NameTagData> = None;
@@ -2807,21 +2807,21 @@ pub mod ext {
             pub unsafe extern "C" fn gmMainLib_8015DBF4(a0: s32)  {
                 match H_gmMainLib_8015DBF4 {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::gmMainLib_8015DBF4(a0 as _); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::gmMainLib_8015DBF4(a0 as _); } return; },
                 }
             }
     pub static mut H_InitializePersistentNameData: Option<unsafe extern "C" fn(s32) > = None;
             pub unsafe extern "C" fn InitializePersistentNameData(a0: s32)  {
                 match H_InitializePersistentNameData {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::gmmain_lib::InitializePersistentNameData(a0 as _); } return; },
+                    None => { unsafe { crate::tu::gmmain_lib::InitializePersistentNameData(a0 as _); } return; },
                 }
             }
     pub static mut H_lb_8000B1CC: Option<unsafe extern "C" fn(*mut HSD_JObj, *mut Vec3, *mut Vec3) > = None;
             pub unsafe extern "C" fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3)  {
                 match H_lb_8000B1CC {
                     Some(f) => f(a0, a1, a2),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } return; },
                 }
             }
     hook!(H_lbArchive_LoadSections, lbArchive_LoadSections, (a0: *mut HSD_Archive, a1: *mut *mut ::core::ffi::c_void, va: &[usize]));
@@ -2841,7 +2841,7 @@ pub mod ext {
             pub unsafe extern "C" fn HSD_Free(a0: *mut ::core::ffi::c_void)  {
                 match H_HSD_Free {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::memory::HSD_Free(a0 as _); } return; },
                 }
             }
     pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(ssize_t) -> *mut ::core::ffi::c_void> = None;

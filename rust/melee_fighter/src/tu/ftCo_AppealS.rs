@@ -30,12 +30,12 @@ pub mod ext {
     ext_fns! {
         ftCl_Init_80149318(g: G) = |_| todo!("TODO(port) ftCl_Init_80149318 (ftclink)");
         ftDr_Init_80149910(g: G) = |_| todo!("TODO(port) ftDr_Init_80149910 (ftdrmario)");
-        lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, out as _); } };
-        lb_800119DC(pos: &mut Vec3, n: i32, a: f32, b: f32, c: f32) = |pos: &mut Vec3, n: i32, a: f32, b: f32, c: f32| { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, n as _, a as _, b as _, c as _); } };
+        lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, out as _); } };
+        lb_800119DC(pos: &mut Vec3, n: i32, a: f32, b: f32, c: f32) = |pos: &mut Vec3, n: i32, a: f32, b: f32, c: f32| { unsafe { melee_runtime::tu::lb_00F9::lb_800119DC(pos as _, n as _, a as _, b as _, c as _); } };
         pl_80040120(slot: i32, sub: i32) = crate::plbonus::pl_80040120;
         // `ftData_80085FD4(fp, anim_id)->x8`.
         ftData_80085FD4(fp: &mut Fighter, anim_id: i32) -> usize = crate::hooks::ftdata_80085fd4_x8;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         // `DbLevel` (db.c global).
         DbLevel() -> i32 = || -> i32 { unsafe { crate::platform::DbLevel() } };
         ftPe_Init_8011B93C(g: G) = |_| todo!("TODO(port) ftPe_Init_8011B93C (ftpeach)");
@@ -60,7 +60,7 @@ pub mod ext {
         ftCo_80099794(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Escape::ftCo_80099794(g as _) as _ } };
         ftCo_80091A4C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Guard::ftCo_80091A4C(g as _) as _ } };
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;
-        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
+        ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
     }
 }
 

@@ -13,7 +13,7 @@ pub mod ext {
     pub fn Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, frame: f32, rate: f32, blend: f32, other: G) {
         match unsafe { FIGHTER_CHANGE_MOTION_STATE } {
             Some(f) => f(g, msid, flags, frame, rate, blend, other),
-            None => { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, frame as _, rate as _, blend as _, other as _); } return; },
+            None => { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, frame as _, rate as _, blend as _, other as _); } return; },
         }
     }
 }

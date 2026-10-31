@@ -73,7 +73,7 @@ pub mod ext {
             pub fn it_802B1FC8(thunder: *mut Item_GObj)  {
                 match unsafe { IT_802B1FC8 } {
                     Some(f) => f(thunder),
-                    None => { unsafe { let _ = melee_items::tu::itpikachuthunder::it_802B1FC8(thunder as _); } return; },
+                    None => { unsafe { melee_items::tu::itpikachuthunder::it_802B1FC8(thunder as _); } return; },
                 }
             }
     pub static mut IT_802B1FE8: Option<fn(*mut Item_GObj, *mut Vec3) > = None;
@@ -81,7 +81,7 @@ pub mod ext {
             pub fn it_802B1FE8(thunder: *mut Item_GObj, out: *mut Vec3)  {
                 match unsafe { IT_802B1FE8 } {
                     Some(f) => f(thunder, out),
-                    None => { unsafe { let _ = melee_items::tu::itpikachuthunder::it_802B1FE8(thunder as _, out as _); } return; },
+                    None => { unsafe { melee_items::tu::itpikachuthunder::it_802B1FE8(thunder as _, out as _); } return; },
                 }
             }
 }

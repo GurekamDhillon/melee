@@ -41,32 +41,32 @@ pub mod ext {
     }
     ext_fns! {
     fn DevText_Create(a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8) -> *mut DevText = |a0: i8, a1: i32, a2: i32, a3: i32, a4: i32, a5: *mut i8| unsafe { crate::tu::textlib::DevText_Create(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _) as _ };
-    fn DevText_Erase(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_Erase(a0 as _); } };
+    fn DevText_Erase(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_Erase(a0 as _); } };
     fn DevText_GetGObj() -> *mut HSD_GObj = || unsafe { crate::tu::textdraw::DevText_GetGObj() as _ };
-    fn DevText_HideBackground(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideBackground(a0 as _); } };
-    fn DevText_HideCursor(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideCursor(a0 as _); } };
-    fn DevText_HideText(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_HideText(a0 as _); } };
-    fn DevText_Print(a0: *mut DevText, a1: *mut i8) = |a0: *mut DevText, a1: *mut i8| { unsafe { let _ = crate::tu::textlib::DevText_Print(a0 as _, a1 as _); } };
-    fn DevText_PrintInt(a0: *mut DevText, a1: i32) = |a0: *mut DevText, a1: i32| { unsafe { let _ = crate::tu::textlib::DevText_PrintInt(a0 as _, a1 as _); } };
+    fn DevText_HideBackground(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_HideBackground(a0 as _); } };
+    fn DevText_HideCursor(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_HideCursor(a0 as _); } };
+    fn DevText_HideText(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_HideText(a0 as _); } };
+    fn DevText_Print(a0: *mut DevText, a1: *mut i8) = |a0: *mut DevText, a1: *mut i8| { unsafe { crate::tu::textlib::DevText_Print(a0 as _, a1 as _); } };
+    fn DevText_PrintInt(a0: *mut DevText, a1: i32) = |a0: *mut DevText, a1: i32| { unsafe { crate::tu::textlib::DevText_PrintInt(a0 as _, a1 as _); } };
     fn DevText_Printf(a0: *mut DevText, a1: *const i8, a2: &[crate::tu::textlib::PrintfArg]) = |a0: *mut DevText, a1: *const i8, a2: &[crate::tu::textlib::PrintfArg]| { unsafe { crate::tu::textlib::DevText_Printf(a0, a1, a2); } };
-    fn DevText_Remove(a0: *mut *mut DevText) = |a0: *mut *mut DevText| { unsafe { let _ = crate::tu::textdraw::DevText_Remove(a0 as _); } };
+    fn DevText_Remove(a0: *mut *mut DevText) = |a0: *mut *mut DevText| { unsafe { crate::tu::textdraw::DevText_Remove(a0 as _); } };
     fn DevText_SetBGColor(a0: *mut DevText, a1: _GXColor) -> _GXColor = |a0: *mut DevText, a1: _GXColor| unsafe { crate::tu::textlib::DevText_SetBGColor(a0 as _, a1 as _) as _ };
-    fn DevText_SetCursorXY(a0: *mut DevText, a1: i32, a2: i32) = |a0: *mut DevText, a1: i32, a2: i32| { unsafe { let _ = crate::tu::textlib::DevText_SetCursorXY(a0 as _, a1 as _, a2 as _); } };
-    fn DevText_SetScale(a0: *mut DevText, a1: f32, a2: f32) = |a0: *mut DevText, a1: f32, a2: f32| { unsafe { let _ = crate::tu::textlib::DevText_SetScale(a0 as _, a1 as _, a2 as _); } };
+    fn DevText_SetCursorXY(a0: *mut DevText, a1: i32, a2: i32) = |a0: *mut DevText, a1: i32, a2: i32| { unsafe { crate::tu::textlib::DevText_SetCursorXY(a0 as _, a1 as _, a2 as _); } };
+    fn DevText_SetScale(a0: *mut DevText, a1: f32, a2: f32) = |a0: *mut DevText, a1: f32, a2: f32| { unsafe { crate::tu::textlib::DevText_SetScale(a0 as _, a1 as _, a2 as _); } };
     fn DevText_SetTextColor(a0: *mut DevText, a1: _GXColor) -> _GXColor = |a0: *mut DevText, a1: _GXColor| unsafe { crate::tu::textlib::DevText_SetTextColor(a0 as _, a1 as _) as _ };
-    fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) = |a0: *mut HSD_GObj, a1: *mut DevText| { unsafe { let _ = crate::tu::textdraw::DevText_Show(a0 as _, a1 as _); } };
-    fn DevText_ShowBackground(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_ShowBackground(a0 as _); } };
-    fn DevText_ShowText(a0: *mut DevText) = |a0: *mut DevText| { unsafe { let _ = crate::tu::textlib::DevText_ShowText(a0 as _); } };
+    fn DevText_Show(a0: *mut HSD_GObj, a1: *mut DevText) = |a0: *mut HSD_GObj, a1: *mut DevText| { unsafe { crate::tu::textdraw::DevText_Show(a0 as _, a1 as _); } };
+    fn DevText_ShowBackground(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_ShowBackground(a0 as _); } };
+    fn DevText_ShowText(a0: *mut DevText) = |a0: *mut DevText| { unsafe { crate::tu::textlib::DevText_ShowText(a0 as _); } };
     fn DevText_StoreColorIndex(a0: *mut DevText, a1: u8) -> u8 = |a0: *mut DevText, a1: u8| unsafe { crate::tu::textlib::DevText_StoreColorIndex(a0 as _, a1 as _) as _ };
     fn DevText_StrLen(a0: *mut i8) -> i32 = |a0: *mut i8| unsafe { crate::tu::textdraw::DevText_StrLen(a0 as _) as _ };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
-    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(a0 as _); } };
+    fn HSD_Free(a0: *mut c_void) = |a0: *mut c_void| { unsafe { melee_runtime::tu::memory::HSD_Free(a0 as _); } };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_MemAlloc(a0: i32) -> *mut c_void = |a0: i32| unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ };
     fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = |a0: *mut _HSD_ObjAllocData| unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) as _ };
-    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = |a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32| { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = |a0: *mut _HSD_ObjAllocData, a1: *mut c_void| { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1 as _); } };
-    fn lbAudioAx_80024030(a0: i32) = |a0: i32| { unsafe { let _ = melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } };
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = |a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32| { unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = |a0: *mut _HSD_ObjAllocData, a1: *mut c_void| { unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1 as _); } };
+    fn lbAudioAx_80024030(a0: i32) = |a0: i32| { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0 as _); } };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

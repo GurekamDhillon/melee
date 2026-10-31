@@ -37,10 +37,10 @@ pub mod ext {
     fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec) = |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) };
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void = |a0: *mut HSD_Archive, a1: *const i8| unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
-    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
+    fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };
     fn HSD_ObjAlloc(a0: *mut _HSD_ObjAllocData) -> *mut c_void = |a0: *mut _HSD_ObjAllocData| unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(a0 as _) as _ };
-    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = |a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32| { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); } };
-    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = |a0: *mut _HSD_ObjAllocData, a1: *mut c_void| { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1 as _); } };
+    fn HSD_ObjAllocInit(a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32) = |a0: *mut _HSD_ObjAllocData, a1: u32, a2: u32| { unsafe { melee_runtime::tu::objalloc::HSD_ObjAllocInit(a0 as _, a1 as _, a2 as _); } };
+    fn HSD_ObjFree(a0: *mut _HSD_ObjAllocData, a1: *mut c_void) = |a0: *mut _HSD_ObjAllocData, a1: *mut c_void| { unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0 as _, a1 as _); } };
     fn HSD_Randf() -> f32 = || melee_runtime::tu::random::HSD_Randf(melee_runtime::tu::globals::rand());
     fn HSD_Randi(a0: i32) -> i32 = |a0: i32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), a0);
     fn Mex_EffectCount() -> i32;
@@ -50,10 +50,10 @@ pub mod ext {
     fn hsd_8039EFAC(a0: i32, a1: i32, a2: i32, a3: *mut HSD_JObj) -> *mut HSD_Generator;
     fn lbArchive_80017040(a0: *mut *mut HSD_Archive, a1: *const i8, a2: *mut c_void, a3: &[*const c_void]) -> i32;
     fn lbArchive_InitializeDAT(a0: *mut HSD_Archive, a1: *mut c_void, a2: u32);
-    fn lbDvd_800178E8(a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32) = |a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32| { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_800178E8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _); } };
-    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
+    fn lbDvd_800178E8(a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32) = |a0: i32, a1: *const i8, a2: i32, a3: i32, a4: i32, a5: i32, a6: i32, a7: u8, a8: i32| { unsafe { melee_runtime::tu::lbdvd::lbDvd_800178E8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _, a6 as _, a7 as _, a8 as _); } };
+    fn lb_8000B1CC(a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec) = |a0: *mut HSD_JObj, a1: *mut Vec, a2: *mut Vec| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0 as _, a1 as _, a2 as _); } };
     fn psInitDataBank(a0: i32, a1: *mut i32, a2: *mut i32, a3: *mut u32, a4: *mut i32);
-    fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32) = |a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32| { unsafe { let _ = melee_runtime::tu::particle::psInitDataBankLoad(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
+    fn psInitDataBankLoad(a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32) = |a0: i32, a1: *const i32, a2: *const i32, a3: *const u32, a4: *const i32| { unsafe { melee_runtime::tu::particle::psInitDataBankLoad(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } };
     fn psInitDataBankLocate(a0: *mut HSD_Archive, a1: *mut HSD_Archive, a2: *mut i32);
     fn sprintf(a0: *mut i8, a1: *const i8, a2: &[*const c_void]) -> i32;
     fn OSReport(a0: &str) = |a0: &str| melee_runtime::tu::os_error::OSReport_str(a0);

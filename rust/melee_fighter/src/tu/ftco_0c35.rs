@@ -22,15 +22,15 @@ pub mod ext {
 
     /// TODO(fighter.c) `Fighter_UnkRecursiveFunc_8006D044`.
     pub fn Fighter_UnkRecursiveFunc_8006D044(g: *mut Fighter_GObj) {
-        match unsafe { FIGHTER_UNK_RECURSIVE_FUNC_8006D044 } { Some(f) => f(g), None => { unsafe { let _ = crate::tu::fighter::Fighter_UnkRecursiveFunc_8006D044(g as _); } return; } }
+        match unsafe { FIGHTER_UNK_RECURSIVE_FUNC_8006D044 } { Some(f) => f(g), None => { unsafe { crate::tu::fighter::Fighter_UnkRecursiveFunc_8006D044(g as _); } return; } }
     }
     /// TODO(ftCo_Damage.c) `ftCo_Damage_CalcVel(fp, x, y)`.
     pub fn ftCo_Damage_CalcVel(fp: &mut Fighter, x: f32, y: f32) {
-        match unsafe { FTCO_DAMAGE_CALC_VEL } { Some(f) => f(fp, x, y), None => { unsafe { let _ = crate::tu::ftCo_Damage::ftCo_Damage_CalcVel(fp as _, x as _, y as _); } return; } }
+        match unsafe { FTCO_DAMAGE_CALC_VEL } { Some(f) => f(fp, x, y), None => { unsafe { crate::tu::ftCo_Damage::ftCo_Damage_CalcVel(fp as _, x as _, y as _); } return; } }
     }
     /// TODO(ftparts.c) `ftPartSetRotY(fp, part, rot_y)`.
     pub fn ftPartSetRotY(fp: &mut Fighter, part: i32, r: f32) {
-        match unsafe { FT_PART_SET_ROT_Y } { Some(f) => f(fp, part, r), None => { unsafe { let _ = crate::tu::ftparts::ftPartSetRotY(fp as _, part as _, r as _); } return; } }
+        match unsafe { FT_PART_SET_ROT_Y } { Some(f) => f(fp, part, r), None => { unsafe { crate::tu::ftparts::ftPartSetRotY(fp as _, part as _, r as _); } return; } }
     }
     /// TODO(group1 jobj.c) `HSD_JObjSetMtxDirtySub` (raw `HSD_JObj*` form).
     pub fn HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) {

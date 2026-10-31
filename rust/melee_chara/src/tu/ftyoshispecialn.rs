@@ -41,7 +41,7 @@ pub mod ext {
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
-        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     hook_or!(FTCOMMON_8007E2D0, ftCommon_8007E2D0,
         (fp: *mut Fighter, arg1: i16, grab_cb: HSD_GObjEvent, unk_cb: HSD_GObjEvent, grabbed_cb: HSD_GObjInteraction),
@@ -55,40 +55,40 @@ pub mod ext {
     pub static mut IT_802F2BFC: Option<fn(*mut Item_GObj, *mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn it_802F2BFC(item: *mut Item_GObj, owner: *mut HSD_GObj) {
-        match unsafe { IT_802F2BFC } { Some(f) => f(item, owner), None => { unsafe { let _ = melee_items::tu::ityoshitongue::it_802F2BFC(item as _, owner as _); } return; } }
+        match unsafe { IT_802F2BFC } { Some(f) => f(item, owner), None => { unsafe { melee_items::tu::ityoshitongue::it_802F2BFC(item as _, owner as _); } return; } }
     }
     pub static mut IT_802F2CE0: Option<fn(*mut Item_GObj, i32)> = None;
     #[allow(non_snake_case)]
     pub fn it_802F2CE0(item: *mut Item_GObj, clear_destroy_type: i32) {
         match unsafe { IT_802F2CE0 } {
             Some(f) => f(item, clear_destroy_type),
-            None => { unsafe { let _ = melee_items::tu::ityoshitongue::it_802F2CE0(item as _, (clear_destroy_type != 0)); } },
+            None => { unsafe { melee_items::tu::ityoshitongue::it_802F2CE0(item as _, (clear_destroy_type != 0)); } },
         }
     }
     pub static mut IT_802F2F34: Option<fn(*mut HSD_GObj, *mut itYoshiEggLay_DatAttrs)> = None;
     #[allow(non_snake_case)]
     pub fn it_802F2F34(gobj: *mut HSD_GObj, attrs: *mut itYoshiEggLay_DatAttrs) {
-        match unsafe { IT_802F2F34 } { Some(f) => f(gobj, attrs), None => { unsafe { let _ = melee_items::tu::ityoshiegglay::it_802F2F34(gobj as _, attrs as _); } return; } }
+        match unsafe { IT_802F2F34 } { Some(f) => f(gobj, attrs), None => { unsafe { melee_items::tu::ityoshiegglay::it_802F2F34(gobj as _, attrs as _); } return; } }
     }
     pub static mut FTCO_800BBB8C: Option<fn(*mut HSD_GObj, *mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BBB8C(gobj: *mut HSD_GObj, attacker_gobj: *mut HSD_GObj) {
-        match unsafe { FTCO_800BBB8C } { Some(f) => f(gobj, attacker_gobj), None => { unsafe { let _ = melee_fighter::tu::ftCo_CaptureYoshi::ftCo_800BBB8C(gobj as _, attacker_gobj as _); } return; } }
+        match unsafe { FTCO_800BBB8C } { Some(f) => f(gobj, attacker_gobj), None => { unsafe { melee_fighter::tu::ftCo_CaptureYoshi::ftCo_800BBB8C(gobj as _, attacker_gobj as _); } return; } }
     }
     pub static mut FTCO_800BBC88: Option<fn(*mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BBC88(gobj: *mut HSD_GObj) {
-        match unsafe { FTCO_800BBC88 } { Some(f) => f(gobj), None => { unsafe { let _ = melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBC88(gobj as _); } return; } }
+        match unsafe { FTCO_800BBC88 } { Some(f) => f(gobj), None => { unsafe { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBC88(gobj as _); } return; } }
     }
     pub static mut FTCO_800DE2CC: Option<fn(*mut HSD_GObj, *mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800DE2CC(a: *mut HSD_GObj, b: *mut HSD_GObj) {
-        match unsafe { FTCO_800DE2CC } { Some(f) => f(a, b), None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2CC(a as _, b as _); } return; } }
+        match unsafe { FTCO_800DE2CC } { Some(f) => f(a, b), None => { unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2CC(a as _, b as _); } return; } }
     }
     pub static mut FTCO_800BBED4: Option<fn(*mut HSD_GObj, *mut HSD_GObj)> = None;
     #[allow(non_snake_case)]
     pub fn ftCo_800BBED4(arg0: *mut HSD_GObj, arg1: *mut HSD_GObj) {
-        match unsafe { FTCO_800BBED4 } { Some(f) => f(arg0, arg1), None => { unsafe { let _ = melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBED4(arg0 as _, arg1 as _); } return; } }
+        match unsafe { FTCO_800BBED4 } { Some(f) => f(arg0, arg1), None => { unsafe { melee_fighter::tu::ftCo_YoshiEgg::ftCo_800BBED4(arg0 as _, arg1 as _); } return; } }
     }
 }
 

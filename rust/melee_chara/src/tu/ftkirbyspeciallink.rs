@@ -33,7 +33,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, off: *const Vec3, out: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, off, out),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, off as _, out as _); } return; },
                 }
             }
     pub static mut IT_802A83E0: Option<fn(f32, *mut HSD_GObj, *mut Vec3, Fighter_Part, i32) -> *mut HSD_GObj> = None;
@@ -65,7 +65,7 @@ pub mod ext {
             pub fn it_802A8398(arrow: *mut HSD_GObj, b: *mut Vec3, a: *mut Vec3)  {
                 match unsafe { IT_802A8398 } {
                     Some(f) => f(arrow, b, a),
-                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8398(arrow as _, b as _, a as _); } return; },
+                    None => { unsafe { melee_items::tu::itlinkarrow::it_802A8398(arrow as _, b as _, a as _); } return; },
                 }
             }
     pub static mut IT_802A8A7C: Option<fn(*mut HSD_GObj) > = None;
@@ -73,7 +73,7 @@ pub mod ext {
             pub fn it_802A8A7C(arrow: *mut HSD_GObj)  {
                 match unsafe { IT_802A8A7C } {
                     Some(f) => f(arrow),
-                    None => { unsafe { let _ = melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
+                    None => { unsafe { melee_items::tu::itlinkarrow::it_802A8A7C(arrow as _); } return; },
                 }
             }
     pub static mut IT_802AF304: Option<fn(*mut HSD_GObj) > = None;
@@ -81,7 +81,7 @@ pub mod ext {
             pub fn it_802AF304(bow: *mut HSD_GObj)  {
                 match unsafe { IT_802AF304 } {
                     Some(f) => f(bow),
-                    None => { unsafe { let _ = melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
+                    None => { unsafe { melee_items::tu::itlinkbow::it_802AF304(bow as _); } return; },
                 }
             }
     pub static mut FTPICKUPITEM_80094818: Option<fn(*mut HSD_GObj, bool) > = None;
@@ -89,7 +89,7 @@ pub mod ext {
             pub fn ftpickupitem_80094818(gobj: *mut HSD_GObj, flag: bool)  {
                 match unsafe { FTPICKUPITEM_80094818 } {
                     Some(f) => f(gobj, flag),
-                    None => { unsafe { let _ = melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
                 }
             }
     // `ftKb_Init_803B7548` (ftkirby.c data): the bow's three-point group.

@@ -41,8 +41,8 @@ pub mod ext {
     ext_fns! {
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-        ftCo_800CF4DC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_ItemParasolDamageFall::ftCo_800CF4DC(g as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_800CF4DC(g: G) = |g: G| { unsafe { crate::tu::ftCo_ItemParasolDamageFall::ftCo_800CF4DC(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
@@ -59,7 +59,7 @@ pub mod ext {
         ftCo_800C5DDC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5DDC(g as _) as _ } };
         ftCo_800C5CD4(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerFall::ftCo_800C5CD4(g as _) as _ } };
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
-        ftCo_80090984(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
+        ftCo_80090984(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
     }
 }
 

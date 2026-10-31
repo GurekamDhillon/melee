@@ -36,7 +36,7 @@ pub mod ext {
             pub fn HSD_AObjSetRate(aobj: *mut HSD_AObj, rate: f32)  {
                 match unsafe { HSD_AOBJSETRATE } {
                     Some(f) => f(aobj, rate),
-                    None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
+                    None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(aobj as _, rate as _); } return; },
                 }
             }
     crate::port_hook!(HSD_AOBJGETENDFRAME, HSD_AObjGetEndFrame, crate::adapt::HSD_AObjGetEndFrame, (aobj: *mut HSD_AObj) -> f32);
@@ -69,7 +69,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     pub static mut FTANIM_8006FA58: Option<fn(*mut Fighter, i32, *mut HSD_Joint)> = None;
@@ -77,7 +77,7 @@ pub mod ext {
     pub fn ftAnim_8006FA58(fp: *mut Fighter, part: i32, joint: *mut HSD_Joint) {
         match unsafe { FTANIM_8006FA58 } {
             Some(f) => f(fp, part, joint),
-            None => { unsafe { let _ = melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
+            None => { unsafe { melee_fighter::tu::ftanim::ftAnim_8006FA58(&mut *(fp as *mut _), part as _, joint as _); } },
         }
     }
     pub static mut FTYS_SPECIALS_8012E270: Option<fn(*mut HSD_GObj) > = None;
@@ -85,7 +85,7 @@ pub mod ext {
             pub fn ftYs_SpecialS_8012E270(gobj: *mut HSD_GObj)  {
                 match unsafe { FTYS_SPECIALS_8012E270 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftyoshispecialhi::ftYs_SpecialS_8012E270(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftyoshispecialhi::ftYs_SpecialS_8012E270(gobj as _); } return; },
                 }
             }
     pub static mut FTYS_SPECIALS_8012DF18: Option<fn(*mut HSD_GObj) > = None;
@@ -93,7 +93,7 @@ pub mod ext {
             pub fn ftYs_SpecialS_8012DF18(gobj: *mut HSD_GObj)  {
                 match unsafe { FTYS_SPECIALS_8012DF18 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftyoshispecialhi::ftYs_SpecialS_8012DF18(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftyoshispecialhi::ftYs_SpecialS_8012DF18(gobj as _); } return; },
                 }
             }
 }

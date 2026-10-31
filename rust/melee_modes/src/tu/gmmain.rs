@@ -107,7 +107,7 @@ pub mod ext {
             pub fn HSD_PadInit(n: i32, data: *mut HSD_PadData, rumble_n: i32, rumble: *mut HSD_PadRumbleListData)  {
                 match unsafe { HSD_PADINIT } {
                     Some(f) => unsafe { f(n, data, rumble_n, rumble) },
-                    None => { unsafe { let _ = melee_runtime::tu::controller::HSD_PadInit(n as _, data as _, rumble_n as _, rumble as _); } return; },
+                    None => { unsafe { melee_runtime::tu::controller::HSD_PadInit(n as _, data as _, rumble_n as _, rumble as _); } return; },
                 }
             }
     hook!(HSD_PADLIBDATA, HSD_PadLibData, () -> *mut PadLibData);

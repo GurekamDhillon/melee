@@ -32,7 +32,7 @@ pub mod ext {
         ftWalkCommon_800DFDDC(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800dfddc;
         ftWalkCommon_800DFEC8(g: G, cb: fn(G, f32)) = crate::tu::ftwalkcommon::ftwalkcommon_800dfec8;
         ftWalkCommon_800E0060(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800e0060;
-        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { let _ = crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
+        ftCo_8009C5A4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_Shouldered::ftCo_8009C5A4(g as _, msid as _); } };
         ftCo_8009BF3C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoThrow::ftCo_8009BF3C(g as _) as _ } };
         ftCo_8009BB1C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_CargoJump::ftCo_8009BB1C(g as _) as _ } };
         ftCo_8009C4F8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_09c4::ftCo_8009C4F8(g as _) as _ } };

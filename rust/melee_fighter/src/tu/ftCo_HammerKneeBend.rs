@@ -31,15 +31,15 @@ pub mod ext {
         };
     }
     ext_fns! {
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCo_800C54C4(fp: &mut Fighter) -> u32 = |fp: &mut Fighter| -> u32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C54C4(fp as _) as _ } };
         ftCo_800C548C(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C548C(fp as _) as _ } };
-        ftCo_800C4E94(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4E94(fp as _); } };
-        ftCo_800C4F64(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_800C4F64(g as _); } };
+        ftCo_800C4E94(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4E94(fp as _); } };
+        ftCo_800C4F64(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4F64(g as _); } };
         ftCo_800C5A98(g: G) = crate::tu::ftCo_HammerJump::ftCo_800C5A98;
-        ftCo_KneeBend_Check_ShortHop(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _); } };
+        ftCo_KneeBend_Check_ShortHop(g: G) = |g: G| { unsafe { crate::tu::ftCo_KneeBend::ftCo_KneeBend_Check_ShortHop(g as _); } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ftCo_HammerWait_Coll(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_HammerWait::ftCo_HammerWait_Coll(g as _); } };
+        ftCo_HammerWait_Coll(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_HammerWait_Coll(g as _); } };
     }
 }
 

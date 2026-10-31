@@ -46,7 +46,7 @@ pub mod ext {
     pub fn ftCo_8008DCE0(gobj: G, a: i32, facing: f32) {
         match unsafe { FTCO_8008DCE0 } {
             Some(f) => f(gobj, a, facing),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_8008DCE0(gobj, a as _, facing as _); } },
+            None => { unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008DCE0(gobj, a as _, facing as _); } },
         }
     }
     pub static mut FTCO_8008F744: Option<fn(G) > = None;
@@ -54,7 +54,7 @@ pub mod ext {
             pub fn ftCo_8008F744(gobj: G)  {
                 match unsafe { FTCO_8008F744 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_8008F744(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_Damage::ftCo_8008F744(gobj as _); } return; },
                 }
             }
     pub static mut FTCO_DAMAGE_PHYS: Option<fn(G)> = None;
@@ -62,7 +62,7 @@ pub mod ext {
     pub fn ftCo_Damage_Phys(gobj: G) {
         match unsafe { FTCO_DAMAGE_PHYS } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(gobj); } },
+            None => { unsafe { melee_fighter::tu::ftCo_Damage::ftCo_Damage_Phys(gobj); } },
         }
     }
 }

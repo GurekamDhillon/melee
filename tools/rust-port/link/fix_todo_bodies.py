@@ -21,7 +21,7 @@ for crate, f, rel in g.tu_files():
         if m.group(5) != name:
             continue
         params = [p.strip() for p in g.split_top(m.group(3), ',') if p.strip()]
-        names = [re.sub(r'^muts+', '', p.split(':')[0].strip()) for p in params]
+        names = [re.sub(r'^mut'+chr(92)+'s+', '', p.split(':')[0].strip()) for p in params]
         cands = [c for c in defs.get(name, []) if c[0] == crate and c[2] == len(params) and c[4] != rel]
         if len(cands) != 1:
             continue
@@ -30,7 +30,7 @@ for crate, f, rel in g.tu_files():
         if m.group(4):
             body = f'unsafe {{ {call} as _ }}'
         else:
-            body = f'unsafe {{ let _ = {call}; }}'
+            body = f'unsafe {{ {call}; }}'
         new = f'{m.group(1)}pub fn {name}({m.group(3)}) {m.group(4) or ""} {{ {body} }}'.replace('  {', ' {')
         out = out[:m.start()] + new + out[m.end():]
         n += 1

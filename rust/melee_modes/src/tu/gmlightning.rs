@@ -134,7 +134,7 @@ pub mod ext {
             pub fn gmVsMelee_EnterCss(s: *mut GameModeState, vs: *mut VsModeData, sel: i32)  {
                 match unsafe { GMVSMELEE_ENTERCSS } {
                     Some(f) => unsafe { f(s, vs, sel) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_EnterCss(s as _, vs as _, sel as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterCss(s as _, vs as _, sel as _); } return; },
                 }
             }
     pub static mut GMVSMELEE_EXITCSS: Option<unsafe fn(*mut GameModeState, *mut VsModeData) > = None;
@@ -142,7 +142,7 @@ pub mod ext {
             pub fn gmVsMelee_ExitCss(s: *mut GameModeState, vs: *mut VsModeData)  {
                 match unsafe { GMVSMELEE_EXITCSS } {
                     Some(f) => unsafe { f(s, vs) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitCss(s as _, vs as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitCss(s as _, vs as _); } return; },
                 }
             }
     pub static mut GMVSMELEE_ENTERSSS: Option<unsafe fn(*mut GameModeState, *mut VsModeData) > = None;
@@ -150,7 +150,7 @@ pub mod ext {
             pub fn gmVsMelee_EnterSss(s: *mut GameModeState, vs: *mut VsModeData)  {
                 match unsafe { GMVSMELEE_ENTERSSS } {
                     Some(f) => unsafe { f(s, vs) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_EnterSss(s as _, vs as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterSss(s as _, vs as _); } return; },
                 }
             }
     pub static mut GMVSMELEE_EXITSSS: Option<unsafe fn(*mut GameModeState, *mut VsModeData, i32) > = None;
@@ -158,7 +158,7 @@ pub mod ext {
             pub fn gmVsMelee_ExitSss(s: *mut GameModeState, vs: *mut VsModeData, next: i32)  {
                 match unsafe { GMVSMELEE_EXITSSS } {
                     Some(f) => unsafe { f(s, vs, next) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitSss(s as _, vs as _, next as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitSss(s as _, vs as _, next as _); } return; },
                 }
             }
     hook!(GMVSMELEE_ENTERVS, gmVsMelee_EnterVs, (s: *mut GameModeState, vs: *mut VsModeData, pre: Option<unsafe fn(*mut StartMeleeData, *mut StartMeleeData)>, per: Option<unsafe fn(*mut PlayerInitData, *mut PlayerInitData)>));
@@ -167,7 +167,7 @@ pub mod ext {
             pub fn gmVsMelee_ExitVs(s: *mut GameModeState, a: i32, b: i32)  {
                 match unsafe { GMVSMELEE_EXITVS } {
                     Some(f) => unsafe { f(s, a, b) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitVs(s as _, a as _, b as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitVs(s as _, a as _, b as _); } return; },
                 }
             }
     hook!(GMVSMELEE_ENTERSUDDENDEATH, gmVsMelee_EnterSuddenDeath, (s: *mut GameModeState, vs: *mut VsModeData, pre: Option<unsafe fn(*mut StartMeleeData, *mut StartMeleeData)>, per: Option<unsafe fn(*mut PlayerInitData, *mut PlayerInitData)>));
@@ -176,7 +176,7 @@ pub mod ext {
     pub fn gmVsMelee_ExitSuddenDeath(s: *mut GameModeState) {
         match unsafe { GMVSMELEE_EXITSUDDENDEATH } {
             Some(f) => f(s),
-            None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitSuddenDeath(s as _); } },
+            None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitSuddenDeath(s as _); } },
         }
     }
     pub static mut GMVSMELEE_ENTERRESULTS: Option<unsafe fn(*mut GameModeState) > = None;
@@ -184,7 +184,7 @@ pub mod ext {
             pub fn gmVsMelee_EnterResults(s: *mut GameModeState)  {
                 match unsafe { GMVSMELEE_ENTERRESULTS } {
                     Some(f) => unsafe { f(s) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_EnterResults(s as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_EnterResults(s as _); } return; },
                 }
             }
     pub static mut GMVSMELEE_EXITRESULTS: Option<unsafe fn(*mut GameModeState, *mut VsModeData, i32) > = None;
@@ -192,7 +192,7 @@ pub mod ext {
             pub fn gmVsMelee_ExitResults(s: *mut GameModeState, vs: *mut VsModeData, next: i32)  {
                 match unsafe { GMVSMELEE_EXITRESULTS } {
                     Some(f) => unsafe { f(s, vs, next) },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ExitResults(s as _, vs as _, next as _); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ExitResults(s as _, vs as _, next as _); } return; },
                 }
             }
     pub static mut GMVSMELEE_RESETKOCOUNTS: Option<unsafe fn() > = None;
@@ -200,7 +200,7 @@ pub mod ext {
             pub fn gmVsMelee_ResetKOCounts()  {
                 match unsafe { GMVSMELEE_RESETKOCOUNTS } {
                     Some(f) => unsafe { f() },
-                    None => { unsafe { let _ = crate::tu::gmvsmelee::gmVsMelee_ResetKOCounts(); } return; },
+                    None => { unsafe { crate::tu::gmvsmelee::gmVsMelee_ResetKOCounts(); } return; },
                 }
             }
     pub static mut GMFRONTEND_ATLASSELECT: Option<unsafe fn(*mut GameModeState, i32, *const i8) > = None;
@@ -208,7 +208,7 @@ pub mod ext {
             pub fn gmFrontend_AtlasSelect(s: *mut GameModeState, sss: i32, name: *const i8)  {
                 match unsafe { GMFRONTEND_ATLASSELECT } {
                     Some(f) => unsafe { f(s, sss, name) },
-                    None => { unsafe { let _ = crate::tu::gmfrontend::gmFrontend_AtlasSelect(s as _, sss as _, name as _); } return; },
+                    None => { unsafe { crate::tu::gmfrontend::gmFrontend_AtlasSelect(s as _, sss as _, name as _); } return; },
                 }
             }
     pub static mut GM_INITVSMODE: Option<unsafe fn(*mut VsModeData) > = None;
@@ -216,7 +216,7 @@ pub mod ext {
             pub fn gm_InitVsMode(vs: *mut VsModeData)  {
                 match unsafe { GM_INITVSMODE } {
                     Some(f) => unsafe { f(vs) },
-                    None => { unsafe { let _ = crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
+                    None => { unsafe { crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
                 }
             }
 }

@@ -38,13 +38,13 @@ pub mod ext {
     pub use crate::tu::grinl2::ext::{
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, HSD_GObj_SetupProc, lb_800115F4,
     };
-    hook_or!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } });
+    hook_or!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } });
     hook_or!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj, || unsafe { crate::cm::camera::Camera_80030A50() as _ });
     hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| crate::cm::camera::world().camera_80031074(a0));
     hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| crate::cm::camera::world().camera_800310a0(a0));
     hook_or!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, |classifier: u16, p_link: u8, priority: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier as _, p_link as _, priority as _) as _ });
-    hook_or!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_InitUserData(gobj as _, kind as _, remove_func as _, data as _); } });
-    hook_or!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLinkMaxSorted(gobj as _, render_cb as _, priority as _); } });
+    hook_or!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(gobj as _, kind as _, remove_func as _, data as _); } });
+    hook_or!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMaxSorted(gobj as _, render_cb as _, priority as _); } });
     hook!(GXGETTEXBUFFERSIZE, GXGetTexBufferSize, (width: u16, height: u16, format: u32, mipmap: u8, max_lod: u8) -> u32);
     pub static mut GROUND_801C0498: Option<fn() -> f32> = None;
     #[allow(non_snake_case)]
@@ -59,12 +59,12 @@ pub mod ext {
     pub static mut GROUND_801C39C0: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C39C0() {
-        match unsafe { GROUND_801C39C0 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; } }
+        match unsafe { GROUND_801C39C0 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C39C0(); } return; } }
     }
     pub static mut GROUND_801C3BB4: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C3BB4() {
-        match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { let _ = crate::tu::ground::Ground_801C3BB4(); } return; } }
+        match unsafe { GROUND_801C3BB4 } { Some(f) => f(), None => { unsafe { crate::tu::ground::Ground_801C3BB4(); } return; } }
     }
     pub static mut GROUND_801C3FA4: Option<fn(*mut HSD_GObj, i32) -> *mut HSD_JObj> = None;
     #[allow(non_snake_case)]
@@ -84,7 +84,7 @@ pub mod ext {
     pub static mut HSD_AOBJSETFLAGS: Option<fn(*mut HSD_AObj, u32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_AObjSetFlags(aobj: *mut HSD_AObj, flags: u32) {
-        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { let _ = melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
+        match unsafe { HSD_AOBJSETFLAGS } { Some(f) => f(aobj, flags), None => { unsafe { melee_runtime::tu::aobj::HSD_AObjSetFlags(aobj as _, flags as _); } return; } }
     }
     pub static mut HSD_ARCHIVEGETPUBLICADDRESS: Option<fn(*mut HSD_Archive, *const i8) -> *mut c_void> = None;
     #[allow(non_snake_case)]
@@ -94,56 +94,56 @@ pub mod ext {
     pub static mut HSD_COBJENDCURRENT: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjEndCurrent() {
-        match unsafe { HSD_COBJENDCURRENT } { Some(f) => f(), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; } }
+        match unsafe { HSD_COBJENDCURRENT } { Some(f) => f(), None => { unsafe { melee_runtime::tu::cobj::HSD_CObjEndCurrent(); } return; } }
     }
     pub static mut HSD_COBJERASESCREEN: Option<fn(*mut HSD_CObj, s32, s32, s32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjEraseScreen(cobj: *mut HSD_CObj, enable_color: s32, enable_alpha: s32, enable_depth: s32) {
-        match unsafe { HSD_COBJERASESCREEN } { Some(f) => f(cobj, enable_color, enable_alpha, enable_depth), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjEraseScreen(cobj as _, enable_color as _, enable_alpha as _, enable_depth as _); } return; } }
+        match unsafe { HSD_COBJERASESCREEN } { Some(f) => f(cobj, enable_color, enable_alpha, enable_depth), None => { unsafe { melee_runtime::tu::cobj::HSD_CObjEraseScreen(cobj as _, enable_color as _, enable_alpha as _, enable_depth as _); } return; } }
     }
     hook_or!(HSD_COBJGETAUTHOREDASPECT, HSD_CObjGetAuthoredAspect, (cobj: *mut HSD_CObj) -> f32, |cobj: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetAuthoredAspect(cobj as _) as _ });
-    hook_or!(HSD_COBJGETEYEPOSITION, HSD_CObjGetEyePosition, (cobj: *mut HSD_CObj, cam_pos: *mut Vec3), |cobj: *mut HSD_CObj, cam_pos: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjGetEyePosition(cobj as _, cam_pos as _); } });
+    hook_or!(HSD_COBJGETEYEPOSITION, HSD_CObjGetEyePosition, (cobj: *mut HSD_CObj, cam_pos: *mut Vec3), |cobj: *mut HSD_CObj, cam_pos: *mut Vec3| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetEyePosition(cobj as _, cam_pos as _); } });
     pub static mut HSD_COBJGETFAR: Option<fn(*mut HSD_CObj) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjGetFar(a0: *mut HSD_CObj) -> f32 {
         match unsafe { HSD_COBJGETFAR } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjGetFar(a0 as _) as _ }; } }
     }
     hook_or!(HSD_COBJGETFOV, HSD_CObjGetFov, (cobj: *mut HSD_CObj) -> f32, |cobj: *mut HSD_CObj| unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetFov(cobj as _) as _ });
-    hook_or!(HSD_COBJGETINTEREST, HSD_CObjGetInterest, (cobj: *mut HSD_CObj, interest: *mut Vec3), |cobj: *mut HSD_CObj, interest: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjGetInterest(cobj as _, interest as _); } });
+    hook_or!(HSD_COBJGETINTEREST, HSD_CObjGetInterest, (cobj: *mut HSD_CObj, interest: *mut Vec3), |cobj: *mut HSD_CObj, interest: *mut Vec3| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjGetInterest(cobj as _, interest as _); } });
     pub static mut HSD_COBJGETNEAR: Option<fn(*mut HSD_CObj) -> f32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjGetNear(a0: *mut HSD_CObj) -> f32 {
         match unsafe { HSD_COBJGETNEAR } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjGetNear(a0 as _) as _ }; } }
     }
     hook!(HSD_COBJGETVIEWINGMTXPTR, HSD_CObjGetViewingMtxPtr, (cobj: *mut HSD_CObj) -> MtxPtr);
-    hook_or!(HSD_COBJSETASPECT, HSD_CObjSetAspect, (cobj: *mut HSD_CObj, aspect: f32), |cobj: *mut HSD_CObj, aspect: f32| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetAspect(cobj as _, aspect as _); } });
+    hook_or!(HSD_COBJSETASPECT, HSD_CObjSetAspect, (cobj: *mut HSD_CObj, aspect: f32), |cobj: *mut HSD_CObj, aspect: f32| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjSetAspect(cobj as _, aspect as _); } });
     pub static mut HSD_COBJSETCURRENT: Option<fn(*mut HSD_CObj) -> i32> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 {
         match unsafe { HSD_COBJSETCURRENT } { Some(f) => f(a0), None => { return unsafe { melee_runtime::tu::cobj::HSD_CObjSetCurrent(a0 as _) as _ }; } }
     }
-    hook_or!(HSD_COBJSETEYEPOSITION, HSD_CObjSetEyePosition, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(cobj as _, a1 as _); } });
+    hook_or!(HSD_COBJSETEYEPOSITION, HSD_CObjSetEyePosition, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjSetEyePosition(cobj as _, a1 as _); } });
     pub static mut HSD_COBJSETFAR: Option<fn(*mut HSD_CObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetFar(cobj: *mut HSD_CObj, far: f32) {
-        match unsafe { HSD_COBJSETFAR } { Some(f) => f(cobj, far), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetFar(cobj as _, far as _); } return; } }
+        match unsafe { HSD_COBJSETFAR } { Some(f) => f(cobj, far), None => { unsafe { melee_runtime::tu::cobj::HSD_CObjSetFar(cobj as _, far as _); } return; } }
     }
     hook!(HSD_COBJSETFOV, HSD_CObjSetFov, (a0: *mut HSD_CObj, a1: f32));
-    hook_or!(HSD_COBJSETINTEREST, HSD_CObjSetInterest, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::cobj_world::HSD_CObjSetInterest(cobj as _, a1 as _); } });
+    hook_or!(HSD_COBJSETINTEREST, HSD_CObjSetInterest, (cobj: *mut HSD_CObj, a1: *mut Vec3), |cobj: *mut HSD_CObj, a1: *mut Vec3| { unsafe { melee_runtime::tu::cobj_world::HSD_CObjSetInterest(cobj as _, a1 as _); } });
     pub static mut HSD_COBJSETNEAR: Option<fn(*mut HSD_CObj, f32)> = None;
     #[allow(non_snake_case)]
     pub fn HSD_CObjSetNear(cobj: *mut HSD_CObj, near: f32) {
-        match unsafe { HSD_COBJSETNEAR } { Some(f) => f(cobj, near), None => { unsafe { let _ = melee_runtime::tu::cobj::HSD_CObjSetNear(cobj as _, near as _); } return; } }
+        match unsafe { HSD_COBJSETNEAR } { Some(f) => f(cobj, near), None => { unsafe { melee_runtime::tu::cobj::HSD_CObjSetNear(cobj as _, near as _); } return; } }
     }
     hook!(HSD_FOGSET, HSD_FogSet, (a0: *mut HSD_Fog));
     hook!(HSD_FOREACHANIM, HSD_ForeachAnim, (obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type));
-    hook_or!(HSD_GOBJGXLINK_8039084C, HSD_GObjGXLink_8039084C, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjGXLink_8039084C(a0 as _); } });
-    hook_or!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(gobj as _, kind as _, obj as _); } });
-    hook_or!(HSD_GOBJ_80390ED0, HSD_GObj_80390ED0, (gobj: *mut HSD_GObj, mask: u32), |gobj: *mut HSD_GObj, mask: u32| { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(gobj as _, mask as _); } });
-    hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_GOBJGXLINK_8039084C, HSD_GObjGXLink_8039084C, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjGXLink_8039084C(a0 as _); } });
+    hook_or!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(gobj as _, kind as _, obj as _); } });
+    hook_or!(HSD_GOBJ_80390ED0, HSD_GObj_80390ED0, (gobj: *mut HSD_GObj, mask: u32), |gobj: *mut HSD_GObj, mask: u32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(gobj as _, mask as _); } });
+    hook_or!(HSD_JOBJCLEARFLAGSALL, HSD_JObjClearFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjClearFlagsAll(a0 as _, flags as _); } });
     hook_or!(HSD_JOBJGETFLAGS, HSD_JObjGetFlags, (jobj: *mut HSD_JObj) -> u32, |jobj: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ });
     hook!(HSD_JOBJREMOVEANIMALL, HSD_JObjRemoveAnimAll, (jobj: *mut HSD_JObj));
-    hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { let _ = melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
+    hook_or!(HSD_JOBJSETFLAGSALL, HSD_JObjSetFlagsAll, (a0: *mut HSD_JObj, flags: u32), |a0: *mut HSD_JObj, flags: u32| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(a0 as _, flags as _); } });
     // rp3 HSD_LObjDeleteCurrentAll
     hook_or!(HSD_LOBJDELETECURRENTALL, HSD_LObjDeleteCurrentAll, (lobj: *mut HSD_LObj), |lobj: *mut HSD_LObj| unsafe { melee_runtime::tu::lobj::HSD_LObjDeleteCurrentAll(lobj); });
     // rp3-end
@@ -157,10 +157,10 @@ pub mod ext {
     hook_or!(HSD_RANDI, HSD_Randi, (max_val: s32) -> s32, |max_val: s32| melee_runtime::tu::random::HSD_Randi(melee_runtime::tu::globals::rand(), max_val));
     hook!(HSD_SETERASECOLOR, HSD_SetEraseColor, (r: u8, g: u8, b: u8, a: u8));
     hook!(HSD_STATESETPOINTSIZE, HSD_StateSetPointSize, (a0: u8, a1: i32));
-    hook_or!(MTXLIGHTPERSPECTIVE, MTXLightPerspective, (m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32), |m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::MTXLightPerspective(m as _, fov_y as _, aspect as _, scale_s as _, scale_t as _, trans_s as _, trans_t as _); } });
+    hook_or!(MTXLIGHTPERSPECTIVE, MTXLightPerspective, (m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32), |m: MtxPtr, fov_y: f32, aspect: f32, scale_s: f32, scale_t: f32, trans_s: f32, trans_t: f32| { unsafe { melee_runtime::tu::mtx_pc::raw::MTXLightPerspective(m as _, fov_y as _, aspect as _, scale_s as _, scale_t as _, trans_s as _, trans_t as _); } });
     hook_or!(OSREPORT, OSReport, (a0: *mut i8), |a0: *mut i8| unsafe { melee_runtime::tu::os_error::OSReport(a0 as _, &[]) });
-    hook_or!(PSMTXCONCAT, PSMTXConcat, (m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr), |m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXConcat(m_a as _, m_b as _, m_ab as _); } });
-    hook_or!(PSMTXCOPY, PSMTXCopy, (src: MtxPtr, dst: MtxPtr), |src: MtxPtr, dst: MtxPtr| { unsafe { let _ = melee_runtime::tu::mtx_pc::raw::PSMTXCopy(src as _, dst as _); } });
+    hook_or!(PSMTXCONCAT, PSMTXConcat, (m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr), |m_a: MtxPtr, m_b: MtxPtr, m_ab: MtxPtr| { unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXConcat(m_a as _, m_b as _, m_ab as _); } });
+    hook_or!(PSMTXCOPY, PSMTXCopy, (src: MtxPtr, dst: MtxPtr), |src: MtxPtr, dst: MtxPtr| { unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXCopy(src as _, dst as _); } });
     // The stage-slot (m-ex stage mod) context: the native build has none yet, so these answer 0 / do nothing.
     hook_or!(SCRIPTGAME_STAGESLOTNATIVECONTEXT, ScriptGame_StageSlotNativeContext, () -> i32, || 0);
     hook_or!(SCRIPTGAME_STAGESLOTRETAILBUFFER, ScriptGame_StageSlotRetailBuffer, (a0: *mut c_void), |_a0: *mut c_void| ());
@@ -170,12 +170,12 @@ pub mod ext {
     pub static mut GRANIME_801C7FF8: Option<fn(*mut HSD_GObj, i32, i32, i32, f32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C7FF8(a0: *mut HSD_GObj, a1: i32, a2: i32, a3: i32, a4: f32, a5: f32) {
-        match unsafe { GRANIME_801C7FF8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { let _ = crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
+        match unsafe { GRANIME_801C7FF8 } { Some(f) => f(a0, a1, a2, a3, a4, a5), None => { unsafe { crate::tu::granime::grAnime_801C7FF8(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, a5 as _); } return; } }
     }
     pub static mut GRANIME_801C8780: Option<fn(*mut HSD_GObj, u32, u32, f32, f32)> = None;
     #[allow(non_snake_case)]
     pub fn grAnime_801C8780(a0: *mut HSD_GObj, a1: u32, a2: u32, a3: f32, a4: f32) {
-        match unsafe { GRANIME_801C8780 } { Some(f) => f(a0, a1, a2, a3, a4), None => { unsafe { let _ = crate::tu::granime::grAnime_801C8780(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } }
+        match unsafe { GRANIME_801C8780 } { Some(f) => f(a0, a1, a2, a3, a4), None => { unsafe { crate::tu::granime::grAnime_801C8780(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _); } return; } }
     }
     pub static mut GRDATFILES_801C6330: Option<fn(s32) -> *mut UnkArchiveStruct> = None;
     #[allow(non_snake_case)]
@@ -205,7 +205,7 @@ pub mod ext {
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *mut Vec3, *mut Vec3)> = None;
     #[allow(non_snake_case)]
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *mut Vec3, pos1: *mut Vec3) {
-        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
+        match unsafe { LB_8000B1CC } { Some(f) => f(jobj, pos0, pos1), None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; } }
     }
     pub static mut LB_800121FC: Option<fn(*mut HSD_ImageDesc, i32, i32, GXTexFmt, s16) -> *mut HSD_ImageDesc> = None;
     #[allow(non_snake_case)]
@@ -217,7 +217,7 @@ pub mod ext {
     pub fn lb_800122C8(image_desc: *mut HSD_ImageDesc, origx: u16, origy: u16, clear: i32) {
         match unsafe { LB_800122C8 } {
             Some(f) => f(image_desc, origx, origy, clear),
-            None => { unsafe { let _ = melee_runtime::tu::lbspdisplay::lb_800122C8(image_desc as _, origx as _, origy as _, (clear != 0)); } },
+            None => { unsafe { melee_runtime::tu::lbspdisplay::lb_800122C8(image_desc as _, origx as _, origy as _, (clear != 0)); } },
         }
     }
     pub static mut LB_80013B14: Option<fn(*mut HSD_CameraDescPerspective) -> *mut HSD_CObj> = None;
@@ -228,12 +228,12 @@ pub mod ext {
     pub static mut MEMZERO: Option<fn(*mut c_void, ssize_t)> = None;
     #[allow(non_snake_case)]
     pub fn memzero(mem: *mut c_void, size: ssize_t) {
-        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { let _ = melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
+        match unsafe { MEMZERO } { Some(f) => f(mem, size), None => { unsafe { melee_runtime::tu::lb_00B0::memzero(mem as _, size as _); } return; } }
     }
     pub static mut MPLIB_80055E9C: Option<fn(i32)> = None;
     #[allow(non_snake_case)]
     pub fn mpLib_80055E9C(joint_id: i32) {
-        match unsafe { MPLIB_80055E9C } { Some(f) => f(joint_id), None => { unsafe { let _ = crate::tu::mplib::mpLib_80055E9C(joint_id as _); } return; } }
+        match unsafe { MPLIB_80055E9C } { Some(f) => f(joint_id), None => { unsafe { crate::tu::mplib::mpLib_80055E9C(joint_id as _); } return; } }
     }
     /// `HSD_Free` is stored as a `GObj_InitUserData` remove function: an `extern "C"` fn over a hook.
     pub static mut HSD_FREE: Option<fn(*mut c_void)> = None;
@@ -241,7 +241,7 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_Free(ptr: *mut c_void) {
         match HSD_FREE {
             Some(f) => f(ptr),
-            None => { unsafe { let _ = melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },
+            None => { unsafe { melee_runtime::tu::memory::HSD_Free(ptr as _); } return; },
         }
     }
     /// `HSD_GObj** HSD_GObjPLinkHead`, `u8 HSD_GObj_CameraKind`.

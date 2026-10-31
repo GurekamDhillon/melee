@@ -52,7 +52,7 @@ pub mod ext {
             pub fn it_802BD45C(item: *mut Item_GObj)  {
                 match unsafe { IT_802BD45C } {
                     Some(f) => f(item),
-                    None => { unsafe { let _ = melee_items::tu::itpeachturnip::it_802BD45C(item as _); } return; },
+                    None => { unsafe { melee_items::tu::itpeachturnip::it_802BD45C(item as _); } return; },
                 }
             }
     pub static mut IT_802BD4AC: Option<fn(*mut HSD_GObj, *mut Vec3, u32, i32, f32) -> *mut Item_GObj> = None;
@@ -68,7 +68,7 @@ pub mod ext {
             pub fn ftpickupitem_80094818(gobj: *mut HSD_GObj, flag: bool)  {
                 match unsafe { FTPICKUPITEM_80094818 } {
                     Some(f) => f(gobj, flag),
-                    None => { unsafe { let _ = melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftpickupitem::ftpickupitem_80094818(gobj as _, flag as _); } return; },
                 }
             }
     pub static mut LB_8000B1CC: Option<fn(*mut HSD_JObj, *const Vec3, *mut Vec3) > = None;
@@ -76,7 +76,7 @@ pub mod ext {
             pub fn lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, pos1: *mut Vec3)  {
                 match unsafe { LB_8000B1CC } {
                     Some(f) => f(jobj, pos0, pos1),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, pos1 as _); } return; },
                 }
             }
     pub static mut FTCO_800957F4: Option<fn(*mut HSD_GObj, i32) > = None;
@@ -84,7 +84,7 @@ pub mod ext {
             pub fn ftCo_800957F4(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCO_800957F4 } {
                     Some(f) => f(gobj, msid),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(gobj as _, msid as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_ItemThrow::ftCo_800957F4(gobj as _, msid as _); } return; },
                 }
             }
     pub use crate::tu::ftcaptainspecialn::ext::{efSync_Spawn, EFSYNC_SPAWN};

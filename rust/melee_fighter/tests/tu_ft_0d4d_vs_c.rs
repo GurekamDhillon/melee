@@ -104,7 +104,7 @@ unsafe fn world() {
     PLINKV[HSD_GOBJ_PLINK_FIGHTER as usize] = &raw mut (*GO)[0];
     h::PLINK_HEAD = Some(|link| PLINKV[link as usize]);
     for q in 0..4 { D6534[q] = (*PADB)[80 + q].as_mut_ptr() as *mut c_void; }
-    m::ext::Fighter_804D6534 = D6534.as_mut_ptr();
+    m::ext::Fighter_804D6534 = D6534.as_mut_ptr() as *mut _;
     for q in 0..NG { (*FT)[q].x20A0_accessory = &raw mut (*JO)[q]; }
     for q in 0..NG { (*CAMB)[q] = core::mem::zeroed(); (*FT)[q].x890_cameraBox = &raw mut (*CAMB)[q]; }
     for q in 0..NG { let f = &mut (*FT)[q]; f.mv.co.common.x0 = (fv() % 100) as _; f.mv.co.common.x4.x = rg(); f.mv.co.common.x4.y = rg(); f.mv.co.common.x4.z = rg(); f.mv.co.unk_deadup.x40 = (fv() % 100) as _; f.mv.co.unk_deadup.x44 = (fv() % 100) as _; }

@@ -49,9 +49,9 @@ pub mod ext {
         LANDING_ENTER ftCo_Landing_Enter(g: G, msid: i32, a: bool, flags: u32, f0: f32, f1: f32);
     }
     /// TODO(group5 itlinkhookshot.c) callbacks stored in the fighter's accessory / death slots.
-    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7AF0(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7AAC(_g as _); } return; } }
-    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { { unsafe { let _ = melee_items::tu::itlinkhookshot::it_802A7B34(_g as _); } return; } }
+    pub unsafe extern "C" fn it_802A7AF0(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7AF0(_g as _); } return; } }
+    pub unsafe extern "C" fn it_802A7AAC(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7AAC(_g as _); } return; } }
+    pub unsafe extern "C" fn it_802A7B34(_g: *mut HSD_GObj) { { unsafe { melee_items::tu::itlinkhookshot::it_802A7B34(_g as _); } return; } }
 }
 
 #[inline(always)]

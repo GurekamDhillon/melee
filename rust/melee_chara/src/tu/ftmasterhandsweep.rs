@@ -17,7 +17,7 @@ pub mod ext {
     pub fn mpFloorGetLeft(line: i32, out: *mut Vec3) {
         match unsafe { MPFLOORGETLEFT } {
             Some(f) => f(line, out),
-            None => { unsafe { let _ = melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
+            None => { unsafe { melee_world::tu::mplib::mpFloorGetLeft(line as _, out as _); } },
         }
     }
 }

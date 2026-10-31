@@ -35,18 +35,18 @@ pub mod ext {
     pub fn gc_u32_to_ptr(a: u32) -> *mut u8 { todo!("gc_u32_to_ptr (SIS stream position of a guest address)") }
     pub fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void { unsafe { melee_types::inline::HSD_GObjGetUserData(&*(gobj as *const _)) as _ } }
     pub fn Mex_Enabled(name: &str) -> bool { todo!("Mex_Enabled (pc/platform mex)") }
-    pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { unsafe { let _ = crate::tu::state_native::HSD_StateSetZMode(enable as _, func as _, update as _); } }
+    pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { unsafe { crate::tu::state_native::HSD_StateSetZMode(enable as _, func as _, update as _); } }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
     pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
     pub fn GXSetZMode(a: u32, b: u32, c: u32) { todo!("GXSetZMode (dolphin/gx)") }
     pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { todo!("GXSetViewport (dolphin/gx)") }
     pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { todo!("GXSetScissor (dolphin/gx)") }
-    pub fn MTXOrtho(mtx: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, n: f32, f: f32) { unsafe { let _ = crate::tu::mtx44::raw::MTXOrtho(mtx as _, t as _, b as _, l as _, r as _, n as _, f as _); } }
+    pub fn MTXOrtho(mtx: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, n: f32, f: f32) { unsafe { crate::tu::mtx44::raw::MTXOrtho(mtx as _, t as _, b as _, l as _, r as _, n as _, f as _); } }
     pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { todo!("GXSetProjection (dolphin/gx)") }
     pub fn GXSetCurrentMtx(id: u32) { todo!("GXSetCurrentMtx (dolphin/gx)") }
-    pub fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32) { unsafe { let _ = crate::tu::pobj::native::mx::GXLoadPosMtxImm(mtx as _, id as _); } }
+    pub fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32) { unsafe { crate::tu::pobj::native::mx::GXLoadPosMtxImm(mtx as _, id as _); } }
     pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { todo!("GXSetTexCoordGen2 (dolphin/gx)") }
-    pub fn HSD_StateSetNumChans(n: u32) { unsafe { let _ = crate::tu::tev_native::HSD_StateSetNumChans(n as _); } }
+    pub fn HSD_StateSetNumChans(n: u32) { unsafe { crate::tu::tev_native::HSD_StateSetNumChans(n as _); } }
     pub fn GXSetNumChans(n: u32) { todo!("GXSetNumChans (dolphin/gx)") }
     pub fn GXClearVtxDesc() { todo!("GXClearVtxDesc (dolphin/gx)") }
     pub fn GXSetCullMode(mode: u32) { todo!("GXSetCullMode (dolphin/gx)") }
@@ -72,7 +72,7 @@ pub mod ext {
     pub fn GXEnd() { unsafe { crate::tu::sobjlib::GXEnd() } }
     pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { todo!("GXInitTexObj (dolphin/gx)") }
     pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { todo!("GXLoadTexObj (dolphin/gx)") }
-    pub fn HSD_StateInvalidate(mask: i32) { unsafe { let _ = crate::tu::state_native::HSD_StateInvalidate(mask as _); } }
+    pub fn HSD_StateInvalidate(mask: i32) { unsafe { crate::tu::state_native::HSD_StateInvalidate(mask as _); } }
     pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { unsafe { crate::tu::lbarchive::lbArchive_LoadArchive(path as _) } }
     pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { unsafe { crate::tu::lbarchive::lbArchive_80016EFC(archive) } }
 }

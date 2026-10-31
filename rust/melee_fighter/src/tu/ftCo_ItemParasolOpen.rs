@@ -29,8 +29,8 @@ pub mod ext {
     }
     ext_fns! {
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_800CF3C8(g: G) = crate::tu::ftCo_ItemParasolFallSpecial::ftCo_800CF3C8;
         ftCo_800CF280(g: G) = crate::tu::ftCo_ItemParasolFall::ftCo_800CF280;
@@ -42,7 +42,7 @@ pub mod ext {
         ftCommon_Fall(f: &mut Fighter, grav: f32, terminal: f32) = crate::ftcommon::fall;
         ftCommon_CalcSelfAccel_AccelToVelClamped(f: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_self_accel_accel_to_vel_clamped;
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
-        ftCo_Landing_Enter_Basic(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(g as _); } };
+        ftCo_Landing_Enter_Basic(g: G) = |g: G| { unsafe { crate::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(g as _); } };
     }
 }
 

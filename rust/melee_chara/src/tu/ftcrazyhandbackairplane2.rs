@@ -30,7 +30,7 @@ pub mod ext {
             pub fn ftCh_GrabUnk1_8015B850(gobj: *mut HSD_GObj, msid: i32)  {
                 match unsafe { FTCH_GRABUNK1_8015B850 } {
                     Some(f) => f(gobj, msid),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(gobj as _, msid as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandthrowncrazyhand::ftCh_GrabUnk1_8015B850(gobj as _, msid as _); } return; },
                 }
             }
     pub static mut FTCH_GRABUNK1_8015BC88: Option<fn(*mut HSD_GObj) > = None;
@@ -38,7 +38,7 @@ pub mod ext {
             pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCH_GRABUNK1_8015BC88 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftcrazyhandtagcancel::ftCh_GrabUnk1_8015BC88(gobj as _); } return; },
                 }
             }
     pub static mut FTCO_800DE2A8: Option<fn(*mut HSD_GObj, *mut HSD_GObj) > = None;
@@ -46,7 +46,7 @@ pub mod ext {
             pub fn ftCo_800DE2A8(gobj: *mut HSD_GObj, vic: *mut HSD_GObj)  {
                 match unsafe { FTCO_800DE2A8 } {
                     Some(f) => f(gobj, vic),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_Throw::ftCo_800DE2A8(gobj as _, vic as _); } return; },
                 }
             }
     /// `ftCo_800DE7C0(gobj, victim, is_upward)`: the native melee_fighter port when unset.

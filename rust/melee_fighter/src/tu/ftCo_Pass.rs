@@ -40,7 +40,7 @@ pub mod ext {
         ftUcf_FlickCounter(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::fighter::ftucf_flick_counter(port as _) } };
         ftCommon_8007D5D4(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(fp as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = |fp: &mut Fighter| { unsafe { let _ = crate::ftcommon::clamp_air_drift(fp); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };

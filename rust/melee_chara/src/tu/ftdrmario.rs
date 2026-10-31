@@ -67,7 +67,7 @@ pub mod ext {
             pub fn ftMr_Init_OnLoadForDrMario(fp: *mut Fighter)  {
                 match unsafe { FTMR_INIT_ONLOADFORDRMARIO } {
                     Some(f) => f(fp),
-                    None => { unsafe { let _ = crate::tu::ftmario::ftMr_Init_OnLoadForDrMario(fp as _); } return; },
+                    None => { unsafe { crate::tu::ftmario::ftMr_Init_OnLoadForDrMario(fp as _); } return; },
                 }
             }
     pub static mut FTMR_INIT_LOADSPECIALATTRS: Option<fn(*mut HSD_GObj) > = None;
@@ -75,7 +75,7 @@ pub mod ext {
             pub fn ftMr_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj)  {
                 match unsafe { FTMR_INIT_LOADSPECIALATTRS } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftmario::ftMr_Init_LoadSpecialAttrs(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftmario::ftMr_Init_LoadSpecialAttrs(gobj as _); } return; },
                 }
             }
     pub static mut IT_8026B3F8: Option<fn(*mut core::ffi::c_void, i32) > = None;
@@ -83,7 +83,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut core::ffi::c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     crate::port_hook!(ITDRMARIOPILL_802C0DBC, itDrMarioPill_802C0DBC, crate::adapt::itDrMarioPill_802C0DBC, (item: *mut Item_GObj));

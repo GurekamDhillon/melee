@@ -32,9 +32,9 @@ pub mod ext {
     }
     ext_fns! {
         ftCommon_8007DB58(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db58(g as _); } };
-        ftCo_8009750C(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
-        ftCo_800DD168(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftCo_8009750C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
+        ftCo_800DD168(g: G) = |g: G| { unsafe { crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         Player_GetHandicap(slot: i32) -> i32 = |slot: i32| -> i32 { unsafe { crate::tu::player::Player_GetHandicap(slot as _) as _ } };
         Player_80033BB8(slot: i32) -> i32 = crate::player::player_80033bb8;
         ftCommon_InitGrab(fp: &mut Fighter, a: i32, timer: f32) = crate::ftcommon2::init_grab;
@@ -43,7 +43,7 @@ pub mod ext {
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
-        ftCo_800C3598(g: G) = |g: G| { unsafe { let _ = crate::tu::ftco_0c35::ftco_800c3598(g as _); } };
+        ftCo_800C3598(g: G) = |g: G| { unsafe { crate::tu::ftco_0c35::ftco_800c3598(g as _); } };
     }
 }
 

@@ -41,21 +41,21 @@ pub mod ext {
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
         lb_8000D008(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
-        efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { let _ = melee_world::tu::efn::eflib::efLib_SetParamAlpha(g as _, a as _); } };
+        efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { melee_world::tu::efn::eflib::efLib_SetParamAlpha(g as _, a as _); } };
         GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |fp: &mut Fighter| -> *mut HSD_Joint { unsafe { crate::platform::GenoDefine_RestPoseTree(fp) } };
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
         ftData_80085E50(fp: &mut Fighter, msid: i32) -> *mut FigaTree = |fp: &mut Fighter, msid: i32| -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ } };
-        ftAnim_8006F4C8(fp: &mut Fighter, b: bool, tree: *mut FigaTree) = |fp: &mut Fighter, b: bool, tree: *mut FigaTree| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006F4C8(fp as _, b as _, tree as _); } };
-        ftAnim_80070710(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070710(j as _, frame as _); } };
-        ftAnim_8006FB88(fp: &mut Fighter, part: u32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, j: *mut HSD_Joint| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FB88(fp as _, part as _, j as _); } };
+        ftAnim_8006F4C8(fp: &mut Fighter, b: bool, tree: *mut FigaTree) = |fp: &mut Fighter, b: bool, tree: *mut FigaTree| { unsafe { crate::tu::ftanim::ftAnim_8006F4C8(fp as _, b as _, tree as _); } };
+        ftAnim_80070710(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { crate::tu::ftanim::ftAnim_80070710(j as _, frame as _); } };
+        ftAnim_8006FB88(fp: &mut Fighter, part: u32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_8006FB88(fp as _, part as _, j as _); } };
         HSD_JObjAnimAll(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnimAll (baselib/jobj.c)");
         // `OSReport("geno: kind %d: shield guard pose samples own Guard row %d\n", kind, row)`.
         OSReport_GuardPose(kind: i32, row: i32) = |_, _| ();
-        ftAnim_80070108(fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070108(fp as _, part as _, a as _, b as _, j as _); } };
-        ftAnim_8006FE9C(fp: &mut Fighter, part: u32, a: f32, b: f32) = |fp: &mut Fighter, part: u32, a: f32, b: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FE9C(fp as _, part as _, a as _, b as _); } };
-        ftAnim_8006FF74(fp: &mut Fighter, part: u32) = |fp: &mut Fighter, part: u32| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FF74(fp as _, part as _); } };
-        ftAnim_80070010(fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint| { unsafe { let _ = crate::tu::ftanim::ftAnim_80070010(fp as _, part as _, a as _, b as _, j as _); } };
-        ftAnim_8006FA58(fp: &mut Fighter, part: u32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, j: *mut HSD_Joint| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006FA58(fp as _, part as _, j as _); } };
+        ftAnim_80070108(fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_80070108(fp as _, part as _, a as _, b as _, j as _); } };
+        ftAnim_8006FE9C(fp: &mut Fighter, part: u32, a: f32, b: f32) = |fp: &mut Fighter, part: u32, a: f32, b: f32| { unsafe { crate::tu::ftanim::ftAnim_8006FE9C(fp as _, part as _, a as _, b as _); } };
+        ftAnim_8006FF74(fp: &mut Fighter, part: u32) = |fp: &mut Fighter, part: u32| { unsafe { crate::tu::ftanim::ftAnim_8006FF74(fp as _, part as _); } };
+        ftAnim_80070010(fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_80070010(fp as _, part as _, a as _, b as _, j as _); } };
+        ftAnim_8006FA58(fp: &mut Fighter, part: u32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_8006FA58(fp as _, part as _, j as _); } };
         Player_GetUnk45(slot: i32) -> u32 = |slot: i32| -> u32 { unsafe { crate::tu::player::Player_GetUnk45(slot as _) as _ } };
         Fighter_804D650C() -> *mut u8 = || todo!("TODO(port) Fighter_804D650C global (fighter.c)");
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
@@ -70,12 +70,12 @@ pub mod ext {
         ftYs_Shield_8012C600(g: G, b: bool) = |_, _| todo!("TODO(port) ftYs_Shield_8012C600 (ftYoshi)");
         ftYs_Shield_8012C850(g: G) = |_| todo!("TODO(port) ftYs_Shield_8012C850 (ftYoshi)");
         ftYs_Shield_8012C914(g: G) = |_| todo!("TODO(port) ftYs_Shield_8012C914 (ftYoshi)");
-        ftParts_80074B0C(g: G, model: i32, v: i32) = |g: G, model: i32, v: i32| { unsafe { let _ = crate::tu::ftparts::ftParts_80074B0C(g as _, model as _, v as _); } };
-        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { let _ = crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { let _ = crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        pl_8003E0E8(slot: i32, sub: i32) = |slot: i32, sub: i32| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E0E8(slot as _, sub as _); } };
-        pl_8003E114(slot: i32, sub: i32, v: f32) = |slot: i32, sub: i32, v: f32| { unsafe { let _ = crate::tu::plbonuslib::pl_8003E114(slot as _, sub as _, v as _); } };
-        ftCo_80098B20(g: G) = |g: G| { unsafe { let _ = crate::tu::ftCo_ShieldBreakFly::ftCo_80098B20(g as _); } };
+        ftParts_80074B0C(g: G, model: i32, v: i32) = |g: G, model: i32, v: i32| { unsafe { crate::tu::ftparts::ftParts_80074B0C(g as _, model as _, v as _); } };
+        Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
+        ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
+        pl_8003E0E8(slot: i32, sub: i32) = |slot: i32, sub: i32| { unsafe { crate::tu::plbonuslib::pl_8003E0E8(slot as _, sub as _); } };
+        pl_8003E114(slot: i32, sub: i32, v: f32) = |slot: i32, sub: i32, v: f32| { unsafe { crate::tu::plbonuslib::pl_8003E114(slot as _, sub as _, v as _); } };
+        ftCo_80098B20(g: G) = |g: G| { unsafe { crate::tu::ftCo_ShieldBreakFly::ftCo_80098B20(g as _); } };
         ftCo_8009515C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemThrow::ftCo_8009515C(g as _) as _ } };
         ftCo_8009980C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Escape::ftCo_8009980C(g as _) as _ } };
         ftCo_8009917C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Escape::ftCo_8009917C(g as _) as _ } };
@@ -86,8 +86,8 @@ pub mod ext {
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftColl_8007AEE0(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aee0(g as _); } };
         ftColl_8007AEF8(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aef8(g as _); } };
-        ft_800845B4(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_800845b4(g as _); } };
-        ft_80084104(g: G) = |g: G| { unsafe { let _ = crate::tu::ft_081b::ft_80084104(g as _); } };
+        ft_800845B4(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_800845b4(g as _); } };
+        ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ftCo_SpecialS_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialS::ftCo_SpecialS_CheckInput(g as _) as _ } };
@@ -101,14 +101,14 @@ pub mod ext {
         ftCo_AttackHi3_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_AttackHi3::ftCo_AttackHi3_CheckInput(g as _) as _ } };
         ftCo_AttackLw3_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_AttackLw3::ftCo_AttackLw3_CheckInput(g as _) as _ } };
         ftCo_Attack1_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Attack1::ftCo_Attack1_CheckInput(g as _) as _ } };
-        ftCo_800C36DC(g: G) = |g: G| { unsafe { let _ = crate::tu::ftco_0c35::ftco_800c36dc(g as _); } };
-        ftAnim_SetAnimRate(g: G, v: f32) = |g: G, v: f32| { unsafe { let _ = crate::tu::ftanim::ftAnim_SetAnimRate(g as _, v as _); } };
+        ftCo_800C36DC(g: G) = |g: G| { unsafe { crate::tu::ftco_0c35::ftco_800c36dc(g as _); } };
+        ftAnim_SetAnimRate(g: G, v: f32) = |g: G, v: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, v as _); } };
         lbGetJObjEndFrame(j: *mut HSD_JObj) -> f32 = |j: *mut HSD_JObj| -> f32 { unsafe { melee_runtime::tu::lb_00B0::lbGetJObjEndFrame(j as _) as _ } };
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
-        ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent| { unsafe { let _ = crate::tu::ftcoll::ftcoll_create_reflect_hit(g as _, desc, cb); } };
+        ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent| { unsafe { crate::tu::ftcoll::ftcoll_create_reflect_hit(g as _, desc, cb); } };
         ftCommon_8007DB24(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g as _); } };
-        lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
+        lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
     }
 }
 

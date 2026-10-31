@@ -18,7 +18,7 @@ pub mod ext {
     pub fn ftCh_Init_801592D4(gobj: *mut HSD_GObj) {
         match unsafe { FTCH_INIT_801592D4 } {
             Some(f) => f(gobj),
-            None => { unsafe { let _ = crate::tu::ftcrazyhandbackairplane1::ftCh_Init_801592D4(gobj as _); } },
+            None => { unsafe { crate::tu::ftcrazyhandbackairplane1::ftCh_Init_801592D4(gobj as _); } },
         }
     }
 }

@@ -41,14 +41,14 @@ pub mod ext {
         fn ftCommon_8007DB58(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007db58(_a0 as _); } };
         fn ftCommon_80080460(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_80080460(&mut *(_a0 as *mut Fighter)); } };
         fn ft_PlaySFX(_a0: *mut core::ffi::c_void, _a1: i32, _a2: u8, _a3: u8) = { unsafe { let _ = crate::hooks::play_sfx(&mut *(_a0 as *mut Fighter), _a1 as _, _a2 as _, _a3 as _); } };
-        fn Fighter_ResetInputData_80068854(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::fighter::Fighter_ResetInputData_80068854(_g as _); } return; } };
+        fn Fighter_ResetInputData_80068854(_g: *mut HSD_GObj) = { { unsafe { crate::tu::fighter::Fighter_ResetInputData_80068854(_g as _); } return; } };
         fn lbBgFlash_80021C48(_a: u32, _b: u32) = { todo!("TODO(group1 lb) lbBgFlash_80021C48") };
         fn gm_80167470(_slot: i32, _sub: i32) = { todo!("TODO(group6 gm) gm_80167470") };
-        fn ftCo_8009750C(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftCo_Lift::ftCo_8009750C(_g as _); } return; } };
-        fn ftCo_CaptureCut_Enter(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(_g as _); } return; } };
-        fn ftCo_800DA698(_g: *mut HSD_GObj, _b: bool) = { { unsafe { let _ = crate::tu::ftCo_CatchCut::ftCo_800DA698(_g as _, _b as _); } return; } };
-        fn ftCo_80090780(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftCo_DamageFall::ftCo_80090780(_g as _); } return; } };
-        fn ftCo_DownSpot_Enter(_g: *mut HSD_GObj) = { { unsafe { let _ = crate::tu::ftCo_DownSpot::ftCo_DownSpot_Enter(_g as _); } return; } };
+        fn ftCo_8009750C(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftCo_Lift::ftCo_8009750C(_g as _); } return; } };
+        fn ftCo_CaptureCut_Enter(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter(_g as _); } return; } };
+        fn ftCo_800DA698(_g: *mut HSD_GObj, _b: bool) = { { unsafe { crate::tu::ftCo_CatchCut::ftCo_800DA698(_g as _, _b as _); } return; } };
+        fn ftCo_80090780(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(_g as _); } return; } };
+        fn ftCo_DownSpot_Enter(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftCo_DownSpot::ftCo_DownSpot_Enter(_g as _); } return; } };
         fn ftMh_MS_343_80151484(_g: *mut HSD_GObj) = { todo!("TODO(group4 ftMh) ftMh_MS_343_80151484") };
         fn ftCh_GrabUnk1_8015ADD0(_g: *mut HSD_GObj) = { todo!("TODO(group4 ftCh) ftCh_GrabUnk1_8015ADD0") };
     }

@@ -71,7 +71,7 @@ pub mod ext {
             pub unsafe extern "C" fn un_802FF7DC()  {
                 match H_un_802FF7DC {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_world::tu::soundtest::un_802FF7DC(); } return; },
+                    None => { unsafe { melee_world::tu::soundtest::un_802FF7DC(); } return; },
                 }
             }
     pub static mut H_un_802FF884: Option<unsafe extern "C" fn(*mut i8) -> i32> = None;
@@ -85,21 +85,21 @@ pub mod ext {
             pub unsafe extern "C" fn lbCardNew_AllocWorkArea()  {
                 match H_lbCardNew_AllocWorkArea {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea(); } return; },
                 }
             }
     pub static mut H_lbCardGame_LoadArchive: Option<unsafe extern "C" fn(i32) > = None;
             pub unsafe extern "C" fn lbCardGame_LoadArchive(a0: i32)  {
                 match H_lbCardGame_LoadArchive {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a0 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_LoadArchive(a0 as _); } return; },
                 }
             }
     pub static mut H_lbSnap_8001E218: Option<unsafe extern "C" fn(*mut core::ffi::c_void, *mut core::ffi::c_void) > = None;
             pub unsafe extern "C" fn lbSnap_8001E218(a0: *mut core::ffi::c_void, a1: *mut core::ffi::c_void)  {
                 match H_lbSnap_8001E218 {
                     Some(f) => f(a0, a1),
-                    None => { unsafe { let _ = melee_runtime::tu::lbsnap::lbSnap_8001E218(a0 as _, a1 as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E218(a0 as _, a1 as _); } return; },
                 }
             }
     pub static mut H_HSD_MemAlloc: Option<unsafe extern "C" fn(i32) -> *mut core::ffi::c_void> = None;
@@ -127,28 +127,28 @@ pub mod ext {
             pub unsafe extern "C" fn lbDvd_80018C6C()  {
                 match H_lbDvd_80018C6C {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018C6C(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018C6C(); } return; },
                 }
             }
     pub static mut H_lbDvd_8001823C: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn lbDvd_8001823C()  {
                 match H_lbDvd_8001823C {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_8001823C(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_8001823C(); } return; },
                 }
             }
     pub static mut H_lbDvd_80018254: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn lbDvd_80018254()  {
                 match H_lbDvd_80018254 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
+                    None => { unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254(); } return; },
                 }
             }
     pub static mut H_mnGallery_80258940: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn mnGallery_80258940()  {
                 match H_mnGallery_80258940 {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::mngallery::mnGallery_80258940(); } return; },
+                    None => { unsafe { crate::tu::mngallery::mnGallery_80258940(); } return; },
                 }
             }
     pub static mut H_gmFrontend_NativeRequest: Option<unsafe extern "C" fn(*mut u8, *mut u8) -> i32> = None;
@@ -183,14 +183,14 @@ pub mod ext {
             pub unsafe extern "C" fn gm_SetPendingGameMode(a0: u8)  {
                 match H_gm_SetPendingGameMode {
                     Some(f) => f(a0),
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetPendingGameMode(a0 as _); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetPendingGameMode(a0 as _); } return; },
                 }
             }
     pub static mut H_gm_SetNewGameModePending: Option<unsafe extern "C" fn() > = None;
             pub unsafe extern "C" fn gm_SetNewGameModePending()  {
                 match H_gm_SetNewGameModePending {
                     Some(f) => f(),
-                    None => { unsafe { let _ = crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
+                    None => { unsafe { crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
                 }
             }
     // ---- extern globals ----

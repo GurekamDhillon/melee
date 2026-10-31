@@ -30,7 +30,7 @@ pub mod ext {
             pub fn ftCo_AppealS_IASA(gobj: *mut HSD_GObj)  {
                 match unsafe { FTCO_APPEALS_IASA } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ftCo_AppealS::ftCo_AppealS_IASA(gobj as _); } return; },
                 }
             }
     pub static mut FT_80084280: Option<fn(*mut HSD_GObj) > = None;
@@ -38,7 +38,7 @@ pub mod ext {
             pub fn ft_80084280(gobj: *mut HSD_GObj)  {
                 match unsafe { FT_80084280 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = melee_fighter::tu::ft_081b::ft_80084280(gobj as _); } return; },
+                    None => { unsafe { melee_fighter::tu::ft_081b::ft_80084280(gobj as _); } return; },
                 }
             }
 }

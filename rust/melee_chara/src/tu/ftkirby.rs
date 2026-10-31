@@ -95,7 +95,7 @@ pub mod ext {
             pub fn HSD_IDInsertToTable(table: *mut c_void, key: *mut c_void, value: *mut HSD_JObj)  {
                 match unsafe { HSD_IDINSERTTOTABLE } {
                     Some(f) => f(table, key, value),
-                    None => { unsafe { let _ = melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, value as _); } return; },
+                    None => { unsafe { melee_runtime::tu::id::HSD_IDInsertToTable(table as _, key as _, value as _); } return; },
                 }
             }
     crate::port_hook!(HSD_DOBJLOADDESC, HSD_DObjLoadDesc, crate::adapt::HSD_DObjLoadDesc, (desc: *mut HSD_DObjDesc) -> *mut HSD_DObj);
@@ -126,7 +126,7 @@ pub mod ext {
             pub fn HSD_JObjSetMtxDirty(jobj: *mut HSD_JObj)  {
                 match unsafe { HSD_JOBJSETMTXDIRTY } {
                     Some(f) => f(jobj),
-                    None => { unsafe { let _ = crate::tu::ftinl::HSD_JObjSetMtxDirty(jobj as _); } return; },
+                    None => { unsafe { crate::tu::ftinl::HSD_JObjSetMtxDirty(jobj as _); } return; },
                 }
             }
     crate::port_hook!(HSD_JOBJDISPALL, HSD_JObjDispAll, crate::adapt::HSD_JObjDispAll, (jobj: *mut HSD_JObj, mtx: MtxPtr, rmode: u32, flags: u32));
@@ -153,7 +153,7 @@ pub mod ext {
             pub fn HSD_ObjFree(data: *mut c_void, obj: *mut c_void)  {
                 match unsafe { HSD_OBJFREE } {
                     Some(f) => f(data, obj),
-                    None => { unsafe { let _ = melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
+                    None => { unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(data as _, obj as _); } return; },
                 }
             }
     // lb / archives / effects
@@ -162,7 +162,7 @@ pub mod ext {
             pub fn lb_8000CE30(a: *mut HSD_DObj, b: *mut HSD_DObj)  {
                 match unsafe { LB_8000CE30 } {
                     Some(f) => f(a, b),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000CE30(a as _, b as _); } return; },
                 }
             }
     pub static mut LB_8000CE40: Option<fn(*mut HSD_JObj, *mut c_void) > = None;
@@ -170,7 +170,7 @@ pub mod ext {
             pub fn lb_8000CE40(a: *mut HSD_JObj, b: *mut c_void)  {
                 match unsafe { LB_8000CE40 } {
                     Some(f) => f(a, b),
-                    None => { unsafe { let _ = melee_runtime::tu::lb_00B0::lb_8000CE40(a as _, b as _); } return; },
+                    None => { unsafe { melee_runtime::tu::lb_00B0::lb_8000CE40(a as _, b as _); } return; },
                 }
             }
     crate::port_hook!(LBDVD_800178E8, lbDvd_800178E8, crate::adapt::lbDvd_800178E8, (a: i32, filename: *const i8, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32));
@@ -185,7 +185,7 @@ pub mod ext {
             pub fn it_8026B3F8(article: *mut c_void, kind: i32)  {
                 match unsafe { IT_8026B3F8 } {
                     Some(f) => f(article, kind),
-                    None => { unsafe { let _ = melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
+                    None => { unsafe { melee_items::tu::it_26B1::it_8026B3F8(article as _, kind as _); } return; },
                 }
             }
     pub static mut ITGETHOLDKIND: Option<fn(*mut Item_GObj) -> i32> = None;
@@ -219,7 +219,7 @@ pub mod ext {
             pub fn ftKb_SpecialAirLw_800F5524(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALAIRLW_800F5524 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F5524(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecials::ftKb_SpecialAirLw_800F5524(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_ATTACKDASHAIR_800F22D4: Option<fn(*mut HSD_GObj) > = None;
@@ -227,7 +227,7 @@ pub mod ext {
             pub fn ftKb_AttackDashAir_800F22D4(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_ATTACKDASHAIR_800F22D4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialhi::ftKb_AttackDashAir_800F22D4(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialhi::ftKb_AttackDashAir_800F22D4(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALAIRLW_800F5318: Option<fn(*mut HSD_GObj) > = None;
@@ -235,7 +235,7 @@ pub mod ext {
             pub fn ftKb_SpecialAirLw_800F5318(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALAIRLW_800F5318 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_800F5318(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspeciallw::ftKb_SpecialAirLw_800F5318(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALN_800F9090: Option<fn(*mut HSD_GObj) > = None;
@@ -243,7 +243,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F9090(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALN_800F9090 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F9090(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F9090(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALN_800F5D04: Option<fn(*mut HSD_GObj, bool) > = None;
@@ -251,7 +251,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F5D04(gobj: *mut HSD_GObj, arg1: bool)  {
                 match unsafe { FTKB_SPECIALN_800F5D04 } {
                     Some(f) => f(gobj, arg1),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F5D04(gobj as _, arg1 as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F5D04(gobj as _, arg1 as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALN_800F5F68: Option<fn(*mut HSD_GObj) > = None;
@@ -259,7 +259,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F5F68(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALN_800F5F68 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F5F68(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALN_800F6070: Option<fn(*mut HSD_GObj) > = None;
@@ -267,7 +267,7 @@ pub mod ext {
             pub fn ftKb_SpecialN_800F6070(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALN_800F6070 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialn::ftKb_SpecialN_800F6070(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNIC_80108D04: Option<fn(*mut HSD_GObj) > = None;
@@ -275,7 +275,7 @@ pub mod ext {
             pub fn ftKb_SpecialNIc_80108D04(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNIC_80108D04 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D04(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialiceclimber::ftKb_SpecialNIc_80108D04(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNPE_8010C3F4: Option<fn(*mut HSD_GObj) > = None;
@@ -283,7 +283,7 @@ pub mod ext {
             pub fn ftKb_SpecialNPe_8010C3F4(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNPE_8010C3F4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3F4(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialpeach::ftKb_SpecialNPe_8010C3F4(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNLK800FB800: Option<fn(*mut HSD_GObj) > = None;
@@ -291,7 +291,7 @@ pub mod ext {
             pub fn ftKb_SpecialNLk800FB800(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNLK800FB800 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB800(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB800(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNLK800FB840: Option<fn(*mut HSD_GObj) > = None;
@@ -299,7 +299,7 @@ pub mod ext {
             pub fn ftKb_SpecialNLk800FB840(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNLK800FB840 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB840(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspeciallink::ftKb_SpecialNLk800FB840(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNMT_8010709C: Option<fn(*mut HSD_GObj) > = None;
@@ -307,7 +307,7 @@ pub mod ext {
             pub fn ftKb_SpecialNMt_8010709C(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNMT_8010709C } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_8010709C(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_8010709C(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNMT_80107130: Option<fn(*mut HSD_GObj) > = None;
@@ -315,7 +315,7 @@ pub mod ext {
             pub fn ftKb_SpecialNMt_80107130(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNMT_80107130 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107130(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialmewtwo::ftKb_SpecialNMt_80107130(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNSS_800FCD60: Option<fn(*mut HSD_GObj) > = None;
@@ -323,7 +323,7 @@ pub mod ext {
             pub fn ftKb_SpecialNSs_800FCD60(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNSS_800FCD60 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD60(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialsamus::ftKb_SpecialNSs_800FCD60(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNSK_8010603C: Option<fn(*mut HSD_GObj) > = None;
@@ -331,7 +331,7 @@ pub mod ext {
             pub fn ftKb_SpecialNSk_8010603C(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNSK_8010603C } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010603C(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialseak::ftKb_SpecialNSk_8010603C(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNYS_801093B4: Option<fn(*mut HSD_GObj) > = None;
@@ -339,7 +339,7 @@ pub mod ext {
             pub fn ftKb_SpecialNYs_801093B4(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNYS_801093B4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801093B4(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_801093B4(gobj as _); } return; },
                 }
             }
     pub static mut FTKB_SPECIALNYS_8010A8BC: Option<fn(*mut HSD_GObj) > = None;
@@ -347,7 +347,7 @@ pub mod ext {
             pub fn ftKb_SpecialNYs_8010A8BC(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNYS_8010A8BC } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(gobj as _); } return; },
                 }
             }
     crate::port_hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, crate::adapt::ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
@@ -357,7 +357,7 @@ pub mod ext {
             pub fn ftKb_SpecialNKp_800FA7D4(gobj: *mut HSD_GObj)  {
                 match unsafe { FTKB_SPECIALNKP_800FA7D4 } {
                     Some(f) => f(gobj),
-                    None => { unsafe { let _ = crate::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA7D4(gobj as _); } return; },
+                    None => { unsafe { crate::tu::ftkirbyspecialkoopa::ftKb_SpecialNKp_800FA7D4(gobj as _); } return; },
                 }
             }
 

@@ -161,6 +161,10 @@ struct State {
     respawn_busy: [i32; 6],
     stocks: Vec<(i32, i32)>,
     dump: String,
+    /// Captured from the consolidated engine (`--engine tu`): fighters and the seed only so far.
+    engine: bool,
+    /// Engine only: per slot, the fighter's JObj tree in preorder as `[flags, rot x4, scale x3, translate x3, mtx 3x4]` bit patterns.
+    joints: Vec<(i32, Vec<[u32; 26]>)>,
 }
 
 fn capture(sim: &VsMatch, frame: i32) -> State {
@@ -174,7 +178,33 @@ fn capture(sim: &VsMatch, frame: i32) -> State {
         respawn_busy,
         stocks: sim.players.iter().map(|p| (p.slot, melee_fighter::stale::stocks(p.slot))).collect(),
         dump: sim.state_dump(),
+        engine: false,
+        joints: vec![],
     }
+}
+
+/// The engine run to golden frame `frame`: the native Fighter records and the seed (items / stocks / model state wait for step 17).
+fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
+    if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+        let pre = std::fs::read_to_string("tools/rust-port/engine/pre_draws.tsv").ok().and_then(|t| t.lines().find_map(|l| l.strip_prefix(&format!("{scn}	")).map(str::to_string)));
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre.unwrap_or_else(|| "0".into())) };
+    }
+    let mut e = crate::boot_engine_scenario(iso, scn)?;
+    for _ in 0..=frame {
+        if !e.tick() {
+            return Err(format!("the engine's scene ended before frame {frame}"));
+        }
+    }
+    let r = e.neutral_row();
+    let mut fighters = Vec::new();
+    for slot in 0..2 {
+        if let Some(b) = e.fighter_bytes(slot) {
+            fighters.push((slot, b));
+        }
+    }
+    let joints = (0..2).map(|slot| (slot, e.joint_words(slot))).collect();
+    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: vec![], respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints })
 }
 
 fn raw<T>(v: &T) -> &[u8] {
@@ -260,11 +290,16 @@ pub fn diff(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
+    let engine = get("--engine").as_deref() == Some("tu");
     if let Some(e) = get("--engine") {
-        if e != "legacy" {
-            eprintln!("melee diff: --engine {e}: only `legacy` exists until consolidation step 7");
+        if e != "legacy" && e != "tu" {
+            eprintln!("melee diff: --engine {e}: legacy | tu");
             return ExitCode::from(2);
         }
+    }
+    if engine && has("--first") {
+        eprintln!("melee diff: --engine tu takes --frame N / --frames LIST (use melee golden --engine tu for the first divergence)");
+        return ExitCode::from(2);
     }
     if let Some(list) = get("--frames") {
         return diff_frames(args, &scn, &list);
@@ -288,18 +323,31 @@ pub fn diff(args: &[String]) -> ExitCode {
     } else {
         vec![]
     };
-    let mut sim = match build(&iso, &scn) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("melee diff: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
-    // Run the sim from frame 0.
     let mut state: Option<State> = None;
     let mut why = String::new();
     let mut n_rows = 0;
-    loop {
+    if engine {
+        match engine_state(&iso, &scn, target.unwrap_or(0)) {
+            Ok(s) => state = Some(s),
+            Err(e) => {
+                eprintln!("melee diff: {e}");
+                return ExitCode::from(3);
+            }
+        }
+    }
+    let mut sim = if engine {
+        None
+    } else {
+        match build(&iso, &scn) {
+            Ok(s) => Some(s),
+            Err(e) => {
+                eprintln!("melee diff: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    };
+    // Run the sim from frame 0.
+    while let Some(sim) = sim.as_mut() {
         if !sim.step() {
             why = sim.stopped.clone().unwrap_or_else(|| "sim ended".into());
             break;
@@ -359,7 +407,6 @@ pub fn diff(args: &[String]) -> ExitCode {
         eprintln!("melee diff: the sim stopped before frame {}: {why}", target.unwrap());
         return ExitCode::from(3); // the --frames wrapper skips frames beyond the engine's count
     };
-    drop(sim);
     let frame = st.frame;
     let snap_path = match find_snap(&scn, frame, get("--snap")) {
         Ok(p) => p,
@@ -387,7 +434,7 @@ pub fn diff(args: &[String]) -> ExitCode {
     }
     // Model state: the sim loaded from the snapshot against the from-0 sim.
     let mut model_note = String::new();
-    {
+    if !st.engine {
         let (stage, fighters, _) = scenario(&scn).unwrap();
         match crate::disc::Disc::open(&iso).and_then(|mut d| VsMatch::from_snapshot(&mut d, &snap, stage, fighters, 12345, 3)) {
             Ok(m) => model_diff(&st.dump, &m.state_dump(), &mut out),
@@ -564,6 +611,49 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
             k += 1;
             push(0, (*slot as u32, gc * 64 + k % 64), "Fighter", inst.clone(), f, Some(gc), c, r);
         });
+    }
+    if st.engine {
+        // The fighters' JObj trees (preorder: a joint, its children, then its siblings).
+        for (slot, rj) in &st.joints {
+            let Some(fg) = gobjs.iter().copied().find(|&g| {
+                let u = snap.u32(g + 0x2c);
+                u != 0 && snap.u8(u + pid) as i32 == *slot
+            }) else { continue };
+            let mut cj: Vec<[u32; 26]> = Vec::new();
+            let mut stack = vec![snap.u32(fg + 0x28)];
+            while let Some(j) = stack.pop() {
+                if j == 0 || cj.len() > 512 {
+                    continue;
+                }
+                let mut w = [0u32; 26];
+                w[0] = snap.u32(j + 0x14);
+                for k in 0..4 { w[1 + k] = snap.u32(j + 0x1C + 4 * k as u32); }
+                for k in 0..3 { w[5 + k] = snap.u32(j + 0x2C + 4 * k as u32); }
+                for k in 0..3 { w[8 + k] = snap.u32(j + 0x38 + 4 * k as u32); }
+                for k in 0..12 { w[11 + k] = snap.u32(j + 0x44 + 4 * k as u32); }
+                cj.push(w);
+                stack.push(snap.u32(j + 8));
+                stack.push(snap.u32(j + 0x10));
+            }
+            let names = ["flags", "rot.x", "rot.y", "rot.z", "rot.w", "scale.x", "scale.y", "scale.z", "trans.x", "trans.y", "trans.z", "mtx00", "mtx01", "mtx02", "mtx03", "mtx10", "mtx11", "mtx12", "mtx13", "mtx20", "mtx21", "mtx22", "mtx23"];
+            if cj.len() != rj.len() {
+                push(0, (*slot as u32, 1 << 30), "JObj tree", format!("P{} joints", slot + 1), "count".into(), None, cj.len().to_string(), rj.len().to_string());
+            }
+            for (n, (c, r)) in cj.iter().zip(rj.iter()).enumerate() {
+                // the world matrices are computed lazily (a stale one is not a state difference): only flags / SRT
+                for (k, nm) in names.iter().enumerate().take(11) {
+                    if c[k] != r[k] {
+                        let (cs, rs) = if k == 0 { (format!("{:08x}", c[k]), format!("{:08x}", r[k])) } else { (format!("{} ({:08x})", f32::from_bits(c[k]), c[k]), format!("{} ({:08x})", f32::from_bits(r[k]), r[k])) };
+                        push(0, (*slot as u32, (1 << 30) + n as u32 * 32 + k as u32), "JObj", format!("P{} j{n}", slot + 1), (*nm).into(), None, cs, rs);
+                    }
+                }
+            }
+        }
+        let seed = snap.u32(snap.must_sym("_seed")?);
+        if seed != st.seed {
+            push(3, (0, 0), "HSD_Rand", "rng".into(), "logic seed".into(), None, format!("{seed:08x}"), format!("{:08x}", st.seed));
+        }
+        return Ok(());
     }
     // Stocks.
     let slots = snap.must_sym("_player_slots")?;

@@ -414,43 +414,18 @@ pub(crate) fn write_wav(path: &str, samples: &[i16]) -> std::io::Result<()> {
     std::fs::write(path, b)
 }
 
-/// `melee golden --engine tu`: the same CSV from the consolidated engine (melee_engine): the real StartMelee path,
-/// the TU-ported game code over native structs, `RB_NeutralHash` (NHV1) after each scene tick. `--frames N`
-/// (default 1) ticks; row k is the state after tick k (frame 0 = the first tick).
-fn golden_engine(args: &[String]) -> ExitCode {
-    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
-    let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
-    let (Some(iso), Some(out)) = (iso, get("--out")) else {
-        eprintln!("usage: melee golden --engine tu --iso DISC.iso --out CANDIDATE.csv [--scenario NAME] [--frames N]");
-        return ExitCode::from(2);
-    };
-    let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
-    let scene = match scenario.as_str() {
+/// The engine booted into a golden scenario's match (scene string, disc, pad feed); `melee golden --engine tu` and `melee diff --engine tu`.
+pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_engine::Engine, String> {
+    let scene = match scenario {
         "pad_falcon_fox_fd" => "p1=falcon/human;p2=fox/human;p3=none;p4=none;stage=fd;match=time;minutes=0;items=off",
         "pad_marth_sheik_bf" => "p1=marth/human;p2=sheik/human;p3=none;p4=none;stage=bf;match=time;minutes=0;items=off",
         "cpu_fox_falco_dl" => "p1=fox/cpu9;p2=falco/cpu9;p3=none;p4=none;stage=dreamland;match=time;minutes=0;items=off",
         "cpu_peach_samus_ys_items" => "p1=peach/cpu9;p2=samus/cpu9;p3=none;p4=none;stage=ys;match=time;minutes=0;items=4",
-        s => {
-            eprintln!("melee: scenario {s:?} not wired");
-            return ExitCode::from(2);
-        }
+        s => return Err(format!("scenario {s:?} not wired")),
     };
-    let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(1);
-    let disc = match melee_engine::gcm::Gcm::open(&iso) {
-        Ok(d) => d,
-        Err(e) => {
-            eprintln!("melee: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
+    let disc = melee_engine::gcm::Gcm::open(iso).map_err(|e| e.to_string())?;
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
-    let mut e = match melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn) {
-        Ok(e) => e,
-        Err(e) => {
-            eprintln!("melee: engine boot: {e}");
-            return ExitCode::FAILURE;
-        }
-    };
+    let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
     // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
     if scenario.starts_with("pad_") {
         e.set_pad_feed(|tick, port| {
@@ -466,6 +441,28 @@ fn golden_engine(args: &[String]) -> ExitCode {
             st
         });
     }
+    Ok(e)
+}
+
+/// `melee golden --engine tu`: the same CSV from the consolidated engine (melee_engine): the real StartMelee path,
+/// the TU-ported game code over native structs, `RB_NeutralHash` (NHV1) after each scene tick. `--frames N`
+/// (default 1) ticks; row k is the state after tick k (frame 0 = the first tick).
+fn golden_engine(args: &[String]) -> ExitCode {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());
+    let (Some(iso), Some(out)) = (iso, get("--out")) else {
+        eprintln!("usage: melee golden --engine tu --iso DISC.iso --out CANDIDATE.csv [--scenario NAME] [--frames N]");
+        return ExitCode::from(2);
+    };
+    let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
+    let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(1);
+    let mut e = match boot_engine_scenario(&iso, &scenario) {
+        Ok(e) => e,
+        Err(er) => {
+            eprintln!("melee: {er}");
+            return ExitCode::FAILURE;
+        }
+    };
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
@@ -513,6 +510,11 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
         if std::env::var_os("MELEE_ENGINE_ITEMS").is_some() {
             for l in e.debug_items().lines() { eprintln!("f{f} {l}"); }
+        }
+        if std::env::var_os("MELEE_ENGINE_HURT").is_some() {
+            for slot in 0..2 {
+                for l in e.debug_hurt(slot).lines() { eprintln!("f{f} p{} {l}", slot + 1); }
+            }
         }
         if std::env::var_os("MELEE_ENGINE_FT").is_some() {
             eprintln!("f{f} {}", e.debug_fighter(0));

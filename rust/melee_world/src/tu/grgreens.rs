@@ -433,14 +433,17 @@ pub unsafe extern "C" fn grGreens_802139C4(gobj: *mut Ground_GObj) {
     melee_core::ct!("grGreens_802139C4");
     let gp = (*gobj).user_data as *mut Ground;
     ext::ftCo_800C06E8(gobj, 9, fn_80213B1C as *mut c_void);
-    (*gp).u.greens.x0_flags.whole_thing = 0;
-    (*gp).u.greens.x4 = null_mut();
-    (*gp).u.greens.x8_blocks = null_mut();
-    (*gp).u.greens.xC = randrange((*yakumono_param).x38_windTimerMax, (*yakumono_param).x34_windTimerMin);
-    (*gp).u.greens.x10 = 1;
-    (*gp).u.greens.x1C = 0;
-    (*gp).u.greens.x14 = ext::HSD_Randi(2);
-    (*gp).u.greens.x18 = 0;
+    // This gobj's variables are `greens2` (80213C10 reads them so): the C writes the same GameCube bytes through
+    // `greens` (x4 / x8 are NULL pointers there), but natively the pointer fields move the others, so the init writes
+    // the layout the readers use.
+    (*gp).u.greens2.x0 = 0;
+    (*gp).u.greens2.x4 = 0;
+    (*gp).u.greens2.x8 = 0;
+    (*gp).u.greens2.xC = randrange((*yakumono_param).x38_windTimerMax, (*yakumono_param).x34_windTimerMin);
+    (*gp).u.greens2.x10 = 1;
+    (*gp).u.greens2.x1C = 0;
+    (*gp).u.greens2.x14 = ext::HSD_Randi(2);
+    (*gp).u.greens2.x18 = 0;
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
 }
 

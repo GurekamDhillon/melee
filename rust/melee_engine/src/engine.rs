@@ -265,6 +265,63 @@ impl Engine {
         }
     }
 
+    /// A slot's fighter JObj tree in preorder as `[flags, rot x4, scale x3, translate x3, mtx 3x4]` bit patterns (`melee diff --engine tu`).
+    pub fn joint_words(&self, slot: i32) -> Vec<[u32; 26]> {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            let mut out = Vec::new();
+            if g.is_null() {
+                return out;
+            }
+            let mut stack = vec![(*g).hsd_obj as *mut melee_types::HSD_JObj];
+            while let Some(j) = stack.pop() {
+                if j.is_null() || out.len() > 512 {
+                    continue;
+                }
+                let j = &*j;
+                let mut w = [0u32; 26];
+                w[0] = j.flags;
+                let r = &j.rotate;
+                for (k, v) in [r.x, r.y, r.z, r.w].iter().enumerate() { w[1 + k] = v.to_bits(); }
+                for (k, v) in [j.scale.x, j.scale.y, j.scale.z].iter().enumerate() { w[5 + k] = v.to_bits(); }
+                for (k, v) in [j.translate.x, j.translate.y, j.translate.z].iter().enumerate() { w[8 + k] = v.to_bits(); }
+                for row in 0..3 { for col in 0..4 { w[11 + row * 4 + col] = j.mtx[row][col].to_bits(); } }
+                out.push(w);
+                stack.push(j.next);
+                stack.push(j.child);
+            }
+            out
+        }
+    }
+
+    /// Debug (`MELEE_ENGINE_HURT=1`): a slot's hurt capsules: bone joint index (preorder), joint flags, state, skip flag, a/b positions.
+    pub fn debug_hurt(&self, slot: i32) -> String {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            if g.is_null() || (*g).user_data.is_null() {
+                return String::new();
+            }
+            let fp = &*((*g).user_data as *const melee_types::Fighter);
+            let mut order: Vec<*mut melee_types::HSD_JObj> = Vec::new();
+            let mut stack = vec![(*g).hsd_obj as *mut melee_types::HSD_JObj];
+            while let Some(j) = stack.pop() {
+                if j.is_null() { continue; }
+                order.push(j);
+                stack.push((*j).next);
+                stack.push((*j).child);
+            }
+            let mut out = String::new();
+            for i in 0..fp.hurt_capsules_len as usize {
+                let c = &fp.hurt_capsules[i].capsule;
+                let idx = order.iter().position(|&j| j as *mut _ == c.bone as *mut _).map_or(-1, |x| x as i32);
+                let fl = if c.bone.is_null() { 0 } else { (*c.bone).flags };
+                out += &format!("hurt{i} bone j{idx} flags {fl:08x} state {} skip {} a ({:.4},{:.4},{:.4}) b ({:.4},{:.4},{:.4})
+", c.state as i32, c.skip_update_pos(), c.a_pos.x, c.a_pos.y, c.a_pos.z, c.b_pos.x, c.b_pos.y, c.b_pos.z);
+            }
+            out
+        }
+    }
+
     /// Debug aid (`MELEE_ENGINE_FT=1` in `melee golden --engine tu`): motion id, position, velocity and ground/air of a slot's fighter.
     pub fn debug_fighter(&self, slot: i32) -> String {
         unsafe {

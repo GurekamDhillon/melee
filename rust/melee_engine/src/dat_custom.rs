@@ -64,7 +64,18 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "plco" => plco(d, b, off),
         "itco" => itco(d, b, off),
         "ftdata" => ftdata(d, b, off, sym),
-        "ptrtable_itemdata" => ptrtable::<melee_types::GroundItemData>(d, b, off),
+        "ptrtable_itemdata" => {
+            // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
+            let n = (b.extent(off) / 4).max(1);
+            for i in 0..n {
+                if let Some(rec) = d.target(off + 4 * i) {
+                    if let Some(ta) = d.target(rec + 4) {
+                        note_article_states(d, b, ta);
+                    }
+                }
+            }
+            ptrtable::<melee_types::GroundItemData>(d, b, off)
+        }
         "ptrtable_dynmodel" => ptrtable::<melee_types::DynamicModelDesc>(d, b, off),
         "ptrtable_lightlist" => ptrtable::<melee_types::LightList>(d, b, off),
         "rawptrs" => {
@@ -76,11 +87,24 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                     Some(t) => v.push(b.raw_addr(t)),
                     None => {
                         v.push(core::ptr::null_mut());
-                        break;
+                        // slot 0 is unused (`ALDYakuAll`: the C walks from 1 to the first null)
+                        if i > 0 {
+                            break;
+                        }
                     }
                 }
             }
             Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
+        }
+        "rawwords" => {
+            // a block of 32-bit ints / floats the game code reads as a native struct (`yakumono_param`): word-swapped copy
+            let n = (b.extent(off) / 4).max(1) as usize;
+            let buf = native_buf(n * 4);
+            for k in 0..n {
+                let w = d.u32_at(off + 4 * k as u32);
+                unsafe { (buf as *mut u32).add(k).write(w) };
+            }
+            buf as *mut c_void
         }
         "efdat" => efdat(d, b, off),
         "ptclcmd" => ptcl_cmd(d, b, off),
@@ -132,8 +156,14 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
         // `T**` field would give one entry, and ftCommonData_ExtendCpuTables reads up to Ft_Kind_Mex0 of them.
         let p = parr::<Fighter_804D64FC_t>(d, b, at(22)) as *mut Fighter_804D64FC_t;
         if let Some(t) = d.target(at(22)) {
-            let tables = [4u32, 8, 0xC, 0x10, 0x14, 0x18, 0x1C].map(|f| rtable_min::<c_void>(d, b, t + f, melee_types::Ft_Kind_Mex0 as u32));
+            // the lists are `ftCo_AttackEntry` arrays (nine 32-bit words each, 0-terminated by `cmd`): word-swapped native copies
+            let tables = [4u32, 8, 0xC, 0x10, 0x14, 0x18, 0x1C].map(|f| attack_lists(d, b, t + f, melee_types::Ft_Kind_Mex0 as u32));
             unsafe {
+                // x20: `f32[kind]` (a hurt-distance threshold per fighter); x24: the six weapon reaches
+                // cmdscripts: `u8*` per script id, byte streams read bytewise (kept in the raw image)
+                (*p).cmdscripts = raw_table(d, b, t) as *mut *mut u8;
+                (*p).x20 = swapped_words(d, b, t + 0x20, melee_types::Ft_Kind_Mex0 as usize) as *mut f32;
+                (*p).x24 = swapped_words(d, b, t + 0x24, 8) as *mut c_void;
                 (*p).x4 = tables[0];
                 (*p).x8 = tables[1];
                 (*p).xC = tables[2];
@@ -147,6 +177,61 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     };
     // the root is a pointer to the table (`void** pData` after `lbArchive_LoadSymbols`)
     Box::leak(out.into_boxed_slice()).as_mut_ptr() as *mut c_void
+}
+
+/// The block the pointer word at `at` targets as native 32-bit words (`min` words at least, to the next boundary), shared per target.
+fn swapped_words(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: usize) -> *mut c_void {
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    memo((b.1, t | 0x8000_0000), || {
+        let n = ((b.extent(t) / 4) as usize).max(min);
+        let buf = native_buf(n * 4);
+        for k in 0..n {
+            let w = d.u32_at(t + 4 * k as u32);
+            unsafe { (buf as *mut u32).add(k).write(w) };
+        }
+        buf as *mut c_void
+    })
+}
+
+/// The table of pointers at `at`, each a pointer into the raw (big-endian) image (null where the word is not a pointer).
+fn raw_table(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut c_void {
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    let n = (b.extent(t) / 4).max(1);
+    let v: Vec<*mut c_void> = (0..n).map(|i| d.target(t + 4 * i).map_or(core::ptr::null_mut(), |q| b.raw_addr(q))).collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr()
+}
+
+/// A kind-indexed table (`void**`) of 0-terminated `ftCo_AttackEntry` lists, as word-swapped native copies. `min` entries at least.
+fn attack_lists(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: u32) -> *mut *mut c_void {
+    const WORDS: u32 = 9;
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    let n = (b.extent(t) / 4).max(1);
+    let v: Vec<*mut c_void> = (0..n.max(min))
+        .map(|i| {
+            if i >= n {
+                return core::ptr::null_mut();
+            }
+            let Some(te) = d.target(t + 4 * i) else { return core::ptr::null_mut() };
+            memo((b.1, te | 0x4000_0000), || {
+                let mut words: Vec<u32> = Vec::new();
+                for e in 0..256u32 {
+                    let at_e = te + e * WORDS * 4;
+                    let ent: Vec<u32> = (0..WORDS).map(|k| d.u32_at(at_e + 4 * k)).collect();
+                    let end = ent[0] == 0;
+                    words.extend(ent);
+                    if end {
+                        break;
+                    }
+                }
+                let buf = native_buf(words.len() * 4);
+                for (k, w) in words.iter().enumerate() {
+                    unsafe { (buf as *mut u32).add(k).write(*w) };
+                }
+                buf as *mut c_void
+            })
+        })
+        .collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr()
 }
 
 /// A table of `T*` (`T**`), one record per entry (null entry = null pointer), sized by the next boundary.
@@ -163,12 +248,33 @@ fn rtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut
 /// [`fix_articles`] right after `finish()`.
 static mut ARTICLE_TABLES: Vec<(usize, usize, usize, Vec<u32>)> = Vec::new();
 
+/// Articles whose `xC_itemStates` runs past the 8 entries of `ItemStateArray`: (table, entry, state array of the full
+/// extent). The C indexes the array by item state (`Ground_801C0800` sets the Random item's `ald_yaku_all` scripts
+/// for every state), so the native copy must hold them all.
+static mut ARTICLE_STATES: Vec<(*mut melee_types::Article, *mut melee_types::ItemStateDesc, usize)> = Vec::new();
+
+/// Queue the full-extent state array of the article at data offset `ta` when its states run past 8 entries.
+fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
+    let Some(ts) = d.target(ta + 0xC) else { return };
+    let cnt = (b.extent(ts) / 0x10) as usize;
+    if cnt >= 8 && cnt <= 32 {
+        let art = d.object::<melee_types::Article>(ta);
+        let arr = d.ptr_array::<melee_types::ItemStateDesc>(ta + 0xC, cnt);
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_STATES)).push((art, arr, cnt)) };
+    }
+}
+
 /// `rtable::<Article>`; see [`fix_articles`].
 fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut melee_types::Article {
     let tbl = rtable::<melee_types::Article>(d, b, at);
     if let Some(t) = d.target(at) {
         let n = (b.extent(t) / 4).max(1) as usize;
         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, n, b.1, b.0.clone())) };
+        for i in 0..n as u32 {
+            if let Some(ta) = d.target(t + 4 * i) {
+                note_article_states(d, b, ta);
+            }
+        }
     }
     tbl
 }
@@ -178,6 +284,17 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
 /// swapped; articles sharing a block share the copy.
 pub fn fix_articles() {
     use std::collections::HashMap;
+    let states = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_STATES)) };
+    for (a, arr, cnt) in states {
+        // the C writes one or two entries past the extent of some arrays (`Ground_801C0800`: the Random item's
+        // `ald_yaku_all` scripts, into the bytes that follow in the file); the native copy keeps room for that
+        let room = (cnt + 8) * core::mem::size_of::<melee_types::ItemStateDesc>();
+        let buf = native_buf(room) as *mut melee_types::ItemStateDesc;
+        unsafe {
+            core::ptr::copy_nonoverlapping(arr, buf, cnt);
+            (*a).xC_itemStates = buf as *mut melee_types::ItemStateArray;
+        }
+    }
     let tables = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TABLES)) };
     for (tbl, n, base, bounds) in tables {
         let b = Bounds(bounds, base);
@@ -265,11 +382,58 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
     v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut *mut c_void;
+    note_dynamics(d, &v, at("x2C"));
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
         v.ext_attr = p;
     }
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
+}
+
+/// Dynamics blocks to rebuild after the decoder ran: (the `ftDynamics` object, per bone the native word block).
+static mut DYNAMICS_FIX: Vec<(usize, Vec<(usize, Vec<u32>)>)> = Vec::new();
+
+/// `ftData.x2C` (`ftDynamics`): each bone's `dyn_desc.data` points at `count` records of `lb_00F9_UnkDesc1Inner` (15 `f32`,
+/// 0x3C bytes each) that `lb_80011710` reads as an array. The generic decode kept the first `PolymorphicDesc` worth of
+/// raw big-endian bytes (two records, unswapped); [`fix_dynamics`] rebuilds the block native, `count` records long.
+fn note_dynamics(d: &mut GcDecoder<'_>, v: &melee_types::ftData, at_x2c: u32) {
+    const REC: usize = 15;
+    let Some(t) = d.target(at_x2c) else { return };
+    let n = d.u32_at(t) as usize;
+    let Some(tb) = d.target(t + 4) else { return };
+    if v.x2C.is_null() {
+        return;
+    }
+    let mut bones = Vec::new();
+    for i in 0..n.min(10) {
+        let e = tb + 0x18 * i as u32;
+        let (Some(td), count) = (d.target(e + 4), d.u32_at(e + 8) as usize) else { continue };
+        if count == 0 || count > 16 {
+            continue;
+        }
+        bones.push((i, (0..count * REC).map(|k| d.u32_at(td + 4 * k as u32)).collect::<Vec<_>>()));
+    }
+    unsafe { (*core::ptr::addr_of_mut!(DYNAMICS_FIX)).push((v.x2C as usize, bones)) };
+}
+
+/// Applies [`note_dynamics`] (run by `archive.rs` right after `GcDecoder::finish`).
+pub fn fix_dynamics() {
+    use melee_types::{DynamicsData, ftDynamics};
+    let todo = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(DYNAMICS_FIX)) };
+    for (obj, bones) in todo {
+        let tbl = unsafe { (*(obj as *mut ftDynamics)).anon_0.ftDynamicBones };
+        if tbl.is_null() {
+            eprintln!("engine: an ftDynamics table decoded to null");
+            continue;
+        }
+        for (i, words) in bones {
+            let buf = native_buf((words.len() * 4).max(core::mem::size_of::<DynamicsData>()));
+            for (k, w) in words.iter().enumerate() {
+                unsafe { (buf as *mut u32).add(k).write(*w) };
+            }
+            unsafe { (*tbl).array[i].dyn_desc.data = buf as *mut DynamicsData };
+        }
+    }
 }
 
 // ---- particle banks (baselib/particle.c: psInitDataBankLocate / psInitDataBankLoad) ----------------------------

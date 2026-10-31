@@ -23,6 +23,7 @@ Gx_\w+
 Netplay_\w+
 Overlay_\w+
 Turbo_\w+
+MatchTurbo\w+
 SyncTest_\w+
 View_\w+
 SceneReport_\w+

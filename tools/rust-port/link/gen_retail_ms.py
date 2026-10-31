@@ -107,7 +107,7 @@ def run_ms(gen):
                     ilines.append(f'        (*t)[{i}].x4_flags = ({resolve(flds["x4_flags"], where)}) as _;')
                 um = re.search(r'_\s*:\s*(.+?)\s*,?\s*\}\s*$', flds.get('c2rust_unnamed', ''), re.S)
                 if um:
-                    ilines.append(f'        (*t)[{i}].anon_8._x0 = ({resolve(um.group(1), where)}) as u32;')
+                    ilines.append(f'        (*t)[{i}].anon_8._x0 = (({resolve(um.group(1), where)}) as u32).to_be();')
                 for cb in ('anim_cb', 'input_cb', 'phys_cb', 'coll_cb', 'cam_cb'):
                     if cb not in flds:
                         continue

@@ -289,7 +289,9 @@ pub static mut PL_804D6470: *const crate::types::pl_804D6470_t = core::ptr::null
 /// `*pl_804D6470`. Panics if the table has not been installed.
 #[inline]
 pub fn pl_804d6470() -> &'static crate::types::pl_804D6470_t {
-    let p = unsafe { PL_804D6470 };
+    // the engine's loader (`tu::player`, `pl_80038914`) owns the table; the legacy `vs_match` sets `PL_804D6470` (step 19 deletes it)
+    let p = unsafe { crate::tu::player::pl_804D6470 } as *const crate::types::pl_804D6470_t;
+    let p = if p.is_null() { unsafe { PL_804D6470 } } else { p };
     assert!(!p.is_null(), "pl_804D6470 not loaded");
     unsafe { &*p }
 }

@@ -26,7 +26,7 @@ mod imp {
         static LAST: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let w = *WATCH.get_or_init(|| std::env::var("MELEE_WATCH").ok().and_then(|v| usize::from_str_radix(v.trim_start_matches("0x"), 16).ok()).unwrap_or(0));
         static ARMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-        if name == "lbHeap_80015F3C" { ARMED.store(true, std::sync::atomic::Ordering::Relaxed); }
+        if name == "lbHeap_80015F3C" || name == "lbMemory_8001564C" { ARMED.store(true, std::sync::atomic::Ordering::Relaxed); }
         if w != 0 && ARMED.load(std::sync::atomic::Ordering::Relaxed) {
             let now = unsafe { core::ptr::read_volatile(w as *const u32) };
             if now != LAST.swap(now, std::sync::atomic::Ordering::Relaxed) {

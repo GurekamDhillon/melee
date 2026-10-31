@@ -277,8 +277,16 @@ static mut ARTICLE_TABLES: Vec<(usize, usize, usize, Vec<u32>)> = Vec::new();
 /// for every state), so the native copy must hold them all.
 static mut ARTICLE_STATES: Vec<(*mut melee_types::Article, *mut melee_types::ItemStateDesc, usize)> = Vec::new();
 
+/// Articles with an `x14_dynamics` block: (article, image base, data offset of the block). The header types it `ItemDynamics
+/// {count, descs}` but the C (`it_8027163C`) reads `ItCollDynamics {pad[8], count, descs}`: rebuilt from the image by [`fix_articles`].
+static mut ARTICLE_DYNAMICS: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
+
 /// Queue the full-extent state array of the article at data offset `ta` when its states run past 8 entries.
 fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
+    if let Some(dy) = d.target(ta + 0x14) {
+        let art = d.object::<melee_types::Article>(ta);
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)).push((art, b.1, dy)) };
+    }
     let Some(ts) = d.target(ta + 0xC) else { return };
     let cnt = (b.extent(ts) / 0x10) as usize;
     if cnt >= 8 && cnt <= 32 {
@@ -331,6 +339,29 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
 /// swapped; articles sharing a block share the copy.
 pub fn fix_articles() {
     use std::collections::HashMap;
+    let dyns = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)) };
+    for (a, base, off) in dyns {
+        unsafe {
+            let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
+            let off = off as usize;
+            let count = be(off + 8) as usize;
+            let descs_off = be(off + 0xC) as usize;
+            let mut v: Vec<melee_items::tu::itcoll::ItCollDynamicsDesc> = Vec::new();
+            if count <= 8 && descs_off != 0 {
+                for k in 0..count {
+                    let d0 = descs_off + 20 * k;
+                    v.push(melee_items::tu::itcoll::ItCollDynamicsDesc {
+                        bone_id: be(d0) as i32,
+                        offset: melee_types::Vec3 { x: f32::from_bits(be(d0 + 4)), y: f32::from_bits(be(d0 + 8)), z: f32::from_bits(be(d0 + 12)) },
+                        size: f32::from_bits(be(d0 + 16)),
+                    });
+                }
+            }
+            let dd = Box::leak(v.into_boxed_slice());
+            let nd = Box::leak(Box::new(melee_items::tu::itcoll::ItCollDynamics { _pad: [0; 8], count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
+            (*a).x14_dynamics = nd as *mut _ as *mut melee_types::ItemDynamics;
+        }
+    }
     let states = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_STATES)) };
     for (a, arr, cnt) in states {
         // the C writes one or two entries past the extent of some arrays (`Ground_801C0800`: the Random item's
@@ -352,7 +383,10 @@ pub fn fix_articles() {
         for i in 0..n {
             unsafe {
                 let a = *tbl.add(i);
-                if a.is_null() || (*a).x4_specialAttributes.is_null() {
+                if a.is_null() {
+                    continue;
+                }
+                if (*a).x4_specialAttributes.is_null() {
                     continue;
                 }
                 let raw = (*a).x4_specialAttributes as usize;

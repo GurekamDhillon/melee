@@ -14,6 +14,19 @@ pub use gen_table::HOOKS;
 /// A variadic tail the hook already carries as a slice: one machine word per element (see [`va_word`]).
 #[inline(always)]
 pub(crate) unsafe fn va_words<A: Copy>(a: &[A]) -> std::vec::Vec<*const core::ffi::c_void> {
+    // melee_items' `EfArg` is a tagged enum standing for one C variadic word (an int or a pointer): unwrap it
+    if core::any::type_name::<A>() == core::any::type_name::<melee_items::tu::iteffect::EfArg>() {
+        use melee_items::tu::iteffect::EfArg;
+        return a
+            .iter()
+            .map(|x| match *(x as *const A as *const EfArg) {
+                EfArg::Int(i) => i as isize as *const core::ffi::c_void,
+                EfArg::Ptr(p) => p as *const core::ffi::c_void,
+                EfArg::F32P(p) => p as *const core::ffi::c_void,
+                EfArg::Vec3P(p) => p as *const core::ffi::c_void,
+            })
+            .collect();
+    }
     a.iter().map(|&x| va_word(x)).collect()
 }
 

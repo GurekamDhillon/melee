@@ -882,7 +882,7 @@ pub unsafe extern "C" fn it_8027163C(item_gobj: *mut HSD_GObj) {
     }
     if !it_dynams.is_null() {
         if (*it_dynams).count > 2 {
-            panic!("item dynamics hit num over! (HSD_ASSERTREPORT(0x415))");
+            panic!("item dynamics hit num over! (HSD_ASSERTREPORT(0x415)) kind {} count {} ptr {:p}", (*it).kind, (*it_dynams).count, it_dynams);
         }
         let mut cnt: u32 = 0;
         (*it).xB68 = (*it_dynams).count as u8;

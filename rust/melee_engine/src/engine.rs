@@ -161,6 +161,7 @@ impl Engine {
             // lb_80019AAC(&gmMain_8015FD24): pad library setup and the sampling period
             melee_modes::tu::lb_0195::lb_80019AAC(Some(gmmain_pad_setup));
             // the rest of `main` after the pad setup (gm/gmmain.c)
+            melee_items::tu::dbitem::db_ItemAndPokemonMenu.ItemSpawnsEnabled = 1; // db_EnableItemSpawns() in `main`
             melee_runtime::tu::lbmemory::lbMemory_8001564C();
             melee_runtime::tu::lbheap::lbHeap_80015F3C();
             melee_runtime::tu::lbdvd::lbDvd_80018F68();

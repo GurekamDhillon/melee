@@ -653,7 +653,7 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
             }
             for (n, (c, r)) in cj.iter().zip(rj.iter()).enumerate() {
                 // the world matrices are computed lazily (a stale one is not a state difference): only flags / SRT
-                for (k, nm) in names.iter().enumerate().take(11) {
+                for (k, nm) in names.iter().enumerate().take(if std::env::var_os("MELEE_DIFF_MTX").is_some() { 23 } else { 11 }) {
                     if c[k] != r[k] {
                         let (cs, rs) = if k == 0 { (format!("{:08x}", c[k]), format!("{:08x}", r[k])) } else { (format!("{} ({:08x})", f32::from_bits(c[k]), c[k]), format!("{} ({:08x})", f32::from_bits(r[k]), r[k])) };
                         push(0, (*slot as u32, (1 << 30) + n as u32 * 32 + k as u32), "JObj", format!("P{} j{n}", slot + 1), (*nm).into(), None, cs, rs);

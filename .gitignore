@@ -208,3 +208,14 @@ rust/out_*/
 rust/r4*/
 rust/rs_win/
 docs/rust-port/shots/play_*.png
+
+# Disc-derived screenshots and game-recorded replays: regenerate locally from your own ISO, never commit
+/pc/assets_src/bf_platform/look/after-ingame-close.png
+/pc/assets_src/bf_platform/look/after-ingame-wide.png
+/pc/docs/readme/match_hd.jpg
+/pc/docs/readme/kit_hud.jpg
+/pc/docs/readme/css.png
+/pc/docs/readme/lobby_strikes.png
+/docs/rust-port/golden/slp
+/rust/melee_data/tests/data/gdlp
+/rust/melee_data/tests/data/replay_real_oracle.txt

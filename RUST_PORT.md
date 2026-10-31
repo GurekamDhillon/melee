@@ -91,3 +91,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-30 consolidation step 5: melee_engine host (OS heaps, DVD seam, raw+native archive images, generated dat_types), see notes/consolidation.md
 - 2026-10-30 rust-port: consolidation step 6, melee_engine Engine::boot/tick runs 60 empty-scene frames, gm_801A4D34 split, gen_seams.py, see notes/consolidation.md
 - 2026-10-31 consolidation step 7: melee_engine boots VS (real StartMelee, stage, Fighter_Create, HUD) and ticks; `melee golden --engine tu` frame 0 fighter words match (seed pending step 10), seams for steps 8-10 in notes/consolidation.md
+- 2026-10-31 consolidation step 10: generator.c / psappsrt.c native, particle banks decoded for the engine, effects run on it (one eflib/efasync/efdata/efsync/efalt = tu/efn); hash + seed match for 64 (FD) / 74 (BF) engine frames, see notes/consolidation.md

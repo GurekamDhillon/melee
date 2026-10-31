@@ -494,6 +494,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
                     let mut t = String::new();
                     t.push_str(&e.debug_tree(0));
                     t.push_str(&e.debug_map_gobjs());
+                    t.push_str(&e.debug_items());
                     for slot in 0..2 {
                         if let Some(b) = e.fighter_bytes(slot) {
                             let mut fl: Vec<(&str, usize)> = fighter_fields::FIGHTER_FIELDS.to_vec();

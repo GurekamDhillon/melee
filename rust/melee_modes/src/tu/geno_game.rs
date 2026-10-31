@@ -249,7 +249,7 @@ pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::m
 pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub use crate::tu::script_game::hsd_804D78FC;
 pub use crate::tu::script_game::hsd_804D0908;
-pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
+pub use melee_items::tu::it_3F14::it_803F14C4;
 pub use melee_world::itacc::it_804A0F60;
 pub use crate::tu::script_game::it_804D6D24;
 pub use melee_items::tu::it_3F14::it_804D6D28;

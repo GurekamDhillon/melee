@@ -120,6 +120,7 @@ impl Engine {
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = true;
             melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
+            melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
             
         }
         melee_link::install();
@@ -202,6 +203,27 @@ impl Engine {
                 n += 1;
                 stack.push((*j).next);
                 stack.push((*j).child);
+            }
+            out
+        }
+    }
+
+    /// Debug: the live items (p_link 9): "itemN kind K msid M pos x y z vel x y z" (bit patterns), the fields the neutral hash sums.
+    pub fn debug_items(&self) -> String {
+        unsafe {
+            let mut out = String::new();
+            let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize);
+            let mut n = 0;
+            while !g.is_null() {
+                let ip = (*g).user_data as *mut melee_types::Item;
+                if !ip.is_null() {
+                    let (p, v) = (&(*ip).pos, &(*ip).x40_vel);
+                    out += &format!("item{n} kind {} msid {} pos {:08x} {:08x} {:08x} vel {:08x} {:08x} {:08x}
+", (*ip).kind as i32, (*ip).msid as i32,
+                        p.x.to_bits(), p.y.to_bits(), p.z.to_bits(), v.x.to_bits(), v.y.to_bits(), v.z.to_bits());
+                    n += 1;
+                }
+                g = (*g).next;
             }
             out
         }

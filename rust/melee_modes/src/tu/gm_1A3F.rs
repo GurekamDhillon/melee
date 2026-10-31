@@ -421,6 +421,7 @@ pub unsafe fn gm_801A4014(mode: *mut GameMode) {
 
 /// `gm_801A4014` up to the scene loop (TARGET_PC split, consolidation step 7): state lookup, preload, `on_enter`s.
 pub unsafe fn gm_801A4014_enter(mode: *mut GameMode) -> SceneRun {
+    melee_core::ct!("gm_801A4014_enter");
     let state = findState((*mode).states);
     state_machine.routing.curr_state_id = (*state).id;
 
@@ -458,6 +459,7 @@ pub unsafe fn gm_801A4014_enter(mode: *mut GameMode) -> SceneRun {
 
 /// `gm_801A4014` after the scene loop: `on_exit`s, state advance, and the reset path.
 pub unsafe fn gm_801A4014_leave(run: SceneRun) {
+    melee_core::ct!("gm_801A4014_leave");
     let SceneRun { mode, state, scene, info, .. } = run;
     ext::SceneReport_State(1, (*mode).kind as i32, (*state).id as i32, (*info).scene_kind as i32);
     if !ext::gmMainLib_8046B0F0_resetting() {
@@ -593,6 +595,7 @@ pub unsafe fn runGameMode(mode_kind: u8) -> u8 {
 
 /// `runGameMode` up to the scene loop (TARGET_PC split): reset the routing and run the mode's `on_load`.
 pub unsafe fn runGameMode_load(mode_kind: u8) -> *mut GameMode {
+    melee_core::ct!("runGameMode_load");
     let mode = findMode(mode_kind);
 
     state_machine.pending_mode_change = 0;
@@ -648,6 +651,7 @@ pub unsafe fn gm_801A4510() {
 
 /// `gm_801A4510` up to its mode loop: init every mode and pick the first (`first`: the engine's override of `GM_BOOT`).
 pub unsafe fn gm_801A4510_init(first: Option<u8>) {
+    melee_core::ct!("gm_801A4510_init");
     ext::gm_GetAllGameModes();
     state_machine = core::mem::zeroed();
     let modes = ext::gm_GetAllGameModes();

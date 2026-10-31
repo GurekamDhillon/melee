@@ -180,14 +180,14 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
-    pub static mut it_803F1418: [sdata_ItemGXLink; 43] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F2310: [sdata_ItemGXLink; 47] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F23CC: [ItemLogicTable; 47] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F2F28: [sdata_ItemGXLink; 118] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F3100: [ItemLogicTable; 118] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F4CA8: [sdata_ItemGXLink; 30] = unsafe { core::mem::zeroed() };
-    pub static mut it_803F4D20: [ItemLogicTable; 30] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_803F1418;
+    pub use crate::tu::it_3F14::it_803F14C4;
+    pub use crate::tu::it_3F14::it_803F2310;
+    pub use crate::tu::it_3F14::it_803F23CC;
+    pub use crate::tu::it_3F14::it_803F2F28;
+    pub use crate::tu::it_3F14::it_803F3100;
+    pub use crate::tu::it_3F14::it_803F4CA8;
+    pub use crate::tu::it_3F14::it_803F4D20;
     pub use crate::tu::itspawn::it_804A0E30;
     pub use crate::tu::itspawn::it_804A0E50;
     pub use crate::tu::itspawn::it_804A0E60;
@@ -207,7 +207,7 @@ pub mod ext {
 }
 // END GENERATED EXT
 
-pub static mut it_mobj: [u8; 64] = [0; 64];
+pub use crate::tu::itmaterial::it_mobj;
 const SFX_NONE: i32 = -1;
 const M_PI: f64 = 3.14159265358979323846;
 

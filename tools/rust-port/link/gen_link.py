@@ -549,6 +549,10 @@ def choose(cands, name, cmap, own_file):
         norm = lambda s: s.lower().replace('_', '')
         pick = [c for c in cands if norm(os.path.splitext(os.path.basename(c[4]))[0]) == norm(stem)]
         if len(pick) == 1: return pick[0]
+        # a TU whose leaf accessors are also copied into a lower crate (melee_items/tu/ftlib.rs): the crate that holds
+        # the whole TU is the highest of the same-stem candidates
+        if len(pick) > 1 and len({c[0] for c in pick}) == len(pick):
+            return max(pick, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else -1)
     low = sorted(cands, key=lambda c: LEAVES.index(c[0]) if c[0] in LEAVES else 99)
     if low and (len(low) == 1 or low[0][0] != low[1][0]) and low[0][0] == 'melee_runtime':
         return low[0]

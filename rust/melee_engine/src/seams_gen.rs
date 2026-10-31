@@ -611,6 +611,9 @@ pub fn install_gen() {
     unsafe { if melee_fighter::tu::ftdrawcommon::ext::MEX_ENABLED_DISABLE_FOD.is_none() { melee_fighter::tu::ftdrawcommon::ext::MEX_ENABLED_DISABLE_FOD = Some(|| 0); } }
     unsafe { if melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_TEMPLATE_SKELETON.is_none() { melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_TEMPLATE_SKELETON = Some(|_| 0); } }
     unsafe { if melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_BASE_KIND.is_none() { melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_BASE_KIND = Some(|_| -1); } }
+    unsafe { if melee_fighter::tu::ftlib::ext::hook::Geno_DefineBaseKind.is_none() { melee_fighter::tu::ftlib::ext::hook::Geno_DefineBaseKind = Some(|_| -1); } }
+    unsafe { if melee_fighter::tu::ftlib::ext::hook::Geno_DefineTemplateSkeleton.is_none() { melee_fighter::tu::ftlib::ext::hook::Geno_DefineTemplateSkeleton = Some(|_| 0); } }
+    unsafe { if melee_fighter::tu::ftlib::ext::hook::Mex_SsmForPortKind.is_none() { melee_fighter::tu::ftlib::ext::hook::Mex_SsmForPortKind = Some(|_| 0); } }
     unsafe { if melee_items::tu::it_26B1::ext::hook::Mex_IndexStageItem.is_none() { melee_items::tu::it_26B1::ext::hook::Mex_IndexStageItem = Some(|_, _| ()); } }
     unsafe { if melee_items::tu::it_26B1::ext::hook::Mex_ItRecord.is_none() { melee_items::tu::it_26B1::ext::hook::Mex_ItRecord = Some(|_, _| 0); } }
     unsafe { melee_items::tu::it_2725::ext::hook::lbAudioAx_80023870 = Some(|_, _, _, _| 0); }
@@ -775,6 +778,7 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ProfileIdWord.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ProfileIdWord = Some(|_| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ItemParam.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ItemParam = Some(|_, _| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Mex_ItemRangeAvailable.is_none() { melee_modes::tu::geno_game::ext::hook::Mex_ItemRangeAvailable = Some(|_, _| 0); } }
+    unsafe { if melee_modes::tu::geno_game::ext::hook::ItemEvent.is_none() { melee_modes::tu::geno_game::ext::hook::ItemEvent = Some(|_, _, _, _, _, _, _, _| ()); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Mex_ItemReady.is_none() { melee_modes::tu::geno_game::ext::hook::Mex_ItemReady = Some(|_| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ComboWord.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ComboWord = Some(|_, _, _| 0); } }
     unsafe { if melee_modes::tu::geno_game::ext::hook::Geno_ComboNote.is_none() { melee_modes::tu::geno_game::ext::hook::Geno_ComboNote = Some(|_, _, _, _, _, _| ()); } }

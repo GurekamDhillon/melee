@@ -43,16 +43,19 @@ pub mod ext {
 
 /// `efSync_GetEffect`
 pub unsafe extern "C" fn efSync_GetEffect(mut ret_obj: *mut c_void) -> *mut EF_Effect {
+    melee_core::ct!("efSync_GetEffect");
     return ret_obj as *mut EF_Effect;
 }
 
 /// `efSync_GetGenerator`
 pub unsafe extern "C" fn efSync_GetGenerator(mut generator: *mut HSD_Generator) -> *mut HSD_Generator {
+    melee_core::ct!("efSync_GetGenerator");
     return generator;
 }
 
 /// `efSync_MexSpawn`
 pub unsafe extern "C" fn efSync_MexSpawn(mut gfx_id: i32, mut gobj: *mut HSD_GObj, mut vlist: *mut crate::tu::va::Va) -> *mut c_void {
+    melee_core::ct!("efSync_MexSpawn");
     let mut id: i32 = 0;
     let mut is_ptcl: i32 = 0;
     let mut owner: *mut HSD_GObj = null_mut();
@@ -157,6 +160,7 @@ pub unsafe extern "C" fn efSync_MexSpawn(mut gfx_id: i32, mut gobj: *mut HSD_GOb
 
 /// `efSync_Spawn`
 pub unsafe fn efSync_Spawn(mut gfx_id: i32, mut gobj: *mut HSD_GObj, args: &[*const c_void]) -> *mut c_void {
+    melee_core::ct!("efSync_Spawn");
     let mut va_store = crate::tu::va::Va::new(args);
     let mut vlist: *mut crate::tu::va::Va = null_mut();
     let mut translate: Vec3 = unsafe { core::mem::zeroed() };
@@ -755,6 +759,7 @@ pub unsafe fn efSync_Spawn(mut gfx_id: i32, mut gobj: *mut HSD_GObj, args: &[*co
 
 /// `HSD_JObjSetRotationZ`
 pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetRotationZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationZ: assertion failed"); }
     (*jobj).rotate.z = z;
@@ -769,11 +774,13 @@ pub unsafe extern "C" fn HSD_JObjSetRotationZ(mut jobj: *mut HSD_JObj, mut z: f3
 
 /// `HSD_GObjGetHSDObj`
 pub unsafe extern "C" fn HSD_GObjGetHSDObj(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetHSDObj");
     return (*gobj).hsd_obj;
 }
 
 /// `HSD_JObjSetScale`
 pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     (*jobj).scale = *scale;
@@ -788,6 +795,7 @@ pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjSetRotationY`
 pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetRotationY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationY: assertion failed"); }
     (*jobj).rotate.y = y;
@@ -802,11 +810,13 @@ pub unsafe extern "C" fn HSD_JObjSetRotationY(mut jobj: *mut HSD_JObj, mut y: f3
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `HSD_JObjGetScale`
 pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjGetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjGetScale: assertion failed"); }
     *scale = (*jobj).scale;
@@ -814,6 +824,7 @@ pub unsafe extern "C" fn HSD_JObjGetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjSetScaleX`
 pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetScaleX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleX: assertion failed"); }
     (*jobj).scale.x = x;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -827,6 +838,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleX(mut jobj: *mut HSD_JObj, mut x: f32) 
 
 /// `HSD_JObjSetScaleY`
 pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) {
+    melee_core::ct!("HSD_JObjSetScaleY");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleY: assertion failed"); }
     (*jobj).scale.y = y;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -840,6 +852,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleY(mut jobj: *mut HSD_JObj, mut y: f32) 
 
 /// `HSD_JObjSetScaleZ`
 pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) {
+    melee_core::ct!("HSD_JObjSetScaleZ");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScaleZ: assertion failed"); }
     (*jobj).scale.z = z;
     if !(((*jobj).flags & ((1 << 25) as u32)) != 0) {
@@ -853,6 +866,7 @@ pub unsafe extern "C" fn HSD_JObjSetScaleZ(mut jobj: *mut HSD_JObj, mut z: f32) 
 
 /// `HSD_JObjSetRotationX`
 pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f32) {
+    melee_core::ct!("HSD_JObjSetRotationX");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetRotationX: assertion failed"); }
     if !(((*jobj).flags & ((1 << 17) as u32)) != 0) { (); } else { panic!("HSD_JObjSetRotationX: assertion failed"); }
     (*jobj).rotate.x = x;
@@ -867,6 +881,7 @@ pub unsafe extern "C" fn HSD_JObjSetRotationX(mut jobj: *mut HSD_JObj, mut x: f3
 
 /// `HSD_JObjGetParent`
 pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("HSD_JObjGetParent");
     if jobj.is_null() {
         return null_mut();
     } else {
@@ -876,6 +891,7 @@ pub unsafe extern "C" fn HSD_JObjGetParent(mut jobj: *mut HSD_JObj) -> *mut HSD_
 
 /// `HSD_JObjMtxIsDirty`
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: i32 = 0;
     if !jobj.is_null() { (); } else { panic!("HSD_JObjMtxIsDirty: assertion failed"); }
     result = 0;

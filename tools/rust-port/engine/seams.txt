@@ -92,3 +92,4 @@ HeapCheck\w*
 !HSD_GObj_80390FC0
 !HSD_StartRender
 !HSD_Init_803755A8
+ItemEvent

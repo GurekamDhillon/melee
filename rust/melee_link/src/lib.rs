@@ -6,6 +6,7 @@ pub mod cabi;
 pub mod manual;
 pub mod retail;
 pub mod retail_ms;
+pub mod retail_it;
 pub mod strs;
 mod gen_table;
 pub use gen_table::HOOKS;
@@ -80,4 +81,5 @@ pub fn install() {
 pub fn install_retail() {
     retail_ms::install_ms();
     retail::install_retail();
+    retail_it::install_retail_it();
 }

@@ -813,6 +813,7 @@ pub static mut gm_onep_interstage: i32 = 0;
 /// TARGET_PC split of the scene loop (consolidation step 6), so the engine can run exactly one iteration:
 /// the C's pre-loop setup (`gm_801677C0` through `Script_SceneBegin`).
 pub unsafe fn gm_801A4D34_begin(info: *mut GameSceneInfo) {
+    melee_core::ct!("gm_801A4D34_begin");
     let temp_r25: *mut gm_80479D58_t = &raw mut gm_80479D58;
 
     ext::gm_801677C0(&raw mut (*temp_r25).unk_10);
@@ -837,6 +838,7 @@ pub unsafe fn gm_801A4D34_begin(info: *mut GameSceneInfo) {
 /// One iteration of the C's `while (gm_80479D58.unk_C == 0)` body. Returns false when the loop is left (the
 /// condition was already false, or the body hit one of its `break`s), true when another iteration may run.
 pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *mut GameSceneInfo) -> bool {
+    melee_core::ct!("gm_801A4D34_tick");
     let mut pad_queue_count: i32;
     let mut i: i32;
     let temp_r25: *mut gm_80479D58_t = &raw mut gm_80479D58;
@@ -1075,6 +1077,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
 
 /// The C's post-loop teardown.
 pub unsafe fn gm_801A4D34_end() {
+    melee_core::ct!("gm_801A4D34_end");
     // Scripted model descriptors and Mato article point into heap-0 archive buffers.
     if gm_onep_interstage == 0 {
         ext::ScriptGame_StageEnd();

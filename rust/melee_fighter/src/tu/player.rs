@@ -88,7 +88,7 @@ pub mod ext {
     fn ftLib_80087140(a0: *mut HSD_GObj) => unsafe { let _ = crate::ftlib::ftlib_80087140(a0 as _); };
     fn ftLib_80087300(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087300(a0 as _) };
     fn ftLib_800873CC(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800873cc(a0 as _) };
-    fn ftLib_80087610(a0: u8) => unsafe { crate::tu::ftlib::ftlib_80087610(a0 as _); };
+    fn ftLib_80087610(a0: u8) => unsafe { crate::tu::ftlib::ftLib_80087610(a0 as _); };
     fn ftLib_GetKind(a0: *mut HSD_GObj) -> FighterKind => unsafe { crate::ftlib::get_kind(a0 as _) };
     fn ftLib_SetScale(a0: *mut HSD_GObj, a1: f32) => unsafe { let _ = crate::ftlib::set_scale(a0 as _, a1 as _); };
     fn gm_8016B168() -> bool;

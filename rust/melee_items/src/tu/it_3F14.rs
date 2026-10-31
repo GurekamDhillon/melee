@@ -20,3 +20,14 @@ pub static mut it_804D6D24: *mut *mut Article = null_mut();
 pub use melee_runtime::shared::it_804D6D28;
 /// `it_804D6D30`: article pointer table (`Article**`), set by the crate's init.
 pub static mut it_804D6D30: *mut *mut Article = null_mut();
+
+// The item logic and render-link tables of it_3F14.c, it_279C.c and it_3F2F.c. Their rows are function and table
+// addresses owned by other TUs; `melee_link::retail_it::install_retail_it` (gen_retail_it.py) fills them at boot.
+pub static mut it_803F1418: [sdata_ItemGXLink; 43] = unsafe { core::mem::zeroed() };
+pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
+pub static mut it_803F2310: [sdata_ItemGXLink; 47] = unsafe { core::mem::zeroed() };
+pub static mut it_803F23CC: [ItemLogicTable; 47] = unsafe { core::mem::zeroed() };
+pub static mut it_803F2F28: [sdata_ItemGXLink; 118] = unsafe { core::mem::zeroed() };
+pub static mut it_803F3100: [ItemLogicTable; 118] = unsafe { core::mem::zeroed() };
+pub static mut it_803F4CA8: [sdata_ItemGXLink; 30] = unsafe { core::mem::zeroed() };
+pub static mut it_803F4D20: [ItemLogicTable; 30] = unsafe { core::mem::zeroed() };

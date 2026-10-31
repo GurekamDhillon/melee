@@ -242,7 +242,7 @@ pub fn Player_SetPlayerAndEntityCpuType__534529(a0: i32, a1: i32) { melee_core::
 pub fn Player_SetStocks__1270f2(a0: i32, a1: i32) { melee_core::ct!("Player_SetStocks__1270f2"); unsafe { melee_fighter::tu::player::Player_SetStocks(a0, a1) } }
 pub fn ftBossLib_8015CB9C__c24da3(a0: i32) { melee_core::ct!("ftBossLib_8015CB9C__c24da3"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CB9C(a0) } }
 pub fn ftBossLib_8015CC14__f4f13c() { melee_core::ct!("ftBossLib_8015CC14__f4f13c"); unsafe { melee_fighter::tu::ftbosslib::ftBossLib_8015CC14() } }
-pub fn ftLib_80087508__b45233(a0: i8, a1: u8) { melee_core::ct!("ftLib_80087508__b45233"); unsafe { melee_fighter::tu::ftlib::ftlib_80087508(a0, a1) } }
+pub fn ftLib_80087508__b45233(a0: i8, a1: u8) { melee_core::ct!("ftLib_80087508__b45233"); unsafe { melee_fighter::tu::ftlib::ftLib_80087508(a0, a1) } }
 pub fn gmMainLib_8015CEB4__86b231(a0: i32) { melee_core::ct!("gmMainLib_8015CEB4__86b231"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CEB4(a0) } }
 pub fn gmMainLib_8015CF5C__8fd145(a0: i32) -> i32 { melee_core::ct!("gmMainLib_8015CF5C__8fd145"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CF5C(a0) } }
 pub fn gmMainLib_8015CF70__0b6cc3(a0: i32, a1: i32) { melee_core::ct!("gmMainLib_8015CF70__0b6cc3"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015CF70(a0, a1) } }
@@ -621,8 +621,8 @@ pub fn ftBossLib_8015CB7C__08c5b8() { melee_core::ct!("ftBossLib_8015CB7C__08c5b
 pub fn ftBossLib_IsMasterHandEntry__b6143e() -> i32 { melee_core::ct!("ftBossLib_IsMasterHandEntry__b6143e"); unsafe { (melee_fighter::tu::ftbosslib::ftBossLib_IsMasterHandEntry()) as _ } }
 pub fn ftLib_80086824__82b58f() { melee_core::ct!("ftLib_80086824__82b58f"); unsafe { melee_fighter::ftlib::ftlib_80086824() } }
 pub fn ftLib_800868A4__7fb267() { melee_core::ct!("ftLib_800868A4__7fb267"); unsafe { melee_fighter::ftlib::ftlib_800868a4() } }
-pub fn ftLib_80087574__3ccbbb(a0: i8) { melee_core::ct!("ftLib_80087574__3ccbbb"); unsafe { melee_fighter::tu::ftlib::ftlib_80087574(a0) } }
-pub fn ftLib_80087610__f2cb3c(a0: u8) { melee_core::ct!("ftLib_80087610__f2cb3c"); unsafe { melee_fighter::tu::ftlib::ftlib_80087610(a0) } }
+pub fn ftLib_80087574__3ccbbb(a0: i8) { melee_core::ct!("ftLib_80087574__3ccbbb"); unsafe { melee_fighter::tu::ftlib::ftLib_80087574(a0) } }
+pub fn ftLib_80087610__f2cb3c(a0: u8) { melee_core::ct!("ftLib_80087610__f2cb3c"); unsafe { melee_fighter::tu::ftlib::ftLib_80087610(a0) } }
 pub fn gmMainLib_8015D134__50170c(a0: u8) { melee_core::ct!("gmMainLib_8015D134__50170c"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D134(a0) } }
 pub fn gmMainLib_8015D1C8__160fa4(a0: u8, a1: i32) { melee_core::ct!("gmMainLib_8015D1C8__160fa4"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D1C8(a0, a1) } }
 pub fn gmMainLib_8015D25C__8fef81(a0: u8) { melee_core::ct!("gmMainLib_8015D25C__8fef81"); unsafe { crate::tu::gmmain_lib::gmMainLib_8015D25C(a0) } }

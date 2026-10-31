@@ -63,7 +63,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
     match name {
         "plco" => plco(d, b, off),
         "itco" => itco(d, b, off),
-        "ftdata" => ftdata(d, off, sym),
+        "ftdata" => ftdata(d, b, off, sym),
         "ptrtable_itemdata" => ptrtable::<melee_types::GroundItemData>(d, b, off),
         "ptrtable_dynmodel" => ptrtable::<melee_types::DynamicModelDesc>(d, b, off),
         "ptrtable_lightlist" => ptrtable::<melee_types::LightList>(d, b, off),
@@ -190,7 +190,7 @@ fn ptrtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c
 
 /// A fighter's public data (`ftDataCaptain`, ...): the record plus the per-animation arrays whose length the C takes
 /// from the retail tables (`ftData_Table_Unk0` rows for `xC` / `x10`, `ftData_UnkIntPairs` rows for `x14` / `x18`).
-fn ftdata(d: &mut GcDecoder<'_>, off: u32, sym: &str) -> *mut c_void {
+fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void {
     use melee_core::gc::GcLayout;
     use melee_fighter::tu::ftdata as fd;
     use melee_types::{ftData, Fighter_WaitAnimData};
@@ -209,6 +209,7 @@ fn ftdata(d: &mut GcDecoder<'_>, off: u32, sym: &str) -> *mut c_void {
     v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
     v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
+    v.x48_items = rtable::<melee_types::Article>(d, b, at("x48_items")) as *mut *mut c_void;
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
         v.ext_attr = p;

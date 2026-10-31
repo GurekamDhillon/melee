@@ -74,7 +74,7 @@ pub mod ext {
     fn ftLib_800874BC(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800874bc(a0 as _) };
     fn ftLib_800876F4(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_800876f4(a0 as _) };
     fn ftLib_80087700(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::ftlib_80087700(a0 as _) };
-    fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftlib_8008777c(a0 as _) };
+    fn ftLib_8008777C(a0: *mut HSD_GObj) -> f32 => unsafe { crate::tu::ftlib::ftLib_8008777C(a0 as _) };
     fn ftLib_800877D4(a0: *mut HSD_GObj) -> bool => unsafe { crate::ftlib::ftlib_800877d4(a0 as _) };
     fn ftLib_GetMotionId(a0: *mut HSD_GObj) -> i32 => unsafe { crate::ftlib::get_motion_id(a0 as _) };
     fn gm_8016AEEC() -> u32;

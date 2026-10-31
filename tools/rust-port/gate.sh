@@ -43,10 +43,14 @@ for s in $scenarios; do
   idle=""; case $s in cpu_*) idle="--idle-pads" ;; esac
   if [ "$engine" = tu ]; then
     # the consolidated engine (melee_engine): frames written as they are produced, so a later crash keeps the count.
-    # The seed/hash columns are compared once the particle system (step 10) draws its RNG values; until then the words are.
-    "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "${ENGINE_FRAMES:-200}" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1 || true
+    # Pre-match draws of subsystems the engine has not taken over yet (memory-card trophy pick, stage init, BGM pick):
+    # tools/rust-port/engine/pre_draws.tsv, shrinking to empty. A scenario with a row is compared with the seed column
+    # (and so the hash): the particle system's draws must agree with the C build's. One without a row is not.
+    pre=$(awk -F'	' -v s="$s" '$1==s{print $2}' tools/rust-port/engine/pre_draws.tsv 2>/dev/null)
+    seedflag="--ignore-seed"; [ -n "$pre" ] && seedflag=""
+    MELEE_ENGINE_PRE_DRAWS="${pre:-0}" "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "${ENGINE_FRAMES:-200}" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1 || true
     [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
-    n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short --ignore-seed --print-count 2>/dev/null | awk '/^COUNT/{print $2}'); n=${n:-0}
+    n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short $seedflag --print-count 2>/dev/null | awk '/^COUNT/{print $2}'); n=${n:-0}
   else
   "$exe" golden --iso "$GW_ISO_VANILLA" --scenario "$s" $idle --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short --print-count | awk '/^COUNT/{print $2}')

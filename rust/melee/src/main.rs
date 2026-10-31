@@ -154,7 +154,100 @@ fn selftest() {
     println!("no game simulation is ported yet; see RUST_PORT.md");
 }
 
+/// Debug aids, both off by default (`GUARD_ALLOC` / `LEAK_ALLOC` are read from the environment once, in `main`):
+/// * `MELEE_GUARD_ALLOC=1` (or `=<min bytes>`, default 4096): every allocation of that size or more gets its own pages and ends exactly at a `PAGE_NOACCESS`
+///   page, so a read past the end of a decoded table faults at once (`access violation (read of ...)` with the
+///   backtrace of the reader) instead of only when the heap layout happens to put the end of a block on a page edge.
+/// * `MELEE_LEAK_ALLOC=1`: `dealloc` is a no-op, to tell a use-after-free from other memory bugs.
+struct DebugAlloc;
+static LEAK_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static GUARD_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static GUARD_MIN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(4096);
+#[inline]
+fn guard_min() -> usize {
+    GUARD_MIN.load(std::sync::atomic::Ordering::Relaxed)
+}
+#[cfg(windows)]
+mod guard {
+    extern "system" {
+        fn VirtualAlloc(addr: *mut u8, size: usize, ty: u32, prot: u32) -> *mut u8;
+        fn VirtualFree(addr: *mut u8, size: usize, ty: u32) -> i32;
+        fn VirtualProtect(addr: *mut u8, size: usize, prot: u32, old: *mut u32) -> i32;
+    }
+    const PAGE: usize = 4096;
+    /// `[head page: base address][data pages ... data ends at the guard][guard page]`; the data starts `align`ed.
+    pub unsafe fn alloc(size: usize, align: usize) -> *mut u8 {
+        let data_pages = (size + PAGE - 1) / PAGE;
+        let total = (data_pages + 2) * PAGE;
+        let base = VirtualAlloc(core::ptr::null_mut(), total, 0x3000, 0x04);
+        if base.is_null() {
+            return base;
+        }
+        let mut old = 0u32;
+        VirtualProtect(base.add(total - PAGE), PAGE, 0x01, &mut old); // PAGE_NOACCESS
+        let end = base.add(total - PAGE);
+        let p = ((end as usize - size) & !(align.max(1) - 1)) as *mut u8;
+        // remember the base just below the block (the head page is always free for it)
+        (p as *mut usize).sub(1).write(base as usize);
+        p
+    }
+    pub unsafe fn free(p: *mut u8) {
+        let base = (p as *mut usize).sub(1).read() as *mut u8;
+        VirtualFree(base, 0, 0x8000);
+    }
+}
+unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
+    unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        #[cfg(windows)]
+        if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
+            return guard::alloc(l.size(), l.align());
+        }
+        std::alloc::System.alloc(l)
+    }
+    unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
+        if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
+            return;
+        }
+        #[cfg(windows)]
+        if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
+            return guard::free(p);
+        }
+        std::alloc::System.dealloc(p, l)
+    }
+    unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        #[cfg(windows)]
+        if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
+            return guard::alloc(l.size(), l.align()); // VirtualAlloc pages are zeroed
+        }
+        std::alloc::System.alloc_zeroed(l)
+    }
+    unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        let guarded = |sz: usize| sz >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed);
+        if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
+            let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
+            if !q.is_null() {
+                core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
+                self.dealloc(p, l);
+            }
+            q
+        } else {
+            std::alloc::System.realloc(p, l, n)
+        }
+    }
+}
+#[global_allocator]
+static GLOBAL: DebugAlloc = DebugAlloc;
+
 fn main() -> ExitCode {
+    if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {
+        LEAK_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+    if let Some(v) = std::env::var_os("MELEE_GUARD_ALLOC") {
+        if let Some(n) = v.to_str().and_then(|v| v.parse::<usize>().ok()).filter(|&n| n > 1) {
+            GUARD_MIN.store(n, std::sync::atomic::Ordering::Relaxed);
+        }
+        GUARD_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
     crash::install();
     let args: std::vec::Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {

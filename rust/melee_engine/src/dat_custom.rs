@@ -127,7 +127,24 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
             out[8] = Box::leak(vec![j, a].into_boxed_slice()).as_mut_ptr() as *mut c_void;
         }
     }
-    out[22] = parr::<Fighter_804D64FC_t>(d, b, at(22));
+    out[22] = {
+        // x4..x1C are kind-indexed `T**` tables (Fighter_LoadCommonData indexes them by kind): the generated decode of a
+        // `T**` field would give one entry, and ftCommonData_ExtendCpuTables reads up to Ft_Kind_Mex0 of them.
+        let p = parr::<Fighter_804D64FC_t>(d, b, at(22)) as *mut Fighter_804D64FC_t;
+        if let Some(t) = d.target(at(22)) {
+            let tables = [4u32, 8, 0xC, 0x10, 0x14, 0x18, 0x1C].map(|f| rtable_min::<c_void>(d, b, t + f, melee_types::Ft_Kind_Mex0 as u32));
+            unsafe {
+                (*p).x4 = tables[0];
+                (*p).x8 = tables[1];
+                (*p).xC = tables[2];
+                (*p).x10 = tables[3];
+                (*p).x14 = tables[4];
+                (*p).x18 = tables[5];
+                (*p).x1C = tables[6];
+            }
+        }
+        p as *mut c_void
+    };
     // the root is a pointer to the table (`void** pData` after `lbArchive_LoadSymbols`)
     Box::leak(out.into_boxed_slice()).as_mut_ptr() as *mut c_void
 }
@@ -137,6 +154,16 @@ fn rtable<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut
     let Some(t) = d.target(at) else { return core::ptr::null_mut() };
     let n = (b.extent(t) / 4).max(1);
     let v: Vec<*mut T> = (0..n).map(|i| d.ptr::<T>(t + 4 * i)).collect();
+    Box::leak(v.into_boxed_slice()).as_mut_ptr()
+}
+
+/// `rtable` with at least `min` entries (missing ones are null), for tables the C indexes by a count the bytes do not state.
+fn rtable_min<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: u32) -> *mut *mut T {
+    let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+    let n = (b.extent(t) / 4).max(1);
+    let v: Vec<*mut T> = (0..n.max(min))
+        .map(|i| if i < n { d.ptr::<T>(t + 4 * i) } else { core::ptr::null_mut() })
+        .collect();
     Box::leak(v.into_boxed_slice()).as_mut_ptr()
 }
 

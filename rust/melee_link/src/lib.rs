@@ -58,6 +58,11 @@ pub(crate) unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
     let (sa, sb) = (core::mem::size_of::<A>(), core::mem::size_of::<B>());
     let a = core::mem::ManuallyDrop::new(a);
     if sa == sb {
+        // an `f32` result read as an `i32` (or the reverse) is a wrong extern signature, not a conversion
+        let fl = |n: &str| matches!(n, "f32" | "f64");
+        if fl(core::any::type_name::<A>()) != fl(core::any::type_name::<B>()) {
+            panic!("link cast: float/int mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
+        }
         return core::mem::transmute_copy::<A, B>(&a);
     }
     assert!(sa <= 8 && sb <= 8, "link cast: size mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());

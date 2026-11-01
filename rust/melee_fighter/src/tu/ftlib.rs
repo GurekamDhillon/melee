@@ -37,8 +37,8 @@ pub mod ext {
     }
     stubs! {
         FTCO_800C8348 ftCo_800C8348(g: G, a: i32, b: i32);
-        IT_8026B560 it_8026B560(it: G) -> i32;
-        IT_8026B574 it_8026B574(it: G) -> i32;
+        IT_8026B560 it_8026B560(it: G) -> f32;
+        IT_8026B574 it_8026B574(it: G) -> f32;
         CAMERA_REQUEST_QUAKE Camera_RequestQuake(k: CmQuakeKind, pos: &Vec3);
         FTDATA_8008572C ftData_8008572C(kind: i32);
         EFASYNC_LOAD_SYNC efAsync_LoadSync(id: i32);
@@ -56,7 +56,7 @@ pub mod ext {
 pub fn ftlib_800871a8(g: G, item: G) {
     melee_core::ct!("ftlib_800871a8");
     assert!(h::it_get_kind(item) == It_Kind_MetalB as i32, "ftlib.c:1117");
-    ext::ftCo_800C8348(g, ext::it_8026B560(item), ext::it_8026B574(item));
+    ext::ftCo_800C8348(g, ext::it_8026B560(item) as i32, ext::it_8026B574(item) as i32);
     h::ftco_800d105c(g);
     h::ft_80081c88(g, fp(g).x34_scale.y);
     crate::ftcommon2::ftcommon_8007ebac(fp(g), 0xC, 0);

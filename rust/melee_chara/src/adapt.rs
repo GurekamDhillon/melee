@@ -307,63 +307,60 @@ fn subject_bone_pos(slot: i32) -> Option<Vec3> {
         }
     }
 }
-/// The game's `game_camera` with the fighter lookup installed.
-fn cam() -> &'static mut melee_world::cm::camera::CameraWorld {
-    let w = melee_world::cm::camera_boss::global();
-    if w.subject_bone_pos.is_none() {
-        w.subject_bone_pos = Some(subject_bone_pos);
-    }
-    w
-}
 pub fn Camera_8002E6FC(slot: i32) {
-    cam().camera_8002e6fc(slot)
+    unsafe { melee_world::tu::camera::Camera_8002E6FC(slot) }
 }
 pub fn Camera_8002E948(cb: unsafe extern "C" fn(*mut Vec3) -> bool) {
-    cam().camera_8002e948(cb)
+    unsafe { CAM_C_CB = Some(cb); melee_world::tu::camera::Camera_8002E948(Some(cam_c_tramp)) }
 }
 pub fn Camera_8002EB5C(v: f32) {
-    cam().camera_8002eb5c(v)
+    unsafe { melee_world::tu::camera::Camera_8002EB5C(v) }
 }
 pub fn Camera_8002EC7C(v: f32) {
-    cam().camera_8002ec7c(v)
+    unsafe { melee_world::tu::camera::Camera_8002EC7C(v) }
 }
 pub fn Camera_8002ED9C(v: f32) {
-    cam().camera_8002ed9c(v)
+    unsafe { melee_world::tu::camera::Camera_8002ED9C(v) }
 }
 pub fn Camera_8002EEC8(fov: f32) {
-    cam().camera_8002eec8(fov)
+    unsafe { melee_world::tu::camera::Camera_8002EEC8(fov) }
 }
 pub fn Camera_8002EF14() {
-    cam().camera_8002ef14()
+    unsafe { melee_world::tu::camera::Camera_8002EF14() }
 }
 pub fn Camera_8002F0E4(frames: i32) {
-    cam().camera_8002f0e4(frames)
+    unsafe { melee_world::tu::camera::Camera_8002F0E4(frames) }
 }
 pub fn Camera_8002F260() -> bool {
-    cam().camera_8002f260()
+    unsafe { melee_world::tu::camera::Camera_8002F260() != 0 }
 }
 pub fn Camera_8002F274() {
-    cam().camera_8002f274()
+    unsafe { melee_world::tu::camera::Camera_8002F274() }
 }
 pub fn Camera_SetModeToStandard() {
-    cam().camera_set_mode_to_standard()
+    unsafe { melee_world::tu::camera::Camera_SetModeToStandard() }
 }
 pub unsafe fn Camera_RequestQuake<P>(kind: impl Into<i64>, pos: *const P) {
-    let p = if pos.is_null() { None } else { Some(*(pos as *const Vec3)) };
-    cam().camera_request_quake(kind.into() as u32, p)
+    melee_world::tu::camera::Camera_RequestQuake(kind.into() as _, pos as *mut Vec3)
 }
-/// `Camera_8002E948` for TUs whose callback is a Rust `fn`: the camera keeps the callback and
-/// calls it every frame, and there is one boss-intro anchor at a time, so a slot is enough.
+/// The boss-intro anchor callbacks: the camera keeps one and calls it every frame (one anchor at a time), so a slot
+/// is enough; the trampolines widen the `bool` result to the `int` the C table returns.
+static mut CAM_C_CB: Option<unsafe extern "C" fn(*mut Vec3) -> bool> = None;
+unsafe extern "C" fn cam_c_tramp(p: *mut Vec3) -> i32 {
+    match CAM_C_CB {
+        Some(f) => f(p) as i32,
+        None => 0,
+    }
+}
 static mut CAM_RS_CB: Option<fn(*mut Vec3) -> bool> = None;
-unsafe extern "C" fn cam_rs_tramp(p: *mut Vec3) -> bool {
+unsafe extern "C" fn cam_rs_tramp(p: *mut Vec3) -> i32 {
     match CAM_RS_CB {
-        Some(f) => f(p),
-        None => false,
+        Some(f) => f(p) as i32,
+        None => 0,
     }
 }
 pub fn Camera_8002E948_rs(cb: fn(*mut Vec3) -> bool) {
-    unsafe { CAM_RS_CB = Some(cb) };
-    cam().camera_8002e948(cam_rs_tramp)
+    unsafe { CAM_RS_CB = Some(cb); melee_world::tu::camera::Camera_8002E948(Some(cam_rs_tramp)) }
 }
 
 // ---- misc ports in lower crates / sibling modules ---------------------------------------------

@@ -40,9 +40,9 @@ pub mod ext {
         grAnime_801C8138, grDisplay_801C5DB0, GObj_SetupGXLink, Ground_InitMapColl, HSD_GObj_SetupProc, lb_800115F4,
     };
     hook_or!(CAMERA_8002A4AC, Camera_8002A4AC, (a0: *mut HSD_GObj), |a0: *mut HSD_GObj| { unsafe { crate::tu::camera::Camera_8002A4AC(a0 as _); } });
-    hook_or!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj, || unsafe { crate::cm::camera::Camera_80030A50() as _ });
-    hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| crate::cm::camera::world().camera_80031074(a0));
-    hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| crate::cm::camera::world().camera_800310a0(a0));
+    hook_or!(CAMERA_80030A50, Camera_80030A50, () -> *mut HSD_GObj, || unsafe { crate::tu::camera::Camera_80030A50() as _ });
+    hook_or!(CAMERA_80031074, Camera_80031074, (a0: u8), |a0: u8| unsafe { crate::tu::camera::Camera_80031074(a0) });
+    hook_or!(CAMERA_800310A0, Camera_800310A0, (a0: u8), |a0: u8| unsafe { crate::tu::camera::Camera_800310A0(a0) });
     hook_or!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, |classifier: u16, p_link: u8, priority: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(classifier as _, p_link as _, priority as _) as _ });
     hook_or!(GOBJ_INITUSERDATA, GObj_InitUserData, (gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void), |gobj: *mut HSD_GObj, kind: u8, remove_func: Option<unsafe extern "C" fn(*mut c_void)>, data: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(gobj as _, kind as _, remove_func as _, data as _); } });
     hook_or!(GOBJ_SETUPGXLINKMAXSORTED, GObj_SetupGXLinkMaxSorted, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLinkMaxSorted(gobj as _, render_cb as _, priority as _); } });

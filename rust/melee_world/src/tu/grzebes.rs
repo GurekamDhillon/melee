@@ -296,7 +296,7 @@ pub mod ext {
                 }
             }
     pub static mut H_Camera_RequestQuake: Option<unsafe extern "C" fn(u32, *mut melee_types::Vec)> = None;
-    pub unsafe extern "C" fn Camera_RequestQuake(a0: u32, a1: *mut melee_types::Vec) { match H_Camera_RequestQuake { Some(f) => f(a0, a1), None => unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) } } }
+    pub unsafe extern "C" fn Camera_RequestQuake(a0: u32, a1: *mut melee_types::Vec) { match H_Camera_RequestQuake { Some(f) => f(a0, a1), None => unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) } } }
     pub static mut H_Ground_801C53EC: Option<unsafe extern "C" fn(u32) > = None;
             pub unsafe extern "C" fn Ground_801C53EC(a0: u32)  {
                 match H_Ground_801C53EC {

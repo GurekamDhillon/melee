@@ -54,10 +54,10 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_80030A78() -> i32 = || crate::cm::camera::world().camera_80030a78() as i32;
+    fn Camera_80030A78() -> i32 = || unsafe { crate::tu::camera::Camera_80030A78() } as i32;
     fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| unsafe { crate::tu::camera::Camera_SetBackgroundColor(a0, a1, a2) };
-    fn Camera_SetModeToFixed() = || crate::cm::camera::world().camera_set_mode_to_fixed();
-    fn Camera_SetModeToStandard() = || crate::cm::camera::world().camera_set_mode_to_standard();
+    fn Camera_SetModeToFixed() = || unsafe { crate::tu::camera::Camera_SetModeToFixed() };
+    fn Camera_SetModeToStandard() = || unsafe { crate::tu::camera::Camera_SetModeToStandard() };
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };
     fn GObj_InitUserData(a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: Option<unsafe extern "C" fn(*mut c_void)>, a3: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::GObj_InitUserData(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };

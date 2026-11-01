@@ -16,19 +16,19 @@ pub fn Camera_8002F3AC() { match unsafe { HOOK_Camera_8002F3AC } { Some(f) => f(
 pub static mut HOOK_Camera_8003010C: Option<fn() -> i32> = None;
 
 /// C `Camera_8003010C` (melee/cm/camera.h).
-pub fn Camera_8003010C() -> i32 { match unsafe { HOOK_Camera_8003010C } { Some(f) => f(), None => crate::cm::camera::world().camera_8003010c() as i32 }
+pub fn Camera_8003010C() -> i32 { match unsafe { HOOK_Camera_8003010C } { Some(f) => f(), None => unsafe { crate::tu::camera::Camera_8003010C() as i32 } }
 }
 
 pub static mut HOOK_Camera_80030AE0: Option<fn(i32)> = None;
 
 /// C `Camera_80030AE0` (melee/cm/camera.h).
-pub fn Camera_80030AE0(a0: i32) { match unsafe { HOOK_Camera_80030AE0 } { Some(f) => f(a0), None => crate::cm::camera::world().camera_80030ae0(a0) }
+pub fn Camera_80030AE0(a0: i32) { match unsafe { HOOK_Camera_80030AE0 } { Some(f) => f(a0), None => unsafe { crate::tu::camera::Camera_80030AE0(a0) } }
 }
 
 pub static mut HOOK_Camera_8003118C: Option<fn(*mut Vec3, f32) -> i32> = None;
 
 /// C `Camera_8003118C` (melee/cm/camera.h).
-pub fn Camera_8003118C(a0: *mut Vec3, a1: f32) -> i32 { match unsafe { HOOK_Camera_8003118C } { Some(f) => f(a0, a1), None => unsafe { crate::cm::camera::world().camera_8003118c(&*a0, a1) as i32 } }
+pub fn Camera_8003118C(a0: *mut Vec3, a1: f32) -> i32 { match unsafe { HOOK_Camera_8003118C } { Some(f) => f(a0, a1), None => unsafe { unsafe { crate::tu::camera::Camera_8003118C(a0, a1) as i32 } } }
 }
 
 pub static mut HOOK_GObj_SetupGXLink: Option<fn(*mut HSD_GObj, GObj_RenderFunc, u8, u32)> = None;

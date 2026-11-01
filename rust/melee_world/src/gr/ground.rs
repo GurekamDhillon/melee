@@ -90,11 +90,11 @@ pub trait GroundHooks {
     }
     /// Camera_SetModeToFixed: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_fixed(&mut self) {
-        crate::cm::camera::world().camera_set_mode_to_fixed()
+        unsafe { crate::tu::camera::Camera_SetModeToFixed() }
     }
     /// Camera_SetModeToStandard: `CameraWorld` implements it (cm::camera).
     fn camera_set_mode_to_standard(&mut self) {
-        crate::cm::camera::world().camera_set_mode_to_standard()
+        unsafe { crate::tu::camera::Camera_SetModeToStandard() }
     }
     /// TODO(group3: pl/player.c)
     fn player_get_entity(&mut self, slot: i32) -> *mut HSD_GObj {

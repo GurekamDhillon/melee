@@ -34,7 +34,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec) = |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) };
+    fn Camera_RequestQuake(a0: CmQuakeKind, a1: *mut Vec) = |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) };
     fn HSD_ArchiveGetPublicAddress(a0: *mut HSD_Archive, a1: *const i8) -> *mut c_void = |a0: *mut HSD_Archive, a1: *const i8| unsafe { melee_runtime::tu::archive::HSD_ArchiveGetPublicAddress(a0 as _, a1 as _) as _ };
     fn HSD_JObjAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) = |a0: *mut HSD_JObj| { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(a0 as _); } };

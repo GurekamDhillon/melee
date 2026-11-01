@@ -90,7 +90,7 @@ pub trait GrLibHooks {
     }
     /// Camera_SetQuakeOffset: `CameraWorld` implements it (cm::camera).
     fn camera_set_quake_offset(&mut self, x: f32, y: f32) {
-        crate::cm::camera::world().camera_set_quake_offset(x, y)
+        unsafe { crate::tu::camera::Camera_SetQuakeOffset(x, y) }
     }
     /// TODO(group1: baselib/gobj.c) HSD_GObjFree
     fn gobj_free(&mut self, g: *mut HSD_GObj) {

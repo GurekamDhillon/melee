@@ -32,11 +32,11 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::{stage_info, HSD_JObjSetMtxDirty, HSD_JObjSetMtxDirtySub, HSD_JObjSetupMatrixSub};
-    hook_or!(CAMERA_8003010C, Camera_8003010C, () -> i32, || crate::cm::camera::world().camera_8003010c() as i32);
-    hook_or!(CAMERA_80030154, Camera_80030154, () -> i32, || crate::cm::camera::world().camera_80030154() as i32);
-    hook_or!(CAMERA_80030178, Camera_80030178, () -> i32, || crate::cm::camera::world().camera_80030178() as i32);
-    hook_or!(CAMERA_GETTRANSFORMINTEREST, Camera_GetTransformInterest, (a0: *mut Vec), |a0: *mut Vec| { unsafe { *a0 = crate::cm::camera::world().camera_get_transform_interest(); } });
-    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
+    hook_or!(CAMERA_8003010C, Camera_8003010C, () -> i32, || unsafe { crate::tu::camera::Camera_8003010C() } as i32);
+    hook_or!(CAMERA_80030154, Camera_80030154, () -> i32, || unsafe { crate::tu::camera::Camera_80030154() } as i32);
+    hook_or!(CAMERA_80030178, Camera_80030178, () -> i32, || unsafe { crate::tu::camera::Camera_80030178() } as i32);
+    hook_or!(CAMERA_GETTRANSFORMINTEREST, Camera_GetTransformInterest, (a0: *mut Vec), |a0: *mut Vec| { unsafe { crate::tu::camera::Camera_GetTransformInterest(a0); } });
+    hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::tu::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     hook_or!(FTLIB_80086644, ftLib_80086644, (gobj: *mut HSD_GObj, pos: *mut Vec), |gobj: *mut HSD_GObj, pos: *mut Vec| { unsafe { let _ = crate::ftlib::ftLib_80086644(gobj as _, pos as _); } });
     hook!(GM_8017E7E0, gm_8017E7E0, () -> i32);
     hook!(GM_801883C0, gm_801883C0, () -> f32);

@@ -510,6 +510,14 @@ fn golden_engine(args: &[String]) -> ExitCode {
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
     // default: the golden's length (the pad scripts end at 1801 frames)
     let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(if scenario.starts_with("pad_") { 1802 } else { 3601 });
+    // `--shots 60,300 [--shot-dir DIR]`: render those frames offscreen (melee_gx on wgpu, no window) to PNG
+    let shots: Vec<usize> = get("--shots").map(|s| s.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default();
+    let shot_dir = std::path::PathBuf::from(get("--shot-dir").unwrap_or_else(|| "target/shots".into()));
+    let mut renderer: Option<melee_gx::render::Renderer> = None;
+    if !shots.is_empty() {
+        unsafe { melee_engine::engine::RENDER = true };
+        let _ = std::fs::create_dir_all(&shot_dir);
+    }
     let mut e = match boot_engine_scenario(&iso, &scenario) {
         Ok(e) => e,
         Err(er) => {
@@ -536,6 +544,23 @@ fn golden_engine(args: &[String]) -> ExitCode {
         if std::env::var_os("MELEE_PAD_DBG").is_some() {
             let q = unsafe { &melee_runtime::tu::controller::HSD_PadGameStatus[0] };
             eprintln!("PADDBG tick {f} btn {:X} sx {} sy {} nx {} ny {}", q.button, q.stickX, q.stickY, q.nml_stickX, q.nml_stickY);
+        }
+        if !shots.is_empty() {
+            let frame = melee_engine::gxbridge::take_frame();
+            if shots.contains(&f) {
+                match frame {
+                    Some(draws) => {
+                        let rd = renderer.get_or_insert_with(|| melee_gx::render::Renderer::new(640, 480).expect("renderer"));
+                        let px = rd.render(&melee_engine::gxbridge::shim().gx.state, &draws);
+                        let path = shot_dir.join(format!("engine_{scenario}_{f:04}.png"));
+                        match melee_platform::gfx::write_png(&path, rd.width, rd.height, &px) {
+                            Ok(()) => eprintln!("melee: frame {f}: {} draws -> {}", draws.len(), path.display()),
+                            Err(er) => eprintln!("melee: screenshot: {er}"),
+                        }
+                    }
+                    None => eprintln!("melee: frame {f}: no GX frame was finished (GXCopyDisp not reached)"),
+                }
+            }
         }
         let r = e.neutral_row();
         if let Ok(spec) = std::env::var("MELEE_ENGINE_DUMP") {

@@ -11,6 +11,8 @@ pub mod extattr;
 pub mod dvd;
 pub mod engine;
 pub mod gcm;
+pub mod gxbridge;
+pub mod gxbridge_gen;
 pub mod host;
 pub mod install;
 pub mod lowmem;

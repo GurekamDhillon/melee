@@ -166,6 +166,10 @@ impl Engine {
             controller::ext::hook::OSRestoreInterrupts = Some(crate::dvd::OSRestoreInterrupts);
 
             crate::seams::install();
+            // the render pass draws into melee_gx unless the run is headless (MELEE_ENGINE_HEADLESS): then the GX hooks answer nothing
+            if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
+                crate::gxbridge_gen::install_gx();
+            }
             crate::seams_gen::install_gen();
             gmmain_lib::gmMainLib_init_statics();
             melee_runtime::tu::perf::__OSBusClock = 162_000_000; // OS_BUS_CLOCK (low memory 0xF8 on a GameCube)
@@ -480,6 +484,9 @@ impl Engine {
         unsafe { FEED_TICK = self.frames };
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
+        if unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
+            crate::gxbridge::finish_frame();
+        }
         self.frames += 1;
         if !more {
             self.ended = true;
@@ -488,6 +495,8 @@ impl Engine {
     }
 }
 
+/// Draw into melee_gx (`gxbridge`): set before `boot_vs` by the viewers and `--shots`; goldens leave the GX hooks silent (faster).
+pub static mut RENDER: bool = false;
 static mut FRAME_ROW: Option<[u32; 16]> = None;
 /// `melee diff --engine tu`: capture the state at `Script_FramePost` of this frame (the C snapshot point: after the logic
 /// procs, before the render pass; joints are still matrix-dirty there).

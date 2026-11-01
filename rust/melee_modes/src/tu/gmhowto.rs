@@ -160,13 +160,8 @@ pub mod ext {
                 }
             }
     pub static mut LBMTHP_8001F604: Option<fn() -> i32> = None;
-            #[allow(non_snake_case)]
-            pub fn lbMthp_8001F604() -> i32 {
-                match unsafe { LBMTHP_8001F604 } {
-                    Some(f) => unsafe { f() },
-                    None => { return unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F604() as _ }; },
-                }
-            }
+pub use melee_runtime::tu::lbmthp::lbMthp_8001F604;
+
     pub static mut LBAUDIOAX_800236DC: Option<fn() > = None;
             #[allow(non_snake_case)]
             pub fn lbAudioAx_800236DC()  {
@@ -224,13 +219,8 @@ pub mod ext {
                 }
             }
     pub static mut GM_SETNEWGAMEMODEPENDING: Option<fn() > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_SetNewGameModePending()  {
-                match unsafe { GM_SETNEWGAMEMODEPENDING } {
-                    Some(f) => unsafe { f() },
-                    None => { unsafe { crate::tu::gm_1A3F::gm_SetNewGameModePending(); } return; },
-                }
-            }
+pub use crate::tu::gm_1A3F::gm_SetNewGameModePending;
+
     pub static mut GM_SETNEXTGAMEMODESTATEID: Option<fn(i32) > = None;
             #[allow(non_snake_case)]
             pub fn gm_SetNextGameModeStateId(id: i32)  {

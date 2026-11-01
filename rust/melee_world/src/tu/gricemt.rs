@@ -950,42 +950,11 @@ pub unsafe extern "C" fn stageGObj3_GObjProc(arg0: *mut Ground_GObj) {
     ext::Ground_UpdateMapColl(arg0);
 }
 
-/// 1F8398
-pub unsafe extern "C" fn stageGObj3_Callback3(gobj: *mut Ground_GObj) {
-    melee_core::ct!("stageGObj3_Callback3");
-    destroy_items(gobj, 4);
-}
+pub use crate::tu::grheal::stageGObj3_Callback3;
 
-/// 1F83EC
-pub unsafe extern "C" fn stageGObj4_OnInit(arg0: *mut Ground_GObj) {
-    melee_core::ct!("stageGObj4_OnInit");
-    let gp = GET_GROUND(arg0);
-    let jobj = (*arg0).hsd_obj as *mut HSD_JObj;
-    let mut sp14: [i16; 4] = [1, 2, 3, 4];
-    ext::Ground_801C0498();
-    ext::Ground_InitMapColl(jobj, (*gp).map_id as i32);
-    ext::grAnime_801C8138(arg0, (*gp).map_id as i32, 0);
-    ext::grAnime_801C77FC(arg0, 0, 7);
-    let jobj2 = ext::Ground_801C3FA4(arg0, 7);
-    let jobj3 = ext::Ground_801C3FA4(arg0, 5);
-    (*gp).u.icemt1.x4 = ext::Ground_801C3FA4(arg0, 8);
-    (*gp).u.icemt1.x8 = ext::Ground_801C3FA4(arg0, 9);
-    (*gp).u.icemt1.xC = ext::Ground_801C3FA4(arg0, 10);
-    (*gp).u.icemt1.x10 = ext::Ground_801C3FA4(arg0, 11);
-    (*gp).u.icemt1.x14 = ext::Ground_801C3FA4(arg0, 23);
-    (*gp).u.icemt1.x18 = ext::Ground_801C3FA4(arg0, 16);
-    (*gp).u.icemt1.x1C = ext::Ground_801C3FA4(arg0, 17);
-    (*gp).u.icemt1.x20 = ext::Ground_801C3FA4(arg0, 18);
-    (*gp).u.icemt1.x24 = ext::Ground_801C3FA4(arg0, 19);
-    (*gp).u.icemt1.x28 = ext::Ground_801C3FA4(arg0, 20);
-    (*gp).u.icemt1.x2C = ext::Ground_801C3FA4(arg0, 21);
-    (*gp).u.icemt1.x30 = ext::Ground_801C3FA4(arg0, 22);
-    (*gp).u.icemt1.set_x0_b0(0);
-    grIceMt_801F8CDC(arg0, sp14.as_mut_ptr(), 4, (*gp).u.icemt1.x34.as_mut_ptr());
-    let r = grIceMt_801FA500(arg0, jobj3);
-    let a = grIceMt_801FA500(arg0, jobj2);
-    grIceMt_801F91EC(arg0, x100_ptr(gp).add(4), a, r, 117, 265, 638, Some(fn_801F9558));
-}
+
+pub use crate::tu::grheal::stageGObj4_OnInit;
+
 
 /// 1F85C4
 pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut Ground_GObj) {
@@ -996,11 +965,8 @@ pub unsafe extern "C" fn stageGObj4_GObjProc(gobj: *mut Ground_GObj) {
     ext::Ground_UpdateMapColl(gobj);
 }
 
-/// 1F8608
-pub unsafe extern "C" fn stageGObj4_Callback3(gobj: *mut Ground_GObj) {
-    melee_core::ct!("stageGObj4_Callback3");
-    destroy_items(gobj, 4);
-}
+pub use crate::tu::grheal::stageGObj4_Callback3;
+
 
 /// 1F865C
 pub unsafe extern "C" fn stageGObj5_OnInit(arg0: *mut Ground_GObj) {

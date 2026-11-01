@@ -42,18 +42,8 @@ unsafe fn lbVector_Add(a: *mut Vec, b: *mut Vec) -> *mut Vec {
     a
 }
 
-/// `lbVector_Diff` (lb/lbvector.c; ported in melee_runtime): `*out = *a - *b`
-pub unsafe fn lbVector_Diff(a: *mut Vec, b: *mut Vec, out: *mut Vec) -> *mut Vec {
-    melee_core::ct!("lbVector_Diff");
-    let r = melee_runtime::lbvector::diff(
-        &melee_core::vec::Vec3 { x: (*a).x, y: (*a).y, z: (*a).z },
-        &melee_core::vec::Vec3 { x: (*b).x, y: (*b).y, z: (*b).z },
-    );
-    (*out).x = r.x;
-    (*out).y = r.y;
-    (*out).z = r.z;
-    out
-}
+pub use melee_runtime::tu::lbvector::lbVector_Diff;
+
 
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]

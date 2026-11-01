@@ -57,27 +57,16 @@ pub mod ext {
     }
 }
 
-// The state callbacks of other TUs, as C-ABI function items the state tables can point at.
-pub unsafe extern "C" fn gm_ModeState_Approach_OnEnter(s: *mut GameModeState) {
-    melee_core::ct!("gm_ModeState_Approach_OnEnter");
-    ext::gm_ModeState_Approach_OnEnter(s)
-}
-pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnEnter(s: *mut GameModeState) {
-    melee_core::ct!("gm_ModeState_ApproachVs_OnEnter");
-    ext::gm_ModeState_ApproachVs_OnEnter(s)
-}
-pub unsafe extern "C" fn gm_ModeState_ApproachVs_OnExit(s: *mut GameModeState) {
-    melee_core::ct!("gm_ModeState_ApproachVs_OnExit");
-    ext::gm_ModeState_ApproachVs_OnExit(s)
-}
-pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(s: *mut GameModeState) {
-    melee_core::ct!("gm_ModeState_Prize_OnEnter");
-    ext::gm_ModeState_Prize_OnEnter(s)
-}
-pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(s: *mut GameModeState) {
-    melee_core::ct!("gm_ModeState_Prize_OnExit");
-    ext::gm_ModeState_Prize_OnExit(s)
-}
+pub use crate::tu::gm_1BFA::gm_ModeState_Approach_OnEnter;
+
+pub use crate::tu::gm_1BFA::gm_ModeState_ApproachVs_OnEnter;
+
+pub use crate::tu::gmmovieend::gm_ModeState_ApproachVs_OnExit;
+
+pub use crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter;
+
+pub use crate::tu::gmmovieend::gm_ModeState_Prize_OnExit;
+
 
 type Cb = Option<unsafe extern "C" fn(*mut GameModeState)>;
 

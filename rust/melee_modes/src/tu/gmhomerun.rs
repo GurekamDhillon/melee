@@ -266,13 +266,8 @@ pub mod ext {
                 }
             }
     pub static mut GM_CHANGEGAMEMODEAFTERCURRENTSCENE: Option<fn(i32) > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_ChangeGameModeAfterCurrentScene(m: i32)  {
-                match unsafe { GM_CHANGEGAMEMODEAFTERCURRENTSCENE } {
-                    Some(f) => unsafe { f(m) },
-                    None => { unsafe { crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(m as _); } return; },
-                }
-            }
+pub use crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene;
+
     pub static mut GM_SETUPALLPLAYERDEFAULTS: Option<fn(*mut PlayerInitData) > = None;
             #[allow(non_snake_case)]
             pub fn gm_SetupAllPlayerDefaults(p: *mut PlayerInitData)  {
@@ -290,13 +285,8 @@ pub mod ext {
                 }
             }
     pub static mut GM_80181998: Option<fn() > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_80181998()  {
-                match unsafe { GM_80181998 } {
-                    Some(f) => unsafe { f() },
-                    None => { unsafe { crate::tu::gm_180A::gm_80181998(); } return; },
-                }
-            }
+pub use crate::tu::gm_180A::gm_80181998;
+
     pub static mut GM_LOADRUMBLEENABLED: Option<fn(*mut StartMeleeData) > = None;
             #[allow(non_snake_case)]
             pub fn gm_LoadRumbleEnabled(s: *mut StartMeleeData)  {
@@ -306,21 +296,11 @@ pub mod ext {
                 }
             }
     pub static mut GM_80181A00: Option<fn(i32, i32) > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_80181A00(ckind: i32, nametag: i32)  {
-                match unsafe { GM_80181A00 } {
-                    Some(f) => unsafe { f(ckind, nametag) },
-                    None => { unsafe { crate::tu::gm_180A::gm_80181A00(ckind as _, nametag as _); } return; },
-                }
-            }
+pub use crate::tu::gm_180A::gm_80181A00;
+
     pub static mut GM_80180B18: Option<fn() > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_80180B18()  {
-                match unsafe { GM_80180B18 } {
-                    Some(f) => unsafe { f() },
-                    None => { unsafe { crate::tu::gm_180A::gm_80180B18(); } return; },
-                }
-            }
+pub use crate::tu::gm_180A::gm_80180B18;
+
     pub static mut GM_801677F0: Option<fn() -> u8> = None;
             #[allow(non_snake_case)]
             pub fn gm_801677F0() -> u8 {
@@ -354,21 +334,11 @@ pub mod ext {
                 }
             }
     pub static mut GM_80180BA0: Option<fn() > = None;
-            #[allow(non_snake_case)]
-            pub fn gm_80180BA0()  {
-                match unsafe { GM_80180BA0 } {
-                    Some(f) => unsafe { f() },
-                    None => { unsafe { crate::tu::gm_180A::gm_80180BA0(); } return; },
-                }
-            }
+pub use crate::tu::gm_180A::gm_80180BA0;
+
     pub static mut GM_80180AE4: Option<fn() -> i32> = None;
-            #[allow(non_snake_case)]
-            pub fn gm_80180AE4() -> i32 {
-                match unsafe { GM_80180AE4 } {
-                    Some(f) => unsafe { f() },
-                    None => { return unsafe { crate::tu::gm_180A::gm_80180AE4() as _ }; },
-                }
-            }
+pub use crate::tu::gm_180A::gm_80180AE4;
+
     pub static mut GM_801734D0: Option<fn(u32) -> i16> = None;
             #[allow(non_snake_case)]
             pub fn gm_801734D0(a: u32) -> i16 {

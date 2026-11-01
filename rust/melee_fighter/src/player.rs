@@ -515,11 +515,8 @@ pub fn inc_self_destructs(slot: i32, condition: i32) {
         h::ifstatus_802f6c04(slot);
     }
 }
-/// `Player_800353BC`.
-pub fn player_800353bc(slot: i32) -> bool {
-    let p = player(slot);
-    p.player_state == 2 && p.flags.b0() != 0
-}
+pub use crate::tu::player::Player_800353BC as player_800353bc;
+
 /// `Player_8003544C`.
 pub fn player_8003544c(slot: i32, condition: i32) -> bool {
     condition == 0 && player_800353bc(slot)
@@ -548,14 +545,9 @@ pub fn get_unk4c(slot: i32) -> i32 {
 pub fn set_unk4c(slot: i32, v: u8) {
     player(slot).unk4C = v as i8;
 }
-/// `Player_80036058`.
-pub fn player_80036058(slot: i32) -> bool {
-    h::ftlib_80086f4c(ent(player(slot), 0))
-}
-/// `Player_800360D8`.
-pub fn player_800360d8(slot: i32) -> f32 {
-    h::ftlib_80086f80(ent(player(slot), 0))
-}
+
+pub use crate::tu::player::Player_800360D8 as player_800360d8;
+
 /// `Player_SetStructFunc`.
 pub fn set_struct_func(slot: i32, f: Option<unsafe extern "C" fn(i32)>) {
     player(slot).struct_func = f;
@@ -568,16 +560,9 @@ pub fn get_unk6a8_ptr(slot: i32) -> &'static mut pl_x5EC_t {
 pub fn get_stale_move_table_index_ptr2(slot: i32) -> *mut pl_StaleMoveTableExt_t {
     &mut player(slot).stale_moves as *mut StaleMoveTable as *mut pl_StaleMoveTableExt_t
 }
-/// `Player_80036394`: the main entity's fighter kind, or -1.
-pub fn player_80036394(slot: i32) -> FighterKind {
-    let e = ent(player(slot), 0);
-    if e.is_null() { (-1i32) as FighterKind } else { h::ftlib_get_kind(e) }
-}
-/// `Player_80036428`.
-pub fn player_80036428(slot: i32) -> i32 {
-    let e = ent(player(slot), 0);
-    if e.is_null() { 6 } else { h::ftlib_80087300(e) }
-}
+pub use crate::tu::player::Player_80036394 as player_80036394;
+
+
 /// `Player_SetUnk45`.
 pub fn set_unk45(slot: i32, v: i32) {
     player(slot).unk45 = v as u8;
@@ -608,22 +593,12 @@ fn each_entity(slot: i32, mut f: impl FnMut(*mut HSD_GObj)) {
         }
     }
 }
-/// `Player_800366DC`.
-pub fn player_800366dc(slot: i32, arg: i32) {
-    each_entity(slot, |e| h::ft_80087ac0(e, arg));
-}
-/// `Player_80036790`.
-pub fn player_80036790(slot: i32, arg: f32) {
-    each_entity(slot, |e| h::ftlib_80086a4c(e, arg));
-}
-/// `Player_80036844`.
-pub fn player_80036844(slot: i32, arg: i32) {
-    each_entity(slot, |e| h::ft_80087bac(e, arg));
-}
-/// `Player_800368F8`.
-pub fn player_800368f8(slot: i32) -> bool {
-    h::ftlib_80086bb4(ent(player(slot), 0))
-}
+
+pub use crate::tu::player::Player_80036790 as player_80036790;
+
+pub use crate::tu::player::Player_80036844 as player_80036844;
+
+
 /// `Player_80036978`.
 pub fn player_80036978(slot: i32, pos: &mut Vec3) {
     h::ftlib_80086b90(ent(player(slot), 0), pos);

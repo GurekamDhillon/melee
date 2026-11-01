@@ -1,0 +1,17 @@
+rust/melee_world/src/tu/textlib.rs	memzero
+rust/melee_world/src/tu/mplib.rs	PSMTXMultVec
+*	grMaterial_801C9604
+*	Player_8003544C
+*	HSD_SisLib_803A6B98
+*	HSD_SisLib_803A70A0
+*	gm_801B06B0
+*	gm_801BEFA4
+*	gm_801BEFC0
+*	gm_801BEFE0
+*	gm_801BF000
+*	gm_GetButtonsTriggered
+*	gm_SetGameModeStateId
+*	gm_SetPendingGameMode
+*	hsdDumpClassStat
+*	lbArchive_LoadSections
+*	lb_80011E24

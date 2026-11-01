@@ -319,9 +319,8 @@ pub static mut PLAYER_GETPLAYERSLOTTYPE: Option<fn(i32) -> i32> = None;
         match unsafe { PLAYER_GETPLAYERSLOTTYPE } { Some(f) => f(slot), None => { return unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(slot as _) as _ }; } }
     }
 
-/// `ftBossLib_8015BD20(gobj)` (ft/ftbosslib.c): the C body is `return;`. Ported as is.
-#[inline]
-pub fn ftBossLib_8015BD20(_g: G) {}
+pub use melee_fighter::tu::ftbosslib::ftBossLib_8015BD20;
+
 
     /// TODO(group3): `ftCliffCommon_80081298(gobj)` (ft/ftcliffcommon.c, ledge grab check; returns bool).
 pub static mut FTCLIFFCOMMON_80081298: Option<fn(G) -> i32> = None;

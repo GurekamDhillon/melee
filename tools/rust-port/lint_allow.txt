@@ -1,7 +1,7 @@
 # Files where logic outside tu/ is allowed (consolidation.md section 5). One glob per line, then the reason.
 rust/melee_engine/src/** host seams: heap, dvd, pads, audio/render sinks
 rust/melee_link/src/** generated link table
-rust/melee/src/{main,cfg,disc,diff,diff_layout,snap,golden,view,play,netplay,netmatch,np_env,ui,hud_view,ps_view,gx_backend,audio,input,crash,ident,mods,mex}.rs CLI / platform glue
+rust/melee/src/{main,cfg,disc,diff,diff_layout,snap,play,netplay,netmatch,np_env,ui,gx_backend,audio,pads,menu_support,engine_view,engine_audio,engine_audio_gen,crash,ident,mods}.rs CLI / platform glue
 rust/melee/src/retail/** CLI / platform glue (retail scene stand-ins, notes/play.md)
 rust/melee_platform/** platform crate (no C game TU)
 rust/melee_gx/** platform crate (no C game TU)

@@ -39,6 +39,7 @@ truth; history and per-topic detail are in `docs/rust-port/notes/` (index at the
 
 ## Commands
 Env: `export GW_ISO_VANILLA=...` via the workspace `.env`. Run from the repo root; `cd rust` for cargo.
+- (Step 19: the `vs_match` model is gone; every `melee` command runs the engine.)
 - Build: `cd rust && cargo build -p melee --release` (exe: `build/cargo/release/melee.exe`). Tests: `cargo test -p <crate>`.
 - Golden run: `melee golden --iso $GW_ISO_VANILLA --out /tmp/c.csv --scenario cpu_fox_falco_dl [--idle-pads for cpu_*]`
   then `python tools/rust-port/compare_golden.py docs/rust-port/golden/<scn>.csv /tmp/c.csv --allow-short`.

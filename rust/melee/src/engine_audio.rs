@@ -180,6 +180,13 @@ pub fn ax_80028B90() { with((), |s| s.lb_audio_ax_80028b90()) }
 /// Boot the sound stack from the disc (`Sound::boot`: lbAudioAx's first init, smash2.sem, main.ssm), what the positional objects read
 /// from the game (owner class and position, the real camera, the game RNG), and the hooks.
 pub fn install(iso: &str, trace: bool) -> Result<(), String> {
+    boot_sound(iso, trace)?;
+    attach(true);
+    Ok(())
+}
+
+/// Boot the sound stack from the disc and what the positional objects read from the game (no engine hooks yet: the menus use this alone).
+pub fn boot_sound(iso: &str, trace: bool) -> Result<(), String> {
     let mut snd = melee_audio::Sound::new();
     snd.boot(Box::new(melee_audio::sound::DiscFs::open(iso)?), lb::boot_bank_sizes())?;
     if trace {
@@ -205,7 +212,6 @@ pub fn install(iso: &str, trace: bool) -> Result<(), String> {
         }),
         randi: Some(melee_runtime::tu::random::global::HSD_Randi),
     });
-    attach(true);
     Ok(())
 }
 

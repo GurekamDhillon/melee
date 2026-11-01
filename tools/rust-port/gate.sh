@@ -14,7 +14,7 @@ set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo="$(cd "$here/../.." && pwd)"
 cd "$repo"
-engine=legacy; update=0; build=1; only=""
+engine=tu; update=0; build=1; only=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --engine) engine="$2"; shift ;;
@@ -28,7 +28,7 @@ ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env"; set +a; fi
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "gate: GW_ISO_VANILLA not set" >&2; exit 2; }
 export MELEE_WINDOW_UNFOCUSED=1
-case "$engine" in legacy|tu) ;; *) echo "gate: unknown engine '$engine' (legacy | tu)" >&2; exit 2 ;; esac
+case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
 exe="$repo/build/cargo/release/melee.exe"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0

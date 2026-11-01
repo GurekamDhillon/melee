@@ -9,8 +9,6 @@
 //! against the from-0 sim (the "model state" section), when the snapshot loader can take that snapshot.
 
 use crate::snap::Snap;
-use crate::vs_match::VsMatch;
-use crate::Sim;
 use melee_types::Fighter;
 use std::fmt::Write as _;
 use std::process::ExitCode;
@@ -180,25 +178,6 @@ struct State {
     dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
 }
 
-fn capture(sim: &VsMatch, frame: i32) -> State {
-    let (items, respawn_busy) = sim.diff_items();
-    State {
-        frame,
-        seed: sim.rand.logic_seed(),
-        render_seed: sim.rand.render_seed,
-        fighters: sim.players.iter().map(|p| (p.slot, raw(&*p.fp).to_vec())).collect(),
-        items,
-        item_bytes: vec![],
-        respawn_busy,
-        stocks: sim.players.iter().map(|p| (p.slot, melee_fighter::stale::stocks(p.slot))).collect(),
-        dump: sim.state_dump(),
-        engine: false,
-        joints: vec![],
-        alt: vec![],
-        dyns: vec![],
-    }
-}
-
 /// The engine run to golden frame `frame`: the native Fighter records and the seed (items / stocks / model state wait for step 17).
 fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
@@ -250,29 +229,6 @@ fn scenario(name: &str) -> Option<(&'static str, &'static [&'static str], Option
     })
 }
 
-fn build(iso: &str, scn: &str) -> Result<VsMatch, String> {
-    let (stage, fighters, item_freq) = scenario(scn).ok_or_else(|| format!("scenario {scn:?} not wired"))?;
-    if scn.starts_with("cpu_") {
-        crate::vs_match::set_cpu_player(0, 9);
-        crate::vs_match::set_cpu_player(1, 9);
-    }
-    let mut d = crate::disc::Disc::open(iso)?;
-    let mut sim = VsMatch::new_ex(&mut d, stage, fighters, 12345, 3, item_freq)?;
-    if scn.starts_with("cpu_") {
-        sim.pad_feed = Some([Default::default(); 4]);
-    }
-    Ok(sim)
-}
-
-/// The golden CSV row of a sim frame, as text columns (the order of the file).
-fn row_cols(w: &crate::FrameWords) -> Vec<String> {
-    let h = melee_types::neutral_hash::nh_game(w.seed, &w.slots, w.items, w.itemsum);
-    let mut v = vec![w.frame.to_string(), format!("{h:08X}"), format!("{:08X}", w.seed), w.items.to_string(), format!("{:08X}", w.itemsum)];
-    for s in w.slots {
-        v.push(format!("{:08X}", s.unwrap_or(0)));
-    }
-    v
-}
 
 fn find_snap(scn: &str, frame: i32, explicit: Option<String>) -> Result<String, String> {
     if let Some(p) = explicit {
@@ -317,127 +273,25 @@ pub fn diff(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
-    // step 18: the engine is the default; `--first` (bisect against the golden CSV) and unwired scenarios still need the model
-    let engine = match get("--engine").as_deref() {
-        Some("tu") => true,
-        Some(_) => false,
-        None => !has("--first") && matches!(scn.as_str(), "pad_falcon_fox_fd" | "pad_marth_sheik_bf" | "cpu_fox_falco_dl" | "cpu_peach_samus_ys_items"),
-    };
-    if let Some(e) = get("--engine") {
-        if e != "legacy" && e != "tu" {
-            eprintln!("melee diff: --engine {e}: legacy | tu");
-            return ExitCode::from(2);
-        }
-    }
-    if engine && has("--first") {
-        eprintln!("melee diff: --engine tu takes --frame N / --frames LIST (use melee golden --engine tu for the first divergence)");
+    // the engine is the only game loop (step 19): `--first` (the old model's bisect) is gone, `melee golden` reports the first divergence
+    if has("--first") {
+        eprintln!("melee diff: --first needs the removed model; use melee golden (it reports the first divergent frame) and then --frame N");
         return ExitCode::from(2);
     }
     if let Some(list) = get("--frames") {
         return diff_frames(args, &scn, &list);
     }
     let max: usize = get("--max").and_then(|v| v.parse().ok()).unwrap_or(40);
-    let target: Option<i32> = get("--frame").and_then(|v| v.parse().ok());
-    let first = has("--first");
-    if target.is_none() && !first {
-        eprintln!("melee diff: give --frame N or --first");
+    let Some(target) = get("--frame").and_then(|v| v.parse::<i32>().ok()) else {
+        eprintln!("melee diff: give --frame N or --frames A,B,C");
         return ExitCode::from(2);
-    }
-    let golden_path = get("--golden").unwrap_or_else(|| format!("docs/rust-port/golden/{scn}.csv"));
-    let golden: Vec<Vec<String>> = if first {
-        match std::fs::read_to_string(&golden_path) {
-            Ok(t) => t.lines().skip(1).map(|l| l.split(',').map(str::to_string).collect()).collect(),
-            Err(e) => {
-                eprintln!("melee diff: {golden_path}: {e} (run from the repo root or pass --golden)");
-                return ExitCode::from(2);
-            }
-        }
-    } else {
-        vec![]
     };
-    let mut state: Option<State> = None;
-    let mut why = String::new();
-    let mut n_rows = 0;
-    if engine {
-        match engine_state(&iso, &scn, target.unwrap_or(0)) {
-            Ok(s) => state = Some(s),
-            Err(e) => {
-                eprintln!("melee diff: {e}");
-                return ExitCode::from(3);
-            }
+    let st = match engine_state(&iso, &scn, target) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("melee diff: {e}");
+            return ExitCode::from(3); // the --frames wrapper skips frames beyond the engine's count
         }
-    }
-    let mut sim = if engine {
-        None
-    } else {
-        match build(&iso, &scn) {
-            Ok(s) => Some(s),
-            Err(e) => {
-                eprintln!("melee diff: {e}");
-                return ExitCode::FAILURE;
-            }
-        }
-    };
-    // Run the sim from frame 0.
-    while let Some(sim) = sim.as_mut() {
-        if !sim.step() {
-            why = sim.stopped.clone().unwrap_or_else(|| "sim ended".into());
-            break;
-        }
-        let w = sim.frame_words();
-        let f = w.frame as i32;
-        n_rows += 1;
-        if first {
-            let cols = row_cols(&w);
-            match golden.iter().find(|g| g.first().map(String::as_str) == Some(&cols[0])) {
-                Some(g) if g.iter().zip(cols.iter()).any(|(a, b)| a != b) => {
-                    let bad: Vec<String> = ["frame", "hash", "seed", "items", "itemsum", "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11"].iter().zip(g.iter().zip(cols.iter()))
-                        .filter(|(_, (a, b))| a != b).map(|(n, (a, b))| format!("{n} golden {a} rust {b}")).collect();
-                    println!("first golden-diverging frame: {f} ({})", bad.join("; "));
-                    state = Some(capture(&sim, f));
-                    break;
-                }
-                Some(_) => {}
-                None => {
-                    why = "end of the golden".into();
-                    break;
-                }
-            }
-        } else if Some(f) == target {
-            state = Some(capture(&sim, f));
-            break;
-        }
-    }
-    let Some(st) = state else {
-        if first {
-            println!("no golden divergence in {n_rows} frames of {scn} ({why})");
-            if why != "end of the golden" && n_rows > 0 {
-                // The sim cannot go on (unported code): diff the last frame it finished.
-                println!("diffing the last simulated frame, {}", n_rows - 1);
-                let mut a: Vec<String> = vec!["diff".into(), "--scenario".into(), scn.clone(), "--frame".into(), (n_rows - 1).to_string()];
-                let mut it = args.iter().skip(1);
-                while let Some(x) = it.next() {
-                    match x.as_str() {
-                        "--first" | "--scenario" | "--frame" => {
-                            if x != "--first" {
-                                it.next();
-                            }
-                        }
-                        _ => a.push(x.clone()),
-                    }
-                }
-                return match std::env::current_exe().and_then(|e| std::process::Command::new(e).args(&a).status()) {
-                    Ok(s) => ExitCode::from(s.code().unwrap_or(1) as u8),
-                    Err(e) => {
-                        eprintln!("melee diff: {e}");
-                        ExitCode::FAILURE
-                    }
-                };
-            }
-            return ExitCode::SUCCESS;
-        }
-        eprintln!("melee diff: the sim stopped before frame {}: {why}", target.unwrap());
-        return ExitCode::from(3); // the --frames wrapper skips frames beyond the engine's count
     };
     let frame = st.frame;
     let snap_path = match find_snap(&scn, frame, get("--snap")) {
@@ -463,15 +317,6 @@ pub fn diff(args: &[String]) -> ExitCode {
     if let Err(e) = compare(&snap, &st, &opts, &mut out) {
         eprintln!("melee diff: {e}");
         return ExitCode::FAILURE;
-    }
-    // Model state: the sim loaded from the snapshot against the from-0 sim.
-    let mut model_note = String::new();
-    if !st.engine {
-        let (stage, fighters, _) = scenario(&scn).unwrap();
-        match crate::disc::Disc::open(&iso).and_then(|mut d| VsMatch::from_snapshot(&mut d, &snap, stage, fighters, 12345, 3)) {
-            Ok(m) => model_diff(&st.dump, &m.state_dump(), &mut out),
-            Err(e) => model_note = format!("model-state section skipped: the snapshot loader refused this state ({e})"),
-        }
     }
     for d in out.iter_mut() {
         d.hashed = match d.strukt {
@@ -537,9 +382,6 @@ pub fn diff(args: &[String]) -> ExitCode {
     }
     if out.len() > max && max > 0 {
         println!("  ... {} more (raise --max)", out.len() - max);
-    }
-    if !model_note.is_empty() {
-        println!("  note: {model_note}");
     }
     if out.is_empty() { ExitCode::SUCCESS } else { ExitCode::from(1) }
 }
@@ -629,7 +471,7 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
     };
     // Fighters.
     let gobjs = snap.plink(8)?;
-    let pid = crate::vs_match::snapshot::gc_off::<Fighter>("player_id");
+    let pid = <Fighter as melee_core::gc::GcLayout>::gc_field("player_id").unwrap().offset;
     for (slot, bytes) in &st.fighters {
         let fp_va = gobjs.iter().map(|&g| snap.u32(g + 0x2c)).find(|&u| u != 0 && snap.u8(u + pid) as i32 == *slot).ok_or(format!("no C fighter for player {}", slot + 1))?;
         let cf: Fighter = snap.decode_flat(fp_va);
@@ -738,15 +580,6 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
             }
         }
     }
-    // Stocks.
-    let slots = snap.must_sym("_player_slots")?;
-    for (slot, rs) in st.stocks.iter().filter(|_| !st.engine) {
-        let off = crate::vs_match::snapshot::gc_off::<melee_types::_StaticPlayer>("stocks");
-        let cs = snap.u8(slots + 0xE90 * *slot as u32 + off) as i8 as i32;
-        if cs != *rs {
-            push(0, (*slot as u32, u32::MAX), "StaticPlayer", format!("P{} slot", slot + 1), "stocks".into(), Some(off), cs.to_string(), rs.to_string());
-        }
-    }
     // Items (p_link 9, in list order).
     let mut citems = Vec::new();
     for g in snap.plink(9)? {
@@ -809,56 +642,6 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
         push(3, (1, 0), "HSD_Rand", "rng".into(), "render seed".into(), None, format!("{rseed:08x}"), format!("{:08x}", st.render_seed));
     }
     Ok(())
-}
-
-/// Line-level diff of two `state_dump`s (lines already covered natively are skipped).
-fn model_diff(rust: &str, c: &str, out: &mut Vec<Diff>) {
-    use std::collections::BTreeMap;
-    let skip = |l: &str| {
-        let t: Vec<&str> = l.splitn(3, ' ').collect();
-        t.get(1).is_some_and(|x| x.starts_with("fp.")) || matches!(t[0], "frame" | "rand" | "respawn_busy") || l.starts_with("pad") || t.get(1) == Some(&"stocks") || l.starts_with("item")
-    };
-    let key = |l: &str, seen: &mut BTreeMap<String, u32>| {
-        let k: String = l.split(' ').take(3).collect::<Vec<_>>().join(" ");
-        let n = seen.entry(k.clone()).or_insert(0);
-        *n += 1;
-        if *n > 1 { format!("{k}#{n}") } else { k }
-    };
-    let mut map = |t: &str| {
-        let mut seen = BTreeMap::new();
-        t.lines().filter(|l| !skip(l)).map(|l| (key(l, &mut seen), l.to_string())).collect::<Vec<_>>()
-    };
-    let (a, b) = (map(c), map(rust));
-    let bm: BTreeMap<_, _> = b.iter().cloned().collect();
-    let am: BTreeMap<_, _> = a.iter().cloned().collect();
-    let mut i = 0u32;
-    let mut emit = |k: &str, cl: Option<&String>, rl: Option<&String>, out: &mut Vec<Diff>| {
-        let rank = if k.starts_with('p') && k.as_bytes().get(1).is_some_and(u8::is_ascii_digit) { 0 } else if k.starts_with("ground") || k.starts_with("cg") || k.starts_with("static_player") || k.starts_with("last_bg") { 2 } else { 4 };
-        let (cs, rs) = match (cl, rl) {
-            (Some(c), Some(r)) => {
-                let (ct, rt): (Vec<&str>, Vec<&str>) = (c.split(' ').collect(), r.split(' ').collect());
-                let d: Vec<usize> = (0..ct.len().max(rt.len())).filter(|&j| ct.get(j) != rt.get(j)).collect();
-                let show = |t: &Vec<&str>| d.iter().take(4).map(|&j| format!("[{j}]{}", t.get(j).copied().unwrap_or("-"))).collect::<Vec<_>>().join(" ");
-                (show(&ct), show(&rt))
-            }
-            (Some(_), None) => ("present".into(), "missing".into()),
-            _ => ("missing".into(), "present".into()),
-        };
-        i += 1;
-        let (inst, field) = k.split_once(' ').map_or((k.to_string(), String::new()), |(a, b)| (a.to_string(), b.to_string()));
-        out.push(Diff { rank, order: (u32::MAX, i), strukt: "model state", instance: inst, field, gc: None, c: cs, rust: rs, hashed: false });
-    };
-    for (k, l) in &a {
-        match bm.get(k) {
-            Some(r) if r == l => {}
-            r => emit(k, Some(l), r, out),
-        }
-    }
-    for (k, l) in &b {
-        if !am.contains_key(k) {
-            emit(k, None, Some(l), out);
-        }
-    }
 }
 
 /// Fighter fields `nh_fighter` reads (rust/melee_types/src/neutral_hash.rs); a difference in one of

@@ -12,7 +12,7 @@
 //! pages, Settings pages): those end this scene with an `Exit::Screen`.
 use super::mn_tables as T;
 use super::*;
-use crate::view::AnimLights;
+use crate::menu_support::AnimLights;
 use super::sis::{GlyphCache, SisArchive, SisEnv, Text};
 
 const BACK: u32 = 0;
@@ -794,7 +794,7 @@ impl MainMenu {
     }
 
     /// One logic frame with this frame's controller samples.
-    pub fn tick(&mut self, raw: &[Option<crate::vs_match::input::RawPad>; 4]) {
+    pub fn tick(&mut self, raw: &[Option<crate::pads::RawPad>; 4]) {
         self.frame += 1;
         if let Ok(v) = std::env::var("MELEE_MENU_DUMP") {
             // "frame:group"
@@ -847,7 +847,7 @@ impl MainMenu {
         shim.set_copy_clear(GxColor::new(self.erase[0], self.erase[1], self.erase[2], self.erase[3]), 0xFF_FFFF);
         shim.set_viewport(0.0, 0.0, 640.0, 480.0, 0.0, 1.0);
         shim.set_scissor(0, 0, 640, 480);
-        let (vmtx, proj) = crate::view::camera(&self.pose);
+        let (vmtx, proj) = crate::menu_support::camera(&self.pose);
         shim.set_projection(&proj, melee_gx::consts::GX_PERSPECTIVE);
         // HSD_FogSet (gx link 1): GXSetFog(type, start, end, cobj near, far, colour)
         shim.set_fog(self.fog.0, self.fog.1, self.fog.2, self.pose.near, self.pose.far, GxColor::new(self.erase[0], self.erase[1], self.erase[2], self.erase[3]));

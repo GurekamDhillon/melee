@@ -5,7 +5,7 @@
 //! `Scene` is the seam the frontend plays through: `melee play` owns one retail scene at a time,
 //! ticks it with the pad state, draws it, and reads its exit. The port's own kit menus
 //! (gmfrontend*, gw_kit, online lobby/settings) are NOT here; `MenuHook` is where they plug in.
-use crate::cm_drive::CamPose;
+use crate::menu_support::CamPose;
 use crate::gx_backend::{DataCache, ShimBackend};
 use crate::stage_anim::StageAnim;
 use melee_gx::shim::GxShim;
@@ -70,7 +70,7 @@ pub fn add_model(dat: &mut Vec<u8>, a: &DatArchive, base: &str) -> Result<u32, S
 }
 
 pub fn draw_models(r: &mut HsdRender, shim: &mut GxShim, cache: &mut DataCache, dat: &Arc<Vec<u8>>, models: &mut [&mut StageAnim], pose: &CamPose, light: &[u32]) {
-    let (vmtx, proj) = crate::view::camera(pose);
+    let (vmtx, proj) = crate::menu_support::camera(pose);
     shim.set_projection(&proj, melee_gx::consts::GX_PERSPECTIVE);
     let mut g = ShimBackend { shim, cache };
     r.invalidate_all();
@@ -366,7 +366,7 @@ pub fn clone_model(dat: &mut Vec<u8>, a: &DatArchive, base: &str, n: usize) -> R
 /// (A/START -> CONFIRM, B -> CANCEL, direction pad / stick -> ANY_UP..) with `fn_801A396C`'s repeat
 /// timer (20 frames, then 8 / 4 / 2 apart as the hold grows).
 pub struct MenuPad {
-    st: [crate::vs_match::input::PadStatus; 4],
+    st: [crate::pads::PadStatus; 4],
     held: [u32; 4],
     trigger: [u32; 4],
     repeat2: [u32; 4],
@@ -417,7 +417,7 @@ impl MenuPad {
     }
 
     /// One frame's samples (`None` = no controller): `HSD_PadRenewStatus` then `gm_EvaluateAllControllerInputs`.
-    pub fn update(&mut self, raw: &[Option<crate::vs_match::input::RawPad>; 4]) {
+    pub fn update(&mut self, raw: &[Option<crate::pads::RawPad>; 4]) {
         for i in 0..4 {
             let r = raw[i].unwrap_or_default();
             self.st[i].renew(&r);

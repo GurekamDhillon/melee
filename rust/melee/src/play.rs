@@ -20,11 +20,8 @@
 //!            [--max-frames N] [--skip-intro] [--mods DIR] [--golden-pads]
 //! ```
 //! `--shots` writes a PNG per screen (30 ticks after entering it) into `--shot-dir`.
-use crate::vs_match::input::RawPad;
+use crate::pads::RawPad;
 use crate::ui::{self, Ui};
-use crate::view::MatchRender;
-use crate::vs_match::VsMatch;
-use crate::Sim;
 use melee_gx::api::GxColor;
 use melee_gx::shim::GxShim;
 use melee_platform::gfx::{write_png, Presenter, EFB_HEIGHT, EFB_WIDTH};
@@ -175,17 +172,6 @@ struct EngMatch {
 /// The tick the HUD's GO appears on (the legacy sim's `go_frame` on every stage in the roster).
 const ENGINE_GO_FRAME: i32 = 84;
 
-struct Match {
-    sim: VsMatch,
-    mr: MatchRender,
-    setup_names: [&'static str; 2],
-    paused: Option<usize>,
-    /// Ticks since a stock count reached 0 / the sim stopped (the GameSet beat before the results).
-    end_timer: Option<u32>,
-    /// The clock ran out (the TIME! call comes with the end timer).
-    timed_out: bool,
-    quit_hold: u32,
-}
 
 #[derive(Default, Clone)]
 struct Outcome {
@@ -217,10 +203,8 @@ pub struct Play {
     pick: [Option<usize>; 2],
     sss_sel: usize,
     setup: Option<MatchSetup>,
-    m: Option<Match>,
-    /// The engine match (`--engine legacy` and `--mods` keep the model in `m`).
+    /// The match (the consolidated engine).
     em: Option<EngMatch>,
-    engine: bool,
     engine_used: bool,
     headless: bool,
     outcome: Outcome,
@@ -322,14 +306,14 @@ impl Play {
                     let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
                     let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
                     // the engine's own stage BGM pick is a sound seam for now: the model's pick (or track 0)
-                    a.match_start(&ck, st, gr, self.m.as_ref().map_or(0, |m| m.sim.bgm));
+                    a.match_start(&ck, st, gr, 0);
                 }
             }
             Scene::Results => {
                 if from == Scene::Match {
                     a.match_leave();
                 }
-                let w = self.outcome.winner.map(|w| crate::audio::ckind_of(self.m.as_ref().map_or("falcon", |m| m.setup_names[w])));
+                let w = self.outcome.winner.map(|w| crate::audio::ckind_of(self.em.as_ref().map_or("falcon", |m| m.names[w])));
                 a.results(w);
             }
         }
@@ -351,7 +335,6 @@ impl Play {
         if self.scene == Scene::Match {
             if let Some(a) = &self.audio { a.match_leave() }
         }
-        self.m = None;
         self.em = None;
         self.pick = [None, None];
         self.cursor = [0, 1];
@@ -462,8 +445,7 @@ impl Play {
                 if trig & HSD_PAD_A != 0 {
                     self.back_to_css();
                 } else if trig & HSD_PAD_START != 0 {
-                    self.m = None;
-                    self.goto(Scene::MainMenu);
+                                self.goto(Scene::MainMenu);
                 }
             }
         }
@@ -519,7 +501,7 @@ impl Play {
         }
     }
 
-    fn start_engine_match(&mut self) {
+    fn start_match(&mut self) {
         let Some(su) = self.setup.as_ref() else { return };
         let names = [ROSTER[su.fighters[0]].0, ROSTER[su.fighters[1]].0];
         let (stage_file, stage_name) = STAGES[su.stage];
@@ -575,39 +557,8 @@ impl Play {
         }
     }
 
-    fn start_match(&mut self) {
-        if self.engine {
-            return self.start_engine_match();
-        }
-        let Some(su) = self.setup.as_ref() else { return };
-        let names = [ROSTER[su.fighters[0]].0, ROSTER[su.fighters[1]].0];
-        let (stage_file, stage_name) = STAGES[su.stage];
-        log(&format!("loading {} v {} on {} ({} s time match)", names[0], names[1], stage_name, self.time_secs));
-        let built = (|| -> Result<Match, String> {
-            let mut disc = crate::disc::Disc::open(&self.iso)?;
-            if let Some(d) = &self.mods_dir {
-                disc.mods = Some(crate::mods::Mods::open(std::path::Path::new(d), None)?);
-            }
-            let seed = 12345 + self.matches_played;
-            let mut sim = VsMatch::new(&mut disc, stage_file, &names, seed, 3)?;
-            let mr = MatchRender::new(&mut disc, stage_file, &names, &mut sim)?;
-            Ok(Match { sim, mr, setup_names: names, paused: None, end_timer: None, timed_out: false, quit_hold: 0 })
-        })();
-        match built {
-            Ok(m) => {
-                self.matches_played += 1;
-                self.m = Some(m);
-                self.goto(Scene::Match);
-            }
-            Err(e) => {
-                log(&format!("match load failed: {e}"));
-                self.toast = Some((format!("LOAD FAILED: {}", e.chars().take(60).collect::<String>()), 300));
-                self.goto(Scene::Sss);
-            }
-        }
-    }
 
-    fn tick_engine_match(&mut self) {
+    fn tick_match(&mut self) {
         let ports = self.port;
         let Some(m) = self.em.as_mut() else { return };
         // L+R+A+START held: end the match and return to the character select (the pad layer, as in the model).
@@ -625,14 +576,14 @@ impl Play {
         if let Some(t) = &mut m.end_timer {
             *t += 1;
             if *t >= 150 {
-                self.finish_engine_match();
+                self.finish_match();
             }
             return;
         }
         // The frame: the live pads in (START included: the pause is the game's own), the scene loop stepped once.
         let mut pads = [melee_types::PADStatus::zeroed(); 4];
         for (i, st) in pads.iter_mut().enumerate() {
-            let raw = if self.golden_pads { crate::vs_match::input::pad_fixed(i, m.e.frames as i32) } else { ports[i].raw };
+            let raw = if self.golden_pads { crate::pads::pad_fixed(i, m.e.frames as i32) } else { ports[i].raw };
             st.button = raw.button as u16;
             st.stickX = raw.stick_x;
             st.stickY = raw.stick_y;
@@ -659,7 +610,7 @@ impl Play {
         }
     }
 
-    fn finish_engine_match(&mut self) {
+    fn finish_match(&mut self) {
         let Some(m) = self.em.as_ref() else { return };
         let mut o = Outcome { frames: m.e.frames as i32, ..Default::default() };
         for i in 0..2usize {
@@ -677,108 +628,7 @@ impl Play {
         self.goto(Scene::Results);
     }
 
-    fn tick_match(&mut self) {
-        if self.em.is_some() {
-            return self.tick_engine_match();
-        }
-        let Some(m) = self.m.as_mut() else { return };
-        let ports = self.port;
-        // gm_DefaultVSGetPauser: START on a connected pad pauses; the pauser's START resumes.
-        let pauser = ports.iter().take(2).position(|p| p.connected && p.trig & HSD_PAD_START != 0 && p.held & (HSD_PAD_L | HSD_PAD_R | HSD_PAD_A) != (HSD_PAD_L | HSD_PAD_R | HSD_PAD_A));
-        match (m.paused, pauser) {
-            (None, Some(p)) if m.end_timer.is_none() && m.sim.go_reached() => {
-                m.paused = Some(p);
-                if let Some(a) = self.audio.as_mut() { a.pause(true) }
-                log(&format!("paused by port {}", p + 1));
-            }
-            (Some(q), Some(p)) if q == p => {
-                m.paused = None;
-                if let Some(a) = self.audio.as_mut() { a.pause(false) }
-                log("resumed");
-            }
-            _ => {}
-        }
-        // L+R+A+START held (gmvs): end the match and return to the character select.
-        const COMBO: u32 = HSD_PAD_L | HSD_PAD_R | HSD_PAD_A | HSD_PAD_START;
-        let quit_combo = ports.iter().take(2).any(|p| p.connected && p.held & COMBO == COMBO);
-        m.quit_hold = if quit_combo { m.quit_hold + 1 } else { 0 };
-        if m.quit_hold >= 30 {
-            log("match quit with L+R+A+START");
-            self.back_to_css();
-            return;
-        }
-        // The combo is read at the pad layer: the fighters do not see it (the sim holds meanwhile).
-        if m.paused.is_some() || quit_combo {
-            return;
-        }
-        if let Some(t) = &mut m.end_timer {
-            // The GameSet beat (a halted sim holds its last frame).
-            *t += 1;
-            if *t == crate::audio::TIME_CALL_DELAY as u32 && m.timed_out {
-                if let Some(a) = &self.audio { a.match_end_call(true) }
-            }
-            if *t >= 150 {
-                self.finish_match();
-            }
-            return;
-        }
-        // The frame: the live pads in, the sim stepped once.
-        let mut raws = [RawPad::default(); 4];
-        for i in 0..4 {
-            raws[i] = if self.golden_pads { crate::vs_match::input::pad_fixed(i, m.sim.frame + 1) } else { ports[i].raw };
-        }
-        // START belongs to the pause layer (gm_DefaultVSGetPauser); no fighter check reads it.
-        for r in raws.iter_mut() {
-            r.button &= !HSD_PAD_START;
-        }
-        m.sim.pad_feed = Some(raws);
-        let alive = m.sim.step();
-        if alive {
-            m.mr.step(&mut m.sim);
-            if let Some(a) = &self.audio {
-                a.match_frame(m.sim.frame, m.sim.go_frame_for_hud(), self.time_secs);
-            }
-        }
-        if !alive {
-            log(&format!("simulation halted: {:?}", m.sim.stopped));
-            if let Some(a) = &self.audio { a.match_end_call(false) }
-            m.end_timer = Some(0);
-        } else if m.sim.frame >= crate::audio::clock_end(m.sim.go_frame_for_hud(), self.time_secs) - 1 {
-            log("time up: GameSet");
-            m.timed_out = true;
-            m.end_timer = Some(0);
-            // gmVs: the end of the clock stops every track, then the TIME! call.
-            if let Some(a) = &self.audio { a.match_leave() }
-        }
-    }
 
-    fn finish_match(&mut self) {
-        let Some(m) = self.m.as_ref() else { return };
-        let mut o = Outcome { frames: m.sim.frame, ..Default::default() };
-        let main: Vec<_> = m.sim.players.iter().filter(|p| !p.follower).collect();
-        for (i, p) in main.iter().take(2).enumerate() {
-            o.names[i] = ROSTER.iter().find(|r| r.0 == m.setup_names[i]).map_or(m.setup_names[i], |r| r.1).to_string();
-            o.falls[i] = p.falls as i32;
-            o.percent[i] = p.fp.dmg.x1830_percent;
-        }
-        match m.sim.stopped.as_ref() {
-            Some(why) => o.why = format!("simulation reached unported code: {why}"),
-            None => {
-                // Time-match score: -1 per fall / self-destruct, no KOs are possible in the ported sim.
-                o.winner = if o.falls[0] < o.falls[1] {
-                    Some(0)
-                } else if o.falls[1] < o.falls[0] {
-                    Some(1)
-                } else {
-                    None
-                };
-                o.why = "TIME!".into();
-            }
-        }
-        log(&format!("results: falls {:?} percent {:?} frames {} winner {:?} ({})", o.falls, o.percent, o.frames, o.winner, o.why));
-        self.outcome = o;
-        self.goto(Scene::Results);
-    }
 
     // ---------------------------------------------------------------- drawing
 
@@ -905,41 +755,6 @@ impl Play {
         u.text(20.0, 452.0, 1.0, hint, ui::GREY);
     }
 
-    fn draw_match_hud(&mut self) {
-        let Some(m) = &self.m else { return };
-        let u = &mut self.ui;
-        let main: Vec<_> = m.sim.players.iter().filter(|p| !p.follower).collect();
-        for (i, p) in main.iter().take(2).enumerate() {
-            let x = 110.0 + i as f32 * 300.0;
-            let col = if i == 0 { ui::RED } else { ui::CYAN };
-            u.rect(x, 396.0, 160.0, 70.0, [0, 0, 0, 150]);
-            u.frame(x, 396.0, 160.0, 70.0, 2.0, col);
-            let pct = p.fp.dmg.x1830_percent.max(0.0) as i32;
-            u.text_shadow(x + 10.0, 406.0, 4.0, &format!("{pct}%"), if pct > 100 { ui::RED } else { ui::WHITE });
-            u.text(x + 10.0, 450.0, 1.0, &format!("FALLS {}", p.falls), col);
-            u.text(x + 100.0, 450.0, 1.0, &m.setup_names[i].to_uppercase(), ui::GREY);
-        }
-        let secs = (m.sim.frame.max(0) / 60) as u32;
-        u.text_centered_shadow(320.0, 12.0, 2.0, &format!("{}:{:02}", secs / 60, secs % 60), ui::WHITE);
-        if !m.sim.go_reached() {
-            u.text_centered_shadow(320.0, 200.0, 6.0, "READY", ui::YELLOW);
-        } else if m.sim.frame < m.sim.go_frame_for_hud() + 50 && m.end_timer.is_none() {
-            u.text_centered_shadow(320.0, 200.0, 6.0, "GO!", ui::GREEN);
-        }
-        if m.end_timer.is_some() {
-            let msg = if m.sim.stopped.is_some() { "SIMULATION HALTED" } else { "TIME!" };
-            u.text_centered_shadow(320.0, 190.0, 6.0, msg, ui::YELLOW);
-            if let Some(why) = &m.sim.stopped {
-                u.text_centered(320.0, 250.0, 1.0, &why.chars().take(76).collect::<String>(), ui::GREY);
-            }
-        }
-        if let Some(p) = m.paused {
-            u.rect(0.0, 0.0, ui::W, ui::H, [0, 0, 0, 140]);
-            u.text_centered_shadow(320.0, 180.0, 5.0, "PAUSE", ui::WHITE);
-            u.text_centered(320.0, 250.0, 2.0, &format!("PLAYER {}   START: RESUME", p + 1), ui::GREY);
-            u.text_centered(320.0, 280.0, 1.0, "HOLD L+R+A+START: QUIT TO CHARACTER SELECT", ui::GREY);
-        }
-    }
 
     fn draw_results(&mut self) {
         self.backdrop([30, 20, 60, 255], [4, 4, 14, 255]);
@@ -997,11 +812,8 @@ impl Play {
     fn draw_frame(&mut self) {
         self.shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         if self.scene == Scene::Match {
-            if let Some(m) = self.m.as_mut() {
-                m.mr.draw(&mut self.shim, &m.sim);
-            }
+            // the engine's own frame is presented in `present_now`; nothing of the stand-in UI during a match
             self.ui.clear();
-            self.draw_match_hud();
         } else if let (Scene::Title, Some(t)) = (self.scene, self.title.as_mut()) {
             t.draw(&mut self.shim);
         } else if let (Scene::MainMenu | Scene::VsMenu, Some(m)) = (self.scene, self.menu.as_mut()) {
@@ -1041,7 +853,7 @@ impl Game for Play {
             self.shot_pending = Some(format!("m{}_{}", self.matches_played, self.scene.name()));
         }
         // Match: one shot well into the fight and one 10 ticks into a pause.
-        let paused = self.scene == Scene::Match && self.m.as_ref().is_some_and(|m| m.paused.is_some());
+        let paused = false;
         self.pause_age = if paused { self.pause_age + 1 } else { 0 };
         if self.shots && self.shot_pending.is_none() {
             if paused && self.pause_age == 10 {
@@ -1114,9 +926,7 @@ pub fn play(args: &[String]) -> ExitCode {
         pick: [None, None],
         sss_sel: 0,
         setup: None,
-        m: None,
         em: None,
-        engine: crate::use_engine(args),
         engine_used: false,
         headless: false,
         outcome: Outcome::default(),

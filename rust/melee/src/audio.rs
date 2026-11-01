@@ -55,10 +55,10 @@ pub fn ckind_of(name: &str) -> i32 {
 /// `(StageKind, GroundKind)` of a stage file, for the bank loads and the stage's echo.
 pub fn stage_kinds(file: &str) -> (i32, i32) {
     match file {
-        "GrNLa.dat" => (crate::vs_match::STKIND_FD, melee_types::Gr_Kind_Last as i32),
-        "GrNBa.dat" => (crate::vs_match::STKIND_BF, melee_types::Gr_Kind_Battle as i32),
-        "GrGr.dat" => (crate::vs_match::STKIND_DL, melee_types::Gr_Kind_Greens as i32),
-        _ => (crate::vs_match::STKIND_YS, melee_types::Gr_Kind_Story as i32),
+        "GrNLa.dat" => (0x20, melee_types::Gr_Kind_Last as i32),
+        "GrNBa.dat" => (0x1F, melee_types::Gr_Kind_Battle as i32),
+        "GrGr.dat" => (0x11, melee_types::Gr_Kind_Greens as i32),
+        _ => (8, melee_types::Gr_Kind_Story as i32),
     }
 }
 
@@ -116,7 +116,7 @@ fn request_banks(flags: u32, mask: u64) {
 impl Audio {
     /// Boot the sound from the disc and open the output. `Err` leaves the game silent.
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
-        crate::install_audio(iso)?;
+        crate::engine_audio::boot_sound(iso, false)?;
         if headless {
             return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into() });
         }

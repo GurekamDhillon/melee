@@ -11,11 +11,11 @@
 //! `--lag-ms` / `--loss-pct` degrade this peer's INBOUND datagrams (a deterministic LCG), so the
 //! predictions miss and the session rolls back.
 
-use crate::netmatch::{golden_hashes, NetGame, NetMatch};
+use crate::netmatch::{golden_hashes, NetGame};
 use crate::np_env::{ck_name, lobby_bot, NativeEnv};
 use melee_net::app::room::{Phase, Room, RoomEnv, RoomSettings};
 use melee_net::app::scene::parse_scene;
-use crate::vs_match::rollback::script_input;
+use crate::netmatch::script_input;
 use melee_net::net::{Config, Net};
 use melee_net::rollback::{NetAdapter, NetLog};
 use melee_net::session::{run_tick, InputSource, RbConfig, RbSession, FIRST};
@@ -73,13 +73,9 @@ impl Transport for Degraded {
     }
 }
 
-/// `melee netplay`: the consolidated engine unless `--engine legacy`.
+/// `melee netplay`: one peer of a rollback match on the consolidated engine.
 pub fn netplay(args: &[String]) -> std::process::ExitCode {
-    if crate::use_engine(args) {
-        netplay_with::<crate::netmatch::engine_game::EngineGame>(args)
-    } else {
-        netplay_with::<NetMatch>(args)
-    }
+    netplay_with::<crate::netmatch::engine_game::EngineGame>(args)
 }
 
 fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode {

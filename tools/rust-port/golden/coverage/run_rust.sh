@@ -19,12 +19,12 @@ one() {
   # found by the first 2 frames (0..3); the chosen N is part of the detail so the gap stays visible (tools/rust-port/engine/pre_draws.tsv)
   pre=0
   for k in 0 1 2 3; do
-    MELEE_ENGINE_PRE_DRAWS=$k build/cargo/release/melee.exe golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
+    MELEE_ENGINE_PRE_DRAWS=$k "${MELEE_EXE:-build/cargo/release/melee.exe}" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
     [ -s "$tmp/$s.cal.csv" ] || break
     c=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.cal.csv" --allow-short --print-count 2>&1 | awk '/^COUNT/{print $2}')
     [ "${c:-0}" -ge 2 ] && { pre=$k; break; }
   done
-  MELEE_ENGINE_PRE_DRAWS=$pre build/cargo/release/melee.exe golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
+  MELEE_ENGINE_PRE_DRAWS=$pre "${MELEE_EXE:-build/cargo/release/melee.exe}" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   if grep -q "not wired" "$tmp/$s.log" && [ ! -s "$tmp/$s.csv" ]; then printf '%s\tNOT_WIRED\t0\t%s\t%s\n' "$s" "$rows" "$(grep -m1 'not wired' "$tmp/$s.log" | sed 's/.*not wired/not wired/' | cut -c1-120)"; return; fi
   [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
   res=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.csv" --allow-short --print-count 2>&1)
@@ -39,5 +39,5 @@ one() {
   if [ "$n" -ge "$rows" ]; then st=PASS; det="-"; else st=FAIL; det=$(echo "$res" | grep -v '^COUNT' | head -2 | tr '\n' ' ' | cut -c1-200); fi
   printf '%s\t%s\t%s\t%s\t%s\n' "$s" "$st" "$n" "$rows" "$det"
 }
-export -f one; export tmp
+export MELEE_EXE; export -f one; export tmp
 printf '%s\n' "${names[@]}" | xargs -P "$jobs" -I{} bash -c 'one {}' | tee ${out:+"$out"}

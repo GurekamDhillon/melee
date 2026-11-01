@@ -35,7 +35,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "quake_model_set" { return Some(rt("DynamicModelDesc")); }
     if name == "map_ptcl" { return Some(RootType::Custom("ptclcmd")); }
     if name == "map_texg" { return Some(RootType::Custom("ptcltex")); }
-    if name == "yakumono_param" { return Some(RootType::Raw); }
+    if name == "yakumono_param" { return Some(RootType::Custom("rawwords")); }
     if name == "itPublicData" { return Some(RootType::Custom("itco")); }
     if name == "effCommonDataTable" { return Some(RootType::Custom("efdat")); }
     if name == "Stc_scemdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }

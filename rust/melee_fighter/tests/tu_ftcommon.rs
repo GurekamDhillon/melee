@@ -91,7 +91,7 @@ fn ftcommon_8007efc8_smoke() {
         c::ext::PLAYER_GET_ENTITY_AT_INDEX = Some(|_, _| { log("get"); DST_G as *mut HSD_GObj });
         c::ext::PLAYER_SWAP_TRANSFORMED_STATES = Some(|_, _, _| log("swap"));
         c::ext::FIGHTER_UNK_INIT_RESET_80067C98 = Some(|_| log("reset"));
-        c::ext::PLAYER_SET_HP_BY_INDEX = Some(|slot, sub, hp| { assert_eq!((slot, sub, hp), (2, 0, 47.0)); log("hp") });
+        c::ext::PLAYER_SET_HP_BY_INDEX = Some(|slot, sub, hp| { assert_eq!((slot, sub, hp), (2, 0, 47)); log("hp") });
         c::ext::FTLIB_SET_SCALE = Some(|_, _| log("scale"));
         c::ext::FT_800849EC = Some(|_, _| log("849ec"));
         c::ext::FT_80081C88 = Some(|_, _| log("81c88"));

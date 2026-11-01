@@ -40,6 +40,11 @@ fn fighter_mut(p: *const melee_types::Fighter) -> *mut melee_types::Fighter {
 
 pub fn install() {
     unsafe {
+        // pc/platform gw_replay.c `gw_Slippi_FrozenStadium` outside playback: `MELEE_SLIPPI_FROZEN_PS=1` enables Slippi's Frozen PS (default off, as the C goldens)
+        melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| {
+            static LIVE: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
+            *LIVE.get_or_init(|| std::env::var("MELEE_SLIPPI_FROZEN_PS").map_or(0, |v| v.starts_with('1') as i32))
+        });
         // the hooks.rs defaults below are the legacy-state ports (`1.0`, `crate::player`); the engine runs the tu bodies
         melee_fighter::hooks::GROUND_FRICTION_MUL = Some(|fp| unsafe { melee_fighter::tu::ft_081b::ft_get_ground_friction_multiplier(&mut *fighter_mut(fp)) });
         melee_fighter::hooks::PLAYER_UPDATE_JOYSTICK_COUNT = Some(|slot, idx| melee_fighter::tu::player::Player_UpdateJoystickCountByIndex(slot, idx));

@@ -59,7 +59,7 @@ pub mod ext {
         PLAYER_GET_ENTITY_AT_INDEX Player_GetEntityAtIndex(slot: i32, i: i32) -> G;
         PLAYER_SWAP_TRANSFORMED_STATES Player_SwapTransformedStates(slot: i32, a: i32, b: i32);
         FIGHTER_UNK_INIT_RESET_80067C98 Fighter_UnkInitReset_80067C98(fp: *mut Fighter);
-        PLAYER_SET_HP_BY_INDEX Player_SetHPByIndex(slot: i32, sub: i32, hp: f32);
+        PLAYER_SET_HP_BY_INDEX Player_SetHPByIndex(slot: i32, sub: i32, hp: i32);
         FTCOLL_8007B7FC ftColl_8007B7FC(fp: *mut Fighter, arg: i32);
         FTCOLL_8007B760 ftColl_8007B760(g: G, arg: i32);
         FTLIB_SET_SCALE ftLib_SetScale(g: G, s: f32);
@@ -110,7 +110,7 @@ pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     dst.pos_delta = src.pos_delta;
     dst.facing_dir = src.facing_dir;
     dst.dmg.x1830_percent = src.dmg.x1830_percent;
-    ext::Player_SetHPByIndex(dst.player_id as i32, dst.is_sub_fighter() as i32, dst.dmg.x1830_percent);
+    ext::Player_SetHPByIndex(dst.player_id as i32, dst.is_sub_fighter() as i32, dst.dmg.x1830_percent as i32);
     let (src, dst) = (fpg(gobj), fpg(dst_gobj));
     dst.dmg.x18F0 = src.dmg.x18F0;
     dst.self_vel = src.self_vel;

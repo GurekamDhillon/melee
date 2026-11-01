@@ -94,6 +94,16 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 | modes: targettest | 26 | 26 | 0 | 0 | 44247 | pending consolidation |
 | blocked modes | 8 | 0 | 0 | 8 | 0 | n/a |
 
+### Rust engine vs coverage goldens (2026-11-01; detail and per-scenario table in notes/coverage.md)
+`melee golden --engine tu` runs the VS coverage scenarios with idle pads (`run_rust.sh`). Main failure classes: engine death at load (16 stage archive symbols, 19 fighters crashing after the AllA load, 4 Kirby-copy DAT loads, 9 link-cast hook mismatches), 9 real hash divergences (first frames 86..2805).
+
+| result | scenarios |
+|---|---|
+| pass | 12 |
+| fail | 67 |
+| not wired (1p modes / Lua pads) | 79 |
+| no golden (C failed or blocked) | 10 |
+
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).

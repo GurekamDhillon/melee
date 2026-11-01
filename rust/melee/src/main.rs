@@ -360,7 +360,7 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
         "pad_marth_sheik_bf" => "p1=marth/human;p2=sheik/human;p3=none;p4=none;stage=bf;match=time;minutes=0;items=off",
         "cpu_fox_falco_dl" => "p1=fox/cpu9;p2=falco/cpu9;p3=none;p4=none;stage=dreamland;match=time;minutes=0;items=off",
         "cpu_peach_samus_ys_items" => "p1=peach/cpu9;p2=samus/cpu9;p3=none;p4=none;stage=ys;match=time;minutes=0;items=4",
-        s => return Err(format!("scenario {s:?} not wired")),
+        s => return boot_coverage_scenario(iso, s),
     };
     // `--time-secs 60`: a one-minute time match (the audio proof's clock)
     let scene = match std::env::var("MELEE_ENGINE_MINUTES") {
@@ -397,6 +397,23 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
         });
     }
     Ok(e)
+}
+
+/// A coverage scenario (docs/rust-port/golden/coverage/scenarios.tsv, notes/coverage.md): only the VS ones with an idle pad
+/// script are wired (scene parse + no pad feed); 1p modes and the Lua random-input pads return "not wired".
+fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine, String> {
+    let tsv = std::fs::read_to_string("docs/rust-port/golden/coverage/scenarios.tsv").map_err(|_| format!("scenario {name:?} not wired"))?;
+    let row = tsv.lines().find_map(|l| { let c: Vec<&str> = l.split(char::from(9u8)).collect(); (c.len() == 5 && c[0] == name).then(|| (c[1].to_string(), c[3].to_string(), c[4].to_string())) });
+    let Some((kind, pad, scene)) = row else { return Err(format!("scenario {name:?} not wired")) };
+    if kind != "vs" { return Err(format!("scenario {name:?} not wired: {kind} mode (the engine boots VS matches only)")); }
+    if !pad.starts_with("idle_") { return Err(format!("scenario {name:?} not wired: pad script {pad} needs the Lua pad host")); }
+    if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "0") };
+    }
+    let disc = engine_disc(iso)?;
+    let scn = melee_engine::scenario::Scenario::parse(&scene)?;
+    melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))
 }
 
 /// The consolidated engine is the only game loop (step 19 removed the `vs_match` model). Kept for the callers that asked "engine or model".

@@ -47,3 +47,200 @@ No OS input, no focus: pad scripts (Lua, `tools/rust-port/golden/coverage/pads/`
   modes are not wired); dropped.
 - Per-character Classic/Adventure/All-Star beyond the rotating sample; Target Test uses one pad per character, so most targets are
   not broken (the run ends when the stage ends: row counts differ per character).
+
+## Rust engine vs the C coverage goldens (2026-11-01)
+
+`melee golden --engine tu --scenario NAME` now accepts every scenario of `docs/rust-port/golden/coverage/scenarios.tsv` (generated from scenarios.json by `tools/rust-port/golden/coverage/gen_tsv.py`). Wired: VS-mode scenarios with the idle pad script (scene strings with `ck:N`, `ext:N` stage ids, `cpuN`/`human`/`idle`); not wired: 1p modes (adventure/classic/allstar/targettest: the engine boots VS matches only), VS scenarios whose pad is a Lua script (`rand_s*`, `randabs_*`, kirby/zelda_sheik: needs a Lua pad host in the engine), scenes with `stocks=`/`teams=`/team suffixes. Runner: `bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out R.tsv] --all|NAME...` (headless, unfocused; per scenario it finds the number of `MELEE_ENGINE_PRE_DRAWS` 0..3 that makes frame 0..1 match, since the BGM-pick/stage-init HSD_Rand draws are still dummies; the chosen N shows in the detail).
+
+Result over all 168 scenarios: **12 pass, 67 fail, 79 not wired, 10 no golden** (158 recorded goldens = 158; the other 10 are the C-side failed/blocked ones). 'First divergent frame' = number of leading rows that matched (the engine/golden disagree, or the engine died, at that frame; engine deaths at load show 0).
+
+| class | scenarios |
+|---|---|
+| not wired: 1p mode | 62 |
+| engine aborted without a panic message (crash/abort) | 19 |
+| not wired: Lua pad | 17 |
+| engine panics at load: missing archive symbol (stage DAT) | 16 |
+| pass | 12 |
+| no golden (C failed/blocked) | 10 |
+| engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) | 6 |
+| engine stopped after -1 rows, no mismatch before: melee_worl | 5 |
+| engine panics at load: dat_custom ftDataKirbyCopy* not loaded | 4 |
+| hash divergence (hash, itemsum) | 3 |
+| engine panic: link cast f32 -> i32 (hook adapter type) | 3 |
+| engine panic: lbArchiveRelocate error (fighter DAT) | 2 |
+| hash divergence (hash, items, itemsum) | 2 |
+| hash divergence (hash, s0) | 2 |
+| hash divergence (hash, s0, s2) | 1 |
+| hash divergence (hash, s2) | 1 |
+| hash divergence (hash, seed) | 1 |
+| engine panic: TODO stub reached | 1 |
+| hash divergence (hash, itemsum, s0, s2) | 1 |
+
+| scenario | status | first divergent frame | class |
+|---|---|---|---|
+| char_gaw | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_kirby | FAIL | 0 | engine panics at load: dat_custom ftDataKirbyCopy* not loaded |
+| char_bowser | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_captain | FAIL | 353 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| char_link | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| char_fox | FAIL | 1910 | engine aborted without a panic message (crash/abort) |
+| char_dk | FAIL | 3151 | engine aborted without a panic message (crash/abort) |
+| char_marth | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_luigi | FAIL | 3151 | engine aborted without a panic message (crash/abort) |
+| char_ness | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_mewtwo | FAIL | 2116 | hash divergence (hash, itemsum) |
+| char_icies | FAIL | 5 | engine panic: lbArchiveRelocate error (fighter DAT) |
+| char_peach | FAIL | 191 | hash divergence (hash, items, itemsum) |
+| char_jigglypuff | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_samus | FAIL | 461 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| char_pikachu | FAIL | 3151 | engine aborted without a panic message (crash/abort) |
+| char_yoshi | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_falco | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| char_younglink | FAIL | 0 | engine panics at load: dat_custom ftDataKirbyCopy* not loaded |
+| char_sheik | FAIL | 828 | engine panic: link cast f32 -> i32 (hook adapter type) |
+| char_roy | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_zelda | FAIL | 2035 | engine panic: link cast f32 -> i32 (hook adapter type) |
+| char_pichu | FAIL | 817 | engine aborted without a panic message (crash/abort) |
+| zelda_sheik_transform | NOT_WIRED | - | not wired: Lua pad |
+| kirby_copy_a | NOT_WIRED | - | not wired: Lua pad |
+| kirby_copy_b | NOT_WIRED | - | not wired: Lua pad |
+| ic_vs_fox_human | NOT_WIRED | - | not wired: Lua pad |
+| char_ganondorf | FAIL | 515 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| sheik_cpu_vs_zelda_cpu | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| stage_02_fountain | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| char_mario | FAIL | 455 | hash divergence (hash, itemsum) |
+| stage_03_stadium | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| stage_04_castle | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| stage_07_corneria | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| stage_08_yoshistory | FAIL | 0 | engine panics at load: dat_custom ftDataKirbyCopy* not loaded |
+| stage_09_onett | FAIL | 0 | engine stopped after -1 rows, no mismatch before: melee_worl |
+| stage_06_brinstar | FAIL | 0 | hash divergence (hash, s0, s2) |
+| stage_11_rainbowcruise | FAIL | 0 | engine panics at load: dat_custom ftDataKirbyCopy* not loaded |
+| stage_05_jungle | FAIL | 0 | hash divergence (hash, s2) |
+| stage_12_garden | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| stage_13_greatbay | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| char_drmario | PASS | 3601 | pass |
+| stage_10_mutecity | FAIL | 1 | hash divergence (hash, seed) |
+| stage_16_yoshiisland | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| stage_14_temple | FAIL | 1219 | engine panic: TODO stub reached |
+| stage_15_kraid | FAIL | 723 | engine aborted without a panic message (crash/abort) |
+| stage_18_fourside | FAIL | 0 | engine stopped after -1 rows, no mismatch before: melee_worl |
+| stage_20_mushroomkingdom2 | FAIL | 166 | hash divergence (hash, items, itemsum) |
+| stage_19_mushroomkingdom | FAIL | 256 | hash divergence (hash, s0) |
+| stage_22_venom | FAIL | 1 | engine aborted without a panic message (crash/abort) |
+| stage_17_greens | PASS | 3601 | pass |
+| stage_24_bigblue | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| stage_27_flatzone | FAIL | 0 | engine stopped after -1 rows, no mismatch before: melee_worl |
+| stage_29_yoshistory64 | FAIL | 0 | engine stopped after -1 rows, no mismatch before: melee_worl |
+| stage_28_dreamland64 | FAIL | 317 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| stage_25_icemt | FAIL | 86 | hash divergence (hash, itemsum, s0, s2) |
+| stage_30_kongojungle64 | FAIL | 0 | engine stopped after -1 rows, no mismatch before: melee_worl |
+| stage_23_pokefloats | PASS | 3601 | pass |
+| items_hi_battlefield | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| items_hi_finaldestination | FAIL | 10 | engine panic: lbArchiveRelocate error (fighter DAT) |
+| items_hi_stadium | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| items_hi_dreamland64 | FAIL | 0 | engine aborted without a panic message (crash/abort) |
+| stage_31_battlefield | FAIL | 3151 | engine aborted without a panic message (crash/abort) |
+| stage_32_finaldestination | PASS | 3601 | pass |
+| items_hi_human_bf | NOT_WIRED | - | not wired: Lua pad |
+| items_off_4p_ps | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| items_hi_yoshistory | FAIL | 2805 | hash divergence (hash, s0) |
+| items_hi_4p_ffa | PASS | 3601 | pass |
+| items_low_fd | PASS | 3601 | pass |
+| cpulv1_fox_falco | PASS | 3601 | pass |
+| items_off_fd | PASS | 3601 | pass |
+| cpulv1_puff_link | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| cpulv1_marth_sheik | FAIL | 3151 | engine aborted without a panic message (crash/abort) |
+| cpulv1_ganon_peach | PASS | 3601 | pass |
+| cpulv5_marth_sheik | FAIL | 831 | engine panic: link cast f32 -> i32 (hook adapter type) |
+| cpulv5_puff_link | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| cpulv5_ganon_peach | FAIL | 542 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| cpulv5_fox_falco | PASS | 3601 | pass |
+| cpulv9_marth_sheik | FAIL | 1798 | hash divergence (hash, itemsum) |
+| cpulv9_puff_link | FAIL | 0 | engine panics at load: missing archive symbol (stage DAT) |
+| cpulv9_fox_falco | PASS | 3601 | pass |
+| cpu_teams4 | NOT_WIRED | - | not wired: Lua pad |
+| cpu_stock2_fd | NOT_WIRED | - | not wired: Lua pad |
+| cpu_stock1_bf | NOT_WIRED | - | not wired: Lua pad |
+| pad_captain_fox_finaldestination | NOT_WIRED | - | not wired: Lua pad |
+| cpu_ffa4_levels | FAIL | 110 | engine aborted without a panic message (crash/abort) |
+| pad_marth_sheik_battlefield | NOT_WIRED | - | not wired: Lua pad |
+| pad_bowser_ganondorf_yoshistory | NOT_WIRED | - | not wired: Lua pad |
+| pad_icies_jigglypuff_stadium | NOT_WIRED | - | not wired: Lua pad |
+| pad_peach_samus_dreamland64 | NOT_WIRED | - | not wired: Lua pad |
+| pad_luigi_drmario_fountain | NOT_WIRED | - | not wired: Lua pad |
+| padcpu_fox_vs_cpu_marth | NOT_WIRED | - | not wired: Lua pad |
+| padcpu_pikachu_vs_cpu_pichu | NOT_WIRED | - | not wired: Lua pad |
+| padcpu_roy_vs_cpu_younglink | NOT_WIRED | - | not wired: Lua pad |
+| targettest_captain | NOT_WIRED | - | not wired: 1p mode |
+| targettest_dk | NOT_WIRED | - | not wired: 1p mode |
+| targettest_fox | NOT_WIRED | - | not wired: 1p mode |
+| targettest_gaw | NOT_WIRED | - | not wired: 1p mode |
+| targettest_kirby | NOT_WIRED | - | not wired: 1p mode |
+| targettest_bowser | NOT_WIRED | - | not wired: 1p mode |
+| targettest_link | NOT_WIRED | - | not wired: 1p mode |
+| targettest_luigi | NOT_WIRED | - | not wired: 1p mode |
+| targettest_mario | NOT_WIRED | - | not wired: 1p mode |
+| targettest_marth | NOT_WIRED | - | not wired: 1p mode |
+| targettest_mewtwo | NOT_WIRED | - | not wired: 1p mode |
+| targettest_ness | NOT_WIRED | - | not wired: 1p mode |
+| targettest_peach | NOT_WIRED | - | not wired: 1p mode |
+| targettest_pikachu | NOT_WIRED | - | not wired: 1p mode |
+| targettest_icies | NOT_WIRED | - | not wired: 1p mode |
+| targettest_jigglypuff | NOT_WIRED | - | not wired: 1p mode |
+| targettest_samus | NOT_WIRED | - | not wired: 1p mode |
+| targettest_yoshi | NOT_WIRED | - | not wired: 1p mode |
+| targettest_zelda | NOT_WIRED | - | not wired: 1p mode |
+| targettest_sheik | NOT_WIRED | - | not wired: 1p mode |
+| targettest_falco | NOT_WIRED | - | not wired: 1p mode |
+| targettest_younglink | NOT_WIRED | - | not wired: 1p mode |
+| targettest_drmario | NOT_WIRED | - | not wired: 1p mode |
+| targettest_roy | NOT_WIRED | - | not wired: 1p mode |
+| targettest_pichu | NOT_WIRED | - | not wired: 1p mode |
+| targettest_ganondorf | NOT_WIRED | - | not wired: 1p mode |
+| classic_step00 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step01 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step02 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step03 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step04 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step05 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step06 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step07 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step08 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step09 | NOT_WIRED | - | not wired: 1p mode |
+| classic_step10 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step00 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step01 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step02 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step03 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step04 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step05 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step06 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step07 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step08 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step09 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step10 | NOT_WIRED | - | not wired: 1p mode |
+| adventure_step11 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step00 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step01 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step02 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step03 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step04 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step05 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step06 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step07 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step08 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step09 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step10 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step11 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step12 | NOT_WIRED | - | not wired: 1p mode |
+| cpulv9_ganon_peach | FAIL | 3470 | engine panic: link cast i32 -> *mut HSD_GObj (hook adapter type) |
+| cpu_mixed_1_9 | PASS | 3601 | pass |
+
+Notes on the classes:
+- *missing archive symbol (stage DAT)*: `melee_engine::archive` panics at stage load (GrdPSt*, GrdIzu*, ...): the engine's stage loader lacks those stages' archive/DAT entries, so they die before frame 0.
+- *engine aborted without a panic message*: the char_* scenarios whose fighter is not one of the ported-and-loaded kinds die with an access violation (read of 0x8) right after the AllA anim load (crash report in crashlogs/); fighter DAT/Pl*AJ setup for those kinds is incomplete.
+- *link cast ...*: the generated `melee_link` adapters (`cast::<_, _, site>`) refuse an i32 -> `*mut HSD_GObj` or f32 -> i32 hook conversion at run time: a hook wired by `gen_link.py` with the wrong arity/type; each site id names the hook in gen_table.rs.
+- *hash divergence*: real simulation differences (items/itemsum columns point at item code; s0/s2 at fighter state), e.g. char_peach at 191, stage_25_icemt at 86, char_mario at 455, cpulv9_marth_sheik at 1798, items_hi_yoshistory at 2805, char_mewtwo at 2116.
+- Scenarios that only pass (12) need pre-draws 0 or 1 as listed in the run detail; the BGM pick on non-FD/BF stages is a separate draw gap.
+

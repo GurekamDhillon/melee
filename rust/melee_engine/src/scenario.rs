@@ -76,8 +76,15 @@ impl Scenario {
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
-                "stage" => s.stage = stage_by_name(v).ok_or(format!("unknown stage {v}"))?,
-                "match" => s.rule_match = if v == "stock" { 1 } else { 0 },
+                "stage" => {
+                    s.stage = match v.strip_prefix("ext:") {
+                        Some(n) => n.parse().map_err(|_| format!("stage {v}"))?,
+                        None => stage_by_name(v).ok_or(format!("unknown stage {v}"))?,
+                    }
+                }
+                // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
+                "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
+                "match" => s.rule_match = if v == "stock" { return Err("stock match not wired".into()) } else { 0 },
                 "minutes" => s.rule_minutes = v.parse().map_err(|_| "minutes")?,
                 "items" => s.item_freq = if v == "off" { -2 } else { v.parse().map_err(|_| "items")? },
                 _ if k.len() == 2 && k.starts_with('p') => {
@@ -86,8 +93,16 @@ impl Scenario {
                         continue;
                     }
                     let mut it = v.split('/');
-                    let ck = ckind_by_name(it.next().unwrap()).ok_or(format!("unknown fighter in {v}"))?;
+                    let name = it.next().unwrap();
+                    let ck = match name.strip_prefix("ck:") {
+                        Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
+                        None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
+                    };
                     let kind = it.next().unwrap_or("human");
+                    if it.next().is_some() {
+                        return Err(format!("team suffix in {v} not wired"));
+                    }
+                    let kind = if kind == "idle" { "human" } else { kind };
                     let (slot_type, cpu_level) = match kind.strip_prefix("cpu") {
                         Some(l) => (1, l.parse().unwrap_or(-1)),
                         None => (0, -1),

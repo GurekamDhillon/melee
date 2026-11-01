@@ -327,7 +327,7 @@ fn main() -> ExitCode {
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
         Some("diff") => diff::diff(&args),
-        Some("synctest") if args.iter().any(|a| a == "tu") && args.iter().any(|a| a == "--engine") => netmatch::engine_game::synctest(&args),
+        Some("synctest") if use_engine(&args) => netmatch::engine_game::synctest(&args),
         Some("synctest") => netmatch::synctest(&args),
         Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => view::view_golden(&args),
@@ -452,6 +452,14 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
         "cpu_peach_samus_ys_items" => "p1=peach/cpu9;p2=samus/cpu9;p3=none;p4=none;stage=ys;match=time;minutes=0;items=4",
         s => return Err(format!("scenario {s:?} not wired")),
     };
+    // draws the C boot makes that the engine's boot flow does not yet (tools/rust-port/engine/pre_draws.tsv; shrinking to empty)
+    if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+        let n = std::fs::read_to_string("tools/rust-port/engine/pre_draws.tsv").ok()
+            .and_then(|t| t.lines().find_map(|l| l.strip_prefix(&format!("{scenario}	")).map(str::to_string)))
+            .unwrap_or_else(|| if scenario.starts_with("pad_") { "1".into() } else { "0".into() });
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", n.trim()) };
+    }
     let disc = melee_engine::gcm::Gcm::open(iso).map_err(|e| e.to_string())?;
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
     let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
@@ -473,6 +481,22 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
     Ok(e)
 }
 
+/// Step 18 (cutover): the consolidated engine is the default. `--engine legacy` selects the `vs_match` model, and so does
+/// anything only the model has (mods, replays, snapshot resume, audio, an unwired scenario).
+pub(crate) fn use_engine(args: &[String]) -> bool {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    match get("--engine").as_deref() {
+        Some("legacy") => return false,
+        Some("tu") => return true,
+        _ => {}
+    }
+    const LEGACY_ONLY: [&str; 8] = ["--mods", "--slp", "--gdlp", "--from-snapshot", "--dump-state", "--audio", "--idle-pads", "--start"];
+    if args.iter().any(|a| LEGACY_ONLY.contains(&a.as_str())) {
+        return false;
+    }
+    matches!(get("--scenario").as_deref().unwrap_or("pad_falcon_fox_fd"), "pad_falcon_fox_fd" | "pad_marth_sheik_bf" | "cpu_fox_falco_dl" | "cpu_peach_samus_ys_items")
+}
+
 /// `melee golden --engine tu`: the same CSV from the consolidated engine (melee_engine): the real StartMelee path,
 /// the TU-ported game code over native structs, `RB_NeutralHash` (NHV1) after each scene tick. `--frames N`
 /// (default 1) ticks; row k is the state after tick k (frame 0 = the first tick).
@@ -484,7 +508,8 @@ fn golden_engine(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
-    let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(1);
+    // default: the golden's length (the pad scripts end at 1801 frames)
+    let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(if scenario.starts_with("pad_") { 1802 } else { 3601 });
     let mut e = match boot_engine_scenario(&iso, &scenario) {
         Ok(e) => e,
         Err(er) => {
@@ -573,7 +598,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
 /// `melee golden`: the native VS match for a golden scenario (vs_match.rs).
 fn golden(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
-    if get("--engine").as_deref() == Some("tu") {
+    if use_engine(args) {
         return golden_engine(args);
     }
     let iso = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok());

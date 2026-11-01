@@ -52,7 +52,7 @@ for s in $scenarios; do
     [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
     n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short $seedflag --print-count 2>/dev/null | awk '/^COUNT/{print $2}'); n=${n:-0}
   else
-  "$exe" golden --iso "$GW_ISO_VANILLA" --scenario "$s" $idle --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
+  "$exe" golden --engine legacy --iso "$GW_ISO_VANILLA" --scenario "$s" $idle --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short --print-count | awk '/^COUNT/{print $2}')
   fi
   want=$(awk -F'\t' -v s="$s" -v e="$engine" 'NR>1 && $2==s && $3==e {w=$4} END{print w+0}' "$progress")
@@ -83,7 +83,7 @@ if [ -n "$migrated" ]; then
     [ "$s" = cpu_fox_falco_dl ] && [ "$cap" -gt 0 ] && fl="$fl,$((cap-1))"
     fl=${fl#,}; [ -n "$fl" ] || continue
     idle=""; case $s in cpu_*) idle="--idle-pads" ;; esac
-    "$exe" diff --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$fl" --subsystems "$migrated" --baseline-check tools/rust-port/diff/baseline --max 0 --print-hits >"$tmp/diff.$s" 2>&1 || { echo "FAIL diff $s"; tail -20 "$tmp/diff.$s"; fail=1; }
+    "$exe" diff --engine legacy --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$fl" --subsystems "$migrated" --baseline-check tools/rust-port/diff/baseline --max 0 --print-hits >"$tmp/diff.$s" 2>&1 || { echo "FAIL diff $s"; tail -20 "$tmp/diff.$s"; fail=1; }
   done < tools/rust-port/diff/frames.tsv
   # a baseline line of a migrated subsystem that no sampled frame hit is STALE: remove it (baselines only shrink)
   for sub in ${migrated//,/ }; do

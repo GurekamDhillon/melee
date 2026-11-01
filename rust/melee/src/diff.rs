@@ -314,7 +314,12 @@ pub fn diff(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
-    let engine = get("--engine").as_deref() == Some("tu");
+    // step 18: the engine is the default; `--first` (bisect against the golden CSV) and unwired scenarios still need the model
+    let engine = match get("--engine").as_deref() {
+        Some("tu") => true,
+        Some(_) => false,
+        None => !has("--first") && matches!(scn.as_str(), "pad_falcon_fox_fd" | "pad_marth_sheik_bf" | "cpu_fox_falco_dl" | "cpu_peach_samus_ys_items"),
+    };
     if let Some(e) = get("--engine") {
         if e != "legacy" && e != "tu" {
             eprintln!("melee diff: --engine {e}: legacy | tu");

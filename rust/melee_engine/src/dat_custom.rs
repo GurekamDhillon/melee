@@ -585,16 +585,15 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
     fn dec<T: GcPointee + GcDecode>(d: &mut GcDecoder<'_>, sa: u32) -> *mut c_void {
         d.object::<T>(sa) as *mut c_void
     }
-    let cands: std::vec::Vec<(u32, Dec)> = match sym {
-        "samus" => std::vec![(<itSamusGrappleAttributes as GcDecode>::GC_BYTES, dec::<itSamusGrappleAttributes> as Dec)],
-        "link" | "clink" => std::vec![
-            (<itLinkHookshotAttributes as GcDecode>::GC_BYTES, dec::<itLinkHookshotAttributes> as Dec),
-            (<itLinkBoomerangAttributes as GcDecode>::GC_BYTES, dec::<itLinkBoomerangAttributes> as Dec),
-            (<itLinkArrowAttributes as GcDecode>::GC_BYTES, dec::<itLinkArrowAttributes> as Dec),
-        ],
-        "seak" => std::vec![(<itSeakChain_Attrs as GcDecode>::GC_BYTES, dec::<itSeakChain_Attrs> as Dec)],
-        "ness" => std::vec![(<itYoyoAttributes as GcDecode>::GC_BYTES, dec::<itYoyoAttributes> as Dec)],
-        "popo" | "nana" => std::vec![(<itClimbersStringAttributes as GcDecode>::GC_BYTES, dec::<itClimbersStringAttributes> as Dec)],
+    fn cand<T: GcPointee + GcDecode + melee_core::gc::GcLayout>() -> (u32, &'static [melee_core::gc::GcField], Dec) {
+        (<T as GcDecode>::GC_BYTES, <T as melee_core::gc::GcLayout>::GC_FIELDS, dec::<T> as Dec)
+    }
+    let cands: std::vec::Vec<(u32, &'static [melee_core::gc::GcField], Dec)> = match sym {
+        "samus" => std::vec![cand::<itSamusGrappleAttributes>()],
+        "link" | "clink" => std::vec![cand::<itLinkHookshotAttributes>(), cand::<itLinkBoomerangAttributes>(), cand::<itLinkArrowAttributes>()],
+        "seak" => std::vec![cand::<itSeakChain_Attrs>()],
+        "ness" => std::vec![cand::<itYoyoAttributes>()],
+        "popo" | "nana" => std::vec![cand::<itClimbersStringAttributes>()],
         _ => return,
     };
     let Some(t) = d.target(at_x48) else { return };
@@ -603,7 +602,21 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
         let Some(ta) = d.target(t + 4 * i) else { continue };
         let Some(sa) = d.target(ta + 4) else { continue };
         let ext = b.extent(sa);
-        if let Some((_, f)) = cands.iter().find(|(sz, _)| ext == *sz) {
+        // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record
+        // is the candidate all of whose pointer-typed fields are relocated words, with the fewest other relocated words inside its size
+        let pick = cands
+            .iter()
+            .filter(|(sz, fields, _)| {
+                *sz <= ext + 8
+                    && fields.iter().filter(|f| f.c_type.contains('*')).all(|f| d.is_reloc(sa + f.offset))
+            })
+            .min_by_key(|(sz, fields, _)| {
+                let extra = (0..*sz / 4)
+                    .filter(|w| d.is_reloc(sa + 4 * w) && !fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')))
+                    .count();
+                (extra, core::cmp::Reverse(*sz))
+            });
+        if let Some((_, _, f)) = pick {
             let art = d.object::<Article>(ta);
             let typed = f(d, sa);
             unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };

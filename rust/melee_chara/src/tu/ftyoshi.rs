@@ -152,9 +152,11 @@ pub fn ftYs_Init_8012B6E8(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1) {
     melee_core::ct!("ftYs_Init_8012B6E8");
     unsafe {
         let attr_r26 = (*(*fp).ft_data).ext_attr as *mut ftYoshiAttributes;
-        let unk_struct = (*unk_struct_arg).unk_struct;
-        let index = (*unk_struct).xC_start_index;
-        let end_index = (*unk_struct).x8_end_index;
+        // `S_UNK_YOSHI2 { x0, x4, x8_end_index, xC_start_index }` is the GameCube view of the vis lookup's two `TempS { count, u8* }`
+        // entries (the native decode keeps them as `TempS` records): `x8` / `xC` are the second entry's count and index list
+        let unk_struct = (*unk_struct_arg).unk_struct as *mut TempS;
+        let index = (*unk_struct.add(1)).x4;
+        let end_index = (*unk_struct.add(1)).x0;
         let zero_float = 0.0_f32;
 
         let mut i = 0;
@@ -179,9 +181,10 @@ pub fn ftYs_Init_8012B804(fp: *mut Fighter, unk_struct_arg: *mut S_UNK_YOSHI1, s
     melee_core::ct!("ftYs_Init_8012B804");
     unsafe {
         if !unk_struct_arg.is_null() {
-            let unk_struct = (*unk_struct_arg).unk_struct;
-            let index = (*unk_struct).xC_start_index;
-            let end_index = (*unk_struct).x8_end_index;
+            // see `ftYs_Init_8012B6E8`: the second `TempS` entry
+            let unk_struct = (*unk_struct_arg).unk_struct as *mut TempS;
+            let index = (*unk_struct.add(1)).x4;
+            let end_index = (*unk_struct.add(1)).x0;
             let mut i = 0;
             while i < end_index {
                 let dobj = *(*fp).dobj_list.data.add(*index.add(i as usize) as usize);

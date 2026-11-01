@@ -73,11 +73,20 @@ pub mod engine_game {
     use std::cell::RefCell;
 
     /// Nanoseconds spent in save / load / state_hash / game_hash / run_frame (printed by `synctest`; the rollback profile).
-    pub static T_NS: [std::sync::atomic::AtomicU64; 5] = [const { std::sync::atomic::AtomicU64::new(0) }; 5];
+    /// The counters live in a leaked heap block: a load puts every static back, so a static array would be rolled back too.
+    static T_ADDR: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    fn t_ns() -> &'static [std::sync::atomic::AtomicU64; 5] {
+        let mut a = T_ADDR.load(std::sync::atomic::Ordering::Relaxed);
+        if a == 0 {
+            a = Box::leak(Box::new([const { std::sync::atomic::AtomicU64::new(0) }; 5])) as *const _ as usize;
+            T_ADDR.store(a, std::sync::atomic::Ordering::Relaxed);
+        }
+        unsafe { &*(a as *const [std::sync::atomic::AtomicU64; 5]) }
+    }
     fn timed<R>(i: usize, f: impl FnOnce() -> R) -> R {
         let t = std::time::Instant::now();
         let r = f();
-        T_NS[i].fetch_add(t.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
+        t_ns()[i].fetch_add(t.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
         r
     }
 
@@ -244,6 +253,7 @@ pub mod engine_game {
                 return std::process::ExitCode::FAILURE;
             }
         };
+        let _ = t_ns(); // allocate the timing block before the first snapshot
         let mut g = EngineGame::new(e);
         if let Some(n) = arg("--fidelity").and_then(|v| v.parse().ok()) {
             g.fidelity(n);
@@ -281,7 +291,7 @@ pub mod engine_game {
             }
         }
         {
-            let t = |i: usize| T_NS[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
+            let t = |i: usize| t_ns()[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
             eprintln!("melee: per tick ms: save {:.3} load {:.3} state_hash {:.3} game_hash {:.3} run_frame(tick) {:.3}; total {:.3}", t(0), t(1), t(2), t(3), t(4), t0.elapsed().as_secs_f64() * 1e3 / run.max(1) as f64);
         }
         eprintln!("melee: engine synctest depth {k}: {run} frames, {} rollback passes, {} hash checks, {} MISMATCHES; golden {}/{} frames equal",

@@ -135,14 +135,30 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
             // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
             let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
-            if let Some((_, _, size, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
-                if (*size as usize) <= n * 4 {
-                    for &(o, w) in fields.iter() {
-                        for i in 0..w as u32 {
-                            let byte = (d.u32_at(off + (o & !3)) >> (8 * (3 - ((o & 3) + i)))) as u8;
-                            unsafe { *buf.add((o + (w as u32 - 1 - i)) as usize) = byte };
+            if let Some((_, _, csize, rsize, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
+                if (*csize as usize) <= n * 4 {
+                    // the native struct differs from the GameCube record when it holds pointers (8 bytes against 4): build it
+                    // field by field at its own offsets
+                    let out = if rsize != csize { native_buf((*rsize as usize).max(n * 4)) } else { buf };
+                    for &(o, r, w, k) in fields.iter() {
+                        if k == 0 {
+                            for i in 0..w as u32 {
+                                let byte = (d.u32_at(off + (o & !3)) >> (8 * (3 - ((o & 3) + i)))) as u8;
+                                unsafe { *out.add((r + (w as u32 - 1 - i)) as usize) = byte };
+                            }
+                        } else {
+                            let p: *mut c_void = match d.target(off + o) {
+                                None => core::ptr::null_mut(),
+                                Some(t) => match k {
+                                    2 => d.object::<melee_types::DynamicsDesc>(t) as *mut c_void,
+                                    3 => d.array::<i16>(t, (b.extent(t) / 2).max(1) as usize) as *mut c_void,
+                                    _ => b.raw_addr(t),
+                                },
+                            };
+                            unsafe { (out.add(r as usize) as *mut usize).write(p as usize) };
                         }
                     }
+                    return out as *mut c_void;
                 }
             }
             buf as *mut c_void

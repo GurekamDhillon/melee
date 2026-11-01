@@ -1920,27 +1920,27 @@ pub unsafe extern "C" fn grZebes_801DAA08() -> i32 {
             ext::HSD_JObjAddChild(parent_child, (*bubble(selected)).x04);
 
             {
-                // `dat` is the stage's .dat block: u32 pointer slots at +0x6C/+0x70/+0x74 (GameCube layout)
-                let dat = (*(*ext::grDatFiles_801C6330(2)).unk4).unk8 as *mut u8;
-                let sap: *mut u32 = u2p(*(dat.add(0x74) as *const u32));
-                let ajp: *mut u32 = u2p(*(dat.add(0x6C) as *const u32));
-                let mjp: *mut u32 = u2p(*(dat.add(0x70) as *const u32));
+                // C: `dat = unk4->unk8` read as bytes at +0x6C / +0x70 / +0x74 = `unk8[2].unk4 / unk8 / unkC` (UnkStageDat_x8_t is 0x34 bytes)
+                let rec = (*(*ext::grDatFiles_801C6330(2)).unk4).unk8.add(2);
+                let sap = (*rec).unkC;
+                let ajp = (*rec).unk4;
+                let mjp = (*rec).unk8;
                 let sa: *mut HSD_ShapeAnimJoint;
                 let ma: *mut HSD_MatAnimJoint;
                 let aj: *mut HSD_AnimJoint;
 
                 if !sap.is_null() {
-                    sa = u2p(*sap);
+                    sa = *sap;
                 } else {
                     sa = null_mut();
                 }
                 if !mjp.is_null() {
-                    ma = u2p(*mjp);
+                    ma = *mjp;
                 } else {
                     ma = null_mut();
                 }
                 if !ajp.is_null() {
-                    aj = u2p(*ajp);
+                    aj = *ajp;
                 } else {
                     aj = null_mut();
                 }

@@ -506,6 +506,10 @@ pub fn ftPk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
         (*fp).anon_2210.throw_flags = 0_u32;
         (*fp).mv.pk.specialhi.x4 = 1_i32;
         (*fp).mv.pk.specialhi.x0 = 0_i32;
+        // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is
+        // 8 bytes wide, so the SpecialLw view is set as well
+        (*fp).mv.pk.speciallw.x0 = core::ptr::null_mut();
+        (*fp).mv.pk.speciallw.x4 = 1_i32;
         st::Fighter_ChangeMotionState(gobj, 359, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }
@@ -520,6 +524,10 @@ pub fn ftPk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
         (*fp).anon_2210.throw_flags = 0_u32;
         (*fp).mv.pk.specialhi.x4 = 1_i32;
         (*fp).mv.pk.specialhi.x0 = 0_i32;
+        // the C writes the SpecialLw vars through the SpecialHi view (`x0` a 4-byte GObj pointer, `x4` the next word); natively `x0` is
+        // 8 bytes wide, so the SpecialLw view is set as well
+        (*fp).mv.pk.speciallw.x0 = core::ptr::null_mut();
+        (*fp).mv.pk.speciallw.x4 = 1_i32;
         st::Fighter_ChangeMotionState(gobj, 363, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }

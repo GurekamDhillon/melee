@@ -646,18 +646,21 @@ pub fn ftGw_LandingAirHi_Coll(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftGw_AttackAirN_ItemCheckParachuteRemove(fp: &Fighter) -> bool {
+pub fn ftGw_AttackAirN_ItemCheckParachuteRemove(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftGw_AttackAirN_ItemCheckParachuteRemove");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirN as u32, ftGw_MS_LandingAirN as u32)
 }
 
-pub fn ftGw_AttackAirN_ItemCheckSparkyRemove(fp: &Fighter) -> bool {
+pub fn ftGw_AttackAirN_ItemCheckSparkyRemove(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftGw_AttackAirN_ItemCheckSparkyRemove");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirHi as u32, ftGw_MS_LandingAirHi as u32)
 }
 
-pub fn ftGw_AttackAirN_ItemCheckTurtleRemove(fp: &Fighter) -> bool {
+pub fn ftGw_AttackAirN_ItemCheckTurtleRemove(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftGw_AttackAirN_ItemCheckTurtleRemove");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirB as u32, ftGw_MS_LandingAirB as u32)
 }
 

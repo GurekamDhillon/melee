@@ -364,8 +364,9 @@ pub fn ftGw_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftGw_SpecialS_ItemCheckJudgementRemove(fp: &Fighter) -> bool {
+pub fn ftGw_SpecialS_ItemCheckJudgementRemove(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftGw_SpecialS_ItemCheckJudgementRemove");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     crate::chars::ftGameWatch::outside(fp, ftGw_MS_SpecialS1 as u32, ftGw_MS_SpecialAirS9 as u32)
 }
 

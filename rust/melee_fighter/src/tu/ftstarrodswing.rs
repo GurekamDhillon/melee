@@ -14,13 +14,13 @@ pub mod ext {
     pub fn ftCo_800CD1BC(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ft_0cd1::ftco_800cd1bc(gobj as _); } return; } }
     pub fn ftCo_800CD204(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ft_0cd1::ftco_800cd204(gobj as _); } return; } }
     pub fn ftCo_800CD278(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ft_0cd1::ftco_800cd278(gobj as _); } return; } }
-    pub fn ftCo_800CD2C4(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) { panic!("TODO(ft_0CD1) ftCo_800CD2C4") }
+    pub fn ftCo_800CD2C4(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) { unsafe { crate::tu::ft_0cd1::ftco_800cd2c4(gobj as _, cb.unwrap()) } }
     pub unsafe extern "C" fn ft_800CD31C(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ft_0cd1::ft_800cd31c(gobj as _); } return; } }
     pub fn it_80292394(item: *mut Item_GObj, v: &mut Vec3) { { unsafe { melee_items::tu::itstarrod::it_80292394(item as _, v as _); } return; } }
     pub fn it_802923BC(item: *mut Item_GObj, v: &Vec3, dir: f32, arg: u32) { unsafe { melee_items::tu::itstarrod::it_802923BC(item as _, v as *const _ as *mut _, dir as _, arg as _); } }
     pub fn lb_8000B1CC(jobj: *mut HSD_JObj, a: *const Vec3, b: &mut Vec3) { { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, a as _, b as _); } return; } }
     pub fn efAsync_Spawn(gobj: *mut HSD_GObj, q: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: &Vec3, f: *const f32) {
-        panic!("TODO(group2 efasync) efAsync_Spawn")
+        unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(gobj, q, kind, gfx, jobj, &[pos as *const Vec3 as *const c_void, f as *const c_void]); }
     }
 }
 

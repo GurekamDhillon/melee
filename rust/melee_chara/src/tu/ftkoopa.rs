@@ -190,38 +190,45 @@ pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj) {
 pub static mut ftKp_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftKp_SpecialS_80132DC0(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132DC0(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132DC0");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x4C
 }
 
-pub fn ftKp_SpecialS_80132DD0(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132DD0(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132DD0");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x48
 }
 
-pub fn ftKp_SpecialS_80132DE0(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132DE0(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132DE0");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x44
 }
 
-pub fn ftKp_SpecialS_80132DF0(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132DF0(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132DF0");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x40
 }
 
-pub fn ftKp_SpecialS_80132E00(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132E00(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132E00");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x3C
 }
 
-pub fn ftKp_SpecialS_80132E10(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132E10(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132E10");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x34
 }
 
-pub fn ftKp_SpecialS_80132E20(fp: &Fighter) -> f32 {
+pub fn ftKp_SpecialS_80132E20(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftKp_SpecialS_80132E20");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftKoopaAttributes>(fp).x38
 }
 

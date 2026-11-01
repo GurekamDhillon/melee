@@ -540,6 +540,9 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     v.x54 = d.ptr_array::<i32>(at("x54"), 5);
     v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut *mut c_void;
     typed_article_attrs(d, b, sym.trim_start_matches("ftData").to_lowercase().as_str(), at("x48_items"));
+    if sym.trim_start_matches("ftData").eq_ignore_ascii_case("gamewatch") {
+        gw_article_attrs(d, b, at("x48_items"));
+    }
     if sym.trim_start_matches("ftData").eq_ignore_ascii_case("samus") {
         // `ftSs_Init_CreateThrowGrappleBeam`: `x48_items[4]` is a `UNK_SAMUS_S1 { joint, anim_joints, anim_joint, matanim_joint }`, not an article
         if let Some(t) = d.target(at("x48_items")) {
@@ -569,6 +572,11 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
                 let models = d.u32_at(t8) as usize;
                 std::vec![(10, d.ptr_array::<melee_types::FtPartsVisLookup>(w(10), models) as *mut c_void)]
             }
+            // ftSk_SpecialS_80110610: `item = items[4 | 5]` is an `HSD_Joint**` (the aim animation joints, read as `item[2]`)
+            "seak" if n > 5 => std::vec![
+                (4, rtable::<HSD_Joint>(d, b, w(4)) as *mut c_void),
+                (5, rtable::<HSD_Joint>(d, b, w(5)) as *mut c_void),
+            ],
             _ => std::vec::Vec::new(),
         };
         if !over.is_empty() {
@@ -643,6 +651,34 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
             let art = d.object::<Article>(ta);
             let typed = f(d, sa);
             unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+        }
+    }
+}
+
+/// Game & Watch articles: word 0 of the special attributes is a relocated pointer to the `it_266F_ItemVars` record that `it_8027CE64`
+/// stores in `xDD4` and `it_8026EECC` reads (`void* x0` of the C attribute structs, e.g. `itGamewatchchefAttributes`). The 4-byte slot of
+/// the word-swapped block cannot hold the native pointer, so the block is rebuilt as `[native ptr][the remaining words, swapped]`
+/// (the layout the native structs have: a pointer, then 4-byte fields), and swapped in by [`fix_articles`].
+fn gw_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, at_x48: u32) {
+    use melee_types::{Article, it_266F_ItemVars};
+    let Some(t) = d.target(at_x48) else { return };
+    let n = (b.extent(t) / 4).max(1);
+    for i in 0..n {
+        let Some(ta) = d.target(t + 4 * i) else { continue };
+        let Some(sa) = d.target(ta + 4) else { continue };
+        if !d.is_reloc(sa) {
+            continue;
+        }
+        let words = (b.extent(sa) / 4).max(1);
+        let rec = d.ptr::<it_266F_ItemVars>(sa);
+        let out = native_buf(8 + 4 * words as usize + 16);
+        unsafe {
+            (out as *mut *mut it_266F_ItemVars).write(rec);
+            for k in 1..words {
+                (out.add(4 + 4 * k as usize) as *mut u32).write_unaligned(d.u32_at(sa + 4 * k));
+            }
+            let art = d.object::<Article>(ta);
+            (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, out as *mut c_void));
         }
     }
 }

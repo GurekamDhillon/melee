@@ -1106,13 +1106,15 @@ pub fn ftSk_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftSk_SpecialS_80110F58(fp: &Fighter) -> f32 {
+pub fn ftSk_SpecialS_80110F58(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftSk_SpecialS_80110F58");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     fp.input.lstick[0].x
 }
 
-pub fn ftSk_SpecialS_80110F64(fp: &Fighter) -> f32 {
+pub fn ftSk_SpecialS_80110F64(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftSk_SpecialS_80110F64");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     fp.input.lstick[0].y
 }
 

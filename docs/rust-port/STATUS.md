@@ -88,7 +88,8 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 
 ## Current blockers (engine, 2026-11-01, round 4)
 Round 4 done: steps 17 (engine snapshot / rollback: `melee synctest`), 18 (cutover, GX bridge draws the real frame), 19 (the `vs_match` model deleted, engine audio equal to the C capture).
-Next: steps 20-23 (dedupe: `melee_chara/src/chars/rN` bodies still back the `tu/` re-exports, `adapt.rs` / `stubs.rs` forwarders, the non-tu `melee_fighter` / `melee_world` / `melee_items` / `melee_modes` bodies, TU-to-TU copies), 24 (lint enforcing).
+Round 5: steps 20-22 done as a mechanical fold (notes/consolidation.md Round 5; tools/rust-port/dedupe/): the C-named bodies of chars/rN, the non-tu melee_fighter / world / items / modes / runtime modules live in their canonical tu files, logic lint baseline 9225 -> 4439 (R1 265 left).
+Next: step 23 (TU-to-TU local copies, `gen_link.py --convert`), the typed `_fp` / `*_ref` variants and `adapt.rs` / `stubs.rs`, 24 (lint enforcing). Known stale: `tests/chars_dispatch.rs` names (`_fp`) vs `tests/data/chars.txt`, so `chars_ref` and `oracle_ftyoshispecials` fail at HEAD and now.
 Open audio: `--pause` and `--time-secs` captures (notes/consolidation.md Round 4).
 Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1652.
 Blockers A and B of round 2 (stale hand matrices) are fixed: the stage draw callbacks were skipped (`Wb_RenderOption` answered 0), `HSD_MkRotationMtx`

@@ -524,11 +524,11 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
         18 => { t::ftYs_SpecialAirSLoop_0_IASA(g); (0, 0) }
         19 => { t::ftYs_SpecialAirSLoop_1_IASA(g); (0, 0) }
         20 => { t::ftYs_SpecialAirSEnd_IASA(g); (0, 0) }
-        21 => { t::ftYs_SpecialAirSStart_1_IASA_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
+        21 => { t::ftYs_SpecialAirSStart_1_IASA(g); (0, 0) }
         22 => { t::ftYs_SpecialAirSLoop_2_IASA(g); (0, 0) }
         23 => { t::ftYs_SpecialAirSLoop_3_IASA(g); (0, 0) }
-        24 => { t::ftYs_SpecialAirSLanding_IASA_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
-        25 => { t::ftYs_SpecialAirSStart_0_Phys_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
+        24 => { t::ftYs_SpecialAirSLanding_IASA(g); (0, 0) }
+        25 => { t::ftYs_SpecialAirSStart_0_Phys(g); (0, 0) }
         26 => { t::ftYs_SpecialAirSLoop_0_Phys(g); (0, 0) }
         27 => { t::ftYs_SpecialAirSLoop_1_Phys(g); (0, 0) }
         28 => { t::ftYs_SpecialAirSEnd_Phys(g); (0, 0) }

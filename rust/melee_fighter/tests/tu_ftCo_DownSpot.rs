@@ -10,14 +10,14 @@ use melee_fighter::types::*;
 use melee_fighter::tu::ftCo_DownSpot as m;
 use m::ext::hook as hk;
 
-static mut DR: *mut ftData_80085FD4_ret = core::ptr::null_mut();
+static mut DR: *mut Fighter_WaitAnimData = core::ptr::null_mut();
 
 #[test]
 fn ftCo_DownSpot_matches_c() {
     init();
     df_init();
     unsafe {
-        DR = Box::leak(Box::new(ftData_80085FD4_ret::zeroed()));
+        DR = Box::leak(Box::new(Fighter_WaitAnimData::zeroed()));
         hk::ftData_80085FD4 = Some(|p, ms| { t(1); t(is_f(p)); t(ms as u32); DR });
         hk::Fighter_ChangeMotionState = Some(|g, ms, fl, a, bb, c, o| {
             t(2); t(is_go(g)); t(ms as u32); t(fl); t(b(a)); t(b(bb)); t(b(c)); t(o.is_null() as u32)

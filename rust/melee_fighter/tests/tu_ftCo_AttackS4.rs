@@ -9,7 +9,7 @@ use melee_fighter::types::*;
 
 static mut ANG: [f32; 2] = [0.0; 2];
 static mut ND: usize = 0;
-static mut DR: [ftData_80085FD4_ret; 4] = unsafe { core::mem::zeroed() };
+static mut DR: [Fighter_WaitAnimData; 4] = unsafe { core::mem::zeroed() };
 unsafe extern "C" fn pause_all(_: *mut HSD_GObj) {}
 unsafe extern "C" fn resume_all(_: *mut HSD_GObj) {}
 
@@ -52,7 +52,7 @@ fn ftCo_AttackS4_matches_c() {
             case(op, k);
             unsafe {
                 ND = 0;
-                for i in 0..4 { DR[i].x8 = sr(48 + i) as usize; }
+                for i in 0..4 { DR[i].x8 = sr(48 + i) as i32; }
                 ANG[0] = rg() * 2.0;
                 ANG[1] = rg() * 2.0;
             }

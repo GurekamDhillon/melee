@@ -10,7 +10,7 @@ use melee_fighter::types::*;
 static mut ANG: [f32; 2] = [0.0; 2];
 static mut NANG: usize = 0;
 static mut ND: usize = 0;
-static mut DR: [ftData_80085FD4_ret; 4] = unsafe { core::mem::zeroed() };
+static mut DR: [Fighter_WaitAnimData; 4] = unsafe { core::mem::zeroed() };
 
 #[test]
 fn ftCo_AttackS3_matches_c() {
@@ -40,7 +40,7 @@ fn ftCo_AttackS3_matches_c() {
             unsafe {
                 NANG = 0;
                 ND = 0;
-                for i in 0..4 { DR[i].x8 = (SRV[4 + i] & 1) as usize; }
+                for i in 0..4 { DR[i].x8 = (SRV[4 + i] & 1) as i32; }
                 ANG[0] = rg() * 2.0;
                 ANG[1] = rg() * 2.0;
             }

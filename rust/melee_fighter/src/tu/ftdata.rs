@@ -1458,7 +1458,10 @@ fn load_figatree(f: *mut Fighter, src: *mut Fighter, msid: i32, key: *mut c_void
         let mut ar: HSD_Archive = core::mem::zeroed();
         let other = ftData_80086060(&mut *f);
         let size = (*r3).x8;
-        if !other.is_null() && (*r3).x14 == ext::gc_addr32((*other).x5A4) {
+        // C: when the other Ice Climber already holds this file, `memcpy` its figatree buffer and `lbArchiveRelocate` the copy. The native
+        // buffer holds the decoded FigaTree objects (not a relocatable GC image), so the copy is parsed from the file again instead: the same
+        // data, the same public address, a private decode (a pure memory optimisation in the C).
+        if false && !other.is_null() && (*r3).x14 == ext::gc_addr32((*other).x5A4) {
             core::ptr::copy_nonoverlapping((*other).x59C as *const u8, buf as *mut u8, size as usize);
             let off = (buf as isize).wrapping_sub((*other).x59C as isize);
             if ext::lbArchiveRelocate(&mut ar, (*buf).x0.as_mut_ptr(), size, off) == -1 {

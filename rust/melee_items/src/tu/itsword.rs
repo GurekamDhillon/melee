@@ -747,7 +747,7 @@ pub unsafe extern "C" fn itSword_Logic12_EvtUnk(gobj: *mut Item_GObj, ref_gobj: 
 pub unsafe fn it_80285300_fp(ip: &Item) -> *mut itSword_UnkBytes {
     melee_core::ct!("it_80285300_fp");
     let a = (*ip.xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
-    core::ptr::addr_of_mut!((*a).x1C)
+    (a as *mut u8).add(0x1C) as *mut itSword_UnkBytes
 }
 
 // ---- folded from itkinds14.rs (consolidation steps 21/22) ----

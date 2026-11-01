@@ -72,7 +72,16 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                 if let Some(rec) = d.target(off + 4 * i) {
                     if let Some(ta) = d.target(rec + 4) {
                         note_article_states(d, b, ta);
-                        arts.push(d.object::<melee_types::Article>(ta));
+                        let art = d.object::<melee_types::Article>(ta);
+                        if d.u32_at(rec) == melee_types::It_Kind_Heiho as u32 {
+                            // Shy Guy: `attr[0]` is a relocated pointer to its health `s32` (`it_802D8EC8` reads `**attr`)
+                            if let Some(sa) = d.target(ta + 4) {
+                                if let Some(pt) = d.target(sa) {
+                                    unsafe { (*core::ptr::addr_of_mut!(HEIHO_HEALTH)).push((art, b.1, pt)) };
+                                }
+                            }
+                        }
+                        arts.push(art);
                     }
                 }
             }
@@ -438,6 +447,16 @@ pub fn fix_articles() {
             }
         }
     }
+    let heiho = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(HEIHO_HEALTH)) };
+    for (a, base, pt) in heiho {
+        unsafe {
+            let health = u32::from_be_bytes(*((base + pt as usize) as *const [u8; 4]));
+            let sa = (*a).x4_specialAttributes as *mut u32;
+            if !sa.is_null() {
+                *sa = health;
+            }
+        }
+    }
 }
 
 /// `rtable` with at least `min` entries (missing ones are null), for tables the C indexes by a count the bytes do not state.
@@ -552,6 +571,10 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
         }
     }
 }
+
+/// Shy Guy articles: (article, image base, data offset of the health `s32` that `attr[0]` points at). [`fix_articles`] stores the value
+/// itself in the native word 0 of the swapped attribute copy (the native pointer would not fit the 4-byte slot).
+static mut HEIHO_HEALTH: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
 
 /// Dynamics blocks to rebuild after the decoder ran: (the `ftDynamics` object, per bone the native word block).
 static mut DYNAMICS_FIX: Vec<(usize, Vec<(usize, Vec<u32>)>)> = Vec::new();

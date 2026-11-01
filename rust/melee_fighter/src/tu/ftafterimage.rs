@@ -42,7 +42,7 @@ pub struct AfterimageVtx {
 pub mod ext {
     use super::G;
     use crate::types::*;
-    pub fn it_80285300(_i: G) -> *mut itSword_UnkBytes { unsafe { melee_items::itkinds13::it_80285300(&*(_i as *const _)) as _ } }
+    pub fn it_80285300(_i: G) -> *mut itSword_UnkBytes { unsafe { melee_items::tu::itsword::it_80285300(_i as _) as _ } }
     pub fn it_802852B8(_i: G, _a: &mut f32, _b: &mut f32) { unsafe { melee_items::tu::itsword::it_802852B8(_i as _, _a, _b) } }
     pub fn it_80285314(_i: G) -> *mut HSD_JObj { unsafe { melee_items::itkinds14::it_80285314(_i as _) as _ } }
     pub fn Mex_FtTrailData(_g: G) -> *mut core::ffi::c_void { unsafe { crate::platform::Mex_FtTrailData(_g) } }

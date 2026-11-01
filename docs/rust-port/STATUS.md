@@ -70,6 +70,30 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 - `port/dedupe` merged into rust-port (c333d57c9); one lint remains (`lint_logic.py`). Gate: `tools/rust-port/gate.sh` GATE OK.
 - Remaining: finish 23 (pointer-based render model for retail menu stand-ins, 109 type-mismatched forwarders in `dedupe/fwd_skip.txt`, melee_audio sim vs lbaudio, melee_modes gm* typed copies), then 24; open audio proofs (`--pause`, `--time-secs`); blocker D (Crazy Hand / Jigglypuff retail callbacks) and E (`todo!` stubs).
 
+## Coverage goldens (C oracle, recorded 2026-10-30)
+168 scenarios in `docs/rust-port/golden/coverage/scenarios.json`; 158 recorded (each run twice, identical CSVs), 2 failed in the
+C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/golden/coverage/<name>.csv`. Record with
+`tools/rust-port/golden/coverage/record_coverage.sh` (`--batch N`/`--group G`/names; see notes/coverage.md).
+- Failed: `stage_26_icetop` (assert `bgm!=BGM_Undefined`, `gr/ground.c:2128`, frame 3), `stage_21_akaneia` (ACCESS_VIOLATION
+  at frame 3; mod stage absent from the vanilla disc). Neither is a definition problem.
+- Blocked: `homerun_contest`, `multiman_{10,100,3min,15min,endless,cruel}`, `event_match` (retail menus only).
+- Report: `python tools/rust-port/golden/coverage_report.py [--md] [--group G]` lists every scenario (golden rows, Rust frames or
+  `not wired`). `--run --melee build/cargo/release/melee.exe` runs the wired ones (`melee golden`, can take long) and fills the
+  "rust frames matched" column. A scenario is wired when `fn golden` in `rust/melee/src/main.rs` accepts its name.
+
+| group | total | recorded | failed | blocked | golden rows | rust frames matched |
+|---|---|---|---|---|---|---|
+| chars (26 char_*, cpu/pad one-offs) | 31 | 31 | 0 | 0 | 106831 | pending consolidation |
+| stages | 31 | 29 | 2 | 0 | 104429 | pending consolidation |
+| items | 10 | 10 | 0 | 0 | 34210 | pending consolidation |
+| cpulevels | 17 | 17 | 0 | 0 | 61218 | pending consolidation |
+| pads | 9 | 9 | 0 | 0 | 16209 | pending consolidation |
+| modes: classic | 11 | 11 | 0 | 0 | 38489 | pending consolidation |
+| modes: adventure | 12 | 12 | 0 | 0 | 41561 | pending consolidation |
+| modes: allstar | 13 | 13 | 0 | 0 | 44884 | pending consolidation |
+| modes: targettest | 26 | 26 | 0 | 0 | 44247 | pending consolidation |
+| blocked modes | 8 | 0 | 0 | 8 | 0 | n/a |
+
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).

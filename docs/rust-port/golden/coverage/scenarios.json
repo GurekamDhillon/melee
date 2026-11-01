@@ -1,0 +1,1525 @@
+{
+ "defaults": {
+  "seed": 12345,
+  "max_seconds": 240
+ },
+ "scenarios": {
+  "char_captain": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:0/cpu9;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 captain vs marth"
+  },
+  "char_dk": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:1/cpu9;p2=ck:10/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 dk vs mewtwo"
+  },
+  "char_fox": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:11/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 fox vs ness"
+  },
+  "char_gaw": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:3/cpu9;p2=ck:12/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 gaw vs peach"
+  },
+  "char_kirby": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:4/cpu9;p2=ck:13/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 kirby vs pikachu"
+  },
+  "char_bowser": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:5/cpu9;p2=ck:14/cpu9;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 bowser vs icies"
+  },
+  "char_link": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:6/cpu9;p2=ck:15/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 link vs jigglypuff"
+  },
+  "char_luigi": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:7/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 luigi vs samus"
+  },
+  "char_mario": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:8/cpu9;p2=ck:17/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 mario vs yoshi"
+  },
+  "char_marth": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:9/cpu9;p2=ck:18/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 marth vs zelda"
+  },
+  "char_mewtwo": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:10/cpu9;p2=ck:19/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 mewtwo vs sheik"
+  },
+  "char_ness": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:11/cpu9;p2=ck:20/cpu9;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 ness vs falco"
+  },
+  "char_peach": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:12/cpu9;p2=ck:21/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 peach vs younglink"
+  },
+  "char_pikachu": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:13/cpu9;p2=ck:22/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 pikachu vs drmario"
+  },
+  "char_icies": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:14/cpu9;p2=ck:23/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 icies vs roy"
+  },
+  "char_jigglypuff": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu9;p2=ck:24/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 jigglypuff vs pichu"
+  },
+  "char_samus": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:16/cpu9;p2=ck:25/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 samus vs ganondorf"
+  },
+  "char_yoshi": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:17/cpu9;p2=ck:0/cpu9;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 yoshi vs captain"
+  },
+  "char_zelda": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:18/cpu9;p2=ck:1/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 zelda vs dk"
+  },
+  "char_sheik": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:19/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 sheik vs fox"
+  },
+  "char_falco": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:20/cpu9;p2=ck:3/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 falco vs gaw"
+  },
+  "char_younglink": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:21/cpu9;p2=ck:4/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 younglink vs kirby"
+  },
+  "char_drmario": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:22/cpu9;p2=ck:5/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 drmario vs bowser"
+  },
+  "char_roy": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:23/cpu9;p2=ck:6/cpu9;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 roy vs link"
+  },
+  "char_pichu": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:24/cpu9;p2=ck:7/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 pichu vs luigi"
+  },
+  "char_ganondorf": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:25/cpu9;p2=ck:8/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "CPU9 ganondorf vs mario"
+  },
+  "zelda_sheik_transform": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:18/human;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/zelda_sheik.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "note": "Zelda Down+B -> Sheik, fight, Down+B -> Zelda, fight; Fox CPU9"
+  },
+  "kirby_copy_a": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:4/human;p2=ck:2/idle;p3=ck:5/idle;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/kirby_copy_a.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "note": "Kirby inhales idle Fox and Bowser to the right (copy abilities)"
+  },
+  "kirby_copy_b": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:4/human;p2=ck:10/idle;p3=ck:25/idle;p4=ck:20/idle;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/kirby_copy_b.lua",
+   "frames": 3000,
+   "kind": "vs",
+   "note": "Kirby inhales idle Mewtwo, Ganondorf, Falco to the left (copy abilities)"
+  },
+  "ic_vs_fox_human": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:14/human;p2=ck:2/human;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s1.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": "Ice Climbers human pad"
+  },
+  "sheik_cpu_vs_zelda_cpu": {
+   "group": "chars",
+   "scene": "mode=vs;at=match;p1=ck:19/cpu9;p2=ck:18/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "stage_02_fountain": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:0/cpu9;p2=ck:11/cpu9;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "captain vs ness"
+  },
+  "stage_03_stadium": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:5/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "bowser vs samus"
+  },
+  "stage_04_castle": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:10/cpu9;p2=ck:21/cpu9;p3=none;p4=none;stage=ext:4;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "mewtwo vs younglink"
+  },
+  "stage_05_jungle": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu9;p2=ck:0/cpu9;p3=none;p4=none;stage=ext:5;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "jigglypuff vs captain"
+  },
+  "stage_06_brinstar": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:20/cpu9;p2=ck:5/cpu9;p3=none;p4=none;stage=ext:6;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "falco vs bowser"
+  },
+  "stage_07_corneria": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:25/cpu9;p2=ck:10/cpu9;p3=none;p4=none;stage=ext:7;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "ganondorf vs mewtwo"
+  },
+  "stage_08_yoshistory": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:4/cpu9;p2=ck:15/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "kirby vs jigglypuff"
+  },
+  "stage_09_onett": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:9/cpu9;p2=ck:20/cpu9;p3=none;p4=none;stage=ext:9;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "marth vs falco"
+  },
+  "stage_10_mutecity": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:14/cpu9;p2=ck:25/cpu9;p3=none;p4=none;stage=ext:10;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "icies vs ganondorf"
+  },
+  "stage_11_rainbowcruise": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:19/cpu9;p2=ck:4/cpu9;p3=none;p4=none;stage=ext:11;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "sheik vs kirby"
+  },
+  "stage_12_garden": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:24/cpu9;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:12;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "pichu vs marth"
+  },
+  "stage_13_greatbay": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:3/cpu9;p2=ck:14/cpu9;p3=none;p4=none;stage=ext:13;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "gaw vs icies"
+  },
+  "stage_14_temple": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:8/cpu9;p2=ck:19/cpu9;p3=none;p4=none;stage=ext:14;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "mario vs sheik"
+  },
+  "stage_15_kraid": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:13/cpu9;p2=ck:24/cpu9;p3=none;p4=none;stage=ext:15;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "pikachu vs pichu"
+  },
+  "stage_16_yoshiisland": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:18/cpu9;p2=ck:3/cpu9;p3=none;p4=none;stage=ext:16;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "zelda vs gaw"
+  },
+  "stage_17_greens": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:23/cpu9;p2=ck:8/cpu9;p3=none;p4=none;stage=ext:17;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "roy vs mario"
+  },
+  "stage_18_fourside": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:13/cpu9;p3=none;p4=none;stage=ext:18;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "fox vs pikachu"
+  },
+  "stage_19_mushroomkingdom": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:7/cpu9;p2=ck:18/cpu9;p3=none;p4=none;stage=ext:19;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "luigi vs zelda"
+  },
+  "stage_20_mushroomkingdom2": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:12/cpu9;p2=ck:23/cpu9;p3=none;p4=none;stage=ext:20;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "peach vs roy"
+  },
+  "stage_21_akaneia": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:17/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:21;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "yoshi vs fox"
+  },
+  "stage_22_venom": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:22/cpu9;p2=ck:7/cpu9;p3=none;p4=none;stage=ext:22;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "drmario vs luigi"
+  },
+  "stage_23_pokefloats": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:1/cpu9;p2=ck:12/cpu9;p3=none;p4=none;stage=ext:23;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "dk vs peach"
+  },
+  "stage_24_bigblue": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:6/cpu9;p2=ck:17/cpu9;p3=none;p4=none;stage=ext:24;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "link vs yoshi"
+  },
+  "stage_25_icemt": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:11/cpu9;p2=ck:22/cpu9;p3=none;p4=none;stage=ext:25;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "ness vs drmario"
+  },
+  "stage_26_icetop": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:16/cpu9;p2=ck:1/cpu9;p3=none;p4=none;stage=ext:26;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "samus vs dk"
+  },
+  "stage_27_flatzone": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:21/cpu9;p2=ck:6/cpu9;p3=none;p4=none;stage=ext:27;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "younglink vs link"
+  },
+  "stage_28_dreamland64": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:0/cpu9;p2=ck:11/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "captain vs ness"
+  },
+  "stage_29_yoshistory64": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:5/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:29;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "bowser vs samus"
+  },
+  "stage_30_kongojungle64": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:10/cpu9;p2=ck:21/cpu9;p3=none;p4=none;stage=ext:30;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "mewtwo vs younglink"
+  },
+  "stage_31_battlefield": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu9;p2=ck:0/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "jigglypuff vs captain"
+  },
+  "stage_32_finaldestination": {
+   "group": "stages",
+   "scene": "mode=vs;at=match;p1=ck:20/cpu9;p2=ck:5/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "falco vs bowser"
+  },
+  "items_hi_finaldestination": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:1/cpu9;p2=ck:14/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 4 (high)"
+  },
+  "items_hi_battlefield": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:8/cpu9;p2=ck:21/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 4 (high)"
+  },
+  "items_hi_yoshistory": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 4 (high)"
+  },
+  "items_hi_stadium": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:22/cpu9;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 4 (high)"
+  },
+  "items_hi_dreamland64": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:3/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 4 (high)"
+  },
+  "items_hi_4p_ffa": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:9/cpu9;p3=ck:12/cpu9;p4=ck:5/cpu9;stage=ext:31;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "4-player FFA, item frequency 4"
+  },
+  "items_low_fd": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:8/cpu9;p2=ck:7/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=1",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "item frequency 1"
+  },
+  "items_hi_human_bf": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:0/human;p2=ck:1/human;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=4",
+   "pad": "coverage/pads/rand_s2.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": "items high, human pads"
+  },
+  "items_off_4p_ps": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:9/cpu9;p3=ck:12/cpu9;p4=ck:5/cpu9;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "items explicitly off, 4 players"
+  },
+  "items_off_fd": {
+   "group": "items",
+   "scene": "mode=vs;at=match;p1=ck:20/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv1_fox_falco": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu1;p2=ck:20/cpu1;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv1_marth_sheik": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:9/cpu1;p2=ck:19/cpu1;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv1_ganon_peach": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:25/cpu1;p2=ck:12/cpu1;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv1_puff_link": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu1;p2=ck:6/cpu1;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv5_fox_falco": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu5;p2=ck:20/cpu5;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv5_marth_sheik": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:9/cpu5;p2=ck:19/cpu5;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv5_ganon_peach": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:25/cpu5;p2=ck:12/cpu5;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv5_puff_link": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu5;p2=ck:6/cpu5;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv9_fox_falco": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:20/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv9_marth_sheik": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:9/cpu9;p2=ck:19/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv9_ganon_peach": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:25/cpu9;p2=ck:12/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpulv9_puff_link": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:15/cpu9;p2=ck:6/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpu_mixed_1_9": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu1;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "cpu_ffa4_levels": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu1;p2=ck:9/cpu3;p3=ck:12/cpu5;p4=ck:5/cpu9;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "4 CPUs, levels 1/3/5/9"
+  },
+  "cpu_teams4": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9/team0;p2=ck:9/cpu9/team0;p3=ck:12/cpu9/team1;p4=ck:5/cpu9/team1;stage=ext:8;match=time;minutes=0;items=off;teams=1",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "2v2 teams"
+  },
+  "cpu_stock2_fd": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:2/cpu9;p2=ck:20/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off;match=stock;stocks=2",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": "stock match (the trailing match=stock overrides match=time; the matched game may end before 3600)"
+  },
+  "cpu_stock1_bf": {
+   "group": "cpulevels",
+   "scene": "mode=vs;at=match;p1=ck:5/cpu9;p2=ck:25/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off;match=stock;stocks=1",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_captain_fox_finaldestination": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:0/human;p2=ck:2/human;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s1.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_marth_sheik_battlefield": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:9/human;p2=ck:19/human;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s2.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_bowser_ganondorf_yoshistory": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:5/human;p2=ck:25/human;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s3.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_icies_jigglypuff_stadium": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:14/human;p2=ck:15/human;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s4.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_peach_samus_dreamland64": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:12/human;p2=ck:16/human;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s5.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "pad_luigi_drmario_fountain": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:7/human;p2=ck:22/human;p3=none;p4=none;stage=ext:2;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s6.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": ""
+  },
+  "padcpu_fox_vs_cpu_marth": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:2/human;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s4.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": "port 1 human pad; port 2 is a CPU slot"
+  },
+  "padcpu_pikachu_vs_cpu_pichu": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:13/human;p2=ck:24/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s5.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": "port 1 human pad; port 2 is a CPU slot"
+  },
+  "padcpu_roy_vs_cpu_younglink": {
+   "group": "pads",
+   "scene": "mode=vs;at=match;p1=ck:23/human;p2=ck:21/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/rand_s6.lua",
+   "frames": 1800,
+   "kind": "vs",
+   "note": "port 1 human pad; port 2 is a CPU slot"
+  },
+  "targettest_captain": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:0",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_dk": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:1",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_fox": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:2",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_gaw": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:3",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_kirby": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:4",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_bowser": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:5",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_link": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:6",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_luigi": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:7",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_mario": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:8",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_marth": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:9",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_mewtwo": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:10",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_ness": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:11",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_peach": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:12",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_pikachu": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:13",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_icies": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:14",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_jigglypuff": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:15",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_samus": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:16",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_yoshi": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:17",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_zelda": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:18",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_sheik": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:19",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_falco": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:20",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_younglink": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:21",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_drmario": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:22",
+   "pad": "coverage/pads/randabs_s3_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_roy": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:23",
+   "pad": "coverage/pads/randabs_s4_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_pichu": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:24",
+   "pad": "coverage/pads/randabs_s1_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "targettest_ganondorf": {
+   "group": "targettest",
+   "scene": "mode=tt;p1=ck:25",
+   "pad": "coverage/pads/randabs_s2_1800.lua",
+   "frames": 1800,
+   "kind": "1p",
+   "note": "Target Test, random human pad; hash rows end when the stage ends"
+  },
+  "classic_step00": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:2;step=0;difficulty=0",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step01": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:5;step=1;difficulty=1",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step02": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:8;step=2;difficulty=2",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step03": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:11;step=3;difficulty=3",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step04": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:14;step=4;difficulty=4",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step05": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:17;step=5;difficulty=0",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step06": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:20;step=6;difficulty=1",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step07": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:23;step=7;difficulty=2",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step08": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:0;step=8;difficulty=3",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step09": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:3;step=9;difficulty=4",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "classic_step10": {
+   "group": "classic",
+   "scene": "mode=classic;p1=ck:6;step=10;difficulty=0",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step00": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:2;step=0;difficulty=0",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step01": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:5;step=1;difficulty=1",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step02": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:8;step=2;difficulty=2",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step03": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:11;step=3;difficulty=3",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step04": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:14;step=4;difficulty=4",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step05": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:17;step=5;difficulty=0",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step06": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:20;step=6;difficulty=1",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step07": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:23;step=7;difficulty=2",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step08": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:0;step=8;difficulty=3",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step09": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:3;step=9;difficulty=4",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step10": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:6;step=10;difficulty=0",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "adventure_step11": {
+   "group": "adventure",
+   "scene": "mode=adventure;p1=ck:9;step=11;difficulty=1",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step00": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:2;step=0;difficulty=0",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step01": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:5;step=1;difficulty=1",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step02": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:8;step=2;difficulty=2",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step03": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:11;step=3;difficulty=3",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step04": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:14;step=4;difficulty=4",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step05": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:17;step=5;difficulty=0",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step06": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:20;step=6;difficulty=1",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step07": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:23;step=7;difficulty=2",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step08": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:0;step=8;difficulty=3",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step09": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:3;step=9;difficulty=4",
+   "pad": "coverage/pads/randabs_s2_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step10": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:6;step=10;difficulty=0",
+   "pad": "coverage/pads/randabs_s3_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step11": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:9;step=11;difficulty=1",
+   "pad": "coverage/pads/randabs_s4_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "allstar_step12": {
+   "group": "allstar",
+   "scene": "mode=allstar;p1=ck:12;step=12;difficulty=2",
+   "pad": "coverage/pads/randabs_s1_3600.lua",
+   "frames": 3600,
+   "kind": "1p",
+   "note": "random human pad; screens advanced by A/Start taps"
+  },
+  "homerun_contest": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_HOME_RUN_CONTEST (0x20): no MELEE_SCENE keyword (gw_sl_modes in pc/platform/gw_runtime.c); retail menus only"
+  },
+  "multiman_10": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_10MAN_VS (0x21): no MELEE_SCENE keyword; retail menus only"
+  },
+  "multiman_100": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_100MAN_VS (0x22): no MELEE_SCENE keyword; retail menus only"
+  },
+  "multiman_3min": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_3MIN_VS (0x23): no MELEE_SCENE keyword; retail menus only"
+  },
+  "multiman_15min": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_15MIN_VS (0x24): no MELEE_SCENE keyword; retail menus only"
+  },
+  "multiman_endless": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_ENDLESS_VS (0x25): no MELEE_SCENE keyword; retail menus only"
+  },
+  "multiman_cruel": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_CRUEL_VS (0x26): no MELEE_SCENE keyword; retail menus only"
+  },
+  "event_match": {
+   "group": "blocked",
+   "status": "blocked",
+   "scene": "",
+   "pad": "",
+   "frames": 0,
+   "kind": "menu",
+   "note": "GM_EVENT (0x2B): no MELEE_SCENE keyword; needs the event select screen"
+  }
+ },
+ "batches": {
+  "1": [
+   "adventure_step01",
+   "adventure_step07",
+   "allstar_step01",
+   "allstar_step07",
+   "char_captain",
+   "char_ganondorf",
+   "char_luigi",
+   "char_pikachu",
+   "char_sheik",
+   "classic_step06",
+   "cpu_stock1_bf",
+   "cpulv1_ganon_peach",
+   "cpulv9_fox_falco",
+   "items_hi_dreamland64",
+   "kirby_copy_b",
+   "padcpu_roy_vs_cpu_younglink",
+   "stage_06_brinstar",
+   "stage_12_garden",
+   "stage_18_fourside",
+   "stage_24_bigblue",
+   "stage_30_kongojungle64",
+   "targettest_link",
+   "targettest_peach",
+   "targettest_pichu",
+   "targettest_zelda"
+  ],
+  "2": [
+   "adventure_step02",
+   "adventure_step08",
+   "allstar_step02",
+   "allstar_step08",
+   "char_dk",
+   "char_falco",
+   "char_icies",
+   "char_mario",
+   "classic_step01",
+   "classic_step07",
+   "cpulv1_puff_link",
+   "cpulv9_marth_sheik",
+   "ic_vs_fox_human",
+   "items_low_fd",
+   "pad_icies_jigglypuff_stadium",
+   "sheik_cpu_vs_zelda_cpu",
+   "stage_07_corneria",
+   "stage_13_greatbay",
+   "stage_19_mushroomkingdom",
+   "stage_25_icemt",
+   "stage_31_battlefield",
+   "targettest_captain",
+   "targettest_ganondorf",
+   "targettest_luigi",
+   "targettest_pikachu",
+   "targettest_sheik"
+  ],
+  "3": [
+   "adventure_step03",
+   "adventure_step09",
+   "allstar_step03",
+   "allstar_step09",
+   "char_gaw",
+   "char_jigglypuff",
+   "char_marth",
+   "char_younglink",
+   "classic_step02",
+   "classic_step08",
+   "cpulv5_fox_falco",
+   "cpulv9_ganon_peach",
+   "items_hi_finaldestination",
+   "items_hi_human_bf",
+   "items_off_4p_ps",
+   "pad_peach_samus_dreamland64",
+   "stage_02_fountain",
+   "stage_08_yoshistory",
+   "stage_14_temple",
+   "stage_20_mushroomkingdom2",
+   "stage_26_icetop",
+   "targettest_dk",
+   "targettest_falco",
+   "targettest_icies",
+   "targettest_mario"
+  ],
+  "4": [
+   "adventure_step04",
+   "adventure_step10",
+   "allstar_step04",
+   "allstar_step10",
+   "char_drmario",
+   "char_kirby",
+   "char_mewtwo",
+   "char_samus",
+   "classic_step03",
+   "classic_step09",
+   "cpulv5_marth_sheik",
+   "cpulv9_puff_link",
+   "items_hi_battlefield",
+   "items_off_fd",
+   "pad_captain_fox_finaldestination",
+   "pad_luigi_drmario_fountain",
+   "stage_03_stadium",
+   "stage_09_onett",
+   "stage_15_kraid",
+   "stage_21_akaneia",
+   "stage_27_flatzone",
+   "targettest_gaw",
+   "targettest_jigglypuff",
+   "targettest_marth",
+   "targettest_younglink"
+  ],
+  "5": [
+   "adventure_step05",
+   "adventure_step11",
+   "allstar_step05",
+   "allstar_step11",
+   "char_bowser",
+   "char_ness",
+   "char_roy",
+   "char_yoshi",
+   "classic_step04",
+   "classic_step10",
+   "cpu_mixed_1_9",
+   "cpulv1_fox_falco",
+   "cpulv5_ganon_peach",
+   "items_hi_yoshistory",
+   "pad_marth_sheik_battlefield",
+   "padcpu_fox_vs_cpu_marth",
+   "stage_04_castle",
+   "stage_10_mutecity",
+   "stage_16_yoshiisland",
+   "stage_22_venom",
+   "stage_28_dreamland64",
+   "targettest_drmario",
+   "targettest_kirby",
+   "targettest_mewtwo",
+   "targettest_samus"
+  ],
+  "6": [
+   "adventure_step00",
+   "adventure_step06",
+   "allstar_step00",
+   "allstar_step06",
+   "allstar_step12",
+   "char_link",
+   "char_peach",
+   "char_pichu",
+   "char_zelda",
+   "classic_step05",
+   "cpu_ffa4_levels",
+   "cpulv1_marth_sheik",
+   "cpulv5_puff_link",
+   "items_hi_stadium",
+   "pad_bowser_ganondorf_yoshistory",
+   "padcpu_pikachu_vs_cpu_pichu",
+   "stage_05_jungle",
+   "stage_11_rainbowcruise",
+   "stage_17_greens",
+   "stage_23_pokefloats",
+   "stage_29_yoshistory64",
+   "targettest_bowser",
+   "targettest_ness",
+   "targettest_roy",
+   "targettest_yoshi"
+  ]
+ }
+}

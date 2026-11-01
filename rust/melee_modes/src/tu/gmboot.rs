@@ -63,12 +63,8 @@ pub mod ext {
     }
     /// `gm_GetGameModeStateEnterData(scene)` / `gm_GetGameModeStateExitData(scene)` (gm/gm_1A3F.c):
     /// the scene's info pointers.
-    pub fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void {
-        unsafe { (*scene).info.enter_data }
-    }
-    pub fn gm_GetGameModeStateExitData(scene: *mut GameModeState) -> *mut c_void {
-        unsafe { (*scene).info.exit_data }
-    }
+    pub fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(scene as _) as _ } }
+    pub fn gm_GetGameModeStateExitData(scene: *mut GameModeState) -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(scene as _) as _ } }
     /// `gmMainLib_8046B0F0.skip_intro` (gm/gmmain_lib.c).
     hook!(GM_MAIN_LIB_SKIP_INTRO, gm_main_lib_skip_intro, () -> bool);
     /// `gm_801BF708(s8)` (gm/gmevent.c).

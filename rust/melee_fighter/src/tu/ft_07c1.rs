@@ -42,9 +42,7 @@ pub mod ext {
     }
     /// `itGetKind`: the shared hook (default `melee_items::itlib::it_get_kind`).
     #[allow(non_snake_case)]
-    pub fn itGetKind(g: *mut Item_GObj) -> i32 {
-        crate::hooks::it_get_kind(g)
-    }
+    pub fn itGetKind(g: *mut Item_GObj) -> i32 { unsafe { melee_items::tu::it_26B1::itGetKind(g as _) as _ } }
 }
 
 #[inline(always)]

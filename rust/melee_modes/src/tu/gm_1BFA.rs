@@ -46,12 +46,8 @@ pub mod ext {
     }
     /// `gm_GetGameModeStateEnterData(scene)` / `gm_GetGameModeStateExitData(scene)` (gm/gm_1A3F.c):
     /// the scene's info pointers.
-    pub fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void {
-        unsafe { (*scene).info.enter_data }
-    }
-    pub fn gm_GetGameModeStateExitData(scene: *mut GameModeState) -> *mut c_void {
-        unsafe { (*scene).info.exit_data }
-    }
+    pub fn gm_GetGameModeStateEnterData(scene: *mut GameModeState) -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateEnterData(scene as _) as _ } }
+    pub fn gm_GetGameModeStateExitData(scene: *mut GameModeState) -> *mut c_void { unsafe { crate::tu::gm_1A3F::gm_GetGameModeStateExitData(scene as _) as _ } }
     pub static mut GM_GETCHALLENGERDATA: Option<fn() -> *mut ChallengerData> = None;
             #[allow(non_snake_case)]
             pub fn gm_GetChallengerData() -> *mut ChallengerData {

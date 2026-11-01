@@ -33,13 +33,7 @@ pub unsafe fn HSD_CObjGetFov(cobj: *mut HSD_CObj) -> f32 {
     (*cobj).projection_param.perspective.fov
 }
 
-pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) {
-    melee_core::ct!("HSD_CObjSetFov");
-    if cobj.is_null() || (*cobj).projection_type != PROJ_PERSPECTIVE {
-        return;
-    }
-    (*cobj).projection_param.perspective.fov = fov;
-}
+pub unsafe fn HSD_CObjSetFov(cobj: *mut HSD_CObj, fov: f32) { unsafe { melee_runtime::tu::cobj::HSD_CObjSetFov(cobj as _, fov as _); } }
 
 pub unsafe fn HSD_CObjGetTop(cobj: *mut HSD_CObj) -> f32 {
     melee_core::ct!("HSD_CObjGetTop");

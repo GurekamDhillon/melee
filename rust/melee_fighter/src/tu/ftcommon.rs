@@ -74,12 +74,7 @@ pub mod ext {
     }
     /// Override for `ftPartSetRotZ` (unset = the port in `tu::ftparts`).
     pub static mut FTPART_SET_ROT_Z: Option<fn(&Fighter, i32, f32)> = None;
-    pub fn ftPartSetRotZ(f: &Fighter, part: i32, v: f32) {
-        match unsafe { FTPART_SET_ROT_Z } {
-            Some(h) => h(f, part, v),
-            None => crate::tu::ftparts::ftPartSetRotZ(f, part, v),
-        }
-    }
+    pub fn ftPartSetRotZ(f: &Fighter, part: i32, v: f32) { unsafe { crate::tu::ftparts::ftPartSetRotZ(f as _, part as _, v as _); } }
 }
 
 #[inline(always)]

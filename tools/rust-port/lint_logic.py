@@ -217,6 +217,12 @@ def stem_ok(rel, cstem):
     return Path(rel).stem.lower() == cstem.lower()
 
 
+_CRATE_ORDER = ('melee_runtime', 'melee_world', 'melee_items', 'melee_fighter', 'melee_chara', 'melee_modes')
+def _crate_rank(rel):
+    c = rel.split('/')[1]
+    return _CRATE_ORDER.index(c) if c in _CRATE_ORDER else len(_CRATE_ORDER)
+
+
 def violations(pats):
     cidx, bodies, r4, r5 = scan(pats)
     v = []
@@ -237,6 +243,7 @@ def violations(pats):
                     v.append(('R2', rel, cname))
             canon[ln] = (cname, next((b[0] for b in tu if Path(b[0]).stem.lower() in stems), bs[0][0]))
             continue
+        tu = sorted(tu, key=lambda b: _crate_rank(b[0]))   # the lowest crate in the dependency order owns a shared body
         pick = next((b for b in tu if stem_ok(b[0], cstem)), None) or (tu[0] if tu else bs[0])
         canon[ln] = (cname, pick[0])
         files = {}

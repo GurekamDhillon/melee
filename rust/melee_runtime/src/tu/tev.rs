@@ -179,9 +179,7 @@ pub mod ext {
     use melee_types::HSD_ObjAllocData;
     pub static mut OBJ_ALLOC_INIT: Option<unsafe fn(*mut HSD_ObjAllocData, usize, u32)> = None;
     pub static mut TEV_COLOR_S10: Option<fn(u32, [i16; 4])> = None;
-    pub unsafe fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: usize, align: u32) {
-        (OBJ_ALLOC_INIT.expect("TODO: HSD_ObjAllocInit"))(data, size, align);
-    }
+    pub unsafe fn HSD_ObjAllocInit(data: *mut HSD_ObjAllocData, size: usize, align: u32) { unsafe { crate::tu::objalloc::HSD_ObjAllocInit(data as _, size as _, align as _); } }
     pub fn GXSetTevColorS10(reg: u32, color: [i16; 4]) {
         unsafe { (TEV_COLOR_S10.expect("TODO: GXSetTevColorS10"))(reg, color); }
     }

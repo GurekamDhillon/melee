@@ -80,10 +80,7 @@ val_fnptr!((), (A0), (A0, A1), (A0, A1, A2), (A0, A1, A2, A3), (A0, A1, A2, A3, 
 ///
 /// # Safety
 /// `p` is valid for `n` bytes.
-pub unsafe fn memzero(p: *mut core::ffi::c_void, n: i32) {
-    melee_core::ct!("memzero");
-    core::ptr::write_bytes(p as *mut u8, 0, n as usize);
-}
+pub unsafe fn memzero(p: *mut core::ffi::c_void, n: i32) { unsafe { melee_runtime::tu::lb_00B0::memzero(p as _, n as _); } }
 
 impl Val for () {
     #[inline] fn to_u64(self) -> u64 { 0 }

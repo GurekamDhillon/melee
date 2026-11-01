@@ -38,9 +38,7 @@ pub mod ext {
         FTCO_8009EF68 ftCo_8009EF68(g: G) -> bool;
     }
     /// Shared hooks in `crate::hooks`.
-    pub fn ftAnim_IsFramesRemaining(g: G) -> bool {
-        crate::hooks::ftanim_is_frames_remaining(g)
-    }
+    pub fn ftAnim_IsFramesRemaining(g: G) -> bool { unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(g as _) as _ } }
     pub fn ftCo_Fall_Enter(g: G) {
         crate::hooks::ftco_fall_enter(g)
     }

@@ -335,19 +335,7 @@ pub unsafe fn HSD_SetupTevStageAll(desc: *mut HSD_TevDesc) {
 }
 
 /// `HSD_Channel2Num`.
-pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 {
-    melee_core::ct!("HSD_Channel2Num");
-    match chan {
-        0 => 1,
-        1 => 2,
-        2 => 1,
-        3 => 2,
-        4 => 1,
-        5 => 2,
-        0xFF => 0,
-        _ => panic!("tev.c:656 0"),
-    }
-}
+pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 { unsafe { crate::tu::tev::HSD_Channel2Num(chan as _) as _ } }
 
 /// `HSD_Index2TevStage`.
 pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 {
@@ -368,13 +356,7 @@ pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 {
 }
 
 /// `HSD_TevStage2Num`.
-pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 {
-    melee_core::ct!("HSD_TevStage2Num");
-    match stage {
-        0..=15 => stage + 1,
-        _ => panic!("tev.c:793 0"),
-    }
-}
+pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 { unsafe { crate::tu::tev::HSD_TevStage2Num(stage as _) as _ } }
 
 /// `HSD_SetTevRegAll`.
 pub unsafe fn HSD_SetTevRegAll() {
@@ -397,14 +379,7 @@ pub unsafe fn HSD_SetTevRegAll() {
 }
 
 /// `HSD_TexCoordID2Num`.
-pub unsafe fn HSD_TexCoordID2Num(id: i32) -> i32 {
-    melee_core::ct!("HSD_TexCoordID2Num");
-    match id {
-        0..=7 => id + 1,
-        0xFF => 0,
-        _ => panic!("tev.c:1010 0"),
-    }
-}
+pub unsafe fn HSD_TexCoordID2Num(id: i32) -> i32 { unsafe { crate::tu::tev::HSD_TexCoordID2Num(id as _) as _ } }
 
 /// `ChanUpdateFunc`.
 pub unsafe fn ChanUpdateFunc(chan: *mut HSD_Chan, arg1: i32, arg2: *const f32) {

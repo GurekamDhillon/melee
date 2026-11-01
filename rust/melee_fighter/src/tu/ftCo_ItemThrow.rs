@@ -95,9 +95,7 @@ pub unsafe extern "C" fn ftCo_80096498_c(g: G) {
 }
 
 #[inline(always)]
-fn absf(x: f32) -> f32 {
-    if x < 0.0 { -x } else { x }
-}
+fn absf(x: f32) -> f32 { unsafe { melee_runtime::tu::lb_00F9::absf(x as _) as _ } }
 
 pub fn ftCo_80094E54(f: &mut Fighter) -> bool {
     melee_core::ct!("ftCo_80094E54");

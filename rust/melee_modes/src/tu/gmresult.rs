@@ -178,13 +178,7 @@ pub mod ext {
         panic!("TODO(ext) lbArchive_80016DBC: its TU is not ported")
     }
     /// lb_00B0.c, variadic in C: `(jobj, out, id, -1)`; fixed arguments logged only.
-    pub unsafe fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, _rest: &[i32]) -> i32 {
-        use crate::oracle::{arg, ext_call, OVal, K};
-        if let Some(v) = ext_call("lb_80011E24", &[arg(a0), arg(a1)], K::I(32)) {
-            return <i32 as OVal>::from_bits(v);
-        }
-        { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(a0 as _, a1 as _, _rest as _) as _ }; }
-    }
+    pub unsafe fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, _rest: &[i32]) -> i32 { unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(a0 as _, a1 as _, _rest as _) as _ } }
 }
 
 /// `StatsEntry`: one row of a stats page.

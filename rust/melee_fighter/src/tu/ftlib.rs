@@ -244,16 +244,11 @@ pub fn ftlib_800864a8(v: &Vec3, g: G) -> f32 {
     if result < 0 { -1.0 } else { 1.0 }
 }
 
-pub fn ftlib_800865c0(g: G) -> f32 { melee_core::ct!("ftlib_800865c0"); fp_ftlib(g).facing_dir }
+pub fn ftlib_800865c0(g: G) -> f32 { unsafe { melee_items::tu::ftlib::ftLib_800865C0(g as _) as _ } }
 
-pub fn ftlib_800865cc(g: G) -> i32 { melee_core::ct!("ftlib_800865cc"); fp_ftlib(g).ground_or_air as i32 }
+pub fn ftlib_800865cc(g: G) -> i32 { unsafe { melee_items::tu::ftlib::ftLib_800865CC(g as _) as _ } }
 
-pub fn ftlib_800865d8(g: G, x: &mut f32, y: &mut f32) {
-    melee_core::ct!("ftlib_800865d8");
-    let f = fp_ftlib(g);
-    *x = f.input.lstick[0].x;
-    *y = f.input.lstick[0].y;
-}
+pub fn ftlib_800865d8(g: G, x: &mut f32, y: &mut f32) { unsafe { melee_items::tu::ftlib::ftLib_800865D8(g as _, x as _, y as _); } }
 
 /// `ftLib_800865F0`: the joint of bone `ftParts_GetBoneIndex(fp_ftlib, 4)`.
 pub fn ftlib_800865f0(g: G) -> *mut HSD_JObj {
@@ -263,10 +258,7 @@ pub fn ftlib_800865f0(g: G) -> *mut HSD_JObj {
     unsafe { (*f.parts.offset(i as isize)).joint }
 }
 
-pub fn ftlib_80086630(g: G, part: i32) -> *mut HSD_JObj {
-    melee_core::ct!("ftlib_80086630");
-    unsafe { (*fp_ftlib(g).parts.offset(part as isize)).joint }
-}
+pub fn ftlib_80086630(g: G, part: i32) -> *mut HSD_JObj { unsafe { melee_items::tu::ftlib::ftLib_80086630(g as _, part as _) as _ } }
 
 pub fn ftlib_80086644(g: G, pos: &mut Vec3) { melee_core::ct!("ftlib_80086644"); unsafe { melee_world::ftlib::ftLib_80086644(g, pos) } }
 
@@ -299,9 +291,9 @@ pub fn ftlib_80086764(g: G) {
     }
 }
 
-pub fn ftlib_800867a0(g: G, arg1: G) -> bool { melee_core::ct!("ftlib_800867a0"); get_item(g) == arg1 || fp_ftlib(g).x1978 == arg1 }
+pub fn ftlib_800867a0(g: G, arg1: G) -> bool { unsafe { melee_items::tu::ftlib::ftLib_800867A0(g as _, arg1 as _) as _ } }
 
-pub fn ftlib_800867cc(g: G) -> G { melee_core::ct!("ftlib_800867cc"); fp_ftlib(g).x1984_heldItemSpec }
+pub fn ftlib_800867cc(g: G) -> G { unsafe { melee_items::tu::ftlib::ftLib_800867CC(g as _) as _ } }
 
 pub fn ftlib_800867d8(g: G) -> bool { melee_core::ct!("ftlib_800867d8"); fp_ftlib(g).x221D_b4() != 0 }
 
@@ -355,11 +347,11 @@ pub fn ftlib_80086990(g: G, v: &mut Vec3) {
     v.z = f.cur_pos.z + 0.0;
 }
 
-pub fn ftlib_800869d4(g: G) -> f32 { melee_core::ct!("ftlib_800869d4"); c2::get_model_scale(fp_ftlib(g)) }
+pub fn ftlib_800869d4(g: G) -> f32 { unsafe { melee_items::tu::ftlib::ftLib_800869D4(g as _) as _ } }
 
 pub fn ftlib_800869f8(g: G) -> f32 { melee_core::ct!("ftlib_800869f8"); fp_ftlib(g).x34_scale.x * fp_ftlib(g).co_attrs.model_scaling }
 
-pub fn ftlib_80086a0c(g: G) -> f32 { melee_core::ct!("ftlib_80086a0c"); fp_ftlib(g).x34_scale.y }
+pub fn ftlib_80086a0c(g: G) -> f32 { unsafe { melee_items::tu::ftlib::ftLib_80086A0C(g as _) as _ } }
 
 pub fn ftlib_80086a18(g: G) -> bool {
     melee_core::ct!("ftlib_80086a18");
@@ -426,7 +418,7 @@ pub fn ftlib_80086e68(g: G) {
     }
 }
 
-pub fn ftlib_80086eb4(g: G) -> i32 { melee_core::ct!("ftlib_80086eb4"); fp_ftlib(g).team as i32 }
+pub fn ftlib_80086eb4(g: G) -> i32 { unsafe { melee_items::tu::ftlib::ftLib_80086EB4(g as _) as _ } }
 
 pub fn ftlib_80086ec0(g: G) -> bool { melee_core::ct!("ftlib_80086ec0"); unsafe { melee_world::ftlib::ftLib_80086EC0(g) } }
 

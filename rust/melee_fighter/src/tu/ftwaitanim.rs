@@ -14,9 +14,7 @@ pub mod ext {
     pub fn ftAnim_8006EBA4(gobj: *mut HSD_GObj) { { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(gobj as _); } return; } }
     pub fn ftAnim_IsFramesRemaining(gobj: *mut HSD_GObj) -> bool { { return unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(gobj as _) as _ }; } }
     pub fn HSD_Randi(max: i32) -> i32 { unsafe { crate::rng::HSD_Randi(max) } }
-    pub fn itGetHoldKind(item: *mut Item_GObj) -> i32 {
-        unsafe { melee_items::itlib::it_get_hold_kind(&*((*item).user_data as *const Item)) }
-    }
+    pub fn itGetHoldKind(item: *mut Item_GObj) -> i32 { unsafe { melee_items::tu::it_26B1::itGetHoldKind(item as _) as _ } }
 }
 
 use super::ftlipstickswing::fp;

@@ -142,7 +142,7 @@ From step 7 the engine path is the one being moved forward.
 | 20 (DONE 2026-11-01 for the oracle-checked bodies: melee_chara R1 1592 -> 29; adapt.rs / stubs.rs forwarders kept (they are the `port_hook!` defaults), see Round 5) | Dedupe A: characters | Delete `melee_chara/src/chars/rN/*` and `chars/*.rs` bodies in favour of `tu/` (section 3.2 rows R and C, 126 bodies). Move `chars_ref.rs` tests onto the tu functions. Delete `adapt.rs` / `stubs.rs` forwarders. |
 | 21 (DONE 2026-11-01 in the fold form: every C-named body of melee_fighter's non-tu modules lives in its canonical tu file, R1 529 -> 31; the typed oracle-checked variants stay as `<name>_fp` next to the c2rs body, see Round 5) | Dedupe B: melee_fighter non-tu | Fold `ftcommon*.rs`, `ftlib.rs`, `ft0877.rs`, `ft0881.rs`, `ft084e.rs`, `ft0df.rs`, `player.rs`, `plbonus*.rs`, `pltrick.rs`, `stale.rs`, `ftaction.rs`, `ftanim.rs`, `ftcoll.rs` and `ftcpu.rs` into their tu files, keeping the `*_ref` oracles. Re-home `hooks.rs` as seams only. |
 | 22 (DONE 2026-11-01 in the fold form for melee_world / items / modes / runtime (R1 total 3856 -> 265), see Round 5) | Dedupe C: world, items, modes non-tu | Fold `melee_world/src/{gr,cm,mp,ef}/`, `tu_ext.rs`, `melee_items/src/{itlib*,itfwd*,itkinds*}.rs` and `melee_modes/src/{gm*,lb*,mn*,hud*}.rs`. |
-| 23 (STARTED 2026-11-01: lint baseline 1996 -> 986, see Rounds 6 and 7) | Dedupe D: TU-to-TU copies | `gen_link.py --convert` on every TU file. Each local copy of another TU's function becomes an `extern "C"` declaration (1667 bodies). Two pairs of files duplicate whole TUs and need a decision: `tu/eflib.rs` vs `tu/efn/*`, and `tu/jobj_world.rs` / `tev_native.rs` vs `jobj.rs` / `tev.rs`. |
+| 23 (STARTED 2026-11-01: lint baseline 1996 -> 986 -> 736, see Rounds 6, 7 and 8) | Dedupe D: TU-to-TU copies | `gen_link.py --convert` on every TU file. Each local copy of another TU's function becomes an `extern "C"` declaration (1667 bodies). Two pairs of files duplicate whole TUs and need a decision: `tu/eflib.rs` vs `tu/efn/*`, and `tu/jobj_world.rs` / `tev_native.rs` vs `jobj.rs` / `tev.rs`. |
 | 24 | Lint enforcing | `lint_logic.py` without `--report` and with an empty `lint_baseline.txt`; CI fails on any violation. The STATUS.md golden table switches to "engine" counts. |
 
 Steps 20 to 23 do not depend on 7 to 19 and can run in parallel with them, on separate worktrees, one crate per agent.
@@ -1184,3 +1184,11 @@ Method: C call sequence of the failing frame (`_build/agents/<name>`, trace exe 
 - Debug aid: `MELEE_WATCH_FIGHTER=slot,field,fromframe` (fields gr_vel, motion_id, xE4, xE8, mv24, mv28) with the calltrace build reports the function entry after
   which the u32 changed (`MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=f` lists the entries before it).
 Not done: the `*_vs_c` oracle tests of `itheiho` (the attr pointer) and `lbcollision` were not re-run beyond `tu_lbcollision`; step 23 (lint baseline 986) and 24 are untouched this round.
+
+Lint (step 23): `lint_logic.py` now treats a C name defined in several C files (`stageGObj1_OnInit`, `doEnter`, `setupStageCallbacks`, ...) as one function
+per defining file: a tu body in a file named after one of the defining C stems is that file's own body, not a copy (R2 760 -> 512); `main` is not game logic.
+Baseline 986 -> 736 entries, no Rust change. What is left in R2 is the pointer-based `*_native` / `jobj_ptr` / `jobj_world` / `gobj_native` / `state_native` /
+`tev_native` / `displayfunc_native` bodies next to the owned-model ones (about 140), the `gm*` typed copies (melee_modes, about 160) and the 105 melee_fighter
+duplicates; step 24 needs all of them at zero. Oracle tests that now differ on purpose: `kinds_itsword` op 9, `oracle_round13` (R13_80285300) and `tu_itheiho`
+compare against a natively compiled (64-bit) C oracle, whose `itSword_UnkArticle1` / Shy Guy attribute layout differs from the shipping 32-bit build the engine
+now follows.

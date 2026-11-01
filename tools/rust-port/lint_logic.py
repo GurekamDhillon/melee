@@ -28,7 +28,7 @@ REPO = Path(__file__).resolve().parents[2]
 ALLOW = REPO / 'tools/rust-port/lint_allow.txt'
 BASE = REPO / 'tools/rust-port/lint_baseline.txt'
 SEAMS = ('lbAudioAx_', 'HSD_DVD', 'DVDRead', 'DVDOpen', 'GXDraw', 'GX', 'OSReport', 'ScriptGame_', 'Mex_', 'Geno_', 'OS')
-KW = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'else', 'do', 'defined'}
+KW = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'else', 'do', 'defined', 'main'}  # `main`: the program entry points of tools / tests, not game logic
 
 
 def strip_c(t):
@@ -41,7 +41,7 @@ CDEF = re.compile(r'^(?P<pre>[A-Za-z_][\w \t\*]*?)\b(?P<name>[A-Za-z_]\w*)\s*\((
 
 
 def c_index():
-    """lower(name) -> (name, c file stem); static duplicates dropped."""
+    """lower(name) -> (name, c file stem, all defining stems); static names shared by several files only static are dropped."""
     defs = defaultdict(list)
     files = list((REPO / 'src/melee').rglob('*.c')) + list((REPO / 'src/sysdolphin').rglob('*.c')) + list((REPO / 'pc/gameworld').glob('*.c'))
     for f in files:
@@ -59,7 +59,7 @@ def c_index():
         stems = {s for s, _ in v}
         if len(stems) > 1 and all(st for _, st in v):
             continue  # static name shared by several files
-        out[n.lower()] = (n, sorted(stems)[0])
+        out[n.lower()] = (n, sorted(stems)[0], frozenset(x.lower() for x in stems))
     return out
 
 
@@ -218,8 +218,21 @@ def violations(pats):
     v = []
     canon = {}
     for ln, bs in bodies.items():
-        cname, cstem = cidx[ln]
+        cname, cstem, stems = cidx[ln]
         tu = [b for b in bs if b[2]]
+        if len(stems) > 1:
+            # several C files define this name (e.g. `stageGObj1_OnInit`, `doEnter`): each is its own function, so a tu body in a file named
+            # after one of the defining C files is that file's own body, not a copy; only bodies elsewhere are violations
+            files = {}
+            for b in bs:
+                files.setdefault(b[0], b)
+            for rel, b in files.items():
+                if not b[2] and not allowed(rel, pats):
+                    v.append(('R1', rel, cname))
+                elif not (b[2] and Path(rel).stem.lower() in stems):
+                    v.append(('R2', rel, cname))
+            canon[ln] = (cname, next((b[0] for b in tu if Path(b[0]).stem.lower() in stems), bs[0][0]))
+            continue
         pick = next((b for b in tu if stem_ok(b[0], cstem)), None) or (tu[0] if tu else bs[0])
         canon[ln] = (cname, pick[0])
         files = {}

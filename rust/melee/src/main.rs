@@ -492,11 +492,41 @@ pub(crate) fn use_engine(args: &[String]) -> bool {
         Some("tu") => return true,
         _ => {}
     }
-    const LEGACY_ONLY: [&str; 8] = ["--mods", "--slp", "--gdlp", "--from-snapshot", "--dump-state", "--audio", "--idle-pads", "--start"];
+    const LEGACY_ONLY: [&str; 6] = ["--mods", "--from-snapshot", "--dump-state", "--audio", "--idle-pads", "--start"];
     if args.iter().any(|a| LEGACY_ONLY.contains(&a.as_str())) {
         return false;
     }
     matches!(get("--scenario").as_deref().unwrap_or("pad_falcon_fox_fd"), "pad_falcon_fox_fd" | "pad_marth_sheik_bf" | "cpu_fox_falco_dl" | "cpu_peach_samus_ys_items")
+}
+
+static mut REPLAY: Option<melee_data::player::Player> = None;
+
+/// Route the fighter code's `Replay_*` platform hooks (gw_replay.c) to `pl`: the recorded inputs of the frame being simulated.
+fn install_replay(pl: melee_data::player::Player) {
+    use melee_fighter::platform::hook as h;
+    unsafe {
+        REPLAY = Some(pl);
+        let r = || REPLAY.as_mut().unwrap();
+        h::Replay_Active = Some(|| 1);
+        h::Replay_HasInput = Some(|p, f| unsafe { r_in().has_input(p, f != 0) as i32 });
+        h::Replay_StickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.lx) });
+        h::Replay_StickY = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.ly) });
+        h::Replay_CStickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.cx) });
+        h::Replay_CStickY = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.cy) });
+        h::Replay_Trigger = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.trigger) });
+        h::Replay_Buttons = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0, |i| i.buttons) });
+        h::Replay_UcfCardinals = Some(|p| unsafe { r_in().ucf_cardinals(p) as i32 });
+        h::Replay_UcfVersion = Some(|p| unsafe { r_in().ucf_version(p) });
+        h::Replay_RawStick = Some(|p, w| unsafe { r_in().raw_stick(p, w) });
+        h::Replay_RawStickBack = Some(|p, w, b| unsafe { r_in().raw_stick_back(p, w, b) });
+        h::Replay_ChecksumSeed = Some(|arrived, frame| unsafe { r_in().checksum_seed(arrived, frame) });
+        let _ = r;
+    }
+}
+
+#[allow(static_mut_refs)]
+unsafe fn r_in() -> &'static mut melee_data::player::Player {
+    REPLAY.as_mut().unwrap()
 }
 
 /// `melee golden --engine tu`: the same CSV from the consolidated engine (melee_engine): the real StartMelee path,
@@ -520,13 +550,49 @@ fn golden_engine(args: &[String]) -> ExitCode {
         unsafe { melee_engine::engine::RENDER = true };
         let _ = std::fs::create_dir_all(&shot_dir);
     }
-    let mut e = match boot_engine_scenario(&iso, &scenario) {
+    // `--slp FILE` / `--gdlp FILE`: a Slippi / whole-match replay drives the match (stage, fighters, seed and every frame's inputs and RNG seed)
+    let mut replay = false;
+    let mut e = if get("--slp").is_some() || get("--gdlp").is_some() {
+        let gd = get("--gdlp");
+        let ident = gd.as_ref().map(|_| {
+            let exe = std::env::current_exe().unwrap_or_default();
+            ident::identity(&exe, std::path::Path::new(&iso), "")
+        });
+        let r = match (&gd, get("--slp")) {
+            (Some(g), _) => slp_open(g, ident),
+            (None, Some(p)) => slp_open(&p, None),
+            _ => unreachable!(),
+        };
+        match r {
+            Ok((pl, stage, names, seed)) => {
+                let key = match stage { "GrNLa.dat" => "fd", _ => "bf" };
+                let scene = format!("mode=vs;at=match;p1={}/human;p2={}/human;p3=none;p4=none;stage={key};match=time;minutes=0;items=off", names[0], names[1]);
+                // SAFETY: single-threaded start-up, before the engine reads them.
+                unsafe {
+                    std::env::set_var("MELEE_TEST_SEED", seed.to_string());
+                    if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1"); }
+                }
+                let booted = melee_engine::gcm::Gcm::open(&iso).map_err(|e| e.to_string()).and_then(|disc| {
+                    let scn = melee_engine::scenario::Scenario::parse(&scene)?;
+                    melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)
+                });
+                install_replay(pl);
+                replay = true;
+                booted
+            }
+            Err(er) => Err(er),
+        }
+    } else {
+        boot_engine_scenario(&iso, &scenario)
+    };
+    let mut e = match e {
         Ok(e) => e,
         Err(er) => {
             eprintln!("melee: {er}");
             return ExitCode::FAILURE;
         }
     };
+    let frames = if replay && get("--frames").is_none() { 1802 } else { frames };
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
@@ -540,6 +606,15 @@ fn golden_engine(args: &[String]) -> ExitCode {
     }
     for f in 0..frames {
         melee_core::ct::begin_frame(f as i64);
+        if replay {
+            // gmscene.c: `Replay_Tick`, then the forced seed; the fighters read the recorded inputs through the `Replay_*` platform hooks
+            let pl = unsafe { REPLAY.as_mut().unwrap() };
+            pl.tick();
+            let sd = pl.resync_seed();
+            if sd != 0 {
+                melee_runtime::tu::random::global::state().set_logic_seed(sd);
+            }
+        }
         if !e.tick() {
             break;
         }

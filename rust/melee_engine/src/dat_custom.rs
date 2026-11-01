@@ -116,6 +116,17 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "rawwords" => {
             // a block of 32-bit ints / floats the game code reads as a native struct (`yakumono_param`): word-swapped copy
             let n = (b.extent(off) / 4).max(1) as usize;
+            if n == 2 && d.target(off).is_some() && d.target(off + 4).is_some() {
+                // `grBattle_YakumonoParam { void* bg_curr_color_overlay; void* bg_prev_color_overlay; }`: two relocated pointers to
+                // colour-overlay command streams (big-endian bytes the lb colour-animation code reads), widened to raw-image addresses
+                let (a, c) = (d.target(off).unwrap(), d.target(off + 4).unwrap());
+                let buf = native_buf(16) as *mut usize;
+                unsafe {
+                    buf.write(b.raw_addr(a) as usize);
+                    buf.add(1).write(b.raw_addr(c) as usize);
+                }
+                return buf as *mut c_void;
+            }
             let buf = native_buf(n * 4);
             for k in 0..n {
                 let w = d.u32_at(off + 4 * k as u32);

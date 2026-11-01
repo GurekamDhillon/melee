@@ -24,6 +24,10 @@ pub fn fire_alarm() {
 /// headless engine only stores them in `HSD_VIData`, so zeroed records stand in.
 static mut RMODES: [melee_types::GXRenderModeObj; 4] = unsafe { core::mem::zeroed() };
 
+unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
+    p
+}
+
 pub fn install() {
     unsafe {
         {
@@ -43,6 +47,28 @@ pub fn install() {
         melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_80023130(id));
         // a stage's callback table entry is a native pointer here (no guest code): the m-ex bind is the identity
         melee_world::tu_ext::HOOK_Mex_GrBind = Some(|p| p);
+        // the remaining `tu_ext` stage-proc hooks (their defaults stop on "not ported"): the engine's canonical bodies
+        melee_world::tu_ext::HOOK_HSD_DObjSetFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(d, f) });
+        melee_world::tu_ext::HOOK_HSD_DObjClearFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(d, f) });
+        melee_world::tu_ext::HOOK_Player_80031790 = Some(|s| melee_fighter::tu::player::Player_80031790(s));
+        melee_world::tu_ext::HOOK_Player_80031900 = Some(|| melee_fighter::tu::player::Player_80031900());
+        melee_world::tu_ext::HOOK_ftLib_80086C18 = Some(|g, a, b| melee_fighter::tu::ftlib::ftlib_80086c18(g, a, b));
+        melee_world::tu_ext::HOOK_gm_GetDbPauseFlag = Some(|b| unsafe { melee_modes::tu::gmscene::gm_GetDbPauseFlag(b) });
+        melee_world::tu_ext::HOOK_gm_MexVanillaKind = Some(|k, c| unsafe { melee_modes::tu::gm_1601::gm_MexVanillaKind(k, c) });
+        melee_world::tu_ext::HOOK_gm_801674C4 = Some(|a, b, c, d, e| unsafe { melee_modes::tu::gm_1601::gm_801674C4(a, b, c, d, e) });
+        // the same identity for the TUs that carry their own `Mex_GrBind` hook (the generated default would return null, which `on_init` then calls)
+        melee_world::tu::grfigure1::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grfigure2::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grfigure3::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grfigureget::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grflatzone::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grfourside::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::grgarden::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::groldkongo::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::groldyoshi::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::gronett::ext::hook::Mex_GrBind = Some(|p| p);
+        melee_world::tu::gryorster::ext::H_Mex_GrBind = Some(mex_gr_bind_c);
+        melee_world::tu::grzebesroute::ext::H_Mex_GrBind = Some(mex_gr_bind_c);
         // stage procs reach items and the camera through `tu_ext`, whose defaults are the legacy-state ports: run the engine's TUs
         melee_world::tu_ext::HOOK_it_8026B3C0 = Some(|k| melee_items::tu::it_26B1::it_8026B3C0(k as _) as i32);
         melee_world::tu_ext::HOOK_it_802D8618 = Some(|a, b, c, d| melee_items::tu::itheiho::it_802D8618(a, b, c, d));

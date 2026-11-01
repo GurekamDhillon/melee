@@ -116,13 +116,38 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "rawwords" => {
             // a block of 32-bit ints / floats the game code reads as a native struct (`yakumono_param`): word-swapped copy
             let n = (b.extent(off) / 4).max(1) as usize;
+            if n == 2 && d.target(off).is_some() && d.target(off + 4).is_some() {
+                // `grBattle_YakumonoParam { void* bg_curr_color_overlay; void* bg_prev_color_overlay; }`: two relocated pointers to
+                // colour-overlay command streams (big-endian bytes the lb colour-animation code reads), widened to raw-image addresses
+                let (a, c) = (d.target(off).unwrap(), d.target(off + 4).unwrap());
+                let buf = native_buf(16) as *mut usize;
+                unsafe {
+                    buf.write(b.raw_addr(a) as usize);
+                    buf.add(1).write(b.raw_addr(c) as usize);
+                }
+                return buf as *mut c_void;
+            }
             let buf = native_buf(n * 4);
             for k in 0..n {
                 let w = d.u32_at(off + 4 * k as u32);
                 unsafe { (buf as *mut u32).add(k).write(w) };
             }
+            // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
+            // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
+            let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
+            if let Some((_, _, size, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
+                if (*size as usize) <= n * 4 {
+                    for &(o, w) in fields.iter() {
+                        for i in 0..w as u32 {
+                            let byte = (d.u32_at(off + (o & !3)) >> (8 * (3 - ((o & 3) + i)))) as u8;
+                            unsafe { *buf.add((o + (w as u32 - 1 - i)) as usize) = byte };
+                        }
+                    }
+                }
+            }
             buf as *mut c_void
         }
+        "sis" => sis_table(d, b, off),
         "efdat" => efdat(d, b, off),
         "ptclcmd" => ptcl_cmd(d, b, off),
         "ptcltex" => ptcl_tex(d, b, off),
@@ -526,6 +551,34 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
             }
         }
     }
+    // `x48_items` slots the C reads as something other than an `Article*` (the table is `void**`): decoded as their own type
+    if let Some(t) = d.target(at("x48_items")) {
+        let n = (b.extent(t) / 4).max(1) as usize;
+        let w = |i: usize| t + 4 * i as u32;
+        let over: std::vec::Vec<(usize, *mut c_void)> = match sym.trim_start_matches("ftData").to_lowercase().as_str() {
+            // ftLk_Init_OnLoad / ftCl_Init_OnLoad: `ftParts_800753D4(fp, .., item_list[6])`, the hylian shield / master sword joint
+            "link" | "clink" if n > 6 => std::vec![(6, d.ptr::<HSD_Joint>(w(6)) as *mut c_void)],
+            // ftKb_SpecialN_800F5898: `return ca->x48_items[4]` (HSD_Joint*)
+            "kirby" if n > 4 => std::vec![(4, d.ptr::<HSD_Joint>(w(4)) as *mut c_void)],
+            // ftYs_SpecialN_8012CDD4: `return ca->x48_items[3]` (HSD_Joint*)
+            "yoshi" if n > 3 => std::vec![(3, d.ptr::<HSD_Joint>(w(3)) as *mut c_void)],
+            // ftGw_Init_OnLoad: `fp->x5AC.xC[4] = items[10]`, an FtPartsVisLookup array of `model_num` entries (ftParts_80074D7C)
+            "gamewatch" if n > 10 && d.target(at("x8")).is_some() => {
+                // the `FtPartsDesc.model_num` word of `x8` (the decoded record is filled later, so read the bytes)
+                let t8 = d.target(at("x8")).unwrap();
+                let models = d.u32_at(t8) as usize;
+                std::vec![(10, d.ptr_array::<melee_types::FtPartsVisLookup>(w(10), models) as *mut c_void)]
+            }
+            _ => std::vec::Vec::new(),
+        };
+        if !over.is_empty() {
+            let mut tbl: std::vec::Vec<*mut c_void> = (0..n).map(|i| unsafe { *(v.x48_items as *mut *mut c_void).add(i) }).collect();
+            for (i, p) in over {
+                tbl[i] = p;
+            }
+            v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut *mut c_void;
+        }
+    }
     note_dynamics(d, &v, at("x2C"));
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
@@ -546,16 +599,15 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
     fn dec<T: GcPointee + GcDecode>(d: &mut GcDecoder<'_>, sa: u32) -> *mut c_void {
         d.object::<T>(sa) as *mut c_void
     }
-    let cands: std::vec::Vec<(u32, Dec)> = match sym {
-        "samus" => std::vec![(<itSamusGrappleAttributes as GcDecode>::GC_BYTES, dec::<itSamusGrappleAttributes> as Dec)],
-        "link" | "clink" => std::vec![
-            (<itLinkHookshotAttributes as GcDecode>::GC_BYTES, dec::<itLinkHookshotAttributes> as Dec),
-            (<itLinkBoomerangAttributes as GcDecode>::GC_BYTES, dec::<itLinkBoomerangAttributes> as Dec),
-            (<itLinkArrowAttributes as GcDecode>::GC_BYTES, dec::<itLinkArrowAttributes> as Dec),
-        ],
-        "seak" => std::vec![(<itSeakChain_Attrs as GcDecode>::GC_BYTES, dec::<itSeakChain_Attrs> as Dec)],
-        "ness" => std::vec![(<itYoyoAttributes as GcDecode>::GC_BYTES, dec::<itYoyoAttributes> as Dec)],
-        "popo" | "nana" => std::vec![(<itClimbersStringAttributes as GcDecode>::GC_BYTES, dec::<itClimbersStringAttributes> as Dec)],
+    fn cand<T: GcPointee + GcDecode + melee_core::gc::GcLayout>() -> (u32, &'static [melee_core::gc::GcField], Dec) {
+        (<T as GcDecode>::GC_BYTES, <T as melee_core::gc::GcLayout>::GC_FIELDS, dec::<T> as Dec)
+    }
+    let cands: std::vec::Vec<(u32, &'static [melee_core::gc::GcField], Dec)> = match sym {
+        "samus" => std::vec![cand::<itSamusGrappleAttributes>()],
+        "link" | "clink" => std::vec![cand::<itLinkHookshotAttributes>(), cand::<itLinkBoomerangAttributes>(), cand::<itLinkArrowAttributes>()],
+        "seak" => std::vec![cand::<itSeakChain_Attrs>()],
+        "ness" => std::vec![cand::<itYoyoAttributes>()],
+        "popo" | "nana" => std::vec![cand::<itClimbersStringAttributes>()],
         _ => return,
     };
     let Some(t) = d.target(at_x48) else { return };
@@ -564,7 +616,30 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
         let Some(ta) = d.target(t + 4 * i) else { continue };
         let Some(sa) = d.target(ta + 4) else { continue };
         let ext = b.extent(sa);
-        if let Some((_, f)) = cands.iter().find(|(sz, _)| ext == *sz) {
+        // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record
+        // is the candidate whose pointer-typed fields hold the relocated words of the block (null pointers are not relocated), with the
+        // fewest relocated words in its other fields
+        let score = |sz: u32, fields: &[melee_core::gc::GcField]| -> (u32, u32) {
+            let (mut hit, mut extra) = (0, 0);
+            for w in 0..sz / 4 {
+                if d.is_reloc(sa + 4 * w) {
+                    if fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')) {
+                        hit += 1;
+                    } else {
+                        extra += 1;
+                    }
+                }
+            }
+            (hit, extra)
+        };
+        let pick = cands
+            .iter()
+            .filter(|(sz, fields, _)| *sz <= ext + 8 && score(*sz, fields).0 > 0)
+            .min_by_key(|(sz, fields, _)| {
+                let (hit, extra) = score(*sz, fields);
+                (extra, core::cmp::Reverse(hit))
+            });
+        if let Some((_, _, f)) = pick {
             let art = d.object::<Article>(ta);
             let typed = f(d, sa);
             unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
@@ -647,6 +722,24 @@ fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
 }
 
 /// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.
+/// A `SIS_*Data` root (`HSD_SisLib_804D1124[font]`): word 0 / 1 are the kerning and glyph-texture tables (`SIS { kerning, textures }`, typed
+/// arrays), the following words are the pointers to the text strings, which the text code (`HSD_SisLib_803A6368`, `803A660C`, ...) reads as
+/// byte streams: native pointer slots, the strings kept in the raw image.
+fn sis_table(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    let n = ((b.extent(off) / 4) as usize).max(2);
+    let buf = native_buf(n * 8) as *mut usize;
+    unsafe {
+        buf.write(d.ptr_array_extent::<melee_types::TextKerning>(off) as usize);
+        buf.add(1).write(d.ptr_array_extent::<melee_types::TextGlyphTexture>(off + 4) as usize);
+        for i in 2..n {
+            if let Some(t) = d.target(off + 4 * i as u32) {
+                buf.add(i).write(b.raw_addr(t) as usize);
+            }
+        }
+    }
+    buf as *mut c_void
+}
+
 fn native_buf(n: usize) -> *mut u8 {
     Box::leak(vec![0u64; (n + 7) / 8].into_boxed_slice()).as_mut_ptr() as *mut u8
 }

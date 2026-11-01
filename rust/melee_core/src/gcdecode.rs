@@ -99,6 +99,8 @@ pub struct GcDecoder<'a> {
     data: &'a [u8],
     relocs: &'a HashSet<u32>,
     memo: HashMap<(u32, TypeId), *mut u8>,
+    /// [`GcDecoder::ptr_array`] results per (target, T, length): two records may name one array with different counts.
+    arr_memo: HashMap<(u32, TypeId, usize), *mut u8>,
     queue: Vec<Pending>,
     arena: GcArena,
     issues: Vec<String>,
@@ -122,7 +124,7 @@ impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
-        Self { data, relocs, memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+        Self { data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -452,12 +454,12 @@ impl<'a> GcDecoder<'a> {
         }
         let Some(t) = self.target(at) else { return core::ptr::null_mut() };
         struct ArrayKey<T>(core::marker::PhantomData<T>);
-        let key = (t, TypeId::of::<ArrayKey<T>>());
-        if let Some(&p) = self.memo.get(&key) {
+        let key = (t, TypeId::of::<ArrayKey<T>>(), n.max(1));
+        if let Some(&p) = self.arr_memo.get(&key) {
             return p as *mut T;
         }
         let p = self.array::<T>(t, n.max(1)) as *mut u8;
-        self.memo.insert(key, p);
+        self.arr_memo.insert(key, p);
         p as *mut T
     }
 

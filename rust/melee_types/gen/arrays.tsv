@@ -35,6 +35,7 @@ ftData.x24	until=0xFFFFFFFF
 ftData.x28	until=0xFFFFFFFF
 # ft/dobjlist.h: a lookup has x0 TempS entries, each TempS names x0 DObj indices (raw bytes)
 FtPartsVisLookup.x4	x0
+TempS.x4	x0
 FigaTree.tracks	extent
 # ft/ftcoll.c ftColl_8007B320: the hurtbox init list has `count` entries, the dynamics hit list `x4` entries
 ftData_x30.inits	count
@@ -63,3 +64,5 @@ HSD_ByteCodeExpDesc.rvalue	until=0
 UNK_SAMUS_S1.x4_anim_joints	4
 # ft_0881.c: ft_800889f4 draws HSD_Randi(num) and indexes sfx_ids with it
 _FtSFXArr.sfx_ids	num
+# ft/fighter.h: ftParts_8007506C / ftParts_800753D4 / ftKb_SpecialN_800EF040 walk x4 consecutive Fighter_804D6540_x0_t rows (Kirby has several)
+Fighter_804D6540_t.x0	x4

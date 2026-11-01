@@ -49,13 +49,16 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
-    if name.starts_with("SIS_") { return Some(rt("SIS")); }
+    if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
+    if name.starts_with("ftDataKirbyCopy") { return Some(rt("KirbyHatStruct")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
+    if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name.ends_with("_scene_data") { return Some(rt("SceneDesc")); }
+    if name.ends_with("_image_desc") { return Some(rt("HSD_ImageDesc")); }
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
     if name.ends_with("_figatree") { return Some(rt("FigaTree")); }
     if name.ends_with("_joint") { return Some(rt("HSD_Joint")); }
@@ -70,15 +73,17 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
         RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
+            "DynamicsDesc" => d.object::<DynamicsDesc>(off) as *mut c_void,
             "FigaTree" => d.object::<FigaTree>(off) as *mut c_void,
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
             "HSD_AnimJoint" => d.object::<HSD_AnimJoint>(off) as *mut c_void,
+            "HSD_ImageDesc" => d.object::<HSD_ImageDesc>(off) as *mut c_void,
             "HSD_Joint" => d.object::<HSD_Joint>(off) as *mut c_void,
             "HSD_MatAnimJoint" => d.object::<HSD_MatAnimJoint>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
+            "KirbyHatStruct" => d.object::<KirbyHatStruct>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
-            "SIS" => d.object::<SIS>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),

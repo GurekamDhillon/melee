@@ -67,8 +67,11 @@ pub(crate) unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
     }
     assert!(sa <= 8 && sb <= 8, "link cast: size mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
     let scalar = |n: &str| matches!(n, "bool" | "u8" | "i8" | "u16" | "i16" | "u32" | "i32" | "u64" | "i64" | "usize" | "isize");
+    // C converts an integer to a pointer by extension (the `0` NULL of a call such as `ftCo_800DE7C0(gobj, 0, 0)` whose
+    // declaration the hook mirrors with ints), so a scalar -> raw pointer cast is a conversion too
+    let ptr = |n: &str| n.starts_with("*mut ") || n.starts_with("*const ");
     assert!(
-        scalar(core::any::type_name::<A>()) && scalar(core::any::type_name::<B>()),
+        scalar(core::any::type_name::<A>()) && (scalar(core::any::type_name::<B>()) || ptr(core::any::type_name::<B>())),
         "link cast: {} -> {} (site {SITE})",
         core::any::type_name::<A>(),
         core::any::type_name::<B>()

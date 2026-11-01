@@ -4,7 +4,8 @@
 # type: a melee_types record (GcDecode); *T = the symbol is a pointer to T (C: `T**`); raw = the bytes stay in the
 #   raw image (C: `void*`, a nested archive or a blob read byte-wise).
 # gen_dat_types.py validates every type against rust/melee_types/src/gen.rs and writes rust/melee_engine/src/dat_types.rs.
-prefix	SIS_	SIS	sislib.c HSD_SisLib_803A62A0 SIS* sis (SdIntro.dat SIS_IntroData and the other text files)
+prefix	SIS_	custom:sis	sislib.c HSD_SisLib_803A62A0 SIS* sis (SdIntro.dat SIS_IntroData and the other text files)
+prefix	ftDataKirbyCopy	KirbyHatStruct	ft/kinds/ftKirby/ftkirby.c:2865 ft_80459B88.hats[kind] (KirbyHatStruct* of the PlKbCpXx.dat hat archives)
 prefix	ftData	custom:ftdata	fighter public data: ft/kinds/*/ft*.c `*_Init_DataName` ("ftDataCaptain", "ftDataFox", ...), loaded by ftdata.c as struct ftData
 sym	map_head	UnkStageDat	src/melee/gr/grdatfiles.c:186 arc->unk4
 sym	coll_data	MapCollData	src/melee/gr/grdatfiles.c:67 stage_info.coll_data
@@ -14,7 +15,7 @@ sym	map_plit	custom:ptrtable_lightlist	src/melee/gr/types.h:6C4 map_plit
 sym	quake_model_set	DynamicModelDesc	src/melee/gr/types.h:6CC quake_model_set
 sym	map_ptcl	custom:ptclcmd	src/melee/gr/grdatfiles.c:41 (HSD_Archive*, psInitDataBankLocate)
 sym	map_texg	custom:ptcltex	src/melee/gr/grdatfiles.c:42 (HSD_Archive*, psInitDataBankLocate)
-sym	yakumono_param	raw	src/melee/gr/types.h:6C0 yakumono_param (void*)
+sym	yakumono_param	custom:rawwords	src/melee/gr/types.h:6C0 yakumono_param (void*)
 sym	itPublicData	custom:itco	src/melee/it/iteffect.c:19 it_804D6D20
 sym	effCommonDataTable	custom:efdat	src/melee/ef/efasync.c:1294 EF_DAT_Entry* (entry 0 decodes; later entries are read through the pointer table by index)
 suffix	_matanim_joint	HSD_MatAnimJoint	model files, e.g. gmresultplayer.c:583 Eblm_matanim_joint
@@ -36,3 +37,5 @@ sym	lbRefData	custom:lbrefdata	src/melee/lb/lbrefract.c:373
 sym	effBehaviorTable	raw	src/melee/ef/efasync.c (effect behavior table; typed by step 10)
 prefix	eff	custom:efdat	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
 sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)
+suffix	_image_desc	HSD_ImageDesc	gr/grizumi.c:758, grpstadium.c:261 HSD_ImageDesc* (mirror / BG image desc, zeroed and refilled by the stage)
+prefix	dynamicsdata_	DynamicsDesc	gr/grcastle.c:428 (flag3/4/6), gr/grrcruise.c:326 (shipflag): DynamicsDesc* for grLib_801C9B20

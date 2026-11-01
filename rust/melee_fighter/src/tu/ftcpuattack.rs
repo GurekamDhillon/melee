@@ -76,7 +76,7 @@ pub mod ext {
         MP_CHECK_CEILING mpCheckCeiling(x0: f32, y0: f32, x1: f32, y1: f32, p: *mut Vec3, line: *mut i32, flags: *mut u32, n: *mut Vec3, a: i32, b: i32) -> i32;
         MP_CHECK_ALL mpCheckAll(p: *mut Vec3, line: *mut i32, flags: *mut u32, n: *mut Vec3, a: i32, b: i32, x0: f32, y0: f32, x1: f32, y1: f32) -> i32;
         IT_8026B960 it_8026B960(g: *mut HSD_GObj) -> f32;
-        IT_8026B924 it_8026B924(g: *mut HSD_GObj) -> f32;
+        IT_8026B924 it_8026B924(g: *mut HSD_GObj) -> i32;
         IT_8026C1B4 it_8026C1B4(g: *mut HSD_GObj) -> i32;
         FTLIB_80086960 ftLib_80086960(g: *mut HSD_GObj) -> i32;
         LBCOLL_8000ACFC lbColl_8000ACFC(fp: *mut Fighter, h: *mut HitCapsule) -> i32;
@@ -1372,7 +1372,7 @@ pub fn ftCo_800B9A04(fp: *mut Fighter, arg1: *mut Item, arg2: f32, arg3: f32) ->
         return true;
     }
     if ext::ftCo_800A59C0(arg1) != 0 {
-        if near_zero(ext::it_8026B924(f.item_gobj)) {
+        if near_zero(ext::it_8026B924(f.item_gobj) as f32) {
             f.cpu.xA4 = 0x28;
             return true;
         }

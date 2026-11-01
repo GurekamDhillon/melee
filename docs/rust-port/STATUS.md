@@ -93,6 +93,9 @@ was unlinked, and several GC-layout reads went through native structs; details i
   `it_80273484 / it_8027346C / it_802714C0` (the rest of `Item_802697D4`) and the engine does not; at 1562 one of the five Foods items (kind 18, the
   Party Ball burst) has `xDCC_flag.b3 == 0` on the engine and 1 in the C. Not yet found who clears it (`Item_8026AE84`?). Tried: item rows in `melee diff`
   (kind / pos / vel equal), blast-zone values (fine). Next: log `xDCC_flag` writes of kind 18 items on both sides (the `gw_dbg_jobj_out` recipe in notes).
+  seqdiff (`^(it_|item_)`, frame 1562): C takes the DROP path (`item_8026ae84 it_80273748 it_8026b6c8 it_8026b390 ... item_8026849c`), the engine the THROW path
+  (`item_8026849c it_80274658 item_80268e5c item_8026b074`), so the fighter-side caller (Samus P2 holding a food item) picks drop vs throw differently; start from
+  the caller of `Item_8026AE84` (non-tu ftlib/ftcommon callers are invisible in the Rust call trace).
 - D. Retail tables with unresolved callbacks (no callback at all on the engine): Crazy Hand `ftCh_*` (40), Jigglypuff `ftPr_*` (80), Crazy Hand captures (12)
   (`melee_link/retail_unresolved.txt`). Not in a golden; any scenario with these fighters will freeze them.
 - E. Direct `todo!` stubs left in melee_fighter tu: `ftCo_Damage` (lbBgFlash_80021C48, efAsync_Spawn, Camera_RequestQuake), `JumpAerial` (HSD_JObjSetMtxDirtySub), `ft_0c8c`

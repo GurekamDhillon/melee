@@ -13,6 +13,7 @@
 use crate::consts::*;
 use crate::draw::DrawCmd;
 use crate::state::*;
+use crate::resources::GxData;
 use crate::texture;
 use std::collections::HashMap;
 
@@ -203,6 +204,28 @@ struct PipelineKey {
     bias: (u32, u32, u32),
 }
 
+/// Decoded-texture cache key: the texture's content identity (guest bytes, shape, format and, for
+/// palette formats, the TLUT bytes and layout). NOT the GXTexObj id: the HSD layer re-inits a fresh
+/// TexObj on every `load_texture`, so an id-keyed cache created a new GPU texture per draw per frame.
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+struct TexKey {
+    ptr: usize,
+    len: usize,
+    w: u32,
+    h: u32,
+    fmt: u32,
+    mips: u32,
+    tlut: (usize, usize, u32, u16),
+}
+
+/// A cached texture; `_data` / `_tlut` keep the source `Arc`s alive so their addresses (the key) cannot be reused.
+struct TexEntry {
+    _tex: wgpu::Texture,
+    view: wgpu::TextureView,
+    _data: GxData,
+    _tlut: Option<GxData>,
+}
+
 /// Offscreen GX renderer.
 pub struct Renderer {
     pub adapter: wgpu::Adapter,
@@ -222,7 +245,7 @@ pub struct Renderer {
     layout: wgpu::PipelineLayout,
     pipelines: HashMap<PipelineKey, wgpu::RenderPipeline>,
     samplers: HashMap<SamplerKey, wgpu::Sampler>,
-    textures: HashMap<(u32, u32, usize, u32), (wgpu::Texture, wgpu::TextureView)>,
+    textures: HashMap<TexKey, TexEntry>,
     empty_view: wgpu::TextureView,
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
@@ -478,12 +501,19 @@ impl Renderer {
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
         let o = &d.textures[map];
         let data = o.data.as_ref()?;
-        let key = (o.tex_obj_id, o.tex_data_version, data.as_ptr() as usize, o.tlut);
-        if let Some((_, v)) = self.textures.get(&key) {
-            return Some(v.clone());
-        }
         let fmt = o.format();
         let (w, h, mips) = (o.width(), o.height(), o.mip_count());
+        let pal = matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2);
+        let tl = if pal { d.tluts.get(o.tlut as usize) } else { None };
+        let tlut_data = tl.and_then(|t| t.data.clone());
+        let tlut_key = match (tl, &tlut_data) {
+            (Some(t), Some(td)) => (td.as_ptr() as usize, td.len(), t.format, t.num_entries),
+            _ => (0, 0, 0, 0),
+        };
+        let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w, h, fmt, mips, tlut: tlut_key };
+        if let Some(e) = self.textures.get(&key) {
+            return Some(e.view.clone());
+        }
         if w == 0 || h == 0 {
             return None;
         }
@@ -518,7 +548,7 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         let view = tex.create_view(&Default::default());
-        self.textures.insert(key, (tex, view.clone()));
+        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data });
         Some(view)
     }
 

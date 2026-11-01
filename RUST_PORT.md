@@ -106,3 +106,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-01 step 23 wip 1: lint_logic recognises forwarders (R2 3386 -> 1007, baseline 1996); engine 1801/1801/3601/1652. See notes/consolidation.md round 6.
 - 2026-11-01 rust-port: step 23 round 7 (camera/stage models deleted, ftCo_0A01 and camera merged, R4/R2 dedupe tools), baseline 1996 -> 986, see notes/consolidation.md
 - 2026-11-01 rust-port: round 8, blocker C solved: all four goldens complete on the engine (1801/1801/3601/3601, seed included), see notes/consolidation.md round 8
+- 2026-11-01 rust-port: round 9, GObj model deleted (native bodies in gobj*.c tu files), fold_names --tu, r2_ext.py, lint baseline 736 -> 576, see notes/consolidation.md round 9

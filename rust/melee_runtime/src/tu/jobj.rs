@@ -332,14 +332,14 @@ unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
 }
 /// `HSD_JObjMtxIsDirty` on the raw record.
 unsafe fn raw_dirty(j:*mut HSD_JObj)->bool{(*j).flags&crate::jobj::JOBJ_USER_DEF_MTX==0&&(*j).flags&JOBJ_MTX_DIRTY!=0}
-/// Fast path of `HSD_JObjSetupMatrixSub` / `MakeMatrix` for the common joint: no robj, no aobj, no IK or user matrix, and a
+/// Fast path of `HSD_JObjSetupMatrixSub` / `MakeMatrix` for the common joint: no robj, no aobj target, no IK or user matrix, and a
 /// clean (or absent) parent. Then the result depends on the joint and its parent alone and only the joint's flags, `scl`
 /// and `mtx` change, so a two-node tree replaces the snapshot of the whole connected component (hundreds of joints per
 /// fighter, rebuilt for every envelope / dobj the render pass sets up). `clear_dirty` = SetupMatrixSub's flag clear.
 /// Returns false (nothing done) when the joint needs the general path.
 unsafe fn fast_matrix(j:*mut HSD_JObj,clear_dirty:bool)->bool{
     use crate::jobj::{JOBJ_JOINT,JOBJ_USER_DEF_MTX};
-    if !(*j).robj.is_null()||!(*j).aobj.is_null()||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
+    if !(*j).robj.is_null()||(!(*j).aobj.is_null()&&!(*(*j).aobj).hsd_obj.is_null())||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
     let par=(*j).parent;
     if !par.is_null()&&raw_dirty(par){return false;}
     let p=[j,par];let n=if par.is_null(){1}else{2};

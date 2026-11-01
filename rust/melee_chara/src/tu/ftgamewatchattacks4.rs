@@ -164,8 +164,9 @@ pub fn ftGw_AttackS4_Coll(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftGw_AttackS4_ItemCheckTorchRemove(fp: &Fighter) -> bool {
+pub fn ftGw_AttackS4_ItemCheckTorchRemove(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftGw_AttackS4_ItemCheckTorchRemove");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     fp.motion_id as u32 != ftGw_MS_AttackS4 as u32
 }
 

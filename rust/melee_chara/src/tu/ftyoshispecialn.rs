@@ -379,10 +379,10 @@ pub fn inlineB0(gobj: *mut HSD_GObj, on_anim_end: fn(*mut HSD_GObj)) {
                     &mut item_attrs.pos,
                 );
             }
-            ftYs_SpecialN_SetupItemVel(&*fp, &mut item_attrs.vel);
-            item_attrs.float2 = ftYs_SpecialN_GetFacingDir(&*fp);
-            item_attrs.lifetime = ftYs_SpecialN_GetDatAttr24(&*fp);
-            item_attrs.x24 = ftYs_SpecialN_GetDatAttr18(&*fp);
+            ftYs_SpecialN_SetupItemVel(gobj, &mut item_attrs.vel);
+            item_attrs.float2 = ftYs_SpecialN_GetFacingDir(gobj);
+            item_attrs.lifetime = ftYs_SpecialN_GetDatAttr24(gobj);
+            item_attrs.x24 = ftYs_SpecialN_GetDatAttr18(gobj);
             item_attrs.float3 = ftYs_SpecialN_8012CDB4();
             item_attrs.kind = It_Kind_Yoshi_EggLay;
             ext::it_802F2F34(gobj, &mut item_attrs);
@@ -451,33 +451,39 @@ pub fn ftYs_SpecialAirN2_0_Anim(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftYs_SpecialN_GetDatAttr18(fp: &Fighter) -> f32 {
+pub fn ftYs_SpecialN_GetDatAttr18(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr18");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftYoshiAttributes>(fp).x18
 }
 
-pub fn ftYs_SpecialN_GetDatAttr1C(fp: &Fighter) -> f32 {
+pub fn ftYs_SpecialN_GetDatAttr1C(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr1C");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftYoshiAttributes>(fp).x1C
 }
 
-pub fn ftYs_SpecialN_GetDatAttr20(fp: &Fighter) -> f32 {
+pub fn ftYs_SpecialN_GetDatAttr20(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr20");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftYoshiAttributes>(fp).x20
 }
 
-pub fn ftYs_SpecialN_GetDatAttr24(fp: &Fighter) -> f32 {
+pub fn ftYs_SpecialN_GetDatAttr24(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr24");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     da::<ftYs_DatAttrs>(fp).x24
 }
 
-pub fn ftYs_SpecialN_GetFacingDir(fp: &Fighter) -> f32 {
+pub fn ftYs_SpecialN_GetFacingDir(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetFacingDir");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     fp.facing_dir
 }
 
-pub fn ftYs_SpecialN_SetupItemVel(fp: &Fighter, out: &mut Vec3) {
+pub fn ftYs_SpecialN_SetupItemVel(gobj: *mut HSD_GObj, out: &mut Vec3) {
     melee_core::ct!("ftYs_SpecialN_SetupItemVel");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     let a: &ftYoshiAttributes = da(fp);
     out.x = -fp.facing_dir * a.x10;
     out.y = a.x14;

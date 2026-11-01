@@ -448,8 +448,9 @@ pub fn ftPe_SpecialAirNHit_Phys(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftPe_SpecialN_IsActive(fp: &Fighter) -> bool {
+pub fn ftPe_SpecialN_IsActive(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftPe_SpecialN_IsActive");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     let m = fp.motion_id as i32;
     !(m >= ftPe_MS_SpecialN as i32 && m <= ftPe_MS_SpecialAirNHit as i32)
 }

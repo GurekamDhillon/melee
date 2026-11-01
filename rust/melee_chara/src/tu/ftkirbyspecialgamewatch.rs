@@ -327,8 +327,9 @@ pub fn ftKb_SpecialNGw_8010D6D0(gobj: *mut HSD_GObj, arg1: f32) {
 }
 
 // ---- folded from chars (consolidation step 20/21) ----
-pub fn ftKb_SpecialNGw_8010D160(fp: &Fighter) -> bool {
+pub fn ftKb_SpecialNGw_8010D160(gobj: *mut HSD_GObj) -> bool {
     melee_core::ct!("ftKb_SpecialNGw_8010D160");
+    let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
     let m = fp.motion_id as i32;
     !(m >= ftKb_MS_GwSpecialN as i32 && m <= ftKb_MS_GwSpecialAirN as i32)
 }

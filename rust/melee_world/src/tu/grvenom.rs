@@ -1228,6 +1228,14 @@ pub unsafe extern "C" fn grVenom_80204284(gobj: *mut Ground_GObj) {
 
 pub unsafe extern "C" fn grVenom_80204424(_arg: *mut Ground_GObj) { melee_core::ct!("grVenom_80204424");}
 
+/// `gp->u.venom.xE4` (the stage gobj's animation frame, a `float` at 0xE4): in the C `Ground` union it sits after the seven 4-byte
+/// `u.venom2` JObj pointers; natively those are 8 bytes wide and the `u.venom` view's offset would overlap them, so the float lives
+/// right after `u.venom2.xE0_state` instead.
+#[inline(always)]
+unsafe fn venom2_xe4(gp: *mut Ground) -> *mut f32 {
+    (&raw mut (*gp).u.venom2.xE0_state as *mut u8).add(4) as *mut f32
+}
+
 pub unsafe extern "C" fn grVenom_80204428(gobj: *mut Ground_GObj) {
     melee_core::ct!("grVenom_80204428");
     let gp = GET_GROUND(gobj);
@@ -1249,7 +1257,7 @@ pub unsafe extern "C" fn grVenom_80204428(gobj: *mut Ground_GObj) {
     (*st).anon_0.set_b5(0);
     (*st).anon_0.set_b6(0);
 
-    (*gp).u.venom.anon_20.xE4 = 0.0f32;
+    *venom2_xe4(gp) = 0.0f32;
 
     ext::Ground_801C5440(gp, 0, 0x6B6C3);
     ext::mpLib_80057BC0(2);
@@ -1319,7 +1327,7 @@ pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
         let a = ext::grAnime_801C8318(gobj, 0, 7);
         if !a.is_null() {
             let frame = (*a).curr_frame;
-            let xe4 = (*gp).u.venom.anon_20.xE4;
+            let xe4 = *venom2_xe4(gp);
             let st = &raw mut (*gp).u.venom2.xE0_state;
             if (xe4 < 1033.0f32 && 1033.0f32 <= frame)
                 || (xe4 < 1086.0f32 && 1086.0f32 <= frame)
@@ -1386,7 +1394,7 @@ pub unsafe extern "C" fn grVenom_8020454C(gobj: *mut Ground_GObj) {
                 (*st).anon_0.set_b4(0);
                 (*st).anon_0.set_b5(0);
             }
-            (*gp).u.venom.anon_20.xE4 = frame;
+            *venom2_xe4(gp) = frame;
         }
     }
 

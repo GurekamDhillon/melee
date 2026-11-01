@@ -34710,7 +34710,7 @@ impl GcDecode for TempS {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.x4 = <*mut u8 as GcDecode>::gc_decode(d, at + 0x4);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x0) as i64)).max(0) as usize; v.x4 = d.ptr_array::<u8>(at + 0x4, n) as *mut u8; }
         v
     }
 }

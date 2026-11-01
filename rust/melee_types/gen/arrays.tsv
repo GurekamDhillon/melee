@@ -35,6 +35,7 @@ ftData.x24	until=0xFFFFFFFF
 ftData.x28	until=0xFFFFFFFF
 # ft/dobjlist.h: a lookup has x0 TempS entries, each TempS names x0 DObj indices (raw bytes)
 FtPartsVisLookup.x4	x0
+TempS.x4	x0
 FigaTree.tracks	extent
 # ft/ftcoll.c ftColl_8007B320: the hurtbox init list has `count` entries, the dynamics hit list `x4` entries
 ftData_x30.inits	count

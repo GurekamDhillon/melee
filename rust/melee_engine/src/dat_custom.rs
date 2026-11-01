@@ -526,6 +526,34 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
             }
         }
     }
+    // `x48_items` slots the C reads as something other than an `Article*` (the table is `void**`): decoded as their own type
+    if let Some(t) = d.target(at("x48_items")) {
+        let n = (b.extent(t) / 4).max(1) as usize;
+        let w = |i: usize| t + 4 * i as u32;
+        let over: std::vec::Vec<(usize, *mut c_void)> = match sym.trim_start_matches("ftData").to_lowercase().as_str() {
+            // ftLk_Init_OnLoad / ftCl_Init_OnLoad: `ftParts_800753D4(fp, .., item_list[6])`, the hylian shield / master sword joint
+            "link" | "clink" if n > 6 => std::vec![(6, d.ptr::<HSD_Joint>(w(6)) as *mut c_void)],
+            // ftKb_SpecialN_800F5898: `return ca->x48_items[4]` (HSD_Joint*)
+            "kirby" if n > 4 => std::vec![(4, d.ptr::<HSD_Joint>(w(4)) as *mut c_void)],
+            // ftYs_SpecialN_8012CDD4: `return ca->x48_items[3]` (HSD_Joint*)
+            "yoshi" if n > 3 => std::vec![(3, d.ptr::<HSD_Joint>(w(3)) as *mut c_void)],
+            // ftGw_Init_OnLoad: `fp->x5AC.xC[4] = items[10]`, an FtPartsVisLookup array of `model_num` entries (ftParts_80074D7C)
+            "gamewatch" if n > 10 && d.target(at("x8")).is_some() => {
+                // the `FtPartsDesc.model_num` word of `x8` (the decoded record is filled later, so read the bytes)
+                let t8 = d.target(at("x8")).unwrap();
+                let models = d.u32_at(t8) as usize;
+                std::vec![(10, d.ptr_array::<melee_types::FtPartsVisLookup>(w(10), models) as *mut c_void)]
+            }
+            _ => std::vec::Vec::new(),
+        };
+        if !over.is_empty() {
+            let mut tbl: std::vec::Vec<*mut c_void> = (0..n).map(|i| unsafe { *(v.x48_items as *mut *mut c_void).add(i) }).collect();
+            for (i, p) in over {
+                tbl[i] = p;
+            }
+            v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut *mut c_void;
+        }
+    }
     note_dynamics(d, &v, at("x2C"));
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {

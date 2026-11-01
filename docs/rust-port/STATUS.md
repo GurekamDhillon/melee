@@ -66,7 +66,7 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
 3. `melee play` covers 7 fighters / 4 stages; retail `mn*` scenes are stand-ins (notes/play.md).
-4. Engine (default since step 18; `--engine legacy` = the model): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl 3601 (the whole golden), cpu_peach_samus_ys_items 1562 (blocker C); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
+4. Engine (default since step 18; `--engine legacy` = the model): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl 3601 (the whole golden), cpu_peach_samus_ys_items 1652 (blocker C); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
 5. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
 
 ## Writing notes (merge-friendly: other branches append concurrently)
@@ -86,7 +86,10 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 - notes/traps.md: index of traps.   Other: docs/rust-port/inventory.md, neutral-hash.md, group-*.md, tools/rust-port/snap/README.md.
 
 
-## Current blockers (engine, 2026-11-01, round 3)
+## Current blockers (engine, 2026-11-01, round 4)
+Round 4 done: steps 17 (engine snapshot / rollback: `melee synctest`), 18 (cutover, GX bridge draws the real frame), 19 (the `vs_match` model deleted, engine audio equal to the C capture).
+Next: steps 20-23 (dedupe: `melee_chara/src/chars/rN` bodies still back the `tu/` re-exports, `adapt.rs` / `stubs.rs` forwarders, the non-tu `melee_fighter` / `melee_world` / `melee_items` / `melee_modes` bodies, TU-to-TU copies), 24 (lint enforcing).
+Open audio: `--pause` and `--time-secs` captures (notes/consolidation.md Round 4).
 Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1652.
 Blockers A and B of round 2 (stale hand matrices) are fixed: the stage draw callbacks were skipped (`Wb_RenderOption` answered 0), `HSD_MkRotationMtx`
 was unlinked, and several GC-layout reads went through native structs; details in notes/consolidation.md "Round 3".

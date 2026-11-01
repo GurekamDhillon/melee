@@ -43,6 +43,10 @@ pub fn install() {
         // the hooks.rs defaults below are the legacy-state ports (`1.0`, `crate::player`); the engine runs the tu bodies
         melee_fighter::hooks::GROUND_FRICTION_MUL = Some(|fp| unsafe { melee_fighter::tu::ft_081b::ft_get_ground_friction_multiplier(&mut *fighter_mut(fp)) });
         melee_fighter::hooks::PLAYER_UPDATE_JOYSTICK_COUNT = Some(|slot, idx| melee_fighter::tu::player::Player_UpdateJoystickCountByIndex(slot, idx));
+        // `ftCommon_UpdateFacing(fp)`: the generator finds the typed `_fp` body and the c2rs one ("ambiguous"); the engine runs the typed body
+        melee_chara::tu::ftsamusspecialhi::ext::hook::ftCommon_UpdateFacing = Some(|fp| unsafe { melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(&mut *fp) });
+        melee_fighter::tu::ftCo_SpecialAir::ext::hook::ftCommon_UpdateFacing = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(fp));
+        melee_fighter::tu::ftCo_SpecialS::ext::hook::ftCommon_UpdateFacing = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(fp));
         // ftcommon.c `parasol_table_3[idx](item, v)`: slot 4 is it_802BDD40, slot 6 is it_802BDDB4 (itpeachparasol.c); the rest are NULL
         melee_fighter::hooks::IT_PARASOL_TABLE_3 = Some(|idx, i, v| unsafe {
             match idx {

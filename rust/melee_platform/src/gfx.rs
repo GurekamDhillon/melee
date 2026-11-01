@@ -90,7 +90,7 @@ impl Presenter {
             }
         };
         let view = tex.texture.create_view(&Default::default());
-        self.renderer.blit_to(&view, self.config.format);
+        self.renderer.blit_to(&view, self.config.format, self.config.width, self.config.height);
         tex.present();
         self.presented += 1;
     }

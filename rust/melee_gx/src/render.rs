@@ -753,10 +753,11 @@ impl Renderer {
         self.queue.submit([enc.finish()]);
     }
 
-    /// Scale the EFB colour target onto `target` (a swapchain image of `format`), filling it. This
+    /// Scale the EFB colour target onto `target` (a `tw` x `th` swapchain image of `format`). This
     /// is the display half of GXCopyDisp + VI: alpha is forced to 1 (the EFB's alpha is not the
-    /// display's), filtering is linear like the XFB scaler.
-    pub fn blit_to(&mut self, target: &wgpu::TextureView, format: wgpu::TextureFormat) {
+    /// display's), filtering is linear like the XFB scaler. The EFB keeps its 4:3 shape, centred
+    /// with black bars, unless `MELEE_ASPECT=stretch` asks for the old fill.
+    pub fn blit_to(&mut self, target: &wgpu::TextureView, format: wgpu::TextureFormat, tw: u32, th: u32) {
         const BLIT_WGSL: &str = "
 @group(0) @binding(0) var efb: texture_2d<f32>;
 @group(0) @binding(1) var smp: sampler;
@@ -861,6 +862,14 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
+            let (tw, th) = (tw.max(1) as f32, th.max(1) as f32);
+            let stretch = std::env::var("MELEE_ASPECT").map_or(false, |v| v == "stretch");
+            if !stretch {
+                // Fit the EFB's aspect (640x480 times the render scale) inside the target.
+                let aspect = self.width as f32 / self.height as f32;
+                let (w, h) = if tw / th > aspect { (th * aspect, th) } else { (tw, tw / aspect) };
+                pass.set_viewport(((tw - w) * 0.5).floor(), ((th - h) * 0.5).floor(), w, h, 0.0, 1.0);
+            }
             pass.set_pipeline(pipeline);
             pass.set_bind_group(0, &bg, &[]);
             pass.draw(0..3, 0..1);

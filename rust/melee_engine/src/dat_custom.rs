@@ -572,6 +572,11 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
                 let models = d.u32_at(t8) as usize;
                 std::vec![(10, d.ptr_array::<melee_types::FtPartsVisLookup>(w(10), models) as *mut c_void)]
             }
+            // ftSk_SpecialS_80110610: `item = items[4 | 5]` is an `HSD_Joint**` (the aim animation joints, read as `item[2]`)
+            "seak" if n > 5 => std::vec![
+                (4, rtable::<HSD_Joint>(d, b, w(4)) as *mut c_void),
+                (5, rtable::<HSD_Joint>(d, b, w(5)) as *mut c_void),
+            ],
             _ => std::vec::Vec::new(),
         };
         if !over.is_empty() {

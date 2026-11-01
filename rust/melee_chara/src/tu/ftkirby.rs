@@ -14,15 +14,18 @@
 //! (callback rows over TUs outside this shard), `ftKb_CostumeList`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter};
 use crate::stubs as st;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
 /// Already ported (rounds 2, 5, 6): re-exported under this TU.
-pub use crate::chars::ftKirby::ftkirby::ftKb_Init_UnkDemoCallbacks0;
-pub use crate::chars::r5::ftKirby::ftkirby::{ftKb_Init_OnKnockbackEnter, ftKb_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftKirby::ftkirby::ftKb_Init_OnItemVisible;
+
+
+
 
 /// `ftKirby_CostumeArchive` (ftKb_Init.static.h): a hat's joint tree and mat-anim tree.
 #[repr(C)]
@@ -350,7 +353,7 @@ pub mod ext {
                     None => { unsafe { crate::tu::ftkirbyspecialyoshi::ftKb_SpecialNYs_8010A8BC(gobj as _); } return; },
                 }
             }
-    crate::port_hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, crate::adapt::ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
+    crate::port_hook!(FTKB_SPECIALNPR_80100DE0, ftKb_SpecialNPr_80100DE0, crate::tu::ftkirbyspecialdonkey::ftKb_SpecialNPr_80100DE0, (gobj: *mut HSD_GObj));
 
     pub static mut FTKB_SPECIALNKP_800FA7D4: Option<fn(*mut HSD_GObj) > = None;
             #[allow(non_snake_case)]
@@ -2648,3 +2651,47 @@ pub fn ftKb_MexCopyKindHat(dst: i32, src: i32, internal: i32) {
 
 /// `ftKb_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftKb_CostumeList[6]`), filled when the costumes load.
 pub static mut ftKb_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_Init_UnkDemoCallbacks0(kind, out1, out2)` (the C's goto kept as a branch).
+pub fn ftKb_Init_UnkDemoCallbacks0(kind: i32, out1: &mut i32, out2: &mut i32) {
+    melee_core::ct!("ftKb_Init_UnkDemoCallbacks0");
+    if kind == 14 {
+        *out2 = 17;
+        *out1 = 17;
+        return;
+    }
+    if kind >= 14 {
+        return;
+    }
+    if kind < 11 {
+        return;
+    }
+    *out1 = 14;
+    *out2 = 16;
+}
+
+/// `ftKb_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftKirby/ftkirby.c).
+pub fn ftKb_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftKb_Init_OnKnockbackExit` (src/melee/ft/kinds/ftKirby/ftkirby.c).
+pub fn ftKb_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnKnockbackExit");
+    unsafe {
+        st::ftAnim_800704F0(gobj, 1, 0.0_f32);
+        st::ftAnim_800704F0(gobj, 0, 0.0_f32);
+    }
+}
+
+/// `ftKb_Init_OnItemVisible` (src/melee/ft/kinds/ftKirby/ftkirby.c).
+pub fn ftKb_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}

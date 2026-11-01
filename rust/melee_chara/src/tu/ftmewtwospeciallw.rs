@@ -5,19 +5,20 @@
 //! double-precision fused multiply-add (not against compiled C).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/5/6/7/12): re-exported under this TU.
-pub use crate::chars::r12::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_IASA, ftMt_SpecialLw_IASA};
-pub use crate::chars::r2::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialLw_Phys;
-pub use crate::chars::r4::ftMewtwo::ftmewtwospeciallw::{
-    ftMewtwo_SpecialLw_SetCall, ftMt_SpecialAirLw_AirToGround,
-};
-pub use crate::chars::r5::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_Coll, ftMt_SpecialLw_Coll};
-pub use crate::chars::r6::ftMewtwo::ftmewtwospeciallw::ftMt_SpecialLw_GroundToAir;
-pub use crate::chars::r7::ftMewtwo::ftmewtwospeciallw::{ftMt_SpecialAirLw_Enter, ftMt_SpecialLw_Enter};
+
+
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -143,5 +144,110 @@ pub fn ftMt_SpecialLw_CreateDisable(gobj: *mut HSD_GObj) {
 
             (*fp).cmd_vars[0] = 0;
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMt_SpecialLw_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_SpecialAirLw_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialAirLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_SpecialLw_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftMewtwo_SpecialLw_SetCall` (static) (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMewtwo_SpecialLw_SetCall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMewtwo_SpecialLw_SetCall");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.mt.x222C_disableGObj.is_null()) {
+            (*fp).death2_cb = Some(crate::chars::cb::ftmewtwo__ftMt_Init_OnDeath2);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftmewtwo__ftMt_Init_OnTakeDamage);
+        }
+    }
+}
+
+/// `ftMt_SpecialAirLw_AirToGround` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialAirLw_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_AirToGround");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 359 /* ftMt_MS_SpecialLw */, 0xC4C5082u32 /* FTMEWTWO_SPECIALLW_COLL_FLAG */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable);
+        crate::chars::r4::ftMewtwo::ftmewtwospeciallw::ftMewtwo_SpecialLw_SetCall(gobj);
+    }
+}
+
+/// `ftMt_SpecialLw_Coll` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_GroundToAir));
+    }
+}
+
+/// `ftMt_SpecialAirLw_Coll` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialAirLw_AirToGround));
+    }
+}
+
+/// `ftMt_SpecialLw_GroundToAir` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_GroundToAir");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_8007D5D4(&mut *fp);
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
+        st::Fighter_ChangeMotionState(gobj, 360 /* ftMt_MS_SpecialAirLw */, 0xC4C5082u32 /* FTMEWTWO_SPECIALLW_COLL_FLAG */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable);
+        crate::chars::r4::ftMewtwo::ftmewtwospeciallw::ftMewtwo_SpecialLw_SetCall(gobj);
+        st::ftCommon_ClampAirDrift(&mut *fp);
+    }
+}
+
+/// `ftMt_SpecialLw_Enter` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialLw_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).u.mt.x222C_disableGObj = core::mem::zeroed(); /* NULL */
+        st::Fighter_ChangeMotionState(gobj, 359 /* ftMt_MS_SpecialLw */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable);
+    }
+}
+
+/// `ftMt_SpecialAirLw_Enter` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
+pub fn ftMt_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirLw_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).u.mt.x222C_disableGObj = core::mem::zeroed(); /* NULL */
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
+        st::Fighter_ChangeMotionState(gobj, 360 /* ftMt_MS_SpecialAirLw */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable);
     }
 }

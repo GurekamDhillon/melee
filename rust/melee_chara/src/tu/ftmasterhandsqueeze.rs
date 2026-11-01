@@ -3,14 +3,22 @@
 //! Smoke-tested by tests/tu_ftmasterhandsqueeze.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+use crate::tu::ftmasterhandcapturemasterhand::ftMh_CaptureMasterHand_80155B80;
+use crate::tu::ftmasterhandthrow::ftMh_MS_379_80155014;
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftmasterhandsqueezing::ftMh_MS_376_80154E78;
 use melee_types::*;
 
 /// Already ported (rounds 4/7/8): re-exported under this TU.
-pub use crate::chars::r4::ftMasterHand::ftmasterhandthrow::ftMh_MS_379_80155014;
-pub use crate::chars::r7::ftMasterHand::ftmasterhandcapturemasterhand::ftMh_CaptureMasterHand_80155B80;
-pub use crate::chars::r8::ftMasterHand::ftmasterhandsqueeze::ftMh_Squeeze_IASA;
+
+
+
 
 /// `ftMh_UpdateBossMotion` (ftMasterHand/inlines.h, static inline).
 pub unsafe fn ftMh_UpdateBossMotion(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftMasterHand_SpecialAttrs) {
@@ -80,4 +88,24 @@ pub fn ftMh_Squeeze_Coll(gobj: *mut HSD_GObj) {
             (*fp).self_vel.x = 0.0;
         }
     }
+}
+
+
+
+
+
+/// `ftMh_Squeeze_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueeze.c).
+    pub fn ftMh_Squeeze_IASA(gobj: *mut HSD_GObj) {
+        unsafe {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+                st::ftBossLib_8015BD20(gobj);
+            }
+        }
+    }
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftMh_Squeeze_Coll_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftMh_Squeeze_Coll_fp");
+    crate::chars::ftMasterHand::stop_if_x18_zero(fp)
 }

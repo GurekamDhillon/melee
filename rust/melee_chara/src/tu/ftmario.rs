@@ -6,12 +6,17 @@
 //! and are TODO until those callbacks are all native. `ftMr_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6 and the pure helper): re-exported under this TU.
-pub use crate::chars::ftMario::ftmario::ftMr_Init_UnkDemoCallbacks0;
-pub use crate::chars::r5::ftMario::ftmario::{ftMr_Init_OnDeath, ftMr_Init_OnKnockbackEnter, ftMr_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftMario::ftmario::{ftMr_Init_OnItemInvisible, ftMr_Init_OnItemVisible};
+
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 pub use super::ftmariostrings::{
@@ -107,4 +112,69 @@ pub fn ftMr_Init_GetMotionFileString(arg0: u32) -> &'static str {
         _ => 14,
     };
     ftMr_Init_DemoViMotionFilenames[offset - 14]
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftMr_Init_UnkDemoCallbacks0(arg0: i32, arg1: &mut i32, arg2: &mut i32) {
+    melee_core::ct!("ftMr_Init_UnkDemoCallbacks0");
+    if arg0 != 10 {
+        if arg0 >= 10 {
+            return;
+        }
+        if arg0 < 9 {
+            return;
+        }
+        *arg2 = 14;
+        *arg1 = 14;
+    } else {
+        *arg2 = 15;
+        *arg1 = 15;
+    }
+}
+
+/// `ftMr_Init_OnDeath` (src/melee/ft/kinds/ftMario/ftmario.c).
+pub fn ftMr_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.mr.x222C_vitaminCurr = 9_i32;
+        (*fp).u.mr.x2230_vitaminPrev = 9_i32;
+        (*fp).u.mr.x2234_tornadoCharge = (0_i32 /* false */);
+        (*fp).u.mr.x2238_isCapeBoost = (0_i32 /* false */);
+        (*fp).u.mr.x223C_capeGObj = core::mem::zeroed(); /* NULL */
+        (*fp).u.mr.x2240 = core::mem::zeroed(); /* 0 */
+    }
+}
+
+/// `ftMr_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftMario/ftmario.c).
+pub fn ftMr_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftMr_Init_OnKnockbackExit` (src/melee/ft/kinds/ftMario/ftmario.c).
+pub fn ftMr_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftMr_Init_OnItemInvisible` (src/melee/ft/kinds/ftMario/ftmario.c).
+pub fn ftMr_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftMr_Init_OnItemVisible` (src/melee/ft/kinds/ftMario/ftmario.c).
+pub fn ftMr_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
 }

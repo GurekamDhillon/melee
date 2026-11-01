@@ -4,6 +4,11 @@
 //! canonical TU function). `bool` is MSL `int`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, unused_assignments, unused_variables, unused_mut, unused_parens, unused_labels, unused_comparisons, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
@@ -60,6 +65,7 @@ pub mod ext {
 
 /// `ftSs_SpecialHi_Enter`
 pub unsafe extern "C" fn ftSs_SpecialHi_Enter(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialHi_Enter");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut __: [u8; 8] = [0; 8];
     ext::Fighter_ChangeMotionState(gobj, 353, 0 as u32, 0.0f32, 1.0f32, 0.0f32, null_mut());
@@ -75,6 +81,7 @@ pub unsafe extern "C" fn ftSs_SpecialHi_Enter(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirHi_Enter`
 pub unsafe extern "C" fn ftSs_SpecialAirHi_Enter(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirHi_Enter");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     ext::Fighter_ChangeMotionState(gobj, 354, 0 as u32, 0.0f32, 1.0f32, 0.0f32, null_mut());
@@ -94,6 +101,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirHi_Enter(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialHi_Anim`
 pub unsafe extern "C" fn ftSs_SpecialHi_Anim(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialHi_Anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = null_mut();
     let mut samus_attr2: *mut _ftSamusAttributes = null_mut();
@@ -112,6 +120,7 @@ pub unsafe extern "C" fn ftSs_SpecialHi_Anim(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirHi_Anim`
 pub unsafe extern "C" fn ftSs_SpecialAirHi_Anim(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirHi_Anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = null_mut();
     let mut samus_attr2: *mut _ftSamusAttributes = null_mut();
@@ -130,6 +139,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirHi_Anim(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialHi_IASA`
 pub unsafe extern "C" fn ftSs_SpecialHi_IASA(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialHi_IASA");
     let mut mag: f32 = 0.0;
     let mut lstick_x: f32 = 0.0;
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
@@ -154,6 +164,7 @@ pub unsafe extern "C" fn ftSs_SpecialHi_IASA(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirHi_IASA`
 pub unsafe extern "C" fn ftSs_SpecialAirHi_IASA(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirHi_IASA");
     let mut mag: f32 = 0.0;
     let mut lstick_x: f32 = 0.0;
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
@@ -178,6 +189,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirHi_IASA(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialHi_Phys`
 pub unsafe extern "C" fn ftSs_SpecialHi_Phys(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialHi_Phys");
     let mut fp: *mut Fighter = getFighter(gobj);
     let mut samus_attr: *mut _ftSamusAttributes = getFtSpecialAttrs(fp) as *mut _ftSamusAttributes;
     if (*fp).cmd_vars[0 as usize] != 0 {
@@ -196,6 +208,7 @@ pub unsafe extern "C" fn ftSs_SpecialHi_Phys(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirHi_Phys`
 pub unsafe extern "C" fn ftSs_SpecialAirHi_Phys(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirHi_Phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 8] = [0; 8];
@@ -205,6 +218,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirHi_Phys(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialHi_Coll`
 pub unsafe extern "C" fn ftSs_SpecialHi_Coll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialHi_Coll");
     let mut fp: *mut Fighter = getFighter(gobj);
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 8] = [0; 8];
@@ -235,6 +249,7 @@ pub unsafe extern "C" fn ftSs_SpecialHi_Coll(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirHi_Coll`
 pub unsafe extern "C" fn ftSs_SpecialAirHi_Coll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirHi_Coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 4] = [0; 4];
@@ -265,11 +280,13 @@ pub unsafe extern "C" fn ftSs_SpecialAirHi_Coll(mut gobj: *mut HSD_GObj) {
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `ftSamus_updateDamageDeathCBs`
 pub unsafe extern "C" fn ftSamus_updateDamageDeathCBs(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSamus_updateDamageDeathCBs");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     (*fp).take_dmg_cb = Some(super::ftsamus::ftSs_Init_80128428);
     (*fp).death2_cb = Some(super::ftsamus::ftSs_Init_80128428);
@@ -277,12 +294,14 @@ pub unsafe extern "C" fn ftSamus_updateDamageDeathCBs(mut gobj: *mut HSD_GObj) {
 
 /// `Fighter_SetEffectHitlagCallbacks`
 pub unsafe extern "C" fn Fighter_SetEffectHitlagCallbacks(mut fp: *mut Fighter) {
+    melee_core::ct!("Fighter_SetEffectHitlagCallbacks");
     (*fp).pre_hitlag_cb = Some(melee_world::tu::efn::eflib::efLib_PauseAll);
     (*fp).post_hitlag_cb = Some(melee_world::tu::efn::eflib::efLib_ResumeAll);
 }
 
 /// `Fighter_ClearCmdVars`
 pub unsafe extern "C" fn Fighter_ClearCmdVars(mut fp: *mut Fighter) {
+    melee_core::ct!("Fighter_ClearCmdVars");
     (*fp).cmd_vars[3 as usize] = 0 as u32;
     (*fp).cmd_vars[2 as usize] = 0 as u32;
     (*fp).cmd_vars[1 as usize] = 0 as u32;
@@ -291,14 +310,26 @@ pub unsafe extern "C" fn Fighter_ClearCmdVars(mut fp: *mut Fighter) {
 
 /// `getFighter`
 pub unsafe extern "C" fn getFighter(mut gobj: *mut HSD_GObj) -> *mut Fighter {
+    melee_core::ct!("getFighter");
     return (*gobj).user_data as *mut Fighter;
 }
 
 /// `getFtSpecialAttrs`
 pub unsafe extern "C" fn getFtSpecialAttrs(mut fp: *mut Fighter) -> *mut c_void {
+    melee_core::ct!("getFtSpecialAttrs");
     let mut fighter_attr: *mut c_void = (*fp).dat_attrs;
     return fighter_attr;
 }
 
 /// Oracle-checked hand ports (rounds 2-12, tests/chars_dispatch.rs), re-exported under this TU.
-pub use crate::chars::r6::ftSamus::ftsamusspecialhi::ftSamus_DestroyAllUnsetx2444;
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftSamus_DestroyAllUnsetx2444` (static) (src/melee/ft/kinds/ftSamus/ftsamusspecialhi.c).
+pub fn ftSamus_DestroyAllUnsetx2444(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSamus_DestroyAllUnsetx2444");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::efLib_DestroyAll(gobj);
+        (*fp).u.ss.x2244 = 0_u32;
+    }
+}

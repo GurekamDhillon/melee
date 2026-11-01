@@ -2,13 +2,15 @@
 //! (exact negation, no fused site). Smoke-tested by tests/tu_ftcrazyhandbackairplane2.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandbackairplane2::ftCh_BackAirplane2_Phys;
-pub use crate::chars::r4::ftCrazyHand::ftcrazyhandbackairplane2::ftCh_Init_801594D4;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackairplane2::ftCh_BackAirplane2_IASA;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -84,3 +86,33 @@ pub fn ftCh_BackAirplane2_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackAirplane2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackAirplane2_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_BackAirplane2_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane2.c).
+pub fn ftCh_BackAirplane2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane2_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_BackAirplane2_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane2.c).
+pub fn ftCh_BackAirplane2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackAirplane2_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_Init_801594D4` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane2.c).
+pub fn ftCh_Init_801594D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_801594D4");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 368 /* 0x170 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).cmd_vars[0] = 0_u32;
+    }
+}

@@ -3,13 +3,16 @@
 //! on PC). Smoke-tested through recording hooks by tests/tu_ftfoxappeals.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 12): re-exported under this TU.
-pub use crate::chars::r12::ftFox::ftfoxappeals::ftFx_AppealS_IASA;
-pub use crate::chars::r2::ftFox::ftfoxappeals::ftFx_AppealS_Phys;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a verified port in melee_fighter, which the unset hook calls.
@@ -257,4 +260,19 @@ pub fn ftFx_AppealS_OnTakeDamage(gobj: *mut HSD_GObj) {
         ext::grCorneria_801E2AF4();
         (*fp).death1_cb = None;
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftFx_AppealS_IASA` (src/melee/ft/kinds/ftFox/ftfoxappeals.c).
+pub fn ftFx_AppealS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_AppealS_Phys` (src/melee/ft/kinds/ftFox/ftfoxappeals.c).
+pub fn ftFx_AppealS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_AppealS_Phys");
+    st::ft_80084F3C(gobj);
 }

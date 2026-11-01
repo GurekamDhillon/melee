@@ -3,72 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftmariospeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospeciallw::{ftMr_SpecialLw_Anim, unsetCallbacks};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `unsetCallbacks` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
-    pub fn unsetCallbacks(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
-
-    /// `ftMr_SpecialLw_Anim` (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
-    pub fn ftMr_SpecialLw_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-                crate::chars::r3::ftMario::ftmariospeciallw::unsetCallbacks(gobj);
-                st::ft_8008A2BC(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmariospecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospecialn::{ftMr_SpecialAirN_AirToGround, ftMr_SpecialAirN_Coll, ftMr_SpecialN_Coll, ftMr_SpecialN_GroundToAir};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMr_SpecialN_Coll` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 /* false */ {
-                crate::chars::r3::ftMario::ftmariospecialn::ftMr_SpecialN_GroundToAir(gobj);
-            }
-        }
-    }
-
-    /// `ftMr_SpecialAirN_Coll` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r3::ftMario::ftmariospecialn::ftMr_SpecialAirN_AirToGround(gobj);
-            }
-        }
-    }
-
-    /// `ftMr_SpecialN_GroundToAir` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialN_GroundToAir(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 344 /* ftMr_MS_SpecialAirN */, 0x5000u32 /* ftMr_MF_SpecialN_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
-        }
-    }
-
-    /// `ftMr_SpecialAirN_AirToGround` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialAirN_AirToGround(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 343 /* ftMr_MS_SpecialN */, 0x5000u32 /* ftMr_MF_SpecialN_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
-        }
-    }
 
 }

@@ -2,13 +2,16 @@
 //! no fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftlinkspeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2 and 3): re-exported under this TU.
-pub use crate::chars::r2::ftLink::ftlinkspeciallw::{ftLk_SpecialAirLw_Phys, ftLk_SpecialLw_Phys};
-pub use crate::chars::r3::ftLink::ftlinkspeciallw::{ftLk_SpecialAirLw_Coll, ftLk_SpecialLw_Coll};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -132,4 +135,41 @@ pub fn ftLk_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 pub fn ftLk_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftLk_SpecialAirLw_Anim");
     doAnim(gobj, st::ftCo_Fall_Enter);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLk_SpecialLw_Phys` (src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
+pub fn ftLk_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLk_SpecialAirLw_Phys` (src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
+pub fn ftLk_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirLw_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftLk_SpecialLw_Coll` (src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
+pub fn ftLk_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialLw_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if st::ft_80082708(gobj) == 0 {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 359 /* ftLk_MS_SpecialAirLw */, 0xC4C5080u32 /* coll_mf */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftlinkspeciallw__spawnBomb);
+        }
+    }
+}
+
+/// `ftLk_SpecialAirLw_Coll` (src/melee/ft/kinds/ftLink/ftlinkspeciallw.c).
+pub fn ftLk_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirLw_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if st::ft_80081D0C(gobj) != 0 {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 358 /* ftLk_MS_SpecialLw */, 0xC4C5080u32 /* coll_mf */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftlinkspeciallw__spawnBomb);
+        }
+    }
 }

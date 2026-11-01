@@ -3,35 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftseak {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseak::{ftSk_Init_OnDeath, ftSk_Init_OnKnockbackEnter, ftSk_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_Init_OnDeath` (src/melee/ft/kinds/ftSeak/ftseak.c).
-    pub fn ftSk_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.sk.x0 = 0_i32;
-            (*fp).u.sk.x4 = core::mem::zeroed(); /* 0 */
-            (*fp).u.sk.x8 = core::mem::zeroed(); /* 0 */
-            st::ftParts_80074A4C(gobj, 0, 0);
-            st::ftParts_80074A4C(gobj, 1, -1);
-        }
-    }
-
-    /// `ftSk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftSeak/ftseak.c).
-    pub fn ftSk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1);
-        }
-    }
-
-    /// `ftSk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftSeak/ftseak.c).
-    pub fn ftSk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1);
-        }
-    }
 
 }

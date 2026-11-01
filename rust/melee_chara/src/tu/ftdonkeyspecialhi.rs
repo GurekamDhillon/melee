@@ -3,15 +3,24 @@
 //! through recording hooks by tests/tu_ftdonkeyspecialhi.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da as da_g;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftDonkeyAttributes};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::chars::caps_max_jumps;
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
-pub use crate::chars::ftDonkey::ftdonkeyspecialhi::ftDk_SpecialAirHi_Phys as ftDk_SpecialAirHi_Phys_fp;
-pub use crate::chars::r12::ftDonkey::ftdonkeyspecialhi::setCallbacks;
-pub use crate::chars::r2::ftDonkey::ftdonkeyspecialhi::ftDk_SpecialHi_Anim;
-pub use crate::chars::r6::ftDonkey::ftdonkeyspecialhi::ftDk_SpecialHi_DestroyAllEffects;
+
+
+
 
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
@@ -178,4 +187,47 @@ pub fn ftDk_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
             ext::ftCliffCommon_80081370(gobj);
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `setCallbacks` (static) (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c).
+pub fn setCallbacks(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setCallbacks");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftdonkey__ftDk_Init_8010D774);
+        (*fp).death2_cb = Some(crate::chars::cb::ftdonkey__ftDk_Init_8010D774);
+        (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+        (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+    }
+}
+
+/// `ftDk_SpecialHi_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c).
+pub fn ftDk_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialHi_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftDk_SpecialHi_DestroyAllEffects` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c).
+pub fn ftDk_SpecialHi_DestroyAllEffects(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialHi_DestroyAllEffects");
+    unsafe {
+        st::efLib_DestroyAll(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftDk_SpecialAirHi_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftDk_SpecialAirHi_Phys_fp");
+    let a: &ftDonkeyAttributes = da_g(fp);
+    let grav_mul = if fp.cmd_vars[0] != 0 { 1.0 } else { a.SpecialHi.x50_AERIAL_GRAVITY };
+    co::fall(fp, grav_mul * fp.co_attrs.gravity, fp.co_attrs.terminal_velocity);
+    co::calc_self_accel_drift_simple(
+        fp,
+        0.0,
+        a.SpecialHi.x60_AERIAL_MOBILITY,
+        a.SpecialHi.x58_AERIAL_HORIZONTAL_VELOCITY,
+    );
 }

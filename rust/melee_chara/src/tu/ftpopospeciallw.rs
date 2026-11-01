@@ -3,6 +3,11 @@
 //! Not smoke-tested yet (hooks-heavy; only compiled).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftpopo::mf;
 use melee_core::fp::fmadds;
@@ -10,8 +15,8 @@ use melee_runtime::cabi::f2i32;
 use melee_types::*;
 
 /// Already ported (rounds 2/5): re-exported under this TU.
-pub use crate::chars::r2::ftPopo::ftpopospeciallw::{ftPp_SpecialAirLw_Phys, ftPp_SpecialLw_Phys};
-pub use crate::chars::r5::ftPopo::ftpopospeciallw::ftPp_SpecialAirLw_Coll;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -255,5 +260,50 @@ pub fn fn_80122D2C(gobj: G) {
             }
             _ => {}
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPp_SpecialLw_Phys` (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+pub fn ftPp_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPp_SpecialAirLw_Phys` (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+pub fn ftPp_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialAirLw_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftPp_SpecialAirLw_Coll` (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+pub fn ftPp_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialAirLw_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftpopospeciallw__fn_80122B54));
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_set_cbs_fp` (static) (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+pub fn ftPp_set_cbs_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_set_cbs_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).death2_cb = Some(crate::chars::cb::ftpopo__ftPp_Init_8011F060);
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftpopo__ftPp_Init_8011F060);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialLw_Coll_Land_fp` (static) (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
+pub fn ftPp_SpecialLw_Coll_Land_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialLw_Coll_Land_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 358 /* ftPp_MS_SpecialAirLw */, 0xC4C5282u32 /* ftPp_MF_SpecialLw_Coll */);
+        crate::chars::r3::ftPopo::ftpopospeciallw::ftPp_set_cbs(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftpopospeciallw__fn_80122D2C);
+        st::ftCommon_ClampAirDrift(&mut *fp);
     }
 }

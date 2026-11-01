@@ -3,44 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftmarsspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmarsspeciallw::{ftMs_SpecialAirLwHit_Coll, ftMs_SpecialLwHit_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_SpecialLwHit_Coll` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialLwHit_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftMars::ftmarsspeciallw::ftMs_SpecialLw_80139080(gobj);
-            }
-        }
-    }
-
-    /// `ftMs_SpecialAirLwHit_Coll` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialAirLwHit_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r2::ftMars::ftmarsspeciallw::ftMs_SpecialLw_801390E0(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmarsspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmarsspecials::{ftMs_SpecialS_80137748};
 
-    /// `ftMs_SpecialS_80137748` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
-    pub fn ftMs_SpecialS_80137748(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.ms.x222C = 0_u32;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 349, 0xC4E508Cu32 /* transition_flags */);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -3,13 +3,16 @@
 //! Smoke-tested by tests/tu_ftcrazyhandfingerbeam0.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandfingerbeam0::ftCh_FingerBeamStart_Phys;
-pub use crate::chars::r4::ftCrazyHand::ftcrazyhandfingerbeam0::fn_801587B0;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandfingerbeam0::ftCh_FingerBeamStart_IASA;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 /// (The hooks shared by the ftcrazyhand* TUs of this shard are defined here once.)
@@ -81,6 +84,38 @@ pub unsafe extern "C" fn fn_801588B8(gobj: *mut HSD_GObj) {
                 (*fp).cmd_vars[i] = 0;
                 melee_fighter::hooks::play_sfx(&mut *fp, 0x4E203, 0x7F, 0x40);
             }
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_FingerBeamStart_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
+pub fn ftCh_FingerBeamStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerBeamStart_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `fn_801587B0` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
+pub fn fn_801587B0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801587B0");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 361 /* 0x169 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[2] = 0_u32;
+        (*fp).cmd_vars[3] = 0_u32;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftcrazyhandfingerbeam0__fn_801588B8);
+    }
+}
+
+/// `ftCh_FingerBeamStart_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
+pub fn ftCh_FingerBeamStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerBeamStart_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
         }
     }
 }

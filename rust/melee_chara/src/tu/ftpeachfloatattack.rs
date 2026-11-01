@@ -3,12 +3,15 @@
 //! recording hooks by tests/tu_ftpeachfloatattack.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftpeachfloat::{ftPe_8011BB6C, ftPe_Float_CheckContinueInput, ftPe_Float_Phys};
 use melee_types::*;
 
 /// Already ported (round 5): re-exported under this TU.
-pub use crate::chars::r5::ftPeach::ftpeachfloatattack::ftPe_FloatAttackAir_Coll;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -177,5 +180,14 @@ pub fn ftPe_FloatAttackAir_Phys(gobj: *mut HSD_GObj) {
         } else {
             ftPe_Float_Phys(gobj);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPe_FloatAttackAir_Coll` (src/melee/ft/kinds/ftPeach/ftpeachfloatattack.c).
+pub fn ftPe_FloatAttackAir_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_FloatAttackAir_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftCo_LandingAir__ftCo_LandingAir_EnterWithLag));
     }
 }

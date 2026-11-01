@@ -6,6 +6,11 @@
 //! `Mex_OnFloatDispatch` (m-ex OnFloat patches), reproduced here.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::Fighter;
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
@@ -194,4 +199,10 @@ pub fn ftPe_Float_Phys(gobj: *mut HSD_GObj) {
 pub fn ftPe_Float_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPe_Float_Coll");
     ext::ft_800831CC(gobj, Some(cb_ftCo_80096CC8), Some(cb_ft_80082B1C));
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftPe_Float_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPe_Float_Phys_fp");
+    co::calc_self_accel_drift(fp);
 }

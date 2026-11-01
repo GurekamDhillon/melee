@@ -3,49 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftluigi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftluigi::{ftLg_Init_OnDeath, ftLg_Init_OnKnockbackEnter, ftLg_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftLg_Init_OnDeath` (src/melee/ft/kinds/ftLuigi/ftluigi.c).
-    pub fn ftLg_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0, 0 /* false */);
-            (*fp).u.lg.x2234 = 0_u32;
-        }
-    }
-
-    /// `ftLg_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftLuigi/ftluigi.c).
-    pub fn ftLg_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1);
-        }
-    }
-
-    /// `ftLg_Init_OnKnockbackExit` (src/melee/ft/kinds/ftLuigi/ftluigi.c).
-    pub fn ftLg_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1);
-        }
-    }
 
 }
 
 pub mod ftluigispecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftluigispecials::{ftLuigi_SpecialS_RemoveGFX};
 
-    /// `ftLuigi_SpecialS_RemoveGFX` (static) (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
-    pub fn ftLuigi_SpecialS_RemoveGFX(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            st::ftCommon_8007DB24(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

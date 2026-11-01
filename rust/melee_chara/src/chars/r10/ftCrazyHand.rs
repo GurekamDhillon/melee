@@ -3,63 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcrazyhandcancel {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandcancel::ftCh_Cancel_Anim;
 
-    /// `ftCh_Cancel_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c).
-    pub fn ftCh_Cancel_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0.0f */;
-                crate::chars::r10::ftCrazyHand::ftcrazyhandsqueezing0::ftCh_Init_8015A184(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcrazyhandfingerbeam {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandfingerbeam::ftCh_FingerBeamEnd_Anim;
 
-    /// `ftCh_FingerBeamEnd_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
-    pub fn ftCh_FingerBeamEnd_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                (*fp).self_vel.z = f32::from_bits(0x00000000) /* 0 */;
-                (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
-                (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0 */;
-                crate::chars::r9::ftCrazyHand::ftcrazyhandfingergun2::ftCh_GrabUnk1_8015AC50(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcrazyhandsqueezing0 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandsqueezing0::{ftCh_Init_8015A184};
 
-    /// `ftCh_Init_8015A184` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsqueezing0.c).
-    pub fn ftCh_Init_8015A184(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 376 /* 0x178 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).cur_pos.x = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftCrazyHand_DatAttrs)).xE4;
-            (*fp).cur_pos.y = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftCrazyHand_DatAttrs)).xE8;
-            (*fp).self_vel.z = f32::from_bits(0x00000000) /* 0 */;
-            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
-            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0 */;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

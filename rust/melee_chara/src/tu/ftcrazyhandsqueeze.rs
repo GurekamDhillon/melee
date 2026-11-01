@@ -2,14 +2,17 @@
 //! Smoke-tested by tests/tu_ftcrazyhandsqueeze.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 use melee_fighter::tu::ftbosslib as bl;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandsqueeze::ftCh_Squeeze_Phys;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandsqueeze::ftCh_Squeeze_IASA;
+
+
 
 pub fn ftCh_Init_8015A3F4(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftCh_Init_8015A3F4");
@@ -39,3 +42,21 @@ pub fn ftCh_Squeeze_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Squeeze_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Squeeze_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_Squeeze_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsqueeze.c).
+pub fn ftCh_Squeeze_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Squeeze_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Squeeze_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandsqueeze.c).
+pub fn ftCh_Squeeze_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Squeeze_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

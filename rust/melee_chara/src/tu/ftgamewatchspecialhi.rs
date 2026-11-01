@@ -4,15 +4,18 @@
 //! expression is also checked bit-for-bit against the C there).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext};
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 3/5/13): re-exported under this TU.
-pub use crate::chars::r13::ftGameWatch::ftgamewatchspecialhi::{ftGw_SpecialAirHi_Phys, ftGw_SpecialHi_Phys};
-pub use crate::chars::r3::ftGameWatch::ftgamewatchspecialhi::ftGw_SpecialHi_ItemRescueSetNULL;
-pub use crate::chars::r5::ftGameWatch::ftgamewatchspecialhi::ftGameWatch_SpecialHi_SetVars;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -287,5 +290,43 @@ pub fn ftGw_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
                 }
             }
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftGw_SpecialHi_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
+pub fn ftGw_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_Phys");
+    unsafe {
+        crate::chars::r13::ftGameWatch::ftgamewatchspecialhi::ftGw_SpecialAirHi_Phys(gobj);
+    }
+}
+
+/// `ftGw_SpecialAirHi_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
+pub fn ftGw_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirHi_Phys");
+    unsafe {
+        st::ft_80085154(gobj);
+    }
+}
+
+/// `ftGw_SpecialHi_ItemRescueSetNULL` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
+pub fn ftGw_SpecialHi_ItemRescueSetNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialHi_ItemRescueSetNULL");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.gw.x226C_rescueGObj = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftGameWatch_SpecialHi_SetVars` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
+pub fn ftGameWatch_SpecialHi_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGameWatch_SpecialHi_SetVars");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ClearCmdVars(&mut *fp);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchspecialhi__ftGw_SpecialHi_ItemRescueSetup);
     }
 }

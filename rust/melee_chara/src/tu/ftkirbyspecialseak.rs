@@ -5,22 +5,18 @@
 //! tests/tu_ftkirbyspecialseak.rs (the needle positions are checked against hand-computed fmadds).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 11): re-exported under this TU.
-pub use crate::chars::r11::ftKirby::ftkirbyspecialseak::{
-    ftKb_SkSpecialAirNLoop_Coll, ftKb_SkSpecialAirNLoop_IASA, ftKb_SkSpecialAirNStart_Coll,
-    ftKb_SkSpecialNLoop_Coll, ftKb_SkSpecialNLoop_IASA, ftKb_SkSpecialNStart_Coll,
-};
-pub use crate::chars::r2::ftKirby::ftkirbyspecialseak::{
-    ftKb_SkSpecialAirNCancel_Phys, ftKb_SkSpecialAirNEnd_Phys, ftKb_SkSpecialAirNLoop_Phys,
-    ftKb_SkSpecialAirNStart_Phys, ftKb_SkSpecialNCancel_Phys, ftKb_SkSpecialNEnd_Phys,
-    ftKb_SkSpecialNLoop_Phys, ftKb_SkSpecialNStart_Phys,
-};
-pub use crate::chars::r3::ftKirby::ftkirbyspecialseak::ftKb_SkSpecialNCancel_Anim;
+
+
+
 
 /// `ftKb_Init_803CB770`: the needle spread offsets.
 pub const ftKb_Init_803CB770: [f32; 9] = [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0];
@@ -394,6 +390,161 @@ pub fn fn_80106DB0(gobj: *mut HSD_GObj) {
                 ext::efSync_Spawn(0x503, gobj, &[&mut pos as *mut Vec3 as *mut _]);
                 melee_fighter::hooks::play_sfx(&mut *fp, 0x41F3C, 127, 64);
             }
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_SkSpecialNLoop_IASA` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNLoop_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) == 0) {
+            (*fp).mv.kb.specialhi.x0 = 0_i32;
+            st::Fighter_ChangeMotionState(gobj, 470 /* ftKb_MS_SkSpecialNEnd */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialseak__fn_80106DB0);
+        } else {
+            if ((((*fp).input.pressed_buttons as u32) & 0x80000000u32 /* HSD_PAD_LR */) != 0) {
+                st::Fighter_ChangeMotionState(gobj, 469 /* ftKb_MS_SkSpecialNCancel */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+                (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+                (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+            }
+        }
+    }
+}
+
+/// `ftKb_SkSpecialAirNLoop_IASA` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNLoop_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) == 0) {
+            (*fp).mv.kb.specialhi.x0 = 0_i32;
+            st::Fighter_ChangeMotionState(gobj, 474 /* ftKb_MS_SkSpecialAirNEnd */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialseak__fn_80106DB0);
+        } else {
+            if ((((*fp).input.pressed_buttons as u32) & 0x80000000u32 /* HSD_PAD_LR */) != 0) {
+                st::Fighter_ChangeMotionState(gobj, 473 /* ftKb_MS_SkSpecialAirNCancel */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+                (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+                (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+            }
+        }
+    }
+}
+
+/// `ftKb_SkSpecialNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNStart_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 471 /* ftKb_MS_SkSpecialAirNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_SkSpecialNLoop_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNLoop_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 472 /* ftKb_MS_SkSpecialAirNLoop */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_SkSpecialAirNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNStart_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) != 0 /* GA_Ground */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 467 /* ftKb_MS_SkSpecialNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_SkSpecialAirNLoop_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNLoop_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) != 0 /* GA_Ground */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 468 /* ftKb_MS_SkSpecialNLoop */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_SkSpecialNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_SkSpecialNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_SkSpecialNCancel_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNCancel_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_SkSpecialNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_SkSpecialAirNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNStart_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_SkSpecialAirNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_SkSpecialAirNCancel_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNCancel_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_SkSpecialAirNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_SkSpecialNCancel_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialseak.c).
+pub fn ftKb_SkSpecialNCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SkSpecialNCancel_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.kb.xB8 = core::mem::zeroed(); /* 0 */
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            st::ft_8008A2BC(gobj);
         }
     }
 }

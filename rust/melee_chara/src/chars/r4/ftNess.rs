@@ -3,47 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftnessattackhi4 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftnessattackhi4::{ftNs_AttackHi4_YoyoSetVarAll};
 
-    /// `ftNs_AttackHi4_YoyoSetVarAll` (src/melee/ft/kinds/ftNess/ftnessattackhi4.c).
-    pub fn ftNs_AttackHi4_YoyoSetVarAll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[1] = 0_u32;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).mv.ns.attackhi4.yoyoCurrentFrame = 1_i32;
-            (*fp).mv.ns.attackhi4.yoyoRehitTimer = 0_i32;
-            (*fp).mv.ns.attackhi4.isPosUpdateMod = (1_i32 /* true */);
-            (*fp).u.ns.yoyo_hitbox_pos.z = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).u.ns.yoyo_hitbox_pos.y = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).u.ns.yoyo_hitbox_pos.x = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).u.ns.x223C = f32::from_bits(0x00000000) /* 0.0f */;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftnessspecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftnessspecialn::{SetPKFlashAttr};
 
-    /// `SetPKFlashAttr` (static) (src/melee/ft/kinds/ftNess/ftnessspecialn.c).
-    pub fn SetPKFlashAttr(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).mv.ns.specialn.frames_to_loop_charge_ground = (*((*fp).dat_attrs as *const melee_types::ftNessAttributes)).x0_PKFLASH_TIMER1_LOOPFRAMES;
-            (*fp).mv.ns.specialn.frames_to_loop_charge_air = (*((*fp).dat_attrs as *const melee_types::ftNessAttributes)).x4_PKFLASH_TIMER2_LOOPFRAMES;
-            (*fp).mv.ns.specialn.falling_acceleration_delay = (*((*fp).dat_attrs as *const melee_types::ftNessAttributes)).x8_PKFLASH_GRAVITY_DELAY;
-            (*fp).u.ns.pkflash_gobj = core::mem::zeroed(); /* NULL */
-            (*fp).mv.ns.specialn.charge_release_delay = (*((*fp).dat_attrs as *const melee_types::ftNessAttributes)).xC_PKFLASH_MINCHARGEFRAMES;
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

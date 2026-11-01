@@ -3,17 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkirbyspecialpeach {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkirbyspecialpeach::{ftKb_PeSpecialLw_Phys};
 
-    /// `ftKb_PeSpecialLw_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialpeach.c).
-    pub fn ftKb_PeSpecialLw_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEE0(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -3,74 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgamewatchattack100 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgamewatchattack100::{ftGw_Attack100End_IASA, ftGw_Attack100Start_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGw_Attack100Start_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattack100.c).
-    pub fn ftGw_Attack100Start_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftGw_Attack100End_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattack100.c).
-    pub fn ftGw_Attack100End_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftgamewatchattackair {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgamewatchattackair::{ftGw_LandingAirB_IASA, ftGw_LandingAirHi_IASA, ftGw_LandingAirN_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGw_LandingAirN_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_LandingAirN_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftGw_LandingAirB_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_LandingAirB_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftGw_LandingAirHi_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_LandingAirHi_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftgamewatchspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgamewatchspecials::{ftGw_SpecialAirS_IASA, ftGw_SpecialS_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGw_SpecialS_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
-    pub fn ftGw_SpecialS_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftGw_SpecialAirS_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
-    pub fn ftGw_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

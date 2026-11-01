@@ -3,210 +3,70 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcrazyhandbackairplane2 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandbackairplane2::{ftCh_Init_801594D4};
 
-    /// `ftCh_Init_801594D4` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane2.c).
-    pub fn ftCh_Init_801594D4(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 368 /* 0x170 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).cmd_vars[0] = 0_u32;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcrazyhandbackairplane3 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandbackairplane3::{ftCh_Init_80159670};
 
-    /// `ftCh_Init_80159670` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane3.c).
-    pub fn ftCh_Init_80159670(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 369 /* 0x171 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).cmd_vars[0] = 0_u32;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcrazyhandfingerbeam0 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandfingerbeam0::{fn_801587B0};
 
-    /// `fn_801587B0` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam0.c).
-    pub fn fn_801587B0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 361 /* 0x169 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).cmd_vars[1] = 0_u32;
-            (*fp).cmd_vars[2] = 0_u32;
-            (*fp).cmd_vars[3] = 0_u32;
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftcrazyhandfingerbeam0__fn_801588B8);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcrazyhandpoke {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcrazyhandpoke::{ftCh_Init_801583E4, ftCh_PaperCrush_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCh_PaperCrush_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
-    pub fn ftCh_PaperCrush_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                crate::chars::r4::ftCrazyHand::ftcrazyhandpoke::ftCh_Init_801583E4(gobj);
-            }
-        }
-    }
-
-    /// `ftCh_Init_801583E4` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
-    pub fn ftCh_Init_801583E4(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 359 /* 0x167 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftcrazyhandpoke__fn_80158534);
-            (*fp).cmd_vars[0] = 1_u32;
-        }
-    }
 
 }
 
 pub mod ftcrazyhandtagcancel {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcrazyhandtagcancel::{ftCh_GrabUnk1_8015B8FC, ftCh_GrabUnk1_8015B998};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCh_GrabUnk1_8015B8FC` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandtagcancel.c).
-    pub fn ftCh_GrabUnk1_8015B8FC(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).u.mh.x2258 as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).u.mh.x2258 as i32) == 388i32 /* 0x184 */)) {
-                st::Fighter_ChangeMotionState(gobj, 388 /* 0x184 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 388 /* 0x184 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-                st::ftAnim_8006EBA4(gobj);
-            }
-            (*fp).u.mh.x2258 = (388_i32 /* 0x184 */);
-        }
-    }
-
-    /// `ftCh_GrabUnk1_8015B998` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandtagcancel.c).
-    pub fn ftCh_GrabUnk1_8015B998(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).u.mh.x2258 as i32) == 342i32 /* ftMh_MS_Wait2_0 */) || (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */)) {
-                st::Fighter_ChangeMotionState(gobj, 389 /* 0x185 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 389 /* 0x185 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-                st::ftAnim_8006EBA4(gobj);
-            }
-            (*fp).u.mh.x2258 = (389_i32 /* 0x185 */);
-        }
-    }
 
 }
 
 pub mod ftcrazyhandwait10 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcrazyhandwait10::doAnim0_fp as doAnim0;
+pub use crate::tu::ftcrazyhandwait10::doAnim1_fp as doAnim1;
+
+pub use crate::tu::ftcrazyhandwait10::{ftCh_Init_80156018, ftCh_Init_801560D8, ftCh_Init_80156198};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCh_Init_80156018` (static) (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c).
-    pub fn ftCh_Init_80156018(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
-                (*fp).cur_pos = (*fp).u.mh.x2240_pos;
-            } else {
-                (*fp).u.mh.x2240_pos = (*fp).cur_pos;
-            }
-            if (((*fp).u.mh.x2258 as i32) == 388i32 /* 0x184 */) {
-                st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-            (*fp).u.mh.x2258 = (341_i32 /* ftMh_MS_Wait1_0 */);
-        }
-    }
-
-    /// `ftCh_Init_801560D8` (static) (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c).
-    pub fn ftCh_Init_801560D8(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).motion_id as i32) == 341i32 /* 0x155 */) || (((*fp).motion_id as i32) == 342i32 /* 0x156 */)) {
-                (*fp).cur_pos = (*fp).u.mh.x2240_pos;
-            } else {
-                (*fp).u.mh.x2240_pos = (*fp).cur_pos;
-            }
-            if (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */) {
-                st::Fighter_ChangeMotionState(gobj, 342 /* 0x156 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 342 /* 0x156 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-            (*fp).u.mh.x2258 = (342_i32 /* 0x156 */);
-        }
-    }
-
-    /// `ftCh_Init_80156198` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c).
-    pub fn ftCh_Init_80156198(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[1] = 0_u32;
-            if (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */) {
-                crate::chars::r4::ftCrazyHand::ftcrazyhandwait10::ftCh_Init_801560D8(gobj);
-            } else {
-                crate::chars::r4::ftCrazyHand::ftcrazyhandwait10::ftCh_Init_80156018(gobj);
-            }
-        }
-    }
-
-    /// `doAnim0` (static) (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c).
-    pub fn doAnim0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).motion_id as i32) == 341i32 /* 0x155 */) || (((*fp).motion_id as i32) == 342i32 /* 0x156 */)) {
-                (*fp).cur_pos = (*fp).u.mh.x2240_pos;
-            } else {
-                (*fp).u.mh.x2240_pos = (*fp).cur_pos;
-            }
-            if (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */) {
-                st::Fighter_ChangeMotionState(gobj, 342 /* 0x156 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 342 /* 0x156 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-            (*fp).u.mh.x2258 = (342_i32 /* 0x156 */);
-        }
-    }
-
-    /// `doAnim1` (static) (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandwait10.c).
-    pub fn doAnim1(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[1] = 0_u32;
-            if (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */) {
-                crate::chars::r4::ftCrazyHand::ftcrazyhandwait10::ftCh_Init_801560D8(gobj);
-            } else {
-                crate::chars::r4::ftCrazyHand::ftcrazyhandwait10::ftCh_Init_80156018(gobj);
-            }
-        }
-    }
 
 }

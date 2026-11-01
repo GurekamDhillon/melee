@@ -8,14 +8,16 @@
 //! `ftFx_CostumeList` is an uninitialised 4-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftFox::ftfox::ftFx_Init_OnDeath;
-pub use crate::chars::r6::ftFox::ftfox::{
-    ftFx_Init_OnItemInvisible, ftFx_Init_OnItemVisible, ftFx_Init_OnKnockbackEnter,
-    ftFx_Init_OnKnockbackExit,
-};
+
+
 
 pub const ftFx_Init_DatFilename: &str = "PlFx.dat";
 pub const ftFx_Init_DataName: &str = "ftDataFox";
@@ -139,3 +141,50 @@ pub fn ftFx_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftFx_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftFx_CostumeList[4]`), filled when the costumes load.
 pub static mut ftFx_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftFx_Init_OnDeath` (src/melee/ft/kinds/ftFox/ftfox.c).
+pub fn ftFx_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* 0 */
+        st::ftParts_80074A4C(gobj, 0, 0);
+    }
+}
+
+/// `ftFx_Init_OnItemInvisible` (src/melee/ft/kinds/ftFox/ftfox.c).
+pub fn ftFx_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftFx_Init_OnItemVisible` (src/melee/ft/kinds/ftFox/ftfox.c).
+pub fn ftFx_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}
+
+/// `ftFx_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftFox/ftfox.c).
+pub fn ftFx_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+        st::ftAnim_ApplyPartAnim(gobj, 3, 3, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 3, 0.0_f32);
+    }
+}
+
+/// `ftFx_Init_OnKnockbackExit` (src/melee/ft/kinds/ftFox/ftfox.c).
+pub fn ftFx_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+        st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0_f32);
+    }
+}

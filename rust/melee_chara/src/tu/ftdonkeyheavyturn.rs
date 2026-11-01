@@ -3,11 +3,14 @@
 //! `ext` also hosts the two callees shared by the other heavy-* TUs of this shard.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
-pub use crate::chars::r2::ftDonkey::ftdonkeyheavyturn::ftDk_HeavyTurn_Phys;
-pub use crate::chars::r5::ftDonkey::ftdonkeyheavyturn::ftDk_HeavyTurn_Coll;
+
+
 
 pub mod ext {
     use melee_types::*;
@@ -74,4 +77,19 @@ pub fn ftDk_MS_345_800E0294(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn cb_ftDk_MS_345_800E0294(g: *mut HSD_GObj) {
     melee_core::ct!("cb_ftDk_MS_345_800E0294");
     ftDk_MS_345_800E0294(g);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_HeavyTurn_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
+pub fn ftDk_HeavyTurn_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyTurn_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_HeavyTurn_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
+pub fn ftDk_HeavyTurn_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyTurn_Coll");
+    unsafe {
+        crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
+    }
 }

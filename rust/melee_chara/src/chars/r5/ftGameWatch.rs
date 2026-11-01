@@ -3,107 +3,45 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgamewatch {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftgamewatch::{ftGw_Init_OnDeath};
 
-    /// `ftGw_Init_OnDeath` (src/melee/ft/kinds/ftGameWatch/ftgamewatch.c).
-    pub fn ftGw_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0 /* 0U */, 0);
-            st::ftParts_80074A4C(gobj, 1 /* 1U */, -1);
-            st::ftParts_80074A4C(gobj, 2 /* 2U */, 0);
-            st::ftParts_80074A4C(gobj, 3 /* 3U */, 0);
-            st::ftParts_80074A4C(gobj, 4 /* 4U */, -1);
-            st::ftParts_80074A4C(gobj, 5 /* 5U */, -1);
-            st::ftParts_80074A4C(gobj, 6 /* 6U */, -1);
-            st::ftParts_80074A4C(gobj, 7 /* 7U */, -1);
-            st::ftParts_80074A4C(gobj, 8 /* 8U */, -1);
-            st::ftParts_80074A4C(gobj, 9 /* 9U */, -1);
-            st::ftParts_80074A4C(gobj, 10, -1);
-            (*fp).u.gw.x222C_judgeVar1 = 1_i32;
-            (*fp).u.gw.x2230_judgeVar2 = 0_i32;
-            (*fp).u.gw.x2234 = 0_u32;
-            (*fp).u.gw.x223C_panicDamage = 0_i32;
-            (*fp).u.gw.x2240_chefVar1 = 1_i32;
-            (*fp).u.gw.x2244_chefVar2 = 3_i32;
-            (*fp).u.gw.x2248_manholeGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x224C_greenhouseGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2250_manholeGObj2 = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2254_fireGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2258_parachuteGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x225C_turtleGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2260_sparkyGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2264_judgementGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x2268_panicGObj = core::mem::zeroed(); /* NULL */
-            (*fp).u.gw.x226C_rescueGObj = core::mem::zeroed(); /* NULL */
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftgamewatchattackair {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgamewatchattackair::{ftGw_AttackAirB_Coll, ftGw_AttackAirHi_Coll, ftGw_AttackAirN_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGw_AttackAirN_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_AttackAirN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirN_Enter));
-        }
-    }
-
-    /// `ftGw_AttackAirB_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_AttackAirB_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirB_Enter));
-        }
-    }
-
-    /// `ftGw_AttackAirHi_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
-    pub fn ftGw_AttackAirHi_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirHi_Enter));
-        }
-    }
 
 }
 
 pub mod ftgamewatchattacks4 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftgamewatchattacks4::{ftGw_AttackS4_IASA};
 
-    /// `ftGw_AttackS4_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
-    pub fn ftGw_AttackS4_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).allow_interrupt() as i32) != 0i32 /* false */) {
-                st::ftCo_Wait_IASA(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftgamewatchspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftgamewatchspecialhi::{ftGameWatch_SpecialHi_SetVars};
 
-    /// `ftGameWatch_SpecialHi_SetVars` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
-    pub fn ftGameWatch_SpecialHi_SetVars(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ClearCmdVars(&mut *fp);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchspecialhi__ftGw_SpecialHi_ItemRescueSetup);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

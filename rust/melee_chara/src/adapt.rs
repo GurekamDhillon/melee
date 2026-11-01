@@ -374,9 +374,6 @@ pub fn ft_CheckGroundAndLedge(g: G, direction: i32) -> i32 {
 pub fn ftCo_AirCatchHit_Coll(g: G) {
     melee_fighter::tu::ft_081b::ftco_air_catch_hit_coll(g)
 }
-pub fn ftKb_SpecialNPr_80100DE0(g: G) {
-    crate::chars::r6::ftKirby::ftkirbyspecialdonkey::ftKb_SpecialNPr_80100DE0(g)
-}
 pub fn ftKb_Init_803B7548() -> *const ftLk_SpecialN_Vec3Group {
     crate::tu::ftkirby::ftKb_Init_803B7548.as_ptr() as *const ftLk_SpecialN_Vec3Group
 }

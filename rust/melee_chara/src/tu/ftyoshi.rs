@@ -12,6 +12,15 @@
 //! Smoke-tested by tests/tu_ftyoshi.rs (ftYs_Init_8012BAC0, ftYs_Init_8012B918); the rest is unverified.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_types::{ftYoshiAttributes, Fighter};
 use crate::stubs as st;
 use melee_types::*;
 
@@ -304,3 +313,57 @@ pub fn ftYs_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
 
 /// `ftYs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftYs_CostumeList[6]`), filled when the costumes load.
 pub static mut ftYs_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftYs_Init_8012BAC0_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftYs_Init_8012BAC0_fp");
+    da::<ftYoshiAttributes>(fp).x120
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftYs_Init_OnDeath_fp` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+pub fn ftYs_Init_OnDeath_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnDeath_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.ys.x2238 = core::mem::zeroed(); /* 0 */
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftYs_Init_OnItemInvisible_fp` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+pub fn ftYs_Init_OnItemInvisible_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnItemInvisible_fp");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftYs_Init_OnItemVisible_fp` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+pub fn ftYs_Init_OnItemVisible_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnItemVisible_fp");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}
+
+/// `ftYs_Init_OnKnockbackEnter_fp` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+pub fn ftYs_Init_OnKnockbackEnter_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnKnockbackEnter_fp");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+        st::ftAnim_ApplyPartAnim(gobj, 3, 3, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 3, 0.0_f32);
+    }
+}
+
+/// `ftYs_Init_OnKnockbackExit_fp` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
+pub fn ftYs_Init_OnKnockbackExit_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_Init_OnKnockbackExit_fp");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+        st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0_f32);
+    }
+}

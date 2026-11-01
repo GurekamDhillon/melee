@@ -3,15 +3,18 @@
 //! Smoke-tested by tests/tu_ftcrazyhandpoke.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftcrazyhandfingerbeam0::ext::{ftCh_GrabUnk1_8015BC88, lb_8000B1CC};
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandpoke::{ftCh_PaperCrush_Phys, ftCh_Poke1_Phys, ftCh_Poke2_Phys};
-pub use crate::chars::r3::ftCrazyHand::ftcrazyhandpoke::fn_801582D8;
-pub use crate::chars::r4::ftCrazyHand::ftcrazyhandpoke::{ftCh_Init_801583E4, ftCh_PaperCrush_Anim};
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandpoke::{ftCh_PaperCrush_IASA, ftCh_Poke1_IASA, ftCh_Poke2_IASA};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -126,3 +129,90 @@ pub fn ftCh_Poke2_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Poke2_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Poke2_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_PaperCrush_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_PaperCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_PaperCrush_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Poke1_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_Poke1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke1_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Poke2_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_Poke2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke2_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `fn_801582D8` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn fn_801582D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_801582D8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 358 /* 0x166 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.ch.unk0.x38 = -1_i32;
+        (*fp).mv.ch.unk0.x3C = -1_i32;
+        (*fp).mv.ch.unk0.x40 = -1_i32;
+    }
+}
+
+/// `ftCh_PaperCrush_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_PaperCrush_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_PaperCrush_Anim");
+    unsafe {
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            crate::chars::r4::ftCrazyHand::ftcrazyhandpoke::ftCh_Init_801583E4(gobj);
+        }
+    }
+}
+
+/// `ftCh_Init_801583E4` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_Init_801583E4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_801583E4");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 359 /* 0x167 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftcrazyhandpoke__fn_80158534);
+        (*fp).cmd_vars[0] = 1_u32;
+    }
+}
+
+/// `ftCh_PaperCrush_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_PaperCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_PaperCrush_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftCh_Poke1_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_Poke1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke1_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftCh_Poke2_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandpoke.c).
+pub fn ftCh_Poke2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Poke2_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

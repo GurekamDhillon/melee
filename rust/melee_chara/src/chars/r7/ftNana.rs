@@ -3,19 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftnanaspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_4_Anim_fp as ftPp_SpecialHi_4_Anim;
 
-    /// `ftPp_SpecialHi_4_Anim` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_4_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 0, 1, 0, ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x130 as f32), ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x134 as f32));
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

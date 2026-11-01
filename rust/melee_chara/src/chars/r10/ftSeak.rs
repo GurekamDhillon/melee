@@ -3,39 +3,13 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftseakspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecialhi::ftSk_SpecialHi_80113EAC_inline_fp as ftSk_SpecialHi_80113EAC_inline;
+pub use crate::tu::ftseakspecialhi::ftSk_SpecialHi_80113F68_inline_fp as ftSk_SpecialHi_80113F68_inline;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialHi_80113EAC_inline` (static) (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHi_80113EAC_inline(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).mv.co.walk.fast_anim_frame = (*fp).self_vel.x;
-            (*fp).mv.co.common.x14 = (*fp).self_vel.y;
-            (*fp).mv.co.common.x18 = (*fp).gr_vel;
-            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).gr_vel = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).set_invisible(0);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecialhi__fn_80113038);
-        }
-    }
-
-    /// `ftSk_SpecialHi_80113F68_inline` (static) (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHi_80113F68_inline(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).mv.co.walk.fast_anim_frame = (*fp).self_vel.x;
-            (*fp).mv.co.common.x14 = (*fp).self_vel.y;
-            (*fp).mv.co.common.x18 = (*fp).gr_vel;
-            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).gr_vel = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).set_invisible(0);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecialhi__fn_80113038);
-        }
-    }
 
 }

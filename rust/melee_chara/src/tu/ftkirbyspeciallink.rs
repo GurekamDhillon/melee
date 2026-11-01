@@ -4,14 +4,14 @@
 //! Smoke-tested by tests/tu_ftkirbyspeciallink.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspeciallink::{
-    ftKb_LkSpecialAirNEnd_Phys, ftKb_LkSpecialAirNLoop_Phys, ftKb_LkSpecialAirNStart_Phys,
-    ftKb_LkSpecialNEnd_Phys, ftKb_LkSpecialNLoop_Phys, ftKb_LkSpecialNStart_Phys,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -620,4 +620,41 @@ pub fn ftKb_LkSpecialAirNEnd_Coll(gobj: G) {
             ftKb_MS_ClSpecialNEnd as u32,
         )
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_LkSpecialNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_LkSpecialNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_LkSpecialNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_LkSpecialAirNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialAirNStart_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_LkSpecialAirNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_LkSpecialAirNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallink.c).
+pub fn ftKb_LkSpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LkSpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
 }

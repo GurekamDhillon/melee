@@ -3,69 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpikachu {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpikachu::{ftPk_Init_OnItemInvisible, ftPk_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPk_Init_OnItemInvisible` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
-    pub fn ftPk_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 0);
-        }
-    }
-
-    /// `ftPk_Init_OnItemVisible` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
-    pub fn ftPk_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 0);
-        }
-    }
 
 }
 
 pub mod ftpikachuspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpikachuspeciallw::{ftPk_SpecialLw_ChangeMotion_Unk01, ftPk_SpecialLw_ChangeMotion_Unk03, ftPk_SpecialLw_ChangeMotion_Unk05, ftPk_SpecialLw_ChangeMotion_Unk07};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPk_SpecialLw_ChangeMotion_Unk01` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialLw_ChangeMotion_Unk01(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 363, 0xC4C5086u32 /* ftPk_MF_SpecialLw_Coll */);
-            st::ftCommon_ClampAirDrift(&mut *fp);
-        }
-    }
-
-    /// `ftPk_SpecialLw_ChangeMotion_Unk03` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialLw_ChangeMotion_Unk03(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 364, 0xC4C588Eu32 /* ftPk_MF_SpecialLwHitRumble_Coll */);
-            (*fp).take_dmg_cb = Some(crate::chars::cb::ftpikachuspeciallw__ftPk_SpecialLw_SetState_Unk1);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftpikachuspeciallw__ftPk_SpecialLw_SpawnEffect);
-            st::ftCommon_ClampAirDrift(&mut *fp);
-        }
-    }
-
-    /// `ftPk_SpecialLw_ChangeMotion_Unk05` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialLw_ChangeMotion_Unk05(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 365, 0xC4C508Eu32 /* ftPk_MF_SpecialLwHit_Coll */);
-            st::ftCommon_ClampAirDrift(&mut *fp);
-        }
-    }
-
-    /// `ftPk_SpecialLw_ChangeMotion_Unk07` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialLw_ChangeMotion_Unk07(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 366, 0xC4C5086u32 /* ftPk_MF_SpecialLw_Coll */);
-            st::ftCommon_ClampAirDrift(&mut *fp);
-        }
-    }
 
 }

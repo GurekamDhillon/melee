@@ -3,19 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpikachuspecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpikachuspecialn::{ftPk_SpecialN_Coll};
 
-    /// `ftPk_SpecialN_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialn.c).
-    pub fn ftPk_SpecialN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80082708(gobj) == 0) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 342 /* ftPk_MS_SpecialAirN */, 0xC4C5082u32 /* ftPk_MF_SpecialN_Coll */);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

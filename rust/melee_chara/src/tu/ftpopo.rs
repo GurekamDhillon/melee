@@ -7,12 +7,15 @@
 //! and is TODO. `ftPp_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftPopo::ftpopo::{ftPp_Init_OnKnockbackEnter, ftPp_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftPopo::ftpopo::{ftPp_Init_OnItemInvisible, ftPp_Init_OnItemVisible};
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 pub const ftPp_Init_DatFilename: &str = "PlPp.dat";
@@ -182,3 +185,36 @@ fn ftPp_Init_8011F190(gobj: G) {
 
 /// `ftPp_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPp_CostumeList[4]`), filled when the costumes load.
 pub static mut ftPp_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPp_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPopo/ftpopo.c).
+pub fn ftPp_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
+    }
+}
+
+/// `ftPp_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPopo/ftpopo.c).
+pub fn ftPp_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
+    }
+}
+
+/// `ftPp_Init_OnItemInvisible` (src/melee/ft/kinds/ftPopo/ftpopo.c).
+pub fn ftPp_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftPp_Init_OnItemVisible` (src/melee/ft/kinds/ftPopo/ftpopo.c).
+pub fn ftPp_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}

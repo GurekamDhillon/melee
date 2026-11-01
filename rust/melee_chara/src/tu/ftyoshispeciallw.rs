@@ -5,16 +5,19 @@
 //! `crate::stubs` hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::tu::ftinl;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4): re-exported under this TU.
-pub use crate::chars::r2::ftYoshi::ftyoshispeciallw::{
-    ftYs_SpecialLwLanding_Anim, ftYs_SpecialLwLanding_Coll, ftYs_SpecialLwLanding_Phys, ftYs_SpecialS_8012EA04,
-};
-pub use crate::chars::r3::ftYoshi::ftyoshispeciallw::{ftYs_SpecialLw_Anim, ftYs_SpecialS_8012EAD8};
-pub use crate::chars::r4::ftYoshi::ftyoshispeciallw::{ftYs_SpecialAirLw_Anim, ftYs_SpecialLw_Phys};
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -138,6 +141,80 @@ pub fn ftYs_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
             }
         } else if (*fp).cmd_vars[0] != 0 && ext::ftCliffCommon_80081298(gobj) {
             ext::ftCliffCommon_80081370(gobj);
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftYs_SpecialS_8012EA04` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialS_8012EA04(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012EA04");
+    st::Fighter_ChangeMotionState(gobj, 368 /* ftYs_MS_SpecialAirLw */, 0xC4C5088u32 /* Ft_MF_SkipHit | Ft_MF_SkipMatAnim | Ft_MF_SkipColAnim | Ft_MF_UpdateCmd | Ft_MF_SkipItemVis | Ft_MF_Unk19 | Ft_MF_SkipModelPartVis | Ft_MF_SkipModelFlags | Ft_MF_Unk27 */, 20.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+}
+
+/// `ftYs_SpecialLwLanding_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialLwLanding_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLwLanding_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftYs_SpecialLwLanding_Phys` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialLwLanding_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLwLanding_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftYs_SpecialLwLanding_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialLwLanding_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLwLanding_Coll");
+    if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftYs_SpecialLw_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLw_Anim");
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            crate::chars::r2::ftYoshi::ftyoshispeciallw::ftYs_SpecialS_8012EA04(gobj);
+        }
+    }
+}
+
+/// `ftYs_SpecialS_8012EAD8` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialS_8012EAD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialS_8012EAD8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).gr_vel = f32::from_bits(0x00000000) /* 0.0f */;
+        st::ftCommon_8007D7FC(&mut *fp);
+        st::Fighter_ChangeMotionState(gobj, 367 /* ftYs_MS_SpecialLwLanding */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispeciallw__fn_8012E644);
+    }
+}
+
+/// `ftYs_SpecialAirLw_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirLw_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            (*fp).cmd_vars[1] = (1_u32 /* true */);
+        }
+    }
+}
+
+/// `ftYs_SpecialLw_Phys` (src/melee/ft/kinds/ftYoshi/ftyoshispeciallw.c).
+pub fn ftYs_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialLw_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ft_80085134(gobj);
+        if ((*fp).self_vel.y < f32::from_bits(0x00000000) /* 0.0f */) {
+            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
         }
     }
 }

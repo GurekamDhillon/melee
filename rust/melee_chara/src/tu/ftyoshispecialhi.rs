@@ -5,17 +5,22 @@
 //! (tests/oracle_ftyoshispecialhi.rs, gen/oracle).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::tu::ftinl;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4/6/7/11): re-exported under this TU.
-pub use crate::chars::r11::ftYoshi::ftyoshispecialhi::{ftYs_SpecialAirHi_Anim, ftYs_SpecialHi_Anim};
-pub use crate::chars::r2::ftYoshi::ftyoshispecialhi::{ftYs_SpecialAirHi_Phys, ftYs_SpecialHi_Phys};
-pub use crate::chars::r3::ftYoshi::ftyoshispecialhi::setAccessory4Callback;
-pub use crate::chars::r4::ftYoshi::ftyoshispecialhi::{fn_8012E44C, setDamageCallbacks};
-pub use crate::chars::r6::ftYoshi::ftyoshispecialhi::fn_8012E3B4;
-pub use crate::chars::r7::ftYoshi::ftyoshispecialhi::{ftYs_SpecialAirHi_Enter, ftYs_SpecialHi_Enter};
+
+
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -197,5 +202,122 @@ pub fn ftYs_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
         } else {
             ext::ft_80082C74(gobj, Some(cb_fn_8012E44C));
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftYs_SpecialHi_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialHi_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) != 0) {
+            (*fp).mv.ys.specialhi.x4 = (*fp).mv.ys.specialhi.x4.wrapping_add(1_i32);
+        }
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ft_8008A2BC(gobj);
+        }
+    }
+}
+
+/// `ftYs_SpecialAirHi_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirHi_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) != 0) {
+            (*fp).mv.ys.specialhi.x4 = (*fp).mv.ys.specialhi.x4.wrapping_add(1_i32);
+        }
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ftCo_Fall_Enter(gobj);
+        }
+    }
+}
+
+/// `ftYs_SpecialHi_Phys` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialHi_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftYs_SpecialAirHi_Phys` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirHi_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `setAccessory4Callback` (static) (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn setAccessory4Callback(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setAccessory4Callback");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispecialhi__fn_8012E110);
+    }
+}
+
+/// `setDamageCallbacks` (static) (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn setDamageCallbacks(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setDamageCallbacks");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.ys.x2238.is_null()) {
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftyoshi__ftYs_Init_8012BA8C);
+            (*fp).death2_cb = Some(crate::chars::cb::ftyoshi__ftYs_Init_8012BA8C);
+        }
+    }
+}
+
+/// `fn_8012E44C` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn fn_8012E44C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012E44C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 364 /* 0x16C */, 0xC4C5082u32 /* motion_flags */);
+        crate::chars::r4::ftYoshi::ftyoshispecialhi::setDamageCallbacks(gobj);
+        crate::chars::r3::ftYoshi::ftyoshispecialhi::setAccessory4Callback(gobj);
+    }
+}
+
+/// `fn_8012E3B4` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn fn_8012E3B4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_8012E3B4");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 365 /* ftYs_MS_SpecialAirHi */, 0xC4C5082u32 /* motion_flags */);
+        crate::chars::r4::ftYoshi::ftyoshispecialhi::setDamageCallbacks(gobj);
+        crate::chars::r3::ftYoshi::ftyoshispecialhi::setAccessory4Callback(gobj);
+        st::ftCommon_ClampAirDrift(&mut *fp);
+    }
+}
+
+/// `ftYs_SpecialHi_Enter` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialHi_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.ys.specialhi.x0 = 0_i32;
+        (*fp).mv.ys.specialhi.x4 = 0_i32;
+        (*fp).u.ys.x2238 = core::mem::zeroed(); /* NULL */
+        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 364 /* ftYs_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispecialhi__fn_8012E110);
+        st::ftAnim_8006EBA4(gobj);
+    }
+}
+
+/// `ftYs_SpecialAirHi_Enter` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
+pub fn ftYs_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirHi_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.ys.specialhi.x0 = 0_i32;
+        (*fp).mv.ys.specialhi.x4 = 0_i32;
+        (*fp).u.ys.x2238 = core::mem::zeroed(); /* NULL */
+        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 365 /* ftYs_MS_SpecialAirHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftyoshispecialhi__fn_8012E110);
+        st::ftAnim_8006EBA4(gobj);
     }
 }

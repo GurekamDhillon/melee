@@ -8,13 +8,16 @@
 //! `ftMt_CostumeList` is an uninitialised 4-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/12): re-exported under this TU.
-pub use crate::chars::r12::ftMewtwo::ftmewtwo::{ftMt_Init_OnItemInvisible, ftMt_Init_OnItemVisible};
-pub use crate::chars::r5::ftMewtwo::ftmewtwo::{
-    ftMt_Init_OnDeath, ftMt_Init_OnKnockbackEnter, ftMt_Init_OnKnockbackExit,
-};
+
+
 
 pub const ftMt_Init_DatFilename: &str = "PlMt.dat";
 pub const ftMt_Init_DataName: &str = "ftDataMewtwo";
@@ -143,3 +146,50 @@ pub fn ftMt_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftMt_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMt_CostumeList[4]`), filled when the costumes load.
 pub static mut ftMt_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMt_Init_OnItemInvisible` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+pub fn ftMt_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnItemInvisible");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_Init_OnItemVisible` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+pub fn ftMt_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnItemVisible");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_Init_OnDeath` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+pub fn ftMt_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.mt.x222C_disableGObj = core::mem::zeroed(); /* NULL */
+        (*fp).u.mt.x2230_shadowHeldGObj = core::mem::zeroed(); /* NULL */
+        (*fp).u.mt.x2234_shadowBallCharge = 0_i32;
+        (*fp).u.mt.x2238_shadowBallGObj = core::mem::zeroed(); /* NULL */
+        (*fp).u.mt.x223C_isConfusionBoost = (0_i32 /* false */);
+    }
+}
+
+/// `ftMt_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+pub fn ftMt_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 2);
+    }
+}
+
+/// `ftMt_Init_OnKnockbackExit` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
+pub fn ftMt_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 2);
+    }
+}

@@ -3,37 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfoxspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecials::{ftFx_SpecialAirS_AirToGround, ftFx_SpecialS_Coll, ftFx_SpecialS_GroundToAir};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialS_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialS_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80082708(gobj) == 0 /* false */) {
-                crate::chars::r4::ftFox::ftfoxspecials::ftFx_SpecialS_GroundToAir(gobj);
-            }
-        }
-    }
-
-    /// `ftFx_SpecialS_GroundToAir` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_8007D60C(&mut *fp);
-            st::Fighter_ChangeMotionState(gobj, 351 /* ftFx_MS_SpecialAirS */, 0xC4C5884u32 /* ftFx_MF_SpecialSDash_Coll */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            (*fp).cmd_vars[2] = 0_u32;
-        }
-    }
-
-    /// `ftFx_SpecialAirS_AirToGround` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 348 /* ftFx_MS_SpecialS */, 0xC4C5884u32 /* ftFx_MF_SpecialSDash_Coll */);
-            (*fp).cmd_vars[2] = 0_u32;
-        }
-    }
 
 }

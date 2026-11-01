@@ -9,18 +9,22 @@
 //! zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_types::{ftKoopaAttributes, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 use melee_types::*;
 
 /// Already ported (rounds 5/6 and hand-written): re-exported under this TU. The SpecialS getters
 /// take the `Fighter` the C reads from the gobj (pure helpers).
-pub use crate::chars::ftKoopa::ftkoopa::{
-    ftKp_SpecialS_80132DC0, ftKp_SpecialS_80132DD0, ftKp_SpecialS_80132DE0, ftKp_SpecialS_80132DF0,
-    ftKp_SpecialS_80132E00, ftKp_SpecialS_80132E10, ftKp_SpecialS_80132E20,
-};
-pub use crate::chars::r5::ftKoopa::ftkoopa::{ftKp_Init_OnKnockbackEnter, ftKp_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftKoopa::ftkoopa::{ftKp_Init_OnItemInvisible, ftKp_Init_OnItemVisible};
+
+
+
 
 pub const ftKp_Init_DatFilename: &str = "PlKp.dat";
 pub const ftKp_Init_DataName: &str = "ftDataKoopa";
@@ -184,3 +188,71 @@ pub fn ftKp_SpecialS_80132E30(gobj: *mut HSD_GObj) {
 
 /// `ftKp_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftKp_CostumeList[4]`), filled when the costumes load.
 pub static mut ftKp_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftKp_SpecialS_80132DC0(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132DC0");
+    da::<ftKoopaAttributes>(fp).x4C
+}
+
+pub fn ftKp_SpecialS_80132DD0(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132DD0");
+    da::<ftKoopaAttributes>(fp).x48
+}
+
+pub fn ftKp_SpecialS_80132DE0(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132DE0");
+    da::<ftKoopaAttributes>(fp).x44
+}
+
+pub fn ftKp_SpecialS_80132DF0(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132DF0");
+    da::<ftKoopaAttributes>(fp).x40
+}
+
+pub fn ftKp_SpecialS_80132E00(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132E00");
+    da::<ftKoopaAttributes>(fp).x3C
+}
+
+pub fn ftKp_SpecialS_80132E10(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132E10");
+    da::<ftKoopaAttributes>(fp).x34
+}
+
+pub fn ftKp_SpecialS_80132E20(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKp_SpecialS_80132E20");
+    da::<ftKoopaAttributes>(fp).x38
+}
+
+/// `ftKp_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftKoopa/ftkoopa.c).
+pub fn ftKp_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
+    }
+}
+
+/// `ftKp_Init_OnKnockbackExit` (src/melee/ft/kinds/ftKoopa/ftkoopa.c).
+pub fn ftKp_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
+    }
+}
+
+/// `ftKp_Init_OnItemInvisible` (src/melee/ft/kinds/ftKoopa/ftkoopa.c).
+pub fn ftKp_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1 /* true */);
+    }
+}
+
+/// `ftKp_Init_OnItemVisible` (src/melee/ft/kinds/ftKoopa/ftkoopa.c).
+pub fn ftKp_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKp_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1 /* true */);
+    }
+}

@@ -6,14 +6,17 @@
 //! tests/tu_ftpikachuspecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/12): re-exported under this TU.
-pub use crate::chars::r12::ftPikachu::ftpikachuspecialn::ftPk_SpecialN_Coll;
-pub use crate::chars::r2::ftPikachu::ftpikachuspecialn::{ftPk_SpecialAirN_Phys, ftPk_SpecialN_Phys};
-pub use crate::chars::r4::ftPikachu::ftpikachuspecialn::ftPk_SpecialAirN_Coll;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -196,4 +199,41 @@ pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect0(g: G) {
 pub unsafe extern "C" fn cb_ftPk_SpecialN_SpawnEffect1(g: G) {
     melee_core::ct!("cb_ftPk_SpecialN_SpawnEffect1");
     ftPk_SpecialN_SpawnEffect1(g);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPk_SpecialN_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialn.c).
+pub fn ftPk_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialN_Coll");
+    unsafe {
+        if (st::ft_80082708(gobj) == 0) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 342 /* ftPk_MS_SpecialAirN */, 0xC4C5082u32 /* ftPk_MF_SpecialN_Coll */);
+        }
+    }
+}
+
+/// `ftPk_SpecialN_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialn.c).
+pub fn ftPk_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPk_SpecialAirN_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialn.c).
+pub fn ftPk_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftPk_SpecialAirN_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialn.c).
+pub fn ftPk_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirN_Coll");
+    unsafe {
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_8007D7FC(&mut *fp);
+            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
+            st::Fighter_ChangeMotionState(gobj, 341 /* ftPk_MS_SpecialN */, 0xC4C5082u32 /* ftPk_MF_SpecialN_Coll */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        }
+    }
 }

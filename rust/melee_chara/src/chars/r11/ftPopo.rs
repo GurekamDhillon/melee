@@ -3,65 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpopospecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpopospecialhi::{ftPp_SpecialAirHiStart_0_Coll, ftPp_SpecialAirHiStart_1_Coll, ftPp_SpecialAirHiThrow_0_Coll, ftPp_SpecialAirHiThrow_1_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_SpecialAirHiStart_0_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiStart_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_8012184C(gobj);
-                return;
-            }
-            if (st::ftCliffCommon_80081298(gobj) != 0) {
-                return;
-            }
-        }
-    }
-
-    /// `ftPp_SpecialAirHiThrow_0_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiThrow_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_80121D40(gobj);
-                return;
-            }
-            if (st::ftCliffCommon_80081298(gobj) != 0) {
-                return;
-            }
-        }
-    }
-
-    /// `ftPp_SpecialAirHiStart_1_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiStart_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_80122038(gobj);
-                return;
-            }
-            if (st::ftCliffCommon_80081298(gobj) != 0) {
-                return;
-            }
-        }
-    }
-
-    /// `ftPp_SpecialAirHiThrow_1_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiThrow_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
-                st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x78 as f32));
-                return;
-            }
-            if (st::ftCliffCommon_80081298(gobj) != 0) {
-                return;
-            }
-        }
-    }
 
 }

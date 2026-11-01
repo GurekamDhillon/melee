@@ -3,24 +3,17 @@
 //! pure and checked against the C by tests/tu_ftkirbyspecialmewtwo.rs; the states have a smoke test.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialn::{change_ms, fpp, G};
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 11): re-exported under this TU.
-pub use crate::chars::r11::ftKirby::ftkirbyspecialmewtwo::{
-    ftKb_MtSpecialAirNCancel_Coll, ftKb_MtSpecialAirNEnd_Coll, ftKb_MtSpecialAirNLoopFull_Coll,
-    ftKb_MtSpecialAirNLoop_Coll, ftKb_MtSpecialAirNStart_Coll, ftKb_MtSpecialNCancel_Coll,
-    ftKb_MtSpecialNEnd_Coll, ftKb_MtSpecialNLoopFull_Coll, ftKb_MtSpecialNLoop_Coll,
-    ftKb_MtSpecialNStart_Coll,
-};
-pub use crate::chars::r2::ftKirby::ftkirbyspecialmewtwo::{
-    ftKb_MtSpecialAirNCancel_Phys, ftKb_MtSpecialAirNEnd_Phys, ftKb_MtSpecialAirNLoopFull_Phys,
-    ftKb_MtSpecialAirNLoop_Phys, ftKb_MtSpecialAirNStart_Phys, ftKb_MtSpecialNCancel_Phys,
-    ftKb_MtSpecialNEnd_Phys, ftKb_MtSpecialNLoopFull_Phys, ftKb_MtSpecialNLoop_Phys,
-    ftKb_MtSpecialNStart_Phys,
-};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -649,4 +642,195 @@ pub fn ftKb_MtSpecialAirNLoopFull_IASA(gobj: G) {
             set_cbs(gobj);
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_MtSpecialNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNStart_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 505 /* ftKb_MS_MtSpecialAirNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialNLoop_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNLoop_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 506 /* ftKb_MS_MtSpecialAirNLoop */, 0xC4C5280u32 /* ftMt_MF_SpecialNLoop_Coll */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialNLoopFull_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNLoopFull_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNLoopFull_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 507 /* ftKb_MS_MtSpecialAirNLoopFull */, 0xC4C5280u32 /* ftMt_MF_SpecialNLoop_Coll */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialNCancel_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNCancel_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 508 /* ftKb_MS_MtSpecialAirNCancel */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialNEnd_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNEnd_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80082708(gobj) == 0 /* GA_Ground */) {
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 509 /* ftKb_MS_MtSpecialAirNEnd */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialAirNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNStart_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 500 /* ftKb_MS_MtSpecialNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialAirNLoop_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoop_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 501 /* ftKb_MS_MtSpecialNLoop */, 0xC4C5280u32 /* ftMt_MF_SpecialNLoop_Coll */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialAirNLoopFull_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNLoopFull_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoopFull_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 502 /* ftKb_MS_MtSpecialNLoopFull */, 0xC4C5280u32 /* ftMt_MF_SpecialNLoop_Coll */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialAirNCancel_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNCancel_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNCancel_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 503 /* ftKb_MS_MtSpecialNCancel */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialAirNEnd_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNEnd_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) == 1 /* GA_Air */) {
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 504 /* ftKb_MS_MtSpecialNEnd */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+            (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+        }
+    }
+}
+
+/// `ftKb_MtSpecialNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MtSpecialNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MtSpecialNLoopFull_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNLoopFull_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNLoopFull_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MtSpecialNCancel_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNCancel_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MtSpecialNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MtSpecialAirNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNStart_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_MtSpecialAirNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_MtSpecialAirNLoopFull_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNLoopFull_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNLoopFull_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_MtSpecialAirNCancel_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNCancel_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_MtSpecialAirNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmewtwo.c).
+pub fn ftKb_MtSpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MtSpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
 }

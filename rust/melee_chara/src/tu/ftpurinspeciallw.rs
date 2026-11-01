@@ -2,11 +2,14 @@
 //! so no fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftpurinspeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftPurin::ftpurinspeciallw::{ftPr_SpecialAirLw_Phys, ftPr_SpecialLw_Phys};
+
 
 type G = *mut HSD_GObj;
 
@@ -88,4 +91,17 @@ pub fn ftPr_SpecialLw_8013D19C(gobj: G) {
         let msid = if -1.0 == (*fp).facing_dir { ftPr_MS_SpecialLwL } else { ftPr_MS_SpecialLwR };
         st::Fighter_ChangeMotionState(gobj, msid as i32, 0x0C4C508E, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPr_SpecialLw_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspeciallw.c).
+pub fn ftPr_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPr_SpecialAirLw_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspeciallw.c).
+pub fn ftPr_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_SpecialAirLw_Phys");
+    st::ft_80084EEC(gobj);
 }

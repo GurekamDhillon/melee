@@ -3,188 +3,56 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfoxappeals {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftfoxappeals::{ftFx_AppealS_IASA};
 
-    /// `ftFx_AppealS_IASA` (src/melee/ft/kinds/ftFox/ftfoxappeals.c).
-    pub fn ftFx_AppealS_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftfoxspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecialhi::{ftFx_SpecialAirHi_IASA, ftFx_SpecialHiBound_IASA, ftFx_SpecialHiFall_IASA, ftFx_SpecialHiHoldAir_IASA, ftFx_SpecialHiHold_IASA, ftFx_SpecialHiLanding_IASA, ftFx_SpecialHi_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialHiHold_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiHold_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialHiHoldAir_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiHoldAir_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialHi_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHi_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirHi_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialHiLanding_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiLanding_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialHiFall_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiFall_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialHiBound_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiBound_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftfoxspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspeciallw::{ftFx_SpecialAirLwEnd_IASA, ftFx_SpecialAirLwHit_IASA, ftFx_SpecialAirLwStart_IASA, ftFx_SpecialAirLwTurn_IASA, ftFx_SpecialLwEnd_IASA, ftFx_SpecialLwHit_IASA, ftFx_SpecialLwTurn_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialAirLwStart_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialAirLwStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialLwTurn_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialLwTurn_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirLwTurn_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialAirLwTurn_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialLwHit_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialLwHit_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirLwHit_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialAirLwHit_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialLwEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialLwEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirLwEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialAirLwEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftfoxspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecialn::{ftFx_SpecialAirNEnd_IASA, ftFx_SpecialNEnd_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialNEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
-    pub fn ftFx_SpecialNEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirNEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
-    pub fn ftFx_SpecialAirNEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftfoxspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecials::{ftFx_SpecialAirSEnd_IASA, ftFx_SpecialAirSStart_IASA, ftFx_SpecialSEnd_IASA, ftFx_SpecialSStart_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialSStart_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialSStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirSStart_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialAirSStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialSEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialSEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftFx_SpecialAirSEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialAirSEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

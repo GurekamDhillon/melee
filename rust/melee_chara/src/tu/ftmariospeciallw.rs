@@ -3,13 +3,17 @@
 //! through recording hooks by tests/tu_ftmariospeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (rounds 3 and 4): re-exported under this TU.
-pub use crate::chars::r3::ftMario::ftmariospeciallw::{ftMr_SpecialLw_Anim, unsetCallbacks};
-pub use crate::chars::r4::ftMario::ftmariospeciallw::setCmdVar2;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a native port behind them (the port runs when the hook is unset).
@@ -330,5 +334,47 @@ pub fn ftMr_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
             (*fp).mv.mr.SpecialLw.isUnkColl = 0;
         }
         doColl(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `unsetCallbacks` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
+pub fn unsetCallbacks(gobj: *mut HSD_GObj) {
+    melee_core::ct!("unsetCallbacks");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftMr_SpecialLw_Anim` (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
+pub fn ftMr_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialLw_Anim");
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            crate::chars::r3::ftMario::ftmariospeciallw::unsetCallbacks(gobj);
+            st::ft_8008A2BC(gobj);
+        }
+    }
+}
+
+/// `setCmdVar2` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
+pub fn setCmdVar2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setCmdVar2");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[2] = 0_u32;
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `setCallbacks_fp` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
+pub fn setCallbacks_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("setCallbacks_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftmariospeciallw__updateRot);
+        (*fp).death2_cb = Some(crate::chars::cb::ftmariospeciallw__updateRot);
     }
 }

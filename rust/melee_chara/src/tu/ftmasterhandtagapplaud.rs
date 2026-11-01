@@ -2,14 +2,17 @@
 //! No fused sites. Smoke-tested by tests/tu_ftmasterhandtagapplaud.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftmasterhandslap::ext::ftMh_MS_389_80151018;
 use melee_fighter::tu::ftbosslib as bl;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandtagapplaud::ftMh_TagApplaud_Phys;
-pub use crate::chars::r8::ftMasterHand::ftmasterhandtagapplaud::ftMh_TagApplaud_IASA;
+
+
 
 /// `ftCh_Init_8015A560` lives in ftcrazyhandthrow.c (ported: crate::tu::ftcrazyhandthrow).
 pub use crate::tu::ftcrazyhandthrow::ftCh_Init_8015A560;
@@ -46,5 +49,23 @@ pub fn ftMh_MS_383_80155484(gobj: *mut HSD_GObj) {
         (*fp).x1A5C = gobj1;
         st::Fighter_ChangeMotionState(gobj, 384 /* ftMh_MS_TagRockPaper */, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_TagApplaud_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagapplaud.c).
+pub fn ftMh_TagApplaud_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagApplaud_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_TagApplaud_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagapplaud.c).
+pub fn ftMh_TagApplaud_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagApplaud_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

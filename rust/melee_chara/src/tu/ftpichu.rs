@@ -6,13 +6,16 @@
 //! load. (Pichu has no `MotionStateTable` of its own: it shares Pikachu's.)
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftPichu::ftpichu::{ftPc_Init_OnKnockbackEnter, ftPc_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftPichu::ftpichu::{ftPc_Init_OnItemInvisible, ftPc_Init_OnItemVisible};
+
+
 
 pub const ftPc_Init_DatFilename: &str = "PlPc.dat";
 pub const ftPc_Init_DataName: &str = "ftDataPichu";
@@ -138,3 +141,36 @@ pub fn ftPc_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftPc_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPc_CostumeList[4]`), filled when the costumes load.
 pub static mut ftPc_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPc_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPichu/ftpichu.c).
+pub fn ftPc_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftPc_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPichu/ftpichu.c).
+pub fn ftPc_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftPc_Init_OnItemInvisible` (src/melee/ft/kinds/ftPichu/ftpichu.c).
+pub fn ftPc_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftPc_Init_OnItemVisible` (src/melee/ft/kinds/ftPichu/ftpichu.c).
+pub fn ftPc_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPc_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

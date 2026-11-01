@@ -4,6 +4,16 @@
 //! Not smoke-tested yet (hooks-heavy; only compiled).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::{da as da_g};
+#[allow(unused_imports)]
+use melee_types::{ftIceClimberAttributes, ftPp_MS_SpecialAirS2, ftPp_MS_SpecialS2};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftpopo::mf;
 use melee_core::fp::fmadds;
@@ -655,4 +665,77 @@ pub fn ftPp_SpecialAirS1_Coll(gobj: G) {
 pub fn ftPp_SpecialAirS2_Coll(gobj: G) {
     melee_core::ct!("ftPp_SpecialAirS2_Coll");
     unsafe { air_coll(gobj, ftPp_MS_SpecialS2 as u32) }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `inlineC0_fp` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
+pub fn inlineC0_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("inlineC0_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_UnkSetFlag_8006CFBC(gobj);
+        (*fp).x1A5C = core::mem::zeroed(); /* NULL */
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialS1_Anim_fp` (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
+pub fn ftPp_SpecialS1_Anim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS1_Anim_fp");
+    unsafe {
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            crate::chars::r3::ftPopo::ftpopospecials::resetAnim(gobj);
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftPp_SpecialAirS1_IASA_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPp_SpecialAirS1_IASA_fp");
+    let a: &ftIceClimberAttributes = da_g(fp);
+    let x = fp.input.lstick[0].x;
+    let v = if abs_c(x) >= a.x40 { x * a.x34 } else { 0.0 };
+    unsafe { fp.mv.pp.specials.x1C = v };
+}
+
+pub fn ftPp_SpecialS1_IASA_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPp_SpecialS1_IASA_fp");
+    let a: &ftIceClimberAttributes = da_g(fp);
+    let x = fp.input.lstick[0].x;
+    let v = if abs_c(x) >= a.x40 { x * a.x30 } else { 0.0 };
+    unsafe { fp.mv.pp.specials.x1C = v };
+}
+
+pub fn ftPp_SpecialS_8011F964_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("ftPp_SpecialS_8011F964_fp");
+    let m = fp.motion_id as u32;
+    !(m == ftPp_MS_SpecialS2 as u32 || m == ftPp_MS_SpecialAirS2 as u32)
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `resetAnim_fp` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
+pub fn resetAnim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("resetAnim_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+        (*fp).pre_hitlag_cb = core::mem::zeroed(); /* NULL */
+        (*fp).post_hitlag_cb = core::mem::zeroed(); /* NULL */
+        (*fp).x1A5C = core::mem::zeroed(); /* NULL */
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `inline0_fp` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
+pub fn inline0_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("inline0_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+        (*fp).pre_hitlag_cb = core::mem::zeroed(); /* NULL */
+        (*fp).post_hitlag_cb = core::mem::zeroed(); /* NULL */
+        (*fp).x1A5C = core::mem::zeroed(); /* NULL */
+    }
 }

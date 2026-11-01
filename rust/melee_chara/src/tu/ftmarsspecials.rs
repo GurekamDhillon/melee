@@ -3,18 +3,19 @@
 //! tests/tu_ftmarsspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 4, 13): re-exported under this TU.
-pub use crate::chars::r13::ftMars::ftmarsspecials::{ftMs_SpecialS3_Phys, ftMs_SpecialS4_Phys};
-pub use crate::chars::r2::ftMars::ftmarsspecials::ftMs_SpecialS_801376E8;
-pub use crate::chars::r3::ftMars::ftmarsspecials::ftMs_SpecialS_80137748;
-pub use crate::chars::r4::ftMars::ftmarsspecials::{
-    ftMs_SpecialAirS1_Anim, ftMs_SpecialAirS1_Coll, ftMs_SpecialS2_Anim, ftMs_SpecialS3_Anim, ftMs_SpecialS4_Anim,
-};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -318,5 +319,128 @@ pub fn ftMs_SpecialS_80138148(gobj: *mut HSD_GObj) {
                 (356, 365)
             }
         });
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMs_SpecialS3_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS3_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+            st::ft_80084FA8(gobj);
+        } else {
+            st::ftCommon_Fall(&mut *fp, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x20 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x24 as f32));
+            st::ft_80085204(gobj);
+        }
+    }
+}
+
+/// `ftMs_SpecialS4_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS4_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+            st::ft_80084FA8(gobj);
+        } else {
+            st::ftCommon_Fall(&mut *fp, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x20 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x24 as f32));
+            st::ft_80085204(gobj);
+        }
+    }
+}
+
+/// `ftMs_SpecialS_801376E8` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS_801376E8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_801376E8");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 358, 0xC4E508Cu32 /* transition_flags */);
+}
+
+/// `ftMs_SpecialS_80137748` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS_80137748(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS_80137748");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.ms.x222C = 0_u32;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 349, 0xC4E508Cu32 /* transition_flags */);
+    }
+}
+
+/// `ftMs_SpecialAirS1_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialAirS1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirS1_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+                st::ft_8008A2BC(gobj);
+            } else {
+                st::ftCo_Fall_Enter(gobj);
+            }
+        }
+    }
+}
+
+/// `ftMs_SpecialAirS1_Coll` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialAirS1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialAirS1_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+            if (st::ft_800827A0(gobj) == 0) {
+                crate::chars::r2::ftMars::ftmarsspecials::ftMs_SpecialS_801376E8(gobj);
+            }
+        } else {
+            if (st::ft_80081D0C(gobj) != 0) {
+                crate::chars::r3::ftMars::ftmarsspecials::ftMs_SpecialS_80137748(gobj);
+            }
+        }
+    }
+}
+
+/// `ftMs_SpecialS2_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS2_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+                st::ft_8008A2BC(gobj);
+            } else {
+                st::ftCo_Fall_Enter(gobj);
+            }
+        }
+    }
+}
+
+/// `ftMs_SpecialS3_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS3_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS3_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+                st::ft_8008A2BC(gobj);
+            } else {
+                st::ftCo_Fall_Enter(gobj);
+            }
+        }
+    }
+}
+
+/// `ftMs_SpecialS4_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
+pub fn ftMs_SpecialS4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialS4_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+                st::ft_8008A2BC(gobj);
+            } else {
+                st::ftCo_Fall_Enter(gobj);
+            }
+        }
     }
 }

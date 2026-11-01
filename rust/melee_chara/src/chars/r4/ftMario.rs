@@ -3,26 +3,14 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmariospeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospeciallw::setCallbacks_fp as setCallbacks;
+
+pub use crate::tu::ftmariospeciallw::{setCmdVar2};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `setCallbacks` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
-    pub fn setCallbacks(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_cb = Some(crate::chars::cb::ftmariospeciallw__updateRot);
-            (*fp).death2_cb = Some(crate::chars::cb::ftmariospeciallw__updateRot);
-        }
-    }
-
-    /// `setCmdVar2` (static) (src/melee/ft/kinds/ftMario/ftmariospeciallw.c).
-    pub fn setCmdVar2(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[2] = 0_u32;
-        }
-    }
 
 }

@@ -3,21 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmariospecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmariospecialhi::{ftMr_SpecialHi_Phys};
 
-    /// `ftMr_SpecialHi_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialhi.c).
-    pub fn ftMr_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).ground_or_air as i32) == 1i32 /* GA_Air */) {
-                st::ft_80085154(gobj);
-            } else {
-                st::ft_80084FA8(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

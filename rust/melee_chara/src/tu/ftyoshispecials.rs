@@ -12,13 +12,19 @@
 //! thin ports are re-exported and checked through the legacy `crate::stubs` hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::{da};
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftYoshiAttributes, Fighter};
 use crate::tu::ftinl;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 1/2/3/5...): re-exported under this TU.
-pub use crate::chars::ftYoshi::ftyoshispecials::fn_8012EFF4 as fn_8012EFF4_fp;
 const M_PI: f64 = 3.14159265358979323846;
 const M_PI_2: f64 = M_PI / 2.0;
 const M_TAU: f64 = 6.283185307179586;
@@ -1287,4 +1293,113 @@ pub fn ftYs_SpecialAirSStart_0_Phys(gobj: *mut HSD_GObj) {
 pub fn ftYs_SpecialAirSStart_1_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftYs_SpecialAirSStart_1_IASA");
     unsafe { crate::chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSStart_1_IASA_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `fn_8012EFF4_fp` (the Egg Roll deal-damage callback): bleed speed off x1C.
+pub fn fn_8012EFF4_fp(fp: &mut Fighter) {
+    melee_core::ct!("fn_8012EFF4_fp");
+    let a: &ftYoshiAttributes = da(fp);
+    unsafe {
+        fp.mv.ys.specials.xC = 0 as _;
+    }
+    let motion = fp.motion_id as i32;
+    if motion != 0x16a {
+        if motion >= 0x16a {
+            return;
+        }
+        if motion != 0x165 {
+            return;
+        }
+    }
+    unsafe {
+        let s = &mut fp.mv.ys.specials;
+        s.x0 -= a.x50;
+        let temp_f2 = if fp.ground_or_air == 1 { a.x8C } else { a.x7C };
+        let s = &mut fp.mv.ys.specials;
+        if abs_c(s.x1C) > temp_f2 {
+            if s.x1C > 0.0 {
+                s.x1C -= a.xCC;
+                if s.x1C < temp_f2 {
+                    s.x1C = temp_f2;
+                }
+            } else {
+                s.x1C += a.xCC;
+                if s.x1C > -temp_f2 {
+                    s.x1C = -temp_f2;
+                }
+            }
+        } else if s.x1C == 0.0 {
+            s.x1C = fp.facing_dir * temp_f2;
+        }
+    }
+}
+
+pub fn ftYs_SpecialAirSEnd_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSEnd_Phys_fp");
+    let f = fp.co_attrs.ground_friction;
+    co::calc_ground_accel_deaccel(fp, f);
+    co::set_self_movement_from_grounded_movement(fp);
+}
+
+pub fn ftYs_SpecialAirSLanding_IASA_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_IASA_fp");
+    unsafe { fp.mv.ys.specials.x30 = 0 as _ };
+}
+
+pub fn ftYs_SpecialAirSLanding_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_Phys_fp");
+    let a: &ftYoshiAttributes = da(fp);
+    unsafe { fp.mv.ys.specials.x30 = 0 as _ };
+    co::fall(fp, a.specials_start_gravity, a.specials_start_terminal_vel);
+}
+
+#[inline]
+pub fn air_s_loop_phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("air_s_loop_phys_fp");
+    let a: &ftYoshiAttributes = da(fp);
+    unsafe { fp.mv.ys.specials.x30 = 0 as _ };
+    let temp = fp.input.lstick[0].x * a.xE0;
+    fp.self_vel.x += temp;
+    let var_f0 = if fp.self_vel.x < 0.0 { -fp.self_vel.x } else { fp.self_vel.x };
+    let mut var_f2 = a.x90;
+    if var_f0 > var_f2 {
+        if fp.self_vel.x < 0.0 {
+            var_f2 = -var_f2;
+        }
+        fp.self_vel.x = var_f2;
+    }
+    co::fall(fp, a.specials_start_gravity, a.specials_start_terminal_vel);
+}
+
+pub fn ftYs_SpecialAirSLoop_2_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_2_Phys_fp");
+    air_s_loop_phys_fp(fp)
+}
+
+pub fn ftYs_SpecialAirSLoop_3_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSLoop_3_Phys_fp");
+    air_s_loop_phys_fp(fp)
+}
+
+pub fn ftYs_SpecialAirSStart_0_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSStart_0_Phys_fp");
+    fp.xE4_ground_accel_1 = 0.0;
+    fp.gr_vel = 0.0;
+    fp.self_vel.y = 0.0;
+    fp.self_vel.x = 0.0;
+    fp.x74_self_accel.y = 0.0;
+    fp.x74_self_accel.x = 0.0;
+}
+
+pub fn ftYs_SpecialAirSStart_1_IASA_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_IASA_fp");
+    unsafe { fp.mv.ys.specials.x30 = 0 as _ };
+}
+
+pub fn ftYs_SpecialAirSStart_1_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_Phys_fp");
+    let a: &ftYoshiAttributes = da(fp);
+    unsafe { fp.mv.ys.specials.x30 = 0 as _ };
+    co::fall(fp, a.specials_start_gravity, a.specials_start_terminal_vel);
 }

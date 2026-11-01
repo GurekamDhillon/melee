@@ -3,10 +3,13 @@
 //! Smoke-tested by tests/tu_ftcrazyhandtaggrab.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandtaggrab::ftCh_TagGrab_IASA;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -146,3 +149,15 @@ pub fn ftCh_TagGrab_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_TagGrab_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_TagGrab_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_TagGrab_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandtaggrab.c).
+pub fn ftCh_TagGrab_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagGrab_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

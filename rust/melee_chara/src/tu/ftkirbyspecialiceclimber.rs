@@ -3,14 +3,15 @@
 //! tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftkirbyspecialiceclimber.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/11): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialiceclimber::{
-    ftKb_PpSpecialAirN_Anim, ftKb_PpSpecialAirN_Phys, ftKb_PpSpecialN_Anim, ftKb_PpSpecialN_Phys,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -250,4 +251,33 @@ pub fn fn_801090D4(gobj: G) {
 pub fn ftKb_SpecialNYs_80109238(gobj: G) -> Fighter_Part {
     melee_core::ct!("ftKb_SpecialNYs_80109238");
     unsafe { melee_fighter::hooks::ftparts_get_bone_index(&*fpp(gobj), FtPart_TransN2 as i32) as Fighter_Part }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_PpSpecialN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialiceclimber.c).
+pub fn ftKb_PpSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PpSpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftKb_PpSpecialAirN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialiceclimber.c).
+pub fn ftKb_PpSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PpSpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftKb_PpSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialiceclimber.c).
+pub fn ftKb_PpSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PpSpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_PpSpecialAirN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialiceclimber.c).
+pub fn ftKb_PpSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PpSpecialAirN_Phys");
+    st::ft_80084EEC(gobj);
 }

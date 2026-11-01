@@ -3,51 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmarsspeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmarsspeciallw::{ftMs_SpecialLw_Phys};
 
-    /// `ftMs_SpecialLw_Phys` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEE0(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmarsspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmarsspecials::{ftMs_SpecialS3_Phys, ftMs_SpecialS4_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_SpecialS3_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
-    pub fn ftMs_SpecialS3_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
-                st::ft_80084FA8(gobj);
-            } else {
-                st::ftCommon_Fall(&mut *fp, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x20 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x24 as f32));
-                st::ft_80085204(gobj);
-            }
-        }
-    }
-
-    /// `ftMs_SpecialS4_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
-    pub fn ftMs_SpecialS4_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
-                st::ft_80084FA8(gobj);
-            } else {
-                st::ftCommon_Fall(&mut *fp, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x20 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x24 as f32));
-                st::ft_80085204(gobj);
-            }
-        }
-    }
 
 }

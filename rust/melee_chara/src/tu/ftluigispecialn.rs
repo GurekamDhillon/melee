@@ -3,15 +3,18 @@
 //! tests/tu_ftluigispecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 4, 7): re-exported under this TU.
-pub use crate::chars::r2::ftLuigi::ftluigispecialn::{
-    ftLg_SpecialAirN_Anim, ftLg_SpecialAirN_Phys, ftLg_SpecialN_Anim, ftLg_SpecialN_Phys,
-};
-pub use crate::chars::r4::ftLuigi::ftluigispecialn::{ftLg_SpecialAirN_Coll, ftLg_SpecialN_Coll};
-pub use crate::chars::r7::ftLuigi::ftluigispecialn::{ftLg_SpecialAirN_Enter, ftLg_SpecialN_Enter};
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a native port behind them (the port runs when the hook is unset).
@@ -122,5 +125,84 @@ pub fn ftLg_SpecialN_FireSpawn(gobj: *mut HSD_GObj) {
                 &[joint as *mut core::ffi::c_void, &mut (*fp).facing_dir as *mut f32 as *mut core::ffi::c_void],
             );
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLg_SpecialN_Anim` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftLg_SpecialAirN_Anim` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftLg_SpecialN_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLg_SpecialAirN_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftLg_SpecialN_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_Coll");
+    unsafe {
+        if (st::ft_80082708(gobj) == 0 /* false */) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 342 /* ftLg_MS_SpecialAirN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
+        }
+    }
+}
+
+/// `ftLg_SpecialAirN_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirN_Coll");
+    unsafe {
+        if (st::ft_80081D0C(gobj) != 0 /* false */) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 341 /* ftLg_MS_SpecialN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
+        }
+    }
+}
+
+/// `ftLg_SpecialN_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 341 /* ftLg_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
+    }
+}
+
+/// `ftLg_SpecialAirN_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
+pub fn ftLg_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 342 /* ftLg_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
     }
 }

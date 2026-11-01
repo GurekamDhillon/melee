@@ -3,39 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgamewatchspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgamewatchspecialhi::{ftGw_SpecialAirHi_Phys, ftGw_SpecialHi_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGw_SpecialHi_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
-    pub fn ftGw_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r13::ftGameWatch::ftgamewatchspecialhi::ftGw_SpecialAirHi_Phys(gobj);
-        }
-    }
-
-    /// `ftGw_SpecialAirHi_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialhi.c).
-    pub fn ftGw_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80085154(gobj);
-        }
-    }
 
 }
 
 pub mod ftgamewatchspeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftgamewatchspeciallw::{ftGw_SpecialLw_Phys};
 
-    /// `ftGw_SpecialLw_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
-    pub fn ftGw_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AF10(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

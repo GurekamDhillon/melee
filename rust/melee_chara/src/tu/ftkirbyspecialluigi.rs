@@ -3,15 +3,18 @@
 //! tests/tu_ftkirbyspecialluigi.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 2/3/5/7): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialluigi::{
-    ftKb_LgSpecialAirN_Anim, ftKb_LgSpecialAirN_Phys, ftKb_LgSpecialN_Anim, ftKb_LgSpecialN_Phys,
-};
-pub use crate::chars::r3::ftKirby::ftkirbyspecialluigi::{ftKb_LgSpecialAirN_Coll, ftKb_LgSpecialN_Coll};
-pub use crate::chars::r5::ftKirby::ftkirbyspecialluigi::ftKb_LgSpecialN_IASA;
-pub use crate::chars::r7::ftKirby::ftkirbyspecialluigi::{ftKb_SpecialNLg_800F9614, ftKb_SpecialNLg_800F9684};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -107,5 +110,95 @@ pub fn fn_800F98F4(gobj: G) {
             let joint = (*(*fp).parts.add(bone2 as usize)).joint;
             ext::efSync_Spawn(0x4B1, gobj, &[joint as usize, &raw mut (*fp).facing_dir as usize]);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_LgSpecialN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftKb_LgSpecialAirN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftKb_LgSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_LgSpecialAirN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftKb_LgSpecialN_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialN_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 432 /* ftKb_MS_LgSpecialAirN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);
+        }
+    }
+}
+
+/// `ftKb_LgSpecialAirN_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialAirN_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 431 /* ftKb_MS_LgSpecialN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);
+        }
+    }
+}
+
+/// `ftKb_LgSpecialN_IASA` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_LgSpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_LgSpecialN_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).cmd_vars[0] as u32) != 0u32 /* 0 */) {
+            st::ftCo_Wait_IASA(gobj);
+        }
+    }
+}
+
+/// `ftKb_SpecialNLg_800F9614` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_SpecialNLg_800F9614(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNLg_800F9614");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 431 /* ftKb_MS_LgSpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);
+    }
+}
+
+/// `ftKb_SpecialNLg_800F9684` (src/melee/ft/kinds/ftKirby/ftkirbyspecialluigi.c).
+pub fn ftKb_SpecialNLg_800F9684(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNLg_800F9684");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 432 /* ftKb_MS_LgSpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialluigi__fn_800F98F4);
     }
 }

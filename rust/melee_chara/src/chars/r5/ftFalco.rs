@@ -3,18 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfalco {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftfalco::{ftFc_Init_OnDeath};
 
-    /// `ftFc_Init_OnDeath` (src/melee/ft/kinds/ftFalco/ftfalco.c).
-    pub fn ftFc_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* 0 */
-            st::ftParts_80074A4C(gobj, 0, 0);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

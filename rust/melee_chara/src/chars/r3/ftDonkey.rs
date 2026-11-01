@@ -3,57 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftdonkeyspeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyspeciallw::{ftDk_SpecialLw_Enter};
 
-    /// `ftDk_SpecialLw_Enter` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).mv.dk.speciallw.x0 = 0_i32;
-            st::Fighter_ChangeMotionState(gobj, 383 /* ftDk_MS_SpecialLwStart */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftdonkeyspecialn::{clearCallbacks, ftDk_SpecialAirNCancel_Anim, ftDk_SpecialNCancel_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `clearCallbacks` (static) (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn clearCallbacks(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_2_cb = core::mem::zeroed(); /* NULL */
-            (*fp).pre_hitlag_cb = core::mem::zeroed(); /* NULL */
-            (*fp).post_hitlag_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
-
-    /// `ftDk_SpecialNCancel_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialNCancel_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-                crate::chars::r3::ftDonkey::ftdonkeyspecialn::clearCallbacks(gobj);
-                st::ft_8008A2BC(gobj);
-            }
-        }
-    }
-
-    /// `ftDk_SpecialAirNCancel_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirNCancel_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-                crate::chars::r3::ftDonkey::ftdonkeyspecialn::clearCallbacks(gobj);
-                st::ftCo_Fall_Enter(gobj);
-            }
-        }
-    }
 
 }

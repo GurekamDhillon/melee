@@ -4,121 +4,60 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftsamusspeciallw0 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsamusspeciallw0::{ftSs_SpecialLw_801290A4};
+
+pub use crate::tu::ftsamusspeciallw0::{ftSs_SpecialLw_80129048};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSs_SpecialLw_80129048` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw0.c).
-    pub fn ftSs_SpecialLw_80129048(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_8007D5D4(fp);
-        st::Fighter_ChangeMotionState(gobj, 342 /* 0x156 */, 0x10u32 /* 0x10 */, fp.cur_anim_frame, fp.frame_speed_mul, 0.0_f32, core::ptr::null_mut());
-    }
-
-    /// `ftSs_SpecialLw_801290A4` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw0.c).
-    pub fn ftSs_SpecialLw_801290A4(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_8007D7FC(fp);
-        st::Fighter_ChangeMotionState(gobj, 341 /* 0x155 */, 0x10u32 /* 0x10 */, fp.cur_anim_frame, fp.frame_speed_mul, 0.0_f32, core::ptr::null_mut());
-    }
 
 }
 
 pub mod ftsamusspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialAirN_Phys};
+
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialAirNStart_Phys};
+
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialN_Phys};
+
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialNCancel_Phys};
+
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialNHold_Phys};
+
+pub use crate::tu::ftsamusspecialn::{ftSs_SpecialNStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSs_SpecialNStart_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialNHold_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialNHold_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialNCancel_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialN_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftSs_SpecialAirN_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecialn.c).
-    pub fn ftSs_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftsamusspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialSSmash_Coll};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialSSmash_Phys};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialAirSSmash_Anim};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialSSmash_Anim};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialS_Coll};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialS_Phys};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialAirS_Anim};
+
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialS_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSs_SpecialS_Anim` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialAirS_Anim` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialS_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialS_Coll` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialS_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_800827A0(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialSSmash_Anim` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialSSmash_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialAirSSmash_Anim` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialAirSSmash_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialSSmash_Phys` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialSSmash_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSs_SpecialSSmash_Coll` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialSSmash_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_80082708(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
 
 }

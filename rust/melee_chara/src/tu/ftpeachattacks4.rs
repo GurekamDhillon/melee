@@ -3,12 +3,15 @@
 //! recording hooks by tests/tu_ftpeachattacks4.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/5): re-exported under this TU.
-pub use crate::chars::r2::ftPeach::ftpeachattacks4::{ftPe_AttackS4_Anim, ftPe_AttackS4_Phys};
-pub use crate::chars::r5::ftPeach::ftpeachattacks4::ftPe_AttackS4_Coll;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -50,5 +53,28 @@ pub fn ftPe_AttackS4_IASA(gobj: *mut HSD_GObj) {
         if (*((*gobj).user_data as *mut Fighter)).allow_interrupt() != 0 {
             st::ftCo_Wait_IASA(gobj);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPe_AttackS4_Anim` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
+pub fn ftPe_AttackS4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_AttackS4_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftPe_AttackS4_Phys` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
+pub fn ftPe_AttackS4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_AttackS4_Phys");
+    st::ft_80084FA8(gobj);
+}
+
+/// `ftPe_AttackS4_Coll` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
+pub fn ftPe_AttackS4_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_AttackS4_Coll");
+    unsafe {
+        st::ft_80084104(gobj);
     }
 }

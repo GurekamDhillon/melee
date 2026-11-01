@@ -3,52 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftluigispecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftluigispecialhi::{ftLg_SpecialHi_Enter};
 
-    /// `ftLg_SpecialHi_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialhi.c).
-    pub fn ftLg_SpecialHi_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 355 /* ftLg_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftluigispecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftluigispecialn::{ftLg_SpecialAirN_Enter, ftLg_SpecialN_Enter};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftLg_SpecialN_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
-    pub fn ftLg_SpecialN_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 341 /* ftLg_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
-        }
-    }
-
-    /// `ftLg_SpecialAirN_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
-    pub fn ftLg_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 342 /* ftLg_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
-        }
-    }
 
 }

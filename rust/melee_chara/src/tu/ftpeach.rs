@@ -9,12 +9,15 @@
 //! BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftPeach::ftpeach::{ftPe_Init_OnKnockbackEnter, ftPe_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftPeach::ftpeach::{ftPe_Init_OnItemInvisible, ftPe_Init_OnItemVisible};
+
+
 
 pub const ftPe_Init_DatFilename: &str = "PlPe.dat";
 pub const ftPe_Init_DataName: &str = "ftDataPeach";
@@ -193,3 +196,36 @@ pub fn ftPe_Init_8011B93C(gobj: *mut HSD_GObj) {
 
 /// `ftPe_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPe_CostumeList[5]`), filled when the costumes load.
 pub static mut ftPe_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPe_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPeach/ftpeach.c).
+pub fn ftPe_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftPe_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPeach/ftpeach.c).
+pub fn ftPe_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftPe_Init_OnItemInvisible` (src/melee/ft/kinds/ftPeach/ftpeach.c).
+pub fn ftPe_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftPe_Init_OnItemVisible` (src/melee/ft/kinds/ftPeach/ftpeach.c).
+pub fn ftPe_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}

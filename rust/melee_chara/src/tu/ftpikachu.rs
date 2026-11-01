@@ -9,16 +9,18 @@
 //! `ftPk_CostumeList` is zero-initialised BSS filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 use crate::tu::ftfox::{copy_attrs, push_attrs};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftPikachu::ftpikachu::{
-    ftPk_Init_OnDeath, ftPk_Init_OnKnockbackEnter, ftPk_Init_OnKnockbackExit,
-    ftPk_Init_UnkMotionStates1, ftPk_Init_UnkMotionStates2,
-};
-pub use crate::chars::r6::ftPikachu::ftpikachu::{ftPk_Init_OnItemInvisible, ftPk_Init_OnItemVisible};
+
+
 
 pub const ftPk_Init_DatFilename: &str = "PlPk.dat";
 pub const ftPk_Init_DataName: &str = "ftDataPikachu";
@@ -128,3 +130,63 @@ pub fn ftPk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftPk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPk_CostumeList[4]`), filled when the costumes load.
 pub static mut ftPk_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPk_Init_OnDeath` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnDeath");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 0, 0);
+        st::ftParts_80074A4C(gobj, 1, 0);
+    }
+}
+
+/// `ftPk_Init_UnkMotionStates1` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_UnkMotionStates1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_UnkMotionStates1");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 1, -1);
+        st::ftParts_80074B0C(gobj, 1, 0);
+    }
+}
+
+/// `ftPk_Init_UnkMotionStates2` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_UnkMotionStates2(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_UnkMotionStates2");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 1, 0);
+        st::ftParts_80074B0C(gobj, 1, 0);
+    }
+}
+
+/// `ftPk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftPk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftPk_Init_OnItemInvisible` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftPk_Init_OnItemVisible` (src/melee/ft/kinds/ftPikachu/ftpikachu.c).
+pub fn ftPk_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

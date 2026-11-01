@@ -8,6 +8,13 @@
 //! The spin/charge arithmetic is checked against the C by tests/tu_ftkirbyspecialpurin.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftCommonData, ftKb_DatAttrs, Fighter};
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialn::{fpp, ftKb_SpecialN_set_cbs, G};
 use melee_core::fp::fmadds;
@@ -1339,4 +1346,60 @@ pub fn fn_80105978(gobj: G) {
         rot_y(fp, 0, M_PI_2 * (*fp).facing_dir as f64);
         ftPr_MirrorSpecialN(fp);
     }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// The four aerial Rollout Phys callbacks read `dat_attrs` as `ftCommonData` (x2BC/x2C0),
+/// exactly as the C does.
+#[inline]
+pub fn fall_cd(fp: &mut Fighter) {
+    melee_core::ct!("fall_cd");
+    let cd: &ftCommonData = da(fp);
+    co::fall(fp, cd.x2BC, cd.x2C0);
+}
+
+pub fn ftKb_PrSpecialAirNEndR_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialAirNEndR_Phys_fp");
+    fall_cd(fp)
+}
+
+pub fn ftKb_PrSpecialAirNFull_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialAirNFull_Phys_fp");
+    fall_cd(fp)
+}
+
+pub fn ftKb_PrSpecialAirNLoop_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialAirNLoop_Phys_fp");
+    fall_cd(fp)
+}
+
+pub fn ftKb_PrSpecialAirNStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialAirNStart_Phys_fp");
+    fall_cd(fp)
+}
+
+pub fn ftKb_PrSpecialNEnd_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialNEnd_Phys_fp");
+    let f = fp.co_attrs.ground_friction;
+    co::calc_ground_accel_deaccel(fp, f);
+    co::set_self_movement_from_grounded_movement(fp);
+}
+
+pub fn ftKb_PrSpecialNHit_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialNHit_Phys_fp");
+    let a: &ftKb_DatAttrs = da(fp);
+    if fp.self_vel.y <= -a.specialn_pr_bounciness {
+        co::calc_self_accel_drift(fp);
+    }
+    co::fall(fp, a.specialn_pr_air_height_offset_at_start, a.specialn_pr_bounciness);
+}
+
+pub fn ftKb_PrSpecialNStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_PrSpecialNStart_Phys_fp");
+    fp.xE4_ground_accel_1 = 0.0;
+    fp.gr_vel = 0.0;
+    fp.self_vel.x = 0.0001f32 * fp.facing_dir;
+    fp.self_vel.y = 0.0;
+    fp.x74_self_accel.y = 0.0;
+    fp.x74_self_accel.x = 0.0;
 }

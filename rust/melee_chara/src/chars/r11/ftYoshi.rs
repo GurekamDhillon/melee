@@ -3,35 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftyoshispecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftyoshispecialhi::{ftYs_SpecialAirHi_Anim, ftYs_SpecialHi_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftYs_SpecialHi_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
-    pub fn ftYs_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) != 0) {
-                (*fp).mv.ys.specialhi.x4 = (*fp).mv.ys.specialhi.x4.wrapping_add(1_i32);
-            }
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ft_8008A2BC(gobj);
-            }
-        }
-    }
-
-    /// `ftYs_SpecialAirHi_Anim` (src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c).
-    pub fn ftYs_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if ((((*fp).input.held_buttons[0] as u32) & 0x200u32 /* HSD_PAD_B */) != 0) {
-                (*fp).mv.ys.specialhi.x4 = (*fp).mv.ys.specialhi.x4.wrapping_add(1_i32);
-            }
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_Fall_Enter(gobj);
-            }
-        }
-    }
 
 }

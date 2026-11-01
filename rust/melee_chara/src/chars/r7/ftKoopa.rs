@@ -3,43 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkoopaspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftkoopaspecials::{ftKp_SpecialSWait_IASA_inline, inlineA0};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `inlineA0` (static) (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-    pub fn inlineA0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).mv.kp.specials.x4 as i32) != 0i32 /* 0 */) {
-                st::Fighter_ChangeMotionState(gobj, 355 /* ftKp_MS_SpecialAirSHit1 */, 0x80u32 /* Ft_MF_SkipMatAnim */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 354 /* ftKp_MS_SpecialAirSHit0_0 */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-            (*fp).set_x2222_b2(1);
-            st::ftCommon_8007E2F4(&mut *fp, (511 /* (s16) (0x1FF) */ as i16));
-            st::ftCommon_8007E2FC(gobj);
-            (*fp).mv.kp.specials.b_held = (0_i32 /* false */);
-            (*fp).cmd_vars[0] = 0_u32;
-        }
-    }
-
-    /// `ftKp_SpecialSWait_IASA_inline` (static) (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-    pub fn ftKp_SpecialSWait_IASA_inline(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).mv.kp.specials.x4 as i32) != 0i32 /* 0 */) {
-                st::Fighter_ChangeMotionState(gobj, 349 /* ftKp_MS_SpecialSHit1 */, 0x80u32 /* Ft_MF_SkipMatAnim */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            } else {
-                st::Fighter_ChangeMotionState(gobj, 348 /* ftKp_MS_SpecialSHit0_0 */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-            (*fp).set_x2222_b2(1);
-            st::ftCommon_8007E2F4(&mut *fp, (511 /* (s16) (0x1FF) */ as i16));
-            st::ftCommon_8007E2FC(gobj);
-            (*fp).mv.kp.specials.b_held = (0_i32 /* false */);
-            (*fp).cmd_vars[0] = 0_u32;
-        }
-    }
 
 }

@@ -5,12 +5,17 @@
 //! Data: the file-name strings are below; `ftBo_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::tu::ftinl;
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftZakoBoy::ftboy::ftBo_Init_OnDeath;
-pub use crate::chars::r6::ftZakoBoy::ftboy::{ftBo_Init_OnItemInvisible, ftBo_Init_OnItemVisible};
+
+
 
 pub const ftBo_Init_DatFilename: &str = "PlBo.dat";
 pub const ftBo_Init_DataName: &str = "ftDataBoy";
@@ -51,3 +56,28 @@ pub fn ftBo_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftBo_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftBo_CostumeList[1]`), filled when the costumes load.
 pub static mut ftBo_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftBo_Init_OnDeath` (src/melee/ft/kinds/ftZakoBoy/ftboy.c).
+pub fn ftBo_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftBo_Init_OnDeath");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 0, 0);
+    }
+}
+
+/// `ftBo_Init_OnItemInvisible` (src/melee/ft/kinds/ftZakoBoy/ftboy.c).
+pub fn ftBo_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftBo_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftBo_Init_OnItemVisible` (src/melee/ft/kinds/ftZakoBoy/ftboy.c).
+pub fn ftBo_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftBo_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

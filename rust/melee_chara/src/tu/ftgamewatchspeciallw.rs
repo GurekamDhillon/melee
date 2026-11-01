@@ -5,19 +5,21 @@
 //! the rest has a smoke test through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftGw_MS_SpecialAirLwShoot, ftGw_MS_SpecialLwShoot, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext};
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4/13 and the item-check helper): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchspeciallw::ftGw_SpecialLw_ItemCheckPanicRemove;
-pub use crate::chars::r13::ftGameWatch::ftgamewatchspeciallw::ftGw_SpecialLw_Phys;
-pub use crate::chars::r2::ftGameWatch::ftgamewatchspeciallw::{
-    ftGw_SpecialAirLwCatch_AirToGround, ftGw_SpecialAirLwCatch_Phys, ftGw_SpecialAirLwShoot_Phys,
-    ftGw_SpecialLwCatch_GroundToAir, ftGw_SpecialLwCatch_Phys, ftGw_SpecialLwShoot_Phys,
-};
-pub use crate::chars::r3::ftGameWatch::ftgamewatchspeciallw::{ftGw_SpecialAirLwCatch_Coll, ftGw_SpecialLwCatch_Coll};
-pub use crate::chars::r4::ftGameWatch::ftgamewatchspeciallw::ftGameWatch_SpecialLw_SetVars;
+
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -646,5 +648,90 @@ pub fn ftGw_SpecialAirLwShoot_ReleaseOil(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, ftGw_MS_SpecialAirLwShoot as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         release_oil_tail(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_SpecialLw_ItemCheckPanicRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_SpecialLw_ItemCheckPanicRemove");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_SpecialLwShoot as u32, ftGw_MS_SpecialAirLwShoot as u32)
+}
+
+/// `ftGw_SpecialLw_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLw_Phys");
+    unsafe {
+        st::ft_80084F3C(gobj);
+        st::ftColl_8007AF10(gobj);
+    }
+}
+
+/// `ftGw_SpecialLwCatch_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialLwCatch_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwCatch_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftGw_SpecialAirLwCatch_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialAirLwCatch_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwCatch_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftGw_SpecialLwCatch_GroundToAir` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialLwCatch_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwCatch_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 379 /* ftGw_MS_SpecialAirLwCatch */, 0xC4C508Eu32 /* transition_flags0 */);
+}
+
+/// `ftGw_SpecialAirLwCatch_AirToGround` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialAirLwCatch_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwCatch_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 376 /* ftGw_MS_SpecialLwCatch */, 0xC4C508Eu32 /* transition_flags0 */);
+}
+
+/// `ftGw_SpecialLwShoot_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialLwShoot_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwShoot_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftGw_SpecialAirLwShoot_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialAirLwShoot_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwShoot_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftGw_SpecialLwCatch_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialLwCatch_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialLwCatch_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftGameWatch::ftgamewatchspeciallw::ftGw_SpecialLwCatch_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftGw_SpecialAirLwCatch_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGw_SpecialAirLwCatch_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirLwCatch_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftGameWatch::ftgamewatchspeciallw::ftGw_SpecialAirLwCatch_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftGameWatch_SpecialLw_SetVars` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspeciallw.c).
+pub fn ftGameWatch_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGameWatch_SpecialLw_SetVars");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).mv.gw.SpecialLw.isRelease = (0_i32 /* false */);
+        (*fp).mv.gw.SpecialLw.turnFrames = 0_i32;
     }
 }

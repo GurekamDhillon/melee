@@ -3,18 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftsamusspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftsamusspecials::{ftSamus_ClearThrowFlagsUnk};
 
-    /// `ftSamus_ClearThrowFlagsUnk` (static) (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSamus_ClearThrowFlagsUnk(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspecialn__ftSs_SpecialS_8012A074);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

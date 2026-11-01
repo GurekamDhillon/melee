@@ -3,6 +3,11 @@
 //! recording hooks by tests/tu_ftpeachfloatfall.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_fighter::hooks::common_data;
+#[allow(unused_imports)]
+use melee_types::{ftPe_MS_FloatFallB, ftPe_MS_FloatFallF, ftPeach_MotionState, Fighter};
 use crate::stubs as st;
 use crate::tu::ftpeachfloat::{cb_ftCo_80096CC8, cb_ft_80082B1C, ext as fext};
 use melee_types::*;
@@ -22,7 +27,7 @@ pub mod ext {
 }
 
 /// Already ported (chars::ftPeach): re-exported under this TU.
-pub use crate::chars::ftPeach::ftpeachfloatfall::getFloatDir;
+
 
 #[inline(always)]
 unsafe fn fpp(gobj: *mut HSD_GObj) -> *mut Fighter {
@@ -69,4 +74,15 @@ pub fn ftPe_FloatFall_Phys(gobj: *mut HSD_GObj) {
 pub fn ftPe_FloatFall_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPe_FloatFall_Coll");
     fext::ft_800831CC(gobj, Some(cb_ftCo_80096CC8), Some(cb_ft_80082B1C));
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `getFloatDir` (static): stick x times facing past `-p_ftCommonData->x78` -> forward.
+pub fn getFloatDir(fp: &Fighter) -> ftPeach_MotionState {
+    melee_core::ct!("getFloatDir");
+    if fp.input.lstick[0].x * fp.facing_dir > -common_data().x78 {
+        ftPe_MS_FloatFallF
+    } else {
+        ftPe_MS_FloatFallB
+    }
 }

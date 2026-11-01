@@ -4,104 +4,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftmewtwospecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospecialhi::{ftMt_SpecialHiLost_GroundToAir, ftMt_SpecialHiStart_Phys, ftMt_SpecialHi_Anim, ftMt_SpecialHi_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialHiStart_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
-    pub fn ftMt_SpecialHiStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialHi_Anim` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
-    pub fn ftMt_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftMt_SpecialHi_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
-    pub fn ftMt_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialHiLost_GroundToAir` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialhi.c).
-    pub fn ftMt_SpecialHiLost_GroundToAir(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_8007D60C(fp);
-        st::Fighter_ChangeMotionState(gobj, 358 /* ftMt_MS_SpecialAirHi */, 0xC4C508Au32 /* transition_flags0 */, fp.cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-    }
 
 }
 
 pub mod ftmewtwospeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmewtwospeciallw::{ftMt_SpecialLw_Phys};
 
-    /// `ftMt_SpecialLw_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
-    pub fn ftMt_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmewtwospecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospecialn::{ftMt_SpecialAirNCancel_Phys, ftMt_SpecialAirNEnd_Phys, ftMt_SpecialAirNLoopFull_Phys, ftMt_SpecialAirNLoop_Phys, ftMt_SpecialAirNStart_Phys, ftMt_SpecialNCancel_Phys, ftMt_SpecialNEnd_Phys, ftMt_SpecialNLoopFull_Phys, ftMt_SpecialNLoop_Phys, ftMt_SpecialNStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialNStart_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialNLoop_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialNLoopFull_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNLoopFull_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialNCancel_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialNEnd_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMt_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMt_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMt_SpecialAirNLoopFull_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNLoopFull_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMt_SpecialAirNCancel_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMt_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }

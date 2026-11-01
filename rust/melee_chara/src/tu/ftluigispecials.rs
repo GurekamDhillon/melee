@@ -7,24 +7,25 @@
 //! recording hooks on both sides); the rest is smoke-tested.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftLuigiAttributes};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 5 and the pure helper): re-exported under this TU.
-pub use crate::chars::r2::ftLuigi::ftluigispecials::{
-    ftLg_SpecialAirSEnd_Anim, ftLg_SpecialAirSHold_AirToGround, ftLg_SpecialAirSHold_Phys,
-    ftLg_SpecialAirSLaunch_AirToGround, ftLg_SpecialAirSMisfire_AirToGround, ftLg_SpecialAirSMisfire_Phys,
-    ftLg_SpecialAirSStart_AirToGround, ftLg_SpecialAirS_Phys, ftLg_SpecialSEnd_Anim, ftLg_SpecialSEnd_Coll,
-    ftLg_SpecialSHold_GroundToAir, ftLg_SpecialSHold_Phys, ftLg_SpecialSLaunch_GroundToAir,
-    ftLg_SpecialSMisfire_GroundToAir, ftLg_SpecialSMisfire_Phys, ftLg_SpecialSStart_GroundToAir, ftLg_SpecialS_Phys,
-};
-pub use crate::chars::r3::ftLuigi::ftluigispecials::{
-    ftLg_SpecialAirSHold_Coll, ftLg_SpecialAirSMisfire_Coll, ftLg_SpecialAirSStart_Coll, ftLg_SpecialAirS_Coll,
-    ftLg_SpecialSHold_Coll, ftLg_SpecialSMisfire_Coll, ftLg_SpecialSStart_Coll, ftLg_SpecialS_Coll,
-};
-pub use crate::chars::r5::ftLuigi::ftluigispecials::ftLuigi_SpecialS_RemoveGFX;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a native port behind them (the port runs when the hook is unset).
@@ -613,4 +614,221 @@ pub fn ftLg_SpecialAirSEnd_Enter(gobj: *mut HSD_GObj) {
 pub fn ftLg_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftLg_SpecialAirSStart_Phys");
     unsafe { crate::chars::ftLuigi::ftluigispecials::ftLg_SpecialAirSStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLg_SpecialSStart_GroundToAir` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSStart_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSStart_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 349 /* ftLg_MS_SpecialAirSStart */, 0xC4C5284u32 /* transition_flags0 */);
+}
+
+/// `ftLg_SpecialAirSStart_AirToGround` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSStart_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSStart_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 343 /* ftLg_MS_SpecialSStart */, 0xC4C5284u32 /* transition_flags0 */);
+}
+
+/// `ftLg_SpecialSHold_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLg_SpecialAirSHold_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftLg_SpecialSHold_GroundToAir` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSHold_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 350 /* ftLg_MS_SpecialAirSHold */, 0xC4C5286u32 /* transition_flags1 */);
+}
+
+/// `ftLg_SpecialAirSHold_AirToGround` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSHold_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 344 /* ftLg_MS_SpecialSHold */, 0xC4C5286u32 /* transition_flags1 */);
+}
+
+/// `ftLg_SpecialS_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLg_SpecialAirS_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftLg_SpecialSLaunch_GroundToAir` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSLaunch_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSLaunch_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 353 /* ftLg_MS_SpecialAirS */, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftLg_SpecialAirSLaunch_AirToGround` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSLaunch_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSLaunch_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 347 /* ftLg_MS_SpecialS */, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftLg_SpecialSMisfire_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSMisfire_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSMisfire_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLg_SpecialAirSMisfire_Phys` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSMisfire_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSMisfire_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLg_SpecialSMisfire_GroundToAir` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSMisfire_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSMisfire_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 354 /* ftLg_MS_SpecialAirSMisfire */, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftLg_SpecialAirSMisfire_AirToGround` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSMisfire_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSMisfire_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 348 /* ftLg_MS_SpecialSMisfire */, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftLg_SpecialSEnd_Anim` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftLg_SpecialAirSEnd_Anim` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftLg_SpecialSEnd_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSEnd_Coll");
+    if st::ft_80082708(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftLg_SpecialSStart_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSStart_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialSStart_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSStart_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialAirSStart_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialSHold_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSHold_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialSHold_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialAirSHold_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSHold_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialAirSHold_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialS_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialS_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialSLaunch_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialAirS_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirS_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialAirSLaunch_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialSMisfire_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialSMisfire_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialSMisfire_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialSMisfire_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftLg_SpecialAirSMisfire_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLg_SpecialAirSMisfire_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSMisfire_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftLuigi::ftluigispecials::ftLg_SpecialAirSMisfire_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftLuigi_SpecialS_RemoveGFX` (static) (src/melee/ft/kinds/ftLuigi/ftluigispecials.c).
+pub fn ftLuigi_SpecialS_RemoveGFX(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLuigi_SpecialS_RemoveGFX");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        st::ftCommon_8007DB24(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftLg_SpecialAirSStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftLg_SpecialAirSStart_Phys_fp");
+    let a: &ftLuigiAttributes = da(fp);
+    if fp.cmd_vars[0] != 0 {
+        co::fall(fp, a.x20_LUIGI_GREENMISSILE_FALLING_SPEED, fp.co_attrs.terminal_velocity);
+    }
+    co::calc_self_accel_deaccel(fp, a.x1C_LUIGI_GREENMISSILE_UNK2);
 }

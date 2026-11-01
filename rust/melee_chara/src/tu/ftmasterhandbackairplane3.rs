@@ -3,12 +3,15 @@
 //! Smoke-tested by tests/tu_ftmasterhandbackairplane3.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandbackairplane3::ftMh_BackAirplane3_Phys;
-pub use crate::chars::r8::ftMasterHand::ftmasterhandbackairplane3::{ftMh_BackAirplane3_IASA, ftMh_BackPunch_IASA};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -72,6 +75,35 @@ pub fn ftMh_BackPunch_Phys(gobj: *mut HSD_GObj) {
             melee_fighter::tu::ftbosslib::ftBossLib_8015BF74(gobj, (*da).x58);
         } else {
             (*fp).self_vel.x = 0.0;
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_BackAirplane3_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane3.c).
+pub fn ftMh_BackAirplane3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackAirplane3_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_BackAirplane3_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane3.c).
+pub fn ftMh_BackAirplane3_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackAirplane3_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_BackPunch_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane3.c).
+pub fn ftMh_BackPunch_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackPunch_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
         }
     }
 }

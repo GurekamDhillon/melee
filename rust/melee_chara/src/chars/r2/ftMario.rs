@@ -4,55 +4,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftmariospecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospecialn::{ftMr_SpecialAirN_Anim, ftMr_SpecialAirN_Phys, ftMr_SpecialN_Anim, ftMr_SpecialN_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMr_SpecialN_Anim` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialN_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftMr_SpecialN_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMr_SpecialAirN_Anim` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftMr_SpecialAirN_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084DB0(gobj);
-    }
 
 }
 
 pub mod ftmariospecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospecials::{ftMr_SpecialAirS_Anim, ftMr_SpecialS_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMr_SpecialS_Anim` (src/melee/ft/kinds/ftMario/ftmariospecials.c).
-    pub fn ftMr_SpecialS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftMr_SpecialAirS_Anim` (src/melee/ft/kinds/ftMario/ftmariospecials.c).
-    pub fn ftMr_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
 
 }

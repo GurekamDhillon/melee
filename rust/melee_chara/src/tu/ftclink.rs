@@ -7,13 +7,16 @@
 //! dispatcher and is TODO until those callbacks are all native.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftCLink::ftclink::{ftCl_Init_OnDeath, ftCl_Init_OnKnockbackEnter, ftCl_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftCLink::ftclink::{ftCl_Init_OnItemInvisible, ftCl_Init_OnItemVisible};
+
+
 
 pub const ftCl_Init_DatFilename: &str = "PlCl.dat";
 pub const ftCl_Init_DataName: &str = "ftDataClink";
@@ -321,3 +324,54 @@ pub fn ftCl_Init_80149318(gobj: *mut HSD_GObj) {
 
 /// `ftCl_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftCl_CostumeList[5]`), filled when the costumes load.
 pub static mut ftCl_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCl_Init_OnDeath` (src/melee/ft/kinds/ftCLink/ftclink.c).
+pub fn ftCl_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        st::ftParts_80074A4C(gobj, 1, 0);
+        st::ftParts_80074A4C(gobj, 2, 0);
+        (*fp).u.lk.used_boomerang = (0_i32 /* false */);
+        (*fp).u.lk.boomerang_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.lk.xC = core::mem::zeroed(); /* 0 */
+        (*fp).u.lk.arrow_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.lk.x14 = core::mem::zeroed(); /* NULL */
+        (*fp).u.lk.xC = core::mem::zeroed(); /* 0 */
+        (*fp).u.lk.x18 = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftCl_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftCLink/ftclink.c).
+pub fn ftCl_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftCl_Init_OnKnockbackExit` (src/melee/ft/kinds/ftCLink/ftclink.c).
+pub fn ftCl_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftCl_Init_OnItemInvisible` (src/melee/ft/kinds/ftCLink/ftclink.c).
+pub fn ftCl_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftCl_Init_OnItemVisible` (src/melee/ft/kinds/ftCLink/ftclink.c).
+pub fn ftCl_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}

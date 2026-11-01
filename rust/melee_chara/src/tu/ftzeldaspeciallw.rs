@@ -4,21 +4,23 @@
 //! Fused sites: none (tools/rust-port/fma_sites.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftZelda_DatAttrs};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/12 and the r-round callbacks): re-exported under this TU.
-pub use crate::chars::r12::ftZelda::ftzeldaspeciallw::{
-    ftZd_SpecialAirLw2_IASA, ftZd_SpecialAirLw_IASA, ftZd_SpecialLw2_IASA, ftZd_SpecialLw_IASA,
-};
-pub use crate::chars::r2::ftZelda::ftzeldaspeciallw::{
-    ftZd_SpecialAirLw2_Anim, ftZd_SpecialLw2_Anim, ftZd_SpecialLw2_Phys, ftZd_SpecialLw_Phys,
-};
-pub use crate::chars::r4::ftZelda::ftzeldaspeciallw::{
-    ftZd_SpecialAirLw2_Coll, ftZd_SpecialAirLw_Anim, ftZd_SpecialAirLw_Coll, ftZd_SpecialLw2_Coll,
-    ftZd_SpecialLw_8013B1CC, ftZd_SpecialLw_8013B238, ftZd_SpecialLw_8013B400, ftZd_SpecialLw_8013B46C,
-    ftZd_SpecialLw_8013B5C4, ftZd_SpecialLw_Anim, ftZd_SpecialLw_Coll,
-};
+
+
+
 /// Calls into TUs that are not ported yet (or into group 3, via the same fallback as `stubs`).
 /// Each is a settable hook; an unset hook without a fallback panics.
 pub mod ext {
@@ -267,4 +269,195 @@ pub fn ftZd_SpecialAirLw2_Phys(gobj: *mut HSD_GObj) {
 pub fn ftZd_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftZd_SpecialAirLw_Phys");
     unsafe { crate::chars::ftZelda::ftzeldaspeciallw::ftZd_SpecialAirLw_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftZd_SpecialLw_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialAirLw_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialLw2_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw2_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialAirLw2_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw2_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialLw_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftZd_SpecialLw2_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw2_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftZd_SpecialAirLw2_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw2_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftZd_SpecialLw2_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw2_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftZd_SpecialLw_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC);
+        }
+    }
+}
+
+/// `ftZd_SpecialAirLw_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013AEAC);
+        }
+    }
+}
+
+/// `ftZd_SpecialLw_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_Coll");
+    unsafe {
+        if (st::ft_80082708(gobj) == 0) {
+            crate::chars::r4::ftZelda::ftzeldaspeciallw::ftZd_SpecialLw_8013B1CC(gobj);
+        }
+    }
+}
+
+/// `ftZd_SpecialAirLw_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw_Coll");
+    unsafe {
+        if (st::ft_80081D0C(gobj) != 0) {
+            crate::chars::r4::ftZelda::ftzeldaspeciallw::ftZd_SpecialLw_8013B238(gobj);
+        }
+    }
+}
+
+/// `ftZd_SpecialLw_8013B1CC` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_8013B1CC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B1CC");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 357, 0xC4C508Eu32 /* ftZd_MF_SpecialLw_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013ADB4);
+    }
+}
+
+/// `ftZd_SpecialLw_8013B238` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_8013B238(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B238");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 355, 0xC4C508Eu32 /* ftZd_MF_SpecialLw_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013ADB4);
+    }
+}
+
+/// `ftZd_SpecialLw2_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw2_Coll");
+    unsafe {
+        if (st::ft_80082708(gobj) == 0) {
+            crate::chars::r4::ftZelda::ftzeldaspeciallw::ftZd_SpecialLw_8013B400(gobj);
+        }
+    }
+}
+
+/// `ftZd_SpecialAirLw2_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialAirLw2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw2_Coll");
+    unsafe {
+        if (st::ft_80081D0C(gobj) != 0) {
+            crate::chars::r4::ftZelda::ftzeldaspeciallw::ftZd_SpecialLw_8013B46C(gobj);
+        }
+    }
+}
+
+/// `ftZd_SpecialLw_8013B400` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_8013B400(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B400");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 358, 0xC4C508Eu32 /* ftZd_MF_SpecialLw_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013AE30);
+    }
+}
+
+/// `ftZd_SpecialLw_8013B46C` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_8013B46C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B46C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 356, 0xC4C508Eu32 /* ftZd_MF_SpecialLw_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftzeldaspeciallw__ftZd_SpecialLw_8013AE30);
+    }
+}
+
+/// `ftZd_SpecialLw_8013B5C4` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
+pub fn ftZd_SpecialLw_8013B5C4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialLw_8013B5C4");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.zd.x222C.is_null()) {
+            (*fp).u.zd.x222C = core::mem::zeroed(); /* 0 */
+        }
+        (*fp).death2_cb = core::mem::zeroed(); /* 0 */
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* 0 */
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftZd_SpecialAirLw2_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftZd_SpecialAirLw2_Phys_fp");
+    let a: &ftZelda_DatAttrs = da(fp);
+    co::fall(fp, a.x78, a.x7C);
+    co::calc_self_accel_deaccel_air(fp);
+}
+
+pub fn ftZd_SpecialAirLw_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftZd_SpecialAirLw_Phys_fp");
+    let a: &ftZelda_DatAttrs = da(fp);
+    co::fall(fp, a.x78, a.x7C);
+    co::calc_self_accel_deaccel_air(fp);
 }

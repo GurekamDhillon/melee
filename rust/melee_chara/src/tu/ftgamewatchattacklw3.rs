@@ -3,6 +3,11 @@
 //! Smoke-tested by tests/tu_ftgamewatchattacklw3.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftGw_MS_AttackLw3, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext, ftGw_Init_8014A538};
 use melee_fighter::tu::{
@@ -12,8 +17,8 @@ use melee_fighter::tu::{
 use melee_types::*;
 
 /// Already ported (rounds 2 and the item-check helper): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchattacklw3::ftGw_AttackLw3_ItemCheckManholeRemove;
-pub use crate::chars::r2::ftGameWatch::ftgamewatchattacklw3::ftGw_AttackLw3_Phys;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -277,4 +282,16 @@ pub fn ftGw_AttackLw3_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftGw_AttackLw3_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_AttackLw3_ItemCheckManholeRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_AttackLw3_ItemCheckManholeRemove");
+    fp.motion_id as u32 != ftGw_MS_AttackLw3 as u32
+}
+
+/// `ftGw_AttackLw3_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacklw3.c).
+pub fn ftGw_AttackLw3_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackLw3_Phys");
+    st::ft_80084F3C(gobj);
 }

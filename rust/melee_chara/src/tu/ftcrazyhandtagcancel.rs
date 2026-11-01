@@ -3,11 +3,14 @@
 //! Smoke-tested by tests/tu_ftcrazyhandtagcancel.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::tu::ftbosslib as bl;
 use melee_types::*;
 
-pub use crate::chars::r4::ftCrazyHand::ftcrazyhandtagcancel::{ftCh_GrabUnk1_8015B8FC, ftCh_GrabUnk1_8015B998};
+
 
 /// `ftCh_Init_80156198` as a GObj callback (ftcrazyhandwait10.c, already ported).
 unsafe extern "C" fn wait10_init_cb(gobj: *mut HSD_GObj) {
@@ -102,5 +105,36 @@ pub fn ftCh_GrabUnk1_8015BC88(gobj: *mut HSD_GObj) {
         }
         (*fp).mv.ch.unk0.x4 = Some(wait10_init_cb);
         (*fp).mv.ch.unk0.xC = pos;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_GrabUnk1_8015B8FC` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandtagcancel.c).
+pub fn ftCh_GrabUnk1_8015B8FC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015B8FC");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).u.mh.x2258 as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).u.mh.x2258 as i32) == 388i32 /* 0x184 */)) {
+            st::Fighter_ChangeMotionState(gobj, 388 /* 0x184 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 388 /* 0x184 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+        (*fp).u.mh.x2258 = (388_i32 /* 0x184 */);
+    }
+}
+
+/// `ftCh_GrabUnk1_8015B998` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandtagcancel.c).
+pub fn ftCh_GrabUnk1_8015B998(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015B998");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).u.mh.x2258 as i32) == 342i32 /* ftMh_MS_Wait2_0 */) || (((*fp).u.mh.x2258 as i32) == 389i32 /* 0x185 */)) {
+            st::Fighter_ChangeMotionState(gobj, 389 /* 0x185 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 389 /* 0x185 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+        (*fp).u.mh.x2258 = (389_i32 /* 0x185 */);
     }
 }

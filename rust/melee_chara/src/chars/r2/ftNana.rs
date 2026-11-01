@@ -4,21 +4,13 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftnanaspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_1_Anim_fp as ftPp_SpecialHi_1_Anim;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_1_Phys_fp as ftPp_SpecialHi_1_Phys;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_SpecialHi_1_Anim` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_1_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftPp_SpecialHi_1_Phys` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_1_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }

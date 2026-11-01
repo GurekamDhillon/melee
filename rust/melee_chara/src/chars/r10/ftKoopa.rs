@@ -3,22 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkoopaspeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkoopaspeciallw::{ftKp_SpecialLw_Enter};
 
-    /// `ftKp_SpecialLw_Enter` (src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c).
-    pub fn ftKp_SpecialLw_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
-            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0.0f */;
-            st::ftCommon_8007D5D4(&mut *fp);
-            st::Fighter_ChangeMotionState(gobj, 361 /* 0x169 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            crate::chars::ftKoopa::ftkoopaspeciallw::ftKp_SpecialLw_Enter_inline(&mut *fp);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

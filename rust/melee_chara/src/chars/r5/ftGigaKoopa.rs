@@ -3,34 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgkoopa {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgkoopa::{ftGk_Init_OnDeath, ftGk_Init_OnKnockbackEnter, ftGk_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGk_Init_OnDeath` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
-    pub fn ftGk_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0, 0);
-            (*fp).dmg.armor0 = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x0;
-            (*fp).u.gk.x222C = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x10;
-            (*fp).u.gk.x2230 = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x18;
-        }
-    }
-
-    /// `ftGk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
-    pub fn ftGk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftGk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
-    pub fn ftGk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
-        }
-    }
 
 }

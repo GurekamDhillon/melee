@@ -4,132 +4,45 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftseakspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecialhi::{ftSk_SpecialHiStart_0_Phys, ftSk_SpecialHi_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialHiStart_0_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHiStart_0_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialHi_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }
 
 pub mod ftseakspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspeciallw::{ftSk_SpecialAirLw2_Anim, ftSk_SpecialLw2_Anim, ftSk_SpecialLw2_Phys, ftSk_SpecialLw_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialLw_Phys` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialLw2_Anim` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw2_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftSk_SpecialAirLw2_Anim` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialAirLw2_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftSk_SpecialLw2_Phys` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw2_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }
 
 pub mod ftseakspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecialn::{ftSk_SpecialAirNCancel_Phys, ftSk_SpecialAirNEnd_Phys, ftSk_SpecialAirNLoop_Phys, ftSk_SpecialAirNStart_Phys, ftSk_SpecialNCancel_Phys, ftSk_SpecialNEnd_Phys, ftSk_SpecialNLoop_Phys, ftSk_SpecialNStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialNStart_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialNLoop_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialNCancel_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialNEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftSk_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftSk_SpecialAirNCancel_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftSk_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftseakspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecials::{ftSk_SpecialAirSEnd_Phys, ftSk_SpecialAirS_Phys, ftSk_SpecialSEnd_Phys, ftSk_SpecialSStart_Phys, ftSk_SpecialS_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialSStart_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialS_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialAirS_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftSk_SpecialSEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSk_SpecialAirSEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }

@@ -3,19 +3,25 @@
 //! `ftKb_NsSpecialNStart_Anim_inline`. Smoke-tested by tests/tu_ftkirbyspecialness.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftKb_DatAttrs};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialn::{change_ms, fpp, ftKb_SpecialN_set_cbs, G};
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2, 4, 6, root module): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialness::{
-    ftKb_NsSpecialAirNEnd_Coll, ftKb_NsSpecialAirNHold_Coll, ftKb_NsSpecialAirNStart_Coll,
-    ftKb_NsSpecialNEnd_Coll, ftKb_NsSpecialNEnd_Phys, ftKb_NsSpecialNHold_Coll, ftKb_NsSpecialNHold_Phys,
-    ftKb_NsSpecialNStart_Coll,
-};
-pub use crate::chars::r4::ftKirby::ftkirbyspecialness::ftKb_SetNsFlashAttr;
-pub use crate::chars::r6::ftKirby::ftkirbyspecialness::ftKb_NsSpecialNStart_Phys;
+
+
+
 
 /// Calls into TUs that are not ported yet (or ported elsewhere: the default then calls the port).
 pub mod ext {
@@ -281,4 +287,111 @@ pub fn ftKb_NsSpecialAirNHold_Phys(gobj: G) {
 pub fn ftKb_NsSpecialAirNEnd_Phys(gobj: G) {
     melee_core::ct!("ftKb_NsSpecialAirNEnd_Phys");
     ftKb_NsSpecialAirNStart_Phys(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_NsSpecialNHold_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNHold_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_NsSpecialNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_NsSpecialNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNStart_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
+        st::ftCommon_GroundToAirStateChange(gobj, fp, 439 /* ftKb_MS_NsSpecialAirNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_NsSpecialNHold_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNHold_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
+        st::ftCommon_GroundToAirStateChange(gobj, fp, 440 /* ftKb_MS_NsSpecialAirNHold0 */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_NsSpecialNEnd_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNEnd_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
+        st::ftCommon_GroundToAirStateChange(gobj, fp, 442 /* ftKb_MS_NsSpecialAirNEnd */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_NsSpecialAirNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialAirNStart_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
+        st::ftCommon_AirToGroundStateChange(gobj, fp, 435 /* ftKb_MS_NsSpecialNStart */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_NsSpecialAirNHold_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialAirNHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialAirNHold_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
+        st::ftCommon_AirToGroundStateChange(gobj, fp, 436 /* ftKb_MS_NsSpecialNHold0 */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_NsSpecialAirNEnd_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialAirNEnd_Coll");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
+        st::ftCommon_AirToGroundStateChange(gobj, fp, 438 /* ftKb_MS_NsSpecialNEnd */, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
+    }
+}
+
+/// `ftKb_SetNsFlashAttr` (static) (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_SetNsFlashAttr(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SetNsFlashAttr");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.ns.specialn.frames_to_loop_charge_ground = (*((*fp).dat_attrs as *const melee_types::ftKb_DatAttrs)).specialn_ns_frames_to_loop_charge_ground;
+        (*fp).mv.ns.specialn.frames_to_loop_charge_air = (*((*fp).dat_attrs as *const melee_types::ftKb_DatAttrs)).specialn_ns_frames_to_loop_charge_air;
+        (*fp).mv.ns.specialn.falling_acceleration_delay = (*((*fp).dat_attrs as *const melee_types::ftKb_DatAttrs)).specialn_ns_falling_acceleration_delay;
+        (*fp).u.kb.ns_flash_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).mv.ns.specialn.charge_release_delay = (*((*fp).dat_attrs as *const melee_types::ftKb_DatAttrs)).specialn_ns_charge_release_delay;
+    }
+}
+
+/// `ftKb_NsSpecialNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
+pub fn ftKb_NsSpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_NsSpecialNStart_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).mv.ns.specialn.falling_acceleration_delay as i32) != 0i32 /* 0 */) {
+            (*fp).mv.ns.specialn.falling_acceleration_delay = (*fp).mv.ns.specialn.falling_acceleration_delay.wrapping_sub(1_i32);
+        }
+        st::ft_80084F3C(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftKb_NsSpecialAirNStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftKb_NsSpecialAirNStart_Phys_fp");
+    let a: &ftKb_DatAttrs = da(fp);
+    unsafe {
+        if fp.mv.ns.specialn.falling_acceleration_delay != 0 {
+            fp.mv.ns.specialn.falling_acceleration_delay -= 1;
+        } else {
+            co::fall(fp, a.specialn_ns_gravity, fp.co_attrs.terminal_velocity);
+        }
+    }
+    let air_friction = fp.co_attrs.aerial_friction;
+    co::calc_self_accel_deaccel(fp, air_friction);
 }

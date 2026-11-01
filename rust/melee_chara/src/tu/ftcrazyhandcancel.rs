@@ -2,6 +2,12 @@
 //! cancelled grab. No float math.
 #![allow(non_snake_case, unused_unsafe)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Calls into other TUs (settable hooks; unset they run the port).
@@ -29,5 +35,30 @@ pub fn ftCh_Init_8015A030(gobj: *mut HSD_GObj) {
         (*fp).self_vel.x = 0.0;
         (*fp).self_vel.y = 0.0;
         (*fp).self_vel.z = 0.0;
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftCh_Cancel_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c).
+pub fn ftCh_Cancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Cancel_Anim");
+    unsafe {
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0.0f */;
+            crate::chars::r10::ftCrazyHand::ftcrazyhandsqueezing0::ftCh_Init_8015A184(gobj);
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftCh_Cancel_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c).
+pub fn ftCh_Cancel_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Cancel_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

@@ -3,13 +3,16 @@
 //! Smoke-tested by tests/tu_ftmasterhandwait12.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::tu::ftbosslib as bl;
 use melee_types::*;
 
 /// Already ported (rounds 3/4): re-exported under this TU.
-pub use crate::chars::r3::ftMasterHand::ftmasterhandwait12::ftMh_Wait1_2_Anim;
-pub use crate::chars::r4::ftMasterHand::ftmasterhandwait12::{ftMh_MS_389_80150C8C, ftMh_MS_389_80150D28};
+
+
 
 /// `ftMh_MS_341_8014FFDC` (ftmasterhandwait10.c, ported in round 4) as a GObj callback.
 unsafe extern "C" fn wait10_init_cb(gobj: *mut HSD_GObj) {
@@ -94,5 +97,49 @@ pub fn ftMh_MS_389_80151018(gobj: *mut HSD_GObj) {
         }
         (*fp2).mv.mh.unk0.x4 = Some(wait10_init_cb);
         (*fp2).mv.mh.unk0.xC = pos;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_Wait1_2_Anim` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait12.c).
+pub fn ftMh_Wait1_2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_2_Anim");
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            (*fp).u.mh.x2258 = (389_i32 /* ftMh_MS_Wait1_2 */);
+            st::Fighter_ChangeMotionState(gobj, 389 /* ftMh_MS_Wait1_2 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+    }
+}
+
+/// `ftMh_MS_389_80150C8C` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait12.c).
+pub fn ftMh_MS_389_80150C8C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_389_80150C8C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).u.mh.x2258 as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).u.mh.x2258 as i32) == 389i32 /* ftMh_MS_Wait1_2 */)) {
+            st::Fighter_ChangeMotionState(gobj, 389 /* ftMh_MS_Wait1_2 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 389 /* ftMh_MS_Wait1_2 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+        (*fp).u.mh.x2258 = (389_i32 /* ftMh_MS_Wait1_2 */);
+    }
+}
+
+/// `ftMh_MS_389_80150D28` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait12.c).
+pub fn ftMh_MS_389_80150D28(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_389_80150D28");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).u.mh.x2258 as i32) == 342i32 /* ftMh_MS_Wait2_0 */) || (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */)) {
+            st::Fighter_ChangeMotionState(gobj, 390 /* ftMh_MS_Wait2_1 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 390 /* ftMh_MS_Wait2_1 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+        (*fp).u.mh.x2258 = (390_i32 /* ftMh_MS_Wait2_1 */);
     }
 }

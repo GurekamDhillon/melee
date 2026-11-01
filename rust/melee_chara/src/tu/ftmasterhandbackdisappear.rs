@@ -7,16 +7,23 @@
 //! tests/tu_ftmasterhandbackdisappear.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+use crate::tu::ftmasterhandwait11::ftMh_MS_375_80154C78;
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/8/9/10): re-exported under this TU.
-pub use crate::chars::r10::ftMasterHand::ftmasterhandbackdisappear::ftMh_Grab_Anim;
-pub use crate::chars::r2::ftMasterHand::ftmasterhandbackdisappear::{ftMh_BackDisappear_Phys, ftMh_Grab_Phys};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandbackdisappear::{ftMh_Cancel_IASA, ftMh_Fail_IASA, ftMh_Wait1_1_IASA};
-pub use crate::chars::r9::ftMasterHand::ftmasterhandbackdisappear::{ftMh_MS_374_801546D8, ftMh_MS_381_8015483C};
-pub use crate::chars::r9::ftMasterHand::ftmasterhandwait11::ftMh_MS_375_80154C78;
+
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -248,5 +255,117 @@ pub fn ftMh_Cancel_Coll(gobj: *mut HSD_GObj) {
             (*fp).self_vel.y = 0.0;
             (*fp).self_vel.x = 0.0;
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_Grab_Anim` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_Grab_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Grab_Anim");
+    unsafe {
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            (*fp).self_vel.z = f32::from_bits(0x00000000) /* 0 */;
+            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
+            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0 */;
+            crate::chars::r9::ftMasterHand::ftmasterhandwait11::ftMh_MS_378_80154CF8(gobj);
+        }
+    }
+}
+
+/// `ftMh_BackDisappear_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_BackDisappear_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackDisappear_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_Grab_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_Grab_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Grab_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_Wait1_1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_Wait1_1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_1_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_Fail_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_Fail_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Fail_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_Cancel_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_Cancel_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Cancel_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_MS_374_801546D8` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_MS_374_801546D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_374_801546D8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 381 /* ftMh_MS_Fail */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.mh.unk0.xC.x = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.x;
+        (*fp).mv.mh.unk0.xC.y = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.y;
+        (*fp).mv.mh.unk0.xC.z = f32::from_bits(0x00000000) /* 0 */;
+    }
+}
+
+/// `ftMh_MS_381_8015483C` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_MS_381_8015483C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_381_8015483C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 375 /* ftMh_MS_Cancel */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.mh.unk0.x24 = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x120;
+        (*fp).cmd_vars[0] = 1_u32;
+        (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).self_vel.z = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).mv.mh.unk0.xC.x = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.x;
+        (*fp).mv.mh.unk0.xC.y = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.y;
+        (*fp).mv.mh.unk0.xC.z = f32::from_bits(0x00000000) /* 0 */;
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftMh_Cancel_Coll_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftMh_Cancel_Coll_fp");
+    crate::chars::ftMasterHand::stop_if_x18_zero(fp)
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftMh_MS_375_80154A2C` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
+pub fn ftMh_MS_375_80154A2C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_375_80154A2C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).self_vel.z = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
+        (*fp).mv.mh.unk0.x20 = (1_i32 /* true */);
+        (*fp).set_x221E_b6(0);
+        crate::chars::r9::ftMasterHand::ftmasterhandwait11::ftMh_MS_375_80154C78(gobj);
     }
 }

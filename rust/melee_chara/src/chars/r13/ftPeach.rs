@@ -3,17 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpeachspecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpeachspecialn::{ftPe_SpecialN_Phys};
 
-    /// `ftPe_SpecialN_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
-    pub fn ftPe_SpecialN_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEE0(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

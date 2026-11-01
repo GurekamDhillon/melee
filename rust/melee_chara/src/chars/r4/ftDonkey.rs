@@ -3,25 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftdonkeyheavylanding {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavylanding::{ftDk_HeavyWait2_Coll};
 
-    /// `ftDk_HeavyWait2_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
-    pub fn ftDk_HeavyWait2_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
-                if (st::ft_80082708(gobj) == 0) {
-                    st::ftCommon_8007D5D4(&mut *fp);
-                }
-            } else {
-                if (st::ft_80081D0C(gobj) != 0) {
-                    st::ftCommon_8007D7FC(&mut *fp);
-                }
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

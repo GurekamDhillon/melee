@@ -3,19 +3,18 @@
 //! fma, in `crate::pure::my_sqrtf`). Smoke-tested by tests/tu_ftmasterhandwalk.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/8/9): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandwalk::{
-    ftMh_MS_350_80151EB4, ftMh_MS_353_80151DC4, ftMh_Walk2_Phys, ftMh_WalkShoot_Phys,
-};
-pub use crate::chars::r3::ftMasterHand::ftmasterhandwalk::{ftMh_MS_351_801520D8, ftMh_Walk2_Anim};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandwalk::{
-    ftMh_Walk2_IASA, ftMh_WalkLoop_IASA, ftMh_WalkShoot_IASA,
-};
-pub use crate::chars::r9::ftMasterHand::ftmasterhandwalk::ftMh_WalkLoop_Phys;
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -122,5 +121,96 @@ pub fn ftMh_WalkLoop_Anim(gobj: *mut HSD_GObj) {
             st::Fighter_ChangeMotionState(gobj, ftMh_MS_WalkLoop as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
             st::ftAnim_8006EBA4(gobj);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_WalkShoot_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_WalkShoot_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkShoot_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_353_80151DC4` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_MS_353_80151DC4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_353_80151DC4");
+    st::Fighter_ChangeMotionState(gobj, 350 /* ftMh_MS_Walk2 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftMh_Walk2_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_Walk2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Walk2_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_350_80151EB4` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_MS_350_80151EB4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_350_80151EB4");
+    st::Fighter_ChangeMotionState(gobj, 351 /* ftMh_MS_WalkLoop */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftMh_Walk2_Anim` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_Walk2_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Walk2_Anim");
+    unsafe {
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            crate::chars::r2::ftMasterHand::ftmasterhandwalk::ftMh_MS_350_80151EB4(gobj);
+        }
+    }
+}
+
+/// `ftMh_MS_351_801520D8` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_MS_351_801520D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_351_801520D8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 352 /* ftMh_MS_WalkWait */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
+    }
+}
+
+/// `ftMh_WalkShoot_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_WalkShoot_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkShoot_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_Walk2_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_Walk2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Walk2_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_WalkLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_WalkLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkLoop_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_WalkLoop_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
+pub fn ftMh_WalkLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkLoop_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ft_80085134(gobj);
+        (*fp).self_vel.x = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x40_pos.z;
     }
 }

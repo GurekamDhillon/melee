@@ -3,15 +3,16 @@
 //! tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftpopospecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/7): re-exported under this TU.
-pub use crate::chars::r2::ftPopo::ftpopospecialn::{
-    ftPp_SpecialAirN_Anim, ftPp_SpecialAirN_Phys, ftPp_SpecialN_Anim, ftPp_SpecialN_Phys,
-};
-pub use crate::chars::r7::ftPopo::ftpopospecialn::ftPp_SpecialN_Enter;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -181,5 +182,48 @@ pub fn ftPp_SpecialN_8011F500(gobj: G) {
                 inlineA0(gobj, fp);
             }
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPp_SpecialN_Anim` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+pub fn ftPp_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftPp_SpecialAirN_Anim` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+pub fn ftPp_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftPp_SpecialN_Phys` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+pub fn ftPp_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPp_SpecialAirN_Phys` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+pub fn ftPp_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialAirN_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftPp_SpecialN_Enter` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
+pub fn ftPp_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).u.nn.x222C = core::mem::zeroed(); /* NULL */
+        st::Fighter_ChangeMotionState(gobj, 341, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftpopospecialn__ftPp_SpecialN_8011F500);
     }
 }

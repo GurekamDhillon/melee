@@ -4,17 +4,16 @@
 //! the grounded and aerial branches, and the aerial `2.0f * n + xC`); each is `fmadds`. Not yet tested: no C oracle and no smoke test (unverified).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/3): re-exported under this TU.
-pub use crate::chars::r2::ftSeak::ftseakspecialn::{
-    ftSk_SpecialAirNCancel_Phys, ftSk_SpecialAirNEnd_Phys, ftSk_SpecialAirNLoop_Phys,
-    ftSk_SpecialAirNStart_Phys, ftSk_SpecialNCancel_Phys, ftSk_SpecialNEnd_Phys, ftSk_SpecialNLoop_Phys,
-    ftSk_SpecialNStart_Phys,
-};
-pub use crate::chars::r3::ftSeak::ftseakspecialn::{ftSk_SpecialNCancel_Anim, ftSk_SpecialN_801120D4};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -433,6 +432,77 @@ pub fn shootNeedles(gobj: *mut HSD_GObj) {
                 ext::efSync_Spawn(1283, gobj, &[&mut pos as *mut Vec3 as *mut core::ffi::c_void]);
                 ext::ft_PlaySFX(fp, 270140, 127, 64);
             }
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftSk_SpecialNStart_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftSk_SpecialNLoop_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftSk_SpecialNCancel_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialNCancel_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftSk_SpecialNEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftSk_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirNStart_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftSk_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftSk_SpecialAirNCancel_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirNCancel_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftSk_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftSk_SpecialN_801120D4` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialN_801120D4(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialN_801120D4");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftSk_SpecialNCancel_Anim` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
+pub fn ftSk_SpecialNCancel_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialNCancel_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.sk.x4 = core::mem::zeroed(); /* 0 */
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            st::ft_8008A2BC(gobj);
         }
     }
 }

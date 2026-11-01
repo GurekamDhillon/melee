@@ -1,51 +1,27 @@
 //! Link (src/melee/ft/kinds/ftLink).
 
 pub mod ftlinkspecialhi {
-    use crate::chars::da;
-    use melee_fighter::ftcommon as co;
-    use melee_types::{ftLk_DatAttrs, Fighter, Vec3};
+pub use crate::tu::ftlinkspecialhi::ftLk_SpecialAirHi_Phys_fp as ftLk_SpecialAirHi_Phys;
+pub use crate::tu::ftlinkspecialhi::ftLk_SpecialHi_GetPosWithAdjustedY_fp as ftLk_SpecialHi_GetPosWithAdjustedY;
 
-    pub fn ftLk_SpecialAirHi_Phys(fp: &mut Fighter) {
-        let a: &ftLk_DatAttrs = da(fp);
-        co::fall(fp, fp.co_attrs.gravity * a.specialhi_grav_mul, fp.co_attrs.terminal_velocity);
-        co::calc_self_accel_drift_simple(
-            fp,
-            0.0,
-            fp.co_attrs.air_drift_stick_mul * a.specialairhi_drift_stick_mul,
-            fp.co_attrs.air_drift_max * a.specialairhi_drift_max_mul,
-        );
-    }
+use crate::chars::da;
 
-    pub fn ftLk_SpecialHi_GetPosWithAdjustedY(fp: &Fighter, pos: &mut Vec3) {
-        let a: &ftLk_DatAttrs = da(fp);
-        *pos = fp.cur_pos;
-        pos.y += a.specialhi_pos_y_offset;
-    }
+use melee_fighter::ftcommon as co;
+
+use melee_types::{ftLk_DatAttrs, Fighter, Vec3};
+
 }
 
 pub mod ftlinkspecialn {
-    use melee_types::*;
+pub use crate::tu::ftlinkspecialn::ftLk_SpecialN_IsActiveAnd2071b6_fp as ftLk_SpecialN_IsActiveAnd2071b6;
 
-    pub fn ftLk_SpecialN_IsActiveAnd2071b6(fp: &Fighter) -> bool {
-        let m = fp.motion_id as u32;
-        let active = [
-            ftLk_MS_SpecialNStart,
-            ftLk_MS_SpecialNLoop,
-            ftLk_MS_SpecialNEnd,
-            ftLk_MS_SpecialAirNStart,
-            ftLk_MS_SpecialAirNLoop,
-            ftLk_MS_SpecialAirNEnd,
-        ];
-        if active.iter().any(|&s| s as u32 == m) && unsafe { fp.x2070.anon_0.x2071_b6() } == 0 {
-            return false;
-        }
-        true
-    }
+use melee_types::*;
+
 }
 
 pub mod ftlinkspecials {
-    use melee_types::Fighter;
-    pub fn ftLk_SepcialS_Get2219b5(fp: &Fighter) -> bool {
-        fp.x2219_b5() != 0
-    }
+pub use crate::tu::ftlinkspecials::ftLk_SepcialS_Get2219b5_fp as ftLk_SepcialS_Get2219b5;
+
+use melee_types::Fighter;
+
 }

@@ -3,35 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpikachuspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpikachuspeciallw::{ftPk_SpecialAirLw_Enter, ftPk_SpecialLw_Enter};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPk_SpecialLw_Enter` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            (*fp).mv.pk.specialhi.x4 = 1_i32;
-            (*fp).mv.pk.specialhi.x0 = 0_i32;
-            st::Fighter_ChangeMotionState(gobj, 359, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
-
-    /// `ftPk_SpecialAirLw_Enter` (src/melee/ft/kinds/ftPikachu/ftpikachuspeciallw.c).
-    pub fn ftPk_SpecialAirLw_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            (*fp).mv.pk.specialhi.x4 = 1_i32;
-            (*fp).mv.pk.specialhi.x0 = 0_i32;
-            st::Fighter_ChangeMotionState(gobj, 363, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
 
 }

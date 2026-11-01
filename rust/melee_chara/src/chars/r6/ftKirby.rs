@@ -3,97 +3,56 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkirby {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkirby::{ftKb_Init_OnItemVisible};
 
-    /// `ftKb_Init_OnItemVisible` (src/melee/ft/kinds/ftKirby/ftkirby.c).
-    pub fn ftKb_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftkirbyspecialdonkey {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkirbyspecialdonkey::{ftKb_SpecialNPr_80100DE0};
 
-    /// `ftKb_SpecialNPr_80100DE0` (src/melee/ft/kinds/ftKirby/ftkirbyspecialdonkey.c).
-    pub fn ftKb_SpecialNPr_80100DE0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.kb.xBC = 0_i32;
-            st::efLib_DestroyAll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftkirbyspecialfox {
-    #[allow(unused_imports)]
+pub use crate::tu::ftkirbyspecialfox::{ftKb_FxSpecialAirNEnd_Coll, ftKb_FxSpecialAirNLoop_Coll, ftKb_FxSpecialAirNStart_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftKb_FxSpecialAirNStart_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialfox.c).
-    pub fn ftKb_FxSpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftCo_AirCatchHit_Coll(gobj);
-        }
-    }
-
-    /// `ftKb_FxSpecialAirNLoop_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialfox.c).
-    pub fn ftKb_FxSpecialAirNLoop_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftCo_AirCatchHit_Coll(gobj);
-        }
-    }
-
-    /// `ftKb_FxSpecialAirNEnd_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialfox.c).
-    pub fn ftKb_FxSpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftCo_AirCatchHit_Coll(gobj);
-        }
-    }
 
 }
 
 pub mod ftkirbyspecialness {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkirbyspecialness::{ftKb_NsSpecialNStart_Phys};
 
-    /// `ftKb_NsSpecialNStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialness.c).
-    pub fn ftKb_NsSpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).mv.ns.specialn.falling_acceleration_delay as i32) != 0i32 /* 0 */) {
-                (*fp).mv.ns.specialn.falling_acceleration_delay = (*fp).mv.ns.specialn.falling_acceleration_delay.wrapping_sub(1_i32);
-            }
-            st::ft_80084F3C(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftkirbyspecialzelda {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftkirbyspecialzelda::{ftKb_ZdSpecialN_Phys};
 
-    /// `ftKb_ZdSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialzelda.c).
-    pub fn ftKb_ZdSpecialN_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEF8(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

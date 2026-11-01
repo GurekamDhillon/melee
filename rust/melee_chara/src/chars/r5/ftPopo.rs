@@ -3,55 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpopo {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpopo::{ftPp_Init_OnKnockbackEnter, ftPp_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPopo/ftpopo.c).
-    pub fn ftPp_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftPp_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPopo/ftpopo.c).
-    pub fn ftPp_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
-        }
-    }
 
 }
 
 pub mod ftpopospeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospeciallw::{ftPp_SpecialAirLw_Coll};
 
-    /// `ftPp_SpecialAirLw_Coll` (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
-    pub fn ftPp_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftpopospeciallw__fn_80122B54));
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpopospecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospecials::inlineC0_fp as inlineC0;
 
-    /// `inlineC0` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
-    pub fn inlineC0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_UnkSetFlag_8006CFBC(gobj);
-            (*fp).x1A5C = core::mem::zeroed(); /* NULL */
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

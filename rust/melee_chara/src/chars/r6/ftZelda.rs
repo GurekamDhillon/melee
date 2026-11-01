@@ -3,39 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftzelda {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzelda::{ftZd_Init_OnItemInvisible, ftZd_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_Init_OnItemInvisible` (src/melee/ft/kinds/ftZelda/ftzelda.c).
-    pub fn ftZd_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 1);
-        }
-    }
-
-    /// `ftZd_Init_OnItemVisible` (src/melee/ft/kinds/ftZelda/ftzelda.c).
-    pub fn ftZd_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1);
-        }
-    }
 
 }
 
 pub mod ftzeldaspecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftzeldaspecialn::{ftZd_SpecialN_Phys};
 
-    /// `ftZd_SpecialN_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
-    pub fn ftZd_SpecialN_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEF8(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

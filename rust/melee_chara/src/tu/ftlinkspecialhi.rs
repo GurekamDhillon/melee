@@ -8,14 +8,24 @@
 //! at GC +0x30: that is `ftLk_DatAttrs::x30` of the block (the same field `AirHi_Anim` uses).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da as da_g;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftLk_DatAttrs, Vec3};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 4 and the hand-written `chars::ftLink`): re-exported under this TU.
-pub use crate::chars::r2::ftLink::ftlinkspecialhi::ftLk_SpecialHi_Anim;
-pub use crate::chars::r3::ftLink::ftlinkspecialhi::ftLk_SpecialHi_Enter;
-pub use crate::chars::r4::ftLink::ftlinkspecialhi::ftLk_SpecialHi_Phys;
+
+
+
 
 /// Calls into TUs that are not ported yet (`efSync_Spawn` is shared with ftcaptainspecialn).
 pub mod ext {
@@ -163,4 +173,57 @@ pub fn ftLk_SpecialHi_GetPosWithAdjustedY(gobj: *mut HSD_GObj, pos: &mut Vec3) {
 pub fn ftLk_SpecialHi_GetFv4(gobj: *mut HSD_GObj) -> i32 {
     melee_core::ct!("ftLk_SpecialHi_GetFv4");
     unsafe { (*fpp(gobj)).u.lk.x4 }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLk_SpecialHi_Anim` (src/melee/ft/kinds/ftLink/ftlinkspecialhi.c).
+pub fn ftLk_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialHi_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftLk_SpecialHi_Enter` (src/melee/ft/kinds/ftLink/ftlinkspecialhi.c).
+pub fn ftLk_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialHi_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 356 /* ftLk_MS_SpecialHi */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftlinkspecialhi__onAccessory4);
+    }
+}
+
+/// `ftLk_SpecialHi_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialhi.c).
+pub fn ftLk_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialHi_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 1i32 /* GA_Air */) {
+            crate::chars::ftLink::ftlinkspecialhi::ftLk_SpecialAirHi_Phys(&mut *fp);
+        } else {
+            st::ft_80084F3C(gobj);
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftLk_SpecialAirHi_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftLk_SpecialAirHi_Phys_fp");
+    let a: &ftLk_DatAttrs = da_g(fp);
+    co::fall(fp, fp.co_attrs.gravity * a.specialhi_grav_mul, fp.co_attrs.terminal_velocity);
+    co::calc_self_accel_drift_simple(
+        fp,
+        0.0,
+        fp.co_attrs.air_drift_stick_mul * a.specialairhi_drift_stick_mul,
+        fp.co_attrs.air_drift_max * a.specialairhi_drift_max_mul,
+    );
+}
+
+pub fn ftLk_SpecialHi_GetPosWithAdjustedY_fp(fp: &Fighter, pos: &mut Vec3) {
+    melee_core::ct!("ftLk_SpecialHi_GetPosWithAdjustedY_fp");
+    let a: &ftLk_DatAttrs = da_g(fp);
+    *pos = fp.cur_pos;
+    pos.y += a.specialhi_pos_y_offset;
 }

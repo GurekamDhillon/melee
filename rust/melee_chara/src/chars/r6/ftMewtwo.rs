@@ -3,46 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmewtwospeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmewtwospeciallw::{ftMt_SpecialLw_GroundToAir};
 
-    /// `ftMt_SpecialLw_GroundToAir` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
-    pub fn ftMt_SpecialLw_GroundToAir(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_8007D5D4(&mut *fp);
-            (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
-            st::Fighter_ChangeMotionState(gobj, 360 /* ftMt_MS_SpecialAirLw */, 0xC4C5082u32 /* FTMEWTWO_SPECIALLW_COLL_FLAG */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftmewtwospeciallw__ftMt_SpecialLw_CreateDisable);
-            crate::chars::r4::ftMewtwo::ftmewtwospeciallw::ftMewtwo_SpecialLw_SetCall(gobj);
-            st::ftCommon_ClampAirDrift(&mut *fp);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmewtwospecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospecials::{ftMt_SpecialAirS_Phys, ftMt_SpecialS_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialS_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
-    pub fn ftMt_SpecialS_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084F3C(gobj);
-            st::ftColl_8007AEF8(gobj);
-        }
-    }
-
-    /// `ftMt_SpecialAirS_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
-    pub fn ftMt_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084EEC(gobj);
-            st::ftColl_8007AEF8(gobj);
-        }
-    }
 
 }

@@ -3,12 +3,15 @@
 //! `lwOnHit` / `lwOnAnim`). Smoke-tested by tests/tu_ftlinkattackair.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftlink::cb_ftLk_800EB334;
 use melee_types::*;
 
 /// Already ported (round 5): re-exported under this TU.
-pub use crate::chars::r5::ftLink::ftlinkattackair::ftLk_AttackAir_SetupParts;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -127,4 +130,14 @@ pub fn lwOnAnim(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn cb_lwOnAnim(g: *mut HSD_GObj) {
     melee_core::ct!("cb_lwOnAnim");
     lwOnAnim(g);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLk_AttackAir_SetupParts` (src/melee/ft/kinds/ftLink/ftlinkattackair.c).
+pub fn ftLk_AttackAir_SetupParts(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_AttackAir_SetupParts");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 2, 0);
+        st::ftParts_80074B0C(gobj, 2, 0);
+    }
 }

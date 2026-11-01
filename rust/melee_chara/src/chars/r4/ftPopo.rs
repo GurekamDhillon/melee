@@ -3,23 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpopospecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospecialhi::{ftPp_SpecialAirHiStart_1_Anim};
 
-    /// `ftPp_SpecialAirHiStart_1_Anim` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiStart_1_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).cmd_vars[2] as u32) != 0u32 /* 0 */) {
-                (*fp).cmd_vars[2] = 0_u32;
-                (*fp).self_vel.y = (*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).xA4;
-            }
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_80122380(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

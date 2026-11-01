@@ -4,21 +4,18 @@
 //! Smoke-tested by tests/tu_ftfoxspecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_runtime::lbtrigf::atan2f;
 use melee_types::*;
 
 /// Already ported (rounds 2/6/12/14): re-exported under this TU.
-pub use crate::chars::r12::ftFox::ftfoxspecialn::{ftFx_SpecialAirNEnd_IASA, ftFx_SpecialNEnd_IASA};
-pub use crate::chars::r14::ftFox::ftfoxspecialn::{ftFox_SpecialN_RemoveBlasterNULL, ftFx_SpecialN_ClearBlaster};
-pub use crate::chars::r2::ftFox::ftfoxspecialn::{
-    ftFx_SpecialAirNEnd_Phys, ftFx_SpecialAirNLoop_Phys, ftFx_SpecialAirNStart_Phys, ftFx_SpecialNEnd_Coll,
-    ftFx_SpecialNEnd_Phys, ftFx_SpecialNLoop_Coll, ftFx_SpecialNLoop_Phys, ftFx_SpecialNStart_Coll,
-    ftFx_SpecialNStart_Phys,
-};
-pub use crate::chars::r6::ftFox::ftfoxspecialn::{
-    ftFx_SpecialAirNEnd_Coll, ftFx_SpecialAirNLoop_Coll, ftFx_SpecialAirNStart_Coll,
-};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -742,5 +739,126 @@ pub fn ftFx_Throw_Anim(gobj: *mut HSD_GObj) {
                 _ => {}
             }
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftFx_SpecialNEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialAirNEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialN_ClearBlaster` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialN_ClearBlaster(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialN_ClearBlaster");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.fx.x222C_blasterGObj.is_null()) {
+            (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* NULL */
+        }
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftFox_SpecialN_RemoveBlasterNULL` (static) (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFox_SpecialN_RemoveBlasterNULL(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFox_SpecialN_RemoveBlasterNULL");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.fx.x222C_blasterGObj.is_null()) {
+            (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* NULL */
+        }
+        (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
+        (*fp).death2_cb = core::mem::zeroed(); /* NULL */
+    }
+}
+
+/// `ftFx_SpecialNStart_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftFx_SpecialNLoop_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftFx_SpecialNEnd_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftFx_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNStart_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftFx_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNLoop_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftFx_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNEnd_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftFx_SpecialNStart_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNStart_Coll");
+    st::ft_80083F88(gobj);
+}
+
+/// `ftFx_SpecialNLoop_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNLoop_Coll");
+    st::ft_80083F88(gobj);
+}
+
+/// `ftFx_SpecialNEnd_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialNEnd_Coll");
+    st::ft_80083F88(gobj);
+}
+
+/// `ftFx_SpecialAirNStart_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNStart_Coll");
+    unsafe {
+        st::ftCo_AirCatchHit_Coll(gobj);
+    }
+}
+
+/// `ftFx_SpecialAirNLoop_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNLoop_Coll");
+    unsafe {
+        st::ftCo_AirCatchHit_Coll(gobj);
+    }
+}
+
+/// `ftFx_SpecialAirNEnd_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
+pub fn ftFx_SpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirNEnd_Coll");
+    unsafe {
+        st::ftCo_AirCatchHit_Coll(gobj);
     }
 }

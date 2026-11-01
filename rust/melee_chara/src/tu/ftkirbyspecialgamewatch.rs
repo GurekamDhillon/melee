@@ -3,16 +3,17 @@
 //! recording hooks by tests/tu_ftkirbyspecialgamewatch.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftKb_MS_GwSpecialAirN, ftKb_MS_GwSpecialN, Fighter};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 4): re-exported under this TU.
-pub use crate::chars::ftKirby::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D160;
-pub use crate::chars::r2::ftKirby::ftkirbyspecialgamewatch::{ftKb_GwSpecialAirN_Phys, ftKb_GwSpecialN_Phys};
-pub use crate::chars::r3::ftKirby::ftkirbyspecialgamewatch::{
-    ftKb_GwSpecialAirN_Coll, ftKb_GwSpecialN_Coll, ftKb_SpecialNGw_8010D580, ftKb_SpecialNGw_8010D5F0,
-};
-pub use crate::chars::r4::ftKirby::ftkirbyspecialgamewatch::inline1;
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -323,4 +324,75 @@ pub fn ftKb_SpecialNGw_8010D6D0(gobj: *mut HSD_GObj, arg1: f32) {
     st::Fighter_ChangeMotionState(gobj, ftKb_MS_GwSpecialAirN as i32, 0x0C4C508C, arg1 - 1.0, 1.0, 0.0, core::ptr::null_mut());
     st::ftAnim_8006EBA4(gobj);
     inline1(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftKb_SpecialNGw_8010D160(fp: &Fighter) -> bool {
+    melee_core::ct!("ftKb_SpecialNGw_8010D160");
+    let m = fp.motion_id as i32;
+    !(m >= ftKb_MS_GwSpecialN as i32 && m <= ftKb_MS_GwSpecialAirN as i32)
+}
+
+/// `ftKb_GwSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_GwSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_GwSpecialAirN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_GwSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialAirN_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_GwSpecialN_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_GwSpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialN_Coll");
+    unsafe {
+        if st::ft_800827A0(gobj) == 0 {
+            crate::chars::r3::ftKirby::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D580(gobj);
+        }
+    }
+}
+
+/// `ftKb_GwSpecialAirN_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_GwSpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_GwSpecialAirN_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
+            crate::chars::r3::ftKirby::ftkirbyspecialgamewatch::ftKb_SpecialNGw_8010D5F0(gobj);
+        }
+    }
+}
+
+/// `ftKb_SpecialNGw_8010D580` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_SpecialNGw_8010D580(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D580");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 511 /* ftKb_MS_GwSpecialAirN */, 0xC4C508Cu32 /* ftKb_MF_GwSpecialN_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialgamewatch__fn_8010CE5C);
+    }
+}
+
+/// `ftKb_SpecialNGw_8010D5F0` (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn ftKb_SpecialNGw_8010D5F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialNGw_8010D5F0");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 510 /* ftKb_MS_GwSpecialN */, 0xC4C508Cu32 /* ftKb_MF_GwSpecialN_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialgamewatch__fn_8010CE5C);
+    }
+}
+
+/// `inline1` (static) (src/melee/ft/kinds/ftKirby/ftkirbyspecialgamewatch.c).
+pub fn inline1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("inline1");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[2] = 0_u32;
+        (*fp).mv.gw.SpecialN.isChefLoopDisable = (0_i32 /* false */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecialgamewatch__fn_8010CE5C);
+    }
 }

@@ -3,42 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmarsspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmarsspecialhi::{ftMs_SpecialAirHi_Anim, ftMs_SpecialHi_Anim, ftMs_SpecialHi_Enter};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_SpecialHi_Enter` (src/melee/ft/kinds/ftMars/ftmarsspecialhi.c).
-    pub fn ftMs_SpecialHi_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[2] = 0_u32;
-            (*fp).cmd_vars[1] = 0_u32;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 367 /* 0x16F */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
-
-    /// `ftMs_SpecialHi_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecialhi.c).
-    pub fn ftMs_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 0, 1, 0, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x28 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x2C as f32));
-            }
-        }
-    }
-
-    /// `ftMs_SpecialAirHi_Anim` (src/melee/ft/kinds/ftMars/ftmarsspecialhi.c).
-    pub fn ftMs_SpecialAirHi_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 0, 1, 0, ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x28 as f32), ((*((*fp).dat_attrs as *const melee_types::MarsAttributes)).x2C as f32));
-            }
-        }
-    }
 
 }

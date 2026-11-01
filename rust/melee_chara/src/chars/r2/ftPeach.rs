@@ -4,107 +4,45 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftpeachattacks4 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachattacks4::{ftPe_AttackS4_Anim, ftPe_AttackS4_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPe_AttackS4_Anim` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
-    pub fn ftPe_AttackS4_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftPe_AttackS4_Phys` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
-    pub fn ftPe_AttackS4_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084FA8(gobj);
-    }
 
 }
 
 pub mod ftpeachspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachspeciallw::{ftPe_SpecialAirLw_Phys, ftPe_SpecialLw_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPe_SpecialLw_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn ftPe_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftPe_SpecialAirLw_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn ftPe_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftpeachspecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpeachspecialn::{ftPe_SpecialNHit_Phys};
 
-    /// `ftPe_SpecialNHit_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspecialn.c).
-    pub fn ftPe_SpecialNHit_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpeachspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachspecials::{enterAirEnd, enterEnd, enterStart, ftPe_SpecialAirSEnd_Anim, ftPe_SpecialAirSEnd_Phys, ftPe_SpecialAirSStart_Phys, ftPe_SpecialSEnd_Anim, ftPe_SpecialSEnd_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPe_SpecialAirSStart_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `enterStart` (static) (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn enterStart(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_AirToGroundStateChange(gobj, fp, 354 /* ftPe_MS_SpecialSStart */, 0xC4C5084u32 /* start_mf */);
-    }
-
-    /// `ftPe_SpecialSEnd_Anim` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftPe_SpecialAirSEnd_Anim` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftPe_SpecialSEnd_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftPe_SpecialAirSEnd_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialAirSEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `enterAirEnd` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn enterAirEnd(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_GroundToAirStateChange(gobj, fp, 358 /* ftPe_MS_SpecialAirSEnd_0 */, 0x5000u32 /* end_mf */);
-    }
-
-    /// `enterEnd` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn enterEnd(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_AirToGroundStateChange(gobj, fp, 355 /* ftPe_MS_SpecialSEnd */, 0x5000u32 /* end_mf */);
-    }
 
 }

@@ -3,47 +3,18 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftsamusspeciallw1 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsamusspeciallw1::{ftSs_SpecialLw_8012B668};
+
+pub use crate::tu::ftsamusspeciallw1::{ftSs_SpecialLw_8012B5F0};
+
+pub use crate::tu::ftsamusspeciallw1::{ftSs_SpecialLw_8012B570};
+
+pub use crate::tu::ftsamusspeciallw1::{ftSamus_UnkSetStateAndCb};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSamus_UnkSetStateAndCb` (static) (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
-    pub fn ftSamus_UnkSetStateAndCb(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[1] = 2_u32;
-            (*fp).mv.ss.unk6.x0 = 0_i32;
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0);
-        }
-    }
-
-    /// `ftSs_SpecialLw_8012B570` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
-    pub fn ftSs_SpecialLw_8012B570(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 356 /* 0x164 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
-            crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSamus_UnkSetStateAndCb(gobj);
-        }
-    }
-
-    /// `ftSs_SpecialLw_8012B5F0` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
-    pub fn ftSs_SpecialLw_8012B5F0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).self_vel.y = (*((*fp).dat_attrs as *const melee_types::ftSs_DatAttrs)).x54;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 356 /* 0x164 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0);
-        }
-    }
-
-    /// `ftSs_SpecialLw_8012B668` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
-    pub fn ftSs_SpecialLw_8012B668(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 355 /* 0x163 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
-            crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSamus_UnkSetStateAndCb(gobj);
-        }
-    }
 
 }

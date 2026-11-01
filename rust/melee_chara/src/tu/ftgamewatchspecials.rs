@@ -2,17 +2,20 @@
 //! No fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftgamewatchspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftGw_MS_SpecialAirS9, ftGw_MS_SpecialS1, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext};
 use melee_types::*;
 
 /// Already ported (rounds 2/4/12 and the item-check helper): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchspecials::ftGw_SpecialS_ItemCheckJudgementRemove;
-pub use crate::chars::r12::ftGameWatch::ftgamewatchspecials::{ftGw_SpecialAirS_IASA, ftGw_SpecialS_IASA};
-pub use crate::chars::r2::ftGameWatch::ftgamewatchspecials::{ftGw_SpecialAirS_Anim, ftGw_SpecialS_Anim};
-pub use crate::chars::r4::ftGameWatch::ftgamewatchspecials::{
-    ftGameWatch_SpecialS_SetCall, ftGameWatch_SpecialS_SetVars, ftGw_SpecialS_Phys,
-};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -357,5 +360,81 @@ pub fn ftGw_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
             core::ptr::null_mut(),
         );
         ftGameWatch_SpecialS_SetCall(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_SpecialS_ItemCheckJudgementRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_SpecialS_ItemCheckJudgementRemove");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_SpecialS1 as u32, ftGw_MS_SpecialAirS9 as u32)
+}
+
+/// `ftGw_SpecialS_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGw_SpecialS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftGw_SpecialAirS_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGw_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftGw_SpecialS_Anim` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGw_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftGw_SpecialAirS_Anim` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGw_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftGameWatch_SpecialS_SetVars` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGameWatch_SpecialS_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGameWatch_SpecialS_SetVars");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup);
+    }
+}
+
+/// `ftGw_SpecialS_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGw_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialS_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).cmd_vars[0] as u32) == 1u32 /* 1U */) {
+            (*fp).cmd_vars[0] = (2_u32 /* 2U */);
+        }
+        st::ft_80084F3C(gobj);
+    }
+}
+
+/// `ftGameWatch_SpecialS_SetCall` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecials.c).
+pub fn ftGameWatch_SpecialS_SetCall(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGameWatch_SpecialS_SetCall");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.gw.x2264_judgementGObj.is_null()) {
+            (*fp).death2_cb = Some(crate::chars::cb::ftgamewatch__ftGw_Init_OnDamage);
+            (*fp).take_dmg_cb = Some(crate::chars::cb::ftgamewatch__ftGw_Init_OnDamage);
+        }
+        (*fp).pre_hitlag_cb = Some(crate::chars::cb::ftgamewatchspecials__ftGw_SpecialS_ItemJudgementEnterHitlag);
+        (*fp).post_hitlag_cb = Some(crate::chars::cb::ftgamewatchspecials__ftGw_SpecialS_ItemJudgementExitHitlag);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchspecials__ftGw_SpecialS_ItemJudgementSetup);
     }
 }

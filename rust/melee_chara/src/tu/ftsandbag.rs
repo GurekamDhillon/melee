@@ -8,10 +8,15 @@
 //! belongs to the motion-state dispatcher and `ftSb_CostumeList` is an uninitialised BSS entry.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftSandbag::ftsandbag::{ftSb_WaitReverse_Coll, ftSb_WaitReverse_Phys};
+
 
 pub const ftSb_Init_DatFilename: &str = "PlSb.dat";
 pub const ftSb_Init_DataName: &str = "ftDataSandbag";
@@ -142,3 +147,16 @@ pub fn ftSb_WaitReverse_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftSb_WaitR
 
 /// `ftSb_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftSb_CostumeList[1]`), filled when the costumes load.
 pub static mut ftSb_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftSb_WaitReverse_Phys` (src/melee/ft/kinds/ftSandbag/ftsandbag.c).
+pub fn ftSb_WaitReverse_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSb_WaitReverse_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftSb_WaitReverse_Coll` (src/melee/ft/kinds/ftSandbag/ftsandbag.c).
+pub fn ftSb_WaitReverse_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSb_WaitReverse_Coll");
+    st::ft_80083F88(gobj);
+}

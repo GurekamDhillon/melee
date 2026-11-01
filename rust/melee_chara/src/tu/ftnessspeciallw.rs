@@ -5,13 +5,23 @@
 //! by tests/tu_ftnessspeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftNessAttributes};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2 and 5): re-exported under this TU.
-pub use crate::chars::r2::ftNess::ftnessspeciallw::ftNs_SpecialLwStart_Phys;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -636,4 +646,24 @@ pub fn ftNs_SpecialAirLwEnd_Enter(gobj: *mut HSD_GObj) {
 pub fn ftNs_SpecialAirLwStart_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_SpecialAirLwStart_Phys");
     unsafe { crate::chars::ftNess::ftnessspeciallw::ftNs_SpecialAirLwStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftNs_SpecialLwStart_Phys` (src/melee/ft/kinds/ftNess/ftnessspeciallw.c).
+pub fn ftNs_SpecialLwStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialLwStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftNs_SpecialAirLwStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_Phys_fp");
+    let a: &ftNessAttributes = da(fp);
+    let gravity_timer = unsafe { fp.mv.ns.speciallw.gravityDelay } as i32;
+    if gravity_timer != 0 {
+        unsafe { fp.mv.ns.speciallw.gravityDelay = (gravity_timer - 1) as _ };
+    } else {
+        co::fall(fp, a.x8C_PSI_MAGNET_FALL_ACCEL, fp.co_attrs.terminal_velocity);
+    }
+    co::calc_self_accel_deaccel_quick_air(fp);
 }

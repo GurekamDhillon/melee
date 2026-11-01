@@ -3,14 +3,15 @@
 //! function). Smoke-tested by tests/tu_ftkirbyspecialmario.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/5): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialmario::{
-    ftKb_MrSpecialAirN_Anim, ftKb_MrSpecialAirN_Phys, ftKb_MrSpecialN_Anim, ftKb_MrSpecialN_Phys,
-};
-pub use crate::chars::r5::ftKirby::ftkirbyspecialmario::ftKb_MrSpecialN_IASA;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -217,5 +218,45 @@ pub fn ftKb_SpecialNLg_800F9598(gobj: G) {
         }
         st::Fighter_ChangeMotionState(gobj, motion_id, 0x5000, anim_frame, 1.0, 0.0, core::ptr::null_mut());
         (*fp).accessory4_cb = Some(cb_fn_800F9260);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_MrSpecialN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmario.c).
+pub fn ftKb_MrSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MrSpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftKb_MrSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmario.c).
+pub fn ftKb_MrSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MrSpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MrSpecialAirN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmario.c).
+pub fn ftKb_MrSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MrSpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftKb_MrSpecialAirN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmario.c).
+pub fn ftKb_MrSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MrSpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftKb_MrSpecialN_IASA` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmario.c).
+pub fn ftKb_MrSpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MrSpecialN_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).cmd_vars[0] as u32) != 0u32 /* 0 */) {
+            st::ftCo_Wait_IASA(gobj);
+        }
     }
 }

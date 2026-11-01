@@ -2,6 +2,9 @@
 //! No fused sites. Smoke-tested by tests/tu_ftmasterhandsqueezing.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::chars::r9::ftMasterHand::ftmasterhandbackdisappear::ftMh_MS_374_801546D8;
 use crate::stubs as st;
 use crate::tu::ftmasterhandslap::ext::ftMh_MS_389_80151018;
@@ -9,8 +12,8 @@ use crate::tu::ftmasterhandsqueeze::{ftMh_MS_378_80154A78, ftMh_UpdateBossMotion
 use melee_types::*;
 
 /// Already ported (rounds 4/8): re-exported under this TU.
-pub use crate::chars::r4::ftMasterHand::ftmasterhandsqueezing::ftMh_MS_376_80154E78;
-pub use crate::chars::r8::ftMasterHand::ftmasterhandsqueezing::ftMh_Squeezing_IASA;
+
+
 
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
@@ -72,5 +75,28 @@ pub fn ftMh_Throw_Anim(gobj: *mut HSD_GObj) {
     }
     if st::ftAnim_IsFramesRemaining(gobj) == 0 {
         ftMh_MS_389_80151018(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_MS_376_80154E78` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueezing.c).
+pub fn ftMh_MS_376_80154E78(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_376_80154E78");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 379 /* ftMh_MS_Throw */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).cmd_vars[0] = 0_u32;
+    }
+}
+
+/// `ftMh_Squeezing_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueezing.c).
+pub fn ftMh_Squeezing_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Squeezing_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

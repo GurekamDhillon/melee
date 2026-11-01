@@ -4,6 +4,9 @@
 //! The spawn position and landing-lag choice are checked against the C by tests/tu_ftkirbyspecialpikachu.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialn::{fpp, G};
 use melee_core::fp::fmadds;
@@ -11,7 +14,7 @@ use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialpikachu::{ftKb_PkSpecialAirN_Phys, ftKb_PkSpecialN_Phys};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -177,4 +180,17 @@ pub fn ftKb_PkSpecialAirN_Coll(gobj: G) {
             coll_change(gobj, ftKb_MS_PkSpecialN as i32, ftKb_MS_PcSpecialN as i32, fp);
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_PkSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialpikachu.c).
+pub fn ftKb_PkSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PkSpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_PkSpecialAirN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialpikachu.c).
+pub fn ftKb_PkSpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_PkSpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
 }

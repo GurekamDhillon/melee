@@ -4,12 +4,15 @@
 //! tests/tu_ftmasterhandbackcrush0.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::inline::{HSD_JObjGetScale, HSD_JObjMtxIsDirty, HSD_JObjSetScale, JObjDirty};
 use melee_types::*;
 
 /// Already ported (round 8): re-exported under this TU.
-pub use crate::chars::r8::ftMasterHand::ftmasterhandbackcrush0::ftMh_BackCrush_IASA;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -142,5 +145,17 @@ pub fn ftMh_BackCrush_Phys(gobj: *mut HSD_GObj) {
             (*fp).self_vel.x = 0.0;
         }
         melee_fighter::tu::ftbosslib::ftBossLib_8015C190(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_BackCrush_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackcrush0.c).
+pub fn ftMh_BackCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_BackCrush_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

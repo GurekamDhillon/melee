@@ -3,603 +3,265 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmasterhandbackairplane1 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandbackairplane1::{ftMh_BackAirplane1_IASA};
 
-    /// `ftMh_BackAirplane1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane1.c).
-    pub fn ftMh_BackAirplane1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandbackairplane2 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandbackairplane2::{ftMh_BackAirplane2_IASA};
 
-    /// `ftMh_BackAirplane2_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane2.c).
-    pub fn ftMh_BackAirplane2_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandbackairplane3 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandbackairplane3::{ftMh_BackAirplane3_IASA, ftMh_BackPunch_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_BackAirplane3_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane3.c).
-    pub fn ftMh_BackAirplane3_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_BackPunch_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackairplane3.c).
-    pub fn ftMh_BackPunch_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandbackcrush0 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandbackcrush0::{ftMh_BackCrush_IASA};
 
-    /// `ftMh_BackCrush_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackcrush0.c).
-    pub fn ftMh_BackCrush_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandbackdisappear {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandbackdisappear::{ftMh_Cancel_IASA, ftMh_Fail_IASA, ftMh_Wait1_1_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_Wait1_1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
-    pub fn ftMh_Wait1_1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_Fail_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
-    pub fn ftMh_Fail_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_Cancel_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandbackdisappear.c).
-    pub fn ftMh_Cancel_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhanddrill {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhanddrill::{ftMh_Drill_IASA, ftMh_WalkWait_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_WalkWait_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
-    pub fn ftMh_WalkWait_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_Drill_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
-    pub fn ftMh_Drill_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandentry {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandentry::{ftMh_Entry_IASA};
 
-    /// `ftMh_Entry_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandentry.c).
-    pub fn ftMh_Entry_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandfingerbeam {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandfingerbeam::{ftMh_FingerBeamLoop_IASA, ftMh_FingerBeamStart_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_FingerBeamStart_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
-    pub fn ftMh_FingerBeamStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_FingerBeamLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
-    pub fn ftMh_FingerBeamLoop_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandfingergun {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandfingergun::{ftMh_FingerBeamEnd_IASA, ftMh_FingerGun1_IASA, ftMh_FingerGun2_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_FingerBeamEnd_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
-    pub fn ftMh_FingerBeamEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_FingerGun1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
-    pub fn ftMh_FingerGun1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_FingerGun2_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
-    pub fn ftMh_FingerGun2_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandfingergun3 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandfingergun3::{ftMh_FingerGun3_IASA};
 
-    /// `ftMh_FingerGun3_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun3.c).
-    pub fn ftMh_FingerGun3_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandpapercrush {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandpapercrush::{ftMh_PaperCrush_IASA, ftMh_RockCrushDown_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_RockCrushDown_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
-    pub fn ftMh_RockCrushDown_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_PaperCrush_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
-    pub fn ftMh_PaperCrush_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandpoke {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandpoke::{ftMh_Poke1_IASA};
 
-    /// `ftMh_Poke1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpoke.c).
-    pub fn ftMh_Poke1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandrockcrush {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandrockcrush::{ftMh_RockCrushUp_IASA, ftMh_RockCrushWait_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_RockCrushUp_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandrockcrush.c).
-    pub fn ftMh_RockCrushUp_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_RockCrushWait_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandrockcrush.c).
-    pub fn ftMh_RockCrushWait_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandslam {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandslam::{ftMh_Slam_IASA};
 
-    /// `ftMh_Slam_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandslam.c).
-    pub fn ftMh_Slam_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandslap {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandslap::{ftMh_Slap_IASA};
 
-    /// `ftMh_Slap_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandslap.c).
-    pub fn ftMh_Slap_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandsqueeze {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandsqueeze::{ftMh_Squeeze_IASA};
 
-    /// `ftMh_Squeeze_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueeze.c).
-    pub fn ftMh_Squeeze_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandsqueezing {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandsqueezing::{ftMh_Squeezing_IASA};
 
-    /// `ftMh_Squeezing_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsqueezing.c).
-    pub fn ftMh_Squeezing_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandsweep {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandsweep::{ftMh_Damage_IASA, ftMh_SweepLoop_IASA, ftMh_WaitSweep_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_Damage_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
-    pub fn ftMh_Damage_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_WaitSweep_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
-    pub fn ftMh_WaitSweep_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_SweepLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
-    pub fn ftMh_SweepLoop_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandsweepwait {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandsweepwait::{ftMh_SweepWait_IASA};
 
-    /// `ftMh_SweepWait_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweepwait.c).
-    pub fn ftMh_SweepWait_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandtagapplaud {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandtagapplaud::{ftMh_TagApplaud_IASA};
 
-    /// `ftMh_TagApplaud_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagapplaud.c).
-    pub fn ftMh_TagApplaud_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandtagrockpaper {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandtagrockpaper::{ftMh_TagCancel_IASA, ftMh_TagFail_IASA, ftMh_TagGrab_IASA, ftMh_TagRockPaper_IASA, ftMh_TagSqueeze_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_TagRockPaper_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagrockpaper.c).
-    pub fn ftMh_TagRockPaper_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_TagGrab_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagrockpaper.c).
-    pub fn ftMh_TagGrab_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_TagSqueeze_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagrockpaper.c).
-    pub fn ftMh_TagSqueeze_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_TagFail_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagrockpaper.c).
-    pub fn ftMh_TagFail_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_TagCancel_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagrockpaper.c).
-    pub fn ftMh_TagCancel_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftmasterhandthrow {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandthrow::{ftMh_Throw_IASA};
 
-    /// `ftMh_Throw_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandthrow.c).
-    pub fn ftMh_Throw_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandwait10 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmasterhandwait10::{ftMh_Wait1_0_IASA};
 
-    /// `ftMh_Wait1_0_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
-    pub fn ftMh_Wait1_0_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmasterhandwalk {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmasterhandwalk::{ftMh_Walk2_IASA, ftMh_WalkLoop_IASA, ftMh_WalkShoot_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMh_WalkShoot_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
-    pub fn ftMh_WalkShoot_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_Walk2_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
-    pub fn ftMh_Walk2_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
-
-    /// `ftMh_WalkLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwalk.c).
-    pub fn ftMh_WalkLoop_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
-                st::ftBossLib_8015BD20(gobj);
-            }
-        }
-    }
 
 }

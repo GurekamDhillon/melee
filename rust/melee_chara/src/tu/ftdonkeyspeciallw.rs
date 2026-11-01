@@ -3,16 +3,16 @@
 //! through recording hooks by tests/tu_ftdonkeyspeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3 and the hand-written module): re-exported under this TU.
-pub use crate::chars::r2::ftDonkey::ftdonkeyspeciallw::{
-    doTransition, ftDk_SpecialLwEnd0_Anim, ftDk_SpecialLwEnd0_Coll, ftDk_SpecialLwEnd0_Phys,
-    ftDk_SpecialLwEnd1_Anim, ftDk_SpecialLwEnd1_Coll, ftDk_SpecialLwEnd1_Phys, ftDk_SpecialLwLoop_Coll,
-    ftDk_SpecialLwLoop_Phys, ftDk_SpecialLwStart_Coll, ftDk_SpecialLwStart_Phys,
-};
-pub use crate::chars::r3::ftDonkey::ftdonkeyspeciallw::ftDk_SpecialLw_Enter;
+
+
 
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic, except
 /// `ft_80089824` which falls back to the verified group 3 port).
@@ -176,4 +176,102 @@ pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
 pub fn ftDk_SpecialLwLoop_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftDk_SpecialLwLoop_IASA");
     unsafe { crate::chars::ftDonkey::ftdonkeyspeciallw::ftDk_SpecialLwLoop_IASA_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_SpecialLwStart_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_SpecialLwStart_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwStart_Coll");
+    if st::ft_80082708(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftDk_SpecialLwLoop_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_SpecialLwLoop_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwLoop_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwLoop_Coll");
+    if st::ft_80082708(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftDk_SpecialLwEnd0_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd0_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd0_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftDk_SpecialLwEnd0_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd0_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_SpecialLwEnd0_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd0_Coll");
+    if st::ft_80082708(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `doTransition` (static) (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn doTransition(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doTransition");
+    st::Fighter_ChangeMotionState(gobj, 385 /* ftDk_MS_SpecialLwEnd0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+}
+
+/// `ftDk_SpecialLwEnd1_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd1_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftDk_SpecialLwEnd1_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd1_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftDk_SpecialLwEnd1_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLwEnd1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwEnd1_Coll");
+    if st::ft_80081D0C(gobj) != 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftDk_SpecialLw_Enter` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
+pub fn ftDk_SpecialLw_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLw_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.dk.speciallw.x0 = 0_i32;
+        st::Fighter_ChangeMotionState(gobj, 383 /* ftDk_MS_SpecialLwStart */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftDk_SpecialLwLoop_IASA_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftDk_SpecialLwLoop_IASA_fp");
+    if fp.input.pressed_buttons & 512 != 0 {
+        unsafe { fp.mv.dk.speciallw.x0 = 1 };
+    }
 }

@@ -4,14 +4,15 @@
 //! smoke-tested through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2, 12): re-exported under this TU.
-pub use crate::chars::r12::ftDonkey::ftdonkeyspecials::ftDk_SpecialS_Enter;
-pub use crate::chars::r2::ftDonkey::ftdonkeyspecials::{
-    ftDk_SpecialAirS_Anim, ftDk_SpecialS_Anim, ftDk_SpecialS_Phys,
-};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -130,4 +131,39 @@ pub fn doGroundTransition(gobj: *mut HSD_GObj) {
 unsafe fn set_effect_hitlag_callbacks(fp: *mut Fighter) {
     (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
     (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_SpecialS_Enter` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
+pub fn ftDk_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialS_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 379 /* ftDk_MS_SpecialS */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftdonkeyspeciallw__ftDk_SpecialLw_8010E0CC);
+    }
+}
+
+/// `ftDk_SpecialS_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
+pub fn ftDk_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftDk_SpecialAirS_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
+pub fn ftDk_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialAirS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftDk_SpecialS_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
+pub fn ftDk_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialS_Phys");
+    st::ft_80084F3C(gobj);
 }

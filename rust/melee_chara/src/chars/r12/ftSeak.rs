@@ -3,44 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftseakspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecials::{ftSk_SpecialAirSEnd_IASA, ftSk_SpecialAirSStart_IASA, ftSk_SpecialSEnd_IASA, ftSk_SpecialSStart_IASA, ftSk_SpecialS_8011097C};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialS_8011097C` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialS_8011097C(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftSk_SpecialSStart_IASA` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialSStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftSk_SpecialAirSStart_IASA` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirSStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftSk_SpecialSEnd_IASA` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialSEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftSk_SpecialAirSEnd_IASA` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirSEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

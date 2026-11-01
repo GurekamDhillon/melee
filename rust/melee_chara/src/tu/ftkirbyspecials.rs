@@ -3,15 +3,17 @@
 //! tests/tu_ftkirbyspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter};
 use crate::stubs as st;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 4 and the root module): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecials::{
-    ftKb_SpecialAirS_Anim, ftKb_SpecialAirS_Phys, ftKb_SpecialS_Anim, ftKb_SpecialS_Phys,
-};
-pub use crate::chars::r4::ftKirby::ftkirbyspecials::{ftKb_SpecialAirS_Enter, ftKb_SpecialS_Enter};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -236,3 +238,66 @@ pub fn ftKb_SpecialN_800F5898(gobj: *mut HSD_GObj) -> *mut HSD_Joint {
 
 #[allow(unused_imports)]
 use fh as _fh;
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_SpecialS_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftKb_SpecialAirS_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftKb_SpecialS_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialS_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_SpecialAirS_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirS_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_SpecialS_Enter` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialS_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 383 /* ftKb_MS_SpecialS */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecials__fn_800F53AC);
+    }
+}
+
+/// `ftKb_SpecialAirS_Enter` (src/melee/ft/kinds/ftKirby/ftkirbyspecials.c).
+pub fn ftKb_SpecialAirS_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirS_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        if (((*fp).u.kb.x64 as i32) == 0i32 /* 0 */) {
+            (*fp).self_vel.y = (*((*fp).dat_attrs as *const melee_types::ftKb_DatAttrs)).specials_aerial_vertical_momentum;
+            (*fp).u.kb.x64 = (1_i32 /* true */);
+        }
+        st::Fighter_ChangeMotionState(gobj, 384 /* ftKb_MS_SpecialAirS */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftkirbyspecials__fn_800F53AC);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftKb_SpecialN_800F5800_fp(fp: &Fighter, vec: &mut Vec3) {
+    melee_core::ct!("ftKb_SpecialN_800F5800_fp");
+    *vec = fp.cur_pos;
+}

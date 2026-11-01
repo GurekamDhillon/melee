@@ -7,13 +7,17 @@
 //! neighbouring `ftPe_DatAttrs` fields (`x30` / `x14`), reproduced here with raw offset reads.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/5): re-exported under this TU.
-pub use crate::chars::r2::ftPeach::ftpeachspeciallw::{ftPe_SpecialAirLw_Phys, ftPe_SpecialLw_Phys};
-pub use crate::chars::r4::ftPeach::ftpeachspeciallw::ftPe_SpecialLw_UnsetVeg;
-pub use crate::chars::r5::ftPeach::ftpeachspeciallw::{ftPe_SpecialAirLw_Coll, ftPe_SpecialLw_Coll};
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -284,4 +288,65 @@ pub fn ftPe_SpecialLw_Anim(gobj: *mut HSD_GObj) {
 pub fn ftPe_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPe_SpecialAirLw_Anim");
     doAnim(gobj, st::ftCo_Fall_Enter);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPe_SpecialLw_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn ftPe_SpecialLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPe_SpecialAirLw_Phys` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn ftPe_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirLw_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftPe_SpecialLw_UnsetVeg` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn ftPe_SpecialLw_UnsetVeg(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_UnsetVeg");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (!(*fp).u.pe.veg_gobj.is_null()) {
+            (*fp).u.pe.veg_gobj = core::mem::zeroed(); /* NULL */
+        }
+    }
+}
+
+/// `ftPe_SpecialLw_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn ftPe_SpecialLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialLw_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftpeachspeciallw__handleAirColl));
+    }
+}
+
+/// `ftPe_SpecialAirLw_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn ftPe_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirLw_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftpeachspeciallw__handleColl));
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `handleAirColl_fp` (static) (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn handleAirColl_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("handleAirColl_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 353 /* ftPe_MS_SpecialAirLw */, 0xC4C5080u32 /* coll_mf */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftpeachspeciallw__spawnVeg);
+    }
+}
+
+/// `handleColl_fp` (static) (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
+pub fn handleColl_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("handleColl_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 352 /* ftPe_MS_SpecialLw */, 0xC4C5080u32 /* coll_mf */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftpeachspeciallw__spawnVeg);
+    }
 }

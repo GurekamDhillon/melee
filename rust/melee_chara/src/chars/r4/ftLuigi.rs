@@ -3,31 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftluigispecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftluigispecialn::{ftLg_SpecialAirN_Coll, ftLg_SpecialN_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftLg_SpecialN_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
-    pub fn ftLg_SpecialN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80082708(gobj) == 0 /* false */) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 342 /* ftLg_MS_SpecialAirN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
-                (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
-            }
-        }
-    }
-
-    /// `ftLg_SpecialAirN_Coll` (src/melee/ft/kinds/ftLuigi/ftluigispecialn.c).
-    pub fn ftLg_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80081D0C(gobj) != 0 /* false */) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 341 /* ftLg_MS_SpecialN */, 0x5000u32 /* ftLg_MF_SpecialN_Coll */);
-                (*fp).accessory4_cb = Some(crate::chars::cb::ftluigispecialn__ftLg_SpecialN_FireSpawn);
-            }
-        }
-    }
 
 }

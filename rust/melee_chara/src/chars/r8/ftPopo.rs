@@ -3,18 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpopospecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospecials::ftPp_SpecialS1_Anim_fp as ftPp_SpecialS1_Anim;
 
-    /// `ftPp_SpecialS1_Anim` (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
-    pub fn ftPp_SpecialS1_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                crate::chars::r3::ftPopo::ftpopospecials::resetAnim(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -5,13 +5,16 @@
 //! velocity is checked bit for bit against the C by tests/tu_ftcrazyhandrockcrush0.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (round 8): re-exported under this TU.
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandrockcrush0::ftCh_RockCrushUp_IASA;
+
 
 /// `my_lbVector_Len` (static inline).
 #[inline]
@@ -100,3 +103,15 @@ pub fn ftCh_RockCrushUp_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_RockCrushUp_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_RockCrushUp_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_RockCrushUp_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandrockcrush0.c).
+pub fn ftCh_RockCrushUp_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_RockCrushUp_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

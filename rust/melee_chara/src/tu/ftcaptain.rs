@@ -7,13 +7,16 @@
 //! TODO until those callbacks are all native. `ftCa_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftCaptain::ftcaptain::ftCa_Init_OnDeath;
-pub use crate::chars::r6::ftCaptain::ftcaptain::{
-    ftCa_Init_800E28C8, ftCa_Init_OnItemInvisible, ftCa_Init_OnItemVisible,
-};
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 pub const ftCa_Init_DatFilename: &str = "PlCa.dat";
@@ -85,3 +88,39 @@ pub fn ftCa_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftCa_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftCa_CostumeList[6]`), filled when the costumes load.
 pub static mut ftCa_CostumeList: [melee_types::UnkCostumeStruct; 6] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCa_Init_OnDeath` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
+pub fn ftCa_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.ca.during_specials = 0_u32;
+        (*fp).u.ca.during_specials_start = (0_u32 /* false */);
+    }
+}
+
+/// `ftCa_Init_800E28C8` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
+pub fn ftCa_Init_800E28C8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_800E28C8");
+    unsafe {
+        crate::chars::r6::ftCaptain::ftcaptainspecials::ftCa_SpecialS_RemoveGFX(gobj);
+    }
+}
+
+/// `ftCa_Init_OnItemInvisible` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
+pub fn ftCa_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1 /* true */);
+    }
+}
+
+/// `ftCa_Init_OnItemVisible` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
+pub fn ftCa_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1 /* true */);
+    }
+}

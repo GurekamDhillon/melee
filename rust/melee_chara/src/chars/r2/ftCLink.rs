@@ -4,14 +4,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftclinkappeals {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftclinkappeals::{ftCl_AppealS_Phys};
 
-    /// `ftCl_AppealS_Phys` (src/melee/ft/kinds/ftCLink/ftclinkappeals.c).
-    pub fn ftCl_AppealS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

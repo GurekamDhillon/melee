@@ -3,14 +3,15 @@
 //! built on PC). Pure parts checked against the C by tests/tu_ftcaptainspecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter};
 use crate::stubs as st;
 use melee_runtime::gekko::{cosf, sinf};
 use melee_types::*;
 
 /// Already ported (round 11): re-exported under this TU.
-pub use crate::chars::r11::ftCaptain::ftcaptainspecialn::{
-    ftCa_SpecialAirN_Coll, ftCa_SpecialAirN_Enter, ftCa_SpecialN_Coll, ftCa_SpecialN_Enter,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -191,6 +192,64 @@ pub fn ftCa_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
             }
             2 => st::ft_80084DB0(gobj),
             _ => {}
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCa_SpecialN_Enter` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c).
+pub fn ftCa_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 347 /* ftCa_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+        (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+        st::ftAnim_8006EBA4(gobj);
+    }
+}
+
+/// `ftCa_SpecialAirN_Enter` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c).
+pub fn ftCa_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 348 /* ftCa_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+        (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+        st::ftAnim_8006EBA4(gobj);
+    }
+}
+
+/// `ftCa_SpecialN_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c).
+pub fn ftCa_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialN_Coll");
+    unsafe {
+        if (st::ft_800827A0(gobj) == 0) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 348 /* ftCa_MS_SpecialAirN */, 0xC4C5882u32 /* transition_flags */);
+            (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+            (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+            st::ftCommon_ClampAirDrift(&mut *fp);
+        }
+    }
+}
+
+/// `ftCa_SpecialAirN_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialn.c).
+pub fn ftCa_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialAirN_Coll");
+    unsafe {
+        if (st::ft_80081D0C(gobj) != 0) {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 347 /* ftCa_MS_SpecialN */, 0xC4C5882u32 /* transition_flags */);
+            (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+            (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
         }
     }
 }

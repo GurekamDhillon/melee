@@ -3,50 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcaptainspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcaptainspecialhi::{ftCa_SpecialHi_Anim};
 
-    /// `ftCa_SpecialHi_Anim` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
-    pub fn ftCa_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 1, 1, 0 /* false */, ((*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_freefall_air_spd_mul as f32), ((*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_landing_lag as f32));
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcaptainspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcaptainspeciallw::{ftCa_SpecialAirLw_Anim, ftCa_SpecialAirLw_Anim_inline};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCa_SpecialAirLw_Anim_inline` (static) (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
-    pub fn ftCa_SpecialAirLw_Anim_inline(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[2] = 0_u32;
-            (*fp).cmd_vars[1] = 0_u32;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-        }
-    }
-
-    /// `ftCa_SpecialAirLw_Anim` (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
-    pub fn ftCa_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-                crate::chars::r7::ftCaptain::ftcaptainspeciallw::ftCa_SpecialAirLw_Anim_inline(gobj);
-                st::ftCommon_8007D5D4(&mut *fp);
-                st::Fighter_ChangeMotionState(gobj, 361 /* ftCa_MS_SpecialAirLwEndAir */, 0x0u32 /* Ft_MF_None */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            }
-        }
-    }
 
 }

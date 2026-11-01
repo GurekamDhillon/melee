@@ -8,6 +8,9 @@
 //! melee_runtime. Smoke-tested through recording hooks by tests/tu_ftnessspecialhi.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::chars::{abs_c, caps_max_jumps};
 use crate::stubs as st;
 use core::ffi::c_void;
@@ -18,12 +21,8 @@ use melee_runtime::lbvector;
 use melee_types::*;
 
 /// Already ported (rounds 2 and 12): re-exported under this TU.
-pub use crate::chars::r12::ftNess::ftnessspecialhi::{
-    ftNs_SpecialAirHiEnd_IASA, ftNs_SpecialAirHiHold_IASA, ftNs_SpecialAirHiRebound_IASA,
-    ftNs_SpecialAirHiStart_IASA, ftNs_SpecialAirHi_IASA, ftNs_SpecialHiEnd_IASA,
-    ftNs_SpecialHiHold_IASA, ftNs_SpecialHi_IASA,
-};
-pub use crate::chars::r2::ftNess::ftnessspecialhi::{ftNs_SpecialHiEnd_Anim, ftNs_SpecialHiEnd_Phys};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -991,4 +990,83 @@ pub fn ftNs_SpecialAirHiRebound_Coll(gobj: *mut HSD_GObj) {
             ext::ftCliffCommon_80081370(gobj);
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftNs_SpecialHiHold_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialHiHold_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiHold_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialHiEnd_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialHiEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialHi_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHi_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialAirHiStart_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialAirHiStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiStart_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialAirHiHold_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialAirHiHold_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiHold_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialAirHiEnd_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialAirHiEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialAirHi_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHi_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialAirHiRebound_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialAirHiRebound_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirHiRebound_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftNs_SpecialHiEnd_Anim` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialHiEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftNs_SpecialHiEnd_Phys` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
+pub fn ftNs_SpecialHiEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialHiEnd_Phys");
+    st::ft_80084F3C(gobj);
 }

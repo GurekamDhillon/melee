@@ -3,30 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkoopaspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftkoopaspecials::{ftKp_SpecialSEndB_Phys, ftKp_SpecialSEndF_Phys, ftKp_SpecialSStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftKp_SpecialSStart_Phys` (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-    pub fn ftKp_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_800850B4(gobj);
-        }
-    }
-
-    /// `ftKp_SpecialSEndF_Phys` (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-    pub fn ftKp_SpecialSEndF_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_800850B4(gobj);
-        }
-    }
-
-    /// `ftKp_SpecialSEndB_Phys` (src/melee/ft/kinds/ftKoopa/ftkoopaspecials.c).
-    pub fn ftKp_SpecialSEndB_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_800850B4(gobj);
-        }
-    }
 
 }

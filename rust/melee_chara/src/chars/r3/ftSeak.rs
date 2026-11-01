@@ -3,136 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftseakspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecialhi::{ftSk_SpecialHi_80113E40, ftSk_SpecialHi_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialHi_Coll` (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHi_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r3::ftSeak::ftseakspecialhi::ftSk_SpecialHi_80113E40(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialHi_80113E40` (src/melee/ft/kinds/ftSeak/ftseakspecialhi.c).
-    pub fn ftSk_SpecialHi_80113E40(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_8007D60C(&mut *fp);
-            st::Fighter_ChangeMotionState(gobj, 360 /* 0x168 */, 0xC4C508Au32 /* 0x0C4C508AU */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecialhi__fn_80113038);
-        }
-    }
 
 }
 
 pub mod ftseakspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspeciallw::{ftSk_SpecialAirLw2_Coll, ftSk_SpecialAirLw_Coll, ftSk_SpecialLw2_Coll, ftSk_SpecialLw_8011444C, ftSk_SpecialLw_801144B8, ftSk_SpecialLw_80114680, ftSk_SpecialLw_801146EC, ftSk_SpecialLw_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialLw_Coll` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
-                crate::chars::r3::ftSeak::ftseakspeciallw::ftSk_SpecialLw_8011444C(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialAirLw_Coll` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
-                crate::chars::r3::ftSeak::ftseakspeciallw::ftSk_SpecialLw_801144B8(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialLw_8011444C` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_8011444C(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 363 /* 0x16B */, 0xC4C508Eu32 /* ftSk_MF_SpecialLw_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspeciallw__fn_80114034);
-        }
-    }
-
-    /// `ftSk_SpecialLw_801144B8` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_801144B8(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 361 /* 0x169 */, 0xC4C508Eu32 /* ftSk_MF_SpecialLw_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspeciallw__fn_80114034);
-        }
-    }
-
-    /// `ftSk_SpecialLw2_Coll` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw2_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 /* GA_Ground */ {
-                crate::chars::r3::ftSeak::ftseakspeciallw::ftSk_SpecialLw_80114680(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialAirLw2_Coll` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialAirLw2_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 /* GA_Ground */ {
-                crate::chars::r3::ftSeak::ftseakspeciallw::ftSk_SpecialLw_801146EC(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialLw_80114680` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_80114680(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 364 /* 0x16C */, 0xC4C508Eu32 /* ftSk_MF_SpecialLw_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspeciallw__fn_801140B0);
-        }
-    }
-
-    /// `ftSk_SpecialLw_801146EC` (src/melee/ft/kinds/ftSeak/ftseakspeciallw.c).
-    pub fn ftSk_SpecialLw_801146EC(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 362 /* 0x16A */, 0xC4C508Eu32 /* ftSk_MF_SpecialLw_Coll */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspeciallw__fn_801140B0);
-        }
-    }
 
 }
 
 pub mod ftseakspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecialn::{ftSk_SpecialNCancel_Anim, ftSk_SpecialN_801120D4};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialN_801120D4` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialN_801120D4(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
-
-    /// `ftSk_SpecialNCancel_Anim` (src/melee/ft/kinds/ftSeak/ftseakspecialn.c).
-    pub fn ftSk_SpecialNCancel_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.sk.x4 = core::mem::zeroed(); /* 0 */
-            if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-                st::ft_8008A2BC(gobj);
-            }
-        }
-    }
 
 }

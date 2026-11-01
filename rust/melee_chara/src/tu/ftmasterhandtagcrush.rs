@@ -2,12 +2,15 @@
 //! Smoke-tested by tests/tu_ftmasterhandtagcrush.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::tu::ftbosslib as bl;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandtagcrush::ftMh_TagCrush_Phys;
+
 
 pub fn ftMh_TagCrush_Anim(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMh_TagCrush_Anim");
@@ -46,4 +49,11 @@ pub fn ftMh_MS_382_801552F8(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, ftMh_MS_TagApplaud as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_TagCrush_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandtagcrush.c).
+pub fn ftMh_TagCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_TagCrush_Phys");
+    st::ft_80085134(gobj);
 }

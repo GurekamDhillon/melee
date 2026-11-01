@@ -3,65 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftnessspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftnessspecialhi::{ftNs_SpecialAirHiEnd_IASA, ftNs_SpecialAirHiHold_IASA, ftNs_SpecialAirHiRebound_IASA, ftNs_SpecialAirHiStart_IASA, ftNs_SpecialAirHi_IASA, ftNs_SpecialHiEnd_IASA, ftNs_SpecialHiHold_IASA, ftNs_SpecialHi_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftNs_SpecialHiHold_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialHiHold_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialHiEnd_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialHiEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialHi_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialHi_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialAirHiStart_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialAirHiStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialAirHiHold_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialAirHiHold_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialAirHiEnd_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialAirHiEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialAirHi_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialAirHi_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftNs_SpecialAirHiRebound_IASA` (src/melee/ft/kinds/ftNess/ftnessspecialhi.c).
-    pub fn ftNs_SpecialAirHiRebound_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

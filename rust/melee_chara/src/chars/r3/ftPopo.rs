@@ -3,114 +3,35 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftpopospecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpopospecialhi::{ftPp_SpecialHiStart_0_Coll, ftPp_SpecialHiStart_1_Coll, ftPp_SpecialHiThrow2_Coll, ftPp_SpecialHiThrow_0_Coll, ftPp_SpecialHiThrow_1_Coll, ftPp_SpecialS_8012114C};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_SpecialS_8012114C` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialS_8012114C(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.pp.x2238 = core::mem::zeroed(); /* NULL */
-            (*fp).death3_cb = core::mem::zeroed(); /* NULL */
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
-
-    /// `ftPp_SpecialHiStart_0_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialHiStart_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_801217EC(gobj);
-            }
-        }
-    }
-
-    /// `ftPp_SpecialHiThrow_0_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialHiThrow_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_80121CE0(gobj);
-            }
-        }
-    }
-
-    /// `ftPp_SpecialHiStart_1_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialHiStart_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_80121FD8(gobj);
-            }
-        }
-    }
-
-    /// `ftPp_SpecialHiThrow_1_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialHiThrow_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_801222E8(gobj);
-            }
-        }
-    }
-
-    /// `ftPp_SpecialHiThrow2_Coll` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialHiThrow2_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftPopo::ftpopospecialhi::ftPp_SpecialHi_801227AC(gobj);
-            }
-        }
-    }
 
 }
 
 pub mod ftpopospeciallw {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospeciallw::ftPp_set_cbs_fp as ftPp_set_cbs;
 
-    /// `ftPp_set_cbs` (static) (src/melee/ft/kinds/ftPopo/ftpopospeciallw.c).
-    pub fn ftPp_set_cbs(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).death2_cb = Some(crate::chars::cb::ftpopo__ftPp_Init_8011F060);
-            (*fp).take_dmg_cb = Some(crate::chars::cb::ftpopo__ftPp_Init_8011F060);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpopospecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpopospecials::resetAnim_fp as resetAnim;
+pub use crate::tu::ftpopospecials::inline0_fp as inline0;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `resetAnim` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
-    pub fn resetAnim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-            (*fp).pre_hitlag_cb = core::mem::zeroed(); /* NULL */
-            (*fp).post_hitlag_cb = core::mem::zeroed(); /* NULL */
-            (*fp).x1A5C = core::mem::zeroed(); /* NULL */
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `inline0` (static) (src/melee/ft/kinds/ftPopo/ftpopospecials.c).
-    pub fn inline0(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-            (*fp).pre_hitlag_cb = core::mem::zeroed(); /* NULL */
-            (*fp).post_hitlag_cb = core::mem::zeroed(); /* NULL */
-            (*fp).x1A5C = core::mem::zeroed(); /* NULL */
-        }
-    }
 
 }

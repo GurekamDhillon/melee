@@ -3,17 +3,18 @@
 //! tests/tu_ftmewtwospecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::chars::cb;
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 5/6/7/12): re-exported under this TU.
-pub use crate::chars::r12::ftMewtwo::ftmewtwospecials::{
-    ftMt_SpecialAirS_IASA, ftMt_SpecialS_IASA, ftMt_SpecialS_OnReflect,
-};
-pub use crate::chars::r5::ftMewtwo::ftmewtwospecials::{ftMt_SpecialAirS_Coll, ftMt_SpecialS_Coll};
-pub use crate::chars::r6::ftMewtwo::ftmewtwospecials::{ftMt_SpecialAirS_Phys, ftMt_SpecialS_Phys};
-pub use crate::chars::r7::ftMewtwo::ftmewtwospecials::ftMt_SpecialS_SetFlags;
+
+
+
+
 
 /// `CONFUSION_REFLECT_NONE` / `_ON` / `_OFF`: the values the script writes to cmd_vars[1].
 pub const CONFUSION_REFLECT_NONE: u32 = 0;
@@ -278,5 +279,76 @@ pub fn ftMt_SpecialS_ReflectThink(gobj: *mut HSD_GObj) {
             }
             _ => {}
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMt_SpecialS_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_SpecialAirS_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_SpecialS_OnReflect` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialS_OnReflect(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_OnReflect");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftMt_SpecialS_Coll` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftmewtwospecials__ftMt_SpecialS_GroundToAir));
+    }
+}
+
+/// `ftMt_SpecialAirS_Coll` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftmewtwospecials__ftMt_SpecialAirS_AirToGround));
+    }
+}
+
+/// `ftMt_SpecialS_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_Phys");
+    unsafe {
+        st::ft_80084F3C(gobj);
+        st::ftColl_8007AEF8(gobj);
+    }
+}
+
+/// `ftMt_SpecialAirS_Phys` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialAirS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialAirS_Phys");
+    unsafe {
+        st::ft_80084EEC(gobj);
+        st::ftColl_8007AEF8(gobj);
+    }
+}
+
+/// `ftMt_SpecialS_SetFlags` (static) (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
+pub fn ftMt_SpecialS_SetFlags(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialS_SetFlags");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_8007E2F4(&mut *fp, (511 /* (s16) (0x1FF) */ as i16));
+        st::ftCommon_8007E2FC(gobj);
+        (*fp).set_x221E_b6(0);
+        (*fp).set_x2222_b2(1);
     }
 }

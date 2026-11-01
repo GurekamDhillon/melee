@@ -4,12 +4,16 @@
 //! Fused sites: none (tools/rust-port/fma_sites.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 6 / round 12): re-exported under this TU.
-pub use crate::chars::r12::ftZelda::ftzeldaspecialn::{ftZd_SpecialAirN_IASA, ftZd_SpecialN_IASA};
-pub use crate::chars::r6::ftZelda::ftzeldaspecialn::ftZd_SpecialN_Phys;
+
+
 
 /// Calls into TUs that are not ported yet (or into group 3, via the same fallback as `stubs`).
 /// Each is a settable hook; an unset hook without a fallback panics.
@@ -296,5 +300,40 @@ pub fn ftZd_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
         }
         melee_fighter::ftcommon::calc_self_accel_deaccel_quick_air(&mut *fp);
         st::ftColl_8007AEF8(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftZd_SpecialN_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
+pub fn ftZd_SpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialAirN_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
+pub fn ftZd_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirN_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftZd_SpecialN_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
+pub fn ftZd_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_Phys");
+    unsafe {
+        st::ft_80084F3C(gobj);
+        st::ftColl_8007AEF8(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftZd_SpecialN_8013ADB0` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
+pub fn ftZd_SpecialN_8013ADB0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialN_8013ADB0");
+    unsafe {
+        return;
     }
 }

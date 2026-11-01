@@ -8,14 +8,21 @@
 //! `ftNs_CostumeList` is an uninitialised 4-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_types::{ftNessAttributes};
 use melee_types::*;
 
 /// Already ported (rounds 2/5/6): re-exported under this TU.
-pub use crate::chars::r5::ftNess::ftness::{
-    ftNs_Init_OnDeath, ftNs_Init_OnKnockbackEnter, ftNs_Init_OnKnockbackExit,
-};
-pub use crate::chars::r6::ftNess::ftness::{ftNs_Init_OnItemInvisible, ftNs_Init_OnItemVisible};
-pub use crate::chars::ftNess::ftness::ftNs_Init_GetAbsorbHeal;
+
+
+
 
 pub const ftNs_Init_DatFilename: &str = "PlNs.dat";
 pub const ftNs_Init_DataName: &str = "ftDataNess";
@@ -116,3 +123,55 @@ pub fn ftNs_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftNs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftNs_CostumeList[4]`), filled when the costumes load.
 pub static mut ftNs_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftNs_Init_OnDeath` (src/melee/ft/kinds/ftNess/ftness.c).
+pub fn ftNs_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.ns.pkflash_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.ns.pkthunder_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.ns.bat_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.ns.yoyo_gobj = core::mem::zeroed(); /* NULL */
+        (*fp).u.ns.pkthunder_gfx = (0_u32 /* false */);
+    }
+}
+
+/// `ftNs_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftNess/ftness.c).
+pub fn ftNs_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftNs_Init_OnKnockbackExit` (src/melee/ft/kinds/ftNess/ftness.c).
+pub fn ftNs_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftNs_Init_OnItemInvisible` (src/melee/ft/kinds/ftNess/ftness.c).
+pub fn ftNs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftNs_Init_OnItemVisible` (src/melee/ft/kinds/ftNess/ftness.c).
+pub fn ftNs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}
+
+pub fn ftNs_Init_GetAbsorbHeal(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftNs_Init_GetAbsorbHeal");
+    da::<ftNessAttributes>(fp).x94_PSI_MAGNET_HEAL_MUL
+}

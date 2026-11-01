@@ -3,87 +3,31 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftnanaspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_3_Anim_fp as ftPp_SpecialHi_3_Anim;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_0_IASA_fp as ftPp_SpecialHi_0_IASA;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_3_IASA_fp as ftPp_SpecialHi_3_IASA;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_3_Phys_fp as ftPp_SpecialHi_3_Phys;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_0_Coll_fp as ftPp_SpecialHi_0_Coll;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_3_Coll_fp as ftPp_SpecialHi_3_Coll;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_1_IASA_fp as ftPp_SpecialHi_1_IASA;
+pub use crate::tu::ftnanaspecialhi::ftPp_SpecialHi_4_IASA_fp as ftPp_SpecialHi_4_IASA;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_SpecialHi_3_Anim` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_3_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_0_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_0_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_3_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_3_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_3_Phys` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_3_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_0_Coll` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_3_Coll` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_3_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_1_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialHi_4_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
-    pub fn ftPp_SpecialHi_4_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftnanaspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftnanaspecials::ftPp_SpecialS_0_IASA_fp as ftPp_SpecialS_0_IASA;
+pub use crate::tu::ftnanaspecials::ftPp_SpecialS_1_IASA_fp as ftPp_SpecialS_1_IASA;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPp_SpecialS_0_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
-    pub fn ftPp_SpecialS_0_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftPp_SpecialS_1_IASA` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
-    pub fn ftPp_SpecialS_1_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

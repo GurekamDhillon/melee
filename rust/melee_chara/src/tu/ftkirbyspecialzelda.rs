@@ -3,13 +3,16 @@
 //! through recording hooks by tests/tu_ftkirbyspecialzelda.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialseak::cb_fn_80105FEC;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (round 6): re-exported under this TU.
-pub use crate::chars::r6::ftKirby::ftkirbyspecialzelda::ftKb_ZdSpecialN_Phys;
+
 
 /// `ftZd_MF_SpecialN_Coll` (ftZelda/forward.h): `ftCommon_GroundAirColl_MF | KeepGfx |
 /// KeepColAnimHitStatus | SkipHit`.
@@ -222,5 +225,15 @@ pub fn ftKb_SpecialNSk_80105F3C(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftKb_MS_ZdSpecialN as i32, ftZd_MF_SpecialN_Coll);
         after_swap(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_ZdSpecialN_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialzelda.c).
+pub fn ftKb_ZdSpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_ZdSpecialN_Phys");
+    unsafe {
+        st::ft_80084F3C(gobj);
+        st::ftColl_8007AEF8(gobj);
     }
 }

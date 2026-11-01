@@ -2,12 +2,15 @@
 //! No float math (no fused sites). Smoke-tested by tests/tu_ftdrmarioappeals.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftdrmario::{cb_ftDr_Init_80149540, ftDr_Init_801497CC};
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftDrMario::ftdrmarioappeals::ftDr_AppealS_Phys;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a verified port in melee_fighter, which the unset hook calls.
@@ -111,4 +114,11 @@ pub fn ftDr_AppealS_IASA(gobj: *mut HSD_GObj) {
 pub fn ftDr_AppealS_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftDr_AppealS_Coll");
     ext::ft_80084280(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDr_AppealS_Phys` (src/melee/ft/kinds/ftDrMario/ftdrmarioappeals.c).
+pub fn ftDr_AppealS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_AppealS_Phys");
+    st::ft_80084F3C(gobj);
 }

@@ -3,82 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftseakspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseakspecials::{ftSk_SpecialAirSEnd_Coll, ftSk_SpecialAirSStart_Coll, ftSk_SpecialSStart_Coll, ftSk_SpecialS_80111440, ftSk_SpecialS_801114E4, ftSk_SpecialS_80111D54};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_SpecialSStart_Coll` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_800827A0(gobj) == 0) {
-                crate::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_80111440(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80081D0C(gobj) != 0) {
-                crate::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_801114E4(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialS_80111440` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialS_80111440(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_8007D5D4(&mut *fp);
-            st::Fighter_ChangeMotionState(gobj, 352, 0xC4C5088u32 /* transition_flags */, ((*fp).cur_anim_frame as f32), 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            if (!(*fp).u.sk.x8.is_null()) {
-                (*fp).death2_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-                (*fp).take_dmg_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-            }
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_8011097C);
-            (*fp).pre_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_80110EE8);
-            (*fp).post_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_ChainSomething);
-        }
-    }
-
-    /// `ftSk_SpecialS_801114E4` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialS_801114E4(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 349, 0xC4C5088u32 /* transition_flags */);
-            if (!(*fp).u.sk.x8.is_null()) {
-                (*fp).death2_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-                (*fp).take_dmg_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-            }
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_8011097C);
-            (*fp).pre_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_80110EE8);
-            (*fp).post_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_ChainSomething);
-        }
-    }
-
-    /// `ftSk_SpecialAirSEnd_Coll` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ft_80081D0C(gobj) != 0) {
-                crate::chars::r14::ftSeak::ftseakspecials::ftSk_SpecialS_80111D54(gobj);
-            }
-        }
-    }
-
-    /// `ftSk_SpecialS_80111D54` (src/melee/ft/kinds/ftSeak/ftseakspecials.c).
-    pub fn ftSk_SpecialS_80111D54(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 351, 0xC4C5088u32 /* transition_flags */);
-            if (!(*fp).u.sk.x8.is_null()) {
-                (*fp).death2_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-                (*fp).take_dmg_cb = Some(crate::chars::cb::ftseak__ftSk_Init_80110198);
-            }
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_8011097C);
-            (*fp).pre_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_80110EE8);
-            (*fp).post_hitlag_cb = Some(crate::chars::cb::ftseakspecials__ftSk_SpecialS_ChainSomething);
-        }
-    }
 
 }

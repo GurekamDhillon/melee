@@ -7,24 +7,22 @@
 //! the functions below keep the C signature (a `gobj`) and delegate to them.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da as da_g;
+#[allow(unused_imports)]
+use melee_types::{ftKb_DatAttrs, Vec3};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::chars::ftKirby::ftkirbyspecialyoshi as pure;
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 5): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialyoshi::{
-    ftKb_YsSpecialAirN2_0_Phys, ftKb_YsSpecialAirN2_1_Phys, ftKb_YsSpecialAirNCapture1_Phys,
-    ftKb_YsSpecialAirNCapture2_Phys, ftKb_YsSpecialAirCapture1_Phys, ftKb_YsSpecialAirCapture2_Phys,
-    ftKb_YsSpecialN1_Phys, ftKb_YsSpecialNCapture1_Phys, ftKb_YsSpecialNCapture2_0_Phys,
-    ftKb_YsSpecialNCapture2_1_Phys,
-};
-pub use crate::chars::r3::ftKirby::ftkirbyspecialyoshi::{fn_80109A08, fn_80109B00, fn_80109C74};
-pub use crate::chars::r5::ftKirby::ftkirbyspecialyoshi::{
-    ftKb_YsSpecialAirN2_0_Coll, ftKb_YsSpecialAirN2_1_Coll, ftKb_YsSpecialAirNCapture1_Coll,
-    ftKb_YsSpecialAirNCapture2_Coll, ftKb_YsSpecialAirCapture1_Coll, ftKb_YsSpecialAirCapture2_Coll,
-    ftKb_YsSpecialN1_Coll, ftKb_YsSpecialNCapture1_Coll, ftKb_YsSpecialNCapture2_0_Coll,
-    ftKb_YsSpecialNCapture2_1_Coll,
-};
+
+
+
 
 /// `ftYs_MF_SpecialN_Coll` (ftYoshi/forward.h): `ftCommon_GroundAirColl_MF | KeepGfx | SkipModel`.
 pub const ftYs_MF_SpecialN_Coll: u32 = 0x0C4C5080 | Ft_MF_KeepGfx as u32 | Ft_MF_SkipModel as u32;
@@ -636,4 +634,212 @@ pub fn ftKb_SpecialNYs_8010A8BC(gobj: *mut HSD_GObj) {
             (*fp).target_item_gobj = core::ptr::null_mut();
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_YsSpecialN1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialN1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialN1_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_YsSpecialAirNCapture2_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirNCapture2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture2_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_YsSpecialAirNCapture1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirNCapture1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture1_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_YsSpecialNCapture1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture1_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_YsSpecialAirCapture1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirCapture1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture1_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_YsSpecialAirCapture2_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirCapture2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture2_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_YsSpecialNCapture2_0_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture2_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_0_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_YsSpecialNCapture2_1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture2_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_1_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_YsSpecialAirN2_1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirN2_1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_1_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_YsSpecialAirN2_0_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirN2_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_0_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `fn_80109A08` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn fn_80109A08(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109A08");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 419 /* ftKb_MS_YsSpecialAirNCapture1_0 */, 0xC4C5092u32 /* ftYs_MF_SpecialN_Coll */);
+        (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+    }
+}
+
+/// `fn_80109B00` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn fn_80109B00(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109B00");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 414 /* ftKb_MS_YsSpecialNCapture1_0 */, 0xC4C5092u32 /* ftYs_MF_SpecialN_Coll */);
+        (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+    }
+}
+
+/// `fn_80109C74` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn fn_80109C74(gobj: *mut HSD_GObj) {
+    melee_core::ct!("fn_80109C74");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 417 /* ftKb_MS_YsSpecialNCapture2_1 */, 0xC4C5092u32 /* ftYs_MF_SpecialN_Coll */);
+        (*fp).death2_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE74C);
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftkirby__ftKb_Init_800EE7B8);
+    }
+}
+
+/// `ftKb_YsSpecialN1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialN1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialN1_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_8010984C));
+    }
+}
+
+/// `ftKb_YsSpecialAirNCapture2_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirNCapture2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture2_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_801098EC));
+    }
+}
+
+/// `ftKb_YsSpecialAirNCapture1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirNCapture1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirNCapture1_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_8010998C));
+    }
+}
+
+/// `ftKb_YsSpecialNCapture1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture1_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109A08));
+    }
+}
+
+/// `ftKb_YsSpecialAirCapture2_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirCapture2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture2_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109A84));
+    }
+}
+
+/// `ftKb_YsSpecialAirCapture1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirCapture1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirCapture1_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109B00));
+    }
+}
+
+/// `ftKb_YsSpecialNCapture2_0_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture2_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_0_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109B7C));
+    }
+}
+
+/// `ftKb_YsSpecialNCapture2_1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialNCapture2_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialNCapture2_1_Coll");
+    unsafe {
+        st::ft_8008403C(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109BF8));
+    }
+}
+
+/// `ftKb_YsSpecialAirN2_1_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirN2_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_1_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109C74));
+    }
+}
+
+/// `ftKb_YsSpecialAirN2_0_Coll` (src/melee/ft/kinds/ftKirby/ftkirbyspecialyoshi.c).
+pub fn ftKb_YsSpecialAirN2_0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_YsSpecialAirN2_0_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftkirbyspecialyoshi__fn_80109CF0));
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftKb_SpecialNYs_80109260_fp(fp: &Fighter, vec: &mut Vec3) {
+    melee_core::ct!("ftKb_SpecialNYs_80109260_fp");
+    let a: &ftKb_DatAttrs = da_g(fp);
+    vec.x = -fp.facing_dir * a.specialn_ys_initial_horizontal_momentum;
+    vec.y = a.specialn_ys_initial_vertical_momentum;
+    vec.z = 0.0;
+}
+
+pub fn ftKb_SpecialNYs_80109290_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_80109290_fp");
+    fp.facing_dir
+}
+
+pub fn ftKb_SpecialNYs_8010929C_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_8010929C_fp");
+    da_g::<ftKb_DatAttrs>(fp).specialn_ys_damage_multiplier
+}
+
+pub fn ftKb_SpecialNYs_801092AC_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092AC_fp");
+    da_g::<ftKb_DatAttrs>(fp).specialn_ys_unk
+}
+
+pub fn ftKb_SpecialNYs_801092BC_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092BC_fp");
+    da_g::<ftKb_DatAttrs>(fp).specialn_ys_growth_time
+}
+
+pub fn ftKb_SpecialNYs_801092CC_fp(fp: &Fighter) -> f32 {
+    melee_core::ct!("ftKb_SpecialNYs_801092CC_fp");
+    da_g::<ftKb_DatAttrs>(fp).specialn_ys_base_duration
 }

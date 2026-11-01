@@ -3,96 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftyoshi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftyoshi::ftYs_Init_OnDeath_fp as ftYs_Init_OnDeath;
 
-    /// `ftYs_Init_OnDeath` (src/melee/ft/kinds/ftYoshi/ftyoshi.c).
-    pub fn ftYs_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0, 0);
-            (*fp).u.ys.x2238 = core::mem::zeroed(); /* 0 */
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftyoshispecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftyoshispecialn::{ftYs_SpecialAirN1_0_Coll, ftYs_SpecialAirN1_1_Coll, ftYs_SpecialAirN1_2_Coll, ftYs_SpecialAirN2_0_Coll, ftYs_SpecialAirN2_1_Coll, ftYs_SpecialN1_0_Coll, ftYs_SpecialN1_1_Coll, ftYs_SpecialN1_Coll, ftYs_SpecialN2_0_Coll, ftYs_SpecialN2_1_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftYs_SpecialN1_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialN1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D128));
-        }
-    }
-
-    /// `ftYs_SpecialAirN1_0_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialAirN1_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D1AC));
-        }
-    }
-
-    /// `ftYs_SpecialN1_1_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialN1_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D230));
-        }
-    }
-
-    /// `ftYs_SpecialN1_0_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialN1_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D298));
-        }
-    }
-
-    /// `ftYs_SpecialAirN1_2_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialAirN1_2_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D2F8));
-        }
-    }
-
-    /// `ftYs_SpecialAirN1_1_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialAirN1_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D360));
-        }
-    }
-
-    /// `ftYs_SpecialN2_1_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialN2_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D3C0));
-        }
-    }
-
-    /// `ftYs_SpecialN2_0_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialN2_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D428));
-        }
-    }
-
-    /// `ftYs_SpecialAirN2_1_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialAirN2_1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D488));
-        }
-    }
-
-    /// `ftYs_SpecialAirN2_0_Coll` (src/melee/ft/kinds/ftYoshi/ftyoshispecialn.c).
-    pub fn ftYs_SpecialAirN2_0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftyoshispecialn__fn_8012D4F0));
-        }
-    }
 
 }

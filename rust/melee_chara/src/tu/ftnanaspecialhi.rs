@@ -4,15 +4,19 @@
 //! Smoke-tested through recording hooks by tests/tu_ftnanaspecialhi.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_runtime::gekko::{cosf, sinf};
 use melee_types::*;
 
 /// Already ported (round 3): re-exported under this TU.
-pub use crate::chars::r3::ftNana::ftnanaspecialhi::{
-    ftNn_Init_80123720, ftNn_Init_8012378C, ftNn_Init_801233F8, ftPp_SpecialHi_1_Coll,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a verified port in melee_fighter, which the unset hook calls.
@@ -249,5 +253,139 @@ pub fn ftNn_Init_801237F8(nana_gobj: *mut HSD_GObj) {
         (*nana_fp).cur_pos.y = fmadds(7.0, scale, (*nana_fp).cur_pos.y);
         st::Fighter_ChangeMotionState(nana_gobj, 365, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         (*nana_fp).accessory4_cb = Some(crate::chars::cb::ftnanaspecialhi__fn_80123218);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftNn_Init_801233F8` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftNn_Init_801233F8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_801233F8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 361 /* 0x169 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftnanaspecialhi__fn_80123218);
+    }
+}
+
+/// `ftPp_SpecialHi_1_Coll` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_Coll");
+    unsafe {
+        if st::ft_800827A0(gobj) == 0 {
+            crate::chars::r3::ftNana::ftnanaspecialhi::ftNn_Init_80123720(gobj);
+        }
+    }
+}
+
+/// `ftNn_Init_80123720` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftNn_Init_80123720(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_80123720");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_8007D60C(&mut *fp);
+        st::Fighter_ChangeMotionState(gobj, 365, 0xC4C508Au32 /* 0x0C4C508A */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftnanaspecialhi__fn_80123218);
+    }
+}
+
+/// `ftNn_Init_8012378C` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftNn_Init_8012378C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_8012378C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 362, 0xC4C508Au32 /* ftPp_MF_SpecialHi_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftnanaspecialhi__fn_80123218);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialHi_3_Anim_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_3_Anim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_3_Anim_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_0_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_0_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_0_IASA_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_3_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_3_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_3_IASA_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_3_Phys_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_3_Phys_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_3_Phys_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_0_Coll_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_0_Coll_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_0_Coll_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_3_Coll_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_3_Coll_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_3_Coll_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_1_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_1_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_IASA_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialHi_4_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_4_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_4_IASA_fp");
+    unsafe {
+        return;
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialHi_1_Anim_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_1_Anim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_Anim_fp");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftPp_SpecialHi_1_Phys_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_1_Phys_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_1_Phys_fp");
+    st::ft_80084F3C(gobj);
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialHi_4_Anim_fp` (src/melee/ft/kinds/ftNana/ftnanaspecialhi.c).
+pub fn ftPp_SpecialHi_4_Anim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialHi_4_Anim_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ftCo_80096900(gobj, 0, 1, 0, ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x130 as f32), ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x134 as f32));
+        }
     }
 }

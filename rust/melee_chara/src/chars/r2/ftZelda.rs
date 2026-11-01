@@ -4,83 +4,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftzeldaspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspecialhi::{ftZd_SpecialHiStart_0_Phys, ftZd_SpecialHi_8013A648, ftZd_SpecialHi_Anim, ftZd_SpecialHi_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialHiStart_0_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHiStart_0_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftZd_SpecialHi_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftZd_SpecialHi_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftZd_SpecialHi_8013A648` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHi_8013A648(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_8007D60C(fp);
-        st::Fighter_ChangeMotionState(gobj, 354, 0xC4C508Au32 /* transition_flags0 */, fp.cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-    }
 
 }
 
 pub mod ftzeldaspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspeciallw::{ftZd_SpecialAirLw2_Anim, ftZd_SpecialLw2_Anim, ftZd_SpecialLw2_Phys, ftZd_SpecialLw_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialLw_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftZd_SpecialLw2_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialLw2_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftZd_SpecialAirLw2_Anim` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialAirLw2_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftZd_SpecialLw2_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialLw2_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }
 
 pub mod ftzeldaspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspecials::{ftZd_SpecialSEnd_Phys, ftZd_SpecialSLoop_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialSLoop_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialSLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftZd_SpecialSEnd_Phys` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialSEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }

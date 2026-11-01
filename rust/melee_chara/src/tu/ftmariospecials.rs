@@ -4,6 +4,12 @@
 //! coords.x)`. Smoke-tested through recording hooks by tests/tu_ftmariospecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftMr_MS_SpecialAirS, ftMr_MS_SpecialS};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_fighter::ftcommon as fc;
@@ -11,7 +17,7 @@ use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (round 2 and the pure helper): re-exported under this TU.
-pub use crate::chars::r2::ftMario::ftmariospecials::{ftMr_SpecialAirS_Anim, ftMr_SpecialS_Anim};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -340,4 +346,28 @@ pub fn ftMr_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
         st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, ftMr_MS_SpecialS as i32, transition_flags);
         collUpdateVars(gobj);
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMr_SpecialS_Anim` (src/melee/ft/kinds/ftMario/ftmariospecials.c).
+pub fn ftMr_SpecialS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftMr_SpecialAirS_Anim` (src/melee/ft/kinds/ftMario/ftmariospecials.c).
+pub fn ftMr_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirS_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftMr_SpecialS_CheckItemCapeRemove_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("ftMr_SpecialS_CheckItemCapeRemove_fp");
+    let msid = fp.motion_id as i32;
+    !(msid >= ftMr_MS_SpecialS as i32 && msid <= ftMr_MS_SpecialAirS as i32)
 }

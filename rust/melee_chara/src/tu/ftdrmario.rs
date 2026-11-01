@@ -8,13 +8,16 @@
 //! `ftDr_CostumeList` is an uninitialised 5-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftDrMario::ftdrmario::{
-    ftDr_Init_OnDeath, ftDr_Init_OnKnockbackEnter, ftDr_Init_OnKnockbackExit,
-};
-pub use crate::chars::r6::ftDrMario::ftdrmario::{ftDr_Init_OnItemInvisible, ftDr_Init_OnItemVisible};
+
+
 
 pub const ftDr_Init_DatFilename: &str = "PlDr.dat";
 pub const ftDr_Init_DataName: &str = "ftDataDrmario";
@@ -223,3 +226,49 @@ pub fn ftDr_Init_80149910(gobj: *mut HSD_GObj) {
 
 /// `ftDr_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftDr_CostumeList[5]`), filled when the costumes load.
 pub static mut ftDr_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDr_Init_OnDeath` (src/melee/ft/kinds/ftDrMario/ftdrmario.c).
+pub fn ftDr_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.mr.x2234_tornadoCharge = 0_i32;
+        (*fp).u.mr.x2238_isCapeBoost = (0_i32 /* false */);
+        (*fp).u.mr.x223C_capeGObj = core::mem::zeroed(); /* NULL */
+        (*fp).u.mr.x2240 = core::mem::zeroed(); /* 0 */
+    }
+}
+
+/// `ftDr_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftDrMario/ftdrmario.c).
+pub fn ftDr_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftDr_Init_OnKnockbackExit` (src/melee/ft/kinds/ftDrMario/ftdrmario.c).
+pub fn ftDr_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftDr_Init_OnItemInvisible` (src/melee/ft/kinds/ftDrMario/ftdrmario.c).
+pub fn ftDr_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1);
+    }
+}
+
+/// `ftDr_Init_OnItemVisible` (src/melee/ft/kinds/ftDrMario/ftdrmario.c).
+pub fn ftDr_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDr_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1);
+    }
+}

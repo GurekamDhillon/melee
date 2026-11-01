@@ -7,12 +7,15 @@
 //! motion-state dispatcher and is TODO. `ftPr_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftclink::Fighter_OnItemDrop;
 use melee_types::*;
 
 /// Already ported (round 5): re-exported under this TU.
-pub use crate::chars::r5::ftPurin::ftpurin::{ftPr_Init_OnDeath, ftPr_Init_OnKnockbackEnter, ftPr_Init_OnKnockbackExit};
+
 
 pub const ftPr_Init_DatFilename: &str = "PlPr.dat";
 pub const ftPr_Init_DataName: &str = "ftDataPurin";
@@ -399,3 +402,28 @@ pub fn ftPr_Init_8013C94C(gobj: G) {
 
 /// `ftPr_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftPr_CostumeList[5]`), filled when the costumes load.
 pub static mut ftPr_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPr_Init_OnDeath` (src/melee/ft/kinds/ftPurin/ftpurin.c).
+pub fn ftPr_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_Init_OnDeath");
+    unsafe {
+        st::ftParts_80074A4C(gobj, 0, 0);
+    }
+}
+
+/// `ftPr_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPurin/ftpurin.c).
+pub fn ftPr_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftPr_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPurin/ftpurin.c).
+pub fn ftPr_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}

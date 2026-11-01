@@ -5,12 +5,15 @@
 //! Smoke-tested by tests/tu_ftmasterhandentry.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use core::f64::consts::PI as M_PI;
 use melee_types::*;
 
 /// Already ported (round 8): re-exported under this TU.
-pub use crate::chars::r8::ftMasterHand::ftmasterhandentry::ftMh_Entry_IASA;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -165,6 +168,18 @@ pub unsafe extern "C" fn ftMh_MS_343_801511FC(gobj: *mut HSD_GObj) {
                 }
             }
             _ => {}
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_Entry_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandentry.c).
+pub fn ftMh_Entry_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Entry_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
         }
     }
 }

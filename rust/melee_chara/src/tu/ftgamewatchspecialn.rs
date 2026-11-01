@@ -2,13 +2,16 @@
 //! No fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftgamewatchspecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::ext as gw_ext;
 use melee_types::*;
 
 /// Already ported (rounds 2/4): re-exported under this TU.
-pub use crate::chars::r2::ftGameWatch::ftgamewatchspecialn::{ftGw_SpecialAirN_Phys, ftGw_SpecialN_Phys};
-pub use crate::chars::r4::ftGameWatch::ftgamewatchspecialn::ftGameWatch_SpecialN_SetVars;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -276,5 +279,32 @@ pub fn ftGw_SpecialAirN_Loop(gobj: *mut HSD_GObj, anim_frame: f32) {
         (*fp).cmd_vars[2] = 0;
         (*fp).mv.gw.SpecialN.isChefLoopDisable = 0;
         (*fp).accessory4_cb = Some(cb_ftGw_SpecialN_CreateSausage);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftGw_SpecialN_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c).
+pub fn ftGw_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftGw_SpecialAirN_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c).
+pub fn ftGw_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_SpecialAirN_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftGameWatch_SpecialN_SetVars` (static) (src/melee/ft/kinds/ftGameWatch/ftgamewatchspecialn.c).
+pub fn ftGameWatch_SpecialN_SetVars(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGameWatch_SpecialN_SetVars");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[2] = 0_u32;
+        (*fp).mv.gw.SpecialN.isChefLoopDisable = (0_i32 /* false */);
+        (*fp).mv.gw.SpecialN.maxSausage = 0_i32;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchspecialn__ftGw_SpecialN_CreateSausage);
     }
 }

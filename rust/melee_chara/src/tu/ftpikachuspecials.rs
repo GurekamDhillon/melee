@@ -8,6 +8,14 @@
 //! by tests/tu_ftpikachuspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da as da_g;
+#[allow(unused_imports)]
+use melee_types::{ftPikachuAttributes};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftpeachspecials::cb_ftCommon_8007F76C;
 use crate::tu::ftpikachuspecialn::{
@@ -18,17 +26,8 @@ use melee_fighter::ftcommon as co;
 use melee_types::*;
 
 /// Already ported (rounds 2/3 and the original pass): re-exported under this TU.
-pub use crate::chars::r2::ftPikachu::ftpikachuspecials::{
-    ftPk_SpecialAirS0_Phys, ftPk_SpecialAirSEnd_Anim, ftPk_SpecialAirSHold_Phys,
-    ftPk_SpecialS0_Phys, ftPk_SpecialSEnd_Anim, ftPk_SpecialSEnd_Coll, ftPk_SpecialSHold_Phys,
-    ftPk_SpecialS_ChangeMotion_Unk00, ftPk_SpecialS_ChangeMotion_Unk01,
-    ftPk_SpecialS_ChangeMotion_Unk02, ftPk_SpecialS_ChangeMotion_Unk03,
-    ftPk_SpecialS_ChangeMotion_Unk06, ftPk_SpecialS_ChangeMotion_Unk07,
-};
-pub use crate::chars::r3::ftPikachu::ftpikachuspecials::{
-    ftPk_SpecialAirS0_Coll, ftPk_SpecialAirSHold_Coll, ftPk_SpecialAirSStart_Coll,
-    ftPk_SpecialS0_Coll, ftPk_SpecialSHold_Coll, ftPk_SpecialSStart_Coll,
-};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -370,4 +369,183 @@ pub fn ftPk_SpecialS_ChangeMotion_Unk12(gobj: G) {
         (*fp).self_vel.x /= (*sa).x50;
         st::Fighter_ChangeMotionState(gobj, 351, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPk_SpecialS_ChangeMotion_Unk00` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk00(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk00");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 348, 0xC4C5284u32 /* transition_flags0 */);
+}
+
+/// `ftPk_SpecialS_ChangeMotion_Unk01` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk01(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk01");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 343, 0xC4C5284u32 /* transition_flags0 */);
+}
+
+/// `ftPk_SpecialSHold_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialSHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialSHold_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPk_SpecialAirSHold_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirSHold_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirSHold_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftPk_SpecialS_ChangeMotion_Unk02` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk02(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk02");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 349, 0xC4C5286u32 /* transition_flags1 */);
+}
+
+/// `ftPk_SpecialS_ChangeMotion_Unk03` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk03(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk03");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 344, 0xC4C5286u32 /* transition_flags1 */);
+}
+
+/// `ftPk_SpecialS0_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS0_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPk_SpecialAirS0_Phys` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirS0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirS0_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftPk_SpecialS_ChangeMotion_Unk06` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk06(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk06");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_GroundToAirStateChange(gobj, fp, 352, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftPk_SpecialS_ChangeMotion_Unk07` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS_ChangeMotion_Unk07(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS_ChangeMotion_Unk07");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 347, 0xC4C5086u32 /* transition_flags2 */);
+}
+
+/// `ftPk_SpecialSEnd_Anim` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialSEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftPk_SpecialAirSEnd_Anim` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirSEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftPk_SpecialSEnd_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialSEnd_Coll");
+    if st::ft_80082708(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftPk_SpecialSStart_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialSStart_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk00(gobj);
+        }
+    }
+}
+
+/// `ftPk_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirSStart_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk01(gobj);
+        }
+    }
+}
+
+/// `ftPk_SpecialSHold_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialSHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialSHold_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk02(gobj);
+        }
+    }
+}
+
+/// `ftPk_SpecialAirSHold_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirSHold_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirSHold_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk03(gobj);
+        }
+    }
+}
+
+/// `ftPk_SpecialS0_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialS0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialS0_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk06(gobj);
+        }
+    }
+}
+
+/// `ftPk_SpecialAirS0_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
+pub fn ftPk_SpecialAirS0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPk_SpecialAirS0_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk07(gobj);
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftPk_SpecialAirS1_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPk_SpecialAirS1_Phys_fp");
+    let a: &ftPikachuAttributes = da_g(fp);
+    if fp.cmd_vars[0] != 0 {
+        co::fall(fp, a.x58, a.x4C);
+    } else {
+        co::fall(fp, a.x48, a.x4C);
+    }
+    if fp.cmd_vars[0] != 0 {
+        co::calc_self_accel_deaccel(fp, a.x54);
+    }
+}
+
+pub fn ftPk_SpecialAirSEnd_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPk_SpecialAirSEnd_Phys_fp");
+    let sa: &ftPikachuAttributes = da_g(fp);
+    co::fall(fp, sa.x58, fp.co_attrs.terminal_velocity);
+    co::calc_self_accel_deaccel(fp, sa.x54);
+}
+
+pub fn ftPk_SpecialSEnd_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftPk_SpecialSEnd_Phys_fp");
+    let sa: &ftPikachuAttributes = da_g(fp);
+    co::calc_ground_accel_deaccel(fp, sa.x54);
+    co::set_self_movement_from_grounded_movement(fp);
 }

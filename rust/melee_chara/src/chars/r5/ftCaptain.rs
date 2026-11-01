@@ -3,70 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcaptain {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcaptain::{ftCa_Init_OnDeath};
 
-    /// `ftCa_Init_OnDeath` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
-    pub fn ftCa_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0, 0);
-            (*fp).u.ca.during_specials = 0_u32;
-            (*fp).u.ca.during_specials_start = (0_u32 /* false */);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcaptainspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcaptainspecialhi::{ftCa_SpecialHiThrow0_Coll};
 
-    /// `ftCa_SpecialHiThrow0_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
-    pub fn ftCa_SpecialHiThrow0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) != 0) {
-                st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, (*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_landing_lag);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcaptainspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcaptainspeciallw::{ftCa_SpecialAirLwEnd_Coll, ftCa_SpecialLwEndAir_Anim, ftCa_SpecialLwEnd_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCa_SpecialLwEnd_Anim` (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
-    pub fn ftCa_SpecialLwEnd_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCommon_8007D92C(gobj);
-            }
-        }
-    }
-
-    /// `ftCa_SpecialLwEndAir_Anim` (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
-    pub fn ftCa_SpecialLwEndAir_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCommon_8007D92C(gobj);
-            }
-        }
-    }
-
-    /// `ftCa_SpecialAirLwEnd_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspeciallw.c).
-    pub fn ftCa_SpecialAirLwEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084104(gobj);
-        }
-    }
 
 }

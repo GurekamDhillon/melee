@@ -3,46 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfox {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftfox::{ftFx_Init_OnDeath};
 
-    /// `ftFx_Init_OnDeath` (src/melee/ft/kinds/ftFox/ftfox.c).
-    pub fn ftFx_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* 0 */
-            st::ftParts_80074A4C(gobj, 0, 0);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftfoxspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspeciallw::{ftFx_SpecialAirLwEnd_Anim, ftFx_SpecialLwEnd_Anim};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialLwEnd_Anim` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialLwEnd_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCommon_8007DB24(gobj);
-                st::ftCommon_8007D92C(gobj);
-            }
-        }
-    }
-
-    /// `ftFx_SpecialAirLwEnd_Anim` (src/melee/ft/kinds/ftFox/ftfoxspeciallw.c).
-    pub fn ftFx_SpecialAirLwEnd_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCommon_8007DB24(gobj);
-                st::ftCommon_8007D92C(gobj);
-            }
-        }
-    }
 
 }

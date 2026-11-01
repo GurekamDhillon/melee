@@ -4,15 +4,16 @@
 //! `x < 0 ? -x : x` (keeps -0.0). Smoke-tested by tests/tu_ftkirbyspeciallw.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_runtime::cabi::srem;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspeciallw::{
-    ftKb_SpecialAirLwEnd_Phys, ftKb_SpecialAirLwStart_Phys, ftKb_SpecialLw1_Phys, ftKb_SpecialLwEnd_Phys,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -728,4 +729,29 @@ pub fn ftKb_SpecialAirLw_800F5318(gobj: G) {
         ext::ftPartSetRotX(fp, 0, 0.0);
         ext::efLib_DestroyAll(gobj);
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_SpecialLw1_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallw.c).
+pub fn ftKb_SpecialLw1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialLw1_Phys");
+    st::ft_80084FA8(gobj);
+}
+
+/// `ftKb_SpecialLwEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallw.c).
+pub fn ftKb_SpecialLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialLwEnd_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftKb_SpecialAirLwStart_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallw.c).
+pub fn ftKb_SpecialAirLwStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirLwStart_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftKb_SpecialAirLwEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspeciallw.c).
+pub fn ftKb_SpecialAirLwEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_SpecialAirLwEnd_Phys");
+    st::ft_80085134(gobj);
 }

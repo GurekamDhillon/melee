@@ -6,13 +6,16 @@
 //! FingerGun1 Phys velocity is checked bit for bit against the C by tests/tu_ftmasterhandfingergun.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandfingergun::{ftMh_FingerBeamEnd_Phys, ftMh_FingerGun2_Phys, ftMh_MS_365_80153730};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandfingergun::{ftMh_FingerBeamEnd_IASA, ftMh_FingerGun1_IASA, ftMh_FingerGun2_IASA};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -200,5 +203,58 @@ pub fn ftMh_MS_365_8015364C(gobj: *mut HSD_GObj, joint: *mut HSD_JObj, arg2: f32
             b = true;
         }
         ext::it_802F0AE0(gobj, &mut vec0, &mut vec1, It_Kind_MasterHand_Bullet, b as i32, (*fp).facing_dir, (*da).xD4, (*da).xD8);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_FingerBeamEnd_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_FingerBeamEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamEnd_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_FingerGun2_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_FingerGun2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun2_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_365_80153730` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_MS_365_80153730(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_365_80153730");
+    st::Fighter_ChangeMotionState(gobj, 366 /* ftMh_MS_FingerGun3 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftMh_FingerBeamEnd_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_FingerBeamEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamEnd_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_FingerGun1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_FingerGun1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun1_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_FingerGun2_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingergun.c).
+pub fn ftMh_FingerGun2_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerGun2_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

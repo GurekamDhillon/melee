@@ -11,14 +11,17 @@
 //! first laser is not freed (it_802F046C gets a garbage pointer). Tests pin the overlay.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandfingerbeam::{ftMh_FingerBeamLoop_Phys, ftMh_FingerBeamStart_Phys};
-pub use crate::chars::r3::ftMasterHand::ftmasterhandfingerbeam::ftMh_MS_359_80152BCC;
-pub use crate::chars::r4::ftMasterHand::ftmasterhandfingerbeam::{ftMh_FingerBeamStart_Anim, ftMh_MS_361_80152CD8};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandfingerbeam::{ftMh_FingerBeamLoop_IASA, ftMh_FingerBeamStart_IASA};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -108,5 +111,75 @@ pub fn ftMh_MS_362_80152F80(gobj: *mut HSD_GObj) {
         (*fp).mv.mh.unk0.x28 = -1;
         (*fp).mv.mh.unk0.x2C = -1;
         (*fp).mv.mh.unk0.x30 = -1;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_FingerBeamStart_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_FingerBeamStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamStart_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_FingerBeamLoop_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_FingerBeamLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamLoop_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_359_80152BCC` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_MS_359_80152BCC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_359_80152BCC");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 361 /* ftMh_MS_FingerBeamStart */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.mh.unk0.x28 = -1_i32;
+        (*fp).mv.mh.unk0.x2C = -1_i32;
+        (*fp).mv.mh.unk0.x30 = -1_i32;
+    }
+}
+
+/// `ftMh_FingerBeamStart_Anim` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_FingerBeamStart_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamStart_Anim");
+    unsafe {
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            crate::chars::r4::ftMasterHand::ftmasterhandfingerbeam::ftMh_MS_361_80152CD8(gobj);
+        }
+    }
+}
+
+/// `ftMh_MS_361_80152CD8` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_MS_361_80152CD8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_361_80152CD8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 362 /* ftMh_MS_FingerBeamLoop */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmasterhandfingerbeam__ftMh_MS_362_80152E28);
+        (*fp).cmd_vars[0] = 1_u32;
+    }
+}
+
+/// `ftMh_FingerBeamStart_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_FingerBeamStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamStart_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_FingerBeamLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandfingerbeam.c).
+pub fn ftMh_FingerBeamLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_FingerBeamLoop_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

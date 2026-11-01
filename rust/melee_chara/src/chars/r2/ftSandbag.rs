@@ -4,19 +4,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftsandbag {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsandbag::{ftSb_WaitReverse_Coll, ftSb_WaitReverse_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSb_WaitReverse_Phys` (src/melee/ft/kinds/ftSandbag/ftsandbag.c).
-    pub fn ftSb_WaitReverse_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftSb_WaitReverse_Coll` (src/melee/ft/kinds/ftSandbag/ftsandbag.c).
-    pub fn ftSb_WaitReverse_Coll(gobj: *mut HSD_GObj) {
-        st::ft_80083F88(gobj);
-    }
 
 }

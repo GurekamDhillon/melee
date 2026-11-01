@@ -2,12 +2,15 @@
 //! No fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftdonkeyheavywait1.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use super::ftdonkeyheavyturn::ext as turn_ext;
 use crate::stubs as st;
 use melee_types::*;
 
-pub use crate::chars::r2::ftDonkey::ftdonkeyheavywait1::ftDk_HeavyWait1_Phys;
-pub use crate::chars::r5::ftDonkey::ftdonkeyheavywait1::ftDk_HeavyWait1_Coll;
+
+
 
 pub mod ext {
     use melee_types::*;
@@ -62,5 +65,20 @@ pub fn ftDk_HeavyLanding_Anim(gobj: *mut HSD_GObj) {
             super::ftdonkeyheavywait0::ftDk_MS_341_800DF980(gobj);
         }
         (*fp).mv.dk.unk8.x4 -= 1.0;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_HeavyWait1_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
+pub fn ftDk_HeavyWait1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait1_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_HeavyWait1_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
+pub fn ftDk_HeavyWait1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait1_Coll");
+    unsafe {
+        crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
     }
 }

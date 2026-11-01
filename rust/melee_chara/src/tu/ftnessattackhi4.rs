@@ -9,6 +9,13 @@
 //! Pure parts and the callbacks are checked by tests/tu_ftnessattackhi4.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da;
+#[allow(unused_imports)]
+use melee_types::{ftNessAttributes, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_runtime::lbtrigf::atan2f;
@@ -16,8 +23,8 @@ use melee_runtime::lbvector;
 use melee_types::*;
 
 /// Already ported (rounds 2/4): re-exported under this TU.
-pub use crate::chars::ftNess::ftnessattackhi4::ftNs_AttackHi4_YoyoStartTimedRehit;
-pub use crate::chars::r4::ftNess::ftnessattackhi4::ftNs_AttackHi4_YoyoSetVarAll;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -830,5 +837,31 @@ pub fn ftNs_AttackHi4Release_Enter(gobj: *mut HSD_GObj) {
         melee_fighter::ft0881::ft_80088510(&mut *fp, 210090, SFX_VOLUME_MAX, SFX_PAN_MID);
         ftNs_AttackHi4_YoyoApplyDamage((*fp).smash_attrs.x2118_frames, gobj);
         set_yoyo_callbacks(fp);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `(s32) xB4_YOYO_REHIT_RATE`: C float->int truncation. The shipping build's gwtool makes
+/// fptosi saturating (NaN -> 0), which is Rust's `as i32`.
+pub fn ftNs_AttackHi4_YoyoStartTimedRehit(fp: &mut Fighter) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoStartTimedRehit");
+    let a: &ftNessAttributes = da(fp);
+    unsafe { fp.mv.ns.attackhi4.yoyoRehitTimer = a.xB4_YOYO_REHIT_RATE as i32 };
+}
+
+/// `ftNs_AttackHi4_YoyoSetVarAll` (src/melee/ft/kinds/ftNess/ftnessattackhi4.c).
+pub fn ftNs_AttackHi4_YoyoSetVarAll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_AttackHi4_YoyoSetVarAll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 0_u32;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).mv.ns.attackhi4.yoyoCurrentFrame = 1_i32;
+        (*fp).mv.ns.attackhi4.yoyoRehitTimer = 0_i32;
+        (*fp).mv.ns.attackhi4.isPosUpdateMod = (1_i32 /* true */);
+        (*fp).u.ns.yoyo_hitbox_pos.z = f32::from_bits(0x00000000) /* 0.0f */;
+        (*fp).u.ns.yoyo_hitbox_pos.y = f32::from_bits(0x00000000) /* 0.0f */;
+        (*fp).u.ns.yoyo_hitbox_pos.x = f32::from_bits(0x00000000) /* 0.0f */;
+        (*fp).u.ns.x223C = f32::from_bits(0x00000000) /* 0.0f */;
     }
 }

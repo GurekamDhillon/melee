@@ -3,28 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftzeldaspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspecialhi::{ftZd_SpecialHi_80139FE8, ftZd_SpecialHi_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialHi_80139FE8` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHi_80139FE8(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_8007D7FC(&mut *fp);
-            st::Fighter_ChangeMotionState(gobj, 350, 0xC4C508Eu32 /* transition_flags1 */, (*fp).cur_anim_frame, 0.0_f32, 0.0_f32, core::ptr::null_mut());
-            (*fp).set_invisible(1);
-        }
-    }
-
-    /// `ftZd_SpecialHi_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecialhi.c).
-    pub fn ftZd_SpecialHi_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 {
-                crate::chars::r2::ftZelda::ftzeldaspecialhi::ftZd_SpecialHi_8013A648(gobj);
-            }
-        }
-    }
 
 }

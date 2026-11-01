@@ -3,23 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpichu {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpichu::{ftPc_Init_OnKnockbackEnter, ftPc_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPc_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPichu/ftpichu.c).
-    pub fn ftPc_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1);
-        }
-    }
-
-    /// `ftPc_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPichu/ftpichu.c).
-    pub fn ftPc_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1);
-        }
-    }
 
 }

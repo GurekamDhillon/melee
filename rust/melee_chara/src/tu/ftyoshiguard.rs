@@ -12,6 +12,9 @@
 //! the rest is unverified.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_fighter::tu::ftCo_Guard as g;
@@ -492,5 +495,18 @@ pub fn ftYs_Shield_8012CC1C(gobj: *mut HSD_GObj) -> bool {
             return true;
         }
         false
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftYs_GuardOff_Anim_fp` (src/melee/ft/kinds/ftYoshi/ftyoshiguard.c).
+pub fn ftYs_GuardOff_Anim_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_GuardOff_Anim_fp");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.ys.guard.x0 += f32::from_bits(0x3F800000) /* 1.0F */;
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            st::ft_8008A2BC(gobj);
+        }
     }
 }

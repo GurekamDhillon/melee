@@ -3,16 +3,19 @@
 //! (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftgamewatchattack11.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftGw_MS_Attack100End, ftGw_MS_Attack11, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext, ftGw_Init_8014A538};
 use melee_fighter::tu::ftCo_Attack1 as co;
 use melee_types::*;
 
 /// Already ported (round 1 helpers, rounds 2/ftGameWatch.rs): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchattack11::{
-    ftGw_Attack11_ItemGreenhouse_CheckAll, ftGw_Attack11_ItemGreenhouse_CheckAttack11,
-};
-pub use crate::chars::r2::ftGameWatch::ftgamewatchattack11::{ftGw_Attack11_Anim, ftGw_Attack11_Phys};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -256,4 +259,29 @@ pub fn ftGw_Attack11_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftGw_Attack11_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_Attack11_ItemGreenhouse_CheckAll(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouse_CheckAll");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_Attack11 as u32, ftGw_MS_Attack100End as u32)
+}
+
+pub fn ftGw_Attack11_ItemGreenhouse_CheckAttack11(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_Attack11_ItemGreenhouse_CheckAttack11");
+    fp.motion_id as u32 != ftGw_MS_Attack11 as u32
+}
+
+/// `ftGw_Attack11_Anim` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattack11.c).
+pub fn ftGw_Attack11_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftGw_Attack11_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattack11.c).
+pub fn ftGw_Attack11_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_Attack11_Phys");
+    st::ft_80084FA8(gobj);
 }

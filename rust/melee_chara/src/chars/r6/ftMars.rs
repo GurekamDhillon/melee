@@ -3,23 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmars {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmars::{ftMs_Init_OnItemInvisible, ftMs_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_Init_OnItemInvisible` (src/melee/ft/kinds/ftMars/ftmars.c).
-    pub fn ftMs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 0);
-        }
-    }
-
-    /// `ftMs_Init_OnItemVisible` (src/melee/ft/kinds/ftMars/ftmars.c).
-    pub fn ftMs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 0);
-        }
-    }
 
 }

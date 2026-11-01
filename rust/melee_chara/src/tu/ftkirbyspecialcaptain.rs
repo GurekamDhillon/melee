@@ -4,12 +4,15 @@
 //! gen/turef/tu_ftkirbyspecialcaptain_ref.c); the callbacks are smoke-tested through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter};
 use crate::stubs as st;
 use melee_runtime::gekko::{cosf, sinf};
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialcaptain::{ftKb_CaSpecialAirN_Anim, ftKb_CaSpecialN_Anim};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -223,5 +226,22 @@ pub fn ftKb_CaSpecialAirN_Coll(gobj: *mut HSD_GObj) {
             st::Fighter_ChangeMotionState(gobj, msid as i32, ftKb_Ca_transition_flags, anim_frame, 1.0, 0.0, core::ptr::null_mut());
             set_effect_hitlag_cbs(fp);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_CaSpecialN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialcaptain.c).
+pub fn ftKb_CaSpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftKb_CaSpecialAirN_Anim` (src/melee/ft/kinds/ftKirby/ftkirbyspecialcaptain.c).
+pub fn ftKb_CaSpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_CaSpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
     }
 }

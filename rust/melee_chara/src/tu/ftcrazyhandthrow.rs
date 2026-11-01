@@ -2,12 +2,15 @@
 //! tests/tu_ftcrazyhandthrow.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandthrow::ftCh_Throw_Phys;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandthrow::ftCh_Throw_IASA;
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -64,3 +67,21 @@ pub fn ftCh_Throw_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_Throw_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Throw_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_Throw_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandthrow.c).
+pub fn ftCh_Throw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Throw_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Throw_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandthrow.c).
+pub fn ftCh_Throw_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Throw_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

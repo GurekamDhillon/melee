@@ -7,13 +7,18 @@
 //! (`1.0` is a double literal) rounded once to f32; `MTXDegToRad(a)` is `a * 0.01745329252f`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::Fighter;
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftpeachfloat::{cb_ftCo_80096CC8, ext as fext};
 use melee_types::*;
 
 /// Already ported (round 7 and the chars module): re-exported under this TU.
-pub use crate::chars::ftPeach::ftpeachspecialhi::checkCmdVar2;
-pub use crate::chars::r7::ftPeach::ftpeachspecialhi::{ftPe_SpecialAirHiEnd_Anim, ftPe_SpecialHiEnd_Anim};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -526,4 +531,34 @@ pub fn ftPe_SpecialHiEnd_Coll(gobj: *mut HSD_GObj) {
 pub fn ftPe_SpecialAirHiEnd_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftPe_SpecialAirHiEnd_Coll");
     doColl(gobj, Some(cb_ftPe_SpecialHi_8011E064));
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `checkCmdVar2` (static): clears cmd_vars[2]; always returns false.
+pub fn checkCmdVar2(fp: &mut Fighter) -> bool {
+    melee_core::ct!("checkCmdVar2");
+    if fp.cmd_vars[2] == 0 {
+        return false;
+    }
+    fp.cmd_vars[2] = 0;
+    false
+}
+
+/// `ftPe_SpecialHiEnd_Anim` (src/melee/ft/kinds/ftPeach/ftpeachspecialhi.c).
+pub fn ftPe_SpecialHiEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialHiEnd_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ftCo_80096900(gobj, 0, 1, 0, ((*((*fp).dat_attrs as *const melee_types::ftPe_DatAttrs)).x70 as f32), ((*((*fp).dat_attrs as *const melee_types::ftPe_DatAttrs)).x74 as f32));
+        }
+    }
+}
+
+/// `ftPe_SpecialAirHiEnd_Anim` (src/melee/ft/kinds/ftPeach/ftpeachspecialhi.c).
+pub fn ftPe_SpecialAirHiEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirHiEnd_Anim");
+    unsafe {
+        crate::chars::r7::ftPeach::ftpeachspecialhi::ftPe_SpecialHiEnd_Anim(gobj);
+    }
 }

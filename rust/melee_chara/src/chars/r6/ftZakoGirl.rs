@@ -3,23 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgirl {
-    #[allow(unused_imports)]
+pub use crate::tu::ftgirl::{ftGl_Init_OnItemInvisible, ftGl_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGl_Init_OnItemInvisible` (src/melee/ft/kinds/ftZakoGirl/ftgirl.c).
-    pub fn ftGl_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 0);
-        }
-    }
-
-    /// `ftGl_Init_OnItemVisible` (src/melee/ft/kinds/ftZakoGirl/ftgirl.c).
-    pub fn ftGl_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 0);
-        }
-    }
 
 }

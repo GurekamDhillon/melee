@@ -2,12 +2,15 @@
 //! No fused sites (plain f32 adds and subtracts). Smoke-tested by tests/tu_ftmasterhandsweep.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandsweep::{ftMh_MS_344_80151828, ftMh_MS_347_80151AC8, ftMh_WaitSweep_Phys};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandsweep::{ftMh_Damage_IASA, ftMh_SweepLoop_IASA, ftMh_WaitSweep_IASA};
+
+
 
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
@@ -83,3 +86,57 @@ pub fn ftMh_SweepLoop_Phys(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftMh_SweepLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftMh_SweepLoop_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_MS_344_80151828` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_MS_344_80151828(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_344_80151828");
+    st::Fighter_ChangeMotionState(gobj, 346 /* ftMh_MS_WaitSweep */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftMh_WaitSweep_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_WaitSweep_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WaitSweep_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_347_80151AC8` (static) (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_MS_347_80151AC8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_347_80151AC8");
+    st::Fighter_ChangeMotionState(gobj, 348 /* ftMh_MS_SweepWait */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftMh_Damage_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_Damage_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Damage_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_WaitSweep_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_WaitSweep_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WaitSweep_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_SweepLoop_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandsweep.c).
+pub fn ftMh_SweepLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_SweepLoop_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

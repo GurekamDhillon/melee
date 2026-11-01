@@ -4,17 +4,18 @@
 //! `--x223C < 0` countdown is a float decrement. Smoke-tested by tests/tu_ftmasterhandwait10.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_assignments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/8/10): re-exported under this TU.
-pub use crate::chars::r10::ftMasterHand::ftmasterhandwait10::ifStage251;
-pub use crate::chars::r2::ftMasterHand::ftmasterhandwait10::ftMh_Wait1_0_Phys;
-pub use crate::chars::r4::ftMasterHand::ftmasterhandwait10::{
-    doAnim0, doAnim1, ftMh_MS_341_8014FE5C, ftMh_MS_341_8014FF1C, ftMh_MS_341_8014FFDC,
-};
-pub use crate::chars::r8::ftMasterHand::ftmasterhandwait10::ftMh_Wait1_0_IASA;
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -455,6 +456,150 @@ pub fn ftMh_MS_341_80150894(gobj: *mut HSD_GObj) {
                 }
                 _ => {}
             }
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ifStage251` (static) (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ifStage251(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ifStage251");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).u.mh.x2258 = (341_i32 /* ftMh_MS_Wait1_0 */);
+        (*fp).motion_id = (343_i32 /* ftMh_MS_Entry */);
+        (*fp).cur_pos.x = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.x;
+        (*fp).cur_pos.y = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftMasterHand_SpecialAttrs)).x30_pos2.y;
+        if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+            (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+        } else {
+            (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+        }
+        if (((*fp).u.mh.x2258 as i32) == 389i32 /* ftMh_MS_Wait1_2 */) {
+            st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, ((*fp).cur_anim_frame as f32), 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        }
+        (*fp).u.mh.x2258 = (341_i32 /* ftMh_MS_Wait1_0 */);
+    }
+}
+
+/// `ftMh_Wait1_0_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ftMh_Wait1_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_0_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_341_8014FE5C` (static) (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ftMh_MS_341_8014FE5C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_341_8014FE5C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+            (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+        } else {
+            (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+        }
+        if (((*fp).u.mh.x2258 as i32) == 389i32 /* ftMh_MS_Wait1_2 */) {
+            st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        }
+        (*fp).u.mh.x2258 = (341_i32 /* ftMh_MS_Wait1_0 */);
+    }
+}
+
+/// `ftMh_MS_341_8014FF1C` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ftMh_MS_341_8014FF1C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_341_8014FF1C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+            (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+        } else {
+            (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+        }
+        if (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */) {
+            st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        }
+        (*fp).u.mh.x2258 = (342_i32 /* ftMh_MS_Wait2_0 */);
+    }
+}
+
+/// `ftMh_MS_341_8014FFDC` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ftMh_MS_341_8014FFDC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_341_8014FFDC");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */) {
+            if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+                (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+            } else {
+                (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+            }
+            if (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */) {
+                st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            } else {
+                st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            }
+            (*fp).u.mh.x2258 = (342_i32 /* ftMh_MS_Wait2_0 */);
+        } else {
+            if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+                (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+            } else {
+                (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+            }
+            if (((*fp).u.mh.x2258 as i32) == 389i32 /* ftMh_MS_Wait1_2 */) {
+                st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            } else {
+                st::Fighter_ChangeMotionState(gobj, 341 /* ftMh_MS_Wait1_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+            }
+            (*fp).u.mh.x2258 = (341_i32 /* ftMh_MS_Wait1_0 */);
+        }
+    }
+}
+
+/// `doAnim0` (static) (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn doAnim0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAnim0");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if ((((*fp).motion_id as i32) == 341i32 /* ftMh_MS_Wait1_0 */) || (((*fp).motion_id as i32) == 342i32 /* ftMh_MS_Wait2_0 */)) {
+            (*fp).cur_pos = (*fp).u.mh.x2240_pos;
+        } else {
+            (*fp).u.mh.x2240_pos = (*fp).cur_pos;
+        }
+        if (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */) {
+            st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        } else {
+            st::Fighter_ChangeMotionState(gobj, 342 /* ftMh_MS_Wait2_0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        }
+        (*fp).u.mh.x2258 = (342_i32 /* ftMh_MS_Wait2_0 */);
+    }
+}
+
+/// `doAnim1` (static) (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn doAnim1(gobj: *mut HSD_GObj) {
+    melee_core::ct!("doAnim1");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).u.mh.x2258 as i32) == 390i32 /* ftMh_MS_Wait2_1 */) {
+            crate::chars::r4::ftMasterHand::ftmasterhandwait10::ftMh_MS_341_8014FF1C(gobj);
+        } else {
+            crate::chars::r4::ftMasterHand::ftmasterhandwait10::ftMh_MS_341_8014FE5C(gobj);
+        }
+    }
+}
+
+/// `ftMh_Wait1_0_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandwait10.c).
+pub fn ftMh_Wait1_0_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Wait1_0_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
         }
     }
 }

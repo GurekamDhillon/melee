@@ -4,16 +4,17 @@
 //! 1's MSL port. Smoke-tested by tests/tu_ftlinkspecialn.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftlink::{ftLk_Init_BoomerangExists, Fighter_SetDamageCallback_ftLk_800EAF58};
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftLink::ftlinkspecialn::{
-    ftLk_SpecialAirNEnd_Phys, ftLk_SpecialAirNLoop_Phys, ftLk_SpecialAirNStart_Phys, ftLk_SpecialNEnd_Phys,
-    ftLk_SpecialNLoop_Phys, ftLk_SpecialNStart_Phys,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -546,4 +547,59 @@ pub fn ftLk_SpecialAirNEnd_Coll(gobj: *mut HSD_GObj) {
             st::ftAnim_8006EBA4(gobj);
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLk_SpecialNStart_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNStart_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLk_SpecialNLoop_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLk_SpecialNEnd_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftLk_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNStart_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftLk_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftLk_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftLink/ftlinkspecialn.c).
+pub fn ftLk_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLk_SpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftLk_SpecialN_IsActiveAnd2071b6_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("ftLk_SpecialN_IsActiveAnd2071b6_fp");
+    let m = fp.motion_id as u32;
+    let active = [
+        ftLk_MS_SpecialNStart,
+        ftLk_MS_SpecialNLoop,
+        ftLk_MS_SpecialNEnd,
+        ftLk_MS_SpecialAirNStart,
+        ftLk_MS_SpecialAirNLoop,
+        ftLk_MS_SpecialAirNEnd,
+    ];
+    if active.iter().any(|&s| s as u32 == m) && unsafe { fp.x2070.anon_0.x2071_b6() } == 0 {
+        return false;
+    }
+    true
 }

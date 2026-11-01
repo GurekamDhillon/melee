@@ -3,13 +3,16 @@
 //! attributes as floats. Smoke-tested by tests/tu_ftmasterhandpapercrush.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhandpapercrush::ftMh_RockCrushDown_Phys;
-pub use crate::chars::r3::ftMasterHand::ftmasterhandpapercrush::ftMh_MS_357_801526D8;
-pub use crate::chars::r8::ftMasterHand::ftmasterhandpapercrush::{ftMh_PaperCrush_IASA, ftMh_RockCrushDown_IASA};
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -47,5 +50,45 @@ pub fn ftMh_PaperCrush_Phys(gobj: *mut HSD_GObj) {
             (*fp).self_vel.x = 0.0;
         }
         ext::ftBossLib_8015C190(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_RockCrushDown_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
+pub fn ftMh_RockCrushDown_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushDown_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_357_801526D8` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
+pub fn ftMh_MS_357_801526D8(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_357_801526D8");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 358 /* ftMh_MS_PaperCrush */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.mh.unk0.x0 = f32::from_bits(0x00000000) /* 0 */;
+    }
+}
+
+/// `ftMh_RockCrushDown_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
+pub fn ftMh_RockCrushDown_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_RockCrushDown_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_PaperCrush_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpapercrush.c).
+pub fn ftMh_PaperCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_PaperCrush_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

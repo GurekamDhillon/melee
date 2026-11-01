@@ -3,124 +3,45 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmewtwo {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwo::{ftMt_Init_OnItemInvisible, ftMt_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_Init_OnItemInvisible` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
-    pub fn ftMt_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_Init_OnItemVisible` (src/melee/ft/kinds/ftMewtwo/ftmewtwo.c).
-    pub fn ftMt_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftmewtwospeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospeciallw::{ftMt_SpecialAirLw_IASA, ftMt_SpecialLw_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialLw_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
-    pub fn ftMt_SpecialLw_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialAirLw_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospeciallw.c).
-    pub fn ftMt_SpecialAirLw_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftmewtwospecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospecialn::{ftMt_SpecialAirNCancel_IASA, ftMt_SpecialAirNEnd_IASA, ftMt_SpecialAirNStart_IASA, ftMt_SpecialNCancel_IASA, ftMt_SpecialNEnd_IASA, ftMt_SpecialNStart_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialNStart_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialNCancel_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNCancel_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialNEnd_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialNEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialAirNStart_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNStart_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialAirNCancel_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNCancel_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialAirNEnd_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecialn.c).
-    pub fn ftMt_SpecialAirNEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftmewtwospecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmewtwospecials::{ftMt_SpecialAirS_IASA, ftMt_SpecialS_IASA, ftMt_SpecialS_OnReflect};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMt_SpecialS_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
-    pub fn ftMt_SpecialS_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialAirS_IASA` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
-    pub fn ftMt_SpecialAirS_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftMt_SpecialS_OnReflect` (src/melee/ft/kinds/ftMewtwo/ftmewtwospecials.c).
-    pub fn ftMt_SpecialS_OnReflect(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }

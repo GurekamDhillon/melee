@@ -3,11 +3,14 @@
 //! `ScriptGame_HitRuleSpecial` call. Smoke-tested by tests/tu_ftpurinspecialhi.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftPurin::ftpurinspecialhi::{ftPr_SpecialAirHi_Phys, ftPr_SpecialHi_Phys};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -204,4 +207,17 @@ pub fn ftPr_SpecialHi_8013CE7C(fighter_gobj: G) {
         let fighter = fpp(fighter_gobj);
         (*fighter).accessory4_cb = None;
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftPr_SpecialHi_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
+pub fn ftPr_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_SpecialHi_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftPr_SpecialAirHi_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
+pub fn ftPr_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPr_SpecialAirHi_Phys");
+    st::ft_80084EEC(gobj);
 }

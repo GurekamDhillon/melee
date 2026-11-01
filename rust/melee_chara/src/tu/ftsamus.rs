@@ -1,6 +1,12 @@
 //! src/melee/ft/kinds/ftSamus/ftsamus.c: the take-damage / death callback `ftSs_Init_80128428`.
 #![allow(non_snake_case, unused_unsafe)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
+#[allow(unused_imports)]
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 use melee_types::*;
@@ -79,6 +85,7 @@ pub mod extg {
 
 /// `ftSs_Init_OnLoad`
 pub unsafe extern "C" fn ftSs_Init_OnLoad(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_OnLoad");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut item_list: *mut *mut c_void = (*(*fp).ft_data).x48_items;
     (*fp).set_can_walljump((1 as u8) as u8);
@@ -98,6 +105,7 @@ pub unsafe extern "C" fn ftSs_Init_OnLoad(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_Init_OnItemPickup`
 pub unsafe extern "C" fn ftSs_Init_OnItemPickup(mut gobj: *mut HSD_GObj, mut flag: i32) {
+    melee_core::ct!("ftSs_Init_OnItemPickup");
     Fighter_OnItemPickup(gobj, flag, 0, 0);
 }
 
@@ -107,11 +115,13 @@ pub unsafe extern "C" fn ftSs_Init_OnItemPickup(mut gobj: *mut HSD_GObj, mut fla
 
 /// `ftSs_Init_OnItemDrop`
 pub unsafe extern "C" fn ftSs_Init_OnItemDrop(mut gobj: *mut HSD_GObj, mut bool1: i32) {
+    melee_core::ct!("ftSs_Init_OnItemDrop");
     Fighter_OnItemDrop(gobj, bool1, 0, 0);
 }
 
 /// `ftSs_Init_UnkMotionStates4`
 pub unsafe extern "C" fn ftSs_Init_UnkMotionStates4(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_UnkMotionStates4");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut da: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut samus_x2230: i32 = (*fp).u.ss.x2230;
@@ -122,6 +132,7 @@ pub unsafe extern "C" fn ftSs_Init_UnkMotionStates4(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_Init_LoadSpecialAttrs`
 pub unsafe extern "C" fn ftSs_Init_LoadSpecialAttrs(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_LoadSpecialAttrs");
     // COPY_ATTRS(gobj, ftSs_DatAttrs) (ft/inlines.h)
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut sA2: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
@@ -147,6 +158,7 @@ pub unsafe extern "C" fn ftSs_Init_LoadSpecialAttrs(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_Init_80128770`
 pub unsafe extern "C" fn ftSs_Init_80128770(mut gobj: *mut HSD_AObj, mut rate: f32) {
+    melee_core::ct!("ftSs_Init_80128770");
     if (!gobj.is_null()) && (!((extg::HSD_AObjGetFlags(gobj) & ((1 << 29) as u32)) != 0)) {
         extg::HSD_AObjSetRate(gobj, rate);
     }
@@ -154,6 +166,7 @@ pub unsafe extern "C" fn ftSs_Init_80128770(mut gobj: *mut HSD_AObj, mut rate: f
 
 /// `ftSs_Init_CreateThrowGrappleBeam`
 pub unsafe extern "C" fn ftSs_Init_CreateThrowGrappleBeam(mut gobj: *mut HSD_GObj, mut motion_state: i32, mut anim_speed: f32) {
+    melee_core::ct!("ftSs_Init_CreateThrowGrappleBeam");
     let mut fighter_copy: *mut Fighter = null_mut();
     let mut scale: Vec3 = unsafe { core::mem::zeroed() };
     let mut fp: *mut Fighter = getFighter(gobj);
@@ -172,11 +185,13 @@ pub unsafe extern "C" fn ftSs_Init_CreateThrowGrappleBeam(mut gobj: *mut HSD_GOb
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `Fighter_OnItemPickup`
 pub unsafe extern "C" fn Fighter_OnItemPickup(mut gobj: *mut HSD_GObj, mut catchItemFlag: i32, mut bool2: i32, mut bool3: i32) {
+    melee_core::ct!("Fighter_OnItemPickup");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     if !(extg::itIsHeavy((*fp).item_gobj) != 0) {
         's4: {
@@ -205,6 +220,7 @@ pub unsafe extern "C" fn Fighter_OnItemPickup(mut gobj: *mut HSD_GObj, mut catch
 
 /// `Fighter_OnItemInvisible`
 pub unsafe extern "C" fn Fighter_OnItemInvisible(mut gobj: *mut HSD_GObj, mut flag: i32) {
+    melee_core::ct!("Fighter_OnItemInvisible");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     if !(extg::itIsHeavy((*fp).item_gobj) != 0) {
         extg::ftAnim_80070CC4(gobj, flag);
@@ -213,6 +229,7 @@ pub unsafe extern "C" fn Fighter_OnItemInvisible(mut gobj: *mut HSD_GObj, mut fl
 
 /// `Fighter_OnItemVisible`
 pub unsafe extern "C" fn Fighter_OnItemVisible(mut gobj: *mut HSD_GObj, mut flag: i32) {
+    melee_core::ct!("Fighter_OnItemVisible");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     if !(extg::itIsHeavy((*fp).item_gobj) != 0) {
         extg::ftAnim_80070C48(gobj, flag);
@@ -221,6 +238,7 @@ pub unsafe extern "C" fn Fighter_OnItemVisible(mut gobj: *mut HSD_GObj, mut flag
 
 /// `Fighter_OnItemDrop`
 pub unsafe extern "C" fn Fighter_OnItemDrop(mut gobj: *mut HSD_GObj, mut dropItemFlag: i32, mut bool2: i32, mut bool3: i32) {
+    melee_core::ct!("Fighter_OnItemDrop");
     extg::ftAnim_80070FB4(gobj, bool2, (-1_i32));
     if dropItemFlag != 0 {
         extg::ftAnim_80070CC4(gobj, bool3);
@@ -229,11 +247,13 @@ pub unsafe extern "C" fn Fighter_OnItemDrop(mut gobj: *mut HSD_GObj, mut dropIte
 
 /// `getFighter`
 pub unsafe extern "C" fn getFighter(mut gobj: *mut HSD_GObj) -> *mut Fighter {
+    melee_core::ct!("getFighter");
     return (*gobj).user_data as *mut Fighter;
 }
 
 /// `HSD_JObjSetScale`
 pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *mut Vec) {
+    melee_core::ct!("HSD_JObjSetScale");
     if !jobj.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     if !scale.is_null() { (); } else { panic!("HSD_JObjSetScale: assertion failed"); }
     (*jobj).scale = *scale;
@@ -248,6 +268,7 @@ pub unsafe extern "C" fn HSD_JObjSetScale(mut jobj: *mut HSD_JObj, mut scale: *m
 
 /// `HSD_JObjMtxIsDirty`
 pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
+    melee_core::ct!("HSD_JObjMtxIsDirty");
     let mut result: i32 = 0;
     if !jobj.is_null() { (); } else { panic!("HSD_JObjMtxIsDirty: assertion failed"); }
     result = 0;
@@ -277,6 +298,35 @@ pub const ftSs_Init_CostumeStrings: [[&str; 2]; 5] = [
 ];
 
 /// Oracle-checked hand ports (rounds 2-12, tests/chars_dispatch.rs), re-exported under this TU.
-pub use crate::chars::r5::ftSamus::ftsamus::ftSs_Init_OnDeath;
-pub use crate::chars::r6::ftSamus::ftsamus::ftSs_Init_OnItemInvisible;
-pub use crate::chars::r6::ftSamus::ftsamus::ftSs_Init_OnItemVisible;
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftSs_Init_OnDeath` (src/melee/ft/kinds/ftSamus/ftsamus.c).
+pub fn ftSs_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).u.ss.x222C = core::mem::zeroed(); /* 0 */
+        (*fp).u.ss.x2230 = 0_i32;
+        (*fp).u.ss.x2238 = 0_u32;
+        (*fp).u.ss.x2244 = 0_u32;
+        (*fp).u.ss.x223C = core::mem::zeroed(); /* 0 */
+        (*fp).u.ss.x2240 = 0_u8;
+    }
+}
+
+/// `ftSs_Init_OnItemInvisible` (src/melee/ft/kinds/ftSamus/ftsamus.c).
+pub fn ftSs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftSs_Init_OnItemVisible` (src/melee/ft/kinds/ftSamus/ftsamus.c).
+pub fn ftSs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

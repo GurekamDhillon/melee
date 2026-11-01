@@ -3,16 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftgirl {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftgirl::{ftGl_Init_OnDeath};
 
-    /// `ftGl_Init_OnDeath` (src/melee/ft/kinds/ftZakoGirl/ftgirl.c).
-    pub fn ftGl_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftParts_80074A4C(gobj, 0, 0);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -3,137 +3,89 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftdonkey {
-    #[allow(unused_imports)]
+pub use crate::tu::ftdonkey::{ftDk_Init_OnDeath, ftDk_Init_OnKnockbackEnter, ftDk_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftDk_Init_OnDeath` (src/melee/ft/kinds/ftDonkey/ftdonkey.c).
-    pub fn ftDk_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).u.dk.x222C = 0_i32;
-            st::ftParts_80074A4C(gobj, 0, 0);
-        }
-    }
-
-    /// `ftDk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftDonkey/ftdonkey.c).
-    pub fn ftDk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftDk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftDonkey/ftdonkey.c).
-    pub fn ftDk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
-        }
-    }
 
 }
 
 pub mod ftdonkeyheavyfall {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavyfall::{ftDk_HeavyFall_Coll};
 
-    /// `ftDk_HeavyFall_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyfall.c).
-    pub fn ftDk_HeavyFall_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftdonkeyheavywait1__ftDk_MS_346_800E05E4));
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavyjump {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavyjump::{ftDk_HeavyJump_Coll};
 
-    /// `ftDk_HeavyJump_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyjump.c).
-    pub fn ftDk_HeavyJump_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r5::ftDonkey::ftdonkeyheavyfall::ftDk_HeavyFall_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavylanding {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavylanding::{ftDk_HeavyLanding_Coll};
 
-    /// `ftDk_HeavyLanding_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
-    pub fn ftDk_HeavyLanding_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavyturn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavyturn::{ftDk_HeavyTurn_Coll};
 
-    /// `ftDk_HeavyTurn_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
-    pub fn ftDk_HeavyTurn_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavywait0 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavywait0::{ftDk_HeavyWait0_Coll};
 
-    /// `ftDk_HeavyWait0_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait0.c).
-    pub fn ftDk_HeavyWait0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftdonkeyheavyturn__ftDk_MS_345_800E0294));
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavywait1 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavywait1::{ftDk_HeavyWait1_Coll};
 
-    /// `ftDk_HeavyWait1_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
-    pub fn ftDk_HeavyWait1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavywalk {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavywalk::{ftDk_HeavyWalk_Coll};
 
-    /// `ftDk_HeavyWalk_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywalk.c).
-    pub fn ftDk_HeavyWalk_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -3,24 +3,20 @@
 //! fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftgamewatchattackair.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext, ftGw_Init_OnDamage};
 use melee_fighter::tu::{ftCo_AttackAir as aa, ftCo_Landing as land, ftCo_LandingAir as landair};
 use melee_types::*;
 
 /// Already ported (rounds 2/5/12 and the item-check helpers): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchattackair::{
-    ftGw_AttackAirN_ItemCheckParachuteRemove, ftGw_AttackAirN_ItemCheckSparkyRemove,
-    ftGw_AttackAirN_ItemCheckTurtleRemove,
-};
-pub use crate::chars::r12::ftGameWatch::ftgamewatchattackair::{
-    ftGw_LandingAirB_IASA, ftGw_LandingAirHi_IASA, ftGw_LandingAirN_IASA,
-};
-pub use crate::chars::r2::ftGameWatch::ftgamewatchattackair::{
-    ftGw_AttackAirB_Phys, ftGw_AttackAirHi_Phys, ftGw_AttackAirN_Phys,
-};
-pub use crate::chars::r5::ftGameWatch::ftgamewatchattackair::{
-    ftGw_AttackAirB_Coll, ftGw_AttackAirHi_Coll, ftGw_AttackAirN_Coll,
-};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -646,5 +642,87 @@ pub fn ftGw_LandingAirHi_Coll(gobj: *mut HSD_GObj) {
     unsafe {
         land::ftCo_Landing_Coll(gobj);
         landing_check(gobj, ftGw_MS_LandingAirHi);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_AttackAirN_ItemCheckParachuteRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_AttackAirN_ItemCheckParachuteRemove");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirN as u32, ftGw_MS_LandingAirN as u32)
+}
+
+pub fn ftGw_AttackAirN_ItemCheckSparkyRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_AttackAirN_ItemCheckSparkyRemove");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirHi as u32, ftGw_MS_LandingAirHi as u32)
+}
+
+pub fn ftGw_AttackAirN_ItemCheckTurtleRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_AttackAirN_ItemCheckTurtleRemove");
+    crate::chars::ftGameWatch::outside(fp, ftGw_MS_AttackAirB as u32, ftGw_MS_LandingAirB as u32)
+}
+
+/// `ftGw_LandingAirN_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_LandingAirN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirN_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftGw_LandingAirB_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_LandingAirB_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirB_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftGw_LandingAirHi_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_LandingAirHi_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_LandingAirHi_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftGw_AttackAirN_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftGw_AttackAirB_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirB_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirB_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftGw_AttackAirHi_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirHi_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftGw_AttackAirN_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirN_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirN_Enter));
+    }
+}
+
+/// `ftGw_AttackAirB_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirB_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirB_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirB_Enter));
+    }
+}
+
+/// `ftGw_AttackAirHi_Coll` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattackair.c).
+pub fn ftGw_AttackAirHi_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackAirHi_Coll");
+    unsafe {
+        st::ft_80082C74(gobj, Some(crate::chars::cb::ftgamewatchattackair__ftGw_LandingAirHi_Enter));
     }
 }

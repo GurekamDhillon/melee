@@ -3,56 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftlink {
-    #[allow(unused_imports)]
+pub use crate::tu::ftlink::{ftLk_Init_OnDeath, ftLk_Init_OnKnockbackEnter, ftLk_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftLk_Init_OnDeath` (src/melee/ft/kinds/ftLink/ftlink.c).
-    pub fn ftLk_Init_OnDeath(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftParts_80074A4C(gobj, 0, 0);
-            st::ftParts_80074A4C(gobj, 1, 0);
-            st::ftParts_80074A4C(gobj, 2, 0);
-            (*fp).u.lk.used_boomerang = (0_i32 /* false */);
-            (*fp).u.lk.boomerang_gobj = core::mem::zeroed(); /* NULL */
-            (*fp).u.lk.xC = core::mem::zeroed(); /* 0 */
-            (*fp).u.lk.arrow_gobj = core::mem::zeroed(); /* NULL */
-            (*fp).u.lk.x14 = core::mem::zeroed(); /* 0 */
-            (*fp).u.lk.xC = core::mem::zeroed(); /* 0 */
-            (*fp).u.lk.x18 = core::mem::zeroed(); /* 0 */
-        }
-    }
-
-    /// `ftLk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftLink/ftlink.c).
-    pub fn ftLk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1);
-        }
-    }
-
-    /// `ftLk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftLink/ftlink.c).
-    pub fn ftLk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1);
-        }
-    }
 
 }
 
 pub mod ftlinkattackair {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftlinkattackair::{ftLk_AttackAir_SetupParts};
 
-    /// `ftLk_AttackAir_SetupParts` (src/melee/ft/kinds/ftLink/ftlinkattackair.c).
-    pub fn ftLk_AttackAir_SetupParts(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftParts_80074A4C(gobj, 2, 0);
-            st::ftParts_80074B0C(gobj, 2, 0);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

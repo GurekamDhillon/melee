@@ -3,23 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftseak {
-    #[allow(unused_imports)]
+pub use crate::tu::ftseak::{ftSk_Init_OnItemInvisible, ftSk_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSk_Init_OnItemInvisible` (src/melee/ft/kinds/ftSeak/ftseak.c).
-    pub fn ftSk_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 1);
-        }
-    }
-
-    /// `ftSk_Init_OnItemVisible` (src/melee/ft/kinds/ftSeak/ftseak.c).
-    pub fn ftSk_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1);
-        }
-    }
 
 }

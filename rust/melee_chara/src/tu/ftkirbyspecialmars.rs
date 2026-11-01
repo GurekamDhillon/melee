@@ -4,14 +4,16 @@
 //! tests/tu_ftkirbyspecialmars.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_runtime::cabi::sdiv;
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftKirby::ftkirbyspecialmars::{
-    ftKb_MsSpecialAirNEnd_Phys, ftKb_MsSpecialAirNLoop_Phys, ftKb_MsSpecialNEnd_Phys, ftKb_MsSpecialNLoop_Phys,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -548,4 +550,36 @@ pub fn ftKb_SpecialNPe_8010C1E8(gobj: G) {
         st::Fighter_ChangeMotionState(gobj, msid, 0x2000, 1.0, 1.0, 0.0, core::ptr::null_mut());
         (*fpp(gobj)).accessory4_cb = Some(cb_fn_8010B1F4);
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftKb_MsSpecialNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmars.c).
+pub fn ftKb_MsSpecialNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MsSpecialNLoop_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MsSpecialAirNLoop_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmars.c).
+pub fn ftKb_MsSpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MsSpecialAirNLoop_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+/// `ftKb_MsSpecialNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmars.c).
+pub fn ftKb_MsSpecialNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MsSpecialNEnd_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftKb_MsSpecialAirNEnd_Phys` (src/melee/ft/kinds/ftKirby/ftkirbyspecialmars.c).
+pub fn ftKb_MsSpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftKb_MsSpecialAirNEnd_Phys");
+    st::ft_80084EEC(gobj);
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn fn_8010B2E8_fp(fp: &mut Fighter) {
+    melee_core::ct!("fn_8010B2E8_fp");
+    fp.cmd_vars[0] = 0;
+    unsafe { fp.mv.ms.specialn.cur_frame = 0 as _ };
 }

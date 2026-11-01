@@ -8,13 +8,18 @@
 //! zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 4/5/6): re-exported under this TU.
-pub use crate::chars::r4::ftMars::ftmars::ftMs_SpecialN_80136730;
-pub use crate::chars::r5::ftMars::ftmars::{ftMs_Init_OnDeath, ftMs_Init_OnKnockbackEnter, ftMs_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftMars::ftmars::{ftMs_Init_OnItemInvisible, ftMs_Init_OnItemVisible};
+
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 /// Calls into TUs that are not ported yet (same hook as ftcaptainspecialn's).
@@ -146,3 +151,57 @@ pub unsafe extern "C" fn cb_ftMs_SpecialN_8013666C(g: *mut HSD_GObj) {
 
 /// `ftMs_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftMs_CostumeList[5]`), filled when the costumes load.
 pub static mut ftMs_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMs_SpecialN_80136730` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_SpecialN_80136730(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_SpecialN_80136730");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).mv.ms.specialn.cur_frame = 0_i32;
+    }
+}
+
+/// `ftMs_Init_OnDeath` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        st::ftParts_80074A4C(gobj, 1, 0);
+        (*fp).u.ms.x222C = 0_u32;
+    }
+}
+
+/// `ftMs_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftMs_Init_OnKnockbackExit` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftMs_Init_OnItemInvisible` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftMs_Init_OnItemVisible` (src/melee/ft/kinds/ftMars/ftmars.c).
+pub fn ftMs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMs_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

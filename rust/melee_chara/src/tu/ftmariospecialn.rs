@@ -4,18 +4,19 @@
 //! smoke-tested through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 5, 7): re-exported under this TU.
-pub use crate::chars::r2::ftMario::ftmariospecialn::{
-    ftMr_SpecialAirN_Anim, ftMr_SpecialAirN_Phys, ftMr_SpecialN_Anim, ftMr_SpecialN_Phys,
-};
-pub use crate::chars::r3::ftMario::ftmariospecialn::{
-    ftMr_SpecialAirN_AirToGround, ftMr_SpecialAirN_Coll, ftMr_SpecialN_Coll, ftMr_SpecialN_GroundToAir,
-};
-pub use crate::chars::r5::ftMario::ftmariospecialn::ftMr_SpecialN_IASA;
-pub use crate::chars::r7::ftMario::ftmariospecialn::{ftMr_SpecialAirN_Enter, ftMr_SpecialN_Enter};
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -151,5 +152,111 @@ pub fn ftMr_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
         if (*fpp(gobj)).cmd_vars[0] != 0 {
             ext::ftCo_Fall_IASA_Inner(gobj);
         }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMr_SpecialN_Anim` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftMr_SpecialN_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftMr_SpecialAirN_Anim` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialAirN_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftMr_SpecialAirN_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_Phys");
+    st::ft_80084DB0(gobj);
+}
+
+/// `ftMr_SpecialN_Coll` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 /* false */ {
+            crate::chars::r3::ftMario::ftmariospecialn::ftMr_SpecialN_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftMr_SpecialAirN_Coll` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialAirN_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_Coll");
+    unsafe {
+        if st::ft_80081D0C(gobj) != 0 {
+            crate::chars::r3::ftMario::ftmariospecialn::ftMr_SpecialAirN_AirToGround(gobj);
+        }
+    }
+}
+
+/// `ftMr_SpecialN_GroundToAir` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_GroundToAir");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 344 /* ftMr_MS_SpecialAirN */, 0x5000u32 /* ftMr_MF_SpecialN_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
+    }
+}
+
+/// `ftMr_SpecialAirN_AirToGround` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialAirN_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_AirToGround");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 343 /* ftMr_MS_SpecialN */, 0x5000u32 /* ftMr_MF_SpecialN_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
+    }
+}
+
+/// `ftMr_SpecialN_IASA` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).cmd_vars[0] as u32) != 0u32 /* 0 */) {
+            st::ftCo_Wait_IASA(gobj);
+        }
+    }
+}
+
+/// `ftMr_SpecialN_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 343 /* ftMr_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
+    }
+}
+
+/// `ftMr_SpecialAirN_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
+pub fn ftMr_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialAirN_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 344 /* ftMr_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
     }
 }

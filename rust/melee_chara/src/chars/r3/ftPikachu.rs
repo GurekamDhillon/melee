@@ -3,80 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftpikachuspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpikachuspecialhi::{ftPk_SpecialHiStart0_Coll};
 
-    /// `ftPk_SpecialHiStart0_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecialhi.c).
-    pub fn ftPk_SpecialHiStart0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecialhi::ftPk_SpecialHi_ChangeMotion_Unk00(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpikachuspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpikachuspecials::{ftPk_SpecialAirS0_Coll, ftPk_SpecialAirSHold_Coll, ftPk_SpecialAirSStart_Coll, ftPk_SpecialS0_Coll, ftPk_SpecialSHold_Coll, ftPk_SpecialSStart_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPk_SpecialSStart_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk00(gobj);
-            }
-        }
-    }
-
-    /// `ftPk_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk01(gobj);
-            }
-        }
-    }
-
-    /// `ftPk_SpecialSHold_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialSHold_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk02(gobj);
-            }
-        }
-    }
-
-    /// `ftPk_SpecialAirSHold_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialAirSHold_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk03(gobj);
-            }
-        }
-    }
-
-    /// `ftPk_SpecialS0_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialS0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk06(gobj);
-            }
-        }
-    }
-
-    /// `ftPk_SpecialAirS0_Coll` (src/melee/ft/kinds/ftPikachu/ftpikachuspecials.c).
-    pub fn ftPk_SpecialAirS0_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r2::ftPikachu::ftpikachuspecials::ftPk_SpecialS_ChangeMotion_Unk07(gobj);
-            }
-        }
-    }
 
 }

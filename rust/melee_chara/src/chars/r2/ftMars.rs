@@ -4,83 +4,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftmarsspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmarsspeciallw::{ftMs_SpecialAirLwHit_Phys, ftMs_SpecialLwHit_Phys, ftMs_SpecialLw_80139080, ftMs_SpecialLw_801390E0};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_SpecialLwHit_Phys` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialLwHit_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMs_SpecialAirLwHit_Phys` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialAirLwHit_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMs_SpecialLw_80139080` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialLw_80139080(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_GroundToAirStateChange(gobj, fp, 372, 0xC4C508Eu32 /* ftMs_MF_SpecialLwHit_Coll */);
-    }
-
-    /// `ftMs_SpecialLw_801390E0` (src/melee/ft/kinds/ftMars/ftmarsspeciallw.c).
-    pub fn ftMs_SpecialLw_801390E0(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_AirToGroundStateChange(gobj, fp, 370, 0xC4C508Eu32 /* ftMs_MF_SpecialLwHit_Coll */);
-    }
 
 }
 
 pub mod ftmarsspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmarsspecialn::{ftMs_SpecialAirNEnd_Phys, ftMs_SpecialAirNLoop_Phys, ftMs_SpecialNEnd_Phys, ftMs_SpecialNLoop_Phys, ftMs_SpecialN_80136E74, ftMs_SpecialN_80136EAC};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMs_SpecialNLoop_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMs_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftMs_SpecialN_80136E74` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialN_80136E74(gobj: *mut HSD_GObj) {
-        st::Fighter_ChangeMotionState(gobj, 342 /* ftMs_MS_SpecialNLoop */, 0x1200u32 /* Ft_MF_KeepSfx | Ft_MF_SkipColAnim */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-    }
-
-    /// `ftMs_SpecialN_80136EAC` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialN_80136EAC(gobj: *mut HSD_GObj) {
-        st::Fighter_ChangeMotionState(gobj, 346 /* ftMs_MS_SpecialAirNLoop */, 0x1200u32 /* Ft_MF_KeepSfx | Ft_MF_SkipColAnim */, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-    }
-
-    /// `ftMs_SpecialNEnd_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftMs_SpecialAirNEnd_Phys` (src/melee/ft/kinds/ftMars/ftmarsspecialn.c).
-    pub fn ftMs_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftmarsspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmarsspecials::{ftMs_SpecialS_801376E8};
 
-    /// `ftMs_SpecialS_801376E8` (src/melee/ft/kinds/ftMars/ftmarsspecials.c).
-    pub fn ftMs_SpecialS_801376E8(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_GroundToAirStateChange(gobj, fp, 358, 0xC4E508Cu32 /* transition_flags */);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

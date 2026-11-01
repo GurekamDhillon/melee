@@ -5,12 +5,15 @@
 //! velocity is checked bit for bit against the C by tests/tu_ftmasterhandpoke.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (round 8): re-exported under this TU.
-pub use crate::chars::r8::ftMasterHand::ftmasterhandpoke::ftMh_Poke1_IASA;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -107,6 +110,18 @@ pub fn ftMh_Poke1_Phys(gobj: *mut HSD_GObj) {
             let (vx, vy) = poke1_vel(&pos, &cur, (*da).x98, (*da).x9C, (*da).x2C, (*da).x28);
             (*fp).self_vel.x = vx;
             (*fp).self_vel.y = vy;
+        }
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_Poke1_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhandpoke.c).
+pub fn ftMh_Poke1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Poke1_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
         }
     }
 }

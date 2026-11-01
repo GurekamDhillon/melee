@@ -3,141 +3,36 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftzeldaspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspeciallw::{ftZd_SpecialAirLw2_IASA, ftZd_SpecialAirLw_IASA, ftZd_SpecialLw2_IASA, ftZd_SpecialLw_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialLw_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialLw_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialAirLw_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialAirLw_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialLw2_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialLw2_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialAirLw2_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspeciallw.c).
-    pub fn ftZd_SpecialAirLw2_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftzeldaspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspecialn::ftZd_SpecialN_8013ADB0;
+
+pub use crate::tu::ftzeldaspecialn::{ftZd_SpecialAirN_IASA, ftZd_SpecialN_IASA};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialN_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
-    pub fn ftZd_SpecialN_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialAirN_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
-    pub fn ftZd_SpecialAirN_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialN_8013ADB0` (src/melee/ft/kinds/ftZelda/ftzeldaspecialn.c).
-    pub fn ftZd_SpecialN_8013ADB0(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
 
 }
 
 pub mod ftzeldaspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftzeldaspecials::{ftZd_SpecialAirSEnd_Coll, ftZd_SpecialAirSEnd_IASA, ftZd_SpecialAirSLoop_Coll, ftZd_SpecialAirSStart_Coll, ftZd_SpecialSEnd_Coll, ftZd_SpecialSLoop_Coll, ftZd_SpecialSStart_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftZd_SpecialAirSEnd_IASA` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialAirSEnd_IASA(gobj: *mut HSD_GObj) {
-        unsafe {
-            return;
-        }
-    }
-
-    /// `ftZd_SpecialSStart_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80082708(gobj) == 0) {
-                st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 346, 0xC4C5082u32 /* ftZd_MF_SpecialSStart_Coll */);
-            }
-        }
-    }
-
-    /// `ftZd_SpecialSLoop_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialSLoop_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80082708(gobj) == 0) {
-                st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 347, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
-            }
-        }
-    }
-
-    /// `ftZd_SpecialSEnd_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80082708(gobj) == 0) {
-                st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 348, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
-            }
-        }
-    }
-
-    /// `ftZd_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) != 0) {
-                st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 343, 0xC4C5082u32 /* ftZd_MF_SpecialSStart_Coll */);
-            }
-        }
-    }
-
-    /// `ftZd_SpecialAirSLoop_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialAirSLoop_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) != 0) {
-                st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 344, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
-            }
-        }
-    }
-
-    /// `ftZd_SpecialAirSEnd_Coll` (src/melee/ft/kinds/ftZelda/ftzeldaspecials.c).
-    pub fn ftZd_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) != 0) {
-                st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 345, 0xC4C5080u32 /* ftCommon_GroundAirColl_MF */);
-            }
-        }
-    }
 
 }

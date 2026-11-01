@@ -2,9 +2,14 @@
 //! No fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftdonkeyheavywalk.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
-pub use crate::chars::r5::ftDonkey::ftdonkeyheavywalk::ftDk_HeavyWalk_Coll;
+
 
 pub mod ext {
     use melee_types::*;
@@ -97,4 +102,13 @@ pub fn ftDk_HeavyWalk_IASA(gobj: *mut HSD_GObj) {
 pub fn ftDk_HeavyWalk_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftDk_HeavyWalk_Phys");
     ext::ftWalkCommon_800E0060(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_HeavyWalk_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywalk.c).
+pub fn ftDk_HeavyWalk_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWalk_Coll");
+    unsafe {
+        crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
+    }
 }

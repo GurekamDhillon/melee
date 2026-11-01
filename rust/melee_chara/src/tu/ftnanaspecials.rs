@@ -6,15 +6,17 @@
 //! Smoke-tested through recording hooks by tests/tu_ftnanaspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_core::fp::fmadds;
 use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (round 11): re-exported under this TU.
-pub use crate::chars::r11::ftNana::ftnanaspecials::{
-    ftNn_Init_80123B3C, ftNn_Init_80123B3C_inline, ftNn_Init_80123BF0,
-};
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a verified port in melee_fighter / melee_chara, which the unset hook calls. The other
@@ -394,5 +396,65 @@ pub fn ftPp_SpecialS_1_Coll(nana_gobj: *mut HSD_GObj) {
         }
         ftPp_SpecialS_0_Coll_inline(nana_gobj);
         ftPp_SpecialS_0_Coll_inline2(nana_gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftNn_Init_80123B3C_inline` (static) (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
+pub fn ftNn_Init_80123B3C_inline(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_80123B3C_inline");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).take_dmg_cb = Some(crate::chars::cb::ftnana__ftNn_Init_80122FAC);
+        (*fp).death2_cb = Some(crate::chars::cb::ftnana__ftNn_Init_80122FAC);
+        (*fp).pre_hitlag_cb = Some(crate::chars::cb::ext__efLib_PauseAll);
+        (*fp).post_hitlag_cb = Some(crate::chars::cb::ext__efLib_ResumeAll);
+    }
+}
+
+/// `ftNn_Init_80123B3C` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
+pub fn ftNn_Init_80123B3C(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_80123B3C");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ClearCmdVars(&mut *fp);
+        crate::chars::r11::ftNana::ftnanaspecials::ftNn_Init_80123B3C_inline(gobj);
+        st::Fighter_ChangeMotionState(gobj, 359, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        crate::chars::r11::ftNana::ftnanaspecials::ftNn_Init_80123B3C_inline(gobj);
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).x74_self_accel.y = f32::from_bits(0x00000000) /* 0.0f */;
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
+    }
+}
+
+/// `ftNn_Init_80123BF0` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
+pub fn ftNn_Init_80123BF0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNn_Init_80123BF0");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ClearCmdVars(&mut *fp);
+        crate::chars::r11::ftNana::ftnanaspecials::ftNn_Init_80123B3C_inline(gobj);
+        st::Fighter_ChangeMotionState(gobj, 360, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        crate::chars::r11::ftNana::ftnanaspecials::ftNn_Init_80123B3C_inline(gobj);
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).x74_self_accel.y = f32::from_bits(0x00000000) /* 0.0f */;
+        (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+/// `ftPp_SpecialS_0_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
+pub fn ftPp_SpecialS_0_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_0_IASA_fp");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftPp_SpecialS_1_IASA_fp` (src/melee/ft/kinds/ftNana/ftnanaspecials.c).
+pub fn ftPp_SpecialS_1_IASA_fp(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPp_SpecialS_1_IASA_fp");
+    unsafe {
+        return;
     }
 }

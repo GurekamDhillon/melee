@@ -3,39 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftganon {
-    #[allow(unused_imports)]
+pub use crate::tu::ftganon::{ftGn_Init_OnItemInvisible, ftGn_Init_OnItemVisible, ftGn_Init_OnKnockbackEnter, ftGn_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftGn_Init_OnItemInvisible` (src/melee/ft/kinds/ftGanon/ftganon.c).
-    pub fn ftGn_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftGn_Init_OnItemVisible` (src/melee/ft/kinds/ftGanon/ftganon.c).
-    pub fn ftGn_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftGn_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftGanon/ftganon.c).
-    pub fn ftGn_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftAnim_ApplyPartAnim(gobj, 3, 3, 0.0_f32);
-            st::ftAnim_ApplyPartAnim(gobj, 4, 3, 0.0_f32);
-        }
-    }
-
-    /// `ftGn_Init_OnKnockbackExit` (src/melee/ft/kinds/ftGanon/ftganon.c).
-    pub fn ftGn_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0_f32);
-            st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0_f32);
-        }
-    }
 
 }

@@ -2,12 +2,15 @@
 //! No float math (no fused sites). Smoke-tested by tests/tu_ftclinkappeals.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftclink::{checkFighter2244, ftCl_Init_80149268};
 use melee_types::*;
 
 /// Already ported (round 2): re-exported under this TU.
-pub use crate::chars::r2::ftCLink::ftclinkappeals::ftCl_AppealS_Phys;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -73,4 +76,11 @@ pub fn ftCl_AppealS_IASA(gobj: *mut HSD_GObj) {
 pub fn ftCl_AppealS_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftCl_AppealS_Coll");
     ext::ft_80084280(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCl_AppealS_Phys` (src/melee/ft/kinds/ftCLink/ftclinkappeals.c).
+pub fn ftCl_AppealS_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCl_AppealS_Phys");
+    st::ft_80084F3C(gobj);
 }

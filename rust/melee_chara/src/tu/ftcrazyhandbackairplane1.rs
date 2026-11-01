@@ -3,14 +3,22 @@
 //! tests/tu_ftcrazyhandbackairplane1.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+use crate::tu::ftcrazyhandbackairplane3::ftCh_Init_80159670;
+use crate::tu::ftcrazyhandbackairplane2::ftCh_Init_801594D4;
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 8): re-exported under this TU. The round-4 Init fns belong to the
 /// airplane2/3 TUs and are only called from here.
-use crate::chars::r4::ftCrazyHand::ftcrazyhandbackairplane2::ftCh_Init_801594D4;
-use crate::chars::r4::ftCrazyHand::ftcrazyhandbackairplane3::ftCh_Init_80159670;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackairplane1::ftCh_BackAirplane1_IASA;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -104,4 +112,24 @@ pub fn ftCh_BackAirplane1_Coll(gobj: *mut HSD_GObj) {
             (*fp).self_vel.x = 0.0;
         }
     }
+}
+
+
+
+
+
+/// `ftCh_BackAirplane1_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackairplane1.c).
+    pub fn ftCh_BackAirplane1_IASA(gobj: *mut HSD_GObj) {
+        unsafe {
+            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+            if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+                st::ftBossLib_8015BD20(gobj);
+            }
+        }
+    }
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftCh_BackAirplane1_Coll_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftCh_BackAirplane1_Coll_fp");
+    crate::chars::ftCrazyHand::stop_if_x18_zero(fp)
 }

@@ -3,15 +3,20 @@
 //! (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftgamewatchattacks4.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{ftGw_MS_AttackS4, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftgamewatch::{cb_ftGw_Init_OnDamage, ext as gw_ext, ftGw_Init_8014A538};
 use melee_types::*;
 
 /// Already ported (rounds 2/4/5 and the item-check helper): re-exported under this TU.
-pub use crate::chars::ftGameWatch::ftgamewatchattacks4::ftGw_AttackS4_ItemCheckTorchRemove;
-pub use crate::chars::r2::ftGameWatch::ftgamewatchattacks4::{ftGw_AttackS4_Anim, ftGw_AttackS4_Phys};
-pub use crate::chars::r4::ftGameWatch::ftgamewatchattacks4::ftGw_AttackS4_Enter;
-pub use crate::chars::r5::ftGameWatch::ftgamewatchattacks4::ftGw_AttackS4_IASA;
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -156,4 +161,48 @@ pub fn ftGw_AttackS4_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftGw_AttackS4_Coll");
     st::ft_80084104(gobj);
     ftGw_Init_8014A538(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+pub fn ftGw_AttackS4_ItemCheckTorchRemove(fp: &Fighter) -> bool {
+    melee_core::ct!("ftGw_AttackS4_ItemCheckTorchRemove");
+    fp.motion_id as u32 != ftGw_MS_AttackS4 as u32
+}
+
+/// `ftGw_AttackS4_Anim` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
+pub fn ftGw_AttackS4_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftGw_AttackS4_Phys` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
+pub fn ftGw_AttackS4_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_Phys");
+    st::ft_80084FA8(gobj);
+}
+
+/// `ftGw_AttackS4_Enter` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
+pub fn ftGw_AttackS4_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).set_allow_interrupt(0);
+        (*fp).cmd_vars[0] = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 346 /* ftGw_MS_AttackS4 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftgamewatchattacks4__ftGw_ItemTorchSetup);
+    }
+}
+
+/// `ftGw_AttackS4_IASA` (src/melee/ft/kinds/ftGameWatch/ftgamewatchattacks4.c).
+pub fn ftGw_AttackS4_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGw_AttackS4_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).allow_interrupt() as i32) != 0i32 /* false */) {
+            st::ftCo_Wait_IASA(gobj);
+        }
+    }
 }

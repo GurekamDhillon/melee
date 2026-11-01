@@ -3,30 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftkoopaspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftkoopaspeciallw::{ftKp_SpecialAirLw_Anim, ftKp_SpecialLw_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftKp_SpecialAirLw_Anim` (src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c).
-    pub fn ftKp_SpecialAirLw_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                (*fp).cmd_vars[1] = 1_u32;
-            }
-        }
-    }
-
-    /// `ftKp_SpecialLw_Phys` (src/melee/ft/kinds/ftKoopa/ftkoopaspeciallw.c).
-    pub fn ftKp_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ft_80085134(gobj);
-            if ((*fp).self_vel.y < f32::from_bits(0x00000000) /* 0.0f */) {
-                (*fp).self_vel.y = f32::from_bits(0x00000000) /* 0.0f */;
-            }
-        }
-    }
 
 }

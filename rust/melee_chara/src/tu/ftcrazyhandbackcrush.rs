@@ -2,12 +2,15 @@
 //! tests/tu_ftcrazyhandbackcrush.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandbackcrush::ftCh_BackCrush_Phys;
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandbackcrush::ftCh_BackCrush_IASA;
+
+
 
 pub fn ftCh_Init_801597F0(gobj: *mut HSD_GObj, cb: HSD_GObjEvent) {
     melee_core::ct!("ftCh_Init_801597F0");
@@ -32,3 +35,21 @@ pub fn ftCh_BackCrush_Anim(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftCh_BackCrush_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackCrush_Coll");}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_BackCrush_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackcrush.c).
+pub fn ftCh_BackCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackCrush_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_BackCrush_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandbackcrush.c).
+pub fn ftCh_BackCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackCrush_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}

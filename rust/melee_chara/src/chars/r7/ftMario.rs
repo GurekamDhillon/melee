@@ -3,52 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftmariospecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftmariospecialhi::{ftMr_SpecialHi_Enter};
 
-    /// `ftMr_SpecialHi_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialhi.c).
-    pub fn ftMr_SpecialHi_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 347 /* ftMr_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftmariospecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftmariospecialn::{ftMr_SpecialAirN_Enter, ftMr_SpecialN_Enter};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftMr_SpecialN_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialN_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 343 /* ftMr_MS_SpecialN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
-        }
-    }
-
-    /// `ftMr_SpecialAirN_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialn.c).
-    pub fn ftMr_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            st::Fighter_ChangeMotionState(gobj, 344 /* ftMr_MS_SpecialAirN */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftmariospecialn__ftMr_SpecialN_ItemFireSpawn);
-        }
-    }
 
 }

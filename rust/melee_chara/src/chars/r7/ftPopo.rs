@@ -3,40 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpopospecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospecialhi::{ftPp_SpecialAirHiThrow_1_Anim};
 
-    /// `ftPp_SpecialAirHiThrow_1_Anim` (src/melee/ft/kinds/ftPopo/ftpopospecialhi.c).
-    pub fn ftPp_SpecialAirHiThrow_1_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 0, 1, 0 /* false */, ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x74 as f32), ((*((*fp).dat_attrs as *const melee_types::ftIceClimberAttributes)).x78 as f32));
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpopospecialn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpopospecialn::{ftPp_SpecialN_Enter};
 
-    /// `ftPp_SpecialN_Enter` (src/melee/ft/kinds/ftPopo/ftpopospecialn.c).
-    pub fn ftPp_SpecialN_Enter(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).anon_2210.throw_flags = 0_u32;
-            (*fp).cmd_vars[0] = 0_u32;
-            (*fp).u.nn.x222C = core::mem::zeroed(); /* NULL */
-            st::Fighter_ChangeMotionState(gobj, 341, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftpopospecialn__ftPp_SpecialN_8011F500);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

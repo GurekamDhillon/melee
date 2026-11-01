@@ -4,241 +4,100 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftdonkeyheavyfall {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavyfall::{ftDk_HeavyFall_Phys};
 
-    /// `ftDk_HeavyFall_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyfall.c).
-    pub fn ftDk_HeavyFall_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084DB0(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavylanding {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavylanding::{ftDk_HeavyLanding_Phys};
 
-    /// `ftDk_HeavyLanding_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
-    pub fn ftDk_HeavyLanding_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavyturn {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavyturn::{ftDk_HeavyTurn_Phys};
 
-    /// `ftDk_HeavyTurn_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyturn.c).
-    pub fn ftDk_HeavyTurn_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavywait0 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavywait0::{ftDk_HeavyWait0_Phys};
 
-    /// `ftDk_HeavyWait0_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait0.c).
-    pub fn ftDk_HeavyWait0_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyheavywait1 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyheavywait1::{ftDk_HeavyWait1_Phys};
 
-    /// `ftDk_HeavyWait1_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavywait1.c).
-    pub fn ftDk_HeavyWait1_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftdonkeyspecialhi::{ftDk_SpecialHi_Anim};
 
-    /// `ftDk_SpecialHi_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialhi.c).
-    pub fn ftDk_SpecialHi_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftdonkeyspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftdonkeyspeciallw::{doTransition, ftDk_SpecialLwEnd0_Anim, ftDk_SpecialLwEnd0_Coll, ftDk_SpecialLwEnd0_Phys, ftDk_SpecialLwEnd1_Anim, ftDk_SpecialLwEnd1_Coll, ftDk_SpecialLwEnd1_Phys, ftDk_SpecialLwLoop_Coll, ftDk_SpecialLwLoop_Phys, ftDk_SpecialLwStart_Coll, ftDk_SpecialLwStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftDk_SpecialLwStart_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialLwStart_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwStart_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_80082708(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialLwLoop_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialLwLoop_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwLoop_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_80082708(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialLwEnd0_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd0_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialLwEnd0_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd0_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialLwEnd0_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd0_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_80082708(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `doTransition` (static) (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn doTransition(gobj: *mut HSD_GObj) {
-        st::Fighter_ChangeMotionState(gobj, 385 /* ftDk_MS_SpecialLwEnd0 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-    }
-
-    /// `ftDk_SpecialLwEnd1_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd1_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialLwEnd1_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd1_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084DB0(gobj);
-    }
-
-    /// `ftDk_SpecialLwEnd1_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyspeciallw.c).
-    pub fn ftDk_SpecialLwEnd1_Coll(gobj: *mut HSD_GObj) {
-        if st::ft_80081D0C(gobj) != 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
 
 }
 
 pub mod ftdonkeyspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftdonkeyspecialn::{ftDk_SpecialAirNCancel_Phys, ftDk_SpecialAirNFull_Phys, ftDk_SpecialAirNLoop_Phys, ftDk_SpecialAirNStart_Phys, ftDk_SpecialAirN_Phys, ftDk_SpecialNCancel_Phys, ftDk_SpecialNFull_Phys, ftDk_SpecialNLoop_Phys, ftDk_SpecialNStart_Phys, ftDk_SpecialN_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftDk_SpecialNStart_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialNLoop_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialNCancel_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialN_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialNFull_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialNFull_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftDk_SpecialAirNStart_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftDk_SpecialAirNLoop_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirNLoop_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftDk_SpecialAirNCancel_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirNCancel_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftDk_SpecialAirN_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirN_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
-
-    /// `ftDk_SpecialAirNFull_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecialn.c).
-    pub fn ftDk_SpecialAirNFull_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftdonkeyspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftdonkeyspecials::{ftDk_SpecialAirS_Anim, ftDk_SpecialS_Anim, ftDk_SpecialS_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftDk_SpecialS_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
-    pub fn ftDk_SpecialS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialAirS_Anim` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
-    pub fn ftDk_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftDk_SpecialS_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyspecials.c).
-    pub fn ftDk_SpecialS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
 
 }

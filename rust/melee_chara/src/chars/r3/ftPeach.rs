@@ -3,62 +3,24 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftpeachspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachspeciallw::handleAirColl_fp as handleAirColl;
+pub use crate::tu::ftpeachspeciallw::handleColl_fp as handleColl;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `handleAirColl` (static) (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn handleAirColl(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 353 /* ftPe_MS_SpecialAirLw */, 0xC4C5080u32 /* coll_mf */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftpeachspeciallw__spawnVeg);
-        }
-    }
-
-    /// `handleColl` (static) (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn handleColl(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 352 /* ftPe_MS_SpecialLw */, 0xC4C5080u32 /* coll_mf */);
-            (*fp).accessory4_cb = Some(crate::chars::cb::ftpeachspeciallw__spawnVeg);
-        }
-    }
 
 }
 
 pub mod ftpeachspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachspecials::{enterAirStart, ftPe_SpecialAirSEnd_Coll, ftPe_SpecialSEnd_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `enterAirStart` (static) (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn enterAirStart(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            (*fp).self_vel.x = f32::from_bits(0x00000000) /* 0 */;
-            st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 357 /* ftPe_MS_SpecialAirSStart */, 0xC4C5084u32 /* start_mf */);
-        }
-    }
-
-    /// `ftPe_SpecialSEnd_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80082708(gobj) == 0 {
-                crate::chars::r2::ftPeach::ftpeachspecials::enterAirEnd(gobj);
-            }
-        }
-    }
-
-    /// `ftPe_SpecialAirSEnd_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspecials.c).
-    pub fn ftPe_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_80081D0C(gobj) != 0 {
-                crate::chars::r2::ftPeach::ftpeachspecials::enterEnd(gobj);
-            }
-        }
-    }
 
 }

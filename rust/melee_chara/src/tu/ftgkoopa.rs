@@ -5,12 +5,17 @@
 //! Data: file-name strings below. `ftGk_CostumeList` does not exist in this TU.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6 and the demo-callback helper): re-exported under this TU.
-pub use crate::chars::ftGigaKoopa::ftgkoopa::ftGk_Init_UnkDemoCallbacks0;
-pub use crate::chars::r5::ftGigaKoopa::ftgkoopa::{ftGk_Init_OnDeath, ftGk_Init_OnKnockbackEnter, ftGk_Init_OnKnockbackExit};
-pub use crate::chars::r6::ftGigaKoopa::ftgkoopa::{ftGk_Init_OnItemInvisible, ftGk_Init_OnItemVisible};
+
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 pub const ftGk_Init_DatFilename: &str = "PlGk.dat";
@@ -130,3 +135,57 @@ pub fn ftGk_Init_GetMotionFileString(arg0: i32) -> Option<&'static str> {
 
 /// `ftGk_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftGk_CostumeList[1]`), filled when the costumes load.
 pub static mut ftGk_CostumeList: [melee_types::UnkCostumeStruct; 1] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftGk_Init_UnkDemoCallbacks0(arg0, arg1, arg2)`: demo motion file indices.
+pub fn ftGk_Init_UnkDemoCallbacks0(arg0: i32, arg1: &mut i32, arg2: &mut i32) {
+    melee_core::ct!("ftGk_Init_UnkDemoCallbacks0");
+    if arg0 == 0xF {
+        *arg2 = 0xE;
+        *arg1 = 0xE;
+    }
+}
+
+/// `ftGk_Init_OnDeath` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
+pub fn ftGk_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        (*fp).dmg.armor0 = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x0;
+        (*fp).u.gk.x222C = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x10;
+        (*fp).u.gk.x2230 = (*((*fp).dat_attrs as *const melee_types::ftKoopaAttributes)).x18;
+    }
+}
+
+/// `ftGk_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
+pub fn ftGk_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1 /* true */);
+    }
+}
+
+/// `ftGk_Init_OnKnockbackExit` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
+pub fn ftGk_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1 /* true */);
+    }
+}
+
+/// `ftGk_Init_OnItemInvisible` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
+pub fn ftGk_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1 /* true */);
+    }
+}
+
+/// `ftGk_Init_OnItemVisible` (src/melee/ft/kinds/ftGigaKoopa/ftgkoopa.c).
+pub fn ftGk_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGk_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1 /* true */);
+    }
+}

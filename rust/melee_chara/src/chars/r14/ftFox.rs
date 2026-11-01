@@ -3,33 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfoxspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecialn::{ftFox_SpecialN_RemoveBlasterNULL, ftFx_SpecialN_ClearBlaster};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialN_ClearBlaster` (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
-    pub fn ftFx_SpecialN_ClearBlaster(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (!(*fp).u.fx.x222C_blasterGObj.is_null()) {
-                (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* NULL */
-            }
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
-
-    /// `ftFox_SpecialN_RemoveBlasterNULL` (static) (src/melee/ft/kinds/ftFox/ftfoxspecialn.c).
-    pub fn ftFox_SpecialN_RemoveBlasterNULL(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (!(*fp).u.fx.x222C_blasterGObj.is_null()) {
-                (*fp).u.fx.x222C_blasterGObj = core::mem::zeroed(); /* NULL */
-            }
-            (*fp).take_dmg_cb = core::mem::zeroed(); /* NULL */
-            (*fp).death2_cb = core::mem::zeroed(); /* NULL */
-        }
-    }
 
 }

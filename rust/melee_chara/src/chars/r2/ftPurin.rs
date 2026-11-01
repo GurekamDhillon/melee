@@ -4,38 +4,24 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, clippy::all)]
 
 pub mod ftpurinspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpurinspecialhi::{ftPr_SpecialAirHi_Phys, ftPr_SpecialHi_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPr_SpecialHi_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
-    pub fn ftPr_SpecialHi_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftPr_SpecialAirHi_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspecialhi.c).
-    pub fn ftPr_SpecialAirHi_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 
 pub mod ftpurinspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpurinspeciallw::{ftPr_SpecialAirLw_Phys, ftPr_SpecialLw_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPr_SpecialLw_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspeciallw.c).
-    pub fn ftPr_SpecialLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084F3C(gobj);
-    }
-
-    /// `ftPr_SpecialAirLw_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspeciallw.c).
-    pub fn ftPr_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084EEC(gobj);
-    }
 
 }
 

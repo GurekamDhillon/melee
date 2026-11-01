@@ -3,86 +3,34 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcaptain {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcaptain::{ftCa_Init_800E28C8, ftCa_Init_OnItemInvisible, ftCa_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCa_Init_800E28C8` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
-    pub fn ftCa_Init_800E28C8(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r6::ftCaptain::ftcaptainspecials::ftCa_SpecialS_RemoveGFX(gobj);
-        }
-    }
-
-    /// `ftCa_Init_OnItemInvisible` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
-    pub fn ftCa_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 1 /* true */);
-        }
-    }
-
-    /// `ftCa_Init_OnItemVisible` (src/melee/ft/kinds/ftCaptain/ftcaptain.c).
-    pub fn ftCa_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1 /* true */);
-        }
-    }
 
 }
 
 pub mod ftcaptainspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcaptainspecialhi::{ftCa_SpecialHiThrow1_Coll};
 
-    /// `ftCa_SpecialHiThrow1_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
-    pub fn ftCa_SpecialHiThrow1_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ftCo_AirCatchHit_Coll(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftcaptainspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcaptainspecials::{ftCa_SpecialAirSStart_Coll, ftCa_SpecialAirS_Coll, ftCa_SpecialS_RemoveGFX};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftCa_SpecialS_RemoveGFX` (src/melee/ft/kinds/ftCaptain/ftcaptainspecials.c).
-    pub fn ftCa_SpecialS_RemoveGFX(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::efLib_DestroyAll(gobj);
-            (*fp).u.ca.during_specials = (0_u32 /* false */);
-            (*fp).u.ca.during_specials_start = (0_u32 /* false */);
-        }
-    }
-
-    /// `ftCa_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecials.c).
-    pub fn ftCa_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) == 1 /* true */) {
-                st::efLib_DestroyAll(gobj);
-                st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, (*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specials_miss_landing_lag);
-            }
-        }
-    }
-
-    /// `ftCa_SpecialAirS_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecials.c).
-    pub fn ftCa_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80081D0C(gobj) == 1 /* true */) {
-                (*fp).gr_vel = (*fp).self_vel.x;
-                st::efLib_DestroyAll(gobj);
-                st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, (*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specials_hit_landing_lag);
-            }
-        }
-    }
 
 }

@@ -3,75 +3,45 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftpeach {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeach::{ftPe_Init_OnKnockbackEnter, ftPe_Init_OnKnockbackExit};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPe_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftPeach/ftpeach.c).
-    pub fn ftPe_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackEnter(gobj, 1);
-        }
-    }
-
-    /// `ftPe_Init_OnKnockbackExit` (src/melee/ft/kinds/ftPeach/ftpeach.c).
-    pub fn ftPe_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnKnockbackExit(gobj, 1);
-        }
-    }
 
 }
 
 pub mod ftpeachattacks4 {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpeachattacks4::{ftPe_AttackS4_Coll};
 
-    /// `ftPe_AttackS4_Coll` (src/melee/ft/kinds/ftPeach/ftpeachattacks4.c).
-    pub fn ftPe_AttackS4_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80084104(gobj);
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpeachfloatattack {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpeachfloatattack::{ftPe_FloatAttackAir_Coll};
 
-    /// `ftPe_FloatAttackAir_Coll` (src/melee/ft/kinds/ftPeach/ftpeachfloatattack.c).
-    pub fn ftPe_FloatAttackAir_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftCo_LandingAir__ftCo_LandingAir_EnterWithLag));
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftpeachspeciallw {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpeachspeciallw::{ftPe_SpecialAirLw_Coll, ftPe_SpecialLw_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPe_SpecialLw_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn ftPe_SpecialLw_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_8008403C(gobj, Some(crate::chars::cb::ftpeachspeciallw__handleAirColl));
-        }
-    }
-
-    /// `ftPe_SpecialAirLw_Coll` (src/melee/ft/kinds/ftPeach/ftpeachspeciallw.c).
-    pub fn ftPe_SpecialAirLw_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::ft_80082C74(gobj, Some(crate::chars::cb::ftpeachspeciallw__handleColl));
-        }
-    }
 
 }

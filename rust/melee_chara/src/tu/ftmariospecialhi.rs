@@ -4,14 +4,17 @@
 //! rest is smoke-tested through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (rounds 7 and 13): re-exported under this TU.
-pub use crate::chars::r13::ftMario::ftmariospecialhi::ftMr_SpecialHi_Phys;
-pub use crate::chars::r5::ftMario::ftmariospecialhi::ftMr_SpecialHi_CheckLanding;
-pub use crate::chars::r7::ftMario::ftmariospecialhi::ftMr_SpecialHi_Enter;
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a native port behind them (the port runs when the hook is unset).
@@ -169,4 +172,39 @@ fn ftMr_SpecialHi_CheckLanding_rs(gobj: *mut HSD_GObj) {
 pub fn ftMr_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftMr_SpecialAirHi_Coll");
     ftMr_SpecialHi_Coll(gobj)
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMr_SpecialHi_Phys` (src/melee/ft/kinds/ftMario/ftmariospecialhi.c).
+pub fn ftMr_SpecialHi_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 1i32 /* GA_Air */) {
+            st::ft_80085154(gobj);
+        } else {
+            st::ft_80084FA8(gobj);
+        }
+    }
+}
+
+/// `ftMr_SpecialHi_CheckLanding` (src/melee/ft/kinds/ftMario/ftmariospecialhi.c).
+pub fn ftMr_SpecialHi_CheckLanding(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_CheckLanding");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, (*((*fp).dat_attrs as *const melee_types::ftMario_DatAttrs)).specialhi.landing_lag);
+    }
+}
+
+/// `ftMr_SpecialHi_Enter` (src/melee/ft/kinds/ftMario/ftmariospecialhi.c).
+pub fn ftMr_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMr_SpecialHi_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 347 /* ftMr_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+    }
 }

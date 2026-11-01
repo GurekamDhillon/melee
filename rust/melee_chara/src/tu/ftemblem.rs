@@ -8,13 +8,16 @@
 //! uninitialised 5-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftEmblem::ftemblem::{
-    ftFe_Init_OnDeath, ftFe_Init_OnKnockbackEnter, ftFe_Init_OnKnockbackExit,
-};
-pub use crate::chars::r6::ftEmblem::ftemblem::{ftFe_Init_OnItemInvisible, ftFe_Init_OnItemVisible};
+
+
 
 pub const ftFe_Init_DatFilename: &str = "PlFe.dat";
 pub const ftFe_Init_DataName: &str = "ftDataEmblem";
@@ -92,3 +95,48 @@ pub fn ftFe_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftFe_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftFe_CostumeList[5]`), filled when the costumes load.
 pub static mut ftFe_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftFe_Init_OnDeath` (src/melee/ft/kinds/ftEmblem/ftemblem.c).
+pub fn ftFe_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFe_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        st::ftParts_80074A4C(gobj, 1, 0);
+        st::ftParts_80074A4C(gobj, 2, -1);
+        (*fp).u.ms.x222C = 0_u32;
+    }
+}
+
+/// `ftFe_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftEmblem/ftemblem.c).
+pub fn ftFe_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFe_Init_OnKnockbackEnter");
+    unsafe {
+        st::Fighter_OnKnockbackEnter(gobj, 1);
+    }
+}
+
+/// `ftFe_Init_OnKnockbackExit` (src/melee/ft/kinds/ftEmblem/ftemblem.c).
+pub fn ftFe_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFe_Init_OnKnockbackExit");
+    unsafe {
+        st::Fighter_OnKnockbackExit(gobj, 1);
+    }
+}
+
+/// `ftFe_Init_OnItemInvisible` (src/melee/ft/kinds/ftEmblem/ftemblem.c).
+pub fn ftFe_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFe_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 0);
+    }
+}
+
+/// `ftFe_Init_OnItemVisible` (src/melee/ft/kinds/ftEmblem/ftemblem.c).
+pub fn ftFe_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFe_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 0);
+    }
+}

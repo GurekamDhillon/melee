@@ -3,14 +3,18 @@
 //! Smoke-tested by tests/tu_ftcrazyhandslam.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88;
 use crate::tu::ftcrazyhandfingergun2::ftCh_UpdateBossMotion;
 use melee_types::*;
 
 /// Already ported (rounds 2/8): re-exported under this TU.
-pub use crate::chars::r2::ftCrazyHand::ftcrazyhandslam::{ftCh_Fail_Phys, ftCh_GrabUnk1_8015A888, ftCh_Slam_Phys, ftCh_TagCrush_Phys};
-pub use crate::chars::r8::ftCrazyHand::ftcrazyhandslam::{ftCh_Fail_IASA, ftCh_Slam_IASA, ftCh_TagApplaud_IASA, ftCh_TagCrush_IASA};
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -95,4 +99,80 @@ pub fn ftCh_TagApplaud_Coll(gobj: *mut HSD_GObj) {
             (*fp).self_vel.x = 0.0;
         }
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCh_Slam_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_Slam_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Slam_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Fail_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_Fail_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Fail_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_GrabUnk1_8015A888` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_GrabUnk1_8015A888(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_GrabUnk1_8015A888");
+    st::Fighter_ChangeMotionState(gobj, 382 /* 0x17E */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+    st::ftAnim_8006EBA4(gobj);
+}
+
+/// `ftCh_TagCrush_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_TagCrush_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCrush_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftCh_Slam_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_Slam_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Slam_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftCh_Fail_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_Fail_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Fail_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftCh_TagCrush_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_TagCrush_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagCrush_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftCh_TagApplaud_IASA` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandslam.c).
+pub fn ftCh_TagApplaud_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_TagApplaud_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftCh_TagApplaud_Coll_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftCh_TagApplaud_Coll_fp");
+    crate::chars::ftCrazyHand::stop_if_x18_zero(fp)
 }

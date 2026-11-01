@@ -4,12 +4,15 @@
 //! through recording hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (round 7): re-exported under this TU.
-pub use crate::chars::r7::ftLuigi::ftluigispecialhi::ftLg_SpecialHi_Enter;
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics, except the
 /// ones with a native port behind them (the port runs when the hook is unset).
@@ -224,5 +227,18 @@ pub fn ftLg_SpecialAirHi_Coll(gobj: *mut HSD_GObj) {
             return;
         }
         st::ft_80084104(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftLg_SpecialHi_Enter` (src/melee/ft/kinds/ftLuigi/ftluigispecialhi.c).
+pub fn ftLg_SpecialHi_Enter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialHi_Enter");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[0] = 0_u32;
+        (*fp).anon_2210.throw_flags = 0_u32;
+        st::Fighter_ChangeMotionState(gobj, 355 /* ftLg_MS_SpecialHi */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
     }
 }

@@ -1,6 +1,17 @@
 //! src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c: `ftSs_SpecialLw_8012ADF0`. FMA: `fma_sites.py` reports one fused site (`vec.x += attr.x74_vec.x * facing_dir`).
 #![allow(non_snake_case, unused_unsafe)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::ftSamus::gobj_for;
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
+#[allow(unused_imports)]
+#[allow(unused_imports)]
+#[allow(unused_imports)]
 use melee_core::fp::fmadds;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -89,6 +100,7 @@ pub mod extg {
 
 /// `ftSs_SpecialLw_8012AEBC`
 pub unsafe extern "C" fn ftSs_SpecialLw_8012AEBC(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_8012AEBC");
     let mut hurt: ftHurtboxInit = unsafe { core::mem::zeroed() };
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     extg::ftColl_8007B0C0(gobj, (HurtCapsule_Intangible as i32) as u32);
@@ -103,11 +115,13 @@ pub unsafe extern "C" fn ftSs_SpecialLw_8012AEBC(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialLw_8012AF38`
 pub unsafe extern "C" fn ftSs_SpecialLw_8012AF38(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_8012AF38");
     extg::ftColl_8007B0C0(gobj, (HurtCapsule_Enabled as i32) as u32);
 }
 
 /// `ftSamus_SpecialLw_StartAction_inner`
 pub unsafe extern "C" fn ftSamus_SpecialLw_StartAction_inner(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSamus_SpecialLw_StartAction_inner");
     let mut fp: *mut Fighter = getFighter(gobj);
     (*fp).cmd_vars[2 as usize] = 0 as u32;
     (*fp).cmd_vars[1 as usize] = 0 as u32;
@@ -122,6 +136,7 @@ pub unsafe extern "C" fn ftSamus_SpecialLw_StartAction_inner(mut gobj: *mut HSD_
 
 /// `ftSs_SpecialLw_Enter`
 pub unsafe extern "C" fn ftSs_SpecialLw_Enter(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_Enter");
     let mut fp: *mut Fighter = getFighter(gobj);
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     (*fp).gr_vel = (*fp).gr_vel * (*samus_attr).x6C;
@@ -139,6 +154,7 @@ pub unsafe extern "C" fn ftSs_SpecialLw_Enter(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirLw_Enter`
 pub unsafe extern "C" fn ftSs_SpecialAirLw_Enter(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirLw_Enter");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 8] = [0; 8];
@@ -151,11 +167,13 @@ pub unsafe extern "C" fn ftSs_SpecialAirLw_Enter(mut gobj: *mut HSD_GObj) {
 
 /// `setSamusBits`
 pub unsafe extern "C" fn setSamusBits(mut fp: *mut Fighter, mut val: i32) {
+    melee_core::ct!("setSamusBits");
     (*fp).mv.ss.unk6.x0 = val;
 }
 
 /// `checkStateVar1`
 pub unsafe extern "C" fn checkStateVar1(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("checkStateVar1");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     if ((*fp).cmd_vars[0 as usize] != 0) && (!((*fp).mv.ss.unk6.x0 != 0)) {
         ftSs_SpecialLw_8012AEBC(gobj);
@@ -169,6 +187,7 @@ pub unsafe extern "C" fn checkStateVar1(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialLwBomb_Anim`
 pub unsafe extern "C" fn ftSs_SpecialLwBomb_Anim(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLwBomb_Anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     if (*fp).cmd_vars[1 as usize] == (1 as u32) {
         (*fp).cmd_vars[1 as usize] = 2 as u32;
@@ -183,6 +202,7 @@ pub unsafe extern "C" fn ftSs_SpecialLwBomb_Anim(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirLwBomb_Anim`
 pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Anim(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirLwBomb_Anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     checkStateVar1(gobj);
     if !(extg::ftAnim_IsFramesRemaining(gobj) != 0) {
@@ -192,6 +212,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Anim(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialLwBomb_IASA`
 pub unsafe extern "C" fn ftSs_SpecialLwBomb_IASA(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLwBomb_IASA");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     if ((*fp).cmd_vars[2 as usize] != 0) && ((*fp).input.lstick[0 as usize].y < (*samus_attr).x80) {
@@ -202,10 +223,12 @@ pub unsafe extern "C" fn ftSs_SpecialLwBomb_IASA(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirLwBomb_IASA`
 pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_IASA(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirLwBomb_IASA");
 }
 
 /// `ftSs_SpecialLwBomb_Phys`
 pub unsafe extern "C" fn ftSs_SpecialLwBomb_Phys(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLwBomb_Phys");
     let mut fp: *mut Fighter = getFighter(gobj);
     let mut samus_attr: *mut _ftSamusAttributes = getFtSpecialAttrs(fp) as *mut _ftSamusAttributes;
     let mut ft_attr: *mut ftCo_DatAttrs = core::ptr::addr_of_mut!((*fp).co_attrs) as *mut ftCo_DatAttrs;
@@ -219,6 +242,7 @@ pub unsafe extern "C" fn ftSs_SpecialLwBomb_Phys(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirLwBomb_Phys`
 pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Phys(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirLwBomb_Phys");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut ft_attr: *mut ftCo_DatAttrs = core::ptr::addr_of_mut!((*fp).co_attrs) as *mut ftCo_DatAttrs;
@@ -229,6 +253,7 @@ pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Phys(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialLwBomb_Coll`
 pub unsafe extern "C" fn ftSs_SpecialLwBomb_Coll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLwBomb_Coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 8] = [0; 8];
@@ -243,6 +268,7 @@ pub unsafe extern "C" fn ftSs_SpecialLwBomb_Coll(mut gobj: *mut HSD_GObj) {
 
 /// `ftSs_SpecialAirLwBomb_Coll`
 pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Coll(mut gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialAirLwBomb_Coll");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj) as *mut Fighter;
     let mut samus_attr: *mut _ftSamusAttributes = (*fp).dat_attrs as *mut _ftSamusAttributes;
     let mut __: [u8; 8] = [0; 8];
@@ -265,11 +291,13 @@ pub unsafe extern "C" fn ftSs_SpecialAirLwBomb_Coll(mut gobj: *mut HSD_GObj) {
 
 /// `HSD_GObjGetUserData`
 pub unsafe extern "C" fn HSD_GObjGetUserData(mut gobj: *mut HSD_GObj) -> *mut c_void {
+    melee_core::ct!("HSD_GObjGetUserData");
     return (*gobj).user_data;
 }
 
 /// `ftCheckThrowB0`
 pub unsafe extern "C" fn ftCheckThrowB0(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("ftCheckThrowB0");
     if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
         (*fp).anon_2210.anon_0.set_throw_flags_b0((0 as u8) as u8);
         return 1;
@@ -280,29 +308,78 @@ pub unsafe extern "C" fn ftCheckThrowB0(mut fp: *mut Fighter) -> i32 {
 
 /// `getFighter`
 pub unsafe extern "C" fn getFighter(mut gobj: *mut HSD_GObj) -> *mut Fighter {
+    melee_core::ct!("getFighter");
     return (*gobj).user_data as *mut Fighter;
 }
 
 /// `getFtSpecialAttrs`
 pub unsafe extern "C" fn getFtSpecialAttrs(mut fp: *mut Fighter) -> *mut c_void {
+    melee_core::ct!("getFtSpecialAttrs");
     let mut fighter_attr: *mut c_void = (*fp).dat_attrs;
     return fighter_attr;
 }
 
 /// `ftCommon_GroundToAirStateChange`
 pub unsafe extern "C" fn ftCommon_GroundToAirStateChange(mut gobj: *mut HSD_GObj, mut fp: *mut Fighter, mut msid: i32, mut flags: u32) {
+    melee_core::ct!("ftCommon_GroundToAirStateChange");
     extg::ftCommon_8007D5D4(fp);
     extg::Fighter_ChangeMotionState(gobj, msid, flags, (*fp).cur_anim_frame, 1.0f32, 0.0f32, null_mut());
 }
 
 /// `ftCommon_AirToGroundStateChange`
 pub unsafe extern "C" fn ftCommon_AirToGroundStateChange(mut gobj: *mut HSD_GObj, mut fp: *mut Fighter, mut msid: i32, mut flags: u32) {
+    melee_core::ct!("ftCommon_AirToGroundStateChange");
     extg::ftCommon_8007D7FC(fp);
     extg::Fighter_ChangeMotionState(gobj, msid, flags, (*fp).cur_anim_frame, 1.0f32, 0.0f32, null_mut());
 }
 
 /// Oracle-checked hand ports (rounds 2-12, tests/chars_dispatch.rs), re-exported under this TU.
-pub use crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSamus_UnkSetStateAndCb;
-pub use crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSs_SpecialLw_8012B570;
-pub use crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSs_SpecialLw_8012B5F0;
-pub use crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSs_SpecialLw_8012B668;
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftSamus_UnkSetStateAndCb` (static) (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
+pub fn ftSamus_UnkSetStateAndCb(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSamus_UnkSetStateAndCb");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).cmd_vars[1] = 2_u32;
+        (*fp).mv.ss.unk6.x0 = 0_i32;
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0);
+    }
+}
+
+/// `ftSs_SpecialLw_8012B570` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
+pub fn ftSs_SpecialLw_8012B570(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_8012B570");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 356 /* 0x164 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
+        crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSamus_UnkSetStateAndCb(gobj);
+    }
+}
+
+/// `ftSs_SpecialLw_8012B5F0` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
+pub fn ftSs_SpecialLw_8012B5F0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_8012B5F0");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        (*fp).self_vel.y = (*((*fp).dat_attrs as *const melee_types::ftSs_DatAttrs)).x54;
+        st::ftCommon_GroundToAirStateChange(gobj, &mut *fp, 356 /* 0x164 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
+        (*fp).accessory4_cb = Some(crate::chars::cb::ftsamusspeciallw1__ftSs_SpecialLw_8012ADF0);
+    }
+}
+
+/// `ftSs_SpecialLw_8012B668` (src/melee/ft/kinds/ftSamus/ftsamusspeciallw1.c).
+pub fn ftSs_SpecialLw_8012B668(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSs_SpecialLw_8012B668");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 355 /* 0x163 */, 0xC4C509Cu32 /* ftSs_MF_SpecialLw_Coll */);
+        crate::chars::r4::ftSamus::ftsamusspeciallw1::ftSamus_UnkSetStateAndCb(gobj);
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftSs_SpecialAirLwBomb_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftSs_SpecialAirLwBomb_Phys_fp");
+    unsafe { crate::tu::ftsamusspeciallw1::ftSs_SpecialAirLwBomb_Phys(&mut gobj_for(fp)) }
+}

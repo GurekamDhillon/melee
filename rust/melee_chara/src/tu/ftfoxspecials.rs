@@ -3,22 +3,28 @@
 //! tests/tu_ftfoxspecials.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::da as da_g;
+#[allow(unused_imports)]
+use melee_fighter::ftcommon as co;
+#[allow(unused_imports)]
+use melee_types::{ftFox_DatAttrs, ftFx_MS_SpecialAirSEnd, ftFx_MS_SpecialSStart, Vec3};
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/4/6/7/11/12): re-exported under this TU.
-pub use crate::chars::r11::ftFox::ftfoxspecials::{ftFx_SpecialAirSEnd_Coll, ftFx_SpecialAirSStart_Coll, ftFx_SpecialAirS_Coll};
-pub use crate::chars::r12::ftFox::ftfoxspecials::{
-    ftFx_SpecialAirSEnd_IASA, ftFx_SpecialAirSStart_IASA, ftFx_SpecialSEnd_IASA, ftFx_SpecialSStart_IASA,
-};
-pub use crate::chars::r2::ftFox::ftfoxspecials::{
-    ftFx_SpecialAirSStart_AirToGround, ftFx_SpecialSEnd_Anim, ftFx_SpecialSEnd_Coll, ftFx_SpecialSStart_GroundToAir,
-};
-pub use crate::chars::r3::ftFox::ftfoxspecials::ftFx_SpecialSStart_Coll;
-pub use crate::chars::r4::ftFox::ftfoxspecials::{ftFx_SpecialAirS_AirToGround, ftFx_SpecialS_Coll, ftFx_SpecialS_GroundToAir};
-pub use crate::chars::r6::ftFox::ftfoxspecials::ftFx_SpecialSStart_Phys;
-pub use crate::chars::r7::ftFox::ftfoxspecials::ftFx_SpecialAirSEnd_Anim;
+
+
+
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -375,4 +381,208 @@ pub fn ftFx_SpecialAirSEnd_Enter(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialAirSEnd as i32, Ft_MF_SkipRumble as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
         ftFox_SpecialSEnd_SetVars(gobj);
     }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftFx_SpecialAirSStart_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
+            crate::chars::r2::ftFox::ftfoxspecials::ftFx_SpecialAirSStart_AirToGround(gobj);
+            return;
+        }
+        if (st::ftCliffCommon_80081298(gobj) != 0) {
+            return;
+        }
+    }
+}
+
+/// `ftFx_SpecialAirS_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
+            crate::chars::r4::ftFox::ftfoxspecials::ftFx_SpecialAirS_AirToGround(gobj);
+            return;
+        }
+        if (st::ftCliffCommon_80081298(gobj) != 0) {
+            return;
+        }
+    }
+}
+
+/// `ftFx_SpecialAirSEnd_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSEnd_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_CheckGroundAndLedge(gobj, (if (*fp).facing_dir < 0.0f32 { -1i32 } else { 1i32 })) != 0) {
+            st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x50_FOX_ILLUSION_LANDING_LAG as f32));
+            return;
+        }
+        if (st::ftCliffCommon_80081298(gobj) != 0) {
+            return;
+        }
+    }
+}
+
+/// `ftFx_SpecialSStart_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialAirSStart_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSStart_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialSEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialAirSEnd_IASA` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSEnd_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSEnd_IASA");
+    unsafe {
+        return;
+    }
+}
+
+/// `ftFx_SpecialSStart_GroundToAir` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSStart_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_GroundToAir");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_8007D60C(fp);
+    st::Fighter_ChangeMotionState(gobj, 350 /* ftFx_MS_SpecialAirSStart */, 0xC4C5880u32 /* ftFx_MF_SpecialS_Coll */, fp.cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+}
+
+/// `ftFx_SpecialAirSStart_AirToGround` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSStart_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSStart_AirToGround");
+    let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
+    st::ftCommon_AirToGroundStateChange(gobj, fp, 347 /* ftFx_MS_SpecialSStart */, 0xC4C5880u32 /* ftFx_MF_SpecialS_Coll */);
+}
+
+/// `ftFx_SpecialSEnd_Anim` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSEnd_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        st::ft_8008A2BC(gobj);
+    }
+}
+
+/// `ftFx_SpecialSEnd_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSEnd_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSEnd_Coll");
+    if st::ft_800827A0(gobj) == 0 /* false */ {
+        st::ftCo_Fall_Enter(gobj);
+    }
+}
+
+/// `ftFx_SpecialSStart_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSStart_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_Coll");
+    unsafe {
+        if st::ft_80082708(gobj) == 0 /* false */ {
+            crate::chars::r2::ftFox::ftfoxspecials::ftFx_SpecialSStart_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftFx_SpecialS_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialS_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_Coll");
+    unsafe {
+        if (st::ft_80082708(gobj) == 0 /* false */) {
+            crate::chars::r4::ftFox::ftfoxspecials::ftFx_SpecialS_GroundToAir(gobj);
+        }
+    }
+}
+
+/// `ftFx_SpecialS_GroundToAir` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialS_GroundToAir(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialS_GroundToAir");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_8007D60C(&mut *fp);
+        st::Fighter_ChangeMotionState(gobj, 351 /* ftFx_MS_SpecialAirS */, 0xC4C5884u32 /* ftFx_MF_SpecialSDash_Coll */, (*fp).cur_anim_frame, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        (*fp).cmd_vars[2] = 0_u32;
+    }
+}
+
+/// `ftFx_SpecialAirS_AirToGround` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirS_AirToGround(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirS_AirToGround");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftCommon_AirToGroundStateChange(gobj, &mut *fp, 348 /* ftFx_MS_SpecialS */, 0xC4C5884u32 /* ftFx_MF_SpecialSDash_Coll */);
+        (*fp).cmd_vars[2] = 0_u32;
+    }
+}
+
+/// `ftFx_SpecialSStart_Phys` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialSStart_Phys");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).mv.fx.SpecialS.gravityDelay as i32) != 0i32 /* 0 */) {
+            (*fp).mv.fx.SpecialS.gravityDelay = (*fp).mv.fx.SpecialS.gravityDelay.wrapping_sub(1_i32);
+        }
+        st::ft_80084F3C(gobj);
+    }
+}
+
+/// `ftFx_SpecialAirSEnd_Anim` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
+pub fn ftFx_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftFx_SpecialAirSEnd_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ftCo_80096900(gobj, 1, 0, 1 /* true */, ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x4C_FOX_ILLUSION_FREEFALL_MOBILITY as f32), ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x50_FOX_ILLUSION_LANDING_LAG as f32));
+        }
+    }
+}
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftFx_SpecialAirSStart_Phys_fp(fp: &mut Fighter) {
+    melee_core::ct!("ftFx_SpecialAirSStart_Phys_fp");
+    let a: &ftFox_DatAttrs = da_g(fp);
+    unsafe {
+        if fp.mv.fx.SpecialS.gravityDelay != 0 {
+            fp.mv.fx.SpecialS.gravityDelay -= 1;
+        } else {
+            co::fall(fp, a.x30_FOX_ILLUSION_UNK2, fp.co_attrs.terminal_velocity);
+        }
+    }
+    co::calc_self_accel_deaccel(fp, a.x2C_FOX_ILLUSION_UNK1);
+}
+
+pub fn ftFx_SpecialS_CheckGhostRemove_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("ftFx_SpecialS_CheckGhostRemove_fp");
+    let msid = fp.motion_id as i32;
+    !(msid >= ftFx_MS_SpecialSStart as i32 && msid <= ftFx_MS_SpecialAirSEnd as i32)
+}
+
+/// `*ghostPos = fp->mv.fx.SpecialS.ghostEffectPos[index]` (index unchecked in C).
+pub fn ftFx_SpecialS_CopyGhostPosIndexed_fp(fp: &Fighter, index: i32, ghost_pos: &mut Vec3) {
+    melee_core::ct!("ftFx_SpecialS_CopyGhostPosIndexed_fp");
+    *ghost_pos = unsafe { fp.mv.fx.SpecialS.ghostEffectPos[index as usize] };
+}
+
+pub fn ftFx_SpecialS_GetCmdVar2_fp(fp: &Fighter) -> i32 {
+    melee_core::ct!("ftFx_SpecialS_GetCmdVar2_fp");
+    fp.cmd_vars[2] as i32
 }

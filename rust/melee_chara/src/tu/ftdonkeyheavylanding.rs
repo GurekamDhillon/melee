@@ -2,12 +2,15 @@
 //! No fused sites (tools/rust-port/fma_sites.py). Smoke-tested by tests/tu_ftdonkeyheavylanding.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
-pub use crate::chars::r2::ftDonkey::ftdonkeyheavylanding::ftDk_HeavyLanding_Phys;
-pub use crate::chars::r4::ftDonkey::ftdonkeyheavylanding::ftDk_HeavyWait2_Coll;
-pub use crate::chars::r5::ftDonkey::ftdonkeyheavylanding::ftDk_HeavyLanding_Coll;
+
+
+
 
 /// Calls into TUs that are not ported yet (settable hooks; unset they panic).
 pub mod ext {
@@ -127,4 +130,36 @@ pub fn ftDk_HeavyWait2_Anim(gobj: *mut HSD_GObj) {
 pub fn ftDk_HeavyWait2_Phys(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftDk_HeavyWait2_Phys");
     ext::ftCo_Damage_Phys(gobj);
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_HeavyLanding_Phys` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
+pub fn ftDk_HeavyLanding_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyLanding_Phys");
+    st::ft_80084F3C(gobj);
+}
+
+/// `ftDk_HeavyWait2_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
+pub fn ftDk_HeavyWait2_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyWait2_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (((*fp).ground_or_air as i32) == 0i32 /* GA_Ground */) {
+            if (st::ft_80082708(gobj) == 0) {
+                st::ftCommon_8007D5D4(&mut *fp);
+            }
+        } else {
+            if (st::ft_80081D0C(gobj) != 0) {
+                st::ftCommon_8007D7FC(&mut *fp);
+            }
+        }
+    }
+}
+
+/// `ftDk_HeavyLanding_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavylanding.c).
+pub fn ftDk_HeavyLanding_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyLanding_Coll");
+    unsafe {
+        crate::chars::r5::ftDonkey::ftdonkeyheavywait0::ftDk_HeavyWait0_Coll(gobj);
+    }
 }

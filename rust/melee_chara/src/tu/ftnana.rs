@@ -8,6 +8,9 @@
 //! `ftNn_CostumeList` is an uninitialised 4-entry BSS array filled at load.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::Fighter;
 use crate::stubs as st;
 use melee_types::*;
 
@@ -124,3 +127,15 @@ pub fn ftNn_Init_8012309C(gobj: *mut HSD_GObj) -> bool {
 
 /// `ftNn_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftNn_CostumeList[4]`), filled when the costumes load.
 pub static mut ftNn_CostumeList: [melee_types::UnkCostumeStruct; 4] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars blocks (consolidation step 20) ----
+pub fn ftNn_Init_8012309C_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("ftNn_Init_8012309C_fp");
+    if fp.x221F_b3() == 0 {
+        let m = fp.motion_id as i32;
+        if (362..=366).contains(&m) {
+            return true;
+        }
+    }
+    false
+}

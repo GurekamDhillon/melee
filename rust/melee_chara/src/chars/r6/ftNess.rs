@@ -3,49 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftness {
-    #[allow(unused_imports)]
+pub use crate::tu::ftness::{ftNs_Init_OnItemInvisible, ftNs_Init_OnItemVisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftNs_Init_OnItemInvisible` (src/melee/ft/kinds/ftNess/ftness.c).
-    pub fn ftNs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 1);
-        }
-    }
-
-    /// `ftNs_Init_OnItemVisible` (src/melee/ft/kinds/ftNess/ftness.c).
-    pub fn ftNs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 1);
-        }
-    }
 
 }
 
 pub mod ftnessspecialn {
-    #[allow(unused_imports)]
+pub use crate::tu::ftnessspecialn::{GravityDelay, ftNs_SpecialNStart_Phys};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `GravityDelay` (static) (src/melee/ft/kinds/ftNess/ftnessspecialn.c).
-    pub fn GravityDelay(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (((*fp).mv.ns.specialn.falling_acceleration_delay as i32) != 0i32 /* 0 */) {
-                (*fp).mv.ns.specialn.falling_acceleration_delay = (*fp).mv.ns.specialn.falling_acceleration_delay.wrapping_sub(1_i32);
-            }
-        }
-    }
-
-    /// `ftNs_SpecialNStart_Phys` (src/melee/ft/kinds/ftNess/ftnessspecialn.c).
-    pub fn ftNs_SpecialNStart_Phys(gobj: *mut HSD_GObj) {
-        unsafe {
-            crate::chars::r6::ftNess::ftnessspecialn::GravityDelay(gobj);
-            st::ft_80084F3C(gobj);
-        }
-    }
 
 }

@@ -3,6 +3,13 @@
 //! through recording hooks by tests/tu_ftcaptainspecialhi.rs (Phys velocity math included).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::chars::{caps_max_jumps, da as da_g};
+#[allow(unused_imports)]
+use melee_types::{ftCaptain_DatAttrs, Fighter};
+#[allow(unused_imports)]
+use melee_types::{HSD_GObj};
 use crate::stubs as st;
 use melee_fighter::ftcommon as fc;
 use melee_fighter::ftcommon2 as fc2;
@@ -10,10 +17,10 @@ use melee_fighter::hooks as fh;
 use melee_types::*;
 
 /// Already ported (rounds 5/6/7 and the pure helper): re-exported under this TU.
-pub use crate::chars::ftCaptain::ftcaptainspecialhi::ftCa_SpecialLw_800E49FC;
-pub use crate::chars::r5::ftCaptain::ftcaptainspecialhi::ftCa_SpecialHiThrow0_Coll;
-pub use crate::chars::r6::ftCaptain::ftcaptainspecialhi::ftCa_SpecialHiThrow1_Coll;
-pub use crate::chars::r7::ftCaptain::ftcaptainspecialhi::ftCa_SpecialHi_Anim;
+
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
 pub mod ext {
@@ -346,5 +353,54 @@ pub fn ftCa_SpecialLw_800E550C(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let vic_fp = fpp((*fp).victim_gobj);
         (*fp).cur_pos = (*vic_fp).cur_pos;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftCa_SpecialLw_800E49FC` (static): Falcon Dive state reset.
+pub fn ftCa_SpecialLw_800E49FC(fp: &mut Fighter) {
+    melee_core::ct!("ftCa_SpecialLw_800E49FC");
+    let da: &ftCaptain_DatAttrs = da_g(fp);
+    fp.x1968_jumpsUsed = caps_max_jumps(fp) as u8;
+    unsafe {
+        fp.mv.ca.specialhi.x0 = da.specialhi_air_var as _;
+    }
+    fp.cmd_vars[0] = 0;
+    fp.cmd_vars[1] = da.specialhi_unk2 as u32;
+    unsafe {
+        fp.mv.ca.specialhi.vel.x = 0.0;
+        fp.mv.ca.specialhi.vel.y = 0.0;
+        fp.mv.ca.specialhi.set_x2_b0(0);
+        fp.mv.ca.specialhi.set_x2_b1(0);
+    }
+}
+
+/// `ftCa_SpecialHiThrow0_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
+pub fn ftCa_SpecialHiThrow0_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiThrow0_Coll");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ft_80081D0C(gobj) != 0) {
+            st::ftCo_LandingFallSpecial_Enter(gobj, 0 /* false */, (*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_landing_lag);
+        }
+    }
+}
+
+/// `ftCa_SpecialHiThrow1_Coll` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
+pub fn ftCa_SpecialHiThrow1_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHiThrow1_Coll");
+    unsafe {
+        st::ftCo_AirCatchHit_Coll(gobj);
+    }
+}
+
+/// `ftCa_SpecialHi_Anim` (src/melee/ft/kinds/ftCaptain/ftcaptainspecialhi.c).
+pub fn ftCa_SpecialHi_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCa_SpecialHi_Anim");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
+            st::ftCo_80096900(gobj, 1, 1, 0 /* false */, ((*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_freefall_air_spd_mul as f32), ((*((*fp).dat_attrs as *const melee_types::ftCaptain_DatAttrs)).specialhi_landing_lag as f32));
+        }
     }
 }

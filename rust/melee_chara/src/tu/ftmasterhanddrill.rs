@@ -3,13 +3,16 @@
 //! Smoke-tested by tests/tu_ftmasterhanddrill.rs.
 #![allow(non_snake_case, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/3/8): re-exported under this TU.
-pub use crate::chars::r2::ftMasterHand::ftmasterhanddrill::ftMh_WalkWait_Phys;
-pub use crate::chars::r3::ftMasterHand::ftmasterhanddrill::ftMh_MS_352_801521DC;
-pub use crate::chars::r8::ftMasterHand::ftmasterhanddrill::{ftMh_Drill_IASA, ftMh_WalkWait_IASA};
+
+
+
 
 /// Calls into TUs that are not ported yet. Each is a settable hook.
 pub mod ext {
@@ -49,5 +52,45 @@ pub fn ftMh_Drill_Phys(gobj: *mut HSD_GObj) {
             ext::ftBossLib_8015C010(gobj, (*da).x80);
         }
         ext::ftBossLib_8015C190(gobj);
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftMh_WalkWait_Phys` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
+pub fn ftMh_WalkWait_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkWait_Phys");
+    st::ft_80085134(gobj);
+}
+
+/// `ftMh_MS_352_801521DC` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
+pub fn ftMh_MS_352_801521DC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_MS_352_801521DC");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::Fighter_ChangeMotionState(gobj, 354 /* ftMh_MS_Drill */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        (*fp).mv.mh.unk0.x0 = f32::from_bits(0x42D60000) /* 107 */;
+    }
+}
+
+/// `ftMh_WalkWait_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
+pub fn ftMh_WalkWait_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_WalkWait_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
+    }
+}
+
+/// `ftMh_Drill_IASA` (src/melee/ft/kinds/ftMasterHand/ftmasterhanddrill.c).
+pub fn ftMh_Drill_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMh_Drill_IASA");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0) {
+            st::ftBossLib_8015BD20(gobj);
+        }
     }
 }

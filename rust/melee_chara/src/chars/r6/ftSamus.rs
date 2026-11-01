@@ -3,57 +3,36 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftsamus {
-    #[allow(unused_imports)]
+pub use crate::tu::ftsamus::{ftSs_Init_OnItemVisible};
+
+pub use crate::tu::ftsamus::{ftSs_Init_OnItemInvisible};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftSs_Init_OnItemInvisible` (src/melee/ft/kinds/ftSamus/ftsamus.c).
-    pub fn ftSs_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemInvisible(gobj, 0);
-        }
-    }
-
-    /// `ftSs_Init_OnItemVisible` (src/melee/ft/kinds/ftSamus/ftsamus.c).
-    pub fn ftSs_Init_OnItemVisible(gobj: *mut HSD_GObj) {
-        unsafe {
-            st::Fighter_OnItemVisible(gobj, 0);
-        }
-    }
 
 }
 
 pub mod ftsamusspecialhi {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftsamusspecialhi::{ftSamus_DestroyAllUnsetx2444};
 
-    /// `ftSamus_DestroyAllUnsetx2444` (static) (src/melee/ft/kinds/ftSamus/ftsamusspecialhi.c).
-    pub fn ftSamus_DestroyAllUnsetx2444(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::efLib_DestroyAll(gobj);
-            (*fp).u.ss.x2244 = 0_u32;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 
 pub mod ftsamusspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftsamusspecials::{ftSs_SpecialS_8012A640};
 
-    /// `ftSs_SpecialS_8012A640` (src/melee/ft/kinds/ftSamus/ftsamusspecials.c).
-    pub fn ftSs_SpecialS_8012A640(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::efLib_DestroyAll(gobj);
-            (*fp).u.ss.x2244 = 0_u32;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

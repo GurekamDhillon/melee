@@ -3,47 +3,23 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftfoxspecialhi {
-    #[allow(unused_imports)]
+pub use crate::tu::ftfoxspecialhi::{ftFx_SpecialHiFall_Anim, ftFx_SpecialHiLanding_Coll};
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftFx_SpecialHiFall_Anim` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiFall_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 1, 0, 1 /* true */, ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x8C_FOX_FIREFOX_FREEFALL_MOBILITY as f32), ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x90_FOX_FIREFOX_LANDING_LAG as f32));
-            }
-        }
-    }
-
-    /// `ftFx_SpecialHiLanding_Coll` (src/melee/ft/kinds/ftFox/ftfoxspecialhi.c).
-    pub fn ftFx_SpecialHiLanding_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ft_80082708(gobj) == 0 /* false */) {
-                st::ftCo_80096900(gobj, 1, 0, 1 /* true */, ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x8C_FOX_FIREFOX_FREEFALL_MOBILITY as f32), ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x90_FOX_FIREFOX_LANDING_LAG as f32));
-            }
-        }
-    }
 
 }
 
 pub mod ftfoxspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftfoxspecials::{ftFx_SpecialAirSEnd_Anim};
 
-    /// `ftFx_SpecialAirSEnd_Anim` (src/melee/ft/kinds/ftFox/ftfoxspecials.c).
-    pub fn ftFx_SpecialAirSEnd_Anim(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            if (st::ftAnim_IsFramesRemaining(gobj) == 0) {
-                st::ftCo_80096900(gobj, 1, 0, 1 /* true */, ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x4C_FOX_ILLUSION_FREEFALL_MOBILITY as f32), ((*((*fp).dat_attrs as *const melee_types::ftFox_DatAttrs)).x50_FOX_ILLUSION_LANDING_LAG as f32));
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

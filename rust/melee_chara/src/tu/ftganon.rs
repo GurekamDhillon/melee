@@ -7,13 +7,16 @@
 //! and is TODO until those callbacks are all native. `ftGn_CostumeList` is zero-initialised BSS.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::stubs as st;
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use melee_types::*;
 
 /// Already ported (rounds 5/6): re-exported under this TU.
-pub use crate::chars::r5::ftGanon::ftganon::ftGn_Init_OnDeath;
-pub use crate::chars::r6::ftGanon::ftganon::{
-    ftGn_Init_OnItemInvisible, ftGn_Init_OnItemVisible, ftGn_Init_OnKnockbackEnter, ftGn_Init_OnKnockbackExit,
-};
+
+
 use crate::tu::ftclink::{Fighter_OnItemDrop, Fighter_OnItemPickup};
 
 pub const ftGn_Init_DatFilename: &str = "PlGn.dat";
@@ -60,3 +63,50 @@ pub fn ftGn_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
 
 /// `ftGn_CostumeList`: zero-initialised BSS array of the C (`UnkCostumeStruct ftGn_CostumeList[5]`), filled when the costumes load.
 pub static mut ftGn_CostumeList: [melee_types::UnkCostumeStruct; 5] = unsafe { core::mem::zeroed() };
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftGn_Init_OnDeath` (src/melee/ft/kinds/ftGanon/ftganon.c).
+pub fn ftGn_Init_OnDeath(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnDeath");
+    unsafe {
+        let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
+        st::ftParts_80074A4C(gobj, 0, 0);
+        st::ftParts_80074A4C(gobj, 1, -1);
+        (*fp).u.gn.during_specials = (0_u32 /* false */);
+        (*fp).u.gn.during_specials_start = (0_u32 /* false */);
+    }
+}
+
+/// `ftGn_Init_OnItemInvisible` (src/melee/ft/kinds/ftGanon/ftganon.c).
+pub fn ftGn_Init_OnItemInvisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnItemInvisible");
+    unsafe {
+        st::Fighter_OnItemInvisible(gobj, 1 /* true */);
+    }
+}
+
+/// `ftGn_Init_OnItemVisible` (src/melee/ft/kinds/ftGanon/ftganon.c).
+pub fn ftGn_Init_OnItemVisible(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnItemVisible");
+    unsafe {
+        st::Fighter_OnItemVisible(gobj, 1 /* true */);
+    }
+}
+
+/// `ftGn_Init_OnKnockbackEnter` (src/melee/ft/kinds/ftGanon/ftganon.c).
+pub fn ftGn_Init_OnKnockbackEnter(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnKnockbackEnter");
+    unsafe {
+        st::ftAnim_ApplyPartAnim(gobj, 3, 3, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 3, 0.0_f32);
+    }
+}
+
+/// `ftGn_Init_OnKnockbackExit` (src/melee/ft/kinds/ftGanon/ftganon.c).
+pub fn ftGn_Init_OnKnockbackExit(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftGn_Init_OnKnockbackExit");
+    unsafe {
+        st::ftAnim_ApplyPartAnim(gobj, 3, 2, 0.0_f32);
+        st::ftAnim_ApplyPartAnim(gobj, 4, 2, 0.0_f32);
+    }
+}

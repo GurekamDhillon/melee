@@ -3,11 +3,14 @@
 //! tests/tu_ftdonkeyheavyjump.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, HSD_GObj};
 use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (round 5): re-exported under this TU.
-pub use crate::chars::r5::ftDonkey::ftdonkeyheavyjump::ftDk_HeavyJump_Coll;
+
 
 pub fn ftDk_HeavyJump_IASA(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftDk_HeavyJump_IASA");
@@ -43,5 +46,14 @@ pub fn ftDk_HeavyWait1_Anim(gobj: *mut HSD_GObj) {
             crate::tu::ftdonkeyheavyfall::ftDk_MS_347_800E03C0(gobj);
         }
         (*fp).mv.dk.unk7.x8 -= 1.0;
+    }
+}
+
+// ---- folded from chars (consolidation step 20/21) ----
+/// `ftDk_HeavyJump_Coll` (src/melee/ft/kinds/ftDonkey/ftdonkeyheavyjump.c).
+pub fn ftDk_HeavyJump_Coll(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_HeavyJump_Coll");
+    unsafe {
+        crate::chars::r5::ftDonkey::ftdonkeyheavyfall::ftDk_HeavyFall_Coll(gobj);
     }
 }

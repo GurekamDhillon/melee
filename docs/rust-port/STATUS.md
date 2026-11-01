@@ -59,6 +59,7 @@ Env: `export GW_ISO_VANILLA=...` via the workspace `.env`. Run from the repo roo
 | pad_marth_sheik_bf | 1801 of 1801 (full) | none |
 | cpu_fox_falco_dl | 323 (0..322), no hash divergence | stops at 323: P2 shield roll `ftCo_800992A8` not ported |
 | cpu_peach_samus_ys_items | 120 (0..119), no hash divergence | stops at 120: Shy Guys spawn `it_802D8618` (`itheiho.c`) |
+(Engine, default since step 18: all four goldens are complete on `--engine tu`, seed column included: 1801 / 1801 / 3601 / 3601; the rows above are the pre-engine legacy numbers.)
 The sim stops (reports why) on unported code rather than guessing; a stop is not a mismatch. Re-measure with
 `melee diff --scenario <scn> --first` (it prints the stop reason).
 
@@ -94,7 +95,7 @@ Open audio: `--pause` and `--time-secs` captures (notes/consolidation.md Round 4
 Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1652.
 Blockers A and B of round 2 (stale hand matrices) are fixed: the stage draw callbacks were skipped (`Wb_RenderOption` answered 0), `HSD_MkRotationMtx`
 was unlinked, and several GC-layout reads went through native structs; details in notes/consolidation.md "Round 3".
-- C (round 4, was 1562, now 1652). The old blocker C was three real bugs: `Fighter_804D6550` (PlCo root 1, the item-throw float table) was a pointer table and its hook returned the
+- C (SOLVED in round 8: cpu_peach_samus_ys_items now matches all 3601 rows, seed included; the text below is the history). Was 1562, then 1652. The old blocker C was three real bugs: `Fighter_804D6550` (PlCo root 1, the item-throw float table) was a pointer table and its hook returned the
   variable's address (`melee_link::manual` now returns the table, `dat_custom::plco` decodes native words); item state-table predicates were `bool`-returning fns transmuted to
   `int`-returning ones (`kinds_inl::pred_b!` now makes an int-returning shim: a Rust `bool` leaves garbage in the upper bits of eax, which made items vanish at random); the full
   `Item` record is now compared by `melee diff --engine tu` (`ItemRecord`). Next stop: frame 1652, P2 Samus. seqdiff (inlined C names ignored: /tmp-style list in notes) is identical up to

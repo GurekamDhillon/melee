@@ -1160,3 +1160,27 @@ Done (engine 1801 / 1801 / 3601 / 1652 unchanged, gate OK, lint baseline 1996 ->
 - R2: `dedupe/drop_dups.py` + `drop_loop.py` remove a non-canonical body only when the canonical one has the same safety, ABI, parameter and return types and is `pub`, the name has no `static` C definition and contains an underscore, and the canonical crate is not downstream; the removed body becomes `pub use <canonical> as <name>`; `skip.txt` lists the names the compiler or a run objected to. Wrong heuristics cost two crashes in `Fighter_Create` (`lb_80011E24` variadic slice, per-TU `onEnter*` statics), so the rule is deliberately strict (27 bodies only).
 Left for step 23: the typed `_fp` / `*_native` variants (melee_runtime native TUs, state_native / tev_native / gobj_native, ~190 R2), the static-name collisions (`stageGObj*_OnInit`, `doEnter`, ...: the lint counts case-insensitive names of different C statics as one function; the lint should key statics by (C file, name)), `melee_fighter/{hooks,player}.rs`, `melee_chara/adapt.rs`, `melee_modes` gm* typed copies. Step 24 needs the baseline at zero.
 Tip: the Bash tool here eats backslashes in heredocs (`` becomes a backspace); write regexes with the Edit tool.
+
+## Round 8 (2026-11-01): blocker C solved, all four goldens complete on the engine
+
+cpu_peach_samus_ys_items 1652 -> 3601 (the whole golden, seed column included; the gate used to ignore the seed for the CPU scenarios, which hid a
+divergence that starts 3 frames before the first hash difference; compare with `compare_golden.py` without `--ignore-seed` to see the real count).
+Method: C call sequence of the failing frame (`_build/agents/<name>`, trace exe from `tools/rust-port/trace/build_trace.sh`, rebuilt per TU in 30 s with
+`--tu`), Rust call trace (`--features melee_core/calltrace`, separate `CARGO_TARGET_DIR`), `countdiff.py` / `seqdiff.py`, `MELEE_RAND_TRACE` on both sides
+(per-frame draw callers), then a temporary `OSReport` in the C TU and an `eprintln!` in the Rust body for the one function the trace named. Each fix:
+- `it_8026B924` (returns `s32`) was declared `f32` in `ftcpuattack.rs` ext_fns; `it_8026B560/574` (return `float`) were declared `i32` in `ftlib.rs`.
+  `melee_link::cast` transmuted same-size values, so the wrong ABI class was silent: it now panics on a float/int mismatch (site id in the message).
+- `lbColl_800077A0`: the C passes `sqrt_tmp - 1` (outside the array) as the volatile spill slot of its second `sqrtf_store`; clang treats the store as UB and the
+  shipping build returns the argument unchanged (measured: `sq == n1`). The Rust takes no sqrt there. `mpLib_80056C54` has the same pattern (`sqrt_tmp - 4/5`);
+  the Rust takes a real sqrt, not exercised by any golden: re-measure before trusting it.
+- Native-vs-GC layout traps (all of the same family: a C struct overlay, or a union arm, that depends on 4-byte pointer slots):
+  Kinoko scale scratch pair (`walk.middle/fast_anim_frame`) overlapped the saved velocities of `fn_800D2B30/BF8`; it lives in a static per fighter now;
+  `ftColl_8007A06C` writes its result over `&fp->dmg.x1870` (native `x1870` is an 8-byte pointer): built locally, stored field by field;
+  Beam Sword attributes (`itSword_UnkArticle1` has `UNK_T` fields before `xC`) are read at their GC offsets;
+  Shy Guy `attr[0]` is a relocated pointer to its health (`dat_custom::HEIHO_HEALTH` stores the value in the swapped copy).
+- Hooks the engine never installed: `GROUND_FRICTION_MUL` and `PLAYER_UPDATE_JOYSTICK_COUNT` (melee_fighter/hooks.rs defaults are the legacy ports),
+  the three `ftCommon_UpdateFacing` seams ("ambiguous" in `unresolved.txt`), the `it_80285300` ext of ftafterimage (cast a GObj to an `Item`).
+  `melee_link/unresolved.txt` still lists 2500 unresolved hooks: any of them panics when first reached.
+- Debug aid: `MELEE_WATCH_FIGHTER=slot,field,fromframe` (fields gr_vel, motion_id, xE4, xE8, mv24, mv28) with the calltrace build reports the function entry after
+  which the u32 changed (`MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=f` lists the entries before it).
+Not done: the `*_vs_c` oracle tests of `itheiho` (the attr pointer) and `lbcollision` were not re-run beyond `tu_lbcollision`; step 23 (lint baseline 986) and 24 are untouched this round.

@@ -132,6 +132,19 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                 let w = d.u32_at(off + 4 * k as u32);
                 unsafe { (buf as *mut u32).add(k).write(w) };
             }
+            // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
+            // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
+            let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
+            if let Some((_, _, size, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
+                if (*size as usize) <= n * 4 {
+                    for &(o, w) in fields.iter() {
+                        for i in 0..w as u32 {
+                            let byte = (d.u32_at(off + (o & !3)) >> (8 * (3 - ((o & 3) + i)))) as u8;
+                            unsafe { *buf.add((o + (w as u32 - 1 - i)) as usize) = byte };
+                        }
+                    }
+                }
+            }
             buf as *mut c_void
         }
         "sis" => sis_table(d, b, off),

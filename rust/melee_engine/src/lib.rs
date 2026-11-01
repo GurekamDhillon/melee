@@ -10,6 +10,7 @@ pub mod dat_custom;
 pub mod dat_types;
 pub mod extattr;
 pub mod dvd;
+pub mod yakumono_layouts;
 pub mod engine;
 pub mod gcm;
 pub mod gxbridge;

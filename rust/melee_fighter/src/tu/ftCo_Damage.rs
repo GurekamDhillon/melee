@@ -100,7 +100,7 @@ pub mod ext {
         pl_80040270(port: i32, sub: i32, kb: f32) = crate::plbonus::pl_80040270;
         pl_800401F0(port: i32, sub: i32, x: f32, y: f32) = crate::plbonus::pl_800401f0;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        HSD_Randf() -> f32 = || -> f32 { unsafe { crate::rng::HSD_Randf() } };
+        HSD_Randf() -> f32 = || todo!("HSD_Randf: installed by melee_link");
         un_803222EC(mag: f32, angle: f32) -> f32 = |mag: f32, angle: f32| -> f32 { unsafe { crate::tu::crowdsfx::un_803222EC(mag as _, angle as _) as _ } };
         un_8032233C(a: u32, b: u32) = |a: u32, b: u32| { unsafe { crate::tu::crowdsfx::un_8032233C(a as _, b as _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
@@ -168,7 +168,7 @@ pub mod ext {
         ftCo_DamageFall_IASA(g: G) = crate::tu::ftCo_DamageFall::ftCo_DamageFall_IASA;
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         PSVECCrossProduct(a: &Vec3, b: &Vec3) -> Vec3 = |a, b| { let r = melee_runtime::mtx::vec_cross(&cv(a), &cv(b)); Vec3 { x: r.x, y: r.y, z: r.z } };
-        lbVector_Angle(a: &Vec3, b: &Vec3) -> f32 = |a, b| melee_runtime::lbvector::angle(&cv(a), &cv(b));
+        lbVector_Angle(a: &Vec3, b: &Vec3) -> f32 = |_, _| todo!("lbVector_Angle: installed by melee_link");
     }
 }
 

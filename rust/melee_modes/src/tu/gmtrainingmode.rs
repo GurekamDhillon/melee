@@ -35,9 +35,9 @@ pub mod ext {
         lbTime_8000AF74(a: u32, b: i32) -> u32 = crate::lb::lbTime_8000AF74;
         gmFrontend_TrainingSelect(state: *mut GameModeState, sss: i32) = |state: *mut GameModeState, sss: i32| { unsafe { crate::tu::gmfrontend::gmFrontend_TrainingSelect(state as _, sss as _); } };
         gm_801B0730(css: *mut CSSData, ckind: *mut i8, stocks: *mut u8, color: *mut u8, nametag: *mut u8, cpu_level: *mut u8)
-            = |css, ckind, stocks, color, nametag, level| crate::gm_ptr::gm_801B0730(unsafe { &*css }, unsafe { ckind.as_mut() }, unsafe { stocks.as_mut() }, unsafe { color.as_mut() }, unsafe { nametag.as_mut() }, unsafe { level.as_mut() });
+            = |_, _, _, _, _, _| todo!("gm_801B0730: installed by melee_link");
         gm_801B07E8(css: *mut CSSData, ckind: *mut i8, stocks: *mut i8, color: *mut i8, arg4: *mut i8, level: *mut u8)
-            = |css, ckind, stocks, color, arg4, level| crate::gm_ptr::gm_801B07E8(unsafe { &*css }, unsafe { ckind.as_mut() }, unsafe { stocks.as_mut() }, unsafe { color.as_mut() }, unsafe { arg4.as_mut() }, unsafe { level.as_mut() });
+            = |_, _, _, _, _, _| todo!("gm_801B07E8: installed by melee_link");
         gm_ChangeGameModeAfterCurrentScene(pending_mode: i32) = |pending_mode: i32| { unsafe { crate::tu::gm_1A3F::gm_ChangeGameModeAfterCurrentScene(pending_mode as _); } };
         gm_SetupAllPlayerDefaults(players: *mut PlayerInitData) = |players: *mut PlayerInitData| { unsafe { crate::tu::gm_1601::gm_SetupAllPlayerDefaults(players as _); } };
         gm_GetNumCostumesForCKind(ckind: u8) -> u8 = |ckind: u8| -> u8 { unsafe { crate::tu::gm_1601::gm_GetNumCostumesForCKind(ckind as _) as _ } };
@@ -51,9 +51,9 @@ pub mod ext {
         lbAudioAx_80026EBC(stkind: StKind) -> u64 = |stkind: StKind| -> u64 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026EBC(stkind as _) as _ } };
         gm_SetupRulesDefaults(rules: *mut StartMeleeRules) = |rules: *mut StartMeleeRules| { unsafe { crate::tu::gm_1601::gm_SetupRulesDefaults(rules as _); } };
         gm_SetupHumanPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8)
-            = |p, ckind, color, stocks, slot| crate::gm_r4::gm_SetupHumanPlayer(unsafe { &mut *p }, ckind, color, stocks, slot);
+            = |_, _, _, _, _| todo!("gm_SetupHumanPlayer: installed by melee_link");
         gm_SetupCpuPlayer(p: *mut PlayerInitData, ckind: u8, color: u8, stocks: u8, slot: u8)
-            = |p, ckind, color, stocks, slot| crate::gm_r4::gm_SetupCpuPlayer(unsafe { &mut *p }, ckind, color, stocks, slot);
+            = |_, _, _, _, _| todo!("gm_SetupCpuPlayer: installed by melee_link");
         gm_LoadRumbleEnabled(data: *mut StartMeleeData) = |data: *mut StartMeleeData| { unsafe { crate::tu::gmvs::gm_LoadRumbleEnabled(data as _); } };
         gm_80189CDC(data: *mut StartMeleeData) = |data: *mut StartMeleeData| { unsafe { crate::tu::gm_1884::gm_80189CDC(data as _); } };
         gm_80162968(seconds: u32) -> i32 = |seconds: u32| -> i32 { unsafe { crate::tu::gm_1601::gm_80162968(seconds as _) as _ } };

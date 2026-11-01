@@ -55,7 +55,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ft_800892A0(g: G) = |g: G| { unsafe { let _ = crate::stale::renew_attack_instance(&mut *((*g).user_data as *mut Fighter)); } };
+        ft_800892A0(g: G) = |_| todo!("ft_800892A0: installed by melee_link");
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;

@@ -51,7 +51,7 @@ pub mod ext {
         ftAnim_IsFramesRemaining(g: G) -> bool = |g| unsafe { crate::tu::ftanim::ftAnim_IsFramesRemaining(g) };
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ftCo_Dash_Enter(g: G, arg1: i32) = crate::tu::ftCo_Dash::ftCo_Dash_Enter;
-        ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
+        ft_80084F3C(g: G) = |_| todo!("ft_80084F3C: installed by melee_link");
         ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");

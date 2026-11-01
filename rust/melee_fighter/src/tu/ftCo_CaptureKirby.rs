@@ -35,11 +35,11 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftKb_SpecialN_800F5AF0(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5AF0(&*(g as *const _)) } };
-        ftKb_SpecialN_800F5B20(g: G, out: &mut Vec2) = |g: G, out: &mut Vec2| { unsafe { let _ = crate::chardata::ftKb_SpecialN_800F5B20(&*(g as *const _), out); } };
-        ftKb_SpecialN_800F5B3C(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B3C(&*(g as *const _)) } };
-        ftKb_SpecialN_800F5B4C(g: G) -> f32 = |g: G| -> f32 { unsafe { crate::chardata::ftKb_SpecialN_800F5B4C(&*(g as *const _)) } };
-        ftKb_SpecialN_800F5B5C(g: G, out: &mut Vec3) = |g: G, out: &mut Vec3| { unsafe { let _ = crate::chardata::ftKb_SpecialN_800F5B5C(&*(g as *const _), out); } };
+        ftKb_SpecialN_800F5AF0(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5AF0: installed by melee_link");
+        ftKb_SpecialN_800F5B20(g: G, out: &mut Vec2) = |_, _| todo!("ftKb_SpecialN_800F5B20: installed by melee_link");
+        ftKb_SpecialN_800F5B3C(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5B3C: installed by melee_link");
+        ftKb_SpecialN_800F5B4C(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5B4C: installed by melee_link");
+        ftKb_SpecialN_800F5B5C(g: G, out: &mut Vec3) = |_, _| todo!("ftKb_SpecialN_800F5B5C: installed by melee_link");
         ftCo_ReleaseItemAndVictim(g: G) = crate::tu::ftco_800c7590::ftco_release_item_and_victim;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
@@ -47,7 +47,7 @@ pub mod ext {
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
-        ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
+        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
     }
 }

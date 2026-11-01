@@ -50,8 +50,8 @@ pub mod ext {
         ftCo_Walk_CheckInput(g: G) -> bool = crate::tu::ftCo_Walk::ftCo_Walk_CheckInput;
         ftCo_DownSpot_Enter(g: G) = crate::tu::ftCo_DownSpot::ftCo_DownSpot_Enter;
         ftCo_8008A7A8(g: G, ws: *mut core::ffi::c_void) = |g, ws| crate::tu::ftwaitanim::ftCo_8008A7A8(g, ws as *const _);
-        ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
-        ftColl_8007AEE0(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aee0(g as _); } };
+        ft_80084F3C(g: G) = |_| todo!("ft_80084F3C: installed by melee_link");
+        ftColl_8007AEE0(g: G) = |_| todo!("ftColl_8007AEE0: installed by melee_link");
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
     }
 }

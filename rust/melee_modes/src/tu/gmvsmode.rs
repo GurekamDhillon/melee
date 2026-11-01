@@ -31,19 +31,19 @@ pub mod ext {
         gm_LoadAnnouncer() = || { unsafe { crate::tu::gm_1601::gm_LoadAnnouncer(); } };
         gmFrontend_SelectScene(state: *mut GameModeState, sss: i32) = |state: *mut GameModeState, sss: i32| { unsafe { crate::tu::gmfrontend::gmFrontend_SelectScene(state as _, sss as _); } };
         gmFrontend_BeginLoading() = || { unsafe { crate::tu::gmfrontend::gmFrontend_BeginLoading(); } };
-        gmVsMelee_GetVsData() -> *mut VsModeData = || unsafe { vm::gmVsMelee_GetVsData() };
-        gmVsMelee_EnterCss(state: *mut GameModeState, vs: *mut VsModeData, mt: CSSMatchType) = |s, v, m| unsafe { vm::gmVsMelee_EnterCss(s, v, m) };
-        gmVsMelee_ExitCss(state: *mut GameModeState, vs: *mut VsModeData) = |s, v| unsafe { vm::gmVsMelee_ExitCss(s, v) };
-        gmVsMelee_EnterSss(state: *mut GameModeState, vs: *mut VsModeData) = |s, v| unsafe { vm::gmVsMelee_EnterSss(s, v) };
-        gmVsMelee_ExitSss(state: *mut GameModeState, vs: *mut VsModeData, cancel: u8) = |s, v, c| unsafe { vm::gmVsMelee_ExitSss(s, v, c) };
+        gmVsMelee_GetVsData() -> *mut VsModeData = || todo!("gmVsMelee_GetVsData: installed by melee_link");
+        gmVsMelee_EnterCss(state: *mut GameModeState, vs: *mut VsModeData, mt: CSSMatchType) = |_, _, _| todo!("gmVsMelee_EnterCss: installed by melee_link");
+        gmVsMelee_ExitCss(state: *mut GameModeState, vs: *mut VsModeData) = |_, _| todo!("gmVsMelee_ExitCss: installed by melee_link");
+        gmVsMelee_EnterSss(state: *mut GameModeState, vs: *mut VsModeData) = |_, _| todo!("gmVsMelee_EnterSss: installed by melee_link");
+        gmVsMelee_ExitSss(state: *mut GameModeState, vs: *mut VsModeData, cancel: u8) = |_, _, _| todo!("gmVsMelee_ExitSss: installed by melee_link");
         gmVsMelee_EnterVs(state: *mut GameModeState, vs: *mut VsModeData, scb: vm::gm_StartMeleeCallback, pcb: vm::gm_PlayerInitCallback)
-            = |s, v, a, b| unsafe { vm::gmVsMelee_EnterVs(s, v, a, b) };
-        gmVsMelee_ExitVs(state: *mut GameModeState, id0: u8, id1: u8) = |s, a, b| unsafe { vm::gmVsMelee_ExitVs(s, a, b) };
+            = |_, _, _, _| todo!("gmVsMelee_EnterVs: installed by melee_link");
+        gmVsMelee_ExitVs(state: *mut GameModeState, id0: u8, id1: u8) = |_, _, _| todo!("gmVsMelee_ExitVs: installed by melee_link");
         gmVsMelee_EnterSuddenDeath(state: *mut GameModeState, vs: *mut VsModeData, scb: vm::gm_StartMeleeCallback, pcb: vm::gm_PlayerInitCallback)
-            = |s, v, a, b| unsafe { vm::gmVsMelee_EnterSuddenDeath(s, v, a, b) };
-        gmVsMelee_ExitSuddenDeath(state: *mut GameModeState) = |s| unsafe { vm::gmVsMelee_ExitSuddenDeath(s) };
-        gmVsMelee_EnterResults(state: *mut GameModeState) = |s| unsafe { vm::gmVsMelee_EnterResults(s) };
-        gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeData, id: u8) = |s, v, i| unsafe { vm::gmVsMelee_ExitResults(s, v, i) };
+            = |_, _, _, _| todo!("gmVsMelee_EnterSuddenDeath: installed by melee_link");
+        gmVsMelee_ExitSuddenDeath(state: *mut GameModeState) = |_| todo!("gmVsMelee_ExitSuddenDeath: installed by melee_link");
+        gmVsMelee_EnterResults(state: *mut GameModeState) = |_| todo!("gmVsMelee_EnterResults: installed by melee_link");
+        gmVsMelee_ExitResults(state: *mut GameModeState, vs: *mut VsModeData, id: u8) = |_, _, _| todo!("gmVsMelee_ExitResults: installed by melee_link");
         gm_80162A98(arg: i32) -> *mut gmm_x1868_1A8_t = |arg: i32| -> *mut gmm_x1868_1A8_t { unsafe { crate::tu::gm_1601::gm_80162A98(arg as _) as _ } };
         gm_RecordSelfDestructs(amount: i32) = |amount: i32| { unsafe { crate::tu::gm_1601::gm_RecordSelfDestructs(amount as _); } };
         gm_80162A4C(amount: i32) -> i32 = |amount: i32| -> i32 { unsafe { crate::tu::gm_1601::gm_80162A4C(amount as _) as _ } };

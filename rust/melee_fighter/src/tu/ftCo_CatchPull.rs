@@ -42,12 +42,12 @@ pub mod ext {
         fn_800DA1D8(g: G) = crate::tu::ftCo_CatchWait::fn_800DA1D8;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |g| crate::ftcommon::set_self_movement_from_grounded_movement(fp(g));
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |_| todo!("ftCommon_SetSelfMovementFromGroundedMovement: installed by melee_link");
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
         ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;
         lb_8000B1CC(jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, offset: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, offset as _, out as _); } };
-        ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |f: &mut Fighter, p: u32| crate::ftdmgfall::ftparts_get_bone_index(f, p as i32) as u32;
+        ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         ftCo_800DA698(g: G, arg1: bool) = crate::tu::ftCo_CatchCut::ftCo_800DA698;
     }
 }

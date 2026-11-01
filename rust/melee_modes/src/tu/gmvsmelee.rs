@@ -33,7 +33,7 @@ pub mod ext {
     use melee_types::*;
     ext_fns! {
         lbTime_8000AF74(a: u32, b: i32) -> u32 = crate::lb::lbTime_8000AF74;
-        memzero(mem: *mut c_void, size: isize) = |m, n| unsafe { core::ptr::write_bytes(m as *mut u8, 0, n as usize) };
+        memzero(mem: *mut c_void, size: isize) = |_, _| todo!("memzero: installed by melee_link");
         Mex_Enabled(name: &str) -> i32 = |_| todo!("TODO(port) Mex_Enabled (pc/platform mex)");
         SceneLaunch_SeedVs(vs: *mut VsModeData, dummy_fallback: bool) -> bool = |vs, d| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedVs(vs, d as i32) != 0 };
         SceneLaunch_Active() -> i32 = || todo!("TODO(port) SceneLaunch_Active (pc/platform)");
@@ -73,7 +73,7 @@ pub mod ext {
         Netplay_NoteTie() = || todo!("TODO(port) Netplay_NoteTie (gw_netplay.c)");
         Netplay_RematchPending() -> i32 = || todo!("TODO(port) Netplay_RematchPending (gw_netplay.c)");
         gm_WasMatchCanceled(outcome: u8) -> bool = crate::gm::gm_WasMatchCanceled;
-        gm_MatchHasMultipleWinners(end: *mut MatchEnd) -> bool = |e| crate::gm_r4::gm_MatchHasMultipleWinners(unsafe { &*e });
+        gm_MatchHasMultipleWinners(end: *mut MatchEnd) -> bool = |_| todo!("gm_MatchHasMultipleWinners: installed by melee_link");
         gm_80162574(ckind: u8, outcome: u8) = |ckind: u8, outcome: u8| { unsafe { crate::tu::gm_1601::gm_80162574(ckind as _, outcome as _); } };
         gm_SetupHumanResultsScreen(match_kind: u8, outcome: u8) = |match_kind: u8, outcome: u8| { unsafe { crate::tu::gm_1601::gm_SetupHumanResultsScreen(match_kind as _, outcome as _); } };
         gm_SetupResultsScreenPlayTime(seconds: u32, arg: u32) = |seconds: u32, arg: u32| { unsafe { crate::tu::gm_1601::gm_SetupResultsScreenPlayTime(seconds as _, arg as _); } };
@@ -90,7 +90,7 @@ pub mod ext {
         gm_80168638(end: *mut MatchEnd) = |end: *mut MatchEnd| { unsafe { crate::tu::gm_1601::gm_80168638(end as _); } };
         gm_80168710(end: *mut MatchEnd, vs: *mut VsModeData) = |end: *mut MatchEnd, vs: *mut VsModeData| { unsafe { crate::tu::gm_1601::gm_80168710(end as _, vs as _); } };
         gm_8016247C(arg: i32) -> i32 = |arg: i32| -> i32 { unsafe { crate::tu::gm_1601::gm_8016247C(arg as _) as _ } };
-        gm_801688AC(end: *mut MatchEnd) -> i32 = |e| crate::gm_r10::gm_801688AC(unsafe { &*e });
+        gm_801688AC(end: *mut MatchEnd) -> i32 = |_| todo!("gm_801688AC: installed by melee_link");
         gm_GetVsPlayMatchTotal() -> u32 = || -> u32 { unsafe { crate::tu::gm_1601::gm_GetVsPlayMatchTotal() as _ } };
         gm_80172DD4(arg: u32) -> u8 = |arg: u32| -> u8 { unsafe { crate::tu::gm_16f1::gm_80172DD4(arg as _) as _ } };
         gmMainLib_8015ED98() -> *mut gmm_retval_ED98 = || -> *mut gmm_retval_ED98 { unsafe { crate::tu::gmmain_lib::gmMainLib_8015ED98() as _ } };

@@ -41,9 +41,9 @@ pub mod ext {
     }
     ext_fns! {
         it_8026B30C(item: *mut HSD_GObj) -> i32 = |item: *mut HSD_GObj| -> i32 { unsafe { melee_items::tu::it_26B1::it_8026B30C(item as _) as _ } };
-        ftCo_GetLStickAngle(fp: &mut Fighter) -> f32 = |f| crate::ftcommon3::ftco_get_lstick_angle(f);
+        ftCo_GetLStickAngle(fp: &mut Fighter) -> f32 = |_| todo!("ftCo_GetLStickAngle: installed by melee_link");
         ftCo_GetCStickAngle(fp: &mut Fighter) -> f32 = |f| crate::ftcommon3::ftco_get_cstick_angle(f);
-        ftCo_800DF50C(fp: &mut Fighter) -> bool = |fp: &mut Fighter| -> bool { unsafe { crate::ft0df::ftco_800df50c(fp as _) as _ } };
+        ftCo_800DF50C(fp: &mut Fighter) -> bool = |_| todo!("ftCo_800DF50C: installed by melee_link");
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
         ftCo_800968C8(g: G) = |g: G| { unsafe { crate::tu::ftCo_FallSpecial::ftCo_800968C8(g as _); } };
         ftCo_Fall_Enter(g: G) = |g| crate::tu::ftCo_Jump::ext::ftCo_Fall_Enter(g);

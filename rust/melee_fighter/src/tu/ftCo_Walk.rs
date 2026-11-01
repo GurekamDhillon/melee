@@ -44,7 +44,7 @@ pub mod ext {
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
         ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
-        ft_8008A244(g: G) -> bool = |g: G| -> bool { unsafe { crate::ft084e::ft_8008a244(g as _) as _ } };
+        ft_8008A244(g: G) -> bool = |_| todo!("ft_8008A244: installed by melee_link");
         ftWalkCommon_800DFC70(g: G) -> bool = crate::tu::ftwalkcommon::ftwalkcommon_800dfc70;
         ftWalkCommon_800DFCA4(g: G, msid: FtMotionId, fl: MotionFlags, start: f32, a: f32, b: f32, c: f32, d: f32, e: f32, h: f32, accel: f32) = crate::tu::ftwalkcommon::ftwalkcommon_800dfca4;
         ftWalkCommon_800DFDDC(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800dfddc;

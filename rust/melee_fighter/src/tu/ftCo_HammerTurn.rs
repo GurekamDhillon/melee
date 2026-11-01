@@ -38,7 +38,7 @@ pub mod ext {
         ftCo_800C97A8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Turn::ftCo_800C97A8(g as _) as _ } };
         ftCo_Turn_Enter(g: G, msid: i32, flags: u32, a: f32, b: f32, c: f32) = |g: G, msid: i32, flags: u32, a: f32, b: f32, c: f32| { unsafe { crate::tu::ftCo_Turn::ftCo_Turn_Enter(g as _, msid as _, flags as _, a as _, b as _, c as _); } };
         ftCo_800C4ED8(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4ED8(g as _); } };
-        ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |fp: &mut Fighter, part: u32| -> u32 { unsafe { crate::ftdmgfall::ftparts_get_bone_index(fp, part as _) as _ } };
+        ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         ftPartSetRotY(fp: &mut Fighter, part: i32, r: f32) = |fp: &mut Fighter, part: i32, r: f32| { unsafe { crate::tu::ftparts::ftPartSetRotY(fp as _, part as _, r as _); } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
         ftCo_800C5A50(g: G) -> bool = crate::tu::ftCo_HammerJump::ftCo_800C5A50;

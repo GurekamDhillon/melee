@@ -37,7 +37,7 @@ pub mod ext {
         // `ftData_80085FD4(fp, msid)->x8` (only that word is read here).
         ftData_80085FD4(f: &mut Fighter, msid: i32) -> usize = crate::tu::ftdata::ftData_80085FD4_x8;
         ftCo_8008A6D8(g: G, anim_id: i32) = crate::tu::ftwaitanim::ftCo_8008A6D8;
-        ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |f: &mut Fighter, val: u32| { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(f as _, val as _); } };
+        ftCommon_8007EFC0(f: &mut Fighter, val: u32) = |_, _| todo!("ftCommon_8007EFC0: installed by melee_link");
         ftLk_AttackAir_800EB3BC(g: G) = |_| todo!("TODO(port) ftLk_AttackAir_800EB3BC (ftlinkattackair.c)");
         ftCl_Init_8014919C(g: G) = |_| todo!("TODO(port) ftCl_Init_8014919C (ftclink.c)");
         ftCo_8008A7A8(g: G, w: *mut WaitStruct) = |g, w| crate::tu::ftwaitanim::ftCo_8008A7A8(g, w);
@@ -56,7 +56,7 @@ pub mod ext {
         ftCo_80099F9C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Pass::ftCo_80099F9C(g as _) as _ } };
         ftCo_Dash_CheckInput(g: G) -> bool = crate::tu::ftCo_Dash::ftCo_Dash_CheckInput;
         ftCo_SquatRv_CheckInput(g: G) -> bool = crate::tu::ftCo_SquatRv::ftCo_SquatRv_CheckInput;
-        ft_80084F3C(g: G) = |g: G| { unsafe { let _ = crate::ft084e::ft_80084f3c(g as _); } };
+        ft_80084F3C(g: G) = |_| todo!("ft_80084F3C: installed by melee_link");
         ftColl_8007AEE0(g: G) = crate::ft0df::ftcoll_8007aee0;
         ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }

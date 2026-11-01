@@ -39,7 +39,7 @@ pub mod ext {
         fn_800D2B04(f: &mut Fighter) = k::fn_800d2b04;
         fn_800D2BF8(g: G) = k::fn_800d2bf8;
         ftCo_800D2770(g: G, scale: f32) = k::ftco_800d2770;
-        ftCommon_8007E2FC(g: G) = |g| crate::ftcommon2::ftcommon_8007e2fc(super::fp(g));
+        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
         ft_8008A324(g: G) = crate::tu::ft_08a1::ft_8008A324;
         fn_800D2B30(g: G) = k::fn_800d2b30;
         fn_800D2890(g: G, msid: i32) = k::fn_800d2890;

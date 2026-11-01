@@ -41,7 +41,7 @@ pub mod ext {
         lbAudioAx_800240B4(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800240B4(sfx as _) as _ } };
         lbAudioAx_8002411C(sfx: i32) -> i32 = |sfx: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002411C(sfx as _) as _ } };
         mpLib_80458868() -> *mut mpCollisionBox = || todo!("TODO(port) mpLib_80458868 (mp/mplib.c data)");
-        ftLib_8008732C(g: G) -> i32 = |g| crate::ftlib::ftlib_8008732c(g) as i32;
+        ftLib_8008732C(g: G) -> i32 = |_| todo!("ftLib_8008732C: installed by melee_link");
         ftLib_8008731C(g: G) -> i32 = crate::ftlib::ftlib_8008731c;
         ftLib_80086644(g: G, pos: &mut Vec3) = crate::ftlib::ftlib_80086644;
         ftLib_80087460(g: G) -> u32 = crate::ftlib::ftlib_80087460;
@@ -51,9 +51,9 @@ pub mod ext {
         ftLib_80087120(g: G) -> i32 = crate::ftlib::ftlib_80087120;
         ftLib_8008746C(g: G) -> i32 = crate::ftlib::ftlib_8008746c;
         ftLib_80087454(g: G) -> f32 = crate::ftlib::ftlib_80087454;
-        Player_8003248C(slot: u8, sub: i32) -> i32 = |s, p| crate::player::player_8003248c(s as i32, p) as i32;
-        pl_8003FDA0(slot: u8, sub: i32) = |s, p| crate::plbonus::pl_8003fda0(s as i32, p);
-        pl_8003FDC8(slot: u8, sub: i32) = |s, p| crate::plbonus::pl_8003fdc8(s as i32, p);
+        Player_8003248C(slot: u8, sub: i32) -> i32 = |_, _| todo!("Player_8003248C: installed by melee_link");
+        pl_8003FDA0(slot: u8, sub: i32) = |_, _| todo!("pl_8003FDA0: installed by melee_link");
+        pl_8003FDC8(slot: u8, sub: i32) = |_, _| todo!("pl_8003FDC8: installed by melee_link");
     }
 }
 

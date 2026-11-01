@@ -43,7 +43,7 @@ pub mod ext {
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         fn_800D8378(g: G) = crate::tu::ftCo_ItemScopeFire::fn_800D8378;
-        ft_800892A0(g: G) = |g: G| { unsafe { let _ = crate::stale::renew_attack_instance(&mut *((*g).user_data as *mut Fighter)); } };
+        ft_800892A0(g: G) = |_| todo!("ft_800892A0: installed by melee_link");
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         fn_800D86E0(g: G) = crate::tu::ftCo_ItemScope::fn_800D86E0;
         fn_800D874C(g: G) = crate::tu::ftCo_ItemScope::fn_800D874C;

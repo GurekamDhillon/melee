@@ -203,7 +203,7 @@ pub mod ext {
         Player_80032768(a0: i32, a1: *mut Vec3) = |a0: i32, a1: *mut Vec3| { unsafe { melee_fighter::tu::player::Player_80032768(a0 as _, a1 as _); } };
         Player_SetFacingDirection(a0: i32, a1: f32) = |a0: i32, a1: f32| { unsafe { melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _); } };
         Player_SetHPByIndex(a0: i32, a1: i32, a2: i32) = |a0: i32, a1: i32, a2: i32| { unsafe { melee_fighter::tu::player::Player_SetHPByIndex(a0 as _, a1 as _, a2 as _); } };
-        Player_80032070(a0: i32, a1: i32) = |a0: i32, a1: i32| { unsafe { let _ = melee_fighter::player::player_80032070(a0 as _, a1 as _); } };
+        Player_80032070(a0: i32, a1: i32) = |_, _| todo!("Player_80032070: installed by melee_link");
         ifStatus_802F6508(a0: i32) = |a0: i32| { unsafe { melee_world::tu::ifstatus::ifStatus_802F6508(a0 as _); } };
         Camera_800310E8() = || todo!("TODO(port) Camera_800310E8 (camera.c)");
         Player_GetFlagsBit1(a0: i32) -> i32 = |a0: i32| -> i32 { unsafe { melee_fighter::tu::player::Player_GetFlagsBit1(a0 as _) as _ } };

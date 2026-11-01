@@ -42,7 +42,7 @@ pub mod ext {
         lb_8000D008(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ } };
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
         efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { melee_world::tu::efn::eflib::efLib_SetParamAlpha(g as _, a as _); } };
-        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |fp: &mut Fighter| -> *mut HSD_Joint { unsafe { crate::platform::GenoDefine_RestPoseTree(fp) } };
+        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |_| todo!("GenoDefine_RestPoseTree: installed by melee_link");
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
         ftData_80085E50(fp: &mut Fighter, msid: i32) -> *mut FigaTree = |fp: &mut Fighter, msid: i32| -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ } };
         ftAnim_8006F4C8(fp: &mut Fighter, b: bool, tree: *mut FigaTree) = |fp: &mut Fighter, b: bool, tree: *mut FigaTree| { unsafe { crate::tu::ftanim::ftAnim_8006F4C8(fp as _, b as _, tree as _); } };
@@ -61,7 +61,7 @@ pub mod ext {
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
         efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (ef/efsync.c)");
         ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_8007B1B8 (ftcoll.c)");
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |fp: &mut Fighter, id: i32, vol: u8, pan: u8| { unsafe { let _ = crate::ft0877::play_sfx(fp, id as _, vol as _, pan as _); } };
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineTemplateSkeleton(kind) } };
         Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
         ftYs_Init_8012BECC(g: G) = |_| todo!("TODO(port) ftYs_Init_8012BECC (ftYoshi)");
@@ -84,8 +84,8 @@ pub mod ext {
         ftCo_800CB024(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::ftCo_800CB024(g as _) as _ } };
         ftCo_8009A080(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Pass::ftCo_8009A080(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ftColl_8007AEE0(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aee0(g as _); } };
-        ftColl_8007AEF8(g: G) = |g: G| { unsafe { let _ = crate::ft0df::ftcoll_8007aef8(g as _); } };
+        ftColl_8007AEE0(g: G) = |_| todo!("ftColl_8007AEE0: installed by melee_link");
+        ftColl_8007AEF8(g: G) = |_| todo!("ftColl_8007AEF8: installed by melee_link");
         ft_800845B4(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_800845b4(g as _); } };
         ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
@@ -107,7 +107,7 @@ pub mod ext {
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
         ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent| { unsafe { crate::tu::ftcoll::ftcoll_create_reflect_hit(g as _, desc, cb); } };
-        ftCommon_8007DB24(g: G) = |g: G| { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g as _); } };
+        ftCommon_8007DB24(g: G) = |_| todo!("ftCommon_8007DB24: installed by melee_link");
         lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
     }
 }

@@ -35,7 +35,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "quake_model_set" { return Some(rt("DynamicModelDesc")); }
     if name == "map_ptcl" { return Some(RootType::Custom("ptclcmd")); }
     if name == "map_texg" { return Some(RootType::Custom("ptcltex")); }
-    if name == "yakumono_param" { return Some(RootType::Custom("rawwords")); }
+    if name == "yakumono_param" { return Some(RootType::Raw); }
     if name == "itPublicData" { return Some(RootType::Custom("itco")); }
     if name == "effCommonDataTable" { return Some(RootType::Custom("efdat")); }
     if name == "Stc_scemdls" { return Some(RootType::Custom("ptrtable_dynmodel")); }
@@ -50,12 +50,14 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("SIS_") { return Some(rt("SIS")); }
+    if name.starts_with("ftDataKirbyCopy") { return Some(rt("KirbyHatStruct")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name.ends_with("_scene_data") { return Some(rt("SceneDesc")); }
+    if name.ends_with("_image_desc") { return Some(rt("HSD_ImageDesc")); }
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
     if name.ends_with("_figatree") { return Some(rt("FigaTree")); }
     if name.ends_with("_joint") { return Some(rt("HSD_Joint")); }
@@ -74,9 +76,11 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
             "HSD_AnimJoint" => d.object::<HSD_AnimJoint>(off) as *mut c_void,
+            "HSD_ImageDesc" => d.object::<HSD_ImageDesc>(off) as *mut c_void,
             "HSD_Joint" => d.object::<HSD_Joint>(off) as *mut c_void,
             "HSD_MatAnimJoint" => d.object::<HSD_MatAnimJoint>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
+            "KirbyHatStruct" => d.object::<KirbyHatStruct>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
             "SIS" => d.object::<SIS>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,

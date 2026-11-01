@@ -172,8 +172,6 @@ nodef Geno_DefineIsNone melee_fighter/tu/fighter.rs 0
 nodef Geno_DefineThrownAs melee_fighter/tu/fighter.rs 0
 nodef Geno_DefineThrownAsRow melee_fighter/tu/fighter.rs 0
 nodef Geno_ToonUnlit melee_fighter/tu/fighter.rs 0
-nodef HSD_MtxInverse melee_fighter/tu/fighter.rs 0
-nodef HSD_MtxSRT melee_fighter/tu/fighter.rs 0
 nodef Mex_Enabled melee_fighter/tu/fighter.rs 0
 nodef Mex_FighterCallbackDispatch melee_fighter/tu/fighter.rs 0
 nodef Mex_FtPartsTable melee_fighter/tu/fighter.rs 0
@@ -274,7 +272,6 @@ nodef ftUcf_PadRaw melee_fighter/tu/ftCo_Damage.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_DamageFall.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_DamageFall.rs 0
 nodef ftUcf_PadRaw melee_fighter/tu/ftCo_DamageFall.rs 0
-nodef HSD_MtxQuat melee_fighter/tu/ftCo_DamageIce.rs 0
 nodef ftCommon_UnlockECB melee_fighter/tu/ftCo_DamageIce.rs 0
 nodef ft_GetGroundFrictionMultiplier melee_fighter/tu/ftCo_Dash.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_Escape.rs 0
@@ -330,7 +327,6 @@ nodef Geno_DefineIsNone melee_fighter/tu/ftanim.rs 0
 nodef Geno_DefineTemplateSkeleton melee_fighter/tu/ftanim.rs 0
 nodef HSD_ForeachAnim_SetLoop melee_fighter/tu/ftanim.rs 1
 nodef HSD_ForeachAnim_SetRate melee_fighter/tu/ftanim.rs 1
-nodef HSD_MtxInverse melee_fighter/tu/ftanim.rs 0
 nodef costume_matanim melee_fighter/tu/ftanim.rs 0
 nodef ftData_UnkCallbackPairs0_x0 melee_fighter/tu/ftanim.rs 0
 nodef ftData_UnkCallbackPairs0_x4 melee_fighter/tu/ftanim.rs 0
@@ -822,15 +818,9 @@ nodef efSync_Spawn_N melee_items/tu/itevyoshiegg.rs 1
 nodef efSync_Spawn_N melee_items/tu/itfflower.rs 1
 nodef efSync_Spawn_N melee_items/tu/itkoopaflame.rs 1
 nodef efSync_Spawn_N melee_items/tu/itkusudama.rs 1
-nodef HSD_MtxGetRotation melee_items/tu/itlinkarrow.rs 0
-nodef HSD_MtxGetRotation melee_items/tu/itlinkboomerang.rs 0
 nodef efSync_Spawn_N melee_items/tu/itlinkhookshot.rs 1
 nodef efSync_Spawn_N melee_items/tu/itlipstickspore.rs 1
 nodef efSync_Spawn_N melee_items/tu/itlizardon.rs 1
-nodef HSD_MtxGetRotation melee_items/tu/itmewtwoshadowball.rs 0
-nodef HSD_MtxGetRotation melee_items/tu/itsamuschargeshot.rs 0
-nodef HSD_MtxGetRotation melee_runtime/tu/jobj.rs 1
-nodef HSD_MtxSRT melee_runtime/tu/jobj.rs 1
 nodef PSVECScale melee_runtime/tu/jobj.rs 1
 nodef ProfActive melee_runtime/tu/jobj.rs 1
 nodef ProfBegin melee_runtime/tu/jobj.rs 1
@@ -882,7 +872,6 @@ nodef DCInvalidateRange melee_modes/tu/lb_01F8.rs 1
 nodef GXInitTexObj melee_modes/tu/lb_01F8.rs 1
 nodef GXInitTexObjLOD melee_modes/tu/lb_01F8.rs 1
 nodef GXLoadTexObj melee_modes/tu/lb_01F8.rs 1
-nodef HSD_MtxQuat melee_modes/tu/lb_020A.rs 1
 nodef MTXRotRad melee_modes/tu/lb_020A.rs 0
 nodef ARQPostRequest melee_runtime/tu/lbarq.rs 1
 nodef DCInvalidateRange melee_runtime/tu/lbarq.rs 1
@@ -963,7 +952,6 @@ nodef GXSetVtxDesc melee_runtime/tu/lbcollision.rs 1
 nodef GXSetZCompLoc melee_runtime/tu/lbcollision.rs 1
 nodef GXSetZMode melee_runtime/tu/lbcollision.rs 1
 nodef HSD_CObjGetViewingMtx melee_runtime/tu/lbcollision.rs 1
-nodef HSD_MtxInverse melee_runtime/tu/lbcollision.rs 0
 nodef DVDConvertPathToEntrynum melee_runtime/tu/lbdvd.rs 1
 nodef OSDisableInterrupts melee_runtime/tu/lbdvd.rs 1
 nodef OSRestoreInterrupts melee_runtime/tu/lbdvd.rs 1
@@ -1135,7 +1123,6 @@ nodef Snap_NoteRenderPool melee_runtime/tu/objalloc.rs 1
 nodef Snap_RenderPoolAt melee_runtime/tu/objalloc.rs 1
 nodef Snap_RenderPoolCount melee_runtime/tu/objalloc.rs 1
 nodef Snap_Resimulating melee_runtime/tu/objalloc.rs 1
-nodef HSD_MtxSRT melee_runtime/tu/particle.rs 1
 nodef OSGetTime melee_runtime/tu/perf.rs 1
 nodef ftDemo_CreateFighter melee_fighter/tu/player.rs 0
 nodef ftDemo_SetArchiveData melee_fighter/tu/player.rs 0
@@ -1211,7 +1198,6 @@ nodef GXSetZMode melee_runtime/tu/psdisp.rs 1
 nodef GXTexCoord1x8 melee_runtime/tu/psdisp.rs 1
 nodef GXTexCoord2f32 melee_runtime/tu/psdisp.rs 1
 nodef HSD_CObjGetViewingMtx melee_runtime/tu/psdisp.rs 1
-nodef HSD_MtxSRT melee_runtime/tu/psdisp.rs 0
 nodef HSD_MulColor melee_runtime/tu/psdisp.rs 0
 nodef GXSetNumTevStages melee_runtime/tu/psdisptev.rs 1
 nodef GXSetNumTexGens melee_runtime/tu/psdisptev.rs 1
@@ -2477,8 +2463,6 @@ sigmismatch Mex_OnFrameDispatch melee_fighter/tu/fighter.rs 0
 sigmismatch Mex_OnLandingDispatch melee_fighter/tu/fighter.rs 0
 sigmismatch Mex_OnLoadDispatch melee_fighter/tu/fighter.rs 0
 sigmismatch PSVECCrossProduct melee_fighter/tu/ftCo_Damage.rs 0
-sigmismatch HSD_MkRotationMtx melee_fighter/tu/ftCo_DamageIce.rs 0
-sigmismatch HSD_MtxGetTranslate melee_fighter/tu/ftCo_DamageIce.rs 0
 sigmismatch ftCommon_8007F8B4 melee_fighter/tu/ft_0d4d.rs 0
 sigmismatch mpCheckAllRemap melee_fighter/tu/ftco_0d8e.rs 1
 sigmismatch mpCheckAllRemap melee_fighter/tu/ftco_0d95.rs 1
@@ -2506,11 +2490,8 @@ sigmismatch lbArchive_LoadSections melee_world/tu/ifstatus.rs 0
 sigmismatch lbArchive_LoadSections melee_world/tu/ifstock.rs 0
 sigmismatch lbArchive_LoadSections melee_world/tu/iftime.rs 0
 sigmismatch _HSD_RandForgetMemory melee_runtime/tu/initialize.rs 0
-sigmismatch HSD_MtxGetTranslate melee_runtime/tu/jobj.rs 1
-sigmismatch HSD_MtxSRTQuat melee_runtime/tu/jobj.rs 1
 sigmismatch HSD_SisLib_803A6B98 melee_modes/tu/lb_0192.rs 1
 sigmismatch HSD_SisLib_803A70A0 melee_modes/tu/lb_0192.rs 1
-sigmismatch HSD_MkRotationMtx melee_modes/tu/lb_020A.rs 1
 sigmismatch lbArchive_LoadSymbols melee_runtime/tu/lbaudio_ax.rs 1
 sigmismatch __assert melee_modes/tu/mnhyaku.rs 1
 sigmismatch gm_801677E8 melee_modes/tu/mnhyaku.rs 1
@@ -2520,13 +2501,10 @@ sigmismatch __assert melee_modes/tu/mnlanguage.rs 1
 sigmismatch __assert melee_modes/tu/mnmain.rs 1
 sigmismatch __assert melee_modes/tu/mnmainrule.rs 1
 sigmismatch __assert melee_modes/tu/mnname.rs 1
-sigmismatch HSD_MtxInverseTranspose melee_runtime/tu/pobj.rs 0
-sigmismatch HSD_MtxScaledAdd melee_runtime/tu/pobj.rs 0
 sigmismatch HSD_TExpMakeDag melee_runtime/tu/texp.rs 1
 sigmismatch HSD_TExpSchedule melee_runtime/tu/texp.rs 1
 sigmismatch HSD_TExpSimplify melee_runtime/tu/texp.rs 1
 sigmismatch HSD_TExpSimplify2 melee_runtime/tu/texp.rs 1
-sigmismatch HSD_MkRotationMtx melee_runtime/tu/tobj.rs 1
 sigmismatch DevText_Printf melee_items/tu/toy.rs 1
 sigmismatch DevText_Printf melee_items/tu/tydisplay.rs 1
 sigmismatch DevText_Printf melee_items/tu/tyfigupon.rs 1

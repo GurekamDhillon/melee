@@ -122,7 +122,10 @@ impl Engine {
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
             melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);
             melee_runtime::tu::gobj_native::HSD_RandRenderEnd = Some(melee_runtime::tu::random::global::HSD_RandRenderEnd);
-            melee_modes::tu::gmscene::ext::FRAME_POST = Some(|| unsafe { FRAME_ROW = Some(Engine::compute_row()) });
+            melee_modes::tu::gmscene::ext::FRAME_POST = Some(|| unsafe {
+                FRAME_ROW = Some(Engine::compute_row());
+                if CAPTURE_FRAME == RAND_FRAME as i64 { CAPTURED = Some(Engine::capture_now()); }
+            });
             melee_core::ct::RENDER_STUB.store(!melee_runtime::tu::gobj_native::HEADLESS_RENDER, core::sync::atomic::Ordering::Relaxed);
             melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
@@ -424,6 +427,36 @@ impl Engine {
 }
 
 static mut FRAME_ROW: Option<[u32; 16]> = None;
+/// `melee diff --engine tu`: capture the state at `Script_FramePost` of this frame (the C snapshot point: after the logic
+/// procs, before the render pass; joints are still matrix-dirty there).
+pub static mut CAPTURE_FRAME: i64 = -1;
+pub static mut CAPTURED: Option<Captured> = None;
+
+/// The engine state read at the post-logic point.
+pub struct Captured {
+    pub row: [u32; 16],
+    pub fighters: Vec<(i32, Vec<u8>)>,
+    pub joints: Vec<(i32, Vec<[u32; 26]>)>,
+    pub dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
+    pub items: Vec<(i32, i32, [f32; 3], [f32; 3])>,
+}
+
+impl Engine {
+    fn capture_now() -> Captured {
+        let e = Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false };
+        let mut fighters = Vec::new();
+        for slot in 0..2 {
+            if let Some(b) = e.fighter_bytes(slot) { fighters.push((slot, b)); }
+        }
+        Captured {
+            row: unsafe { FRAME_ROW.unwrap_or([0; 16]) },
+            fighters,
+            joints: (0..2).map(|slot| (slot, e.joint_words(slot))).collect(),
+            dyns: (0..2).map(|slot| (slot, e.dyn_words(slot))).collect(),
+            items: e.item_rows(),
+        }
+    }
+}
 
 unsafe extern "C" fn gmmain_pad_setup() {
     gmmain::gmMain_8015FD24();

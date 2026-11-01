@@ -105,9 +105,13 @@ macro_rules! ct {
 /// (GX / display calls with no effect on the simulation) answers zero instead of panicking. Off by default.
 pub static RENDER_STUB: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
+/// Set by `Det_SetInRender` (the C marks the draw callbacks' window with it): the stub answers apply only inside the render pass,
+/// so an unported callee reached from the simulation panics instead of silently returning zero.
+pub static IN_RENDER: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
 #[inline]
 pub fn render_stub() -> bool {
-    RENDER_STUB.load(core::sync::atomic::Ordering::Relaxed)
+    RENDER_STUB.load(core::sync::atomic::Ordering::Relaxed) && IN_RENDER.load(core::sync::atomic::Ordering::Relaxed)
 }
 
 /// `panic!` for an unported callee unless render-stub mode is on (then `return` a zeroed value of the fn's type).

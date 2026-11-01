@@ -47,6 +47,7 @@ OSGetTime	crate::seams::os_get_time()
 OSTicksToCalendarTime
 DVDGetDriveStatus
 GX\w+
+Wb_RenderOption	[$ARGS][1]
 Wb_\w+
 Fx_\w+
 Prof\w+
@@ -92,6 +93,5 @@ EXI\w+
 HeapCheck\w*
 # the headless engine draws nothing: the GObj render pass is the renderer step's (melee_gx sink) job
 !HSD_GObj_80390FC0
-!HSD_StartRender
-!HSD_Init_803755A8
 ItemEvent
+!HSD_SisLib_803A84BC

@@ -202,9 +202,19 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
         unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre.unwrap_or_else(|| "0".into())) };
     }
     let mut e = crate::boot_engine_scenario(iso, scn)?;
+    // the C snapshot is taken in Script_FramePost (before the render pass): capture there unless MELEE_DIFF_POST_RENDER=1
+    let post = std::env::var_os("MELEE_DIFF_POST_RENDER").is_none();
+    // SAFETY: single-threaded.
+    if post { unsafe { melee_engine::engine::CAPTURE_FRAME = frame as i64; } }
     for _ in 0..=frame {
         if !e.tick() {
             return Err(format!("the engine's scene ended before frame {frame}"));
+        }
+    }
+    if post {
+        // SAFETY: single-threaded.
+        if let Some(c) = unsafe { (*std::ptr::addr_of_mut!(melee_engine::engine::CAPTURED)).take() } {
+            return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, dyns: c.dyns });
         }
     }
     let r = e.neutral_row();

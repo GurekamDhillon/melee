@@ -174,8 +174,12 @@ tu::jobj::ext::hook::HSD_JObjDispSub
 tu::jobj::ext::hook::HSD_JObjMakePositionMtx
 tu::jobj::ext::hook::HSD_MtxAlloc
 tu::jobj::ext::hook::HSD_MtxFree
+tu::jobj::ext::hook::HSD_MtxGetRotation
 tu::jobj::ext::hook::HSD_MtxGetScale
+tu::jobj::ext::hook::HSD_MtxGetTranslate
 tu::jobj::ext::hook::HSD_MtxInverseConcat
+tu::jobj::ext::hook::HSD_MtxSRT
+tu::jobj::ext::hook::HSD_MtxSRTQuat
 tu::jobj::ext::hook::HSD_RObjAddAnimAll
 tu::jobj::ext::hook::HSD_RObjAnimAll
 tu::jobj::ext::hook::HSD_RObjGetByType
@@ -326,6 +330,7 @@ tu::lbcollision::ext::hook::GXLoadPosMtxImm
 tu::lbcollision::ext::hook::HSD_CObjGetCurrent
 tu::lbcollision::ext::hook::HSD_ClearVtxDesc
 tu::lbcollision::ext::hook::HSD_JObjSetupMatrixSub
+tu::lbcollision::ext::hook::HSD_MtxInverse
 tu::lbcollision::ext::hook::HSD_StateInitTev
 tu::lbcollision::ext::hook::HSD_StateInvalidate
 tu::lbcollision::ext::hook::PSMTXConcat
@@ -494,6 +499,7 @@ tu::particle::ext::hook::HSD_JObjSetMtxDirtySub
 tu::particle::ext::hook::HSD_JObjSetupMatrixSub
 tu::particle::ext::hook::HSD_JObjUnref
 tu::particle::ext::hook::HSD_MtxGetScale
+tu::particle::ext::hook::HSD_MtxSRT
 tu::particle::ext::hook::HSD_ObjAlloc
 tu::particle::ext::hook::HSD_ObjAllocInit
 tu::particle::ext::hook::HSD_ObjFree
@@ -518,6 +524,8 @@ tu::pobj::native::ext::hook::HSD_JObjGetCurrent
 tu::pobj::native::ext::hook::HSD_JObjSetupMatrixSub
 tu::pobj::native::ext::hook::HSD_JObjUnrefThis
 tu::pobj::native::ext::hook::HSD_MemAlloc
+tu::pobj::native::ext::hook::HSD_MtxInverseTranspose
+tu::pobj::native::ext::hook::HSD_MtxScaledAdd
 tu::pobj::native::ext::hook::HSD_PerfCountEnvelopeBlending
 tu::pobj::native::ext::hook::HSD_SListAlloc
 tu::pobj::native::ext::hook::HSD_SListRemove
@@ -540,6 +548,7 @@ tu::psdisp::ext::hook::HSD_LObjGetActiveByID
 tu::psdisp::ext::hook::HSD_LObjGetLightMaskAttnFunc
 tu::psdisp::ext::hook::HSD_LObjGetLightMaskDiffuse
 tu::psdisp::ext::hook::HSD_MtxGetScale
+tu::psdisp::ext::hook::HSD_MtxSRT
 tu::psdisp::ext::hook::HSD_StateInvalidate
 tu::psdisp::ext::hook::PSMTXConcat
 tu::psdisp::ext::hook::PSMTXCopy
@@ -689,6 +698,7 @@ tu::tobj::native::ext::hook::HSD_LObjGetCurrentByType
 tu::tobj::native::ext::hook::HSD_LObjGetLightMaskDiffuse
 tu::tobj::native::ext::hook::HSD_LObjGetLightVector
 tu::tobj::native::ext::hook::HSD_MemAlloc
+tu::tobj::native::ext::hook::HSD_MkRotationMtx
 tu::tobj::native::ext::hook::HSD_SetupTevStage
 tu::tobj::native::ext::hook::HSD_StateAssignTev
 tu::tobj::native::ext::hook::HSD_StateRegisterTexGen
@@ -2726,6 +2736,8 @@ tu::fighter::ext::hook::ft_PlaySFX
 tu::fighter::ext::hook::un_80322258
 tu::fighter::ext::hook::ftColl_8007AF28
 tu::fighter::ext::hook::HSD_JObjSetupMatrixSub
+tu::fighter::ext::hook::HSD_MtxInverse
+tu::fighter::ext::hook::HSD_MtxSRT
 tu::fighter::ext::hook::PSMTXConcat
 tu::fighter::ext::hook::Player_GetStocks
 tu::fighter::ext::hook::Geno_CollBegin
@@ -3719,8 +3731,11 @@ tu::ftCo_DamageIce::ext::hook::ftCommon_8007DB58
 tu::ftCo_DamageIce::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_DamageIce::ext::hook::ftCommon_InitGrab
 tu::ftCo_DamageIce::ext::hook::PSMTXTrans
+tu::ftCo_DamageIce::ext::hook::HSD_MkRotationMtx
+tu::ftCo_DamageIce::ext::hook::HSD_MtxQuat
 tu::ftCo_DamageIce::ext::hook::PSMTXTranspose
 tu::ftCo_DamageIce::ext::hook::PSMTXConcat
+tu::ftCo_DamageIce::ext::hook::HSD_MtxGetTranslate
 tu::ftCo_DamageIce::ext::hook::HSD_JObjSetMtxDirtySub
 tu::ftCo_DamageIce::ext::hook::ftCo_8009E140
 tu::ftCo_DamageIce::ext::hook::ftCommon_8007F824
@@ -5380,6 +5395,7 @@ tu::ftanim::ext::hook::HSD_JObjReqAnimAll
 tu::ftanim::ext::hook::HSD_JObjReqAnimAllByFlags
 tu::ftanim::ext::hook::HSD_JObjReqAnimByFlags
 tu::ftanim::ext::hook::HSD_JObjRemoveAnimAllByFlags
+tu::ftanim::ext::hook::HSD_MtxInverse
 tu::ftanim::ext::hook::PSMTXMultVec
 tu::ftanim::ext::hook::lb_8000B1CC
 tu::ftanim::ext::hook::lb_8000B074
@@ -8160,6 +8176,7 @@ tu::itlinkarrow::ext::hook::HSD_JObjLoadJoint
 tu::itlinkarrow::ext::hook::HSD_JObjRemoveAll
 tu::itlinkarrow::ext::hook::HSD_JObjSetMtxDirty
 tu::itlinkarrow::ext::hook::HSD_JObjSetMtxDirtySub
+tu::itlinkarrow::ext::hook::HSD_MtxGetRotation
 tu::itlinkarrow::ext::hook::HSD_Randf
 tu::itlinkarrow::ext::hook::HSD_Randi
 tu::itlinkarrow::ext::hook::Item_80268B18
@@ -8246,6 +8263,7 @@ tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAll
 tu::itlinkboomerang::ext::hook::HSD_JObjRemoveAnimAll
 tu::itlinkboomerang::ext::hook::HSD_JObjReqAnimAll
 tu::itlinkboomerang::ext::hook::HSD_JObjSetMtxDirtySub
+tu::itlinkboomerang::ext::hook::HSD_MtxGetRotation
 tu::itlinkboomerang::ext::hook::Item_80268B18
 tu::itlinkboomerang::ext::hook::Item_80268E5C
 tu::itlinkboomerang::ext::hook::Item_8026A8EC
@@ -8741,6 +8759,7 @@ tu::itmewtwodisable::ext::hook::it_80276308
 tu::itmewtwodisable::ext::hook::it_802763E0
 tu::itmewtwoshadowball::ext::hook::HSD_JObjSetFlagsAll
 tu::itmewtwoshadowball::ext::hook::HSD_JObjSetMtxDirtySub
+tu::itmewtwoshadowball::ext::hook::HSD_MtxGetRotation
 tu::itmewtwoshadowball::ext::hook::HSD_Randf
 tu::itmewtwoshadowball::ext::hook::HSD_Randi
 tu::itmewtwoshadowball::ext::hook::Item_80268B18
@@ -9467,6 +9486,7 @@ tu::itsamusbomb::ext::hook::it_802751D8
 tu::itsamusbomb::ext::hook::lbVector_NormalizeXY
 tu::itsamusbomb::ext::hook::lb_8000BA0C
 tu::itsamuschargeshot::ext::hook::HSD_JObjSetMtxDirtySub
+tu::itsamuschargeshot::ext::hook::HSD_MtxGetRotation
 tu::itsamuschargeshot::ext::hook::Item_80268B18
 tu::itsamuschargeshot::ext::hook::Item_80268E5C
 tu::itsamuschargeshot::ext::hook::Item_8026A8EC
@@ -12154,7 +12174,9 @@ tu::lb_01F8::ext::hook::THPVideoDecode
 tu::lb_01F8::ext::hook::lbFile_80016760
 tu::lb_020A::ext::hook::HSD_JObjSetMtxDirtySub
 tu::lb_020A::ext::hook::HSD_JObjSetupMatrixSub
+tu::lb_020A::ext::hook::HSD_MkRotationMtx
 tu::lb_020A::ext::hook::HSD_MtxInverseConcat
+tu::lb_020A::ext::hook::HSD_MtxQuat
 tu::lb_020A::ext::hook::HSD_QuatLib_8037EB28
 tu::lb_020A::ext::hook::MatToQuat
 tu::lb_020A::ext::hook::PSMTXConcat

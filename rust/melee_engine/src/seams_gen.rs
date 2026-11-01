@@ -212,8 +212,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::lbrefract::ext::hook::GXSetTexCopyDst.is_none() { melee_runtime::tu::lbrefract::ext::hook::GXSetTexCopyDst = Some(|_, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbrefract::ext::hook::GXSetTexCopySrc.is_none() { melee_runtime::tu::lbrefract::ext::hook::GXSetTexCopySrc = Some(|_, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbshadow::ext::hook::GXSetScissor.is_none() { melee_runtime::tu::lbshadow::ext::hook::GXSetScissor = Some(|_, _, _, _| ()); } }
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::HSD_Init_803755A8 = Some(|| ()); }
-    unsafe { melee_runtime::tu::lbshadow::ext::hook::HSD_StartRender = Some(|_| ()); }
     unsafe { if melee_runtime::tu::lobj::native::ext::hook::GXInitLightAttn.is_none() { melee_runtime::tu::lobj::native::ext::hook::GXInitLightAttn = Some(|_, _, _, _, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::lobj::native::ext::hook::GXInitLightColor.is_none() { melee_runtime::tu::lobj::native::ext::hook::GXInitLightColor = Some(|_, _| ()); } }
     unsafe { if melee_runtime::tu::lobj::native::ext::hook::GXInitLightDir.is_none() { melee_runtime::tu::lobj::native::ext::hook::GXInitLightDir = Some(|_, _, _, _| ()); } }
@@ -322,6 +320,7 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetTexCopySrc.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetTexCopySrc = Some(|_, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetVtxAttrFmt.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetVtxAttrFmt = Some(|_, _, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetVtxDesc.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetVtxDesc = Some(|_, _| ()); } }
+    unsafe { melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = Some(|_, _| ()); }
     unsafe { if melee_runtime::tu::sislib::ext::hook::View_AspectBits.is_none() { melee_runtime::tu::sislib::ext::hook::View_AspectBits = Some(|| 0); } }
     unsafe { if melee_runtime::tu::sobjlib::ext::hook::GXBegin.is_none() { melee_runtime::tu::sobjlib::ext::hook::GXBegin = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::sobjlib::ext::hook::GXClearVtxDesc.is_none() { melee_runtime::tu::sobjlib::ext::hook::GXClearVtxDesc = Some(|| ()); } }
@@ -457,7 +456,7 @@ pub fn install_gen() {
     unsafe { if melee_world::tu::cmcamera::ext::hook::Wb_RenderActive.is_none() { melee_world::tu::cmcamera::ext::hook::Wb_RenderActive = Some(|| 0); } }
     unsafe { if melee_world::tu::cmcamera::ext::hook::Wb_RenderCameraBits.is_none() { melee_world::tu::cmcamera::ext::hook::Wb_RenderCameraBits = Some(|_| 0); } }
     unsafe { if melee_world::tu::cmcamera::ext::hook::Wb_RenderDrawn.is_none() { melee_world::tu::cmcamera::ext::hook::Wb_RenderDrawn = Some(|| ()); } }
-    unsafe { if melee_world::tu::cmcamera::ext::hook::Wb_RenderOption.is_none() { melee_world::tu::cmcamera::ext::hook::Wb_RenderOption = Some(|_, _| 0); } }
+    unsafe { if melee_world::tu::cmcamera::ext::hook::Wb_RenderOption.is_none() { melee_world::tu::cmcamera::ext::hook::Wb_RenderOption = Some(|a0, a1| [a0, a1][1]); } }
     unsafe { if melee_world::tu::cmcamera::ext::hook::diag_cam_translate.is_none() { melee_world::tu::cmcamera::ext::hook::diag_cam_translate = Some(|_, _, _, _, _, _, _, _, _, _| ()); } }
     unsafe { if melee_world::tu::cmcamera::ext::hook::diag_camera_consts.is_none() { melee_world::tu::cmcamera::ext::hook::diag_camera_consts = Some(|_, _, _, _| ()); } }
     unsafe { if melee_world::tu::cmcamera::ext::hook::diag_camera_desc.is_none() { melee_world::tu::cmcamera::ext::hook::diag_camera_desc = Some(|_, _, _, _, _, _| ()); } }
@@ -466,7 +465,7 @@ pub fn install_gen() {
     unsafe { if melee_world::tu::cmcamera::ext::hook::diag_game_camera.is_none() { melee_world::tu::cmcamera::ext::hook::diag_game_camera = Some(|_, _, _| ()); } }
     unsafe { if melee_world::tu::efn::efasync::ext::hook::Mex_EffectCount.is_none() { melee_world::tu::efn::efasync::ext::hook::Mex_EffectCount = Some(|| 0); } }
     unsafe { if melee_world::tu::efn::efasync::ext::hook::Mex_EffectString.is_none() { melee_world::tu::efn::efasync::ext::hook::Mex_EffectString = Some(|_, _| core::ptr::null_mut()); } }
-    unsafe { if melee_world::tu::grdisplay::ext::hook::Wb_RenderOption.is_none() { melee_world::tu::grdisplay::ext::hook::Wb_RenderOption = Some(|_, _| 0); } }
+    unsafe { if melee_world::tu::grdisplay::ext::hook::Wb_RenderOption.is_none() { melee_world::tu::grdisplay::ext::hook::Wb_RenderOption = Some(|a0, a1| [a0, a1][1]); } }
     unsafe { if melee_world::tu::grfigure1::ext::hook::Mex_GrBind.is_none() { melee_world::tu::grfigure1::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
     unsafe { if melee_world::tu::grfigure2::ext::hook::Mex_GrBind.is_none() { melee_world::tu::grfigure2::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
     unsafe { if melee_world::tu::grfigure3::ext::hook::Mex_GrBind.is_none() { melee_world::tu::grfigure3::ext::hook::Mex_GrBind = Some(|_| core::ptr::null_mut()); } }
@@ -606,7 +605,7 @@ pub fn install_gen() {
     unsafe { if melee_fighter::tu::ftdata::ext::SKINS_STRING.is_none() { melee_fighter::tu::ftdata::ext::SKINS_STRING = Some(|_, _, _| core::ptr::null_mut()); } }
     unsafe { if melee_fighter::tu::ftdata::ext::SKINS255_TEST_COUNT.is_none() { melee_fighter::tu::ftdata::ext::SKINS255_TEST_COUNT = Some(|| 0); } }
     unsafe { if melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_ACTIVE.is_none() { melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_ACTIVE = Some(|| 0); } }
-    unsafe { if melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_OPTION.is_none() { melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_OPTION = Some(|_, _| 0); } }
+    unsafe { if melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_OPTION.is_none() { melee_fighter::tu::ftdrawcommon::ext::WB_RENDER_OPTION = Some(|a0, a1| [a0, a1][1]); } }
     unsafe { if melee_fighter::tu::ftdrawcommon::ext::MEX_ON_MODEL_RENDER.is_none() { melee_fighter::tu::ftdrawcommon::ext::MEX_ON_MODEL_RENDER = Some(|_, _, _, _| ()); } }
     unsafe { if melee_fighter::tu::ftdrawcommon::ext::MEX_ENABLED_DISABLE_FOD.is_none() { melee_fighter::tu::ftdrawcommon::ext::MEX_ENABLED_DISABLE_FOD = Some(|| 0); } }
     unsafe { if melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_TEMPLATE_SKELETON.is_none() { melee_fighter::tu::ftdynamics::ext::GENO_DEFINE_TEMPLATE_SKELETON = Some(|_| 0); } }
@@ -920,8 +919,7 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::lb_0192::ext::hook::DVDGetDriveStatus.is_none() { melee_modes::tu::lb_0192::ext::hook::DVDGetDriveStatus = Some(|| 0); } }
     unsafe { if melee_modes::tu::lb_0192::ext::hook::GXInvalidateTexAll.is_none() { melee_modes::tu::lb_0192::ext::hook::GXInvalidateTexAll = Some(|| ()); } }
     unsafe { if melee_modes::tu::lb_0192::ext::hook::GXInvalidateVtxCache.is_none() { melee_modes::tu::lb_0192::ext::hook::GXInvalidateVtxCache = Some(|| ()); } }
-    unsafe { melee_modes::tu::lb_0192::ext::hook::HSD_Init_803755A8 = Some(|| ()); }
-    unsafe { melee_modes::tu::lb_0192::ext::hook::HSD_StartRender = Some(|_| ()); }
+    unsafe { melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = Some(|_, _| ()); }
     unsafe { melee_modes::tu::lb_0192::ext::hook::lbAudioAx_80024F08 = Some(|| ()); }
     unsafe { melee_modes::tu::lb_0192::ext::hook::lbAudioAx_80024F6C = Some(|| ()); }
     unsafe { if melee_modes::tu::lb_0195::ext::hook::OSCancelAlarm.is_none() { melee_modes::tu::lb_0195::ext::hook::OSCancelAlarm = Some(|_| ()); } }
@@ -998,7 +996,7 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::card::ext::CARDWriteAsync_hook.is_none() { melee_runtime::tu::card::ext::CARDWriteAsync_hook = Some(melee_link::cabi::c5(|_, _, _, _, _| -3)); } }
     unsafe { if melee_runtime::tu::card::ext::CARDWrite_hook.is_none() { melee_runtime::tu::card::ext::CARDWrite_hook = Some(melee_link::cabi::c4(|_, _, _, _| -3)); } }
     unsafe { if melee_world::tu::grizumi::ext::GXGETTEXBUFFERSIZE.is_none() { melee_world::tu::grizumi::ext::GXGETTEXBUFFERSIZE = Some(|a0, a1, a2, a3, a4| crate::seams::gx_tex_buffer_size(a0, a1, a2, a3, a4)); } }
-    unsafe { if melee_world::tu::ifall::ext::H_Wb_RenderOption.is_none() { melee_world::tu::ifall::ext::H_Wb_RenderOption = Some(melee_link::cabi::c2(|_, _| 0)); } }
+    unsafe { if melee_world::tu::ifall::ext::H_Wb_RenderOption.is_none() { melee_world::tu::ifall::ext::H_Wb_RenderOption = Some(melee_link::cabi::c2(|a0, a1| [a0, a1][1])); } }
     unsafe { if melee_world::tu::ifcoget::ext::H_Ui_RetailHidden.is_none() { melee_world::tu::ifcoget::ext::H_Ui_RetailHidden = Some(melee_link::cabi::c1(|_| 0)); } }
     unsafe { if melee_world::tu::stage::ext::H_Mex_GrExternalCount.is_none() { melee_world::tu::stage::ext::H_Mex_GrExternalCount = Some(melee_link::cabi::c0(|| 0)); } }
     unsafe { if melee_world::tu::stage::ext::H_Mex_GrKindForExt.is_none() { melee_world::tu::stage::ext::H_Mex_GrKindForExt = Some(melee_link::cabi::c1(|_| 0)); } }

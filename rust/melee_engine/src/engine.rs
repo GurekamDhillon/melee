@@ -124,6 +124,18 @@ impl Engine {
         Host::boot(disc, mem_size)?;
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
+            // The C golden recordings ran in the default 1920x1080 window with widescreen on in the match scenes:
+            // `gw_view_projection_scale(16/9, wide)` = aspect * (60/73) scales every perspective camera's aspect, which
+            // reaches the simulation through Camera_LogicToScreen (offscreen flags) and the stage Display procs
+            // (Stadium's nametag placement). A window that is actually drawn keeps 4:3 (the seam default).
+            if !RENDER || melee_runtime::tu::gobj_native::HEADLESS_RENDER {
+                if std::env::var_os("MELEE_ENGINE_NO_WIDE").is_none() {
+                    let aspect: f32 = 1920.0f32 / 1080.0f32;
+                    let scale: f32 = aspect * (60.0f32 / 73.0f32);
+                    melee_runtime::tu::cobj::ext::hook::View_ProjectionScaleBits = Some(WIDE_SCALE_BITS_FN);
+                    WIDE_SCALE_BITS = scale.to_bits() as i32;
+                }
+            }
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
             melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);
             melee_runtime::tu::gobj_native::HSD_RandRenderEnd = Some(melee_runtime::tu::random::global::HSD_RandRenderEnd);
@@ -517,6 +529,8 @@ impl Engine {
 pub static mut POST_LINK: Option<fn()> = None;
 /// Draw into melee_gx (`gxbridge`): set before `boot_vs` by the viewers and `--shots`; goldens leave the GX hooks silent (faster).
 pub static mut RENDER: bool = false;
+static mut WIDE_SCALE_BITS: i32 = 0x3f800000;
+const WIDE_SCALE_BITS_FN: fn() -> i32 = || unsafe { WIDE_SCALE_BITS };
 static mut FRAME_ROW: Option<[u32; 16]> = None;
 /// `melee diff --engine tu`: capture the state at `Script_FramePost` of this frame (the C snapshot point: after the logic
 /// procs, before the render pass; joints are still matrix-dirty there).

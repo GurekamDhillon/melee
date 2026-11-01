@@ -60,7 +60,8 @@ Not merged into `rust-port`; Rust was not touched. Open risks are listed under "
   `build_objects.py game --tu ...` and appended to a private `upsync_link_objects.rsp`, selected through `GW_LINK_OBJECTS`.
 - Fast error loop used (23 s for all TUs, 12 jobs): `xargs -P12 clang -fsyntax-only` over `files.txt` with the flags from
   `_build/masstest/pipe_win.sh`; then `posfix` (error-position-driven member renames). The gwtool compile of ~1000 TUs takes a few minutes.
-- Only game TUs and the link were exercised. The pc native tests (`run.sh --test tests`) were not run; see "Not verified".
+- pc native test suite on the merged exe (`run.sh --test --max-seconds 600`, headless, window off-screen and unfocused, vanilla disc only):
+  `TESTS: pass=407 fail=0 total=407`, exit 0, FATAL 0 (`geno_lab_*`, stage/menu/settings/script tests included; `MxDt.dat` absent, so the m-ex paths skipped).
 
 ## C goldens
 Command: `tools/rust-port/golden/record.sh` logic with the output redirected to `_build/agents/upstream-sync/rustgold` (one pass per
@@ -81,9 +82,9 @@ Determinism was not re-proved (single pass); the goldens being identical to the 
 
 ### Not verified
 - Single pass per golden (record.sh does two); identical-to-committed makes that moot for these four.
-- The pc test suite (`run.sh --test tests`) and any m-ex/ACE disc paths: not run. Places where upstream typed the code and our raw
-  pc hacks were dropped (toy.c trophy list, mndiagram.c, mnvibration.c, if_2FFC/if_3004 soundtest menu, mn stage select
-  `sss_models`) compile but are untested at runtime on an m-ex disc.
+- m-ex / ACE disc paths: the vanilla-disc test suite passed (407/407) but skips them. Places where upstream typed the code and our raw
+  pc hacks were dropped (toy.c trophy list, mndiagram.c, mnvibration.c, if_2FFC/if_3004 soundtest menu, mn stage select `sss_models`)
+  are untested at runtime on an m-ex disc.
 - The auto-resolved hunks (about 200 of 317) were reviewed by compile errors and a novel-line scan, not read one by one.
 
 ## Upstream commits that rename symbols or retype fields that the Rust mirrors use

@@ -268,36 +268,48 @@ type NativeHost = (std::vec::Vec<*mut HSD_JObj>, std::vec::Vec<JObjId>);
 fn vid(v:melee_types::Vec)->crate::mtx::Vec3{crate::mtx::Vec3{x:v.x,y:v.y,z:v.z}}
 fn native_vec(v:crate::mtx::Vec3)->melee_types::Vec{melee_types::Vec{x:v.x,y:v.y,z:v.z}}
 /// Pointer -> first index in `p`. Trees reach hundreds of joints (a fighter), so the former linear `contains`/`position`
-/// scans were quadratic and the top cost of a tick; small trees stay on the scan (no table to build).
-struct PtrIndex{small:bool,map:std::collections::HashMap<usize,u32,std::hash::BuildHasherDefault<PtrHash>>}
-#[derive(Default)]
-struct PtrHash(u64);
-impl std::hash::Hasher for PtrHash{
-    fn finish(&self)->u64{self.0}
-    fn write(&mut self,b:&[u8]){for &x in b{self.0=(self.0.rotate_left(5)^x as u64).wrapping_mul(0x517c_c1b7_2722_0a95);}}
-    fn write_usize(&mut self,n:usize){self.0=(n as u64>>4).wrapping_mul(0x517c_c1b7_2722_0a95);}
-}
+/// scans were quadratic and the top cost of a tick. Three tiers: a scan for tiny trees, a stack open-addressing table
+/// (no allocation) up to `TAB/2` entries, a `HashMap` beyond.
+const TAB:usize=512;
+struct PtrIndex{n:usize,stack:[(usize,u32);TAB],map:Option<std::collections::HashMap<usize,u32>>}
 impl PtrIndex{
     const SMALL:usize=24;
+    fn slot(j:usize)->usize{((j>>4).wrapping_mul(0x9E37_79B9_7F4A_7C15)>>40)&(TAB-1)}
+    fn new()->Self{PtrIndex{n:0,stack:[(0,0);TAB],map:None}}
     fn find(&self,p:&[*mut HSD_JObj],j:*mut HSD_JObj)->Option<u32>{
-        if self.small{p.iter().position(|q|*q==j).map(|n|n as u32)}else{self.map.get(&(j as usize)).copied()}
+        if let Some(m)=&self.map{return m.get(&(j as usize)).copied();}
+        if self.n<=Self::SMALL{return p.iter().position(|q|*q==j).map(|n|n as u32);}
+        let mut s=Self::slot(j as usize);
+        loop{let e=self.stack[s];if e.0==0{return None;}if e.0==j as usize{return Some(e.1);}s=(s+1)&(TAB-1);}
     }
-    fn push(&mut self,p:&mut std::vec::Vec<*mut HSD_JObj>,j:*mut HSD_JObj){
-        p.push(j);
-        if self.small&&p.len()>Self::SMALL{
-            self.small=false;
-            for (n,&q) in p.iter().enumerate(){self.map.entry(q as usize).or_insert(n as u32);}
-        }else if !self.small{self.map.entry(j as usize).or_insert((p.len()-1) as u32);}
+    fn insert(&mut self,j:usize,n:u32){
+        if let Some(m)=&mut self.map{m.entry(j).or_insert(n);return;}
+        let mut s=Self::slot(j);
+        loop{let e=self.stack[s];if e.0==0{self.stack[s]=(j,n);return;}if e.0==j{return;}s=(s+1)&(TAB-1);}
+    }
+    /// Called after `p` grew (or was filled) to `len` entries; builds the lookup structure when the scan stops being cheap.
+    fn grew(&mut self,p:&[*mut HSD_JObj]){
+        let len=p.len();
+        if self.map.is_none()&&len>TAB/2{
+            let mut m=std::collections::HashMap::with_capacity(len*2);
+            for (n,&q) in p.iter().enumerate(){m.entry(q as usize).or_insert(n as u32);}
+            self.map=Some(m);self.n=len;return;
+        }
+        if self.map.is_some(){if let Some(&q)=p.last(){self.insert(q as usize,(len-1) as u32);}self.n=len;return;}
+        if len>Self::SMALL{
+            if self.n<=Self::SMALL{for (n,&q) in p.iter().enumerate(){self.insert(q as usize,n as u32);}}
+            else{self.insert(p[len-1] as usize,(len-1) as u32);}
+        }
+        self.n=len;
     }
 }
 unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
     let mut p=roots.iter().copied().filter(|j|!j.is_null()).collect::<std::vec::Vec<_>>(); p.dedup();
-    let mut ix=PtrIndex{small:true,map:Default::default()};
-    if p.len()>PtrIndex::SMALL{ix.small=false;for (n,&q) in p.iter().enumerate(){ix.map.entry(q as usize).or_insert(n as u32);}}
+    let mut ix=PtrIndex::new();ix.grew(&p);
     let mut k=0;
     while k<p.len(){let j=p[k];
         // link order is part of the id assignment: parent, child, next, aobj owner, then the joint-valued robjs
-        let mut add=|link:*mut HSD_JObj,p:&mut std::vec::Vec<*mut HSD_JObj>|{if !link.is_null()&&ix.find(p,link).is_none(){ix.push(p,link);}};
+        let mut add=|link:*mut HSD_JObj,p:&mut std::vec::Vec<*mut HSD_JObj>|{if !link.is_null()&&ix.find(p,link).is_none(){p.push(link);ix.grew(p);}};
         add((*j).parent,&mut p);add((*j).child,&mut p);add((*j).next,&mut p);
         if !(*j).aobj.is_null(){add((*(*j).aobj).hsd_obj.cast(),&mut p);}
         let mut r=(*j).robj;
@@ -305,7 +317,7 @@ unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
         k+=1;
     }
     let id=|j|ix.find(&p,j).map(JObjId);
-    let mut t=NativeTree::new();
+    let mut t=NativeTree{nodes:std::vec::Vec::with_capacity(p.len())};
     for &j in &p{
         let x=t.alloc();let o=t.get_mut(x);
         o.parent=id((*j).parent);o.child=id((*j).child);o.next=id((*j).next);o.flags=(*j).flags;

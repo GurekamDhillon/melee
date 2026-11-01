@@ -86,16 +86,17 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 
 
 ## Current blockers (engine, 2026-11-01, round 3)
-Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1562.
+Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1652.
 Blockers A and B of round 2 (stale hand matrices) are fixed: the stage draw callbacks were skipped (`Wb_RenderOption` answered 0), `HSD_MkRotationMtx`
 was unlinked, and several GC-layout reads went through native structs; details in notes/consolidation.md "Round 3".
-- C. cpu_peach_samus_ys_items stops at frame 1562 (hash, `itemsum`; 1563 `items` 9 vs 10). First differing call: chunk 1563, after `Item_802696CC` the C runs
-  `it_80273484 / it_8027346C / it_802714C0` (the rest of `Item_802697D4`) and the engine does not; at 1562 one of the five Foods items (kind 18, the
-  Party Ball burst) has `xDCC_flag.b3 == 0` on the engine and 1 in the C. Not yet found who clears it (`Item_8026AE84`?). Tried: item rows in `melee diff`
-  (kind / pos / vel equal), blast-zone values (fine). Next: log `xDCC_flag` writes of kind 18 items on both sides (the `gw_dbg_jobj_out` recipe in notes).
-  seqdiff (`^(it_|item_)`, frame 1562): C takes the DROP path (`item_8026ae84 it_80273748 it_8026b6c8 it_8026b390 ... item_8026849c`), the engine the THROW path
-  (`item_8026849c it_80274658 item_80268e5c item_8026b074`), so the fighter-side caller (Samus P2 holding a food item) picks drop vs throw differently; start from
-  the caller of `Item_8026AE84` (non-tu ftlib/ftcommon callers are invisible in the Rust call trace).
+- C (round 4, was 1562, now 1652). The old blocker C was three real bugs: `Fighter_804D6550` (PlCo root 1, the item-throw float table) was a pointer table and its hook returned the
+  variable's address (`melee_link::manual` now returns the table, `dat_custom::plco` decodes native words); item state-table predicates were `bool`-returning fns transmuted to
+  `int`-returning ones (`kinds_inl::pred_b!` now makes an int-returning shim: a Rust `bool` leaves garbage in the upper bits of eax, which made items vanish at random); the full
+  `Item` record is now compared by `melee diff --engine tu` (`ItemRecord`). Next stop: frame 1652, P2 Samus. seqdiff (inlined C names ignored: /tmp-style list in notes) is identical up to
+  `ftco_attack1_checkinput`; the C then presses A (`cpu.buttons` 0x100, `lstick_x` 0.567, motion 92) and the engine does not. State at 1651 is equal (diff: only audio-voice garbage),
+  the seed after 1652 is equal, but `cpu.buffer` (the CPU command script, `ftcmdscript` writer) holds different command bytes after the frame (C `86 01 87 01 7f 7f 02 7f 7f 00 09 86`,
+  engine `.. 0a 02 8e 01 09 86 01 0a 02 7f 7f 86`) and `cpu.x55C..x568` floats differ: the AI built a different action with the same draws. Suspects: the PlCo attack-entry tables
+  for Samus (`dat_custom::attack_lists`, 9-word entries) or a float step of the command builder. Not yet instrumented per value.
 - D. Retail tables with unresolved callbacks (no callback at all on the engine): Crazy Hand `ftCh_*` (40), Jigglypuff `ftPr_*` (80), Crazy Hand captures (12)
   (`melee_link/retail_unresolved.txt`). Not in a golden; any scenario with these fighters will freeze them.
 - E. Direct `todo!` stubs left in melee_fighter tu: `ftCo_Damage` (lbBgFlash_80021C48, efAsync_Spawn, Camera_RequestQuake), `JumpAerial` (HSD_JObjSetMtxDirtySub), `ft_0c8c`

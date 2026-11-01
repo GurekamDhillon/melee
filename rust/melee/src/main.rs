@@ -28,6 +28,7 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod crash;
+mod prof;
 mod disc;
 mod cfg;
 mod ident;
@@ -269,6 +270,7 @@ fn main() -> ExitCode {
         }
         GUARD_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
     }
+    let _prof = prof::from_env();
     crash::install();
     let args: std::vec::Vec<String> = std::env::args().skip(1).collect();
     if args.windows(2).any(|w| w[0] == "--engine" && w[1] == "legacy") {
@@ -565,6 +567,8 @@ fn golden_engine(args: &[String]) -> ExitCode {
     let idle = args.iter().any(|a| a == "--idle-pads");
     // `--pause F:T`: START after logic frame F pauses, the pauser's START resumes at T (the audio keeps running on the held frames)
     let pause: Option<(usize, usize)> = get("--pause").and_then(|v| v.split_once(':').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?))));
+    let mut csv_file = std::fs::File::create(&out).ok();
+    let mut csv_written = 0usize;
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
@@ -691,7 +695,12 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
         csv.push('\n');
         // written every frame: a crash later in the run keeps the frames that were produced
-        let _ = std::fs::write(&out, &csv);
+        // (appended through one open handle: rewriting the whole file each frame cost ~half the run on Windows)
+        if let Some(f) = csv_file.as_mut() {
+            use std::io::Write;
+            let _ = f.write_all(&csv.as_bytes()[csv_written..]);
+            csv_written = csv.len();
+        }
     }
     if let Some(p) = &calltrace_out {
         match melee_core::ct::write(p) {
@@ -714,6 +723,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
             eprintln!("melee: audio mix of {} sub-frames written to {p}", w.len() / 320);
         }
     }
+    drop(csv_file);
     if let Err(er) = std::fs::write(&out, csv) {
         eprintln!("melee: {out}: {er}");
         return ExitCode::FAILURE;

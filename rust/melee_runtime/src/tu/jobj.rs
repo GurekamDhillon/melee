@@ -267,18 +267,44 @@ type NativeTree = JObjTree<*mut HSD_DObj, *mut HSD_RObj>;
 type NativeHost = (std::vec::Vec<*mut HSD_JObj>, std::vec::Vec<JObjId>);
 fn vid(v:melee_types::Vec)->crate::mtx::Vec3{crate::mtx::Vec3{x:v.x,y:v.y,z:v.z}}
 fn native_vec(v:crate::mtx::Vec3)->melee_types::Vec{melee_types::Vec{x:v.x,y:v.y,z:v.z}}
+/// Pointer -> first index in `p`. Trees reach hundreds of joints (a fighter), so the former linear `contains`/`position`
+/// scans were quadratic and the top cost of a tick; small trees stay on the scan (no table to build).
+struct PtrIndex{small:bool,map:std::collections::HashMap<usize,u32,std::hash::BuildHasherDefault<PtrHash>>}
+#[derive(Default)]
+struct PtrHash(u64);
+impl std::hash::Hasher for PtrHash{
+    fn finish(&self)->u64{self.0}
+    fn write(&mut self,b:&[u8]){for &x in b{self.0=(self.0.rotate_left(5)^x as u64).wrapping_mul(0x517c_c1b7_2722_0a95);}}
+    fn write_usize(&mut self,n:usize){self.0=(n as u64>>4).wrapping_mul(0x517c_c1b7_2722_0a95);}
+}
+impl PtrIndex{
+    const SMALL:usize=24;
+    fn find(&self,p:&[*mut HSD_JObj],j:*mut HSD_JObj)->Option<u32>{
+        if self.small{p.iter().position(|q|*q==j).map(|n|n as u32)}else{self.map.get(&(j as usize)).copied()}
+    }
+    fn push(&mut self,p:&mut std::vec::Vec<*mut HSD_JObj>,j:*mut HSD_JObj){
+        p.push(j);
+        if self.small&&p.len()>Self::SMALL{
+            self.small=false;
+            for (n,&q) in p.iter().enumerate(){self.map.entry(q as usize).or_insert(n as u32);}
+        }else if !self.small{self.map.entry(j as usize).or_insert((p.len()-1) as u32);}
+    }
+}
 unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
     let mut p=roots.iter().copied().filter(|j|!j.is_null()).collect::<std::vec::Vec<_>>(); p.dedup();
+    let mut ix=PtrIndex{small:true,map:Default::default()};
+    if p.len()>PtrIndex::SMALL{ix.small=false;for (n,&q) in p.iter().enumerate(){ix.map.entry(q as usize).or_insert(n as u32);}}
     let mut k=0;
     while k<p.len(){let j=p[k];
-        let mut links=vec![(*j).parent,(*j).child,(*j).next];
-        if !(*j).aobj.is_null(){links.push((*(*j).aobj).hsd_obj.cast());}
+        // link order is part of the id assignment: parent, child, next, aobj owner, then the joint-valued robjs
+        let mut add=|link:*mut HSD_JObj,p:&mut std::vec::Vec<*mut HSD_JObj>|{if !link.is_null()&&ix.find(p,link).is_none(){ix.push(p,link);}};
+        add((*j).parent,&mut p);add((*j).child,&mut p);add((*j).next,&mut p);
+        if !(*j).aobj.is_null(){add((*(*j).aobj).hsd_obj.cast(),&mut p);}
         let mut r=(*j).robj;
-        while !r.is_null(){if (*r).flags&0x70000000==0x10000000{links.push((*r).u.jobj);}r=(*r).next;}
-        for link in links {if !link.is_null()&&!p.contains(&link){p.push(link);}}
+        while !r.is_null(){if (*r).flags&0x70000000==0x10000000{add((*r).u.jobj,&mut p);}r=(*r).next;}
         k+=1;
     }
-    let id=|j|p.iter().position(|q|*q==j).map(|n|JObjId(n as u32));
+    let id=|j|ix.find(&p,j).map(JObjId);
     let mut t=NativeTree::new();
     for &j in &p{
         let x=t.alloc();let o=t.get_mut(x);

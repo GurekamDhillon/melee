@@ -2056,7 +2056,13 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
             }
             i += 1;
         }
-        let out = &mut *(dmg_ptr as *mut DmgResult);
+        // arg4 != 0: the result overlays `fp->dmg.facing_dir_1 ..` (x1844..x186C, all 4-byte fields up to the source pointer, so the
+        // overlay is exact). arg4 == 0: the C overlays `fp->dmg.x1870 ..`, but the native `x1870` is an 8-byte pointer, so the following
+        // fields are not where a C struct overlay would put them: build the result locally and store it field by field.
+        let mut local: DmgResult = core::mem::zeroed();
+        let outp: *mut DmgResult = if arg4 != 0 { dmg_ptr as *mut DmgResult } else { &mut local };
+        let dmg_ptr: *mut c_void = outp as *mut c_void;
+        let out = &mut *outp;
         let best = &*log.add(best_idx);
         let mut dir: f32 = 0.0;
         let mut angle: f32 = 0.0;
@@ -2143,6 +2149,18 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
         }
         if out.element == HitElement_Electric as u32 {
             (*fp).x1960_vibrateMult = cd().x1A4;
+        }
+        if arg4 == 0 {
+            let d = &mut (*fp).dmg;
+            *(&mut d.x1870 as *mut *mut DmgLogEntry as *mut f32) = out.dir;
+            d.x1874 = out.angle;
+            d.x1878 = out.hurt_height;
+            d.x187c = out.kb;
+            d.x1880 = out.pos;
+            d.x188c = out.element as _;
+            d.x1890 = out.sfx_severity;
+            d.x1894 = out.source as usize as u32 as i32;
+            d.x1898 = out.damage;
         }
     }
 }

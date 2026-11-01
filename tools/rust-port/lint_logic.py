@@ -142,6 +142,8 @@ def trivial(body, name=None):
     if 'match unsafe { HOOK }' in b or re.search(r'Some\(f\) => f\(', b):
         return True
     flat = ' '.join(b.split())
+    if re.match(r'match unsafe \{ [A-Z][A-Z0-9_]* \} \{ Some\(f\) =>', flat) and ', None =>' in flat and len(flat) < 700 and re.search(r'\b(?:crate|melee_\w+|super)(?:::\w+)*::tu::', flat) and not re.search(r'\b(if|while|for|loop|let)\b', flat):
+        return True   # a host-hook wrapper whose fallback is a call of the canonical fn
     if len(b.split('\n')) <= 4 and re.search(r'\b(crate|melee_\w+)::tu::', flat) and not re.search(r'\b(if|match|while|for|loop|let)\b', flat):
         return True
     if re.search(r'panic!\("TODO\(', flat) and len(flat) < 900:
@@ -152,7 +154,9 @@ def trivial(body, name=None):
         # a forwarder: after removing the optional `if let Some(h) = HOOK { .. }` preamble, the body only calls a tu path of the
         # same name (or another crate's tu function of that name), with no loop / match / branch of its own
         f2 = re.sub(r'if let Some\(h\) = (?:unsafe \{ )?HOOK(?: \})? \{.*?\}\s*(?=\S|$)', '', flat)
-        if len(f2) < 700 and re.search(r'(?:crate|melee_\w+|super)(?:::\w+)*::' + re.escape(name) + r'\s*\(', f2, re.I) \
+        if re.fullmatch(r'[\s{};]*(return\s*(0|false|null_mut\(\)|\(\))?\s*;?[\s{};]*)?(0|false|std::ptr::null_mut\(\)|core::ptr::null_mut\(\)|ptr::null_mut\(\))?[\s{};]*', re.sub(r'/\*.*?\*/', '', f2)) and f2 != flat:
+            return True   # a hook-only stub (no default behaviour)
+        if len(f2) < 700 and re.search(r'\w+(?:::\w+)*::' + re.escape(name) + r'\s*\(', f2, re.I) \
                 and not re.search(r'\b(if|match|while|for|loop)\b', f2):
             return True
     return False

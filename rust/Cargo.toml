@@ -42,6 +42,13 @@ overflow-checks = false
 overflow-checks = false
 debug = 1
 
+# `cargo build -p melee --profile perf`: fat LTO, one codegen unit. About 25% faster ticks than release, 2.3x the build time
+# (9 min vs 4); output bit-identical (notes/perf.md). Release stays as it was so everyday builds stay fast.
+[profile.perf]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+
 # The C build embeds the vendored Lua 5.4.7 (pc/third_party/lua-5.4.7, unmodified). lua-src ships 5.4.9, so
 # the crate is patched to compile those exact sources: the scripting host runs the same Lua as the C build.
 [patch.crates-io]

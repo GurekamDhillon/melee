@@ -72,6 +72,24 @@ pub mod engine_game {
     use melee_types::PADStatus;
     use std::cell::RefCell;
 
+    /// Nanoseconds spent in save / load / state_hash / game_hash / run_frame (printed by `synctest`; the rollback profile).
+    /// The counters live in a leaked heap block: a load puts every static back, so a static array would be rolled back too.
+    static T_ADDR: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+    fn t_ns() -> &'static [std::sync::atomic::AtomicU64; 5] {
+        let mut a = T_ADDR.load(std::sync::atomic::Ordering::Relaxed);
+        if a == 0 {
+            a = Box::leak(Box::new([const { std::sync::atomic::AtomicU64::new(0) }; 5])) as *const _ as usize;
+            T_ADDR.store(a, std::sync::atomic::Ordering::Relaxed);
+        }
+        unsafe { &*(a as *const [std::sync::atomic::AtomicU64; 5]) }
+    }
+    fn timed<R>(i: usize, f: impl FnOnce() -> R) -> R {
+        let t = std::time::Instant::now();
+        let r = f();
+        t_ns()[i].fetch_add(t.elapsed().as_nanos() as u64, std::sync::atomic::Ordering::Relaxed);
+        r
+    }
+
     pub struct EngineGame {
         pub e: Engine,
         base: RefCell<Option<Base>>,
@@ -165,18 +183,18 @@ pub mod engine_game {
             (slot % 2 == 0 && slot / 2 < 2).then(|| crate::netmatch::script_input(slot / 2, frame - FIRST))
         }
         fn save(&self) -> EngSnap {
-            EngSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
+            EngSnap { mem: timed(0, || self.with_base(|b| b.save())), frames: self.e.frames, ended: self.e.ended }
         }
         fn load(&mut self, s: &EngSnap) {
-            self.with_base(|b| b.load(&s.mem));
+            timed(1, || self.with_base(|b| b.load(&s.mem)));
             self.e.frames = s.frames;
             self.e.ended = s.ended;
         }
         fn state_hash(&self) -> u32 {
-            self.with_base(|b| b.page_hash())
+            timed(2, || self.with_base(|b| b.page_hash()))
         }
         fn game_hash(&self) -> u32 {
-            self.e.neutral_row()[0]
+            timed(3, || self.e.neutral_row()[0])
         }
         fn live(&self) -> bool {
             self.live
@@ -197,7 +215,7 @@ pub mod engine_game {
                 // gw_Replay_ChecksumSeed in live mode: every frame starts from `seed + ((frame + 123) << 16)`
                 melee_runtime::tu::random::global::state().set_logic_seed(super::live_frame_seed(sd, self.frame() + 1));
             }
-            self.e.tick();
+            timed(4, || self.e.tick());
             let r = self.e.neutral_row();
             let mut t = format!("{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]);
             for w in &r[4..16] {
@@ -235,6 +253,7 @@ pub mod engine_game {
                 return std::process::ExitCode::FAILURE;
             }
         };
+        let _ = t_ns(); // allocate the timing block before the first snapshot
         let mut g = EngineGame::new(e);
         if let Some(n) = arg("--fidelity").and_then(|v| v.parse().ok()) {
             g.fidelity(n);
@@ -270,6 +289,10 @@ pub mod engine_game {
             if run % 100 == 0 {
                 eprintln!("melee: synctest {run} frames, {} mismatches, {:.1}s", st.mismatches.len(), t0.elapsed().as_secs_f32());
             }
+        }
+        {
+            let t = |i: usize| t_ns()[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
+            eprintln!("melee: per tick ms: save {:.3} load {:.3} state_hash {:.3} game_hash {:.3} run_frame(tick) {:.3}; total {:.3}", t(0), t(1), t(2), t(3), t(4), t0.elapsed().as_secs_f64() * 1e3 / run.max(1) as f64);
         }
         eprintln!("melee: engine synctest depth {k}: {run} frames, {} rollback passes, {} hash checks, {} MISMATCHES; golden {}/{} frames equal",
             st.passes, st.checked, st.mismatches.len(), n - bad, n);

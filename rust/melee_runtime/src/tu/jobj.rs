@@ -267,19 +267,57 @@ type NativeTree = JObjTree<*mut HSD_DObj, *mut HSD_RObj>;
 type NativeHost = (std::vec::Vec<*mut HSD_JObj>, std::vec::Vec<JObjId>);
 fn vid(v:melee_types::Vec)->crate::mtx::Vec3{crate::mtx::Vec3{x:v.x,y:v.y,z:v.z}}
 fn native_vec(v:crate::mtx::Vec3)->melee_types::Vec{melee_types::Vec{x:v.x,y:v.y,z:v.z}}
+/// Pointer -> first index in `p`. Trees reach hundreds of joints (a fighter), so the former linear `contains`/`position`
+/// scans were quadratic and the top cost of a tick. Three tiers: a scan for tiny trees, a stack open-addressing table
+/// (no allocation) up to `TAB/2` entries, a `HashMap` beyond.
+const TAB:usize=512;
+struct PtrIndex{n:usize,stack:[(usize,u32);TAB],map:Option<std::collections::HashMap<usize,u32>>}
+impl PtrIndex{
+    const SMALL:usize=24;
+    fn slot(j:usize)->usize{((j>>4).wrapping_mul(0x9E37_79B9_7F4A_7C15)>>40)&(TAB-1)}
+    fn new()->Self{PtrIndex{n:0,stack:[(0,0);TAB],map:None}}
+    fn find(&self,p:&[*mut HSD_JObj],j:*mut HSD_JObj)->Option<u32>{
+        if let Some(m)=&self.map{return m.get(&(j as usize)).copied();}
+        if self.n<=Self::SMALL{return p.iter().position(|q|*q==j).map(|n|n as u32);}
+        let mut s=Self::slot(j as usize);
+        loop{let e=self.stack[s];if e.0==0{return None;}if e.0==j as usize{return Some(e.1);}s=(s+1)&(TAB-1);}
+    }
+    fn insert(&mut self,j:usize,n:u32){
+        if let Some(m)=&mut self.map{m.entry(j).or_insert(n);return;}
+        let mut s=Self::slot(j);
+        loop{let e=self.stack[s];if e.0==0{self.stack[s]=(j,n);return;}if e.0==j{return;}s=(s+1)&(TAB-1);}
+    }
+    /// Called after `p` grew (or was filled) to `len` entries; builds the lookup structure when the scan stops being cheap.
+    fn grew(&mut self,p:&[*mut HSD_JObj]){
+        let len=p.len();
+        if self.map.is_none()&&len>TAB/2{
+            let mut m=std::collections::HashMap::with_capacity(len*2);
+            for (n,&q) in p.iter().enumerate(){m.entry(q as usize).or_insert(n as u32);}
+            self.map=Some(m);self.n=len;return;
+        }
+        if self.map.is_some(){if let Some(&q)=p.last(){self.insert(q as usize,(len-1) as u32);}self.n=len;return;}
+        if len>Self::SMALL{
+            if self.n<=Self::SMALL{for (n,&q) in p.iter().enumerate(){self.insert(q as usize,n as u32);}}
+            else{self.insert(p[len-1] as usize,(len-1) as u32);}
+        }
+        self.n=len;
+    }
+}
 unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
     let mut p=roots.iter().copied().filter(|j|!j.is_null()).collect::<std::vec::Vec<_>>(); p.dedup();
+    let mut ix=PtrIndex::new();ix.grew(&p);
     let mut k=0;
     while k<p.len(){let j=p[k];
-        let mut links=vec![(*j).parent,(*j).child,(*j).next];
-        if !(*j).aobj.is_null(){links.push((*(*j).aobj).hsd_obj.cast());}
+        // link order is part of the id assignment: parent, child, next, aobj owner, then the joint-valued robjs
+        let mut add=|link:*mut HSD_JObj,p:&mut std::vec::Vec<*mut HSD_JObj>|{if !link.is_null()&&ix.find(p,link).is_none(){p.push(link);ix.grew(p);}};
+        add((*j).parent,&mut p);add((*j).child,&mut p);add((*j).next,&mut p);
+        if !(*j).aobj.is_null(){add((*(*j).aobj).hsd_obj.cast(),&mut p);}
         let mut r=(*j).robj;
-        while !r.is_null(){if (*r).flags&0x70000000==0x10000000{links.push((*r).u.jobj);}r=(*r).next;}
-        for link in links {if !link.is_null()&&!p.contains(&link){p.push(link);}}
+        while !r.is_null(){if (*r).flags&0x70000000==0x10000000{add((*r).u.jobj,&mut p);}r=(*r).next;}
         k+=1;
     }
-    let id=|j|p.iter().position(|q|*q==j).map(|n|JObjId(n as u32));
-    let mut t=NativeTree::new();
+    let id=|j|ix.find(&p,j).map(JObjId);
+    let mut t=NativeTree{nodes:std::vec::Vec::with_capacity(p.len())};
     for &j in &p{
         let x=t.alloc();let o=t.get_mut(x);
         o.parent=id((*j).parent);o.child=id((*j).child);o.next=id((*j).next);o.flags=(*j).flags;
@@ -291,6 +329,35 @@ unsafe fn snapshot(roots:&[*mut HSD_JObj])->(NativeTree,NativeHost){
         let mut r=(*j).robj;while !r.is_null(){o.robj.push(r);r=(*r).next;}
     }
     (t,(p,vec![]))
+}
+/// `HSD_JObjMtxIsDirty` on the raw record.
+unsafe fn raw_dirty(j:*mut HSD_JObj)->bool{(*j).flags&crate::jobj::JOBJ_USER_DEF_MTX==0&&(*j).flags&JOBJ_MTX_DIRTY!=0}
+/// Fast path of `HSD_JObjSetupMatrixSub` / `MakeMatrix` for the common joint: no robj, no aobj target, no IK or user matrix, and a
+/// clean (or absent) parent. Then the result depends on the joint and its parent alone and only the joint's flags, `scl`
+/// and `mtx` change, so a two-node tree replaces the snapshot of the whole connected component (hundreds of joints per
+/// fighter, rebuilt for every envelope / dobj the render pass sets up). `clear_dirty` = SetupMatrixSub's flag clear.
+/// Returns false (nothing done) when the joint needs the general path.
+unsafe fn fast_matrix(j:*mut HSD_JObj,clear_dirty:bool)->bool{
+    use crate::jobj::{JOBJ_JOINT,JOBJ_USER_DEF_MTX};
+    if !(*j).robj.is_null()||(!(*j).aobj.is_null()&&!(*(*j).aobj).hsd_obj.is_null())||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
+    let par=(*j).parent;
+    if !par.is_null()&&raw_dirty(par){return false;}
+    let p=[j,par];let n=if par.is_null(){1}else{2};
+    let mut t=NativeTree{nodes:std::vec::Vec::with_capacity(n)};
+    for (k,&x) in p[..n].iter().enumerate(){
+        let id=t.alloc();let o=t.get_mut(id);
+        if k==0&&n==2{o.parent=Some(JObjId(1));}
+        o.flags=(*x).flags;o.scale=vid((*x).scale);o.translate=vid((*x).translate);
+        o.rotate=crate::mtx::Quaternion{x:(*x).rotate.x,y:(*x).rotate.y,z:(*x).rotate.z,w:(*x).rotate.w};o.mtx=(*x).mtx;
+        o.scl=(*x).scl.as_ref().map(|s|vid(*s));
+    }
+    let mut h:NativeHost=(p[..n].to_vec(),vec![]);
+    t.make_matrix(&mut h,JObjId(0));
+    let o=t.get(JObjId(0));
+    (*j).flags=if clear_dirty{o.flags&!JOBJ_MTX_DIRTY}else{o.flags};
+    (*j).mtx=o.mtx;
+    match o.scl {Some(s)=>{if (*j).scl.is_null(){(*j).scl=Box::into_raw(Box::new(native_vec(s)));}else{*(*j).scl=native_vec(s);}},None=>{if !(*j).scl.is_null(){ext::HSD_VecFree((*j).scl.cast());(*j).scl=null_mut();}}}
+    true
 }
 unsafe fn flush(t:&NativeTree,p:&[*mut HSD_JObj]){
     let ptr=|id:Option<JObjId>|id.map_or(null_mut(),|i|p[i.0 as usize]);
@@ -313,10 +380,10 @@ impl JObjHost<*mut HSD_DObj,*mut HSD_RObj> for NativeHost {
 unsafe fn finish(t:&NativeTree,h:NativeHost){flush(t,&h.0);for j in h.1{HSD_JObjUnref(h.0[j.0 as usize]);}}
 unsafe fn native_remove_all(j:*mut HSD_JObj){if !j.is_null(){let(mut t,mut h)=snapshot(&[j]);t.remove_all(&mut h,Some(JObjId(0)));finish(&t,h);}}
 unsafe fn native_reparent(j:*mut HSD_JObj,p:*mut HSD_JObj){let(mut t,h)=snapshot(&[j,p]);let pi=h.0.iter().position(|&x|x==p).map(|i|JObjId(i as u32));t.reparent(Some(JObjId(0)),pi);finish(&t,h);}
-unsafe extern "C" fn native_make_matrix(j:*mut HSD_JObj){let(mut t,mut h)=snapshot(&[j]);t.make_matrix(&mut h,JObjId(0));finish(&t,h);}
-pub(crate) unsafe fn native_setup_sub(j:*mut HSD_JObj){ melee_core::ct!("native_setup_sub");if !j.is_null(){let(mut t,mut h)=snapshot(&[j]);t.setup_matrix_sub(&mut h,JObjId(0));finish(&t,h);}}
+unsafe extern "C" fn native_make_matrix(j:*mut HSD_JObj){if fast_matrix(j,false){return;}let(mut t,mut h)=snapshot(&[j]);t.make_matrix(&mut h,JObjId(0));finish(&t,h);}
+pub(crate) unsafe fn native_setup_sub(j:*mut HSD_JObj){ melee_core::ct!("native_setup_sub");if !j.is_null(){if fast_matrix(j,true){return;}let(mut t,mut h)=snapshot(&[j]);t.setup_matrix_sub(&mut h,JObjId(0));finish(&t,h);}}
 pub(crate) unsafe fn native_make_matrix_pub(j:*mut HSD_JObj){ melee_core::ct!("native_make_matrix_pub");native_make_matrix(j)}
-unsafe fn native_setup(j:*mut HSD_JObj){if !j.is_null(){let(mut t,mut h)=snapshot(&[j]);t.setup_matrix(&mut h,Some(JObjId(0)));finish(&t,h);}}
+unsafe fn native_setup(j:*mut HSD_JObj){if !j.is_null()&&raw_dirty(j){let(mut t,mut h)=snapshot(&[j]);t.setup_matrix(&mut h,Some(JObjId(0)));finish(&t,h);}}
 pub unsafe fn HSD_JObjDispAll(j:*mut HSD_JObj,v:&Mtx,flags:u32,mode:u32){
     melee_core::ct!("HSD_JObjDispAll");
     if j.is_null(){return}

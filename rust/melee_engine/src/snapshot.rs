@@ -23,19 +23,24 @@ fn ranges() -> Vec<(usize, usize)> {
 }
 
 /// Pages of the first two ranges (arena, host block) are write-watched: only pages written since the base can differ.
+/// Sets the bit of every page of `[addr, addr+len)` written since the last call (and resets the watch).
 #[cfg(windows)]
-fn written_pages(addr: usize, len: usize, out: &mut std::collections::BTreeSet<u32>) {
+fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
     extern "system" {
         fn GetWriteWatch(flags: u32, base: *mut core::ffi::c_void, size: usize, addrs: *mut *mut core::ffi::c_void, count: *mut usize, gran: *mut u32) -> u32;
     }
-    let mut buf = vec![core::ptr::null_mut::<core::ffi::c_void>(); 1 << 16];
+    if len == 0 {
+        return;
+    }
+    let mut buf = [core::ptr::null_mut::<core::ffi::c_void>(); 4096];
+    // GetWriteWatch resumes where the reset left off: a full buffer means more pages follow in the same range
     loop {
         let mut n = buf.len();
         let mut g = 0u32;
         let r = unsafe { GetWriteWatch(1, addr as *mut _, len, buf.as_mut_ptr(), &mut n, &mut g) };
         assert_eq!(r, 0, "GetWriteWatch failed");
         for a in &buf[..n] {
-            out.insert(((*a as usize - addr) / PAGE) as u32);
+            set_bit(out, (*a as usize - base) / PAGE);
         }
         if n < buf.len() {
             break;
@@ -43,8 +48,34 @@ fn written_pages(addr: usize, len: usize, out: &mut std::collections::BTreeSet<u
     }
 }
 #[cfg(not(windows))]
-fn written_pages(_: usize, len: usize, out: &mut std::collections::BTreeSet<u32>) {
-    out.extend(0..(len / PAGE) as u32);
+fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
+    for p in (addr - base) / PAGE..(addr - base + len) / PAGE {
+        set_bit(out, p);
+    }
+}
+
+fn set_bit(v: &mut Vec<u64>, i: usize) {
+    if v.len() <= i / 64 {
+        v.resize(i / 64 + 1, 0);
+    }
+    v[i / 64] |= 1u64 << (i % 64);
+}
+
+/// Indexes of the set bits, ascending, below `limit`.
+fn bits(v: &[u64], limit: usize) -> Vec<u32> {
+    let mut out = Vec::new();
+    for (w, &x) in v.iter().enumerate() {
+        let mut x = x;
+        while x != 0 {
+            let i = w * 64 + x.trailing_zeros() as usize;
+            if i >= limit {
+                return out;
+            }
+            out.push(i as u32);
+            x &= x - 1;
+        }
+    }
+    out
 }
 
 const WATCHED: usize = 2;
@@ -57,7 +88,7 @@ pub struct Base {
     /// Bytes of the arena that existed at capture (pages beyond were zero then).
     arena_len: usize,
     /// Watched ranges: every page written since the base (cumulative).
-    dirty: std::cell::RefCell<Vec<std::collections::BTreeSet<u32>>>,
+    dirty: std::cell::RefCell<Vec<Vec<u64>>>,
 }
 
 #[derive(Clone)]
@@ -95,18 +126,26 @@ impl Base {
         let arena_len = ranges[0].1;
         let b = Base { ranges, data, arena_len, dirty: std::cell::RefCell::new(vec![Default::default(); WATCHED]) };
         b.refresh(); // consumes the watch state up to now (the copy above only read)
-        b.dirty.borrow_mut().iter_mut().for_each(|d| d.clear());
+        b.dirty.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
         // the arena's base is not copied: the first write to each page saves it (cow.rs)
         unsafe { crate::cow::protect(b.ranges[0].0, arena_len).expect("arena copy-on-write") };
         b
     }
 
-    /// Pull the pages written since the last call into the dirty sets.
+    /// Pull the pages written since the last call into the dirty sets. The arena part that existed at the capture is
+    /// copy-on-first-write (`cow`): a page ever written there has its bit in the cow store, so the (expensive, it walks
+    /// ~5 GB) write watch only covers what the arena grew by since; the host block is watched in full.
     fn refresh(&self) {
         let cur = ranges();
         let mut d = self.dirty.borrow_mut();
-        for ri in 0..WATCHED {
-            written_pages(cur[ri].0, cur[ri].1.max(PAGE), &mut d[ri]);
+        let (a0, l0) = cur[0];
+        let cow_len = self.arena_len.min(l0);
+        crate::cow::or_written(&mut d[0]);
+        if l0 > cow_len {
+            written_pages(a0 + cow_len, l0 - cow_len, a0, &mut d[0]);
+        }
+        for ri in 1..WATCHED {
+            written_pages(cur[ri].0, cur[ri].1.max(PAGE), cur[ri].0, &mut d[ri]);
         }
     }
 
@@ -127,7 +166,7 @@ impl Base {
     /// The page indexes of range `ri` that can differ from the base.
     fn candidates(&self, ri: usize, len: usize) -> Vec<u32> {
         if ri < WATCHED {
-            self.dirty.borrow()[ri].iter().copied().filter(|&p| (p as usize) < len / PAGE).collect()
+            bits(&self.dirty.borrow()[ri], len / PAGE)
         } else {
             (0..(len / PAGE) as u32).collect()
         }
@@ -149,8 +188,7 @@ impl Base {
                 let pi = pi as usize;
                 let p = &live[pi * PAGE..(pi + 1) * PAGE];
                 if p != self.base_page(ri, pi) {
-                    let mut b = Box::new([0u8; PAGE]);
-                    b.copy_from_slice(p);
+                    let b: Box<[u8; PAGE]> = p.to_vec().into_boxed_slice().try_into().unwrap();
                     pages.push((pi as u32, b));
                 }
             }
@@ -166,15 +204,25 @@ impl Base {
         let (abase, alen_now) = arena::used_range();
         for (ri, r) in s.ranges.iter().enumerate() {
             let live = unsafe { core::slice::from_raw_parts_mut(r.addr as *mut u8, r.len) };
-            // pages that may differ now: the dirty ones plus the snapshot's own
-            let mut todo: std::collections::BTreeSet<u32> = self.candidates(ri, r.len).into_iter().collect();
-            todo.extend(r.pages.iter().map(|p| p.0));
-            for pi in todo {
+            // pages that may differ now: the dirty ones plus the snapshot's own (both ascending)
+            let cand = self.candidates(ri, r.len);
+            let (mut i, mut k) = (0, 0);
+            while i < cand.len() || k < r.pages.len() {
+                let pi = match (cand.get(i), r.pages.get(k)) {
+                    (Some(&c), Some(p)) => c.min(p.0),
+                    (Some(&c), None) => c,
+                    (None, Some(p)) => p.0,
+                    (None, None) => unreachable!(),
+                };
+                if cand.get(i) == Some(&pi) {
+                    i += 1;
+                }
+                let own = if r.pages.get(k).map(|p| p.0) == Some(pi) { k += 1; Some(k - 1) } else { None };
                 let pi = pi as usize;
                 let dst = &mut live[pi * PAGE..(pi + 1) * PAGE];
-                let src: &[u8] = match r.pages.binary_search_by_key(&(pi as u32), |p| p.0) {
-                    Ok(i) => &r.pages[i].1[..],
-                    Err(_) => self.base_page(ri, pi),
+                let src: &[u8] = match own {
+                    Some(n) => &r.pages[n].1[..],
+                    None => self.base_page(ri, pi),
                 };
                 if dst != src {
                     dst.copy_from_slice(src);
@@ -203,10 +251,15 @@ impl Base {
                 let p = &live[pi * PAGE..(pi + 1) * PAGE];
                 if p != self.base_page(ri, pi) {
                     h = (h ^ (ri as u64) << 32 ^ pi as u64).wrapping_mul(0x100000001b3);
-                    for w in p.chunks_exact(8) {
-                        let v = u64::from_le_bytes(w.try_into().unwrap());
-                        h = (h ^ v).wrapping_mul(0x100000001b3).rotate_left(23);
+                    // four independent multiply lanes: the former single chain was latency bound (a page is 512 words)
+                    let mut l = [h, h ^ 0x9E37_79B9_7F4A_7C15, h ^ 0xC2B2_AE3D_27D4_EB4F, h ^ 0x1656_67B1_9E37_79F9];
+                    for q in p.chunks_exact(32) {
+                        for k in 0..4 {
+                            let v = u64::from_le_bytes(q[k * 8..k * 8 + 8].try_into().unwrap());
+                            l[k] = (l[k] ^ v).wrapping_mul(0x100000001b3).rotate_left(23);
+                        }
                     }
+                    h = (l[0] ^ l[1].rotate_left(13) ^ l[2].rotate_left(29) ^ l[3].rotate_left(43)).wrapping_mul(0x100000001b3);
                 }
             }
         }

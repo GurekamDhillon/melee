@@ -115,6 +115,22 @@ mod imp {
         }
     }
 
+    /// OR the written-page bitmap (bit i = page i of the range, ever written since `protect`) into `out`.
+    pub fn or_written(out: &mut Vec<u64>) {
+        unsafe {
+            if START == 0 {
+                return;
+            }
+            let words = (LEN / PAGE).div_ceil(64);
+            if out.len() < words {
+                out.resize(words, 0);
+            }
+            for (i, w) in out[..words].iter_mut().enumerate() {
+                *w |= *BITS.add(i);
+            }
+        }
+    }
+
     pub fn active() -> bool {
         unsafe { START != 0 }
     }

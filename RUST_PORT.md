@@ -113,3 +113,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-01 rust-port: Rust vs C benchmarks (build times, headless sim fps on 4 goldens, 7-frame resim 34.5 ms, offscreen render), see notes/bench.md
 - 2026-11-01 port/coverage merged; port/cov-integ merge aborted (101 conflicts, and its pre-dedupe duplicate bodies make gen_link ambiguous: hooks unlinked, 0 golden frames); coverage scenarios wired into `melee golden --engine tu` (VS + idle pad): 12 pass / 67 fail / 79 not wired -> notes/coverage.md
 - 2026-11-01 rust-port: external tournament replay harvest (125 Ausmash .slp, 20 playable, 0/5 match C playback from frame 0), see notes/replays-ext.md
+- 2026-11-01 rust-port: port/perf, sampling profiler (MELEE_SAMPLE), golden CSV append, cow-bitmap snapshot dirty tracking, jobj matrix fast path: tick 7.1-9.2 -> 0.2-0.5 ms, 7-frame rollback tick 65 -> 7.4 ms, see notes/perf.md

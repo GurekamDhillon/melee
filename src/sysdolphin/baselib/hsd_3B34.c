@@ -429,11 +429,7 @@ typedef struct JpegEncodeTables {
     u8 pad_44E[2];
 } JpegEncodeTables;
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma inline_depth(8)
-#endif
-static inline s32 hsd_803B3CD8_bit_length(s32 value)
+static inline s32 bitLength(s32 value)
 {
     s32 bit;
 
@@ -445,20 +441,7 @@ static inline s32 hsd_803B3CD8_bit_length(s32 value)
     return 0;
 }
 
-static inline s32 jpeg_run_bit_length(s32 value)
-{
-    s32 bit;
-
-    value++;
-    for (bit = 0x1F; bit >= 0; bit--) {
-        if (value & (1 << bit)) {
-            return bit + 1;
-        }
-    }
-    return 0;
-}
-
-static inline void hsd_803B3CD8_write_byte(u8 byte, JpegWork** work)
+static inline void writeByte(u8 byte)
 {
     u8* dst = hsd_804D79A0;
 
@@ -466,12 +449,11 @@ static inline void hsd_803B3CD8_write_byte(u8 byte, JpegWork** work)
         hsd_804D79A0 = dst + 1;
         *dst = byte;
     } else {
-        longjmp((*work)->buf, 1);
+        longjmp(hsd_804D2648.buf, 1);
     }
 }
 
-static inline void hsd_803B3CD8_write_bits(s32 value, s32 length,
-                                           JpegWork** work)
+static inline void writeBits(s32 value, s32 length)
 {
     s32 bit;
 
@@ -482,9 +464,9 @@ static inline void hsd_803B3CD8_write_bits(s32 value, s32 length,
             hsd_804D79B0[0] |= 1;
         }
         if (hsd_804D79AC == 8) {
-            hsd_803B3CD8_write_byte(hsd_804D79B0[0], work);
+            writeByte(hsd_804D79B0[0]);
             if (hsd_804D79B0[0] == 0xFF) {
-                hsd_803B3CD8_write_byte(0, work);
+                writeByte(0);
             }
             hsd_804D79AC = 0;
             hsd_804D79B0[0] = 0;
@@ -492,102 +474,66 @@ static inline void hsd_803B3CD8_write_bits(s32 value, s32 length,
     }
 }
 
-static inline void jpeg_write_run_payload(s32 run, s32 length, JpegWork** work)
+void hsd_803B3CD8(s32 component)
 {
-    s32 bit;
-
-    bit = length - 1;
-    run++;
-    for (; bit >= 0; bit--) {
-        hsd_804D79B0[0] <<= 1;
-        hsd_804D79AC += 1;
-        if (run & (1 << bit)) {
-            hsd_804D79B0[0] |= 1;
-        }
-        if (hsd_804D79AC == 8) {
-            hsd_803B3CD8_write_byte(hsd_804D79B0[0], work);
-            if (hsd_804D79B0[0] == 0xFF) {
-                hsd_803B3CD8_write_byte(0, work);
-            }
-            hsd_804D79AC = 0;
-            hsd_804D79B0[0] = 0;
-        }
-    }
-}
-
-static inline void jpeg_encode_component(s32 component, s32* ac_value_out,
-                                         s32* run_out, s32* value_out,
-                                         s32* index_out)
-{
-    JpegWork* work;
-    JpegEncodeTables* tables;
+    JpegWork* work = &hsd_804D2648;
+    JpegEncodeTables* tables = (JpegEncodeTables*) lbl_80430C40;
     u16* dc_code;
     u8* dc_length;
     u16* ac_code;
     u8* ac_length;
+    s32 value;
     s32 length;
+    s32 run;
+    s32 index;
+    s32 ac_value;
 
-    work = &hsd_804D2648;
-    tables = (JpegEncodeTables*) lbl_80430C40;
+    PAD_STACK(16);
+
     dc_code = component == 0 ? lbl_80431678 : lbl_8043169C;
     dc_length = component == 0 ? lbl_80431690 : lbl_804316B4;
     ac_code = component == 0 ? tables->ac_code_luma : tables->ac_code_chroma;
     ac_length =
         component == 0 ? tables->ac_length_luma : tables->ac_length_chroma;
 
-    (*value_out) = work->coef[0] - work->prev_dc[component];
-    (*run_out) = 0;
-    length = hsd_803B3CD8_bit_length(abs((*value_out)));
+    value = work->coef[0] - work->prev_dc[component];
+    run = 0;
+    length = bitLength(abs(value));
     work->prev_dc[component] = work->coef[0];
-    hsd_803B3CD8_write_bits(dc_code[length], dc_length[length], &work);
+    writeBits(dc_code[length], dc_length[length]);
     if (length != 0) {
-        if ((*value_out) < 0) {
-            (*value_out)--;
+        if (value < 0) {
+            value--;
         }
-        hsd_803B3CD8_write_bits((*value_out), length, &work);
+        writeBits(value, length);
     }
-    for ((*index_out) = 1; (*index_out) < 64; (*index_out)++) {
+    for (index = 1; index < 64; index++) {
         JpegWork* indexed;
         /* Apply the zigzag index before the coefficient array offset. */
         s32 coefficient =
-            (indexed = (JpegWork*) ((s32*) work + lbl_80431638[(*index_out)]))
+            (indexed = (JpegWork*) ((s32*) work + lbl_80431638[index]))
                 ->coef[0];
-        (*ac_value_out) = coefficient;
 
+        ac_value = coefficient;
         if (coefficient != 0) {
-            length = jpeg_run_bit_length((*run_out));
-            hsd_803B3CD8_write_bits(ac_code[length], ac_length[length], &work);
-            jpeg_write_run_payload((*run_out), length, &work);
-            length = hsd_803B3CD8_bit_length(abs((*ac_value_out)));
-            hsd_803B3CD8_write_bits(ac_code[length], ac_length[length], &work);
-            if ((*ac_value_out) < 0) {
-                (*ac_value_out)--;
+            length = bitLength(run + 1);
+            writeBits(ac_code[length], ac_length[length]);
+            writeBits(run + 1, length);
+            length = bitLength(abs(ac_value));
+            writeBits(ac_code[length], ac_length[length]);
+            if (ac_value < 0) {
+                ac_value--;
             }
-            hsd_803B3CD8_write_bits((*ac_value_out), length, &work);
-            (*run_out) = 0;
+            writeBits(ac_value, length);
+            run = 0;
         } else {
-            (*run_out)++;
+            run++;
         }
     }
-    if ((*run_out) != 0) {
-        hsd_803B3CD8_write_bits(ac_code[0], ac_length[0], &work);
+    if (run != 0) {
+        writeBits(ac_code[0], ac_length[0]);
     }
 }
-
-#ifdef MUST_MATCH
-#pragma auto_inline off
-#endif
-void hsd_803B3CD8(s32 component)
-{
-    s32 value;
-    s32 run;
-    s32 index;
-    s32 ac_value;
-    jpeg_encode_component(component, &ac_value, &run, &value, &index);
-}
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void hsd_803B46D4(void)
 {
@@ -838,6 +784,12 @@ void hsd_803B4D64(u32 arg0, u32 arg1)
     longjmp(hsd_804D2648.buf, 1);
 }
 
+struct hsd_803B51C8_inline_state {
+    u8* base;
+    JpegWork* work;
+    u8* quant_table;
+};
+
 static inline s32
 hsd_803B51C8_inline(s32 image, s32 image_height, s32 image_width,
                     const char* output, s32 output_capacity,
@@ -850,17 +802,11 @@ hsd_803B51C8_inline(s32 image, s32 image_height, s32 image_width,
     s32* work_r26_2;
     s32 scratch_r6_4;
     s32 scratch_r6_5;
-    s32 scratch_r7_2;
-    s32 scratch_r7_4;
     s32 quant_scale;
     u16 scratch_r0;
     u8 scratch_r6_3;
-    u8 scratch_r7_3;
-    struct {
-        u8* base;
-        JpegWork* work;
-        u8* quant_table;
-    } state;
+    s32 k;
+    struct hsd_803B51C8_inline_state state;
     u32 scratch_r23;
     u32 comment_size;
     s32 width;
@@ -1022,27 +968,12 @@ hsd_803B51C8_inline(s32 image, s32 image_height, s32 image_width,
                 work_r4_3 = (s32*) work_r23;
                 work_r5_3 = (s32*) (state.base + 0x718);
                 for (work_r3 = 0; work_r3 < 0x40; work_r3 += 8) {
-                    u8 scratch_r7;
                     scratch_r6 = state.quant_table + work_r3;
-                    scratch_r7 = scratch_r6[0];
-                    work_r5_3[0] =
-                        (work_r4_3[0] / ((s32) scratch_r7 / quant_scale));
-                    work_r5_3[1] =
-                        (work_r4_3[1] / ((s32) scratch_r6[1] / quant_scale));
-                    work_r5_3[2] =
-                        (work_r4_3[2] / ((s32) scratch_r6[2] / quant_scale));
-                    work_r5_3[3] =
-                        (work_r4_3[3] / ((s32) scratch_r6[3] / quant_scale));
-                    work_r5_3[4] =
-                        (work_r4_3[4] / ((s32) scratch_r6[4] / quant_scale));
-                    work_r5_3[5] =
-                        (work_r4_3[5] / ((s32) scratch_r6[5] / quant_scale));
-                    work_r5_3[6] =
-                        (work_r4_3[6] / ((s32) scratch_r6[6] / quant_scale));
-                    scratch_r7_2 = work_r4_3[7];
+                    for (k = 0; k < 8; k++) {
+                        work_r5_3[k] =
+                            work_r4_3[k] / ((s32) scratch_r6[k] / quant_scale);
+                    }
                     work_r4_3 += 8;
-                    work_r5_3[7] =
-                        (scratch_r7_2 / ((s32) scratch_r6[7] / quant_scale));
                     work_r5_3 += 8;
                 }
                 hsd_803B3CD8(0);
@@ -1061,25 +992,11 @@ hsd_803B51C8_inline(s32 image, s32 image_height, s32 image_width,
                 work_r4_4 = (s32*) (state.base + 0x518);
                 for (work_r3_2 = 0; work_r3_2 < 0x40; work_r3_2 += 8) {
                     scratch_r6_2 = chroma_quant_table + work_r3_2;
-                    scratch_r7_3 = scratch_r6_2[0];
-                    work_r5_4[0] =
-                        (work_r4_4[0] / ((s32) scratch_r7_3 / quant_scale));
-                    work_r5_4[1] =
-                        (work_r4_4[1] / ((s32) scratch_r6_2[1] / quant_scale));
-                    work_r5_4[2] =
-                        (work_r4_4[2] / ((s32) scratch_r6_2[2] / quant_scale));
-                    work_r5_4[3] =
-                        (work_r4_4[3] / ((s32) scratch_r6_2[3] / quant_scale));
-                    work_r5_4[4] =
-                        (work_r4_4[4] / ((s32) scratch_r6_2[4] / quant_scale));
-                    work_r5_4[5] =
-                        (work_r4_4[5] / ((s32) scratch_r6_2[5] / quant_scale));
-                    work_r5_4[6] =
-                        (work_r4_4[6] / ((s32) scratch_r6_2[6] / quant_scale));
-                    scratch_r7_4 = work_r4_4[7];
+                    for (k = 0; k < 8; k++) {
+                        work_r5_4[k] = work_r4_4[k] /
+                                       ((s32) scratch_r6_2[k] / quant_scale);
+                    }
                     work_r4_4 += 8;
-                    work_r5_4[7] =
-                        (scratch_r7_4 / ((s32) scratch_r6_2[7] / quant_scale));
                     work_r5_4 += 8;
                 }
                 hsd_803B3CD8(1);
@@ -1094,25 +1011,11 @@ hsd_803B51C8_inline(s32 image, s32 image_height, s32 image_width,
                 work_r4_5 = (s32*) (state.base + 0x618);
                 for (work_r3_3 = 0; work_r3_3 < 0x40; work_r3_3 += 8) {
                     scratch_r5 = chroma_quant_table + work_r3_3;
-                    scratch_r6_3 = scratch_r5[0];
-                    work_r26_2[0] =
-                        (work_r4_5[0] / ((s32) scratch_r6_3 / quant_scale));
-                    work_r26_2[1] =
-                        (work_r4_5[1] / ((s32) scratch_r5[1] / quant_scale));
-                    work_r26_2[2] =
-                        (work_r4_5[2] / ((s32) scratch_r5[2] / quant_scale));
-                    work_r26_2[3] =
-                        (work_r4_5[3] / ((s32) scratch_r5[3] / quant_scale));
-                    work_r26_2[4] =
-                        (work_r4_5[4] / ((s32) scratch_r5[4] / quant_scale));
-                    work_r26_2[5] =
-                        (work_r4_5[5] / ((s32) scratch_r5[5] / quant_scale));
-                    work_r26_2[6] =
-                        (work_r4_5[6] / ((s32) scratch_r5[6] / quant_scale));
-                    scratch_r6_4 = work_r4_5[7];
+                    for (k = 0; k < 8; k++) {
+                        work_r26_2[k] =
+                            work_r4_5[k] / ((s32) scratch_r5[k] / quant_scale);
+                    }
                     work_r4_5 += 8;
-                    work_r26_2[7] =
-                        (scratch_r6_4 / ((s32) scratch_r5[7] / quant_scale));
                     work_r26_2 += 8;
                 }
                 hsd_803B3CD8(2);
@@ -1158,8 +1061,6 @@ s32 hsd_803B51C8(s32 arg0, s32 arg1, s32 arg2, char* arg3, s32 arg4)
     JpegHuffDc huff_dc_chroma;
     JpegHuffAc huff_ac_luma;
     JpegHuffAc huff_ac_chroma;
-
-    PAD_STACK(0x18);
 
     return hsd_803B51C8_inline(arg0, arg2, arg1, arg3, arg4, &lbl_803B9670,
                                &comment, &huff_dc_luma, &huff_dc_chroma,

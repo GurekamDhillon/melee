@@ -12,7 +12,7 @@
 /* 16AE80 */ bool gm_8016AE80(void);
 /* 16AE94 */ f32 gm_8016AE94(void);
 /* 16AEA4 */ u64 gm_8016AEA4(void);
-/* 16AEB8 */ s32 gm_8016AEB8(void);
+/* 16AEB8 */ ItemKind gm_8016AEB8(void);
 /* 16AEC8 */ bool gm_8016AEC8(void);
 /* 16AEDC */ u32 gm_GetFrameCount(void);
 /* 16AEEC */ u32 gm_8016AEEC(void);
@@ -60,9 +60,9 @@
 /* 16B728 */ u8 fn_8016B728(void);
 /* 16B738 */ void fn_8016B738(int);
 /* 16B774 */ MatchEnd* gm_8016B774(void);
-/* 16B784 */ void fn_8016B784(void);
+/* 16B784 */ void fn_8016B784(int);
 /* 16B7B4 */ void fn_8016B7B4(int);
-/* 16B7F8 */ void fn_8016B7F8(void);
+/* 16B7F8 */ void fn_8016B7F8(int);
 /* 16B88C */ void fn_8016B88C(int);
 /* 16B8D4 */ void gm_8016B8D4(s32, u8 slot_type);
 /* 16B918 */ void fn_8016B918(void);

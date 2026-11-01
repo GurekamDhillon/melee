@@ -2,12 +2,14 @@
 
 #include <melee/it/forward.h>
 
+#include "forward.h"
 #include "gm_1601.h"
 #include "gm_1A36.h"
 #include "gm_unsplit.h"
 #include "gmscene.h"
 #include "types.h"
 #include <dolphin/pad.h>
+#include <dolphin/types.h>
 #include <melee/gr/stage.h>
 #include <melee/if/ifall.h>
 #include <melee/if/ifstatus.h>
@@ -24,7 +26,6 @@
 #include <melee/pl/player.h>
 #include <melee/sc/types.h>
 #include <sysdolphin/baselib/aobj.h>
-#include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/dobj.h>
 #include <sysdolphin/baselib/fog.h>
 #include <sysdolphin/baselib/gobjgxlink.h>
@@ -212,8 +213,6 @@ void fn_80188644(void)
     Vec3 sp10;
     int saved_count;
 
-    PAD_STACK(8);
-
     saved_count = lbl_80473700.count;
     lbl_80473700.count = 1;
     Player_SetFacingDirection(0, 1.0f);
@@ -236,15 +235,10 @@ void fn_80188644(void)
         }
     }
 
-    gm_80473814.menu_values[0] = 0;
-    gm_80473814.menu_values[1] = 0;
-    gm_80473814.menu_values[2] = 0;
-    gm_80473814.menu_values[3] = 0;
-    saved_count = 0;
-    gm_80473814.menu_values[4] = saved_count;
-    gm_80473814.menu_values[5] = saved_count;
-    gm_80473814.menu_values[6] = saved_count;
-    gm_80473814.menu_values[saved_count] = 2;
+    for (i = 0; i < 7; i++) {
+        gm_80473814.menu_values[i] = 0;
+    }
+    gm_80473814.menu_values[0] = 2;
 }
 
 void fn_80188738(HSD_JObj* arg0)
@@ -503,9 +497,6 @@ void fn_80188EE8(HSD_GObj* gobj)
     HSD_JObjAnimAll(cursor_jobj);
 }
 
-#ifdef MUST_MATCH
-#pragma dont_inline off
-#endif
 static inline u32 gm_801891F4_GetTickRate(void)
 {
     return OS_TIMER_CLOCK;
@@ -830,9 +821,6 @@ void fn_801891F4(void)
         sub->x01 = 0;
     }
 }
-#ifdef MUST_MATCH
-#pragma dont_inline off
-#endif
 
 void fn_80189B88(void)
 {
@@ -873,25 +861,25 @@ void fn_80189B88(void)
     sub->menu_values[0] = 2;
 }
 
-void gm_80189CDC(StartMeleeData* arg0)
+void gm_80189CDC(StartMeleeData* start)
 {
     TrainingModeState* state = &lbl_80473700;
-    s32 i;
+    ssize_t i;
 
-    arg0->rules.match_kind = 0;
-    arg0->rules.is_teams = 1;
-    arg0->rules.item_freq = -1;
-    arg0->rules.x20 = 0xFFFFFFFFFFFFFFFFULL;
-    arg0->rules.x5_0 = 1;
+    start->rules.match_kind = MatchKind_Time;
+    start->rules.is_teams = true;
+    start->rules.item_freq = -1;
+    start->rules.x20 = 0xFFFFFFFFFFFFFFFFULL;
+    start->rules.x5_0 = 1;
 
-    for (i = 0; i < 4; i++) {
-        state->players[i] = gm_80473814.saved_players[i] = arg0->players[i];
+    for (i = 0; i < (ssize_t) ARRAY_SIZE(gm_80473814.saved_players); i++) {
+        state->players[i] = gm_80473814.saved_players[i] = start->players[i];
     }
 
-    state->mode = (s32) (arg0->players[0].slot - 1);
+    state->mode = (s32) (start->players[0].slot - 1);
     state->count = 1;
 
-    for (i = 0; 0x1B > i; i++) {
+    for (i = 0; (ssize_t) ARRAY_SIZE(state->char_data) > i; i++) {
         state->char_data[i] = 0;
     }
 }

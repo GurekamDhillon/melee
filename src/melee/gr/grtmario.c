@@ -35,7 +35,7 @@
 /* 21FB4C */ static void grTMario_8021FB4C(Ground_GObj*);
 /* 21FB50 */ static int lbl_8021FB50(s32, HSD_GObj*);
 /* 21FBE8 */ static void grTMario_8021FBE8(Vec3*, f32);
-/* 21FC50 */ static DynamicsDesc* grTMario_8021FC50(enum_t);
+/* 21FC50 */ static lbColl_80008D30_arg1* grTMario_8021FC50(enum_t);
 /* 21FC58 */ static bool grTMario_8021FC58(Vec3*, int, HSD_JObj*);
 
 StageCallbacks grTMr_StageCallbacks[] = {
@@ -177,8 +177,8 @@ int lbl_8021FB50(s32 unk, HSD_GObj* gobj)
     f32 unused = -120.0f;
 
     temp_f31 = unused * Ground_801C0498();
-    ftLib_80086644(gobj, &current);
-    ftLib_80086684(gobj, &previous);
+    ftLib_GetPos(gobj, &current);
+    ftLib_GetPrevPos(gobj, &previous);
     if ((current.y < temp_f31) && (previous.y > temp_f31)) {
         temp_f1 = ftLib_80086B80(gobj) / 10.0f;
         current.y = temp_f31;
@@ -202,7 +202,7 @@ void grTMario_8021FBE8(Vec3* vec, f32 arg8)
     }
 }
 
-DynamicsDesc* grTMario_8021FC50(enum_t arg0)
+lbColl_80008D30_arg1* grTMario_8021FC50(enum_t arg0)
 {
     return NULL;
 }

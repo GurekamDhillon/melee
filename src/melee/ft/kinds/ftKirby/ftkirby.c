@@ -1,8 +1,8 @@
 #include "ftkirby.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
-#include "ftKb_Init.static.h"
 #include "ftkirbyattackdash.h"
 #include "ftkirbyspecialdonkey.h"
 #include "ftkirbyspecialgamewatch.h"
@@ -37,6 +37,13 @@
 #include <sysdolphin/baselib/id.h>
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
+
+typedef struct ftKirby_CostumeArchive {
+    /* +0 */ HSD_Joint* joint;
+    /* +4 */ HSD_MatAnimJoint* matanim;
+} ftKirby_CostumeArchive;
+
+extern HSD_GObjEvent ftKb_Init_803C9CC8[];
 
 /* 459C10 */ UnkCostumeStruct ftKb_CostumeList[6];
 /* 459B88 */ struct ft_80459B88_t ft_80459B88;
@@ -2508,9 +2515,9 @@ int ftKb_CopyCostumeRow(int costume)
     row = Mex_CostumeVisIdx((int) Ft_Kind_Kirby, costume);
     return (row >= 0 && row < FTKB_COPY_COSTUMES) ? row : 0;
 }
-#define FTKB_COPY_ROW(fp) ftKb_CopyCostumeRow((int) (fp)->x619_costume_id)
+#define FTKB_COPY_ROW(fp) ftKb_CopyCostumeRow((int) (fp)->costume_id)
 #else
-#define FTKB_COPY_ROW(fp) ((fp)->x619_costume_id)
+#define FTKB_COPY_ROW(fp) ((fp)->costume_id)
 #endif
 
 MotionState ftKb_Init_UnkMotionStates0[] = {
@@ -2559,7 +2566,7 @@ MotionState ftKb_Init_UnkMotionStates0[] = {
 void ftKb_Init_800EE528(void)
 {
     /// @todo Bad cast.
-    s32* number_list = (s32*) &ft_80459B88.x0;
+    s32* number_list = (s32*) ft_80459B88.copies;
     ftKirby_CostumeArchive** struct_list = ftKb_Init_803C9FC8;
 
     s32 i;
@@ -2607,27 +2614,27 @@ void ftKb_Init_OnDeath(HSD_GObj* gobj)
     fp->u.kb.hat.x14.data = 0;
     fp->u.kb.x60 = 0;
     fp->u.kb.x64 = 0;
-    if (Player_GetFlagsBit1(fp->player_id) &&
-        Player_GetUnk4D(fp->player_id) != 4)
+    if (Player_GetFlagsBit1(fp->player_idx) &&
+        Player_GetUnk4D(fp->player_idx) != 4)
     {
-        ftKb_SpecialN_800F1BAC(gobj, Player_GetUnk4D(fp->player_id), 0);
+        ftKb_SpecialN_800F1BAC(gobj, Player_GetUnk4D(fp->player_idx), false);
     }
 }
 
 void ftKb_Init_OnLoad(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    void** item_list = fp->ft_data->x48_items;
+    union ftData_Item* item_list = fp->ft_data->x48_items;
 
     PUSH_ATTRS(fp, ftKb_DatAttrs);
 
     fp->can_multijump = true;
     fp->x2D0 = fp->dat_attrs;
-    fp->u.kb.hat.x8_b0 = Player_GetFlagsAEBit1(fp->player_id);
-    it_8026B3F8(item_list[0], It_Kind_Kirby_CBeam);
-    it_8026B3F8(item_list[1], It_Kind_Kirby_Hammer);
-    it_8026B3F8(item_list[2], It_Kind_Unk1);
-    it_8026B3F8(item_list[3], It_Kind_Unk2);
+    fp->u.kb.hat.x8_b0 = Player_GetFlagsAEBit1(fp->player_idx);
+    it_8026B3F8(item_list[0].article, It_Kind_Kirby_CBeam);
+    it_8026B3F8(item_list[1].article, It_Kind_Kirby_Hammer);
+    it_8026B3F8(item_list[2].article, It_Kind_Unk1);
+    it_8026B3F8(item_list[3].article, It_Kind_Unk2);
 }
 
 void ftKb_Init_800EE74C(HSD_GObj* gobj)
@@ -2661,23 +2668,23 @@ void ftKb_Init_UnkMotionStates4(HSD_GObj* gobj)
     switch (fp->u.kb.hat.kind) {
     case Ft_Kind_Donkey:
         if (fp->u.kb.xBC == da->specialn_dk_swings_to_full_charge) {
-            ftCo_800BFFD0(fp, 58, 0);
+            ftCo_800BFFD0(fp, 58, false);
         }
         break;
     case Ft_Kind_Samus:
         if (fp->u.kb.xA8 == da->specialn_ss_charge_time) {
-            ftCo_800BFFD0(fp, 54, 0);
+            ftCo_800BFFD0(fp, 54, false);
         }
         break;
     case Ft_Kind_Mewtwo:
         if (fp->u.kb.x9C == da->specialn_mt_charge_time) {
-            ftCo_800BFFD0(fp, 93, 0);
+            ftCo_800BFFD0(fp, 93, false);
             return;
         }
         break;
     case Ft_Kind_Seak:
         if (fp->u.kb.xB4 == 6) {
-            ftCo_800BFFD0(fp, 87, 0);
+            ftCo_800BFFD0(fp, 87, false);
         }
         break;
     default:
@@ -2711,19 +2718,19 @@ void ftKb_Init_OnItemPickup(HSD_GObj* gobj, bool arg1)
 void ftKb_Init_OnItemInvisible(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if (itIsHeavy(fp->item_gobj) == 0) {
+    if (itIsHeavy(fp->item_gobj) == false) {
         ftAnim_80070CC4(gobj, 1);
     }
 }
 
 void ftKb_Init_OnItemVisible(HSD_GObj* gobj)
 {
-    Fighter_OnItemVisible(gobj, 1);
+    Fighter_OnItemVisible(gobj, true);
 }
 
 void ftKb_Init_OnItemDrop(HSD_GObj* gobj, bool bool1)
 {
-    Fighter_OnItemDrop(gobj, bool1, 1, 1);
+    Fighter_OnItemDrop(gobj, bool1, true, true);
 }
 
 void ftKb_Init_LoadSpecialAttrs(HSD_GObj* gobj)
@@ -2731,22 +2738,24 @@ void ftKb_Init_LoadSpecialAttrs(HSD_GObj* gobj)
     COPY_ATTRS(gobj, ftKb_DatAttrs);
 }
 
-void ftKb_Init_800EEB00(Fighter_GObj* gobj, ArticleDynamicBones** arg1)
+void ftKb_Init_800EEB00(Fighter_GObj* gobj, BoneDynamicsTemplate** arg1)
 {
-    KirbyHatStruct** hats = ft_80459B88.hats;
-    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Pichu] : NULL;
+    KirbyHatStruct** hats = ft_80459B88.copies;
+    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_GameWatch] : NULL;
     if (hat == NULL) {
         *arg1 = NULL;
         return;
     }
-    *arg1 = hat->hat_dynamics[4]->ftDynamicBones;
+    *arg1 = hat
+                ->hat_dynamics[4]
+                ->x0.ftDynamicBones;
 }
 
 void ftKb_Init_800EEB1C(Fighter_GObj* gobj, s32* arg1)
 {
-    KirbyHatStruct** hats = ft_80459B88.hats;
-    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Pichu] : NULL;
-    if (hat == NULL) {
+    KirbyHatStruct** copies = ft_80459B88.copies;
+    KirbyHatStruct* hat = copies != 0 ? copies[Ft_Kind_GameWatch] : 0;
+    if (hat == 0) {
         *arg1 = 0;
         return;
     }
@@ -2766,21 +2775,18 @@ void ftKb_Init_OnKnockbackExit(HSD_GObj* gobj)
 
 void ftKb_Init_UnkDemoCallbacks0(int kind, int* out1, int* out2)
 {
-    if (kind == 14) {
-        goto case14;
+    switch (kind) {
+    case 11:
+    case 12:
+    case 13:
+        *out1 = 14;
+        *out2 = 16;
+        break;
+    case 14:
+        *out2 = 17;
+        *out1 = 17;
+        break;
     }
-    if (kind >= 14) {
-        return;
-    }
-    if (kind < 11) {
-        return;
-    }
-    *out1 = 14;
-    *out2 = 16;
-    return;
-case14:
-    *out2 = 17;
-    *out1 = 17;
 }
 
 char* ftKb_Init_GetMotionFileString(enum_t arg0)
@@ -2861,9 +2867,10 @@ void ftKb_SpecialN_800EED50(s32 arg0, s32 arg1)
 
     if (arg0 != -1 && arg0 != 4) {
         if (ftKb_Init_803CA9D0[arg0].filename != NULL) {
-            if (((HSD_Archive**) &ft_80459B88)[arg0] == NULL) {
+            // The layout depends on the fighter: an ftKbCopy* struct
+            if (((void**) ft_80459B88.copies)[arg0] == NULL) {
                 lbArchive_80017040(NULL, ftKb_Init_803CA9D0[arg0].filename,
-                                   &((HSD_Archive**) &ft_80459B88)[arg0],
+                                   &((void**) ft_80459B88.copies)[arg0],
                                    ftKb_Init_803CA9D0[arg0].name, 0);
             }
         }
@@ -2873,12 +2880,13 @@ void ftKb_SpecialN_800EED50(s32 arg0, s32 arg1)
                 costumes = ftKb_Init_803CB3E8[arg0];
                 cs = &ftKb_Init_803CB3E8[arg0][arg1];
                 if (cs->matanim_joint_name != NULL) {
-                    lbArchive_80017040(NULL, costumes[arg1].dat_filename, item,
-                                       cs->joint_name, &item->matanim,
-                                       cs->matanim_joint_name, 0);
+                    lbArchive_80017040(NULL, costumes[arg1].dat_filename,
+                                       &item->joint, cs->joint_name,
+                                       &item->matanim, cs->matanim_joint_name,
+                                       0);
                 } else {
-                    lbArchive_80017040(NULL, costumes[arg1].dat_filename, item,
-                                       cs->joint_name, 0);
+                    lbArchive_80017040(NULL, costumes[arg1].dat_filename,
+                                       &item->joint, cs->joint_name, 0);
                     item->matanim = NULL;
                 }
             }
@@ -2944,8 +2952,8 @@ void ftKb_SpecialN_800EF040(Fighter_GObj* gobj, int arg1, KirbyHatStruct* hat)
         Fighter* fp = GET_FIGHTER(gobj);
         struct Fighter_804D6540_t* ft_data = Fighter_804D6540[fp->kind];
         int count = ft_data->x4;
-        /* Each row of ftKb_Init_803C9FC8 is sized to KIRBY's retail costume count (six) and
-         * is indexed by Kirby's own costume; Akaneia gives him eight. FTKB_COPY_ROW maps and
+        /* Each row of ftKb_Init_803C9FC8 is sized to KIRBY's retail costume count (six) hat
+         * is indexed by Kirby's own costume; Akaneia gives him eight. FTKB_COPY_ROW maps hat
          * bounds - see ftKb_CopyCostumeRow. */
         HSD_Joint* joint = ftKb_Init_803C9FC8[arg1][FTKB_COPY_ROW(fp)].joint;
         struct Fighter_804D6540_x0_t* parts = ft_data->x0;
@@ -2971,7 +2979,7 @@ ftKb_SpecialN_insert_joint_refs(s32* total_dobjs, HSD_Joint* root, Fighter* fp,
     while (*joint != NULL) {
         FighterBone* parts = fp->parts;
         FighterBone* bone = &parts[*part_idx];
-        while (!bone->flags_b1) {
+        while (!bone->x8.x0.flags_b1) {
             bone++;
             (*part_idx)++;
         }
@@ -2988,7 +2996,7 @@ static inline void ftKb_SpecialN_800EF0E4_find_bone(Fighter* fp, s32* part_idx,
 {
     FighterBone* parts = fp->parts;
     FighterBone* bone = &parts[*part_idx];
-    while (!bone->flags_b1) {
+    while (!bone->x8.x0.flags_b1) {
         bone++;
         (*arg2_idx)++;
         (*part_idx)++;
@@ -3076,7 +3084,7 @@ void ftKb_SpecialN_800EF0E4(Fighter_GObj* gobj, int arg1, u8* arg2)
                 OSReport("fighter dobj num over!\n");
                 HSD_ASSERT(0x44C, 0);
             }
-            fp->parts[insert_part_idx].flags_b6 = true;
+            fp->parts[insert_part_idx].x8.x0.flags_b6 = true;
         }
         arg2_idx++;
         insert_part_idx++;
@@ -3137,14 +3145,14 @@ void ftKb_SpecialN_800EF438(Fighter_GObj* gobj, KirbyHatStruct* hat)
         insert_part_idx = 0;
         while (current_joint != NULL) {
             group_count = 0;
-            while (!fp->parts[insert_part_idx].flags_b1) {
+            while (!fp->parts[insert_part_idx].x8.x0.flags_b1) {
                 insert_part_idx++;
             }
             jobj = fp->parts[insert_part_idx].joint;
             dobj = HSD_DObjLoadDesc(current_joint->u.dobjdesc);
             if (dobj != NULL) {
                 tail = HSD_JObjGetDObj(jobj);
-                fp->parts[insert_part_idx].flags2_b7 = true;
+                fp->parts[insert_part_idx].x8.x0.flags2_b7 = true;
                 HSD_DObjResolveRefsAll(dobj, current_joint->u.dobjdesc);
                 if (tail == NULL) {
                     HSD_JObjAddDObj(jobj, dobj);
@@ -3223,13 +3231,15 @@ void ftKb_SpecialN_800EF69C(Fighter_GObj* gobj, int arg1, KirbyHatStruct* hat)
             HSD_DObj* dobj;
             jobj = bone->joint;
             dobj = (HSD_DObj*) jobj;
-            if (jobj != NULL && (bone->flags_b6 || bone->flags2_b7)) {
+            if (jobj != NULL &&
+                (bone->x8.x0.flags_b6 || bone->x8.x0.flags2_b7))
+            {
                 u8* b9p = &((u8*) bone)[9];
                 if ((*b9p >> 1) & 1) {
                     if ((*b9p >> 2) & 1) {
-                        dobj = fp->x203C.data[bone->xD];
+                        dobj = fp->x203C.data[bone->xC_u.x0.xD];
                     } else {
-                        dobj = fp->dobj_list.data[bone->xD];
+                        dobj = fp->dobj_list.data[bone->xC_u.x0.xD];
                     }
                     HSD_DObjRemoveAll(dobj != NULL ? dobj->next : NULL);
                     lb_8000CE30(dobj, NULL);
@@ -3237,7 +3247,8 @@ void ftKb_SpecialN_800EF69C(Fighter_GObj* gobj, int arg1, KirbyHatStruct* hat)
                     HSD_DObjRemoveAll(HSD_JObjGetDObj(jobj));
                     lb_8000CE40(jobj, NULL);
                 }
-                fp->parts[i].flags_b6 = fp->parts[i].flags2_b7 = false;
+                fp->parts[i].x8.x0.flags_b6 = fp->parts[i].x8.x0.flags2_b7 =
+                    false;
             }
         }
         HSD_ObjFree(&fighter_x2040_alloc_data, fp->u.kb.hat.x14.data);
@@ -3313,14 +3324,14 @@ void ftKb_SpecialN_800EFA40(HSD_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     PAD_STACK(4);
     if (fp->u.kb.hat.jobj == NULL) {
-        Kirby_Unk* unk = ft_80459B88.x0;
+        KirbyHatStruct* unk = ft_80459B88.copies[Ft_Kind_Mario];
         fp->u.kb.hat.x14.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);
         ftPartsPObjSetDefaultClass();
-        fp->u.kb.hat.jobj = HSD_JObjLoadJoint(unk->x0);
+        fp->u.kb.hat.jobj = HSD_JObjLoadJoint(unk->hat_joint);
         fp->x2225_b2 = true;
         ftPartsPObjClearDefaultClass();
         ftParts_80075650(gobj, fp->u.kb.hat.jobj, &fp->u.kb.hat.x14);
-        ftParts_8007487C(&unk->x4, &fp->u.kb.hat.x24, 0, &fp->u.kb.hat.x14,
+        ftParts_8007487C(&unk->desc, &fp->u.kb.hat.x24, 0, &fp->u.kb.hat.x14,
                          &fp->u.kb.hat.x14);
     }
 }
@@ -3342,14 +3353,14 @@ void ftKb_SpecialN_800EFAF0(Fighter_GObj* gobj)
 }
 
 #if defined(TARGET_PC)
-/* ft_80459B88.hats is NULL whenever the hat archives were never loaded (attract mode plays Kirby's
+/* ft_80459B88.copies is NULL whenever the hat archives were never loaded (attract mode plays Kirby's
  * copy abilities without them), and every caller indexes it unguarded. Point those at an
  * all-NULL table instead, so the fetch yields NULL and ftKb_LoadHat skips. */
-static KirbyHatStruct* ftKb_80459B88_null_hats[Ft_Kind_Max] = { NULL };
+static KirbyHatStruct* ftKb_80459B88_null_hats[Ft_Kind_Max + 1] = { NULL };
 #define ftKb_hatTable \
-    (ft_80459B88.hats != NULL ? ft_80459B88.hats : ftKb_80459B88_null_hats)
+    (ft_80459B88.copies != NULL ? ft_80459B88.copies : ftKb_80459B88_null_hats)
 #else
-#define ftKb_hatTable (ft_80459B88.hats)
+#define ftKb_hatTable (ft_80459B88.copies)
 #endif
 
 static inline void ftKb_LoadHat(Fighter_GObj* gobj, Fighter* fp,
@@ -3372,8 +3383,8 @@ void ftKb_SpecialN_800EFB4C(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Mario];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Fox];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3387,8 +3398,8 @@ void ftKb_SpecialN_800EFC58(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Fox];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Captain];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3402,8 +3413,8 @@ void ftKb_SpecialN_800EFD64(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Kirby];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Koopa];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D4D4(fp);
     }
@@ -3420,8 +3431,8 @@ void ftKb_SpecialN_800EFE80(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Koopa];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Link];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D074(fp);
     }
@@ -3438,8 +3449,8 @@ void ftKb_SpecialN_800EFF9C(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Link];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Seak];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D704(fp);
     }
@@ -3456,8 +3467,8 @@ void ftKb_SpecialN_800F00B8(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Seak];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Ness];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3471,8 +3482,8 @@ void ftKb_SpecialN_800F01C4(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Ness];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Peach];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3486,8 +3497,8 @@ void ftKb_SpecialN_800F02D0(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Peach];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Popo];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3501,8 +3512,8 @@ void ftKb_SpecialN_800F03DC(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Nana];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Pikachu];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D2A4(fp);
     }
@@ -3519,8 +3530,8 @@ void ftKb_SpecialN_800F04F8(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Pikachu];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Samus];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3534,8 +3545,8 @@ void ftKb_SpecialN_800F0604(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Samus];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Yoshi];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3549,8 +3560,8 @@ void ftKb_SpecialN_800F0710(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Mewtwo];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Luigi];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3564,8 +3575,8 @@ void ftKb_SpecialN_800F081C(Fighter_GObj* gobj)
 {
     if ((GET_FIGHTER(gobj))->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Luigi];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Mars];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D920(fp);
     }
@@ -3582,8 +3593,8 @@ void ftKb_SpecialN_800F0938(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Mars];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Zelda];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D5EC(fp);
     }
@@ -3600,8 +3611,8 @@ void ftKb_SpecialN_800F0A54(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Zelda];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_CLink];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D18C(fp);
     }
@@ -3618,8 +3629,8 @@ void ftKb_SpecialN_800F0B70(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_CLink];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_DrMario];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3633,8 +3644,8 @@ void ftKb_SpecialN_800F0C7C(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Falco];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Pichu];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009D3BC(fp);
     }
@@ -3651,8 +3662,8 @@ void ftKb_SpecialN_800F0D98(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->u.kb.hat.jobj == NULL) {
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_GameWatch];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Ganon];
         ftKb_LoadHat(gobj, fp, hat);
     }
 }
@@ -3666,8 +3677,8 @@ void ftKb_SpecialN_800F0EA4(Fighter_GObj* gobj)
 {
     if (GET_FIGHTER(gobj)->u.kb.hat.jobj == NULL) {
         Fighter* fp = HSD_GObjGetUserData(gobj);
-        KirbyHatStruct** hats = ftKb_hatTable;
-        KirbyHatStruct* hat = hats[Ft_Kind_Ganon];
+        KirbyHatStruct** copies = ftKb_hatTable;
+        KirbyHatStruct* hat = copies[Ft_Kind_Emblem];
         ftKb_LoadHat(gobj, fp, hat);
         ftCo_8009DA38(fp);
     }
@@ -3679,85 +3690,63 @@ void ftKb_SpecialN_800F0F5C(Fighter_GObj* gobj)
     ftKb_SpecialN_800EFAF0_inline(gobj);
     ftCo_UnloadDynamicBones(fp);
 }
-/// Shared body of the Kirby hat loaders: load the hat model/parts for
-/// @p kind and start its animation.
-/// @todo Should be an inline function (which would also allow removing the
-/// callers' @c dont_inline pragmas), but that shifts register allocation.
-#define LOAD_HAT(gobj, fp, fp2, kind, hat, part_dobj_indices)                 \
-    do {                                                                      \
-        (hat) = ftKb_hatTable[kind];                                          \
-        if ((hat) == NULL) {                                                  \
-            return;                                                           \
-        }                                                                     \
-        ftKb_SpecialN_800EF040(gobj, (kind) + 1, hat);                        \
-        (fp2)->u.kb.hat.x14.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);   \
-        (fp2)->u.kb.hat.x1C.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);   \
-        ftKb_SpecialN_800EF0E4(gobj, (kind) + 1, part_dobj_indices);          \
-        ftKb_SpecialN_800EF35C(gobj, (kind) + 1, part_dobj_indices);          \
-        ftKb_SpecialN_800EF438(gobj, hat);                                    \
-        ftParts_8007487C((FtPartsDesc*) (hat), &(fp)->u.kb.hat.x24,           \
-                         (u32) FTKB_COPY_ROW(fp), &(fp)->u.kb.hat.x14,        \
-                         &(fp)->u.kb.hat.x1C);                                \
-        ftAnim_80070200(fp, (ftData_x8_x8*) &(hat)->desc.vis_table,           \
-                        &(fp)->u.kb.x44, &(fp)->u.kb.hat.x14);                \
-    } while (0)
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+/// Load a hat that replaces fighter parts; counterpart of
+/// ftKb_SpecialN_800EF69C.
+static inline void ftKb_LoadHatParts(Fighter_GObj* gobj, int arg1,
+                                     KirbyHatStruct* hat)
+{
+    u8 part_dobj_indices[0x8C];
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (hat == NULL) {
+        return; /* hat archives not loaded (attract mode) */
+    }
+    ftKb_SpecialN_800EF040(gobj, arg1, hat);
+    fp->u.kb.hat.x14.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);
+    fp->u.kb.hat.x1C.data = HSD_ObjAlloc(&fighter_x2040_alloc_data);
+    ftKb_SpecialN_800EF0E4(gobj, arg1, part_dobj_indices);
+    ftKb_SpecialN_800EF35C(gobj, arg1, part_dobj_indices);
+    ftKb_SpecialN_800EF438(gobj, hat);
+    ftParts_8007487C((FtPartsDesc*) hat, &fp->u.kb.hat.x24, (u32) FTKB_COPY_ROW(fp),
+                     &fp->u.kb.hat.x14, &fp->u.kb.hat.x1C);
+    ftAnim_80070200(fp, (ftData_x8_x8*) &hat->desc.vis_table, &fp->u.kb.x44,
+                    &fp->u.kb.hat.x14);
+}
+
 void ftKb_SpecialN_800F0FC0(Fighter_GObj* gobj)
 {
-    u8 part_dobj_indices[0x90];
-    Fighter* fp = fp = gobj->user_data;
-    KirbyHatStruct* hat;
-    PAD_STACK(8);
-    if (fp->u.kb.hat.x14.data != NULL) {
-        return;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->u.kb.hat.x14.data == NULL) {
+        KirbyHatStruct* hat = ft_80459B88.copies[Ft_Kind_Donkey];
+        ftKb_LoadHatParts(gobj, 3, hat);
     }
-    LOAD_HAT(gobj, fp, fp, Ft_Kind_Captain, hat, part_dobj_indices);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void ftKb_SpecialN_800F10A4(Fighter_GObj* gobj)
 {
-    KirbyHatStruct** hats = ftKb_hatTable;
-    KirbyHatStruct* hat = hats[Ft_Kind_Captain];
-    if (hat == NULL) {
+    KirbyHatStruct** copies = ftKb_hatTable;
+    KirbyHatStruct* hat = copies[Ft_Kind_Donkey];
+    if (hat == 0) {
         return;
     }
     ftKb_SpecialN_800EF69C(gobj, 3, hat);
 }
 
-/// Load Yoshi's hat for Kirby copy ability.
-/// @note The split Fighter* locals are required for register allocation.
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+/// Load Jigglypuff's hat for Kirby copy ability.
 void ftKb_SpecialN_800F10D4(Fighter_GObj* gobj)
 {
-    u8 part_dobj_indices[0x88];
-    Fighter* fp = gobj->user_data;
-    Fighter* fp2 = gobj->user_data;
-    KirbyHatStruct* hat;
-    PAD_STACK(8);
-    if (fp2->u.kb.hat.x14.data != NULL) {
-        return;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->u.kb.hat.x14.data == NULL) {
+        KirbyHatStruct* hat = ft_80459B88.copies[Ft_Kind_Purin];
+        ftKb_LoadHatParts(gobj, 0xF, hat);
+        ftCo_8009D81C(fp);
     }
-    LOAD_HAT(gobj, fp, fp2, Ft_Kind_Yoshi, hat, part_dobj_indices);
-    ftCo_8009D81C(fp2);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void ftKb_SpecialN_800F11AC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct** hats = ftKb_hatTable + 1; /* old numbering: hats[k] == copies[k + 1] */
     KirbyHatStruct* hat = hats[14];
     if (hat == NULL) {
         return;
@@ -3766,67 +3755,44 @@ void ftKb_SpecialN_800F11AC(Fighter_GObj* gobj)
     ftCo_UnloadDynamicBones(fp);
 }
 
-/// Load Jigglypuff's hat for Kirby copy ability.
-/// @note The split Fighter* locals are required for register allocation.
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+/// Load Mewtwo's hat for Kirby copy ability.
 void ftKb_SpecialN_800F11F0(Fighter_GObj* gobj)
 {
-    u8 part_dobj_indices[0x88];
-    Fighter* fp = gobj->user_data;
-    Fighter* fp2 = gobj->user_data;
-    KirbyHatStruct* hat;
-    PAD_STACK(8);
-    if (fp2->u.kb.hat.x14.data != NULL) {
-        return;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->u.kb.hat.x14.data == NULL) {
+        KirbyHatStruct* hat = ft_80459B88.copies[Ft_Kind_Mewtwo];
+        ftKb_LoadHatParts(gobj, 0x10, hat);
+        ftCo_8009DB50(fp);
     }
-    LOAD_HAT(gobj, fp, fp2, Ft_Kind_Purin, hat, part_dobj_indices);
-    ftCo_8009DB50(fp2);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void ftKb_SpecialN_800F12C8(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    KirbyHatStruct** hats = ftKb_hatTable;
-    KirbyHatStruct* hat = hats[Ft_Kind_Purin];
-    if (hat == NULL) {
+    KirbyHatStruct** copies = ftKb_hatTable;
+    KirbyHatStruct* hat = copies[Ft_Kind_Mewtwo];
+    if (hat == 0) {
         return;
     }
     ftKb_SpecialN_800EF69C(gobj, 0x10, hat);
     ftCo_UnloadDynamicBones(fp);
 }
 
-/// Load Dr. Mario's hat for Kirby copy ability.
-/// @note The self-assignment `fp = fp` is required for register allocation.
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+/// Load Falco's hat for Kirby copy ability.
 void ftKb_SpecialN_800F130C(Fighter_GObj* gobj)
 {
-    u8 part_dobj_indices[0x90];
-    Fighter* fp = fp = gobj->user_data;
-    KirbyHatStruct* hat;
-    PAD_STACK(8);
-    if (fp->u.kb.hat.x14.data != NULL) {
-        return;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->u.kb.hat.x14.data == NULL) {
+        KirbyHatStruct* hat = ft_80459B88.copies[Ft_Kind_Falco];
+        ftKb_LoadHatParts(gobj, 0x16, hat);
     }
-    LOAD_HAT(gobj, fp, fp, Ft_Kind_DrMario, hat, part_dobj_indices);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void ftKb_SpecialN_800F13F0(Fighter_GObj* gobj)
 {
-    KirbyHatStruct** hats = ftKb_hatTable;
-    KirbyHatStruct* hat = hats[Ft_Kind_DrMario];
-    if (hat == NULL) {
+    KirbyHatStruct** copies = ftKb_hatTable;
+    KirbyHatStruct* hat = copies[Ft_Kind_Falco];
+    if (hat == 0) {
         return;
     }
     ftKb_SpecialN_800EF69C(gobj, 0x16, hat);
@@ -3864,40 +3830,32 @@ u8* ftKb_SpecialN_800F1420(Fighter_GObj* gobj, const u32* arg1)
     return p;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void ftKb_SpecialN_800F14B4(Fighter_GObj* gobj)
 {
-    u8 part_dobj_indices[0x88];
-    Fighter* fp = fp = gobj->user_data;
-    KirbyHatStruct* hat;
-    FtPartsVisLookup* lookup;
-    PAD_STACK(8);
-    if (fp->u.kb.hat.x14.data != NULL) {
-        return;
+    Fighter* fp = GET_FIGHTER(gobj);
+    if (fp->u.kb.hat.x14.data == NULL) {
+        KirbyHatStruct* hat = ft_80459B88.copies[Ft_Kind_GameWatch];
+        FtPartsVisLookup* lookup;
+        ftKb_LoadHatParts(gobj, 0x18, hat);
+        lookup = (FtPartsVisLookup*) hat->hat_dynamics[3];
+        fp->u.kb.hat.x24.xC[4] = lookup;
+        fp->x5AC.xC[4] = lookup;
+        ftParts_80074D7C(&fp->u.kb.hat.x24, 4, &fp->u.kb.hat.x14);
+        ftKb_SpecialN_800F1420(gobj, (u32*) ((u8*) hat->hat_dynamics[4] + 4));
+        *(u32*) &fp->x610_color_rgba[1] =
+            *(u32*) ((u8*) hat->hat_dynamics[4] + 8);
+        Fighter_UpdateModelScale(gobj);
     }
-    LOAD_HAT(gobj, fp, fp, Ft_Kind_Pichu, hat, part_dobj_indices);
-    lookup = (FtPartsVisLookup*) hat->hat_dynamics[3];
-    fp->u.kb.hat.x24.xC[4] = lookup;
-    fp->x5AC.xC[4] = lookup;
-    ftParts_80074D7C(&fp->u.kb.hat.x24, 4, &fp->u.kb.hat.x14);
-    ftKb_SpecialN_800F1420(gobj, (u32*) ((u8*) hat->hat_dynamics[4] + 4));
-    *(u32*) &fp->x610_color_rgba[1] = *(u32*) ((u8*) hat->hat_dynamics[4] + 8);
-    Fighter_UpdateModelScale(gobj);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void ftKb_SpecialN_800F15D8(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct** hats = ftKb_hatTable + 1; /* old numbering: hats[k] == copies[k + 1] */
+    KirbyHatStruct** copies = ft_80459B88.copies;
     KirbyHatStruct* new_var;
-    new_var = hats[Ft_Kind_Pichu];
-    if (new_var == NULL) {
+    new_var = copies[Ft_Kind_GameWatch];
+    if (new_var == 0) {
         return;
     }
     ftKb_SpecialN_800EF69C(gobj, 0x18, new_var);
@@ -3929,16 +3887,18 @@ void ftKb_SpecialAirN_Enter(Fighter_GObj* gobj)
 void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
 {
     struct ft_80459B88_t* g = &ft_80459B88;
-    KirbyHatStruct** hats = ftKb_hatTable;
+    KirbyHatStruct** hats = ftKb_hatTable + 1; /* old numbering: hats[k] == copies[k + 1] */
+    KirbyHatStruct** copies = ft_80459B88.copies;
     KirbyHatStruct* hat;
     PAD_STACK(8);
 
     switch (kind) {
     case Ft_Kind_Mario:
-        if (g->x0 == NULL) {
+        if (g->copies[0] == NULL) {
             break;
         }
-        it_8026B3F8((Article*) g->x0->xC, It_Kind_Kirby_MarioFire);
+        it_8026B3F8((Article*) g->copies[Ft_Kind_Mario]->hat_dynamics[0],
+                    It_Kind_Kirby_MarioFire);
         break;
     case Ft_Kind_Luigi:
         hat = hats[16];
@@ -3957,7 +3917,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_IceClimberIce);
         break;
     case Ft_Kind_Peach:
-        hat = hats[8];
+        hat = copies[Ft_Kind_Peach];
         if (hat == NULL) {
             break;
         }
@@ -3966,7 +3926,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_PeachToadSpore);
         break;
     case Ft_Kind_Fox:
-        hat = hats[0];
+        hat = copies[Ft_Kind_Fox];
         if (hat == NULL) {
             break;
         }
@@ -3974,7 +3934,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
         it_8026B3F8((Article*) hat->hat_dynamics[1], It_Kind_Kirby_FoxBlaster);
         break;
     case Ft_Kind_Falco:
-        hat = hats[21];
+        hat = copies[Ft_Kind_Falco];
         if (hat == NULL) {
             break;
         }
@@ -3983,7 +3943,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_FalcoBlaster);
         break;
     case Ft_Kind_Link:
-        hat = hats[5];
+        hat = copies[Ft_Kind_Link];
         if (hat == NULL) {
             break;
         }
@@ -3991,7 +3951,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
         it_8026B3F8((Article*) hat->hat_dynamics[1], It_Kind_Kirby_LinkBow);
         break;
     case Ft_Kind_CLink:
-        hat = hats[19];
+        hat = copies[Ft_Kind_CLink];
         if (hat == NULL) {
             break;
         }
@@ -4007,7 +3967,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_MewtwoShadowBall);
         break;
     case Ft_Kind_Ness:
-        hat = hats[7];
+        hat = copies[Ft_Kind_Ness];
         if (hat == NULL) {
             break;
         }
@@ -4017,7 +3977,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_NessPKFlush_Explode);
         break;
     case Ft_Kind_Pikachu:
-        hat = hats[11];
+        hat = copies[Ft_Kind_Pikachu];
         if (hat == NULL) {
             break;
         }
@@ -4027,7 +3987,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_PikachuTJolt_Air);
         break;
     case Ft_Kind_Pichu:
-        hat = hats[22];
+        hat = copies[Ft_Kind_Pichu];
         if (hat == NULL) {
             break;
         }
@@ -4061,7 +4021,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_KoopaFlame);
         break;
     case Ft_Kind_Seak:
-        hat = hats[6];
+        hat = copies[Ft_Kind_Seak];
         if (hat == NULL) {
             break;
         }
@@ -4079,7 +4039,7 @@ void ftKb_SpecialN_800F16D0(Fighter_GObj* gobj, FighterKind kind)
                     It_Kind_Kirby_DrMarioVitamin);
         break;
     case Ft_Kind_GameWatch:
-        hat = hats[23];
+        hat = copies[Ft_Kind_GameWatch];
         if (hat == NULL) {
             break;
         }
@@ -4261,7 +4221,7 @@ void ftKb_SpecialN_800F1BAC(Fighter_GObj* gobj, s32 kind, bool arg2)
          * it_804D6D38, so spawning the copied move dereferences a NULL article at
          * Item_80267AA8. Reload the copied kind's hat on demand. */
         if (((KirbyHatStruct**) &ft_80459B88)[kind] == NULL) {
-            ftKb_SpecialN_800EED50(kind, (s32) fp->x619_costume_id);
+            ftKb_SpecialN_800EED50(kind, (s32) fp->costume_id);
         }
 #endif
         fp->u.kb.hat.kind = kind;

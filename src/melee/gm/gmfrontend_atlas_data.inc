@@ -1,3 +1,4 @@
+#include <sysdolphin/baselib/sislib_font.h>
 /* gmfrontend_atlas_data.inc - the Atlas data screens (spec 13.8, Atlas step 8): Event Match, Name Entry's tag list, Sound Test, Special Messages, Bonus
  * Records, Misc. Records and VS. Records, and the Results stand-in. Included by gmfrontend.c after gmfrontend_atlas_set.inc.
  *
@@ -215,7 +216,7 @@ static bool fad_sis_open(void)
         return false;
     }
     fad_sis_n = n;
-    Ui_SisTables(HSD_SisLib_8040C680, lbl_8040C8C0);
+    Ui_SisTables((const void*) HSD_SisLib_8040C680, (const void*) lbl_8040C8C0);
     return true;
 }
 
@@ -266,7 +267,7 @@ static void fad_sis_selfcheck(void)
     int n;
     st[0] = st[1] = st[2] = st[3] = st[4] = 0;
     n = HSD_SisLib_803A67EC(buf, (u8*) probe);
-    Ui_SisTables(HSD_SisLib_8040C680, lbl_8040C8C0);
+    Ui_SisTables((const void*) HSD_SisLib_8040C680, (const void*) lbl_8040C8C0);
     Ui_SisDecode(buf, n + 1, back, sizeof back, st);
     OSReport("frontend: sis round trip %s (chars %d, unknown %d, bad %d)\n", strcmp(back, probe) == 0 ? "ok" : "FAILED", st[0], st[1], st[4]); /* OK-NOTEXT */
 }
@@ -1358,7 +1359,7 @@ static void far_enter(void* arg)
         far_win_ck = w->ckind;
         far_win_ft = w->ftkind;
         far_win_team = w->team;
-        far_rumble = w->pkind == Gm_PKind_Human && !far_cancel && w->x3_b6;
+        far_rumble = w->pkind == Gm_PKind_Human && !far_cancel && w->x3_u.x0.x3_b6;
     } else {
         far_winner = -1;
     }

@@ -12,7 +12,6 @@
 #include "gm_1601.h"
 #include "gm_unsplit.h"
 #include "gmmain_lib.h"
-#include "gmtoulib.static.h"
 #include "types.h"
 #include <melee/lb/lblanguage.h>
 #include <melee/lb/lbspdisplay.h>
@@ -38,8 +37,73 @@
 #include <sysdolphin/baselib/sislib.h>
 #include <sysdolphin/baselib/wobj.h>
 
+struct lbl_803D9D20_t lbl_803D9D20 = {
+    {
+        0x04, 0x06, 0x08, 0x0C, 0x10, 0x18, 0x20, 0x30, 0x40, 0x06, 0x09,
+        0x0C, 0x12, 0x1B, 0x08, 0x0C, 0x10, 0x10, 0x14, 0x18, 0x1C, 0x20,
+        0x20, 0x24, 0x28, 0x2C, 0x30, 0x34, 0x38, 0x3C, 0x40, 0x40,
+    },
+    {
+        0x04, 0x07, 0x08, 0x0E, 0x10, 0x19, 0x20, 0x31, 0x3F, 0x04, 0x05, 0x08,
+        0x0A, 0x0E, 0x04, 0x05, 0x06, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x10, 0x0D,
+        0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x17, 0x06, 0x05, 0x04, 0x04,
+        0x06, 0x04, 0x05, 0x04, 0x05, 0x04, 0x04, 0x04, 0x05, 0x04, 0x04, 0x04,
+        0x05, 0x06, 0x05, 0x04, 0x05, 0x05, 0x04, 0x04, 0x04,
+    },
+    {
+        0x00, 0x01, 0x02, 0x04, 0x05, 0x06, 0x08, 0x0B, 0x0D,
+        0x0E, 0x12, 0x11, 0x10, 0x0C, 0x03, 0x16, 0x07, 0x0F,
+        0x0A, 0x09, 0x19, 0x15, 0x14, 0x18, 0x17,
+    },
+};
+
+struct lbl_803D9DAC_t {
+    Vec3 current;
+    Vec3 target;
+    Vec3 step;
+} lbl_803D9DAC = {
+    { 320, -240, 415.6922 },
+    { 320, -240, 415.6922 },
+    { 0, 0, 0 },
+};
+
+struct lbl_803D9DD0_t {
+    /* +00 */ HSD_CObj* cobj;
+    /* +04 */ char pad_B4[0xD0 - 0xB4];
+    /* +20 */ float xD0;
+} lbl_803D9DD0 = { 0, { 0 }, 0 };
+
+/* 3D9DF4 */ static HSD_WObjDesc lbl_803D9DF4 = {
+    NULL,
+    { 320, -240, 415.6922 },
+    NULL,
+};
+
+/* 3D9E08 */ static HSD_WObjDesc lbl_803D9E08 = {
+    NULL,
+    { 320, -240, 0 },
+    NULL,
+};
+
+static s16 lbl_803D9E1C[][2] = {
+    { 0x140, 0x8C }, { 0x15E, 0x82 }, { 0x140, 0x96 }, { 0x140, 0x78 },
+    { 0x140, 0xA0 }, { 0x172, 0xA0 }, { 0x140, 0x8C }, { 0x168, 0xEB },
+    { 0x140, 0xF0 }, { 0x140, 0xC8 }, { 0x140, 0xBE }, { 0x140, 0x96 },
+    { 0x140, 0xAA }, { 0x140, 0x8C }, { 0x140, 0xB4 }, { 0x140, 0xB4 },
+    { 0x140, 0xA0 }, { 0x140, 0x8C }, { 0x14E, 0x8C }, { 0x140, 0x8C },
+    { 0x140, 0xA0 }, { 0x140, 0xAA }, { 0x140, 0x96 }, { 0x140, 0xF0 },
+    { 0x154, 0xF0 }, { 0x13F, 0xF0 }, { 0x13F, 0xF0 }, { 0x13F, 0xF0 },
+    { 0x147, 0xF0 }, { 0x140, 0xF0 }, { 0x140, 0xF0 }, { 0x140, 0xF0 },
+};
+
+/* 473AB8 */ BracketEntry lbl_80473AB8[64];
+/* 4771B8 */ struct TmBoxArrays lbl_804771B8;
+
+/* 477738 */ MatchEnd gm_80477738; // must not be static
+/* 4771C4 */ TmData gm_804771C4;   // must not be static
+
 int lbl_804D663C;
-u8 lbl_804D6638[0x4];
+HSD_Archive* lbl_804D6638;
 
 extern SceneDesc* lbl_804D666C;
 extern SceneDesc* lbl_804D6674;
@@ -117,6 +181,7 @@ static inline void gmTournament_SetBracketByes(BracketEntry* entries,
 
 void fn_8018A514(int count, float val)
 {
+    int j;
     s32 region;
     BracketEntry* entries;
     BracketSrcEntry* src;
@@ -172,14 +237,10 @@ void fn_8018A514(int count, float val)
         lbl_80473AB8[i].x26 = src->x1D;
         lbl_80473AB8[i].x27 = src->x1F;
         lbl_80473AB8[i].x28 = src->x20;
-        lbl_80473AB8[i].slots[0].x52 = 9;
-        lbl_80473AB8[i].slots[0].x32 = 0;
-        lbl_80473AB8[i].slots[1].x52 = 9;
-        lbl_80473AB8[i].slots[1].x32 = 0;
-        lbl_80473AB8[i].slots[2].x52 = 9;
-        lbl_80473AB8[i].slots[2].x32 = 0;
-        lbl_80473AB8[i].slots[3].x52 = 9;
-        lbl_80473AB8[i].slots[3].x32 = 0;
+        for (j = 0; j < 4; j++) {
+            lbl_80473AB8[i].slots[j].x52 = 9;
+            lbl_80473AB8[i].slots[j].x32 = 0;
+        }
         lbl_80473AB8[i].slots[0].x30 = src->x21;
         lbl_80473AB8[i].slots[1].x30 = src->x22;
         lbl_80473AB8[i].slots[2].x30 = src->x23;
@@ -190,7 +251,7 @@ void fn_8018A514(int count, float val)
     if (region == 0) {
         gmTournament_SetBracketByes(entries, count);
     }
-    PAD_STACK(24);
+    PAD_STACK(8);
 }
 
 void fn_8018A970(int arg0)
@@ -1631,7 +1692,7 @@ void fn_8018DF68(BracketEntry* arg0, s32 arg1, s32 arg2, s32 arg3, s32 arg4,
     }
 }
 
-void fn_8018E46C(HSD_GObj* gobj, int unused)
+void fn_8018E46C(HSD_GObj* gobj, intptr_t unused)
 {
     BracketEntry* data;
     s32 temp;
@@ -1677,6 +1738,11 @@ static inline void gmTournament_InitBracket(s32 entrant_count, f32 anim_frame,
     fn_8018A970(entrant_count);
 }
 
+typedef struct CObjData {
+    f32 pos[9];
+    struct lbl_803D9DD0_t cobj_data;
+} CObjData;
+
 /// Initializes the tournament bracket camera and optionally resets bracket
 /// data. Removes all existing GObjs from two entity lists, inits lbl_80473AB8
 /// entries, creates camera GObj with CObjDesc loaded from lbl_803B7CA8 rodata.
@@ -1709,10 +1775,6 @@ void fn_8018E618(int arg0, f32 farg0, int arg1)
 
     gobj = GObj_Create(9, 20, 1);
     {
-        typedef struct CObjData {
-            f32 pos[9];
-            struct lbl_803D9DD0_t cobj_data;
-        } CObjData;
         HSD_CObj* cobj = HSD_CObjLoadDesc((HSD_CObjDesc*) &cam);
 #if defined(TARGET_PC)
         /* lbl_803D9DD0 immediately follows the 0x24-byte lbl_803D9DAC in the
@@ -1736,8 +1798,7 @@ void fn_8018E618(int arg0, f32 farg0, int arg1)
 #endif
     }
     GObj_SetupGXLinkMax(gobj, HSD_GObj_803910D8, 1);
-    ((u32*) &gobj->gxlink_prios)[1] = 0x10;
-    ((u32*) &gobj->gxlink_prios)[0] = 0;
+    gobj->gxlink_prios = 0x10;
 
     gmTournament_InitBracket(arg0, farg0, arg1);
 }
@@ -1763,13 +1824,13 @@ void fn_8018E85C(DynamicModelDesc* model, s32 flag)
 
     for (outer_idx = 0; outer_idx < 0x40; outer_idx++) {
         if (lbl_80473AB8[outer_idx].x0 == 0) {
-            goto next_entry;
+            continue;
         }
         inner_idx = 0;
         for (; inner_idx < 4; inner_idx++) {
             sub = &lbl_80473AB8[outer_idx].x0 + inner_idx * 0x2C;
             if (sub[0x30] == 0) {
-                goto next_sub;
+                continue;
             }
 
             if (flag != 0) {
@@ -1822,10 +1883,7 @@ void fn_8018E85C(DynamicModelDesc* model, s32 flag)
                 fn_8018FDC4(jobj, (f32) * (s32*) (sub + 0x44),
                             -(f32) * (s32*) (sub + 0x48), 666.0f);
             }
-
-        next_sub:;
         }
-    next_entry:;
     }
 }
 

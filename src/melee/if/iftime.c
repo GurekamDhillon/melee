@@ -3,8 +3,6 @@
 #endif
 #include "iftime.h"
 
-#include <placeholder.h>
-
 #include "forward.h"
 #include "ifall.h"
 #include <dolphin/os.h>
@@ -33,7 +31,7 @@ static DynamicModelDesc ifTime_match_timer_models;
 static bool ifTime_LoadModels(void)
 {
     DynamicModelDesc** ScInfTim_scene_models;
-    lbArchive_LoadSections(*ifAll_GetArchive(), (void*) &ScInfTim_scene_models,
+    lbArchive_LoadSections(*ifAll_GetArchive(), &ScInfTim_scene_models,
                            "ScInfTim_scene_models",
                            &ifTime_data.countdown_timer_models, "tdsce", 0);
     if (*ScInfTim_scene_models != NULL) {
@@ -123,28 +121,29 @@ void ifTime_SetTime(HSD_JObj* jobj, int seconds, int centiseconds)
 void ifTime_HideTimers(void)
 {
     struct ifTime_data* x = &ifTime_data;
-    PAD_STACK(0x18);
     if (x->match_timer != NULL) {
-        HSD_JObjSetFlagsAll(x->match_timer->hsd_obj, JOBJ_HIDDEN);
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->match_timer);
+        HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
     }
     if (x->countdown_timer != NULL) {
-        HSD_JObjSetFlagsAll(x->countdown_timer->hsd_obj, JOBJ_HIDDEN);
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->countdown_timer);
+        HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN);
     }
 }
 
 void ifTime_ShowTimers(void)
 {
     struct ifTime_data* x = &ifTime_data;
-    PAD_STACK(0x18);
     if (x->match_timer != NULL) {
-        HSD_JObj* jobj = x->match_timer->hsd_obj;
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->match_timer);
         int seconds;
         HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN);
         seconds = gm_8016AEEC();
         ifTime_SetTime(jobj, seconds, gm_8016AF0C());
     }
     if (x->countdown_timer != NULL) {
-        HSD_JObjClearFlagsAll(x->countdown_timer->hsd_obj, JOBJ_HIDDEN);
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->countdown_timer);
+        HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN);
     }
 }
 
@@ -170,7 +169,7 @@ static inline int ifTime_GetCountdownSeconds_dontinline(void)
 
 #if defined(TARGET_PC)
 /* the match timer and the countdown (the two GObj_SetupGXLink sites below): the Atlas retail mask hides this element's render only (never its proc); empty by default */
-static void ifTime_RenderGuarded(HSD_GObj* gobj, int pass)
+static void ifTime_RenderGuarded(HSD_GObj* gobj, intptr_t pass)
 {
     extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc */
     if (Ui_RetailHidden(AT_RE_HUD_TIMER)) return;
@@ -208,13 +207,12 @@ void ifTime_FreeCountdown(void)
 void ifTime_UpdateTimers(HSD_GObj* arg0)
 {
     struct ifTime_data* x = &ifTime_data;
-    HSD_JObj* jobj = arg0->hsd_obj;
+    HSD_JObj* jobj = HSD_GObjGetHSDObj(arg0);
     int centiseconds;
     int seconds;
     u8 tmp;
-    PAD_STACK(8);
 
-    gm_GetStartMeleeRules();
+    StartMeleeRules* rules = gm_GetStartMeleeRules();
     seconds = gm_8016AEEC();
     centiseconds = gm_8016AF0C();
     ifTime_SetTime(jobj, seconds, centiseconds);
@@ -311,16 +309,17 @@ void ifTime_FreeTimers(void)
 bool ifTime_IsTimerHidden(void)
 {
     struct ifTime_data* x = &ifTime_data;
-    PAD_STACK(0x18);
-    if (x->match_timer != NULL &&
-        (HSD_JObjGetFlags(x->match_timer->hsd_obj) & JOBJ_HIDDEN) != 0)
-    {
-        return true;
+    if (x->match_timer != NULL) {
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->match_timer);
+        if (HSD_JObjGetFlags(jobj) & JOBJ_HIDDEN) {
+            return true;
+        }
     }
-    if (x->countdown_timer != NULL &&
-        (HSD_JObjGetFlags(x->countdown_timer->hsd_obj) & JOBJ_HIDDEN) != 0)
-    {
-        return true;
+    if (x->countdown_timer != NULL) {
+        HSD_JObj* jobj = HSD_GObjGetHSDObj(x->countdown_timer);
+        if (HSD_JObjGetFlags(jobj) & JOBJ_HIDDEN) {
+            return true;
+        }
     }
     return false;
 }

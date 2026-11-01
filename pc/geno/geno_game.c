@@ -112,7 +112,7 @@ GenoLuaBlock Geno_LuaBlock[GENO_PLAYERS][2];
 
 static GenoState* geno_state(Fighter* fp)
 {
-    int p = fp->player_id < GENO_PLAYERS ? fp->player_id : GENO_PLAYERS - 1;
+    int p = fp->player_idx < GENO_PLAYERS ? fp->player_idx : GENO_PLAYERS - 1;
     return &Geno_StateBlock[p][fp->is_sub_fighter ? 1 : 0];
 }
 
@@ -153,7 +153,7 @@ typedef int (*GenoHookFn)(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 ar
 
 static int hook_log(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
 {
-    Geno_Event(2, fp->kind, fp->player_id, arg, st->la_i[0]);
+    Geno_Event(2, fp->kind, fp->player_idx, arg, st->la_i[0]);
     return 0;
 }
 
@@ -262,7 +262,7 @@ static int hook_aim_stick(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 ar
         st->move_f[0] = st->move_f[2];
         st->move_f[1] = st->move_f[3];
     }
-    Geno_Event(42, fp->kind, fp->player_id, used,
+    Geno_Event(42, fp->kind, fp->player_idx, used,
                (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
     return 0;
 }
@@ -280,7 +280,7 @@ static int hook_lockon(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
         for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
             Fighter* o = GET_FIGHTER(cur);
             f32 dx, dy, d;
-            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_id == fp->player_id) {
+            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_idx == fp->player_idx) {
                 continue;
             }
             dx = o->cur_pos.x - fp->cur_pos.x;
@@ -302,7 +302,7 @@ static int hook_lockon(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg)
                        (f32) ((u32) arg >> 24), &st->move_f[0], &st->move_f[1], &face);
     fp->facing_dir = face;
     st->move_i[0] = has;
-    Geno_Event(40, fp->kind, fp->player_id, has, (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
+    Geno_Event(40, fp->kind, fp->player_idx, has, (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
     return 0;
 }
 
@@ -383,7 +383,7 @@ static Fighter* geno_dash_target(Fighter_GObj* gobj, Fighter* fp, int port)
     }
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
         Fighter* o = GET_FIGHTER(cur);
-        if (o != NULL && cur != (HSD_GObj*) gobj && o->player_id != fp->player_id && o->player_id == port) {
+        if (o != NULL && cur != (HSD_GObj*) gobj && o->player_idx != fp->player_idx && o->player_idx == port) {
             return o;
         }
     }
@@ -403,7 +403,7 @@ static int hook_dash_search(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 
         for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
             Fighter* o = GET_FIGHTER(cur);
             f32 dx, dy, d;
-            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_id == fp->player_id) {
+            if (o == NULL || cur == (HSD_GObj*) gobj || o->player_idx == fp->player_idx) {
                 continue;
             }
             dx = o->cur_pos.x - fp->cur_pos.x;
@@ -412,7 +412,7 @@ static int hook_dash_search(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 
             if (d <= range * range && (best < 0.0f || d < best)) {
                 best = d;
                 st->move_i[0] = 1;
-                st->move_i[1] = o->player_id;
+                st->move_i[1] = o->player_idx;
             }
         }
     }
@@ -424,7 +424,7 @@ static int hook_dash_search(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 
             st->move_i[2] = 1;
         }
     }
-    Geno_Event(43, fp->kind, fp->player_id, st->move_i[0] ? 1 + st->move_i[1] : 0,
+    Geno_Event(43, fp->kind, fp->player_idx, st->move_i[0] ? 1 + st->move_i[1] : 0,
                st->move_i[2] ? (int) (atan2f(st->move_f[3], st->move_f[2]) * 180.0f / (f32) M_PI) : -1);
     return 0;
 }
@@ -452,7 +452,7 @@ static int hook_dash_aim(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s32 arg
             ftPartSetRotY(fp, 0, 1.5707964f * fp->facing_dir);
         }
     }
-    Geno_Event(44, fp->kind, fp->player_id, (o != NULL) | (st->move_i[2] << 1) | (kind << 2),
+    Geno_Event(44, fp->kind, fp->player_idx, (o != NULL) | (st->move_i[2] << 1) | (kind << 2),
                (int) (atan2f(st->move_f[1], st->move_f[0]) * 180.0f / (f32) M_PI));
     return 0;
 }
@@ -552,7 +552,7 @@ int GenoGame_CallHook(Fighter_GObj* gobj, int id, s32 arg)
             return 0;
         }
     }
-    Geno_Event(4, fp->kind, fp->player_id, id, 0);
+    Geno_Event(4, fp->kind, fp->player_idx, id, 0);
     return -1;
 }
 
@@ -652,7 +652,7 @@ static void geno_install_overlays(Fighter* fp, int p)
                 Geno_OverlayOrig[slot] = table[anim].xC;
             }
             table[anim].xC = mine;
-            Geno_Event(13, fp->kind, fp->player_id, anim, slot);
+            Geno_Event(13, fp->kind, fp->player_idx, anim, slot);
         }
     }
 }
@@ -839,7 +839,7 @@ void Geno_FighterReset(Fighter* fp)
     geno_zero(geno_lua_block(fp), sizeof(GenoLuaBlock));
     geno_combo_reset(fp, st);
     if (st->profile >= 0) {
-        Geno_Event(0, fp->kind, fp->player_id, st->profile, 0);
+        Geno_Event(0, fp->kind, fp->player_idx, st->profile, 0);
         geno_install_overlays(fp, st->profile);
         geno_v2_build(fp, st->profile);
         /* Reserve article descriptors at fighter setup, never on its first move. */
@@ -888,7 +888,7 @@ int GenoGame_LabReload(void)
  * rehit timers and autolink flags belong to one action. */
 void Geno_OnActionChange(Fighter_GObj* gobj)
 {
-    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_idx << 16) | GET_FIGHTER(gobj)->kind);
     GenoState* st = geno_state(GET_FIGHTER(gobj));
     if (geno_inert(st)) {
         { PC_PROF_END(); return; }
@@ -918,10 +918,10 @@ void Geno_OnActionChange(Fighter_GObj* gobj)
     PC_PROF_END();
 }
 
-/* Fighter_8006A360, after the m-ex onFrame dispatch. */
+/* Fighter_procAnim, after the m-ex onFrame dispatch. */
 void Geno_OnFrame(Fighter_GObj* gobj)
 {
-    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_idx << 16) | GET_FIGHTER(gobj)->kind);
     GenoState* st = geno_state(GET_FIGHTER(gobj));
     if (st->profile < 0) {
         { PC_PROF_END(); return; }
@@ -1081,7 +1081,7 @@ static void geno_apply_special(Fighter* fp, int p)
             dst[idx] = bits;
         }
     }
-    Geno_Event(12, fp->kind, fp->player_id, n, Geno_SpecialIndex(p, 0));
+    Geno_Event(12, fp->kind, fp->player_idx, n, Geno_SpecialIndex(p, 0));
 }
 
 /* ftchangeparam.c, right after co_attrs is copied from the fighter's data and BEFORE any scaling:
@@ -1105,7 +1105,7 @@ void Geno_ApplyAttrs(Fighter* fp)
     if (mj > 0) {
         fp->co_attrs.max_jumps = mj;
     }
-    Geno_Event(5, fp->kind, fp->player_id, n, fp->co_attrs.max_jumps);
+    Geno_Event(5, fp->kind, fp->player_idx, n, fp->co_attrs.max_jumps);
     geno_apply_special(fp, p);
 }
 
@@ -1156,9 +1156,9 @@ void Geno_MultiJump(Fighter* fp, int first_state, int* msid, float* vy)
             *msid = first_state + rows - 1;
         }
         st->extra_jumps++;
-        Geno_Event(1, fp->kind, fp->player_id, n + 1, fp->co_attrs.max_jumps - 1);
+        Geno_Event(1, fp->kind, fp->player_idx, n + 1, fp->co_attrs.max_jumps - 1);
     } else {
-        Geno_Event(6, fp->kind, fp->player_id, n + 1, fp->co_attrs.max_jumps - 1);
+        Geno_Event(6, fp->kind, fp->player_idx, n + 1, fp->co_attrs.max_jumps - 1);
     }
     if (nvy > 0) {
         bits.u = (u32) Geno_JumpVyBits(p, n < nvy ? n : nvy - 1);
@@ -1521,10 +1521,10 @@ static GenoWord geno_val_get(Fighter* fp, GenoState* st, u32 id)
         r.i = st->hidden;
         break;
     case GENO_VAL_TRANSN_FWD:
-        r.f = fp->x594_b0 ? fp->x6A4_transNOffset.z : 0.0f;
+        r.f = fp->x594.x0.x594_b0 ? fp->x6A4_transNOffset.z : 0.0f;
         break;
     case GENO_VAL_TRANSN_UP:
-        r.f = fp->x594_b0 ? fp->x6A4_transNOffset.y : 0.0f;
+        r.f = fp->x594.x0.x594_b0 ? fp->x6A4_transNOffset.y : 0.0f;
         break;
     case GENO_VAL_MOTION_GRAVITY:
         r.f = st->motion_gravity;
@@ -1642,7 +1642,7 @@ static int geno_val_put(Fighter* fp, u32 id, GenoWord v)
         fp->cmd_vars[id - GENO_VAL_CMD_VAR0] = (u32) v.i;
         return 1;
     default:
-        Geno_Event(14, fp->kind, fp->player_id, (int) id, 0);
+        Geno_Event(14, fp->kind, fp->player_idx, (int) id, 0);
         return 0;
     }
 }
@@ -1722,7 +1722,7 @@ static int geno_do_change(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 ta
     if ((target >> 28) == GENO_TGT_GENO) {
         int s = (int) (target & 0xFFFF);
         if (!geno_state_valid(st, s)) {
-            Geno_Event(8, fp->kind, fp->player_id, s, 0);
+            Geno_Event(8, fp->kind, fp->player_idx, s, 0);
             return 0;
         }
         return geno_enter_state(gobj, fp, st, s, target);
@@ -1734,7 +1734,7 @@ static int geno_do_change(Fighter_GObj* gobj, Fighter* fp, GenoState* st, u32 ta
         return 0;
     }
     st->changes++;
-    Geno_Event(7, fp->kind, fp->player_id, (int) fp->motion_id, (int) target);
+    Geno_Event(7, fp->kind, fp->player_idx, (int) fp->motion_id, (int) target);
     if (geno_test_capture) {
         geno_test_target = target;
         geno_test_changes++;
@@ -1864,7 +1864,7 @@ static void geno_register_check(Fighter* fp, GenoState* st, u32 head, u32 target
         }
     }
     if (st->nchecks >= GENO_MAX_CHECKS) {
-        Geno_Event(15, fp->kind, fp->player_id, GENO_MAX_CHECKS, 0);
+        Geno_Event(15, fp->kind, fp->player_idx, GENO_MAX_CHECKS, 0);
         st->last_check = -1;
         return;
     }
@@ -1930,14 +1930,14 @@ static void geno_rehit_tick(Fighter* fp, GenoState* st)
         if (st->rehit_period[i] > 0 && ++st->rehit_count[i] >= st->rehit_period[i]) {
             st->rehit_count[i] = 0;
             lbColl_80008440(&fp->x914[i]); /* Melee's "clear the hit list" */
-            Geno_Event(10, fp->kind, fp->player_id, 1 << i, st->rehit_period[i]);
+            Geno_Event(10, fp->kind, fp->player_idx, 1 << i, st->rehit_period[i]);
         }
     }
 }
 
 /* ---- v1 dispatch points ----------------------------------------------------------------------- */
 
-/* fighter.c (Fighter_8006A360), after the animation and the subaction script advanced and BEFORE
+/* fighter.c (Fighter_procAnim), after the animation and the subaction script advanced and BEFORE
  * the state's anim callback: the frame tick, rehit timers, then the registered change-action
  * checks. Returns 1 when a check changed the action (the caller then skips the old state's anim
  * callback, exactly as when that callback itself changes the state). */
@@ -1959,7 +1959,7 @@ int Geno_PreAnim(Fighter_GObj* gobj)
             if (!geno_target_ok(fp, st->checks[i].target)) {
                 /* a Geno state this profile does not declare: logged, and a later check (the
                    translator's fallback) may still win */
-                Geno_Event(8, fp->kind, fp->player_id, (int) (st->checks[i].target & 0xFFFF), 0);
+                Geno_Event(8, fp->kind, fp->player_idx, (int) (st->checks[i].target & 0xFFFF), 0);
                 continue;
             }
             hit = (s32) i;
@@ -2030,7 +2030,7 @@ void Geno_GroundEdge(Fighter* fp, int landing)
         {
             st->edge_pending = 1;
             st->edge_target = k->target;
-            Geno_Event(9, fp->kind, fp->player_id, (int) fp->motion_id, (int) k->target);
+            Geno_Event(9, fp->kind, fp->player_idx, (int) fp->motion_id, (int) k->target);
             return;
         }
     }
@@ -2044,7 +2044,7 @@ void Geno_GroundEdge(Fighter* fp, int landing)
             {
                 st->edge_pending = 1;
                 st->edge_target = (u32) Geno_OnLandTo(st->profile, j);
-                Geno_Event(9, fp->kind, fp->player_id, (int) fp->motion_id, (int) st->edge_target);
+                Geno_Event(9, fp->kind, fp->player_idx, (int) fp->motion_id, (int) st->edge_target);
                 return;
             }
         }
@@ -2100,7 +2100,7 @@ int Geno_Autolink(Fighter* attacker, HitCapsule* hit, float* dir, float* angle, 
             *kb = need;
         }
     }
-    Geno_Event(11, attacker->kind, attacker->player_id, (int) *angle, (int) *kb);
+    Geno_Event(11, attacker->kind, attacker->player_idx, (int) *angle, (int) *kb);
     return 1;
 }
 
@@ -2108,7 +2108,7 @@ int Geno_Autolink(Fighter* attacker, HitCapsule* hit, float* dir, float* angle, 
  * from the three ftAction loops for opcode GENO_FTCMD_OP only. */
 void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
 {
-    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_id << 16) | GET_FIGHTER(gobj)->kind);
+    PC_PROF_BEGIN(GW_PROF_GENO_HOOK, (GET_FIGHTER(gobj)->player_idx << 16) | GET_FIGHTER(gobj)->kind);
     Fighter* fp = GET_FIGHTER(gobj);
     GenoState* st = geno_state(fp);
     u32* w = (u32*) cmd->u;
@@ -2255,7 +2255,7 @@ void Geno_FtCmd(Fighter_GObj* gobj, CommandInfo* cmd, int mode)
         break;
     }
     default:
-        Geno_Event(3, fp->kind, fp->player_id, sub, 0);
+        Geno_Event(3, fp->kind, fp->player_idx, sub, 0);
         break;
     }
 #undef GENO_W
@@ -2301,7 +2301,7 @@ int Geno_HitFlags(Fighter* atk, int idx, Fighter* vic)
     s = geno_state(vic);
     {
         extern void diag_geno_stun(int port, int base, int bonus);
-        diag_geno_stun(-1000 - vic->player_id, f, atk->player_id); /* MELEE_GENO_STUNLOG: a contact-flags hit */
+        diag_geno_stun(-1000 - vic->player_idx, f, atk->player_idx); /* MELEE_GENO_STUNLOG: a contact-flags hit */
     }
     if (s->react_frame != geno_stun_frame()) {
         s->react_flags = 0;

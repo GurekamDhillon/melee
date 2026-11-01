@@ -26,7 +26,7 @@ void GenoGame_DefineApplyRows(int kind, MotionState* common, MotionState* specif
         HSD_ASSERTREPORT(__LINE__, value < subactions, "Geno native state references missing subaction\n");
         if (value >= 0) row->anim_id = value;
         value = Geno_DefineOverrideField(kind, i, 3); if (value >= 0) row->x4_flags = value;
-        value = Geno_DefineOverrideField(kind, i, 4); if (value >= 0) row->move_id = (u8)value;
+        value = Geno_DefineOverrideField(kind, i, 4); if (value >= 0) row->x8.x0.move_id = (u8)value;
         for (field = 5; field < 9; ++field) {
             const GenoCbDef* cb;
             value = Geno_DefineOverrideField(kind, i, field);

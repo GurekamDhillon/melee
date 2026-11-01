@@ -25,12 +25,12 @@ int ScriptGame_CpuModeTest(void)
     zelda.cpu.kind=sheik.cpu.kind=CpuKind_4;
     zelda.cpu.level=7; sheik.cpu.level=3;
     zelda.cpu.x14=11; sheik.cpu.x14=22;
-    sheik.motion_id=ftCo_MS_Sleep; sheik.x221F_b3=1; sheik.invisible=1;
+    sheik.motion_id=ftCo_MS_Sleep; sheik.is_sleeping=1; sheik.invisible=1;
     pair[0]=&zelda; pair[1]=&sheik; script_cpu_mode_test_calls=0;
     if (!script_cpu_mode_pair(pair,0,script_cpu_mode_test_init) ||
         script_cpu_mode_test_calls!=2 || zelda.cpu.kind!=CpuKind_0 || sheik.cpu.kind!=CpuKind_0 ||
         zelda.cpu.level!=7 || sheik.cpu.level!=3 || zelda.cpu.x14!=11 || sheik.cpu.x14!=22 ||
-        sheik.motion_id!=ftCo_MS_Sleep || !sheik.x221F_b3 || !sheik.invisible) rc++;
+        sheik.motion_id!=ftCo_MS_Sleep || !sheik.is_sleeping || !sheik.invisible) rc++;
     pair[0]=&sheik; pair[1]=&zelda; /* accessor order after a transform */
     if (pair[0]->cpu.kind!=CpuKind_0 ||
         !script_cpu_mode_pair(pair,1,script_cpu_mode_test_init) ||
@@ -58,7 +58,7 @@ int ScriptGame_CpuModeTest(void)
         script_bench[0].entity[1].cpu.kind!=CpuKind_0) rc++;
     script_bench_restore(&script_bench[0].entity[0],&zelda);
     script_bench_restore(&script_bench[0].entity[1],&sheik);
-    if (zelda.cpu.kind!=CpuKind_0 || sheik.cpu.kind!=CpuKind_0 || !sheik.x221F_b3) rc++;
+    if (zelda.cpu.kind!=CpuKind_0 || sheik.cpu.kind!=CpuKind_0 || !sheik.is_sleeping) rc++;
     memset(&script_bench[0],0,sizeof script_bench[0]);
     script_cpu_mode_test_slot_kind=CpuKind_4;
     if (!script_cpu_mode_persist(pair,0,0,script_cpu_mode_test_init,
@@ -80,7 +80,7 @@ int ScriptGame_CpuModeTest(void)
         int k,frame;
         for (k=0; k<4; ++k) {
             zelda.kind=kinds[k]; zelda.self_vel.x=3; zelda.cur_pos.y=10;
-            zelda.motion_id=ftCo_MS_Wait; zelda.x221F_b3=0;
+            zelda.motion_id=ftCo_MS_Wait; zelda.is_sleeping=0;
             for (frame=0; frame<900; ++frame) {
                 zelda.cpu.buttons=HSD_PAD_B; zelda.cpu.lstick.y=-100;
                 zelda.cpu.cstick.x=100; zelda.cpu.ltrigger=255; zelda.cpu.rtrigger=255;
@@ -92,7 +92,7 @@ int ScriptGame_CpuModeTest(void)
                     zelda.cpu.rtrigger || zelda.cpu.xF8_b5 || zelda.cpu.csP ||
                     zelda.cpu.command_duration || zelda.cpu.xC8 || zelda.cpu.xEC ||
                     zelda.input.held_buttons[0] || zelda.input.lstick[0].y ||
-                    zelda.self_vel.x!=3 || zelda.cur_pos.y!=10 || zelda.x221F_b3) rc++;
+                    zelda.self_vel.x!=3 || zelda.cur_pos.y!=10 || zelda.is_sleeping) rc++;
             }
         }
         zelda.cpu.buttons=HSD_PAD_B;

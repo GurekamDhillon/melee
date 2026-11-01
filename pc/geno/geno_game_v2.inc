@@ -323,7 +323,7 @@ static void geno_build_rows(Fighter* fp, int p)
             row->x4_flags = (enum_t) Geno_StateFlags(p, s);
         }
         if (Geno_StateMoveId(p, s) >= 0) {
-            row->move_id = (u8) Geno_StateMoveId(p, s);
+            row->x8.x0.move_id = (u8) Geno_StateMoveId(p, s);
         }
         for (slot = 0; slot < GENO_CB_SLOTS; slot++) {
             int id = Geno_StateCb(p, s, slot);
@@ -361,7 +361,7 @@ static void geno_build_rows(Fighter* fp, int p)
             GenoGame_ScriptHasIasa(fp->ft_data->xC[row->anim_id].xC)) {
             Geno_WarnIasa(p, s);
         }
-        Geno_Event(20, fp->kind, fp->player_id, s, (int) row->anim_id);
+        Geno_Event(20, fp->kind, fp->player_idx, s, (int) row->anim_id);
     }
     Geno_RowCount[p] = n;
 }
@@ -385,7 +385,7 @@ MotionState* Geno_MotionRow(Fighter* fp, int msid)
     if (geno_state_valid(st, s) && s < Geno_RowCount[st->profile]) {
         return &Geno_Rows[st->profile][s];
     }
-    Geno_Event(8, fp->kind, fp->player_id, s, 0);
+    Geno_Event(8, fp->kind, fp->player_idx, s, 0);
     return geno_vanilla_row(fp, ftCo_MS_Fall);
 }
 
@@ -414,14 +414,14 @@ static int geno_enter_state(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int 
     s32 k_started = st->motion_started, k_ledge = st->ledge;
     f32 k_vy = st->motion_vy, k_facing = st->motion_facing, k_grav = st->motion_gravity;
     if (st->profile >= GENO_MAX_PROFILES || s >= Geno_RowCount[st->profile]) {
-        Geno_Event(8, fp->kind, fp->player_id, s, 0);
+        Geno_Event(8, fp->kind, fp->player_idx, s, 0);
         return 0;
     }
     st->changes++;
     st->state_entries++;
     st->enter_from = from;
     st->enter_keep = (target & GENO_TGT_KEEP_FRAME) != 0;
-    Geno_Event(16, fp->kind, fp->player_id, s, from);
+    Geno_Event(16, fp->kind, fp->player_idx, s, from);
     /* Melee's own attacks clear Allow Interrupt on entry (ftCo_Attack1.c, ftCo_AppealS.c); the flag
        is not part of ChangeMotionState's resets. Without this an IASA left set by the previous state
        (Sora's whiffed counter reaching its cancel frame, then Wait) makes an "interrupt" state
@@ -700,10 +700,10 @@ static void geno_become_ground(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     f32 vx = fp->self_vel.x;
     ftCommon_8007D7FC(fp);
-    /* A row whose clip drives the fighter (x594_b0) makes ftCommon_8007D6A4 replace the horizontal
+    /* A row whose clip drives the fighter (x594.x0.x594_b0) makes ftCommon_8007D6A4 replace the horizontal
      * speed with the clip's root motion. In a "both" state the speed is the script's: a dash aimed
      * into the floor slides along it with the horizontal part it had (Sonic Blade, spec 3.6). */
-    if (fp->x594_b0) {
+    if (fp->x594.x0.x594_b0) {
         fp->self_vel.x = vx;
         fp->gr_vel = vx;
     }
@@ -723,7 +723,7 @@ static void geno_coll_both(Fighter_GObj* gobj)
  *
  * Brawl moves many specials by the clip's root motion (TransN) in the air as well as on the ground
  * (Shuttle Loop, Dimensional Cape's F/B reappear). Melee extracts TransN only on subaction rows whose
- * flags have 0x80000000 (fp->x594_b0: TransN is zeroed on the model and its per-frame delta lands in
+ * flags have 0x80000000 (fp->x594.x0.x594_b0: TransN is zeroed on the model and its per-frame delta lands in
  * fp->x6A4_transNOffset, z forward / y up) and only a few of its phys helpers consume it. This
  * behaviour consumes it everywhere:
  *   ground  gr_vel = forward x facing (Melee's own ft_800850E0); with "liftoff", an upward delta
@@ -768,7 +768,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
         }
         lr = st->motion_facing < 0.0f ? -1.0f : 1.0f;
     }
-    if (fp->x594_b0) {
+    if (fp->x594.x0.x594_b0) {
         fwd = fp->x6A4_transNOffset.z;
         up = fp->x6A4_transNOffset.y;
         if (!st->motion_started && (o & GENO_MOTION_ORIGIN)) {
@@ -778,12 +778,12 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
     }
     st->motion_started = 1;
     if (fp->ground_or_air == GA_Ground) {
-        if (!fp->x594_b0) {
+        if (!fp->x594.x0.x594_b0) {
             ft_80084F3C(gobj); /* no root motion: friction */
             return;
         }
         if ((o & GENO_MOTION_LIFTOFF) && up > 0.001f) {
-            Geno_Event(23, fp->kind, fp->player_id, s, st->action_time);
+            Geno_Event(23, fp->kind, fp->player_idx, s, st->action_time);
             ftCommon_8007D5D4(fp); /* take off: the air rule below moves this frame */
         } else {
             fp->gr_vel = fwd * lr;
@@ -797,7 +797,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
             st->motion_vy = -fp->co_attrs.terminal_velocity;
         }
     }
-    if (!fp->x594_b0 && g == 0.0f) {
+    if (!fp->x594.x0.x594_b0 && g == 0.0f) {
         fp->self_vel.x = 0.0f; /* no root motion and no gravity: hold still (Brawl's stall) */
         fp->self_vel.y = 0.0f;
         return;
@@ -812,7 +812,7 @@ static void geno_motion_land(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     GenoState* st = geno_state(fp);
     int s = geno_cur_state(fp, st);
-    Geno_Event(24, fp->kind, fp->player_id, s, s >= 0 ? (int) geno_land_of(st, s) : -1);
+    Geno_Event(24, fp->kind, fp->player_idx, s, s >= 0 ? (int) geno_land_of(st, s) : -1);
     if (s >= 0 && geno_land_of(st, s) == GENO_TGT_STAY) {
         ftCommon_8007D7FC(fp); /* grounded; the state (and a script's GROUND check) goes on */
         return;
@@ -831,7 +831,7 @@ static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land
     coll->last_pos = coll->cur_pos;
     coll->cur_pos = fp->cur_pos;
     mpColl_LedgeLevelOK = both && geno_state(fp)->fall_ledge; /* ctx.ledge(3) moves only (Goku's flight: a level or descending approach catches (retail needs a strict descent) */
-    if (fp->x2064_ledgeCooldown || fp->x2224_b2) {
+    if (fp->x2064_ledgeCooldown || fp->stamina_dead) {
         touched = mpColl_80047AC8(coll, ftCo_80096CC8, gobj);
     } else {
         mpCollSetFacingDir(coll, both ? 0 : (fp->facing_dir < 0.0f ? -1 : 1));
@@ -847,7 +847,7 @@ static void geno_coll_air_ledge(Fighter_GObj* gobj, int both, HSD_GObjEvent land
         return;
     }
     if (ftCliffCommon_80081298(gobj)) {
-        Geno_Event(25, fp->kind, fp->player_id, (int) fp->motion_id - GENO_MOTION_BASE, both ? 2 : 1);
+        Geno_Event(25, fp->kind, fp->player_idx, (int) fp->motion_id - GENO_MOTION_BASE, both ? 2 : 1);
     }
 }
 
@@ -1142,7 +1142,7 @@ int Geno_SpecialEnter(Fighter_GObj* gobj, int which)
     if (t == GENO_NONE_T || !geno_target_ok(fp, t)) {
         return 0;
     }
-    Geno_Event(18, fp->kind, fp->player_id, which, (int) t);
+    Geno_Event(18, fp->kind, fp->player_idx, which, (int) t);
     return geno_do_change(gobj, fp, st, t);
 }
 

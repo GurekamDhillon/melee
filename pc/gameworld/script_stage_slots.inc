@@ -94,7 +94,7 @@ int ScriptGame_StageSlotFile(int kind,int at)
       if(!has_extension && at<n+4)return ".dat"[at-n];
       return 0; }
 }
-static void script_slot_render(HSD_GObj* gobj,int pass)
+static void script_slot_render(HSD_GObj* gobj,intptr_t pass)
 {
     int i,k; extern int Script_StageSlotVisual(int);
     if(gx_suppress_draws) return;
@@ -220,7 +220,7 @@ int ScriptGame_StageSlotLoad(int owner,int handle,int music)
     }
     if(!(s->param->y>0.001f && s->param->y<=100)){script_slot_dispose(s);return -2;}
     for(g=0;g<head->unkC;++g) {
-        HSD_Joint* source=head->unk8[g].unk0; HSD_Joint branch; HSD_JObj* root;
+        HSD_Joint* source=head->unk8[g].joint; HSD_Joint branch; HSD_JObj* root;
         if(!(group_mask&(1ull<<g)) || !source) { s->ngroups=g+1; continue; }
         if(!script_slot_ptr(s->archive,source,sizeof *source) || source->flags&JOBJ_INSTANCE || script_stage_has_instance(source->child)) {
             script_slot_dispose(s); return -2;
@@ -245,12 +245,12 @@ int ScriptGame_StageSlotLoad(int owner,int handle,int music)
         GObj_SetupGXLink(s->models[g],script_slot_render,3,0);
         /* Reproduce Ground_801C34AC's joint-index -> general-point bindings. */
         {
-            struct SlotMarkers { HSD_Joint* joint; s16* pairs; int count; }* rows=head->unk0;
+            struct SlotMarkers { HSD_Joint* joint; s16* pairs; int count; }* rows=(struct SlotMarkers*)head->unk0;
             int r;
-            if(head->unk4<0 || head->unk4>261 || (head->unk4 && !script_slot_ptr(s->archive,rows,head->unk4*sizeof *rows))) {
+            if(head->count<0 || head->count>261 || (head->count && !script_slot_ptr(s->archive,rows,head->count*sizeof *rows))) {
                 script_slot_dispose(s); return -2;
             }
-            for(r=0;r<head->unk4;++r) if(rows[r].joint==source) {
+            for(r=0;r<head->count;++r) if(rows[r].joint==source) {
                 int k;
                 if(rows[r].count<0 || rows[r].count>261 || !script_slot_ptr(s->archive,rows[r].pairs,rows[r].count*4)) {
                     script_slot_dispose(s); return -2;
@@ -478,7 +478,7 @@ static void script_switch_clear_lines(void)
     for(i=0;i<script_switch.nlines;++i) {
 #ifndef STAGE_SLOT_FIXTURE
         int at=script_stage_seam_slot(script_switch.lines[i]);
-        if(at>=0)mpGetGroundCollJoint()[script_stage.base_j+at].x20=NULL;
+        if(at>=0)mpGetGroundCollJoint()[script_stage.base_j+at].jobj=NULL;
 #endif
         ScriptGame_StageRemove(script_switch.lines[i]);
     }

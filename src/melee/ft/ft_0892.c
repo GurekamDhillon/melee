@@ -38,28 +38,28 @@ typedef struct {
 
 void ft_800892D4(Fighter* arg0)
 {
-    union Struct2070 spC;
+    union Struct2070 zero;
 
-    spC.x2070_int = 0;
-    arg0->dmg.x18d4 = *(UnkPlBonusBits*) &spC;
-    arg0->x2070.x2070_int = *(s32*) &arg0->dmg.x18d4;
-    *(s32*) &arg0->x2074.x2074_vec.x = 0;
-    *(s32*) &arg0->x2074.x2074_vec.y = 0;
-    *(f32*) &arg0->x2074.x207C.x = 0.0f;
+    zero.x2070_int = 0;
+    arg0->dmg.x18d4 = zero;
+    arg0->x2070.x2070_int = arg0->dmg.x18d4.x2070_int;
+    arg0->x2074.x2074_vec.x = 0;
+    arg0->x2074.x2074_vec.y = 0;
+    arg0->x2074.x207C.x = 0.0f;
     arg0->x2074.x207C.y = 6;
-    arg0->x2074.x2084_b0 = 0;
-    arg0->x2074.x2085_b3 = 0;
-    arg0->x2074.x2084_b1 = 0;
-    arg0->x2074.x2084_b2 = 0;
-    arg0->x2074.x2084_b3 = 0;
-    arg0->x2074.x2084_b4 = 0;
-    arg0->x2074.x2084_b5 = 0;
-    arg0->x2074.x2084_b6 = 0;
-    arg0->x2074.x2084_b7 = 0;
-    arg0->x2074.x2085_b0 = 0;
-    arg0->x2074.x2085_b1 = 0;
-    arg0->x2074.x2085_b2 = 0;
-    arg0->x2074.x2085_b4 = 0;
+    arg0->x2074.x10.x0.x2084_b0 = 0;
+    arg0->x2074.x10.x0.x2085_b3 = 0;
+    arg0->x2074.x10.x0.x2084_b1 = 0;
+    arg0->x2074.x10.x0.x2084_b2 = 0;
+    arg0->x2074.x10.x0.x2084_b3 = 0;
+    arg0->x2074.x10.x0.x2084_b4 = 0;
+    arg0->x2074.x10.x0.x2084_b5 = 0;
+    arg0->x2074.x10.x0.x2084_b6 = 0;
+    arg0->x2074.x10.x0.x2084_b7 = 0;
+    arg0->x2074.x10.x0.x2085_b0 = 0;
+    arg0->x2074.x10.x0.x2085_b1 = 0;
+    arg0->x2074.x10.x0.x2085_b2 = 0;
+    arg0->x2074.x10.x0.x2085_b4 = 0;
     arg0->dmg.x18d8.x0 = 0;
     arg0->dmg.x18d8.x4 = 0;
     arg0->dmg.x18d8.kb_applied1 = 0.0f;
@@ -83,45 +83,45 @@ void ft_800892D4(Fighter* arg0)
 
 void ft_80089460(Fighter* fp)
 {
-    *(s32*) &fp->x2074.x2074_vec.x = 0;
-    *(s32*) &fp->x2074.x2074_vec.y = 0;
-    *(f32*) &fp->x2074.x207C.x = 0.0f;
+    fp->x2074.x2074_vec.x = 0;
+    fp->x2074.x2074_vec.y = 0;
+    fp->x2074.x207C.x = 0.0f;
     fp->x2074.x207C.y = 6;
-    fp->x2074.x2084_b0 = 0;
-    fp->x2074.x2085_b3 = 0;
-    fp->x2074.x2084_b1 = 0;
-    fp->x2074.x2084_b2 = 0;
-    fp->x2074.x2084_b3 = 0;
-    fp->x2074.x2084_b4 = 0;
-    fp->x2074.x2084_b5 = 0;
-    fp->x2074.x2084_b6 = 0;
-    fp->x2074.x2084_b7 = 0;
-    fp->x2074.x2085_b0 = 0;
-    fp->x2074.x2085_b1 = 0;
-    fp->x2074.x2085_b2 = 0;
-    fp->x2074.x2085_b4 = 0;
-    *(s32*) &fp->x2074.x2074_vec.x = (s32) fp->dmg.x1830_percent;
+    fp->x2074.x10.x0.x2084_b0 = 0;
+    fp->x2074.x10.x0.x2085_b3 = 0;
+    fp->x2074.x10.x0.x2084_b1 = 0;
+    fp->x2074.x10.x0.x2084_b2 = 0;
+    fp->x2074.x10.x0.x2084_b3 = 0;
+    fp->x2074.x10.x0.x2084_b4 = 0;
+    fp->x2074.x10.x0.x2084_b5 = 0;
+    fp->x2074.x10.x0.x2084_b6 = 0;
+    fp->x2074.x10.x0.x2084_b7 = 0;
+    fp->x2074.x10.x0.x2085_b0 = 0;
+    fp->x2074.x10.x0.x2085_b1 = 0;
+    fp->x2074.x10.x0.x2085_b2 = 0;
+    fp->x2074.x10.x0.x2085_b4 = 0;
+    fp->x2074.x2074_vec.x = (s32) fp->dmg.x1830_percent;
     if (fp->is_metal) {
-        fp->x2074.x2084_b1 = 1;
+        fp->x2074.x10.x0.x2084_b1 = 1;
     }
     if (fp->x197C != NULL) {
-        fp->x2074.x2084_b2 = 1;
+        fp->x2074.x10.x0.x2084_b2 = 1;
     }
     if (fp->x221D_b6) {
-        fp->x2074.x2084_b3 = 1;
+        fp->x2074.x10.x0.x2084_b3 = 1;
     }
     if (fp->x2226_b4) {
-        fp->x2074.x2084_b4 = 1;
+        fp->x2074.x10.x0.x2084_b4 = 1;
     }
     if (fp->x2220_b5) {
-        fp->x2074.x2084_b5 = 1;
+        fp->x2074.x10.x0.x2084_b5 = 1;
     }
     if (fp->x2220_b6) {
-        fp->x2074.x2084_b6 = 1;
+        fp->x2074.x10.x0.x2084_b6 = 1;
     }
 }
 
-// TODO: is arg1 not just a Struct2070?
+/// @TODO: is arg1 not just a Struct2070?
 void ft_800895E0(Fighter* fp, int arg1)
 {
     union Struct2070 val;
@@ -130,14 +130,14 @@ void ft_800895E0(Fighter* fp, int arg1)
     union Struct2070 spC;
 
     val = *(union Struct2070*) &arg1;
-    if (val.x2073 == 0 || val.x2073 != fp->x2070.x2073) {
+    if (val.x0.x2073 == 0 || val.x0.x2073 != fp->x2070.x0.x2073) {
         fp->x2074.x2088 = plAttack_80037B08();
     }
-    if (fp->kind == Ft_Kind_Luigi && val.x2073 == 0x71) {
+    if (fp->kind == Ft_Kind_Luigi && val.x0.x2073 == 0x71) {
         sp18.x2070_int = 0x240063;
         val = sp18;
     }
-    if (val.x2073 == 0x62) {
+    if (val.x0.x2073 == 0x62) {
         if (fp->item_gobj != NULL && it_8026B6C8(fp->item_gobj) != 0) {
             sp14.x2070_int = 0x44003D;
             val = sp14;
@@ -145,28 +145,28 @@ void ft_800895E0(Fighter* fp, int arg1)
     }
     fp->x2070.x2070_int = val.x2070_int;
     ft_80089768(&fp->x2074.x2074_vec);
-    *(s32*) &fp->x2074.x2074_vec.x = (s32) fp->dmg.x1830_percent;
+    fp->x2074.x2074_vec.x = (s32) fp->dmg.x1830_percent;
     if (fp->is_metal) {
-        fp->x2074.x2084_b1 = 1;
+        fp->x2074.x10.x0.x2084_b1 = 1;
     }
     if (fp->x197C != NULL) {
-        fp->x2074.x2084_b2 = 1;
+        fp->x2074.x10.x0.x2084_b2 = 1;
     }
     if (fp->x221D_b6) {
-        fp->x2074.x2084_b3 = 1;
+        fp->x2074.x10.x0.x2084_b3 = 1;
     }
     if (fp->x2226_b4) {
-        fp->x2074.x2084_b4 = 1;
+        fp->x2074.x10.x0.x2084_b4 = 1;
     }
     if (fp->x2220_b5) {
-        fp->x2074.x2084_b5 = 1;
+        fp->x2074.x10.x0.x2084_b5 = 1;
     }
     if (fp->x2220_b6) {
-        fp->x2074.x2084_b6 = 1;
+        fp->x2074.x10.x0.x2084_b6 = 1;
     }
 }
 
-void ft_80089768(Vec2* ptr)
+void ft_80089768(S32Vec2* ptr)
 {
     UnkStruct89768* s = (UnkStruct89768*) ptr;
     s->x0 = 0;
@@ -203,7 +203,7 @@ union Struct2070* ft_80089884(Fighter_GObj* gobj)
     return &GET_FIGHTER(gobj)->x2070;
 }
 
-UnkPlBonusBits* ft_80089890(Fighter_GObj* gobj)
+union Struct2070* ft_80089890(Fighter_GObj* gobj)
 {
     return &GET_FIGHTER(gobj)->dmg.x18d4;
 }
@@ -226,8 +226,8 @@ ft_800898B4_t* ft_800898B4(Fighter_GObj* gobj)
 bool ft_800898C0(HSD_GObj* gobj)
 {
     Fighter* ft = GET_FIGHTER(gobj);
-    if ((ft->x2070.x2073 == 113 || ft->x2070.x2073 == 114 ||
-         ft->x2070.x2073 == 99) ||
+    if ((ft->x2070.x0.x2073 == 113 || ft->x2070.x0.x2073 == 114 ||
+         ft->x2070.x0.x2073 == 99) ||
         ftFx_AppealS_CheckIfUsed(ft))
     {
         return true;

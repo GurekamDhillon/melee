@@ -20,7 +20,7 @@ extern int Script_HitRulesInput(int at);
 /* crit launch (script_skill.inc, included later): the multiplier a crit on this capsule asked for, and its retirement */
 static float script_crit_launch(HitCapsule* hit,Fighter* victim);
 static void script_crit_launch_clear(Fighter* victim);
-static int script_hit_entity(Fighter* f) {return f->player_id*2+(f->is_sub_fighter ? 1 : 0); }
+static int script_hit_entity(Fighter* f) {return f->player_idx*2+(f->is_sub_fighter ? 1 : 0); }
 static HRMeta* script_hit_metadata(HitCapsule* h,int create) {
  unsigned start=((unsigned)h>>2)%HR_META_MAX; int i;
  if(!create && !script_hit_meta_count)return NULL;
@@ -88,11 +88,11 @@ void ScriptGame_HitRuleSpecial(HitCapsule* hit) {
 void ScriptGame_HitRuleCreate(Fighter* owner,HitCapsule* hit,int item) {
  HRMeta* m; HRResult v; HRPort* p; int i;
  ScriptGame_HitRuleForget(hit);
- if(!owner || owner->player_id>=6) return;
+ if(!owner || owner->player_idx>=6) return;
  for(i=0;i<12;++i)if(script_hit_ports[i].count)break;
  if(i==12)return;
- if(!item && owner->x1064_thrownHitbox.owner) owner=GET_FIGHTER(owner->x1064_thrownHitbox.owner);
- if(!owner || owner->player_id>=6)return;
+ if(!item && owner->x1064_thrownHitbox.x134.owner) owner=GET_FIGHTER(owner->x1064_thrownHitbox.x134.owner);
+ if(!owner || owner->player_idx>=6)return;
  p=&script_hit_ports[script_hit_entity(owner)];
  if(!hr_ordinary(hit->element)) return;
  m=script_hit_metadata(hit,1); if(!m) { if(!script_hit_capacity_warned){script_hit_capacity_warned=1;OSReport("hit rules: capsule metadata capacity (1024) exhausted; creation unchanged\n");}return; }
@@ -107,8 +107,8 @@ void ScriptGame_HitRuleCreate(Fighter* owner,HitCapsule* hit,int item) {
  if(v.shield) {hit->x34+=v.shield;if(hit->x34>100)hit->x34=100;if(hit->x34< -100)hit->x34=-100;}
 }
 void ScriptGame_HitRuleItemCreate(Item* item,HitCapsule* hit) {
- extern int ftLib_80086960(HSD_GObj*);
- ScriptGame_HitRuleCreate(item->owner && ftLib_80086960(item->owner) ? GET_FIGHTER(item->owner) : NULL,hit,1);
+ extern int ftLib_IsFighter(HSD_GObj*);
+ ScriptGame_HitRuleCreate(item->owner && ftLib_IsFighter(item->owner) ? GET_FIGHTER(item->owner) : NULL,hit,1);
 }
 static HRResult script_hit_family(HitCapsule*,Fighter*,int);
 /* The historical capsule already contains creation-time outgoing transforms.
@@ -127,7 +127,7 @@ void ScriptGame_HitRuleEchoCreate(Fighter* fp,HitCapsule* hit,int move,int groun
 /* This reads per-victim status, and returns a scalar. Never mutate shared hit. */
 float ScriptGame_HitRuleContact(HitCapsule* hit,Fighter* victim,float value,int knockback) {
  HRMeta* m=script_hit_metadata(hit,0);HRResult v,w;HRPort* defender;
- if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element))return value;
+ if(!victim || victim->player_idx>=6 || !hr_ordinary(hit->element))return value;
  v=hr_evaluate(m ? script_hit_ports[m->port].rules : NULL,m ? script_hit_ports[m->port].count : 0,
      m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,script_hit_ports[script_hit_entity(victim)].status,1);
  defender=&script_hit_ports[script_hit_entity(victim)];
@@ -150,7 +150,7 @@ static HRResult script_hit_family(HitCapsule* hit,Fighter* victim,int incoming) 
 }
 void ScriptGame_HitRulePercentQueue(HitCapsule* hit,Fighter* victim,float damage) {
  HRResult outgoing,incoming;float scale;double delta;int entity;
- if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element) || !hr_finite(damage) || damage<=0)return;
+ if(!victim || victim->player_idx>=6 || !hr_ordinary(hit->element) || !hr_finite(damage) || damage<=0)return;
  outgoing=script_hit_family(hit,victim,0);incoming=script_hit_family(hit,victim,1);
  scale=hr_percent_cap(outgoing.percent_damage,0)*hr_percent_cap(incoming.percent_damage,1);
  entity=script_hit_entity(victim);
@@ -161,7 +161,7 @@ void ScriptGame_HitRulePercentQueue(HitCapsule* hit,Fighter* victim,float damage
 }
 float ScriptGame_HitRulePercentCommit(Fighter* victim,float damage) {
  int entity;float delta;double result;
- if(!victim || victim->player_id>=6)return damage;
+ if(!victim || victim->player_idx>=6)return damage;
  script_crit_launch_clear(victim);
  entity=script_hit_entity(victim);delta=script_hit_percent_delta[entity];script_hit_percent_delta[entity]=0;
  if(!hr_finite(damage))damage=damage>0 ? 999 : 0;
@@ -169,7 +169,7 @@ float ScriptGame_HitRulePercentCommit(Fighter* victim,float damage) {
  result=(double)damage+delta;return result<0 ? 0 : result>999 ? 999 : (float)result;
 }
 void ScriptGame_HitRulePercentClear(Fighter* victim) {
- if(victim && victim->player_id<6){script_hit_percent_delta[script_hit_entity(victim)]=0;script_crit_launch_clear(victim);}
+ if(victim && victim->player_idx<6){script_hit_percent_delta[script_hit_entity(victim)]=0;script_crit_launch_clear(victim);}
 }
 void ScriptGame_HitRuleWon(HitCapsule* hit,Fighter* victim) {
  HRMeta* m=script_hit_metadata(hit,0);
@@ -180,7 +180,7 @@ void ScriptGame_HitRuleContext(HitCapsule* hit,Fighter* victim) {
  HRMeta* m=script_hit_metadata(hit,0); HRResult v,w,x,y;HRPort* defender;int i;
  extern void Script_HitRuleContext(int,int,int,int,int);
  extern void Script_HitOriginalElement(int);
- if(!victim || victim->player_id>=6 || !hr_ordinary(hit->element))return;
+ if(!victim || victim->player_idx>=6 || !hr_ordinary(hit->element))return;
  /* The creation-time element before any conversion; the context already carries the effective one. */
  Script_HitOriginalElement(m ? m->original : hit->element);
  v=hr_evaluate(m ? script_hit_ports[m->port].rules : NULL,m ? script_hit_ports[m->port].count : 0,
@@ -188,11 +188,11 @@ void ScriptGame_HitRuleContext(HitCapsule* hit,Fighter* victim) {
  defender=&script_hit_ports[script_hit_entity(victim)];
  w=hr_evaluate(defender->rules,defender->count,m ? m->move : 0,m ? m->grounded : -1,m ? m->original : hit->element,defender->status,2);
  x=script_hit_family(hit,victim,0);y=script_hit_family(hit,victim,1);
- for(i=0;m && i<m->count;++i) Script_HitRuleContext(victim->player_id,m->ids[i],m->move,m->grounded,m->owner);
- for(i=0;i<v.count;++i) Script_HitRuleContext(victim->player_id,v.ids[i],m->move,m->grounded,script_hit_ports[m->port].owner);
- for(i=0;i<w.count;++i) Script_HitRuleContext(victim->player_id,w.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
- for(i=0;i<x.count;++i) Script_HitRuleContext(victim->player_id,x.ids[i],m ? m->move : 0,m ? m->grounded : -1,m ? script_hit_ports[m->port].owner : 0);
- for(i=0;i<y.count;++i) Script_HitRuleContext(victim->player_id,y.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
+ for(i=0;m && i<m->count;++i) Script_HitRuleContext(victim->player_idx,m->ids[i],m->move,m->grounded,m->owner);
+ for(i=0;i<v.count;++i) Script_HitRuleContext(victim->player_idx,v.ids[i],m->move,m->grounded,script_hit_ports[m->port].owner);
+ for(i=0;i<w.count;++i) Script_HitRuleContext(victim->player_idx,w.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
+ for(i=0;i<x.count;++i) Script_HitRuleContext(victim->player_idx,x.ids[i],m ? m->move : 0,m ? m->grounded : -1,m ? script_hit_ports[m->port].owner : 0);
+ for(i=0;i<y.count;++i) Script_HitRuleContext(victim->player_idx,y.ids[i],m ? m->move : 0,m ? m->grounded : -1,defender->owner);
 }
 
 /* Called after a retail damage-only setter (charge, powershield and script edits).
@@ -225,7 +225,7 @@ void ScriptGame_HitRuleDamageOnly(HitCapsule* hit) {
 void ScriptGame_HitRuleReport(Fighter* attacker,Fighter* victim,HitCapsule* hit,float damage) {
  extern void Script_GameEvent(int,int,int,int,int);union {float f;int i;} bits;
  bits.f=damage;
- Script_GameEvent(2,attacker->player_id,victim->player_id,255|(attacker->is_sub_fighter?256:0)|(victim->is_sub_fighter?512:0),bits.i);
+ Script_GameEvent(2,attacker->player_idx,victim->player_idx,255|(attacker->is_sub_fighter?256:0)|(victim->is_sub_fighter?512:0),bits.i);
  ScriptGame_ReportHitContext(attacker,victim,hit->element,0);
  ScriptGame_HitRuleContext(hit,victim);
 }

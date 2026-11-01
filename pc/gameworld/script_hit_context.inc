@@ -17,7 +17,7 @@ static int script_hit_move_tag(int motion)
  * Cleared when the fighter returns to a common state (Fighter_ChangeMotionState). Game BSS. */
 static unsigned char script_special_open[12];
 static int script_special_slot(Fighter* fp) {
- return fp && fp->player_id<6 ? fp->player_id*2+(fp->is_sub_fighter ? 1 : 0) : -1;
+ return fp && fp->player_idx<6 ? fp->player_idx*2+(fp->is_sub_fighter ? 1 : 0) : -1;
 }
 void ScriptGame_NoteSpecialInput(Fighter* fp) {int e=script_special_slot(fp);if(e>=0)script_special_open[e]=1;}
 void ScriptGame_NoteMotion(Fighter* fp,int motion) {
@@ -86,16 +86,16 @@ void ScriptGame_ReportHitContext(Fighter* attacker,Fighter* victim,int element,i
     union {float f; int i;} a,v;
     Fighter* owner=attacker;
     if (!victim) return;
-    if (owner && !item && owner->x1064_thrownHitbox.owner)
-        owner=GET_FIGHTER(owner->x1064_thrownHitbox.owner);
+    if (owner && !item && owner->x1064_thrownHitbox.x134.owner)
+        owner=GET_FIGHTER(owner->x1064_thrownHitbox.x134.owner);
     a.f=owner ? owner->dmg.x1830_percent : 0;
     v.f=victim->dmg.x1830_percent;
     {   /* online Envoy stage 4: the native triggered rules see the hit here, inside the simulation (also while resimulating) */
         extern void ScriptMods_Hit(int,int,int,int,int,int,float,float);
-        ScriptMods_Hit(owner ? owner->player_id : -1,victim->player_id,element,item ? 9 : owner ? script_hit_family_move(owner) : 0,
+        ScriptMods_Hit(owner ? owner->player_idx : -1,victim->player_idx,element,item ? 9 : owner ? script_hit_family_move(owner) : 0,
             owner ? owner->ground_or_air==GA_Ground : -1,victim->ground_or_air==GA_Ground,a.f,v.f);
     }
-    Script_HitContext(owner ? owner->player_id : -1,victim->player_id,element,
+    Script_HitContext(owner ? owner->player_idx : -1,victim->player_idx,element,
         /* An item or article declares itself: its hits are projectile hits, whatever its owner was doing
            (the hit rules already record item hits as move 9). */
         owner ? owner->motion_id : -1,item ? 9 : owner ? script_hit_family_move(owner) : 0,

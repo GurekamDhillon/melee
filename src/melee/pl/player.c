@@ -117,7 +117,8 @@ void Player_80031790(int slot)
             /// (transformed) checks to see if the player is in a transformed
             /// state, and calls the function only once depending on the state
             if ((player->player_entity[player->transformed[i]])) {
-                ftLib_800867E8(player->player_entity[player->transformed[i]]);
+                ftLib_DisableInput(
+                    player->player_entity[player->transformed[i]]);
             }
         }
     }
@@ -137,7 +138,8 @@ void Player_80031848(int slot)
             /// (transformed) checks to see if the player is in a transformed
             /// state, and calls the function only once depending on the state
             if ((player->player_entity[player->transformed[i]])) {
-                ftLib_8008688C(player->player_entity[player->transformed[i]]);
+                ftLib_EnableInput(
+                    player->player_entity[player->transformed[i]]);
             }
         }
     }
@@ -149,7 +151,8 @@ static void func_8008688C_wrapper(StaticPlayer* player)
         s32 i;
         for (i = 0; i < 2; i++) {
             if ((player->player_entity[player->transformed[i]])) {
-                ftLib_8008688C(player->player_entity[player->transformed[i]]);
+                ftLib_EnableInput(
+                    player->player_entity[player->transformed[i]]);
             }
         }
     }
@@ -226,8 +229,8 @@ void Player_80031AD0(int slot)
 
     first_struct.internal_id = internal_id;
     first_struct.slot = slot;
-    first_struct.b0 = false;
-    first_struct.has_transformation = false;
+    first_struct.x6.b0 = false;
+    first_struct.x6.has_transformation = false;
     first_struct.x5 = -1;
 
     player->player_entity[0] = Fighter_Create(&first_struct);
@@ -242,8 +245,8 @@ void Player_80031AD0(int slot)
 
         second_struct.internal_id = internal_id;
         second_struct.slot = slot;
-        second_struct.b0 = true;
-        second_struct.has_transformation = has_transformation;
+        second_struct.x6.b0 = true;
+        second_struct.x6.has_transformation = has_transformation;
         second_struct.x5 = -1;
 
         player->player_entity[1] = Fighter_Create(&second_struct);
@@ -279,14 +282,14 @@ void Player_80031CB0(CharacterKind kind, u8 color)
 void Player_80031D2C(CharacterKind kind, u8 color)
 {
 #if defined(TARGET_PC)
-    /* ftLib_80087610 preloads Kirby's hat archives, but its only caller is the VS-match setup
+    /* ftLib_LoadKirbyHats preloads Kirby's hat archives, but its only caller is the VS-match setup
      * (gm_8017C838), which the attract path never reaches - so ft_80459B88.hats stays all-NULL and
      * the first Kirby demo crashes. Run it once, here, before any fighter is set up. */
     {
         static bool hats_preloaded;
         if (!hats_preloaded && !lbDvd_IsPlanningSixSlot()) {
             hats_preloaded = true;
-            ftLib_80087610(0);
+            ftLib_LoadKirbyHats(0);
         }
     }
 #endif
@@ -329,7 +332,8 @@ void Player_80031EBC(int slot)
     for (i = 0; i < 2; i++) {
         StaticPlayer* player = &player_slots[slot];
         if ((player->player_entity[player->transformed[i]])) {
-            if (!ftLib_8008701C(player->player_entity[player->transformed[i]]))
+            if (!ftLib_IsSleeping(
+                    player->player_entity[player->transformed[i]]))
             {
                 ftCo_800D4F24(player->player_entity[player->transformed[i]],
                               1);
@@ -354,8 +358,6 @@ void Player_80031FB0(int slot, s32 entity_index)
     }
 }
 
-/// new match decomp.me/scratch/oHfiV  @todo
-//// old match decomp.me/scratch/8otnq
 void Player_80032070(int slot, bool bool_arg)
 {
     StaticPlayer* player;
@@ -367,7 +369,7 @@ void Player_80032070(int slot, bool bool_arg)
 
         if (player->flags.b2 &&
             !ftMapping_list[player->ckind].has_transformation &&
-            ftLib_8008701C(player->player_entity[player->transformed[1]]))
+            ftLib_IsSleeping(player->player_entity[player->transformed[1]]))
         {
             ftCo_800D4FF4(player->player_entity[player->transformed[1]]);
         }
@@ -376,7 +378,7 @@ void Player_80032070(int slot, bool bool_arg)
         return;
     }
 
-    if (ftLib_800873CC(player->player_entity[player->transformed[0]])) {
+    if (ftLib_IsRebirth(player->player_entity[player->transformed[0]])) {
         ftCo_800D4FF4(player->player_entity[player->transformed[1]]);
     }
 }
@@ -386,7 +388,7 @@ bool Player_8003219C(int slot)
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    return ftLib_8008701C(player->player_entity[player->transformed[0]]);
+    return ftLib_IsSleeping(player->player_entity[player->transformed[0]]);
 }
 
 bool Player_8003221C(int slot)
@@ -397,7 +399,7 @@ bool Player_8003221C(int slot)
         Player_CheckSlot(slot);
         player = &player_slots[slot];
 
-        if (!ftLib_8008701C(player->player_entity[player->transformed[0]])) {
+        if (!ftLib_IsSleeping(player->player_entity[player->transformed[0]])) {
             return true;
         }
     }
@@ -486,8 +488,7 @@ s8 Player_800325C8(CharacterKind kind, bool b)
 }
 
 s8 Player_80032610(s32 slot, bool arg1)
-{ //// decomp.me/scratch/pHTx2
-
+{
     StaticPlayer* player;
     s32 error_value = -1;
 
@@ -594,8 +595,8 @@ void Player_80032A04(int slot, Vec3* arg_vec)
         player->player_poses.byIndex[player->transformed[i]] = *arg_vec;
 
         if (player->player_entity[player->transformed[i]]) {
-            ftLib_80086664(player->player_entity[player->transformed[i]],
-                           arg_vec);
+            ftLib_SetPos(player->player_entity[player->transformed[i]],
+                         arg_vec);
         }
     }
 }
@@ -743,22 +744,22 @@ void Player_SetCostumeId(int slot, int costume_id)
     player->costume_id = costume_id;
 }
 
-u8 Player_GetControllerIndex(int slot)
+u8 Player_GetSubColor(int slot)
 {
-    s8 controller_index;
+    s8 sub_color;
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    controller_index = player->controller_index;
-    return controller_index;
+    sub_color = player->sub_color;
+    return sub_color;
 }
 
-void Player_SetControllerIndex(int slot, s8 controller_index)
+void Player_SetSubColor(int slot, s8 sub_color)
 {
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    player->controller_index = controller_index;
+    player->sub_color = sub_color;
 }
 
 int Player_GetTeam(int slot)
@@ -779,22 +780,22 @@ void Player_SetTeam(int slot, s8 team)
     player->team = team;
 }
 
-int Player_GetPlayerId(int slot)
+int Player_GetPadPort(int slot)
 {
-    u8 player_id;
+    u8 controller_index;
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    player_id = player->player_id;
-    return player_id;
+    controller_index = player->pad_port;
+    return controller_index;
 }
 
-void Player_SetPlayerId(int slot, int player_id)
+void Player_SetPadPort(int slot, int controller_index)
 {
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    player->player_id = player_id;
+    player->pad_port = controller_index;
 }
 
 int Player_GetCpuLevel(int slot)
@@ -1104,8 +1105,8 @@ void Player_SetHUDDamage(s32 slot, s32 arg1)
         player = &player_slots[slot];
         player->staminas.byIndex[player->transformed[i]] = arg1;
         if (player->player_entity[player->transformed[i]]) {
-            ftLib_800870F0(player->player_entity[player->transformed[i]],
-                           arg1);
+            ftLib_SetPercent(player->player_entity[player->transformed[i]],
+                             arg1);
         }
     }
 }
@@ -1302,7 +1303,7 @@ s32 Player_GetRemainingHPByIndex(s32 slot, s32 index)
 }
 
 s32 Player_GetFalls(s32 slot)
-{ /// decomp.me/scratch/8ijor
+{
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
@@ -1722,7 +1723,8 @@ float Player_800360D8(s32 slot)
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    return ftLib_80086F80(player->player_entity[player->transformed[0]]);
+    return ftLib_GetNameTagHeight(
+        player->player_entity[player->transformed[0]]);
 }
 
 void Player_SetStructFunc(s32 slot, void* arg_func)
@@ -1798,7 +1800,7 @@ s32 Player_80036428(s32 slot)
     entity = player->player_entity[player->transformed[0]];
 
     if (entity) {
-        return ftLib_80087300(entity);
+        return ftLib_GetLastAttackerSlot(entity);
     }
     return 6;
 }
@@ -1891,7 +1893,8 @@ bool Player_800368F8(int slot)
     StaticPlayer* player;
     Player_CheckSlot(slot);
     player = &player_slots[slot];
-    return ftLib_80086BB4(player->player_entity[player->transformed[0]]);
+    return ftLib_IsCameraSubjectInBounds(
+        player->player_entity[player->transformed[0]]);
 }
 
 void Player_80036978(s32 slot, Vec3* pos)
@@ -1903,18 +1906,20 @@ void Player_80036978(s32 slot, Vec3* pos)
     Player_CheckSlot(slot);
     player = &player_slots[slot];
 
-    ftLib_80086B90(player->player_entity[player->transformed[0]], pos);
+    ftLib_GetCameraSubjectBonePos(
+        player->player_entity[player->transformed[0]], pos);
 }
 
 void Player_InitOrResetPlayer(s32 slot)
 {
+    int i;
     StaticPlayer* player;
     u8* transformed0;
     u8* transformed1;
     f32 zerofloat;
     f32 onefloat;
 
-    u8 _[56];
+    u8 _[48];
 
     Player_CheckSlot(slot);
     player = &player_slots[slot];
@@ -1946,9 +1951,9 @@ void Player_InitOrResetPlayer(s32 slot)
     player->transformed[1] = 1;
 
     player->unk45 = 0;
-    player->controller_index = 0;
+    player->sub_color = 0;
     player->team = 0;
-    player->player_id = 0;
+    player->pad_port = 0;
     player->cpu_level = 0;
 
     player->cpu_type = 4;
@@ -1972,12 +1977,9 @@ void Player_InitOrResetPlayer(s32 slot)
     player->falls[player->transformed[0]] = 0;
     player->falls[player->transformed[1]] = 0;
 
-    player->kos_by_player[0] = 0;
-    player->kos_by_player[1] = 0;
-    player->kos_by_player[2] = 0;
-    player->kos_by_player[3] = 0;
-    player->kos_by_player[4] = 0;
-    player->kos_by_player[5] = 0;
+    for (i = 0; i < 6; i++) {
+        player->kos_by_player[i] = 0;
+    }
 
     player->match_frame_count = -1;
     player->self_destructs = 0;
@@ -2050,11 +2052,11 @@ void Player_80036DA4(void)
 
 void Player_80036DD8(void)
 {
-    void** sp8;
+    struct plLoadCommonData* data;
 
-    lbArchive_LoadSymbols(str_PdPmdat_start_of_data, (void**) &sp8,
+    lbArchive_LoadSymbols(str_PdPmdat_start_of_data, &data,
                           str_plLoadCommonData, 0);
-    pl_804D6470 = *sp8;
+    pl_804D6470 = data->x0;
 }
 
 void Player_80036E20(CharacterKind ckind, HSD_Archive* archive, s32 arg2)
@@ -2078,7 +2080,7 @@ HSD_JObj* Player_80036EA0(s32 slot)
     entity = player->player_entity[player->transformed[0]];
 
     if (entity) {
-        return ftLib_800865F0(entity);
+        return ftLib_GetHipJObj(entity);
     }
 
     return NULL;
@@ -2094,9 +2096,9 @@ void Player_80036F34(s32 slot, s32 arg1)
     player = &player_slots[slot];
     some_struct.internal_id = ftMapping_list[player->ckind].internal_id;
     some_struct.slot = slot;
-    some_struct.has_transformation = 0;
+    some_struct.xC.has_transformation = 0;
     some_struct.unk8 = arg1;
-    some_struct.b0 = 0;
+    some_struct.xC.b0 = 0;
 
     player->pkind = Gm_PKind_Demo;
     player->player_entity[0] = ftDemo_CreateFighter(&some_struct);
@@ -2105,7 +2107,7 @@ void Player_80036F34(s32 slot, s32 arg1)
     {
         some_struct.internal_id =
             ftMapping_list[player->ckind].extra_internal_id;
-        some_struct.has_transformation = 1;
+        some_struct.xC.has_transformation = 1;
         player->player_entity[1] = ftDemo_CreateFighter(&some_struct);
     }
 }
@@ -2120,9 +2122,9 @@ void Player_80037054(s32 slot, s32 arg1)
     player = &player_slots[slot];
     some_struct.internal_id = ftMapping_list[player->ckind].internal_id;
     some_struct.slot = slot;
-    some_struct.has_transformation = 0;
+    some_struct.xC.has_transformation = 0;
     some_struct.unk8 = arg1;
-    some_struct.b0 = 1;
+    some_struct.xC.b0 = 1;
 
     player->pkind = Gm_PKind_Demo;
     player->player_entity[0] = ftDemo_CreateFighter(&some_struct);
@@ -2131,7 +2133,7 @@ void Player_80037054(s32 slot, s32 arg1)
     {
         some_struct.internal_id =
             ftMapping_list[player->ckind].extra_internal_id;
-        some_struct.has_transformation = 1;
+        some_struct.xC.has_transformation = 1;
         player->player_entity[1] = ftDemo_CreateFighter(&some_struct);
     }
 }

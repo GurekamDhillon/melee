@@ -52,10 +52,10 @@ int ScriptGame_MotionAnchorI(int slot,int sub,int kind,int index,int item,int fi
     if(!fp)return 0;
     if(field==2)return (int)fp->gobj;
     if(field==3)return Player_GetFalls(slot);
-    if(field==4)return fp->x619_costume_id;
+    if(field==4)return fp->costume_id;
     if(field==1 && kind==1){HitCapsule* h=lab_hit(fp,index);return h?(int)h->element:0;}
     if(field==1)return 0;
-    if(kind==1){HitCapsule* h=lab_hit(fp,index);return h && h->state!=HitCapsule_Disabled && (index!=4||h->owner);}
+    if(kind==1){HitCapsule* h=lab_hit(fp,index);return h && h->state!=HitCapsule_Disabled && (index!=4||h->x134.owner);}
     if(kind==2)return fp->item_gobj!=NULL;
     if(kind==3)return fp->x2100>0 && fp->x2100<=3 && fp->x2101_bits_0to6<3;
     if(kind==0){

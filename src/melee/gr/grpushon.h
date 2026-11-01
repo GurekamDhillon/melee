@@ -28,8 +28,31 @@
 /* 219204 */ void grPushOn_80219204(int arg0, int* out1, int* out2);
 /* 219230 */ int grPushOn_80219230(int);
 /* 2192A4 */ s32 fn_802192A4(void*, HSD_GObj*, s32*);
-/* 219458 */ DynamicsDesc* grPushOn_80219458(enum_t);
+/* 219458 */ lbColl_80008D30_arg1* grPushOn_80219458(enum_t);
 /* 219528 */ bool grPushOn_80219528(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E7B10 */ extern StageData grPushOn_StageData;
+
+struct grPushOn_Entry {
+    s32 x0;
+    s16 x4;
+    s16 x6;
+};
+
+struct grPushOn_Lookup {
+    s32 key;
+    s32 value;
+};
+
+struct grPushon_YakumonoParam {
+    void* x0;
+    lbColl_80008D30_arg1* x4;
+    lbColl_80008D30_arg1* x8;
+    lbColl_80008D30_arg1* xC;
+    lbColl_80008D30_arg1* x10;
+    lbColl_80008D30_arg1* x14;
+    bool x18;
+    struct grPushOn_Entry x1c[0x1E];
+    struct grPushOn_Lookup x10c[0x21];
+};
 
 #endif

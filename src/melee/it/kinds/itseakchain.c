@@ -8,7 +8,6 @@
 
 #include "inlines.h"
 #include "itlinkhookshot.h"
-#include "itseakchain.static.h"
 #include <dolphin/mtx.h>
 #include <melee/ft/ftcoll.h>
 #include <melee/ft/ftlib.h>
@@ -19,6 +18,7 @@
 #include <melee/it/it_2725.h>
 #include <melee/it/itCharItems.h>
 #include <melee/it/item.h>
+#include <melee/it/types.h>
 #include <melee/lb/lbaudio_ax.h>
 #include <melee/lb/lbvector.h>
 #include <melee/mp/mpcoll.h>
@@ -28,6 +28,81 @@
 #include <sysdolphin/baselib/gobjplink.h>
 #include <sysdolphin/baselib/gobjuserdata.h>
 #include <sysdolphin/baselib/jobj.h>
+
+struct _m2c_stack_it_802BCA30 {
+    /* 0x00 */ char pad_0[0x18];
+    /* 0x18 */ Vec3 vec;
+    /* 0x24 */ Mtx mtx;
+    /* 0x54 */ char pad_54[0x14];
+};
+ASSERT_SIZE(struct _m2c_stack_it_802BCA30, 0x68);
+
+struct _m2c_stack_fn_802BB694 {
+    /* 0x10 */ Mtx mtx0;
+    char pad_0[0xC];
+    /* 0x3C */ float z;
+    /* 0x40 */ Vec3 vec;
+    /* 0x4C */ char pad_4C[0x14];
+};
+ASSERT_SIZE(struct _m2c_stack_fn_802BB694, 0x60);
+
+struct _m2c_stack_fn_802BB784 {
+    char pad_0[0xC];
+    Mtx mtx;
+    char pad_x[0x4];
+    /* 0x3C */ Vec3 vec;
+    /* 0x4C */ char pad_4C[0x1C];
+}; /* size = 0x68 */
+ASSERT_SIZE(struct _m2c_stack_fn_802BB784, 0x68);
+
+struct _m2c_stack_fn_802BB574 {
+    /* 0x00 */ char pad_0[0x10];
+    /* 0x10 */ Mtx mtx;
+    /* 0x40 */ Vec3 vec;
+    /* 0x4C */ char pad_4C[0x1C];
+};
+ASSERT_SIZE(struct _m2c_stack_fn_802BB574, 0x68);
+
+struct _m2c_stack_fn_802BB44C {
+    /* 0x00 */ char pad_0[0x10];
+    /* 0x10 */ Mtx mtx;
+    /* 0x40 */ Vec3 vec;
+    /* 0x4C */ char pad_4C[0x1C];
+};
+ASSERT_SIZE(struct _m2c_stack_fn_802BB44C, 0x68);
+
+struct _m2c_stack_it_802BCB88 {
+    /* 0x00 */ char pad_0[0x18];
+    /* 0x18 */ Mtx mtx;
+    /* 0x48 */ Vec3 delta;
+    /* 0x54 */ Vec3 pos0;
+    /* 0x60 */ Vec3 pos1;
+    /* 0x6C */ Vec3 pos2;
+    /* 0x78 */ char pad_78[0x28];
+}; /* size = 0xA0 */
+ASSERT_SIZE(struct _m2c_stack_it_802BCB88, 0xA0);
+
+struct _m2c_stack_it_802BCFC4 {
+    /* 0x00 */ char pad_0[0x1C];
+    /* 0x1C */ Mtx mtx;        /* inferred */
+    /* 0x4C */ char pad_4C[8]; /* maybe part of sp48[3]? */
+    /* 0x54 */ Vec3 pos;       /* inferred */
+    /* 0x60 */ char pad_60[0x20];
+}; /* size = 0x80 */
+ASSERT_SIZE(struct _m2c_stack_it_802BCFC4, 0x80);
+
+struct _m2c_stack_it_802BB290 {
+    /* 0x00 */ char pad_0[0x40];
+    /* 0x40 */ SpawnItem spawn;
+    char pad[0xA8 - 0x8C];
+}; /* size = 0xA8 */
+ASSERT_SIZE(struct _m2c_stack_it_802BB290, 0xA8);
+
+const Vec3 it_803B8680 = { 0 };
+const Vec3 it_803B868C = { 0.0f, 0.0f, 0.1f };
+
+/* 2BC080 */ void it_802BC080(ItemLink*, Vec3*, Item*);
+/* 2BCB88 */ void it_802BCB88(Item*, Vec3*);
 
 ItemStateTable it_803F7438[] = {
     { -1, itSeakchain_UnkMotion4_Anim, NULL, NULL },
@@ -58,13 +133,15 @@ void it_802BAF0C(Item_GObj* gobj)
 
 static inline HSD_JObj* it_802BAF2C_Load_x64(Item* ip)
 {
-    itSeakChain_Attrs* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     return HSD_JObjLoadJoint(attrs->x64_joint);
 }
 
 static inline HSD_JObj* it_802BAF2C_Load_x68(Item* ip)
 {
-    itSeakChain_Attrs* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     return HSD_JObjLoadJoint(attrs->x68_joint);
 }
 
@@ -74,7 +151,8 @@ int it_802BAF2C(Item* ip, HSD_JObj* jobj)
     ItemLink* head_link;
     ItemLink* tail_link;
     HSD_JObj* result;
-    itSeakChain_Attrs* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     HSD_GObj* link_gobj;
     ItemLink* link;
     int i;
@@ -220,7 +298,7 @@ void fn_802BB44C(Item_GObj* gobj)
 
     temp_r30 = GET_ITEM(gobj);
     link = temp_r30->xDD4_itemVar.seakchain.x0;
-    sa = temp_r30->xC4_article_data->x4_specialAttributes;
+    sa = &temp_r30->xC4_article_data->x4_specialAttributes->seak_chain;
     Item_InitLinkMtx(mtx, 0.1f);
     HSD_JObjSetupMatrix(link->jobj);
     PSMTXConcat(link->jobj->mtx, mtx, mtx);
@@ -243,7 +321,8 @@ void fn_802BB574(Item_GObj* gobj)
 {
     Vec3 vec;
     Item* ip = GET_ITEM(gobj);
-    itSeakChain_Attrs* sa = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* sa =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     Mtx mtx;
     ItemLink* link = ip->xDD4_itemVar.seakchain.x0;
 
@@ -291,7 +370,7 @@ void fn_802BB784(Item_GObj* gobj)
 
     ip = GET_ITEM(gobj);
     link = ip->xDD4_itemVar.seakchain.x4;
-    sa = ip->xC4_article_data->x4_specialAttributes;
+    sa = &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     Item_InitLinkMtx(mtx, 0.1f);
     HSD_JObjSetupMatrix(link->jobj);
     PSMTXConcat(link->jobj->mtx, mtx, mtx);
@@ -538,16 +617,19 @@ static inline void itSeakChain_clamp_x14(ItemLink* link,
     }
 }
 
+struct it_802BC080_stack {
+    Vec3 dir;
+    u8 pad[16];
+};
+
 void it_802BC080(ItemLink* link, Vec3* target, Item* ip)
 {
-    struct {
-        Vec3 dir;
-        u8 pad[16];
-    } stack;
+    struct it_802BC080_stack stack;
     f32 lstick_x, lstick_y;
     ItemLink* iter = link->prev;
     ItemLink* cur = link;
-    itSeakChain_Attrs* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     s32 last_idx = (s32) (0.5f * attrs->x0 - 1.0f);
     Fighter* fp;
     s32 env_flags;
@@ -778,7 +860,8 @@ static inline ItemLink* it_802BCB88_prev(ItemLink* link)
 void it_802BCB88(Item* ip, Vec3* vec)
 {
     ItemLink* link = ip->xDD4_itemVar.seakchain.x4;
-    itSeakChain_Attrs* sa = ip->xC4_article_data->x4_specialAttributes;
+    itSeakChain_Attrs* sa =
+        &ip->xC4_article_data->x4_specialAttributes->seak_chain;
     HSD_JObj* jobj;
     int count;
     int stride = sa->x0 / 3;

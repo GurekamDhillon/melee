@@ -265,13 +265,15 @@ static void inlineA1(Fighter_GObj* gobj)
                                           fp->self_vel.y + fp->x8c_kb_vel.y));
 }
 
+struct ftCo_8008DCE0_scaled_kb {
+    float v;
+};
+
 void ftCo_8008DCE0(Fighter_GObj* gobj, int arg1, float facing_dir)
 {
     float scaled_kb_154;
     /// @todo One-field aggregate to order this web against the @c x154 temp.
-    struct {
-        float v;
-    } scaled_kb;
+    struct ftCo_8008DCE0_scaled_kb scaled_kb;
     Vec3 pos;
     float sp40;
     float floor_angle;
@@ -290,7 +292,7 @@ void ftCo_8008DCE0(Fighter_GObj* gobj, int arg1, float facing_dir)
     PAD_STACK(0x28);
     Fighter_8006CDA4(fp, fp->dmg.x1838_percentTemp);
     fp->dmg.x18d8.kb_applied1 = kb_applied;
-    pl_80040270(fp->player_id, fp->is_sub_fighter, kb_applied);
+    pl_80040270(fp->player_idx, fp->is_sub_fighter, kb_applied);
     scaled_kb_154 = kb_applied * p_ftCommonData->x154;
     fp->mv.co.damage.x0 = (int) scaled_kb_154;
     if (!fp->mv.co.damage.x0) {
@@ -302,7 +304,7 @@ void ftCo_8008DCE0(Fighter_GObj* gobj, int arg1, float facing_dir)
         extern int Geno_TakeStunBonus(Fighter * vic);
         extern void diag_geno_stun(int port, int base, int bonus);
         const int bonus = Geno_TakeStunBonus(fp);
-        diag_geno_stun(fp->player_id, fp->mv.co.damage.x0, bonus);
+        diag_geno_stun(fp->player_idx, fp->mv.co.damage.x0, bonus);
         fp->mv.co.damage.x0 += bonus;
     }
     {
@@ -529,7 +531,7 @@ static bool ftCo_Ucf084Sdi(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     extern int ftUcf_PadRaw(int port, int which_y, int back);
-    int port = fp->x618_player_id;
+    int port = fp->pad_port;
     int dx, dy;
     f32 yy, prev, thr;
     if (Replay_UcfVersion(port) != 84) {
@@ -571,7 +573,7 @@ void ftCo_Damage_OnEveryHitlag(Fighter_GObj* gobj)
         fp->cur_pos.y += scaled_lstick_y;
         fp->active_timer.lstick.x = 254;
         fp->active_timer.lstick.y = 254;
-        pl_800401F0(fp->player_id, fp->is_sub_fighter, scaled_lstick_x,
+        pl_800401F0(fp->player_idx, fp->is_sub_fighter, scaled_lstick_x,
                     scaled_lstick_y);
     }
 }
@@ -633,7 +635,7 @@ void ftCo_Damage_OnExitHitlag(Fighter_GObj* gobj)
         }
         fp->cur_pos.x += x;
         fp->cur_pos.y += y;
-        pl_800401F0(fp->player_id, fp->is_sub_fighter, x, y);
+        pl_800401F0(fp->player_idx, fp->is_sub_fighter, x, y);
     }
     if (fp->mv.co.damage.x4) {
         fp->mv.co.damage.x4 = false;
@@ -681,9 +683,10 @@ bool ftCo_8008E984(Fighter* fp)
     }
 }
 
-static inline void inlineF0(Fighter_GObj* gobj)
+void ftCo_8008E9D0(Fighter_GObj* gobj)
 {
-    Fighter* fp = GET_FIGHTER(gobj);
+    Fighter* fp = gobj->user_data;
+    float scaled_kb;
     ftCo_800C8D00(gobj);
     if (fp->motion_id == 0xe0 || fp->motion_id == 0xe1) {
         ftCo_800DC284(gobj);
@@ -691,13 +694,6 @@ static inline void inlineF0(Fighter_GObj* gobj)
     if (fp->motion_id == 0xe3 || fp->motion_id == 0xe4) {
         ftCo_800DC3A4(gobj);
     }
-}
-
-void ftCo_8008E9D0(Fighter_GObj* gobj)
-{
-    Fighter* fp = gobj->user_data;
-    float scaled_kb;
-    inlineF0(gobj);
     scaled_kb = ftCo_ScaleBy154(fp->dmg.kb_applied);
     if (ftCo_8008DA4C(gobj, fp->dmg.x1860_element, ftCo_8008D8E8(scaled_kb))) {
         ftCo_800C0408(gobj);
@@ -719,55 +715,12 @@ static bool inlineB0(Fighter* fp)
     return false;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma inline_depth(0)
-#endif
 void ftCo_8008EB58(Fighter_GObj* gobj)
 {
-    Fighter* tmp_p21265 = gobj->user_data;
-    Fighter* fp = tmp_p21265;
-    float kb_applied = fp->dmg.kb_applied;
-    bool should_update;
-    enum_t kb_level;
-    float scaled_kb;
-    u8 _[0x18] = { 0 };
-
-    if (kb_applied == 0 || (fp->allow_sdi && fp->x221A_b3 &&
-                            kb_applied < fp->dmg.x18A8 + p_ftCommonData->x140))
-    {
-        should_update = true;
-    } else {
-        should_update = false;
-    }
-
-    if (should_update) {
-        ftCo_800C8D00(gobj);
-        if (fp->motion_id == 0xe0 || fp->motion_id == 0xe1) {
-            ftCo_800DC284(gobj);
-        }
-        if (fp->motion_id == 0xe3 || fp->motion_id == 0xe4) {
-            ftCo_800DC3A4(gobj);
-        }
-        scaled_kb = fp->dmg.kb_applied * p_ftCommonData->x154;
-        if (scaled_kb < p_ftCommonData->x158) {
-            kb_level = 0;
-        } else if (scaled_kb < p_ftCommonData->x15C) {
-            kb_level = 1;
-        } else if (scaled_kb < p_ftCommonData->x160) {
-            kb_level = 2;
-        } else {
-            kb_level = 3;
-        }
-        if (ftCo_8008DA4C(gobj, fp->dmg.x1860_element, kb_level)) {
-            ftCo_800C0408(gobj);
-        }
-        ftCommon_800804FC(fp);
+    if (ftCo_8008E984(GET_FIGHTER(gobj))) {
+        ftCo_8008E9D0(gobj);
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static bool inlineB1(Fighter* fp)
 {
@@ -830,7 +783,7 @@ static void capturecut_trace(const char* where, Fighter_GObj* gobj)
     extern int Mex_Enabled(const char*);
     Fighter* fp = gobj->user_data;
     if (Mex_Enabled("test_log_capturecut"))
-        OSReport("CAPTURECUT-TRACE: %s P%d victim_gobj=%p motion=%d\n", where, fp->player_id + 1, fp->victim_gobj, fp->motion_id);
+        OSReport("CAPTURECUT-TRACE: %s P%d victim_gobj=%p motion=%d\n", where, fp->player_idx + 1, fp->victim_gobj, fp->motion_id);
 }
 #define CAPTURECUT_TRACE(w, g) capturecut_trace(w, g)
 #else
@@ -864,7 +817,7 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
     }
     if (!ftCo_800C44CC(gobj) && !ftCo_800D2FA4(gobj)) {
         if (fp->victim_gobj != NULL) {
-            if (!fp->x221B_b5) {
+            if (!fp->x221B.x221B_b5) {
                 Fighter_GObj* other_gobj = fp->victim_gobj;
                 Fighter* other_fp = other_gobj->user_data;
                 if (!ret0 && inlineB1(fp)) {
@@ -876,49 +829,44 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                             fp->x1960_vibrateMult =
                                 other_fp->x1960_vibrateMult;
                             other_fp->x1828 = 3;
-                            goto ret_A8C;
+                        } else {
+                            ftCo_800DE854(gobj);
+                            ftCo_800DCE34(other_gobj, gobj);
+                            ftCommon_8007DB58(gobj);
+                            ftCo_8008E908(gobj, facing_dir);
+                            other_fp->x1828 = 1;
                         }
-                        ftCo_800DE854(gobj);
-                        ftCo_800DCE34(other_gobj, gobj);
-                        ftCommon_8007DB58(gobj);
-                        ftCo_8008E908(gobj, facing_dir);
-                        other_fp->x1828 = 1;
-                        goto ret_A8C;
-                    }
-                    if (fp->dmg.x183C_applied != 0) {
-                        other_fp->dmg.x195c_hitlag_frames =
-                            ftCommon_CalcHitlag(fp->dmg.x183C_applied,
-                                                other_fp->motion_id,
-                                                other_fp->x1960_vibrateMult);
-                        other_fp->allow_sdi = true;
-                        if (!other_fp->x2219_b5) {
-                            if (other_fp->pre_hitlag_cb != NULL) {
-                                other_fp->pre_hitlag_cb(gobj);
+                    } else {
+                        if (fp->dmg.x183C_applied != 0) {
+                            other_fp->dmg.x195c_hitlag_frames =
+                                ftCommon_CalcHitlag(
+                                    fp->dmg.x183C_applied, other_fp->motion_id,
+                                    other_fp->x1960_vibrateMult);
+                            other_fp->allow_sdi = true;
+                            if (!other_fp->x2219_b5) {
+                                if (other_fp->pre_hitlag_cb != NULL) {
+                                    other_fp->pre_hitlag_cb(gobj);
+                                }
+                                other_fp->x2219_b5 = true;
                             }
-                            other_fp->x2219_b5 = true;
                         }
+                        fp->input.pressed_buttons =
+                            fp->input.released_buttons = 0;
+                        inlineB2(gobj);
                     }
-                    fp->input.pressed_buttons = fp->input.released_buttons = 0;
-                    inlineB2(gobj);
-                    goto ret_A8C;
-                }
-                {
-                    if (other_fp->dmg.kb_applied) {
-                        ftCo_800DCE34(other_gobj, gobj);
-                        ftCommon_8007DB58(gobj);
-                        ftCo_8008E908(gobj, facing_dir);
-                        other_fp->x1828 = 1;
-                        goto ret_A8C;
-                    }
+                } else if (other_fp->dmg.kb_applied) {
+                    ftCo_800DCE34(other_gobj, gobj);
+                    ftCommon_8007DB58(gobj);
+                    ftCo_8008E908(gobj, facing_dir);
+                    other_fp->x1828 = 1;
+                } else {
                     ftCo_800DCE34(other_gobj, gobj);
                     ftCommon_8007DB58(gobj);
                     ftCo_8008E908(gobj, facing_dir);
                     ftCommon_8007DB58(other_gobj);
                     ftCo_800DE2F0(other_gobj);
-                    goto ret_A8C;
                 }
-            }
-            {
+            } else {
                 Fighter* other_fp = fp->victim_gobj->user_data;
                 if (inlineB0(fp)) {
                     if (other_fp->dmg.kb_applied) {
@@ -929,19 +877,17 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                                 fp->x1960_vibrateMult;
                             inlineB3(gobj);
                             other_fp->x1828 = 2;
-                            goto ret_A8C;
+                        } else {
+                            ftCo_800DCE34(gobj, fp->victim_gobj);
+                            ftCommon_8007DB58(gobj);
+                            ftCo_8008E908(gobj, facing_dir);
+                            other_fp->x1828 = 1;
                         }
                         CAPTURECUT_TRACE("site A", gobj);
-                        ftCo_800DCE34(gobj, fp->victim_gobj);
-                        ftCommon_8007DB58(gobj);
-                        ftCo_8008E908(gobj, facing_dir);
-                        other_fp->x1828 = 1;
-                        goto ret_A8C;
+                    } else {
+                        inlineB3(gobj);
                     }
-                    inlineB3(gobj);
-                    goto ret_A8C;
-                }
-                if (other_fp->dmg.kb_applied) {
+                } else if (other_fp->dmg.kb_applied) {
                     if (inlineB1(other_fp)) {
                         ftCo_800DE854(fp->victim_gobj);
                     }
@@ -950,14 +896,14 @@ void ftCo_8008EC90(Fighter_GObj* gobj)
                     ftCommon_8007DB58(gobj);
                     ftCo_8008E908(gobj, facing_dir);
                     other_fp->x1828 = 1;
-                    goto ret_A8C;
+                } else {
+                    ftCommon_8007DB58(fp->victim_gobj);
+                    ftCo_800DCFD4(fp->victim_gobj);
+                    ftCo_800DCE34(gobj, fp->victim_gobj);
+                    ftCommon_8007DB58(gobj);
+                    ftCo_8008E908(gobj, facing_dir);
                 }
-                ftCommon_8007DB58(fp->victim_gobj);
-                ftCo_800DCFD4(fp->victim_gobj);
-                CAPTURECUT_TRACE("site C (after 8007DB58 + 800DCFD4)", gobj);
-                ftCo_800DCE34(gobj, fp->victim_gobj);
-                ftCommon_8007DB58(gobj);
-                ftCo_8008E908(gobj, facing_dir);
+
             }
         } else if (fp->item_gobj != NULL && it_8026B2D8(fp->item_gobj) &&
                    fp->x2222_b0)
@@ -1014,7 +960,7 @@ void ftCo_Damage_Anim(Fighter_GObj* gobj)
     ftCo_8008F744(gobj);
     if (!ftAnim_IsFramesRemaining(gobj) && !fp->x221C_b6) {
         if (fp->ground_or_air == GA_Air) {
-            if (fp->x2224_b2) {
+            if (fp->stamina_dead) {
                 ftCo_80090780(gobj);
             } else if (!inlineC0(gobj)) {
                 ftCo_Fall_Enter(gobj);
@@ -1029,25 +975,22 @@ void ftCo_Damage_Anim(Fighter_GObj* gobj)
 bool doIasa(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    if (!(fp->mv.co.damage.x1A)) {
-        goto ret_inline;
+    if (fp->mv.co.damage.x1A) {
+        if (fp->mv.co.damage.x1B) {
+            --fp->mv.co.damage.x1B;
+        }
+        if (!fp->mv.co.damage.x1B && fp->ground_or_air == GA_Air &&
+            fp->x8c_kb_vel.y < 0 &&
+            (ftCo_800D69C4(gobj) || ftCo_800CB8E0(gobj)))
+        {
+            fp->x8c_kb_vel.x = fp->x8c_kb_vel.y = fp->x8c_kb_vel.z = 0;
+            ftCommon_8007EBAC(fp, 12, 0);
+            ftCo_800BFFD0(fp, 121, 0);
+            fp->x2227_b4 = true;
+            return true;
+        }
     }
-    if (fp->mv.co.damage.x1B) {
-        --fp->mv.co.damage.x1B;
-    }
-    if (!(!fp->mv.co.damage.x1B)) {
-        goto ret_inline;
-    }
-    if (fp->ground_or_air == GA_Air && fp->x8c_kb_vel.y < 0 &&
-        (ftCo_800D69C4(gobj) || ftCo_800CB8E0(gobj)))
-    {
-        fp->x8c_kb_vel.x = fp->x8c_kb_vel.y = fp->x8c_kb_vel.z = 0;
-        ftCommon_8007EBAC(fp, 12, 0);
-        ftCo_800BFFD0(fp, 121, 0);
-        fp->x2227_b4 = true;
-        return true;
-    }
-ret_inline:
+
     if (ftCo_Jump_GetInput(gobj)) {
         fp->mv.co.damage.x14 = fp->mv.co.damage.x0;
         return true;
@@ -1102,7 +1045,7 @@ void ftCo_Damage_Coll(Fighter_GObj* gobj)
     if (fp->ground_or_air == GA_Ground) {
         ft_800848DC(gobj, ftCo_8008FC94);
     } else if (ft_80081DD4(gobj)) {
-        if (fp->x2224_b2) {
+        if (fp->stamina_dead) {
             ftCo_80097D40(gobj);
         } else {
             float mag = sqrtf(VEC2_SQ_LEN(fp->x8c_kb_vel));
@@ -1122,26 +1065,28 @@ void ftCo_8008FC94(Fighter_GObj* gobj)
     ftCommon_8007D5D4(gobj->user_data);
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void ftCo_Damage_SetMv8FromKbThreshold(Fighter* fp)
 {
     float kb_vel = fp->ground_or_air == GA_Air
                        ? sqrtf(VEC3_SQ_LEN(fp->x8c_kb_vel))
                        : ABS(fp->xF0_ground_kb_vel);
-    fp->mv.co.damage.x8 =
-        kb_vel < p_ftCommonData->x568   ? 0
-        : kb_vel < p_ftCommonData->x56C ? p_ftCommonData->x57C
-        : kb_vel < p_ftCommonData->x570 ? p_ftCommonData->x57C
-        : kb_vel < p_ftCommonData->x574 ? p_ftCommonData->x580
-        : kb_vel < p_ftCommonData->x578 ? p_ftCommonData->x584
-                                        : p_ftCommonData->x588;
+    int value;
+
+    if (kb_vel < p_ftCommonData->x568) {
+        value = 0;
+    } else if (kb_vel < p_ftCommonData->x56C) {
+        value = p_ftCommonData->x57C;
+    } else if (kb_vel < p_ftCommonData->x570) {
+        value = p_ftCommonData->x57C;
+    } else if (kb_vel < p_ftCommonData->x574) {
+        value = p_ftCommonData->x580;
+    } else if (kb_vel < p_ftCommonData->x578) {
+        value = p_ftCommonData->x584;
+    } else {
+        value = p_ftCommonData->x588;
+    }
+    fp->mv.co.damage.x8 = value;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static inline void inlineD0(Fighter_GObj* gobj)
 {
@@ -1220,7 +1165,7 @@ void ftCo_DamageFly_Phys(Fighter_GObj* gobj)
     if (fp->motion_id == ftCo_MS_DamageFlyRoll) {
         doFlyRoll(gobj);
     }
-    if (fp->x1064_thrownHitbox.owner != NULL &&
+    if (fp->x1064_thrownHitbox.x134.owner != NULL &&
         sqrtf(VEC3_SQ_LEN(fp->x8c_kb_vel)) < p_ftCommonData->x1C8)
     {
         ftColl_8007AFF8(gobj);
@@ -1284,7 +1229,7 @@ void ftCo_DamageFlyRoll_Phys(Fighter_GObj* gobj)
     if (fp->motion_id == ftCo_MS_DamageFlyRoll) {
         doFlyRoll(gobj);
     }
-    if (fp->x1064_thrownHitbox.owner != NULL) {
+    if (fp->x1064_thrownHitbox.x134.owner != NULL) {
         if (sqrtf__Ff(VEC3_SQ_LEN(fp->x8c_kb_vel)) < p_ftCommonData->x1C8) {
             ftColl_8007AFF8(gobj);
         }

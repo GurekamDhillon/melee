@@ -56,7 +56,7 @@ typedef struct CpuAssistSlot {
 static CpuAssistSlot cpu_assist_slots[6];
 /* the first 300 injections of a slot are logged (what, which fighter, motion, the slot's own frame count) */
 #define CA_LOG(s, fp, what) do { if ((s)->logged < 300) { ++(s)->logged; \
-    OSReport("CPU-ASSIST: P%d %s frame=%d motion=%d\n", (fp)->player_id + 1, what, (s)->frames, (fp)->motion_id); } } while (0)
+    OSReport("CPU-ASSIST: P%d %s frame=%d motion=%d\n", (fp)->player_idx + 1, what, (s)->frames, (fp)->motion_id); } } while (0)
 
 /* one draw: returns 0..999 */
 static int cpu_assist_roll(CpuAssistSlot* s)
@@ -79,8 +79,8 @@ static int cpu_assist_decide(CpuAssistSlot* s, int t, int* sub)
 
 static int cpu_assist_supported(Fighter* fp)
 {
-    return fp != NULL && !fp->is_sub_fighter && fp->player_id < 6 &&
-        Player_GetPlayerSlotType(fp->player_id) == Gm_PKind_Cpu && ftCo_IsCpuControlled(fp);
+    return fp != NULL && !fp->is_sub_fighter && fp->player_idx < 6 &&
+        Player_GetPlayerSlotType(fp->player_idx) == Gm_PKind_Cpu && ftCo_IsCpuControlled(fp);
 }
 
 static int cpu_assist_config_ok(int lc, int ps, int tech, int tdir, int wd, int ff)
@@ -168,7 +168,7 @@ static Fighter* cpu_assist_nearest_foe(Fighter* fp)
         HSD_GObj* g;
         Fighter* o;
         float d;
-        if (i == fp->player_id) continue;
+        if (i == fp->player_idx) continue;
         g = Player_GetEntity(i);
         if (!technical_ai_live(g)) continue;
         o = GET_FIGHTER(g);
@@ -206,7 +206,7 @@ static int cpu_assist_threat(Fighter* fp)
     for (i = 0; i < 6; ++i) {
         HSD_GObj* g;
         Fighter* o;
-        if (i == fp->player_id) continue;
+        if (i == fp->player_idx) continue;
         g = Player_GetEntity(i);
         if (!technical_ai_live(g)) continue;
         o = GET_FIGHTER(g);
@@ -250,7 +250,7 @@ static void cpu_assist_dump_hits(Fighter* fp)
     for (i = 0; i < 6; ++i) {
         HSD_GObj* g;
         Fighter* o;
-        if (i == fp->player_id) continue;
+        if (i == fp->player_idx) continue;
         g = Player_GetEntity(i);
         if (!technical_ai_live(g)) continue;
         o = GET_FIGHTER(g);
@@ -288,8 +288,8 @@ static void cpu_assist_overlay(Fighter* fp)
     CpuAssistSlot* s;
     int m, fresh, air, sub = 0, from;
     float eta = 0.0f;
-    if (fp->player_id >= 6 || fp->is_sub_fighter) return;
-    s = &cpu_assist_slots[fp->player_id];
+    if (fp->player_idx >= 6 || fp->is_sub_fighter) return;
+    s = &cpu_assist_slots[fp->player_idx];
     if (!s->owner) return;
     if (Netplay_Enabled() || RB_Enabled() || Replay_Active() || !cpu_assist_supported(fp)) {
         memset(s, 0, sizeof *s);
@@ -363,7 +363,7 @@ static void cpu_assist_overlay(Fighter* fp)
     /* ---- perfect shield ---- */
     if (s->ps_log > 0) {
         --s->ps_log;
-        OSReport("CPU-ASSIST: P%d ps+%d motion=%d kb=%f ps_window=%d guard=%f\n", fp->player_id + 1, 3 - s->ps_log, m, (double) fp->dmg.kb_applied, (int) fp->x221C_b2, (double) fp->mv.co.guard.x18);
+        OSReport("CPU-ASSIST: P%d ps+%d motion=%d kb=%f ps_window=%d guard=%f\n", fp->player_idx + 1, 3 - s->ps_log, m, (double) fp->dmg.kb_applied, (int) fp->x221C_b2, (double) fp->mv.co.guard.x18);
         cpu_assist_dump_hits(fp);
     }
     if (s->ps_hold > 0) {

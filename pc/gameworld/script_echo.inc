@@ -24,7 +24,7 @@ extern unsigned short plStale_IncrementAttackInstance(void);
 extern int gm_8016B168(void);
 extern int gm_8016B0D4(void);
 static int script_echo_entity(Fighter* fp) {
- return fp && fp->player_id<6 ? fp->player_id*2+(fp->is_sub_fighter ? 1 : 0) : -1;
+ return fp && fp->player_idx<6 ? fp->player_idx*2+(fp->is_sub_fighter ? 1 : 0) : -1;
 }
 static int script_echo_bits(float f) {union {float f;int i;} u;u.f=f;return u.i;}
 static float script_echo_float(int i) {union {float f;int i;} u;u.i=i;return u.f;}
@@ -144,12 +144,12 @@ static Fighter* script_echo_live_owner(HSD_GObj* owner) {
 }
 static Fighter* script_echo_body_actor(Fighter* fp) {
  HSD_GObj* g;
- if(fp->x1064_thrownHitbox.state!=HitCapsule_Disabled && script_echo_live_owner(fp->x1064_thrownHitbox.owner))return fp;
+ if(fp->x1064_thrownHitbox.state!=HitCapsule_Disabled && script_echo_live_owner(fp->x1064_thrownHitbox.x134.owner))return fp;
  /* Expose the thrower's owned body hit in the thrower's own history as well.
   * Collision then uses the true thrower/team/credit; no thrown-victim impersonation. */
  for(g=HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];g;g=g->next) {
  Fighter* body=GET_FIGHTER(g);
- if(body->x1064_thrownHitbox.state!=HitCapsule_Disabled && body->x1064_thrownHitbox.owner==fp->gobj)return body;
+ if(body->x1064_thrownHitbox.state!=HitCapsule_Disabled && body->x1064_thrownHitbox.x134.owner==fp->gobj)return body;
  }return NULL;
 }
 void ScriptGame_EchoCapture(Fighter* fp) {
@@ -180,7 +180,7 @@ void ScriptGame_EchoCapture(Fighter* fp) {
  record.position[2]=fp->cur_pos.z;record.facing=fp->facing_dir;
  for(i=0;i<ECHO_HITS;++i) {
  Fighter* actor=i==4 ? script_echo_body_actor(fp) : fp;
- Fighter* source=actor && i==4 ? script_echo_live_owner(actor->x1064_thrownHitbox.owner) : fp;
+ Fighter* source=actor && i==4 ? script_echo_live_owner(actor->x1064_thrownHitbox.x134.owner) : fp;
  HitCapsule* h=actor ? (i==4 ? &actor->x1064_thrownHitbox : &actor->x914[i]) : NULL;
  HRMeta* metadata;
  if(!h || !source || h->state==HitCapsule_Disabled)continue;
@@ -195,7 +195,7 @@ void ScriptGame_EchoCapture(Fighter* fp) {
  if(!h->x43_b1)record.hit[i].scale*=actor->x34_scale.y;record.hit[i].x43_b1=1;
  /* History describes resolved geometry/properties, never live victim pointers. */
  memset(record.hit[i].victims_1,0,sizeof h->victims_1);memset(record.hit[i].victims_2,0,sizeof h->victims_2);
- record.hit[i].x44=record.hit[i].x45=0;record.hit[i].jobj=NULL;record.hit[i].owner=NULL;
+ record.hit[i].x44=record.hit[i].x45=0;record.hit[i].jobj=NULL;record.hit[i].x134.owner=NULL;
  }
  echo_record(&script_echo.history,entity,&record);
  for(i=0;i<8;++i) {
@@ -216,7 +216,7 @@ void ScriptGame_EchoCapture(Fighter* fp) {
  (rule->airborne>=0 && rule->airborne!=old->airborne) || old->hit[j].state==HitCapsule_Disabled ||
  old->hit_source[j]!=entity ||
  (rule->match_element>=0 && rule->match_element!=(int)old->hit[j].element))continue;
- *h=old->hit[j];h->jobj=NULL;h->owner=NULL;
+ *h=old->hit[j];h->jobj=NULL;h->x134.owner=NULL;
  if(preserve){memcpy(h->victims_1,v1,sizeof v1);memcpy(h->victims_2,v2,sizeof v2);h->x44=c1;h->x45=c2;}
  h->damage*=script_echo_float(rule->damage);h->unk_count=(unsigned)(h->unk_count*script_echo_float(rule->damage));
  if(h->damage>500)h->damage=500;if(h->unk_count>500)h->unk_count=500;
@@ -280,7 +280,7 @@ int ScriptGame_EchoSameGroup(HitCapsule* a,HitCapsule* b) {
  script_echo_body_kind(a)==script_echo_body_kind(b);
 }
 int ScriptGame_EchoTargetAllowed(Fighter* source,Fighter* target) {
- if(!source || !target || source==target || source->player_id==target->player_id)return 0;
+ if(!source || !target || source==target || source->player_idx==target->player_idx)return 0;
  return !gm_8016B168() || gm_8016B0D4() || target->x2225_b4 || source->team!=target->team;
 }
 int ScriptGame_EchoBlocked(HitCapsule* hit,Fighter* victim) {
@@ -303,7 +303,7 @@ int ScriptGame_EchoReportContext(Fighter* attacker,Fighter* victim,HitCapsule* h
  for(i=0;i<8;++i)for(j=0;j<ECHO_HITS;++j)if(hit==&script_echo.rule[entity][i].capsule[j]) {
  ScriptEchoRule* rule=&script_echo.rule[entity][i];const EchoRecord* r=echo_history(&script_echo.history,entity,rule->delay);
  if(!r)return 0;a.f=attacker->dmg.x1830_percent;v.f=victim->dmg.x1830_percent;
- Script_HitContext(attacker->player_id,victim->player_id,hit->element,r->motion,r->hit_move[j],r->hit_grounded[j],
+ Script_HitContext(attacker->player_idx,victim->player_idx,hit->element,r->motion,r->hit_move[j],r->hit_grounded[j],
  victim->ground_or_air==GA_Ground,a.i,v.i);return 1;}
  return 0;
 }

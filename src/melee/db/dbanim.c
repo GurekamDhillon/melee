@@ -9,12 +9,12 @@
 #include <melee/if/textlib.h>
 #include <melee/pl/player.h>
 
-static struct {
+static struct db_AnimationInfo_t {
     DevText* text;
     char buf[0x5A4];
 } db_AnimationInfo;
 
-static struct {
+static struct db_804D6B48_t {
     u32 ShowFighterCollisionBubbles : 3;
     u32 MiscFighterVisualsStatus : 6;
     u32 ShowAnimationInfo : 1;
@@ -79,7 +79,7 @@ void fn_ToggleMiscFighterVisuals(void)
 
 u8 fn_8022697C(Fighter_GObj* owner)
 {
-    if (ftLib_80086960(owner) != 0) {
+    if (ftLib_IsFighter(owner) != 0) {
         Fighter* ft = GET_FIGHTER(owner);
         return ft->x21FC_flag.byte;
     } else {
@@ -110,10 +110,10 @@ void fn_UpdateAnimationInfo(void)
                 DevText_Printf(text, "\n");
             }
             if (ft->motion_id < 0x155) {
-                DevText_Printf(text, "%d %s", ft->player_id,
+                DevText_Printf(text, "%d %s", ft->player_idx,
                                db_motionstate_names[ft->motion_id]);
             } else {
-                DevText_Printf(text, "%d %d", ft->player_id, ft->motion_id);
+                DevText_Printf(text, "%d %d", ft->player_idx, ft->motion_id);
             }
             DevText_SetCursorX(text, 23);
             if (ft->anim_id != -1) {

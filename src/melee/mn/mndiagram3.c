@@ -3,10 +3,10 @@
 #include "inlines.h"
 #include "mndiagram.h"
 #include "mndiagram2.h"
-#include "mndiagram3.static.h"
 #include "mnmain.h"
 #include "mnname.h"
 #include "types.h"
+#include <dolphin/gx/GXStruct.h>
 #include <melee/gm/gmmain_lib.h>
 #include <melee/lb/lb_00B0.h>
 #include <melee/lb/lbaudio_ax.h>
@@ -21,6 +21,31 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/memory.h>
 #include <sysdolphin/baselib/sislib.h>
+
+typedef struct mnDiagram3_PosTable {
+    /* 0x00 */ Vec3 x0;  ///< title_pos (3.3,0.5,0)
+    /* 0x0C */ Vec3 xC;  ///< rank_name_pos (-2,0.57,0)
+    /* 0x18 */ Vec3 x18; ///< value_pos (8,0.57,0)
+} mnDiagram3_PosTable;
+
+typedef struct mnDiagram3_StatTable {
+    /* 0x00 */ u16 label_ids[24];      ///< SIS string ids, 0x62..0x79
+    /* 0x30 */ u16 unit_glyph_ids[24]; ///< mnDiagram2 unit/icon column entries
+} mnDiagram3_StatTable;
+
+typedef struct mnDiagram3_DataTable {
+    /* 0x00 */ AnimLoopSettings x0;
+    /* 0x0C */ AnimLoopSettings xC;
+    /* 0x18 */ mnDiagram3_PosTable positions;
+    /* 0x3C */ mnDiagram3_StatTable stats;
+} mnDiagram3_DataTable;
+
+/* 3EEC10 */ extern AnimLoopSettings mnDiagram3_803EEC10;
+/* 3EEC1C */ extern AnimLoopSettings mnDiagram3_803EEC1C;
+/* 3EEC28 */ extern mnDiagram3_PosTable mnDiagram3_803EEC28;
+/* 3EEC4C */ extern mnDiagram3_StatTable mnDiagram3_803EEC4C;
+/* 4D6C20 */ extern HSD_GObj* mnDiagram3_804D6C20;
+/* 4D4B64 */ extern GXColor mn_804D4B64;
 
 #ifdef MUST_MATCH
 static void sdata2_order(void)
@@ -187,14 +212,14 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
                     (rank = (u8) i,
                      mnDiagram2_GetAggregatedFighterRank(&first_rank,
                                                          stat_type, rank),
-                     first_rank.idx != 0x19))
+                     first_rank.x0.idx != 0x19))
                 {
                     {
                         u8 rank = (u16) i;
                         mnDiagram2_GetAggregatedFighterRank(&fighter_rank,
                                                             stat_type, rank);
                     }
-                    icon = mnDiagram_CreateFighterIcon(fighter_rank.idx, 0);
+                    icon = mnDiagram_CreateFighterIcon(fighter_rank.x0.idx, 0);
                     HSD_JObjSetTranslateY(icon, row_spacing * (f32) i);
                     HSD_JObjAddChild(data->jobjs[6], icon);
                     {
@@ -202,8 +227,8 @@ void mnDiagram3_PopulateRankings(HSD_GObj* gobj)
                         mnDiagram2_GetAggregatedFighterRank(&rank_value,
                                                             stat_type, rank);
                     }
-                    mnDiagram_FormatDecimalNumber((char*) sp58, rank_value.xC,
-                                                  0);
+                    mnDiagram_FormatDecimalNumber((char*) sp58,
+                                                  rank_value.x0.xC, 0);
                     {
                         f32 offset_y = neg_spacing * (f32) i / 0.035f;
                         HSD_SisLib_803A6B98(value_text, 0.0f, offset_y,
@@ -571,7 +596,7 @@ void mnDiagram3_InitUserData(Diagram3* data, int arg1)
 {
     u8* src;
     int i;
-    PAD_STACK(8);
+    PAD_STACK(4);
 
     src = (u8*) &mn_804A04F0;
     data->saved_menu = src[0];
@@ -587,11 +612,9 @@ void mnDiagram3_InitUserData(Diagram3* data, int arg1)
     data->popup_gobj = NULL;
     data->title_text = NULL;
     data->value_text = NULL;
-    data->row_icons[0] = NULL;
-    data->row_icons[1] = NULL;
-    data->row_icons[2] = NULL;
-    data->row_icons[3] = NULL;
-    data->row_icons[4] = NULL;
+    for (i = 0; i < 5; i++) {
+        data->row_icons[i] = NULL;
+    }
 }
 
 static inline HSD_JObj* mnDiagram3_LoadJoint(StaticModelDesc* archive)

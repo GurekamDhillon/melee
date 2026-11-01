@@ -5,6 +5,8 @@
 
 #include <sysdolphin/baselib/forward.h> // IWYU pragma: export
 
+#include <dat_macros.h> // IWYU pragma: keep
+
 #define HSD_ARCHIVE_DONT_FREE 1
 
 struct HSD_ArchiveHeader {
@@ -43,11 +45,36 @@ struct HSD_Archive {
     char* name;                            /* 0x38 */
     u32 flags;                             /* 0x3C */
     void* top_ptr;                         /* 0x40 */
+#ifdef DAT_NATIVE_ARCHIVE
+    struct DatArchive* native_data;
+#endif
 };
+#ifndef DAT_NATIVE_ARCHIVE
 ASSERT_SIZE(struct HSD_Archive, 0x44);
+#endif
 
 s32 HSD_ArchiveParse(HSD_Archive*, u8*, size_t file_size);
 void* HSD_ArchiveGetPublicAddress(HSD_Archive*, const char*);
+
+/// The public symbol @p name of @p archive, as a pointer to @p type.
+#ifdef DAT_NATIVE_ARCHIVE
+void* HSD_ArchiveGetPublicTyped(HSD_Archive*, const char* name,
+                                const char* type);
+void HSD_ArchiveReleaseNative(HSD_Archive*);
+#define HSD_ArchiveGetPublicAs(type, archive, name)                           \
+    ((type*) HSD_ArchiveGetPublicTyped((archive), (name), #type))
+#elif defined(DAT_ROOTS_ENABLED)
+// Also record the type the symbol is loaded as
+#define HSD_ArchiveGetPublicAs(type, archive, name)                           \
+    ({                                                                        \
+        DAT_ROOT((type**) 0, name)                                            \
+        (type*) HSD_ArchiveGetPublicAddress((archive), (name));               \
+    })
+#else
+#define HSD_ArchiveGetPublicAs(type, archive, name)                           \
+    ((type*) HSD_ArchiveGetPublicAddress((archive), (name)))
+#endif
+
 char* HSD_ArchiveGetExtern(HSD_Archive*, int);
 void HSD_ArchiveLocateExtern(HSD_Archive*, const char*, void*);
 

@@ -43,8 +43,21 @@
 /* 20DE48 */ DynamicModelDesc* grBigBlueRoute_8020DE48(void);
 /* 20DEAC */ void fn_8020DEAC(void);
 /* 20DED4 */ void grBigBlueRoute_8020DED4(Vec3*);
-/* 20DF78 */ DynamicsDesc* grBigBlueRoute_8020DF78(enum_t);
+/* 20DF78 */ lbColl_80008D30_arg1* grBigBlueRoute_8020DF78(enum_t);
 /* 20DF80 */ bool grBigBlueRoute_8020DF80(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E617C */ extern StageData grBb_Route_StageData;
+
+struct grBigBlueRoute_YakumonoParam {
+    int x0;
+    f32 x4;
+    u8 pad_8[0x20 - 0x8];
+    f32 x20;
+    u8 pad_24[0x3C - 0x24];
+    f32 x3C;
+    f32 x40;
+    f32 x44;
+    f32 x48;
+    f32 x4C;
+};
 
 #endif

@@ -18,12 +18,6 @@ ItemStateTable it_803F8FD0[] = {
       NULL },
 };
 
-s32 it_802EAF28(Item_GObj* item_gobj)
-{
-    // can't use xDD4_itemVar.greatfoxlaser.x38, which is an s16
-    return GET_ITEM(item_gobj)->xDD4_itemVar.likelike.x38;
-}
-
 Item_GObj* it_802EAF34(HSD_GObj* owner, Vec3* offset, int type)
 {
     Item_GObj* item_gobj;
@@ -40,14 +34,14 @@ Item_GObj* it_802EAF34(HSD_GObj* owner, Vec3* offset, int type)
     spawn.vel.x = spawn.vel.y = spawn.vel.z = 0.0f;
     spawn.x0_parent_gobj = NULL;
     spawn.x4_parent_gobj2 = NULL;
-    spawn.x44_flag.b0 = false;
+    spawn.x44_flag.x0.b0 = false;
     spawn.x40 = 0;
     HSD_JObjGetRotation(jobj, &unused); // ???
     item_gobj = Item_80268B18(&spawn);
     if (item_gobj != NULL) {
         Item* ip = GET_ITEM(item_gobj);
         itGreatFoxLaser_Attrs* attr =
-            ip->xC4_article_data->x4_specialAttributes;
+            &ip->xC4_article_data->x4_specialAttributes->great_fox_laser;
         ip->scl = Ground_801C0498();
         HSD_JObjSetScaleX(item_gobj->hsd_obj, ip->scl);
         HSD_JObjSetScaleY(item_gobj->hsd_obj, ip->scl);
@@ -91,7 +85,8 @@ void it_802EB268(Item_GObj* gobj)
 bool itGreatfoxlaser_UnkMotion1_Anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itGreatFoxLaser_Attrs* attr = ip->xC4_article_data->x4_specialAttributes;
+    itGreatFoxLaser_Attrs* attr =
+        &ip->xC4_article_data->x4_specialAttributes->great_fox_laser;
     HSD_JObj* jobj;
     Vec3 offset;
     PAD_STACK(12);
@@ -155,7 +150,7 @@ bool it_2725_Logic27_Reflected(Item_GObj* gobj)
     PAD_STACK(16);
 
     if (ip->msid == 0) {
-        ftLib_80086644(ip->xC64_reflectGObj, &reflect_pos);
+        ftLib_GetPos(ip->xC64_reflectGObj, &reflect_pos);
         jobj = ip->xDD4_itemVar.greatfoxlaser.x20->hsd_obj;
         lb_8000B1CC(jobj, &ip->xDD4_itemVar.greatfoxlaser.x28, &laser_pos);
         ip->xDD4_itemVar.greatfoxlaser.x28.x -=

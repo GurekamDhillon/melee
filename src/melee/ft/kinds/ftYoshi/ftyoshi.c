@@ -343,7 +343,6 @@ extern char* ftYs_Unk2_804D3E68;
 extern char* ftYs_Unk2_804D3E70;
 extern char* ftYs_Unk2_804D3E78;
 
-/// https://decomp.me/scratch/ufrFK
 void ftYs_Init_8012B6E8(Fighter* fp, struct S_UNK_YOSHI1* unk_struct_arg)
 {
     u8 _[12];
@@ -355,7 +354,7 @@ void ftYs_Init_8012B6E8(Fighter* fp, struct S_UNK_YOSHI1* unk_struct_arg)
     s32 i;
     float zero_float;
 
-    attr_r26 = fp->ft_data->ext_attr;
+    attr_r26 = &fp->ft_data->ext_attr->yoshi;
     index = (unk_struct1 = unk_struct_arg)->unk_struct->xC_start_index;
     ptr2EndIndex = (&unk_struct1->unk_struct->x8_end_index);
     zero_float = 0.0f;
@@ -368,7 +367,7 @@ void ftYs_Init_8012B6E8(Fighter* fp, struct S_UNK_YOSHI1* unk_struct_arg)
         if (dobj_r3) {
             mobj_r3 = dobj_r3->mobj;
         } else {
-            mobj_r3 = 0;
+            mobj_r3 = NULL;
         }
 
         aobj_r24 = mobj_r3->aobj;
@@ -406,7 +405,7 @@ void ftYs_Init_8012B804(Fighter* fp, struct S_UNK_YOSHI1* unk_struct_arg,
             if (dobj_r3) {
                 mobj_r3 = dobj_r3->mobj;
             } else {
-                mobj_r3 = 0;
+                mobj_r3 = NULL;
             }
 
             mobj = mobj_r3;
@@ -440,13 +439,12 @@ void ftYs_Init_OnDeath(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     ftParts_80074A4C(gobj, 0, 0);
-    fp->u.ys.x2238 = 0;
+    fp->u.ys.x2238 = NULL;
 }
 
-/// https://decomp.me/scratch/5TPxg
 void ftYs_Init_OnLoad(HSD_GObj* gobj)
 {
-    void** item_list;
+    union ftData_Item* item_list;
     ftYoshiAttributes* other_attr;
     struct S_UNK_YOSHI1* temp_r28;
     struct S_UNK_YOSHI1* temp;
@@ -459,7 +457,7 @@ void ftYs_Init_OnLoad(HSD_GObj* gobj)
     ft = fp->ft_data;
     temp_r28 = (struct S_UNK_YOSHI1*) fp->x5AC.xC[1];
     item_list = ft->x48_items;
-    other_attr = ft->ext_attr;
+    other_attr = &ft->ext_attr->yoshi;
 
     if (!temp) {
         HSD_ASSERTREPORT(113, 0, "yoshi parts_model NULL!!\n");
@@ -469,9 +467,9 @@ void ftYs_Init_OnLoad(HSD_GObj* gobj)
     ftYs_Init_8012B6E8(fp, temp_r27);
     ftYs_Init_8012B6E8(fp, temp_r28);
     PUSH_ATTRS(fp, ftYoshiAttributes);
-    it_8026B3F8(item_list[0], It_Kind_Yoshi_EggThrow);
-    it_8026B3F8(item_list[1], It_Kind_Yoshi_Star);
-    it_8026B3F8(item_list[2], It_Kind_Yoshi_EggLay);
+    it_8026B3F8(item_list[0].article, It_Kind_Yoshi_EggThrow);
+    it_8026B3F8(item_list[1].article, It_Kind_Yoshi_Star);
+    it_8026B3F8(item_list[2].article, It_Kind_Yoshi_EggLay);
     fp->x2226_b1 = 1;
 }
 
@@ -489,22 +487,22 @@ float ftYs_Init_8012BAC0(Fighter* fp)
 
 void ftYs_Init_OnItemPickup(HSD_GObj* gobj, bool flag)
 {
-    Fighter_OnItemPickup(gobj, flag, 1, 1);
+    Fighter_OnItemPickup(gobj, flag, true, true);
 }
 
 void ftYs_Init_OnItemInvisible(HSD_GObj* gobj)
 {
-    Fighter_OnItemInvisible(gobj, 1);
+    Fighter_OnItemInvisible(gobj, true);
 }
 
 void ftYs_Init_OnItemVisible(HSD_GObj* gobj)
 {
-    Fighter_OnItemVisible(gobj, 1);
+    Fighter_OnItemVisible(gobj, true);
 }
 
 void ftYs_Init_OnItemDrop(HSD_GObj* gobj, bool bool1)
 {
-    Fighter_OnItemDrop(gobj, bool1, 1, 1);
+    Fighter_OnItemDrop(gobj, bool1, true, true);
 }
 
 void ftYs_Init_LoadSpecialAttrs(HSD_GObj* gobj)
@@ -555,12 +553,13 @@ Fighter_DemoStrings ftYs_Init_DemoMotionFilenames = {
     "ftDemoViWaitMotionFileYoshi",
 };
 
-Fighter_CostumeStrings ftYs_Init_CostumeStrings[] = {
-    { ftYs_Unk2_803CEAB0, ftYs_Unk2_803CEABC, ftYs_Unk2_803CEAD4 },
-    { ftYs_Unk2_803CEAF4, ftYs_Unk2_803CEB00, ftYs_Unk2_803CEB1C },
-    { ftYs_Unk2_803CEB40, ftYs_Unk2_803CEB4C, ftYs_Unk2_803CEB68 },
-    { ftYs_Unk2_803CEB8C, ftYs_Unk2_803CEB98, ftYs_Unk2_803CEBB4 },
-    { ftYs_Unk2_803CEBD8, ftYs_Unk2_803CEBE4, ftYs_Unk2_803CEC00 },
-    { ftYs_Unk2_803CEC24, ftYs_Unk2_803CEC30, ftYs_Unk2_803CEC4C },
-};
+Fighter_CostumeStrings
+    ftYs_Init_CostumeStrings[ARRAY_SIZE(ftYs_CostumeList)] = {
+        { ftYs_Unk2_803CEAB0, ftYs_Unk2_803CEABC, ftYs_Unk2_803CEAD4 },
+        { ftYs_Unk2_803CEAF4, ftYs_Unk2_803CEB00, ftYs_Unk2_803CEB1C },
+        { ftYs_Unk2_803CEB40, ftYs_Unk2_803CEB4C, ftYs_Unk2_803CEB68 },
+        { ftYs_Unk2_803CEB8C, ftYs_Unk2_803CEB98, ftYs_Unk2_803CEBB4 },
+        { ftYs_Unk2_803CEBD8, ftYs_Unk2_803CEBE4, ftYs_Unk2_803CEC00 },
+        { ftYs_Unk2_803CEC24, ftYs_Unk2_803CEC30, ftYs_Unk2_803CEC4C },
+    };
 /* 45A000 */ UnkCostumeStruct ftYs_CostumeList[6];

@@ -57,7 +57,8 @@ ItemStateTable it_803F7CF8[] = {
 void itHassam_802CDBE0(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itHassam_ItemVars* attr = ip->xC4_article_data->x4_specialAttributes;
+    itHassamAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->hassam;
     PAD_STACK(12);
 
     it_80279C48(gobj);
@@ -151,13 +152,13 @@ Item_GObj* itHassam_802CDE1C(Vec3* vec, Item_GObj* gobj)
     for (cur_fgobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
          cur_fgobj != NULL; cur_fgobj = cur_fgobj->next)
     {
-        if (ftLib_80086FD4(gobj, cur_fgobj) == false) {
+        if (ftLib_IsSamePlayer(gobj, cur_fgobj) == false) {
             cur_fp = GET_FIGHTER(cur_fgobj);
-            if ((cur_fp->x221F_b3 == false) &&
+            if ((cur_fp->is_sleeping == false) &&
                 ((gm_8016B168() == false) || (fp == NULL) ||
                  (cur_fp->team != fp->team)))
             {
-                ftLib_800866DC(cur_fgobj, &sp20);
+                ftLib_GetCameraBonePos(cur_fgobj, &sp20);
                 y_dist = vec->y - sp20.y;
                 x_dist = vec->x - sp20.x;
                 temp_f0 = (x_dist * x_dist) + (y_dist * y_dist);
@@ -169,7 +170,7 @@ Item_GObj* itHassam_802CDE1C(Vec3* vec, Item_GObj* gobj)
         }
     }
     if (closest_fgobj == NULL) {
-        closest_fgobj = ftLib_8008627C(vec, gobj);
+        closest_fgobj = ftLib_FindNearestOpponent(vec, gobj);
     }
     return closest_fgobj;
 }
@@ -181,13 +182,14 @@ void itHassam_802CDF28(Item_GObj* gobj)
     Fighter_GObj* var_r3;
 
     Item* ip = GET_ITEM(gobj);
-    itHassam_ItemVars* attr = ip->xC4_article_data->x4_specialAttributes;
+    itHassamAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->hassam;
 
     var_r3 = itHassam_802CDE1C(&ip->pos, ip->owner);
     if (var_r3 == NULL) {
         var_r3 = ip->owner;
     }
-    ftLib_800866DC(var_r3, &sp1C);
+    ftLib_GetCameraBonePos(var_r3, &sp1C);
     sp1C.y += attr->x8;
     lbVector_Diff(&sp1C, &ip->pos, &sp10);
     ip->xDD4_itemVar.hassam.x5C.x = attr->x4;
@@ -204,7 +206,8 @@ void itHassam_802CDF28(Item_GObj* gobj)
 void itHassam_802CE008(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itHassam_ItemVars* attr = ip->xC4_article_data->x4_specialAttributes;
+    itHassamAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->hassam;
 
     Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
     Item_SetEffectHitlagCallbacks(ip);
@@ -219,11 +222,11 @@ bool itHassam_UnkMotion1_Anim(Item_GObj* gobj)
 {
     f32 prev_dir;
     Item* ip;
-    itHassam_ItemVars* attr;
+    itHassamAttributes* attr;
     HSD_JObj* jobj;
 
     ip = (Item*) gobj->user_data;
-    attr = ip->xC4_article_data->x4_specialAttributes;
+    attr = &ip->xC4_article_data->x4_specialAttributes->hassam;
     if (it_80272C6C(gobj) == false) {
         Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
         Item_SetEffectHitlagCallbacks(ip);
@@ -261,7 +264,8 @@ bool itHassam_UnkMotion1_Anim(Item_GObj* gobj)
 void itHassam_UnkMotion1_Phys(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itHassam_ItemVars* attr = ip->xC4_article_data->x4_specialAttributes;
+    itHassamAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->hassam;
 
     it_8027A344(gobj);
     if (ip->ground_or_air == GA_Air) {
@@ -303,13 +307,13 @@ void itHassam_802CE400(Item_GObj* gobj)
 {
     Item* ip;
     HSD_JObj* jobj;
-    itHassam_ItemVars* attr;
+    itHassamAttributes* attr;
     Vec3 cam_pos;
     Vec3 sp10;
 
     ip = GET_ITEM(gobj);
     jobj = (HSD_JObj*) gobj->hsd_obj;
-    attr = ip->xC4_article_data->x4_specialAttributes;
+    attr = &ip->xC4_article_data->x4_specialAttributes->hassam;
 
     itHassam_802CE400_sub(gobj, 2, ITEM_ANIM_UPDATE);
     Camera_GetTransformPosition(&cam_pos);

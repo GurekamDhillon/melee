@@ -35,7 +35,7 @@ ItemStateTable it_803F6818[] = {
     },
 };
 
-void it_8029CD18(Item_GObj* item_gobj, int arg1)
+void it_8029CD18(Item_GObj* item_gobj, intptr_t arg1)
 {
     Item* item = GET_ITEM(item_gobj);
     HSD_JObj* jobj = item->xDD4_itemVar.foxillusion.xDDC;
@@ -109,12 +109,12 @@ void it_8029CFF0(Item_GObj* item_gobj)
     u8 _[4];
 
     item->xD44_lifeTimer =
-        *(f32*) item->xC4_article_data->x4_specialAttributes;
+        item->xC4_article_data->x4_specialAttributes->fox_illusion.x0;
     item->xD5C = 0;
     item->xDD4_itemVar.foxillusion.xDD4 =
         item->xC4_article_data->x10_modelDesc->x0_joint;
     it_8026B3A8(item_gobj);
-    if (ftLib_800865CC(item->owner) == 1) {
+    if (ftLib_GetGroundAir(item->owner) == 1) {
         Item_80268E5C(item_gobj, 1, ITEM_ANIM_UPDATE);
     } else {
         Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
@@ -199,8 +199,9 @@ void it_8029D798(Item_GObj* item_gobj)
 {
     Item* item = GET_ITEM(item_gobj);
     HSD_JObj* jobj = GET_JOBJ(item_gobj);
-    f32* attr = item->xC4_article_data->x4_specialAttributes;
-    item->xD44_lifeTimer = attr[1];
+    FoxIllusionAttr* attr =
+        &item->xC4_article_data->x4_specialAttributes->fox_illusion;
+    item->xD44_lifeTimer = attr->x4;
     it_80272A3C(jobj);
     Item_80268E5C(item_gobj, 2, ITEM_ANIM_UPDATE);
 }

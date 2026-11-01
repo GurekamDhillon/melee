@@ -76,37 +76,37 @@ f32 ftKb_SpecialNYs_801092CC(Fighter_GObj* gobj)
 
 f32 ftKb_SpecialNYs_801092DC(void)
 {
-    ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
     return ea->specialn_ys_egg_breakout_resistance;
 }
 
 f32 ftKb_SpecialNYs_801092F4(void)
 {
-    ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
     return ea->specialn_ys_frames_reduced_per_input;
 }
 
 f32 ftKb_SpecialNYs_8010930C(void)
 {
-    ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
     return ea->specialn_ys_unk1;
 }
 
 f32 ftKb_SpecialNYs_80109324(void)
 {
-    ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
     return ea->specialn_ys_unk2;
 }
 
 int ftKb_SpecialNYs_8010933C(void)
 {
-    ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
     return ea->specialn_ys_iframes_on_release;
 }
 
 void ftKb_SpecialNYs_80109354(Vec3* v)
 {
-    ftKb_DatAttrs* cd = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* cd = &ftKb_KirbyFtData()->ext_attr->kirby;
     v->x = cd->specialn_ys_horizontal_velocity_on_breakout;
     v->y = cd->specialn_ys_vertical_velocity_on_breakout;
     v->z = 0.0f;
@@ -114,16 +114,16 @@ void ftKb_SpecialNYs_80109354(Vec3* v)
 
 float ftKb_SpecialNYs_80109380(void)
 {
-    ftKb_DatAttrs* cd = ftKb_KirbyFtData()->ext_attr;
+    ftKb_DatAttrs* cd = &ftKb_KirbyFtData()->ext_attr->kirby;
     return cd->specialn_ys_unk3 / cd->specialn_ys_damage_multiplier;
 }
 
 ftDynamics* ftKb_SpecialNYs_801093A0(Fighter_GObj* gobj)
 {
-    KirbyHatStruct** hats = ft_80459B88.hats;
-    KirbyHatStruct* hat = hats != NULL ? hats[Ft_Kind_Samus] : NULL;
-    if (hat == NULL) {
-        return NULL;
+    KirbyHatStruct** copies = ft_80459B88.copies;
+    KirbyHatStruct* hat = copies != 0 ? copies[Ft_Kind_Yoshi] : 0;
+    if (hat == 0) {
+        return 0;
     }
     return hat->hat_dynamics[0];
 }
@@ -148,14 +148,14 @@ void ftKb_SpecialNYs_801093B4(Fighter_GObj* gobj)
 void ftKb_SpecialNYs_8010941C(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    KirbyHatStruct** hats = ft_80459B88.hats;
-    KirbyHatStruct* ys_hat = hats != NULL ? hats[Ft_Kind_Samus] : NULL;
-    if (ys_hat == NULL) {
+    KirbyHatStruct** copies = ft_80459B88.copies;
+    KirbyHatStruct* ys_hat = copies != 0 ? copies[Ft_Kind_Yoshi] : 0;
+    if (ys_hat == 0) {
         return;
     }
     fp->cmd_vars[0] = 0;
-    Fighter_ChangeMotionState(gobj, ftKb_MS_YsSpecialN1, 0, 0.0F, 1.0F, 0.0F,
-                              NULL);
+    Fighter_ChangeMotionState(gobj, ftKb_MS_YsSpecialN1, Ft_MF_None, 0.0F,
+                              1.0F, 0.0F, NULL);
     ftAnim_8006EBA4(gobj);
     HSD_JObjAddAnimAll(fp->u.kb.hat.jobj,
                        (HSD_AnimJoint*) ys_hat->hat_dynamics[1], 0, 0);
@@ -173,14 +173,14 @@ void ftKb_SpecialNYs_8010941C(Fighter_GObj* gobj)
 void ftKb_SpecialNYs_801094FC(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    KirbyHatStruct** hats = ft_80459B88.hats;
-    KirbyHatStruct* ys_hat = hats != NULL ? hats[Ft_Kind_Samus] : NULL;
-    if (ys_hat == NULL) {
+    KirbyHatStruct** copies = ft_80459B88.copies;
+    KirbyHatStruct* ys_hat = copies != 0 ? copies[Ft_Kind_Yoshi] : 0;
+    if (ys_hat == 0) {
         return;
     }
     fp->cmd_vars[0] = 0;
-    Fighter_ChangeMotionState(gobj, ftKb_MS_YsSpecialAirNCapture2, 0, 0.0F,
-                              1.0F, 0.0F, NULL);
+    Fighter_ChangeMotionState(gobj, ftKb_MS_YsSpecialAirNCapture2, Ft_MF_None,
+                              0.0F, 1.0F, 0.0F, NULL);
     ftAnim_8006EBA4(gobj);
     HSD_JObjAddAnimAll(fp->u.kb.hat.jobj,
                        (HSD_AnimJoint*) ys_hat->hat_dynamics[3], 0, 0);
@@ -425,7 +425,7 @@ void ftKb_YsSpecialAirNCapture1_Anim(Fighter_GObj* gobj)
         fp->cmd_vars[0] = new_var;
         fp->cmd_vars[1] = new_var;
         fp2 = GET_FIGHTER(gobj);
-        hat = ft_80459B88.hats != NULL ? ft_80459B88.hats[0xD] : NULL;
+        hat = ft_80459B88.copies != NULL ? ft_80459B88.hats[Ft_Kind_Yoshi] : NULL;
         if (hat == NULL) {
             return;
         }
@@ -456,7 +456,7 @@ void ftKb_YsSpecialNCapture1_Anim(Fighter_GObj* gobj)
         fp->cmd_vars[0] = new_var;
         fp->cmd_vars[1] = new_var;
         fp2 = GET_FIGHTER(gobj);
-        hat = ft_80459B88.hats != NULL ? ft_80459B88.hats[0xD] : NULL;
+        hat = ft_80459B88.copies != NULL ? ft_80459B88.hats[Ft_Kind_Yoshi] : NULL;
         if (hat == NULL) {
             return;
         }
@@ -486,7 +486,7 @@ void ftKb_YsSpecialAirCapture2_Anim(Fighter_GObj* gobj)
         fp->cmd_vars[0] = new_var;
         fp->cmd_vars[1] = new_var;
         fp2 = GET_FIGHTER(gobj);
-        hat = ft_80459B88.hats != NULL ? ft_80459B88.hats[0xD] : NULL;
+        hat = ft_80459B88.copies != NULL ? ft_80459B88.hats[Ft_Kind_Yoshi] : NULL;
         if (hat == NULL) {
             return;
         }
@@ -517,7 +517,7 @@ void ftKb_YsSpecialAirCapture1_Anim(Fighter_GObj* gobj)
         fp->cmd_vars[0] = new_var;
         fp->cmd_vars[1] = new_var;
         fp2 = GET_FIGHTER(gobj);
-        hat = ft_80459B88.hats != NULL ? ft_80459B88.hats[0xD] : NULL;
+        hat = ft_80459B88.copies != NULL ? ft_80459B88.hats[Ft_Kind_Yoshi] : NULL;
         if (hat == NULL) {
             return;
         }
@@ -574,7 +574,7 @@ void ftKb_YsSpecialNCapture2_0_Anim(Fighter_GObj* gobj)
             item_attrs.x24 = da->specialn_ys_damage_multiplier;
         }
         {
-            ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+            ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
             item_attrs.float3 =
                 ea->specialn_ys_unk3 / ea->specialn_ys_damage_multiplier;
         }
@@ -651,7 +651,7 @@ void ftKb_YsSpecialAirN2_1_Anim(Fighter_GObj* gobj)
             item_attrs.x24 = da->specialn_ys_damage_multiplier;
         }
         {
-            ftKb_DatAttrs* ea = ftKb_KirbyFtData()->ext_attr;
+            ftKb_DatAttrs* ea = &ftKb_KirbyFtData()->ext_attr->kirby;
             item_attrs.float3 =
                 ea->specialn_ys_unk3 / ea->specialn_ys_damage_multiplier;
         }

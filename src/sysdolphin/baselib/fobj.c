@@ -118,12 +118,14 @@ void HSD_FObjStopAnimAll(HSD_FObj* fobj, void* obj,
     }
 }
 
+union parseFloat_u {
+    f32 f;
+    u32 d;
+};
+
 static f32 parseFloat(u8** pos, u8 frac)
 {
-    union {
-        f32 f;
-        u32 d;
-    } u;
+    union parseFloat_u u;
     f32 numer;
     s32 denom;
 
@@ -352,7 +354,7 @@ void FObjUpdateAnim(HSD_FObj* fobj, void* obj, HSD_ObjUpdateFunc obj_update)
     case HSD_A_OP_KEY:
         if (fobj->flags & 0x80) {
             fobjdata.fv = fobj->p0;
-            fobj->flags &= 0xFFFFFF7F;
+            fobj->flags &= ~0x80;
         } else {
             return;
         }
@@ -367,7 +369,7 @@ void FObjUpdateAnim(HSD_FObj* fobj, void* obj, HSD_ObjUpdateFunc obj_update)
         break;
     case HSD_A_OP_LIN:
         if (fobj->flags & 0x20) {
-            fobj->flags = fobj->flags & 0xFFFFFFDF;
+            fobj->flags &= ~0x20;
             if (fobj->fterm != 0) {
                 fobj->d0 = (fobj->p1 - fobj->p0) / fobj->fterm;
             } else {
@@ -421,62 +423,70 @@ void HSD_FObjInterpretAnim(HSD_FObj* fobj, void* obj,
 
     fterm = 0.0F;
     state = fobj != NULL ? HSD_FObjGetState(fobj) : 0;
-    if (state != 0 && !(fobj->time += rate, (fobj->time < 0.0))) {
-        for (;;) {
-            switch (state) {
-            case 6: {
-                fobj->time += fterm;
-                FObjLaunchKeyData(fobj);
-                FObjUpdateAnim(fobj, obj, obj_update);
-                return;
-            }
-            case 1:
-            case 2: {
-                state = FObjLoadData(fobj);
-                break;
-            }
-            case 3: {
-                if ((fobj->flags & 0x80) != 0) {
-                    FObjUpdateAnim(fobj, obj, obj_update);
-                }
-                state = FObjLoadWait(fobj);
-                break;
-            }
-            case 4: {
-                if (fobj->fterm <= fobj->time) {
-                    u8 _[8];
-                    state =
-#ifdef MUST_MATCH
-                        state =
-#endif
-                            3;
 
-                    fterm = fobj->fterm;
-                    fobj->time -= fobj->fterm;
-                    HSD_FObjSetState(fobj, state);
-                    break;
-                }
+    if (state == 0) {
+        return;
+    }
+
+    fobj->time += rate;
+
+    if (fobj->time < 0.0) {
+        return;
+    }
+
+    for (;;) {
+        switch (state) {
+        case 6: {
+            fobj->time += fterm;
+            FObjLaunchKeyData(fobj);
+            FObjUpdateAnim(fobj, obj, obj_update);
+            return;
+        }
+        case 1:
+        case 2: {
+            state = FObjLoadData(fobj);
+            break;
+        }
+        case 3: {
+            if ((fobj->flags & 0x80) != 0) {
                 FObjUpdateAnim(fobj, obj, obj_update);
-                state =
-#ifdef MUST_MATCH
-                    state =
-#endif
-                        5;
-                HSD_FObjSetState(fobj, state);
-                return;
             }
-            case 5: {
+            state = FObjLoadWait(fobj);
+            break;
+        }
+        case 4: {
+            if (fobj->fterm <= fobj->time) {
+                u8 _[8];
                 state =
 #ifdef MUST_MATCH
                     state =
 #endif
-                        4;
+                        3;
+                fterm = fobj->fterm;
+                fobj->time -= fobj->fterm;
                 HSD_FObjSetState(fobj, state);
                 break;
             }
-            case 0:
-                return;
-            }
+            FObjUpdateAnim(fobj, obj, obj_update);
+            state =
+#ifdef MUST_MATCH
+                state =
+#endif
+                    5;
+            HSD_FObjSetState(fobj, state);
+            return;
+        }
+        case 5: {
+            state =
+#ifdef MUST_MATCH
+                state =
+#endif
+                    4;
+            HSD_FObjSetState(fobj, state);
+            break;
+        }
+        case 0:
+            return;
         }
     }
 }

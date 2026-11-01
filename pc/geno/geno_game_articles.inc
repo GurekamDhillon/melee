@@ -234,7 +234,7 @@ static HSD_GObj* geno_fx_gobj; /* game memory: a rollback restores it with the G
 extern void diag_fx_cam(int cobj, int code, int main_cobj, float ex, float ey, float ez, float mx, float my,
                         float mz);
 extern HSD_CObj* Camera_800310B8(void);
-static void geno_fx_render(HSD_GObj* gobj, int code)
+static void geno_fx_render(HSD_GObj* gobj, intptr_t code)
 {
     HSD_CObj* cobj;
     {
@@ -491,7 +491,7 @@ static void geno_art_hitbox_on(Item_GObj* gobj, Item* ip, int p, int a, int h, i
         hit->x4 = 0;
         hit->state = HitCapsule_Enabled;
         ip->xDC8_word.flags.x16 = 1;
-        ip->xDAA_flag.b2 = 0;
+        ip->xDAA.xDAA_flag.x0.b2 = 0;
         it_8026FCF8(ip, hit);
     }
     hit->jobj = gobj->hsd_obj;
@@ -628,7 +628,7 @@ static int geno_art_target(Item* ip, f32* tx, f32* ty)
         Fighter* fp = GET_FIGHTER(cur);
         f32 dx, dy, d;
         if (fp == NULL || cur == ip->owner ||
-            (ip->owner != NULL && fp->player_id == GET_FIGHTER(ip->owner)->player_id))
+            (ip->owner != NULL && fp->player_idx == GET_FIGHTER(ip->owner)->player_idx))
         {
             continue;
         }
@@ -663,7 +663,7 @@ static void geno_art_gone(Item* ip, GenoArtVars* v, int why)
     HSD_GObj* o = ip->owner;
     v->why = why;
     geno_art_sound(o, v->profile, v->article, GENO_AP_END_SFX, GENO_AP_END_VOL, "end");
-    Geno_Event(29, o != NULL ? GET_FIGHTER(o)->kind : -1, o != NULL ? GET_FIGHTER(o)->player_id : -1,
+    Geno_Event(29, o != NULL ? GET_FIGHTER(o)->kind : -1, o != NULL ? GET_FIGHTER(o)->player_idx : -1,
                v->article, why);
 }
 
@@ -903,7 +903,7 @@ static bool geno_art_reflected(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     GenoArtVars* v = geno_art_vars(ip);
-    if (ip->owner != NULL) Fx_SetOwnerPort((int) GET_JOBJ(gobj), GET_FIGHTER(ip->owner)->player_id + 1);
+    if (ip->owner != NULL) Fx_SetOwnerPort((int) GET_JOBJ(gobj), GET_FIGHTER(ip->owner)->player_idx + 1);
     if (ip->facing_dir != ip->xC68) {
         ip->facing_dir = ip->xC68;
         HSD_JObjSetRotationY(GET_JOBJ(gobj), (f32) (M_PI / 2) * ip->facing_dir);
@@ -938,12 +938,12 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     GenoArtVars* v;
     f32 fwd, up, vf, vu, rad, c, sn;
     if (p < 0 || p >= GENO_MAX_PROFILES || a < 0 || a >= Geno_ArticleCount(p)) {
-        Geno_Event(30, fp->kind, fp->player_id, a, 0);
+        Geno_Event(30, fp->kind, fp->player_idx, a, 0);
         return NULL;
     }
     max = Geno_ArticleParam(p, a, GENO_AP_MAX_LIVE);
     if (max > 0 && geno_art_live(owner, a) >= max) {
-        Geno_Event(30, fp->kind, fp->player_id, a, 1);
+        Geno_Event(30, fp->kind, fp->player_idx, a, 1);
         return NULL;
     }
     geno_art_build(p, a);
@@ -967,7 +967,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
     Item_InitSpawnCommonFields(&spawn, owner, facing, true);
     ig = Item_80268B18(&spawn);
     if (ig == NULL) {
-        Geno_Event(30, fp->kind, fp->player_id, a, 2);
+        Geno_Event(30, fp->kind, fp->player_idx, a, 2);
         return NULL;
     }
     ip = GET_ITEM(ig);
@@ -999,7 +999,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
         {
             int h = Fx_Attach(Geno_ArticleParam(p, a, GENO_AP_FX) - 1, (int) GET_JOBJ(ig), 0x44,
                               geno_fx_frame, facing < 0.0f ? -1 : 1);
-            if (h > 0) Fx_SetOwner(h, 2, fp->player_id + 1);
+            if (h > 0) Fx_SetOwner(h, 2, fp->player_idx + 1);
         }
         /* the package is the article's look: the model's display objects (a placeholder, e.g. trail_magic_models.py's
          * sphere) are hidden; the joints keep being set up, so the effects still follow the article */
@@ -1011,7 +1011,7 @@ static Item_GObj* geno_art_spawn(HSD_GObj* owner, int p, int a, int variant, f32
         }
     }
     geno_state(fp)->art_spawned++;
-    Geno_Event(28, fp->kind, fp->player_id, a, kind);
+    Geno_Event(28, fp->kind, fp->player_idx, a, kind);
     {
         /* what will be drawn: the joints and display objects the item built from the model */
         HSD_JObj* j = GET_JOBJ(ig);
@@ -1039,7 +1039,7 @@ int GenoGame_ArticleSpawn(Fighter_GObj* gobj, int arg)
     int a = arg & 0xFF, bone;
     Vec3 base = fp->cur_pos;
     if (st->profile < 0 || a >= Geno_ArticleCount(st->profile)) {
-        Geno_Event(30, fp->kind, fp->player_id, a, 0);
+        Geno_Event(30, fp->kind, fp->player_idx, a, 0);
         return 0;
     }
     bone = Geno_ArticleParam(st->profile, a, GENO_AP_BONE);
@@ -1062,7 +1062,7 @@ static int hook_article_spawn(Fighter_GObj* gobj, Fighter* fp, GenoState* st, s3
 }
 
 /* ---- on_hit and counter windows ------------------------------------------------------------------
- * Fighter_ProcessHit_8006D1EC (fighter.c), before Melee reacts to the hits this frame collected
+ * Fighter_procCollResolve (fighter.c), before Melee reacts to the hits this frame collected
  * (fp->dmg): a hit is "knockback to apply" or "damage to take". The context goes to the HIT_*
  * values first, so a counter target's entry and the on_hit hooks both see it. A hit in a counter
  * window (the fighter's current Geno state has a "counter" whose frames include this action frame)
@@ -1084,7 +1084,7 @@ int Geno_OnHit(Fighter_GObj* gobj)
                        ? fp->dmg.x18c4_source_ply
                        : -1;
     st->hit_counter = 0;
-    Geno_Event(31, fp->kind, fp->player_id, (int) (st->hit_damage * 100.0f), st->hit_port);
+    Geno_Event(31, fp->kind, fp->player_idx, (int) (st->hit_damage * 100.0f), st->hit_port);
     s = geno_cur_state(fp, st);
     if (s >= 0 && Geno_StateHasCounter(st->profile, s) &&
         st->action_time >= Geno_StateCounter(st->profile, s, GENO_CTR_FROM) &&
@@ -1094,7 +1094,7 @@ int Geno_OnHit(Fighter_GObj* gobj)
         countered = 1;
         st->hit_counter = 1;
         st->counters++;
-        Geno_Event(32, fp->kind, fp->player_id, s, st->action_time);
+        Geno_Event(32, fp->kind, fp->player_idx, s, st->action_time);
         if (Geno_StateCounter(st->profile, s, GENO_CTR_NEGATE)) {
             fp->dmg.kb_applied = 0.0f;
             fp->dmg.x1838_percentTemp = 0.0f;

@@ -1173,10 +1173,6 @@ void fn_80192758(HSD_GObj* gobj)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma inline_depth(0)
-#endif
 void fn_80192938(void)
 {
     struct Lbl804799B8_t* state = &lbl_804799B8;
@@ -1273,9 +1269,6 @@ void fn_80192938(void)
     tm->pad_x34[0] = 0xFF;
     tm->x33 = 0xFF;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void fn_80192BB0(void)
 {
@@ -2208,7 +2201,7 @@ typedef struct TmData_80194F30 {
     u8 pad_x0[0x2E];
     u8 x2E;
     u8 pad_x2F[0x37 - 0x2F];
-    struct {
+    struct TmData_80194F30_x37 {
         u8 x0;
         u8 x1;
         u8 x2;

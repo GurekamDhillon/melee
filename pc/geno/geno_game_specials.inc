@@ -237,7 +237,7 @@ static void geno_tornado_phys(Fighter_GObj* gobj)
         st->move_i[2] = 0;
         st->move_i[1] = 0;
         st->move_i[3]++;
-        Geno_Event(22, fp->kind, fp->player_id, st->move_i[3], (int) (fp->self_vel.y * 100.0f));
+        Geno_Event(22, fp->kind, fp->player_idx, st->move_i[3], (int) (fp->self_vel.y * 100.0f));
     }
     if (fp->self_vel.y > TP(12)) {
         fp->self_vel.y = TP(12);
@@ -435,7 +435,7 @@ static int geno_drill_end_state(Fighter* fp, GenoState* st)
 static void geno_drill_bounce(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int reason)
 {
     int e = geno_drill_end_state(fp, st);
-    Geno_Event(19, fp->kind, fp->player_id, reason, st->move_i[0]);
+    Geno_Event(19, fp->kind, fp->player_idx, reason, st->move_i[0]);
     st->move_i[3] = reason;
     if (e >= 0) {
         geno_do_change(gobj, fp, st, GENO_TARGET(GENO_TGT_GENO, e));
@@ -484,7 +484,7 @@ static void geno_drill_phys(Fighter_GObj* gobj)
     }
     st->move_f[0] = a;
     geno_drill_pose(fp, st); /* Brawl: posture rot.x = -pitch */
-    if (fp->x594_b0) {
+    if (fp->x594.x0.x594_b0) {
         spd = fp->x6A4_transNOffset.z;
     }
     fp->self_vel.x = lr * spd * cosf(a * GENO_DEG2RAD);
@@ -620,7 +620,7 @@ static void geno_cape_phys(Fighter_GObj* gobj)
     s32 f = st->move_i[0]++;
     f32 sx = geno_stick_dz(fp->input.lstick[0].x), sy = geno_stick_dz(fp->input.lstick[0].y);
     if (f == (s32) geno_param(st, GENO_P_CAPE_STEER_FRAME)) {
-        Geno_Event(26, fp->kind, fp->player_id, f, (int) (sx * 100.0f));
+        Geno_Event(26, fp->kind, fp->player_idx, f, (int) (sx * 100.0f));
     }
     if (f < (s32) geno_param(st, GENO_P_CAPE_STEER_FRAME)) {
         /* the kept momentum, no gravity, no friction */
@@ -674,7 +674,7 @@ static void geno_cape_anim(Fighter_GObj* gobj)
         t = geno_state_nth(st, GENO_BHV_CAPE_END, air);
     }
     st->move_i[1] = v + (air ? 10 : 0);
-    Geno_Event(27, fp->kind, fp->player_id, st->move_i[1], (int) held);
+    Geno_Event(27, fp->kind, fp->player_idx, st->move_i[1], (int) held);
     if (t < 0) {
         geno_helpless(gobj, fp, st);
         return;

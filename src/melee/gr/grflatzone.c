@@ -15,25 +15,6 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
 
-struct grFlatzone_YakumonoParam {
-    s32 unk0;
-    s32 unk4;
-    s32 unk8;
-    s32 unkC;
-    s32 unk10;
-    s32 unk14;
-    s32 unk18;
-    s32 unk1C;
-    s32 unk20;
-    f32 unk24;
-    f32 unk28;
-    int unk2C;
-    s32 unk30;
-    s32 unk34;
-    f32 unk38;
-    s32 unk3C;
-};
-
 static void stageGObj0_OnInit(Ground_GObj* gobj);
 
 static StageCallbacks grFz_StageCallbacks[] = {
@@ -697,13 +678,11 @@ void grFlatzone_80218060(s32 arg0)
             } else {
                 u8 v;
                 do {
-                loop_4:
                     gp->u.flatzone.xC7 = HSD_Randi(8);
                     v = gp->u.flatzone.xC7;
-                    if (v == gp->u.flatzone3.xC8) {
-                        goto loop_4;
-                    }
-                } while (((s16(*)[5]) grFz_803E7A68)[v][1] == -1);
+                } while (v == gp->u.flatzone3.xC8 ||
+                         ((s16(*)[5]) grFz_803E7A68)[v][1] == -1);
+
                 do {
                     {
                         s32 randi = HSD_Randi(4);
@@ -765,7 +744,7 @@ void grFlatzone_80218260(void)
     }
 }
 
-DynamicsDesc* grFlatzone_802182B4(enum_t arg0)
+lbColl_80008D30_arg1* grFlatzone_802182B4(enum_t arg0)
 {
     return NULL;
 }

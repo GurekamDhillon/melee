@@ -1,6 +1,5 @@
 #include "sislib.h"
 
-#include <printf.h> // IWYU pragma: keep
 #include <stdio.h>
 
 #include "cobj.h"
@@ -58,7 +57,7 @@ SisBlock* free_head;
 /// u8 HSD_SisLib_8040C490[0x60] = { 0 };
 
 static HSD_Archive* HSD_SisLib_804D1110[5];
-SIS* HSD_SisLib_804D1124[5];
+u8** HSD_SisLib_804D1124[5];
 
 void* HSD_SisLib_Alloc(s32 size)
 {
@@ -116,7 +115,7 @@ void* HSD_SisLib_Alloc(s32 size)
         SisBlock* next_free;
         int remaining_size;
 
-        data_ptr = (u8*) free_head->data;
+        data_ptr = free_head->data;
         next_free = free_cur->next;
         remaining_size = (free_cur->size - size) - (sizeof(SisBlock));
         if (remaining_size < 0) {
@@ -126,7 +125,7 @@ void* HSD_SisLib_Alloc(s32 size)
 
         free_head = (SisBlock*) (data_ptr + size);
         free_head->next = next_free;
-        free_head->data = (HSD_Text*) (free_head + 1);
+        free_head->data = free_head + 1;
         free_head->size = remaining_size;
         best->size = size;
     } else {
@@ -180,7 +179,7 @@ void HSD_SisLib_Free(void* ptr)
         }
         free_head = alloc_cur;
         alloc_cur->next = old_next;
-        free_head->data = (HSD_Text*) (free_head + 1);
+        free_head->data = free_head + 1;
         free_head->size = new_size;
         return;
     }
@@ -202,7 +201,7 @@ void HSD_SisLib_Free(void* ptr)
 void HSD_SisLib_803A5A2C(void* ptr)
 {
     HSD_Text* next_text;
-    SisBlock* alloc;
+    SisBuffer* alloc;
     HSD_Text* curr;
     HSD_Text* last;
 
@@ -223,8 +222,8 @@ void HSD_SisLib_803A5A2C(void* ptr)
                 }
                 HSD_SisLib_Free(curr->alloc_data);
             }
-            if (curr->string_buffer != NULL) {
-                HSD_SisLib_Free(curr->string_buffer);
+            if (curr->state_stack != NULL) {
+                HSD_SisLib_Free(curr->state_stack);
             }
             HSD_SisLib_Free(curr);
             return;
@@ -296,7 +295,7 @@ HSD_Text* HSD_SisLib_803A5ACC(int font_idx, s32 context_id, f32 pos_x,
     text->font_size.y = 1.0F;
     text->font_size.x = 1.0F;
     text->alloc_data = NULL;
-    text->string_buffer = 0;
+    text->state_stack = 0;
     text->sis_buffer = 0;
     text->bg_color.a = 0;
     text->bg_color.b = 0;
@@ -315,8 +314,8 @@ HSD_Text* HSD_SisLib_803A5ACC(int font_idx, s32 context_id, f32 pos_x,
     text->default_alignment = 0;
     text->default_fitting = 0;
     text->default_kerning = 0;
-    text->x6E = 0;
-    text->x6C = 0;
+    text->state_stack_capacity = 0;
+    text->state_stack_used = 0;
     text->x4E = 0;
     text->hidden = 0;
     text->x4C = 0;
@@ -425,7 +424,7 @@ void HSD_SisLib_803A5E70(void)
     free_head = HSD_SisLib_804D796C;
     used_head = NULL;
     free_head->next = NULL;
-    free_head->data = (HSD_Text*) (free_head + 1);
+    free_head->data = free_head + 1;
     free_head->size = HSD_SisLib_804D7968 - sizeof(SisBlock);
 }
 
@@ -464,7 +463,7 @@ void HSD_SisLib_803A6048(size_t size)
     used_head = NULL;
     HSD_SisLib_804D796C = free_head = HSD_MemAlloc(HSD_SisLib_804D7968);
     free_head->next = NULL;
-    free_head->data = (HSD_Text*) (free_head + 1);
+    free_head->data = free_head + 1;
     free_head->size = HSD_SisLib_804D7968 - sizeof(SisBlock);
     HSD_SisLib_804D7978 = NULL;
     HSD_SisLib_804D797C = NULL;
@@ -489,7 +488,7 @@ void fn_803A60EC(void* gobj)
 }
 
 #if defined(TARGET_PC)
-static void sislib_WideCamera(HSD_GObj* gobj, int pass)
+static void sislib_WideCamera(HSD_GObj* gobj, intptr_t pass)
 {
     extern int View_AspectBits(void);
     union { int i; float f; } aspect;
@@ -585,8 +584,8 @@ void HSD_SisLib_803A62A0(s32 font_idx, char* archive_name, char* symbol_name)
         OSPanic(__FILE__, 0x24A, "");
     }
     {
-        SIS* sis = HSD_ArchiveGetPublicAddress(HSD_SisLib_804D1110[font_idx],
-                                               symbol_name);
+        u8** sis = HSD_ArchiveGetPublicAs(u8*, HSD_SisLib_804D1110[font_idx],
+                                          symbol_name);
         HSD_SisLib_804D1124[font_idx] = sis;
         if (sis == NULL) {
             OSReport("Cannot find symbol %s.\n", symbol_name);
@@ -597,10 +596,10 @@ void HSD_SisLib_803A62A0(s32 font_idx, char* archive_name, char* symbol_name)
 
 void HSD_SisLib_803A6368(HSD_Text* text, s32 sis_idx)
 {
-    SIS** sis_table;
+    u8** sis_table;
     s32 i;
 
-    sis_table = (SIS**) HSD_SisLib_804D1124[text->font_idx];
+    sis_table = HSD_SisLib_804D1124[text->font_idx];
     if (sis_table != NULL) {
         text->sis_buffer = sis_table[sis_idx];
     }
@@ -617,18 +616,18 @@ void HSD_SisLib_803A6368(HSD_Text* text, s32 sis_idx)
     text->alignment = text->default_alignment;
     text->kerning = text->default_kerning;
     text->fitting = text->default_fitting;
-    text->x6C = 0;
+    text->state_stack_used = 0;
     text->x98 = 0;
     text->x94 = 0;
     text->x4B = 0;
-    if (text->string_buffer != NULL) {
-        HSD_SisLib_Free(text->string_buffer);
+    if (text->state_stack != NULL) {
+        HSD_SisLib_Free(text->state_stack);
     }
-    text->string_buffer = HSD_SisLib_Alloc(0x10);
+    text->state_stack = HSD_SisLib_Alloc(0x10);
     i = 0;
-    text->x6E = 0x10;
-    while (i < text->x6E) {
-        text->string_buffer[i] = 0;
+    text->state_stack_capacity = 0x10;
+    while (i < text->state_stack_capacity) {
+        text->state_stack[i] = 0;
         i += 1;
     }
 }

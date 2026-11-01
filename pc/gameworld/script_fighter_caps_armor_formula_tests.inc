@@ -13,7 +13,7 @@ static float script_caps_armor_formula_sample(float percent, int damage,
     HitCapsule hit;
     memset(&fp, 0, sizeof fp);
     memset(&hit, 0, sizeof hit);
-    fp.player_id = 0;
+    fp.player_idx = 0;
     fp.dmg.x1830_percent = percent;
     fp.dmg.x1838_percentTemp = damage;
     hit.x24 = growth;

@@ -395,8 +395,8 @@ static int script_enemy_preload(int which)
     i = which == 1 ? 0 : which == 3 ? 1 : 2;
     rows = stage_info.itemdata;
     for (j = 0; rows != NULL && j < 64 && rows[j] != NULL; ++j) {
-        if (rows[j]->unk0 == kinds[i] && rows[j]->unk4 != NULL) {
-            it_8026B40C(rows[j]->unk4, kinds[i]);
+        if (rows[j]->gr_itkind == kinds[i] && rows[j]->article_data != NULL) {
+            it_8026B40C(rows[j]->article_data, kinds[i]);
             script_stage.enemy_ready[which] = 1;
             break;
         }
@@ -409,10 +409,10 @@ static int script_enemy_preload(int which)
      * article asserts in Item_802675A8 ("not found zako model data"). Rows the running stage
      * already registered are left alone. */
     for (j = 0; rows != NULL && j < 64 && rows[j] != NULL; ++j) {
-        int k = rows[j]->unk0;
-        if (rows[j]->unk4 == NULL || k < It_Kind_Old_Kuri) continue;
+        int k = rows[j]->gr_itkind;
+        if (rows[j]->article_data == NULL || k < It_Kind_Old_Kuri) continue;
         if (it_804A0F60[k - It_Kind_Old_Kuri] == NULL) {
-            it_8026B40C(rows[j]->unk4, k);
+            it_8026B40C(rows[j]->article_data, k);
             OSReport("script enemy: registered stage item kind=%d from %s\n", k, files[i]);
         }
         if (k == kinds[i]) script_stage.enemy_ready[which] = 1;
@@ -589,7 +589,7 @@ static void script_mesh_render(Mtx view, int alpha)
 }
 
 #include "script_stage_render_pass.inc"
-static void script_stage_render(HSD_GObj* gobj, int code)
+static void script_stage_render(HSD_GObj* gobj, intptr_t code)
 {
     Mtx view;
     HSD_TevDesc tev;
@@ -684,14 +684,14 @@ static void script_stage_render(HSD_GObj* gobj, int code)
     HSD_StateInvalidate(-1);
 }
 
-static void script_stage_model_render(HSD_GObj* gobj, int code)
+static void script_stage_model_render(HSD_GObj* gobj, intptr_t code)
 {
     if (!Wb_RenderOption(WB_RENDER_STAGE, script_stage_geometry) || gx_suppress_draws) return;
     HSD_StateInvalidate(-1);
     HSD_GObj_JObjCallback(gobj, code); /* the stage's lit, textured JObj path */
 }
 
-static void script_background_render(HSD_GObj* gobj, int code)
+static void script_background_render(HSD_GObj* gobj, intptr_t code)
 {
     Mtx view;
     int alpha, i, count, order[SCRIPT_MESH_INSTANCES];
@@ -758,12 +758,12 @@ void ScriptGame_StageReady(void)
         ml->v1_idx = v + 1;
         ml->prev_id0 = ml->next_id0 = ml->prev_id1 = ml->next_id1 = -1;
         ml->hi_flags = ml->lo_flags = 0;
-        cl[l].x0 = ml;
+        cl[l].inner = ml;
         cl[l].flags = 0;
         for (k = 0; k < 2; ++k) {
-            cv[v + k].x0 = cv[v + k].x4 = 0;
+            cv[v + k].base_pos.x = cv[v + k].base_pos.y = 0;
             cv[v + k].pos.x = cv[v + k].pos.y = 0;
-            cv[v + k].x10 = cv[v + k].x14 = 0;
+            cv[v + k].prev_pos.x = cv[v + k].prev_pos.y = 0;
             map->verts[v + k].x = map->verts[v + k].y = 0;
         }
         for (k = 0; k < MapLineGroup_Count; ++k) {
@@ -776,7 +776,7 @@ void ScriptGame_StageReady(void)
         cj[script_stage.base_j + i].next = NULL;
         cj[script_stage.base_j + i].inner = mj;
         cj[script_stage.base_j + i].flags = 0;
-        cj[script_stage.base_j + i].x20 = NULL;
+        cj[script_stage.base_j + i].jobj = NULL;
         cj[script_stage.base_j + i].cb_0 = cj[script_stage.base_j + i].cb_1 = NULL;
         cj[script_stage.base_j + i].cb_data_0 = cj[script_stage.base_j + i].cb_data_1 = NULL;
         cj[script_stage.base_j + i].xE = false;
@@ -818,12 +818,12 @@ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int fl
     cv = mpGetGroundCollVtx(); cl = mpGetGroundCollLine(); cj = mpGetGroundCollJoint();
     scale = Ground_801C0498();
     if (scale <= 0.001f) scale = 1.0f;
-    cv[v].x0 = x0 / scale; cv[v].x4 = y0 / scale;
-    cv[v + 1].x0 = x1 / scale; cv[v + 1].x4 = y1 / scale;
-    cv[v].pos.x = cv[v].x10 = x0; cv[v].pos.y = cv[v].x14 = y0;
-    cv[v + 1].pos.x = cv[v + 1].x10 = x1; cv[v + 1].pos.y = cv[v + 1].x14 = y1;
-    map->verts[v].x = cv[v].x0; map->verts[v].y = cv[v].x4;
-    map->verts[v + 1].x = cv[v + 1].x0; map->verts[v + 1].y = cv[v + 1].x4;
+    cv[v].base_pos.x = x0 / scale; cv[v].base_pos.y = y0 / scale;
+    cv[v + 1].base_pos.x = x1 / scale; cv[v + 1].base_pos.y = y1 / scale;
+    cv[v].pos.x = cv[v].prev_pos.x = x0; cv[v].pos.y = cv[v].prev_pos.y = y0;
+    cv[v + 1].pos.x = cv[v + 1].prev_pos.x = x1; cv[v + 1].pos.y = cv[v + 1].prev_pos.y = y1;
+    map->verts[v].x = cv[v].base_pos.x; map->verts[v].y = cv[v].base_pos.y;
+    map->verts[v + 1].x = cv[v + 1].base_pos.x; map->verts[v + 1].y = cv[v + 1].base_pos.y;
     /* mpIsland_8005B004 builds floor/ceiling islands from the dynamic range when
      * mpJointListAdd runs. The extra 0x10 identifies its dynamic line type. */
     mj->ranges[MapLineGroup_Dynamic].start = l;
@@ -1093,7 +1093,7 @@ int ScriptGame_StageAddModel(int group, int joint_index, int xb, int yb, int zb,
         head = HSD_ArchiveGetPublicAddress(archive, symbol);
         if (head == NULL || group < 0 || group >= head->unkC || head->unk8 == NULL)
             return -1;
-        source = head->unk8[group].unk0;
+        source = head->unk8[group].joint;
     } else {
         source = HSD_ArchiveGetPublicAddress(archive, symbol);
     }
@@ -1210,8 +1210,8 @@ void ScriptGame_StageFrame(void)
         int v;
         if (!script_stage.line[i].active) continue;
         v = script_stage.base_v + i * 2;
-        cv[v].x10 = cv[v].pos.x; cv[v].x14 = cv[v].pos.y;
-        cv[v + 1].x10 = cv[v + 1].pos.x; cv[v + 1].x14 = cv[v + 1].pos.y;
+        cv[v].prev_pos.x = cv[v].pos.x; cv[v].prev_pos.y = cv[v].pos.y;
+        cv[v + 1].prev_pos.x = cv[v + 1].pos.x; cv[v + 1].prev_pos.y = cv[v + 1].pos.y;
         mpGetGroundCollJoint()[script_stage.base_j + i].flags &= ~CollJoint_B8;
     }
 
@@ -1256,9 +1256,9 @@ static int script_target_register(void)
     items = HSD_ArchiveGetPublicAddress(archive, "itemdata");
     if (items == NULL) return 0;
     for (i = 0; items[i] != NULL; ++i) {
-        if (items[i]->unk0 == It_Kind_Mato && items[i]->unk4 != NULL &&
-            items[i]->unk4->x10_modelDesc != NULL &&
-            items[i]->unk4->x10_modelDesc->x0_joint != NULL) break;
+        if (items[i]->gr_itkind == It_Kind_Mato && items[i]->article_data != NULL &&
+            items[i]->article_data->x10_modelDesc != NULL &&
+            items[i]->article_data->x10_modelDesc->x0_joint != NULL) break;
     }
     if (items[i] == NULL) return 0;
     script_target_attr.x1_67_cam_kind = 0;
@@ -1270,7 +1270,7 @@ static int script_target_register(void)
     script_target_hurt_desc.a_offset.z = 0;
     script_target_hurt_desc.b_offset = script_target_hurt_desc.a_offset;
     script_target_hurt_desc.scale = 5.0f;
-    script_target_model = *items[i]->unk4->x10_modelDesc;
+    script_target_model = *items[i]->article_data->x10_modelDesc;
     script_target_old_article = it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri];
     it_804A0F60[It_Kind_Mato - It_Kind_Old_Kuri] = &script_target_article;
     script_stage.target_model_ready = 1;
@@ -1528,11 +1528,11 @@ void ScriptGame_EnemyReceived(Item_GObj* gobj, Fighter_GObj* source, int damage)
         ScriptStageEnemy* e = &script_stage.enemy[i];
         if (e->active && !e->scripted_hurt && e->gobj == gobj) {
             if (e->received < 0x7FFFFFFF) e->received++;
-            e->last_attacker = fp->player_id;
+            e->last_attacker = fp->player_idx;
             e->last_damage = damage;
             {
                 extern void Script_EnemyHit(int handle, int from, int damage);
-                Script_EnemyHit(e->handle, fp->player_id, damage);
+                Script_EnemyHit(e->handle, fp->player_idx, damage);
             }
             return;
         }
@@ -1749,14 +1749,14 @@ static void script_mod_shield_clamp(int slot)
  * Reflection naturally changes the owner whose dealt multiplier applies. */
 float ScriptGame_FighterDealtDamage(Fighter* attacker, float damage)
 {
-    if (attacker && script_gobj_live(attacker->x1064_thrownHitbox.owner))
-        attacker=GET_FIGHTER(attacker->x1064_thrownHitbox.owner);
-    return attacker ? ScriptGame_ModDamage(attacker->player_id,0,damage) : damage;
+    if (attacker && script_gobj_live(attacker->x1064_thrownHitbox.x134.owner))
+        attacker=GET_FIGHTER(attacker->x1064_thrownHitbox.x134.owner);
+    return attacker ? ScriptGame_ModDamage(attacker->player_idx,0,damage) : damage;
 }
 float ScriptGame_ItemModDamage(Item* item, float damage)
 {
     if (item && script_gobj_live(item->owner))
-        damage=ScriptGame_ModDamage(GET_FIGHTER(item->owner)->player_id,0,damage);
+        damage=ScriptGame_ModDamage(GET_FIGHTER(item->owner)->player_idx,0,damage);
     return damage;
 }
 
@@ -1937,7 +1937,7 @@ static int script_lab_mission_floor_valid(Fighter* fp)
     if (!script_lab_mission_i(fp, LAB_I_ON_FLOOR) || map == NULL ||
         line >= map->line_count || lines == NULL || mpGetGroundCollVtx() == NULL ||
         !(lines[line].flags & CollLine_Floor)) return 0;
-    segment = lines[line].x0;
+    segment = lines[line].inner;
     return segment != NULL && segment->v0_idx < map->vert_count && segment->v1_idx < map->vert_count;
 }
 
@@ -2044,7 +2044,7 @@ float ScriptGame_LabF(int slot, int field)
     case LAB_F_FLOOR_Y:
         if (script_lab_mission_floor_valid(fp)) {
             Vec3 left, right;
-            MapLine* line = mpGetGroundCollLine()[cd->floor.index].x0;
+            MapLine* line = mpGetGroundCollLine()[cd->floor.index].inner;
             CollVtx* verts = mpGetGroundCollVtx();
             /* mpFloorGetLeft/Right walk an entire linked floor chain; using
              * that chain's endpoints would flatten a sequence of slopes. */
@@ -2129,7 +2129,7 @@ int ScriptGame_LabI(int slot, int field)
     case LAB_I_JUMP_AGE:
         return (int) fp->x67E;
     case LAB_I_SHIELD_ON:
-        return fp->x221B_b0 ? 1 : 0;
+        return fp->x221B.x221B_b0 ? 1 : 0;
     case LAB_I_JOINTS:
         return lab_joint_count(fp);
     case LAB_I_HURTBOXES:
@@ -2179,7 +2179,7 @@ int ScriptGame_HitI(int slot, int i, int field)
     case LAB_HI_STATE:
         /* the thrown hitbox keeps a stale state between throws; it is live only while it has
            an owner (the thrower) */
-        if (i == 4 && h->owner == NULL) {
+        if (i == 4 && h->x134.owner == NULL) {
             return 0;
         }
         return (int) h->state;
@@ -2429,7 +2429,7 @@ int ScriptGame_LabDebugDraw(int slot, int set, int value)
         HSD_GObj* g;
         for (g = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; g != NULL; g = g->next) {
             Fighter* f = GET_FIGHTER(g);
-            if (f->player_id == fp->player_id) {
+            if (f->player_idx == fp->player_idx) {
                 f->x21FC_flag.byte = (u8) value;
             }
         }
@@ -2603,7 +2603,7 @@ void ScriptGame_WbDraw(void)
             CollLine* lines = mpGetGroundCollLine();
             CollVtx* verts = mpGetGroundCollVtx();
             if (map && lines && verts) for (i = 0; i < map->line_count; ++i) {
-                MapLine* line = lines[i].x0;
+                MapLine* line = lines[i].inner;
                 Vec3 a, b;
                 if (!line || !(lines[i].flags & LINE_FLAG_ENABLED) ||
                     !(lines[i].flags & CollLine_Floor) || (lines[i].flags & LINE_FLAG_HIDDEN)) continue;
@@ -2723,7 +2723,7 @@ int ScriptGame_LabSetPreviewRow(int slot, int row, int facing)
 }
 int ScriptGame_LabPreviewRow(Fighter* fp, int motion)
 {
-    int slot = fp->player_id, row;
+    int slot = fp->player_idx, row;
     if (motion != ftCo_MS_Wait || slot < 0 || slot >= 6 || fp->is_sub_fighter) {
         return -1;
     }
@@ -3060,7 +3060,7 @@ static int script_cpu_idle_policy(int kind0,int override,int dflt)
 }
 int ScriptGame_CpuStanding(Fighter* fp)
 {
-    int slot=fp->player_id;
+    int slot=fp->player_idx;
     if (slot<0 || slot>=6 || Player_GetPlayerSlotType(slot)!=Gm_PKind_Cpu) return 0;
     return script_cpu_idle_policy(Player_GetCpuType(slot)==CpuKind_0,script_cpu_override[slot],
                                   Script_CpuIdleDefault(slot));
@@ -3096,7 +3096,7 @@ static int script_cpu_stand_quiet(Fighter* fp, int standing)
 static void script_cpu_script_tick(Fighter* fp);
 int ScriptGame_CpuStandTick(Fighter* fp)
 {
-    int slot=fp->player_id;
+    int slot=fp->player_idx;
     if (slot>=0 && slot<6 && script_cpu_override[slot]==3 &&
         Player_GetPlayerSlotType(slot)==Gm_PKind_Cpu) {
         script_cpu_script_tick(fp);
@@ -3224,7 +3224,7 @@ int ScriptGame_EnemyHit(int handle, int from_slot, int damage, int angle, int kb
         ip->xCC8_knockback = it_80270CD8(ip, &hit);
         ip->xCAC_angle = angle;
         ip->xCC4 = HitElement_Normal;
-        ip->xCB0_source_ply = from != NULL ? from->player_id : 6;
+        ip->xCB0_source_ply = from != NULL ? from->player_idx : 6;
         ip->xCEC_fighterGObj = from != NULL ? from->gobj : NULL;
         ip->xCF0_itemGObj = NULL;
         ip->xCCC_incDamageDirection = from != NULL && from->cur_pos.x < ip->pos.x
@@ -3249,9 +3249,9 @@ int ScriptGame_EnemyHit(int handle, int from_slot, int damage, int angle, int kb
 }
 /* ---- end enemies2 hit block ---- */
 
-/* gd.hit: feed the same damage result consumed after ftColl_8007AB48 in Fighter_8006CB94.
+/* gd.hit: feed the same damage result consumed after ftColl_8007AB48 in Fighter_procAttackColl.
  * ftColl_8007A06C chooses the collision's knockback, angle, direction and source;
- * Fighter_ProcessHit_8006D1EC applies percent/HP, damage state and hitlag. The entry and
+ * Fighter_procCollResolve applies percent/HP, damage state and hitlag. The entry and
  * hitbox live on this stack only while the collision result is being consumed. */
 int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int bkb)
 {
@@ -3282,8 +3282,8 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
         entry.x0 = 1; /* ftColl_80076ED8: fighter hitbox against fighter hurtbox */
         entry.kind = from->kind;
         entry.gobj = from->gobj;
-        entry.hit0 = &hit;
-        entry.hurt1 = &fp->hurt_capsules[0];
+        entry.xC.hit0 = &hit;
+        entry.x10.hurt1 = &fp->hurt_capsules[0];
     } else {
         entry.x0 = 3; /* ftColl_80076764: anonymous environment damage */
         entry.kind = -10;
@@ -3292,17 +3292,17 @@ int ScriptGame_Hit(int slot, int from_slot, int damage, int angle, int kbg, int 
         env.unkC = kbg;
         env.unk14 = bkb;
         env.element = HitElement_Normal;
-        entry.unk_anim0 = (DynamicsDesc*) &env;
+        entry.xC.unk_anim0 = (lbColl_80008D30_arg1*) &env;
         /* ftColl_8007A06C reads best_entry->hit0->kb_angle (the 361 check) for every entry kind */
-        entry.hit0 = &hit;
-        entry.hurt1 = &fp->hurt_capsules[0];
+        entry.xC.hit0 = &hit;
+        entry.x10.hurt1 = &fp->hurt_capsules[0];
     }
     {
         extern void ftColl_8007A06C(Fighter_GObj*, void*, void*, size_t, int);
         ftColl_8007A06C(fp->gobj, &fp->dmg.facing_dir_1, &entry, 1, 0);
     }
     ScriptGame_HitRuleWon(&hit,fp);
-    Fighter_ProcessHit_8006D1EC(fp->gobj);
+    Fighter_procCollResolve(fp->gobj);
     ScriptGame_HitRuleForget(&hit);
     OSReport("script: hit victim=%d from=%d damage=%d angle=%d kbg=%d bkb=%d percent=%d\n",
              slot + 1, from_slot + 1, damage, angle, kbg, bkb,
@@ -3342,20 +3342,20 @@ int ScriptGame_EnemyStrike(int handle, int slot, int damage, int angle, int kbg,
         !script_enemy_finite(fp->cur_pos.y) || ip->xCBC_hitlagFrames > 0.0f || fabsf(ip->pos.x - fp->cur_pos.x) > reach.f ||
         fabsf(ip->pos.y - fp->cur_pos.y) > 12.0f ||
         (fp->cur_pos.x - ip->pos.x) * ip->facing_dir < 0.0f ||
-        (ip->owner == fp->gobj && !ip->xDCE_flag.b0) ||
-        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.b1 && fp->team == ip->x20_team_id) ||
+        (ip->owner == fp->gobj && !ip->xDCE_flag.x0.b0) ||
+        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.x0.b1 && fp->team == ip->x20_team_id) ||
         !ftColl_80076640(fp, &applied)) return 0;
     hit.damage = applied; hit.unk_count = (u32) applied;
     hit.kb_angle = angle; hit.x24 = kbg; hit.x2C = bkb; hit.element = HitElement_Normal;
     entry.x0 = 2; entry.kind = ip->kind; entry.gobj = ip->entity;
-    entry.hit0 = &hit; entry.hurt1 = &fp->hurt_capsules[0];
+    entry.xC.hit0 = &hit; entry.x10.hurt1 = &fp->hurt_capsules[0];
     entry.pos = fp->cur_pos; entry.x20 = applied; entry.size_of_xC = (size_t) applied;
     {
         extern void ftColl_8007A06C(Fighter_GObj*, void*, void*, size_t, int);
         extern void Script_EnemyGameEvent(int, int, int, int, int, int);
         union { float f; int i; } bits;
         ftColl_8007A06C(fp->gobj, &fp->dmg.facing_dir_1, &entry, 1, 0);
-        Fighter_ProcessHit_8006D1EC(fp->gobj);
+        Fighter_procCollResolve(fp->gobj);
         bits.f = applied;
         Script_EnemyGameEvent(handle, -1, slot, 0xFF | 0x400, bits.i, 1);
     }
@@ -3382,8 +3382,8 @@ int ScriptGame_EnemyHurt(int handle, int from_slot, int damage, int angle, int k
         ip->xD0C == 2 || ip->xCBC_hitlagFrames > 0.0f || ip->xCA0 != 0 || ip->xCC8_knockback != 0.0f ||
         fabsf(ip->pos.x - fp->cur_pos.x) > reach.f || fabsf(ip->pos.y - fp->cur_pos.y) > 12.0f ||
         (ip->pos.x - fp->cur_pos.x) * fp->facing_dir < 0.0f ||
-        (ip->owner == fp->gobj && !ip->xDCE_flag.b0) ||
-        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.b1 && fp->team == ip->x20_team_id)) return 0;
+        (ip->owner == fp->gobj && !ip->xDCE_flag.x0.b0) ||
+        (gm_8016B168() && !gm_8016B0D4() && !ip->xDCE_flag.x0.b1 && fp->team == ip->x20_team_id)) return 0;
     hit.state = HitCapsule_Enabled; hit.damage = damage; hit.unk_count = damage;
     hit.kb_angle = angle; hit.x24 = kbg; hit.x2C = bkb; hit.element = HitElement_Normal;
     hit.hurt_coll_pos = ip->pos;
@@ -3417,7 +3417,7 @@ int ScriptGame_EnemyTest(void)
     item.entity = &gobj; item.pos.x = 4; item.pos.y = 2;
     item.xAC8_hurtboxNum = 1; item.xACC_itemHurtbox[0].state = HurtCapsule_Enabled;
     e->handle = 0x7FFFFFFF; e->active = 1; e->gobj = &gobj; e->last_group = -1;
-    source.player_id = 0; reach.f = 10;
+    source.player_idx = 0; reach.f = 10;
     for (i = 0; i <= 2; i += 2) {
         e->kind = script_enemy_kinds[i];
         if (ScriptGame_EnemyI(e->handle, 0) != i) rc = 1;
@@ -3490,9 +3490,9 @@ float ScriptGame_LabKnockback(int slot, int attacker_slot, int dmg_bits, int kbg
         fp->dmg.x1830_percent = pct.f;
     }
     fp->dmg.x1838_percentTemp = (float) hit.unk_count;
-    atk = at != NULL ? Player_GetAttackRatio(at->player_id) : 1.0f;
+    atk = at != NULL ? Player_GetAttackRatio(at->player_idx) : 1.0f;
     kb = ftColl_80079AB0(fp, &hit, hit.unk_count, gm_8016B248(), atk,
-                         Player_GetDefenseRatio(fp->player_id), fp->co_attrs.weight);
+                         Player_GetDefenseRatio(fp->player_idx), fp->co_attrs.weight);
     if (post) {
         fp->dmg.kb_applied = kb;
         ftCo_Damage_CalcKnockback(fp);
@@ -3716,7 +3716,7 @@ int ScriptGame_LabFighterAt(u32 va)
         Fighter* f = GET_FIGHTER(g);
         u32 base = (u32) (uintptr_t) f;
         if (f != NULL && va >= base && va < base + (u32) sizeof(Fighter)) {
-            return ((int) f->player_id << 16) | (int) (va - base);
+            return ((int) f->player_idx << 16) | (int) (va - base);
         }
     }
     return -1;
@@ -3794,7 +3794,7 @@ void ScriptGame_OnePSpawnTint(Fighter* fp,int owner,int rgb)
         if(i<0)continue;
         lab_part_colors[i].dobj=dobj;lab_part_colors[i].rgb=(u32)rgb;
         lab_part_colors[i].owner=owner;lab_part_colors[i].mode=PART_CTL_TINT;
-        lab_part_colors[i].slot=fp->player_id;
+        lab_part_colors[i].slot=fp->player_idx;
         if(i>=lab_part_colors_hi)lab_part_colors_hi=i+1;
     }
 }

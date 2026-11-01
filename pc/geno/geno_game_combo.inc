@@ -46,7 +46,7 @@ static s32 geno_combo_entering;
 
 static GenoComboBlock* geno_combo_block(Fighter* fp)
 {
-    int p = fp->player_id < GENO_PLAYERS ? fp->player_id : GENO_PLAYERS - 1;
+    int p = fp->player_idx < GENO_PLAYERS ? fp->player_idx : GENO_PLAYERS - 1;
     return &Geno_ComboBlock[p][fp->is_sub_fighter ? 1 : 0];
 }
 
@@ -482,7 +482,7 @@ int GenoGame_ComboInfo(int port, int what)
     }
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
         Fighter* fp = GET_FIGHTER(cur);
-        if (fp->player_id == port && !fp->is_sub_fighter) {
+        if (fp->player_idx == port && !fp->is_sub_fighter) {
             GenoState* st = geno_state(fp);
             GenoComboBlock* cb = geno_combo_block(fp);
             if (!geno_combo_on(st)) {
@@ -523,7 +523,7 @@ int GenoGame_ComboSetKi(int port, int ki)
     }
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
         Fighter* fp = GET_FIGHTER(cur);
-        if (fp->player_id == port && !fp->is_sub_fighter) {
+        if (fp->player_idx == port && !fp->is_sub_fighter) {
             GenoState* st = geno_state(fp);
             if (!geno_combo_on(st)) {
                 return -1;

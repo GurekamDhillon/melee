@@ -1,7 +1,5 @@
 #include "grlast.h"
 
-#include <math.h>
-
 #include "granime.h"
 #include "grdisplay.h"
 #include "grlib.h"
@@ -76,7 +74,7 @@
 /* 21C500 */ static void grLast_8021C500(Ground_GObj*);
 /* 21C640 */ static void grLast_8021C640(void);
 /* 21C6AC */ static void grLast_8021C6AC(void);
-/* 21C740 */ static DynamicsDesc* grLast_OnTouchLine(enum_t);
+/* 21C740 */ static lbColl_80008D30_arg1* grLast_OnTouchLine(enum_t);
 /* 21C748 */ static bool grLast_OnCheckShadowRender(Vec3*, int, HSD_JObj*);
 
 /// @todo Size is wrong but type is correct; using ::SDATA as a hack
@@ -90,12 +88,7 @@ Vec3 const grLast_803B8480 = { 1.0f, 1.0f, 1.0f };
 Vec3 const grLast_803B848C = { 0.0f, 1.0f, 0.0f };
 Vec3 const grLast_803B8498 = { 0.0f, 0.0f, 1.0f };
 
-static struct grLast_YakumonoParam {
-    void* x0;
-    void* x4;
-    void* x8;
-    void* xC;
-}* yakumono_param;
+static struct grLast_YakumonoParam* yakumono_param;
 
 static void grLast_OnDemoInit(enum_t arg0)
 {
@@ -1039,7 +1032,7 @@ static void grLast_8021C6AC(void)
     Ground_801C0574(&spC);
 }
 
-static DynamicsDesc* grLast_OnTouchLine(enum_t arg0)
+static lbColl_80008D30_arg1* grLast_OnTouchLine(enum_t arg0)
 {
     return NULL;
 }

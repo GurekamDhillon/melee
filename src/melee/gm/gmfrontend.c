@@ -1371,7 +1371,7 @@ static void fe_draw_frame(void)
     fe_panel_art_frame(&bounds, 64.0F, 16.0F, 0, false);
 }
 
-static void fe_draw_panels(HSD_GObj* gobj, int pass)
+static void fe_draw_panels(HSD_GObj* gobj, intptr_t pass)
 {
     int slot;
     float pulse;
@@ -1470,7 +1470,7 @@ static void fe_draw_panels(HSD_GObj* gobj, int pass)
     }
 }
 
-static void fe_draw_fade(HSD_GObj* gobj, int pass)
+static void fe_draw_fade(HSD_GObj* gobj, intptr_t pass)
 {
     (void) gobj;
     if (pass != 2) {

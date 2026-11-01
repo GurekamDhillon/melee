@@ -50,7 +50,7 @@ static f32 geno_lua_bitsf(u32 u)
 
 static GenoLuaBlock* geno_lua_block(Fighter* fp)
 {
-    int p = fp->player_id < GENO_PLAYERS ? fp->player_id : GENO_PLAYERS - 1;
+    int p = fp->player_idx < GENO_PLAYERS ? fp->player_idx : GENO_PLAYERS - 1;
     return &Geno_LuaBlock[p][fp->is_sub_fighter ? 1 : 0];
 }
 
@@ -70,7 +70,7 @@ int GenoGame_LuaInfo(int port, int what)
     }
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
         Fighter* fp = GET_FIGHTER(cur);
-        if (fp->player_id == port && !fp->is_sub_fighter) {
+        if (fp->player_idx == port && !fp->is_sub_fighter) {
             GenoState* st = geno_state(fp);
             GenoLuaBlock* lb = geno_lua_block(fp);
             g = cur;
@@ -109,7 +109,7 @@ static u32 geno_lua_hit_from(Fighter* fp, GenoState* st)
     }
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL; cur = cur->next) {
         Fighter* ap = GET_FIGHTER(cur);
-        if (ap != fp && ap->player_id == st->hit_port && !ap->is_sub_fighter) {
+        if (ap != fp && ap->player_idx == st->hit_port && !ap->is_sub_fighter) {
             f32 dx = (ap->cur_pos.x - fp->cur_pos.x) * (fp->facing_dir < 0.0f ? -1.0f : 1.0f);
             return dx >= 0.0f ? 1u : 2u;
         }

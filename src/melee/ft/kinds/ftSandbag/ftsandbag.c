@@ -4,8 +4,6 @@
 
 #include <melee/ft/forward.h>
 
-#include <math.h>
-
 #include "forward.h"
 #include <melee/ft/fighter.h>
 #include <melee/ft/ft_081B.h>
@@ -41,10 +39,6 @@ char ftSb_Init_AnimDatFilename[] = "PlSbAJ.dat";
 Fighter_CostumeStrings ftSb_Init_CostumeStrings[] = {
     { ftSb_Init_803D39D4, ftSb_Init_803D39E0, ftSb_Init_803D39F8 },
 };
-
-typedef struct _ftSandbagAttributes {
-    u32 x0_pair[2];
-} ftSandbagAttributes;
 
 void ftSb_Init_OnDeath(HSD_GObj* arg0) {}
 
@@ -113,7 +107,8 @@ void ftSb_Init_8014FBA4(HSD_GObj* gobj)
         ftCommon_8007D7FC(fp);
     }
 
-    Fighter_ChangeMotionState(gobj, 0x155, 0, 0.0f, 1.0f, 0.0f, 0);
+    Fighter_ChangeMotionState(gobj, ftSb_MS_WaitReverse, Ft_MF_None, 0.0f,
+                              1.0f, 0.0f, NULL);
     ftCommon_8007EFC0(fp, p_ftCommonData->x5F0);
 }
 

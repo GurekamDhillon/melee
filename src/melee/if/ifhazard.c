@@ -57,7 +57,7 @@ void fn_802FD680(HSD_GObj* gobj)
     HSD_JObjAnimAll(jobj);
 }
 
-void fn_802FD6CC(HSD_GObj* gobj, int pass)
+void fn_802FD6CC(HSD_GObj* gobj, intptr_t pass)
 {
 #if defined(TARGET_PC)
     extern int Ui_RetailHidden(int id); /* pc/platform/gw_script_ui.inc: the Atlas retail mask (empty by default) */

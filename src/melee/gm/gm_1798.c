@@ -7,7 +7,6 @@
 #include "gm_unsplit.h"
 #include "gmresult.h"
 #include "gmresultplayer.h"
-#include "gmresultplayer.static.h"
 #include "types.h"
 #include <melee/cm/camera.h>
 #include <melee/ef/efasync.h>
@@ -110,7 +109,7 @@ static void sdata2_order(void)
 /* Ported from m-ex (https://github.com/akaneia/m-ex):
  * asm/qol/ReduceResultScreenLag/{clapping,rewrite_prologue,rewrite_epilogue,
  * slot1,slot2,slot3,slot4}.asm. The result screen normally draws every player's
- * clapping model; these patches toggle Fighter.x21FC_flag.b0 so only the model for
+ * clapping model; these patches toggle Fighter.x21FC_flag.x0.b0 so only the model for
  * the slot being rendered stays visible (show_slot >= 0), or every model at once
  * (show_slot < 0), cutting overdraw lag.
  * Opt-in: MELEE_MEX=reduce_result_screen_lag. */
@@ -126,7 +125,7 @@ static void gm_1798_MexSetResultModels(int show_slot)
         if (entity == NULL) {
             continue;
         }
-        GET_FIGHTER(entity)->x21FC_flag.b0 =
+        GET_FIGHTER(entity)->x21FC_flag.x0.b0 =
             (show_slot < 0) ? 1 : (i == show_slot);
     }
 }
@@ -161,7 +160,7 @@ void fn_80179854(void)
     }
 }
 
-extern s32 ftLib_800876B4(HSD_GObj*);
+extern s32 ftLib_IsFramesRemaining(HSD_GObj*);
 
 static inline int get_big_loser(int slot, MatchEnd* match_end)
 {
@@ -263,7 +262,7 @@ void fn_80179990(HSD_GObj* arg0, int arg1, int arg2)
                     fn_80179990_img_at(disp->player_img2, arg2);
             }
         } else {
-            if (ftLib_800876B4(Player_GetEntity(arg2)) == 0) {
+            if (ftLib_IsFramesRemaining(Player_GetEntity(arg2)) == 0) {
                 if (RESULTS_STATE.player_flags[arg2] == 0 && RESULTS_STATE.x0_6) {
                     fn_80179990_set_erase_color(match_end, arg2);
                     HSD_CObjEraseScreen(cobj, 1, 0, 0);
@@ -289,27 +288,27 @@ void fn_80179990(HSD_GObj* arg0, int arg1, int arg2)
     }
 }
 
-void fn_80179D3C(HSD_GObj* gobj, int arg1)
+void fn_80179D3C(HSD_GObj* gobj, intptr_t arg1)
 {
     fn_80179990(gobj, arg1, 0);
 }
 
-void fn_80179D60(HSD_GObj* gobj, int arg1)
+void fn_80179D60(HSD_GObj* gobj, intptr_t arg1)
 {
     fn_80179990(gobj, arg1, 1);
 }
 
-void fn_80179D84(HSD_GObj* gobj, int arg1)
+void fn_80179D84(HSD_GObj* gobj, intptr_t arg1)
 {
     fn_80179990(gobj, arg1, 2);
 }
 
-void fn_80179DA8(HSD_GObj* gobj, int arg1)
+void fn_80179DA8(HSD_GObj* gobj, intptr_t arg1)
 {
     fn_80179990(gobj, arg1, 3);
 }
 
-void fn_80179DCC(HSD_GObj* gobj, int arg1)
+void fn_80179DCC(HSD_GObj* gobj, intptr_t arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
 #if defined(TARGET_PC)
@@ -326,7 +325,7 @@ void fn_80179DCC(HSD_GObj* gobj, int arg1)
 #endif
 }
 
-void fn_80179E34(HSD_GObj* gobj, int arg1)
+void fn_80179E34(HSD_GObj* gobj, intptr_t arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
 #if defined(TARGET_PC)
@@ -343,7 +342,7 @@ void fn_80179E34(HSD_GObj* gobj, int arg1)
 #endif
 }
 
-void fn_80179E9C(HSD_GObj* gobj, int arg1)
+void fn_80179E9C(HSD_GObj* gobj, intptr_t arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
 #if defined(TARGET_PC)
@@ -360,7 +359,7 @@ void fn_80179E9C(HSD_GObj* gobj, int arg1)
 #endif
 }
 
-void fn_80179F04(HSD_GObj* gobj, int arg1)
+void fn_80179F04(HSD_GObj* gobj, intptr_t arg1)
 {
     HSD_CObj* cobj = GET_COBJ(gobj);
 #if defined(TARGET_PC)
@@ -597,7 +596,7 @@ Fighter_GObj* fn_8017A67C(CharacterKind kind, int arg1, int arg2)
         Player_80036E20(kind, lbArchive_LoadArchive(gm_80160438(kind)), 0);
         Player_SetPlayerCharacter(arg2, kind);
         Player_SetCostumeId(arg2, arg1);
-        Player_SetPlayerId(arg2, arg2);
+        Player_SetPadPort(arg2, arg2);
         Player_SetSlottype(arg2, Gm_PKind_Demo);
 
         if (kind == CKind_GameWatch) {

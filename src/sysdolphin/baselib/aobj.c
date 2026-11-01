@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "cobj.h"
+#include "cobj.h" // IWYU pragma: keep
 #include "debug.h"
 #include "dobj.h"
 #include "fog.h"
@@ -122,10 +122,13 @@ void HSD_AObjStopAnim(HSD_AObj* aobj, void* obj, HSD_ObjUpdateFunc func)
     aobj->flags |= AOBJ_NO_ANIM;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+static inline f32 getLoopedFrame(HSD_AObj* aobj)
+{
+    f32 y = aobj->end_frame - aobj->rewind_frame;
+    f32 x = aobj->curr_frame - aobj->rewind_frame;
+    return fmodf(x, y) + aobj->rewind_frame;
+}
+
 void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
                            HSD_ObjUpdateFunc update_func)
 {
@@ -136,7 +139,7 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
     }
 
     if (aobj->flags & AOBJ_FIRST_PLAY) {
-        aobj->flags &= 0xF7FFFFFF;
+        aobj->flags &= ~AOBJ_FIRST_PLAY;
         rate = 0.0F;
     } else {
         rate = aobj->framerate;
@@ -145,12 +148,8 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
 
     if ((aobj->flags & AOBJ_LOOP) && aobj->end_frame <= aobj->curr_frame) {
         if (aobj->rewind_frame < aobj->end_frame) {
-            f32 x, y;
-
             HSD_FObjStopAnimAll(aobj->fobj, obj, update_func, rate);
-            y = aobj->end_frame - aobj->rewind_frame;
-            x = aobj->curr_frame - aobj->rewind_frame;
-            aobj->curr_frame = fmodf(x, y) + aobj->rewind_frame;
+            aobj->curr_frame = getLoopedFrame(aobj);
             HSD_FObjReqAnimAll(aobj->fobj, aobj->curr_frame);
         } else {
             aobj->curr_frame = aobj->end_frame;
@@ -158,7 +157,7 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
         rate = 0.0F;
         aobj->flags |= AOBJ_REWINDED;
     } else {
-        aobj->flags &= 0xFBFFFFFF;
+        aobj->flags &= ~AOBJ_REWINDED;
     }
 
     if (aobj->flags & AOBJ_NO_UPDATE) {
@@ -167,11 +166,8 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
         HSD_FObjInterpretAnimAll(aobj->fobj, obj, update_func, rate);
     }
 
-    if (!(aobj->flags & AOBJ_LOOP) && (aobj->end_frame <= aobj->curr_frame) &&
-        aobj)
-    {
-        HSD_FObjStopAnimAll(aobj->fobj, obj, update_func, aobj->framerate);
-        aobj->flags |= AOBJ_NO_ANIM;
+    if (!(aobj->flags & AOBJ_LOOP) && aobj->end_frame <= aobj->curr_frame) {
+        HSD_AObjStopAnim(aobj, obj, update_func);
     }
 
     if (aobj->flags & AOBJ_NO_ANIM) {
@@ -180,9 +176,6 @@ void HSD_AObjInterpretAnim(HSD_AObj* aobj, void* obj,
         HSD_AObj_804D7630 += 1;
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 HSD_AObj* HSD_AObjLoadDesc(HSD_AObjDesc* aobjdesc)
 {
@@ -193,7 +186,7 @@ HSD_AObj* HSD_AObjLoadDesc(HSD_AObjDesc* aobjdesc)
 
     HSD_FObj* fobj;
     HSD_IDKey id;
-    HSD_Obj* phi_r30;
+    HSD_JObj* phi_r30;
 
     if (aobjdesc != NULL) {
         aobj = HSD_AObjAlloc();
@@ -203,21 +196,20 @@ HSD_AObj* HSD_AObjLoadDesc(HSD_AObjDesc* aobjdesc)
         fobjdesc = aobjdesc->fobjdesc;
         fobj = HSD_FObjLoadDesc(fobjdesc);
         HSD_AObjSetFObj(aobj, fobj);
-        id = aobjdesc->obj_id;
+        id = (HSD_IDKey) aobjdesc->obj_id;
         if (id != 0U) {
-            HSD_Obj* hsd_obj = HSD_IDGetDataFromTable(0, id, 0);
+            HSD_JObj* hsd_obj = HSD_IDGetDataFromTable(0, id, 0);
             phi_r30 = hsd_obj;
             if (hsd_obj != NULL) {
                 ref_INC(hsd_obj);
             } else {
-                phi_r30 =
-                    (HSD_Obj*) HSD_JObjLoadJoint((void*) aobjdesc->obj_id);
+                phi_r30 = HSD_JObjLoadJoint((HSD_Joint*) aobjdesc->obj_id);
             }
             if (aobj != NULL) {
-                if (aobj->hsd_obj != NULL) {
-                    HSD_JObjUnref((HSD_JObj*) aobj->hsd_obj);
+                if (aobj->jobj != NULL) {
+                    HSD_JObjUnref(aobj->jobj);
                 }
-                aobj->hsd_obj = phi_r30;
+                aobj->jobj = phi_r30;
             }
         }
         return aobj;
@@ -239,10 +231,10 @@ void HSD_AObjRemove(HSD_AObj* aobj)
     }
 
     if (aobj) {
-        if (aobj->hsd_obj != NULL) {
-            HSD_JObjUnref((HSD_JObj*) aobj->hsd_obj);
+        if (aobj->jobj != NULL) {
+            HSD_JObjUnref(aobj->jobj);
         }
-        aobj->hsd_obj = NULL;
+        aobj->jobj = NULL;
     }
     HSD_AObjFree(aobj);
 }
@@ -557,7 +549,7 @@ void HSD_AObjSetCurrentFrame(HSD_AObj* aobj, f32 frame)
 
     if (!(aobj->flags & AOBJ_NO_ANIM) && aobj) {
         aobj->curr_frame = frame;
-        aobj->flags = (aobj->flags & 0xBFFFFFFF) | AOBJ_FIRST_PLAY;
+        aobj->flags = (aobj->flags & ~AOBJ_NO_ANIM) | AOBJ_FIRST_PLAY;
         HSD_FObjReqAnimAll(aobj->fobj, frame);
     }
 }

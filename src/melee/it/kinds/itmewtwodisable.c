@@ -52,7 +52,7 @@ itMewtwoDisable_Logic67_SpawnMewtwoDisable(Fighter_GObj* fighter_gobj,
     vel->x = 0.0f;
     spawnitem.x0_parent_gobj = fighter_gobj;
     spawnitem.x4_parent_gobj2 = spawnitem.x0_parent_gobj;
-    spawnitem.x44_flag.b0 = true;
+    spawnitem.x44_flag.x0.b0 = true;
     spawnitem.x40 = 0;
 
     if ((item_gobj = Item_80268B18(&spawnitem)) != NULL) {
@@ -72,12 +72,13 @@ itMewtwoDisable_Logic67_SpawnMewtwoDisable(Fighter_GObj* fighter_gobj,
 void it_802C4B38(Item_GObj* item_gobj)
 {
     Item* item = GET_ITEM(item_gobj);
-    itMDisableAttributes* attrs = item->xC4_article_data->x4_specialAttributes;
+    itMDisableAttributes* attrs =
+        &item->xC4_article_data->x4_specialAttributes->m_disable;
     Fighter_GObj* fighter_gobj = item->xDD4_itemVar.mdisable.owner;
 
     // the last parameter gets the y scaling of mewtwo
     item->x40_vel.x =
-        attrs->x_vel * item->facing_dir * ftLib_80086A0C(fighter_gobj);
+        attrs->x_vel * item->facing_dir * ftLib_GetScale(fighter_gobj);
     item->x40_vel.y = item->x40_vel.z = 0.0f;
     // set mdisable lifetime timers
     it_80275158(item_gobj, attrs->lifetime);
@@ -90,7 +91,7 @@ void it_802C4BB8(Item_GObj* item_gobj)
     float y_scale;
 
     Item_80268E5C(item_gobj, 0, ITEM_ANIM_UPDATE);
-    y_scale = ftLib_80086A0C(item->xDD4_itemVar.mdisable.owner);
+    y_scale = ftLib_GetScale(item->xDD4_itemVar.mdisable.owner);
     it_802755C0(item_gobj, y_scale);
 }
 

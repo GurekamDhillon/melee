@@ -85,7 +85,7 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
     if (st->hold_frames < (need > 0 ? need : 1)) {
         return 0;
     }
-    Geno_Event(17, fp->kind, fp->player_id, st->hold_frames, (int) fp->motion_id);
+    Geno_Event(17, fp->kind, fp->player_idx, st->hold_frames, (int) fp->motion_id);
     st->hold_frames = -1;
     return geno_do_change(gobj, fp, st, GENO_TARGET(GENO_TGT_GENO, start));
 }
@@ -255,7 +255,7 @@ static void geno_glide_end(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int r
 {
     int s = geno_cur_state(fp, st);
     st->GL_REASON = reason;
-    Geno_Event(21, fp->kind, fp->player_id, reason, st->GL_TIME);
+    Geno_Event(21, fp->kind, fp->player_idx, reason, st->GL_TIME);
     if (reason == 3) {
         int k = geno_state_with(st, GENO_BHV_GLIDE_ATTACK);
         if (k >= 0) {

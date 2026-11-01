@@ -18,7 +18,7 @@
  *   Pre-Frame (0x37), per frame per character: the PROCESSED inputs - sticks, C-stick, trigger and
  *     buttons as the fighter holds them after deadzones and the L/R/Z folding. RestoreGameFrame.asm
  *     writes them into the fighter (fp+0x620..0x65C) at 0x8006B0DC, inside
- *     Fighter_Spaghetti_8006AD10 just before pressed/released are derived - the same point here.
+ *     Fighter_procInput just before pressed/released are derived - the same point here.
  *     Recording and playback both use this point, so pad sampling, the pad queue and controller
  *     calibration are out of the loop entirely.
  *   Modern online Pre-Frame events also retain physical buttons, normalized L/R trigger floats
@@ -1262,7 +1262,7 @@ static void gw_tb_printf(int which, FILE *plain, const char *fmt, ...) {
 }
 
 /* Where this replay's Slippi recorded post-frame state: 1.x/2.x at Fighter_procMap's epilogue
- * (0x8006C5D8), 3.x at Fighter_UnkCallCameraCallback_8006D9EC's (0x8006DA34, after hits). */
+ * (0x8006C5D8), 3.x at Fighter_procCamera's (0x8006DA34, after hits). */
 int gw_Replay_TraceAtProcMap(void) {
     if (rp.active) {
         return rp.version[0] < 3;

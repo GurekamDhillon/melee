@@ -272,7 +272,7 @@ int ScriptGame_CapsGiveItem(int entity, int owner, int kind)
         spawn.pos.x += fp->facing_dir * offset->x;
         spawn.pos.y += offset->y;
     }
-    spawn.prev_pos = spawn.pos; spawn.facing_dir = fp->facing_dir; spawn.x44_flag.b0 = 1;
+    spawn.prev_pos = spawn.pos; spawn.facing_dir = fp->facing_dir; spawn.x44_flag.x0.b0 = 1;
     item = Item_80268B18(&spawn);
     if (!item) return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_SPAWN_FAILED);
     if (!ftpickupitem_80094150(fp->gobj,item)) { Item_8026A8EC(item); return script_caps_give_refuse(entity, kind, SCRIPT_GIVE_PICKUP_REFUSED); }

@@ -59,14 +59,14 @@ void ftCo_80090594(Fighter* fp, HitElement element, int dmg, FtMotionId msid,
         fp->dmg.x1900 = fp->coll_data.floor.normal.x;
         fp->dmg.x1904 = fp->coll_data.floor.normal.y;
     }
-    fp->dmg.x18FD = (u8) (u32) Fighter_804D6530[fp->dmg.x18F8 * 2 + 1];
+    fp->dmg.x18FD = Fighter_804D6530[fp->dmg.x18F8].count;
 }
 
 Vec2* ftCo_80090690(Fighter* fp, Vec2* shift)
 {
     if (fp->dmg.x18fa_model_shift_frames != 0) {
         u8 fp_x18F8 = fp->dmg.x18F8;
-        Vec2* vec = &Fighter_804D6530[fp_x18F8 * 2][fp->dmg.x18FC];
+        Vec2* vec = &Fighter_804D6530[fp_x18F8].shifts[fp->dmg.x18FC];
         if (fp_x18F8 == 1) {
             float x = vec->x * fp->facing_dir;
             shift->x = fp->dmg.x1904 * x;
@@ -101,8 +101,8 @@ void ftCo_80090780(HSD_GObj* gobj)
     if (ftGetParasolStatus(gobj) != -1) {
         ftCo_800CF4DC(gobj);
     } else {
-        Fighter_ChangeMotionState(gobj, 0x26, 0x18001U, 0.0f, 1.0f, 0.0f,
-                                  NULL);
+        Fighter_ChangeMotionState(gobj, ftCo_MS_DamageFall, 0x18001U, 0.0f,
+                                  1.0f, 0.0f, NULL);
         ftCommon_ClampAirDrift(fp);
         ftCommon_8007EBAC(fp, 8U, 0U);
     }
@@ -122,7 +122,7 @@ static bool ftCo_Ucf084Tumble(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     extern int ftUcf_PadRaw(int port, int which_y, int back);
-    int port = fp->x618_player_id, d;
+    int port = fp->pad_port, d;
     f32 prev = fp->input.lstick[1].x;
     if (Replay_UcfVersion(port) != 84) {
         return false;

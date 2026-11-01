@@ -13,7 +13,7 @@
 
 /* 4D0E5C */
 
-/* 4D78F8 */ static u32 hsd_804D78F8;
+/* 4D78F8 */ static HSD_Generator* hsd_804D78F8;
 /* 4D78FC */ HSD_Generator* hsd_804D78FC = NULL;
 /* 4D7900 */ void (*hsd_804D7900)(HSD_Generator*) = NULL;
 
@@ -21,12 +21,12 @@
 
 static u16 lbl_804D6368 = 0x100;
 
-void hsd_8039D1E4(HSD_Generator* gen, void* userfunc)
+void psSetUserFunc(HSD_Generator* gen, HSD_PSUserFunc* userfunc)
 {
     gen->userfunc = userfunc;
 }
 
-u16 hsd_8039D1EC(void)
+u16 psGetNewIDNum(void)
 {
     lbl_804D6368++;
     if (lbl_804D6368 < 256) {
@@ -74,13 +74,13 @@ void hsd_8039D354(u32 unused)
 {
     HSD_ObjAllocInit(&hsd_804D0F90.alloc_data, sizeof(HSD_Generator), 4);
     hsd_804D78FC = NULL;
-    hsd_804D78E0 = 0;
-    hsd_804D78DA = 0;
-    hsd_804D78F4 = 0;
+    numActiveGenerators = 0;
+    numPeakGenerators = 0;
+    hsd_804D78F4 = NULL;
     psCamera = NULL;
-    hsd_804D78E8 = 0;
-    hsd_804D78EC = 0;
-    hsd_804D78F8 = 0;
+    hsd_804D78E8 = NULL;
+    hsd_804D78EC = NULL;
+    hsd_804D78F8 = NULL;
     hsd_804D7900 = NULL;
 }
 
@@ -123,7 +123,7 @@ HSD_Generator* hsd_8039D3AC(HSD_Generator* gen, HSD_Generator* prev)
         gen->jobj = NULL;
     }
     HSD_ObjFree(&hsd_804D0F90.alloc_data, gen);
-    hsd_804D78E0--;
+    numActiveGenerators--;
     return prev;
 }
 
@@ -132,24 +132,23 @@ void hsd_8039D4DC(HSD_Generator* gen)
     HSD_Generator* cur;
 
     cur = hsd_804D78FC;
-    hsd_804D78F8 = 0;
+    hsd_804D78F8 = NULL;
     while (cur != NULL) {
         if (cur == gen) {
-            hsd_804D78F8 =
-                (u32) hsd_8039D3AC(gen, (HSD_Generator*) hsd_804D78F8);
-            if (hsd_804D78F8 != 0) {
-                while (((HSD_Generator*) hsd_804D78F8)->next != NULL) {
-                    hsd_804D78F8 = (u32) ((HSD_Generator*) hsd_804D78F8)->next;
+            hsd_804D78F8 = hsd_8039D3AC(gen, hsd_804D78F8);
+            if (hsd_804D78F8 != NULL) {
+                while (hsd_804D78F8->next != NULL) {
+                    hsd_804D78F8 = hsd_804D78F8->next;
                 }
             } else if (hsd_804D78FC != NULL) {
-                hsd_804D78F8 = (u32) hsd_804D78FC;
-                while (((HSD_Generator*) hsd_804D78F8)->next != NULL) {
-                    hsd_804D78F8 = (u32) ((HSD_Generator*) hsd_804D78F8)->next;
+                hsd_804D78F8 = hsd_804D78FC;
+                while (hsd_804D78F8->next != NULL) {
+                    hsd_804D78F8 = hsd_804D78F8->next;
                 }
             }
             return;
         }
-        hsd_804D78F8 = (u32) cur;
+        hsd_804D78F8 = cur;
         cur = cur->next;
     }
 }
@@ -203,7 +202,7 @@ void hsd_8039D688(HSD_JObj* jobj, f32** unused1, s32 unused2)
     HSD_Generator* gen;
 
     gen = hsd_804D78FC;
-    hsd_804D78F8 = 0;
+    hsd_804D78F8 = NULL;
     while (gen != NULL) {
         next = gen->next;
         if (gen->jobj == jobj) {
@@ -213,10 +212,9 @@ void hsd_8039D688(HSD_JObj* jobj, f32** unused1, s32 unused2)
                     gen->type = type | 0x80;
                 }
             }
-            hsd_804D78F8 =
-                (u32) hsd_8039D3AC(gen, (HSD_Generator*) hsd_804D78F8);
+            hsd_804D78F8 = hsd_8039D3AC(gen, hsd_804D78F8);
         } else {
-            hsd_804D78F8 = (u32) gen;
+            hsd_804D78F8 = gen;
         }
         gen = next;
     }
@@ -310,7 +308,6 @@ void hsd_8039D71C(HSD_Generator* gen)
 HSD_Generator* hsd_8039D9C8(void)
 {
     HSD_Generator* gen;
-    PAD_STACK(8);
 
     gen = HSD_ObjAlloc(&hsd_804D0F90.alloc_data);
     if (gen != NULL) {
@@ -320,14 +317,12 @@ HSD_Generator* hsd_8039D9C8(void)
         return NULL;
     }
 
-    hsd_804D78E0++;
-    if (hsd_804D78E0 > hsd_804D78DA) {
-        hsd_804D78DA = hsd_804D78E0;
+    numActiveGenerators++;
+    if (numActiveGenerators > numPeakGenerators) {
+        numPeakGenerators = numActiveGenerators;
     }
 
-    if ((HSD_Generator*) hsd_804D78F8 == NULL ||
-        ((HSD_Generator*) hsd_804D78F8)->next == NULL)
-    {
+    if (hsd_804D78F8 == NULL || hsd_804D78F8->next == NULL) {
         if (hsd_804D78FC == NULL) {
             gen->next = NULL;
             hsd_804D78FC = gen;
@@ -336,15 +331,11 @@ HSD_Generator* hsd_8039D9C8(void)
             hsd_804D78FC->next = gen;
         }
     } else {
-        gen->next = ((HSD_Generator*) hsd_804D78F8)->next->next;
-        ((HSD_Generator*) hsd_804D78F8)->next->next = gen;
+        gen->next = hsd_804D78F8->next->next;
+        hsd_804D78F8->next->next = gen;
     }
 
-    lbl_804D6368++;
-    if (lbl_804D6368 < 0x100) {
-        lbl_804D6368 = 0x100;
-    }
-    gen->idnum = lbl_804D6368;
+    gen->idnum = psGetNewIDNum();
     gen->appsrt = NULL;
     gen->userfunc = NULL;
     return gen;
@@ -712,9 +703,9 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
             /* Spawn particle */
             cur_angle = cos_az;
             hsd_80398F0C(gen->linkNo, gen->bank, gen->kind, gen->texGroup,
-                         (s32) gen->cmdList, gen->life, 0, (s32) gen,
-                         emit_pos.x, emit_pos.y, emit_pos.z, vec.x, vec.y,
-                         vec.z, gen->size, gen->grav, gen->fric);
+                         gen->cmdList, gen->life, 0, gen, emit_pos.x,
+                         emit_pos.y, emit_pos.z, vec.x, vec.y, vec.z,
+                         gen->size, gen->grav, gen->fric);
             break;
         }
 
@@ -733,9 +724,9 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
             PSMTXMultVec(rot_mtx, &vel_copy, &vec);
 
             hsd_80398F0C(gen->linkNo, gen->bank, gen->kind, gen->texGroup,
-                         (s32) gen->cmdList, gen->life, 0, (s32) gen,
-                         emit_pos.x, emit_pos.y, emit_pos.z, vec.x, vec.y,
-                         vec.z, gen->size, gen->grav, gen->fric);
+                         gen->cmdList, gen->life, 0, gen, emit_pos.x,
+                         emit_pos.y, emit_pos.z, vec.x, vec.y, vec.z,
+                         gen->size, gen->grav, gen->fric);
             break;
         }
 
@@ -755,9 +746,8 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
             }
             gen->aux.line.x2 = elevation;
             hsd_80398F0C(gen->linkNo, gen->bank, gen->kind | 4, gen->texGroup,
-                         (s32) gen->cmdList, gen->life, 0, (s32) gen, 0.0F,
-                         0.0F, 0.0F, cur_angle, sin_az, 0.0F, gen->size,
-                         angle1, angle3);
+                         gen->cmdList, gen->life, 0, gen, 0.0F, 0.0F, 0.0F,
+                         cur_angle, sin_az, 0.0F, gen->size, angle1, angle3);
             break;
         }
 
@@ -872,9 +862,9 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
             PSMTXMultVec(rot_mtx, &vec, &vec);
 
             hsd_80398F0C(gen->linkNo, gen->bank, gen->kind, gen->texGroup,
-                         (s32) gen->cmdList, gen->life, 0, (s32) gen,
-                         emit_pos.x, emit_pos.y, emit_pos.z, vec.x, vec.y,
-                         vec.z, gen->size, gen->grav, gen->fric);
+                         gen->cmdList, gen->life, 0, gen, emit_pos.x,
+                         emit_pos.y, emit_pos.z, vec.x, vec.y, vec.z,
+                         gen->size, gen->grav, gen->fric);
             break;
         }
 
@@ -943,15 +933,15 @@ f32 hsd_8039DAD4(HSD_Generator* gen)
             emit_pos.z = sin_az * emit_pos.z + gen->pos.z;
 
             hsd_80398F0C(gen->linkNo, gen->bank, gen->kind, gen->texGroup,
-                         (s32) gen->cmdList, gen->life, 0, (s32) gen,
-                         emit_pos.x, emit_pos.y, emit_pos.z, vec.x, vec.y,
-                         vec.z, gen->size, gen->grav, gen->fric);
+                         gen->cmdList, gen->life, 0, gen, emit_pos.x,
+                         emit_pos.y, emit_pos.z, vec.x, vec.y, vec.z,
+                         gen->size, gen->grav, gen->fric);
             break;
         }
 
         default: /* shape > 8 */
-            if ((void (*)(HSD_Generator*, Mtx)) hsd_804D78E8 != NULL) {
-                ((void (*)(HSD_Generator*, Mtx)) hsd_804D78E8)(gen, rot_mtx);
+            if (hsd_804D78E8 != NULL) {
+                hsd_804D78E8(gen, rot_mtx);
             }
             break;
         }
@@ -967,15 +957,15 @@ void hsd_8039EE24(u32 mask)
     HSD_Generator* gp;
     HSD_Generator* gen;
 
-    while (hsd_804D78F4 != 0) {
-        gp = (HSD_Generator*) ((HSD_SList*) hsd_804D78F4)->data;
+    while (hsd_804D78F4 != NULL) {
+        gp = hsd_804D78F4->data;
 #if defined(TARGET_PC)
         { extern int ScriptGame_StageSlotParticleBegin(int);
           extern void ScriptGame_StageSlotProcEnd(void);
           int owned=ScriptGame_StageSlotParticleBegin(gp->linkNo);
 #endif
         hsd_8039D71C(gp);
-        hsd_804D78F4 = (u32) HSD_SListRemove((HSD_SList*) hsd_804D78F4);
+        hsd_804D78F4 = HSD_SListRemove(hsd_804D78F4);
         if (gp->jobj != NULL) {
             HSD_JObjUnref(gp->jobj);
             gp->jobj = NULL;
@@ -986,16 +976,16 @@ void hsd_8039EE24(u32 mask)
     }
 
     gen = hsd_804D78FC;
-    hsd_804D78F8 = 0;
+    hsd_804D78F8 = NULL;
 
     while (gen != NULL) {
         if (mask & (1 << (gen->linkNo + 16))) {
-            hsd_804D78F8 = (u32) gen;
+            hsd_804D78F8 = gen;
             gen = gen->next;
             continue;
         }
         if (gen->kind & 0x800) {
-            hsd_804D78F8 = (u32) gen;
+            hsd_804D78F8 = gen;
             gen = gen->next;
             continue;
         }
@@ -1017,10 +1007,9 @@ void hsd_8039EE24(u32 mask)
             u16 life = gen->genLife - 1;
             gen->genLife = life;
             if (life == 0) {
-                hsd_804D78F8 =
-                    (u32) hsd_8039D3AC(gen, (HSD_Generator*) hsd_804D78F8);
-                if (hsd_804D78F8 != 0) {
-                    gen = ((HSD_Generator*) hsd_804D78F8)->next;
+                hsd_804D78F8 = hsd_8039D3AC(gen, hsd_804D78F8);
+                if (hsd_804D78F8 != NULL) {
+                    gen = hsd_804D78F8->next;
                 } else {
                     gen = hsd_804D78FC;
                 }
@@ -1030,7 +1019,7 @@ void hsd_8039EE24(u32 mask)
                 continue;
             }
         }
-        hsd_804D78F8 = (u32) gen;
+        hsd_804D78F8 = gen;
         gen = gen->next;
 #if defined(TARGET_PC)
         if(owned)ScriptGame_StageSlotProcEnd(); }
@@ -1056,8 +1045,6 @@ HSD_Generator* hsd_8039EFAC(s32 linkNo, s32 bank, s32 gfx_id, HSD_JObj* jobj)
     return gen;
 }
 
-/// @todo The bound check reads the .bss array named `psCmdListArray`, not
-/// `psNumCmdList`; the two names look swapped against their addresses.
 HSD_Generator* hsd_8039F05C(s32 linkNo, s32 bank, s32 idx)
 {
 #if defined(TARGET_PC)
@@ -1072,7 +1059,7 @@ HSD_Generator* hsd_8039F05C(s32 linkNo, s32 bank, s32 idx)
     if (linkNo >= 8) {
         return NULL;
     }
-    if (idx >= psCmdListArray[bank]) {
+    if (idx >= psNumCmdList[bank]) {
         return NULL;
     }
 
@@ -1224,8 +1211,8 @@ HSD_Generator* hsd_8039F05C(s32 linkNo, s32 bank, s32 idx)
             break;
         }
         default:
-            if ((void (*)(HSD_Generator*)) hsd_804D78EC != NULL) {
-                ((void (*)(HSD_Generator*)) hsd_804D78EC)(gen);
+            if (hsd_804D78EC != NULL) {
+                hsd_804D78EC(gen);
             }
             break;
         }
@@ -1261,8 +1248,7 @@ HSD_Generator* hsd_8039F6CC(s32 linkNo, s32 bank, s32 gfx_id, HSD_JObj* jobj)
         }
     }
     gen->type |= (gen->kind & 0x20000) ? 0x500 : 0x700;
-    hsd_804D78F4 =
-        (u32) HSD_SListAllocAndAppend((HSD_SList*) hsd_804D78F4, gen);
+    hsd_804D78F4 = HSD_SListAllocAndAppend(hsd_804D78F4, gen);
     return gen;
 }
 
@@ -1279,7 +1265,7 @@ void HSD_StageSlotParticlesClear(void)
         HSD_Generator* g=cur->data;
         if(g->linkNo==3) {
             HSD_SList* next=HSD_SListRemove(cur);
-            if(prev)prev->next=next;else hsd_804D78F4=(u32)next;
+            if(prev)prev->next=next;else hsd_804D78F4=next;
             cur=next;
         } else {prev=cur;cur=cur->next;}
     }

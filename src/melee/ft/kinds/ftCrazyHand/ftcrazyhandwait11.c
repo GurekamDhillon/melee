@@ -25,13 +25,13 @@ void fn_80159AA4(HSD_GObj* gobj)
     Fighter* fp = gobj->user_data;
     HSD_JObj* jobj = get_jobj(gobj);
 
-    ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+    ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
     Vec3 pos;
     Vec3 scl;
 
     u8 _[4];
 
-    Fighter_ChangeMotionState(gobj, 0x175, 0, 0, 1, 0, 0);
+    Fighter_ChangeMotionState(gobj, 0x175, Ft_MF_None, 0, 1, 0, 0);
     ftAnim_8006EBA4(gobj);
     ftBossLib_8015C208(gobj, &pos);
     fp->cur_pos.x = pos.x;
@@ -96,7 +96,7 @@ void ftCh_Wait1_1_Anim(HSD_GObj* gobj)
 void ftCh_Wait1_1_IASA(HSD_GObj* gobj)
 {
     Fighter* ft = GET_FIGHTER(gobj);
-    if (Player_GetPlayerSlotType(ft->player_id) == Gm_PKind_Human) {
+    if (Player_GetPlayerSlotType(ft->player_idx) == Gm_PKind_Human) {
         ftBossLib_8015BD20(gobj);
     }
 }
@@ -105,7 +105,7 @@ void ftCh_Wait1_1_Phys(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (--fp->mv.ch.unk0.x0 > 0) {
-        ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+        ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
         ftBossLib_8015BF74(gobj, da->xDC);
     } else {
         fp->self_vel.x = 0;

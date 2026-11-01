@@ -2,8 +2,6 @@
 
 #include <melee/mp/forward.h>
 
-#include <placeholder.h>
-
 #include "granime.h"
 #include "ground.h"
 #include "grzakogenerator.h"
@@ -31,7 +29,7 @@
 /* 220AA0 */ static bool stageGObj1_Callback1(Ground_GObj*);
 /* 220AA8 */ static void stageGObj1_GObjProc(Ground_GObj*);
 /* 220AC8 */ static void stageGObj1_Callback3(Ground_GObj*);
-/* 220ACC */ static DynamicsDesc* grTFalco_80220ACC(enum_t);
+/* 220ACC */ static lbColl_80008D30_arg1* grTFalco_80220ACC(enum_t);
 /* 220B78 */ static bool grTFalco_80220B78(Vec3*, int, HSD_JObj*);
 
 StageCallbacks grTFc_803E8918[] = {
@@ -73,13 +71,6 @@ StageData grTFc_StageData = {
     (1 << 0),
     NULL,
     0,
-};
-
-struct grTFalco_YakumonoParam {
-    UNK_T unk_0;
-    UNK_T unk_4;
-    UNK_T unk_8;
-    UNK_T unk_C;
 };
 
 static struct grTFalco_YakumonoParam* yakumono_param;
@@ -169,7 +160,7 @@ void stageGObj1_GObjProc(Ground_GObj* gobj)
 
 void stageGObj1_Callback3(Ground_GObj* arg0) {}
 
-DynamicsDesc* grTFalco_80220ACC(enum_t arg0)
+lbColl_80008D30_arg1* grTFalco_80220ACC(enum_t arg0)
 {
     if (arg0 != -1) {
         enum_t i = mpJointFromLine(arg0);

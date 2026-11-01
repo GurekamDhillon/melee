@@ -218,10 +218,10 @@ void HSD_JObjMakeMatrix(HSD_JObj* jobj)
     if (jobj->parent != NULL) {
         PSMTXConcat(jobj->parent->mtx, jobj->mtx, jobj->mtx);
     }
-    if (jobj->aobj != NULL && jobj->aobj->hsd_obj != NULL) {
+    if (jobj->aobj != NULL && jobj->aobj->jobj != NULL) {
         Vec3 vec;
-        HSD_JObj* aobj_jobj = (HSD_JObj*) jobj->aobj->hsd_obj;
-        HSD_JObjSetupMatrix((HSD_JObj*) jobj->aobj->hsd_obj);
+        HSD_JObj* aobj_jobj = jobj->aobj->jobj;
+        HSD_JObjSetupMatrix(jobj->aobj->jobj);
         MTXMultVec(aobj_jobj->mtx, &jobj->translate, &vec);
         jobj->mtx[0][3] = vec.x;
         jobj->mtx[1][3] = vec.y;
@@ -401,7 +401,7 @@ void JObjUpdateFunc(void* obj, enum_t type, HSD_ObjData* val)
                 val->fv = 1.0F;
             }
             HSD_ASSERT(0x24B, jobj->aobj);
-            jp = (HSD_JObj*) jobj->aobj->hsd_obj;
+            jp = jobj->aobj->jobj;
             HSD_ASSERT(0x24D, jp);
             HSD_ASSERT(0x24E, jp->u.spline);
             splArcLengthPoint(&p, jp->u.spline, val->fv);
@@ -808,7 +808,6 @@ HSD_JObj* HSD_JObjRemove(HSD_JObj* jobj)
     return child;
 }
 
-/// @todo Regswaps
 void HSD_JObjRemoveAll(HSD_JObj* jobj)
 {
     HSD_JObj* prev;
@@ -1357,8 +1356,8 @@ void resolveIKJoint2(HSD_JObj* jobj)
     VECSubtract(&var_r29->translate, &sp94, &sp7C);
     VECScale(&sp7C, &sp7C,
              sqrtf(1.0F / (1e-10F + VECDotProduct(&sp7C, &sp7C))));
-    temp_r28 = HSD_RObjGetByType(jobj->robj, 0x20000000, 5);
-    temp_r29 = HSD_RObjGetByType(jobj->robj, 0x20000000, 6);
+    temp_r28 = HSD_RObjGetByType(jobj->robj, REFTYPE_LIMIT, 5);
+    temp_r29 = HSD_RObjGetByType(jobj->robj, REFTYPE_LIMIT, 6);
     if ((temp_r28 != NULL) || (temp_r29 != NULL)) {
         var_r27 = 0;
         robj = HSD_RObjGetByType(jobj->robj, REFTYPE_IKHINT, 0);
@@ -1625,9 +1624,6 @@ void JObjAmnesia(HSD_ClassInfo* info)
     HSD_OBJECT_PARENT_INFO(&hsdJObj)->amnesia(info);
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma force_active on
 static char unused3[] = "jobj[%d,%d]";
 static char unused4[] = "SKELETON_ROOT ";
 static char unused5[] = "SKELETON ";
@@ -1639,8 +1635,6 @@ static char unused10[] = "  tra(L): ";
 static char unused11[] = "  rot(G): ";
 static char unused12[] = "  sca(G): ";
 static char unused13[] = "  tra(G): ";
-#pragma pop
-#endif
 
 void JObjInfoInit(void)
 {
@@ -1657,9 +1651,4 @@ void JObjInfoInit(void)
     HSD_JOBJ_INFO(&hsdJObj)->release_child = JObjReleaseChild;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma force_active on
 static u32 unused14[6] = { 0 };
-#pragma pop
-#endif

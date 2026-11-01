@@ -53,6 +53,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name.starts_with("ftDataKirbyCopy") { return Some(rt("KirbyHatStruct")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
+    if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
@@ -72,6 +73,7 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
         RootType::Custom(n) => crate::dat_custom::decode(n, d, off, extent, bounds, sym, ),
         RootType::Record(n) => match n {
             "DynamicModelDesc" => d.object::<DynamicModelDesc>(off) as *mut c_void,
+            "DynamicsDesc" => d.object::<DynamicsDesc>(off) as *mut c_void,
             "FigaTree" => d.object::<FigaTree>(off) as *mut c_void,
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,

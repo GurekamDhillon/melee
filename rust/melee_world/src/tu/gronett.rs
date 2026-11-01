@@ -639,8 +639,9 @@ pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
     if (*gp).u.onettcar.x0_b0() == 0 {
         ext::Camera_LogicBounds(&mut cam_x, &mut cam_y, &mut cam_z);
 
-        let mut car_jobj = (*gp).u.onettcar.car_jobjs[saved_car as usize];
-        let car_jobj2 = (*gp).u.onettcar.car_jobjs2[saved_car as usize];
+        // `curr_car` is 4 before the first car is picked: the C indexes one past the arrays, onto `unk_jobj` / `unk_jobj2` that follow them
+        let mut car_jobj = *(*gp).u.onettcar.car_jobjs.as_ptr().offset(saved_car as isize);
+        let car_jobj2 = *(*gp).u.onettcar.car_jobjs2.as_ptr().offset(saved_car as isize);
 
         match (*gp).u.onettcar.state_a as i8 {
             0 => {
@@ -768,7 +769,7 @@ pub unsafe extern "C" fn grOnett_801E43E0(gobj: *mut HSD_GObj) {
         {
             let state_b = (*gp).u.onettcar.state_b as i8;
             let next = (*gp).u.onettcar.next_car;
-            car_jobj = (*gp).u.onettcar.car_jobjs[next as usize];
+            car_jobj = *(*gp).u.onettcar.car_jobjs.as_ptr().offset(next as isize); // `next_car` can be 4 (one past the array, as in the C)
 
             match state_b {
                 0 => {

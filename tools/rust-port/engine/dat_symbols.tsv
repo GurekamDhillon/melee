@@ -38,3 +38,4 @@ sym	effBehaviorTable	raw	src/melee/ef/efasync.c (effect behavior table; typed by
 prefix	eff	custom:efdat	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
 sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)
 suffix	_image_desc	HSD_ImageDesc	gr/grizumi.c:758, grpstadium.c:261 HSD_ImageDesc* (mirror / BG image desc, zeroed and refilled by the stage)
+prefix	dynamicsdata_	DynamicsDesc	gr/grcastle.c:428 (flag3/4/6), gr/grrcruise.c:326 (shipflag): DynamicsDesc* for grLib_801C9B20

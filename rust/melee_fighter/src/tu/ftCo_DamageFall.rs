@@ -10,7 +10,6 @@ use crate::types::*;
 pub use crate::ftdmgfall::{
     calc_shift as calcShift, ftco_80090574 as ftCo_80090574, ftco_80090594 as ftCo_80090594,
     ftco_80090690 as ftCo_80090690, ftco_80090718 as ftCo_80090718,
-    ftco_damagefall_anim as ftCo_DamageFall_Anim, ftco_damagefall_phys as ftCo_DamageFall_Phys,
 };
 
 pub type G = *mut HSD_GObj;
@@ -39,6 +38,7 @@ pub mod ext {
         };
     }
     ext_fns! {
+        ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
         ftCo_800CF4DC(g: G) = |g: G| { unsafe { crate::tu::ftCo_ItemParasolDamageFall::ftCo_800CF4DC(g as _); } };
@@ -61,6 +61,17 @@ pub mod ext {
         ft_8008370C(g: G, cb: fn(G)) = crate::tu::ft_081b::ft_8008370c;
         ftCo_80090984(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageIce::ftCo_80090984(g as _); } };
     }
+}
+
+/// `ftCo_DamageFall_Anim`: empty.
+pub fn ftCo_DamageFall_Anim(_g: G) {
+    melee_core::ct!("ftCo_DamageFall_Anim");
+}
+
+/// `ftCo_DamageFall_Phys(gobj)`: `ft_80084DB0(gobj)`.
+pub fn ftCo_DamageFall_Phys(g: G) {
+    melee_core::ct!("ftCo_DamageFall_Phys");
+    ext::ft_80084DB0(g)
 }
 
 pub fn ftCo_80090780(g: G) {

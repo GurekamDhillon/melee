@@ -11,7 +11,6 @@ use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2/3 and the original pass): re-exported under this TU.
-pub use crate::chars::ftPeach::ftpeachspecials::{ftPe_SpecialAirSJump_Phys, ftPe_SpecialSStart_Phys};
 pub use crate::chars::r2::ftPeach::ftpeachspecials::{
     enterAirEnd, enterEnd, enterStart, ftPe_SpecialAirSEnd_Anim, ftPe_SpecialAirSEnd_Phys,
     ftPe_SpecialAirSStart_Phys, ftPe_SpecialSEnd_Anim, ftPe_SpecialSEnd_Phys,
@@ -348,4 +347,16 @@ pub fn enterAirEndSmash(gobj: G) {
         }
         doPostEnd_SmallerStack(gobj);
     }
+}
+
+/// `ftPe_SpecialAirSJump_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftPeach::ftpeachspecials::ftPe_SpecialAirSJump_Phys_fp`.
+pub fn ftPe_SpecialAirSJump_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirSJump_Phys");
+    unsafe { crate::chars::ftPeach::ftpeachspecials::ftPe_SpecialAirSJump_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftPe_SpecialSStart_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftPeach::ftpeachspecials::ftPe_SpecialSStart_Phys_fp`.
+pub fn ftPe_SpecialSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialSStart_Phys");
+    unsafe { crate::chars::ftPeach::ftpeachspecials::ftPe_SpecialSStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

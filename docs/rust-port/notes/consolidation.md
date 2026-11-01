@@ -135,7 +135,7 @@ From step 7 the engine path is the one being moved forward.
 | 13 (DONE 2026-10-31; pad_marth_sheik_bf 1801 on the engine, item rows equal in `melee diff --engine tu`) | Items engine | `Item_Create` / `Item_80268E5C` / item procs and `it_26B1` registration, then `itseakneedleheld` / `itseakneedlethrown`, `itfoxblaster` / `itfoxlaser`, `itsamusmissile`, and item-vs-fighter hits (`ftColl_8007925C`). Target: **pad_marth_sheik_bf 1801 on the engine**. Item diff subsystem at 0. |
 | 14 (DONE 2026-10-31: cpu_fox_falco_dl 1197 frames on the engine, target 370 passed; first divergence 1196, STATUS.md blocker A) | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
 | 15 (DONE 2026-10-31; cpu_peach_samus_ys_items 120 on the engine, the golden stops there at the Shy Guys spawn; Samus ported to tu/, retail tables resolve) | Hazard stages | `grStory` and `grGreens` procs through their map gobjs, plus `Ground_UpdateMapColl`. Target: cpu_peach_samus_ys_items 120 or more on the engine. |
-| 16 | Rebirth, death, stocks | `ftCo_800BFD9C` / `gm_80167320` / `fn_8016719C` / `ftCo_800D4FF4`, blast zones from the real `Stage` data, and `gmMainLib` stocks. Every KO in the four goldens takes the engine path (re-check all four counts). |
+| 16 (DONE 2026-11-01 for three goldens: pad x2 1801, cpu_fox_falco_dl 3601 = the whole golden incl. its KOs; cpu_peach 1562, STATUS.md blocker C) | Rebirth, death, stocks | `ftCo_800BFD9C` / `gm_80167320` / `fn_8016719C` / `ftCo_800D4FF4`, blast zones from the real `Stage` data, and `gmMainLib` stocks. Every KO in the four goldens takes the engine path (re-check all four counts). |
 | 17 | Engine snapshot, rollback and diff | `Engine::state()` and the C-snapshot overlay. Port `melee diff`, `synctest`, `--from-snapshot` and `--dump-state` to the engine, and delete the model-state section. Target: rollback synctest clean over 1800 frames on pad_falcon_fox_fd. |
 | 18 | Cutover | `--engine tu` becomes the default for `golden`, `diff`, `view-golden`, `play` and `netplay`. All four goldens are at or above their legacy counts on the engine. The legacy path remains reachable only with `--engine legacy`. |
 | 19 | Delete vs_match | Delete `vs_match.rs`, `vs_match/*`, `fighter_data.rs`, `movetab.rs`, `skeleton.rs`, `dynamics.rs`, `effect.rs`, `colanim.rs`, `cm_drive.rs`, `stage_anim.rs`, `snapshot*.rs` and the `Player` struct, after migrating the viewers. Remove the corresponding entries from `lint_allow.txt`. |
@@ -1027,3 +1027,40 @@ what stopped the engine was not camera, HUD or sound but the item path the two s
   layout (`it_8028F9D8` reads them as `Vec4`) with the joints in a side table. The m-ex/stage `tu_ext` hooks must be wired to the engine's TUs:
   their built-in defaults are the legacy-state ports (`crate::itacc`, `crate::cm::camera::world()`, `crate::ftlib`, `crate::pl`): `Player_*`,
   `ftLib_*` and `ftCo_800C07F8` are still on those defaults.
+
+## Round 3 (2026-11-01): step 16, cpu goldens on the engine
+
+Frame counts on `--engine tu`: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (1197 before; the whole golden, seed column
+included), cpu_peach_samus_ys_items 1562 (559 before). The gate now runs 3601 frames (`ENGINE_FRAMES`). Method that found everything below:
+`melee diff --engine tu` now captures at `Script_FramePost` (the C snapshot point, before the render pass) and also compares the blend-source pose
+joints (`parts[i].x4_jobj2`, with the AObj / first FObj state); then the C trace build (`_build/agents/spine-r1-trace`, `pc/platform/gw_snap.c` had
+a throw-away `dbg_jobj_out` logger, `src/...` printed the arguments of one function per run, reverted afterwards) against `eprintln!` in the same
+function on the Rust side. `MELEE_CT_LIVE=1 MELEE_CT_LIVE_FROM=<frame>` (calltrace build) prints every entry from a frame on: the last lines name the
+function a segfault happens in (the crash handler cannot walk the stack of an access violation in release).
+
+Fixes (each was a real divergence from the C):
+- Seams: `Wb_RenderOption` answers its fallback argument (it answered 0: stages were not drawn, so their fighter-shadow loop never ran);
+  `View_AspectBits` / `View_ProjectionScaleBits` answer 4/3 and 1.0 (logic reads them: `ifMagnify_802FB73C` edge); `GXProject` is the gx shim's pure
+  math (it reaches the sim through `Camera_LogicToScreen`, the fighters' off-camera flag, the Magnify damage); `HSD_StartRender` / `HSD_Init_803755A8`
+  run for real; the SIS text draw is a no-op seam. Unported-callee stubs answer zero only inside the render pass (`melee_core::ct::IN_RENDER`, set by
+  `Det_SetInRender`): outside it they panic, which is how the next fixes were found.
+- `HSD_MkRotationMtx` and the other pointer-shaped `mtx.c` functions (`tu/mtx.rs`, the owned-model wrappers are `*_owned`): an unlinked hook returned
+  zeros and the foot IK produced a gimbal-lock pose.
+- `ftData_80085FD4` returns a GC-layout motion row; the hooks that typed it `ftData_80085FD4_ret` read the native layout of that struct (loop flag of
+  part animations, `AppealS` side, `SquatWait`, `DownSpot`, `AttackS3/S4`). `ftCo_AppealS` / `SquatWait` / `FTDATA_80085FD4_X8` were linked to the
+  pointer-returning function by the generator (non-null is always true): `link_skip.txt` + `melee_link::manual`.
+- Retail motion-state tables: `ftCo_DamageFall_Phys/Anim` were re-exports (not found by `gen_retail_ms.py`: no physics in that state); 21 chars
+  callbacks took `&mut Fighter` but the table casts the GObj (Peach `SpecialAirSJump_Phys`, Ness / Zelda / Seak / Yoshi / Donkey / Luigi / Mewtwo
+  specials): wrappers in the tu files, the fighter-only ports are `*_fp`. Still unresolved in `retail_unresolved.txt`: Crazy Hand (`ftCh_*`, 40), Jigglypuff
+  (`ftPr_*`, 80), the Crazy Hand captures (12): those states have NO callbacks on the engine.
+- Data decode: `ftData.x54` is an `int[5]` table (one `int` was decoded); `HSD_ExpDesc/HSD_ByteCodeExpDesc.rvalue` lists end at an all-zero entry
+  (`arrays.tsv until=0`); `UNK_SAMUS_S1.x4_anim_joints` has 4 entries; Samus `x48_items[4]` is a `UNK_SAMUS_S1`, not an article; the pointer-bearing
+  special-attribute records of Samus / Link / Seak / Ness / Climbers articles are decoded as their record (`dat_custom::typed_article_attrs`); the Super
+  Mushroom animation roots live in `itkinoko::KINOKO_JOINTS`.
+- Layout traps: `mv.co.walk.middle/fast_anim_frame` overlap the 8-byte callback pointers of `mv.co.mushroom` in the native union (the Kinoko states
+  keep their scratch pair in `walk.*_anim_rate`); `CommandInfo.event_return` is indexed past its declared 3 slots (`lbcommand::er`).
+- Hooks: `HSD_ForeachAnim` for mn_22EC / Samus (variadic tail as a word), the nine `efSync_Spawn_N` item TUs, Peach parasol table, Metal Box bone step,
+  `mpCheckAllRemap` for Samus' grab, `ft_0cdd/0cdf/0ce3` direct stubs, `ft_0d27` AddAnim / Anim.
+
+Open (STATUS.md "Current blockers"): cpu_peach 1562 (the Foods items' `xDCC_flag.b3` differs after the Party Ball burst), the `stubs!`-style hooks that are
+not in the generated table (`ft_0c8c` / `ftCo_Damage` direct `todo!` stubs: lbBgFlash_80021C48, gm_80167470, Camera_RequestQuake, efAsync_Spawn, `ftMh` / `ftCh`).

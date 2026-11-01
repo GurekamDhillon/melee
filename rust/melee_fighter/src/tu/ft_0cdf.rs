@@ -22,11 +22,11 @@ pub mod ext {
     pub fn ft_800841B8(_g: G, _cb: unsafe extern "C" fn(G)) { unsafe { let _ = crate::bridge::with_ev(Some(_cb), |ev| crate::tu::ft_081b::ft_800841b8(_g as _, ev)); } }
     pub fn ft_80082C74(_g: G, _cb: unsafe extern "C" fn(G)) { unsafe { let _ = crate::bridge::with_ev(Some(_cb), |ev| crate::tu::ft_081b::ft_80082c74(_g as _, ev)); } }
     /// `efSync_Spawn(id, gobj, pos)`.
-    pub fn efSync_Spawn(_id: i32, _g: G, _pos: &Vec3) { todo!("TODO(group2 ef) efSync_Spawn") }
+    pub fn efSync_Spawn(_id: i32, _g: G, _pos: &Vec3) { unsafe { melee_world::tu::efn::efsync::efSync_Spawn(_id, _g as _, &[_pos as *const Vec3 as *const core::ffi::c_void]); } }
     /// `efSync_Spawn(id, gobj, pos, &facing_dir)`.
-    pub fn efSync_Spawn_dir(_id: i32, _g: G, _pos: &Vec3, _dir: &f32) { todo!("TODO(group2 ef) efSync_Spawn") }
+    pub fn efSync_Spawn_dir(_id: i32, _g: G, _pos: &Vec3, _dir: &f32) { unsafe { melee_world::tu::efn::efsync::efSync_Spawn(_id, _g as _, &[_pos as *const Vec3 as *const core::ffi::c_void, _dir as *const f32 as *const core::ffi::c_void]); } }
     /// `efSync_Spawn(id, gobj, pos, &facing_dir, &f)`.
-    pub fn efSync_Spawn_dir_f(_id: i32, _g: G, _pos: &Vec3, _dir: &f32, _f: &f32) { todo!("TODO(group2 ef) efSync_Spawn") }
+    pub fn efSync_Spawn_dir_f(_id: i32, _g: G, _pos: &Vec3, _dir: &f32, _f: &f32) { unsafe { melee_world::tu::efn::efsync::efSync_Spawn(_id, _g as _, &[_pos as *const Vec3 as *const core::ffi::c_void, _dir as *const f32 as *const core::ffi::c_void, _f as *const f32 as *const core::ffi::c_void]); } }
 }
 
 fn shoot_enter(g: G, full: i32, empty: i32, air: bool) {

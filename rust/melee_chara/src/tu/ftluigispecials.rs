@@ -13,7 +13,6 @@ use melee_fighter::ftcommon as fc;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3, 5 and the pure helper): re-exported under this TU.
-pub use crate::chars::ftLuigi::ftluigispecials::ftLg_SpecialAirSStart_Phys;
 pub use crate::chars::r2::ftLuigi::ftluigispecials::{
     ftLg_SpecialAirSEnd_Anim, ftLg_SpecialAirSHold_AirToGround, ftLg_SpecialAirSHold_Phys,
     ftLg_SpecialAirSLaunch_AirToGround, ftLg_SpecialAirSMisfire_AirToGround, ftLg_SpecialAirSMisfire_Phys,
@@ -608,4 +607,10 @@ pub fn ftLg_SpecialAirSEnd_Enter(gobj: *mut HSD_GObj) {
         (*fp).self_vel.x /= (*sa).x38_LUIGI_GREENMISSILE_FRICTION_END;
         st::Fighter_ChangeMotionState(gobj, ftLg_MS_SpecialAirSEnd as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     }
+}
+
+/// `ftLg_SpecialAirSStart_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftLuigi::ftluigispecials::ftLg_SpecialAirSStart_Phys_fp`.
+pub fn ftLg_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftLg_SpecialAirSStart_Phys");
+    unsafe { crate::chars::ftLuigi::ftluigispecials::ftLg_SpecialAirSStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

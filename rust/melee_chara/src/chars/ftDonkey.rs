@@ -21,7 +21,7 @@ pub mod ftdonkeyspecialhi {
 pub mod ftdonkeyspeciallw {
     use melee_types::Fighter;
 
-    pub fn ftDk_SpecialLwLoop_IASA(fp: &mut Fighter) {
+    pub fn ftDk_SpecialLwLoop_IASA_fp(fp: &mut Fighter) {
         if fp.input.pressed_buttons & 512 != 0 {
             unsafe { fp.mv.dk.speciallw.x0 = 1 };
         }

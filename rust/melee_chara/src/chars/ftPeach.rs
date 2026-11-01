@@ -41,7 +41,7 @@ pub mod ftpeachspecialn {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftPe_DatAttrs, ftPe_MS_SpecialAirNHit, ftPe_MS_SpecialN, Fighter};
 
-    pub fn ftPe_SpecialAirNHit_Phys(fp: &mut Fighter) {
+    pub fn ftPe_SpecialAirNHit_Phys_fp(fp: &mut Fighter) {
         let a: &ftPe_DatAttrs = da(fp);
         co::fall(fp, a.xA0, a.xA4);
         co::calc_self_accel_deaccel(fp, a.x98);
@@ -58,7 +58,7 @@ pub mod ftpeachspecials {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftPe_DatAttrs, Fighter};
 
-    pub fn ftPe_SpecialAirSJump_Phys(fp: &mut Fighter) {
+    pub fn ftPe_SpecialAirSJump_Phys_fp(fp: &mut Fighter) {
         let a: &ftPe_DatAttrs = da(fp);
         if fp.cmd_vars[1] != 0 {
             co::calc_self_accel_deaccel(fp, a.x54);
@@ -67,7 +67,7 @@ pub mod ftpeachspecials {
         co::fall(fp, g, a.x5C_terminal_vel);
     }
 
-    pub fn ftPe_SpecialSStart_Phys(fp: &mut Fighter) {
+    pub fn ftPe_SpecialSStart_Phys_fp(fp: &mut Fighter) {
         let a: &ftPe_DatAttrs = da(fp);
         co::calc_ground_accel_accel_to_vel(
             fp,

@@ -65,7 +65,7 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
 3. `melee play` covers 7 fighters / 4 stages; retail `mn*` scenes are stand-ins (notes/play.md).
-4. Engine (`--engine tu`): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl reaches 1197 (blocker A), cpu_peach_samus_ys_items 120 (the golden's end; blocker B); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
+4. Engine (`--engine tu`): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl 3601 (the whole golden), cpu_peach_samus_ys_items 1562 (blocker C); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
 5. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
 
 ## Writing notes (merge-friendly: other branches append concurrently)
@@ -85,35 +85,20 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 - notes/traps.md: index of traps.   Other: docs/rust-port/inventory.md, neutral-hash.md, group-*.md, tools/rust-port/snap/README.md.
 
 
-## Current blockers (engine, 2026-10-31, round 2)
-- A. cpu_fox_falco_dl on `--engine tu`: 1197 frames match (was 950). Fixed this round: (1) `lb_8001044C` read the body colliders as the
-  GC `lb_Collider` layout instead of the native `Fighter_x1670_t` (position at +0x1C, found by storing the C's chain inputs in a game
-  global and reading the snapshot); (2) `ftCo_800A9CB4` lost its `__frsqrte` seed in the c2rs port (all four `sqrtf_store` sites).
-  Next stop: frame 1196 (Fox is hit by Falco, motion 76). The hurt capsules 8 and 10 (the hands: `ftFx_Init_OnKnockbackEnter` part
-  animations `ftAnim_ApplyPartAnim(gobj, 3 / 4, 3, 0)`) get bone matrices that differ from the C's (JObj SRT equal), so `ftCo_800A0DA4`
-  derives a different `cpu.x560/x564`, the AI range `cpu.x38` differs a frame later and the stick/hash diverge at 1197. Suspect the
-  hand joints' mtx dirty/cached state (`HSD_JObjSetMtxDirty` early-out, `lb_8000B4FC` / `ftAnim_8006FA58`, part-anim `flags_b5`) or the
-  render pass (see lead below). Not yet checked: JObj flags of the hand joints in the snapshot vs the engine (C 0x49, engine 0x09 on
-  all joints at the snapshot point, so the snapshot point differs).
-  Then: segfault at frame ~1207 in `efSync_Spawn` from `it_80270E30` (`efLib_Create_Attach_Pos` gets a bad jobj).
-- B. cpu_peach_samus_ys_items on `--engine tu`: 559 frames match (the legacy path stops at 120). Done this round: Samus in tu/ (c2rs plus the
-  oracle-checked chars bodies re-exported), the sound-id lookups run for real, `Mex_GrBind` identity, the `tu_ext` item/camera hooks wired to the
-  engine's TUs (their defaults were the legacy-state ports), stage-item articles word-swapped like the common ones, the Foods attribute rows
-  in GC layout with the joint in `itfoods::FOODS_JOINTS`, `ItCollDynamics` rebuilt from the image, `db_ItemSpawnsEnabled` set at boot
-  (the random item spawner never ran), and `EfArg` variadic words in `melee_link::va_words` (the `efSync_Spawn` crash at ~1207 on
-  cpu_fox_falco_dl and ~308 here). Next stop: frame 559, P1 (Peach) ECB `coll_data.desired_ecb` differs (the same class as A: a bone matrix).
-  Then a segfault at ~959. Peach's dress bone sets (`Dynamics P1 bone set 0`) are inactive in the C (bone_id 0x100) but run in the engine: not hashed.
-- Both A and B stop on the same thing: a joint's CACHED world matrix (`jobj->mtx`, clean flag, rotation part) differs between the C and the
-  engine at the time the hurt capsule / ECB reads it (`lb_8000B1CC`; translation, flags and the joint's own SRT are equal). Measured for
-  Fox's hands at frame 1196 by logging every `lb_8000B1CC` call into a C game global (last 256 calls) and the same values from the engine: 252 of
-  256 calls identical, the 3 differing ones are the hand joint. So who last wrote that joint's matrix (the render pass of an earlier frame, the
-  shadow pass, a hidden-joint skip) is what differs; next step is to log `HSD_JObjSetupMatrixSub` events for that joint on both sides.
-- c2rs trap: a declaration whose initialiser comes from a macro (`PUSH_ATTRS`, `COPY_ATTRS`) is emitted with a null initialiser. Check
-  generated fighter inits (fixed by hand in `tu/ftsamus.rs`).
-- A (lead). The dynamic-bone sim and capsules read world matrices (`jobj->mtx`) that the C render pass leaves fresh; the engine's render
-  pass is incomplete: per frame the C build runs `HSD_JObjDispSub` 122x, `HSD_DObjDisp` 374x and `HSD_StartRender` 3x (the `lbShadow` /
-  `ifMagnify` offscreen passes are seams that do nothing, `seams_gen.rs`), the engine 24x / 0x / 1x. Make the offscreen passes real
-  (at least their matrix-setup effect) and re-check. `MELEE_DIFF_MTX=1 melee diff --engine tu` compares world matrices too.
-- Method that worked: store the function's intermediate values in a C game global (`gw_*` array in the TU, rebuild one TU in
-  `_build/agents/spine-r1-trace`, `tools/rust-port/snap/dump.sh`) and read it from the snapshot with a small python reader of the
-  MELSNAP1 format; the log (`OSReport`) drops lines.
+## Current blockers (engine, 2026-11-01, round 3)
+Engine (`--engine tu`) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601 (full golden), cpu_peach_samus_ys_items 1562.
+Blockers A and B of round 2 (stale hand matrices) are fixed: the stage draw callbacks were skipped (`Wb_RenderOption` answered 0), `HSD_MkRotationMtx`
+was unlinked, and several GC-layout reads went through native structs; details in notes/consolidation.md "Round 3".
+- C. cpu_peach_samus_ys_items stops at frame 1562 (hash, `itemsum`; 1563 `items` 9 vs 10). First differing call: chunk 1563, after `Item_802696CC` the C runs
+  `it_80273484 / it_8027346C / it_802714C0` (the rest of `Item_802697D4`) and the engine does not; at 1562 one of the five Foods items (kind 18, the
+  Party Ball burst) has `xDCC_flag.b3 == 0` on the engine and 1 in the C. Not yet found who clears it (`Item_8026AE84`?). Tried: item rows in `melee diff`
+  (kind / pos / vel equal), blast-zone values (fine). Next: log `xDCC_flag` writes of kind 18 items on both sides (the `gw_dbg_jobj_out` recipe in notes).
+- D. Retail tables with unresolved callbacks (no callback at all on the engine): Crazy Hand `ftCh_*` (40), Jigglypuff `ftPr_*` (80), Crazy Hand captures (12)
+  (`melee_link/retail_unresolved.txt`). Not in a golden; any scenario with these fighters will freeze them.
+- E. Direct `todo!` stubs left in melee_fighter tu: `ftCo_Damage` (lbBgFlash_80021C48, efAsync_Spawn, Camera_RequestQuake), `JumpAerial` (HSD_JObjSetMtxDirtySub), `ft_0c8c`
+  (lbBgFlash_80021C48, gm_80167470, ftMh / ftCh), `ft_0cdd` done, `ft_0cdf` done. They panic when reached (outside the render pass).
+- F. Peach's dress dynamics (`Dynamics P1 bone set 0`) run on the engine but are inactive in the C (bone id 0x100): not hashed, still a diff in `melee diff`.
+- Method (works, keep using it): `melee diff --engine tu --frame N` (captures at Script_FramePost like the C snapshot; `MELEE_DIFF_MTX=1` adds world matrices;
+  JObj2 lines = the blend-source tree), `tools/rust-port/trace/countdiff.py` / `seqdiff.py --anchor Fighter_8006A1BC --auto-ignore N`, the C trace build with a
+  throw-away `dbg_jobj_out` logger, and `MELEE_CT_LIVE_FROM` to find the function a segfault is in. Do not hunt single fields first.
+- c2rs trap: a declaration whose initialiser comes from a macro (`PUSH_ATTRS`, `COPY_ATTRS`) is emitted with a null initialiser. Check generated fighter inits.

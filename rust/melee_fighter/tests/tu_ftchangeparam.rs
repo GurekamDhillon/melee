@@ -56,7 +56,7 @@ fn ftchangeparam_vs_c() {
             go.user_data = &mut *f as *mut Fighter as *mut _;
             let mut ret = 0u32;
             match op {
-                0 => ret = c::ftco_calc_y_scaled_knockback(a, s, e).to_bits(),
+                0 => ret = c::ftCo_CalcYScaledKnockback(a, s, e).to_bits(),
                 1 => {
                     let sc = if h.rnd() & 3 != 0 { s } else { 1.0 };
                     c::ftco_800cf6e8(&mut at, sc)

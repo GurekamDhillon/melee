@@ -29,7 +29,7 @@ pub mod ext {
     ext_fns! {
         ftWalkCommon_800DFC70(g: G) -> bool = crate::tu::ftwalkcommon::ftwalkcommon_800dfc70;
         ftWalkCommon_800E0060(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800e0060;
-        ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
+        ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback;
         // `Fighter_804D6524->xC`.
         Fighter_804D6524_xC() -> f32 = || crate::tu::ftchangeparam::ext::d6524().xC;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };

@@ -17,7 +17,7 @@ pub mod ext {
     pub static mut MTX_MULT_VEC: Option<fn(*mut HSD_JObj, &Vec3, &mut Vec3)> = None;
     pub fn MTXMultVec_HSD_JObjGetMtxPtr(j: *mut HSD_JObj, src: &Vec3, dst: &mut Vec3) {
         if let Some(h) = unsafe { MTX_MULT_VEC } { return h(j, src, dst) }
-        todo!("TODO(group1 HSD) HSD_JObjGetMtxPtr / MTXMultVec")
+        unsafe { melee_runtime::tu::jobj::HSD_JObjSetupMatrix(j as _); melee_runtime::tu::mtx_pc::raw::PSMTXMultVec((*j).mtx.as_mut_ptr() as _, src as *const Vec3 as _, dst as *mut Vec3 as _); }
     }
 }
 

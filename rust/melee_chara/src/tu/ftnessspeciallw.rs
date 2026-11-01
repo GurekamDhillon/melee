@@ -11,7 +11,6 @@ use melee_core::fp::fmadds;
 use melee_types::*;
 
 /// Already ported (rounds 2 and 5): re-exported under this TU.
-pub use crate::chars::ftNess::ftnessspeciallw::ftNs_SpecialAirLwStart_Phys;
 pub use crate::chars::r2::ftNess::ftnessspeciallw::ftNs_SpecialLwStart_Phys;
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
@@ -631,4 +630,10 @@ pub fn ftNs_SpecialLwEnd_Enter(gobj: *mut HSD_GObj) {
 pub fn ftNs_SpecialAirLwEnd_Enter(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftNs_SpecialAirLwEnd_Enter");
     st::Fighter_ChangeMotionState(gobj, ftNs_MS_SpecialAirLwEnd as i32, 0, 0.0, 1.0, 0.0, null());
+}
+
+/// `ftNs_SpecialAirLwStart_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftNess::ftnessspeciallw::ftNs_SpecialAirLwStart_Phys_fp`.
+pub fn ftNs_SpecialAirLwStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirLwStart_Phys");
+    unsafe { crate::chars::ftNess::ftnessspeciallw::ftNs_SpecialAirLwStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

@@ -85,7 +85,7 @@ pub mod ftyoshispecials {
         co::set_self_movement_from_grounded_movement(fp);
     }
 
-    pub fn ftYs_SpecialAirSLanding_IASA(fp: &mut Fighter) {
+    pub fn ftYs_SpecialAirSLanding_IASA_fp(fp: &mut Fighter) {
         unsafe { fp.mv.ys.specials.x30 = 0 as _ };
     }
 
@@ -118,7 +118,7 @@ pub mod ftyoshispecials {
         air_s_loop_phys(fp)
     }
 
-    pub fn ftYs_SpecialAirSStart_0_Phys(fp: &mut Fighter) {
+    pub fn ftYs_SpecialAirSStart_0_Phys_fp(fp: &mut Fighter) {
         fp.xE4_ground_accel_1 = 0.0;
         fp.gr_vel = 0.0;
         fp.self_vel.y = 0.0;
@@ -127,7 +127,7 @@ pub mod ftyoshispecials {
         fp.x74_self_accel.x = 0.0;
     }
 
-    pub fn ftYs_SpecialAirSStart_1_IASA(fp: &mut Fighter) {
+    pub fn ftYs_SpecialAirSStart_1_IASA_fp(fp: &mut Fighter) {
         unsafe { fp.mv.ys.specials.x30 = 0 as _ };
     }
 

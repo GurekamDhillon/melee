@@ -11,9 +11,6 @@ use melee_types::*;
 
 /// Already ported (rounds 2/4/6, chars/): re-exported under this TU (their signatures take the
 /// gobj or the fighter exactly as the earlier round decided).
-pub use crate::chars::ftNess::ftnessspecialn::{
-    ftNs_SpecialAirNEnd_Phys, ftNs_SpecialAirNRelease_Phys, ftNs_SpecialAirNStart_Phys,
-};
 pub use crate::chars::r2::ftNess::ftnessspecialn::{
     ftNs_SpecialAirNEnd_Coll, ftNs_SpecialAirNRelease_Coll, ftNs_SpecialAirNStart_Coll,
     ftNs_SpecialNEnd_Coll, ftNs_SpecialNEnd_Phys, ftNs_SpecialNRelease_Coll,
@@ -346,3 +343,21 @@ pub fn ftNs_SpecialAirNRelease_IASA(gobj: *mut HSD_GObj) {
 }
 
 pub fn ftNs_SpecialAirNEnd_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftNs_SpecialAirNEnd_IASA");}
+
+/// `ftNs_SpecialAirNEnd_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftNess::ftnessspecialn::ftNs_SpecialAirNEnd_Phys_fp`.
+pub fn ftNs_SpecialAirNEnd_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNEnd_Phys");
+    unsafe { crate::chars::ftNess::ftnessspecialn::ftNs_SpecialAirNEnd_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftNs_SpecialAirNRelease_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftNess::ftnessspecialn::ftNs_SpecialAirNRelease_Phys_fp`.
+pub fn ftNs_SpecialAirNRelease_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNRelease_Phys");
+    unsafe { crate::chars::ftNess::ftnessspecialn::ftNs_SpecialAirNRelease_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftNs_SpecialAirNStart_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftNess::ftnessspecialn::ftNs_SpecialAirNStart_Phys_fp`.
+pub fn ftNs_SpecialAirNStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftNs_SpecialAirNStart_Phys");
+    unsafe { crate::chars::ftNess::ftnessspecialn::ftNs_SpecialAirNStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}

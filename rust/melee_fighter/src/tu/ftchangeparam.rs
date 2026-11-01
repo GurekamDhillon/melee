@@ -41,14 +41,14 @@ pub mod ext {
 }
 
 /// `ftCo_CalcYScaledKnockback`.
-pub fn ftco_calc_y_scaled_knockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
-    melee_core::ct!("ftco_calc_y_scaled_knockback");
+pub fn ftCo_CalcYScaledKnockback(arg0: f32, scale: f32, arg2: f32) -> f32 {
+    melee_core::ct!("ftCo_CalcYScaledKnockback");
     assert!(scale != 0.0, "ftchangeparam.c:30 scale != 0.0F");
     if arg2 == 0.0 {
         return arg0;
     }
     if arg2 < 0.0 {
-        return arg0 / ftco_calc_y_scaled_knockback(1.0, scale, -arg2);
+        return arg0 / ftCo_CalcYScaledKnockback(1.0, scale, -arg2);
     }
     if scale >= 1.0 || arg2 <= 1.0 {
         return fmadds((scale - 1.0) * arg0, arg2, arg0);
@@ -63,7 +63,7 @@ pub fn ftco_800cf6e8(a: &mut ftCo_DatAttrs, scale: f32) {
         return;
     }
     let k = ext::d6524();
-    let s = |v: f32, e: f32| ftco_calc_y_scaled_knockback(v, scale, e);
+    let s = |v: f32, e: f32| ftCo_CalcYScaledKnockback(v, scale, e);
     a.slow_walk_max = s(a.slow_walk_max, k.x10);
     a.mid_walk_point = s(a.mid_walk_point, k.x14);
     a.fast_walk_min = s(a.fast_walk_min, k.x18);
@@ -117,7 +117,7 @@ pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
     let count = unsafe { (*t).x28 };
     let mut scale: f32 = 1.0;
     if scale != f.x34_scale.y {
-        scale *= ftco_calc_y_scaled_knockback(1.0, f.x34_scale.y, ext::d6524().x28);
+        scale *= ftCo_CalcYScaledKnockback(1.0, f.x34_scale.y, ext::d6524().x28);
     }
     if !f.x197C.is_null() {
         scale *= crate::hooks::fighter_804d6520().x14;
@@ -139,7 +139,7 @@ pub fn ftco_800d0cbc(g: *mut HSD_GObj) {
 /// `ftCo_800D0EC8`: negated size-scaled common x310.
 pub fn ftco_800d0ec8(f: &Fighter) -> f32 {
     melee_core::ct!("ftco_800d0ec8");
-    -ftco_calc_y_scaled_knockback(crate::hooks::common_data().x310, f.x34_scale.y, ext::d6524().x30)
+    -ftCo_CalcYScaledKnockback(crate::hooks::common_data().x310, f.x34_scale.y, ext::d6524().x30)
 }
 
 fn reload(f: &mut Fighter) {

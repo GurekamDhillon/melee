@@ -54,8 +54,6 @@ fn ftCo_CaptureWaitCrazyHand_Anim (ftData_MotionStateList[338].anim_cb): no cano
 fn ftCo_CaptureWaitCrazyHand_Coll (ftData_MotionStateList[338].coll_cb): no canonical
 fn ftCo_CaptureWaitCrazyHand_IASA (ftData_MotionStateList[338].input_cb): no canonical
 fn ftCo_CaptureWaitCrazyHand_Phys (ftData_MotionStateList[338].phys_cb): no canonical
-fn ftCo_DamageFall_Anim (ftData_MotionStateList[38].anim_cb): no canonical
-fn ftCo_DamageFall_Phys (ftData_MotionStateList[38].phys_cb): no canonical
 fn ftPr_SpecialAirNChargeFull_Anim (ftPr_Init_MotionStateTable[16].anim_cb): no canonical
 fn ftPr_SpecialAirNChargeFull_Coll (ftPr_Init_MotionStateTable[16].coll_cb): no canonical
 fn ftPr_SpecialAirNChargeFull_IASA (ftPr_Init_MotionStateTable[16].input_cb): no canonical

@@ -18,9 +18,9 @@ pub mod ext {
     pub extern "C" fn ftCo_800968C8(_g: G) { { unsafe { crate::tu::ftCo_FallSpecial::ftCo_800968C8(_g as _); } return; } }
     pub extern "C" fn ftCo_FallAerial_Enter(_g: G) { { unsafe { crate::tu::ftCo_FallAerial::ftCo_FallAerial_Enter(_g as _); } return; } }
     pub fn HSD_JObjLoadJoint(_j: *mut HSD_Joint) -> *mut HSD_JObj { { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(_j as _) as _ }; } }
-    pub fn HSD_JObjAddAnim(_j: *mut HSD_JObj, _a: *mut HSD_AnimJoint) { todo!("TODO(group1 HSD) HSD_JObjAddAnim") }
+    pub fn HSD_JObjAddAnim(_j: *mut HSD_JObj, _a: *mut HSD_AnimJoint) { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnim(_j as _, _a as _, core::ptr::null_mut(), core::ptr::null_mut()) } }
     pub static mut HSD_JOBJ_ANIM: Option<fn(*mut HSD_JObj)> = None;
-    pub fn HSD_JObjAnim(j: *mut HSD_JObj) { if let Some(h) = unsafe { HSD_JOBJ_ANIM } { return h(j) } todo!("TODO(group1 HSD) HSD_JObjAnim") }
+    pub fn HSD_JObjAnim(j: *mut HSD_JObj) { match unsafe { HSD_JOBJ_ANIM } { Some(f) => f(j), None => unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnim(j as _) } } }
     pub fn it_80293660(_i: i32) -> *mut HSD_AnimJoint { { return unsafe { melee_items::tu::itkinoko::it_80293660(_i as _) as _ }; } }
 }
 
@@ -114,8 +114,9 @@ pub fn fn_800d299c(g: G, idx: i32, arg8: f32, arg9: f32) {
     }
     let f = fp(g);
     unsafe {
-        f.mv.co.walk.middle_anim_frame = arg8;
-        f.mv.co.walk.fast_anim_frame = arg9;
+        // native layout: `walk.middle/fast_anim_frame` overlap `mushroom.x4/x8` (8-byte callback pointers) that the Kinoko states write; the scratch pair lives in the later rate slots
+        f.mv.co.walk.middle_anim_rate = arg8;
+        f.mv.co.walk.fast_anim_rate = arg9;
     }
     ext::HSD_JObjAddAnim(f.x2184, ext::it_80293660(idx));
     e::ftAnim_80070734(fp(g).x2184, 0.0);
@@ -134,7 +135,7 @@ pub fn fn_800d2a3c(g: G) -> bool {
     ext::HSD_JObjAnim(fp(g).x2184);
     let f = fp(g);
     let scale = unsafe { (*f.x2184).scale.x };
-    let (mid, fast) = unsafe { (f.mv.co.walk.middle_anim_frame, f.mv.co.walk.fast_anim_frame) };
+    let (mid, fast) = unsafe { (f.mv.co.walk.middle_anim_rate, f.mv.co.walk.fast_anim_rate) };
     h::ftlib_set_scale(g, lerp_scale(mid, fast, scale));
     let flags = unsafe { (*(*fp(g).x2184).aobj).flags };
     flags & 0x4000_0000 == 0

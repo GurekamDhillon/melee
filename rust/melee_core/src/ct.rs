@@ -34,7 +34,12 @@ mod imp {
             }
         }
         if *LIVE.get_or_init(|| std::env::var_os("MELEE_CT_LIVE").is_some()) {
-            eprintln!("ct {name}");
+            // MELEE_CT_LIVE_FROM=<frame>: print only from this frame on
+            static FROM: std::sync::OnceLock<i64> = std::sync::OnceLock::new();
+            let from = *FROM.get_or_init(|| std::env::var("MELEE_CT_LIVE_FROM").ok().and_then(|v| v.parse().ok()).unwrap_or(i64::MIN));
+            if ST.lock().map(|s| s.frame >= from).unwrap_or(true) {
+                eprintln!("ct {name}");
+            }
         }
         if let Ok(mut s) = ST.lock() {
             if s.frame >= s.lo && s.frame <= s.hi {

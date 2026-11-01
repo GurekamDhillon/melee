@@ -60,9 +60,18 @@ pub static it_803F6110: [ItemStateTable; 2] = [
 /// `HSD_AnimJoint* it_80293660(int idx)` (293660)
 pub unsafe extern "C" fn it_80293660(idx: i32) -> *mut HSD_AnimJoint {
     melee_core::ct!("it_80293660");
+    // the engine's attribute block keeps the GameCube 4-byte pointer slots; the decoded animation roots are in KINOKO_JOINTS
+    // (an image whose block is a native `KinokoAnim` array, as the oracle tests build it, is read directly)
+    let table = KINOKO_JOINTS[(idx as usize + 2).min(31)];
+    if !table.is_null() {
+        return table;
+    }
     let attrs = (**ext::it_804D6D24.add(It_Kind_Kinoko as usize)).x4_specialAttributes as *mut KinokoAnim;
     (*attrs.offset(idx as isize + 2)).joint
 }
+
+/// The Super Mushroom's animation roots by attribute slot (`attrs[slot].joint`), filled by the engine's archive decode.
+pub static mut KINOKO_JOINTS: [*mut HSD_AnimJoint; 32] = [core::ptr::null_mut(); 32];
 
 /// `void itKinoko_Logic26_Spawned(Item_GObj*)` (29366C)
 pub unsafe extern "C" fn itKinoko_Logic26_Spawned(gobj: *mut Item_GObj) {

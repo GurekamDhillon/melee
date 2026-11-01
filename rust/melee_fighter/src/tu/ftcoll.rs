@@ -136,7 +136,7 @@ pub mod ext {
         FTLIB_80086960 ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960(g);
         FTCOMMON_8007F804 ftCommon_8007F804(fp: F) -> MtxPtr = unsafe { crate::ftcommon2::ftcommon_8007f804(&mut *fp) };
         FTCOMMON_8007EBAC ftCommon_8007EBAC(fp: F, a: u32, b: u32) = unsafe { crate::ftcommon2::ftcommon_8007ebac(&mut *fp, a, b) };
-        FTCO_CALC_Y_SCALED_KNOCKBACK ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback(a, scale, c);
+        FTCO_CALC_Y_SCALED_KNOCKBACK ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback(a, scale, c);
         FTCO_800C0694 ftCo_800C0694(fp: F) -> i32 = unsafe { crate::tu::ftdevice::ftco_800c0694(&mut *fp) as i32 };
         FTCO_800C0200 ftCo_800C0200(fp: F, a: i32) = unsafe { crate::tu::ftcolanim::ftco_800c0200(&mut *fp, a) };
         FTCO_800BFFD0 ftCo_800BFFD0(fp: F, a: i32, b: i32) -> bool = unsafe { crate::tu::ftcolanim::ftco_800bffd0(&mut *fp, a, b) };
@@ -2802,7 +2802,7 @@ pub fn ftColl_8007ABD0(hit: *mut HitCapsule, damage: u32, gobj: G) {
     let mut dmg = damage as f32;
     if fp.x34_scale.y != 1.0 {
         let x4 = crate::tu::ftchangeparam::ext::d6524().x4;
-        dmg = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback(dmg, fp.x34_scale.y, x4);
+        dmg = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback(dmg, fp.x34_scale.y, x4);
     }
     let scaled = crate::ft0df::ftco_800deeb8(fp, dmg);
     unsafe {

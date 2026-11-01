@@ -51,7 +51,7 @@ pub mod ext {
         ftWalkCommon_800DFEC8(g: G, cb: fn(G, f32)) = crate::tu::ftwalkcommon::ftwalkcommon_800dfec8;
         ftWalkCommon_800E0060(g: G) = crate::tu::ftwalkcommon::ftwalkcommon_800e0060;
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
-        ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
+        ftCo_CalcYScaledKnockback(a: f32, scale: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback;
         // `Fighter_804D651C->x0`, `Fighter_804D6524->xC`, `Fighter_804D6520->x0` (PlCo data).
         Fighter_804D651C_x0() -> f32 = || crate::tu::ftchangeparam::ext::d651c().x0;
         Fighter_804D6524_xC() -> f32 = || crate::tu::ftchangeparam::ext::d6524().xC;

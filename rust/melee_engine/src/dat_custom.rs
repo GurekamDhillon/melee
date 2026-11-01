@@ -302,6 +302,8 @@ static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<melee_types::itFoodsAttributes>)>
 
 /// `ItemKind` of Foods (the index of its article in the common-item table).
 const KIND_FOODS: u32 = 18;
+/// `ItemKind` of the Super Mushroom: its attribute block is `KinokoAnim { HSD_AnimJoint* joint }` entries (`it_80293660` reads `[idx + 2]`).
+const KIND_KINOKO: u32 = 26;
 
 /// `rtable::<Article>`; see [`fix_articles`].
 fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut melee_types::Article {
@@ -312,6 +314,18 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
         for i in 0..n as u32 {
             if let Some(ta) = d.target(t + 4 * i) {
                 note_article_states(d, b, ta);
+                if i == KIND_KINOKO && n > KIND_KINOKO as usize {
+                    // the animation roots are 32-bit relocated pointers in the block; the native `KinokoAnim` is 8 bytes wide, so the decoded
+                    // roots live in a side table (itkinoko.rs `KINOKO_JOINTS`) and the C's `attrs[idx + 2].joint` reads it
+                    if let Some(sa) = d.target(ta + 4) {
+                        let words = (b.extent(sa) / 4) as u32;
+                        for k in 0..words.min(32) {
+                            if d.target(sa + 4 * k).is_some() {
+                                unsafe { melee_items::tu::itkinoko::KINOKO_JOINTS[k as usize] = d.ptr::<melee_types::HSD_AnimJoint>(sa + 4 * k) };
+                            }
+                        }
+                    }
+                }
                 if i == KIND_FOODS && n > KIND_FOODS as usize {
                     if let Some(sa) = d.target(ta + 4) {
                         let rows = (b.extent(sa) / 0x10) as u32;
@@ -339,6 +353,10 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
 /// swapped; articles sharing a block share the copy.
 pub fn fix_articles() {
     use std::collections::HashMap;
+    let typed = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_TYPED)) };
+    for (a, t) in typed {
+        unsafe { (*a).x4_specialAttributes = t };
+    }
     let dyns = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)) };
     for (a, base, off) in dyns {
         unsafe {
@@ -473,13 +491,65 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
     v.x14 = d.ptr_array::<Fighter_WaitAnimData>(at("x14"), m);
     v.x18 = d.ptr_array::<[u8; 2]>(at("x18"), m);
+    // `int* x54`: the random-bone table `ftCo_8009F834` indexes with the 0..4 counter `x2220_b0` (the plain pointer decode would read one `int`)
+    v.x54 = d.ptr_array::<i32>(at("x54"), 5);
     v.x48_items = rtable_articles(d, b, at("x48_items")) as *mut *mut c_void;
+    typed_article_attrs(d, b, sym.trim_start_matches("ftData").to_lowercase().as_str(), at("x48_items"));
+    if sym.trim_start_matches("ftData").eq_ignore_ascii_case("samus") {
+        // `ftSs_Init_CreateThrowGrappleBeam`: `x48_items[4]` is a `UNK_SAMUS_S1 { joint, anim_joints, anim_joint, matanim_joint }`, not an article
+        if let Some(t) = d.target(at("x48_items")) {
+            let n = (b.extent(t) / 4).max(1) as usize;
+            if n > 4 {
+                let mut tbl: std::vec::Vec<*mut c_void> = (0..n).map(|i| unsafe { *(v.x48_items as *mut *mut c_void).add(i) }).collect();
+                tbl[4] = d.ptr::<melee_types::UNK_SAMUS_S1>(t + 16) as *mut c_void;
+                v.x48_items = Box::leak(tbl.into_boxed_slice()).as_mut_ptr() as *mut *mut c_void;
+            }
+        }
+    }
     note_dynamics(d, &v, at("x2C"));
     let lower = sym.trim_start_matches("ftData").to_lowercase();
     if let Some(p) = crate::extattr::decode(&lower, d, at("ext_attr")) {
         v.ext_attr = p;
     }
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
+}
+
+/// Fighter-owned articles whose special attributes hold `HSD_Joint*` fields (the grapple beam, the hookshot, the boomerang,
+/// the arrow, the chain, the yo-yo, the Ice Climbers' string): the 32-bit pointer slots of the raw block do not fit the native
+/// struct, so the block is decoded as its record and swapped in by [`fix_articles`]: (article, decoded attributes).
+static mut ARTICLE_TYPED: Vec<(*mut melee_types::Article, *mut c_void)> = Vec::new();
+
+/// Decode the fighter's `x48_items` articles whose attribute block is one of the pointer-bearing records of that fighter.
+fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32) {
+    use melee_types::{Article, itClimbersStringAttributes, itLinkArrowAttributes, itLinkBoomerangAttributes, itLinkHookshotAttributes, itSamusGrappleAttributes, itSeakChain_Attrs, itYoyoAttributes};
+    type Dec = fn(&mut GcDecoder<'_>, u32) -> *mut c_void;
+    fn dec<T: GcPointee + GcDecode>(d: &mut GcDecoder<'_>, sa: u32) -> *mut c_void {
+        d.object::<T>(sa) as *mut c_void
+    }
+    let cands: std::vec::Vec<(u32, Dec)> = match sym {
+        "samus" => std::vec![(<itSamusGrappleAttributes as GcDecode>::GC_BYTES, dec::<itSamusGrappleAttributes> as Dec)],
+        "link" | "clink" => std::vec![
+            (<itLinkHookshotAttributes as GcDecode>::GC_BYTES, dec::<itLinkHookshotAttributes> as Dec),
+            (<itLinkBoomerangAttributes as GcDecode>::GC_BYTES, dec::<itLinkBoomerangAttributes> as Dec),
+            (<itLinkArrowAttributes as GcDecode>::GC_BYTES, dec::<itLinkArrowAttributes> as Dec),
+        ],
+        "seak" => std::vec![(<itSeakChain_Attrs as GcDecode>::GC_BYTES, dec::<itSeakChain_Attrs> as Dec)],
+        "ness" => std::vec![(<itYoyoAttributes as GcDecode>::GC_BYTES, dec::<itYoyoAttributes> as Dec)],
+        "popo" | "nana" => std::vec![(<itClimbersStringAttributes as GcDecode>::GC_BYTES, dec::<itClimbersStringAttributes> as Dec)],
+        _ => return,
+    };
+    let Some(t) = d.target(at_x48) else { return };
+    let n = (b.extent(t) / 4).max(1);
+    for i in 0..n {
+        let Some(ta) = d.target(t + 4 * i) else { continue };
+        let Some(sa) = d.target(ta + 4) else { continue };
+        let ext = b.extent(sa);
+        if let Some((_, f)) = cands.iter().find(|(sz, _)| ext == *sz) {
+            let art = d.object::<Article>(ta);
+            let typed = f(d, sa);
+            unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+        }
+    }
 }
 
 /// Dynamics blocks to rebuild after the decoder ran: (the `ftDynamics` object, per bone the native word block).

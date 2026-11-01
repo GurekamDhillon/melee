@@ -20,7 +20,6 @@ fn angle_xy(a: &Vec, b: &Vec) -> f32 {
 }
 
 /// Already ported (rounds 2/3/7/11 and the base module): re-exported under this TU.
-pub use crate::chars::ftMewtwo::ftmewtwospecialhi::ftMt_SpecialHiLost_Phys;
 pub use crate::chars::r11::ftMewtwo::ftmewtwospecialhi::{
     ftMt_SpecialAirHiStart_Coll, ftMt_SpecialAirHi_Coll,
 };
@@ -524,4 +523,10 @@ pub fn ftMt_SpecialAirHiLost_Enter(gobj: *mut HSD_GObj) {
         (*fp).self_vel.x = (*fp).mv.mt.SpecialHi.velX * (*a).x6C_MEWTWO_TELEPORT_MOMENTUM_END_MUL;
         (*fp).self_vel.y = (*fp).mv.mt.SpecialHi.velY * (*a).x6C_MEWTWO_TELEPORT_MOMENTUM_END_MUL;
     }
+}
+
+/// `ftMt_SpecialHiLost_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftMewtwo::ftmewtwospecialhi::ftMt_SpecialHiLost_Phys_fp`.
+pub fn ftMt_SpecialHiLost_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftMt_SpecialHiLost_Phys");
+    unsafe { crate::chars::ftMewtwo::ftmewtwospecialhi::ftMt_SpecialHiLost_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

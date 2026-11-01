@@ -16,7 +16,7 @@ use melee_types::*;
 /// module's `ZeroHitboxPositions`, `80110F58`, `80110F64` and `AirSStart_Phys` take the fighter
 /// (`&mut Fighter` / `&Fighter`) where the C takes the gobj.
 pub use crate::chars::ftSeak::ftseakspecials::{
-    ftSk_SpecialAirSStart_Phys, ftSk_SpecialS_80110F58, ftSk_SpecialS_80110F64, ftSk_SpecialS_ZeroHitboxPositions,
+    ftSk_SpecialS_80110F58, ftSk_SpecialS_80110F64, ftSk_SpecialS_ZeroHitboxPositions,
 };
 pub use crate::chars::r12::ftSeak::ftseakspecials::{
     ftSk_SpecialAirSEnd_IASA, ftSk_SpecialAirSStart_IASA, ftSk_SpecialSEnd_IASA, ftSk_SpecialSStart_IASA,
@@ -1100,4 +1100,10 @@ pub fn ftSk_SpecialS_80111FA0(gobj: *mut HSD_GObj) -> i32 {
 
         0
     }
+}
+
+/// `ftSk_SpecialAirSStart_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftSeak::ftseakspecials::ftSk_SpecialAirSStart_Phys_fp`.
+pub fn ftSk_SpecialAirSStart_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirSStart_Phys");
+    unsafe { crate::chars::ftSeak::ftseakspecials::ftSk_SpecialAirSStart_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

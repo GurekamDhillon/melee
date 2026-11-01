@@ -19734,7 +19734,7 @@ impl GcDecode for HSD_ExpDesc {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.rvalue = <*mut HSD_RvalueList as GcDecode>::gc_decode(d, at + 0x4);
+        v.rvalue = d.ptr_array_until_word::<HSD_RvalueList>(at + 0x4, 0) as *mut HSD_RvalueList;
         v
     }
 }
@@ -19766,7 +19766,7 @@ impl GcDecode for HSD_ByteCodeExpDesc {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.bytecode = <*mut u8 as GcDecode>::gc_decode(d, at + 0x0);
-        v.rvalue = <*mut HSD_RvalueList as GcDecode>::gc_decode(d, at + 0x4);
+        v.rvalue = d.ptr_array_until_word::<HSD_RvalueList>(at + 0x4, 0) as *mut HSD_RvalueList;
         v
     }
 }
@@ -41090,7 +41090,7 @@ impl GcDecode for UNK_SAMUS_S1 {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.x0_joint = <*mut HSD_Joint as GcDecode>::gc_decode(d, at + 0x0);
-        v.x4_anim_joints = <*mut *mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x4);
+        { let n = 4; v.x4_anim_joints = d.ptr_array::<*mut HSD_AnimJoint>(at + 0x4, n) as *mut *mut HSD_AnimJoint; }
         v.x8_anim_joint = <*mut HSD_AnimJoint as GcDecode>::gc_decode(d, at + 0x8);
         v.xC_matanim_joint = <*mut HSD_MatAnimJoint as GcDecode>::gc_decode(d, at + 0xC);
         v

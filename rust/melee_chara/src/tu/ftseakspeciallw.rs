@@ -9,7 +9,6 @@ use melee_types::*;
 
 /// Already ported (rounds 2/3/4 and the hand module): re-exported under this TU. The hand
 /// module's Phys functions take the fighter (`&mut Fighter`) where the C takes the gobj.
-pub use crate::chars::ftSeak::ftseakspeciallw::{ftSk_SpecialAirLw2_Phys, ftSk_SpecialAirLw_Phys};
 pub use crate::chars::r2::ftSeak::ftseakspeciallw::{ftSk_SpecialLw2_Anim, ftSk_SpecialAirLw2_Anim, ftSk_SpecialLw2_Phys, ftSk_SpecialLw_Phys};
 pub use crate::chars::r3::ftSeak::ftseakspeciallw::{
     ftSk_SpecialAirLw2_Coll, ftSk_SpecialAirLw_Coll, ftSk_SpecialLw2_Coll, ftSk_SpecialLw_801144B8,
@@ -207,4 +206,16 @@ pub fn ftSk_SpecialLw_80114758(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, var_r4, 0, (*attributes).x70, 1.0, 0.0, core::ptr::null_mut());
         (*fp).accessory4_cb = Some(cb_fn_801140B0);
     }
+}
+
+/// `ftSk_SpecialAirLw2_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftSeak::ftseakspeciallw::ftSk_SpecialAirLw2_Phys_fp`.
+pub fn ftSk_SpecialAirLw2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirLw2_Phys");
+    unsafe { crate::chars::ftSeak::ftseakspeciallw::ftSk_SpecialAirLw2_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftSk_SpecialAirLw_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftSeak::ftseakspeciallw::ftSk_SpecialAirLw_Phys_fp`.
+pub fn ftSk_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftSk_SpecialAirLw_Phys");
+    unsafe { crate::chars::ftSeak::ftseakspeciallw::ftSk_SpecialAirLw_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

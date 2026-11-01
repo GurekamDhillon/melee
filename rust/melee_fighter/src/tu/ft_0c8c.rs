@@ -33,8 +33,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-        fn HSD_JObjLoadJoint(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { todo!("TODO(group1 HSD) HSD_JObjLoadJoint") };
-        fn HSD_JObjGetDObj(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { todo!("TODO(group1 HSD) HSD_JObjGetDObj") };
+        fn HSD_JObjLoadJoint(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(_a0 as _) as _ } };
+        fn HSD_JObjGetDObj(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjGetDObj(_a0 as _) as _ } };
         fn ft_800C80A4(_fp: *mut core::ffi::c_void) = { unsafe { crate::tu::ft_0c88::ext::ft_800C80A4(&mut *(_fp as *mut Fighter)) } };
         fn Player_GetMoreFlagsBit0(_a0: i32) -> i32 = { unsafe { (crate::player::get_more_flags_bit0(_a0 as _)) as _ } };
         fn Player_GetRemainingHPByIndex(_a0: i32, _a1: i32) -> i32 = { unsafe { (crate::player::get_remaining_hp_by_index(_a0 as _, _a1 as _)) as _ } };

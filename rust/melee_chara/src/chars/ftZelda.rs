@@ -34,13 +34,13 @@ pub mod ftzeldaspeciallw {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftZelda_DatAttrs, Fighter};
 
-    pub fn ftZd_SpecialAirLw2_Phys(fp: &mut Fighter) {
+    pub fn ftZd_SpecialAirLw2_Phys_fp(fp: &mut Fighter) {
         let a: &ftZelda_DatAttrs = da(fp);
         co::fall(fp, a.x78, a.x7C);
         co::calc_self_accel_deaccel_air(fp);
     }
 
-    pub fn ftZd_SpecialAirLw_Phys(fp: &mut Fighter) {
+    pub fn ftZd_SpecialAirLw_Phys_fp(fp: &mut Fighter) {
         let a: &ftZelda_DatAttrs = da(fp);
         co::fall(fp, a.x78, a.x7C);
         co::calc_self_accel_deaccel_air(fp);
@@ -64,13 +64,13 @@ pub mod ftzeldaspecials {
         let aerial_friction = fp.co_attrs.aerial_friction;
         co::calc_self_accel_deaccel(fp, aerial_friction);
     }
-    pub fn ftZd_SpecialAirSEnd_Phys(fp: &mut Fighter) {
+    pub fn ftZd_SpecialAirSEnd_Phys_fp(fp: &mut Fighter) {
         air_s_phys(fp)
     }
-    pub fn ftZd_SpecialAirSLoop_Phys(fp: &mut Fighter) {
+    pub fn ftZd_SpecialAirSLoop_Phys_fp(fp: &mut Fighter) {
         air_s_phys(fp)
     }
-    pub fn ftZd_SpecialAirSStart_Phys(fp: &mut Fighter) {
+    pub fn ftZd_SpecialAirSStart_Phys_fp(fp: &mut Fighter) {
         air_s_phys(fp)
     }
 }

@@ -267,7 +267,6 @@ nodef Fighter_804D6524_x0 melee_fighter/tu/ftCo_Damage.rs 0
 nodef Mex_Enabled melee_fighter/tu/ftCo_Damage.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_Damage.rs 0
 nodef diag_geno_stun melee_fighter/tu/ftCo_Damage.rs 0
-nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftCo_Damage.rs 0
 nodef ftUcf_PadRaw melee_fighter/tu/ftCo_Damage.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_DamageFall.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_DamageFall.rs 0
@@ -282,7 +281,6 @@ nodef OSReport_GuardPose melee_fighter/tu/ftCo_Guard.rs 0
 nodef Replay_UcfVersion melee_fighter/tu/ftCo_Guard.rs 0
 nodef ftUcf_PadRaw melee_fighter/tu/ftCo_Guard.rs 0
 nodef Fighter_804D6524_xC melee_fighter/tu/ftCo_HammerWalk.rs 0
-nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftCo_HammerWalk.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_ItemParasolOpen.rs 0
 nodef ftCo_GetCStickAngle melee_fighter/tu/ftCo_ItemThrow.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_ItemThrow.rs 0
@@ -318,7 +316,6 @@ nodef ftUcf_PadRaw melee_fighter/tu/ftCo_Turn.rs 0
 nodef Fighter_804D651C_x0 melee_fighter/tu/ftCo_Walk.rs 0
 nodef Fighter_804D6520_x0 melee_fighter/tu/ftCo_Walk.rs 0
 nodef Fighter_804D6524_xC melee_fighter/tu/ftCo_Walk.rs 0
-nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftCo_Walk.rs 0
 nodef Mex_OnIntroLDispatch melee_fighter/tu/ft_0bf0.rs 1
 nodef Geno_DefineIsNone melee_fighter/tu/ft_0c88.rs 0
 nodef Geno_DefineTemplateSkeleton melee_fighter/tu/ft_0c88.rs 0
@@ -347,7 +344,6 @@ nodef Script_Clank melee_fighter/tu/ftcoll.rs 1
 nodef Script_ClankWanted melee_fighter/tu/ftcoll.rs 1
 nodef Script_EnemyGameEvent melee_fighter/tu/ftcoll.rs 1
 nodef Script_GameEvent melee_fighter/tu/ftcoll.rs 1
-nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftcoll.rs 0
 nodef Geno_DefineAiLike melee_fighter/tu/ftcpuattack.rs 1
 nodef EF_BANK_MAX melee_fighter/tu/ftdata.rs 1
 nodef GenoDefine_Load melee_fighter/tu/ftdata.rs 1
@@ -416,7 +412,6 @@ nodef CostumeListsForeachCharacter_numCostumes melee_fighter/tu/ftlib.rs 1
 nodef ftData_UnkBytePerCharacter melee_fighter/tu/ftlib.rs 1
 nodef Fighter_804D6524_x8 melee_fighter/tu/ftpickupitem.rs 0
 nodef Mex_OnItemPickupDispatch melee_fighter/tu/ftpickupitem.rs 0
-nodef ftCo_CalcYScaledKnockback melee_fighter/tu/ftpickupitem.rs 0
 nodef ftData_OnItemPickupExt melee_fighter/tu/ftpickupitem.rs 0
 nodef Fx_Attach melee_modes/tu/geno_game.rs 1
 nodef Fx_Detach melee_modes/tu/geno_game.rs 1
@@ -805,7 +800,6 @@ nodef OSSetCurrentHeap melee_runtime/tu/initialize.rs 1
 nodef VIWaitForRetrace melee_runtime/tu/initialize.rs 1
 nodef Mex_IndexStageItem melee_items/tu/it_26B1.rs 1
 nodef Mex_ItRecord melee_items/tu/it_26B1.rs 1
-nodef ftCo_CalcYScaledKnockback melee_items/tu/itcoll.rs 1
 nodef GXSetPipelineWaitAURORA melee_items/tu/itdraw.rs 1
 nodef efSync_Spawn_N melee_items/tu/itegg.rs 1
 nodef Mex_ItemCustomDesc melee_items/tu/item.rs 1

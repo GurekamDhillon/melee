@@ -8,7 +8,7 @@ use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2/4/13 and the original pass): re-exported under this TU.
-pub use crate::chars::ftPeach::ftpeachspecialn::{ftPe_SpecialAirNHit_Phys, ftPe_SpecialN_IsActive};
+pub use crate::chars::ftPeach::ftpeachspecialn::{ftPe_SpecialN_IsActive};
 pub use crate::chars::r13::ftPeach::ftpeachspecialn::ftPe_SpecialN_Phys;
 pub use crate::chars::r2::ftPeach::ftpeachspecialn::ftPe_SpecialNHit_Phys;
 pub use crate::chars::r4::ftPeach::ftpeachspecialn::{
@@ -430,4 +430,10 @@ pub fn onUnkHit(gobj: G) {
         }
         setupHitColl(gobj);
     }
+}
+
+/// `ftPe_SpecialAirNHit_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftPeach::ftpeachspecialn::ftPe_SpecialAirNHit_Phys_fp`.
+pub fn ftPe_SpecialAirNHit_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftPe_SpecialAirNHit_Phys");
+    unsafe { crate::chars::ftPeach::ftpeachspecialn::ftPe_SpecialAirNHit_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

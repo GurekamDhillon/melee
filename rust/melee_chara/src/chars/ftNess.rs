@@ -26,7 +26,7 @@ pub mod ftnessspeciallw {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftNessAttributes, Fighter};
 
-    pub fn ftNs_SpecialAirLwStart_Phys(fp: &mut Fighter) {
+    pub fn ftNs_SpecialAirLwStart_Phys_fp(fp: &mut Fighter) {
         let a: &ftNessAttributes = da(fp);
         let gravity_timer = unsafe { fp.mv.ns.speciallw.gravityDelay } as i32;
         if gravity_timer != 0 {
@@ -56,13 +56,13 @@ pub mod ftnessspecialn {
         let air_friction = fp.co_attrs.aerial_friction;
         co::calc_self_accel_deaccel(fp, air_friction);
     }
-    pub fn ftNs_SpecialAirNEnd_Phys(fp: &mut Fighter) {
+    pub fn ftNs_SpecialAirNEnd_Phys_fp(fp: &mut Fighter) {
         pk_flash_air_phys(fp)
     }
-    pub fn ftNs_SpecialAirNRelease_Phys(fp: &mut Fighter) {
+    pub fn ftNs_SpecialAirNRelease_Phys_fp(fp: &mut Fighter) {
         pk_flash_air_phys(fp)
     }
-    pub fn ftNs_SpecialAirNStart_Phys(fp: &mut Fighter) {
+    pub fn ftNs_SpecialAirNStart_Phys_fp(fp: &mut Fighter) {
         pk_flash_air_phys(fp)
     }
 }

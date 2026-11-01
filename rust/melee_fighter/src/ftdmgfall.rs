@@ -93,14 +93,6 @@ pub fn ftco_80090718(fp: &mut Fighter) {
     }
 }
 
-/// `ftCo_DamageFall_Anim`: empty.
-pub fn ftco_damagefall_anim(_g: G) {}
-
-/// `ftCo_DamageFall_Phys(gobj)`: `ft_80084DB0(gobj)`.
-pub fn ftco_damagefall_phys(g: G) {
-    h::ft_80084db0(g)
-}
-
 // ---- ftparts.c -------------------------------------------------------------------------------
 
 /// `ftParts_GetBoneIndex(fp, part)`: `ftPartsTable[kind]->part_to_joint[part]`.

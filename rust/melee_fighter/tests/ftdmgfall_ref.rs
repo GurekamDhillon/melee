@@ -163,8 +163,8 @@ fn ftdmgfall_matches_c() {
                     Some(s) => s.x.to_bits().wrapping_mul(31).wrapping_add(s.y.to_bits()) ^ 1,
                 },
                 4 => { m::ftco_80090718(fr); 0 }
-                5 => { m::ftco_damagefall_anim(gp); 0 }
-                6 => { m::ftco_damagefall_phys(gp); 0 }
+                5 => { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_Anim(gp); 0 }
+                6 => { melee_fighter::tu::ftCo_DamageFall::ftCo_DamageFall_Phys(gp); 0 }
                 7 => if !ptp[fr.kind as usize].is_null() { m::ftparts_get_bone_index(fr, part) as u32 } else { 0xEEEE_EEEE },
                 8 => m::ftparts_remap(to, from, joint) as u32,
                 9 => m::ftparts_8007506c(kind, part % 9),

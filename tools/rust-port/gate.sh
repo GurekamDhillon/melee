@@ -48,7 +48,7 @@ for s in $scenarios; do
     # (and so the hash): the particle system's draws must agree with the C build's. One without a row is not.
     pre=$(awk -F'	' -v s="$s" '$1==s{print $2}' tools/rust-port/engine/pre_draws.tsv 2>/dev/null)
     seedflag="--ignore-seed"; [ -n "$pre" ] && seedflag=""
-    MELEE_ENGINE_PRE_DRAWS="${pre:-0}" "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "${ENGINE_FRAMES:-1801}" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1 || true
+    MELEE_ENGINE_PRE_DRAWS="${pre:-0}" "$exe" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "${ENGINE_FRAMES:-3601}" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1 || true
     [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
     n=$(python tools/rust-port/compare_golden.py "docs/rust-port/golden/$s.csv" "$tmp/$s.csv" --allow-short $seedflag --print-count 2>/dev/null | awk '/^COUNT/{print $2}'); n=${n:-0}
   else

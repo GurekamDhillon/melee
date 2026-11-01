@@ -101,7 +101,7 @@ pub fn ftCo_800D1F6C(g: G) {
     let f = fp(g);
     f.set_x2220_b6(1);
     f.x2008 = cd().x688;
-    let s = unsafe { fp(g).mv.co.walk.fast_anim_frame };
+    let s = unsafe { fp(g).mv.co.walk.fast_anim_rate };
     ext::ftCo_800D2770(g, s);
     ext::ftCommon_8007E2FC(g);
     if fp(g).ground_or_air == GA_Ground {

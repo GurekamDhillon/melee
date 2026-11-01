@@ -19,7 +19,7 @@ pub mod ftluigispecials {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftLuigiAttributes, Fighter};
 
-    pub fn ftLg_SpecialAirSStart_Phys(fp: &mut Fighter) {
+    pub fn ftLg_SpecialAirSStart_Phys_fp(fp: &mut Fighter) {
         let a: &ftLuigiAttributes = da(fp);
         if fp.cmd_vars[0] != 0 {
             co::fall(fp, a.x20_LUIGI_GREENMISSILE_FALLING_SPEED, fp.co_attrs.terminal_velocity);

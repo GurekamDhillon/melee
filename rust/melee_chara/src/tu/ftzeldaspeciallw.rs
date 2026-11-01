@@ -19,8 +19,6 @@ pub use crate::chars::r4::ftZelda::ftzeldaspeciallw::{
     ftZd_SpecialLw_8013B1CC, ftZd_SpecialLw_8013B238, ftZd_SpecialLw_8013B400, ftZd_SpecialLw_8013B46C,
     ftZd_SpecialLw_8013B5C4, ftZd_SpecialLw_Anim, ftZd_SpecialLw_Coll,
 };
-pub use crate::chars::ftZelda::ftzeldaspeciallw::{ftZd_SpecialAirLw2_Phys, ftZd_SpecialAirLw_Phys};
-
 /// Calls into TUs that are not ported yet (or into group 3, via the same fallback as `stubs`).
 /// Each is a settable hook; an unset hook without a fallback panics.
 pub mod ext {
@@ -257,4 +255,16 @@ pub fn ftZd_SpecialLw_8013B5EC(gobj: *mut HSD_GObj) {
         (*fp).death2_cb = None;
         (*fp).take_dmg_cb = None;
     }
+}
+
+/// `ftZd_SpecialAirLw2_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftZelda::ftzeldaspeciallw::ftZd_SpecialAirLw2_Phys_fp`.
+pub fn ftZd_SpecialAirLw2_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw2_Phys");
+    unsafe { crate::chars::ftZelda::ftzeldaspeciallw::ftZd_SpecialAirLw2_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftZd_SpecialAirLw_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftZelda::ftzeldaspeciallw::ftZd_SpecialAirLw_Phys_fp`.
+pub fn ftZd_SpecialAirLw_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftZd_SpecialAirLw_Phys");
+    unsafe { crate::chars::ftZelda::ftzeldaspeciallw::ftZd_SpecialAirLw_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

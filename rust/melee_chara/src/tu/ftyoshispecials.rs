@@ -19,10 +19,6 @@ use melee_types::*;
 
 /// Already ported (rounds 1/2/3/5...): re-exported under this TU.
 pub use crate::chars::ftYoshi::ftyoshispecials::fn_8012EFF4 as fn_8012EFF4_fp;
-pub use crate::chars::ftYoshi::ftyoshispecials::{
-    ftYs_SpecialAirSLanding_IASA, ftYs_SpecialAirSStart_0_Phys, ftYs_SpecialAirSStart_1_IASA,
-};
-
 const M_PI: f64 = 3.14159265358979323846;
 const M_PI_2: f64 = M_PI / 2.0;
 const M_TAU: f64 = 6.283185307179586;
@@ -1273,4 +1269,22 @@ pub fn fn_8013295C(gobj: *mut HSD_GObj) {
         (*fp).mv.ys.specials.x20 = -(*fp).mv.ys.specials.x20;
         (*fp).mv.ys.specials.x24 = -(*fp).mv.ys.specials.x24;
     }
+}
+
+/// `ftYs_SpecialAirSLanding_IASA(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSLanding_IASA_fp`.
+pub fn ftYs_SpecialAirSLanding_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSLanding_IASA");
+    unsafe { crate::chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSLanding_IASA_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftYs_SpecialAirSStart_0_Phys(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSStart_0_Phys_fp`.
+pub fn ftYs_SpecialAirSStart_0_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_0_Phys");
+    unsafe { crate::chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSStart_0_Phys_fp(&mut *((*gobj).user_data as *mut Fighter)) }
+}
+
+/// `ftYs_SpecialAirSStart_1_IASA(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSStart_1_IASA_fp`.
+pub fn ftYs_SpecialAirSStart_1_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftYs_SpecialAirSStart_1_IASA");
+    unsafe { crate::chars::ftYoshi::ftyoshispecials::ftYs_SpecialAirSStart_1_IASA_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

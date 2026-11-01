@@ -3608,6 +3608,7 @@ tu::ftCo_Damage::ext::hook::ScriptGame_CapsNoFlinch
 tu::ftCo_Damage::ext::hook::ScriptGame_ShockTake
 tu::ftCo_Damage::ext::hook::Geno_TakeStunBonus
 tu::ftCo_Damage::ext::hook::ftColl_8007AC68
+tu::ftCo_Damage::ext::hook::ftCo_CalcYScaledKnockback
 tu::ftCo_Damage::ext::hook::ftCo_800BFFD0
 tu::ftCo_Damage::ext::hook::lbBgFlash_80021C48
 tu::ftCo_Damage::ext::hook::efAsync_Spawn
@@ -3697,6 +3698,7 @@ tu::ftCo_DamageBind::ext::hook::ftCommon_GrabMash
 tu::ftCo_DamageBind::ext::hook::ft_8008A2BC
 tu::ftCo_DamageBind::ext::hook::ft_80084F3C
 tu::ftCo_DamageBind::ext::hook::ft_80084280
+tu::ftCo_DamageFall::ext::hook::ft_80084DB0
 tu::ftCo_DamageFall::ext::hook::ftCommon_8007D5D4
 tu::ftCo_DamageFall::ext::hook::ftCo_800CF4DC
 tu::ftCo_DamageFall::ext::hook::Fighter_ChangeMotionState
@@ -4151,6 +4153,7 @@ tu::ftCo_HammerWait::ext::hook::ftCo_800BFFD0
 tu::ftCo_HammerWait::ext::hook::it_8026C16C
 tu::ftCo_HammerWalk::ext::hook::ftWalkCommon_800DFC70
 tu::ftCo_HammerWalk::ext::hook::ftWalkCommon_800E0060
+tu::ftCo_HammerWalk::ext::hook::ftCo_CalcYScaledKnockback
 tu::ftCo_HammerWalk::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_HammerWalk::ext::hook::ftAnim_8006EBA4
 tu::ftCo_HammerWalk::ext::hook::ftCo_800C54C4
@@ -5051,6 +5054,7 @@ tu::ftCo_Walk::ext::hook::ftWalkCommon_800DFDDC
 tu::ftCo_Walk::ext::hook::ftWalkCommon_800DFEC8
 tu::ftCo_Walk::ext::hook::ftWalkCommon_800E0060
 tu::ftCo_Walk::ext::hook::ft_80084280
+tu::ftCo_Walk::ext::hook::ftCo_CalcYScaledKnockback
 tu::ftCo_WarpStar::ext::hook::it_80294430
 tu::ftCo_WarpStar::ext::hook::it_80294364
 tu::ftCo_WarpStar::ext::hook::it_802944AC
@@ -5573,6 +5577,7 @@ tu::ftcoll::ext::FTCO_800C0B20
 tu::ftcoll::ext::FTLIB_80086960
 tu::ftcoll::ext::FTCOMMON_8007F804
 tu::ftcoll::ext::FTCOMMON_8007EBAC
+tu::ftcoll::ext::FTCO_CALC_Y_SCALED_KNOCKBACK
 tu::ftcoll::ext::FTCO_800C0694
 tu::ftcoll::ext::FTCO_800C0200
 tu::ftcoll::ext::FTCO_800BFFD0
@@ -5794,6 +5799,7 @@ tu::ftpickupitem::ext::hook::ftCo_800C52F4
 tu::ftpickupitem::ext::hook::ftCommon_8007FA58
 tu::ftpickupitem::ext::hook::ftLib_800871A8
 tu::ftpickupitem::ext::hook::ftCo_800C88D4
+tu::ftpickupitem::ext::hook::ftCo_CalcYScaledKnockback
 tu::ftpickupitem::ext::hook::Fighter_ChangeMotionState
 tu::ftpickupitem::ext::hook::ftAnim_8006EBA4
 tu::ftpickupitem::ext::hook::ftCo_800974C4
@@ -6752,6 +6758,7 @@ tu::itcoll::ext::hook::ScriptGame_HitRuleDamage
 tu::itcoll::ext::hook::ScriptGame_ItemModDamage
 tu::itcoll::ext::hook::efSync_Spawn
 tu::itcoll::ext::hook::ftCo_80098634
+tu::itcoll::ext::hook::ftCo_CalcYScaledKnockback
 tu::itcoll::ext::hook::ftColl_80076808
 tu::itcoll::ext::hook::ftCommon_8007F804
 tu::itcoll::ext::hook::ftLib_80086960

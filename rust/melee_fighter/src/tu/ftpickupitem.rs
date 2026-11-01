@@ -58,7 +58,7 @@ pub mod ext {
         ftCommon_8007FA58(g: G, i: I) = crate::ftcommon3::ftcommon_8007fa58;
         ftLib_800871A8(g: G, i: I) = crate::tu::ftlib::ftlib_800871a8;
         ftCo_800C88D4(g: G, v: i32, b: i32) = |g: G, v: i32, b: i32| { unsafe { crate::tu::ft_0c88::ftco_800c88d4(g as _, v as _, (b != 0 as _)); } };
-        ftCo_CalcYScaledKnockback(a: f32, b: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
+        ftCo_CalcYScaledKnockback(a: f32, b: f32, c: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback;
         // `Fighter_804D6524->x8` (PlCo size-scaling exponent).
         Fighter_804D6524_x8() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x8;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };

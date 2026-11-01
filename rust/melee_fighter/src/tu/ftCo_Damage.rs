@@ -89,7 +89,7 @@ pub mod ext {
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = crate::fighter::ftucf_pad_raw;
         Mex_Enabled(name: &str) -> i32 = |name: &str| -> i32 { unsafe { crate::platform::Mex_Enabled(name) as i32 } };
         ftColl_8007AC68(kb_angle: u32) -> bool = |kb_angle: u32| -> bool { unsafe { crate::tu::ftcoll::ftcoll_8007ac68(kb_angle as _) } };
-        ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftco_calc_y_scaled_knockback;
+        ftCo_CalcYScaledKnockback(a: f32, scale: f32, b: f32) -> f32 = crate::tu::ftchangeparam::ftCo_CalcYScaledKnockback;
         Fighter_804D6524_x0() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x0;
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: i32) -> bool = crate::tu::ftcolanim::ftco_800bffd0;
         lbBgFlash_80021C48(a: u32, b: u32) = |_, _| todo!("TODO(group1 lb) lbBgFlash_80021C48");

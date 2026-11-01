@@ -7,7 +7,6 @@ use crate::stubs as st;
 use melee_types::*;
 
 /// Already ported (rounds 2, 3 and the hand-written module): re-exported under this TU.
-pub use crate::chars::ftDonkey::ftdonkeyspeciallw::ftDk_SpecialLwLoop_IASA;
 pub use crate::chars::r2::ftDonkey::ftdonkeyspeciallw::{
     doTransition, ftDk_SpecialLwEnd0_Anim, ftDk_SpecialLwEnd0_Coll, ftDk_SpecialLwEnd0_Phys,
     ftDk_SpecialLwEnd1_Anim, ftDk_SpecialLwEnd1_Coll, ftDk_SpecialLwEnd1_Phys, ftDk_SpecialLwLoop_Coll,
@@ -171,4 +170,10 @@ pub fn ftDk_SpecialLw_8010E148(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn cb_ftDk_SpecialLw_8010E0CC(g: *mut HSD_GObj) {
     melee_core::ct!("cb_ftDk_SpecialLw_8010E0CC");
     ftDk_SpecialLw_8010E0CC(g);
+}
+
+/// `ftDk_SpecialLwLoop_IASA(gobj)`: the retail motion-state callback; the body is the fighter-only port `chars::ftDonkey::ftdonkeyspeciallw::ftDk_SpecialLwLoop_IASA_fp`.
+pub fn ftDk_SpecialLwLoop_IASA(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftDk_SpecialLwLoop_IASA");
+    unsafe { crate::chars::ftDonkey::ftdonkeyspeciallw::ftDk_SpecialLwLoop_IASA_fp(&mut *((*gobj).user_data as *mut Fighter)) }
 }

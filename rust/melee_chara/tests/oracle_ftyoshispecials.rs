@@ -465,11 +465,11 @@ const FNS: &[Fn_] = &[
     Fn_ { name: "ftYs_SpecialAirSLoop_0_IASA", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLoop_1_IASA", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSEnd_IASA", n: 400, bfmask: 0x1 },
-    Fn_ { name: "ftYs_SpecialAirSStart_1_IASA", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialAirSStart_1_IASA_fp", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLoop_2_IASA", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLoop_3_IASA", n: 400, bfmask: 0x1 },
-    Fn_ { name: "ftYs_SpecialAirSLanding_IASA", n: 400, bfmask: 0x1 },
-    Fn_ { name: "ftYs_SpecialAirSStart_0_Phys", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialAirSLanding_IASA_fp", n: 400, bfmask: 0x1 },
+    Fn_ { name: "ftYs_SpecialAirSStart_0_Phys_fp", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLoop_0_Phys", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSLoop_1_Phys", n: 400, bfmask: 0x1 },
     Fn_ { name: "ftYs_SpecialAirSEnd_Phys", n: 400, bfmask: 0x1 },
@@ -524,11 +524,11 @@ unsafe fn call_fn(fi: usize, w: &mut World, a: &mut Args) -> (u64, u32) {
         18 => { t::ftYs_SpecialAirSLoop_0_IASA(g); (0, 0) }
         19 => { t::ftYs_SpecialAirSLoop_1_IASA(g); (0, 0) }
         20 => { t::ftYs_SpecialAirSEnd_IASA(g); (0, 0) }
-        21 => { t::ftYs_SpecialAirSStart_1_IASA(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
+        21 => { t::ftYs_SpecialAirSStart_1_IASA_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
         22 => { t::ftYs_SpecialAirSLoop_2_IASA(g); (0, 0) }
         23 => { t::ftYs_SpecialAirSLoop_3_IASA(g); (0, 0) }
-        24 => { t::ftYs_SpecialAirSLanding_IASA(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
-        25 => { t::ftYs_SpecialAirSStart_0_Phys(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
+        24 => { t::ftYs_SpecialAirSLanding_IASA_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
+        25 => { t::ftYs_SpecialAirSStart_0_Phys_fp(&mut *((*g).user_data as *mut Fighter)); (0, 0) }
         26 => { t::ftYs_SpecialAirSLoop_0_Phys(g); (0, 0) }
         27 => { t::ftYs_SpecialAirSLoop_1_Phys(g); (0, 0) }
         28 => { t::ftYs_SpecialAirSEnd_Phys(g); (0, 0) }
@@ -613,7 +613,7 @@ unsafe fn install_hooks() {
         melee_chara::tu::ftyoshispecials::ext::MPLIB_800569EC = Some(|a0: u32| -> f32 { lg_s("mpLib_800569EC("); lg_int(a0 as u32); lg_s(")"); { let r = rf(); lg_retf(r); lg_c(';'); r } });
 
 }
-const PRE: &[&str] = &["ftYs_SpecialS_8012EB48", "fn_8012EC7C", "fn_8012EDE8", "fn_8012EFC0", "fn_8012EFF4", "ftYs_SpecialS_8012F0DC", "ftYs_SpecialS_8012F35C", "ftYs_SpecialS_Enter", "ftYs_SpecialAirS_Enter", "ftYs_SpecialAirSStart_0_Anim", "ftYs_SpecialAirSLoop_0_Anim", "ftYs_SpecialAirSLoop_1_Anim", "ftYs_SpecialAirSEnd_Anim", "ftYs_SpecialAirSStart_1_Anim", "ftYs_SpecialAirSLoop_2_Anim", "ftYs_SpecialAirSLoop_3_Anim", "ftYs_SpecialAirSLanding_Anim", "ftYs_SpecialAirSStart_0_IASA", "ftYs_SpecialAirSLoop_0_IASA", "ftYs_SpecialAirSLoop_1_IASA", "ftYs_SpecialAirSEnd_IASA", "ftYs_SpecialAirSStart_1_IASA", "ftYs_SpecialAirSLoop_2_IASA", "ftYs_SpecialAirSLoop_3_IASA", "ftYs_SpecialAirSLanding_IASA", "ftYs_SpecialAirSStart_0_Phys", "ftYs_SpecialAirSLoop_0_Phys", "ftYs_SpecialAirSLoop_1_Phys", "ftYs_SpecialAirSEnd_Phys", "ftYs_SpecialAirSStart_1_Phys", "ftYs_SpecialAirSLoop_2_Phys", "ftYs_SpecialAirSLoop_3_Phys", "ftYs_SpecialAirSLanding_Phys", "ftYs_SpecialAirSStart_0_Coll", "ftYs_SpecialAirSLoop_0_Coll", "ftYs_SpecialAirSLoop_1_Coll", "ftYs_SpecialAirSEnd_Coll", "ftYs_SpecialAirSStart_1_Coll", "ftYs_SpecialAirSLoop_2_Coll", "ftYs_SpecialAirSLoop_3_Coll", "ftYs_SpecialAirSLanding_Coll", "fn_8013295C", "ftYoshi_SpecialS_SetCall", "fn_8012EC7C_inline", "ftYs_SpecialS_UpdateScale", "ftYs_SpecialS_UpdateScale2", "ftYs_SpecialS_WrapAndSetRotX", "ftYs_SpecialS_CheckButtonPressure", "ftYs_SpecialS_SpawnWallBounceEffect", "ftYs_SpecialS_UpdateLoop1Rotation", "ftYs_SpecialS_UpdateLoop1Rotation2", "perm_vel_inline", "perm_neg_inline", "perm_mul_inline", "perm_vel_x_inline"];
+const PRE: &[&str] = &["ftYs_SpecialS_8012EB48", "fn_8012EC7C", "fn_8012EDE8", "fn_8012EFC0", "fn_8012EFF4", "ftYs_SpecialS_8012F0DC", "ftYs_SpecialS_8012F35C", "ftYs_SpecialS_Enter", "ftYs_SpecialAirS_Enter", "ftYs_SpecialAirSStart_0_Anim", "ftYs_SpecialAirSLoop_0_Anim", "ftYs_SpecialAirSLoop_1_Anim", "ftYs_SpecialAirSEnd_Anim", "ftYs_SpecialAirSStart_1_Anim", "ftYs_SpecialAirSLoop_2_Anim", "ftYs_SpecialAirSLoop_3_Anim", "ftYs_SpecialAirSLanding_Anim", "ftYs_SpecialAirSStart_0_IASA", "ftYs_SpecialAirSLoop_0_IASA", "ftYs_SpecialAirSLoop_1_IASA", "ftYs_SpecialAirSEnd_IASA", "ftYs_SpecialAirSStart_1_IASA_fp", "ftYs_SpecialAirSLoop_2_IASA", "ftYs_SpecialAirSLoop_3_IASA", "ftYs_SpecialAirSLanding_IASA_fp", "ftYs_SpecialAirSStart_0_Phys_fp", "ftYs_SpecialAirSLoop_0_Phys", "ftYs_SpecialAirSLoop_1_Phys", "ftYs_SpecialAirSEnd_Phys", "ftYs_SpecialAirSStart_1_Phys", "ftYs_SpecialAirSLoop_2_Phys", "ftYs_SpecialAirSLoop_3_Phys", "ftYs_SpecialAirSLanding_Phys", "ftYs_SpecialAirSStart_0_Coll", "ftYs_SpecialAirSLoop_0_Coll", "ftYs_SpecialAirSLoop_1_Coll", "ftYs_SpecialAirSEnd_Coll", "ftYs_SpecialAirSStart_1_Coll", "ftYs_SpecialAirSLoop_2_Coll", "ftYs_SpecialAirSLoop_3_Coll", "ftYs_SpecialAirSLanding_Coll", "fn_8013295C", "ftYoshi_SpecialS_SetCall", "fn_8012EC7C_inline", "ftYs_SpecialS_UpdateScale", "ftYs_SpecialS_UpdateScale2", "ftYs_SpecialS_WrapAndSetRotX", "ftYs_SpecialS_CheckButtonPressure", "ftYs_SpecialS_SpawnWallBounceEffect", "ftYs_SpecialS_UpdateLoop1Rotation", "ftYs_SpecialS_UpdateLoop1Rotation2", "perm_vel_inline", "perm_neg_inline", "perm_mul_inline", "perm_vel_x_inline"];
 unsafe fn case_pre(fi: usize, w: &mut World, a: &mut Args) {
     match fi {
         11 => { let a = &mut *(w.attr.as_mut_ptr() as *mut ftYoshiAttributes); if a.xA4 == 0 { a.xA4 = 3; } let x10 = &mut w.f.mv.ys.specials.x10; if *x10 > -0.01 && *x10 < 0.01 { *x10 = 2.5; } }

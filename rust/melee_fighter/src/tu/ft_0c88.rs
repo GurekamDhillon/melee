@@ -33,11 +33,11 @@ pub mod ext {
         };
     }
     ext_fns! {
-        fn HSD_ObjAlloc(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { todo!("TODO(group1 HSD) HSD_ObjAlloc") };
+        fn HSD_ObjAlloc(_a0: *mut core::ffi::c_void) -> *mut core::ffi::c_void = { unsafe { melee_runtime::tu::objalloc::HSD_ObjAlloc(_a0 as _) as _ } };
         fn Geno_DefineTemplateSkeleton(_a0: i32) -> i32 = { unsafe { (crate::hooks::geno_define_template_skeleton(_a0 as _)) as _ } };
         fn Geno_DefineIsNone(_kind: i32) -> i32 = { unsafe { crate::platform::Geno_DefineIsNone(_kind) } };
-        fn ftPartsPObjSetDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjSetDefaultClass") };
-        fn ftPartsPObjClearDefaultClass() = { todo!("TODO(group3 ftparts) ftPartsPObjClearDefaultClass") };
+        fn ftPartsPObjSetDefaultClass() = { unsafe { crate::tu::ftparts_render::ftPartsPObjSetDefaultClass() } };
+        fn ftPartsPObjClearDefaultClass() = { unsafe { crate::tu::ftparts_render::ftPartsPObjClearDefaultClass() } };
         fn ft_800C85B8(_g: *mut HSD_GObj) = { { unsafe { crate::tu::ftmetal::ft_800C85B8(_g as _); } return; } };
         fn ft_800C80A4(_fp: &mut Fighter) = { { unsafe { crate::tu::ftco_800c7ca0::ft_800c80a4(_fp as _); } return; } };
         fn ft_800C8170(_fp: &mut Fighter) = { { unsafe { crate::tu::ftmetal::ft_800C8170(_fp as _); } return; } };

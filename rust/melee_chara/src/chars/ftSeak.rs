@@ -33,13 +33,13 @@ pub mod ftseakspeciallw {
     use melee_fighter::ftcommon as co;
     use melee_types::{ftSeakAttributes, Fighter};
 
-    pub fn ftSk_SpecialAirLw2_Phys(fp: &mut Fighter) {
+    pub fn ftSk_SpecialAirLw2_Phys_fp(fp: &mut Fighter) {
         let a: &ftSeakAttributes = da(fp);
         co::fall(fp, a.x68, a.x6C);
         co::calc_self_accel_deaccel_air(fp);
     }
 
-    pub fn ftSk_SpecialAirLw_Phys(fp: &mut Fighter) {
+    pub fn ftSk_SpecialAirLw_Phys_fp(fp: &mut Fighter) {
         let a: &ftSeakAttributes = da(fp);
         co::fall(fp, a.x68, a.x6C);
         co::calc_self_accel_deaccel_air(fp);
@@ -50,7 +50,7 @@ pub mod ftseakspecials {
     use melee_fighter::ftcommon as co;
     use melee_types::Fighter;
 
-    pub fn ftSk_SpecialAirSStart_Phys(fp: &mut Fighter) {
+    pub fn ftSk_SpecialAirSStart_Phys_fp(fp: &mut Fighter) {
         if fp.cmd_vars[0] != 0 {
             co::fall(fp, fp.co_attrs.gravity, fp.co_attrs.terminal_velocity);
         }

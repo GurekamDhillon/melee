@@ -36,6 +36,42 @@ macro_rules! ef_arg_words {
 
 pub fn install() {
     unsafe {
+        // ftcommon.c `parasol_table_3[idx](item, v)`: slot 4 is it_802BDD40, slot 6 is it_802BDDB4 (itpeachparasol.c); the rest are NULL
+        melee_fighter::hooks::IT_PARASOL_TABLE_3 = Some(|idx, i, v| unsafe {
+            match idx {
+                4 => melee_items::tu::itpeachparasol::it_802BDD40(i as _, v),
+                6 => melee_items::tu::itpeachparasol::it_802BDDB4(i as _, v),
+                _ => {}
+            }
+        });
+        // Samus' grab states (ftCo_0D8E / ftCo_0D95): mpCheckAllRemap(NULL, NULL, NULL, NULL, skip, only, x0, y0, x1, y1) as a bool
+        melee_fighter::tu::ftco_0d8e::ext::MP_CHECK_ALL_REMAP = Some(|skip, only, x0, y0, x1, y1| unsafe {
+            melee_world::tu::mplib::mpCheckAllRemap(core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), skip, only, x0, y0, x1, y1) != 0
+        });
+        melee_fighter::tu::ftco_0d95::ext::MP_CHECK_ALL_REMAP = Some(|skip, only, x0, y0, x1, y1| unsafe {
+            melee_world::tu::mplib::mpCheckAllRemap(core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), core::ptr::null_mut(), skip, only, x0, y0, x1, y1) != 0
+        });
+        // ftCo_800C7CA0.c ft_800C80A4 (Metal Box): the per-bone step of the loop, the bone's joint and its DObj chain
+        melee_fighter::tu::ftco_800c7ca0::ext::FT_800C80A4_BONE = Some(|jobj| unsafe {
+            use melee_runtime::tu::jobj_ptr as jp;
+            let mut dobj = jp::HSD_JObjGetDObj(jobj as _);
+            jp::HSD_JObjSetFlags(jobj as _, (JOBJ_LIGHTING | JOBJ_TEXGEN | JOBJ_SPECULAR | JOBJ_UNK_B18) as u32);
+            jp::HSD_JObjClearFlags(jobj as _, (JOBJ_UNK_B19 | JOBJ_UNK_B20) as u32);
+            while !dobj.is_null() {
+                melee_runtime::tu::dobj::hsd::HSD_DObjModifyFlags(dobj, 2, 0xE);
+                dobj = (*dobj).next;
+            }
+        });
+        // ftsamus.c: HSD_ForeachAnim(jobj, JOBJ_TYPE, mask, cb, AOBJ_ARG_AF, (double) speed): the variadic tail arrives as one machine word
+        melee_chara::tu::ftsamus::extg::hook::HSD_ForeachAnim = Some(|obj, ty, mask, func, arg_type, tail| unsafe {
+            let w = tail.first().map_or(0usize, |p| *p as usize);
+            let arg = if arg_type as u32 == AOBJ_ARG_AF as u32 { CallbackArg { f: f64::from_bits(w as u64) as f32 } } else { CallbackArg { d: w as u32 } };
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func, arg_type as _, arg)
+        });
+        // mn_22EC.c: HSD_ForeachAnim(jobj, JOBJ_TYPE, mask, cb, AOBJ_ARG_AOU, (int) value): the variadic tail is a u32
+        melee_modes::tu::mn_22EC::ext::hook::HSD_ForeachAnim = Some(|obj, ty, mask, func, arg_type, v| unsafe {
+            melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func as usize as *mut c_void, arg_type as _, CallbackArg { d: v as u32 })
+        });
         // `ftData_80085FD4(fp, id)->x8`: these hooks read only the size word; the generator would link them to the row-returning function
         // (non-null is always true). link_skip.txt keeps them out of the table.
         melee_fighter::hooks::FTDATA_80085FD4_X8 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
@@ -210,6 +246,19 @@ pub fn install() {
         melee_modes::tu::gmcamera::ext::HSD_FOREACHANIM = Some(|obj, ty, mask, func, arg_type, _a, _b| unsafe {
             melee_runtime::tu::aobj::HSD_ForeachAnim(obj, ty as _, mask as _, func as *mut c_void, arg_type as _, CallbackArg { v: core::ptr::null_mut() });
         });
+        // item TUs that spawn with `efSync_Spawn_N(gfx, gobj, &[args])`: the args are already machine-word pointers
+        {
+            use melee_items::tu::{itegg, itentei, itevyoshiegg, itfflower, itkoopaflame, itkusudama, itlinkhookshot, itlipstickspore, itlizardon};
+            itegg::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itentei::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itevyoshiegg::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itfflower::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itkoopaflame::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itkusudama::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itlinkhookshot::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itlipstickspore::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+            itlizardon::ext::hook::efSync_Spawn_N = Some(|a, b, c| unsafe { melee_world::tu::efn::efsync::efSync_Spawn(a, b as _, &c.iter().map(|p| *p as *const c_void).collect::<std::vec::Vec<_>>()) as _ });
+        }
         // item TUs: effect spawns with their own EfArg tails
         {
             use melee_items::tu::{iteffect, itclimbersice, it_2725, it_279C, itspawn, itcoll};

@@ -109,3 +109,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-01 rust-port: round 9, GObj model deleted (native bodies in gobj*.c tu files), fold_names --tu, r2_ext.py, lint baseline 736 -> 576, see notes/consolidation.md round 9
 - 2026-11-01 rust-port: round 10, lint recognises hook wrappers, fwd_dups.py forwarders, baseline 576 -> 403, see notes/consolidation.md round 10
 - 2026-11-01 rust-port: merged port/dedupe; its lint_logic_location.py, dedupe_apply.py, lint_logic_baseline.txt and lint_logic_allow.txt dropped in favour of the single lint_logic.py with lint_baseline.txt and lint_allow.txt (same R1-R5 rules incl. single-body R2); its Rust edits were already superseded by rounds 7-10
+- 2026-11-01 rust-port: round 11, ef::eflib model deleted (oracle re-pointed at tu::efn), tev_native shares tu::tev scalar fns, menu_to_results.txt headless play run (no todo! hit), see notes/consolidation.md round 11

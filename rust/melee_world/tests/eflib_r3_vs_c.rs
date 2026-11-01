@@ -1,7 +1,9 @@
-//! efLib_SetFlags / PauseAll / ResumeAll (ef::eflib) against the C
+//! efLib_SetFlags / PauseAll / ResumeAll (tu::efn::eflib, the engine copy) against the C
 //! (cref/gen_trivial_r3_ref.sh -> tests/data/eflib_r3_ref.txt): 3000 random list pairs.
 use melee_types::{EF_Effect, HSD_GObj};
-use melee_world::ef::eflib::*;
+use melee_world::tu::efn::eflib::{efLib_PauseAll, efLib_ResumeAll, efLib_SetFlags, ext};
+
+const HSD_GOBJ_PLINK_EFFECT_UNK0: usize = 11;
 
 const DATA: &str = include_str!("data/eflib_r3_ref.txt");
 
@@ -43,10 +45,11 @@ fn eflib_r3_match_c() {
             heads[HSD_GOBJ_PLINK_EFFECT_UNK0 + l] = if n[l] > 0 { &mut nodes[l][0] } else { core::ptr::null_mut() };
         }
         unsafe {
+            ext::HSD_GObjPLinkHead = heads.as_mut_ptr();
             match op {
-                0 => eflib_set_flags(&heads, pp[0], arg),
-                1 => eflib_pause_all(&heads, pp[0]),
-                _ => eflib_resume_all(&heads, pp[0]),
+                0 => efLib_SetFlags(pp[0], arg),
+                1 => efLib_PauseAll(pp[0]),
+                _ => efLib_ResumeAll(pp[0]),
             }
         }
         let mut got = vec![];

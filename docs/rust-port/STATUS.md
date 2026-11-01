@@ -66,7 +66,7 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 ## Consolidation status (2026-11-01)
 - Steps 1-22 DONE; 23 (TU-to-TU dedupe) in progress; 24 (lint enforcing, empty baseline) not started.
 - Engine (`--engine tu`, the only engine since step 19) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601, cpu_peach_samus_ys_items 3601 (all full goldens, seed column included).
-- Baselines: logic lint `tools/rust-port/lint_baseline.txt` 403 entries (R1 29, R2 291, R3 79, R4 4; `lint_allow.txt` 13); diff baseline 144 entries.
+- Baselines: logic lint `tools/rust-port/lint_baseline.txt` 398 entries (R1 29, R2 286, R3 79, R4 4; `lint_allow.txt` 13); diff baseline 144 entries.
 - `port/dedupe` merged into rust-port (c333d57c9); one lint remains (`lint_logic.py`). Gate: `tools/rust-port/gate.sh` GATE OK.
 - Remaining: finish 23 (pointer-based render model for retail menu stand-ins, 109 type-mismatched forwarders in `dedupe/fwd_skip.txt`, melee_audio sim vs lbaudio, melee_modes gm* typed copies), then 24; open audio proofs (`--pause`, `--time-secs`); blocker D (Crazy Hand / Jigglypuff retail callbacks) and E (`todo!` stubs).
 

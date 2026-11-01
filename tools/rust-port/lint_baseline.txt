@@ -266,11 +266,7 @@ R2	rust/melee_runtime/src/tu/state_native.rs	_HSD_StateInvalidateRenderMode
 R2	rust/melee_runtime/src/tu/state_native.rs	_HSD_StateInvalidateVtxAttr
 R2	rust/melee_runtime/src/tu/state_native.rs	setupTevMode_last
 R2	rust/melee_runtime/src/tu/tev_native.rs	ChanUpdateFunc
-R2	rust/melee_runtime/src/tu/tev_native.rs	CompareRGB
-R2	rust/melee_runtime/src/tu/tev_native.rs	CompareRGBA
-R2	rust/melee_runtime/src/tu/tev_native.rs	CopyRGB
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_ChanGetAllocData
-R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_Index2TevStage
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_RenderGetAllocData
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_RenderInitAllocData
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_SetTevRegAll
@@ -287,7 +283,6 @@ R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_StateSetNumChans
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_StateSetNumTevStages
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_StateSetNumTexGens
 R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_TevRegGetAllocData
-R2	rust/melee_runtime/src/tu/tev_native.rs	HSD_TevStage2Index
 R2	rust/melee_runtime/src/tu/tev_native.rs	_HSD_StateInvalidateColorChannel
 R2	rust/melee_runtime/src/tu/tev_native.rs	_HSD_StateInvalidateTevRegister
 R2	rust/melee_runtime/src/tu/tev_native.rs	_HSD_StateInvalidateTevStage

@@ -1213,3 +1213,25 @@ Steps 12-22 were already done. Engine 1801 / 1801 / 3601 / 3601 unchanged, gate 
 ## Merge of port/dedupe (2026-11-01)
 
 `port/dedupe` (a second lint, `lint_logic_location.py`, with `lint_logic_baseline.txt` / `lint_logic_allow.txt`, and `dedupe_apply.py`) was merged with `--no-ff`. Its Rust edits and the old legacy-engine files it touched were superseded by rounds 7 to 10 (and by step 19, which deleted vs_match), so the merge keeps this branch's tree. There is one lint: `tools/rust-port/lint_logic.py`, one baseline `lint_baseline.txt` (403), one allowlist `lint_allow.txt`. The single-body rule is R2 of that lint and is unchanged. The dropped scripts stay in git history.
+
+## Round 11 (2026-11-01): step 23 continued, canonical-copy decisions, blocker E check
+
+Decisions by evidence (which copy matches its C oracle and is what the engine runs):
+- `ef::eflib` (melee_world/src/ef/eflib.rs, a model taking the plink heads as a slice; 3 fns) vs `tu::efn::eflib`: the model was used only by its own test; the engine
+  links `tu::efn::eflib` (reads `gobj_native::HSD_GObjPLinkHead`). Kept `tu::efn`, deleted the model, and re-pointed the C oracle `tests/eflib_r3_vs_c.rs` (3000 random list pairs) at
+  `efLib_SetFlags / PauseAll / ResumeAll` of `tu::efn::eflib` (it sets `ext::HSD_GObjPLinkHead`): green, so the engine copy is now the one checked against the C.
+  `ef/mod.rs` stays as an empty module (path kept for `melee_world::ef`).
+- `tu::jobj_world` / `jobj_ptr` / `tev_native` (raw-pointer, C layout) vs `tu::jobj` / `tu::tev` (arena `JObjTree`, owned `HsdRender`): the pointer copies are the ones the engine
+  and the fighter/world/item TUs call, and they have the C oracles (`pure_jobj_world`, `tu_tev_native`, `jobjptr_vs_c`). The arena/`HsdRender` copies are only reached by the retail
+  menu stand-ins (`rust/melee/src/retail/`, `gx_backend.rs`) and the `state.rs` model. So the pointer copies are the keepers, but the arena ones cannot be deleted until those stand-ins
+  go (the task said not to port kit menus), and the lint's canonical choice (lowest crate / first file) points the other way for these names. Not forced: the 24 `tu::jobj` and 27 `tu::tev`
+  entries stay in the baseline; they are the "pointer-based render model" item.
+  Done there: `tev_native` no longer has its own `CompareRGB / CompareRGBA / CopyRGB / HSD_Index2TevStage / HSD_TevStage2Index`; it uses/forwards to `tu::tev` (identical semantics: alpha ignored
+  for RGB, stage range 0..16), as it already did for `HSD_Channel2Num` and the `2Num` pair. `tu_tev_native` stays green.
+
+Blocker E check (`melee play` headless, MELEE_PAD_SCRIPT, window unfocused, adapter ignored): new script `tools/rust-port/play/menu_to_results.txt` drives title -> main menu (stick down to
+VS) -> VS menu -> CSS -> SSS -> loading -> match -> results on the engine (`play: tick 478 mainmenu -> css`, `774 css -> sss`, `817 sss -> loading`, `820 loading -> match`, `1814 match -> results`,
+closed after 1904 ticks, exit 0, no `todo!` panic). The retail main menu is driven by `retail/mainmenu.rs` (the old full_loop.txt presses A on the first item, which is now 1P mode, and stops at
+"NOT IN THE NATIVE PORT YET"; use the new script). The direct `todo!` defaults named in blocker E (`lbBgFlash_80021C48`, `efAsync_Spawn`, `Camera_RequestQuake`, `HSD_JObjSetMtxDirtySub` in
+`ftCo_Damage` / `ft_0c8c` / `JumpAerial`) are not in `melee_link/unresolved.txt` for melee_fighter any more (the link layer installs them); they stay as ext defaults, not panics, on the
+paths a match reaches. Menus other than VS (1P, Toy, Settings, Data) show the toast and do not enter a scene; they were not exercised beyond the toast.

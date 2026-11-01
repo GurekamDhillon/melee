@@ -128,17 +128,7 @@ pub unsafe fn HSD_ChanGetAllocData() -> *mut HSD_ObjAllocData {
     addr_of_mut!(chan_alloc_data)
 }
 
-fn CompareRGB(c0: &GXColor, c1: &GXColor) -> bool {
-    c0.r != c1.r || c0.g != c1.g || c0.b != c1.b
-}
-fn CompareRGBA(c0: &GXColor, c1: &GXColor) -> bool {
-    c0.r != c1.r || c0.g != c1.g || c0.b != c1.b || c0.a != c1.a
-}
-fn CopyRGB(dst: &mut GXColor, src: &GXColor) {
-    dst.r = src.r;
-    dst.g = src.g;
-    dst.b = src.b;
-}
+use super::tev::{CompareRGB, CompareRGBA, CopyRGB};
 
 /// `HSD_SetupChannel`.
 pub unsafe fn HSD_SetupChannel(ch: *mut HSD_Chan) {
@@ -338,22 +328,10 @@ pub unsafe fn HSD_SetupTevStageAll(desc: *mut HSD_TevDesc) {
 pub unsafe fn HSD_Channel2Num(chan: i32) -> i32 { unsafe { crate::tu::tev::HSD_Channel2Num(chan as _) as _ } }
 
 /// `HSD_Index2TevStage`.
-pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 {
-    melee_core::ct!("HSD_Index2TevStage");
-    match idx {
-        0..=15 => idx,
-        _ => panic!("tev.c:709 0"),
-    }
-}
+pub unsafe fn HSD_Index2TevStage(idx: i32) -> i32 { unsafe { crate::tu::tev::HSD_Index2TevStage(idx) } }
 
 /// `HSD_TevStage2Index`.
-pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 {
-    melee_core::ct!("HSD_TevStage2Index");
-    match stage {
-        0..=15 => stage,
-        _ => panic!("tev.c:762 0"),
-    }
-}
+pub unsafe fn HSD_TevStage2Index(stage: i32) -> i32 { unsafe { crate::tu::tev::HSD_TevStage2Index(stage) } }
 
 /// `HSD_TevStage2Num`.
 pub unsafe fn HSD_TevStage2Num(stage: i32) -> i32 { unsafe { crate::tu::tev::HSD_TevStage2Num(stage as _) as _ } }

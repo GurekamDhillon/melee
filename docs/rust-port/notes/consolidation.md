@@ -1209,3 +1209,7 @@ Steps 12-22 were already done. Engine 1801 / 1801 / 3601 / 3601 unchanged, gate 
 - `dedupe/fwd_dups.py` + `fwd_check.py`: a non-canonical body whose canonical fn sits in the same or a lower crate becomes a forwarder (`unsafe { path::CName(args as _) as _ }`); a cargo check loop restores every fn that does not compile (109 listed in `dedupe/fwd_skip.txt`: type mismatches such as `Option<JObjId>`, `bool` vs `i32`, different arity). 146 tried, about 37 stuck. Baseline 440 -> 403.
 - Left: the pointer-based render model (`*_native`, `jobj_ptr`, `jobj_world`, `tev_native`, `state_native`, `displayfunc_native`) used by the retail menu stand-ins, the type-mismatched forwarders in fwd_skip.txt, melee_audio sim vs lbaudio. Step 24 (empty baseline) still needs those retired.
 - Note: the gate run printed a segmentation fault line for pad_falcon_fox_fd after its 1801 matching frames (exit-time, results equal); not investigated.
+
+## Merge of port/dedupe (2026-11-01)
+
+`port/dedupe` (a second lint, `lint_logic_location.py`, with `lint_logic_baseline.txt` / `lint_logic_allow.txt`, and `dedupe_apply.py`) was merged with `--no-ff`. Its Rust edits and the old legacy-engine files it touched were superseded by rounds 7 to 10 (and by step 19, which deleted vs_match), so the merge keeps this branch's tree. There is one lint: `tools/rust-port/lint_logic.py`, one baseline `lint_baseline.txt` (403), one allowlist `lint_allow.txt`. The single-body rule is R2 of that lint and is unchanged. The dropped scripts stay in git history.

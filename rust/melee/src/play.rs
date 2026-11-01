@@ -161,6 +161,20 @@ struct MatchSetup {
     stage: usize,
 }
 
+/// A match on the consolidated engine (`melee_engine`): the game's own scene loop, camera, HUD and pause, drawn through
+/// the GX bridge. One per process: the engine boots its host and the TU statics once (consolidation.md step 18).
+struct EngMatch {
+    e: melee_engine::Engine,
+    frame: Option<Vec<melee_gx::draw::DrawCmd>>,
+    names: [&'static str; 2],
+    end_timer: Option<u32>,
+    timed_out: bool,
+    quit_hold: u32,
+}
+
+/// The tick the HUD's GO appears on (the legacy sim's `go_frame` on every stage in the roster).
+const ENGINE_GO_FRAME: i32 = 84;
+
 struct Match {
     sim: VsMatch,
     mr: MatchRender,
@@ -204,6 +218,11 @@ pub struct Play {
     sss_sel: usize,
     setup: Option<MatchSetup>,
     m: Option<Match>,
+    /// The engine match (`--engine legacy` and `--mods` keep the model in `m`).
+    em: Option<EngMatch>,
+    engine: bool,
+    engine_used: bool,
+    headless: bool,
     outcome: Outcome,
     matches_played: u32,
     shim: GxShim,
@@ -299,10 +318,11 @@ impl Play {
             Scene::Sss => a.menu_music(),
             Scene::Loading => {}
             Scene::Match => {
-                if let (Some(su), Some(m)) = (self.setup.as_ref(), self.m.as_ref()) {
+                if let Some(su) = self.setup.as_ref() {
                     let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
                     let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
-                    a.match_start(&ck, st, gr, m.sim.bgm);
+                    // the engine's own stage BGM pick is a sound seam for now: the model's pick (or track 0)
+                    a.match_start(&ck, st, gr, self.m.as_ref().map_or(0, |m| m.sim.bgm));
                 }
             }
             Scene::Results => {
@@ -332,6 +352,7 @@ impl Play {
             if let Some(a) = &self.audio { a.match_leave() }
         }
         self.m = None;
+        self.em = None;
         self.pick = [None, None];
         self.cursor = [0, 1];
         self.goto(Scene::Css);
@@ -498,7 +519,57 @@ impl Play {
         }
     }
 
+    fn start_engine_match(&mut self) {
+        let Some(su) = self.setup.as_ref() else { return };
+        let names = [ROSTER[su.fighters[0]].0, ROSTER[su.fighters[1]].0];
+        let (stage_file, stage_name) = STAGES[su.stage];
+        if self.engine_used {
+            // The engine boots its host and the TU statics (the C globals) once per process.
+            self.toast = Some(("ONE ENGINE MATCH PER RUN: RESTART, OR --engine legacy".into(), 300));
+            self.goto(Scene::Sss);
+            return;
+        }
+        log(&format!("loading {} v {} on {} on the engine ({} s time match)", names[0], names[1], stage_name, self.time_secs));
+        let stage = match stage_file {
+            "GrNLa.dat" => "fd",
+            "GrNBa.dat" => "bf",
+            "GrGr.dat" => "dl",
+            "GrSt.dat" => "ys",
+            _ => "fd",
+        };
+        let scene = format!("mode=vs;at=match;p1={}/human;p2={}/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off", names[0], names[1]);
+        let built = (|| -> Result<EngMatch, String> {
+            let scn = melee_engine::scenario::Scenario::parse(&scene)?;
+            let disc = melee_engine::gcm::Gcm::open(&self.iso).map_err(|e| e.to_string())?;
+            unsafe {
+                melee_engine::engine::RENDER = !self.headless;
+                std::env::set_var("MELEE_TEST_SEED", (12345 + self.matches_played).to_string());
+                if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+                    std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+                }
+            }
+            let e = melee_engine::Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn)?;
+            Ok(EngMatch { e, frame: None, names, end_timer: None, timed_out: false, quit_hold: 0 })
+        })();
+        match built {
+            Ok(em) => {
+                self.matches_played += 1;
+                self.engine_used = true;
+                self.em = Some(em);
+                self.goto(Scene::Match);
+            }
+            Err(e) => {
+                log(&format!("match load failed: {e}"));
+                self.toast = Some((format!("LOAD FAILED: {}", e.chars().take(60).collect::<String>()), 300));
+                self.goto(Scene::Sss);
+            }
+        }
+    }
+
     fn start_match(&mut self) {
+        if self.engine {
+            return self.start_engine_match();
+        }
         let Some(su) = self.setup.as_ref() else { return };
         let names = [ROSTER[su.fighters[0]].0, ROSTER[su.fighters[1]].0];
         let (stage_file, stage_name) = STAGES[su.stage];
@@ -527,7 +598,87 @@ impl Play {
         }
     }
 
+    fn tick_engine_match(&mut self) {
+        let ports = self.port;
+        let Some(m) = self.em.as_mut() else { return };
+        // L+R+A+START held: end the match and return to the character select (the pad layer, as in the model).
+        const COMBO: u32 = HSD_PAD_L | HSD_PAD_R | HSD_PAD_A | HSD_PAD_START;
+        let quit_combo = ports.iter().take(2).any(|p| p.connected && p.held & COMBO == COMBO);
+        m.quit_hold = if quit_combo { m.quit_hold + 1 } else { 0 };
+        if m.quit_hold >= 30 {
+            log("match quit with L+R+A+START");
+            self.back_to_css();
+            return;
+        }
+        if quit_combo {
+            return;
+        }
+        if let Some(t) = &mut m.end_timer {
+            *t += 1;
+            if *t == crate::audio::TIME_CALL_DELAY as u32 && m.timed_out {
+                if let Some(a) = &self.audio { a.match_end_call(true) }
+            }
+            if *t >= 150 {
+                self.finish_engine_match();
+            }
+            return;
+        }
+        // The frame: the live pads in (START included: the pause is the game's own), the scene loop stepped once.
+        let mut pads = [melee_types::PADStatus::zeroed(); 4];
+        for (i, st) in pads.iter_mut().enumerate() {
+            let raw = if self.golden_pads { crate::vs_match::input::pad_fixed(i, m.e.frames as i32) } else { ports[i].raw };
+            st.button = raw.button as u16;
+            st.stickX = raw.stick_x;
+            st.stickY = raw.stick_y;
+            st.substickX = raw.sub_x;
+            st.substickY = raw.sub_y;
+            st.triggerLeft = raw.analog_l;
+            st.triggerRight = raw.analog_r;
+            st.err = if ports[i].connected || self.golden_pads { 0 } else { -1 };
+        }
+        m.e.set_pads(Some(pads));
+        let alive = m.e.tick();
+        if let Some(f) = melee_engine::gxbridge::take_frame() {
+            m.frame = Some(f);
+        }
+        let frame = m.e.frames as i32 - 1;
+        if let Some(a) = &self.audio {
+            a.match_frame(frame, ENGINE_GO_FRAME, self.time_secs);
+        }
+        if !alive {
+            log("the engine's scene ended");
+            if let Some(a) = &self.audio { a.match_end_call(false) }
+            m.end_timer = Some(0);
+        } else if frame >= crate::audio::clock_end(ENGINE_GO_FRAME, self.time_secs) - 1 {
+            log("time up: GameSet");
+            m.timed_out = true;
+            m.end_timer = Some(0);
+            if let Some(a) = &self.audio { a.match_leave() }
+        }
+    }
+
+    fn finish_engine_match(&mut self) {
+        let Some(m) = self.em.as_ref() else { return };
+        let mut o = Outcome { frames: m.e.frames as i32, ..Default::default() };
+        for i in 0..2usize {
+            o.names[i] = ROSTER.iter().find(|r| r.0 == m.names[i]).map_or(m.names[i], |r| r.1).to_string();
+            o.falls[i] = melee_fighter::tu::player::Player_GetFalls(i as i32);
+            o.percent[i] = unsafe {
+                let g = melee_fighter::player::get_entity(i as i32);
+                if g.is_null() || (*g).user_data.is_null() { 0.0 } else { (*((*g).user_data as *const melee_types::Fighter)).dmg.x1830_percent }
+            };
+        }
+        o.winner = if o.falls[0] < o.falls[1] { Some(0) } else if o.falls[1] < o.falls[0] { Some(1) } else { None };
+        o.why = "TIME!".into();
+        log(&format!("results: falls {:?} percent {:?} frames {} winner {:?}", o.falls, o.percent, o.frames, o.winner));
+        self.outcome = o;
+        self.goto(Scene::Results);
+    }
+
     fn tick_match(&mut self) {
+        if self.em.is_some() {
+            return self.tick_engine_match();
+        }
         let Some(m) = self.m.as_mut() else { return };
         let ports = self.port;
         // gm_DefaultVSGetPauser: START on a connected pad pauses; the pauser's START resumes.
@@ -826,6 +977,21 @@ impl Play {
         }
     }
 
+    /// Draw and present the current state: the engine's own frame during an engine match, else the stand-in scene.
+    fn present_now(&mut self) {
+        if self.scene == Scene::Match && self.em.is_some() {
+            let frame = self.em.as_mut().and_then(|m| m.frame.take());
+            let p = self.presenter.as_mut().unwrap();
+            p.present(&melee_engine::gxbridge::shim().gx.state, frame.as_deref());
+            return;
+        }
+        self.draw_frame();
+        let frame = self.shim.take_frame();
+        let p = self.presenter.as_mut().unwrap();
+        p.present(&self.shim.gx.state, frame.as_deref());
+        self.shim.log.clear();
+    }
+
     fn draw_frame(&mut self) {
         self.shim.set_copy_clear(GxColor::new(0, 0, 0, 255), 0xFF_FFFF);
         if self.scene == Scene::Match {
@@ -866,11 +1032,7 @@ impl Game for Play {
         if self.shots && (self.shot_ages.contains(&self.age) || self.shot_ticks.contains(&(self.tick_no - 1))) && self.presenter.is_some() {
             // Age-exact: draw this tick's state now (the display may have skipped ticks), then write it.
             self.shot_pending = Some(if self.shot_ticks.contains(&(self.tick_no - 1)) { format!("tl_{:04}", self.tick_no - 1) } else { format!("{}_{:04}", self.scene.name(), self.age) });
-            self.draw_frame();
-            let frame = self.shim.take_frame();
-            let p = self.presenter.as_mut().unwrap();
-            p.present(&self.shim.gx.state, frame.as_deref());
-            self.shim.log.clear();
+            self.present_now();
             self.emit_shot();
         }
         if self.shots && self.shot_ages.is_empty() && self.age == 30 && self.shot_pending.is_none() {
@@ -899,11 +1061,7 @@ impl Game for Play {
                 }
             }
         }
-        self.draw_frame();
-        let frame = self.shim.take_frame();
-        let p = self.presenter.as_mut().unwrap();
-        p.present(&self.shim.gx.state, frame.as_deref());
-        self.shim.log.clear();
+        self.present_now();
         self.emit_shot();
     }
 
@@ -955,6 +1113,10 @@ pub fn play(args: &[String]) -> ExitCode {
         sss_sel: 0,
         setup: None,
         m: None,
+        em: None,
+        engine: crate::use_engine(args) && get("--mods").is_none(),
+        engine_used: false,
+        headless: false,
         outcome: Outcome::default(),
         matches_played: 0,
         shim: GxShim::new(),
@@ -977,9 +1139,26 @@ pub fn play(args: &[String]) -> ExitCode {
         shot_ages: get("--shot-ages").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
     };
     let mut game = game;
+    // `--match falcon,fox,GrNLa.dat`: skip the menus (a hands-off test of the match path)
+    if let Some(spec) = get("--match") {
+        let parts: Vec<&str> = spec.split(',').collect();
+        let f = |n: &str| ROSTER.iter().position(|r| r.0 == n);
+        let st = parts.get(2).and_then(|n| STAGES.iter().position(|s| s.0 == *n)).unwrap_or(0);
+        match (parts.first().and_then(|n| f(n)), parts.get(1).and_then(|n| f(n))) {
+            (Some(a), Some(b)) => {
+                game.setup = Some(MatchSetup { fighters: [a, b], stage: st });
+                game.scene = Scene::Loading;
+            }
+            _ => {
+                eprintln!("play: --match NAME,NAME[,STAGE.dat]: unknown fighter");
+                return ExitCode::from(2);
+            }
+        }
+    }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
     let headless = has("--headless");
+    game.headless = headless;
     let trace_path = get("--audio-trace");
     if !has("--no-audio") && crate::cfg::flag("audio", true) {
         match crate::audio::Audio::boot(&game.iso, headless) {

@@ -65,7 +65,7 @@ The sim stops (reports why) on unported code rather than guessing; a stop is not
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
 3. `melee play` covers 7 fighters / 4 stages; retail `mn*` scenes are stand-ins (notes/play.md).
-4. Engine (`--engine tu`): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl 3601 (the whole golden), cpu_peach_samus_ys_items 1562 (blocker C); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
+4. Engine (default since step 18; `--engine legacy` = the model): both pad scenarios reach 1801 frames with hash + seed identical to the golden (steps 11-13); the seed needs `tools/rust-port/engine/pre_draws.tsv` dummy draws (1) until the boot flow draws for real. cpu_fox_falco_dl 3601 (the whole golden), cpu_peach_samus_ys_items 1562 (blocker C); sound is a no-op seam; `melee diff --engine tu` works for fighters, items and dynamic bones, engine snapshots / rollback are step 17 (notes/consolidation.md). The engine now runs the draw callbacks headless (notes/consolidation.md, round 1).
 5. User-only checks: visuals, audio by ear, real controller, online vs another machine (notes/platform.md).
 
 ## Writing notes (merge-friendly: other branches append concurrently)

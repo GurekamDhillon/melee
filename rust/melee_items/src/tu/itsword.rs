@@ -424,11 +424,20 @@ pub unsafe extern "C" fn it_802852B8(gobj: *mut Item_GObj, arg1: *mut f32, arg2:
     }
 }
 
+/// The Beam Sword's special attributes are the word-swapped GC block: `itSword_UnkArticle1` has `UNK_T` (pointer) fields before `xC`,
+/// so the native struct's field offsets differ from the data. Read the data at its GC offsets.
+pub(crate) unsafe fn swf(a: *mut itSword_UnkArticle1, off: usize) -> f32 {
+    *((a as *const u8).add(off) as *const f32)
+}
+pub(crate) unsafe fn swi(a: *mut itSword_UnkArticle1, off: usize) -> i32 {
+    *((a as *const u8).add(off) as *const i32)
+}
+
 /// 285300
 pub unsafe extern "C" fn it_80285300(gobj: *mut Item_GObj) -> *mut itSword_UnkBytes {
     melee_core::ct!("it_80285300");
     let attrs = (*(*GET_ITEM(gobj)).xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
-    &raw mut (*attrs).x1C
+    (attrs as *mut u8).add(0x1C) as *mut itSword_UnkBytes
 }
 
 /// 285314
@@ -444,7 +453,7 @@ pub unsafe extern "C" fn itSword_Logic12_Spawned(gobj: *mut Item_GObj) {
     let sv = &raw mut (*ip).xDD4_itemVar.sword;
     ext::it_8026B390(gobj);
     (*ip).x40_vel.x = 0.0;
-    (*ip).x40_vel.y = (*attrs).xC;
+    (*ip).x40_vel.y = swf(attrs, 0xC);
     (*ip).x40_vel.z = 0.0;
     (*sv).x0 = 0;
     (*sv).x4 = 0;
@@ -525,11 +534,11 @@ unsafe fn inlineA3(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
     let sv = &raw mut (*ip).xDD4_itemVar.sword;
-    (*sv).x34 = (*attrs).x18;
+    (*sv).x34 = swi(attrs, 0x18);
     (*sv).x38 = 0;
     (*sv).x3C = -1;
-    (*sv).x44 = (*attrs).x10;
-    (*sv).x48 = ((*attrs).x10 - (*sv).x40) / (*attrs).x18 as f32;
+    (*sv).x44 = swf(attrs, 0x10);
+    (*sv).x48 = (swf(attrs, 0x10) - (*sv).x40) / swi(attrs, 0x18) as f32;
 }
 
 #[inline]
@@ -538,11 +547,11 @@ unsafe fn inlineD1(gobj: *mut Item_GObj) {
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
     let sv = &raw mut (*ip).xDD4_itemVar.sword;
     (*sv).x34 = 0;
-    (*sv).x38 = (*attrs).x18;
+    (*sv).x38 = swi(attrs, 0x18);
     (*sv).x3C = 1;
-    (*sv).x40 = (*attrs).x10;
-    (*sv).x44 = (*attrs).x14;
-    (*sv).x48 = ((*attrs).x14 - (*attrs).x10) / (*attrs).x18 as f32;
+    (*sv).x40 = swf(attrs, 0x10);
+    (*sv).x44 = swf(attrs, 0x14);
+    (*sv).x48 = (swf(attrs, 0x14) - swf(attrs, 0x10)) / swi(attrs, 0x18) as f32;
 }
 
 #[inline]
@@ -628,7 +637,7 @@ pub unsafe extern "C" fn itSword_UnkMotion2_Anim(gobj: *mut Item_GObj) -> bool {
         if (*ip).xDD4_itemVar.sword.x34 == (*ip).xDD4_itemVar.sword.x38 {
             if (*ip).xDD4_itemVar.sword.x38 == 0 {
                 inlineD1(gobj);
-            } else if (*ip).xDD4_itemVar.sword.x38 == (*attrs).x18 {
+            } else if (*ip).xDD4_itemVar.sword.x38 == swi(attrs, 0x18) {
                 inlineA3(gobj);
             }
         }

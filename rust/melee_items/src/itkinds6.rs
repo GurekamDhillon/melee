@@ -269,27 +269,27 @@ pub fn inline_c1(ip: &mut Item) {
 /// # Safety
 /// The special attributes must be a valid `itSword_UnkArticle1`.
 pub unsafe fn inline_a3(ip: &mut Item) {
-    let attrs = sa::<itSword_UnkArticle1>(ip);
+    let attrs = sa::<itSword_UnkArticle1>(ip) as *const itSword_UnkArticle1 as *mut itSword_UnkArticle1;
     let s = &mut ip.xDD4_itemVar.sword;
-    s.x34 = attrs.x18;
+    s.x34 = crate::tu::itsword::swi(attrs, 0x18);
     s.x38 = 0;
     s.x3C = -1;
-    s.x44 = attrs.x10;
-    s.x48 = (attrs.x10 - s.x40) / attrs.x18 as f32;
+    s.x44 = crate::tu::itsword::swf(attrs, 0x10);
+    s.x48 = (crate::tu::itsword::swf(attrs, 0x10) - s.x40) / crate::tu::itsword::swi(attrs, 0x18) as f32;
 }
 
 /// `inlineD1` (itsword.c, static inline): blend 2 from `attrs->x10` to `attrs->x14`.
 /// # Safety
 /// The special attributes must be a valid `itSword_UnkArticle1`.
 pub unsafe fn inline_d1(ip: &mut Item) {
-    let attrs = sa::<itSword_UnkArticle1>(ip);
+    let attrs = sa::<itSword_UnkArticle1>(ip) as *const itSword_UnkArticle1 as *mut itSword_UnkArticle1;
     let s = &mut ip.xDD4_itemVar.sword;
     s.x34 = 0;
-    s.x38 = attrs.x18;
+    s.x38 = crate::tu::itsword::swi(attrs, 0x18);
     s.x3C = 1;
-    s.x40 = attrs.x10;
-    s.x44 = attrs.x14;
-    s.x48 = (attrs.x14 - attrs.x10) / attrs.x18 as f32;
+    s.x40 = crate::tu::itsword::swf(attrs, 0x10);
+    s.x44 = crate::tu::itsword::swf(attrs, 0x14);
+    s.x48 = (crate::tu::itsword::swf(attrs, 0x14) - crate::tu::itsword::swf(attrs, 0x10)) / crate::tu::itsword::swi(attrs, 0x18) as f32;
 }
 
 // ---- zgshell ---------------------------------------------------------------------------------

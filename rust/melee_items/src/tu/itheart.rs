@@ -5,6 +5,109 @@
 //! No float arithmetic of its own (copies and `HSD_JObjAddRotationY`'s `+=`: no fused sites).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
+#[allow(unused_imports)]
+use crate::itkinds::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -212,4 +315,13 @@ pub unsafe extern "C" fn itHeart_UnkMotion4_Coll(gobj: *mut HSD_GObj) -> i32 {
 pub unsafe extern "C" fn itHeart_Logic8_EvtUnk(gobj: *mut HSD_GObj, ref_gobj: *mut HSD_GObj) {
     melee_core::ct!("itHeart_Logic8_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_80283BD4` (itheart.c): `heart.xDD4_heal = attrs.x4.flags`.
+/// # Safety
+/// The special attributes must be a valid `HeartContainerAttr`.
+pub unsafe fn it_80283bd4(ip: &mut Item) {
+    melee_core::ct!("it_80283bd4");
+    ip.xDD4_itemVar.heart.xDD4_heal = sa::<HeartContainerAttr>(ip).x4.flags as _;
 }

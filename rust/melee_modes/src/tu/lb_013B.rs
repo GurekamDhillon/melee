@@ -3,6 +3,9 @@
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_lb_013B.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use melee_runtime::cabi::f2u8;
 use melee_types::*;
@@ -41,7 +44,6 @@ pub mod ext {
 }
 // END GENERATED EXT
 
-pub use crate::lb_ptr::lb_80013BB0;
 
 /// `lb_804D63C0` (static): the loaded `lbRumbleData` table.
 pub static mut lb_804D63C0: *mut Fighter_804D653C_t = core::ptr::null_mut();
@@ -301,4 +303,11 @@ pub unsafe fn lb_800145F4() {
     for i in 0..4 {
         lb_800145C0(i as u8);
     }
+}
+
+// ---- folded from lb_ptr.rs (consolidation steps 21/22) ----
+/// lb_013B.c `lb_80013BB0`.
+pub fn lb_80013BB0(_arg: *mut mt::ColorOverlay) -> bool {
+    melee_core::ct!("lb_80013BB0");
+    true
 }

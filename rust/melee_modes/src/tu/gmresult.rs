@@ -11,6 +11,30 @@
 //! Fused multiply-adds: `fn_80174B4C` (row y) and `fn_8017507C` (the three colour channels).
 #![allow(non_snake_case, non_upper_case_globals, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gm_r4::fn_801771C0 as fn_801771C0_gm_r7;
+#[allow(unused_imports)]
+use crate::lb_r6::memzero as memzero_gm_r7;
+#[allow(unused_imports)]
+use crate::gm_r7::{bytes_of};
+#[allow(unused_imports)]
+use crate::gm_ptr::fn_80165418 as fn_80165418_gm_r4;
+#[allow(unused_imports)]
+use crate::gm_ptr::fn_801654A0 as fn_801654A0_gm_r4;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_r4;
+#[allow(unused_imports)]
+use mt::ResultsData as ResultsData_gm_r4;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_ptr;
+#[allow(unused_imports)]
+use crate::gm::{OUTCOME_NO_CONTEST as OUTCOME_NO_CONTEST_gm, OUTCOME_RETRY as OUTCOME_RETRY_gm};
 use core::ffi::c_void;
 use core::mem::offset_of;
 use core::ptr::{addr_of, addr_of_mut, null_mut};
@@ -1350,7 +1374,6 @@ pub unsafe fn fn_801771C0(data: *mut ResultsData) {
 }
 
 /// gmResult_PcWinner (gm_r7.rs; checked there against the C with `fn_801771C0` over local state).
-pub use crate::gm_r7::gmResult_PcWinner;
 
 /// `gmResultLoadArchive` (static inline).
 pub unsafe fn gmResultLoadArchive(data: *mut ResultsData) {
@@ -1482,3 +1505,81 @@ pub unsafe extern "C" fn gm_Scene_Results_OnExit(_unused: *mut c_void) {
 const _OFFS: usize = offset_of!(ResultsData, x34);
 #[allow(dead_code)]
 fn _unused(_: MatchPlayerData, _: ResultsPlayerData) {}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmresult.c `gm_WasMatchCanceled_fp`.
+pub fn gm_WasMatchCanceled_fp(outcome: u8) -> bool {
+    melee_core::ct!("gm_WasMatchCanceled_fp");
+    outcome == OUTCOME_NO_CONTEST_gm || outcome == OUTCOME_RETRY_gm
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmresult.c `gmResultFindNth_fp`: index of the n-th nonzero value (256 if there is none).
+pub fn gmResultFindNth_fp(values: &[u8], mut n: i32) -> i32 {
+    melee_core::ct!("gmResultFindNth_fp");
+    let mut i = 0;
+    while i < 256 {
+        if values[i as usize] != 0 {
+            n = n.wrapping_sub(1);
+            if n == 0 {
+                break;
+            }
+        }
+        i += 1;
+    }
+    i
+}
+
+/// gmresult.c `matchWasSkipped_fp`.
+pub fn matchWasSkipped_fp(me: &MatchEnd_gm_ptr) -> bool {
+    melee_core::ct!("matchWasSkipped_fp");
+    me.outcome == mt::OUTCOME_NO_CONTEST as u8 || me.outcome == mt::OUTCOME_RETRY as u8
+}
+
+// ---- folded from gm_r4.rs (consolidation steps 21/22) ----
+/// gmresult.c `fn_801771C0_fp`: winner (x4), winning team (x5) and, in teams, the first player of
+/// that team no teammate beats on `is_small_loser` (x6).
+pub fn fn_801771C0_fp(data: &mut ResultsData_gm_r4) {
+    melee_core::ct!("fn_801771C0_fp");
+    // SAFETY: x94 is the results' MatchEnd_gm_r4, set before this runs (the C dereferences it unchecked).
+    let me = unsafe { &*data.x94 };
+    data.x4 = fn_80165418_gm_r4(me) as u8;
+    data.x5 = fn_801654A0_gm_r4(me) as u8;
+    if me.is_teams == 1 {
+        let ps = &me.player_standings;
+        let na = mt::Gm_PKind_NA as i32;
+        for i in 0..4usize {
+            if ps[i].pkind as i32 != na && ps[i].team == data.x5 {
+                let mut result = i as i32;
+                for j in 0..4usize {
+                    if ps[j].pkind as i32 != na && ps[j].team == data.x5 && i != j
+                        && ps[i].is_small_loser > ps[j].is_small_loser
+                    {
+                        result = -1;
+                        break;
+                    }
+                }
+                if result >= 0 {
+                    data.x6 = result as u8;
+                    break;
+                }
+            }
+        }
+    } else {
+        data.x6 = data.x4;
+    }
+}
+
+// ---- folded from gm_r7.rs (consolidation steps 21/22) ----
+/// gmresult.c `gmResult_PcWinner`: run `fn_801771C0_gm_r7` on a zeroed scratch ResultsData pointing at
+/// `me` and return its x6. The C's scratch is a function static, fully zeroed on every call, so
+/// a local is equivalent.
+pub fn gmResult_PcWinner(me: &mut MatchEnd) -> i32 {
+    melee_core::ct!("gmResult_PcWinner");
+    // SAFETY: ResultsData is plain data (integers, floats, raw pointers); all-zero is valid.
+    let mut scratch: ResultsData = unsafe { core::mem::zeroed() };
+    memzero_gm_r7(bytes_of(&mut scratch), core::mem::size_of::<ResultsData>() as isize);
+    scratch.x94 = me;
+    fn_801771C0_gm_r7(&mut scratch);
+    scratch.x6 as i32
+}

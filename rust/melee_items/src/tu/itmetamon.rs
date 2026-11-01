@@ -3,6 +3,9 @@
 //! (unset: panics "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_itmetamon.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::Item;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -147,3 +150,7 @@ pub unsafe extern "C" fn itMetamon_UnkMotion2_Coll(item_gobj: *mut Item_GObj) ->
     melee_core::ct!("itMetamon_UnkMotion2_Coll");
     ext::it_8027A118(item_gobj, Some(it_802D3090)) != 0
 }
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802D306C` (src/melee/it/kinds/itmetamon.c): `empty body / return;`.
+pub fn it_802d306c(_ip: &mut Item) { melee_core::ct!("it_802d306c");}

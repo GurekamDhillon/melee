@@ -12,6 +12,61 @@
 //! `melee_core::fp::fmadds`. The result is widened to f64 on return.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -281,4 +336,14 @@ pub unsafe extern "C" fn it_802F289C(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802F289C");
     let ip = get_item(gobj);
     ext::ftKb_SpecialN_800F5800((*ip).grab_victim, &mut (*ip).pos);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802F23AC` (itkirby_2F23.c): squared distance from `pos` (two `fmadds`), as f64.
+pub fn it_802f23ac(ip: &Item, pos: &GcVec) -> f64 {
+    melee_core::ct!("it_802f23ac");
+    let dx = ip.pos.x - pos.x;
+    let dy = ip.pos.y - pos.y;
+    let dz = ip.pos.z - pos.z;
+    fmadds(dz, dz, fmadds(dx, dx, dy * dy)) as f64
 }

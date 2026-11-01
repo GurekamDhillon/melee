@@ -20,6 +20,7 @@
 //! tables; the one `static` cache of `fe_enabled` / `fe_menus_on` is a registered global.
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, static_mut_refs, clippy::missing_safety_doc, clippy::too_many_arguments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null, null_mut};
 
@@ -28,7 +29,6 @@ use melee_types::*;
 #[allow(unused_imports)]
 use std::vec::Vec;
 
-use crate::gm::{fe_ease, fe_rgba, fe_row_y};
 use crate::oracle::Va;
 use crate::GXColor;
 
@@ -2478,4 +2478,35 @@ pub unsafe extern "C" fn gm_Scene_Frontend_OnExit(_exit_data: *mut c_void) {
 }
 
 /// `fe_np_zero` (gm.rs ports and verifies it; the leaf `fe_*` helpers `fe_rgba`, `fe_ease`, `fe_row_y` too).
-pub use crate::gm::fe_np_zero;
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmfrontend.c `fe_np_zero`.
+pub fn fe_np_zero() -> i32 {
+    melee_core::ct!("fe_np_zero");
+    0
+}
+
+/// gmfrontend.c `fe_rgba`.
+pub fn fe_rgba(r: u8, g: u8, b: u8, a: u8) -> GXColor {
+    melee_core::ct!("fe_rgba");
+    GXColor { r, g, b, a }
+}
+
+/// gmfrontend.c `fe_ease`: `1 - u*u*u` is one fused site (fmuladd(-(u*u), u, 1)).
+pub fn fe_ease(t: f32) -> f32 {
+    melee_core::ct!("fe_ease");
+    if t <= 0.0 {
+        return 0.0;
+    }
+    if t >= 1.0 {
+        return 1.0;
+    }
+    let u = 1.0f32 - t;
+    fmadds(-(u * u), u, 1.0)
+}
+
+/// gmfrontend.c `fe_row_y`: `FE_ROW_Y + FE_ROW_STEP * slot`, fused.
+pub fn fe_row_y(slot: i32) -> f32 {
+    melee_core::ct!("fe_row_y");
+    fmadds(34.0, slot as f32, 114.0)
+}

@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -173,7 +179,6 @@ pub static grTe_803E56B8: [GrJoint; 13] = [
 ];
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtest::{grTest_8020703C, grTest_8020715C, grTest_802071BC, grTest_802073FC, grTest_8020740C, grTest_80207414};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -371,3 +376,29 @@ pub unsafe extern "C" fn grTest_80207408(gobj: *mut HSD_GObj) {
     melee_core::ct!("grTest_80207408");
     
 }
+
+// ---- folded from grtest.rs (consolidation steps 21/22) ----
+/// grTest_UnkStage0_OnStart_fp (gr/grtest.c:80)
+    pub unsafe extern "C" fn grTest_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// stageGObj2_X8Callback_fp (gr/grtest.c:180)
+    pub unsafe extern "C" fn stageGObj2_X8Callback_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtest.rs (consolidation steps 21/22) ----
+/// grTest_8020703C (gr/grtest.c:85)
+    pub extern "C" fn grTest_8020703C() -> i32 { 0 }
+
+/// grTest_8020715C (gr/grtest.c:111)
+    pub extern "C" fn grTest_8020715C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTest_802071BC (gr/grtest.c:125)
+    pub extern "C" fn grTest_802071BC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTest_802073FC (gr/grtest.c:190)
+    pub extern "C" fn grTest_802073FC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTest_8020740C (gr/grtest.c:199)
+    pub extern "C" fn grTest_8020740C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTest_80207414 (gr/grtest.c:204)
+    pub extern "C" fn grTest_80207414(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

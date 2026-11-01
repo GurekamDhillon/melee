@@ -8,16 +8,15 @@
 //! State-oracle checked against the C (tests/gro_grbigblueroute.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
 use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-pub use crate::gr::trivial::grbigblueroute::{
-    grBigBlueRoute_8020B9CC, grBigBlueRoute_8020BB00, grBigBlueRoute_8020BB58, grBigBlueRoute_8020BC24,
-    grBigBlueRoute_8020BF30, grBigBlueRoute_8020C1D4, grBigBlueRoute_8020DF78,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -1236,3 +1235,25 @@ pub unsafe extern "C" fn grBigBlueRoute_8020DF80(a: *mut Vec3, _arg: i32, joint:
         0
     }
 }
+
+// ---- folded from grbigblueroute.rs (consolidation steps 21/22) ----
+/// grBigBlueRoute_8020B9CC (gr/grbigblueroute.c:214)
+    pub extern "C" fn grBigBlueRoute_8020B9CC() -> i32 { 0 }
+
+/// grBigBlueRoute_8020BB00 (gr/grbigblueroute.c:259)
+    pub extern "C" fn grBigBlueRoute_8020BB00(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlueRoute_8020BB58 (gr/grbigblueroute.c:275)
+    pub extern "C" fn grBigBlueRoute_8020BB58(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlueRoute_8020BC24 (gr/grbigblueroute.c:300)
+    pub extern "C" fn grBigBlueRoute_8020BC24(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlueRoute_8020BF30 (gr/grbigblueroute.c:376)
+    pub extern "C" fn grBigBlueRoute_8020BF30(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlueRoute_8020C1D4 (gr/grbigblueroute.c:451)
+    pub extern "C" fn grBigBlueRoute_8020C1D4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlueRoute_8020DF78 (gr/grbigblueroute.c:1183)
+    pub extern "C" fn grBigBlueRoute_8020DF78(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

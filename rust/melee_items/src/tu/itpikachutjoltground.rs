@@ -5,6 +5,63 @@
 //! shipping contraction) by tests/kinds_itpikachutjoltground.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_runtime::gekko::{cosf, sinf};
@@ -415,4 +472,20 @@ pub unsafe extern "C" fn it_2725_Logic106_ShieldBounced(gobj: *mut Item_GObj) ->
 pub unsafe extern "C" fn itPikachuTJoltGround_Logic106_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itPikachuTJoltGround_Logic106_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802B3544` (itpikachutjoltground.c): `pikachujoltground.xDDC = 0`.
+pub fn it_802b3544(ip: &mut Item) {
+    melee_core::ct!("it_802b3544");
+    ip.xDD4_itemVar.pikachujoltground.xDDC = null_mut_itkinds5();
+}
+
+/// `it_802B3368` (itpikachutjoltground.c): `pikachujoltground.xDDC`, or NULL.
+pub fn it_802b3368(ip: Option<&Item>) -> *mut HSD_GObj {
+    melee_core::ct!("it_802b3368");
+    match ip {
+        Some(ip) => unsafe { ip.xDD4_itemVar.pikachujoltground.xDDC },
+        None => null_mut_itkinds5(),
+    }
 }

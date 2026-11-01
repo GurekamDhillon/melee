@@ -8,6 +8,7 @@
 //! native structs here with the GameCube layout in their `GcLayout`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, non_camel_case_types, unused_variables, unused_assignments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use super::support::*;
 use core::ffi::c_void;
 use melee_types::*;
@@ -2333,5 +2334,16 @@ pub fn gm_801BEC54() -> *mut c_void {
             return core::ptr::null_mut();
         }
         (*temp_r3).x4 as *mut c_void
+    }
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmevent.c `gm_GetNextColor_fp`.
+pub fn gm_GetNextColor_fp(color: u8) -> u8 {
+    melee_core::ct!("gm_GetNextColor_fp");
+    if color <= 2 {
+        color + 1
+    } else {
+        0
     }
 }

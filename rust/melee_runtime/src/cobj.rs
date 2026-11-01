@@ -1,3 +1,4 @@
+
 //! Port of the logic half of `src/sysdolphin/baselib/cobj.c`: the camera object's eye / interest
 //! / up / roll math, the viewing matrix and its inverse, the projection parameters and their
 //! getters and setters, and `makeProjectionMtx`.
@@ -23,25 +24,37 @@
 //! the camera AObj wiring), load / init / class (CObjLoad, HSD_CObjInit, LoadDesc, Alloc,
 //! CObjInit, CObjRelease, CObjAmnesia, CObjInfoInit, SetDefaultClass), `HSD_CObjGetCurrent`.
 use crate::gekko::{sqrtf, tanf};
+
 use crate::hsd_mtx::fabsf_bitwise;
+
 use crate::jobj::{JObjHost, JObjTree};
+
 use crate::lbtrigf::atan2f;
+
 use crate::mtx::{self, Mtx, Mtx44, Vec3};
+
 use crate::wobj::HsdWObj;
+
 use melee_core::fp::fmadds;
 
 /// `PROJ_PERSPECTIVE`.
 pub const PROJ_PERSPECTIVE: u8 = 1;
+
 /// `PROJ_FRUSTUM`.
 pub const PROJ_FRUSTUM: u8 = 2;
+
 /// `PROJ_ORTHO`.
 pub const PROJ_ORTHO: u8 = 3;
+
 /// `GX_PERSPECTIVE`.
 pub const GX_PERSPECTIVE: u32 = 0;
+
 /// `GX_ORTHOGRAPHIC`.
 pub const GX_ORTHOGRAPHIC: u32 = 1;
+
 /// CObj flag bit 0: `u` holds an up vector (else a roll).
 pub const COBJ_UP_VECTOR: u32 = 1;
+
 /// util.h `FLT_MIN`.
 pub const FLT_MIN: f32 = 1.17549435e-38;
 
@@ -134,7 +147,7 @@ pub fn vec_normalize_check(src: &Vec3, dst: &mut Vec3) -> i32 {
 }
 
 #[inline]
-fn deg_to_rad(a: f32) -> f32 {
+pub(crate) fn deg_to_rad(a: f32) -> f32 {
     a * 0.01745329252f32
 }
 
@@ -154,12 +167,14 @@ pub fn mtx_is_dirty<R>(cobj: &HsdCObj<R>) -> bool {
 pub fn get_flags<R>(cobj: &HsdCObj<R>) -> u32 {
     cobj.flags
 }
+
 /// `HSD_CObjSetFlags`.
 pub fn set_flags<R>(cobj: Option<&mut HsdCObj<R>>, flags: u32) {
     if let Some(c) = cobj {
         c.flags |= flags;
     }
 }
+
 /// `HSD_CObjClearFlags`.
 pub fn clear_flags<R>(cobj: Option<&mut HsdCObj<R>>, flags: u32) {
     if let Some(c) = cobj {
@@ -171,14 +186,17 @@ pub fn clear_flags<R>(cobj: Option<&mut HsdCObj<R>>, flags: u32) {
 pub fn get_interest_wobj<R>(cobj: &HsdCObj<R>) -> Option<&HsdWObj<R>> {
     cobj.interest.as_ref()
 }
+
 /// `HSD_CObjSetInterestWObj` (the C just stores the pointer; natively the CObj takes it).
 pub fn set_interest_wobj<R>(cobj: &mut HsdCObj<R>, interest: Option<HsdWObj<R>>) {
     cobj.interest = interest;
 }
+
 /// `HSD_CObjGetEyePositionWObj`.
 pub fn get_eye_position_wobj<R>(cobj: &HsdCObj<R>) -> Option<&HsdWObj<R>> {
     cobj.eyepos.as_ref()
 }
+
 /// `HSD_CObjSetEyePositionWObj`.
 pub fn set_eye_position_wobj<R>(cobj: &mut HsdCObj<R>, eyepos: Option<HsdWObj<R>>) {
     cobj.eyepos = eyepos;
@@ -193,10 +211,12 @@ where
 {
     cobj.interest.as_mut().expect("HSD_WObjGetPosition: wobj").get_position(tree, host)
 }
+
 /// `HSD_CObjSetInterest`.
 pub fn set_interest<R>(cobj: &mut HsdCObj<R>, p: &Vec3) {
     cobj.interest.as_mut().expect("HSD_WObjSetPosition: wobj").set_position(p);
 }
+
 /// `HSD_CObjGetEyePosition`.
 pub fn get_eye_position<R, D, H>(cobj: &mut HsdCObj<R>, tree: &mut JObjTree<D, R>, host: &mut H) -> Vec3
 where
@@ -206,6 +226,7 @@ where
 {
     cobj.eyepos.as_mut().expect("HSD_WObjGetPosition: wobj").get_position(tree, host)
 }
+
 /// `HSD_CObjSetEyePosition`.
 pub fn set_eye_position<R>(cobj: &mut HsdCObj<R>, p: &Vec3) {
     cobj.eyepos.as_mut().expect("HSD_WObjSetPosition: wobj").set_position(p);
@@ -245,69 +266,6 @@ where
     let position = get_eye_position(c, tree, host);
     let interest = get_interest(c, tree, host);
     mtx::vec_mag(&mtx::vec_sub(&interest, &position))
-}
-
-/// `upvec2roll` (static).
-pub fn upvec2roll<R, D, H>(cobj: &mut HsdCObj<R>, up: &Vec3, tree: &mut JObjTree<D, R>, host: &mut H) -> f32
-where
-    D: Copy + PartialEq,
-    R: Copy + PartialEq,
-    H: JObjHost<D, R>,
-{
-    let (r, eye) = get_eye_vector(Some(cobj), tree, host);
-    if r != 0 {
-        return 0.0;
-    }
-    let mut dot = mtx::vec_dot(up, &eye).abs();
-    dot = 1.0 - dot;
-    if dot < FLT_MIN {
-        0.0
-    } else {
-        let orig = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-        let uy = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
-        let vmtx = mtx::look_at(&orig, &uy, &eye);
-        let v = mtx::mult_vec_sr(&vmtx, up);
-        if fabsf_bitwise(v.y) == 0.0 {
-            if -v.x >= 0.0 {
-                1.5707963267948966f64 as f32
-            } else {
-                -1.5707963267948966f64 as f32
-            }
-        } else {
-            atan2f(-v.x, v.y)
-        }
-    }
-}
-
-/// `roll2upvec` (static): (result, up). `up` is only written on success.
-pub fn roll2upvec<R, D, H>(
-    cobj: &mut HsdCObj<R>,
-    roll: f32,
-    tree: &mut JObjTree<D, R>,
-    host: &mut H,
-) -> (i32, Option<Vec3>)
-where
-    D: Copy + PartialEq,
-    R: Copy + PartialEq,
-    H: JObjHost<D, R>,
-{
-    let (res, eye) = get_eye_vector(Some(cobj), tree, host);
-    if res != 0 {
-        return (res, None);
-    }
-    let mut v0 = Vec3::default();
-    if 1.0 - (eye.y.abs() as f64) < 0.0001 {
-        v0.x = sqrtf(fmadds(eye.y, eye.y, eye.z * eye.z));
-        v0.y = eye.y * (-eye.x / v0.x);
-        v0.z = eye.z * (-eye.x / v0.x);
-    } else {
-        v0.y = sqrtf(fmadds(eye.x, eye.x, eye.z * eye.z));
-        v0.x = eye.x * (-eye.y / v0.y);
-        v0.z = eye.z * (-eye.y / v0.y);
-    }
-    let m = mtx::rot_axis_rad(&eye, -roll);
-    let v1 = mtx::mult_vec_sr(&m, &v0);
-    (0, Some(mtx::vec_normalize(&v1)))
 }
 
 /// `HSD_CObjGetUpVector`: 0 and the up vector, or -1 and (0, 1, 0).
@@ -394,7 +352,7 @@ where
 }
 
 /// The body shared by `HSD_CObjSetupViewingMtx`, `GetViewingMtxPtr` and `GetInvViewingMtxPtr`.
-fn rebuild_view<R, D, H>(cobj: &mut HsdCObj<R>, tree: &mut JObjTree<D, R>, host: &mut H)
+pub(crate) fn rebuild_view<R, D, H>(cobj: &mut HsdCObj<R>, tree: &mut JObjTree<D, R>, host: &mut H)
 where
     D: Copy + PartialEq,
     R: Copy + PartialEq,
@@ -488,6 +446,7 @@ pub fn get_fov<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
         _ => 0.0,
     }
 }
+
 /// `HSD_CObjSetFov`.
 pub fn set_fov<R>(cobj: Option<&mut HsdCObj<R>>, fov: f32) {
     if let Some(c) = cobj {
@@ -496,6 +455,7 @@ pub fn set_fov<R>(cobj: Option<&mut HsdCObj<R>>, fov: f32) {
         }
     }
 }
+
 /// `HSD_CObjGetAspect`.
 pub fn get_aspect<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
     update_view(cobj.as_deref_mut(), proj_scale);
@@ -504,6 +464,7 @@ pub fn get_aspect<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 
         _ => 0.0,
     }
 }
+
 /// `HSD_CObjSetAspect`.
 pub fn set_aspect<R>(cobj: Option<&mut HsdCObj<R>>, aspect: f32, proj_scale: f32) {
     let Some(c) = cobj else { return };
@@ -516,6 +477,7 @@ pub fn set_aspect<R>(cobj: Option<&mut HsdCObj<R>>, aspect: f32, proj_scale: f32
         update_view(Some(c), proj_scale);
     }
 }
+
 /// `HSD_CObjGetAuthoredAspect` (TARGET_PC).
 pub fn get_authored_aspect<R>(cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
     if let Some(c) = &cobj {
@@ -527,7 +489,7 @@ pub fn get_authored_aspect<R>(cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) ->
 }
 
 #[inline]
-fn half_tan<R>(c: &HsdCObj<R>) -> f32 {
+pub(crate) fn half_tan<R>(c: &HsdCObj<R>) -> f32 {
     tanf(0.5f32 * deg_to_rad(c.projection_param[0]))
 }
 
@@ -540,6 +502,7 @@ pub fn get_top<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
         _ => 0.0,
     }
 }
+
 /// `HSD_CObjGetBottom`.
 pub fn get_bottom<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
     let Some(c) = cobj else { return 0.0 };
@@ -549,6 +512,7 @@ pub fn get_bottom<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
         _ => 0.0,
     }
 }
+
 /// `HSD_CObjGetLeft`.
 pub fn get_left<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
     update_view(cobj.as_deref_mut(), proj_scale);
@@ -559,6 +523,7 @@ pub fn get_left<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
         _ => 0.0,
     }
 }
+
 /// `HSD_CObjGetRight`.
 pub fn get_right<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
     update_view(cobj.as_deref_mut(), proj_scale);
@@ -569,73 +534,87 @@ pub fn get_right<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> f32 {
         _ => 0.0,
     }
 }
-fn set_frustum_slot<R>(cobj: Option<&mut HsdCObj<R>>, i: usize, v: f32) {
+
+pub(crate) fn set_frustum_slot<R>(cobj: Option<&mut HsdCObj<R>>, i: usize, v: f32) {
     if let Some(c) = cobj {
         if c.projection_type == PROJ_FRUSTUM || c.projection_type == PROJ_ORTHO {
             c.projection_param[i] = v;
         }
     }
 }
+
 /// `HSD_CObjSetTop` (perspective: no-op).
 pub fn set_top<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     set_frustum_slot(cobj, 0, v)
 }
+
 /// `HSD_CObjSetBottom`.
 pub fn set_bottom<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     set_frustum_slot(cobj, 1, v)
 }
+
 /// `HSD_CObjSetLeft`.
 pub fn set_left<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     set_frustum_slot(cobj, 2, v)
 }
+
 /// `HSD_CObjSetRight`.
 pub fn set_right<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     set_frustum_slot(cobj, 3, v)
 }
+
 /// `HSD_CObjGetNear`.
 pub fn get_near<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
     cobj.map_or(0.0, |c| c.near)
 }
+
 /// `HSD_CObjSetNear`.
 pub fn set_near<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     if let Some(c) = cobj {
         c.near = v;
     }
 }
+
 /// `HSD_CObjGetFar`.
 pub fn get_far<R>(cobj: Option<&HsdCObj<R>>) -> f32 {
     cobj.map_or(0.0, |c| c.far)
 }
+
 /// `HSD_CObjSetFar`.
 pub fn set_far<R>(cobj: Option<&mut HsdCObj<R>>, v: f32) {
     if let Some(c) = cobj {
         c.far = v;
     }
 }
+
 /// `HSD_CObjGetScissor` (NULL cobj: `out` untouched).
 pub fn get_scissor<R>(cobj: Option<&HsdCObj<R>>, out: &mut Scissor) {
     if let Some(c) = cobj {
         *out = c.scissor;
     }
 }
+
 /// `HSD_CObjSetScissor`.
 pub fn set_scissor<R>(cobj: Option<&mut HsdCObj<R>>, s: &Scissor) {
     if let Some(c) = cobj {
         c.scissor = *s;
     }
 }
+
 /// `HSD_CObjSetScissorx4`.
 pub fn set_scissor_x4<R>(cobj: Option<&mut HsdCObj<R>>, left: u16, right: u16, top: u16, bottom: u16) {
     if let Some(c) = cobj {
         c.scissor = Scissor { left, right, top, bottom };
     }
 }
+
 /// `HSD_CObjGetViewportf`.
 pub fn get_viewportf<R>(cobj: Option<&HsdCObj<R>>, out: &mut RectF32) {
     if let Some(c) = cobj {
         *out = c.viewport;
     }
 }
+
 /// `HSD_CObjSetViewport` (s16 -> f32).
 pub fn set_viewport<R>(cobj: Option<&mut HsdCObj<R>>, v: &RectS16) {
     if let Some(c) = cobj {
@@ -643,29 +622,34 @@ pub fn set_viewport<R>(cobj: Option<&mut HsdCObj<R>>, v: &RectS16) {
             RectF32 { xmin: v.xmin as f32, xmax: v.xmax as f32, ymin: v.ymin as f32, ymax: v.ymax as f32 };
     }
 }
+
 /// `HSD_CObjSetViewportf`.
 pub fn set_viewportf<R>(cobj: Option<&mut HsdCObj<R>>, v: &RectF32) {
     if let Some(c) = cobj {
         c.viewport = *v;
     }
 }
+
 /// `HSD_CObjSetViewportfx4`.
 pub fn set_viewportf_x4<R>(cobj: Option<&mut HsdCObj<R>>, left: f32, right: f32, top: f32, bottom: f32) {
     if let Some(c) = cobj {
         c.viewport = RectF32 { xmin: left, xmax: right, ymin: top, ymax: bottom };
     }
 }
+
 /// `HSD_CObjGetProjectionType` (NULL: 1).
 pub fn get_projection_type<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> i32 {
     update_view(cobj.as_deref_mut(), proj_scale);
     cobj.map_or(1, |c| c.projection_type as i32)
 }
+
 /// `HSD_CObjSetProjectionType` (stored as u8, truncating).
 pub fn set_projection_type<R>(cobj: Option<&mut HsdCObj<R>>, t: u32) {
     if let Some(c) = cobj {
         c.projection_type = t as u8;
     }
 }
+
 /// `HSD_CObjSetPerspective`.
 pub fn set_perspective<R>(cobj: Option<&mut HsdCObj<R>>, fov: f32, aspect: f32, proj_scale: f32) {
     let Some(c) = cobj else { return };
@@ -677,6 +661,7 @@ pub fn set_perspective<R>(cobj: Option<&mut HsdCObj<R>>, fov: f32, aspect: f32, 
         update_view(Some(c), proj_scale);
     }
 }
+
 /// `HSD_CObjSetFrustum`.
 pub fn set_frustum<R>(cobj: Option<&mut HsdCObj<R>>, top: f32, bottom: f32, left: f32, right: f32) {
     if let Some(c) = cobj {
@@ -684,6 +669,7 @@ pub fn set_frustum<R>(cobj: Option<&mut HsdCObj<R>>, top: f32, bottom: f32, left
         c.projection_param = [top, bottom, left, right];
     }
 }
+
 /// `HSD_CObjSetOrtho`.
 pub fn set_ortho<R>(cobj: Option<&mut HsdCObj<R>>, top: f32, bottom: f32, left: f32, right: f32) {
     if let Some(c) = cobj {
@@ -691,6 +677,7 @@ pub fn set_ortho<R>(cobj: Option<&mut HsdCObj<R>>, top: f32, bottom: f32, left: 
         c.projection_param = [top, bottom, left, right];
     }
 }
+
 /// `HSD_CObjGetPerspective`: (fov, aspect) of a perspective camera, else None (outputs untouched).
 pub fn get_perspective<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) -> Option<(f32, f32)> {
     update_view(cobj.as_deref_mut(), proj_scale);
@@ -699,6 +686,7 @@ pub fn get_perspective<R>(mut cobj: Option<&mut HsdCObj<R>>, proj_scale: f32) ->
         _ => None,
     }
 }
+
 /// `HSD_CObjGetOrtho`: (top, bottom, left, right) of an ortho camera, else None.
 pub fn get_ortho<R>(cobj: Option<&HsdCObj<R>>) -> Option<[f32; 4]> {
     match cobj {
@@ -728,3 +716,6 @@ pub fn make_projection_mtx<R>(cobj: &mut HsdCObj<R>, mtx: &mut Mtx44, proj_scale
         _ => 0,
     }
 }
+
+pub use crate::tu::cobj::roll2upvec_fp as roll2upvec;
+pub use crate::tu::cobj::upvec2roll_fp as upvec2roll;

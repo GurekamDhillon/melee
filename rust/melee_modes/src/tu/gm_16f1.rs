@@ -8,6 +8,7 @@
 //! * The m-ex hooks (`Mex_Enabled`) are the TARGET_PC branches of the C.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use super::ext_hook::memzero;
 use crate::ext_fns;
 use core::ffi::c_void;
@@ -1827,4 +1828,11 @@ pub unsafe fn fn_8017367C() -> i32 {
         (*ext::gmMainLib_8015EDC8()).x6 = 1;
     }
     (*ext::gmMainLib_8015EDC8()).x6 as i32
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gm_16F1.c `fn_801724C8_fp`.
+pub fn fn_801724C8_fp() -> bool {
+    melee_core::ct!("fn_801724C8_fp");
+    false
 }

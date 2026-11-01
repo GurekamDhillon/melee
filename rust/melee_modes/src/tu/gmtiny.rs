@@ -7,6 +7,11 @@
 //! (rust/melee_modes/oracle/s497).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::PlayerInitData as PlayerInitData_gm_ptr;
 use core::ffi::c_void;
 use core::ptr::{null, null_mut};
 
@@ -149,4 +154,14 @@ pub unsafe extern "C" fn gm_Mode_TinyVs_OnInit() {
 pub unsafe extern "C" fn gm_Mode_TinyVs_OnLoad() {
     melee_core::ct!("gm_Mode_TinyVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmtiny.c `fn_801B8E50_fp` (Tiny Melee player setup).
+pub fn fn_801B8E50_fp(arg0: &mut PlayerInitData_gm_ptr, _unused: *mut PlayerInitData_gm_ptr) {
+    melee_core::ct!("fn_801B8E50_fp");
+    arg0.model_scale = 0.35;
+    arg0.defense_ratio = 0.5;
+    arg0.attack_ratio = 1.0;
+    arg0.xB = 1;
 }

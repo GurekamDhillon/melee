@@ -22,6 +22,51 @@ sys.argv = ['x']
 spec.loader.exec_module(lint)
 sys.argv = sys.argv_saved
 
+def use_pairs(u):
+    m = re.match(r'\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\([a-z]+\))?\s+)?use\s+(.*?);', u, re.S)
+    p = m.group(1)
+    out = []
+
+    def rec(prefix, t):
+        t = t.strip()
+        if t.startswith('{') and t.endswith('}'):
+            depth = 0
+            cur = ''
+            parts = []
+            for ch in t[1:-1]:
+                if ch == '{':
+                    depth += 1
+                if ch == '}':
+                    depth -= 1
+                if ch == ',' and depth == 0:
+                    parts.append(cur)
+                    cur = ''
+                else:
+                    cur += ch
+            parts.append(cur)
+            for q in parts:
+                if q.strip():
+                    rec(prefix, q)
+            return
+        if '{' in t:
+            a, b = t.split('{', 1)
+            rec(prefix + a, '{' + b)
+            return
+        full = (prefix + t).strip()
+        if full.endswith('::self'):
+            full = full[:-6]
+        if full.endswith('*'):
+            out.append((full, full))
+        elif ' as ' in full:
+            pth, al = full.split(' as ')
+            out.append((al.strip(), pth.strip()))
+        else:
+            out.append((full.split('::')[-1].strip(), full))
+
+    rec('', p)
+    return out
+
+
 ap = argparse.ArgumentParser()
 ap.add_argument('--crate', required=True)
 ap.add_argument('--files')
@@ -45,9 +90,13 @@ def load(p):
 
 
 tu_names = {}
-for f in os.listdir(tu_dir):
-    if f.endswith('.rs') and f != 'mod.rs':
-        tu_names[f[:-3].lower()] = f[:-3]
+tu_paths = {}
+for dp_, dn_, fs_ in os.walk(tu_dir):
+    for f in fs_:
+        if f.endswith('.rs') and f != 'mod.rs':
+            if f[:-3].lower() not in tu_names or dp_ == tu_dir:
+                tu_names[f[:-3].lower()] = f[:-3]
+                tu_paths[f[:-3].lower()] = os.path.join(dp_, f)
 # every C-named fn defined in any tu file of any crate
 tu_defined = set()
 for crate in os.listdir(os.path.join(REPO, 'rust')):
@@ -58,6 +107,9 @@ for crate in os.listdir(os.path.join(REPO, 'rust')):
                 if f.endswith('.rs'):
                     t = open(os.path.join(dp, f), encoding='utf-8', errors='replace').read()
                     for m in lint.FN.finditer(t):
+                        bb = lint.body_of(t, m.start())
+                        if bb is None or lint.trivial(t[bb[0] + 1:bb[1]]):
+                            continue
                         tu_defined.add(m.group(1))
 
 skipset = set(a.skip.split(',')) if a.skip else set()
@@ -80,9 +132,10 @@ for dp, dn, fs in os.walk(root):
         files.append(os.path.join(dp, f))
 
 moved = 0
-for sp in sorted(files):
-    s = load(sp)
-    items = split_items(s)
+
+
+def process(sp, items, modpath, parentpath, modname):
+    global moved
     sel = []
     for it in items:
         if it[2] != 'fn' or not it[3]:
@@ -95,8 +148,7 @@ for sp in sorted(files):
             continue
         sel.append(it)
     if not sel:
-        continue
-    modname = os.path.splitext(os.path.basename(sp))[0]
+        return None
     groups = {}
     for it in sel:
         cname, stem = cidx[it[3].lower()]
@@ -108,7 +160,7 @@ for sp in sorted(files):
     gone_all = {it[3] for it in sel}
     ren = {}
     for key, its in groups.items():
-        tp = os.path.join(tu_dir, key + '.rs')
+        tp = tu_paths.get(key.lower(), os.path.join(tu_dir, key + '.rs'))
         if key not in tu_names.values() and key.lower() not in tu_names:
             cstem = cidx[its[0][3].lower()][1]
             with open(tp, 'w', encoding='utf-8', newline=chr(10)) as nf:
@@ -117,6 +169,7 @@ for sp in sorted(files):
             with open(os.path.join(tu_dir, 'mod.rs'), 'a', encoding='utf-8', newline=chr(10)) as mf:
                 mf.write('pub mod ' + key + ';' + chr(10))
             tu_names[key.lower()] = key
+            tu_paths[key.lower()] = tp
         tu = load(tp)
         texts = []
         for it in its:
@@ -124,8 +177,11 @@ for sp in sorted(files):
             new = n
             if n in tu_defined or re.search(r'\bfn\s+' + re.escape(n) + r'\b', tu):
                 new = n + '_fp'
+                while re.search(r'\bfn\s+' + re.escape(new) + r'\b', tu) or any(v[1] == new and v[0] == key for v in ren.values()):
+                    new += '2'
             ren[n] = (key, new)
             txt = it[4].strip('\n')
+            txt = re.sub(r'(?m)^//!', '//', txt)
             if not re.search(r'(?m)^pub\b', txt):
                 txt = re.sub(r'(?m)^((?:unsafe |extern "C" )*fn )', r'pub \1', txt, count=1)
             texts.append((n, new, txt))
@@ -134,14 +190,26 @@ for sp in sorted(files):
         for (n, new, txt) in texts:
             for (o, (k2, nw)) in ren.items():
                 if o != nw and k2 == key:
-                    txt = re.sub(r'(?<![A-Za-z0-9_:])' + re.escape(o) + r'(?![A-Za-z0-9_])', nw, txt)
+                    txt = re.sub(r'(?<![A-Za-z0-9_:.])' + re.escape(o) + r'(?![A-Za-z0-9_])', nw, txt)
             out_t.append(txt)
         have = set()
+        have_map = {}
         for um in re.finditer(r'(?ms)^(?:pub(?:\([a-z]+\))?\s+)?use\s+.*?;', tu):
             try:
-                have.update(use_leaves(um.group(0)))
+                for lf, fp_ in use_pairs(um.group(0)):
+                    have.add(lf)
+                    have_map.setdefault(lf, fp_)
             except Exception:
                 pass
+        roots0 = set()
+        for u0 in uses:
+            for m0 in re.finditer(r'use\s+([A-Za-z_][A-Za-z0-9_]*)::', u0):
+                roots0.add(m0.group(1))
+            for m0 in re.finditer(r'[{,]\s*([A-Za-z_][A-Za-z0-9_]*)::', u0):
+                roots0.add(m0.group(1))
+        used0 = set()
+        for t0 in out_t:
+            used0.update(IDENT.findall(t0))
         add = []
         for u in uses:
             u = re.sub(r'^(#\[[^\]]*\]\s*)+', '', u)
@@ -150,23 +218,45 @@ for sp in sorted(files):
             if re.match(r'pub use crate::tu::', u):
                 continue
             try:
-                lv = use_leaves(u)
+                prs = use_pairs(u)
             except Exception:
                 continue
-            fresh = [l for l in lv if l not in have]
-            if not fresh:
-                continue
-            mb = re.match(r'((?:pub(?:\([a-z]+\))?\s+)?use\s+[A-Za-z0-9_:]+::)\{(.*)\};', u, re.S)
-            if mb and len(fresh) != len(lv):
-                u = mb.group(1) + '{' + ', '.join(fresh) + '};'
-            have.update(fresh)
-            add.append('#[allow(unused_imports)]\n' + re.sub(r'^(?:pub(?:\([a-z]+\))?\s+)?use', 'use', u))
-        srcnames = {it2[3] for it2 in items if it2[3] and it2[2] in ('fn', 'const', 'static', 'struct', 'enum', 'type', 'union') and it2[3] not in gone_all}
+            def absol(q):
+                if q.startswith('super::'):
+                    return parentpath + '::' + q[7:]
+                if q.startswith('self::'):
+                    return modpath + '::' + q[6:]
+                return q
+            prs = [(lf if not lf.startswith(('super::', 'self::')) else absol(lf), absol(fp_)) for lf, fp_ in prs]
+            for lf, fp_ in prs:
+                if not lf.endswith('*') and lf.split('::')[-1] not in used0 and lf not in roots0:
+                    continue
+                defd = (not lf.endswith('*')) and lf not in roots0 and re.search(r'(?<![A-Za-z0-9_])' + re.escape(lf.split('::')[-1]) + r'(?![A-Za-z0-9_])', tu)
+                if lf in have_map or defd:
+                    if lf in have_map and have_map[lf] == fp_:
+                        continue
+                    if lf.endswith('*'):
+                        continue
+                    al = lf + '_' + modname
+                    out_t = [re.sub(r'(?<![A-Za-z0-9_:.])' + re.escape(lf) + r'(?![A-Za-z0-9_])', al, t) for t in out_t]
+                    have_map[al] = fp_
+                    have.add(al)
+                    add.append('#[allow(unused_imports)]\nuse %s as %s;' % (fp_, al))
+                else:
+                    have_map[lf] = fp_
+                    have.add(lf)
+                    if lf.endswith('*'):
+                        add.append('#[allow(unused_imports)]\nuse %s;' % fp_)
+                    elif fp_.split('::')[-1] == lf:
+                        add.append('#[allow(unused_imports)]\nuse %s;' % fp_)
+                    else:
+                        add.append('#[allow(unused_imports)]\nuse %s as %s;' % (fp_, lf))
+        srcnames = {it2[3] for it2 in items if it2[3] and it2[2] in ('fn', 'const', 'static', 'struct', 'enum', 'type', 'union', 'mod', 'trait') and it2[3] not in {x[3] for x in its}}
         used = set()
         for txt in out_t:
             used.update(IDENT.findall(txt))
         def dest_defines(n):
-            return re.search(r'(?m)^(?:pub(?:\([a-z]+\))?\s+)?(?:unsafe\s+)?(?:extern\s+"C"\s+)?(?:fn|const|static(?:\s+mut)?|struct|enum|type|union)\s+' + re.escape(n) + r'\b', tu) or n in have
+            return re.search(r'(?<![A-Za-z0-9_])' + re.escape(n) + r'(?![A-Za-z0-9_])', tu) or n in have
         need = []
         for n in sorted(used & srcnames):
             if not dest_defines(n):
@@ -177,7 +267,7 @@ for sp in sorted(files):
                 out_t = [re.sub(r'(?<![A-Za-z0-9_:.])' + re.escape(n) + r'(?![A-Za-z0-9_])', al, t) for t in out_t]
                 need.append(n + ' as ' + al)
         if need:
-            add.append('#[allow(unused_imports)]\nuse crate::%s::{%s};' % (modname, ', '.join(need)))
+            add.append('#[allow(unused_imports)]\nuse %s::{%s};' % (modpath, ', '.join(need)))
         lines = tu.rstrip('\n').split('\n')
         p0 = 0
         for idx, ln in enumerate(lines):
@@ -196,17 +286,64 @@ for sp in sorted(files):
         if it[3] in gone and it[2] == 'fn':
             continue
         t = it[4]
-        if it[2] in ('fn', 'const', 'static', 'struct', 'enum', 'type', 'union') and it[3]:
+        if it[2] in ('fn', 'const', 'static', 'struct', 'enum', 'type', 'union', 'mod', 'trait') and it[3]:
             # make private top-level items visible to the destination
-            t = re.sub(r'(?m)^(\s*)((?:unsafe\s+|extern\s+"C"\s+)*(?:fn|const|static\s+mut|static|struct|enum|type|union)\s)', lambda m: m.group(1) + 'pub(crate) ' + m.group(2), t, count=1) if not re.match(r'(?s)\s*(?:(?:///[^\n]*|//[^\n]*|#\[[^\]]*\])\s*)*pub', t) else t
+            t = re.sub(r'(?m)^(\s*)((?:unsafe\s+|extern\s+"C"\s+)*(?:fn|const|static\s+mut|static|struct|enum|type|union|mod|trait)\s)', lambda m: m.group(1) + 'pub(crate) ' + m.group(2), t, count=1) if not re.match(r'(?s)\s*(?:(?:///[^\n]*|//[^\n]*|#\[[^\]]*\])\s*)*pub', t) else t
         keep.append(t)
     back = []
     for o, (key, nw) in sorted(ren.items()):
         back.append('pub use crate::tu::%s::%s%s;' % (key, nw, '' if nw == o else ' as ' + o))
-    first_item = items[0][0] if items else 0
-    # put back-references after the leading inner attrs/docs: simply append at the end of file
-    new_s = ''.join(('\n' + k.strip('\n') + '\n') for k in keep if k.strip()) + '\n' + '\n'.join(back) + '\n'
-    # preserve the file header (anything before the first item)
+    return keep, back
+
+
+stems_lc = {v[1].lower() for v in cidx.values()}
+for sp in sorted(files):
+    s = load(sp)
+    modname0 = os.path.splitext(os.path.basename(sp))[0]
+    relp = os.path.relpath(sp, root).replace(os.sep, '/')[:-3].split('/')
+    if relp[-1] == 'mod':
+        relp = relp[:-1]
+    fpath = 'crate' + ''.join('::' + x for x in relp)
+    fparent = 'crate' + ''.join('::' + x for x in relp[:-1])
+    if modname0 == 'mod' and relp:
+        modname0 = relp[-1]
+    # nested `mod <c stem> { ... }` blocks first
+    pos = 0
+    block_moved = False
+    while True:
+        m = re.compile(r'(?m)^(?:pub(?:\([a-z]+\))?\s+)?mod\s+([A-Za-z0-9_]+)\s*\{').search(s, pos)
+        if not m:
+            break
+        pos = m.end()
+        bname = m.group(1)
+        if bname.lower() not in stems_lc:
+            continue
+        ob = s.index('{', m.start())
+        cb = scan_close(s, ob)
+        binner = s[ob + 1:cb]
+        bitems = split_items(binner)
+        res = process(sp, bitems, fpath + '::' + bname, fpath, bname)
+        if res is None:
+            continue
+        keep, back = res
+        block_moved = True
+        newinner = chr(10) + chr(10).join(back) + chr(10) + ''.join((chr(10) + k.strip(chr(10)) + chr(10)) for k in keep if k.strip()) + chr(10)
+        s = s[:ob + 1] + newinner + s[cb:]
+        pos = ob + 1 + len(newinner)
+    if block_moved:
+        for it in reversed(split_items(s)):
+            if it[2] in ('fn', 'const', 'static', 'struct', 'enum', 'type', 'union', 'trait') and it[3]:
+                t = it[4]
+                if not re.match(r'(?s)\s*(?:(?:///[^\n]*|//[^\n]*|#\[[^\]]*\])\s*)*pub', t):
+                    t = re.sub(r'(?m)^(\s*)((?:unsafe\s+|extern\s+"C"\s+)*(?:fn|const|static\s+mut|static|struct|enum|type|union|trait)\s)', lambda m: m.group(1) + 'pub(crate) ' + m.group(2), t, count=1)
+                    s = s[:it[0]] + t + s[it[1]:]
+    cache[sp] = s
+    items = split_items(s)
+    res = process(sp, items, fpath, fparent, modname0)
+    if res is None:
+        continue
+    keep, back = res
+    new_s = ''.join((chr(10) + k.strip(chr(10)) + chr(10)) for k in keep if k.strip()) + chr(10) + chr(10).join(back) + chr(10)
     header = s[:items[0][0]] if items else ''
     cache[sp] = header + new_s
 

@@ -8,6 +8,75 @@
 //! Checked by tests/tu_itclimbersstring.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itkinds14::{sa as sa_itkinds14};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -733,4 +802,21 @@ pub static it_803F76B8: [ItemStateTable; 4] = [
 pub unsafe extern "C" fn itClimbersstring_UnkMotion3_Anim_p(g: *mut HSD_GObj) -> i32 {
     melee_core::ct!("itClimbersstring_UnkMotion3_Anim_p");
     itClimbersstring_UnkMotion3_Anim(g) as i32
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itclimbersstring.c `it_802C248C_joint24`: `attrs->x24_joint`.
+/// # Safety
+/// The special attributes are an `itClimbersStringAttributes`.
+pub unsafe fn it_802c248c_joint24(ip: &Item) -> *mut HSD_Joint {
+    melee_core::ct!("it_802c248c_joint24");
+    sa_itkinds14::<itClimbersStringAttributes>(ip).x24_joint
+}
+
+/// itclimbersstring.c `it_802C248C_joint28`: `attrs->x28_joint`.
+/// # Safety
+/// As `it_802c248c_joint24`.
+pub unsafe fn it_802c248c_joint28(ip: &Item) -> *mut HSD_Joint {
+    melee_core::ct!("it_802c248c_joint28");
+    sa_itkinds14::<itClimbersStringAttributes>(ip).x28_joint
 }

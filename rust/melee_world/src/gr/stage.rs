@@ -1,4 +1,6 @@
+
 #![allow(non_upper_case_globals)]
+
 //! Port of src/melee/gr/stage.c (port round 6): the stage camera / blast-zone getters, the
 //! fixed-camera projection, spawn-point helpers, the StKind -> GrKind map (with the PC m-ex
 //! tail fill) and the selected-stage forwarders, plus `Stage_StageSlotSelect` from
@@ -19,13 +21,18 @@
 //! FMA (`python tools/rust-port/fma_sites.py src/melee/gr/stage.c`): only Stage_80224CAC fuses,
 //! the two `another_vec * t + arg0` lines. lbVector_ApplyEulerRotation is melee_runtime's.
 use crate::mp::lines::GroundColl;
+
 use melee_core::fp::fmadds;
+
 use melee_runtime::lbvector::apply_euler_rotation;
+
 use crate::vec::Vec3;
+
 use melee_types::*;
 
 /// `0.0174532923847F`, stage.c's degrees-to-radians constant.
-const DEG2RAD: f32 = 0.017_453_292_384_7_f32;
+pub(crate) const DEG2RAD: f32 = 0.017_453_292_384_7_f32;
+
 /// `ST_MEX_EXT_MAX`.
 pub const ST_MEX_EXT_MAX: usize = 384;
 
@@ -437,11 +444,6 @@ impl StageWorld {
     }
 }
 
-/// `Stage_80224DC8`
-pub fn stage_80224dc8(arg: i32) -> bool {
-    arg == 0x3b || arg == 0x3f || arg == 0x42 || arg == 0x49 || arg == 0x4c
-}
-
 /// `stage_id_map` initializer (vanilla rows, gr/stage.c), indexed by StKind.
 pub const STAGE_ID_MAP_VANILLA: [GrKind; 286] = [
     Gr_Kind_Unk00, Gr_Kind_Test, Gr_Kind_Izumi, Gr_Kind_PStadium,
@@ -519,12 +521,12 @@ pub const STAGE_ID_MAP_VANILLA: [GrKind; 286] = [
 ];
 
 #[inline]
-fn v3(v: melee_types::Vec) -> Vec3 {
+pub(crate) fn v3(v: melee_types::Vec) -> Vec3 {
     Vec3 { x: v.x, y: v.y, z: v.z }
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[derive(Default)]
@@ -623,3 +625,5 @@ mod tests {
         assert_eq!(w.stage_80225194(), 31);
     }
 }
+
+pub use crate::tu::stage::stage_80224dc8;

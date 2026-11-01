@@ -10,1473 +10,1039 @@ use melee_types::{DynamicsDesc, Ground, HSD_GObj, HSD_JObj, Vec3};
 
 /// src/melee/gr/grbattle.c
 pub mod grbattle {
-    use super::*;
-    /// grBattle_80219D7C (gr/grbattle.c:171)
-    pub extern "C" fn grBattle_80219D7C() -> i32 { 0 }
-    /// grBattle_GObj0_Callback1 (gr/grbattle.c:230)
-    pub extern "C" fn grBattle_GObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_GObj6_Callback1 (gr/grbattle.c:244)
-    pub extern "C" fn grBattle_GObj6_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_GObj5_Callback1 (gr/grbattle.c:264)
-    pub extern "C" fn grBattle_GObj5_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_GObj1_Callback1 (gr/grbattle.c:284)
-    pub extern "C" fn grBattle_GObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_GObj2_Callback1 (gr/grbattle.c:308)
-    pub extern "C" fn grBattle_GObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_GObj4_Callback1 (gr/grbattle.c:322)
-    pub extern "C" fn grBattle_GObj4_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_BG_Callback1 (gr/grbattle.c:354)
-    pub extern "C" fn grBattle_BG_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBattle_OnTouchLine (gr/grbattle.c:428)
-    pub extern "C" fn grBattle_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grBattle_OnCheckShadowRender (gr/grbattle.c:433)
-    pub extern "C" fn grBattle_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grbattle::grBattle_80219D7C;
+pub use crate::tu::grbattle::grBattle_BG_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj0_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj1_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj2_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj4_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj5_Callback1;
+pub use crate::tu::grbattle::grBattle_GObj6_Callback1;
+pub use crate::tu::grbattle::grBattle_OnCheckShadowRender;
+pub use crate::tu::grbattle::grBattle_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grbigblue.c
 pub mod grbigblue {
-    use super::*;
-    /// grBigBlue_801E59F0 (gr/grbigblue.c:284)
-    pub extern "C" fn grBigBlue_801E59F0() -> i32 { 0 }
-    /// grBigBlue_801E5B10 (gr/grbigblue.c:337)
-    pub extern "C" fn grBigBlue_801E5B10(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E6114 (gr/grbigblue.c:375)
-    pub extern "C" fn grBigBlue_801E6114(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E61BC (gr/grbigblue.c:403)
-    pub extern "C" fn grBigBlue_801E61BC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E6288 (gr/grbigblue.c:434)
-    pub extern "C" fn grBigBlue_801E6288(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E6354 (gr/grbigblue.c:463)
-    pub extern "C" fn grBigBlue_801E6354(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E687C (gr/grbigblue.c:581)
-    pub extern "C" fn grBigBlue_801E687C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E6C58 (gr/grbigblue.c:650)
-    pub extern "C" fn grBigBlue_801E6C58(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801E93D0 (gr/grbigblue.c:1534)
-    pub extern "C" fn grBigBlue_801E93D0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801EA054 (gr/grbigblue.c:1848)
-    pub extern "C" fn grBigBlue_801EA054(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlue_801EFC0C (gr/grbigblue.c:4576)
-    pub extern "C" fn grBigBlue_801EFC0C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grbigblue::grBigBlue_801E59F0;
+pub use crate::tu::grbigblue::grBigBlue_801E5B10;
+pub use crate::tu::grbigblue::grBigBlue_801E6114;
+pub use crate::tu::grbigblue::grBigBlue_801E61BC;
+pub use crate::tu::grbigblue::grBigBlue_801E6288;
+pub use crate::tu::grbigblue::grBigBlue_801E6354;
+pub use crate::tu::grbigblue::grBigBlue_801E687C;
+pub use crate::tu::grbigblue::grBigBlue_801E6C58;
+pub use crate::tu::grbigblue::grBigBlue_801E93D0;
+pub use crate::tu::grbigblue::grBigBlue_801EA054;
+pub use crate::tu::grbigblue::grBigBlue_801EFC0C;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grbigblueroute.c
 pub mod grbigblueroute {
-    use super::*;
-    /// grBigBlueRoute_8020B9CC (gr/grbigblueroute.c:214)
-    pub extern "C" fn grBigBlueRoute_8020B9CC() -> i32 { 0 }
-    /// grBigBlueRoute_8020BB00 (gr/grbigblueroute.c:259)
-    pub extern "C" fn grBigBlueRoute_8020BB00(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlueRoute_8020BB58 (gr/grbigblueroute.c:275)
-    pub extern "C" fn grBigBlueRoute_8020BB58(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlueRoute_8020BC24 (gr/grbigblueroute.c:300)
-    pub extern "C" fn grBigBlueRoute_8020BC24(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlueRoute_8020BF30 (gr/grbigblueroute.c:376)
-    pub extern "C" fn grBigBlueRoute_8020BF30(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlueRoute_8020C1D4 (gr/grbigblueroute.c:451)
-    pub extern "C" fn grBigBlueRoute_8020C1D4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grBigBlueRoute_8020DF78 (gr/grbigblueroute.c:1183)
-    pub extern "C" fn grBigBlueRoute_8020DF78(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020B9CC;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020BB00;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020BB58;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020BC24;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020BF30;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020C1D4;
+pub use crate::tu::grbigblueroute::grBigBlueRoute_8020DF78;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grcastle.c
 pub mod grcastle {
-    use super::*;
-    /// grCastle_801CD4C8 (gr/grcastle.c:338)
-    pub extern "C" fn grCastle_801CD4C8() -> i32 { 0 }
-    /// grCastle_801CD600 (gr/grcastle.c:383)
-    pub extern "C" fn grCastle_801CD600(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CD8A0 (gr/grcastle.c:472)
-    pub extern "C" fn grCastle_801CD8A0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CDC3C (gr/grcastle.c:565)
-    pub extern "C" fn grCastle_801CDC3C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CE3A4 (gr/grcastle.c:824)
-    pub extern "C" fn grCastle_801CE3A4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CE858 (gr/grcastle.c:976)
-    pub extern "C" fn grCastle_801CE858(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CE9E0 (gr/grcastle.c:1027)
-    pub extern "C" fn grCastle_801CE9E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CEEFC (gr/grcastle.c:1179)
-    pub extern "C" fn grCastle_801CEEFC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801CF300 (gr/grcastle.c:1298)
-    pub extern "C" fn grCastle_801CF300(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCastle_801D0B04 (gr/grcastle.c:1897)
-    pub extern "C" fn grCastle_801D0B04(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grcastle::grCastle_801CD4C8_fp as grCastle_801CD4C8;
+pub use crate::tu::grcastle::grCastle_801CD600_fp as grCastle_801CD600;
+pub use crate::tu::grcastle::grCastle_801CD8A0_fp as grCastle_801CD8A0;
+pub use crate::tu::grcastle::grCastle_801CDC3C_fp as grCastle_801CDC3C;
+pub use crate::tu::grcastle::grCastle_801CE3A4_fp as grCastle_801CE3A4;
+pub use crate::tu::grcastle::grCastle_801CE858_fp as grCastle_801CE858;
+pub use crate::tu::grcastle::grCastle_801CE9E0_fp as grCastle_801CE9E0;
+pub use crate::tu::grcastle::grCastle_801CEEFC_fp as grCastle_801CEEFC;
+pub use crate::tu::grcastle::grCastle_801CF300_fp as grCastle_801CF300;
+pub use crate::tu::grcastle::grCastle_801D0B04_fp as grCastle_801D0B04;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grcorneria.c
 pub mod grcorneria {
-    use super::*;
-    /// grCorneria_801DD52C (gr/grcorneria.c:553)
-    pub extern "C" fn grCorneria_801DD52C() -> i32 { 0 }
-    /// grCorneria_801DD64C (gr/grcorneria.c:599)
-    pub extern "C" fn grCorneria_801DD64C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DD9A0 (gr/grcorneria.c:703)
-    pub extern "C" fn grCorneria_801DD9A0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DDCE8 (gr/grcorneria.c:774)
-    pub extern "C" fn grCorneria_801DDCE8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DE560 (gr/grcorneria.c:1014)
-    pub extern "C" fn grCorneria_801DE560(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DEC00 (gr/grcorneria.c:1098)
-    pub extern "C" fn grCorneria_801DEC00(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DFBC4 (gr/grcorneria.c:1504)
-    pub extern "C" fn grCorneria_801DFBC4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DFC1C (gr/grcorneria.c:1521)
-    pub extern "C" fn grCorneria_801DFC1C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DFC90 (gr/grcorneria.c:1541)
-    pub extern "C" fn grCorneria_801DFC90(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801DFF18 (gr/grcorneria.c:1589)
-    pub extern "C" fn grCorneria_801DFF18(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E01A0 (gr/grcorneria.c:1636)
-    pub extern "C" fn grCorneria_801E01A0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E0D28 (gr/grcorneria.c:1833)
-    pub extern "C" fn grCorneria_801E0D28(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E0E0C (gr/grcorneria.c:1855)
-    pub extern "C" fn grCorneria_801E0E0C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E0F64 (gr/grcorneria.c:1984)
-    pub extern "C" fn grCorneria_801E0F64(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E1058 (gr/grcorneria.c:2003)
-    pub extern "C" fn grCorneria_801E1058(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grCorneria_801E2EE4 (gr/grcorneria.c:2796)
-    pub extern "C" fn grCorneria_801E2EE4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grcorneria::grCorneria_801DD52C_fp as grCorneria_801DD52C;
+pub use crate::tu::grcorneria::grCorneria_801DD64C_fp as grCorneria_801DD64C;
+pub use crate::tu::grcorneria::grCorneria_801DD9A0_fp as grCorneria_801DD9A0;
+pub use crate::tu::grcorneria::grCorneria_801DDCE8_fp as grCorneria_801DDCE8;
+pub use crate::tu::grcorneria::grCorneria_801DE560_fp as grCorneria_801DE560;
+pub use crate::tu::grcorneria::grCorneria_801DEC00_fp as grCorneria_801DEC00;
+pub use crate::tu::grcorneria::grCorneria_801DFBC4_fp as grCorneria_801DFBC4;
+pub use crate::tu::grcorneria::grCorneria_801DFC1C_fp as grCorneria_801DFC1C;
+pub use crate::tu::grcorneria::grCorneria_801DFC90_fp as grCorneria_801DFC90;
+pub use crate::tu::grcorneria::grCorneria_801DFF18_fp as grCorneria_801DFF18;
+pub use crate::tu::grcorneria::grCorneria_801E01A0_fp as grCorneria_801E01A0;
+pub use crate::tu::grcorneria::grCorneria_801E0D28_fp as grCorneria_801E0D28;
+pub use crate::tu::grcorneria::grCorneria_801E0E0C_fp as grCorneria_801E0E0C;
+pub use crate::tu::grcorneria::grCorneria_801E0F64_fp as grCorneria_801E0F64;
+pub use crate::tu::grcorneria::grCorneria_801E1058_fp as grCorneria_801E1058;
+pub use crate::tu::grcorneria::grCorneria_801E2EE4_fp as grCorneria_801E2EE4;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure1.c
 pub mod grfigure1 {
-    use super::*;
-    /// grFigure1_8020E078 (gr/grfigure1.c:86)
-    pub extern "C" fn grFigure1_8020E078() -> i32 { 0 }
-    /// grFigure1_8020E194 (gr/grfigure1.c:112)
-    pub extern "C" fn grFigure1_8020E194(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure1_8020E1D0 (gr/grfigure1.c:129)
-    pub extern "C" fn grFigure1_8020E1D0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure1_8020E250 (gr/grfigure1.c:147)
-    pub extern "C" fn grFigure1_8020E250(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure1_OnTouchLine (gr/grfigure1.c:156)
-    pub extern "C" fn grFigure1_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grFigure1_OnCheckShadowRender (gr/grfigure1.c:161)
-    pub extern "C" fn grFigure1_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grfigure1::grFigure1_8020E078;
+pub use crate::tu::grfigure1::grFigure1_8020E194;
+pub use crate::tu::grfigure1::grFigure1_8020E1D0;
+pub use crate::tu::grfigure1::grFigure1_8020E250;
+pub use crate::tu::grfigure1::grFigure1_OnCheckShadowRender;
+pub use crate::tu::grfigure1::grFigure1_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure2.c
 pub mod grfigure2 {
-    use super::*;
-    /// grFigure2_8020E30C (gr/grfigure2.c:81)
-    pub extern "C" fn grFigure2_8020E30C() -> i32 { 0 }
-    /// grFigure2_8020E428 (gr/grfigure2.c:106)
-    pub extern "C" fn grFigure2_8020E428(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure2_8020E464 (gr/grfigure2.c:121)
-    pub extern "C" fn grFigure2_8020E464(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure2_8020E4E4 (gr/grfigure2.c:139)
-    pub extern "C" fn grFigure2_8020E4E4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure2_8020E4F4 (gr/grfigure2.c:148)
-    pub extern "C" fn grFigure2_8020E4F4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grFigure2_8020E4FC (gr/grfigure2.c:153)
-    pub extern "C" fn grFigure2_8020E4FC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grfigure2::grFigure2_8020E30C;
+pub use crate::tu::grfigure2::grFigure2_8020E428;
+pub use crate::tu::grfigure2::grFigure2_8020E464;
+pub use crate::tu::grfigure2::grFigure2_8020E4E4;
+pub use crate::tu::grfigure2::grFigure2_8020E4F4;
+pub use crate::tu::grfigure2::grFigure2_8020E4FC;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure3.c
 pub mod grfigure3 {
-    use super::*;
-    /// grFigure3_8020E5A0 (gr/grfigure3.c:83)
-    pub extern "C" fn grFigure3_8020E5A0() -> i32 { 0 }
-    /// grFigure3_8020E6BC (gr/grfigure3.c:109)
-    pub extern "C" fn grFigure3_8020E6BC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure3_8020E6F8 (gr/grfigure3.c:124)
-    pub extern "C" fn grFigure3_8020E6F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure3_8020E778 (gr/grfigure3.c:142)
-    pub extern "C" fn grFigure3_8020E778(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigure3_8020E788 (gr/grfigure3.c:151)
-    pub extern "C" fn grFigure3_8020E788(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grFigure3_8020E790 (gr/grfigure3.c:156)
-    pub extern "C" fn grFigure3_8020E790(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grfigure3::grFigure3_8020E5A0;
+pub use crate::tu::grfigure3::grFigure3_8020E6BC;
+pub use crate::tu::grfigure3::grFigure3_8020E6F8;
+pub use crate::tu::grfigure3::grFigure3_8020E778;
+pub use crate::tu::grfigure3::grFigure3_8020E788;
+pub use crate::tu::grfigure3::grFigure3_8020E790;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigureget.c
 pub mod grfigureget {
-    use super::*;
-    /// grFigureGet_802195C4 (gr/grfigureget.c:118)
-    pub extern "C" fn grFigureGet_802195C4() -> i32 { 0 }
-    /// grFigureGet_802196E0 (gr/grfigureget.c:144)
-    pub extern "C" fn grFigureGet_802196E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigureGet_80219890 (gr/grfigureget.c:208)
-    pub extern "C" fn grFigureGet_80219890(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFigureGet_OnTouchLine (gr/grfigureget.c:350)
-    pub extern "C" fn grFigureGet_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grFigureGet_OnCheckShadowRender (gr/grfigureget.c:355)
-    pub extern "C" fn grFigureGet_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grfigureget::grFigureGet_802195C4;
+pub use crate::tu::grfigureget::grFigureGet_802196E0;
+pub use crate::tu::grfigureget::grFigureGet_80219890;
+pub use crate::tu::grfigureget::grFigureGet_OnCheckShadowRender;
+pub use crate::tu::grfigureget::grFigureGet_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grflatzone.c
 pub mod grflatzone {
-    use super::*;
-    /// grFlatzone_80216F40 (gr/grflatzone.c:153)
-    pub extern "C" fn grFlatzone_80216F40() -> i32 { 0 }
-    /// grFlatzone_8021705C (gr/grflatzone.c:181)
-    pub extern "C" fn grFlatzone_8021705C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_802171CC (gr/grflatzone.c:222)
-    pub extern "C" fn grFlatzone_802171CC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_80217430 (gr/grflatzone.c:293)
-    pub extern "C" fn grFlatzone_80217430(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_802174E4 (gr/grflatzone.c:324)
-    pub extern "C" fn grFlatzone_802174E4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_802176B4 (gr/grflatzone.c:390)
-    pub extern "C" fn grFlatzone_802176B4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_80217D28 (gr/grflatzone.c:560)
-    pub extern "C" fn grFlatzone_80217D28(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_80217DFC (gr/grflatzone.c:594)
-    pub extern "C" fn grFlatzone_80217DFC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_80217E80 (gr/grflatzone.c:608)
-    pub extern "C" fn grFlatzone_80217E80(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_80217EE8 (gr/grflatzone.c:627)
-    pub extern "C" fn grFlatzone_80217EE8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFlatzone_802182B4 (gr/grflatzone.c:768)
-    pub extern "C" fn grFlatzone_802182B4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grFlatzone_802182BC (gr/grflatzone.c:773)
-    pub extern "C" fn grFlatzone_802182BC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grflatzone::grFlatzone_80216F40;
+pub use crate::tu::grflatzone::grFlatzone_8021705C;
+pub use crate::tu::grflatzone::grFlatzone_802171CC;
+pub use crate::tu::grflatzone::grFlatzone_80217430;
+pub use crate::tu::grflatzone::grFlatzone_802174E4;
+pub use crate::tu::grflatzone::grFlatzone_802176B4;
+pub use crate::tu::grflatzone::grFlatzone_80217D28;
+pub use crate::tu::grflatzone::grFlatzone_80217DFC;
+pub use crate::tu::grflatzone::grFlatzone_80217E80;
+pub use crate::tu::grflatzone::grFlatzone_80217EE8;
+pub use crate::tu::grflatzone::grFlatzone_802182B4;
+pub use crate::tu::grflatzone::grFlatzone_802182BC;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfourside.c
 pub mod grfourside {
-    use super::*;
-    /// grFourside_801F2DC8 (gr/grfourside.c:159)
-    pub extern "C" fn grFourside_801F2DC8() -> i32 { 0 }
-    /// grFourside_801F2EE8 (gr/grfourside.c:186)
-    pub extern "C" fn grFourside_801F2EE8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F2F24 (gr/grfourside.c:200)
-    pub extern "C" fn grFourside_801F2F24(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F3070 (gr/grfourside.c:233)
-    pub extern "C" fn grFourside_801F3070(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F3144 (gr/grfourside.c:275)
-    pub extern "C" fn grFourside_801F3144(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F326C (gr/grfourside.c:305)
-    pub extern "C" fn grFourside_801F326C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F388C (gr/grfourside.c:509)
-    pub extern "C" fn grFourside_801F388C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F3CC0 (gr/grfourside.c:667)
-    pub extern "C" fn grFourside_801F3CC0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grFourside_801F41E0 (gr/grfourside.c:796)
-    pub extern "C" fn grFourside_801F41E0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grfourside::grFourside_801F2DC8;
+pub use crate::tu::grfourside::grFourside_801F2EE8;
+pub use crate::tu::grfourside::grFourside_801F2F24;
+pub use crate::tu::grfourside::grFourside_801F3070;
+pub use crate::tu::grfourside::grFourside_801F3144;
+pub use crate::tu::grfourside::grFourside_801F326C;
+pub use crate::tu::grfourside::grFourside_801F388C;
+pub use crate::tu::grfourside::grFourside_801F3CC0;
+pub use crate::tu::grfourside::grFourside_801F41E0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgarden.c
 pub mod grgarden {
-    use super::*;
-    /// grGarden_80202C70 (gr/grgarden.c:105)
-    pub extern "C" fn grGarden_80202C70() -> i32 { 0 }
-    /// grGarden_80202D8C (gr/grgarden.c:131)
-    pub extern "C" fn grGarden_80202D8C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80202E40 (gr/grgarden.c:156)
-    pub extern "C" fn grGarden_80202E40(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80202F34 (gr/grgarden.c:180)
-    pub extern "C" fn grGarden_80202F34(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80202F94 (gr/grgarden.c:198)
-    pub extern "C" fn grGarden_80202F94(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80202FF4 (gr/grgarden.c:216)
-    pub extern "C" fn grGarden_80202FF4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80203090 (gr/grgarden.c:239)
-    pub extern "C" fn grGarden_80203090(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_80203248 (gr/grgarden.c:296)
-    pub extern "C" fn grGarden_80203248(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGarden_802035C8 (gr/grgarden.c:397)
-    pub extern "C" fn grGarden_802035C8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grgarden::grGarden_80202C70;
+pub use crate::tu::grgarden::grGarden_80202D8C;
+pub use crate::tu::grgarden::grGarden_80202E40;
+pub use crate::tu::grgarden::grGarden_80202F34;
+pub use crate::tu::grgarden::grGarden_80202F94;
+pub use crate::tu::grgarden::grGarden_80202FF4;
+pub use crate::tu::grgarden::grGarden_80203090;
+pub use crate::tu::grgarden::grGarden_80203248;
+pub use crate::tu::grgarden::grGarden_802035C8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgreatbay.c
 pub mod grgreatbay {
-    use super::*;
-    /// grGreatBay_801F423C (gr/grgreatbay.c:198)
-    pub extern "C" fn grGreatBay_801F423C(a0: i32) {  }
-    /// grGreatBay_801F42F8 (gr/grgreatbay.c:226)
-    pub extern "C" fn grGreatBay_801F42F8() -> i32 { 0 }
-    /// grGreatBay_801F4430 (gr/grgreatbay.c:268)
-    pub extern "C" fn grGreatBay_801F4430(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F4438 (gr/grgreatbay.c:273)
-    pub extern "C" fn grGreatBay_801F4438(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F443C (gr/grgreatbay.c:278)
-    pub extern "C" fn grGreatBay_801F443C(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F44A0 (gr/grgreatbay.c:291)
-    pub extern "C" fn grGreatBay_801F44A0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F44A8 (gr/grgreatbay.c:296)
-    pub extern "C" fn grGreatBay_801F44A8(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F44AC (gr/grgreatbay.c:301)
-    pub extern "C" fn grGreatBay_801F44AC(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F4510 (gr/grgreatbay.c:314)
-    pub extern "C" fn grGreatBay_801F4510(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F4518 (gr/grgreatbay.c:319)
-    pub extern "C" fn grGreatBay_801F4518(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F451C (gr/grgreatbay.c:324)
-    pub extern "C" fn grGreatBay_801F451C(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F4650 (gr/grgreatbay.c:352)
-    pub extern "C" fn grGreatBay_801F4650(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F4690 (gr/grgreatbay.c:364)
-    pub extern "C" fn grGreatBay_801F4690(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F4994 (gr/grgreatbay.c:406)
-    pub extern "C" fn grGreatBay_801F4994(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F545C (gr/grgreatbay.c:592)
-    pub extern "C" fn grGreatBay_801F545C(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F55F8 (gr/grgreatbay.c:627)
-    pub extern "C" fn grGreatBay_801F55F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F5988 (gr/grgreatbay.c:740)
-    pub extern "C" fn grGreatBay_801F5988(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F59F0 (gr/grgreatbay.c:754)
-    pub extern "C" fn grGreatBay_801F59F0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F59F8 (gr/grgreatbay.c:759)
-    pub extern "C" fn grGreatBay_801F59F8(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F59FC (gr/grgreatbay.c:764)
-    pub extern "C" fn grGreatBay_801F59FC(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F5AF0 (gr/grgreatbay.c:788)
-    pub extern "C" fn grGreatBay_801F5AF0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreatBay_801F5D48 (gr/grgreatbay.c:849)
-    pub extern "C" fn grGreatBay_801F5D48(a0: *mut HSD_GObj) {  }
-    /// grGreatBay_801F680C (gr/grgreatbay.c:1193)
-    pub extern "C" fn grGreatBay_801F680C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grgreatbay::grGreatBay_801F423C;
+pub use crate::tu::grgreatbay::grGreatBay_801F42F8;
+pub use crate::tu::grgreatbay::grGreatBay_801F4430;
+pub use crate::tu::grgreatbay::grGreatBay_801F4438;
+pub use crate::tu::grgreatbay::grGreatBay_801F443C;
+pub use crate::tu::grgreatbay::grGreatBay_801F44A0;
+pub use crate::tu::grgreatbay::grGreatBay_801F44A8;
+pub use crate::tu::grgreatbay::grGreatBay_801F44AC;
+pub use crate::tu::grgreatbay::grGreatBay_801F4510;
+pub use crate::tu::grgreatbay::grGreatBay_801F4518;
+pub use crate::tu::grgreatbay::grGreatBay_801F451C;
+pub use crate::tu::grgreatbay::grGreatBay_801F4650;
+pub use crate::tu::grgreatbay::grGreatBay_801F4690;
+pub use crate::tu::grgreatbay::grGreatBay_801F4994;
+pub use crate::tu::grgreatbay::grGreatBay_801F545C;
+pub use crate::tu::grgreatbay::grGreatBay_801F55F8;
+pub use crate::tu::grgreatbay::grGreatBay_801F5988;
+pub use crate::tu::grgreatbay::grGreatBay_801F59F0;
+pub use crate::tu::grgreatbay::grGreatBay_801F59F8;
+pub use crate::tu::grgreatbay::grGreatBay_801F59FC;
+pub use crate::tu::grgreatbay::grGreatBay_801F5AF0;
+pub use crate::tu::grgreatbay::grGreatBay_801F5D48;
+pub use crate::tu::grgreatbay::grGreatBay_801F680C;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgreens.c
 pub mod grgreens {
-    use super::*;
-    /// grGreens_8021351C (gr/grgreens.c:225)
-    pub extern "C" fn grGreens_8021351C() -> i32 { 0 }
-    /// grGreens_802138AC (gr/grgreens.c:292)
-    pub extern "C" fn grGreens_802138AC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_80213900 (gr/grgreens.c:308)
-    pub extern "C" fn grGreens_80213900(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_8021393C (gr/grgreens.c:322)
-    pub extern "C" fn grGreens_8021393C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_80213978 (gr/grgreens.c:336)
-    pub extern "C" fn grGreens_80213978(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_802139B4 (gr/grgreens.c:351)
-    pub extern "C" fn grGreens_802139B4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_80213AAC (gr/grgreens.c:376)
-    pub extern "C" fn grGreens_80213AAC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grGreens_80214654 (gr/grgreens.c:719)
-    pub extern "C" fn grGreens_80214654(a0: *mut HSD_GObj) {  }
-    /// grGreens_80214794 (gr/grgreens.c:754)
-    pub extern "C" fn grGreens_80214794(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// fn_802159B4 (gr/grgreens.c:1081)
-    pub extern "C" fn fn_802159B4(a0: *mut HSD_GObj, a1: *mut Ground) {  }
-    /// fn_80215D50 (gr/grgreens.c:1159)
-    pub extern "C" fn fn_80215D50(a0: *mut HSD_GObj, a1: *mut Ground, a2: *mut HSD_GObj) {  }
-    /// grGreens_80216E64 (gr/grgreens.c:1562)
-    pub extern "C" fn grGreens_80216E64(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grGreens_80216E6C (gr/grgreens.c:1567)
-    pub extern "C" fn grGreens_80216E6C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grgreens::fn_802159B4;
+pub use crate::tu::grgreens::fn_80215D50;
+pub use crate::tu::grgreens::grGreens_8021351C;
+pub use crate::tu::grgreens::grGreens_802138AC;
+pub use crate::tu::grgreens::grGreens_80213900;
+pub use crate::tu::grgreens::grGreens_8021393C;
+pub use crate::tu::grgreens::grGreens_80213978;
+pub use crate::tu::grgreens::grGreens_802139B4;
+pub use crate::tu::grgreens::grGreens_80213AAC;
+pub use crate::tu::grgreens::grGreens_80214654;
+pub use crate::tu::grgreens::grGreens_80214794;
+pub use crate::tu::grgreens::grGreens_80216E64;
+pub use crate::tu::grgreens::grGreens_80216E6C;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grheal.c
 pub mod grheal {
-    use super::*;
-    /// grHeal_8021EFE4 (gr/grheal.c:162)
-    pub extern "C" fn grHeal_8021EFE4() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/grheal.c:209)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/grheal.c:277)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/grheal.c:339)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj3_Callback1 (gr/grheal.c:357)
-    pub extern "C" fn stageGObj3_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj4_Callback1 (gr/grheal.c:384)
-    pub extern "C" fn stageGObj4_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHeal_8021F830 (gr/grheal.c:432)
-    pub extern "C" fn grHeal_8021F830(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grHeal_8021F838 (gr/grheal.c:437)
-    pub extern "C" fn grHeal_8021F838(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grheal::grHeal_8021EFE4;
+pub use crate::tu::grheal::grHeal_8021F830;
+pub use crate::tu::grheal::grHeal_8021F838;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp as stageGObj2_Callback1;
+pub use crate::tu::grheal::stageGObj3_Callback1_fp as stageGObj3_Callback1;
+pub use crate::tu::grheal::stageGObj4_Callback1_fp as stageGObj4_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grhomerun.c
 pub mod grhomerun {
-    use super::*;
-    /// grHomeRun_8021C824 (gr/grhomerun.c:118)
-    pub extern "C" fn grHomeRun_8021C824() -> i32 { 0 }
-    /// grHomeRun_8021CB10 (gr/grhomerun.c:164)
-    pub extern "C" fn grHomeRun_8021CB10(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021D678 (gr/grhomerun.c:297)
-    pub extern "C" fn grHomeRun_8021D678(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021DEE0 (gr/grhomerun.c:460)
-    pub extern "C" fn grHomeRun_8021DEE0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021DF48 (gr/grhomerun.c:477)
-    pub extern "C" fn grHomeRun_8021DF48(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E064 (gr/grhomerun.c:524)
-    pub extern "C" fn grHomeRun_8021E064(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E0CC (gr/grhomerun.c:541)
-    pub extern "C" fn grHomeRun_8021E0CC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E1E8 (gr/grhomerun.c:588)
-    pub extern "C" fn grHomeRun_8021E1E8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E250 (gr/grhomerun.c:605)
-    pub extern "C" fn grHomeRun_8021E250(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E36C (gr/grhomerun.c:652)
-    pub extern "C" fn grHomeRun_8021E36C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E3D4 (gr/grhomerun.c:669)
-    pub extern "C" fn grHomeRun_8021E3D4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021E4F0 (gr/grhomerun.c:716)
-    pub extern "C" fn grHomeRun_8021E4F0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grHomeRun_8021EEB4 (gr/grhomerun.c:961)
-    pub extern "C" fn grHomeRun_8021EEB4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grhomerun::grHomeRun_8021C824;
+pub use crate::tu::grhomerun::grHomeRun_8021CB10;
+pub use crate::tu::grhomerun::grHomeRun_8021D678;
+pub use crate::tu::grhomerun::grHomeRun_8021DEE0;
+pub use crate::tu::grhomerun::grHomeRun_8021DF48;
+pub use crate::tu::grhomerun::grHomeRun_8021E064;
+pub use crate::tu::grhomerun::grHomeRun_8021E0CC;
+pub use crate::tu::grhomerun::grHomeRun_8021E1E8;
+pub use crate::tu::grhomerun::grHomeRun_8021E250;
+pub use crate::tu::grhomerun::grHomeRun_8021E36C;
+pub use crate::tu::grhomerun::grHomeRun_8021E3D4;
+pub use crate::tu::grhomerun::grHomeRun_8021E4F0;
+pub use crate::tu::grhomerun::grHomeRun_8021EEB4;
+
+use super::*;
+
 }
 
 /// src/melee/gr/gricemt.c
 pub mod gricemt {
-    use super::*;
-    /// grIceMt_801F71E0 (gr/gricemt.c:590)
-    pub extern "C" fn grIceMt_801F71E0() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/gricemt.c:653)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj9_Callback1 (gr/gricemt.c:701)
-    pub extern "C" fn stageGObj9_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/gricemt.c:922)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/gricemt.c:981)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj3_Callback1 (gr/gricemt.c:1037)
-    pub extern "C" fn stageGObj3_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj4_Callback1 (gr/gricemt.c:1101)
-    pub extern "C" fn stageGObj4_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj5_Callback1 (gr/gricemt.c:1154)
-    pub extern "C" fn stageGObj5_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj6_Callback1 (gr/gricemt.c:1209)
-    pub extern "C" fn stageGObj6_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj8_Callback1 (gr/gricemt.c:1249)
-    pub extern "C" fn stageGObj8_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIceMt_801FA8F8 (gr/gricemt.c:2072)
-    pub extern "C" fn grIceMt_801FA8F8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grIceMt_801FA900 (gr/gricemt.c:2077)
-    pub extern "C" fn grIceMt_801FA900(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::gricemt::grIceMt_801F71E0;
+pub use crate::tu::gricemt::grIceMt_801FA8F8;
+pub use crate::tu::gricemt::grIceMt_801FA900;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp2 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp2 as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp2 as stageGObj2_Callback1;
+pub use crate::tu::grheal::stageGObj3_Callback1_fp2 as stageGObj3_Callback1;
+pub use crate::tu::grheal::stageGObj4_Callback1_fp2 as stageGObj4_Callback1;
+pub use crate::tu::gricemt::stageGObj5_Callback1;
+pub use crate::tu::gricemt::stageGObj6_Callback1;
+pub use crate::tu::gricemt::stageGObj8_Callback1;
+pub use crate::tu::gricemt::stageGObj9_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grinishie1.c
 pub mod grinishie1 {
-    use super::*;
-    /// grInishie1_801FA9AC (gr/grinishie1.c:251)
-    pub extern "C" fn grInishie1_801FA9AC() -> i32 { 0 }
-    /// grInishie1_801FAACC (gr/grinishie1.c:296)
-    pub extern "C" fn grInishie1_801FAACC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie1_801FAB60 (gr/grinishie1.c:316)
-    pub extern "C" fn grInishie1_801FAB60(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie1_801FABF4 (gr/grinishie1.c:339)
-    pub extern "C" fn grInishie1_801FABF4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie1_801FAC50 (gr/grinishie1.c:357)
-    pub extern "C" fn grInishie1_801FAC50(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie1_801FCBB0 (gr/grinishie1.c:1183)
-    pub extern "C" fn grInishie1_801FCBB0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grInishie1_801FCBB8 (gr/grinishie1.c:1188)
-    pub extern "C" fn grInishie1_801FCBB8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grinishie1::grInishie1_801FA9AC;
+pub use crate::tu::grinishie1::grInishie1_801FAACC;
+pub use crate::tu::grinishie1::grInishie1_801FAB60;
+pub use crate::tu::grinishie1::grInishie1_801FABF4;
+pub use crate::tu::grinishie1::grInishie1_801FAC50;
+pub use crate::tu::grinishie1::grInishie1_801FCBB0;
+pub use crate::tu::grinishie1::grInishie1_801FCBB8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grinishie2.c
 pub mod grinishie2 {
-    use super::*;
-    /// grInishie2_801FCCD4 (gr/grinishie2.c:225)
-    pub extern "C" fn grInishie2_801FCCD4() -> i32 { 0 }
-    /// grInishie2_801FCDF4 (gr/grinishie2.c:268)
-    pub extern "C" fn grInishie2_801FCDF4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie2_801FCF24 (gr/grinishie2.c:296)
-    pub extern "C" fn grInishie2_801FCF24(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie2_801FD21C (gr/grinishie2.c:402)
-    pub extern "C" fn grInishie2_801FD21C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie2_801FD64C (gr/grinishie2.c:537)
-    pub extern "C" fn grInishie2_801FD64C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie2_801FDED0 (gr/grinishie2.c:730)
-    pub extern "C" fn grInishie2_801FDED0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grInishie2_801FDFE8 (gr/grinishie2.c:782)
-    pub extern "C" fn grInishie2_801FDFE8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grInishie2_801FDFF0 (gr/grinishie2.c:787)
-    pub extern "C" fn grInishie2_801FDFF0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grinishie2::grInishie2_801FCCD4;
+pub use crate::tu::grinishie2::grInishie2_801FCDF4;
+pub use crate::tu::grinishie2::grInishie2_801FCF24;
+pub use crate::tu::grinishie2::grInishie2_801FD21C;
+pub use crate::tu::grinishie2::grInishie2_801FD64C;
+pub use crate::tu::grinishie2::grInishie2_801FDED0;
+pub use crate::tu::grinishie2::grInishie2_801FDFE8;
+pub use crate::tu::grinishie2::grInishie2_801FDFF0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grizumi.c
 pub mod grizumi {
-    use super::*;
-    /// grIzumi_801CBB84 (gr/grizumi.c:186)
-    pub extern "C" fn grIzumi_801CBB84(a0: i32) {  }
-    /// grIzumi_801CBCE0 (gr/grizumi.c:231)
-    pub extern "C" fn grIzumi_801CBCE0() -> i32 { 0 }
-    /// grIzumi_801CBE00 (gr/grizumi.c:273)
-    pub extern "C" fn grIzumi_801CBE00(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CBE08 (gr/grizumi.c:278)
-    pub extern "C" fn grIzumi_801CBE08(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CBE0C (gr/grizumi.c:283)
-    pub extern "C" fn grIzumi_801CBE0C(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CBE54 (gr/grizumi.c:295)
-    pub extern "C" fn grIzumi_801CBE54(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CBE5C (gr/grizumi.c:300)
-    pub extern "C" fn grIzumi_801CBE5C(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CBE60 (gr/grizumi.c:305)
-    pub extern "C" fn grIzumi_801CBE60(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CC0CC (gr/grizumi.c:395)
-    pub extern "C" fn grIzumi_801CC0CC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CC338 (gr/grizumi.c:440)
-    pub extern "C" fn grIzumi_801CC338(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CC350 (gr/grizumi.c:452)
-    pub extern "C" fn grIzumi_801CC350(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CCA10 (gr/grizumi.c:588)
-    pub extern "C" fn grIzumi_801CCA10(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CCA54 (gr/grizumi.c:601)
-    pub extern "C" fn grIzumi_801CCA54(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CCA5C (gr/grizumi.c:606)
-    pub extern "C" fn grIzumi_801CCA5C(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CCA60 (gr/grizumi.c:611)
-    pub extern "C" fn grIzumi_801CCA60(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CCB08 (gr/grizumi.c:630)
-    pub extern "C" fn grIzumi_801CCB08(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grIzumi_801CCB10 (gr/grizumi.c:635)
-    pub extern "C" fn grIzumi_801CCB10(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CCB14 (gr/grizumi.c:640)
-    pub extern "C" fn grIzumi_801CCB14(a0: *mut HSD_GObj) {  }
-    /// grIzumi_801CD278 (gr/grizumi.c:906)
-    pub extern "C" fn grIzumi_801CD278(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grizumi::grIzumi_801CBB84_fp as grIzumi_801CBB84;
+pub use crate::tu::grizumi::grIzumi_801CBCE0;
+pub use crate::tu::grizumi::grIzumi_801CBE00;
+pub use crate::tu::grizumi::grIzumi_801CBE08;
+pub use crate::tu::grizumi::grIzumi_801CBE0C;
+pub use crate::tu::grizumi::grIzumi_801CBE54;
+pub use crate::tu::grizumi::grIzumi_801CBE5C;
+pub use crate::tu::grizumi::grIzumi_801CBE60;
+pub use crate::tu::grizumi::grIzumi_801CC0CC;
+pub use crate::tu::grizumi::grIzumi_801CC338;
+pub use crate::tu::grizumi::grIzumi_801CC350;
+pub use crate::tu::grizumi::grIzumi_801CCA10;
+pub use crate::tu::grizumi::grIzumi_801CCA54;
+pub use crate::tu::grizumi::grIzumi_801CCA5C;
+pub use crate::tu::grizumi::grIzumi_801CCA60;
+pub use crate::tu::grizumi::grIzumi_801CCB08;
+pub use crate::tu::grizumi::grIzumi_801CCB10;
+pub use crate::tu::grizumi::grIzumi_801CCB14;
+pub use crate::tu::grizumi::grIzumi_801CD278;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grkinokoroute.c
 pub mod grkinokoroute {
-    use super::*;
-    /// grKinokoRoute_80207544 (gr/grkinokoroute.c:145)
-    pub extern "C" fn grKinokoRoute_80207544() -> i32 { 0 }
-    /// grKinokoRoute_802078E8 (gr/grkinokoroute.c:237)
-    pub extern "C" fn grKinokoRoute_802078E8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKinokoRoute_80207ACC (gr/grkinokoroute.c:291)
-    pub extern "C" fn grKinokoRoute_80207ACC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKinokoRoute_80207B20 (gr/grkinokoroute.c:307)
-    pub extern "C" fn grKinokoRoute_80207B20(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKinokoRoute_80207C80 (gr/grkinokoroute.c:343)
-    pub extern "C" fn grKinokoRoute_80207C80(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKinokoRoute_80208754 (gr/grkinokoroute.c:646)
-    pub extern "C" fn grKinokoRoute_80208754(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grkinokoroute::grKinokoRoute_80207544;
+pub use crate::tu::grkinokoroute::grKinokoRoute_802078E8;
+pub use crate::tu::grkinokoroute::grKinokoRoute_80207ACC;
+pub use crate::tu::grkinokoroute::grKinokoRoute_80207B20;
+pub use crate::tu::grkinokoroute::grKinokoRoute_80207C80;
+pub use crate::tu::grkinokoroute::grKinokoRoute_80208754;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grkongo.c
 pub mod grkongo {
-    use super::*;
-    /// grKongo_801D5338 (gr/grkongo.c:180)
-    pub extern "C" fn grKongo_801D5338() -> i32 { 0 }
-    /// grKongo_801D5574 (gr/grkongo.c:252)
-    pub extern "C" fn grKongo_801D5574(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D55D4 (gr/grkongo.c:266)
-    pub extern "C" fn grKongo_801D55D4(a0: *mut HSD_GObj) {  }
-    /// grKongo_801D5774 (gr/grkongo.c:301)
-    pub extern "C" fn grKongo_801D5774(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D5FD4 (gr/grkongo.c:503)
-    pub extern "C" fn grKongo_801D5FD4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D6028 (gr/grkongo.c:521)
-    pub extern "C" fn grKongo_801D6028(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D6064 (gr/grkongo.c:536)
-    pub extern "C" fn grKongo_801D6064(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D6190 (gr/grkongo.c:568)
-    pub extern "C" fn grKongo_801D6190(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D6378 (gr/grkongo.c:626)
-    pub extern "C" fn grKongo_801D6378(a0: *mut HSD_GObj) {  }
-    /// grKongo_801D64B4 (gr/grkongo.c:686)
-    pub extern "C" fn grKongo_801D64B4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D6518 (gr/grkongo.c:700)
-    pub extern "C" fn grKongo_801D6518(a0: *mut HSD_GObj) {  }
-    /// grKongo_801D6660 (gr/grkongo.c:739)
-    pub extern "C" fn grKongo_801D6660(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKongo_801D8444 (gr/grkongo.c:1508)
-    pub extern "C" fn grKongo_801D8444(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grkongo::grKongo_801D5338;
+pub use crate::tu::grkongo::grKongo_801D5574;
+pub use crate::tu::grkongo::grKongo_801D55D4;
+pub use crate::tu::grkongo::grKongo_801D5774;
+pub use crate::tu::grkongo::grKongo_801D5FD4;
+pub use crate::tu::grkongo::grKongo_801D6028;
+pub use crate::tu::grkongo::grKongo_801D6064;
+pub use crate::tu::grkongo::grKongo_801D6190;
+pub use crate::tu::grkongo::grKongo_801D6378;
+pub use crate::tu::grkongo::grKongo_801D64B4;
+pub use crate::tu::grkongo::grKongo_801D6518;
+pub use crate::tu::grkongo::grKongo_801D6660;
+pub use crate::tu::grkongo::grKongo_801D8444;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grkraid.c
 pub mod grkraid {
-    use super::*;
-    /// grKraid_OnDemoInit (gr/grkraid.c:60)
-    pub extern "C" fn grKraid_OnDemoInit(a0: i32) {  }
-    /// grKraid_801FE0BC (gr/grkraid.c:90)
-    pub extern "C" fn grKraid_801FE0BC() -> i32 { 0 }
-    /// grKraid_801FE1DC (gr/grkraid.c:116)
-    pub extern "C" fn grKraid_801FE1DC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKraid_801FE1E4 (gr/grkraid.c:121)
-    pub extern "C" fn grKraid_801FE1E4(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE1E8 (gr/grkraid.c:126)
-    pub extern "C" fn grKraid_801FE1E8(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE2C8 (gr/grkraid.c:141)
-    pub extern "C" fn grKraid_801FE2C8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKraid_801FE35C (gr/grkraid.c:160)
-    pub extern "C" fn grKraid_801FE35C(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE3A4 (gr/grkraid.c:172)
-    pub extern "C" fn grKraid_801FE3A4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKraid_801FE3AC (gr/grkraid.c:177)
-    pub extern "C" fn grKraid_801FE3AC(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE3B0 (gr/grkraid.c:182)
-    pub extern "C" fn grKraid_801FE3B0(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE438 (gr/grkraid.c:201)
-    pub extern "C" fn grKraid_801FE438(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKraid_801FE6D4 (gr/grkraid.c:260)
-    pub extern "C" fn grKraid_801FE6D4(a0: *mut HSD_GObj) {  }
-    /// grKraid_801FE9F8 (gr/grkraid.c:382)
-    pub extern "C" fn grKraid_801FE9F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grKraid_801FF14C (gr/grkraid.c:563)
-    pub extern "C" fn grKraid_801FF14C(a0: *mut HSD_GObj) {  }
-    /// grKraid_OnTouchLine (gr/grkraid.c:570)
-    pub extern "C" fn grKraid_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grKraid_OnCheckShadowRender (gr/grkraid.c:575)
-    pub extern "C" fn grKraid_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grkraid::grKraid_801FE0BC;
+pub use crate::tu::grkraid::grKraid_801FE1DC;
+pub use crate::tu::grkraid::grKraid_801FE1E4;
+pub use crate::tu::grkraid::grKraid_801FE1E8;
+pub use crate::tu::grkraid::grKraid_801FE2C8;
+pub use crate::tu::grkraid::grKraid_801FE35C;
+pub use crate::tu::grkraid::grKraid_801FE3A4;
+pub use crate::tu::grkraid::grKraid_801FE3AC;
+pub use crate::tu::grkraid::grKraid_801FE3B0;
+pub use crate::tu::grkraid::grKraid_801FE438;
+pub use crate::tu::grkraid::grKraid_801FE6D4;
+pub use crate::tu::grkraid::grKraid_801FE9F8;
+pub use crate::tu::grkraid::grKraid_801FF14C;
+pub use crate::tu::grkraid::grKraid_OnCheckShadowRender;
+pub use crate::tu::grkraid::grKraid_OnDemoInit;
+pub use crate::tu::grkraid::grKraid_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grlast.c
 pub mod grlast {
-    use super::*;
-    /// grLast_8021A7EC (gr/grlast.c:256)
-    pub extern "C" fn grLast_8021A7EC() -> i32 { 0 }
-    /// grLast_8021A90C (gr/grlast.c:294)
-    pub extern "C" fn grLast_8021A90C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021A960 (gr/grlast.c:310)
-    pub extern "C" fn grLast_8021A960(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021A99C (gr/grlast.c:324)
-    pub extern "C" fn grLast_8021A99C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021AAA8 (gr/grlast.c:359)
-    pub extern "C" fn grLast_8021AAA8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021AB78 (gr/grlast.c:402)
-    pub extern "C" fn grLast_8021AB78(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021ABCC (gr/grlast.c:418)
-    pub extern "C" fn grLast_8021ABCC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021AC20 (gr/grlast.c:434)
-    pub extern "C" fn grLast_8021AC20(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021ADC8 (gr/grlast.c:470)
-    pub extern "C" fn grLast_8021ADC8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021B284 (gr/grlast.c:563)
-    pub extern "C" fn grLast_8021B284(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_8021B2D8 (gr/grlast.c:579)
-    pub extern "C" fn grLast_8021B2D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grLast_OnTouchLine (gr/grlast.c:1042)
-    pub extern "C" fn grLast_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grLast_OnCheckShadowRender (gr/grlast.c:1047)
-    pub extern "C" fn grLast_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grlast::grLast_8021A7EC;
+pub use crate::tu::grlast::grLast_8021A90C;
+pub use crate::tu::grlast::grLast_8021A960;
+pub use crate::tu::grlast::grLast_8021A99C;
+pub use crate::tu::grlast::grLast_8021AAA8;
+pub use crate::tu::grlast::grLast_8021AB78;
+pub use crate::tu::grlast::grLast_8021ABCC;
+pub use crate::tu::grlast::grLast_8021AC20;
+pub use crate::tu::grlast::grLast_8021ADC8;
+pub use crate::tu::grlast::grLast_8021B284;
+pub use crate::tu::grlast::grLast_8021B2D8;
+pub use crate::tu::grlast::grLast_OnCheckShadowRender;
+pub use crate::tu::grlast::grLast_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grmutecity.c
 pub mod grmutecity {
-    use super::*;
-    /// grMuteCity_801EFD04 (gr/grmutecity.c:403)
-    pub extern "C" fn grMuteCity_801EFD04() -> i32 { 0 }
-    /// grMuteCity_801F0118 (gr/grmutecity.c:513)
-    pub extern "C" fn grMuteCity_801F0118(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grMuteCity_801F0288 (gr/grmutecity.c:558)
-    pub extern "C" fn grMuteCity_801F0288(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grMuteCity_801F043C (gr/grmutecity.c:606)
-    pub extern "C" fn grMuteCity_801F043C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grMuteCity_801F04A8 (gr/grmutecity.c:630)
-    pub extern "C" fn grMuteCity_801F04A8(a0: *mut HSD_GObj) -> i32 { 0 }
+pub use crate::tu::grmutecity::grMuteCity_801EFD04_fp as grMuteCity_801EFD04;
+pub use crate::tu::grmutecity::grMuteCity_801F0118_fp as grMuteCity_801F0118;
+pub use crate::tu::grmutecity::grMuteCity_801F0288_fp as grMuteCity_801F0288;
+pub use crate::tu::grmutecity::grMuteCity_801F043C_fp as grMuteCity_801F043C;
+pub use crate::tu::grmutecity::grMuteCity_801F04A8_fp as grMuteCity_801F04A8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldkongo.c
 pub mod groldkongo {
-    use super::*;
-    /// grOldKongo_8020F524 (gr/groldkongo.c:169)
-    pub extern "C" fn grOldKongo_8020F524() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/groldkongo.c:194)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj3_Callback1 (gr/groldkongo.c:211)
-    pub extern "C" fn stageGObj3_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/groldkongo.c:251)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/groldkongo.c:455)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldKongo_80210780 (gr/groldkongo.c:634)
-    pub extern "C" fn grOldKongo_80210780(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::groldkongo::grOldKongo_8020F524_fp as grOldKongo_8020F524;
+pub use crate::tu::groldkongo::grOldKongo_80210780_fp as grOldKongo_80210780;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp22 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp22 as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp22 as stageGObj2_Callback1;
+pub use crate::tu::grheal::stageGObj3_Callback1_fp22 as stageGObj3_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldpupupu.c
 pub mod groldpupupu {
-    use super::*;
-    /// grOldPupupu_802108AC (gr/groldpupupu.c:169)
-    pub extern "C" fn grOldPupupu_802108AC() -> i32 { 0 }
-    /// grOldPupupu_802109C8 (gr/groldpupupu.c:216)
-    pub extern "C" fn grOldPupupu_802109C8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80210A1C (gr/groldpupupu.c:235)
-    pub extern "C" fn grOldPupupu_80210A1C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80210B48 (gr/groldpupupu.c:275)
-    pub extern "C" fn grOldPupupu_80210B48(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80210BB8 (gr/groldpupupu.c:292)
-    pub extern "C" fn grOldPupupu_80210BB8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80210C2C (gr/groldpupupu.c:311)
-    pub extern "C" fn grOldPupupu_80210C2C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80210D08 (gr/groldpupupu.c:339)
-    pub extern "C" fn grOldPupupu_80210D08(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_8021118C (gr/groldpupupu.c:456)
-    pub extern "C" fn grOldPupupu_8021118C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80211284 (gr/groldpupupu.c:500)
-    pub extern "C" fn grOldPupupu_80211284(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80211C14 (gr/groldpupupu.c:750)
-    pub extern "C" fn grOldPupupu_80211C14(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldPupupu_80211CA0 (gr/groldpupupu.c:770)
-    pub extern "C" fn grOldPupupu_80211CA0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::groldpupupu::grOldPupupu_802108AC_fp as grOldPupupu_802108AC;
+pub use crate::tu::groldpupupu::grOldPupupu_802109C8_fp as grOldPupupu_802109C8;
+pub use crate::tu::groldpupupu::grOldPupupu_80210A1C_fp as grOldPupupu_80210A1C;
+pub use crate::tu::groldpupupu::grOldPupupu_80210B48_fp as grOldPupupu_80210B48;
+pub use crate::tu::groldpupupu::grOldPupupu_80210BB8_fp as grOldPupupu_80210BB8;
+pub use crate::tu::groldpupupu::grOldPupupu_80210C2C_fp as grOldPupupu_80210C2C;
+pub use crate::tu::groldpupupu::grOldPupupu_80210D08_fp as grOldPupupu_80210D08;
+pub use crate::tu::groldpupupu::grOldPupupu_8021118C_fp as grOldPupupu_8021118C;
+pub use crate::tu::groldpupupu::grOldPupupu_80211284_fp as grOldPupupu_80211284;
+pub use crate::tu::groldpupupu::grOldPupupu_80211C14_fp as grOldPupupu_80211C14;
+pub use crate::tu::groldpupupu::grOldPupupu_80211CA0_fp as grOldPupupu_80211CA0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldyoshi.c
 pub mod groldyoshi {
-    use super::*;
-    /// grOldYoshi_8020E84C (gr/groldyoshi.c:93)
-    pub extern "C" fn grOldYoshi_8020E84C() -> i32 { 0 }
-    /// grOldYoshi_8020E968 (gr/groldyoshi.c:120)
-    pub extern "C" fn grOldYoshi_8020E968(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020E9E0 (gr/groldyoshi.c:140)
-    pub extern "C" fn grOldYoshi_8020E9E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020EA5C (gr/groldyoshi.c:158)
-    pub extern "C" fn grOldYoshi_8020EA5C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020EAEC (gr/groldyoshi.c:179)
-    pub extern "C" fn grOldYoshi_8020EAEC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020EC08 (gr/groldyoshi.c:212)
-    pub extern "C" fn grOldYoshi_8020EC08(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020F080 (gr/groldyoshi.c:328)
-    pub extern "C" fn grOldYoshi_8020F080(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOldYoshi_8020F404 (gr/groldyoshi.c:460)
-    pub extern "C" fn grOldYoshi_8020F404(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::groldyoshi::grOldYoshi_8020E84C_fp as grOldYoshi_8020E84C;
+pub use crate::tu::groldyoshi::grOldYoshi_8020E968_fp as grOldYoshi_8020E968;
+pub use crate::tu::groldyoshi::grOldYoshi_8020E9E0_fp as grOldYoshi_8020E9E0;
+pub use crate::tu::groldyoshi::grOldYoshi_8020EA5C_fp as grOldYoshi_8020EA5C;
+pub use crate::tu::groldyoshi::grOldYoshi_8020EAEC_fp as grOldYoshi_8020EAEC;
+pub use crate::tu::groldyoshi::grOldYoshi_8020EC08_fp as grOldYoshi_8020EC08;
+pub use crate::tu::groldyoshi::grOldYoshi_8020F080_fp as grOldYoshi_8020F080;
+pub use crate::tu::groldyoshi::grOldYoshi_8020F404_fp as grOldYoshi_8020F404;
+
+use super::*;
+
 }
 
 /// src/melee/gr/gronett.c
 pub mod gronett {
-    use super::*;
-    /// grOnett_801E37EC (gr/gronett.c:143)
-    pub extern "C" fn grOnett_801E37EC() -> i32 { 0 }
-    /// grOnett_801E3920 (gr/gronett.c:171)
-    pub extern "C" fn grOnett_801E3920(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOnett_801E3C58 (gr/gronett.c:247)
-    pub extern "C" fn grOnett_801E3C58(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOnett_801E3D98 (gr/gronett.c:292)
-    pub extern "C" fn grOnett_801E3D98(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOnett_801E43D8 (gr/gronett.c:479)
-    pub extern "C" fn grOnett_801E43D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grOnett_801E5760 (gr/gronett.c:950)
-    pub extern "C" fn grOnett_801E5760(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::gronett::grOnett_801E37EC_fp as grOnett_801E37EC;
+pub use crate::tu::gronett::grOnett_801E3920_fp as grOnett_801E3920;
+pub use crate::tu::gronett::grOnett_801E3C58_fp as grOnett_801E3C58;
+pub use crate::tu::gronett::grOnett_801E3D98_fp as grOnett_801E3D98;
+pub use crate::tu::gronett::grOnett_801E43D8_fp as grOnett_801E43D8;
+pub use crate::tu::gronett::grOnett_801E5760_fp as grOnett_801E5760;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grpstadium.c
 pub mod grpstadium {
-    use super::*;
-    /// grStadium_801D10F0 (gr/grpstadium.c:198)
-    pub extern "C" fn grStadium_801D10F0() -> i32 { 0 }
-    /// grStadium_801D1388 (gr/grpstadium.c:278)
-    pub extern "C" fn grStadium_801D1388(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D1518 (gr/grpstadium.c:337)
-    pub extern "C" fn grStadium_801D1518(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D15FC (gr/grpstadium.c:366)
-    pub extern "C" fn grStadium_801D15FC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D16D4 (gr/grpstadium.c:394)
-    pub extern "C" fn grStadium_801D16D4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D17E0 (gr/grpstadium.c:428)
-    pub extern "C" fn grStadium_801D17E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D19D0 (gr/grpstadium.c:499)
-    pub extern "C" fn grStadium_801D19D0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D1B40 (gr/grpstadium.c:547)
-    pub extern "C" fn grStadium_801D1B40(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_801D1E10 (gr/grpstadium.c:608)
-    pub extern "C" fn grStadium_801D1E10(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStadium_OnTouchLine (gr/grpstadium.c:2245)
-    pub extern "C" fn grStadium_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grpstadium::grStadium_801D10F0_fp as grStadium_801D10F0;
+pub use crate::tu::grpstadium::grStadium_801D1388_fp as grStadium_801D1388;
+pub use crate::tu::grpstadium::grStadium_801D1518_fp as grStadium_801D1518;
+pub use crate::tu::grpstadium::grStadium_801D15FC_fp as grStadium_801D15FC;
+pub use crate::tu::grpstadium::grStadium_801D16D4_fp as grStadium_801D16D4;
+pub use crate::tu::grpstadium::grStadium_801D17E0_fp as grStadium_801D17E0;
+pub use crate::tu::grpstadium::grStadium_801D19D0_fp as grStadium_801D19D0;
+pub use crate::tu::grpstadium::grStadium_801D1B40_fp as grStadium_801D1B40;
+pub use crate::tu::grpstadium::grStadium_801D1E10_fp as grStadium_801D1E10;
+pub use crate::tu::grpstadium::grStadium_OnTouchLine_fp as grStadium_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grpura.c
 pub mod grpura {
-    use super::*;
-    /// grPura_80211E00 (gr/grpura.c:326)
-    pub extern "C" fn grPura_80211E00() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/grpura.c:376)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj27_Callback1 (gr/grpura.c:391)
-    pub extern "C" fn stageGObj27_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj4_Callback1 (gr/grpura.c:408)
-    pub extern "C" fn stageGObj4_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/grpura.c:449)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/grpura.c:685)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grPura_802130C0 (gr/grpura.c:875)
-    pub extern "C" fn grPura_802130C0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grPura_802130C8 (gr/grpura.c:880)
-    pub extern "C" fn grPura_802130C8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grpura::grPura_80211E00_fp as grPura_80211E00;
+pub use crate::tu::grpura::grPura_802130C0_fp as grPura_802130C0;
+pub use crate::tu::grpura::grPura_802130C8_fp as grPura_802130C8;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp222 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp222 as stageGObj1_Callback1;
+pub use crate::tu::grpura::stageGObj27_Callback1_fp as stageGObj27_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp222 as stageGObj2_Callback1;
+pub use crate::tu::grheal::stageGObj4_Callback1_fp22 as stageGObj4_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grpushon.c
 pub mod grpushon {
-    use super::*;
-    /// grPushOn_802183DC (gr/grpushon.c:158)
-    pub extern "C" fn grPushOn_802183DC() -> i32 { 0 }
-    /// grPushOn_80218590 (gr/grpushon.c:214)
-    pub extern "C" fn grPushOn_80218590(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grPushOn_80218670 (gr/grpushon.c:238)
-    pub extern "C" fn grPushOn_80218670(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grPushOn_80218880 (gr/grpushon.c:323)
-    pub extern "C" fn grPushOn_80218880(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grPushOn_80219528 (gr/grpushon.c:767)
-    pub extern "C" fn grPushOn_80219528(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grpushon::grPushOn_802183DC;
+pub use crate::tu::grpushon::grPushOn_80218590;
+pub use crate::tu::grpushon::grPushOn_80218670;
+pub use crate::tu::grpushon::grPushOn_80218880;
+pub use crate::tu::grpushon::grPushOn_80219528;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grrcruise.c
 pub mod grrcruise {
-    use super::*;
-    /// grRCruise_801FF2C0 (gr/grrcruise.c:174)
-    pub extern "C" fn grRCruise_801FF2C0() -> i32 { 0 }
-    /// grRCruise_801FF3E0 (gr/grrcruise.c:201)
-    pub extern "C" fn grRCruise_801FF3E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_801FF434 (gr/grrcruise.c:217)
-    pub extern "C" fn grRCruise_801FF434(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_801FF6CC (gr/grrcruise.c:276)
-    pub extern "C" fn grRCruise_801FF6CC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_801FF794 (gr/grrcruise.c:304)
-    pub extern "C" fn grRCruise_801FF794(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_801FF8DC (gr/grrcruise.c:353)
-    pub extern "C" fn grRCruise_801FF8DC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_801FFAD4 (gr/grrcruise.c:398)
-    pub extern "C" fn grRCruise_801FFAD4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_8020014C (gr/grrcruise.c:515)
-    pub extern "C" fn grRCruise_8020014C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grRCruise_80201C50 (gr/grrcruise.c:1185)
-    pub extern "C" fn grRCruise_80201C50(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grRCruise_80201C58 (gr/grrcruise.c:1190)
-    pub extern "C" fn grRCruise_80201C58(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grrcruise::grRCruise_801FF2C0;
+pub use crate::tu::grrcruise::grRCruise_801FF3E0;
+pub use crate::tu::grrcruise::grRCruise_801FF434;
+pub use crate::tu::grrcruise::grRCruise_801FF6CC;
+pub use crate::tu::grrcruise::grRCruise_801FF794;
+pub use crate::tu::grrcruise::grRCruise_801FF8DC;
+pub use crate::tu::grrcruise::grRCruise_801FFAD4;
+pub use crate::tu::grrcruise::grRCruise_8020014C;
+pub use crate::tu::grrcruise::grRCruise_80201C50;
+pub use crate::tu::grrcruise::grRCruise_80201C58;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grshrine.c
 pub mod grshrine {
-    use super::*;
-    /// grShrine_80201D18 (gr/grshrine.c:97)
-    pub extern "C" fn grShrine_80201D18() -> i32 { 0 }
-    /// grShrine_80201E34 (gr/grshrine.c:123)
-    pub extern "C" fn grShrine_80201E34(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrine_80201E88 (gr/grshrine.c:139)
-    pub extern "C" fn grShrine_80201E88(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrine_80201F14 (gr/grshrine.c:162)
-    pub extern "C" fn grShrine_80201F14(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrine_80201F44 (gr/grshrine.c:175)
-    pub extern "C" fn grShrine_80201F44(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grshrine::grShrine_80201D18;
+pub use crate::tu::grshrine::grShrine_80201E34;
+pub use crate::tu::grshrine::grShrine_80201E88;
+pub use crate::tu::grshrine::grShrine_80201F14;
+pub use crate::tu::grshrine::grShrine_80201F44;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grshrineroute.c
 pub mod grshrineroute {
-    use super::*;
-    /// grShrineRoute_802088B8 (gr/grshrineroute.c:214)
-    pub extern "C" fn grShrineRoute_802088B8() -> i32 { 0 }
-    /// grShrineRoute_802089D8 (gr/grshrineroute.c:252)
-    pub extern "C" fn grShrineRoute_802089D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_80208A28 (gr/grshrineroute.c:269)
-    pub extern "C" fn grShrineRoute_80208A28(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_80208F0C (gr/grshrineroute.c:381)
-    pub extern "C" fn grShrineRoute_80208F0C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_80209BE4 (gr/grshrineroute.c:798)
-    pub extern "C" fn grShrineRoute_80209BE4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_8020A214 (gr/grshrineroute.c:925)
-    pub extern "C" fn grShrineRoute_8020A214(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_8020A894 (gr/grshrineroute.c:1120)
-    pub extern "C" fn grShrineRoute_8020A894(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grShrineRoute_OnTouchLine (gr/grshrineroute.c:1564)
-    pub extern "C" fn grShrineRoute_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grshrineroute::grShrineRoute_802088B8;
+pub use crate::tu::grshrineroute::grShrineRoute_802089D8;
+pub use crate::tu::grshrineroute::grShrineRoute_80208A28;
+pub use crate::tu::grshrineroute::grShrineRoute_80208F0C;
+pub use crate::tu::grshrineroute::grShrineRoute_80209BE4;
+pub use crate::tu::grshrineroute::grShrineRoute_8020A214;
+pub use crate::tu::grshrineroute::grShrineRoute_8020A894;
+pub use crate::tu::grshrineroute::grShrineRoute_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grstory.c
 pub mod grstory {
-    use super::*;
-    /// grStory_801E30D0 (gr/grstory.c:102)
-    pub extern "C" fn grStory_801E30D0() -> i32 { 0 }
-    /// grStory_801E3224 (gr/grstory.c:133)
-    pub extern "C" fn grStory_801E3224(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStory_801E332C (gr/grstory.c:183)
-    pub extern "C" fn grStory_801E332C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStory_801E33D8 (gr/grstory.c:212)
-    pub extern "C" fn grStory_801E33D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grStory_801E36D0 (gr/grstory.c:313)
-    pub extern "C" fn grStory_801E36D0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grstory::grStory_801E30D0;
+pub use crate::tu::grstory::grStory_801E3224;
+pub use crate::tu::grstory::grStory_801E332C;
+pub use crate::tu::grstory::grStory_801E33D8;
+pub use crate::tu::grstory::grStory_801E36D0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtcaptain.c
 pub mod grtcaptain {
-    use super::*;
-    /// grTCaptain_8021FCFC (gr/grtcaptain.c:91)
-    pub extern "C" fn grTCaptain_8021FCFC() -> i32 { 0 }
-    /// grTCaptain_8021FE18 (gr/grtcaptain.c:117)
-    pub extern "C" fn grTCaptain_8021FE18(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCaptain_8021FE78 (gr/grtcaptain.c:131)
-    pub extern "C" fn grTCaptain_8021FE78(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCaptain_8021FF08 (gr/grtcaptain.c:148)
-    pub extern "C" fn grTCaptain_8021FF08(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCaptain_OnTouchLine (gr/grtcaptain.c:160)
-    pub extern "C" fn grTCaptain_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grtcaptain::grTCaptain_8021FCFC;
+pub use crate::tu::grtcaptain::grTCaptain_8021FE18;
+pub use crate::tu::grtcaptain::grTCaptain_8021FE78;
+pub use crate::tu::grtcaptain::grTCaptain_8021FF08;
+pub use crate::tu::grtcaptain::grTCaptain_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtclink.c
 pub mod grtclink {
-    use super::*;
-    /// grTCLink_8021FFE0 (gr/grtclink.c:72)
-    pub extern "C" fn grTCLink_8021FFE0() -> i32 { 0 }
-    /// grTCLink_802200FC (gr/grtclink.c:99)
-    pub extern "C" fn grTCLink_802200FC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCLink_8022015C (gr/grtclink.c:113)
-    pub extern "C" fn grTCLink_8022015C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCLink_802201EC (gr/grtclink.c:130)
-    pub extern "C" fn grTCLink_802201EC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTCLink_80220218 (gr/grtclink.c:142)
-    pub extern "C" fn grTCLink_80220218(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTCLink_80220220 (gr/grtclink.c:147)
-    pub extern "C" fn grTCLink_80220220(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtclink::grTCLink_8021FFE0;
+pub use crate::tu::grtclink::grTCLink_802200FC;
+pub use crate::tu::grtclink::grTCLink_8022015C;
+pub use crate::tu::grtclink::grTCLink_802201EC;
+pub use crate::tu::grtclink::grTCLink_80220218;
+pub use crate::tu::grtclink::grTCLink_80220220;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtdonkey.c
 pub mod grtdonkey {
-    use super::*;
-    /// grTDonkey_802202C4 (gr/grtdonkey.c:86)
-    pub extern "C" fn grTDonkey_802202C4() -> i32 { 0 }
-    /// grTDonkey_802203E0 (gr/grtdonkey.c:111)
-    pub extern "C" fn grTDonkey_802203E0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTDonkey_80220440 (gr/grtdonkey.c:125)
-    pub extern "C" fn grTDonkey_80220440(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTDonkey_802204D0 (gr/grtdonkey.c:142)
-    pub extern "C" fn grTDonkey_802204D0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTDonkey_802204FC (gr/grtdonkey.c:154)
-    pub extern "C" fn grTDonkey_802204FC(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTDonkey_80220504 (gr/grtdonkey.c:159)
-    pub extern "C" fn grTDonkey_80220504(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtdonkey::grTDonkey_802202C4;
+pub use crate::tu::grtdonkey::grTDonkey_802203E0;
+pub use crate::tu::grtdonkey::grTDonkey_80220440;
+pub use crate::tu::grtdonkey::grTDonkey_802204D0;
+pub use crate::tu::grtdonkey::grTDonkey_802204FC;
+pub use crate::tu::grtdonkey::grTDonkey_80220504;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtdrmario.c
 pub mod grtdrmario {
-    use super::*;
-    /// grtDrMario_802205A8 (gr/grtdrmario.c:89)
-    pub extern "C" fn grtDrMario_802205A8() -> i32 { 0 }
-    /// grtDrMario_802206C4 (gr/grtdrmario.c:115)
-    pub extern "C" fn grtDrMario_802206C4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grtDrMario_80220724 (gr/grtdrmario.c:129)
-    pub extern "C" fn grtDrMario_80220724(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grtDrMario_802207B4 (gr/grtdrmario.c:146)
-    pub extern "C" fn grtDrMario_802207B4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grtDrMario_802207E0 (gr/grtdrmario.c:158)
-    pub extern "C" fn grtDrMario_802207E0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grtDrMario_802207E8 (gr/grtdrmario.c:163)
-    pub extern "C" fn grtDrMario_802207E8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtdrmario::grtDrMario_802205A8;
+pub use crate::tu::grtdrmario::grtDrMario_802206C4;
+pub use crate::tu::grtdrmario::grtDrMario_80220724;
+pub use crate::tu::grtdrmario::grtDrMario_802207B4;
+pub use crate::tu::grtdrmario::grtDrMario_802207E0;
+pub use crate::tu::grtdrmario::grtDrMario_802207E8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtemblem.c
 pub mod grtemblem {
-    use super::*;
-    /// grTRoy_80224490 (gr/grtemblem.c:88)
-    pub extern "C" fn grTRoy_80224490() -> i32 { 0 }
-    /// grTRoy_802245AC (gr/grtemblem.c:114)
-    pub extern "C" fn grTRoy_802245AC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTRoy_8022460C (gr/grtemblem.c:128)
-    pub extern "C" fn grTRoy_8022460C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTRoy_8022469C (gr/grtemblem.c:145)
-    pub extern "C" fn grTRoy_8022469C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTRoy_802246C8 (gr/grtemblem.c:157)
-    pub extern "C" fn grTRoy_802246C8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTRoy_802246D0 (gr/grtemblem.c:162)
-    pub extern "C" fn grTRoy_802246D0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtemblem::grTRoy_80224490;
+pub use crate::tu::grtemblem::grTRoy_802245AC;
+pub use crate::tu::grtemblem::grTRoy_8022460C;
+pub use crate::tu::grtemblem::grTRoy_8022469C;
+pub use crate::tu::grtemblem::grTRoy_802246C8;
+pub use crate::tu::grtemblem::grTRoy_802246D0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtest.c
 pub mod grtest {
-    use super::*;
-    /// grTest_8020703C (gr/grtest.c:85)
-    pub extern "C" fn grTest_8020703C() -> i32 { 0 }
-    /// grTest_8020715C (gr/grtest.c:111)
-    pub extern "C" fn grTest_8020715C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTest_802071BC (gr/grtest.c:125)
-    pub extern "C" fn grTest_802071BC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTest_802073FC (gr/grtest.c:190)
-    pub extern "C" fn grTest_802073FC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTest_8020740C (gr/grtest.c:199)
-    pub extern "C" fn grTest_8020740C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTest_80207414 (gr/grtest.c:204)
-    pub extern "C" fn grTest_80207414(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtest::grTest_8020703C;
+pub use crate::tu::grtest::grTest_8020715C;
+pub use crate::tu::grtest::grTest_802071BC;
+pub use crate::tu::grtest::grTest_802073FC;
+pub use crate::tu::grtest::grTest_8020740C;
+pub use crate::tu::grtest::grTest_80207414;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtfalco.c
 pub mod grtfalco {
-    use super::*;
-    /// grTFalco_80220894 (gr/grtfalco.c:102)
-    pub extern "C" fn grTFalco_80220894() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/grtfalco.c:129)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/grtfalco.c:143)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/grtfalco.c:160)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTFalco_80220B78 (gr/grtfalco.c:203)
-    pub extern "C" fn grTFalco_80220B78(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtfalco::grTFalco_80220894;
+pub use crate::tu::grtfalco::grTFalco_80220B78;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp2222 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp2222 as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp2222 as stageGObj2_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtfox.c
 pub mod grtfox {
-    use super::*;
-    /// grTFox_80220C24 (gr/grtfox.c:80)
-    pub extern "C" fn grTFox_80220C24() -> i32 { 0 }
-    /// grTFox_80220D40 (gr/grtfox.c:106)
-    pub extern "C" fn grTFox_80220D40(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTFox_80220DA0 (gr/grtfox.c:120)
-    pub extern "C" fn grTFox_80220DA0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTFox_80220E30 (gr/grtfox.c:137)
-    pub extern "C" fn grTFox_80220E30(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTFox_80220F08 (gr/grtfox.c:173)
-    pub extern "C" fn grTFox_80220F08(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtfox::grTFox_80220C24;
+pub use crate::tu::grtfox::grTFox_80220D40;
+pub use crate::tu::grtfox::grTFox_80220DA0;
+pub use crate::tu::grtfox::grTFox_80220E30;
+pub use crate::tu::grtfox::grTFox_80220F08;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtgamewatch.c
 pub mod grtgamewatch {
-    use super::*;
-    /// grTGameWatch_80224110 (gr/grtgamewatch.c:42)
-    pub extern "C" fn grTGameWatch_80224110(a0: i32) {  }
-    /// grTgamewatch_UnkStage0_OnLoad (gr/grtgamewatch.c:52)
-    pub extern "C" fn grTgamewatch_UnkStage0_OnLoad() {  }
-    /// grTGameWatch_802241AC (gr/grtgamewatch.c:62)
-    pub extern "C" fn grTGameWatch_802241AC() -> i32 { 0 }
-    /// grTGameWatch_802242C8 (gr/grtgamewatch.c:89)
-    pub extern "C" fn grTGameWatch_802242C8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGameWatch_802242D0 (gr/grtgamewatch.c:94)
-    pub extern "C" fn grTGameWatch_802242D0(a0: *mut HSD_GObj) {  }
-    /// grTGameWatch_802242D4 (gr/grtgamewatch.c:99)
-    pub extern "C" fn grTGameWatch_802242D4(a0: *mut HSD_GObj) {  }
-    /// grTGameWatch_80224328 (gr/grtgamewatch.c:109)
-    pub extern "C" fn grTGameWatch_80224328(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGameWatch_80224364 (gr/grtgamewatch.c:119)
-    pub extern "C" fn grTGameWatch_80224364(a0: *mut HSD_GObj) {  }
-    /// grTGameWatch_802243B8 (gr/grtgamewatch.c:129)
-    pub extern "C" fn grTGameWatch_802243B8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGameWatch_802243E0 (gr/grtgamewatch.c:139)
-    pub extern "C" fn grTGameWatch_802243E0(a0: *mut HSD_GObj) {  }
-    /// grTGameWatch_802243E4 (gr/grtgamewatch.c:144)
-    pub extern "C" fn grTGameWatch_802243E4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTGameWatch_802243EC (gr/grtgamewatch.c:149)
-    pub extern "C" fn grTGameWatch_802243EC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtgamewatch::grTGameWatch_80224110;
+pub use crate::tu::grtgamewatch::grTGameWatch_802241AC;
+pub use crate::tu::grtgamewatch::grTGameWatch_802242C8;
+pub use crate::tu::grtgamewatch::grTGameWatch_802242D0;
+pub use crate::tu::grtgamewatch::grTGameWatch_802242D4;
+pub use crate::tu::grtgamewatch::grTGameWatch_80224328;
+pub use crate::tu::grtgamewatch::grTGameWatch_80224364;
+pub use crate::tu::grtgamewatch::grTGameWatch_802243B8;
+pub use crate::tu::grtgamewatch::grTGameWatch_802243E0;
+pub use crate::tu::grtgamewatch::grTGameWatch_802243E4;
+pub use crate::tu::grtgamewatch::grTGameWatch_802243EC;
+pub use crate::tu::grtgamewatch::grTgamewatch_UnkStage0_OnLoad;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtganon.c
 pub mod grtganon {
-    use super::*;
-    /// grTGanon_802246D8 (gr/grtganon.c:51)
-    pub extern "C" fn grTGanon_802246D8(a0: i32) {  }
-    /// grTganon_UnkStage0_OnLoad (gr/grtganon.c:62)
-    pub extern "C" fn grTganon_UnkStage0_OnLoad() {  }
-    /// grTGanon_8022477C (gr/grtganon.c:72)
-    pub extern "C" fn grTGanon_8022477C() -> i32 { 0 }
-    /// grTGanon_80224898 (gr/grtganon.c:99)
-    pub extern "C" fn grTGanon_80224898(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGanon_802248A0 (gr/grtganon.c:104)
-    pub extern "C" fn grTGanon_802248A0(a0: *mut HSD_GObj) {  }
-    /// grTGanon_802248A4 (gr/grtganon.c:109)
-    pub extern "C" fn grTGanon_802248A4(a0: *mut HSD_GObj) {  }
-    /// grTGanon_802248F8 (gr/grtganon.c:119)
-    pub extern "C" fn grTGanon_802248F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGanon_80224934 (gr/grtganon.c:129)
-    pub extern "C" fn grTGanon_80224934(a0: *mut HSD_GObj) {  }
-    /// grTGanon_80224988 (gr/grtganon.c:139)
-    pub extern "C" fn grTGanon_80224988(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTGanon_802249B0 (gr/grtganon.c:149)
-    pub extern "C" fn grTGanon_802249B0(a0: *mut HSD_GObj) {  }
-    /// grTGanon_80224A4C (gr/grtganon.c:181)
-    pub extern "C" fn grTGanon_80224A4C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtganon::grTGanon_802246D8;
+pub use crate::tu::grtganon::grTGanon_8022477C;
+pub use crate::tu::grtganon::grTGanon_80224898;
+pub use crate::tu::grtganon::grTGanon_802248A0;
+pub use crate::tu::grtganon::grTGanon_802248A4;
+pub use crate::tu::grtganon::grTGanon_802248F8;
+pub use crate::tu::grtganon::grTGanon_80224934;
+pub use crate::tu::grtganon::grTGanon_80224988;
+pub use crate::tu::grtganon::grTGanon_802249B0;
+pub use crate::tu::grtganon::grTGanon_80224A4C;
+pub use crate::tu::grtganon::grTganon_UnkStage0_OnLoad;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grticeclimber.c
 pub mod grticeclimber {
-    use super::*;
-    /// grTIceClimber_80220FAC (gr/grticeclimber.c:97)
-    pub extern "C" fn grTIceClimber_80220FAC() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/grticeclimber.c:124)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/grticeclimber.c:140)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/grticeclimber.c:157)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTIceClimber_80221354 (gr/grticeclimber.c:210)
-    pub extern "C" fn grTIceClimber_80221354(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTIceClimber_8022135C (gr/grticeclimber.c:215)
-    pub extern "C" fn grTIceClimber_8022135C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grticeclimber::grTIceClimber_80220FAC;
+pub use crate::tu::grticeclimber::grTIceClimber_80221354;
+pub use crate::tu::grticeclimber::grTIceClimber_8022135C;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp22222 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp22222 as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp22222 as stageGObj2_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtkirby.c
 pub mod grtkirby {
-    use super::*;
-    /// grTKirby_80221400 (gr/grtkirby.c:90)
-    pub extern "C" fn grTKirby_80221400() -> i32 { 0 }
-    /// grTKirby_8022151C (gr/grtkirby.c:116)
-    pub extern "C" fn grTKirby_8022151C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKirby_8022157C (gr/grtkirby.c:130)
-    pub extern "C" fn grTKirby_8022157C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKirby_8022160C (gr/grtkirby.c:147)
-    pub extern "C" fn grTKirby_8022160C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKirby_80221638 (gr/grtkirby.c:159)
-    pub extern "C" fn grTKirby_80221638(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTKirby_80221640 (gr/grtkirby.c:164)
-    pub extern "C" fn grTKirby_80221640(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtkirby::grTKirby_80221400;
+pub use crate::tu::grtkirby::grTKirby_8022151C;
+pub use crate::tu::grtkirby::grTKirby_8022157C;
+pub use crate::tu::grtkirby::grTKirby_8022160C;
+pub use crate::tu::grtkirby::grTKirby_80221638;
+pub use crate::tu::grtkirby::grTKirby_80221640;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtkoopa.c
 pub mod grtkoopa {
-    use super::*;
-    /// grTKoopa_802216E4 (gr/grtkoopa.c:90)
-    pub extern "C" fn grTKoopa_802216E4() -> i32 { 0 }
-    /// grTKoopa_80221800 (gr/grtkoopa.c:116)
-    pub extern "C" fn grTKoopa_80221800(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKoopa_80221860 (gr/grtkoopa.c:129)
-    pub extern "C" fn grTKoopa_80221860(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKoopa_802218F0 (gr/grtkoopa.c:146)
-    pub extern "C" fn grTKoopa_802218F0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTKoopa_8022191C (gr/grtkoopa.c:158)
-    pub extern "C" fn grTKoopa_8022191C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTKoopa_80221924 (gr/grtkoopa.c:163)
-    pub extern "C" fn grTKoopa_80221924(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtkoopa::grTKoopa_802216E4;
+pub use crate::tu::grtkoopa::grTKoopa_80221800;
+pub use crate::tu::grtkoopa::grTKoopa_80221860;
+pub use crate::tu::grtkoopa::grTKoopa_802218F0;
+pub use crate::tu::grtkoopa::grTKoopa_8022191C;
+pub use crate::tu::grtkoopa::grTKoopa_80221924;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtlink.c
 pub mod grtlink {
-    use super::*;
-    /// grTLink_802219C8 (gr/grtlink.c:90)
-    pub extern "C" fn grTLink_802219C8() -> i32 { 0 }
-    /// grTLink_80221AE4 (gr/grtlink.c:116)
-    pub extern "C" fn grTLink_80221AE4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLink_80221B44 (gr/grtlink.c:130)
-    pub extern "C" fn grTLink_80221B44(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLink_80221BD4 (gr/grtlink.c:147)
-    pub extern "C" fn grTLink_80221BD4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLink_80221C00 (gr/grtlink.c:159)
-    pub extern "C" fn grTLink_80221C00(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTLink_80221C08 (gr/grtlink.c:164)
-    pub extern "C" fn grTLink_80221C08(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtlink::grTLink_802219C8;
+pub use crate::tu::grtlink::grTLink_80221AE4;
+pub use crate::tu::grtlink::grTLink_80221B44;
+pub use crate::tu::grtlink::grTLink_80221BD4;
+pub use crate::tu::grtlink::grTLink_80221C00;
+pub use crate::tu::grtlink::grTLink_80221C08;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtluigi.c
 pub mod grtluigi {
-    use super::*;
-    /// grTLuigi_80221CAC (gr/grtluigi.c:68)
-    pub extern "C" fn grTLuigi_80221CAC() -> i32 { 0 }
-    /// grTLuigi_80221DC8 (gr/grtluigi.c:94)
-    pub extern "C" fn grTLuigi_80221DC8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLuigi_80221E28 (gr/grtluigi.c:108)
-    pub extern "C" fn grTLuigi_80221E28(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLuigi_80221EB8 (gr/grtluigi.c:125)
-    pub extern "C" fn grTLuigi_80221EB8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTLuigi_80221EE4 (gr/grtluigi.c:137)
-    pub extern "C" fn grTLuigi_80221EE4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTLuigi_80221EEC (gr/grtluigi.c:142)
-    pub extern "C" fn grTLuigi_80221EEC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtluigi::grTLuigi_80221CAC;
+pub use crate::tu::grtluigi::grTLuigi_80221DC8;
+pub use crate::tu::grtluigi::grTLuigi_80221E28;
+pub use crate::tu::grtluigi::grTLuigi_80221EB8;
+pub use crate::tu::grtluigi::grTLuigi_80221EE4;
+pub use crate::tu::grtluigi::grTLuigi_80221EEC;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmario.c
 pub mod grtmario {
-    use super::*;
-    /// grTMario_8021F8DC (gr/grtmario.c:96)
-    pub extern "C" fn grTMario_8021F8DC() -> i32 { 0 }
-    /// grTMario_8021F9F8 (gr/grtmario.c:122)
-    pub extern "C" fn grTMario_8021F9F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMario_8021FA94 (gr/grtmario.c:142)
-    pub extern "C" fn grTMario_8021FA94(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMario_8021FB24 (gr/grtmario.c:159)
-    pub extern "C" fn grTMario_8021FB24(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMario_8021FC50 (gr/grtmario.c:205)
-    pub extern "C" fn grTMario_8021FC50(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTMario_8021FC58 (gr/grtmario.c:210)
-    pub extern "C" fn grTMario_8021FC58(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtmario::grTMario_8021F8DC;
+pub use crate::tu::grtmario::grTMario_8021F9F8;
+pub use crate::tu::grtmario::grTMario_8021FA94;
+pub use crate::tu::grtmario::grTMario_8021FB24;
+pub use crate::tu::grtmario::grTMario_8021FC50;
+pub use crate::tu::grtmario::grTMario_8021FC58;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmars.c
 pub mod grtmars {
-    use super::*;
-    /// grTMars_80221F90 (gr/grtmars.c:84)
-    pub extern "C" fn grTMars_80221F90() -> i32 { 0 }
-    /// stageGObj0_Callback1 (gr/grtmars.c:109)
-    pub extern "C" fn stageGObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj2_Callback1 (gr/grtmars.c:123)
-    pub extern "C" fn stageGObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// stageGObj1_Callback1 (gr/grtmars.c:140)
-    pub extern "C" fn stageGObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMars_802221C8 (gr/grtmars.c:152)
-    pub extern "C" fn grTMars_802221C8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTMars_802221D0 (gr/grtmars.c:157)
-    pub extern "C" fn grTMars_802221D0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtmars::grTMars_80221F90;
+pub use crate::tu::grtmars::grTMars_802221C8;
+pub use crate::tu::grtmars::grTMars_802221D0;
+pub use crate::tu::grheal::stageGObj0_Callback1_fp222222 as stageGObj0_Callback1;
+pub use crate::tu::grheal::stageGObj1_Callback1_fp222222 as stageGObj1_Callback1;
+pub use crate::tu::grheal::stageGObj2_Callback1_fp222222 as stageGObj2_Callback1;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmewtwo.c
 pub mod grtmewtwo {
-    use super::*;
-    /// grTMewtwo_8022227C (gr/grtmewtwo.c:112)
-    pub extern "C" fn grTMewtwo_8022227C() -> i32 { 0 }
-    /// grTMewtwo_80222398 (gr/grtmewtwo.c:138)
-    pub extern "C" fn grTMewtwo_80222398(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMewtwo_802223F8 (gr/grtmewtwo.c:152)
-    pub extern "C" fn grTMewtwo_802223F8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMewtwo_80222488 (gr/grtmewtwo.c:169)
-    pub extern "C" fn grTMewtwo_80222488(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTMewtwo_802225C8 (gr/grtmewtwo.c:228)
-    pub extern "C" fn grTMewtwo_802225C8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtmewtwo::grTMewtwo_8022227C;
+pub use crate::tu::grtmewtwo::grTMewtwo_80222398;
+pub use crate::tu::grtmewtwo::grTMewtwo_802223F8;
+pub use crate::tu::grtmewtwo::grTMewtwo_80222488;
+pub use crate::tu::grtmewtwo::grTMewtwo_802225C8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtness.c
 pub mod grtness {
-    use super::*;
-    /// grTNess_802225D0 (gr/grtness.c:71)
-    pub extern "C" fn grTNess_802225D0(a0: i32) {  }
-    /// grTness_UnkStage0_OnLoad (gr/grtness.c:81)
-    pub extern "C" fn grTness_UnkStage0_OnLoad() {  }
-    /// grTNess_8022266C (gr/grtness.c:91)
-    pub extern "C" fn grTNess_8022266C() -> i32 { 0 }
-    /// grTNess_80222788 (gr/grtness.c:117)
-    pub extern "C" fn grTNess_80222788(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTNess_80222790 (gr/grtness.c:122)
-    pub extern "C" fn grTNess_80222790(a0: *mut HSD_GObj) {  }
-    /// grTNess_80222794 (gr/grtness.c:127)
-    pub extern "C" fn grTNess_80222794(a0: *mut HSD_GObj) {  }
-    /// grTNess_802227E8 (gr/grtness.c:137)
-    pub extern "C" fn grTNess_802227E8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTNess_80222824 (gr/grtness.c:147)
-    pub extern "C" fn grTNess_80222824(a0: *mut HSD_GObj) {  }
-    /// grTNess_80222878 (gr/grtness.c:157)
-    pub extern "C" fn grTNess_80222878(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTNess_802228A0 (gr/grtness.c:167)
-    pub extern "C" fn grTNess_802228A0(a0: *mut HSD_GObj) {  }
-    /// grTNess_802228A4 (gr/grtness.c:172)
-    pub extern "C" fn grTNess_802228A4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTNess_802228AC (gr/grtness.c:177)
-    pub extern "C" fn grTNess_802228AC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtness::grTNess_802225D0;
+pub use crate::tu::grtness::grTNess_8022266C;
+pub use crate::tu::grtness::grTNess_80222788;
+pub use crate::tu::grtness::grTNess_80222790;
+pub use crate::tu::grtness::grTNess_80222794;
+pub use crate::tu::grtness::grTNess_802227E8;
+pub use crate::tu::grtness::grTNess_80222824;
+pub use crate::tu::grtness::grTNess_80222878;
+pub use crate::tu::grtness::grTNess_802228A0;
+pub use crate::tu::grtness::grTNess_802228A4;
+pub use crate::tu::grtness::grTNess_802228AC;
+pub use crate::tu::grtness::grTness_UnkStage0_OnLoad;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpeach.c
 pub mod grtpeach {
-    use super::*;
-    /// grTPeach_80222950 (gr/grtpeach.c:99)
-    pub extern "C" fn grTPeach_80222950() -> i32 { 0 }
-    /// grTPeach_80222A6C (gr/grtpeach.c:125)
-    pub extern "C" fn grTPeach_80222A6C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPeach_80222ACC (gr/grtpeach.c:139)
-    pub extern "C" fn grTPeach_80222ACC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPeach_80222B5C (gr/grtpeach.c:156)
-    pub extern "C" fn grTPeach_80222B5C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPeach_80222B88 (gr/grtpeach.c:168)
-    pub extern "C" fn grTPeach_80222B88(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTPeach_80222B90 (gr/grtpeach.c:173)
-    pub extern "C" fn grTPeach_80222B90(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtpeach::grTPeach_80222950;
+pub use crate::tu::grtpeach::grTPeach_80222A6C;
+pub use crate::tu::grtpeach::grTPeach_80222ACC;
+pub use crate::tu::grtpeach::grTPeach_80222B5C;
+pub use crate::tu::grtpeach::grTPeach_80222B88;
+pub use crate::tu::grtpeach::grTPeach_80222B90;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpichu.c
 pub mod grtpichu {
-    use super::*;
-    /// grTPichu_80222C34 (gr/grtpichu.c:89)
-    pub extern "C" fn grTPichu_80222C34() -> i32 { 0 }
-    /// grTPichu_80222D50 (gr/grtpichu.c:115)
-    pub extern "C" fn grTPichu_80222D50(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPichu_80222DB0 (gr/grtpichu.c:129)
-    pub extern "C" fn grTPichu_80222DB0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPichu_80222E40 (gr/grtpichu.c:146)
-    pub extern "C" fn grTPichu_80222E40(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPichu_80222E6C (gr/grtpichu.c:158)
-    pub extern "C" fn grTPichu_80222E6C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTPichu_80222E74 (gr/grtpichu.c:163)
-    pub extern "C" fn grTPichu_80222E74(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtpichu::grTPichu_80222C34;
+pub use crate::tu::grtpichu::grTPichu_80222D50;
+pub use crate::tu::grtpichu::grTPichu_80222DB0;
+pub use crate::tu::grtpichu::grTPichu_80222E40;
+pub use crate::tu::grtpichu::grTPichu_80222E6C;
+pub use crate::tu::grtpichu::grTPichu_80222E74;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpikachu.c
 pub mod grtpikachu {
-    use super::*;
-    /// grTPikachu_80222E7C (gr/grtpikachu.c:41)
-    pub extern "C" fn grTPikachu_80222E7C(a0: i32) {  }
-    /// grTpikachu_UnkStage0_OnLoad (gr/grtpikachu.c:51)
-    pub extern "C" fn grTpikachu_UnkStage0_OnLoad() {  }
-    /// grTPikachu_80222F18 (gr/grtpikachu.c:61)
-    pub extern "C" fn grTPikachu_80222F18() -> i32 { 0 }
-    /// grTPikachu_80223034 (gr/grtpikachu.c:88)
-    pub extern "C" fn grTPikachu_80223034(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPikachu_8022303C (gr/grtpikachu.c:93)
-    pub extern "C" fn grTPikachu_8022303C(a0: *mut HSD_GObj) {  }
-    /// grTPikachu_80223040 (gr/grtpikachu.c:98)
-    pub extern "C" fn grTPikachu_80223040(a0: *mut HSD_GObj) {  }
-    /// grTPikachu_80223094 (gr/grtpikachu.c:108)
-    pub extern "C" fn grTPikachu_80223094(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPikachu_802230D0 (gr/grtpikachu.c:118)
-    pub extern "C" fn grTPikachu_802230D0(a0: *mut HSD_GObj) {  }
-    /// grTPikachu_80223124 (gr/grtpikachu.c:128)
-    pub extern "C" fn grTPikachu_80223124(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPikachu_8022314C (gr/grtpikachu.c:138)
-    pub extern "C" fn grTPikachu_8022314C(a0: *mut HSD_GObj) {  }
-    /// grTPikachu_80223150 (gr/grtpikachu.c:143)
-    pub extern "C" fn grTPikachu_80223150(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTPikachu_80223158 (gr/grtpikachu.c:148)
-    pub extern "C" fn grTPikachu_80223158(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtpikachu::grTPikachu_80222E7C;
+pub use crate::tu::grtpikachu::grTPikachu_80222F18;
+pub use crate::tu::grtpikachu::grTPikachu_80223034;
+pub use crate::tu::grtpikachu::grTPikachu_8022303C;
+pub use crate::tu::grtpikachu::grTPikachu_80223040;
+pub use crate::tu::grtpikachu::grTPikachu_80223094;
+pub use crate::tu::grtpikachu::grTPikachu_802230D0;
+pub use crate::tu::grtpikachu::grTPikachu_80223124;
+pub use crate::tu::grtpikachu::grTPikachu_8022314C;
+pub use crate::tu::grtpikachu::grTPikachu_80223150;
+pub use crate::tu::grtpikachu::grTPikachu_80223158;
+pub use crate::tu::grtpikachu::grTpikachu_UnkStage0_OnLoad;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpurin.c
 pub mod grtpurin {
-    use super::*;
-    /// grTPurin_80223160 (gr/grtpurin.c:48)
-    pub extern "C" fn grTPurin_80223160(a0: i32) {  }
-    /// grTpurin_UnkStage0_OnLoad (gr/grtpurin.c:59)
-    pub extern "C" fn grTpurin_UnkStage0_OnLoad() {  }
-    /// grTPurin_80223204 (gr/grtpurin.c:69)
-    pub extern "C" fn grTPurin_80223204() -> i32 { 0 }
-    /// grTPurin_80223320 (gr/grtpurin.c:96)
-    pub extern "C" fn grTPurin_80223320(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPurin_80223328 (gr/grtpurin.c:101)
-    pub extern "C" fn grTPurin_80223328(a0: *mut HSD_GObj) {  }
-    /// grTPurin_8022332C (gr/grtpurin.c:106)
-    pub extern "C" fn grTPurin_8022332C(a0: *mut HSD_GObj) {  }
-    /// grTPurin_80223380 (gr/grtpurin.c:116)
-    pub extern "C" fn grTPurin_80223380(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPurin_80223478 (gr/grtpurin.c:147)
-    pub extern "C" fn grTPurin_80223478(a0: *mut HSD_GObj) {  }
-    /// grTPurin_802234CC (gr/grtpurin.c:157)
-    pub extern "C" fn grTPurin_802234CC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTPurin_802234F4 (gr/grtpurin.c:167)
-    pub extern "C" fn grTPurin_802234F4(a0: *mut HSD_GObj) {  }
-    /// grTPurin_80223578 (gr/grtpurin.c:191)
-    pub extern "C" fn grTPurin_80223578(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtpurin::grTPurin_80223160;
+pub use crate::tu::grtpurin::grTPurin_80223204;
+pub use crate::tu::grtpurin::grTPurin_80223320;
+pub use crate::tu::grtpurin::grTPurin_80223328;
+pub use crate::tu::grtpurin::grTPurin_8022332C;
+pub use crate::tu::grtpurin::grTPurin_80223380;
+pub use crate::tu::grtpurin::grTPurin_80223478;
+pub use crate::tu::grtpurin::grTPurin_802234CC;
+pub use crate::tu::grtpurin::grTPurin_802234F4;
+pub use crate::tu::grtpurin::grTPurin_80223578;
+pub use crate::tu::grtpurin::grTpurin_UnkStage0_OnLoad;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtsamus.c
 pub mod grtsamus {
-    use super::*;
-    /// grTSamus_8022361C (gr/grtsamus.c:87)
-    pub extern "C" fn grTSamus_8022361C() -> i32 { 0 }
-    /// grTSamus_80223738 (gr/grtsamus.c:113)
-    pub extern "C" fn grTSamus_80223738(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSamus_80223798 (gr/grtsamus.c:127)
-    pub extern "C" fn grTSamus_80223798(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSamus_80223828 (gr/grtsamus.c:144)
-    pub extern "C" fn grTSamus_80223828(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSamus_OnTouchLine (gr/grtsamus.c:156)
-    pub extern "C" fn grTSamus_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTSamus_OnCheckShadowRender (gr/grtsamus.c:161)
-    pub extern "C" fn grTSamus_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtsamus::grTSamus_8022361C;
+pub use crate::tu::grtsamus::grTSamus_80223738;
+pub use crate::tu::grtsamus::grTSamus_80223798;
+pub use crate::tu::grtsamus::grTSamus_80223828;
+pub use crate::tu::grtsamus::grTSamus_OnCheckShadowRender;
+pub use crate::tu::grtsamus::grTSamus_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtseak.c
 pub mod grtseak {
-    use super::*;
-    /// grTSeak_80223900 (gr/grtseak.c:121)
-    pub extern "C" fn grTSeak_80223900() -> i32 { 0 }
-    /// grTSeak_80223A1C (gr/grtseak.c:174)
-    pub extern "C" fn grTSeak_80223A1C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSeak_80223A7C (gr/grtseak.c:188)
-    pub extern "C" fn grTSeak_80223A7C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSeak_80223B0C (gr/grtseak.c:205)
-    pub extern "C" fn grTSeak_80223B0C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTSeak_OnTouchLine (gr/grtseak.c:217)
-    pub extern "C" fn grTSeak_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTSeak_OnCheckShadowRender (gr/grtseak.c:222)
-    pub extern "C" fn grTSeak_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtseak::grTSeak_80223900;
+pub use crate::tu::grtseak::grTSeak_80223A1C;
+pub use crate::tu::grtseak::grTSeak_80223A7C;
+pub use crate::tu::grtseak::grTSeak_80223B0C;
+pub use crate::tu::grtseak::grTSeak_OnCheckShadowRender;
+pub use crate::tu::grtseak::grTSeak_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtyoshi.c
 pub mod grtyoshi {
-    use super::*;
-    /// grTYoshi_80223BE4 (gr/grtyoshi.c:90)
-    pub extern "C" fn grTYoshi_80223BE4() -> i32 { 0 }
-    /// grTYoshi_80223D00 (gr/grtyoshi.c:116)
-    pub extern "C" fn grTYoshi_80223D00(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTYoshi_80223D60 (gr/grtyoshi.c:130)
-    pub extern "C" fn grTYoshi_80223D60(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTYoshi_80223DF0 (gr/grtyoshi.c:147)
-    pub extern "C" fn grTYoshi_80223DF0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTYoshi_OnTouchLine (gr/grtyoshi.c:159)
-    pub extern "C" fn grTYoshi_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTYoshi_OnCheckShadowRender (gr/grtyoshi.c:164)
-    pub extern "C" fn grTYoshi_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtyoshi::grTYoshi_80223BE4;
+pub use crate::tu::grtyoshi::grTYoshi_80223D00;
+pub use crate::tu::grtyoshi::grTYoshi_80223D60;
+pub use crate::tu::grtyoshi::grTYoshi_80223DF0;
+pub use crate::tu::grtyoshi::grTYoshi_OnCheckShadowRender;
+pub use crate::tu::grtyoshi::grTYoshi_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtzelda.c
 pub mod grtzelda {
-    use super::*;
-    /// grTZelda_80223EC8 (gr/grtzelda.c:74)
-    pub extern "C" fn grTZelda_80223EC8() -> i32 { 0 }
-    /// grTZelda_80223FE4 (gr/grtzelda.c:100)
-    pub extern "C" fn grTZelda_80223FE4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTZelda_80224044 (gr/grtzelda.c:114)
-    pub extern "C" fn grTZelda_80224044(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTZelda_802240D4 (gr/grtzelda.c:131)
-    pub extern "C" fn grTZelda_802240D4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grTZelda_OnTouchLine (gr/grtzelda.c:143)
-    pub extern "C" fn grTZelda_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grTZelda_OnCheckShadowRender (gr/grtzelda.c:148)
-    pub extern "C" fn grTZelda_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grtzelda::grTZelda_80223EC8;
+pub use crate::tu::grtzelda::grTZelda_80223FE4;
+pub use crate::tu::grtzelda::grTZelda_80224044;
+pub use crate::tu::grtzelda::grTZelda_802240D4;
+pub use crate::tu::grtzelda::grTZelda_OnCheckShadowRender;
+pub use crate::tu::grtzelda::grTZelda_OnTouchLine;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grvenom.c
 pub mod grvenom {
-    use super::*;
-    /// grVenom_80203EA4 (gr/grvenom.c:552)
-    pub extern "C" fn grVenom_80203EA4() -> i32 { 0 }
-    /// grVenom_80203FC4 (gr/grvenom.c:612)
-    pub extern "C" fn grVenom_80203FC4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_802040A4 (gr/grvenom.c:645)
-    pub extern "C" fn grVenom_802040A4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_8020427C (gr/grvenom.c:695)
-    pub extern "C" fn grVenom_8020427C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80204544 (gr/grvenom.c:785)
-    pub extern "C" fn grVenom_80204544(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80204CE4 (gr/grvenom.c:992)
-    pub extern "C" fn grVenom_80204CE4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80204EF4 (gr/grvenom.c:1023)
-    pub extern "C" fn grVenom_80204EF4(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_802052D8 (gr/grvenom.c:1100)
-    pub extern "C" fn grVenom_802052D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80205750 (gr/grvenom.c:1305)
-    pub extern "C" fn grVenom_80205750(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80205DF0 (gr/grvenom.c:1389)
-    pub extern "C" fn grVenom_80205DF0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80206B68 (gr/grvenom.c:1827)
-    pub extern "C" fn grVenom_80206B68(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80206BBC (gr/grvenom.c:1845)
-    pub extern "C" fn grVenom_80206BBC(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grVenom_80206D74 (gr/grvenom.c:1921)
-    pub extern "C" fn grVenom_80206D74(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+pub use crate::tu::grvenom::grVenom_80203EA4_fp as grVenom_80203EA4;
+pub use crate::tu::grvenom::grVenom_80203FC4_fp as grVenom_80203FC4;
+pub use crate::tu::grvenom::grVenom_802040A4_fp as grVenom_802040A4;
+pub use crate::tu::grvenom::grVenom_8020427C_fp as grVenom_8020427C;
+pub use crate::tu::grvenom::grVenom_80204544_fp as grVenom_80204544;
+pub use crate::tu::grvenom::grVenom_80204CE4_fp as grVenom_80204CE4;
+pub use crate::tu::grvenom::grVenom_80204EF4_fp as grVenom_80204EF4;
+pub use crate::tu::grvenom::grVenom_802052D8_fp as grVenom_802052D8;
+pub use crate::tu::grvenom::grVenom_80205750_fp as grVenom_80205750;
+pub use crate::tu::grvenom::grVenom_80205DF0_fp as grVenom_80205DF0;
+pub use crate::tu::grvenom::grVenom_80206B68_fp as grVenom_80206B68;
+pub use crate::tu::grvenom::grVenom_80206BBC_fp as grVenom_80206BBC;
+pub use crate::tu::grvenom::grVenom_80206D74_fp as grVenom_80206D74;
+
+use super::*;
+
 }
 
 /// src/melee/gr/gryorster.c
 pub mod gryorster {
-    use super::*;
-    /// grYorster_80201FA0 (gr/gryorster.c:76)
-    pub extern "C" fn grYorster_80201FA0(a0: i32) {  }
-    /// grYorster_8020200C (gr/gryorster.c:93)
-    pub extern "C" fn grYorster_8020200C() {  }
-    /// grYorster_80202034 (gr/gryorster.c:103)
-    pub extern "C" fn grYorster_80202034() -> i32 { 0 }
-    /// grYorster_80202150 (gr/gryorster.c:129)
-    pub extern "C" fn grYorster_80202150(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grYorster_80202158 (gr/gryorster.c:134)
-    pub extern "C" fn grYorster_80202158(a0: *mut HSD_GObj) {  }
-    /// grYorster_8020215C (gr/gryorster.c:139)
-    pub extern "C" fn grYorster_8020215C(a0: *mut HSD_GObj) {  }
-    /// grYorster_8020224C (gr/gryorster.c:166)
-    pub extern "C" fn grYorster_8020224C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grYorster_80202B5C (gr/gryorster.c:426)
-    pub extern "C" fn grYorster_80202B5C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grYorster_80202B64 (gr/gryorster.c:431)
-    pub extern "C" fn grYorster_80202B64(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::gryorster::grYorster_80201FA0_fp as grYorster_80201FA0;
+pub use crate::tu::gryorster::grYorster_8020200C_fp as grYorster_8020200C;
+pub use crate::tu::gryorster::grYorster_80202034_fp as grYorster_80202034;
+pub use crate::tu::gryorster::grYorster_80202150_fp as grYorster_80202150;
+pub use crate::tu::gryorster::grYorster_80202158_fp as grYorster_80202158;
+pub use crate::tu::gryorster::grYorster_8020215C_fp as grYorster_8020215C;
+pub use crate::tu::gryorster::grYorster_8020224C_fp as grYorster_8020224C;
+pub use crate::tu::gryorster::grYorster_80202B5C_fp as grYorster_80202B5C;
+pub use crate::tu::gryorster::grYorster_80202B64_fp as grYorster_80202B64;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grzebes.c
 pub mod grzebes {
-    use super::*;
-    /// grZebes_801D8550 (gr/grzebes.c:290)
-    pub extern "C" fn grZebes_801D8550() -> i32 { 0 }
-    /// grZebes_801D8814 (gr/grzebes.c:388)
-    pub extern "C" fn grZebes_801D8814(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801D9254 (gr/grzebes.c:737)
-    pub extern "C" fn grZebes_801D9254(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801D9408 (gr/grzebes.c:786)
-    pub extern "C" fn grZebes_801D9408(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801D95B0 (gr/grzebes.c:823)
-    pub extern "C" fn grZebes_801D95B0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801D99D8 (gr/grzebes.c:926)
-    pub extern "C" fn grZebes_801D99D8(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801D9F7C (gr/grzebes.c:1115)
-    pub extern "C" fn grZebes_801D9F7C(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebes_801DCCB8 (gr/grzebes.c:2460)
-    pub extern "C" fn grZebes_801DCCB8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grZebes_801DCCC0 (gr/grzebes.c:2465)
-    pub extern "C" fn grZebes_801DCCC0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grzebes::grZebes_801D8550_fp as grZebes_801D8550;
+pub use crate::tu::grzebes::grZebes_801D8814_fp as grZebes_801D8814;
+pub use crate::tu::grzebes::grZebes_801D9254_fp as grZebes_801D9254;
+pub use crate::tu::grzebes::grZebes_801D9408_fp as grZebes_801D9408;
+pub use crate::tu::grzebes::grZebes_801D95B0_fp as grZebes_801D95B0;
+pub use crate::tu::grzebes::grZebes_801D99D8_fp as grZebes_801D99D8;
+pub use crate::tu::grzebes::grZebes_801D9F7C_fp as grZebes_801D9F7C;
+pub use crate::tu::grzebes::grZebes_801DCCB8_fp as grZebes_801DCCB8;
+pub use crate::tu::grzebes::grZebes_801DCCC0_fp as grZebes_801DCCC0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grzebesroute.c
 pub mod grzebesroute {
-    use super::*;
-    /// grZebesRoute_8020B258 (gr/grzebesroute.c:117)
-    pub extern "C" fn grZebesRoute_8020B258() -> i32 { 0 }
-    /// grZebesRoute_8020B374 (gr/grzebesroute.c:142)
-    pub extern "C" fn grZebesRoute_8020B374(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebesRoute_8020B3B0 (gr/grzebesroute.c:156)
-    pub extern "C" fn grZebesRoute_8020B3B0(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebesRoute_8020B424 (gr/grzebesroute.c:175)
-    pub extern "C" fn grZebesRoute_8020B424(a0: *mut HSD_GObj) -> i32 { 0 }
-    /// grZebesRoute_8020B854 (gr/grzebesroute.c:302)
-    pub extern "C" fn grZebesRoute_8020B854(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
-    /// grZebesRoute_8020B85C (gr/grzebesroute.c:307)
-    pub extern "C" fn grZebesRoute_8020B85C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+pub use crate::tu::grzebesroute::grZebesRoute_8020B258_fp as grZebesRoute_8020B258;
+pub use crate::tu::grzebesroute::grZebesRoute_8020B374_fp as grZebesRoute_8020B374;
+pub use crate::tu::grzebesroute::grZebesRoute_8020B3B0_fp as grZebesRoute_8020B3B0;
+pub use crate::tu::grzebesroute::grZebesRoute_8020B424_fp as grZebesRoute_8020B424;
+pub use crate::tu::grzebesroute::grZebesRoute_8020B854_fp as grZebesRoute_8020B854;
+pub use crate::tu::grzebesroute::grZebesRoute_8020B85C_fp as grZebesRoute_8020B85C;
+
+use super::*;
+
 }
 
 /// Number of functions in this module.

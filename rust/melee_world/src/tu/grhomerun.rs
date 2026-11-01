@@ -15,16 +15,17 @@
 //! The constant-return and empty callbacks that `gr/trivial.rs` already holds are re-exported.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::grhomerun::{
-    grHomeRun_8021C824, grHomeRun_8021CB10, grHomeRun_8021D678, grHomeRun_8021DEE0, grHomeRun_8021DF48, grHomeRun_8021E064,
-    grHomeRun_8021E0CC, grHomeRun_8021E1E8, grHomeRun_8021E250, grHomeRun_8021E36C, grHomeRun_8021E3D4, grHomeRun_8021E4F0,
-    grHomeRun_8021EEB4,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -942,3 +943,47 @@ pub unsafe extern "C" fn grHomeRun_8021EF10() -> f32 {
     melee_core::ct!("grHomeRun_8021EF10");
     5.0 * ext::Ground_801C0498()
 }
+
+// ---- folded from grhomerun.rs (consolidation steps 21/22) ----
+/// grHomeRun_8021C800_fp (gr/grhomerun.c:113)
+    pub unsafe extern "C" fn grHomeRun_8021C800_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grhomerun.rs (consolidation steps 21/22) ----
+/// grHomeRun_8021C824 (gr/grhomerun.c:118)
+    pub extern "C" fn grHomeRun_8021C824() -> i32 { 0 }
+
+/// grHomeRun_8021CB10 (gr/grhomerun.c:164)
+    pub extern "C" fn grHomeRun_8021CB10(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021D678 (gr/grhomerun.c:297)
+    pub extern "C" fn grHomeRun_8021D678(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021DEE0 (gr/grhomerun.c:460)
+    pub extern "C" fn grHomeRun_8021DEE0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021DF48 (gr/grhomerun.c:477)
+    pub extern "C" fn grHomeRun_8021DF48(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E064 (gr/grhomerun.c:524)
+    pub extern "C" fn grHomeRun_8021E064(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E0CC (gr/grhomerun.c:541)
+    pub extern "C" fn grHomeRun_8021E0CC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E1E8 (gr/grhomerun.c:588)
+    pub extern "C" fn grHomeRun_8021E1E8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E250 (gr/grhomerun.c:605)
+    pub extern "C" fn grHomeRun_8021E250(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E36C (gr/grhomerun.c:652)
+    pub extern "C" fn grHomeRun_8021E36C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E3D4 (gr/grhomerun.c:669)
+    pub extern "C" fn grHomeRun_8021E3D4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021E4F0 (gr/grhomerun.c:716)
+    pub extern "C" fn grHomeRun_8021E4F0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHomeRun_8021EEB4 (gr/grhomerun.c:961)
+    pub extern "C" fn grHomeRun_8021EEB4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

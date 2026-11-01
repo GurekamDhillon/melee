@@ -10,6 +10,221 @@
 //! pointers, so the port reads `tiers[1].threshold` and the oracle compiles the C with the same substitution.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::Mtx;
+#[allow(unused_imports)]
+use crate::layout::SpawnItem;
+#[allow(unused_imports)]
+use crate::layout::itFoodsAttributes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Unk4;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c as it_802e657c_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI as M_PI_itkinds10;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2 as M_PI_2_itkinds10;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU as M_TAU_itkinds10;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -569,4 +784,107 @@ pub unsafe extern "C" fn it_802E6A74(gobj: *mut HSD_GObj) {
 pub unsafe extern "C" fn it_2E5A_Logic115_EvtUnk(item_gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_2E5A_Logic115_EvtUnk");
     ext::it_8026B894(item_gobj, ref_gobj);
+}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_802E657C` (it_2E5A.c): life timer; in mode `x8 == 1` count `x10` down (then set
+/// `x18.b0`) and `x14` down (then `it_80275444` + `x18.b1` unless `xDCD_flag.b5`).
+pub fn it_802e657c(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802e657c");
+    let timer = ip.xD44_lifeTimer;
+    if timer <= 0.0 {
+        return true;
+    }
+    ip.xD44_lifeTimer = timer - 1.0;
+    unsafe {
+        if ip.xDD4_itemVar.it_2E5A.x8 == 1 {
+            let t0 = ip.xDD4_itemVar.it_2E5A.x10;
+            if t0 <= 0.0 {
+                if ip.xDD4_itemVar.it_2E5A.x18.anon_0.b0() == 0 {
+                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b0(1);
+                }
+            } else {
+                ip.xDD4_itemVar.it_2E5A.x10 = t0 - 1.0;
+            }
+            let t1 = ip.xDD4_itemVar.it_2E5A.x14;
+            if t1 <= 0.0 {
+                if ip.xDCD_flag.anon_0.b5() != 1 {
+                    it_80275444(ip);
+                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b1(1);
+                }
+            } else {
+                ip.xDD4_itemVar.it_2E5A.x14 = t1 - 1.0;
+            }
+        }
+    }
+    false
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- it_2E5A.c -------------------------------------------------------------------------
+
+/// `it_802E628C`: random launch velocity; extra x push when `arg8` is in [pi/3, 2pi/3] or
+/// [4pi/3, 5pi/3] (bounds in f32 from `(f32)M_PI_itkinds10`). 1 fused site.
+/// # Safety
+/// The item's special attributes are an `it_2E5A_Attrs`.
+pub unsafe fn it_802e628c(rand: &mut HsdRand, item: &mut Item, arg8: f32, arg9: f32) {
+    melee_core::ct!("it_802e628c");
+    let attr = &*((*item.xC4_article_data).x4_specialAttributes as *const it_2E5A_Attrs);
+    let t31 = rand.randf();
+    let t1 = (arg8 as f64 - M_PI_2_itkinds10) as f32;
+    let pi = M_PI_itkinds10 as f32;
+    let mut v = t31 * attr.xC;
+    v *= item.facing_dir;
+    if (arg8 >= pi / 3.0 && arg8 <= 2.0 * (pi / 3.0))
+        || (arg8 >= 4.0 * (pi / 3.0) && arg8 <= 5.0 * (pi / 3.0))
+    {
+        v = fmadds(attr.x10, cosf(t1), v);
+    }
+    item.x40_vel.x = v;
+    let mut t0 = t31 * attr.x20;
+    t0 += arg9;
+    item.x40_vel.y = attr.x18 + t0;
+    item.x40_vel.z = 0.0;
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802E5EF4` (it_2E5A.c): `it_2E5A.x0`.
+pub fn it_802e5ef4(ip: &Item) -> i32 {
+    melee_core::ct!("it_802e5ef4");
+    unsafe { ip.xDD4_itemVar.it_2E5A.x0 }
+}
+
+// ---- folded from itkinds7.rs (consolidation steps 21/22) ----
+/// `it_802E614C` (it_2E5A.c, static inline): fill a `SpawnItem` for kind `It_Kind_Unk4` at `pos`.
+pub fn it_802e614c(parent_gobj1: *mut HSD_GObj, parent_gobj2: *mut HSD_GObj, spawn: &mut SpawnItem,
+    pos: &GcVec, vel: &GcVec) {
+    melee_core::ct!("it_802e614c");
+    spawn.kind = It_Kind_Unk4;
+    spawn.prev_pos = *pos;
+    spawn.pos = spawn.prev_pos;
+    spawn.x3C_damage = 0;
+    spawn.vel = *vel;
+    spawn.x0_parent_gobj = parent_gobj1;
+    spawn.x4_parent_gobj2 = parent_gobj2;
+    // SAFETY: plain-data union member.
+    unsafe { spawn.x44_flag.anon_0.set_b0(1) };
+    spawn.x40 = 0;
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_802E61C4` (it_2E5A.c): `arg1 * x2C[arg2]` scaled by `1 + 0.01 * x24 * r`, at least 1.
+/// # Safety
+/// The item's special attributes are an `it_2E5A_Attrs`, `arg2` in 0..4; the products fit `s32`
+/// (the C float-to-int conversion is undefined otherwise).
+pub unsafe fn it_802e61c4(rand: &mut HsdRand, ip: &Item, arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("it_802e61c4");
+    let attr = &*((*ip.xC4_article_data).x4_specialAttributes as *const it_2E5A_Attrs);
+    let mut v = (arg1 as f32 * attr.x2C[arg2 as usize]) as i32;
+    let r = rand.randf();
+    let t = attr.x24 * r;
+    v = (v as f32 * fmadds(0.01, t, 1.0)) as i32;
+    if v < 1 {
+        v = 1;
+    }
+    v
 }

@@ -9,6 +9,9 @@
 //! character through `gm_MexVanillaKind`.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use crate::tu_util::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -692,4 +695,17 @@ pub unsafe fn gm_80183218() {
     melee_core::ct!("gm_80183218");
     lbl_804D65E8 = 0;
     ext::HSD_GObj_SetupProc(ext::GObj_Create(0xF, 0x11, 0), Some(fn_80182F40), 0x15);
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_181A.c `fn_80181E18_ComputeRemaining100`.
+pub fn fn_80181E18_ComputeRemaining100(x4: &i32, count: i32) -> i32 {
+    melee_core::ct!("fn_80181E18_ComputeRemaining100");
+    0x64i32.wrapping_sub(count.wrapping_add(*x4))
+}
+
+/// gm_181A.c `gm_80182578_GetIndexFromPointer`.
+pub fn gm_80182578_GetIndexFromPointer(idx_ptr: &i32) -> i32 {
+    melee_core::ct!("gm_80182578_GetIndexFromPointer");
+    *idx_ptr
 }

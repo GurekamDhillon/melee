@@ -1,3 +1,4 @@
+
 //! Port of `src/sysdolphin/baselib/id.c`: the id -> object hash table (101 buckets, chained).
 //!
 //! Native shape: `IdTable<T>` owns its buckets; each bucket is a `Vec` whose **last** element
@@ -27,11 +28,6 @@ impl<T> melee_core::gc::GcLayout for IdTable<T> {
     const GC_ALIGN: u32 = <melee_types::HSD_IDTable as melee_core::gc::GcLayout>::GC_ALIGN;
     const GC_FIELDS: &'static [melee_core::gc::GcField] =
         <melee_types::HSD_IDTable as melee_core::gc::GcLayout>::GC_FIELDS;
-}
-
-#[inline]
-fn hash(id: IdKey) -> usize {
-    (id % 0x65) as usize
 }
 
 impl<T> IdTable<T> {
@@ -67,3 +63,5 @@ impl<T> IdTable<T> {
         self.buckets[hash(id)].iter().rev().find(|e| e.0 == id).map(|e| &e.1)
     }
 }
+
+pub use crate::tu::id::hash_fp as hash;

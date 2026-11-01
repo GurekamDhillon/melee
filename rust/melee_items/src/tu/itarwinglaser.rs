@@ -9,6 +9,17 @@
 //! The state-table predicates are stored through the same `(HSD_GObjPredicate) (Event)` cast the C uses.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::itfwd::it_maril_unk_motion2_anim;
+#[allow(unused_imports)]
+use crate::itfwd::it_zgshell_logic11_reflected;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -588,5 +599,20 @@ pub unsafe extern "C" fn it_802E85F4(gobj: *mut Item_GObj) -> bool {
 /// 2E8784
 pub unsafe extern "C" fn it_802E8784(_gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("it_802E8784");
+    true
+}
+
+// ---- folded from itfwd6.rs (consolidation steps 21/22) ----
+// ---- bodies that are only `return true;` / `return 1;` / `return;` (state-table callbacks)
+
+/// `it_802E8418` (src/melee/it/kinds/itarwinglaser.c): `return true;`.
+pub fn it_802e8418(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802e8418");
+    true
+}
+
+/// `it_802E8784` (src/melee/it/kinds/itarwinglaser.c): `return true;`.
+pub fn it_802e8784(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802e8784");
     true
 }

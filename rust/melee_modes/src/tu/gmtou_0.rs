@@ -12,6 +12,15 @@
 //! big-endian in the shipping build).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_JObj as HSD_JObj_gm_ptr;
+#[allow(unused_imports)]
+use mt::TmData as TmData_gm_ptr;
 use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null_mut};
 
@@ -2577,4 +2586,42 @@ pub unsafe extern "C" fn gm_Scene_TouSetup_OnExit(_arg: *mut c_void) {
     (*gm_GetTournamentData()).cur_option = 0x13;
     (*gm_GetTournamentData()).x2C = 1;
     (*gm_GetTournamentData()).x31 = lbl_804799B8.x0;
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmtou_0.c `fn_801953C8_GetPreviousPosition_fp`.
+pub fn fn_801953C8_GetPreviousPosition_fp(offset: i32, position: i32) -> i32 {
+    melee_core::ct!("fn_801953C8_GetPreviousPosition_fp");
+    position.wrapping_sub(offset)
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmtou_0.c `fn_80191240_save_root_jobj`.
+pub fn fn_80191240_save_root_jobj(jobj: *mut HSD_JObj_gm_ptr, jobj_copy: &mut *mut HSD_JObj_gm_ptr) {
+    melee_core::ct!("fn_80191240_save_root_jobj");
+    *jobj_copy = jobj;
+}
+
+/// gmtou_0.c `fn_80191FD4_is_selected_fp` (`hud` is an `enum CSSIconHud`).
+pub fn fn_80191FD4_is_selected_fp(hud: i32, slot: i32, tm: &TmData_gm_ptr) -> bool {
+    melee_core::ct!("fn_80191FD4_is_selected_fp");
+    tm.x37[slot as usize].x3 as u32 == hud as u32
+}
+
+/// gmtou_0.c `fn_80195CCC_IsUniqueEntry_fp`.
+pub fn fn_80195CCC_IsUniqueEntry_fp(tm: &TmData_gm_ptr, count: i32, slot: i32, selected: i32) -> i32 {
+    melee_core::ct!("fn_80195CCC_IsUniqueEntry_fp");
+    for i in 0..count.max(0) {
+        if i != slot && selected == tm.x37[i as usize].x9 as i32 {
+            return 0;
+        }
+    }
+    1
+}
+
+// ---- folded from gm_r6.rs (consolidation steps 21/22) ----
+/// gmtou_0.c `fn_80194658_get_value` (static inline): `*++ptr`.
+pub fn fn_80194658_get_value(ptr: &[i32]) -> i32 {
+    melee_core::ct!("fn_80194658_get_value");
+    ptr[1]
 }

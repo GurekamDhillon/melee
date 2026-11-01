@@ -29,11 +29,11 @@ pub struct Callees {
     pub lb_800115f4: unsafe fn(),
 }
 
-unsafe fn todo_zako(_p0: *mut core::ffi::c_void) { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_p0 as _); } }
-unsafe fn todo_umc(_p0: *mut HSD_GObj) { unsafe { let _ = crate::tu::ground::Ground_UpdateMapColl(_p0 as _); } }
-unsafe fn todo_imc(_p0: *mut HSD_JObj, _p1: i32) { unsafe { let _ = crate::tu::ground::Ground_InitMapColl(_p0 as _, _p1 as _); } }
-unsafe fn todo_anim(_p0: *mut HSD_GObj, _p1: i32, _p2: i32) { unsafe { let _ = crate::tu::granime::grAnime_801C8138(_p0 as _, _p1 as _, _p2 as _); } }
-unsafe fn todo_lb() { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } }
+pub(crate) unsafe fn todo_zako(_p0: *mut core::ffi::c_void) { unsafe { let _ = crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_p0 as _); } }
+pub(crate) unsafe fn todo_umc(_p0: *mut HSD_GObj) { unsafe { let _ = crate::tu::ground::Ground_UpdateMapColl(_p0 as _); } }
+pub(crate) unsafe fn todo_imc(_p0: *mut HSD_JObj, _p1: i32) { unsafe { let _ = crate::tu::ground::Ground_InitMapColl(_p0 as _, _p1 as _); } }
+pub(crate) unsafe fn todo_anim(_p0: *mut HSD_GObj, _p1: i32, _p2: i32) { unsafe { let _ = crate::tu::granime::grAnime_801C8138(_p0 as _, _p1 as _, _p2 as _); } }
+pub(crate) unsafe fn todo_lb() { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } }
 
 /// The callee table the forwarders call through (C callbacks carry no context).
 pub static CALLEES: RwLock<Callees> = RwLock::new(Callees {
@@ -41,764 +41,668 @@ pub static CALLEES: RwLock<Callees> = RwLock::new(Callees {
     ground_init_map_coll: todo_imc, granime_801c8138: todo_anim, lb_800115f4: todo_lb,
 });
 
-struct C(Callees);
+pub(crate) struct C(Callees);
 impl C {
-    unsafe fn grzakogenerator_801cae04(&self, a: *mut core::ffi::c_void) { (self.0.grzakogenerator_801cae04)(a) }
-    unsafe fn ground_update_map_coll(&self, g: *mut HSD_GObj) { (self.0.ground_update_map_coll)(g) }
-    unsafe fn ground_init_map_coll(&self, j: *mut HSD_JObj, m: i32) { (self.0.ground_init_map_coll)(j, m) }
-    unsafe fn granime_801c8138(&self, g: *mut HSD_GObj, m: i32, b: i32) { (self.0.granime_801c8138)(g, m, b) }
-    unsafe fn lb_800115f4(&self) { (self.0.lb_800115f4)() }
+    pub(crate) unsafe fn grzakogenerator_801cae04(&self, a: *mut core::ffi::c_void) { (self.0.grzakogenerator_801cae04)(a) }
+    pub(crate) unsafe fn ground_update_map_coll(&self, g: *mut HSD_GObj) { (self.0.ground_update_map_coll)(g) }
+    pub(crate) unsafe fn ground_init_map_coll(&self, j: *mut HSD_JObj, m: i32) { (self.0.ground_init_map_coll)(j, m) }
+    pub(crate) unsafe fn granime_801c8138(&self, g: *mut HSD_GObj, m: i32, b: i32) { (self.0.granime_801c8138)(g, m, b) }
+    pub(crate) unsafe fn lb_800115f4(&self) { (self.0.lb_800115f4)() }
 }
-fn c() -> C { C(*CALLEES.read().unwrap_or_else(|e| e.into_inner())) }
+pub(crate) fn c() -> C { C(*CALLEES.read().unwrap_or_else(|e| e.into_inner())) }
 
 /// src/melee/gr/grbattle.c
 pub mod grbattle {
-    use super::*;
-    /// grBattle_OnStart (gr/grbattle.c:166)
-    pub unsafe extern "C" fn grBattle_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// grBattle_GObj6_Callback0 (gr/grbattle.c:239)
-    pub unsafe extern "C" fn grBattle_GObj6_Callback0(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grbattle::grBattle_GObj6_Callback0_fp as grBattle_GObj6_Callback0;
+pub use crate::tu::grbattle::grBattle_OnStart_fp as grBattle_OnStart;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grbigblue.c
 pub mod grbigblue {
-    use super::*;
-    /// grBigBlue_801E59CC (gr/grbigblue.c:279)
-    pub unsafe extern "C" fn grBigBlue_801E59CC() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grbigblue::grBigBlue_801E59CC_fp as grBigBlue_801E59CC;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grcastle.c
 pub mod grcastle {
-    use super::*;
-    /// grCastle_801CD4A4 (gr/grcastle.c:333)
-    pub unsafe extern "C" fn grCastle_801CD4A4() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grcastle::grCastle_801CD4A4_fp as grCastle_801CD4A4;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grcorneria.c
 pub mod grcorneria {
-    use super::*;
-    /// grCorneria_801DD508 (gr/grcorneria.c:548)
-    pub unsafe extern "C" fn grCorneria_801DD508() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj6_OnInit (gr/grcorneria.c:1516)
-    pub unsafe extern "C" fn stageGObj6_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grcorneria::grCorneria_801DD508_fp as grCorneria_801DD508;
+pub use crate::tu::grcorneria::stageGObj6_OnInit_fp as stageGObj6_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure1.c
 pub mod grfigure1 {
-    use super::*;
-    /// grFigure1_OnStart (gr/grfigure1.c:81)
-    pub unsafe extern "C" fn grFigure1_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grfigure1.c:107)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grfigure1.c:142)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure1::grFigure1_OnStart_fp as grFigure1_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure2.c
 pub mod grfigure2 {
-    use super::*;
-    /// grFigure2_OnStart (gr/grfigure2.c:76)
-    pub unsafe extern "C" fn grFigure2_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grfigure2.c:101)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grfigure2.c:134)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure2::grFigure2_OnStart_fp as grFigure2_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2 as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigure3.c
 pub mod grfigure3 {
-    use super::*;
-    /// grFigure3_OnStart (gr/grfigure3.c:78)
-    pub unsafe extern "C" fn grFigure3_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grfigure3.c:104)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grfigure3.c:137)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure3::grFigure3_OnStart_fp as grFigure3_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22 as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfigureget.c
 pub mod grfigureget {
-    use super::*;
-    /// grFigureGet_OnStart (gr/grfigureget.c:113)
-    pub unsafe extern "C" fn grFigureGet_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grfigureget.c:139)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigureget::grFigureGet_OnStart_fp as grFigureGet_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grflatzone.c
 pub mod grflatzone {
-    use super::*;
-    /// stageGObj0_OnInit (gr/grflatzone.c:176)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grfourside.c
 pub mod grfourside {
-    use super::*;
-    /// grFourside_801F2DA4 (gr/grfourside.c:154)
-    pub unsafe extern "C" fn grFourside_801F2DA4() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grfourside.c:181)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grfourside.c:195)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfourside::grFourside_801F2DA4_fp as grFourside_801F2DA4;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222 as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgarden.c
 pub mod grgarden {
-    use super::*;
-    /// grGarden_80202C4C (gr/grgarden.c:100)
-    pub unsafe extern "C" fn grGarden_80202C4C() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grgarden.c:126)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grgarden::grGarden_80202C4C_fp as grGarden_80202C4C;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgreatbay.c
 pub mod grgreatbay {
-    use super::*;
-    /// grGreatBay_801F42D4 (gr/grgreatbay.c:221)
-    pub unsafe extern "C" fn grGreatBay_801F42D4() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grgreatbay.c:263)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grgreatbay::grGreatBay_801F42D4_fp as grGreatBay_801F42D4;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grgreens.c
 pub mod grgreens {
-    use super::*;
-    /// grGreens_802134F8 (gr/grgreens.c:220)
-    pub unsafe extern "C" fn grGreens_802134F8() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj1_OnInit (gr/grgreens.c:317)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj3_OnInit (gr/grgreens.c:331)
-    pub unsafe extern "C" fn stageGObj3_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grgreens::grGreens_802134F8_fp as grGreens_802134F8;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp as stageGObj1_OnInit;
+pub use crate::tu::grgreens::stageGObj3_OnInit_fp as stageGObj3_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grheal.c
 pub mod grheal {
-    use super::*;
-    /// grHeal_8021EFC0 (gr/grheal.c:157)
-    pub unsafe extern "C" fn grHeal_8021EFC0() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grheal::grHeal_8021EFC0_fp as grHeal_8021EFC0;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grhomerun.c
 pub mod grhomerun {
-    use super::*;
-    /// grHomeRun_8021C800 (gr/grhomerun.c:113)
-    pub unsafe extern "C" fn grHomeRun_8021C800() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grhomerun::grHomeRun_8021C800_fp as grHomeRun_8021C800;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grinishie1.c
 pub mod grinishie1 {
-    use super::*;
-    /// grInishie1_801FA988 (gr/grinishie1.c:246)
-    pub unsafe extern "C" fn grInishie1_801FA988() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grinishie1.c:291)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grinishie1::grInishie1_801FA988_fp as grInishie1_801FA988;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grinishie2.c
 pub mod grinishie2 {
-    use super::*;
-    /// grInishie2_801FCCB0 (gr/grinishie2.c:220)
-    pub unsafe extern "C" fn grInishie2_801FCCB0() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grinishie2.c:263)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grinishie2::grInishie2_801FCCB0_fp as grInishie2_801FCCB0;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grizumi.c
 pub mod grizumi {
-    use super::*;
-    /// grIzumi_OnStart (gr/grizumi.c:226)
-    pub unsafe extern "C" fn grIzumi_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grizumi::grIzumi_OnStart_fp as grIzumi_OnStart;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grkraid.c
 pub mod grkraid {
-    use super::*;
-    /// grKraid_OnStart (gr/grkraid.c:85)
-    pub unsafe extern "C" fn grKraid_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grkraid.c:111)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grkraid::grKraid_OnStart_fp as grKraid_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grlast.c
 pub mod grlast {
-    use super::*;
-    /// grLast_OnStart (gr/grlast.c:251)
-    pub unsafe extern "C" fn grLast_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grlast.c:289)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grlast.c:319)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grlast::grLast_OnStart_fp as grLast_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222 as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grmutecity.c
 pub mod grmutecity {
-    use super::*;
-    /// grMuteCity_801EFCE0 (gr/grmutecity.c:398)
-    pub unsafe extern "C" fn grMuteCity_801EFCE0() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj36_37_OnInit (gr/grmutecity.c:601)
-    pub unsafe extern "C" fn stageGObj36_37_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grmutecity::grMuteCity_801EFCE0_fp as grMuteCity_801EFCE0;
+pub use crate::tu::grmutecity::stageGObj36_37_OnInit_fp as stageGObj36_37_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldkongo.c
 pub mod groldkongo {
-    use super::*;
-    /// stageGObj0_OnInit (gr/groldkongo.c:189)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldpupupu.c
 pub mod groldpupupu {
-    use super::*;
-    /// grOldPupupu_80210888 (gr/groldpupupu.c:164)
-    pub unsafe extern "C" fn grOldPupupu_80210888() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/groldpupupu.c:211)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::groldpupupu::grOldPupupu_80210888_fp as grOldPupupu_80210888;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/groldyoshi.c
 pub mod groldyoshi {
-    use super::*;
-    /// grOldYoshi_8020E828 (gr/groldyoshi.c:88)
-    pub unsafe extern "C" fn grOldYoshi_8020E828() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/groldyoshi.c:115)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::groldyoshi::grOldYoshi_8020E828_fp as grOldYoshi_8020E828;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/gronett.c
 pub mod gronett {
-    use super::*;
-    /// grOnett_801E37C8 (gr/gronett.c:138)
-    pub unsafe extern "C" fn grOnett_801E37C8() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::gronett::grOnett_801E37C8_fp as grOnett_801E37C8;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grpstadium.c
 pub mod grpstadium {
-    use super::*;
-    /// grStadium_OnStart (gr/grpstadium.c:193)
-    pub unsafe extern "C" fn grStadium_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj5_GObjProc (gr/grpstadium.c:371)
-    pub unsafe extern "C" fn stageGObj5_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
-    /// stageGObj4_GObjProc (gr/grpstadium.c:399)
-    pub unsafe extern "C" fn stageGObj4_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
-    /// stageGObj6_GObjProc (gr/grpstadium.c:433)
-    pub unsafe extern "C" fn stageGObj6_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
-    /// stageGObj3_GObjProc (gr/grpstadium.c:504)
-    pub unsafe extern "C" fn stageGObj3_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
-    /// stageGObj7_8_OnInit (gr/grpstadium.c:603)
-    pub unsafe extern "C" fn stageGObj7_8_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grpstadium::grStadium_OnStart_fp as grStadium_OnStart;
+pub use crate::tu::grheal::stageGObj3_GObjProc_fp as stageGObj3_GObjProc;
+pub use crate::tu::grheal::stageGObj4_GObjProc_fp as stageGObj4_GObjProc;
+pub use crate::tu::gricemt::stageGObj5_GObjProc_fp as stageGObj5_GObjProc;
+pub use crate::tu::gricemt::stageGObj6_GObjProc_fp as stageGObj6_GObjProc;
+pub use crate::tu::grpstadium::stageGObj7_8_OnInit_fp as stageGObj7_8_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grpura.c
 pub mod grpura {
-    use super::*;
-    /// grPura_80211DDC (gr/grpura.c:321)
-    pub unsafe extern "C" fn grPura_80211DDC() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grpura::grPura_80211DDC_fp as grPura_80211DDC;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grrcruise.c
 pub mod grrcruise {
-    use super::*;
-    /// grRCruise_801FF29C (gr/grrcruise.c:169)
-    pub unsafe extern "C" fn grRCruise_801FF29C() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grrcruise::grRCruise_801FF29C;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grshrine.c
 pub mod grshrine {
-    use super::*;
-    /// grShrine_UnkStage0_OnStart (gr/grshrine.c:92)
-    pub unsafe extern "C" fn grShrine_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grshrine.c:118)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grshrine::grShrine_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grshrineroute.c
 pub mod grshrineroute {
-    use super::*;
-    /// stageGObj0_OnInit (gr/grshrineroute.c:247)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_3_OnInit (gr/grshrineroute.c:1115)
-    pub unsafe extern "C" fn stageGObj1_3_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grshrineroute::stageGObj1_3_OnInit_fp as stageGObj1_3_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grstory.c
 pub mod grstory {
-    use super::*;
-    /// grStory_UnkStage0_OnStart (gr/grstory.c:97)
-    pub unsafe extern "C" fn grStory_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+pub use crate::tu::grstory::grStory_UnkStage0_OnStart;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtcaptain.c
 pub mod grtcaptain {
-    use super::*;
-    /// grTCaptain_OnStart (gr/grtcaptain.c:86)
-    pub unsafe extern "C" fn grTCaptain_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtcaptain.c:112)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtcaptain.c:126)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtcaptain.c:136)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtcaptain.c:143)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtcaptain.c:153)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtcaptain::grTCaptain_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtclink.c
 pub mod grtclink {
-    use super::*;
-    /// grTclink_UnkStage0_OnStart (gr/grtclink.c:67)
-    pub unsafe extern "C" fn grTclink_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtclink.c:108)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtclink.c:118)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtclink.c:125)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtclink.c:135)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtclink::grTclink_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtdonkey.c
 pub mod grtdonkey {
-    use super::*;
-    /// grTdonkey_UnkStage0_OnStart (gr/grtdonkey.c:81)
-    pub unsafe extern "C" fn grTdonkey_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtdonkey.c:106)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtdonkey.c:120)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtdonkey.c:130)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtdonkey.c:137)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtdonkey.c:147)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtdonkey::grTdonkey_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtdrmario.c
 pub mod grtdrmario {
-    use super::*;
-    /// grTdrmario_UnkStage0_OnStart (gr/grtdrmario.c:84)
-    pub unsafe extern "C" fn grTdrmario_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtdrmario.c:110)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtdrmario.c:124)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtdrmario.c:134)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtdrmario.c:141)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtdrmario.c:151)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtdrmario::grTdrmario_UnkStage0_OnStart_fp as grTdrmario_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtemblem.c
 pub mod grtemblem {
-    use super::*;
-    /// grTemblem_UnkStage0_OnStart (gr/grtemblem.c:83)
-    pub unsafe extern "C" fn grTemblem_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtemblem.c:109)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtemblem.c:123)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtemblem.c:133)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtemblem.c:140)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtemblem.c:150)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtemblem::grTemblem_UnkStage0_OnStart_fp as grTemblem_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtest.c
 pub mod grtest {
-    use super::*;
-    /// grTest_UnkStage0_OnStart (gr/grtest.c:80)
-    pub unsafe extern "C" fn grTest_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtest.c:106)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtest.c:120)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_X8Callback (gr/grtest.c:180)
-    pub unsafe extern "C" fn stageGObj2_X8Callback(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtest.c:185)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grtest::grTest_UnkStage0_OnStart_fp as grTest_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222 as stageGObj1_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222 as stageGObj2_OnInit;
+pub use crate::tu::grtest::stageGObj2_X8Callback_fp as stageGObj2_X8Callback;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtfalco.c
 pub mod grtfalco {
-    use super::*;
-    /// grTfalco_UnkStage0_OnStart (gr/grtfalco.c:97)
-    pub unsafe extern "C" fn grTfalco_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtfalco.c:138)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtfalco.c:148)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtfalco.c:155)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtfalco.c:165)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtfalco::grTfalco_UnkStage0_OnStart_fp as grTfalco_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtfox.c
 pub mod grtfox {
-    use super::*;
-    /// grTFox_UnkStage0_OnStart (gr/grtfox.c:75)
-    pub unsafe extern "C" fn grTFox_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtfox.c:101)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtfox.c:115)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtfox.c:125)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtfox.c:132)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtfox.c:142)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtfox::grTFox_UnkStage0_OnStart_fp as grTFox_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtgamewatch.c
 pub mod grtgamewatch {
-    use super::*;
-    /// grTgamewatch_UnkStage0_OnStart (gr/grtgamewatch.c:57)
-    pub unsafe extern "C" fn grTgamewatch_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtgamewatch.c:104)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtgamewatch.c:114)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtgamewatch.c:124)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtgamewatch.c:134)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtgamewatch::grTgamewatch_UnkStage0_OnStart_fp as grTgamewatch_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtganon.c
 pub mod grtganon {
-    use super::*;
-    /// grTganon_UnkStage0_OnStart (gr/grtganon.c:67)
-    pub unsafe extern "C" fn grTganon_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtganon.c:114)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtganon.c:124)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtganon.c:134)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtganon.c:144)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtganon::grTganon_UnkStage0_OnStart_fp as grTganon_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grticeclimber.c
 pub mod grticeclimber {
-    use super::*;
-    /// grTiceclimber_UnkStage0_OnStart (gr/grticeclimber.c:92)
-    pub unsafe extern "C" fn grTiceclimber_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_GObjProc (gr/grticeclimber.c:145)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grticeclimber.c:152)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grticeclimber.c:162)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grticeclimber::grTiceclimber_UnkStage0_OnStart_fp as grTiceclimber_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222 as stageGObj2_GObjProc;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtkirby.c
 pub mod grtkirby {
-    use super::*;
-    /// grTkirby_UnkStage0_OnStart (gr/grtkirby.c:85)
-    pub unsafe extern "C" fn grTkirby_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtkirby.c:111)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtkirby.c:125)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtkirby.c:135)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtkirby.c:142)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtkirby.c:152)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtkirby::grTkirby_UnkStage0_OnStart_fp as grTkirby_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtkoopa.c
 pub mod grtkoopa {
-    use super::*;
-    /// grTkoopa_UnkStage0_OnStart (gr/grtkoopa.c:85)
-    pub unsafe extern "C" fn grTkoopa_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtkoopa.c:111)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtkoopa.c:124)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtkoopa.c:134)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtkoopa.c:141)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtkoopa.c:151)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtkoopa::grTkoopa_UnkStage0_OnStart_fp as grTkoopa_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtlink.c
 pub mod grtlink {
-    use super::*;
-    /// grTlink_UnkStage0_OnStart (gr/grtlink.c:85)
-    pub unsafe extern "C" fn grTlink_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtlink.c:111)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtlink.c:125)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtlink.c:135)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtlink.c:142)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtlink.c:152)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtlink::grTlink_UnkStage0_OnStart_fp as grTlink_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtluigi.c
 pub mod grtluigi {
-    use super::*;
-    /// grTluigi_UnkStage0_OnStart (gr/grtluigi.c:63)
-    pub unsafe extern "C" fn grTluigi_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtluigi.c:89)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtluigi.c:103)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtluigi.c:113)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtluigi.c:120)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtluigi.c:130)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtluigi::grTluigi_UnkStage0_OnStart_fp as grTluigi_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmario.c
 pub mod grtmario {
-    use super::*;
-    /// grTmario_UnkStage0_OnStart (gr/grtmario.c:91)
-    pub unsafe extern "C" fn grTmario_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtmario.c:117)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtmario.c:147)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtmario.c:154)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtmario.c:164)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtmario::grTmario_UnkStage0_OnStart_fp as grTmario_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222222222 as stageGObj2_GObjProc;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmars.c
 pub mod grtmars {
-    use super::*;
-    /// grTmars_UnkStage0_OnStart (gr/grtmars.c:79)
-    pub unsafe extern "C" fn grTmars_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtmars.c:104)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtmars.c:118)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtmars.c:128)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtmars.c:135)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtmars.c:145)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtmars::grTmars_UnkStage0_OnStart_fp as grTmars_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtmewtwo.c
 pub mod grtmewtwo {
-    use super::*;
-    /// grTmewtwo_UnkStage0_OnStart (gr/grtmewtwo.c:107)
-    pub unsafe extern "C" fn grTmewtwo_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtmewtwo.c:133)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtmewtwo.c:147)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtmewtwo.c:157)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtmewtwo.c:164)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtmewtwo.c:174)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtmewtwo::grTmewtwo_UnkStage0_OnStart_fp as grTmewtwo_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtness.c
 pub mod grtness {
-    use super::*;
-    /// grTness_UnkStage0_OnStart (gr/grtness.c:86)
-    pub unsafe extern "C" fn grTness_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtness.c:112)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtness.c:132)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtness.c:142)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtness.c:152)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtness.c:162)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtness::grTness_UnkStage0_OnStart_fp as grTness_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpeach.c
 pub mod grtpeach {
-    use super::*;
-    /// grTpeach_UnkStage0_OnStart (gr/grtpeach.c:94)
-    pub unsafe extern "C" fn grTpeach_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtpeach.c:134)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtpeach.c:144)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtpeach.c:151)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtpeach.c:161)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtpeach::grTpeach_UnkStage0_OnStart_fp as grTpeach_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpichu.c
 pub mod grtpichu {
-    use super::*;
-    /// grTpichu_UnkStage0_OnStart (gr/grtpichu.c:84)
-    pub unsafe extern "C" fn grTpichu_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtpichu.c:110)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtpichu.c:124)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtpichu.c:134)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtpichu.c:141)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtpichu.c:151)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtpichu::grTpichu_UnkStage0_OnStart_fp as grTpichu_UnkStage0_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpikachu.c
 pub mod grtpikachu {
-    use super::*;
-    /// grTpikachu_UnkStage0_OnStart (gr/grtpikachu.c:56)
-    pub unsafe extern "C" fn grTpikachu_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtpikachu.c:103)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtpikachu.c:113)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtpikachu.c:123)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtpikachu.c:133)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtpikachu::grTpikachu_UnkStage0_OnStart_fp as grTpikachu_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtpurin.c
 pub mod grtpurin {
-    use super::*;
-    /// grTpurin_UnkStage0_OnStart (gr/grtpurin.c:64)
-    pub unsafe extern "C" fn grTpurin_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj2_OnInit (gr/grtpurin.c:111)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_OnInit (gr/grtpurin.c:152)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtpurin.c:162)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtpurin::grTpurin_UnkStage0_OnStart_fp as grTpurin_UnkStage0_OnStart;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtsamus.c
 pub mod grtsamus {
-    use super::*;
-    /// grTSamus_OnStart (gr/grtsamus.c:82)
-    pub unsafe extern "C" fn grTSamus_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtsamus.c:108)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtsamus.c:122)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtsamus.c:132)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtsamus.c:139)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtsamus.c:149)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtsamus::grTSamus_OnStart_fp as grTSamus_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtseak.c
 pub mod grtseak {
-    use super::*;
-    /// grTseak_OnStart (gr/grtseak.c:116)
-    pub unsafe extern "C" fn grTseak_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtseak.c:169)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtseak.c:183)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtseak.c:193)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtseak.c:200)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtseak.c:210)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtseak::grTseak_OnStart_fp as grTseak_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp22222222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp2222222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp2222222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtyoshi.c
 pub mod grtyoshi {
-    use super::*;
-    /// grTYoshi_OnStart (gr/grtyoshi.c:85)
-    pub unsafe extern "C" fn grTYoshi_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtyoshi.c:111)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtyoshi.c:125)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtyoshi.c:135)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtyoshi.c:142)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtyoshi.c:152)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtyoshi::grTYoshi_OnStart_fp as grTYoshi_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp222222222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp22222222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp22222222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp2222222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grtzelda.c
 pub mod grtzelda {
-    use super::*;
-    /// grTZelda_OnStart (gr/grtzelda.c:69)
-    pub unsafe extern "C" fn grTZelda_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grtzelda.c:95)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grtzelda.c:109)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_GObjProc (gr/grtzelda.c:119)
-    pub unsafe extern "C" fn stageGObj2_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
-    /// stageGObj1_OnInit (gr/grtzelda.c:126)
-    pub unsafe extern "C" fn stageGObj1_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj1_GObjProc (gr/grtzelda.c:136)
-    pub unsafe extern "C" fn stageGObj1_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grtzelda::grTZelda_OnStart_fp as grTZelda_OnStart;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grheal::stageGObj1_GObjProc_fp2222222222222222222222222 as stageGObj1_GObjProc;
+pub use crate::tu::grgreens::stageGObj1_OnInit_fp222222222222222222222222222 as stageGObj1_OnInit;
+pub use crate::tu::grheal::stageGObj2_GObjProc_fp222222222222222222222222 as stageGObj2_GObjProc;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp22222222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grvenom.c
 pub mod grvenom {
-    use super::*;
-    /// grVenom_80203E80 (gr/grvenom.c:547)
-    pub unsafe extern "C" fn grVenom_80203E80() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/grvenom.c:607)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj9_GObjProc (gr/grvenom.c:1028)
-    pub unsafe extern "C" fn stageGObj9_GObjProc(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+pub use crate::tu::grvenom::grVenom_80203E80_fp as grVenom_80203E80;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp222222222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::gricemt::stageGObj9_GObjProc_fp as stageGObj9_GObjProc;
+
+use super::*;
+
 }
 
 /// src/melee/gr/gryorster.c
 pub mod gryorster {
-    use super::*;
-    /// grYorster_80202010 (gr/gryorster.c:98)
-    pub unsafe extern "C" fn grYorster_80202010() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj0_OnInit (gr/gryorster.c:124)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::gryorster::grYorster_80202010_fp as grYorster_80202010;
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp2222222222222222222222222222222222222 as stageGObj0_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grzebes.c
 pub mod grzebes {
-    use super::*;
-    /// grZebes_801D852C (gr/grzebes.c:285)
-    pub unsafe extern "C" fn grZebes_801D852C() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
-    /// stageGObj5_OnInit (gr/grzebes.c:781)
-    pub unsafe extern "C" fn stageGObj5_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grzebes::grZebes_801D852C_fp as grZebes_801D852C;
+pub use crate::tu::gricemt::stageGObj5_OnInit_fp as stageGObj5_OnInit;
+
+use super::*;
+
 }
 
 /// src/melee/gr/grzebesroute.c
 pub mod grzebesroute {
-    use super::*;
-    /// stageGObj0_OnInit (gr/grzebesroute.c:137)
-    pub unsafe extern "C" fn stageGObj0_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
-    /// stageGObj2_OnInit (gr/grzebesroute.c:151)
-    pub unsafe extern "C" fn stageGObj2_OnInit(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+pub use crate::tu::grfigure1::stageGObj0_OnInit_fp22222222222222222222222222222222222222 as stageGObj0_OnInit;
+pub use crate::tu::grfigure1::stageGObj2_OnInit_fp222222222222222222222222222222 as stageGObj2_OnInit;
+
+use super::*;
+
 }
 
 /// Number of functions in this module.

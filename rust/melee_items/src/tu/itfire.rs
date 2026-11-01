@@ -7,6 +7,9 @@
 //! `Item_EnterAirStateWithHitlagAndStateDesc`, `GET_ITEM`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::Item;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -205,3 +208,10 @@ pub unsafe extern "C" fn itFire_UnkMotion0_Coll(gobj: *mut Item_GObj) -> i32 {
     melee_core::ct!("itFire_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802CC740))
 }
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802CC740` (src/melee/it/kinds/itfire.c): `empty body / return;`.
+pub fn it_802cc740(_ip: &mut Item) { melee_core::ct!("it_802cc740");}
+
+/// `it_802CC7D4` (src/melee/it/kinds/itfire.c): `empty body / return;`.
+pub fn it_802cc7d4(_ip: &mut Item) { melee_core::ct!("it_802cc7d4");}

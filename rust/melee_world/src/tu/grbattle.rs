@@ -6,16 +6,17 @@
 //! State-oracle checked against the C (tests/gro_grbattle.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::{assert_, GET_GROUND, GET_JOBJ, HSD_JObjSetTranslate};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-pub use crate::gr::trivial::grbattle::{
-    grBattle_80219D7C, grBattle_BG_Callback1, grBattle_GObj0_Callback1, grBattle_GObj1_Callback1, grBattle_GObj2_Callback1,
-    grBattle_GObj4_Callback1, grBattle_GObj5_Callback1, grBattle_GObj6_Callback1, grBattle_OnCheckShadowRender,
-    grBattle_OnTouchLine,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -424,3 +425,41 @@ pub unsafe extern "C" fn grBattle_BG_Callback2(gobj: *mut Ground_GObj) {
 }
 
 pub unsafe extern "C" fn grBattle_BG_Callback3(_gobj: *mut Ground_GObj) { melee_core::ct!("grBattle_BG_Callback3");}
+
+// ---- folded from grbattle.rs (consolidation steps 21/22) ----
+/// grBattle_OnStart_fp (gr/grbattle.c:166)
+    pub unsafe extern "C" fn grBattle_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// grBattle_GObj6_Callback0_fp (gr/grbattle.c:239)
+    pub unsafe extern "C" fn grBattle_GObj6_Callback0_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grbattle.rs (consolidation steps 21/22) ----
+/// grBattle_80219D7C (gr/grbattle.c:171)
+    pub extern "C" fn grBattle_80219D7C() -> i32 { 0 }
+
+/// grBattle_GObj0_Callback1 (gr/grbattle.c:230)
+    pub extern "C" fn grBattle_GObj0_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_GObj6_Callback1 (gr/grbattle.c:244)
+    pub extern "C" fn grBattle_GObj6_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_GObj5_Callback1 (gr/grbattle.c:264)
+    pub extern "C" fn grBattle_GObj5_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_GObj1_Callback1 (gr/grbattle.c:284)
+    pub extern "C" fn grBattle_GObj1_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_GObj2_Callback1 (gr/grbattle.c:308)
+    pub extern "C" fn grBattle_GObj2_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_GObj4_Callback1 (gr/grbattle.c:322)
+    pub extern "C" fn grBattle_GObj4_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_BG_Callback1 (gr/grbattle.c:354)
+    pub extern "C" fn grBattle_BG_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBattle_OnTouchLine (gr/grbattle.c:428)
+    pub extern "C" fn grBattle_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grBattle_OnCheckShadowRender (gr/grbattle.c:433)
+    pub extern "C" fn grBattle_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

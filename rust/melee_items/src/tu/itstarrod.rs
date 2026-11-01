@@ -3,6 +3,17 @@
 //! (whole TU, shipping contraction) by tests/kinds_itstarrod.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBoomerangAttributes;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::itkinds8::{StarRodAttributes as StarRodAttributes_itkinds8};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -254,4 +265,16 @@ pub unsafe extern "C" fn itStarRod_Logic22_ShieldBounced(gobj: *mut Item_GObj) -
 pub unsafe extern "C" fn itStarRod_Logic22_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itStarRod_Logic22_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds8.rs (consolidation steps 21/22) ----
+/// `it_80292394_fp` (itstarrod.c): `*arg1 = attrs->x4` of the star rod special attributes.
+///
+/// # Safety
+/// `ip.xC4_article_data` must be valid and its `x4_specialAttributes` point to a
+/// `StarRodAttributes_itkinds8`.
+pub unsafe fn it_80292394_fp(ip: &Item, arg1: &mut GcVec) {
+    melee_core::ct!("it_80292394_fp");
+    let x = (*ip.xC4_article_data).x4_specialAttributes as *const StarRodAttributes_itkinds8;
+    *arg1 = (*x).x4;
 }

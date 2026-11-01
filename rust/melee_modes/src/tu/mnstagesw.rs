@@ -3,6 +3,9 @@
 //! Callees in TUs that are not ported yet are `ext` stubs named like the C function.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_mut, unused_variables, unused_assignments, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use crate::mn_inl::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -1028,3 +1031,10 @@ pub unsafe extern "C" fn mnStageSw_80237410() {
     (*proc_0).set_flags_3(HSD_GObj_804D783C as u8);
 }
 pub const NULL: i32 = 0;
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mnstagesw.c `mnStageSw_CountEnabled_fp` (NUM_STAGES = 29 flags from byte 2).
+pub fn mnStageSw_CountEnabled_fp(user_data: &[u8]) -> i32 {
+    melee_core::ct!("mnStageSw_CountEnabled_fp");
+    user_data[2..2 + 29].iter().filter(|&&b| b != 0).count() as i32
+}

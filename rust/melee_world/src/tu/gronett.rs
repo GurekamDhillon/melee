@@ -4,6 +4,12 @@
 //! tests/tu_gronett.rs; regenerate the C side with `python rust/melee_world/gen/cref/run_gr.py gronett`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1008,3 +1014,26 @@ pub unsafe extern "C" fn grOnett_801E5768(a: *mut Vec3, _b: i32, jobj: *mut HSD_
         0
     }
 }
+
+// ---- folded from gronett.rs (consolidation steps 21/22) ----
+/// grOnett_801E37C8_fp (gr/gronett.c:138)
+    pub unsafe extern "C" fn grOnett_801E37C8_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from gronett.rs (consolidation steps 21/22) ----
+/// grOnett_801E37EC_fp (gr/gronett.c:143)
+    pub extern "C" fn grOnett_801E37EC_fp() -> i32 { 0 }
+
+/// grOnett_801E3920_fp (gr/gronett.c:171)
+    pub extern "C" fn grOnett_801E3920_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOnett_801E3C58_fp (gr/gronett.c:247)
+    pub extern "C" fn grOnett_801E3C58_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOnett_801E3D98_fp (gr/gronett.c:292)
+    pub extern "C" fn grOnett_801E3D98_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOnett_801E43D8_fp (gr/gronett.c:479)
+    pub extern "C" fn grOnett_801E43D8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOnett_801E5760_fp (gr/gronett.c:950)
+    pub extern "C" fn grOnett_801E5760_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

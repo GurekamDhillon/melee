@@ -1,3 +1,4 @@
+
 //! Round 3: `src/melee/lb/` leaf functions that take pointers to game structs, from the lb TUs
 //! group 1 did not port. TODO(group1): move into melee_runtime when group 1 ports these TUs.
 //! Conventions and verification as in `gm_ptr.rs` (`tests/oracle_ptr.rs`).
@@ -7,87 +8,14 @@
 #![allow(non_snake_case)]
 
 use core::ffi::c_void;
+
 use melee_core::fp::fmadds;
+
 use melee_types as mt;
+
 use mt::{CommandInfo, HSD_DObj, HSD_JObj, HitCapsule, Vec as Vec3};
 
 pub use melee_runtime::tu::lbanim::{FigaTree, lbAnim_8001E8F8};
-
-/// lbcardnew.c `readCardFileSize` (a `volatile` read).
-pub fn readCardFileSize(file_size: &i32) -> i32 {
-    // SAFETY: a reference is valid for reads.
-    unsafe { core::ptr::read_volatile(file_size) }
-}
-
-/// lbcollision.c `lbColl_80005EBC`: squared distance from `arg2` to segment arg0..arg1 (3D);
-/// `*arg3` gets the clamped segment parameter. Nine fused sites.
-pub fn lbColl_80005EBC(arg0: &Vec3, arg1: &Vec3, arg2: &Vec3, arg3: &mut f32) -> f32 {
-    let sp50 = *arg0;
-    let d1 = Vec3 { x: arg1.x - arg0.x, y: arg1.y - arg0.y, z: arg1.z - arg0.z };
-    let sp38 = *arg2;
-    let d2 = Vec3 { x: sp50.x - sp38.x, y: sp50.y - sp38.y, z: sp50.z - sp38.z };
-    let d1_dot_d1 = fmadds(d1.z, d1.z, fmadds(d1.x, d1.x, d1.y * d1.y));
-    let d1_dot_d2 = fmadds(d1.z, d2.z, fmadds(d1.x, d2.x, d1.y * d2.y));
-    let mut scale = -d1_dot_d2 / d1_dot_d1;
-    if scale as f64 > 1.0 {
-        scale = 1.0;
-    } else if (scale as f64) < 0.0 {
-        scale = 0.0;
-    }
-    let x = fmadds(d1.x, scale, sp50.x) - arg2.x;
-    let y = fmadds(d1.y, scale, sp50.y) - arg2.y;
-    let z = fmadds(d1.z, scale, sp50.z) - arg2.z;
-    *arg3 = scale;
-    fmadds(z, z, fmadds(x, x, y * y))
-}
-
-/// lbcollision.c `lbColl_80005FC0`: the same in the XY plane. Five fused sites.
-pub fn lbColl_80005FC0(arg0: &Vec3, arg1: &Vec3, arg2: &Vec3, arg3: &mut f32) -> f32 {
-    let sp50 = *arg0;
-    let d1x = arg1.x - arg0.x;
-    let d1y = arg1.y - arg0.y;
-    let sp38 = *arg2;
-    let d2x = sp50.x - sp38.x;
-    let d2y = sp50.y - sp38.y;
-    let d1_dot_d1 = fmadds(d1x, d1x, d1y * d1y);
-    let d1_dot_d2 = fmadds(d1x, d2x, d1y * d2y);
-    let mut scale = -d1_dot_d2 / d1_dot_d1;
-    if scale as f64 > 1.0 {
-        scale = 1.0;
-    } else if (scale as f64) < 0.0 {
-        scale = 0.0;
-    }
-    let x = fmadds(d1x, scale, sp50.x) - arg2.x;
-    let y = fmadds(d1y, scale, sp50.y) - arg2.y;
-    *arg3 = scale;
-    fmadds(x, x, y * y)
-}
-
-/// lbcollision.c `end`: `a` within `unk_sum` of `b` (`z*z + (x*x + y*y)`: both fused).
-pub fn end(a: &Vec3, b: &Vec3, unk_sum: f32) -> bool {
-    let x = a.x - b.x;
-    let y = a.y - b.y;
-    let z = a.z - b.z;
-    !(unk_sum * unk_sum < fmadds(z, z, fmadds(x, x, y * y)))
-}
-
-/// lbcollision.c `lbColl_GetY`.
-pub fn lbColl_GetY(v: &Vec3) -> f32 {
-    v.y
-}
-
-/// lbcollision.c `lbColl_DifferenceY`.
-pub fn lbColl_DifferenceY(a: &Vec3, b: &Vec3) -> f32 {
-    a.y - b.y
-}
-
-/// lbcollision.c `sqrDistance` (two fused sites).
-pub fn sqrDistance(a: &Vec3, b: &Vec3) -> f32 {
-    let x = a.x - b.x;
-    let y = a.y - b.y;
-    let z = a.z - b.z;
-    fmadds(z, z, fmadds(x, x, y * y))
-}
 
 /// lbcollision.c `lbColl_80008428`.
 pub fn lbColl_80008428(arg0: &mut HitCapsule) {
@@ -107,83 +35,13 @@ pub fn lbColl_80008440(hit: &mut HitCapsule) {
     unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(hit) }
 }
 
-/// lbcollision.c `lbColl_800089B8`: forget one victim.
-pub fn lbColl_800089B8(hit: &mut HitCapsule, arg1: *mut c_void) {
-    for v in &mut hit.victims_1 {
-        if v.victim == arg1 {
-            v.victim = core::ptr::null_mut();
-        }
-    }
-}
-
-/// lbcollision.c `lbColl_80008A5C`: count down the victims' rehit timers.
-pub fn lbColl_80008A5C(hit: &mut HitCapsule) {
-    if hit.state == mt::HitCapsule_Disabled {
-        return;
-    }
-    for v in hit.victims_1.iter_mut().chain(hit.victims_2.iter_mut()) {
-        if !v.victim.is_null() && v.x4 != 0 {
-            v.x4 -= 1;
-            if v.x4 == 0 {
-                v.victim = core::ptr::null_mut();
-            }
-        }
-    }
-}
-
-/// lbcollision.c `lbColl_80008D30`: copy a hitbox description (damage u32 -> f32).
-pub fn lbColl_80008D30(arg0: &mut HitCapsule, arg1: &mt::lbColl_80008D30_arg1) {
-    arg0.state = arg1.state;
-    arg0.damage = arg1.damage as f32;
-    arg0.kb_angle = arg1.kb_angle;
-    arg0.x24 = arg1.unkC;
-    arg0.x28 = arg1.unk10;
-    arg0.x2C = arg1.unk14;
-    arg0.element = arg1.element;
-    arg0.sfx_severity = arg1.sfx_severity;
-    arg0.sfx_kind = arg1.sfx_kind;
-    arg0.unk_count = arg1.damage;
-}
-
-/// lbcommand.c `Command_00`: end of script.
-pub fn Command_00(info: &mut CommandInfo) {
-    info.anon_8.u = core::ptr::null_mut();
-}
-
-/// lbcommand.c `Command_06`: return from a subroutine.
-pub fn Command_06(info: &mut CommandInfo) {
-    info.loop_count = info.loop_count.wrapping_sub(1);
-    info.anon_8.u = info.event_return[info.loop_count as usize];
-}
-
-/// lbcommand.c `Command_08`: next command, then wait forever (F32_MAX).
-pub fn Command_08(info: &mut CommandInfo) {
-    // SAFETY: reading the union's pointer member; the C reads the same bytes.
-    let u = unsafe { info.anon_8.u };
-    info.anon_8.u = u.wrapping_add(1);
-    info.timer = 3.4028235e38f32;
-}
-
 // Compatibility exports: lbshadow belongs to runtime (inventory group 1).
 pub use melee_runtime::tu::lbshadow::{splGetCardinalTangent, splGetBSplineTangent, splGetBezierTangent};
-
-/// lbsnap.c `lbSnap_ClearText`: 0x21 NULs.
-pub fn lbSnap_ClearText(text: &mut [i8]) {
-    text[..0x21].fill(0);
-}
 
 /// lbspdisplay.c and lb_00F9.c `checkJObjFlags` (identical static copies): neither a
 /// particle nor a spline joint.
 pub fn checkJObjFlags(jobj: &HSD_JObj) -> bool {
     jobj.flags & (mt::JOBJ_PTCL | mt::JOBJ_SPLINE) as u32 == 0
-}
-
-/// lbvector.c `lbVector_Mirror`: reflect `a` in the XY plane about a unit axis (3 fused sites).
-pub fn lbVector_Mirror(a: &mut Vec3, unit_mirror_axis: &Vec3) {
-    let m = unit_mirror_axis;
-    let f = fmadds(m.x, a.x, m.y * a.y) * -2.0;
-    a.x = fmadds(m.x, f, a.x);
-    a.y = fmadds(m.y, f, a.y);
 }
 
 /// lb_00B0.c `lb_8000CE30`.
@@ -198,49 +56,21 @@ pub fn lb_8000CE40(jobj: Option<&mut HSD_JObj>, dobj: *mut HSD_DObj) {
     unsafe { melee_runtime::tu::lb_00B0::lb_8000CE40(jobj.map_or(core::ptr::null_mut(), |j| j as *mut HSD_JObj), dobj) }
 }
 
-/// lb_00F9.c `lb_800103D8`: where the segment (x0,x1)-(x2,x3) crosses height `offset`
-/// (one fused site).
-pub fn lb_800103D8(vec: &mut Vec3, x0: f32, x1: f32, x2: f32, x3: f32, offset: f32) -> bool {
-    let dist0 = x1 - offset;
-    let dist1 = x3 - offset;
-    if dist0 == dist1 {
-        return dist0 > 1e-10f32;
-    }
-    if dist0 as f64 > 0.0 && (dist1 as f64) < 0.0 {
-        vec.x = fmadds(-dist1 / (dist0 - dist1), x0 - x2, x2);
-        vec.y = offset;
-        vec.z = 0.0;
-        return true;
-    }
-    false
-}
-
-/// lb_013B.c `lb_80013BB0`.
-pub fn lb_80013BB0(_arg: *mut mt::ColorOverlay) -> bool {
-    true
-}
-
-/// lb_0146.c `lb_80014638` (two fused sites).
-pub fn lb_80014638(arg0: &mt::lb_80014638_arg0_t, arg1: &mt::lb_80014638_arg1_t) -> bool {
-    let mut sp30 = arg0.x0;
-    let sp24 = arg0.xC;
-    let sp18 = arg1.x8;
-    sp30.x = sp30.x + arg1.unk_x;
-    sp30.y += arg1.unk_x;
-    sp30.z += arg1.unk_y;
-    if sp30.z < sp24.z {
-        return false;
-    }
-    if sp30.z < sp18.z || sp24.z > sp18.z {
-        return false;
-    }
-    let d = sp24.z - sp30.z;
-    let z = if (if d < 0.0 { -d } else { d }) < 0.01f32 { 1.0 } else { (sp18.z - sp30.z) / d };
-    if fmadds(z, sp24.x - sp30.x, sp30.x) > sp18.y {
-        return false;
-    }
-    if fmadds(z, sp24.y - sp30.y, sp30.y) < sp18.x {
-        return false;
-    }
-    true
-}
+pub use crate::tu::lbcommand::Command_00_fp as Command_00;
+pub use crate::tu::lbcommand::Command_06_fp as Command_06;
+pub use crate::tu::lbcommand::Command_08_fp as Command_08;
+pub use crate::tu::lbcollision::end_fp as end;
+pub use crate::tu::lbcollision::lbColl_80005EBC_fp as lbColl_80005EBC;
+pub use crate::tu::lbcollision::lbColl_80005FC0_fp as lbColl_80005FC0;
+pub use crate::tu::lbcollision::lbColl_800089B8_fp as lbColl_800089B8;
+pub use crate::tu::lbcollision::lbColl_80008A5C_fp as lbColl_80008A5C;
+pub use crate::tu::lbcollision::lbColl_80008D30_fp as lbColl_80008D30;
+pub use crate::tu::lbcollision::lbColl_DifferenceY;
+pub use crate::tu::lbcollision::lbColl_GetY;
+pub use crate::tu::lbsnap::lbSnap_ClearText_fp as lbSnap_ClearText;
+pub use crate::tu::lbvector::lbVector_Mirror_fp as lbVector_Mirror;
+pub use crate::tu::lb_00f9::lb_800103D8_fp as lb_800103D8;
+pub use crate::tu::lb_013B::lb_80013BB0;
+pub use crate::tu::lb_0146::lb_80014638;
+pub use crate::tu::lbcardnew::readCardFileSize_fp as readCardFileSize;
+pub use crate::tu::lbcollision::sqrDistance;

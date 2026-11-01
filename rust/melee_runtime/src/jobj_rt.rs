@@ -1,3 +1,4 @@
+
 //! Port round 8 of `src/sysdolphin/baselib/jobj.c`: the animation half (`JObjUpdateFunc`, the
 //! ReqAnim / RemoveAnim / AddAnim / Anim walkers, `JObjSortAnim`), the IK solvers
 //! (`resolveIKJoint1`, `resolveIKJoint2`, `jobj_get_effector_checked` and its static inlines),
@@ -29,31 +30,55 @@
 //! PSMTX / HSD_Mtx ports and math_ppc `sqrtf` ([`crate::gekko::sqrtf`]); `acosf` is lbtrigf's.
 
 use crate::aobj::{AObjGlobals, HsdAObj, HsdAObjDesc};
+
 use crate::fobj::HsdFObj;
+
 use crate::gekko::sqrtf;
+
 use crate::hsd_mtx::{self, fabsf_bitwise};
+
 use crate::jobj::*;
+
 use crate::lbtrigf::acosf;
+
 use crate::mtx::{self, Mtx, Vec3};
+
 use crate::robj::{self, HsdRObj, HsdRObjAnimJoint, RObjGlobals, RObjHost, RObjVal, REFTYPE_IKHINT, REFTYPE_JOBJ};
+
 use melee_core::fp::fmadds;
+
 use std::cell::RefCell;
+
 use std::rc::Rc;
 
 pub const HSD_A_J_ROTX: u32 = 1;
+
 pub const HSD_A_J_ROTY: u32 = 2;
+
 pub const HSD_A_J_ROTZ: u32 = 3;
+
 pub const HSD_A_J_PATH: u32 = 4;
+
 pub const HSD_A_J_TRAX: u32 = 5;
+
 pub const HSD_A_J_TRAY: u32 = 6;
+
 pub const HSD_A_J_TRAZ: u32 = 7;
+
 pub const HSD_A_J_SCAX: u32 = 8;
+
 pub const HSD_A_J_SCAY: u32 = 9;
+
 pub const HSD_A_J_SCAZ: u32 = 10;
+
 pub const HSD_A_J_NODE: u32 = 11;
+
 pub const HSD_A_J_BRANCH: u32 = 12;
+
 pub const HSD_A_J_SETBYTE0: u32 = 20;
+
 pub const HSD_A_J_SETFLOAT0: u32 = 30;
+
 /// fobj.h `TYPE_JOBJ`.
 pub const TYPE_JOBJ: u8 = 12;
 
@@ -99,6 +124,7 @@ impl From<RObjVal> for ObjData {
 
 /// `ufc_callback`: (jobj, type, value).
 pub type UfcCallback = Box<dyn FnMut(JObjId, u32, f32)>;
+
 /// `DPCtlCallback`: (0, lo, hi, jobj).
 pub type DPtclCallback = Box<dyn FnMut(i32, i32, i32, JObjId)>;
 
@@ -235,12 +261,12 @@ pub fn update_func_core<D: Copy + PartialEq, R: Copy + PartialEq>(
     }
 }
 
-fn need(v: Option<&mut ObjData>) -> &mut ObjData {
+pub(crate) fn need(v: Option<&mut ObjData>) -> &mut ObjData {
     v.expect("JObjUpdateFunc: val")
 }
 
 /// `HSD_JObjSetRotationX/Y/Z`.
-fn set_rotation<D: Copy + PartialEq, R: Copy + PartialEq>(t: &mut JObjTree<D, R>, j: JObjId, axis: u8, v: f32) {
+pub(crate) fn set_rotation<D: Copy + PartialEq, R: Copy + PartialEq>(t: &mut JObjTree<D, R>, j: JObjId, axis: u8, v: f32) {
     let o = t.get_mut(j);
     assert!(o.flags & JOBJ_USE_QUATERNION == 0, "HSD_ASSERT(640, !(jobj->flags & JOBJ_USE_QUATERNION))");
     match axis {
@@ -254,7 +280,7 @@ fn set_rotation<D: Copy + PartialEq, R: Copy + PartialEq>(t: &mut JObjTree<D, R>
 }
 
 /// `HSD_JObjSetTranslateX/Y/Z`.
-fn set_translate<D: Copy + PartialEq, R: Copy + PartialEq>(t: &mut JObjTree<D, R>, j: JObjId, axis: u8, v: f32) {
+pub(crate) fn set_translate<D: Copy + PartialEq, R: Copy + PartialEq>(t: &mut JObjTree<D, R>, j: JObjId, axis: u8, v: f32) {
     let o = t.get_mut(j);
     match axis {
         0 => o.translate.x = v,
@@ -333,6 +359,7 @@ pub struct JObjRt<X> {
 
 /// The `RObjHost` view of [`JObjRt::ext`].
 pub struct ExtProxy<X>(pub Rc<RefCell<X>>);
+
 impl<X: RObjHost> RObjHost for ExtProxy<X> {
     fn jobj_ref_this(&mut self, j: JObjId) {
         self.0.borrow_mut().jobj_ref_this(j)
@@ -345,7 +372,7 @@ impl<X: RObjHost> RObjHost for ExtProxy<X> {
     }
 }
 
-type Tree<D> = JObjTree<D, u32>;
+pub(crate) type Tree<D> = JObjTree<D, u32>;
 
 impl<X> JObjRt<X> {
     pub fn new(ext: X) -> Self {
@@ -876,28 +903,6 @@ impl<X: JObjExt> JObjRt<X> {
     }
 }
 
-/// `jobj_get_joint2` (static inline): the first JOINT2 in the sibling list from `j`.
-pub fn jobj_get_joint2<D: Copy + PartialEq, R: Copy + PartialEq>(t: &JObjTree<D, R>, mut j: Option<JObjId>) -> Option<JObjId> {
-    while let Some(x) = j {
-        if t.get(x).flags & JOBJ_EFFECTOR == JOBJ_JOINT2 {
-            return Some(x);
-        }
-        j = t.get(x).next;
-    }
-    None
-}
-
-/// `jobj_get_effector` (static inline).
-pub fn jobj_get_effector<D: Copy + PartialEq, R: Copy + PartialEq>(t: &JObjTree<D, R>, mut j: Option<JObjId>) -> Option<JObjId> {
-    while let Some(x) = j {
-        if t.get(x).flags & JOBJ_EFFECTOR == JOBJ_EFFECTOR {
-            return Some(x);
-        }
-        j = t.get(x).next;
-    }
-    None
-}
-
 impl<X: JObjExt> JObjHost<X::D, u32> for JObjRt<X> {
     fn ik_hint_bone_length(&mut self, robj: &[u32]) -> Option<f32> {
         robj.iter()
@@ -918,3 +923,6 @@ impl<X: JObjExt> JObjHost<X::D, u32> for JObjRt<X> {
         self.ext.borrow_mut().jobj_unref(Some(jobj));
     }
 }
+
+pub use crate::tu::jobj::jobj_get_effector;
+pub use crate::tu::jobj::jobj_get_joint2;

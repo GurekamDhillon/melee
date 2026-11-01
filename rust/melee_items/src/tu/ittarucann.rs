@@ -5,6 +5,112 @@
 //! panics "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_ittarucann.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds6::{c_abs, sa as sa_itkinds6};
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -754,4 +860,64 @@ pub unsafe extern "C" fn itTaruCann_Logic5_Reflected(_arg0: *mut Item_GObj) -> b
 pub unsafe extern "C" fn itTaruCann_Logic5_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itTaruCann_Logic5_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802960B8` (ittarucann.c): `sa->x2C`.
+/// # Safety
+/// The special attributes must be a valid `itTaruCann_DatAttrs`.
+pub unsafe fn it_802960b8(ip: &Item) -> i32 {
+    melee_core::ct!("it_802960b8");
+    sa::<itTaruCann_DatAttrs>(ip).x2C
+}
+
+/// `it_802960CC` (ittarucann.c): `sa->x28`.
+/// # Safety
+/// The special attributes must be a valid `itTaruCann_DatAttrs`.
+pub unsafe fn it_802960cc(ip: &Item) -> i32 {
+    melee_core::ct!("it_802960cc");
+    sa::<itTaruCann_DatAttrs>(ip).x28
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802962E0` (ittarucann.c): barrel cannon roll speed and spin (4 fused sites).
+/// # Safety
+/// The special attributes must be a valid `itTaruCann_DatAttrs`.
+pub unsafe fn it_802962e0(ip: &mut Item) {
+    melee_core::ct!("it_802962e0");
+    let da = sa_itkinds6::<itTaruCann_DatAttrs>(ip);
+    let t = &mut ip.xDD4_itemVar.tarucann;
+    if ip.ground_or_air != 1 {
+        let d = t.x14.x;
+        if c_abs(d) > 0.1 {
+            if c_abs(t.x10) < da.x18 {
+                t.x10 = fmadds(d, da.x10, t.x10);
+            }
+        } else {
+            let f1 = t.x10;
+            let mut f2 = da.x14;
+            if c_abs(f1) < f2 {
+                t.x10 = 0.0;
+            } else {
+                if f1 > 0.0 {
+                    f2 = -f2;
+                }
+                t.x10 = f1 + f2;
+            }
+        }
+        let s = t.x10;
+        if (s > 0.0 && ip.facing_dir == -1.0) || (s < 0.0 && ip.facing_dir == 1.0) {
+            ip.facing_dir = -ip.facing_dir;
+        }
+        let m = da.xC;
+        if c_abs(t.x10) > m {
+            t.x10 = m * ip.facing_dir;
+        }
+        ip.x40_vel.x = t.x28 * (t.x10 * t.x14.y);
+        let v2 = c_abs(t.x10);
+        t.xC = fmadds(t.x28, 0.12217305f32 * v2 * -ip.facing_dir, t.xC);
+    } else {
+        t.xC = fmadds(0.10471976f32 * -ip.facing_dir, t.x28, t.xC);
+    }
+    t.xC = fmadds(da.x50, -ip.facing_dir, t.xC);
 }

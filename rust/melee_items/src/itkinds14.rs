@@ -1,3 +1,4 @@
+
 //! Port round 14 (night 3, round 6): hand ports of 26 item functions whose callees are all
 //! ported in this crate (`it_80272CC0`, `it_80272860`, `it_802AC5D8`, `swapVelocity`,
 //! `get_min_life`, `it_802B3368`, `it_80275594`, `pika_scale`, `it_8026B3A8`, `it_80275444`,
@@ -18,30 +19,43 @@
 #![allow(non_snake_case)]
 
 use crate::helpers::pika_scale;
+
 use crate::itkinds11::it_80272cc0;
+
 use crate::itkinds13::swap_velocity;
+
 use crate::itkinds5::{it_802ac5d8, it_802b3368};
+
 use crate::itkinds8::get_min_life;
+
 use crate::itkinds9::my_sqrtf_accurate;
+
 use crate::itlib::{it_8026b3a8, it_80275444, it_80275594};
+
 use crate::itlib3::{it_80272828, it_80272860};
+
 use crate::layout::{
     Article, CommandInfo, HSD_GObj, HSD_JObj, HSD_Joint, Item, ItemStateTable,
     Vec as GcVec, it_8026C47C_arg0_t, itBombHeiAttributes, itClimbersStringAttributes,
     itLikelikeAttributes, itNessPKFirepillarAttributes, itSamusBombAttributes,
     itSScopeAttributes, ItemKind, It_Kind_Capsule, It_Kind_RabbitC,
 };
+
 use melee_core::fp::{fmadds, fmsubs};
+
 use melee_core::vec::Vec3 as RVec;
+
 use melee_runtime::lbvector;
+
 use core::ptr::null_mut;
 
 #[inline(always)]
-unsafe fn sa<'a, T>(ip: &Item) -> &'a mut T {
+pub(crate) unsafe fn sa<'a, T>(ip: &Item) -> &'a mut T {
     &mut *((*ip.xC4_article_data).x4_specialAttributes as *mut T)
 }
+
 #[inline(always)]
-unsafe fn item_of<'a>(gobj: *mut HSD_GObj) -> Option<&'a mut Item> {
+pub(crate) unsafe fn item_of<'a>(gobj: *mut HSD_GObj) -> Option<&'a mut Item> {
     if gobj.is_null() {
         None
     } else {
@@ -49,119 +63,11 @@ unsafe fn item_of<'a>(gobj: *mut HSD_GObj) -> Option<&'a mut Item> {
     }
 }
 
-// ---- it_2725.c --------------------------------------------------------------------------
-
-/// `get_bone_by_id` (static inline): as `it_80272CC0` (bone table when the model has bones,
-/// else `bone_id` NULL-safe child steps from the root JObj).
-/// # Safety
-/// As `it_80272CC0`.
-pub unsafe fn get_bone_by_id(gobj: *mut HSD_GObj, mut bone_id: i32) -> *mut HSD_JObj {
-    let ip = &*((*gobj).user_data as *mut Item);
-    let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
-    if (*(*ip.xC4_article_data).x10_modelDesc).x4_bone_count != 0 {
-        jobj = (*ip.xBBC_dynamicBoneTable).bones[bone_id as usize];
-    } else if bone_id != 0 {
-        while bone_id > 0 {
-            bone_id -= 1;
-            jobj = if jobj.is_null() { null_mut() } else { (*jobj).child };
-        }
-        // C's `while (bone_id-- > 0)` leaves bone_id at -1; unused after.
-    }
-    jobj
-}
-
-// ---- itanimlist.c -----------------------------------------------------------------------
-
-/// `it_80279768`: `xDBC_itcmd_var4.flags.x0 = true`, next command.
-/// # Safety
-/// `cmd.u` points into a command array (one past is formed, as in C).
-pub unsafe fn it_80279768(ip: &mut Item, cmd: &mut CommandInfo) {
-    ip.anon_dbc.xDBC_itcmd_var4.flags.set_x0(1);
-    cmd.anon_8.u = cmd.anon_8.u.add(1);
-}
-/// `it_80279720`: `xDB0_itcmd_var1 = cmd->u->set_throw_flags.hit_idx`, next command.
-/// # Safety
-/// As `it_80279768`; `cmd.u` valid to read.
-pub unsafe fn it_80279720(ip: &mut Item, cmd: &mut CommandInfo) {
-    ip.xDB0_itcmd_var1 = (*cmd.anon_8.u).set_throw_flags.hit_idx();
-    cmd.anon_8.u = cmd.anon_8.u.add(1);
-}
-/// `it_80279744`: `xDB4_itcmd_var2 = cmd->u->set_throw_flags.hit_idx`, next command.
-/// # Safety
-/// As `it_80279720`.
-pub unsafe fn it_80279744(ip: &mut Item, cmd: &mut CommandInfo) {
-    ip.xDB4_itcmd_var2 = (*cmd.anon_8.u).set_throw_flags.hit_idx();
-    cmd.anon_8.u = cmd.anon_8.u.add(1);
-}
-
-// ---- itspawn.c --------------------------------------------------------------------------
-
-/// `it_8026C47C`: one bit per item kind `It_Kind_Capsule..238` that has a live item on the
-/// p-link list (`it_80272828`), 32 kinds per word (`!(kind & It_Kind_RabbitC)` starts a word).
-/// # Safety
-/// As `it_80272828` (`head` the item p-link list head).
-pub unsafe fn it_8026c47c(head: *mut HSD_GObj, arg: &mut it_8026C47C_arg0_t) {
-    let mut it_kind = It_Kind_Capsule as u32;
-    let mut bit_idx: i32 = 0;
-    *arg = it_8026C47C_arg0_t::zeroed();
-    // SAFETY: eight consecutive i32 fields (unk0..unk1C), repr(C).
-    let words = core::slice::from_raw_parts_mut(arg as *mut it_8026C47C_arg0_t as *mut i32, 8);
-    let mut w = 0usize;
-    while it_kind < 238 {
-        if !it_80272828(head, it_kind as ItemKind).is_null() {
-            words[w] |= 1i32.wrapping_shl(bit_idx as u32);
-        }
-        it_kind += 1;
-        bit_idx += 1;
-        if it_kind & It_Kind_RabbitC as u32 == 0 {
-            bit_idx = 0;
-            w += 1;
-        }
-    }
-}
-
-// ---- kinds ------------------------------------------------------------------------------
-
-/// `itBombHei` `fn_80280974_inline`: flags.x15 off, `vel.x = attrs->xC * facing_dir`,
-/// `xD5C = 0`, then `it_80275444`.
-/// # Safety
-/// The special attributes are an `itBombHeiAttributes`.
-pub unsafe fn fn_80280974_inline(ip: &mut Item) {
-    let a = sa::<itBombHeiAttributes>(ip);
-    it_8026b3a8(ip);
-    ip.x40_vel.x = a.xC * ip.facing_dir;
-    ip.xD5C = 0;
-    it_80275444(ip);
-}
-
-/// itclimbersstring.c `it_802C248C_joint24`: `attrs->x24_joint`.
-/// # Safety
-/// The special attributes are an `itClimbersStringAttributes`.
-pub unsafe fn it_802c248c_joint24(ip: &Item) -> *mut HSD_Joint {
-    sa::<itClimbersStringAttributes>(ip).x24_joint
-}
-/// itclimbersstring.c `it_802C248C_joint28`: `attrs->x28_joint`.
-/// # Safety
-/// As `it_802c248c_joint24`.
-pub unsafe fn it_802c248c_joint28(ip: &Item) -> *mut HSD_Joint {
-    sa::<itClimbersStringAttributes>(ip).x28_joint
-}
-
-/// itcrazyhandbomb.c `it_802F1340`: empty.
-pub fn it_802f1340() {}
-/// itlugia.c `it_802D14D0`: empty.
-pub fn it_802d14d0() {}
-
 /// itdosei.c `itDosei_GetJObj`: `gobj->hsd_obj`.
 /// # Safety
 /// `gobj` valid.
 pub unsafe fn it_dosei_get_jobj(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
     (*gobj).hsd_obj as *mut HSD_JObj
-}
-
-/// ithitodeman.c `it_802D472C_inline`: `ip->xC4_article_data`.
-pub fn it_802d472c_inline(ip: &Item) -> *mut Article {
-    ip.xC4_article_data
 }
 
 /// itlikelike.c `likelikeVelocity`: within `attrs->x0.x0_f32->y * multiplier` of `x20` on both
@@ -205,44 +111,6 @@ pub unsafe fn it_nesspkfirepillar_logic24_dmg_received(ip: &mut Item) -> bool {
     false
 }
 
-/// itnesspkthunderball.c `it_802AB9C0`: with `xF00 == 0`, clear owner / flags.x13 and run
-/// `it_802AC5D8` on the six linked trail GObjs.
-/// # Safety
-/// `gobj` NULL or a live item GObj; the six links NULL or GObjs (user_data NULL or an Item).
-pub unsafe fn it_802ab9c0(gobj: *mut HSD_GObj) {
-    if let Some(ip) = item_of(gobj) {
-        if ip.xDD4_itemVar.pkthunder.xF00 == 0 {
-            ip.owner = null_mut();
-            ip.xDC8_word.flags.set_x13(0);
-            for i in 0..6 {
-                let l = ip.xDD4_itemVar.pkthunder.xDD4[i];
-                if !l.is_null() {
-                    it_802ac5d8(item_of(l));
-                }
-            }
-        }
-    }
-}
-
-/// itparasol.c `it_8028B08C`: `{20, 16, 45, 2, 20, 30, 40, 16}[st[statenum].anim_id]`. Panics
-/// on an anim id outside 0..8 (the C reads past its table; the real table has -1 entries).
-pub fn it_8028b08c(st: &[ItemStateTable], statenum: i32) -> i32 {
-    const T: [i32; 8] = [20, 16, 45, 2, 20, 30, 40, 16];
-    T[st[statenum as usize].anim_id as usize]
-}
-
-/// itpikachuthunder.c `it_802B22B8_inline`: copy `pos` to the child's `x28`, set its `x4`.
-/// # Safety
-/// `x34` NULL or a GObj whose user_data is NULL or an Item.
-pub unsafe fn it_802b22b8_inline(ip: &mut Item) {
-    let c = ip.xDD4_itemVar.pikachuthunder.x34;
-    if !c.is_null() {
-        if let Some(ch) = item_of(c) {
-            ch.xDD4_itemVar.pikachuthunder.x28 = ip.pos;
-            ch.xDD4_itemVar.pikachuthunder.x4 = 1;
-        }
-    }
-}
 /// itpikachuthunder.c `itPikachuthunder_UnkMotion2_ScaleCall`: hitbox 0 scale *=
 /// `pika_scale(x10, xC)`.
 pub fn it_pikachuthunder_unk_motion2_scale_call(ip: &mut Item) {
@@ -282,22 +150,6 @@ pub unsafe fn it_samusbomb_unk_motion2_phys(ip: &mut Item) {
     }
 }
 
-/// itsscope.c `it_80291D38`: `attrs->xC[charge_level]` as s32 (charge 0..9; the C has no
-/// return for other values). `as i32` is gwtool's saturating conversion.
-/// # Safety
-/// The special attributes are an `itSScopeAttributes`.
-pub unsafe fn it_80291d38(ip: &Item, charge_level: i32) -> i32 {
-    let a = sa::<itSScopeAttributes>(ip);
-    a.xC[charge_level as usize] as i32
-}
-
-/// itsword.c `it_80285314`: `it_80272CC0(gobj, 5)`.
-/// # Safety
-/// As `it_80272CC0`.
-pub unsafe fn it_80285314(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
-    it_80272cc0(gobj, 5)
-}
-
 /// ityoshistar.c `itYoshistar_UnkMotion0_Phys`: fall (`it_80272860`), then
 /// `vel.x += star->accel * facing_dir` (fused).
 /// # Safety
@@ -317,9 +169,20 @@ pub unsafe fn zgshell_get_attrs(ip: &Item) -> *mut core::ffi::c_void {
     (*ip.xC4_article_data).x4_specialAttributes as *mut core::ffi::c_void
 }
 
-/// itparasol.c `jobj_child`: `jobj->child`, NULL-safe.
-/// # Safety
-/// `jobj` NULL or valid.
-pub unsafe fn jobj_child(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
-    if jobj.is_null() { null_mut() } else { (*jobj).child }
-}
+pub use crate::tu::itbombhei::fn_80280974_inline_fp as fn_80280974_inline;
+pub use crate::tu::it_2725::get_bone_by_id_fp as get_bone_by_id;
+pub use crate::tu::itspawn::it_8026c47c;
+pub use crate::tu::itanimlist::it_80279720_fp as it_80279720;
+pub use crate::tu::itanimlist::it_80279744_fp as it_80279744;
+pub use crate::tu::itanimlist::it_80279768_fp as it_80279768;
+pub use crate::tu::itsword::it_80285314_fp as it_80285314;
+pub use crate::tu::itparasol::it_8028b08c;
+pub use crate::tu::itsscope::it_80291d38;
+pub use crate::tu::itnesspkthunderball::it_802ab9c0;
+pub use crate::tu::itpikachuthunder::it_802b22b8_inline;
+pub use crate::tu::itclimbersstring::it_802c248c_joint24;
+pub use crate::tu::itclimbersstring::it_802c248c_joint28;
+pub use crate::tu::itlugia::it_802d14d0;
+pub use crate::tu::ithitodeman::it_802d472c_inline;
+pub use crate::tu::itcrazyhandbomb::it_802f1340;
+pub use crate::tu::itparasol::jobj_child_fp as jobj_child;

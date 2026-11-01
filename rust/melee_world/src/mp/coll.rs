@@ -1,3 +1,4 @@
+
 //! Environment collision, from src/melee/mp/mpcoll.c (and mplib.c's `mpLibLoad` /
 //! `mpPruneEmptyLines`), over the ported mplib queries ([`GroundColl`]).
 //!
@@ -31,42 +32,69 @@
 //! The TARGET_PC `half` statement in mpColl_LoadECB_JObj (one shared `0.5F * (b + t)`) is kept.
 
 use super::check::LineFilter;
+
 use super::lines::GroundColl;
+
 use super::types::*;
+
 use crate::vec::Vec3;
+
 use melee_core::fp::fmadds;
+
 use melee_types::{CollData, Vec as TVec, _ftECB, ftCollisionBox};
 
 pub const COLLIDE_LEFT_WALL_PUSH: i32 = 0x1;
+
 pub const COLLIDE_LEFT_WALL_HUG: i32 = 0x20;
+
 pub const COLLIDE_LEFT_WALL_MASK: i32 = 0x3F;
+
 pub const COLLIDE_RIGHT_WALL_PUSH: i32 = 0x40;
+
 pub const COLLIDE_RIGHT_WALL_HUG: i32 = 0x800;
+
 pub const COLLIDE_RIGHT_WALL_MASK: i32 = 0xFC0;
+
 pub const COLLIDE_CEILING_PUSH: i32 = 0x2000;
+
 pub const COLLIDE_CEILING_HUG: i32 = 0x4000;
+
 pub const COLLIDE_FLOOR_PUSH: i32 = 0x8000;
+
 pub const COLLIDE_FLOOR_HUG: i32 = 0x10000;
+
 pub const COLLIDE_LEFT_EDGE: i32 = 0x100000;
+
 pub const COLLIDE_RIGHT_EDGE: i32 = 0x200000;
+
 pub const COLLIDE_EDGE: i32 = 0x800000;
+
 pub const COLLIDE_LEFT_LEDGE_GRAB: i32 = 0x1000000;
+
 pub const COLLIDE_RIGHT_LEDGE_GRAB: i32 = 0x2000000;
+
 pub const COLLIDE_LEFT_LEDGE_SLIP: i32 = 0x10000000;
+
 pub const COLLIDE_RIGHT_LEDGE_SLIP: i32 = 0x20000000;
 
 pub const COLL_FLAG_AIR_STAY_AIRBORNE: u32 = 0x1;
+
 pub const COLL_FLAG_AIR_PLATFORM_PASS_CALLBACK: u32 = 0x2;
+
 pub const COLL_FLAG_AIR_CAN_GRAB_LEDGE: u32 = 0x4;
 
 pub const COLLDATA_X130_LOCKED: u32 = 1 << 4;
+
 pub const COLLDATA_X130_CLEAR: u32 = 1 << 5;
+
 /// `ECBSource_JObj` / `ECBSource_Fixed` (mp/types.h).
 pub const ECB_SOURCE_JOBJ: i32 = 1;
+
 pub const ECB_SOURCE_FIXED: i32 = 2;
 
-const MPCOLL_WALLID_MAX: usize = 9;
-const F32_MAX: f32 = 3.4028235e38;
+pub(crate) const MPCOLL_WALLID_MAX: usize = 9;
+
+pub(crate) const F32_MAX: f32 = 3.4028235e38;
 
 /// Code the step needs that is not ported (the scenario stops there).
 #[derive(Clone, Debug, PartialEq)]
@@ -98,15 +126,17 @@ pub enum StepCb {
 }
 
 #[inline]
-fn v3(v: TVec) -> Vec3 {
+pub(crate) fn v3(v: TVec) -> Vec3 {
     Vec3 { x: v.x, y: v.y, z: v.z }
 }
+
 #[inline]
-fn tv(v: Vec3) -> TVec {
+pub(crate) fn tv(v: Vec3) -> TVec {
     TVec { x: v.x, y: v.y, z: v.z }
 }
+
 #[inline]
-fn abs(x: f32) -> f32 {
+pub(crate) fn abs(x: f32) -> f32 {
     // C ABS(x): x < 0 ? -x : x (keeps -0.0).
     if x < 0.0 {
         -x
@@ -115,7 +145,7 @@ fn abs(x: f32) -> f32 {
     }
 }
 
-fn zero_ecb() -> _ftECB {
+pub(crate) fn zero_ecb() -> _ftECB {
     _ftECB::zeroed()
 }
 
@@ -420,15 +450,6 @@ pub fn mp_coll_80042384(cd: &mut CollData) {
     }
 }
 
-#[inline]
-fn update_min_max(min: &mut f32, max: &mut f32, val: f32) {
-    if *min > val {
-        *min = val;
-    } else if *max < val {
-        *max = val;
-    }
-}
-
 /// `mpColl_LoadECB_JObj`. `joints[i]` = `lb_8000B1CC(ecb_source.x10C_joint[i], NULL)`.
 pub fn mp_coll_load_ecb_jobj(cd: &mut CollData, flags: u32, joints: &[Vec3; 6]) {
     if cd.x130_flags & COLLDATA_X130_CLEAR != 0 {
@@ -624,7 +645,7 @@ pub fn mp_coll_80043754(
 pub fn mp_coll_end(_cd: &mut CollData, _arg1: bool, _arg2: bool) {}
 
 /// The `inline0` / `inline1` wrapper: ECB-tiny flag, the step loop with mpColl_80046904, End.
-fn run_air(
+pub(crate) fn run_air(
     g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32, floor_cb: &mut LineFilter,
 ) -> R<bool> {
     cd.prev_env_flags = cd.env_flags;
@@ -687,7 +708,7 @@ pub fn mp_coll_80047e14(
 }
 
 /// `mpColl_80043BBC`.
-fn mp_coll_80043bbc(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
+pub(crate) fn mp_coll_80043bbc(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
     let line_id = g.mp_line_prev_non_floor(cd.floor.index);
     let bx = cd.cur_pos.x + cd.ecb.bottom.x;
     let by = cd.cur_pos.y + cd.ecb.bottom.y;
@@ -700,7 +721,7 @@ fn mp_coll_80043bbc(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
 }
 
 /// `mpColl_80043E90`.
-fn mp_coll_80043e90(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
+pub(crate) fn mp_coll_80043e90(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
     let line_id = g.mp_line_next_non_floor(cd.floor.index);
     let bx = cd.cur_pos.x + cd.ecb.bottom.x;
     let by = cd.cur_pos.y + cd.ecb.bottom.y;
@@ -713,12 +734,12 @@ fn mp_coll_80043e90(g: &mut GroundColl, cd: &CollData) -> Option<i32> {
 }
 
 /// `mpColl_stage_same_joint` (no script slots: `ScriptGame_StageSlotSameJoint` is -1).
-fn same_joint(g: &GroundColl, a: i32, b: i32) -> bool {
+pub(crate) fn same_joint(g: &GroundColl, a: i32, b: i32) -> bool {
     g.mp_joint_from_line(a) == g.mp_joint_from_line(b)
 }
 
 /// `mpColl_80044164` (left ledge) and `mpColl_800443C4` (right ledge): `dir` 1 / -1.
-fn mp_coll_ledge(g: &mut GroundColl, cd: &mut CollData, right_side: bool) -> Option<i32> {
+pub(crate) fn mp_coll_ledge(g: &mut GroundColl, cd: &mut CollData, right_side: bool) -> Option<i32> {
     let half_height = 0.5f32 * cd.ledge_snap_height;
     let mut snap_x = cd.ledge_snap_x;
     let snap_y = cd.ledge_snap_y;
@@ -789,7 +810,7 @@ fn mp_coll_ledge(g: &mut GroundColl, cd: &mut CollData, right_side: bool) -> Opt
 }
 
 /// `mpColl_80044628_Floor`.
-fn mp_coll_80044628_floor(
+pub(crate) fn mp_coll_80044628_floor(
     g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, cb: &mut LineFilter, left_right: i32,
 ) -> bool {
     let pbx = cd.prev_pos.x + cd.prev_ecb.bottom.x;
@@ -845,7 +866,7 @@ fn mp_coll_80044628_floor(
 }
 
 /// `mpColl_80044838_Floor`.
-fn mp_coll_80044838_floor(g: &mut GroundColl, cd: &mut CollData, ignore_bottom: bool) -> bool {
+pub(crate) fn mp_coll_80044838_floor(g: &mut GroundColl, cd: &mut CollData, ignore_bottom: bool) -> bool {
     let bottom = if ignore_bottom {
         Vec3 { x: cd.cur_pos.x, y: cd.cur_pos.y, z: 0.0 }
     } else {
@@ -876,7 +897,7 @@ fn mp_coll_80044838_floor(g: &mut GroundColl, cd: &mut CollData, ignore_bottom: 
 }
 
 /// `mpColl_80044948_Floor`.
-fn mp_coll_80044948_floor(g: &mut GroundColl, cd: &mut CollData) -> bool {
+pub(crate) fn mp_coll_80044948_floor(g: &mut GroundColl, cd: &mut CollData) -> bool {
     let mut hit_wall = false;
     let bottom = if cd.ecb.bottom.y <= 0.0 {
         Vec3 { x: cd.cur_pos.x + cd.ecb.bottom.x, y: cd.cur_pos.y + cd.ecb.bottom.y, z: 0.0 }
@@ -920,7 +941,7 @@ fn mp_coll_80044948_floor(g: &mut GroundColl, cd: &mut CollData) -> bool {
 }
 
 /// `mpColl_80044AD8_Ceiling`.
-fn mp_coll_80044ad8_ceiling(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, left_right: i32) -> bool {
+pub(crate) fn mp_coll_80044ad8_ceiling(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, left_right: i32) -> bool {
     let ptx = cd.prev_pos.x + cd.prev_ecb.top.x;
     let pty = cd.prev_pos.y + cd.prev_ecb.top.y;
     let top = Vec3 { x: cd.cur_pos.x + cd.ecb.top.x, y: cd.cur_pos.y + cd.ecb.top.y, z: 0.0 };
@@ -962,7 +983,7 @@ fn mp_coll_80044ad8_ceiling(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollD
 
 /// `mpColl_RightWall_inline` / `mpColl_LeftWall_inline`: remember a wall unless it, or a line
 /// connected to it, is already listed.
-fn add_wall(g: &GroundColl, list: &mut [i32; MPCOLL_WALLID_MAX], n: &mut usize, line_id: i32) {
+pub(crate) fn add_wall(g: &GroundColl, list: &mut [i32; MPCOLL_WALLID_MAX], n: &mut usize, line_id: i32) {
     for i in 0..*n {
         let s = list[i];
         if line_id == s || g.mp_lines_connected(s, line_id) {
@@ -976,14 +997,14 @@ fn add_wall(g: &GroundColl, list: &mut [i32; MPCOLL_WALLID_MAX], n: &mut usize, 
 
 /// `mpColl_80044E10_RightWall` (`right` false) / `mpColl_80045B74_LeftWall` (`right` true is
 /// the left-facing-wall check against the ECB's right side): the wall checks.
-fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool) -> bool {
+pub(crate) fn mp_coll_wall_check(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool) -> bool {
     mp_coll_wall_check_ex(g, st, cd, left_wall, false)
 }
 
 /// The wall checks; `ground` = the grounded variants (mpColl_80048AB0_RightWall /
 /// mpColl_80049778_LeftWall), which ignore the two walls next to the floor (`line_id1/2`) in
 /// the bottom-based checks.
-fn mp_coll_wall_check_ex(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool, ground: bool) -> bool {
+pub(crate) fn mp_coll_wall_check_ex(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, left_wall: bool, ground: bool) -> bool {
     let (ex1, ex2) = if ground && g.mp_lib_80054ed8(cd.floor.index) {
         let first = |g: &GroundColl, i: i32| if left_wall { g.mp_lib_80053448_floor(i) } else { g.mp_lib_80053394_floor(i) };
         let second = |g: &GroundColl, i: i32| if left_wall { g.mp_lib_800534fc_floor(i) } else { g.mp_lib_800536cc_floor(i) };
@@ -1084,14 +1105,14 @@ fn mp_coll_wall_check_ex(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut Coll
 
 /// A candidate wall contact of the push-out searches (`mpColl_804D6490/94/98` + `.normal`).
 #[derive(Clone, Copy)]
-struct WallBest {
+pub(crate) struct WallBest {
     max_x: f32,
     line_id: i32,
     flags: u32,
     normal: Vec3,
 }
 
-fn wall_take(b: &mut WallBest, max_x: f32, h: &crate::mp::geom::LineHit) {
+pub(crate) fn wall_take(b: &mut WallBest, max_x: f32, h: &crate::mp::geom::LineHit) {
     b.max_x = max_x;
     b.line_id = h.line_id;
     b.flags = h.flags;
@@ -1100,7 +1121,7 @@ fn wall_take(b: &mut WallBest, max_x: f32, h: &crate::mp::geom::LineHit) {
 
 /// `mpColl_80046224_LeftWall`: push the ECB out of the left-facing walls collected by the check
 /// (`mpColl_80045B74_LeftWall`). True = `cur_pos.x` moved.
-fn mp_coll_80046224_left_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
+pub(crate) fn mp_coll_80046224_left_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
     let mut b = WallBest { max_x: F32_MAX, line_id: -1, flags: 0, normal: Vec3 { x: 0.0, y: 0.0, z: 0.0 } };
     for i in 0..st.n_left {
         let mut wall_id = st.left[i];
@@ -1221,7 +1242,7 @@ fn mp_coll_80046224_left_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut Col
 }
 
 /// `mpColl_800454A4_RightWall`: the mirror of [`mp_coll_80046224_left_wall`].
-fn mp_coll_800454a4_right_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
+pub(crate) fn mp_coll_800454a4_right_wall(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData) -> bool {
     let mut b = WallBest { max_x: -F32_MAX, line_id: -1, flags: 0, normal: Vec3 { x: 0.0, y: 0.0, z: 0.0 } };
     for i in 0..st.n_right {
         let mut wall_id = st.right[i];
@@ -1444,7 +1465,7 @@ pub fn mp_coll_80046904(
 }
 
 /// `mpColl_800488F4`: follow the floor under a grounded ECB.
-fn mp_coll_800488f4(g: &mut GroundColl, cd: &mut CollData) -> bool {
+pub(crate) fn mp_coll_800488f4(g: &mut GroundColl, cd: &mut CollData) -> bool {
     let floor_id = cd.floor.index;
     let bottom = Vec3 { x: cd.cur_pos.x + cd.ecb.bottom.x, y: cd.cur_pos.y + cd.ecb.bottom.y, z: 0.0 };
     if !g.mp_lib_80054ed8(cd.floor.index) || g.mp_line_get_kind(cd.floor.index) != COLL_LINE_FLOOR {
@@ -1487,7 +1508,7 @@ fn mp_coll_800488f4(g: &mut GroundColl, cd: &mut CollData) -> bool {
 /// `mpColl_8004A45C_Floor` (`teeter` false: walk off the end, stand on the end point) /
 /// `mpColl_8004A678_Floor` (`teeter` true: stop at the edge). True = the ECB was put on the end
 /// point of the floor (`on_edge`).
-fn mp_coll_floor_edge(g: &mut GroundColl, cd: &mut CollData, line_id: i32, teeter: bool) -> R<bool> {
+pub(crate) fn mp_coll_floor_edge(g: &mut GroundColl, cd: &mut CollData, line_id: i32, teeter: bool) -> R<bool> {
     if !g.mp_lib_80054ed8(line_id) || g.mp_line_get_kind(line_id) != COLL_LINE_FLOOR {
         return Ok(false);
     }
@@ -1563,7 +1584,7 @@ fn mp_coll_floor_edge(g: &mut GroundColl, cd: &mut CollData, line_id: i32, teete
 }
 
 /// `mpColl_8004A908_Floor`: a different floor crossed by the bottom (then the ECB-middle) sweep.
-fn mp_coll_8004a908_floor(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, line_id: i32) -> bool {
+pub(crate) fn mp_coll_8004a908_floor(g: &mut GroundColl, st: &CollGlobals, cd: &mut CollData, line_id: i32) -> bool {
     let pbx = cd.prev_pos.x + cd.prev_ecb.bottom.x;
     let mut pby = cd.prev_pos.y + cd.prev_ecb.bottom.y;
     let bx = cd.cur_pos.x + cd.ecb.bottom.x;
@@ -1671,7 +1692,7 @@ pub fn mp_coll_8004ace4(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollD
 }
 
 /// `inline2(coll, i)`: the substep loop with mpColl_8004ACE4, then `mpCollEnd(.., false)`.
-fn run_ground(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32) -> R<bool> {
+pub(crate) fn run_ground(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollData, flags: u32) -> R<bool> {
     cd.prev_env_flags = cd.env_flags;
     cd.env_flags = 0;
     st.is_ecb_tiny = cd.ecb.top.y - cd.ecb.bottom.y < 6.0 && cd.ecb.right.y - cd.ecb.left.y < 6.0;
@@ -1702,6 +1723,8 @@ pub fn mp_coll_8004b2dc(g: &mut GroundColl, st: &mut CollGlobals, cd: &mut CollD
 }
 
 #[allow(dead_code)]
-fn _unused(v: TVec) -> Vec3 {
+pub(crate) fn _unused(v: TVec) -> Vec3 {
     v3(v)
 }
+
+pub use crate::tu::mpcoll::update_min_max_fp as update_min_max;

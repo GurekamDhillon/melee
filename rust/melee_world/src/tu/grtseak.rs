@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -81,7 +87,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtseak::{grTSeak_80223900, grTSeak_80223A1C, grTSeak_80223A7C, grTSeak_80223B0C, grTSeak_OnTouchLine, grTSeak_OnCheckShadowRender};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -244,3 +249,26 @@ pub unsafe extern "C" fn grTSeak_80223B34(gobj: *mut HSD_GObj) {
     melee_core::ct!("grTSeak_80223B34");
     
 }
+
+// ---- folded from grtseak.rs (consolidation steps 21/22) ----
+/// grTseak_OnStart_fp (gr/grtseak.c:116)
+    pub unsafe extern "C" fn grTseak_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtseak.rs (consolidation steps 21/22) ----
+/// grTSeak_80223900 (gr/grtseak.c:121)
+    pub extern "C" fn grTSeak_80223900() -> i32 { 0 }
+
+/// grTSeak_80223A1C (gr/grtseak.c:174)
+    pub extern "C" fn grTSeak_80223A1C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTSeak_80223A7C (gr/grtseak.c:188)
+    pub extern "C" fn grTSeak_80223A7C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTSeak_80223B0C (gr/grtseak.c:205)
+    pub extern "C" fn grTSeak_80223B0C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTSeak_OnTouchLine (gr/grtseak.c:217)
+    pub extern "C" fn grTSeak_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTSeak_OnCheckShadowRender (gr/grtseak.c:222)
+    pub extern "C" fn grTSeak_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

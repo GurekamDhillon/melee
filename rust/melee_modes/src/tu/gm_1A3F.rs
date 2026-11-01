@@ -12,10 +12,15 @@
 //! 1P interstage) are part of the port and are ported too, with their callees as hooks.
 #![allow(non_snake_case, non_upper_case_globals, dead_code, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::GameModeState as GameModeState_gm_ptr;
 use core::ffi::c_void;
 use melee_types::*;
 
-pub use crate::gm::gm_Is1PMode;
 
 /// `GM_FRONTEND` (gm/gmfrontend.h): the port's own frontend screens, `GM_COUNT + 1`.
 pub const GM_FRONTEND: u8 = GM_COUNT as u8 + 1;
@@ -689,4 +694,22 @@ unsafe fn gm_801A4510_loop() {
         }
         state_machine.routing.curr_mode = next_mode;
     }
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gm_1A3F.c `gm_Is1PMode`.
+pub fn gm_Is1PMode(mode: u8) -> bool {
+    melee_core::ct!("gm_Is1PMode");
+    // GM_CLASSIC 3, ADVENTURE 4, ALLSTAR 5, TARGET_TEST 15, TRAINING 28, HOME_RUN 32,
+    // 10MAN 33, 100MAN 34, 3MIN 35, 15MIN 36, ENDLESS 37, CRUEL 38, EVENT 43
+    matches!(mode, 3 | 4 | 5 | 15 | 28 | 32..=38 | 43)
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_1A3F.c `firstState_fp`. The C's `break` only leaves its `do {} while (0)`, so the loop
+/// always returns on its first pass: the first state's id, or 0 if the table starts with the
+/// 0xFF terminator. `next_id` has no effect.
+pub fn firstState_fp(state: &[GameModeState_gm_ptr], _next_id: u8) -> u8 {
+    melee_core::ct!("firstState_fp");
+    if state[0].id != 0xFF { state[0].id } else { 0 }
 }

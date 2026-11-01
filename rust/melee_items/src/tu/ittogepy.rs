@@ -3,6 +3,17 @@
 //! by tests/kinds_ittogepy.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::itfwd::it_maril_unk_motion2_anim;
+#[allow(unused_imports)]
+use crate::itfwd::it_zgshell_logic11_reflected;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -216,3 +227,7 @@ pub unsafe extern "C" fn itTogepy_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool 
     melee_core::ct!("itTogepy_UnkMotion0_Coll");
     ext::it_8027A118(gobj, Some(it_802D3728)) != 0
 }
+
+// ---- folded from itfwd6.rs (consolidation steps 21/22) ----
+/// `it_802D3728` (src/melee/it/kinds/ittogepy.c): `return;`.
+pub fn it_802d3728(_ip: &mut Item) { melee_core::ct!("it_802d3728");}

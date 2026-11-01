@@ -1,5 +1,15 @@
 //! TARGET_PC port of src/melee/mn/mndiagram3.c, checked against the native C state oracle.
 #![allow(non_snake_case, non_upper_case_globals, unused_imports, unused_variables, unused_assignments, unused_mut, static_mut_refs, clippy::all)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use mt::Diagram3 as Diagram3_mn_r4;
+#[allow(unused_imports)]
+use mt::HSD_JObj as HSD_JObj_mn_r4;
+#[allow(unused_imports)]
+use crate::mn_r4::{jobj as jobj_mn_r4};
+#[allow(unused_imports)]
+use melee_types as mt;
 use melee_types::*;
 use std::vec::Vec;
 use crate::oracle::Va;
@@ -477,7 +487,6 @@ pub unsafe extern "C" fn mnDiagram3_PopulateRankings(mut gobj: *mut HSD_GObj) {
         i += 1;
     }
 }
-pub use crate::mn_r4::mnDiagram3_GetRowSpacing;
 #[inline]
 pub unsafe extern "C" fn mnDiagram3_ClearRowLabels(mut data: *mut Diagram3) {
     melee_core::ct!("mnDiagram3_ClearRowLabels");
@@ -495,7 +504,6 @@ pub unsafe extern "C" fn mnDiagram3_ClearRowLabels(mut data: *mut Diagram3) {
         }
     };
 }
-pub use crate::mn_ptr::mnDiagram3_GetRowStat;
 #[inline]
 pub unsafe extern "C" fn mnDiagram3_RebuildRowLabels(
     mut data: *mut Diagram3,
@@ -972,8 +980,6 @@ pub unsafe extern "C" fn mnDiagram3_SetupRows(
         i += 1;
     }
 }
-pub use crate::mn_r4::mnDiagram3_GetPopupSpacing;
-pub use crate::mn_r4::mnDiagram3_GetPopupY;
 #[inline]
 pub unsafe extern "C" fn mnDiagram3_CreatePopup(
     mut data: *mut Diagram3,
@@ -1045,4 +1051,32 @@ pub unsafe extern "C" fn mnDiagram3_Init(mut arg0: *mut ::core::ffi::c_void) {
         0 as u8,
     );
     (*proc_0).set_flags_3(HSD_GObj_804D783C as u8 as u8);
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mndiagram3.c `mnDiagram3_GetRowStat`: the stat shown on a row, wrapping at 24 (names) or 21.
+pub fn mnDiagram3_GetRowStat(data: &mt::Diagram3, offset: u8, row: u8) -> u8 {
+    melee_core::ct!("mnDiagram3_GetRowStat");
+    let limit: i32 = if data.is_name_mode != 0 { 24 } else { 21 };
+    let value = offset as i32 + row as i32;
+    if value >= limit { (value - limit) as u8 } else { value as u8 }
+}
+
+// ---- folded from mn_r4.rs (consolidation steps 21/22) ----
+/// mndiagram3.c `mnDiagram3_GetPopupSpacing` (static inline).
+pub fn mnDiagram3_GetPopupSpacing(popup_row: &HSD_JObj_mn_r4, data: &Diagram3_mn_r4) -> f32 {
+    melee_core::ct!("mnDiagram3_GetPopupSpacing");
+    mt::inline::HSD_JObjGetTranslationY(jobj_mn_r4(data.jobjs[9])) - mt::inline::HSD_JObjGetTranslationY(popup_row)
+}
+
+/// mndiagram3.c `mnDiagram3_GetPopupY` (static inline): `row_spacing * index + y`, fused.
+pub fn mnDiagram3_GetPopupY(popup_row: &HSD_JObj_mn_r4, row_spacing: f32, index: u8) -> f32 {
+    melee_core::ct!("mnDiagram3_GetPopupY");
+    fmadds(row_spacing, index as f32, mt::inline::HSD_JObjGetTranslationY(popup_row))
+}
+
+/// mndiagram3.c `mnDiagram3_GetRowSpacing` (static inline).
+pub fn mnDiagram3_GetRowSpacing(data: &Diagram3_mn_r4) -> f32 {
+    melee_core::ct!("mnDiagram3_GetRowSpacing");
+    mt::inline::HSD_JObjGetTranslationY(jobj_mn_r4(data.jobjs[9])) - mt::inline::HSD_JObjGetTranslationY(jobj_mn_r4(data.jobjs[8]))
 }

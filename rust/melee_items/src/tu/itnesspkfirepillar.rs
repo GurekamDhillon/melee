@@ -3,6 +3,15 @@
 //! tests/kinds_itnesspkfirepillar.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBoomerangAttributes;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -167,4 +176,11 @@ pub unsafe extern "C" fn itNesspkfirepillar_Logic24_DmgReceived(item_gobj: *mut 
 pub unsafe extern "C" fn itNesspkfirepillar_Logic24_EvtUnk(item_gobj: *mut Item_GObj, parent_gobj: *mut HSD_GObj) {
     melee_core::ct!("itNesspkfirepillar_Logic24_EvtUnk");
     ext::it_8026B894(item_gobj, parent_gobj);
+}
+
+// ---- folded from itkinds8.rs (consolidation steps 21/22) ----
+/// `get_min_life_fp` (itnesspkfirepillar.c): `1.0F`.
+pub fn get_min_life_fp() -> f32 {
+    melee_core::ct!("get_min_life_fp");
+    1.0
 }

@@ -5,6 +5,118 @@
 //! shipping contraction) by tests/kinds_itmaril.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{normalize};
+#[allow(unused_imports)]
+use crate::itfwd::it_maril_unk_motion2_anim;
+#[allow(unused_imports)]
+use crate::itfwd::it_zgshell_logic11_reflected;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -366,4 +478,70 @@ pub unsafe extern "C" fn it_802D6F00(gobj: *mut Item_GObj) -> bool {
 pub unsafe extern "C" fn it_802D6FB0(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("it_802D6FB0");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802D6810` (src/melee/it/kinds/itmaril.c): `return it_80273030(..)`.
+pub fn it_802d6810(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6810");
+    it_80273030(ip)
+}
+
+/// `it_802D6850` (src/melee/it/kinds/itmaril.c): `it_8026B894(..)`.
+pub fn it_802d6850(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d6850");
+    it_8026b894(ip, ref_gobj);
+}
+
+/// `it_802D6FB0` (src/melee/it/kinds/itmaril.c): `it_8026B894(..)`.
+pub fn it_802d6fb0(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d6fb0");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itfwd6.rs (consolidation steps 21/22) ----
+/// `it_802D6830` (src/melee/it/kinds/itmaril.c): `return true;`.
+pub fn it_802d6830(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6830");
+    true
+}
+
+/// `it_802D6840` (src/melee/it/kinds/itmaril.c): `return true;`.
+pub fn it_802d6840(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6840");
+    true
+}
+
+/// `it_802D6848` (src/melee/it/kinds/itmaril.c): `return true;`.
+pub fn it_802d6848(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6848");
+    true
+}
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802D6808` (src/melee/it/kinds/itmaril.c): `return false;`.
+pub fn it_802d6808(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6808");
+    false
+}
+
+/// `it_802D6838` (src/melee/it/kinds/itmaril.c): `return false;`.
+pub fn it_802d6838(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d6838");
+    false
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- itmaril.c -------------------------------------------------------------------------
+
+/// `it_802D6740`: gravity, then `x6C` = the normalised velocity.
+/// # Safety
+/// The item's special attributes are an `itMarilAttributes`.
+pub unsafe fn it_802d6740(ip: &mut Item) {
+    melee_core::ct!("it_802d6740");
+    let a = &*((*ip.xC4_article_data).x4_specialAttributes as *const itMarilAttributes);
+    ip.x40_vel.y += a.xC;
+    let m = &mut ip.xDD4_itemVar.maril;
+    m.x6C = ip.x40_vel;
+    normalize(&mut m.x6C);
 }

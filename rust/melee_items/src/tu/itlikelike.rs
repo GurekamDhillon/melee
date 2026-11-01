@@ -5,6 +5,112 @@
 //! contraction; no fused sites) by tests/kinds_itlikelike.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itfwd8::it_8027c794;
+#[allow(unused_imports)]
+use crate::itkinds10::it_flipper_repel_inline;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802e37a4;
+#[allow(unused_imports)]
+use crate::itkinds6::it_802ddbe8;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HSD_AnimJoint;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::KinokoAnim;
+#[allow(unused_imports)]
+use crate::layout::UnkAllstarData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itClimbersBlizzardAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLipstickAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkBytes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kinoko;
+#[allow(unused_imports)]
+use crate::itkinds13::{it_swap_velocity, swap_velocity};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -1340,4 +1446,26 @@ pub unsafe extern "C" fn it_802DC4BC(arg0: i32, arg1: *mut Vec3, arg2: i32) -> *
         }
     }
     gobj
+}
+
+// ---- folded from itkinds13.rs (consolidation steps 21/22) ----
+/// `it_802D9B78` (itlikelike.c): `swapVelocity`.
+/// # Safety
+/// As `it_swap_velocity`.
+pub unsafe fn it_802d9b78(ip: &mut Item) {
+    melee_core::ct!("it_802d9b78");
+    swap_velocity(ip);
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802DB358` (itlikelike.c): remember the grab victim, clear `xDD0_flag.b5`,
+/// `it_80274ECC(gobj, true)`.
+pub fn it_802db358(ip: &mut Item) {
+    melee_core::ct!("it_802db358");
+    // SAFETY: item-var union fields are plain data.
+    unsafe {
+        ip.xDD4_itemVar.likelike.x50 = ip.grab_victim;
+        ip.xDD0_flag.anon_0.set_b5(0);
+        it_80274ecc(ip, 1);
+    }
 }

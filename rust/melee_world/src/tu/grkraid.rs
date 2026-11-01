@@ -6,17 +6,18 @@
 //! State-oracle checked against the C (tests/gro_grkraid.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::{GET_GROUND, GET_JOBJ, HSD_JObjAddRotationZ, HSD_JObjSetScale, HSD_JObjSetTranslateX};
 use super::grinl2::{Ground_SetupStageCallbacks, Ground_StartMapAnim, Ground_UpdateWindAndMapColl};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
-pub use crate::gr::trivial::grkraid::{
-    grKraid_801FE0BC, grKraid_801FE1DC, grKraid_801FE1E4, grKraid_801FE1E8, grKraid_801FE2C8, grKraid_801FE35C,
-    grKraid_801FE3A4, grKraid_801FE3AC, grKraid_801FE3B0, grKraid_801FE438, grKraid_801FE6D4, grKraid_801FE9F8,
-    grKraid_801FF14C, grKraid_OnCheckShadowRender, grKraid_OnDemoInit, grKraid_OnTouchLine,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -551,3 +552,56 @@ pub unsafe fn grKraid_801FF150(_gobj: *mut HSD_GObj) { melee_core::ct!("grKraid_
 
 #[allow(dead_code)]
 type _Unused = c_void;
+
+// ---- folded from grkraid.rs (consolidation steps 21/22) ----
+/// grKraid_OnStart_fp (gr/grkraid.c:85)
+    pub unsafe extern "C" fn grKraid_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grkraid.rs (consolidation steps 21/22) ----
+/// grKraid_OnDemoInit (gr/grkraid.c:60)
+    pub extern "C" fn grKraid_OnDemoInit(a0: i32) {  }
+
+/// grKraid_801FE0BC (gr/grkraid.c:90)
+    pub extern "C" fn grKraid_801FE0BC() -> i32 { 0 }
+
+/// grKraid_801FE1DC (gr/grkraid.c:116)
+    pub extern "C" fn grKraid_801FE1DC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKraid_801FE1E4 (gr/grkraid.c:121)
+    pub extern "C" fn grKraid_801FE1E4(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE1E8 (gr/grkraid.c:126)
+    pub extern "C" fn grKraid_801FE1E8(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE2C8 (gr/grkraid.c:141)
+    pub extern "C" fn grKraid_801FE2C8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKraid_801FE35C (gr/grkraid.c:160)
+    pub extern "C" fn grKraid_801FE35C(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE3A4 (gr/grkraid.c:172)
+    pub extern "C" fn grKraid_801FE3A4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKraid_801FE3AC (gr/grkraid.c:177)
+    pub extern "C" fn grKraid_801FE3AC(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE3B0 (gr/grkraid.c:182)
+    pub extern "C" fn grKraid_801FE3B0(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE438 (gr/grkraid.c:201)
+    pub extern "C" fn grKraid_801FE438(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKraid_801FE6D4 (gr/grkraid.c:260)
+    pub extern "C" fn grKraid_801FE6D4(a0: *mut HSD_GObj) {  }
+
+/// grKraid_801FE9F8 (gr/grkraid.c:382)
+    pub extern "C" fn grKraid_801FE9F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKraid_801FF14C (gr/grkraid.c:563)
+    pub extern "C" fn grKraid_801FF14C(a0: *mut HSD_GObj) {  }
+
+/// grKraid_OnTouchLine (gr/grkraid.c:570)
+    pub extern "C" fn grKraid_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grKraid_OnCheckShadowRender (gr/grkraid.c:575)
+    pub extern "C" fn grKraid_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

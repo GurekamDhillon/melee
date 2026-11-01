@@ -4,6 +4,9 @@
 //! Callees of unported TUs are `ext` hooks named like the C (unset: panics "TODO").
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 
@@ -380,4 +383,41 @@ pub fn mn_8022F4CC() {
     ext::HSD_SisLib_803A5E70();
     ext::mn_8022EBDC();
     ext::mnCharSel_802640A0();
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mn_22EC.c `mn_8022F410_fp`: step `*x` toward `*target` by `dx`; returns the direction.
+pub fn mn_8022F410_fp(x: &mut f32, target: &f32, dx: f32) -> i32 {
+    melee_core::ct!("mn_8022F410_fp");
+    let t = *target;
+    if *x == t {
+        return 0;
+    }
+    if *x < t {
+        let a = *x + dx;
+        *x = if a > t { t } else { a };
+        1
+    } else {
+        let a = *x - dx;
+        *x = if a < t { t } else { a };
+        -1
+    }
+}
+
+/// mn_22EC.c `mn_8022F470_fp`: the integer version (`-fwrapv`).
+pub fn mn_8022F470_fp(x: &mut i32, target: &i32, dx: i32) -> i32 {
+    melee_core::ct!("mn_8022F470_fp");
+    let t = *target;
+    if *x == t {
+        return 0;
+    }
+    if *x < t {
+        let a = x.wrapping_add(dx);
+        *x = if a > t { t } else { a };
+        1
+    } else {
+        let a = x.wrapping_sub(dx);
+        *x = if a < t { t } else { a };
+        -1
+    }
 }

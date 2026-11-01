@@ -3,6 +3,7 @@
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_lb_0219.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ffi::c_void;
 use melee_runtime::cabi::f2u8;
 use melee_types::*;
@@ -149,3 +150,7 @@ pub unsafe fn fn_80021C80(gobj: *mut HSD_GObj) {
         ext::lb_80014498(&raw mut (*user_data).x4);
     }
 }
+
+// ---- folded from lb_r9.rs (consolidation steps 21/22) ----
+/// lb_0219.c `fn_80021C18_fp`: an empty command callback.
+pub fn fn_80021C18_fp(_gobj: *mut c_void, _cmd: *mut c_void, _arg2: i32) { melee_core::ct!("fn_80021C18_fp");}

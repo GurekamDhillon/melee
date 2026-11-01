@@ -132,3 +132,4 @@ pub mod card;
 pub mod THPDec;
 pub mod float;
 pub mod ansi_files;
+pub mod ftcpuattack;

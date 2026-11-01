@@ -5,6 +5,12 @@
 //! tests/tu_grpura.rs; regenerate the C side with `python rust/melee_world/gen/cref/run_gr.py grpura`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -809,3 +815,20 @@ pub unsafe extern "C" fn grPura_80213250(jobj: *mut HSD_JObj) {
         }
     }
 }
+
+// ---- folded from grpura.rs (consolidation steps 21/22) ----
+/// grPura_80211DDC_fp (gr/grpura.c:321)
+    pub unsafe extern "C" fn grPura_80211DDC_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grpura.rs (consolidation steps 21/22) ----
+/// grPura_80211E00_fp (gr/grpura.c:326)
+    pub extern "C" fn grPura_80211E00_fp() -> i32 { 0 }
+
+/// stageGObj27_Callback1_fp (gr/grpura.c:391)
+    pub extern "C" fn stageGObj27_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grPura_802130C0_fp (gr/grpura.c:875)
+    pub extern "C" fn grPura_802130C0_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grPura_802130C8_fp (gr/grpura.c:880)
+    pub extern "C" fn grPura_802130C8_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -1,5 +1,10 @@
 //! TARGET_PC port of mndiagram.c. C-native seeded state oracle: tests/tu_mndiagram.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments, unused_variables, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_Text as HSD_Text_mn_ptr;
 use melee_types::*;
 use std::vec::Vec;
 use crate::oracle::Va;
@@ -3273,7 +3278,6 @@ pub unsafe extern "C" fn mnDiagram_DrawGridValues(
         row += 1 as i32;
     }
 }
-pub use crate::mn_ptr::mnDiagram_TextSetPos;
 pub unsafe extern "C" fn mnDiagram_DrawNameHeaders(
     mut arg0: *mut HSD_GObj,
     mut arg1: i32,
@@ -3922,3 +3926,11 @@ pub unsafe extern "C" fn mnDiagram_Init(mut arg0: u8, mut arg1: u8) {
     (*proc_0).set_flags_3(HSD_GObj_804D783C as u8 as u8);
 }
 
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mndiagram.c `mnDiagram_TextSetPos`.
+pub fn mnDiagram_TextSetPos(text: &mut HSD_Text_mn_ptr, x: f32, y: f32, z: f32) {
+    melee_core::ct!("mnDiagram_TextSetPos");
+    text.pos_x = x;
+    text.pos_y = y;
+    text.pos_z = z;
+}

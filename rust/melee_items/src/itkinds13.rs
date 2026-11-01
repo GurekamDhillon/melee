@@ -1,3 +1,4 @@
+
 //! Port round 13 (night 3, round 5): hand ports of 29 item functions whose callees are all
 //! ported in this crate (`it_8027C794`, `it_802DDBE8`, `it_802E37A4`, `itFlipper_Repel_inline`)
 //! or call nothing. Verified against verbatim C copies (tests/c_oracle/round13_bodies.h,
@@ -15,9 +16,13 @@
 #![allow(non_snake_case)]
 
 use crate::itfwd8::it_8027c794;
+
 use crate::itkinds10::it_flipper_repel_inline;
+
 use crate::itkinds5::it_802e37a4;
+
 use crate::itkinds6::it_802ddbe8;
+
 use crate::layout::{
     Article, CollData, HSD_AnimJoint, HSD_GObj, HSD_ObjAllocUnk, Item, ItemStateTable, KinokoAnim,
     UnkAllstarData, Vec as GcVec, itClimbersBlizzardAttributes, itDoseiAttributes,
@@ -26,7 +31,7 @@ use crate::layout::{
 };
 
 #[inline(always)]
-unsafe fn sa<'a, T>(ip: &Item) -> &'a mut T {
+pub(crate) unsafe fn sa<'a, T>(ip: &Item) -> &'a mut T {
     &mut *((*ip.xC4_article_data).x4_specialAttributes as *mut T)
 }
 
@@ -94,13 +99,6 @@ pub unsafe fn it_freeze_logic17_destroyed(ip: &mut Item) {
     }
 }
 
-/// `it_80299FB4_get` (ithammerhead.c, static inline): `GET_ITEM(gobj)`.
-/// # Safety
-/// `gobj` is valid.
-pub unsafe fn it_80299fb4_get(gobj: *mut HSD_GObj) -> *mut Item {
-    (*gobj).user_data as *mut Item
-}
-
 /// `itHeart_Logic8_Destroyed`: free the all-star heart slot `xDDC` if `xDD8.b0`.
 /// # Safety
 /// `xDDC` indexes inside `gm` (as in C, `x90[i]` is not bounds-checked).
@@ -109,15 +107,6 @@ pub unsafe fn it_heart_logic8_destroyed(ip: &mut Item, gm: &mut UnkAllstarData) 
     if h.xDD8.anon_0.b0() != 0 {
         *(gm.x90.as_mut_ptr()).offset(h.xDDC as isize) = 0;
     }
-}
-
-/// `it_80293660` (itkinoko.c): `((KinokoAnim*) tbl[Kinoko]->x4)[idx + 2].joint`.
-/// # Safety
-/// `tbl[It_Kind_Kinoko]` and its attributes are valid for `idx + 2`.
-pub unsafe fn it_80293660(tbl: *const *mut Article, idx: i32) -> *mut HSD_AnimJoint {
-    let a = *tbl.add(It_Kind_Kinoko as usize);
-    let anims = (*a).x4_specialAttributes as *const KinokoAnim;
-    (*anims.offset(idx as isize + 2)).joint
 }
 
 /// `itKyasarin_GetCollData` (static inline): `&ip->x378_itemColl`.
@@ -129,26 +118,32 @@ pub fn it_kyasarin_get_coll_data(ip: &mut Item) -> *mut CollData {
 pub fn it_kyasarin_unk_motion9_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itLeadead_UnkMotion16_Coll`: `it_8027C794`.
 pub fn it_leadead_unk_motion16_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itLikelike_UnkMotion21_Coll`: `it_8027C794`.
 pub fn it_likelike_unk_motion21_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itOctarock_UnkMotion8_Coll`: `it_8027C794`.
 pub fn it_octarock_unk_motion8_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itOldkuri_UnkMotion11_Coll`: `it_8027C794`.
 pub fn it_oldkuri_unk_motion11_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itOldkuri_UnkMotion7_Coll`: `it_8027C794`.
 pub fn it_oldkuri_unk_motion7_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
 }
+
 /// `itWhitebea_UnkMotion11_Coll`: `it_8027C794`.
 pub fn it_whitebea_unk_motion11_coll(ip: &mut Item) -> bool {
     it_8027c794(ip)
@@ -162,24 +157,12 @@ pub unsafe fn it_swap_velocity(ip: &mut Item) {
     ip.facing_dir = -ip.facing_dir;
     ip.x40_vel.x = ip.facing_dir * (*attr.x0.x0_f32).y;
 }
+
 /// `swapVelocity` (itlikelike.c, static inline): `itSwapVelocity(gobj->user_data)`.
 /// # Safety
 /// As `it_swap_velocity`.
 pub unsafe fn swap_velocity(ip: &mut Item) {
     it_swap_velocity(ip);
-}
-/// `it_802D9B78` (itlikelike.c): `swapVelocity`.
-/// # Safety
-/// As `it_swap_velocity`.
-pub unsafe fn it_802d9b78(ip: &mut Item) {
-    swap_velocity(ip);
-}
-
-/// `it_80295748` (itlipstick.c): `*pos = attrs->x4`.
-/// # Safety
-/// The special attributes are an `itLipstickAttributes`.
-pub unsafe fn it_80295748(ip: &Item, pos: &mut GcVec) {
-    *pos = sa::<itLipstickAttributes>(ip).x4;
 }
 
 /// `itMball_Destroyed`: one fewer live M-ball (`Item_804A0C64.x1C`) unless `mball.b1`.
@@ -187,46 +170,6 @@ pub fn it_mball_destroyed(ip: &Item, unk: &mut HSD_ObjAllocUnk) {
     if unsafe { ip.xDD4_itemVar.mball.b1() } == 0 {
         unk.x1C = unk.x1C.wrapping_sub(1);
     }
-}
-
-/// `it_802BDA40` (itpeachparasol.c): `{15, 16}[it_803F74F8[i].anim_id]`.
-/// # Safety
-/// `tbl[i]` exists and its `anim_id` is 0 or 1.
-pub unsafe fn it_802bda40(tbl: *const ItemStateTable, i: i32) -> i32 {
-    const IT_804D5518: [i32; 2] = [15, 16];
-    *IT_804D5518.as_ptr().offset((*tbl.offset(i as isize)).anim_id as isize)
-}
-
-/// `it_80291CCC` (itsscope.c): `*pos = attrs->x34`.
-/// # Safety
-/// The special attributes are an `itSScopeAttributes`.
-pub unsafe fn it_80291ccc(ip: &Item, pos: &mut GcVec) {
-    let a = sa::<itSScopeAttributes>(ip);
-    pos.x = a.x34.x;
-    pos.y = a.x34.y;
-    pos.z = a.x34.z;
-}
-
-/// `it_80291CF4` (itsscope.c): charge level of `arg1` frames (0, `arg1 / 8`, or 9).
-/// # Safety
-/// The special attributes are an `itSScopeAttributes`.
-pub unsafe fn it_80291cf4(ip: &Item, arg1: i32) -> i32 {
-    let a = sa::<itSScopeAttributes>(ip);
-    if arg1 <= a.x4 {
-        return 0;
-    }
-    if arg1 < a.x8.wrapping_mul(8) {
-        return arg1 / 8;
-    }
-    9
-}
-
-/// `it_80285300` (itsword.c): `&attrs->x1C`.
-/// # Safety
-/// `ip.xC4_article_data` is valid.
-pub unsafe fn it_80285300(ip: &Item) -> *mut itSword_UnkBytes {
-    let a = (*ip.xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
-    core::ptr::addr_of_mut!((*a).x1C)
 }
 
 /// `itTomato_Logic9_Destroyed`: free the all-star tomato slot `x8` if `x4_b0`.
@@ -246,3 +189,12 @@ pub unsafe fn it_zrshell_unk_motion4_anim(ip: &mut Item) -> bool {
     it_802ddbe8(ip);
     false
 }
+
+pub use crate::tu::itsword::it_80285300_fp as it_80285300;
+pub use crate::tu::itsscope::it_80291ccc;
+pub use crate::tu::itsscope::it_80291cf4;
+pub use crate::tu::itkinoko::it_80293660_fp as it_80293660;
+pub use crate::tu::itlipstick::it_80295748_fp as it_80295748;
+pub use crate::tu::ithammerhead::it_80299fb4_get;
+pub use crate::tu::itpeachparasol::it_802bda40;
+pub use crate::tu::itlikelike::it_802d9b78;

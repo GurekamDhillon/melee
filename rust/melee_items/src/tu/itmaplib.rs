@@ -2,6 +2,290 @@
 //! bounce and slide). Callees of other TUs go through `ext`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_assignments, unused_variables, unused_mut, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Disabled;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Unk4;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsuleState;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorPush;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftEdge;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightEdge;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Arwing_Laser;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_BombHei;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Coin;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_F_Flower;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Foods;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Heart;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kuriboh;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kyasarin_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Link_Bomb;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lucky_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Octarock_Stone;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Old_Kuri;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_S_Scope;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_StarRod;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Tomato;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyApple;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyHealApple;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib;
+#[allow(unused_imports)]
+use crate::itlib::{COLLIDE_FLOOR_MASK as COLLIDE_FLOOR_MASK_itlib, COLLIDE_LEFT_EDGE, COLLIDE_LEFT_WALL_MASK, COLLIDE_RIGHT_EDGE, COLLIDE_RIGHT_WALL_MASK};
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use crate::itkinds9::{sqrt_n};
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds10::it_80277040 as it_80277040_itkinds12;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjEvent;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjInteraction;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::itLGun_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf_accurate as sqrtf_accurate_itkinds12;
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408 as it_80276408_itkinds10;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{mirror, rv, zero};
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::item::{GA_AIR, GA_GROUND};
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use crate::helpers::{COLLIDE_CEILING_MASK};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -900,4 +1184,337 @@ pub unsafe extern "C" fn it_80277C40(item_gobj: *mut HSD_GObj, arg1: i32) {
     if (*it).xDCF_flag.anon_0.b0() == 0 {
         ext::it_80278800(item_gobj, 0x405, 0, &raw mut sp20, &raw mut sp14, 0, 0.0);
     }
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+// ---- vector products -------------------------------------------------------------------
+
+/// `product_xy_fp` (itmaplib.c, static inline). 1 fused site: `fmadds(ax, bx, ay*by)`.
+pub fn product_xy_fp(a: &GcVec, b: &GcVec) -> f32 {
+    melee_core::ct!("product_xy_fp");
+    fmadds(a.x, b.x, a.y * b.y)
+}
+
+/// `it_802763E0` (itmaplib.c): 2 and record the ceiling surface when touching one, else 0.
+pub fn it_802763e0(ip: &mut Item) -> i32 {
+    melee_core::ct!("it_802763e0");
+    let mut result = 0;
+    if ip.x378_itemColl.env_flags & COLLIDE_CEILING_MASK != 0 {
+        ip.xC30 = ip.x378_itemColl.ceiling.index;
+        result = 2;
+    }
+    result
+}
+
+// ---- folded from item.rs (consolidation steps 21/22) ----
+/// `it_802762B0` (itmaplib.c).
+pub fn it_802762b0(ip: &mut Item) {
+    melee_core::ct!("it_802762b0");
+    ip.ground_or_air = GA_GROUND;
+}
+
+/// `it_802762BC` (itmaplib.c).
+pub fn it_802762bc(ip: &mut Item) {
+    melee_core::ct!("it_802762bc");
+    ip.ground_or_air = GA_AIR;
+    ip.xDC8_word.flags.set_x1F(0);
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- itmaplib.c ------------------------------------------------------------------------
+
+/// `it_8027649C_ref` (static inline): the signed angle of the touched surface's normal from up,
+/// times the facing direction. `sp14` gets up, `sp20` the normal (left as passed when no
+/// collision flag is set).
+pub fn it_8027649c_ref(item: &Item, sp14: &mut GcVec, sp20: &mut GcVec) -> f32 {
+    melee_core::ct!("it_8027649c_ref");
+    sp14.z = 0.0;
+    sp14.x = 0.0;
+    sp14.y = 1.0;
+    it_80276408_itkinds10(&item.x378_itemColl, sp20);
+    let angle = lbvector::angle(&rv(sp20), &rv(sp14));
+    let int_dir: i32 = if sp20.x < 0.0 { -1 } else { 1 };
+    item.facing_dir * (angle * int_dir as f32)
+}
+
+/// `it_8027649C`: as `it_8027649C_ref` with locals (the normal is 0 when nothing is touched).
+pub fn it_8027649c(item: &Item) -> f32 {
+    melee_core::ct!("it_8027649c");
+    let mut sp14 = zero();
+    let mut sp20 = zero();
+    it_8027649c_ref(item, &mut sp14, &mut sp20)
+}
+
+/// `it_80277040_fp`: slide along a steep surface. `common` is `it_804D6D28`.
+/// # Safety
+/// `item.xCC_item_attr` is valid.
+pub unsafe fn it_80277040_fp(item: &mut Item, common: &ItemCommonData) -> bool {
+    melee_core::ct!("it_80277040_fp");
+    let mut ret_val = true;
+    let attr = &*item.xCC_item_attr;
+    let x50 = attr.x50;
+    if (if x50 < 0.0 { -x50 } else { x50 }) < 0.00001 {
+        item.x88.y = 0.0;
+        item.x88.x = 0.0;
+        return false;
+    }
+    let up = RVec { x: 0.0, y: 1.0, z: 0.0 };
+    let coll = &item.x378_itemColl;
+    let mut n = zero();
+    if coll.env_flags & Collide_LeftWallMask != 0 {
+        n = coll.left_facing_wall.normal;
+    }
+    if coll.env_flags & Collide_RightWallMask != 0 {
+        n = coll.right_facing_wall.normal;
+    }
+    if coll.env_flags & COLLIDE_CEILING_MASK != 0 {
+        n = coll.ceiling.normal;
+    }
+    if coll.env_flags & COLLIDE_FLOOR_MASK != 0 {
+        n = coll.floor.normal;
+    }
+    item.x94 = item.x88;
+    let n = rv(&n);
+    let mut angle1 = lbvector::angle_xy(&n, &up);
+    if angle1 < 0.0 {
+        angle1 = -angle1;
+    }
+    if angle1 >= common.xC0 {
+        let down = RVec { x: 0.0, y: -1.0, z: 0.0 };
+        let sp44 = lbvector::crossprod_normalized(&n, &down);
+        let sp38 = lbvector::crossprod_normalized(&sp44, &n);
+        let t3 = attr.x50;
+        let t31 = item.x94.x / t3;
+        let t30 = item.x94.y / t3;
+        item.x88.x = sp38.x * t3;
+        item.x88.y = sp38.y * attr.x50;
+        let mut sp14 = zero();
+        it_80276408_itkinds10(&item.x378_itemColl, &mut sp14);
+        let mut angle2 = lbvector::angle(&rv(&sp14), &rv(&item.xAC_unk));
+        if angle2 < 0.0 {
+            angle2 = -angle2;
+        }
+        let chk = angle2 >= common.xC4 && item.xC30 == item.xC2C;
+        if !chk {
+            if item.x94.x != 0.0 || item.x94.y != 0.0 {
+                let sgn = |f: f32| if f < 0.0 { -1 } else { 1 };
+                let mismatch = sgn(t31) != sgn(sp38.x) || sgn(t30) != sgn(sp38.y);
+                if mismatch {
+                    item.xD58 = item.xD58.wrapping_add(1);
+                    if item.xD58 >= common.x38_float {
+                        item.xD58 = 0;
+                        ret_val = false;
+                        item.x88.y = 0.0;
+                        item.x88.x = 0.0;
+                    }
+                }
+            }
+        } else {
+            item.xD5C = 2;
+        }
+    } else {
+        ret_val = false;
+        item.x88.y = 0.0;
+        item.x88.x = 0.0;
+    }
+    ret_val
+}
+
+/// `it_8027770C`: bounce off a touched wall (mirror the velocity if moving into it), then scale
+/// the velocity by `attr.x58`. 2 fused sites in the dot product.
+/// # Safety
+/// `item.xCC_item_attr` is valid.
+pub unsafe fn it_8027770c(item: &mut Item) -> bool {
+    melee_core::ct!("it_8027770c");
+    let coll = &item.x378_itemColl;
+    let mut var_r5 = 0;
+    let mut n = zero();
+    if coll.env_flags & Collide_LeftWallMask != 0 {
+        var_r5 = 8;
+        item.xC30 = coll.left_facing_wall.index;
+        n = coll.left_facing_wall.normal;
+    }
+    let coll = &item.x378_itemColl;
+    if coll.env_flags & Collide_RightWallMask != 0 {
+        var_r5 = 4;
+        item.xC30 = coll.right_facing_wall.index;
+        n = coll.right_facing_wall.normal;
+    }
+    if var_r5 == 0 {
+        return false;
+    }
+    let v = item.x40_vel;
+    if fmadds(v.z, n.z, fmadds(v.x, n.x, v.y * n.y)) < 0.0 {
+        mirror(&mut item.x40_vel, &n);
+    }
+    let mult = (*item.xCC_item_attr).x58;
+    item.x40_vel.x *= mult;
+    item.x40_vel.y *= mult;
+    item.x40_vel.z *= mult;
+    true
+}
+
+// ---- folded from itkinds12.rs (consolidation steps 21/22) ----
+// ---- itmaplib.c ------------------------------------------------------------------------
+
+/// `it_80277544_fp`: after a steep-slope slide (`it_80277040_itkinds12`), stop sliding when fast enough
+/// (`|vel + nudge|^2 >= xCC`) or when `xD5C == 2`.
+/// # Safety
+/// As `it_80277040_itkinds12`.
+pub unsafe fn it_80277544_fp(ip: &mut Item, common: &ItemCommonData) -> bool {
+    melee_core::ct!("it_80277544_fp");
+    let mut ret_val = false;
+    if ip.xD5C != 0 && it_80277040_itkinds12(ip, common) && {
+        // PSVECAdd(&vel, &nudge, &sp10)
+        let sx = ip.x40_vel.x + ip.x70_nudge.x;
+        let sy = ip.x40_vel.y + ip.x70_nudge.y;
+        fmadds(sx, sx, sy * sy) >= common.xCC || ip.xD5C == 2
+    } {
+        ip.xDC8_word.flags.set_x1F(1);
+        ret_val = true;
+        ip.xD5C = 1;
+    }
+    ret_val
+}
+
+/// `it_802775F0`: spin speed from the 2D speed `arg1` over the ECB bottom, signed by the
+/// motion direction vs facing, flipped by facing unless `x19 == 1`. Only when `spin_spd != 0`.
+pub fn it_802775f0(ip: &mut Item, arg1: &GcVec) {
+    melee_core::ct!("it_802775f0");
+    let mut t = 0.0f32;
+    if ip.spin_spd != t {
+        t = sqrtf_accurate_itkinds12(fmadds(arg1.x, arg1.x, arg1.y * arg1.y));
+        ip.xD3C_spinSpeed = 0.85f32 * (t / ip.xC1C.bottom);
+        let sa = if arg1.x < 0.0 { -1 } else { 1 };
+        let sf = if ip.facing_dir < 0.0 { -1 } else { 1 };
+        if sa != sf {
+            ip.xD3C_spinSpeed = -ip.xD3C_spinSpeed;
+        }
+        if ip.xDC8_word.flags.x19() != 1 {
+            ip.xD3C_spinSpeed *= -ip.facing_dir;
+        }
+    }
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802762B0` (itmaplib.c): `ground_or_air = GA_Ground`.
+pub fn it_802762b0_fp(ip: &mut Item) {
+    melee_core::ct!("it_802762b0_fp");
+    ip.ground_or_air = 0;
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `sqrtf_accurate_local_fp` (itmaplib.c): 4 steps.
+pub fn sqrtf_accurate_local_fp(x: f32) -> f32 {
+    melee_core::ct!("sqrtf_accurate_local_fp");
+    sqrt_n(x, 4)
+}
+
+/// `sqrtf_accurate_sp18_fp` (itmaplib.c): 4 steps.
+pub fn sqrtf_accurate_sp18_fp(x: f32) -> f32 {
+    melee_core::ct!("sqrtf_accurate_sp18_fp");
+    sqrt_n(x, 4)
+}
+
+// ---- folded from itlib.rs (consolidation steps 21/22) ----
+// ---- itmaplib.c ------------------------------------------------------------------------
+
+/// `it_802762D8`: on a left or right edge.
+pub fn it_802762d8(ip: &Item) -> bool {
+    melee_core::ct!("it_802762d8");
+    let f = ip.x378_itemColl.env_flags;
+    f & COLLIDE_LEFT_EDGE != 0 || f & COLLIDE_RIGHT_EDGE != 0
+}
+
+/// `it_80276308_fp`: 8 for a left wall, 4 for a right wall (right wins), recording its index.
+pub fn it_80276308_fp(ip: &mut Item) -> i32 {
+    melee_core::ct!("it_80276308_fp");
+    let mut ret = 0;
+    let cd = &ip.x378_itemColl;
+    if cd.env_flags & COLLIDE_LEFT_WALL_MASK != 0 {
+        ret = 8;
+        ip.xC30 = cd.left_facing_wall.index;
+    }
+    if cd.env_flags & COLLIDE_RIGHT_WALL_MASK != 0 {
+        ip.xC30 = cd.right_facing_wall.index;
+        ret = 4;
+    }
+    ret
+}
+
+/// `it_80276348_fp`: `it_80276308_fp` plus the wall normal.
+pub fn it_80276348_fp(ip: &mut Item, vec: &mut GcVec) -> i32 {
+    melee_core::ct!("it_80276348_fp");
+    let mut ret = 0;
+    let cd = &ip.x378_itemColl;
+    if cd.env_flags & COLLIDE_LEFT_WALL_MASK != 0 {
+        ret = 8;
+        ip.xC30 = cd.left_facing_wall.index;
+        *vec = cd.left_facing_wall.normal;
+    }
+    if cd.env_flags & COLLIDE_RIGHT_WALL_MASK != 0 {
+        ip.xC30 = cd.right_facing_wall.index;
+        *vec = cd.right_facing_wall.normal;
+        ret = 4;
+    }
+    ret
+}
+
+/// `it_802763B8`: on a floor, recording its index.
+pub fn it_802763b8(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802763b8");
+    if ip.x378_itemColl.env_flags & COLLIDE_FLOOR_MASK_itlib != 0 {
+        ip.xC30 = ip.x378_itemColl.floor.index;
+        return true;
+    }
+    false
+}
+
+/// `it_80276408_fp`: the normal of the touched surface (floor > ceiling > right > left). The C's
+/// `item_gobj` is unused.
+pub fn it_80276408_fp(coll: &CollData, vec: &mut GcVec) {
+    melee_core::ct!("it_80276408_fp");
+    if coll.env_flags & COLLIDE_LEFT_WALL_MASK != 0 {
+        *vec = coll.left_facing_wall.normal;
+    }
+    if coll.env_flags & COLLIDE_RIGHT_WALL_MASK != 0 {
+        *vec = coll.right_facing_wall.normal;
+    }
+    if coll.env_flags & COLLIDE_CEILING_MASK != 0 {
+        *vec = coll.ceiling.normal;
+    }
+    if coll.env_flags & COLLIDE_FLOOR_MASK_itlib != 0 {
+        *vec = coll.floor.normal;
+    }
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- itmaplib.c ------------------------------------------------------------------------
+
+/// `it_80276CEC`: store the contact normal and surface index, floor winning over ceiling over
+/// right wall over left wall. With no contact the C reads an uninitialised `coll_index`; the
+/// shipping build compiles with `-ftrivial-auto-var-init=zero`, so it is 0 here.
+pub fn it_80276cec(ip: &mut Item) {
+    melee_core::ct!("it_80276cec");
+    let coll = &ip.x378_itemColl;
+    let mut idx: u32 = 0;
+    let mut n = ip.xAC_unk;
+    if coll.env_flags & Collide_LeftWallMask != 0 {
+        n = coll.left_facing_wall.normal;
+        idx = coll.left_facing_wall.index as u32;
+    }
+    if coll.env_flags & Collide_RightWallMask != 0 {
+        n = coll.right_facing_wall.normal;
+        idx = coll.right_facing_wall.index as u32;
+    }
+    if coll.env_flags & COLLIDE_CEILING_MASK != 0 {
+        n = coll.ceiling.normal;
+        idx = coll.ceiling.index as u32;
+    }
+    if coll.env_flags & COLLIDE_FLOOR_MASK != 0 {
+        n = coll.floor.normal;
+        idx = coll.floor.index as u32;
+    }
+    ip.xAC_unk = n;
+    ip.xC2C = idx as i32;
 }

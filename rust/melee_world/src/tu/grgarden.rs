@@ -6,15 +6,17 @@
 //! The constant-return and empty callbacks that `gr/trivial.rs` already holds are re-exported.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::grgarden::{
-    grGarden_80202C70, grGarden_80202D8C, grGarden_80202E40, grGarden_80202F34, grGarden_80202F94, grGarden_80202FF4,
-    grGarden_80203090, grGarden_80203248, grGarden_802035C8,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -482,3 +484,35 @@ pub unsafe extern "C" fn grGarden_80203624() -> f32 {
     melee_core::ct!("grGarden_80203624");
     -20.0
 }
+
+// ---- folded from grgarden.rs (consolidation steps 21/22) ----
+/// grGarden_80202C4C_fp (gr/grgarden.c:100)
+    pub unsafe extern "C" fn grGarden_80202C4C_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grgarden.rs (consolidation steps 21/22) ----
+/// grGarden_80202C70 (gr/grgarden.c:105)
+    pub extern "C" fn grGarden_80202C70() -> i32 { 0 }
+
+/// grGarden_80202D8C (gr/grgarden.c:131)
+    pub extern "C" fn grGarden_80202D8C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80202E40 (gr/grgarden.c:156)
+    pub extern "C" fn grGarden_80202E40(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80202F34 (gr/grgarden.c:180)
+    pub extern "C" fn grGarden_80202F34(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80202F94 (gr/grgarden.c:198)
+    pub extern "C" fn grGarden_80202F94(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80202FF4 (gr/grgarden.c:216)
+    pub extern "C" fn grGarden_80202FF4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80203090 (gr/grgarden.c:239)
+    pub extern "C" fn grGarden_80203090(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_80203248 (gr/grgarden.c:296)
+    pub extern "C" fn grGarden_80203248(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGarden_802035C8 (gr/grgarden.c:397)
+    pub extern "C" fn grGarden_802035C8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

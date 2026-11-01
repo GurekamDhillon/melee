@@ -1,6 +1,9 @@
 //! Native port of `src/sysdolphin/baselib/id.c`: the HSD object-ID hash table.
 //! Chained buckets of `IDEntry` nodes, exactly as the C (insert at head, remove unlinks).
 #![allow(non_snake_case, non_upper_case_globals)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::id::{IdKey};
 use core::ffi::c_void;
 use melee_types::{HSD_IDKey, HSD_IDTable, HSD_ObjAllocData, IDEntry};
 
@@ -129,4 +132,11 @@ pub mod ext {
     pub unsafe fn free(d: *mut HSD_ObjAllocData, p: *mut c_void) {
         if let Some(f) = FREE { f(d, p) } else { crate::tu::objalloc::HSD_ObjFree(d, p) }
     }
+}
+
+// ---- folded from id.rs (consolidation steps 21/22) ----
+#[inline]
+pub fn hash_fp(id: IdKey) -> usize {
+    melee_core::ct!("hash_fp");
+    (id % 0x65) as usize
 }

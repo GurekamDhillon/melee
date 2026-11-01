@@ -13,6 +13,16 @@
 //! converted to int).
 #![allow(non_snake_case, non_upper_case_globals, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lb_r6::memzero as memzero_gm_r7;
+#[allow(unused_imports)]
+use melee_types::ResultsMatchInfo;
+#[allow(unused_imports)]
+use crate::gm_r7::{bytes_of};
+#[allow(unused_imports)]
+use crate::gm::{CHKIND_CAP, CHKIND_MEX0};
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null_mut};
 
@@ -24,7 +34,6 @@ use melee_types::{
     GX_TF_I4, JOBJ_HIDDEN, JOBJ_TYPE, PROJ_PERSPECTIVE, TOBJ_MASK, TOBJ_TLUT_NONE,
 };
 
-use crate::gm::gmRst_IsMex;
 pub use crate::gm_r7::gm_80177724;
 use crate::oracle::Va;
 
@@ -1677,4 +1686,19 @@ pub unsafe fn fn_801796F0(arg0: i32) -> i32 {
 /// gmresult.c `gm_WasMatchCanceled` with the C `bool` (a 32-bit int) result.
 unsafe fn was_match_canceled(outcome: u8) -> i32 {
     super::gmresult::gm_WasMatchCanceled(outcome) as i32
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmresultplayer.c `gmRst_IsMex` (TARGET_PC: an m-ex character kind).
+pub fn gmRst_IsMex(ck: i32) -> bool {
+    melee_core::ct!("gmRst_IsMex");
+    ck >= CHKIND_MEX0 && ck < CHKIND_CAP
+}
+
+// ---- folded from gm_r7.rs (consolidation steps 21/22) ----
+/// gmresultplayer.c `gm_80177724_fp`: zero the record.
+pub fn gm_80177724_fp(arg0: &mut ResultsMatchInfo) {
+    melee_core::ct!("gm_80177724_fp");
+    let n = core::mem::size_of::<ResultsMatchInfo>() as isize;
+    memzero_gm_r7(bytes_of(arg0), n);
 }

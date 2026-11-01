@@ -7,6 +7,74 @@
 //! `fmadds(10*vy, 0.01745329252, rot.x)`, one per axis.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::layout::Item;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -228,3 +296,11 @@ pub static it_803F93A8: [ItemStateTable; 2] = [
     ItemStateTable { anim_id: 0, animated: Some(itCrazyhandbomb_UnkMotion0_Anim_p), physics_updated: Some(itCrazyhandbomb_UnkMotion0_Phys), collided: Some(itCrazyhandbomb_UnkMotion0_Coll_p) },
     ItemStateTable { anim_id: 1, animated: Some(itCrazyhandbomb_UnkMotion1_Anim_p), physics_updated: Some(itCrazyhandbomb_UnkMotion1_Phys), collided: Some(itCrazyhandbomb_UnkMotion1_Coll_p) },
 ];
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802F13B0` (src/melee/it/kinds/itcrazyhandbomb.c): `empty body / return;`.
+pub fn it_802f13b0(_ip: &mut Item) { melee_core::ct!("it_802f13b0");}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itcrazyhandbomb.c `it_802F1340`: empty.
+pub fn it_802f1340() { melee_core::ct!("it_802f1340");}

@@ -3,6 +3,56 @@
 //! by tests/kinds_itwhispyapple.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itfwd::it_maril_unk_motion2_anim;
+#[allow(unused_imports)]
+use crate::itfwd::it_zgshell_logic11_reflected;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -413,4 +463,24 @@ pub unsafe extern "C" fn it_802EEF68(gobj: *mut Item_GObj) -> bool {
 pub unsafe extern "C" fn it_802EEF88(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("it_802EEF88");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802EEF10` (src/melee/it/kinds/itwhispyapple.c): `return it_80273030(..)`.
+pub fn it_802eef10(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802eef10");
+    it_80273030(ip)
+}
+
+/// `it_802EEF88` (src/melee/it/kinds/itwhispyapple.c): `it_8026B894(..)`.
+pub fn it_802eef88(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802eef88");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itfwd6.rs (consolidation steps 21/22) ----
+/// `it_802EEED0` (src/melee/it/kinds/itwhispyapple.c): `return true;`.
+pub fn it_802eeed0(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802eeed0");
+    true
 }

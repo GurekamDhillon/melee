@@ -4,6 +4,18 @@
 //! online/scene-launch/m-ex branches). Calls out of the TU go through `ext` (a port where one
 //! exists in this crate, else a TODO panic). Checked against the C (whole TU included verbatim,
 //! shipping contraction) by tests/tu_gmvsmelee.rs.
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lb::lbTime_8000AF74 as lbTime_8000AF74_gm_r4;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_r4;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_ptr;
+#[allow(unused_imports)]
+use crate::gm_ptr::{PKIND_HUMAN};
 use super::globals::gmMainLib_804D3EE0;
 use core::ffi::c_void;
 use melee_types::*;
@@ -523,3 +535,22 @@ pub const gmVsMode_State_Approach: u8 = 2 << 6;
 pub const gmVsMode_State_ApproachVs: u8 = (2 << 6) + 1;
 pub const gmVsMode_State_Prize: u8 = 3 << 6;
 pub const gmVsMode_State_Loading: u8 = 1 << 6;
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmvsmelee.c `gmVsMelee_WasAnyPlayerHuman_fp` (GM_MAX_PLAYERS = 6).
+pub fn gmVsMelee_WasAnyPlayerHuman_fp(end: &MatchEnd_gm_ptr) -> bool {
+    melee_core::ct!("gmVsMelee_WasAnyPlayerHuman_fp");
+    end.player_standings.iter().any(|p| p.pkind == PKIND_HUMAN)
+}
+
+// ---- folded from gm_r4.rs (consolidation steps 21/22) ----
+/// gmvsmelee.c `gmVsMelee_UpdateKOCounts_fp`: per human player, `lbTime_8000AF74_gm_r4` of the count
+/// and the standing's x20 (u8 -> u32 in, u32 -> int for x20, truncated back to u8).
+pub fn gmVsMelee_UpdateKOCounts_fp(ko_counts_p: &mut [u8], end: &MatchEnd_gm_r4) {
+    melee_core::ct!("gmVsMelee_UpdateKOCounts_fp");
+    for i in 0..mt::GM_MAX_PLAYERS as usize {
+        if end.player_standings[i].pkind as i32 == mt::Gm_PKind_Human as i32 {
+            ko_counts_p[i] = lbTime_8000AF74_gm_r4(ko_counts_p[i] as u32, end.player_standings[i].x20 as i32) as u8;
+        }
+    }
+}

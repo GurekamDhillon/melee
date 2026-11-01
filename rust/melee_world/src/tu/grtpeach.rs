@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtpeach::{grTPeach_80222950, grTPeach_80222A6C, grTPeach_80222ACC, grTPeach_80222B5C, grTPeach_80222B88, grTPeach_80222B90};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -207,3 +212,26 @@ pub unsafe extern "C" fn grTPeach_80222B84(gobj: *mut HSD_GObj) {
     melee_core::ct!("grTPeach_80222B84");
     
 }
+
+// ---- folded from grtpeach.rs (consolidation steps 21/22) ----
+/// grTpeach_UnkStage0_OnStart_fp (gr/grtpeach.c:94)
+    pub unsafe extern "C" fn grTpeach_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtpeach.rs (consolidation steps 21/22) ----
+/// grTPeach_80222950 (gr/grtpeach.c:99)
+    pub extern "C" fn grTPeach_80222950() -> i32 { 0 }
+
+/// grTPeach_80222A6C (gr/grtpeach.c:125)
+    pub extern "C" fn grTPeach_80222A6C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPeach_80222ACC (gr/grtpeach.c:139)
+    pub extern "C" fn grTPeach_80222ACC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPeach_80222B5C (gr/grtpeach.c:156)
+    pub extern "C" fn grTPeach_80222B5C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPeach_80222B88 (gr/grtpeach.c:168)
+    pub extern "C" fn grTPeach_80222B88(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTPeach_80222B90 (gr/grtpeach.c:173)
+    pub extern "C" fn grTPeach_80222B90(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

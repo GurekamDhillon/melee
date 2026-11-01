@@ -19,6 +19,16 @@
 //! Checked against the C by the state oracle `tests/s497_gmstaffroll.rs` (rust/melee_modes/oracle/s497).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gm_r9::{StaffEntryData as StaffEntryData_gm_r9};
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_JObj as HSD_JObj_gm_ptr;
+#[allow(unused_imports)]
+use mt::HSD_psAppSRT as HSD_psAppSRT_gm_ptr;
 use core::ffi::{c_char, c_void};
 use core::ptr::{null, null_mut};
 
@@ -1469,3 +1479,23 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnExit(_unused: *mut c_void) { melee
 
 #[allow(dead_code)]
 const _N: *const c_void = null();
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmstaffroll.c `gm_801AB200_SetAppSRT`: copy a joint's world translation and 1.3x scale.
+/// No fused site.
+pub fn gm_801AB200_SetAppSRT(appsrt: &mut HSD_psAppSRT_gm_ptr, jobj: &HSD_JObj_gm_ptr) {
+    melee_core::ct!("gm_801AB200_SetAppSRT");
+    appsrt.translate.x = jobj.mtx[0][3];
+    appsrt.translate.y = jobj.mtx[1][3];
+    appsrt.translate.z = jobj.mtx[2][3];
+    appsrt.scale.x = 1.3f32 * jobj.scale.x;
+    appsrt.scale.y = 1.3f32 * jobj.scale.y;
+    appsrt.scale.z = 1.3f32 * jobj.scale.z;
+}
+
+// ---- folded from gm_r9.rs (consolidation steps 21/22) ----
+/// gmstaffroll.c `gm_801AB200_HasCheck_fp`.
+pub fn gm_801AB200_HasCheck_fp(entry_data: &StaffEntryData_gm_r9) -> u8 {
+    melee_core::ct!("gm_801AB200_HasCheck_fp");
+    entry_data.has_check
+}

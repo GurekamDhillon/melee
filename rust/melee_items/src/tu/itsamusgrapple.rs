@@ -11,6 +11,90 @@
 //! Every float expression the shipping compiler contracts is written with `fmadds` (f32) or `mul_add` (f64).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code, unused_assignments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1746,5 +1830,42 @@ pub unsafe extern "C" fn itSamusGrapple_Logic53_EvtUnk(gobj: *mut Item_GObj, arg
     ext::it_8026B894(gobj, arg1);
     if (*item).xDD4_itemVar.samusgrapple.x8 == arg1 {
         (*item).xDD4_itemVar.samusgrapple.x8 = null_mut();
+    }
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `samus_grapple_fighter_compare_fp` (itsamusgrapple.c, static inline): one of the four motions.
+pub fn samus_grapple_fighter_compare_fp(id: i32) -> bool {
+    melee_core::ct!("samus_grapple_fighter_compare_fp");
+    id == 0x165 || id == 0x166 || id == 0xD4 || id == 0xD6
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `samus_grapple_calc_grav_fp` (itsamusgrapple.c). Both comparisons are in f64 (`0.9`, `0.0`).
+pub fn samus_grapple_calc_grav_fp(rand: &mut HsdRand, vel_y: f32) -> f32 {
+    melee_core::ct!("samus_grapple_calc_grav_fp");
+    if rand.randf() as f64 > 0.9 {
+        if (vel_y as f64) < 0.0 {
+            -fmadds(0.6, rand.randf(), -vel_y)
+        } else {
+            fmadds(0.6, rand.randf(), vel_y)
+        }
+    } else {
+        0.0
+    }
+}
+
+/// `it_802B9328_grav` (itsamusgrapple.c): as `samus_grapple_calc_grav_fp` with factor 1.
+pub fn it_802b9328_grav(rand: &mut HsdRand, vely: f32) -> f32 {
+    melee_core::ct!("it_802b9328_grav");
+    let one = 1.0f32;
+    if rand.randf() as f64 > 0.9 {
+        if (vely as f64) < 0.0 {
+            -fmadds(one, rand.randf(), -vely)
+        } else {
+            fmadds(one, rand.randf(), vely)
+        }
+    } else {
+        0.0
     }
 }

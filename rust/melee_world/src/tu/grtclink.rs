@@ -6,19 +6,17 @@
 //! tests/tu_grtclink.rs against gen/turef/tu_grtclink_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use melee_types::*;
 
-pub use crate::gr::forward::grtclink::{
-    grTclink_UnkStage0_OnStart, stageGObj1_GObjProc, stageGObj1_OnInit, stageGObj2_GObjProc,
-    stageGObj2_OnInit,
-};
-pub use crate::gr::trivial::grtclink::{
-    grTCLink_8021FFE0, grTCLink_802200FC, grTCLink_8022015C, grTCLink_802201EC, grTCLink_80220218,
-    grTCLink_80220220,
-};
-
+pub use crate::gr::forward::grtclink::{stageGObj1_GObjProc, stageGObj1_OnInit, stageGObj2_GObjProc, stageGObj2_OnInit};
 pub unsafe extern "C" fn grTCLink_8021FF44(_unused: i32) { melee_core::ct!("grTCLink_8021FF44");}
 
 pub unsafe extern "C" fn grTCLink_OnInit() {
@@ -94,3 +92,26 @@ pub static mut grTCLink_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grtclink.rs (consolidation steps 21/22) ----
+/// grTclink_UnkStage0_OnStart (gr/grtclink.c:67)
+    pub unsafe extern "C" fn grTclink_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtclink.rs (consolidation steps 21/22) ----
+/// grTCLink_8021FFE0 (gr/grtclink.c:72)
+    pub extern "C" fn grTCLink_8021FFE0() -> i32 { 0 }
+
+/// grTCLink_802200FC (gr/grtclink.c:99)
+    pub extern "C" fn grTCLink_802200FC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCLink_8022015C (gr/grtclink.c:113)
+    pub extern "C" fn grTCLink_8022015C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCLink_802201EC (gr/grtclink.c:130)
+    pub extern "C" fn grTCLink_802201EC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCLink_80220218 (gr/grtclink.c:142)
+    pub extern "C" fn grTCLink_80220218(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTCLink_80220220 (gr/grtclink.c:147)
+    pub extern "C" fn grTCLink_80220220(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

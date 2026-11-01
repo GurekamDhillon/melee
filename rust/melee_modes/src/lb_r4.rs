@@ -1,3 +1,4 @@
+
 //! Round 4: lb callers of rounds 1-3 and of group 1's ported code (lbtrigf `acosf`, MSL
 //! `sqrtf`). Verified bit for bit against the C (`tests/oracle_r4.rs`).
 //! TODO(group1): these lb TUs are lb leftovers; move into melee_runtime if group 1 takes them.
@@ -7,9 +8,13 @@
 #![allow(non_snake_case)]
 
 use crate::lb::{absf, calcPan};
+
 use melee_core::fp::fmadds;
+
 use melee_runtime::gekko::sqrtf;
+
 use melee_types as mt;
+
 use mt::{CameraBlurData, DynamicsData, HSD_GObj, HSD_GObjEvent, HSD_JObj, Vec as Vec3};
 
 /// `lbAudioAx_UserData` (lb/lbaudio_ax.static.h, 0x48 bytes on the GC). melee_types does not
@@ -60,229 +65,28 @@ melee_core::gc_layout!(lbAudioAx_UserData, "lbAudioAx_UserData", size 0x48, alig
 ]);
 
 /// `GET_SOUND(gobj)`: the gobj's user data as the sound object (may be NULL).
-fn get_sound<'a>(gobj: &HSD_GObj) -> Option<&'a mut lbAudioAx_UserData> {
+pub(crate) fn get_sound<'a>(gobj: &HSD_GObj) -> Option<&'a mut lbAudioAx_UserData> {
     // SAFETY: a sound gobj's user_data is its lbAudioAx_UserData (or NULL).
     unsafe { (mt::inline::HSD_GObjGetUserData(gobj) as *mut lbAudioAx_UserData).as_mut() }
 }
 
-fn pan_of(ud: &lbAudioAx_UserData) -> i32 {
+pub(crate) fn pan_of(ud: &lbAudioAx_UserData) -> i32 {
     calcPan(ud.current_frame, ud.end_frame, ud.pan_left, ud.pan_right)
-}
-
-/// lbaudio_ax.c `fn_800253D8` (static): pan left->right when x3C == 1, else mirrored.
-pub fn fn_800253D8(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(ud) = gobj.and_then(get_sound) {
-        ud.pan = if ud.x3C == 1.0 { pan_of(ud) } else { 0x7F - pan_of(ud) };
-    }
-    false
-}
-
-/// lbaudio_ax.c `fn_800256BC` (static): the same body as `fn_800253D8`.
-pub fn fn_800256BC(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(ud) = gobj.and_then(get_sound) {
-        ud.pan = if ud.x3C == 1.0 { pan_of(ud) } else { 0x7F - pan_of(ud) };
-    }
-    false
-}
-
-/// lbaudio_ax.c `fn_80025B44` (static).
-pub fn fn_80025B44(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(ud) = gobj.and_then(get_sound) {
-        ud.pan = pan_of(ud);
-    }
-    false
-}
-
-/// lbaudio_ax.c `fn_80025CBC` (static).
-pub fn fn_80025CBC(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(ud) = gobj.and_then(get_sound) {
-        ud.pan = 0x7F - pan_of(ud);
-    }
-    false
-}
-
-/// lbaudio_ax.c `fn_800259EC` (static): the first time only, `fn_800253D8`.
-pub fn fn_800259EC(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(g) = gobj {
-        if let Some(ud) = get_sound(g) {
-            if ud.x44 == 0 {
-                ud.x44 = 1;
-                fn_800253D8(Some(g));
-            }
-        }
-    }
-    false
-}
-
-/// lbaudio_ax.c `fn_80025A98` (static): the same body as `fn_800259EC`.
-pub fn fn_80025A98(gobj: Option<&HSD_GObj>) -> bool {
-    if let Some(g) = gobj {
-        if let Some(ud) = get_sound(g) {
-            if ud.x44 == 0 {
-                ud.x44 = 1;
-                fn_800253D8(Some(g));
-            }
-        }
-    }
-    false
-}
-
-/// lbaudio_ax.c `lbAudioAx_800264E4`: the sound's voice id, -1 without one.
-pub fn lbAudioAx_800264E4(gobj: Option<&HSD_GObj>) -> i32 {
-    match gobj {
-        Some(g) => get_sound(g).map_or(-1, |ud| ud.voice_id),
-        None => -1,
-    }
-}
-
-/// lbspdisplay.c `lb_800138CC`: set the camera blur's callback.
-pub fn lb_800138CC(gobj: &HSD_GObj, blur_callback: HSD_GObjEvent) {
-    // SAFETY: the blur gobj's user data is its CameraBlurData (the C does not check it).
-    let data = unsafe { &mut *(mt::inline::HSD_GObjGetUserData(gobj) as *mut CameraBlurData) };
-    data.callback = blur_callback;
-}
-
-/// lbspdisplay.c `lb_800138D8`: blur mode 1 with the given size.
-pub fn lb_800138D8(gobj: &HSD_GObj, size: i8) {
-    // SAFETY: as in `lb_800138CC`.
-    let data = unsafe { &mut *(mt::inline::HSD_GObjGetUserData(gobj) as *mut CameraBlurData) };
-    data.mode = 1;
-    data.blur_size = size as u8;
-}
-
-/// lbspdisplay.c `lb_8001204C`: for each index in `indices[..count]`, the joint at that
-/// depth-first position under `root` (instances' children skipped), or NULL past the end;
-/// returns how many were found. Ascending indices continue the walk from the previous one.
-pub fn lb_8001204C(root: Option<&HSD_JObj>, result: Option<&mut [*mut HSD_JObj]>, indices: Option<&[u16]>,
-                   count: i32) -> i32 {
-    let (Some(root), Some(out), Some(idx)) = (root, result, indices) else { return 0 };
-    if count == 0 {
-        return 0;
-    }
-    let root = root as *const HSD_JObj as *mut HSD_JObj;
-    // SAFETY (all derefs below): the joints form a well-linked tree (child/next/parent).
-    let get = |p: *mut HSD_JObj| unsafe { p.as_ref() };
-    let mut found = 0;
-    let mut prev: i32 = -1;
-    let mut jobj: *mut HSD_JObj = core::ptr::null_mut();
-    let mut cur: i32;
-    let mut k = 0usize;
-    let mut i = count;
-    while i > 0 {
-        let target = idx[k];
-        if prev > target as i32 || prev == -1 {
-            jobj = root;
-            cur = 0;
-        } else {
-            cur = prev;
-        }
-        while let Some(j) = get(jobj) {
-            if cur == target as i32 {
-                break;
-            }
-            let mut saved = jobj;
-            let next_node;
-            if j.flags & mt::JOBJ_INSTANCE as u32 == 0 && !mt::inline::HSD_JObjGetChild(Some(j)).is_null() {
-                next_node = mt::inline::HSD_JObjGetChild(Some(j));
-            } else if !mt::inline::HSD_JObjGetNext(Some(j)).is_null() {
-                next_node = mt::inline::HSD_JObjGetNext(Some(j));
-            } else {
-                loop {
-                    let parent = mt::inline::HSD_JObjGetParent(get(saved));
-                    if parent.is_null() {
-                        next_node = core::ptr::null_mut();
-                        break;
-                    }
-                    let pn = mt::inline::HSD_JObjGetNext(get(parent));
-                    if !pn.is_null() {
-                        saved = pn;
-                        next_node = saved;
-                        break;
-                    }
-                    saved = parent;
-                }
-            }
-            jobj = next_node;
-            cur += 1;
-        }
-        out[k] = jobj;
-        prev = cur;
-        if !jobj.is_null() {
-            found += 1;
-        }
-        k += 1;
-        i -= 1;
-    }
-    found
-}
-
-/// lb_00CE.c `lb_8000D148`: is point 2 within `threshold` of the segment point0..point1
-/// (distance to the line, then the endpoint cases)? Five fused sites, as the shipping build.
-pub fn lb_8000D148(point0_x: f32, point0_y: f32, point1_x: f32, point1_y: f32, point2_x: f32, point2_y: f32,
-                   threshold: f32) -> i32 {
-    let mut dist_01;
-    let mut var_f0;
-    {
-        let diff_01_x = point1_x - point0_x;
-        let diff_01_y = point0_y - point1_y;
-        let mut cross = point0_y * point1_x;
-        dist_01 = fmadds(diff_01_x, diff_01_x, diff_01_y * diff_01_y);
-        cross = fmadds(point0_x, point1_y, -cross);
-        if dist_01 < 0.00001 {
-            return 0;
-        }
-        dist_01 = sqrtf(dist_01);
-        var_f0 = cross + fmadds(diff_01_x, point2_x, diff_01_y * point2_y);
-        if var_f0 < 0.0 {
-            var_f0 = -var_f0;
-        }
-    }
-    if var_f0 / dist_01 <= threshold {
-        let dx0 = point0_x - point2_x;
-        let dy0 = point0_y - point2_y;
-        let dist_squared_02 = fmadds(dx0, dx0, dy0 * dy0);
-        let threshold_squared = threshold * threshold;
-        let dx1 = point1_x - point2_x;
-        let dy1 = point1_y - point2_y;
-        let dist_squared_12 = fmadds(dx1, dx1, dy1 * dy1);
-        if dist_squared_02 < threshold_squared {
-            if dist_squared_12 > threshold_squared {
-                return 1;
-            }
-            if dist_squared_12 < threshold_squared {
-                return 0;
-            }
-            return 1;
-        }
-        if dist_squared_02 > threshold_squared {
-            if dist_squared_12 > threshold_squared {
-                if (point0_x > point2_x && point1_x < point2_x)
-                    || (point0_x < point2_x && point1_x > point2_x)
-                    || (point0_y > point2_y && point1_y < point2_y)
-                    || (point0_y < point2_y && point1_y > point2_y)
-                {
-                    return 1;
-                }
-                return 0;
-            }
-            return 1;
-        }
-        return 1;
-    }
-    0
-}
-
-/// lb_00F9.c `groundHeight` (static inline).
-pub fn groundHeight(data: &DynamicsData, floor_point: &Vec3) -> f32 {
-    // SAFETY: plain-data union; the C reads this member.
-    let y = unsafe { data.desc.lb_unk0.unk_2C.y };
-    absf(y - floor_point.y)
-}
-
-/// lb_020A.c `calc_acos` (static inline): group 1's `acosf`.
-pub fn calc_acos(value: f32) -> f32 {
-    melee_runtime::lbtrigf::acosf(value)
 }
 
 // Compatibility export: the implementation lives with its TU in runtime.
 pub use melee_runtime::tu::lbshadow::lbShadow_8000E9F0;
+
+pub use crate::tu::lb_020A::calc_acos_fp as calc_acos;
+pub use crate::tu::lbaudio_ax::fn_800253D8_fp as fn_800253D8;
+pub use crate::tu::lbaudio_ax::fn_800256BC_fp as fn_800256BC;
+pub use crate::tu::lbaudio_ax::fn_800259EC_fp as fn_800259EC;
+pub use crate::tu::lbaudio_ax::fn_80025A98_fp as fn_80025A98;
+pub use crate::tu::lbaudio_ax::fn_80025B44_fp as fn_80025B44;
+pub use crate::tu::lbaudio_ax::fn_80025CBC_fp as fn_80025CBC;
+pub use crate::tu::lb_00f9::groundHeight_fp as groundHeight;
+pub use crate::tu::lbaudio_ax::lbAudioAx_800264E4_fp as lbAudioAx_800264E4;
+pub use crate::tu::lb_00ce::lb_8000D148_fp as lb_8000D148;
+pub use crate::tu::lbspdisplay::lb_8001204C_fp as lb_8001204C;
+pub use crate::tu::lbspdisplay::lb_800138CC_fp as lb_800138CC;
+pub use crate::tu::lbspdisplay::lb_800138D8_fp as lb_800138D8;

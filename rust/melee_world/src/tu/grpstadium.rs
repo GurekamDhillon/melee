@@ -12,6 +12,12 @@
 //!   preset; the game is big-endian, so it is composed big-endian from the bytes.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -2174,3 +2180,41 @@ pub unsafe extern "C" fn grStadium_801D511C() {
 
     ext::lbDvd_80017740(0, 0x7D5, 4, 4, 0x50000, 0, 7, 0x10, 0);
 }
+
+// ---- folded from grpstadium.rs (consolidation steps 21/22) ----
+/// grStadium_OnStart_fp (gr/grpstadium.c:193)
+    pub unsafe extern "C" fn grStadium_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// stageGObj7_8_OnInit_fp (gr/grpstadium.c:603)
+    pub unsafe extern "C" fn stageGObj7_8_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grpstadium.rs (consolidation steps 21/22) ----
+/// grStadium_801D10F0_fp (gr/grpstadium.c:198)
+    pub extern "C" fn grStadium_801D10F0_fp() -> i32 { 0 }
+
+/// grStadium_801D1388_fp (gr/grpstadium.c:278)
+    pub extern "C" fn grStadium_801D1388_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D1518_fp (gr/grpstadium.c:337)
+    pub extern "C" fn grStadium_801D1518_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D15FC_fp (gr/grpstadium.c:366)
+    pub extern "C" fn grStadium_801D15FC_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D16D4_fp (gr/grpstadium.c:394)
+    pub extern "C" fn grStadium_801D16D4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D17E0_fp (gr/grpstadium.c:428)
+    pub extern "C" fn grStadium_801D17E0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D19D0_fp (gr/grpstadium.c:499)
+    pub extern "C" fn grStadium_801D19D0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D1B40_fp (gr/grpstadium.c:547)
+    pub extern "C" fn grStadium_801D1B40_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_801D1E10_fp (gr/grpstadium.c:608)
+    pub extern "C" fn grStadium_801D1E10_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStadium_OnTouchLine_fp (gr/grpstadium.c:2245)
+    pub extern "C" fn grStadium_OnTouchLine_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

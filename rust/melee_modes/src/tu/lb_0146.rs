@@ -3,6 +3,11 @@
 //! shipping contraction) by tests/tu_lb_0146.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use melee_types::*;
 
@@ -60,7 +65,6 @@ pub mod ext {
 }
 // END GENERATED EXT
 
-pub use crate::lb_ptr::lb_80014638;
 
 // GX enum values used here (dolphin/gx/*.h).
 const GX_TRUE: u8 = 1;
@@ -178,4 +182,31 @@ pub unsafe fn lb_800149E0(arg0: *mut [f32; 4], arg1: u32) -> bool {
         return true;
     }
     false
+}
+
+// ---- folded from lb_ptr.rs (consolidation steps 21/22) ----
+/// lb_0146.c `lb_80014638` (two fused sites).
+pub fn lb_80014638(arg0: &mt::lb_80014638_arg0_t, arg1: &mt::lb_80014638_arg1_t) -> bool {
+    melee_core::ct!("lb_80014638");
+    let mut sp30 = arg0.x0;
+    let sp24 = arg0.xC;
+    let sp18 = arg1.x8;
+    sp30.x = sp30.x + arg1.unk_x;
+    sp30.y += arg1.unk_x;
+    sp30.z += arg1.unk_y;
+    if sp30.z < sp24.z {
+        return false;
+    }
+    if sp30.z < sp18.z || sp24.z > sp18.z {
+        return false;
+    }
+    let d = sp24.z - sp30.z;
+    let z = if (if d < 0.0 { -d } else { d }) < 0.01f32 { 1.0 } else { (sp18.z - sp30.z) / d };
+    if fmadds(z, sp24.x - sp30.x, sp30.x) > sp18.y {
+        return false;
+    }
+    if fmadds(z, sp24.y - sp30.y, sp30.y) < sp18.x {
+        return false;
+    }
+    true
 }

@@ -17,6 +17,14 @@
 //! `bool` is a 32-bit int in this build; the file's `static bool` flags are `i32`.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, unused_variables, unused_assignments, unused_mut, dead_code, clippy::missing_safety_doc, clippy::too_many_arguments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use melee_runtime::cabi as cabi_mn;
+#[allow(unused_imports)]
+use crate::mn::{CSS_ICON_SIZE};
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null, null_mut};
 use std::vec::Vec;
@@ -30,8 +38,6 @@ use melee_types::*;
 use super::hsd::{get_jobj, jobj_child, jobj_next, jobj_parent, sfxBack, sfxForward, sfxMove};
 use crate::oracle::Va;
 
-pub use crate::mn::{equalU8, getIconOffset, toFeet, toMeters};
-pub use crate::mn_ptr::{loadStickValue, mnCharSel_MexPackRows};
 
 pub mod ext {
     #![allow(unused_imports)]
@@ -6040,3 +6046,69 @@ pub unsafe fn mnCharSel_PcArtPortrait(mut ck: i32, mut costume: i32, img: *mut *
     (!t.is_null()) as i32
 }
 
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mncharsel.c `toMeters`.
+pub fn toMeters(cm: f32) -> f32 {
+    melee_core::ct!("toMeters");
+    cabi_mn::f2i32((10.0f32 * (cm / 100.0)) as f64) as f32 / 10.0
+}
+
+/// mncharsel.c `toFeet`.
+pub fn toFeet(cm: f32) -> f32 {
+    melee_core::ct!("toFeet");
+    cabi_mn::f2i32((10.0f32 * (cm / 30.4788)) as f64) as f32 / 10.0
+}
+
+/// mncharsel.c `equalU8`.
+pub fn equalU8(lhs: u8, rhs: u8) -> bool {
+    melee_core::ct!("equalU8");
+    lhs == rhs
+}
+
+/// mncharsel.c `getIconOffset`.
+pub fn getIconOffset(icon_idx: u32) -> i32 {
+    melee_core::ct!("getIconOffset");
+    icon_idx.wrapping_mul(CSS_ICON_SIZE) as i32
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mncharsel.c `loadStickValue`.
+pub fn loadStickValue(value: &i8) -> f32 {
+    melee_core::ct!("loadStickValue");
+    *value as f32
+}
+
+/// mncharsel.c `mnCharSel_MexPackRows`: spread `n_avail` icons over `rows` rows of capacity
+/// `row_cap[r]`, as evenly as the caps allow; `take[r]` gets each row's share.
+pub fn mnCharSel_MexPackRows(row_cap: &[i32], rows: i32, n_avail: i32, take: &mut [i32]) -> i32 {
+    melee_core::ct!("mnCharSel_MexPackRows");
+    if rows <= 0 || n_avail <= 0 {
+        for t in &mut take[..rows.max(0) as usize] {
+            *t = 0;
+        }
+        return 0;
+    }
+    let n = rows as usize;
+    let mut placed = 0i32;
+    for r in 0..n {
+        let share = n_avail / rows + if (r as i32) < n_avail % rows { 1 } else { 0 };
+        take[r] = if share > row_cap[r] { row_cap[r] } else { share };
+        placed = placed.wrapping_add(take[r]);
+    }
+    while placed < n_avail {
+        let mut progress = false;
+        let mut r = 0;
+        while r < n && placed < n_avail {
+            if take[r] < row_cap[r] {
+                take[r] += 1;
+                placed += 1;
+                progress = true;
+            }
+            r += 1;
+        }
+        if !progress {
+            break;
+        }
+    }
+    placed
+}

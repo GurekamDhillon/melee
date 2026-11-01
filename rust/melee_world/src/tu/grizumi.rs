@@ -13,6 +13,12 @@
 //! State-oracle checked against the C (tests/gro_grizumi.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::{
     assert_, GET_GROUND, GET_JOBJ, HSD_JObjGetChild, HSD_JObjGetNext, HSD_JObjGetParent, HSD_JObjGetTranslation,
     HSD_JObjGetTranslationY, HSD_JObjSetScaleX, HSD_JObjSetScaleY, HSD_JObjSetTranslate, HSD_JObjSetTranslateY,
@@ -23,11 +29,6 @@ use core::ptr::{addr_of_mut, null_mut};
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-pub use crate::gr::trivial::grizumi::{
-    grIzumi_801CBCE0, grIzumi_801CBE00, grIzumi_801CBE54, grIzumi_801CBE5C, grIzumi_801CBE60, grIzumi_801CBE08,
-    grIzumi_801CBE0C, grIzumi_801CC0CC, grIzumi_801CC338, grIzumi_801CC350, grIzumi_801CCA10, grIzumi_801CCA54,
-    grIzumi_801CCA5C, grIzumi_801CCA60, grIzumi_801CCB08, grIzumi_801CCB10, grIzumi_801CCB14, grIzumi_801CD278,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics (the `ScriptGame_*` ones default).
 pub mod ext {
@@ -945,3 +946,65 @@ pub unsafe fn grIzumi_801CD2D4() {
     let size = ext::GXGetTexBufferSize(80, 60, 4, 0, 0);
     ext::lbDvd_80017740(0, 2001, 4, 4, (size.wrapping_add(31)) & !31, 0, 7, 16, 0);
 }
+
+// ---- folded from grizumi.rs (consolidation steps 21/22) ----
+/// grIzumi_OnStart_fp (gr/grizumi.c:226)
+    pub unsafe extern "C" fn grIzumi_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grizumi.rs (consolidation steps 21/22) ----
+/// grIzumi_801CBB84_fp (gr/grizumi.c:186)
+    pub extern "C" fn grIzumi_801CBB84_fp(a0: i32) {  }
+
+/// grIzumi_801CBCE0 (gr/grizumi.c:231)
+    pub extern "C" fn grIzumi_801CBCE0() -> i32 { 0 }
+
+/// grIzumi_801CBE00 (gr/grizumi.c:273)
+    pub extern "C" fn grIzumi_801CBE00(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CBE08 (gr/grizumi.c:278)
+    pub extern "C" fn grIzumi_801CBE08(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CBE0C (gr/grizumi.c:283)
+    pub extern "C" fn grIzumi_801CBE0C(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CBE54 (gr/grizumi.c:295)
+    pub extern "C" fn grIzumi_801CBE54(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CBE5C (gr/grizumi.c:300)
+    pub extern "C" fn grIzumi_801CBE5C(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CBE60 (gr/grizumi.c:305)
+    pub extern "C" fn grIzumi_801CBE60(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CC0CC (gr/grizumi.c:395)
+    pub extern "C" fn grIzumi_801CC0CC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CC338 (gr/grizumi.c:440)
+    pub extern "C" fn grIzumi_801CC338(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CC350 (gr/grizumi.c:452)
+    pub extern "C" fn grIzumi_801CC350(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CCA10 (gr/grizumi.c:588)
+    pub extern "C" fn grIzumi_801CCA10(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CCA54 (gr/grizumi.c:601)
+    pub extern "C" fn grIzumi_801CCA54(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CCA5C (gr/grizumi.c:606)
+    pub extern "C" fn grIzumi_801CCA5C(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CCA60 (gr/grizumi.c:611)
+    pub extern "C" fn grIzumi_801CCA60(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CCB08 (gr/grizumi.c:630)
+    pub extern "C" fn grIzumi_801CCB08(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIzumi_801CCB10 (gr/grizumi.c:635)
+    pub extern "C" fn grIzumi_801CCB10(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CCB14 (gr/grizumi.c:640)
+    pub extern "C" fn grIzumi_801CCB14(a0: *mut HSD_GObj) {  }
+
+/// grIzumi_801CD278 (gr/grizumi.c:906)
+    pub extern "C" fn grIzumi_801CD278(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

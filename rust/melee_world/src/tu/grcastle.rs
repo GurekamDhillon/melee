@@ -15,6 +15,12 @@
 //! State-oracle checked against the C (tests/gro_grcastle.rs, gen/oracle/gr_oracle.py; the spec lists the C patches).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
@@ -1973,3 +1979,38 @@ pub unsafe fn grCastle_801D0FF0() -> f32 {
     melee_core::ct!("grCastle_801D0FF0");
     50.0f32 * ext::Ground_801C0498()
 }
+
+// ---- folded from grcastle.rs (consolidation steps 21/22) ----
+/// grCastle_801CD4A4_fp (gr/grcastle.c:333)
+    pub unsafe extern "C" fn grCastle_801CD4A4_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grcastle.rs (consolidation steps 21/22) ----
+/// grCastle_801CD4C8_fp (gr/grcastle.c:338)
+    pub extern "C" fn grCastle_801CD4C8_fp() -> i32 { 0 }
+
+/// grCastle_801CD600_fp (gr/grcastle.c:383)
+    pub extern "C" fn grCastle_801CD600_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CD8A0_fp (gr/grcastle.c:472)
+    pub extern "C" fn grCastle_801CD8A0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CDC3C_fp (gr/grcastle.c:565)
+    pub extern "C" fn grCastle_801CDC3C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CE3A4_fp (gr/grcastle.c:824)
+    pub extern "C" fn grCastle_801CE3A4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CE858_fp (gr/grcastle.c:976)
+    pub extern "C" fn grCastle_801CE858_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CE9E0_fp (gr/grcastle.c:1027)
+    pub extern "C" fn grCastle_801CE9E0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CEEFC_fp (gr/grcastle.c:1179)
+    pub extern "C" fn grCastle_801CEEFC_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801CF300_fp (gr/grcastle.c:1298)
+    pub extern "C" fn grCastle_801CF300_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCastle_801D0B04_fp (gr/grcastle.c:1897)
+    pub extern "C" fn grCastle_801D0B04_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

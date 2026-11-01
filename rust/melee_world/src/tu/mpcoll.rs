@@ -3,6 +3,9 @@
 //! per-substep callbacks). Generated from the C by `gen/mtu/c2rs.py` (see `mplib.rs`).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, unused_assignments, unused_variables, unused_mut, unused_parens, unused_labels, unused_comparisons, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::mp::types::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
@@ -3968,4 +3971,15 @@ unsafe fn mpColl_stage_same_joint(mut a: i32, mut b: i32) -> i32 {
         return (same != 0) as i32;
     }
     return (super::mplib::mpJointFromLine(a) == super::mplib::mpJointFromLine(b)) as i32;
+}
+
+// ---- folded from coll.rs (consolidation steps 21/22) ----
+#[inline]
+pub fn update_min_max_fp(min: &mut f32, max: &mut f32, val: f32) {
+    melee_core::ct!("update_min_max_fp");
+    if *min > val {
+        *min = val;
+    } else if *max < val {
+        *max = val;
+    }
 }

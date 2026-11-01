@@ -6,6 +6,9 @@
 //! natively.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
 
@@ -99,7 +102,6 @@ pub mod ext {
 }
 
 pub use melee_types::{mnGallery_804D6C88_userdata, mnGallery_child_userdata};
-pub use crate::mn_ptr::float_order_helper;
 
 const HEAP_SIZE: u32 = 0x271000;
 
@@ -555,4 +557,12 @@ pub unsafe extern "C" fn mnGallery_80259868() {
     mnGallery_80258A08(cam_gobj, 0x280, 0x1E0, 1);
     (*cam_gobj).gxlink_prios = 0x100;
     (*inner).gobj4 = cam_gobj;
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mngallery.c `float_order_helper`.
+pub fn float_order_helper(sobj: &mut mt::HSD_SObj) {
+    melee_core::ct!("float_order_helper");
+    sobj.x10 = 96.0;
+    sobj.x14 = 72.0;
 }

@@ -1,3 +1,4 @@
+
 //! Leaf helpers from it/ and ty/ (port round 1, night 2): pure math and functions that only
 //! touch `Item`/`ItemLink` fields. Each cites the C it mirrors. Float code keeps the C order and
 //! precision, and fuses `a*b+c` exactly where the shipping build does
@@ -11,43 +12,22 @@ use crate::layout::{
     ftCommonData, itECB, itSeakChain_Attrs, Collide_CeilingHug, Collide_CeilingPush, GroundOrAir,
     Item, ItemCommonData, ItemLink, Vec as GcVec, GA_Air,
 };
+
 use melee_core::fp::fmadds;
 
 /// M_PI (src/MSL/math.h), M_PI_2 = M_PI / 2, M_TAU (src/Runtime/platform.h): double literals.
 pub const M_PI: f64 = 3.14159265358979323846;
+
 pub const M_PI_2: f64 = M_PI / 2.0;
+
 pub const M_TAU: f64 = 6.283185307179586;
+
 /// `Collide_CeilingMask` (src/melee/mp/forward.h).
 pub const COLLIDE_CEILING_MASK: i32 = Collide_CeilingPush | Collide_CeilingHug;
-
-// ---- vector products -------------------------------------------------------------------
-
-/// `product_xy` (itmaplib.c, static inline). 1 fused site: `fmadds(ax, bx, ay*by)`.
-pub fn product_xy(a: &GcVec, b: &GcVec) -> f32 {
-    fmadds(a.x, b.x, a.y * b.y)
-}
-
-/// `product_xyz` (itzako.c, static inline). 2 fused sites.
-pub fn product_xyz(a: &GcVec, b: &GcVec) -> f32 {
-    let xy = fmadds(a.x, b.x, a.y * b.y);
-    fmadds(a.z, b.z, xy)
-}
-
-/// `neg_dot` (itleadead.c, static inline): `-(ax*bx) - (ay*by) - (az*bz)`.
-/// Clang folds it into 2 fused sites: `fmadds(-ax, bx, -(ay*by))`, then `fmadds(-az, bz, _)`.
-pub fn neg_dot(a: &GcVec, b: &GcVec) -> f32 {
-    let t = fmadds(-a.x, b.x, -(a.y * b.y));
-    fmadds(-a.z, b.z, t)
-}
 
 /// `_tyDisplay_80318CB4_calc_dist_sq` (tydisplay.c, static inline). 1 site: `fmadds(dx, dx, dz*dz)`.
 pub fn ty_display_calc_dist_sq(dz: f32, dx: f32) -> f32 {
     fmadds(dx, dx, dz * dz)
-}
-
-/// `it_link_lerp` (itlinkhookshot.c, static inline). 1 site: `fmadds(t, a, (1-t)*b)`.
-pub fn it_link_lerp(a: f32, b: f32, t: f32) -> f32 {
-    fmadds(t, a, (1.0 - t) * b)
 }
 
 // ---- angles ----------------------------------------------------------------------------
@@ -72,40 +52,6 @@ pub fn it_8027b798_calc_angle(ground_or_air: GroundOrAir, angle: i32, cd: &ftCom
     }
 }
 
-/// `clamp_tau` (itlinkboomerang.c, static): compares and adds in f64 (M_TAU is a double).
-pub fn clamp_tau(angle: &mut f32) {
-    if (*angle as f64) > M_TAU {
-        *angle = (*angle as f64 - M_TAU) as f32;
-    } else if (*angle as f64) < -M_TAU {
-        *angle = (*angle as f64 + M_TAU) as f32;
-    }
-}
-
-/// `clamp_pi_tau` (itlinkboomerang.c, static).
-pub fn clamp_pi_tau(angle: &mut f32) {
-    if (*angle as f64) < -M_PI {
-        *angle = (*angle as f64 + M_TAU) as f32;
-    } else if (*angle as f64) > M_PI {
-        *angle = (*angle as f64 - M_TAU) as f32;
-    }
-}
-
-/// `clamp_angle_pi` (itlinkboomerang.c, static inline): f32 compare, f64 add.
-pub fn clamp_angle_pi(angle: &mut f32) {
-    if *angle <= 0.0 {
-        *angle = (*angle as f64 + M_PI) as f32;
-    } else {
-        *angle = (*angle as f64 - M_PI) as f32;
-    }
-}
-
-/// `norm_xF74_from_angle` (itlinkboomerang.c, static inline).
-pub fn norm_xf74_from_angle(ip: &mut Item, angle_in: f32) {
-    let angle: f64 = if ip.facing_dir == 1.0 { angle_in as f64 } else { angle_in as f64 - M_PI };
-    // The caller owns a Link boomerang (xDD4_itemVar holds its linkboomerang vars).
-    ip.xDD4_itemVar.linkboomerang.xF78 = angle as f32;
-}
-
 /// `itDosei_FacingAngle` (itdosei.c, static inline): `fd*M_PI_2 + fd*m` in f64, one f64 fused
 /// site (`fma(fd, M_PI_2, (double)(fd*m))`, the `fd*m` product in f32), stored as f32.
 pub fn it_dosei_facing_angle(ip: &Item, m: f32) -> f32 {
@@ -124,37 +70,10 @@ pub fn link_boomerang_add_clamp(mut x: f32, y: f32, max: f32) -> f32 {
     x
 }
 
-/// `fsign_inline` (itlinkbomb.c, static inline).
-pub fn fsign_inline(x: f32) -> f32 {
-    if x >= 0.0 { 1.0 } else { -1.0 }
-}
-
-/// `float_sign_int_inline` (itlinkbomb.c, static inline).
-pub fn float_sign_int_inline(x: f32) -> i32 {
-    if x == -1.0 { -1 } else { 1 }
-}
-
-/// `inline_fabsf` (ittaru.c, static inline). `+x` keeps a NaN or -0.0 as is.
-pub fn inline_fabsf(x: f32) -> f32 {
-    if x < 0.0 { -x } else { x }
-}
-
-/// `lt_zero` (itnokonoko.c, static inline).
-pub fn lt_zero(val: f32) -> f32 {
-    if val < 0.0 { -1.0 } else { 1.0 }
-}
-
 /// `getX` (itoctarockstone.c, static inline): |x1 - x2| by compare-negate.
 pub fn octarock_stone_get_x(x1: f32, x2: f32) -> f32 {
     let res = x1 - x2;
     if res < 0.0 { -res } else { res }
-}
-
-/// `pika_scale` (itpikachuthunder.c, static): `(s32)` is gwtool's saturating conversion
-/// (NaN -> 0), which is what Rust's `as i32` does.
-pub fn pika_scale(a: f32, b: f32) -> f32 {
-    let f = 10000.0f32 * a / b;
-    ((f + 1.0) as i32) as f32 / 10000.0
 }
 
 /// `tyFigupon_StoreDigits` (tyfigupon.c, static inline): writes least significant digit first,
@@ -184,31 +103,6 @@ pub fn it_coll_chk_ecb_overlap(pos_x: f32, pos_y: f32, a: &itECB, b: &itECB, tar
     top >= target.y && bottom <= target.y && right <= target.x && left >= target.x
 }
 
-/// `it_802763E0` (itmaplib.c): 2 and record the ceiling surface when touching one, else 0.
-pub fn it_802763e0(ip: &mut Item) -> i32 {
-    let mut result = 0;
-    if ip.x378_itemColl.env_flags & COLLIDE_CEILING_MASK != 0 {
-        ip.xC30 = ip.x378_itemColl.ceiling.index;
-        result = 2;
-    }
-    result
-}
-
-// ---- lifetime ----------------------------------------------------------------------------
-
-/// `decrease_lifetimer` (itpeachturnip.c, static): `--` on an f32 subtracts 1.0f.
-pub fn decrease_lifetimer(ip: &mut Item) -> bool {
-    ip.xD44_lifeTimer -= 1.0;
-    ip.xD44_lifeTimer <= 0.0
-}
-
-/// `it_80275158` (it_2725.c). `common` is the C global `it_804D6D28` (ItemCommonData), passed
-/// in until the item globals exist natively.
-pub fn it_80275158(ip: &mut Item, lifetime: f32, common: &ItemCommonData) {
-    ip.xD44_lifeTimer = lifetime;
-    ip.xD48_halfLifeTimer = lifetime * common.x4C_float;
-}
-
 // ---- Red shell (itrshell.c) -------------------------------------------------------------
 
 /// `itRShell_Attrs`: file-local in itrshell.c, so not in the generated set. Same field order;
@@ -235,6 +129,7 @@ pub struct itRShell_Attrs {
     pub x48: GcVec,
     pub x54: i32,
 }
+
 impl itRShell_Attrs {
     /// All-zero is a valid value (plain floats).
     pub fn zeroed() -> Self {
@@ -242,6 +137,7 @@ impl itRShell_Attrs {
         unsafe { core::mem::zeroed() }
     }
 }
+
 melee_core::gc_layout!(itRShell_Attrs, "itRShell_Attrs", size 0x58, align 4, [
     x0 @ 0x0: 4 "float", x4 @ 0x4: 4 "float", x8 @ 0x8: 4 "float", xC @ 0xC: 4 "float",
     x10 @ 0x10: 4 "float", x14 @ 0x14: 12 "Vec3", x20 @ 0x20: 4 "float", x24 @ 0x24: 4 "float",
@@ -288,7 +184,7 @@ pub fn it_rshell_um5c_reverse(ip: &mut Item) {
 
 // ---- Sheik chain (itseakchain.c) ---------------------------------------------------------
 
-fn seak_chain_clamp(link: &mut ItemLink, limit: f32) {
+pub(crate) fn seak_chain_clamp(link: &mut ItemLink, limit: f32) {
     let value = link.vel.x;
     link.vel.x = if value > limit {
         value - limit
@@ -308,3 +204,20 @@ pub fn it_seak_chain_clamp_x10(link: &mut ItemLink, attrs: &itSeakChain_Attrs) {
 pub fn it_seak_chain_clamp_x14(link: &mut ItemLink, attrs: &itSeakChain_Attrs) {
     seak_chain_clamp(link, attrs.x14);
 }
+
+pub use crate::tu::itlinkboomerang::clamp_angle_pi_fp as clamp_angle_pi;
+pub use crate::tu::itlinkboomerang::clamp_pi_tau_fp as clamp_pi_tau;
+pub use crate::tu::itlinkboomerang::clamp_tau_fp as clamp_tau;
+pub use crate::tu::itpeachturnip::decrease_lifetimer_fp as decrease_lifetimer;
+pub use crate::tu::itlinkbomb::float_sign_int_inline_fp as float_sign_int_inline;
+pub use crate::tu::itlinkbomb::fsign_inline_fp as fsign_inline;
+pub use crate::tu::ittaru::inline_fabsf_fp as inline_fabsf;
+pub use crate::tu::it_2725::it_80275158_fp as it_80275158;
+pub use crate::tu::itmaplib::it_802763e0;
+pub use crate::tu::itlinkhookshot::it_link_lerp_fp as it_link_lerp;
+pub use crate::tu::itnokonoko::lt_zero_fp as lt_zero;
+pub use crate::tu::itleadead::neg_dot_fp as neg_dot;
+pub use crate::tu::itlinkboomerang::norm_xf74_from_angle;
+pub use crate::tu::itpikachuthunder::pika_scale_fp as pika_scale;
+pub use crate::tu::itmaplib::product_xy_fp as product_xy;
+pub use crate::tu::itzako::product_xyz_fp as product_xyz;

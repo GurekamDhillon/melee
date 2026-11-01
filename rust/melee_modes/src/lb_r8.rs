@@ -1,35 +1,17 @@
+
 //! Round 8 (night 3 round 4): lb leaf functions over nested pointers (lbcollision.c, lb_00B0.c,
 //! lbspdisplay.c), verified bit for bit against the C by `tests/oracle_r8.rs`. TODO(group1): lb
 //! leftovers; move into melee_runtime if group 1 takes these TUs.
 use core::ffi::c_void;
+
 use melee_types::{HitCapsule, HSD_DObj, HSD_JObj};
-
-/// lbcollision.c `lbColl_CopyHitCapsule`: copy both victim arrays and x44/x45.
-/// The C struct assignment copies each HitVictim's tail padding too (native: 4 bytes after x4),
-/// so the copy is bytewise to keep the record bit-identical.
-pub fn lbColl_CopyHitCapsule(src: &HitCapsule, dst: &mut HitCapsule) {
-    for i in 0..src.victims_1.len() {
-        // SAFETY: distinct `&`/`&mut` records, so the elements do not overlap.
-        unsafe {
-            core::ptr::copy_nonoverlapping(&src.victims_1[i], &mut dst.victims_1[i], 1);
-            core::ptr::copy_nonoverlapping(&src.victims_2[i], &mut dst.victims_2[i], 1);
-        }
-    }
-    dst.x44 = src.x44;
-    dst.x45 = src.x45;
-}
-
-/// lbcollision.c `lbColl_8000ACFC`: `victim` is in `hitbox.victims_1` (compared by address).
-pub fn lbColl_8000ACFC(victim: *mut c_void, hitbox: &HitCapsule) -> bool {
-    hitbox.victims_1.iter().any(|v| v.victim == victim)
-}
 
 /// The depth-first walk lb_8000B09C/lb_8000B134 share: true at the first joint whose AObj
 /// satisfies `hit`. JOBJ_INSTANCE joints are not descended into.
 ///
 /// # Safety
 /// `jobj` is NULL or the root of a well-formed JObj tree (child/next/parent/aobj NULL or live).
-unsafe fn jobj_tree_any(mut jobj: *const HSD_JObj, hit: impl Fn(u32) -> bool) -> bool {
+pub(crate) unsafe fn jobj_tree_any(mut jobj: *const HSD_JObj, hit: impl Fn(u32) -> bool) -> bool {
     const JOBJ_INSTANCE: u32 = 1 << 12;
     while let Some(j) = jobj.as_ref() {
         if let Some(a) = j.aobj.as_ref() {
@@ -61,30 +43,8 @@ unsafe fn jobj_tree_any(mut jobj: *const HSD_JObj, hit: impl Fn(u32) -> bool) ->
     false
 }
 
-/// lb_00B0.c `lb_8000B09C`: some joint in the tree has an AObj without AOBJ_NO_ANIM.
-///
-/// # Safety
-/// See `jobj_tree_any`.
-pub unsafe fn lb_8000B09C(jobj: *const HSD_JObj) -> bool {
-    jobj_tree_any(jobj, |f| f & (1 << 30) == 0)
-}
-
-/// lb_00B0.c `lb_8000B134`: some joint in the tree has an AObj with AOBJ_REWINDED.
-///
-/// # Safety
-/// See `jobj_tree_any`.
-pub unsafe fn lb_8000B134(jobj: *const HSD_JObj) -> bool {
-    jobj_tree_any(jobj, |f| f & (1 << 26) != 0)
-}
-
-/// lbspdisplay.c `lb_80011B74`: OR `flags` into the render mode of every DObj's MObj, last DObj
-/// in the `next` chain first (the C recurses before it writes).
-///
-/// # Safety
-/// `dobj`'s `next` chain ends in NULL and each DObj's `mobj` is live.
-pub unsafe fn lb_80011B74(dobj: &mut HSD_DObj, flags: u32) {
-    if let Some(n) = dobj.next.as_mut() {
-        lb_80011B74(n, flags);
-    }
-    (*dobj.mobj).rendermode |= flags;
-}
+pub use crate::tu::lbcollision::lbColl_8000ACFC_fp as lbColl_8000ACFC;
+pub use crate::tu::lbcollision::lbColl_CopyHitCapsule_fp as lbColl_CopyHitCapsule;
+pub use crate::tu::lb_00b0::lb_8000B09C_fp as lb_8000B09C;
+pub use crate::tu::lb_00b0::lb_8000B134_fp as lb_8000B134;
+pub use crate::tu::lbspdisplay::lb_80011B74_fp as lb_80011B74;

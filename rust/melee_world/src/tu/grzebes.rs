@@ -20,6 +20,13 @@
 //! multiplicand of `a*b + c*d` is the fused one), `mul_add` for f64.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -2837,3 +2844,42 @@ pub unsafe extern "C" fn grZebes_801DCCC8() -> f32 {
     ext::Ground_801C4368(&mut slope, &mut intercept);
     5.0 + slope
 }
+
+// ---- folded from grzebes.rs (consolidation steps 21/22) ----
+/// grZebes_801D852C_fp (gr/grzebes.c:285)
+    pub unsafe extern "C" fn grZebes_801D852C_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// grZebes_Subtract (gr/grzebes.c, static inline).
+pub fn grzebes_subtract(lhs: f32, rhs: f32) -> f32 {
+    melee_core::ct!("grzebes_subtract");
+    lhs - rhs
+}
+
+// ---- folded from grzebes.rs (consolidation steps 21/22) ----
+/// grZebes_801D8550_fp (gr/grzebes.c:290)
+    pub extern "C" fn grZebes_801D8550_fp() -> i32 { 0 }
+
+/// grZebes_801D8814_fp (gr/grzebes.c:388)
+    pub extern "C" fn grZebes_801D8814_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801D9254_fp (gr/grzebes.c:737)
+    pub extern "C" fn grZebes_801D9254_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801D9408_fp (gr/grzebes.c:786)
+    pub extern "C" fn grZebes_801D9408_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801D95B0_fp (gr/grzebes.c:823)
+    pub extern "C" fn grZebes_801D95B0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801D99D8_fp (gr/grzebes.c:926)
+    pub extern "C" fn grZebes_801D99D8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801D9F7C_fp (gr/grzebes.c:1115)
+    pub extern "C" fn grZebes_801D9F7C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebes_801DCCB8_fp (gr/grzebes.c:2460)
+    pub extern "C" fn grZebes_801DCCB8_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grZebes_801DCCC0_fp (gr/grzebes.c:2465)
+    pub extern "C" fn grZebes_801DCCC0_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

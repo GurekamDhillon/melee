@@ -3,6 +3,65 @@
 //! by tests/kinds_ittomato.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -249,4 +308,14 @@ pub unsafe extern "C" fn itTomato_UnkMotion5_Coll(gobj: *mut Item_GObj) -> bool 
 pub unsafe extern "C" fn itTomato_Logic9_EvtUnk(gobj: *mut Item_GObj, gobj_ref: *mut Item_GObj) {
     melee_core::ct!("itTomato_Logic9_EvtUnk");
     ext::it_8026B894(gobj, gobj_ref);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_8028428C` (ittomato.c): `tomato.heal_amount = sa->heal_amount_1`.
+/// # Safety
+/// The special attributes must be a valid `MaximTomatoSpecialAttr`.
+pub unsafe fn it_8028428c(ip: &mut Item) {
+    melee_core::ct!("it_8028428c");
+    let a: &MaximTomatoSpecialAttr = sa(ip);
+    ip.xDD4_itemVar.tomato.heal_amount = a.heal_amount_1;
 }

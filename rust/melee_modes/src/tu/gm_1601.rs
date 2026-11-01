@@ -16,6 +16,31 @@
 //! `gm_80166378`'s zero-initialised `sp48_x` stays 0), `gm_801623A4` falls off the end (returns 0), and
 //! `gm_801647F8`'s search for the terminator 0x148 (which the table never holds) runs off the table's end
 //! (returns 0x148 here).
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lb_r6::memzero as memzero_gm_r7;
+#[allow(unused_imports)]
+use crate::gm_r7::{Fn80168A6CSrc, bytes_of};
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_r4;
+#[allow(unused_imports)]
+use melee_types::MatchEnd as MatchEnd_gm_r10;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_ptr;
+#[allow(unused_imports)]
+use crate::gm_ptr::{PKIND_NA, team_active};
+#[allow(unused_imports)]
+use melee_runtime::cabi;
+#[allow(unused_imports)]
+use crate::GXColor;
+#[allow(unused_imports)]
+use crate::gm::{CHKIND_CAP, CHKIND_MEX0, CHKIND_POPO, CKIND_TO_SELKIND_MAP as CKIND_TO_SELKIND_MAP_gm, GM_PKIND_HUMAN, LBL_803B7808 as LBL_803B7808_gm, LBL_803B7864, LBL_803B78C8 as LBL_803B78C8_gm, LBL_803B790C as LBL_803B790C_gm, LBL_803B7930 as LBL_803B7930_gm, NUM_UNLOCKABLE_CHARACTERS as NUM_UNLOCKABLE_CHARACTERS_gm, NUM_UNLOCKABLE_STAGES as NUM_UNLOCKABLE_STAGES_gm, SELKIND_COUNT as SELKIND_COUNT_gm, SELKIND_TO_CKIND_MAP, ST_KIND_UNK328};
 use super::globals::{stage_info, CostumeListsForeachCharacter, HSD_PadMasterStatus, HSD_VIData};
 use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null, null_mut};
@@ -241,18 +266,7 @@ pub mod ext {
 }
 // @ext-end
 
-pub use crate::gm::{
-    fn_80160710, fn_80160840, fn_801607A8, fn_801607F4, fn_8016419C, fn_801641B4, fn_801653E8, fn_8016588C_clamp, getStageUnlockIndex,
-    getStageUnlockNotifyId, get_unlockable_selkind_by_bit_index, gm_801601C4, gm_801601C4_inner, gm_801601C4_noinline, gm_80160244,
-    gm_80160244_inner, gm_80160244_noinline, gm_80160854, gm_80160968, gm_801641CC, gm_CKindToSelKind, gm_CKindToUnlockIndex,
-    gm_GetCKindByUnlockIndex, gm_GetChallengerStKind, gm_SelKindToCKind, gm_SelKindToUnlockIndex,
-};
-pub use crate::gm_ptr::{
-    fn_80161C90_count_players, fn_80165418, fn_801654A0, fn_80165548, fn_801656A8, fn_80166CBC, fn_80167194, gm_80166CCC, gm_801677C0,
-    gm_80168940, is_character_unlocked,
-};
-pub use crate::gm_r10::{fn_80161004, gm_801688AC};
-pub use crate::gm_r4::gm_MatchHasMultipleWinners;
+pub use crate::gm::{fn_80160710, fn_801607A8, fn_801607F4, gm_801601C4, gm_80160244, gm_80160854, gm_80160968, gm_801641CC, gm_CKindToSelKind, gm_CKindToUnlockIndex, gm_GetCKindByUnlockIndex, gm_GetChallengerStKind, gm_SelKindToCKind, gm_SelKindToUnlockIndex};pub use crate::gm_ptr::{fn_80165418, fn_801654A0, gm_801677C0, gm_80168940};pub use crate::gm_r10::{gm_801688AC};pub use crate::gm_r4::gm_MatchHasMultipleWinners;
 pub use crate::gm_r7::fn_80168A6C;
 
 pub const NUM_UNLOCKABLE_CHARACTERS: i32 = 11;
@@ -3384,4 +3398,508 @@ pub unsafe fn gm_801692E8(secs: u32, datetime: *mut datetime) {
     } else {
         (*datetime).second = tm.sec as u8;
     }
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gm_1601.c `gm_801601C4_fp` (a pan/volume curve).
+pub fn gm_801601C4_fp(arg0: i8) -> i32 {
+    melee_core::ct!("gm_801601C4_fp");
+    let mut t = (arg0 as i32 + 100) as f32 / 200.0;
+    t *= 100.0;
+    if t == 50.0 {
+        return 0x7F;
+    }
+    if t > 50.0 {
+        return cabi::f2i32((127.0f32 * ((100.0f32 - t) / 50.0)) as f64);
+    }
+    0x7F
+}
+
+/// gm_1601.c `gm_80160244_fp`.
+pub fn gm_80160244_fp(arg0: i8) -> i32 {
+    melee_core::ct!("gm_80160244_fp");
+    let mut t = (arg0 as i32 + 100) as f32 / 200.0;
+    t *= 100.0;
+    if t == 50.0 || t > 50.0 {
+        return 0x7F;
+    }
+    cabi::f2i32((127.0f32 * (t / 50.0)) as f64)
+}
+
+/// gm_1601.c `fn_80160840`.
+pub fn fn_80160840(arg0: u8) -> u8 {
+    melee_core::ct!("fn_80160840");
+    if arg0 >= 4 {
+        4
+    } else {
+        arg0
+    }
+}
+
+/// gm_1601.c `gm_80160854_fp`: the HUD colour index for a slot.
+pub fn gm_80160854_fp(slot: u8, team: u8, is_teams: u8, slot_type: u8) -> u32 {
+    melee_core::ct!("gm_80160854_fp");
+    let human = slot_type == GM_PKIND_HUMAN;
+    if is_teams != 0 {
+        match team {
+            0 => return if human { 0 } else { 5 },
+            1 => return if human { 1 } else { 6 },
+            2 => return if human { 3 } else { 8 },
+            3 => return if human { 2 } else { 7 },
+            4 => return 4,
+            _ => {}
+        }
+    } else {
+        if !human {
+            return 4;
+        }
+        if slot <= 3 {
+            return slot as u32;
+        }
+    }
+    0
+}
+
+/// gm_1601.c `fn_801653E8`.
+pub fn fn_801653E8(arg0: u8) -> f32 {
+    melee_core::ct!("fn_801653E8");
+    0.1f32 * arg0 as f32
+}
+
+/// gm_1601.c `fn_8016588C_clamp`.
+pub fn fn_8016588C_clamp(v: i32) -> i32 {
+    melee_core::ct!("fn_8016588C_clamp");
+    let lim: i32 = (1 << 24) - 1;
+    if v > lim {
+        lim
+    } else if v < -lim {
+        -lim
+    } else {
+        v
+    }
+}
+
+/// gm_1601.c `gm_801601C4_inner`.
+pub fn gm_801601C4_inner(arg0: i8) -> i32 {
+    melee_core::ct!("gm_801601C4_inner");
+    gm_801601C4_fp(arg0)
+}
+
+/// gm_1601.c `gm_801601C4_noinline`.
+pub fn gm_801601C4_noinline(arg0: i8) -> i32 {
+    melee_core::ct!("gm_801601C4_noinline");
+    gm_801601C4_inner(arg0)
+}
+
+/// gm_1601.c `gm_80160244_inner`.
+pub fn gm_80160244_inner(arg0: i8) -> i32 {
+    melee_core::ct!("gm_80160244_inner");
+    gm_80160244_fp(arg0)
+}
+
+/// gm_1601.c `gm_80160244_noinline`.
+pub fn gm_80160244_noinline(arg0: i8) -> i32 {
+    melee_core::ct!("gm_80160244_noinline");
+    gm_80160244_inner(arg0)
+}
+
+/// gm_1601.c `gm_SelKindToUnlockIndex_fp` (the selkind enum is an int compared to the u8 field).
+pub fn gm_SelKindToUnlockIndex_fp(selkind: i32) -> u8 {
+    melee_core::ct!("gm_SelKindToUnlockIndex_fp");
+    for e in &LBL_803B78C8_gm {
+        if selkind == e.selkind as i32 {
+            return e.idx;
+        }
+    }
+    NUM_UNLOCKABLE_CHARACTERS_gm as u8
+}
+
+/// gm_1601.c `gm_CKindToUnlockIndex_fp` (`ckind` truncates to u8 at the gm_CKindToSelKind_fp call).
+pub fn gm_CKindToUnlockIndex_fp(ckind: i32) -> i8 {
+    melee_core::ct!("gm_CKindToUnlockIndex_fp");
+    gm_SelKindToUnlockIndex_fp(gm_CKindToSelKind_fp(ckind as u8) as i32) as i8
+}
+
+/// gm_1601.c `get_unlockable_selkind_by_bit_index`.
+pub fn get_unlockable_selkind_by_bit_index(unlock_bit_index: i32) -> u8 {
+    melee_core::ct!("get_unlockable_selkind_by_bit_index");
+    for e in &LBL_803B78C8_gm {
+        if unlock_bit_index == e.idx as i32 {
+            return e.selkind;
+        }
+    }
+    SELKIND_COUNT_gm
+}
+
+/// gm_1601.c `gm_GetCKindByUnlockIndex_fp`. An index with no entry gives SELKIND_COUNT_gm (0x19),
+/// which is inside selkind_to_ckind_map.
+pub fn gm_GetCKindByUnlockIndex_fp(index: i32) -> u8 {
+    melee_core::ct!("gm_GetCKindByUnlockIndex_fp");
+    gm_SelKindToCKind_fp(get_unlockable_selkind_by_bit_index(index))
+}
+
+/// gm_1601.c `fn_80160710_fp`: the notification id for an unlock index (0x42 if none).
+pub fn fn_80160710_fp(arg0: i32) -> u8 {
+    melee_core::ct!("fn_80160710_fp");
+    for e in &LBL_803B78C8_gm {
+        if arg0 == e.idx as i32 {
+            return e.notification_id;
+        }
+    }
+    0x42
+}
+
+/// gm_1601.c `gm_GetChallengerStKind_fp`.
+pub fn gm_GetChallengerStKind_fp(selkind: i32) -> i32 {
+    melee_core::ct!("gm_GetChallengerStKind_fp");
+    for e in &LBL_803B78C8_gm {
+        if selkind == e.selkind as i32 {
+            return e.stkind as i32;
+        }
+    }
+    ST_KIND_UNK328
+}
+
+/// gm_1601.c `fn_801607A8_fp`.
+pub fn fn_801607A8_fp(arg0: i32) -> u8 {
+    melee_core::ct!("fn_801607A8_fp");
+    for e in &LBL_803B790C_gm {
+        if arg0 == e[0] as i32 {
+            return e[1];
+        }
+    }
+    0x6F
+}
+
+/// gm_1601.c `fn_801607F4_fp`.
+pub fn fn_801607F4_fp(arg0: i32) -> u8 {
+    melee_core::ct!("fn_801607F4_fp");
+    for e in &LBL_803B790C_gm {
+        if arg0 == e[1] as i32 {
+            return e[2];
+        }
+    }
+    0x42
+}
+
+/// gm_1601.c `gm_80160968_fp` (index `(u8) arg0`; above 8 the C reads past the table, this panics).
+pub fn gm_80160968_fp(arg0: u32) -> GXColor {
+    melee_core::ct!("gm_80160968_fp");
+    LBL_803B7864[arg0 as u8 as usize]
+}
+
+/// gm_1601.c `gm_SelKindToCKind_fp` (selkind < 0x1C).
+pub fn gm_SelKindToCKind_fp(selkind: u8) -> u8 {
+    melee_core::ct!("gm_SelKindToCKind_fp");
+    SELKIND_TO_CKIND_MAP[selkind as usize]
+}
+
+/// gm_1601.c `gm_CKindToSelKind_fp` (TARGET_PC `GM_CK_TO_SELKIND`: an m-ex kind reads Popo's row).
+/// ckind 0x21 and >= 0x80 read past the C table; this panics there.
+pub fn gm_CKindToSelKind_fp(ckind: u8) -> u8 {
+    melee_core::ct!("gm_CKindToSelKind_fp");
+    let ck = ckind as i32;
+    if ck >= CHKIND_MEX0 && ck < CHKIND_CAP {
+        CKIND_TO_SELKIND_MAP_gm[CHKIND_POPO]
+    } else {
+        CKIND_TO_SELKIND_MAP_gm[ckind as usize]
+    }
+}
+
+/// gm_1601.c `fn_8016419C` (handicap 1..9).
+pub fn fn_8016419C(arg0: u8) -> f32 {
+    melee_core::ct!("fn_8016419C");
+    LBL_803B7930_gm[(arg0 as i32 - 1) as usize][0]
+}
+
+/// gm_1601.c `fn_801641B4` (handicap 1..9).
+pub fn fn_801641B4(arg0: u8) -> f32 {
+    melee_core::ct!("fn_801641B4");
+    LBL_803B7930_gm[(arg0 as i32 - 1) as usize][1]
+}
+
+/// gm_1601.c `gm_801641CC_fp` (the s16 table entry as u16; arg0 < 30).
+pub fn gm_801641CC_fp(arg0: u8) -> u16 {
+    melee_core::ct!("gm_801641CC_fp");
+    LBL_803B7808_gm[arg0 as usize] as u16
+}
+
+/// gm_1601.c `getStageUnlockIndex`.
+pub fn getStageUnlockIndex(grkind: u8) -> u8 {
+    melee_core::ct!("getStageUnlockIndex");
+    for e in LBL_803B790C_gm.iter().take(NUM_UNLOCKABLE_STAGES_gm) {
+        if grkind as i32 == e[1] as i32 {
+            return e[0];
+        }
+    }
+    NUM_UNLOCKABLE_STAGES_gm as u8
+}
+
+/// gm_1601.c `getStageUnlockNotifyId`.
+pub fn getStageUnlockNotifyId(unlock_idx: u8) -> u8 {
+    melee_core::ct!("getStageUnlockNotifyId");
+    for e in LBL_803B790C_gm.iter().take(NUM_UNLOCKABLE_STAGES_gm) {
+        if unlock_idx as i32 == e[0] as i32 {
+            return e[2];
+        }
+    }
+    0x42
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_1601.c `fn_80161C90_count_players` (first 4 standings).
+pub fn fn_80161C90_count_players(match_end: &MatchEnd_gm_ptr) -> u32 {
+    melee_core::ct!("fn_80161C90_count_players");
+    match_end.player_standings[..4].iter().filter(|p| p.pkind != 3).count() as u32
+}
+
+/// gm_1601.c `is_character_unlocked` (`n < 64`; Zelda/Sheik's 0xB is always unlocked).
+pub fn is_character_unlocked(n: u8, mask: &u16) -> bool {
+    melee_core::ct!("is_character_unlocked");
+    n == 0xB || (*mask as i64 & (1i64 << n)) != 0
+}
+
+/// gm_1601.c `fn_80165418_fp`: the last present player who is not a small loser.
+pub fn fn_80165418_fp(match_end: &MatchEnd_gm_ptr) -> i32 {
+    melee_core::ct!("fn_80165418_fp");
+    let mut winner = 0;
+    for i in 0..4 {
+        let p = &match_end.player_standings[i];
+        if p.pkind != PKIND_NA && p.is_small_loser == 0 {
+            winner = i as i32;
+        }
+    }
+    winner
+}
+
+/// gm_1601.c `fn_801654A0_fp`: the same over the 5 teams.
+pub fn fn_801654A0_fp(match_end: &MatchEnd_gm_ptr) -> i32 {
+    melee_core::ct!("fn_801654A0_fp");
+    let mut winner = 0;
+    for i in 0..5 {
+        let t = &match_end.team_standings[i];
+        if t.active != 0 && t.is_small_loser == 0 {
+            winner = i as i32;
+        }
+    }
+    winner
+}
+
+/// gm_1601.c `fn_80165548`.
+pub fn fn_80165548(me: &MatchEnd_gm_ptr, arg1: i32, team: i32) -> i32 {
+    melee_core::ct!("fn_80165548");
+    let ps = &me.player_standings;
+    let mut ret = 0i32;
+    if me.is_teams == 1 {
+        for i in 0..4 {
+            if ps[i].pkind != 3 && ps[i].team as i32 == team {
+                let mut result = i as i32;
+                for j in 0..4 {
+                    if ps[j].pkind != 3 && ps[j].team as i32 == team && i != j
+                        && ps[i].is_small_loser > ps[j].is_small_loser
+                    {
+                        result = -1;
+                        break;
+                    }
+                }
+                if result >= 0 {
+                    ret = ret.wrapping_add(result);
+                    break;
+                }
+            }
+        }
+    } else {
+        ret = arg1;
+    }
+    ret
+}
+
+/// gm_1601.c `fn_801656A8`: a sort key for player `arg1` (`arg1 < 6`).
+pub fn fn_801656A8(arg0: &MatchEnd_gm_ptr, arg1: u32) -> u32 {
+    melee_core::ct!("fn_801656A8");
+    let ps = &arg0.player_standings;
+    let me = &ps[arg1 as usize];
+    if me.pkind == 3 {
+        return 0;
+    }
+    let cnt_gt = ps.iter().filter(|p| p.pkind != 3 && me.x20 > p.x20).count() as u32;
+    let cnt_lt = ps.iter().filter(|p| p.pkind != 3 && (me.x24 as u32) < (p.x24 as u32)).count() as u32;
+    let ret = cnt_gt.wrapping_mul(0x10);
+    let ret = ret.wrapping_add(cnt_lt).wrapping_mul(0x10);
+    ret.wrapping_add(6u32.wrapping_sub(arg1))
+}
+
+/// gm_1601.c `fn_80166CBC`.
+pub fn fn_80166CBC(arg0: &MatchEnd_gm_ptr, index: i32) -> u32 {
+    melee_core::ct!("fn_80166CBC");
+    arg0.player_standings[index as usize].is_small_loser as u32
+}
+
+/// gm_1601.c `gm_80166CCC`: merge a sudden-death result (`arg1`) into the match result.
+pub fn gm_80166CCC(arg0: &mut MatchEnd_gm_ptr, arg1: &mut MatchEnd_gm_ptr) {
+    melee_core::ct!("gm_80166CCC");
+    let result = arg1.outcome;
+    let mut player_count = 0i32;
+    let mut team_count = 0i32;
+    if result == mt::OUTCOME_NO_CONTEST as u8 || result == mt::OUTCOME_RETRY as u8 {
+        arg0.outcome = result;
+    }
+    if arg1.n_winners > 1 {
+        for i in 0..6 {
+            if arg1.player_standings[i].pkind != 3 {
+                arg1.player_standings[i].is_big_loser = arg0.player_standings[i].is_big_loser
+                    .wrapping_add(arg1.player_standings[i].is_small_loser);
+            }
+        }
+    }
+    if arg1.n_team_winners > 1 {
+        for i in 0..5 {
+            if arg1.team_standings[i].active != 0 {
+                arg1.team_standings[i].is_big_loser = arg0.team_standings[i].is_big_loser
+                    .wrapping_add(arg1.team_standings[i].is_small_loser);
+            }
+        }
+    }
+    for i in 0..6 {
+        if arg1.player_standings[i].pkind != 3 {
+            player_count += 1;
+        }
+    }
+    if arg0.n_winners > 1 {
+        for i in 0..6 {
+            if arg0.player_standings[i].pkind != 3 {
+                let b = &arg1.player_standings[i];
+                let (b_ftkind, b_xe, b_pkind, b_big) = (b.ftkind, b.xE, b.pkind, b.is_big_loser);
+                let a = &mut arg0.player_standings[i];
+                a.ftkind = b_ftkind;
+                a.xE = a.xE.wrapping_add(b_xe);
+                if a.is_big_loser == 0 {
+                    if b_pkind == 3 {
+                        a.is_big_loser = a.is_big_loser.wrapping_add(player_count as u8);
+                        a.is_small_loser = a.is_small_loser.wrapping_add(player_count as u8);
+                    } else {
+                        a.is_big_loser = b_big;
+                        a.is_small_loser = b_big;
+                    }
+                }
+            }
+        }
+    }
+    for i in 0..6 {
+        if team_active(arg1, i) != 0 {
+            team_count += 1;
+        }
+    }
+    if arg0.n_team_winners > 1 {
+        for i in 0..5 {
+            if arg0.team_standings[i].active != 0 && arg0.team_standings[i].is_big_loser == 0 {
+                let (b_active, b_big) = (arg1.team_standings[i].active, arg1.team_standings[i].is_big_loser);
+                let a = &mut arg0.team_standings[i];
+                if b_active != 0 {
+                    a.is_big_loser = b_big;
+                    a.is_small_loser = b_big;
+                } else {
+                    a.is_big_loser = a.is_big_loser.wrapping_add(team_count as u8);
+                    a.is_small_loser = a.is_small_loser.wrapping_add(team_count as u8);
+                }
+            }
+        }
+    }
+}
+
+/// gm_1601.c `fn_80167194`.
+pub fn fn_80167194(me: &MatchEnd_gm_ptr) -> i32 {
+    melee_core::ct!("fn_80167194");
+    me.n_winners as i32
+}
+
+/// gm_1601.c `gm_801677C0_fp`.
+pub fn gm_801677C0_fp(arg0: &mut mt::gm_801677C0_s) {
+    melee_core::ct!("gm_801677C0_fp");
+    arg0.x0 = 0;
+    arg0.x1 = 0;
+    arg0.x2 = 0;
+    arg0.x3 = 0;
+    arg0.unk_28 = 0;
+    arg0.unk_20 = 0;
+}
+
+/// gm_1601.c `gm_80168940_fp`.
+pub fn gm_80168940_fp(match_end: &MatchEnd_gm_ptr) -> i32 {
+    melee_core::ct!("gm_80168940_fp");
+    if match_end.player_standings[0].pkind == 0 {
+        return match_end.player_standings[0].xE as i32;
+    }
+    0
+}
+
+// ---- folded from gm_r10.rs (consolidation steps 21/22) ----
+/// gm_1601.c `fn_80161004`: the largest `is_big_loser` among active teams (team mode) or
+/// non-absent players (pkind != 3), floor 0.
+pub fn fn_80161004(match_end: &MatchEnd_gm_r10) -> i32 {
+    melee_core::ct!("fn_80161004");
+    let mut max = 0i32;
+    if match_end.is_teams == 1 {
+        for t in &match_end.team_standings {
+            if t.active != 0 && t.is_big_loser as i32 > max {
+                max = t.is_big_loser as i32;
+            }
+        }
+    } else {
+        for p in &match_end.player_standings[..4] {
+            if p.pkind != 3 && p.is_big_loser as i32 > max {
+                max = p.is_big_loser as i32;
+            }
+        }
+    }
+    max
+}
+
+/// gm_1601.c `gm_801688AC_fp`: the sum of `xE` over the six players with pkind 0.
+pub fn gm_801688AC_fp(arg0: &MatchEnd_gm_r10) -> i32 {
+    melee_core::ct!("gm_801688AC_fp");
+    let mut sum = 0u32;
+    for p in &arg0.player_standings {
+        if p.pkind == 0 {
+            sum = sum.wrapping_add(p.xE as u32);
+        }
+    }
+    sum as i32
+}
+
+// ---- folded from gm_r4.rs (consolidation steps 21/22) ----
+/// gm_1601.c `gm_MatchHasMultipleWinners_fp`.
+pub fn gm_MatchHasMultipleWinners_fp(end: &MatchEnd_gm_r4) -> bool {
+    melee_core::ct!("gm_MatchHasMultipleWinners_fp");
+    if end.outcome as i32 != mt::OUTCOME_NO_CONTEST as i32 {
+        let winners = if end.is_teams == 1 { end.n_team_winners as i32 } else { fn_80167194(end) };
+        if winners > 1 {
+            return true;
+        }
+    }
+    false
+}
+
+// ---- folded from gm_r7.rs (consolidation steps 21/22) ----
+/// gm_1601.c `fn_80168A6C_fp`: zero eight words of `arg1`, then copy `src->x0[idx][0..4]` (when
+/// non-NULL) to words 0..3, `src->x4[0..2]` (when non-NULL) to 5..6, x8 to 4 and xC to 7.
+///
+/// # Safety
+/// `src->x0` points at an array holding index `idx`; non-NULL entries and `x4` point at 4 and 2
+/// readable words (as in the C).
+pub unsafe fn fn_80168A6C_fp(src: &Fn80168A6CSrc, arg1: &mut [i32; 8], idx: i32) {
+    melee_core::ct!("fn_80168A6C_fp");
+    memzero_gm_r7(bytes_of(arg1), 0x20);
+    let e = *src.x0.offset(idx as isize);
+    if !e.is_null() {
+        for k in 0..4 {
+            arg1[k] = *e.add(k);
+        }
+    }
+    if !src.x4.is_null() {
+        arg1[5] = *src.x4;
+        arg1[6] = *src.x4.add(1);
+    }
+    arg1[4] = src.x8;
+    arg1[7] = src.xC;
 }

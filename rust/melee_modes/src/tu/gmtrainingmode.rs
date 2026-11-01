@@ -3,6 +3,13 @@
 //! state table, its enter/exit hooks and the mode's OnInit/OnLoad). Calls out of the TU go
 //! through `ext` (a port where one exists in this crate, else a TODO panic). Checked against the C
 //! (whole TU included verbatim, shipping contraction) by tests/tu_gmtrainingmode.rs.
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gm_ptr::gm_801B07E8 as gm_801B07E8_gm_r4;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::CSSData as CSSData_gm_r4;
 use super::globals::{gm_80473814, gmMainLib_804D3EE0};
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
@@ -318,4 +325,12 @@ pub unsafe fn gm_Mode_Training_OnLoad() {
     gm_804D68C1 = 0;
     // TARGET_PC: scene launch seeds this mode's VsModeData (gmscenelaunch.h)
     ext::SceneLaunch_SeedVs(training_row(), true);
+}
+
+// ---- folded from gm_r4.rs (consolidation steps 21/22) ----
+/// gmtrainingmode.c `gm_801B07E8_layer_fp` (static): forwards to gm_1B03's `gm_801B07E8_gm_r4`.
+pub fn gm_801B07E8_layer_fp(css_data_p: &CSSData_gm_r4, c_kind: Option<&mut i8>, stocks: Option<&mut i8>, color: Option<&mut i8>,
+                         arg4: Option<&mut i8>, level: Option<&mut u8>) {
+    melee_core::ct!("gm_801B07E8_layer_fp");
+    gm_801B07E8_gm_r4(css_data_p, c_kind, stocks, color, arg4, level);
 }

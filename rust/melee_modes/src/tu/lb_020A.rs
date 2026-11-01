@@ -6,6 +6,9 @@
 //! `sqrtf_store`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use melee_core::fp::{fmadds, frsqrte};
 use melee_types::*;
@@ -482,4 +485,11 @@ pub unsafe fn lbBgFlash_80021410(data: *mut IKState) {
     acos2 -= angle2;
     fn_8002113C(d.jobj0, &raw mut axis, acos1);
     fn_8002113C(d.jobj1, &raw mut axis, acos2);
+}
+
+// ---- folded from lb_r4.rs (consolidation steps 21/22) ----
+/// lb_020A.c `calc_acos_fp` (static inline): group 1's `acosf`.
+pub fn calc_acos_fp(value: f32) -> f32 {
+    melee_core::ct!("calc_acos_fp");
+    melee_runtime::lbtrigf::acosf(value)
 }

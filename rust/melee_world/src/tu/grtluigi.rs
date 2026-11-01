@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtluigi::{grTLuigi_80221CAC, grTLuigi_80221DC8, grTLuigi_80221E28, grTLuigi_80221EB8, grTLuigi_80221EE4, grTLuigi_80221EEC};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -200,3 +205,26 @@ pub unsafe extern "C" fn grTLuigi_80221EE0(arg0: *mut HSD_GObj) {
     melee_core::ct!("grTLuigi_80221EE0");
     
 }
+
+// ---- folded from grtluigi.rs (consolidation steps 21/22) ----
+/// grTluigi_UnkStage0_OnStart_fp (gr/grtluigi.c:63)
+    pub unsafe extern "C" fn grTluigi_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtluigi.rs (consolidation steps 21/22) ----
+/// grTLuigi_80221CAC (gr/grtluigi.c:68)
+    pub extern "C" fn grTLuigi_80221CAC() -> i32 { 0 }
+
+/// grTLuigi_80221DC8 (gr/grtluigi.c:94)
+    pub extern "C" fn grTLuigi_80221DC8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLuigi_80221E28 (gr/grtluigi.c:108)
+    pub extern "C" fn grTLuigi_80221E28(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLuigi_80221EB8 (gr/grtluigi.c:125)
+    pub extern "C" fn grTLuigi_80221EB8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLuigi_80221EE4 (gr/grtluigi.c:137)
+    pub extern "C" fn grTLuigi_80221EE4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTLuigi_80221EEC (gr/grtluigi.c:142)
+    pub extern "C" fn grTLuigi_80221EEC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

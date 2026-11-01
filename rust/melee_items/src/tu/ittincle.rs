@@ -3,6 +3,147 @@
 //! by tests/kinds_ittincle.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -802,4 +943,69 @@ pub unsafe extern "C" fn it_802ECCA4(gobj: *mut Item_GObj, kind: *mut i32, pos: 
     *pos = (*ip).pos;
     (*pos).y += (*ip).xDD4_itemVar.tincle.x50;
     *kind = (*ip).msid;
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802EC850` (src/melee/it/kinds/ittincle.c): `it_8026B894(..)`.
+pub fn it_802ec850(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ec850");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- ittincle.c ------------------------------------------------------------------------
+
+/// `it_802EC870`: turn around (`arg1 != 0`), or pick a direction (1 in 3 reversed, clamped to
+/// the area `[xC, x10]`) and a random speed. `x24 / 2` is an integer division.
+/// # Safety
+/// The item's special attributes are an `itTincleAttributes`.
+pub unsafe fn it_802ec870(rand: &mut HsdRand, ip: &mut Item, arg1: i32) {
+    melee_core::ct!("it_802ec870");
+    let sa = &*((*ip.xC4_article_data).x4_specialAttributes as *const itTincleAttributes);
+    if arg1 != 0 {
+        ip.facing_dir = -ip.facing_dir;
+        ip.x40_vel.x *= -1.0;
+        ip.xDD4_itemVar.tincle.x34 *= -1.0;
+        return;
+    }
+    ip.facing_dir = if ip.pos.x < ip.xDD4_itemVar.tincle.x58 { 1.0 } else { -1.0 };
+    if rand.randi(3) == 0 {
+        ip.facing_dir *= -1.0;
+    }
+    if ip.pos.x < sa.xC {
+        ip.facing_dir = 1.0;
+    }
+    if ip.pos.x > sa.x10 {
+        ip.facing_dir = -1.0;
+    }
+    let d = sa.x38 - sa.x34;
+    let abs = if d < 0.0 { -(sa.x38 - sa.x34) } else { sa.x38 - sa.x34 };
+    ip.x40_vel.x = abs * rand.randf();
+    let t = &mut ip.xDD4_itemVar.tincle;
+    t.x24 = sa.x3C;
+    t.x34 = (sa.x38 - ip.x40_vel.x) / (t.x24.wrapping_div(2) as f32);
+    ip.x40_vel.x *= ip.facing_dir;
+    t.x34 *= ip.facing_dir;
+    t.x28 = 0;
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802ECC8C` (ittincle.c): `tincle.x20`.
+pub fn it_802ecc8c(ip: &Item) -> i32 {
+    melee_core::ct!("it_802ecc8c");
+    unsafe { ip.xDD4_itemVar.tincle.x20 }
+}
+
+/// `it_802ECC98` (ittincle.c): `tincle.x54 = arg1`.
+pub fn it_802ecc98(ip: &mut Item, arg1: f32) {
+    melee_core::ct!("it_802ecc98");
+    ip.xDD4_itemVar.tincle.x54 = arg1;
+}
+
+/// `it_802ECCA4` (ittincle.c): `*pos = pos + (0, tincle.x50, 0)`, `*kind = msid`.
+pub fn it_802ecca4(ip: &Item, kind: &mut i32, pos: &mut GcVec) {
+    melee_core::ct!("it_802ecca4");
+    *pos = ip.pos;
+    pos.y += unsafe { ip.xDD4_itemVar.tincle.x50 };
+    *kind = ip.msid;
 }

@@ -1,3 +1,4 @@
+
 //! HSD matrix helpers. Port of `src/sysdolphin/baselib/mtx.c` (+ `fabsf_bitwise` from mtx.h).
 //!
 //! Fused sites follow the shipping build's IR exactly (`tools/rust-port/fma_sites.py
@@ -8,13 +9,18 @@
 //! `*AllocData` accessors are provided by `tu::mtx` over the native object pools.
 
 use crate::gekko::{cosf, sinf, sqrtf};
+
 use crate::lbtrigf::{asinf, atan2f};
+
 use crate::mtx::{self, Mtx, Quaternion, Vec3};
+
 use melee_core::fp::fmadds;
 
-const EPSILON: f32 = 0.000_000_000_1;
-const FLOAT_MIN: f32 = 1.175_494_3e-38;
-const M_PI: f64 = std::f64::consts::PI;
+pub(crate) const EPSILON: f32 = 0.000_000_000_1;
+
+pub(crate) const FLOAT_MIN: f32 = 1.175_494_3e-38;
+
+pub(crate) const M_PI: f64 = std::f64::consts::PI;
 
 /// `fabsf_bitwise`: clear the sign bit (NaN payloads kept).
 #[inline]
@@ -33,13 +39,13 @@ pub fn determinant3x4(m: &Mtx) -> f32 {
 
 /// `a*b - c*d` as the C build computes it: `fmadds(a, b, -(c*d))`.
 #[inline(always)]
-fn d2(a: f32, b: f32, c: f32, d: f32) -> f32 {
+pub(crate) fn d2(a: f32, b: f32, c: f32, d: f32) -> f32 {
     fmadds(a, b, -(c * d))
 }
 
 /// The 3x3 cofactor block shared by HSD_MtxInverse / InverseConcat / InverseTranspose,
 /// in HSD_MtxInverse's `dest[r][c]` order (already multiplied by `det`).
-fn cofactors(m: &Mtx, det: f32) -> [[f32; 3]; 3] {
+pub(crate) fn cofactors(m: &Mtx, det: f32) -> [[f32; 3]; 3] {
     [
         [
             d2(m[1][1], m[2][2], m[2][1], m[1][2]) * det,
@@ -61,7 +67,7 @@ fn cofactors(m: &Mtx, det: f32) -> [[f32; 3]; 3] {
 
 /// `-(c2*t2 - (-c0*t0 - c1*t1))`: the translation row of the inverse.
 #[inline(always)]
-fn inv_t(c0: f32, c1: f32, c2: f32, t0: f32, t1: f32, t2: f32) -> f32 {
+pub(crate) fn inv_t(c0: f32, c1: f32, c2: f32, t0: f32, t1: f32, t2: f32) -> f32 {
     -fmadds(c2, t2, -fmadds(-c0, t0, -(c1 * t1)))
 }
 
@@ -150,7 +156,7 @@ pub fn calc_val(x: f32, y: f32) -> f32 {
 }
 
 #[inline(always)]
-fn col_len(m: &Mtx, c: usize) -> f32 {
+pub(crate) fn col_len(m: &Mtx, c: usize) -> f32 {
     sqrtf(fmadds(m[2][c], m[2][c], fmadds(m[0][c], m[0][c], m[1][c] * m[1][c])))
 }
 
@@ -185,32 +191,6 @@ pub fn get_rotation(m: &Mtx) -> Vec3 {
 /// `HSD_MtxGetTranslate`.
 pub fn get_translate(m: &Mtx) -> Vec3 {
     Vec3 { x: m[0][3], y: m[1][3], z: m[2][3] }
-}
-
-/// `HSD_MtxGetScale`: Gram-Schmidt column lengths, negated when the basis is left-handed.
-pub fn get_scale(m: &Mtx) -> Vec3 {
-    let mut v1 = Vec3 { x: m[0][0], y: m[1][0], z: m[2][0] };
-    let mut out = Vec3 { x: mtx::vec_mag(&v1), y: 0.0, z: 0.0 };
-    v1 = mtx::vec_normalize(&v1);
-    let mut v2 = Vec3 { x: m[0][1], y: m[1][1], z: m[2][1] };
-    let v4 = mtx::vec_scale(&v1, mtx::vec_dot(&v1, &v2));
-    v2 = mtx::vec_sub(&v2, &v4);
-    out.y = mtx::vec_mag(&v2);
-    v2 = mtx::vec_normalize(&v2);
-    let mut v3 = Vec3 { x: m[0][2], y: m[1][2], z: m[2][2] };
-    let v4 = mtx::vec_scale(&v2, mtx::vec_dot(&v2, &v3));
-    v3 = mtx::vec_sub(&v3, &v4);
-    let v4 = mtx::vec_scale(&v1, mtx::vec_dot(&v1, &v3));
-    v3 = mtx::vec_sub(&v3, &v4);
-    out.z = mtx::vec_mag(&v3);
-    v3 = mtx::vec_normalize(&v3);
-    let v4 = mtx::vec_cross(&v2, &v3);
-    if (mtx::vec_dot(&v1, &v4) as f64) < 0.0 {
-        out.x = (out.x as f64 * -1.0) as f32;
-        out.y = (out.y as f64 * -1.0) as f32;
-        out.z = (out.z as f64 * -1.0) as f32;
-    }
-    out
 }
 
 /// `HSD_MkRotationMtx`: rotation matrix from Euler angles (translation zero).
@@ -280,3 +260,5 @@ pub fn srt_quat(s: &Vec3, q: &Quaternion, t: &Vec3, ps: Option<&Vec3>) -> Mtx {
 pub fn scaled_add(a: &Mtx, b: &Mtx, s: f32) -> Mtx {
     core::array::from_fn(|r| core::array::from_fn(|c| fmadds(s, a[r][c], b[r][c])))
 }
+
+pub use crate::tu::ftcpuattack::get_scale;

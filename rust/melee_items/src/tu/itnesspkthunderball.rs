@@ -3,6 +3,149 @@
 //! tests/kinds_itnesspkthunderball.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itkinds14::{item_of};
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -490,4 +633,68 @@ pub unsafe extern "C" fn it_802AC3F8(gobj: *mut Item_GObj) -> bool {
 pub unsafe extern "C" fn it_802AC41C(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("it_802AC41C");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802AC41C` (src/melee/it/kinds/itnesspkthunderball.c): `it_8026B894(..)`.
+pub fn it_802ac41c(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ac41c");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itnesspkthunderball.c `it_802AB9C0`: with `xF00 == 0`, clear owner / flags.x13 and run
+/// `it_802AC5D8` on the six linked trail GObjs.
+/// # Safety
+/// `gobj` NULL or a live item GObj; the six links NULL or GObjs (user_data NULL or an Item).
+pub unsafe fn it_802ab9c0(gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802ab9c0");
+    if let Some(ip) = item_of(gobj) {
+        if ip.xDD4_itemVar.pkthunder.xF00 == 0 {
+            ip.owner = null_mut();
+            ip.xDC8_word.flags.set_x13(0);
+            for i in 0..6 {
+                let l = ip.xDD4_itemVar.pkthunder.xDD4[i];
+                if !l.is_null() {
+                    it_802ac5d8(item_of(l));
+                }
+            }
+        }
+    }
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802AB568` (itnesspkthunderball.c): `owner`, or NULL without an item.
+pub fn it_802ab568(ip: Option<&Item>) -> *mut HSD_GObj {
+    melee_core::ct!("it_802ab568");
+    match ip {
+        Some(ip) => ip.owner,
+        None => null_mut_itkinds5(),
+    }
+}
+
+/// `it_802AB3F0` (itnesspkthunderball.c): `*out = pkthunder.positions[idx * 2]`, zero without
+/// an item; nothing without `out`.
+pub fn it_802ab3f0(ip: Option<&Item>, out: Option<&mut GcVec>, idx: i32) {
+    melee_core::ct!("it_802ab3f0");
+    match (ip, out) {
+        (Some(ip), Some(out)) => *out = unsafe { ip.xDD4_itemVar.pkthunder.positions[(idx * 2) as usize] },
+        (None, Some(out)) => {
+            out.x = 0.0;
+            out.y = 0.0;
+            out.z = 0.0;
+        }
+        (_, None) => {}
+    }
+}
+
+/// `it_802AB468` (itnesspkthunderball.c): `*out = pkthunder.xEEC`, zero without an item.
+pub fn it_802ab468(ip: Option<&Item>, out: Option<&mut f32>) {
+    melee_core::ct!("it_802ab468");
+    if let Some(out) = out {
+        *out = match ip {
+            Some(ip) => unsafe { ip.xDD4_itemVar.pkthunder.xEEC },
+            None => 0.0,
+        };
+    }
 }

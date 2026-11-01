@@ -16,6 +16,35 @@
 //! oracle, patched to `return rand_kind;`) returns.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds9::{box_pick, it_80286340};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmsubs;
@@ -877,4 +906,23 @@ pub unsafe extern "C" fn itKusudama_Logic4_DmgReceived(gobj: *mut Item_GObj) -> 
 pub unsafe extern "C" fn itKusudama_Logic4_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itKusudama_Logic4_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_8028A114` (itkusudama.c): same body as `it_80286340`.
+pub fn it_8028a114(rand: &mut HsdRand, arg1: i32, arg2: i32, arg3: i32, arg4: i32) -> bool {
+    melee_core::ct!("it_8028a114");
+    box_pick(rand, arg1, arg2, arg3, arg4)
+}
+
+/// `it_80289BE8_inline` (itkusudama.c): spawn position 5 below the item and a random velocity.
+pub fn it_80289be8_inline(rand: &mut HsdRand, ip: &Item, vel_scale: f32, pos: &mut GcVec, vel: &mut GcVec) {
+    melee_core::ct!("it_80289be8_inline");
+    *pos = ip.pos;
+    pos.y -= 5.0;
+    let r = rand.randf();
+    vel.x = fmadds(vel_scale, r, -(vel_scale * 0.5));
+    let r = rand.randf();
+    vel.y = fmadds(vel_scale * 0.5, r, -(vel_scale * 0.25));
+    vel.z = 0.0;
 }

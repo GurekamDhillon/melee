@@ -1,6 +1,12 @@
 //! src/melee/mn/mnmain.c: native port (c2rust-derived body; callees of unported TUs are `ext` TODO hooks).
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused_unsafe, unused_mut, unused_assignments, unused_variables, unused_parens, dead_code, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::AnimLoopSettings as AnimLoopSettings_mn_ptr;
 use melee_types::*;
 #[allow(unused_imports)] use self::ext::*;
 #[allow(unused_imports)] use super::mnhyaku::{mnHyaku_8024CD64};
@@ -5481,4 +5487,65 @@ pub mod ext {
     pub static mut HSD_GObj_LightKind: s8 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_CameraKind: u8_0 = unsafe { core::mem::zeroed() };
     pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
+}
+
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mnmain.c `GetSelectionFrameOffset_fp`.
+pub fn GetSelectionFrameOffset_fp(selection: i32) -> i32 {
+    melee_core::ct!("GetSelectionFrameOffset_fp");
+    selection.wrapping_mul(2)
+}
+
+/// mnmain.c `mn_8022C010_fp`: which main-menu entry a menu kind belongs to.
+/// MENU_KIND_34 and up fall off the end of the C function (no return value; undefined); this
+/// returns 0 there, which is not verified against anything.
+pub fn mn_8022C010_fp(menu_kind: i32, selection: i32) -> i32 {
+    melee_core::ct!("mn_8022C010_fp");
+    match menu_kind {
+        0 => selection,
+        1 | 6 | 7 | 8 | 9 | 10 | 33 => 0,
+        2 | 11..=18 => 1,
+        3 => 2,
+        4 | 19..=24 => 3,
+        5 | 25..=32 => 4,
+        _ => 0, // TODO(group6): UB in the C; check the shipping build's actual return register.
+    }
+}
+
+// ---- Round 2 ----
+
+/// mnmain.c `mn_GetDigitAt_fp`: `(n / 10^place) % 10` through lb_00CE `powi` (place 0..31, where
+/// the wrapping 10^place is never 0).
+pub fn mn_GetDigitAt_fp(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("mn_GetDigitAt_fp");
+    arg0.wrapping_div(crate::lb::powi(10, arg1)).wrapping_rem(10)
+}
+
+/// mnmain.c `mn_GetDigitCount_fp`: decimal digits of `num`, at most 11.
+pub fn mn_GetDigitCount_fp(num: i32) -> i32 {
+    melee_core::ct!("mn_GetDigitCount_fp");
+    if num == 0 {
+        return 1;
+    }
+    let mut count = 0;
+    while num / crate::lb::powi(10, count) != 0 {
+        count += 1;
+        if count >= 11 {
+            break;
+        }
+    }
+    count
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mnmain.c `GetAnimStartFrame_fp`.
+pub fn GetAnimStartFrame_fp(anim_loop: &AnimLoopSettings_mn_ptr) -> f32 {
+    melee_core::ct!("GetAnimStartFrame_fp");
+    anim_loop.start_frame
+}
+
+/// mnmain.c `GetAnimEndFrame_fp`.
+pub fn GetAnimEndFrame_fp(anim_loop: &AnimLoopSettings_mn_ptr) -> f32 {
+    melee_core::ct!("GetAnimEndFrame_fp");
+    anim_loop.end_frame
 }

@@ -1,45 +1,14 @@
+
 //! Round 9 (night 3 round 5): lb functions verified bit for bit against the C by
 //! `tests/oracle_r9.rs`. TODO(group1): lb leftovers; move into melee_runtime if group 1 takes
 //! these TUs.
 use crate::lb_ptr::checkJObjFlags;
+
 use crate::lb_r8::lb_80011B74;
+
 use core::ffi::c_void;
+
 use melee_types::{it_8026C47C_arg0_t, HSD_JObj};
-
-/// lbspdisplay.c `lb_80011C18`: OR `flags` into the render mode of every MObj under `jobj`
-/// (its child and next subtrees, the child/next joints' DObj chains, the joint's own DObjs).
-///
-/// # Safety
-/// `jobj` is a live JObj tree; every joint `checkJObjFlags` accepts holds a NULL or live DObj
-/// chain whose DObjs all have a live MObj (as in the C, which does not check `mobj`).
-pub unsafe fn lb_80011C18(jobj: &mut HSD_JObj, flags: u32) {
-    for cur in [jobj.child, jobj.next] {
-        if let Some(cur) = cur.as_mut() {
-            if let Some(c) = cur.child.as_mut() {
-                lb_80011C18(c, flags);
-            }
-            if let Some(n) = cur.next.as_mut() {
-                lb_80011C18(n, flags);
-            }
-            if checkJObjFlags(cur) {
-                if let Some(d) = cur.u.dobj.as_mut() {
-                    lb_80011B74(d, flags);
-                }
-            }
-        }
-    }
-    if checkJObjFlags(jobj) {
-        if let Some(d) = jobj.u.dobj.as_mut() {
-            if let Some(n) = d.next.as_mut() {
-                lb_80011B74(n, flags);
-            }
-            (*d.mobj).rendermode |= flags;
-        }
-    }
-}
-
-/// lb_0219.c `fn_80021C18`: an empty command callback.
-pub fn fn_80021C18(_gobj: *mut c_void, _cmd: *mut c_void, _arg2: i32) {}
 
 /// lbsnap.c `struct Unk80433380_0` (defined in the .c): a snapshot save header.
 #[repr(C)]
@@ -68,8 +37,6 @@ melee_core::gc_layout!(Unk80433380_0, "struct Unk80433380_0", size 0x3C, align 4
     x38 @ 0x38: 4 "char[4]",
 ]);
 
-/// lbsnap.c `lbSnap_GetSaveDataOffset`: `xC` plus the offset of `x38` (0x38 on both the GC and
-/// native layouts: the record holds no pointers).
-pub fn lbSnap_GetSaveDataOffset(snap: &Unk80433380_0) -> i32 {
-    snap.xC.wrapping_add(core::mem::offset_of!(Unk80433380_0, x38) as i32)
-}
+pub use crate::tu::lb_0219::fn_80021C18_fp as fn_80021C18;
+pub use crate::tu::lbsnap::lbSnap_GetSaveDataOffset_fp as lbSnap_GetSaveDataOffset;
+pub use crate::tu::lbspdisplay::lb_80011C18_fp as lb_80011C18;

@@ -1,3 +1,4 @@
+
 //! src/melee/gr/grlib.c, round 8: all 24 functions (incl. the static quake procs and the
 //! PointInsideColl inline). TARGET_PC bodies.
 //!
@@ -8,8 +9,11 @@
 //! FMA: fma_sites.py reports 4 fused sites, all in PointInsideColl: `0.5f*height + offset` and
 //! `0.5f*(top+bottom) + topn` (and the x twins). `- point->y` is a separate subtract.
 #![allow(non_upper_case_globals)]
+
 use super::stage::StageWorld;
+
 use crate::vec::Vec3;
+
 use melee_types::*;
 
 /// Which static proc grLib_801C9CEC installs.
@@ -158,62 +162,7 @@ pub struct GrLib {
     pub mtx: [Vec3; 4],
 }
 
-/// grLib_801C96E8
-pub fn grlib_801c96e8(gp: &Ground) -> bool {
-    gp.x10_flags.b4() != 0
-}
-
-/// grLib_801C96F8
-pub fn grlib_801c96f8(w: &StageWorld, h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, arg2: &Vec3) -> *mut HSD_Generator {
-    let g = h.hsd_8039f05c(0, arg1, arg0);
-    if !g.is_null() {
-        unsafe {
-            let mut srt = (*g).appsrt;
-            if srt.is_null() {
-                srt = h.ps_add_generator_app_srt_begin(g, 1);
-            } else {
-                (*srt).xA2 = 0;
-            }
-            if srt.is_null() {
-                h.hsd_8039d4dc(g);
-                return core::ptr::null_mut();
-            }
-            (*srt).translate = Vec { x: arg2.x, y: arg2.y, z: arg2.z };
-            let scale = w.ground_801c0498();
-            (*srt).scale.x *= scale;
-            (*srt).scale.y *= scale;
-            (*srt).scale.z *= scale;
-            (*g).pos.z = 0.0;
-            (*g).pos.y = 0.0;
-            (*g).pos.x = 0.0;
-        }
-    }
-    g
-}
-
-/// grLib_801C97DC
-pub fn grlib_801c97dc(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) {
-    h.hsd_8039f6cc(0, arg1, arg0, j);
-}
-/// grLib_801C9808
-pub fn grlib_801c9808(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) -> *mut HSD_Generator {
-    h.hsd_8039efac(0, arg1, arg0, j)
-}
-/// grLib_801C9834
-pub fn grlib_801c9834(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
-    h.hsd_8039d4dc(g);
-}
-/// grLib_801C9854
-pub fn grlib_801c9854(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
-    h.hsd_8039d5dc(j);
-}
-/// grLib_801C9874
-pub fn grlib_801c9874(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
-    unsafe { (*g).r#type |= 0x80 };
-    h.hsd_8039d4dc(g);
-}
-
-fn kill_generators_on(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
+pub(crate) fn kill_generators_on(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
     let mut cur = h.generator_list_head();
     while !cur.is_null() {
         let next = unsafe { (*cur).next };
@@ -222,39 +171,6 @@ fn kill_generators_on(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
             h.hsd_8039d4dc(cur);
         }
         cur = next;
-    }
-}
-
-/// grLib_801C98A0
-pub fn grlib_801c98a0(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
-    if j.is_null() {
-        return;
-    }
-    kill_generators_on(h, j);
-}
-
-/// grLib_801C9908 (recursive over the joint tree, stops at instances)
-pub fn grlib_801c9908(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
-    if j.is_null() {
-        return;
-    }
-    kill_generators_on(h, j);
-    if unsafe { (*j).flags } & JOBJ_INSTANCE as u32 != 0 {
-        return;
-    }
-    let mut c = unsafe { (*j).child };
-    while !c.is_null() {
-        grlib_801c9908(h, c);
-        c = unsafe { (*c).next };
-    }
-}
-
-/// grLib_801C99C0
-pub fn grlib_801c99c0(h: &mut dyn GrLibHooks, bank: i32, gfx_id: i32, j: *mut HSD_JObj, flag: i32) {
-    if flag != 0 {
-        h.hsd_8039efac(0, bank, gfx_id, j);
-    } else {
-        h.hsd_8039f6cc(0, bank, gfx_id, j);
     }
 }
 
@@ -272,41 +188,6 @@ impl GrLib {
     pub fn grlib_801c9a70(&self, arg0: i32) -> Vec3 {
         assert!((0..4).contains(&arg0), "grlib.c:290: 0");
         self.mtx[arg0 as usize]
-    }
-}
-
-/// grLib_801C9B20
-pub fn grlib_801c9b20(h: &mut dyn GrLibHooks, j: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: *mut DynamicsDesc) {
-    let count = unsafe { (*a1).count };
-    h.lb_8000fd48(j, a2, count as i32);
-    h.lb_80011710(a1, a2);
-}
-/// grLib_801C9B6C
-pub fn grlib_801c9b6c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
-    h.lb_8000fd18(a);
-}
-/// grLib_801C9B8C
-pub fn grlib_801c9b8c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
-    h.lb_8001044c_zero(a);
-}
-
-/// grLib_801C9BC8 (static proc, loop quake)
-pub fn grlib_801c9bc8(h: &mut dyn GrLibHooks, gobj: *mut HSD_GObj) {
-    let j = unsafe { (*gobj).hsd_obj } as *mut HSD_JObj;
-    h.jobj_anim_all(j);
-    let (x, y) = h.jobj_translation_xy(j);
-    h.camera_set_quake_offset(x, y);
-}
-
-/// grLib_801C9C40 (static proc, one-shot quake)
-pub fn grlib_801c9c40(h: &mut dyn GrLibHooks, gobj: *mut HSD_GObj) {
-    let j = unsafe { (*gobj).hsd_obj } as *mut HSD_JObj;
-    let aobj = unsafe { (*j).aobj };
-    h.jobj_anim_all(j);
-    let (x, y) = h.jobj_translation_xy(j);
-    h.camera_set_quake_offset(x, y);
-    if aobj.is_null() || unsafe { (*aobj).flags } & 0x4000_0000 != 0 {
-        h.gobj_free(gobj);
     }
 }
 
@@ -369,7 +250,7 @@ impl StageWorld {
 }
 
 #[inline]
-fn abs_c(x: f32) -> f32 {
+pub(crate) fn abs_c(x: f32) -> f32 {
     if x < 0.0 { -x } else { x }
 }
 
@@ -396,23 +277,8 @@ pub fn point_inside_coll(cd: &CollData, p: &Vec3, offset: f32) -> bool {
     point_inside_box(cd.ecb.top.y, cd.ecb.bottom.y, cd.ecb.right.x, cd.ecb.left.x, cd.cur_pos.x, cd.cur_pos.y, p, offset)
 }
 
-/// grLib_801C9EE8
-pub fn grlib_801c9ee8(h: &mut dyn GrLibHooks, p: &Vec3, offset: f32) -> bool {
-    for cd in h.fighter_colls() {
-        if point_inside_coll(unsafe { &*cd }, p, offset) {
-            return true;
-        }
-    }
-    for (kind, cd) in h.item_colls() {
-        if kind != It_PKind_Random && point_inside_coll(unsafe { &*cd }, p, offset) {
-            return true;
-        }
-    }
-    false
-}
-
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[derive(Default)]
@@ -522,3 +388,20 @@ mod tests {
         assert!(grlib_801c9ee8(&mut h, &p, 7.0));
     }
 }
+
+pub use crate::tu::grlib::grlib_801c96e8;
+pub use crate::tu::grlib::grlib_801c96f8;
+pub use crate::tu::grlib::grlib_801c97dc;
+pub use crate::tu::grlib::grlib_801c9808;
+pub use crate::tu::grlib::grlib_801c9834;
+pub use crate::tu::grlib::grlib_801c9854;
+pub use crate::tu::grlib::grlib_801c9874;
+pub use crate::tu::grlib::grlib_801c98a0;
+pub use crate::tu::grlib::grlib_801c9908;
+pub use crate::tu::grlib::grlib_801c99c0;
+pub use crate::tu::grlib::grlib_801c9b20;
+pub use crate::tu::grlib::grlib_801c9b6c;
+pub use crate::tu::grlib::grlib_801c9b8c;
+pub use crate::tu::grlib::grlib_801c9bc8;
+pub use crate::tu::grlib::grlib_801c9c40;
+pub use crate::tu::grlib::grlib_801c9ee8;

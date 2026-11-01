@@ -2,6 +2,19 @@
 //! layout). The owned-model port of the same file (checked bit for bit against the C) is `crate::robj`; the math
 //! helpers it shares (matrix columns, `HSD_MtxInverseConcat`, vector ops) are called from there.
 #![allow(non_snake_case)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gekko::sqrtf as sqrtf_robj;
+#[allow(unused_imports)]
+use crate::jobj::JObjId;
+#[allow(unused_imports)]
+use crate::jobj::JObjTree;
+#[allow(unused_imports)]
+use crate::mtx as mtx_robj;
+#[allow(unused_imports)]
+use crate::mtx::Vec3 as Vec3_robj;
+#[allow(unused_imports)]
+use crate::robj::{EPS, RObjUpdate, RObjVal};
 use melee_types::HSD_ObjAllocData;
 
 /// `robj_alloc_data` / `rvalue_alloc_data` (robj.c): the native pools of the engine path.
@@ -794,4 +807,36 @@ pub unsafe fn HSD_RObjSetConstraintObj(robj: *mut HSD_RObj, o: *mut c_void) {
         super::os_error::OSReport(c"constraint only support jobj target.\n".as_ptr(), &[]);
         panic!("robj.c:1376 HSD_ASSERT(1376, 0)");
     }
+}
+
+// ---- folded from robj.rs (consolidation steps 21/22) ----
+/// `set_dirup_matrix_fp` (static). `dir` / `uv` are written back as in the C.
+pub fn set_dirup_matrix_fp<D, R>(
+    dir: &mut Vec3_robj,
+    uv: &mut Vec3_robj,
+    scale: &Vec3_robj,
+    tree: &mut JObjTree<D, R>,
+    obj: JObjId,
+    update: &mut RObjUpdate<'_, D, R>,
+) {
+    melee_core::ct!("set_dirup_matrix_fp");
+    let mut z = mtx_robj::vec_cross(dir, uv);
+    let kdir = sqrtf_robj(1.0f32 / (EPS + mtx_robj::vec_dot(dir, dir)));
+    *dir = mtx_robj::vec_scale(dir, kdir);
+    let kz = sqrtf_robj(1.0f32 / (EPS + mtx_robj::vec_dot(&z, &z)));
+    z = mtx_robj::vec_scale(&z, kz);
+    *uv = mtx_robj::vec_cross(&z, dir);
+    let v = Vec3_robj { x: dir.x * scale.x, y: dir.y * scale.x, z: dir.z * scale.x };
+    update(tree, obj, 50, Some(RObjVal::Vec(v)));
+    let v = Vec3_robj { x: uv.x * scale.y, y: uv.y * scale.y, z: uv.z * scale.y };
+    update(tree, obj, 51, Some(RObjVal::Vec(v)));
+    let v = Vec3_robj { x: z.x * scale.z, y: z.y * scale.z, z: z.z * scale.z };
+    update(tree, obj, 52, Some(RObjVal::Vec(v)));
+    update(tree, obj, 55, None);
+}
+
+/// `dummy_func_fp` (static).
+pub fn dummy_func_fp(_args: &[f32]) -> f32 {
+    melee_core::ct!("dummy_func_fp");
+    0.0
 }

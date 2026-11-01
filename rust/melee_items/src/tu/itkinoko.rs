@@ -3,6 +3,51 @@
 //! No fused sites.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itfwd8::it_8027c794;
+#[allow(unused_imports)]
+use crate::itkinds10::it_flipper_repel_inline;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802e37a4;
+#[allow(unused_imports)]
+use crate::itkinds6::it_802ddbe8;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HSD_AnimJoint;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::KinokoAnim;
+#[allow(unused_imports)]
+use crate::layout::UnkAllstarData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itClimbersBlizzardAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLipstickAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkBytes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kinoko;
 use crate::itlib::COLLIDE_FLOOR_MASK;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -205,4 +250,15 @@ pub unsafe extern "C" fn itKinoko_Logic26_DmgDealt(_gobj: *mut Item_GObj) -> i32
 pub unsafe extern "C" fn itKinoko_Logic26_EvtUnk(gobj: *mut Item_GObj, gobj_2: *mut HSD_GObj) {
     melee_core::ct!("itKinoko_Logic26_EvtUnk");
     ext::it_8026B894(gobj, gobj_2);
+}
+
+// ---- folded from itkinds13.rs (consolidation steps 21/22) ----
+/// `it_80293660_fp` (itkinoko.c): `((KinokoAnim*) tbl[Kinoko]->x4)[idx + 2].joint`.
+/// # Safety
+/// `tbl[It_Kind_Kinoko]` and its attributes are valid for `idx + 2`.
+pub unsafe fn it_80293660_fp(tbl: *const *mut Article, idx: i32) -> *mut HSD_AnimJoint {
+    melee_core::ct!("it_80293660_fp");
+    let a = *tbl.add(It_Kind_Kinoko as usize);
+    let anims = (*a).x4_specialAttributes as *const KinokoAnim;
+    (*anims.offset(idx as isize + 2)).joint
 }

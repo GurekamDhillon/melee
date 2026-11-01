@@ -64,7 +64,7 @@ def scan_close(s, i):
     return n
 
 
-HEAD = re.compile(r'^\s*(?:pub(?:\([a-z]+\))?\s+)?(?:unsafe\s+)?(?:extern\s+"C"\s+)?(fn|const|static\s+mut|static|struct|enum|type|mod|use|impl|trait|union)\b\s*([A-Za-z_][A-Za-z0-9_]*)?')
+HEAD = re.compile(r'^\s*(?:pub(?:\([a-z]+\))?\s+)?(?:const\s+(?=unsafe|extern|fn))?(?:unsafe\s+)?(?:extern\s+"C"\s+)?(?:unsafe\s+)?(fn|const|static\s+mut|static|struct|enum|type|mod|use|impl|trait|union)\b\s*([A-Za-z_][A-Za-z0-9_]*)?')
 BRACE_KINDS = {'fn', 'struct', 'enum', 'mod', 'impl', 'trait', 'union'}
 
 

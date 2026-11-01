@@ -9,6 +9,11 @@
 //! here (the splash tile positions and `fn_801855BC`).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::HSD_GObj as HSD_GObj_gm_r10;
+#[allow(unused_imports)]
+use melee_types::HSD_SObj as HSD_SObj_gm_r10;
 use crate::tu_util::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -1332,4 +1337,24 @@ pub unsafe fn gm_Scene_IntroEasy_OnEnter(arg0_: *mut c_void) {
     lbl_804D6608 = -1;
     ext::gm_80167858(lbl_8047368C.xEC as i8 as i32, lbl_8047368C.xED as i32, 0xB, 0x2D);
     ext::gm_80168F88();
+}
+
+// ---- folded from gm_r10.rs (consolidation steps 21/22) ----
+/// gm_1832.c `fn_801859C8_fp`: counts every SObj's `x48` timer down, clearing bit 0 of `x40`
+/// when it reaches 0.
+///
+/// # Safety
+/// `gobj.hsd_obj` must be NULL or a valid NULL-terminated HSD_SObj_gm_r10 chain.
+pub unsafe fn fn_801859C8_fp(gobj: &HSD_GObj_gm_r10) {
+    melee_core::ct!("fn_801859C8_fp");
+    let mut sobj = gobj.hsd_obj as *mut HSD_SObj_gm_r10;
+    while let Some(s) = sobj.as_mut() {
+        if s.x48 != 0 {
+            s.x48 = s.x48.wrapping_sub(1);
+            if s.x48 == 0 {
+                s.x40 &= !1;
+            }
+        }
+        sobj = s.next;
+    }
 }

@@ -14,6 +14,12 @@
 //! `Map_VanishEntry` width (the C sizes it by the 8-byte descriptor table).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use core::ffi::c_void;
@@ -23,12 +29,6 @@ use melee_runtime::lbtrigf::atan2f;
 use melee_types::inline as mi;
 use melee_types::*;
 
-pub use crate::gr::forward::grrcruise::grRCruise_801FF29C;
-pub use crate::gr::trivial::grrcruise::{
-    grRCruise_8020014C, grRCruise_801FF2C0, grRCruise_801FF3E0, grRCruise_801FF434,
-    grRCruise_801FF6CC, grRCruise_801FF794, grRCruise_801FF8DC, grRCruise_801FFAD4,
-    grRCruise_80201C50, grRCruise_80201C58,
-};
 
 /// `struct grRCruise_YakumonoParam`.
 #[repr(C)]
@@ -1114,3 +1114,38 @@ pub static mut grRc_StageData: StageData = StageData {
     joints: unsafe { &raw mut grRc_803E4DA8 as *mut GrJoint },
     joint_count: 23,
 };
+
+// ---- folded from grrcruise.rs (consolidation steps 21/22) ----
+/// grRCruise_801FF29C (gr/grrcruise.c:169)
+    pub unsafe extern "C" fn grRCruise_801FF29C() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grrcruise.rs (consolidation steps 21/22) ----
+/// grRCruise_801FF2C0 (gr/grrcruise.c:174)
+    pub extern "C" fn grRCruise_801FF2C0() -> i32 { 0 }
+
+/// grRCruise_801FF3E0 (gr/grrcruise.c:201)
+    pub extern "C" fn grRCruise_801FF3E0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_801FF434 (gr/grrcruise.c:217)
+    pub extern "C" fn grRCruise_801FF434(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_801FF6CC (gr/grrcruise.c:276)
+    pub extern "C" fn grRCruise_801FF6CC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_801FF794 (gr/grrcruise.c:304)
+    pub extern "C" fn grRCruise_801FF794(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_801FF8DC (gr/grrcruise.c:353)
+    pub extern "C" fn grRCruise_801FF8DC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_801FFAD4 (gr/grrcruise.c:398)
+    pub extern "C" fn grRCruise_801FFAD4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_8020014C (gr/grrcruise.c:515)
+    pub extern "C" fn grRCruise_8020014C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grRCruise_80201C50 (gr/grrcruise.c:1185)
+    pub extern "C" fn grRCruise_80201C50(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grRCruise_80201C58 (gr/grrcruise.c:1190)
+    pub extern "C" fn grRCruise_80201C58(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

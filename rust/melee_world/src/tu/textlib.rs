@@ -10,6 +10,12 @@
 //!   GameCube build (and this port) keeps `color` in the TOP two bits, as `DevText_Draw` reads it.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::DevText as DevText_textlib;
+#[allow(unused_imports)]
+use crate::hud::textlib::{DEVTEXT_FLAG_NOWRAP as DEVTEXT_FLAG_NOWRAP_textlib, devtext_advance_line};
 use core::ptr::null_mut;
 use melee_types::*;
 
@@ -328,4 +334,51 @@ pub unsafe extern "C" fn un_80302DF0() -> *mut un_80304138_objalloc_t {
 pub unsafe extern "C" fn un_80302DF8(arg0: *mut un_80304138_objalloc_t, arg1: soundtest_callback) {
     melee_core::ct!("un_80302DF8");
     (*arg0).xC = arg1;
+}
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// DevText_Clamp (if/textlib.c, static inline). `max - 1` wraps.
+pub fn devtext_clamp(val: i32, max: i32) -> i32 {
+    melee_core::ct!("devtext_clamp");
+    if max <= val {
+        max.wrapping_sub(1)
+    } else if val < 0 {
+        0
+    } else {
+        val
+    }
+}
+
+// ---- folded from textlib.rs (consolidation steps 21/22) ----
+/// DevText_80302AC0 (sets NOWRAP).
+pub fn devtext_80302ac0(text: &mut DevText_textlib) {
+    melee_core::ct!("devtext_80302ac0");
+    text.flags |= DEVTEXT_FLAG_NOWRAP_textlib;
+}
+
+/// DevText_Erase: clears `2 * w * h` bytes.
+pub fn devtext_erase(text: &DevText_textlib, buf: &mut [u8]) {
+    melee_core::ct!("devtext_erase");
+    let n = 2 * text.w as usize * text.h as usize;
+    buf[..n].fill(0);
+}
+
+/// DevText_Print. `None` is the C's NULL; the string ends at the first NUL (or slice end).
+pub fn devtext_print(text: &mut DevText_textlib, buf: &mut [u8], s: Option<&[u8]>) {
+    melee_core::ct!("devtext_print");
+    let Some(s) = s else { return };
+    for &c in s.iter().take_while(|&&c| c != 0) {
+        if c != b'\n' {
+            let index = (text.cursor_x as i32 + text.cursor_y as i32 * text.w as i32) as usize;
+            buf[index * 2] = c;
+            buf[index * 2 + 1] = (buf[index * 2 + 1] & !3) | text.current_color();
+            if (text.cursor_x as i32) < text.w as i32 - 1 {
+                text.cursor_x += 1;
+            } else if text.flags & DEVTEXT_FLAG_NOWRAP_textlib == 0 {
+                devtext_advance_line(text, buf);
+            }
+        } else {
+            devtext_advance_line(text, buf);
+        }
+    }
 }

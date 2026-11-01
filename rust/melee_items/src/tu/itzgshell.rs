@@ -5,6 +5,139 @@
 //! "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_itzgshell.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs as itGShell_Attrs_itkinds6;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds6::{zgshell_tick};
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1106,4 +1239,48 @@ pub unsafe extern "C" fn it_802E0100(arg0: i32, pos: *mut Vec3, facing_int: i32)
         }
     }
     spawn_gobj
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802DFED4` (src/melee/it/kinds/itzgshell.c): `it_8026B894(..)`.
+pub fn it_802dfed4(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802dfed4");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802DFFA0` (itzgshell.c): `zgshell.vel = 0`.
+pub fn it_802dffa0(ip: &mut Item) {
+    melee_core::ct!("it_802dffa0");
+    ip.xDD4_itemVar.zgshell.vel.x = 0.0;
+    ip.xDD4_itemVar.zgshell.vel.y = 0.0;
+    ip.xDD4_itemVar.zgshell.vel.z = 0.0;
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802DDBE8` (itzgshell.c).
+/// # Safety
+/// The special attributes must be a valid `itGShell_Attrs_itkinds6`.
+pub unsafe fn it_802ddbe8(ip: &mut Item) {
+    melee_core::ct!("it_802ddbe8");
+    zgshell_tick(ip);
+}
+
+/// `it_802DFF14` (itzgshell.c): set hurtbox 0 from the shell's capsule, raised and doubled if
+/// `arg1`. (The C passes an `itGShell_HurtInit` as a `HurtCapsule*`; `it_80271534` reads only
+/// the offsets and scale, which the two share.)
+/// # Safety
+/// `ip.xC4_article_data` must be valid.
+pub unsafe fn it_802dff14(ip: &mut Item, arg1: i32) {
+    melee_core::ct!("it_802dff14");
+    let c = ip.xDD4_itemVar.zgshell.x58_hurtInit;
+    let mut h: HurtCapsule = HurtCapsule::zeroed();
+    h.a_offset = c.a_offset;
+    h.b_offset = c.b_offset;
+    h.scale = c.scale;
+    if arg1 != 0 {
+        h.a_offset.y = 6.0;
+        h.scale *= 2.0;
+    }
+    it_80271534(ip, 0, &h);
 }

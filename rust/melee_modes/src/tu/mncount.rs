@@ -5,6 +5,7 @@
 //! (`globals!`); tests/tu_mncount.rs checks every function against the C compiled natively.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null_mut};
 
@@ -823,4 +824,17 @@ pub unsafe extern "C" fn mnCount_Create() {
     gobj = ext::GObj_Create(0, 1, 0x80);
     let proc = ext::HSD_GObj_SetupProc(gobj, Some(mnCount_HandleUserInput), 0);
     (*proc).set_flags_3(HSD_GObj_804D783C as u8);
+}
+
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mncount.c `inline_is_row_time_fp` (POWER_TIME..COMBINED_VS_PLAY_TIME = 1..5).
+pub fn inline_is_row_time_fp(row: i32) -> bool {
+    melee_core::ct!("inline_is_row_time_fp");
+    (1..=5).contains(&row)
+}
+
+/// mncount.c `inline_is_row_char_fp` (LONGEST_TIME..DISASTER_MASTER = 20..29).
+pub fn inline_is_row_char_fp(row: i32) -> bool {
+    melee_core::ct!("inline_is_row_char_fp");
+    (20..=29).contains(&row)
 }

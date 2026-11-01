@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -116,7 +122,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtmario::{grTMario_8021F8DC, grTMario_8021F9F8, grTMario_8021FA94, grTMario_8021FB24, grTMario_8021FC50, grTMario_8021FC58};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -290,3 +295,26 @@ pub unsafe extern "C" fn grTMario_8021FBE8(vec: *mut Vec3, arg8: f32) {
         (*temp_r3_2).scale.z *= arg8;
     }
 }
+
+// ---- folded from grtmario.rs (consolidation steps 21/22) ----
+/// grTmario_UnkStage0_OnStart_fp (gr/grtmario.c:91)
+    pub unsafe extern "C" fn grTmario_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtmario.rs (consolidation steps 21/22) ----
+/// grTMario_8021F8DC (gr/grtmario.c:96)
+    pub extern "C" fn grTMario_8021F8DC() -> i32 { 0 }
+
+/// grTMario_8021F9F8 (gr/grtmario.c:122)
+    pub extern "C" fn grTMario_8021F9F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMario_8021FA94 (gr/grtmario.c:142)
+    pub extern "C" fn grTMario_8021FA94(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMario_8021FB24 (gr/grtmario.c:159)
+    pub extern "C" fn grTMario_8021FB24(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMario_8021FC50 (gr/grtmario.c:205)
+    pub extern "C" fn grTMario_8021FC50(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTMario_8021FC58 (gr/grtmario.c:210)
+    pub extern "C" fn grTMario_8021FC58(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

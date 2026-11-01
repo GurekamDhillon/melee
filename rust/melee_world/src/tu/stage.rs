@@ -9,6 +9,7 @@
 //! independent (`done` is `pub static mut done` here).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
@@ -696,4 +697,11 @@ pub unsafe extern "C" fn Stage_StageSlotSelect(kind: i32) -> i32 {
         i += 1;
     }
     -1
+}
+
+// ---- folded from stage.rs (consolidation steps 21/22) ----
+/// `Stage_80224DC8`
+pub fn stage_80224dc8(arg: i32) -> bool {
+    melee_core::ct!("stage_80224dc8");
+    arg == 0x3b || arg == 0x3f || arg == 0x42 || arg == 0x49 || arg == 0x4c
 }

@@ -6,19 +6,17 @@
 //! tests/tu_grtcaptain.rs against gen/turef/tu_grtcaptain_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use melee_types::*;
 
-pub use crate::gr::forward::grtcaptain::{
-    grTCaptain_OnStart, stageGObj0_OnInit, stageGObj1_GObjProc, stageGObj1_OnInit,
-    stageGObj2_GObjProc, stageGObj2_OnInit,
-};
-pub use crate::gr::trivial::grtcaptain::{
-    grTCaptain_8021FCFC, grTCaptain_8021FE18, grTCaptain_8021FE78, grTCaptain_8021FF08,
-    grTCaptain_OnTouchLine,
-};
-
+pub use crate::gr::forward::grtcaptain::{stageGObj0_OnInit, stageGObj1_GObjProc, stageGObj1_OnInit, stageGObj2_GObjProc, stageGObj2_OnInit};
 pub unsafe extern "C" fn grTCaptain_OnDemoInit(_unused: i32) { melee_core::ct!("grTCaptain_OnDemoInit");}
 
 pub unsafe extern "C" fn grTCaptain_OnInit() {
@@ -93,3 +91,23 @@ pub static mut grTCa_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grtcaptain.rs (consolidation steps 21/22) ----
+/// grTCaptain_OnStart (gr/grtcaptain.c:86)
+    pub unsafe extern "C" fn grTCaptain_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtcaptain.rs (consolidation steps 21/22) ----
+/// grTCaptain_8021FCFC (gr/grtcaptain.c:91)
+    pub extern "C" fn grTCaptain_8021FCFC() -> i32 { 0 }
+
+/// grTCaptain_8021FE18 (gr/grtcaptain.c:117)
+    pub extern "C" fn grTCaptain_8021FE18(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCaptain_8021FE78 (gr/grtcaptain.c:131)
+    pub extern "C" fn grTCaptain_8021FE78(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCaptain_8021FF08 (gr/grtcaptain.c:148)
+    pub extern "C" fn grTCaptain_8021FF08(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTCaptain_OnTouchLine (gr/grtcaptain.c:160)
+    pub extern "C" fn grTCaptain_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

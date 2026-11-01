@@ -10,6 +10,212 @@
 //! `xE50.y - 1.0` updates are in double. `cosf` / `sinf` are the MSL ports of `melee_runtime::gekko`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds9::{sqrt_n};
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate as my_sqrtf_accurate_itkinds14;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_runtime::gekko::{cosf, sinf};
@@ -548,4 +754,38 @@ pub unsafe extern "C" fn it_802D24A0(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_802D24FC(gobj: *mut Item_GObj) -> i32 {
     melee_core::ct!("it_802D24FC");
     ext::it_8026DA08(gobj)
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802D23D4` (src/melee/it/kinds/itlugia.c): `it_8026B894(..)`.
+pub fn it_802d23d4(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d23d4");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_802D24A0` (itlugia.c): `vel.z *= attrs[1..=3]` by aeroblast kind (0 otherwise).
+/// # Safety
+/// The special attributes must hold at least 4 floats.
+pub unsafe fn it_802d24a0(ip: &mut Item) {
+    melee_core::ct!("it_802d24a0");
+    let a = (*ip.xC4_article_data).x4_specialAttributes as *const f32;
+    let multiplier = match ip.kind {
+        It_Kind_Lugia_Aeroblast => *a.add(1),
+        It_Kind_Lugia_Aeroblast2 => *a.add(2),
+        It_Kind_Lugia_Aeroblast3 => *a.add(3),
+        _ => 0.0,
+    };
+    ip.x40_vel.z *= multiplier;
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itlugia.c `it_802D14D0`: empty.
+pub fn it_802d14d0() { melee_core::ct!("it_802d14d0");}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `my_sqrtf_accurate_fp` (itlugia.c): 4 steps.
+pub fn my_sqrtf_accurate_fp(x: f32) -> f32 {
+    melee_core::ct!("my_sqrtf_accurate_fp");
+    sqrt_n(x, 4)
 }

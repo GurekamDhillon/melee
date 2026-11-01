@@ -4,6 +4,53 @@
 //! by tests/tu_itlipstick.rs. No float arithmetic.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itfwd8::it_8027c794;
+#[allow(unused_imports)]
+use crate::itkinds10::it_flipper_repel_inline;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802e37a4;
+#[allow(unused_imports)]
+use crate::itkinds6::it_802ddbe8;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HSD_AnimJoint;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::KinokoAnim;
+#[allow(unused_imports)]
+use crate::layout::UnkAllstarData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itClimbersBlizzardAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLipstickAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkBytes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kinoko;
+#[allow(unused_imports)]
+use crate::itkinds13::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -256,4 +303,13 @@ pub unsafe fn itLipstick_Logic23_ShieldBounced(gobj: *mut Item_GObj) -> i32 {
 pub unsafe fn itLipstick_Logic23_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itLipstick_Logic23_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds13.rs (consolidation steps 21/22) ----
+/// `it_80295748_fp` (itlipstick.c): `*pos = attrs->x4`.
+/// # Safety
+/// The special attributes are an `itLipstickAttributes`.
+pub unsafe fn it_80295748_fp(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_80295748_fp");
+    *pos = sa::<itLipstickAttributes>(ip).x4;
 }

@@ -3,6 +3,12 @@
 //! are re-exported here.
 #![allow(non_snake_case, non_upper_case_globals)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use crate::gm_ptr::{CHKIND_NONE};
 use melee_types::ChKind_None;
 
 pub use crate::gm::gm_8017BE84;
@@ -75,4 +81,18 @@ pub unsafe fn gmRegSetupEnemyColorTable(ckind: i8, color: u8, ckinds: *const i8,
             ext::__assert(c"gmregcommon.c".as_ptr(), 0xDA, c"0".as_ptr());
         }
     }
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmregcommon.c `gm_8017BE84_fp`.
+pub fn gm_8017BE84_fp(arg0: u32) -> i32 {
+    melee_core::ct!("gm_8017BE84_fp");
+    ((arg0 >> 3) & 0x1F) as i32
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmregcommon.c `gm_8017BE8C_fp`: opponents that are not ChKind_None (NUM_OPPONENTS = 3).
+pub fn gm_8017BE8C_fp(opps: &[i8]) -> i32 {
+    melee_core::ct!("gm_8017BE8C_fp");
+    opps[..3].iter().filter(|&&o| o != CHKIND_NONE).count() as i32
 }

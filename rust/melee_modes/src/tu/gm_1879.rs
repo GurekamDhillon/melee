@@ -6,6 +6,9 @@
 //! flash:1, active:1`, `x37` is `frame_counter:4, anim_state:2, state2:2`.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gm_r9::{gm_80187F48_EnterData as gm_80187F48_EnterData_gm_r9};
 use crate::tu_util::*;
 use core::ffi::{c_char, c_void, CStr};
 use core::ptr::null_mut;
@@ -417,4 +420,11 @@ pub unsafe fn gm_801883C0() -> f32 {
 pub fn gm_8018841C() -> bool {
     melee_core::ct!("gm_8018841C");
     ext::gm_GetCurrentGameMode() as i32 == GM_TRAINING as i32
+}
+
+// ---- folded from gm_r9.rs (consolidation steps 21/22) ----
+/// gm_1879.c `getStKind`.
+pub fn getStKind(data: &gm_80187F48_EnterData_gm_r9) -> i32 {
+    melee_core::ct!("getStKind");
+    data.stkind as i32
 }

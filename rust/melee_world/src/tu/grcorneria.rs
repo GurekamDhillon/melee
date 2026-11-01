@@ -14,6 +14,12 @@
 //! State-oracle checked against the C (tests/gro_grcorneria.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
@@ -2887,3 +2893,59 @@ pub unsafe extern "C" fn grCorneria_801E2FCC() -> f32 {
     }
     -3.4028235e38
 }
+
+// ---- folded from grcorneria.rs (consolidation steps 21/22) ----
+/// grCorneria_801DD508_fp (gr/grcorneria.c:548)
+    pub unsafe extern "C" fn grCorneria_801DD508_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// stageGObj6_OnInit_fp (gr/grcorneria.c:1516)
+    pub unsafe extern "C" fn stageGObj6_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grcorneria.rs (consolidation steps 21/22) ----
+/// grCorneria_801DD52C_fp (gr/grcorneria.c:553)
+    pub extern "C" fn grCorneria_801DD52C_fp() -> i32 { 0 }
+
+/// grCorneria_801DD64C_fp (gr/grcorneria.c:599)
+    pub extern "C" fn grCorneria_801DD64C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DD9A0_fp (gr/grcorneria.c:703)
+    pub extern "C" fn grCorneria_801DD9A0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DDCE8_fp (gr/grcorneria.c:774)
+    pub extern "C" fn grCorneria_801DDCE8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DE560_fp (gr/grcorneria.c:1014)
+    pub extern "C" fn grCorneria_801DE560_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DEC00_fp (gr/grcorneria.c:1098)
+    pub extern "C" fn grCorneria_801DEC00_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DFBC4_fp (gr/grcorneria.c:1504)
+    pub extern "C" fn grCorneria_801DFBC4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DFC1C_fp (gr/grcorneria.c:1521)
+    pub extern "C" fn grCorneria_801DFC1C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DFC90_fp (gr/grcorneria.c:1541)
+    pub extern "C" fn grCorneria_801DFC90_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801DFF18_fp (gr/grcorneria.c:1589)
+    pub extern "C" fn grCorneria_801DFF18_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E01A0_fp (gr/grcorneria.c:1636)
+    pub extern "C" fn grCorneria_801E01A0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E0D28_fp (gr/grcorneria.c:1833)
+    pub extern "C" fn grCorneria_801E0D28_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E0E0C_fp (gr/grcorneria.c:1855)
+    pub extern "C" fn grCorneria_801E0E0C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E0F64_fp (gr/grcorneria.c:1984)
+    pub extern "C" fn grCorneria_801E0F64_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E1058_fp (gr/grcorneria.c:2003)
+    pub extern "C" fn grCorneria_801E1058_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grCorneria_801E2EE4_fp (gr/grcorneria.c:2796)
+    pub extern "C" fn grCorneria_801E2EE4_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

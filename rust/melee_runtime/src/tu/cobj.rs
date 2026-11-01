@@ -24,6 +24,19 @@
 //! `HSD_CObjSetupViewingMtx`'s TARGET_PC `diag_cobj_view` call only logs and is not ported.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gekko::sqrtf;
+#[allow(unused_imports)]
+use crate::hsd_mtx::fabsf_bitwise;
+#[allow(unused_imports)]
+use crate::jobj::JObjHost;
+#[allow(unused_imports)]
+use crate::jobj::JObjTree;
+#[allow(unused_imports)]
+use crate::lbtrigf::atan2f as atan2f_cobj;
+#[allow(unused_imports)]
+use crate::cobj::{FLT_MIN, HsdCObj as HsdCObj_cobj, get_eye_vector};
 pub use crate::cobj::*;
 
 use super::debug::{HSD_Panic, __assert};
@@ -945,4 +958,70 @@ pub unsafe extern "C" fn CObjInfoInit() {
     (*ci).release = Some(CObjRelease);
     (*ci).amnesia = Some(CObjAmnesia);
     hsdCObj.load = Some(CObjLoad);
+}
+
+// ---- folded from cobj.rs (consolidation steps 21/22) ----
+/// `upvec2roll_fp` (static).
+pub fn upvec2roll_fp<R, D, H>(cobj: &mut HsdCObj_cobj<R>, up: &Vec3, tree: &mut JObjTree<D, R>, host: &mut H) -> f32
+where
+    D: Copy + PartialEq,
+    R: Copy + PartialEq,
+    H: JObjHost<D, R>,
+{
+    melee_core::ct!("upvec2roll_fp");
+    let (r, eye) = get_eye_vector(Some(cobj), tree, host);
+    if r != 0 {
+        return 0.0;
+    }
+    let mut dot = mtx::vec_dot(up, &eye).abs();
+    dot = 1.0 - dot;
+    if dot < FLT_MIN {
+        0.0
+    } else {
+        let orig = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
+        let uy = Vec3 { x: 0.0, y: 1.0, z: 0.0 };
+        let vmtx = mtx::look_at(&orig, &uy, &eye);
+        let v = mtx::mult_vec_sr(&vmtx, up);
+        if fabsf_bitwise(v.y) == 0.0 {
+            if -v.x >= 0.0 {
+                1.5707963267948966f64 as f32
+            } else {
+                -1.5707963267948966f64 as f32
+            }
+        } else {
+            atan2f_cobj(-v.x, v.y)
+        }
+    }
+}
+
+/// `roll2upvec_fp` (static): (result, up). `up` is only written on success.
+pub fn roll2upvec_fp<R, D, H>(
+    cobj: &mut HsdCObj_cobj<R>,
+    roll: f32,
+    tree: &mut JObjTree<D, R>,
+    host: &mut H,
+) -> (i32, Option<Vec3>)
+where
+    D: Copy + PartialEq,
+    R: Copy + PartialEq,
+    H: JObjHost<D, R>,
+{
+    melee_core::ct!("roll2upvec_fp");
+    let (res, eye) = get_eye_vector(Some(cobj), tree, host);
+    if res != 0 {
+        return (res, None);
+    }
+    let mut v0 = Vec3::default();
+    if 1.0 - (eye.y.abs() as f64) < 0.0001 {
+        v0.x = sqrtf(fmadds(eye.y, eye.y, eye.z * eye.z));
+        v0.y = eye.y * (-eye.x / v0.x);
+        v0.z = eye.z * (-eye.x / v0.x);
+    } else {
+        v0.y = sqrtf(fmadds(eye.x, eye.x, eye.z * eye.z));
+        v0.x = eye.x * (-eye.y / v0.y);
+        v0.z = eye.z * (-eye.y / v0.y);
+    }
+    let m = mtx::rot_axis_rad(&eye, -roll);
+    let v1 = mtx::mult_vec_sr(&m, &v0);
+    (0, Some(mtx::vec_normalize(&v1)))
 }

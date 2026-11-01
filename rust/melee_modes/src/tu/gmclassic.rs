@@ -8,6 +8,11 @@
 //! Here they are one object, `gmClassicRuntimeBuf`; `gm_804908A0()` is its `state` bytes.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, non_camel_case_types, unused_variables)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use crate::gm_ptr::{gmClassicMatchup as gmClassicMatchup_gm_ptr};
 use super::support::*;
 use core::ffi::c_void;
 use melee_types::*;
@@ -15,7 +20,6 @@ use melee_types::*;
 pub use crate::gm_ptr::gmClassicMatchup;
 /// Already ported and oracle-checked in round 3 (`tests/oracle_ptr.rs`): the slice form of the
 /// matchup count. This TU's own callers use `matchup_count` (pointer form, terminator search).
-pub use crate::gm_ptr::gmClassic_GetMatchupCount;
 
 // BEGIN GENERATED EXT (rust/melee_modes/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -1050,4 +1054,15 @@ pub unsafe extern "C" fn gmClassic_801B3F18(_scene: *mut GameModeState) {
     melee_core::ct!("gmClassic_801B3F18");
     ext::gm_SetPendingGameMode(GM_MENU as u8);
     ext::gm_SetNewGameModePending();
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmclassic.c `gmClassic_GetMatchupCount`: entries up to the 0x148 terminator.
+pub fn gmClassic_GetMatchupCount(matchups: &[gmClassicMatchup_gm_ptr]) -> i32 {
+    melee_core::ct!("gmClassic_GetMatchupCount");
+    let mut count = 0usize;
+    while matchups[count].x00 != 0x148 {
+        count += 1;
+    }
+    count as i32
 }

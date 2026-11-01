@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -103,7 +109,6 @@ pub fn set_yakumono_param(p: *mut YakumonoParam) {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtganon::{grTGanon_802246D8, grTganon_UnkStage0_OnLoad, grTGanon_8022477C, grTGanon_80224898, grTGanon_802248A0, grTGanon_802248A4, grTGanon_802248F8, grTGanon_80224934, grTGanon_80224988, grTGanon_802249B0, grTGanon_80224A4C};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -243,3 +248,41 @@ pub unsafe extern "C" fn grTGanon_802249B4(arg0: i32) -> *mut DynamicsDesc {
     }
     null_mut()
 }
+
+// ---- folded from grtganon.rs (consolidation steps 21/22) ----
+/// grTganon_UnkStage0_OnStart_fp (gr/grtganon.c:67)
+    pub unsafe extern "C" fn grTganon_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtganon.rs (consolidation steps 21/22) ----
+/// grTGanon_802246D8 (gr/grtganon.c:51)
+    pub extern "C" fn grTGanon_802246D8(a0: i32) {  }
+
+/// grTganon_UnkStage0_OnLoad (gr/grtganon.c:62)
+    pub extern "C" fn grTganon_UnkStage0_OnLoad() {  }
+
+/// grTGanon_8022477C (gr/grtganon.c:72)
+    pub extern "C" fn grTGanon_8022477C() -> i32 { 0 }
+
+/// grTGanon_80224898 (gr/grtganon.c:99)
+    pub extern "C" fn grTGanon_80224898(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGanon_802248A0 (gr/grtganon.c:104)
+    pub extern "C" fn grTGanon_802248A0(a0: *mut HSD_GObj) {  }
+
+/// grTGanon_802248A4 (gr/grtganon.c:109)
+    pub extern "C" fn grTGanon_802248A4(a0: *mut HSD_GObj) {  }
+
+/// grTGanon_802248F8 (gr/grtganon.c:119)
+    pub extern "C" fn grTGanon_802248F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGanon_80224934 (gr/grtganon.c:129)
+    pub extern "C" fn grTGanon_80224934(a0: *mut HSD_GObj) {  }
+
+/// grTGanon_80224988 (gr/grtganon.c:139)
+    pub extern "C" fn grTGanon_80224988(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGanon_802249B0 (gr/grtganon.c:149)
+    pub extern "C" fn grTGanon_802249B0(a0: *mut HSD_GObj) {  }
+
+/// grTGanon_80224A4C (gr/grtganon.c:181)
+    pub extern "C" fn grTGanon_80224A4C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

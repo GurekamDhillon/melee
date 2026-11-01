@@ -4,6 +4,157 @@
 //! "TODO"). Checked against the C by the state oracle `tests/tu_itzako.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::itlib3::{c_f32_to_s32};
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::itkinds9::{sqrt_n};
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2 as M_PI_2_itkinds10;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{rv};
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::{fmadds, frsqrte};
@@ -805,4 +956,116 @@ pub unsafe extern "C" fn it_8027CE64(item_gobj: *mut HSD_GObj, fighter_gobj: *mu
     (*item).x5C8 = ext::ftLib_800870BC((*item).owner, &raw mut (*item).xBC4 as *mut i32) as u8;
     ext::it_80274594(item_gobj);
     (*item).xDD4_itemVar.gamewatch.attr = arg_attr_address;
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `product_xyz_fp` (itzako.c, static inline). 2 fused sites.
+pub fn product_xyz_fp(a: &GcVec, b: &GcVec) -> f32 {
+    melee_core::ct!("product_xyz_fp");
+    let xy = fmadds(a.x, b.x, a.y * b.y);
+    fmadds(a.z, b.z, xy)
+}
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+// ---- bodies that are empty or only `return true;` / `return false;` / `return 0;` / `return 1;` / `return;` (state-table callbacks)
+
+/// `it_8027C794` (src/melee/it/itzako.c): `return false;`.
+pub fn it_8027c794(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_8027c794");
+    false
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- itzako.c --------------------------------------------------------------------------
+
+/// `it_8027B798`: launch velocity from knockback; true when on the ground and the launch points
+/// away from the floor. `cd` is `p_ftCommonData`.
+pub fn it_8027b798(ip: &mut Item, out_vel: &mut GcVec, cd: &ftCommonData) -> bool {
+    melee_core::ct!("it_8027b798");
+    let knockback = ip.xCC8_knockback;
+    let mag = knockback * cd.x100;
+    let angle = it_8027b798_calc_angle(ip.ground_or_air, ip.xCAC_angle, cd, knockback);
+    let dx = mag * cosf(angle);
+    let dy = mag * sinf(angle);
+    ip.facing_dir = ip.xCCC_incDamageDirection;
+    if ip.ground_or_air == GA_Air {
+        out_vel.x = -dx * ip.facing_dir;
+        out_vel.y = dy;
+        out_vel.z = 0.0;
+        return false;
+    }
+    let normal = ip.x378_itemColl.floor.normal;
+    let v = GcVec { x: -dx * ip.facing_dir, y: dy, z: 0.0 };
+    if lbvector::angle(&rv(&normal), &rv(&v)) < 1.5707964 {
+        out_vel.x = v.x;
+        out_vel.y = v.y;
+        out_vel.z = 0.0;
+        true
+    } else {
+        let x = v.x;
+        out_vel.x = normal.y * x;
+        out_vel.y = -normal.x * x;
+        out_vel.z = 0.0;
+        false
+    }
+}
+
+/// `it_8027BB1C`: rotate `v` by the Euler angles `a` (x, then y, then z). 6 fused sites.
+/// The C IR is `fmuladd(a, c, fneg(b * s))`; the optimiser folds the add of a negation into a
+/// subtraction, which keeps the NaN sign of `b * s` (x86 default NaN is negative), so the three
+/// subtracting sites are written as `fmsubs` (same rounding, same NaN as the optimised C).
+pub fn it_8027bb1c(v: &mut GcVec, a: &GcVec) {
+    melee_core::ct!("it_8027bb1c");
+    let (c, s) = (cosf(a.x), sinf(a.x));
+    let (t1, t2) = (v.y, v.z);
+    v.y = fmsubs(t1, c, t2 * s);
+    v.z = fmadds(t1, s, t2 * c);
+    let (c, s) = (cosf(a.y), sinf(a.y));
+    let (t1, t2) = (v.x, v.z);
+    v.x = fmadds(t1, c, t2 * s);
+    v.z = fmsubs(t2, c, t1 * s);
+    let (c, s) = (cosf(a.z), sinf(a.z));
+    let t1 = fmsubs(v.x, c, v.y * s);
+    let t2 = fmadds(v.x, s, v.y * c);
+    v.x = t1;
+    v.y = t2;
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `itzako_sqrtf_fp` (itzako.c): 3 steps.
+pub fn itzako_sqrtf_fp(x: f32) -> f32 {
+    melee_core::ct!("itzako_sqrtf_fp");
+    sqrt_n(x, 3)
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- itzako.c --------------------------------------------------------------------------
+
+/// `it_8027B730`: reset the zako vars, then `it_80275228` / `it_80275240`.
+pub fn it_8027b730(ip: &mut Item) {
+    melee_core::ct!("it_8027b730");
+    unsafe {
+        let z = &mut ip.xDD4_itemVar.zako;
+        z.jobj = null_mut_itlib3();
+        z.idx = -1;
+        z.x8.z = 0.0;
+        z.x8.x = 0.0;
+        z.x8.y = 1.0;
+        z.x14.x = 0;
+        z.x14.y = 0;
+        z.x14.z = 0;
+    }
+    it_80275228(ip);
+    it_80275240(ip);
+}
+
+/// `it_8027CBFC`: a per-state float from `it_804D6D40`, through an `s32` (truncated).
+pub fn it_8027cbfc(ip: &Item, d40: &it_804D6D40_t) -> f32 {
+    melee_core::ct!("it_8027cbfc");
+    let r: i32 = match ip.xCC4 {
+        6 | 7 => c_f32_to_s32(d40.xC),
+        9 => c_f32_to_s32(d40.x10),
+        _ => 0,
+    };
+    r as f32
 }

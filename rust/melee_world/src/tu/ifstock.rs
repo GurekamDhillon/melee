@@ -3,6 +3,7 @@
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_ifstock.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_mut, unused_assignments, unused_variables)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -1544,4 +1545,45 @@ pub unsafe fn ifStock_802FB6AC(player: i32) {
     if !(*x).player[player as usize].x0.is_null() {
         ext::HSD_GObj_80390CAC((*x).player[player as usize].x0);
     }
+}
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// ifStock_802F89F8_count (if/ifstock.c, static inline): decimal digit count, 0 for 0.
+pub fn ifstock_802f89f8_count(mut coins: i32) -> i32 {
+    melee_core::ct!("ifstock_802f89f8_count");
+    for i in 0..32 {
+        if coins == 0 {
+            return i;
+        }
+        coins = sdiv(coins, 10);
+    }
+    0
+}
+
+/// ifStock_802F89F8_divisor (if/ifstock.c, static inline): `10^position`, wrapping.
+pub fn ifstock_802f89f8_divisor(position: i32) -> i32 {
+    melee_core::ct!("ifstock_802f89f8_divisor");
+    let mut divisor = 1i32;
+    if position != 0 {
+        for _ in 0..position {
+            divisor = divisor.wrapping_mul(10);
+        }
+    }
+    divisor
+}
+
+/// ifStock_802F89F8_digit (if/ifstock.c, static inline): the `position`-th decimal digit
+/// (1-based) of `coins`, signed like C `%`.
+pub fn ifstock_802f89f8_digit(coins: i32, position: i32) -> i32 {
+    melee_core::ct!("ifstock_802f89f8_digit");
+    if position.wrapping_sub(1) == 0 {
+        return srem(coins, 10);
+    }
+    let mut divisor = 1i32;
+    let mut i = 0;
+    while i < position.wrapping_sub(1) {
+        divisor = divisor.wrapping_mul(10);
+        i += 1;
+    }
+    srem(sdiv(coins, divisor), 10)
 }

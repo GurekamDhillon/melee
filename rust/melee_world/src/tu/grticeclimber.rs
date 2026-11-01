@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -146,8 +152,7 @@ pub mod ext {
 pub static grTIc_803E8B5C: [i16; 42] = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, 0];
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grticeclimber::{grTIceClimber_80220FAC, stageGObj0_Callback1, stageGObj2_Callback1, stageGObj1_Callback1, grTIceClimber_80221354, grTIceClimber_8022135C};
-
+pub use crate::gr::trivial::grticeclimber::{stageGObj0_Callback1, stageGObj2_Callback1, stageGObj1_Callback1};
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
 static mut STAGE_DATA: MaybeUninit<StageData> = MaybeUninit::uninit();
@@ -320,3 +325,17 @@ pub unsafe extern "C" fn grTIceClimber_80221288(ground_gobj: *mut HSD_GObj) {
         i += 1;
     }
 }
+
+// ---- folded from grticeclimber.rs (consolidation steps 21/22) ----
+/// grTiceclimber_UnkStage0_OnStart_fp (gr/grticeclimber.c:92)
+    pub unsafe extern "C" fn grTiceclimber_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grticeclimber.rs (consolidation steps 21/22) ----
+/// grTIceClimber_80220FAC (gr/grticeclimber.c:97)
+    pub extern "C" fn grTIceClimber_80220FAC() -> i32 { 0 }
+
+/// grTIceClimber_80221354 (gr/grticeclimber.c:210)
+    pub extern "C" fn grTIceClimber_80221354(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTIceClimber_8022135C (gr/grticeclimber.c:215)
+    pub extern "C" fn grTIceClimber_8022135C(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

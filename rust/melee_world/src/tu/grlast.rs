@@ -15,6 +15,12 @@
 //! State-oracle checked against the C (tests/gro_grlast.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::{
     assert_, GET_GROUND, GET_JOBJ, HSD_JObjSetRotationX, HSD_JObjSetRotationY, HSD_JObjSetScale, ABS, M_PI,
 };
@@ -24,11 +30,6 @@ use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-pub use crate::gr::trivial::grlast::{
-    grLast_8021A7EC, grLast_8021A90C, grLast_8021A960, grLast_8021A99C, grLast_8021AAA8, grLast_8021AB78,
-    grLast_8021ABCC, grLast_8021AC20, grLast_8021ADC8, grLast_8021B284, grLast_8021B2D8, grLast_OnCheckShadowRender,
-    grLast_OnTouchLine,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics (`Slippi_Codes` defaults to 0).
 pub mod ext {
@@ -1104,3 +1105,47 @@ pub unsafe fn Ground_StageSlotFDBackdrop() {
         ext::grAnime_801C8098(ext::Ground_GetMapGObj(4), 0x10, 7, 0, 0.0, 1.0);
     }
 }
+
+// ---- folded from grlast.rs (consolidation steps 21/22) ----
+/// grLast_OnStart_fp (gr/grlast.c:251)
+    pub unsafe extern "C" fn grLast_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grlast.rs (consolidation steps 21/22) ----
+/// grLast_8021A7EC (gr/grlast.c:256)
+    pub extern "C" fn grLast_8021A7EC() -> i32 { 0 }
+
+/// grLast_8021A90C (gr/grlast.c:294)
+    pub extern "C" fn grLast_8021A90C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021A960 (gr/grlast.c:310)
+    pub extern "C" fn grLast_8021A960(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021A99C (gr/grlast.c:324)
+    pub extern "C" fn grLast_8021A99C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021AAA8 (gr/grlast.c:359)
+    pub extern "C" fn grLast_8021AAA8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021AB78 (gr/grlast.c:402)
+    pub extern "C" fn grLast_8021AB78(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021ABCC (gr/grlast.c:418)
+    pub extern "C" fn grLast_8021ABCC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021AC20 (gr/grlast.c:434)
+    pub extern "C" fn grLast_8021AC20(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021ADC8 (gr/grlast.c:470)
+    pub extern "C" fn grLast_8021ADC8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021B284 (gr/grlast.c:563)
+    pub extern "C" fn grLast_8021B284(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_8021B2D8 (gr/grlast.c:579)
+    pub extern "C" fn grLast_8021B2D8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grLast_OnTouchLine (gr/grlast.c:1042)
+    pub extern "C" fn grLast_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grLast_OnCheckShadowRender (gr/grlast.c:1047)
+    pub extern "C" fn grLast_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

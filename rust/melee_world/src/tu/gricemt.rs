@@ -18,17 +18,20 @@
 //! parameter of `grIceMt_801F9ACC` is unused); it returns 0.0.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::gricemt::{
-    grIceMt_801F71E0, grIceMt_801FA8F8, grIceMt_801FA900, stageGObj0_Callback1, stageGObj1_Callback1, stageGObj2_Callback1,
-    stageGObj3_Callback1, stageGObj4_Callback1, stageGObj5_Callback1, stageGObj6_Callback1, stageGObj8_Callback1,
-    stageGObj9_Callback1,
-};
-
+pub use crate::gr::trivial::gricemt::{stageGObj0_Callback1, stageGObj1_Callback1, stageGObj2_Callback1, stageGObj3_Callback1, stageGObj4_Callback1};
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
@@ -1757,3 +1760,40 @@ pub unsafe extern "C" fn grIceMt_801FA854() {
         }
     }
 }
+
+// ---- folded from grpstadium.rs (consolidation steps 21/22) ----
+/// stageGObj5_GObjProc_fp (gr/grpstadium.c:371)
+    pub unsafe extern "C" fn stageGObj5_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+/// stageGObj6_GObjProc_fp (gr/grpstadium.c:433)
+    pub unsafe extern "C" fn stageGObj6_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grvenom.rs (consolidation steps 21/22) ----
+/// stageGObj9_GObjProc_fp (gr/grvenom.c:1028)
+    pub unsafe extern "C" fn stageGObj9_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grzebes.rs (consolidation steps 21/22) ----
+/// stageGObj5_OnInit_fp (gr/grzebes.c:781)
+    pub unsafe extern "C" fn stageGObj5_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from gricemt.rs (consolidation steps 21/22) ----
+/// grIceMt_801F71E0 (gr/gricemt.c:590)
+    pub extern "C" fn grIceMt_801F71E0() -> i32 { 0 }
+
+/// stageGObj9_Callback1 (gr/gricemt.c:701)
+    pub extern "C" fn stageGObj9_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj5_Callback1 (gr/gricemt.c:1154)
+    pub extern "C" fn stageGObj5_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj6_Callback1 (gr/gricemt.c:1209)
+    pub extern "C" fn stageGObj6_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj8_Callback1 (gr/gricemt.c:1249)
+    pub extern "C" fn stageGObj8_Callback1(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grIceMt_801FA8F8 (gr/gricemt.c:2072)
+    pub extern "C" fn grIceMt_801FA8F8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grIceMt_801FA900 (gr/gricemt.c:2077)
+    pub extern "C" fn grIceMt_801FA900(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

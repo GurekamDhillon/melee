@@ -7,6 +7,77 @@
 //! against the C (whole TU, shipping contraction) by tests/kinds_itbombhei.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itkinds14::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -850,4 +921,20 @@ pub unsafe extern "C" fn it_3F14_Logic6_ShieldBounced(gobj: *mut Item_GObj) -> b
 pub unsafe extern "C" fn itBombhei_Logic6_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itBombhei_Logic6_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+// ---- kinds ------------------------------------------------------------------------------
+
+/// `itBombHei` `fn_80280974_inline_fp`: flags.x15 off, `vel.x = attrs->xC * facing_dir`,
+/// `xD5C = 0`, then `it_80275444`.
+/// # Safety
+/// The special attributes are an `itBombHeiAttributes`.
+pub unsafe fn fn_80280974_inline_fp(ip: &mut Item) {
+    melee_core::ct!("fn_80280974_inline_fp");
+    let a = sa::<itBombHeiAttributes>(ip);
+    it_8026b3a8(ip);
+    ip.x40_vel.x = a.xC * ip.facing_dir;
+    ip.xD5C = 0;
+    it_80275444(ip);
 }

@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtpikachu::{grTPikachu_80222E7C, grTpikachu_UnkStage0_OnLoad, grTPikachu_80222F18, grTPikachu_80223034, grTPikachu_8022303C, grTPikachu_80223040, grTPikachu_80223094, grTPikachu_802230D0, grTPikachu_80223124, grTPikachu_8022314C, grTPikachu_80223150, grTPikachu_80223158};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -178,3 +183,44 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
+
+// ---- folded from grtpikachu.rs (consolidation steps 21/22) ----
+/// grTpikachu_UnkStage0_OnStart_fp (gr/grtpikachu.c:56)
+    pub unsafe extern "C" fn grTpikachu_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtpikachu.rs (consolidation steps 21/22) ----
+/// grTPikachu_80222E7C (gr/grtpikachu.c:41)
+    pub extern "C" fn grTPikachu_80222E7C(a0: i32) {  }
+
+/// grTpikachu_UnkStage0_OnLoad (gr/grtpikachu.c:51)
+    pub extern "C" fn grTpikachu_UnkStage0_OnLoad() {  }
+
+/// grTPikachu_80222F18 (gr/grtpikachu.c:61)
+    pub extern "C" fn grTPikachu_80222F18() -> i32 { 0 }
+
+/// grTPikachu_80223034 (gr/grtpikachu.c:88)
+    pub extern "C" fn grTPikachu_80223034(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPikachu_8022303C (gr/grtpikachu.c:93)
+    pub extern "C" fn grTPikachu_8022303C(a0: *mut HSD_GObj) {  }
+
+/// grTPikachu_80223040 (gr/grtpikachu.c:98)
+    pub extern "C" fn grTPikachu_80223040(a0: *mut HSD_GObj) {  }
+
+/// grTPikachu_80223094 (gr/grtpikachu.c:108)
+    pub extern "C" fn grTPikachu_80223094(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPikachu_802230D0 (gr/grtpikachu.c:118)
+    pub extern "C" fn grTPikachu_802230D0(a0: *mut HSD_GObj) {  }
+
+/// grTPikachu_80223124 (gr/grtpikachu.c:128)
+    pub extern "C" fn grTPikachu_80223124(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPikachu_8022314C (gr/grtpikachu.c:138)
+    pub extern "C" fn grTPikachu_8022314C(a0: *mut HSD_GObj) {  }
+
+/// grTPikachu_80223150 (gr/grtpikachu.c:143)
+    pub extern "C" fn grTPikachu_80223150(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTPikachu_80223158 (gr/grtpikachu.c:148)
+    pub extern "C" fn grTPikachu_80223158(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -1,3 +1,4 @@
+
 //! Round 9 (night 3 round 5): mn getters over records the .c files define, verified bit for
 //! bit against the C by `tests/oracle_r9.rs`.
 use melee_types::{HSD_GObj, HSD_JObj, HSD_Text};
@@ -27,7 +28,4 @@ melee_core::gc_layout!(MnVibrationData, "MnVibrationData", size 0x98, align 4, [
     cursor_gobj @ 0x94: 4 "HSD_GObj*",
 ]);
 
-/// mnvibration.c `mnVibration_GetCursorRow`.
-pub fn mnVibration_GetCursorRow(data: &MnVibrationData) -> u8 {
-    data.x0[1]
-}
+pub use crate::tu::mnvibration::mnVibration_GetCursorRow_fp as mnVibration_GetCursorRow;

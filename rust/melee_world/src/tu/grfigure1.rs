@@ -5,15 +5,62 @@
 //! (whole TU, shipping contraction) by tests/tu_grfigure1.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
 use super::grdisplay::grDisplay_801C5DB0;
-pub use crate::gr::trivial::grfigure1::{
-    grFigure1_8020E078, grFigure1_8020E194, grFigure1_8020E1D0, grFigure1_8020E250, grFigure1_OnCheckShadowRender,
-    grFigure1_OnTouchLine,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -227,3 +274,281 @@ pub unsafe extern "C" fn grFigure1_8020E25C(_gobj: *mut HSD_GObj) { melee_core::
 
 /// 20E270 (the non-static one; grfigure2.c stores its address as its demo-init)
 pub unsafe extern "C" fn grFigure1_8020E270(_n: i32) { melee_core::ct!("grFigure1_8020E270");}
+
+// ---- folded from grfigure1.rs (consolidation steps 21/22) ----
+/// grFigure1_OnStart_fp (gr/grfigure1.c:81)
+    pub unsafe extern "C" fn grFigure1_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// stageGObj0_OnInit_fp (gr/grfigure1.c:107)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp (gr/grfigure1.c:142)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grfigure2.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2 (gr/grfigure2.c:101)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2 (gr/grfigure2.c:134)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grfigure3.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22 (gr/grfigure3.c:104)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22 (gr/grfigure3.c:137)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grfigureget.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222 (gr/grfigureget.c:139)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grflatzone.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222 (gr/grflatzone.c:176)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grfourside.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222 (gr/grfourside.c:181)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222 (gr/grfourside.c:195)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grgarden.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222 (gr/grgarden.c:126)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grgreatbay.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222 (gr/grgreatbay.c:263)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grinishie1.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222 (gr/grinishie1.c:291)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grinishie2.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222 (gr/grinishie2.c:263)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grkraid.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222 (gr/grkraid.c:111)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grlast.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222 (gr/grlast.c:289)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222 (gr/grlast.c:319)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from groldkongo.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222 (gr/groldkongo.c:189)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from groldpupupu.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222 (gr/groldpupupu.c:211)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from groldyoshi.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222 (gr/groldyoshi.c:115)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grshrine.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222 (gr/grshrine.c:118)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grshrineroute.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222 (gr/grshrineroute.c:247)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtcaptain.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222 (gr/grtcaptain.c:112)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222 (gr/grtcaptain.c:126)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtclink.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp222222 (gr/grtclink.c:108)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtdonkey.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222 (gr/grtdonkey.c:106)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222222 (gr/grtdonkey.c:120)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtdrmario.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222 (gr/grtdrmario.c:110)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222 (gr/grtdrmario.c:124)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtemblem.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222 (gr/grtemblem.c:109)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222 (gr/grtemblem.c:123)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtest.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222 (gr/grtest.c:106)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222222222 (gr/grtest.c:120)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtfalco.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp22222222222 (gr/grtfalco.c:138)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtfox.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222 (gr/grtfox.c:101)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222 (gr/grtfox.c:115)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtgamewatch.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp2222222222222 (gr/grtgamewatch.c:104)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtganon.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp22222222222222 (gr/grtganon.c:114)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtkirby.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222 (gr/grtkirby.c:111)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222222 (gr/grtkirby.c:125)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtkoopa.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222222 (gr/grtkoopa.c:111)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222222222222222 (gr/grtkoopa.c:124)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtlink.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222222 (gr/grtlink.c:111)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222222222222 (gr/grtlink.c:125)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtluigi.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222222 (gr/grtluigi.c:89)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222222222 (gr/grtluigi.c:103)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtmario.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222222222 (gr/grtmario.c:117)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtmars.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222222222 (gr/grtmars.c:104)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222222222222222222 (gr/grtmars.c:118)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtmewtwo.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222222222 (gr/grtmewtwo.c:133)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222222222222222 (gr/grtmewtwo.c:147)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtness.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222222222222 (gr/grtness.c:112)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222222222222 (gr/grtness.c:132)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtpeach.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp2222222222222222222222 (gr/grtpeach.c:134)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtpichu.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222222222222 (gr/grtpichu.c:110)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222222222222222222 (gr/grtpichu.c:124)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtpikachu.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp222222222222222222222222 (gr/grtpikachu.c:103)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtpurin.rs (consolidation steps 21/22) ----
+/// stageGObj2_OnInit_fp2222222222222222222222222 (gr/grtpurin.c:111)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtsamus.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222222222222 (gr/grtsamus.c:108)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222222222222222222222 (gr/grtsamus.c:122)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtseak.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222222222222222 (gr/grtseak.c:169)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222222222222222222 (gr/grtseak.c:183)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtyoshi.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222222222222222 (gr/grtyoshi.c:111)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp2222222222222222222222222222 (gr/grtyoshi.c:125)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp2222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grtzelda.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222222222222222 (gr/grtzelda.c:95)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp22222222222222222222222222222 (gr/grtzelda.c:109)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp22222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; let j = (*a0).hsd_obj as *mut HSD_JObj; c.ground_init_map_coll(j, (*gp).map_id as i32); c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grvenom.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp222222222222222222222222222222222222 (gr/grvenom.c:607)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp222222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from gryorster.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp2222222222222222222222222222222222222 (gr/gryorster.c:124)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp2222222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grzebesroute.rs (consolidation steps 21/22) ----
+/// stageGObj0_OnInit_fp22222222222222222222222222222222222222 (gr/grzebesroute.c:137)
+    pub unsafe extern "C" fn stageGObj0_OnInit_fp22222222222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+/// stageGObj2_OnInit_fp222222222222222222222222222222 (gr/grzebesroute.c:151)
+    pub unsafe extern "C" fn stageGObj2_OnInit_fp222222222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grfigure1.rs (consolidation steps 21/22) ----
+/// grFigure1_8020E078 (gr/grfigure1.c:86)
+    pub extern "C" fn grFigure1_8020E078() -> i32 { 0 }
+
+/// grFigure1_8020E194 (gr/grfigure1.c:112)
+    pub extern "C" fn grFigure1_8020E194(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure1_8020E1D0 (gr/grfigure1.c:129)
+    pub extern "C" fn grFigure1_8020E1D0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure1_8020E250 (gr/grfigure1.c:147)
+    pub extern "C" fn grFigure1_8020E250(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure1_OnTouchLine (gr/grfigure1.c:156)
+    pub extern "C" fn grFigure1_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grFigure1_OnCheckShadowRender (gr/grfigure1.c:161)
+    pub extern "C" fn grFigure1_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -13,6 +13,11 @@
 //!   where a record holds pointers/`HSD_ImageDesc`).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::MatchEnd as MatchEnd_gm_ptr;
 use super::ext_hook::memzero;
 use crate::ext_fns;
 use core::ffi::c_void;
@@ -870,4 +875,11 @@ pub unsafe fn fn_8017AA78(arg0: *const u8) {
         (*st).score_tbl[i] = *(core::ptr::addr_of!(ext::gmResultScoreTableInit) as *const PackedS16x4).add(i);
         (*st).x22F4[i] = *(core::ptr::addr_of!(ext::gmResultX22F4Init) as *const PackedS16x4).add(i);
     }
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_1798.c `get_big_loser_fp`.
+pub fn get_big_loser_fp(slot: i32, match_end: &MatchEnd_gm_ptr) -> i32 {
+    melee_core::ct!("get_big_loser_fp");
+    match_end.player_standings[slot as usize].is_big_loser as i32
 }

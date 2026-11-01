@@ -14,6 +14,9 @@
 //! State-oracle checked against the C (tests/gro_granime.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::tu_ext::{HOOK_grAnime_801C752C};
 use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -982,4 +985,12 @@ pub unsafe fn grAnime_801C8780(_gobj: *mut HSD_GObj, arg1: u32, _arg2: u32, _arg
     ext::Ground_801C498C();
     let archive = ext::grDatFiles_801C6330(arg1 as s32);
     assert_(!archive.is_null(), 0x617, "archive");
+}
+
+// ---- folded from tu_ext.rs (consolidation steps 21/22) ----
+/// C `grAnime_801C752C_fp(jobj, a, b, fn, n, ...)` (melee/gr/granime.h) is variadic; every caller passes
+/// exactly one more `u32` (the flags) after `n`.
+pub fn grAnime_801C752C_fp(jobj: *mut HSD_JObj, a: i32, b: i32, f: *mut core::ffi::c_void, n: u32, flags: u32) {
+    melee_core::ct!("grAnime_801C752C_fp");
+    match unsafe { HOOK_grAnime_801C752C } { Some(h) => h(jobj, a, b, f, n, flags), None => melee_core::unported!("TODO: grAnime_801C752C_fp is not ported") }
 }

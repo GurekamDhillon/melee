@@ -1,3 +1,4 @@
+
 //! Item kinds, port round 4 (night 3): per-kind state callbacks (`src/melee/it/kinds/*.c`) whose
 //! bodies touch only the Item, its `ItemAttr`, its kind's special attributes and item vars, and
 //! call only functions already ported (`itlib.rs`, `itlib3.rs`, `item.rs`, `helpers.rs`). Each
@@ -17,11 +18,15 @@
 #![allow(non_upper_case_globals, non_snake_case)]
 
 use crate::helpers::{it_80275158, it_rshell_clamp_vel, itRShell_Attrs};
+
 use crate::item::{decelerate_item_x, it_802762bc};
+
 use crate::itlib::{
     it_8026b3a8, it_80273030, it_80273130, it_80275444, it_802756d0, it_8027572c,
 };
+
 use crate::itlib3::{it_80272860, it_8027a344, it_802756e0, it_coll_bounce_off_victim};
+
 use crate::layout::{
     itClimbersIceAttributes, itCoinAttributes, itDoseiAttributes, itFireAttributes,
     itFlipper_DatAttrs, itFreezerAttributes, itGamewatchchefAttributes, itHammerheadAttributes,
@@ -32,27 +37,29 @@ use crate::layout::{
     It_Kind_Lugia_Aeroblast, It_Kind_Lugia_Aeroblast2, It_Kind_Lugia_Aeroblast3,
     It_Kind_Matadogas_Gas1, It_Kind_Matadogas_Gas2,
 };
+
 use melee_core::fp::fmadds;
+
 use std::ptr::null_mut;
 
 /// The item's `ItemAttr` (`ip->xCC_item_attr`).
 /// # Safety
 /// `ip.xCC_item_attr` must be valid for `'a`.
-unsafe fn attr<'a>(ip: &Item) -> &'a ItemAttr {
+pub(crate) unsafe fn attr<'a>(ip: &Item) -> &'a ItemAttr {
     &*ip.xCC_item_attr
 }
 
 /// The kind's special attributes (`ip->xC4_article_data->x4_specialAttributes`) as a `T`.
 /// # Safety
 /// The article data and its special attributes must be valid as a `T` for `'a`.
-unsafe fn sa<'a, T>(ip: &Item) -> &'a T {
+pub(crate) unsafe fn sa<'a, T>(ip: &Item) -> &'a T {
     &*((*ip.xC4_article_data).x4_specialAttributes as *const T)
 }
 
 /// `it_80272860(gobj, attr->x10_fall_speed, attr->x14_fall_speed_max)`, the common fall step.
 /// # Safety
 /// `ip.xCC_item_attr` must be valid.
-unsafe fn fall(ip: &mut Item) {
+pub(crate) unsafe fn fall(ip: &mut Item) {
     let a = attr(ip);
     it_80272860(ip, a.x10_fall_speed, a.x14_fall_speed_max);
 }
@@ -718,15 +725,6 @@ pub unsafe fn it_entei_unk_motion0_phys(ip: &mut Item) {
     }
 }
 
-/// `it_802CA618`: fall while airborne.
-/// # Safety
-/// `ip.xCC_item_attr` must be valid.
-pub unsafe fn it_802ca618(ip: &mut Item) {
-    if ip.ground_or_air == GA_Air {
-        fall(ip);
-    }
-}
-
 /// `itKamex_UnkMotion2_Phys`: fall while airborne.
 /// # Safety
 /// `ip.xCC_item_attr` must be valid.
@@ -1130,59 +1128,49 @@ pub fn it_dosei_unk_motion8_anim(ip: &mut Item) -> bool {
 }
 
 /// Life timer `-= 1`, true when `<= 0` (`it_802CAE60`, `it_802CF120`, `it_802D5884`, ... below).
-fn lifetimer_tick(ip: &mut Item) -> bool {
+pub(crate) fn lifetimer_tick(ip: &mut Item) -> bool {
     ip.xD44_lifeTimer -= 1.0;
     ip.xD44_lifeTimer <= 0.0
 }
 
-/// `it_802CAE60` (itkamex.c): count the life timer down; true when it ran out.
-pub fn it_802cae60(ip: &mut Item) -> bool {
-    lifetimer_tick(ip)
-}
-/// `it_802CF120` (itmatadogas.c): as `it_802CAE60`.
-pub fn it_802cf120(ip: &mut Item) -> bool {
-    lifetimer_tick(ip)
-}
-/// `it_802D5884` (itlucky.c): as `it_802CAE60`.
-pub fn it_802d5884(ip: &mut Item) -> bool {
-    lifetimer_tick(ip)
-}
 /// `itMaril_UnkMotion2_Anim_inline` (static): as `it_802CAE60`.
 pub fn it_maril_unk_motion2_anim_inline(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `itLuigifireball_UnkMotion0_Anim`: as `it_802CAE60`.
 pub fn it_luigifireball_unk_motion0_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `itMariofireball_UnkMotion0_Anim`: as `it_802CAE60`.
 pub fn it_mariofireball_unk_motion0_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `itNesspkfire_UnkMotion0_Anim`: as `it_802CAE60`.
 pub fn it_nesspkfire_unk_motion0_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `itPikachuthunder_UnkMotion1_Anim`: as `it_802CAE60`.
 pub fn it_pikachuthunder_unk_motion1_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `it_2ADA_UnkMotion0_Anim`: as `it_802CAE60`.
 pub fn it_2ada_unk_motion0_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `it_2F28_UnkMotion0_Anim`: as `it_802CAE60`.
 pub fn it_2f28_unk_motion0_anim(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
 }
+
 /// `itFushigibana_UnkMotion1_Anim_inline2` (static): as `it_802CAE60`.
 pub fn it_fushigibana_unk_motion1_anim_inline2(ip: &mut Item) -> bool {
     lifetimer_tick(ip)
-}
-
-/// `it_802AA7E4` (itnesspkflash.c): the owner.
-pub fn it_802aa7e4(ip: &Item) -> *mut HSD_GObj {
-    ip.owner
 }
 
 /// `itZeldaDinFire_GetOwner`: the owner.
@@ -1309,18 +1297,6 @@ pub fn it_peach_toad_spore_logic68_reflected(ip: &mut Item) -> bool {
     false
 }
 
-/// `it_2725_Logic50_Reflected` (itsamusbomb.c): bounce back, flip a falling `vel.y` scaled by
-/// `xC70`, drop the owner.
-pub fn it_2725_logic50_reflected(ip: &mut Item) -> bool {
-    it_80273030(ip);
-    let yvel = ip.x40_vel.y;
-    if yvel < 0.0 {
-        ip.x40_vel.y = -yvel * ip.xC70;
-    }
-    ip.xDD4_itemVar.samusbomb.owner = null_mut();
-    false
-}
-
 /// `itChicoritaleaf_UnkMotion0_Anim`: true once the life timer is out, else count it down.
 pub fn it_chicoritaleaf_unk_motion0_anim(ip: &mut Item) -> bool {
     if ip.xD44_lifeTimer <= 0.0 {
@@ -1355,16 +1331,6 @@ pub fn it_sonans_unk_motion1_anim(ip: &mut Item) -> bool {
     let lifetime = ip.xD44_lifeTimer - 1.0;
     ip.xD44_lifeTimer = lifetime;
     lifetime == 0.0
-}
-
-/// `it_802D4FFC` (ithitodeman.c): life timer down; true when out or `xDB4_itcmd_var2` is set.
-pub fn it_802d4ffc(ip: &mut Item) -> bool {
-    let timer = ip.xD44_lifeTimer - 1.0;
-    ip.xD44_lifeTimer = timer;
-    if timer <= 0.0 {
-        return true;
-    }
-    ip.xDB4_itcmd_var2 != 0
 }
 
 /// `itBox_UnkMotion7_Anim`: count `box.despawn_timer` down; true at `<= 0`.
@@ -1478,12 +1444,6 @@ pub fn it_fox_illusion_logic14_dmg_dealt(ip: &mut Item) -> bool {
     false
 }
 
-/// `it_802D4EF4` (ithitodeman.c): `xDB4_itcmd_var2 = 1`.
-pub fn it_802d4ef4(ip: &mut Item) -> bool {
-    ip.xDB4_itcmd_var2 = 1;
-    false
-}
-
 /// `itLipstick_UnkMotion2_Anim`: `xDAC_itcmd_var0 = 1`.
 pub fn it_lipstick_unk_motion2_anim(ip: &mut Item) -> bool {
     ip.xDAC_itcmd_var0 = 1;
@@ -1526,16 +1486,6 @@ pub unsafe fn it_leadead_unk_motion4_phys(ip: &mut Item) {
         ip.x40_vel.x = 0.0;
     }
     ip.xDD4_itemVar.leadead.x48 = ip.xDD4_itemVar.leadead.x48.wrapping_add(1);
-}
-
-/// `it_802CC684` (itlizardon.c): scale the velocity by `attrs.x4`.
-/// # Safety
-/// The special attributes must be a valid `itLizardonAttributes`.
-pub unsafe fn it_802cc684(ip: &mut Item) {
-    let k = sa::<itLizardonAttributes>(ip).x4;
-    ip.x40_vel.x *= k;
-    ip.x40_vel.y *= k;
-    ip.x40_vel.z *= k;
 }
 
 /// `itPeachtoadspore_UnkMotion0_Phys`: scale `vel.x`, `vel.y` by `attrs.x8_speed_decay_rate`.
@@ -1634,16 +1584,6 @@ pub fn it_octarock_unk_motion4_phys(ip: &mut Item) {
     }
 }
 
-/// `it_802E5944` (itoctarock.c): `octarock.x20 = 0`.
-pub fn it_802e5944(ip: &mut Item) {
-    unsafe {
-        let v = &mut ip.xDD4_itemVar.octarock.x20;
-        v.x = 0.0;
-        v.y = 0.0;
-        v.z = 0.0;
-    }
-}
-
 /// `itNokonoko_UnkMotion8_Phys`: `vel.y -= fall_speed`; count `nokonoko.x28` down, at 0
 /// `it_802756E0`.
 /// # Safety
@@ -1667,35 +1607,6 @@ pub fn it_patapata_unk_motion4_coll(ip: &mut Item) -> bool {
         ip.xDD4_itemVar.patapata.x20 = ip.xDD4_itemVar.patapata.x20.wrapping_sub(1);
     }
     false
-}
-
-/// `it_802BDC38` (itpeachparasol.c): motion state 2 at frame >= 16.
-pub fn it_802bdc38(ip: &Item) -> bool {
-    if ip.msid != 2 {
-        return false;
-    }
-    ip.x5CC_currentAnimFrame >= 16.0
-}
-
-/// `it_8029FDBC` (itlinkboomerang.c): `msid == 0`.
-pub fn it_8029fdbc(ip: &Item) -> bool {
-    ip.msid == 0
-}
-
-/// `it_802AA7F0` (itnesspkflash.c): `msid == 2`.
-pub fn it_802aa7f0(ip: &Item) -> bool {
-    ip.msid == 2
-}
-
-/// `it_8028D390` (itrshell.c): count `rshell.xDEC` down; at 0 set `rshell.xDF0 = 1`.
-pub fn it_8028d390(ip: &mut Item) {
-    unsafe {
-        let r = &mut ip.xDD4_itemVar.rshell;
-        r.xDEC = r.xDEC.wrapping_sub(1);
-        if r.xDEC == 0 {
-            r.xDF0 = 1;
-        }
-    }
 }
 
 /// `itGamewatchchef_UnkMotion0_Phys`: fall with the speeds of attribute entry
@@ -1752,28 +1663,6 @@ pub unsafe fn it_linkarrow_unk_motion1_phys(ip: &mut Item) {
     let g = sa::<itLinkArrowAttributes>(ip).x1C;
     ip.xDD4_itemVar.linkarrow.x18 = ip.pos;
     ip.x40_vel.y -= if g < 0.0 { -g } else { g };
-}
-
-/// `it_80283BD4` (itheart.c): `heart.xDD4_heal = attrs.x4.flags`.
-/// # Safety
-/// The special attributes must be a valid `HeartContainerAttr`.
-pub unsafe fn it_80283bd4(ip: &mut Item) {
-    ip.xDD4_itemVar.heart.xDD4_heal = sa::<HeartContainerAttr>(ip).x4.flags as _;
-}
-
-/// `it_802D98AC` (itheiho.c): `heiho.x3C = 0`.
-pub fn it_802d98ac(ip: &mut Item) {
-    unsafe {
-        let v = &mut ip.xDD4_itemVar.heiho.x3C;
-        v.x = 0.0;
-        v.y = 0.0;
-        v.z = 0.0;
-    }
-}
-
-/// `it_802F2020` (itcoin.c): `coin.x0`.
-pub fn it_802f2020(ip: &Item) -> i32 {
-    unsafe { ip.xDD4_itemVar.coin.x0 }
 }
 
 /// `itFreeze_UnkMotion4_Phys`: take a pending `freeze.x10` velocity, then decelerate `vel.x`
@@ -1903,38 +1792,6 @@ pub unsafe fn it_samusmissile_unk_motion1_phys(ip: &mut Item) {
     }
 }
 
-/// `it_802CD7D4` (itsonans.c): `sonans.x60` from the damage taken and its direction (kept at
-/// the larger magnitude after the first hit); `sonans.x68 = min(xCA0 * attrs.x4, attrs.xC)`.
-/// # Safety
-/// The special attributes must be a valid `itsonansAttributes`.
-pub unsafe fn it_802cd7d4(ip: &mut Item) -> bool {
-    let attrs = sa::<itsonansAttributes>(ip);
-    if ip.xDAC_itcmd_var0 == 0 {
-        ip.xDD4_itemVar.sonans.x60 = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
-        ip.xDAC_itcmd_var0 = 1;
-    } else {
-        let cur = ip.xDD4_itemVar.sonans.x60;
-        let new = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
-        if (if cur < 0.0 { -cur } else { cur }) < (if new < 0.0 { -new } else { new }) {
-            ip.xDD4_itemVar.sonans.x60 = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
-        }
-    }
-    if ip.xCA0 as f32 * attrs.x4 > attrs.xC {
-        ip.xDD4_itemVar.sonans.x68 = attrs.xC;
-    } else {
-        ip.xDD4_itemVar.sonans.x68 = ip.xCA0 as f32 * attrs.x4;
-    }
-    false
-}
-
-/// `it_8028D4E4` (itrshell.c): clamp `|vel.x|` to `attrs.xC` (the body of `itRshell_ClampVel`).
-/// # Safety
-/// The special attributes must be a valid `itRShell_Attrs`.
-pub unsafe fn it_8028d4e4(ip: &mut Item) {
-    let attrs = sa::<itRShell_Attrs>(ip);
-    it_rshell_clamp_vel(ip, attrs);
-}
-
 /// `itGShell_Attrs`: file-local in itgshell.c, so not in the generated set (ppc32: all
 /// 4-byte fields, size 0x40, GC offsets in the `gc_layout!` below).
 #[repr(C)]
@@ -1956,6 +1813,7 @@ pub struct itGShell_Attrs {
     pub x30: f32,
     pub x34: GcVec,
 }
+
 impl itGShell_Attrs {
     /// All-zero is a valid value (plain floats).
     pub fn zeroed() -> Self {
@@ -1963,6 +1821,7 @@ impl itGShell_Attrs {
         unsafe { core::mem::zeroed() }
     }
 }
+
 melee_core::gc_layout!(itGShell_Attrs, "itGShell_Attrs", size 0x40, align 4, [
     x0 @ 0x0: 4 "float", x4 @ 0x4: 4 "float", x8 @ 0x8: 4 "float", xC @ 0xC: 4 "float",
     x10 @ 0x10: 4 "float", x14 @ 0x14: 4 "float", pad18 @ 0x18: 4 "char[4]",
@@ -1977,54 +1836,6 @@ melee_core::gc_layout!(itGShell_Attrs, "itGShell_Attrs", size 0x40, align 4, [
 pub unsafe fn it_gshell_unk_motion3_anim(ip: &mut Item) -> bool {
     it_8028b988(ip);
     false
-}
-
-/// `it_8028B988` (itgshell.c): the body of `itGshell_UnkMotion3_Anim` without the return.
-/// # Safety
-/// The special attributes must be a valid `itGShell_Attrs`.
-pub unsafe fn it_8028b988(ip: &mut Item) {
-    let attrs = sa::<itGShell_Attrs>(ip);
-    if ip.xDD4_itemVar.gshell.xDEC_b1() != 0 {
-        ip.xDD4_itemVar.gshell.xDE0 -= 1.0;
-        if ip.xDD4_itemVar.gshell.xDE0 <= 0.0 {
-            ip.xDD4_itemVar.gshell.set_xDEC_b1(0);
-            ip.xDD4_itemVar.gshell.xDE0 = attrs.x28;
-            it_8027572c(ip, 0);
-            if ip.xDD4_itemVar.gshell.xDEC_b2() != 0 {
-                it_802756e0(ip);
-            }
-        }
-    }
-}
-
-/// `it_802D24A0` (itlugia.c): `vel.z *= attrs[1..=3]` by aeroblast kind (0 otherwise).
-/// # Safety
-/// The special attributes must hold at least 4 floats.
-pub unsafe fn it_802d24a0(ip: &mut Item) {
-    let a = (*ip.xC4_article_data).x4_specialAttributes as *const f32;
-    let multiplier = match ip.kind {
-        It_Kind_Lugia_Aeroblast => *a.add(1),
-        It_Kind_Lugia_Aeroblast2 => *a.add(2),
-        It_Kind_Lugia_Aeroblast3 => *a.add(3),
-        _ => 0.0,
-    };
-    ip.x40_vel.z *= multiplier;
-}
-
-/// `it_802CB844` (itmatadogas.c): scale the velocity by `attrs.x4` / `x8` by gas kind (0
-/// otherwise).
-/// # Safety
-/// The special attributes must be a valid `itMatadogasAttributes`.
-pub unsafe fn it_802cb844(ip: &mut Item) {
-    let attrs = sa::<itMatadogasAttributes>(ip);
-    let scale = match ip.kind {
-        It_Kind_Matadogas_Gas1 => attrs.x4,
-        It_Kind_Matadogas_Gas2 => attrs.x8,
-        _ => 0.0,
-    };
-    ip.x40_vel.x *= scale;
-    ip.x40_vel.y *= scale;
-    ip.x40_vel.z *= scale;
 }
 
 /// `itFlipper_AddSpinImpulse`: add `vel + attrs.x1C_baseSpinOnHit` to the spin velocity, signed
@@ -2081,34 +1892,26 @@ pub unsafe fn it_chicorita_phys(ip: &mut Item) {
     ip.xDD4_itemVar.chicorita.x64 = 0.0;
 }
 
-/// `it_802E657C` (it_2E5A.c): life timer; in mode `x8 == 1` count `x10` down (then set
-/// `x18.b0`) and `x14` down (then `it_80275444` + `x18.b1` unless `xDCD_flag.b5`).
-pub fn it_802e657c(ip: &mut Item) -> bool {
-    let timer = ip.xD44_lifeTimer;
-    if timer <= 0.0 {
-        return true;
-    }
-    ip.xD44_lifeTimer = timer - 1.0;
-    unsafe {
-        if ip.xDD4_itemVar.it_2E5A.x8 == 1 {
-            let t0 = ip.xDD4_itemVar.it_2E5A.x10;
-            if t0 <= 0.0 {
-                if ip.xDD4_itemVar.it_2E5A.x18.anon_0.b0() == 0 {
-                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b0(1);
-                }
-            } else {
-                ip.xDD4_itemVar.it_2E5A.x10 = t0 - 1.0;
-            }
-            let t1 = ip.xDD4_itemVar.it_2E5A.x14;
-            if t1 <= 0.0 {
-                if ip.xDCD_flag.anon_0.b5() != 1 {
-                    it_80275444(ip);
-                    ip.xDD4_itemVar.it_2E5A.x18.anon_0.set_b1(1);
-                }
-            } else {
-                ip.xDD4_itemVar.it_2E5A.x14 = t1 - 1.0;
-            }
-        }
-    }
-    false
-}
+pub use crate::tu::itsamusbomb::it_2725_logic50_reflected;
+pub use crate::tu::itheart::it_80283bd4;
+pub use crate::tu::itgshell::it_8028b988;
+pub use crate::tu::itrshell::it_8028d390;
+pub use crate::tu::itrshell::it_8028d4e4;
+pub use crate::tu::itlinkboomerang::it_8029fdbc;
+pub use crate::tu::itnesspkflash::it_802aa7e4;
+pub use crate::tu::itnesspkflash::it_802aa7f0;
+pub use crate::tu::itpeachparasol::it_802bdc38;
+pub use crate::tu::itkamex::it_802ca618;
+pub use crate::tu::itkamex::it_802cae60;
+pub use crate::tu::itmatadogas::it_802cb844;
+pub use crate::tu::itlizardon::it_802cc684;
+pub use crate::tu::itsonans::it_802cd7d4;
+pub use crate::tu::itunknown::it_802cf120;
+pub use crate::tu::itlugia::it_802d24a0;
+pub use crate::tu::ithitodeman::it_802d4ef4;
+pub use crate::tu::ithitodeman::it_802d4ffc;
+pub use crate::tu::itlucky::it_802d5884;
+pub use crate::tu::itheiho::it_802d98ac;
+pub use crate::tu::itoctarock::it_802e5944;
+pub use crate::tu::it_2E5A::it_802e657c;
+pub use crate::tu::itcoin::it_802f2020;

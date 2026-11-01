@@ -12,6 +12,9 @@
 //! State-oracle checked against the C (tests/gro_grkinokoroute.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
 use super::grinl::{assert_, GET_GROUND, HSD_JObjGetTranslation, HSD_JObjSetTranslate, HSD_JObjSetTranslateX, HSD_JObjSetTranslateY};
 use super::grinl2::Ground_UpdateWindAndMapColl;
 use core::ffi::c_void;
@@ -20,10 +23,6 @@ use melee_runtime::gekko::sqrtf;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-pub use crate::gr::trivial::grkinokoroute::{
-    grKinokoRoute_80207544, grKinokoRoute_802078E8, grKinokoRoute_80207ACC, grKinokoRoute_80207B20,
-    grKinokoRoute_80207C80, grKinokoRoute_80208754,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -841,3 +840,22 @@ pub unsafe fn grKinokoRoute_802087B0() -> f32 {
 
 #[allow(dead_code)]
 type _Unused = c_void;
+
+// ---- folded from grkinokoroute.rs (consolidation steps 21/22) ----
+/// grKinokoRoute_80207544 (gr/grkinokoroute.c:145)
+    pub extern "C" fn grKinokoRoute_80207544() -> i32 { 0 }
+
+/// grKinokoRoute_802078E8 (gr/grkinokoroute.c:237)
+    pub extern "C" fn grKinokoRoute_802078E8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKinokoRoute_80207ACC (gr/grkinokoroute.c:291)
+    pub extern "C" fn grKinokoRoute_80207ACC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKinokoRoute_80207B20 (gr/grkinokoroute.c:307)
+    pub extern "C" fn grKinokoRoute_80207B20(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKinokoRoute_80207C80 (gr/grkinokoroute.c:343)
+    pub extern "C" fn grKinokoRoute_80207C80(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKinokoRoute_80208754 (gr/grkinokoroute.c:646)
+    pub extern "C" fn grKinokoRoute_80208754(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

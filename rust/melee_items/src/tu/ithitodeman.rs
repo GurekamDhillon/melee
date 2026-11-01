@@ -7,6 +7,267 @@
 //! `it_802D4C74` 1 (`prev_pos.x += facing * x54`).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{c_abs as c_abs_itkinds5};
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
+#[allow(unused_imports)]
+use crate::itfwd::it_maril_unk_motion2_anim;
+#[allow(unused_imports)]
+use crate::itfwd::it_zgshell_logic11_reflected;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use crate::helpers::M_PI_2;
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -574,4 +835,122 @@ pub unsafe extern "C" fn it_802D5044(_gobj: *mut Item_GObj) { melee_core::ct!("i
 pub unsafe extern "C" fn it_802D5048(_gobj: *mut Item_GObj) -> i32 {
     melee_core::ct!("it_802D5048");
     0
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802D4F58` (src/melee/it/kinds/ithitodeman.c): `it_8026B894(..)`.
+pub fn it_802d4f58(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d4f58");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itfwd6.rs (consolidation steps 21/22) ----
+/// `it_802D4F50` (src/melee/it/kinds/ithitodeman.c): `return true;`.
+pub fn it_802d4f50(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d4f50");
+    true
+}
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802D43AC` (src/melee/it/kinds/ithitodeman.c): `empty body / return;`.
+pub fn it_802d43ac(_ip: &mut Item) { melee_core::ct!("it_802d43ac");}
+
+/// `it_802D48A8` (src/melee/it/kinds/ithitodeman.c): `return false;`.
+pub fn it_802d48a8(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d48a8");
+    false
+}
+
+/// `it_802D4B50` (src/melee/it/kinds/ithitodeman.c): `empty body / return;`.
+pub fn it_802d4b50(_ip: &mut Item) { melee_core::ct!("it_802d4b50");}
+
+/// `it_802D5044` (src/melee/it/kinds/ithitodeman.c): `empty body / return;`.
+pub fn it_802d5044(_ip: &mut Item) { melee_core::ct!("it_802d5044");}
+
+/// `it_802D5048` (src/melee/it/kinds/ithitodeman.c): `return false;`.
+pub fn it_802d5048(_ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d5048");
+    false
+}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_802D4FFC` (ithitodeman.c): life timer down; true when out or `xDB4_itcmd_var2` is set.
+pub fn it_802d4ffc(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d4ffc");
+    let timer = ip.xD44_lifeTimer - 1.0;
+    ip.xD44_lifeTimer = timer;
+    if timer <= 0.0 {
+        return true;
+    }
+    ip.xDB4_itcmd_var2 != 0
+}
+
+/// `it_802D4EF4` (ithitodeman.c): `xDB4_itcmd_var2 = 1`.
+pub fn it_802d4ef4(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802d4ef4");
+    ip.xDB4_itcmd_var2 = 1;
+    false
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- ithitodeman.c ---------------------------------------------------------------------
+
+/// `it_802D4494`: `x84 = x18 + randi((s32)(x14 - x18))` (the float-to-int conversion saturates,
+/// NaN -> 0, as the build's lowering does).
+/// # Safety
+/// The item's special attributes are an `itHitodemanAttributes`.
+pub unsafe fn it_802d4494(rand: &mut HsdRand, ip: &mut Item) {
+    melee_core::ct!("it_802d4494");
+    let a = &*((*ip.xC4_article_data).x4_specialAttributes as *const itHitodemanAttributes);
+    let r = rand.randi((a.x14 - a.x18) as i32);
+    ip.xDD4_itemVar.hitodeman.x84 = a.x18 + r as f32;
+}
+
+/// `it_802D4510`: `x88 = x44 + randi(x40 - x44)`.
+/// # Safety
+/// The item's special attributes are an `itHitodemanAttributes`.
+pub unsafe fn it_802d4510(rand: &mut HsdRand, ip: &mut Item) {
+    melee_core::ct!("it_802d4510");
+    let a = &*((*ip.xC4_article_data).x4_specialAttributes as *const itHitodemanAttributes);
+    ip.xDD4_itemVar.hitodeman.x88 = a.x44.wrapping_add(rand.randi(a.x40.wrapping_sub(a.x44)));
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// ithitodeman.c `it_802D472C_inline`: `ip->xC4_article_data`.
+pub fn it_802d472c_inline(ip: &Item) -> *mut Article {
+    melee_core::ct!("it_802d472c_inline");
+    ip.xC4_article_data
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802D43B0` (ithitodeman.c): `it_8026B894`, `hitodeman.x90 = NULL`, `xDAC = 1`.
+pub fn it_802d43b0(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d43b0");
+    it_8026b894(ip, ref_gobj);
+    ip.xDD4_itemVar.hitodeman.x90 = null_mut_itkinds5();
+    ip.xDAC_itcmd_var0 = 1;
+}
+
+// ---- pure ------------------------------------------------------------------------------
+
+/// `it_802D48B0` (ithitodeman.c): move `*value` towards `target` by at most `accel` (or at
+/// least `decel`), clamp to `+-max_val`, store and return it.
+pub fn it_802d48b0(value: &mut f32, mut target: f32, max_val: f32, accel: f32, decel: f32) -> f32 {
+    melee_core::ct!("it_802d48b0");
+    let current = *value;
+    let diff = target - current;
+    if c_abs_itkinds5(diff) > c_abs_itkinds5(accel) {
+        target = if diff > 0.0 { current + accel } else { current - accel };
+    } else if c_abs_itkinds5(diff) < c_abs_itkinds5(decel) {
+        target = if diff > 0.0 { current + decel } else { current - decel };
+    }
+    if target > 0.0 {
+        if target > max_val {
+            target = max_val;
+        }
+    } else if target < -max_val {
+        target = -max_val;
+    }
+    *value = target;
+    target
 }

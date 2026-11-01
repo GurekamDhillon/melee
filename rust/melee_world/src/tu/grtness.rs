@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtness::{grTNess_802225D0, grTness_UnkStage0_OnLoad, grTNess_8022266C, grTNess_80222788, grTNess_80222790, grTNess_80222794, grTNess_802227E8, grTNess_80222824, grTNess_80222878, grTNess_802228A0, grTNess_802228A4, grTNess_802228AC};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -170,3 +175,44 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
+
+// ---- folded from grtness.rs (consolidation steps 21/22) ----
+/// grTness_UnkStage0_OnStart_fp (gr/grtness.c:86)
+    pub unsafe extern "C" fn grTness_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtness.rs (consolidation steps 21/22) ----
+/// grTNess_802225D0 (gr/grtness.c:71)
+    pub extern "C" fn grTNess_802225D0(a0: i32) {  }
+
+/// grTness_UnkStage0_OnLoad (gr/grtness.c:81)
+    pub extern "C" fn grTness_UnkStage0_OnLoad() {  }
+
+/// grTNess_8022266C (gr/grtness.c:91)
+    pub extern "C" fn grTNess_8022266C() -> i32 { 0 }
+
+/// grTNess_80222788 (gr/grtness.c:117)
+    pub extern "C" fn grTNess_80222788(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTNess_80222790 (gr/grtness.c:122)
+    pub extern "C" fn grTNess_80222790(a0: *mut HSD_GObj) {  }
+
+/// grTNess_80222794 (gr/grtness.c:127)
+    pub extern "C" fn grTNess_80222794(a0: *mut HSD_GObj) {  }
+
+/// grTNess_802227E8 (gr/grtness.c:137)
+    pub extern "C" fn grTNess_802227E8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTNess_80222824 (gr/grtness.c:147)
+    pub extern "C" fn grTNess_80222824(a0: *mut HSD_GObj) {  }
+
+/// grTNess_80222878 (gr/grtness.c:157)
+    pub extern "C" fn grTNess_80222878(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTNess_802228A0 (gr/grtness.c:167)
+    pub extern "C" fn grTNess_802228A0(a0: *mut HSD_GObj) {  }
+
+/// grTNess_802228A4 (gr/grtness.c:172)
+    pub extern "C" fn grTNess_802228A4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTNess_802228AC (gr/grtness.c:177)
+    pub extern "C" fn grTNess_802228AC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

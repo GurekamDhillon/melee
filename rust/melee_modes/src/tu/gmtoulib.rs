@@ -16,6 +16,22 @@
 //! native layouts, so those stay byte-offset accesses.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::HSD_GObj as HSD_GObj_gm_r9;
+#[allow(unused_imports)]
+use melee_types::BracketEntry as BracketEntry_gm_r10;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::BracketEntry as BracketEntry_gm_ptr;
+#[allow(unused_imports)]
+use mt::HSD_GObj as HSD_GObj_gm_ptr;
+#[allow(unused_imports)]
+use crate::gm::{CKIND_GKOOPS, CKIND_KOOPA, CKIND_SEAK};
 use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null_mut};
 
@@ -320,9 +336,6 @@ const col: GXColor = GXColor { r: 0xFF, g: 0xFF, b: 0x00, a: 0xFF };
 const lbl_804DA69C: GXColor = GXColor { r: 255, g: 255, b: 0, a: 255 };
 
 /// Already ported (rounds 1 to 10): re-exported under this TU.
-pub use crate::gm::{fn_8018F3D0, fn_8018F6DC, fn_8018F6FC, fn_8018F71C};
-pub use crate::gm_ptr::fn_8018F62C;
-pub use crate::gm_r9::fn_8018FBD8;
 
 // ---------------------------------------------------------------------------------------------
 // helpers
@@ -2107,3 +2120,131 @@ pub unsafe extern "C" fn gm_801905F0(arg0: *mut StartMeleeData) {
 }
 
 use super::gmtou_2::fn_8019EF08;
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmtoulib.c `fn_8018F3D0`.
+pub fn fn_8018F3D0(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8018F3D0");
+    if arg0 == 0xE || (0x10..=0x13).contains(&arg0) || arg0 == 0xA {
+        return 1;
+    }
+    if arg0 <= 0xD {
+        return 0;
+    }
+    2
+}
+
+/// gmtoulib.c `fn_8018F6DC`.
+pub fn fn_8018F6DC(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8018F6DC");
+    if arg0 >= 0x13 {
+        if arg0 == 0x1D {
+            return 5;
+        }
+        return arg0.wrapping_sub(1);
+    }
+    arg0
+}
+
+/// gmtoulib.c `fn_8018F6FC` (CSSIconHud -> CharacterKind).
+pub fn fn_8018F6FC(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8018F6FC");
+    if arg0 >= 0x13 {
+        if arg0 == 0x1D {
+            return 5;
+        }
+        return arg0.wrapping_add(1);
+    }
+    arg0
+}
+
+/// gmtoulib.c `fn_8018F71C`: int arithmetic (-fwrapv), then one int->float conversion.
+pub fn fn_8018F71C(arg0: i32, arg1: i32) -> f32 {
+    melee_core::ct!("fn_8018F71C");
+    arg0.wrapping_add(arg1.wrapping_mul(0x1E)) as f32
+}
+
+/// gmtoulib.c `fn_8018FA24_inline0_fp`.
+pub fn fn_8018FA24_inline0_fp(char_kind: i32) -> i32 {
+    melee_core::ct!("fn_8018FA24_inline0_fp");
+    if char_kind < CKIND_SEAK {
+        return char_kind;
+    }
+    if char_kind == CKIND_GKOOPS {
+        return 5;
+    }
+    char_kind.wrapping_add(1)
+}
+
+/// gmtoulib.c `gm_801905F0_inline0_fp`.
+pub fn gm_801905F0_inline0_fp(c_kind: i32) -> i32 {
+    melee_core::ct!("gm_801905F0_inline0_fp");
+    if c_kind < CKIND_SEAK {
+        return c_kind;
+    }
+    if c_kind == CKIND_GKOOPS {
+        return CKIND_KOOPA;
+    }
+    c_kind.wrapping_add(1)
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmtoulib.c `gmTournament_SetBracketByes`.
+pub fn gmTournament_SetBracketByes(entries: &mut [BracketEntry_gm_ptr], entrant_count: i32) {
+    melee_core::ct!("gmTournament_SetBracketByes");
+    match entrant_count {
+        1 => entries[5].slots[1].x32 = 1,
+        3 => {
+            entries[10].slots[0].x32 = 1;
+            entries[11].slots[1].x32 = 1;
+        }
+        5 => entries[23].slots[1].x32 = 1,
+        7 => {
+            entries[46].slots[1].x32 = 1;
+            entries[47].slots[1].x32 = 1;
+        }
+        _ => {}
+    }
+}
+
+/// gmtoulib.c `fn_8018B090_inline4`: first slot whose x4C is 0 (4 if none).
+pub fn fn_8018B090_inline4(entry: &BracketEntry_gm_ptr) -> i32 {
+    melee_core::ct!("fn_8018B090_inline4");
+    entry.slots.iter().position(|s| s.x4C == 0).unwrap_or(4) as i32
+}
+
+/// gmtoulib.c `fn_8018F62C`: `(u32) gobj->user_data`.
+pub fn fn_8018F62C(gobj: &HSD_GObj_gm_ptr) -> u32 {
+    melee_core::ct!("fn_8018F62C");
+    gobj.user_data as usize as u32
+}
+
+// ---- folded from gm_r10.rs (consolidation steps 21/22) ----
+/// gmtoulib.c `gmTournament_SetTripleRightCoords_fp` (static inline).
+pub fn gmTournament_SetTripleRightCoords_fp(
+    entry: &BracketEntry_gm_r10,
+    p3C: &mut i32,
+    p44: &mut i32,
+    p34: &mut i32,
+    p40: &mut i32,
+    p48: &mut i32,
+    p38: &mut i32,
+) {
+    melee_core::ct!("gmTournament_SetTripleRightCoords_fp");
+    let val1 = entry.xC.wrapping_add(entry.x14);
+    *p3C = val1;
+    *p44 = val1;
+    *p34 = val1;
+    let val = entry.x10.wrapping_add(entry.x18);
+    *p48 = val;
+    *p38 = val;
+    *p40 = val.wrapping_sub(entry.x18 / 3);
+}
+
+// ---- folded from gm_r9.rs (consolidation steps 21/22) ----
+/// gmtoulib.c `fn_8018FBD8`: `gobj->user_data = (void*) arg1` (the s32 sign-extends, as the
+/// native C's int-to-pointer cast does).
+pub fn fn_8018FBD8(gobj: &mut HSD_GObj_gm_r9, arg1: i32) {
+    melee_core::ct!("fn_8018FBD8");
+    gobj.user_data = arg1 as isize as *mut c_void;
+}

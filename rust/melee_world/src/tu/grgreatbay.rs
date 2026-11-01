@@ -9,18 +9,17 @@
 //! The constant-return and empty callbacks that `gr/trivial.rs` already holds are re-exported.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::grgreatbay::{
-    grGreatBay_801F423C, grGreatBay_801F42F8, grGreatBay_801F4430, grGreatBay_801F4438, grGreatBay_801F443C,
-    grGreatBay_801F44A0, grGreatBay_801F44A8, grGreatBay_801F44AC, grGreatBay_801F4510, grGreatBay_801F4518,
-    grGreatBay_801F451C, grGreatBay_801F4650, grGreatBay_801F4690, grGreatBay_801F4994, grGreatBay_801F545C,
-    grGreatBay_801F55F8, grGreatBay_801F5988, grGreatBay_801F59F0, grGreatBay_801F59F8, grGreatBay_801F59FC,
-    grGreatBay_801F5AF0, grGreatBay_801F5D48, grGreatBay_801F680C,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -1145,3 +1144,77 @@ pub unsafe extern "C" fn grGreatBay_801F6814(a: *mut Vec3, _b: i32, joint: *mut 
         0
     }
 }
+
+// ---- folded from grgreatbay.rs (consolidation steps 21/22) ----
+/// grGreatBay_801F42D4_fp (gr/grgreatbay.c:221)
+    pub unsafe extern "C" fn grGreatBay_801F42D4_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grgreatbay.rs (consolidation steps 21/22) ----
+/// grGreatBay_801F423C (gr/grgreatbay.c:198)
+    pub extern "C" fn grGreatBay_801F423C(a0: i32) {  }
+
+/// grGreatBay_801F42F8 (gr/grgreatbay.c:226)
+    pub extern "C" fn grGreatBay_801F42F8() -> i32 { 0 }
+
+/// grGreatBay_801F4430 (gr/grgreatbay.c:268)
+    pub extern "C" fn grGreatBay_801F4430(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F4438 (gr/grgreatbay.c:273)
+    pub extern "C" fn grGreatBay_801F4438(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F443C (gr/grgreatbay.c:278)
+    pub extern "C" fn grGreatBay_801F443C(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F44A0 (gr/grgreatbay.c:291)
+    pub extern "C" fn grGreatBay_801F44A0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F44A8 (gr/grgreatbay.c:296)
+    pub extern "C" fn grGreatBay_801F44A8(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F44AC (gr/grgreatbay.c:301)
+    pub extern "C" fn grGreatBay_801F44AC(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F4510 (gr/grgreatbay.c:314)
+    pub extern "C" fn grGreatBay_801F4510(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F4518 (gr/grgreatbay.c:319)
+    pub extern "C" fn grGreatBay_801F4518(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F451C (gr/grgreatbay.c:324)
+    pub extern "C" fn grGreatBay_801F451C(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F4650 (gr/grgreatbay.c:352)
+    pub extern "C" fn grGreatBay_801F4650(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F4690 (gr/grgreatbay.c:364)
+    pub extern "C" fn grGreatBay_801F4690(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F4994 (gr/grgreatbay.c:406)
+    pub extern "C" fn grGreatBay_801F4994(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F545C (gr/grgreatbay.c:592)
+    pub extern "C" fn grGreatBay_801F545C(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F55F8 (gr/grgreatbay.c:627)
+    pub extern "C" fn grGreatBay_801F55F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F5988 (gr/grgreatbay.c:740)
+    pub extern "C" fn grGreatBay_801F5988(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F59F0 (gr/grgreatbay.c:754)
+    pub extern "C" fn grGreatBay_801F59F0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F59F8 (gr/grgreatbay.c:759)
+    pub extern "C" fn grGreatBay_801F59F8(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F59FC (gr/grgreatbay.c:764)
+    pub extern "C" fn grGreatBay_801F59FC(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F5AF0 (gr/grgreatbay.c:788)
+    pub extern "C" fn grGreatBay_801F5AF0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grGreatBay_801F5D48 (gr/grgreatbay.c:849)
+    pub extern "C" fn grGreatBay_801F5D48(a0: *mut HSD_GObj) {  }
+
+/// grGreatBay_801F680C (gr/grgreatbay.c:1193)
+    pub extern "C" fn grGreatBay_801F680C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

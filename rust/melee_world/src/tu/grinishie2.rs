@@ -7,6 +7,12 @@
 //! State-oracle checked against the C (tests/gro_grinishie2.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::{
     GET_GROUND, GET_JOBJ, HSD_JObjAddTranslationX, HSD_JObjAddTranslationY, HSD_JObjAddTranslationZ,
     HSD_JObjGetTranslation, HSD_JObjSetTranslate,
@@ -15,10 +21,6 @@ use super::grinl2::{Ground_InitMapCollAndAnim, Ground_StartMapAnim};
 use core::ptr::null_mut;
 use melee_types::*;
 
-pub use crate::gr::trivial::grinishie2::{
-    grInishie2_801FCCD4, grInishie2_801FCDF4, grInishie2_801FCF24, grInishie2_801FD21C, grInishie2_801FD64C,
-    grInishie2_801FDED0, grInishie2_801FDFE8, grInishie2_801FDFF0,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -734,3 +736,32 @@ pub unsafe fn grInishie2_801FDFB4(arg0: s32) -> s32 {
 }
 
 pub unsafe extern "C" fn grInishie2_801FDFE4(_gobj: *mut HSD_GObj) { melee_core::ct!("grInishie2_801FDFE4");}
+
+// ---- folded from grinishie2.rs (consolidation steps 21/22) ----
+/// grInishie2_801FCCB0_fp (gr/grinishie2.c:220)
+    pub unsafe extern "C" fn grInishie2_801FCCB0_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grinishie2.rs (consolidation steps 21/22) ----
+/// grInishie2_801FCCD4 (gr/grinishie2.c:225)
+    pub extern "C" fn grInishie2_801FCCD4() -> i32 { 0 }
+
+/// grInishie2_801FCDF4 (gr/grinishie2.c:268)
+    pub extern "C" fn grInishie2_801FCDF4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie2_801FCF24 (gr/grinishie2.c:296)
+    pub extern "C" fn grInishie2_801FCF24(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie2_801FD21C (gr/grinishie2.c:402)
+    pub extern "C" fn grInishie2_801FD21C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie2_801FD64C (gr/grinishie2.c:537)
+    pub extern "C" fn grInishie2_801FD64C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie2_801FDED0 (gr/grinishie2.c:730)
+    pub extern "C" fn grInishie2_801FDED0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie2_801FDFE8 (gr/grinishie2.c:782)
+    pub extern "C" fn grInishie2_801FDFE8(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grInishie2_801FDFF0 (gr/grinishie2.c:787)
+    pub extern "C" fn grInishie2_801FDFF0(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

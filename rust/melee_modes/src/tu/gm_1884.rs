@@ -6,6 +6,11 @@
 //! build, so it is `mul_add` here.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_Text as HSD_Text_gm_ptr;
 use crate::tu_util::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -735,4 +740,12 @@ pub unsafe fn fn_8018A000() -> *mut HSD_Text {
     let text = *text_ptr;
     (**text_ptr).default_alignment = 2;
     text
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_1884.c `resetText`.
+pub fn resetText(text: &mut HSD_Text_gm_ptr) {
+    melee_core::ct!("resetText");
+    text.x34.x = 0.7;
+    text.x34.y = 0.6;
 }

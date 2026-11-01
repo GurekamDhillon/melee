@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -104,7 +110,6 @@ pub fn set_yakumono_param(p: *mut YakumonoParam) {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtfox::{grTFox_80220C24, grTFox_80220D40, grTFox_80220DA0, grTFox_80220E30, grTFox_80220F08};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -276,3 +281,23 @@ pub unsafe extern "C" fn grTFox_80220E5C(arg0: i32) -> *mut DynamicsDesc {
     }
     null_mut()
 }
+
+// ---- folded from grtfox.rs (consolidation steps 21/22) ----
+/// grTFox_UnkStage0_OnStart_fp (gr/grtfox.c:75)
+    pub unsafe extern "C" fn grTFox_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtfox.rs (consolidation steps 21/22) ----
+/// grTFox_80220C24 (gr/grtfox.c:80)
+    pub extern "C" fn grTFox_80220C24() -> i32 { 0 }
+
+/// grTFox_80220D40 (gr/grtfox.c:106)
+    pub extern "C" fn grTFox_80220D40(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTFox_80220DA0 (gr/grtfox.c:120)
+    pub extern "C" fn grTFox_80220DA0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTFox_80220E30 (gr/grtfox.c:137)
+    pub extern "C" fn grTFox_80220E30(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTFox_80220F08 (gr/grtfox.c:173)
+    pub extern "C" fn grTFox_80220F08(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

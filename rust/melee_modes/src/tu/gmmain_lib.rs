@@ -12,6 +12,19 @@
 //! in other TUs (`HSD_PadLibData`, `GXNtsc480*`, `db_*`) is reached through `ext` hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::VsModeData as VsModeData_gm_r6;
+#[allow(unused_imports)]
+use melee_types::VsModeData as VsModeData_gm_r5;
+#[allow(unused_imports)]
+use crate::gm_ptr::{GM_NAMETAG_COUNT as GM_NAMETAG_COUNT_gm_ptr};
+#[allow(unused_imports)]
+use melee_runtime::cabi;
 use core::ffi::c_void;
 use core::mem::offset_of;
 use core::ptr::addr_of_mut;
@@ -19,7 +32,6 @@ use core::ptr::addr_of_mut;
 use melee_types as mt;
 use mt::*;
 
-pub use crate::gm::{bitset64_mask, bitset_mask, selkind_mask};
 /// The plain save-data accessors are owned by `melee_world::gmmain`.
 pub use melee_world::gmmain::{
     gmMainLib_8015D8B0,
@@ -1563,4 +1575,126 @@ pub mod ext {
     hook!(DBLEVEL, DbLevel, () -> i32);
     hook!(DBLKIND_DEBUGDEVELOP, DbLKind_DebugDevelop, () -> i32);
     hook!(DB_804D6B20, db_804D6B20, () -> bool);
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmmain_lib.c `bitset_mask`.
+pub fn bitset_mask(bit: u32) -> u32 {
+    melee_core::ct!("bitset_mask");
+    1u32 << (bit % 32)
+}
+
+/// gmmain_lib.c `bitset64_mask`: `1LL << bit`. Verified for bit < 64; a larger shift is
+/// undefined in C (gwtool's 64-bit shift rule is not modelled by the oracle): 0 here.
+pub fn bitset64_mask(bit: u32) -> i64 {
+    melee_core::ct!("bitset64_mask");
+    1i64.checked_shl(bit).unwrap_or(0)
+}
+
+/// gmmain_lib.c `selkind_mask`: `1 << kind` (kind >= 32 uses gwtool's oversize-shift rule).
+pub fn selkind_mask(kind: u8) -> i32 {
+    melee_core::ct!("selkind_mask");
+    cabi::shl(1, kind as u32) as i32
+}
+
+/// gmmain_lib.c `selkind_bit_fp`.
+pub fn selkind_bit_fp(word: i32, kind: u8) -> i32 {
+    melee_core::ct!("selkind_bit_fp");
+    word & selkind_mask(kind)
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmmain_lib.c `gmMainLib_AdjustNameTag_fp`.
+pub fn gmMainLib_AdjustNameTag_fp(tag_ptr: &mut u8, tag: u8) {
+    melee_core::ct!("gmMainLib_AdjustNameTag_fp");
+    if *tag_ptr == tag {
+        *tag_ptr = GM_NAMETAG_COUNT_gm_ptr;
+    } else if *tag_ptr > tag && *tag_ptr != GM_NAMETAG_COUNT_gm_ptr {
+        *tag_ptr -= 1;
+    }
+}
+
+/// gmmain_lib.c `gmMainLib_ClearNameTag_fp`.
+pub fn gmMainLib_ClearNameTag_fp(tag_ptr: &mut u8, tag: u8) {
+    melee_core::ct!("gmMainLib_ClearNameTag_fp");
+    if *tag_ptr == tag {
+        *tag_ptr = 0;
+    } else if *tag_ptr > tag && *tag_ptr != GM_NAMETAG_COUNT_gm_ptr {
+        *tag_ptr -= 1;
+    }
+}
+
+/// gmmain_lib.c `gmMainLib_8015EF30_fp`: clear a stats block.
+pub fn gmMainLib_8015EF30_fp(stats: &mut mt::GmStats) {
+    melee_core::ct!("gmMainLib_8015EF30_fp");
+    stats.sd_count = 0;
+    stats.attacks_hit = 0;
+    stats.attacks_total = 0;
+    stats.damage_dealt = 0;
+    stats.damage_taken = 0;
+    stats.peak_damage = 0;
+    stats.match_count = 0;
+    stats.victories = 0;
+    stats.losses = 0;
+    stats.play_time = 0;
+    stats.total_player_count = 0;
+    stats.damage_recovered = 0;
+    stats.walk_distance = 0;
+    stats.run_distance = 0;
+    stats.fall_distance = 0;
+    stats.peak_height = 0;
+    stats.coins_swiped = 0;
+    stats.coins_lost = 0;
+    stats.coins_collected = 0;
+}
+
+// ---- folded from gm_r4.rs (consolidation steps 21/22) ----
+/// gmmain_lib.c `bitset_set_fp`.
+pub fn bitset_set_fp(words: &mut [u32], bit: u32) {
+    melee_core::ct!("bitset_set_fp");
+    words[(bit / 32) as usize] |= bitset_mask(bit);
+}
+
+/// gmmain_lib.c `bitset_clear_fp`.
+pub fn bitset_clear_fp(words: &mut [u32], bit: u32) {
+    melee_core::ct!("bitset_clear_fp");
+    words[(bit / 32) as usize] &= !bitset_mask(bit);
+}
+
+/// gmmain_lib.c `bitset_test_fp`: the masked word (not a bool).
+pub fn bitset_test_fp(words: &[u32], bit: u32) -> u32 {
+    melee_core::ct!("bitset_test_fp");
+    let mask = bitset_mask(bit);
+    words[(bit / 32) as usize] & mask
+}
+
+/// gmmain_lib.c `bitset_test_word_fp`: the same as `bitset_test_fp`.
+pub fn bitset_test_word_fp(words: &[u32], bit: u32) -> u32 {
+    melee_core::ct!("bitset_test_word_fp");
+    let word = words[(bit / 32) as usize];
+    word & bitset_mask(bit)
+}
+
+// ---- folded from gm_r5.rs (consolidation steps 21/22) ----
+/// gmmain_lib.c `SetDefaultHandicaps_fp`: every player's handicap to 9 (GM_MAX_PLAYERS = 6).
+pub fn SetDefaultHandicaps_fp(mode: &mut VsModeData_gm_r5) {
+    melee_core::ct!("SetDefaultHandicaps_fp");
+    for p in mode.start.players.iter_mut().take(6) {
+        p.handicap = 9;
+    }
+}
+
+// ---- folded from gm_r6.rs (consolidation steps 21/22) ----
+/// gmmain_lib.c `gmMainLib_AdjustNameTags_fp` (static inline): after name tag `tag` is deleted,
+/// players holding it get GM_NAMETAG_COUNT (no tag) and higher tags shift down by one.
+pub fn gmMainLib_AdjustNameTags_fp(vmd: &mut VsModeData_gm_r6, tag: u8) {
+    melee_core::ct!("gmMainLib_AdjustNameTags_fp");
+    const GM_NAMETAG_COUNT: u8 = 120;
+    for p in vmd.start.players.iter_mut() {
+        if p.nametag == tag {
+            p.nametag = GM_NAMETAG_COUNT;
+        } else if p.nametag > tag && p.nametag != GM_NAMETAG_COUNT {
+            p.nametag = p.nametag.wrapping_sub(1);
+        }
+    }
 }

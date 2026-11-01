@@ -6,6 +6,108 @@
 //! `tests/tu_it_279C.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::itkinds10::it_80277040;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjEvent;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjInteraction;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itLGun_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf_accurate;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1056,5 +1158,90 @@ pub unsafe extern "C" fn it_8027B564(item_gobj: *mut HSD_GObj) {
     if ext::ftLib_80086960((*item).owner) != 0 {
         let mut sp10 = (*item).xD90;
         ext::pl_80037DF4((*item).owner, &raw mut sp10);
+    }
+}
+
+// ---- folded from itkinds12.rs (consolidation steps 21/22) ----
+// ---- it_279C.c -------------------------------------------------------------------------
+
+/// `it_8027B070`: copy the owner fighter's attack id / instance and staling fields.
+/// # Safety
+/// `owner_gobj`'s user data is a Fighter.
+pub unsafe fn it_8027b070(ip: &mut Item, owner_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_8027b070");
+    let fp = &*((*owner_gobj).user_data as *const Fighter);
+    ip.xD88_attackID = fp.x2068_attackID;
+    ip.xD8C_attack_instance = fp.x206C_attack_instance;
+    ip.xD90 = fp.x2070;
+    ip.xD94 = fp.x2074.x2074_vec;
+    ip.xD9C = fp.x2074.x207C;
+    ip.xDA4_word = fp.x2074.anon_10.x2084;
+    ip.xDA8_short = fp.x2074.x2088;
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- it_279C.c -------------------------------------------------------------------------
+
+/// `it_8027A13C`: zero the pokemon-spawn x4/x10 vectors.
+pub fn it_8027a13c(ip: &mut Item) {
+    melee_core::ct!("it_8027a13c");
+    unsafe {
+        let v = &mut ip.xDD4_itemVar.pokemon_spawn;
+        v.x10 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+        v.x4 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    }
+}
+
+/// `it_8027A344`.
+pub fn it_8027a344(ip: &mut Item) {
+    melee_core::ct!("it_8027a344");
+    unsafe {
+        ip.x40_vel.x = ip.xDD4_itemVar.pokemon_spawn.x4.z * ip.facing_dir;
+        ip.x40_vel.y = ip.xDD4_itemVar.pokemon_spawn.x4.y;
+    }
+}
+
+/// `it_8027A364`: 1 + the spawn weights of every pokemon other than the last two spawned.
+/// # Safety
+/// `ip.xC4_article_data->x4_specialAttributes` must be a valid `itPokemonSpawn_DatAttrs`.
+pub unsafe fn it_8027a364(ip: &Item, sel: &PokemonSelectionState) -> i32 {
+    melee_core::ct!("it_8027a364");
+    let attr = &*((*ip.xC4_article_data).x4_specialAttributes as *const itPokemonSpawn_DatAttrs);
+    let mut ret = 1i32;
+    for i in It_PKind_Start..It_PKind_Terminate {
+        if sel.last_kind != i && sel.previous_kind != i {
+            ret = ret.wrapping_add(attr.pokemon_spawn_weights[(i - It_PKind_Start) as usize]);
+        }
+    }
+    ret
+}
+
+/// `it_8027AAA0`: copy the spawner's (`ip1`) attributes into the spawned item's vars.
+/// # Safety
+/// `ip1`'s article special attributes must be a valid `itPokemonSpawn_DatAttrs`;
+/// `item2.xCC_item_attr` must be valid; `attr.x38` must be at most 6 (the C overruns `x2C`).
+pub unsafe fn it_8027aaa0(ip1: &Item, item2: &mut Item, arg2: i32) {
+    melee_core::ct!("it_8027aaa0");
+    let attr = &*((*ip1.xC4_article_data).x4_specialAttributes as *const itPokemonSpawn_DatAttrs);
+    let scale = (*item2.xCC_item_attr).x60_scale;
+    let v = &mut item2.xDD4_itemVar.pokemon_spawn;
+    if arg2 == It_PKind_Marumine {
+        v.x1C = 0.0;
+        v.x20 = 0.0;
+    } else {
+        v.x1C = attr.xC;
+        v.x20 = attr.x10;
+    }
+    v.x24 = attr.x14;
+    v.x28 = attr.x18;
+    v.x48 = (scale - v.x4C) / v.x28;
+    v.x44 = attr.x34;
+    v.x54 = attr.x38;
+    v.x5C = 0;
+    v.x58 = 0;
+    v.x50 = 0.0;
+    for i in 0..attr.x38.max(0) as usize {
+        // the C re-reads x60_scale each iteration; nothing writes it in between
+        v.x2C[i] = attr.x1C[i] * scale;
     }
 }

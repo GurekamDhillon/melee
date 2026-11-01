@@ -10,6 +10,10 @@
 //! `mnNameNew_GlyphTable`, `unk_vec`).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_mut, unused_variables, unused_assignments, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use crate::mn_inl::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -3509,3 +3513,84 @@ pub static mut mnNameNew_803EE724: [*mut c_char; 1] = unsafe {
     [&raw const mnNameNew_804D4F98 as *mut u8 as *mut c_char]
 };
 pub const NULL: i32 = 0;
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mnnamenew.c `mnNameNew_8023BAA8_fp`: the key the cursor moves to on the name-entry grid
+/// (`arg1`: 1 left, 2 right, 4 down, 8 up; keys 0x32..0x39 are the bottom row).
+pub fn mnNameNew_8023BAA8_fp(arg0: &mt::NameNewEntry, arg1: i32, arg2: u8) -> i32 {
+    melee_core::ct!("mnNameNew_8023BAA8_fp");
+    let k = arg2 as i32;
+    let last = arg0.last_key_sel as i32;
+    let by_mode = |mode: u8| match mode {
+        0 => Some(0x33),
+        1 => Some(0x34),
+        2 => Some(0x35),
+        _ => None,
+    };
+    if (0x32..0x3A).contains(&arg2) {
+        if arg1 & 1 != 0 {
+            if k == 0x39 {
+                return (last / 5) * 5 + 4;
+            }
+            if k > 0x32 {
+                return k - 1;
+            }
+            return 0x38;
+        }
+        if arg1 & 2 != 0 {
+            if k == 0x39 {
+                return (last / 5) * 5;
+            }
+            if k == 0x38 {
+                return 0x32;
+            }
+            return k + 1;
+        }
+        if arg1 & 4 != 0 {
+            if k != 0x38 && k != 0x39 {
+                return last % 5;
+            }
+        } else if arg1 & 8 != 0 && k != 0x38 && k != 0x39 {
+            return last % 5 + 0x2D;
+        }
+    } else {
+        if arg1 & 1 != 0 {
+            return if k % 5 != 0 { k - 1 } else { 0x39 };
+        }
+        if arg1 & 2 != 0 {
+            return if k % 5 == 4 { 0x39 } else { k + 1 };
+        }
+        if arg1 & 4 != 0 {
+            if k / 5 < 9 {
+                return k + 5;
+            }
+            if let Some(r) = by_mode(arg0.mode) {
+                return r;
+            }
+        } else if arg1 & 8 != 0 {
+            if k / 5 != 0 {
+                return k - 5;
+            }
+            if let Some(r) = by_mode(arg0.mode) {
+                return r;
+            }
+        }
+    }
+    k
+}
+
+/// mnnamenew.c `GlyphVariantCount_fp`.
+pub fn GlyphVariantCount_fp(count: u16, out: &mut i32) {
+    melee_core::ct!("GlyphVariantCount_fp");
+    *out = (count & 0xFF) as i32;
+}
+
+// ---- folded from mn_r5.rs (consolidation steps 21/22) ----
+// Round 5: mn leaf functions over nested pointers, verified by `tests/oracle_r5.rs`.
+
+/// mnnamenew.c `GetAutoNameCharacter_fp`: `(*names)[char_idx]`.
+pub fn GetAutoNameCharacter_fp(names: &*const u8, char_idx: i32) -> u8 {
+    melee_core::ct!("GetAutoNameCharacter_fp");
+    // SAFETY: the C indexes the name string unchecked.
+    unsafe { *names.offset(char_idx as isize) }
+}

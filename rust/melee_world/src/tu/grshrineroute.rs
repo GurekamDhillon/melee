@@ -15,6 +15,12 @@
 //! the oracle never reaches it (the light chain always has 15 or more objects).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use core::ffi::c_void;
@@ -23,10 +29,6 @@ use melee_runtime::gekko::{cosf, sinf, sqrtf};
 use melee_types::inline as mi;
 use melee_types::*;
 
-pub use crate::gr::trivial::grshrineroute::{
-    grShrineRoute_802088B8, grShrineRoute_802089D8, grShrineRoute_80208A28, grShrineRoute_80208F0C,
-    grShrineRoute_80209BE4, grShrineRoute_8020A214, grShrineRoute_8020A894, grShrineRoute_OnTouchLine,
-};
 
 /// `struct grShrineRoute_YakumonoParam`.
 #[repr(C)]
@@ -1208,3 +1210,32 @@ pub unsafe extern "C" fn grShrineRoute_ScriptQuery(field: i32, idx: i32) -> i32 
         _ => -1,
     }
 }
+
+// ---- folded from grshrineroute.rs (consolidation steps 21/22) ----
+/// stageGObj1_3_OnInit_fp (gr/grshrineroute.c:1115)
+    pub unsafe extern "C" fn stageGObj1_3_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grshrineroute.rs (consolidation steps 21/22) ----
+/// grShrineRoute_802088B8 (gr/grshrineroute.c:214)
+    pub extern "C" fn grShrineRoute_802088B8() -> i32 { 0 }
+
+/// grShrineRoute_802089D8 (gr/grshrineroute.c:252)
+    pub extern "C" fn grShrineRoute_802089D8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_80208A28 (gr/grshrineroute.c:269)
+    pub extern "C" fn grShrineRoute_80208A28(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_80208F0C (gr/grshrineroute.c:381)
+    pub extern "C" fn grShrineRoute_80208F0C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_80209BE4 (gr/grshrineroute.c:798)
+    pub extern "C" fn grShrineRoute_80209BE4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_8020A214 (gr/grshrineroute.c:925)
+    pub extern "C" fn grShrineRoute_8020A214(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_8020A894 (gr/grshrineroute.c:1120)
+    pub extern "C" fn grShrineRoute_8020A894(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrineRoute_OnTouchLine (gr/grshrineroute.c:1564)
+    pub extern "C" fn grShrineRoute_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

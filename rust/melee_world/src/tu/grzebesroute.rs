@@ -4,6 +4,9 @@
 //! Verified against the C by the TU state oracle (tests/tuo_grzebesroute.rs; oracle/tuo).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -560,3 +563,22 @@ pub unsafe extern "C" fn grZebesRoute_8020B85C(_arg: *mut Vec3, _arg0: i32, _job
     melee_core::ct!("grZebesRoute_8020B85C");
     1
 }
+
+// ---- folded from grzebesroute.rs (consolidation steps 21/22) ----
+/// grZebesRoute_8020B258_fp (gr/grzebesroute.c:117)
+    pub extern "C" fn grZebesRoute_8020B258_fp() -> i32 { 0 }
+
+/// grZebesRoute_8020B374_fp (gr/grzebesroute.c:142)
+    pub extern "C" fn grZebesRoute_8020B374_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebesRoute_8020B3B0_fp (gr/grzebesroute.c:156)
+    pub extern "C" fn grZebesRoute_8020B3B0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebesRoute_8020B424_fp (gr/grzebesroute.c:175)
+    pub extern "C" fn grZebesRoute_8020B424_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grZebesRoute_8020B854_fp (gr/grzebesroute.c:302)
+    pub extern "C" fn grZebesRoute_8020B854_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grZebesRoute_8020B85C_fp (gr/grzebesroute.c:307)
+    pub extern "C" fn grZebesRoute_8020B85C_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

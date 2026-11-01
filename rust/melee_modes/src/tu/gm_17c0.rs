@@ -14,6 +14,18 @@
 //! * `fn_8017C1A4` has a function-local `static int drive_tick` in the C; it is `DRIVE_TICK` here.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lb_r6::memzero as memzero_gm_r7;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use crate::gm_ptr::{CHKIND_NONE};
+#[allow(unused_imports)]
+use crate::gm::{FT_KIND_CREZYH, FT_KIND_MASTERH};
 use super::ext_hook::memzero;
 use crate::ext_fns;
 use core::ffi::c_void;
@@ -1527,4 +1539,69 @@ pub unsafe fn fn_8017E3C8() {
             ext::Toy_SetUnlockState(lbl_804706D8[i].x0 as enum_t, lbl_804706D8[i].x2 as i32);
         }
     }
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gm_17C0.c `BossHook_Kind_fp` (TARGET_PC): the HP bosses driven by the 1P controller.
+pub fn BossHook_Kind_fp(kind: i32) -> i32 {
+    melee_core::ct!("BossHook_Kind_fp");
+    (kind == FT_KIND_MASTERH || kind == FT_KIND_CREZYH) as i32
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gm_17C0.c `gm_8017CE34_CountEnemies_fp` (TARGET_PC: compares with ChKind_None, per m-ex).
+pub fn gm_8017CE34_CountEnemies_fp(arg0: &[i8]) -> i32 {
+    melee_core::ct!("gm_8017CE34_CountEnemies_fp");
+    arg0[..3].iter().filter(|&&c| c as i32 != mt::ChKind_None as i32).count() as i32
+}
+
+/// gm_17C0.c `gm_8017CE34_GetCpuLevel_fp`.
+pub fn gm_8017CE34_GetCpuLevel_fp(arg1: &mt::Unk1PData) -> u8 {
+    melee_core::ct!("gm_8017CE34_GetCpuLevel_fp");
+    arg1.x0.cpu_level
+}
+
+/// gm_17C0.c `gm_8017DB58_fp`: clear three enemy entries.
+pub fn gm_8017DB58_fp(arg0: &mut [mt::Unk1PData_x24]) {
+    melee_core::ct!("gm_8017DB58_fp");
+    for e in &mut arg0[..3] {
+        e.ckind = CHKIND_NONE;
+    }
+}
+
+/// gm_17C0.c `gm_8017DB6C_fp`.
+pub fn gm_8017DB6C_fp(arg0: &[mt::gm_8017DB6C_arg0_t], index: i32) -> u8 {
+    melee_core::ct!("gm_8017DB6C_fp");
+    arg0[index as usize].x0
+}
+
+/// gm_17C0.c `gm_8017DB78_fp`.
+pub fn gm_8017DB78_fp(arg0: &[mt::gm_8017DB6C_arg0_t], index: i32) -> u8 {
+    melee_core::ct!("gm_8017DB78_fp");
+    arg0[index as usize].x1
+}
+
+// ---- folded from gm_r10.rs (consolidation steps 21/22) ----
+/// gm_17C0.c `fn_8017DE54_fp` (TARGET_PC branch: the null id is `ChKind_None`, 0x21 either way).
+pub fn fn_8017DE54_fp(arg0: u8, arg1: &[u8]) -> i32 {
+    melee_core::ct!("fn_8017DE54_fp");
+    const NONE: i32 = melee_types::ChKind_None as i32;
+    if arg0 & 0x20 != 0 {
+        return 0;
+    }
+    if arg0 & 0x10 != 0 {
+        let count = arg1[..3].iter().filter(|&&k| k as i32 != NONE).count() as i32;
+        return 3 - count;
+    }
+    if arg0 & 2 != 0 {
+        return 2;
+    }
+    0
+}
+
+// ---- folded from gm_r7.rs (consolidation steps 21/22) ----
+/// gm_17C0.c `gm_8017C984_fp`: zero 0x74 bytes.
+pub fn gm_8017C984_fp(arg0: &mut [u8]) {
+    melee_core::ct!("gm_8017C984_fp");
+    memzero_gm_r7(arg0, 0x74);
 }

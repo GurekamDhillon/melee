@@ -7,6 +7,17 @@
 //! Callees in TUs that are not ported yet are `ext` stubs named like the C function.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_mut, unused_variables, unused_assignments, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::mn_r9::{MnVibrationData as MnVibrationData_mn_r9};
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_JObj as HSD_JObj_mn_r4;
+#[allow(unused_imports)]
+use crate::mn_r4::{jobj as jobj_mn_r4};
 use crate::mn_inl::*;
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
@@ -1447,3 +1458,36 @@ pub static mut mnVibration_804DC058: f32 = 12.0_f32;
 pub static mut mnVibration_804DC05C: f32 = 13.0_f32;
 pub static mut mnVibration_804DC060: f32 = 14.0_f32;
 pub const NULL: i32 = 0;
+
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mnvibration.c `mnVibration_GetPreviousCursorRow_fp`.
+pub fn mnVibration_GetPreviousCursorRow_fp(cursor_row: i32) -> i32 {
+    melee_core::ct!("mnVibration_GetPreviousCursorRow_fp");
+    cursor_row.wrapping_sub(1)
+}
+
+/// mnvibration.c `mnVibration_GetNextCursorRow_fp`.
+pub fn mnVibration_GetNextCursorRow_fp(cursor_row: i32) -> i32 {
+    melee_core::ct!("mnVibration_GetNextCursorRow_fp");
+    cursor_row.wrapping_add(1)
+}
+
+/// mnvibration.c `mnVibration_GetPadIndex_fp`.
+pub fn mnVibration_GetPadIndex_fp(port: i32) -> u8 {
+    melee_core::ct!("mnVibration_GetPadIndex_fp");
+    port as u8
+}
+
+// ---- folded from mn_r4.rs (consolidation steps 21/22) ----
+/// mnvibration.c `mnVibration_GetCursorYSpacing_fp` (static inline).
+pub fn mnVibration_GetCursorYSpacing_fp(base_y: f32, jobj_mn_r4: &HSD_JObj_mn_r4) -> f32 {
+    melee_core::ct!("mnVibration_GetCursorYSpacing_fp");
+    mt::inline::HSD_JObjGetTranslationY(jobj_mn_r4) - base_y
+}
+
+// ---- folded from mn_r9.rs (consolidation steps 21/22) ----
+/// mnvibration.c `mnVibration_GetCursorRow_fp`.
+pub fn mnVibration_GetCursorRow_fp(data: &MnVibrationData_mn_r9) -> u8 {
+    melee_core::ct!("mnVibration_GetCursorRow_fp");
+    data.x0[1]
+}

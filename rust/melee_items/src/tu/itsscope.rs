@@ -3,6 +3,165 @@
 //! tests/kinds_itsscope.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_mut, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds6::{sa as sa_itkinds6};
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itkinds14::{sa as sa_itkinds14};
+#[allow(unused_imports)]
+use crate::itfwd8::it_8027c794;
+#[allow(unused_imports)]
+use crate::itkinds10::it_flipper_repel_inline;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802e37a4;
+#[allow(unused_imports)]
+use crate::itkinds6::it_802ddbe8;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HSD_AnimJoint;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::KinokoAnim;
+#[allow(unused_imports)]
+use crate::layout::UnkAllstarData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itClimbersBlizzardAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLipstickAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkBytes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kinoko;
+#[allow(unused_imports)]
+use crate::itkinds13::{sa};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -336,4 +495,60 @@ pub unsafe extern "C" fn itSscope_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool 
 pub unsafe extern "C" fn itSScope_Logic21_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itSScope_Logic21_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds13.rs (consolidation steps 21/22) ----
+/// `it_80291CCC` (itsscope.c): `*pos = attrs->x34`.
+/// # Safety
+/// The special attributes are an `itSScopeAttributes`.
+pub unsafe fn it_80291ccc(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_80291ccc");
+    let a = sa::<itSScopeAttributes>(ip);
+    pos.x = a.x34.x;
+    pos.y = a.x34.y;
+    pos.z = a.x34.z;
+}
+
+/// `it_80291CF4` (itsscope.c): charge level of `arg1` frames (0, `arg1 / 8`, or 9).
+/// # Safety
+/// The special attributes are an `itSScopeAttributes`.
+pub unsafe fn it_80291cf4(ip: &Item, arg1: i32) -> i32 {
+    melee_core::ct!("it_80291cf4");
+    let a = sa::<itSScopeAttributes>(ip);
+    if arg1 <= a.x4 {
+        return 0;
+    }
+    if arg1 < a.x8.wrapping_mul(8) {
+        return arg1 / 8;
+    }
+    9
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itsscope.c `it_80291D38`: `attrs->xC[charge_level]` as s32 (charge 0..9; the C has no
+/// return for other values). `as i32` is gwtool's saturating conversion.
+/// # Safety
+/// The special attributes are an `itSScopeAttributes`.
+pub unsafe fn it_80291d38(ip: &Item, charge_level: i32) -> i32 {
+    melee_core::ct!("it_80291d38");
+    let a = sa_itkinds14::<itSScopeAttributes>(ip);
+    a.xC[charge_level as usize] as i32
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+// ---- scope / wstar / sword -------------------------------------------------------------------
+
+/// `it_80291DAC_level` (itsscope.c, static inline): charge level 0..9 of `arg1`.
+/// # Safety
+/// The special attributes must be a valid `itSScopeAttributes`.
+pub unsafe fn it_80291dac_level(ip: &Item, arg1: i32) -> i32 {
+    melee_core::ct!("it_80291dac_level");
+    let attrs = sa_itkinds6::<itSScopeAttributes>(ip);
+    if arg1 <= attrs.x4 {
+        0
+    } else if arg1 < attrs.x8.wrapping_mul(8) {
+        arg1 / 8
+    } else {
+        9
+    }
 }

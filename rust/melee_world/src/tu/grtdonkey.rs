@@ -6,19 +6,17 @@
 //! tests/tu_grtdonkey.rs against gen/turef/tu_grtdonkey_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use melee_types::*;
 
-pub use crate::gr::forward::grtdonkey::{
-    grTdonkey_UnkStage0_OnStart, stageGObj0_OnInit, stageGObj1_GObjProc, stageGObj1_OnInit,
-    stageGObj2_GObjProc, stageGObj2_OnInit,
-};
-pub use crate::gr::trivial::grtdonkey::{
-    grTDonkey_802202C4, grTDonkey_802203E0, grTDonkey_80220440, grTDonkey_802204D0,
-    grTDonkey_802204FC, grTDonkey_80220504,
-};
-
+pub use crate::gr::forward::grtdonkey::{stageGObj0_OnInit, stageGObj1_GObjProc, stageGObj1_OnInit, stageGObj2_GObjProc, stageGObj2_OnInit};
 pub unsafe extern "C" fn grTDonkey_80220228(_arg0: i32) { melee_core::ct!("grTDonkey_80220228");}
 
 pub unsafe extern "C" fn grTDonkey_OnInit() {
@@ -88,3 +86,26 @@ pub static mut grTDk_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grtdonkey.rs (consolidation steps 21/22) ----
+/// grTdonkey_UnkStage0_OnStart (gr/grtdonkey.c:81)
+    pub unsafe extern "C" fn grTdonkey_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtdonkey.rs (consolidation steps 21/22) ----
+/// grTDonkey_802202C4 (gr/grtdonkey.c:86)
+    pub extern "C" fn grTDonkey_802202C4() -> i32 { 0 }
+
+/// grTDonkey_802203E0 (gr/grtdonkey.c:111)
+    pub extern "C" fn grTDonkey_802203E0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTDonkey_80220440 (gr/grtdonkey.c:125)
+    pub extern "C" fn grTDonkey_80220440(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTDonkey_802204D0 (gr/grtdonkey.c:142)
+    pub extern "C" fn grTDonkey_802204D0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTDonkey_802204FC (gr/grtdonkey.c:154)
+    pub extern "C" fn grTDonkey_802204FC(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTDonkey_80220504 (gr/grtdonkey.c:159)
+    pub extern "C" fn grTDonkey_80220504(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

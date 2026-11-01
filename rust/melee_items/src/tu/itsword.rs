@@ -6,6 +6,151 @@
 //! tests/kinds_itsword.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{step_f, step_i};
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itfwd8::it_8027c794;
+#[allow(unused_imports)]
+use crate::itkinds10::it_flipper_repel_inline;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802e37a4;
+#[allow(unused_imports)]
+use crate::itkinds6::it_802ddbe8;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HSD_AnimJoint;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::KinokoAnim;
+#[allow(unused_imports)]
+use crate::layout::UnkAllstarData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itClimbersBlizzardAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLipstickAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkBytes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kinoko;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -584,4 +729,98 @@ pub unsafe extern "C" fn itSword_Logic12_ShieldBounced(gobj: *mut Item_GObj) -> 
 pub unsafe extern "C" fn itSword_Logic12_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut HSD_GObj) {
     melee_core::ct!("itSword_Logic12_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from itkinds13.rs (consolidation steps 21/22) ----
+/// `it_80285300_fp` (itsword.c): `&attrs->x1C`.
+/// # Safety
+/// `ip.xC4_article_data` is valid.
+pub unsafe fn it_80285300_fp(ip: &Item) -> *mut itSword_UnkBytes {
+    melee_core::ct!("it_80285300_fp");
+    let a = (*ip.xC4_article_data).x4_specialAttributes as *mut itSword_UnkArticle1;
+    core::ptr::addr_of_mut!((*a).x1C)
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itsword.c `it_80285314_fp`: `it_80272CC0(gobj, 5)`.
+/// # Safety
+/// As `it_80272CC0`.
+pub unsafe fn it_80285314_fp(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("it_80285314_fp");
+    it_80272cc0(gobj, 5)
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+// ---- sword (beam sword) blend state --------------------------------------------------------
+
+/// `it_80284FC4` (itsword.c): start blend A towards `arg1` steps / value `arg2`.
+pub fn it_80284fc4(ip: &mut Item, arg1: i32, arg2: f32) {
+    melee_core::ct!("it_80284fc4");
+    unsafe {
+        let s = &mut ip.xDD4_itemVar.sword;
+        s.x4 = 0;
+        s.x8 = arg1;
+        s.xC = 1;
+        s.x10 = 1.0;
+        s.x14 = arg2;
+        s.x18 = (s.x14 - s.x10) / arg1 as f32;
+    }
+}
+
+/// `it_80285024_fp` (itsword.c): blend A back down over `arg1` steps to 1.0.
+pub fn it_80285024_fp(ip: &mut Item, arg1: i32) {
+    melee_core::ct!("it_80285024_fp");
+    unsafe {
+        let s = &mut ip.xDD4_itemVar.sword;
+        s.x4 = arg1;
+        s.x8 = 0;
+        s.xC = -1;
+        s.x14 = 1.0;
+        s.x18 = (s.x14 - s.x10) / s.x4 as f32;
+    }
+}
+
+/// `it_80285084_fp` (itsword.c): step blend A (`x4`->`x8` by `xC`, `x10`->`x14` by `x18`).
+pub fn it_80285084_fp(ip: &mut Item) {
+    melee_core::ct!("it_80285084_fp");
+    unsafe {
+        let s = &mut ip.xDD4_itemVar.sword;
+        step_i(&mut s.x4, s.x8, &mut s.xC);
+        step_f(&mut s.x10, s.x14, &mut s.x18);
+    }
+}
+
+/// `it_80285140_fp` (itsword.c): step blend B (`x1C`->`x20` by `x24`, `x28`->`x2C` by `x30`).
+pub fn it_80285140_fp(ip: &mut Item) {
+    melee_core::ct!("it_80285140_fp");
+    unsafe {
+        let s = &mut ip.xDD4_itemVar.sword;
+        step_i(&mut s.x1C, s.x20, &mut s.x24);
+        step_f(&mut s.x28, s.x2C, &mut s.x30);
+    }
+}
+
+/// `it_802851FC` (itsword.c): step blend C (`x34`->`x38` by `x3C`, `x40`->`x44` by `x48`).
+pub fn it_802851fc(ip: &mut Item) {
+    melee_core::ct!("it_802851fc");
+    unsafe {
+        let s = &mut ip.xDD4_itemVar.sword;
+        step_i(&mut s.x34, s.x38, &mut s.x3C);
+        step_f(&mut s.x40, s.x44, &mut s.x48);
+    }
+}
+
+/// `it_802852B8` (itsword.c): `*arg1 = 0`, `*arg2 = 10.03 * (sword.x4C * star.xvel *
+/// sword.x28 * 0.3)` (`star.xvel` is the same word as `sword.x10`).
+pub fn it_802852b8(ip: &Item, arg1: Option<&mut f32>, arg2: Option<&mut f32>) {
+    melee_core::ct!("it_802852b8");
+    let f1 = unsafe {
+        ip.xDD4_itemVar.sword.x4C * ip.xDD4_itemVar.star.xvel * ip.xDD4_itemVar.sword.x28 * 0.3
+    };
+    if let Some(a) = arg1 {
+        *a = 0.0;
+    }
+    if let Some(b) = arg2 {
+        *b = 10.03 * f1;
+    }
 }

@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtlink::{grTLink_802219C8, grTLink_80221AE4, grTLink_80221B44, grTLink_80221BD4, grTLink_80221C00, grTLink_80221C08};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -200,3 +205,26 @@ pub unsafe extern "C" fn grTLink_80221BFC(gobj: *mut HSD_GObj) {
     melee_core::ct!("grTLink_80221BFC");
     
 }
+
+// ---- folded from grtlink.rs (consolidation steps 21/22) ----
+/// grTlink_UnkStage0_OnStart_fp (gr/grtlink.c:85)
+    pub unsafe extern "C" fn grTlink_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtlink.rs (consolidation steps 21/22) ----
+/// grTLink_802219C8 (gr/grtlink.c:90)
+    pub extern "C" fn grTLink_802219C8() -> i32 { 0 }
+
+/// grTLink_80221AE4 (gr/grtlink.c:116)
+    pub extern "C" fn grTLink_80221AE4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLink_80221B44 (gr/grtlink.c:130)
+    pub extern "C" fn grTLink_80221B44(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLink_80221BD4 (gr/grtlink.c:147)
+    pub extern "C" fn grTLink_80221BD4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTLink_80221C00 (gr/grtlink.c:159)
+    pub extern "C" fn grTLink_80221C00(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTLink_80221C08 (gr/grtlink.c:164)
+    pub extern "C" fn grTLink_80221C08(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

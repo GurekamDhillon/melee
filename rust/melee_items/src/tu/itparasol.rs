@@ -2,6 +2,73 @@
 //! "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_itparasol.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -298,4 +365,21 @@ pub unsafe extern "C" fn it_8028B850(item_gobj: *mut Item_GObj, speed: f32) {
 pub unsafe extern "C" fn itParasol_Logic13_EvtUnk(item_gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
     melee_core::ct!("itParasol_Logic13_EvtUnk");
     ext::it_8026B894(item_gobj, arg1);
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+/// itparasol.c `it_8028B08C`: `{20, 16, 45, 2, 20, 30, 40, 16}[st[statenum].anim_id]`. Panics
+/// on an anim id outside 0..8 (the C reads past its table; the real table has -1 entries).
+pub fn it_8028b08c(st: &[ItemStateTable], statenum: i32) -> i32 {
+    melee_core::ct!("it_8028b08c");
+    const T: [i32; 8] = [20, 16, 45, 2, 20, 30, 40, 16];
+    T[st[statenum as usize].anim_id as usize]
+}
+
+/// itparasol.c `jobj_child_fp`: `jobj->child`, NULL-safe.
+/// # Safety
+/// `jobj` NULL or valid.
+pub unsafe fn jobj_child_fp(jobj: *mut HSD_JObj) -> *mut HSD_JObj {
+    melee_core::ct!("jobj_child_fp");
+    if jobj.is_null() { null_mut() } else { (*jobj).child }
 }

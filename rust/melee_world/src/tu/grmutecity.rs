@@ -9,6 +9,12 @@
 //! the same way (spec `patch`).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1601,3 +1607,26 @@ pub unsafe extern "C" fn grMuteCity_801F2C10(pos: *mut Vec3, arg: i32, jobj: *mu
     }
     1
 }
+
+// ---- folded from grmutecity.rs (consolidation steps 21/22) ----
+/// grMuteCity_801EFCE0_fp (gr/grmutecity.c:398)
+    pub unsafe extern "C" fn grMuteCity_801EFCE0_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+/// stageGObj36_37_OnInit_fp (gr/grmutecity.c:601)
+    pub unsafe extern "C" fn stageGObj36_37_OnInit_fp(a0: *mut HSD_GObj) { let c = c(); let gp = (*a0).user_data as *mut Ground; c.granime_801c8138(a0, (*gp).map_id as i32, 0); }
+
+// ---- folded from grmutecity.rs (consolidation steps 21/22) ----
+/// grMuteCity_801EFD04_fp (gr/grmutecity.c:403)
+    pub extern "C" fn grMuteCity_801EFD04_fp() -> i32 { 0 }
+
+/// grMuteCity_801F0118_fp (gr/grmutecity.c:513)
+    pub extern "C" fn grMuteCity_801F0118_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grMuteCity_801F0288_fp (gr/grmutecity.c:558)
+    pub extern "C" fn grMuteCity_801F0288_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grMuteCity_801F043C_fp (gr/grmutecity.c:606)
+    pub extern "C" fn grMuteCity_801F043C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grMuteCity_801F04A8_fp (gr/grmutecity.c:630)
+    pub extern "C" fn grMuteCity_801F04A8_fp(a0: *mut HSD_GObj) -> i32 { 0 }

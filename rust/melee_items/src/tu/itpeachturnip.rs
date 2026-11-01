@@ -5,6 +5,50 @@
 //! contraction) by tests/kinds_itpeachturnip.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -321,4 +365,43 @@ pub unsafe extern "C" fn itPeachTurnip_Logic56_EvtUnk(item_gobj: *mut Item_GObj,
         (*item).xDD4_itemVar.peachturnip.xDE4_owner = null_mut();
     }
     ext::it_8026B894(item_gobj, ref_gobj);
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+// ---- lifetime ----------------------------------------------------------------------------
+
+/// `decrease_lifetimer_fp` (itpeachturnip.c, static): `--` on an f32 subtracts 1.0f.
+pub fn decrease_lifetimer_fp(ip: &mut Item) -> bool {
+    melee_core::ct!("decrease_lifetimer_fp");
+    ip.xD44_lifeTimer -= 1.0;
+    ip.xD44_lifeTimer <= 0.0
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_802BD32C` (itpeachturnip.c): weighted turnip pick; -1 if none.
+/// # Safety
+/// The item's special attributes are an `itPeachTurnipAttributes` with `x4_length <= 7` (the C
+/// reads `x8[length]`).
+pub unsafe fn it_802bd32c(rand: &mut HsdRand, ip: &Item) -> i32 {
+    melee_core::ct!("it_802bd32c");
+    let attr = &*((*ip.xC4_article_data).x4_specialAttributes as *const itPeachTurnipAttributes);
+    let n = attr.x4_length;
+    let mut sum = 0i32;
+    let mut i = 0;
+    while i < n {
+        sum = sum.wrapping_add(attr.x8[i as usize].x0_odds);
+        i += 1;
+    }
+    let r = rand.randi(sum);
+    let mut cum = attr.x8[0].x0_odds;
+    let mut ret = -1;
+    i = 0;
+    while i < n && ret == -1 {
+        if r < cum {
+            ret = i;
+        }
+        cum = cum.wrapping_add(attr.x8[(i + 1) as usize].x0_odds);
+        i += 1;
+    }
+    ret
 }

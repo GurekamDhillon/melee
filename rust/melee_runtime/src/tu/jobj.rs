@@ -2,9 +2,9 @@
 //! `crate::jobj` and `crate::jobj_rt`; exported below. The load/class boundary uses generated
 //! little-endian records, never guest-memory offsets. See the shard coverage document.
 #![allow(non_snake_case, non_upper_case_globals, clippy::missing_safety_doc)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 pub use crate::jobj::{JObjTree, JObjHost, JObjId, JointSource};
-pub use crate::jobj_rt::{JObjRt, JObjExt, sort_anim as JObjSortAnim, jobj_get_joint2, jobj_get_effector};
-use crate::jobj::*;
+pub use crate::jobj_rt::{JObjRt, JObjExt, sort_anim as JObjSortAnim};use crate::jobj as jobj_src;
 use melee_types::{HSD_JObj, HSD_Joint, HSD_JObjInfo, HSD_DObj, HSD_DObjDesc, HSD_RObj,
     HSD_RObjDesc, HSD_AObj, HSD_CObj, _HSD_Class, _HSD_ClassInfo, _HSD_SList, Mtx};
 use std::ptr::null_mut;
@@ -455,3 +455,28 @@ pub unsafe fn HSD_JObjSetupMatrix(j: *mut HSD_JObj) { melee_core::ct!("HSD_JObjS
 pub unsafe fn HSD_JObjRemoveAll_ptr(j: *mut HSD_JObj) { melee_core::ct!("HSD_JObjRemoveAll_ptr"); native_remove_all(j) }
 /// `HSD_JObjRemove` on a raw JObj: unlink it from its tree and drop its reference.
 pub unsafe fn HSD_JObjRemove_ptr(j: *mut HSD_JObj) { melee_core::ct!("HSD_JObjRemove_ptr"); if !j.is_null() { let (mut t, mut h) = snapshot(&[j]); t.remove(&mut h, Some(JObjId(0))); finish(&t, h); } }
+
+// ---- folded from jobj_rt.rs (consolidation steps 21/22) ----
+/// `jobj_get_joint2` (static inline): the first JOINT2 in the sibling list from `j`.
+pub fn jobj_get_joint2<D: Copy + PartialEq, R: Copy + PartialEq>(t: &JObjTree<D, R>, mut j: Option<JObjId>) -> Option<JObjId> {
+    melee_core::ct!("jobj_get_joint2");
+    while let Some(x) = j {
+        if t.get(x).flags & jobj_src::JOBJ_EFFECTOR == jobj_src::JOBJ_JOINT2 {
+            return Some(x);
+        }
+        j = t.get(x).next;
+    }
+    None
+}
+
+/// `jobj_get_effector` (static inline).
+pub fn jobj_get_effector<D: Copy + PartialEq, R: Copy + PartialEq>(t: &JObjTree<D, R>, mut j: Option<JObjId>) -> Option<JObjId> {
+    melee_core::ct!("jobj_get_effector");
+    while let Some(x) = j {
+        if t.get(x).flags & jobj_src::JOBJ_EFFECTOR == jobj_src::JOBJ_EFFECTOR {
+            return Some(x);
+        }
+        j = t.get(x).next;
+    }
+    None
+}

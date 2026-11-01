@@ -5,6 +5,17 @@
 //! `python rust/melee_world/gen/cref/run_gr.py groldpupupu`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::vec::Vec3 as Vec3_leaves;
+#[allow(unused_imports)]
+use crate::gr::leaves::{in_box};
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -752,3 +763,48 @@ pub unsafe extern "C" fn grOldPupupu_80211CA8(a: *mut Vec3, _arg: i32, joint: *m
         0
     }
 }
+
+// ---- folded from groldpupupu.rs (consolidation steps 21/22) ----
+/// grOldPupupu_80210888_fp (gr/groldpupupu.c:164)
+    pub unsafe extern "C" fn grOldPupupu_80210888_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// grOldPupupu_8021128C (gr/groldpupupu.c); same body as grGreens_80213AB4.
+pub fn groldpupupu_8021128c(v: &Vec3_leaves, max_x: f32, min_x: f32, max_y: f32, min_y: f32) -> bool {
+    melee_core::ct!("groldpupupu_8021128c");
+    in_box(v, max_x, min_x, max_y, min_y)
+}
+
+// ---- folded from groldpupupu.rs (consolidation steps 21/22) ----
+/// grOldPupupu_802108AC_fp (gr/groldpupupu.c:169)
+    pub extern "C" fn grOldPupupu_802108AC_fp() -> i32 { 0 }
+
+/// grOldPupupu_802109C8_fp (gr/groldpupupu.c:216)
+    pub extern "C" fn grOldPupupu_802109C8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80210A1C_fp (gr/groldpupupu.c:235)
+    pub extern "C" fn grOldPupupu_80210A1C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80210B48_fp (gr/groldpupupu.c:275)
+    pub extern "C" fn grOldPupupu_80210B48_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80210BB8_fp (gr/groldpupupu.c:292)
+    pub extern "C" fn grOldPupupu_80210BB8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80210C2C_fp (gr/groldpupupu.c:311)
+    pub extern "C" fn grOldPupupu_80210C2C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80210D08_fp (gr/groldpupupu.c:339)
+    pub extern "C" fn grOldPupupu_80210D08_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_8021118C_fp (gr/groldpupupu.c:456)
+    pub extern "C" fn grOldPupupu_8021118C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80211284_fp (gr/groldpupupu.c:500)
+    pub extern "C" fn grOldPupupu_80211284_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80211C14_fp (gr/groldpupupu.c:750)
+    pub extern "C" fn grOldPupupu_80211C14_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldPupupu_80211CA0_fp (gr/groldpupupu.c:770)
+    pub extern "C" fn grOldPupupu_80211CA0_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

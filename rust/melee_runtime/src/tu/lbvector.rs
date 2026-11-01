@@ -7,6 +7,9 @@
 //! contraction) by tests/lbtu_lbvector.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lbvector::{M_PI as M_PI_lbvector, angle as angle_lbvector, quintic as quintic_lbvector, wrap as wrap_lbvector};
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use melee_types::*;
@@ -523,4 +526,18 @@ pub unsafe fn lbVector_8000E838(a: *mut Vec, b: *mut Vec, c: *mut Vec, d: *mut V
         lbVector_Diff(c, d, &mut v3);
         lbVector_Len(&v3)
     }
+}
+
+// ---- folded from lbvector.rs (consolidation steps 21/22) ----
+/// `lbvector_sin_fp` (static).
+pub fn lbvector_sin_fp(angle_lbvector: f32) -> f32 {
+    melee_core::ct!("lbvector_sin_fp");
+    quintic_lbvector(wrap_lbvector(angle_lbvector))
+}
+
+/// `lbvector_cos_fp` (static).
+pub fn lbvector_cos_fp(angle_lbvector: f32) -> f32 {
+    melee_core::ct!("lbvector_cos_fp");
+    let a = (angle_lbvector as f64 + M_PI_lbvector / 2.0) as f32;
+    quintic_lbvector(wrap_lbvector(a))
 }

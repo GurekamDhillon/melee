@@ -13,6 +13,9 @@
 //! 32-bit layout); the oracle compiles the C with that spelled out.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use core::ffi::c_void;
@@ -20,9 +23,6 @@ use melee_core::fp::{fmadds, fmsubs};
 use melee_runtime::gekko::sqrtf;
 use melee_types::*;
 
-pub use crate::gr::trivial::grpushon::{
-    grPushOn_802183DC, grPushOn_80218590, grPushOn_80218670, grPushOn_80218880, grPushOn_80219528,
-};
 
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -704,3 +704,19 @@ pub static mut grPushOn_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grpushon.rs (consolidation steps 21/22) ----
+/// grPushOn_802183DC (gr/grpushon.c:158)
+    pub extern "C" fn grPushOn_802183DC() -> i32 { 0 }
+
+/// grPushOn_80218590 (gr/grpushon.c:214)
+    pub extern "C" fn grPushOn_80218590(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grPushOn_80218670 (gr/grpushon.c:238)
+    pub extern "C" fn grPushOn_80218670(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grPushOn_80218880 (gr/grpushon.c:323)
+    pub extern "C" fn grPushOn_80218880(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grPushOn_80219528 (gr/grpushon.c:767)
+    pub extern "C" fn grPushOn_80219528(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -5,6 +5,12 @@
 //! `python rust/melee_world/gen/cref/run_gr.py groldyoshi`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -533,3 +539,32 @@ pub unsafe extern "C" fn grOldYoshi_8020F40C(a: *mut Vec3, _arg: i32, joint: *mu
         0
     }
 }
+
+// ---- folded from groldyoshi.rs (consolidation steps 21/22) ----
+/// grOldYoshi_8020E828_fp (gr/groldyoshi.c:88)
+    pub unsafe extern "C" fn grOldYoshi_8020E828_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from groldyoshi.rs (consolidation steps 21/22) ----
+/// grOldYoshi_8020E84C_fp (gr/groldyoshi.c:93)
+    pub extern "C" fn grOldYoshi_8020E84C_fp() -> i32 { 0 }
+
+/// grOldYoshi_8020E968_fp (gr/groldyoshi.c:120)
+    pub extern "C" fn grOldYoshi_8020E968_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020E9E0_fp (gr/groldyoshi.c:140)
+    pub extern "C" fn grOldYoshi_8020E9E0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020EA5C_fp (gr/groldyoshi.c:158)
+    pub extern "C" fn grOldYoshi_8020EA5C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020EAEC_fp (gr/groldyoshi.c:179)
+    pub extern "C" fn grOldYoshi_8020EAEC_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020EC08_fp (gr/groldyoshi.c:212)
+    pub extern "C" fn grOldYoshi_8020EC08_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020F080_fp (gr/groldyoshi.c:328)
+    pub extern "C" fn grOldYoshi_8020F080_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grOldYoshi_8020F404_fp (gr/groldyoshi.c:460)
+    pub extern "C" fn grOldYoshi_8020F404_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

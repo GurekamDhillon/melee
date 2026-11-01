@@ -5,6 +5,249 @@
 //! oracle `tests/tu_it_2725.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c as it_8027346c_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484 as it_80273484_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c as it_8027349c_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4 as it_802734b4_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228 as it_80275228_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240 as it_80275240_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Disabled;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Unk4;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsuleState;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorPush;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftEdge;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightEdge;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Arwing_Laser;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_BombHei;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Coin;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_F_Flower;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Foods;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Heart;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kuriboh;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kyasarin_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Link_Bomb;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lucky_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Octarock_Stone;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Old_Kuri;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_S_Scope;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_StarRod;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Tomato;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyApple;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyHealApple;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib;
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0 as it_80272cc0_itkinds14;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828 as it_80272828_itkinds14;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860 as it_80272860_itkinds14;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use crate::itkinds10::it_80277040;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0 as it_80272cc0_itkinds12;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjEvent;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjInteraction;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::itLGun_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use crate::itkinds12::{item as item_itkinds12};
+#[allow(unused_imports)]
+use crate::helpers::it_coll_chk_ecb_overlap;
+#[allow(unused_imports)]
+use crate::itlib::it_is_heavy;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::Item_FtTrack;
+#[allow(unused_imports)]
+use crate::layout::Quaternion;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf_accurate;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds11::{child, item, jobj_of as jobj_of_itkinds11};
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1524,4 +1767,454 @@ pub unsafe extern "C" fn it_80275390(item_gobj: *mut HSD_GObj) {
     melee_core::ct!("it_80275390");
     (*item_of(item_gobj)).owner = null_mut();
     ext::it_8026B3A8(item_gobj);
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `it_80275158_fp` (it_2725.c). `common` is the C global `it_804D6D28` (ItemCommonData), passed
+/// in until the item globals exist natively.
+pub fn it_80275158_fp(ip: &mut Item, lifetime: f32, common: &ItemCommonData) {
+    melee_core::ct!("it_80275158_fp");
+    ip.xD44_lifeTimer = lifetime;
+    ip.xD48_halfLifeTimer = lifetime * common.x4C_float;
+}
+
+// ---- folded from item.rs (consolidation steps 21/22) ----
+/// `it_80274F28` (it_2725.c).
+pub fn it_80274f28(ip: &mut Item, arg1: i8, arg2: Option<unsafe extern "C" fn(*mut HSD_GObj)>,
+    arg3: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut HSD_GObj)>) {
+    melee_core::ct!("it_80274f28");
+    // SAFETY: UnkFlagStruct is a union of a byte and its bit view; both are plain bits.
+    unsafe { ip.xDD0_flag.anon_0.set_b5(1) };
+    ip.xD08 = arg1 as u8;
+    ip.grab_dealt = arg2;
+    ip.grabbed_for_victim = arg3;
+}
+
+// ---- folded from itkinds11.rs (consolidation steps 21/22) ----
+// ---- it_2725.c -------------------------------------------------------------------------
+
+/// `it_80272CC0`: bone `idx` of the item model: from the dynamic bone table when the model
+/// describes bones, else the `idx`-th first child down from the root JObj.
+/// # Safety
+/// `gobj` is a live item GObj; its article data / model desc (and the bone table when used) valid.
+pub unsafe fn it_80272cc0(gobj: *mut HSD_GObj, mut idx: i32) -> *mut HSD_JObj {
+    melee_core::ct!("it_80272cc0");
+    let ip = item(gobj);
+    let mut jobj = jobj_of_itkinds11(gobj);
+    if (*(*ip.xC4_article_data).x10_modelDesc).x4_bone_count != 0 {
+        return (*ip.xBBC_dynamicBoneTable).bones[idx as usize];
+    }
+    if idx != 0 {
+        while idx > 0 {
+            jobj = child(jobj);
+            idx -= 1;
+        }
+    }
+    jobj
+}
+
+/// `it_80274990_fp`: the model's spin angle: descend `(xC_bit_field >> 6) & 3` children, then read
+/// rotation z / x / y by `xDC8_word.flags.x17` (0 / 1 / other).
+/// # Safety
+/// As `it_80272CC0`; the JObj reached must be non-null (the C asserts).
+pub unsafe fn it_80274990_fp(gobj: *mut HSD_GObj) -> f32 {
+    melee_core::ct!("it_80274990_fp");
+    let ip = item(gobj);
+    let mut j = jobj_of_itkinds11(gobj);
+    let bit_chk = ((*(*ip.xC4_article_data).x10_modelDesc).xC_bit_field as u32 >> 6) & 3;
+    let mut n = bit_chk as i32;
+    while n > 0 {
+        j = if j.is_null() { core::ptr::null_mut() } else { (*j).child };
+        n -= 1;
+    }
+    let j = &*j;
+    match ip.xDC8_word.flags.x17() {
+        0 => j.rotate.z,
+        1 => j.rotate.x,
+        _ => j.rotate.y,
+    }
+}
+
+// ---- folded from itkinds12.rs (consolidation steps 21/22) ----
+// ---- it_2725.c -------------------------------------------------------------------------
+
+/// `it_80272C90`: the model's bone-attach bone (`it_80272CC0(gobj, x8_bone_attach_id)`).
+/// # Safety
+/// As `it_80272CC0`.
+pub unsafe fn it_80272c90(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("it_80272c90");
+    let id = (*(*item_itkinds12(gobj).xC4_article_data).x10_modelDesc).x8_bone_attach_id;
+    it_80272cc0_itkinds12(gobj, id)
+}
+
+/// `it_802746F8`: descend `(xC_bit_field >> 6) & 3` first children from the root JObj
+/// (NULL-safe).
+/// # Safety
+/// `gobj` is a live item_itkinds12 GObj; its article data / model desc valid; reached JObjs valid or NULL.
+pub unsafe fn it_802746f8(gobj: *mut HSD_GObj) -> *mut HSD_JObj {
+    melee_core::ct!("it_802746f8");
+    let mut j = (*gobj).hsd_obj as *mut HSD_JObj;
+    let bit_chk = ((*(*item_itkinds12(gobj).xC4_article_data).x10_modelDesc).xC_bit_field as u32 >> 6) & 3;
+    let mut n = bit_chk as i32;
+    while n > 0 {
+        j = if j.is_null() { core::ptr::null_mut() } else { (*j).child };
+        n -= 1;
+    }
+    j
+}
+
+/// `it_80274ED8`: `it_804D6D0C++`.
+pub fn it_80274ed8(it_804d6d0c: &mut i32) {
+    melee_core::ct!("it_80274ed8");
+    *it_804d6d0c = it_804d6d0c.wrapping_add(1);
+}
+
+/// `it_80274EE8`: `it_804D6D08++`.
+pub fn it_80274ee8(it_804d6d08: &mut i32) {
+    melee_core::ct!("it_80274ee8");
+    *it_804d6d08 = it_804d6d08.wrapping_add(1);
+}
+
+/// `it_80274F28`: set the grab callbacks (`xDD0_flag.b5`, `xD08`, `grab_dealt`,
+/// `grabbed_for_victim`).
+pub fn it_80274f28_fp(ip: &mut Item, arg1: i8, arg2: HSD_GObjEvent, arg3: HSD_GObjInteraction) {
+    melee_core::ct!("it_80274f28_fp");
+    // SAFETY: the flag union is a plain byte.
+    unsafe { ip.xDD0_flag.anon_0.set_b5(1) };
+    ip.xD08 = arg1 as u8;
+    ip.grab_dealt = arg2;
+    ip.grabbed_for_victim = arg3;
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+// ---- it_2725.c --------------------------------------------------------------------------
+
+/// `get_bone_by_id_fp` (static inline): as `it_80272CC0` (bone table when the model has bones,
+/// else `bone_id` NULL-safe child steps from the root JObj).
+/// # Safety
+/// As `it_80272CC0`.
+pub unsafe fn get_bone_by_id_fp(gobj: *mut HSD_GObj, mut bone_id: i32) -> *mut HSD_JObj {
+    melee_core::ct!("get_bone_by_id_fp");
+    let ip = &*((*gobj).user_data as *mut Item);
+    let mut jobj = (*gobj).hsd_obj as *mut HSD_JObj;
+    if (*(*ip.xC4_article_data).x10_modelDesc).x4_bone_count != 0 {
+        jobj = (*ip.xBBC_dynamicBoneTable).bones[bone_id as usize];
+    } else if bone_id != 0 {
+        while bone_id > 0 {
+            bone_id -= 1;
+            jobj = if jobj.is_null() { null_mut() } else { (*jobj).child };
+        }
+        // C's `while (bone_id-- > 0)` leaves bone_id at -1; unused after.
+    }
+    jobj
+}
+
+// ---- folded from itlib.rs (consolidation steps 21/22) ----
+// ---- it_2725.c -------------------------------------------------------------------------
+
+/// `it_80273030_fp`: bounce back (`vel = -vel * xC70`, turn around, reset the life timer).
+pub fn it_80273030_fp(ip: &mut Item) -> bool {
+    melee_core::ct!("it_80273030_fp");
+    ip.x40_vel.x = -ip.x40_vel.x * ip.xC70;
+    ip.x40_vel.y = -ip.x40_vel.y * ip.xC70;
+    ip.facing_dir = -ip.facing_dir;
+    ip.xD44_lifeTimer = ip.xD48_halfLifeTimer;
+    false
+}
+
+/// `it_80273130_fp`: count the life timer down; true when it ran out.
+pub fn it_80273130_fp(ip: &mut Item) -> bool {
+    melee_core::ct!("it_80273130_fp");
+    ip.xD44_lifeTimer -= 1.0;
+    ip.xD44_lifeTimer <= 0.0
+}
+
+/// `it_8027346C`.
+pub fn it_8027346c(ip: &mut Item) {
+    melee_core::ct!("it_8027346c");
+    ip.x64_vec_unk2 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+}
+
+/// `it_80273484_fp`.
+pub fn it_80273484_fp(ip: &mut Item) {
+    melee_core::ct!("it_80273484_fp");
+    ip.x58_vec_unk = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+}
+
+/// `it_8027349C`.
+pub fn it_8027349c(ip: &mut Item) {
+    melee_core::ct!("it_8027349c");
+    ip.x70_nudge = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+}
+
+/// `it_802734B4`.
+pub fn it_802734b4(ip: &mut Item) {
+    melee_core::ct!("it_802734b4");
+    let z = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    ip.x7C = z;
+    ip.x88 = z;
+    ip.x94 = z;
+    ip.xA0 = z;
+    ip.xAC_unk.x = 0.0;
+    ip.xAC_unk.z = 0.0;
+    ip.xAC_unk.y = 1.0;
+}
+
+/// `it_80274C60`: `xDC8_word.flags.xC = 0`.
+pub fn it_80274c60(ip: &mut Item) {
+    melee_core::ct!("it_80274c60");
+    ip.xDC8_word.flags.set_xC(0);
+}
+
+/// `it_80274C78`: `xDC8_word.flags.xC`.
+pub fn it_80274c78(ip: &Item) -> bool {
+    melee_core::ct!("it_80274c78");
+    ip.xDC8_word.flags.xC() != 0
+}
+
+/// `it_80274C88`.
+pub fn it_80274c88(ip: &mut Item) {
+    melee_core::ct!("it_80274c88");
+    unsafe {
+        ip.xDD0_flag.anon_0.set_b0(0);
+        ip.anon_daa.xDAA_flag.anon_0.set_b3(0);
+    }
+}
+
+/// `it_80274D6C`: the `xB54.x8` box from the ECB (`z = right.y + pos.y + top.y`, left to right).
+pub fn it_80274d6c(ip: &mut Item) {
+    melee_core::ct!("it_80274d6c");
+    let ecb = &ip.x378_itemColl.ecb;
+    let (right_x, right_y, left_x, top_y) = (ecb.right.x, ecb.right.y, ecb.left.x, ecb.top.y);
+    ip.xB54.x8.y = right_x + ip.pos.x;
+    ip.xB54.x8.x = left_x + ip.pos.x;
+    ip.xB54.x8.z = right_y + ip.pos.y + top_y;
+}
+
+/// `it_80274DAC`: clear `xB54.unk_x/y`, then `it_80274D6C`'s body (inlined in the C).
+pub fn it_80274dac(ip: &mut Item) {
+    melee_core::ct!("it_80274dac");
+    ip.xB54.unk_x = 0.0;
+    ip.xB54.unk_y = 0.0;
+    it_80274d6c(ip);
+}
+
+/// `it_80274DFC`: scale `xBCC` and the grab range by `scl`.
+pub fn it_80274dfc(ip: &mut Item) {
+    melee_core::ct!("it_80274dfc");
+    ip.xBCC_unk.x *= ip.scl;
+    ip.xBCC_unk.y *= ip.scl;
+    ip.xBD4_grabRange.x *= ip.scl;
+    ip.xBD4_grabRange.y *= ip.scl;
+}
+
+/// `it_80274E44`: scale `xBEC` and `xBDC` by `scl`.
+pub fn it_80274e44(ip: &mut Item) {
+    melee_core::ct!("it_80274e44");
+    let s = ip.scl;
+    ip.xBEC.top *= s;
+    ip.xBEC.bottom *= s;
+    ip.xBEC.right *= s;
+    ip.xBEC.left *= s;
+    ip.xBDC.top *= s;
+    ip.xBDC.bottom *= s;
+    ip.xBDC.right *= s;
+    ip.xBDC.left *= s;
+}
+
+/// `it_80274ECC`: `xD09 = arg1` (C `bool` stored to a `u8`).
+pub fn it_80274ecc(ip: &mut Item, arg1: i32) {
+    melee_core::ct!("it_80274ecc");
+    ip.xD09 = arg1 as u8;
+}
+
+/// `it_80274EF8`: `xDC8_word.flags.x2 = 0`.
+pub fn it_80274ef8(ip: &mut Item) {
+    melee_core::ct!("it_80274ef8");
+    ip.xDC8_word.flags.set_x2(0);
+}
+
+/// `it_80274F10`: `xDC8_word.flags.x2 = 1`.
+pub fn it_80274f10(ip: &mut Item) {
+    melee_core::ct!("it_80274f10");
+    ip.xDC8_word.flags.set_x2(1);
+}
+
+/// `it_802750E8`: `xDC0 & mask`. The C return type `bool` is `int` in this codebase
+/// (src/MSL/stdbool.h), so the masked bits are returned, not 0/1.
+pub fn it_802750e8(ip: &Item, mask: i32) -> i32 {
+    melee_core::ct!("it_802750e8");
+    (ip.xDC0 & mask as u32) as i32
+}
+
+/// `it_802751D8` (same body as `it_80273130_fp`).
+pub fn it_802751d8(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802751d8");
+    ip.xD44_lifeTimer -= 1.0;
+    ip.xD44_lifeTimer <= 0.0
+}
+
+/// `it_80275210_fp`: `xDC8_word.flags.x1C = 1`.
+pub fn it_80275210_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275210_fp");
+    ip.xDC8_word.flags.set_x1C(1);
+}
+
+/// `it_80275228_fp`: `xDC8_word.flags.x1C = 0`.
+pub fn it_80275228_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275228_fp");
+    ip.xDC8_word.flags.set_x1C(0);
+}
+
+/// `it_80275240_fp`: `xDC8_word.flags.x1E = 0`.
+pub fn it_80275240_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275240_fp");
+    ip.xDC8_word.flags.set_x1E(0);
+}
+
+/// `it_80275258_fp`: `xDD0_flag.b4 = 0`.
+pub fn it_80275258_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275258_fp");
+    unsafe { ip.xDD0_flag.anon_0.set_b4(0) }
+}
+
+/// `it_80275270_fp`: `xDD0_flag.b4 = 1`.
+pub fn it_80275270_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275270_fp");
+    unsafe { ip.xDD0_flag.anon_0.set_b4(1) }
+}
+
+/// `it_802753BC`: reset the damage counters, `xC9C = arg1`.
+pub fn it_802753bc(ip: &mut Item, arg1: i16) {
+    melee_core::ct!("it_802753bc");
+    ip.xC94 = 0;
+    ip.xC9C = arg1 as i32;
+    ip.xCA0 = 0;
+    ip.xCA4 = 0;
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- it_2725.c -------------------------------------------------------------------------
+
+/// `it_80272818_fp`: the fighter stored in the article's special attributes.
+/// # Safety
+/// `ip.xC4_article_data` and its `x4_specialAttributes` must be valid.
+pub unsafe fn it_80272818_fp(ip: &Item) -> *mut Fighter {
+    melee_core::ct!("it_80272818_fp");
+    (*((*ip.xC4_article_data).x4_specialAttributes as *mut it_2728_DatAttrs)).fighter
+}
+
+/// `it_80272828_fp`: the last item GObj of `kind` in the item p-link list starting at `head`.
+/// # Safety
+/// `head` must start a valid `next`-linked GObj list whose user data are Items.
+pub unsafe fn it_80272828_fp(head: *mut HSD_GObj, kind: ItemKind) -> *mut HSD_GObj {
+    melee_core::ct!("it_80272828_fp");
+    let mut ret = null_mut_itlib3();
+    let mut cur = head;
+    while !cur.is_null() {
+        if (*((*cur).user_data as *mut Item)).kind == kind {
+            ret = cur;
+        }
+        cur = (*cur).next;
+    }
+    ret
+}
+
+/// `it_80272860_fp`: apply `arg1` to `vel.y` unless moving against it at `|vel.y| >= arg2`.
+pub fn it_80272860_fp(ip: &mut Item, arg1: f32, arg2: f32) {
+    melee_core::ct!("it_80272860_fp");
+    let r0 = if arg1 < 0.0 { -1 } else { 1 };
+    let mut f3 = ip.x40_vel.y;
+    let r3 = if f3 < 0.0 { -1 } else { 1 };
+    if r3 != r0 {
+        if f3 < 0.0 {
+            f3 = -f3;
+        }
+        if f3 < arg2 {
+            ip.x40_vel.y -= arg1;
+        }
+        return;
+    }
+    ip.x40_vel.y -= arg1;
+}
+
+/// `it_80272D1C`: `gobj` is non-null and of the item class.
+/// # Safety
+/// `gobj` must be null or valid.
+pub unsafe fn it_80272d1c(gobj: *const HSD_GObj) -> bool {
+    melee_core::ct!("it_80272d1c");
+    !gobj.is_null() && (*gobj).classifier as i32 == HSD_GOBJ_CLASS_ITEM
+}
+
+/// `it_80273500_fp`: set the velocity, then the four `it_8027346C`.. resets.
+pub fn it_80273500_fp(ip: &mut Item, vel: &GcVec) {
+    melee_core::ct!("it_80273500_fp");
+    ip.x40_vel.x = vel.x;
+    ip.x40_vel.y = vel.y;
+    ip.x40_vel.z = vel.z;
+    it_8027346c_itlib3(ip);
+    it_80273484_itlib3(ip);
+    it_8027349c_itlib3(ip);
+    it_802734b4_itlib3(ip);
+}
+
+/// `it_80274658_fp`: spin speed from `spin_spd` and an angle in degrees; returns the sign of vel.x.
+/// No fused site (`0.01f * spin * (k * arg1)` is three products).
+pub fn it_80274658_fp(ip: &mut Item, arg1: f32) -> i32 {
+    melee_core::ct!("it_80274658_fp");
+    let mut s2 = 0.0f32;
+    let s1 = ip.spin_spd;
+    if s1 != s2 {
+        s2 = 0.01f32 * s1 * (0.017453292f32 * arg1);
+    }
+    ip.xD3C_spinSpeed = s2;
+    let d1 = if ip.facing_dir < 0.0 { -1 } else { 1 };
+    let d2 = if ip.x40_vel.x < 0.0 { -1 } else { 1 };
+    if d2 != d1 {
+        ip.xD3C_spinSpeed = -ip.xD3C_spinSpeed;
+    }
+    if ip.xDC8_word.flags.x19() != 1 {
+        ip.xD3C_spinSpeed *= -ip.facing_dir;
+    }
+    d2
+}
+
+/// `it_80274D04`: ECB centre minus the previous ECB centre (x, y).
+pub fn it_80274d04(ip: &Item, out: &mut lb_80014638_arg1_t) {
+    melee_core::ct!("it_80274d04");
+    let mut a = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    let mut b = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    it_8026bb88(ip, &mut a);
+    it_8026bbcc(ip, &mut b);
+    out.unk_x = a.x - b.x;
+    out.unk_y = a.y - b.y;
+}
+
+/// `it_80275174_fp`: `xD48_halfLifeTimer = lifetime * x4C`.
+pub fn it_80275174_fp(ip: &mut Item, lifetime: f32, common: &ItemCommonData) {
+    melee_core::ct!("it_80275174_fp");
+    ip.xD48_halfLifeTimer = lifetime * common.x4C_float;
+}
+
+/// `it_80275328_fp`: initialise an `ItemLink` owned by `gobj` (`coll_data` is left untouched).
+pub fn it_80275328_fp(gobj: *mut HSD_GObj, link: &mut ItemLink) {
+    melee_core::ct!("it_80275328_fp");
+    link.prev = null_mut_itlib3();
+    link.next = null_mut_itlib3();
+    link.vel = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    link.pos = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    link.x20 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    link.set_x2C_b0(0);
+    link.set_x2C_b1(0);
+    link.set_x2C_b2(0);
+    link.x1CC = 0;
+    link.gobj = gobj;
+    link.jobj = null_mut_itlib3();
+}
+
+/// `it_80275390_fp`: drop the owner, then `it_8026B3A8`.
+pub fn it_80275390_fp(ip: &mut Item) {
+    melee_core::ct!("it_80275390_fp");
+    ip.owner = null_mut_itlib3();
+    it_8026b3a8(ip);
 }

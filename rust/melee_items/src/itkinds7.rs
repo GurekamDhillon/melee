@@ -1,3 +1,4 @@
+
 //! Port round 7 (night 5): hand ports of 12 item functions whose callees are all ported, from
 //! the decomp C (raw c2rust output as reference). Verified against verbatim C copies
 //! (tests/c_oracle/round7_bodies.h, extracted by gen_round7.py) in tests/oracle_round7.rs.
@@ -12,60 +13,15 @@ use crate::layout::{
     Article, CollData, Fighter, HSD_GObj, Item, ItemPickTable, Mtx, SpawnItem, Vec as GcVec,
     itFoodsAttributes, It_Kind_Unk4,
 };
+
 use melee_core::fp::fmadds;
+
 use melee_runtime::gekko::sqrtf;
 
 /// `|v|` of the stored difference as the C writes it: `sqrtf(x*x + y*y + z*z)`, two fused sites.
 #[inline(always)]
-fn len3(v: &GcVec) -> f32 {
+pub(crate) fn len3(v: &GcVec) -> f32 {
     sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
-}
-
-/// `it_802A3C98` (itlinkhookshot.c): `*arg2 = normalize(*arg0 - *arg1)`, returns the length.
-/// The zero test and the reciprocal are in f64 (`(f64) 1.0F / len`), rounded to f32.
-pub fn it_802a3c98(arg0: &GcVec, arg1: &GcVec, arg2: &mut GcVec) -> f32 {
-    arg2.x = arg0.x - arg1.x;
-    arg2.y = arg0.y - arg1.y;
-    arg2.z = arg0.z - arg1.z;
-    let len = len3(arg2);
-    let inv: f32 = if len as f64 == 0.0 { 0.0 } else { (1.0f64 / len as f64) as f32 };
-    arg2.x *= inv;
-    arg2.y *= inv;
-    arg2.z *= inv;
-    len
-}
-
-/// `it_802A6A78_normalize_diff` (itlinkhookshot.c, static inline): `*vec = normalize(*a - *b)`,
-/// returns the f32 length widened to f64.
-pub fn it_802a6a78_normalize_diff(a: &GcVec, b: &GcVec, vec: &mut GcVec) -> f64 {
-    vec.x = a.x - b.x;
-    vec.y = a.y - b.y;
-    vec.z = a.z - b.z;
-    let len = len3(vec) as f64;
-    let inv: f32 = if len == 0.0 { 0.0 } else { (1.0f64 / len) as f32 };
-    vec.x *= inv;
-    vec.y *= inv;
-    vec.z *= inv;
-    len
-}
-
-/// `it_802A6A78_normalize_diff_rev` (itlinkhookshot.c, static inline): as
-/// [`it_802a6a78_normalize_diff`] with the parameters named the other way round (`b` first),
-/// still `*a - *b`.
-pub fn it_802a6a78_normalize_diff_rev(b: &GcVec, a: &GcVec, vec: &mut GcVec) -> f64 {
-    it_802a6a78_normalize_diff(a, b, vec)
-}
-
-/// `vec3_eq_mtx` (itlinkhookshot.c, static inline): the translation column of `m`.
-pub fn vec3_eq_mtx(vec: &mut GcVec, m: &Mtx) {
-    vec.x = m[0][3];
-    vec.y = m[1][3];
-    vec.z = m[2][3];
-}
-
-/// `link_fighter_compare` (itlinkhookshot.c, static inline): motion 0x168, 0x169, 0xD4 or 0xD6.
-pub fn link_fighter_compare(fp: &Fighter) -> bool {
-    matches!(fp.motion_id, 0x168 | 0x169 | 0xD4 | 0xD6)
 }
 
 /// `it_2F28_UnkMotion0_Phys` (it_2F28.c): decelerate the xy velocity by `unk2.x0` along its
@@ -103,21 +59,6 @@ pub unsafe fn bisect_value(val: i32, table: &ItemPickTable, lo: i32, hi: i32) ->
     }
 }
 
-/// `it_802E614C` (it_2E5A.c, static inline): fill a `SpawnItem` for kind `It_Kind_Unk4` at `pos`.
-pub fn it_802e614c(parent_gobj1: *mut HSD_GObj, parent_gobj2: *mut HSD_GObj, spawn: &mut SpawnItem,
-    pos: &GcVec, vel: &GcVec) {
-    spawn.kind = It_Kind_Unk4;
-    spawn.prev_pos = *pos;
-    spawn.pos = spawn.prev_pos;
-    spawn.x3C_damage = 0;
-    spawn.vel = *vel;
-    spawn.x0_parent_gobj = parent_gobj1;
-    spawn.x4_parent_gobj2 = parent_gobj2;
-    // SAFETY: plain-data union member.
-    unsafe { spawn.x44_flag.anon_0.set_b0(1) };
-    spawn.x40 = 0;
-}
-
 /// `itTarucann_UnkMotion9_Anim_inline` (ittarucann.c, static inline):
 /// `xDCC_flag.b3 = (tarucann.x20 == 0)`.
 pub fn it_tarucann_unk_motion9_anim_inline(ip: &mut Item) {
@@ -145,3 +86,10 @@ pub fn it_arwinglaser_get_coll_arg(ip: &Item) -> i32 {
 pub unsafe fn get_rand_max(article: &Article) -> u32 {
     (*(article.x4_specialAttributes as *const itFoodsAttributes)).x0 as u32
 }
+
+pub use crate::tu::itlinkhookshot::it_802a3c98;
+pub use crate::tu::itlinkhookshot::it_802a6a78_normalize_diff;
+pub use crate::tu::itlinkhookshot::it_802a6a78_normalize_diff_rev;
+pub use crate::tu::it_2E5A::it_802e614c;
+pub use crate::tu::itlinkhookshot::link_fighter_compare_fp as link_fighter_compare;
+pub use crate::tu::itlinkhookshot::vec3_eq_mtx_fp as vec3_eq_mtx;

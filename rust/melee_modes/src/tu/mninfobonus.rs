@@ -1,6 +1,11 @@
 //! src/melee/mn/mninfobonus.c: native port (c2rust-derived body; callees of unported TUs are `ext` TODO hooks).
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused_unsafe, unused_mut, unused_assignments, unused_variables, unused_parens, dead_code, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::HSD_Text as HSD_Text_mn_ptr;
 use melee_types::*;
 #[allow(unused_imports)] use self::ext::*;
 #[allow(unused_imports)] use super::mnmain::{mn_80229624, mn_80229894, mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
@@ -828,4 +833,19 @@ pub mod ext {
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
     pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
     pub use crate::tu::globals::DbLevel;
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mninfobonus.c `textSize_fp`.
+pub fn textSize_fp(text: &mut HSD_Text_mn_ptr) {
+    melee_core::ct!("textSize_fp");
+    text.font_size.x = 0.0521;
+    text.font_size.y = 0.0521;
+}
+
+/// mninfobonus.c `mnInfoBonus_80252ADC_inline_fp`.
+pub fn mnInfoBonus_80252ADC_inline_fp(text: &mut HSD_Text_mn_ptr) {
+    melee_core::ct!("mnInfoBonus_80252ADC_inline_fp");
+    text.x34.x = 0.034;
+    text.x34.y = 0.034;
 }

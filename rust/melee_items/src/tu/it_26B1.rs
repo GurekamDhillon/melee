@@ -4,6 +4,196 @@
 //! "TODO"). Checked against the C by the state oracle `tests/tu_it_26B1.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88 as it_8026bb88_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc as it_8026bbcc_itlib3;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::itlib3::{it_80272828};
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Disabled;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Unk4;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsuleState;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_FloorPush;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftEdge;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightEdge;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Arwing_Laser;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_BombHei;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Coin;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_F_Flower;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Foods;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Heart;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kuriboh;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Kyasarin_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Link_Bomb;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lucky_Egg;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Octarock_Stone;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Old_Kuri;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_S_Scope;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_StarRod;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Tomato;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyApple;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_WhispyHealApple;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib;
+#[allow(unused_imports)]
+use crate::itlib::{unk_attrs};
+#[allow(unused_imports)]
+use crate::itkinds10::it_80277040;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjEvent;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjInteraction;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itLGun_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itkinds12::{item};
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1052,6 +1242,480 @@ pub unsafe extern "C" fn it_8026C42C() {
         if (*ip).xDC8_word.flags.x3() != 0 {
             (*ip).xDC8_word.flags.set_x3(0);
         }
+        cur = (*cur).next;
+    }
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_8026C1B4` (src/melee/it/it_26B1.c): `return it_80275870(..)`.
+pub fn it_8026c1b4(ip: &mut Item) -> bool {
+    melee_core::ct!("it_8026c1b4");
+    it_80275870(ip)
+}
+
+// ---- folded from itkinds12.rs (consolidation steps 21/22) ----
+// ---- it_26B1.c -------------------------------------------------------------------------
+
+/// `it_8026B1D4`: hitbox damage, plus a speed bonus (`k5 * |vel| + k6`, at least 1) when
+/// `xDC8_word.flags.x14` is set. `common` is `it_804D6D28`.
+/// # Safety
+/// `gobj` is a live item GObj.
+pub unsafe fn it_8026b1d4(gobj: *mut HSD_GObj, cap: &HitCapsule, common: &ItemCommonData) -> f32 {
+    melee_core::ct!("it_8026b1d4");
+    let mut ret = cap.damage;
+    let ip = item(gobj);
+    if ip.xDC8_word.flags.x14() != 0 {
+        let v = &ip.x40_vel;
+        let speed = sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)));
+        ret = fmadds(speed, common.x80_float[5], ret);
+        ret += common.x80_float[6];
+        if ret as f64 <= 1.0 {
+            return 1.0;
+        }
+    }
+    ret
+}
+
+/// `it_8026B7D8`: `it_804D6D0C`.
+pub fn it_8026b7d8(it_804d6d0c: &i32) -> i32 {
+    melee_core::ct!("it_8026b7d8");
+    *it_804d6d0c
+}
+
+/// `it_8026B7E0`: `it_804D6D08`.
+pub fn it_8026b7e0(it_804d6d08: &i32) -> i32 {
+    melee_core::ct!("it_8026b7e0");
+    *it_804d6d08
+}
+
+/// `it_8026C1D4`: the L-Gun article's `timer`. `tbl` is `it_804D6D24`.
+/// # Safety
+/// `tbl[It_Kind_L_Gun]` and its special attributes are valid.
+pub unsafe fn it_8026c1d4(tbl: *const *mut Article) -> u32 {
+    melee_core::ct!("it_8026c1d4");
+    let a = *tbl.add(It_Kind_L_Gun as usize);
+    (*((*a).x4_specialAttributes as *const itLGun_ItemVars)).timer as u32
+}
+
+/// `it_8026C258`: the nearest (2D) target / lock-on / enemy / kind-7 item, not grabbed and not
+/// owned with `x13` set, on the `facing_dir` side of `pos` (both sides unless +-1).
+/// # Safety
+/// `head` is the item p-link list (each user data an Item).
+pub unsafe fn it_8026c258(head: *mut HSD_GObj, pos: &GcVec, facing_dir: f32) -> *mut HSD_GObj {
+    melee_core::ct!("it_8026c258");
+    let mut min_sq_dist = f32::MAX;
+    let mut result = core::ptr::null_mut();
+    let mut cur = head;
+    while !cur.is_null() {
+        let ip = item(cur);
+        let hk = ip.hold_kind;
+        if (hk == 4 || hk == 5 || hk == 6 || hk == 7)
+            && ip.grab_victim.is_null()
+            && (ip.xDC8_word.flags.x13() == 0 || ip.owner.is_null())
+            && (facing_dir != -1.0 || !(ip.pos.x > pos.x))
+            && (facing_dir != 1.0 || !(ip.pos.x < pos.x))
+        {
+            let dx = pos.x - ip.pos.x;
+            let dy = pos.y - ip.pos.y;
+            let sq = fmadds(dx, dx, dy * dy);
+            if sq < min_sq_dist {
+                min_sq_dist = sq;
+                result = cur;
+            }
+        }
+        cur = (*cur).next;
+    }
+    result
+}
+
+// ---- folded from itlib.rs (consolidation steps 21/22) ----
+// ---- it_26B1.c -------------------------------------------------------------------------
+
+/// `it_8026B294`: the item's position.
+pub fn it_8026b294(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_8026b294");
+    *pos = ip.pos;
+}
+
+/// `it_8026B2D8` (`x0_is_heavy == 1`; the same for a 1-bit field).
+/// # Safety
+/// `ip.xCC_item_attr` must be valid.
+pub unsafe fn it_8026b2d8(ip: &Item) -> bool {
+    melee_core::ct!("it_8026b2d8");
+    (*ip.xCC_item_attr).x0_is_heavy() == 1
+}
+
+/// `it_8026B30C`: `xCC_item_attr->x0_78` (unsigned 4-bit field).
+/// # Safety
+/// `ip.xCC_item_attr` must be valid.
+pub unsafe fn it_8026b30c(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b30c");
+    (*ip.xCC_item_attr).x0_78() as i32
+}
+
+/// `it_8026B344`. 1 fused site: `x = fmadds(facing_dir, xBCC.x, pos.x)`.
+pub fn it_8026b344(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_8026b344");
+    pos.x = fmadds(ip.facing_dir, ip.xBCC_unk.x, ip.pos.x);
+    pos.y = ip.pos.y + ip.xBCC_unk.y;
+    pos.z = ip.pos.z;
+}
+
+/// `it_8026B390`: `xDC8_word.flags.x15 = 1`.
+pub fn it_8026b390(ip: &mut Item) {
+    melee_core::ct!("it_8026b390");
+    ip.xDC8_word.flags.set_x15(1);
+}
+
+/// `it_8026B3A8`: `xDC8_word.flags.x15 = 0`.
+pub fn it_8026b3a8(ip: &mut Item) {
+    melee_core::ct!("it_8026b3a8");
+    ip.xDC8_word.flags.set_x15(0);
+}
+
+/// `it_8026B424`. `common` is the C global `it_804D6D28`. 1 fused site:
+/// `fmadds((f32) damage, xB8, xBC)`; `(int)` is gwtool's saturating conversion (= Rust `as`).
+pub fn it_8026b424(damage: i32, common: &ItemCommonData) -> f32 {
+    melee_core::ct!("it_8026b424");
+    fmadds(damage as f32, common.xB8, common.xBC) as i32 as f32
+}
+
+/// `it_8026B47C`: heal value of the healing items, else 0.
+pub fn it_8026b47c(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b47c");
+    let v = &ip.xDD4_itemVar;
+    unsafe {
+        match ip.kind {
+            It_Kind_Heart => v.heart.xDD4_heal,
+            It_Kind_Tomato => v.tomato.heal_amount,
+            It_Kind_Foods => v.foods.heal_amount as i32,
+            It_Kind_Lucky_Egg => v.egg.heal_amount,
+            It_Kind_WhispyHealApple => v.whispyapple.xDD4_heal,
+            _ => 0,
+        }
+    }
+}
+
+/// `it_8026B4F0`: is a healing item.
+pub fn it_8026b4f0(ip: &Item) -> bool {
+    melee_core::ct!("it_8026b4f0");
+    matches!(ip.kind, It_Kind_Heart | It_Kind_Tomato | It_Kind_Foods | It_Kind_Coin
+        | It_Kind_Lucky_Egg | It_Kind_WhispyHealApple)
+}
+
+/// `it_8026B54C`: special attributes `x0_float`.
+/// # Safety
+/// `ip.xC4_article_data` and its `x4_specialAttributes` must be valid.
+pub unsafe fn it_8026b54c(ip: &Item) -> f32 {
+    melee_core::ct!("it_8026b54c");
+    unk_attrs(ip).x0_float
+}
+
+/// `it_8026B560` (same body as `it_8026B54C`).
+/// # Safety
+/// As `it_8026b54c`.
+pub unsafe fn it_8026b560(ip: &Item) -> f32 {
+    melee_core::ct!("it_8026b560");
+    unk_attrs(ip).x0_float
+}
+
+/// `it_8026B574`: special attributes `x4_float`.
+/// # Safety
+/// As `it_8026b54c`.
+pub unsafe fn it_8026b574(ip: &Item) -> f32 {
+    melee_core::ct!("it_8026b574");
+    unk_attrs(ip).x4_float
+}
+
+/// `it_8026B588`: `it_804D6D28->xDC`.
+pub fn it_8026b588(common: &ItemCommonData) -> i32 {
+    melee_core::ct!("it_8026b588");
+    common.xDC
+}
+
+/// `it_8026B594`: a shooting item with no ammo left. (The C case list falls through to
+/// `default`; Harisen is listed under `default`.)
+pub fn it_8026b594_fp(ip: &Item) -> bool {
+    melee_core::ct!("it_8026b594_fp");
+    match ip.kind {
+        It_Kind_L_Gun | It_Kind_S_Scope | It_Kind_StarRod | crate::layout::It_Kind_LipStick
+        | It_Kind_F_Flower => ip.xD4C <= 0,
+        _ => false,
+    }
+}
+
+/// `it_8026B6C8`: is a stage item (Kuriboh..Octarock_Stone or Old_Kuri..Arwing_Laser), except
+/// Kyasarin_Egg and WhispyApple.
+pub fn it_8026b6c8(ip: &Item) -> bool {
+    melee_core::ct!("it_8026b6c8");
+    let kind = ip.kind;
+    if (kind >= It_Kind_Kuriboh && kind < It_Kind_Octarock_Stone)
+        || (kind >= It_Kind_Old_Kuri && kind < It_Kind_Arwing_Laser)
+    {
+        if kind != It_Kind_Kyasarin_Egg && kind != It_Kind_WhispyApple {
+            return true;
+        }
+    }
+    false
+}
+
+/// `it_8026B718`.
+pub fn it_8026b718(ip: &mut Item, hitlag_frames: f32) {
+    melee_core::ct!("it_8026b718");
+    ip.xCBC_hitlagFrames = hitlag_frames;
+}
+
+/// `it_8026B724`: `xDC8_word.flags.x3 = 1`.
+pub fn it_8026b724(ip: &mut Item) {
+    melee_core::ct!("it_8026b724");
+    ip.xDC8_word.flags.set_x3(1);
+}
+
+/// `it_8026B73C`.
+pub fn it_8026b73c(ip: &mut Item) {
+    melee_core::ct!("it_8026b73c");
+    if ip.xDC8_word.flags.x7() != 0 {
+        ip.xDC8_word.flags.set_x5(1);
+    }
+    if ip.xDC8_word.flags.x3() != 0 {
+        ip.xDC8_word.flags.set_x3(0);
+    }
+}
+
+/// `it_8026B774`: bit `arg1` of the 4-bit `xDC8_word.flags.xF`. The C shift is `int << u8`;
+/// shifts of 32+ are UB there, and `arg1` is a small constant at every call site, so it is
+/// limited to 0..31 here (the oracle covers 0..31).
+pub fn it_8026b774(ip: &Item, arg1: u8) -> bool {
+    melee_core::ct!("it_8026b774");
+    (ip.xDC8_word.flags.xF() as i32 & (1i32.wrapping_shl(arg1 as u32))) != 0
+}
+
+/// `it_8026B7BC`: `xDC8_word.flags.x14`.
+pub fn it_8026b7bc(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b7bc");
+    ip.xDC8_word.flags.x14() as i32
+}
+
+/// `it_8026B7CC`.
+pub fn it_8026b7cc(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b7cc");
+    ip.x1C
+}
+
+/// `it_8026B7E8`: `xDC8_word.flags.x1`.
+pub fn it_8026b7e8(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b7e8");
+    ip.xDC8_word.flags.x1() as i32
+}
+
+/// `it_8026B894`: clear every reference to `ref_gobj`; true when it was the owner.
+pub fn it_8026b894(ip: &mut Item, ref_gobj: *mut HSD_GObj) -> bool {
+    melee_core::ct!("it_8026b894");
+    let mut result = false;
+    if ip.owner == ref_gobj {
+        ip.owner = null_mut_itlib();
+        result = true;
+    }
+    if ip.xC64_reflectGObj == ref_gobj {
+        ip.xC64_reflectGObj = null_mut_itlib();
+    }
+    if ip.xC90_absorbGObj == ref_gobj {
+        ip.xC90_absorbGObj = null_mut_itlib();
+    }
+    if ip.xCEC_fighterGObj == ref_gobj {
+        ip.xCEC_fighterGObj = null_mut_itlib();
+        ip.xCB0_source_ply = 6;
+    }
+    if ip.xCF4_fighterGObjUnk == ref_gobj {
+        ip.xCF4_fighterGObjUnk = null_mut_itlib();
+    }
+    if ip.toucher == ref_gobj {
+        ip.toucher = null_mut_itlib();
+    }
+    result
+}
+
+/// `it_8026B924`: remaining ammo of the shooting items, else -1.
+pub fn it_8026b924(ip: &Item) -> i32 {
+    melee_core::ct!("it_8026b924");
+    match ip.kind {
+        It_Kind_S_Scope | It_Kind_StarRod | It_Kind_L_Gun | It_Kind_F_Flower => ip.xD4C,
+        _ => -1,
+    }
+}
+
+/// `it_8026B960`: a bomb's timer, else -1.0.
+pub fn it_8026b960(ip: &Item) -> f32 {
+    melee_core::ct!("it_8026b960");
+    let mut unk_timer = -1.0f32;
+    match ip.kind {
+        It_Kind_BombHei => {
+            if ip.msid != 0xB {
+                unk_timer = unsafe { ip.xDD4_itemVar.bombhei.xDEC };
+            }
+        }
+        It_Kind_Link_Bomb => {
+            if ip.msid != 5 {
+                unk_timer = ip.xD44_lifeTimer;
+            }
+        }
+        _ => {}
+    }
+    unk_timer
+}
+
+/// `it_8026BB88`: the ECB centre. `offset_xz` is a literal 0.0 that the C still adds.
+pub fn it_8026bb88(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_8026bb88");
+    let ecb = &ip.x378_itemColl.ecb;
+    let offset_xz = 0.0f32;
+    let offset_y = 0.5f32 * (ecb.top.y + ecb.bottom.y);
+    pos.x = ip.pos.x + offset_xz;
+    pos.y = ip.pos.y + offset_y;
+    pos.z = ip.pos.z + offset_xz;
+}
+
+/// `it_8026BBCC`: the same from `last_pos` and `xE4_ecb`.
+pub fn it_8026bbcc(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_8026bbcc");
+    let cd = &ip.x378_itemColl;
+    let ecb = &cd.xE4_ecb;
+    let offset_xz = 0.0f32;
+    let offset_y = 0.5f32 * (ecb.top.y + ecb.bottom.y);
+    pos.x = cd.last_pos.x + offset_xz;
+    pos.y = cd.last_pos.y + offset_y;
+    pos.z = cd.last_pos.z + offset_xz;
+}
+
+/// `it_8026BC68`: `xDD0_flag.b0`.
+pub fn it_8026bc68(ip: &Item) -> bool {
+    melee_core::ct!("it_8026bc68");
+    unsafe { ip.xDD0_flag.anon_0.b0() != 0 }
+}
+
+/// `it_8026BCF4`: `xDCD_flag.b2 = 0`.
+pub fn it_8026bcf4(ip: &mut Item) {
+    melee_core::ct!("it_8026bcf4");
+    ip.xDCD_flag.anon_0.set_b2(0);
+}
+
+/// `it_8026BD0C`: `xDCD_flag.b2 = 1`.
+pub fn it_8026bd0c(ip: &mut Item) {
+    melee_core::ct!("it_8026bd0c");
+    ip.xDCD_flag.anon_0.set_b2(1);
+}
+
+/// `it_8026BD24`: `xDD0_flag.b3 = 1`.
+pub fn it_8026bd24(ip: &mut Item) {
+    melee_core::ct!("it_8026bd24");
+    unsafe { ip.xDD0_flag.anon_0.set_b3(1) }
+}
+
+/// `it_8026BD3C`: `xDCC_flag.b3 = 1`.
+pub fn it_8026bd3c(ip: &mut Item) {
+    melee_core::ct!("it_8026bd3c");
+    ip.xDCC_flag.set_b3(1);
+}
+
+/// `it_8026BD54`: `xDCC_flag.b3 = 0`.
+pub fn it_8026bd54(ip: &mut Item) {
+    melee_core::ct!("it_8026bd54");
+    ip.xDCC_flag.set_b3(0);
+}
+
+/// `it_8026BD6C`: `xDCD_flag.b3 = 1`.
+pub fn it_8026bd6c(ip: &mut Item) {
+    melee_core::ct!("it_8026bd6c");
+    ip.xDCD_flag.anon_0.set_b3(1);
+}
+
+/// `it_8026BD84`: `xDCD_flag.b4 = 1`.
+pub fn it_8026bd84(ip: &mut Item) {
+    melee_core::ct!("it_8026bd84");
+    ip.xDCD_flag.anon_0.set_b4(1);
+}
+
+/// `it_8026BD9C`: `xDC8_word.flags.x1A = 1`.
+pub fn it_8026bd9c(ip: &mut Item) {
+    melee_core::ct!("it_8026bd9c");
+    ip.xDC8_word.flags.set_x1A(1);
+}
+
+/// `it_8026BDCC` (five inlined setters).
+pub fn it_8026bdcc(ip: &mut Item) {
+    melee_core::ct!("it_8026bdcc");
+    unsafe { ip.xDD0_flag.anon_0.set_b3(0) };
+    ip.xDCC_flag.set_b3(1);
+    ip.xDCD_flag.anon_0.set_b3(0);
+    ip.xDCD_flag.anon_0.set_b4(0);
+    ip.xDC8_word.flags.set_x1A(1);
+}
+
+/// `it_8026BE28` (the inverse of `it_8026BDCC`).
+pub fn it_8026be28(ip: &mut Item) {
+    melee_core::ct!("it_8026be28");
+    unsafe { ip.xDD0_flag.anon_0.set_b3(1) };
+    ip.xDCC_flag.set_b3(0);
+    ip.xDCD_flag.anon_0.set_b3(1);
+    ip.xDCD_flag.anon_0.set_b4(1);
+    ip.xDC8_word.flags.set_x1A(0);
+}
+
+/// `it_8026C1E8`: not grabbing, and not held by an owner.
+pub fn it_8026c1e8(ip: &Item) -> bool {
+    melee_core::ct!("it_8026c1e8");
+    !(!ip.grab_victim.is_null() || (ip.xDC8_word.flags.x13() != 0 && !ip.owner.is_null()))
+}
+
+/// `it_8026C334`: position offset by the ECB bottom.
+pub fn it_8026c334(ip: &Item, pos: &mut GcVec) {
+    melee_core::ct!("it_8026c334");
+    let offset_xz = 0.0f32;
+    let offset_y = ip.x378_itemColl.ecb.bottom.y;
+    pos.x = ip.pos.x + offset_xz;
+    pos.y = ip.pos.y + offset_y;
+    pos.z = ip.pos.z + offset_xz;
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- it_26B1.c -------------------------------------------------------------------------
+
+/// `it_8026B3C0`: the number of items of `kind` in the item list.
+/// # Safety
+/// As [`it_80272828`].
+pub unsafe fn it_8026b3c0(head: *mut HSD_GObj, kind: ItemKind) -> i32 {
+    melee_core::ct!("it_8026b3c0");
+    let mut i = 0;
+    let mut cur = head;
+    while !cur.is_null() {
+        if (*((*cur).user_data as *mut Item)).kind == kind {
+            i += 1;
+        }
+        cur = (*cur).next;
+    }
+    i
+}
+
+/// `it_8026C3FC`: `it_8026B724` on every item.
+/// # Safety
+/// As [`it_80272828`].
+pub unsafe fn it_8026c3fc(head: *mut HSD_GObj) {
+    melee_core::ct!("it_8026c3fc");
+    let mut cur = head;
+    while !cur.is_null() {
+        it_8026b724(&mut *((*cur).user_data as *mut Item));
+        cur = (*cur).next;
+    }
+}
+
+/// `it_8026C42C`: the `it_8026B73C` flag update on every item (the C inlines the same body).
+/// # Safety
+/// As [`it_80272828`].
+pub unsafe fn it_8026c42c(head: *mut HSD_GObj) {
+    melee_core::ct!("it_8026c42c");
+    let mut cur = head;
+    while !cur.is_null() {
+        it_8026b73c(&mut *((*cur).user_data as *mut Item));
         cur = (*cur).next;
     }
 }

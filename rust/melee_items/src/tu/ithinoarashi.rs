@@ -11,6 +11,96 @@
 //! unaligned raw reads / writes of the same bytes.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{normalize, zero};
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use crate::helpers::{M_PI, M_PI_2};
 use core::ffi::c_void;
 use core::ptr::null_mut;
@@ -475,4 +565,55 @@ pub unsafe extern "C" fn it_802D6674(gobj: *mut Item_GObj, arg1: i32) {
         ],
     );
     ext::it_8026B3A8(gobj);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802D61A8` (src/melee/it/kinds/ithinoarashi.c): `it_8026B894(..)`.
+pub fn it_802d61a8(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802d61a8");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- ithinoarashi.c --------------------------------------------------------------------
+
+/// `it_802D61C8`: wrap `x78` into [-pi, pi] (f64 steps), sum the touched surfaces' normals
+/// (`coll` bits 1 floor, 2 ceiling, 8 left wall, 4 right wall), normalise, and store the vector
+/// over the 12 bytes at item-var +0x60.
+pub fn it_802d61c8(ip: &mut Item, coll: i32) {
+    melee_core::ct!("it_802d61c8");
+    let mut n = zero();
+    // SAFETY: the item is a hinoarashi (plain-data union member).
+    unsafe {
+        let h = &mut ip.xDD4_itemVar.hinoarashi;
+        while (h.x78 as f64) < -M_PI {
+            h.x78 = (h.x78 as f64 + 2.0 * M_PI) as f32;
+        }
+        while h.x78 as f64 > M_PI {
+            h.x78 = (h.x78 as f64 - 2.0 * M_PI) as f32;
+        }
+    }
+    let c = &ip.x378_itemColl;
+    if coll & 1 != 0 {
+        n.x += c.floor.normal.x;
+        n.y += c.floor.normal.y;
+    }
+    if coll & 2 != 0 {
+        n.x += c.ceiling.normal.x;
+        n.y += c.ceiling.normal.y;
+    }
+    if coll & 8 != 0 {
+        n.x += c.left_facing_wall.normal.x;
+        n.y += c.left_facing_wall.normal.y;
+    }
+    if coll & 4 != 0 {
+        n.x += c.right_facing_wall.normal.x;
+        n.y += c.right_facing_wall.normal.y;
+    }
+    normalize(&mut n);
+    // SAFETY: bytes +0x60..+0x6C of the 504-byte union (x60 flags, x61 pad, x64, x68).
+    unsafe {
+        let p = (&mut ip.xDD4_itemVar.hinoarashi.x60 as *mut _ as *mut u8) as *mut GcVec;
+        p.write_unaligned(n);
+    }
 }

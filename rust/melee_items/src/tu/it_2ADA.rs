@@ -3,6 +3,51 @@
 //! "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_it_2ADA.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -108,4 +153,11 @@ pub unsafe extern "C" fn it_2ADA_UnkMotion0_Coll(gobj: *mut Item_GObj) -> bool {
 pub unsafe extern "C" fn it_802ADBE4(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
     melee_core::ct!("it_802ADBE4");
     ext::it_8026B894(arg0, arg1);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802ADBE4` (src/melee/it/kinds/it_2ADA.c): `it_8026B894(..)`.
+pub fn it_802adbe4(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802adbe4");
+    it_8026b894(ip, ref_gobj);
 }

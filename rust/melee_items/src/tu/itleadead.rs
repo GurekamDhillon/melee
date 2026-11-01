@@ -4,6 +4,93 @@
 //! through `ext` (unset: panics "TODO"). Checked against the C (whole TU, shipping contraction; `neg_dot` is two fmadds sites) by tests/kinds_itleadead.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBoomerangAttributes;
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask as Collide_LeftWallMask_itkinds6;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask as Collide_RightWallMask_itkinds6;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -1159,4 +1246,39 @@ pub unsafe extern "C" fn it_802EAE80(gobj: *mut Item_GObj) {
     } else {
         it_802E9308_inline(gobj);
     }
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `neg_dot_fp` (itleadead.c, static inline): `-(ax*bx) - (ay*by) - (az*bz)`.
+/// Clang folds it into 2 fused sites: `fmadds(-ax, bx, -(ay*by))`, then `fmadds(-az, bz, _)`.
+pub fn neg_dot_fp(a: &GcVec, b: &GcVec) -> f32 {
+    melee_core::ct!("neg_dot_fp");
+    let t = fmadds(-a.x, b.x, -(a.y * b.y));
+    fmadds(-a.z, b.z, t)
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+// ---- leadead / links / pure helpers ---------------------------------------------------------
+
+/// `it_802EA988` (itleadead.c): 8 if the item touches a left wall, 4 if a right wall (right
+/// wins). The offset copy of the collision data is never used.
+pub fn it_802ea988(ip: &Item, _x_offset: f32, _y_offset: f32) -> i32 {
+    melee_core::ct!("it_802ea988");
+    let f = ip.x378_itemColl.env_flags;
+    let mut ret = 0;
+    if f & Collide_LeftWallMask_itkinds6 != 0 {
+        ret = 8;
+    }
+    if f & Collide_RightWallMask_itkinds6 != 0 {
+        ret = 4;
+    }
+    ret
+}
+
+// ---- folded from itkinds8.rs (consolidation steps 21/22) ----
+/// `it_802EAAEC_inline` (itleadead.c, static inline): `leadead.x3C`.
+pub fn it_802eaaec_inline(ip2: &Item) -> f32 {
+    melee_core::ct!("it_802eaaec_inline");
+    // SAFETY: plain-data union member.
+    unsafe { ip2.xDD4_itemVar.leadead.x3C }
 }

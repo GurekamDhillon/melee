@@ -1,3 +1,4 @@
+
 //! Stage music selection: `Ground_801C24F8` (ground.c), reached from `Stage_80225074` at match
 //! start. Some rows roll for the alternate track, so the pick draws from the simulation RNG.
 //!
@@ -58,9 +59,10 @@ pub trait BgmUnlocks {
     fn gm_80164600(&self) -> bool;
 }
 
-const BGM_UNDEFINED: i32 = -1;
+pub(crate) const BGM_UNDEFINED: i32 = -1;
+
 /// ground.c `RANDI_MAX`.
-const RANDI_MAX: i32 = 100;
+pub(crate) const RANDI_MAX: i32 = 100;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BgmPick {
@@ -70,85 +72,6 @@ pub struct BgmPick {
     pub bgm: i32,
     /// `stage_info.unk8C.b0` when written.
     pub alt_flag: Option<bool>,
-}
-
-/// `Ground_801C24F8(stkind, arg1, &bgm)`. `randi` is `HSD_Randi`.
-pub fn ground_801c24f8(rows: &[StageParam], stkind: i32, mut arg1: u32, unlocks: &dyn BgmUnlocks, randi: &mut dyn FnMut(i32) -> i32) -> BgmPick {
-    let mut bgm = BGM_UNDEFINED;
-    let mut result = false;
-    let mut alt_flag = None;
-    for p in rows {
-        if p.stkind != stkind {
-            continue;
-        }
-        if arg1 & 4 != 0 {
-            let forced = arg1 & 0x40 != 0;
-            // `x16 > HSD_Randi(RANDI_MAX) || forced`: the draw happens even when forced.
-            let roll = |randi: &mut dyn FnMut(i32) -> i32| p.x16 as i32 > randi(RANDI_MAX) || forced;
-            let alt = match p.x14 {
-                0 => Some(forced),
-                1 => Some(randi(0xC) == 0 || forced),
-                8 => Some(false),
-                2 => Some(roll(randi)),
-                3 => Some(unlocks.mars() && roll(randi)),
-                4 => Some(unlocks.clink() && roll(randi)),
-                5 => Some(unlocks.toy_11a() && roll(randi)),
-                6 => Some(unlocks.all_characters() && roll(randi)),
-                7 => Some(unlocks.gm_80164600() && roll(randi)),
-                _ => None,
-            };
-            match alt {
-                Some(true) => arg1 |= 2,
-                Some(false) => arg1 |= 1,
-                None => {}
-            }
-        }
-        if arg1 & 0x10 != 0 {
-            alt_flag = Some(false);
-            if arg1 & 1 != 0 {
-                bgm = p.x_c as i32;
-            } else if arg1 & 2 != 0 {
-                if p.x10 != BGM_UNDEFINED as u32 {
-                    bgm = p.x10 as i32;
-                    result = true;
-                } else {
-                    bgm = p.x_c as i32;
-                }
-            }
-        } else if arg1 & 0x20 != 0 {
-            if arg1 & 1 != 0 {
-                bgm = p.x_c as i32;
-                alt_flag = Some(false);
-            } else if arg1 & 2 != 0 {
-                if p.x10 != BGM_UNDEFINED as u32 {
-                    bgm = p.x10 as i32;
-                    alt_flag = Some(true);
-                    result = true;
-                } else {
-                    bgm = p.x_c as i32;
-                    alt_flag = Some(false);
-                }
-            }
-        } else if arg1 & 1 != 0 {
-            bgm = p.x4;
-            alt_flag = Some(false);
-        } else if arg1 & 2 != 0 {
-            if p.x8 as u32 != BGM_UNDEFINED as u32 {
-                bgm = p.x8;
-                alt_flag = Some(true);
-                result = true;
-            } else {
-                bgm = p.x4;
-                alt_flag = Some(false);
-            }
-        }
-        break;
-    }
-    assert!(bgm != BGM_UNDEFINED, "Ground_801C24F8: no music row for stkind {stkind:#x} (m-ex playlist fallback not ported)");
-    if bgm == -2 {
-        panic!("Ground_801C24F8: per-character track lbAudioAx_8002305C (TODO(group1 lbaudio))");
-    }
-    BgmPick { result, bgm, alt_flag }
 }
 
 /// `Stage_80225074`'s `arg1` for a VS match (`gm_8016B238` / `gm_8016B3A0` false): 4, or 0x44
@@ -162,3 +85,5 @@ pub fn stage_80225074_flags(arg0: i32) -> u32 {
         _ => panic!("Stage_80225074: arg0 {arg0}"),
     }
 }
+
+pub use crate::tu::ground::ground_801c24f8;

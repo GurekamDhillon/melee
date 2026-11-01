@@ -1,13 +1,9 @@
+
 //! Round 9 (night 3 round 5): gm setters/getters, several over records the .c files define,
 //! verified bit for bit against the C by `tests/oracle_r9.rs`.
 use core::ffi::c_void;
-use melee_types::HSD_GObj;
 
-/// gmtoulib.c `fn_8018FBD8`: `gobj->user_data = (void*) arg1` (the s32 sign-extends, as the
-/// native C's int-to-pointer cast does).
-pub fn fn_8018FBD8(gobj: &mut HSD_GObj, arg1: i32) {
-    gobj.user_data = arg1 as isize as *mut c_void;
-}
+use melee_types::HSD_GObj;
 
 /// gm_1879.c `gm_80187F48_EnterData`.
 #[repr(C)]
@@ -23,11 +19,6 @@ melee_core::gc_layout!(gm_80187F48_EnterData, "gm_80187F48_EnterData", size 0x4,
     stage_index @ 0x1: 1 "u8",
     stkind @ 0x2: 2 "u16",
 ]);
-
-/// gm_1879.c `getStKind`.
-pub fn getStKind(data: &gm_80187F48_EnterData) -> i32 {
-    data.stkind as i32
-}
 
 /// gmstaffroll.c `StaffEntryData`.
 #[repr(C)]
@@ -56,11 +47,6 @@ melee_core::gc_layout!(StaffEntryData, "StaffEntryData", size 0x14, align 4, [
     x11 @ 0x11: 2 "u8[2]",
     pad_13 @ 0x13: 1 "u8",
 ]);
-
-/// gmstaffroll.c `gm_801AB200_HasCheck`.
-pub fn gm_801AB200_HasCheck(entry_data: &StaffEntryData) -> u8 {
-    entry_data.has_check
-}
 
 /// gmevent.c `gm_801BAB40_src`: one event match's player entry.
 #[repr(C)]
@@ -109,3 +95,7 @@ melee_core::gc_layout!(gm_801BAB40_src, "gm_801BAB40_src", size 0x1C, align 4, [
 pub fn gm_801BC00C_GetCharacterKind(event_entry: &gm_801BAB40_src) -> i32 {
     event_entry.c_kind as i32
 }
+
+pub use crate::tu::gmtoulib::fn_8018FBD8;
+pub use crate::tu::gm_1879::getStKind;
+pub use crate::tu::gmstaffroll::gm_801AB200_HasCheck_fp as gm_801AB200_HasCheck;

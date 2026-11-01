@@ -3,6 +3,92 @@
 //! through `ext`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -230,4 +316,26 @@ pub unsafe extern "C" fn it_8026F8B4(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
     }
     ext::it_802E5F00(item_gobj, arg1, arg2, rand_int);
     1
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_8026F3D4_check_kind` (itdrop.c, static inline): `kind >= It_Kind_L_Gun_Ray`.
+pub fn it_8026f3d4_check_kind(_ip: Option<&Item>, it_kind: i32) -> bool {
+    melee_core::ct!("it_8026f3d4_check_kind");
+    it_kind >= It_Kind_L_Gun_Ray
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_8026F53C` (itdrop.c): unless `chk`, draws the drop velocity; then copies it to the item.
+/// `common` is the C global `it_804D6D28`.
+/// # Safety
+/// `ip.xCC_item_attr` is valid when `chk` is false.
+pub unsafe fn it_8026f53c(rand: &mut HsdRand, ip: &mut Item, vel: &mut GcVec, chk: bool, common: &ItemCommonData) {
+    melee_core::ct!("it_8026f53c");
+    if !chk {
+        vel.x = common.x54_float * (2.0 * (rand.randf() - 0.5));
+        vel.y = (*ip.xCC_item_attr).x18;
+        vel.z = 0.0;
+    }
+    ip.x40_vel = *vel;
 }

@@ -14,6 +14,9 @@
 //! against the C (whole TU, shipping contraction) by tests/tu_grflatzone.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -21,11 +24,6 @@ use melee_runtime::cabi::srem;
 use melee_types::*;
 
 use super::grdisplay::grDisplay_801C5DB0;
-pub use crate::gr::trivial::grflatzone::{
-    grFlatzone_80216F40, grFlatzone_8021705C, grFlatzone_802171CC, grFlatzone_80217430, grFlatzone_802174E4,
-    grFlatzone_802176B4, grFlatzone_80217D28, grFlatzone_80217DFC, grFlatzone_80217E80, grFlatzone_80217EE8,
-    grFlatzone_802182B4, grFlatzone_802182BC,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -877,3 +875,40 @@ pub unsafe extern "C" fn grFlatzone_80218260() {
         }
     }
 }
+
+// ---- folded from grflatzone.rs (consolidation steps 21/22) ----
+/// grFlatzone_80216F40 (gr/grflatzone.c:153)
+    pub extern "C" fn grFlatzone_80216F40() -> i32 { 0 }
+
+/// grFlatzone_8021705C (gr/grflatzone.c:181)
+    pub extern "C" fn grFlatzone_8021705C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_802171CC (gr/grflatzone.c:222)
+    pub extern "C" fn grFlatzone_802171CC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_80217430 (gr/grflatzone.c:293)
+    pub extern "C" fn grFlatzone_80217430(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_802174E4 (gr/grflatzone.c:324)
+    pub extern "C" fn grFlatzone_802174E4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_802176B4 (gr/grflatzone.c:390)
+    pub extern "C" fn grFlatzone_802176B4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_80217D28 (gr/grflatzone.c:560)
+    pub extern "C" fn grFlatzone_80217D28(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_80217DFC (gr/grflatzone.c:594)
+    pub extern "C" fn grFlatzone_80217DFC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_80217E80 (gr/grflatzone.c:608)
+    pub extern "C" fn grFlatzone_80217E80(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_80217EE8 (gr/grflatzone.c:627)
+    pub extern "C" fn grFlatzone_80217EE8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFlatzone_802182B4 (gr/grflatzone.c:768)
+    pub extern "C" fn grFlatzone_802182B4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grFlatzone_802182BC (gr/grflatzone.c:773)
+    pub extern "C" fn grFlatzone_802182BC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

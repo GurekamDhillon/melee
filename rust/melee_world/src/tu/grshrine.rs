@@ -6,16 +6,18 @@
 //! gen/turef/tu_grshrine_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use core::ffi::c_void;
 use melee_types::*;
 
-pub use crate::gr::forward::grshrine::{grShrine_UnkStage0_OnStart, stageGObj0_OnInit};
-pub use crate::gr::trivial::grshrine::{
-    grShrine_80201D18, grShrine_80201E34, grShrine_80201E88, grShrine_80201F14, grShrine_80201F44,
-};
-
+pub use crate::gr::forward::grshrine::{stageGObj0_OnInit};
 /// `static void* yakumono_param`.
 pub static mut yakumono_param: *mut c_void = core::ptr::null_mut();
 
@@ -140,3 +142,23 @@ pub static mut grSh_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grshrine.rs (consolidation steps 21/22) ----
+/// grShrine_UnkStage0_OnStart (gr/grshrine.c:92)
+    pub unsafe extern "C" fn grShrine_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grshrine.rs (consolidation steps 21/22) ----
+/// grShrine_80201D18 (gr/grshrine.c:97)
+    pub extern "C" fn grShrine_80201D18() -> i32 { 0 }
+
+/// grShrine_80201E34 (gr/grshrine.c:123)
+    pub extern "C" fn grShrine_80201E34(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrine_80201E88 (gr/grshrine.c:139)
+    pub extern "C" fn grShrine_80201E88(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrine_80201F14 (gr/grshrine.c:162)
+    pub extern "C" fn grShrine_80201F14(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grShrine_80201F44 (gr/grshrine.c:175)
+    pub extern "C" fn grShrine_80201F44(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

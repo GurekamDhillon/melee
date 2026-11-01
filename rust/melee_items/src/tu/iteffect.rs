@@ -4,6 +4,31 @@
 //! typed [`EfArg`]s.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -413,4 +438,16 @@ pub unsafe extern "C" fn it_80278800(item_gobj: *mut HSD_GObj, ef_id: i32, arg2:
             ext::efAsync_Spawn(item_gobj, xbc0, 8, 4, jobj, &[EfArg::Vec3P(&sp74)]);
         }
     }
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_80278800_rand_vec_fp` (iteffect.c): `out += 2 v (r - 0.5)` per axis, one draw each.
+pub fn it_80278800_rand_vec_fp(rand: &mut HsdRand, out: &mut GcVec, v: &GcVec) {
+    melee_core::ct!("it_80278800_rand_vec_fp");
+    let f = rand.randf();
+    out.x = fmadds(2.0 * v.x, f - 0.5, out.x);
+    let f = rand.randf();
+    out.y = fmadds(2.0 * v.y, f - 0.5, out.y);
+    let f = rand.randf();
+    out.z = fmadds(2.0 * v.z, f - 0.5, out.z);
 }

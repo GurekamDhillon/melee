@@ -1,35 +1,11 @@
+
 //! Round 6 (night 3 round 2): lb leaf functions (lbrefract.c, lb_00B0.c), verified bit for bit
 //! against the C by `tests/oracle_r6.rs`. TODO(group1): lb leftovers; move into melee_runtime
 //! if group 1 takes these TUs.
 use melee_core::fp::fmadds;
+
 use melee_types::HSD_JObj;
 
-/// lbrefract.c `my_fmodf` (static inline): `a - b * (s64)(a / b)`, or `a` when |b| > |a|.
-/// The shipping build contracts the last step into one fused site: fmuladd(-b, (float) q, a).
-/// `(s64)` of a non-finite or out-of-range quotient saturates (gwtool's lowering, Rust `as`).
-pub fn my_fmodf(a: f32, b: f32) -> f32 {
-    let fa = a.abs();
-    let fb = b.abs();
-    if fb > fa {
-        return a;
-    }
-    let quotient = (a / b) as i64;
-    fmadds(-b, quotient as f32, a)
-}
-
-/// lb_00B0.c `lb_8000B074`: the joint has an AObj that is not AOBJ_NO_ANIM.
-pub fn lb_8000B074(jobj: &HSD_JObj) -> bool {
-    const AOBJ_NO_ANIM: u32 = 1 << 30;
-    // SAFETY: `aobj` is NULL or a live AObj, as in the C.
-    match unsafe { jobj.aobj.as_ref() } {
-        Some(a) => a.flags & AOBJ_NO_ANIM == 0,
-        None => false,
-    }
-}
-
-/// lb_00B0.c `memzero`: zero `size` bytes (`while (size--)`; size >= 0).
-pub fn memzero(mem: &mut [u8], size: isize) {
-    for b in &mut mem[..size as usize] {
-        *b = 0;
-    }
-}
+pub use crate::tu::lb_00b0::lb_8000B074_fp as lb_8000B074;
+pub use crate::tu::lb_00b0::memzero_fp as memzero;
+pub use crate::tu::lbrefract::my_fmodf_fp as my_fmodf;

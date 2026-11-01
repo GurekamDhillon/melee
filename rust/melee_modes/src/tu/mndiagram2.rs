@@ -1,5 +1,6 @@
 //! TARGET_PC port of src/melee/mn/mndiagram2.c.
 #![allow(non_snake_case, non_upper_case_globals, unused_imports, unused_variables, unused_assignments, unused_mut, unused_unsafe, static_mut_refs, clippy::all)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ffi::c_void;
 use melee_types::*;
 use std::vec::Vec;
@@ -1665,4 +1666,29 @@ pub unsafe extern "C" fn mnDiagram2_ClearDetailView(mut gobj: *mut HSD_GObj) {
     if !jobj.is_null() {
         HSD_JObjRemoveAll(jobj);
     }
+}
+
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mndiagram2.c `mnDiagram2_IsTimeStat_fp` (VSSTAT_PLAY_TIME = 11).
+pub fn mnDiagram2_IsTimeStat_fp(stat_type: u8) -> bool {
+    melee_core::ct!("mnDiagram2_IsTimeStat_fp");
+    stat_type == 11
+}
+
+/// mndiagram2.c `mnDiagram2_IsDistanceStat_fp` (WALK/RUN/FALL_DISTANCE, PEAK_HEIGHT = 14..17).
+pub fn mnDiagram2_IsDistanceStat_fp(stat_type: u8) -> bool {
+    melee_core::ct!("mnDiagram2_IsDistanceStat_fp");
+    (14..=17).contains(&stat_type)
+}
+
+/// mndiagram2.c `mnDiagram2_IsPercentageStat_fp` (HIT_PERCENTAGE 3, PLAY_PERCENTAGE 12, AVG_PLAYERS 13).
+pub fn mnDiagram2_IsPercentageStat_fp(stat_type: u8) -> bool {
+    melee_core::ct!("mnDiagram2_IsPercentageStat_fp");
+    matches!(stat_type, 3 | 12 | 13)
+}
+
+/// mndiagram2.c `mnDiagram2_IsIconOnlyStat_fp` (MOST/SECOND/LEAST_PLAYED = 21..23).
+pub fn mnDiagram2_IsIconOnlyStat_fp(stat_type: u8) -> bool {
+    melee_core::ct!("mnDiagram2_IsIconOnlyStat_fp");
+    (21..=23).contains(&stat_type)
 }

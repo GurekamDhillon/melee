@@ -9,6 +9,12 @@
 //! Function pointers the C hands to other TUs (`fn_8016B784`, `fn_8016B7B4`, `fn_8016B7F8`, `fn_8016B88C`,
 //! `fn_8016C7D0`, `gm_AnyControllerPressedStart`, `gm_AnyControllerPressedZ`) are `extern "C"` here; the ones
 //! with an `int` result return `i32` like the C's `bool` (a typedef of `int`).
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::PlayerInitData as PlayerInitData_gm_ptr;
 use super::globals::{DbLevel, HSD_PadCopyStatus, HSD_PadMasterStatus, HSD_RandSeedPtr, __OSBusClock};
 use super::gmvsmelee::gmVsMelee_ResultsEnterData;
 use super::gmvsmode::gm_Mode_Vs_States;
@@ -2297,4 +2303,23 @@ pub unsafe fn gm_8016B3A0() -> bool {
         return true;
     }
     false
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gmvs.c `direction_fp` (NaN -> +1).
+pub fn direction_fp(x: f32) -> f32 {
+    melee_core::ct!("direction_fp");
+    if x >= 0.0 {
+        -1.0
+    } else {
+        1.0
+    }
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmvs.c `getPort_fp`.
+pub fn getPort_fp(player: &PlayerInitData_gm_ptr, i: i32) -> i32 {
+    melee_core::ct!("getPort_fp");
+    let slot = player.slot as i32;
+    if slot == 0 { i } else { slot - 1 }
 }

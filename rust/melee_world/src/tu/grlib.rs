@@ -4,6 +4,13 @@
 //! State-oracle checked against the C (tests/gro_grlib.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::stage::StageWorld;
+#[allow(unused_imports)]
+use crate::vec::Vec3 as Vec3_grlib;
+#[allow(unused_imports)]
+use crate::gr::grlib::{GrLibHooks, kill_generators_on, point_inside_coll};
 use super::grinl::{assert_, ABS, GET_JOBJ, HSD_JObjGetChild, HSD_JObjGetNext, HSD_JObjGetTranslationX, HSD_JObjGetTranslationY};
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
@@ -395,6 +402,167 @@ pub unsafe fn grLib_801C9EE8(point: *mut Vec3, offset: f32) -> bool {
             }
         }
         cur_item = (*cur_item).next;
+    }
+    false
+}
+
+// ---- folded from grlib.rs (consolidation steps 21/22) ----
+/// grLib_801C96E8
+pub fn grlib_801c96e8(gp: &Ground) -> bool {
+    melee_core::ct!("grlib_801c96e8");
+    gp.x10_flags.b4() != 0
+}
+
+/// grLib_801C96F8
+pub fn grlib_801c96f8(w: &StageWorld, h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, arg2: &Vec3_grlib) -> *mut HSD_Generator {
+    melee_core::ct!("grlib_801c96f8");
+    let g = h.hsd_8039f05c(0, arg1, arg0);
+    if !g.is_null() {
+        unsafe {
+            let mut srt = (*g).appsrt;
+            if srt.is_null() {
+                srt = h.ps_add_generator_app_srt_begin(g, 1);
+            } else {
+                (*srt).xA2 = 0;
+            }
+            if srt.is_null() {
+                h.hsd_8039d4dc(g);
+                return core::ptr::null_mut();
+            }
+            (*srt).translate = Vec { x: arg2.x, y: arg2.y, z: arg2.z };
+            let scale = w.ground_801c0498();
+            (*srt).scale.x *= scale;
+            (*srt).scale.y *= scale;
+            (*srt).scale.z *= scale;
+            (*g).pos.z = 0.0;
+            (*g).pos.y = 0.0;
+            (*g).pos.x = 0.0;
+        }
+    }
+    g
+}
+
+/// grLib_801C97DC
+pub fn grlib_801c97dc(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) {
+    melee_core::ct!("grlib_801c97dc");
+    h.hsd_8039f6cc(0, arg1, arg0, j);
+}
+
+/// grLib_801C9808
+pub fn grlib_801c9808(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) -> *mut HSD_Generator {
+    melee_core::ct!("grlib_801c9808");
+    h.hsd_8039efac(0, arg1, arg0, j)
+}
+
+/// grLib_801C9834
+pub fn grlib_801c9834(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
+    melee_core::ct!("grlib_801c9834");
+    h.hsd_8039d4dc(g);
+}
+
+/// grLib_801C9854
+pub fn grlib_801c9854(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
+    melee_core::ct!("grlib_801c9854");
+    h.hsd_8039d5dc(j);
+}
+
+/// grLib_801C9874
+pub fn grlib_801c9874(h: &mut dyn GrLibHooks, g: *mut HSD_Generator) {
+    melee_core::ct!("grlib_801c9874");
+    unsafe { (*g).r#type |= 0x80 };
+    h.hsd_8039d4dc(g);
+}
+
+/// grLib_801C98A0
+pub fn grlib_801c98a0(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
+    melee_core::ct!("grlib_801c98a0");
+    if j.is_null() {
+        return;
+    }
+    kill_generators_on(h, j);
+}
+
+/// grLib_801C9908 (recursive over the joint tree, stops at instances)
+pub fn grlib_801c9908(h: &mut dyn GrLibHooks, j: *mut HSD_JObj) {
+    melee_core::ct!("grlib_801c9908");
+    if j.is_null() {
+        return;
+    }
+    kill_generators_on(h, j);
+    if unsafe { (*j).flags } & JOBJ_INSTANCE as u32 != 0 {
+        return;
+    }
+    let mut c = unsafe { (*j).child };
+    while !c.is_null() {
+        grlib_801c9908(h, c);
+        c = unsafe { (*c).next };
+    }
+}
+
+/// grLib_801C99C0
+pub fn grlib_801c99c0(h: &mut dyn GrLibHooks, bank: i32, gfx_id: i32, j: *mut HSD_JObj, flag: i32) {
+    melee_core::ct!("grlib_801c99c0");
+    if flag != 0 {
+        h.hsd_8039efac(0, bank, gfx_id, j);
+    } else {
+        h.hsd_8039f6cc(0, bank, gfx_id, j);
+    }
+}
+
+/// grLib_801C9B20
+pub fn grlib_801c9b20(h: &mut dyn GrLibHooks, j: *mut HSD_JObj, a1: *mut DynamicsDesc, a2: *mut DynamicsDesc) {
+    melee_core::ct!("grlib_801c9b20");
+    let count = unsafe { (*a1).count };
+    h.lb_8000fd48(j, a2, count as i32);
+    h.lb_80011710(a1, a2);
+}
+
+/// grLib_801C9B6C
+pub fn grlib_801c9b6c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
+    melee_core::ct!("grlib_801c9b6c");
+    h.lb_8000fd18(a);
+}
+
+/// grLib_801C9B8C
+pub fn grlib_801c9b8c(h: &mut dyn GrLibHooks, a: *mut core::ffi::c_void) {
+    melee_core::ct!("grlib_801c9b8c");
+    h.lb_8001044c_zero(a);
+}
+
+/// grLib_801C9BC8 (static proc, loop quake)
+pub fn grlib_801c9bc8(h: &mut dyn GrLibHooks, gobj: *mut HSD_GObj) {
+    melee_core::ct!("grlib_801c9bc8");
+    let j = unsafe { (*gobj).hsd_obj } as *mut HSD_JObj;
+    h.jobj_anim_all(j);
+    let (x, y) = h.jobj_translation_xy(j);
+    h.camera_set_quake_offset(x, y);
+}
+
+/// grLib_801C9C40 (static proc, one-shot quake)
+pub fn grlib_801c9c40(h: &mut dyn GrLibHooks, gobj: *mut HSD_GObj) {
+    melee_core::ct!("grlib_801c9c40");
+    let j = unsafe { (*gobj).hsd_obj } as *mut HSD_JObj;
+    let aobj = unsafe { (*j).aobj };
+    h.jobj_anim_all(j);
+    let (x, y) = h.jobj_translation_xy(j);
+    h.camera_set_quake_offset(x, y);
+    if aobj.is_null() || unsafe { (*aobj).flags } & 0x4000_0000 != 0 {
+        h.gobj_free(gobj);
+    }
+}
+
+/// grLib_801C9EE8
+pub fn grlib_801c9ee8(h: &mut dyn GrLibHooks, p: &Vec3_grlib, offset: f32) -> bool {
+    melee_core::ct!("grlib_801c9ee8");
+    for cd in h.fighter_colls() {
+        if point_inside_coll(unsafe { &*cd }, p, offset) {
+            return true;
+        }
+    }
+    for (kind, cd) in h.item_colls() {
+        if kind != It_PKind_Random && point_inside_coll(unsafe { &*cd }, p, offset) {
+            return true;
+        }
     }
     false
 }

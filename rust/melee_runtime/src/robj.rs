@@ -1,3 +1,4 @@
+
 //! Port of `src/sysdolphin/baselib/robj.c` (round 7): reference objects (constraints, limits,
 //! expressions, IK hints) and the constraint solver `HSD_RObjUpdateAll`.
 //!
@@ -23,25 +24,38 @@
 //! GameCube records: `melee_types::HSD_RObj` (0x1C), `HSD_RObjDesc` (0x0C), `HSD_Rvalue` (0x0C).
 
 use crate::aobj::{AObjGlobals, HsdAObj, HsdAObjDesc};
+
 use crate::gekko::sqrtf;
+
 use crate::hsd_mtx::{self, fabsf_bitwise};
+
 use crate::hsd_util::get_nb_bits;
+
 use crate::jobj::{JObjHost, JObjId, JObjTree, JOBJ_CLASSICAL_SCALE};
+
 use crate::mtx::{self, Mtx, Vec3};
+
 use melee_core::fp::fmadds;
 
 pub const ROBJ_TYPE_MASK: u32 = 0x7000_0000;
+
 pub const REFTYPE_EXP: u32 = 0x0000_0000;
+
 pub const REFTYPE_JOBJ: u32 = 0x1000_0000;
+
 pub const REFTYPE_LIMIT: u32 = 0x2000_0000;
+
 pub const REFTYPE_BYTECODE: u32 = 0x3000_0000;
+
 pub const REFTYPE_IKHINT: u32 = 0x4000_0000;
+
 /// fobj.h `TYPE_ROBJ`.
 pub const TYPE_ROBJ: u8 = 1;
 
-const EPS: f32 = 1.00000001335e-10f32;
+pub(crate) const EPS: f32 = 1.00000001335e-10f32;
+
 /// `HSD_RObj_80406E74`.
-const ORIENT_TYPES: [u32; 3] = [0x32, 0x33, 0x34];
+pub(crate) const ORIENT_TYPES: [u32; 3] = [0x32, 0x33, 0x34];
 
 /// `HSD_ExpDesc::func` / `HSD_Exp::expr.func`: gets the whole argument buffer.
 pub type ExpFunc = fn(&[f32]) -> f32;
@@ -367,30 +381,6 @@ where
     }
 }
 
-/// `set_dirup_matrix` (static). `dir` / `uv` are written back as in the C.
-pub fn set_dirup_matrix<D, R>(
-    dir: &mut Vec3,
-    uv: &mut Vec3,
-    scale: &Vec3,
-    tree: &mut JObjTree<D, R>,
-    obj: JObjId,
-    update: &mut RObjUpdate<'_, D, R>,
-) {
-    let mut z = mtx::vec_cross(dir, uv);
-    let kdir = sqrtf(1.0f32 / (EPS + mtx::vec_dot(dir, dir)));
-    *dir = mtx::vec_scale(dir, kdir);
-    let kz = sqrtf(1.0f32 / (EPS + mtx::vec_dot(&z, &z)));
-    z = mtx::vec_scale(&z, kz);
-    *uv = mtx::vec_cross(&z, dir);
-    let v = Vec3 { x: dir.x * scale.x, y: dir.y * scale.x, z: dir.z * scale.x };
-    update(tree, obj, 50, Some(RObjVal::Vec(v)));
-    let v = Vec3 { x: uv.x * scale.y, y: uv.y * scale.y, z: uv.z * scale.y };
-    update(tree, obj, 51, Some(RObjVal::Vec(v)));
-    let v = Vec3 { x: z.x * scale.z, y: z.y * scale.z, z: z.z * scale.z };
-    update(tree, obj, 52, Some(RObjVal::Vec(v)));
-    update(tree, obj, 55, None);
-}
-
 /// `resolveCnsDirUp` (static).
 pub fn resolve_cns_dir_up<D, R, H>(
     chain: &[HsdRObj],
@@ -429,7 +419,7 @@ pub fn resolve_cns_dir_up<D, R, H>(
 }
 
 /// `HSD_JObjGetMtxPtr` (jobj.h inline): set up the matrix, then read it.
-fn mtx_ptr<D, R, H>(tree: &mut JObjTree<D, R>, host: &mut H, j: JObjId) -> Mtx
+pub(crate) fn mtx_ptr<D, R, H>(tree: &mut JObjTree<D, R>, host: &mut H, j: JObjId) -> Mtx
 where
     D: Copy + PartialEq,
     R: Copy + PartialEq,
@@ -717,11 +707,6 @@ pub fn load_rvalue(list: Option<&[HsdRvalueList]>) -> Vec<HsdRvalue> {
     })
 }
 
-/// `dummy_func` (static).
-pub fn dummy_func(_args: &[f32]) -> f32 {
-    0.0
-}
-
 /// `expLoadDesc` (static).
 pub fn exp_load_desc(desc: Option<&HsdExpDesc>) -> HsdExp {
     let mut e = HsdExp::default();
@@ -876,3 +861,6 @@ pub fn set_constraint_obj<X: RObjHost>(r: Option<&mut HsdRObj>, o: JObjId, rhost
     r.u.jobj = Some(o);
     rhost.jobj_ref_this(o);
 }
+
+pub use crate::tu::robj::dummy_func_fp as dummy_func;
+pub use crate::tu::robj::set_dirup_matrix_fp as set_dirup_matrix;

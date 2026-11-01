@@ -1,3 +1,4 @@
+
 //! Night 3 round 6: the DevText buffer/state functions of src/melee/if/textlib.c, plus
 //! textlib_1.c's `adjust`. Checked against the C by `tests/textlib_r6_vs_c.rs`
 //! (`cref/gen_textlib_r6_ref.sh`). No float arithmetic, so no fused sites.
@@ -12,8 +13,11 @@ use melee_types::{DevText, GXColor};
 use super::leaves::{devtext_clamp, devtext_num_to_str};
 
 pub const DEVTEXT_FLAG_HIDETEXT: u8 = 0x80;
+
 pub const DEVTEXT_FLAG_HIDEBACKGROUND: u8 = 0x40;
+
 pub const DEVTEXT_FLAG_NOWRAP: u8 = 0x20;
+
 pub const DEVTEXT_FLAG_SHOWCURSOR: u8 = 0x10;
 
 /// DevText_EraseFirstLine: scrolls the buffer up one line and clears the last.
@@ -55,11 +59,6 @@ pub fn devtext_set_cursor_x(text: &mut DevText, x: i32) {
 /// DevText_HideCursor.
 pub fn devtext_hide_cursor(text: &mut DevText) {
     text.flags &= !DEVTEXT_FLAG_SHOWCURSOR;
-}
-
-/// DevText_80302AC0 (sets NOWRAP).
-pub fn devtext_80302ac0(text: &mut DevText) {
-    text.flags |= DEVTEXT_FLAG_NOWRAP;
 }
 
 /// DevText_ShowBackground.
@@ -118,12 +117,6 @@ pub fn devtext_set_bg_color(text: &mut DevText, color: GXColor) -> GXColor {
     core::mem::replace(&mut text.bg_color, color)
 }
 
-/// DevText_Erase: clears `2 * w * h` bytes.
-pub fn devtext_erase(text: &DevText, buf: &mut [u8]) {
-    let n = 2 * text.w as usize * text.h as usize;
-    buf[..n].fill(0);
-}
-
 /// DevText_AdvanceLine (static inline): next line, or scroll when on the last.
 pub fn devtext_advance_line(text: &mut DevText, buf: &mut [u8]) {
     text.cursor_x = 0;
@@ -131,25 +124,6 @@ pub fn devtext_advance_line(text: &mut DevText, buf: &mut [u8]) {
         text.cursor_y = text.cursor_y.wrapping_add(1);
     } else {
         devtext_erase_first_line(text, buf);
-    }
-}
-
-/// DevText_Print. `None` is the C's NULL; the string ends at the first NUL (or slice end).
-pub fn devtext_print(text: &mut DevText, buf: &mut [u8], s: Option<&[u8]>) {
-    let Some(s) = s else { return };
-    for &c in s.iter().take_while(|&&c| c != 0) {
-        if c != b'\n' {
-            let index = (text.cursor_x as i32 + text.cursor_y as i32 * text.w as i32) as usize;
-            buf[index * 2] = c;
-            buf[index * 2 + 1] = (buf[index * 2 + 1] & !3) | text.current_color();
-            if (text.cursor_x as i32) < text.w as i32 - 1 {
-                text.cursor_x += 1;
-            } else if text.flags & DEVTEXT_FLAG_NOWRAP == 0 {
-                devtext_advance_line(text, buf);
-            }
-        } else {
-            devtext_advance_line(text, buf);
-        }
     }
 }
 
@@ -167,3 +141,7 @@ pub fn textlib1_adjust(mut c: GXColor) -> GXColor {
     c.b = (c.b as i32 * 50 / 100) as u8;
     c
 }
+
+pub use crate::tu::textlib::devtext_80302ac0;
+pub use crate::tu::textlib::devtext_erase;
+pub use crate::tu::textlib::devtext_print;

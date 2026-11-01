@@ -9,6 +9,110 @@
 //! `ABS` keeps the sign of a zero; `(f32) it_804D6D28->x30_lifetime` converts a u32.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds6::{c_abs as c_abs_itkinds6, sa};
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -620,4 +724,62 @@ pub unsafe extern "C" fn it_8028F968(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn it_8028F9B8(gobj: *mut Item_GObj) {
     melee_core::ct!("it_8028F9B8");
     ext::Item_8026A8EC(gobj);
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_8028ECE0` (itfreeze.c): `freeze.unk_1C = NULL`.
+pub fn it_8028ece0(ip: &mut Item) {
+    melee_core::ct!("it_8028ece0");
+    ip.xDD4_itemVar.freeze.unk_1C = null_mut_itkinds5();
+}
+
+/// `it_8028ECF0` (itfreeze.c): `*v = pos`, returns the item.
+pub fn it_8028ecf0(ip: &mut Item, v: &mut GcVec) -> *mut Item {
+    melee_core::ct!("it_8028ecf0");
+    v.x = ip.pos.x;
+    v.y = ip.pos.y;
+    v.z = ip.pos.z;
+    ip
+}
+
+/// `it_8028EC98` (itfreeze.c): `freeze.x10 = vel`, lifetime `it_804D6D28->x30_lifetime`.
+pub fn it_8028ec98(ip: &mut Item, vel: f32, common: &ItemCommonData) {
+    melee_core::ct!("it_8028ec98");
+    ip.xDD4_itemVar.freeze.x10 = vel;
+    it_80275158(ip, common.x30_lifetime as f32, common);
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_8028EDBC` (itfreeze.c): ground speed of the freezie (1 fused site).
+/// # Safety
+/// The special attributes must be a valid `itUnkAttributes`.
+pub unsafe fn it_8028edbc(ip: &mut Item) {
+    melee_core::ct!("it_8028edbc");
+    let attrs = sa::<itUnkAttributes>(ip);
+    if ip.ground_or_air != 1 {
+        let fr = &mut ip.xDD4_itemVar.freeze;
+        if c_abs_itkinds6(fr.x4.x) > 0.1 {
+            if fr.x0 == 0.0 {
+                ip.facing_dir = if fr.x4.x > 0.0 { 1.0 } else { -1.0 };
+                fr.x0 = attrs.x4_float * ip.facing_dir;
+            } else {
+                fr.x0 = fmadds(fr.x4.x, attrs.xC, fr.x0);
+            }
+        } else if c_abs_itkinds6(fr.x0) < attrs.x4_float {
+            fr.x0 = attrs.x4_float * ip.facing_dir;
+        } else if fr.x0 > 0.0 {
+            fr.x0 -= attrs.x10;
+        } else {
+            fr.x0 += attrs.x10;
+        }
+        if fr.x0 > attrs.x8 {
+            fr.x0 = attrs.x8;
+        } else if fr.x0 < -attrs.x8 {
+            fr.x0 = -attrs.x8;
+        }
+        if (fr.x0 > 0.0 && ip.facing_dir < 0.0) || (fr.x0 < 0.0 && ip.facing_dir > 0.0) {
+            ip.facing_dir *= -1.0;
+        }
+        ip.x40_vel.x = fr.x0 * fr.x4.y;
+    }
 }

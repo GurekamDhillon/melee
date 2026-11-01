@@ -3,6 +3,11 @@
 //! `gm_Mode_LightningVs_States` table is not ported in this pass.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::StartMeleeData as StartMeleeData_gm_ptr;
 use core::ptr::addr_of_mut;
 use melee_types::*;
 
@@ -219,4 +224,11 @@ pub mod ext {
                     None => { unsafe { crate::tu::gm_1601::gm_InitVsMode(vs as _); } return; },
                 }
             }
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmlightning.c `fn_801BA7AC_fp` (Lightning Melee).
+pub fn fn_801BA7AC_fp(start: &mut StartMeleeData_gm_ptr, _vs: *mut StartMeleeData_gm_ptr) {
+    melee_core::ct!("fn_801BA7AC_fp");
+    start.rules.game_speed = 1.25;
 }

@@ -1,3 +1,4 @@
+
 //! Segment-vs-map collision queries over the joint list, from src/melee/mp/mplib.c:
 //! mpCheckFloor/Ceiling/LeftWall/RightWall and their `Remap` variants, mpLib_800511A4_RightWall,
 //! mpLib_800515A0_LeftWall, mpLib_8005199C_Floor, mpLib_80051BA8_Floor, mpCheckMultiple,
@@ -19,13 +20,17 @@
 //! vertex); mpLib_8005199C fuses `dy / dx * (x - x0) + y0`; the rest fuse nothing.
 
 use super::geom::{mp_line_intersection, mp_line_intersection_h, mp_line_intersection_v, mp_remap2d};
+
 use super::lines::GroundColl;
+
 use super::types::*;
+
 use crate::vec::{ps_vec_normalize, Vec2, Vec3};
+
 use melee_core::fp::fmadds;
 
 /// `F32_MAX` (src/Runtime/platform.h).
-const F32_MAX: f32 = 3.4028235e38;
+pub(crate) const F32_MAX: f32 = 3.4028235e38;
 
 /// Native `CollJoint` as the collision queries use it. `next`/`inner` become indices
 /// (-1 = NULL); the HSD_JObj / callback fields stay on [`CollJoint`] (raw, group 1/3/5).
@@ -39,6 +44,7 @@ pub struct CollJointRt {
     pub bounding_min: Vec2,
     pub bounding_max: Vec2,
 }
+
 melee_core::gc_layout!(CollJointRt, "CollJoint", size 0x34, align 4, [
     next @ 0x0: 4 "CollJoint*",
     inner @ 0x4: 4 "MapJoint*",
@@ -61,7 +67,7 @@ pub struct SegHit {
 pub type LineFilter<'a> = Option<&'a mut dyn FnMut(i32) -> bool>;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Kind {
+pub(crate) enum Kind {
     Floor,
     Ceiling,
     LeftWall,
@@ -96,19 +102,14 @@ impl Kind {
     }
 }
 
-#[inline]
-fn sq(x: f32) -> f32 {
-    x * x
-}
-
 /// C `ABS(x) > 0.0001` (f32 ABS, double compare).
 #[inline]
-fn abs_gt(x: f32) -> bool {
+pub(crate) fn abs_gt(x: f32) -> bool {
     let a = if x < 0.0 { -x } else { x };
     (a as f64) > 0.0001
 }
 
-fn usable(flags: u32, bit: u32) -> bool {
+pub(crate) fn usable(flags: u32, bit: u32) -> bool {
     flags & bit != 0 && flags & LINE_FLAG_ENABLED != 0 && flags & LINE_FLAG_EMPTY == 0
 }
 
@@ -634,3 +635,5 @@ impl GroundColl {
         self.mp_check_multiple(x0, y0, x1, y1, 0xF, joint_id_skip, joint_id_only)
     }
 }
+
+pub use crate::tu::controller::sq_fp as sq;

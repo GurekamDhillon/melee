@@ -5,6 +5,157 @@
 //! Checked against the C by the state oracle `tests/tu_itspawn.rs` (gen/mtu).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_mut, unused_assignments, unused_variables, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::itlib3::{c_f32_to_s32};
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -544,4 +695,66 @@ pub unsafe extern "C" fn it_8026D3CC() -> bool {
     result |= it_8026D324(It_Kind_Tomato);
     result |= it_8026D324(It_Kind_Foods);
     result
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+// ---- itspawn.c --------------------------------------------------------------------------
+
+/// `it_8026C47C`: one bit per item kind `It_Kind_Capsule..238` that has a live item on the
+/// p-link list (`it_80272828`), 32 kinds per word (`!(kind & It_Kind_RabbitC)` starts a word).
+/// # Safety
+/// As `it_80272828` (`head` the item p-link list head).
+pub unsafe fn it_8026c47c(head: *mut HSD_GObj, arg: &mut it_8026C47C_arg0_t) {
+    melee_core::ct!("it_8026c47c");
+    let mut it_kind = It_Kind_Capsule as u32;
+    let mut bit_idx: i32 = 0;
+    *arg = it_8026C47C_arg0_t::zeroed();
+    // SAFETY: eight consecutive i32 fields (unk0..unk1C), repr(C).
+    let words = core::slice::from_raw_parts_mut(arg as *mut it_8026C47C_arg0_t as *mut i32, 8);
+    let mut w = 0usize;
+    while it_kind < 238 {
+        if !it_80272828(head, it_kind as ItemKind).is_null() {
+            words[w] |= 1i32.wrapping_shl(bit_idx as u32);
+        }
+        it_kind += 1;
+        bit_idx += 1;
+        if it_kind & It_Kind_RabbitC as u32 == 0 {
+            bit_idx = 0;
+            w += 1;
+        }
+    }
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_8026C65C` (itspawn.c): weighted kind pick from an `ItemPickTable`.
+/// # Safety
+/// `table.x4` holds `table.size` kinds and `table.xC` the `size + 1` cumulative weights.
+pub unsafe fn it_8026c65c(rand: &mut HsdRand, table: &ItemPickTable) -> i32 {
+    melee_core::ct!("it_8026c65c");
+    let total = table.x8 as i32;
+    let v = rand.randi(total);
+    *table.x4.offset(bisect_value(v, table, 0, table.size as i32) as isize) as i32
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- itspawn.c -------------------------------------------------------------------------
+
+/// `it_8026CA4C`: sum of the scaled, rounded-up weights of the kinds selected by `mask`
+/// (bit 0 = kind `start`), for kinds below `It_Kind_L_Gun_Ray`. `sum += f` is
+/// `sum = (s32) ((f32) sum + f)`; 1 fused site: `fmadds(arg4, (f32) w, 0.99)`. The result is
+/// stored to the u16 `x8`.
+pub fn it_8026ca4c(alloc: &mut ItemPickTable, weights: &[i32], mask: u64, start: i32, arg4: f32) {
+    melee_core::ct!("it_8026ca4c");
+    let mut mask = mask;
+    let mut sum: i32 = 0;
+    let mut i = start;
+    while i < It_Kind_L_Gun_Ray {
+        if mask & 1 != 0 {
+            let f = fmadds(arg4, weights[i as usize] as f32, 0.99f32);
+            sum = c_f32_to_s32(sum as f32 + f);
+        }
+        i += 1;
+        mask >>= 1;
+    }
+    alloc.x8 = sum as u16;
 }

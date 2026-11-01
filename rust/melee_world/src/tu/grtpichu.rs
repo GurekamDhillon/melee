@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtpichu::{grTPichu_80222C34, grTPichu_80222D50, grTPichu_80222DB0, grTPichu_80222E40, grTPichu_80222E6C, grTPichu_80222E74};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -207,3 +212,26 @@ pub unsafe extern "C" fn grTPichu_80222E68(arg0: *mut HSD_GObj) {
     melee_core::ct!("grTPichu_80222E68");
     
 }
+
+// ---- folded from grtpichu.rs (consolidation steps 21/22) ----
+/// grTpichu_UnkStage0_OnStart_fp (gr/grtpichu.c:84)
+    pub unsafe extern "C" fn grTpichu_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtpichu.rs (consolidation steps 21/22) ----
+/// grTPichu_80222C34 (gr/grtpichu.c:89)
+    pub extern "C" fn grTPichu_80222C34() -> i32 { 0 }
+
+/// grTPichu_80222D50 (gr/grtpichu.c:115)
+    pub extern "C" fn grTPichu_80222D50(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPichu_80222DB0 (gr/grtpichu.c:129)
+    pub extern "C" fn grTPichu_80222DB0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPichu_80222E40 (gr/grtpichu.c:146)
+    pub extern "C" fn grTPichu_80222E40(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPichu_80222E6C (gr/grtpichu.c:158)
+    pub extern "C" fn grTPichu_80222E6C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTPichu_80222E74 (gr/grtpichu.c:163)
+    pub extern "C" fn grTPichu_80222E74(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

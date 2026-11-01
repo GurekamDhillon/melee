@@ -18,6 +18,12 @@
 //! State-oracle checked against the C (tests/gro_grbigblue.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, unused_mut, unused_variables, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null_mut};
@@ -25,11 +31,6 @@ use melee_core::fp::{fmadds, fmsubs};
 use melee_runtime::gekko::{cosf, sinf, sqrtf};
 use melee_types::*;
 
-pub use crate::gr::trivial::grbigblue::{
-    grBigBlue_801E59F0, grBigBlue_801E5B10, grBigBlue_801E6114, grBigBlue_801E61BC, grBigBlue_801E6288,
-    grBigBlue_801E6354, grBigBlue_801E687C, grBigBlue_801E6C58, grBigBlue_801E93D0, grBigBlue_801EA054,
-    grBigBlue_801EFC0C,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -3992,3 +3993,41 @@ pub unsafe extern "C" fn grBigBlue_801EFC14(a: *mut Vec3, _b: i32, jobj: *mut HS
     lb_8000B1CC(jobj, null_mut(), &mut vec);
     if (*a).y > vec.y { 1 } else { 0 }
 }
+
+// ---- folded from grbigblue.rs (consolidation steps 21/22) ----
+/// grBigBlue_801E59CC_fp (gr/grbigblue.c:279)
+    pub unsafe extern "C" fn grBigBlue_801E59CC_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grbigblue.rs (consolidation steps 21/22) ----
+/// grBigBlue_801E59F0 (gr/grbigblue.c:284)
+    pub extern "C" fn grBigBlue_801E59F0() -> i32 { 0 }
+
+/// grBigBlue_801E5B10 (gr/grbigblue.c:337)
+    pub extern "C" fn grBigBlue_801E5B10(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E6114 (gr/grbigblue.c:375)
+    pub extern "C" fn grBigBlue_801E6114(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E61BC (gr/grbigblue.c:403)
+    pub extern "C" fn grBigBlue_801E61BC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E6288 (gr/grbigblue.c:434)
+    pub extern "C" fn grBigBlue_801E6288(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E6354 (gr/grbigblue.c:463)
+    pub extern "C" fn grBigBlue_801E6354(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E687C (gr/grbigblue.c:581)
+    pub extern "C" fn grBigBlue_801E687C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E6C58 (gr/grbigblue.c:650)
+    pub extern "C" fn grBigBlue_801E6C58(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801E93D0 (gr/grbigblue.c:1534)
+    pub extern "C" fn grBigBlue_801E93D0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801EA054 (gr/grbigblue.c:1848)
+    pub extern "C" fn grBigBlue_801EA054(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grBigBlue_801EFC0C (gr/grbigblue.c:4576)
+    pub extern "C" fn grBigBlue_801EFC0C(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

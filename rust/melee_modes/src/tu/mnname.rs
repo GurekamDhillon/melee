@@ -1,6 +1,17 @@
 //! src/melee/mn/mnname.c: native port (c2rust-derived body; callees of unported TUs are `ext` TODO hooks).
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused_unsafe, unused_mut, unused_assignments, unused_variables, unused_parens, dead_code, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use mt::HSD_JObj as HSD_JObj_mn_r4;
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::AnimLoopSettings as AnimLoopSettings_mn_ptr;
+#[allow(unused_imports)]
+use crate::mn_ptr::{FULLWIDTH_SPACE};
 use melee_types::*;
 #[allow(unused_imports)] use self::ext::*;
 #[allow(unused_imports)] use super::mnmain::{mn_80229624, mn_80229894, mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
@@ -2856,4 +2867,52 @@ pub mod ext {
     // the real tables (mnnamenew.c): a zero-length stand-in here would be read past its end
     pub use crate::tu::mnnamenew::{mnNameNew_803EE720, mnNameNew_803EE724};
     pub static mut mnNameNew_NullCharacter: ::core::ffi::c_char = unsafe { core::mem::zeroed() };
+}
+
+// ---- folded from mn.rs (consolidation steps 21/22) ----
+/// mnname.c `signedCharactersEqual_fp`.
+pub fn signedCharactersEqual_fp(lhs: i8, rhs: u8) -> bool {
+    melee_core::ct!("signedCharactersEqual_fp");
+    lhs == rhs as i8
+}
+
+/// mnname.c `unsignedCharacter_fp`.
+pub fn unsignedCharacter_fp(character: i32) -> u8 {
+    melee_core::ct!("unsignedCharacter_fp");
+    character as u8
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mnname.c `readNameTerminator_fp` (a `volatile` read).
+pub fn readNameTerminator_fp(terminator: &i8) -> i8 {
+    melee_core::ct!("readNameTerminator_fp");
+    // SAFETY: a reference is valid for reads.
+    unsafe { core::ptr::read_volatile(terminator) }
+}
+
+/// mnname.c `checkStringRest_fp`: only full-width spaces up to `terminator`.
+pub fn checkStringRest_fp(ptr: &[i8], terminator: i8) -> bool {
+    melee_core::ct!("checkStringRest_fp");
+    let c = FULLWIDTH_SPACE[0] as i8;
+    let mut i = 0;
+    while terminator != ptr[i] {
+        if c != ptr[i] || FULLWIDTH_SPACE[1] as i8 != ptr[i + 1] {
+            return false;
+        }
+        i += 2;
+    }
+    true
+}
+
+/// mnname.c `mnName_80238C34_inline_fp`.
+pub fn mnName_80238C34_inline_fp(anim: &AnimLoopSettings_mn_ptr) -> f32 {
+    melee_core::ct!("mnName_80238C34_inline_fp");
+    anim.end_frame
+}
+
+// ---- folded from mn_r4.rs (consolidation steps 21/22) ----
+/// mnname.c `mnName_TextWidth_fp` (static inline).
+pub fn mnName_TextWidth_fp(start: f32, end: &HSD_JObj_mn_r4) -> f32 {
+    melee_core::ct!("mnName_TextWidth_fp");
+    mt::inline::HSD_JObjGetTranslationX(end) - start
 }

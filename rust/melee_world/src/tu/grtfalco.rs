@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -104,8 +110,7 @@ pub fn set_yakumono_param(p: *mut YakumonoParam) {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtfalco::{grTFalco_80220894, stageGObj0_Callback1, stageGObj2_Callback1, stageGObj1_Callback1, grTFalco_80220B78};
-
+pub use crate::gr::trivial::grtfalco::{stageGObj0_Callback1, stageGObj2_Callback1, stageGObj1_Callback1};
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
 static mut STAGE_DATA: MaybeUninit<StageData> = MaybeUninit::uninit();
@@ -270,3 +275,14 @@ pub unsafe extern "C" fn grTFalco_80220ACC(arg0: i32) -> *mut DynamicsDesc {
     }
     null_mut()
 }
+
+// ---- folded from grtfalco.rs (consolidation steps 21/22) ----
+/// grTfalco_UnkStage0_OnStart_fp (gr/grtfalco.c:97)
+    pub unsafe extern "C" fn grTfalco_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtfalco.rs (consolidation steps 21/22) ----
+/// grTFalco_80220894 (gr/grtfalco.c:102)
+    pub extern "C" fn grTFalco_80220894() -> i32 { 0 }
+
+/// grTFalco_80220B78 (gr/grtfalco.c:203)
+    pub extern "C" fn grTFalco_80220B78(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

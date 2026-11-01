@@ -1,4 +1,6 @@
+
 #![allow(non_upper_case_globals)]
+
 //! Port of the camera framing / follow math and the `game_camera` accessors of
 //! src/melee/cm/camera.c (port round 5, night 2).
 //!
@@ -18,7 +20,9 @@
 //! FMA: every `fmadds` below is a site `tools/rust-port/fma_sites.py` reports for the
 //! shipping build; nothing else fuses.
 use melee_core::fp::fmadds;
+
 use melee_runtime::gekko::tanf;
+
 use melee_types::{
     Camera, CameraBounds, CameraQuake, CameraTransformState, CameraUnkGlobals, CmQuakeKind,
     CmSubject, Vec as Vec3, Vec2, _GXColor, CAMERA_BOSS_INTRO, CAMERA_DEBUG_FOLLOW,
@@ -28,10 +32,11 @@ use melee_types::{
     QuakeKind_Loop, QuakeKind_Medium, QuakeKind_None, QuakeKind_Small,
 };
 
-const F32_MAX: f32 = 3.402_823_466e38;
+pub(crate) const F32_MAX: f32 = 3.402_823_466e38;
+
 /// `MTXDegToRad` (dolphin/mtx.h): `a * 0.01745329252f`.
 #[inline(always)]
-fn deg_to_rad(a: f32) -> f32 {
+pub(crate) fn deg_to_rad(a: f32) -> f32 {
     a * 0.017_453_292_52_f32
 }
 
@@ -60,6 +65,7 @@ pub struct CamDesc {
     /// viewport xmin, xmax, ymin, ymax
     pub viewport: [i16; 4],
 }
+
 impl Default for CamDesc {
     fn default() -> Self {
         CamDesc { aspect: 1.217_333_3, viewport: [0, 0x280, 0, 0x1E0] }
@@ -138,7 +144,7 @@ impl Default for CameraWorld {
     }
 }
 
-static mut WORLD: Option<CameraWorld> = None;
+pub(crate) static mut WORLD: Option<CameraWorld> = None;
 
 /// The one camera world of the process: the C globals of camera.c (`game_camera`, `cm_803BCCA0`,
 /// the stage camera info, ...) behind the C-named entry points the TU ports call
@@ -146,28 +152,6 @@ static mut WORLD: Option<CameraWorld> = None;
 #[allow(static_mut_refs)]
 pub fn world() -> &'static mut CameraWorld {
     unsafe { WORLD.get_or_insert_with(CameraWorld::default) }
-}
-
-/// `Camera_80030A50`: the camera GObj, after an auto-view refresh of its CObj (TARGET_PC).
-///
-/// # Safety
-/// `game_camera.gobj` is NULL or a live camera GObj.
-pub unsafe fn Camera_80030A50() -> *mut melee_types::HSD_GObj {
-    let gobj = world().game_camera.gobj;
-    if !gobj.is_null() {
-        melee_runtime::tu::cobj::HSD_CObjUpdateView((*gobj).hsd_obj.cast());
-    }
-    gobj
-}
-
-/// `Camera_RequestQuake(kind, pos)` on the process camera world, with the real `grLib_801C9CEC`.
-///
-/// # Safety
-/// `pos` is NULL or points to a `Vec3`.
-pub unsafe fn Camera_RequestQuake(kind: CmQuakeKind, pos: *mut Vec3) {
-    world().camera_request_quake_with(kind, if pos.is_null() { None } else { Some(*pos) }, |k| unsafe {
-        crate::tu::grlib::grLib_801C9CEC(k)
-    });
 }
 
 impl CameraWorld {
@@ -749,7 +733,7 @@ impl CameraWorld {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     /// The accessors are one-line field moves; checked here, not against the C.
@@ -790,10 +774,11 @@ mod tests {
 // ---- port round 1, night 3: more game_camera accessors, Camera_8002FE38 / 8002EEC8 /
 // 8002BC78, the PC cm_script helpers. All checked against the C by tests/camera_acc_vs_c.rs.
 
-fn to_core(v: Vec3) -> melee_core::vec::Vec3 {
+pub(crate) fn to_core(v: Vec3) -> melee_core::vec::Vec3 {
     melee_core::vec::Vec3 { x: v.x, y: v.y, z: v.z }
 }
-fn from_core(v: melee_core::vec::Vec3) -> Vec3 {
+
+pub(crate) fn from_core(v: melee_core::vec::Vec3) -> Vec3 {
     Vec3 { x: v.x, y: v.y, z: v.z }
 }
 
@@ -817,49 +802,6 @@ pub struct CmScriptPose {
     pub interest: Vec3,
     pub fov: f32,
     pub roll: f32,
-}
-
-/// `cm_script_float`: the int bit pattern as an f32.
-pub fn cm_script_float(bits: i32) -> f32 {
-    f32::from_bits(bits as u32)
-}
-/// `cm_script_bits`: the f32 bit pattern as an int.
-pub fn cm_script_bits(value: f32) -> i32 {
-    value.to_bits() as i32
-}
-/// `cm_script_lerp`: `a + (b - a) * t`, one fused site.
-pub fn cm_script_lerp(a: f32, b: f32, t: f32) -> f32 {
-    fmadds(b - a, t, a)
-}
-/// `cm_script_blend`: field-wise lerp.
-pub fn cm_script_blend(a: &CmScriptPose, b: &CmScriptPose, t: f32) -> CmScriptPose {
-    let l = |x: f32, y: f32| cm_script_lerp(x, y, t);
-    CmScriptPose {
-        eye: Vec3 { x: l(a.eye.x, b.eye.x), y: l(a.eye.y, b.eye.y), z: l(a.eye.z, b.eye.z) },
-        interest: Vec3 {
-            x: l(a.interest.x, b.interest.x),
-            y: l(a.interest.y, b.interest.y),
-            z: l(a.interest.z, b.interest.z),
-        },
-        fov: l(a.fov, b.fov),
-        roll: l(a.roll, b.roll),
-    }
-}
-/// `cm_script_ease`: 1 ease-in, 2 ease-out, 3 ease-in-out (its second branch fuses), else
-/// linear.
-pub fn cm_script_ease(t: f32, ease: i32) -> f32 {
-    match ease {
-        1 => t * t,
-        2 => t * (2.0 - t),
-        3 => {
-            if t < 0.5 {
-                2.0 * t * t
-            } else {
-                fmadds(-(2.0 * (1.0 - t)), 1.0 - t, 1.0)
-            }
-        }
-        _ => t,
-    }
 }
 
 impl CameraWorld {
@@ -985,7 +927,7 @@ impl crate::gr::grlib::GrLibHooks for CameraWorld {
 }
 
 #[cfg(test)]
-mod hook_tests {
+pub(crate) mod hook_tests {
     use super::*;
     #[test]
     fn ground_and_grlib_hooks_reach_the_camera() {
@@ -999,3 +941,11 @@ mod hook_tests {
         assert_eq!((w.game_camera.quake_offset.x, w.game_camera.quake_offset.y), (1.5, -2.0));
     }
 }
+
+pub use crate::tu::camera::Camera_80030A50_fp as Camera_80030A50;
+pub use crate::tu::camera::Camera_RequestQuake_fp as Camera_RequestQuake;
+pub use crate::tu::camera::cm_script_bits_fp as cm_script_bits;
+pub use crate::tu::camera::cm_script_blend_fp as cm_script_blend;
+pub use crate::tu::camera::cm_script_ease_fp as cm_script_ease;
+pub use crate::tu::camera::cm_script_float_fp as cm_script_float;
+pub use crate::tu::camera::cm_script_lerp_fp as cm_script_lerp;

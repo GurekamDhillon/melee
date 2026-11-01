@@ -6,6 +6,11 @@
 //! (rust/melee_modes/oracle/s497).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::StartMeleeData as StartMeleeData_gm_ptr;
 use core::ffi::c_void;
 use core::ptr::{null, null_mut};
 
@@ -149,4 +154,11 @@ pub unsafe extern "C" fn gm_Mode_SlowMo_OnInit() {
 pub unsafe extern "C" fn gm_Mode_SlowMo_OnLoad() {
     melee_core::ct!("gm_Mode_SlowMo_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmslomo.c `fn_801BA5B4_fp` (Slo-Mo Melee).
+pub fn fn_801BA5B4_fp(data: &mut StartMeleeData_gm_ptr, _unused: *mut StartMeleeData_gm_ptr) {
+    melee_core::ct!("fn_801BA5B4_fp");
+    data.rules.game_speed = 0.5;
 }

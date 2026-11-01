@@ -6,6 +6,71 @@
 //! No fused sites (`x8 / 100.0f` is a divide; the vector difference is a plain subtract).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{itHammerData as itHammerData_itkinds10};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -259,4 +324,20 @@ pub unsafe extern "C" fn itHammer_UnkMotion5_Coll(gobj: *mut HSD_GObj) -> i32 {
 pub unsafe extern "C" fn itHammer_Logic28_EvtUnk(igobj: *mut HSD_GObj, gobj: *mut HSD_GObj) {
     melee_core::ct!("itHammer_Logic28_EvtUnk");
     ext::it_8026B894(igobj, gobj);
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- ithammer.c ------------------------------------------------------------------------
+
+/// `it_80293DCC`: with probability `x8`%, a random value in [x0, x4).
+/// # Safety
+/// The item's special attributes are an `itHammerData_itkinds10`.
+pub unsafe fn it_80293dcc(rand: &mut HsdRand, item: &Item) -> i32 {
+    melee_core::ct!("it_80293dcc");
+    let d = &*((*item.xC4_article_data).x4_specialAttributes as *const itHammerData_itkinds10);
+    if rand.randf() < d.x8 / 100.0 {
+        let rng = rand.randi(d.x4.wrapping_sub(d.x0) as i32);
+        return (rng as u32).wrapping_add(d.x0) as i32;
+    }
+    0
 }

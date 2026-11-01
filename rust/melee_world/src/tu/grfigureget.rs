@@ -7,15 +7,17 @@
 //! tests/tu_grfigureget.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
 use super::grdisplay::grDisplay_801C5DB0;
-pub use crate::gr::trivial::grfigureget::{
-    grFigureGet_802195C4, grFigureGet_802196E0, grFigureGet_80219890, grFigureGet_OnCheckShadowRender,
-    grFigureGet_OnTouchLine,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -381,3 +383,23 @@ pub unsafe extern "C" fn grFigureGet_80219C50(gobj: *mut HSD_GObj) -> i32 {
     }
     0
 }
+
+// ---- folded from grfigureget.rs (consolidation steps 21/22) ----
+/// grFigureGet_OnStart_fp (gr/grfigureget.c:113)
+    pub unsafe extern "C" fn grFigureGet_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grfigureget.rs (consolidation steps 21/22) ----
+/// grFigureGet_802195C4 (gr/grfigureget.c:118)
+    pub extern "C" fn grFigureGet_802195C4() -> i32 { 0 }
+
+/// grFigureGet_802196E0 (gr/grfigureget.c:144)
+    pub extern "C" fn grFigureGet_802196E0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigureGet_80219890 (gr/grfigureget.c:208)
+    pub extern "C" fn grFigureGet_80219890(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigureGet_OnTouchLine (gr/grfigureget.c:350)
+    pub extern "C" fn grFigureGet_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grFigureGet_OnCheckShadowRender (gr/grfigureget.c:355)
+    pub extern "C" fn grFigureGet_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

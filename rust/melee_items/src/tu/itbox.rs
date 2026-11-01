@@ -8,6 +8,88 @@
 //! `mul_add`, two of them).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::itkinds7::bisect_value;
+#[allow(unused_imports)]
+use crate::layout::itEgg_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachTurnipAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use melee_core::fp::frsqrte;
+#[allow(unused_imports)]
+use crate::itkinds9::{box_pick};
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU as M_TAU_itkinds10;
+#[allow(unused_imports)]
+use crate::item::norm_xf74;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::gekko::cosf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sinf;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{rv, zero};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -679,4 +761,37 @@ pub unsafe extern "C" fn it_8028733C(gobj: *mut Item_GObj) {
         ext::it_8026B3A8(gobj);
         ext::Item_80268E5C(gobj, 1, 2);
     }
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- itbox.c ---------------------------------------------------------------------------
+
+/// `it_802863BC`: on a floor flatter than the bounce threshold, zero the four velocity
+/// accumulators and set `xD5C`.
+/// # Safety
+/// The item's special attributes are an `itBoxAttributes`.
+pub unsafe fn it_802863bc(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802863bc");
+    let attr = &*((*ip.xC4_article_data).x4_specialAttributes as *const itBoxAttributes);
+    if ip.x378_itemColl.env_flags & COLLIDE_FLOOR_MASK != 0 {
+        let mut dir = zero();
+        it_80276408(&ip.x378_itemColl, &mut dir);
+        let unit = RVec { x: 0.0, y: 1.0, z: 0.0 };
+        if lbvector::angle_xy(&rv(&dir), &unit) < attr.bounce_angle_threshold {
+            ip.x7C = zero();
+            ip.x88 = zero();
+            ip.x94 = zero();
+            ip.xA0 = zero();
+            ip.xD5C = 1;
+            return true;
+        }
+    }
+    false
+}
+
+// ---- folded from itkinds9.rs (consolidation steps 21/22) ----
+/// `it_80286340_fp` (itbox.c). The GObj argument is unused.
+pub fn it_80286340_fp(rand: &mut HsdRand, arg1: i32, arg2: i32, arg3: i32, arg4: i32) -> bool {
+    melee_core::ct!("it_80286340_fp");
+    box_pick(rand, arg1, arg2, arg3, arg4)
 }

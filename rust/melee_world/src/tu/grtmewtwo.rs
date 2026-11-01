@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -108,7 +114,6 @@ pub fn set_yakumono_param(p: *mut YakumonoParam) {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtmewtwo::{grTMewtwo_8022227C, grTMewtwo_80222398, grTMewtwo_802223F8, grTMewtwo_80222488, grTMewtwo_802225C8};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -297,3 +302,23 @@ pub unsafe extern "C" fn grTMewtwo_802224B4(arg0: i32) -> *mut DynamicsDesc {
     }
     null_mut()
 }
+
+// ---- folded from grtmewtwo.rs (consolidation steps 21/22) ----
+/// grTmewtwo_UnkStage0_OnStart_fp (gr/grtmewtwo.c:107)
+    pub unsafe extern "C" fn grTmewtwo_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtmewtwo.rs (consolidation steps 21/22) ----
+/// grTMewtwo_8022227C (gr/grtmewtwo.c:112)
+    pub extern "C" fn grTMewtwo_8022227C() -> i32 { 0 }
+
+/// grTMewtwo_80222398 (gr/grtmewtwo.c:138)
+    pub extern "C" fn grTMewtwo_80222398(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMewtwo_802223F8 (gr/grtmewtwo.c:152)
+    pub extern "C" fn grTMewtwo_802223F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMewtwo_80222488 (gr/grtmewtwo.c:169)
+    pub extern "C" fn grTMewtwo_80222488(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTMewtwo_802225C8 (gr/grtmewtwo.c:228)
+    pub extern "C" fn grTMewtwo_802225C8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

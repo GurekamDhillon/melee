@@ -5,6 +5,9 @@
 //! contraction) by tests/kinds_itchicorita.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::Item;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -329,3 +332,7 @@ pub unsafe extern "C" fn itChicoritaleaf_UnkMotion0_Coll(item_gobj: *mut HSD_GOb
     melee_core::ct!("itChicoritaleaf_UnkMotion0_Coll");
     ext::it_8026DFB0(item_gobj) != 0
 }
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802C9618` (src/melee/it/kinds/itchicorita.c): `empty body / return;`.
+pub fn it_802c9618(_ip: &mut Item) { melee_core::ct!("it_802c9618");}

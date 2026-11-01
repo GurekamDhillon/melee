@@ -6,6 +6,9 @@
 //! `gen/rewire/` wired). `bool` is MSL `int`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, unused_assignments, unused_variables, unused_mut, unused_parens, unused_labels, unused_comparisons, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::tu_ext::{HOOK_efSync_Spawn};
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
@@ -899,4 +902,12 @@ pub unsafe extern "C" fn HSD_JObjMtxIsDirty(mut jobj: *mut HSD_JObj) -> i32 {
         result = 1;
     }
     return result;
+}
+
+// ---- folded from tu_ext.rs (consolidation steps 21/22) ----
+/// C `efSync_Spawn_fp(gfx_id, gobj, ...)` (melee/ef/efsync.h) is variadic; grshrineroute.c passes the joint
+/// and a `f32*` scale.
+pub fn efSync_Spawn_fp(gfx_id: i32, gobj: *mut HSD_GObj, jobj: *mut HSD_JObj, scale: *mut f32) -> *mut core::ffi::c_void {
+    melee_core::ct!("efSync_Spawn_fp");
+    match unsafe { HOOK_efSync_Spawn } { Some(h) => h(gfx_id, gobj, jobj, scale), None => melee_core::unported!("TODO: efSync_Spawn_fp is not ported") }
 }

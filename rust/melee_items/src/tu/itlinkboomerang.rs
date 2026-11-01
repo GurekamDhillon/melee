@@ -9,6 +9,215 @@
 //! other products (`v * cosf(a)`, `a * (b * c)`, `-(2 * z) / n`) have no add to fuse with.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::itLinkBoomerangAttributes;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{gp};
+#[allow(unused_imports)]
+use crate::helpers::clamp_tau as clamp_tau_itkinds10;
+#[allow(unused_imports)]
+use crate::helpers::it_8027b798_calc_angle;
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::helpers::M_PI as M_PI_itkinds10;
+#[allow(unused_imports)]
+use crate::helpers::M_PI_2;
+#[allow(unused_imports)]
+use crate::helpers::M_TAU as M_TAU_itkinds10;
+#[allow(unused_imports)]
+use crate::item::norm_xf74 as norm_xf74_itkinds10;
+#[allow(unused_imports)]
+use crate::itlib::it_80276408;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::itBoxAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPikachutJoltGroundAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTincleAttributes;
+#[allow(unused_imports)]
+use crate::layout::it_2E5A_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Flipper;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbtrigf::atan2f;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
+#[allow(unused_imports)]
+use melee_runtime::random::HsdRand;
+#[allow(unused_imports)]
+use crate::itkinds10::{mirror};
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::item::{M_PI as M_PI_item};
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use crate::helpers::{M_PI as M_PI_helpers, M_TAU as M_TAU_helpers};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_runtime::gekko::{cosf, sinf, sqrtf};
@@ -837,4 +1046,113 @@ pub unsafe fn it_802A23CC(gobj: *mut Item_GObj, arg1: *mut HSD_GObj) {
     if (*ip).xDD4_itemVar.linkboomerang.xF98 == arg1 {
         (*ip).xDD4_itemVar.linkboomerang.xF98 = null_mut();
     }
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `clamp_tau_fp` (itlinkboomerang.c, static): compares and adds in f64 (M_TAU_helpers is a double).
+pub fn clamp_tau_fp(angle: &mut f32) {
+    melee_core::ct!("clamp_tau_fp");
+    if (*angle as f64) > M_TAU_helpers {
+        *angle = (*angle as f64 - M_TAU_helpers) as f32;
+    } else if (*angle as f64) < -M_TAU_helpers {
+        *angle = (*angle as f64 + M_TAU_helpers) as f32;
+    }
+}
+
+/// `clamp_pi_tau_fp` (itlinkboomerang.c, static).
+pub fn clamp_pi_tau_fp(angle: &mut f32) {
+    melee_core::ct!("clamp_pi_tau_fp");
+    if (*angle as f64) < -M_PI_helpers {
+        *angle = (*angle as f64 + M_TAU_helpers) as f32;
+    } else if (*angle as f64) > M_PI_helpers {
+        *angle = (*angle as f64 - M_TAU_helpers) as f32;
+    }
+}
+
+/// `clamp_angle_pi_fp` (itlinkboomerang.c, static inline): f32 compare, f64 add.
+pub fn clamp_angle_pi_fp(angle: &mut f32) {
+    melee_core::ct!("clamp_angle_pi_fp");
+    if *angle <= 0.0 {
+        *angle = (*angle as f64 + M_PI_helpers) as f32;
+    } else {
+        *angle = (*angle as f64 - M_PI_helpers) as f32;
+    }
+}
+
+/// `norm_xF74_from_angle` (itlinkboomerang.c, static inline).
+pub fn norm_xf74_from_angle(ip: &mut Item, angle_in: f32) {
+    melee_core::ct!("norm_xf74_from_angle");
+    let angle: f64 = if ip.facing_dir == 1.0 { angle_in as f64 } else { angle_in as f64 - M_PI_helpers };
+    // The caller owns a Link boomerang (xDD4_itemVar holds its linkboomerang vars).
+    ip.xDD4_itemVar.linkboomerang.xF78 = angle as f32;
+}
+
+// ---- folded from item.rs (consolidation steps 21/22) ----
+/// `norm_xF74` (itlinkboomerang.c, static inline): angle in f64, stored as f32.
+pub fn norm_xf74(ip: &mut Item) {
+    melee_core::ct!("norm_xf74");
+    // SAFETY: the caller owns a Link boomerang; xDD4_itemVar holds its linkboomerang vars.
+    unsafe {
+        let v = &mut ip.xDD4_itemVar.linkboomerang;
+        let angle: f64 = if ip.facing_dir == 1.0 {
+            v.xF74 as f64
+        } else {
+            v.xF74 as f64 - M_PI_item
+        };
+        v.xF78 = angle as f32;
+    }
+}
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802A0F84` (src/melee/it/kinds/itlinkboomerang.c): `empty body / return;`.
+pub fn it_802a0f84(_ip: &mut Item) { melee_core::ct!("it_802a0f84");}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_8029FDBC` (itlinkboomerang.c): `msid == 0`.
+pub fn it_8029fdbc(ip: &Item) -> bool {
+    melee_core::ct!("it_8029fdbc");
+    ip.msid == 0
+}
+
+// ---- folded from itkinds10.rs (consolidation steps 21/22) ----
+// ---- itlinkboomerang.c / itmewtwoshadowball.c ------------------------------------------
+
+/// `it_802A2320`: mirror the velocity off `xC58`, re-derive the boomerang's angle.
+pub fn it_802a2320(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802a2320");
+    let m = ip.xC58;
+    mirror(&mut ip.x40_vel, &m);
+    // SAFETY: the item is a Link boomerang (plain-data union member).
+    unsafe {
+        let b = &mut ip.xDD4_itemVar.linkboomerang;
+        b.xF74 = atan2f(ip.x40_vel.y, ip.x40_vel.x);
+        clamp_tau_itkinds10(&mut b.xF74);
+    }
+    norm_xf74_itkinds10(ip);
+    false
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802A23CC` (itlinkboomerang.c): `it_8026B894`, then forget `linkboomerang.xF98`.
+pub fn it_802a23cc(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802a23cc");
+    it_8026b894(ip, ref_gobj);
+    unsafe {
+        if gp(ip.xDD4_itemVar.linkboomerang.xF98) == ref_gobj {
+            ip.xDD4_itemVar.linkboomerang.xF98 = null_mut_itkinds5();
+        }
+    }
+}
+
+// ---- folded from itkinds8.rs (consolidation steps 21/22) ----
+/// `it_802A13EC_inline` (itlinkboomerang.c, static inline): `ip->pos.x`.
+pub fn it_802a13ec_inline(ip: &Item) -> f32 {
+    melee_core::ct!("it_802a13ec_inline");
+    ip.pos.x
+}
+
+/// `it_802A20E8_inline` (itlinkboomerang.c, static inline): `ip->pos.x`.
+pub fn it_802a20e8_inline(ip: &Item) -> f32 {
+    melee_core::ct!("it_802a20e8_inline");
+    ip.pos.x
 }

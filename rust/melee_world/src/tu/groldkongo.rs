@@ -5,6 +5,16 @@
 //! `python rust/melee_world/gen/cref/run_gr.py groldkongo`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use melee_types::Ground as Ground_leaves;
+#[allow(unused_imports)]
+use melee_types::HSD_GObj as HSD_GObj_leaves;
+#[allow(unused_imports)]
+use crate::gr::leaves::{grkongo_801d8270, groldkongo_802105ac_gp};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -730,3 +740,20 @@ pub unsafe extern "C" fn grOldKongo_80210788(a: *mut Vec3, _arg: i32, joint: *mu
         0
     }
 }
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// grOldKongo_802105AC(gobj).
+///
+/// # Safety
+/// As [`grkongo_801d8270`].
+pub unsafe fn groldkongo_802105ac(gobj: *mut HSD_GObj_leaves) {
+    melee_core::ct!("groldkongo_802105ac");
+    groldkongo_802105ac_gp(&mut *((*gobj).user_data as *mut Ground_leaves))
+}
+
+// ---- folded from groldkongo.rs (consolidation steps 21/22) ----
+/// grOldKongo_8020F524_fp (gr/groldkongo.c:169)
+    pub extern "C" fn grOldKongo_8020F524_fp() -> i32 { 0 }
+
+/// grOldKongo_80210780_fp (gr/groldkongo.c:634)
+    pub extern "C" fn grOldKongo_80210780_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

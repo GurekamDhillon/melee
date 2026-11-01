@@ -4,6 +4,90 @@
 //! "TODO"). Checked against the C (whole TU, shipping contraction) by tests/kinds_ittaru.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::itkinds6::{c_abs, sa};
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
@@ -722,4 +806,52 @@ pub unsafe extern "C" fn it_3F14_Logic2_DmgReceived(gobj: *mut Item_GObj) -> boo
 pub unsafe extern "C" fn itTaru_Logic2_EvtUnk(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {
     melee_core::ct!("itTaru_Logic2_EvtUnk");
     ext::it_8026B894(gobj, ref_gobj);
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `inline_fabsf_fp` (ittaru.c, static inline). `+x` keeps a NaN or -0.0 as is.
+pub fn inline_fabsf_fp(x: f32) -> f32 {
+    melee_core::ct!("inline_fabsf_fp");
+    if x < 0.0 { -x } else { x }
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802874F0` (ittaru.c): barrel roll speed and spin (3 fused sites).
+/// # Safety
+/// The special attributes must be a valid `itTaruAttributes`.
+pub unsafe fn it_802874f0(ip: &mut Item) {
+    melee_core::ct!("it_802874f0");
+    let attr = sa::<itTaruAttributes>(ip);
+    let t = &mut ip.xDD4_itemVar.taru;
+    if ip.ground_or_air != 1 {
+        let d = t.xDE8.x;
+        if c_abs(d) > 0.1 {
+            if c_abs(t.xDE4) < attr.x2C {
+                t.xDE4 = fmadds(d, attr.x24, t.xDE4);
+            }
+        } else {
+            let f1 = t.xDE4;
+            let f2 = attr.x28;
+            if c_abs(f1) < f2 {
+                t.xDE4 = 0.0;
+            } else if t.xDE4 > 0.0 {
+                t.xDE4 -= f2;
+            } else {
+                t.xDE4 += f2;
+            }
+        }
+        let s = t.xDE4;
+        if (s > 0.0 && ip.facing_dir < 0.0) || (s < 0.0 && ip.facing_dir > 0.0) {
+            ip.facing_dir *= -1.0;
+        }
+        let m = attr.x20;
+        if c_abs(t.xDE4) > m {
+            t.xDE4 = m * ip.facing_dir;
+        }
+        ip.x40_vel.x = t.xDE4 * t.xDE8.y;
+        let v2 = c_abs(t.xDE4);
+        t.xDE0 = fmadds(0.12217305f32 * v2, -ip.facing_dir, t.xDE0);
+    } else {
+        t.xDE0 = fmadds(0.10471976f32, -ip.facing_dir, t.xDE0);
+    }
 }

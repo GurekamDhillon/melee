@@ -11,6 +11,11 @@
 //! as big-endian words and read as u16 triplets, so it is stored decoded.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::TmData as TmData_gm_ptr;
 use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null_mut};
 
@@ -2080,3 +2085,16 @@ pub unsafe extern "C" fn gm_Scene_TouBracket_OnExit(_arg0: *mut c_void) {
 }
 
 pub unsafe extern "C" fn fn_8019BA04(_state: *mut i32) { melee_core::ct!("fn_8019BA04");}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmtou_1.c `fn_80196564_fp`.
+pub fn fn_80196564_fp(arg0: &TmData_gm_ptr) -> bool {
+    melee_core::ct!("fn_80196564_fp");
+    (arg0.stage_selection_type == 0 && arg0.x32 == 0) || arg0.stage_selection_type == 1
+}
+
+/// gmtou_1.c `fn_80196594_fp`.
+pub fn fn_80196594_fp(arg0: &TmData_gm_ptr) -> bool {
+    melee_core::ct!("fn_80196594_fp");
+    (arg0.stage_selection_type == 2 && arg0.x32 == 0) || arg0.stage_selection_type == 3
+}

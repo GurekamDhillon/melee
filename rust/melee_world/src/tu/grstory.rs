@@ -6,16 +6,18 @@
 //! gen/turef/tu_grstory_ref.c.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use super::gr_util::*;
 use crate::tu_ext as ext;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 use melee_types::*;
 
-pub use crate::gr::forward::grstory::grStory_UnkStage0_OnStart;
-pub use crate::gr::trivial::grstory::{
-    grStory_801E30D0, grStory_801E3224, grStory_801E332C, grStory_801E33D8, grStory_801E36D0,
-};
 
 /// `struct grStory_YakumonoParam`: the stage's yakumono (parameter) block.
 #[repr(C)]
@@ -247,3 +249,23 @@ pub static mut grSt_StageData: StageData = StageData {
     joints: core::ptr::null_mut(),
     joint_count: 0,
 };
+
+// ---- folded from grstory.rs (consolidation steps 21/22) ----
+/// grStory_UnkStage0_OnStart (gr/grstory.c:97)
+    pub unsafe extern "C" fn grStory_UnkStage0_OnStart() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grstory.rs (consolidation steps 21/22) ----
+/// grStory_801E30D0 (gr/grstory.c:102)
+    pub extern "C" fn grStory_801E30D0() -> i32 { 0 }
+
+/// grStory_801E3224 (gr/grstory.c:133)
+    pub extern "C" fn grStory_801E3224(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStory_801E332C (gr/grstory.c:183)
+    pub extern "C" fn grStory_801E332C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStory_801E33D8 (gr/grstory.c:212)
+    pub extern "C" fn grStory_801E33D8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grStory_801E36D0 (gr/grstory.c:313)
+    pub extern "C" fn grStory_801E36D0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

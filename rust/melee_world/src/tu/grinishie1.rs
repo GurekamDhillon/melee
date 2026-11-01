@@ -10,15 +10,17 @@
 //! The `while (true) {}` after an "oioi.." OSReport (corrupted block table) is a panic here.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::grinishie1::{
-    grInishie1_801FA9AC, grInishie1_801FAACC, grInishie1_801FAB60, grInishie1_801FABF4, grInishie1_801FAC50,
-    grInishie1_801FCBB0, grInishie1_801FCBB8,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -1193,3 +1195,29 @@ pub unsafe extern "C" fn grInishie1_801FCB10(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+// ---- folded from grinishie1.rs (consolidation steps 21/22) ----
+/// grInishie1_801FA988_fp (gr/grinishie1.c:246)
+    pub unsafe extern "C" fn grInishie1_801FA988_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grinishie1.rs (consolidation steps 21/22) ----
+/// grInishie1_801FA9AC (gr/grinishie1.c:251)
+    pub extern "C" fn grInishie1_801FA9AC() -> i32 { 0 }
+
+/// grInishie1_801FAACC (gr/grinishie1.c:296)
+    pub extern "C" fn grInishie1_801FAACC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie1_801FAB60 (gr/grinishie1.c:316)
+    pub extern "C" fn grInishie1_801FAB60(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie1_801FABF4 (gr/grinishie1.c:339)
+    pub extern "C" fn grInishie1_801FABF4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie1_801FAC50 (gr/grinishie1.c:357)
+    pub extern "C" fn grInishie1_801FAC50(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grInishie1_801FCBB0 (gr/grinishie1.c:1183)
+    pub extern "C" fn grInishie1_801FCBB0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grInishie1_801FCBB8 (gr/grinishie1.c:1188)
+    pub extern "C" fn grInishie1_801FCBB8(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

@@ -2,6 +2,51 @@
 //! TUs go through `ext` (TODO hooks). `bool` is the C `int`: callee results are tested as ints and
 //! `true` is 1. Checked against the whole C TU (shipping contraction) by tests/tu_itgamewatchmanhole.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_variables, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -205,4 +250,17 @@ pub unsafe extern "C" fn itGamewatchmanhole_UnkMotion0_Anim(gobj: *mut HSD_GObj)
 pub unsafe extern "C" fn itGameWatchManhole_Logic72_EvtUnk(gobj: *mut HSD_GObj, gobj2: *mut HSD_GObj) {
     melee_core::ct!("itGameWatchManhole_Logic72_EvtUnk");
     ext::it_8026B894(gobj, gobj2);
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802C6764` (src/melee/it/kinds/itgamewatchmanhole.c): `it_8026B724(..)`.
+pub fn it_802c6764(ip: &mut Item) {
+    melee_core::ct!("it_802c6764");
+    it_8026b724(ip);
+}
+
+/// `it_802C6784` (src/melee/it/kinds/itgamewatchmanhole.c): `it_8026B73C(..)`.
+pub fn it_802c6784(ip: &mut Item) {
+    melee_core::ct!("it_802c6784");
+    it_8026b73c(ip);
 }

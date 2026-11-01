@@ -2,6 +2,9 @@
 //! fields of `fn_80174274()`'s MatchEnd). Verified against the C by tests/tu_gm_17ad.rs.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gm::{clamp_sym};
 use crate::ext_fns;
 use melee_types::*;
 
@@ -154,4 +157,36 @@ pub unsafe fn fn_8017B9F4(arg0: i32) -> i32 {
         ((*p).x98 as f32 / 100.0f32) as u32
     };
     gmClampResultStat(var_r3 as i32)
+}
+
+// ---- folded from gm.rs (consolidation steps 21/22) ----
+/// gm_17AD.c `fn_8017AD04_fp`: clamp to [-arg1, arg1] (upper bound tested first).
+pub fn fn_8017AD04_fp(arg0: i32, arg1: i32) -> i32 {
+    melee_core::ct!("fn_8017AD04_fp");
+    if arg0 > arg1 {
+        return arg1;
+    }
+    let neg = arg1.wrapping_neg();
+    if arg0 < neg {
+        return neg;
+    }
+    arg0
+}
+
+/// gm_17AD.c `fn_8017AD28_fp`.
+pub fn fn_8017AD28_fp(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017AD28_fp");
+    clamp_sym(arg0, 9999)
+}
+
+/// gm_17AD.c `fn_8017AD48_fp`.
+pub fn fn_8017AD48_fp(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017AD48_fp");
+    clamp_sym(arg0, 9999999)
+}
+
+/// gm_17AD.c `fn_8017AD78_fp`.
+pub fn fn_8017AD78_fp(arg0: i32) -> i32 {
+    melee_core::ct!("fn_8017AD78_fp");
+    clamp_sym(arg0, 99999)
 }

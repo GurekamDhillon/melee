@@ -3,6 +3,141 @@
 //! tests/kinds_itsonans.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_mut, unused_variables, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::helpers::it_rshell_clamp_vel;
+#[allow(unused_imports)]
+use crate::helpers::itRShell_Attrs;
+#[allow(unused_imports)]
+use crate::item::decelerate_item_x;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_802756d0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itClimbersIceAttributes;
+#[allow(unused_imports)]
+use crate::layout::itCoinAttributes;
+#[allow(unused_imports)]
+use crate::layout::itDoseiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFireAttributes;
+#[allow(unused_imports)]
+use crate::layout::itFlipper_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itFreezerAttributes;
+#[allow(unused_imports)]
+use crate::layout::itGamewatchchefAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHammerheadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHitodemanAttributes;
+#[allow(unused_imports)]
+use crate::layout::itHououAttr;
+#[allow(unused_imports)]
+use crate::layout::itLeadeadAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkArrowAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLinkBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLizardonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMatadogasAttributes;
+#[allow(unused_imports)]
+use crate::layout::itPeachToadSporeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::itsonansAttributes;
+#[allow(unused_imports)]
+use crate::layout::HeartContainerAttr;
+#[allow(unused_imports)]
+use crate::layout::ItemAttr;
+#[allow(unused_imports)]
+use crate::layout::KinokoAttrs;
+#[allow(unused_imports)]
+use crate::layout::MewVars;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use crate::layout::GA_Ground;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast2;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Lugia_Aeroblast3;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas1;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Matadogas_Gas2;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds;
+#[allow(unused_imports)]
+use crate::itkinds::{sa};
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::helpers::decrease_lifetimer;
+#[allow(unused_imports)]
+use crate::itkinds::it_802d5884;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_chicorita_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_harisen_logic24_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lipstick_logic23_dmg_dealt;
+#[allow(unused_imports)]
+use crate::itkinds::it_lizardon_unk_motion1_phys;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_anim_inline;
+#[allow(unused_imports)]
+use crate::itkinds::it_maril_unk_motion2_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_80273030;
+#[allow(unused_imports)]
+use crate::itlib::it_80273130;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275870;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027b730;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -274,4 +409,41 @@ pub unsafe extern "C" fn itSonans_UnkMotion2_Phys(gobj: *mut Item_GObj) {
 pub unsafe extern "C" fn itSonans_UnkMotion2_Coll(gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("itSonans_UnkMotion2_Coll");
     ext::it_8027A118(gobj, Some(it_802CD4D8)) != 0
+}
+
+// ---- folded from itfwd.rs (consolidation steps 21/22) ----
+/// `it_802CD4DC` (src/melee/it/kinds/itsonans.c): `it_8026B894(..)`.
+pub fn it_802cd4dc(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802cd4dc");
+    it_8026b894(ip, ref_gobj);
+}
+
+// ---- folded from itfwd8.rs (consolidation steps 21/22) ----
+/// `it_802CD4D8` (src/melee/it/kinds/itsonans.c): `empty body / return;`.
+pub fn it_802cd4d8(_ip: &mut Item) { melee_core::ct!("it_802cd4d8");}
+
+// ---- folded from itkinds.rs (consolidation steps 21/22) ----
+/// `it_802CD7D4` (itsonans.c): `sonans.x60` from the damage taken and its direction (kept at
+/// the larger magnitude after the first hit); `sonans.x68 = min(xCA0 * attrs.x4, attrs.xC)`.
+/// # Safety
+/// The special attributes must be a valid `itsonansAttributes`.
+pub unsafe fn it_802cd7d4(ip: &mut Item) -> bool {
+    melee_core::ct!("it_802cd7d4");
+    let attrs = sa::<itsonansAttributes>(ip);
+    if ip.xDAC_itcmd_var0 == 0 {
+        ip.xDD4_itemVar.sonans.x60 = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
+        ip.xDAC_itcmd_var0 = 1;
+    } else {
+        let cur = ip.xDD4_itemVar.sonans.x60;
+        let new = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
+        if (if cur < 0.0 { -cur } else { cur }) < (if new < 0.0 { -new } else { new }) {
+            ip.xDD4_itemVar.sonans.x60 = attrs.x8 * (ip.xCA0 as f32 * ip.xCCC_incDamageDirection);
+        }
+    }
+    if ip.xCA0 as f32 * attrs.x4 > attrs.xC {
+        ip.xDD4_itemVar.sonans.x68 = attrs.xC;
+    } else {
+        ip.xDD4_itemVar.sonans.x68 = ip.xCA0 as f32 * attrs.x4;
+    }
+    false
 }

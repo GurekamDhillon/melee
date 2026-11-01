@@ -1,28 +1,35 @@
+
 //! `src/melee/lb/lbvector.c` (+ the inlines in lbvector.h). Every contraction the C build makes
 //! (clang `-ffp-contract=on`, gwtool fmadds) is explicit. `lbVector_WorldToScreen` is not ported
 //! yet: it needs HSD_CObj and GXProject.
 
 use crate::gekko::{sqrtf, sqrtf_accurate};
+
 use crate::lbtrigf::{acosf, asinf, atan2f};
+
 use crate::mtx::{vec_cross, Mtx, Quaternion, Vec3};
+
 use melee_core::fp::fmadds;
 
-const M_PI: f64 = 3.14159265358979323846;
-const M_TAU: f64 = 6.283185307179586;
+pub(crate) const M_PI: f64 = 3.14159265358979323846;
+
+pub(crate) const M_TAU: f64 = 6.283185307179586;
 
 /// `x*x + y*y + z*z` as the C build computes it.
 #[inline]
-fn sq3(x: f32, y: f32, z: f32) -> f32 {
+pub(crate) fn sq3(x: f32, y: f32, z: f32) -> f32 {
     fmadds(z, z, fmadds(x, x, y * y))
 }
+
 /// `a.x*b.x + a.y*b.y + a.z*b.z`.
 #[inline]
-fn dot3(a: &Vec3, b: &Vec3) -> f32 {
+pub(crate) fn dot3(a: &Vec3, b: &Vec3) -> f32 {
     fmadds(a.z, b.z, fmadds(a.x, b.x, a.y * b.y))
 }
+
 /// `a.x*b.x + a.y*b.y`.
 #[inline]
-fn dot2(a: &Vec3, b: &Vec3) -> f32 {
+pub(crate) fn dot2(a: &Vec3, b: &Vec3) -> f32 {
     fmadds(a.x, b.x, a.y * b.y)
 }
 
@@ -30,11 +37,13 @@ fn dot2(a: &Vec3, b: &Vec3) -> f32 {
 pub fn len(v: &Vec3) -> f32 {
     sqrtf(sq3(v.x, v.y, v.z))
 }
+
 /// `lbVector_Len_xy` (lbvector.h).
 pub fn len_xy(v: &Vec3) -> f32 {
     sqrtf(dot2(v, v))
 }
-fn len_xy_accurate(v: &Vec3) -> f32 {
+
+pub(crate) fn len_xy_accurate(v: &Vec3) -> f32 {
     sqrtf_accurate(dot2(v, v))
 }
 
@@ -69,17 +78,20 @@ pub fn add(a: &mut Vec3, b: &Vec3) {
     a.y += b.y;
     a.z += b.z;
 }
+
 /// `lbVector_Add_xy`.
 pub fn add_xy(a: &mut Vec3, b: &Vec3) {
     a.x += b.x;
     a.y += b.y;
 }
+
 /// `lbVector_Sub`.
 pub fn sub(a: &mut Vec3, b: &Vec3) {
     a.x -= b.x;
     a.y -= b.y;
     a.z -= b.z;
 }
+
 /// `lbVector_Diff`: a - b.
 pub fn diff(a: &Vec3, b: &Vec3) -> Vec3 {
     Vec3 { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z }
@@ -92,7 +104,7 @@ pub fn crossprod_normalized(a: &Vec3, b: &Vec3) -> Vec3 {
     r
 }
 
-fn clamp_cos(c: f32) -> f32 {
+pub(crate) fn clamp_cos(c: f32) -> f32 {
     let mut c = c;
     if c > 1.0 {
         c = 1.0;
@@ -123,14 +135,14 @@ pub fn angle_xy(a: &Vec3, b: &Vec3) -> f32 {
 
 /// The quintic `0.98786199f*a - 0.155271f*a^3 + 0.005643f*a^5`, fused as the C build does.
 #[inline]
-fn quintic(a: f32) -> f32 {
+pub(crate) fn quintic(a: f32) -> f32 {
     let inner = fmadds(0.9878619909286499f32, a, -(0.15527099370956421f32 * a * a * a));
     fmadds(0.0056429998949170113f32 * a * a * a * a, a, inner)
 }
 
 /// Wrap into [-pi, pi] once; the comparisons and steps are in double (M_PI is a double).
 #[inline]
-fn wrap(a: f32) -> f32 {
+pub(crate) fn wrap(a: f32) -> f32 {
     if a as f64 > M_PI {
         (a as f64 - M_TAU) as f32
     } else if (a as f64) < -M_PI {
@@ -138,16 +150,6 @@ fn wrap(a: f32) -> f32 {
     } else {
         a
     }
-}
-
-/// `lbvector_sin` (static).
-pub fn lbvector_sin(angle: f32) -> f32 {
-    quintic(wrap(angle))
-}
-/// `lbvector_cos` (static).
-pub fn lbvector_cos(angle: f32) -> f32 {
-    let a = (angle as f64 + M_PI / 2.0) as f32;
-    quintic(wrap(a))
 }
 
 /// `lbVector_RotateAboutUnitAxis` (8000D8F4).
@@ -316,3 +318,6 @@ pub fn project_8000e838(a: &Vec3, b: &Vec3, c: &Vec3) -> (f32, Vec3) {
     };
     (len(&diff(c, &d)), d)
 }
+
+pub use crate::tu::lbvector::lbvector_cos_fp as lbvector_cos;
+pub use crate::tu::lbvector::lbvector_sin_fp as lbvector_sin;

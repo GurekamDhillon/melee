@@ -16,6 +16,140 @@
 //! Float math: `0.003906f * int` products and `xC3C * (damage * xC40)` only; no fused sites.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::helpers::pika_scale;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::itkinds13::swap_velocity;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802ac5d8;
+#[allow(unused_imports)]
+use crate::itkinds5::it_802b3368;
+#[allow(unused_imports)]
+use crate::itkinds8::get_min_life;
+#[allow(unused_imports)]
+use crate::itkinds9::my_sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_80275444;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272828;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_Joint;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemStateTable;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::it_8026C47C_arg0_t;
+#[allow(unused_imports)]
+use crate::layout::itBombHeiAttributes;
+#[allow(unused_imports)]
+use crate::layout::itClimbersStringAttributes;
+#[allow(unused_imports)]
+use crate::layout::itLikelikeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itNessPKFirepillarAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSamusBombAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Capsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_RabbitC;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::fmsubs;
+#[allow(unused_imports)]
+use melee_core::vec::Vec3 as RVec;
+#[allow(unused_imports)]
+use melee_runtime::lbvector;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -473,4 +607,62 @@ pub unsafe extern "C" fn it_80279BE0(item_gobj: *mut Item_GObj) {
     while ext::lb_80014258(item_gobj, &raw mut (*item).x548_colorOverlay as *mut c_void, Some(fn_80279B30)) != 0 {
         ext::lb_80014498(&raw mut (*item).x548_colorOverlay);
     }
+}
+
+// ---- folded from itkinds14.rs (consolidation steps 21/22) ----
+// ---- itanimlist.c -----------------------------------------------------------------------
+
+/// `it_80279768_fp`: `xDBC_itcmd_var4.flags.x0 = true`, next command.
+/// # Safety
+/// `cmd.u` points into a command array (one past is formed, as in C).
+pub unsafe fn it_80279768_fp(ip: &mut Item, cmd: &mut CommandInfo) {
+    melee_core::ct!("it_80279768_fp");
+    ip.anon_dbc.xDBC_itcmd_var4.flags.set_x0(1);
+    cmd.anon_8.u = cmd.anon_8.u.add(1);
+}
+
+/// `it_80279720_fp`: `xDB0_itcmd_var1 = cmd->u->set_throw_flags.hit_idx`, next command.
+/// # Safety
+/// As `it_80279768_fp`; `cmd.u` valid to read.
+pub unsafe fn it_80279720_fp(ip: &mut Item, cmd: &mut CommandInfo) {
+    melee_core::ct!("it_80279720_fp");
+    ip.xDB0_itcmd_var1 = (*cmd.anon_8.u).set_throw_flags.hit_idx();
+    cmd.anon_8.u = cmd.anon_8.u.add(1);
+}
+
+/// `it_80279744_fp`: `xDB4_itcmd_var2 = cmd->u->set_throw_flags.hit_idx`, next command.
+/// # Safety
+/// As `it_80279720_fp`.
+pub unsafe fn it_80279744_fp(ip: &mut Item, cmd: &mut CommandInfo) {
+    melee_core::ct!("it_80279744_fp");
+    ip.xDB4_itcmd_var2 = (*cmd.anon_8.u).set_throw_flags.hit_idx();
+    cmd.anon_8.u = cmd.anon_8.u.add(1);
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- itanimlist.c ----------------------------------------------------------------------
+
+/// `it_802795EC`: item script "set hitbox scale".
+/// # Safety
+/// `cmd.anon_8.u` must point to a valid command followed by the next one.
+pub unsafe fn it_802795ec(ip: &mut Item, cmd: &mut CommandInfo) {
+    melee_core::ct!("it_802795ec");
+    let c = &(*cmd.anon_8.u).set_hitbox_scale;
+    let idx = c.idx() as i32;
+    let value = c.value();
+    let hit = &mut ip.x5D4_hitboxes[idx as usize].hit;
+    hit.scale = 0.003906f32 * value as f32;
+    ip.x3C = hit.scale;
+    let m = 1.0f32 / ip.scl;
+    it_80275594(ip, idx, m);
+    cmd.anon_8.u = cmd.anon_8.u.add(1);
+}
+
+/// `it_802796FC`: item script "set throw flags" (`xDAC_itcmd_var0 = hit_idx`).
+/// # Safety
+/// As [`it_802795ec`].
+pub unsafe fn it_802796fc(ip: &mut Item, cmd: &mut CommandInfo) {
+    melee_core::ct!("it_802796fc");
+    ip.xDAC_itcmd_var0 = (*cmd.anon_8.u).set_throw_flags.hit_idx();
+    cmd.anon_8.u = cmd.anon_8.u.add(1);
 }

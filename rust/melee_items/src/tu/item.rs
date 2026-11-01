@@ -3,6 +3,117 @@
 //! PC build's Geno / m-ex branches. Callees of other TUs go through `ext`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, unused_assignments, unused_variables, unused_mut, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::helpers::COLLIDE_CEILING_MASK;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b724;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b73c;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bb88;
+#[allow(unused_imports)]
+use crate::itlib::it_8026bbcc;
+#[allow(unused_imports)]
+use crate::itlib::it_802714c0;
+#[allow(unused_imports)]
+use crate::itlib::it_8027346c;
+#[allow(unused_imports)]
+use crate::itlib::it_80273484;
+#[allow(unused_imports)]
+use crate::itlib::it_8027349c;
+#[allow(unused_imports)]
+use crate::itlib::it_802734b4;
+#[allow(unused_imports)]
+use crate::itlib::it_80275228;
+#[allow(unused_imports)]
+use crate::itlib::it_80275240;
+#[allow(unused_imports)]
+use crate::itlib::it_80275594;
+#[allow(unused_imports)]
+use crate::itlib::COLLIDE_FLOOR_MASK;
+#[allow(unused_imports)]
+use crate::layout::it_2728_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::it_804D6D40_t;
+#[allow(unused_imports)]
+use crate::layout::itPokemonSpawn_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::CommandInfo;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::ItemKind;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::ItemStateDesc;
+#[allow(unused_imports)]
+use crate::layout::PokemonSelectionState;
+#[allow(unused_imports)]
+use crate::layout::lb_80014638_arg1_t;
+#[allow(unused_imports)]
+use crate::layout::HSD_GOBJ_CLASS_ITEM;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Marumine;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Start;
+#[allow(unused_imports)]
+use crate::layout::It_PKind_Terminate;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itlib3;
+#[allow(unused_imports)]
+use crate::itkinds10::it_80277040;
+#[allow(unused_imports)]
+use crate::itkinds11::it_80272cc0;
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjEvent;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObjInteraction;
+#[allow(unused_imports)]
+use crate::layout::HSD_JObj;
+#[allow(unused_imports)]
+use crate::layout::HSD_ObjAllocUnk;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::itLGun_ItemVars;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf;
+#[allow(unused_imports)]
+use melee_runtime::gekko::sqrtf_accurate;
+#[allow(unused_imports)]
+use crate::itkinds12::{item};
+#[allow(unused_imports)]
+use crate::layout::itSamusMissileAttributes;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::Item;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -2329,4 +2440,109 @@ pub unsafe extern "C" fn Item_IsGrabbable(gobj: *mut HSD_GObj) -> bool {
         return true;
     }
     false
+}
+
+// ---- folded from item.rs (consolidation steps 21/22) ----
+/// `Item_80269CA0` (item.c): add damage, clamp at 999.
+pub fn item_80269ca0(ip: &mut Item, damage: i32) {
+    melee_core::ct!("item_80269ca0");
+    ip.xC9C = ip.xC9C.wrapping_add(damage);
+    if ip.xC9C > 999 {
+        ip.xC9C = 999;
+    }
+}
+
+// ---- folded from itkinds12.rs (consolidation steps 21/22) ----
+// ---- item.c ----------------------------------------------------------------------------
+
+/// `Item_8026784C`: whether the drop class `drop_item` has reached its cap (`Item_804A0C64`);
+/// class 9 instead takes one from its pending count.
+pub fn item_8026784c(drop_item: i32, _unused: i32, d: &mut HSD_ObjAllocUnk) -> bool {
+    melee_core::ct!("item_8026784c");
+    match drop_item {
+        0 => d.x0 >= d.x4,
+        1 => d.x8 >= d.xC,
+        2 => d.x10 >= d.x14,
+        3 => d.x58 >= d.x5C,
+        5 => d.x40 >= d.x44,
+        7 => d.x34 >= d.x38,
+        9 => {
+            if d.x1C > d.x20 {
+                d.x1C = d.x1C.wrapping_sub(1);
+                true
+            } else {
+                false
+            }
+        }
+        10 => d.x24 >= d.x28,
+        11 => d.x48 >= d.x4C,
+        12 => d.x50 >= d.x54,
+        _ => false,
+    }
+}
+
+// ---- folded from itlib3.rs (consolidation steps 21/22) ----
+// ---- item.c ----------------------------------------------------------------------------
+
+/// `Item_80268E40`: start the state's command script.
+pub fn item_80268e40(ip: &mut Item, desc: &ItemStateDesc) {
+    melee_core::ct!("item_80268e40");
+    ip.x524_cmd.anon_8.u = desc.xC_script as *mut _;
+    ip.x524_cmd.loop_count = 0;
+    ip.x524_cmd.timer = 0.0;
+}
+
+/// `Item_80269CC4` (static): reset the damage / interaction state.
+pub fn item_80269cc4(ip: &mut Item) {
+    melee_core::ct!("item_80269cc4");
+    ip.xCA0 = 0;
+    ip.xCA4 = 0;
+    ip.xC94 = 0;
+    ip.xCC8_knockback = 0.0;
+    ip.xC34_damageDealt = 0;
+    ip.xC48 = 0;
+    ip.xC4C = 0;
+    ip.xC50 = 0;
+    ip.xCCC_incDamageDirection = 0.0;
+    ip.xCB8_outDamageDirection = 0.0;
+    ip.xC68 = 0.0;
+    ip.xCD0 = 0.0;
+    ip.xCC0 = 0.0;
+    unsafe { ip.xDCF_flag.anon_0.set_b6(0) };
+    ip.xCC4 = 0;
+    ip.xCEC_fighterGObj = null_mut_itlib3();
+    ip.xCF0_itemGObj = null_mut_itlib3();
+    ip.xCF4_fighterGObjUnk = null_mut_itlib3();
+    ip.toucher = null_mut_itlib3();
+    ip.xC64_reflectGObj = null_mut_itlib3();
+    ip.xC90_absorbGObj = null_mut_itlib3();
+    ip.xCFC = null_mut_itlib3();
+    ip.xCB4 = -1;
+    ip.xC38 = -1;
+    ip.xCE0 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    ip.xCD4 = GcVec { x: 0.0, y: 0.0, z: 0.0 };
+    unsafe {
+        ip.xDCE_flag.anon_0.set_b5(0);
+        ip.xDCE_flag.anon_0.set_b4(0);
+    }
+    ip.xDCC_flag.set_b1(0);
+    ip.xC70 = 1.0;
+    ip.xC6C = 1.0;
+    ip.xDCC_flag.set_b2(0);
+    ip.xDC8_word.flags.set_xB(0);
+    ip.xCA8 = 0;
+    ip.xDC8_word.flags.set_x3(0);
+    ip.xDC8_word.flags.set_x4(0);
+    unsafe { ip.xDCE_flag.anon_0.set_b6(0) };
+}
+
+/// `Item_8026AE60`: next nonzero spawn id from the `it_804D6D14` counter.
+pub fn item_8026ae60(counter: &mut u32) -> u32 {
+    melee_core::ct!("item_8026ae60");
+    let result = *counter;
+    *counter = counter.wrapping_add(1);
+    if *counter == 0 {
+        *counter = counter.wrapping_add(1);
+    }
+    result
 }

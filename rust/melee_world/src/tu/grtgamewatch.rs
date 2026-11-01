@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtgamewatch::{grTGameWatch_80224110, grTgamewatch_UnkStage0_OnLoad, grTGameWatch_802241AC, grTGameWatch_802242C8, grTGameWatch_802242D0, grTGameWatch_802242D4, grTGameWatch_80224328, grTGameWatch_80224364, grTGameWatch_802243B8, grTGameWatch_802243E0, grTGameWatch_802243E4, grTGameWatch_802243EC};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -178,3 +183,44 @@ pub unsafe extern "C" fn stageGObj1_GObjProc(gobj: *mut HSD_GObj) {
     melee_core::ct!("stageGObj1_GObjProc");
     ext::Ground_UpdateMapColl(gobj);
 }
+
+// ---- folded from grtgamewatch.rs (consolidation steps 21/22) ----
+/// grTgamewatch_UnkStage0_OnStart_fp (gr/grtgamewatch.c:57)
+    pub unsafe extern "C" fn grTgamewatch_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtgamewatch.rs (consolidation steps 21/22) ----
+/// grTGameWatch_80224110 (gr/grtgamewatch.c:42)
+    pub extern "C" fn grTGameWatch_80224110(a0: i32) {  }
+
+/// grTgamewatch_UnkStage0_OnLoad (gr/grtgamewatch.c:52)
+    pub extern "C" fn grTgamewatch_UnkStage0_OnLoad() {  }
+
+/// grTGameWatch_802241AC (gr/grtgamewatch.c:62)
+    pub extern "C" fn grTGameWatch_802241AC() -> i32 { 0 }
+
+/// grTGameWatch_802242C8 (gr/grtgamewatch.c:89)
+    pub extern "C" fn grTGameWatch_802242C8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGameWatch_802242D0 (gr/grtgamewatch.c:94)
+    pub extern "C" fn grTGameWatch_802242D0(a0: *mut HSD_GObj) {  }
+
+/// grTGameWatch_802242D4 (gr/grtgamewatch.c:99)
+    pub extern "C" fn grTGameWatch_802242D4(a0: *mut HSD_GObj) {  }
+
+/// grTGameWatch_80224328 (gr/grtgamewatch.c:109)
+    pub extern "C" fn grTGameWatch_80224328(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGameWatch_80224364 (gr/grtgamewatch.c:119)
+    pub extern "C" fn grTGameWatch_80224364(a0: *mut HSD_GObj) {  }
+
+/// grTGameWatch_802243B8 (gr/grtgamewatch.c:129)
+    pub extern "C" fn grTGameWatch_802243B8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTGameWatch_802243E0 (gr/grtgamewatch.c:139)
+    pub extern "C" fn grTGameWatch_802243E0(a0: *mut HSD_GObj) {  }
+
+/// grTGameWatch_802243E4 (gr/grtgamewatch.c:144)
+    pub extern "C" fn grTGameWatch_802243E4(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTGameWatch_802243EC (gr/grtgamewatch.c:149)
+    pub extern "C" fn grTGameWatch_802243EC(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

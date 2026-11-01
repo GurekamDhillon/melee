@@ -13,6 +13,12 @@
 //! Fused float sites (tools/rust-port/fma_sites.py): none (no `a * b` here feeds an add/sub).
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, unused_mut, unused_assignments, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
@@ -2087,3 +2093,47 @@ pub unsafe extern "C" fn grVenom_80206D7C(pos: *mut Vec3, _arg1: i32, arg2: *mut
     }
     0
 }
+
+// ---- folded from grvenom.rs (consolidation steps 21/22) ----
+/// grVenom_80203E80_fp (gr/grvenom.c:547)
+    pub unsafe extern "C" fn grVenom_80203E80_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grvenom.rs (consolidation steps 21/22) ----
+/// grVenom_80203EA4_fp (gr/grvenom.c:552)
+    pub extern "C" fn grVenom_80203EA4_fp() -> i32 { 0 }
+
+/// grVenom_80203FC4_fp (gr/grvenom.c:612)
+    pub extern "C" fn grVenom_80203FC4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_802040A4_fp (gr/grvenom.c:645)
+    pub extern "C" fn grVenom_802040A4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_8020427C_fp (gr/grvenom.c:695)
+    pub extern "C" fn grVenom_8020427C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80204544_fp (gr/grvenom.c:785)
+    pub extern "C" fn grVenom_80204544_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80204CE4_fp (gr/grvenom.c:992)
+    pub extern "C" fn grVenom_80204CE4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80204EF4_fp (gr/grvenom.c:1023)
+    pub extern "C" fn grVenom_80204EF4_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_802052D8_fp (gr/grvenom.c:1100)
+    pub extern "C" fn grVenom_802052D8_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80205750_fp (gr/grvenom.c:1305)
+    pub extern "C" fn grVenom_80205750_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80205DF0_fp (gr/grvenom.c:1389)
+    pub extern "C" fn grVenom_80205DF0_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80206B68_fp (gr/grvenom.c:1827)
+    pub extern "C" fn grVenom_80206B68_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80206BBC_fp (gr/grvenom.c:1845)
+    pub extern "C" fn grVenom_80206BBC_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grVenom_80206D74_fp (gr/grvenom.c:1921)
+    pub extern "C" fn grVenom_80206D74_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

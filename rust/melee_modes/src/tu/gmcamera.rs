@@ -5,6 +5,9 @@
 //! the FreeTexts pair, update_selection, 31FC_inline) are ported as private functions.
 #![allow(non_snake_case, non_upper_case_globals, dead_code, static_mut_refs, unused_unsafe)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use melee_types::*;
 
@@ -933,4 +936,11 @@ pub unsafe fn gmCamera_801A31FC() {
     gmCamera_VsCamUiState.x48[0] = core::ptr::null_mut();
     gmCamera_VsCamUiState.x48[1] = core::ptr::null_mut();
     gmCamera_VsCamUiState.x48[2] = core::ptr::null_mut();
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmcamera.c `gmCamera_801A2BF0_get_translate_x_fp`.
+pub fn gmCamera_801A2BF0_get_translate_x_fp(px18: &i32) -> f32 {
+    melee_core::ct!("gmCamera_801A2BF0_get_translate_x_fp");
+    if *px18 != 0 { 5.0 } else { -5.0 }
 }

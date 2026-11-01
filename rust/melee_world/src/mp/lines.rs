@@ -1,3 +1,4 @@
+
 //! Line-graph queries from src/melee/mp/mplib.c (mpLineGetNext .. mpLinesConnected).
 //!
 //! The C globals `groundCollVtx`, `groundCollLine` and `mpLib_804D64B4` become [`GroundColl`].
@@ -6,16 +7,17 @@
 //! gate `next_id0`/`prev_id0`), because the C PC build is the behavioural reference.
 
 use super::types::*;
+
 use crate::vec::{ps_vec_normalize, Vec3};
 
 /// `ScriptGame_StageLineActive` hook (pc/gameworld script layer). Default: every line active.
 pub type LineActiveFn = fn(i32) -> bool;
 
-fn all_lines_active(_: i32) -> bool {
+pub(crate) fn all_lines_active(_: i32) -> bool {
     true
 }
 
-fn no_stage_joint(_: i32) -> bool {
+pub(crate) fn no_stage_joint(_: i32) -> bool {
     false
 }
 
@@ -81,14 +83,9 @@ impl Default for GroundColl {
     }
 }
 
-#[inline]
-fn sq(x: f32) -> f32 {
-    x * x
-}
-
 /// Which side of the line graph a walk follows.
 #[derive(Clone, Copy, PartialEq, Eq)]
-enum Dir {
+pub(crate) enum Dir {
     Next,
     Prev,
 }
@@ -463,3 +460,5 @@ impl GroundColl {
         false
     }
 }
+
+pub use crate::tu::controller::sq_fp2 as sq;

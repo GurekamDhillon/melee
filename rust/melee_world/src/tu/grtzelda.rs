@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -60,7 +66,6 @@ pub mod ext {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtzelda::{grTZelda_80223EC8, grTZelda_80223FE4, grTZelda_80224044, grTZelda_802240D4, grTZelda_OnTouchLine, grTZelda_OnCheckShadowRender};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -207,3 +212,26 @@ pub unsafe extern "C" fn grTZelda_802240FC(gobj: *mut HSD_GObj) {
     melee_core::ct!("grTZelda_802240FC");
     
 }
+
+// ---- folded from grtzelda.rs (consolidation steps 21/22) ----
+/// grTZelda_OnStart_fp (gr/grtzelda.c:69)
+    pub unsafe extern "C" fn grTZelda_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtzelda.rs (consolidation steps 21/22) ----
+/// grTZelda_80223EC8 (gr/grtzelda.c:74)
+    pub extern "C" fn grTZelda_80223EC8() -> i32 { 0 }
+
+/// grTZelda_80223FE4 (gr/grtzelda.c:100)
+    pub extern "C" fn grTZelda_80223FE4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTZelda_80224044 (gr/grtzelda.c:114)
+    pub extern "C" fn grTZelda_80224044(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTZelda_802240D4 (gr/grtzelda.c:131)
+    pub extern "C" fn grTZelda_802240D4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTZelda_OnTouchLine (gr/grtzelda.c:143)
+    pub extern "C" fn grTZelda_OnTouchLine(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grTZelda_OnCheckShadowRender (gr/grtzelda.c:148)
+    pub extern "C" fn grTZelda_OnCheckShadowRender(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

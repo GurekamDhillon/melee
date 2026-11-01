@@ -7,6 +7,7 @@
 //! is the same (the oracle compares the values).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
 use melee_types::*;
@@ -435,4 +436,14 @@ pub unsafe extern "C" fn DevText_AddToList(list: *mut *mut DevText, text: *mut D
 pub unsafe extern "C" fn DevText_Show(_gobj: *mut HSD_GObj, text: *mut DevText) {
     melee_core::ct!("DevText_Show");
     DevText_AddToList(&raw mut devtext_drawlist, text);
+}
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// DevText_StrLen (if/textdraw.c). `None` is the C's NULL. Counts up to the first NUL.
+pub fn devtext_strlen(s: Option<&[u8]>) -> i32 {
+    melee_core::ct!("devtext_strlen");
+    match s {
+        Some(s) => s.iter().take_while(|&&c| c != 0).count() as i32,
+        None => 0,
+    }
 }

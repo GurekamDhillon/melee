@@ -5,15 +5,17 @@
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_grfigure3.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
 use super::grdisplay::grDisplay_801C5DB0;
-pub use crate::gr::trivial::grfigure3::{
-    grFigure3_8020E5A0, grFigure3_8020E6BC, grFigure3_8020E6F8, grFigure3_8020E778, grFigure3_8020E790,
-    grFigure3_8020E788,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -225,3 +227,26 @@ pub unsafe extern "C" fn grFigure3_8020E780(_gobj: *mut HSD_GObj) { melee_core::
 
 /// grFigure3_8020E784
 pub unsafe extern "C" fn grFigure3_8020E784(_gobj: *mut HSD_GObj) { melee_core::ct!("grFigure3_8020E784");}
+
+// ---- folded from grfigure3.rs (consolidation steps 21/22) ----
+/// grFigure3_OnStart_fp (gr/grfigure3.c:78)
+    pub unsafe extern "C" fn grFigure3_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grfigure3.rs (consolidation steps 21/22) ----
+/// grFigure3_8020E5A0 (gr/grfigure3.c:83)
+    pub extern "C" fn grFigure3_8020E5A0() -> i32 { 0 }
+
+/// grFigure3_8020E6BC (gr/grfigure3.c:109)
+    pub extern "C" fn grFigure3_8020E6BC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure3_8020E6F8 (gr/grfigure3.c:124)
+    pub extern "C" fn grFigure3_8020E6F8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure3_8020E778 (gr/grfigure3.c:142)
+    pub extern "C" fn grFigure3_8020E778(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFigure3_8020E788 (gr/grfigure3.c:151)
+    pub extern "C" fn grFigure3_8020E788(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grFigure3_8020E790 (gr/grfigure3.c:156)
+    pub extern "C" fn grFigure3_8020E790(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

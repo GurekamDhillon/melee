@@ -16,6 +16,146 @@
 //! `*(&y + 6)` (a PowerPC stack-slot trick); the port computes the intended `sqrtf`.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::layout::Article;
+#[allow(unused_imports)]
+use crate::layout::CollData;
+#[allow(unused_imports)]
+use crate::layout::Fighter;
+#[allow(unused_imports)]
+use crate::layout::ItemPickTable;
+#[allow(unused_imports)]
+use crate::layout::Mtx;
+#[allow(unused_imports)]
+use crate::layout::SpawnItem;
+#[allow(unused_imports)]
+use crate::layout::itFoodsAttributes;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_Unk4;
+#[allow(unused_imports)]
+use crate::itkinds7::{len3 as len3_itkinds7};
+#[allow(unused_imports)]
+use crate::helpers::it_link_lerp as it_link_lerp_itkinds6;
+#[allow(unused_imports)]
+use crate::itlib::it_80271534;
+#[allow(unused_imports)]
+use crate::itlib::it_80274d6c;
+#[allow(unused_imports)]
+use crate::itlib::it_80274ecc;
+#[allow(unused_imports)]
+use crate::itlib::it_8027572c;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274d04;
+#[allow(unused_imports)]
+use crate::itlib3::it_802756e0;
+#[allow(unused_imports)]
+use crate::itkinds::itGShell_Attrs;
+#[allow(unused_imports)]
+use crate::layout::ftCollisionBox;
+#[allow(unused_imports)]
+use crate::layout::itLinkHookshotAttributes;
+#[allow(unused_imports)]
+use crate::layout::itMarilAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSScopeAttributes;
+#[allow(unused_imports)]
+use crate::layout::itSword_UnkArticle1;
+#[allow(unused_imports)]
+use crate::layout::itTaruAttributes;
+#[allow(unused_imports)]
+use crate::layout::itToolsAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnkAttributes;
+#[allow(unused_imports)]
+use crate::layout::itWstarAttributes;
+#[allow(unused_imports)]
+use crate::layout::Collide_LeftWallMask;
+#[allow(unused_imports)]
+use crate::layout::Collide_RightWallMask;
+#[allow(unused_imports)]
+use crate::layout::HurtCapsule;
+#[allow(unused_imports)]
+use crate::layout::It_Kind_L_Gun_Ray;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds6;
+#[allow(unused_imports)]
+use crate::helpers::it_80275158;
+#[allow(unused_imports)]
+use crate::item::it_802762bc;
+#[allow(unused_imports)]
+use crate::itkinds::it_802e657c;
+#[allow(unused_imports)]
+use crate::itkinds::it_8028b988;
+#[allow(unused_imports)]
+use crate::itkinds::it_capsule_unk_motion4_phys;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b3a8;
+#[allow(unused_imports)]
+use crate::itlib::it_8026b894;
+#[allow(unused_imports)]
+use crate::itlib::it_802751d8;
+#[allow(unused_imports)]
+use crate::itlib::it_802755c0;
+#[allow(unused_imports)]
+use crate::itlib3::it_80272860;
+#[allow(unused_imports)]
+use crate::itlib3::it_80274658;
+#[allow(unused_imports)]
+use crate::itlib3::it_8027a344;
+#[allow(unused_imports)]
+use crate::itlib3::it_coll_bounce_off_victim;
+#[allow(unused_imports)]
+use crate::layout::itPikachuthunderAttributes;
+#[allow(unused_imports)]
+use crate::layout::itRshellAttributes;
+#[allow(unused_imports)]
+use crate::layout::itTaruCann_DatAttrs;
+#[allow(unused_imports)]
+use crate::layout::itThunderPokemonAttributes;
+#[allow(unused_imports)]
+use crate::layout::itUnknownAttributes;
+#[allow(unused_imports)]
+use crate::layout::HSD_GObj;
+#[allow(unused_imports)]
+use crate::layout::ItLGunAttr;
+#[allow(unused_imports)]
+use crate::layout::MaximTomatoSpecialAttr;
+#[allow(unused_imports)]
+use crate::layout::ScopeBeamAttrs;
+#[allow(unused_imports)]
+use crate::layout::HitCapsule_Enabled;
+#[allow(unused_imports)]
+use std::ptr::null_mut as null_mut_itkinds5;
+#[allow(unused_imports)]
+use crate::itkinds5::{gp};
+#[allow(unused_imports)]
+use crate::layout::ftCommonData;
+#[allow(unused_imports)]
+use crate::layout::itECB;
+#[allow(unused_imports)]
+use crate::layout::itSeakChain_Attrs;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingHug;
+#[allow(unused_imports)]
+use crate::layout::Collide_CeilingPush;
+#[allow(unused_imports)]
+use crate::layout::GroundOrAir;
+#[allow(unused_imports)]
+use crate::layout::Item;
+#[allow(unused_imports)]
+use crate::layout::ItemCommonData;
+#[allow(unused_imports)]
+use crate::layout::ItemLink;
+#[allow(unused_imports)]
+use crate::layout::Vec as GcVec;
+#[allow(unused_imports)]
+use crate::layout::GA_Air;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_runtime::gekko::sqrtf;
@@ -1933,4 +2073,132 @@ pub unsafe fn it_802A7D40(arg0: *mut Item_GObj, arg1: *mut Item_GObj) {
     if (*item).xDD4_itemVar.linkhookshot.x8 == arg1 {
         (*item).xDD4_itemVar.linkhookshot.x8 = null_mut();
     }
+}
+
+// ---- folded from helpers.rs (consolidation steps 21/22) ----
+/// `it_link_lerp_fp` (itlinkhookshot.c, static inline). 1 site: `fmadds(t, a, (1-t)*b)`.
+pub fn it_link_lerp_fp(a: f32, b: f32, t: f32) -> f32 {
+    melee_core::ct!("it_link_lerp_fp");
+    fmadds(t, a, (1.0 - t) * b)
+}
+
+// ---- folded from itkinds5.rs (consolidation steps 21/22) ----
+/// `it_802A2418` (itlinkhookshot.c): `linkhookshot.x10 = NULL`.
+pub fn it_802a2418(ip: &mut Item) {
+    melee_core::ct!("it_802a2418");
+    ip.xDD4_itemVar.linkhookshot.x10 = None;
+}
+
+/// `it_802A7D40` (itlinkhookshot.c): `it_8026B894`, then forget `linkhookshot.x8`.
+pub fn it_802a7d40(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
+    melee_core::ct!("it_802a7d40");
+    it_8026b894(ip, ref_gobj);
+    unsafe {
+        if gp(ip.xDD4_itemVar.linkhookshot.x8) == ref_gobj {
+            ip.xDD4_itemVar.linkhookshot.x8 = null_mut_itkinds5();
+        }
+    }
+}
+
+// ---- folded from itkinds6.rs (consolidation steps 21/22) ----
+/// `it_802A43B8` (itlinkhookshot.c): `cur_pos = pos; last_pos = cur_pos`.
+pub fn it_802a43b8(l: &mut ItemLink) {
+    melee_core::ct!("it_802a43b8");
+    l.coll_data.cur_pos = l.pos;
+    l.coll_data.last_pos = l.coll_data.cur_pos;
+}
+
+/// `it_802A43EC` (itlinkhookshot.c): `last_pos = cur_pos; cur_pos = pos`.
+pub fn it_802a43ec(l: &mut ItemLink) {
+    melee_core::ct!("it_802a43ec");
+    l.coll_data.last_pos = l.coll_data.cur_pos;
+    l.coll_data.cur_pos = l.pos;
+}
+
+/// `it_802A4420` (itlinkhookshot.c): `pos += vel`.
+pub fn it_802a4420(l: &mut ItemLink) {
+    melee_core::ct!("it_802a4420");
+    l.pos.x += l.vel.x;
+    l.pos.y += l.vel.y;
+    l.pos.z += l.vel.z;
+}
+
+/// `test_comp_fp` (itlinkhookshot.c, static inline): `vec0 = vec2 * *arg2 + vec1` (3 fused).
+pub fn test_comp_fp(vec0: &mut GcVec, vec1: &GcVec, vec2: &GcVec, arg2: f32) {
+    melee_core::ct!("test_comp_fp");
+    vec0.x = fmadds(vec2.x, arg2, vec1.x);
+    vec0.y = fmadds(vec2.y, arg2, vec1.y);
+    vec0.z = fmadds(vec2.z, arg2, vec1.z);
+}
+
+/// `it_link_attr_math_fp` (itlinkhookshot.c, static inline): scale the hookshot attributes.
+pub fn it_link_attr_math_fp(attr: &mut itLinkHookshotAttributes, arg2: i32, arg8: f32) {
+    melee_core::ct!("it_link_attr_math_fp");
+    let f0 = if arg2 != 0 { attr.x50 } else { attr.x4C };
+    attr.x30 = attr.x10 * arg8;
+    attr.x34 = attr.x14 * arg8;
+    attr.x38 = f0 * (attr.x18 * arg8);
+    attr.x3C = attr.x1C * arg8;
+    attr.x40 = f0 * (attr.x20 * arg8);
+    attr.x44 = f0 * (attr.x24 * arg8);
+    attr.x48 = attr.x28 * arg8;
+    let f1 = if arg8 > 1.0 {
+        it_link_lerp_itkinds6(attr.xC as f32 * attr.x30, attr.xC as f32 * attr.x10, attr.x8)
+    } else {
+        attr.xC as f32 * attr.x30
+    };
+    attr.x2C = ((f1 * f0) / attr.x30) as i32;
+}
+
+// ---- folded from itkinds7.rs (consolidation steps 21/22) ----
+/// `it_802A3C98` (itlinkhookshot.c): `*arg2 = normalize(*arg0 - *arg1)`, returns the length.
+/// The zero test and the reciprocal are in f64 (`(f64) 1.0F / len`), rounded to f32.
+pub fn it_802a3c98(arg0: &GcVec, arg1: &GcVec, arg2: &mut GcVec) -> f32 {
+    melee_core::ct!("it_802a3c98");
+    arg2.x = arg0.x - arg1.x;
+    arg2.y = arg0.y - arg1.y;
+    arg2.z = arg0.z - arg1.z;
+    let len = len3_itkinds7(arg2);
+    let inv: f32 = if len as f64 == 0.0 { 0.0 } else { (1.0f64 / len as f64) as f32 };
+    arg2.x *= inv;
+    arg2.y *= inv;
+    arg2.z *= inv;
+    len
+}
+
+/// `it_802A6A78_normalize_diff` (itlinkhookshot.c, static inline): `*vec = normalize(*a - *b)`,
+/// returns the f32 length widened to f64.
+pub fn it_802a6a78_normalize_diff(a: &GcVec, b: &GcVec, vec: &mut GcVec) -> f64 {
+    melee_core::ct!("it_802a6a78_normalize_diff");
+    vec.x = a.x - b.x;
+    vec.y = a.y - b.y;
+    vec.z = a.z - b.z;
+    let len = len3_itkinds7(vec) as f64;
+    let inv: f32 = if len == 0.0 { 0.0 } else { (1.0f64 / len) as f32 };
+    vec.x *= inv;
+    vec.y *= inv;
+    vec.z *= inv;
+    len
+}
+
+/// `it_802A6A78_normalize_diff_rev` (itlinkhookshot.c, static inline): as
+/// [`it_802a6a78_normalize_diff`] with the parameters named the other way round (`b` first),
+/// still `*a - *b`.
+pub fn it_802a6a78_normalize_diff_rev(b: &GcVec, a: &GcVec, vec: &mut GcVec) -> f64 {
+    melee_core::ct!("it_802a6a78_normalize_diff_rev");
+    it_802a6a78_normalize_diff(a, b, vec)
+}
+
+/// `vec3_eq_mtx_fp` (itlinkhookshot.c, static inline): the translation column of `m`.
+pub fn vec3_eq_mtx_fp(vec: &mut GcVec, m: &Mtx) {
+    melee_core::ct!("vec3_eq_mtx_fp");
+    vec.x = m[0][3];
+    vec.y = m[1][3];
+    vec.z = m[2][3];
+}
+
+/// `link_fighter_compare_fp` (itlinkhookshot.c, static inline): motion 0x168, 0x169, 0xD4 or 0xD6.
+pub fn link_fighter_compare_fp(fp: &Fighter) -> bool {
+    melee_core::ct!("link_fighter_compare_fp");
+    matches!(fp.motion_id, 0x168 | 0x169 | 0xD4 | 0xD6)
 }

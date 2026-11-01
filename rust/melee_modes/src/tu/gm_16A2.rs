@@ -9,6 +9,9 @@
 //! `x1C0` sit 4 bytes later than the GameCube's +0x1BC/+0x1C0). The C reaches them by byte offset
 //! from `&x0` (`q[0x1C0]`, a `GmEventPlayerInitCallback` at +0x1BC); the port uses the fields, and
 //! keeps the event callback (a 4-byte code address in the C's `pad_1BC`) in `EVENT_PLAYER_INIT_CB`.
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::lb_r6::memzero as memzero_gm_r7;
 use core::ffi::c_void;
 use core::ptr::addr_of_mut;
 use melee_types::*;
@@ -924,4 +927,13 @@ pub unsafe fn gm_PcTestLegacyCostumes() -> i32 {
         || lbl_8046B668.arr2[2] != -2) as i32;
     lbl_8046B668 = saved;
     failed
+}
+
+// ---- folded from gm_r7.rs (consolidation steps 21/22) ----
+/// gm_16A2.c `fn_80169574_fp`: zero `size` bytes, then `buf[size] = -2`.
+pub fn fn_80169574_fp(size: isize, buf: &mut [i8]) {
+    melee_core::ct!("fn_80169574_fp");
+    // SAFETY: i8 and u8 share layout.
+    memzero_gm_r7(unsafe { &mut *(buf as *mut [i8] as *mut [u8]) }, size);
+    buf[size as usize] = -2;
 }

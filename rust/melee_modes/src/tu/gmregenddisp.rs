@@ -6,6 +6,9 @@
 //! tyfall TU's statics it reads are registered through `globals_ext!`.
 #![allow(non_snake_case, non_upper_case_globals, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 
@@ -292,7 +295,6 @@ pub unsafe fn gm_801A8D54(arg0: *mut i32) {
     }
 }
 
-pub use crate::gm_ptr::gm_801A9094_get_entry;
 
 /// `gm_801A9094_get_bg` (static inline): the pedestal stand's joint.
 pub unsafe fn gm_801A9094_get_bg() -> *mut HSD_Joint {
@@ -523,4 +525,11 @@ pub unsafe fn gm_801A9630() {
     ext::lb_8000C1C0(jobj, target);
     ext::lb_8000C290(jobj, target);
     ext::HSD_GObj_SetupProc(gobj, Some(fn_801A80F0), 0x17);
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmregenddisp.c `gm_801A9094_get_entry`.
+pub fn gm_801A9094_get_entry(entries: &[i32], i: i32) -> i32 {
+    melee_core::ct!("gm_801A9094_get_entry");
+    entries[i as usize]
 }

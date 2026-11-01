@@ -16,6 +16,16 @@
 //! State-oracle checked against the C (tests/gro_grkongo.rs, gen/oracle/gr_oracle.py).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use melee_types::Ground as Ground_leaves;
+#[allow(unused_imports)]
+use melee_types::HSD_GObj as HSD_GObj_leaves;
+#[allow(unused_imports)]
+use crate::gr::leaves::{grkongo_801d8270_gp};
 use super::grinl::{
     assert_, GET_GROUND, GET_JOBJ, HSD_JObjGetRotationZ, HSD_JObjGetTranslation, HSD_JObjSetRotation, HSD_JObjSetRotationX,
     HSD_JObjSetRotationZ, HSD_JObjSetTranslate, HSD_JObjSetTranslateX, ABS, M_TAU,
@@ -27,11 +37,6 @@ use melee_core::fp::{fmadds, frsqrte};
 use melee_runtime::gekko::tanf;
 use melee_types::*;
 
-pub use crate::gr::trivial::grkongo::{
-    grKongo_801D5338, grKongo_801D55D4, grKongo_801D5574, grKongo_801D5774, grKongo_801D5FD4, grKongo_801D6028,
-    grKongo_801D6064, grKongo_801D6190, grKongo_801D6378, grKongo_801D64B4, grKongo_801D6518, grKongo_801D6660,
-    grKongo_801D8444,
-};
 
 /// Callees in TUs that are not ported yet. An unset hook panics.
 pub mod ext {
@@ -1510,3 +1515,53 @@ pub unsafe extern "C" fn grKongo_801D844C(a: *mut Vec3, _b: i32, jobj: *mut HSD_
         0
     }
 }
+
+// ---- folded from leaves.rs (consolidation steps 21/22) ----
+/// grKongo_801D8270(gobj): `GET_GROUND(gobj)` then the step.
+///
+/// # Safety
+/// `gobj` and its `user_data` must point to a live HSD_GObj_leaves / Ground_leaves.
+pub unsafe fn grkongo_801d8270(gobj: *mut HSD_GObj_leaves) {
+    melee_core::ct!("grkongo_801d8270");
+    grkongo_801d8270_gp(&mut *((*gobj).user_data as *mut Ground_leaves))
+}
+
+// ---- folded from grkongo.rs (consolidation steps 21/22) ----
+/// grKongo_801D5338 (gr/grkongo.c:180)
+    pub extern "C" fn grKongo_801D5338() -> i32 { 0 }
+
+/// grKongo_801D5574 (gr/grkongo.c:252)
+    pub extern "C" fn grKongo_801D5574(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D55D4 (gr/grkongo.c:266)
+    pub extern "C" fn grKongo_801D55D4(a0: *mut HSD_GObj) {  }
+
+/// grKongo_801D5774 (gr/grkongo.c:301)
+    pub extern "C" fn grKongo_801D5774(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D5FD4 (gr/grkongo.c:503)
+    pub extern "C" fn grKongo_801D5FD4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D6028 (gr/grkongo.c:521)
+    pub extern "C" fn grKongo_801D6028(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D6064 (gr/grkongo.c:536)
+    pub extern "C" fn grKongo_801D6064(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D6190 (gr/grkongo.c:568)
+    pub extern "C" fn grKongo_801D6190(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D6378 (gr/grkongo.c:626)
+    pub extern "C" fn grKongo_801D6378(a0: *mut HSD_GObj) {  }
+
+/// grKongo_801D64B4 (gr/grkongo.c:686)
+    pub extern "C" fn grKongo_801D64B4(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D6518 (gr/grkongo.c:700)
+    pub extern "C" fn grKongo_801D6518(a0: *mut HSD_GObj) {  }
+
+/// grKongo_801D6660 (gr/grkongo.c:739)
+    pub extern "C" fn grKongo_801D6660(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grKongo_801D8444 (gr/grkongo.c:1508)
+    pub extern "C" fn grKongo_801D8444(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

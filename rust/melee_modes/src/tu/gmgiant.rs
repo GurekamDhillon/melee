@@ -4,6 +4,11 @@
 //! contraction) by tests/tu_gmgiant.rs.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
+#[allow(unused_imports)]
+use mt::PlayerInitData as PlayerInitData_gm_ptr;
 use super::support::*;
 use core::ffi::c_void;
 use melee_types::*;
@@ -178,4 +183,14 @@ pub fn gm_Mode_GiantVs_OnInit() {
 pub fn gm_Mode_GiantVs_OnLoad() {
     melee_core::ct!("gm_Mode_GiantVs_OnLoad");
     ext::gmVsMelee_ResetKOCounts();
+}
+
+// ---- folded from gm_ptr.rs (consolidation steps 21/22) ----
+/// gmgiant.c `fn_801B9060_fp` (Giant Melee player setup).
+pub fn fn_801B9060_fp(arg0: &mut PlayerInitData_gm_ptr, _unused: *mut PlayerInitData_gm_ptr) {
+    melee_core::ct!("fn_801B9060_fp");
+    arg0.model_scale = 1.8;
+    arg0.defense_ratio = 1.0;
+    arg0.attack_ratio = 1.5;
+    arg0.xB = 2;
 }

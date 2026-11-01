@@ -1,3 +1,4 @@
+
 //! src/melee/gr/ground.c, round 7: the stage_info / GroundParam accessors, the camera and
 //! blast-zone setters, the per-Ground SFX slot helpers, and the two pure orientation helpers
 //! (Ground_801C4B50's math, Ground_801C5AEC). TARGET_PC bodies.
@@ -7,14 +8,20 @@
 //! not). Everything the C calls in another group goes through `GroundHooks`, whose default
 //! bodies panic with the owning group.
 #![allow(non_upper_case_globals)]
+
 use super::stage::StageWorld;
+
 use crate::vec::Vec3;
+
 use melee_runtime::gekko::{cosf, sinf};
+
 use melee_runtime::lbtrigf::asinf;
+
 use melee_runtime::lbvector::{crossprod_normalized, euler_angles_from_onb, normalize};
+
 use melee_types::*;
 
-const M_PI: f64 = 3.14159265358979323846;
+pub(crate) const M_PI: f64 = 3.14159265358979323846;
 
 /// Callees outside ground.c. Defaults are stubs.
 #[allow(unused_variables)]
@@ -117,7 +124,7 @@ pub enum ParamColor {
     XB8, XBC, XC0, XC4, XC8, XCC, XD0, XD4, XD8,
 }
 
-fn color_mut(p: &mut GroundParam, c: ParamColor) -> &mut _GXColor {
+pub(crate) fn color_mut(p: &mut GroundParam, c: ParamColor) -> &mut _GXColor {
     match c {
         ParamColor::XB8 => &mut p.xB8,
         ParamColor::XBC => &mut p.xBC,
@@ -548,128 +555,26 @@ impl StageWorld {
     }
 }
 
-/// Ground_801C498C: the first gobj on the light plink list (`HSD_GObjPLinkHead[3]`, passed in)
-/// whose classifier is HSD_GOBJ_CLASS_GROUND, or null.
-///
-/// # Safety
-/// `head` is null or a well-formed `next`-linked list of live GObjs.
-pub unsafe fn ground_801c498c(head: *mut HSD_GObj) -> *mut HSD_GObj {
-    let mut g = head;
-    while !g.is_null() {
-        if (*g).classifier as i32 == HSD_GOBJ_CLASS_GROUND {
-            break;
-        }
-        g = (*g).next;
-    }
-    g
-}
-
-/// Ground_801C1D38 (static): call the Ground's `xC_callback` when set.
-///
-/// # Safety
-/// `gobj` is a live Ground GObj (the C reads `user_data` unchecked).
-pub unsafe fn ground_801c1d38(gobj: *mut HSD_GObj) {
-    let gp = (*gobj).user_data as *mut Ground;
-    if let Some(cb) = (*gp).xC_callback {
-        cb(gobj);
-    }
-}
-
 /// Ground_GetP1Fighter
 pub fn ground_get_p1_fighter(h: &mut dyn GroundHooks) -> *mut HSD_GObj { h.player_get_entity(0) }
+
 /// Ground_GetP1Fighter2
 pub fn ground_get_p1_fighter2(h: &mut dyn GroundHooks) -> *mut HSD_GObj { h.player_get_entity_at_index(0, 1) }
-/// Ground_801C53EC
-pub fn ground_801c53ec(h: &mut dyn GroundHooks, sfx: u32) { h.lbaudioax_800237a8(sfx as i32, 0x7F, 0x40); }
-/// Ground_801C5414
-pub fn ground_801c5414(h: &mut dyn GroundHooks, a: i32, b: i32) { h.lbaudioax_80023870(a, 0x7F, 0x40, b); }
-/// Ground_801C5A28
-pub fn ground_801c5a28(h: &mut dyn GroundHooks) {
-    h.toy_803124bc();
-    h.toy_8031234c(0);
-    h.toy_80305918(0, 0, 1);
-}
-/// Ground_801C5A60
-pub fn ground_801c5a60(h: &mut dyn GroundHooks) { h.toy_8031234c(1); }
 
-/// Ground_801C5440
-pub fn ground_801c5440(h: &mut dyn GroundHooks, gp: Option<&mut Ground>, i: i32, sfx: u32) {
-    if !(0..8).contains(&i) {
-        return;
-    }
-    let Some(gp) = gp else { return };
-    if sfx == 540000 {
-        return;
-    }
-    if sfx != 540001 {
-        if gp.x20[i as usize] != -1 {
-            h.lbaudioax_800236b8(gp.x20[i as usize]);
-        }
-        gp.x20[i as usize] = h.lbaudioax_800237a8(sfx as i32, 0x7F, 0x40);
-    } else {
-        ground_801c5544(h, Some(gp), i);
-    }
-}
-/// Ground_801C54DC
-pub fn ground_801c54dc(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32) -> bool {
-    if !(0..8).contains(&i) {
-        return false;
-    }
-    matches!(gp, Some(g) if g.x20[i as usize] != -1 && h.lbaudioax_80023710(g.x20[i as usize]))
-}
-/// Ground_801C5544
-pub fn ground_801c5544(h: &mut dyn GroundHooks, gp: Option<&mut Ground>, i: i32) {
-    if !(0..8).contains(&i) {
-        return;
-    }
-    let Some(gp) = gp else { return };
-    if gp.x20[i as usize] != -1 {
-        h.lbaudioax_800236b8(gp.x20[i as usize]);
-    }
-    gp.x20[i as usize] = -1;
-}
-/// Ground_801C55AC (static)
-pub fn ground_801c55ac(h: &mut dyn GroundHooks, gp: Option<&mut Ground>) {
-    if let Some(gp) = gp {
-        for i in 0..8 {
-            ground_801c5544(h, Some(gp), i);
-        }
-    }
-}
 /// C float -> int conversion (fctiwz / cvttss2si); inputs the game passes are in range.
 #[inline]
-fn f2i(x: f32) -> i32 {
+pub(crate) fn f2i(x: f32) -> i32 {
     x as i32
 }
+
 /// The volume Ground_801C5630 passes: `127 * val`.
 pub fn ground_5630_volume(val: f32) -> i32 {
     f2i(127.0f32 * val)
 }
+
 /// The pan Ground_801C5694 passes: `63.5f * (val + 1)`.
 pub fn ground_5694_pan(val: f32) -> i32 {
     f2i(63.5f32 * (val + 1.0f32))
-}
-/// Ground_801C5630
-pub fn ground_801c5630(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32, val: f32) {
-    if !(0..8).contains(&i) {
-        return;
-    }
-    if let Some(g) = gp {
-        if g.x20[i as usize] != -1 {
-            h.lbaudioax_80024b58(g.x20[i as usize], ground_5630_volume(val));
-        }
-    }
-}
-/// Ground_801C5694
-pub fn ground_801c5694(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32, val: f32) {
-    if !(0..8).contains(&i) {
-        return;
-    }
-    if let Some(g) = gp {
-        if g.x20[i as usize] != -1 {
-            h.lbaudioax_80024b1c(g.x20[i as usize], ground_5694_pan(val));
-        }
-    }
 }
 
 /// Ground_801C4B50's math after the two spline queries: tangent `vec0` (un-normalized, as
@@ -715,31 +620,8 @@ pub fn ground_4b50_angles(mut vec0: Vec3) -> Vec3 {
     Vec3 { x: result_x, y: result_y, z: result_z }
 }
 
-/// Ground_801C4B50: returns (*arg1 = spline point, *result = angles).
-pub fn ground_801c4b50(h: &mut dyn GroundHooks, spline: *mut HSD_Spline, t: f32) -> (Vec3, Vec3) {
-    let p = h.spl_get_spline_point(spline, t);
-    let tangent = h.lbshadow_8000e9f0(spline, t);
-    (p, ground_4b50_angles(tangent))
-}
-
-/// Ground_801C5AEC
-pub fn ground_801c5aec(a: &Vec3, b: &Vec3, c: &Vec3) -> Vec3 {
-    let mut v = euler_angles_from_onb(a, b, c);
-    let ok = |x: f32| (if x < 0.0 { -x } else { x }) < 30000.0;
-    if !ok(v.x) {
-        v.x = 0.0;
-    }
-    if !ok(v.y) {
-        v.y = 0.0;
-    }
-    if !ok(v.z) {
-        v.z = 0.0;
-    }
-    v
-}
-
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     #[derive(Default)]
@@ -850,3 +732,18 @@ mod tests {
         assert_eq!(r.log, ["play 100 127 64", "stop 1", "play 101 127 64", "vol 2 63", "pan 2 63", "stop 2", "play4 5 127 64 6"]);
     }
 }
+
+pub use crate::tu::ground::ground_801c1d38;
+pub use crate::tu::ground::ground_801c498c;
+pub use crate::tu::ground::ground_801c4b50;
+pub use crate::tu::ground::ground_801c53ec;
+pub use crate::tu::ground::ground_801c5414;
+pub use crate::tu::ground::ground_801c5440;
+pub use crate::tu::ground::ground_801c54dc;
+pub use crate::tu::ground::ground_801c5544;
+pub use crate::tu::ground::ground_801c55ac;
+pub use crate::tu::ground::ground_801c5630;
+pub use crate::tu::ground::ground_801c5694;
+pub use crate::tu::ground::ground_801c5a28;
+pub use crate::tu::ground::ground_801c5a60;
+pub use crate::tu::ground::ground_801c5aec;

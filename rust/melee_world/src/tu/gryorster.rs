@@ -6,6 +6,12 @@
 //! oracle patches the PPC-ism `(Ground*) ((s32) gp + 0)` (a 64-bit pointer through `s32`) to `gp`.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, unused_unsafe, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmsubs;
@@ -692,3 +698,35 @@ pub unsafe extern "C" fn grYorster_80202B64(_a: *mut Vec3, _unused: i32, _joint:
     melee_core::ct!("grYorster_80202B64");
     1
 }
+
+// ---- folded from gryorster.rs (consolidation steps 21/22) ----
+/// grYorster_80202010_fp (gr/gryorster.c:98)
+    pub unsafe extern "C" fn grYorster_80202010_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from gryorster.rs (consolidation steps 21/22) ----
+/// grYorster_80201FA0_fp (gr/gryorster.c:76)
+    pub extern "C" fn grYorster_80201FA0_fp(a0: i32) {  }
+
+/// grYorster_8020200C_fp (gr/gryorster.c:93)
+    pub extern "C" fn grYorster_8020200C_fp() {  }
+
+/// grYorster_80202034_fp (gr/gryorster.c:103)
+    pub extern "C" fn grYorster_80202034_fp() -> i32 { 0 }
+
+/// grYorster_80202150_fp (gr/gryorster.c:129)
+    pub extern "C" fn grYorster_80202150_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grYorster_80202158_fp (gr/gryorster.c:134)
+    pub extern "C" fn grYorster_80202158_fp(a0: *mut HSD_GObj) {  }
+
+/// grYorster_8020215C_fp (gr/gryorster.c:139)
+    pub extern "C" fn grYorster_8020215C_fp(a0: *mut HSD_GObj) {  }
+
+/// grYorster_8020224C_fp (gr/gryorster.c:166)
+    pub extern "C" fn grYorster_8020224C_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grYorster_80202B5C_fp (gr/gryorster.c:426)
+    pub extern "C" fn grYorster_80202B5C_fp(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grYorster_80202B64_fp (gr/gryorster.c:431)
+    pub extern "C" fn grYorster_80202B64_fp(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

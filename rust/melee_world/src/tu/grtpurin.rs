@@ -6,6 +6,12 @@
 //! (replaceable through `ext::HOOKS`); the gr/inlines.h inlines live in [`crate::gr::inlines`].
 #![allow(unused_variables, unused_mut, non_snake_case, non_upper_case_globals, unused_imports, unused_unsafe, static_mut_refs, clippy::missing_safety_doc, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::{c_void, CStr};
 use core::mem::MaybeUninit;
 use core::ptr::{null, null_mut};
@@ -140,7 +146,6 @@ pub fn set_yakumono_param(p: *mut YakumonoParam) {
 }
 
 // Pure constant/empty callbacks already ported in gr::trivial (night 3 r3): re-exported.
-pub use crate::gr::trivial::grtpurin::{grTPurin_80223160, grTpurin_UnkStage0_OnLoad, grTPurin_80223204, grTPurin_80223320, grTPurin_80223328, grTPurin_8022332C, grTPurin_80223380, grTPurin_80223478, grTPurin_802234CC, grTPurin_802234F4, grTPurin_80223578};
 
 static TABLES_INIT: Once = Once::new();
 static mut CALLBACKS: MaybeUninit<[StageCallbacks; 4]> = MaybeUninit::uninit();
@@ -298,3 +303,41 @@ pub unsafe extern "C" fn grTPurin_802234F8(arg0: i32) -> *mut DynamicsDesc {
     }
     null_mut()
 }
+
+// ---- folded from grtpurin.rs (consolidation steps 21/22) ----
+/// grTpurin_UnkStage0_OnStart_fp (gr/grtpurin.c:64)
+    pub unsafe extern "C" fn grTpurin_UnkStage0_OnStart_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grtpurin.rs (consolidation steps 21/22) ----
+/// grTPurin_80223160 (gr/grtpurin.c:48)
+    pub extern "C" fn grTPurin_80223160(a0: i32) {  }
+
+/// grTpurin_UnkStage0_OnLoad (gr/grtpurin.c:59)
+    pub extern "C" fn grTpurin_UnkStage0_OnLoad() {  }
+
+/// grTPurin_80223204 (gr/grtpurin.c:69)
+    pub extern "C" fn grTPurin_80223204() -> i32 { 0 }
+
+/// grTPurin_80223320 (gr/grtpurin.c:96)
+    pub extern "C" fn grTPurin_80223320(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPurin_80223328 (gr/grtpurin.c:101)
+    pub extern "C" fn grTPurin_80223328(a0: *mut HSD_GObj) {  }
+
+/// grTPurin_8022332C (gr/grtpurin.c:106)
+    pub extern "C" fn grTPurin_8022332C(a0: *mut HSD_GObj) {  }
+
+/// grTPurin_80223380 (gr/grtpurin.c:116)
+    pub extern "C" fn grTPurin_80223380(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPurin_80223478 (gr/grtpurin.c:147)
+    pub extern "C" fn grTPurin_80223478(a0: *mut HSD_GObj) {  }
+
+/// grTPurin_802234CC (gr/grtpurin.c:157)
+    pub extern "C" fn grTPurin_802234CC(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grTPurin_802234F4 (gr/grtpurin.c:167)
+    pub extern "C" fn grTPurin_802234F4(a0: *mut HSD_GObj) {  }
+
+/// grTPurin_80223578 (gr/grtpurin.c:191)
+    pub extern "C" fn grTPurin_80223578(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }

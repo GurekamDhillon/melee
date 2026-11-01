@@ -6,16 +6,51 @@
 //! The constant-return and empty callbacks that `gr/trivial.rs` already holds are re-exported.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::inline::*;
 use melee_types::*;
 
-pub use crate::gr::trivial::grheal::{
-    grHeal_8021EFE4, grHeal_8021F830, grHeal_8021F838, stageGObj0_Callback1, stageGObj1_Callback1, stageGObj2_Callback1,
-    stageGObj3_Callback1, stageGObj4_Callback1,
-};
-
+pub use crate::gr::trivial::grheal::{stageGObj0_Callback1, stageGObj1_Callback1, stageGObj2_Callback1, stageGObj3_Callback1, stageGObj4_Callback1};
 // BEGIN GENERATED EXT (rust/melee_world/gen/cref/gen_tu.py; the callees of the C TU)
 pub mod ext {
     #![allow(non_upper_case_globals, non_snake_case, unused_imports, dead_code)]
@@ -418,3 +453,290 @@ pub unsafe extern "C" fn grHeal_8021F79C(arg0: i32, idx: i32, arg2: i32) {
     ext::lb_8000B1CC(jobj, null_mut(), &mut bobomb_rain.x8_vec);
     ext::it_8026BE84(&mut bobomb_rain);
 }
+
+// ---- folded from grheal.rs (consolidation steps 21/22) ----
+/// grHeal_8021EFC0_fp (gr/grheal.c:157)
+    pub unsafe extern "C" fn grHeal_8021EFC0_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grpstadium.rs (consolidation steps 21/22) ----
+/// stageGObj4_GObjProc_fp (gr/grpstadium.c:399)
+    pub unsafe extern "C" fn stageGObj4_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+/// stageGObj3_GObjProc_fp (gr/grpstadium.c:504)
+    pub unsafe extern "C" fn stageGObj3_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtcaptain.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp (gr/grtcaptain.c:136)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp (gr/grtcaptain.c:153)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtclink.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2 (gr/grtclink.c:118)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2 (gr/grtclink.c:135)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtdonkey.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22 (gr/grtdonkey.c:130)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22 (gr/grtdonkey.c:147)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtdrmario.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222 (gr/grtdrmario.c:134)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222 (gr/grtdrmario.c:151)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtemblem.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222 (gr/grtemblem.c:133)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222 (gr/grtemblem.c:150)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtfalco.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222 (gr/grtfalco.c:148)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222 (gr/grtfalco.c:165)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtfox.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222 (gr/grtfox.c:125)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222 (gr/grtfox.c:142)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtgamewatch.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222 (gr/grtgamewatch.c:114)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222 (gr/grtgamewatch.c:134)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtganon.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222 (gr/grtganon.c:124)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222 (gr/grtganon.c:144)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grticeclimber.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222 (gr/grticeclimber.c:145)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222222 (gr/grticeclimber.c:162)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtkirby.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222222 (gr/grtkirby.c:135)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222 (gr/grtkirby.c:152)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtkoopa.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222222 (gr/grtkoopa.c:134)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222222 (gr/grtkoopa.c:151)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtlink.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222222 (gr/grtlink.c:135)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222222222 (gr/grtlink.c:152)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtluigi.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222222222 (gr/grtluigi.c:113)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222222 (gr/grtluigi.c:130)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtmario.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222222222 (gr/grtmario.c:147)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222222222 (gr/grtmario.c:164)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtmars.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222222222 (gr/grtmars.c:128)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222222222222 (gr/grtmars.c:145)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtmewtwo.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222222222222 (gr/grtmewtwo.c:157)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222222222 (gr/grtmewtwo.c:174)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtness.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222222222222 (gr/grtness.c:142)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222222222222 (gr/grtness.c:162)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtpeach.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222222222222 (gr/grtpeach.c:144)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222222222222222 (gr/grtpeach.c:161)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtpichu.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222222222222222 (gr/grtpichu.c:134)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222222222222 (gr/grtpichu.c:151)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtpikachu.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222222222222222 (gr/grtpikachu.c:113)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222222222222222 (gr/grtpikachu.c:133)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtpurin.rs (consolidation steps 21/22) ----
+/// stageGObj1_GObjProc_fp222222222222222222222 (gr/grtpurin.c:162)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtsamus.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222222222222222 (gr/grtsamus.c:132)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222222222222222 (gr/grtsamus.c:149)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtseak.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp2222222222222222222222 (gr/grtseak.c:193)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp2222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp22222222222222222222222 (gr/grtseak.c:210)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp22222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtyoshi.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp22222222222222222222222 (gr/grtyoshi.c:135)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp22222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp222222222222222222222222 (gr/grtyoshi.c:152)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grtzelda.rs (consolidation steps 21/22) ----
+/// stageGObj2_GObjProc_fp222222222222222222222222 (gr/grtzelda.c:119)
+    pub unsafe extern "C" fn stageGObj2_GObjProc_fp222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.lb_800115f4(); c.ground_update_map_coll(a0); }
+
+/// stageGObj1_GObjProc_fp2222222222222222222222222 (gr/grtzelda.c:136)
+    pub unsafe extern "C" fn stageGObj1_GObjProc_fp2222222222222222222222222(a0: *mut HSD_GObj) { let c = c(); c.ground_update_map_coll(a0); }
+
+// ---- folded from grheal.rs (consolidation steps 21/22) ----
+/// grHeal_8021EFE4 (gr/grheal.c:162)
+    pub extern "C" fn grHeal_8021EFE4() -> i32 { 0 }
+
+/// stageGObj0_Callback1_fp (gr/grheal.c:209)
+    pub extern "C" fn stageGObj0_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp (gr/grheal.c:277)
+    pub extern "C" fn stageGObj1_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp (gr/grheal.c:339)
+    pub extern "C" fn stageGObj2_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj3_Callback1_fp (gr/grheal.c:357)
+    pub extern "C" fn stageGObj3_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj4_Callback1_fp (gr/grheal.c:384)
+    pub extern "C" fn stageGObj4_Callback1_fp(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grHeal_8021F830 (gr/grheal.c:432)
+    pub extern "C" fn grHeal_8021F830(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }
+
+/// grHeal_8021F838 (gr/grheal.c:437)
+    pub extern "C" fn grHeal_8021F838(a0: *mut Vec3, a1: i32, a2: *mut HSD_JObj) -> i32 { 1 }
+
+// ---- folded from gricemt.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp2 (gr/gricemt.c:653)
+    pub extern "C" fn stageGObj0_Callback1_fp2(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp2 (gr/gricemt.c:922)
+    pub extern "C" fn stageGObj1_Callback1_fp2(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp2 (gr/gricemt.c:981)
+    pub extern "C" fn stageGObj2_Callback1_fp2(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj3_Callback1_fp2 (gr/gricemt.c:1037)
+    pub extern "C" fn stageGObj3_Callback1_fp2(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj4_Callback1_fp2 (gr/gricemt.c:1101)
+    pub extern "C" fn stageGObj4_Callback1_fp2(a0: *mut HSD_GObj) -> i32 { 0 }
+
+// ---- folded from groldkongo.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp22 (gr/groldkongo.c:194)
+    pub extern "C" fn stageGObj0_Callback1_fp22(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj3_Callback1_fp22 (gr/groldkongo.c:211)
+    pub extern "C" fn stageGObj3_Callback1_fp22(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp22 (gr/groldkongo.c:251)
+    pub extern "C" fn stageGObj1_Callback1_fp22(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp22 (gr/groldkongo.c:455)
+    pub extern "C" fn stageGObj2_Callback1_fp22(a0: *mut HSD_GObj) -> i32 { 0 }
+
+// ---- folded from grpura.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp222 (gr/grpura.c:376)
+    pub extern "C" fn stageGObj0_Callback1_fp222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj4_Callback1_fp22 (gr/grpura.c:408)
+    pub extern "C" fn stageGObj4_Callback1_fp22(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp222 (gr/grpura.c:449)
+    pub extern "C" fn stageGObj1_Callback1_fp222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp222 (gr/grpura.c:685)
+    pub extern "C" fn stageGObj2_Callback1_fp222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+// ---- folded from grtfalco.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp2222 (gr/grtfalco.c:129)
+    pub extern "C" fn stageGObj0_Callback1_fp2222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp2222 (gr/grtfalco.c:143)
+    pub extern "C" fn stageGObj2_Callback1_fp2222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp2222 (gr/grtfalco.c:160)
+    pub extern "C" fn stageGObj1_Callback1_fp2222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+// ---- folded from grticeclimber.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp22222 (gr/grticeclimber.c:124)
+    pub extern "C" fn stageGObj0_Callback1_fp22222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp22222 (gr/grticeclimber.c:140)
+    pub extern "C" fn stageGObj2_Callback1_fp22222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp22222 (gr/grticeclimber.c:157)
+    pub extern "C" fn stageGObj1_Callback1_fp22222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+// ---- folded from grtmars.rs (consolidation steps 21/22) ----
+/// stageGObj0_Callback1_fp222222 (gr/grtmars.c:109)
+    pub extern "C" fn stageGObj0_Callback1_fp222222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj2_Callback1_fp222222 (gr/grtmars.c:123)
+    pub extern "C" fn stageGObj2_Callback1_fp222222(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// stageGObj1_Callback1_fp222222 (gr/grtmars.c:140)
+    pub extern "C" fn stageGObj1_Callback1_fp222222(a0: *mut HSD_GObj) -> i32 { 0 }

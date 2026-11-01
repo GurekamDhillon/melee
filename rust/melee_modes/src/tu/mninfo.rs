@@ -1,6 +1,9 @@
 //! src/melee/mn/mninfo.c: native port (c2rust-derived body; callees of unported TUs are `ext` TODO hooks).
 #![allow(non_snake_case, non_upper_case_globals, non_camel_case_types, unused_unsafe, unused_mut, unused_assignments, unused_variables, unused_parens, dead_code, static_mut_refs, clippy::all)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types as mt;
 use melee_types::*;
 #[allow(unused_imports)] use self::ext::*;
 #[allow(unused_imports)] use super::mnmain::{mn_80229624, mn_80229894, mn_8022EA78, mn_804A04F0, mn_804D4B64, mn_804D6BB8, mn_804D6BC8};
@@ -967,4 +970,21 @@ pub mod ext {
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
     pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
     pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
+}
+
+// ---- folded from mn_ptr.rs (consolidation steps 21/22) ----
+/// mninfo.c `mnInfo_80251AFC_inline_3_fp`.
+pub fn mnInfo_80251AFC_inline_3_fp(ids: &[u8], i: i32) -> i32 {
+    melee_core::ct!("mnInfo_80251AFC_inline_3_fp");
+    ids[i as usize] as i32
+}
+
+/// mninfo.c `mnInfo_80252720_fp`: reset the info screen's user data.
+pub fn mnInfo_80252720_fp(data: &mut mt::MnInfoData) {
+    melee_core::ct!("mnInfo_80252720_fp");
+    data.scroll_idx = 0;
+    data.anim_timer = 10;
+    data.description = core::ptr::null_mut();
+    data.left_column = [core::ptr::null_mut(); 4];
+    data.right_column = [core::ptr::null_mut(); 4];
 }

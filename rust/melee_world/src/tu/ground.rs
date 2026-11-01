@@ -11,6 +11,16 @@
 //! (`while (1) {}` after a failed lookup) are panics.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code, unused_mut)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::vec::Vec3 as Vec3_ground;
+#[allow(unused_imports)]
+use melee_runtime::lbvector::euler_angles_from_onb;
+#[allow(unused_imports)]
+use crate::gr::ground::{GroundHooks, ground_4b50_angles, ground_5630_volume, ground_5694_pan};
+#[allow(unused_imports)]
+use crate::gr::bgm::{BGM_UNDEFINED, BgmPick, BgmUnlocks, RANDI_MAX as RANDI_MAX_bgm, StageParam as StageParam_bgm};
 use core::ffi::c_void;
 use core::mem::{offset_of, size_of};
 use core::ptr::null_mut;
@@ -3882,4 +3892,235 @@ pub unsafe extern "C" fn Ground_StageSlotRetailInstall(pair: *mut StageIdPair, a
     Ground_StageSlotFighterLightingRebuild();
     Ground_OnLoad(pair);
     Ground_801C0FB8(pair);
+}
+
+// ---- folded from bgm.rs (consolidation steps 21/22) ----
+/// `Ground_801C24F8(stkind, arg1, &bgm)`. `randi` is `HSD_Randi`.
+pub fn ground_801c24f8(rows: &[StageParam_bgm], stkind: i32, mut arg1: u32, unlocks: &dyn BgmUnlocks, randi: &mut dyn FnMut(i32) -> i32) -> BgmPick {
+    melee_core::ct!("ground_801c24f8");
+    let mut bgm = BGM_UNDEFINED;
+    let mut result = false;
+    let mut alt_flag = None;
+    for p in rows {
+        if p.stkind != stkind {
+            continue;
+        }
+        if arg1 & 4 != 0 {
+            let forced = arg1 & 0x40 != 0;
+            // `x16 > HSD_Randi(RANDI_MAX_bgm) || forced`: the draw happens even when forced.
+            let roll = |randi: &mut dyn FnMut(i32) -> i32| p.x16 as i32 > randi(RANDI_MAX_bgm) || forced;
+            let alt = match p.x14 {
+                0 => Some(forced),
+                1 => Some(randi(0xC) == 0 || forced),
+                8 => Some(false),
+                2 => Some(roll(randi)),
+                3 => Some(unlocks.mars() && roll(randi)),
+                4 => Some(unlocks.clink() && roll(randi)),
+                5 => Some(unlocks.toy_11a() && roll(randi)),
+                6 => Some(unlocks.all_characters() && roll(randi)),
+                7 => Some(unlocks.gm_80164600() && roll(randi)),
+                _ => None,
+            };
+            match alt {
+                Some(true) => arg1 |= 2,
+                Some(false) => arg1 |= 1,
+                None => {}
+            }
+        }
+        if arg1 & 0x10 != 0 {
+            alt_flag = Some(false);
+            if arg1 & 1 != 0 {
+                bgm = p.x_c as i32;
+            } else if arg1 & 2 != 0 {
+                if p.x10 != BGM_UNDEFINED as u32 {
+                    bgm = p.x10 as i32;
+                    result = true;
+                } else {
+                    bgm = p.x_c as i32;
+                }
+            }
+        } else if arg1 & 0x20 != 0 {
+            if arg1 & 1 != 0 {
+                bgm = p.x_c as i32;
+                alt_flag = Some(false);
+            } else if arg1 & 2 != 0 {
+                if p.x10 != BGM_UNDEFINED as u32 {
+                    bgm = p.x10 as i32;
+                    alt_flag = Some(true);
+                    result = true;
+                } else {
+                    bgm = p.x_c as i32;
+                    alt_flag = Some(false);
+                }
+            }
+        } else if arg1 & 1 != 0 {
+            bgm = p.x4;
+            alt_flag = Some(false);
+        } else if arg1 & 2 != 0 {
+            if p.x8 as u32 != BGM_UNDEFINED as u32 {
+                bgm = p.x8;
+                alt_flag = Some(true);
+                result = true;
+            } else {
+                bgm = p.x4;
+                alt_flag = Some(false);
+            }
+        }
+        break;
+    }
+    assert!(bgm != BGM_UNDEFINED, "Ground_801C24F8: no music row for stkind {stkind:#x} (m-ex playlist fallback not ported)");
+    if bgm == -2 {
+        panic!("Ground_801C24F8: per-character track lbAudioAx_8002305C (TODO(group1 lbaudio))");
+    }
+    BgmPick { result, bgm, alt_flag }
+}
+
+// ---- folded from ground.rs (consolidation steps 21/22) ----
+/// Ground_801C498C: the first gobj on the light plink list (`HSD_GObjPLinkHead[3]`, passed in)
+/// whose classifier is HSD_GOBJ_CLASS_GROUND, or null.
+///
+/// # Safety
+/// `head` is null or a well-formed `next`-linked list of live GObjs.
+pub unsafe fn ground_801c498c(head: *mut HSD_GObj) -> *mut HSD_GObj {
+    melee_core::ct!("ground_801c498c");
+    let mut g = head;
+    while !g.is_null() {
+        if (*g).classifier as i32 == HSD_GOBJ_CLASS_GROUND {
+            break;
+        }
+        g = (*g).next;
+    }
+    g
+}
+
+/// Ground_801C1D38 (static): call the Ground's `xC_callback` when set.
+///
+/// # Safety
+/// `gobj` is a live Ground GObj (the C reads `user_data` unchecked).
+pub unsafe fn ground_801c1d38(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ground_801c1d38");
+    let gp = (*gobj).user_data as *mut Ground;
+    if let Some(cb) = (*gp).xC_callback {
+        cb(gobj);
+    }
+}
+
+/// Ground_801C53EC
+pub fn ground_801c53ec(h: &mut dyn GroundHooks, sfx: u32) { melee_core::ct!("ground_801c53ec"); h.lbaudioax_800237a8(sfx as i32, 0x7F, 0x40); }
+
+/// Ground_801C5414
+pub fn ground_801c5414(h: &mut dyn GroundHooks, a: i32, b: i32) { melee_core::ct!("ground_801c5414"); h.lbaudioax_80023870(a, 0x7F, 0x40, b); }
+
+/// Ground_801C5A28
+pub fn ground_801c5a28(h: &mut dyn GroundHooks) {
+    melee_core::ct!("ground_801c5a28");
+    h.toy_803124bc();
+    h.toy_8031234c(0);
+    h.toy_80305918(0, 0, 1);
+}
+
+/// Ground_801C5A60
+pub fn ground_801c5a60(h: &mut dyn GroundHooks) { melee_core::ct!("ground_801c5a60"); h.toy_8031234c(1); }
+
+/// Ground_801C5440
+pub fn ground_801c5440(h: &mut dyn GroundHooks, gp: Option<&mut Ground>, i: i32, sfx: u32) {
+    melee_core::ct!("ground_801c5440");
+    if !(0..8).contains(&i) {
+        return;
+    }
+    let Some(gp) = gp else { return };
+    if sfx == 540000 {
+        return;
+    }
+    if sfx != 540001 {
+        if gp.x20[i as usize] != -1 {
+            h.lbaudioax_800236b8(gp.x20[i as usize]);
+        }
+        gp.x20[i as usize] = h.lbaudioax_800237a8(sfx as i32, 0x7F, 0x40);
+    } else {
+        ground_801c5544(h, Some(gp), i);
+    }
+}
+
+/// Ground_801C54DC
+pub fn ground_801c54dc(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32) -> bool {
+    melee_core::ct!("ground_801c54dc");
+    if !(0..8).contains(&i) {
+        return false;
+    }
+    matches!(gp, Some(g) if g.x20[i as usize] != -1 && h.lbaudioax_80023710(g.x20[i as usize]))
+}
+
+/// Ground_801C5544
+pub fn ground_801c5544(h: &mut dyn GroundHooks, gp: Option<&mut Ground>, i: i32) {
+    melee_core::ct!("ground_801c5544");
+    if !(0..8).contains(&i) {
+        return;
+    }
+    let Some(gp) = gp else { return };
+    if gp.x20[i as usize] != -1 {
+        h.lbaudioax_800236b8(gp.x20[i as usize]);
+    }
+    gp.x20[i as usize] = -1;
+}
+
+/// Ground_801C55AC (static)
+pub fn ground_801c55ac(h: &mut dyn GroundHooks, gp: Option<&mut Ground>) {
+    melee_core::ct!("ground_801c55ac");
+    if let Some(gp) = gp {
+        for i in 0..8 {
+            ground_801c5544(h, Some(gp), i);
+        }
+    }
+}
+
+/// Ground_801C5630
+pub fn ground_801c5630(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32, val: f32) {
+    melee_core::ct!("ground_801c5630");
+    if !(0..8).contains(&i) {
+        return;
+    }
+    if let Some(g) = gp {
+        if g.x20[i as usize] != -1 {
+            h.lbaudioax_80024b58(g.x20[i as usize], ground_5630_volume(val));
+        }
+    }
+}
+
+/// Ground_801C5694
+pub fn ground_801c5694(h: &mut dyn GroundHooks, gp: Option<&Ground>, i: i32, val: f32) {
+    melee_core::ct!("ground_801c5694");
+    if !(0..8).contains(&i) {
+        return;
+    }
+    if let Some(g) = gp {
+        if g.x20[i as usize] != -1 {
+            h.lbaudioax_80024b1c(g.x20[i as usize], ground_5694_pan(val));
+        }
+    }
+}
+
+/// Ground_801C4B50: returns (*arg1 = spline point, *result = angles).
+pub fn ground_801c4b50(h: &mut dyn GroundHooks, spline: *mut HSD_Spline, t: f32) -> (Vec3_ground, Vec3_ground) {
+    melee_core::ct!("ground_801c4b50");
+    let p = h.spl_get_spline_point(spline, t);
+    let tangent = h.lbshadow_8000e9f0(spline, t);
+    (p, ground_4b50_angles(tangent))
+}
+
+/// Ground_801C5AEC
+pub fn ground_801c5aec(a: &Vec3_ground, b: &Vec3_ground, c: &Vec3_ground) -> Vec3_ground {
+    melee_core::ct!("ground_801c5aec");
+    let mut v = euler_angles_from_onb(a, b, c);
+    let ok = |x: f32| (if x < 0.0 { -x } else { x }) < 30000.0;
+    if !ok(v.x) {
+        v.x = 0.0;
+    }
+    if !ok(v.y) {
+        v.y = 0.0;
+    }
+    if !ok(v.z) {
+        v.z = 0.0;
+    }
+    v
 }

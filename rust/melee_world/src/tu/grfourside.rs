@@ -11,15 +11,17 @@
 //! field value is the same (the oracle compares the bits by value).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::gr::trivial::*;
+#[allow(unused_imports)]
+use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 
 use super::grdisplay::grDisplay_801C5DB0;
-pub use crate::gr::trivial::grfourside::{
-    grFourside_801F2DC8, grFourside_801F2EE8, grFourside_801F2F24, grFourside_801F3070, grFourside_801F3144,
-    grFourside_801F326C, grFourside_801F388C, grFourside_801F3CC0, grFourside_801F41E0,
-};
 
 // BEGIN GENERATED EXT (rust/melee_world/gen/mtu/gen_tu.py; the callees of the C TU)
 pub mod ext {
@@ -851,3 +853,35 @@ pub unsafe extern "C" fn grFourside_801F41E8(a: *mut Vec3, _arg: i32, joint: *mu
         0
     }
 }
+
+// ---- folded from grfourside.rs (consolidation steps 21/22) ----
+/// grFourside_801F2DA4_fp (gr/grfourside.c:154)
+    pub unsafe extern "C" fn grFourside_801F2DA4_fp() { let c = c(); c.grzakogenerator_801cae04(core::ptr::null_mut()); }
+
+// ---- folded from grfourside.rs (consolidation steps 21/22) ----
+/// grFourside_801F2DC8 (gr/grfourside.c:159)
+    pub extern "C" fn grFourside_801F2DC8() -> i32 { 0 }
+
+/// grFourside_801F2EE8 (gr/grfourside.c:186)
+    pub extern "C" fn grFourside_801F2EE8(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F2F24 (gr/grfourside.c:200)
+    pub extern "C" fn grFourside_801F2F24(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F3070 (gr/grfourside.c:233)
+    pub extern "C" fn grFourside_801F3070(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F3144 (gr/grfourside.c:275)
+    pub extern "C" fn grFourside_801F3144(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F326C (gr/grfourside.c:305)
+    pub extern "C" fn grFourside_801F326C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F388C (gr/grfourside.c:509)
+    pub extern "C" fn grFourside_801F388C(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F3CC0 (gr/grfourside.c:667)
+    pub extern "C" fn grFourside_801F3CC0(a0: *mut HSD_GObj) -> i32 { 0 }
+
+/// grFourside_801F41E0 (gr/grfourside.c:796)
+    pub extern "C" fn grFourside_801F41E0(a0: i32) -> *mut DynamicsDesc { core::ptr::null_mut() }

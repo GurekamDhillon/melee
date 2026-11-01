@@ -44,7 +44,7 @@ pub mod ext {
     hook_or!(CAMERA_800311CC, Camera_800311CC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311cc(a0));
     hook_or!(CAMERA_800311DC, Camera_800311DC, (a0: f32), |a0: f32| crate::cm::camera::world().camera_800311dc(a0));
     hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec3), |a0: CmQuakeKind, a1: *mut Vec3| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
-    hook_or!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8), |r: u8, g: u8, b: u8| unsafe { crate::tu::cmcamera::Camera_SetBackgroundColor(r, g, b) });
+    hook_or!(CAMERA_SETBACKGROUNDCOLOR, Camera_SetBackgroundColor, (r: u8, g: u8, b: u8), |r: u8, g: u8, b: u8| unsafe { crate::tu::camera::Camera_SetBackgroundColor(r, g, b) });
     pub static mut GROUND_801C052C: Option<fn(*mut GXColor)> = None;
     #[allow(non_snake_case)]
     pub fn Ground_801C052C(a0: *mut GXColor) {

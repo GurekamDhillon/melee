@@ -1,5 +1,5 @@
 use melee_types::CmSubjectState_Auto;
-use melee_world::tu::camera::*;
+use melee_world::tu::camera::pool::*;
 
 #[test]
 fn subject_pool_alloc_free() {

@@ -207,7 +207,7 @@ pub fn boot_sound(iso: &str, trace: bool) -> Result<(), String> {
         }),
         camera: Some(|| unsafe {
             let (mut l, mut c, mut r) = (0.0f32, 0.0f32, 0.0f32);
-            melee_world::tu::cmcamera::Camera_800307D0(&mut l, &mut c, &mut r);
+            melee_world::tu::camera::Camera_800307D0(&mut l, &mut c, &mut r);
             (l, c, r)
         }),
         randi: Some(melee_runtime::tu::random::global::HSD_Randi),

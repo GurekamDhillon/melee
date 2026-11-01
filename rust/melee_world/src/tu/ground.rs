@@ -55,7 +55,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_80030A78() -> i32 = || crate::cm::camera::world().camera_80030a78() as i32;
-    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| unsafe { crate::tu::cmcamera::Camera_SetBackgroundColor(a0, a1, a2) };
+    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| unsafe { crate::tu::camera::Camera_SetBackgroundColor(a0, a1, a2) };
     fn Camera_SetModeToFixed() = || crate::cm::camera::world().camera_set_mode_to_fixed();
     fn Camera_SetModeToStandard() = || crate::cm::camera::world().camera_set_mode_to_standard();
     fn GObj_Create(a0: u16, a1: u8, a2: u8) -> *mut HSD_GObj = |a0: u16, a1: u8, a2: u8| unsafe { melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _ };

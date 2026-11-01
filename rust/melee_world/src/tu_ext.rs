@@ -10,7 +10,7 @@ use melee_types::*;
 pub static mut HOOK_Camera_8002F3AC: Option<fn()> = None;
 
 /// C `Camera_8002F3AC` (melee/cm/camera.h).
-pub fn Camera_8002F3AC() { match unsafe { HOOK_Camera_8002F3AC } { Some(f) => f(), None => unsafe { let _ = crate::tu::cmcamera::Camera_8002F3AC(); } }
+pub fn Camera_8002F3AC() { match unsafe { HOOK_Camera_8002F3AC } { Some(f) => f(), None => unsafe { let _ = crate::tu::camera::Camera_8002F3AC(); } }
 }
 
 pub static mut HOOK_Camera_8003010C: Option<fn() -> i32> = None;

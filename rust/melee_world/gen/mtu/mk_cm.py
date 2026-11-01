@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""State oracle for melee_world::tu::cmcamera (the mechanical port of src/melee/cm/camera.c).
+"""State oracle for melee_world::tu::camera (the mechanical port of src/melee/cm/camera.c).
 
     python rust/melee_world/gen/mtu/mk_cm.py gen|run|all          (from the worktree root)
 
@@ -247,7 +247,7 @@ int main(void)
 '''
 
 R_HEAD = r'''//! Written by gen/mtu/mk_cm.py from the same table as gen/mtu/tu/cm.c.
-//! tu::cmcamera vs the C (camera.c, shipping contraction; regenerate the expected file with
+//! tu::camera vs the C (camera.c, shipping contraction; regenerate the expected file with
 //! `python rust/melee_world/gen/mtu/mk_cm.py run`).
 #![allow(static_mut_refs, non_snake_case, non_upper_case_globals, unused_imports, unused_mut, unused_assignments, unused_variables, unused_unsafe)]
 mod mtu_harness;
@@ -255,7 +255,7 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_types::*;
 use melee_world::tu as m;
-use melee_world::tu::cmcamera as cm;
+use melee_world::tu::camera as cm;
 use mtu_harness::*;
 #[path = "mtu/cm_gen.rs"]
 mod g;

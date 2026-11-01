@@ -24,7 +24,7 @@ pub mod ext {
     use core::ffi::c_void;
     use melee_types::*;
     pub use crate::tu::grinl::ext::stage_info;
-    hook_or!(CAMERA_8002F3AC, Camera_8002F3AC, (), || { unsafe { crate::tu::cmcamera::Camera_8002F3AC(); } });
+    hook_or!(CAMERA_8002F3AC, Camera_8002F3AC, (), || { unsafe { crate::tu::camera::Camera_8002F3AC(); } });
     hook_or!(CAMERA_80030AE0, Camera_80030AE0, (a0: i32), |a0: i32| crate::cm::camera::world().camera_80030ae0(a0));
     hook_or!(CAMERA_REQUESTQUAKE, Camera_RequestQuake, (a0: CmQuakeKind, a1: *mut Vec), |a0: CmQuakeKind, a1: *mut Vec| unsafe { crate::cm::camera::Camera_RequestQuake(a0 as _, a1 as _) });
     hook_or!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32), |gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(gobj as _, render_cb as _, gx_link as _, priority as _); } });

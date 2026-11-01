@@ -31,7 +31,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn Camera_8002A4AC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { crate::tu::cmcamera::Camera_8002A4AC(a0 as _); } };
+    fn Camera_8002A4AC(a0: *mut HSD_GObj) = |a0: *mut HSD_GObj| { unsafe { crate::tu::camera::Camera_8002A4AC(a0 as _); } };
     fn Camera_80030130() -> i32 = || crate::cm::camera::world().camera_80030130() as i32;
     fn Camera_80030A50() -> *mut HSD_GObj = || unsafe { crate::cm::camera::Camera_80030A50() as _ };
     fn Camera_80030BBC(a0: *mut Vec, a1: *mut S32Vec2) -> i32;

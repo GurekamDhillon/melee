@@ -298,7 +298,7 @@ pub fn ftco_800b4a78(fp: &mut Fighter) {
     ftco_800b462c(fp);
 }
 
-// C-named entry points for the generated CPU AI (tu::ftCo_0A01_ai).
+// C-named entry points for the generated CPU AI (tu::ftCo_0A01).
 pub unsafe fn ftCo_800B3E04(fp: *mut Fighter) { melee_core::ct!("ftCo_800B3E04"); ftco_800b3e04(&mut *fp) }
 pub unsafe fn ftCo_800B462C(fp: *mut Fighter) { melee_core::ct!("ftCo_800B462C"); ftco_800b462c(&mut *fp) }
 pub unsafe fn ftCo_800B463C(fp: *mut Fighter, cmd: u8) { melee_core::ct!("ftCo_800B463C"); ftco_800b463c(&mut *fp, cmd) }

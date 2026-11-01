@@ -44,7 +44,7 @@ pub mod ext {
         it_8026B344(i: I, pos: &mut Vec3) = |i: I, pos: &mut Vec3| { unsafe { melee_items::tu::it_26B1::it_8026B344(i as _, pos as _); } };
         itGetGrabRangeX(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_x(ip(i));
         itGetGrabRangeY(i: I) -> f32 = |i| melee_items::itlib::it_get_grab_range_y(ip(i));
-        ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |f: &mut Fighter| -> bool { unsafe { crate::tu::ftCo_0A01::ftCo_IsCpuControlled(&*(f as *const Fighter)) } };
+        ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |f: &mut Fighter| -> bool { unsafe { (crate::tu::ftCo_0A01::ftCo_IsCpuControlled(f as _) != 0) } };
         // `HSD_GObjPLinkHead[link]`.
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
         Geno_ItemPressDist(i: I, f: &mut Fighter) -> f32 = |_, _| todo!("TODO(pc/geno) Geno_ItemPressDist (geno_game_items.inc)");

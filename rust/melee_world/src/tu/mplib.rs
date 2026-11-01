@@ -111,7 +111,7 @@ pub mod ext {
     }
     pub use melee_runtime::shared::DbLevel;
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
-    pub use crate::tu::cmcamera::cm_804D6468;
+    pub use crate::tu::camera::cm_804D6468;
     pub use crate::tu::ground::stage_info;
 }
 

@@ -1,4 +1,4 @@
-"""Spec of the camera oracle (cm/camera.c, ported as tu::cmcamera); driven by gen/mtu/mk_cm.py."""
+"""Spec of the camera oracle (cm/camera.c, ported as tu::camera); driven by gen/mtu/mk_cm.py."""
 import os
 
 SPECS = {}
@@ -89,8 +89,8 @@ EFFECTS = {
 
 SPECS["cm"] = dict(
     src="src/melee/cm/camera.c",
-    mods=["cmcamera"],
-    freg_mod="cmcamera",
+    mods=["camera"],
+    freg_mod="camera",
     types=["Camera", "CmSubject", "HSD_CObj", "HSD_GObj", "CameraBounds", "CameraDebugMode", "HSD_PadStatus"],
     patch_all=DBG_PATCH,
     skip_data=["guess", "y", "result"],

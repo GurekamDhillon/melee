@@ -43,7 +43,7 @@ pub mod ext {
     }
     ext_fns! {
     fn Camera_80029020() -> *mut CmSubject;
-    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| unsafe { crate::tu::cmcamera::Camera_SetBackgroundColor(a0, a1, a2) };
+    fn Camera_SetBackgroundColor(a0: u8, a1: u8, a2: u8) = |a0: u8, a1: u8, a2: u8| unsafe { crate::tu::camera::Camera_SetBackgroundColor(a0, a1, a2) };
     fn GObj_SetupGXLink(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32) = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, a2: u8, a3: u32| { unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _); } };
     fn Ground_801C205C(a0: *mut _GXColor) = |a0: *mut _GXColor| { unsafe { crate::tu::ground::Ground_801C205C(a0 as _); } };
     fn Ground_801C33C0(a0: i32, a1: i32) -> i32 = |a0: i32, a1: i32| unsafe { crate::tu::ground::Ground_801C33C0(a0 as _, a1 as _) as _ };

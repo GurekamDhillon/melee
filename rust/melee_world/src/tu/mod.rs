@@ -101,7 +101,6 @@ pub mod stage;
 pub mod grvenom;
 pub mod grzebes;
 pub mod mplib;
-pub mod cmcamera;
 pub mod efn;
 // The effect TUs live in `efn/` (mechanical ports with the C state oracle); these are the canonical paths.
 pub use efn::{efalt, efasync, efdata, eflib, efsync};

@@ -151,7 +151,7 @@ def trivial(body, name=None):
     if name:
         # a forwarder: after removing the optional `if let Some(h) = HOOK { .. }` preamble, the body only calls a tu path of the
         # same name (or another crate's tu function of that name), with no loop / match / branch of its own
-        f2 = re.sub(r'if let Some\(h\) = (?:unsafe \{ )?HOOK(?: \})? \{.*?\}\s*(?=\{|$)', '', flat)
+        f2 = re.sub(r'if let Some\(h\) = (?:unsafe \{ )?HOOK(?: \})? \{.*?\}\s*(?=\S|$)', '', flat)
         if len(f2) < 700 and re.search(r'(?:crate|melee_\w+|super)(?:::\w+)*::' + re.escape(name) + r'\s*\(', f2, re.I) \
                 and not re.search(r'\b(if|match|while|for|loop)\b', f2):
             return True

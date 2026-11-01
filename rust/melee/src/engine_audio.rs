@@ -205,14 +205,20 @@ pub fn install(iso: &str, trace: bool) -> Result<(), String> {
         }),
         randi: Some(melee_runtime::tu::random::global::HSD_Randi),
     });
+    attach(true);
+    Ok(())
+}
+
+/// Route the game's lbAudioAx calls of the NEXT engine boot to the installed sound (`sim::install` done by the caller), and run the
+/// C's scene start (`start_match_audio`): scene init and the announcer bank, before the game's own bank loads. `wait_bgm`: the first
+/// BGM call runs the 3 load frames the captures have (a live player pumps its own DSP and passes false).
+pub fn attach(wait_bgm: bool) {
     unsafe {
-        BGM_STARTED = false;
+        BGM_STARTED = !wait_bgm;
         melee_engine::engine::POST_LINK = Some(post_link);
     }
-    // the C's scene start (`start_match_audio`): scene init and the announcer bank, before the game's own bank loads
     sim::scene_init();
     sim::load_announcer();
-    Ok(())
 }
 
 /// A bridge function's result as the hook's declared return type (some TUs declare a hook `()` that others declare `int`).

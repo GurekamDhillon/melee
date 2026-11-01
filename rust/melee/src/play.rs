@@ -318,7 +318,7 @@ impl Play {
             Scene::Sss => a.menu_music(),
             Scene::Loading => {}
             Scene::Match => {
-                if let Some(su) = self.setup.as_ref() {
+                if let (Some(su), None) = (self.setup.as_ref(), self.em.as_ref()) {
                     let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
                     let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
                     // the engine's own stage BGM pick is a sound seam for now: the model's pick (or track 0)
@@ -550,7 +550,14 @@ impl Play {
                     std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
                 }
             }
+            if self.audio.is_some() {
+                // the game's own lbAudioAx calls (banks, announcer, entry sounds, pause) drive the sound the menus already booted
+                crate::engine_audio::attach(false);
+            }
             let e = melee_engine::Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn)?;
+            if self.audio.is_some() {
+                crate::engine_audio::start_stage_bgm();
+            }
             Ok(EngMatch { e, frame: None, names, end_timer: None, timed_out: false, quit_hold: 0 })
         })();
         match built {
@@ -617,9 +624,6 @@ impl Play {
         }
         if let Some(t) = &mut m.end_timer {
             *t += 1;
-            if *t == crate::audio::TIME_CALL_DELAY as u32 && m.timed_out {
-                if let Some(a) = &self.audio { a.match_end_call(true) }
-            }
             if *t >= 150 {
                 self.finish_engine_match();
             }
@@ -644,12 +648,8 @@ impl Play {
             m.frame = Some(f);
         }
         let frame = m.e.frames as i32 - 1;
-        if let Some(a) = &self.audio {
-            a.match_frame(frame, ENGINE_GO_FRAME, self.time_secs);
-        }
         if !alive {
             log("the engine's scene ended");
-            if let Some(a) = &self.audio { a.match_end_call(false) }
             m.end_timer = Some(0);
         } else if frame >= crate::audio::clock_end(ENGINE_GO_FRAME, self.time_secs) - 1 {
             log("time up: GameSet");

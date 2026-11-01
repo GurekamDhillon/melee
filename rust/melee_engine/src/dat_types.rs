@@ -49,7 +49,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
-    if name.starts_with("SIS_") { return Some(rt("SIS")); }
+    if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(rt("KirbyHatStruct")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
@@ -82,7 +82,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
             "KirbyHatStruct" => d.object::<KirbyHatStruct>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
-            "SIS" => d.object::<SIS>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),

@@ -134,6 +134,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             }
             buf as *mut c_void
         }
+        "sis" => sis_table(d, b, off),
         "efdat" => efdat(d, b, off),
         "ptclcmd" => ptcl_cmd(d, b, off),
         "ptcltex" => ptcl_tex(d, b, off),
@@ -603,18 +604,27 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
         let Some(sa) = d.target(ta + 4) else { continue };
         let ext = b.extent(sa);
         // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record
-        // is the candidate all of whose pointer-typed fields are relocated words, with the fewest other relocated words inside its size
+        // is the candidate whose pointer-typed fields hold the relocated words of the block (null pointers are not relocated), with the
+        // fewest relocated words in its other fields
+        let score = |sz: u32, fields: &[melee_core::gc::GcField]| -> (u32, u32) {
+            let (mut hit, mut extra) = (0, 0);
+            for w in 0..sz / 4 {
+                if d.is_reloc(sa + 4 * w) {
+                    if fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')) {
+                        hit += 1;
+                    } else {
+                        extra += 1;
+                    }
+                }
+            }
+            (hit, extra)
+        };
         let pick = cands
             .iter()
-            .filter(|(sz, fields, _)| {
-                *sz <= ext + 8
-                    && fields.iter().filter(|f| f.c_type.contains('*')).all(|f| d.is_reloc(sa + f.offset))
-            })
+            .filter(|(sz, fields, _)| *sz <= ext + 8 && score(*sz, fields).0 > 0)
             .min_by_key(|(sz, fields, _)| {
-                let extra = (0..*sz / 4)
-                    .filter(|w| d.is_reloc(sa + 4 * w) && !fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')))
-                    .count();
-                (extra, core::cmp::Reverse(*sz))
+                let (hit, extra) = score(*sz, fields);
+                (extra, core::cmp::Reverse(hit))
             });
         if let Some((_, _, f)) = pick {
             let art = d.object::<Article>(ta);
@@ -699,6 +709,24 @@ fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
 }
 
 /// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.
+/// A `SIS_*Data` root (`HSD_SisLib_804D1124[font]`): word 0 / 1 are the kerning and glyph-texture tables (`SIS { kerning, textures }`, typed
+/// arrays), the following words are the pointers to the text strings, which the text code (`HSD_SisLib_803A6368`, `803A660C`, ...) reads as
+/// byte streams: native pointer slots, the strings kept in the raw image.
+fn sis_table(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    let n = ((b.extent(off) / 4) as usize).max(2);
+    let buf = native_buf(n * 8) as *mut usize;
+    unsafe {
+        buf.write(d.ptr_array_extent::<melee_types::TextKerning>(off) as usize);
+        buf.add(1).write(d.ptr_array_extent::<melee_types::TextGlyphTexture>(off + 4) as usize);
+        for i in 2..n {
+            if let Some(t) = d.target(off + 4 * i as u32) {
+                buf.add(i).write(b.raw_addr(t) as usize);
+            }
+        }
+    }
+    buf as *mut c_void
+}
+
 fn native_buf(n: usize) -> *mut u8 {
     Box::leak(vec![0u64; (n + 7) / 8].into_boxed_slice()).as_mut_ptr() as *mut u8
 }

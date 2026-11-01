@@ -54,6 +54,8 @@ mod snap;
 mod fighter_fields;
 mod diff;
 mod engine_view;
+mod engine_audio;
+mod engine_audio_gen;
 mod diff_layout;
 mod netmatch;
 mod netplay;
@@ -454,6 +456,12 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
         "cpu_peach_samus_ys_items" => "p1=peach/cpu9;p2=samus/cpu9;p3=none;p4=none;stage=ys;match=time;minutes=0;items=4",
         s => return Err(format!("scenario {s:?} not wired")),
     };
+    // `--time-secs 60`: a one-minute time match (the audio proof's clock)
+    let scene = match std::env::var("MELEE_ENGINE_MINUTES") {
+        Ok(m) => scene.replace("minutes=0", &format!("minutes={m}")),
+        Err(_) => scene.to_string(),
+    };
+    let scene = scene.as_str();
     // draws the C boot makes that the engine's boot flow does not yet (tools/rust-port/engine/pre_draws.tsv; shrinking to empty)
     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
         let n = std::fs::read_to_string("tools/rust-port/engine/pre_draws.tsv").ok()
@@ -462,7 +470,7 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
         // SAFETY: single-threaded start-up, before the engine reads it.
         unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", n.trim()) };
     }
-    let disc = melee_engine::gcm::Gcm::open(iso).map_err(|e| e.to_string())?;
+    let disc = engine_disc(iso)?;
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
     let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
     // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
@@ -477,6 +485,8 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
             st.substickY = r.sub_y;
             st.triggerLeft = r.analog_l;
             st.triggerRight = r.analog_r;
+            // the scripted match has two controllers: ports 3 and 4 report PAD_ERR_NO_CONTROLLER (the controller indicator's sound reads it)
+            if port >= 2 { st.err = -1; }
             st
         });
     }
@@ -492,7 +502,7 @@ pub(crate) fn use_engine(args: &[String]) -> bool {
         Some("tu") => return true,
         _ => {}
     }
-    const LEGACY_ONLY: [&str; 6] = ["--mods", "--from-snapshot", "--dump-state", "--audio", "--idle-pads", "--start"];
+    const LEGACY_ONLY: [&str; 3] = ["--from-snapshot", "--dump-state", "--start"];
     if args.iter().any(|a| LEGACY_ONLY.contains(&a.as_str())) {
         return false;
     }
@@ -500,6 +510,39 @@ pub(crate) fn use_engine(args: &[String]) -> bool {
 }
 
 static mut REPLAY: Option<melee_data::player::Player> = None;
+
+static mut PENDING_OVERLAY: Option<melee_engine::gcm::Overlay> = None;
+
+/// The disc image for an engine boot, with the pending mods overlay (`set_engine_mods`) mounted over it.
+pub(crate) fn engine_disc(iso: &str) -> Result<melee_engine::gcm::Gcm, String> {
+    let mut d = melee_engine::gcm::Gcm::open(iso)?;
+    if let Some(o) = unsafe { (*std::ptr::addr_of_mut!(PENDING_OVERLAY)).take() } {
+        d.set_overlay(o);
+    }
+    Ok(d)
+}
+
+/// Mount the `--mods` / settings mods over the next engine boot.
+pub(crate) fn set_engine_mods(args: &[String]) -> Result<(), String> {
+    unsafe { PENDING_OVERLAY = engine_mods_overlay(args)? };
+    Ok(())
+}
+
+/// `--mods DIR [--enable id,id]` (else `MELEE_MODS_DIR` / settings): the gdmods mounted over the disc, as a `Gcm` overlay.
+pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Overlay>, String> {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let mods = match get("--mods") {
+        Some(dir) => {
+            let en: Option<Vec<String>> = get("--enable").map(|s| s.split(',').map(str::to_string).collect());
+            mods::Mods::open(std::path::Path::new(&dir), en.as_deref()).map(Some)?
+        }
+        None => mods::Mods::from_env()?,
+    };
+    let Some(m) = mods else { return Ok(None) };
+    let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
+    eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    Ok(Some(Box::new(move |path: &str| m.lookup(path).and_then(|p| std::fs::read(p).ok()))))
+}
 
 /// Route the fighter code's `Replay_*` platform hooks (gw_replay.c) to `pl`: the recorded inputs of the frame being simulated.
 fn install_replay(pl: melee_data::player::Player) {
@@ -540,6 +583,10 @@ fn golden_engine(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
+    if let Err(er) = set_engine_mods(args) {
+        eprintln!("melee: mods: {er}");
+        return ExitCode::FAILURE;
+    }
     // default: the golden's length (the pad scripts end at 1801 frames)
     let frames: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(if scenario.starts_with("pad_") { 1802 } else { 3601 });
     // `--shots 60,300 [--shot-dir DIR]`: render those frames offscreen (melee_gx on wgpu, no window) to PNG
@@ -549,6 +596,26 @@ fn golden_engine(args: &[String]) -> ExitCode {
     if !shots.is_empty() {
         unsafe { melee_engine::engine::RENDER = true };
         let _ = std::fs::create_dir_all(&shot_dir);
+    }
+    // `--audio [--audio-wav OUT] [--audio-trace OUT] [--audio-preroll N]`: the sound stack from the same disc, driven by the game's own lbAudioAx calls
+    let audio = args.iter().any(|a| a == "--audio");
+    if audio {
+        // the C audio captures ran headless (turbo, no render pass): the draw callbacks have sound side effects (the off-screen arrow's)
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        if std::env::var_os("MELEE_ENGINE_RENDER_AUDIO").is_none() { unsafe { std::env::set_var("MELEE_ENGINE_HEADLESS", "1") }; }
+        if let Some(secs) = get("--time-secs").and_then(|v| v.parse::<i32>().ok()).filter(|&s| s < 180) {
+            // SAFETY: single-threaded start-up, before the engine reads it.
+            unsafe { std::env::set_var("MELEE_ENGINE_MINUTES", ((secs + 59) / 60).to_string()) };
+        }
+        // SAFETY: single-threaded start-up, before the engine reads it.
+        unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "0") }; // the BGM pick below makes the draw the dummy stood for
+        if let Err(er) = engine_audio::install(&iso, get("--audio-trace").is_some()) {
+            eprintln!("melee: --audio: {er}");
+            return ExitCode::FAILURE;
+        }
+        if get("--audio-wav").is_some() {
+            unsafe { engine_audio::WAV = Some(Vec::new()) };
+        }
     }
     // `--slp FILE` / `--gdlp FILE`: a Slippi / whole-match replay drives the match (stage, fighters, seed and every frame's inputs and RNG seed)
     let mut replay = false;
@@ -572,7 +639,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
                     std::env::set_var("MELEE_TEST_SEED", seed.to_string());
                     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1"); }
                 }
-                let booted = melee_engine::gcm::Gcm::open(&iso).map_err(|e| e.to_string()).and_then(|disc| {
+                let booted = engine_disc(&iso).and_then(|disc| {
                     let scn = melee_engine::scenario::Scenario::parse(&scene)?;
                     melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)
                 });
@@ -593,6 +660,16 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
     };
     let frames = if replay && get("--frames").is_none() { 1802 } else { frames };
+    if audio {
+        engine_audio::start_stage_bgm();
+        // the C's load: the first logic frame comes this many video frames after the BGM starts
+        for _ in 0..get("--audio-preroll").and_then(|v| v.parse::<u32>().ok()).unwrap_or(29) {
+            engine_audio::load_frame();
+        }
+    }
+    let idle = args.iter().any(|a| a == "--idle-pads");
+    // `--pause F:T`: START after logic frame F pauses, the pauser's START resumes at T (the audio keeps running on the held frames)
+    let pause: Option<(usize, usize)> = get("--pause").and_then(|v| v.split_once(':').and_then(|(a, b)| Some((a.parse().ok()?, b.parse().ok()?))));
     let mut csv = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
     let calltrace_out = get("--calltrace");
     if calltrace_out.is_some() && !melee_core::ct::ENABLED {
@@ -615,8 +692,20 @@ fn golden_engine(args: &[String]) -> ExitCode {
                 melee_runtime::tu::random::global::state().set_logic_seed(sd);
             }
         }
+        if idle || pause.is_some() {
+            let mut pads = [melee_types::PADStatus::zeroed(); 4];
+            pads[2].err = -1;
+            pads[3].err = -1;
+            if pause.is_some_and(|(a, b)| f == a + 1 || f == b + 1) {
+                pads[0].button = 0x1000; // START
+            }
+            e.set_pads(Some(pads));
+        }
         if !e.tick() {
             break;
+        }
+        if audio {
+            engine_audio::dsp_frame();
         }
         if std::env::var_os("MELEE_PAD_DBG").is_some() {
             let q = unsafe { &melee_runtime::tu::controller::HSD_PadGameStatus[0] };
@@ -688,6 +777,21 @@ fn golden_engine(args: &[String]) -> ExitCode {
         match melee_core::ct::write(p) {
             Ok(n) => eprintln!("melee: {n} calls written to {p}"),
             Err(er) => eprintln!("melee: {p}: {er}"),
+        }
+    }
+    if audio {
+        if let Some(p) = get("--audio-trace") {
+            let t = melee_audio::sim::with(|s| s.trace.take()).flatten().unwrap_or_default();
+            let _ = std::fs::write(&p, t.join("
+") + "
+");
+            eprintln!("melee: {} audio calls written to {p}", t.len());
+        }
+        if let (Some(p), Some(w)) = (get("--audio-wav"), unsafe { (*std::ptr::addr_of_mut!(engine_audio::WAV)).take() }) {
+            if let Err(er) = write_wav(&p, &w) {
+                eprintln!("melee: {p}: {er}");
+            }
+            eprintln!("melee: audio mix of {} sub-frames written to {p}", w.len() / 320);
         }
     }
     if let Err(er) = std::fs::write(&out, csv) {

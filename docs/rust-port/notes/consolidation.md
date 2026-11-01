@@ -1113,3 +1113,17 @@ specular, nothing is checked against a C screenshot.
   exception handler) so a rollback session costs the dirty pages, not a second 4.5 GB. Two netplay peers on one machine need ~10 GB.
 - Blocks step 19: the legacy model is still the only implementation of `--slp` / `--gdlp` replays, `--mods` (the engine has no mods overlay on its DVD seam), the `--audio` proof, `--from-snapshot` and
   `melee diff --first`; the retail-menu stand-ins in `play` use `vs_match::input`. Deleting `vs_match` means giving those four an engine version first.
+
+Step 19 prerequisites (round 4, still not the deletion): the model-only features now run on the engine.
+- `--slp` / `--gdlp` replays: `golden_engine` routes the fighter code's `Replay_*` platform hooks (`melee_fighter::platform::hook`) to `melee_data::Player` and forces the seed per frame;
+  `tools/rust-port/golden/check_slp.sh` (falcon v fox .slp and .gdlp) is equal to the C playback (1801 / 1802 frames). The marth_sheik .slp has never been in the check (golden count 0 on both paths).
+- `--mods DIR`: `Gcm::set_overlay` (melee_engine): a path the mods answer keeps its disc entry number and its bytes come from the mod (`engine_disc`, `set_engine_mods`; `play --mods` too).
+  Files a mod ADDS (new fighters, m-ex) have no disc entry and are not served: m-ex needs the engine's extension step.
+- Audio (`golden --audio [--audio-wav] [--audio-trace] [--audio-preroll N] [--idle-pads] [--pause F:T] [--time-secs N]`): `melee/src/engine_audio.rs` forwards every TU's `lbAudioAx_*` hook (generated table
+  `engine_audio_gen.rs`, 177 hooks, `tools/rust-port/engine/gen_audio_bridge.py`) to `melee_audio::sim`, after the link table (`melee_engine::engine::POST_LINK`). The real scene code makes the calls (announcer,
+  entry voices, KO, pause); the driver only boots the Sound, runs the scene-load frames (3 before the BGM, `--audio-preroll` after: the C's load timeline) and the DSP once per tick. The audio golden runs without the render pass
+  (`MELEE_ENGINE_HEADLESS`, like the C's turbo capture: the draw callbacks have sound side effects, the off-screen arrow's). Result: pad_falcon_fox_fd 1800 frames = 6106 sub-frames, mix hash
+  0xf4956676e79a4037 = the C capture (in the gate now), pad_marth_sheik_bf 843 sub-frames equal (0x4071ad16fd1751fd). Open: `--pause 300:420` gives the right length (702 ticks) but not the C mix
+  (the engine misses the duck `UAV 44` calls at the pause and resumes 11 ticks after pausing: the pause input path), and `--time-secs 60` stops at `melee_runtime::tu::rumble` (PADControlMotor unported seam).
+  Bugs the audio proof found in the engine's data path: `ftAction_80071B50` read big-endian sfx ids natively (`u32::from_be` now), `_FtSFXArr.sfx_ids` had no length (`arrays.tsv`), the pad feed reported ports 3 and 4 as connected.
+- Still open before `vs_match` can go: the retail-menu stand-ins in `play` use `vs_match::input`; `melee diff --first` and the legacy diff; `--from-snapshot` (obsolete: the engine runs the goldens from frame 0).

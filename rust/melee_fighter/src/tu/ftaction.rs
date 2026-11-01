@@ -449,7 +449,7 @@ pub fn ftAction_80071B50(g: G, cmd: &mut CommandInfo) {
         next(cmd);
         match behavior {
             0..=6 => {
-                let sfx = u(cmd).sound_effect_1.sfx_id;
+                let sfx = u32::from_be(u(cmd).sound_effect_1.sfx_id); // the stream is the DAT's big-endian bytes
                 next(cmd);
                 let vol = u(cmd).sound_effect_2.volume() as u8;
                 let pan = u(cmd).sound_effect_2.panning() as u8;
@@ -556,7 +556,7 @@ pub fn ftAction_80071FC8(g: G, cmd: &mut CommandInfo) {
         let mut sfx = 0i32;
         if (0..=5).contains(&roll) {
             skip_cmd(cmd, roll as usize);
-            sfx = u(cmd).pseudo_random_sfx_1.sfx_id as i32;
+            sfx = u32::from_be(u(cmd).pseudo_random_sfx_1.sfx_id) as i32;
             skip_cmd(cmd, (5 - roll) as usize);
         }
         next(cmd);
@@ -581,7 +581,7 @@ pub fn ftAction_80072320(g: G, cmd: &mut CommandInfo) {
             _ => 0.0,
         };
         next(cmd);
-        let sfx = ext::ft_80087D0C(fp, u(cmd).stage_sfx_1.sfx_id);
+        let sfx = ext::ft_80087D0C(fp, u32::from_be(u(cmd).stage_sfx_1.sfx_id));
         next(cmd);
         let p2 = u(cmd).stage_sfx_2.x2_b0_15() as i32;
         next(cmd);
@@ -738,7 +738,7 @@ pub fn ftAction_80072CB0(g: G, cmd: &mut CommandInfo) {
 unsafe fn sfx_with_override(g: G, cmd: &CommandInfo, sfx: i32) {
     let src = cmd.anon_8.u;
     let mut words: [CmdUnion; 3] = [*src, *src.add(1), *src.add(2)];
-    words[1].sound_effect_1.sfx_id = sfx as u32;
+    words[1].sound_effect_1.sfx_id = (sfx as u32).to_be();
     let mut c: CommandInfo = core::mem::zeroed();
     c.anon_8.u = words.as_mut_ptr();
     ftAction_80071B50(g, &mut c);

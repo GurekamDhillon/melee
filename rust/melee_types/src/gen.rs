@@ -51729,7 +51729,7 @@ impl GcDecode for _FtSFXArr {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.num = <i32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.sfx_ids = <*mut i32 as GcDecode>::gc_decode(d, at + 0x4);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x0) as i64)).max(0) as usize; v.sfx_ids = d.ptr_array::<i32>(at + 0x4, n) as *mut i32; }
         v
     }
 }

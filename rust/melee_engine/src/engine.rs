@@ -171,6 +171,7 @@ impl Engine {
                 crate::gxbridge_gen::install_gx();
             }
             crate::seams_gen::install_gen();
+            if let Some(f) = POST_LINK { f(); }
             gmmain_lib::gmMainLib_init_statics();
             melee_runtime::tu::perf::__OSBusClock = 162_000_000; // OS_BUS_CLOCK (low memory 0xF8 on a GameCube)
             initialize::HSD_OSInit();
@@ -512,6 +513,8 @@ impl Engine {
     }
 }
 
+/// Called after the link table, the GX bridge and the fallback seams are installed: a viewer / audio driver overrides hooks here.
+pub static mut POST_LINK: Option<fn()> = None;
 /// Draw into melee_gx (`gxbridge`): set before `boot_vs` by the viewers and `--shots`; goldens leave the GX hooks silent (faster).
 pub static mut RENDER: bool = false;
 static mut FRAME_ROW: Option<[u32; 16]> = None;

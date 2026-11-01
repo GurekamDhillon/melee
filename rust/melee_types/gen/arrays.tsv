@@ -61,3 +61,5 @@ ftDynamics.x10	tab[10]
 HSD_ExpDesc.rvalue	until=0
 HSD_ByteCodeExpDesc.rvalue	until=0
 UNK_SAMUS_S1.x4_anim_joints	4
+# ft_0881.c: ft_800889f4 draws HSD_Randi(num) and indexes sfx_ids with it
+_FtSFXArr.sfx_ids	num

@@ -63,6 +63,12 @@ done
 if [ "$engine" = tu ] && [ -z "$only" ]; then
   if "$exe" synctest --engine tu --depth 4 --frames "${SYNCTEST_FRAMES:-240}" --golden docs/rust-port/golden/pad_falcon_fox_fd.csv >"$tmp/synctest.log" 2>&1; then echo "ok   synctest: $(grep 'melee: engine synctest' "$tmp/synctest.log" | cut -c8-)"; else echo "FAIL synctest (see $tmp/synctest.log)"; fail=1; fi
 fi
+# engine audio: the game's own sound calls mix to exactly the C build's capture (melee/tests/audio_match.rs pins the same hash)
+if [ "$engine" = tu ] && [ -z "$only" ]; then
+  "$exe" golden --iso "$GW_ISO_VANILLA" --scenario pad_falcon_fox_fd --frames 1800 --audio --audio-preroll 29 --audio-wav "$tmp/a.wav" --out "$tmp/a.csv" >"$tmp/audio.log" 2>&1
+  ah=$(python tools/rust-port/wavhash.py "$tmp/a.wav" 2>/dev/null)
+  if [ "$ah" = "6106 0xf4956676e79a4037" ]; then echo "ok   audio: 6106 sub-frames, mix hash equal to the C capture"; else echo "FAIL audio: got '$ah', want '6106 0xf4956676e79a4037'"; fail=1; fi
+fi
 # baselines may only shrink
 bmax=tools/rust-port/diff/baseline_max.tsv
 while IFS=$'\t' read -r sub max; do

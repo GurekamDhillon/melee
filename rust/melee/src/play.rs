@@ -540,7 +540,9 @@ impl Play {
         let scene = format!("mode=vs;at=match;p1={}/human;p2={}/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off", names[0], names[1]);
         let built = (|| -> Result<EngMatch, String> {
             let scn = melee_engine::scenario::Scenario::parse(&scene)?;
-            let disc = melee_engine::gcm::Gcm::open(&self.iso).map_err(|e| e.to_string())?;
+            let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
+            crate::set_engine_mods(&margs)?;
+            let disc = crate::engine_disc(&self.iso)?;
             unsafe {
                 melee_engine::engine::RENDER = !self.headless;
                 std::env::set_var("MELEE_TEST_SEED", (12345 + self.matches_played).to_string());
@@ -1114,7 +1116,7 @@ pub fn play(args: &[String]) -> ExitCode {
         setup: None,
         m: None,
         em: None,
-        engine: crate::use_engine(args) && get("--mods").is_none(),
+        engine: crate::use_engine(args),
         engine_used: false,
         headless: false,
         outcome: Outcome::default(),

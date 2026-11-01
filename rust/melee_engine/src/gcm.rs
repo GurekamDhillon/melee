@@ -3,9 +3,15 @@
 
 use std::io::{Read, Seek, SeekFrom};
 
+/// Answers a disc path with the bytes of a file that replaces it (gdmods mounted over the disc), or None.
+pub type Overlay = Box<dyn Fn(&str) -> Option<Vec<u8>>>;
+
 pub struct Gcm {
     f: Option<std::fs::File>,
     fst: Vec<u8>,
+    /// Mounted mods: a path they answer resolves to the same entry number, whose bytes are replaced.
+    overlay: Option<Overlay>,
+    replaced: std::cell::RefCell<std::collections::HashMap<i32, std::sync::Arc<[u8]>>>,
 }
 
 fn be32(b: &[u8], at: usize) -> u32 {
@@ -17,7 +23,7 @@ impl Gcm {
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(Some(&mut f), 0x424, 8)?;
         let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f: Some(f), fst })
+        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default() })
     }
 
     /// A disc with only the root directory: for headless runs that load no files.
@@ -25,7 +31,12 @@ impl Gcm {
         let mut fst = vec![0u8; 12];
         fst[0] = 1;
         fst[11] = 1;
-        Self { f: None, fst }
+        Self { f: None, fst, overlay: None, replaced: Default::default() }
+    }
+
+    /// Mount `f` over the disc: every file it answers replaces the disc's file of that path (same entry number).
+    pub fn set_overlay(&mut self, f: Overlay) {
+        self.overlay = Some(f);
     }
 
     /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset).
@@ -61,6 +72,21 @@ impl Gcm {
     /// (case-insensitive); a bare name that is not at the root falls back to the first file of that name
     /// anywhere (how the port's `Disc::read` has always matched). -1 when there is none.
     pub fn entry_for_path(&self, path: &str) -> i32 {
+        let n = self.entry_for_path_disc(path);
+        if n >= 0 {
+            if let Some(o) = &self.overlay {
+                if !self.replaced.borrow().contains_key(&n) {
+                    if let Some(b) = o(path) {
+                        eprintln!("engine: {path} comes from the mods ({} bytes)", b.len());
+                        self.replaced.borrow_mut().insert(n, b.into());
+                    }
+                }
+            }
+        }
+        n
+    }
+
+    fn entry_for_path_disc(&self, path: &str) -> i32 {
         let n = self.count();
         let parts: Vec<&str> = path.split('/').filter(|p| !p.is_empty()).collect();
         let mut dir = 0usize;
@@ -94,6 +120,9 @@ impl Gcm {
 
     /// Length in bytes of file entry `entry` (None for a directory or an out-of-range entry).
     pub fn entry_len(&self, entry: i32) -> Option<u32> {
+        if let Some(b) = self.replaced.borrow().get(&entry) {
+            return Some(b.len() as u32);
+        }
         let i = usize::try_from(entry).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i))?;
         Some(be32(&self.fst, i * 12 + 8))
     }
@@ -101,6 +130,10 @@ impl Gcm {
     /// `len` bytes at `offset` inside file entry `entry`.
     pub fn read_entry(&mut self, entry: i32, offset: u32, len: usize) -> Result<Vec<u8>, String> {
         let flen = self.entry_len(entry).ok_or(format!("DVD entry {entry}: not a file"))?;
+        if let Some(b) = self.replaced.borrow().get(&entry) {
+            let (o, l) = (offset as usize, len);
+            return b.get(o..o + l).map(|s| s.to_vec()).ok_or(format!("DVD entry {entry}: read {offset:#x}+{len:#x} past the end of the mod file"));
+        }
         if offset as u64 + len as u64 > flen as u64 {
             return Err(format!("DVD entry {entry}: read {offset:#x}+{len:#x} past the end ({flen:#x})"));
         }

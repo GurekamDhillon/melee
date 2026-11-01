@@ -413,35 +413,6 @@ pub fn grlib_801c96e8(gp: &Ground) -> bool {
     gp.x10_flags.b4() != 0
 }
 
-/// grLib_801C96F8
-pub fn grlib_801c96f8(w: &StageWorld, h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, arg2: &Vec3_grlib) -> *mut HSD_Generator {
-    melee_core::ct!("grlib_801c96f8");
-    let g = h.hsd_8039f05c(0, arg1, arg0);
-    if !g.is_null() {
-        unsafe {
-            let mut srt = (*g).appsrt;
-            if srt.is_null() {
-                srt = h.ps_add_generator_app_srt_begin(g, 1);
-            } else {
-                (*srt).xA2 = 0;
-            }
-            if srt.is_null() {
-                h.hsd_8039d4dc(g);
-                return core::ptr::null_mut();
-            }
-            (*srt).translate = Vec { x: arg2.x, y: arg2.y, z: arg2.z };
-            let scale = w.ground_801c0498();
-            (*srt).scale.x *= scale;
-            (*srt).scale.y *= scale;
-            (*srt).scale.z *= scale;
-            (*g).pos.z = 0.0;
-            (*g).pos.y = 0.0;
-            (*g).pos.x = 0.0;
-        }
-    }
-    g
-}
-
 /// grLib_801C97DC
 pub fn grlib_801c97dc(h: &mut dyn GrLibHooks, arg0: i32, arg1: i32, j: *mut HSD_JObj) {
     melee_core::ct!("grlib_801c97dc");

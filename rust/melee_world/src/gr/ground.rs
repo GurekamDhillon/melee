@@ -148,18 +148,10 @@ impl StageWorld {
         unsafe { self.stage_info.param.as_mut() }.expect("stage_info.param is NULL")
     }
 
-    /// Ground_801C0498
-    pub fn ground_801c0498(&self) -> f32 {
-        self.param().map_or(1.0, |p| p.y)
-    }
     /// Ground_SetParamY (HSD_ASSERT(521, 0) when param is NULL)
     pub fn ground_set_param_y(&mut self, y: f32) {
         assert!(!self.stage_info.param.is_null(), "ground.c:521");
         self.param_mut().y = y;
-    }
-    /// Ground_801C0508
-    pub fn ground_801c0508(&self) -> i32 {
-        self.param().map_or(128, |p| p.x4 as i32)
     }
     /// The nine colour setters: Ground_801C052C (xB8), 0544 (xC0), 055C (xD0), 0574 (xD8),
     /// 058C (xC4), 05A4 (xCC), 05BC (xD4), 05D4 (xBC), 05EC (xC8).
@@ -171,216 +163,9 @@ impl StageWorld {
     pub fn ground_param_color(&mut self, which: ParamColor) -> &mut _GXColor {
         color_mut(self.param_mut(), which)
     }
-    pub fn ground_801c052c(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XB8, c) }
-    pub fn ground_801c0544(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XC0, c) }
-    pub fn ground_801c055c(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XD0, c) }
-    pub fn ground_801c0574(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XD8, c) }
-    pub fn ground_801c058c(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XC4, c) }
-    pub fn ground_801c05a4(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XCC, c) }
-    pub fn ground_801c05bc(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XD4, c) }
-    pub fn ground_801c05d4(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XBC, c) }
-    pub fn ground_801c05ec(&mut self, c: &_GXColor) { self.ground_set_param_color(ParamColor::XC8, c) }
-    pub fn ground_801c0604(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XB8) }
-    pub fn ground_801c0618(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XC0) }
-    pub fn ground_801c062c(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XD0) }
-    pub fn ground_801c0640(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XD8) }
-    pub fn ground_801c0654(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XC4) }
-    pub fn ground_801c0668(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XCC) }
-    pub fn ground_801c067c(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XD4) }
-    pub fn ground_801c0690(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XBC) }
-    pub fn ground_801c06a4(&mut self) -> &mut _GXColor { self.ground_param_color(ParamColor::XC8) }
 
-    /// Ground_801C1D6C
-    pub fn ground_801c1d6c(&mut self, f: u32) { self.stage_info.flags |= f; }
-    /// Ground_801C1D84
-    pub fn ground_801c1d84(&self) -> u32 { self.stage_info.flags & 0x330 }
-    /// Ground_801C1D98
-    pub fn ground_801c1d98(&self) -> u32 { self.stage_info.flags & 0x20 }
-    /// Ground_801C1DAC
-    pub fn ground_801c1dac(&self) -> u32 { self.stage_info.flags & 0x100 }
-    /// Ground_801C1DC0
-    pub fn ground_801c1dc0(&self) -> u32 { self.stage_info.flags & 0x80 }
-    /// Ground_801C1DD4
-    pub fn ground_801c1dd4(&self) -> i32 { self.stage_info.x6D0 as i32 }
-    /// Ground_801C1DE4: (*arg0, *arg1) = (x6D4, x6D2)
-    pub fn ground_801c1de4(&self) -> (i32, i32) {
-        (self.stage_info.x6D4 as i32, self.stage_info.x6D2 as i32)
-    }
-    /// Ground_801C1E00 (1-bit field: low bit kept)
-    pub fn ground_801c1e00(&mut self, v: i32) { self.stage_info.unk8C.set_b2(v as u8); }
-    /// Ground_801C1E18
-    pub fn ground_801c1e18(&self) -> i32 { self.stage_info.unk8C.b2() as i32 }
-    /// Ground_801C1E84
-    pub fn ground_801c1e84(&self) -> *mut HSD_GObj { self.stage_info.x12C }
 
-    /// Ground_801C3880
-    pub fn ground_801c3880(&mut self, v: f32) { self.stage_info.cam_info.cam_bounds.top = v; }
-    /// Ground_801C3890
-    pub fn ground_801c3890(&mut self, v: f32) { self.stage_info.cam_info.cam_bounds.bottom = v; }
-    /// Ground_801C38A0
-    pub fn ground_801c38a0(&mut self, v: f32) { self.stage_info.cam_info.cam_bounds.left = v; }
-    /// Ground_801C38AC
-    pub fn ground_801c38ac(&mut self, v: f32) { self.stage_info.cam_info.cam_bounds.right = v; }
-    /// Ground_801C38BC
-    pub fn ground_801c38bc(&mut self, x: f32, y: f32) {
-        let c = &mut self.stage_info.cam_info;
-        c.cam_x_offset = x;
-        c.cam_y_offset = y;
-    }
-    /// Ground_801C38D0
-    pub fn ground_801c38d0(&mut self, tilt: f32, pan: f32, a: f32, b: f32) {
-        let c = &mut self.stage_info.cam_info;
-        c.cam_vertical_tilt = tilt;
-        c.cam_pan_degrees = pan;
-        c.x20 = a;
-        c.x24 = b;
-    }
-    /// Ground_801C38EC
-    pub fn ground_801c38ec(&mut self, depth: f32, zoom: f32) {
-        let c = &mut self.stage_info.cam_info;
-        c.cam_max_depth = depth;
-        c.cam_zoom_rate = zoom;
-    }
-    /// Ground_801C3900
-    #[allow(clippy::too_many_arguments)]
-    pub fn ground_801c3900(&mut self, a8: f32, a9: f32, aa: f32, ab: f32, up: f32, down: f32, left: f32, right: f32) {
-        let c = &mut self.stage_info.cam_info;
-        c.x3C = a8;
-        c.pausecam_zpos_min = a9;
-        c.pausecam_zpos_init = aa;
-        c.pausecam_zpos_max = ab;
-        c.cam_angle_up = up;
-        c.cam_angle_down = down;
-        c.cam_angle_left = left;
-        c.cam_angle_right = right;
-    }
-    /// Ground_801C392C
-    pub fn ground_801c392c(&mut self, x: f32, y: f32, z: f32, fov: f32, vert: f32, horz: f32) {
-        let c = &mut self.stage_info.cam_info;
-        c.fixed_cam_pos.x = x;
-        c.fixed_cam_pos.y = y;
-        c.fixed_cam_pos.z = z;
-        c.fixed_cam_fov = fov;
-        c.fixed_cam_vert_angle = vert;
-        c.fixed_cam_horz_angle = horz;
-    }
-    /// Ground_801C3950
-    pub fn ground_801c3950(&mut self, v: f32) { self.stage_info.cam_info.cam_fixed_zoom = v; }
-    /// Ground_801C3960
-    pub fn ground_801c3960(&mut self, v: f32) { self.stage_info.cam_info.cam_track_ratio = v; }
-    /// Ground_801C3970
-    pub fn ground_801c3970(&mut self, v: f32) { self.stage_info.cam_info.cam_track_smooth = v; }
-    /// Ground_801C3980
-    pub fn ground_801c3980(&mut self, v: f32) { self.stage_info.blast_zone.top = v; }
-    /// Ground_801C3990
-    pub fn ground_801c3990(&mut self, v: f32) { self.stage_info.blast_zone.bottom = v; }
-    /// Ground_801C39A0
-    pub fn ground_801c39a0(&mut self, v: f32) { self.stage_info.blast_zone.left = v; }
-    /// Ground_801C39B0
-    pub fn ground_801c39b0(&mut self, v: f32) { self.stage_info.blast_zone.right = v; }
 
-    /// Ground_801C3D44
-    pub fn ground_801c3d44(&mut self, cb: Option<unsafe extern "C" fn(*mut Vec, i32) -> i32>, a8: f32, a9: f32) -> i32 {
-        let s = &mut *self.stage_info;
-        s.unk8C.set_b6(1);
-        s.x70C = 0.5f32 * a8;
-        s.x710 = 0.5f32 * a9;
-        s.x90 = cb;
-        if s.x714 != -1 {
-            s.flags |= 0x10;
-            s.x6D0 = s.x714 as i16;
-        } else {
-            s.flags &= 0xFFFF_FFEF;
-        }
-        s.x714
-    }
-    /// Ground_801C3DB4
-    pub fn ground_801c3db4(&mut self, cb: Option<unsafe extern "C" fn(*mut Vec, i32) -> i32>, a8: f32, a9: f32) -> i32 {
-        let s = &mut *self.stage_info;
-        s.unk8C.set_b7(1);
-        s.x718 = 0.5f32 * a8;
-        s.x71C = 0.5f32 * a9;
-        s.x94 = cb;
-        if s.x720 != -1 {
-            s.flags |= 0x40;
-        } else {
-            s.flags &= 0xFFFF_FFBF;
-        }
-        s.x720
-    }
-    /// Ground_801C4338
-    pub fn ground_801c4338(&mut self) {
-        let s = &mut *self.stage_info;
-        s.x6D4 = s.x6D4.wrapping_sub(1);
-        if s.x6D4 == 0 {
-            s.flags |= 0x20;
-        }
-    }
-    /// Ground_801C4368: (*slope, *intercept)
-    pub fn ground_801c4368(&self) -> (f32, f32) {
-        (self.stage_info.x724, self.stage_info.x724 - self.stage_info.x728)
-    }
-    /// Ground_801C438C
-    pub fn ground_801c438c(&mut self, v: f32) {
-        self.stage_info.x728 = self.stage_info.x724;
-        self.stage_info.x724 = v;
-    }
-    /// Ground_801C43A4
-    pub fn ground_801c43a4(&self, h: &mut dyn GroundHooks, arg: *mut core::ffi::c_void) {
-        h.grzebes_801da3f4(arg);
-    }
-    /// Ground_801C4D70
-    pub fn ground_801c4d70(&mut self, g: *mut HSD_GObj, v: &Vec3, f: f32) -> bool {
-        self.stage_info.x72C = g;
-        self.stage_info.x730 = Vec { x: v.x, y: v.y, z: v.z };
-        self.stage_info.x73C = f;
-        true
-    }
-    /// Ground_801C4DA0
-    pub fn ground_801c4da0(&self) -> (Vec3, f32) {
-        let v = self.stage_info.x730;
-        (Vec3 { x: v.x, y: v.y, z: v.z }, self.stage_info.x73C)
-    }
-    /// Ground_801C4DD0
-    pub fn ground_801c4dd0(&self, h: &mut dyn GroundHooks) -> bool {
-        match self.stage_info.grkind {
-            Gr_Kind_Kongo => h.grkongo_801d8270(self.stage_info.x72C),
-            Gr_Kind_OldKongo => h.groldkongo_802105ac(self.stage_info.x72C),
-            _ => {}
-        }
-        true
-    }
-    /// Ground_801C4E20
-    pub fn ground_801c4e20(&self, h: &mut dyn GroundHooks) -> bool {
-        match self.stage_info.grkind {
-            Gr_Kind_Kongo => h.grkongo_801d828c(self.stage_info.x72C),
-            Gr_Kind_OldKongo => h.groldkongo_802105c8(self.stage_info.x72C),
-            _ => {}
-        }
-        true
-    }
-    /// Ground_801C5700
-    pub fn ground_801c5700(&self, i: i32) -> *mut DynamicsDesc {
-        match self.stage_info.on_touch_line {
-            // SAFETY: the stage's own callback, as the C calls it.
-            Some(f) => unsafe { f(i) },
-            None => core::ptr::null_mut(),
-        }
-    }
-    /// Ground_801C5740
-    pub fn ground_801c5740(&mut self, v: i32) { self.stage_info.x6D8 = v; }
-    /// Ground_801C5750
-    pub fn ground_801c5750(&mut self) { self.stage_info.x6D8 = 0; }
-    /// Ground_801C5764
-    pub fn ground_801c5764(&self) -> i32 { self.stage_info.x6D8 }
-    /// Ground_801C5774
-    pub fn ground_801c5774(&self) -> i32 { self.stage_info.x6DC as i32 }
-    /// Ground_801C5784
-    pub fn ground_801c5784(&mut self, v: i32) { self.stage_info.x740 = v; }
-    /// Ground_801C5794
-    pub fn ground_801c5794(&self) -> i32 { self.stage_info.x740 }
-    /// Ground_801C57F0 (arg unused)
-    pub fn ground_801c57f0(&self, _arg: i32) -> f32 { self.stage_info.x6E0 }
     /// Ground_EnableMatchCamera
     pub fn ground_enable_match_camera(&self, h: &mut dyn GroundHooks) {
         // SAFETY: the C dereferences param unconditionally.
@@ -391,24 +176,9 @@ impl StageWorld {
             h.camera_set_mode_to_standard();
         }
     }
-    /// Ground_801C5840
-    pub fn ground_801c5840(&self, h: &mut dyn GroundHooks) -> i32 {
-        let i = h.hsd_randi(1);
-        self.stage_info.x6E4[i as usize]
-    }
-    /// Ground_801C5A84
-    pub fn ground_801c5a84(&mut self, v: i32) { self.stage_info.x98 = v; }
-    /// Ground_801C5A94
-    pub fn ground_801c5a94(&self) -> i32 { self.stage_info.x98 }
-    /// Ground_801C5AA4
-    pub fn ground_801c5aa4(&mut self, b: bool) { self.stage_info.unk8C.set_b1(b as u8); }
-    /// Ground_801C5ABC
-    pub fn ground_801c5abc(&self) -> bool { self.stage_info.unk8C.b1() != 0 }
 
     // ---- night 3 round 5: the map-gobj / x280 / x694 tables and the stage-param scale ----
 
-    /// Ground_801C2AD8: `&stage_info.xA0`.
-    pub fn ground_801c2ad8(&mut self) -> &mut i32 { &mut self.stage_info.xA0 }
     /// Ground_MexParamStkind (TARGET_PC, static): the stkind whose StageParam row applies.
     pub fn ground_mex_param_stkind(&self, stkind: StKind) -> StKind {
         let Some(param) = self.param() else { return stkind };
@@ -430,129 +200,14 @@ impl StageWorld {
         }
         stkind
     }
-    /// Ground_801C2AE8: `(0.01f * param->x68) * (0.01f * row->x18)` for the stkind's row
-    /// (no fused sites). The C spins forever when no row matches; this panics instead.
-    pub fn ground_801c2ae8(&self, stkind: StKind) -> f32 {
-        let stkind = self.ground_mex_param_stkind(stkind);
-        let param = self.param().expect("stage_info.param is NULL");
-        let mut p = param.stage_params;
-        for _ in 0..param.stage_param_count {
-            // SAFETY: as in ground_mex_param_stkind.
-            let r = unsafe { &*p };
-            if r.stkind == stkind {
-                return (0.01f32 * param.x68 as f32) * (0.01f32 * r.x18 as f32);
-            }
-            p = p.wrapping_add(1);
-        }
-        panic!("ground.c:0x927: not found stage param in DAT (the C spins here)");
-    }
     /// Ground_GetMapGObj: `stage_info.map_gobjs[map_id]` (index checked; the C is not).
     pub fn ground_get_map_gobj(&self, map_id: i32) -> *mut Ground_GObj { self.stage_info.map_gobjs[map_id as usize] }
-    /// Ground_801C2BBC (static): `stage_info.map_gobjs[index] = map_gobj`.
-    pub fn ground_801c2bbc(&mut self, map_gobj: *mut Ground_GObj, index: i32) {
-        self.stage_info.map_gobjs[index as usize] = map_gobj;
-    }
-    /// Ground_801C2BD4 (static): add `arg0` to `x694` unless present; HSD_ASSERT(2381) when full.
-    pub fn ground_801c2bd4(&mut self, arg0: *mut core::ffi::c_void) {
-        let t = &mut self.stage_info.x694;
-        if t.iter().any(|&e| e == arg0) {
-            return;
-        }
-        match t.iter().position(|e| e.is_null()) {
-            Some(i) => t[i] = arg0,
-            None => panic!("ground.c:2381: i!=Gr_CObj_Max"),
-        }
-    }
-    /// Ground_801C2C8C: is `arg0` in `x694`.
-    pub fn ground_801c2c8c(&self, arg0: *mut core::ffi::c_void) -> bool {
-        self.stage_info.x694.iter().any(|&e| e == arg0)
-    }
-    /// Ground_801C2CF4: `stage_info.x280[i]`.
-    pub fn ground_801c2cf4(&self, i: i32) -> *mut HSD_JObj { self.stage_info.x280[i as usize] }
-    /// Ground_801C2D0C: `stage_info.x280[i] = jobj`.
-    pub fn ground_801c2d0c(&mut self, i: i32, jobj: *mut HSD_JObj) { self.stage_info.x280[i as usize] = jobj; }
 
     // ---- per-stage scroll-offset getters (Ground_GetMapGObj + the gobj's Ground) ----
 
-    /// grRCruise_80201918 (gr/grrcruise.c): map 3's `u.scroll.x1C`, else zero.
-    pub fn grrcruise_80201918(&self, vec: &mut Vec) {
-        let g = self.ground_get_map_gobj(3);
-        // SAFETY: map_gobjs hold null or live Ground GObjs whose user_data is null or a Ground.
-        unsafe {
-            if !g.is_null() {
-                let gp = (*g).user_data as *mut Ground;
-                if !gp.is_null() {
-                    *vec = (*gp).u.scroll.x1C;
-                    return;
-                }
-            }
-        }
-        vec.x = 0.0; vec.y = 0.0; vec.z = 0.0;
-    }
-    /// grBigBlue_801EF7D8 (gr/grbigblue.c): (-10, 0, 0) while map 34 has a Ground, else zero.
-    pub fn grbigblue_801ef7d8(&self, pos: &mut Vec) {
-        let g = self.ground_get_map_gobj(34);
-        // SAFETY: as above.
-        if !g.is_null() && unsafe { !(*g).user_data.is_null() } {
-            pos.x = -10.0;
-            pos.y = 0.0;
-            pos.z = 0.0;
-        } else {
-            pos.z = 0.0; pos.y = 0.0; pos.x = 0.0;
-        }
-    }
-    /// grIceMt_801FA728 (gr/gricemt.c): (0, -u.icemt.x10, 0) of map 10 (stkind 0x4C) or 9.
-    pub fn gricemt_801fa728(&self, arg0: &mut Vec) {
-        let id = if self.stage_80225194() == 0x4C { 10 } else { 9 };
-        let g = self.ground_get_map_gobj(id);
-        // SAFETY: as above.
-        unsafe {
-            if !g.is_null() {
-                let gp = (*g).user_data as *mut Ground;
-                if !gp.is_null() {
-                    arg0.x = 0.0;
-                    arg0.y = -(*gp).u.icemt.x10;
-                    arg0.z = 0.0;
-                    return;
-                }
-            }
-        }
-        arg0.z = 0.0; arg0.y = 0.0; arg0.x = 0.0;
-    }
 
     // ---- night 3 round 5: fog colour, tilt, the light-list scan, the xC callback ----
 
-    /// Ground_801C20D0: `stage_info.cam_info.cam_vertical_tilt`.
-    pub fn ground_801c20d0(&self) -> f32 { self.stage_info.cam_info.cam_vertical_tilt }
-    /// Ground_801C205C: set the stage fog's colour (`GET_FOG(stage_info.x12C)->color`) when the
-    /// fog gobj, `color` and the fog all exist.
-    pub fn ground_801c205c(&mut self, color: Option<&GXColor>) {
-        let g = self.stage_info.x12C;
-        if let (false, Some(c)) = (g.is_null(), color) {
-            // SAFETY: x12C is null or the live fog GObj, whose hsd_obj is null or an HSD_Fog.
-            unsafe {
-                let fog = (*g).hsd_obj as *mut HSD_Fog;
-                if !fog.is_null() {
-                    (*fog).color = *c;
-                }
-            }
-        }
-    }
-    /// Ground_801C2090: read the stage fog's colour into `color`; true when it was read.
-    pub fn ground_801c2090(&self, color: Option<&mut GXColor>) -> bool {
-        let g = self.stage_info.x12C;
-        if let (false, Some(c)) = (g.is_null(), color) {
-            // SAFETY: as in ground_801c205c.
-            unsafe {
-                let fog = (*g).hsd_obj as *mut HSD_Fog;
-                if !fog.is_null() {
-                    *c = (*fog).color;
-                    return true;
-                }
-            }
-        }
-        false
-    }
 }
 
 /// Ground_GetP1Fighter
@@ -631,30 +286,8 @@ pub(crate) mod tests {
         playing: bool,
     }
     impl GroundHooks for Rec {
-        fn lbaudioax_800237a8(&mut self, s: i32, v: i32, p: i32) -> i32 {
-            self.log.push(format!("play {s} {v} {p}"));
-            self.next_id += 1;
-            self.next_id
-        }
-        fn lbaudioax_80023870(&mut self, a: i32, v: i32, p: i32, d: i32) -> i32 {
-            self.log.push(format!("play4 {a} {v} {p} {d}"));
-            0
-        }
-        fn lbaudioax_800236b8(&mut self, id: i32) -> i32 {
-            self.log.push(format!("stop {id}"));
-            0
-        }
-        fn lbaudioax_80023710(&mut self, _: i32) -> bool { self.playing }
-        fn lbaudioax_80024b58(&mut self, id: i32, v: i32) { self.log.push(format!("vol {id} {v}")); }
-        fn lbaudioax_80024b1c(&mut self, id: i32, v: i32) { self.log.push(format!("pan {id} {v}")); }
-        fn hsd_randi(&mut self, _: i32) -> i32 { 1 }
         fn camera_set_mode_to_fixed(&mut self) { self.log.push("fixed".into()); }
         fn camera_set_mode_to_standard(&mut self) { self.log.push("std".into()); }
-        fn grkongo_801d8270(&mut self, _: *mut HSD_GObj) { self.log.push("k70".into()); }
-        fn groldkongo_802105c8(&mut self, _: *mut HSD_GObj) { self.log.push("ok c8".into()); }
-        fn toy_803124bc(&mut self) { self.log.push("t bc".into()); }
-        fn toy_8031234c(&mut self, a: i32) { self.log.push(format!("t 4c {a}")); }
-        fn toy_80305918(&mut self, a: i32, b: i32, c: i32) { self.log.push(format!("t 18 {a}{b}{c}")); }
     }
 
     #[test]

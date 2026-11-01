@@ -184,69 +184,9 @@ impl GrLib {
         }
         &self.mtx
     }
-    /// grLib_801C9A70 (HSD_ASSERT(290, 0) outside 0..3)
-    pub fn grlib_801c9a70(&self, arg0: i32) -> Vec3 {
-        assert!((0..4).contains(&arg0), "grlib.c:290: 0");
-        self.mtx[arg0 as usize]
-    }
 }
 
 impl StageWorld {
-    /// grLib_801C9CEC
-    pub fn grlib_801c9cec(&self, h: &mut dyn GrLibHooks, kind: CmQuakeKind) -> *mut HSD_GObj {
-        let idx = match kind {
-            QuakeKind_Loop => 0,
-            QuakeKind_Small => 1,
-            QuakeKind_Medium => 2,
-            QuakeKind_Large => 3,
-            _ => return core::ptr::null_mut(),
-        };
-        let set = self.stage_info.quake_model_set;
-        if set.is_null() {
-            return core::ptr::null_mut();
-        }
-        let gobj = h.gobj_create(HSD_GOBJ_CLASS_STAGE, 18, kind as u8);
-        let j = h.jobj_load_joint(unsafe { (*set).joint });
-        h.gobj_add_jobj(gobj, j);
-        h.gobj_setup_proc(gobj, if kind == QuakeKind_Loop { QuakeProc::Loop } else { QuakeProc::OneShot });
-        h.jobj_add_anim_all(j, unsafe { *(*set).anims.add(idx) });
-        h.jobj_req_anim_all(j, 0.0);
-        if kind == QuakeKind_Loop {
-            h.foreach_anim_set_loop(j);
-        }
-        gobj
-    }
-    /// grLib_801C9E40
-    pub fn grlib_801c9e40(&self) -> i32 {
-        self.stage_info.x708 as i32
-    }
-    /// grLib_801C9E50
-    pub fn grlib_801c9e50(&mut self, v: i16) {
-        self.stage_info.x708 = v;
-    }
-    /// grLib_801C9E60
-    pub fn grlib_801c9e60(&self, h: &mut dyn GrLibHooks, v: &mut Vec3) -> bool {
-        match self.stage_info.grkind {
-            // The three per-stage getters are ported on StageWorld (gr::ground, night 3 round 5).
-            Gr_Kind_RCruise | Gr_Kind_BigBlue | Gr_Kind_Icemt => {
-                let _ = h;
-                let mut t = Vec { x: v.x, y: v.y, z: v.z };
-                match self.stage_info.grkind {
-                    Gr_Kind_RCruise => self.grrcruise_80201918(&mut t),
-                    Gr_Kind_BigBlue => self.grbigblue_801ef7d8(&mut t),
-                    _ => self.gricemt_801fa728(&mut t),
-                }
-                *v = Vec3 { x: t.x, y: t.y, z: t.z };
-            }
-            _ => {
-                v.z = 0.0;
-                v.y = 0.0;
-                v.x = 0.0;
-                return false;
-            }
-        }
-        true
-    }
 }
 
 #[inline]
@@ -289,16 +229,8 @@ pub(crate) mod tests {
         items: std::vec::Vec<(ItemKind, Box<CollData>)>,
     }
     impl GrLibHooks for Rec {
-        fn hsd_8039d4dc(&mut self, g: *mut HSD_Generator) {
-            self.log.push(format!("kill {}", unsafe { (*g).idnum }));
-        }
         fn generator_list_head(&mut self) -> *mut HSD_Generator {
             self.gens.first_mut().map_or(core::ptr::null_mut(), |g| &mut **g)
-        }
-        fn ground_801c2d24(&mut self, i: i32, out: &mut Vec) -> bool {
-            out.x = i as f32;
-            out.y = -(i as f32);
-            true
         }
         fn fighter_colls(&mut self) -> std::vec::Vec<*const CollData> {
             self.fighters.iter().map(|c| &**c as *const _).collect()
@@ -390,7 +322,6 @@ pub(crate) mod tests {
 }
 
 pub use crate::tu::grlib::grlib_801c96e8;
-pub use crate::tu::grlib::grlib_801c96f8;
 pub use crate::tu::grlib::grlib_801c97dc;
 pub use crate::tu::grlib::grlib_801c9808;
 pub use crate::tu::grlib::grlib_801c9834;

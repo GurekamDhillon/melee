@@ -254,19 +254,6 @@ impl StageWorld {
     pub fn get_cam_angle_radians_right(&self) -> f32 {
         DEG2RAD * self.ci().cam_angle_right
     }
-    /// `Stage_80224CAC`: where the fixed camera's view ray from `fixed_cam_pos` meets z = 0.
-    pub fn stage_80224cac(&self) -> Vec3 {
-        let mut another = Vec3 { x: 0.0, y: 0.0, z: -100.0 };
-        let p = v3(self.ci().fixed_cam_pos);
-        let rot = Vec3 {
-            x: DEG2RAD * self.ci().fixed_cam_vert_angle,
-            y: DEG2RAD * self.ci().fixed_cam_horz_angle,
-            z: 0.0,
-        };
-        apply_euler_rotation(&mut another, &rot);
-        let t = p.z / -another.z;
-        Vec3 { x: fmadds(another.x, t, p.x), y: fmadds(another.y, t, p.y), z: 0.0 }
-    }
     /// `Stage_SetVecToFixedCamPos`
     pub fn set_vec_to_fixed_cam_pos(&self) -> Vec3 {
         v3(self.ci().fixed_cam_pos)
@@ -274,100 +261,6 @@ impl StageWorld {
     /// `Stage_GetCamFixedFov`
     pub fn get_cam_fixed_fov(&self) -> f32 {
         self.ci().fixed_cam_fov
-    }
-    /// `Stage_80224E38`
-    pub fn stage_80224e38(&self, h: &mut dyn StageHooks, out: &mut Vec3, arg1: i32) {
-        h.ground_801c2d24(arg1.wrapping_add(4), out);
-    }
-    /// `Stage_80224E64`: spawn point `arg0`; kind 4 probes the floor near x = 0 with
-    /// `mpCheckMultiple` (floor only) in 10-unit steps, up then down.
-    /// Panics where the C asserts (`arg0 == -1`, stage.c:360).
-    pub fn stage_80224e64(
-        &self, h: &mut dyn StageHooks, coll: &mut GroundColl, arg0: i32, out: &mut Vec3,
-    ) {
-        if arg0 == -1 {
-            panic!("stage.c:360: no!=St_Player_InitPos_None");
-        }
-        if arg0 == 4 {
-            let mut found: Option<Vec3> = None;
-            let mut c = -10.0f32;
-            while c < 100.0 {
-                if let Some(hit) = coll.mp_check_multiple(0.0, 10.0 + c, 0.0, c, 1, -1, -1) {
-                    found = Some(hit.pos);
-                    break;
-                }
-                c += 10.0;
-            }
-            if found.is_none() {
-                c = -10.0;
-                while c > -100.0 {
-                    if let Some(hit) = coll.mp_check_multiple(0.0, c, 0.0, c - 10.0, 1, -1, -1)
-                    {
-                        found = Some(hit.pos);
-                        break;
-                    }
-                    c -= 10.0;
-                }
-            }
-            *out = found.unwrap_or(Vec3 { x: 0.0, y: 0.0, z: 0.0 });
-            return;
-        }
-        h.ground_801c2d24(arg0, out);
-    }
-    /// `Stage_80224FDC`: a random spawn point, 21 tries over indices 0x7F.., then the C's
-    /// `counter2 = rand_output` loop over 0..4, kept as is.
-    pub fn stage_80224fdc(&self, h: &mut dyn StageHooks, out: &mut Vec3) -> bool {
-        let mut counter = 0x15;
-        while counter != 0 {
-            let r = h.hsd_randi(counter);
-            if h.ground_801c2d24(r.wrapping_add(0x7F), out) {
-                return true;
-            }
-            counter -= 1;
-        }
-        let mut counter2 = 4;
-        while counter2 != 0 {
-            let r = h.hsd_randi(counter2);
-            if h.ground_801c2d24(r, out) {
-                return true;
-            }
-            counter2 = r;
-        }
-        false
-    }
-    /// `Stage_80225074`. Panics where the C asserts (stage.c:526).
-    pub fn stage_80225074(&self, h: &mut dyn StageHooks, arg0: i32) -> i32 {
-        let r31 = if h.gm_8016b238() {
-            if self.stage_info.unk8C.b0() != 0 || arg0 == 2 {
-                0x12
-            } else {
-                0x11
-            }
-        } else if h.gm_8016b3a0() {
-            match arg0 {
-                2 => 0x22,
-                1 => 0x64,
-                _ => 0x24,
-            }
-        } else {
-            match arg0 {
-                0 => 4,
-                3 => 1,
-                2 => 2,
-                1 => 0x44,
-                _ => panic!("stage.c:526: assert"),
-            }
-        };
-        let mut sp_c = 0i32;
-        let tmp = h.ground_801c28ac(self.selected_stkind, r31, &mut sp_c);
-        h.lbaudioax_80023f28(sp_c);
-        h.ground_801c5a84(sp_c);
-        h.ground_801c5aa4(tmp);
-        arg0
-    }
-    /// `Stage_80225194`
-    pub fn stage_80225194(&self) -> StKind {
-        self.selected_stkind
     }
     /// `Stage_MexInitIds`: fill the external ids past the vanilla initializer from m-ex, once.
     pub fn mex_init_ids(&mut self, h: &mut dyn StageHooks) {
@@ -387,48 +280,9 @@ impl StageWorld {
             }
         }
     }
-    /// `Stage_8022519C`: StKind -> GrKind.
-    pub fn stage_8022519c(&mut self, h: &mut dyn StageHooks, stkind: StKind) -> GrKind {
-        self.mex_init_ids(h);
-        self.stage_id_map[stkind as usize]
-    }
-    /// `Stage_802251B4`
-    pub fn stage_802251b4(&mut self, h: &mut dyn StageHooks, stkind: StKind) {
-        self.mex_init_ids(h);
-        let g = self.stage_id_map[stkind as usize];
-        h.ground_801c06b8(g);
-    }
     fn selected_grkind(&self) -> GrKind {
         // The C dereferences selected_stage.entry; NULL there is a crash.
         self.stage_id_map[self.selected_entry.expect("selected_stage.entry is NULL")]
-    }
-    /// `Stage_802251E8`: select `stkind`.
-    pub fn stage_802251e8(&mut self, h: &mut dyn StageHooks, stkind: StKind) {
-        self.mex_init_ids(h);
-        self.selected_stkind = stkind;
-        self.selected_entry = Some(stkind as usize);
-        let pair = StageIdPair { grkind: self.selected_grkind(), stkind: self.selected_stkind };
-        h.ground_801c0754(&pair);
-    }
-    /// `Stage_8022524C`
-    pub fn stage_8022524c(&self, h: &mut dyn StageHooks) {
-        let pair = StageIdPair { grkind: self.selected_grkind(), stkind: self.selected_stkind };
-        h.ground_801c0800(&pair);
-    }
-    /// `Stage_80225298`
-    pub fn stage_80225298(&self, h: &mut dyn StageHooks) {
-        let pair = StageIdPair { grkind: self.selected_grkind(), stkind: self.selected_stkind };
-        h.ground_on_load(&pair);
-    }
-    /// `Stage_802252E4`
-    pub fn stage_802252e4(&self, h: &mut dyn StageHooks, stkind: StKind) {
-        let pair = StageIdPair { grkind: self.selected_grkind(), stkind };
-        h.ground_801c0fb8(&pair);
-    }
-    /// `Stage_8022532C`
-    pub fn stage_8022532c(&self, h: &mut dyn StageHooks, stkind: StKind, arg1: i32) {
-        let pair = StageIdPair { grkind: self.selected_grkind(), stkind };
-        h.ground_demo_init(&pair, arg1);
     }
     /// `Stage_StageSlotSelect` (stage_stage_slot_retail.inc): select the first StKind whose
     /// map row is `kind`; -1 if none.
@@ -538,30 +392,8 @@ pub(crate) mod tests {
         b3a0: bool,
     }
     impl StageHooks for Log {
-        fn ground_801c2d24(&mut self, i: i32, out: &mut Vec3) -> bool {
-            self.calls.push(format!("2D24 {i}"));
-            out.x = i as f32;
-            self.hit == Some(i)
-        }
-        fn hsd_randi(&mut self, n: i32) -> i32 {
-            self.calls.push(format!("rand {n}"));
-            if self.rand.is_empty() { 0 } else { self.rand.remove(0) }
-        }
         fn gm_8016b238(&mut self) -> bool { self.b238 }
-        fn gm_8016b3a0(&mut self) -> bool { self.b3a0 }
-        fn ground_801c28ac(&mut self, s: StKind, a: i32, out: &mut i32) -> bool {
-            self.calls.push(format!("28AC {s} {a:#x}"));
-            *out = 77;
-            true
-        }
-        fn lbaudioax_80023f28(&mut self, id: i32) { self.calls.push(format!("audio {id}")); }
-        fn ground_801c5a84(&mut self, id: i32) { self.calls.push(format!("5A84 {id}")); }
-        fn ground_801c5aa4(&mut self, b: bool) { self.calls.push(format!("5AA4 {b}")); }
-        fn ground_801c06b8(&mut self, g: GrKind) { self.calls.push(format!("06B8 {g}")); }
-        fn ground_801c0754(&mut self, p: &StageIdPair) { self.calls.push(format!("0754 {} {}", p.grkind, p.stkind)); }
-        fn ground_801c0800(&mut self, p: &StageIdPair) { self.calls.push(format!("0800 {} {}", p.grkind, p.stkind)); }
         fn ground_on_load(&mut self, p: &StageIdPair) { self.calls.push(format!("load {} {}", p.grkind, p.stkind)); }
-        fn ground_801c0fb8(&mut self, p: &StageIdPair) { self.calls.push(format!("0FB8 {} {}", p.grkind, p.stkind)); }
         fn ground_demo_init(&mut self, p: &StageIdPair, a: i32) { self.calls.push(format!("demo {} {} {a}", p.grkind, p.stkind)); }
         fn mex_gr_external_count(&mut self) -> i32 { 0 }
         fn mex_gr_kind_for_ext(&mut self, _: i32) -> i32 { -1 }

@@ -43,7 +43,7 @@ pub mod ext {
     fn HSD_JObjRemoveAnimAll(a0: *mut HSD_JObj);
     fn HSD_JObjReqAnimAll(a0: *mut HSD_JObj, a1: f32);
     fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj) => unsafe { crate::tu::jobj::HSD_JObjSetMtxDirtySub(a0) };
-    fn HSD_MtxGetRotation(a0: *mut c_void, a1: *mut Vec) => unsafe { *(a1 as *mut _) = melee_runtime::tu::mtx::HSD_MtxGetRotation(&*(a0 as *const _)) };
+    fn HSD_MtxGetRotation(a0: *mut c_void, a1: *mut Vec) => unsafe { *(a1 as *mut _) = melee_runtime::tu::mtx::HSD_MtxGetRotation_owned(&*(a0 as *const _)) };
     fn Item_80268B18(a0: *mut SpawnItem) -> *mut HSD_GObj => unsafe { crate::tu::item::Item_80268B18(a0) };
     fn Item_80268E5C(a0: *mut HSD_GObj, a1: i32, a2: u32) => unsafe { crate::tu::item::Item_80268E5C(a0, a1, a2) };
     fn Item_8026A8EC(a0: *mut HSD_GObj) => unsafe { crate::tu::item::Item_8026A8EC(a0) };

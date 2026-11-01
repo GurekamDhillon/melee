@@ -122,6 +122,14 @@ impl Engine {
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
             melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);
             melee_runtime::tu::gobj_native::HSD_RandRenderEnd = Some(melee_runtime::tu::random::global::HSD_RandRenderEnd);
+            // GXProject is pure math whose result reaches the simulation (Camera_LogicToScreen -> the fighters' offscreen flag):
+            // the SDK function, owned by the gx shim.
+            melee_runtime::tu::lbvector::ext::hook::GXProject = Some(|x, y, z, mtx, pm, vp, sx, sy, sz| unsafe {
+                let (a, b, c) = melee_gx::shim::gx_project(x, y, z, &*(mtx as *const [[f32; 4]; 3]), &*(pm as *const [f32; 7]), &*(vp as *const [f32; 6]));
+                *sx = a;
+                *sy = b;
+                *sz = c;
+            });
             melee_modes::tu::gmscene::ext::FRAME_POST = Some(|| unsafe {
                 FRAME_ROW = Some(Engine::compute_row());
                 if CAPTURE_FRAME == RAND_FRAME as i64 { CAPTURED = Some(Engine::capture_now()); }
@@ -297,6 +305,48 @@ impl Engine {
         }
     }
 
+    /// The second pose joint of every part (`parts[i].x4_jobj2`, the blend source tree) as the same 26-word records (zeros when absent).
+    pub fn alt_joint_words(&self, slot: i32) -> Vec<[u32; 26]> {
+        unsafe {
+            let g = melee_fighter::player::get_entity(slot);
+            let mut out = Vec::new();
+            if g.is_null() || (*g).user_data.is_null() {
+                return out;
+            }
+            let fp = &*((*g).user_data as *const melee_types::Fighter);
+            let n = (**melee_fighter::hooks::ft_parts_table().add(fp.kind as usize)).parts_num as usize;
+            for i in 0..n.min(128) {
+                let j = (*fp.parts.add(i)).x4_jobj2;
+                let mut w = [0u32; 26];
+                if !j.is_null() {
+                    let j = &*j;
+                    w[0] = j.flags;
+                    let r = &j.rotate;
+                    for (k, v) in [r.x, r.y, r.z, r.w].iter().enumerate() { w[1 + k] = v.to_bits(); }
+                    for (k, v) in [j.scale.x, j.scale.y, j.scale.z].iter().enumerate() { w[5 + k] = v.to_bits(); }
+                    for (k, v) in [j.translate.x, j.translate.y, j.translate.z].iter().enumerate() { w[8 + k] = v.to_bits(); }
+                    // words 11..: the AObj (curr_frame, rewind_frame, end_frame, framerate, flags) and its first three FObjs
+                    // (time, p0, p1, d0, d1, flags | op_intrp << 8 | fterm << 16): the animation state of the blend tree
+                    if !j.aobj.is_null() {
+                        let a = &*j.aobj;
+                        w[11] = a.curr_frame.to_bits(); w[12] = a.rewind_frame.to_bits(); w[13] = a.end_frame.to_bits(); w[14] = a.framerate.to_bits(); w[15] = a.flags;
+                        let mut fo = a.fobj;
+                        let mut k = 16;
+                        while !fo.is_null() && k + 5 < 26 {
+                            let f = &*fo;
+                            w[k] = f.time.to_bits(); w[k + 1] = f.p0.to_bits(); w[k + 2] = f.p1.to_bits(); w[k + 3] = f.d0.to_bits(); w[k + 4] = f.d1.to_bits();
+                            w[k + 5] = f.flags as u32 | (f.op_intrp as u32) << 8 | (f.fterm as u32) << 16;
+                            k += 6;
+                            fo = f.next;
+                        }
+                    }
+                }
+                out.push(w);
+            }
+            out
+        }
+    }
+
     /// A slot's fighter JObj tree in preorder as `[flags, rot x4, scale x3, translate x3, mtx 3x4]` bit patterns (`melee diff --engine tu`).
     pub fn joint_words(&self, slot: i32) -> Vec<[u32; 26]> {
         unsafe {
@@ -415,6 +465,7 @@ impl Engine {
             return false;
         }
         unsafe { RAND_FRAME = self.frames as i32; }
+        melee_core::ct::DBG_FRAME.store(self.frames as i32, core::sync::atomic::Ordering::Relaxed);
         unsafe { FEED_TICK = self.frames };
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
@@ -437,6 +488,7 @@ pub struct Captured {
     pub row: [u32; 16],
     pub fighters: Vec<(i32, Vec<u8>)>,
     pub joints: Vec<(i32, Vec<[u32; 26]>)>,
+    pub alt: Vec<(i32, Vec<[u32; 26]>)>,
     pub dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
     pub items: Vec<(i32, i32, [f32; 3], [f32; 3])>,
 }
@@ -452,6 +504,7 @@ impl Engine {
             row: unsafe { FRAME_ROW.unwrap_or([0; 16]) },
             fighters,
             joints: (0..2).map(|slot| (slot, e.joint_words(slot))).collect(),
+            alt: (0..2).map(|slot| (slot, e.alt_joint_words(slot))).collect(),
             dyns: (0..2).map(|slot| (slot, e.dyn_words(slot))).collect(),
             items: e.item_rows(),
         }

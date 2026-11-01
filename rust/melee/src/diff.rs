@@ -173,6 +173,7 @@ struct State {
     engine: bool,
     /// Engine only: per slot, the fighter's JObj tree in preorder as `[flags, rot x4, scale x3, translate x3, mtx 3x4]` bit patterns.
     joints: Vec<(i32, Vec<[u32; 26]>)>,
+    alt: Vec<(i32, Vec<[u32; 26]>)>,
     /// Engine only: per slot, the dynamic bone chains (`Engine::dyn_words`).
     dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
 }
@@ -190,6 +191,7 @@ fn capture(sim: &VsMatch, frame: i32) -> State {
         dump: sim.state_dump(),
         engine: false,
         joints: vec![],
+        alt: vec![],
         dyns: vec![],
     }
 }
@@ -214,7 +216,7 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
     if post {
         // SAFETY: single-threaded.
         if let Some(c) = unsafe { (*std::ptr::addr_of_mut!(melee_engine::engine::CAPTURED)).take() } {
-            return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, dyns: c.dyns });
+            return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, alt: c.alt, dyns: c.dyns });
         }
     }
     let r = e.neutral_row();
@@ -226,7 +228,7 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
     }
     let joints = (0..2).map(|slot| (slot, e.joint_words(slot))).collect();
     let dyns = (0..2).map(|slot| (slot, e.dyn_words(slot))).collect();
-    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: e.item_rows(), respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints, dyns })
+    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: e.item_rows(), respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints, alt: (0..2).map(|slot| (slot, e.alt_joint_words(slot))).collect(), dyns })
 }
 
 fn raw<T>(v: &T) -> &[u8] {
@@ -667,6 +669,42 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
                     if c[k] != r[k] {
                         let (cs, rs) = if k == 0 { (format!("{:08x}", c[k]), format!("{:08x}", r[k])) } else { (format!("{} ({:08x})", f32::from_bits(c[k]), c[k]), format!("{} ({:08x})", f32::from_bits(r[k]), r[k])) };
                         push(0, (*slot as u32, (1 << 30) + n as u32 * 32 + k as u32), "JObj", format!("P{} j{n}", slot + 1), (*nm).into(), None, cs, rs);
+                    }
+                }
+            }
+        }
+    }
+    if st.engine {
+        // The second pose joint of every part (`parts[i].x4_jobj2`, the animation blend source).
+        for (slot, ra) in &st.alt {
+            let Some(fp_va) = gobjs.iter().map(|&g| snap.u32(g + 0x2c)).find(|&u| u != 0 && snap.u8(u + pid) as i32 == *slot) else { continue };
+            let parts = snap.u32(fp_va + 0x5e8);
+            let mut names: Vec<String> = ["flags", "rot.x", "rot.y", "rot.z", "rot.w", "scale.x", "scale.y", "scale.z", "trans.x", "trans.y", "trans.z", "aobj.curr_frame", "aobj.rewind_frame", "aobj.end_frame", "aobj.framerate", "aobj.flags"].iter().map(|s| s.to_string()).collect();
+            for f in 0..2 { for nm in ["time", "p0", "p1", "d0", "d1", "flags|op<<8|fterm<<16"] { names.push(format!("fobj{f}.{nm}")); } }
+            for (n, r) in ra.iter().enumerate() {
+                let j = snap.u32(parts + 0x10 * n as u32 + 4);
+                if j == 0 { continue; }
+                let mut c = [0u32; 26];
+                c[0] = snap.u32(j + 0x14);
+                for k in 0..4 { c[1 + k] = snap.u32(j + 0x1C + 4 * k as u32); }
+                for k in 0..3 { c[5 + k] = snap.u32(j + 0x2C + 4 * k as u32); }
+                for k in 0..3 { c[8 + k] = snap.u32(j + 0x38 + 4 * k as u32); }
+                let ao = snap.u32(j + 0x7C);
+                if ao != 0 {
+                    c[11] = snap.u32(ao + 4); c[12] = snap.u32(ao + 8); c[13] = snap.u32(ao + 0xC); c[14] = snap.u32(ao + 0x10); c[15] = snap.u32(ao);
+                    let mut fo = snap.u32(ao + 0x14);
+                    let mut k = 16;
+                    while fo != 0 && k + 5 < 26 {
+                        c[k] = snap.u32(fo + 0x1C); c[k + 1] = snap.u32(fo + 0x20); c[k + 2] = snap.u32(fo + 0x24); c[k + 3] = snap.u32(fo + 0x28); c[k + 4] = snap.u32(fo + 0x2C);
+                        c[k + 5] = snap.u8(fo + 0x10) as u32 | (snap.u8(fo + 0x12) as u32) << 8 | ((snap.u8(fo + 0x1A) as u32) << 8 | snap.u8(fo + 0x1B) as u32) << 16;
+                        fo = snap.u32(fo);
+                        k += 6;
+                    }
+                }
+                for (k, nm) in names.iter().enumerate().take(22) {
+                    if c[k] != r[k] {
+                        let (cs, rs) = if k == 0 || k == 15 || k == 21 { (format!("{:08x}", c[k]), format!("{:08x}", r[k])) } else { (format!("{} ({:08x})", f32::from_bits(c[k]), c[k]), format!("{} ({:08x})", f32::from_bits(r[k]), r[k])) };
+                        push(0, (*slot as u32, (3 << 30) + n as u32 * 32 + k as u32), "JObj2", format!("P{} part{n} x4_jobj2", slot + 1), nm.clone(), None, cs, rs);
                     }
                 }
             }

@@ -49,7 +49,7 @@ pub mod ext {
         ftGw_AttackS4_Enter(g: G) = t!("ftGw_AttackS4_Enter (ftgamewatchattacks4.c)");
         efLib_PauseAll_fn() -> HSD_GObjEvent = || todo!("TODO(port) &efLib_PauseAll (eflib.c)");
         efLib_ResumeAll_fn() -> HSD_GObjEvent = || todo!("TODO(port) &efLib_ResumeAll (eflib.c)");
-        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut ftData_80085FD4_ret = |fp: &mut Fighter, msid: i32| -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
+        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut Fighter_WaitAnimData = |fp: &mut Fighter, msid: i32| -> *mut Fighter_WaitAnimData { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = t!("ftAnim_8006EBA4 (ftanim.c)");
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;

@@ -35,7 +35,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut ftData_80085FD4_ret = |fp: &mut Fighter, msid: i32| -> *mut ftData_80085FD4_ret { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
+        ftData_80085FD4(fp: &mut Fighter, msid: i32) -> *mut Fighter_WaitAnimData = |fp: &mut Fighter, msid: i32| -> *mut Fighter_WaitAnimData { unsafe { crate::tu::ftdata::ftData_80085FD4(fp as _, msid as _) as _ } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;

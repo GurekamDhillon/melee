@@ -42,6 +42,13 @@ pub mod ext {
 
 const F32_MAX: f32 = 3.4028235e38;
 
+/// `info->event_return[i]` without the bounds check: the C array is declared with a made-up size of 3 but the record is 0x24
+/// bytes (the slots run on over `loop_count_dup` / `unk_x18`), and the scripts nest deeper than 3 slots.
+#[inline(always)]
+unsafe fn er(info: *mut CommandInfo, i: usize) -> *mut *mut CmdUnion {
+    ((&raw mut (*info).event_return) as *mut *mut CmdUnion).add(i)
+}
+
 #[inline(always)]
 unsafe fn next_cmd(info: *mut CommandInfo) {
     (*info).anon_8.u = (*info).anon_8.u.add(1);
@@ -72,8 +79,8 @@ pub unsafe extern "C" fn Command_03(info: *mut CommandInfo) {
     melee_core::ct!("Command_03");
     let i = &mut *info;
     let lc = i.loop_count as usize;
-    i.event_return[lc] = i.anon_8.u.add(1);
-    i.event_return[lc + 1] = (*i.anon_8.u).Command_03.value() as usize as *mut CmdUnion;
+    *er(info, lc) = i.anon_8.u.add(1);
+    *er(info, lc + 1) = (*i.anon_8.u).Command_03.value() as usize as *mut CmdUnion;
     i.loop_count += 2;
     next_cmd(info);
 }
@@ -83,10 +90,10 @@ pub unsafe extern "C" fn Command_04(info: *mut CommandInfo) {
     melee_core::ct!("Command_04");
     let i = &mut *info;
     let lc = i.loop_count as usize;
-    let slot = (&raw mut i.event_return[lc - 1]) as *mut u32;
+    let slot = er(info, lc - 1) as *mut u32;
     *slot = (*slot).wrapping_sub(1);
-    if (i.event_return[lc - 1] as usize as u32 as i32) != 0 {
-        i.anon_8.u = i.event_return[lc - 2];
+    if (*er(info, lc - 1) as usize as u32 as i32) != 0 {
+        i.anon_8.u = *er(info, lc - 2);
         return;
     }
     next_cmd(info);
@@ -99,7 +106,7 @@ pub unsafe extern "C" fn Command_05(info: *mut CommandInfo) {
     next_cmd(info);
     let i = &mut *info;
     let lc = i.loop_count as usize;
-    i.event_return[lc] = i.anon_8.u.add(1);
+    *er(info, lc) = i.anon_8.u.add(1);
     i.loop_count += 1;
     i.anon_8.u = u32::from_be((*i.anon_8.u).Command_05.ptr) as usize as *mut CmdUnion; // a 32-bit guest address stored big-endian in the raw stream
 }
@@ -109,7 +116,7 @@ pub unsafe extern "C" fn Command_06(info: *mut CommandInfo) {
     melee_core::ct!("Command_06");
     let i = &mut *info;
     i.loop_count = i.loop_count.wrapping_sub(1);
-    i.anon_8.u = i.event_return[i.loop_count as usize];
+    i.anon_8.u = *er(info, i.loop_count as usize);
 }
 
 /// Goto

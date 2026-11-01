@@ -379,8 +379,8 @@ pub mod ext {
         fn ftColl_8007AF28(g: G) = { unsafe { let _ = crate::ft0df::ftcoll_8007af28(g); } };
         fn DbLevel_at_least_DebugRom() -> bool = { unsafe { crate::platform::DbLevel_at_least_DebugRom() } };
         fn HSD_JObjSetupMatrixSub(j: J) = { unsafe { melee_runtime::tu::jobj::HSD_JObjSetupMatrix(j as _) } };
-        fn HSD_MtxInverse(src: *mut Mtx, dst: *mut Mtx) = { unsafe { let _ = crate::bridge::hsd_mtx_inverse(src, dst); } };
-        fn HSD_MtxSRT(m: *mut Mtx, s: *const Vec3, r: *const Vec3, t: *const Vec3, sc: *const Vec3) = { unsafe { let _ = crate::bridge::hsd_mtx_srt(m, s, r, t, sc); } };
+        fn HSD_MtxInverse(src: *mut Mtx, dst: *mut Mtx) = { unsafe { melee_runtime::tu::mtx::HSD_MtxInverse(src as _, dst as _) } };
+        fn HSD_MtxSRT(m: *mut Mtx, s: *const Vec3, r: *const Vec3, t: *const Vec3, sc: *const Vec3) = { unsafe { melee_runtime::tu::mtx::HSD_MtxSRT(m as _, s as _, r as _, t as _, sc as _) } };
         fn PSMTXConcat(a: *mut Mtx, b: *mut Mtx, ab: *mut Mtx) = { unsafe { let _ = crate::bridge::psmtx_concat(a, b, ab); } };
         fn Replay_Tracing() -> i32 = { unsafe { crate::platform::Replay_Tracing() } };
         fn Replay_TraceFighter(port: i32, fol: i32, ckind: i32, action: i32, x: f32, y: f32, facing: f32, pct: f32, stocks: i32, ax: f32, ay: f32, kx: f32, ky: f32, gx: f32) = { unsafe { let _ = crate::platform::Replay_TraceFighter(port, fol, ckind, action, x, y, facing, pct, stocks, ax, ay, kx, ky, gx); } };

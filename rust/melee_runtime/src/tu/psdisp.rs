@@ -115,7 +115,7 @@ unsafe fn HSD_CObjGetViewingMtx(c: *mut HSD_CObj, m: MP) { ext::HSD_CObjGetViewi
 unsafe fn GXLoadPosMtxImm(m: MP, id: u32) { ext::GXLoadPosMtxImm(m.cast(), id) }
 unsafe fn GXLoadTexMtxImm(m: MP, id: u32, ty: GXTexMtxType) { ext::GXLoadTexMtxImm(m.cast(), id, ty as _) }
 unsafe fn HSD_MtxGetScale(m: MP, v: *mut Vec3) { ext::HSD_MtxGetScale(m.cast(), v.cast()) }
-unsafe fn HSD_MtxSRT(m: MP, s: *mut Vec3, r: *mut Vec3, t: *mut Vec3, p: *mut Vec3) { ext::HSD_MtxSRT(m.cast(), s.cast(), r.cast(), t.cast(), p.cast()) }
+unsafe fn mtx_srt_call(m: MP, s: *mut Vec3, r: *mut Vec3, t: *mut Vec3, p: *mut Vec3) { ext::HSD_MtxSRT(m.cast(), s.cast(), r.cast(), t.cast(), p.cast()) }
 
 pub static mut HSD_PSDisp_803B9628: psdisp_Mtx = psdisp_Mtx {
     mtx: [
@@ -1962,7 +1962,7 @@ pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
                 let mut rotate: *mut Vec3 = &raw mut (*(*pp).appsrt).rot as *mut Vec3;
                 let mut scale: *mut Vec3 = &raw mut (*(*pp).appsrt).scale;
                 let mut mmtx: MtxPtr = &raw mut (*(*pp).appsrt).mmtx as MtxPtr;
-                HSD_MtxSRT(
+                mtx_srt_call(
                     mmtx as *mut [f32; 4],
                     scale,
                     rotate,
@@ -2258,7 +2258,7 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
             let mut rotate: *mut Vec3 = &raw mut (*(*pp).appsrt).rot as *mut Vec3;
             let mut scale: *mut Vec3 = &raw mut (*(*pp).appsrt).scale;
             let mut mmtx: MtxPtr = &raw mut (*(*pp).appsrt).mmtx as MtxPtr;
-            HSD_MtxSRT(
+            mtx_srt_call(
                 mmtx as *mut [f32; 4],
                 scale,
                 rotate,

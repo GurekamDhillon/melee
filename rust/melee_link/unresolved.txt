@@ -2509,6 +2509,9 @@ sigmismatch DevText_Printf melee_items/tu/toy.rs 1
 sigmismatch DevText_Printf melee_items/tu/tydisplay.rs 1
 sigmismatch DevText_Printf melee_items/tu/tyfigupon.rs 1
 sigmismatch HSD_SisLib_803A6B98 melee_items/tu/tylist.rs 1
+skipped ftData_80085FD4 melee_fighter/hooks.rs 1
+skipped ftData_80085FD4 melee_fighter/tu/ftCo_AppealS.rs 0
+skipped ftData_80085FD4 melee_fighter/tu/ftCo_SquatWait.rs 0
 typeclass ftCommon_8007E2A4 melee_fighter/tu/fighter.rs 0
 typeclass ftCommon_8007FF74 melee_fighter/tu/fighter.rs 0
 typeclass ftCommon_8008021C melee_fighter/tu/fighter.rs 0

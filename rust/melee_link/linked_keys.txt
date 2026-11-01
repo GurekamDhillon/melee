@@ -2910,7 +2910,6 @@ tu::ftCo_AppealS::ext::hook::ftDr_Init_80149910
 tu::ftCo_AppealS::ext::hook::lb_8000B1CC
 tu::ftCo_AppealS::ext::hook::lb_800119DC
 tu::ftCo_AppealS::ext::hook::pl_80040120
-tu::ftCo_AppealS::ext::hook::ftData_80085FD4
 tu::ftCo_AppealS::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_AppealS::ext::hook::DbLevel
 tu::ftCo_AppealS::ext::hook::ftPe_Init_8011B93C
@@ -4799,7 +4798,6 @@ tu::ftCo_SquatRv::ext::hook::ft_80084F3C
 tu::ftCo_SquatRv::ext::hook::ft_80083F88
 tu::ftCo_SquatWait::ext::hook::Fighter_ChangeMotionState
 tu::ftCo_SquatWait::ext::hook::ftCo_8008A698
-tu::ftCo_SquatWait::ext::hook::ftData_80085FD4
 tu::ftCo_SquatWait::ext::hook::ftCo_8008A6D8
 tu::ftCo_SquatWait::ext::hook::ftCommon_8007EFC0
 tu::ftCo_SquatWait::ext::hook::ftLk_AttackAir_800EB3BC
@@ -14895,7 +14893,6 @@ hooks::LBAUDIOAX_800264E4
 hooks::LBAUDIOAX_80026510
 hooks::LBAUDIOAX_800265C4
 hooks::FTFX_APPEALS_CHECK_IF_USED
-hooks::FTDATA_80085FD4_X8
 hooks::MPLIB_8004D164_LINE_COUNT
 hooks::MP_LINE_GET_NEXT
 hooks::MP_LINE_GET_PREV

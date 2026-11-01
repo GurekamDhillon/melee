@@ -25,6 +25,9 @@ Overlay_\w+
 Turbo_\w+
 MatchTurbo\w+
 SyncTest_\w+
+# non-wide window content view (the golden runs): aspect 4/3, projection scale 1.0 (gw_view_math.h); logic reads both
+View_AspectBits	0x3faaaaab
+View_ProjectionScaleBits	0x3f800000
 View_\w+
 SceneReport_\w+
 RenderTest_\w+
@@ -46,7 +49,7 @@ CARD\w+	-3
 OSGetTime	crate::seams::os_get_time()
 OSTicksToCalendarTime
 DVDGetDriveStatus
-GX\w+
+GX(?!Project$)\w+
 Wb_RenderOption	[$ARGS][1]
 Wb_\w+
 Fx_\w+

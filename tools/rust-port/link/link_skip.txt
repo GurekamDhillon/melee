@@ -1,0 +1,3 @@
+tu::ftCo_AppealS::ext::hook::ftData_80085FD4 linked to the pointer-returning ftData_80085FD4: the hook reads ->x8 (use ftData_80085FD4_x8)
+tu::ftCo_SquatWait::ext::hook::ftData_80085FD4 same
+hooks::FTDATA_80085FD4_X8 same

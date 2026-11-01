@@ -107,6 +107,7 @@ pub static RENDER_STUB: core::sync::atomic::AtomicBool = core::sync::atomic::Ato
 
 /// Set by `Det_SetInRender` (the C marks the draw callbacks' window with it): the stub answers apply only inside the render pass,
 /// so an unported callee reached from the simulation panics instead of silently returning zero.
+pub static DBG_FRAME: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(-1);
 pub static IN_RENDER: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
 #[inline]

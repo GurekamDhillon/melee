@@ -36,6 +36,11 @@ macro_rules! ef_arg_words {
 
 pub fn install() {
     unsafe {
+        // `ftData_80085FD4(fp, id)->x8`: these hooks read only the size word; the generator would link them to the row-returning function
+        // (non-null is always true). link_skip.txt keeps them out of the table.
+        melee_fighter::hooks::FTDATA_80085FD4_X8 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
+        melee_fighter::tu::ftCo_AppealS::ext::hook::ftData_80085FD4 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
+        melee_fighter::tu::ftCo_SquatWait::ext::hook::ftData_80085FD4 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
         // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice (efsync.c builds its own `Va` from it)
         melee_world::tu::efn::efasync::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { melee_world::tu::efsync::efSync_Spawn(a0, a1, a2) });
         // `&func` hooks: the callback table entries the C stores (`fp->pre_hitlag_cb = efLib_PauseAll`, ...) as extern "C" thunks

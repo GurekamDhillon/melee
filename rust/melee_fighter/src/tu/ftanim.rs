@@ -95,7 +95,7 @@ pub mod ext {
         fn ftParts_8007462C(_g: G) = { unsafe { crate::tu::ftparts::ftParts_8007462C(_g) } };
         fn ftParts_80075240(_d: *mut DObjList, _idx: u16) -> *mut HSD_TObj = { unsafe { crate::tu::ftparts::ftParts_80075240(_d, _idx as i32) } };
         fn ftData_80085E50(_fp: *mut Fighter, _id: i32) -> *mut FigaTree = { unsafe { crate::tu::ftdata::ftData_80085E50(_fp as _, _id as _) as _ } };
-        fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut ftData_80085FD4_ret = { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } };
+        fn ftData_80085FD4(_fp: *mut Fighter, _id: i32) -> *mut Fighter_WaitAnimData = { unsafe { crate::tu::ftdata::ftData_80085FD4(&mut *(_fp as *mut _), _id as _) as _ } };
         fn ftData_UnkCallbackPairs0_x0(_kind: i32) -> Option<unsafe extern "C" fn(G)> = { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x0 } };
         fn ftData_UnkCallbackPairs0_x4(_kind: i32) -> Option<unsafe extern "C" fn(G, i32, f32)> = { unsafe { crate::tu::ftdata::ftData_UnkCallbackPairs0[_kind as usize].x4 } };
         fn costume_matanim(_kind: i32, _costume: u8) -> *mut HSD_MatAnimJoint = { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[_kind as usize].costume_list.add(_costume as usize)).x4 } };
@@ -435,7 +435,7 @@ pub unsafe fn ftAnim_8006EDD0(fp: &mut Fighter, arg1: i32, frame: f32, rate: f32
     ftAnim_80070A10(fp, FtPart_TopN as i32, tree);
     ftAnim_80070710(jobj, frame);
     let r = ext::ftData_80085FD4(fp, arg1);
-    if (*r).x10_b1() != 0 {
+    if ((*r).x10_animCurrFlags as u32 >> 30) & 1 != 0 { // C: x10_b1 = bit 1 of the row's byte at +0x10 (MSB-first), i.e. bit 30 of the big-endian word
         ext::HSD_ForeachAnim_SetLoop(jobj, ANIM_MASK);
     }
     ext::HSD_ForeachAnim_SetRate(jobj, ANIM_MASK, rate);
@@ -451,7 +451,7 @@ pub unsafe fn ftAnim_8006EED4(fp: &mut Fighter, part: i32, tree: *mut FigaTree, 
         ftAnim_8006F954(fp, part, false, tree);
         ftAnim_80070710(j, frame);
         let r = ext::ftData_80085FD4(fp, fp.anim_id);
-        if (*r).x10_b1() != 0 {
+        if ((*r).x10_animCurrFlags as u32 >> 30) & 1 != 0 { // C: x10_b1 = bit 1 of the row's byte at +0x10 (MSB-first), i.e. bit 30 of the big-endian word
             ext::HSD_ForeachAnim_SetLoop(j, ANIM_MASK);
         }
         ext::HSD_ForeachAnim_SetRate(j, ANIM_MASK, speed);

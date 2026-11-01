@@ -36805,7 +36805,7 @@ impl GcLayout for ftMars_SpecialLwVars {
 const _: () = assert!(core::mem::size_of::<ftMars_SpecialLwVars>() == 4);
 
 /// C `ftLk_DatAttrs` (src/melee/ft/kinds/ftLink/types.h:15); GameCube size 0xDC, align 4.
-#[repr(C, align(8))]
+#[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct ftLk_DatAttrs {
     pub x0: f32,
@@ -36836,10 +36836,10 @@ pub struct ftLk_DatAttrs {
     pub x88: i32,
     pub x8C: i32,
     pub x90: i32,
-    pub x94: *mut c_void,
+    pub x94: i32,
     pub x98: i32,
-    pub x9C: *mut c_void,
-    pub xA0: *mut c_void,
+    pub x9C: i32,
+    pub xA0: i32,
     pub xA4: i32,
     pub xA8: i32,
     pub xAC: i32,
@@ -36887,10 +36887,10 @@ impl GcDecode for ftLk_DatAttrs {
         v.x88 = <i32 as GcDecode>::gc_decode(d, at + 0x88);
         v.x8C = <i32 as GcDecode>::gc_decode(d, at + 0x8C);
         v.x90 = <i32 as GcDecode>::gc_decode(d, at + 0x90);
-        v.x94 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x94);
+        v.x94 = <i32 as GcDecode>::gc_decode(d, at + 0x94);
         v.x98 = <i32 as GcDecode>::gc_decode(d, at + 0x98);
-        v.x9C = <*mut c_void as GcDecode>::gc_decode(d, at + 0x9C);
-        v.xA0 = <*mut c_void as GcDecode>::gc_decode(d, at + 0xA0);
+        v.x9C = <i32 as GcDecode>::gc_decode(d, at + 0x9C);
+        v.xA0 = <i32 as GcDecode>::gc_decode(d, at + 0xA0);
         v.xA4 = <i32 as GcDecode>::gc_decode(d, at + 0xA4);
         v.xA8 = <i32 as GcDecode>::gc_decode(d, at + 0xA8);
         v.xAC = <i32 as GcDecode>::gc_decode(d, at + 0xAC);
@@ -36938,10 +36938,10 @@ impl GcLayout for ftLk_DatAttrs {
         GcField::new("x88", 0x88, 4, "s32"),
         GcField::new("x8C", 0x8C, 4, "s32"),
         GcField::new("x90", 0x90, 4, "s32"),
-        GcField::new("x94", 0x94, 4, "void *"),
+        GcField::new("x94", 0x94, 4, "s32"),
         GcField::new("x98", 0x98, 4, "s32"),
-        GcField::new("x9C", 0x9C, 4, "void *"),
-        GcField::new("xA0", 0xA0, 4, "void *"),
+        GcField::new("x9C", 0x9C, 4, "s32"),
+        GcField::new("xA0", 0xA0, 4, "s32"),
         GcField::new("xA4", 0xA4, 4, "int"),
         GcField::new("xA8", 0xA8, 4, "s32"),
         GcField::new("xAC", 0xAC, 4, "int"),
@@ -36954,7 +36954,7 @@ impl GcLayout for ftLk_DatAttrs {
         GcField::new("xD8", 0xD8, 4, "float"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftLk_DatAttrs>() == 240);
+const _: () = assert!(core::mem::size_of::<ftLk_DatAttrs>() == 220);
 
 /// C `ftLk_FighterVars` (src/melee/ft/kinds/ftLink/types.h:60); GameCube size 0x20, align 4.
 #[repr(C, align(8))]

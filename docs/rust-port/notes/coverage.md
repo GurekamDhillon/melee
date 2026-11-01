@@ -52,114 +52,113 @@ No OS input, no focus: pad scripts (Lua, `tools/rust-port/golden/coverage/pads/`
 
 `melee golden --engine tu --scenario NAME` accepts every scenario of `docs/rust-port/golden/coverage/scenarios.tsv` (generated from scenarios.json by `tools/rust-port/golden/coverage/gen_tsv.py`). Wired: VS-mode scenarios with the idle pad script (scene strings with `ck:N`, `ext:N` stage ids, `cpuN`/`human`/`idle`); not wired: 1p modes (adventure/classic/allstar/targettest: the engine boots VS matches only), VS scenarios whose pad is a Lua script (`rand_s*`, `randabs_*`, kirby/zelda_sheik: needs a Lua pad host in the engine), scenes with `stocks=`/`teams=`/team suffixes. Runner: `bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out R.tsv] --all|NAME...` (headless, unfocused; per scenario it finds the number of `MELEE_ENGINE_PRE_DRAWS` 0..3 that makes frame 0..1 match, since the BGM-pick/stage-init HSD_Rand draws are still dummies; the chosen N shows in the detail; `MELEE_EXE=path` runs a copy of the exe so the build tree stays free).
 
-Result over all 168 scenarios: **28 pass, 51 fail, 79 not wired, 10 no golden** (was 12 pass / 67 fail before the covfix rounds; the wired total is 79). 'First divergent frame' = number of leading rows that matched (the engine and the golden disagree, or the engine died, at that frame; engine deaths at load show 0).
+Result over all 168 scenarios: **34 pass, 45 fail, 79 not wired, 10 no golden** (was 12 pass / 67 fail before the covfix rounds, 28 after round 1; the wired total is 79). 'First divergent frame' = number of leading rows that matched (the engine and the golden disagree, or the engine died, at that frame; engine deaths at load show 0).
 
 | class | scenarios |
 |---|---|
 | not wired: 1p mode | 65 |
-| pass | 28 |
+| pass | 34 |
+| hash divergence (hash, seed) | 14 |
 | not wired: Lua pad | 14 |
-| hash divergence (hash, seed) | 12 |
-| engine crashed (access violation) mid-match | 10 |
 | no golden (C failed/blocked) | 10 |
+| hash divergence (hash, s2) | 6 |
 | hash divergence (hash, s0) | 5 |
-| hash divergence (hash, s2) | 5 |
-| hash divergence (hash, items, itemsum) | 4 |
+| hash divergence (hash, itemsum) | 5 |
 | hash divergence (hash, seed, items, itemsum, s0, s2) | 3 |
-| hash divergence (hash, itemsum) | 3 |
-| engine panic: lbArchiveRelocate (Ice Climbers shared figatree copy) | 3 |
+| hash divergence (hash, items, itemsum) | 3 |
+| engine crashed (access violation) mid-match | 2 |
+| hash divergence (hash, s0, s2) | 2 |
 | hash divergence (hash, seed, s2) | 1 |
-| engine panic: granime.rs:92 HSD_JObjResetRST is not ported (pointer form missing) | 1 |
-| hash divergence (hash, s0, s2) | 1 |
-| engine panic: pobj.rs:204 envelope joint assertion | 1 |
+| engine panic: granime.rs:92 TODO: HSD_JObjResetRST is not ported | 1 |
+| engine panic: pobj.rs:204 assertion failed: !(*e).jobj.is_null() | 1 |
 | hash divergence (hash, itemsum, s0, s2) | 1 |
 | hash divergence (hash, seed, items, itemsum, s2) | 1 |
 
 | scenario | status | first divergent frame | class |
 |---|---|---|---|
-| char_gaw | FAIL | 207 | engine crashed (access violation) mid-match |
+| char_gaw | FAIL | 1567 | hash divergence (hash, seed) |
 | char_kirby | FAIL | 755 | hash divergence (hash, s0) |
 | char_bowser | FAIL | 4 | hash divergence (hash, seed) |
 | char_captain | FAIL | 3502 | hash divergence (hash, s2) |
-| char_dk | PASS | 3601 | pass |
+| char_dk | PASS | - | pass |
 | char_link | FAIL | 167 | hash divergence (hash, seed, items, itemsum, s0, s2) |
-| char_luigi | PASS | 3601 | pass |
-| char_fox | PASS | 3601 | pass |
+| char_luigi | PASS | - | pass |
+| char_fox | PASS | - | pass |
 | char_mewtwo | FAIL | 2116 | hash divergence (hash, itemsum) |
 | char_marth | FAIL | 3303 | hash divergence (hash, seed) |
 | char_ness | FAIL | 4 | hash divergence (hash, seed) |
-| char_icies | FAIL | 5 | engine panic: lbArchiveRelocate (Ice Climbers shared figatree copy) |
-| char_pikachu | PASS | 3601 | pass |
+| char_icies | PASS | - | pass |
+| char_pikachu | PASS | - | pass |
 | char_peach | FAIL | 191 | hash divergence (hash, items, itemsum) |
-| char_samus | PASS | 3601 | pass |
+| char_samus | PASS | - | pass |
 | char_jigglypuff | FAIL | 3498 | hash divergence (hash, seed) |
 | char_mario | FAIL | 455 | hash divergence (hash, itemsum) |
 | char_yoshi | FAIL | 4 | hash divergence (hash, seed) |
-| char_falco | FAIL | 137 | engine crashed (access violation) mid-match |
+| char_falco | PASS | - | pass |
 | char_younglink | FAIL | 531 | hash divergence (hash, items, itemsum) |
 | char_zelda | FAIL | 2446 | hash divergence (hash, seed, s2) |
-| char_sheik | PASS | 3601 | pass |
-| char_pichu | FAIL | 817 | engine crashed (access violation) mid-match |
+| char_sheik | PASS | - | pass |
+| char_pichu | PASS | - | pass |
 | zelda_sheik_transform | NOT_WIRED | - | not wired: Lua pad |
 | kirby_copy_a | NOT_WIRED | - | not wired: Lua pad |
 | kirby_copy_b | NOT_WIRED | - | not wired: Lua pad |
 | ic_vs_fox_human | NOT_WIRED | - | not wired: Lua pad |
 | char_roy | FAIL | 4 | hash divergence (hash, seed) |
-| char_ganondorf | PASS | 3601 | pass |
+| char_ganondorf | PASS | - | pass |
 | sheik_cpu_vs_zelda_cpu | FAIL | 442 | hash divergence (hash, s2) |
-| stage_04_castle | FAIL | 397 | engine panic: granime.rs:92 HSD_JObjResetRST is not ported (pointer form missing) |
+| stage_04_castle | FAIL | 397 | engine panic: granime.rs:92 TODO: HSD_JObjResetRST is not ported |
 | stage_02_fountain | FAIL | 4 | hash divergence (hash, seed) |
 | stage_03_stadium | FAIL | 725 | hash divergence (hash, seed) |
 | stage_07_corneria | FAIL | 0 | engine crashed (access violation) mid-match |
-| char_drmario | PASS | 3601 | pass |
+| char_drmario | PASS | - | pass |
 | stage_06_brinstar | FAIL | 0 | hash divergence (hash, s0, s2) |
-| stage_08_yoshistory | FAIL | 448 | engine panic: pobj.rs:204 envelope joint assertion |
+| stage_08_yoshistory | FAIL | 448 | engine panic: pobj.rs:204 assertion failed: !(*e).jobj.is_null() |
 | stage_11_rainbowcruise | FAIL | 177 | hash divergence (hash, s2) |
 | stage_10_mutecity | FAIL | 1 | hash divergence (hash, seed) |
 | stage_05_jungle | FAIL | 0 | hash divergence (hash, s2) |
 | stage_09_onett | FAIL | 2373 | hash divergence (hash, s0) |
-| stage_13_greatbay | FAIL | 10 | engine panic: lbArchiveRelocate (Ice Climbers shared figatree copy) |
-| stage_15_kraid | FAIL | 723 | engine crashed (access violation) mid-match |
-| stage_16_yoshiisland | FAIL | 114 | engine crashed (access violation) mid-match |
-| stage_14_temple | FAIL | 1579 | engine crashed (access violation) mid-match |
-| stage_12_garden | PASS | 3601 | pass |
-| stage_20_mushroomkingdom2 | FAIL | 166 | hash divergence (hash, items, itemsum) |
+| stage_13_greatbay | FAIL | 1623 | hash divergence (hash, itemsum) |
+| stage_15_kraid | PASS | - | pass |
+| stage_16_yoshiisland | PASS | - | pass |
+| stage_14_temple | FAIL | 2477 | hash divergence (hash, itemsum) |
+| stage_12_garden | PASS | - | pass |
+| stage_20_mushroomkingdom2 | FAIL | 786 | hash divergence (hash, seed) |
 | stage_21_akaneia | NO_GOLDEN | - | no golden (C failed/blocked) |
 | stage_18_fourside | FAIL | 1334 | hash divergence (hash, s2) |
 | stage_19_mushroomkingdom | FAIL | 256 | hash divergence (hash, s0) |
-| stage_17_greens | PASS | 3601 | pass |
-| stage_22_venom | FAIL | 1 | engine crashed (access violation) mid-match |
+| stage_17_greens | PASS | - | pass |
+| stage_22_venom | FAIL | 19 | hash divergence (hash, s0, s2) |
 | stage_26_icetop | NO_GOLDEN | - | no golden (C failed/blocked) |
-| stage_23_pokefloats | PASS | 3601 | pass |
-| stage_24_bigblue | PASS | 3601 | pass |
+| stage_23_pokefloats | PASS | - | pass |
+| stage_24_bigblue | PASS | - | pass |
 | stage_25_icemt | FAIL | 86 | hash divergence (hash, itemsum, s0, s2) |
 | stage_27_flatzone | FAIL | 256 | hash divergence (hash, items, itemsum) |
 | stage_30_kongojungle64 | FAIL | 97 | hash divergence (hash, seed, items, itemsum, s2) |
-| stage_28_dreamland64 | PASS | 3601 | pass |
+| stage_28_dreamland64 | PASS | - | pass |
 | stage_29_yoshistory64 | FAIL | 2959 | hash divergence (hash, s0) |
-| items_hi_finaldestination | FAIL | 10 | engine panic: lbArchiveRelocate (Ice Climbers shared figatree copy) |
-| stage_32_finaldestination | PASS | 3601 | pass |
-| stage_31_battlefield | PASS | 3601 | pass |
-| items_hi_battlefield | PASS | 3601 | pass |
-| items_hi_dreamland64 | FAIL | 188 | engine crashed (access violation) mid-match |
+| items_hi_finaldestination | PASS | - | pass |
+| stage_32_finaldestination | PASS | - | pass |
+| stage_31_battlefield | PASS | - | pass |
+| items_hi_battlefield | PASS | - | pass |
+| items_hi_dreamland64 | FAIL | 2763 | engine crashed (access violation) mid-match |
 | items_hi_yoshistory | FAIL | 2805 | hash divergence (hash, s0) |
 | items_hi_human_bf | NOT_WIRED | - | not wired: Lua pad |
 | items_hi_stadium | FAIL | 2092 | hash divergence (hash, seed) |
-| items_hi_4p_ffa | PASS | 3601 | pass |
-| items_low_fd | PASS | 3601 | pass |
-| items_off_fd | PASS | 3601 | pass |
-| cpulv1_marth_sheik | PASS | 3601 | pass |
-| cpulv1_fox_falco | PASS | 3601 | pass |
-| cpulv1_ganon_peach | PASS | 3601 | pass |
+| items_hi_4p_ffa | PASS | - | pass |
+| items_low_fd | PASS | - | pass |
+| items_off_fd | PASS | - | pass |
+| cpulv1_marth_sheik | PASS | - | pass |
+| cpulv1_fox_falco | PASS | - | pass |
+| cpulv1_ganon_peach | PASS | - | pass |
 | items_off_4p_ps | FAIL | 725 | hash divergence (hash, seed) |
 | cpulv1_puff_link | FAIL | 1674 | hash divergence (hash, seed) |
-| cpulv5_fox_falco | PASS | 3601 | pass |
-| cpulv5_ganon_peach | PASS | 3601 | pass |
-| cpulv5_marth_sheik | PASS | 3601 | pass |
+| cpulv5_fox_falco | PASS | - | pass |
+| cpulv5_ganon_peach | PASS | - | pass |
+| cpulv5_marth_sheik | PASS | - | pass |
 | cpulv5_puff_link | FAIL | 455 | hash divergence (hash, seed, items, itemsum, s0, s2) |
 | cpulv9_marth_sheik | FAIL | 1798 | hash divergence (hash, itemsum) |
-| cpulv9_fox_falco | PASS | 3601 | pass |
-| cpu_ffa4_levels | FAIL | 110 | engine crashed (access violation) mid-match |
+| cpulv9_fox_falco | PASS | - | pass |
+| cpu_ffa4_levels | FAIL | 120 | hash divergence (hash, s2) |
 | cpu_teams4 | NOT_WIRED | - | not wired: 1p mode |
 | cpu_stock2_fd | NOT_WIRED | - | not wired: 1p mode |
 | cpu_stock1_bf | NOT_WIRED | - | not wired: 1p mode |
@@ -243,8 +242,8 @@ Result over all 168 scenarios: **28 pass, 51 fail, 79 not wired, 10 no golden** 
 | multiman_endless | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_cruel | NO_GOLDEN | - | no golden (C failed/blocked) |
 | event_match | NO_GOLDEN | - | no golden (C failed/blocked) |
-| cpu_mixed_1_9 | PASS | 3601 | pass |
-| cpulv9_ganon_peach | PASS | 3601 | pass |
+| cpu_mixed_1_9 | PASS | - | pass |
+| cpulv9_ganon_peach | PASS | - | pass |
 
 Notes on the classes (covfix rounds, 2026-11-01; what was fixed and what is left):
 - **fixed: stage archive symbols** (`dat_symbols.tsv`): `_image_desc` -> HSD_ImageDesc (Fountain mirror, Stadium BG), `dynamicsdata_*` -> DynamicsDesc (Castle flags, Rainbow Cruise ship), `ftDataKirbyCopy*` -> KirbyHatStruct, `SIS_*` -> the new `custom:sis` table (words 0/1 typed kerning/textures, the rest raw string pointers; Stadium text `HSD_SisLib_803A660C` read garbage before). `yakumono_param` stays `custom:rawwords` (a regenerated `dat_types.rs` had silently reverted it to raw).
@@ -254,8 +253,17 @@ Notes on the classes (covfix rounds, 2026-11-01; what was fixed and what is left
 - **fixed: s16 / u8 packed `yakumono_param`** (Stadium, Fourside, Old Pupupu, Old Yoshi): the blind 32-bit word swap exchanged the halves of every s16 pair; `tools/rust-port/engine/gen_yakumono.py` generates per-field widths (`yakumono_layouts.rs`) from the stage TUs' structs. The other stage records with s16 fields also hold pointers (Castle, Corneria, Mute City, Kongo, Ice Mt, Inishie, Venom, Zebes, Big Blue): each still needs a typed decode, and they are the likely cause of several early `hash` divergences above.
 - *left: Fountain (stage_02, char_ness / yoshi / roy / bowser) diverges at frame 4*: the Rust particle system makes 90 draws against the C's 46 at match frame 4 (extra live generators after `grIzumi_801CC358`); the BGM-pick dummy draw is not the cause (pre=0 matches frames 0..3). Start from `MELEE_RAND_TRACE` on both sides (`rand_resolve.py` on the C trace of the cov-trace exe).
 - *left: Stadium (stage_03 and 8 more) diverges at 725*: the Display proc re-enters `grStadium_801D2A60` one frame after the pick, so `xE0` is not set the way the C sets it (the yakumono values now match the DAT bytes; look at the `grStadium_801D2528` case selection).
-- *left: Ice Climbers (char_icies, stage_13_greatbay, items_hi_finaldestination)*: `lbArchiveRelocate error` in `load_figatree`: Popo / Nana copy the partner's raw animation block and relocate it, but the engine keeps decoded native FigaTrees.
 - *left: Corneria (stage_07)*: `GObj_Create` returns NULL once 512 retail-capture owned gobjs exist (`ScriptGame_StageSlotCanCreate`, `script_retail_owned`), 5 frames in.
 - *left: Castle needs the pointer form of `HSD_JObjResetRST`* (only the generic `JObjTree` version exists; a second body would add a lint violation, so it was not added); Yoshi's Story (stage_08) hits a pobj envelope assertion; Rainbow Cruise reaches 177 and dies in `Item_80267AA8`.
 - *left: item hash divergences* (char_link 167 arrow, char_peach 191, char_mario 455, stage_20 166, stage_25 86 ...): the `items` / `itemsum` columns point at item code; call-trace the first divergent item function (needs a C trace build with `MELEE_CALLTRACE_SEQ`; the cov-trace exe only logs first calls).
 - Scenarios that pass need pre-draws 0 or 1 as listed in the run detail; the BGM pick on non-FD/BF stages is a separate draw gap.
+
+
+Round 2 (covfix, 28 -> 34 of the 79 wired; gate and the 4 goldens green, lint unchanged at 398):
+- *Game & Watch article attributes* (crashes in `it_8026EECC`, char_falco / char_gaw / items_hi_dreamland64 / stage_16): word 0 of every G&W special-attribute block is a relocated pointer to an `it_266F_ItemVars` record (`it_8027CE64` stores it in `xDD4`, the item draw reads `x0/x4/x8/xC` through it). The word-swapped 4-byte copy made `*attributes` an 8-byte junk value. `dat_custom::gw_article_attrs` now rebuilds the block as `[native ptr][remaining words, swapped]` (the layout of the native `itGamewatchchefAttributes` ...) and swaps it in with the typed articles.
+- *Link-cast class "gobj passed as `&Fighter`"* (26 functions): chara tu bodies for `ftKp_SpecialS_80132DC0..E20` (Bowser capture getters), the G&W `*_ItemCheck*Remove`, `ftPe_SpecialN_IsActive`, `ftSk_SpecialS_80110F58/64`, `ftYs_SpecialN_GetDatAttr*/GetFacingDir/SetupItemVel`, `ftKb_SpecialNGw_8010D160` took `&Fighter` where the C takes the fighter gobj; the link `cast` transmuted the gobj pointer, so they read garbage (cpu_ffa4_levels crash at 110 -> 120, G&W item removal). They now take `*mut HSD_GObj` like the C. Check: `python tools/rust-port/golden/coverage/scan_gobj_refs.py` (a regex over the `gen_table.rs` hooks against the C definition's parameter types; prints 0 now).
+- *Union-view pointer width* (venom, Pikachu / Pichu): the C writes one `Ground` / `mv` union view and reads another assuming 4-byte pointers. `grvenom` stored the frame float `u.venom.xE4` over the upper half of `u.venom2.xD4` (now kept after `venom2.xE0_state`); `ftPk_SpecialLw_Enter/AirEnter` set the thunder pointer through `specialhi.x0/x4` (4-byte ints) while Thunder reads it as an 8-byte `speciallw.x0` (0x1_0000_0000 crash, also took Kraid, Temple's Sheik chain was a separate table).
+- *Sheik `x48_items[4|5]`* are `HSD_Joint**` tables (`ftSk_SpecialS_80110610`), decoded in `dat_custom` (`rtable::<HSD_Joint>`): Temple no longer dies at 1579.
+- *Ice Climbers*: `load_figatree` parses the file again instead of memcpy + `lbArchiveRelocate` over decoded native objects (char_icies passes; stage_13 and items_hi_FD run on; the Star Rod / Lipstick swing `ftCo_800CD2C4` / `efAsync_Spawn` stubs are wired).
+- *left: Fountain (round 2 narrowed it)*: the extra 44 draws at match frame 4 are the four generators (`idnum` 267-270, bank 30 idx 30000..30003, `kind 0x8000100`, `random -1`, `count 0`) that the stage animation's DPtcl event (`efLib_Cb_DPtcl` -> `grLib_801C99C0` -> `hsd_8039EFAC`, from `Ground_801C1CD0` -> `HSD_JObjAnimAll`) creates at frame 4 and that `efLib_particles_proc_main` runs in the same frame (each: count += 1 -> `hsd_8039DAD4` -> about 11 `HSD_Randf`). The C draws 46 at frame 4 (like frame 3) and 34 at 5 (Rust 54), so either that event fires on another frame in the C (animation start / rate of the stage gobj) or the generators are processed a frame later and with fewer draws. Needs a C call trace with `MELEE_CALLTRACE_SEQ` (the shared `cov-trace` / `covfix-ct` exes predate it; the C trace build in `_build/agents/consol-trace` is stale).
+- *left: Mario 455 / Mushroom Kingdom II / Great Bay 1623 / Temple 2477 / G&W 1567 (itemsum)*: Yoshi's Down-B stars (`It_Kind_Yoshi_Star`, kind 88) spawn at 455 in char_mario; fighters still equal, one item's pos / vel / msid differs. Not yet traced.

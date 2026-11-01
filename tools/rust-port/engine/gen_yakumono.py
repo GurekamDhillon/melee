@@ -14,7 +14,7 @@ import re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 SRC = ROOT / "rust/melee_world/src/tu"
 OUT = ROOT / "rust/melee_engine/src/yakumono_layouts.rs"
-W = {"i8": 1, "u8": 1, "i16": 2, "u16": 2, "i32": 4, "u32": 4, "f32": 4}
+W = {"s8": 1, "s16": 2, "s32": 4, "i8": 1, "u8": 1, "i16": 2, "u16": 2, "i32": 4, "u32": 4, "f32": 4}
 # pointer fields: the GameCube record holds a 4-byte relocated pointer, the native struct an 8-byte one. The kind says how the
 # engine builds the native pointer: 1 = address in the raw big-endian image (colour-overlay / command streams the lb code reads
 # as bytes), 2 = decoded DynamicsDesc, 3 = decoded s16 array.
@@ -38,9 +38,9 @@ def parse(body, depth=0):
     coff, roff, fields, cmax, rmax = 0, 0, [], 1, 1
     for m in re.finditer(r"pub\s+(\w+)\s*:\s*([^,\n]+),", body):
         ty = m.group(2).strip()
-        am = re.fullmatch(r"\[\s*(\w+)\s*;\s*(0x[0-9a-fA-F]+|\d+)\s*\]", ty)
+        am = re.fullmatch(r"\[\s*(\w+)\s*;\s*([0-9a-fA-Fx +*-]+)\s*\]", ty)
         if am:
-            ety, n = am.group(1), int(am.group(2), 0)
+            ety, n = am.group(1), int(eval(am.group(2), {"__builtins__": {}}))
         elif re.match(r"\[", ty):
             return None
         else:

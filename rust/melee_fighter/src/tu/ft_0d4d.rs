@@ -89,9 +89,9 @@ pub mod ext {
         fn Player_GetEntityAtIndex(_a0: i32, _a1: i32) -> *mut core::ffi::c_void = { unsafe { (crate::player::get_entity_at_index(_a0 as _, _a1 as _)) as _ } };
         fn Player_GetSomePos(_a0: i32, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::player::get_some_pos(_a0 as _); } };
         fn Player_GetSpawnPlatformPos(_a0: i32, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::player::get_spawn_platform_pos(_a0 as _); } };
-        fn Player_GetUnk9C(_a0: i32) -> i32 = { unsafe { (crate::player::get_unk9c(_a0 as _)) as _ } };
-        fn Player_SetCoins(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::set_coins(_a0 as _, _a1 as _); } };
-        fn Player_SetUnk9C(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::set_unk9c(_a0 as _, _a1 as _); } };
+        fn Player_GetUnk9C(_a0: i32) -> i32 = { crate::tu::player::Player_GetUnk9C(_a0) };
+        fn Player_SetCoins(_a0: i32, _a1: i32) = { crate::tu::player::Player_SetCoins(_a0, _a1) };
+        fn Player_SetUnk9C(_a0: i32, _a1: i32) = { crate::tu::player::Player_SetUnk9C(_a0, _a1) };
         fn ftCo_800D331C(_a0: *mut core::ffi::c_void) = { unsafe { let _ = ftCo_800D331C(_a0 as _); } };
         fn ftCommon_8007D5D4(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(&mut *(_a0 as *mut Fighter)); } };
         fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };

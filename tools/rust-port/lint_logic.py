@@ -27,7 +27,7 @@ from collections import defaultdict, Counter
 REPO = Path(__file__).resolve().parents[2]
 ALLOW = REPO / 'tools/rust-port/lint_allow.txt'
 BASE = REPO / 'tools/rust-port/lint_baseline.txt'
-SEAMS = ('lbAudioAx_', 'HSD_DVD', 'DVDRead', 'DVDOpen', 'GXDraw', 'GX', 'OSReport', 'ScriptGame_', 'Mex_', 'Geno_', 'OS')
+SEAMS = ('lbAudioAx_', 'HSD_DVD', 'DVDRead', 'DVDOpen', 'GXDraw', 'GX', 'OSReport', 'ScriptGame_', 'Mex_', 'Geno_', 'OS', 'Replay_', 'SceneLaunch_', 'ftUcf_', 'diag_')
 KW = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'else', 'do', 'defined', 'main'}  # `main`: the program entry points of tools / tests, not game logic
 
 
@@ -190,7 +190,7 @@ def scan(pats):
                 if not m2:
                     continue
                 name, rhs = m2.group(1), m2.group(2).strip()
-                if name.startswith(SEAMS) or 'todo!(' in rhs or 'unimplemented!(' in rhs:
+                if name.startswith(SEAMS) or 'todo!(' in rhs or 'unimplemented!(' in rhs or re.match(r't!\("', rhs):
                     continue
                 if re.fullmatch(r'[\w:]+', rhs):
                     continue

@@ -71,6 +71,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--crate', required=True)
 ap.add_argument('--files')
 ap.add_argument('--dry', action='store_true')
+ap.add_argument('--tu', action='store_true', help='process the tu files named by --files (R3: a C-named fn in a tu file of another stem)')
 ap.add_argument('--skip', default='')
 a = ap.parse_args()
 sys.argv = sys.argv_saved
@@ -117,7 +118,9 @@ files = []
 for dp, dn, fs in os.walk(root):
     rel = os.path.relpath(dp, root).replace(os.sep, '/')
     top = rel.split('/')[0]
-    if top in ('tu', 'raw', 'c2r', 'types_gen'):
+    if top in ('tu', 'raw', 'c2r', 'types_gen') and not (a.tu and top == 'tu'):
+        continue
+    if a.tu and top != 'tu':
         continue
     for f in fs:
         if not f.endswith('.rs') or f in ('lib.rs', 'gen.rs'):
@@ -132,6 +135,12 @@ for dp, dn, fs in os.walk(root):
         files.append(os.path.join(dp, f))
 
 moved = 0
+SRC_STEM = ''
+R3SET = set()
+if a.tu:
+    for r_, p_, n_ in lint.violations(pats)[0]:
+        if r_ == 'R3':
+            R3SET.add((os.path.basename(p_)[:-3], n_))
 
 
 def process(sp, items, modpath, parentpath, modname):
@@ -142,6 +151,8 @@ def process(sp, items, modpath, parentpath, modname):
             continue
         if it[3].lower() not in cidx:
             continue
+        if a.tu and (SRC_STEM, it[3]) not in R3SET:
+            continue
         # skip trivial / declaration bodies
         b = lint.body_of(it[4], it[4].index('fn ' + it[3]))
         if b is None or lint.trivial(it[4][b[0] + 1:b[1]]):
@@ -151,7 +162,7 @@ def process(sp, items, modpath, parentpath, modname):
         return None
     groups = {}
     for it in sel:
-        cname, stem = cidx[it[3].lower()]
+        cname, stem = cidx[it[3].lower()][:2]
         key = tu_names.get(stem.lower())
         if key is None:
             key = stem.lower()
@@ -175,7 +186,7 @@ def process(sp, items, modpath, parentpath, modname):
         for it in its:
             n = it[3]
             new = n
-            if n in tu_defined or re.search(r'\bfn\s+' + re.escape(n) + r'\b', tu):
+            if (n in tu_defined and not a.tu) or re.search(r'\bfn\s+' + re.escape(n) + r'\b', tu):
                 new = n + '_fp'
                 while re.search(r'\bfn\s+' + re.escape(new) + r'\b', tu) or any(v[1] == new and v[0] == key for v in ren.values()):
                     new += '2'
@@ -300,6 +311,7 @@ stems_lc = {v[1].lower() for v in cidx.values()}
 for sp in sorted(files):
     s = load(sp)
     modname0 = os.path.splitext(os.path.basename(sp))[0]
+    SRC_STEM = modname0
     relp = os.path.relpath(sp, root).replace(os.sep, '/')[:-3].split('/')
     if relp[-1] == 'mod':
         relp = relp[:-1]

@@ -78,18 +78,18 @@ pub mod ext {
     ext_fns! {
         fn Player_GetMoreFlagsBit5(_a0: i32) -> i32 = { crate::player::get_more_flags_bit5(_a0) as i32 };
         fn Player_GetStocks(_a0: i32) -> i32 = { crate::stale::stocks(_a0) as i32 };
-        fn plStale_ResetStaleMoveTableForPlayer(_a0: i32) = { crate::stale::reset_stale_move_table(_a0) };
+        fn plStale_ResetStaleMoveTableForPlayer(_a0: i32) = { crate::tu::plstale::plStale_ResetStaleMoveTableForPlayer(_a0) };
         fn lbVector_Lerp(_a: *mut core::ffi::c_void, _b: *mut core::ffi::c_void, _out: *mut core::ffi::c_void, _t: f32) = { unsafe { let r = melee_runtime::lbvector::lerp(&super::to_rt(&*(_a as *const Vec3)), &super::to_rt(&*(_b as *const Vec3)), _t); *(_out as *mut Vec3) = Vec3 { x: r.x, y: r.y, z: r.z }; } };
         fn lbVector_Add(_a: *mut core::ffi::c_void, _b: *mut core::ffi::c_void) = { unsafe { let a = &mut *(_a as *mut Vec3); let b = &*(_b as *const Vec3); a.x += b.x; a.y += b.y; a.z += b.z; } };
         fn ftCommon_Fall(_fp: *mut core::ffi::c_void, _a: f32, _b: f32) = { unsafe { crate::ftcommon::fall(&mut *(_fp as *mut Fighter), _a, _b) } };
         fn Fighter_ChangeMotionState(_a0: *mut core::ffi::c_void, _a1: i32, _a2: u32, _a3: f32, _a4: f32, _a5: f32, _a6: *mut core::ffi::c_void) = { unsafe { let _ = super::super::ft_0d4d::ext::Fighter_ChangeMotionState(_a0 as _, _a1 as _, _a2 as _, _a3 as _, _a4 as _, _a5 as _, _a6 as _); } };
         fn Player_GetEntity(_a0: i32) -> *mut core::ffi::c_void = { unsafe { (crate::player::get_entity(_a0 as _)) as _ } };
-        fn Player_GetFallsByIndex(_a0: i32, _a1: i32) -> i32 = { unsafe { (crate::player::get_falls_by_index(_a0 as _, _a1 as _)) as _ } };
-        fn Player_GetUnk45(_a0: i32) -> u32 = { unsafe { (crate::player::get_unk45(_a0 as _)) as _ } };
-        fn Player_IncSelfDestructs(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::inc_self_destructs(_a0 as _, _a1 as _); } };
-        fn Player_LoseStock(_a0: i32) = { unsafe { let _ = crate::player::lose_stock(_a0 as _); } };
-        fn Player_SetFallsByIndex(_a0: i32, _a1: i32, _a2: i32) = { unsafe { let _ = crate::player::set_falls_by_index(_a0 as _, _a1 as _, _a2 as _); } };
-        fn Player_SetHPByIndex(_a0: i32, _a1: i32, _a2: i32) = { unsafe { let _ = crate::player::set_hp_by_index(_a0 as _, _a1 as _, _a2 as _); } };
+        fn Player_GetFallsByIndex(_a0: i32, _a1: i32) -> i32 = { crate::tu::player::Player_GetFallsByIndex(_a0, _a1) };
+        fn Player_GetUnk45(_a0: i32) -> u32 = { crate::tu::player::Player_GetUnk45(_a0) };
+        fn Player_IncSelfDestructs(_a0: i32, _a1: i32) = { crate::tu::player::Player_IncSelfDestructs(_a0, _a1) };
+        fn Player_LoseStock(_a0: i32) = { crate::tu::player::Player_LoseStock(_a0) };
+        fn Player_SetFallsByIndex(_a0: i32, _a1: i32, _a2: i32) = { crate::tu::player::Player_SetFallsByIndex(_a0, _a1, _a2) };
+        fn Player_SetHPByIndex(_a0: i32, _a1: i32, _a2: i32) = { crate::tu::player::Player_SetHPByIndex(_a0, _a1, _a2) };
         fn Player_UpdateKOsBySlot(_a0: i32, _a1: i32, _a2: i32) = { unsafe { let _ = crate::player::update_kos_by_slot(_a0 as _, _a1 as _, _a2 as _); } };
         fn Player_UpdateMatchFrameCount(_a0: i32, _a1: i32) = { unsafe { let _ = crate::player::update_match_frame_count(_a0 as _, _a1 as _); } };
         fn Script_GameEvent(_a0: i32, _a1: i32, _a2: i32, _a3: i32, _a4: i32) = { unsafe { let _ = crate::hooks::script_game_event(_a0 as _, _a1 as _, _a2 as _, _a3 as _, _a4 as _); } };

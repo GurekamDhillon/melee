@@ -117,7 +117,7 @@ pub mod ext {
     fn pl_8003891C(a0: i32) => unsafe { crate::tu::plbonus::pl_8003891C(a0 as _); };
     fn pl_80038F10(a0: i32) => unsafe { let _ = crate::plbonus3::pl_80038f10(a0 as _); };
     fn plAttack_80037590() => unsafe { crate::tu::plattack::plAttack_80037590(); };
-    fn plStale_InitAttackInstance() => unsafe { let _ = crate::stale::init_attack_instance(); };
+    fn plStale_InitAttackInstance() => { crate::tu::plstale::plStale_InitAttackInstance() };
     }
     /// `ScriptGame_ModValue(slot, field, base)` (TARGET_PC): the crate's `SCRIPT_MOD_VALUE` hook,
     /// vanilla-neutral (returns `base`) when none is installed.

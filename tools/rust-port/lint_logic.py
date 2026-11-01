@@ -131,7 +131,7 @@ def body_of(t, pos):
     return j, len(t) - 1
 
 
-def trivial(body):
+def trivial(body, name=None):
     b = re.sub(r'melee_core::ct!\("[^"]*"\);', '', body)
     b = re.sub(r'//[^\n]*', '', b).strip()
     head = '\n'.join(b.split('\n')[:5])
@@ -144,6 +144,17 @@ def trivial(body):
     flat = ' '.join(b.split())
     if len(b.split('\n')) <= 4 and re.search(r'\b(crate|melee_\w+)::tu::', flat) and not re.search(r'\b(if|match|while|for|loop|let)\b', flat):
         return True
+    if re.search(r'panic!\("TODO\(', flat) and len(flat) < 900:
+        return True   # an unported stub
+    if re.search(r'HOOKS\.read\(\)', flat) and len(flat) < 300 and not re.search(chr(92)+'b(if|match|while|for|loop)'+chr(92)+'b', flat):
+        return True   # a hook-table forwarder
+    if name:
+        # a forwarder: after removing the optional `if let Some(h) = HOOK { .. }` preamble, the body only calls a tu path of the
+        # same name (or another crate's tu function of that name), with no loop / match / branch of its own
+        f2 = re.sub(r'if let Some\(h\) = (?:unsafe \{ )?HOOK(?: \})? \{.*?\}\s*(?=\{|$)', '', flat)
+        if len(f2) < 700 and re.search(r'(?:crate|melee_\w+|super)(?:::\w+)*::' + re.escape(name) + r'\s*\(', f2, re.I) \
+                and not re.search(r'\b(if|match|while|for|loop)\b', f2):
+            return True
     return False
 
 
@@ -159,7 +170,7 @@ def scan(pats):
             if n.lower() not in cidx:
                 continue
             b = body_of(t, m.start())
-            if b is None or trivial(t[b[0] + 1:b[1]]):
+            if b is None or trivial(t[b[0] + 1:b[1]], n):
                 continue
             bodies[n.lower()].append((rel, t.count('\n', 0, m.start()) + 1, in_tu, n))
         # R4: ext_fns! entries

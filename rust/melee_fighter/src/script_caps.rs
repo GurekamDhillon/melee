@@ -1,3 +1,4 @@
+
 //! The LAB's per-fighter movement caps (`pc/gameworld/script_fighter_caps_movement.inc`) that the
 //! fighter and character code read from below `melee_modes`: the air-jump limit
 //! (`ScriptGame_CapsMaxJumps`, called from `ftCo_JumpAerial*`, `ftcpuattack` and the Sheik/Zelda
@@ -7,35 +8,6 @@
 use melee_types::{Fighter, HSD_GObj, ScriptCapsMovement, HSD_GOBJ_PLINK_FIGHTER};
 
 pub static mut script_caps_movement: [ScriptCapsMovement; 12] = unsafe { core::mem::zeroed() };
-
-/// `script_gobj_live(gobj)`: `gobj` is on the fighter player link.
-pub unsafe extern "C" fn script_gobj_live(gobj: *mut HSD_GObj) -> i32 {
-    // The C returns 0 while `HSD_GObjPLinkHead` is NULL; an unset hook is that case here.
-    if gobj.is_null() || crate::hooks::PLINK_HEAD.is_none() {
-        return 0;
-    }
-    let mut cur = crate::hooks::plink_head(HSD_GOBJ_PLINK_FIGHTER as i32);
-    while !cur.is_null() {
-        if cur == gobj {
-            return 1;
-        }
-        cur = (*cur).next as *mut HSD_GObj;
-    }
-    0
-}
-
-/// `ScriptGame_CapsFighter(entity)`: the live fighter of script entity 1..=12 (slot + 6 * sub).
-pub unsafe extern "C" fn ScriptGame_CapsFighter(entity: i32) -> *mut Fighter {
-    if !(1..=12).contains(&entity) {
-        return core::ptr::null_mut();
-    }
-    let g = crate::player::get_entity_at_index((entity - 1) % 6, (entity - 1) / 6);
-    if script_gobj_live(g) != 0 && !(*g).user_data.is_null() {
-        (*g).user_data as *mut Fighter
-    } else {
-        core::ptr::null_mut()
-    }
-}
 
 /// `ScriptGame_CapsEntity(fp)`: the script entity (1..=12) of a fighter, 0 when it has none.
 pub unsafe extern "C" fn ScriptGame_CapsEntity(fp: *mut Fighter) -> i32 {
@@ -68,3 +40,6 @@ pub unsafe extern "C" fn script_caps_max_jumps_value(fp: *mut Fighter, entity: i
 pub unsafe extern "C" fn ScriptGame_CapsMaxJumps(fp: *mut Fighter) -> i32 {
     script_caps_max_jumps_value(fp, ScriptGame_CapsEntity(fp))
 }
+
+pub use crate::tu::script_spine_refs_tests::ScriptGame_CapsFighter_fp as ScriptGame_CapsFighter;
+pub use crate::tu::script_game::script_gobj_live_fp as script_gobj_live;

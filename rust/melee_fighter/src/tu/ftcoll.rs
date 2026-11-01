@@ -12,13 +12,25 @@
 //! (80079AB0 / 80079C70 / 80079EA8 / 8007A06C), and 8007A06C's two 0.5*(a+b)-p sites.
 #![allow(non_snake_case, static_mut_refs, non_upper_case_globals, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftcoll::{DMG_LOG0_IDX, DMG_LOG1_IDX};
+#[allow(unused_imports)]
+use crate::ftcommon::abs_c;
+#[allow(unused_imports)]
+use crate::ftcommon2 as fc2;
+#[allow(unused_imports)]
+use crate::ftcommon3::ftco_get_cstick_angle;
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use crate::ft0df::{G as G_ft0df, fp};
 use crate::types::*;
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
 
-pub use crate::ft0df::{ftcoll_8007aee0, ftcoll_8007aef8, ftcoll_8007af10, ftcoll_8007af28, ftcoll_8007b8a8, ftcoll_8007b8cc};
-pub use crate::ftcoll::{ftcoll_800765e0, get_env_dmg};
-
+pub use crate::ftcoll::{get_env_dmg};
 pub type G = *mut HSD_GObj;
 type F = *mut Fighter;
 type HC = *mut HitCapsule;
@@ -2963,5 +2975,52 @@ pub fn ftColl_HurtboxInit(fp: *mut Fighter, hurt: *mut FighterHurtCapsule, init:
         (*hurt).capsule.b_offset = (*init).b_offset;
         (*hurt).capsule.scale = (*init).scale;
         (*fp).set_x221A_b6(1);
+    }
+}
+
+// ---- folded from ft0df.rs (consolidation steps 21/22) ----
+// ---- ftcoll.c leaves ---------------------------------------------------------------------
+
+pub fn ftcoll_8007aee0(g: G_ft0df) { melee_core::ct!("ftcoll_8007aee0"); fp(g).shield_hit.set_skip_update_pos(0) }
+
+pub fn ftcoll_8007aef8(g: G_ft0df) { melee_core::ct!("ftcoll_8007aef8"); fp(g).reflect_hit.set_skip_update_pos(0) }
+
+pub fn ftcoll_8007af10(g: G_ft0df) { melee_core::ct!("ftcoll_8007af10"); fp(g).absorb_hit.set_skip_update_pos(0) }
+
+/// `ftColl_8007AF28`: clear `skip_update_pos` on every hurt capsule.
+pub fn ftcoll_8007af28(g: G_ft0df) {
+    melee_core::ct!("ftcoll_8007af28");
+    let f = fp(g);
+    let mut i = 0usize;
+    while i < f.hurt_capsules_len as usize {
+        f.hurt_capsules[i].capsule.set_skip_update_pos(0);
+        i += 1;
+    }
+}
+
+/// `ftColl_8007B8A8(hit, &offset)`.
+pub fn ftcoll_8007b8a8(hit: &mut HitCapsule, v: &Vec3) {
+    melee_core::ct!("ftcoll_8007b8a8");
+    hit.jobj = core::ptr::null_mut();
+    hit.b_offset = *v;
+}
+
+/// `ftColl_8007B8CC(fp, grabber)`: the thrown hitbox's owner/team come from the grabber.
+pub fn ftcoll_8007b8cc(f: &mut Fighter, grabber: G_ft0df) {
+    melee_core::ct!("ftcoll_8007b8cc");
+    let gf = fp(grabber);
+    let (team, pid) = (gf.team, gf.player_id);
+    f.x1064_thrownHitbox.anon_134.owner = grabber;
+    f.x119C_teamUnk = team;
+    f.grabber_unk1 = pid;
+}
+
+// ---- folded from ftcoll.rs (consolidation steps 21/22) ----
+/// `ftColl_800765E0`.
+pub fn ftcoll_800765e0() {
+    melee_core::ct!("ftcoll_800765e0");
+    unsafe {
+        DMG_LOG0_IDX = 0;
+        DMG_LOG1_IDX = 0;
     }
 }

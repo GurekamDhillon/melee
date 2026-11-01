@@ -6,6 +6,15 @@
 //! can point it at [`ft_8008A2BC`].
 #![allow(non_snake_case)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftcommon as fc;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_runtime::gekko::{cosf, sinf};
+#[allow(unused_imports)]
+use crate::ft084e::{G as G_ft084e, fp as fp_ft084e};
 use crate::hooks as h;
 use crate::types::*;
 
@@ -97,4 +106,34 @@ pub fn ft_8008A348(g: G, anim_blend: f32) {
         Ft_Kind_CLink => ext::ftCl_Init_8014919C(g),
         _ => {}
     }
+}
+
+// ---- folded from ft084e.rs (consolidation steps 21/22) ----
+// ---- ft_08A1.c: the walk/turn stick test ---------------------------------------------------
+
+/// `ft_8008A1FC` (ft_08A1.c): the stick points against the facing or is under the walk
+/// threshold. No fused site (a product compared with 0).
+pub fn ft_8008a1fc(g: G_ft084e) -> bool {
+    melee_core::ct!("ft_8008a1fc");
+    let f = fp_ft084e(g);
+    f.input.lstick[0].x * f.facing_dir < 0.0 || fc::abs_c(f.input.lstick[0].x) < h::common_data().walk_stick_threshold
+}
+
+/// `ft_8008A244_inline` (static inline in ft_08A1.c): the same test as [`ft_8008a1fc`].
+#[inline]
+pub fn ft_8008a244_inline(g: G_ft084e) -> bool {
+    melee_core::ct!("ft_8008a244_inline");
+    let f = fp_ft084e(g);
+    let v = f.input.lstick[0].x;
+    v * f.facing_dir < 0.0 || fc::abs_c(v) < h::common_data().walk_stick_threshold
+}
+
+/// `ft_8008A244` (ft_08A1.c): on the test, `ft_8008A2BC` (enter Wait; a hook, not ported).
+pub fn ft_8008a244(g: G_ft084e) -> bool {
+    melee_core::ct!("ft_8008a244");
+    if ft_8008a244_inline(g) {
+        h::ft_8008a2bc(g);
+        return true;
+    }
+    false
 }

@@ -9,6 +9,21 @@
 //! `pl_8003E4A4`'s `seen[-1]` store for an unknown item kind (stack garbage in C) is skipped.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, unused_assignments, unused_variables)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::plbonus::{pl_800419ac, pl_80040ed4};#[allow(unused_imports)]
+use crate::plbonus2::{I, ext as ext_plbonus2};
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use crate::player::{get_entity_at_index, get_team, get_unk6a8_ptr, player_8003221c};
+#[allow(unused_imports)]
+use crate::stale::action_stats;
+#[allow(unused_imports)]
+use crate::types::*;
+#[allow(unused_imports)]
+use crate::plbonus::{calculate_average, check_if_same_team, ext, k, none_has};
 use core::ffi::c_void;
 use core::ptr::null_mut;
 
@@ -1686,4 +1701,844 @@ pub fn pl_80040D8C(slot: i32, arg1: i32) {
 pub fn pl_80040DB8(slot: i32) -> i32 {
     melee_core::ct!("pl_80040DB8");
     unsafe { (*tbl(slot)).x0_staleMoveTable.xCB0 }
+}
+
+// ---- folded from plbonus.rs (consolidation steps 21/22) ----
+/// plbonuslib.c static inline `unk_cond_fp`.
+#[inline]
+pub fn unk_cond_fp(arg0: i32, r23: i32) -> bool {
+    melee_core::ct!("unk_cond_fp");
+    r23 == 6 || r23 == arg0 || check_if_same_team(arg0, r23)
+}
+
+// ---- plbonuslib.c (pl_8003FBFC .. end of file) -------------------------------------------
+
+/// `pl_8003FBFC`.
+pub fn pl_8003fbfc(a: i32) -> i32 {
+    melee_core::ct!("pl_8003fbfc");
+    ext(a).xCFC
+}
+
+/// `pl_8003FC20`.
+pub fn pl_8003fc20(a: i32) -> i32 {
+    melee_core::ct!("pl_8003fc20");
+    ext(a).xD00
+}
+
+/// `pl_8003FC44`.
+pub fn pl_8003fc44(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003fc44");
+    let t = ext(slot);
+    if arg1 != 0 {
+        return;
+    }
+    unsafe { t.xDD0.anon_0.set_bit0(1) };
+}
+
+/// `pl_8003FC88`.
+pub fn pl_8003fc88(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003fc88");
+    let s = &mut ext(arg0).x0_staleMoveTable;
+    if arg1 == 1 {
+        return;
+    }
+    let r0 = s.xC90;
+    let hit = match r0 {
+        0 => (1..=3).contains(&arg2),
+        1 => (6..=8).contains(&arg2),
+        2 => (9..=11).contains(&arg2),
+        3 => (17..=48).contains(&arg2),
+        _ => false,
+    };
+    if hit {
+        if r0 == 3 {
+            s.xC90 = 0;
+            h::pl_80038824(arg0, 0x56);
+        } else {
+            s.xC90 = s.xC90.wrapping_add(1);
+        }
+    } else {
+        s.xC90 = 0;
+    }
+}
+
+/// `pl_8003FDA0`.
+pub fn pl_8003fda0(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fda0");
+    h::pl_80038788(arg0, 0x5B, 1);
+}
+
+/// `pl_8003FDC8`.
+pub fn pl_8003fdc8(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fdc8");
+    let t = ext(arg0);
+    t.xD70 = t.xD70.wrapping_add(1);
+}
+
+/// `pl_8003FDF4`.
+pub fn pl_8003fdf4(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fdf4");
+    h::pl_80038788(arg0, 0xC4, 1);
+}
+
+/// `pl_8003FE1C`.
+pub fn pl_8003fe1c(slot: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fe1c");
+    h::pl_80038824(slot, 0xA);
+}
+
+/// `pl_8003FE40`.
+pub fn pl_8003fe40(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fe40");
+    h::pl_80038824(arg0, 0x4B);
+}
+
+/// `pl_8003FE64`.
+pub fn pl_8003fe64(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003fe64");
+    if none_has(0x1A) {
+        h::pl_80038788(arg0, 0x1A, 1);
+    }
+}
+
+/// `pl_8003FED0`.
+pub fn pl_8003fed0(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003fed0");
+    if arg1 != 0 {
+        return;
+    }
+    if none_has(0x82) {
+        h::pl_80038788(arg0, 0x82, 1);
+    }
+}
+
+/// `pl_8003FF44` (the C evaluates ft_80087A8C only when the earlier tests pass).
+pub fn pl_8003ff44(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003ff44");
+    let t = ext(arg0);
+    let g = get_entity_at_index(arg0, arg1);
+    if arg1 == 0 && (1..=0x10).contains(&arg2) && h::ft_80087a8c(g) > k().x38 {
+        unsafe { t.xDD1.anon_0.set_bit4(1) };
+    }
+}
+
+/// `pl_8003FFDC`.
+pub fn pl_8003ffdc(arg0: i32, _arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_8003ffdc");
+    let g = get_entity_at_index(arg2, arg3);
+    if arg0 != arg2 && arg4 != h::ft_80087a98(g) {
+        h::pl_80038824(arg0, 0x46);
+    }
+}
+
+/// `pl_80040048_fp`.
+pub fn pl_80040048_fp(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040048_fp");
+    let g = get_entity_at_index(arg0, arg1);
+    let r3 = h::ftlib_80087300(g);
+    if arg1 != 0 || r3 == 6 {
+        return;
+    }
+    let f31 = unsafe { (*h::ft_800898b4(g)).kb_applied1 };
+    let t = ext(arg0);
+    if f31 >= k().x98 {
+        t.x0_staleMoveTable.xCE8 = t.x0_staleMoveTable.xCE8.wrapping_add(1);
+    }
+    if f31 >= k().xA0 && !h::ft_80087aa4(g) && h::ft_80087ab4(g) <= 1 {
+        h::pl_80038824(arg0, 0x48);
+    }
+}
+
+/// `pl_80040120_fp`.
+pub fn pl_80040120_fp(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040120_fp");
+    if arg1 == 1 {
+        return;
+    }
+    if ext(arg0).xD4C != 0 {
+        h::pl_80038824(arg0, 0x4A);
+    }
+    if ext(arg0).xD54 != 0 {
+        h::pl_80038824(arg0, 0x4D);
+    }
+    for i in 0..6 {
+        if !player_8003221c(i) {
+            continue;
+        }
+        if i == arg0 {
+            ext(arg0).xD50 = k().xB0;
+        } else {
+            ext(i).xD4C = k().xA4;
+        }
+    }
+}
+
+/// `pl_800401F0`.
+pub fn pl_800401f0(arg0: i32, _arg1: i32, arg2: f32, arg3: f32) {
+    melee_core::ct!("pl_800401f0");
+    let s = &mut ext(arg0).x0_staleMoveTable;
+    s.xCDC += abs_c(arg2);
+    s.xCE0 += abs_c(arg3);
+}
+
+/// `pl_80040270_fp`.
+pub fn pl_80040270_fp(arg0: i32, arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_80040270_fp");
+    let s = &mut ext(arg0).x0_staleMoveTable;
+    if arg1 != 0 {
+        return;
+    }
+    if arg2 >= k().x98 {
+        s.xCE4 = s.xCE4.wrapping_add(1);
+    }
+}
+
+/// `pl_800402D0`.
+pub fn pl_800402d0(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_800402d0");
+    let s = &mut ext(slot).x0_staleMoveTable;
+    if arg1 != 0 {
+        return;
+    }
+    s.xCEC = s.xCEC.wrapping_add(1);
+    if arg2 == 0 {
+        return;
+    }
+    s.xCF0 = s.xCF0.wrapping_add(1);
+}
+
+/// `pl_80040330_fp`.
+pub fn pl_80040330_fp(slot: i32, arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_80040330_fp");
+    if arg1 != 0 {
+        return;
+    }
+    let t = ext(slot);
+    if arg2 < t.xCF8 {
+        t.xCF8 = arg2;
+    }
+}
+
+/// `pl_80040374_fp`.
+pub fn pl_80040374_fp(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_80040374_fp");
+    let t = ext(arg0);
+    if arg1 == 0 && t.xD64 != 6 {
+        t.xD60 = k().x124;
+    }
+}
+
+/// `pl_800403C0`.
+pub fn pl_800403c0(arg0: i32, _arg1: i32) {
+    melee_core::ct!("pl_800403c0");
+    h::pl_80038788(arg0, 0xC5, 1);
+}
+
+/// `pl_800403FC`.
+pub fn pl_800403fc(arg0: i32, _arg1: i32, slot: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_800403fc");
+    let t = ext(slot);
+    if arg3 == 0 && (0x54..=0x57).contains(&arg4) {
+        t.x0_staleMoveTable.xCAC = arg0 as u32;
+    }
+}
+
+/// `pl_80040460_fp`.
+pub fn pl_80040460_fp(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_80040460_fp");
+    let t = ext(slot);
+    if arg1 != 0 {
+        return;
+    }
+    t.x0_staleMoveTable.xCAC = 6;
+}
+
+/// `pl_8004049C(player, item kind)`: KO of a stage enemy.
+#[allow(non_upper_case_globals)]
+pub fn pl_8004049c(player: i32, arg1: ItemKind) {
+    melee_core::ct!("pl_8004049c");
+    if player == 6 {
+        return;
+    }
+    assert!((0..6).contains(&player), "zako ko player illegal ! :{player}");
+    let v: i32 = match arg1 {
+        It_Kind_Old_Kuri | It_Kind_Kuriboh => 0xCE,
+        It_Kind_Heiho => 0xD6,
+        It_Kind_Nokonoko => 0xCF,
+        It_Kind_Patapata => 0xD0,
+        It_Kind_Likelike => 0xD2,
+        It_Kind_Old_Lead | It_Kind_Leadead => 0xD1,
+        It_Kind_Old_Octa | It_Kind_Octarock => 0xD3,
+        It_Kind_Old_Otto | It_Kind_Ottosea => 0xD4,
+        It_Kind_Whitebea => 0xD5,
+        _ => return,
+    };
+    let r = h::gm_8016f2f8(v, player as u8);
+    h::gm_8016b6e8(player, r);
+    h::pl_80038824(player, v);
+}
+
+/// `pl_80040614_fp` (`!arg8` is `arg8 == 0.0`).
+pub fn pl_80040614_fp(arg0: i32, _arg1: bool, arg8: f32) {
+    melee_core::ct!("pl_80040614_fp");
+    if arg8 == 0.0 {
+        return;
+    }
+    if arg8 <= k().x4C {
+        h::pl_80038788(arg0, 0x2D, 1);
+    }
+}
+
+/// `pl_8004065C`.
+pub fn pl_8004065c(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8004065c");
+    if arg1 != 0 {
+        return;
+    }
+    h::pl_80038824(arg0, 0x78);
+}
+
+/// `pl_80040688_fp`.
+pub fn pl_80040688_fp(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_80040688_fp");
+    if h::gm_get_frame_count() <= k().xEC as u32 {
+        h::pl_80038788(arg0, 0x5F, 1);
+    }
+    if arg2 != 0 && arg1 != 6 {
+        let s = &ext(arg1).x0_staleMoveTable;
+        let r0 = s.xCB8;
+        let x3 = s.xCBC.x3;
+        let b0 = s.xCC0.x10_b0();
+        if !unk_cond_fp(arg1, r0) {
+            if (0x33..=0x3D).contains(&x3) {
+                h::pl_80038788(r0, 0x2A, 1);
+            }
+            if b0 != 0 {
+                h::pl_80038788(r0, 7, 1);
+                h::pl_80038898(r0, 6);
+            }
+        }
+    }
+}
+
+/// `pl_800407C8`.
+pub fn pl_800407c8(arg0: i32) -> f32 {
+    melee_core::ct!("pl_800407c8");
+    let s = &ext(arg0).x0_staleMoveTable;
+    if s.xCEC != 0 {
+        let tmp = s.xCEC as u32 as f32;
+        let f31 = s.xCF0 as u32 as f32;
+        return calculate_average(f31, tmp);
+    }
+    0.0
+}
+
+/// `pl_80040870_fp`.
+pub fn pl_80040870_fp(a: i32) -> f32 {
+    melee_core::ct!("pl_80040870_fp");
+    ext(a).xCF8
+}
+
+/// `pl_80040894_fp`.
+pub fn pl_80040894_fp(a: i32) -> u32 {
+    melee_core::ct!("pl_80040894_fp");
+    ext(a).xD40
+}
+
+/// `pl_800408B8`.
+pub fn pl_800408b8(a: i32) -> u32 {
+    melee_core::ct!("pl_800408b8");
+    ext(a).xD48
+}
+
+/// `pl_800408DC`.
+pub fn pl_800408dc(a: i32) -> i32 {
+    melee_core::ct!("pl_800408dc");
+    ext(a).x0_staleMoveTable.xCB4
+}
+
+/// `pl_80040900_fp`.
+pub fn pl_80040900_fp(a: i32) -> i32 {
+    melee_core::ct!("pl_80040900_fp");
+    unsafe { action_stats(a).anon_358.x358_hits.total as i32 }
+}
+
+/// `pl_80040924_fp`.
+pub fn pl_80040924_fp(a: i32) -> i32 {
+    melee_core::ct!("pl_80040924_fp");
+    action_stats(a).attacks.total as i32
+}
+
+/// `pl_80040948_fp`.
+pub fn pl_80040948_fp(a: i32) -> f32 {
+    melee_core::ct!("pl_80040948_fp");
+    let total = action_stats(a).attacks.total;
+    let r30 = unsafe { action_stats(a).anon_358.x358_hits.total };
+    if total != 0 {
+        return calculate_average(r30 as f32, total as f32);
+    }
+    0.0
+}
+
+/// `pl_80040A04`.
+pub fn pl_80040a04(a: i32) -> i32 {
+    melee_core::ct!("pl_80040a04");
+    let s = action_stats(a);
+    s.attacks.total.wrapping_sub(s.attacks.aerials_count) as i32
+}
+
+/// `pl_80040A30`.
+pub fn pl_80040a30(a: i32) -> i32 {
+    melee_core::ct!("pl_80040a30");
+    action_stats(a).attacks.aerials_count as i32
+}
+
+/// `pl_80040A54`.
+pub fn pl_80040a54(a: i32) -> i32 {
+    melee_core::ct!("pl_80040a54");
+    action_stats(a).attacks.thrown_item_count as i32
+}
+
+/// `pl_80040A78`.
+pub fn pl_80040a78(a: i32) -> i32 {
+    melee_core::ct!("pl_80040a78");
+    action_stats(a).attacks.by_attack_counts[StatsAttack_Catch as usize] as i32
+}
+
+/// `pl_80040A9C`: the C loop sums `by_attack_counts[DownAttackD + 3 ..= DownAttackD + 11]`.
+pub fn pl_80040a9c(a: i32) -> i32 {
+    melee_core::ct!("pl_80040a9c");
+    let c = &action_stats(a).attacks.by_attack_counts;
+    let base = StatsAttack_DownAttackD as usize;
+    let mut sum = 0i32;
+    let mut cursor: u32 = 51;
+    for k in 0..11usize {
+        if cursor.wrapping_sub(51) > 1 {
+            sum = sum.wrapping_add(c[base + k + 1] as i32);
+        }
+        cursor += 1;
+    }
+    sum
+}
+
+/// `pl_80040AF0`.
+pub fn pl_80040af0(a: i32) -> u32 {
+    melee_core::ct!("pl_80040af0");
+    h::pl_800386d8(action_stats(a), 0x70)
+}
+
+/// `pl_80040B18`.
+pub fn pl_80040b18(a: i32) -> i32 {
+    melee_core::ct!("pl_80040b18");
+    action_stats(a).attacks.specials_count as i32
+}
+
+/// `pl_80040B3C` (float -> u32, saturating).
+pub fn pl_80040b3c(a: i32) -> u32 {
+    melee_core::ct!("pl_80040b3c");
+    ext(a).x0_staleMoveTable.xC6C as u32
+}
+
+/// `pl_80040B64` (float -> u32, saturating).
+pub fn pl_80040b64(a: i32) -> u32 {
+    melee_core::ct!("pl_80040b64");
+    ext(a).x0_staleMoveTable.xC60 as u32
+}
+
+/// `pl_80040B8C`.
+pub fn pl_80040b8c(slot: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_80040b8c");
+    let s = &mut ext(slot).x0_staleMoveTable;
+    if arg1 != 0 {
+        return;
+    }
+    s.xC68 = s.xC68.wrapping_add(arg2);
+}
+
+/// `pl_80040BD8`.
+pub fn pl_80040bd8(a: i32) -> i32 {
+    melee_core::ct!("pl_80040bd8");
+    ext(a).x0_staleMoveTable.xC68
+}
+
+/// `pl_80040BFC` (float -> u32, saturating).
+pub fn pl_80040bfc(a: i32) -> u32 {
+    melee_core::ct!("pl_80040bfc");
+    ext(a).x0_staleMoveTable.xC64 as u32
+}
+
+/// `pl_80040C24`.
+pub fn pl_80040c24(a: i32) -> f32 {
+    melee_core::ct!("pl_80040c24");
+    ext(a).xD74
+}
+
+/// `pl_80040C48`.
+pub fn pl_80040c48(a: i32) -> f32 {
+    melee_core::ct!("pl_80040c48");
+    ext(a).xD78
+}
+
+/// `pl_80040C6C`.
+pub fn pl_80040c6c(a: i32) -> f32 {
+    melee_core::ct!("pl_80040c6c");
+    ext(a).xD7C
+}
+
+/// `pl_80040C90`.
+pub fn pl_80040c90(a: i32) -> f32 {
+    melee_core::ct!("pl_80040c90");
+    ext(a).xD80
+}
+
+/// `pl_80040CB4`.
+pub fn pl_80040cb4(a: i32) -> i32 {
+    melee_core::ct!("pl_80040cb4");
+    ext(a).xD24 as i32
+}
+
+/// `pl_80040CD8`.
+pub fn pl_80040cd8(a: i32) -> i32 {
+    melee_core::ct!("pl_80040cd8");
+    ext(a).xD20 as i32
+}
+
+/// `pl_80040CFC`.
+pub fn pl_80040cfc(a: i32) -> u32 {
+    melee_core::ct!("pl_80040cfc");
+    ext(a).xD04
+}
+
+/// `pl_80040D20`.
+pub fn pl_80040d20(a: i32) -> i32 {
+    melee_core::ct!("pl_80040d20");
+    ext(a).xD68
+}
+
+/// `pl_80040D44`.
+pub fn pl_80040d44(a: i32) -> f32 {
+    melee_core::ct!("pl_80040d44");
+    ext(a).xD84
+}
+
+/// `pl_80040D68`.
+pub fn pl_80040d68(a: i32) -> f32 {
+    melee_core::ct!("pl_80040d68");
+    ext(a).xD88
+}
+
+/// `pl_80040D8C`.
+pub fn pl_80040d8c(slot: i32, _arg1: i32) {
+    melee_core::ct!("pl_80040d8c");
+    let s = &mut ext(slot).x0_staleMoveTable;
+    s.xCB0 = s.xCB0.wrapping_add(1);
+}
+
+/// `pl_80040DB8`.
+pub fn pl_80040db8(slot: i32) -> i32 {
+    melee_core::ct!("pl_80040db8");
+    ext(slot).x0_staleMoveTable.xCB0
+}
+
+// ---- folded from plbonus2.rs (consolidation steps 21/22) ----
+/// `pl_8003DF44`.
+pub fn pl_8003df44(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003df44");
+    let r3 = h::ftlib_80087300(get_entity_at_index(arg0, arg1));
+    if r3 == 6 || r3 == arg0 || check_if_same_team(arg0, r3) {
+        return;
+    }
+    ext_plbonus2(r3).xD54 = h::pl_804d6470().xB4;
+}
+
+/// `pl_8003DFF4`.
+pub fn pl_8003dff4(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003dff4");
+    pl_8003fc88(arg0, arg1, arg2);
+    pl_8003ff44(arg0, arg1, arg2);
+    pl_8003eaac(arg0, arg1, arg2);
+}
+
+/// `pl_8003E058`.
+pub fn pl_8003e058(arg0: i32, _arg1: i32, arg2: i32, _arg3: i32) {
+    melee_core::ct!("pl_8003e058");
+    h::pl_80038824(arg2, 0x3F);
+    if arg0 == 6 || check_if_same_team(arg2, arg0) {
+        return;
+    }
+    h::pl_80038824(arg0, 0x3E);
+}
+
+/// `pl_8003E0E8`.
+pub fn pl_8003e0e8(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003e0e8");
+    if arg1 != 0 {
+        return;
+    }
+    h::pl_80038824(arg0, 0x40);
+}
+
+/// `pl_8003E114`.
+pub fn pl_8003e114(arg0: i32, _arg1: i32, arg2: f32) {
+    melee_core::ct!("pl_8003e114");
+    if arg2 <= h::pl_804d6470().x84 {
+        h::pl_80038788(arg0, 0x41, 1);
+    }
+}
+
+/// `pl_8003E150`.
+pub fn pl_8003e150(slot: i32, _arg1: i32) {
+    melee_core::ct!("pl_8003e150");
+    let s = &mut ext_plbonus2(slot).x0_staleMoveTable;
+    s.xCD8 = s.xCD8.wrapping_add(1);
+}
+
+/// `pl_8003E17C`.
+pub fn pl_8003e17c(player_id: i32, _arg1: i32, item: I) {
+    melee_core::ct!("pl_8003e17c");
+    let t = ext_plbonus2(player_id);
+    let kind = h::it_get_kind(item);
+    let kind2 = if kind >= It_Kind_Capsule as i32 && kind < It_Kind_L_Gun_Ray as i32 {
+        kind
+    } else {
+        match kind {
+            It_Kind_Lucky_Egg => It_Kind_L_Gun_Ray as i32,
+            It_Kind_WhispyApple => It_Kind_StarRod_Star as i32,
+            It_Kind_WhispyHealApple => It_Kind_LipStick_Spore as i32,
+            It_Kind_Hammer_Head => It_Kind_S_Scope_Beam as i32,
+            _ => -1,
+        }
+    };
+    if kind2 != -1
+        && (kind2 == It_Kind_L_Gun_Ray as i32
+            || kind2 == It_Kind_Egg as i32
+            || kind2 == It_Kind_S_Scope_Beam as i32
+            || h::it_8026b7e8(item) == 1)
+    {
+        let s = &mut t.x0_staleMoveTable;
+        if !h::it_8026b774(item, player_id as u8) {
+            s.x674[kind2 as usize] = s.x674[kind2 as usize].wrapping_add(1);
+        }
+        for cnt in 0..6 {
+            if h::it_8026b774(item, cnt) {
+                return;
+            }
+        }
+        s.x710[kind2 as usize] = s.x710[kind2 as usize].wrapping_add(1);
+    }
+}
+
+/// `pl_8003E2CC` (HSD_ASSERT kind < Pl_ItemLog_Terminate -> panic).
+pub fn pl_8003e2cc(arg0: i32, kind: u32) -> u32 {
+    melee_core::ct!("pl_8003e2cc");
+    assert!(kind < Pl_ItemLog_Terminate as u32, "plbonuslib.c:555");
+    ext_plbonus2(arg0).x0_staleMoveTable.x674[kind as usize]
+}
+
+/// `pl_8003E334`.
+pub fn pl_8003e334(arg0: i32, kind: u32) -> u32 {
+    melee_core::ct!("pl_8003e334");
+    assert!(kind < Pl_ItemLog_Terminate as u32, "plbonuslib.c:564");
+    ext_plbonus2(arg0).x0_staleMoveTable.x710[kind as usize] as u32
+}
+
+/// `pl_8003E39C`.
+pub fn pl_8003e39c(arg0: i32) -> i32 {
+    melee_core::ct!("pl_8003e39c");
+    let s = &ext_plbonus2(arg0).x0_staleMoveTable;
+    s.x674.iter().fold(0i32, |a, &v| a.wrapping_add(v as i32))
+}
+
+/// `pl_8003E420`.
+pub fn pl_8003e420(arg0: i32) -> u32 {
+    melee_core::ct!("pl_8003e420");
+    let s = &ext_plbonus2(arg0).x0_staleMoveTable;
+    s.x710.iter().fold(0i32, |a, &v| a.wrapping_add(v)) as u32
+}
+
+/// plbonuslib.c static inline `match_item_kind_fp`.
+#[inline]
+pub fn match_item_kind_fp(kind: i32) -> i32 {
+    melee_core::ct!("match_item_kind_fp");
+    if kind >= It_Kind_Capsule as i32 && kind < It_Kind_L_Gun_Ray as i32 {
+        return kind;
+    }
+    match kind {
+        It_Kind_Lucky_Egg => Pl_ItemLog_Unk35 as i32,
+        It_Kind_WhispyApple => Pl_ItemLog_Unk36 as i32,
+        It_Kind_WhispyHealApple => Pl_ItemLog_Unk37 as i32,
+        It_Kind_Hammer_Head => Pl_ItemLog_Unk38 as i32,
+        _ => -1,
+    }
+}
+
+/// `pl_8003E4A4`. C quirk not reproduced: an unknown kind gives -1, which passes the C's signed
+/// `< Pl_ItemLog_Terminate` test and stores to `seen[-1]` (out of bounds on the stack); here it
+/// is skipped. The oracle only drives kinds that map.
+pub fn pl_8003e4a4(slot: i32, _arg1: bool, moves: &[i32]) {
+    melee_core::ct!("pl_8003e4a4");
+    let t = ext_plbonus2(slot);
+    let mut seen = [0u32; Pl_ItemLog_Terminate as usize];
+    for &m in moves {
+        let k = match_item_kind_fp(m);
+        if k >= 0 && k < Pl_ItemLog_Terminate as i32 {
+            seen[k as usize] = 1;
+        }
+    }
+    let lim = h::pl_804d6470().x138;
+    for i in 0..Pl_ItemLog_Terminate as usize {
+        let s = &mut t.x0_staleMoveTable;
+        if seen[i] == 1 {
+            s.x7AC[i] = s.x7AC[i].wrapping_add(1);
+            if s.x7AC[i] as u32 == lim {
+                h::pl_80038788(slot, 0x9D, 1);
+                s.x7AC[i] = 0;
+            }
+        } else {
+            s.x7AC[i] = 0;
+        }
+    }
+}
+
+/// `pl_8003E854`.
+pub fn pl_8003e854_fp(arg0: i32, arg1: i32, arg2: I) {
+    melee_core::ct!("pl_8003e854_fp");
+    let r31 = get_entity_at_index(arg0, arg1);
+    let r3 = h::it_get_owner(arg2);
+    if r31 != r3 && h::it_8026b7bc(arg2) != 0 {
+        h::pl_80038824(arg0, 0x9A);
+        if h::it_get_kind(arg2) == It_Kind_Dosei as i32 {
+            h::pl_80038788(arg0, 0xB6, 1);
+        }
+        if arg1 == 0 && h::ftlib_80086960(r3) && h::ftlib_800874bc(r3) == 0 {
+            let id = h::ftlib_80086be0(r3);
+            ext_plbonus2(arg0).xD6C = id as i32;
+        }
+    }
+    if h::it_get_kind(arg2) == It_Kind_BombHei as i32 && h::it_8026b960(arg2) <= h::pl_804d6470().x180 {
+        pl_800419ac(arg0, arg1, h::it_8026b7cc(arg2) as u16);
+    }
+    if arg1 != 0 {
+        return;
+    }
+    ext_plbonus2(arg0).x0_staleMoveTable.xCA8 = 0;
+}
+
+/// `pl_8003E978`.
+pub fn pl_8003e978(slot: i32, b4: bool, _item: I) {
+    melee_core::ct!("pl_8003e978");
+    fn_8003e998(slot, b4 as i32);
+}
+
+/// `fn_8003E998`.
+pub fn fn_8003e998(arg0: i32, index: i32) {
+    melee_core::ct!("fn_8003e998");
+    let t = ext_plbonus2(arg0);
+    if index == 0 && t.xD6C != 6 {
+        let g = get_entity_at_index(arg0, index);
+        unsafe { (*h::ft_800898a8(g)).x207C.y = t.xD6C };
+    }
+}
+
+/// `pl_8003EA08`.
+pub fn pl_8003ea08(slot: i32, arg1: i32) {
+    melee_core::ct!("pl_8003ea08");
+    if arg1 != 0 {
+        return;
+    }
+    ext_plbonus2(slot).xD6C = 6;
+}
+
+/// `pl_8003EA40`.
+pub fn pl_8003ea40(arg0: i32, _arg1: i32, arg2: i32, arg3: i32, arg4: i32) {
+    melee_core::ct!("pl_8003ea40");
+    if arg3 != 0 || arg2 != arg4 {
+        return;
+    }
+    h::pl_80038824(arg0, 0x9B);
+}
+
+/// `pl_8003EA74`.
+pub fn pl_8003ea74(arg0: i32, arg1: i32) {
+    melee_core::ct!("pl_8003ea74");
+    if arg1 != 0 {
+        return;
+    }
+    ext_plbonus2(arg0).xD44 = 0;
+}
+
+/// `pl_8003EAAC`.
+pub fn pl_8003eaac(arg0: i32, arg1: i32, arg2: i32) {
+    melee_core::ct!("pl_8003eaac");
+    let s = &mut ext_plbonus2(arg0).x0_staleMoveTable;
+    if arg1 == 0 && arg2 == 0x59 {
+        s.xCA8 = s.xCA8.wrapping_add(1);
+        if s.xCA8 == h::it_8026c1d4() {
+            h::pl_80038788(arg0, 0xC2, 1);
+        }
+    }
+}
+
+/// `pl_8003EB30`.
+pub fn pl_8003eb30(arg0: f32, arg1: i32, arg2: i32, arg3: i32, arg4: i32, arg5: i32) {
+    melee_core::ct!("pl_8003eb30");
+    if arg1 != 6 && arg1 != arg3 {
+        {
+            let s = &mut ext_plbonus2(arg1).x0_staleMoveTable;
+            s.xC6C += arg0;
+            if arg5 == 0x34 {
+                s.xC70 += arg0;
+            }
+            if (arg5.wrapping_sub(0x5C) as u32) <= 1 {
+                s.xC74 += arg0;
+            }
+        }
+        if arg3 != 6 {
+            if arg4 == 0 {
+                let v = &mut ext_plbonus2(arg3).x0_staleMoveTable;
+                v.xC78[arg1 as usize] += arg0;
+            }
+            pl_80040ed4(arg1, arg2, arg3, arg4, arg5, arg0);
+        }
+        ext_plbonus2(arg1).xD08 = 0;
+    }
+}
+
+/// `pl_8003EC30`.
+pub fn pl_8003ec30(slot: i32, arg1: i32, arg2: i32, arg3: f32) {
+    melee_core::ct!("pl_8003ec30");
+    if arg1 != 0 {
+        return;
+    }
+    let s = &mut ext_plbonus2(slot).x0_staleMoveTable;
+    if arg2 == 1 || arg2 == 3 {
+        s.xC98 += arg3;
+    }
+}
+
+/// `pl_8003EC9C`.
+pub fn pl_8003ec9c(arg0: i32, arg1: i32, arg2: f32, arg3: f32) {
+    melee_core::ct!("pl_8003ec9c");
+    let t = ext_plbonus2(arg0);
+    if arg1 != 0 {
+        return;
+    }
+    t.x0_staleMoveTable.xC60 += arg3;
+    if t.x0_staleMoveTable.xC64 < arg2 {
+        t.x0_staleMoveTable.xC64 = arg2;
+    }
+    t.xD10 = 0;
+}
+
+/// `pl_8003ED0C`: `xCA0 * (n - 1) + arg2` is one fmadds in the shipping build.
+pub fn pl_8003ed0c(arg0: i32, _arg1: i32, r5: i32, _arg3: i32, arg2: f32) {
+    melee_core::ct!("pl_8003ed0c");
+    if arg0 == r5 || check_if_same_team(r5, arg0) {
+        return;
+    }
+    let s = &mut ext_plbonus2(arg0).x0_staleMoveTable;
+    s.xCA4 = s.xCA4.wrapping_add(1);
+    let n = s.xCA4;
+    let f30 = fmadds(s.xCA0, n.wrapping_sub(1) as f32, arg2);
+    s.xCA0 = calculate_average(f30, n as f32);
 }

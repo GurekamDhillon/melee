@@ -3,20 +3,13 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, unused_comparisons, clippy::all)]
 
 pub mod ftcrazyhandentry {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandentry::fn_80156F6C;
 
-    /// `fn_80156F6C` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandentry.c).
-    pub fn fn_80156F6C(gobj: *mut HSD_GObj) {
-        unsafe {
-            let fp: *mut Fighter = (*gobj).user_data as *mut Fighter;
-            st::Fighter_ChangeMotionState(gobj, 343 /* ftMh_MS_Entry */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-            st::ftAnim_8006EBA4(gobj);
-            (*fp).cur_pos.y = (*((*(*fp).ft_data).ext_attr as *const melee_types::ftCrazyHand_DatAttrs)).x20;
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 

@@ -8,12 +8,14 @@
 //! ftparts/ftdata/ftcommon/ftaction that are not ported go through `ext`.
 #![allow(non_snake_case, static_mut_refs, clippy::missing_safety_doc)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftanim::{G as G_ftanim, fp};
 use crate::hooks as h;
 use crate::types::*;
 use melee_types::inline::*;
 
-pub use crate::ftanim::{ftanim_8007077c as ftAnim_8007077C, ftanim_80070fb4 as ftAnim_80070FB4, get_part_joint, scale_inline};
-
+pub use crate::ftanim::{ftanim_8007077c as ftAnim_8007077C, ftanim_80070fb4 as ftAnim_80070FB4};
 type G = *mut HSD_GObj;
 type J = *mut HSD_JObj;
 
@@ -1104,4 +1106,38 @@ pub unsafe fn ftAnim_80070FD0(fp: &mut Fighter) -> bool {
         return true;
     }
     false
+}
+
+// ---- folded from ftanim.rs (consolidation steps 21/22) ----
+/// `scale_inline` (static): `v *= 1 / scale` per component (no fused sites).
+pub fn scale_inline(scale: f32, v: &mut Vec3) {
+    melee_core::ct!("scale_inline");
+    let f1 = 1.0f32 / scale;
+    v.x *= f1;
+    v.y *= f1;
+    v.z *= f1;
+}
+
+/// `get_part_joint` (static).
+/// # Safety
+/// `f.parts` must point to at least `part + 1` bones.
+pub unsafe fn get_part_joint(f: &Fighter, part: i32, do_blending: bool) -> *mut HSD_JObj {
+    melee_core::ct!("get_part_joint");
+    let b = &*f.parts.offset(part as isize);
+    if do_blending { b.x4_jobj2 } else { b.joint }
+}
+
+/// `ftAnim_8007077C`: every x8B0 slot's x11 and x10 to -1.
+pub fn ftanim_8007077c(g: G_ftanim) {
+    melee_core::ct!("ftanim_8007077c");
+    for s in fp(g).x8B0.iter_mut() {
+        s.x11 = -1;
+        s.x10 = -1;
+    }
+}
+
+/// `ftAnim_80070FB4`: `x8B0[arg1].x10 = arg2` (s8 truncation).
+pub fn ftanim_80070fb4(g: G_ftanim, arg1: i32, arg2: i32) {
+    melee_core::ct!("ftanim_80070fb4");
+    fp(g).x8B0[arg1 as usize].x10 = arg2 as i8;
 }

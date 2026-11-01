@@ -1,3 +1,4 @@
+
 //! The player table: hand port of the accessor half of src/melee/pl/player.c (port round 2).
 //!
 //! `player_slots` itself, `Player_CheckSlot`, the stocks / slot-type / stale-table accessors
@@ -17,17 +18,20 @@
 #![allow(static_mut_refs)]
 
 use crate::hooks as h;
+
 use crate::stale::{player, FtMapping, PLAYER_NUM_MAX};
+
 use crate::types::*;
 
 /// `ftMapping_list[ChKind_Cap]` (TARGET_PC size; m-ex rows are written by `mex_set_mapping`):
 /// owned by `melee_world::pl`, which the world TUs read too.
 pub use melee_world::pl::ftMapping_list as FT_MAPPING_LIST;
+
 /// The retail initial value of `FT_MAPPING_LIST`.
 pub use melee_world::pl::FT_MAPPING_INIT;
 
 #[inline]
-fn mapping(ckind: CharacterKind) -> &'static mut FtMapping {
+pub(crate) fn mapping(ckind: CharacterKind) -> &'static mut FtMapping {
     unsafe { &mut FT_MAPPING_LIST[ckind as usize] }
 }
 
@@ -38,171 +42,37 @@ pub fn has_extra_fighter_id(d: &FtMapping) -> bool {
 }
 
 #[inline]
-fn ent(p: &StaticPlayer, i: usize) -> *mut HSD_GObj {
+pub(crate) fn ent(p: &StaticPlayer, i: usize) -> *mut HSD_GObj {
     p.player_entity[p.transformed[i] as usize]
 }
 
 #[inline]
-fn human_or_cpu(p: &StaticPlayer) -> bool {
+pub(crate) fn human_or_cpu(p: &StaticPlayer) -> bool {
     p.pkind == Gm_PKind_Human || p.pkind == Gm_PKind_Cpu
-}
-
-/// `Player_80031790`.
-pub fn player_80031790(slot: i32) {
-    let p = player(slot);
-    if human_or_cpu(p) {
-        for i in 0..2 {
-            let e = ent(p, i);
-            if !e.is_null() {
-                h::ftlib_800867e8(e);
-            }
-        }
-    }
-}
-
-/// `func_8008688C_wrapper` (static).
-fn func_8008688c_wrapper(p: &StaticPlayer) {
-    if human_or_cpu(p) {
-        for i in 0..2 {
-            let e = ent(p, i);
-            if !e.is_null() {
-                h::ftlib_8008688c(e);
-            }
-        }
-    }
-}
-
-/// `Player_80031848`.
-pub fn player_80031848(slot: i32) {
-    func_8008688c_wrapper(player(slot));
-}
-
-/// `Player_80031900`.
-pub fn player_80031900() {
-    for slot in 0..PLAYER_NUM_MAX as i32 {
-        func_8008688c_wrapper(player(slot));
-    }
-}
-
-/// `Player_800319C4(slot, arg1)`: arg1 -> both entities exist; !arg1 -> neither does.
-pub fn player_800319c4(slot: i32, arg1: i32) -> bool {
-    let p = player(slot);
-    if arg1 != 0 {
-        return (0..2).all(|i| !ent(p, i).is_null());
-    }
-    (0..2).all(|i| ent(p, i).is_null())
-}
-
-/// `Player_80031DA8`.
-pub fn player_80031da8(a: i32, b: i32) {
-    h::ftkb_specialn_800eed50(a, b);
-}
-
-/// `Player_80031DC8(func)`.
-pub fn player_80031dc8(mut func: impl FnMut(i32, i32)) {
-    for slot in 0..PLAYER_NUM_MAX as i32 {
-        let p = player(slot);
-        if p.player_state != 0 {
-            let mp = *mapping(p.ckind);
-            func(mp.internal_id as i32, 0);
-            if has_extra_fighter_id(&mp) {
-                func(mp.extra_internal_id as i32, 0);
-            }
-        }
-    }
-}
-
-/// `Player_80031EBC`.
-pub fn player_80031ebc(slot: i32) {
-    for i in 0..2 {
-        let p = player(slot);
-        let e = ent(p, i);
-        if !e.is_null() {
-            if !h::ftlib_8008701c(e) {
-                h::ftco_800d4f24(ent(p, i), 1);
-            }
-            h::hsd_gobj_free(ent(p, i));
-        }
-    }
-}
-
-/// `Player_80031FB0`.
-pub fn player_80031fb0(slot: i32, entity_index: i32) {
-    let p = player(slot);
-    let t = p.transformed[entity_index as usize] as usize;
-    p.player_entity[t] = core::ptr::null_mut();
-    if p.flags.b2() == 0 || player_800319c4(slot, 0) {
-        player(slot).player_state = 0;
-    }
-}
-
-/// `Player_80032070`.
-pub fn player_80032070(slot: i32, bool_arg: i32) {
-    let p = player(slot);
-    if bool_arg == 0 {
-        h::ftco_800d4ff4(ent(p, 0));
-        if p.flags.b2() != 0 && mapping(p.ckind).has_transformation == 0 && h::ftlib_8008701c(ent(p, 1)) {
-            h::ftco_800d4ff4(ent(p, 1));
-        }
-        h::ifstatus_802f6e1c(slot);
-        return;
-    }
-    if h::ftlib_800873cc(ent(p, 0)) {
-        h::ftco_800d4ff4(ent(p, 1));
-    }
-}
-
-/// `Player_8003219C`.
-pub fn player_8003219c(slot: i32) -> bool {
-    h::ftlib_8008701c(ent(player(slot), 0))
-}
-
-/// `Player_8003221C`.
-pub fn player_8003221c(slot: i32) -> bool {
-    get_player_state(slot) == 2 && !h::ftlib_8008701c(ent(player(slot), 0))
 }
 
 /// `Player_GetPlayerState`.
 pub fn get_player_state(slot: i32) -> i32 {
     player(slot).player_state
 }
+
 /// `Player_GetPlayerCharacter`.
 pub fn get_player_character(slot: i32) -> CharacterKind {
     player(slot).ckind
 }
+
 /// `Player_SetPlayerCharacter`.
 pub fn set_player_character(slot: i32, v: CharacterKind) {
     player(slot).ckind = v;
 }
 
-/// `Player_8003248C` over the real mapping table (the night-1 form is `stale::slot_type_for`).
-pub fn player_8003248c(slot: i32, arg1: i32) -> Gm_PKind {
-    let p = player(slot);
-    crate::stale::slot_type_for(slot, arg1 == 1, mapping(p.ckind).has_transformation != 0)
-}
-
-/// `Player_800325C8(kind, b)`.
-pub fn player_800325c8(kind: CharacterKind, b: i32) -> i8 {
-    if b == 0 {
-        mapping(kind).internal_id
-    } else if b == 1 {
-        mapping(kind).extra_internal_id
-    } else {
-        -1
-    }
-}
-
-/// `Player_80032610(slot, arg1)`.
-pub fn player_80032610(slot: i32, arg1: i32) -> i8 {
-    player_800325c8(player(slot).ckind, arg1)
-}
-
 #[inline]
-fn poses(p: &mut StaticPlayer) -> &mut [Vec3; 4] {
+pub(crate) fn poses(p: &mut StaticPlayer) -> &mut [Vec3; 4] {
     unsafe { &mut p.player_poses.byIndex }
 }
+
 #[inline]
-fn stam(p: &mut StaticPlayer) -> &mut [i16; 4] {
+pub(crate) fn stam(p: &mut StaticPlayer) -> &mut [i16; 4] {
     unsafe { &mut p.staminas.byIndex }
 }
 
@@ -212,42 +82,7 @@ pub fn load_player_coords(slot: i32) -> Vec3 {
     let t = p.transformed[0] as usize;
     poses(p)[t]
 }
-/// `Player_80032768`.
-pub fn player_80032768(slot: i32, v: &Vec3) {
-    let p = player(slot);
-    let (a, b) = (p.transformed[0] as usize, p.transformed[1] as usize);
-    poses(p)[a] = *v;
-    poses(p)[b] = *v;
-}
-/// `Player_80032828`.
-pub fn player_80032828(slot: i32, index: i32, v: &Vec3) {
-    let p = player(slot);
-    let t = p.transformed[index as usize] as usize;
-    poses(p)[t] = *v;
-}
-/// `Player_800328D4`.
-pub fn player_800328d4(slot: i32, v: &Vec3) {
-    player_80032768(slot, v);
-    let p = player(slot);
-    for i in 0..2 {
-        let e = ent(p, i);
-        if !e.is_null() {
-            h::ftlib_80087140(e);
-        }
-    }
-}
-/// `Player_80032A04`.
-pub fn player_80032a04(slot: i32, v: &Vec3) {
-    for i in 0..2 {
-        let p = player(slot);
-        let t = p.transformed[i] as usize;
-        poses(p)[t] = *v;
-        let e = ent(p, i);
-        if !e.is_null() {
-            h::ftlib_80086664(e, v);
-        }
-    }
-}
+
 /// `Player_SetPlayerAndEntityFacingDirection`.
 pub fn set_player_and_entity_facing_direction(slot: i32, dir: f32) {
     let p = player(slot);
@@ -259,12 +94,7 @@ pub fn set_player_and_entity_facing_direction(slot: i32, dir: f32) {
         }
     }
 }
-/// `Player_80032BB0`.
-pub fn player_80032bb0(slot: i32) -> f32 {
-    let p = player(slot);
-    let t = h::ftlib_800869f8(ent(p, 0));
-    t / p.model_scale
-}
+
 /// `Player_SetScale`.
 pub fn set_scale(slot: i32, scale: f32) {
     let p = player(slot);
@@ -276,80 +106,89 @@ pub fn set_scale(slot: i32, scale: f32) {
         }
     }
 }
+
 /// `Player_GetSpawnPlatformPos`.
 pub fn get_spawn_platform_pos(slot: i32) -> Vec3 {
     unsafe { player(slot).player_poses.byVecName.spawn_platform_final_pos }
 }
+
 /// `Player_SetSpawnPlatformPos`.
 pub fn set_spawn_platform_pos(slot: i32, v: &Vec3) {
     player(slot).player_poses.byVecName.spawn_platform_final_pos = *v;
 }
+
 /// `Player_GetSomePos`.
 pub fn get_some_pos(slot: i32) -> Vec3 {
     unsafe { player(slot).player_poses.byVecName.some_other_player_pos }
 }
+
 /// `Player_SetSomePos`.
 pub fn set_some_pos(slot: i32, v: &Vec3) {
     player(slot).player_poses.byVecName.some_other_player_pos = *v;
 }
-/// `Player_80032F30` (unk4E, s8 sign-extended).
-pub fn player_80032f30(slot: i32) -> i32 {
-    player(slot).unk4E as i32
-}
-/// `Player_80032FA4`.
-pub fn player_80032fa4(slot: i32, arg: i32) {
-    player(slot).unk4E = arg as i8;
-}
+
 /// `Player_GetFacingDirection`.
 pub fn get_facing_direction(slot: i32) -> f32 {
     player(slot).facing_direction
 }
+
 /// `Player_SetFacingDirection`.
 pub fn set_facing_direction(slot: i32, dir: f32) {
     player(slot).facing_direction = dir;
 }
+
 /// `Player_SetFacingDirectionConditional`.
 pub fn set_facing_direction_conditional(slot: i32, b: i32, dir: f32) {
     if b == 0 {
         player(slot).facing_direction = dir;
     }
 }
+
 /// `Player_GetCostumeId`.
 pub fn get_costume_id(slot: i32) -> u32 {
     player(slot).costume_id as u32
 }
+
 /// `Player_SetCostumeId`.
 pub fn set_costume_id(slot: i32, v: i32) {
     player(slot).costume_id = v as u8;
 }
+
 /// `Player_GetControllerIndex` (s8 field returned as u8).
 pub fn get_controller_index(slot: i32) -> u8 {
     player(slot).controller_index as u8
 }
+
 /// `Player_SetControllerIndex`.
 pub fn set_controller_index(slot: i32, v: i8) {
     player(slot).controller_index = v;
 }
+
 /// `Player_GetTeam`.
 pub fn get_team(slot: i32) -> i32 {
     player(slot).team as i32
 }
+
 /// `Player_SetTeam`.
 pub fn set_team(slot: i32, v: i8) {
     player(slot).team = v as u8;
 }
+
 /// `Player_GetPlayerId`.
 pub fn get_player_id(slot: i32) -> i32 {
     player(slot).player_id as i32
 }
+
 /// `Player_SetPlayerId`.
 pub fn set_player_id(slot: i32, v: i32) {
     player(slot).player_id = v as u8;
 }
+
 /// `Player_GetCpuLevel`.
 pub fn get_cpu_level(slot: i32) -> i32 {
     player(slot).cpu_level as i32
 }
+
 /// `Player_SetPlayerAndEntityCpuLevel`.
 pub fn set_player_and_entity_cpu_level(slot: i32, v: i32) {
     let p = player(slot);
@@ -361,10 +200,12 @@ pub fn set_player_and_entity_cpu_level(slot: i32, v: i32) {
         }
     }
 }
+
 /// `Player_GetCpuType`.
 pub fn get_cpu_type(slot: i32) -> i32 {
     player(slot).cpu_type as i32
 }
+
 /// `Player_SetPlayerAndEntityCpuType`.
 pub fn set_player_and_entity_cpu_type(slot: i32, v: i32) {
     let p = player(slot);
@@ -376,52 +217,59 @@ pub fn set_player_and_entity_cpu_type(slot: i32, v: i32) {
         }
     }
 }
+
 /// `Player_GetHandicap`.
 pub fn get_handicap(slot: i32) -> i32 {
     player(slot).handicap as i32
 }
+
 /// `Player_SetHandicap`.
 pub fn set_handicap(slot: i32, v: i8) {
     player(slot).handicap = v as u8;
 }
+
 /// `Player_GetUnk50`.
 pub fn get_unk50(slot: i32) -> f32 {
     player(slot).unk50
 }
+
 /// `Player_GetAttackRatio` (TARGET_PC: through `ScriptGame_ModValue(slot, 0, r)`).
 pub fn get_attack_ratio(slot: i32) -> f32 {
     let r = player(slot).attack_ratio;
     h::script_mod_value(slot, 0, r)
 }
+
 /// `Player_SetAttackRatio`.
 pub fn set_attack_ratio(slot: i32, v: f32) {
     player(slot).attack_ratio = v;
 }
+
 /// `Player_GetDefenseRatio` (TARGET_PC: through `ScriptGame_ModValue(slot, 1, r)`).
 pub fn get_defense_ratio(slot: i32) -> f32 {
     let r = player(slot).defense_ratio;
     h::script_mod_value(slot, 1, r)
 }
+
 /// `Player_SetDefenseRatio`.
 pub fn set_defense_ratio(slot: i32, v: f32) {
     player(slot).defense_ratio = v;
 }
+
 /// `Player_GetModelScale`.
 pub fn get_model_scale(slot: i32) -> f32 {
     player(slot).model_scale
 }
+
 /// `Player_SetModelScale`.
 pub fn set_model_scale(slot: i32, v: f32) {
     player(slot).model_scale = v;
 }
-/// `Player_80033BB8`.
-pub fn player_80033bb8(slot: i32) -> i32 {
-    h::gm_8016c5c0(slot)
-}
+
 /// `Player_GetP1Stock` (no slot check).
 pub fn get_p1_stock() -> i32 {
     unsafe { crate::stale::PLAYER_SLOTS[0].stocks as i32 }
 }
+
 /// `Player_LoseStock`.
 pub fn lose_stock(slot: i32) {
     let p = player(slot);
@@ -429,56 +277,69 @@ pub fn lose_stock(slot: i32) {
         p.stocks -= 1;
     }
 }
+
 /// `Player_GetCoins`.
 pub fn get_coins(slot: i32) -> i32 {
     player(slot).current_coins
 }
+
 /// `Player_SetCoins`.
 pub fn set_coins(slot: i32, v: i32) {
     player(slot).current_coins = v;
 }
+
 /// `Player_GetTotalCoins`.
 pub fn get_total_coins(slot: i32) -> i32 {
     player(slot).total_coins
 }
+
 /// `Player_SetTotalCoins`.
 pub fn set_total_coins(slot: i32, v: i32) {
     player(slot).total_coins = v;
 }
+
 /// `Player_GetUnk98`.
 pub fn get_unk98(slot: i32) -> i32 {
     player(slot).unk98
 }
+
 /// `Player_SetUnk98`.
 pub fn set_unk98(slot: i32, v: i32) {
     player(slot).unk98 = v;
 }
+
 /// `Player_GetUnk9C`.
 pub fn get_unk9c(slot: i32) -> i32 {
     player(slot).unk9C
 }
+
 /// `Player_SetUnk9C`.
 pub fn set_unk9c(slot: i32, v: i32) {
     player(slot).unk9C = v;
 }
+
 /// `Player_GetEntity`.
 pub fn get_entity(slot: i32) -> *mut HSD_GObj {
     ent(player(slot), 0)
 }
+
 /// `Player_GetEntityAtIndex`.
 pub fn get_entity_at_index(slot: i32, index: i32) -> *mut HSD_GObj {
     ent(player(slot), index as usize)
 }
+
 /// `Player_SwapTransformedStates`.
 pub fn swap_transformed_states(slot: i32, a: i32, b: i32) {
     player(slot).transformed.swap(a as usize, b as usize);
 }
+
 /// `Player_GetDamage`.
 pub fn get_damage(slot: i32) -> i32 {
     let p = player(slot);
     let t = p.transformed[0] as usize;
     stam(p)[t] as i32
 }
+
 /// `Player_SetHUDDamage`.
 pub fn set_hud_damage(slot: i32, v: i32) {
     for i in 0..2 {
@@ -491,24 +352,29 @@ pub fn set_hud_damage(slot: i32, v: i32) {
         }
     }
 }
+
 /// `Player_SetHPByIndex`.
 pub fn set_hp_by_index(slot: i32, index: i32, v: i32) {
     let p = player(slot);
     let t = p.transformed[index as usize] as usize;
     stam(p)[t] = v as i16;
 }
+
 /// `Player_GetOtherStamina`.
 pub fn get_other_stamina(slot: i32) -> i32 {
     unsafe { player(slot).staminas.byName.stamina as i32 }
 }
+
 /// `Player_SetOtherStamina`.
 pub fn set_other_stamina(slot: i32, v: i32) {
     player(slot).staminas.byName.stamina = v as i16;
 }
+
 /// `Player_GetRemainingHP`: max(stamina - damage, 0).
 pub fn get_remaining_hp(slot: i32) -> i32 {
     get_remaining_hp_by_index(slot, 0)
 }
+
 /// `Player_GetRemainingHPByIndex`.
 pub fn get_remaining_hp_by_index(slot: i32, index: i32) -> i32 {
     let p = player(slot);
@@ -782,3 +648,27 @@ pub fn forget_entities() {
         unsafe { crate::stale::PLAYER_SLOTS[slot].player_entity = [core::ptr::null_mut(); 2] };
     }
 }
+
+pub use crate::tu::player::func_8008688c_wrapper;
+pub use crate::tu::player::player_80031790;
+pub use crate::tu::player::player_80031848;
+pub use crate::tu::player::player_80031900;
+pub use crate::tu::player::player_800319c4;
+pub use crate::tu::player::player_80031da8;
+pub use crate::tu::player::player_80031dc8;
+pub use crate::tu::player::player_80031ebc;
+pub use crate::tu::player::player_80031fb0;
+pub use crate::tu::player::player_80032070;
+pub use crate::tu::player::player_8003219c;
+pub use crate::tu::player::player_8003221c;
+pub use crate::tu::player::player_8003248c;
+pub use crate::tu::player::player_800325c8;
+pub use crate::tu::player::player_80032610;
+pub use crate::tu::player::player_80032768;
+pub use crate::tu::player::player_80032828;
+pub use crate::tu::player::player_800328d4;
+pub use crate::tu::player::player_80032a04;
+pub use crate::tu::player::player_80032bb0;
+pub use crate::tu::player::player_80032f30;
+pub use crate::tu::player::player_80032fa4;
+pub use crate::tu::player::player_80033bb8;

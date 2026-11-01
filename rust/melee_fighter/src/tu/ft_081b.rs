@@ -9,10 +9,18 @@
 //! tests/tu_ft_081b.rs; the rest are smoke-tested there with stubbed callees.
 #![allow(static_mut_refs, non_snake_case)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftcommon as fc;
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use melee_runtime::gekko::{cosf, sinf};
+#[allow(unused_imports)]
+use crate::ft084e::{G as G_ft084e, fall_or_fast, fp as fp_ft084e};
 use crate::types::*;
 use melee_core::fp::fmadds;
 
-pub use crate::ft084e::{ft_80084cb0, ft_80084db0};
 
 pub type G = *mut HSD_GObj;
 /// `bool (*)(Fighter_GObj*, int)` passed through to mpColl.
@@ -875,4 +883,25 @@ pub fn ft_80084ce4(attacker: &Fighter, victim: &Fighter) -> bool {
     } else {
         ext::mpCheckLeftWall(ax, ay, vx, vy, n3, ni, nu, n3, -1, -1)
     }
+}
+
+// ---- folded from ft084e.rs (consolidation steps 21/22) ----
+/// `ft_80084CB0(fp_ft084e, box)` (ft_081B.c).
+pub fn ft_80084cb0(f: &Fighter, b: &mut ftCollisionBox) {
+    melee_core::ct!("ft_80084cb0");
+    let e = &f.coll_data.ecb;
+    b.top = e.top.y;
+    b.bottom = e.bottom.y;
+    b.right.x = e.right.x;
+    b.right.y = e.right.y;
+    b.left.x = e.left.x;
+    b.left.y = e.left.y;
+}
+
+/// `ft_80084DB0` (ft_081B.c).
+pub fn ft_80084db0(g: G_ft084e) {
+    melee_core::ct!("ft_80084db0");
+    let f = fp_ft084e(g);
+    fall_or_fast(f);
+    fc::calc_self_accel_drift(f);
 }

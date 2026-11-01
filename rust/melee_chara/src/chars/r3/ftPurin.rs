@@ -3,18 +3,12 @@
 #![allow(non_snake_case, unused_unsafe, unused_variables, unused_parens, clippy::all)]
 
 pub mod ftpurinspecials {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftpurinspecials::ftPr_SpecialS_Coll;
 
-    /// `ftPr_SpecialS_Coll` (src/melee/ft/kinds/ftPurin/ftpurinspecials.c).
-    pub fn ftPr_SpecialS_Coll(gobj: *mut HSD_GObj) {
-        unsafe {
-            if st::ft_800827A0(gobj) == 0 /* GA_Ground */ {
-                crate::chars::r2::ftPurin::ftpurinspecials::ftPr_SpecialS_8013D590(gobj);
-            }
-        }
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }

@@ -9,6 +9,19 @@
 //! no `return` (garbage in r3): it returns nothing here.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use crate::stale::{player};
+#[allow(unused_imports)]
+use crate::types::*;
+#[allow(unused_imports)]
+use melee_world::pl::ftMapping_list as FT_MAPPING_LIST;
+#[allow(unused_imports)]
+use melee_world::pl::FT_MAPPING_INIT;
+#[allow(unused_imports)]
+use crate::player::{ent as ent_player, get_player_state, has_extra_fighter_id, human_or_cpu, mapping, poses};
 use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
@@ -1458,4 +1471,227 @@ pub fn Player_ForgetEntities() {
             unsafe { player_slots[slot].player_entity[i] = null_mut() };
         }
     }
+}
+
+// ---- folded from player.rs (consolidation steps 21/22) ----
+/// `Player_80031790`.
+pub fn player_80031790(slot: i32) {
+    melee_core::ct!("player_80031790");
+    let p = player(slot);
+    if human_or_cpu(p) {
+        for i in 0..2 {
+            let e = ent_player(p, i);
+            if !e.is_null() {
+                h::ftlib_800867e8(e);
+            }
+        }
+    }
+}
+
+/// `func_8008688C_wrapper` (static).
+pub fn func_8008688c_wrapper(p: &StaticPlayer) {
+    melee_core::ct!("func_8008688c_wrapper");
+    if human_or_cpu(p) {
+        for i in 0..2 {
+            let e = ent_player(p, i);
+            if !e.is_null() {
+                h::ftlib_8008688c(e);
+            }
+        }
+    }
+}
+
+/// `Player_80031848`.
+pub fn player_80031848(slot: i32) {
+    melee_core::ct!("player_80031848");
+    func_8008688c_wrapper(player(slot));
+}
+
+/// `Player_80031900`.
+pub fn player_80031900() {
+    melee_core::ct!("player_80031900");
+    for slot in 0..PLAYER_NUM_MAX as i32 {
+        func_8008688c_wrapper(player(slot));
+    }
+}
+
+/// `Player_800319C4(slot, arg1)`: arg1 -> both entities exist; !arg1 -> neither does.
+pub fn player_800319c4(slot: i32, arg1: i32) -> bool {
+    melee_core::ct!("player_800319c4");
+    let p = player(slot);
+    if arg1 != 0 {
+        return (0..2).all(|i| !ent_player(p, i).is_null());
+    }
+    (0..2).all(|i| ent_player(p, i).is_null())
+}
+
+/// `Player_80031DA8`.
+pub fn player_80031da8(a: i32, b: i32) {
+    melee_core::ct!("player_80031da8");
+    h::ftkb_specialn_800eed50(a, b);
+}
+
+/// `Player_80031DC8(func)`.
+pub fn player_80031dc8(mut func: impl FnMut(i32, i32)) {
+    melee_core::ct!("player_80031dc8");
+    for slot in 0..PLAYER_NUM_MAX as i32 {
+        let p = player(slot);
+        if p.player_state != 0 {
+            let mp = *mapping(p.ckind);
+            func(mp.internal_id as i32, 0);
+            if has_extra_fighter_id(&mp) {
+                func(mp.extra_internal_id as i32, 0);
+            }
+        }
+    }
+}
+
+/// `Player_80031EBC`.
+pub fn player_80031ebc(slot: i32) {
+    melee_core::ct!("player_80031ebc");
+    for i in 0..2 {
+        let p = player(slot);
+        let e = ent_player(p, i);
+        if !e.is_null() {
+            if !h::ftlib_8008701c(e) {
+                h::ftco_800d4f24(ent_player(p, i), 1);
+            }
+            h::hsd_gobj_free(ent_player(p, i));
+        }
+    }
+}
+
+/// `Player_80031FB0`.
+pub fn player_80031fb0(slot: i32, entity_index: i32) {
+    melee_core::ct!("player_80031fb0");
+    let p = player(slot);
+    let t = p.transformed[entity_index as usize] as usize;
+    p.player_entity[t] = core::ptr::null_mut();
+    if p.flags.b2() == 0 || player_800319c4(slot, 0) {
+        player(slot).player_state = 0;
+    }
+}
+
+/// `Player_80032070`.
+pub fn player_80032070(slot: i32, bool_arg: i32) {
+    melee_core::ct!("player_80032070");
+    let p = player(slot);
+    if bool_arg == 0 {
+        h::ftco_800d4ff4(ent_player(p, 0));
+        if p.flags.b2() != 0 && mapping(p.ckind).has_transformation == 0 && h::ftlib_8008701c(ent_player(p, 1)) {
+            h::ftco_800d4ff4(ent_player(p, 1));
+        }
+        h::ifstatus_802f6e1c(slot);
+        return;
+    }
+    if h::ftlib_800873cc(ent_player(p, 0)) {
+        h::ftco_800d4ff4(ent_player(p, 1));
+    }
+}
+
+/// `Player_8003219C`.
+pub fn player_8003219c(slot: i32) -> bool {
+    melee_core::ct!("player_8003219c");
+    h::ftlib_8008701c(ent_player(player(slot), 0))
+}
+
+/// `Player_8003221C`.
+pub fn player_8003221c(slot: i32) -> bool {
+    melee_core::ct!("player_8003221c");
+    get_player_state(slot) == 2 && !h::ftlib_8008701c(ent_player(player(slot), 0))
+}
+
+/// `Player_8003248C` over the real mapping table (the night-1 form is `stale::slot_type_for`).
+pub fn player_8003248c(slot: i32, arg1: i32) -> Gm_PKind {
+    melee_core::ct!("player_8003248c");
+    let p = player(slot);
+    crate::stale::slot_type_for(slot, arg1 == 1, mapping(p.ckind).has_transformation != 0)
+}
+
+/// `Player_800325C8(kind, b)`.
+pub fn player_800325c8(kind: CharacterKind, b: i32) -> i8 {
+    melee_core::ct!("player_800325c8");
+    if b == 0 {
+        mapping(kind).internal_id
+    } else if b == 1 {
+        mapping(kind).extra_internal_id
+    } else {
+        -1
+    }
+}
+
+/// `Player_80032610(slot, arg1)`.
+pub fn player_80032610(slot: i32, arg1: i32) -> i8 {
+    melee_core::ct!("player_80032610");
+    player_800325c8(player(slot).ckind, arg1)
+}
+
+/// `Player_80032768`.
+pub fn player_80032768(slot: i32, v: &Vec3) {
+    melee_core::ct!("player_80032768");
+    let p = player(slot);
+    let (a, b) = (p.transformed[0] as usize, p.transformed[1] as usize);
+    poses(p)[a] = *v;
+    poses(p)[b] = *v;
+}
+
+/// `Player_80032828`.
+pub fn player_80032828(slot: i32, index: i32, v: &Vec3) {
+    melee_core::ct!("player_80032828");
+    let p = player(slot);
+    let t = p.transformed[index as usize] as usize;
+    poses(p)[t] = *v;
+}
+
+/// `Player_800328D4`.
+pub fn player_800328d4(slot: i32, v: &Vec3) {
+    melee_core::ct!("player_800328d4");
+    player_80032768(slot, v);
+    let p = player(slot);
+    for i in 0..2 {
+        let e = ent_player(p, i);
+        if !e.is_null() {
+            h::ftlib_80087140(e);
+        }
+    }
+}
+
+/// `Player_80032A04`.
+pub fn player_80032a04(slot: i32, v: &Vec3) {
+    melee_core::ct!("player_80032a04");
+    for i in 0..2 {
+        let p = player(slot);
+        let t = p.transformed[i] as usize;
+        poses(p)[t] = *v;
+        let e = ent_player(p, i);
+        if !e.is_null() {
+            h::ftlib_80086664(e, v);
+        }
+    }
+}
+
+/// `Player_80032BB0`.
+pub fn player_80032bb0(slot: i32) -> f32 {
+    melee_core::ct!("player_80032bb0");
+    let p = player(slot);
+    let t = h::ftlib_800869f8(ent_player(p, 0));
+    t / p.model_scale
+}
+
+/// `Player_80032F30` (unk4E, s8 sign-extended).
+pub fn player_80032f30(slot: i32) -> i32 {
+    melee_core::ct!("player_80032f30");
+    player(slot).unk4E as i32
+}
+
+/// `Player_80032FA4`.
+pub fn player_80032fa4(slot: i32, arg: i32) {
+    melee_core::ct!("player_80032fa4");
+    player(slot).unk4E = arg as i8;
+}
+
+/// `Player_80033BB8`.
+pub fn player_80033bb8(slot: i32) -> i32 {
+    melee_core::ct!("player_80033bb8");
+    h::gm_8016c5c0(slot)
 }

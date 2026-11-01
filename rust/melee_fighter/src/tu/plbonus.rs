@@ -7,6 +7,13 @@
 //! (tools/rust-port/fma_sites.py: 0 fmuladd). Callees of unported TUs are `ext` hooks.
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_imports, dead_code, unused_assignments, unused_variables)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use crate::types::*;
+#[allow(unused_imports)]
+use crate::plbonus3::{GM_DEC_TYPE_POINT, ext, hsd_assert as hsd_assert_plbonus3, set_point_value, verify_gm_8016aedc};
 use core::ffi::c_void;
 
 use super::player::*;
@@ -1203,4 +1210,168 @@ pub fn fn_8003D2EC(player: i32) {
             }
         }
     }
+}
+
+// ---- folded from plbonus3.rs (consolidation steps 21/22) ----
+/// `pl_800386D8`.
+pub fn pl_800386d8(arg0: &plActionStats, arg1: i32) -> u32 {
+    melee_core::ct!("pl_800386d8");
+    unsafe { arg0.anon_358.anon_0.by_attack_hi[arg1 as usize] }
+}
+
+/// `pl_800386E8`.
+pub fn pl_800386e8(arg0: &pl_800386E8_arg0_t) -> i32 {
+    melee_core::ct!("pl_800386e8");
+    let temp = arg0.unk_190.wrapping_add(arg0.unk_5AC);
+    temp.wrapping_add(arg0.unk_5B0)
+}
+
+/// `fn_80038700_fp`: sum of `arg0[i + 1]` for i in arg1..=arg2.
+pub fn fn_80038700_fp(arg0: &[i32], arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("fn_80038700_fp");
+    let mut sum: i32 = 0;
+    let mut i = arg1;
+    while i <= arg2 {
+        sum = sum.wrapping_add(arg0[(i + 1) as usize]);
+        i += 1;
+    }
+    sum
+}
+
+/// `pl_80038788_fp`.
+pub fn pl_80038788_fp(player: i32, kind: i32, arg2: i32) {
+    melee_core::ct!("pl_80038788_fp");
+    set_point_value(player, kind, arg2 as u32);
+}
+
+/// `pl_80038824_fp`.
+pub fn pl_80038824_fp(player: i32, kind: i32) {
+    melee_core::ct!("pl_80038824_fp");
+    let t = ext(player);
+    hsd_assert_plbonus3(92, h::gm_decision_get_type(kind) == GM_DEC_TYPE_POINT, "gmDecisionGetType(kind) == Gm_DecType_Point");
+    let v = &mut t.x0_staleMoveTable.x904[kind as usize];
+    *v = v.wrapping_add(1);
+}
+
+/// `pl_80038898_fp`.
+pub fn pl_80038898_fp(player: i32, kind: i32) {
+    melee_core::ct!("pl_80038898_fp");
+    let t = ext(player);
+    hsd_assert_plbonus3(103, h::gm_decision_get_type(kind) == GM_DEC_TYPE_POINT, "gmDecisionGetType(kind) == Gm_DecType_Point");
+    let cur = t.x0_staleMoveTable.x904[kind as usize];
+    if cur == 0 {
+        return;
+    }
+    t.x0_staleMoveTable.x904[kind as usize] = cur - 1;
+}
+
+/// `pl_80038914_fp`: the `pl_804D6470` constants pointer.
+pub fn pl_80038914_fp() -> *const pl_804D6470_t {
+    melee_core::ct!("pl_80038914_fp");
+    unsafe { h::PL_804D6470 }
+}
+
+/// `pl_80038F10`.
+pub fn pl_80038f10(player: i32) {
+    melee_core::ct!("pl_80038f10");
+    let t = ext(player);
+    t.xD50 = 0;
+    t.xD54 = 0;
+    t.xD60 = 0;
+    t.xD64 = 6;
+    for i in 0..6 {
+        let o = ext(i);
+        if player == o.xD64 {
+            o.xD60 = 0;
+            o.xD64 = 6;
+        }
+        if player as u32 == o.x0_staleMoveTable.xCAC {
+            o.x0_staleMoveTable.xCAC = 6;
+        }
+        if player == o.xD6C {
+            o.xD6C = 6;
+        }
+    }
+}
+
+/// `fn_80038FB8`.
+pub fn fn_80038fb8(player: i32) {
+    melee_core::ct!("fn_80038fb8");
+    let t = ext(player);
+    for v in t.x0_staleMoveTable.x904.iter_mut() {
+        *v = 0;
+    }
+}
+
+/// `pl_8003906C`. `arg2` is used when `kind == -1`.
+#[allow(clippy::too_many_arguments)]
+pub fn pl_8003906c(player: i32, kind: i32, arg2: &mut u32, arg3: u32, arg4: u32, arg5: u32, arg6: &mut i32) -> i32 {
+    melee_core::ct!("pl_8003906c");
+    if verify_gm_8016aedc() {
+        if h::gm_get_frame_count() <= arg3 {
+            if arg5 >= arg4 {
+                if kind != -1 {
+                    set_point_value(player, kind, 1);
+                } else {
+                    *arg2 = 1;
+                }
+            }
+            if arg3 == h::gm_get_frame_count() {
+                *arg6 = arg5 as i32;
+                return 1;
+            }
+        } else if h::gm_get_frame_count() % arg3 == 0 {
+            let r3 = if kind != -1 { h::pl_80039418(player, kind) } else { *arg2 };
+            if r3 as i32 != 0 && arg5.wrapping_sub(*arg6 as u32) < arg4 {
+                if kind != -1 {
+                    set_point_value(player, kind, 0);
+                } else {
+                    *arg2 = 0;
+                }
+            }
+            *arg6 = arg5 as i32;
+            return 1;
+        }
+    }
+    0
+}
+
+/// `pl_80039238_fp`.
+#[allow(clippy::too_many_arguments)]
+pub fn pl_80039238_fp(player: i32, kind: i32, arg2: &mut i32, arg3: u32, arg4: &mut f32, arg6: f32, arg7: f32) -> bool {
+    melee_core::ct!("pl_80039238_fp");
+    let r0 = h::gm_get_frame_count() != 0 && h::gm_get_frame_count() != (-2i32) as u32;
+    if r0 {
+        if h::gm_get_frame_count() <= arg3 {
+            if arg7 >= arg6 {
+                if kind != -1 {
+                    set_point_value(player, kind, 1);
+                } else {
+                    *arg2 = 1;
+                }
+            }
+            if arg3 == h::gm_get_frame_count() {
+                *arg4 = arg7;
+                return true;
+            }
+        } else if h::gm_get_frame_count() % arg3 == 0 {
+            let r3 = if kind != -1 { h::pl_80039418(player, kind) as i32 } else { *arg2 };
+            if r3 != 0 && arg7 - *arg4 < arg6 {
+                if kind != -1 {
+                    set_point_value(player, kind, 0);
+                } else {
+                    *arg2 = 0;
+                }
+            }
+            *arg4 = arg7;
+            return true;
+        }
+    }
+    false
+}
+
+/// `pl_80039418_fp`.
+pub fn pl_80039418_fp(player: i32, kind: i32) -> u32 {
+    melee_core::ct!("pl_80039418_fp");
+    ext(player).x0_staleMoveTable.x904[kind as usize]
 }

@@ -11,6 +11,9 @@
 //! `ftCo_800B9704` is the existing `crate::ftcpu::ftco_800b9704` (verified), drawn here.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::too_many_arguments)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use melee_types::{Fighter, FighterKind, Ft_Kind_Donkey, Ft_Kind_GKoops, Ft_Kind_Koopa, Ft_Kind_Nana};
 use crate::tu::ftcmdscript::{self as cs, ftco_800b463c as cmd0, ftco_800b46b8 as cmd1};
 use crate::types::*;
 use melee_core::fp::fmadds;
@@ -1864,4 +1867,19 @@ pub fn ftCo_800BB9B4(fp: *mut Fighter) -> i32 {
         g = unsafe { (*g).next };
     }
     f.cpu.xF8_b12() as i32
+}
+
+// ---- folded from ftcpu.rs (consolidation steps 21/22) ----
+/// `ftCo_800B9704`: the CPU's reaction delay.
+pub fn ftco_800b9704(fp: &mut Fighter, randf: f32) {
+    melee_core::ct!("ftco_800b9704");
+    let cpu = &mut fp.cpu;
+    let rand = randf;
+    // ftcpuattack.c: (10 - level) * (rand * 15.0F + 15.0F) + 10.0F, stored to an int field.
+    let t = melee_core::fp::fmadds(rand, 15.0, 15.0);
+    let v = melee_core::fp::fmadds((10 - cpu.level) as f32, t, 10.0);
+    cpu.x34 = v as i32;
+    if cpu.kind == 7 {
+        cpu.x34 /= 2;
+    }
 }

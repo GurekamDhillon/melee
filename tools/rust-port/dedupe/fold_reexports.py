@@ -79,7 +79,11 @@ def split_items(body):
         if i >= n:
             break
         start = i
+        inner_attr = False
         while True:
+            if body.startswith('#![', i):
+                inner_attr = True
+                break
             if body.startswith('//', i):
                 j = body.find('\n', i)
                 i = n if j < 0 else j + 1
@@ -102,6 +106,23 @@ def split_items(body):
                 break
             while i < n and body[i] in ' \t\r\n':
                 i += 1
+        if inner_attr:
+            k = i + 2
+            d = 0
+            while k < n:
+                if body[k] == '[':
+                    d += 1
+                elif body[k] == ']':
+                    d -= 1
+                    if d == 0:
+                        break
+                elif body[k] == '"':
+                    k = skip_str(body, k)
+                    continue
+                k += 1
+            items.append((start, k + 1, 'inner', None, body[start:k + 1]))
+            i = k + 1
+            continue
         if i >= n:
             items.append((start, n, 'trail', None, body[start:n]))
             break
@@ -195,7 +216,9 @@ def use_leaves(u):
             rec(prefix + a, '{' + b)
             return
         full = prefix + t
-        if ' as ' in full:
+        if full.endswith('*'):
+            out.append(full)
+        elif ' as ' in full:
             out.append(full.split(' as ')[1].strip())
         else:
             out.append(full.split('::')[-1].strip())
@@ -307,7 +330,7 @@ def main():
         for st, en, rep in sorted(edits, reverse=True):
             tu = tu[:st] + rep + tu[en:]
         have = set()
-        for um in re.finditer(r'(?ms)^[ \t]*(?:pub(?:\([a-z]+\))?\s+)?use\s+.*?;', tu):
+        for um in re.finditer(r'(?ms)^(?:pub(?:\([a-z]+\))?\s+)?use\s+.*?;', tu):
             try:
                 have.update(use_leaves(um.group(0)))
             except Exception:
@@ -316,6 +339,8 @@ def main():
         seen_stmt = set()
         for u in new_imports:
             u = re.sub(r'^(#\[[^\]]*\]\s*)+', '', u)
+            mu = re.search(r'(?m)^(?:pub(?:\([a-z]+\))?\s+)?use\s', u)
+            u = u[mu.start():] if mu else u
             if u in seen_stmt:
                 continue
             seen_stmt.add(u)

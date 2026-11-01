@@ -9,11 +9,25 @@
 //! 800755E8, 80075650.
 #![allow(non_snake_case)]
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftcommon::calc_hitlag;
+#[allow(unused_imports)]
+use crate::ftcommon::abs_c;
+#[allow(unused_imports)]
+use crate::ftcommon2 as fc2;
+#[allow(unused_imports)]
+use crate::ftcommon3::ftco_get_cstick_angle;
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use crate::ft0df::{G, fp};
 use crate::types::*;
 
-pub use crate::ft0df::{ftparts_80074a4c, ftparts_80074a74, ftparts_80074a8c, ftparts_80074acc};
-pub use crate::ftdmgfall::{ftparts_8007506c, ftparts_get_bone_index, ftparts_remap};
-
+pub use crate::ftdmgfall::{ftparts_get_bone_index, ftparts_remap};
 /// Callees outside this TU: settable hooks (the C oracle in tests/tu_ftparts_vs_c.rs installs recording
 /// stubs); unset they run the runtime / world port.
 #[allow(non_snake_case, unused_variables)]
@@ -365,4 +379,60 @@ pub unsafe fn ftParts_80075240(list: *mut DObjList, n: i32) -> *mut HSD_TObj {
         }
     }
     panic!("cannot find tobj!\n");
+}
+
+// ---- folded from ft0df.rs (consolidation steps 21/22) ----
+// ---- ftparts.c leaves --------------------------------------------------------------------
+
+pub fn ftparts_80074a4c(g: G, model_idx: i32, val: i32) {
+    melee_core::ct!("ftparts_80074a4c");
+    let f = fp(g);
+    f.x5F4_arr[model_idx as usize].prev = val as i8;
+    f.set_x221D_b2(1);
+}
+
+pub fn ftparts_80074a74(g: G, model_idx: i32) -> i32 { melee_core::ct!("ftparts_80074a74"); fp(g).x5F4_arr[model_idx as usize].prev as i32 }
+
+pub fn ftparts_80074a8c(g: G) {
+    melee_core::ct!("ftparts_80074a8c");
+    let f = fp(g);
+    let mut i = 0u32;
+    while i < f.x5AC.model_num {
+        f.x5F4_arr[i as usize].idx = f.x5F4_arr[i as usize].prev;
+        i += 1;
+    }
+    f.set_x221D_b2(0);
+}
+
+pub fn ftparts_80074acc(g: G) {
+    melee_core::ct!("ftparts_80074acc");
+    let f = fp(g);
+    let mut i = 0u32;
+    while i < f.x5AC.model_num {
+        f.x5F4_arr[i as usize].idx = -1;
+        i += 1;
+    }
+    f.set_x221D_b2(0);
+}
+
+// ---- folded from ftdmgfall.rs (consolidation steps 21/22) ----
+/// `ftParts_8007506C(kind, part)`: bit `i` of the first `Fighter_804D6540[kind]` entry whose
+/// `x0 == part`, else 0.
+pub fn ftparts_8007506c(ftkind: i32, part: i32) -> u32 {
+    melee_core::ct!("ftparts_8007506c");
+    unsafe {
+        let t = *h::fighter_804d6540().offset(ftkind as isize);
+        if !t.is_null() && (*t).x4 != 0 {
+            let mut v = (*t).x0;
+            let mut i = 0i32;
+            while i < (*t).x4 {
+                if (*v).x0 as i32 == part {
+                    return 1u32.wrapping_shl(i as u32);
+                }
+                i += 1;
+                v = v.add(1);
+            }
+        }
+    }
+    0
 }

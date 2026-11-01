@@ -26,34 +26,15 @@ pub use crate::tu::ftpurinspeciallw::{ftPr_SpecialAirLw_Phys, ftPr_SpecialLw_Phy
 }
 
 pub mod ftpurinspecials {
-    #[allow(unused_imports)]
+pub use crate::tu::ftpurinspecials::ftPr_SpecialS_Anim;
+pub use crate::tu::ftpurinspecials::ftPr_SpecialAirS_Anim;
+pub use crate::tu::ftpurinspecials::ftPr_SpecialS_Phys;
+pub use crate::tu::ftpurinspecials::ftPr_SpecialS_8013D590;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `ftPr_SpecialS_Anim` (src/melee/ft/kinds/ftPurin/ftpurinspecials.c).
-    pub fn ftPr_SpecialS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ft_8008A2BC(gobj);
-        }
-    }
-
-    /// `ftPr_SpecialAirS_Anim` (src/melee/ft/kinds/ftPurin/ftpurinspecials.c).
-    pub fn ftPr_SpecialAirS_Anim(gobj: *mut HSD_GObj) {
-        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
-            st::ftCo_Fall_Enter(gobj);
-        }
-    }
-
-    /// `ftPr_SpecialS_Phys` (src/melee/ft/kinds/ftPurin/ftpurinspecials.c).
-    pub fn ftPr_SpecialS_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80084FA8(gobj);
-    }
-
-    /// `ftPr_SpecialS_8013D590` (src/melee/ft/kinds/ftPurin/ftpurinspecials.c).
-    pub fn ftPr_SpecialS_8013D590(gobj: *mut HSD_GObj) {
-        let fp = unsafe { &mut *((*gobj).user_data as *mut Fighter) };
-        st::ftCommon_GroundToAirStateChange(gobj, fp, 364 /* ftPr_MS_SpecialAirS */, 0xC4C508Au32 /* ftPr_MF_SpecialS_Coll */);
-    }
 
 }

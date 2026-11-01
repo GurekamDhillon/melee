@@ -37,45 +37,27 @@ pub use crate::tu::ftcrazyhandbackcrush::{ftCh_BackCrush_Phys};
 }
 
 pub mod ftcrazyhanddamage0 {
-    #[allow(unused_imports)]
+pub use crate::tu::ftcrazyhanddamage0::fn_80157080;
+pub use crate::tu::ftcrazyhanddamage0::ftCh_Damage_Phys;
+pub use crate::tu::ftcrazyhanddamage0::ftCh_Init_8015737C;
+pub use crate::tu::ftcrazyhanddamage0::ftCh_WaitSweep_Phys;
+
+#[allow(unused_imports)]
     use crate::stubs as st;
-    #[allow(unused_imports)]
+
+#[allow(unused_imports)]
     use melee_types::{Fighter, HSD_GObj};
-
-    /// `fn_80157080` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddamage0.c).
-    pub fn fn_80157080(gobj: *mut HSD_GObj) {
-        st::Fighter_ChangeMotionState(gobj, 344 /* 0x158 */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-        st::ftAnim_8006EBA4(gobj);
-    }
-
-    /// `ftCh_Damage_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddamage0.c).
-    pub fn ftCh_Damage_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80085134(gobj);
-    }
-
-    /// `ftCh_Init_8015737C` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddamage0.c).
-    pub fn ftCh_Init_8015737C(gobj: *mut HSD_GObj) {
-        st::Fighter_ChangeMotionState(gobj, 346 /* ftMh_MS_WaitSweep */, 0u32, 0.0_f32, 1.0_f32, 0.0_f32, core::ptr::null_mut());
-        st::ftAnim_8006EBA4(gobj);
-    }
-
-    /// `ftCh_WaitSweep_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddamage0.c).
-    pub fn ftCh_WaitSweep_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80085134(gobj);
-    }
 
 }
 
 pub mod ftcrazyhandentry {
-    #[allow(unused_imports)]
-    use crate::stubs as st;
-    #[allow(unused_imports)]
-    use melee_types::{Fighter, HSD_GObj};
+pub use crate::tu::ftcrazyhandentry::ftCh_Entry_Phys;
 
-    /// `ftCh_Entry_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandentry.c).
-    pub fn ftCh_Entry_Phys(gobj: *mut HSD_GObj) {
-        st::ft_80085134(gobj);
-    }
+#[allow(unused_imports)]
+    use crate::stubs as st;
+
+#[allow(unused_imports)]
+    use melee_types::{Fighter, HSD_GObj};
 
 }
 

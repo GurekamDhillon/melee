@@ -21,6 +21,16 @@ root = os.path.join(a.crate, 'src')
 tu_dir = os.path.join(root, 'tu')
 tu_files = {f[:-3] for f in os.listdir(tu_dir) if f.endswith('.rs')}
 cache = {}
+C_ROOT = os.environ.get('MELEE_C_SRC', 'E:/Projects/Melee Workspace/melee/src/melee')
+_cidx = {}
+for _dp, _dn, _fs in os.walk(C_ROOT):
+    for _f in _fs:
+        if _f.endswith('.c'):
+            _cidx.setdefault(_f[:-2].lower(), os.path.relpath(os.path.join(_dp, _f), os.path.dirname(C_ROOT)).replace(os.sep, '/'))
+
+
+def find_c(mod):
+    return _cidx.get(mod.lower())
 
 
 def load(p):
@@ -49,7 +59,14 @@ for dp, dn, fns in os.walk(os.path.join(root, a.prefix)):
             if m.start() < pos:
                 continue
             if modname not in tu_files:
-                continue
+                cpath = find_c(modname)
+                if not cpath:
+                    continue
+                with open(os.path.join(tu_dir, modname + '.rs'), 'w', encoding='utf-8', newline=chr(10)) as nf:
+                    nf.write('//! ' + cpath + ': ports folded from the hand-written character modules (consolidation step 20).' + chr(10) + '#![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs)]' + chr(10))
+                with open(os.path.join(tu_dir, 'mod.rs'), 'a', encoding='utf-8', newline=chr(10)) as mf:
+                    mf.write('pub mod ' + modname + ';' + chr(10))
+                tu_files.add(modname)
             ob = s.index('{', m.start())
             cb = scan_close(s, ob)
             inner = s[ob + 1:cb]
@@ -102,7 +119,7 @@ for dp, dn, fns in os.walk(os.path.join(root, a.prefix)):
             tu2 = tu.rstrip('\n')
             # imports
             have = set()
-            for um in re.finditer(r'(?ms)^[ \t]*(?:pub(?:\([a-z]+\))?\s+)?use\s+.*?;', tu2):
+            for um in re.finditer(r'(?ms)^(?:pub(?:\([a-z]+\))?\s+)?use\s+.*?;', tu2):
                 try:
                     have.update(use_leaves(um.group(0)))
                 except Exception:
@@ -110,6 +127,8 @@ for dp, dn, fns in os.walk(os.path.join(root, a.prefix)):
             add = []
             for u in uses:
                 u = re.sub(r'^(#\[[^\]]*\]\s*)+', '', u)
+            mu = re.search(r'(?m)^(?:pub(?:\([a-z]+\))?\s+)?use\s', u)
+            u = u[mu.start():] if mu else u
                 try:
                     lv = use_leaves(u)
                 except Exception:

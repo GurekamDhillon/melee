@@ -5,6 +5,15 @@
 //! rest: ftCo_80090780, the TARGET_PC UCF 0.84 tumble test, DamageFall_IASA and DamageFall_Coll.
 //! Checked against the C (whole TU, shipping contraction) by tests/tu_ftCo_DamageFall.rs.
 
+#![allow(unused_variables, unused_parens, unused_comparisons, unused_unsafe, unused_mut)]
+#[allow(unused_imports)]
+use crate::ftcommon::calc_hitlag;
+#[allow(unused_imports)]
+use crate::hooks as h;
+#[allow(unused_imports)]
+use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use crate::ftdmgfall::{G as G_ftdmgfall, calc_shift, fp as fp_ftdmgfall};
 use crate::types::*;
 
 pub use crate::ftdmgfall::{
@@ -150,4 +159,73 @@ pub fn ftCo_DamageFall_IASA(g: G) {
 pub fn ftCo_DamageFall_Coll(g: G) {
     melee_core::ct!("ftCo_DamageFall_Coll");
     ext::ft_8008370C(g, ext::ftCo_80090984);
+}
+
+// ---- folded from ftdmgfall.rs (consolidation steps 21/22) ----
+// ---- ftCo_DamageFall.c -----------------------------------------------------------------------
+
+/// `ftCo_80090574(gobj)`: `ft_80081DD4(gobj)`.
+pub fn ftco_80090574(g: G_ftdmgfall) {
+    melee_core::ct!("ftco_80090574");
+    h::ft_80081dd4(g)
+}
+
+/// `ftCo_80090594(fp_ftdmgfall, element, dmg, msid, ground_or_air, hitlag_mul)`: arm the hit model shift.
+pub fn ftco_80090594(fp_ftdmgfall: &mut Fighter, element: i32, dmg: i32, msid: i32, ground_or_air: i32, hitlag_mul: f32) {
+    melee_core::ct!("ftco_80090594");
+    if element == HitElement_Cape as i32
+        || element == HitElement_Disable as i32
+        || element == HitElement_Nap as i32
+        || element == HitElement_Sleep as i32
+    {
+        return;
+    }
+    if fp_ftdmgfall.motion_id as i32 == ftCo_MS_DamageIce as i32 {
+        return;
+    }
+    fp_ftdmgfall.dmg.x18fa_model_shift_frames = calc_shift(hitlag_mul, msid, dmg);
+    fp_ftdmgfall.dmg.x18FC = 0;
+    if element == HitElement_Electric as i32 {
+        fp_ftdmgfall.dmg.x18F8 = 2;
+    } else if ground_or_air == GA_Air as i32 {
+        fp_ftdmgfall.dmg.x18F8 = 0;
+    } else {
+        fp_ftdmgfall.dmg.x18F8 = 1;
+        fp_ftdmgfall.dmg.x1900 = fp_ftdmgfall.coll_data.floor.normal.x;
+        fp_ftdmgfall.dmg.x1904 = fp_ftdmgfall.coll_data.floor.normal.y;
+    }
+    // `(u8) (u32) Fighter_804D6530[x18F8 * 2 + 1]`: the odd entries hold a count, not a pointer.
+    let e = unsafe { *h::fighter_804d6530().offset(fp_ftdmgfall.dmg.x18F8 as isize * 2 + 1) };
+    fp_ftdmgfall.dmg.x18FD = e as usize as u32 as u8;
+}
+
+/// `ftCo_80090690(fp_ftdmgfall, &shift)`: the current model shift (C returns `shift`, or NULL).
+pub fn ftco_80090690(fp_ftdmgfall: &mut Fighter) -> Option<Vec2> {
+    melee_core::ct!("ftco_80090690");
+    if fp_ftdmgfall.dmg.x18fa_model_shift_frames == 0 {
+        return None;
+    }
+    let k = fp_ftdmgfall.dmg.x18F8;
+    let vec = unsafe { *(*h::fighter_804d6530().offset(k as isize * 2)).offset(fp_ftdmgfall.dmg.x18FC as isize) };
+    if k == 1 {
+        let x = vec.x * fp_ftdmgfall.facing_dir;
+        Some(Vec2 { x: fp_ftdmgfall.dmg.x1904 * x, y: fmadds(-fp_ftdmgfall.dmg.x1900, x, vec.y) })
+    } else {
+        Some(Vec2 { x: vec.x * fp_ftdmgfall.facing_dir, y: vec.y })
+    }
+}
+
+/// `ftCo_80090718(fp_ftdmgfall)`: play and clear the queued hit SFX / voice line.
+pub fn ftco_80090718(fp_ftdmgfall: &mut Fighter) {
+    melee_core::ct!("ftco_80090718");
+    if fp_ftdmgfall.dmg.x1908 != -1 {
+        let id = fp_ftdmgfall.dmg.x1908;
+        h::play_sfx(fp_ftdmgfall, id, 127, 64);
+        fp_ftdmgfall.dmg.x1908 = -1;
+    }
+    if !fp_ftdmgfall.dmg.x190C.is_null() {
+        let p = fp_ftdmgfall.dmg.x190C as *const FtSFXArr;
+        h::ft_800889f4(fp_ftdmgfall, p);
+        fp_ftdmgfall.dmg.x190C = core::ptr::null_mut();
+    }
 }

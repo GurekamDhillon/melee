@@ -57,11 +57,18 @@ Env: `export GW_ISO_VANILLA=...` via the workspace `.env`. Run from the repo roo
 |---|---|---|
 | pad_falcon_fox_fd | 1801 of 1801 (full) | none |
 | pad_marth_sheik_bf | 1801 of 1801 (full) | none |
-| cpu_fox_falco_dl | 323 (0..322), no hash divergence | stops at 323: P2 shield roll `ftCo_800992A8` not ported |
+| cpu_fox_falco_dl | 323 (0..322), no hash divergence (legacy) | legacy only; engine 3601 |
 | cpu_peach_samus_ys_items | 120 (0..119), no hash divergence | stops at 120: Shy Guys spawn `it_802D8618` (`itheiho.c`) |
 (Engine, default since step 18: all four goldens are complete on `--engine tu`, seed column included: 1801 / 1801 / 3601 / 3601; the rows above are the pre-engine legacy numbers.)
 The sim stops (reports why) on unported code rather than guessing; a stop is not a mismatch. Re-measure with
 `melee diff --scenario <scn> --first` (it prints the stop reason).
+
+## Consolidation status (2026-11-01)
+- Steps 1-22 DONE; 23 (TU-to-TU dedupe) in progress; 24 (lint enforcing, empty baseline) not started.
+- Engine (`--engine tu`, the only engine since step 19) frame counts: pad_falcon_fox_fd 1801, pad_marth_sheik_bf 1801, cpu_fox_falco_dl 3601, cpu_peach_samus_ys_items 3601 (all full goldens, seed column included).
+- Baselines: logic lint `tools/rust-port/lint_baseline.txt` 403 entries (R1 29, R2 291, R3 79, R4 4; `lint_allow.txt` 13); diff baseline 144 entries.
+- `port/dedupe` merged into rust-port (c333d57c9); one lint remains (`lint_logic.py`). Gate: `tools/rust-port/gate.sh` GATE OK.
+- Remaining: finish 23 (pointer-based render model for retail menu stand-ins, 109 type-mismatched forwarders in `dedupe/fwd_skip.txt`, melee_audio sim vs lbaudio, melee_modes gm* typed copies), then 24; open audio proofs (`--pause`, `--time-secs`); blocker D (Crazy Hand / Jigglypuff retail callbacks) and E (`todo!` stubs).
 
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.

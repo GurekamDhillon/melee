@@ -103,3 +103,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-01 rust-port: step 18, golden/diff/synctest/view-golden/play/netplay default to the engine; GX bridge draws the real frame; netplay rollback 1801/1801 vs the C golden, see notes/consolidation.md Round 4
 - 2026-11-01 rust-port: step 19, vs_match and the legacy viewers deleted; engine audio equal to the C capture (falcon_fox 6106 sub-frames); mods overlay and --slp/--gdlp on the engine; cpu_peach 1652; see notes/consolidation.md Round 4
 - 2026-11-01 rust-port: steps 20-22 as a mechanical fold (tools/rust-port/dedupe: chars/rN, non-tu fighter / world / items / modes / runtime bodies moved into their canonical tu files); lint baseline 9225 -> 4439, engine 1801/1801/3601/1652 unchanged; see notes/consolidation.md Round 5
+- 2026-11-01 step 23 wip 1: lint_logic recognises forwarders (R2 3386 -> 1007, baseline 1996); engine 1801/1801/3601/1652. See notes/consolidation.md round 6.

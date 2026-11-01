@@ -11,7 +11,7 @@
 //! `--lag-ms` / `--loss-pct` degrade this peer's INBOUND datagrams (a deterministic LCG), so the
 //! predictions miss and the session rolls back.
 
-use crate::netmatch::{golden_hashes, open_match_for, NetMatch};
+use crate::netmatch::{golden_hashes, NetGame, NetMatch};
 use crate::np_env::{ck_name, lobby_bot, NativeEnv};
 use melee_net::app::room::{Phase, Room, RoomEnv, RoomSettings};
 use melee_net::app::scene::parse_scene;
@@ -73,9 +73,17 @@ impl Transport for Degraded {
     }
 }
 
-type Sess = RbSession<NetMatch>;
-
+/// `melee netplay`: the consolidated engine unless `--engine legacy`.
 pub fn netplay(args: &[String]) -> std::process::ExitCode {
+    if crate::use_engine(args) {
+        netplay_with::<crate::netmatch::engine_game::EngineGame>(args)
+    } else {
+        netplay_with::<NetMatch>(args)
+    }
+}
+
+fn netplay_with<G: NetGame + 'static>(args: &[String]) -> std::process::ExitCode {
+    type Sess<G> = RbSession<G>;
     use std::process::ExitCode;
     let random = args.iter().any(|a| a == "--random");
     let room_code = arg(args, "--room");
@@ -106,7 +114,7 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
     let lag = Duration::from_millis(num("--lag-ms", 0) as u64);
     let loss = num("--loss-pct", 0) as u32;
     let rcfg = RbConfig { net: true, local_port, delay, src: InputSource::Live, ..RbConfig::default() };
-    let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(rcfg)));
+    let sess: Rc<RefCell<Sess<G>>> = Rc::new(RefCell::new(Sess::<G>::new(rcfg)));
     sess.borrow_mut().scene_begin(2);
     let log = Rc::new(RefCell::new(NetLog::default()));
     let inner = Box::new(NetAdapter::new(sess.clone(), log.clone(), None));
@@ -198,17 +206,14 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
         return ExitCode::FAILURE;
     };
     let names: Vec<&str> = [&ps.host_tok, &ps.guest_tok].iter().map(|t| ck_name(NativeEnv.ck_for_token(t)).unwrap_or("falcon")).collect();
-    let mut game = match open_match_for(args, "GrNLa.dat", &names, agreed_seed, ps.stocks) {
+    let mut game = match G::open(args, "GrNLa.dat", &names, agreed_seed, ps.stocks) {
         Ok(g) => g,
         Err(e) => {
             eprintln!("melee: {e}");
             return ExitCode::FAILURE;
         }
     };
-    game.live = true;
-    if args.iter().any(|a| a == "--live-rng") {
-        game.live_seed = Some(agreed_seed);
-    }
+    game.set_live(args.iter().any(|a| a == "--live-rng").then_some(agreed_seed));
     let host = room.sh.borrow().s.host;
     let tag = if host { "host" } else { "guest" };
     let local_port = if host { 0 } else { 1 };
@@ -268,22 +273,22 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
             s.submit_local_input(local_port * 2, ff, &i);
         }
         let n_run = run_tick(&mut s, &mut game, None);
-        if game.vs.stopped.is_some() != stop_logged {
-            stop_logged = game.vs.stopped.is_some();
+        if game.halted() != stop_logged {
+            stop_logged = game.halted();
             if stop_logged {
-                let fr = game.vs.frame + FIRST + 1;
+                let fr = game.frame() + 1;
                 for p in 0..2usize {
                     let u = s.input_any(p, fr).map(|i| (i.buttons, i.lx, i.ly, i.confirmed));
                     let w = script_input(p, fr - FIRST);
                     eprintln!("melee: {tag}:   frame {fr} port {p} used {u:?} script {:?}", (w.buttons, w.lx, w.ly));
                 }
             }
-            eprintln!("melee: {tag}: tick {ticks} sim {} at session frame {} (game frame {}, conf {}, remote_conf {}): {:?}", if stop_logged { "STOPPED" } else { "resumed" }, s.current_frame(), game.vs.frame, s.confirmed_frame(), net.remote_confirmed_frame(), game.vs.stopped);
+            eprintln!("melee: {tag}: tick {ticks} sim {} at session frame {} (game frame {}, conf {}, remote_conf {})", if stop_logged { "STOPPED" } else { "resumed" }, s.current_frame(), game.frame() - FIRST, s.confirmed_frame(), net.remote_confirmed_frame());
         }
         if trace && ticks % 120 == 0 {
             eprintln!("melee: {tag}: tick {ticks} frame {} ran {n_run} confirmed {} adv {} remote_conf {} unacked {} rtt {} silent {} state {:?}",
                 s.current_frame(), s.confirmed_frame(), s.frame_advantage(), net.remote_confirmed_frame(), net.unacked(), net.rtt_ms(), net.silent_ms(), net.state());
-            eprintln!("melee: {tag}:   {} stopped {:?} game frame {}", s.dbg_line(), game.vs.stopped.is_some(), game.vs.frame);
+            eprintln!("melee: {tag}:   {} halted {:?} game frame {}", s.dbg_line(), game.halted(), game.frame() - FIRST);
         }
         let next = finals.last().map_or(FIRST, |x| x.0 + 1);
         for fr in next..=s.current_frame() {
@@ -331,7 +336,7 @@ pub fn netplay(args: &[String]) -> std::process::ExitCode {
     }
     if let Some(p) = arg(args, "--raw-out") {
         let mut t = String::from("frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
-        for (f, h) in &game.raw_log {
+        for (f, h) in &game.raw_log() {
             t += &format!("{},{}\n", f, h);
         }
         let _ = std::fs::write(p, t);

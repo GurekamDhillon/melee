@@ -4,6 +4,7 @@
 pub mod arena;
 pub mod archive;
 pub mod cdata;
+pub mod cow;
 pub mod crash;
 pub mod dat_custom;
 pub mod dat_types;

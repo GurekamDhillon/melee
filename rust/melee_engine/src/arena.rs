@@ -33,6 +33,8 @@ static mut BUMP: usize = 0;
 static mut FREE: [[usize; NCLASS]; NALIGN] = [[0; NCLASS]; NALIGN];
 /// Blocks served / bytes bumped (diagnostics).
 static mut NALLOC: u64 = 0;
+/// Live blocks per size class (diagnostics).
+static mut LIVE: [i64; NCLASS] = [0; NCLASS];
 
 #[cfg(windows)]
 mod sys {
@@ -136,6 +138,7 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
         COMMITTED = BASE;
     }
     NALLOC += 1;
+    LIVE[c] += 1;
     let head = FREE[ab][c];
     if head != 0 {
         FREE[ab][c] = *(head as *const usize);
@@ -167,6 +170,7 @@ pub unsafe fn alloc(_l: Layout) -> *mut u8 {
 pub unsafe fn free(p: *mut u8, l: Layout) {
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
     let _g = Lock::take();
+    LIVE[c] -= 1;
     *(p as *mut usize) = FREE[ab][c];
     FREE[ab][c] = p as usize;
 }
@@ -223,5 +227,41 @@ pub fn note_miss(l: Layout) {
     if n < 16 {
         MISSED[2 * n].store(l.size(), Relaxed);
         MISSED[2 * n + 1].store(l.align(), Relaxed);
+    }
+}
+
+/// Diagnostics: bytes bumped, bytes sitting on the free lists, and the five classes holding most free bytes (class size, blocks).
+pub fn stats() -> (usize, usize, Vec<(usize, usize)>) {
+    unsafe {
+        let mut free = 0usize;
+        let mut per: Vec<(usize, usize)> = Vec::new();
+        for c in 0..NCLASS {
+            let mut n = 0usize;
+            let mut sz = 0usize;
+            for ab in 0..NALIGN {
+                let mut p = FREE[ab][c];
+                while p != 0 {
+                    n += 1;
+                    p = *(p as *const usize);
+                }
+            }
+            if n > 0 {
+                // block size of class c (inverse of class_of)
+                sz = if c < 8 { (c + 1) * 16 } else { let k = 7 + (c - 8) / 8; let sub = (c - 8) % 8 + 1; (1usize << k) + sub * (1usize << (k - 3)) };
+                free += n * sz;
+                per.push((sz * n, sz));
+            }
+        }
+        per.sort_unstable_by(|a, b| b.cmp(a));
+        // live bytes by class: replace the free-list report by the live one
+        let mut live: Vec<(usize, usize)> = (0..NCLASS).filter(|&c| LIVE[c] > 0).map(|c| {
+            let sz = if c < 8 { (c + 1) * 16 } else { let k = 7 + (c - 8) / 8; let sub = (c - 8) % 8 + 1; (1usize << k) + sub * (1usize << (k - 3)) };
+            (sz * LIVE[c] as usize, sz)
+        }).collect();
+        live.sort_unstable_by(|a, b| b.cmp(a));
+        if std::env::var_os("MELEE_ARENA_LIVE").is_some() {
+            return (BUMP - BASE, free, live.into_iter().take(8).map(|(t, s)| (s, t / s)).collect());
+        }
+        (BUMP - BASE, free, per.into_iter().take(6).map(|(t, s)| (s, t / s)).collect())
     }
 }

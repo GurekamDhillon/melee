@@ -97,6 +97,29 @@ impl RbGame for NetMatch {
     }
 }
 
+/// What `melee netplay` needs of a game beyond the session's `RbGame`.
+pub trait NetGame: RbGame + Sized {
+    /// The agreed match: stage file, fighters by name, seed, stocks.
+    fn open(args: &[String], stage_file: &str, names: &[&str], seed: u32, stocks: i32) -> Result<Self, String>;
+    /// Live play (the pads decide); `live_seed` is the online RNG rule (every frame starts from `seed + (frame << 16)`).
+    fn set_live(&mut self, live_seed: Option<u32>);
+    /// The after-frame neutral rows by golden frame (what `--raw-out` writes).
+    fn raw_log(&self) -> Vec<(i32, String)>;
+}
+
+impl NetGame for NetMatch {
+    fn open(args: &[String], stage_file: &str, names: &[&str], seed: u32, stocks: i32) -> Result<Self, String> {
+        open_match_for(args, stage_file, names, seed, stocks)
+    }
+    fn set_live(&mut self, live_seed: Option<u32>) {
+        self.live = true;
+        self.live_seed = live_seed;
+    }
+    fn raw_log(&self) -> Vec<(i32, String)> {
+        self.raw_log.iter().map(|(f, h)| (*f, h.clone())).collect()
+    }
+}
+
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
 }
@@ -199,6 +222,9 @@ pub mod engine_game {
     pub struct EngineGame {
         pub e: Engine,
         base: RefCell<Option<Base>>,
+        pub live: bool,
+        pub live_seed: Option<u32>,
+        pub rows: std::collections::BTreeMap<i32, String>,
     }
 
     #[derive(Clone)]
@@ -210,7 +236,7 @@ pub mod engine_game {
 
     impl EngineGame {
         pub fn new(e: Engine) -> Self {
-            EngineGame { e, base: RefCell::new(None) }
+            EngineGame { e, base: RefCell::new(None), live: false, live_seed: None, rows: Default::default() }
         }
         fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
             if self.base.borrow().is_none() {
@@ -260,6 +286,10 @@ pub mod engine_game {
                 eprintln!("arena misses: {n} allocs {} range {:x?}", melee_engine::arena::allocations(), melee_engine::arena::used_range());
                 for k in 0..n.min(16) { eprintln!("  miss size {} align {}", MISSED[2*k].load(std::sync::atomic::Ordering::Relaxed), MISSED[2*k+1].load(std::sync::atomic::Ordering::Relaxed)); }
             }
+            {
+                let (bump, free, top) = melee_engine::arena::stats();
+                eprintln!("arena: bumped {:.0} MB, free-listed {:.0} MB, top free classes (size, blocks) {:?}", bump as f64 / 1e6, free as f64 / 1e6, top);
+            }
             let s0 = self.save();
             let i = inputs(self.frame() + 1);
             self.run_frame(&i, false);
@@ -295,13 +325,32 @@ pub mod engine_game {
         fn game_hash(&self) -> u32 {
             self.e.neutral_row()[0]
         }
+        fn live(&self) -> bool {
+            self.live
+        }
+        fn port_human(&self, port: usize) -> bool {
+            port < 2
+        }
+        fn halted(&self) -> bool {
+            self.e.ended
+        }
         fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], _resim: bool) {
             let mut p = [PADStatus::zeroed(); 4];
             for (port, slot) in p.iter_mut().enumerate() {
                 *slot = pad_of(&inputs[port * 2]);
             }
             self.e.set_pads(Some(p));
+            if let Some(sd) = self.live_seed {
+                // gw_Replay_ChecksumSeed in live mode: every frame starts from `seed + ((frame + 123) << 16)`
+                melee_runtime::tu::random::global::state().set_logic_seed(super::live_frame_seed(sd, self.frame() + 1));
+            }
             self.e.tick();
+            let r = self.e.neutral_row();
+            let mut t = format!("{:08X},{:08X},{},{:08X}", r[0], r[1], r[2], r[3]);
+            for w in &r[4..16] {
+                t += &format!(",{w:08X}");
+            }
+            self.rows.insert(self.e.frames as i32 - 1, t);
         }
     }
 
@@ -377,4 +426,35 @@ pub mod engine_game {
         if st.mismatches.is_empty() && bad == 0 && st.checked > 0 { std::process::ExitCode::SUCCESS } else { std::process::ExitCode::FAILURE }
     }
 
+
+    impl super::NetGame for EngineGame {
+        fn open(_args: &[String], stage_file: &str, names: &[&str], seed: u32, _stocks: i32) -> Result<Self, String> {
+            let stage = match stage_file {
+                "GrNLa.dat" => "fd",
+                "GrNBa.dat" => "bf",
+                s => return Err(format!("stage {s} is not wired on the engine")),
+            };
+            let scene = format!("p1={}/human;p2={}/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off", names[0], names[1]);
+            // SAFETY: single-threaded start-up, before the engine reads them.
+            unsafe {
+                std::env::set_var("MELEE_TEST_SEED", seed.to_string());
+                if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+                    std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+                }
+            }
+            let iso = std::env::var("GW_ISO_VANILLA").map_err(|_| "no GW_ISO_VANILLA".to_string())?;
+            let iso = super::arg(_args, "--iso").unwrap_or(iso);
+            let disc = melee_engine::gcm::Gcm::open(&iso).map_err(|e| e.to_string())?;
+            let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}"))?;
+            let e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn)?;
+            Ok(EngineGame::new(e))
+        }
+        fn set_live(&mut self, live_seed: Option<u32>) {
+            self.live = true;
+            self.live_seed = live_seed;
+        }
+        fn raw_log(&self) -> Vec<(i32, String)> {
+            self.rows.iter().map(|(f, h)| (*f, h.clone())).collect()
+        }
+    }
 }

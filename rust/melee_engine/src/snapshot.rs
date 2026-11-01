@@ -52,7 +52,10 @@ const WATCHED: usize = 2;
 /// The reference every snapshot is a delta of (the state when the first snapshot was taken).
 pub struct Base {
     ranges: Vec<(usize, usize)>,
+    /// Full copies of every range but the arena (range 0), whose base is kept copy-on-first-write (`cow`).
     data: Vec<Vec<u8>>,
+    /// Bytes of the arena that existed at capture (pages beyond were zero then).
+    arena_len: usize,
     /// Watched ranges: every page written since the base (cumulative).
     dirty: std::cell::RefCell<Vec<std::collections::BTreeSet<u32>>>,
 }
@@ -78,14 +81,23 @@ unsafe fn bytes(addr: usize, len: usize) -> &'static [u8] {
 
 const ZERO: [u8; PAGE] = [0; PAGE];
 
+impl Drop for Base {
+    fn drop(&mut self) {
+        unsafe { crate::cow::release() };
+    }
+}
+
 impl Base {
     /// Capture the current state as the base (the system heap holds the copy).
     pub fn capture() -> Base {
         let ranges = ranges();
-        let data: Vec<Vec<u8>> = ranges.iter().map(|&(a, l)| unsafe { bytes(a, l) }.to_vec()).collect();
-        let b = Base { ranges, data, dirty: std::cell::RefCell::new(vec![Default::default(); WATCHED]) };
+        let data: Vec<Vec<u8>> = ranges.iter().enumerate().map(|(i, &(a, l))| if i == 0 { Vec::new() } else { unsafe { bytes(a, l) }.to_vec() }).collect();
+        let arena_len = ranges[0].1;
+        let b = Base { ranges, data, arena_len, dirty: std::cell::RefCell::new(vec![Default::default(); WATCHED]) };
         b.refresh(); // consumes the watch state up to now (the copy above only read)
         b.dirty.borrow_mut().iter_mut().for_each(|d| d.clear());
+        // the arena's base is not copied: the first write to each page saves it (cow.rs)
+        unsafe { crate::cow::protect(b.ranges[0].0, arena_len).expect("arena copy-on-write") };
         b
     }
 
@@ -99,6 +111,14 @@ impl Base {
     }
 
     fn base_page(&self, ri: usize, pi: usize) -> &[u8] {
+        if ri == 0 {
+            if pi * PAGE >= self.arena_len {
+                return &ZERO;
+            }
+            let at = self.ranges[0].0 + pi * PAGE;
+            // never written since the capture: the live page IS the base page
+            return unsafe { crate::cow::saved(at).unwrap_or_else(|| bytes(at, PAGE)) };
+        }
         let d = &self.data[ri];
         let s = pi * PAGE;
         if s + PAGE <= d.len() { &d[s..s + PAGE] } else { &ZERO }

@@ -53,6 +53,7 @@ mod stage_anim;
 mod snap;
 mod fighter_fields;
 mod diff;
+mod engine_view;
 mod diff_layout;
 mod netmatch;
 mod netplay;
@@ -330,6 +331,7 @@ fn main() -> ExitCode {
         Some("synctest") if use_engine(&args) => netmatch::engine_game::synctest(&args),
         Some("synctest") => netmatch::synctest(&args),
         Some("netplay") => netplay::netplay(&args),
+        Some("view-golden") if use_engine(&args) => engine_view::view_golden(&args),
         Some("view-golden") => view::view_golden(&args),
         Some("play") => play::play(&args),
         Some("dat-dump") => retail::dat_dump(&args),

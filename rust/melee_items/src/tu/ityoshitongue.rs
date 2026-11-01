@@ -58,9 +58,9 @@ pub mod ext {
 /// `ItemStateTable it_803F9480[]`
 pub static mut it_803F9480: [ItemStateTable; 1] = [st_row(
     -1,
-    pred_b(it_2F2B_UnkMotion0_Anim),
+    pred_b!(it_2F2B_UnkMotion0_Anim),
     Some(it_2F2B_UnkMotion0_Phys),
-    pred_b(it_2F2B_UnkMotion0_Coll),
+    pred_b!(it_2F2B_UnkMotion0_Coll),
 )];
 
 pub unsafe extern "C" fn it_802F2BFC(gobj: *mut Item_GObj, owner_gobj: *mut Fighter_GObj) {

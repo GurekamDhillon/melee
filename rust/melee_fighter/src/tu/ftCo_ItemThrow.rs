@@ -418,6 +418,7 @@ pub fn ftCo_80095D5C(f: &mut Fighter, arg1: &mut Vec3) {
     let vel_mul = f.co_attrs.item_throw_velocity_multiplier;
     let row = unsafe { ext::Fighter_804D6550().offset(f.motion_id as isize * 12) };
     let rd = |off: isize| unsafe { (row.offset(off) as *const f32).read_unaligned() };
+   
     vel *= vel_mul * rd(-0x468);
     let angle;
     if cmd_var0 != 0 {

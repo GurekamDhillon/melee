@@ -267,6 +267,23 @@ impl Engine {
         }
     }
 
+    /// The raw native `Item` records of the live items (p_link 9, list order) for the field-level diff.
+    pub fn item_bytes(&self) -> Vec<Vec<u8>> {
+        unsafe {
+            let mut out = Vec::new();
+            let n = core::mem::size_of::<melee_types::Item>();
+            let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize);
+            while !g.is_null() {
+                let ip = (*g).user_data as *const u8;
+                if !ip.is_null() {
+                    out.push(core::slice::from_raw_parts(ip, n).to_vec());
+                }
+                g = (*g).next;
+            }
+            out
+        }
+    }
+
     /// The live items (p_link 9, list order) as `(kind, msid, pos, vel)` for `melee diff --engine tu`.
     pub fn item_rows(&self) -> Vec<(i32, i32, [f32; 3], [f32; 3])> {
         unsafe {
@@ -511,6 +528,7 @@ pub struct Captured {
     pub alt: Vec<(i32, Vec<[u32; 26]>)>,
     pub dyns: Vec<(i32, Vec<Vec<Vec<u32>>>)>,
     pub items: Vec<(i32, i32, [f32; 3], [f32; 3])>,
+    pub item_bytes: Vec<Vec<u8>>,
 }
 
 impl Engine {
@@ -527,6 +545,7 @@ impl Engine {
             alt: (0..2).map(|slot| (slot, e.alt_joint_words(slot))).collect(),
             dyns: (0..2).map(|slot| (slot, e.dyn_words(slot))).collect(),
             items: e.item_rows(),
+            item_bytes: e.item_bytes(),
         }
     }
 }

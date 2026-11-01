@@ -109,16 +109,16 @@ const fn phys_f(f: unsafe extern "C" fn(*mut HSD_GObj) -> f32) -> HSD_GObjEvent 
 
 /// `ItemStateTable it_803F63C0[]`
 pub static mut it_803F63C0: [ItemStateTable; 10] = [
-    st_row(-1, pred_b(itTarucann_UnkMotion0_Anim), Some(itTarucann_UnkMotion0_Phys), pred_b(itTarucann_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itTarucann_UnkMotion1_Anim), Some(itTarucann_UnkMotion1_Phys), pred_b(itTarucann_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itTarucann_UnkMotion2_Anim), Some(itTarucann_UnkMotion2_Phys), None),
-    st_row(1, pred_b(itTarucann_UnkMotion6_Anim), Some(itTarucann_UnkMotion6_Phys), pred_b(itTarucann_UnkMotion6_Coll)),
-    st_row(1, pred_b(itTarucann_UnkMotion7_Anim), phys_f(itTarucann_UnkMotion7_Phys), pred_b(itTarucann_UnkMotion7_Coll)),
-    st_row(1, pred_b(itTarucann_UnkMotion8_Anim), Some(itTarucann_UnkMotion8_Phys), pred_b(itTarucann_UnkMotion8_Coll)),
-    st_row(2, pred_b(itTarucann_UnkMotion6_Anim), Some(itTarucann_UnkMotion6_Phys), pred_b(itTarucann_UnkMotion6_Coll)),
-    st_row(2, pred_b(itTarucann_UnkMotion7_Anim), phys_f(itTarucann_UnkMotion7_Phys), pred_b(itTarucann_UnkMotion7_Coll)),
-    st_row(2, pred_b(itTarucann_UnkMotion8_Anim), Some(itTarucann_UnkMotion8_Phys), pred_b(itTarucann_UnkMotion8_Coll)),
-    st_row(3, pred_b(itTarucann_UnkMotion9_Anim), Some(itTarucann_UnkMotion9_Phys), pred_b(itTarucann_UnkMotion9_Coll)),
+    st_row(-1, pred_b!(itTarucann_UnkMotion0_Anim), Some(itTarucann_UnkMotion0_Phys), pred_b!(itTarucann_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itTarucann_UnkMotion1_Anim), Some(itTarucann_UnkMotion1_Phys), pred_b!(itTarucann_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itTarucann_UnkMotion2_Anim), Some(itTarucann_UnkMotion2_Phys), None),
+    st_row(1, pred_b!(itTarucann_UnkMotion6_Anim), Some(itTarucann_UnkMotion6_Phys), pred_b!(itTarucann_UnkMotion6_Coll)),
+    st_row(1, pred_b!(itTarucann_UnkMotion7_Anim), phys_f(itTarucann_UnkMotion7_Phys), pred_b!(itTarucann_UnkMotion7_Coll)),
+    st_row(1, pred_b!(itTarucann_UnkMotion8_Anim), Some(itTarucann_UnkMotion8_Phys), pred_b!(itTarucann_UnkMotion8_Coll)),
+    st_row(2, pred_b!(itTarucann_UnkMotion6_Anim), Some(itTarucann_UnkMotion6_Phys), pred_b!(itTarucann_UnkMotion6_Coll)),
+    st_row(2, pred_b!(itTarucann_UnkMotion7_Anim), phys_f(itTarucann_UnkMotion7_Phys), pred_b!(itTarucann_UnkMotion7_Coll)),
+    st_row(2, pred_b!(itTarucann_UnkMotion8_Anim), Some(itTarucann_UnkMotion8_Phys), pred_b!(itTarucann_UnkMotion8_Coll)),
+    st_row(3, pred_b!(itTarucann_UnkMotion9_Anim), Some(itTarucann_UnkMotion9_Phys), pred_b!(itTarucann_UnkMotion9_Coll)),
 ];
 
 /// `inline_itTarucann_SetRotationZ` (ittarucann.c, static inline)

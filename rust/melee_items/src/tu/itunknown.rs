@@ -76,10 +76,10 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F7D60[]`
 pub static mut it_803F7D60: [ItemStateTable; 4] = [
-    st_row(0, pred_b(itUnknown_UnkMotion0_Anim), Some(itUnknown_UnkMotion0_Phys), pred_b(itUnknown_UnkMotion0_Coll)),
-    st_row(1, pred_b(itUnknown_UnkMotion1_Anim), Some(itUnknown_UnkMotion1_Phys), pred_b(itUnknown_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itUnknown_UnkMotion2_Anim), Some(itUnknown_UnkMotion2_Phys), pred_b(itUnknown_UnkMotion2_Coll)),
-    st_row(0, pred_b(it_802CF120), Some(it_802CF154), pred_b(it_802CF3D8)),
+    st_row(0, pred_b!(itUnknown_UnkMotion0_Anim), Some(itUnknown_UnkMotion0_Phys), pred_b!(itUnknown_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itUnknown_UnkMotion1_Anim), Some(itUnknown_UnkMotion1_Phys), pred_b!(itUnknown_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itUnknown_UnkMotion2_Anim), Some(itUnknown_UnkMotion2_Phys), pred_b!(itUnknown_UnkMotion2_Coll)),
+    st_row(0, pred_b!(it_802CF120), Some(it_802CF154), pred_b!(it_802CF3D8)),
 ];
 
 /// `ABS(x)` (Runtime/platform.h) for f32.

@@ -189,11 +189,11 @@ unsafe fn Item_RetractChain(
 
 /// `ItemStateTable it_803F7438[]`
 pub static mut it_803F7438: [ItemStateTable; 5] = [
-    st_row(-1, pred_b(itSeakchain_UnkMotion4_Anim), None, None),
-    st_row(-1, pred_b(itSeakchain_UnkMotion4_Anim), None, None),
-    st_row(-1, pred_b(itSeakchain_UnkMotion4_Anim), None, None),
-    st_row(-1, pred_b(itSeakchain_UnkMotion4_Anim), None, None),
-    st_row(-1, pred_b(itSeakchain_UnkMotion4_Anim), None, None),
+    st_row(-1, pred_b!(itSeakchain_UnkMotion4_Anim), None, None),
+    st_row(-1, pred_b!(itSeakchain_UnkMotion4_Anim), None, None),
+    st_row(-1, pred_b!(itSeakchain_UnkMotion4_Anim), None, None),
+    st_row(-1, pred_b!(itSeakchain_UnkMotion4_Anim), None, None),
+    st_row(-1, pred_b!(itSeakchain_UnkMotion4_Anim), None, None),
 ];
 
 /// `const Vec3 it_803B8680 = { 0 }`

@@ -90,10 +90,10 @@ kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F7558[]`
 pub static mut it_803F7558: [ItemStateTable; 4] = [
-    st_row(-1, pred_b(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion0_Phys), None),
-    st_row(-1, pred_b(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion1_Phys), None),
-    st_row(-1, pred_b(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion2_Phys), None),
-    st_row(-1, pred_b(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion3_Phys), None),
+    st_row(-1, pred_b!(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion0_Phys), None),
+    st_row(-1, pred_b!(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion1_Phys), None),
+    st_row(-1, pred_b!(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion2_Phys), None),
+    st_row(-1, pred_b!(itNessyoyo_UnkMotion3_Anim), Some(itNessyoyo_UnkMotion3_Phys), None),
 ];
 
 /// `const Vec3 it_803B8698 = { 0, 0, 0 }`

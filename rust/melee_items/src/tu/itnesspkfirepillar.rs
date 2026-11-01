@@ -62,9 +62,9 @@ pub unsafe extern "C" fn get_min_life() -> f32 {
 /// `ItemStateTable it_803F6B60[1]`
 pub static mut it_803F6B60: [ItemStateTable; 1] = [st_row(
     0,
-    pred_b(itNesspkfirepillar_UnkMotion0_Anim),
+    pred_b!(itNesspkfirepillar_UnkMotion0_Anim),
     Some(itNesspkfirepillar_UnkMotion0_Phys),
-    pred_b(itNesspkfirepillar_UnkMotion0_Coll),
+    pred_b!(itNesspkfirepillar_UnkMotion0_Coll),
 )];
 
 #[inline]

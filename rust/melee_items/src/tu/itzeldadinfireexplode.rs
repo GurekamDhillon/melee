@@ -62,7 +62,7 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F7740[]`
 pub static mut it_803F7740: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itZeldadinfireexplode_UnkMotion0_Anim), Some(itZeldadinfireexplode_UnkMotion0_Phys), pred_b(itZeldadinfireexplode_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itZeldadinfireexplode_UnkMotion0_Anim), Some(itZeldadinfireexplode_UnkMotion0_Phys), pred_b!(itZeldadinfireexplode_UnkMotion0_Coll)),
 ];
 
 /// `Item_InitSpawnPosition` (it/kinds/inlines.h, static inline)

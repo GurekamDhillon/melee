@@ -50,8 +50,8 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7488[]`
 pub static mut it_803F7488: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itPeachexplode_UnkMotion1_Anim), None, None),
-    st_row(1, pred_b(itPeachexplode_UnkMotion1_Anim), None, None),
+    st_row(0, pred_b!(itPeachexplode_UnkMotion1_Anim), None, None),
+    st_row(1, pred_b!(itPeachexplode_UnkMotion1_Anim), None, None),
 ];
 
 /// `Item_InitSpawnPosition` (kinds/inlines.h, static inline).

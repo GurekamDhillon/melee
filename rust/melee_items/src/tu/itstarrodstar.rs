@@ -95,7 +95,7 @@ unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut H
 
 /// `ItemStateTable it_803F6530[]`
 pub static mut it_803F6530: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itStarrodstar_UnkMotion0_Anim), Some(itStarrodstar_UnkMotion0_Phys), pred_b(itStarrodstar_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itStarrodstar_UnkMotion0_Anim), Some(itStarrodstar_UnkMotion0_Phys), pred_b!(itStarrodstar_UnkMotion0_Coll)),
 ];
 
 /// 2988E4

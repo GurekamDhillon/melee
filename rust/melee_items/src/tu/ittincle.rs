@@ -96,19 +96,19 @@ unsafe fn SA(ip: *mut Item) -> *mut itTincleAttributes {
 
 /// `ItemStateTable it_803F9000[]`
 pub static mut it_803F9000: [ItemStateTable; 13] = [
-    st_row(-1, pred_b(itTincle_UnkMotion0_Anim), Some(itTincle_UnkMotion0_Phys), pred_b(itTincle_UnkMotion0_Coll)),
-    st_row(0, pred_b(itTincle_UnkMotion1_Anim), Some(itTincle_UnkMotion1_Phys), pred_b(itTincle_UnkMotion1_Coll)),
-    st_row(0, pred_b(itTincle_UnkMotion2_Anim), Some(itTincle_UnkMotion2_Phys), pred_b(itTincle_UnkMotion2_Coll)),
-    st_row(0, pred_b(itTincle_UnkMotion3_Anim), Some(itTincle_UnkMotion3_Phys), pred_b(itTincle_UnkMotion3_Coll)),
-    st_row(0, pred_b(itTincle_UnkMotion4_Anim), Some(itTincle_UnkMotion4_Phys), pred_b(itTincle_UnkMotion4_Coll)),
-    st_row(0, pred_b(itTincle_UnkMotion5_Anim), Some(itTincle_UnkMotion5_Phys), pred_b(itTincle_UnkMotion5_Coll)),
-    st_row(1, pred_b(itTincle_UnkMotion7_Anim), Some(itTincle_UnkMotion7_Phys), pred_b(itTincle_UnkMotion7_Coll)),
-    st_row(2, pred_b(itTincle_UnkMotion7_Anim), Some(itTincle_UnkMotion7_Phys), pred_b(itTincle_UnkMotion7_Coll)),
-    st_row(3, pred_b(itTincle_UnkMotion8_Anim), Some(itTincle_UnkMotion8_Phys), pred_b(itTincle_UnkMotion8_Coll)),
-    st_row(4, pred_b(itTincle_UnkMotion9_Anim), Some(itTincle_UnkMotion9_Phys), pred_b(itTincle_UnkMotion9_Coll)),
-    st_row(5, pred_b(itTincle_UnkMotion10_Anim), Some(itTincle_UnkMotion10_Phys), pred_b(itTincle_UnkMotion10_Coll)),
-    st_row(6, pred_b(itTincle_UnkMotion11_Anim), Some(itTincle_UnkMotion11_Phys), pred_b(itTincle_UnkMotion11_Coll)),
-    st_row(6, pred_b(itTincle_UnkMotion12_Anim), Some(itTincle_UnkMotion12_Phys), pred_b(itTincle_UnkMotion12_Coll)),
+    st_row(-1, pred_b!(itTincle_UnkMotion0_Anim), Some(itTincle_UnkMotion0_Phys), pred_b!(itTincle_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itTincle_UnkMotion1_Anim), Some(itTincle_UnkMotion1_Phys), pred_b!(itTincle_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itTincle_UnkMotion2_Anim), Some(itTincle_UnkMotion2_Phys), pred_b!(itTincle_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itTincle_UnkMotion3_Anim), Some(itTincle_UnkMotion3_Phys), pred_b!(itTincle_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itTincle_UnkMotion4_Anim), Some(itTincle_UnkMotion4_Phys), pred_b!(itTincle_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itTincle_UnkMotion5_Anim), Some(itTincle_UnkMotion5_Phys), pred_b!(itTincle_UnkMotion5_Coll)),
+    st_row(1, pred_b!(itTincle_UnkMotion7_Anim), Some(itTincle_UnkMotion7_Phys), pred_b!(itTincle_UnkMotion7_Coll)),
+    st_row(2, pred_b!(itTincle_UnkMotion7_Anim), Some(itTincle_UnkMotion7_Phys), pred_b!(itTincle_UnkMotion7_Coll)),
+    st_row(3, pred_b!(itTincle_UnkMotion8_Anim), Some(itTincle_UnkMotion8_Phys), pred_b!(itTincle_UnkMotion8_Coll)),
+    st_row(4, pred_b!(itTincle_UnkMotion9_Anim), Some(itTincle_UnkMotion9_Phys), pred_b!(itTincle_UnkMotion9_Coll)),
+    st_row(5, pred_b!(itTincle_UnkMotion10_Anim), Some(itTincle_UnkMotion10_Phys), pred_b!(itTincle_UnkMotion10_Coll)),
+    st_row(6, pred_b!(itTincle_UnkMotion11_Anim), Some(itTincle_UnkMotion11_Phys), pred_b!(itTincle_UnkMotion11_Coll)),
+    st_row(6, pred_b!(itTincle_UnkMotion12_Anim), Some(itTincle_UnkMotion12_Phys), pred_b!(itTincle_UnkMotion12_Coll)),
 ];
 
 pub unsafe extern "C" fn it_802EB5C8(gobj: *mut Item_GObj) {

@@ -69,9 +69,9 @@ const M_PI_2: f64 = 1.57079632679489661923;
 
 /// `ItemStateTable it_803F6B70[]`
 pub static mut it_803F6B70: [ItemStateTable; 3] = [
-    st_row(0, pred_b(itNesspkflash_UnkMotion0_Anim), Some(itNesspkflash_UnkMotion0_Phys), pred_b(itNesspkflash_UnkMotion0_Coll)),
-    st_row(1, pred_b(itNesspkflash_UnkMotion1_Anim), Some(itNesspkflash_UnkMotion1_Phys), pred_b(itNesspkflash_UnkMotion1_Coll)),
-    st_row(2, pred_b(itNesspkflash_UnkMotion2_Anim), Some(itNesspkflash_UnkMotion2_Phys), pred_b(itNesspkflash_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itNesspkflash_UnkMotion0_Anim), Some(itNesspkflash_UnkMotion0_Phys), pred_b!(itNesspkflash_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itNesspkflash_UnkMotion1_Anim), Some(itNesspkflash_UnkMotion1_Phys), pred_b!(itNesspkflash_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itNesspkflash_UnkMotion2_Anim), Some(itNesspkflash_UnkMotion2_Phys), pred_b!(itNesspkflash_UnkMotion2_Coll)),
 ];
 
 #[inline]

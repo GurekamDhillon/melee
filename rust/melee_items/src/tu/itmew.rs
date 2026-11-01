@@ -58,9 +58,9 @@ pub mod ext {
 
 /// `ItemStateTable it_803F80C8[]`
 pub static mut it_803F80C8: [ItemStateTable; 3] = [
-    st_row(0, pred_b(itMew_UnkMotion0_Anim), Some(itMew_UnkMotion0_Phys), pred_b(itMew_UnkMotion0_Coll)),
-    st_row(1, pred_b(itMew_UnkMotion1_Anim), Some(itMew_UnkMotion1_Phys), pred_b(itMew_UnkMotion1_Coll)),
-    st_row(2, pred_b(itMew_UnkMotion2_Anim), Some(itMew_UnkMotion2_Phys), pred_b(itMew_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itMew_UnkMotion0_Anim), Some(itMew_UnkMotion0_Phys), pred_b!(itMew_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itMew_UnkMotion1_Anim), Some(itMew_UnkMotion1_Phys), pred_b!(itMew_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itMew_UnkMotion2_Anim), Some(itMew_UnkMotion2_Phys), pred_b!(itMew_UnkMotion2_Coll)),
 ];
 
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h, static inline)

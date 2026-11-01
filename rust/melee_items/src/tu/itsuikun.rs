@@ -80,8 +80,8 @@ unsafe fn Item_EnterAirStateWithHitlag(gobj: *mut Item_GObj, msid: i32) {
 
 /// `ItemStateTable it_803F7E08[]`
 pub static mut it_803F7E08: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itSuikun_UnkMotion0_Anim), Some(itSuikun_UnkMotion0_Phys), pred_b(itSuikun_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itSuikun_UnkMotion1_Anim), Some(itSuikun_UnkMotion1_Phys), pred_b(itSuikun_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itSuikun_UnkMotion0_Anim), Some(itSuikun_UnkMotion0_Phys), pred_b!(itSuikun_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itSuikun_UnkMotion1_Anim), Some(itSuikun_UnkMotion1_Phys), pred_b!(itSuikun_UnkMotion1_Coll)),
 ];
 
 pub unsafe extern "C" fn itSuikun_Logic14_Spawned(gobj: *mut Item_GObj) {

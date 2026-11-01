@@ -166,6 +166,8 @@ struct State {
     render_seed: u32,
     fighters: Vec<(i32, Vec<u8>)>,
     items: Vec<(i32, i32, [f32; 3], [f32; 3])>,
+    /// Engine only: the raw native `Item` records (list order).
+    item_bytes: Vec<Vec<u8>>,
     respawn_busy: [i32; 6],
     stocks: Vec<(i32, i32)>,
     dump: String,
@@ -186,6 +188,7 @@ fn capture(sim: &VsMatch, frame: i32) -> State {
         render_seed: sim.rand.render_seed,
         fighters: sim.players.iter().map(|p| (p.slot, raw(&*p.fp).to_vec())).collect(),
         items,
+        item_bytes: vec![],
         respawn_busy,
         stocks: sim.players.iter().map(|p| (p.slot, melee_fighter::stale::stocks(p.slot))).collect(),
         dump: sim.state_dump(),
@@ -216,7 +219,7 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
     if post {
         // SAFETY: single-threaded.
         if let Some(c) = unsafe { (*std::ptr::addr_of_mut!(melee_engine::engine::CAPTURED)).take() } {
-            return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, alt: c.alt, dyns: c.dyns });
+            return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, item_bytes: c.item_bytes, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, alt: c.alt, dyns: c.dyns });
         }
     }
     let r = e.neutral_row();
@@ -228,7 +231,7 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
     }
     let joints = (0..2).map(|slot| (slot, e.joint_words(slot))).collect();
     let dyns = (0..2).map(|slot| (slot, e.dyn_words(slot))).collect();
-    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: e.item_rows(), respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints, alt: (0..2).map(|slot| (slot, e.alt_joint_words(slot))).collect(), dyns })
+    Ok(State { frame, seed: r[1], render_seed: 0, fighters, items: e.item_rows(), item_bytes: e.item_bytes(), respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints, alt: (0..2).map(|slot| (slot, e.alt_joint_words(slot))).collect(), dyns })
 }
 
 fn raw<T>(v: &T) -> &[u8] {
@@ -770,6 +773,22 @@ fn compare(snap: &Snap, st: &State, o: &Opts, out: &mut Vec<Diff>) -> Result<(),
         }
         for (j, ax) in ["x", "y", "z"].iter().enumerate() {
             chk(&format!("vel.{ax}"), 0x40 + 4 * j as u32, c.3[j].to_bits(), r.3[j].to_bits(), true, 5 + j as u32);
+        }
+    }
+    // Items, field by field (engine runs): every `Item` record against the C snapshot's.
+    if st.engine && !st.item_bytes.is_empty() {
+        let tab = crate::diff_layout::T_Item;
+        let bits = crate::diff_layout::bitfields("Item");
+        let root = Kind::Struct("Item", tab);
+        let ivas: Vec<u32> = snap.plink(9)?.iter().map(|&g| snap.u32(g + 0x2C)).filter(|&u| u != 0).collect();
+        for (i, (va, rb)) in ivas.iter().zip(st.item_bytes.iter()).enumerate() {
+            let ci: melee_types::Item = snap.decode_flat(*va);
+            let inst = format!("item#{i} record kind {}", snap.s32(va + 0x10));
+            let mut k = 0u32;
+            walk(raw(&ci), rb, "", 0, 0, rb.len(), &root, "Item", bits, o, &mut |f, gc, c, r| {
+                k += 1;
+                push(1, (1000 + i as u32, gc * 64 + k % 64), "ItemRecord", inst.clone(), f, Some(gc), c, r);
+            });
         }
     }
     // Stage: the respawn spots' countdowns.

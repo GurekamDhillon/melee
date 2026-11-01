@@ -74,7 +74,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 
 
 /// `ItemStateTable it_803F70B8[]`
-pub static mut it_803F70B8: [ItemStateTable; 1] = [st_row(0, pred_b(itSeakvanish_UnkMotion0_Anim), None, None)];
+pub static mut it_803F70B8: [ItemStateTable; 1] = [st_row(0, pred_b!(itSeakvanish_UnkMotion0_Anim), None, None)];
 
 pub unsafe extern "C" fn it_802B1C60(parent: *mut HSD_GObj, pos: *mut Vec3, dir: f32) -> *mut Item_GObj {
     melee_core::ct!("it_802B1C60");

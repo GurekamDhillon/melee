@@ -72,11 +72,11 @@ pub static mut it_803F7118: [ItemStateTable; 3] = [
     st_row(-1, None, None, None),
     st_row(
         0,
-        pred_b(itYoshieggthrow_UnkMotion1_Anim),
+        pred_b!(itYoshieggthrow_UnkMotion1_Anim),
         Some(itYoshieggthrow_UnkMotion1_Phys),
-        pred_b(itYoshieggthrow_UnkMotion1_Coll),
+        pred_b!(itYoshieggthrow_UnkMotion1_Coll),
     ),
-    st_row(1, pred_b(itYoshieggthrow_UnkMotion2_Anim), None, None),
+    st_row(1, pred_b!(itYoshieggthrow_UnkMotion2_Anim), None, None),
 ];
 
 pub unsafe extern "C" fn it_802B2890(gobj: *mut Item_GObj) {

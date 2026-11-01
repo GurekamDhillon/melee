@@ -106,14 +106,14 @@ pub mod ext {
 
 /// `ItemStateTable it_803F89C8[]`
 pub static mut it_803F89C8: [ItemStateTable; 12] = [
-    st_row(0, pred_b(itOldottosea_UnkMotion0_Anim), Some(itOldottosea_UnkMotion0_Phys), pred_b(itOldottosea_UnkMotion0_Coll)),
-    st_row(0, pred_b(itOldottosea_UnkMotion2_Anim), Some(itOldottosea_UnkMotion2_Phys), pred_b(itOldottosea_UnkMotion2_Coll)),
-    st_row(1, pred_b(itOldottosea_UnkMotion2_Anim), Some(itOldottosea_UnkMotion2_Phys), pred_b(itOldottosea_UnkMotion2_Coll)),
-    st_row(2, pred_b(itOldottosea_UnkMotion3_Anim), Some(itOldottosea_UnkMotion3_Phys), pred_b(itOldottosea_UnkMotion3_Coll)),
-    st_row(0, pred_b(itOldottosea_UnkMotion4_Anim), Some(itOldottosea_UnkMotion4_Phys), pred_b(itOldottosea_UnkMotion4_Coll)),
-    st_row(3, pred_b(itOldottosea_UnkMotion5_Anim), Some(itOldottosea_UnkMotion5_Phys), pred_b(itOldottosea_UnkMotion5_Coll)),
-    st_row(4, pred_b(itOldottosea_UnkMotion7_Anim), Some(itOldottosea_UnkMotion7_Phys), pred_b(itOldottosea_UnkMotion7_Coll)),
-    st_row(5, pred_b(itOldottosea_UnkMotion7_Anim), Some(itOldottosea_UnkMotion7_Phys), pred_b(itOldottosea_UnkMotion7_Coll)),
+    st_row(0, pred_b!(itOldottosea_UnkMotion0_Anim), Some(itOldottosea_UnkMotion0_Phys), pred_b!(itOldottosea_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itOldottosea_UnkMotion2_Anim), Some(itOldottosea_UnkMotion2_Phys), pred_b!(itOldottosea_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itOldottosea_UnkMotion2_Anim), Some(itOldottosea_UnkMotion2_Phys), pred_b!(itOldottosea_UnkMotion2_Coll)),
+    st_row(2, pred_b!(itOldottosea_UnkMotion3_Anim), Some(itOldottosea_UnkMotion3_Phys), pred_b!(itOldottosea_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itOldottosea_UnkMotion4_Anim), Some(itOldottosea_UnkMotion4_Phys), pred_b!(itOldottosea_UnkMotion4_Coll)),
+    st_row(3, pred_b!(itOldottosea_UnkMotion5_Anim), Some(itOldottosea_UnkMotion5_Phys), pred_b!(itOldottosea_UnkMotion5_Coll)),
+    st_row(4, pred_b!(itOldottosea_UnkMotion7_Anim), Some(itOldottosea_UnkMotion7_Phys), pred_b!(itOldottosea_UnkMotion7_Coll)),
+    st_row(5, pred_b!(itOldottosea_UnkMotion7_Anim), Some(itOldottosea_UnkMotion7_Phys), pred_b!(itOldottosea_UnkMotion7_Coll)),
     st_row(3, Some(ext::cb::itOldottosea_UnkMotion8_Anim), Some(ext::cb::itOldottosea_UnkMotion8_Phys), None),
     st_row(6, Some(ext::cb::itOldottosea_UnkMotion9_Anim), Some(ext::cb::itOldottosea_UnkMotion9_Phys), Some(ext::cb::itOldottosea_UnkMotion9_Coll)),
     st_row(3, Some(ext::cb::itOldottosea_UnkMotion10_Anim), Some(ext::cb::itOldottosea_UnkMotion10_Phys), Some(ext::cb::itOldottosea_UnkMotion10_Coll)),

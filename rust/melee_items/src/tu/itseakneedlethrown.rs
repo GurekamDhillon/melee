@@ -107,11 +107,11 @@ unsafe fn Item_ClearCmdVars(ip: *mut Item) {
 
 /// `ItemStateTable it_803F6F50[]`
 pub static mut it_803F6F50: [ItemStateTable; 5] = [
-    st_row(0, pred_b(itSeakneedlethrown_UnkMotion0_Anim), Some(itSeakneedlethrown_UnkMotion0_Phys), pred_b(itSeakneedlethrown_UnkMotion0_Coll)),
-    st_row(1, pred_b(itSeakneedlethrown_UnkMotion1_Anim), Some(itSeakneedlethrown_UnkMotion1_Phys), pred_b(itSeakneedlethrown_UnkMotion1_Coll)),
-    st_row(2, pred_b(itSeakneedlethrown_UnkMotion2_Anim), Some(itSeakneedlethrown_UnkMotion2_Phys), pred_b(itSeakneedlethrown_UnkMotion2_Coll)),
-    st_row(3, pred_b(itSeakneedlethrown_UnkMotion3_Anim), Some(itSeakneedlethrown_UnkMotion3_Phys), pred_b(itSeakneedlethrown_UnkMotion3_Coll)),
-    st_row(4, pred_b(itSeakneedlethrown_UnkMotion4_Anim), Some(itSeakneedlethrown_UnkMotion4_Phys), pred_b(itSeakneedlethrown_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itSeakneedlethrown_UnkMotion0_Anim), Some(itSeakneedlethrown_UnkMotion0_Phys), pred_b!(itSeakneedlethrown_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itSeakneedlethrown_UnkMotion1_Anim), Some(itSeakneedlethrown_UnkMotion1_Phys), pred_b!(itSeakneedlethrown_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itSeakneedlethrown_UnkMotion2_Anim), Some(itSeakneedlethrown_UnkMotion2_Phys), pred_b!(itSeakneedlethrown_UnkMotion2_Coll)),
+    st_row(3, pred_b!(itSeakneedlethrown_UnkMotion3_Anim), Some(itSeakneedlethrown_UnkMotion3_Phys), pred_b!(itSeakneedlethrown_UnkMotion3_Coll)),
+    st_row(4, pred_b!(itSeakneedlethrown_UnkMotion4_Anim), Some(itSeakneedlethrown_UnkMotion4_Phys), pred_b!(itSeakneedlethrown_UnkMotion4_Coll)),
 ];
 static it_803F6FA0: [f32; 8] = [-2.0, -2.1, -2.2, -2.3, -2.4, -2.5, -2.6, -2.7];
 static it_803F6FC0: [f32; 8] = [-0.1, -0.12, -0.14, -0.18, -0.2, -0.22, -0.24, -0.26];

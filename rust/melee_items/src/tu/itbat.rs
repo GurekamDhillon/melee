@@ -54,11 +54,11 @@ pub mod ext {
 
 /// `ItemStateTable it_803F57B0[]`
 pub static mut it_803F57B0: [ItemStateTable; 5] = [
-    st_row(-1, pred_b(itBat_UnkMotion0_Anim), Some(itBat_UnkMotion0_Phys), pred_b(itBat_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itBat_UnkMotion3_Anim), Some(itBat_UnkMotion3_Phys), pred_b(itBat_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itBat_UnkMotion2_Anim), Some(itBat_UnkMotion2_Phys), pred_b(itBat_UnkMotion2_Coll)),
-    st_row(0, pred_b(itBat_UnkMotion3_Anim), Some(itBat_UnkMotion3_Phys), pred_b(itBat_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itBat_UnkMotion4_Anim), Some(itBat_UnkMotion4_Phys), pred_b(itBat_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itBat_UnkMotion0_Anim), Some(itBat_UnkMotion0_Phys), pred_b!(itBat_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itBat_UnkMotion3_Anim), Some(itBat_UnkMotion3_Phys), pred_b!(itBat_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itBat_UnkMotion2_Anim), Some(itBat_UnkMotion2_Phys), pred_b!(itBat_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itBat_UnkMotion3_Anim), Some(itBat_UnkMotion3_Phys), pred_b!(itBat_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itBat_UnkMotion4_Anim), Some(itBat_UnkMotion4_Phys), pred_b!(itBat_UnkMotion4_Coll)),
 ];
 
 /// 284854: spawns a bat at `pos` (z forced to 0).

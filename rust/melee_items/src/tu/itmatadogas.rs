@@ -69,13 +69,13 @@ kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F7B58[]`
 pub static mut it_803F7B58: [ItemStateTable; 3] = [
-    st_row(0, pred_b(it_802CB118), Some(it_802CB14C), pred_b(it_802CB150)),
-    st_row(1, pred_b(itMatadogas_UnkMotion1_Anim), Some(itMatadogas_UnkMotion1_Phys), pred_b(itMatadogas_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itMatadogas_UnkMotion2_Anim), Some(itMatadogas_UnkMotion2_Phys), pred_b(itMatadogas_UnkMotion2_Coll)),
+    st_row(0, pred_b!(it_802CB118), Some(it_802CB14C), pred_b!(it_802CB150)),
+    st_row(1, pred_b!(itMatadogas_UnkMotion1_Anim), Some(itMatadogas_UnkMotion1_Phys), pred_b!(itMatadogas_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itMatadogas_UnkMotion2_Anim), Some(itMatadogas_UnkMotion2_Phys), pred_b!(itMatadogas_UnkMotion2_Coll)),
 ];
 
 /// `ItemStateTable it_803F7BB0[]`
-pub static mut it_803F7BB0: [ItemStateTable; 1] = [st_row(0, pred_b(it_802CB810), Some(it_802CB844), pred_b(it_802CB8A4))];
+pub static mut it_803F7BB0: [ItemStateTable; 1] = [st_row(0, pred_b!(it_802CB810), Some(it_802CB844), pred_b!(it_802CB8A4))];
 
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h, static inline)
 #[inline]

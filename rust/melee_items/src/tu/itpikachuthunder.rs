@@ -61,9 +61,9 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F70C8[]`
 pub static mut it_803F70C8: [ItemStateTable; 3] = [
-    st_row(-1, pred_b(itPikachuthunder_UnkMotion0_Anim), None, None),
-    st_row(0, pred_b(itPikachuthunder_UnkMotion1_Anim), None, pred_b(itPikachuthunder_UnkMotion1_Coll)),
-    st_row(0, pred_b(itPikachuthunder_UnkMotion2_Anim), None, None),
+    st_row(-1, pred_b!(itPikachuthunder_UnkMotion0_Anim), None, None),
+    st_row(0, pred_b!(itPikachuthunder_UnkMotion1_Anim), None, pred_b!(itPikachuthunder_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itPikachuthunder_UnkMotion2_Anim), None, None),
 ];
 
 /// 2B1DEC

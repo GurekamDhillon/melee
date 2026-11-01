@@ -65,11 +65,11 @@ pub mod ext {
 
 /// `ItemStateTable it_803F74A8[]`
 pub static mut it_803F74A8: [ItemStateTable; 5] = [
-    st_row(1, pred_b(itPeachturnip_UnkMotion4_Anim), Some(itPeachturnip_UnkMotion4_Phys), None),
-    st_row(-1, pred_b(itPeachturnip_UnkMotion1_Anim), Some(itPeachturnip_UnkMotion1_Phys), None),
-    st_row(2, pred_b(itPeachturnip_UnkMotion3_Anim), Some(itPeachturnip_UnkMotion3_Phys), pred_b(itPeachturnip_UnkMotion3_Coll)),
-    st_row(2, pred_b(itPeachturnip_UnkMotion3_Anim), Some(itPeachturnip_UnkMotion3_Phys), pred_b(itPeachturnip_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itPeachturnip_UnkMotion4_Anim), Some(itPeachturnip_UnkMotion4_Phys), None),
+    st_row(1, pred_b!(itPeachturnip_UnkMotion4_Anim), Some(itPeachturnip_UnkMotion4_Phys), None),
+    st_row(-1, pred_b!(itPeachturnip_UnkMotion1_Anim), Some(itPeachturnip_UnkMotion1_Phys), None),
+    st_row(2, pred_b!(itPeachturnip_UnkMotion3_Anim), Some(itPeachturnip_UnkMotion3_Phys), pred_b!(itPeachturnip_UnkMotion3_Coll)),
+    st_row(2, pred_b!(itPeachturnip_UnkMotion3_Anim), Some(itPeachturnip_UnkMotion3_Phys), pred_b!(itPeachturnip_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itPeachturnip_UnkMotion4_Anim), Some(itPeachturnip_UnkMotion4_Phys), None),
 ];
 
 /// `attr->x8[i].x0_odds` (x8 starts at +8, 8 bytes per entry; `i` may run one past the array).

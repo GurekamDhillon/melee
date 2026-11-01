@@ -84,19 +84,19 @@ crate::kinds_jobj_inl_dirty!();
 
 /// `ItemStateTable it_803F54D8[]`
 pub static mut it_803F54D8: [ItemStateTable; 13] = [
-    st_row(-1, pred_b(itBombhei_UnkMotion0_Anim), Some(itBombhei_UnkMotion0_Phys), pred_b(itBombhei_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itBombhei_UnkMotion1_Anim), Some(itBombhei_UnkMotion1_Phys), pred_b(itBombhei_UnkMotion1_Coll)),
-    st_row(0, pred_b(itBombhei_UnkMotion2_Anim), Some(itBombhei_UnkMotion2_Phys), pred_b(itBombhei_UnkMotion2_Coll)),
-    st_row(0, pred_b(itBombhei_UnkMotion3_Anim), Some(itBombhei_UnkMotion3_Phys), pred_b(itBombhei_UnkMotion3_Coll)),
-    st_row(6, pred_b(itBombhei_UnkMotion4_Anim), Some(itBombhei_UnkMotion4_Phys), pred_b(itBombhei_UnkMotion4_Coll)),
-    st_row(4, pred_b(itBombhei_UnkMotion5_Anim), Some(itBombhei_UnkMotion5_Phys), pred_b(itBombhei_UnkMotion5_Coll)),
-    st_row(4, pred_b(itBombhei_UnkMotion6_Anim), Some(itBombhei_UnkMotion6_Phys), pred_b(itBombhei_UnkMotion6_Coll)),
-    st_row(1, pred_b(itBombhei_UnkMotion8_Anim), Some(itBombhei_UnkMotion8_Phys), None),
-    st_row(4, pred_b(itBombhei_UnkMotion8_Anim), Some(itBombhei_UnkMotion8_Phys), None),
-    st_row(2, pred_b(itBombhei_UnkMotion10_Anim), Some(itBombhei_UnkMotion10_Phys), pred_b(itBombhei_UnkMotion10_Coll)),
-    st_row(5, pred_b(itBombhei_UnkMotion10_Anim), Some(itBombhei_UnkMotion10_Phys), pred_b(itBombhei_UnkMotion10_Coll)),
-    st_row(3, pred_b(itBombhei_UnkMotion11_Anim), Some(itBombhei_UnkMotion11_Phys), pred_b(itBombhei_UnkMotion11_Coll)),
-    st_row(-1, pred_b(itBombhei_UnkMotion12_Anim), Some(itBombhei_UnkMotion12_Phys), pred_b(itBombhei_UnkMotion12_Coll)),
+    st_row(-1, pred_b!(itBombhei_UnkMotion0_Anim), Some(itBombhei_UnkMotion0_Phys), pred_b!(itBombhei_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itBombhei_UnkMotion1_Anim), Some(itBombhei_UnkMotion1_Phys), pred_b!(itBombhei_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itBombhei_UnkMotion2_Anim), Some(itBombhei_UnkMotion2_Phys), pred_b!(itBombhei_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itBombhei_UnkMotion3_Anim), Some(itBombhei_UnkMotion3_Phys), pred_b!(itBombhei_UnkMotion3_Coll)),
+    st_row(6, pred_b!(itBombhei_UnkMotion4_Anim), Some(itBombhei_UnkMotion4_Phys), pred_b!(itBombhei_UnkMotion4_Coll)),
+    st_row(4, pred_b!(itBombhei_UnkMotion5_Anim), Some(itBombhei_UnkMotion5_Phys), pred_b!(itBombhei_UnkMotion5_Coll)),
+    st_row(4, pred_b!(itBombhei_UnkMotion6_Anim), Some(itBombhei_UnkMotion6_Phys), pred_b!(itBombhei_UnkMotion6_Coll)),
+    st_row(1, pred_b!(itBombhei_UnkMotion8_Anim), Some(itBombhei_UnkMotion8_Phys), None),
+    st_row(4, pred_b!(itBombhei_UnkMotion8_Anim), Some(itBombhei_UnkMotion8_Phys), None),
+    st_row(2, pred_b!(itBombhei_UnkMotion10_Anim), Some(itBombhei_UnkMotion10_Phys), pred_b!(itBombhei_UnkMotion10_Coll)),
+    st_row(5, pred_b!(itBombhei_UnkMotion10_Anim), Some(itBombhei_UnkMotion10_Phys), pred_b!(itBombhei_UnkMotion10_Coll)),
+    st_row(3, pred_b!(itBombhei_UnkMotion11_Anim), Some(itBombhei_UnkMotion11_Phys), pred_b!(itBombhei_UnkMotion11_Coll)),
+    st_row(-1, pred_b!(itBombhei_UnkMotion12_Anim), Some(itBombhei_UnkMotion12_Phys), pred_b!(itBombhei_UnkMotion12_Coll)),
 ];
 
 /// `const Vec3 it_803B8600 = { 0 }`

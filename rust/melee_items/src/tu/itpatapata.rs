@@ -85,13 +85,13 @@ crate::kinds_jobj_inl!();
 /// `ItemStateTable it_803F88C0[]`
 pub static mut it_803F88C0: [ItemStateTable; 8] = [
     st_row(0, None, None, None),
-    st_row(1, pred_b(itPatapata_UnkMotion1_Anim), Some(itPatapata_UnkMotion1_Phys), pred_b(itPatapata_UnkMotion1_Coll)),
-    st_row(1, pred_b(itPatapata_UnkMotion2_Anim), Some(itPatapata_UnkMotion3_Phys), pred_b(itPatapata_UnkMotion3_Coll)),
-    st_row(2, pred_b(itPatapata_UnkMotion3_Anim), Some(itPatapata_UnkMotion3_Phys), pred_b(itPatapata_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itPatapata_UnkMotion4_Anim), Some(itPatapata_UnkMotion4_Phys), pred_b(itPatapata_UnkMotion4_Coll)),
-    st_row(3, pred_b(itPatapata_UnkMotion5_Anim), Some(itPatapata_UnkMotion5_Phys), None),
-    st_row(4, pred_b(itPatapata_UnkMotion6_Anim), Some(itPatapata_UnkMotion6_Phys), pred_b(itPatapata_UnkMotion6_Coll)),
-    st_row(1, pred_b(itPatapata_UnkMotion7_Anim), Some(itPatapata_UnkMotion7_Phys), pred_b(itPatapata_UnkMotion7_Coll)),
+    st_row(1, pred_b!(itPatapata_UnkMotion1_Anim), Some(itPatapata_UnkMotion1_Phys), pred_b!(itPatapata_UnkMotion1_Coll)),
+    st_row(1, pred_b!(itPatapata_UnkMotion2_Anim), Some(itPatapata_UnkMotion3_Phys), pred_b!(itPatapata_UnkMotion3_Coll)),
+    st_row(2, pred_b!(itPatapata_UnkMotion3_Anim), Some(itPatapata_UnkMotion3_Phys), pred_b!(itPatapata_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itPatapata_UnkMotion4_Anim), Some(itPatapata_UnkMotion4_Phys), pred_b!(itPatapata_UnkMotion4_Coll)),
+    st_row(3, pred_b!(itPatapata_UnkMotion5_Anim), Some(itPatapata_UnkMotion5_Phys), None),
+    st_row(4, pred_b!(itPatapata_UnkMotion6_Anim), Some(itPatapata_UnkMotion6_Phys), pred_b!(itPatapata_UnkMotion6_Coll)),
+    st_row(1, pred_b!(itPatapata_UnkMotion7_Anim), Some(itPatapata_UnkMotion7_Phys), pred_b!(itPatapata_UnkMotion7_Coll)),
 ];
 
 /// `Item_InitZakoCollision` (kinds/inlines.h, static inline)
@@ -544,7 +544,7 @@ pub unsafe extern "C" fn it_802E1648(gobj: *mut Item_GObj, arg1: i32, arg2: i32)
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, arg1, arg2 as _);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(it_802E0F1C);
+    (*ip).jumped_on = pred_b!(it_802E0F1C);
 }
 
 pub unsafe extern "C" fn it_802E1694(gobj: *mut Item_GObj) {
@@ -579,7 +579,7 @@ pub unsafe extern "C" fn it_802E16F8(arg0: i32, pos: *mut Vec3, facing: i32) -> 
         ip = GET_ITEM(gobj);
         ext::Item_80268E5C(gobj, 1, 2);
         ext::it_80274CAC(gobj);
-        (*ip).jumped_on = pred_b(it_802E0F1C);
+        (*ip).jumped_on = pred_b!(it_802E0F1C);
     }
     gobj
 }

@@ -60,9 +60,9 @@ pub struct ItMetamonVars {
 
 /// `ItemStateTable it_803F7FC8[]`
 pub static mut it_803F7FC8: [ItemStateTable; 3] = [
-    st_row(0, pred_b(itMetamon_UnkMotion0_Anim), Some(itMetamon_UnkMotion0_Phys), pred_b(itMetamon_UnkMotion0_Coll)),
-    st_row(1, pred_b(itMetamon_UnkMotion1_Anim), Some(itMetamon_UnkMotion1_Phys), pred_b(itMetamon_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itMetamon_UnkMotion2_Anim), Some(itMetamon_UnkMotion2_Phys), pred_b(itMetamon_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itMetamon_UnkMotion0_Anim), Some(itMetamon_UnkMotion0_Phys), pred_b!(itMetamon_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itMetamon_UnkMotion1_Anim), Some(itMetamon_UnkMotion1_Phys), pred_b!(itMetamon_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itMetamon_UnkMotion2_Anim), Some(itMetamon_UnkMotion2_Phys), pred_b!(itMetamon_UnkMotion2_Coll)),
 ];
 
 pub unsafe extern "C" fn it_802D3008(item_gobj: *mut Item_GObj) {

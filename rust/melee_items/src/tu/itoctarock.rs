@@ -86,15 +86,15 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F8B48[]`
 pub static mut it_803F8B48: [ItemStateTable; 9] = [
-    st_row(0, pred_b(itOctarock_UnkMotion0_Anim), Some(itOctarock_UnkMotion0_Phys), pred_b(itOctarock_UnkMotion0_Coll)),
-    st_row(1, pred_b(itOctarock_UnkMotion1_Anim), Some(itOctarock_UnkMotion1_Phys), pred_b(itOctarock_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itOctarock_UnkMotion2_Anim), Some(itOctarock_UnkMotion2_Phys), pred_b(itOctarock_UnkMotion2_Coll)),
-    st_row(3, pred_b(itOctarock_UnkMotion3_Anim), Some(itOctarock_UnkMotion3_Phys), pred_b(itOctarock_UnkMotion3_Coll)),
-    st_row(2, pred_b(itOctarock_UnkMotion4_Anim), Some(itOctarock_UnkMotion4_Phys), pred_b(itOctarock_UnkMotion4_Coll)),
-    st_row(3, pred_b(itOctarock_UnkMotion5_Anim), Some(itOctarock_UnkMotion5_Phys), None),
-    st_row(4, pred_b(itOctarock_UnkMotion6_Anim), Some(itOctarock_UnkMotion6_Phys), pred_b(itOctarock_UnkMotion6_Coll)),
-    st_row(3, pred_b(itOctarock_UnkMotion7_Anim), Some(itOctarock_UnkMotion7_Phys), pred_b(itOctarock_UnkMotion7_Coll)),
-    st_row(3, pred_b(itOctarock_UnkMotion8_Anim), Some(itOctarock_UnkMotion8_Phys), pred_b(itOctarock_UnkMotion8_Coll)),
+    st_row(0, pred_b!(itOctarock_UnkMotion0_Anim), Some(itOctarock_UnkMotion0_Phys), pred_b!(itOctarock_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itOctarock_UnkMotion1_Anim), Some(itOctarock_UnkMotion1_Phys), pred_b!(itOctarock_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itOctarock_UnkMotion2_Anim), Some(itOctarock_UnkMotion2_Phys), pred_b!(itOctarock_UnkMotion2_Coll)),
+    st_row(3, pred_b!(itOctarock_UnkMotion3_Anim), Some(itOctarock_UnkMotion3_Phys), pred_b!(itOctarock_UnkMotion3_Coll)),
+    st_row(2, pred_b!(itOctarock_UnkMotion4_Anim), Some(itOctarock_UnkMotion4_Phys), pred_b!(itOctarock_UnkMotion4_Coll)),
+    st_row(3, pred_b!(itOctarock_UnkMotion5_Anim), Some(itOctarock_UnkMotion5_Phys), None),
+    st_row(4, pred_b!(itOctarock_UnkMotion6_Anim), Some(itOctarock_UnkMotion6_Phys), pred_b!(itOctarock_UnkMotion6_Coll)),
+    st_row(3, pred_b!(itOctarock_UnkMotion7_Anim), Some(itOctarock_UnkMotion7_Phys), pred_b!(itOctarock_UnkMotion7_Coll)),
+    st_row(3, pred_b!(itOctarock_UnkMotion8_Anim), Some(itOctarock_UnkMotion8_Phys), pred_b!(itOctarock_UnkMotion8_Coll)),
 ];
 
 /// `itOctarock_SetFacingDir` (static inline)

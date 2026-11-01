@@ -83,10 +83,10 @@ kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F82B0[]`
 pub static mut it_803F82B0: [ItemStateTable; 4] = [
-    st_row(-1, pred_b(itMaril_UnkMotion0_Anim), Some(itMaril_UnkMotion0_Phys), pred_b(itMaril_UnkMotion0_Coll)),
-    st_row(0, pred_b(itMaril_UnkMotion1_Anim), Some(itMaril_UnkMotion1_Phys), pred_b(itMaril_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itMaril_UnkMotion2_Anim), Some(itMaril_UnkMotion2_Phys), pred_b(itMaril_UnkMotion2_Coll)),
-    st_row(-1, pred_b(itMaril_UnkMotion3_Anim), Some(itMaril_UnkMotion3_Phys), None),
+    st_row(-1, pred_b!(itMaril_UnkMotion0_Anim), Some(itMaril_UnkMotion0_Phys), pred_b!(itMaril_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itMaril_UnkMotion1_Anim), Some(itMaril_UnkMotion1_Phys), pred_b!(itMaril_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itMaril_UnkMotion2_Anim), Some(itMaril_UnkMotion2_Phys), pred_b!(itMaril_UnkMotion2_Coll)),
+    st_row(-1, pred_b!(itMaril_UnkMotion3_Anim), Some(itMaril_UnkMotion3_Phys), None),
 ];
 
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h, static inline)

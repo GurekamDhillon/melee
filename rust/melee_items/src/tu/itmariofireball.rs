@@ -59,9 +59,9 @@ pub mod ext {
 /// `ItemStateTable it_803F6788[]`
 pub static mut it_803F6788: [ItemStateTable; 1] = [st_row(
     0,
-    pred_b(itMariofireball_UnkMotion0_Anim),
+    pred_b!(itMariofireball_UnkMotion0_Anim),
     Some(itMariofireball_UnkMotion0_Phys),
-    pred_b(itMariofireball_UnkMotion0_Coll),
+    pred_b!(itMariofireball_UnkMotion0_Coll),
 )];
 
 /// `Item_ApplyFallingPhysics` (it/inlines.h, static inline)

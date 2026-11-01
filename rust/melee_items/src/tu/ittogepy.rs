@@ -55,13 +55,13 @@ pub mod ext {
 
 /// `ItemStateTable it_803F8058[]`
 pub static mut it_803F8058: [ItemStateTable; 7] = [
-    st_row(0, pred_b(itTogepy_UnkMotion0_Anim), Some(itTogepy_UnkMotion0_Phys), pred_b(itTogepy_UnkMotion0_Coll)),
-    st_row(1, pred_b(itTogepy_UnkMotion1_Anim), Some(itTogepy_UnkMotion1_Phys), pred_b(itTogepy_UnkMotion1_Coll)),
-    st_row(2, pred_b(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b(itTogepy_UnkMotion6_Coll)),
-    st_row(3, pred_b(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b(itTogepy_UnkMotion6_Coll)),
-    st_row(4, pred_b(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b(itTogepy_UnkMotion6_Coll)),
-    st_row(5, pred_b(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b(itTogepy_UnkMotion6_Coll)),
-    st_row(6, pred_b(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b(itTogepy_UnkMotion6_Coll)),
+    st_row(0, pred_b!(itTogepy_UnkMotion0_Anim), Some(itTogepy_UnkMotion0_Phys), pred_b!(itTogepy_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itTogepy_UnkMotion1_Anim), Some(itTogepy_UnkMotion1_Phys), pred_b!(itTogepy_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
+    st_row(3, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
+    st_row(4, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
+    st_row(5, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
+    st_row(6, pred_b!(itTogepy_UnkMotion6_Anim), Some(itTogepy_UnkMotion6_Phys), pred_b!(itTogepy_UnkMotion6_Coll)),
 ];
 
 pub unsafe extern "C" fn itTogepy_Logic21_Spawned(gobj: *mut Item_GObj) {

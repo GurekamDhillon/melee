@@ -68,8 +68,8 @@ unsafe fn Item_CopyJObjScale(dst: *mut HSD_JObj, src: *mut HSD_JObj, scale: *mut
 
 /// `ItemStateTable it_803F6C68[]`
 pub static mut it_803F6C68: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itNessbat_UnkMotion0_Anim), Some(itNessbat_UnkMotion0_Phys), pred_b(itNessbat_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itNessbat_UnkMotion1_Anim), Some(itNessbat_UnkMotion1_Phys), pred_b(itNessbat_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itNessbat_UnkMotion0_Anim), Some(itNessbat_UnkMotion0_Phys), pred_b!(itNessbat_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itNessbat_UnkMotion1_Anim), Some(itNessbat_UnkMotion1_Phys), pred_b!(itNessbat_UnkMotion1_Coll)),
 ];
 
 /// `itNessbat_ClearOwnerRef` (static inline)

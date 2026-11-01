@@ -74,15 +74,15 @@ const M_TAU: f64 = 6.283185307179586;
 pub static mut it_803F7190: [ItemStateTable; 2] = [
     st_row(
         0,
-        pred_b(itPikachutjoltground_UnkMotion0_Anim),
+        pred_b!(itPikachutjoltground_UnkMotion0_Anim),
         Some(itPikachutjoltground_UnkMotion0_Phys),
-        pred_b(itPikachutjoltground_UnkMotion0_Coll),
+        pred_b!(itPikachutjoltground_UnkMotion0_Coll),
     ),
     st_row(
         1,
-        pred_b(itPikachutjoltground_UnkMotion1_Anim),
+        pred_b!(itPikachutjoltground_UnkMotion1_Anim),
         Some(itPikachutjoltground_UnkMotion1_Phys),
-        pred_b(itPikachutjoltground_UnkMotion1_Coll),
+        pred_b!(itPikachutjoltground_UnkMotion1_Coll),
     ),
 ];
 

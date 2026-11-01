@@ -126,13 +126,13 @@ pub static it_803B8640: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 /// `ItemStateTable it_803F6888[]`
 pub static mut it_803F6888: [ItemStateTable; 7] = [
-    st_row(0, pred_b(itLinkbomb_UnkMotion0_Anim), Some(itLinkbomb_UnkMotion0_Phys), None),
-    st_row(0, pred_b(itLinkbomb_UnkMotion1_Anim), Some(itLinkbomb_UnkMotion1_Phys), pred_b(itLinkbomb_UnkMotion1_Coll)),
-    st_row(1, pred_b(itLinkbomb_UnkMotion2_Anim), Some(itLinkbomb_UnkMotion2_Phys), pred_b(itLinkbomb_UnkMotion2_Coll)),
-    st_row(1, pred_b(itLinkbomb_UnkMotion3_Anim), Some(itLinkbomb_UnkMotion3_Phys), pred_b(itLinkbomb_UnkMotion3_Coll)),
-    st_row(0, pred_b(itLinkbomb_UnkMotion4_Anim), Some(itLinkbomb_UnkMotion4_Phys), pred_b(itLinkbomb_UnkMotion4_Coll)),
-    st_row(2, Some(itLinkbomb_UnkMotion5_Anim), Some(itLinkbomb_UnkMotion5_Phys), pred_b(itLinkbomb_UnkMotion5_Coll)),
-    st_row(0, pred_b(itLinkbomb_UnkMotion6_Anim), Some(itLinkbomb_UnkMotion6_Phys), pred_b(itLinkbomb_UnkMotion6_Coll)),
+    st_row(0, pred_b!(itLinkbomb_UnkMotion0_Anim), Some(itLinkbomb_UnkMotion0_Phys), None),
+    st_row(0, pred_b!(itLinkbomb_UnkMotion1_Anim), Some(itLinkbomb_UnkMotion1_Phys), pred_b!(itLinkbomb_UnkMotion1_Coll)),
+    st_row(1, pred_b!(itLinkbomb_UnkMotion2_Anim), Some(itLinkbomb_UnkMotion2_Phys), pred_b!(itLinkbomb_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itLinkbomb_UnkMotion3_Anim), Some(itLinkbomb_UnkMotion3_Phys), pred_b!(itLinkbomb_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itLinkbomb_UnkMotion4_Anim), Some(itLinkbomb_UnkMotion4_Phys), pred_b!(itLinkbomb_UnkMotion4_Coll)),
+    st_row(2, Some(itLinkbomb_UnkMotion5_Anim), Some(itLinkbomb_UnkMotion5_Phys), pred_b!(itLinkbomb_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itLinkbomb_UnkMotion6_Anim), Some(itLinkbomb_UnkMotion6_Phys), pred_b!(itLinkbomb_UnkMotion6_Coll)),
 ];
 
 /// 29D968

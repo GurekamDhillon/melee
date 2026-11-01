@@ -95,12 +95,12 @@ pub static it_803F8E48: [Vec2; 4] = [
 
 /// `ItemStateTable it_803F8DE8[]`
 pub static mut it_803F8DE8: [ItemStateTable; 6] = [
-    st_row(0, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b(itArwinglaser_UnkMotion2_Coll)),
-    st_row(1, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b(itArwinglaser_UnkMotion3_Coll)),
-    st_row(2, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b(itArwinglaser_UnkMotion2_Coll)),
-    st_row(3, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b(itArwinglaser_UnkMotion3_Coll)),
-    st_row(4, None, None, pred_b(itArwinglaser_UnkMotion5_Coll)),
-    st_row(5, None, None, pred_b(itArwinglaser_UnkMotion5_Coll)),
+    st_row(0, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
+    st_row(1, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
+    st_row(2, pred_v(itArwinglaser_UnkMotion2_Anim), Some(itArwinglaser_UnkMotion2_Phys), pred_b!(itArwinglaser_UnkMotion2_Coll)),
+    st_row(3, pred_v(itArwinglaser_UnkMotion3_Anim), Some(itArwinglaser_UnkMotion3_Phys), pred_b!(itArwinglaser_UnkMotion3_Coll)),
+    st_row(4, None, None, pred_b!(itArwinglaser_UnkMotion5_Coll)),
+    st_row(5, None, None, pred_b!(itArwinglaser_UnkMotion5_Coll)),
 ];
 
 /// `itArwinglaser_GetCollArg` (static inline)

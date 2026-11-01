@@ -47,7 +47,7 @@ pub mod ext {
 
 /// `ItemStateTable it_803F6C88[]`
 pub static mut it_803F6C88: [ItemStateTable; 1] = [
-    st_row(0, pred_b(it_2ADA_UnkMotion0_Anim), Some(it_2ADA_UnkMotion0_Phys), pred_b(it_2ADA_UnkMotion0_Coll)),
+    st_row(0, pred_b!(it_2ADA_UnkMotion0_Anim), Some(it_2ADA_UnkMotion0_Phys), pred_b!(it_2ADA_UnkMotion0_Coll)),
 ];
 
 /// 2ADA1C: spawns the item at `pos` (z forced to 0) with velocity `vel`.

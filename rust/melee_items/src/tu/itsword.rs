@@ -97,11 +97,11 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 
 /// `ItemStateTable it_803F5800[]`
 pub static mut it_803F5800: [ItemStateTable; 5] = [
-    st_row(0, pred_b(itSword_UnkMotion0_Anim), Some(itSword_UnkMotion0_Phys), pred_b(itSword_UnkMotion0_Coll)),
-    st_row(0, pred_b(itSword_UnkMotion3_Anim), Some(itSword_UnkMotion3_Phys), pred_b(itSword_UnkMotion3_Coll)),
-    st_row(0, pred_b(itSword_UnkMotion2_Anim), Some(itSword_UnkMotion2_Phys), pred_b(itSword_UnkMotion2_Coll)),
-    st_row(1, pred_b(itSword_UnkMotion3_Anim), Some(itSword_UnkMotion3_Phys), pred_b(itSword_UnkMotion3_Coll)),
-    st_row(0, pred_b(itSword_UnkMotion4_Anim), Some(itSword_UnkMotion4_Phys), pred_b(itSword_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itSword_UnkMotion0_Anim), Some(itSword_UnkMotion0_Phys), pred_b!(itSword_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itSword_UnkMotion3_Anim), Some(itSword_UnkMotion3_Phys), pred_b!(itSword_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itSword_UnkMotion2_Anim), Some(itSword_UnkMotion2_Phys), pred_b!(itSword_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itSword_UnkMotion3_Anim), Some(itSword_UnkMotion3_Phys), pred_b!(itSword_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itSword_UnkMotion4_Anim), Some(itSword_UnkMotion4_Phys), pred_b!(itSword_UnkMotion4_Coll)),
 ];
 
 pub unsafe extern "C" fn itSword_Spawn(pos: *mut Vec3) -> *mut Item_GObj {

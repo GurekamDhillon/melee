@@ -65,14 +65,14 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7A98[]`
 pub static mut it_803F7A98: [ItemStateTable; 3] = [
-    st_row(0, pred_b(itChicorita_UnkMotion0_Anim), Some(itChicorita_UnkMotion0_Phys), pred_b(itChicorita_UnkMotion0_Coll)),
-    st_row(1, pred_b(itChicorita_UnkMotion1_Anim), Some(itChicorita_UnkMotion1_Phys), pred_b(itChicorita_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itChicorita_UnkMotion2_Anim), Some(itChicorita_UnkMotion2_Phys), pred_b(itChicorita_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itChicorita_UnkMotion0_Anim), Some(itChicorita_UnkMotion0_Phys), pred_b!(itChicorita_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itChicorita_UnkMotion1_Anim), Some(itChicorita_UnkMotion1_Phys), pred_b!(itChicorita_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itChicorita_UnkMotion2_Anim), Some(itChicorita_UnkMotion2_Phys), pred_b!(itChicorita_UnkMotion2_Coll)),
 ];
 
 /// `ItemStateTable it_803F7AC8[]`
 pub static mut it_803F7AC8: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itChicoritaleaf_UnkMotion0_Anim), Some(itChicoritaleaf_UnkMotion0_Phys), pred_b(itChicoritaleaf_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itChicoritaleaf_UnkMotion0_Anim), Some(itChicoritaleaf_UnkMotion0_Phys), pred_b!(itChicoritaleaf_UnkMotion0_Coll)),
 ];
 
 /// 2C9588

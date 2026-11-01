@@ -74,10 +74,10 @@ unsafe fn Item_ApplyFallingPhysics(gobj: *mut Item_GObj) {
 
 /// `ItemStateTable it_803F9328[]`
 pub static mut it_803F9328: [ItemStateTable; 5] = [
-    st_row(0, None, None, pred_b(itKyasarinegg_UnkMotion0_Coll)),
+    st_row(0, None, None, pred_b!(itKyasarinegg_UnkMotion0_Coll)),
     st_row(-1, None, Some(itKyasarinegg_UnkMotion1_Phys), Some(itKyasarinegg_UnkMotion1_Coll)),
     st_row(-1, None, None, None),
-    st_row(1, None, Some(itKyasarinegg_UnkMotion3_Phys), pred_b(itKyasarinegg_UnkMotion3_Coll)),
+    st_row(1, None, Some(itKyasarinegg_UnkMotion3_Phys), pred_b!(itKyasarinegg_UnkMotion3_Coll)),
     st_row(2, Some(itKyasarinegg_UnkMotion4_Anim), None, None),
 ];
 

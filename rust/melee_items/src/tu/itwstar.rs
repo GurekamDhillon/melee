@@ -103,12 +103,12 @@ pub unsafe extern "C" fn it_80294364(gobj: *mut Item_GObj) -> *mut HSD_AnimJoint
 
 /// `ItemStateTable it_803F61B0[]`
 pub static mut it_803F61B0: [ItemStateTable; 6] = [
-    st_row(0, pred_b(itWstar_UnkMotion0_Anim), Some(itWstar_UnkMotion0_Phys), pred_b(itWstar_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itWstar_UnkMotion1_Anim), Some(itWstar_UnkMotion1_Phys), pred_b(itWstar_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itWstar_UnkMotion3_Anim), None, None),
-    st_row(2, pred_b(itWstar_UnkMotion3_Anim), None, None),
-    st_row(-1, pred_b(itWstar_UnkMotion4_Anim), Some(itWstar_UnkMotion4_Phys), pred_b(itWstar_UnkMotion4_Coll)),
-    st_row(1, pred_b(itWstar_UnkMotion5_Anim), Some(itWstar_UnkMotion5_Phys), pred_b(itWstar_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itWstar_UnkMotion0_Anim), Some(itWstar_UnkMotion0_Phys), pred_b!(itWstar_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itWstar_UnkMotion1_Anim), Some(itWstar_UnkMotion1_Phys), pred_b!(itWstar_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itWstar_UnkMotion3_Anim), None, None),
+    st_row(2, pred_b!(itWstar_UnkMotion3_Anim), None, None),
+    st_row(-1, pred_b!(itWstar_UnkMotion4_Anim), Some(itWstar_UnkMotion4_Phys), pred_b!(itWstar_UnkMotion4_Coll)),
+    st_row(1, pred_b!(itWstar_UnkMotion5_Anim), Some(itWstar_UnkMotion5_Phys), pred_b!(itWstar_UnkMotion5_Coll)),
 ];
 
 pub unsafe extern "C" fn it_80294430(gobj: *mut Item_GObj, arg1: f32, arg2: f32) {

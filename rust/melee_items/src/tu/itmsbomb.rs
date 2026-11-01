@@ -98,14 +98,14 @@ const _: () = assert!(core::mem::size_of::<itMsBomb_Attrs>() == 24);
 
 /// `ItemStateTable ItemStateTable_MsBomb[]`
 pub static mut ItemStateTable_MsBomb: [ItemStateTable; 8] = [
-    st_row(-1, None, None, pred_b(itMsbomb_UnkMotion0_Coll)),
-    st_row(-1, None, Some(itMsbomb_UnkMotion1_Phys), pred_b(itMsbomb_UnkMotion1_Coll)),
+    st_row(-1, None, None, pred_b!(itMsbomb_UnkMotion0_Coll)),
+    st_row(-1, None, Some(itMsbomb_UnkMotion1_Phys), pred_b!(itMsbomb_UnkMotion1_Coll)),
     st_row(-1, None, None, None),
-    st_row(1, None, Some(itMsbomb_UnkMotion3_Phys), pred_b(itMsbomb_UnkMotion3_Coll)),
-    st_row(0, None, None, pred_b(itMsbomb_UnkMotion4_Coll)),
-    st_row(0, None, Some(itMsbomb_UnkMotion5_Phys), pred_b(itMsbomb_UnkMotion5_Coll)),
-    st_row(2, pred_b(itMsbomb_UnkMotion6_Anim), None, None),
-    st_row(-1, None, None, pred_b(itMsbomb_UnkMotion7_Coll)),
+    st_row(1, None, Some(itMsbomb_UnkMotion3_Phys), pred_b!(itMsbomb_UnkMotion3_Coll)),
+    st_row(0, None, None, pred_b!(itMsbomb_UnkMotion4_Coll)),
+    st_row(0, None, Some(itMsbomb_UnkMotion5_Phys), pred_b!(itMsbomb_UnkMotion5_Coll)),
+    st_row(2, pred_b!(itMsbomb_UnkMotion6_Anim), None, None),
+    st_row(-1, None, None, pred_b!(itMsbomb_UnkMotion7_Coll)),
 ];
 
 /// `Item_ApplyFallingPhysics` (it/inlines.h, static inline)
@@ -235,7 +235,7 @@ unsafe fn it_80290314_inline(gobj: *mut Item_GObj) {
         it_80290238(gobj);
     }
     ext::it_8026B3A8(gobj);
-    (*ip).touched = pred_b(it_802908D8);
+    (*ip).touched = pred_b!(it_802908D8);
     (*ip).xDC8_word.flags.set_x1A(0);
     ext::it_802756E0(gobj);
     ext::it_80275444(gobj);

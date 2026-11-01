@@ -50,12 +50,12 @@ pub mod ext {
 
 /// `ItemStateTable it_803F5740[]`
 pub static mut it_803F5740: [ItemStateTable; 6] = [
-    st_row(-1, pred_b(itTomato_UnkMotion0_Anim), Some(itTomato_UnkMotion0_Phys), pred_b(itTomato_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itTomato_UnkMotion1_Anim), Some(itTomato_UnkMotion1_Phys), pred_b(itTomato_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itTomato_UnkMotion4_Anim), Some(itTomato_UnkMotion4_Phys), pred_b(itTomato_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itTomato_UnkMotion3_Anim), Some(itTomato_UnkMotion3_Phys), None),
-    st_row(-1, pred_b(itTomato_UnkMotion4_Anim), Some(itTomato_UnkMotion4_Phys), pred_b(itTomato_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itTomato_UnkMotion5_Anim), Some(itTomato_UnkMotion5_Phys), pred_b(itTomato_UnkMotion5_Coll)),
+    st_row(-1, pred_b!(itTomato_UnkMotion0_Anim), Some(itTomato_UnkMotion0_Phys), pred_b!(itTomato_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itTomato_UnkMotion1_Anim), Some(itTomato_UnkMotion1_Phys), pred_b!(itTomato_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itTomato_UnkMotion4_Anim), Some(itTomato_UnkMotion4_Phys), pred_b!(itTomato_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itTomato_UnkMotion3_Anim), Some(itTomato_UnkMotion3_Phys), None),
+    st_row(-1, pred_b!(itTomato_UnkMotion4_Anim), Some(itTomato_UnkMotion4_Phys), pred_b!(itTomato_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itTomato_UnkMotion5_Anim), Some(itTomato_UnkMotion5_Phys), pred_b!(itTomato_UnkMotion5_Coll)),
 ];
 
 /// `Item_InitSpawnPosition` (it/kinds/inlines.h, static inline)

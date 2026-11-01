@@ -58,7 +58,7 @@ const M_PI_2: f64 = core::f64::consts::FRAC_PI_2;
 
 /// `ItemStateTable it_803F76A8[]`
 pub static mut it_803F76A8: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itClimbersBlizzard_UnkMotion0_Anim), Some(itClimbersBlizzard_UnkMotion0_Phys), pred_b(itClimbersBlizzard_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itClimbersBlizzard_UnkMotion0_Anim), Some(itClimbersBlizzard_UnkMotion0_Phys), pred_b!(itClimbersBlizzard_UnkMotion0_Coll)),
 ];
 
 /// `Item_TickLifetime` (it/inlines.h, static inline)

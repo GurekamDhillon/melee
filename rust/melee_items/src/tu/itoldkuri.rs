@@ -97,18 +97,18 @@ melee_core::gc_layout!(itOldkuriAttributes, "itOldkuriAttributes", size 0x10, al
 
 /// `ItemStateTable it_803F8320[]`
 pub static mut it_803F8320: [ItemStateTable; 12] = [
-    st_row(-1, pred_b(itOldkuri_UnkMotion0_Anim), Some(itOldkuri_UnkMotion0_Phys), pred_b(itOldkuri_UnkMotion0_Coll)),
-    st_row(0, pred_b(itOldkuri_UnkMotion1_Anim), Some(itOldkuri_UnkMotion1_Phys), pred_b(itOldkuri_UnkMotion1_Coll)),
-    st_row(1, pred_b(itOldkuri_UnkMotion2_Anim), Some(itOldkuri_UnkMotion2_Phys), pred_b(itOldkuri_UnkMotion2_Coll)),
-    st_row(0, pred_b(itOldkuri_UnkMotion3_Anim), Some(itOldkuri_UnkMotion3_Phys), pred_b(itOldkuri_UnkMotion3_Coll)),
-    st_row(1, pred_b(itOldkuri_UnkMotion4_Anim), Some(itOldkuri_UnkMotion4_Phys), pred_b(itOldkuri_UnkMotion4_Coll)),
-    st_row(3, pred_b(itOldkuri_UnkMotion5_Anim), Some(itOldkuri_UnkMotion5_Phys), None),
-    st_row(4, pred_b(itOldkuri_UnkMotion6_Anim), Some(itOldkuri_UnkMotion6_Phys), pred_b(itOldkuri_UnkMotion6_Coll)),
-    st_row(2, pred_b(itOldkuri_UnkMotion7_Anim), Some(itOldkuri_UnkMotion7_Phys), pred_b(itOldkuri_UnkMotion7_Coll)),
-    st_row(2, pred_b(itOldkuri_UnkMotion8_Anim), Some(itOldkuri_UnkMotion8_Phys), pred_b(itOldkuri_UnkMotion8_Coll)),
-    st_row(3, pred_b(itOldkuri_UnkMotion9_Anim), Some(itOldkuri_UnkMotion9_Phys), pred_b(itOldkuri_UnkMotion9_Coll)),
-    st_row(3, pred_b(itOldkuri_UnkMotion10_Anim), Some(itOldkuri_UnkMotion10_Phys), pred_b(itOldkuri_UnkMotion10_Coll)),
-    st_row(3, pred_b(itOldkuri_UnkMotion11_Anim), Some(itOldkuri_UnkMotion11_Phys), pred_b(itOldkuri_UnkMotion11_Coll)),
+    st_row(-1, pred_b!(itOldkuri_UnkMotion0_Anim), Some(itOldkuri_UnkMotion0_Phys), pred_b!(itOldkuri_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itOldkuri_UnkMotion1_Anim), Some(itOldkuri_UnkMotion1_Phys), pred_b!(itOldkuri_UnkMotion1_Coll)),
+    st_row(1, pred_b!(itOldkuri_UnkMotion2_Anim), Some(itOldkuri_UnkMotion2_Phys), pred_b!(itOldkuri_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itOldkuri_UnkMotion3_Anim), Some(itOldkuri_UnkMotion3_Phys), pred_b!(itOldkuri_UnkMotion3_Coll)),
+    st_row(1, pred_b!(itOldkuri_UnkMotion4_Anim), Some(itOldkuri_UnkMotion4_Phys), pred_b!(itOldkuri_UnkMotion4_Coll)),
+    st_row(3, pred_b!(itOldkuri_UnkMotion5_Anim), Some(itOldkuri_UnkMotion5_Phys), None),
+    st_row(4, pred_b!(itOldkuri_UnkMotion6_Anim), Some(itOldkuri_UnkMotion6_Phys), pred_b!(itOldkuri_UnkMotion6_Coll)),
+    st_row(2, pred_b!(itOldkuri_UnkMotion7_Anim), Some(itOldkuri_UnkMotion7_Phys), pred_b!(itOldkuri_UnkMotion7_Coll)),
+    st_row(2, pred_b!(itOldkuri_UnkMotion8_Anim), Some(itOldkuri_UnkMotion8_Phys), pred_b!(itOldkuri_UnkMotion8_Coll)),
+    st_row(3, pred_b!(itOldkuri_UnkMotion9_Anim), Some(itOldkuri_UnkMotion9_Phys), pred_b!(itOldkuri_UnkMotion9_Coll)),
+    st_row(3, pred_b!(itOldkuri_UnkMotion10_Anim), Some(itOldkuri_UnkMotion10_Phys), pred_b!(itOldkuri_UnkMotion10_Coll)),
+    st_row(3, pred_b!(itOldkuri_UnkMotion11_Anim), Some(itOldkuri_UnkMotion11_Phys), pred_b!(itOldkuri_UnkMotion11_Coll)),
 ];
 
 /// `Item_UpdateZakoVelocity` (kinds/inlines.h, static inline)
@@ -594,7 +594,7 @@ pub unsafe extern "C" fn it_802D848C(gobj: *mut Item_GObj, arg1: i32, arg2: Item
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, arg1, arg2);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(it_802D8098);
+    (*ip).jumped_on = pred_b!(it_802D8098);
 }
 
 pub unsafe extern "C" fn it_802D84D8(gobj: *mut Item_GObj, ref_gobj: *mut Item_GObj) {

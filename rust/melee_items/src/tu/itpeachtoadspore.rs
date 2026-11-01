@@ -55,7 +55,7 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7548[]`
 pub static mut it_803F7548: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itPeachtoadspore_UnkMotion0_Anim), Some(itPeachtoadspore_UnkMotion0_Phys), None),
+    st_row(0, pred_b!(itPeachtoadspore_UnkMotion0_Anim), Some(itPeachtoadspore_UnkMotion0_Phys), None),
 ];
 
 /// 2BE214

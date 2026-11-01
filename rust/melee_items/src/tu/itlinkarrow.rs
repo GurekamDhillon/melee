@@ -173,11 +173,11 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 
 /// `ItemStateTable it_803F6A28[5]`
 pub static mut it_803F6A28: [ItemStateTable; 5] = [
-    st_row(-1, pred_b(itLinkarrow_UnkMotion0_Anim), Some(itLinkarrow_UnkMotion0_Phys), pred_b(itLinkarrow_UnkMotion0_Coll)),
-    st_row(0, pred_b(itLinkarrow_UnkMotion1_Anim), Some(itLinkarrow_UnkMotion1_Phys), pred_b(itLinkarrow_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itLinkarrow_UnkMotion2_Anim), Some(itLinkarrow_UnkMotion2_Phys), pred_b(itLinkarrow_UnkMotion2_Coll)),
-    st_row(-1, pred_b(itLinkarrow_UnkMotion3_Anim), Some(itLinkarrow_UnkMotion3_Phys), pred_b(itLinkarrow_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itLinkarrow_UnkMotion4_Anim), Some(itLinkarrow_UnkMotion4_Phys), pred_b(itLinkarrow_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itLinkarrow_UnkMotion0_Anim), Some(itLinkarrow_UnkMotion0_Phys), pred_b!(itLinkarrow_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itLinkarrow_UnkMotion1_Anim), Some(itLinkarrow_UnkMotion1_Phys), pred_b!(itLinkarrow_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itLinkarrow_UnkMotion2_Anim), Some(itLinkarrow_UnkMotion2_Phys), pred_b!(itLinkarrow_UnkMotion2_Coll)),
+    st_row(-1, pred_b!(itLinkarrow_UnkMotion3_Anim), Some(itLinkarrow_UnkMotion3_Phys), pred_b!(itLinkarrow_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itLinkarrow_UnkMotion4_Anim), Some(itLinkarrow_UnkMotion4_Phys), pred_b!(itLinkarrow_UnkMotion4_Coll)),
 ];
 
 /// 2A7D8C: draws the two trail objects.

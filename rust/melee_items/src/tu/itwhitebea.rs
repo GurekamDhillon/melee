@@ -98,18 +98,18 @@ pub mod ext {
 
 /// `ItemStateTable it_803F8A88[]`
 pub static mut it_803F8A88: [ItemStateTable; 12] = [
-    st_row(0, pred_b(itWhitebea_UnkMotion0_Anim), Some(itWhitebea_UnkMotion0_Phys), pred_b(itWhitebea_UnkMotion0_Coll)),
-    st_row(1, pred_b(itWhitebea_UnkMotion1_Anim), Some(itWhitebea_UnkMotion1_Phys), pred_b(itWhitebea_UnkMotion1_Coll)),
-    st_row(2, pred_b(itWhitebea_UnkMotion2_Anim), Some(itWhitebea_UnkMotion2_Phys), pred_b(itWhitebea_UnkMotion2_Coll)),
-    st_row(1, pred_b(itWhitebea_UnkMotion3_Anim), Some(itWhitebea_UnkMotion3_Phys), pred_b(itWhitebea_UnkMotion3_Coll)),
-    st_row(3, pred_b(itWhitebea_UnkMotion4_Anim), Some(itWhitebea_UnkMotion4_Phys), pred_b(itWhitebea_UnkMotion4_Coll)),
-    st_row(4, pred_b(itWhitebea_UnkMotion5_Anim), Some(itWhitebea_UnkMotion5_Phys), pred_b(itWhitebea_UnkMotion5_Coll)),
-    st_row(5, pred_b(itWhitebea_UnkMotion6_Anim), Some(itWhitebea_UnkMotion6_Phys), pred_b(itWhitebea_UnkMotion6_Coll)),
-    st_row(6, pred_b(itWhitebea_UnkMotion7_Anim), Some(itWhitebea_UnkMotion7_Phys), pred_b(itWhitebea_UnkMotion7_Coll)),
-    st_row(3, pred_b(itWhitebea_UnkMotion8_Anim), Some(itWhitebea_UnkMotion8_Phys), None),
-    st_row(7, pred_b(itWhitebea_UnkMotion9_Anim), Some(itWhitebea_UnkMotion9_Phys), pred_b(itWhitebea_UnkMotion9_Coll)),
-    st_row(3, pred_b(itWhitebea_UnkMotion10_Anim), Some(itWhitebea_UnkMotion10_Phys), pred_b(itWhitebea_UnkMotion10_Coll)),
-    st_row(3, pred_b(itWhitebea_UnkMotion11_Anim), Some(itWhitebea_UnkMotion11_Phys), pred_b(itWhitebea_UnkMotion11_Coll)),
+    st_row(0, pred_b!(itWhitebea_UnkMotion0_Anim), Some(itWhitebea_UnkMotion0_Phys), pred_b!(itWhitebea_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itWhitebea_UnkMotion1_Anim), Some(itWhitebea_UnkMotion1_Phys), pred_b!(itWhitebea_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itWhitebea_UnkMotion2_Anim), Some(itWhitebea_UnkMotion2_Phys), pred_b!(itWhitebea_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itWhitebea_UnkMotion3_Anim), Some(itWhitebea_UnkMotion3_Phys), pred_b!(itWhitebea_UnkMotion3_Coll)),
+    st_row(3, pred_b!(itWhitebea_UnkMotion4_Anim), Some(itWhitebea_UnkMotion4_Phys), pred_b!(itWhitebea_UnkMotion4_Coll)),
+    st_row(4, pred_b!(itWhitebea_UnkMotion5_Anim), Some(itWhitebea_UnkMotion5_Phys), pred_b!(itWhitebea_UnkMotion5_Coll)),
+    st_row(5, pred_b!(itWhitebea_UnkMotion6_Anim), Some(itWhitebea_UnkMotion6_Phys), pred_b!(itWhitebea_UnkMotion6_Coll)),
+    st_row(6, pred_b!(itWhitebea_UnkMotion7_Anim), Some(itWhitebea_UnkMotion7_Phys), pred_b!(itWhitebea_UnkMotion7_Coll)),
+    st_row(3, pred_b!(itWhitebea_UnkMotion8_Anim), Some(itWhitebea_UnkMotion8_Phys), None),
+    st_row(7, pred_b!(itWhitebea_UnkMotion9_Anim), Some(itWhitebea_UnkMotion9_Phys), pred_b!(itWhitebea_UnkMotion9_Coll)),
+    st_row(3, pred_b!(itWhitebea_UnkMotion10_Anim), Some(itWhitebea_UnkMotion10_Phys), pred_b!(itWhitebea_UnkMotion10_Coll)),
+    st_row(3, pred_b!(itWhitebea_UnkMotion11_Anim), Some(itWhitebea_UnkMotion11_Phys), pred_b!(itWhitebea_UnkMotion11_Coll)),
 ];
 
 /// `Item_UpdateZakoVelocity` (it/kinds/inlines.h, static inline)

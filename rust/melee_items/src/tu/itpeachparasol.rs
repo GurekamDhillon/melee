@@ -52,9 +52,9 @@ pub mod ext {
 
 /// `ItemStateTable it_803F74F8[]`
 pub static mut it_803F74F8: [ItemStateTable; 3] = [
-    st_row(-1, pred_b(itPeachparasol_UnkMotion2_Anim), None, None),
-    st_row(0, pred_b(itPeachparasol_UnkMotion2_Anim), None, None),
-    st_row(1, pred_b(itPeachparasol_UnkMotion2_Anim), None, None),
+    st_row(-1, pred_b!(itPeachparasol_UnkMotion2_Anim), None, None),
+    st_row(0, pred_b!(itPeachparasol_UnkMotion2_Anim), None, None),
+    st_row(1, pred_b!(itPeachparasol_UnkMotion2_Anim), None, None),
 ];
 
 /// `static int it_804D5518[] = { 15, 16 }` (function-local in the C). The C indexes it with the

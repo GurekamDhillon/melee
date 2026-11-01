@@ -70,12 +70,12 @@ unsafe fn Item_StopAndEnterState(gobj: *mut Item_GObj, ip: *mut Item, msid: i32)
 
 /// `ItemStateTable it_803F5CC8[]`
 pub static mut it_803F5CC8: [ItemStateTable; 6] = [
-    st_row(-1, pred_b(itLgun_UnkMotion0_Anim), Some(itLgun_UnkMotion0_Phys), pred_b(itLgun_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itLgun_UnkMotion4_Anim), Some(itLgun_UnkMotion1_Phys), Some(itLgun_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itLgun_UnkMotion2_Anim), Some(itLgun_UnkMotion2_Phys), None),
-    st_row(0, pred_b(itLgun_UnkMotion3_Anim), Some(itLgun_UnkMotion3_Phys), None),
-    st_row(1, pred_b(itLgun_UnkMotion4_Anim), Some(itLgun_UnkMotion4_Phys), Some(itLgun_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itLgun_UnkMotion5_Anim), Some(itLgun_UnkMotion5_Phys), pred_b(itLgun_UnkMotion5_Coll)),
+    st_row(-1, pred_b!(itLgun_UnkMotion0_Anim), Some(itLgun_UnkMotion0_Phys), pred_b!(itLgun_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itLgun_UnkMotion4_Anim), Some(itLgun_UnkMotion1_Phys), Some(itLgun_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itLgun_UnkMotion2_Anim), Some(itLgun_UnkMotion2_Phys), None),
+    st_row(0, pred_b!(itLgun_UnkMotion3_Anim), Some(itLgun_UnkMotion3_Phys), None),
+    st_row(1, pred_b!(itLgun_UnkMotion4_Anim), Some(itLgun_UnkMotion4_Phys), Some(itLgun_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itLgun_UnkMotion5_Anim), Some(itLgun_UnkMotion5_Phys), pred_b!(itLgun_UnkMotion5_Coll)),
 ];
 
 pub unsafe extern "C" fn itLGun_Logic16_Spawned(gobj: *mut Item_GObj) {

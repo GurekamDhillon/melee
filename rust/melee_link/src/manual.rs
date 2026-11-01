@@ -77,6 +77,8 @@ pub fn install() {
         melee_fighter::hooks::FTDATA_80085FD4_X8 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
         melee_fighter::tu::ftCo_AppealS::ext::hook::ftData_80085FD4 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
         melee_fighter::tu::ftCo_SquatWait::ext::hook::ftData_80085FD4 = Some(|f, i| melee_fighter::tu::ftdata::ftData_80085FD4_x8(f, i));
+        // `Fighter_804D6550` (PlCo.dat root 1): the item-throw table; the C reads the pointer's VALUE as the table base
+        melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550 = Some(|| unsafe { melee_fighter::tu::fighter::Fighter_804D6550 as *mut u8 });
         // efasync.c's `efSync_Spawn(id, gobj, ...)` passes its vararg words as a slice (efsync.c builds its own `Va` from it)
         melee_world::tu::efn::efasync::ext::hook::efSync_Spawn = Some(|a0, a1, a2| unsafe { melee_world::tu::efsync::efSync_Spawn(a0, a1, a2) });
         // `&func` hooks: the callback table entries the C stores (`fp->pre_hitlag_cb = efLib_PauseAll`, ...) as extern "C" thunks

@@ -56,12 +56,12 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7FF8[]`
 pub static mut it_803F7FF8: [ItemStateTable; 6] = [
-    st_row(0, pred_b(itPippi_UnkMotion0_Anim), Some(itPippi_UnkMotion0_Phys), pred_b(itPippi_UnkMotion0_Coll)),
-    st_row(1, pred_b(itPippi_UnkMotion1_Anim), Some(itPippi_UnkMotion1_Phys), pred_b(itPippi_UnkMotion1_Coll)),
-    st_row(2, pred_b(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b(itPippi_UnkMotion5_Coll)),
-    st_row(3, pred_b(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b(itPippi_UnkMotion5_Coll)),
-    st_row(4, pred_b(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b(itPippi_UnkMotion5_Coll)),
-    st_row(5, pred_b(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b(itPippi_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itPippi_UnkMotion0_Anim), Some(itPippi_UnkMotion0_Phys), pred_b!(itPippi_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itPippi_UnkMotion1_Anim), Some(itPippi_UnkMotion1_Phys), pred_b!(itPippi_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b!(itPippi_UnkMotion5_Coll)),
+    st_row(3, pred_b!(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b!(itPippi_UnkMotion5_Coll)),
+    st_row(4, pred_b!(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b!(itPippi_UnkMotion5_Coll)),
+    st_row(5, pred_b!(itPippi_UnkMotion5_Anim), Some(itPippi_UnkMotion5_Phys), pred_b!(itPippi_UnkMotion5_Coll)),
 ];
 
 pub unsafe extern "C" fn itPippi_Logic20_Spawned(gobj: *mut Item_GObj) {

@@ -131,7 +131,8 @@ fn plco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     let at = |i: u32| off + 4 * i;
     let mut out: Vec<*mut c_void> = vec![core::ptr::null_mut(); 23];
     out[0] = parr::<ftCommonData>(d, b, at(0));
-    out[1] = ptable::<i32>(d, b, at(1)); // int**
+    // Fighter_804D6550: declared `int**`, read as a flat table of 12-byte float rows (ftCo_ItemThrow, base - 0x468): native words, not a pointer table
+    out[1] = swapped_words(d, b, at(1), 1);
     out[2] = parr::<f32>(d, b, at(2)); // float (*)[5]
     out[3] = parr::<f32>(d, b, at(3)); // float*
     out[4] = ptable::<FighterPartsTable>(d, b, at(4));

@@ -76,10 +76,10 @@ const M_PI_2_F: f32 = 3.14159265358979323846f32 / 2.0f32;
 
 /// `ItemStateTable it_803F7340[]`
 pub static mut it_803F7340: [ItemStateTable; 4] = [
-    st_row(0, pred_b(itSamusmissile_UnkMotion0_Anim), Some(itSamusmissile_UnkMotion0_Phys), pred_b(itSamusmissile_UnkMotion0_Coll)),
-    st_row(1, pred_b(itSamusmissile_UnkMotion1_Anim), Some(itSamusmissile_UnkMotion1_Phys), pred_b(itSamusmissile_UnkMotion1_Coll)),
-    st_row(2, pred_b(itSamusmissile_UnkMotion3_Anim), None, None),
-    st_row(3, pred_b(itSamusmissile_UnkMotion3_Anim), None, None),
+    st_row(0, pred_b!(itSamusmissile_UnkMotion0_Anim), Some(itSamusmissile_UnkMotion0_Phys), pred_b!(itSamusmissile_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itSamusmissile_UnkMotion1_Anim), Some(itSamusmissile_UnkMotion1_Phys), pred_b!(itSamusmissile_UnkMotion1_Coll)),
+    st_row(2, pred_b!(itSamusmissile_UnkMotion3_Anim), None, None),
+    st_row(3, pred_b!(itSamusmissile_UnkMotion3_Anim), None, None),
 ];
 
 /// `Item_InitSpawnPositionFromParent` (it/kinds/inlines.h, static inline)

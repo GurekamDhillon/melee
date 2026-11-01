@@ -49,11 +49,11 @@ pub mod ext {
 
 /// `ItemStateTable it_803F6370[]`
 pub static mut it_803F6370: [ItemStateTable; 5] = [
-    st_row(0, pred_b(itSpycloak_UnkMotion0_Anim), Some(itSpycloak_UnkMotion0_Phys), pred_b(itSpycloak_UnkMotion0_Coll)),
-    st_row(0, pred_b(itSpycloak_UnkMotion3_Anim), Some(itSpycloak_UnkMotion1_Phys), pred_b(itSpycloak_UnkMotion1_Coll)),
-    st_row(0, pred_b(itSpycloak_UnkMotion2_Anim), None, None),
-    st_row(0, pred_b(itSpycloak_UnkMotion3_Anim), Some(itSpycloak_UnkMotion3_Phys), pred_b(itSpycloak_UnkMotion3_Coll)),
-    st_row(0, pred_b(itSpycloak_UnkMotion4_Anim), Some(itSpycloak_UnkMotion4_Phys), pred_b(itSpycloak_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itSpycloak_UnkMotion0_Anim), Some(itSpycloak_UnkMotion0_Phys), pred_b!(itSpycloak_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itSpycloak_UnkMotion3_Anim), Some(itSpycloak_UnkMotion1_Phys), pred_b!(itSpycloak_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itSpycloak_UnkMotion2_Anim), None, None),
+    st_row(0, pred_b!(itSpycloak_UnkMotion3_Anim), Some(itSpycloak_UnkMotion3_Phys), pred_b!(itSpycloak_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itSpycloak_UnkMotion4_Anim), Some(itSpycloak_UnkMotion4_Phys), pred_b!(itSpycloak_UnkMotion4_Coll)),
 ];
 
 pub unsafe extern "C" fn itSpyCloak_Logic33_Spawned(gobj: *mut Item_GObj) {

@@ -54,7 +54,7 @@ pub mod ext {
 
 /// `ItemStateTable it_803F9470[]`
 pub static mut it_803F9470: [ItemStateTable; 1] = [
-    st_row(0, pred_b(it_2F28_UnkMotion0_Anim), Some(it_2F28_UnkMotion0_Phys), pred_b(it_2F28_UnkMotion0_Coll)),
+    st_row(0, pred_b!(it_2F28_UnkMotion0_Anim), Some(it_2F28_UnkMotion0_Phys), pred_b!(it_2F28_UnkMotion0_Coll)),
 ];
 
 /// `Item_InitSpawnPosition` (it/kinds/inlines.h, static inline)

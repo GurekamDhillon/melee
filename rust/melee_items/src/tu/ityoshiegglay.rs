@@ -56,9 +56,9 @@ pub mod ext {
 
 /// `ItemStateTable it_803F94A0[]`
 pub static mut it_803F94A0: [ItemStateTable; 3] = [
-    st_row(-1, pred_b(it_27CF_UnkMotion0_Anim), Some(it_27CF_UnkMotion0_Phys), pred_b(it_27CF_UnkMotion0_Coll)),
-    st_row(-1, pred_b(it_27CF_UnkMotion1_Anim), Some(it_27CF_UnkMotion1_Phys), pred_b(it_27CF_UnkMotion1_Coll)),
-    st_row(-1, pred_b(it_27CF_UnkMotion2_Anim), None, None),
+    st_row(-1, pred_b!(it_27CF_UnkMotion0_Anim), Some(it_27CF_UnkMotion0_Phys), pred_b!(it_27CF_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(it_27CF_UnkMotion1_Anim), Some(it_27CF_UnkMotion1_Phys), pred_b!(it_27CF_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(it_27CF_UnkMotion2_Anim), None, None),
 ];
 
 pub unsafe extern "C" fn it_802F2F34(gobj: *mut HSD_GObj, attr: *mut itYoshiEggLay_DatAttrs) {

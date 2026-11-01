@@ -60,9 +60,9 @@ crate::kinds_jobj_inl!();
 /// `ItemStateTable it_803F7158[]`
 pub static mut it_803F7158: [ItemStateTable; 1] = [st_row(
     0,
-    pred_b(itYoshistar_UnkMotion0_Anim),
+    pred_b!(itYoshistar_UnkMotion0_Anim),
     Some(itYoshistar_UnkMotion0_Phys),
-    pred_b(itYoshistar_UnkMotion0_Coll),
+    pred_b!(itYoshistar_UnkMotion0_Coll),
 )];
 
 /// The file-local `StarAttrs` (the article's special attributes).

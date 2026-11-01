@@ -116,18 +116,18 @@ pub fn link() {
 
 /// `ItemStateTable it_803F87F0[]` (the motion functions are `itzgshell.rs`'s)
 pub static mut it_803F87F0: [ItemStateTable; 13] = [
-    st_row(0, pred_b(zg::itZrshell_UnkMotion0_Anim), Some(zg::itZrshell_UnkMotion0_Phys), pred_b(zg::itZrshell_UnkMotion0_Coll)),
-    st_row(0, pred_b(zg::itZrshell_UnkMotion1_Anim), Some(zg::itZrshell_UnkMotion1_Phys), pred_b(zg::itZrshell_UnkMotion1_Coll)),
-    st_row(0, pred_b(zg::itZrshell_UnkMotion2_Anim), Some(zg::itZrshell_UnkMotion2_Phys), None),
-    st_row(1, pred_b(zg::itZrshell_UnkMotion3_Anim), Some(zg::itZrshell_UnkMotion3_Phys), pred_b(zg::itZrshell_UnkMotion3_Coll)),
-    st_row(1, pred_b(zg::itZrshell_UnkMotion4_Anim), Some(zg::itZrshell_UnkMotion4_Phys), pred_b(zg::itZrshell_UnkMotion4_Coll)),
-    st_row(1, pred_b(zg::itZrshell_UnkMotion6_Anim), Some(zg::itZrshell_UnkMotion6_Phys), pred_b(zg::itZrshell_UnkMotion6_Coll)),
-    st_row(0, pred_b(zg::itZrshell_UnkMotion6_Anim), Some(zg::itZrshell_UnkMotion6_Phys), pred_b(zg::itZrshell_UnkMotion6_Coll)),
-    st_row(1, pred_b(zg::itZrshell_UnkMotion8_Anim), Some(zg::itZrshell_UnkMotion8_Phys), pred_b(zg::itZrshell_UnkMotion8_Coll)),
-    st_row(0, pred_b(zg::itZrshell_UnkMotion8_Anim), Some(zg::itZrshell_UnkMotion8_Phys), pred_b(zg::itZrshell_UnkMotion8_Coll)),
-    st_row(0, pred_b(zg::itZrshell_UnkMotion9_Anim), Some(zg::itZrshell_UnkMotion9_Phys), pred_b(zg::itZrshell_UnkMotion9_Coll)),
-    st_row(2, pred_b(zg::itZrshell_UnkMotion10_Anim), Some(zg::itZrshell_UnkMotion10_Phys), pred_b(zg::itZrshell_UnkMotion10_Coll)),
-    st_row(3, pred_b(zg::itZrshell_UnkMotion11_Anim), Some(zg::itZrshell_UnkMotion11_Phys), pred_b(zg::itZrshell_UnkMotion11_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion0_Anim), Some(zg::itZrshell_UnkMotion0_Phys), pred_b!(zg::itZrshell_UnkMotion0_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion1_Anim), Some(zg::itZrshell_UnkMotion1_Phys), pred_b!(zg::itZrshell_UnkMotion1_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion2_Anim), Some(zg::itZrshell_UnkMotion2_Phys), None),
+    st_row(1, pred_b!(zg::itZrshell_UnkMotion3_Anim), Some(zg::itZrshell_UnkMotion3_Phys), pred_b!(zg::itZrshell_UnkMotion3_Coll)),
+    st_row(1, pred_b!(zg::itZrshell_UnkMotion4_Anim), Some(zg::itZrshell_UnkMotion4_Phys), pred_b!(zg::itZrshell_UnkMotion4_Coll)),
+    st_row(1, pred_b!(zg::itZrshell_UnkMotion6_Anim), Some(zg::itZrshell_UnkMotion6_Phys), pred_b!(zg::itZrshell_UnkMotion6_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion6_Anim), Some(zg::itZrshell_UnkMotion6_Phys), pred_b!(zg::itZrshell_UnkMotion6_Coll)),
+    st_row(1, pred_b!(zg::itZrshell_UnkMotion8_Anim), Some(zg::itZrshell_UnkMotion8_Phys), pred_b!(zg::itZrshell_UnkMotion8_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion8_Anim), Some(zg::itZrshell_UnkMotion8_Phys), pred_b!(zg::itZrshell_UnkMotion8_Coll)),
+    st_row(0, pred_b!(zg::itZrshell_UnkMotion9_Anim), Some(zg::itZrshell_UnkMotion9_Phys), pred_b!(zg::itZrshell_UnkMotion9_Coll)),
+    st_row(2, pred_b!(zg::itZrshell_UnkMotion10_Anim), Some(zg::itZrshell_UnkMotion10_Phys), pred_b!(zg::itZrshell_UnkMotion10_Coll)),
+    st_row(3, pred_b!(zg::itZrshell_UnkMotion11_Anim), Some(zg::itZrshell_UnkMotion11_Phys), pred_b!(zg::itZrshell_UnkMotion11_Coll)),
     st_row(4, None, None, None),
 ];
 

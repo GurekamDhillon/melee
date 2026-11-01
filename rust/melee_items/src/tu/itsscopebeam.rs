@@ -82,16 +82,16 @@ unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut H
 
 /// `ItemStateTable it_803F6568[]`
 pub static mut it_803F6568: [ItemStateTable; 10] = [
-    st_row(0, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(1, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(2, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(3, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(4, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(5, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(6, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(7, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(8, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
-    st_row(9, pred_b(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b(itSscopebeam_UnkMotion9_Coll)),
+    st_row(0, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(1, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(2, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(3, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(4, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(5, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(6, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(7, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(8, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
+    st_row(9, pred_b!(itSscopebeam_UnkMotion9_Anim), Some(itSscopebeam_UnkMotion9_Phys), pred_b!(itSscopebeam_UnkMotion9_Coll)),
 ];
 
 /// 298DEC: spawns a beam of charge level `arg2` from the fighter `gobj`.

@@ -70,12 +70,12 @@ unsafe fn Item_ApplyFallingPhysics(gobj: *mut Item_GObj) {
 
 /// `ItemStateTable it_803F5F90[]`
 pub static mut it_803F5F90: [ItemStateTable; 6] = [
-    st_row(-1, pred_b(itStarrod_UnkMotion0_Anim), Some(itStarrod_UnkMotion0_Phys), pred_b(itStarrod_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion1_Phys), pred_b(itStarrod_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itStarrod_UnkMotion2_Anim), Some(itStarrod_UnkMotion2_Phys), None),
-    st_row(0, pred_b(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion4_Phys), pred_b(itStarrod_UnkMotion3_Coll)),
-    st_row(0, pred_b(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion4_Phys), pred_b(itStarrod_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itStarrod_UnkMotion5_Anim), Some(itStarrod_UnkMotion5_Phys), pred_b(itStarrod_UnkMotion5_Coll)),
+    st_row(-1, pred_b!(itStarrod_UnkMotion0_Anim), Some(itStarrod_UnkMotion0_Phys), pred_b!(itStarrod_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion1_Phys), pred_b!(itStarrod_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itStarrod_UnkMotion2_Anim), Some(itStarrod_UnkMotion2_Phys), None),
+    st_row(0, pred_b!(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion4_Phys), pred_b!(itStarrod_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itStarrod_UnkMotion4_Anim), Some(itStarrod_UnkMotion4_Phys), pred_b!(itStarrod_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itStarrod_UnkMotion5_Anim), Some(itStarrod_UnkMotion5_Phys), pred_b!(itStarrod_UnkMotion5_Coll)),
 ];
 
 pub unsafe extern "C" fn itStarRod_Logic22_Spawned(gobj: *mut Item_GObj) {

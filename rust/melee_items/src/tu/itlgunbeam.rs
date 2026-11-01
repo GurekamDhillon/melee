@@ -121,7 +121,7 @@ unsafe fn Item_InitSpawnPositionFromParent(spawn: *mut SpawnItem, parent: *mut H
 
 /// `ItemStateTable it_803F6630[]`
 pub static mut it_803F6630: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itLgunbeam_UnkMotion0_Anim), Some(itLgunbeam_UnkMotion0_Phys), pred_b(itLgunbeam_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itLgunbeam_UnkMotion0_Anim), Some(itLgunbeam_UnkMotion0_Phys), pred_b!(itLgunbeam_UnkMotion0_Coll)),
 ];
 
 /// 2993E0: sums the contact normals selected by `flags` into `position1`.

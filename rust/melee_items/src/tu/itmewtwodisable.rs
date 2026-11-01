@@ -55,7 +55,7 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7750[1]`
 pub static mut it_803F7750: [ItemStateTable; 1] = [
-    st_row(0, pred_b(itMewtwodisable_UnkMotion0_Anim), Some(itMewtwodisable_UnkMotion0_Phys), pred_b_i(itMewtwodisable_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itMewtwodisable_UnkMotion0_Anim), Some(itMewtwodisable_UnkMotion0_Phys), pred_b_i(itMewtwodisable_UnkMotion0_Coll)),
 ];
 
 /// A state-table predicate slot from an `int`-returning function.

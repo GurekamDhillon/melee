@@ -64,13 +64,13 @@ pub mod ext {
 
 /// `ItemStateTable it_803F6488[]`
 pub static mut it_803F6488: [ItemStateTable; 7] = [
-    st_row(-1, pred_b(itMball_Motion0_Anim), Some(itMball_Motion0_Phys), pred_b(itMball_Motion0_Coll)),
-    st_row(-1, pred_b(itMball_Motion3_Anim), Some(itMball_Motion1_Phys), pred_b(itMball_Motion1_Coll)),
-    st_row(-1, pred_b(itMball_Motion2_Anim), Some(itMball_Motion2_Phys), None),
-    st_row(0, pred_b(itMball_Motion3_Anim), Some(itMball_Motion3_Phys), pred_b(itMball_Motion3_Coll)),
-    st_row(-1, pred_b(itMball_Motion4_Anim), Some(itMball_Motion4_Phys), pred_b(itMball_Motion4_Coll)),
-    st_row(1, pred_b(itMball_Motion5_Anim), Some(itMball_Motion5_Phys), pred_b(itMball_Motion5_Coll)),
-    st_row(1, pred_b(itMball_Motion6_Anim), Some(itMball_Motion6_Phys), pred_b(itMball_Motion6_Coll)),
+    st_row(-1, pred_b!(itMball_Motion0_Anim), Some(itMball_Motion0_Phys), pred_b!(itMball_Motion0_Coll)),
+    st_row(-1, pred_b!(itMball_Motion3_Anim), Some(itMball_Motion1_Phys), pred_b!(itMball_Motion1_Coll)),
+    st_row(-1, pred_b!(itMball_Motion2_Anim), Some(itMball_Motion2_Phys), None),
+    st_row(0, pred_b!(itMball_Motion3_Anim), Some(itMball_Motion3_Phys), pred_b!(itMball_Motion3_Coll)),
+    st_row(-1, pred_b!(itMball_Motion4_Anim), Some(itMball_Motion4_Phys), pred_b!(itMball_Motion4_Coll)),
+    st_row(1, pred_b!(itMball_Motion5_Anim), Some(itMball_Motion5_Phys), pred_b!(itMball_Motion5_Coll)),
+    st_row(1, pred_b!(itMball_Motion6_Anim), Some(itMball_Motion6_Phys), pred_b!(itMball_Motion6_Coll)),
 ];
 
 /// `Item_TickLifetime` (it/inlines.h, static inline)

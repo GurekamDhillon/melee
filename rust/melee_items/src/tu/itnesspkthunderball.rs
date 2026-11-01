@@ -76,9 +76,9 @@ fn MTXDegToRad(a: f32) -> f32 {
 /// `ItemStateTable it_803F6BC8[]`
 pub static mut it_803F6BC8: [ItemStateTable; 1] = [st_row(
     0,
-    pred_b(itNesspkthunderball_UnkMotion0_Anim),
+    pred_b!(itNesspkthunderball_UnkMotion0_Anim),
     Some(itNesspkthunderball_UnkMotion0_Phys),
-    pred_b(itNesspkthunderball_UnkMotion0_Coll),
+    pred_b!(itNesspkthunderball_UnkMotion0_Coll),
 )];
 
 #[inline]

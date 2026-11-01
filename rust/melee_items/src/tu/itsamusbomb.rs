@@ -69,10 +69,10 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F7220[]`
 pub static mut it_803F7220: [ItemStateTable; 4] = [
-    st_row(0, pred_b(itSamusbomb_UnkMotion0_Anim), Some(itSamusbomb_UnkMotion0_Phys), pred_b(itSamusbomb_UnkMotion0_Coll)),
-    st_row(0, pred_b(itSamusbomb_UnkMotion1_Anim), Some(itSamusbomb_UnkMotion1_Phys), pred_b(itSamusbomb_UnkMotion1_Coll)),
-    st_row(0, pred_b(itSamusbomb_UnkMotion2_Anim), Some(itSamusbomb_UnkMotion2_Phys), pred_b(itSamusbomb_UnkMotion2_Coll)),
-    st_row(1, pred_b(itSamusbomb_UnkMotion3_Anim), None, None),
+    st_row(0, pred_b!(itSamusbomb_UnkMotion0_Anim), Some(itSamusbomb_UnkMotion0_Phys), pred_b!(itSamusbomb_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itSamusbomb_UnkMotion1_Anim), Some(itSamusbomb_UnkMotion1_Phys), pred_b!(itSamusbomb_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itSamusbomb_UnkMotion2_Anim), Some(itSamusbomb_UnkMotion2_Phys), pred_b!(itSamusbomb_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itSamusbomb_UnkMotion3_Anim), None, None),
 ];
 
 /// `Item_InitSpawnPositionFromParent` (it/kinds/inlines.h, static inline)

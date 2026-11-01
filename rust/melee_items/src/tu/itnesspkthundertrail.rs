@@ -58,9 +58,9 @@ const M_PI: f64 = 3.14159265358979323846;
 /// `ItemStateTable it_803F6C08[]`
 pub static mut it_803F6C08: [ItemStateTable; 1] = [st_row(
     0,
-    pred_b(itNesspkthundertrail_UnkMotion0_Anim),
+    pred_b!(itNesspkthundertrail_UnkMotion0_Anim),
     Some(itNesspkthundertrail_UnkMotion0_Phys),
-    pred_b(itNesspkthundertrail_UnkMotion0_Coll),
+    pred_b!(itNesspkthundertrail_UnkMotion0_Coll),
 )];
 
 /// `s32 it_803F6C18[]`

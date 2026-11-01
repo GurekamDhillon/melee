@@ -93,16 +93,16 @@ crate::kinds_jobj_inl!();
 /// `ItemStateTable it_803F85F0[]`
 pub static mut it_803F85F0: [ItemStateTable; 11] = [
     st_row(0, None, None, None),
-    st_row(-1, pred_b(itNokonoko_UnkMotion1_Anim), Some(itNokonoko_UnkMotion1_Phys), pred_b(itNokonoko_UnkMotion1_Coll)),
-    st_row(1, pred_b(itNokonoko_UnkMotion2_Anim), Some(itNokonoko_UnkMotion2_Phys), pred_b(itNokonoko_UnkMotion2_Coll)),
-    st_row(2, pred_b(itNokonoko_UnkMotion3_Anim), Some(itNokonoko_UnkMotion3_Phys), pred_b(itNokonoko_UnkMotion3_Coll)),
-    st_row(1, pred_b(itNokonoko_UnkMotion4_Anim), Some(itNokonoko_UnkMotion4_Phys), pred_b(itNokonoko_UnkMotion6_Coll)),
-    st_row(3, pred_b(itNokonoko_UnkMotion5_Anim), Some(itNokonoko_UnkMotion5_Phys), pred_b(itNokonoko_UnkMotion5_Coll)),
-    st_row(3, pred_b(itNokonoko_UnkMotion6_Anim), Some(itNokonoko_UnkMotion6_Phys), pred_b(itNokonoko_UnkMotion6_Coll)),
-    st_row(4, pred_b(itNokonoko_UnkMotion8_Anim), Some(itNokonoko_UnkMotion7_Phys), pred_b(itNokonoko_UnkMotion8_Coll)),
-    st_row(4, pred_b(itNokonoko_UnkMotion8_Anim), Some(itNokonoko_UnkMotion8_Phys), pred_b(itNokonoko_UnkMotion8_Coll)),
-    st_row(4, pred_b(itNokonoko_UnkMotion9_Anim), Some(itNokonoko_UnkMotion9_Phys), None),
-    st_row(5, pred_b(itNokonoko_UnkMotion10_Anim), Some(itNokonoko_UnkMotion10_Phys), pred_b(itNokonoko_UnkMotion10_Coll)),
+    st_row(-1, pred_b!(itNokonoko_UnkMotion1_Anim), Some(itNokonoko_UnkMotion1_Phys), pred_b!(itNokonoko_UnkMotion1_Coll)),
+    st_row(1, pred_b!(itNokonoko_UnkMotion2_Anim), Some(itNokonoko_UnkMotion2_Phys), pred_b!(itNokonoko_UnkMotion2_Coll)),
+    st_row(2, pred_b!(itNokonoko_UnkMotion3_Anim), Some(itNokonoko_UnkMotion3_Phys), pred_b!(itNokonoko_UnkMotion3_Coll)),
+    st_row(1, pred_b!(itNokonoko_UnkMotion4_Anim), Some(itNokonoko_UnkMotion4_Phys), pred_b!(itNokonoko_UnkMotion6_Coll)),
+    st_row(3, pred_b!(itNokonoko_UnkMotion5_Anim), Some(itNokonoko_UnkMotion5_Phys), pred_b!(itNokonoko_UnkMotion5_Coll)),
+    st_row(3, pred_b!(itNokonoko_UnkMotion6_Anim), Some(itNokonoko_UnkMotion6_Phys), pred_b!(itNokonoko_UnkMotion6_Coll)),
+    st_row(4, pred_b!(itNokonoko_UnkMotion8_Anim), Some(itNokonoko_UnkMotion7_Phys), pred_b!(itNokonoko_UnkMotion8_Coll)),
+    st_row(4, pred_b!(itNokonoko_UnkMotion8_Anim), Some(itNokonoko_UnkMotion8_Phys), pred_b!(itNokonoko_UnkMotion8_Coll)),
+    st_row(4, pred_b!(itNokonoko_UnkMotion9_Anim), Some(itNokonoko_UnkMotion9_Phys), None),
+    st_row(5, pred_b!(itNokonoko_UnkMotion10_Anim), Some(itNokonoko_UnkMotion10_Phys), pred_b!(itNokonoko_UnkMotion10_Coll)),
 ];
 
 /// `coll_inline` (static inline)
@@ -484,7 +484,7 @@ pub unsafe extern "C" fn it_802DD4A8(gobj: *mut HSD_GObj, arg1: i32, arg2: Item_
     let ip = GET_ITEM(gobj);
     ext::Item_80268E5C(gobj, arg1, arg2);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(it_802DC83C);
+    (*ip).jumped_on = pred_b!(it_802DC83C);
 }
 
 pub unsafe extern "C" fn it_802DD4F4(gobj: *mut Item_GObj) {

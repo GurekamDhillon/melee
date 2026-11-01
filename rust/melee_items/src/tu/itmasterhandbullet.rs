@@ -56,8 +56,8 @@ kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F9388[]`
 pub static mut it_803F9388: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itMasterhandbullet_UnkMotion1_Anim), Some(itMasterhandbullet_UnkMotion1_Phys), pred_b(itMasterhandbullet_UnkMotion1_Coll)),
-    st_row(1, pred_b(itMasterhandbullet_UnkMotion1_Anim), Some(itMasterhandbullet_UnkMotion1_Phys), pred_b(itMasterhandbullet_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itMasterhandbullet_UnkMotion1_Anim), Some(itMasterhandbullet_UnkMotion1_Phys), pred_b!(itMasterhandbullet_UnkMotion1_Coll)),
+    st_row(1, pred_b!(itMasterhandbullet_UnkMotion1_Anim), Some(itMasterhandbullet_UnkMotion1_Phys), pred_b!(itMasterhandbullet_UnkMotion1_Coll)),
 ];
 
 /// `it_802F0AE0_sub` (static inline)

@@ -58,17 +58,17 @@ const deg_to_rad: f32 = 1.0 * 0.01745329252;
 
 /// `ItemStateTable it_803F5AB0[]`
 pub static mut it_803F5AB0: [ItemStateTable; 11] = [
-    st_row(-1, pred_b(itParasol_UnkMotion0_Anim), Some(itParasol_UnkMotion0_Phys), pred_b(itParasol_UnkMotion0_Coll)),
-    st_row(4, pred_b(itParasol_UnkMotion2_Anim), Some(itParasol_UnkMotion1_Phys), pred_b(itParasol_UnkMotion2_Coll)),
-    st_row(0, pred_b(itParasol_UnkMotion2_Anim), Some(itParasol_UnkMotion2_Phys), pred_b(itParasol_UnkMotion2_Coll)),
-    st_row(-1, pred_b(itParasol_UnkMotion3_Anim), Some(itParasol_UnkMotion3_Phys), pred_b(itParasol_UnkMotion3_Coll)),
-    st_row(1, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(2, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(3, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(4, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(5, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(6, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
-    st_row(7, pred_b(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(-1, pred_b!(itParasol_UnkMotion0_Anim), Some(itParasol_UnkMotion0_Phys), pred_b!(itParasol_UnkMotion0_Coll)),
+    st_row(4, pred_b!(itParasol_UnkMotion2_Anim), Some(itParasol_UnkMotion1_Phys), pred_b!(itParasol_UnkMotion2_Coll)),
+    st_row(0, pred_b!(itParasol_UnkMotion2_Anim), Some(itParasol_UnkMotion2_Phys), pred_b!(itParasol_UnkMotion2_Coll)),
+    st_row(-1, pred_b!(itParasol_UnkMotion3_Anim), Some(itParasol_UnkMotion3_Phys), pred_b!(itParasol_UnkMotion3_Coll)),
+    st_row(1, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(2, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(3, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(4, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(5, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(6, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
+    st_row(7, pred_b!(itParasol_UnkMotion10_Anim), Some(itParasol_UnkMotion10_Phys), None),
 ];
 
 pub unsafe extern "C" fn it_8028B08C(_item_gobj: *mut Item_GObj, statenum: i32) -> i32 {

@@ -61,8 +61,8 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7DE8[]`
 pub static mut it_803F7DE8: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itRaikou_UnkMotion0_Anim), Some(itRaikou_UnkMotion0_Phys), pred_b(itRaikou_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itRaikou_UnkMotion1_Anim), Some(itRaikou_UnkMotion1_Phys), pred_b(itRaikou_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itRaikou_UnkMotion0_Anim), Some(itRaikou_UnkMotion0_Phys), pred_b!(itRaikou_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itRaikou_UnkMotion1_Anim), Some(itRaikou_UnkMotion1_Phys), pred_b!(itRaikou_UnkMotion1_Coll)),
 ];
 
 /// `Item_SetEffectHitlagCallbacks` (it/inlines.h, static inline)

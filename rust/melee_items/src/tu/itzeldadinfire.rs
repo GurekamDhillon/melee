@@ -67,8 +67,8 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable ItemStateTable_ZeldaDinFire[]`
 pub static mut ItemStateTable_ZeldaDinFire: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itZeldadinfire_UnkMotion0_Anim), Some(itZeldadinfire_UnkMotion0_Phys), pred_b(itZeldadinfire_UnkMotion0_Coll)),
-    st_row(1, pred_b(itZeldadinfire_UnkMotion1_Anim), Some(itZeldadinfire_UnkMotion1_Phys), pred_b(itZeldadinfire_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itZeldadinfire_UnkMotion0_Anim), Some(itZeldadinfire_UnkMotion0_Phys), pred_b!(itZeldadinfire_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itZeldadinfire_UnkMotion1_Anim), Some(itZeldadinfire_UnkMotion1_Phys), pred_b!(itZeldadinfire_UnkMotion1_Coll)),
 ];
 
 /// The file-local `ItZeldaDinFire_ItemVars` (the article's special attributes).

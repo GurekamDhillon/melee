@@ -107,14 +107,14 @@ pub struct itRShell_Attrs {
 
 /// `ItemStateTable it_803F5C48[]`
 pub static mut it_803F5C48: [ItemStateTable; 8] = [
-    st_row(-1, pred_b(itRshell_UnkMotion0_Anim), Some(itRshell_UnkMotion0_Phys), pred_b(itRshell_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itRshell_UnkMotion1_Anim), Some(itRshell_UnkMotion1_Phys), pred_b(itRshell_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itRshell_UnkMotion2_Anim), Some(itRshell_UnkMotion2_Phys), None),
-    st_row(0, pred_b(itRshell_UnkMotion3_Anim), Some(itRshell_UnkMotion3_Phys), pred_b(itRshell_UnkMotion3_Coll)),
-    st_row(0, pred_b(itRshell_UnkMotion4_Anim), Some(itRshell_UnkMotion4_Phys), pred_b(itRshell_UnkMotion4_Coll)),
-    st_row(0, pred_b(itRshell_UnkMotion5_Anim), Some(itRshell_UnkMotion5_Phys), pred_b(itRshell_UnkMotion5_Coll)),
-    st_row(0, pred_b(itRshell_UnkMotion6_Anim), Some(itRshell_UnkMotion6_Phys), pred_b(itRshell_UnkMotion6_Coll)),
-    st_row(-1, pred_b(itRshell_UnkMotion7_Anim), Some(itRshell_UnkMotion7_Phys), pred_b(itRshell_UnkMotion7_Coll)),
+    st_row(-1, pred_b!(itRshell_UnkMotion0_Anim), Some(itRshell_UnkMotion0_Phys), pred_b!(itRshell_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itRshell_UnkMotion1_Anim), Some(itRshell_UnkMotion1_Phys), pred_b!(itRshell_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itRshell_UnkMotion2_Anim), Some(itRshell_UnkMotion2_Phys), None),
+    st_row(0, pred_b!(itRshell_UnkMotion3_Anim), Some(itRshell_UnkMotion3_Phys), pred_b!(itRshell_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itRshell_UnkMotion4_Anim), Some(itRshell_UnkMotion4_Phys), pred_b!(itRshell_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itRshell_UnkMotion5_Anim), Some(itRshell_UnkMotion5_Phys), pred_b!(itRshell_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itRshell_UnkMotion6_Anim), Some(itRshell_UnkMotion6_Phys), pred_b!(itRshell_UnkMotion6_Coll)),
+    st_row(-1, pred_b!(itRshell_UnkMotion7_Anim), Some(itRshell_UnkMotion7_Phys), pred_b!(itRshell_UnkMotion7_Coll)),
 ];
 
 /// `Item_UpdateRollingShellRotation` (it/kinds/inlines.h, static inline)
@@ -345,7 +345,7 @@ pub unsafe extern "C" fn it_8028D62C(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.rshell.xDD8 = (*attrs).x3C;
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(it_8028E6C0);
+    (*ip).jumped_on = pred_b!(it_8028E6C0);
 }
 
 pub unsafe extern "C" fn itRshell_UnkMotion0_Anim(_gobj: *mut Item_GObj) -> bool {

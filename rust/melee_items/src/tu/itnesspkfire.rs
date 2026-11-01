@@ -53,7 +53,7 @@ pub mod ext {
 kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F6B28[]`
-pub static mut it_803F6B28: [ItemStateTable; 1] = [st_row(0, pred_b(itNesspkfire_UnkMotion0_Anim), None, pred_b(itNesspkfire_UnkMotion0_Coll))];
+pub static mut it_803F6B28: [ItemStateTable; 1] = [st_row(0, pred_b!(itNesspkfire_UnkMotion0_Anim), None, pred_b!(itNesspkfire_UnkMotion0_Coll))];
 
 /// `Item_InitSpawnPositionFromParent` (it/kinds/inlines.h, static inline)
 #[inline]

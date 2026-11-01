@@ -154,18 +154,18 @@ unsafe fn attrs_of(ip: *mut Item) -> *mut itGShell_Attrs {
 
 /// `ItemStateTable it_803F86C8[]`
 pub static mut it_803F86C8: [ItemStateTable; 12] = [
-    st_row(0, pred_b(itZrshell_UnkMotion0_Anim), Some(itZrshell_UnkMotion0_Phys), pred_b(itZrshell_UnkMotion0_Coll)),
-    st_row(0, pred_b(itZrshell_UnkMotion1_Anim), Some(itZrshell_UnkMotion1_Phys), pred_b(itZrshell_UnkMotion1_Coll)),
-    st_row(0, pred_b(itZrshell_UnkMotion2_Anim), Some(itZrshell_UnkMotion2_Phys), None),
-    st_row(1, pred_b(itZrshell_UnkMotion3_Anim), Some(itZrshell_UnkMotion3_Phys), pred_b(itZrshell_UnkMotion3_Coll)),
-    st_row(1, pred_b(itZrshell_UnkMotion4_Anim), Some(itZrshell_UnkMotion4_Phys), pred_b(itZrshell_UnkMotion4_Coll)),
-    st_row(1, pred_b(itZrshell_UnkMotion6_Anim), Some(itZrshell_UnkMotion6_Phys), pred_b(itZrshell_UnkMotion6_Coll)),
-    st_row(0, pred_b(itZrshell_UnkMotion6_Anim), Some(itZrshell_UnkMotion6_Phys), pred_b(itZrshell_UnkMotion6_Coll)),
-    st_row(1, pred_b(itZrshell_UnkMotion8_Anim), Some(itZrshell_UnkMotion8_Phys), pred_b(itZrshell_UnkMotion8_Coll)),
-    st_row(0, pred_b(itZrshell_UnkMotion8_Anim), Some(itZrshell_UnkMotion8_Phys), pred_b(itZrshell_UnkMotion8_Coll)),
-    st_row(0, pred_b(itZrshell_UnkMotion9_Anim), Some(itZrshell_UnkMotion9_Phys), pred_b(itZrshell_UnkMotion9_Coll)),
-    st_row(2, pred_b(itZrshell_UnkMotion10_Anim), Some(itZrshell_UnkMotion10_Phys), pred_b(itZrshell_UnkMotion10_Coll)),
-    st_row(3, pred_b(itZrshell_UnkMotion11_Anim), Some(itZrshell_UnkMotion11_Phys), pred_b(itZrshell_UnkMotion11_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion0_Anim), Some(itZrshell_UnkMotion0_Phys), pred_b!(itZrshell_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion1_Anim), Some(itZrshell_UnkMotion1_Phys), pred_b!(itZrshell_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion2_Anim), Some(itZrshell_UnkMotion2_Phys), None),
+    st_row(1, pred_b!(itZrshell_UnkMotion3_Anim), Some(itZrshell_UnkMotion3_Phys), pred_b!(itZrshell_UnkMotion3_Coll)),
+    st_row(1, pred_b!(itZrshell_UnkMotion4_Anim), Some(itZrshell_UnkMotion4_Phys), pred_b!(itZrshell_UnkMotion4_Coll)),
+    st_row(1, pred_b!(itZrshell_UnkMotion6_Anim), Some(itZrshell_UnkMotion6_Phys), pred_b!(itZrshell_UnkMotion6_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion6_Anim), Some(itZrshell_UnkMotion6_Phys), pred_b!(itZrshell_UnkMotion6_Coll)),
+    st_row(1, pred_b!(itZrshell_UnkMotion8_Anim), Some(itZrshell_UnkMotion8_Phys), pred_b!(itZrshell_UnkMotion8_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion8_Anim), Some(itZrshell_UnkMotion8_Phys), pred_b!(itZrshell_UnkMotion8_Coll)),
+    st_row(0, pred_b!(itZrshell_UnkMotion9_Anim), Some(itZrshell_UnkMotion9_Phys), pred_b!(itZrshell_UnkMotion9_Coll)),
+    st_row(2, pred_b!(itZrshell_UnkMotion10_Anim), Some(itZrshell_UnkMotion10_Phys), pred_b!(itZrshell_UnkMotion10_Coll)),
+    st_row(3, pred_b!(itZrshell_UnkMotion11_Anim), Some(itZrshell_UnkMotion11_Phys), pred_b!(itZrshell_UnkMotion11_Coll)),
 ];
 
 /// `Item_UpdateRollingShellRotation` (it/kinds/inlines.h, static inline)
@@ -366,7 +366,7 @@ pub unsafe extern "C" fn it_802DE0F0(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
     (*ip).xDD4_itemVar.zgshell.set_xE1C_b0(0);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(fn_802DFE7C);
+    (*ip).jumped_on = pred_b!(fn_802DFE7C);
 }
 
 pub unsafe extern "C" fn itZrshell_UnkMotion0_Anim(arg0: *mut Item_GObj) -> bool {
@@ -410,7 +410,7 @@ pub unsafe extern "C" fn itZrshell_UnkMotion1_Anim(gobj: *mut Item_GObj) -> bool
     if (*ip).xDD4_itemVar.zgshell.xE1C_b0() != 0 && (*ip).xDD0_flag.anon_0.b0() != 1 {
         if (*ip).xDD4_itemVar.zgshell.xE04 <= 0.0 {
             ext::it_80274CAC(gobj);
-            (*ip).jumped_on = pred_b(fn_802DFE7C);
+            (*ip).jumped_on = pred_b!(fn_802DFE7C);
         } else {
             (*ip).xDD4_itemVar.zgshell.xE04 -= 1.0;
         }
@@ -548,7 +548,7 @@ pub unsafe extern "C" fn it_802DE6F0(gobj: *mut Item_GObj) {
         ext::Item_80268E5C(gobj, 5, ITEM_ANIM_UPDATE as u32);
     }
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(fn_802DFE7C);
+    (*ip).jumped_on = pred_b!(fn_802DFE7C);
 }
 
 /// `it_802DDB38_inline` (static inline)
@@ -614,7 +614,7 @@ pub unsafe extern "C" fn itZrshell_UnkMotion6_Phys(gobj: *mut Item_GObj) {
             ext::Item_80268E5C(gobj, 0, ITEM_UNK_0x1 as u32);
             (*ip).xDD4_itemVar.zgshell.set_xE1C_b0(0);
             ext::it_80274CAC(gobj);
-            (*ip).jumped_on = pred_b(fn_802DFE7C);
+            (*ip).jumped_on = pred_b!(fn_802DFE7C);
         } else {
             it_2725_Logic11_EnteredAir(gobj);
         }
@@ -663,7 +663,7 @@ pub unsafe extern "C" fn it_802DEC80(gobj: *mut Item_GObj) {
         ext::Item_80268E5C(gobj, 7, ITEM_ANIM_UPDATE as u32);
     }
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(fn_802DFE7C);
+    (*ip).jumped_on = pred_b!(fn_802DFE7C);
 }
 
 pub unsafe extern "C" fn itZrshell_UnkMotion8_Anim(gobj: *mut Item_GObj) -> bool {
@@ -727,7 +727,7 @@ unsafe fn itZGShell_StopAndIdle(gobj: *mut Item_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_UNK_0x1 as u32);
     (*ip).xDD4_itemVar.zgshell.set_xE1C_b0(0);
     ext::it_80274CAC(gobj);
-    (*ip).jumped_on = pred_b(fn_802DFE7C);
+    (*ip).jumped_on = pred_b!(fn_802DFE7C);
 }
 
 pub unsafe extern "C" fn itZrshell_UnkMotion9_Phys(gobj: *mut Item_GObj) {
@@ -922,7 +922,7 @@ pub unsafe extern "C" fn itZrshell_UnkMotion10_Anim(gobj: *mut Item_GObj) -> boo
             ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE as u32);
             (*ip).xDD4_itemVar.zgshell.set_xE1C_b0(0);
             ext::it_80274CAC(gobj);
-            (*ip).jumped_on = pred_b(fn_802DFE7C);
+            (*ip).jumped_on = pred_b!(fn_802DFE7C);
         } else {
             ip = GET_ITEM(gobj);
             if (*ip).msid != 0xB && (*ip).msid != 0xA {
@@ -1087,7 +1087,7 @@ pub unsafe extern "C" fn it_802E0100(arg0: i32, pos: *mut Vec3, facing_int: i32)
                 ext::Item_80268E5C(spawn_gobj, 0, ITEM_ANIM_UPDATE as u32);
                 (*spawn_ip).xDD4_itemVar.zgshell.set_xE1C_b0(0);
                 ext::it_80274CAC(spawn_gobj);
-                (*spawn_ip).jumped_on = pred_b(fn_802DFE7C);
+                (*spawn_ip).jumped_on = pred_b!(fn_802DFE7C);
             } else {
                 spawn_ip = GET_ITEM(spawn_gobj);
                 if (*spawn_ip).msid != 0xB && (*spawn_ip).msid != 0xA {

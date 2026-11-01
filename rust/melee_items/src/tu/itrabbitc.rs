@@ -58,11 +58,11 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F6270[]`
 pub static mut it_803F6270: [ItemStateTable; 5] = [
-    st_row(-1, pred_b(itRabbitc_UnkMotion0_Anim), Some(itRabbitc_UnkMotion0_Phys), pred_b(itRabbitc_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itRabbitc_UnkMotion3_Anim), Some(itRabbitc_UnkMotion1_Phys), pred_b(itRabbitc_UnkMotion1_Coll)),
-    st_row(-1, pred_b(itRabbitc_UnkMotion2_Anim), None, None),
-    st_row(-1, pred_b(itRabbitc_UnkMotion3_Anim), Some(itRabbitc_UnkMotion3_Phys), pred_b(itRabbitc_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itRabbitc_UnkMotion4_Anim), Some(itRabbitc_UnkMotion4_Phys), pred_b(itRabbitc_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itRabbitc_UnkMotion0_Anim), Some(itRabbitc_UnkMotion0_Phys), pred_b!(itRabbitc_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itRabbitc_UnkMotion3_Anim), Some(itRabbitc_UnkMotion1_Phys), pred_b!(itRabbitc_UnkMotion1_Coll)),
+    st_row(-1, pred_b!(itRabbitc_UnkMotion2_Anim), None, None),
+    st_row(-1, pred_b!(itRabbitc_UnkMotion3_Anim), Some(itRabbitc_UnkMotion3_Phys), pred_b!(itRabbitc_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itRabbitc_UnkMotion4_Anim), Some(itRabbitc_UnkMotion4_Phys), pred_b!(itRabbitc_UnkMotion4_Coll)),
 ];
 
 pub unsafe extern "C" fn itRabbitC_Logic30_ShieldBounced(item_gobj: *mut Item_GObj) -> bool {

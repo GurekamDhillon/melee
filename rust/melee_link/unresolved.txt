@@ -282,6 +282,7 @@ nodef Replay_UcfVersion melee_fighter/tu/ftCo_Guard.rs 0
 nodef ftUcf_PadRaw melee_fighter/tu/ftCo_Guard.rs 0
 nodef Fighter_804D6524_xC melee_fighter/tu/ftCo_HammerWalk.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_ItemParasolOpen.rs 0
+nodef Fighter_804D6550 melee_fighter/tu/ftCo_ItemThrow.rs 1
 nodef ftCo_GetCStickAngle melee_fighter/tu/ftCo_ItemThrow.rs 0
 nodef ftGetParasolStatus melee_fighter/tu/ftCo_ItemThrow.rs 0
 nodef FighterControls_TapJumpOff melee_fighter/tu/ftCo_Jump.rs 0

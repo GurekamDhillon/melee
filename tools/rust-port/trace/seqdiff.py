@@ -68,6 +68,7 @@ def main():
                     'the names are printed so the list can be reviewed')
     ap.add_argument('--anchor', default=None, help='re-chunk both sides at each call of this function (frame phases differ: the C log '
                     'frame starts after render, the engine log at the pad renew); chunk k of C is compared with chunk k of Rust')
+    ap.add_argument('--context', type=int, default=8, help='calls of context to print on each side of the first difference')
     a = ap.parse_args()
     c, r = read_c(a.c, a.map), read_rust(a.rust)
     lo, hi = (None, None)
@@ -123,8 +124,8 @@ def main():
                     print('auto-ignored:', ' '.join(auto))
                 i = next((j for j in range(min(len(cs), len(rs))) if cs[j] != rs[j]), min(len(cs), len(rs)))
                 print(f'first difference: chunk {k} (C frame {fc}, Rust frame {fr}) position {i} (C {len(cs)} calls, Rust {len(rs)} calls)')
-                print('  C   :', ' '.join(cs[max(0, i - 8):i + 8]))
-                print('  Rust:', ' '.join(rs[max(0, i - 8):i + 8]))
+                print('  C   :', ' '.join(cs[max(0, i - a.context):i + a.context]))
+                print('  Rust:', ' '.join(rs[max(0, i - a.context):i + a.context]))
                 return 1
             total += len(cs)
         if auto:

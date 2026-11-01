@@ -323,11 +323,18 @@ macro_rules! kinds_jobj_inl {
 }
 pub use kinds_jobj_inl;
 
-/// A state-table predicate slot from a `bool`-returning function (the C stores them through
-/// `(HSD_GObjPredicate)`; a `bool` is read back as an `int`).
-pub const fn pred_b(f: unsafe extern "C" fn(*mut HSD_GObj) -> bool) -> HSD_GObjPredicate {
-    unsafe { core::mem::transmute::<unsafe extern "C" fn(*mut HSD_GObj) -> bool, HSD_GObjPredicate>(f) }
+/// A state-table predicate slot from a `bool`-returning function, through a real `int`-returning shim: a Rust `bool` comes back in
+/// `al` only, and the C side (`animated`, `collided`, ... read as `int`) tests all of `eax`, whose upper bits are whatever the
+/// callee left there (a transmute of the function pointer made items vanish at random: cpu_peach frame 1572).
+macro_rules! pred_b {
+    ($f:expr) => {{
+        unsafe extern "C" fn w(g: *mut HSD_GObj) -> i32 {
+            unsafe { ($f)(g) as i32 }
+        }
+        Some(w as unsafe extern "C" fn(*mut HSD_GObj) -> i32)
+    }};
 }
+pub(crate) use pred_b;
 
 /// A state-table predicate slot from a `void` function (the C casts `(HSD_GObjPredicate) (Event)`).
 pub const fn pred_v(f: unsafe extern "C" fn(*mut HSD_GObj)) -> HSD_GObjPredicate {

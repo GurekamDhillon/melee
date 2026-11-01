@@ -66,11 +66,11 @@ const SFX_NONE: i32 = -1;
 
 /// `ItemStateTable it_803F7A48[]`
 pub static mut it_803F7A48: [ItemStateTable; 5] = [
-    st_row(0, pred_b(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b(itTosakinto_UnkMotion2_Coll)),
-    st_row(1, pred_b(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b(itTosakinto_UnkMotion2_Coll)),
-    st_row(2, pred_b(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b(itTosakinto_UnkMotion2_Coll)),
-    st_row(-1, None, Some(itTosakinto_UnkMotion3_Phys), pred_b(itTosakinto_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itTosakinto_UnkMotion4_Anim), Some(itTosakinto_UnkMotion4_Phys), pred_b(itTosakinto_UnkMotion4_Coll)),
+    st_row(0, pred_b!(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b!(itTosakinto_UnkMotion2_Coll)),
+    st_row(1, pred_b!(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b!(itTosakinto_UnkMotion2_Coll)),
+    st_row(2, pred_b!(itTosakinto_UnkMotion2_Anim), Some(itTosakinto_UnkMotion2_Phys), pred_b!(itTosakinto_UnkMotion2_Coll)),
+    st_row(-1, None, Some(itTosakinto_UnkMotion3_Phys), pred_b!(itTosakinto_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itTosakinto_UnkMotion4_Anim), Some(itTosakinto_UnkMotion4_Phys), pred_b!(itTosakinto_UnkMotion4_Coll)),
 ];
 
 /// `Item_TickLifetime` (it/inlines.h, static inline)

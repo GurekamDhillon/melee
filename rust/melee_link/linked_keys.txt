@@ -4297,7 +4297,6 @@ tu::ftCo_ItemThrow::ext::hook::ftAnim_IsFramesRemaining
 tu::ftCo_ItemThrow::ext::hook::ftCommon_8007D92C
 tu::ftCo_ItemThrow::ext::hook::it_80272C90
 tu::ftCo_ItemThrow::ext::hook::lb_8000B1CC
-tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550
 tu::ftCo_ItemThrow::ext::hook::pl_8003E978
 tu::ftCo_ItemThrow::ext::hook::Item_8026AC74
 tu::ftCo_ItemThrow::ext::hook::Item_8026AD20

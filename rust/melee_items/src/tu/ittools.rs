@@ -60,16 +60,16 @@ crate::kinds_jobj_inl!();
 
 /// `ItemStateTable it_803F9260[]`
 pub static mut it_803F9260: [ItemStateTable; 10] = [
-    st_row(0, pred_b(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b(itTools_UnkMotion4_Coll)),
-    st_row(1, pred_b(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b(itTools_UnkMotion4_Coll)),
-    st_row(2, pred_b(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b(itTools_UnkMotion4_Coll)),
-    st_row(3, pred_b(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b(itTools_UnkMotion4_Coll)),
-    st_row(4, pred_b(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b(itTools_UnkMotion4_Coll)),
-    st_row(5, pred_b(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b(itTools_UnkMotion9_Coll)),
-    st_row(6, pred_b(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b(itTools_UnkMotion9_Coll)),
-    st_row(7, pred_b(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b(itTools_UnkMotion9_Coll)),
-    st_row(8, pred_b(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b(itTools_UnkMotion9_Coll)),
-    st_row(9, pred_b(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b(itTools_UnkMotion9_Coll)),
+    st_row(0, pred_b!(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b!(itTools_UnkMotion4_Coll)),
+    st_row(1, pred_b!(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b!(itTools_UnkMotion4_Coll)),
+    st_row(2, pred_b!(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b!(itTools_UnkMotion4_Coll)),
+    st_row(3, pred_b!(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b!(itTools_UnkMotion4_Coll)),
+    st_row(4, pred_b!(itTools_UnkMotion4_Anim), Some(itTools_UnkMotion4_Phys), pred_b!(itTools_UnkMotion4_Coll)),
+    st_row(5, pred_b!(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b!(itTools_UnkMotion9_Coll)),
+    st_row(6, pred_b!(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b!(itTools_UnkMotion9_Coll)),
+    st_row(7, pred_b!(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b!(itTools_UnkMotion9_Coll)),
+    st_row(8, pred_b!(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b!(itTools_UnkMotion9_Coll)),
+    st_row(9, pred_b!(itTools_UnkMotion9_Anim), Some(itTools_UnkMotion9_Phys), pred_b!(itTools_UnkMotion9_Coll)),
 ];
 
 /// `ABS(x)` (Runtime/platform.h) for f32.

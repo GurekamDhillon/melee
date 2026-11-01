@@ -78,15 +78,15 @@ const M_TAU: f64 = 6.283185307179586;
 
 /// `ItemStateTable it_803F7288[]`
 pub static mut it_803F7288: [ItemStateTable; 9] = [
-    st_row(0, pred_b(itSamuschargeshot_UnkMotion0_Anim), Some(itSamuschargeshot_UnkMotion0_Phys), pred_b(itSamuschargeshot_UnkMotion0_Coll)),
-    st_row(1, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(2, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(3, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(4, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(5, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(6, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(7, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
-    st_row(8, pred_b(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(0, pred_b!(itSamuschargeshot_UnkMotion0_Anim), Some(itSamuschargeshot_UnkMotion0_Phys), pred_b!(itSamuschargeshot_UnkMotion0_Coll)),
+    st_row(1, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(2, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(3, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(4, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(5, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(6, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(7, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
+    st_row(8, pred_b!(itSamuschargeshot_UnkMotion8_Anim), Some(itSamuschargeshot_UnkMotion8_Phys), pred_b!(itSamuschargeshot_UnkMotion8_Coll)),
 ];
 
 /// `Item_InitSpawnPositionFromParent` (it/kinds/inlines.h, static inline)

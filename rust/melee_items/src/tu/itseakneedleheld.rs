@@ -96,7 +96,7 @@ unsafe fn Item_InitSpawnCommonFields(spawn: *mut SpawnItem, parent: *mut HSD_GOb
 
 /// `ItemStateTable it_803F70A8[]`
 pub static mut it_803F70A8: [ItemStateTable; 1] = [
-    st_row(-1, pred_b(itSeakneedleheld_UnkMotion0_Anim), Some(itSeakneedleheld_UnkMotion0_Phys), pred_b(itSeakneedleheld_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itSeakneedleheld_UnkMotion0_Anim), Some(itSeakneedleheld_UnkMotion0_Phys), pred_b!(itSeakneedleheld_UnkMotion0_Coll)),
 ];
 
 pub unsafe extern "C" fn it_802B18B0(gobj: *mut Item_GObj) {

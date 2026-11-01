@@ -141,7 +141,7 @@ unsafe fn Item_ResetRayAfterReflection(ip: *mut Item, jobj: *mut HSD_JObj) {
 
 /// `ItemStateTable it_803F64F8[]`
 pub static mut it_803F64F8: [ItemStateTable; 1] = [
-    st_row(0, Some(itLgunray_UnkMotion0_Anim), Some(itLgunray_UnkMotion0_Phys), pred_b(itLgunray_UnkMotion0_Coll)),
+    st_row(0, Some(itLgunray_UnkMotion0_Anim), Some(itLgunray_UnkMotion0_Phys), pred_b!(itLgunray_UnkMotion0_Coll)),
 ];
 
 /// 298168: fires a ray from `owner_gobj`.

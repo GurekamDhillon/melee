@@ -100,11 +100,11 @@ unsafe fn GET_ATTRS(ip: *mut Item) -> *mut itSScopeAttributes {
 
 /// `ItemStateTable it_803F5F40[]`
 pub static mut it_803F5F40: [ItemStateTable; 5] = [
-    st_row(-1, pred_b(itSscope_UnkMotion0_Anim), Some(itSscope_UnkMotion0_Phys), pred_b(itSscope_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itSscope_UnkMotion3_Anim), Some(itSscope_UnkMotion1_Phys), pred_b(itSscope_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itSscope_UnkMotion2_Anim), Some(itSscope_UnkMotion2_Phys), None),
-    st_row(0, pred_b(itSscope_UnkMotion3_Anim), Some(itSscope_UnkMotion3_Phys), pred_b(itSscope_UnkMotion3_Coll)),
-    st_row(-1, pred_b(itSscope_UnkMotion4_Anim), Some(itSscope_UnkMotion4_Phys), pred_b(itSscope_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itSscope_UnkMotion0_Anim), Some(itSscope_UnkMotion0_Phys), pred_b!(itSscope_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itSscope_UnkMotion3_Anim), Some(itSscope_UnkMotion1_Phys), pred_b!(itSscope_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itSscope_UnkMotion2_Anim), Some(itSscope_UnkMotion2_Phys), None),
+    st_row(0, pred_b!(itSscope_UnkMotion3_Anim), Some(itSscope_UnkMotion3_Phys), pred_b!(itSscope_UnkMotion3_Coll)),
+    st_row(-1, pred_b!(itSscope_UnkMotion4_Anim), Some(itSscope_UnkMotion4_Phys), pred_b!(itSscope_UnkMotion4_Coll)),
 ];
 
 pub unsafe extern "C" fn it_80291BE0(arg0: *mut Vec3) -> *mut HSD_GObj {

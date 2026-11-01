@@ -153,7 +153,7 @@ pub unsafe extern "C" fn it_802E6AEC(
         (*item).xDCC_flag.set_b3(0);
         ext::it_802756D0(item_gobj);
         ext::Item_80268E5C(item_gobj, arg2, ITEM_ANIM_UPDATE);
-        (*item).touched = pred_b(it_802E7054);
+        (*item).touched = pred_b!(it_802E7054);
         (*item).x378_itemColl.x34_flags.set_b1234(5);
     }
     item_gobj

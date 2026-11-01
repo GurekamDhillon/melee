@@ -75,14 +75,14 @@ pub mod ext {
 
 /// `ItemStateTable it_803F91D0[]`
 pub static mut it_803F91D0: [ItemStateTable; 8] = [
-    st_row(1, pred_b(itWhispyapple_UnkMotion0_Anim), Some(itWhispyapple_UnkMotion0_Phys), pred_b(itWhispyapple_UnkMotion0_Coll)),
-    st_row(0, pred_b(itWhispyapple_UnkMotion1_Anim), Some(itWhispyapple_UnkMotion1_Phys), pred_b(itWhispyapple_UnkMotion1_Coll)),
-    st_row(0, pred_b(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b(itWhispyapple_UnkMotion5_Coll)),
-    st_row(0, pred_b(itWhispyapple_UnkMotion3_Anim), Some(itWhispyapple_UnkMotion3_Phys), None),
-    st_row(1, pred_b(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b(itWhispyapple_UnkMotion5_Coll)),
-    st_row(1, pred_b(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b(itWhispyapple_UnkMotion5_Coll)),
-    st_row(0, pred_b(itWhispyapple_UnkMotion6_Anim), Some(itWhispyapple_UnkMotion6_Phys), pred_b(itWhispyapple_UnkMotion6_Coll)),
-    st_row(2, pred_b(itWhispyapple_UnkMotion7_Anim), Some(itWhispyapple_UnkMotion7_Phys), pred_b(itWhispyapple_UnkMotion7_Coll)),
+    st_row(1, pred_b!(itWhispyapple_UnkMotion0_Anim), Some(itWhispyapple_UnkMotion0_Phys), pred_b!(itWhispyapple_UnkMotion0_Coll)),
+    st_row(0, pred_b!(itWhispyapple_UnkMotion1_Anim), Some(itWhispyapple_UnkMotion1_Phys), pred_b!(itWhispyapple_UnkMotion1_Coll)),
+    st_row(0, pred_b!(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b!(itWhispyapple_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itWhispyapple_UnkMotion3_Anim), Some(itWhispyapple_UnkMotion3_Phys), None),
+    st_row(1, pred_b!(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b!(itWhispyapple_UnkMotion5_Coll)),
+    st_row(1, pred_b!(itWhispyapple_UnkMotion5_Anim), Some(itWhispyapple_UnkMotion5_Phys), pred_b!(itWhispyapple_UnkMotion5_Coll)),
+    st_row(0, pred_b!(itWhispyapple_UnkMotion6_Anim), Some(itWhispyapple_UnkMotion6_Phys), pred_b!(itWhispyapple_UnkMotion6_Coll)),
+    st_row(2, pred_b!(itWhispyapple_UnkMotion7_Anim), Some(itWhispyapple_UnkMotion7_Phys), pred_b!(itWhispyapple_UnkMotion7_Coll)),
 ];
 
 /// `static s32 it_803F9250[4]`

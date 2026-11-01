@@ -90,9 +90,9 @@ pub static it_803B8724: Vec3 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
 /// `ItemStateTable it_803F8BD8[]`
 pub static mut it_803F8BD8: [ItemStateTable; 3] = [
-    st_row(0, pred_b(it_2E5A_UnkMotion1_Anim), Some(it_2E5A_UnkMotion1_Phys), pred_b(it_2E5A_UnkMotion0_Coll)),
-    st_row(-1, pred_b(it_2E5A_UnkMotion1_Anim), Some(it_2E5A_UnkMotion1_Phys), None),
-    st_row(0, pred_b(it_2E5A_UnkMotion2_Anim), Some(it_2E5A_UnkMotion2_Phys), pred_b(it_2E5A_UnkMotion2_Coll)),
+    st_row(0, pred_b!(it_2E5A_UnkMotion1_Anim), Some(it_2E5A_UnkMotion1_Phys), pred_b!(it_2E5A_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(it_2E5A_UnkMotion1_Anim), Some(it_2E5A_UnkMotion1_Phys), None),
+    st_row(0, pred_b!(it_2E5A_UnkMotion2_Anim), Some(it_2E5A_UnkMotion2_Phys), pred_b!(it_2E5A_UnkMotion2_Coll)),
 ];
 
 #[inline]

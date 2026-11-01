@@ -58,8 +58,8 @@ pub mod ext {
 
 /// `ItemStateTable it_803F7528[]`
 pub static mut it_803F7528: [ItemStateTable; 2] = [
-    st_row(0, pred_b(itPeachtoad_UnkMotion0_Anim), None, None),
-    st_row(1, pred_b(itPeachtoad_UnkMotion1_Anim), None, None),
+    st_row(0, pred_b!(itPeachtoad_UnkMotion0_Anim), None, None),
+    st_row(1, pred_b!(itPeachtoad_UnkMotion1_Anim), None, None),
 ];
 
 /// `static inline itpeachtoad_inline_1`

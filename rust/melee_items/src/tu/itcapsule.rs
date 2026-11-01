@@ -65,13 +65,13 @@ pub mod ext {
 
 /// `ItemStateTable it_803F5468[]`
 pub static mut it_803F5468: [ItemStateTable; 7] = [
-    st_row(-1, pred_b(itCapsule_UnkMotion0_Anim), Some(itCapsule_UnkMotion0_Phys), pred_b(itCapsule_UnkMotion0_Coll)),
-    st_row(-1, pred_b(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion4_Phys), pred_b(itCapsule_UnkMotion4_Coll)),
-    st_row(-1, pred_b(itCapsule_UnkMotion2_Anim), Some(itCapsule_UnkMotion2_Phys), None),
-    st_row(0, pred_b(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion3_Phys), pred_b(itCapsule_UnkMotion3_Coll)),
-    st_row(0, pred_b(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion4_Phys), pred_b(itCapsule_UnkMotion4_Coll)),
-    st_row(1, pred_b(itCapsule_UnkMotion5_Anim), Some(itCapsule_UnkMotion5_Phys), pred_b(itCapsule_UnkMotion5_Coll)),
-    st_row(-1, pred_b(itCapsule_UnkMotion6_Anim), Some(itCapsule_UnkMotion6_Phys), pred_b(itCapsule_UnkMotion6_Coll)),
+    st_row(-1, pred_b!(itCapsule_UnkMotion0_Anim), Some(itCapsule_UnkMotion0_Phys), pred_b!(itCapsule_UnkMotion0_Coll)),
+    st_row(-1, pred_b!(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion4_Phys), pred_b!(itCapsule_UnkMotion4_Coll)),
+    st_row(-1, pred_b!(itCapsule_UnkMotion2_Anim), Some(itCapsule_UnkMotion2_Phys), None),
+    st_row(0, pred_b!(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion3_Phys), pred_b!(itCapsule_UnkMotion3_Coll)),
+    st_row(0, pred_b!(itCapsule_UnkMotion4_Anim), Some(itCapsule_UnkMotion4_Phys), pred_b!(itCapsule_UnkMotion4_Coll)),
+    st_row(1, pred_b!(itCapsule_UnkMotion5_Anim), Some(itCapsule_UnkMotion5_Phys), pred_b!(itCapsule_UnkMotion5_Coll)),
+    st_row(-1, pred_b!(itCapsule_UnkMotion6_Anim), Some(itCapsule_UnkMotion6_Phys), pred_b!(itCapsule_UnkMotion6_Coll)),
 ];
 
 pub unsafe extern "C" fn itCapsule_Logic0_Spawned(item_gobj: *mut Item_GObj) {

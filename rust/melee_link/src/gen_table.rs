@@ -10788,8 +10788,6 @@ fn install_melee_fighter() {
     // tu/ftCo_ItemScrew.rs
     unsafe { melee_fighter::tu::ftCo_ItemScrew::ext::hook::ft_80084DB0 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084db0(cast::<_, _, 537801>(a0)) }); }
     // tu/ftCo_ItemThrow.rs
-    unsafe { melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550 = Some(|| unsafe { cast::<_, _, 0>(&raw mut melee_fighter::tu::fighter::Fighter_804D6550) }); }
-    // tu/ftCo_ItemThrow.rs
     unsafe { melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_ChangeMotionState = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 537901>(a0), cast::<_, _, 537902>(a1), cast::<_, _, 537903>(a2), cast::<_, _, 537904>(a3), cast::<_, _, 537905>(a4), cast::<_, _, 537906>(a5), cast::<_, _, 537907>(a6)) }); }
     // tu/ftCo_ItemThrow.rs
     unsafe { melee_fighter::tu::ftCo_ItemThrow::ext::hook::Item_8026ABD8 = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_8026ABD8(cast::<_, _, 538001>(a0), cast::<_, _, 538002>(a1), cast::<_, _, 538003>(a2)) }); }
@@ -32538,7 +32536,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ft_80082B1C", "melee_fighter::tu::ftCo_ItemScrew::ext::hook::ft_80082B1C", true, false),
     ("ft_800831CC", "melee_fighter::tu::ftCo_ItemScrew::ext::hook::ft_800831CC", true, false),
     ("ft_80084DB0", "melee_fighter::tu::ftCo_ItemScrew::ext::hook::ft_80084DB0", true, false),
-    ("Fighter_804D6550", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550", true, true),
     ("Fighter_ChangeMotionState", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_ChangeMotionState", true, false),
     ("Item_8026ABD8", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::Item_8026ABD8", true, false),
     ("Item_8026AC74", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::Item_8026AC74", true, false),
@@ -33494,9 +33491,9 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ft_800846B0", "melee_fighter::tu::ft_0c31::ext::FT_800846B0", true, true),
     ("HSD_JObjSetMtxDirtySub", "melee_fighter::tu::ft_0c31::ext::HSD_JOBJ_SET_MTX_DIRTY_SUB", true, true),
     ("lbAudioAx_80024304", "melee_fighter::tu::ft_0c31::ext::LBAUDIOAX_80024304", true, true),
-    ("HSD_ObjAlloc", "melee_fighter::tu::ft_0c88::ext::hook::HSD_ObjAlloc", true, true),
-    ("ftPartsPObjClearDefaultClass", "melee_fighter::tu::ft_0c88::ext::hook::ftPartsPObjClearDefaultClass", true, true),
-    ("ftPartsPObjSetDefaultClass", "melee_fighter::tu::ft_0c88::ext::hook::ftPartsPObjSetDefaultClass", true, true),
+    ("HSD_ObjAlloc", "melee_fighter::tu::ft_0c88::ext::hook::HSD_ObjAlloc", true, false),
+    ("ftPartsPObjClearDefaultClass", "melee_fighter::tu::ft_0c88::ext::hook::ftPartsPObjClearDefaultClass", true, false),
+    ("ftPartsPObjSetDefaultClass", "melee_fighter::tu::ft_0c88::ext::hook::ftPartsPObjSetDefaultClass", true, false),
     ("ft_800C0098", "melee_fighter::tu::ft_0c88::ext::hook::ft_800C0098", true, false),
     ("ft_800C80A4", "melee_fighter::tu::ft_0c88::ext::hook::ft_800C80A4", true, false),
     ("ft_800C8170", "melee_fighter::tu::ft_0c88::ext::hook::ft_800C8170", true, false),
@@ -33505,8 +33502,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("lbRefract_800225D4", "melee_fighter::tu::ft_0c88::ext::hook::lbRefract_800225D4", true, false),
     ("lbRefract_80022BB8", "melee_fighter::tu::ft_0c88::ext::hook::lbRefract_80022BB8", true, false),
     ("Fighter_ResetInputData_80068854", "melee_fighter::tu::ft_0c8c::ext::hook::Fighter_ResetInputData_80068854", true, false),
-    ("HSD_JObjGetDObj", "melee_fighter::tu::ft_0c8c::ext::hook::HSD_JObjGetDObj", true, true),
-    ("HSD_JObjLoadJoint", "melee_fighter::tu::ft_0c8c::ext::hook::HSD_JObjLoadJoint", true, true),
+    ("HSD_JObjGetDObj", "melee_fighter::tu::ft_0c8c::ext::hook::HSD_JObjGetDObj", true, false),
+    ("HSD_JObjLoadJoint", "melee_fighter::tu::ft_0c8c::ext::hook::HSD_JObjLoadJoint", true, false),
     ("Player_GetMoreFlagsBit0", "melee_fighter::tu::ft_0c8c::ext::hook::Player_GetMoreFlagsBit0", true, false),
     ("Player_GetRemainingHPByIndex", "melee_fighter::tu::ft_0c8c::ext::hook::Player_GetRemainingHPByIndex", true, false),
     ("ftCh_GrabUnk1_8015ADD0", "melee_fighter::tu::ft_0c8c::ext::hook::ftCh_GrabUnk1_8015ADD0", true, true),
@@ -44997,6 +44994,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftUcf_PadRaw", "melee_fighter::tu::ftCo_Guard::ext::hook::ftUcf_PadRaw", false, false),
     ("Fighter_804D6524_xC", "melee_fighter::tu::ftCo_HammerWalk::ext::hook::Fighter_804D6524_xC", false, false),
     ("ftGetParasolStatus", "melee_fighter::tu::ftCo_ItemParasolOpen::ext::hook::ftGetParasolStatus", false, false),
+    ("Fighter_804D6550", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550", false, true),
     ("ftCo_GetCStickAngle", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::ftCo_GetCStickAngle", false, false),
     ("ftGetParasolStatus", "melee_fighter::tu::ftCo_ItemThrow::ext::hook::ftGetParasolStatus", false, false),
     ("FighterControls_TapJumpOff", "melee_fighter::tu::ftCo_Jump::ext::hook::FighterControls_TapJumpOff", false, false),

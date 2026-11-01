@@ -578,6 +578,31 @@ fn golden_engine(args: &[String]) -> ExitCode {
     }
     for f in 0..frames {
         melee_core::ct::begin_frame(f as i64);
+        if melee_core::ct::ENABLED {
+            // MELEE_WATCH_FIGHTER=slot,field,fromframe: report the function entry after which the field's u32 changed
+            if let Some(v) = std::env::var("MELEE_WATCH_FIGHTER").ok() {
+                let p: Vec<&str> = v.split(',').collect();
+                if p.len() == 3 && p[2].parse::<usize>().ok() == Some(f) {
+                    let g = unsafe { melee_fighter::player::get_entity(p[0].parse().unwrap_or(0)) };
+                    if !g.is_null() {
+                        let fp = unsafe { (*g).user_data } as usize;
+                        let off = match p[1] {
+                            "gr_vel" => core::mem::offset_of!(melee_types::Fighter, gr_vel),
+                            "motion_id" => core::mem::offset_of!(melee_types::Fighter, motion_id),
+                            "xE4" => core::mem::offset_of!(melee_types::Fighter, xE4_ground_accel_1),
+                            "xE8" => core::mem::offset_of!(melee_types::Fighter, xE8_ground_accel_2),
+                            "mv24" => core::mem::offset_of!(melee_types::Fighter, mv) + 24,
+                            "mv28" => core::mem::offset_of!(melee_types::Fighter, mv) + 28,
+                            _ => 0,
+                        };
+                        if off != 0 {
+                            melee_core::ct::WATCH_ADDR.store(fp + off, std::sync::atomic::Ordering::Relaxed);
+                            eprintln!("watch: fighter slot {} {} at {:#x}", p[0], p[1], fp + off);
+                        }
+                    }
+                }
+            }
+        }
         if replay {
             // gmscene.c: `Replay_Tick`, then the forced seed; the fighters read the recorded inputs through the `Replay_*` platform hooks
             let pl = unsafe { REPLAY.as_mut().unwrap() };

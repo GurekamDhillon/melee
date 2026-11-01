@@ -106,6 +106,14 @@ pub fn fn_800d290c(g: G) {
 }
 
 /// `fn_800D299C(gobj, idx, from, to)`.
+static mut KINOKO_SCRATCH: [[f32; 2]; 16] = [[0.0; 2]; 16];
+
+/// The (middle, fast) scale pair the Kinoko states keep across `fn_800D2BF8` (see `fn_800d299c`).
+pub fn kinoko_scratch(f: &Fighter) -> &'static mut [f32; 2] {
+    let i = (f.player_id as usize & 3) * 2 + f.is_sub_fighter() as usize;
+    unsafe { &mut (*core::ptr::addr_of_mut!(KINOKO_SCRATCH))[i] }
+}
+
 pub fn fn_800d299c(g: G, idx: i32, arg8: f32, arg9: f32) {
     melee_core::ct!("fn_800d299c");
     let f = fp(g);
@@ -114,9 +122,10 @@ pub fn fn_800d299c(g: G, idx: i32, arg8: f32, arg9: f32) {
     }
     let f = fp(g);
     unsafe {
-        // native layout: `walk.middle/fast_anim_frame` overlap `mushroom.x4/x8` (8-byte callback pointers) that the Kinoko states write; the scratch pair lives in the later rate slots
-        f.mv.co.walk.middle_anim_rate = arg8;
-        f.mv.co.walk.fast_anim_rate = arg9;
+        // C: `walk.middle_anim_frame` / `fast_anim_frame` (mv+0xC / +0x10), in the gap between `mushroom.x8` and the `common.x14..` block
+        // that `fn_800D2B30` / `fn_800D2BF8` save and restore. The native `mv` has no such gap (8-byte callback pointers), so the pair lives
+        // in a per-fighter static (snapshotted with the other statics).
+        *kinoko_scratch(f) = [arg8, arg9];
     }
     ext::HSD_JObjAddAnim(f.x2184, ext::it_80293660(idx));
     e::ftAnim_80070734(fp(g).x2184, 0.0);
@@ -135,7 +144,7 @@ pub fn fn_800d2a3c(g: G) -> bool {
     ext::HSD_JObjAnim(fp(g).x2184);
     let f = fp(g);
     let scale = unsafe { (*f.x2184).scale.x };
-    let (mid, fast) = unsafe { (f.mv.co.walk.middle_anim_rate, f.mv.co.walk.fast_anim_rate) };
+    let [mid, fast] = *kinoko_scratch(f);
     h::ftlib_set_scale(g, lerp_scale(mid, fast, scale));
     let flags = unsafe { (*(*fp(g).x2184).aobj).flags };
     flags & 0x4000_0000 == 0

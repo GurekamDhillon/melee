@@ -34,8 +34,15 @@ macro_rules! ef_arg_words {
     };
 }
 
+fn fighter_mut(p: *const melee_types::Fighter) -> *mut melee_types::Fighter {
+    p as *mut _
+}
+
 pub fn install() {
     unsafe {
+        // the hooks.rs defaults below are the legacy-state ports (`1.0`, `crate::player`); the engine runs the tu bodies
+        melee_fighter::hooks::GROUND_FRICTION_MUL = Some(|fp| unsafe { melee_fighter::tu::ft_081b::ft_get_ground_friction_multiplier(&mut *fighter_mut(fp)) });
+        melee_fighter::hooks::PLAYER_UPDATE_JOYSTICK_COUNT = Some(|slot, idx| melee_fighter::tu::player::Player_UpdateJoystickCountByIndex(slot, idx));
         // ftcommon.c `parasol_table_3[idx](item, v)`: slot 4 is it_802BDD40, slot 6 is it_802BDDB4 (itpeachparasol.c); the rest are NULL
         melee_fighter::hooks::IT_PARASOL_TABLE_3 = Some(|idx, i, v| unsafe {
             match idx {

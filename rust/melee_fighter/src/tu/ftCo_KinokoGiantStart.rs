@@ -108,7 +108,7 @@ pub fn ftCo_800D15D0(g: G) {
         }
         f.x2008 = (f.x2008 as f32 + percent) as i32;
     }
-    let s = unsafe { fp(g).mv.co.walk.fast_anim_rate };
+    let s = crate::tu::ft_0d27::kinoko_scratch(fp(g))[1];
     ext::ftCo_800D2770(g, s);
     ext::ftCommon_8007E2FC(g);
     if fp(g).ground_or_air == GA_Ground {

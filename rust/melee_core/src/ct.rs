@@ -19,12 +19,15 @@ mod imp {
     static ST: Mutex<State> = Mutex::new(State { frame: -1, lo: i64::MIN, hi: i64::MAX, seq: 0, rows: Vec::new() });
 
     static LIVE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    /// Set by the driver (`MELEE_WATCH_FIGHTER=slot,field,fromframe`): the address `enter` watches when `MELEE_WATCH` is unset.
+    pub static WATCH_ADDR: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     pub fn enter(name: &'static str) {
         // MELEE_CT_LIVE=1 prints every entry (to find the function a crash happens in)
         // MELEE_WATCH=<hex address>: report the function entry after which the u32 there changed (debugging aid)
         static WATCH: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
         static LAST: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
         let w = *WATCH.get_or_init(|| std::env::var("MELEE_WATCH").ok().and_then(|v| usize::from_str_radix(v.trim_start_matches("0x"), 16).ok()).unwrap_or(0));
+        let w = if w != 0 { w } else { WATCH_ADDR.load(std::sync::atomic::Ordering::Relaxed) };
         static ARMED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
         if name == "lbHeap_80015F3C" || name == "lbMemory_8001564C" { ARMED.store(true, std::sync::atomic::Ordering::Relaxed); }
         if w != 0 && ARMED.load(std::sync::atomic::Ordering::Relaxed) {
@@ -77,6 +80,7 @@ mod imp {
 
 #[cfg(not(feature = "calltrace"))]
 mod imp {
+    pub static WATCH_ADDR: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
     #[inline(always)]
     pub fn enter(_: &'static str) {}
     #[inline(always)]

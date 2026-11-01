@@ -30,13 +30,15 @@ mod sys {
     }
     const MEM_COMMIT: u32 = 0x1000;
     const MEM_RESERVE: u32 = 0x2000;
+    /// Lets a rollback ask which pages were written (`GetWriteWatch`).
+    const MEM_WRITE_WATCH: u32 = 0x200000;
     const PAGE_READWRITE: u32 = 0x04;
     pub fn alloc_low(len: usize) -> Option<*mut u8> {
         // A 64-bit process has no low addresses by default: probe 16 MiB-stepped hints from 2 GiB + 16 MiB up to
         // 4 GiB. Guest main-RAM addresses are 0x80000000 and up (the C tells ARAM from MEM1 by that bit).
         let mut hint: usize = 0x8100_0000;
         while hint + len <= 0x1_0000_0000 {
-            let p = unsafe { VirtualAlloc(hint as *mut c_void, len, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE) };
+            let p = unsafe { VirtualAlloc(hint as *mut c_void, len, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE) };
             if !p.is_null() {
                 return Some(p as *mut u8);
             }

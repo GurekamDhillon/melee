@@ -189,6 +189,27 @@ pub mod native {
         _HSD_ClassInfo,
     };
     use std::cell::Cell;
+    /// Process-wide in the engine (these are C globals: a rollback restores the executable's statics, a
+    /// thread-local would escape it); per-thread under `cargo test`, where the oracle tests run in parallel.
+    pub struct Gl<T: 'static>(Cell<T>);
+    unsafe impl<T> Sync for Gl<T> {}
+    impl<T> Gl<T> {
+        pub const fn new(v: T) -> Self { Gl(Cell::new(v)) }
+        pub fn with<R>(&'static self, f: impl FnOnce(&Cell<T>) -> R) -> R { f(&self.0) }
+    }
+    #[cfg(not(test))]
+    static CLASS: Gl<*mut HSD_LObjInfo> = Gl::new(null_mut());
+    #[cfg(not(test))]
+    static DEFAULT: Gl<*mut HSD_LObjInfo> = Gl::new(null_mut());
+    #[cfg(not(test))]
+    static CURRENT: Gl<*mut HSD_SList> = Gl::new(null_mut());
+    #[cfg(not(test))]
+    static ACTIVE: Gl<[*mut HSD_LObj; 9]> = Gl::new([null_mut(); 9]);
+    #[cfg(not(test))]
+    static COUNT: Gl<i32> = Gl::new(0);
+    #[cfg(not(test))]
+    static MASK: Gl<[i32; 4]> = Gl::new([0; 4]);
+    #[cfg(test)]
     thread_local! {
         static CLASS: Cell<*mut HSD_LObjInfo> = Cell::new({let mut c=HSD_LObjInfo::zeroed();c.parent.parent.head.info_init=Some(LObjInfoInit);Box::into_raw(Box::new(c))});
         static DEFAULT: Cell<*mut HSD_LObjInfo> = const {Cell::new(null_mut())};
@@ -199,6 +220,12 @@ pub mod native {
     }
     /// Class/static accessors used by hosts and oracle; pointers remain stable on this thread.
     pub fn hsdLObj() -> *mut HSD_LObjInfo {
+        #[cfg(not(test))]
+        if CLASS.with(Cell::get).is_null() {
+            let mut c = HSD_LObjInfo::zeroed();
+            c.parent.parent.head.info_init = Some(LObjInfoInit);
+            CLASS.with(|x| x.set(Box::into_raw(Box::new(c))));
+        }
         CLASS.with(Cell::get)
     }
     pub fn current_lights() -> std::vec::Vec<*mut HSD_LObj> {

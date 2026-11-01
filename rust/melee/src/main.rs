@@ -198,6 +198,13 @@ mod guard {
 }
 unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
     unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::arena::active() {
+            let p = melee_engine::arena::alloc(l);
+            if !p.is_null() {
+                return p;
+            }
+            melee_engine::arena::note_miss(l);
+        }
         #[cfg(windows)]
         if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return guard::alloc(l.size(), l.align());
@@ -205,6 +212,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc(l)
     }
     unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
+        if melee_engine::arena::contains(p) {
+            return melee_engine::arena::free(p, l);
+        }
         if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return;
         }
@@ -215,6 +225,13 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.dealloc(p, l)
     }
     unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        if melee_engine::arena::active() {
+            let p = melee_engine::arena::alloc(l);
+            if !p.is_null() {
+                core::ptr::write_bytes(p, 0, l.size());
+                return p;
+            }
+        }
         #[cfg(windows)]
         if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return guard::alloc(l.size(), l.align()); // VirtualAlloc pages are zeroed
@@ -222,6 +239,17 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         std::alloc::System.alloc_zeroed(l)
     }
     unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        if melee_engine::arena::contains(p) {
+            if melee_engine::arena::same_class(l.size(), n) {
+                return p;
+            }
+            let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
+            if !q.is_null() {
+                core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
+                self.dealloc(p, l);
+            }
+            return q;
+        }
         let guarded = |sz: usize| sz >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed);
         if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
@@ -299,6 +327,7 @@ fn main() -> ExitCode {
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
         Some("diff") => diff::diff(&args),
+        Some("synctest") if args.iter().any(|a| a == "tu") && args.iter().any(|a| a == "--engine") => netmatch::engine_game::synctest(&args),
         Some("synctest") => netmatch::synctest(&args),
         Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => view::view_golden(&args),

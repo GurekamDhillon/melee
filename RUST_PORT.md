@@ -99,3 +99,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-10-31 consolidation steps 14-15: cpu_fox_falco_dl 1197 on the engine (dynamic-bone collider layout, frsqrte seed in ftCo_800A9CB4), Samus in tu/ (c2rs + oracle-checked chars re-exports), real sound-id lookups, cpu_peach_samus_ys_items 120; see notes/consolidation.md and STATUS.md blockers
 
 - 2026-11-01 rust-port: consolidation step 16: cpu_fox_falco_dl runs its whole golden (3601) on the engine, cpu_peach 1562; seams that reach the sim (Wb_RenderOption, View aspect, GXProject), GC-layout rows read through native structs, 21 chars callbacks cast from GObj, unlinked retail-table callbacks, article attribute decode, see notes/consolidation.md round 3
+- 2026-11-01 rust-port: step 17, engine snapshot/rollback (game arena + page-delta snapshots), `melee synctest --engine tu` clean over 1800 frames, see notes/consolidation.md Round 4

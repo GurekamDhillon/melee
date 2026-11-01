@@ -19,6 +19,8 @@ type PadFeed = Box<dyn Fn(u32, usize) -> PADStatus>;
 static mut PAD_FEED: Option<PadFeed> = None;
 /// The tick the next `PADRead` belongs to (the engine's frame counter).
 static mut FEED_TICK: u32 = 0;
+/// Inputs for the next tick set by a rollback session (wins over the feed). A plain static: a load restores it.
+static mut DIRECT_PADS: Option<[PADStatus; 4]> = None;
 
 fn pad_read(st: *mut PADStatus) -> u32 {
     unsafe {
@@ -27,7 +29,9 @@ fn pad_read(st: *mut PADStatus) -> u32 {
             Some(p) => p.read(arr),
             None => 0,
         };
-        if let Some(f) = PAD_FEED.as_ref() {
+        if let Some(d) = DIRECT_PADS {
+            *arr = d;
+        } else if let Some(f) = PAD_FEED.as_ref() {
             for (port, slot) in arr.iter_mut().enumerate() {
                 *slot = f(FEED_TICK, port);
             }
@@ -88,6 +92,7 @@ impl Engine {
     /// Step 7: boot the host, then start the VS mode the way `main` -> `gm_801A4510` -> `runGameMode` -> `gm_801A4014` does
     /// (the VS mode's `on_load` seeds the match from `scn`, entry state 2 = the match), up to the first scene tick.
     pub fn boot_vs(disc: Gcm, mem_size: usize, pads: PadSystem, scn: crate::scenario::Scenario) -> Result<Engine, String> {
+        let _scope = crate::arena::GameScope::enter();
         Self::boot_host(disc, mem_size, pads)?;
         crate::scenario::install(scn);
         unsafe {
@@ -458,12 +463,18 @@ impl Engine {
         unsafe { PAD_FEED = Some(Box::new(feed)) };
     }
 
+    /// The pads of the next tick (a rollback session's inputs); `None` goes back to the feed / `PadSystem`.
+    pub fn set_pads(&mut self, p: Option<[PADStatus; 4]>) {
+        unsafe { DIRECT_PADS = p };
+    }
+
     /// Exactly one iteration of the scene loop (pad queue, logic frame(s), `HSD_GObj_RunProcs`, render).
     /// Returns false once the scene has ended.
     pub fn tick(&mut self) -> bool {
         if self.ended {
             return false;
         }
+        let _scope = crate::arena::GameScope::enter();
         unsafe { RAND_FRAME = self.frames as i32; }
         melee_core::ct::DBG_FRAME.store(self.frames as i32, core::sync::atomic::Ordering::Relaxed);
         unsafe { FEED_TICK = self.frames };

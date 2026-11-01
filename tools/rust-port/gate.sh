@@ -59,6 +59,10 @@ for s in $scenarios; do
   counts[$s]=$n
   if [ "${n:-0}" -lt "$want" ]; then echo "FAIL golden $s: $n frames match, recorded $want"; fail=1; else echo "ok   golden $s: $n frames match (recorded $want)"; fi
 done
+# rollback on the engine: a short synctest (consolidation.md step 17)
+if [ "$engine" = tu ] && [ -z "$only" ]; then
+  if "$exe" synctest --engine tu --depth 4 --frames "${SYNCTEST_FRAMES:-240}" --golden docs/rust-port/golden/pad_falcon_fox_fd.csv >"$tmp/synctest.log" 2>&1; then echo "ok   synctest: $(grep 'melee: engine synctest' "$tmp/synctest.log" | cut -c8-)"; else echo "FAIL synctest (see $tmp/synctest.log)"; fail=1; fi
+fi
 # baselines may only shrink
 bmax=tools/rust-port/diff/baseline_max.tsv
 while IFS=$'\t' read -r sub max; do

@@ -136,7 +136,7 @@ From step 7 the engine path is the one being moved forward.
 | 14 (DONE 2026-10-31: cpu_fox_falco_dl 1197 frames on the engine, target 370 passed; first divergence 1196, STATUS.md blocker A) | CPU | Real `Fighter_8006ABA0` into `ftCo_800B3900` (`tu/ftCo_0A01_ai.rs`) and `ftcmdscript`. Target: cpu_fox_falco_dl 370 or more on the engine. |
 | 15 (DONE 2026-10-31; cpu_peach_samus_ys_items 120 on the engine, the golden stops there at the Shy Guys spawn; Samus ported to tu/, retail tables resolve) | Hazard stages | `grStory` and `grGreens` procs through their map gobjs, plus `Ground_UpdateMapColl`. Target: cpu_peach_samus_ys_items 120 or more on the engine. |
 | 16 (DONE 2026-11-01 for three goldens: pad x2 1801, cpu_fox_falco_dl 3601 = the whole golden incl. its KOs; cpu_peach 1562, STATUS.md blocker C) | Rebirth, death, stocks | `ftCo_800BFD9C` / `gm_80167320` / `fn_8016719C` / `ftCo_800D4FF4`, blast zones from the real `Stage` data, and `gmMainLib` stocks. Every KO in the four goldens takes the engine path (re-check all four counts). |
-| 17 | Engine snapshot, rollback and diff | `Engine::state()` and the C-snapshot overlay. Port `melee diff`, `synctest`, `--from-snapshot` and `--dump-state` to the engine, and delete the model-state section. Target: rollback synctest clean over 1800 frames on pad_falcon_fox_fd. |
+| 17 (DONE 2026-11-01: rollback synctest clean over 1800 frames at depth 12 on pad_falcon_fox_fd, 400 frames on the other three; `melee diff --engine tu` was done in round 3; the C-snapshot overlay / `--from-snapshot` on the engine and deleting the model-state section move to step 19) | Engine snapshot, rollback and diff | `Engine::state()` and the C-snapshot overlay. Port `melee diff`, `synctest`, `--from-snapshot` and `--dump-state` to the engine, and delete the model-state section. Target: rollback synctest clean over 1800 frames on pad_falcon_fox_fd. |
 | 18 | Cutover | `--engine tu` becomes the default for `golden`, `diff`, `view-golden`, `play` and `netplay`. All four goldens are at or above their legacy counts on the engine. The legacy path remains reachable only with `--engine legacy`. |
 | 19 | Delete vs_match | Delete `vs_match.rs`, `vs_match/*`, `fighter_data.rs`, `movetab.rs`, `skeleton.rs`, `dynamics.rs`, `effect.rs`, `colanim.rs`, `cm_drive.rs`, `stage_anim.rs`, `snapshot*.rs` and the `Player` struct, after migrating the viewers. Remove the corresponding entries from `lint_allow.txt`. |
 | 20 | Dedupe A: characters | Delete `melee_chara/src/chars/rN/*` and `chars/*.rs` bodies in favour of `tu/` (section 3.2 rows R and C, 126 bodies). Move `chars_ref.rs` tests onto the tu functions. Delete `adapt.rs` / `stubs.rs` forwarders. |
@@ -1064,3 +1064,22 @@ Fixes (each was a real divergence from the C):
 
 Open (STATUS.md "Current blockers"): cpu_peach 1562 (the Foods items' `xDCC_flag.b3` differs after the Party Ball burst), the `stubs!`-style hooks that are
 not in the generated table (`ft_0c8c` / `ftCo_Damage` direct `todo!` stubs: lbBgFlash_80021C48, gm_80167470, Camera_RequestQuake, efAsync_Spawn, `ftMh` / `ftCh`).
+
+## Round 4 (2026-11-01): step 17, engine snapshot and rollback
+
+`melee synctest --engine tu [--scenario S] [--depth K] [--frames N] [--golden CSV]` (`netmatch::engine_game`): `EngineGame` implements `RbGame` over the
+real `Engine`; `melee_net::session::SyncTest` saves, ticks, rolls back K frames and resimulates, comparing the OS-heap hash and the NHV1 hash. pad_falcon_fox_fd:
+1800 frames, depth 12, 21468 hash checks, 0 mismatches, every golden hash equal (2.5 min). pad_marth_sheik_bf, cpu_fox_falco_dl and cpu_peach: 400 frames depth 6, clean.
+How (no per-field state list, nothing to keep in sync):
+- `melee_engine::arena`: while the engine runs (`GameScope`, in `boot_vs` and `tick`) the binary's `#[global_allocator]` serves Rust allocations from one
+  reserved 16 GiB range (fine size classes, free lists in statics, write-watched). The harness (SyncTest, snapshots, strings) stays on the system heap,
+  so a restore cannot clobber it. The engine's arena is ~4.8 GB after boot (the decoded archives are tens of millions of small objects).
+- `melee_engine::snapshot`: the state is three kinds of range: the arena, the OS-heap block (`lowmem`, `MEM_WRITE_WATCH`) and the executable's writable PE
+  sections (every static). `Base::capture` copies them once; `save` stores only pages that differ from the base (candidates from `GetWriteWatch` for the two big ranges),
+  `load` rewrites only dirty + stored pages and zeroes the arena the discarded timeline bumped into. `Engine::frames/ended` are saved by `EngineGame`.
+- Traps: (1) thread-locals are outside the statics: `lobj.rs`'s class / light state was `thread_local!`, now a process static (`Gl`, thread-local under `cfg(test)`);
+  any new `thread_local!` holding game state breaks rollback. (2) std's HashMap seeds (a thread-local) make arena bytes differ after a replay, so the full-state hash is
+  the OS-heap block only; the curated NHV1 hash covers the rest. (3) Blocks over alignment 4096 or 16 GiB fall back to the system heap and are NOT rolled back
+  (`arena::NMISSED` counts them; zero in all four scenarios). (4) A snapshot is a page delta against the first one; memory is the base (~5 GB) + dirty pages per snapshot.
+- `melee synctest --engine tu --fidelity N` runs N frames then prints the pages where tick, load, tick differ (debug aid), `MELEE_SNAP_DBG=1` prints the ranges.
+- Not done: `--from-snapshot` (C snapshot overlay) on the engine, `--dump-state` stays `MELEE_ENGINE_DUMP`; engine `--features guard` allocator test still uses its own allocator.

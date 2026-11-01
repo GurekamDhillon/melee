@@ -47,6 +47,15 @@ pub fn install() {
         melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_80023130(id));
         // a stage's callback table entry is a native pointer here (no guest code): the m-ex bind is the identity
         melee_world::tu_ext::HOOK_Mex_GrBind = Some(|p| p);
+        // the remaining `tu_ext` stage-proc hooks (their defaults stop on "not ported"): the engine's canonical bodies
+        melee_world::tu_ext::HOOK_HSD_DObjSetFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(d, f) });
+        melee_world::tu_ext::HOOK_HSD_DObjClearFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(d, f) });
+        melee_world::tu_ext::HOOK_Player_80031790 = Some(|s| melee_fighter::tu::player::Player_80031790(s));
+        melee_world::tu_ext::HOOK_Player_80031900 = Some(|| melee_fighter::tu::player::Player_80031900());
+        melee_world::tu_ext::HOOK_ftLib_80086C18 = Some(|g, a, b| melee_fighter::tu::ftlib::ftlib_80086c18(g, a, b));
+        melee_world::tu_ext::HOOK_gm_GetDbPauseFlag = Some(|b| unsafe { melee_modes::tu::gmscene::gm_GetDbPauseFlag(b) });
+        melee_world::tu_ext::HOOK_gm_MexVanillaKind = Some(|k, c| unsafe { melee_modes::tu::gm_1601::gm_MexVanillaKind(k, c) });
+        melee_world::tu_ext::HOOK_gm_801674C4 = Some(|a, b, c, d, e| unsafe { melee_modes::tu::gm_1601::gm_801674C4(a, b, c, d, e) });
         // the same identity for the TUs that carry their own `Mex_GrBind` hook (the generated default would return null, which `on_init` then calls)
         melee_world::tu::grfigure1::ext::hook::Mex_GrBind = Some(|p| p);
         melee_world::tu::grfigure2::ext::hook::Mex_GrBind = Some(|p| p);

@@ -24,7 +24,6 @@ pub mod fobj;
 pub mod fog;
 pub mod gekko;
 pub mod generator;
-pub mod gobj;
 pub mod hsd_mtx;
 pub mod hsd_util;
 pub mod id;

@@ -8,7 +8,6 @@
 //!
 //! Not ported (observability only): `gobj_trace_render`, the profiler zones.
 #![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc)]
-use crate::gobj::{hsd_gobj_803912a8, hsd_gobj_80390eb8, GObjHost, GObjId, GObjSystem, HsdGObjLibInitData, KindFunc};
 use melee_types::inline::ref_DEC;
 use melee_types::*;
 
@@ -51,21 +50,6 @@ pub mod ext {
     hook!(HSDDELETE, hsdDelete, (obj: *mut core::ffi::c_void));
 }
 
-/// `HSD_GObj_80391120` (camera kind entry of the obj-kind table): HSD_Obj release. NULL is a
-/// no-op; otherwise `ref_DEC(obj)` and, when it reports the last reference, `hsdDelete(obj)`.
-pub unsafe fn HSD_GObj_80391120(obj: *mut HSD_Obj) {
-    melee_core::ct!("HSD_GObj_80391120");
-    if !obj.is_null() && ref_DEC(&mut *obj) {
-        ext::hsdDelete(obj as *mut core::ffi::c_void);
-    }
-}
-
-/// `HSD_GObj_803911C0`: the same release, as the fog kind's own table entry.
-pub unsafe fn HSD_GObj_803911C0(obj: *mut HSD_Obj) {
-    melee_core::ct!("HSD_GObj_803911C0");
-    HSD_GObj_80391120(obj)
-}
-
 /// `HSD_GObj_LObjCallback`: render callback of a light GObj.
 pub unsafe fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, _unused: i32) {
     melee_core::ct!("HSD_GObj_LObjCallback");
@@ -77,7 +61,7 @@ pub unsafe fn HSD_GObj_LObjCallback(gobj: *mut HSD_GObj, _unused: i32) {
 pub unsafe fn HSD_GObj_JObjCallback(gobj: *mut HSD_GObj, arg1: i32) {
     melee_core::ct!("HSD_GObj_JObjCallback");
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
-    ext::HSD_JObjDispAll(jobj, core::ptr::null_mut(), hsd_gobj_80390eb8(arg1), 0);
+    ext::HSD_JObjDispAll(jobj, core::ptr::null_mut(), HSD_GObj_80390EB8(arg1), 0);
 }
 
 /// `HSD_GObj_FogCallback`.
@@ -86,72 +70,282 @@ pub unsafe fn HSD_GObj_FogCallback(gobj: *mut HSD_GObj, _unused: i32) {
     ext::HSD_FogSet((*gobj).hsd_obj as *mut HSD_Fog);
 }
 
-/// `HSD_GObj_803910D8`: render callback of a camera GObj; `walk` is
-/// `HSD_GObj_80390ED0(gobj, 7)` (the camera walk over the GObj system, which the caller owns).
-pub unsafe fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, _renderpass: i32, walk: impl FnOnce()) {
-    melee_core::ct!("HSD_GObj_803910D8");
-    if ext::HSD_CObjSetCurrent((*gobj).hsd_obj as *mut HSD_CObj) != 0 {
-        walk();
-        ext::HSD_CObjEndCurrent();
+
+use super::gobj_native::{self as gn, *};
+use super::gobj_native::*;
+use super::gobj_native::{at, hsd_assert};
+use super::memory::HSD_MemAlloc;
+use super::objalloc::{HSD_ObjAlloc, HSD_ObjAllocInit, HSD_ObjFree};
+use core::ffi::c_void;
+use core::ptr::null_mut;
+use melee_types::{
+    GObjFunc, GObjFuncs, GObj_RenderFunc, HSD_GObj, HSD_GObjEvent, HSD_GObjProc, HSD_ObjAllocData,
+    _HSD_GObjLibInitDataType,
+};
+
+/// `HSD_GObj_803912A8`: append `arg1` to the function-table chain, return the count before it.
+pub unsafe fn HSD_GObj_803912A8(arg0: *mut _HSD_GObjLibInitDataType, arg1: *mut GObjFuncs) -> u8 {
+    melee_core::ct!("HSD_GObj_803912A8");
+    let mut pcur: *mut *mut GObjFuncs = &mut (*arg0).funcs;
+    let mut n: u8 = 0;
+    while !(*pcur).is_null() {
+        let cur = *pcur;
+        pcur = &mut (*cur).next;
+        n = n.wrapping_add((*cur).size);
+    }
+    *pcur = arg1;
+    (**pcur).next = null_mut();
+    n
+}
+
+/// `ref_DEC` (object.h): true when the object is not reference counted (`NOREF`) or this was the last reference.
+unsafe fn ref_dec(o: *mut melee_types::HSD_Obj) -> bool {
+    if (*o).ref_count == 0xFFFF {
+        return true;
+    }
+    let was = (*o).ref_count;
+    (*o).ref_count = was.wrapping_sub(1);
+    was == 0
+}
+
+/// `HSD_GObj_80391120`: drop one reference of an HSD object and delete it (`hsdDelete`: the
+/// class's `release` then `destroy`) when it was the last.
+pub unsafe extern "C" fn HSD_GObj_80391120(obj: *mut melee_types::HSD_Obj) {
+    melee_core::ct!("HSD_GObj_80391120");
+    if !obj.is_null() && ref_dec(obj) {
+        let info = (*obj).parent.class_info;
+        ((*info).release.unwrap())(obj.cast());
+        ((*info).destroy.unwrap())(obj.cast());
     }
 }
 
-/// `HSD_GObj_80390C5C`..`80390CD4`: proc-pause helpers.
-pub fn HSD_GObj_80390C5C<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+pub unsafe extern "C" fn HSD_GObj_803911C0(obj: *mut melee_types::HSD_Obj) {
+    melee_core::ct!("HSD_GObj_803911C0");
+    HSD_GObj_80391120(obj);
+}
+
+pub unsafe fn HSD_GObj_80391260(arg0: *mut _HSD_GObjLibInitDataType) {
+    melee_core::ct!("HSD_GObj_80391260");
+    if HSD_GObj_80408600[0].is_none() {
+        HSD_GObj_80408600[0] = Some(HSD_GObj_80391120);
+        HSD_GObj_80408600[3] = Some(HSD_GObj_803911C0);
+    }
+    HSD_GObj_80408610.funcs = HSD_GObj_80408600.as_mut_ptr();
+    let mut count = HSD_GObj_803912A8(arg0, &mut HSD_GObj_80408610);
+    HSD_GObj_CameraKind = count;
+    count = count.wrapping_add(1);
+    HSD_GObj_LightKind = count as i8;
+    count = count.wrapping_add(1);
+    HSD_GObj_JObjKind = count;
+    count = count.wrapping_add(1);
+    HSD_GObj_FogKind = count as i8;
+}
+
+/// `HSD_GObj_80390C5C`: set `flags_1` on every proc of `gobj`.
+pub unsafe fn HSD_GObj_80390C5C(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObj_80390C5C");
-    sys.hsd_gobj_80390c5c(gobj)
+    let mut p = (*gobj).proc;
+    while !p.is_null() {
+        (*p).set_flags_1(1);
+        p = (*p).child;
+    }
 }
-pub fn HSD_GObj_80390C84<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+
+/// `HSD_GObj_80390C84`: clear `flags_1` on every proc of `gobj`.
+pub unsafe fn HSD_GObj_80390C84(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObj_80390C84");
-    sys.hsd_gobj_80390c84(gobj)
+    let mut p = (*gobj).proc;
+    while !p.is_null() {
+        (*p).set_flags_1(0);
+        p = (*p).child;
+    }
 }
-pub fn HSD_GObj_80390CAC<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+
+/// `HSD_GObj_80390CAC`: clear `flags_2` on every proc of `gobj`.
+pub unsafe fn HSD_GObj_80390CAC(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObj_80390CAC");
-    sys.hsd_gobj_80390cac(gobj)
+    let mut p = (*gobj).proc;
+    while !p.is_null() {
+        (*p).set_flags_2(0);
+        p = (*p).child;
+    }
 }
-pub fn HSD_GObj_80390CD4<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+
+/// `HSD_GObj_80390CD4`: stamp `flags_3` of every proc of `gobj` with the frame phase.
+pub unsafe fn HSD_GObj_80390CD4(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObj_80390CD4");
-    sys.hsd_gobj_80390cd4(gobj)
+    let mut p = (*gobj).proc;
+    while !p.is_null() {
+        (*p).set_flags_3(HSD_GObj_804D783C as u8);
+        p = (*p).child;
+    }
 }
 
-/// `HSD_GObj_RunProcs`.
-pub fn HSD_GObj_RunProcs<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, host: &mut impl GObjHost<F, O>) {
+/// `HSD_GObj_RunProcs` (the GObj_RunProcs of the frame): run every due proc in link order.
+/// Debug aid (`MELEE_WATCH_PROC=<hex addr>`): reports the u32 there whenever it changed across a gobj proc (priority and
+/// proc address), to find which proc overwrites a variable. Complements `MELEE_WATCH` (function entries, calltrace builds).
+static mut WATCH_PROC: Option<(usize, u32)> = None;
+
+static mut WATCH_PROC_INIT: bool = false;
+
+#[allow(static_mut_refs)]
+unsafe fn watch_proc(pri: i32, cb: usize, after: bool) {
+    if !WATCH_PROC_INIT {
+        WATCH_PROC_INIT = true;
+        if let Some(a) = std::env::var("MELEE_WATCH_PROC").ok().and_then(|v| usize::from_str_radix(v.trim_start_matches("0x"), 16).ok()) {
+            WATCH_PROC = Some((a, core::ptr::read_volatile(a as *const u32)));
+        }
+    }
+    if let Some((a, old)) = WATCH_PROC.as_mut() {
+        let now = core::ptr::read_volatile(*a as *const u32);
+        if now != *old {
+            eprintln!("watch-proc: {:#x} {:#010x} -> {:#010x} {} proc pri {pri} cb {cb:#x}", *a, *old, now, if after { "after" } else { "before" });
+            *old = now;
+        }
+    }
+}
+
+pub unsafe fn HSD_GObj_RunProcs() {
     melee_core::ct!("HSD_GObj_RunProcs");
-    sys.run_procs(host)
+    let var_r31: u64 = if !HSD_GObjLibInitData.unk_2.is_null() { *HSD_GObjLibInitData.unk_2 } else { 0 };
+    HSD_GObj_804D783C += 1;
+    if HSD_GObj_804D783C > 2 {
+        HSD_GObj_804D783C = 0;
+    }
+    let mut i = 0i32;
+    while i <= HSD_GObjLibInitData.gproc_pri_max as i32 {
+        HSD_GObj_CurrentInvokedSLink = i;
+        let mut proc = *at(HSD_GObj_GObjProcHead, i as usize);
+        while !proc.is_null() {
+            HSD_GObj_NextInvokedProc = (*proc).next;
+            if (*proc).flags_3() as i32 != HSD_GObj_804D783C {
+                (*proc).set_flags_3(HSD_GObj_804D783C as u8);
+                let gobj = (*proc).gobj;
+                if var_r31 & (1u64 << (*gobj).p_link) == 0 && (*proc).flags_1() == 0 && (*proc).flags_2() == 0 {
+                    HSD_GObj_CurrentInvokedProcGObj = gobj;
+                    HSD_GObj_CurrentInvokedProc = proc;
+                    let owned = match gn::ext::ScriptGame_StageSlotProcBegin {
+                        Some(f) => f(gobj),
+                        None => 0,
+                    };
+                    if gn::ext::ScriptStageHostHidden == 0 || (*gobj).classifier != 3 || owned != 0 {
+                        if let Some(cb) = (*proc).on_invoke {
+                            watch_proc(i, cb as usize, false);
+                            cb((*proc).gobj);
+                            watch_proc(i, cb as usize, true);
+                        }
+                    }
+                    if owned != 0 {
+                        if let Some(f) = gn::ext::ScriptGame_StageSlotProcEnd {
+                            f();
+                        }
+                    }
+                    HSD_GObj_NextInvokedProc = (*proc).next;
+                    if HSD_GObj_DelayedProcInfo.flags != 0 {
+                        HSD_GObj_DelayedProcInfo.flags |= DelayedProcInfo::IN_DELAYED_PROC;
+                        if HSD_GObj_DelayedProcInfo.flags & DelayedProcInfo::DELAY_REMOVE_GOBJ != 0 {
+                            HSD_GObjFree((*proc).gobj);
+                        } else {
+                            if HSD_GObj_DelayedProcInfo.flags & DelayedProcInfo::DELAY_CHANGE_GOBJ_PRI != 0 {
+                                HSD_GObjPLink_ChangeGObjPri_Unk(
+                                    HSD_GObj_DelayedProcInfo.r#type,
+                                    (*proc).gobj,
+                                    HSD_GObj_DelayedProcInfo.p_link,
+                                    HSD_GObj_DelayedProcInfo.p_prio,
+                                    HSD_GObj_DelayedProcInfo.gobj,
+                                );
+                            }
+                            if HSD_GObj_DelayedProcInfo.flags & DelayedProcInfo::DELAY_REMOVE_PROC != 0 {
+                                HSD_GObjProc_RemoveProc(proc);
+                            }
+                        }
+                        HSD_GObj_DelayedProcInfo.flags = 0;
+                    }
+                    HSD_GObj_CurrentInvokedProcGObj = null_mut();
+                    HSD_GObj_CurrentInvokedProc = null_mut();
+                }
+            }
+            proc = HSD_GObj_NextInvokedProc;
+        }
+        i += 1;
+    }
 }
 
-/// `HSD_GObj_80390EB8` (GObj_GetFlagFromArray).
+/// `HSD_GObj_80390EB8` (`GObj_GetFlagFromArray`).
 pub fn HSD_GObj_80390EB8(i: i32) -> u32 {
     melee_core::ct!("HSD_GObj_80390EB8");
-    hsd_gobj_80390eb8(i)
+    const HSD_GOBJ_804085F0: [u32; 4] = [1, 4, 2, 0];
+    HSD_GOBJ_804085F0[i as usize]
 }
 
-/// `HSD_GObj_80390ED0` (GObj_SetTextureCamera).
-pub fn HSD_GObj_80390ED0<F: Copy, O: Copy>(
-    sys: &mut GObjSystem<F, O>,
-    host: &mut impl GObjHost<F, O>,
-    gobj: GObjId,
-    mask: u32,
-) {
+/// `HSD_GObj_80390ED0` (`GObj_SetTextureCamera`): call the render callbacks of every GX link the
+/// camera `gobj` selects (`gxlink_prios`), for each camera index set in `mask`.
+pub unsafe fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mut mask: u32) {
     melee_core::ct!("HSD_GObj_80390ED0");
-    sys.hsd_gobj_80390ed0(host, gobj, mask)
+    if HEADLESS_RENDER {
+        return;
+    }
+    let mut i = 0i32;
+    if let Some(f) = HSD_RandRenderBegin {
+        f();
+    }
+    while mask != 0 {
+        if mask & 1 != 0 {
+            let mut prios = (*gobj).gxlink_prios;
+            let mut j = 0usize;
+            while prios != 0 {
+                if prios & 1 != 0 {
+                    let mut cur = *at(HSD_GObjGXLinkHead, j);
+                    while !cur.is_null() {
+                        if let Some(cb) = (*cur).render_cb {
+                            let saved = HSD_GObj_804D7814;
+                            HSD_GObj_804D7814 = cur;
+                            cb(cur, i);
+                            HSD_GObj_804D7814 = saved;
+                        }
+                        cur = (*cur).next_gx;
+                    }
+                }
+                j += 1;
+                prios >>= 1;
+            }
+        }
+        i += 1;
+        mask >>= 1;
+    }
+    if let Some(f) = HSD_RandRenderEnd {
+        f();
+    }
 }
 
-/// `HSD_GObj_80390FC0` (GObj_RunGXLinkMaxCallbacks).
-pub fn HSD_GObj_80390FC0<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, host: &mut impl GObjHost<F, O>) {
+pub unsafe fn HSD_GObj_80390FC0() {
     melee_core::ct!("HSD_GObj_80390FC0");
-    sys.hsd_gobj_80390fc0(host)
+    if HEADLESS_RENDER {
+        return;
+    }
+    if let Some(f) = HSD_RandRenderBegin {
+        f();
+    }
+    let mut cur = *at(HSD_GObjGXLinkHead, HSD_GObjLibInitData.gx_link_max as usize + 1);
+    while !cur.is_null() {
+        if let Some(cb) = (*cur).render_cb {
+            let saved = HSD_GObj_804D7818;
+            HSD_GObj_804D7818 = cur;
+            cb(cur, 0);
+            HSD_GObj_804D7818 = saved;
+        }
+        cur = (*cur).next_gx;
+    }
+    if let Some(f) = HSD_RandRenderEnd {
+        f();
+    }
 }
 
-/// `HSD_GObj_80391260`: append the built-in kind table and number the camera / light / jobj /
-/// fog kinds.
-pub fn HSD_GObj_80391260<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, arg0: &mut HsdGObjLibInitData<F>) {
-    melee_core::ct!("HSD_GObj_80391260");
-    sys.hsd_gobj_80391260(arg0)
-}
-
-/// `HSD_GObj_803912A8`: append `arg1` to the funcs chain; returns the previous function count.
-pub fn HSD_GObj_803912A8<F>(arg0: &mut HsdGObjLibInitData<F>, arg1: std::vec::Vec<KindFunc<F>>) -> u8 {
-    melee_core::ct!("HSD_GObj_803912A8");
-    hsd_gobj_803912a8(arg0, arg1)
+/// `HSD_GObj_803910D8`: render the scene for a camera GObj (set current, walk, end).
+pub unsafe fn HSD_GObj_803910D8(gobj: *mut HSD_GObj, _renderpass: i32) {
+    melee_core::ct!("HSD_GObj_803910D8");
+    if super::cobj::HSD_CObjSetCurrent((*gobj).hsd_obj.cast()) {
+        HSD_GObj_80390ED0(gobj, 7);
+        super::cobj::HSD_CObjEndCurrent();
+    }
 }

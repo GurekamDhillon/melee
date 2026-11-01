@@ -79,7 +79,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-    fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) };
+    fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) };
     fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjLoadJoint(a0: *mut HSD_Joint) -> *mut HSD_JObj => unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(a0) };
     fn HSD_JObjRemoveAll(a0: *mut HSD_JObj);

@@ -31,7 +31,7 @@ pub mod ext {
     fn GXSetPipelineWaitAURORA(a0: u8);
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj => unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() };
     fn HSD_ClearVtxDesc() => unsafe { melee_runtime::tu::pobj::HSD_ClearVtxDesc() };
-    fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) };
+    fn HSD_GObj_80390EB8(a0: i32) -> u32 => unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) };
     fn HSD_JObjDispAll(a0: *mut HSD_JObj, a1: *mut c_void, a2: u32, a3: u32);
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 => unsafe { crate::tu::jobj::HSD_JObjGetFlags(a0) as _ };
     fn HSD_StateInitTev();

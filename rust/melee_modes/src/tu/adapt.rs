@@ -426,7 +426,7 @@ pub fn Toy_803124BC__320358() { melee_core::ct!("Toy_803124BC__320358"); unsafe 
 pub fn lbAudioAx_80023694__e3b7af() -> i32 { melee_core::ct!("lbAudioAx_80023694__e3b7af"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() } }
 pub fn lb_8000BA0C__a558e3(a0: *mut HSD_JObj, a1: f32) { melee_core::ct!("lb_8000BA0C__a558e3"); unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(a0, a1) } }
 pub fn mn_8022F0F0__97c62c(a0: i32) { melee_core::ct!("mn_8022F0F0__97c62c"); unsafe { crate::tu::mn_22EC::mn_8022F0F0(a0) } }
-pub fn HSD_GObj_80390EB8__5ed1a9(a0: i32) -> u32 { melee_core::ct!("HSD_GObj_80390EB8__5ed1a9"); unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) } }
+pub fn HSD_GObj_80390EB8__5ed1a9(a0: i32) -> u32 { melee_core::ct!("HSD_GObj_80390EB8__5ed1a9"); unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) } }
 pub fn HSD_TObjAnim__0f2a76(a0: *mut HSD_TObj) { melee_core::ct!("HSD_TObjAnim__0f2a76"); unsafe { melee_runtime::tu::tobj::HSD_TObjAnim(a0) } }
 pub fn Player_GetTeam__f1d095(a0: i32) -> i32 { melee_core::ct!("Player_GetTeam__f1d095"); unsafe { melee_fighter::tu::player::Player_GetTeam(a0) } }
 pub fn fn_80160400__597b46(a0: CharacterKind) -> u32 { melee_core::ct!("fn_80160400__597b46"); unsafe { crate::tu::gm_1601::fn_80160400(a0) } }
@@ -919,7 +919,7 @@ pub fn HSD_PadRumbleOffN__6901ea(a0: u8) { melee_core::ct!("HSD_PadRumbleOffN__6
 pub fn gm_80190EA4__7bb941() { melee_core::ct!("gm_80190EA4__7bb941"); unsafe { crate::tu::gmtou_0::gm_80190EA4() } }
 pub fn HSD_CObjGetCurrent__ad58db() -> * mut HSD_CObj { melee_core::ct!("HSD_CObjGetCurrent__ad58db"); unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() } }
 pub fn HSD_ObjFree__bf3ee9(a0: * mut HSD_ObjAllocData, a1: * mut :: core :: ffi :: c_void) { melee_core::ct!("HSD_ObjFree__bf3ee9"); unsafe { melee_runtime::tu::objalloc::HSD_ObjFree(a0, a1) } }
-pub fn HSD_GObj_80390EB8__ae201c(a0: s32) -> :: core :: ffi :: c_uint { melee_core::ct!("HSD_GObj_80390EB8__ae201c"); unsafe { melee_runtime::gobj::hsd_gobj_80390eb8(a0) } }
+pub fn HSD_GObj_80390EB8__ae201c(a0: s32) -> :: core :: ffi :: c_uint { melee_core::ct!("HSD_GObj_80390EB8__ae201c"); unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) } }
 pub fn HSD_GObj_JObjCallback__392d18(a0: * mut HSD_GObj, a1: :: core :: ffi :: c_int) { melee_core::ct!("HSD_GObj_JObjCallback__392d18"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) } }
 pub fn ftKb_MexKirbyLike__c2b696(a0: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("ftKb_MexKirbyLike__c2b696"); unsafe { melee_chara::tu::ftkirby::ftKb_MexKirbyLike(a0) } }
 pub fn it_8026B40C__05955e(a0: * mut Article, a1: s32) { melee_core::ct!("it_8026B40C__05955e"); unsafe { melee_items::tu::it_26B1::it_8026B40C(a0, a1) } }

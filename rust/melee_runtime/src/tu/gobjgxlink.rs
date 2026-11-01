@@ -1,48 +1,123 @@
-//! `src/sysdolphin/baselib/gobjgxlink.c`: the GX (render) link lists, sorted by render priority.
-//!
-//! Native ports on [`GObjSystem`] (`crate::gobj`, oracle `tests/oracle_gobj.rs`); the C names are
-//! exposed here. The `HSD_ASSERT`s of the C are `assert!`s in the methods.
-#![allow(non_snake_case)]
-use crate::gobj::{GObjId, GObjSystem};
+//! src/sysdolphin/baselib/gobjgxlink.c: the GX (render) link lists.
+#![allow(non_snake_case, non_upper_case_globals, static_mut_refs, clippy::missing_safety_doc, unused_imports)]
+use super::gobj_native::*;
+use super::gobj_native::*;
+use super::gobj_native::{at, hsd_assert};
+use super::memory::HSD_MemAlloc;
+use super::objalloc::{HSD_ObjAlloc, HSD_ObjAllocInit, HSD_ObjFree};
+use core::ffi::c_void;
+use core::ptr::null_mut;
+use melee_types::{
+    GObjFunc, GObjFuncs, GObj_RenderFunc, HSD_GObj, HSD_GObjEvent, HSD_GObjProc, HSD_ObjAllocData,
+    _HSD_GObjLibInitDataType,
+};
 
-/// `GObj_GXReorder(gobj, hiprio_gobj)`.
-pub fn GObj_GXReorder<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, hiprio: Option<GObjId>) {
+/// `GObj_GXReorder`.
+pub unsafe fn GObj_GXReorder(gobj: *mut HSD_GObj, hiprio_gobj: *mut HSD_GObj) {
     melee_core::ct!("GObj_GXReorder");
-    sys.gx_reorder(gobj, hiprio)
+    let link = (*gobj).gx_link as usize;
+    (*gobj).prev_gx = hiprio_gobj;
+    if !hiprio_gobj.is_null() {
+        (*gobj).next_gx = (*hiprio_gobj).next_gx;
+        (*hiprio_gobj).next_gx = gobj;
+    } else {
+        (*gobj).next_gx = *at(HSD_GObjGXLinkHead, link);
+        *at(HSD_GObjGXLinkHead, link) = gobj;
+    }
+    if !(*gobj).next_gx.is_null() {
+        (*(*gobj).next_gx).prev_gx = gobj;
+    } else {
+        *at(HSD_GObj_804D7820, (*gobj).gx_link as usize) = gobj;
+    }
 }
 
-/// `GObj_SetupGXLink(gobj, render_cb, gx_link, priority)`.
-pub fn GObj_SetupGXLink<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, render_cb: Option<F>, gx_link: u8, priority: u32) {
+/// `GObj_SetupGXLink`.
+pub unsafe fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, gx_link: u8, priority: u32) {
     melee_core::ct!("GObj_SetupGXLink");
-    sys.setup_gx_link(gobj, render_cb, gx_link, priority)
+    hsd_assert!("gobjgxlink.c", 167, gx_link <= HSD_GObjLibInitData.gx_link_max);
+    (*gobj).render_cb = render_cb;
+    (*gobj).gx_link = gx_link;
+    (*gobj).render_priority = priority as u8;
+    let mut i = *at(HSD_GObj_804D7820, (*gobj).gx_link as usize);
+    while !i.is_null() && (*i).render_priority > (*gobj).render_priority {
+        i = (*i).prev_gx;
+    }
+    GObj_GXReorder(gobj, i);
 }
 
-/// `GObj_SetupGXLinkMax(gobj, render_cb, priority)`.
-pub fn GObj_SetupGXLinkMax<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, render_cb: Option<F>, priority: u32) {
+/// `GObj_SetupGXLinkMax`.
+pub unsafe fn GObj_SetupGXLinkMax(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32) {
     melee_core::ct!("GObj_SetupGXLinkMax");
-    sys.setup_gx_link_max(gobj, render_cb, priority)
+    let max_link = HSD_GObjLibInitData.gx_link_max;
+    (*gobj).render_cb = render_cb;
+    (*gobj).gx_link = max_link.wrapping_add(1);
+    (*gobj).render_priority = priority as u8;
+    let mut i = *at(HSD_GObj_804D7820, (*gobj).gx_link as usize);
+    while !i.is_null() && (*i).render_priority > (*gobj).render_priority {
+        i = (*i).prev_gx;
+    }
+    GObj_GXReorder(gobj, i);
 }
 
-/// `GObj_SetupGXLinkMaxSorted(gobj, render_cb, priority)`.
-pub fn GObj_SetupGXLinkMaxSorted<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, render_cb: Option<F>, priority: u32) {
+/// `GObj_SetupGXLinkMaxSorted`.
+pub unsafe fn GObj_SetupGXLinkMaxSorted(gobj: *mut HSD_GObj, render_cb: GObj_RenderFunc, priority: u32) {
     melee_core::ct!("GObj_SetupGXLinkMaxSorted");
-    sys.setup_gx_link_max_sorted(gobj, render_cb, priority)
+    let max_link = HSD_GObjLibInitData.gx_link_max;
+    (*gobj).render_cb = render_cb;
+    (*gobj).gx_link = max_link.wrapping_add(1);
+    (*gobj).render_priority = priority as u8;
+    let mut i = gx_find_prio_position(gobj);
+    if !i.is_null() {
+        i = (*i).prev_gx;
+    } else {
+        i = *at(HSD_GObj_804D7820, (*gobj).gx_link as usize);
+    }
+    GObj_GXReorder(gobj, i);
 }
 
-/// `HSD_GObjGXLink_8039084C(gobj)`: unlink from the GX list.
-pub fn HSD_GObjGXLink_8039084C<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId) {
+/// `HSD_GObjGXLink_8039084C`: unlink from the render link.
+pub unsafe fn HSD_GObjGXLink_8039084C(gobj: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObjGXLink_8039084C");
-    sys.gxlink_8039084c(gobj)
+    hsd_assert!("gobjgxlink.c", 415, (*gobj).gx_link != HSD_GOBJ_GXLINK_NONE);
+    let prev = (*gobj).prev_gx;
+    if !prev.is_null() {
+        (*prev).next_gx = (*gobj).next_gx;
+    } else {
+        *at(HSD_GObjGXLinkHead, (*gobj).gx_link as usize) = (*gobj).next_gx;
+    }
+    let next = (*gobj).next_gx;
+    if !next.is_null() {
+        (*next).prev_gx = (*gobj).prev_gx;
+    } else {
+        *at(HSD_GObj_804D7820, (*gobj).gx_link as usize) = (*gobj).prev_gx;
+    }
+    (*gobj).gx_link = HSD_GOBJ_GXLINK_NONE;
+    (*gobj).render_priority = 0;
+    (*gobj).prev_gx = null_mut();
+    (*gobj).next_gx = null_mut();
 }
 
-/// `HSD_GObjGXLink_80390908(gobj, gx_link, priority)`.
-pub fn HSD_GObjGXLink_80390908<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, gx_link: u8, priority: u8) {
+/// `HSD_GObjGXLink_80390908`: move to `gx_link` at `priority`.
+pub unsafe fn HSD_GObjGXLink_80390908(gobj: *mut HSD_GObj, gx_link: u8, priority: u8) {
     melee_core::ct!("HSD_GObjGXLink_80390908");
-    sys.gxlink_80390908(gobj, gx_link, priority)
+    hsd_assert!("gobjgxlink.c", 535, gx_link <= HSD_GObjLibInitData.gx_link_max);
+    HSD_GObjGXLink_8039084C(gobj);
+    (*gobj).gx_link = gx_link;
+    (*gobj).render_priority = priority;
+    let mut cur = *at(HSD_GObjGXLinkHead, (*gobj).gx_link as usize);
+    while !cur.is_null() && (*cur).render_priority < (*gobj).render_priority {
+        cur = (*cur).next_gx;
+    }
+    GObj_GXReorder(gobj, if !cur.is_null() { (*cur).prev_gx } else { *at(HSD_GObj_804D7820, (*gobj).gx_link as usize) });
 }
 
-/// `HSD_GObjGXLink_803909D8(gobj, other)`: take `other`'s link and priority, ahead of it.
-pub fn HSD_GObjGXLink_803909D8<F: Copy, O: Copy>(sys: &mut GObjSystem<F, O>, gobj: GObjId, other: GObjId) {
+/// `HSD_GObjGXLink_803909D8`: re-link `gobj` right after `other`'s predecessor, in `other`'s link.
+pub unsafe fn HSD_GObjGXLink_803909D8(gobj: *mut HSD_GObj, other: *mut HSD_GObj) {
     melee_core::ct!("HSD_GObjGXLink_803909D8");
-    sys.gxlink_803909d8(gobj, other)
+    let prio = (*other).render_priority;
+    let link = (*other).gx_link;
+    HSD_GObjGXLink_8039084C(gobj);
+    (*gobj).gx_link = link;
+    (*gobj).render_priority = prio;
+    GObj_GXReorder(gobj, (*other).prev_gx);
 }

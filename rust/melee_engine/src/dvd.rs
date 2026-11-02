@@ -43,6 +43,35 @@ pub fn OSDisableInterrupts() -> i32 {
 pub fn OSRestoreInterrupts(_level: i32) -> i32 {
     0
 }
+/// A completion `host_dev_com_deferred` holds back: (callback, args, buffer).
+type Completion = (unsafe extern "C" fn(i32, usize, *mut c_void, i32), usize, *mut c_void);
+static mut DEFERRED: Vec<Completion> = Vec::new();
+
+/// `host_dev_com_request` for the movie player (lb/lbmthp.c), whose reads must complete *after* the request returns, as
+/// the disc interrupt does on hardware: `fn_8001F13C` sets `unk_110` (a read in flight) after `HSD_DevComRequest`, and the
+/// completion `fn_8001E910` clears it and refills the frame ring. A synchronous callback ran before the flag was set (the
+/// movie stalled on its first frame) and nested one call per buffered frame. The copy is immediate; the callback runs in
+/// [`run_deferred_completions`], once per frame after the alarms.
+pub fn host_dev_com_deferred(file: i32, src: usize, dst: usize, size: usize, ty: i32, pri: i32, cb: HSD_DevComCallback, args: usize) -> i32 {
+    let r = host_dev_com_request(file, src, dst, size, ty, pri, None, args);
+    if let Some(f) = cb {
+        // the buffer host_dev_com_request hands its callback: the main-RAM destination, or null for ARAM
+        let h = Host::get();
+        let in_ram = dst >= h.os.mem.base as usize && dst < h.os.mem.end_ptr() as usize;
+        let buf = if in_ram || ty == 0x21 { dst as *mut c_void } else { core::ptr::null_mut() };
+        unsafe { (*core::ptr::addr_of_mut!(DEFERRED)).push((f, args, buf)) };
+    }
+    r
+}
+
+/// Completes the reads [`host_dev_com_deferred`] queued (the ones a completion issues wait for the next frame).
+pub fn run_deferred_completions() {
+    let batch = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(DEFERRED)) };
+    for (f, a, b) in batch {
+        unsafe { f(0, a, b, 0) };
+    }
+}
+
 /// `host_pump_disc`: pumps the disc queue; requests already completed.
 pub fn host_pump_disc() {}
 

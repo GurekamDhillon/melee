@@ -105,6 +105,9 @@ pub fn install() {
 
         lbfile::ext::H_lb_800195D0 = Some(dvd::host_pump_disc);
         lbfile::ext::H_HSD_DevComRequest = Some(dvd::host_dev_com_request);
+        // the movie player's frame reads (lbmthp.c fn_8001E910 / fn_8001F13C, through lbmemory's DevCom hook): the same
+        // host disc as lbFile's (the canonical devcom.c queue is never initialised on the engine path), completing a frame later
+        melee_runtime::tu::lbmemory::ext::H_HSD_DevComRequest = Some(dvd::host_dev_com_deferred);
         lbfile::ext::H_DVDFastOpen = Some(dvd::DVDFastOpen);
         lbfile::ext::H_DVDClose = Some(dvd::DVDClose);
         lbfile::ext::H_OSDisableInterrupts = Some(dvd::OSDisableInterrupts);

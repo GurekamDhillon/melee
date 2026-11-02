@@ -57,7 +57,51 @@ def decls():
                 has = bool(re.match(r'\s*->', tail))
                 if '&[' in t[op + 1:pc]: continue   # a C `...` as a slice: seams.rs spells those by hand
                 out.setdefault(d.group(1), (gl.count_params(t[op + 1:pc]), has, rel))
+    for name, (npar, has, _ty) in tu_ext_hooks().items():
+        out.setdefault(name, (npar, has, 'tu_ext.rs'))
     return out
+
+
+TU_EXT = os.path.join(gl.RUST, 'melee_modes', 'src', 'tu_ext.rs')
+
+
+def tu_ext_hooks():
+    """name -> (nparams, hasret, (param types, ret type)) of melee_modes/src/tu_ext.rs `HOOK_<name>` statics whose unset
+    arm stops on "not ported" (the shard 529-536 gm TUs: the title demo and the VS scene's setup reach them)."""
+    out = {}
+    t = open(TU_EXT, encoding='utf8').read()
+    for m in re.finditer(r'pub static mut HOOK_(\w+): Option<fn\((.*?)\)(?:\s*->\s*(.+?))?> = None;\n(.*?\n.*?\n.*?\n)', t):
+        name, plist, rty, body = m.group(1), m.group(2), (m.group(3) or '').strip(), m.group(4)
+        if 'unported!' not in body: continue
+        types = [x.strip() for x in gl.split_top(plist, ',') if x.strip()]
+        out[name] = (len(types), bool(rty), (types, rty))
+    return out
+
+
+def to_word(ty, v):
+    """A tu_ext hook argument as its 64-bit word (the inverse of conv_arg)."""
+    base = ty.split('::')[-1]
+    if base in INTS or ty in INTS: return f'{v} as i64 as u64'
+    if ty == 'bool': return f'{v} as u64'
+    if ty == 'f32': return f'{v}.to_bits() as u64'
+    if ty == 'f64': return f'{v}.to_bits()'
+    return f'p2w({v})'
+
+
+def tu_ext_installer():
+    """`install_tu_ext`: every unported tu_ext hook routed by name through the engine's ext path (seams::ext_real:
+    the hand-written callees, this table's canonical ports, the host seams). A name none of them resolves still stops."""
+    rows = []
+    for name, (_, has, (types, rty)) in sorted(tu_ext_hooks().items()):
+        ps = ', '.join(f'a{i}: {ty}' for i, ty in enumerate(types))
+        ws = ', '.join(to_word(ty, f'a{i}') for i, ty in enumerate(types))
+        call = f'crate::seams::ext_real("{name}", &[{ws}]).unwrap_or_else(|| melee_core::unported!("TODO: {name} is not ported"))'
+        if not has:
+            body = f'{{ {call}; }}'
+        else:
+            body = '{ let w = ' + call + '; ' + conv_arg(rty, 'w') + ' }'
+        rows.append(f'        m::HOOK_{name} = Some(|{ps}| unsafe {body});')
+    return rows
 
 
 def conv_arg(ty, w):
@@ -162,6 +206,9 @@ fn p2w<T>(r: T) -> u64 { assert!(core::mem::size_of::<T>() == 8); let w: usize =
         fh.write('pub fn seam_off(name: &str) -> Option<u64> {\n    Some(match name {\n')
         fh.write('\n'.join(seam_arms) + '\n')
         fh.write('        _ => return None,\n    })\n}\n')
+        fh.write('\n/// Points every unported `melee_modes::tu_ext` hook at the by-name ext path (see `seams::ext_real`).\n')
+        fh.write('pub unsafe fn install_tu_ext() {\n    use melee_modes::tu_ext as m;\n    use melee_types::*;\n')
+        fh.write('\n'.join(tu_ext_installer()) + '\n}\n')
     if '-v' in sys.argv:
         for n, why in skipped: print(f'  left out {n}: {why}')
     print(f'{len(arms)} resolved, {len(seam_arms)} seams, {len(skipped)} left out -> {OUT}')

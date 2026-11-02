@@ -620,6 +620,27 @@ fn rtable_min<T: GcPointee>(d: &mut GcDecoder<'_>, b: &Bounds, at: u32, min: u32
     Box::leak(v.into_boxed_slice()).as_mut_ptr()
 }
 
+/// The coin (`It_Kind_Unk4`, coin mode: `ftCommon_8007EA90` -> `it_802E5F8C`), the character-item table's entry
+/// `It_Kind_Unk4 - It_Kind_Kuriboh` (it/item.c `Item_80267978`: `it_804D6D38 = it_804D6D20->x8`). Its special attributes are
+/// an `it_2E5A_Attrs`: scalars, then three `it_2E5A_TierEntry { HSD_Joint* joint; ...anim joints; s32 value, threshold; ... }`
+/// rows at GC +0x3C that `it_802E6380` reads (`it_80273318(gobj, attr->tiers[off].joint)`). The word swap keeps the GC
+/// offsets and leaves the joints as image words, so the block is decoded as its record (as Unown's letters are).
+fn coin_attrs(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) {
+    let idx = (melee_types::It_Kind_Unk4 - melee_types::It_Kind_Kuriboh) as u32;
+    let Some(t) = d.target(at) else { return };
+    if b.extent(t) / 4 <= idx {
+        return;
+    }
+    let Some(ta) = d.target(t + 4 * idx) else { return };
+    let Some(sa) = d.target(ta + 4) else { return };
+    if b.extent(sa) < <melee_types::it_2E5A_Attrs as GcDecode>::GC_BYTES || !d.is_reloc(sa + 0x3C) {
+        return;
+    }
+    let art = d.object::<melee_types::Article>(ta);
+    let typed = d.object::<melee_types::it_2E5A_Attrs>(sa) as *mut c_void;
+    unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+}
+
 /// `itPublicData` (ItCo.dat / ItCoUS.dat): `it_804D6D20_t`, whose `Article**` tables run to the next boundary.
 fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     let at = |i: u32| off + 4 * i;
@@ -627,6 +648,7 @@ fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     r.x0 = d.ptr::<ItemCommonData>(at(0));
     r.x4 = rtable_articles(d, b, at(1));
     r.x8 = rtable_articles(d, b, at(2));
+    coin_attrs(d, b, at(2));
     r.xC = rtable_articles(d, b, at(3));
     r.x10 = d.ptr::<it_804D6D40_t>(at(4));
     r.x14 = parr::<Fighter_804D653C_t>(d, b, at(5)) as *mut Fighter_804D653C_t;

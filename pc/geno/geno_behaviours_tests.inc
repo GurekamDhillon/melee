@@ -263,7 +263,7 @@ static int test_geno_bhv_glide(void)
         GenoBhv_GlideStep(&g, &in, &p);
         n++;
     }
-    gba("G-4", g.phase == GB_GL_END && g.end_reason == GB_GLE_STALL, n);
+    gba("G-4", g.phase == GB_GL_END && g.end_reason == GB_GLE_STALL && n == 39 /* fixture: this reference run */, n);
 
     /* G-5 / G-7: full up reaches theta_def + 85 = 80 after 29 frames */
     gbt_glide_fly(&g, &p, 0, 0);
@@ -528,7 +528,7 @@ static int test_geno_bhv_tornado(void)
     }
     gba("T-8", ok, nr);
     gba("T-5", endk == 98 && endk - 47 == 51 && endk - 47 <= 70, endk - 47);
-    gba("T-15", y > 0.0f, gba_i(y));
+    gba("T-15", y > 0.0f && gba_i(y) == 118769 /* fixture: this reference run */, gba_i(y));
     OSReport("GBACC T-15 note: net vertical displacement at k=98 is %d/1000 units\n", gba_i(y));
 
     /* T-10 / T-11 */
@@ -667,7 +667,7 @@ static int test_geno_bhv_drill(void)
     gba("D-11", fa == 1000, fa);
     {
         int exp_ok = gba_near(dist_after, 90.0f, 3.0f);
-        gba("D-9", exp_ok, gba_i(dist));
+        gba("D-9", exp_ok && gba_i(dist) == 97000 /* fixture: this reference run */, gba_i(dist));
         OSReport("GBACC D-9 note: path length frames 16..65 = %d/1000 (ramp 5.0 + 20..65 = %d/1000)\n", gba_i(dist),
                  gba_i(dist_after));
     }

@@ -21,12 +21,12 @@ proves the sim for that opening minute, not every special move.
 | Title Y/B -> port menu | kit menu | dropped on purpose (kit) | notes/menus.md | - |
 | Main menu (1P / VS / Trophies / Options / Data) | retail MnMain | PART: ported (`retail/mainmenu.rs`) but description text, C-stick camera swing and sounds not done | mainmenu.rs:1-12 | M |
 | Main menu leaf screens (Event, Rules, Name entry, Snapshots, Archives, Sound Test, Info, Records x3, Multi-Man, Rumble, Sound, Display, Language, Erase) | all work | MISSING: each returns `Exit::Screen(..)`; `play.rs` shows toast "IS NOT IN THE NATIVE PORT YET" | mainmenu.rs:731-763, play.rs:403-408 | L |
-| Character select (CSS) | retail MnCharSel (26 chars, costumes, tags, CPU level, teams, handicap, token) | PART: ui.rs rectangles + bitmap font, 2 players, 7 fighters, no costumes/CPU/teams/tags | play.rs:46-54,463-500,720-757; notes/menus.md | L |
-| Stage select (SSS) | retail MnStageSw (all stages, random, rules) | PART: stand-in list of 4 stages (FD, BF, Dream Land, Yoshi's Story) | play.rs:56-61,416-419 | L |
-| Match loading / VS rules setup | rules from CSS/Rules menu | PART: rules fixed: time match, `--time-secs` (default 180), items off, p3/p4 none | play.rs:518-523 | M |
+| Character select (CSS) | retail MnCharSel (26 chars, costumes, tags, CPU level, teams, handicap, token) | PART: ui.rs stand-in, 26 fighters, 4 slots HMN/CPU 1-9/NA, costumes, teams; no tags/handicap/token (port/parity1) | play.rs tick_css; notes/play.md round 4 | M |
+| Stage select (SSS) | retail MnStageSw (all stages, random, rules) | PART: stand-in list of all 29 VS stages + random; 4 crash (marked) | play.rs STAGES; notes/play.md round 4 | M |
+| Match loading / VS rules setup | rules from CSS/Rules menu | PART: CSS rules bar: stock/time, items frequency, teams, via SceneLaunch_SeedVs; no handicap/damage ratio/pause rules | play.rs scenario_of | S |
 | Pause / resume / L+R+A+Start quit | works | OK: engine's own pause; quit combo in play.rs | play.rs:561-575, notes/play.md | - |
 | Results screen | retail MnVsResult style screens | PART: ui.rs stand-in with winner and halt reason; not the retail results scene | play.rs:613-632,759; notes/audio.md (results audio proven against C, scene not) | M |
-| Return to CSS and rematch | works, unlimited | BROKEN: engine statics boot once per process, a second match shows toast "ONE ENGINE MATCH PER RUN: RESTART" | play.rs:507-512 | M |
+| Return to CSS and rematch | works, unlimited | OK: `Engine::next_vs`; 5 consecutive matches, memory flat from match 3 | notes/play.md round 4 | - |
 | Match unlock notices / secrets (Pichu, Mewtwo, stages unlock) | unlock flow | MISSING: no save, nothing is locked/unlocked | engine seam `CARDProbe = -3` (melee_engine/src/seams.rs:97) | M |
 | Sound test, Trophies (gallery, lottery, collection), snapshots | work | MISSING: `Exit::Mode("ToyGallery"/"ToyLottery"/"ToyCollection")` falls to the toast | mainmenu.rs:744-756 | L |
 | Name entry / tags | works | MISSING | mainmenu.rs:737 | M |

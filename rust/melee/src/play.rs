@@ -10,15 +10,17 @@
 //!
 //! What is a stand-in: the screens other than the match are drawn by `ui.rs` (rectangles and a
 //! bitmap font), not by the retail menu models (MnTitle / MnMain / MnCharSel DAT scenes are not
-//! ported) and not by the frontend kit; the opening movie (THP) is a card. Match rules are fixed
-//! (a time match of `--time-secs`, the rules the golden sim runs under). The match ends when the time is up or when
-//! the simulation reaches code that is not ported yet (`VsMatch::stopped`), reported on the
-//! results screen. The camera is an approximation (cm/camera.c is not ported), no HUD models.
+//! ported) and not by the frontend kit; the opening movie (THP) is a card. The CSS sets the slots (HMN / CPU 1-9 / NA,
+//! fighter of all 26, costume or team) and the rules (stock or time, items, teams), which reach the engine through its
+//! launcher (`SceneLaunch_SeedVs`), as in the C build's VS mode. The match ends the game's own way (GAME! / TIME!), or with
+//! L+R+A+START; after the results the same engine runs the next match (`Engine::next_vs`), any number of times.
 //!
 //! ```text
-//! melee play [--iso DISC.iso] [--time-secs N] [--shot-dir DIR] [--shots] [--quit-at-results]
-//!            [--max-frames N] [--skip-intro] [--mods DIR] [--golden-pads]
+//! melee play [--iso DISC.iso] [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--shot-dir DIR] [--shots]
+//!            [--quit-at-results [--quit-after-matches N]] [--max-frames N] [--skip-intro] [--mods DIR] [--golden-pads]
+//!            [--match a,b[/cpuN],..[,STAGE]] [--headless]
 //! ```
+//! `--time-secs` presets the time rule (the game counts whole minutes: GameRules rounds it up), `--stocks N` a stock match.
 //! `--shots` writes a PNG per screen (30 ticks after entering it) into `--shot-dir`.
 use crate::pads::RawPad;
 use crate::ui::{self, Ui};
@@ -42,23 +44,81 @@ const HSD_PAD_RIGHT: u32 = 0x2;
 const HSD_PAD_L: u32 = 0x40;
 const HSD_PAD_R: u32 = 0x20;
 
-/// Fighters the native sim can load (name, display).
-const ROSTER: &[(&str, &str)] = &[
-    ("falcon", "C. FALCON"),
-    ("fox", "FOX"),
-    ("falco", "FALCO"),
-    ("marth", "MARTH"),
-    ("sheik", "SHEIK"),
-    ("peach", "PEACH"),
-    ("samus", "SAMUS"),
+const HSD_PAD_X: u32 = 0x400;
+const HSD_PAD_Y: u32 = 0x800;
+const HSD_PAD_Z: u32 = 0x10;
+
+/// The whole VS roster in the retail CSS's order (scene name, display, costume count, note). The scene name is
+/// `melee_engine::scenario::ckind_by_name`'s; the costume counts are `gm_GetNumCostumesForCKind`'s (the launcher
+/// takes the colour modulo the real count anyway). Sheik has her own icon here (retail reaches her through Zelda).
+const ROSTER: &[(&str, &str, u8, &str)] = &[
+    ("drmario", "DR. MARIO", 5, ""),
+    ("mario", "MARIO", 5, ""),
+    ("luigi", "LUIGI", 4, ""),
+    ("bowser", "BOWSER", 4, ""),
+    ("peach", "PEACH", 5, ""),
+    ("yoshi", "YOSHI", 6, ""),
+    ("dk", "DK", 5, ""),
+    ("falcon", "C. FALCON", 6, ""),
+    ("ganon", "GANONDORF", 5, ""),
+    ("falco", "FALCO", 4, ""),
+    ("fox", "FOX", 4, ""),
+    ("ness", "NESS", 4, ""),
+    ("ics", "ICE CLIMBERS", 4, ""),
+    ("kirby", "KIRBY", 6, ""),
+    ("samus", "SAMUS", 5, ""),
+    ("zelda", "ZELDA", 5, ""),
+    ("sheik", "SHEIK", 5, ""),
+    ("link", "LINK", 5, ""),
+    ("younglink", "YOUNG LINK", 4, ""),
+    ("pichu", "PICHU", 4, ""),
+    ("pikachu", "PIKACHU", 4, ""),
+    ("jigglypuff", "JIGGLYPUFF", 5, "SPECIALS INCOMPLETE (BLOCKER D)"),
+    ("mewtwo", "MEWTWO", 4, ""),
+    ("gw", "MR. G&W", 4, ""),
+    ("marth", "MARTH", 5, ""),
+    ("roy", "ROY", 5, ""),
 ];
-/// Stages the sim can load (file, display).
-const STAGES: &[(&str, &str)] = &[
-    ("GrNLa.dat", "FINAL DESTINATION"),
-    ("GrNBa.dat", "BATTLEFIELD"),
-    ("GrGr.dat", "GREEN GREENS"),
-    ("GrSt.dat", "YOSHI'S STORY"),
+const CSS_COLS: usize = 9;
+/// Every retail VS stage by its external StKind (gw_sl_stage_names; Akaneia 21 is not on the disc and Icetop 26
+/// asserts in the C build too), with the display name and a known problem (docs/rust-port/notes/parity.md section 4).
+const STAGES: &[(i32, &str, &str)] = &[
+    (32, "FINAL DESTINATION", ""),
+    (31, "BATTLEFIELD", ""),
+    (8, "YOSHI'S STORY", ""),
+    (2, "FOUNTAIN OF DREAMS", ""),
+    (3, "POKEMON STADIUM", ""),
+    (28, "DREAM LAND N64", ""),
+    (4, "PEACH'S CASTLE", ""),
+    (5, "KONGO JUNGLE", ""),
+    (6, "BRINSTAR", ""),
+    (7, "CORNERIA", "CRASHES (ARWINGS)"),
+    (9, "ONETT", ""),
+    (10, "MUTE CITY", ""),
+    (11, "RAINBOW CRUISE", ""),
+    (12, "JUNGLE JAPES", ""),
+    (13, "GREAT BAY", "CRASHES (TINGLE)"),
+    (14, "HYRULE TEMPLE", ""),
+    (15, "BRINSTAR DEPTHS", ""),
+    (16, "YOSHI'S ISLAND", ""),
+    (17, "GREEN GREENS", ""),
+    (18, "FOURSIDE", ""),
+    (19, "MUSHROOM KINGDOM", ""),
+    (20, "MUSHROOM KINGDOM II", "CRASHES"),
+    (22, "VENOM", "CRASHES"),
+    (23, "POKE FLOATS", ""),
+    (24, "BIG BLUE", ""),
+    (25, "ICICLE MOUNTAIN", "SCROLL DIVERGES"),
+    (27, "FLAT ZONE", ""),
+    (29, "YOSHI'S ISLAND N64", ""),
+    (30, "KONGO JUNGLE N64", ""),
 ];
+const SSS_COLS: usize = 5;
+/// The extra SSS cell after the stages: a random stage (play's own pick, never the game's RNG).
+const SSS_RANDOM: usize = STAGES.len();
+const ITEM_NAMES: [&str; 6] = ["OFF", "VERY LOW", "LOW", "MEDIUM", "HIGH", "VERY HIGH"];
+const TEAM_NAMES: [&str; 3] = ["RED", "BLUE", "GREEN"];
+const SLOT_COLS: [ui::Rgba; 4] = [ui::RED, ui::CYAN, ui::YELLOW, ui::GREEN];
 const MAIN_ITEMS: &[(&str, bool)] = &[("1P MODE", false), ("VS MODE", true), ("TROPHIES", false), ("OPTIONS", false), ("DATA", false)];
 const VS_ITEMS: &[(&str, bool)] = &[("MELEE", true), ("SPECIAL MELEE", false), ("CUSTOM RULES", false), ("NAMES", false)];
 
@@ -153,8 +213,57 @@ impl PortIn {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum SlotKind {
+    Hmn,
+    Cpu,
+    Off,
+}
+
+/// One CSS slot (`MnCharSel`'s player panel): who plays it, the fighter, costume, CPU level and team.
+#[derive(Clone, Copy, Debug)]
+struct Slot {
+    kind: SlotKind,
+    cursor: usize,
+    pick: Option<usize>,
+    color: u8,
+    level: u8,
+    team: u8,
+}
+
+impl Slot {
+    fn new(kind: SlotKind, cursor: usize, team: u8) -> Slot {
+        Slot { kind, cursor, pick: None, color: 0, level: 9, team }
+    }
+    /// The fighter this slot plays (a CPU plays its cursor's fighter without an explicit pick).
+    fn fighter(&self) -> Option<usize> {
+        match self.kind {
+            SlotKind::Off => None,
+            SlotKind::Cpu => Some(self.pick.unwrap_or(self.cursor)),
+            SlotKind::Hmn => self.pick,
+        }
+    }
+}
+
+/// The rules the CSS sets (the retail Rules screen's VS subset), mapped onto `GameRules` / `StartMeleeRules`
+/// by the engine's launcher (`SceneLaunch_SeedVs`), as the C build's VS mode does.
+#[derive(Clone, Copy, Debug)]
+struct Rules {
+    stock: bool,
+    stocks: i32,
+    /// time limit in seconds (time mode; the menu steps whole minutes, `--time-secs` may set any value)
+    time_secs: i32,
+    /// 0 off, 1..5 = item frequency 0..4 (very low .. very high)
+    items: i32,
+    teams: bool,
+}
+const RULE_ROWS: usize = 4;
+
+#[derive(Clone)]
 struct MatchSetup {
-    fighters: [usize; 2],
+    slots: [Slot; 4],
+    rules: Rules,
+    /// index into STAGES
     stage: usize,
 }
 
@@ -163,31 +272,43 @@ struct MatchSetup {
 struct EngMatch {
     e: melee_engine::Engine,
     frame: Option<Vec<melee_gx::draw::DrawCmd>>,
-    names: [&'static str; 2],
+    setup: MatchSetup,
     end_timer: Option<u32>,
     timed_out: bool,
     quit_hold: u32,
 }
 
-/// The tick the HUD's GO appears on (the legacy sim's `go_frame` on every stage in the roster).
-const ENGINE_GO_FRAME: i32 = 84;
 
 
 #[derive(Default, Clone)]
 struct Outcome {
-    names: [String; 2],
-    falls: [i32; 2],
-    percent: [f32; 2],
+    /// per slot: None = not in the match
+    rows: [Option<OutRow>; 4],
     frames: i32,
+    /// the winning slot, or the first slot of the winning team
     winner: Option<usize>,
+    teams: bool,
+    stock: bool,
     why: String,
+}
+
+#[derive(Default, Clone)]
+struct OutRow {
+    name: String,
+    ckind: i32,
+    cpu: bool,
+    team: u8,
+    kos: i32,
+    falls: i32,
+    stocks: i32,
+    percent: f32,
 }
 
 pub struct Play {
     iso: String,
     mods_dir: Option<String>,
-    /// Match length in seconds (the sim is a time match: the golden's rules, `match_kind` 0).
-    time_secs: i32,
+    /// The CSS rules (the `--time-secs` / `--stocks` / `--items` options preset them).
+    rules: Rules,
     /// `--golden-pads`: the match reads the golden harness's pad cycles (pad_fixed.lua) instead of
     /// the live pads, so a scripted run goes through exactly the states the oracle verified.
     golden_pads: bool,
@@ -199,13 +320,18 @@ pub struct Play {
     main_sel: usize,
     vs_sel: usize,
     toast: Option<(String, u32)>,
-    cursor: [usize; 2],
-    pick: [Option<usize>; 2],
+    slots: [Slot; 4],
+    /// What port 1 edits on the CSS: 0..3 a slot, 4 the rules bar (Z cycles it).
+    focus: usize,
+    rule_row: usize,
     sss_sel: usize,
     setup: Option<MatchSetup>,
     /// The match (the consolidated engine).
     em: Option<EngMatch>,
-    engine_used: bool,
+    /// The engine between matches: booted once per process, each next match is `Engine::next_vs`.
+    spare: Option<melee_engine::Engine>,
+    /// play's own random source (the SSS random stage), never the game's RNG
+    menu_rng: u32,
     headless: bool,
     outcome: Outcome,
     matches_played: u32,
@@ -217,6 +343,8 @@ pub struct Play {
     shot_pending: Option<String>,
     pause_age: u32,
     quit_at_results: bool,
+    /// `--quit-after-matches N` (with `--quit-at-results`): quit on the Nth results screen (default 1).
+    quit_after: u32,
     max_frames: Option<u64>,
     skip_intro: bool,
     quit: bool,
@@ -305,19 +433,13 @@ impl Play {
             }
             Scene::Sss => a.menu_music(),
             Scene::Loading => {}
-            Scene::Match => {
-                if let (Some(su), None) = (self.setup.as_ref(), self.em.as_ref()) {
-                    let ck = [crate::audio::ckind_of(ROSTER[su.fighters[0]].0), crate::audio::ckind_of(ROSTER[su.fighters[1]].0)];
-                    let (st, gr) = crate::audio::stage_kinds(STAGES[su.stage].0);
-                    // the engine's own stage BGM pick is a sound seam for now: the model's pick (or track 0)
-                    a.match_start(&ck, st, gr, 0);
-                }
-            }
+            // the engine's own lbAudioAx calls (engine_audio) load the banks and start the stage music
+            Scene::Match => {}
             Scene::Results => {
                 if from == Scene::Match {
                     a.match_leave();
                 }
-                let w = self.outcome.winner.map(|w| crate::audio::ckind_of(self.em.as_ref().map_or("falcon", |m| m.names[w])));
+                let w = self.outcome.winner.and_then(|w| self.outcome.rows[w].as_ref()).map(|r| r.ckind);
                 a.results(w);
             }
         }
@@ -335,14 +457,25 @@ impl Play {
         n
     }
 
+    /// Leave the match (or the results) for the character select. The picks and rules stay, as on the retail CSS
+    /// after a match, so START goes straight to a rematch. The engine leaves its scene and is kept for the next one.
     fn back_to_css(&mut self) {
         if self.scene == Scene::Match {
             if let Some(a) = &self.audio { a.match_leave() }
         }
-        self.em = None;
-        self.pick = [None, None];
-        self.cursor = [0, 1];
+        if let Some(mut m) = self.em.take() {
+            m.e.leave_scene();
+            self.spare = Some(m.e);
+        }
+        self.frame_mem("back to css");
+        self.focus = 0;
         self.goto(Scene::Css);
+    }
+
+    /// The process's memory (working set, private bytes) in the log: checks that match after match does not grow.
+    fn frame_mem(&self, what: &str) {
+        let (ws, private) = proc_mem();
+        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024));
     }
 
     fn tick_scene(&mut self) {
@@ -400,8 +533,10 @@ impl Play {
                         self.goto(Scene::Title);
                     }
                     Exit::Mode("Vs") => {
-                        self.cursor = [0, 1];
-                        self.pick = [None, None];
+                        for s in self.slots.iter_mut() {
+                            s.pick = None;
+                        }
+                        self.focus = 0;
                         self.goto(Scene::Css);
                     }
                     Exit::None => {}
@@ -416,19 +551,28 @@ impl Play {
                 if nx != 0 || ny != 0 {
                     if let Some(a) = &self.audio { a.moved() }
                 }
+                let n = STAGES.len() + 1;
                 if nx != 0 {
-                    self.sss_sel = (self.sss_sel as i32 + nx).rem_euclid(STAGES.len() as i32) as usize;
+                    self.sss_sel = (self.sss_sel as i32 + nx).rem_euclid(n as i32) as usize;
                 }
                 if ny != 0 {
-                    self.sss_sel = (self.sss_sel + 2) % STAGES.len();
+                    let v = self.sss_sel as i32 - ny * SSS_COLS as i32;
+                    if (0..n as i32).contains(&v) {
+                        self.sss_sel = v as usize;
+                    }
                 }
                 if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
                     if let Some(a) = &self.audio { a.forward() }
-                    self.setup = Some(MatchSetup { fighters: [self.pick[0].unwrap_or(0), self.pick[1].unwrap_or(1)], stage: self.sss_sel });
+                    let stage = if self.sss_sel == SSS_RANDOM {
+                        self.menu_rng = self.menu_rng.wrapping_mul(1103515245).wrapping_add(12345 + self.tick_no as u32);
+                        (self.menu_rng >> 16) as usize % STAGES.len()
+                    } else {
+                        self.sss_sel
+                    };
+                    self.setup = Some(MatchSetup { slots: self.slots, rules: self.rules, stage });
                     self.goto(Scene::Loading);
                 } else if trig & HSD_PAD_B != 0 {
                     if let Some(a) = &self.audio { a.back() }
-                    self.pick = [None, None];
                     self.goto(Scene::Css);
                 }
             }
@@ -440,7 +584,7 @@ impl Play {
             }
             Scene::Match => self.tick_match(),
             Scene::Results => {
-                if self.quit_at_results && self.age >= 90 {
+                if self.quit_at_results && self.matches_played >= self.quit_after && self.age >= 90 {
                     self.quit = true;
                 }
                 if trig & (HSD_PAD_A | HSD_PAD_START) != 0 {
@@ -449,7 +593,11 @@ impl Play {
                 if trig & HSD_PAD_A != 0 {
                     self.back_to_css();
                 } else if trig & HSD_PAD_START != 0 {
-                                self.goto(Scene::MainMenu);
+                    if let Some(mut m) = self.em.take() {
+                        m.e.leave_scene();
+                        self.spare = Some(m.e);
+                    }
+                    self.goto(Scene::MainMenu);
                 }
             }
         }
@@ -461,96 +609,274 @@ impl Play {
         }
     }
 
-    /// Character select. Slot 0 is chosen with port 1's pad; slot 1 with port 2's pad when one is
-    /// plugged in, otherwise with port 1's after slot 0 has picked. A confirms, B takes back, START
-    /// or A (both picked) goes on to the stage select.
+    /// The port that edits slot `i`: its own pad when one is plugged in (ports 2-4), else port 1 when it has the focus.
+    fn slot_port(&self, i: usize) -> Option<usize> {
+        if i > 0 && self.port[i].connected {
+            Some(i)
+        } else if self.focus == i {
+            Some(self.first_port())
+        } else {
+            None
+        }
+    }
+    /// Port 1, or the first connected port when port 1 is unplugged.
+    fn first_port(&self) -> usize {
+        if self.port[0].connected { 0 } else { self.port.iter().position(|q| q.connected).unwrap_or(0) }
+    }
+
+    /// Why the CSS cannot go on yet, or None when it can.
+    fn css_blocker(&self) -> Option<&'static str> {
+        let active: Vec<&Slot> = self.slots.iter().filter(|s| s.kind != SlotKind::Off).collect();
+        if active.len() < 2 {
+            return Some("NEED 2 OR MORE PLAYERS");
+        }
+        if active.iter().any(|s| s.fighter().is_none()) {
+            return Some("EVERY HMN SLOT MUST PICK");
+        }
+        if self.rules.teams && active.iter().all(|s| s.team == active[0].team) {
+            return Some("TEAMS: NEED 2 TEAMS");
+        }
+        None
+    }
+
+    /// Character select (the stand-in for `MnCharSel`): four slots, each HMN / CPU (level 1-9) / off, a fighter and a
+    /// costume (or a team in a team match), and the rules bar. Port 1 edits the slot it has the focus on (Z moves the
+    /// focus P1 -> P2 -> P3 -> P4 -> RULES); ports 2-4 edit their own slot when plugged in. In a slot: the stick moves the
+    /// cursor, A picks, B takes back (B with nothing picked: the focus steps back; on P1, back to the VS menu), X cycles
+    /// HMN/CPU/OFF, Y cycles the costume (the team in a team match), L/R lower/raise the CPU level. On the rules bar:
+    /// up/down picks a rule, left/right (or A) changes it, B returns to P1. START (or A on a picked slot, everyone
+    /// ready) goes on to the stage select.
     fn tick_css(&mut self) {
-        let slot = if self.pick[0].is_none() { 0 } else { 1 };
-        let pi = if slot == 1 && self.port[1].connected { 1 } else { 0 };
-        let first = self.port[pi];
-        let src = if first.connected { first } else { *self.port.iter().find(|q| q.connected).unwrap_or(&first) };
-        if self.pick[1].is_none() {
-            let cols = 4i32;
-            let rows = (ROSTER.len() as i32 + cols - 1) / cols;
-            let c = &mut self.cursor[slot];
-            let (mut cx, mut cy) = ((*c as i32) % cols, (*c as i32) / cols);
-            cx = (cx + src.nav_x).rem_euclid(cols);
-            cy = (cy - src.nav_y).rem_euclid(rows);
-            let old = *c;
-            *c = ((cy * cols + cx) as usize).min(ROSTER.len() - 1);
-            if *c != old {
-                if let Some(a) = &self.audio { a.moved() }
-            }
-            if src.trig & HSD_PAD_A != 0 {
-                if let Some(a) = &self.audio { a.css_pick(crate::audio::ckind_of(ROSTER[*c].0), *c) }
-                self.pick[slot] = Some(*c);
-                log(&format!("css: slot {} picked {}", slot + 1, ROSTER[*c].0));
-                return;
-            }
-        } else if src.trig & (HSD_PAD_START | HSD_PAD_A) != 0 {
-            if let Some(a) = &self.audio { a.forward() }
-            self.sss_sel = 0;
-            self.goto(Scene::Sss);
+        let p1 = self.first_port();
+        if self.port[p1].trig & HSD_PAD_Z != 0 {
+            self.focus = (self.focus + 1) % 5;
+            if let Some(a) = &self.audio { a.moved() }
             return;
         }
-        if src.trig & HSD_PAD_B != 0 {
-            if let Some(a) = &self.audio { a.back() }
-            if self.pick[1].is_some() {
-                self.pick[1] = None;
-            } else if self.pick[0].is_some() {
-                self.pick[0] = None;
-            } else {
-                self.goto(Scene::VsMenu);
+        let ready = self.css_blocker().is_none();
+        let start = self.port.iter().any(|q| q.connected && q.trig & HSD_PAD_START != 0);
+        if start {
+            if ready {
+                if let Some(a) = &self.audio { a.forward() }
+                self.goto(Scene::Sss);
+            } else if let Some(why) = self.css_blocker() {
+                self.toast = Some((why.into(), 90));
+            }
+            return;
+        }
+        if self.focus == 4 {
+            self.tick_rules(p1);
+            return;
+        }
+        for i in 0..4 {
+            let Some(pi) = self.slot_port(i) else { continue };
+            let src = self.port[pi];
+            let teams = self.rules.teams;
+            let mut moved = false;
+            let mut sl = self.slots[i];
+            if src.trig & HSD_PAD_X != 0 {
+                sl.kind = match sl.kind {
+                    SlotKind::Hmn => SlotKind::Cpu,
+                    SlotKind::Cpu => SlotKind::Off,
+                    SlotKind::Off => SlotKind::Hmn,
+                };
+                if sl.kind == SlotKind::Off {
+                    sl.pick = None;
+                }
+                self.slots[i] = sl;
+                if let Some(a) = &self.audio { a.moved() }
+                continue;
+            }
+            let back = src.trig & HSD_PAD_B != 0;
+            if sl.kind == SlotKind::Off {
+                // A on a closed slot opens it as a human (the retail HMN / CPU / NA button)
+                if src.trig & HSD_PAD_A != 0 {
+                    sl.kind = SlotKind::Hmn;
+                    self.slots[i] = sl;
+                    if let Some(a) = &self.audio { a.moved() }
+                } else if back && pi == p1 {
+                    self.css_back(i);
+                    return;
+                }
+                continue;
+            }
+            if src.trig & HSD_PAD_Y != 0 {
+                if teams {
+                    sl.team = (sl.team + 1) % 3;
+                } else {
+                    sl.color = (sl.color + 1) % ROSTER[sl.pick.unwrap_or(sl.cursor)].2;
+                }
+                moved = true;
+            }
+            if sl.kind == SlotKind::Cpu {
+                if src.trig & HSD_PAD_L != 0 && sl.level > 1 { sl.level -= 1; moved = true }
+                if src.trig & HSD_PAD_R != 0 && sl.level < 9 { sl.level += 1; moved = true }
+            }
+            if sl.pick.is_none() {
+                let cols = CSS_COLS as i32;
+                let rows = (ROSTER.len() as i32 + cols - 1) / cols;
+                let (mut cx, mut cy) = ((sl.cursor as i32) % cols, (sl.cursor as i32) / cols);
+                cx = (cx + src.nav_x).rem_euclid(cols);
+                cy = (cy - src.nav_y).rem_euclid(rows);
+                let old = sl.cursor;
+                sl.cursor = ((cy * cols + cx) as usize).min(ROSTER.len() - 1);
+                if sl.cursor != old {
+                    sl.color %= ROSTER[sl.cursor].2;
+                    moved = true;
+                }
+                if src.trig & HSD_PAD_A != 0 {
+                    let c = sl.cursor;
+                    sl.pick = Some(c);
+                    self.slots[i] = sl;
+                    if let Some(a) = &self.audio { a.css_pick(melee_engine::scenario::ckind_by_name(ROSTER[c].0).unwrap_or(0), c) }
+                    log(&format!("css: slot {} picked {}", i + 1, ROSTER[c].0));
+                    // port 1 moves on to the next open human slot nobody else drives (the old two-player flow)
+                    if pi == p1 && self.focus == i {
+                        if let Some(n) = (i + 1..4).find(|&n| self.slots[n].kind == SlotKind::Hmn && self.slots[n].pick.is_none() && !self.port[n].connected) {
+                            self.focus = n;
+                        }
+                    }
+                    return;
+                }
+                if back && pi == p1 {
+                    self.slots[i] = sl;
+                    self.css_back(i);
+                    return;
+                }
+            } else if src.trig & HSD_PAD_A != 0 && pi == p1 && ready {
+                if let Some(a) = &self.audio { a.forward() }
+                self.goto(Scene::Sss);
+                return;
+            } else if back {
+                sl.pick = None;
+                if let Some(a) = &self.audio { a.back() }
+            }
+            self.slots[i] = sl;
+            if moved {
+                if let Some(a) = &self.audio { a.moved() }
             }
         }
     }
 
-    fn start_match(&mut self) {
-        let Some(su) = self.setup.as_ref() else { return };
-        let names = [ROSTER[su.fighters[0]].0, ROSTER[su.fighters[1]].0];
-        let (stage_file, stage_name) = STAGES[su.stage];
-        if self.engine_used {
-            // The engine boots its host and the TU statics (the C globals) once per process.
-            self.toast = Some(("ONE ENGINE MATCH PER RUN: RESTART, OR --engine legacy".into(), 300));
-            self.goto(Scene::Sss);
+    /// B with nothing to take back on slot `i` (port 1): the focus steps back to the previous slot and takes back its
+    /// pick; on P1, back to the VS menu.
+    fn css_back(&mut self, i: usize) {
+        if let Some(a) = &self.audio { a.back() }
+        if i == 0 {
+            self.goto(Scene::VsMenu);
             return;
         }
-        log(&format!("loading {} v {} on {} on the engine ({} s time match)", names[0], names[1], stage_name, self.time_secs));
-        let stage = match stage_file {
-            "GrNLa.dat" => "fd",
-            "GrNBa.dat" => "bf",
-            "GrGr.dat" => "dl",
-            "GrSt.dat" => "ys",
-            _ => "fd",
-        };
-        let scene = format!("mode=vs;at=match;p1={}/human;p2={}/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off", names[0], names[1]);
-        let built = (|| -> Result<EngMatch, String> {
-            let scn = melee_engine::scenario::Scenario::parse(&scene)?;
-            let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
-            crate::set_engine_mods(&margs)?;
-            let disc = crate::engine_disc(&self.iso)?;
-            unsafe {
-                melee_engine::engine::RENDER = !self.headless;
-                std::env::set_var("MELEE_TEST_SEED", (12345 + self.matches_played).to_string());
-                if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
-                    std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+        self.focus = i - 1;
+        self.slots[i - 1].pick = None;
+    }
+
+    fn tick_rules(&mut self, p1: usize) {
+        let src = self.port[p1];
+        if src.nav_y != 0 {
+            self.rule_row = (self.rule_row as i32 - src.nav_y).rem_euclid(RULE_ROWS as i32) as usize;
+            if let Some(a) = &self.audio { a.moved() }
+        }
+        if src.trig & HSD_PAD_B != 0 {
+            self.focus = 0;
+            if let Some(a) = &self.audio { a.back() }
+            return;
+        }
+        let d = if src.nav_x != 0 { src.nav_x } else if src.trig & HSD_PAD_A != 0 { 1 } else { 0 };
+        if d == 0 {
+            return;
+        }
+        let r = &mut self.rules;
+        match self.rule_row {
+            0 => r.stock = !r.stock,
+            1 if r.stock => r.stocks = (r.stocks - 1 + d).rem_euclid(99) + 1,
+            1 => {
+                let m = ((r.time_secs + 59) / 60 - 1 + d).rem_euclid(99) + 1;
+                r.time_secs = m * 60;
+            }
+            2 => r.items = (r.items + d).rem_euclid(ITEM_NAMES.len() as i32),
+            _ => {
+                r.teams = !r.teams;
+                if r.teams {
+                    // the retail default split: P1 / P3 red, P2 / P4 blue
+                    for (i, s) in self.slots.iter_mut().enumerate() {
+                        s.team = (i % 2) as u8;
+                    }
                 }
             }
-            if self.audio.is_some() {
-                // the game's own lbAudioAx calls (banks, announcer, entry sounds, pause) drive the sound the menus already booted
-                crate::engine_audio::attach(false);
-            }
-            let e = melee_engine::Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn)?;
-            if self.audio.is_some() {
-                crate::engine_audio::start_stage_bgm();
-            }
-            Ok(EngMatch { e, frame: None, names, end_timer: None, timed_out: false, quit_hold: 0 })
-        })();
+        }
+        if let Some(a) = &self.audio { a.moved() }
+    }
+
+    /// The setup as the engine's launcher reads it (`SceneLaunch_*`, melee_engine::scenario): the fields the C build's
+    /// CSS and Rules screens leave in `VsModeData` / `GameRules`, seeded by `SceneLaunch_SeedVs` in the VS mode's on_load.
+    fn scenario_of(su: &MatchSetup) -> melee_engine::scenario::Scenario {
+        use melee_engine::scenario::{PlayerSpec, Scenario};
+        let r = su.rules;
+        let mut players = [None; 6];
+        for (i, sl) in su.slots.iter().enumerate() {
+            let Some(f) = sl.fighter() else { continue };
+            let cpu = sl.kind == SlotKind::Cpu;
+            players[i] = Some(PlayerSpec {
+                ckind: melee_engine::scenario::ckind_by_name(ROSTER[f].0).unwrap_or(0),
+                slot_type: cpu as i32,
+                cpu_level: if cpu { sl.level as i32 } else { -1 },
+                color: sl.color as i32,
+                team: if r.teams { sl.team as i32 } else { -1 },
+                stocks: -1,
+                handicap: -1,
+            });
+        }
+        Scenario {
+            stage: STAGES[su.stage].0,
+            players,
+            rule_match: r.stock as i32,
+            rule_minutes: -1,
+            item_freq: if r.items == 0 { -2 } else { r.items - 1 },
+            teams: r.teams as i32,
+            // a stock match has no timer here; a time match counts its seconds
+            time_limit: if r.stock { 0 } else { r.time_secs },
+            rule_stocks: if r.stock { r.stocks } else { -1 },
+        }
+    }
+
+    fn start_match(&mut self) {
+        let Some(su) = self.setup.clone() else { return };
+        let (_, stage_name, _) = STAGES[su.stage];
+        let who: Vec<String> = su.slots.iter().enumerate().filter_map(|(i, s)| s.fighter().map(|f| format!("P{} {}{}", i + 1, ROSTER[f].0, if s.kind == SlotKind::Cpu { format!("/cpu{}", s.level) } else { String::new() }))).collect();
+        let r = su.rules;
+        log(&format!("loading {} on {} ({}, items {}, teams {}), engine match {}", who.join(" v "), stage_name,
+            if r.stock { format!("{} stock", r.stocks) } else { format!("{} s time", r.time_secs) }, ITEM_NAMES[r.items as usize], r.teams, self.matches_played + 1));
+        let scn = Self::scenario_of(&su);
+        let built = if let Some(mut e) = self.spare.take() {
+            // the next match of the run: the engine stays booted (Engine::next_vs, the C mode loop's next scene)
+            e.next_vs(scn).map(|()| e)
+        } else {
+            (|| -> Result<melee_engine::Engine, String> {
+                let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
+                crate::set_engine_mods(&margs)?;
+                let disc = crate::engine_disc(&self.iso)?;
+                unsafe {
+                    melee_engine::engine::RENDER = !self.headless;
+                    std::env::set_var("MELEE_TEST_SEED", "12345");
+                    if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+                        std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+                    }
+                }
+                if self.audio.is_some() {
+                    // the game's own lbAudioAx calls (banks, announcer, entry sounds, pause) drive the sound the menus already booted
+                    crate::engine_audio::attach(false);
+                }
+                melee_engine::Engine::boot_vs(disc, 64 << 20, PadSystem::headless(), scn)
+            })()
+        };
         match built {
-            Ok(em) => {
+            Ok(e) => {
+                if self.audio.is_some() {
+                    crate::engine_audio::start_stage_bgm();
+                }
                 self.matches_played += 1;
-                self.engine_used = true;
-                self.em = Some(em);
+                self.em = Some(EngMatch { e, frame: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
+                self.frame_mem("match start");
                 self.goto(Scene::Match);
             }
             Err(e) => {
@@ -567,7 +893,7 @@ impl Play {
         let Some(m) = self.em.as_mut() else { return };
         // L+R+A+START held: end the match and return to the character select (the pad layer, as in the model).
         const COMBO: u32 = HSD_PAD_L | HSD_PAD_R | HSD_PAD_A | HSD_PAD_START;
-        let quit_combo = ports.iter().take(2).any(|p| p.connected && p.held & COMBO == COMBO);
+        let quit_combo = ports.iter().any(|p| p.connected && p.held & COMBO == COMBO);
         m.quit_hold = if quit_combo { m.quit_hold + 1 } else { 0 };
         if m.quit_hold >= 30 {
             log("match quit with L+R+A+START");
@@ -602,37 +928,63 @@ impl Play {
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             m.frame = Some(f);
         }
-        let frame = m.e.frames as i32 - 1;
         if !alive {
-            log("the engine's scene ended");
+            // GAME! / TIME! are the game's own (the match scene ends itself); the results follow after a moment
+            log(&format!("the engine's scene ended at frame {}", m.e.frames));
+            m.timed_out = !m.setup.rules.stock;
             m.end_timer = Some(0);
-        } else if frame >= crate::audio::clock_end(ENGINE_GO_FRAME, self.time_secs) - 1 {
-            log("time up: GameSet");
-            m.timed_out = true;
-            m.end_timer = Some(0);
-            if let Some(a) = &self.audio { a.match_leave() }
         }
     }
 
     fn finish_match(&mut self) {
         let Some(m) = self.em.as_ref() else { return };
-        let mut o = Outcome { frames: m.e.frames as i32, ..Default::default() };
-        for i in 0..2usize {
-            o.names[i] = ROSTER.iter().find(|r| r.0 == m.names[i]).map_or(m.names[i], |r| r.1).to_string();
-            o.falls[i] = melee_fighter::tu::player::Player_GetFalls(i as i32);
-            o.percent[i] = unsafe {
-                let g = melee_fighter::player::get_entity(i as i32);
+        let su = &m.setup;
+        let mut o = Outcome { frames: m.e.frames as i32, teams: su.rules.teams, stock: su.rules.stock, ..Default::default() };
+        for (i, sl) in su.slots.iter().enumerate() {
+            let Some(f) = sl.fighter() else { continue };
+            let slot = i as i32;
+            let percent = unsafe {
+                let g = melee_fighter::player::get_entity(slot);
                 if g.is_null() || (*g).user_data.is_null() { 0.0 } else { (*((*g).user_data as *const melee_types::Fighter)).dmg.x1830_percent }
             };
+            let kos = (0..6).filter(|&k| k != slot).map(|k| melee_fighter::tu::player::Player_GetKOsByPlayerIndex(slot, k)).sum();
+            o.rows[i] = Some(OutRow {
+                name: ROSTER[f].1.to_string(),
+                ckind: melee_engine::scenario::ckind_by_name(ROSTER[f].0).unwrap_or(0),
+                cpu: sl.kind == SlotKind::Cpu,
+                team: sl.team,
+                kos,
+                falls: melee_fighter::tu::player::Player_GetFalls(slot),
+                stocks: unsafe { melee_fighter::tu::player::player_slots[i].stocks as i32 },
+                percent,
+            });
         }
-        o.winner = if o.falls[0] < o.falls[1] { Some(0) } else if o.falls[1] < o.falls[0] { Some(1) } else { None };
-        o.why = "TIME!".into();
-        log(&format!("results: falls {:?} percent {:?} frames {} winner {:?}", o.falls, o.percent, o.frames, o.winner));
+        // the winner: most stocks left (stock), most KOs minus falls (time); summed per team in a team match
+        let stock = o.stock;
+        let score = |r: &OutRow| if stock { r.stocks } else { r.kos - r.falls };
+        let key = |i: usize| if o.teams { o.rows[i].as_ref().unwrap().team as usize } else { i };
+        let mut best: Option<(i32, usize)> = None;
+        let mut tie = false;
+        let mut seen = Vec::new();
+        for i in (0..4).filter(|&i| o.rows[i].is_some()) {
+            let k = key(i);
+            if seen.contains(&k) { continue }
+            seen.push(k);
+            let v: i32 = (0..4).filter(|&j| o.rows[j].is_some() && key(j) == k).map(|j| score(o.rows[j].as_ref().unwrap())).sum();
+            match best {
+                Some((b, _)) if v < b => {}
+                Some((b, _)) if v == b => tie = true,
+                _ => { best = Some((v, i)); tie = false; }
+            }
+        }
+        o.winner = if tie { None } else { best.map(|b| b.1) };
+        o.why = if m.timed_out { "TIME!".into() } else { "GAME!".into() };
+        let rows: Vec<String> = o.rows.iter().enumerate().filter_map(|(i, r)| r.as_ref().map(|r| format!("P{} {} kos {} falls {} stocks {} {:.0}%", i + 1, r.name, r.kos, r.falls, r.stocks, r.percent))).collect();
+        log(&format!("results of match {}: {} | frames {} winner {:?}", self.matches_played, rows.join(" | "), o.frames, o.winner.map(|w| w + 1)));
         self.outcome = o;
+        self.frame_mem("results");
         self.goto(Scene::Results);
     }
-
-
 
     // ---------------------------------------------------------------- drawing
 
@@ -697,13 +1049,34 @@ impl Play {
                 self.backdrop([20, 40, 70, 255], [6, 10, 20, 255]);
                 let sel = self.sss_sel;
                 let u = &mut self.ui;
-                u.text_centered_shadow(320.0, 36.0, 3.0, "STAGE SELECT", ui::WHITE);
-                for (i, (_, name)) in STAGES.iter().enumerate() {
-                    let (cx, cy) = (i % 2, i / 2);
-                    let (x, y) = (60.0 + cx as f32 * 280.0, 110.0 + cy as f32 * 150.0);
-                    u.rect(x, y, 240.0, 120.0, if i == sel { [60, 100, 150, 235] } else { [24, 30, 44, 220] });
-                    if i == sel { u.frame(x, y, 240.0, 120.0, 4.0, ui::YELLOW) }
-                    u.text_centered(x + 120.0, y + 50.0, 1.0, name, ui::WHITE);
+                u.text_centered_shadow(320.0, 20.0, 3.0, "STAGE SELECT", ui::WHITE);
+                let (cw, ch) = (120.0, 44.0);
+                for i in 0..=STAGES.len() {
+                    let (name, note) = if i == SSS_RANDOM { ("RANDOM", "") } else { (STAGES[i].1, STAGES[i].2) };
+                    let (cx, cy) = (i % SSS_COLS, i / SSS_COLS);
+                    let (x, y) = (16.0 + cx as f32 * (cw + 4.0), 60.0 + cy as f32 * (ch + 4.0));
+                    u.rect(x, y, cw, ch, if i == sel { [60, 100, 150, 235] } else { [24, 30, 44, 220] });
+                    if i == sel { u.frame(x, y, cw, ch, 3.0, ui::YELLOW) }
+                    // two lines of up to 14 characters
+                    let mut lines = vec![String::new()];
+                    for w in name.split(' ') {
+                        let l = lines.last_mut().unwrap();
+                        if !l.is_empty() && l.len() + 1 + w.len() > 14 {
+                            lines.push(w.to_string());
+                        } else {
+                            if !l.is_empty() { l.push(' ') }
+                            l.push_str(w);
+                        }
+                    }
+                    for (k, l) in lines.iter().take(2).enumerate() {
+                        u.text_centered(x + cw / 2.0, y + 10.0 + k as f32 * 12.0, 1.0, l, if note.is_empty() { ui::WHITE } else { ui::GREY });
+                    }
+                    if !note.is_empty() {
+                        u.text_centered(x + cw / 2.0, y + 34.0, 1.0, "*", ui::RED);
+                    }
+                }
+                if sel < STAGES.len() && !STAGES[sel].2.is_empty() {
+                    u.text_centered(320.0, 432.0, 1.0, &format!("* KNOWN ISSUE: {}", STAGES[sel].2), ui::RED);
                 }
                 u.text(20.0, 452.0, 1.0, "STICK: MOVE   A: OK   B: BACK", ui::GREY);
             }
@@ -723,68 +1096,137 @@ impl Play {
 
     fn draw_css(&mut self) {
         self.backdrop([60, 30, 30, 255], [8, 8, 24, 255]);
-        let (cursor, pick) = (self.cursor, self.pick);
+        let (slots, focus, rules, row) = (self.slots, self.focus, self.rules, self.rule_row);
+        let blocker = self.css_blocker();
         let u = &mut self.ui;
-        u.text_centered_shadow(320.0, 24.0, 3.0, "CHARACTER SELECT", ui::WHITE);
-        for (i, (_, name)) in ROSTER.iter().enumerate() {
-            let (cx, cy) = (i % 4, i / 4);
-            let (x, y) = (40.0 + cx as f32 * 148.0, 90.0 + cy as f32 * 110.0);
-            u.rect(x, y, 136.0, 96.0, [26, 30, 46, 230]);
-            u.text_centered(x + 68.0, y + 44.0, 1.0, name, ui::WHITE);
-            for s in 0..2 {
-                let col = if s == 0 { ui::RED } else { ui::CYAN };
-                let sel = pick[s] == Some(i);
-                if sel || (pick[s].is_none() && cursor[s] == i && (s == 0 || pick[0].is_some())) {
-                    let inset = 2.0 + s as f32 * 5.0;
-                    u.frame(x - 2.0 + inset, y - 2.0 + inset, 140.0 - 2.0 * inset, 100.0 - 2.0 * inset, if sel { 4.0 } else { 2.0 }, col);
+        u.text_centered_shadow(320.0, 8.0, 2.0, "CHARACTER SELECT", ui::WHITE);
+        // the rules bar (focus 4)
+        let items = [
+            ("MODE", if rules.stock { "STOCK".to_string() } else { "TIME".to_string() }),
+            (if rules.stock { "STOCKS" } else { "TIME" }, if rules.stock { rules.stocks.to_string() } else if rules.time_secs % 60 == 0 { format!("{} MIN", rules.time_secs / 60) } else { format!("{} SEC", rules.time_secs) }),
+            ("ITEMS", ITEM_NAMES[rules.items as usize].to_string()),
+            ("TEAMS", if rules.teams { "ON".to_string() } else { "OFF".to_string() }),
+        ];
+        u.rect(16.0, 28.0, 608.0, 22.0, if focus == 4 { [70, 60, 20, 235] } else { [16, 16, 28, 220] });
+        if focus == 4 { u.frame(16.0, 28.0, 608.0, 22.0, 2.0, ui::YELLOW) }
+        for (k, (name, val)) in items.iter().enumerate() {
+            let x = 24.0 + k as f32 * 150.0;
+            let on = focus == 4 && row == k;
+            u.text(x, 35.0, 1.0, &format!("{name}: {val}"), if on { ui::YELLOW } else { ui::WHITE });
+        }
+        // the roster grid
+        let (cw, ch) = (64.0, 56.0);
+        for (i, (_, name, _, note)) in ROSTER.iter().enumerate() {
+            let (cx, cy) = (i % CSS_COLS, i / CSS_COLS);
+            let (x, y) = (24.0 + cx as f32 * (cw + 2.0), 58.0 + cy as f32 * (ch + 2.0));
+            u.rect(x, y, cw, ch, [26, 30, 46, 230]);
+            // the icon label: words on up to two lines of 8 characters (GANONDORF, JIGGLYPUFF: the short names)
+            let label = match *name { "GANONDORF" => "GANON", "JIGGLYPUFF" => "PUFF", "C. FALCON" => "FALCON", "MR. G&W" => "G&W", n => n };
+            let mut lines: Vec<String> = vec![String::new()];
+            for w in label.split(' ') {
+                let l = lines.last_mut().unwrap();
+                if !l.is_empty() && l.len() + 1 + w.len() > 8 {
+                    lines.push(w.chars().take(8).collect());
+                } else {
+                    if !l.is_empty() { l.push(' ') }
+                    l.push_str(w);
+                }
+            }
+            for (k, l) in lines.iter().take(2).enumerate() {
+                u.text_centered(x + cw / 2.0, y + 18.0 + 10.0 * k as f32, 1.0, l, if note.is_empty() { ui::WHITE } else { ui::GREY });
+            }
+            if !note.is_empty() {
+                u.text_centered(x + cw / 2.0, y + 42.0, 1.0, "*", ui::RED);
+            }
+            for (s, sl) in slots.iter().enumerate() {
+                if sl.kind == SlotKind::Off { continue }
+                let picked = sl.pick == Some(i);
+                if picked || (sl.pick.is_none() && sl.cursor == i) {
+                    let inset = 1.0 + s as f32 * 3.0;
+                    u.frame(x + inset, y + inset, cw - 2.0 * inset, ch - 2.0 * inset, if picked { 3.0 } else { 1.0 }, SLOT_COLS[s]);
                 }
             }
         }
-        for s in 0..2 {
-            let y = 330.0;
-            let x = 60.0 + s as f32 * 280.0;
-            let col = if s == 0 { ui::RED } else { ui::CYAN };
-            u.rect(x, y, 240.0, 70.0, [16, 16, 28, 230]);
-            u.frame(x, y, 240.0, 70.0, 3.0, col);
-            u.text(x + 12.0, y + 10.0, 2.0, &format!("P{}", s + 1), col);
-            let label = match pick[s] {
-                Some(i) => ROSTER[i].1.to_string(),
-                None => {
-                    if s == 0 || pick[0].is_some() { format!("{}?", ROSTER[cursor[s]].1) } else { "...".into() }
-                }
-            };
-            u.text(x + 12.0, y + 40.0, 2.0, &label, ui::WHITE);
+        // the four slot panels
+        for (s, sl) in slots.iter().enumerate() {
+            let (x, y, w, h) = (16.0 + s as f32 * 154.0, 248.0, 146.0, 150.0);
+            let col = if rules.teams && sl.kind != SlotKind::Off { [ui::RED, ui::CYAN, ui::GREEN][sl.team as usize] } else { SLOT_COLS[s] };
+            u.rect(x, y, w, h, if sl.kind == SlotKind::Off { [10, 10, 16, 200] } else { [16, 16, 28, 230] });
+            u.frame(x, y, w, h, if focus == s { 4.0 } else { 2.0 }, if focus == s { ui::WHITE } else { col });
+            let kind = match sl.kind { SlotKind::Hmn => "HMN".to_string(), SlotKind::Cpu => format!("CPU LV{}", sl.level), SlotKind::Off => "NA".to_string() };
+            u.text(x + 8.0, y + 8.0, 2.0, &format!("P{}", s + 1), col);
+            u.text(x + 46.0, y + 12.0, 1.0, &kind, if sl.kind == SlotKind::Off { ui::DIM } else { ui::WHITE });
+            if sl.kind == SlotKind::Off {
+                u.text(x + 8.0, y + 60.0, 1.0, "A: JOIN", ui::DIM);
+                continue;
+            }
+            let f = sl.pick.unwrap_or(sl.cursor);
+            let ready = sl.pick.is_some() || sl.kind == SlotKind::Cpu;
+            u.text(x + 8.0, y + 40.0, 1.0, ROSTER[f].1, if ready { ui::WHITE } else { ui::GREY });
+            u.text(x + 8.0, y + 56.0, 1.0, if sl.pick.is_some() { "READY" } else if sl.kind == SlotKind::Cpu { "(CURSOR)" } else { "CHOOSING..." }, if ready { ui::GREEN } else { ui::DIM });
+            if rules.teams {
+                u.text(x + 8.0, y + 76.0, 1.0, &format!("TEAM {}", TEAM_NAMES[sl.team as usize]), col);
+            } else {
+                u.text(x + 8.0, y + 76.0, 1.0, &format!("COSTUME {}", sl.color + 1), ui::GREY);
+            }
+            if !ROSTER[f].3.is_empty() {
+                // e.g. Jigglypuff: two lines of the note
+                let n = ROSTER[f].3;
+                let (a, b) = n.split_at(n.find(" (").unwrap_or(n.len()));
+                u.text(x + 8.0, y + 100.0, 1.0, a, ui::RED);
+                u.text(x + 8.0, y + 112.0, 1.0, b.trim(), ui::RED);
+            }
         }
-        let hint = if pick[1].is_some() { "A / START: STAGE SELECT   B: BACK" } else { "STICK: MOVE   A: PICK   B: BACK" };
-        u.text(20.0, 452.0, 1.0, hint, ui::GREY);
+        let hint = if focus == 4 {
+            "RULES: UP/DOWN PICK  LEFT/RIGHT CHANGE  B: SLOTS  Z: NEXT"
+        } else {
+            "A PICK  B BACK  X HMN/CPU/NA  Y COSTUME/TEAM  L/R CPU LV  Z: NEXT"
+        };
+        u.text(16.0, 410.0, 1.0, hint, ui::GREY);
+        match blocker {
+            None => u.text(16.0, 428.0, 1.0, "START: STAGE SELECT", ui::YELLOW),
+            Some(b) => u.text(16.0, 428.0, 1.0, b, ui::DIM),
+        }
     }
-
 
     fn draw_results(&mut self) {
         self.backdrop([30, 20, 60, 255], [4, 4, 14, 255]);
         let o = self.outcome.clone();
         let u = &mut self.ui;
-        u.text_centered_shadow(320.0, 30.0, 4.0, "RESULTS", ui::WHITE);
-        let head = match o.winner {
-            Some(w) => format!("{} WINS", o.names[w]),
-            None => "DRAW".into(),
+        u.text_centered_shadow(320.0, 20.0, 4.0, "RESULTS", ui::WHITE);
+        let head = match o.winner.and_then(|w| o.rows[w].as_ref().map(|r| (w, r))) {
+            Some((_, r)) if o.teams => format!("{} TEAM WINS", TEAM_NAMES[r.team as usize]),
+            Some((_, r)) => format!("{} WINS", r.name),
+            None => "NO CONTEST".into(),
         };
-        u.text_centered_shadow(320.0, 90.0, 3.0, &head, ui::YELLOW);
-        for i in 0..2 {
-            let x = 60.0 + i as f32 * 280.0;
-            let col = if i == 0 { ui::RED } else { ui::CYAN };
-            u.rect(x, 150.0, 240.0, 170.0, [16, 16, 30, 230]);
-            u.frame(x, 150.0, 240.0, 170.0, 3.0, if o.winner == Some(i) { ui::YELLOW } else { col });
-            u.text(x + 14.0, 164.0, 2.0, &format!("P{} {}", i + 1, o.names[i]), col);
-            u.text(x + 14.0, 210.0, 2.0, &format!("FALLS   {}", o.falls[i]), ui::WHITE);
-            u.text(x + 14.0, 245.0, 2.0, &format!("DAMAGE  {}%", o.percent[i].max(0.0) as i32), ui::WHITE);
+        u.text_centered_shadow(320.0, 70.0, 3.0, &head, ui::YELLOW);
+        u.text_centered(320.0, 104.0, 1.0, &o.why, ui::GREY);
+        for (i, r) in o.rows.iter().enumerate() {
+            let x = 16.0 + i as f32 * 154.0;
+            let col = SLOT_COLS[i];
+            let Some(r) = r else {
+                u.rect(x, 130.0, 146.0, 190.0, [10, 10, 16, 180]);
+                continue;
+            };
+            let winner = o.winner.is_some_and(|w| if o.teams { o.rows[w].as_ref().is_some_and(|q| q.team == r.team) } else { w == i });
+            u.rect(x, 130.0, 146.0, 190.0, [16, 16, 30, 230]);
+            u.frame(x, 130.0, 146.0, 190.0, 3.0, if winner { ui::YELLOW } else { col });
+            u.text(x + 10.0, 142.0, 2.0, &format!("P{}", i + 1), col);
+            u.text(x + 46.0, 146.0, 1.0, if r.cpu { "CPU" } else { "HMN" }, ui::GREY);
+            u.text(x + 10.0, 172.0, 1.0, &r.name, ui::WHITE);
+            if o.teams {
+                u.text(x + 10.0, 188.0, 1.0, &format!("TEAM {}", TEAM_NAMES[r.team as usize]), ui::GREY);
+            }
+            u.text(x + 10.0, 210.0, 1.0, &format!("KOS      {}", r.kos), ui::WHITE);
+            u.text(x + 10.0, 230.0, 1.0, &format!("FALLS    {}", r.falls), ui::WHITE);
+            if o.stock {
+                u.text(x + 10.0, 250.0, 1.0, &format!("STOCKS   {}", r.stocks), ui::WHITE);
+            }
+            u.text(x + 10.0, 270.0, 1.0, &format!("DAMAGE   {}%", r.percent.max(0.0) as i32), ui::WHITE);
         }
         let secs = o.frames.max(0) / 60;
         u.text_centered(320.0, 345.0, 2.0, &format!("TIME  {}:{:02}", secs / 60, secs % 60), ui::GREY);
-        if o.why != "TIME!" {
-            u.text_centered(320.0, 385.0, 1.0, &o.why.chars().take(78).collect::<String>(), ui::DIM);
-        }
-        u.text(20.0, 452.0, 1.0, "A: CHARACTER SELECT   START: MAIN MENU", ui::GREY);
+        u.text(20.0, 452.0, 1.0, "A: CHARACTER SELECT (REMATCH: START THERE)   START: MAIN MENU", ui::GREY);
     }
 
     /// Write the pending screenshot (the presenter's last frame), if any.
@@ -913,7 +1355,7 @@ pub fn play(args: &[String]) -> ExitCode {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let has = |k: &str| args.iter().any(|a| a == k);
     let Some(iso) = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
-        eprintln!("usage: melee play --iso DISC.iso [--time-secs N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro]");
+        eprintln!("usage: melee play --iso DISC.iso [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--match a,b/cpu9,..,STAGE] [--quit-after-matches N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro]");
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
@@ -931,7 +1373,13 @@ pub fn play(args: &[String]) -> ExitCode {
     let game = Play {
         iso,
         mods_dir: get("--mods"),
-        time_secs: get("--time-secs").and_then(|s| s.parse().ok()).unwrap_or(180),
+        rules: Rules {
+            stock: get("--stocks").is_some(),
+            stocks: get("--stocks").and_then(|s| s.parse().ok()).unwrap_or(4).clamp(1, 99),
+            time_secs: get("--time-secs").and_then(|s| s.parse().ok()).unwrap_or(120).max(1),
+            items: get("--items").map_or(0, |v| ITEM_NAMES.iter().position(|n| n.eq_ignore_ascii_case(&v.replace('_', " "))).unwrap_or(3) as i32),
+            teams: has("--teams"),
+        },
         golden_pads: has("--golden-pads"),
         scene: Scene::Opening,
         age: 0,
@@ -941,12 +1389,14 @@ pub fn play(args: &[String]) -> ExitCode {
         main_sel: 1,
         vs_sel: 0,
         toast: None,
-        cursor: [0, 1],
-        pick: [None, None],
+        slots: [Slot::new(SlotKind::Hmn, 7, 0), Slot::new(SlotKind::Hmn, 10, 1), Slot::new(SlotKind::Off, 9, 0), Slot::new(SlotKind::Off, 24, 1)],
+        focus: 0,
+        rule_row: 0,
         sss_sel: 0,
         setup: None,
         em: None,
-        engine_used: false,
+        spare: None,
+        menu_rng: 0x2545_F491,
         headless: false,
         outcome: Outcome::default(),
         matches_played: 0,
@@ -958,6 +1408,7 @@ pub fn play(args: &[String]) -> ExitCode {
         shot_pending: None,
         pause_age: 0,
         quit_at_results: has("--quit-at-results"),
+        quit_after: get("--quit-after-matches").and_then(|s| s.parse().ok()).unwrap_or(1),
         max_frames: get("--max-frames").and_then(|s| s.parse().ok()),
         skip_intro: has("--skip-intro") || crate::cfg::flag("skip_intro", false),
         quit: false,
@@ -972,21 +1423,38 @@ pub fn play(args: &[String]) -> ExitCode {
         shot_ages: get("--shot-ages").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
     };
     let mut game = game;
-    // `--match falcon,fox,GrNLa.dat`: skip the menus (a hands-off test of the match path)
+    // `--match falcon,fox[,fox,...][,STAGE]`: skip the menus (a hands-off test of the match path). Fighters as the scene
+    // names them (`falcon`, `jigglypuff`, ...; `name/cpuN` for a CPU), the stage by its external id or display name.
     if let Some(spec) = get("--match") {
-        let parts: Vec<&str> = spec.split(',').collect();
-        let f = |n: &str| ROSTER.iter().position(|r| r.0 == n);
-        let st = parts.get(2).and_then(|n| STAGES.iter().position(|s| s.0 == *n)).unwrap_or(0);
-        match (parts.first().and_then(|n| f(n)), parts.get(1).and_then(|n| f(n))) {
-            (Some(a), Some(b)) => {
-                game.setup = Some(MatchSetup { fighters: [a, b], stage: st });
-                game.scene = Scene::Loading;
-            }
-            _ => {
-                eprintln!("play: --match NAME,NAME[,STAGE.dat]: unknown fighter");
+        let mut slots = [Slot::new(SlotKind::Off, 0, 0); 4];
+        let mut stage = 0;
+        let mut n = 0;
+        for part in spec.split(',') {
+            let (name, kind) = part.split_once('/').unwrap_or((part, ""));
+            if let Some(f) = ROSTER.iter().position(|r| r.0 == name) {
+                if n < 4 {
+                    slots[n] = Slot::new(SlotKind::Hmn, f, (n % 2) as u8);
+                    slots[n].pick = Some(f);
+                    if let Some(l) = kind.strip_prefix("cpu") {
+                        slots[n].kind = SlotKind::Cpu;
+                        slots[n].level = l.parse().unwrap_or(9).clamp(1, 9);
+                    }
+                    n += 1;
+                }
+            } else if let Some(st) = STAGES.iter().position(|s| s.0.to_string() == part || s.1.eq_ignore_ascii_case(part) || (part == "GrNLa.dat" && s.0 == 32) || (part == "GrNBa.dat" && s.0 == 31)) {
+                stage = st;
+            } else {
+                eprintln!("play: --match: unknown fighter or stage '{part}'");
                 return ExitCode::from(2);
             }
         }
+        if n < 2 {
+            eprintln!("play: --match NAME,NAME[,NAME..][,STAGE]: two fighters or more");
+            return ExitCode::from(2);
+        }
+        game.slots = slots;
+        game.setup = Some(MatchSetup { slots, rules: game.rules, stage });
+        game.scene = Scene::Loading;
     }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
@@ -1055,4 +1523,39 @@ pub fn play(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+/// (working set, private bytes) of this process (`K32GetProcessMemoryInfo`); zeros elsewhere.
+#[cfg(windows)]
+fn proc_mem() -> (usize, usize) {
+    #[repr(C)]
+    #[derive(Default)]
+    struct Counters {
+        cb: u32,
+        page_faults: u32,
+        peak_ws: usize,
+        ws: usize,
+        peak_paged: usize,
+        paged: usize,
+        peak_nonpaged: usize,
+        nonpaged: usize,
+        pagefile: usize,
+        peak_pagefile: usize,
+        private: usize,
+    }
+    extern "system" {
+        fn GetCurrentProcess() -> *mut core::ffi::c_void;
+        fn K32GetProcessMemoryInfo(p: *mut core::ffi::c_void, c: *mut Counters, cb: u32) -> i32;
+    }
+    let mut c = Counters { cb: core::mem::size_of::<Counters>() as u32, ..Default::default() };
+    unsafe {
+        if K32GetProcessMemoryInfo(GetCurrentProcess(), &mut c, c.cb) == 0 {
+            return (0, 0);
+        }
+    }
+    (c.ws, c.private)
+}
+#[cfg(not(windows))]
+fn proc_mem() -> (usize, usize) {
+    (0, 0)
 }

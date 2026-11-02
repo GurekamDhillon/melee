@@ -1,0 +1,102 @@
+# melee play: CSS -> 4-CPU match on Brinstar -> results -> CSS -> second match (teams, stock) on Onett -> results.
+# Run (tools/rust-port/play/rematch.sh): melee play --skip-intro --time-secs 60 --quit-at-results --quit-after-matches 2 --max-frames 40000
+# (MELEE_PAD_SCRIPT=this file, MELEE_PAD_IGNORE_ADAPTER=1, MELEE_WINDOW_UNFOCUSED=1)
+# title -> main menu -> VS -> CSS
+40 0000 0 0
+3 1000 0 0
+300 0000 0 0
+4 0000 0 -100
+20 0000 0 0
+10 0100 0 0
+100 0000 0 0
+10 0100 0 0
+200 0000 0 0
+# CSS: P1..P4 -> CPU 9 (X on P1, P2; X X on the closed P3, P4), Z to each slot, then the rules bar
+3 0400 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0400 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0400 0 0
+12 0000 0 0
+3 0400 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0400 0 0
+12 0000 0 0
+3 0400 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+# rules: down twice to ITEMS, right: VERY LOW
+3 0004 0 0
+12 0000 0 0
+3 0004 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+# START: stage select; down + right x3 = BRINSTAR (index 8); A
+3 1000 0 0
+12 0000 0 0
+30 0000 0 0
+3 0004 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+# the match (1 minute time match, the game's own TIME!) and the results
+4400 0000 0 0
+# results: A -> CSS (picks and rules kept)
+3 0100 0 0
+12 0000 0 0
+60 0000 0 0
+# CSS again: Z x4 to the rules, up twice to MODE: STOCK; down, left x3: 1 stock; down x2, right: TEAMS ON
+3 0010 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0010 0 0
+12 0000 0 0
+3 0008 0 0
+12 0000 0 0
+3 0008 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0004 0 0
+12 0000 0 0
+3 0001 0 0
+12 0000 0 0
+3 0001 0 0
+12 0000 0 0
+3 0001 0 0
+12 0000 0 0
+3 0004 0 0
+12 0000 0 0
+3 0004 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+# START: SSS (still on BRINSTAR); right x2 = ONETT; A
+3 1000 0 0
+12 0000 0 0
+30 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0002 0 0
+12 0000 0 0
+3 0100 0 0
+12 0000 0 0
+# the second match: 2v2 teams, 1 stock, items very low, to GAME!
+30000 0000 0 0

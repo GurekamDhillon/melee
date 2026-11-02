@@ -49,6 +49,8 @@ struct Owned {
     ptr: *mut u8,
     len: usize,
     free: unsafe fn(*mut u8, usize),
+    ty: &'static str,
+    bytes: usize,
 }
 
 /// The native objects decoded from one archive. Pointers inside them point into this arena, so
@@ -58,6 +60,18 @@ pub struct GcArena {
 }
 
 impl GcArena {
+    /// Diagnostics: native bytes by element type, largest first.
+    pub fn bytes_by_type(&self) -> Vec<(&'static str, usize, usize)> {
+        let mut m: HashMap<&'static str, (usize, usize)> = HashMap::new();
+        for o in &self.owned {
+            let e = m.entry(o.ty).or_default();
+            e.0 += 1;
+            e.1 += o.bytes;
+        }
+        let mut v: Vec<_> = m.into_iter().map(|(k, (n, b))| (k, n, b)).collect();
+        v.sort_unstable_by(|a, b| b.2.cmp(&a.2));
+        v
+    }
     /// Number of separate allocations (objects, arrays, strings).
     pub fn len(&self) -> usize {
         self.owned.len()
@@ -95,7 +109,12 @@ unsafe fn fill<T: GcDecode>(d: &mut GcDecoder<'_>, target: u32, dst: *mut u8) {
 /// Records decoded per entry of a `T**` table of arrays whose length is not in the data.
 pub const MAX_TABLE_ARRAY: usize = 64;
 
+/// Issues a decoder keeps (see [`GcDecoder::issue`]).
+pub const MAX_ISSUES: usize = 256;
+
 pub struct GcDecoder<'a> {
+    /// Issues past [`MAX_ISSUES`] (counted, not kept).
+    pub dropped_issues: u64,
     data: &'a [u8],
     relocs: &'a HashSet<u32>,
     memo: HashMap<(u32, TypeId), *mut u8>,
@@ -124,7 +143,7 @@ impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
-        Self { data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+        Self { dropped_issues: 0, data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -194,7 +213,7 @@ impl<'a> GcDecoder<'a> {
             .collect();
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T>, ty: core::any::type_name::<*mut T>(), bytes: core::mem::size_of::<*mut T>() * len });
         self.memo.insert(key, p);
         p as *mut *mut T
     }
@@ -240,7 +259,7 @@ impl<'a> GcDecoder<'a> {
             .collect();
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T>, ty: core::any::type_name::<*mut T>(), bytes: core::mem::size_of::<*mut T>() * len });
         self.memo.insert(key, p);
         p as *mut *mut T
     }
@@ -307,7 +326,7 @@ impl<'a> GcDecoder<'a> {
             .collect();
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T>, ty: core::any::type_name::<*mut T>(), bytes: core::mem::size_of::<*mut T>() * len });
         self.memo.insert(key, p);
         p as *mut *mut T
     }
@@ -344,7 +363,7 @@ impl<'a> GcDecoder<'a> {
             .collect();
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T>, ty: core::any::type_name::<*mut T>(), bytes: core::mem::size_of::<*mut T>() * len });
         self.memo.insert(key, p);
         p as *mut *mut T
     }
@@ -361,8 +380,22 @@ impl<'a> GcDecoder<'a> {
         p as *mut T
     }
 
-    /// Record something the bytes could not say.
+    /// Whether another issue would still be kept (callers skip formatting the message when not).
+    pub fn wants_issue(&mut self) -> bool {
+        if self.issues.len() < MAX_ISSUES {
+            return true;
+        }
+        self.dropped_issues += 1;
+        false
+    }
+
+    /// Record something the bytes could not say (the first [`MAX_ISSUES`] are kept; the rest only counted:
+    /// one bad table once produced tens of millions of them, gigabytes of strings).
     pub fn issue(&mut self, s: String) {
+        if self.issues.len() >= MAX_ISSUES {
+            self.dropped_issues += 1;
+            return;
+        }
         let (ty, at) = self.cur;
         let ty = ty.rsplit("::").next().unwrap_or(ty);
         self.issues.push(format!("{s} (in {ty} @ {at:#x})"));
@@ -373,7 +406,7 @@ impl<'a> GcDecoder<'a> {
         match self.data.get(a..a + N) {
             Some(b) => b.try_into().unwrap(),
             None => {
-                self.issue(format!("read of {N} bytes at {at:#x} past the data block"));
+                if self.wants_issue() { self.issue(format!("read of {N} bytes at {at:#x} past the data block")); }
                 [0; N]
             }
         }
@@ -401,12 +434,12 @@ impl<'a> GcDecoder<'a> {
         let v = self.u32_at(at);
         if !self.relocs.contains(&at) {
             if v != 0 {
-                self.issue(format!("non-zero word {v:#x} at {at:#x} is not relocated; read as null"));
+                if self.wants_issue() { self.issue(format!("non-zero word {v:#x} at {at:#x} is not relocated; read as null")); }
             }
             return None;
         }
         if v as usize >= self.data.len() {
-            self.issue(format!("pointer at {at:#x} targets {v:#x}, past the data block"));
+            if self.wants_issue() { self.issue(format!("pointer at {at:#x} targets {v:#x}, past the data block")); }
             return None;
         }
         Some(v)
@@ -430,7 +463,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut T;
         }
         let p = Box::into_raw(Box::new(T::gc_zeroed())) as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len: 1, free: free_box::<T> });
+        self.arena.owned.push(Owned { ptr: p, len: 1, free: free_box::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * 1 });
         self.memo.insert(key, p);
         self.queue.push(Pending { target, dst: p, fill: fill::<T> });
         p as *mut T
@@ -440,7 +473,7 @@ impl<'a> GcDecoder<'a> {
     pub fn array<T: GcDecode>(&mut self, target: u32, n: usize) -> *mut T {
         let v: Vec<T> = (0..n).map(|i| T::gc_decode(self, target + i as u32 * T::GC_BYTES)).collect();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len: n, free: free_slice::<T> });
+        self.arena.owned.push(Owned { ptr: p, len: n, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * n });
         p as *mut T
     }
 
@@ -483,7 +516,7 @@ impl<'a> GcDecoder<'a> {
         let v: Vec<*mut T> = (0..=n).map(|i| self.ptr::<T>(t + 4 * i)).collect();
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut *mut T as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<*mut T>, ty: core::any::type_name::<*mut T>(), bytes: core::mem::size_of::<*mut T>() * len });
         self.memo.insert(key, p);
         p as *mut *mut T
     }
@@ -499,7 +532,7 @@ impl<'a> GcDecoder<'a> {
             Some(i) => rest[..=i].to_vec(),
             None => {
                 let v = rest.to_vec();
-                self.issue(format!("string at {target:#x} has no NUL before the end of data"));
+                if self.wants_issue() { self.issue(format!("string at {target:#x} has no NUL before the end of data")); }
                 v
             }
         };
@@ -508,7 +541,7 @@ impl<'a> GcDecoder<'a> {
         }
         let len = v.len();
         let p = Box::into_raw(v.into_boxed_slice()) as *mut u8;
-        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<u8> });
+        self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<u8>, ty: core::any::type_name::<u8>(), bytes: core::mem::size_of::<u8>() * len });
         self.memo.insert(key, p);
         p
     }
@@ -525,6 +558,10 @@ impl<'a> GcDecoder<'a> {
     pub fn finish(mut self) -> (GcArena, Vec<String>) {
         self.run();
         let arena = core::mem::replace(&mut self.arena, GcArena { owned: Vec::new() });
+        if self.dropped_issues > 0 {
+            let n = self.dropped_issues;
+            self.issues.push(format!("... and {n} more issues (not kept)"));
+        }
         (arena, core::mem::take(&mut self.issues))
     }
 }

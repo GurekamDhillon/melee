@@ -76,6 +76,12 @@ unsafe fn extent(p: usize, cap: usize) -> usize {
     0
 }
 
+/// Diagnostics: (entries, bytes) of the copied game-memory cache.
+pub fn data_cache_stats() -> (usize, usize) {
+    let o = objs();
+    (o.data.len(), o.data.values().map(|d| d.len()).sum())
+}
+
 /// The bytes at `p` as the shared data the shim hands to the renderer (cached by address and length).
 unsafe fn data_at(p: *const c_void, want: usize) -> Option<GxData> {
     if p.is_null() {

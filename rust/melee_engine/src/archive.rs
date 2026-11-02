@@ -44,6 +44,8 @@ pub struct ArchiveImage {
     _reloc: Vec<HSD_ArchiveRelocationInfo>,
     _public: Vec<HSD_ArchivePublicInfo>,
     _extern: Vec<HSD_ArchiveExternInfo>,
+    /// Diagnostics: game-arena bytes the parse left live (data copy, tables, decoded objects).
+    pub cost: usize,
 }
 
 impl ArchiveImage {
@@ -86,6 +88,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         return -1;
     }
     crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
+    let live0 = crate::arena::live_bytes();
     // Parse (and validate) the untouched file first; the relocation below rewrites it.
     let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
     let h = dat.header;
@@ -128,6 +131,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         _reloc: reloc,
         _public: public,
         _extern: externs,
+        cost: 0,
     };
     if h.nb_reloc != 0 {
         (*archive).reloc_info = image._reloc.as_mut_ptr();
@@ -185,9 +189,16 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
                 None => {}
             }
         }
+        let l1 = crate::arena::live_bytes();
         let (arena, issues) = d.finish();
+        let l2 = crate::arena::live_bytes();
         crate::dat_custom::fix_articles();
+        let l3 = crate::arena::live_bytes();
         crate::dat_custom::fix_dynamics();
+        let l4 = crate::arena::live_bytes();
+        if std::env::var_os("MELEE_ARCHIVE_LOG").is_some() {
+            eprintln!("engine:   phases KB: roots {} finish {} articles {} dynamics {}", (l1 - live0) >> 10, (l2 as isize - l1 as isize) >> 10, (l3 as isize - l2 as isize) >> 10, (l4 as isize - l3 as isize) >> 10);
+        }
         image.roots = roots;
         image._arena = Some(arena);
         if std::env::var_os("MELEE_DAT_ISSUES").is_some() {
@@ -208,6 +219,20 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         }
     }
 
+    image.cost = crate::arena::live_bytes().saturating_sub(live0);
+    if std::env::var_os("MELEE_ARCHIVE_LOG").is_some() {
+        let name = image.dat.publics.iter().map(|p| p.name.as_str()).take(3).collect::<Vec<_>>().join(",");
+        eprintln!("engine: parsed {name} raw {} KB, data copy {} KB, arena cost {} KB", file_size >> 10, image.dat.data.len() >> 10, image.cost >> 10);
+        if image.cost > 8 << 20 {
+            if let Some(a) = &image._arena {
+                let all = a.bytes_by_type();
+                eprintln!("engine:   decoded total {} KB in {} allocations", all.iter().map(|x| x.2).sum::<usize>() >> 10, all.iter().map(|x| x.1).sum::<usize>());
+                for (t, n, b) in all.into_iter().take(8) {
+                    eprintln!("engine:   {t}: {n} allocations, {} KB", b >> 10);
+                }
+            }
+        }
+    }
     if unsafe { RECLAIM } {
         reclaim_overlapping(archive as usize, src as usize, file_size);
     }
@@ -239,6 +264,13 @@ fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     if std::env::var_os("MELEE_RECLAIM_LOG").is_some() && (before != h.retired.len() || !dead.is_empty()) {
         eprintln!("engine: reclaimed {} archive image(s) under {raw:#x}+{len:#x}", before - h.retired.len() + dead.len());
     }
+}
+
+/// Diagnostics: (live images, retired images, raw bytes, arena bytes of their parses).
+pub fn stats() -> (usize, usize, usize, usize) {
+    let h = Host::get();
+    let all = || h.archives.values().chain(h.retired.iter());
+    (h.archives.len(), h.retired.len(), all().map(|i| i.raw_len).sum(), all().map(|i| i.cost).sum())
 }
 
 /// `host_public_address`: the native root of public `symbols` (null when the archive has no such

@@ -475,7 +475,7 @@ impl Play {
     /// The process's memory (working set, private bytes) in the log: checks that match after match does not grow.
     fn frame_mem(&self, what: &str) {
         let (ws, private) = proc_mem();
-        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024));
+        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB (live {} KB), system heap {} KB, gx data cache {:?}, archives (live, retired, raw KB, arena KB) {:?}", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024, melee_engine::arena::live_bytes() / 1024, crate::SYS_LIVE.load(std::sync::atomic::Ordering::Relaxed) / 1024, { let (n, b) = melee_engine::gxbridge::data_cache_stats(); (n, b >> 20) }, { let (a, r, raw, c) = melee_engine::archive::stats(); (a, r, raw >> 10, c >> 10) }));
     }
 
     fn tick_scene(&mut self) {

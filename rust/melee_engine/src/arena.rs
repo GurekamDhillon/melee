@@ -230,6 +230,19 @@ pub fn note_miss(l: Layout) {
     }
 }
 
+/// Diagnostics: live bytes in blocks handed out (by size class, so rounded up).
+pub fn live_bytes() -> usize {
+    unsafe {
+        (0..NCLASS)
+            .filter(|&c| LIVE[c] > 0)
+            .map(|c| {
+                let sz = if c < 8 { (c + 1) * 16 } else { let k = 7 + (c - 8) / 8; let sub = (c - 8) % 8 + 1; (1usize << k) + sub * (1usize << (k - 3)) };
+                sz * LIVE[c] as usize
+            })
+            .sum()
+    }
+}
+
 /// Diagnostics: bytes bumped, bytes sitting on the free lists, and the five classes holding most free bytes (class size, blocks).
 pub fn stats() -> (usize, usize, Vec<(usize, usize)>) {
     unsafe {

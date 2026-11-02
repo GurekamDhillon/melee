@@ -155,6 +155,12 @@ fn selftest() {
 ///   backtrace of the reader) instead of only when the heap layout happens to put the end of a block on a page edge.
 /// * `MELEE_LEAK_ALLOC=1`: `dealloc` is a no-op, to tell a use-after-free from other memory bugs.
 struct DebugAlloc;
+/// Live bytes the process allocator serves from the system heap (outside the game arena); diagnostics for `play`'s mem lines.
+pub static SYS_LIVE: std::sync::atomic::AtomicIsize = std::sync::atomic::AtomicIsize::new(0);
+#[inline]
+fn sys_add(n: isize) {
+    SYS_LIVE.fetch_add(n, std::sync::atomic::Ordering::Relaxed);
+}
 static LEAK_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static GUARD_ALLOC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 static GUARD_MIN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(4096);
@@ -191,9 +197,22 @@ mod guard {
         VirtualFree(base, 0, 0x8000);
     }
 }
+/// `MELEE_BIG_ALLOC=<bytes>`: print a backtrace for each game-arena allocation at least that big (diagnostics).
+static BIG_MIN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
+static IN_TRACE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+fn big_alloc_trace(n: usize) {
+    use std::sync::atomic::Ordering::Relaxed;
+    if n < BIG_MIN.load(Relaxed) || IN_TRACE.swap(true, Relaxed) {
+        return;
+    }
+    eprintln!("big alloc {n} bytes:
+{}", std::backtrace::Backtrace::force_capture());
+    IN_TRACE.store(false, Relaxed);
+}
 unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
     unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
         if melee_engine::arena::active() {
+            big_alloc_trace(l.size());
             let p = melee_engine::arena::alloc(l);
             if !p.is_null() {
                 return p;
@@ -204,6 +223,7 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return guard::alloc(l.size(), l.align());
         }
+        sys_add(l.size() as isize);
         std::alloc::System.alloc(l)
     }
     unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
@@ -217,6 +237,7 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return guard::free(p);
         }
+        sys_add(-(l.size() as isize));
         std::alloc::System.dealloc(p, l)
     }
     unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
@@ -231,6 +252,7 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if l.size() >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return guard::alloc(l.size(), l.align()); // VirtualAlloc pages are zeroed
         }
+        sys_add(l.size() as isize);
         std::alloc::System.alloc_zeroed(l)
     }
     unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
@@ -254,7 +276,11 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             }
             q
         } else {
-            std::alloc::System.realloc(p, l, n)
+            let q = std::alloc::System.realloc(p, l, n);
+            if !q.is_null() {
+                sys_add(n as isize - l.size() as isize);
+            }
+            q
         }
     }
 }
@@ -270,6 +296,9 @@ fn main() -> ExitCode {
             GUARD_MIN.store(n, std::sync::atomic::Ordering::Relaxed);
         }
         GUARD_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+    if let Some(n) = std::env::var("MELEE_BIG_ALLOC").ok().and_then(|v| v.parse().ok()) {
+        BIG_MIN.store(n, std::sync::atomic::Ordering::Relaxed);
     }
     let _prof = prof::from_env();
     crash::install();

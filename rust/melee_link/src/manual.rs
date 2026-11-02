@@ -51,6 +51,8 @@ pub fn install() {
         melee_fighter::tu::ftcolanim::ext::FTACTION_80073108 = Some(|g, c| unsafe { melee_fighter::tu::ftaction::ftAction_80073108(g, &mut *c) });
         // `grAnime_801C752C_fp(jobj, a, b, fn, n, flags)`: the variadic `grAnime_801C752C` with its single `u32` vararg (the flags)
         melee_world::tu_ext::HOOK_grAnime_801C752C = Some(|jobj, a, b, f, n, flags| unsafe { melee_world::tu::granime::grAnime_801C752C(jobj, a, b, f, n, &[flags as u64]) });
+        // `HSD_JObjResetRST(jobj, joint)`: the pointer-tree form (tu/jobj.rs; the model's `JObjTree::reset_rst` is the generic twin)
+        melee_world::tu::granime::ext::HSD_JOBJRESETRST = Some(|j, jt| unsafe { melee_runtime::tu::jobj::HSD_JObjResetRST(j as _, jt as _) });
         // ftCo_DownReflect_Coll: `if (ft_80081DD4(gobj))`, the bool the crate hook models as unit
         melee_fighter::tu::ftco_800c7ca0::FT_80081DD4_BOOL = Some(|g| melee_fighter::tu::ft_081b::ft_80081dd4(g));
         // the hooks.rs defaults below are the legacy-state ports (`1.0`, `crate::player`); the engine runs the tu bodies

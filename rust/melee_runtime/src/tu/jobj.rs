@@ -486,8 +486,6 @@ pub fn HSD_JObjClearFlags<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjT
 pub fn HSD_JObjClearFlagsAll<D: Copy + PartialEq, R: Copy + PartialEq>(t:&mut JObjTree<D,R>,j:Option<JObjId>,f:u32)->(){ melee_core::ct!("HSD_JObjClearFlagsAll");t.clear_flags_all(j,f)}
 pub fn HSD_JObjWalkTree<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:Option<JObjId>,cb:&mut dyn FnMut(JObjId,u32))->(){ melee_core::ct!("HSD_JObjWalkTree");t.walk_tree(j,cb)}
 pub fn HSD_JObjWalkTree0<D: Copy + PartialEq, R: Copy + PartialEq>(t:&JObjTree<D,R>,j:JObjId,cb:&mut dyn FnMut(JObjId,u32))->(){ melee_core::ct!("HSD_JObjWalkTree0");t.walk_tree0(j,cb)}
-pub fn JObjResetRST<D: Copy + PartialEq, R: Copy + PartialEq,S:JointSource>(t:&mut JObjTree<D,R>,j:Option<JObjId>,s:&S,d:Option<S::Id>){ melee_core::ct!("JObjResetRST");t.reset_rst_one(j,s,d)}
-pub fn HSD_JObjResetRST<D: Copy + PartialEq, R: Copy + PartialEq,S:JointSource>(t:&mut JObjTree<D,R>,j:Option<JObjId>,s:&S,d:Option<S::Id>){ melee_core::ct!("HSD_JObjResetRST");t.reset_rst(j,s,d)}
 pub fn HSD_JObjMakeMatrix_owned<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjMakeMatrix");t.make_matrix(h,j)}
 pub fn HSD_JObjSetupMatrixSub_owned<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:JObjId)->(){ melee_core::ct!("HSD_JObjSetupMatrixSub");t.setup_matrix_sub(h,j)}
 pub fn HSD_JObjRemove<D: Copy + PartialEq, R: Copy + PartialEq,H:JObjHost<D,R>>(t:&mut JObjTree<D,R>,h:&mut H,j:Option<JObjId>)->Option<JObjId>{ melee_core::ct!("HSD_JObjRemove");t.remove(h,j)}
@@ -547,3 +545,38 @@ pub fn jobj_get_effector<D: Copy + PartialEq, R: Copy + PartialEq>(t: &JObjTree<
     }
     None
 }
+
+/// `JObjResetRST` (jobj.c): reset the SRT of a joint-pointer JObj from its `HSD_Joint`.
+pub unsafe fn JObjResetRST(jobj: *mut melee_types::HSD_JObj, joint: *mut melee_types::HSD_Joint) {
+    melee_core::ct!("JObjResetRST");
+    if jobj.is_null() || joint.is_null() {
+        return;
+    }
+    (*jobj).rotate.x = (*joint).rotation.x;
+    (*jobj).rotate.y = (*joint).rotation.y;
+    (*jobj).rotate.z = (*joint).rotation.z;
+    (*jobj).scale = (*joint).scale;
+    (*jobj).translate = (*joint).position;
+    if (*jobj).flags & (melee_types::JOBJ_MTX_INDEP_SRT as u32) == 0 {
+        super::jobj_ptr::HSD_JObjSetMtxDirty(jobj);
+    }
+}
+
+/// `HSD_JObjResetRST` (jobj.c): `JObjResetRST` down the JObj / Joint trees (siblings walked in step).
+pub unsafe fn HSD_JObjResetRST(jobj: *mut melee_types::HSD_JObj, joint: *mut melee_types::HSD_Joint) {
+    melee_core::ct!("HSD_JObjResetRST");
+    if jobj.is_null() || joint.is_null() {
+        return;
+    }
+    JObjResetRST(jobj, joint);
+    if (*jobj).flags & (melee_types::JOBJ_INSTANCE as u32) == 0 {
+        let mut child_jobj = (*jobj).child;
+        let mut child_joint = (*joint).child;
+        while !child_jobj.is_null() {
+            HSD_JObjResetRST(child_jobj, child_joint);
+            child_jobj = (*child_jobj).next;
+            child_joint = if !child_joint.is_null() { (*child_joint).next } else { core::ptr::null_mut() };
+        }
+    }
+}
+

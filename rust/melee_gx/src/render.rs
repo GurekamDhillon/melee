@@ -17,6 +17,8 @@ use crate::resources::GxData;
 use crate::texture;
 use std::collections::HashMap;
 
+type FxMap<K, V> = HashMap<K, V, rustc_hash::FxBuildHasher>;
+
 pub const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 pub const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
 const IMMEDIATE_SIZE: u32 = 64;
@@ -243,18 +245,77 @@ pub struct Renderer {
     bgl_uniform: wgpu::BindGroupLayout,
     bgl_textures: wgpu::BindGroupLayout,
     layout: wgpu::PipelineLayout,
-    pipelines: HashMap<PipelineKey, wgpu::RenderPipeline>,
-    wgsl_hashes: HashMap<crate::shader::ShaderConfig, u64>,
-    tex_bgs: HashMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
-    samplers: HashMap<SamplerKey, wgpu::Sampler>,
-    textures: HashMap<TexKey, TexEntry>,
+    pipelines: FxMap<PipelineKey, wgpu::RenderPipeline>,
+    wgsl_hashes: FxMap<crate::shader::ShaderConfig, u64>,
+    tex_bgs: FxMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
+    samplers: FxMap<SamplerKey, wgpu::Sampler>,
+    textures: FxMap<TexKey, TexEntry>,
     empty_view: wgpu::TextureView,
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
     pub shader_errors: Vec<String>,
     blit: HashMap<wgpu::TextureFormat, (wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
     blit_sampler: Option<wgpu::Sampler>,
+    /// The last [`Renderer::prepare`]d frame: persistent GPU buffers, per-draw pipeline / bind group / offsets.
+    frame: FrameCache,
 }
+
+/// One draw of the prepared frame.
+struct PreparedDraw {
+    pipeline: Option<wgpu::RenderPipeline>,
+    tex_bg: Option<wgpu::BindGroup>,
+    imm: [u8; 64],
+    uoff: u32,
+    first_index: u32,
+    /// This draw owns its uniform block (false: it shares the previous draw's identical block).
+    owner: bool,
+}
+
+/// A GPU buffer reused across frames (grown to the next power of two when a frame needs more).
+struct GpuBuf {
+    buf: wgpu::Buffer,
+    cap: u64,
+}
+
+#[derive(Default)]
+struct FrameCache {
+    draws: Vec<PreparedDraw>,
+    vbuf: Vec<u8>,
+    abuf: Vec<u8>,
+    ibuf: Vec<u8>,
+    ubuf: Vec<u8>,
+    arr_max: FxMap<usize, usize>,
+    arr_off: FxMap<usize, u32>,
+    gv: Option<GpuBuf>,
+    ga: Option<GpuBuf>,
+    gi: Option<GpuBuf>,
+    gu: Option<GpuBuf>,
+    storage_bg: Option<wgpu::BindGroup>,
+    uniform_bg: Option<(wgpu::BindGroup, u64)>,
+    max_uniform: u64,
+    /// 0: `ubuf` must be refilled from the draws; 1: it holds their uniforms; 2: `fill` rewrote parts of it.
+    ubuf_state: u8,
+    /// The previous draw's pipeline config and its pipeline (consecutive draws mostly share one).
+    last_pipe: Option<(crate::shader::PipelineConfig, Option<wgpu::RenderPipeline>)>,
+}
+
+/// Make `slot` hold at least `size` bytes; true when the buffer was (re)created.
+fn ensure_buf(device: &wgpu::Device, slot: &mut Option<GpuBuf>, size: u64, usage: wgpu::BufferUsages, label: &str) -> bool {
+    if slot.as_ref().is_some_and(|b| b.cap >= size) {
+        return false;
+    }
+    let cap = size.next_power_of_two().max(4096);
+    let buf = device.create_buffer(&wgpu::BufferDescriptor { label: Some(label), size: cap, usage: usage | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+    *slot = Some(GpuBuf { buf, cap });
+    true
+}
+
+/// `MELEE_GX_PROF`: print per-frame renderer timings.
+fn prof() -> bool {
+    static PROF: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *PROF.get_or_init(|| std::env::var_os("MELEE_GX_PROF").is_some())
+}
+
 
 fn fnv(d: &[u8]) -> u64 {
     let mut h = 0xcbf29ce484222325u64;
@@ -444,16 +505,17 @@ impl Renderer {
             bgl_uniform,
             bgl_textures,
             layout,
-            pipelines: HashMap::new(),
-            wgsl_hashes: HashMap::new(),
-            tex_bgs: HashMap::new(),
-            samplers: HashMap::new(),
-            textures: HashMap::new(),
+            pipelines: FxMap::default(),
+            wgsl_hashes: FxMap::default(),
+            tex_bgs: FxMap::default(),
+            samplers: FxMap::default(),
+            textures: FxMap::default(),
             empty_view,
             empty_sampler,
             shader_errors: Vec::new(),
             blit: HashMap::new(),
             blit_sampler: None,
+            frame: FrameCache::default(),
         })
     }
 
@@ -654,164 +716,228 @@ impl Renderer {
     /// [`Renderer::render`] without the readback: clear, draw, submit (the EFB stays on the GPU
     /// for [`Renderer::blit_to`] / [`Renderer::read_color`]).
     pub fn render_frame(&mut self, state: &GxState, draws: &[DrawCmd]) {
-        let _t0 = std::time::Instant::now();
-        // Pack every draw's vertices, array snapshots and uniforms into three buffers.
-        let mut vbuf: Vec<u8> = Vec::new();
-        let mut abuf: Vec<u8> = Vec::new();
-        let mut ubuf: Vec<u8> = Vec::new();
-        let mut ibuf: Vec<u8> = Vec::new();
-        struct Prepared {
-            imm: [u8; 64],
-            uoff: u32,
-            ioff: u64,
-        }
-        let mut prep = Vec::with_capacity(draws.len());
+        self.prepare(state, draws);
+        self.draw_prepared(state, draws, None);
+    }
+
+    /// The per-frame work that does not depend on the uniforms: pack and upload every draw's vertices, array
+    /// snapshots and indices into the persistent buffers, look up its pipeline and texture bind group. A frame
+    /// presented several times (interpolation) is prepared once; [`Renderer::draw_prepared`] then only rewrites
+    /// the uniforms and records the pass.
+    pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
+        let t0 = std::time::Instant::now();
+        let mut fc = std::mem::take(&mut self.frame);
+        fc.vbuf.clear();
+        fc.abuf.clear();
+        fc.ibuf.clear();
+        fc.arr_max.clear();
+        fc.arr_off.clear();
+        fc.draws.clear();
         // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
         // Keyed by the snapshot's allocation; the upload covers the most any draw this frame needs.
-        let mut arr_max: HashMap<usize, usize> = HashMap::new();
         for a in draws.iter().flat_map(|d| d.arrays.iter().flatten()) {
             let n = (a.needed as usize).min(a.data.len());
-            let e = arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
+            let e = fc.arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
             *e = (*e).max(n);
         }
-        let mut arr_off: HashMap<usize, u32> = HashMap::new();
+        let mut uoff = 0u32;
+        let mut max_uniform = 16usize;
+        let mut prev_d: Option<&DrawCmd> = None;
         for d in draws {
             let mut imm = [0u32; 16];
-            imm[0] = vbuf.len() as u32;
+            imm[0] = fc.vbuf.len() as u32;
             imm[1] = d.current_pn_mtx;
-            vbuf.extend_from_slice(&d.verts);
-            while vbuf.len() % 4 != 0 {
-                vbuf.push(0);
-            }
+            fc.vbuf.extend_from_slice(&d.verts);
+            fc.vbuf.resize(fc.vbuf.len().next_multiple_of(4), 0);
             for (i, a) in d.arrays.iter().enumerate() {
                 if let Some(a) = a {
                     let k = a.data.as_ptr() as usize;
-                    let n = arr_max[&k];
-                    if let Some(&o) = arr_off.get(&k) {
+                    if let Some(&o) = fc.arr_off.get(&k) {
                         imm[4 + i] = o;
                         continue;
                     }
-                    imm[4 + i] = abuf.len() as u32;
-                    arr_off.insert(k, abuf.len() as u32);
-                    abuf.extend_from_slice(&a.data[..n]);
-                    while abuf.len() % 4 != 0 {
-                        abuf.push(0);
-                    }
-                    abuf.extend_from_slice(&[0; 4]);
+                    let n = fc.arr_max[&k];
+                    imm[4 + i] = fc.abuf.len() as u32;
+                    fc.arr_off.insert(k, fc.abuf.len() as u32);
+                    fc.abuf.extend_from_slice(&a.data[..n]);
+                    fc.abuf.resize(fc.abuf.len().next_multiple_of(4) + 4, 0);
                 }
             }
-            let uoff = ubuf.len() as u32;
-            ubuf.extend_from_slice(&d.uniform);
-            ubuf.resize(ubuf.len().div_ceil(UNIFORM_ALIGN as usize) * UNIFORM_ALIGN as usize, 0);
-            let ioff = ibuf.len() as u64;
+            let first_index = (fc.ibuf.len() / 2) as u32;
             for i in &d.indices {
-                ibuf.extend_from_slice(&i.to_le_bytes());
+                fc.ibuf.extend_from_slice(&i.to_le_bytes());
             }
-            while ibuf.len() % 4 != 0 {
-                ibuf.push(0);
-            }
+            fc.ibuf.resize(fc.ibuf.len().next_multiple_of(4), 0);
             let mut immb = [0u8; 64];
             for (k, w) in imm.iter().enumerate() {
                 immb[k * 4..k * 4 + 4].copy_from_slice(&w.to_le_bytes());
             }
-            prep.push(Prepared { imm: immb, uoff, ioff });
+            // Consecutive draws of one joint mostly carry identical uniform blocks: share one (same matrix slot and
+            // skinning, so an interpolating `fill` of the owner covers them all).
+            let share = prev_d.is_some_and(|p: &DrawCmd| {
+                p.current_pn_mtx == d.current_pn_mtx && p.config.shader.attrs[0] == d.config.shader.attrs[0] && p.uniform == d.uniform
+            });
+            if share {
+                let u = fc.draws.last().unwrap().uoff;
+                fc.draws.push(PreparedDraw { pipeline: None, tex_bg: None, imm: immb, uoff: u, first_index, owner: false });
+            } else {
+                fc.draws.push(PreparedDraw { pipeline: None, tex_bg: None, imm: immb, uoff, first_index, owner: true });
+                uoff += (d.uniform.len() as u32).next_multiple_of(UNIFORM_ALIGN as u32);
+                max_uniform = max_uniform.max(d.uniform.len());
+            }
+            prev_d = Some(d);
         }
-        let max_uniform = draws.iter().map(|d| d.uniform.len()).max().unwrap_or(16).max(16) as u64;
-        let max_uniform = max_uniform.div_ceil(16) * 16;
-        ubuf.resize(ubuf.len() + max_uniform as usize, 0);
-        for b in [&mut vbuf, &mut abuf, &mut ubuf, &mut ibuf] {
-            if b.len() < 256 {
-                b.resize(256, 0);
+        fc.max_uniform = (max_uniform as u64).next_multiple_of(16);
+        let ubytes = uoff as u64 + fc.max_uniform;
+        fc.ubuf.resize(ubytes as usize, 0);
+        fc.ubuf_state = 0;
+        let t1 = std::time::Instant::now();
+        let st = wgpu::BufferUsages::STORAGE;
+        let mut regroup = ensure_buf(&self.device, &mut fc.gv, fc.vbuf.len() as u64 + 4, st, "GX vbuf");
+        regroup |= ensure_buf(&self.device, &mut fc.ga, fc.abuf.len() as u64 + 4, st, "GX abuf");
+        ensure_buf(&self.device, &mut fc.gi, fc.ibuf.len() as u64 + 4, wgpu::BufferUsages::INDEX, "GX indices");
+        let ugrown = ensure_buf(&self.device, &mut fc.gu, ubytes, wgpu::BufferUsages::UNIFORM, "GX uniforms");
+        for (g, b) in [(&fc.gv, &fc.vbuf), (&fc.ga, &fc.abuf), (&fc.gi, &fc.ibuf)] {
+            if !b.is_empty() {
+                self.queue.write_buffer(&g.as_ref().unwrap().buf, 0, b);
             }
         }
-        let _t1 = std::time::Instant::now();
-        use wgpu::util::DeviceExt;
-        let mk = |data: &[u8], usage, label| {
-            self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some(label), contents: data, usage })
-        };
-        let vb = mk(&vbuf, wgpu::BufferUsages::STORAGE, "GX vbuf");
-        let ab = mk(&abuf, wgpu::BufferUsages::STORAGE, "GX abuf");
-        let ub = mk(&ubuf, wgpu::BufferUsages::UNIFORM, "GX uniforms");
-        let ib = mk(&ibuf, wgpu::BufferUsages::INDEX, "GX indices");
-        let storage_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("GX storage"),
-            layout: &self.bgl_storage,
-            entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: vb.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: ab.as_entire_binding() },
-            ],
-        });
-        let uniform_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("GX uniform"),
-            layout: &self.bgl_uniform,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
-                    buffer: &ub,
-                    offset: 0,
-                    size: std::num::NonZeroU64::new(max_uniform),
-                }),
-            }],
-        });
-        let _t2 = std::time::Instant::now();
-        // Pipelines and texture groups first (they borrow self mutably).
-        let mut per_draw = Vec::with_capacity(draws.len());
-        for d in draws {
-            let p = if d.config.cull_mode == GX_CULL_ALL { None } else { self.pipeline(d) };
-            // Texture bind groups are cached by (decoded texture, sampler) per map: the decoded
-            // texture cache never evicts, so its keys stay valid for the bind group's lifetime.
-            let mut bkey: [Option<(TexKey, SamplerKey)>; MAX_TEXTURES] = Default::default();
-            let mut cacheable = true;
-            for i in 0..MAX_TEXTURES {
-                let used = d.info.sampled_textures & (1 << i) != 0 || d.info.sampled_ind_textures & (1 << i) != 0;
-                if used {
-                    match self.cached_tex_key(d, i) {
-                        Some(k) => bkey[i] = Some((k, sampler_key(&d.textures[i]))),
-                        None => cacheable = false,
+        if regroup || fc.storage_bg.is_none() {
+            fc.storage_bg = Some(self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("GX storage"),
+                layout: &self.bgl_storage,
+                entries: &[
+                    wgpu::BindGroupEntry { binding: 0, resource: fc.gv.as_ref().unwrap().buf.as_entire_binding() },
+                    wgpu::BindGroupEntry { binding: 1, resource: fc.ga.as_ref().unwrap().buf.as_entire_binding() },
+                ],
+            }));
+        }
+        if ugrown || fc.uniform_bg.as_ref().is_none_or(|(_, m)| *m != fc.max_uniform) {
+            let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("GX uniform"),
+                layout: &self.bgl_uniform,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                        buffer: &fc.gu.as_ref().unwrap().buf,
+                        offset: 0,
+                        size: std::num::NonZeroU64::new(fc.max_uniform),
+                    }),
+                }],
+            });
+            fc.uniform_bg = Some((bg, fc.max_uniform));
+        }
+        let t2 = std::time::Instant::now();
+        // Pipelines and texture groups (they borrow self mutably). Consecutive draws mostly share a config:
+        // compare with the previous draw's before hashing.
+        let mut last_pipe = fc.last_pipe.take();
+        for (i, d) in draws.iter().enumerate() {
+            let p = if d.config.cull_mode == GX_CULL_ALL {
+                None
+            } else {
+                match last_pipe.as_ref() {
+                    Some((cfg, p)) if *cfg == d.config => p.clone(),
+                    _ => {
+                        let p = self.pipeline(d);
+                        last_pipe = Some((d.config.clone(), p.clone()));
+                        p
                     }
                 }
-            }
-            if cacheable {
-                if let Some(bg) = self.tex_bgs.get(&bkey) {
-                    per_draw.push((p, bg.clone()));
-                    continue;
-                }
-            }
-            let mut views = Vec::new();
-            let mut samplers = Vec::new();
-            for i in 0..MAX_TEXTURES {
-                let used = d.info.sampled_textures & (1 << i) != 0 || d.info.sampled_ind_textures & (1 << i) != 0;
-                let v = if used { self.texture_view(d, i) } else { None };
-                if let Some(v) = v {
-                    views.push(v);
-                    samplers.push(self.sampler(&d.textures[i]));
-                } else {
-                    views.push(self.empty_view.clone());
-                    samplers.push(self.empty_sampler.clone());
-                }
-            }
-            let mut entries = Vec::new();
-            for i in 0..MAX_TEXTURES {
-                entries.push(wgpu::BindGroupEntry {
-                    binding: (i * 2) as u32,
-                    resource: wgpu::BindingResource::TextureView(&views[i]),
-                });
-                entries.push(wgpu::BindGroupEntry {
-                    binding: (i * 2 + 1) as u32,
-                    resource: wgpu::BindingResource::Sampler(&samplers[i]),
-                });
-            }
-            let tex_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("GX textures"),
-                layout: &self.bgl_textures,
-                entries: &entries,
-            });
-            if cacheable {
-                self.tex_bgs.insert(bkey, tex_bg.clone());
-            }
-            per_draw.push((p, tex_bg));
+            };
+            fc.draws[i].pipeline = p;
+            fc.draws[i].tex_bg = Some(self.tex_bind_group(d));
         }
-        let _t3 = std::time::Instant::now();
+        fc.last_pipe = last_pipe;
+        self.frame = fc;
+        if prof() {
+            eprintln!(
+                "gxprof prepare n={} pack={:?} upload={:?} lookup={:?} vb={} ab={} ub={}",
+                draws.len(),
+                t1 - t0,
+                t2 - t1,
+                t2.elapsed(),
+                self.frame.vbuf.len(),
+                self.frame.abuf.len(),
+                self.frame.ubuf.len()
+            );
+        }
+    }
+
+    /// The texture bind group of `d` (cached by decoded texture and sampler per map).
+    fn tex_bind_group(&mut self, d: &DrawCmd) -> wgpu::BindGroup {
+        // Texture bind groups are cached by (decoded texture, sampler) per map: the decoded
+        // texture cache never evicts, so its keys stay valid for the bind group's lifetime.
+        let used = |i: usize| d.info.sampled_textures & (1 << i) != 0 || d.info.sampled_ind_textures & (1 << i) != 0;
+        let mut bkey: [Option<(TexKey, SamplerKey)>; MAX_TEXTURES] = Default::default();
+        let mut cacheable = true;
+        for (i, k) in bkey.iter_mut().enumerate() {
+            if used(i) {
+                match self.cached_tex_key(d, i) {
+                    Some(t) => *k = Some((t, sampler_key(&d.textures[i]))),
+                    None => cacheable = false,
+                }
+            }
+        }
+        if cacheable {
+            if let Some(bg) = self.tex_bgs.get(&bkey) {
+                return bg.clone();
+            }
+        }
+        let mut views = Vec::with_capacity(MAX_TEXTURES);
+        let mut samplers = Vec::with_capacity(MAX_TEXTURES);
+        for i in 0..MAX_TEXTURES {
+            let v = if used(i) { self.texture_view(d, i) } else { None };
+            if let Some(v) = v {
+                views.push(v);
+                samplers.push(self.sampler(&d.textures[i]));
+            } else {
+                views.push(self.empty_view.clone());
+                samplers.push(self.empty_sampler.clone());
+            }
+        }
+        let mut entries = Vec::with_capacity(MAX_TEXTURES * 2);
+        for i in 0..MAX_TEXTURES {
+            entries.push(wgpu::BindGroupEntry { binding: (i * 2) as u32, resource: wgpu::BindingResource::TextureView(&views[i]) });
+            entries.push(wgpu::BindGroupEntry { binding: (i * 2 + 1) as u32, resource: wgpu::BindingResource::Sampler(&samplers[i]) });
+        }
+        let tex_bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor { label: Some("GX textures"), layout: &self.bgl_textures, entries: &entries });
+        if cacheable {
+            self.tex_bgs.insert(bkey, tex_bg.clone());
+        }
+        tex_bg
+    }
+
+    /// Draw the last [`Renderer::prepare`]d frame: `draws` must be that frame (same draws, same order). Each
+    /// draw's uniform block is copied from `draws`, then `fill(i, block)` may rewrite it (interpolated
+    /// matrices); the blocks are uploaded once and the pass is recorded with redundant state changes skipped.
+    pub fn draw_prepared(&mut self, state: &GxState, draws: &[DrawCmd], mut fill: Option<&mut dyn FnMut(usize, &mut [u8])>) {
+        let t0 = std::time::Instant::now();
+        let fc = &mut self.frame;
+        assert_eq!(fc.draws.len(), draws.len(), "draw_prepared: not the prepared frame");
+        // The uniform blocks are copied once per prepared frame; `fill` only rewrites what it changes
+        // (it must write every byte it ever changes, from its own inputs, each time it is called).
+        if fc.ubuf_state == 0 || (fill.is_none() && fc.ubuf_state == 2) {
+            for (i, d) in draws.iter().enumerate() {
+                if fc.draws[i].owner {
+                    let o = fc.draws[i].uoff as usize;
+                    fc.ubuf[o..o + d.uniform.len()].copy_from_slice(&d.uniform);
+                }
+            }
+            fc.ubuf_state = 1;
+        }
+        if let Some(f) = fill.as_mut() {
+            for (i, d) in draws.iter().enumerate() {
+                if fc.draws[i].owner {
+                    let o = fc.draws[i].uoff as usize;
+                    f(i, &mut fc.ubuf[o..o + d.uniform.len()]);
+                }
+            }
+            fc.ubuf_state = 2;
+        }
+        if let Some(g) = fc.gu.as_ref() {
+            self.queue.write_buffer(&g.buf, 0, &fc.ubuf);
+        }
+        let t1 = std::time::Instant::now();
         let color_view = self.color.create_view(&Default::default());
         let depth_view = self.depth.create_view(&Default::default());
         let mut enc = self.device.create_command_encoder(&Default::default());
@@ -824,74 +950,86 @@ impl Renderer {
                     resolve_target: None,
                     depth_slice: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: cc[0] as f64,
-                            g: cc[1] as f64,
-                            b: cc[2] as f64,
-                            a: cc[3] as f64,
-                        }),
+                        load: wgpu::LoadOp::Clear(wgpu::Color { r: cc[0] as f64, g: cc[1] as f64, b: cc[2] as f64, a: cc[3] as f64 }),
                         store: wgpu::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &depth_view,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(state.clear_depth_value()),
-                        store: wgpu::StoreOp::Store,
-                    }),
+                    depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(state.clear_depth_value()), store: wgpu::StoreOp::Store }),
                     stencil_ops: None,
                 }),
                 timestamp_writes: None,
                 occlusion_query_set: None,
             });
-            pass.set_bind_group(0, &storage_bg, &[]);
-            pass.set_index_buffer(ib.slice(..), wgpu::IndexFormat::Uint16);
-            for (i, d) in draws.iter().enumerate() {
-                let (Some(p), tex_bg) = &per_draw[i] else { continue };
-                let vp = d.render_viewport;
-                let k = self.scale as f32;
-                let vp = crate::state::Viewport { left: vp.left * k, top: vp.top * k, width: vp.width * k, height: vp.height * k, ..vp };
+            if let (Some(sbg), Some(gi), Some((ubg, _))) = (fc.storage_bg.as_ref(), fc.gi.as_ref(), fc.uniform_bg.as_ref()) {
+                pass.set_bind_group(0, sbg, &[]);
+                pass.set_index_buffer(gi.buf.slice(..), wgpu::IndexFormat::Uint16);
                 let (w, h) = (self.width as f32, self.height as f32);
-                let left = vp.left.clamp(0.0, w);
-                let top = vp.top.clamp(0.0, h);
-                pass.set_viewport(
-                    left,
-                    top,
-                    vp.width.min(w - left).max(1.0),
-                    vp.height.min(h - top).max(1.0),
-                    1.0 - vp.zfar,
-                    1.0 - vp.znear,
-                );
-                let sc = d.render_scissor;
+                let k = self.scale as f32;
                 let ki = self.scale as i32;
-                let sc = crate::state::ClipRect { x: sc.x * ki, y: sc.y * ki, width: sc.width * ki, height: sc.height * ki, ..sc };
-                let sx = sc.x.clamp(0, self.width as i32) as u32;
-                let sy = sc.y.clamp(0, self.height as i32) as u32;
-                let sw = (sc.width.max(0) as u32).min(self.width - sx);
-                let sh = (sc.height.max(0) as u32).min(self.height - sy);
-                if sw == 0 || sh == 0 {
-                    continue;
-                }
-                pass.set_scissor_rect(sx, sy, sw, sh);
-                pass.set_pipeline(p);
-                pass.set_bind_group(1, &uniform_bg, &[prep[i].uoff]);
-                pass.set_bind_group(2, tex_bg, &[]);
-                pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &prep[i].imm);
-                if d.config.dst_alpha != u32::MAX {
-                    pass.set_blend_constant(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: d.config.dst_alpha as f64 / 255.0 });
-                }
-                if d.indices.is_empty() {
-                    pass.draw(0..d.vtx_count, 0..d.instance_count);
-                } else {
-                    let n = d.indices.len() as u32;
-                    let first = (prep[i].ioff / 2) as u32;
-                    pass.draw_indexed(first..first + n, 0, 0..d.instance_count);
+                let mut cur_vp = [f32::NAN; 6];
+                let mut cur_sc = [u32::MAX; 4];
+                let mut cur_pipe: Option<&wgpu::RenderPipeline> = None;
+                let mut cur_tex: Option<&wgpu::BindGroup> = None;
+                let mut cur_blend = f64::NAN;
+                let mut cur_uoff = u32::MAX;
+                for (i, d) in draws.iter().enumerate() {
+                    let pd = &fc.draws[i];
+                    let (Some(p), Some(tex_bg)) = (pd.pipeline.as_ref(), pd.tex_bg.as_ref()) else { continue };
+                    let sc = d.render_scissor;
+                    let sx = (sc.x * ki).clamp(0, self.width as i32) as u32;
+                    let sy = (sc.y * ki).clamp(0, self.height as i32) as u32;
+                    let sw = ((sc.width * ki).max(0) as u32).min(self.width - sx);
+                    let sh = ((sc.height * ki).max(0) as u32).min(self.height - sy);
+                    if sw == 0 || sh == 0 {
+                        continue;
+                    }
+                    let vp = d.render_viewport;
+                    let left = (vp.left * k).clamp(0.0, w);
+                    let top = (vp.top * k).clamp(0.0, h);
+                    let v = [left, top, (vp.width * k).min(w - left).max(1.0), (vp.height * k).min(h - top).max(1.0), 1.0 - vp.zfar, 1.0 - vp.znear];
+                    if v.iter().zip(cur_vp.iter()).any(|(a, b)| a.to_bits() != b.to_bits()) {
+                        pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
+                        cur_vp = v;
+                    }
+                    if [sx, sy, sw, sh] != cur_sc {
+                        pass.set_scissor_rect(sx, sy, sw, sh);
+                        cur_sc = [sx, sy, sw, sh];
+                    }
+                    if cur_pipe.is_none_or(|c| c != p) {
+                        pass.set_pipeline(p);
+                        cur_pipe = Some(p);
+                    }
+                    if pd.uoff != cur_uoff {
+                        pass.set_bind_group(1, ubg, &[pd.uoff]);
+                        cur_uoff = pd.uoff;
+                    }
+                    if cur_tex.is_none_or(|c| c != tex_bg) {
+                        pass.set_bind_group(2, tex_bg, &[]);
+                        cur_tex = Some(tex_bg);
+                    }
+                    pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &pd.imm);
+                    if d.config.dst_alpha != u32::MAX {
+                        let a = d.config.dst_alpha as f64 / 255.0;
+                        if a.to_bits() != cur_blend.to_bits() {
+                            pass.set_blend_constant(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a });
+                            cur_blend = a;
+                        }
+                    }
+                    if d.indices.is_empty() {
+                        pass.draw(0..d.vtx_count, 0..d.instance_count);
+                    } else {
+                        let n = d.indices.len() as u32;
+                        pass.draw_indexed(pd.first_index..pd.first_index + n, 0, 0..d.instance_count);
+                    }
                 }
             }
         }
         self.queue.submit([enc.finish()]);
-        static PROF: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-        if *PROF.get_or_init(|| std::env::var_os("MELEE_GX_PROF").is_some()) { eprintln!("gxprof n={} pack={:?} bufs={:?} perdraw={:?} pass={:?} vb={} ab={}", draws.len(), _t1-_t0, _t2-_t1, _t3-_t2, _t3.elapsed(), vbuf.len(), abuf.len()); }
+        if prof() {
+            eprintln!("gxprof draw n={} uniforms={:?} pass={:?}", draws.len(), t1 - t0, t1.elapsed());
+        }
     }
 
     /// Scale the EFB colour target onto `target` (a `tw` x `th` swapchain image of `format`). This

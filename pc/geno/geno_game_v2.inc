@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_game_v2.inc - Geno v2: Geno action states, native behaviours (glide, Mach Tornado, Drill
  * Rush, generic air / ground states) and specials bound to states. Included at the end of
  * geno_game.c (one translation unit: it shares that file's statics). Design and data format:

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #if defined(TARGET_PC)
 #include <gameworld/script_hit_rules.h>
 #endif

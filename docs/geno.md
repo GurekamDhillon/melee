@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Geno - GD's Melee's fighter-extension layer
 
 **2026-10-04 GF1 update:** the Geno engine has an offline native Mario-reference `define` backend in format 6. Section 22 supersedes earlier statements that `define` is reserved. Source/tooling verification is separate from game acceptance; no GF1 game build or launch has been performed.

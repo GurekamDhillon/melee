@@ -223,17 +223,6 @@ pub fn param_find(family: &str, name: &str) -> i32 {
     if let Some(p) = tables::PARAMS.iter().find(|p| p.0 == family && p.1 == name) {
         return p.2 as i32;
     }
-    let b = name.as_bytes();
-    if b.len() == 3 && b[0] == b'w' && b[1].is_ascii_digit() && b[2].is_ascii_digit() {
-        let w = ((b[1] - b'0') * 10 + (b[2] - b'0')) as u32;
-        return match family {
-            "glide" if w <= 21 => (GENO_P_GLIDE_W0 + w) as i32,
-            "tornado" if w <= 19 => (GENO_P_TORNADO_W0 + w) as i32,
-            "drill" if w <= 5 => (GENO_P_DRILL_W0 + w) as i32,
-            "cape" if w <= 5 => (GENO_P_CAPE_W0 + w) as i32,
-            _ => -1,
-        };
-    }
     -1
 }
 

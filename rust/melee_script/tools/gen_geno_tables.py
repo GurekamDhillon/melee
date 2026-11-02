@@ -5,6 +5,21 @@ import re, sys, pathlib
 root = pathlib.Path(__file__).resolve().parents[3]
 out = root / "rust/melee_script/src/geno"
 h = (root / "pc/geno/geno.h").read_text()
+# the v5.1 behaviour parameter set: X(FAMILY, field, type, default, "name") rows, ids in list order
+bph = (root / "pc/geno/geno_behaviour_params.h").read_text()
+bph_nc = re.sub(r"/\*.*?\*/", "", bph, flags=re.S)
+bp_lists = {}
+_cur = None
+for _l in bph_nc.splitlines():
+    _m = re.match(r"#define (GENO_BP_\w+_LIST)\(X\)", _l)
+    if _m: _cur = _m.group(1); bp_lists[_cur] = ""
+    if _cur: bp_lists[_cur] += _l + " "
+    if _cur and not _l.rstrip().endswith("\\"): _cur = None
+bp_order = bp_lists.pop("GENO_BP_ALL_LIST")
+bp_rows = []
+for ln in [x for x in re.findall(r"(GENO_BP_\w+_LIST)\(X\)", bp_order) if x != "GENO_BP_ALL_LIST"]:
+    for m in re.finditer(r'X\((\w+),\s*(\w+),\s*(\w+),\s*([-\d.]+)f?,\s*"(\w+)"\)', bp_lists[ln]):
+        bp_rows.append((m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)))
 h = re.sub(r"/\*.*?\*/", "", h, flags=re.S)
 h = re.sub(r"//.*", "", h)
 consts = []   # (name, expr)
@@ -67,6 +82,11 @@ for n, e in allc:
     if e2.strip().startswith("(-"):
         lines.append(f"pub const {n}: i32 = {e2};"); continue
     lines.append(f"pub const {n}: u32 = ({e2}) as u32;")
+lines.append("// v5.1 behaviour parameter ids (pc/geno/geno_behaviour_params.h)")
+lines.append("pub const GENO_PARAMS: u32 = (%s) as u32;" % re.search(r"#define GENO_PARAMS (\d+)", bph_nc).group(1))
+for i, (F, n, ty, d, nm) in enumerate(bp_rows):
+    lines.append(f"pub const GENO_BP_{F}_{n}: u32 = {i};")
+lines.append(f"pub const GENO_BP_COUNT: u32 = {len(bp_rows)};")
 (out / "consts.rs").write_text("\n".join(lines) + "\n")
 
 # ---- tables
@@ -83,20 +103,11 @@ hooks = re.findall(r'\{\s*(GENO_HOOK_\w+),\s*"([\w.]+)",\s*hook_\w+\s*\}', g)
 t.append("pub const HOOKS: &[(u32, &str)] = &[")
 for i, n in hooks: t.append(f'    ({i}, "{n}"),')
 t.append("];\n")
-ps = re.findall(r'\{\s*"(\w+)",\s*"(\w+)",\s*([A-Z0-9_]+(?:\s*\+\s*\d+)?),\s*([^}]*?)\s*\}', v2[v2.index("geno_params[] = {"):v2.index("GENO_NPARAMDEFS")])
-t.append("/// (family, name, id, default)")
+t.append("/// (family, name, id, default): the v5.1 set of pc/geno/geno_behaviour_params.h")
 t.append("pub const PARAMS: &[(&str, &str, u32, f32)] = &[")
-for f, n, i, d in ps:
-    d = d.strip().rstrip(",")
-    d = re.sub(r"\(f32\)\s*", "", d)
-    d = re.sub(r"\b(GENO_BTN_\w+)", r"\1", d)
-    if re.fullmatch(r"-?[\d.]+f?", d):
-        d = d.rstrip("f")
-        if "." not in d: d += ".0"
-        d = d + "_f32" if False else d
-        t.append(f'    ("{f}", "{n}", {i}, {d}),')
-    else:
-        t.append(f'    ("{f}", "{n}", {i}, ({d}) as f32),')
+for F, n, ty, d, nm in bp_rows:
+    if "." not in d: d += ".0"
+    t.append(f'    ("{F.lower()}", "{nm}", GENO_BP_{F}_{n}, {d}),')
 t.append("];\n")
 cbs = re.findall(r'\{\s*(GENO_CBID_\w+),\s*(GENO_CB_\w+),\s*"([\w.]+)",', v2)
 cbid = {}
@@ -113,4 +124,4 @@ t.append("pub const BEHAVIORS: &[(u32, &str)] = &[")
 for i, n in bs: t.append(f'    ({i}, "{n}"),')
 t.append("];\n")
 (out / "tables.rs").write_text("\n".join(t) + "\n")
-print(len(allc), "consts;", len(attrs), "attrs;", len(hooks), "hooks;", len(ps), "params;", len(cbs), "callbacks;", len(bs), "behaviours")
+print(len(allc), "consts;", len(attrs), "attrs;", len(hooks), "hooks;", len(bp_rows), "params;", len(cbs), "callbacks;", len(bs), "behaviours")

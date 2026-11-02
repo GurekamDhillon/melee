@@ -106,8 +106,8 @@ fn v2() {
         {\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"phys\":\"none\",\"coll\":\"like\",\
         \"anim\":\"nope\",\"like\":\"motion:43\",\"landing_lag\":12,\"move_id\":7,\"flags\":\"0x10\"},\
         {\"name\":\"X\",\"behavior\":\"geno.nope\",\"next\":\"geno:Glide\"}],\
-        \"glide\":{\"hold_frames\":20,\"w07\":2.5,\"bogus\":1},\
-        \"tornado\":{\"w13\":17},\
+        \"glide\":{\"entry_hold\":20,\"s_start\":2.5,\"bogus\":1},\
+        \"tornado\":{\"mash_add\":17},\
         \"specials\":{\"n\":\"geno:Glide\",\"hi\":\"special:3\",\"air_hi\":\"geno:X\",\"lw\":\"geno:Nope\"},\
         \"on_land\":[{\"from\":\"geno:Glide\",\"to\":\"geno:GlideLanding\"}]}]}";
     let (r, n) = reg(t, "v2");
@@ -132,9 +132,9 @@ fn v2() {
     assert_eq!(p.st_cb[2][GENO_CB_ANIM as usize], -1);
     assert_eq!(p.st_cb[2][GENO_CB_IASA as usize], -1);
     assert_eq!(p.nparam, 3);
-    assert_eq!(p.param_id[0], GENO_P_GLIDE_HOLD as i32);
-    assert_eq!(p.param_id[1], (GENO_P_GLIDE_W0 + 7) as i32);
-    assert_eq!(p.param_id[2], (GENO_P_TORNADO_W0 + 13) as i32);
+    assert_eq!(p.param_id[0], GENO_BP_GLIDE_entry_hold as i32);
+    assert_eq!(p.param_id[1], GENO_BP_GLIDE_s_start as i32);
+    assert_eq!(p.param_id[2], GENO_BP_TORNADO_mash_add as i32);
     assert_eq!(f(p.param_bits[1]), 2.5);
     assert_eq!(p.special[GENO_SP_N as usize], target(GENO_TGT_GENO, 1));
     assert_eq!(p.special[GENO_SP_AIR_N as usize], target(GENO_TGT_GENO, 1));

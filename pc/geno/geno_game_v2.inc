@@ -37,134 +37,44 @@
 #define GENO_AUTO GENO_TGT_AUTO
 #define GENO_NONE_T 0xFFFFFFFFu
 
-/* ---- parameters -------------------------------------------------------------------------------- */
+/* ---- parameters ----------------------------------------------------------------------------------- */
 
+/* The v5.1 behaviour parameter set (geno_behaviour_params.h, from docs/specs/geno-v5.1-behaviours.md
+ * only): family, spec name, id, default. Scripts look parameters up by "<family>" + "<name>". */
 typedef struct {
     const char* family;
     const char* name;
     int id;
     f32 def;
-} GenoParamDef;
+} GenoBhvParamDef;
 
-/* Named parameters (the "wNN" Brawl words are accepted too: see GenoGame_ParamFind). Defaults are
- * Meta Knight's Brawl values; names and meanings of the glide / tornado / drill words: docs/geno.md
- * section 16 and geno_v2_encodings.md. */
-static const GenoParamDef geno_params[] = {
-    /* glide: Brawl's Misc Glide block, read by sora_melee ftStatusUniqProcessGlide (initStatus /
-       execStatus, and the Glide_Start energy resets). Names from the disassembly (16.4). */
-    { "glide", "angle_max", GENO_P_GLIDE_W0 + 0, 80.0f },
-    { "glide", "angle_min", GENO_P_GLIDE_W0 + 1, -70.0f },
-    { "glide", "start_vy", GENO_P_GLIDE_W0 + 2, 0.75f },
-    { "glide", "start_gravity", GENO_P_GLIDE_W0 + 3, 1.0f },
-    { "glide", "start_vx", GENO_P_GLIDE_W0 + 4, 1.0f },
-    { "glide", "speed", GENO_P_GLIDE_W0 + 5, 1.7f },
-    { "glide", "speed_accel", GENO_P_GLIDE_W0 + 6, 0.04f },
-    { "glide", "max_speed", GENO_P_GLIDE_W0 + 7, 2.2f },
-    { "glide", "stall_speed", GENO_P_GLIDE_W0 + 8, 0.7f },
-    { "glide", "sink_accel", GENO_P_GLIDE_W0 + 9, 0.03f },
-    { "glide", "max_sink", GENO_P_GLIDE_W0 + 10, 0.6f },
-    { "glide", "recover_angle", GENO_P_GLIDE_W0 + 11, 15.0f },
-    { "glide", "dive_angle", GENO_P_GLIDE_W0 + 12, -25.0f },
-    { "glide", "dive_bonus", GENO_P_GLIDE_W0 + 13, 0.03f },
-    { "glide", "w14", GENO_P_GLIDE_W0 + 14, 0.15f }, /* not read by Brawl's code */
-    { "glide", "deadzone", GENO_P_GLIDE_W0 + 15, 0.25f },
-    { "glide", "pitch_up", GENO_P_GLIDE_W0 + 16, 0.55f },
-    { "glide", "pitch_down", GENO_P_GLIDE_W0 + 17, 0.75f },
-    { "glide", "max_pitch_rate", GENO_P_GLIDE_W0 + 18, 7.0f },
-    { "glide", "stall_pitch", GENO_P_GLIDE_W0 + 19, 1.0f },
-    { "glide", "wing_node", GENO_P_GLIDE_W0 + 20, 44.0f }, /* Brawl's wing partial anim: unused */
-    { "glide", "w21", GENO_P_GLIDE_W0 + 21, 0.0f },        /* not read by Brawl's code */
-    { "glide", "hold_frames", GENO_P_GLIDE_HOLD, 16.0f },
-    { "glide", "from_ground_jump", GENO_P_GLIDE_FROM_JUMP, 0.0f },
-    { "glide", "end_helpless", GENO_P_GLIDE_END_HELPLESS, 0.0f },
-    { "glide", "landing_lag", GENO_P_GLIDE_LANDING_LAG, 0.0f },
-    { "glide", "entry", GENO_P_GLIDE_ENTRY, 1.0f },
-    { "glide", "max_frames", GENO_P_GLIDE_MAX_FRAMES, 0.0f },
-    { "glide", "pose_center", GENO_P_GLIDE_POSE, 0.0f },
-    { "glide", "end_buttons", GENO_P_GLIDE_END_BUTTONS,
-      (f32) (GENO_BTN_SHIELD | GENO_BTN_SPECIAL | GENO_BTN_JUMP) },
-    /* tornado: MK's paramSpecialN (param ids 4000-4016 / 24000-24001; the int words are w11 and
-       w16), read by ftMetaknightStatusUniqProcessSpecialNSpin and MK's kinetic types 0x64/0x65 */
-    { "tornado", "entry_vy", GENO_P_TORNADO_W0 + 0, 1.0f },
-    { "tornado", "entry_vx_mul", GENO_P_TORNADO_W0 + 1, 0.7f },
-    { "tornado", "start_rate", GENO_P_TORNADO_W0 + 2, 80.0f },
-    { "tornado", "ground_accel", GENO_P_TORNADO_W0 + 3, 0.12f },
-    { "tornado", "ground_speed", GENO_P_TORNADO_W0 + 4, 2.0f },
-    { "tornado", "air_accel", GENO_P_TORNADO_W0 + 5, 0.1f },
-    { "tornado", "air_speed", GENO_P_TORNADO_W0 + 6, 1.7f },
-    { "tornado", "brake", GENO_P_TORNADO_W0 + 7, 0.008f },
-    { "tornado", "gravity", GENO_P_TORNADO_W0 + 8, -0.08f },
-    { "tornado", "max_fall", GENO_P_TORNADO_W0 + 9, 0.5f },
-    { "tornado", "tap_vy", GENO_P_TORNADO_W0 + 10, 1.0f },
-    { "tornado", "tap_cooldown", GENO_P_TORNADO_W0 + 11, 10.0f },
-    { "tornado", "max_rise", GENO_P_TORNADO_W0 + 12, 1.4f },
-    { "tornado", "tap_rate", GENO_P_TORNADO_W0 + 13, 16.0f },
-    { "tornado", "max_rate", GENO_P_TORNADO_W0 + 14, 80.0f },
-    { "tornado", "rate_decay", GENO_P_TORNADO_W0 + 15, 1.5f },
-    { "tornado", "spin_frames", GENO_P_TORNADO_W0 + 16, 70.0f },
-    { "tornado", "late_decay", GENO_P_TORNADO_W0 + 17, 2.0f },
-    { "tornado", "end_rate", GENO_P_TORNADO_W0 + 18, 10.0f },
-    { "tornado", "w19", GENO_P_TORNADO_W0 + 19, 0.0f },
-    { "tornado", "max_speed", GENO_P_TORNADO_MAX_SPEED, 2.5f },
-    { "tornado", "end_helpless", GENO_P_TORNADO_END_HELPLESS, 1.0f },
-    { "tornado", "spin_anim", GENO_P_TORNADO_SPIN_ANIM, 0.0f },     /* v4 (MK: 1) */
-    { "tornado", "spin_period", GENO_P_TORNADO_SPIN_PERIOD, 0.0f }, /* v4 (MK: 360) */
-    /* drill: MK's paramSpecialS (param ids 4017-4020 / 24002), read by SpecialSRush / SpecialSEnd
-       (ft_metaknight.rel) and MK's kinetic types 0x66-0x68 */
-    { "drill", "start_vx_mul", GENO_P_DRILL_W0 + 0, 0.5f },
-    { "drill", "start_vy", GENO_P_DRILL_W0 + 1, 1.0f },
-    { "drill", "start_gravity", GENO_P_DRILL_W0 + 2, -0.08f },
-    { "drill", "steer", GENO_P_DRILL_W0 + 3, 3.0f },
-    { "drill", "end_frames", GENO_P_DRILL_W0 + 4, 10.0f },
-    { "drill", "w05", GENO_P_DRILL_W0 + 5, 0.0f },
-    { "drill", "speed", GENO_P_DRILL_SPEED, 2.0f },
-    { "drill", "angle_max", GENO_P_DRILL_ANGLE_MAX, 0.0f },
-    { "drill", "bounce", GENO_P_DRILL_BOUNCE, 0.0f }, /* v3: Brawl never ends the rush early */
-    { "drill", "pop_vx", GENO_P_DRILL_POP_VX, 1.0f },
-    { "drill", "pop_vy", GENO_P_DRILL_POP_VY, 2.1f },
-    { "drill", "end_helpless", GENO_P_DRILL_END_HELPLESS, 1.0f },
-    { "drill", "pitch_model", GENO_P_DRILL_PITCH_MODEL, 1.0f }, /* v4: Brawl turns the model */
-    { "glide", "script_entry_helpless", GENO_P_GLIDE_SCRIPT_HELPLESS, 1.0f },
-    /* cape (v3): MK's paramSpecialLw (param ids 4021-4026, read only by MK kinetic types 0x69 /
-       0x6A in sora_melee fn_27_359014) + the PSA's frames */
-    { "cape", "keep_vx", GENO_P_CAPE_W0 + 0, 0.5f },
-    { "cape", "keep_vy", GENO_P_CAPE_W0 + 1, 0.4f },
-    { "cape", "steer_accel_x", GENO_P_CAPE_W0 + 2, 0.5f },
-    { "cape", "steer_max_x", GENO_P_CAPE_W0 + 3, 2.5f },
-    { "cape", "steer_accel_y", GENO_P_CAPE_W0 + 4, 0.5f },
-    { "cape", "steer_max_y", GENO_P_CAPE_W0 + 5, 2.5f },
-    { "cape", "steer_frame", GENO_P_CAPE_STEER_FRAME, 12.0f },
-    { "cape", "decide_frame", GENO_P_CAPE_DECIDE_FRAME, 26.0f },
-    { "cape", "neutral_x", GENO_P_CAPE_NEUTRAL_X, 0.3f },
-    { "cape", "attack_buttons", GENO_P_CAPE_BUTTONS, (f32) (GENO_BTN_SPECIAL | GENO_BTN_ATTACK) },
-};
-#define GENO_NPARAMDEFS ((int) (sizeof(geno_params) / sizeof(geno_params[0])))
+#define GENO_BP_ROW_(F, n, t, d, s) { #F, s, GENO_BP_##F##_##n, (f32) (d) },
+static const GenoBhvParamDef geno_bhv_params[] = { GENO_BP_ALL_LIST(GENO_BP_ROW_) };
+#undef GENO_BP_ROW_
+#define GENO_NPARAMDEFS ((int) (sizeof(geno_bhv_params) / sizeof(geno_bhv_params[0])))
+
+/* the family strings are the upper-case list tags; compare case-insensitively */
+static int geno_fam_eq(const char* a, const char* tag)
+{
+    for (; *a && *tag; a++, tag++) {
+        char c = *a;
+        if (c >= 'a' && c <= 'z') {
+            c = (char) (c - 'a' + 'A');
+        }
+        if (c != *tag) {
+            return 0;
+        }
+    }
+    return *a == *tag;
+}
 
 /* For the registry: "<family>" + "<name>" -> parameter id, -1 when unknown. */
 int GenoGame_ParamFind(const char* family, const char* name)
 {
     int i;
     for (i = 0; i < GENO_NPARAMDEFS; i++) {
-        if (geno_streq(family, geno_params[i].family) && geno_streq(name, geno_params[i].name)) {
-            return geno_params[i].id;
-        }
-    }
-    /* every family also takes its Brawl block by word: "w00".."w31" */
-    if (name[0] == 'w' && name[1] >= '0' && name[1] <= '9' && name[2] >= '0' && name[2] <= '9' &&
-        name[3] == '\0')
-    {
-        int w = (name[1] - '0') * 10 + (name[2] - '0');
-        if (geno_streq(family, "glide") && w <= 21) {
-            return GENO_P_GLIDE_W0 + w;
-        }
-        if (geno_streq(family, "tornado") && w <= 19) {
-            return GENO_P_TORNADO_W0 + w;
-        }
-        if (geno_streq(family, "drill") && w <= 5) {
-            return GENO_P_DRILL_W0 + w;
-        }
-        if (geno_streq(family, "cape") && w <= 5) {
-            return GENO_P_CAPE_W0 + w;
+        if (geno_fam_eq(family, geno_bhv_params[i].family) && geno_streq(name, geno_bhv_params[i].name)) {
+            return geno_bhv_params[i].id;
         }
     }
     return -1;
@@ -190,7 +100,7 @@ static void geno_build_params(int p)
         Geno_Params[p][i] = 0.0f;
     }
     for (i = 0; i < GENO_NPARAMDEFS; i++) {
-        Geno_Params[p][geno_params[i].id] = geno_params[i].def;
+        Geno_Params[p][geno_bhv_params[i].id] = geno_bhv_params[i].def;
     }
     n = Geno_ParamCount(p);
     for (i = 0; i < n; i++) {
@@ -397,7 +307,7 @@ MotionState* Geno_MotionRow(Fighter* fp, int msid)
 static f32 geno_start_frame(Fighter* fp, GenoState* st, int s)
 {
     if (Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE) {
-        f32 pose = geno_param(st, GENO_P_GLIDE_POSE);
+        f32 pose = geno_param(st, GENO_BP_GLIDE_pose_center);
         if (pose > 0.0f) {
             return pose; /* - angle, which geno_glide_enter sets to 0 */
         }

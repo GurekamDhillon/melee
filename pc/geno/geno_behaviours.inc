@@ -286,37 +286,10 @@ void GenoBhv_Stick(f32 rx, f32 ry, f32* sx, f32* sy)
 
 void GenoBhv_GlideParams(GbGlideP* p)
 {
-    p->max_glides = 2;
-    p->entry_hold = 6;
-    p->flick_window = 12;
-    p->start_frames = 12;
-    p->trip_frames = 30;
-    p->land_lag = 14;
-    p->jumpout_frames = 8;
-    p->attack_frames = 28;
-    p->attack_hit0 = 8;
-    p->attack_hit1 = 14;
-    p->attack_endlag = 14;
-    p->attack_buf_frames = 6;
-    p->entry_vy_max = 0.6f;
-    p->apex_vy = 0.25f;
-    p->flick_thr = 0.55f;
-    p->s_start = 1.50f; /* spec 2.5 rev 1 (was 1.20): G-2 within 3% at 600 frames */
-    p->start_accel = 0.12f;
-    p->s_start_cap = 2.0f;
-    p->theta_def = -5.0f;
-    p->r_down = 60.0f;
-    p->r_up = 85.0f;
-    p->turn_rate = 3.0f;
-    p->gk = 0.0366f;
-    p->drag = 0.002f;
-    p->s_max = 2.40f;
-    p->s_stall = 0.35f;
-    p->trip_angle = 30.0f;
-    p->attack_speed_keep = 0.6f;
-    p->chain_speed_mul = 0.75f;
-    p->chain_turn_mul = 1.4f;
-    p->attack_damage = 12;
+    /* the spec defaults: geno_behaviour_params.h */
+#define GB_DEF_(F, n, t, d, s) p->n = (t) (d);
+    GENO_BP_GLIDE_LIST(GB_DEF_)
+#undef GB_DEF_
 }
 
 void GenoBhv_GlideEntryInit(GbGlideEntry* e)
@@ -541,31 +514,10 @@ void GenoBhv_GlideStep(GbGlide* g, const GbGlideIn* in, const GbGlideP* p)
 
 void GenoBhv_TornadoParams(GbTornadoP* p)
 {
-    p->start_frames = 12;
-    p->read_period = 10;
-    p->read_limit = 70;
-    p->end_frames = 29;
-    p->ledge_lock = 6;
-    p->final_hit_ground = 3;
-    p->final_hit_air = 2;
-    p->loop_damage = 1;
-    p->final_damage = 3;
-    p->spin0 = 80.0f;
-    p->decay_a = 1.5f;
-    p->decay_b = 2.0f;
-    p->mash_add = 16.0f;
-    p->spin_max = 80.0f;
-    p->spin_end = 10.0f;
-    p->grav = 0.0239f;
-    p->rise_impulse = 0.9f;
-    p->rise_max = 1.6f;
-    p->fall_max = 0.50f;
-    p->vx_max = 1.1f;
-    p->vx_max_ground = 1.3f;
-    p->vx_accel = 0.06f;
-    p->jump_bonus = 1.0f;
-    p->start_vy_keep = 0.2f;
-    p->start_vx_keep = 0.5f;
+    /* the spec defaults: geno_behaviour_params.h */
+#define GB_DEF_(F, n, t, d, s) p->n = (t) (d);
+    GENO_BP_TORNADO_LIST(GB_DEF_)
+#undef GB_DEF_
 }
 
 void GenoBhv_TornadoBegin(GbTornado* t, f32 vx, f32 vy)
@@ -688,26 +640,10 @@ void GenoBhv_TornadoStep(GbTornado* t, const GbTornadoIn* in, const GbTornadoP* 
 
 void GenoBhv_DrillParams(GbDrillP* p)
 {
-    p->move0 = 16;
-    p->ramp = 4;
-    p->hit0 = 26;
-    p->hit_period = 4;
-    p->nhits = 10;
-    p->hit_end = 65;
-    p->final_frame = 66;
-    p->final_end_ground = 67;
-    p->final_end_air = 70;
-    p->total = 96;
-    p->rush_damage = 1;
-    p->final_damage = 3;
-    p->dive_default = -20.0f;
-    p->psi_stick = 45.0f;
-    p->psi_min = -60.0f;
-    p->psi_max = 30.0f;
-    p->steer_rate = 2.0f;
-    p->speed = 2.0f;
-    p->recoil_vy = 1.0f;
-    p->end_vx_keep = 0.2f;
+    /* the spec defaults: geno_behaviour_params.h */
+#define GB_DEF_(F, n, t, d, s) p->n = (t) (d);
+    GENO_BP_DRILL_LIST(GB_DEF_)
+#undef GB_DEF_
 }
 
 void GenoBhv_DrillBegin(GbDrill* d, const GbDrillP* p, f32 f, f32 sy)
@@ -791,18 +727,10 @@ void GenoBhv_DrillStep(GbDrill* d, const GbDrillIn* in, const GbDrillP* p)
 
 void GenoBhv_CapeParams(GbCapeP* p)
 {
-    p->start = 6;
-    p->end = 25;
-    p->total = 40;
-    p->turn_thr = 0.5f;
-    p->stall_x = 0.80f;
-    p->stall_y_up = 0.85f;
-    p->stall_vy_hi = 0.0f;
-    p->stall_grav = 0.015f;
-    p->stall_fall = 0.45f;
-    p->ground_x = 0.5f;
-    p->reflect_dmg_mul = 1.5f;
-    p->reflect_speed_mul = 1.2f;
+    /* the spec defaults: geno_behaviour_params.h */
+#define GB_DEF_(F, n, t, d, s) p->n = (t) (d);
+    GENO_BP_CAPE_LIST(GB_DEF_)
+#undef GB_DEF_
 }
 
 void GenoBhv_CapeBegin(GbCape* c, f32 f, f32 vx, f32 vy)
@@ -1143,6 +1071,25 @@ void GenoBhv_AnimMotionStep(GbAnimMotion* a, const f32* track, int n, const GbAn
 
 #define GB_PRESSED(fp, m) (((fp)->input.pressed_buttons & (m)) != 0)
 
+/* A profile's parameter values (the spec defaults of geno_behaviour_params.h, then its geno.json
+ * family block) over the pure procedures' parameter structs. No profile table: the defaults. */
+static const f32* gb_profile_params(GenoState* st)
+{
+    int pr = st->profile;
+    if (pr < 0 || pr >= Geno_ProfileCapacity || !Geno_Params[pr]) {
+        return NULL;
+    }
+    return Geno_Params[pr];
+}
+#define GB_SET_(F, n, t, d, s) p->n = (t) v[GENO_BP_##F##_##n];
+#define GB_PARAMS_FN_(name, T, FAM, LIST)                  static void name(GenoState* st, T* p)                  {                                                          const f32* v = gb_profile_params(st);                  GenoBhv_##FAM##Params(p);                              if (v != NULL) {                                           LIST(GB_SET_)                                      }                                                  }
+GB_PARAMS_FN_(gb_glide_params, GbGlideP, Glide, GENO_BP_GLIDE_LIST)
+GB_PARAMS_FN_(gb_tornado_params, GbTornadoP, Tornado, GENO_BP_TORNADO_LIST)
+GB_PARAMS_FN_(gb_drill_params, GbDrillP, Drill, GENO_BP_DRILL_LIST)
+GB_PARAMS_FN_(gb_cape_params, GbCapeP, Cape, GENO_BP_CAPE_LIST)
+#undef GB_PARAMS_FN_
+#undef GB_SET_
+
 static void gb_stick_of(Fighter* fp, f32* sx, f32* sy)
 {
     GenoBhv_Stick(fp->input.lstick[0].x, fp->input.lstick[0].y, sx, sy);
@@ -1252,7 +1199,7 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
         st->move_i[6] = (1000 << 2) | 1;
         return 0;
     }
-    if (geno_cur_state(fp, st) >= 0 || geno_param(st, GENO_P_GLIDE_ENTRY) == 0.0f) {
+    if (geno_cur_state(fp, st) >= 0 || geno_param(st, GENO_BP_GLIDE_auto_entry) == 0.0f) {
         return 0;
     }
     msid = (int) fp->motion_id;
@@ -1273,7 +1220,7 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
     if (!allowed) {
         return 0;
     }
-    GenoBhv_GlideParams(&p);
+    gb_glide_params(st, &p);
     gb_stick_of(fp, &sx, &sy);
     e.hold_frames = st->hold_frames;
     e.last_dir = (st->move_i[6] & 3) - 1;
@@ -1296,7 +1243,7 @@ static void geno_glide_start_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* s
     GbGlideP p;
     GbGlide g;
     f32 sx, sy;
-    GenoBhv_GlideParams(&p);
+    gb_glide_params(st, &p);
     gb_stick_of(fp, &sx, &sy);
     GenoBhv_GlideBegin(&g, &p, fp->self_vel.x, fp->self_vel.y, fp->facing_dir, sx, 0,
                        fp->x1968_jumpsUsed >= fp->co_attrs.max_jumps, st->move_i[7]);
@@ -1318,7 +1265,7 @@ static void geno_glide_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int
         gb_glide_store(st, &g);
         return;
     }
-    GenoBhv_GlideParams(&p);
+    gb_glide_params(st, &p);
     gb_stick_of(fp, &sx, &sy);
     GenoBhv_GlideBegin(&g, &p, fp->self_vel.x, fp->self_vel.y, fp->facing_dir, sx, 1,
                        fp->x1968_jumpsUsed >= fp->co_attrs.max_jumps, st->move_i[7]);
@@ -1353,7 +1300,7 @@ static void gb_glide_tick(Fighter_GObj* gobj)
     if (g.phase >= GB_GL_END) {
         return;
     }
-    GenoBhv_GlideParams(&p);
+    gb_glide_params(st, &p);
     gb_stick_of(fp, &in.sx, &in.sy);
     in.jump_pressed = GB_PRESSED(fp, HSD_PAD_XY);
     in.attack_pressed = GB_PRESSED(fp, HSD_PAD_A);
@@ -1458,7 +1405,7 @@ static int gb_glide_land(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s)
     {
         return 0;
     }
-    GenoBhv_GlideParams(&p);
+    gb_glide_params(st, &p);
     gb_glide_load(st, &g);
     GenoBhv_GlideGround(&g, &p);
     st->move_i[3] = g.lag;
@@ -1531,7 +1478,7 @@ static void geno_tornado_anim(Fighter_GObj* gobj)
     GbTornadoIn in;
     f32 sy;
     int air = gb_airborne(fp);
-    GenoBhv_TornadoParams(&p);
+    gb_tornado_params(st, &p);
     gb_tornado_load(st, &t);
     gb_stick_of(fp, &in.sx, &sy);
     in.special_pressed = GB_PRESSED(fp, HSD_PAD_B);
@@ -1594,7 +1541,7 @@ static void gb_drill_begin(Fighter* fp, GenoState* st)
     GbDrillP p;
     GbDrill d;
     f32 sx, sy;
-    GenoBhv_DrillParams(&p);
+    gb_drill_params(st, &p);
     gb_stick_of(fp, &sx, &sy);
     GenoBhv_DrillBegin(&d, &p, fp->facing_dir < 0.0f ? -1.0f : 1.0f, sy);
     gb_drill_store(st, &d);
@@ -1635,7 +1582,7 @@ static void gb_drill_tick(Fighter_GObj* gobj)
     GbDrillIn in;
     f32 sx;
     int prev_n, bhv, want, air = gb_airborne(fp);
-    GenoBhv_DrillParams(&p);
+    gb_drill_params(st, &p);
     gb_drill_load(st, &d);
     if (d.done) {
         return;
@@ -1677,7 +1624,7 @@ static void gb_drill_phys(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     GbDrillP p;
     GbDrill d;
-    GenoBhv_DrillParams(&p);
+    gb_drill_params(geno_state(fp), &p);
     gb_drill_load(geno_state(fp), &d);
     if (!gb_airborne(fp)) {
         ftCommon_SetSelfMovementFromGroundedMovement(gobj);
@@ -1763,7 +1710,7 @@ static void geno_cape_anim(Fighter_GObj* gobj)
     GbCapeIn in;
     f32 sy;
     int air = gb_airborne(fp);
-    GenoBhv_CapeParams(&p);
+    gb_cape_params(st, &p);
     c.n = st->move_i[0] & 255;
     c.flipped = (st->move_i[0] >> 8) & 1;
     c.done = 0;
@@ -1796,7 +1743,7 @@ static void geno_cape_phys(Fighter_GObj* gobj)
     GbCapeP p;
     int n = geno_state(fp)->move_i[0] & 255;
     int stalled;
-    GenoBhv_CapeParams(&p);
+    gb_cape_params(geno_state(fp), &p);
     stalled = n > p.start && n <= p.end + 1;
     if (gb_airborne(fp)) {
         if (!stalled) {

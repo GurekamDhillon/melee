@@ -33,7 +33,7 @@ exe="$repo/build/cargo/release/melee.exe"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
 if [ $build = 1 ]; then
-  (cd rust && CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 cargo build -p melee --release 2>&1 | tail -2) || fail=1
+  (cd rust && set -o pipefail && CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 cargo build -p melee --release 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
 fi
 progress=docs/rust-port/engine_progress.tsv
 declare -A counts

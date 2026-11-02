@@ -62,7 +62,7 @@ fn rand_trace(_seed: u32, stream: i32) {
         }
         names.truncate(6);
         if let Some(f) = (&raw mut RAND_TRACE).as_mut().and_then(|f| f.as_mut()) {
-            let _ = writeln!(f, "{} {} s{} {}", RAND_FRAME, RAND_N, stream, names.join(" < "));
+            let _ = writeln!(f, "{} {} s{} {:08x} {}", RAND_FRAME, RAND_N, stream, _seed, names.join(" < "));
         }
     }
 }

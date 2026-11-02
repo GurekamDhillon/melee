@@ -1211,9 +1211,13 @@ pub unsafe fn it_802A6A78_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut V
 }
 
 /// MSL `sqrtf` expansion (the C shifts its volatile spill slot with `*(&y + 6)`; same value).
+/// The C body is the MSL `sqrtf` expansion with its volatile spill stored at `*(&y + 6)`, i.e. outside the local `y`: undefined
+/// behaviour that the x86 PC build compiles to `return x` (the Newton steps and the store vanish), so the hookshot chain sees the
+/// SQUARED length (`len = |d|^2`, `vec = d / |d|^2`) and links activate faster than on the console. The C goldens carry that
+/// behaviour; reproduce it, not the intended square root.
 pub fn it_802A4BFC_sqrtf_offset(x: f32) -> f32 {
     melee_core::ct!("it_802A4BFC_sqrtf_offset");
-    sqrtf(x)
+    x
 }
 
 pub unsafe fn it_802A4BFC_normalize_diff(a: *mut Vec3, b: *mut Vec3, vec: *mut Vec3) -> f64 {

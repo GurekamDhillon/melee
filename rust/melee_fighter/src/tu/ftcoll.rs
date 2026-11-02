@@ -401,7 +401,7 @@ pub fn ftcoll_80076764(arg0: i32, arg1: i32, arg2: G, arg3: *mut DynamicsDesc, f
             e.anon_c.unk_anim0 = arg3;
             e.anon_10.hurt1 = hurt;
             e.pos = fp.cur_pos;
-            e.size_of_xC = (*arg3).count as usize;
+            e.size_of_xC = (*(arg3 as *const lbColl_80008D30_arg1)).damage as usize; // word 1 (`arg3->count` in the C)
         }
         set_log0_idx(idx + 1);
     } else {

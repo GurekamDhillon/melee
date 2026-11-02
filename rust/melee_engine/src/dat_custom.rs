@@ -151,6 +151,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 None => core::ptr::null_mut(),
                                 Some(t) => match k {
                                     2 => d.object::<melee_types::DynamicsDesc>(t) as *mut c_void,
+                                    4 => d.object::<melee_types::lbColl_80008D30_arg1>(t) as *mut c_void,
                                     3 => d.array::<i16>(t, (b.extent(t) / 2).max(1) as usize) as *mut c_void,
                                     _ => b.raw_addr(t),
                                 },

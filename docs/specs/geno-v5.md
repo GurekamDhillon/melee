@@ -163,11 +163,11 @@ State n becomes MotionState row for motion id `0x400 + n` (`GENO_MOTION_BASE`), 
 Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift brake ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape`;
 coll: `none air air_noledge ground ground_stop both anim_motion glide drill drill.start cape cape.after`; any slot: `like`. `air` = Melee's aerial physics/collision with ledge grab; `both` = ground and air without changing state.
 **IASA trap:** the default `iasa` is `none`; an IASA script command alone does not give an input callback; use `"iasa": "interrupt"`. Paired states are found by declaration order among the profile's states with that behaviour (cape start ground/air, cape.attack N/N-air/F/F-air/B/B-air, cape.end ground/air, drill.start ground/air, drill.end ground/air).
-Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity.
+Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion): `geno-v5.1-behaviours.md` is normative for their arithmetic, parameter names and defaults, and acceptance tables (clean-room spec, MIT).
 
 ### 4.6 Parameter blocks
 
-The parameter blocks `glide`, `tornado`, `drill` and `cape` (float; bool accepted as 0/1; `wNN` = numbered word also accepted) configure the behaviours of 4.5. Their key names, default values and meaning belong to the behaviour procedures: Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity. A reader accepts the four keys, ignores unknown names (logged) and has **128** parameter slots.
+The parameter blocks `glide`, `tornado`, `drill` and `cape` (float; bool accepted as 0/1; `wNN` = numbered word also accepted) configure the behaviours of 4.5. Their key names, default values and meaning are defined by `geno-v5.1-behaviours.md` (normative). A reader accepts the four keys, ignores unknown names (logged) and has **128** parameter slots.
 Geno button mask: ATTACK 1, SPECIAL 2, JUMP 4, SHIELD 8, GRAB 0x10, TAUNT 0x20, BLAST 0x40 (the last is geno 11).
 
 ### 4.7 `specials`
@@ -487,7 +487,7 @@ To produce a fixture for an `attach` v5 fighter (states, articles, escape variab
 
 | # | item |
 |---|---|
-| 1 | behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) and their parameter defaults: Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity. Hooks 6-10 and `GenoGame_ArticleStep` arithmetic are also not restated |
+| 1 | **closed 2026-11-02:** behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) and their parameter defaults are normative in `geno-v5.1-behaviours.md` (clean-room similarity review: clean). Hooks 6-10 and `GenoGame_ArticleStep` arithmetic are also not restated |
 | 2 | words-file path handling beyond `..` refusal (absolute paths, drive letters) |
 | 3 | meaning of `x221F_b3` (the guard around `Fighter_8006A360` and `ProcessHit`'s body); assumed "fighter not frozen" |
 | 4 | digest of `attach` state is specified and implemented (nhv1.md 8.1, columns `geno0..3`) for the variable banks and `action_time` only; the change-action checks, rehit/link/stun tables and motion scratch are not in it |

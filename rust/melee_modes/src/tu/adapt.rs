@@ -81,10 +81,6 @@ pub fn Geno_MotionRow__2d0cf2(a0: *mut Fighter, a1: i32) -> *mut MotionState { m
 pub fn Geno_SpecialEnter__354edd(a0: *mut Fighter_GObj, a1: i32) -> i32 { melee_core::ct!("Geno_SpecialEnter__354edd"); unsafe { crate::tu::geno_game::Geno_SpecialEnter(a0, a1) } }
 pub fn GenoGame_TestLedgeMode__20e1e5(a0: *mut Fighter) -> i32 { melee_core::ct!("GenoGame_TestLedgeMode__20e1e5"); unsafe { crate::tu::geno_game::GenoGame_TestLedgeMode(a0) } }
 pub fn GenoGame_TestStartFrame__314818(a0: *mut Fighter, a1: i32) -> f32 { melee_core::ct!("GenoGame_TestStartFrame__314818"); unsafe { crate::tu::geno_game::GenoGame_TestStartFrame(a0, a1) } }
-pub fn GenoGame_TestPairSwap__f2efa3(a0: *mut Fighter, a1: i32) -> i32 { melee_core::ct!("GenoGame_TestPairSwap__f2efa3"); unsafe { crate::tu::geno_game::GenoGame_TestPairSwap(a0, a1) } }
-pub fn GenoGame_TestModelRotX__9f9136() -> f32 { melee_core::ct!("GenoGame_TestModelRotX__9f9136"); unsafe { crate::tu::geno_game::GenoGame_TestModelRotX() } }
-pub fn GenoGame_TestJointRate__51ea58() -> f32 { melee_core::ct!("GenoGame_TestJointRate__51ea58"); unsafe { crate::tu::geno_game::GenoGame_TestJointRate() } }
-pub fn GenoGame_TestPoseReset__cef785(a0: f32) { melee_core::ct!("GenoGame_TestPoseReset__cef785"); unsafe { crate::tu::geno_game::GenoGame_TestPoseReset(a0) } }
 pub fn ScriptGame_FighterI__fafc3a(a0: i32, a1: i32) -> i32 { melee_core::ct!("ScriptGame_FighterI__fafc3a"); unsafe { crate::tu::script_game::ScriptGame_FighterI(a0, a1) } }
 pub fn ScriptGame_FighterF__01b474(a0: i32, a1: i32) -> f32 { melee_core::ct!("ScriptGame_FighterF__01b474"); unsafe { crate::tu::script_game::ScriptGame_FighterF(a0, a1) } }
 pub fn gmFrontend_ModeSelect__ce9fbe(a0: *mut GameModeState, a1: i32, a2: *const i8) { melee_core::ct!("gmFrontend_ModeSelect__ce9fbe"); unsafe { crate::tu::gmfrontend::gmFrontend_ModeSelect(a0, a1, a2) } }

@@ -9,10 +9,15 @@ def replace_ws(s,a,b,count=1):
     if n!=count:raise ValueError((a,n,count))
     return s
 
-for stem in ('geno_game','geno_tests'):
+import sys
+for stem in (sys.argv[1:] or ['geno_game','geno_tests']):
     path=ROOT/f'rust/melee_modes/src/tu/{stem}.rs'
     s=path.read_text()
     s=s.replace('AObjArgType','AObj_Arg_Type')
+    # C fields named after Rust keywords keep their raw-identifier spelling in melee_types.
+    s=re.sub(r'\.loop_0(?!\w)','.r#loop',s)
+    # ftData.x24 is typed (*mut WaitStruct) in melee_types; C declares it void*.
+    s=s.replace('x24: ::core::ptr::null::<c_void>() as *mut c_void,','x24: ::core::ptr::null_mut(),')
     s=s.replace('fn Geno_DefineVoiceState(a0: u32,','fn Geno_DefineVoiceState(a0: i32,')
     s=s.replace('fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: i32,','fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32,')
     # Repeated block externs are an old c2rust name-resolution defect. They are
@@ -73,16 +78,22 @@ for stem in ('geno_game','geno_tests'):
     if stem=='geno_game':
         # Exact contraction sites from the shipping PPC clang IR (fma_sites.py).
         for a,b,n in [
-            ('sx * sx + sy * sy','fmadds(sx, sx, sy * sy)',2),
-            ('dx * dx + dy * dy','fmadds(dx, dx, dy * dy)',5),
-            ('*vx * *vx + *vy * *vy','fmadds(*vx, *vx, *vy * *vy)',3),
+            ('sx * sx + sy * sy','fmadds(sx, sx, sy * sy)',1),
+            ('dx * dx + dy * dy','fmadds(dx, dx, dy * dy)',4),
+            ('*vx * *vx + *vy * *vy','fmadds(*vx, *vx, *vy * *vy)',2),
             ('vx * vx + vy * vy','fmadds(vx, vx, vy * vy)',1),
-            ('sx as f32 * sx as f32 + sy as f32 * sy as f32','fmadds(sx, sx, sy * sy)',1),
-            ('vx as f32 * vx as f32 + vy as f32 * vy as f32','fmadds(vx, vx, vy * vy)',1),
             ('(*st).motion_vy -= ((*fp).co_attrs.gravity as f32 * g) as f32;',
              '(*st).motion_vy = fmadds(-(*fp).co_attrs.gravity, g, (*st).motion_vy);',1),
-            ('let mut a: f32 = (*st).move_f[0 as i32 as usize] + sy * geno_param( st, GENO_P_DRILL_W0 as i32 + 3 as i32, );',
-             'let mut a = fmadds(sy, geno_param(st, GENO_P_DRILL_W0 as i32 + 3), (*st).move_f[0]);',1),
+            ('(*v).vx = facing * (vf * c - vu * sn);','(*v).vx = facing * fmadds(vf, c, -(vu * sn));',1),
+            ('r.f = sqrtf( (*fp).input.lstick[0 as i32 as usize].x as f32 * (*fp).input.lstick[0 as i32 as usize].x as f32 + (*fp).input.lstick[0 as i32 as usize].y as f32 * (*fp).input.lstick[0 as i32 as usize].y as f32, ) as f32;',
+             'r.f = sqrtf(fmadds((*fp).input.lstick[0].x, (*fp).input.lstick[0].x, (*fp).input.lstick[0].y * (*fp).input.lstick[0].y));',1),
+            ('return geno_item_paramf(d, GENO_IP_HOVER as i32) + geno_item_paramf(d, GENO_IP_BOB as i32) * sinf( age as f32 * geno_item_paramf(d, GENO_IP_BOB_SPEED as i32) as f32 * M_PI as f32 / 180.0f32, ) as f32;',
+             'return fmadds(geno_item_paramf(d, GENO_IP_BOB as i32), sinf(age * geno_item_paramf(d, GENO_IP_BOB_SPEED as i32) * M_PI as f32 / 180.0f32), geno_item_paramf(d, GENO_IP_HOVER as i32));',1),
+            ('fp.cur_pos.y = ip.pos.y + geno_item_lift(def, 1 as i32 as f32) + geno_item_paramf(def, GENO_IP_HEIGHT as i32) * geno_item_paramf(def, GENO_IP_SCALE as i32);',
+             'fp.cur_pos.y = fmadds(geno_item_paramf(def, GENO_IP_HEIGHT as i32), geno_item_paramf(def, GENO_IP_SCALE as i32), ip.pos.y + geno_item_lift(def, 1 as i32 as f32));',1),
+            ('fp.cur_pos.x = (ip.pos.x as f32 + radius as f32 * 0.99f32) as f32;','fp.cur_pos.x = fmadds(radius, 0.99f32, ip.pos.x);',1),
+            ('geno_item_lift(d, (*v).age as f32) + geno_item_paramf(d, GENO_IP_HEIGHT as i32) * geno_item_paramf(d, GENO_IP_SCALE as i32),',
+             'fmadds(geno_item_paramf(d, GENO_IP_HEIGHT as i32), geno_item_paramf(d, GENO_IP_SCALE as i32), geno_item_lift(d, (*v).age as f32)),',1),
             ('pos.x = (*base).x + facing * fwd;','pos.x = fmadds(facing, fwd, (*base).x);',1),
             ('(*v).vy = vf * sn + vu * c;','(*v).vy = fmadds(vf, sn, vu * c);',1),
             ('(*fp).facing_dir as f32 * (*box_0).x + (*fp).cur_pos.x','fmadds((*fp).facing_dir, (*box_0).x, (*fp).cur_pos.x)',1),
@@ -91,4 +102,12 @@ for stem in ('geno_game','geno_tests'):
             ('svx += (*pp).vel.x * (*ip).facing_dir;','svx = fmadds((*pp).vel.x, (*ip).facing_dir, svx);',1),
         ]:
             s=replace_ws(s,a,b,n)
+    # Large C initialisers live in the oracle-generated <stem>/data.rs (tuoracle.py tables).
+    data=path.parent/stem/'data.rs'
+    if data.exists():
+        names=re.findall(r'(?m)^pub static mut (\w+):',data.read_text())
+        for n in names:
+            m=re.search(r'(?m)^pub static mut '+n+r':[^=]*= \[',s)
+            if m:s=s[:m.start()]+s[s.index('];',m.end())+2:]
+        s=s.replace('\nuse ext::*;\n','\nuse ext::*;\nmod data;\npub use data::{'+', '.join(names)+'};\n',1)
     path.write_text(s)

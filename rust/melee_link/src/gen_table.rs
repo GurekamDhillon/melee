@@ -25659,195 +25659,310 @@ fn install_melee_items() {
 
 fn install_melee_modes() {
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Camera_800310B8 = Some(|| unsafe { cast::<_, _, 1282600>(melee_world::tu::camera::Camera_800310B8()) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Fighter_ChangeMotionState = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 1282701>(a0), cast::<_, _, 1282702>(a1), cast::<_, _, 1282703>(a2), cast::<_, _, 1282704>(a3), cast::<_, _, 1282705>(a4), cast::<_, _, 1282706>(a5), cast::<_, _, 1282707>(a6)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::GObj_Create = Some(|a0, a1, a2| unsafe { cast::<_, _, 1282800>(melee_runtime::tu::gobj_native::GObj_Create(cast::<_, _, 1282801>(a0), cast::<_, _, 1282802>(a1), cast::<_, _, 1282803>(a2))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobj_native::GObj_SetupGXLink(cast::<_, _, 1282901>(a0), cast::<_, _, 1282902>(a1), cast::<_, _, 1282903>(a2), cast::<_, _, 1282904>(a3)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_AObjSetEndFrame = Some(|a0, a1| unsafe { melee_runtime::tu::aobj::HSD_AObjSetEndFrame(cast::<_, _, 1283001>(a0), cast::<_, _, 1283002>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_AObjSetFlags = Some(|a0, a1| unsafe { melee_runtime::tu::aobj::HSD_AObjSetFlags(cast::<_, _, 1283101>(a0), cast::<_, _, 1283102>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_AObjSetRate = Some(|a0, a1| unsafe { melee_runtime::tu::aobj::HSD_AObjSetRate(cast::<_, _, 1283201>(a0), cast::<_, _, 1283202>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetCurrent = Some(|| unsafe { cast::<_, _, 1283300>(melee_runtime::tu::cobj::HSD_CObjGetCurrent()) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetEyePosition = Some(|a0, a1| unsafe { melee_items::tu::cobj::HSD_CObjGetEyePosition(cast::<_, _, 1283401>(a0), cast::<_, _, 1283402>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetViewingMtxPtr = Some(|a0| unsafe { cast::<_, _, 1283500>(melee_runtime::tu::cobj_world::HSD_CObjGetViewingMtxPtr(cast::<_, _, 1283501>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_DObjSetFlags = Some(|a0, a1| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(cast::<_, _, 1283601>(a0), cast::<_, _, 1283602>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_ForeachAnim = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_runtime::tu::aobj::HSD_ForeachAnim(cast::<_, _, 1283701>(a0), cast::<_, _, 1283702>(a1), cast::<_, _, 1283703>(a2), cast::<_, _, 1283704>(a3), cast::<_, _, 1283705>(a4), cast::<_, _, 1283706>(a5)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjGetDObj = Some(|a0| unsafe { cast::<_, _, 1283800>(melee_items::tu::jobj::HSD_JObjGetDObj(cast::<_, _, 1283801>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1283901>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjSetupMatrixSub = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(cast::<_, _, 1284001>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_Randf = Some(|| unsafe { cast::<_, _, 1284100>(melee_runtime::tu::random::global::HSD_Randf()) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_Randi = Some(|a0| unsafe { cast::<_, _, 1284200>(melee_runtime::tu::random::global::HSD_Randi(cast::<_, _, 1284201>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_StateInvalidate = Some(|a0| unsafe { melee_runtime::tu::state_native::HSD_StateInvalidate(cast::<_, _, 1284301>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80267978 = Some(|a0| unsafe { melee_items::tu::item::Item_80267978(cast::<_, _, 1284401>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1284500>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1284501>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1284601>(a0), cast::<_, _, 1284602>(a1), cast::<_, _, 1284603>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1284701>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_ScriptSpawnAtCap = Some(|a0| unsafe { cast::<_, _, 1284800>(melee_items::tu::item::Item_ScriptSpawnAtCap(cast::<_, _, 1284801>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Item_ScriptSpawnCapTest = Some(|| unsafe { cast::<_, _, 1284900>(melee_items::tu::item::Item_ScriptSpawnCapTest()) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::Player_GetEntity = Some(|a0| unsafe { cast::<_, _, 1285000>(melee_fighter::tu::player::Player_GetEntity(cast::<_, _, 1285001>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleDamageOnly = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleDamageOnly(cast::<_, _, 1285101>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleForget = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleForget(cast::<_, _, 1285201>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleItemCreate = Some(|a0, a1| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleItemCreate(cast::<_, _, 1285301>(a0), cast::<_, _, 1285302>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_NoteSpecialInput = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_NoteSpecialInput(cast::<_, _, 1285401>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::__frsqrte = Some(|a0| unsafe { cast::<_, _, 1285500>(melee_runtime::tu::gekko_fp::__frsqrte(cast::<_, _, 1285501>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 1285600>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 1285601>(a0), cast::<_, _, 1285602>(a1))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::cosf = Some(|a0| unsafe { cast::<_, _, 1285700>(melee_runtime::tu::gekko_fp::cosf(cast::<_, _, 1285701>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::db_80225DD8 = Some(|a0, a1| unsafe { melee_items::tu::dbitem::db_80225DD8(cast::<_, _, 1285801>(a0), cast::<_, _, 1285802>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_MexSpawn = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_world::tu::efn::efasync::efAsync_MexSpawn(cast::<_, _, 1285901>(a0), cast::<_, _, 1285902>(a1), cast::<_, _, 1285903>(a2), cast::<_, _, 1285904>(a3), cast::<_, _, 1285905>(a4), cast::<_, _, 1285906>(a5), cast::<_, _, 1285907>(a6)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_QueueFlush = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::efAsync_QueueFlush(cast::<_, _, 1286001>(a0), cast::<_, _, 1286002>(a1)) }); }
-    // tu/geno_game.rs: link_alias.tsv
-    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_Spawn = Some(|a0, a1, a2, a3, a4| unsafe { { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(cast::<_, _, 1286101>(a0), cast::<_, _, 1286102>(a1), cast::<_, _, 1286103>(a2), cast::<_, _, 1286104>(a3), cast::<_, _, 1286105>(a4), &[]); } }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_8006F0FC = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_8006F0FC(cast::<_, _, 1286201>(a0), cast::<_, _, 1286202>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_IsFramesRemaining = Some(|a0| unsafe { cast::<_, _, 1286300>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 1286301>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_SetAnimRate = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(cast::<_, _, 1286401>(a0), cast::<_, _, 1286402>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCliffCommon_80081298 = Some(|a0| unsafe { cast::<_, _, 1286500>(melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298(cast::<_, _, 1286501>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800968C8 = Some(|a0| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_800968C8(cast::<_, _, 1286601>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_80096CC8 = Some(|a0, a1| unsafe { cast::<_, _, 1286700>(melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(cast::<_, _, 1286701>(a0), cast::<_, _, 1286702>(a1))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_80096D28 = Some(|a0| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096D28(cast::<_, _, 1286801>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_8009917C = Some(|a0| unsafe { cast::<_, _, 1286900>(melee_fighter::tu::ftCo_Escape::ftCo_8009917C(cast::<_, _, 1286901>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800D105C = Some(|a0| unsafe { melee_fighter::tu::ftchangeparam::ftco_800d105c(cast::<_, _, 1287001>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800D72A0 = Some(|a0| unsafe { cast::<_, _, 1287100>(melee_fighter::tu::ftco_0d72::ftco_800d72a0(cast::<_, _, 1287101>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_AttackAir_EnterFromMsid = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(cast::<_, _, 1287201>(a0), cast::<_, _, 1287202>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Fall_Enter = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 1287301>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Fall_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_IASA(cast::<_, _, 1287401>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_IsCpuControlled = Some(|a0| unsafe { cast::<_, _, 1287500>(melee_fighter::tu::ftCo_0A01::ftCo_IsCpuControlled(cast::<_, _, 1287501>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_JumpAerial_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Enter_Basic(cast::<_, _, 1287601>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Jump_Enter = Some(|a0| unsafe { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Enter(cast::<_, _, 1287701>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(cast::<_, _, 1287801>(a0), cast::<_, _, 1287802>(a1), cast::<_, _, 1287803>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter_Basic(cast::<_, _, 1287901>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Landing_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(cast::<_, _, 1288001>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Wait_IASA = Some(|a0| unsafe { melee_fighter::tu::ftCo_Wait::ftCo_Wait_IASA(cast::<_, _, 1288101>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_8007D5D4 = Some(|a0| unsafe { melee_fighter::ftcommon2::ftcommon_8007d5d4(cast::<_, _, 1288201>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_8007D7FC = Some(|a0| unsafe { melee_fighter::ftcommon3::ftcommon_8007d7fc(cast::<_, _, 1288301>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_DeaccelAir = Some(|a0| unsafe { melee_fighter::ftcommon_c::ftCommon_CalcSelfAccel_DeaccelAir(cast::<_, _, 1288401>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_Drift = Some(|a0| unsafe { melee_fighter::ftcommon_c::ftCommon_CalcSelfAccel_Drift(cast::<_, _, 1288501>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_Fall = Some(|a0, a1, a2| unsafe { melee_fighter::ftcommon_c::ftCommon_Fall(cast::<_, _, 1288601>(a0), cast::<_, _, 1288602>(a1), cast::<_, _, 1288603>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_SetSelfMovementFromGroundedMovement = Some(|a0| unsafe { melee_fighter::ftcommon_c::ftCommon_SetSelfMovementFromGroundedMovement(cast::<_, _, 1288701>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftPartSetRotX = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotX(cast::<_, _, 1288801>(a0), cast::<_, _, 1288802>(a1), cast::<_, _, 1288803>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ftPartSetRotY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 1288901>(a0), cast::<_, _, 1288902>(a1), cast::<_, _, 1288903>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80081A00 = Some(|a0| unsafe { cast::<_, _, 1289000>(melee_fighter::tu::ft_0819::ft_80081a00(cast::<_, _, 1289001>(a0))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80082C74 = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_80082c74(cast::<_, _, 1289101>(a0), cast::<_, _, 1289102>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80083090 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ft_081b::ft_80083090(cast::<_, _, 1289201>(a0), cast::<_, _, 1289202>(a1), cast::<_, _, 1289203>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_8008403C = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_8008403c(cast::<_, _, 1289301>(a0), cast::<_, _, 1289302>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084104 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084104(cast::<_, _, 1289401>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084280 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084280(cast::<_, _, 1289501>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084DB0 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084db0(cast::<_, _, 1289601>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084F3C = Some(|a0| unsafe { melee_fighter::ft084e::ft_80084f3c(cast::<_, _, 1289701>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 1289801>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::ft_PlaySFX = Some(|a0, a1, a2, a3| unsafe { melee_chara::adapt::ft_PlaySFX(cast::<_, _, 1289901>(a0), cast::<_, _, 1289902>(a1), cast::<_, _, 1289903>(a2), cast::<_, _, 1289904>(a3)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::hsd_8039D5DC = Some(|a0| unsafe { melee_runtime::tu::generator::hsd_8039D5DC(cast::<_, _, 1290001>(a0)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026B40C = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B40C(cast::<_, _, 1290101>(a0), cast::<_, _, 1290102>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026B894 = Some(|a0, a1| unsafe { cast::<_, _, 1290200>(melee_items::tu::it_26B1::it_8026B894(cast::<_, _, 1290201>(a0), cast::<_, _, 1290202>(a1))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1290301>(a0), cast::<_, _, 1290302>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026E9A4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 1290400>(melee_items::tu::itgroundcoll::it_8026E9A4(cast::<_, _, 1290401>(a0), cast::<_, _, 1290402>(a1), cast::<_, _, 1290403>(a2), cast::<_, _, 1290404>(a3))) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026FCF8 = Some(|a0, a1| unsafe { melee_items::tu::itcoll::it_8026FCF8(cast::<_, _, 1290501>(a0), cast::<_, _, 1290502>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_8027129C = Some(|a0, a1| unsafe { melee_items::tu::itcoll::it_8027129C(cast::<_, _, 1290601>(a0), cast::<_, _, 1290602>(a1)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_80272460 = Some(|a0, a1, a2| unsafe { melee_items::tu::itcoll::it_80272460(cast::<_, _, 1290701>(a0), cast::<_, _, 1290702>(a1), cast::<_, _, 1290703>(a2)) }); }
-    // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::it_80275594 = Some(|a0, a1, a2| unsafe { melee_items::tu::ithitbox::it_80275594(cast::<_, _, 1290801>(a0), cast::<_, _, 1290802>(a1), cast::<_, _, 1290803>(a2)) }); }
-    // tu/geno_game.rs
+    unsafe { melee_modes::tu::geno_game::ext::hook::Camera_800310B8 = Some(|| unsafe { cast::<_, _, 1190700>(melee_world::tu::camera::Camera_800310B8()) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Fighter_ChangeMotionState = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 1190801>(a0), cast::<_, _, 1190802>(a1), cast::<_, _, 1190803>(a2), cast::<_, _, 1190804>(a3), cast::<_, _, 1190805>(a4), cast::<_, _, 1190806>(a5), cast::<_, _, 1190807>(a6)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::GObj_Create = Some(|a0, a1, a2| unsafe { cast::<_, _, 1190900>(melee_runtime::tu::gobjplink::GObj_Create(cast::<_, _, 1190901>(a0), cast::<_, _, 1190902>(a1), cast::<_, _, 1190903>(a2))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| unsafe { melee_runtime::tu::gobjgxlink::GObj_SetupGXLink(cast::<_, _, 1191001>(a0), cast::<_, _, 1191002>(a1), cast::<_, _, 1191003>(a2), cast::<_, _, 1191004>(a3)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetCurrent = Some(|| unsafe { cast::<_, _, 1191100>(melee_runtime::tu::cobj::HSD_CObjGetCurrent()) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetEyePosition = Some(|a0, a1| unsafe { melee_items::tu::cobj::HSD_CObjGetEyePosition(cast::<_, _, 1191201>(a0), cast::<_, _, 1191202>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_CObjGetViewingMtxPtr = Some(|a0| unsafe { cast::<_, _, 1191300>(melee_runtime::tu::cobj_world::HSD_CObjGetViewingMtxPtr(cast::<_, _, 1191301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_DObjSetFlags = Some(|a0, a1| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(cast::<_, _, 1191401>(a0), cast::<_, _, 1191402>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_ForeachAnim = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_runtime::tu::aobj::HSD_ForeachAnim(cast::<_, _, 1191501>(a0), cast::<_, _, 1191502>(a1), cast::<_, _, 1191503>(a2), cast::<_, _, 1191504>(a3), cast::<_, _, 1191505>(a4), cast::<_, _, 1191506>(a5)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjGetDObj = Some(|a0| unsafe { cast::<_, _, 1191600>(melee_items::tu::jobj::HSD_JObjGetDObj(cast::<_, _, 1191601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjSetMtxDirtySub = Some(|a0| unsafe { melee_items::tu::jobj::HSD_JObjSetMtxDirtySub(cast::<_, _, 1191701>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_JObjSetupMatrixSub = Some(|a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(cast::<_, _, 1191801>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_Randf = Some(|| unsafe { cast::<_, _, 1191900>(melee_runtime::tu::random::global::HSD_Randf()) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_Randi = Some(|a0| unsafe { cast::<_, _, 1192000>(melee_runtime::tu::random::global::HSD_Randi(cast::<_, _, 1192001>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::HSD_StateInvalidate = Some(|a0| unsafe { melee_runtime::tu::state_native::HSD_StateInvalidate(cast::<_, _, 1192101>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80267978 = Some(|a0| unsafe { melee_items::tu::item::Item_80267978(cast::<_, _, 1192201>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80268B18 = Some(|a0| unsafe { cast::<_, _, 1192300>(melee_items::tu::item::Item_80268B18(cast::<_, _, 1192301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_80268E5C = Some(|a0, a1, a2| unsafe { melee_items::tu::item::Item_80268E5C(cast::<_, _, 1192401>(a0), cast::<_, _, 1192402>(a1), cast::<_, _, 1192403>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_8026A8EC = Some(|a0| unsafe { melee_items::tu::item::Item_8026A8EC(cast::<_, _, 1192501>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_ScriptSpawnAtCap = Some(|a0| unsafe { cast::<_, _, 1192600>(melee_items::tu::item::Item_ScriptSpawnAtCap(cast::<_, _, 1192601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Item_ScriptSpawnCapTest = Some(|| unsafe { cast::<_, _, 1192700>(melee_items::tu::item::Item_ScriptSpawnCapTest()) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::Player_GetEntity = Some(|a0| unsafe { cast::<_, _, 1192800>(melee_fighter::tu::player::Player_GetEntity(cast::<_, _, 1192801>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleDamageOnly = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleDamageOnly(cast::<_, _, 1192901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleForget = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleForget(cast::<_, _, 1193001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleItemCreate = Some(|a0, a1| unsafe { melee_modes::tu::script_game::ScriptGame_HitRuleItemCreate(cast::<_, _, 1193101>(a0), cast::<_, _, 1193102>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ScriptGame_NoteSpecialInput = Some(|a0| unsafe { melee_modes::tu::script_game::ScriptGame_NoteSpecialInput(cast::<_, _, 1193201>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::__frsqrte = Some(|a0| unsafe { cast::<_, _, 1193300>(melee_runtime::tu::gekko_fp::__frsqrte(cast::<_, _, 1193301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::cosf = Some(|a0| unsafe { cast::<_, _, 1193400>(melee_runtime::tu::gekko_fp::cosf(cast::<_, _, 1193401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::db_80225DD8 = Some(|a0, a1| unsafe { melee_items::tu::dbitem::db_80225DD8(cast::<_, _, 1193501>(a0), cast::<_, _, 1193502>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_MexSpawn = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_world::tu::efn::efasync::efAsync_MexSpawn(cast::<_, _, 1193601>(a0), cast::<_, _, 1193602>(a1), cast::<_, _, 1193603>(a2), cast::<_, _, 1193604>(a3), cast::<_, _, 1193605>(a4), cast::<_, _, 1193606>(a5), cast::<_, _, 1193607>(a6)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_QueueFlush = Some(|a0, a1| unsafe { melee_world::tu::efn::efasync::efAsync_QueueFlush(cast::<_, _, 1193701>(a0), cast::<_, _, 1193702>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::efAsync_Spawn = Some(|a0, a1, a2, a3, a4| unsafe { { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(cast::<_, _, 1193801>(a0), cast::<_, _, 1193802>(a1), cast::<_, _, 1193803>(a2), cast::<_, _, 1193804>(a3), cast::<_, _, 1193805>(a4), &[]); } }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_8006F0FC = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_8006F0FC(cast::<_, _, 1193901>(a0), cast::<_, _, 1193902>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_IsFramesRemaining = Some(|a0| unsafe { cast::<_, _, 1194000>(melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(cast::<_, _, 1194001>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftAnim_SetAnimRate = Some(|a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(cast::<_, _, 1194101>(a0), cast::<_, _, 1194102>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCliffCommon_80081298 = Some(|a0| unsafe { cast::<_, _, 1194200>(melee_fighter::tu::ftcliffcommon::ftcliffcommon_80081298(cast::<_, _, 1194201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_80095328 = Some(|a0, a1| unsafe { cast::<_, _, 1194300>(melee_fighter::tu::ftCo_ItemThrow::ftCo_80095328(cast::<_, _, 1194301>(a0), cast::<_, _, 1194302>(a1))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800968C8 = Some(|a0| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_800968C8(cast::<_, _, 1194401>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_80096CC8 = Some(|a0, a1| unsafe { cast::<_, _, 1194500>(melee_fighter::tu::ftCo_FallSpecial::ftCo_80096CC8(cast::<_, _, 1194501>(a0), cast::<_, _, 1194502>(a1))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_80096D28 = Some(|a0| unsafe { melee_fighter::tu::ftCo_FallSpecial::ftCo_80096D28(cast::<_, _, 1194601>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_8009917C = Some(|a0| unsafe { cast::<_, _, 1194700>(melee_fighter::tu::ftCo_Escape::ftCo_8009917C(cast::<_, _, 1194701>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800C3B10 = Some(|a0| unsafe { cast::<_, _, 1194800>(melee_fighter::tu::ftco_aircatch::ftco_800c3b10(cast::<_, _, 1194801>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800CB870 = Some(|a0| unsafe { cast::<_, _, 1194900>(melee_fighter::tu::ftCo_JumpAerial::ftCo_800CB870(cast::<_, _, 1194901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800D105C = Some(|a0| unsafe { melee_fighter::tu::ftchangeparam::ftco_800d105c(cast::<_, _, 1195001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800D705C = Some(|a0| unsafe { cast::<_, _, 1195100>(melee_fighter::tu::ftCo_Attack100::ftCo_800D705C(cast::<_, _, 1195101>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_800D7100 = Some(|a0| unsafe { cast::<_, _, 1195200>(melee_fighter::tu::ftCo_Attack100::ftCo_800D7100(cast::<_, _, 1195201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_AttackAir_EnterFromMsid = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_AttackAir::ftCo_AttackAir_EnterFromMsid(cast::<_, _, 1195301>(a0), cast::<_, _, 1195302>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_AttackS4_CheckInput = Some(|a0| unsafe { cast::<_, _, 1195400>(melee_fighter::tu::ftCo_AttackS4::ftCo_AttackS4_CheckInput(cast::<_, _, 1195401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Dash_CheckInput = Some(|a0| unsafe { cast::<_, _, 1195500>(melee_fighter::tu::ftCo_Dash::ftCo_Dash_CheckInput(cast::<_, _, 1195501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Fall_Enter = Some(|a0| unsafe { melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(cast::<_, _, 1195601>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_IsCpuControlled = Some(|a0| unsafe { cast::<_, _, 1195700>(melee_fighter::tu::ftCo_0A01::ftCo_IsCpuControlled(cast::<_, _, 1195701>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_JumpAerial_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_JumpAerial::ftCo_JumpAerial_Enter_Basic(cast::<_, _, 1195801>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Jump_CheckInput = Some(|a0| unsafe { cast::<_, _, 1195900>(melee_fighter::tu::ftCo_Jump::ftCo_Jump_CheckInput(cast::<_, _, 1195901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Jump_Enter = Some(|a0| unsafe { melee_fighter::tu::ftCo_Jump::ftCo_Jump_Enter(cast::<_, _, 1196001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter(cast::<_, _, 1196101>(a0), cast::<_, _, 1196102>(a1), cast::<_, _, 1196103>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_LandingFallSpecial_Enter_Basic(cast::<_, _, 1196201>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Landing_Enter_Basic = Some(|a0| unsafe { melee_fighter::tu::ftCo_Landing::ftCo_Landing_Enter_Basic(cast::<_, _, 1196301>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Turn_CheckInput = Some(|a0| unsafe { cast::<_, _, 1196400>(melee_fighter::tu::ftCo_Turn::ftCo_Turn_CheckInput(cast::<_, _, 1196401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCo_Walk_CheckInput = Some(|a0| unsafe { cast::<_, _, 1196500>(melee_fighter::tu::ftCo_Walk::ftCo_Walk_CheckInput(cast::<_, _, 1196501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftColl_CreateReflectHit = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftcoll::ftColl_CreateReflectHit(cast::<_, _, 1196601>(a0), cast::<_, _, 1196602>(a1), cast::<_, _, 1196603>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_8007D5D4 = Some(|a0| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007d5d4(cast::<_, _, 1196701>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftCommon_8007D7FC = Some(|a0| unsafe { melee_fighter::tu::ftcommon::ftcommon_8007d7fc(cast::<_, _, 1196801>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ftPartSetRotY = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftparts::ftPartSetRotY(cast::<_, _, 1196901>(a0), cast::<_, _, 1196902>(a1), cast::<_, _, 1196903>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80081A00 = Some(|a0| unsafe { cast::<_, _, 1197000>(melee_fighter::tu::ft_0819::ft_80081a00(cast::<_, _, 1197001>(a0))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80082C74 = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_80082c74(cast::<_, _, 1197101>(a0), cast::<_, _, 1197102>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80083090 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ft_081b::ft_80083090(cast::<_, _, 1197201>(a0), cast::<_, _, 1197202>(a1), cast::<_, _, 1197203>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_8008403C = Some(|a0, a1| unsafe { melee_fighter::tu::ft_081b::ft_8008403c(cast::<_, _, 1197301>(a0), cast::<_, _, 1197302>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084104 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084104(cast::<_, _, 1197401>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084280 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084280(cast::<_, _, 1197501>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084DB0 = Some(|a0| unsafe { melee_fighter::tu::ft_081b::ft_80084db0(cast::<_, _, 1197601>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_80084F3C = Some(|a0| unsafe { melee_fighter::tu::ft_084e::ft_80084f3c(cast::<_, _, 1197701>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_8008A2BC = Some(|a0| unsafe { melee_fighter::tu::ft_08a1::ft_8008A2BC(cast::<_, _, 1197801>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::ft_PlaySFX = Some(|a0, a1, a2, a3| unsafe { melee_chara::adapt::ft_PlaySFX(cast::<_, _, 1197901>(a0), cast::<_, _, 1197902>(a1), cast::<_, _, 1197903>(a2), cast::<_, _, 1197904>(a3)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::hsd_8039D5DC = Some(|a0| unsafe { melee_runtime::tu::generator::hsd_8039D5DC(cast::<_, _, 1198001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026B40C = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026B40C(cast::<_, _, 1198101>(a0), cast::<_, _, 1198102>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026BB68 = Some(|a0, a1| unsafe { melee_items::tu::it_26B1::it_8026BB68(cast::<_, _, 1198201>(a0), cast::<_, _, 1198202>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026E9A4 = Some(|a0, a1, a2, a3| unsafe { cast::<_, _, 1198300>(melee_items::tu::itgroundcoll::it_8026E9A4(cast::<_, _, 1198301>(a0), cast::<_, _, 1198302>(a1), cast::<_, _, 1198303>(a2), cast::<_, _, 1198304>(a3))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_8026FCF8 = Some(|a0, a1| unsafe { melee_items::tu::itcoll::it_8026FCF8(cast::<_, _, 1198401>(a0), cast::<_, _, 1198402>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_8027129C = Some(|a0, a1| unsafe { melee_items::tu::itcoll::it_8027129C(cast::<_, _, 1198501>(a0), cast::<_, _, 1198502>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_80272460 = Some(|a0, a1, a2| unsafe { melee_items::tu::itcoll::it_80272460(cast::<_, _, 1198601>(a0), cast::<_, _, 1198602>(a1), cast::<_, _, 1198603>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::it_80275594 = Some(|a0, a1, a2| unsafe { melee_items::tu::ithitbox::it_80275594(cast::<_, _, 1198701>(a0), cast::<_, _, 1198702>(a1), cast::<_, _, 1198703>(a2)) }); }
     unsafe { melee_modes::tu::geno_game::ext::hook::it_ResetStageArticleTable = Some(|| unsafe { melee_items::tu::it_26B1::it_ResetStageArticleTable() }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::lbColl_80008440 = Some(|a0| unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(cast::<_, _, 1198901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::lb_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 1199001>(a0), cast::<_, _, 1199002>(a1), cast::<_, _, 1199003>(a2)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckCeiling = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1199100>(melee_world::tu::mplib::mpCheckCeiling(cast::<_, _, 1199101>(a0), cast::<_, _, 1199102>(a1), cast::<_, _, 1199103>(a2), cast::<_, _, 1199104>(a3), cast::<_, _, 1199105>(a4), cast::<_, _, 1199106>(a5), cast::<_, _, 1199107>(a6), cast::<_, _, 1199108>(a7), cast::<_, _, 1199109>(a8), cast::<_, _, 1199110>(a9))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckFloor = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13| unsafe { cast::<_, _, 1199200>(melee_world::tu::mplib::mpCheckFloor(cast::<_, _, 1199201>(a0), cast::<_, _, 1199202>(a1), cast::<_, _, 1199203>(a2), cast::<_, _, 1199204>(a3), cast::<_, _, 1199205>(a4), cast::<_, _, 1199206>(a5), cast::<_, _, 1199207>(a6), cast::<_, _, 1199208>(a7), cast::<_, _, 1199209>(a8), cast::<_, _, 1199210>(a9), cast::<_, _, 1199211>(a10), cast::<_, _, 1199212>(a11), cast::<_, _, 1199213>(a12), cast::<_, _, 1199214>(a13))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckLeftWall = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1199300>(melee_world::tu::mplib::mpCheckLeftWall(cast::<_, _, 1199301>(a0), cast::<_, _, 1199302>(a1), cast::<_, _, 1199303>(a2), cast::<_, _, 1199304>(a3), cast::<_, _, 1199305>(a4), cast::<_, _, 1199306>(a5), cast::<_, _, 1199307>(a6), cast::<_, _, 1199308>(a7), cast::<_, _, 1199309>(a8), cast::<_, _, 1199310>(a9))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckRightWall = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1199400>(melee_world::tu::mplib::mpCheckRightWall(cast::<_, _, 1199401>(a0), cast::<_, _, 1199402>(a1), cast::<_, _, 1199403>(a2), cast::<_, _, 1199404>(a3), cast::<_, _, 1199405>(a4), cast::<_, _, 1199406>(a5), cast::<_, _, 1199407>(a6), cast::<_, _, 1199408>(a7), cast::<_, _, 1199409>(a8), cast::<_, _, 1199410>(a9))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpCollSetFacingDir = Some(|a0, a1| unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(cast::<_, _, 1199501>(a0), cast::<_, _, 1199502>(a1)) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpColl_80047AC8 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1199600>(melee_world::tu::mpcoll::mpColl_80047AC8(cast::<_, _, 1199601>(a0), cast::<_, _, 1199602>(a1), cast::<_, _, 1199603>(a2))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpColl_80047E14 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1199700>(melee_world::tu::mpcoll::mpColl_80047E14(cast::<_, _, 1199701>(a0), cast::<_, _, 1199702>(a1), cast::<_, _, 1199703>(a2))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::mpGetSpeed = Some(|a0, a1, a2| unsafe { cast::<_, _, 1199800>(melee_world::tu::mplib::mpGetSpeed(cast::<_, _, 1199801>(a0), cast::<_, _, 1199802>(a1), cast::<_, _, 1199803>(a2))) }); }
+    unsafe { melee_modes::tu::geno_game::ext::hook::sinf = Some(|a0| unsafe { cast::<_, _, 1199900>(melee_runtime::tu::gekko_fp::sinf(cast::<_, _, 1199901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionBegin = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_AnimMotionBegin(cast::<_, _, 1202701>(a0), cast::<_, _, 1202702>(a1), cast::<_, _, 1202703>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionFrameDelta = Some(|a0, a1, a2, a3, a4| unsafe { melee_modes::tu::geno_game::GenoBhv_AnimMotionFrameDelta(cast::<_, _, 1202801>(a0), cast::<_, _, 1202802>(a1), cast::<_, _, 1202803>(a2), cast::<_, _, 1202804>(a3), cast::<_, _, 1202805>(a4)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_AnimMotionParams(cast::<_, _, 1202901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionSample = Some(|a0, a1, a2, a3, a4| unsafe { melee_modes::tu::geno_game::GenoBhv_AnimMotionSample(cast::<_, _, 1203001>(a0), cast::<_, _, 1203002>(a1), cast::<_, _, 1203003>(a2), cast::<_, _, 1203004>(a3), cast::<_, _, 1203005>(a4)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionStep = Some(|a0, a1, a2, a3, a4, a5| unsafe { melee_modes::tu::geno_game::GenoBhv_AnimMotionStep(cast::<_, _, 1203101>(a0), cast::<_, _, 1203102>(a1), cast::<_, _, 1203103>(a2), cast::<_, _, 1203104>(a3), cast::<_, _, 1203105>(a4), cast::<_, _, 1203106>(a5)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeBegin = Some(|a0, a1, a2, a3| unsafe { melee_modes::tu::geno_game::GenoBhv_CapeBegin(cast::<_, _, 1203201>(a0), cast::<_, _, 1203202>(a1), cast::<_, _, 1203203>(a2), cast::<_, _, 1203204>(a3)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_CapeParams(cast::<_, _, 1203301>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeStep = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_CapeStep(cast::<_, _, 1203401>(a0), cast::<_, _, 1203402>(a1), cast::<_, _, 1203403>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_CosDeg = Some(|a0| unsafe { cast::<_, _, 1203500>(melee_modes::tu::geno_game::GenoBhv_CosDeg(cast::<_, _, 1203501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillBegin = Some(|a0, a1, a2, a3| unsafe { melee_modes::tu::geno_game::GenoBhv_DrillBegin(cast::<_, _, 1203601>(a0), cast::<_, _, 1203602>(a1), cast::<_, _, 1203603>(a2), cast::<_, _, 1203604>(a3)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_DrillParams(cast::<_, _, 1203701>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillStep = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_DrillStep(cast::<_, _, 1203801>(a0), cast::<_, _, 1203802>(a1), cast::<_, _, 1203803>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideBegin = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8| unsafe { melee_modes::tu::geno_game::GenoBhv_GlideBegin(cast::<_, _, 1203901>(a0), cast::<_, _, 1203902>(a1), cast::<_, _, 1203903>(a2), cast::<_, _, 1203904>(a3), cast::<_, _, 1203905>(a4), cast::<_, _, 1203906>(a5), cast::<_, _, 1203907>(a6), cast::<_, _, 1203908>(a7), cast::<_, _, 1203909>(a8)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideEntryInit = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_GlideEntryInit(cast::<_, _, 1204001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideEntryStep = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10| unsafe { cast::<_, _, 1204100>(melee_modes::tu::geno_game::GenoBhv_GlideEntryStep(cast::<_, _, 1204101>(a0), cast::<_, _, 1204102>(a1), cast::<_, _, 1204103>(a2), cast::<_, _, 1204104>(a3), cast::<_, _, 1204105>(a4), cast::<_, _, 1204106>(a5), cast::<_, _, 1204107>(a6), cast::<_, _, 1204108>(a7), cast::<_, _, 1204109>(a8), cast::<_, _, 1204110>(a9), cast::<_, _, 1204111>(a10))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_GlideParams(cast::<_, _, 1204201>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideStep = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_GlideStep(cast::<_, _, 1204301>(a0), cast::<_, _, 1204302>(a1), cast::<_, _, 1204303>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashBegin = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::GenoBhv_MultiDashBegin(cast::<_, _, 1204401>(a0), cast::<_, _, 1204402>(a1)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_MultiDashParams(cast::<_, _, 1204501>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashStep = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_MultiDashStep(cast::<_, _, 1204601>(a0), cast::<_, _, 1204602>(a1), cast::<_, _, 1204603>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinDeg = Some(|a0| unsafe { cast::<_, _, 1204700>(melee_modes::tu::geno_game::GenoBhv_SinDeg(cast::<_, _, 1204701>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinqCrc32 = Some(|| unsafe { cast::<_, _, 1204800>(melee_modes::tu::geno_game::GenoBhv_SinqCrc32()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinqWord = Some(|a0| unsafe { cast::<_, _, 1204900>(melee_modes::tu::geno_game::GenoBhv_SinqWord(cast::<_, _, 1204901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoBegin = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_TornadoBegin(cast::<_, _, 1205001>(a0), cast::<_, _, 1205002>(a1), cast::<_, _, 1205003>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoParams = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoBhv_TornadoParams(cast::<_, _, 1205101>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoStep = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::GenoBhv_TornadoStep(cast::<_, _, 1205201>(a0), cast::<_, _, 1205202>(a1), cast::<_, _, 1205203>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoDefine_StateDigest = Some(|a0| unsafe { cast::<_, _, 1205300>(melee_modes::tu::geno_game::GenoDefine_StateDigest(cast::<_, _, 1205301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_CursorTest = Some(|| unsafe { cast::<_, _, 1205400>(melee_modes::tu::geno_lab_mode::GenoFly_CursorTest()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_Fighter = Some(|a0| unsafe { cast::<_, _, 1205500>(melee_modes::tu::geno_lab_mode::GenoFly_Fighter(cast::<_, _, 1205501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_SetSolid = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_SetSolid(cast::<_, _, 1205601>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_SetSpeed = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_SetSpeed(cast::<_, _, 1205701>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_Speed = Some(|| unsafe { cast::<_, _, 1205800>(melee_modes::tu::geno_lab_mode::GenoFly_Speed()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_TestArm = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_TestArm(cast::<_, _, 1205901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AimStick = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10| unsafe { cast::<_, _, 1206000>(melee_modes::tu::geno_game::GenoGame_AimStick(cast::<_, _, 1206001>(a0), cast::<_, _, 1206002>(a1), cast::<_, _, 1206003>(a2), cast::<_, _, 1206004>(a3), cast::<_, _, 1206005>(a4), cast::<_, _, 1206006>(a5), cast::<_, _, 1206007>(a6), cast::<_, _, 1206008>(a7), cast::<_, _, 1206009>(a8), cast::<_, _, 1206010>(a9), cast::<_, _, 1206011>(a10))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ArticleStep = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { melee_modes::tu::geno_game::GenoGame_ArticleStep(cast::<_, _, 1206101>(a0), cast::<_, _, 1206102>(a1), cast::<_, _, 1206103>(a2), cast::<_, _, 1206104>(a3), cast::<_, _, 1206105>(a4), cast::<_, _, 1206106>(a5), cast::<_, _, 1206107>(a6), cast::<_, _, 1206108>(a7), cast::<_, _, 1206109>(a8), cast::<_, _, 1206110>(a9)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrFind = Some(|a0| unsafe { cast::<_, _, 1206200>(melee_modes::tu::geno_game::GenoGame_AttrFind(cast::<_, _, 1206201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrIsInt = Some(|a0| unsafe { cast::<_, _, 1206300>(melee_modes::tu::geno_game::GenoGame_AttrIsInt(cast::<_, _, 1206301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrOffset = Some(|a0| unsafe { cast::<_, _, 1206400>(melee_modes::tu::geno_game::GenoGame_AttrOffset(cast::<_, _, 1206401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_CallbackFind = Some(|a0, a1| unsafe { cast::<_, _, 1206500>(melee_modes::tu::geno_game::GenoGame_CallbackFind(cast::<_, _, 1206501>(a0), cast::<_, _, 1206502>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ComboBlockOf = Some(|a0| unsafe { cast::<_, _, 1206600>(melee_modes::tu::geno_game::GenoGame_ComboBlockOf(cast::<_, _, 1206601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_HookFind = Some(|a0| unsafe { cast::<_, _, 1206700>(melee_modes::tu::geno_game::GenoGame_HookFind(cast::<_, _, 1206701>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_LockonAim = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11| unsafe { melee_modes::tu::geno_game::GenoGame_LockonAim(cast::<_, _, 1206801>(a0), cast::<_, _, 1206802>(a1), cast::<_, _, 1206803>(a2), cast::<_, _, 1206804>(a3), cast::<_, _, 1206805>(a4), cast::<_, _, 1206806>(a5), cast::<_, _, 1206807>(a6), cast::<_, _, 1206808>(a7), cast::<_, _, 1206809>(a8), cast::<_, _, 1206810>(a9), cast::<_, _, 1206811>(a10), cast::<_, _, 1206812>(a11)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_LuaBlockOf = Some(|a0| unsafe { cast::<_, _, 1206900>(melee_modes::tu::geno_game::GenoGame_LuaBlockOf(cast::<_, _, 1206901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ScriptHasIasa = Some(|a0| unsafe { cast::<_, _, 1207000>(melee_modes::tu::geno_game::GenoGame_ScriptHasIasa(cast::<_, _, 1207001>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ScriptRange = Some(|a0, a1| unsafe { cast::<_, _, 1207100>(melee_modes::tu::geno_game::GenoGame_ScriptRange(cast::<_, _, 1207101>(a0), cast::<_, _, 1207102>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateFieldBase = Some(|a0| unsafe { cast::<_, _, 1207200>(melee_modes::tu::geno_game::GenoGame_StateFieldBase(cast::<_, _, 1207201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateFieldName = Some(|a0| unsafe { cast::<_, _, 1207300>(melee_modes::tu::geno_game::GenoGame_StateFieldName(cast::<_, _, 1207301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateOf = Some(|a0| unsafe { cast::<_, _, 1207400>(melee_modes::tu::geno_game::GenoGame_StateOf(cast::<_, _, 1207401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateSize = Some(|| unsafe { cast::<_, _, 1207500>(melee_modes::tu::geno_game::GenoGame_StateSize()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestCapture = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::GenoGame_TestCapture(cast::<_, _, 1207601>(a0), cast::<_, _, 1207602>(a1)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestChanges = Some(|| unsafe { cast::<_, _, 1207700>(melee_modes::tu::geno_game::GenoGame_TestChanges()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLastTarget = Some(|| unsafe { cast::<_, _, 1207800>(melee_modes::tu::geno_game::GenoGame_TestLastTarget()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLedgeMode = Some(|a0| unsafe { cast::<_, _, 1207900>(melee_modes::tu::geno_game::GenoGame_TestLedgeMode(cast::<_, _, 1207901>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_ApplyRules = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoLab_ApplyRules(cast::<_, _, 1208001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_Leave = Some(|a0| unsafe { cast::<_, _, 1208100>(melee_modes::tu::geno_lab_mode::GenoLab_Leave(cast::<_, _, 1208101>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_ModeActive = Some(|| unsafe { cast::<_, _, 1208200>(melee_modes::tu::geno_lab_mode::GenoLab_ModeActive()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_NextAfterMatch = Some(|| unsafe { cast::<_, _, 1208300>(melee_modes::tu::geno_lab_mode::GenoLab_NextAfterMatch()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ApplyAttrs = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_ApplyAttrs(cast::<_, _, 1208401>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ArticleDesc = Some(|a0| unsafe { cast::<_, _, 1208500>(melee_modes::tu::geno_game::Geno_ArticleDesc(cast::<_, _, 1208501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ArticleLogic = Some(|a0| unsafe { cast::<_, _, 1208600>(melee_modes::tu::geno_game::Geno_ArticleLogic(cast::<_, _, 1208601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_Autolink = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 1208700>(melee_modes::tu::geno_game::Geno_Autolink(cast::<_, _, 1208701>(a0), cast::<_, _, 1208702>(a1), cast::<_, _, 1208703>(a2), cast::<_, _, 1208704>(a3), cast::<_, _, 1208705>(a4))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_CollBegin = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_CollBegin(cast::<_, _, 1208801>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_CollEnd = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_CollEnd(cast::<_, _, 1208901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboContact = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::Geno_ComboContact(cast::<_, _, 1209001>(a0), cast::<_, _, 1209002>(a1)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboInput = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_ComboInput(cast::<_, _, 1209101>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboTick = Some(|a0| unsafe { cast::<_, _, 1209200>(melee_modes::tu::geno_game::Geno_ComboTick(cast::<_, _, 1209201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_FighterReset = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_FighterReset(cast::<_, _, 1209301>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_GroundEdge = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::Geno_GroundEdge(cast::<_, _, 1209401>(a0), cast::<_, _, 1209402>(a1)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitFlags = Some(|a0, a1, a2| unsafe { cast::<_, _, 1209500>(melee_modes::tu::geno_game::Geno_HitFlags(cast::<_, _, 1209501>(a0), cast::<_, _, 1209502>(a1), cast::<_, _, 1209503>(a2))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitReact = Some(|a0| unsafe { cast::<_, _, 1209600>(melee_modes::tu::geno_game::Geno_HitReact(cast::<_, _, 1209601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitStunBonus = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::Geno_HitStunBonus(cast::<_, _, 1209701>(a0), cast::<_, _, 1209702>(a1), cast::<_, _, 1209703>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_LabEnterState = Some(|a0, a1| unsafe { cast::<_, _, 1209800>(melee_modes::tu::geno_game::Geno_LabEnterState(cast::<_, _, 1209801>(a0), cast::<_, _, 1209802>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_MotionRow = Some(|a0, a1| unsafe { cast::<_, _, 1209900>(melee_modes::tu::geno_game::Geno_MotionRow(cast::<_, _, 1209901>(a0), cast::<_, _, 1209902>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_MultiJump = Some(|a0, a1, a2, a3| unsafe { melee_modes::tu::geno_game::Geno_MultiJump(cast::<_, _, 1210001>(a0), cast::<_, _, 1210002>(a1), cast::<_, _, 1210003>(a2), cast::<_, _, 1210004>(a3)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_NoHitlag = Some(|a0| unsafe { cast::<_, _, 1210100>(melee_modes::tu::geno_game::Geno_NoHitlag(cast::<_, _, 1210101>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_OnActionChange = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_OnActionChange(cast::<_, _, 1210201>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_OnHit = Some(|a0| unsafe { cast::<_, _, 1210300>(melee_modes::tu::geno_game::Geno_OnHit(cast::<_, _, 1210301>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_PreAnim = Some(|a0| unsafe { cast::<_, _, 1210400>(melee_modes::tu::geno_game::Geno_PreAnim(cast::<_, _, 1210401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_SpecialEnter = Some(|a0, a1| unsafe { cast::<_, _, 1210500>(melee_modes::tu::geno_game::Geno_SpecialEnter(cast::<_, _, 1210501>(a0), cast::<_, _, 1210502>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_TakeStunBonus = Some(|a0| unsafe { cast::<_, _, 1210600>(melee_modes::tu::geno_game::Geno_TakeStunBonus(cast::<_, _, 1210601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_AObjInitAllocData = Some(|| unsafe { melee_runtime::tu::aobj::HSD_AObjInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_FObjInitAllocData = Some(|| unsafe { melee_runtime::tu::fobj::HSD_FObjInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_GetHeap = Some(|| unsafe { cast::<_, _, 1210900>(melee_runtime::tu::initialize::HSD_GetHeap()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_IDInitAllocData = Some(|| unsafe { melee_runtime::tu::id::HSD_IDInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_IDSetup = Some(|| unsafe { melee_runtime::tu::id::HSD_IDSetup() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1211200>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1211201>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_JObjRemoveAll = Some(|a0| unsafe { melee_chara::adapt::HSD_JObjRemoveAll(cast::<_, _, 1211301>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_MtxInitAllocData = Some(|| unsafe { melee_runtime::tu::mtx::HSD_MtxInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_RObjInitAllocData = Some(|| unsafe { melee_runtime::tu::robj::HSD_RObjInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_SetHeap = Some(|a0| unsafe { melee_runtime::tu::initialize::HSD_SetHeap(cast::<_, _, 1211601>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_VecInitAllocData = Some(|| unsafe { melee_runtime::tu::mtx::HSD_VecInitAllocData() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_FighterHash = Some(|a0, a1, a2| unsafe { cast::<_, _, 1211800>(melee_fighter::tu::fighter::RB_FighterHash(cast::<_, _, 1211801>(a0), cast::<_, _, 1211802>(a1), cast::<_, _, 1211803>(a2))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_GameHash = Some(|| unsafe { cast::<_, _, 1211900>(melee_fighter::tu::fighter::RB_GameHash()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_HashSetLegacy = Some(|a0| unsafe { melee_fighter::tu::fighter::RB_HashSetLegacy(cast::<_, _, 1212001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_ItemHash = Some(|a0| unsafe { cast::<_, _, 1212100>(melee_fighter::tu::fighter::RB_ItemHash(cast::<_, _, 1212101>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_FighterF = Some(|a0, a1| unsafe { cast::<_, _, 1212200>(melee_modes::tu::script_game::ScriptGame_FighterF(cast::<_, _, 1212201>(a0), cast::<_, _, 1212202>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_FighterI = Some(|a0, a1| unsafe { cast::<_, _, 1212300>(melee_modes::tu::script_game::ScriptGame_FighterI(cast::<_, _, 1212301>(a0), cast::<_, _, 1212302>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_HitFamilyMove = Some(|a0| unsafe { cast::<_, _, 1212400>(melee_modes::tu::script_game::ScriptGame_HitFamilyMove(cast::<_, _, 1212401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldBase = Some(|a0| unsafe { cast::<_, _, 1212500>(melee_modes::tu::script_game::ScriptGame_LabFighterFieldBase(cast::<_, _, 1212501>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldName = Some(|a0| unsafe { cast::<_, _, 1212600>(melee_modes::tu::script_game::ScriptGame_LabFighterFieldName(cast::<_, _, 1212601>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::__frsqrte = Some(|a0| unsafe { cast::<_, _, 1212700>(melee_runtime::tu::gekko_fp::__frsqrte(cast::<_, _, 1212701>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::cosf = Some(|a0| unsafe { cast::<_, _, 1212800>(melee_runtime::tu::gekko_fp::cosf(cast::<_, _, 1212801>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_80073240 = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_80073240(cast::<_, _, 1212901>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_80073354 = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_80073354(cast::<_, _, 1213001>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_8007349C = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_8007349C(cast::<_, _, 1213101>(a0)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAnim_8006FA58 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_8006FA58(cast::<_, _, 1213201>(a0), cast::<_, _, 1213202>(a1), cast::<_, _, 1213203>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftCo_80091E78 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80091E78(cast::<_, _, 1213301>(a0), cast::<_, _, 1213302>(a1)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ftCo_800D3158 = Some(|a0| unsafe { cast::<_, _, 1213400>(melee_fighter::tu::ft_0d31::ftCo_800D3158(cast::<_, _, 1213401>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::ft_did_jump = Some(|a0, a1| unsafe { cast::<_, _, 1213500>(melee_fighter::tu::ftCo_JumpAerial::ft_did_jump(cast::<_, _, 1213501>(a0), cast::<_, _, 1213502>(a1))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::gmFrontend_ModeSelect = Some(|a0, a1, a2| unsafe { melee_modes::tu::gmfrontend::gmFrontend_ModeSelect(cast::<_, _, 1213601>(a0), cast::<_, _, 1213602>(a1), cast::<_, _, 1213603>(a2)) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_GetAllGameModes = Some(|| unsafe { cast::<_, _, 1213700>(melee_modes::tu::gmscdata::gm_GetAllGameModes()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_GetStartMeleeRules = Some(|| unsafe { cast::<_, _, 1213800>(melee_modes::tu::gmvs::gm_GetStartMeleeRules()) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_Mode_Lab_OnLoad = Some(|| unsafe { melee_modes::tu::geno_lab_mode::gm_Mode_Lab_OnLoad() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::it_8026D018 = Some(|| unsafe { melee_items::tu::itspawn::it_8026D018() }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::it_8026D324 = Some(|a0| unsafe { cast::<_, _, 1214100>(melee_items::tu::itspawn::it_8026D324(cast::<_, _, 1214101>(a0))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::lbColl_80007BCC = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { cast::<_, _, 1214200>(melee_runtime::tu::lbcollision::lbColl_80007BCC(cast::<_, _, 1214201>(a0), cast::<_, _, 1214202>(a1), cast::<_, _, 1214203>(a2), cast::<_, _, 1214204>(a3), cast::<_, _, 1214205>(a4), cast::<_, _, 1214206>(a5), cast::<_, _, 1214207>(a6))) }); }
+    unsafe { melee_modes::tu::geno_tests::ext::hook::sinf = Some(|a0| unsafe { cast::<_, _, 1214300>(melee_runtime::tu::gekko_fp::sinf(cast::<_, _, 1214301>(a0))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::lbColl_80008440 = Some(|a0| unsafe { melee_runtime::tu::lbcollision::lbColl_80008440(cast::<_, _, 1291001>(a0)) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::lb_8000B1CC = Some(|a0, a1, a2| unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(cast::<_, _, 1291101>(a0), cast::<_, _, 1291102>(a1), cast::<_, _, 1291103>(a2)) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckCeiling = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1291200>(melee_world::tu::mplib::mpCheckCeiling(cast::<_, _, 1291201>(a0), cast::<_, _, 1291202>(a1), cast::<_, _, 1291203>(a2), cast::<_, _, 1291204>(a3), cast::<_, _, 1291205>(a4), cast::<_, _, 1291206>(a5), cast::<_, _, 1291207>(a6), cast::<_, _, 1291208>(a7), cast::<_, _, 1291209>(a8), cast::<_, _, 1291210>(a9))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckFloor = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13| unsafe { cast::<_, _, 1291300>(melee_world::tu::mplib::mpCheckFloor(cast::<_, _, 1291301>(a0), cast::<_, _, 1291302>(a1), cast::<_, _, 1291303>(a2), cast::<_, _, 1291304>(a3), cast::<_, _, 1291305>(a4), cast::<_, _, 1291306>(a5), cast::<_, _, 1291307>(a6), cast::<_, _, 1291308>(a7), cast::<_, _, 1291309>(a8), cast::<_, _, 1291310>(a9), cast::<_, _, 1291311>(a10), cast::<_, _, 1291312>(a11), cast::<_, _, 1291313>(a12), cast::<_, _, 1291314>(a13))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckLeftWall = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1291400>(melee_world::tu::mplib::mpCheckLeftWall(cast::<_, _, 1291401>(a0), cast::<_, _, 1291402>(a1), cast::<_, _, 1291403>(a2), cast::<_, _, 1291404>(a3), cast::<_, _, 1291405>(a4), cast::<_, _, 1291406>(a5), cast::<_, _, 1291407>(a6), cast::<_, _, 1291408>(a7), cast::<_, _, 1291409>(a8), cast::<_, _, 1291410>(a9))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpCheckRightWall = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { cast::<_, _, 1291500>(melee_world::tu::mplib::mpCheckRightWall(cast::<_, _, 1291501>(a0), cast::<_, _, 1291502>(a1), cast::<_, _, 1291503>(a2), cast::<_, _, 1291504>(a3), cast::<_, _, 1291505>(a4), cast::<_, _, 1291506>(a5), cast::<_, _, 1291507>(a6), cast::<_, _, 1291508>(a7), cast::<_, _, 1291509>(a8), cast::<_, _, 1291510>(a9))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpCollSetFacingDir = Some(|a0, a1| unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(cast::<_, _, 1291601>(a0), cast::<_, _, 1291602>(a1)) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpColl_80047AC8 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1291700>(melee_world::tu::mpcoll::mpColl_80047AC8(cast::<_, _, 1291701>(a0), cast::<_, _, 1291702>(a1), cast::<_, _, 1291703>(a2))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpColl_80047E14 = Some(|a0, a1, a2| unsafe { cast::<_, _, 1291800>(melee_world::tu::mpcoll::mpColl_80047E14(cast::<_, _, 1291801>(a0), cast::<_, _, 1291802>(a1), cast::<_, _, 1291803>(a2))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::mpGetSpeed = Some(|a0, a1, a2| unsafe { cast::<_, _, 1291900>(melee_world::tu::mplib::mpGetSpeed(cast::<_, _, 1291901>(a0), cast::<_, _, 1291902>(a1), cast::<_, _, 1291903>(a2))) }); }
     // tu/geno_game.rs
-    unsafe { melee_modes::tu::geno_game::ext::hook::sinf = Some(|a0| unsafe { cast::<_, _, 1292000>(melee_runtime::tu::gekko_fp::sinf(cast::<_, _, 1292001>(a0))) }); }
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs: link_alias.tsv
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
+    // tu/geno_game.rs
     // tu/geno_lab_mode.rs
     unsafe { melee_modes::tu::geno_lab_mode::ext::hook::Fighter_ChangeMotionState = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(cast::<_, _, 1292101>(a0), cast::<_, _, 1292102>(a1), cast::<_, _, 1292103>(a2), cast::<_, _, 1292104>(a3), cast::<_, _, 1292105>(a4), cast::<_, _, 1292106>(a5), cast::<_, _, 1292107>(a6)) }); }
     // tu/geno_lab_mode.rs
@@ -25905,198 +26020,103 @@ fn install_melee_modes() {
     // tu/geno_lab_mode.rs
     unsafe { melee_modes::tu::geno_lab_mode::ext::hook::plStale_IncrementAttackInstance = Some(|| unsafe { cast::<_, _, 1294800>(melee_fighter::tu::plstale::plStale_IncrementAttackInstance()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoDefine_StateDigest = Some(|a0| unsafe { cast::<_, _, 1294900>(melee_modes::tu::geno_game::GenoDefine_StateDigest(cast::<_, _, 1294901>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_CursorTest = Some(|| unsafe { cast::<_, _, 1295000>(melee_modes::tu::geno_lab_mode::GenoFly_CursorTest()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_Fighter = Some(|a0| unsafe { cast::<_, _, 1295100>(melee_modes::tu::geno_lab_mode::GenoFly_Fighter(cast::<_, _, 1295101>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_SetSolid = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_SetSolid(cast::<_, _, 1295201>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_SetSpeed = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_SetSpeed(cast::<_, _, 1295301>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_Speed = Some(|| unsafe { cast::<_, _, 1295400>(melee_modes::tu::geno_lab_mode::GenoFly_Speed()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoFly_TestArm = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoFly_TestArm(cast::<_, _, 1295501>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AimStick = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10| unsafe { cast::<_, _, 1295600>(melee_modes::tu::geno_game::GenoGame_AimStick(cast::<_, _, 1295601>(a0), cast::<_, _, 1295602>(a1), cast::<_, _, 1295603>(a2), cast::<_, _, 1295604>(a3), cast::<_, _, 1295605>(a4), cast::<_, _, 1295606>(a5), cast::<_, _, 1295607>(a6), cast::<_, _, 1295608>(a7), cast::<_, _, 1295609>(a8), cast::<_, _, 1295610>(a9), cast::<_, _, 1295611>(a10))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ArticleStep = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9| unsafe { melee_modes::tu::geno_game::GenoGame_ArticleStep(cast::<_, _, 1295701>(a0), cast::<_, _, 1295702>(a1), cast::<_, _, 1295703>(a2), cast::<_, _, 1295704>(a3), cast::<_, _, 1295705>(a4), cast::<_, _, 1295706>(a5), cast::<_, _, 1295707>(a6), cast::<_, _, 1295708>(a7), cast::<_, _, 1295709>(a8), cast::<_, _, 1295710>(a9)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrFind = Some(|a0| unsafe { cast::<_, _, 1295800>(melee_modes::tu::geno_game::GenoGame_AttrFind(cast::<_, _, 1295801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrIsInt = Some(|a0| unsafe { cast::<_, _, 1295900>(melee_modes::tu::geno_game::GenoGame_AttrIsInt(cast::<_, _, 1295901>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrOffset = Some(|a0| unsafe { cast::<_, _, 1296000>(melee_modes::tu::geno_game::GenoGame_AttrOffset(cast::<_, _, 1296001>(a0))) }); }
     // tu/geno_tests.rs
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ComboBlockOf = Some(|a0| unsafe { cast::<_, _, 1296200>(melee_modes::tu::geno_game::GenoGame_ComboBlockOf(cast::<_, _, 1296201>(a0))) }); }
     // tu/geno_tests.rs
     // tu/geno_tests.rs
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_HookFind = Some(|a0| unsafe { cast::<_, _, 1296500>(melee_modes::tu::geno_game::GenoGame_HookFind(cast::<_, _, 1296501>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_LockonAim = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11| unsafe { melee_modes::tu::geno_game::GenoGame_LockonAim(cast::<_, _, 1296601>(a0), cast::<_, _, 1296602>(a1), cast::<_, _, 1296603>(a2), cast::<_, _, 1296604>(a3), cast::<_, _, 1296605>(a4), cast::<_, _, 1296606>(a5), cast::<_, _, 1296607>(a6), cast::<_, _, 1296608>(a7), cast::<_, _, 1296609>(a8), cast::<_, _, 1296610>(a9), cast::<_, _, 1296611>(a10), cast::<_, _, 1296612>(a11)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_LuaBlockOf = Some(|a0| unsafe { cast::<_, _, 1296700>(melee_modes::tu::geno_game::GenoGame_LuaBlockOf(cast::<_, _, 1296701>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ScriptHasIasa = Some(|a0| unsafe { cast::<_, _, 1296800>(melee_modes::tu::geno_game::GenoGame_ScriptHasIasa(cast::<_, _, 1296801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ScriptRange = Some(|a0, a1| unsafe { cast::<_, _, 1296900>(melee_modes::tu::geno_game::GenoGame_ScriptRange(cast::<_, _, 1296901>(a0), cast::<_, _, 1296902>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateFieldBase = Some(|a0| unsafe { cast::<_, _, 1297000>(melee_modes::tu::geno_game::GenoGame_StateFieldBase(cast::<_, _, 1297001>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateFieldName = Some(|a0| unsafe { cast::<_, _, 1297100>(melee_modes::tu::geno_game::GenoGame_StateFieldName(cast::<_, _, 1297101>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateOf = Some(|a0| unsafe { cast::<_, _, 1297200>(melee_modes::tu::geno_game::GenoGame_StateOf(cast::<_, _, 1297201>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_StateSize = Some(|| unsafe { cast::<_, _, 1297300>(melee_modes::tu::geno_game::GenoGame_StateSize()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestCapture = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::GenoGame_TestCapture(cast::<_, _, 1297401>(a0), cast::<_, _, 1297402>(a1)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestChanges = Some(|| unsafe { cast::<_, _, 1297500>(melee_modes::tu::geno_game::GenoGame_TestChanges()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestJointRate = Some(|| unsafe { cast::<_, _, 1297600>(melee_modes::tu::geno_game::GenoGame_TestJointRate()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLastTarget = Some(|| unsafe { cast::<_, _, 1297700>(melee_modes::tu::geno_game::GenoGame_TestLastTarget()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLedgeMode = Some(|a0| unsafe { cast::<_, _, 1297800>(melee_modes::tu::geno_game::GenoGame_TestLedgeMode(cast::<_, _, 1297801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestModelRotX = Some(|| unsafe { cast::<_, _, 1297900>(melee_modes::tu::geno_game::GenoGame_TestModelRotX()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestPairSwap = Some(|a0, a1| unsafe { cast::<_, _, 1298000>(melee_modes::tu::geno_game::GenoGame_TestPairSwap(cast::<_, _, 1298001>(a0), cast::<_, _, 1298002>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestPoseReset = Some(|a0| unsafe { melee_modes::tu::geno_game::GenoGame_TestPoseReset(cast::<_, _, 1298101>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_TestStartFrame = Some(|a0, a1| unsafe { cast::<_, _, 1298200>(melee_modes::tu::geno_game::GenoGame_TestStartFrame(cast::<_, _, 1298201>(a0), cast::<_, _, 1298202>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_ApplyRules = Some(|a0| unsafe { melee_modes::tu::geno_lab_mode::GenoLab_ApplyRules(cast::<_, _, 1298301>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_Leave = Some(|a0| unsafe { cast::<_, _, 1298400>(melee_modes::tu::geno_lab_mode::GenoLab_Leave(cast::<_, _, 1298401>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_ModeActive = Some(|| unsafe { cast::<_, _, 1298500>(melee_modes::tu::geno_lab_mode::GenoLab_ModeActive()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoLab_NextAfterMatch = Some(|| unsafe { cast::<_, _, 1298600>(melee_modes::tu::geno_lab_mode::GenoLab_NextAfterMatch()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ApplyAttrs = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_ApplyAttrs(cast::<_, _, 1298701>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ArticleDesc = Some(|a0| unsafe { cast::<_, _, 1298800>(melee_modes::tu::geno_game::Geno_ArticleDesc(cast::<_, _, 1298801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ArticleLogic = Some(|a0| unsafe { cast::<_, _, 1298900>(melee_modes::tu::geno_game::Geno_ArticleLogic(cast::<_, _, 1298901>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_Autolink = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 1299000>(melee_modes::tu::geno_game::Geno_Autolink(cast::<_, _, 1299001>(a0), cast::<_, _, 1299002>(a1), cast::<_, _, 1299003>(a2), cast::<_, _, 1299004>(a3), cast::<_, _, 1299005>(a4))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_CollBegin = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_CollBegin(cast::<_, _, 1299101>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_CollEnd = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_CollEnd(cast::<_, _, 1299201>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboContact = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::Geno_ComboContact(cast::<_, _, 1299301>(a0), cast::<_, _, 1299302>(a1)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboInput = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_ComboInput(cast::<_, _, 1299401>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_ComboTick = Some(|a0| unsafe { cast::<_, _, 1299500>(melee_modes::tu::geno_game::Geno_ComboTick(cast::<_, _, 1299501>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_FighterReset = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_FighterReset(cast::<_, _, 1299601>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_GroundEdge = Some(|a0, a1| unsafe { melee_modes::tu::geno_game::Geno_GroundEdge(cast::<_, _, 1299701>(a0), cast::<_, _, 1299702>(a1)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitFlags = Some(|a0, a1, a2| unsafe { cast::<_, _, 1299800>(melee_modes::tu::geno_game::Geno_HitFlags(cast::<_, _, 1299801>(a0), cast::<_, _, 1299802>(a1), cast::<_, _, 1299803>(a2))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitReact = Some(|a0| unsafe { cast::<_, _, 1299900>(melee_modes::tu::geno_game::Geno_HitReact(cast::<_, _, 1299901>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_HitStunBonus = Some(|a0, a1, a2| unsafe { melee_modes::tu::geno_game::Geno_HitStunBonus(cast::<_, _, 1300001>(a0), cast::<_, _, 1300002>(a1), cast::<_, _, 1300003>(a2)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_MotionRow = Some(|a0, a1| unsafe { cast::<_, _, 1300100>(melee_modes::tu::geno_game::Geno_MotionRow(cast::<_, _, 1300101>(a0), cast::<_, _, 1300102>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_MultiJump = Some(|a0, a1, a2, a3| unsafe { melee_modes::tu::geno_game::Geno_MultiJump(cast::<_, _, 1300201>(a0), cast::<_, _, 1300202>(a1), cast::<_, _, 1300203>(a2), cast::<_, _, 1300204>(a3)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_NoHitlag = Some(|a0| unsafe { cast::<_, _, 1300300>(melee_modes::tu::geno_game::Geno_NoHitlag(cast::<_, _, 1300301>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_OnActionChange = Some(|a0| unsafe { melee_modes::tu::geno_game::Geno_OnActionChange(cast::<_, _, 1300401>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_OnHit = Some(|a0| unsafe { cast::<_, _, 1300500>(melee_modes::tu::geno_game::Geno_OnHit(cast::<_, _, 1300501>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_PreAnim = Some(|a0| unsafe { cast::<_, _, 1300600>(melee_modes::tu::geno_game::Geno_PreAnim(cast::<_, _, 1300601>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_SpecialEnter = Some(|a0, a1| unsafe { cast::<_, _, 1300700>(melee_modes::tu::geno_game::Geno_SpecialEnter(cast::<_, _, 1300701>(a0), cast::<_, _, 1300702>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::Geno_TakeStunBonus = Some(|a0| unsafe { cast::<_, _, 1300800>(melee_modes::tu::geno_game::Geno_TakeStunBonus(cast::<_, _, 1300801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_AObjInitAllocData = Some(|| unsafe { melee_runtime::tu::aobj::HSD_AObjInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_FObjInitAllocData = Some(|| unsafe { melee_runtime::tu::fobj::HSD_FObjInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_GetHeap = Some(|| unsafe { cast::<_, _, 1301100>(melee_runtime::tu::initialize::HSD_GetHeap()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_IDInitAllocData = Some(|| unsafe { melee_runtime::tu::id::HSD_IDInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_IDSetup = Some(|| unsafe { melee_runtime::tu::id::HSD_IDSetup() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_JObjLoadJoint = Some(|a0| unsafe { cast::<_, _, 1301400>(melee_runtime::tu::jobj::HSD_JObjLoadJoint(cast::<_, _, 1301401>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_JObjRemoveAll = Some(|a0| unsafe { melee_chara::adapt::HSD_JObjRemoveAll(cast::<_, _, 1301501>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_MtxInitAllocData = Some(|| unsafe { melee_runtime::tu::mtx::HSD_MtxInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_RObjInitAllocData = Some(|| unsafe { melee_runtime::tu::robj::HSD_RObjInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_SetHeap = Some(|a0| unsafe { melee_runtime::tu::initialize::HSD_SetHeap(cast::<_, _, 1301801>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::HSD_VecInitAllocData = Some(|| unsafe { melee_runtime::tu::mtx::HSD_VecInitAllocData() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_FighterHash = Some(|a0, a1, a2| unsafe { cast::<_, _, 1302000>(melee_fighter::tu::fighter::RB_FighterHash(cast::<_, _, 1302001>(a0), cast::<_, _, 1302002>(a1), cast::<_, _, 1302003>(a2))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_GameHash = Some(|| unsafe { cast::<_, _, 1302100>(melee_fighter::tu::fighter::RB_GameHash()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_HashSetLegacy = Some(|a0| unsafe { melee_fighter::tu::fighter::RB_HashSetLegacy(cast::<_, _, 1302201>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::RB_ItemHash = Some(|a0| unsafe { cast::<_, _, 1302300>(melee_fighter::tu::fighter::RB_ItemHash(cast::<_, _, 1302301>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_FighterF = Some(|a0, a1| unsafe { cast::<_, _, 1302400>(melee_modes::tu::script_game::ScriptGame_FighterF(cast::<_, _, 1302401>(a0), cast::<_, _, 1302402>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_FighterI = Some(|a0, a1| unsafe { cast::<_, _, 1302500>(melee_modes::tu::script_game::ScriptGame_FighterI(cast::<_, _, 1302501>(a0), cast::<_, _, 1302502>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_HitFamilyMove = Some(|a0| unsafe { cast::<_, _, 1302600>(melee_modes::tu::script_game::ScriptGame_HitFamilyMove(cast::<_, _, 1302601>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldBase = Some(|a0| unsafe { cast::<_, _, 1302700>(melee_modes::tu::script_game::ScriptGame_LabFighterFieldBase(cast::<_, _, 1302701>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldName = Some(|a0| unsafe { cast::<_, _, 1302800>(melee_modes::tu::script_game::ScriptGame_LabFighterFieldName(cast::<_, _, 1302801>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::__frsqrte = Some(|a0| unsafe { cast::<_, _, 1302900>(melee_runtime::tu::gekko_fp::__frsqrte(cast::<_, _, 1302901>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::atan2f = Some(|a0, a1| unsafe { cast::<_, _, 1303000>(melee_runtime::tu::lbtrigf::atan2f(cast::<_, _, 1303001>(a0), cast::<_, _, 1303002>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_80073240 = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_80073240(cast::<_, _, 1303101>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_80073354 = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_80073354(cast::<_, _, 1303201>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAction_8007349C = Some(|a0| unsafe { melee_fighter::tu::ftaction::ftAction_8007349C(cast::<_, _, 1303301>(a0)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftAnim_8006FA58 = Some(|a0, a1, a2| unsafe { melee_fighter::tu::ftanim::ftAnim_8006FA58(cast::<_, _, 1303401>(a0), cast::<_, _, 1303402>(a1), cast::<_, _, 1303403>(a2)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftCo_80091E78 = Some(|a0, a1| unsafe { melee_fighter::tu::ftCo_Guard::ftCo_80091E78(cast::<_, _, 1303501>(a0), cast::<_, _, 1303502>(a1)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ftCo_800D3158 = Some(|a0| unsafe { cast::<_, _, 1303600>(melee_fighter::tu::ft_0d31::ftCo_800D3158(cast::<_, _, 1303601>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::ft_did_jump = Some(|a0, a1| unsafe { cast::<_, _, 1303700>(melee_fighter::tu::ftCo_JumpAerial::ft_did_jump(cast::<_, _, 1303701>(a0), cast::<_, _, 1303702>(a1))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::gmFrontend_ModeSelect = Some(|a0, a1, a2| unsafe { melee_modes::tu::gmfrontend::gmFrontend_ModeSelect(cast::<_, _, 1303801>(a0), cast::<_, _, 1303802>(a1), cast::<_, _, 1303803>(a2)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_8016AE80 = Some(|| unsafe { cast::<_, _, 1303900>(melee_modes::tu::gmvs::gm_8016AE80()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_GetAllGameModes = Some(|| unsafe { cast::<_, _, 1304000>(melee_modes::tu::gmscdata::gm_GetAllGameModes()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_GetStartMeleeRules = Some(|| unsafe { cast::<_, _, 1304100>(melee_modes::tu::gmvs::gm_GetStartMeleeRules()) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::gm_Mode_Lab_OnLoad = Some(|| unsafe { melee_modes::tu::geno_lab_mode::gm_Mode_Lab_OnLoad() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::it_8026D018 = Some(|| unsafe { melee_items::tu::itspawn::it_8026D018() }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::it_8026D324 = Some(|a0| unsafe { cast::<_, _, 1304400>(melee_items::tu::itspawn::it_8026D324(cast::<_, _, 1304401>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::lbColl_80007BCC = Some(|a0, a1, a2, a3, a4, a5, a6| unsafe { cast::<_, _, 1304500>(melee_runtime::tu::lbcollision::lbColl_80007BCC(cast::<_, _, 1304501>(a0), cast::<_, _, 1304502>(a1), cast::<_, _, 1304503>(a2), cast::<_, _, 1304504>(a3), cast::<_, _, 1304505>(a4), cast::<_, _, 1304506>(a5), cast::<_, _, 1304507>(a6))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::sinf = Some(|a0| unsafe { cast::<_, _, 1304600>(melee_runtime::tu::gekko_fp::sinf(cast::<_, _, 1304601>(a0))) }); }
     // tu/gm_1601.rs
     unsafe { melee_modes::tu::gm_1601::ext::hook::Camera_8002F3AC = Some(|| unsafe { melee_world::tu::camera::Camera_8002F3AC() }); }
     // tu/gm_1601.rs
@@ -39218,9 +39238,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Fighter_ChangeMotionState", "melee_modes::tu::geno_game::ext::hook::Fighter_ChangeMotionState", true, false),
     ("GObj_Create", "melee_modes::tu::geno_game::ext::hook::GObj_Create", true, true),
     ("GObj_SetupGXLink", "melee_modes::tu::geno_game::ext::hook::GObj_SetupGXLink", true, true),
-    ("HSD_AObjSetEndFrame", "melee_modes::tu::geno_game::ext::hook::HSD_AObjSetEndFrame", true, false),
-    ("HSD_AObjSetFlags", "melee_modes::tu::geno_game::ext::hook::HSD_AObjSetFlags", true, false),
-    ("HSD_AObjSetRate", "melee_modes::tu::geno_game::ext::hook::HSD_AObjSetRate", true, false),
     ("HSD_CObjGetCurrent", "melee_modes::tu::geno_game::ext::hook::HSD_CObjGetCurrent", true, false),
     ("HSD_CObjGetEyePosition", "melee_modes::tu::geno_game::ext::hook::HSD_CObjGetEyePosition", true, true),
     ("HSD_CObjGetViewingMtxPtr", "melee_modes::tu::geno_game::ext::hook::HSD_CObjGetViewingMtxPtr", true, true),
@@ -39244,7 +39261,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ScriptGame_HitRuleItemCreate", "melee_modes::tu::geno_game::ext::hook::ScriptGame_HitRuleItemCreate", true, false),
     ("ScriptGame_NoteSpecialInput", "melee_modes::tu::geno_game::ext::hook::ScriptGame_NoteSpecialInput", true, false),
     ("__frsqrte", "melee_modes::tu::geno_game::ext::hook::__frsqrte", true, true),
-    ("atan2f", "melee_modes::tu::geno_game::ext::hook::atan2f", true, false),
     ("cosf", "melee_modes::tu::geno_game::ext::hook::cosf", true, false),
     ("db_80225DD8", "melee_modes::tu::geno_game::ext::hook::db_80225DD8", true, true),
     ("efAsync_MexSpawn", "melee_modes::tu::geno_game::ext::hook::efAsync_MexSpawn", true, true),
@@ -39254,29 +39270,32 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftAnim_IsFramesRemaining", "melee_modes::tu::geno_game::ext::hook::ftAnim_IsFramesRemaining", true, false),
     ("ftAnim_SetAnimRate", "melee_modes::tu::geno_game::ext::hook::ftAnim_SetAnimRate", true, false),
     ("ftCliffCommon_80081298", "melee_modes::tu::geno_game::ext::hook::ftCliffCommon_80081298", true, false),
+    ("ftCo_80095328", "melee_modes::tu::geno_game::ext::hook::ftCo_80095328", true, true),
     ("ftCo_800968C8", "melee_modes::tu::geno_game::ext::hook::ftCo_800968C8", true, false),
     ("ftCo_80096CC8", "melee_modes::tu::geno_game::ext::hook::ftCo_80096CC8", true, false),
     ("ftCo_80096D28", "melee_modes::tu::geno_game::ext::hook::ftCo_80096D28", true, false),
     ("ftCo_8009917C", "melee_modes::tu::geno_game::ext::hook::ftCo_8009917C", true, false),
+    ("ftCo_800C3B10", "melee_modes::tu::geno_game::ext::hook::ftCo_800C3B10", true, false),
+    ("ftCo_800CB870", "melee_modes::tu::geno_game::ext::hook::ftCo_800CB870", true, false),
     ("ftCo_800D105C", "melee_modes::tu::geno_game::ext::hook::ftCo_800D105C", true, false),
-    ("ftCo_800D72A0", "melee_modes::tu::geno_game::ext::hook::ftCo_800D72A0", true, false),
+    ("ftCo_800D705C", "melee_modes::tu::geno_game::ext::hook::ftCo_800D705C", true, true),
+    ("ftCo_800D7100", "melee_modes::tu::geno_game::ext::hook::ftCo_800D7100", true, true),
     ("ftCo_AttackAir_EnterFromMsid", "melee_modes::tu::geno_game::ext::hook::ftCo_AttackAir_EnterFromMsid", true, false),
+    ("ftCo_AttackS4_CheckInput", "melee_modes::tu::geno_game::ext::hook::ftCo_AttackS4_CheckInput", true, false),
+    ("ftCo_Dash_CheckInput", "melee_modes::tu::geno_game::ext::hook::ftCo_Dash_CheckInput", true, false),
     ("ftCo_Fall_Enter", "melee_modes::tu::geno_game::ext::hook::ftCo_Fall_Enter", true, false),
-    ("ftCo_Fall_IASA", "melee_modes::tu::geno_game::ext::hook::ftCo_Fall_IASA", true, false),
     ("ftCo_IsCpuControlled", "melee_modes::tu::geno_game::ext::hook::ftCo_IsCpuControlled", true, true),
     ("ftCo_JumpAerial_Enter_Basic", "melee_modes::tu::geno_game::ext::hook::ftCo_JumpAerial_Enter_Basic", true, false),
+    ("ftCo_Jump_CheckInput", "melee_modes::tu::geno_game::ext::hook::ftCo_Jump_CheckInput", true, false),
     ("ftCo_Jump_Enter", "melee_modes::tu::geno_game::ext::hook::ftCo_Jump_Enter", true, false),
     ("ftCo_LandingFallSpecial_Enter", "melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter", true, false),
     ("ftCo_LandingFallSpecial_Enter_Basic", "melee_modes::tu::geno_game::ext::hook::ftCo_LandingFallSpecial_Enter_Basic", true, false),
     ("ftCo_Landing_Enter_Basic", "melee_modes::tu::geno_game::ext::hook::ftCo_Landing_Enter_Basic", true, false),
-    ("ftCo_Wait_IASA", "melee_modes::tu::geno_game::ext::hook::ftCo_Wait_IASA", true, false),
+    ("ftCo_Turn_CheckInput", "melee_modes::tu::geno_game::ext::hook::ftCo_Turn_CheckInput", true, false),
+    ("ftCo_Walk_CheckInput", "melee_modes::tu::geno_game::ext::hook::ftCo_Walk_CheckInput", true, false),
+    ("ftColl_CreateReflectHit", "melee_modes::tu::geno_game::ext::hook::ftColl_CreateReflectHit", true, true),
     ("ftCommon_8007D5D4", "melee_modes::tu::geno_game::ext::hook::ftCommon_8007D5D4", true, false),
     ("ftCommon_8007D7FC", "melee_modes::tu::geno_game::ext::hook::ftCommon_8007D7FC", true, false),
-    ("ftCommon_CalcSelfAccel_DeaccelAir", "melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_DeaccelAir", true, true),
-    ("ftCommon_CalcSelfAccel_Drift", "melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_Drift", true, true),
-    ("ftCommon_Fall", "melee_modes::tu::geno_game::ext::hook::ftCommon_Fall", true, true),
-    ("ftCommon_SetSelfMovementFromGroundedMovement", "melee_modes::tu::geno_game::ext::hook::ftCommon_SetSelfMovementFromGroundedMovement", true, true),
-    ("ftPartSetRotX", "melee_modes::tu::geno_game::ext::hook::ftPartSetRotX", true, false),
     ("ftPartSetRotY", "melee_modes::tu::geno_game::ext::hook::ftPartSetRotY", true, false),
     ("ft_80081A00", "melee_modes::tu::geno_game::ext::hook::ft_80081A00", true, false),
     ("ft_80082C74", "melee_modes::tu::geno_game::ext::hook::ft_80082C74", true, false),
@@ -39290,7 +39309,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ft_PlaySFX", "melee_modes::tu::geno_game::ext::hook::ft_PlaySFX", true, true),
     ("hsd_8039D5DC", "melee_modes::tu::geno_game::ext::hook::hsd_8039D5DC", true, true),
     ("it_8026B40C", "melee_modes::tu::geno_game::ext::hook::it_8026B40C", true, false),
-    ("it_8026B894", "melee_modes::tu::geno_game::ext::hook::it_8026B894", true, true),
     ("it_8026BB68", "melee_modes::tu::geno_game::ext::hook::it_8026BB68", true, false),
     ("it_8026E9A4", "melee_modes::tu::geno_game::ext::hook::it_8026E9A4", true, false),
     ("it_8026FCF8", "melee_modes::tu::geno_game::ext::hook::it_8026FCF8", true, false),
@@ -39309,34 +39327,32 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("mpColl_80047E14", "melee_modes::tu::geno_game::ext::hook::mpColl_80047E14", true, true),
     ("mpGetSpeed", "melee_modes::tu::geno_game::ext::hook::mpGetSpeed", true, false),
     ("sinf", "melee_modes::tu::geno_game::ext::hook::sinf", true, false),
-    ("Fighter_ChangeMotionState", "melee_modes::tu::geno_lab_mode::ext::hook::Fighter_ChangeMotionState", true, false),
-    ("Player_GetEntity", "melee_modes::tu::geno_lab_mode::ext::hook::Player_GetEntity", true, false),
-    ("SceneLaunch_SeedPlayers", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_SeedPlayers", true, false),
-    ("SceneLaunch_SeedVs", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_SeedVs", true, false),
-    ("ScriptGame_HitRuleCreate", "melee_modes::tu::geno_lab_mode::ext::hook::ScriptGame_HitRuleCreate", true, false),
-    ("ftAnim_IsFramesRemaining", "melee_modes::tu::geno_lab_mode::ext::hook::ftAnim_IsFramesRemaining", true, false),
-    ("ftAnim_SetAnimRate", "melee_modes::tu::geno_lab_mode::ext::hook::ftAnim_SetAnimRate", true, false),
-    ("ftCo_Fall_Enter", "melee_modes::tu::geno_lab_mode::ext::hook::ftCo_Fall_Enter", true, false),
-    ("gmFrontend_BeginLoading", "melee_modes::tu::geno_lab_mode::ext::hook::gmFrontend_BeginLoading", true, false),
-    ("gmFrontend_ModeSelect", "melee_modes::tu::geno_lab_mode::ext::hook::gmFrontend_ModeSelect", true, false),
-    ("gmVsMelee_EnterCss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterCss", true, false),
-    ("gmVsMelee_EnterSss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterSss", true, false),
-    ("gmVsMelee_EnterVs", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterVs", true, false),
-    ("gmVsMelee_ExitCss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_ExitCss", true, false),
-    ("gmVsMelee_ExitSss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_ExitSss", true, false),
-    ("gmVs_EndMatch", "melee_modes::tu::geno_lab_mode::ext::hook::gmVs_EndMatch", true, false),
-    ("gm_ChangeGameModeAfterCurrentScene", "melee_modes::tu::geno_lab_mode::ext::hook::gm_ChangeGameModeAfterCurrentScene", true, false),
-    ("gm_GetCurrentGameMode", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetCurrentGameMode", true, false),
-    ("gm_GetGameModeStateEnterData", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetGameModeStateEnterData", true, false),
-    ("gm_GetGameModeStateExitData", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetGameModeStateExitData", true, false),
-    ("gm_GetNumCostumesForCKind", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetNumCostumesForCKind", true, false),
-    ("gm_InitVsMode", "melee_modes::tu::geno_lab_mode::ext::hook::gm_InitVsMode", true, false),
-    ("gm_SetNextGameModeStateId", "melee_modes::tu::geno_lab_mode::ext::hook::gm_SetNextGameModeStateId", true, false),
-    ("gm_SetupAllPlayerDefaults", "melee_modes::tu::geno_lab_mode::ext::hook::gm_SetupAllPlayerDefaults", true, false),
-    ("lbColl_80008440", "melee_modes::tu::geno_lab_mode::ext::hook::lbColl_80008440", true, false),
-    ("mpCheckFloor", "melee_modes::tu::geno_lab_mode::ext::hook::mpCheckFloor", true, false),
-    ("mpColl_80043680", "melee_modes::tu::geno_lab_mode::ext::hook::mpColl_80043680", true, false),
-    ("plStale_IncrementAttackInstance", "melee_modes::tu::geno_lab_mode::ext::hook::plStale_IncrementAttackInstance", true, false),
+    ("GenoBhv_AnimMotionBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionBegin", true, true),
+    ("GenoBhv_AnimMotionFrameDelta", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionFrameDelta", true, true),
+    ("GenoBhv_AnimMotionParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionParams", true, true),
+    ("GenoBhv_AnimMotionSample", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionSample", true, true),
+    ("GenoBhv_AnimMotionStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_AnimMotionStep", true, true),
+    ("GenoBhv_CapeBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeBegin", true, true),
+    ("GenoBhv_CapeParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeParams", true, true),
+    ("GenoBhv_CapeStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_CapeStep", true, true),
+    ("GenoBhv_CosDeg", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_CosDeg", true, true),
+    ("GenoBhv_DrillBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillBegin", true, true),
+    ("GenoBhv_DrillParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillParams", true, true),
+    ("GenoBhv_DrillStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_DrillStep", true, true),
+    ("GenoBhv_GlideBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideBegin", true, true),
+    ("GenoBhv_GlideEntryInit", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideEntryInit", true, true),
+    ("GenoBhv_GlideEntryStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideEntryStep", true, true),
+    ("GenoBhv_GlideParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideParams", true, true),
+    ("GenoBhv_GlideStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_GlideStep", true, true),
+    ("GenoBhv_MultiDashBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashBegin", true, true),
+    ("GenoBhv_MultiDashParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashParams", true, true),
+    ("GenoBhv_MultiDashStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_MultiDashStep", true, true),
+    ("GenoBhv_SinDeg", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinDeg", true, true),
+    ("GenoBhv_SinqCrc32", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinqCrc32", true, true),
+    ("GenoBhv_SinqWord", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_SinqWord", true, true),
+    ("GenoBhv_TornadoBegin", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoBegin", true, true),
+    ("GenoBhv_TornadoParams", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoParams", true, true),
+    ("GenoBhv_TornadoStep", "melee_modes::tu::geno_tests::ext::hook::GenoBhv_TornadoStep", true, true),
     ("GenoDefine_StateDigest", "melee_modes::tu::geno_tests::ext::hook::GenoDefine_StateDigest", true, false),
     ("GenoFly_CursorTest", "melee_modes::tu::geno_tests::ext::hook::GenoFly_CursorTest", true, false),
     ("GenoFly_Fighter", "melee_modes::tu::geno_tests::ext::hook::GenoFly_Fighter", true, false),
@@ -39349,6 +39365,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("GenoGame_AttrFind", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrFind", true, false),
     ("GenoGame_AttrIsInt", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrIsInt", true, false),
     ("GenoGame_AttrOffset", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrOffset", true, false),
+    ("GenoGame_CallbackFind", "melee_modes::tu::geno_tests::ext::hook::GenoGame_CallbackFind", true, true),
     ("GenoGame_ComboBlockOf", "melee_modes::tu::geno_tests::ext::hook::GenoGame_ComboBlockOf", true, false),
     ("GenoGame_HookFind", "melee_modes::tu::geno_tests::ext::hook::GenoGame_HookFind", true, false),
     ("GenoGame_LockonAim", "melee_modes::tu::geno_tests::ext::hook::GenoGame_LockonAim", true, false),
@@ -39361,13 +39378,8 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("GenoGame_StateSize", "melee_modes::tu::geno_tests::ext::hook::GenoGame_StateSize", true, false),
     ("GenoGame_TestCapture", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestCapture", true, false),
     ("GenoGame_TestChanges", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestChanges", true, false),
-    ("GenoGame_TestJointRate", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestJointRate", true, false),
     ("GenoGame_TestLastTarget", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLastTarget", true, false),
     ("GenoGame_TestLedgeMode", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestLedgeMode", true, false),
-    ("GenoGame_TestModelRotX", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestModelRotX", true, false),
-    ("GenoGame_TestPairSwap", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestPairSwap", true, false),
-    ("GenoGame_TestPoseReset", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestPoseReset", true, false),
-    ("GenoGame_TestStartFrame", "melee_modes::tu::geno_tests::ext::hook::GenoGame_TestStartFrame", true, false),
     ("GenoLab_ApplyRules", "melee_modes::tu::geno_tests::ext::hook::GenoLab_ApplyRules", true, false),
     ("GenoLab_Leave", "melee_modes::tu::geno_tests::ext::hook::GenoLab_Leave", true, false),
     ("GenoLab_ModeActive", "melee_modes::tu::geno_tests::ext::hook::GenoLab_ModeActive", true, false),
@@ -39386,6 +39398,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("Geno_HitFlags", "melee_modes::tu::geno_tests::ext::hook::Geno_HitFlags", true, false),
     ("Geno_HitReact", "melee_modes::tu::geno_tests::ext::hook::Geno_HitReact", true, false),
     ("Geno_HitStunBonus", "melee_modes::tu::geno_tests::ext::hook::Geno_HitStunBonus", true, false),
+    ("Geno_LabEnterState", "melee_modes::tu::geno_tests::ext::hook::Geno_LabEnterState", true, false),
     ("Geno_MotionRow", "melee_modes::tu::geno_tests::ext::hook::Geno_MotionRow", true, false),
     ("Geno_MultiJump", "melee_modes::tu::geno_tests::ext::hook::Geno_MultiJump", true, false),
     ("Geno_NoHitlag", "melee_modes::tu::geno_tests::ext::hook::Geno_NoHitlag", true, false),
@@ -39415,7 +39428,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ScriptGame_LabFighterFieldBase", "melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldBase", true, false),
     ("ScriptGame_LabFighterFieldName", "melee_modes::tu::geno_tests::ext::hook::ScriptGame_LabFighterFieldName", true, false),
     ("__frsqrte", "melee_modes::tu::geno_tests::ext::hook::__frsqrte", true, true),
-    ("atan2f", "melee_modes::tu::geno_tests::ext::hook::atan2f", true, false),
+    ("cosf", "melee_modes::tu::geno_tests::ext::hook::cosf", true, false),
     ("ftAction_80073240", "melee_modes::tu::geno_tests::ext::hook::ftAction_80073240", true, false),
     ("ftAction_80073354", "melee_modes::tu::geno_tests::ext::hook::ftAction_80073354", true, false),
     ("ftAction_8007349C", "melee_modes::tu::geno_tests::ext::hook::ftAction_8007349C", true, false),
@@ -39424,7 +39437,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCo_800D3158", "melee_modes::tu::geno_tests::ext::hook::ftCo_800D3158", true, false),
     ("ft_did_jump", "melee_modes::tu::geno_tests::ext::hook::ft_did_jump", true, false),
     ("gmFrontend_ModeSelect", "melee_modes::tu::geno_tests::ext::hook::gmFrontend_ModeSelect", true, false),
-    ("gm_8016AE80", "melee_modes::tu::geno_tests::ext::hook::gm_8016AE80", true, false),
     ("gm_GetAllGameModes", "melee_modes::tu::geno_tests::ext::hook::gm_GetAllGameModes", true, false),
     ("gm_GetStartMeleeRules", "melee_modes::tu::geno_tests::ext::hook::gm_GetStartMeleeRules", true, false),
     ("gm_Mode_Lab_OnLoad", "melee_modes::tu::geno_tests::ext::hook::gm_Mode_Lab_OnLoad", true, false),
@@ -39432,6 +39444,171 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("it_8026D324", "melee_modes::tu::geno_tests::ext::hook::it_8026D324", true, false),
     ("lbColl_80007BCC", "melee_modes::tu::geno_tests::ext::hook::lbColl_80007BCC", true, false),
     ("sinf", "melee_modes::tu::geno_tests::ext::hook::sinf", true, false),
+    ("Fx_Attach", "melee_modes::tu::geno_game::ext::hook::Fx_Attach", false, true),
+    ("Fx_Detach", "melee_modes::tu::geno_game::ext::hook::Fx_Detach", false, true),
+    ("Fx_Draw", "melee_modes::tu::geno_game::ext::hook::Fx_Draw", false, true),
+    ("Fx_Drive", "melee_modes::tu::geno_game::ext::hook::Fx_Drive", false, true),
+    ("Fx_Frame", "melee_modes::tu::geno_game::ext::hook::Fx_Frame", false, true),
+    ("Fx_Owner", "melee_modes::tu::geno_game::ext::hook::Fx_Owner", false, true),
+    ("Fx_SetOwner", "melee_modes::tu::geno_game::ext::hook::Fx_SetOwner", false, true),
+    ("Fx_SetOwnerPort", "melee_modes::tu::geno_game::ext::hook::Fx_SetOwnerPort", false, true),
+    ("Fx_Stat", "melee_modes::tu::geno_game::ext::hook::Fx_Stat", false, true),
+    ("Geno_ArticleCount", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleCount", false, true),
+    ("Geno_ArticleHitCount", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitCount", false, true),
+    ("Geno_ArticleHitParam", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitParam", false, true),
+    ("Geno_ArticleJoint", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleJoint", false, true),
+    ("Geno_ArticleParam", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleParam", false, true),
+    ("Geno_AttrBits", "melee_modes::tu::geno_game::ext::hook::Geno_AttrBits", false, true),
+    ("Geno_AttrCount", "melee_modes::tu::geno_game::ext::hook::Geno_AttrCount", false, true),
+    ("Geno_AttrIndex", "melee_modes::tu::geno_game::ext::hook::Geno_AttrIndex", false, true),
+    ("Geno_ComboNote", "melee_modes::tu::geno_game::ext::hook::Geno_ComboNote", false, true),
+    ("Geno_ComboParam", "melee_modes::tu::geno_game::ext::hook::Geno_ComboParam", false, true),
+    ("Geno_ComboWord", "melee_modes::tu::geno_game::ext::hook::Geno_ComboWord", false, true),
+    ("Geno_DefineBaseKind", "melee_modes::tu::geno_game::ext::hook::Geno_DefineBaseKind", false, true),
+    ("Geno_DefineOverrideCount", "melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideCount", false, true),
+    ("Geno_DefineOverrideField", "melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideField", false, true),
+    ("Geno_DefineVoiceState", "melee_modes::tu::geno_game::ext::hook::Geno_DefineVoiceState", false, true),
+    ("Geno_Event", "melee_modes::tu::geno_game::ext::hook::Geno_Event", false, true),
+    ("Geno_FxBindings", "melee_modes::tu::geno_game::ext::hook::Geno_FxBindings", false, true),
+    ("Geno_Hook", "melee_modes::tu::geno_game::ext::hook::Geno_Hook", false, true),
+    ("Geno_HookArg", "melee_modes::tu::geno_game::ext::hook::Geno_HookArg", false, true),
+    ("Geno_HookCount", "melee_modes::tu::geno_game::ext::hook::Geno_HookCount", false, true),
+    ("Geno_ItemParam", "melee_modes::tu::geno_game::ext::hook::Geno_ItemParam", false, true),
+    ("Geno_JumpVyBits", "melee_modes::tu::geno_game::ext::hook::Geno_JumpVyBits", false, true),
+    ("Geno_JumpVyCount", "melee_modes::tu::geno_game::ext::hook::Geno_JumpVyCount", false, true),
+    ("Geno_LuaCall", "melee_modes::tu::geno_game::ext::hook::Geno_LuaCall", false, true),
+    ("Geno_LuaFn", "melee_modes::tu::geno_game::ext::hook::Geno_LuaFn", false, true),
+    ("Geno_LuaSlots", "melee_modes::tu::geno_game::ext::hook::Geno_LuaSlots", false, true),
+    ("Geno_MaxJumps", "melee_modes::tu::geno_game::ext::hook::Geno_MaxJumps", false, true),
+    ("Geno_MotionAnim", "melee_modes::tu::geno_game::ext::hook::Geno_MotionAnim", false, true),
+    ("Geno_OnLandCount", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandCount", false, true),
+    ("Geno_OnLandFrom", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandFrom", false, true),
+    ("Geno_OnLandTo", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandTo", false, true),
+    ("Geno_OverlayAnim", "melee_modes::tu::geno_game::ext::hook::Geno_OverlayAnim", false, true),
+    ("Geno_OverlayCount", "melee_modes::tu::geno_game::ext::hook::Geno_OverlayCount", false, true),
+    ("Geno_OverlaySlot", "melee_modes::tu::geno_game::ext::hook::Geno_OverlaySlot", false, true),
+    ("Geno_ParamBits", "melee_modes::tu::geno_game::ext::hook::Geno_ParamBits", false, true),
+    ("Geno_ParamCount", "melee_modes::tu::geno_game::ext::hook::Geno_ParamCount", false, true),
+    ("Geno_ParamId", "melee_modes::tu::geno_game::ext::hook::Geno_ParamId", false, true),
+    ("Geno_PoolGen", "melee_modes::tu::geno_game::ext::hook::Geno_PoolGen", false, true),
+    ("Geno_PoolWord", "melee_modes::tu::geno_game::ext::hook::Geno_PoolWord", false, true),
+    ("Geno_PoolWords", "melee_modes::tu::geno_game::ext::hook::Geno_PoolWords", false, true),
+    ("Geno_ProfileCount", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileCount", false, true),
+    ("Geno_ProfileForKind", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileForKind", false, true),
+    ("Geno_ProfileIdWord", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileIdWord", false, true),
+    ("Geno_Scale", "melee_modes::tu::geno_game::ext::hook::Geno_Scale", false, true),
+    ("Geno_ScriptAddressValid", "melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid", false, true),
+    ("Geno_SlotCount", "melee_modes::tu::geno_game::ext::hook::Geno_SlotCount", false, true),
+    ("Geno_SlotLen", "melee_modes::tu::geno_game::ext::hook::Geno_SlotLen", false, true),
+    ("Geno_SlotOffset", "melee_modes::tu::geno_game::ext::hook::Geno_SlotOffset", false, true),
+    ("Geno_SlotRelative", "melee_modes::tu::geno_game::ext::hook::Geno_SlotRelative", false, true),
+    ("Geno_Special", "melee_modes::tu::geno_game::ext::hook::Geno_Special", false, true),
+    ("Geno_SpecialBits", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialBits", false, true),
+    ("Geno_SpecialCount", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialCount", false, true),
+    ("Geno_SpecialIndex", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialIndex", false, true),
+    ("Geno_SpecialSelect", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialSelect", false, true),
+    ("Geno_StateAnim", "melee_modes::tu::geno_game::ext::hook::Geno_StateAnim", false, true),
+    ("Geno_StateAnimFrom", "melee_modes::tu::geno_game::ext::hook::Geno_StateAnimFrom", false, true),
+    ("Geno_StateBehavior", "melee_modes::tu::geno_game::ext::hook::Geno_StateBehavior", false, true),
+    ("Geno_StateCb", "melee_modes::tu::geno_game::ext::hook::Geno_StateCb", false, true),
+    ("Geno_StateCount", "melee_modes::tu::geno_game::ext::hook::Geno_StateCount", false, true),
+    ("Geno_StateCounter", "melee_modes::tu::geno_game::ext::hook::Geno_StateCounter", false, true),
+    ("Geno_StateFlags", "melee_modes::tu::geno_game::ext::hook::Geno_StateFlags", false, true),
+    ("Geno_StateFlagsSet", "melee_modes::tu::geno_game::ext::hook::Geno_StateFlagsSet", false, true),
+    ("Geno_StateGravityBits", "melee_modes::tu::geno_game::ext::hook::Geno_StateGravityBits", false, true),
+    ("Geno_StateHasCounter", "melee_modes::tu::geno_game::ext::hook::Geno_StateHasCounter", false, true),
+    ("Geno_StateLagBits", "melee_modes::tu::geno_game::ext::hook::Geno_StateLagBits", false, true),
+    ("Geno_StateLand", "melee_modes::tu::geno_game::ext::hook::Geno_StateLand", false, true),
+    ("Geno_StateLike", "melee_modes::tu::geno_game::ext::hook::Geno_StateLike", false, true),
+    ("Geno_StateMotion", "melee_modes::tu::geno_game::ext::hook::Geno_StateMotion", false, true),
+    ("Geno_StateMoveId", "melee_modes::tu::geno_game::ext::hook::Geno_StateMoveId", false, true),
+    ("Geno_StateNext", "melee_modes::tu::geno_game::ext::hook::Geno_StateNext", false, true),
+    ("Geno_WarnIasa", "melee_modes::tu::geno_game::ext::hook::Geno_WarnIasa", false, true),
+    ("ItemDraw", "melee_modes::tu::geno_game::ext::hook::ItemDraw", false, true),
+    ("ItemEvent", "melee_modes::tu::geno_game::ext::hook::ItemEvent", false, true),
+    ("Mex_ItemRangeAvailable", "melee_modes::tu::geno_game::ext::hook::Mex_ItemRangeAvailable", false, true),
+    ("Mex_ItemReady", "melee_modes::tu::geno_game::ext::hook::Mex_ItemReady", false, true),
+    ("ProfActive", "melee_modes::tu::geno_game::ext::hook::ProfActive", false, true),
+    ("ProfBegin", "melee_modes::tu::geno_game::ext::hook::ProfBegin", false, true),
+    ("ProfEnd", "melee_modes::tu::geno_game::ext::hook::ProfEnd", false, true),
+    ("atan2f", "melee_modes::tu::geno_game::ext::hook::atan2f", false, false),
+    ("diag_fx_cam", "melee_modes::tu::geno_game::ext::hook::diag_fx_cam", false, true),
+    ("diag_geno_stun", "melee_modes::tu::geno_game::ext::hook::diag_geno_stun", false, true),
+    ("ftCommon_CalcSelfAccel_DeaccelAir", "melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_DeaccelAir", false, true),
+    ("ftCommon_CalcSelfAccel_Drift", "melee_modes::tu::geno_game::ext::hook::ftCommon_CalcSelfAccel_Drift", false, true),
+    ("ftCommon_Fall", "melee_modes::tu::geno_game::ext::hook::ftCommon_Fall", false, true),
+    ("ftCommon_SetSelfMovementFromGroundedMovement", "melee_modes::tu::geno_game::ext::hook::ftCommon_SetSelfMovementFromGroundedMovement", false, true),
+    ("it_8026B894", "melee_modes::tu::geno_game::ext::hook::it_8026B894", false, true),
+    ("snap_load", "melee_modes::tu::geno_game::ext::hook::snap_load", false, true),
+    ("snap_open", "melee_modes::tu::geno_game::ext::hook::snap_open", false, true),
+    ("snap_save", "melee_modes::tu::geno_game::ext::hook::snap_save", false, true),
+    ("GenoDefine_FtDataFieldName", "melee_modes::tu::geno_tests::ext::hook::GenoDefine_FtDataFieldName", false, true),
+    ("GenoDefine_FtDataSharedMask", "melee_modes::tu::geno_tests::ext::hook::GenoDefine_FtDataSharedMask", false, true),
+    ("GenoGame_DefinePPCViolation", "melee_modes::tu::geno_tests::ext::hook::GenoGame_DefinePPCViolation", false, true),
+    ("Geno_ArticleCount", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleCount", false, true),
+    ("Geno_ArticleHitCount", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleHitCount", false, true),
+    ("Geno_ArticleHitParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleHitParam", false, true),
+    ("Geno_ArticleParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleParam", false, true),
+    ("Geno_ComboParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ComboParam", false, true),
+    ("Geno_ComboWord", "melee_modes::tu::geno_tests::ext::hook::Geno_ComboWord", false, true),
+    ("Geno_DefineCKAt", "melee_modes::tu::geno_tests::ext::hook::Geno_DefineCKAt", false, true),
+    ("Geno_DefineCount", "melee_modes::tu::geno_tests::ext::hook::Geno_DefineCount", false, true),
+    ("Geno_HookCount", "melee_modes::tu::geno_tests::ext::hook::Geno_HookCount", false, true),
+    ("Geno_MeterParam", "melee_modes::tu::geno_tests::ext::hook::Geno_MeterParam", false, true),
+    ("Geno_SpecialSelect", "melee_modes::tu::geno_tests::ext::hook::Geno_SpecialSelect", false, true),
+    ("Geno_StateCounter", "melee_modes::tu::geno_tests::ext::hook::Geno_StateCounter", false, true),
+    ("Geno_TestInstall", "melee_modes::tu::geno_tests::ext::hook::Geno_TestInstall", false, true),
+    ("Geno_TestReloadLayout", "melee_modes::tu::geno_tests::ext::hook::Geno_TestReloadLayout", false, true),
+    ("Geno_TestRestore", "melee_modes::tu::geno_tests::ext::hook::Geno_TestRestore", false, true),
+    ("OSCreateHeap", "melee_modes::tu::geno_tests::ext::hook::OSCreateHeap", false, true),
+    ("OSInitAlloc", "melee_modes::tu::geno_tests::ext::hook::OSInitAlloc", false, true),
+    ("SceneLaunch_BootGameMode", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_BootGameMode", false, true),
+    ("SceneLaunch_EntryStateId", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_EntryStateId", false, true),
+    ("SceneLaunch_ItemFreq", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_ItemFreq", false, true),
+    ("SceneLaunch_LoadForTest", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_LoadForTest", false, true),
+    ("SceneLaunch_PlayerCKind", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_PlayerCKind", false, true),
+    ("SceneLaunch_PlayerSlotType", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_PlayerSlotType", false, true),
+    ("SceneLaunch_StageExternal", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_StageExternal", false, true),
+    ("TestFail", "melee_modes::tu::geno_tests::ext::hook::TestFail", false, true),
+    ("TestRegister", "melee_modes::tu::geno_tests::ext::hook::TestRegister", false, true),
+    ("atan2f", "melee_modes::tu::geno_tests::ext::hook::atan2f", false, false),
+    ("fabsf", "melee_modes::tu::geno_tests::ext::hook::fabsf", false, true),
+    ("gm_8016AE80", "melee_modes::tu::geno_tests::ext::hook::gm_8016AE80", false, false),
+    ("memcmp", "melee_modes::tu::geno_tests::ext::hook::memcmp", false, true),
+    ("memcpy", "melee_modes::tu::geno_tests::ext::hook::memcpy", false, true),
+    ("memset", "melee_modes::tu::geno_tests::ext::hook::memset", false, true),
+    ("snap_load", "melee_modes::tu::geno_tests::ext::hook::snap_load", false, true),
+    ("snap_open", "melee_modes::tu::geno_tests::ext::hook::snap_open", false, true),
+    ("snap_save", "melee_modes::tu::geno_tests::ext::hook::snap_save", false, true),
+    ("strcmp", "melee_modes::tu::geno_tests::ext::hook::strcmp", false, true),
+    ("Fighter_ChangeMotionState", "melee_modes::tu::geno_lab_mode::ext::hook::Fighter_ChangeMotionState", true, false),
+    ("Player_GetEntity", "melee_modes::tu::geno_lab_mode::ext::hook::Player_GetEntity", true, false),
+    ("SceneLaunch_SeedPlayers", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_SeedPlayers", true, false),
+    ("SceneLaunch_SeedVs", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_SeedVs", true, false),
+    ("ScriptGame_HitRuleCreate", "melee_modes::tu::geno_lab_mode::ext::hook::ScriptGame_HitRuleCreate", true, false),
+    ("ftAnim_IsFramesRemaining", "melee_modes::tu::geno_lab_mode::ext::hook::ftAnim_IsFramesRemaining", true, false),
+    ("ftAnim_SetAnimRate", "melee_modes::tu::geno_lab_mode::ext::hook::ftAnim_SetAnimRate", true, false),
+    ("ftCo_Fall_Enter", "melee_modes::tu::geno_lab_mode::ext::hook::ftCo_Fall_Enter", true, false),
+    ("gmFrontend_BeginLoading", "melee_modes::tu::geno_lab_mode::ext::hook::gmFrontend_BeginLoading", true, false),
+    ("gmFrontend_ModeSelect", "melee_modes::tu::geno_lab_mode::ext::hook::gmFrontend_ModeSelect", true, false),
+    ("gmVsMelee_EnterCss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterCss", true, false),
+    ("gmVsMelee_EnterSss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterSss", true, false),
+    ("gmVsMelee_EnterVs", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_EnterVs", true, false),
+    ("gmVsMelee_ExitCss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_ExitCss", true, false),
+    ("gmVsMelee_ExitSss", "melee_modes::tu::geno_lab_mode::ext::hook::gmVsMelee_ExitSss", true, false),
+    ("gmVs_EndMatch", "melee_modes::tu::geno_lab_mode::ext::hook::gmVs_EndMatch", true, false),
+    ("gm_ChangeGameModeAfterCurrentScene", "melee_modes::tu::geno_lab_mode::ext::hook::gm_ChangeGameModeAfterCurrentScene", true, false),
+    ("gm_GetCurrentGameMode", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetCurrentGameMode", true, false),
+    ("gm_GetGameModeStateEnterData", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetGameModeStateEnterData", true, false),
+    ("gm_GetGameModeStateExitData", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetGameModeStateExitData", true, false),
+    ("gm_GetNumCostumesForCKind", "melee_modes::tu::geno_lab_mode::ext::hook::gm_GetNumCostumesForCKind", true, false),
+    ("gm_InitVsMode", "melee_modes::tu::geno_lab_mode::ext::hook::gm_InitVsMode", true, false),
+    ("gm_SetNextGameModeStateId", "melee_modes::tu::geno_lab_mode::ext::hook::gm_SetNextGameModeStateId", true, false),
+    ("gm_SetupAllPlayerDefaults", "melee_modes::tu::geno_lab_mode::ext::hook::gm_SetupAllPlayerDefaults", true, false),
+    ("lbColl_80008440", "melee_modes::tu::geno_lab_mode::ext::hook::lbColl_80008440", true, false),
+    ("mpCheckFloor", "melee_modes::tu::geno_lab_mode::ext::hook::mpCheckFloor", true, false),
+    ("mpColl_80043680", "melee_modes::tu::geno_lab_mode::ext::hook::mpColl_80043680", true, false),
+    ("plStale_IncrementAttackInstance", "melee_modes::tu::geno_lab_mode::ext::hook::plStale_IncrementAttackInstance", true, false),
     ("Camera_8002F3AC", "melee_modes::tu::gm_1601::ext::hook::Camera_8002F3AC", true, false),
     ("Camera_8002F760", "melee_modes::tu::gm_1601::ext::hook::Camera_8002F760", true, true),
     ("Camera_8002F784", "melee_modes::tu::gm_1601::ext::hook::Camera_8002F784", true, true),
@@ -45198,142 +45375,12 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("OSReport", "melee_modes::mn_inl.rs", false, true),
     ("lbAudioAx_80024030", "melee_modes::mn_inl.rs", false, false),
     ("mn_80229624", "melee_modes::mn_inl.rs", false, false),
-    ("Fx_Attach", "melee_modes::tu::geno_game::ext::hook::Fx_Attach", false, true),
-    ("Fx_Detach", "melee_modes::tu::geno_game::ext::hook::Fx_Detach", false, true),
-    ("Fx_Draw", "melee_modes::tu::geno_game::ext::hook::Fx_Draw", false, true),
-    ("Fx_Drive", "melee_modes::tu::geno_game::ext::hook::Fx_Drive", false, true),
-    ("Fx_Frame", "melee_modes::tu::geno_game::ext::hook::Fx_Frame", false, true),
-    ("Fx_Owner", "melee_modes::tu::geno_game::ext::hook::Fx_Owner", false, true),
-    ("Fx_SetOwner", "melee_modes::tu::geno_game::ext::hook::Fx_SetOwner", false, true),
-    ("Fx_SetOwnerPort", "melee_modes::tu::geno_game::ext::hook::Fx_SetOwnerPort", false, true),
-    ("Fx_Stat", "melee_modes::tu::geno_game::ext::hook::Fx_Stat", false, true),
-    ("Geno_ArticleCount", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleCount", false, true),
-    ("Geno_ArticleHitCount", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitCount", false, true),
-    ("Geno_ArticleHitParam", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleHitParam", false, true),
-    ("Geno_ArticleJoint", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleJoint", false, true),
-    ("Geno_ArticleParam", "melee_modes::tu::geno_game::ext::hook::Geno_ArticleParam", false, true),
-    ("Geno_AttrBits", "melee_modes::tu::geno_game::ext::hook::Geno_AttrBits", false, true),
-    ("Geno_AttrCount", "melee_modes::tu::geno_game::ext::hook::Geno_AttrCount", false, true),
-    ("Geno_AttrIndex", "melee_modes::tu::geno_game::ext::hook::Geno_AttrIndex", false, true),
-    ("Geno_ComboNote", "melee_modes::tu::geno_game::ext::hook::Geno_ComboNote", false, true),
-    ("Geno_ComboParam", "melee_modes::tu::geno_game::ext::hook::Geno_ComboParam", false, true),
-    ("Geno_ComboWord", "melee_modes::tu::geno_game::ext::hook::Geno_ComboWord", false, true),
-    ("Geno_DefineBaseKind", "melee_modes::tu::geno_game::ext::hook::Geno_DefineBaseKind", false, true),
-    ("Geno_DefineOverrideCount", "melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideCount", false, true),
-    ("Geno_DefineOverrideField", "melee_modes::tu::geno_game::ext::hook::Geno_DefineOverrideField", false, true),
-    ("Geno_DefineVoiceState", "melee_modes::tu::geno_game::ext::hook::Geno_DefineVoiceState", false, true),
-    ("Geno_Event", "melee_modes::tu::geno_game::ext::hook::Geno_Event", false, true),
-    ("Geno_FxBindings", "melee_modes::tu::geno_game::ext::hook::Geno_FxBindings", false, true),
-    ("Geno_Hook", "melee_modes::tu::geno_game::ext::hook::Geno_Hook", false, true),
-    ("Geno_HookArg", "melee_modes::tu::geno_game::ext::hook::Geno_HookArg", false, true),
-    ("Geno_HookCount", "melee_modes::tu::geno_game::ext::hook::Geno_HookCount", false, true),
-    ("Geno_ItemParam", "melee_modes::tu::geno_game::ext::hook::Geno_ItemParam", false, true),
-    ("Geno_JumpVyBits", "melee_modes::tu::geno_game::ext::hook::Geno_JumpVyBits", false, true),
-    ("Geno_JumpVyCount", "melee_modes::tu::geno_game::ext::hook::Geno_JumpVyCount", false, true),
-    ("Geno_LuaCall", "melee_modes::tu::geno_game::ext::hook::Geno_LuaCall", false, true),
-    ("Geno_LuaFn", "melee_modes::tu::geno_game::ext::hook::Geno_LuaFn", false, true),
-    ("Geno_LuaSlots", "melee_modes::tu::geno_game::ext::hook::Geno_LuaSlots", false, true),
-    ("Geno_MaxJumps", "melee_modes::tu::geno_game::ext::hook::Geno_MaxJumps", false, true),
-    ("Geno_MotionAnim", "melee_modes::tu::geno_game::ext::hook::Geno_MotionAnim", false, true),
-    ("Geno_OnLandCount", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandCount", false, true),
-    ("Geno_OnLandFrom", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandFrom", false, true),
-    ("Geno_OnLandTo", "melee_modes::tu::geno_game::ext::hook::Geno_OnLandTo", false, true),
-    ("Geno_OverlayAnim", "melee_modes::tu::geno_game::ext::hook::Geno_OverlayAnim", false, true),
-    ("Geno_OverlayCount", "melee_modes::tu::geno_game::ext::hook::Geno_OverlayCount", false, true),
-    ("Geno_OverlaySlot", "melee_modes::tu::geno_game::ext::hook::Geno_OverlaySlot", false, true),
-    ("Geno_ParamBits", "melee_modes::tu::geno_game::ext::hook::Geno_ParamBits", false, true),
-    ("Geno_ParamCount", "melee_modes::tu::geno_game::ext::hook::Geno_ParamCount", false, true),
-    ("Geno_ParamId", "melee_modes::tu::geno_game::ext::hook::Geno_ParamId", false, true),
-    ("Geno_PoolGen", "melee_modes::tu::geno_game::ext::hook::Geno_PoolGen", false, true),
-    ("Geno_PoolWord", "melee_modes::tu::geno_game::ext::hook::Geno_PoolWord", false, true),
-    ("Geno_PoolWords", "melee_modes::tu::geno_game::ext::hook::Geno_PoolWords", false, true),
-    ("Geno_ProfileCount", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileCount", false, true),
-    ("Geno_ProfileForKind", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileForKind", false, true),
-    ("Geno_ProfileIdWord", "melee_modes::tu::geno_game::ext::hook::Geno_ProfileIdWord", false, true),
-    ("Geno_Scale", "melee_modes::tu::geno_game::ext::hook::Geno_Scale", false, true),
-    ("Geno_ScriptAddressValid", "melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid", false, true),
-    ("Geno_SlotCount", "melee_modes::tu::geno_game::ext::hook::Geno_SlotCount", false, true),
-    ("Geno_SlotLen", "melee_modes::tu::geno_game::ext::hook::Geno_SlotLen", false, true),
-    ("Geno_SlotOffset", "melee_modes::tu::geno_game::ext::hook::Geno_SlotOffset", false, true),
-    ("Geno_SlotRelative", "melee_modes::tu::geno_game::ext::hook::Geno_SlotRelative", false, true),
-    ("Geno_Special", "melee_modes::tu::geno_game::ext::hook::Geno_Special", false, true),
-    ("Geno_SpecialBits", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialBits", false, true),
-    ("Geno_SpecialCount", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialCount", false, true),
-    ("Geno_SpecialIndex", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialIndex", false, true),
-    ("Geno_SpecialSelect", "melee_modes::tu::geno_game::ext::hook::Geno_SpecialSelect", false, true),
-    ("Geno_StateAnim", "melee_modes::tu::geno_game::ext::hook::Geno_StateAnim", false, true),
-    ("Geno_StateAnimFrom", "melee_modes::tu::geno_game::ext::hook::Geno_StateAnimFrom", false, true),
-    ("Geno_StateBehavior", "melee_modes::tu::geno_game::ext::hook::Geno_StateBehavior", false, true),
-    ("Geno_StateCb", "melee_modes::tu::geno_game::ext::hook::Geno_StateCb", false, true),
-    ("Geno_StateCount", "melee_modes::tu::geno_game::ext::hook::Geno_StateCount", false, true),
-    ("Geno_StateCounter", "melee_modes::tu::geno_game::ext::hook::Geno_StateCounter", false, true),
-    ("Geno_StateFlags", "melee_modes::tu::geno_game::ext::hook::Geno_StateFlags", false, true),
-    ("Geno_StateFlagsSet", "melee_modes::tu::geno_game::ext::hook::Geno_StateFlagsSet", false, true),
-    ("Geno_StateGravityBits", "melee_modes::tu::geno_game::ext::hook::Geno_StateGravityBits", false, true),
-    ("Geno_StateHasCounter", "melee_modes::tu::geno_game::ext::hook::Geno_StateHasCounter", false, true),
-    ("Geno_StateLagBits", "melee_modes::tu::geno_game::ext::hook::Geno_StateLagBits", false, true),
-    ("Geno_StateLand", "melee_modes::tu::geno_game::ext::hook::Geno_StateLand", false, true),
-    ("Geno_StateLike", "melee_modes::tu::geno_game::ext::hook::Geno_StateLike", false, true),
-    ("Geno_StateMotion", "melee_modes::tu::geno_game::ext::hook::Geno_StateMotion", false, true),
-    ("Geno_StateMoveId", "melee_modes::tu::geno_game::ext::hook::Geno_StateMoveId", false, true),
-    ("Geno_StateNext", "melee_modes::tu::geno_game::ext::hook::Geno_StateNext", false, true),
-    ("Geno_WarnIasa", "melee_modes::tu::geno_game::ext::hook::Geno_WarnIasa", false, true),
-    ("ItemDraw", "melee_modes::tu::geno_game::ext::hook::ItemDraw", false, true),
-    ("ItemEvent", "melee_modes::tu::geno_game::ext::hook::ItemEvent", false, true),
-    ("Mex_ItemRangeAvailable", "melee_modes::tu::geno_game::ext::hook::Mex_ItemRangeAvailable", false, true),
-    ("Mex_ItemReady", "melee_modes::tu::geno_game::ext::hook::Mex_ItemReady", false, true),
-    ("ProfActive", "melee_modes::tu::geno_game::ext::hook::ProfActive", false, true),
-    ("ProfBegin", "melee_modes::tu::geno_game::ext::hook::ProfBegin", false, true),
-    ("ProfEnd", "melee_modes::tu::geno_game::ext::hook::ProfEnd", false, true),
-    ("diag_fx_cam", "melee_modes::tu::geno_game::ext::hook::diag_fx_cam", false, true),
-    ("diag_geno_stun", "melee_modes::tu::geno_game::ext::hook::diag_geno_stun", false, true),
-    ("ftCommon_UseAllJumps", "melee_modes::tu::geno_game::ext::hook::ftCommon_UseAllJumps", false, true),
-    ("snap_load", "melee_modes::tu::geno_game::ext::hook::snap_load", false, true),
-    ("snap_open", "melee_modes::tu::geno_game::ext::hook::snap_open", false, true),
-    ("snap_save", "melee_modes::tu::geno_game::ext::hook::snap_save", false, true),
     ("Netplay_Enabled", "melee_modes::tu::geno_lab_mode::ext::hook::Netplay_Enabled", false, true),
     ("RB_Enabled", "melee_modes::tu::geno_lab_mode::ext::hook::RB_Enabled", false, true),
     ("Replay_Active", "melee_modes::tu::geno_lab_mode::ext::hook::Replay_Active", false, true),
     ("SceneLaunch_BootGameMode", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_BootGameMode", false, true),
     ("SceneLaunch_ItemFreq", "melee_modes::tu::geno_lab_mode::ext::hook::SceneLaunch_ItemFreq", false, true),
     ("Script_LabRequest", "melee_modes::tu::geno_lab_mode::ext::hook::Script_LabRequest", false, true),
-    ("GenoDefine_FtDataFieldName", "melee_modes::tu::geno_tests::ext::hook::GenoDefine_FtDataFieldName", false, true),
-    ("GenoDefine_FtDataSharedMask", "melee_modes::tu::geno_tests::ext::hook::GenoDefine_FtDataSharedMask", false, true),
-    ("GenoGame_DefinePPCViolation", "melee_modes::tu::geno_tests::ext::hook::GenoGame_DefinePPCViolation", false, true),
-    ("Geno_ArticleCount", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleCount", false, true),
-    ("Geno_ArticleHitCount", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleHitCount", false, true),
-    ("Geno_ArticleHitParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleHitParam", false, true),
-    ("Geno_ArticleParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ArticleParam", false, true),
-    ("Geno_ComboParam", "melee_modes::tu::geno_tests::ext::hook::Geno_ComboParam", false, true),
-    ("Geno_ComboWord", "melee_modes::tu::geno_tests::ext::hook::Geno_ComboWord", false, true),
-    ("Geno_DefineCKAt", "melee_modes::tu::geno_tests::ext::hook::Geno_DefineCKAt", false, true),
-    ("Geno_DefineCount", "melee_modes::tu::geno_tests::ext::hook::Geno_DefineCount", false, true),
-    ("Geno_HookCount", "melee_modes::tu::geno_tests::ext::hook::Geno_HookCount", false, true),
-    ("Geno_MeterParam", "melee_modes::tu::geno_tests::ext::hook::Geno_MeterParam", false, true),
-    ("Geno_SpecialSelect", "melee_modes::tu::geno_tests::ext::hook::Geno_SpecialSelect", false, true),
-    ("Geno_StateCounter", "melee_modes::tu::geno_tests::ext::hook::Geno_StateCounter", false, true),
-    ("Geno_TestInstall", "melee_modes::tu::geno_tests::ext::hook::Geno_TestInstall", false, true),
-    ("Geno_TestReloadLayout", "melee_modes::tu::geno_tests::ext::hook::Geno_TestReloadLayout", false, true),
-    ("Geno_TestRestore", "melee_modes::tu::geno_tests::ext::hook::Geno_TestRestore", false, true),
-    ("OSCreateHeap", "melee_modes::tu::geno_tests::ext::hook::OSCreateHeap", false, true),
-    ("OSInitAlloc", "melee_modes::tu::geno_tests::ext::hook::OSInitAlloc", false, true),
-    ("SceneLaunch_BootGameMode", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_BootGameMode", false, true),
-    ("SceneLaunch_EntryStateId", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_EntryStateId", false, true),
-    ("SceneLaunch_ItemFreq", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_ItemFreq", false, true),
-    ("SceneLaunch_LoadForTest", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_LoadForTest", false, true),
-    ("SceneLaunch_PlayerCKind", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_PlayerCKind", false, true),
-    ("SceneLaunch_PlayerSlotType", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_PlayerSlotType", false, true),
-    ("SceneLaunch_StageExternal", "melee_modes::tu::geno_tests::ext::hook::SceneLaunch_StageExternal", false, true),
-    ("TestFail", "melee_modes::tu::geno_tests::ext::hook::TestFail", false, true),
-    ("TestRegister", "melee_modes::tu::geno_tests::ext::hook::TestRegister", false, true),
-    ("fabsf", "melee_modes::tu::geno_tests::ext::hook::fabsf", false, true),
-    ("memcmp", "melee_modes::tu::geno_tests::ext::hook::memcmp", false, true),
-    ("memcpy", "melee_modes::tu::geno_tests::ext::hook::memcpy", false, true),
-    ("memset", "melee_modes::tu::geno_tests::ext::hook::memset", false, true),
-    ("snap_load", "melee_modes::tu::geno_tests::ext::hook::snap_load", false, true),
-    ("snap_open", "melee_modes::tu::geno_tests::ext::hook::snap_open", false, true),
-    ("snap_save", "melee_modes::tu::geno_tests::ext::hook::snap_save", false, true),
-    ("strcmp", "melee_modes::tu::geno_tests::ext::hook::strcmp", false, true),
     ("Geno_DefineArtBaseCK", "melee_modes::tu::gm_1601::ext::hook::Geno_DefineArtBaseCK", false, true),
     ("Geno_DefineAudioPlay", "melee_modes::tu::gm_1601::ext::hook::Geno_DefineAudioPlay", false, true),
     ("Geno_DefineBaseCK", "melee_modes::tu::gm_1601::ext::hook::Geno_DefineBaseCK", false, true),

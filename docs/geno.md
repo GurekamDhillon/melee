@@ -1849,7 +1849,7 @@ Per profile, in family blocks (`glide`, `tornado`, `drill`, `cape`), by the name
 clean-room parameter set in `pc/geno/geno_behaviour_params.h`. That set is defined only from
 `docs/specs/geno-v5.1-behaviours.md` (sections 2.5, 3.2-3.3, 4.1-4.2, 5.1-5.2, revision 1 in
 section 9, host switches in section 10); the header lists every name with its default and source
-tag. The old Brawl-word block (`w00`..) and its named defaults were removed.
+tag. The earlier word block (`w00`..) and its named defaults were removed.
 
 ```json
 "glide":   { "entry_hold": 6, "s_start": 1.5, "max_glides": 2 },
@@ -1857,68 +1857,41 @@ tag. The old Brawl-word block (`w00`..) and its named defaults were removed.
 "drill":   { "psi_min": -60, "dr_speed": 2.0 }
 ```
 
-### 16.4 The recovered Brawl logic (what is exact, what is approximated)
+### 16.4 The behaviour procedures (clean-room v5.1)
 
-Recovered by disassembling `sora_melee.rel` (ftStatusUniqProcessGlide init/exec/fixPos,
-ftMetaknightStatusUniqProcessSpecialNSpin, MK kinetic types 0x64-0x68) and `ft_metaknight.rel`
-(SpecialSRush, SpecialSEnd, the param accessor fn_111_81A8), with an annotated REL disassembler
-over capstone (relocations and rodata resolved). The glide reaches its block through
-`soValueAccesser::getConstantIndefinite(43019)`; common ids used: 3023 gravity, 3024 terminal
-velocity, 3029 max air speed, 3030 air friction, 3032 hard x cap 2.5.
+The four procedures are implemented in `pc/geno/geno_behaviours.inc` only from
+`docs/specs/geno-v5.1-behaviours.md`; that spec is the reference for every formula, state and
+acceptance row, and this section is a summary. Parameter names are the `geno_behaviour_params.h`
+script names; trig is the spec's deterministic `sin_deg` / `cos_deg` (section 1.1).
 
-**Glide entry.** Jump (X/Y, or the stick past Melee's tap-jump threshold) held continuously for
-`hold_frames` frames of an air jump (JumpAerialF/B, or a Kirby/Puff multi-jump state) enters
-GlideStart. A release cancels it for that jump. Scripts enter it with CHG GENO.
+**glide** (spec section 2). States GL_START, GL_FLY, GL_ATTACK, GL_JUMPOUT, GL_LAND, GL_TRIP,
+GL_END. Entry while airborne with glides left (`max_glides`): A) jump held `entry_hold` frames after
+a midair jump with `vel.y <= entry_vy_max`; B) a stick flick across `flick_thr` within
+`flick_window` frames near the apex (`|vel.y| <= apex_vy`); C) chained from another procedure
+(slow variant, `chain_speed_mul` / `chain_turn_mul`). The host switch `auto_entry` runs A and B from
+the preanim hook. GL_START eases the speed to `s_start` for `start_frames`; GL_FLY steers the pitch
+toward a stick target (`r_down` / `r_up`, `turn_rate`), trades speed against the pitch (`gk`), applies
+`drag` and the `s_max` cap. Exits in priority order: ground contact (zero lag with the attack
+buffer, GL_TRIP past `trip_angle` nose down, else GL_LAND with `land_lag`), jump-out, the glide
+attack, the stall below `s_stall`.
 
-**GlideStart** (Brawl 0x84): on entry `vy += w02`, `vx *= w04`; per frame Melee gravity x w03 to the
-terminal velocity, vx braked toward 0 by the air friction, |vx| <= 2.5. Animation end -> Glide.
+**tornado** (spec section 3). Start-up `start_frames`, then a spin loop: the spin starts at `spin0`,
+decays by `decay_a` (then `decay_b` after `read_limit` loop frames), and a special press read every
+`read_period` frames adds `mash_add` (capped at `spin_max`) and a rise impulse. A hit spawns each
+360 degrees of accumulated spin; the loop ends at `spin_end` into the 29-frame end with the final hit.
+Air movement: reduced gravity `grav_tn`, rise `rise_impulse` up to `rise_max`, fall cap `fall_tn`,
+drift toward `vx_max` by `vx_accel`; ledge grab is locked through the loop and `ledge_lock` frames.
 
-**Glide** (0x85), per frame (exact port of execStatus):
-```
-init:  speed = w05; sink = -vy(entry); angle = rate = 0
-stick: a = stick angle mirrored into the facing frame; mag = |stick|
-  if mag > w15:  acc = (a >= 45 or a < -135) ? +w16 : -w17     (back/up = nose up)
-                 acc *= (mag - w15) / (1 - w15); if rate*acc < 0: rate = 0
-                 rate = clamp(rate + acc, +-w18); angle += rate
-  (neutral: angle and rate hold)
-angle = clamp(angle, w01, w00)
-speed -= w06 * angle / 90   (+ 0.01 penalty while touching a wall); speed >= 0
-if angle < w12: speed += w13 * (w12 - angle) / (w12 - w01)
-v = (facing * speed * cos(angle), speed * sin(angle)); sink = clamp(sink + w09, +-w10); v.y -= sink
-if |v| > w07: v *= w07 / |v|
-if |v| < w08 or speed <= 0: stall -> the glide ends (GlideEnd), as Brawl's action does
-```
-Exits: A -> GlideAttack; a pressed `end_buttons` button (Brawl's PSA: requirement 0x30 args 1 and
-2, read as special / jump; shield added per GD) -> GlideEnd; stall -> GlideEnd; landing ->
-GlideLanding; `max_frames` > 0 adds a time limit (Brawl has none). GlideAttack / GlideEnd -> Fall.
+**drill** (spec section 4). Wind-up to `move0`, then a `ramp`-frame speed ramp to `dr_speed` along a
+heading `psi` steered by the stick (`dive_default + sy * psi_stick`, clamped to `psi_min..psi_max`,
+`steer_rate` per frame), no gravity during the rush. Rush hits from `hit0` every `hit_period` frames
+(`nhits`), the final hit at `final_frame`, then the end with `end_vx_keep` and, in the air,
+`recoil_vy`, helpless afterwards.
 
-**Mach Tornado** (exact logic; Brawl units used unscaled):
-entry vx *= w01, in the air vy += w00; spin rate r = w02, countdown w16. Per frame: frames-since-lift
-+1; while the countdown runs: r -= w15, a B press arms a lift; if armed and >= w11 frames since the
-last lift: lift (grounded -> airborne), r += w13; r in [0, w14]; after the countdown r -= w17.
-Air: an accepted lift adds vy += w10, rise capped at w12, gravity w08 to a fall of w09; drift accel
-stick*w05 (+ Melee's aerial drift base), stable |stick|*w06, brake w07 above it, |vx| <= 2.5.
-Ground: accel stick*w03 to |stick|*w04, brake w07. Moving into a wall reverses vx and turns around.
-The spin ends when r <= w18 -> `next` (MK: TornadoEnd, the final hit) -> helpless in the air.
-Not ported: Brawl drives the spin animation's rate by r (Melee plays the clip at rate 1, looping).
-
-**Drill Rush:** start: vx *= w00, air vy = w01, gravity w02 (optional DrillStart state). Rush:
-pitch += stickY * w03 per frame (up climbs for either facing; `angle_max` optional limit, Brawl has
-none - its 45-frame clip bounds it to +-135); velocity = the clip's root motion (Melee TransN) or
-`speed`, rotated by the pitch; on the ground it can only pitch up (and takes off). End: pitch eases
-to level (x(1 - 2/w04) per frame); in the air a pop back/up (pop_vx / pop_vy: Brawl's air-end
-momentum -1 / +2.1), then helpless unless the rush hit something (Brawl's SpecialSEnd enters both
-Fall and FallSpecial; which one when is inferred). **Bounce** (a Geno addition: Brawl's code has none
-besides that end pop): wall / hit / shield (`bounce` mask) -> DrillEnd at once. **v3 corrects this
-from Brawl's code: 17.5** (no bounce by default, the air end is always helpless, ends by situation).
-
-**Approximations / not recovered:** the stall-recovery branch (w11, w19) is ported but the stall
-ends the glide first (as Brawl's action does); Glide_Landing's extra thresholds (common params
-3169/3170) are not applied (every landing -> GlideLanding); Brawl's wing partial animation (w20)
-and Glide_Direction's pose-by-angle need MK's clips: `pose_center` (e.g. 90 with the 181-frame
-Glide_Direction clip) scrubs the animation to `pose_center - angle` (untested until Phase 2 ships
-the clip); the Drill's real speed is its SpecialSDrill TransN curve (needs the converted clip; else
-`speed`); units are not rescaled (Brawl and Melee both use units/frame; tune per fighter).
+**cape** (spec section 5). Start-up `cape_start`, reflect window to `cape_end`, a one-time turnaround
+when the stick is held back past `turn_thr`, end at `cape_total`. In the air the active frames apply
+the momentum stall (`stall_x`, `stall_y_up`, `stall_grav`, `stall_fall`); on the ground `ground_x`.
+Reflected projectiles take `reflect_dmg_mul` and `reflect_speed_mul`.
 
 ### 16.5 How v2 hooks in (compatibility)
 

@@ -3733,7 +3733,7 @@ pub const HR_MAX: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
 pub const HR_FIELDS: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
 pub unsafe extern "C" fn hr_finite(mut x: ::core::ffi::c_float) -> ::core::ffi::c_int {
     melee_core::ct!("hr_finite");
-    let mut v: Anon_anon_107 = unsafe { core::mem::zeroed::<Anon_anon_107>() };
+    let mut v: Anon_anon_18 = unsafe { core::mem::zeroed::<Anon_anon_18>() };
     v.f = x;
     return (v.u & 0x7f800000 as ::core::ffi::c_uint != 0x7f800000 as ::core::ffi::c_uint)
         as ::core::ffi::c_int;
@@ -18076,7 +18076,7 @@ pub unsafe extern "C" fn sm_mix(
 }
 pub unsafe extern "C" fn sm_fbits(mut f: ::core::ffi::c_float) -> ::core::ffi::c_uint {
     melee_core::ct!("sm_fbits");
-    let mut v: Anon_anon_107 = unsafe { core::mem::zeroed::<Anon_anon_107>() };
+    let mut v: Anon_anon_18 = unsafe { core::mem::zeroed::<Anon_anon_18>() };
     v.f = f;
     return v.u;
 }
@@ -24862,7 +24862,7 @@ pub unsafe extern "C" fn part_component(
     melee_core::ct!("part_component");
     let mut val: ::core::ffi::c_int = 0;
     if type_0 == GX_F32 as ::core::ffi::c_int {
-        let mut x: Anon_anon_1134 = unsafe { core::mem::zeroed::<Anon_anon_1134>() };
+        let mut x: Anon_anon_378 = unsafe { core::mem::zeroed::<Anon_anon_378>() };
         x.u = (*p.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint)
             << 24 as ::core::ffi::c_int
             | (*p.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_uint)
@@ -28915,12 +28915,12 @@ pub unsafe extern "C" fn ScriptGame_LabFlightF(
     }
     return 0.0f32;
 }
-pub static mut lab_ffields: [Anon_anon_2511; 32] = [unsafe {
-    core::mem::zeroed::<Anon_anon_2511>()
+pub static mut lab_ffields: [Anon_anon_3672; 32] = [unsafe {
+    core::mem::zeroed::<Anon_anon_3672>()
 }; 32];
-pub const LAB_NFF: ::core::ffi::c_int = (::core::mem::size_of::<[Anon_anon_2511; 32]>()
+pub const LAB_NFF: ::core::ffi::c_int = (::core::mem::size_of::<[Anon_anon_3672; 32]>()
     as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_2511>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_3672>() as usize)
     as ::core::ffi::c_int;
 pub unsafe extern "C" fn ScriptGame_LabFighterAt(
     mut va: ::core::ffi::c_uint,
@@ -35500,163 +35500,163 @@ pub unsafe extern "C" fn sqrtf(mut x: ::core::ffi::c_float) -> ::core::ffi::c_fl
 pub unsafe extern "C" fn run_static_initializers() {
     melee_core::ct!("run_static_initializers");
     lab_ffields = [
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"kind\0" as *const u8 as *const ::core::ffi::c_char,
             off: 8 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<FighterKind>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"motion_id\0" as *const u8 as *const ::core::ffi::c_char,
             off: 20 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<FtMotionId>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"anim_id\0" as *const u8 as *const ::core::ffi::c_char,
             off: 24 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<enum_t>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"facing_dir\0" as *const u8 as *const ::core::ffi::c_char,
             off: 64 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_float>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x34_scale\0" as *const u8 as *const ::core::ffi::c_char,
             off: 72 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x44_mtx\0" as *const u8 as *const ::core::ffi::c_char,
             off: 88 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Mtx>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x74_self_accel\0" as *const u8 as *const ::core::ffi::c_char,
             off: 136 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"self_vel\0" as *const u8 as *const ::core::ffi::c_char,
             off: 148 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x8c_kb_vel\0" as *const u8 as *const ::core::ffi::c_char,
             off: 160 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x98_atk_shield_kb\0" as *const u8 as *const ::core::ffi::c_char,
             off: 172 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"cur_pos\0" as *const u8 as *const ::core::ffi::c_char,
             off: 196 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"prev_pos\0" as *const u8 as *const ::core::ffi::c_char,
             off: 208 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"pos_delta\0" as *const u8 as *const ::core::ffi::c_char,
             off: 220 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Vec>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"ground_or_air\0" as *const u8 as *const ::core::ffi::c_char,
             off: 244 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<GroundOrAir>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"gr_vel\0" as *const u8 as *const ::core::ffi::c_char,
             off: 256 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_float>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"xF0_ground_kb_vel\0" as *const u8 as *const ::core::ffi::c_char,
             off: 260 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_float>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"input\0" as *const u8 as *const ::core::ffi::c_char,
             off: 1928 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Fighter_input>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"co_attrs\0" as *const u8 as *const ::core::ffi::c_char,
             off: 304 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<ftCo_DatAttrs>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"coll_data\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2136 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<CollData>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"ecb_lock\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2592 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<s32>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"cur_anim_frame\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2608 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_float>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"frame_speed_mul\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2616 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_float>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x8B0\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2640 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<[Fighter_x8B0_t; 5]>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x914 (hitboxes)\0" as *const u8 as *const ::core::ffi::c_char,
             off: 2744 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<[HitCapsule; 4]>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"xDF4\0" as *const u8 as *const ::core::ffi::c_char,
             off: 4792 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<[HitCapsule; 2]>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x1064_thrownHitbox\0" as *const u8 as *const ::core::ffi::c_char,
             off: 5816 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<HitCapsule>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"hurt_capsules\0" as *const u8 as *const ::core::ffi::c_char,
             off: 6336 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<[FighterHurtCapsule; 15]>()
                 as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x1614\0" as *const u8 as *const ::core::ffi::c_char,
             off: 7536 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<[Fighter_x1614_t; 2]>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"dmg\0" as *const u8 as *const ::core::ffi::c_char,
             off: 8112 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<dmg>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x1968_jumpsUsed\0" as *const u8 as *const ::core::ffi::c_char,
             off: 8448 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_uchar>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"x2064_ledgeCooldown\0" as *const u8 as *const ::core::ffi::c_char,
             off: 10360 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<::core::ffi::c_int>() as ::core::ffi::c_int,
         },
-        Anon_anon_2511 {
+        Anon_anon_3672 {
             name: b"mv (state vars)\0" as *const u8 as *const ::core::ffi::c_char,
             off: 11384 as ::core::ffi::c_ulonglong as ::core::ffi::c_int,
             size: ::core::mem::size_of::<Fighter_MotionVars>() as ::core::ffi::c_int,

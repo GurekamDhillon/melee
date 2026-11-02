@@ -52,9 +52,16 @@ pub unsafe extern "C" fn cb_fn_8012E644(g: *mut HSD_GObj) {
 
 /// Float at GameCube offset `gc` of the attribute block. The block keeps the GC layout (4-byte `x1C`/`x20`
 /// pointers), so the native `ftYs_DatAttrs` fields after `x20` sit 8 bytes too far; read by GC offset.
+/// Bytes 0xEC..0x114 are the `pad_xEC` run of `ftYoshiAttributes`, which the loader leaves in file
+/// (big-endian) byte order; those floats are decoded here.
 #[inline(always)]
 pub(crate) unsafe fn gc_f32(da: *const ftYs_DatAttrs, gc: usize) -> f32 {
-    core::ptr::read_unaligned((da as *const u8).add(gc) as *const f32)
+    let p = (da as *const u8).add(gc);
+    if (0xEC..0x114).contains(&gc) {
+        f32::from_bits(u32::from_be_bytes(core::ptr::read_unaligned(p as *const [u8; 4])))
+    } else {
+        core::ptr::read_unaligned(p as *const f32)
+    }
 }
 
 /// Spawn the two Yoshi Bomb stars either side of Yoshi's TransN joint.

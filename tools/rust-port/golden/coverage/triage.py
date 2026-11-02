@@ -33,6 +33,8 @@ HERE = Path(__file__).resolve().parent
 EXE = os.environ.get("MELEE_EXE", str(REPO / "build/cargo/release/melee.exe"))
 CTEXE = os.environ.get("MELEE_CT_EXE", str(REPO / "build/cargo-ct/release/melee.exe"))
 ANCHOR = "Fighter_8006A1BC"
+# names the C build inlines in some places (ScriptGame_EchoSameGroup's IsCapsule calls via script_echo_body_kind): never a divergence
+EXTRA_NOISE = {x for x in os.environ.get("TRIAGE_EXTRA_NOISE", "scriptgame_echoiscapsule").split(",") if x}
 LOOKBACKS = (60, 400)
 REF_GAP = 20   # frames just before the divergence are not used to learn inlining noise
 BASH = shutil.which("bash") or "bash"
@@ -413,6 +415,7 @@ def triage_one(s, args):
             nz = noise_names(cseq, cmap, rct, lo, hi, frame)
         except Exception as e:  # noqa
             nz = set()
+        nz |= EXTRA_NOISE
         ign.write_text(chr(10).join(sorted(nz)) + chr(10))
         early = []
         for _ in range(12):

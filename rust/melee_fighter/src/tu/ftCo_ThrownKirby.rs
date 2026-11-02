@@ -218,7 +218,7 @@ fn inline_a0(g: G) {
     let x4 = tk(f).x4;
     if vel_mag > x4 {
         f.self_vel.x = (f.self_vel.x * (vel_mag - x4)) / vel_mag;
-        let svx = unsafe { f.mv.ca.specialhi.vel.x };
+        let svx = tk(f).x4; // C reads mv.ca.specialhi.vel.x = fp+2344, the same word as thrownkirby.x4
         f.self_vel.y = (f.self_vel.y * (vel_mag - svx)) / vel_mag;
         f.facing_dir = if f.self_vel.y < 0.0 { -1.0 } else { 1.0 };
     } else {
@@ -302,7 +302,7 @@ pub fn ftCo_800BE494(g: G) {
         ext::ftKb_SpecialN_800F5874(&mut sv);
         let f = fp(g);
         f.self_vel.y = sv.y;
-        let vy = unsafe { f.mv.ca.specialhi.vel.y };
+        let vy = tk(f).x8; // mv.ca.specialhi.vel.y = fp+2348 = thrownkirby.x8
         if vy != 0.0 {
             f.self_vel.x = vy * sv.x;
         } else {

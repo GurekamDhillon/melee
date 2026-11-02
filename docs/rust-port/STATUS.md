@@ -110,6 +110,13 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - Yoshi's Story (448, Kirby hat load): the Yoshi hat joint tree walks 50 joints but Kirby's `parts` has 46 `flags_b1` bones (parts_num 59), so `ftKb_SpecialN_insert_joint_refs` runs off `fp->parts` and the envelope lookup fails. The tree structure itself decodes consistently; find why C has 50 flagged bones (or the hat has 46 joints). Items Stadium (3529): `ftCo_800D3158` death with a garbage `fp->player_id` (192). Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
 - Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
+## Current blockers (slpcheck, 2026-11-02, port/slporacle)
+`melee slpcheck --slp F` compares the engine with the console's own post-frame data (notes/slpcheck.md). 125 of 125 external replays run, none matches yet (median first divergence frame 1157). Blockers, none solved inside the timebox:
+- S1. DamageFlyRoll (91) vs DamageFlyHi/N/Lw choice at a hit (39 files): RNG draw count between Frame Start and the damage code.
+- S2. Hit-connection timing (hitlag / percent / last attack / shield push, ~30 files).
+- S3. Pokemon Stadium / Fountain platform `y` (16 files) and Dream Land wind (16 files): stage state at start.
+Fixed on the way: VS-mode `Replay_Active` (Slippi Neutral Spawn), rumble motor hook, smash-charge shake table in the engine.
+
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).
@@ -130,7 +137,7 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - notes/oracles-mtu.md: whole-TU ports with state oracles (items, world, modes), efn.   notes/traces.md: pre-melee_* traces.
 - notes/data.md: DAT reader, mex-import, saves/mods/replays.   notes/integration.md: integration nights, recounts, merges.
 - notes/render.md, notes/audio.md, notes/net.md, notes/script.md, notes/play.md, notes/platform.md, notes/menus.md.
-- notes/consolidation.md: plan to run matches on the real loop + tu/ dedupe.
+- notes/consolidation.md: plan to run matches on the real loop + tu/ dedupe.   notes/slpcheck.md: `melee slpcheck`, a .slp replay as a direct oracle (results over 125 tournament replays).
 - notes/traps.md: index of traps.   Other: docs/rust-port/inventory.md, neutral-hash.md, group-*.md, tools/rust-port/snap/README.md.
 
 

@@ -177,6 +177,10 @@ impl Engine {
             controller::ext::hook::OSDisableInterrupts = Some(crate::dvd::OSDisableInterrupts);
             controller::ext::hook::OSRestoreInterrupts = Some(crate::dvd::OSRestoreInterrupts);
 
+            // rumble (baselib/rumble.c) is host output: the motor command goes nowhere, the interrupt calls are the flat ones
+            melee_runtime::tu::rumble::ext::hook::PADControlMotor = Some(|_, _| ());
+            melee_runtime::tu::rumble::ext::hook::OSDisableInterrupts = Some(crate::dvd::OSDisableInterrupts);
+            melee_runtime::tu::rumble::ext::hook::OSRestoreInterrupts = Some(crate::dvd::OSRestoreInterrupts);
             crate::seams::install();
             // the render pass draws into melee_gx unless the run is headless (MELEE_ENGINE_HEADLESS): then the GX hooks answer nothing
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {

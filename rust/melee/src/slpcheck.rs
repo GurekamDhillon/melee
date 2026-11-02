@@ -187,9 +187,17 @@ fn install_capture(at_proc_map: bool) {
 /// `Replay_HasInput` call), so a mismatch means the engine drew a different number of random values earlier in that frame.
 static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
 static mut SEED_PROBE: bool = false;
+static mut RESEED_PRE: bool = false;
 
 pub(crate) fn seed_probe(port: i32, fol: i32) {
     unsafe {
+        if RESEED_PRE && fol == 0 && crate::r_in().frame() > -123 {
+            if let Some(rec) = crate::r_in().input(port, false).map(|i| i.seed) {
+                if rec != 0 {
+                    melee_runtime::tu::random::global::state().set_logic_seed(rec);
+                }
+            }
+        }
         if !SEED_PROBE || fol != 0 || SEED_FIRST.is_some() || crate::r_in().frame() <= -123 {
             return;
         }
@@ -349,7 +357,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
-    unsafe { SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
+    unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
     let max_ticks: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(usize::MAX);

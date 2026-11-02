@@ -30,3 +30,33 @@ pub fn ftCh_Drill_IASA(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftCh_Drill_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddrill.c).
+pub fn ftCh_Drill_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Drill_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88(gobj);
+    }
+}
+
+/// `ftCh_Drill_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddrill.c). `++x0` is an f32
+/// count-up compared against the s32 attributes as floats. No fused sites.
+pub fn ftCh_Drill_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Drill_Phys");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const melee_types::ftCrazyHand_DatAttrs;
+        st::ft_80085134(gobj);
+        (*fp).mv.ch.unk0.x0 += 1.0;
+        let f = (*fp).mv.ch.unk0.x0;
+        if f > (*da).x74 as f32 && (*fp).mv.ch.unk0.x0 < (*da).x78 as f32 {
+            melee_fighter::tu::ftbosslib::ftBossLib_8015C010(gobj, (*da).x7C);
+        } else {
+            (*fp).self_vel.x = 0.0;
+        }
+        melee_fighter::tu::ftbosslib::ftBossLib_8015C190(gobj);
+    }
+}
+
+/// `ftCh_Drill_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhanddrill.c).
+pub fn ftCh_Drill_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Drill_Coll"); }

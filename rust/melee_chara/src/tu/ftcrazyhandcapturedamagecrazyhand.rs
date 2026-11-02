@@ -20,3 +20,19 @@ pub fn ftCh_GrabUnk1_8015B670(gobj: *mut HSD_GObj) {
         st::ftAnim_8006EBA4(gobj);
     }
 }
+
+/// `ftCo_CaptureDamageCrazyHand_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcapturedamagecrazyhand.c).
+pub fn ftCo_CaptureDamageCrazyHand_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCo_CaptureDamageCrazyHand_Anim");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        melee_fighter::ftcommon2::grab_mash(&mut *fp, melee_fighter::hooks::common_data().x3A8);
+        if (*fp).grab_timer <= 0.0 {
+            crate::tu::ftcrazyhandcapturewaitcrazyhand::ftCh_GrabUnk1_8015B778(gobj);
+            crate::tu::ftcrazyhandfingerbeam::ftCh_Init_80159098((*fp).victim_gobj);
+        }
+    }
+}
+pub fn ftCo_CaptureDamageCrazyHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureDamageCrazyHand_IASA"); }
+pub fn ftCo_CaptureDamageCrazyHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureDamageCrazyHand_Phys"); }
+pub fn ftCo_CaptureDamageCrazyHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureDamageCrazyHand_Coll"); }

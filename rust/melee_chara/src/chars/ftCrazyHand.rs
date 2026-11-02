@@ -19,7 +19,7 @@ use melee_types::Fighter;
 }
 
 pub mod ftcrazyhandfingerbeam {
-pub use crate::tu::ftcrazyhandfingerbeam::ftCh_FingerGun1_Coll;
+pub use crate::tu::ftcrazyhandfingerbeam::ftCh_FingerGun1_Coll_fp as ftCh_FingerGun1_Coll;
 
 use melee_types::Fighter;
 

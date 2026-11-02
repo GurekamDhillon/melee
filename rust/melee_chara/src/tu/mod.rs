@@ -10,6 +10,7 @@ pub mod ftcrazyhand;
 pub mod ftcrazyhandbackairplane1;
 pub mod ftcrazyhandcancel;
 pub mod ftcrazyhandcapturewaitcrazyhand;
+pub mod ftcrazyhandcapturecrazyhand;
 pub mod ftcrazyhandfingerbeam;
 pub mod ftcrazyhandbackairplane2;
 pub mod ftcrazyhandbackairplane3;

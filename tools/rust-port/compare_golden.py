@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compare two neutral-hash CSVs (MELEE_NEUTRAL_HASHLOG format, docs/rust-port/neutral-hash.md).
 
-    compare_golden.py GOLDEN.csv CANDIDATE.csv [--max-report N] [--allow-short] [--from N]
+    compare_golden.py GOLDEN.csv CANDIDATE.csv [--max-report N] [--allow-short] [--from N] [--common]
 
 `--from N` compares only the golden frames >= N, for a run resumed from a state snapshot at frame N
 (`melee golden --from-snapshot`, tools/rust-port/snap/); the candidate must start at exactly N.
@@ -49,6 +49,9 @@ def main():
     ap.add_argument("--ignore-seed", action="store_true",
                     help="skip the `hash` and `seed` columns (the post-frame RNG seed differs where the port draws a different "
                          "number of logic RNG values; replays force the seed every frame, so it cannot reach the next frame)")
+    ap.add_argument("--common", action="store_true",
+                    help="headers may differ: compare only the columns both files have, matched by name (a file with extra "
+                         "columns, e.g. the proposed NHV1 `seed_post`, against one without). Default: headers must be identical")
     ap.add_argument("--from", dest="start", type=int, default=None, help="compare golden frames >= N only (resumed run)")
     ap.add_argument("--print-count", action="store_true",
                     help="print `COUNT n` (golden frames matching consecutively from the first row) as the last line; exit 0 "
@@ -62,6 +65,16 @@ def main():
         if not corder or corder[0] != a.start:
             print("candidate starts at frame %s, not %d" % (corder[0] if corder else None, a.start))
             return 1
+    if a.common and gh != ch:
+        keep = [h for h in gh if h in ch]
+        if keep[:2] != ["frame", "hash"]:
+            print("no common frame/hash columns")
+            return 2
+        gi, ci = [gh.index(h) for h in keep], [ch.index(h) for h in keep]
+        g = {f: [r[i] for i in gi] for f, r in g.items()}
+        c = {f: [r[i] for i in ci] for f, r in c.items()}
+        gh = ch = keep
+        print("--common: comparing %d columns: %s" % (len(keep), ",".join(keep)))
     if gh != ch:
         print("header differs:\n  golden    %s\n  candidate %s" % (",".join(gh), ",".join(ch)))
         return 1

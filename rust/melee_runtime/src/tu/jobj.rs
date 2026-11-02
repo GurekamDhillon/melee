@@ -341,7 +341,9 @@ unsafe fn fast_matrix(j:*mut HSD_JObj,clear_dirty:bool)->bool{
     use crate::jobj::{JOBJ_JOINT,JOBJ_USER_DEF_MTX};
     if !(*j).robj.is_null()||(!(*j).aobj.is_null()&&!(*(*j).aobj).hsd_obj.is_null())||(*j).flags&(JOBJ_JOINT|JOBJ_USER_DEF_MTX)!=0{return false;}
     let par=(*j).parent;
-    if !par.is_null()&&raw_dirty(par){return false;}
+    // A dirty parent is set up first, as make_matrix's setup_matrix(parent) does at the same point; it then reads
+    // clean, so this joint still takes the two-node path instead of snapshotting its whole skeleton (most of a Temple tick).
+    if !par.is_null()&&raw_dirty(par){native_setup_sub(par);if raw_dirty(par){return false;}}
     let p=[j,par];let n=if par.is_null(){1}else{2};
     let mut t=NativeTree{nodes:std::vec::Vec::with_capacity(n)};
     for (k,&x) in p[..n].iter().enumerate(){

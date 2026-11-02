@@ -60,7 +60,7 @@ pub struct DatArchive {
     pub data: Vec<u8>,
     /// Relocation offsets in file order.
     pub relocs: Vec<u32>,
-    reloc_set: HashSet<u32>,
+    reloc_set: melee_core::gcdecode::RelocSet,
     pub publics: Vec<DatSymbol>,
     pub externs: Vec<DatSymbol>,
 }

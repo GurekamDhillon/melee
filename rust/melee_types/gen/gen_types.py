@@ -24,6 +24,10 @@ from pathlib import Path
 import clang.cindex as ci
 
 RAW_STREAM_TYPES = {"CmdUnion"}
+# Raw words kept in pointer-typed slots (the decoder reads an unrelocated non-zero word as null): KirbyHatStruct.hat_dynamics[1]
+# [2] is the second part model (an HSD_Joint tree), and when GC +0 is not a pointer it is the model_num of a FtPartsDesc at +0 (LOAD_HAT passes `(FtPartsDesc*) hat`; hats with a real hat_joint pointer keep the struct):
+# decoded by the hand-written FtPartsDesc rule and written over native +0..16 (the decomp labels them hat_joint/desc.model_num). [1] is a bit mask of fighter bones (ftKb_SpecialN_800EF040: `(u32) hat->hat_dynamics[1]`).
+POST_DECODE = {"KirbyHatStruct": ["        if !d.is_reloc(at + 0x10) { v.hat_dynamics[1] = d.u32_at(at + 0x10) as usize as *mut ftDynamics; }", "        if !d.is_reloc(at) { let fd = <FtPartsDesc as GcDecode>::gc_decode(d, at); unsafe { core::ptr::write(&mut v as *mut Self as *mut FtPartsDesc, fd); } }"]}
 LLVM = Path(os.environ.get("LLVM_DIR", r"C:\Program Files\LLVM"))
 ci.Config.set_library_file(str(LLVM / "bin" / "libclang.dll"))
 import ctypes
@@ -1050,6 +1054,8 @@ class Gen:
                 e(f"        {{ let n = {cexpr}; v.{fn_} = d.ptr_array::<{inner}>(at + 0x{off:X}, n) as {ty}; }}")
                 continue
             e(f"        v.{fn_} = <{ty} as GcDecode>::gc_decode(d, at + 0x{off:X});")
+        for line in POST_DECODE.get(nm, []):
+            e(line)
         if uni:
             (pf, po, pt), (sf, so, st) = uni
             e(f"        if d.is_reloc(at) {{ v.{pf} = <{pt} as GcDecode>::gc_decode(d, at + 0x{po:X}); }}")

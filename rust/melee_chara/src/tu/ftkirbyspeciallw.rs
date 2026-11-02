@@ -352,7 +352,7 @@ pub fn ftKb_SpecialHi_800F3B28(gobj: G) {
         if abs_c(var_f31) < 0.017453292 {
             var_f5 = 0.0f32;
             let temp_f3 = (*fp).gr_vel;
-            let temp_f2 = temp_f1 * ((*fp).mv.co.common.x58.x * (*fp).co_attrs.ground_friction);
+            let temp_f2 = temp_f1 * ((*fp).mv.kb.speciallw.x54[0].y * (*fp).co_attrs.ground_friction);
             let var_f1_2 = abs_c((*fp).gr_vel);
             if abs_c(temp_f2) > var_f1_2 {
                 var_f4 = -(*fp).gr_vel;
@@ -363,7 +363,7 @@ pub fn ftKb_SpecialHi_800F3B28(gobj: G) {
             }
         } else {
             var_f4 = 0.0f32;
-            var_f5 = (1.0 + (1.0 - temp_f1)) * ((*fp).mv.co.common.x4C.z * (*dat_attr).speciallw_slide_acceleration);
+            var_f5 = (1.0 + (1.0 - temp_f1)) * ((*fp).mv.kb.speciallw.x54[0].x * (*dat_attr).speciallw_slide_acceleration);
         }
         (*fp).xE4_ground_accel_1 = (*fp).mv.kb.speciallw.x88[8] * (var_f5 + var_f4);
         (*fp).gr_vel *= (*fp).mv.kb.speciallw.x88[8];
@@ -377,11 +377,11 @@ pub fn ftKb_SpecialHi_800F3B28(gobj: G) {
         } else if (*fp).gr_vel + (*fp).xE4_ground_accel_1 > (*dat_attr).speciallw_slide_max_speed {
             (*fp).xE4_ground_accel_1 = (*dat_attr).speciallw_slide_max_speed - (*fp).gr_vel;
         }
-        (*fp).x74_self_accel.x = (*fp).mv.co.common.x58.x * (*fp).xE4_ground_accel_1;
-        (*fp).x74_self_accel.y = -(*fp).mv.co.common.x4C.z * (*fp).xE4_ground_accel_1;
+        (*fp).x74_self_accel.x = (*fp).mv.kb.speciallw.x54[0].y * (*fp).xE4_ground_accel_1;
+        (*fp).x74_self_accel.y = -(*fp).mv.kb.speciallw.x54[0].x * (*fp).xE4_ground_accel_1;
         (*fp).x74_self_accel.z = 0.0;
-        (*fp).self_vel.x = (*fp).mv.co.common.x58.x * (*fp).gr_vel;
-        (*fp).self_vel.y = -(*fp).mv.co.common.x4C.z * (*fp).gr_vel;
+        (*fp).self_vel.x = (*fp).mv.kb.speciallw.x54[0].y * (*fp).gr_vel;
+        (*fp).self_vel.y = -(*fp).mv.kb.speciallw.x54[0].x * (*fp).gr_vel;
         (*fp).self_vel.z = 0.0;
     }
 }
@@ -651,7 +651,7 @@ unsafe fn set_stone_vecs(gobj: G, fp: *mut Fighter, da: *const ftKb_DatAttrs) {
         angle = -angle;
     }
     if angle >= (*da).speciallw_min_slant_angle_slide {
-        (*fp).gr_vel = (*fp).mv.co.common.x18 * (*da).speciallw_slide_max_speed;
+        (*fp).gr_vel = (*fp).mv.kb.speciallw.x18.x * (*da).speciallw_slide_max_speed;
     }
 }
 

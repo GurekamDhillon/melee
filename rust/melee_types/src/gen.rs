@@ -57477,6 +57477,8 @@ impl GcDecode for KirbyHatStruct {
         v.hat_joint = <*mut HSD_Joint as GcDecode>::gc_decode(d, at + 0x0);
         v.desc = <FtPartsDesc as GcDecode>::gc_decode(d, at + 0x4);
         v.hat_dynamics = <[*mut ftDynamics; 5] as GcDecode>::gc_decode(d, at + 0xC);
+        if !d.is_reloc(at + 0x10) { v.hat_dynamics[1] = d.u32_at(at + 0x10) as usize as *mut ftDynamics; }
+        if !d.is_reloc(at) { let fd = <FtPartsDesc as GcDecode>::gc_decode(d, at); unsafe { core::ptr::write(&mut v as *mut Self as *mut FtPartsDesc, fd); } }
         v
     }
 }

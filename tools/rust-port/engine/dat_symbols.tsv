@@ -5,7 +5,7 @@
 #   raw image (C: `void*`, a nested archive or a blob read byte-wise).
 # gen_dat_types.py validates every type against rust/melee_types/src/gen.rs and writes rust/melee_engine/src/dat_types.rs.
 prefix	SIS_	custom:sis	sislib.c HSD_SisLib_803A62A0 SIS* sis (SdIntro.dat SIS_IntroData and the other text files)
-prefix	ftDataKirbyCopy	KirbyHatStruct	ft/kinds/ftKirby/ftkirby.c:2865 ft_80459B88.hats[kind] (KirbyHatStruct* of the PlKbCpXx.dat hat archives)
+prefix	ftDataKirbyCopy	custom:kirbyhat	ft/kinds/ftKirby/ftkirby.c:2865 ft_80459B88.hats[kind] (KirbyHatStruct* of the PlKbCpXx.dat hat archives)
 prefix	ftData	custom:ftdata	fighter public data: ft/kinds/*/ft*.c `*_Init_DataName` ("ftDataCaptain", "ftDataFox", ...), loaded by ftdata.c as struct ftData
 sym	map_head	UnkStageDat	src/melee/gr/grdatfiles.c:186 arc->unk4
 sym	coll_data	MapCollData	src/melee/gr/grdatfiles.c:67 stage_info.coll_data

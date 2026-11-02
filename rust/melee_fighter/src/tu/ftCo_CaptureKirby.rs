@@ -151,7 +151,7 @@ pub fn ftCo_800BD39C(g: G) {
             q *= d;
             let s = (1.0f32 - d) + q;
             let sc = Vec3 {
-                x: s * f.mv.co.guard.x2C,
+                x: s * f.mv.co.capturekirby.scale.x, // C: mv.co.guard.x2C (same GC offset fp+236C; native union arms differ)
                 y: s * f.mv.co.capturekirby.scale.y,
                 z: s * f.mv.co.capturekirby.scale.z,
             };

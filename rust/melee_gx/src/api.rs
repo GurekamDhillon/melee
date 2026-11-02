@@ -13,7 +13,7 @@ use crate::resources::{GxData, Resources};
 use crate::state::{GxState, TexObj, TlutObj};
 
 /// `GXColor`.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct GxColor {
     pub r: u8,
     pub g: u8,
@@ -33,7 +33,7 @@ melee_core::gc_layout!(GxColor, "_GXColor", size 0x4, align 1, [
 ]);
 
 /// `GXColorS10`.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct GxColorS10 {
     pub r: i16,
     pub g: i16,

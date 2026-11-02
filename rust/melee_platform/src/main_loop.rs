@@ -26,6 +26,8 @@ pub trait Game {
     fn tick(&mut self, pads: &mut PadSystem);
     /// Draw. `alpha` in [0,1): how far into the next tick real time is.
     fn present(&mut self, _window: &Arc<Window>, _alpha: f64) {}
+    /// Render-only interpolation switched on/off (MELEE_INTERP, or auto above 60 fps).
+    fn set_interp(&mut self, _on: bool) {}
     /// The window's client area changed (physical pixels); reconfigure a swapchain here.
     fn resized(&mut self, _width: u32, _height: u32) {}
     /// Return true to end the loop (checked after every tick).
@@ -56,6 +58,11 @@ impl FixedStep {
     /// Fraction of a tick accumulated.
     pub fn alpha(&self) -> f64 {
         self.acc as f64 / NS as f64
+    }
+    /// Fraction of a tick accumulated plus `extra` real time not yet added, clamped below 1.
+    pub fn alpha_after(&self, extra: Duration) -> f64 {
+        let a = (self.acc as u128 + extra.as_nanos() * TICK_HZ as u128) as f64 / NS as f64;
+        a.min(0.999_999)
     }
     /// Time until the next tick is due.
     pub fn until_next(&self) -> Duration {
@@ -99,6 +106,25 @@ struct App<G: Game> {
     focus_lost_at: Option<Instant>,
     focus_released: bool,
     quit: bool,
+    /// Render as often as the swapchain allows instead of once per tick.
+    decoupled: bool,
+    /// MELEE_INTERP: Some(forced) or None (auto: on when rendering above 60 fps).
+    interp_env: Option<bool>,
+    interp: bool,
+    show_fps: bool,
+    fps_t0: Option<Instant>,
+    fps_frames: u64,
+    fps_ticks0: u64,
+    /// Rendered frames over the whole run (for the exit log).
+    pub frames: u64,
+    run_t0: Option<Instant>,
+    tick_time: Duration,
+    present_time: Duration,
+}
+
+fn env_bool(k: &str) -> Option<bool> {
+    let v = std::env::var(k).ok()?.to_ascii_lowercase();
+    Some(!matches!(v.as_str(), "" | "0" | "off" | "false" | "no"))
 }
 
 impl<G: Game> App<G> {
@@ -107,11 +133,38 @@ impl<G: Game> App<G> {
         let dt = self.last.map(|l| now - l).unwrap_or_default();
         self.last = Some(now);
         for _ in 0..self.clock.advance(dt) {
+            let t = Instant::now();
             self.game.tick(&mut self.pads);
+            self.tick_time += t.elapsed();
             if self.game.should_quit() {
                 self.quit = true;
                 break;
             }
+        }
+    }
+
+    /// Once a second: measure render fps / sim tps, apply the MELEE_INTERP auto rule, show MELEE_SHOW_FPS.
+    fn fps_tick(&mut self, w: &Arc<Window>) {
+        let now = Instant::now();
+        let t0 = *self.fps_t0.get_or_insert(now);
+        let dt = (now - t0).as_secs_f64();
+        if dt < 1.0 {
+            return;
+        }
+        let fps = self.fps_frames as f64 / dt;
+        let tps = (self.clock.ticks - self.fps_ticks0) as f64 / dt;
+        self.fps_t0 = Some(now);
+        self.fps_frames = 0;
+        self.fps_ticks0 = self.clock.ticks;
+        let (sim_ms, ren_ms) = (std::mem::take(&mut self.tick_time).as_secs_f64() * 1e3, std::mem::take(&mut self.present_time).as_secs_f64() * 1e3);
+        let want = self.interp_env.unwrap_or(fps > 65.0);
+        if want != self.interp {
+            self.interp = want;
+            self.game.set_interp(want);
+        }
+        if self.show_fps {
+            plog!("gw: fps: render {fps:.1} sim {tps:.1} tps (interp {}; sim {:.0} ms, render {:.0} ms of {:.0})", if self.interp { "on" } else { "off" }, sim_ms, ren_ms, dt * 1e3);
+            w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps", self.cfg.title));
         }
     }
 
@@ -177,7 +230,13 @@ impl<G: Game> ApplicationHandler for App<G> {
             }
             WindowEvent::RedrawRequested => {
                 if let Some(w) = self.window.clone() {
-                    self.game.present(&w, self.clock.alpha());
+                    let extra = self.last.map(|l| l.elapsed()).unwrap_or_default();
+                    let t = Instant::now();
+                    self.game.present(&w, self.clock.alpha_after(extra));
+                    self.present_time += t.elapsed();
+                    self.frames += 1;
+                    self.fps_frames += 1;
+                    self.fps_tick(&w);
                 }
             }
             _ => {}
@@ -194,7 +253,13 @@ impl<G: Game> ApplicationHandler for App<G> {
         if let Some(w) = self.window.as_ref() {
             w.request_redraw();
         }
-        el.set_control_flow(ControlFlow::WaitUntil(Instant::now() + self.clock.until_next()));
+        if self.decoupled {
+            // Render as fast as presentation allows (vsync on: blocks in present at the refresh
+            // rate; off: uncapped). The fixed-step clock still runs exactly 60 ticks a second.
+            el.set_control_flow(ControlFlow::Poll);
+        } else {
+            el.set_control_flow(ControlFlow::WaitUntil(Instant::now() + self.clock.until_next()));
+        }
     }
 }
 
@@ -211,7 +276,27 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         focus_lost_at: None,
         focus_released: false,
         quit: false,
+        // MELEE_RENDER_DECOUPLED=0 restores the old once-per-tick redraw.
+        decoupled: env_bool("MELEE_RENDER_DECOUPLED").unwrap_or(true),
+        interp_env: env_bool("MELEE_INTERP"),
+        interp: false,
+        show_fps: env_bool("MELEE_SHOW_FPS").unwrap_or(false),
+        fps_t0: None,
+        fps_frames: 0,
+        fps_ticks0: 0,
+        frames: 0,
+        run_t0: Some(Instant::now()),
+        tick_time: Duration::ZERO,
+        present_time: Duration::ZERO,
     };
+    if app.interp_env == Some(true) {
+        app.interp = true;
+        app.game.set_interp(true);
+    }
     el.run_app(&mut app)?;
+    if app.show_fps {
+        let secs = app.run_t0.map(|t| t.elapsed().as_secs_f64()).unwrap_or(1.0).max(1e-9);
+        plog!("gw: fps: run total: {} frames, {} ticks in {secs:.2}s = render {:.1} fps, sim {:.2} tps", app.frames, app.clock.ticks, app.frames as f64 / secs, app.clock.ticks as f64 / secs);
+    }
     Ok((app.clock.ticks, app.clock.dropped))
 }

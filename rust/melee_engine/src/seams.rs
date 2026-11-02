@@ -285,6 +285,12 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
     if name == "Frontend_NativeSelect" {
         return Some(1);
     }
+    // the sound stack the `melee` crate runs (melee_audio's sim, as in the match), when on
+    if name.starts_with("lbAudioAx_") {
+        if let Some(v) = melee_modes::tu::ext_hook::audio_route(name, args) {
+            return Some(v);
+        }
+    }
     if let Some(v) = ext_hand(name, args) {
         return Some(v);
     }

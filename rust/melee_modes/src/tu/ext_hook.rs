@@ -215,3 +215,28 @@ pub fn log_off(name: &'static str) {
 pub fn audio_lib_off() -> bool {
     unsafe { AUDIO_LIB_OFF }
 }
+
+/// The sound bridge for the lbAudioAx calls of the string-hook TUs (the menus): set by the `melee` crate when its sound stack
+/// (melee_audio's sim) runs; `None` keeps the library off (AUDIO_LIB_OFF) or the TU port.
+pub static mut AUDIO_ROUTE: Option<fn(&str, &[u64]) -> Option<u64>> = None;
+
+pub fn audio_route(name: &str, a: &[u64]) -> Option<u64> {
+    unsafe { AUDIO_ROUTE }.and_then(|f| f(name, a))
+}
+
+/// A bridge result as an adapter's return type.
+pub trait FromAudio {
+    fn from_audio(v: u64) -> Self;
+}
+impl FromAudio for () {
+    fn from_audio(_: u64) -> Self {}
+}
+impl FromAudio for i32 {
+    fn from_audio(v: u64) -> Self { v as i32 }
+}
+impl FromAudio for u32 {
+    fn from_audio(v: u64) -> Self { v as u32 }
+}
+impl FromAudio for u64 {
+    fn from_audio(v: u64) -> Self { v }
+}

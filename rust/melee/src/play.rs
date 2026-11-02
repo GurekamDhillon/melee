@@ -1524,6 +1524,7 @@ pub fn play(args: &[String]) -> ExitCode {
         let quit_after = has("--quit-after-matches").then_some(game.quit_after).or(game.quit_at_results.then_some(1));
         let mut rp = crate::retail_flow::RetailPlay::new(game.iso.clone(), game.mods_dir.clone(), presets, has("--headless"), game.shot_dir.clone(), game.shot_ages.clone(), quit_after, game.max_frames);
         rp.skip_intro = game.skip_intro;
+        rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         return crate::retail_flow::run(rp, has("--headless"));
     }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives

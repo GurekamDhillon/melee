@@ -66,6 +66,9 @@ pub struct RetailPlay {
     pub failed: Option<String>,
     interp: bool,
     pub skip_intro: bool,
+    /// Sound on (no --no-audio, audio.cfg on): melee_audio's sim, as the match (port/sfxparity), the menus' calls routed by name.
+    pub audio_on: bool,
+    audio: Option<crate::audio::Audio>,
 }
 
 impl RetailPlay {
@@ -74,7 +77,7 @@ impl RetailPlay {
             iso, mods_dir, presets, e: None, frame: None, presenter: None, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
-            shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false,
+            shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
         }
     }
 
@@ -93,6 +96,17 @@ impl RetailPlay {
         unsafe {
             melee_engine::engine::RENDER = !self.headless;
         }
+        if self.audio_on {
+            match crate::audio::Audio::boot(&self.iso, self.headless) {
+                Ok(au) => {
+                    // the TU hooks (post-link) and the scene's per-frame update, before the engine links
+                    crate::engine_audio::attach(false);
+                    unsafe { melee_modes::tu::ext_hook::AUDIO_ROUTE = Some(crate::engine_audio::route_by_name) };
+                    self.audio = Some(au);
+                }
+                Err(e) => log(&format!("audio off: {e}")),
+            }
+        }
         // The boot mode (gmboot.c) is the memory-card scene, which the port skips with no card (the C build's unattended
         // runs: SceneLaunch_SkipMemcard); its bootOnLoad then picks the mode: the opening movie, or the title when the
         // intro is skipped. MELEE_RETAIL_FIRST=<GameModeKind> starts elsewhere.
@@ -103,6 +117,10 @@ impl RetailPlay {
             first = melee_types::GM_VS as u8;
         }
         let e = melee_engine::Engine::boot_modes(disc, 64 << 20, PadSystem::headless(), first)?;
+        if self.audio.is_some() {
+            // the menu TUs' sound hooks, over the seams' silent defaults (which the link above installs)
+            crate::engine_audio_gen::install_menus();
+        }
         self.apply_rules();
         Ok(e)
     }
@@ -165,6 +183,9 @@ impl Game for RetailPlay {
         let e = self.e.as_mut().unwrap();
         e.set_pads(Some(four));
         let entered = e.tick_modes();
+        if let Some(au) = self.audio.as_mut() {
+            au.tick();
+        }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             self.frame = Some(f);
         }

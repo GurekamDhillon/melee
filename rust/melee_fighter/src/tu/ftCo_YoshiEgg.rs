@@ -209,7 +209,7 @@ pub fn ftCo_YoshiEgg_Anim(g: G) {
     fp(g).grab_timer -= d;
     let v = ext::ftYs_SpecialN_GetExtAttr2C();
     let m = ext::ftCommon_GrabMash(fp(g), v);
-    fp(g).mv.co.yoshiegg.x4 = m as i32;
+    fp(g).mv.ca.specialhi.vel.x = f32::from_bits(m as u32); // yoshiegg.x4 is the word specialhi.vel.x occupies (GC 0x2344)
     if fp(g).grab_timer <= 0.0 {
         ext::ft_PlaySFX(fp(g), 280088, 127, 64);
         let f = fp(g);
@@ -228,13 +228,13 @@ pub fn ftCo_YoshiEgg_Anim(g: G) {
     let f = fp(g);
     if f.mv.ca.specialhi.vel.y != 0.0 {
         f.mv.ca.specialhi.vel.y -= 1.0;
-        if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.yoshiegg.x4 == 0 {
+        if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.ca.specialhi.vel.x.to_bits() == 0 {
             ext::ftAnim_SetAnimRate(g, 1.0);
             fp(g).mv.ca.specialhi.vel.y = 0.0;
         }
     }
     let f = fp(g);
-    if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.yoshiegg.x4 != 0 {
+    if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.ca.specialhi.vel.x.to_bits() != 0 {
         fp(g).mv.ca.specialhi.vel.y = ext::ftYs_SpecialN_8012CD40();
         let r = ext::ftYs_SpecialN_GetExtAttr34();
         ext::ftAnim_SetAnimRate(g, r);

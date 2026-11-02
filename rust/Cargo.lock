@@ -1146,6 +1146,7 @@ dependencies = [
  "melee_fighter",
  "melee_gx",
  "melee_items",
+ "melee_link",
  "melee_modes",
  "melee_net",
  "melee_platform",

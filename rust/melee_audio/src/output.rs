@@ -7,7 +7,7 @@
 //! the shortfall of the ring against its target cushion (the device clock plays the DSP's 5 ms
 //! interrupt); without one (turbo, headless, no device), the wall clock drives the synth.
 //! Differences from the SDL path: cpal has no stream resampler, so when the device will not run
-//! at 32 kHz the callback resamples linearly to the device rate, and the gain is applied there.
+//! at 32 kHz the callback resamples to the device rate (a 32-tap Kaiser-windowed sinc), and the gain is applied there.
 
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
@@ -208,44 +208,93 @@ mod device {
         pub rate: u32,
     }
 
+    /// Band-limited 32 kHz -> device-rate conversion: a Kaiser-windowed sinc (beta 7, `TAPS` taps, `PHASES` sub-sample
+    /// phases, cut at 95% of the lower Nyquist), unity DC gain per phase. Built on the opening thread; the callback only reads it.
+    const TAPS: usize = 32;
+    const PHASES: usize = 256;
+    fn sinc_table(rate: u32) -> Vec<f32> {
+        fn i0(x: f64) -> f64 {
+            let (mut s, mut t) = (1.0, 1.0);
+            for k in 1..32 {
+                t *= (x / (2.0 * k as f64)).powi(2);
+                s += t;
+            }
+            s
+        }
+        let cutoff = 0.5 * 0.95 * (rate as f64 / RATE as f64).min(1.0); // cycles per input sample
+        let beta = 7.0;
+        let mut k = vec![0f32; (PHASES + 1) * TAPS];
+        for p in 0..=PHASES {
+            let frac = p as f64 / PHASES as f64;
+            let mut row = [0f64; TAPS];
+            let mut sum = 0.0;
+            for (j, w) in row.iter_mut().enumerate() {
+                // tap j weighs input sample (newest - (TAPS-1) + j); the output point sits between taps TAPS/2-1 and TAPS/2
+                let x = j as f64 - (TAPS / 2 - 1) as f64 - frac;
+                let r = x / (TAPS / 2) as f64;
+                let win = if r.abs() >= 1.0 { 0.0 } else { i0(beta * (1.0 - r * r).sqrt()) / i0(beta) };
+                let sn = if x == 0.0 { 2.0 * cutoff } else { (2.0 * std::f64::consts::PI * cutoff * x).sin() / (std::f64::consts::PI * x) };
+                *w = sn * win;
+                sum += *w;
+            }
+            for j in 0..TAPS {
+                k[p * TAPS + j] = (row[j] / sum) as f32;
+            }
+        }
+        k
+    }
+
     struct Feed {
         ring: Arc<Ring>,
         gain: Arc<AtomicU32>,
         /// 16.16 phase step of the 32 kHz source per device frame.
         step: u32,
         frac: u32,
-        cur: (i16, i16),
-        next: (i16, i16),
+        /// The last `TAPS` source frames (`hist[pos]` the oldest), for the sinc.
+        hist: [(f32, f32); TAPS],
+        pos: usize,
+        kernel: Vec<f32>,
+        /// The ring has delivered once: silence before the first mix (device opened ahead of the game) is not an underrun.
+        primed: bool,
     }
 
     impl Feed {
         fn frame(&mut self) -> (f32, f32) {
-            if self.step == 0x10000 {
-                self.cur = self.pop();
-            } else {
-                self.frac += self.step;
-                while self.frac >= 0x10000 {
-                    self.frac -= 0x10000;
-                    self.cur = self.next;
-                    self.next = self.pop();
-                }
-            }
-            let t = self.frac as f32 / 65536.0;
             let g = f32::from_bits(self.gain.load(Ordering::Relaxed)) / 32768.0;
-            let (a, b) = (self.cur, self.next);
             if self.step == 0x10000 {
+                let a = self.pop();
                 return (a.0 as f32 * g, a.1 as f32 * g);
             }
-            (
-                (a.0 as f32 + (b.0 as f32 - a.0 as f32) * t) * g,
-                (a.1 as f32 + (b.1 as f32 - a.1 as f32) * t) * g,
-            )
+            self.frac += self.step;
+            while self.frac >= 0x10000 {
+                self.frac -= 0x10000;
+                let v = self.pop();
+                self.hist[self.pos] = (v.0 as f32, v.1 as f32);
+                self.pos = (self.pos + 1) % TAPS;
+            }
+            let p = ((self.frac as u64 * PHASES as u64) >> 16) as usize;
+            let row = &self.kernel[p * TAPS..(p + 1) * TAPS];
+            let (mut l, mut r) = (0f32, 0f32);
+            for (j, &w) in row.iter().enumerate() {
+                let (a, b) = self.hist[(self.pos + j) % TAPS];
+                l += a * w;
+                r += b * w;
+            }
+            (l * g, r * g)
         }
         fn pop(&mut self) -> (i16, i16) {
-            self.ring.pop().unwrap_or_else(|| {
-                self.ring.underruns.fetch_add(1, Ordering::Relaxed);
-                (0, 0)
-            })
+            match self.ring.pop() {
+                Some(v) => {
+                    self.primed = true;
+                    v
+                }
+                None => {
+                    if self.primed {
+                        self.ring.underruns.fetch_add(1, Ordering::Relaxed);
+                    }
+                    (0, 0)
+                }
+            }
         }
     }
 
@@ -286,8 +335,10 @@ mod device {
                 gain,
                 step: (((RATE as u64) << 16) / rate as u64).max(1) as u32,
                 frac: 0,
-                cur: (0, 0),
-                next: (0, 0),
+                hist: [(0.0, 0.0); TAPS],
+                pos: 0,
+                kernel: if rate == RATE { Vec::new() } else { sinc_table(rate) },
+                primed: false,
             };
             if rate == RATE {
                 feed.step = 0x10000;

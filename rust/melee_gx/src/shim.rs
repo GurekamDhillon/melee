@@ -479,6 +479,8 @@ impl GxShim {
         }
         self.gx.draw_done();
         let draws = self.gx.state.take_draws();
+        if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &self.gx.state.warnings { eprintln!("gx warn: {w}"); } }
+        self.gx.state.warnings.clear();
         if let Ok(v) = std::env::var("MELEE_GX_DRAWLOG") {
             if v.parse::<u32>().ok() == Some(self.stats.copies) {
                 for (i, d) in draws.iter().enumerate() {

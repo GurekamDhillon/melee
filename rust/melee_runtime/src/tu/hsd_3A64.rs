@@ -206,6 +206,13 @@ pub unsafe fn HSD_SisLib_803A67EC(data: *mut u8, string: *const u8) -> i32 {
             sisEndKerning(data, &mut out_idx, &mut has_kerning);
             sjis_hi = 0x82;
             sjis_lo = cur_char.wrapping_add(0x20);
+        } else if let Some((hi, lo)) = fullwidth_utf8_to_sjis(cur_char, *string.offset(in_idx as isize + 1), *string.offset(in_idx as isize + 2)) {
+            // The port's string tables are UTF-8 (the GC build's were Shift-JIS): a fullwidth form
+            // U+FF01..U+FF5E (the fighter names gm_80160A60 returns) is the Shift-JIS pair it was.
+            sisEndKerning(data, &mut out_idx, &mut has_kerning);
+            sjis_hi = hi;
+            sjis_lo = lo;
+            in_idx += 2;
         } else {
             sisEndKerning(data, &mut out_idx, &mut has_kerning);
             // two-byte Shift-JIS: the C reads the trail byte through its second cursor.
@@ -226,6 +233,33 @@ pub unsafe fn HSD_SisLib_803A67EC(data: *mut u8, string: *const u8) -> i32 {
     }
     *data.offset(out_idx as isize) = 0;
     out_idx
+}
+
+/// A UTF-8 fullwidth form (EF BC 81..EF BD 9E) as its Shift-JIS pair, for the characters the
+/// SIS font has.
+fn fullwidth_utf8_to_sjis(b0: u8, b1: u8, b2: u8) -> Option<(u8, u8)> {
+    if b0 != 0xEF || !(b1 == 0xBC || b1 == 0xBD) || !(0x80..=0xBF).contains(&b2) {
+        return None;
+    }
+    let cp = 0xF000u32 | ((b1 as u32 & 0x3F) << 6) | (b2 as u32 & 0x3F);
+    if !(0xFF01..=0xFF5E).contains(&cp) {
+        return None;
+    }
+    let c = (cp - 0xFEE0) as u8;
+    Some(match c {
+        b'0'..=b'9' | b'A'..=b'Z' => (0x82, c + 0x1F),
+        b'a'..=b'z' => (0x82, c + 0x20),
+        b'.' => (0x81, 0x44),
+        b',' => (0x81, 0x43),
+        b':' => (0x81, 0x46),
+        b'?' => (0x81, 0x48),
+        b'!' => (0x81, 0x49),
+        b'\'' => (0x81, 0x66),
+        b'"' => (0x81, 0x68),
+        b'-' => (0x81, 0x7C),
+        b'&' => (0x81, 0x95),
+        _ => return None,
+    })
 }
 
 /// `vsnprintf((char*)buffer, sizeof buffer, ...)` result: the formatted text in the C's 128-byte

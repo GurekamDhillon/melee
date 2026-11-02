@@ -361,6 +361,7 @@ impl Gx {
                             let _ = ptx.send(buf);
                         }
                         Job::End => {
+                            if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
                             let draws = st.take_draws();
                             let packed = crate::render::pack(&draws);
@@ -1526,7 +1527,12 @@ impl Gx {
             GX_PF_Z24 => 3,
             GX_PF_Y8 | GX_PF_U8 | GX_PF_V8 => 4,
             GX_PF_YUV420 => 5,
-            _ => panic!("GXSetPixelFmt: unsupported pixel format {pix}"),
+            // Not a GXPixelFmt: the SDK indexes a table with it (undefined); keep the current
+            // format rather than aborting.
+            _ => {
+                eprintln!("gx: GXSetPixelFmt: unknown pixel format {pix}; keeping the current one");
+                return;
+            }
         };
         set_field(&mut self.sh.pe_ctrl, 3, 0, hw);
         set_field(&mut self.sh.pe_ctrl, 3, 3, z);

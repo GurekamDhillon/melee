@@ -117,6 +117,14 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - S3. Pokemon Stadium / Fountain platform `y` (16 files) and Dream Land wind (16 files): stage state at start.
 Fixed on the way: VS-mode `Replay_Active` (Slippi Neutral Spawn), rumble motor hook, smash-charge shake table in the engine.
 
+**Leads for S1-S3: try these FIRST** (from melee-unlocked's frame-exact replay path, notes/unlocked-survey.md rows "Per-frame replay inputs and RNG", "UCF and the other gameplay codes", "Denylist and code list", "Replay compare gate"):
+1. Re-seed the RNG from the replay's pre-frame seed EVERY frame (likely S1: the tumble choice is a random draw).
+2. Decide UCF from the gameplay injections in the replay's own Gecko list, not from the per-player toggle words. Feed the RAW stick bytes from the pre-frame update into the pad queue (HSD_PadLibData queue) so UCF sees raw input, not just the processed values (likely S2).
+3. Slippi gameplay codes the replay enables: WhispyFix (Dream Land wind, S3), the 4 Pokemon Stadium codes, InitStage/InitPlayerData, NeutralSpawn, FreezeGlitch, BrawlOffscreenDamage, DeadUpFall, FD BG seed, Nana determinism, PreventWobbling. Gate each on the replay's Gecko list, using Slippi's InjectionLists "[affects-gameplay]" tags.
+4. Allow melee-unlocked's known baseline: one-ULP `y` differences at frames -118..-108 (spawn animation). Require exactness from frame 0.
+
+Licensing (user decision, 2026-11-02): implement the codes from Slippi's own public sources (slippi-ssbm-asm, GPL-3.0; InjectionLists), NOT from melee-unlocked's mu_gecko.c, mu_replay.c or mu_online.c. Taking GPL-3 code makes the combined work GPL-3, which the user accepts. Credit slippi-ssbm-asm in each file.
+
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.
 2. Shy Guys (`itheiho.c`, item-stage collision `it_8026DA70`) and the random item spawner (`fn_8026C88C`).

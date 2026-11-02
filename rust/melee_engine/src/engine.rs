@@ -158,8 +158,16 @@ impl Engine {
         Ok(())
     }
 
-    fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
+    fn boot_host(mut disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         crate::crash::install();
+        // The SIS text renderer's default glyph atlas (`HSD_SisLib_FontAtlas`, main.dol 0x8040CD40, 287 glyphs of 0x200
+        // bytes): dynamic text (the Pokemon Stadium screen's names and time, ...) draws its glyphs from it. Render data
+        // only; a disc without it leaves the pointer null (those glyphs then draw untextured).
+        if let Ok(atlas) = disc.dol_bytes(0x8040_CD40, 0x23E00) {
+            unsafe {
+                melee_runtime::tu::sislib_font::HSD_SisLib_FontAtlas = Box::leak(atlas.into_boxed_slice()).as_ptr() as *const _;
+            }
+        }
         Host::boot(disc, mem_size)?;
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();

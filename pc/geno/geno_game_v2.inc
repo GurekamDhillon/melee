@@ -138,16 +138,6 @@ static int geno_state_with(GenoState* st, int bhv)
     return -1;
 }
 
-static f32 geno_clampf(f32 v, f32 lo, f32 hi)
-{
-    return v < lo ? lo : v > hi ? hi : v;
-}
-
-static f32 geno_absf(f32 v)
-{
-    return v < 0.0f ? -v : v;
-}
-
 #define GENO_DEG2RAD 0.017453292f
 
 /* The animation has no frames left (tests: the capture flag). */
@@ -595,8 +585,8 @@ static void geno_coll_both(Fighter_GObj* gobj)
 
 /* ---- v3: geno.anim_motion (root motion on the ground and in the air) -------------------------------
  *
- * Brawl moves many specials by the clip's root motion (TransN) in the air as well as on the ground
- * (Shuttle Loop, Dimensional Cape's F/B reappear). Melee extracts TransN only on subaction rows whose
+ * Some specials move by the clip's root motion (TransN) in the air as well as on the ground
+ * (loops, teleport reappears). Melee extracts TransN only on subaction rows whose
  * flags have 0x80000000 (fp->x594_b0: TransN is zeroed on the model and its per-frame delta lands in
  * fp->x6A4_transNOffset, z forward / y up) and only a few of its phys helpers consume it. This
  * behaviour consumes it everywhere:
@@ -604,8 +594,8 @@ static void geno_coll_both(Fighter_GObj* gobj)
  *           takes off (then the air rule applies the same frame); walking off an edge -> airborne,
  *           same state
  *   air     self_vel = (forward x facing, up) + gravity x "gravity" accumulated from the state's start
- *           (0 = pure root motion, Brawl's motion kinetics); "origin": the first frame also moves by
- *           the clip's frame-0 offset (Brawl clips that start away from the origin)
+ *           (0 = pure root motion); "origin": the first frame also moves by
+ *           the clip's frame-0 offset (for clips that start away from the origin)
  *   ledge   per action: the state's "ledge" default, overridden by scripts (PUT LEDGE, PSA
  *           Allow/Disallow Ledgegrab): 0 none, 1 front (Melee's own), 2 front and back
  *   landing the state's "land" target (a Geno state, a motion) or Melee's landing; "landing_lag"
@@ -675,7 +665,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
         }
     }
     if (!fp->x594_b0 && g == 0.0f) {
-        fp->self_vel.x = 0.0f; /* no root motion and no gravity: hold still (Brawl's stall) */
+        fp->self_vel.x = 0.0f; /* no root motion and no gravity: hold still in the air */
         fp->self_vel.y = 0.0f;
         return;
     }
@@ -775,7 +765,7 @@ static void geno_cb_coll_anim_motion(Fighter_GObj* gobj)
     }
 }
 
-/* The Brawl-style direction the stick asks for: jump held counts (X/Y), and the stick up past
+/* The direction the stick asks for: jump held counts (X/Y), and the stick up past
  * Melee's tap-jump threshold. */
 static int geno_jump_held(Fighter* fp)
 {

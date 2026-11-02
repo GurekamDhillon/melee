@@ -331,13 +331,11 @@ pc/geno/tools/parity.sh
 
 Excluded (remain GPL-2.0-or-later, no MIT header)
 -------------------------------------------------
-pc/geno/geno_game_glide.inc
-pc/geno/geno_game_specials.inc
-pc/geno/geno_game_v2.inc
-pc/geno/geno_game.c
-docs/geno.md
 all CLAUDE.md files
 pc/geno/mods/geno-lab/art/README.md
-pc/geno/mods/geno-lab/art/preview/
+pc/geno/mods/geno-lab/art/preview/lab_sheet.png
 pc/geno/tools/xv2_fx_render_adapter.py
-pc/geno/tools/scan_ftcmd_opcodes.py
+pc/geno/tools/scan_ftcmd_opcodes.py (pending provenance review)
+
+Not in the covered list, so GPL-2.0-or-later like the rest of pc/ (not relicensed here):
+pc/geno/geno_game.c, pc/geno/geno_game_v2.inc, docs/geno.md

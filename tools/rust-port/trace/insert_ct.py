@@ -5,6 +5,7 @@ top-level `pub`/`#[no_mangle]` fn in rust/*/src/tu/**.rs (consolidation step 1; 
   python tools/rust-port/trace/insert_ct.py            insert (idempotent)
   python tools/rust-port/trace/insert_ct.py --remove   strip every marker
   python tools/rust-port/trace/insert_ct.py --check    exit 1 if any eligible fn lacks a marker
+  python tools/rust-port/trace/insert_ct.py FILE...    insert into the named files only
 
 Skipped: `const fn` (the marker is not const), declarations ending in `;`, fns inside macro_rules!/extern blocks
 (only column-0 `fn` lines are looked at). Without the `calltrace` feature the marker expands to nothing, so the
@@ -86,7 +87,8 @@ def process(path, mode):
 
 def main():
     mode = 'remove' if '--remove' in sys.argv else 'check' if '--check' in sys.argv else 'insert'
-    files = sorted(glob.glob(os.path.join(ROOT, '*', 'src', 'tu', '**', '*.rs'), recursive=True))
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    files = args or sorted(glob.glob(os.path.join(ROOT, '*', 'src', 'tu', '**', '*.rs'), recursive=True))
     tot = miss = 0
     for f in files:
         a, b = process(f, mode)

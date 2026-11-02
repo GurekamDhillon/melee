@@ -2292,11 +2292,21 @@ pub fn ftKb_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
     }
 }
 
+/// Kirby hat archives: (hat record address, `hat_dynamics[5]`, `hat_dynamics[6]`) for the hats whose items sit past the record (Game & Watch, Yoshi).
+pub static mut HAT_EXTRA_ARTICLES: std::vec::Vec<(usize, [*mut c_void; 2])> = std::vec::Vec::new();
+
 /// `ftKb_SpecialN_800F16D0(gobj, kind)`: register the copied ability's items (articles) for `kind`.
 pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
     melee_core::ct!("ftKb_SpecialN_800F16D0");
     unsafe {
-        let art = |hat: *mut KirbyHatStruct, slot: usize| (*hat).hat_dynamics[slot] as *mut c_void;
+        let art = |hat: *mut KirbyHatStruct, slot: usize| -> *mut c_void {
+            if slot < 5 {
+                (*hat).hat_dynamics[slot] as *mut c_void
+            } else {
+                // `hat_dynamics[5..]` run past the 0x20-byte record in the C; the engine's archive decode keeps those articles here
+                (*core::ptr::addr_of!(HAT_EXTRA_ARTICLES)).iter().find(|e| e.0 == hat as usize).map_or(core::ptr::null_mut(), |e| e.1[slot - 5])
+            }
+        };
         // `hats[idx]` literals are the C's (hat table index = kind - 1 here).
         macro_rules! with_hat {
             ($idx:expr, |$h:ident| $body:block) => {{

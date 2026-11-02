@@ -50,7 +50,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
-    if name.starts_with("ftDataKirbyCopy") { return Some(rt("KirbyHatStruct")); }
+    if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
     if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
@@ -82,7 +82,6 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "HSD_Joint" => d.object::<HSD_Joint>(off) as *mut c_void,
             "HSD_MatAnimJoint" => d.object::<HSD_MatAnimJoint>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
-            "KirbyHatStruct" => d.object::<KirbyHatStruct>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,

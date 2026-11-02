@@ -64,6 +64,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "plco" => plco(d, b, off),
         "itco" => itco(d, b, off),
         "ftdata" => ftdata(d, b, off, sym),
+        "kirbyhat" => kirbyhat(d, b, off, sym),
         "ptrtable_itemdata" => {
             // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
             let n = (b.extent(off) / 4).max(1);
@@ -654,6 +655,49 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
 }
 
+/// A Kirby copy-ability archive (`ftDataKirbyCopyXxx`, `KirbyHatStruct`). `hat_dynamics[]` is typed `ftDynamics*` but the slots the
+/// copied move registers as items (`ftKb_SpecialN_800F16D0`: `it_8026B3F8((Article*) hat->hat_dynamics[k], kind)`) are `Article`s, decoded
+/// like a fighter's own `x48_items` (state arrays, special attributes, typed attribute records).
+fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void {
+    use melee_types::{Article, KirbyHatStruct, ftDynamics};
+    let lower = sym.trim_start_matches("ftDataKirbyCopy").to_lowercase();
+    let slots: &[usize] = match lower.as_str() {
+        "mario" | "luigi" | "popo" | "samus" | "koopa" | "drmario" => &[0],
+        "peach" | "fox" | "link" | "clink" | "ness" | "pikachu" | "pichu" | "seak" => &[0, 1],
+        "falco" => &[3, 4],
+        "mewtwo" => &[3],
+        "gamewatch" => &[5, 6],
+        "yoshi" => &[5],
+        _ => &[],
+    };
+    let mut v = <KirbyHatStruct as GcDecode>::gc_decode(d, off);
+    let cands = typed_cands(lower.as_str());
+    let mut arts: Vec<*mut Article> = Vec::new();
+    let mut extra: [*mut c_void; 2] = [core::ptr::null_mut(); 2];
+    for &k in slots {
+        let Some(ta) = d.target(off + 0xC + 4 * k as u32) else { continue };
+        note_article_states(d, b, ta);
+        typed_article_attr(d, b, &cands, ta);
+        let art = d.object::<Article>(ta);
+        if k < 5 {
+            v.hat_dynamics[k] = art as *mut ftDynamics;
+        } else {
+            extra[k - 5] = art as *mut c_void;
+        }
+        arts.push(art);
+    }
+    if !arts.is_empty() {
+        let cnt = arts.len();
+        let tbl = Box::leak(arts.into_boxed_slice()).as_mut_ptr();
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((tbl as usize, cnt, b.1, b.0.clone())) };
+    }
+    let hat = Box::leak(Box::new(v)) as *mut KirbyHatStruct;
+    if extra.iter().any(|p| !p.is_null()) {
+        unsafe { (*core::ptr::addr_of_mut!(melee_chara::tu::ftkirby::HAT_EXTRA_ARTICLES)).push((hat as usize, extra)) };
+    }
+    hat as *mut c_void
+}
+
 /// Fighter-owned articles whose special attributes hold `HSD_Joint*` fields (the grapple beam, the hookshot, the boomerang,
 /// the arrow, the chain, the yo-yo, the Ice Climbers' string): the 32-bit pointer slots of the raw block do not fit the native
 /// struct, so the block is decoded as its record and swapped in by [`fix_articles`]: (article, decoded attributes).
@@ -661,56 +705,70 @@ static mut ARTICLE_TYPED: Vec<(*mut melee_types::Article, *mut c_void)> = Vec::n
 
 /// Decode the fighter's `x48_items` articles whose attribute block is one of the pointer-bearing records of that fighter.
 fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32) {
-    use melee_types::{Article, itClimbersStringAttributes, itLinkArrowAttributes, itLinkBoomerangAttributes, itLinkHookshotAttributes, itSamusGrappleAttributes, itSeakChain_Attrs, itYoyoAttributes};
-    type Dec = fn(&mut GcDecoder<'_>, u32) -> *mut c_void;
+    let cands = typed_cands(sym);
+    if cands.is_empty() {
+        return;
+    }
+    let Some(t) = d.target(at_x48) else { return };
+    let n = (b.extent(t) / 4).max(1);
+    for i in 0..n {
+        let Some(ta) = d.target(t + 4 * i) else { continue };
+        typed_article_attr(d, b, &cands, ta);
+    }
+}
+
+type TypedCand = (u32, &'static [melee_core::gc::GcField], fn(&mut GcDecoder<'_>, u32) -> *mut c_void);
+
+fn typed_cands(sym: &str) -> std::vec::Vec<TypedCand> {
+    use melee_types::{itClimbersStringAttributes, itLinkArrowAttributes, itLinkBoomerangAttributes, itLinkHookshotAttributes, itSamusGrappleAttributes, itSeakChain_Attrs, itYoyoAttributes};
     fn dec<T: GcPointee + GcDecode>(d: &mut GcDecoder<'_>, sa: u32) -> *mut c_void {
         d.object::<T>(sa) as *mut c_void
     }
-    fn cand<T: GcPointee + GcDecode + melee_core::gc::GcLayout>() -> (u32, &'static [melee_core::gc::GcField], Dec) {
-        (<T as GcDecode>::GC_BYTES, <T as melee_core::gc::GcLayout>::GC_FIELDS, dec::<T> as Dec)
+    fn cand<T: GcPointee + GcDecode + melee_core::gc::GcLayout>() -> TypedCand {
+        (<T as GcDecode>::GC_BYTES, <T as melee_core::gc::GcLayout>::GC_FIELDS, dec::<T> as fn(&mut GcDecoder<'_>, u32) -> *mut c_void)
     }
-    let cands: std::vec::Vec<(u32, &'static [melee_core::gc::GcField], Dec)> = match sym {
+    match sym {
         "samus" => std::vec![cand::<itSamusGrappleAttributes>()],
         "link" | "clink" => std::vec![cand::<itLinkHookshotAttributes>(), cand::<itLinkBoomerangAttributes>(), cand::<itLinkArrowAttributes>()],
         "seak" => std::vec![cand::<itSeakChain_Attrs>()],
         "ness" => std::vec![cand::<itYoyoAttributes>()],
         "popo" | "nana" => std::vec![cand::<itClimbersStringAttributes>()],
-        _ => return,
-    };
-    let Some(t) = d.target(at_x48) else { return };
-    let n = (b.extent(t) / 4).max(1);
-    for i in 0..n {
-        let Some(ta) = d.target(t + 4 * i) else { continue };
-        let Some(sa) = d.target(ta + 4) else { continue };
-        let ext = b.extent(sa);
-        // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record
-        // is the candidate whose pointer-typed fields hold the relocated words of the block (null pointers are not relocated), with the
-        // fewest relocated words in its other fields
-        let score = |sz: u32, fields: &[melee_core::gc::GcField]| -> (u32, u32) {
-            let (mut hit, mut extra) = (0, 0);
-            for w in 0..sz / 4 {
-                if d.is_reloc(sa + 4 * w) {
-                    if fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')) {
-                        hit += 1;
-                    } else {
-                        extra += 1;
-                    }
+        _ => std::vec::Vec::new(),
+    }
+}
+
+/// One article (data offset `ta`) whose attribute block may be one of the pointer-bearing records in `cands`.
+fn typed_article_attr(d: &mut GcDecoder<'_>, b: &Bounds, cands: &[TypedCand], ta: u32) {
+    use melee_types::Article;
+    let Some(sa) = d.target(ta + 4) else { return };
+    let ext = b.extent(sa);
+    // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record
+    // is the candidate whose pointer-typed fields hold the relocated words of the block (null pointers are not relocated), with the
+    // fewest relocated words in its other fields
+    let score = |sz: u32, fields: &[melee_core::gc::GcField]| -> (u32, u32) {
+        let (mut hit, mut extra) = (0, 0);
+        for w in 0..sz / 4 {
+            if d.is_reloc(sa + 4 * w) {
+                if fields.iter().any(|f| f.offset == 4 * w && f.c_type.contains('*')) {
+                    hit += 1;
+                } else {
+                    extra += 1;
                 }
             }
-            (hit, extra)
-        };
-        let pick = cands
-            .iter()
-            .filter(|(sz, fields, _)| *sz <= ext + 8 && score(*sz, fields).0 > 0)
-            .min_by_key(|(sz, fields, _)| {
-                let (hit, extra) = score(*sz, fields);
-                (extra, core::cmp::Reverse(hit))
-            });
-        if let Some((_, _, f)) = pick {
-            let art = d.object::<Article>(ta);
-            let typed = f(d, sa);
-            unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
         }
+        (hit, extra)
+    };
+    let pick = cands
+        .iter()
+        .filter(|(sz, fields, _)| *sz <= ext + 8 && score(*sz, fields).0 > 0)
+        .min_by_key(|(sz, fields, _)| {
+            let (hit, extra) = score(*sz, fields);
+            (extra, core::cmp::Reverse(hit))
+        });
+    if let Some((_, _, f)) = pick {
+        let art = d.object::<Article>(ta);
+        let typed = f(d, sa);
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
     }
 }
 

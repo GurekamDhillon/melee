@@ -522,6 +522,21 @@ pub fn ext_call(name: &'static str, args: &[Arg], ret: K) -> Option<u64> {
 }
 
 /// One C vararg of a printf-style callee.
+/// A variadic stub with no port: its fixed words then one word per `...` argument (ints sign-extended, pointers as
+/// addresses, doubles as their bits), through the engine's by-name table (`tu::ext_hook::fallback`).
+pub fn va_fallback(name: &'static str, fixed: &[u64], va: &[Va]) -> u64 {
+    let mut w = fixed.to_vec();
+    for a in va {
+        w.push(match *a {
+            Va::I32(i) => i as i64 as u64,
+            Va::I64(i) => i as u64,
+            Va::P(p) => p as usize as u64,
+            Va::D(d) => d.to_bits(),
+        });
+    }
+    crate::tu::ext_hook::fallback(name, &w)
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum Va {
     I32(i32),
@@ -819,12 +834,15 @@ macro_rules! oext_fns {
                         &[$($crate::oracle::arg($a)),*], <$r as $crate::oracle::OVal>::K) {
                     return <$r as $crate::oracle::OVal>::from_bits(v);
                 }
-                $crate::oext_fns!(@body $name ( $($a),* ) $(= $fwd)?)
+                $crate::oext_fns!(@body $name [$r] ( $($a),* ) $(= $fwd)?)
             }
         )*
     };
-    (@body $name:ident ( $($a:ident),* ) = $fwd:path) => { $fwd($($a),*) };
-    (@body $name:ident ( $($a:ident),* )) => { melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported")) };
+    (@body $name:ident [$r:ty] ( $($a:ident),* ) = $fwd:path) => { $fwd($($a),*) };
+    // no port named: the engine's by-name table (ext_hook::fallback: the canonical port or the host seam), else the TODO stop
+    (@body $name:ident [$r:ty] ( $($a:ident),* )) => {
+        <$r as $crate::oracle::OVal>::from_bits($crate::tu::ext_hook::fallback(stringify!($name), &[$($crate::oracle::OVal::to_bits($a)),*]))
+    };
 }
 
 /// Declares variadic callees whose varargs have fixed kinds:
@@ -840,7 +858,7 @@ macro_rules! ext_vk {
                         &[$($crate::oracle::arg($a)),*], $kinds, va, <$r as $crate::oracle::OVal>::K) {
                     return <$r as $crate::oracle::OVal>::from_bits(v);
                 }
-                melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+                <$r as $crate::oracle::OVal>::from_bits($crate::oracle::va_fallback(stringify!($name), &[$($crate::oracle::OVal::to_bits($a)),*], va))
             }
         )*
     };
@@ -859,7 +877,7 @@ macro_rules! ext_va {
                         &[$($crate::oracle::arg($a)),*], $fmt, va, <$r as $crate::oracle::OVal>::K) {
                     return <$r as $crate::oracle::OVal>::from_bits(v);
                 }
-                melee_core::unported!(concat!("TODO(ext) ", stringify!($name), ": its TU is not ported"))
+                <$r as $crate::oracle::OVal>::from_bits($crate::oracle::va_fallback(stringify!($name), &[$($crate::oracle::OVal::to_bits($a)),*], va))
             }
         )*
     };

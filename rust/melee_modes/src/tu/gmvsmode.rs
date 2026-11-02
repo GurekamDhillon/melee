@@ -204,11 +204,15 @@ pub unsafe extern "C" fn onEnterSss(state: *mut GameModeState) {
 }
 
 /// 1B154C
+/// Set by the engine's retail mode loop: no PC loading screen between the SSS and the match (retail behaviour).
+pub static mut RETAIL_NO_LOADING_SCREEN: bool = false;
+
 pub unsafe extern "C" fn onExitSss(state: *mut GameModeState) {
     melee_core::ct!("onExitSss");
     ext::gmVsMelee_ExitSss(state, ext::gmVsMelee_GetVsData(), gmVsMode_State_Css);
-    // Starting the match goes through the loading screen first.
-    if (*(ext::gm_GetGameModeStateExitData(state) as *mut SSSData)).start_game != 0 {
+    // Starting the match goes through the loading screen first (TARGET_PC; the frontend's GS_FRONTEND scene). The
+    // engine's retail flow skips it (RETAIL_NO_LOADING_SCREEN): the retail SSS goes straight to the match.
+    if !RETAIL_NO_LOADING_SCREEN && (*(ext::gm_GetGameModeStateExitData(state) as *mut SSSData)).start_game != 0 {
         ext::gm_SetNextGameModeStateId(gmVsMode_State_Loading);
     }
 }

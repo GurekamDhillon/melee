@@ -222,3 +222,25 @@ pub fn install_gen() {
     unsafe { melee_world::tu::ifcoget::ext::H_lbAudioAx_800237A8 = Some(melee_link::cabi::c3(|a0, a1, a2| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_800237A8(a0 as i32, a1 as i32, a2 as i32)) })); }
     unsafe { melee_world::tu::stage::ext::H_lbAudioAx_80023F28 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_80023F28(a0 as i32)) })); }
 }
+
+/// Point the menu TUs' extern "C" lbAudioAx hooks at the sound bridge (the retail-menu flow, sound on).
+pub fn install_menus() {
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_800237A8 = Some(melee_link::cabi::c3(|a0, a1, a2| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_800237A8(a0 as i32, a1 as i32, a2 as i32)) })); }
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_80026F2C = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80026F2C(a0 as u32) })); }
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_8002702C = Some(melee_link::cabi::c2(|a0, a1| unsafe { crate::engine_audio::ax_8002702C(a0 as u32, a1 as u64) })); }
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_80027168 = Some(melee_link::cabi::c0(|| unsafe { crate::engine_audio::ax_80027168() })); }
+    unsafe { melee_modes::tu::mnhyaku::ext::H_lbAudioAx_80027648 = Some(melee_link::cabi::c0(|| unsafe { crate::engine_audio::ax_80027648() })); }
+    unsafe { melee_modes::tu::mninfo::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mninfobonus::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnitemsw::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnlanguage::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnlanguage::ext::H_lbAudioAx_80027AB0 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80027AB0(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnmain::ext::H_lbAudioAx_80023694 = Some(melee_link::cabi::c0(|| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_80023694()) })); }
+    unsafe { melee_modes::tu::mnmain::ext::H_lbAudioAx_800236DC = Some(melee_link::cabi::c0(|| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_800236DC()) })); }
+    unsafe { melee_modes::tu::mnmain::ext::H_lbAudioAx_80023F28 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_80023F28(a0 as i32)) })); }
+    unsafe { melee_modes::tu::mnmain::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnmainrule::ext::H_lbAudioAx_80023F28 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::cast(crate::engine_audio::ax_80023F28(a0 as i32)) })); }
+    unsafe { melee_modes::tu::mnmainrule::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+    unsafe { melee_modes::tu::mnname::ext::H_lbAudioAx_80024030 = Some(melee_link::cabi::c1(|a0| unsafe { crate::engine_audio::ax_80024030(a0 as i32) })); }
+}

@@ -41,7 +41,9 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    // the engine's by-name table (EXT_FALLBACK: the canonical port or the host seam), else the TODO stop
+                    None => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64($crate::tu::ext_hook::fallback(
+                        stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
                 }
             }
         };
@@ -194,7 +196,7 @@ pub mod ext {
                 }
             }
     // ---- extern globals ----
-    pub static mut un_803F9FA4: [u8; 656] = unsafe { core::mem::zeroed() };
+    pub use melee_world::tu::soundtest::un_803F9FA4;
     pub use crate::tu::mnsnap::mnSnap_804A0B90;
 }
 

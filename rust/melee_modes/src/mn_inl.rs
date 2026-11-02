@@ -33,14 +33,11 @@ ext_fns! {
 /// `HSD_SisLib_803A6B98(text, x, y, fmt, ...)` (sislib, not ported): the printf arguments are
 /// passed as integer / pointer bits.
 pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *const c_char, args: &[usize]) -> i32 {
-    match crate::tu::ext_hook::EXT_HOOK {
-        Some(h) => {
-            let mut a: std::vec::Vec<u64> = std::vec![text as usize as u64, x.to_bits() as u64, y.to_bits() as u64, fmt as usize as u64];
-            a.extend(args.iter().map(|v| *v as u64));
-            h("HSD_SisLib_803A6B98", &a) as i32
-        }
-        None => panic!("TODO ext: HSD_SisLib_803A6B98 is in a TU that is not ported yet"),
-    }
+    let mut a: std::vec::Vec<u64> = std::vec![text as usize as u64, x.to_bits() as u64, y.to_bits() as u64, fmt as usize as u64];
+    a.extend(args.iter().map(|v| *v as u64));
+    // the test hook, else the engine's by-name table (ext_hook::fallback), else the TODO stop
+    let r = match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("HSD_SisLib_803A6B98", &a), None => crate::tu::ext_hook::fallback("HSD_SisLib_803A6B98", &a) };
+    r as i32
 }
 
 /// `lb_80011E24(jobj, &out, idx0, idx1, ..., -1)` (lb/lb_00B0.c, not ported): finds the joint at the
@@ -59,30 +56,24 @@ pub unsafe fn lb_80011E24(jobj: *mut HSD_JObj, out: *mut *mut HSD_JObj, path: &[
 /// `HSD_ForeachAnim(obj, type, mask, func, arg_type, ...)` (baselib/aobj.c, not ported): the
 /// variadic tail is passed as integer bits.
 pub unsafe fn HSD_ForeachAnim(obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask, func: *mut c_void, arg_type: AObj_Arg_Type, args: &[usize]) {
-    match crate::tu::ext_hook::EXT_HOOK {
-        Some(h) => {
-            let mut a: std::vec::Vec<u64> = std::vec![obj as usize as u64, ty as u64, mask as u64, func as usize as u64, arg_type as u64];
-            a.extend(args.iter().map(|v| *v as u64));
-            h("HSD_ForeachAnim", &a);
-        }
-        None => panic!("TODO ext: HSD_ForeachAnim is in a TU that is not ported yet"),
-    }
+    let mut a: std::vec::Vec<u64> = std::vec![obj as usize as u64, ty as u64, mask as u64, func as usize as u64, arg_type as u64];
+    a.extend(args.iter().map(|v| *v as u64));
+    // the test hook, else the engine's by-name table (ext_hook::fallback), else the TODO stop
+    let r = match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("HSD_ForeachAnim", &a), None => crate::tu::ext_hook::fallback("HSD_ForeachAnim", &a) };
+    let _ = r;
 }
 
 /// `lbArchive_LoadSections(archive, &sym0, "name0", &sym1, "name1", ..., 0)` (lb/lbarchive.c, not
 /// ported): the (symbol slot, section name) pairs.
 pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, sections: &[(*mut *mut c_void, *const c_char)]) {
-    match crate::tu::ext_hook::EXT_HOOK {
-        Some(h) => {
-            let mut a: std::vec::Vec<u64> = std::vec![archive as usize as u64];
-            for (slot, name) in sections {
-                a.push(*slot as usize as u64);
-                a.push(*name as usize as u64);
-            }
-            h("lbArchive_LoadSections", &a);
-        }
-        None => panic!("TODO ext: lbArchive_LoadSections is in a TU that is not ported yet"),
+    let mut a: std::vec::Vec<u64> = std::vec![archive as usize as u64];
+    for (slot, name) in sections {
+        a.push(*slot as usize as u64);
+        a.push(*name as usize as u64);
     }
+    // the test hook, else the engine's by-name table (ext_hook::fallback), else the TODO stop
+    let r = match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_LoadSections", &a), None => crate::tu::ext_hook::fallback("lbArchive_LoadSections", &a) };
+    let _ = r;
 }
 
 /// `__assert(file, line, expr)`: the baselib assert failure (aborts).

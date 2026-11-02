@@ -29,7 +29,9 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    // the engine's by-name table (EXT_FALLBACK: the canonical port or the host seam), else the TODO stop
+                    None => <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64($crate::tu::ext_hook::fallback(
+                        stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*])),
                 }
             }
         };
@@ -169,7 +171,7 @@ pub mod ext {
     // ---- extern globals ----
     pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
     pub use crate::tu::gmscene::gm_804D6724;
-    pub static mut gmMainLib_8046B0F0: melee_types::gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
 }
 
 /// `static HSD_GObj* gm_804D6858`

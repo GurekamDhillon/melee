@@ -83,5 +83,25 @@ for path, name in hooks_c:
     out.append(f'    unsafe {{ {path}::H_{name} = Some(melee_link::cabi::c{len(params)}(|{ps}| unsafe {{ {call} }})); }}')
     n += 1
 out.append('}')
+# The menu TUs (MENU above): bridged only by the retail-menu flow, which calls `install_menus` when its sound library is on.
+out += ['', "/// Point the menu TUs' extern \"C\" lbAudioAx hooks at the sound bridge (the retail-menu flow, sound on).", 'pub fn install_menus() {']
+for crate in sorted(root.glob('melee_*/src/tu')):
+    for f in sorted(crate.glob('*.rs')):
+        if not MENU.match(f.stem):
+            continue
+        src = f.read_text(encoding='utf-8', errors='replace')
+        for name in sorted(set(re.findall(r'static mut H_(lbAudioAx_[0-9A-F]{8})', src))):
+            bn = 'ax_' + name[len('lbAudioAx_'):]
+            if bn not in fns:
+                continue
+            params, ret = fns[bn]
+            args = [f'a{i} as {t}' if (t in PRIM or t.startswith('*')) else f'a{i}' for i, t in enumerate(params)]
+            ps = ', '.join(f'a{i}' for i in range(len(params)))
+            call = f'crate::engine_audio::{bn}({", ".join(args)})'
+            if ret:
+                call = f'crate::engine_audio::cast({call})'
+            out.append(f'    unsafe {{ {crate.parent.parent.name}::tu::{f.stem}::ext::H_{name} = Some(melee_link::cabi::c{len(params)}(|{ps}| unsafe {{ {call} }})); }}')
+            n += 1
+out.append('}')
 (root / 'melee/src/engine_audio_gen.rs').write_text('\n'.join(out) + '\n')
 print(f'{n} hooks bridged; unbridged: ' + ', '.join(sorted({h[1] for h in hooks if 'ax_' + h[1][len('lbAudioAx_'):] not in fns})))

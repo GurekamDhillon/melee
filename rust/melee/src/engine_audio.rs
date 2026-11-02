@@ -284,3 +284,40 @@ fn post_link() {
         }
     }
 }
+
+/// `melee_modes::tu::ext_hook::AUDIO_ROUTE`: the menus' (string-hook TUs') lbAudioAx calls into the same sound stack as the match.
+pub fn route_by_name(name: &str, a: &[u64]) -> Option<u64> {
+    let a = |i: usize| a.get(i).copied().unwrap_or(0);
+    let a = [a(0), a(1), a(2), a(3), a(4), a(5), a(6), a(7), a(8), a(9), a(10)];
+    Some(match name {
+        "lbAudioAx_80023090" => ax_80023090(a[0] as i32) as i64 as u64,
+        "lbAudioAx_80023694" => ax_80023694() as i64 as u64,
+        "lbAudioAx_800236DC" => ax_800236DC() as i64 as u64,
+        "lbAudioAx_800237A8" => ax_800237A8(a[0] as i32, a[1] as i32, a[2] as i32) as i64 as u64,
+        "lbAudioAx_80023870" => ax_80023870(a[0] as i32, a[1] as i32, a[2] as i32, a[3] as i32) as i64 as u64,
+        "lbAudioAx_80023B24" => ax_80023B24(a[0] as i32) as i64 as u64,
+        "lbAudioAx_80023F28" => ax_80023F28(a[0] as i32) as i64 as u64,
+        "lbAudioAx_80024B94" => ax_80024B94(a[0] as i32, a[1] as i32) as i64 as u64,
+        "lbAudioAx_80024030" => { ax_80024030(a[0] as i32); 0 }
+        "lbAudioAx_8002411C" => ax_8002411C(a[0] as i32) as i64 as u64,
+        "lbAudioAx_8002438C" => ax_8002438C(a[0] as i32) as i64 as u64,
+        "lbAudioAx_800245F4" => ax_800245F4(a[0] as i32) as i64 as u64,
+        "lbAudioAx_80024614" => { ax_80024614(a[0] as i32); 0 }
+        "lbAudioAx_80024BD0" => ax_80024BD0() as i64 as u64,
+        "lbAudioAx_80024C08" => ax_80024C08(a[0] as u32) as i64 as u64,
+        "lbAudioAx_80024E50" => { ax_80024E50(a[0] as i32); 0 }
+        "lbAudioAx_80024F08" => { ax_80024F08(); 0 }
+        "lbAudioAx_80024F6C" => { ax_80024F6C(); 0 }
+        "lbAudioAx_80026E84" => ax_80026E84(a[0] as i32) as i64 as u64,
+        "lbAudioAx_80026EBC" => ax_80026EBC(a[0] as u32) as i64 as u64,
+        "lbAudioAx_80026F2C" => { ax_80026F2C(a[0] as u32); 0 }
+        "lbAudioAx_8002702C" => { ax_8002702C(a[0] as u32, a[1] as u64); 0 }
+        "lbAudioAx_80027648" => { ax_80027648(); 0 }
+        "lbAudioAx_80027168" => { ax_80027168(); 0 }
+        "lbAudioAx_80027AB0" => { ax_80027AB0(a[0] as i32); 0 }
+        "lbAudioAx_80027DBC" => { ax_80027DBC(); 0 }
+        "lbAudioAx_80028B6C" => { ax_80028B6C(); 0 }
+        "lbAudioAx_80028B90" => { ax_80028B90(); 0 }
+        _ => return None,
+    })
+}

@@ -82,6 +82,14 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 }
                             }
                         }
+                        if d.u32_at(rec) == melee_types::It_Kind_Kyasarin as u32 {
+                            // Kyasarin: `itKyasarinAttributes` starts with a pointer (`x0`, unused), so the native record is 4 bytes wider than the
+                            // word-swapped block and every `attr->xN` read natively would land one word late (the walk speed read the next field)
+                            if let Some(sa) = d.target(ta + 4) {
+                                let typed = d.object::<melee_types::itKyasarinAttributes>(sa) as *mut c_void;
+                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                            }
+                        }
                         arts.push(art);
                     }
                 }

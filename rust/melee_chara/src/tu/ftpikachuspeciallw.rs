@@ -545,10 +545,10 @@ pub fn ftPk_SpecialAirLwLoop1_Phys_fp(fp: &mut Fighter) {
 
 pub fn ftPk_SpecialLw_SetState_Unk0_fp(fp: &mut Fighter) {
     melee_core::ct!("ftPk_SpecialLw_SetState_Unk0_fp");
-    unsafe { fp.mv.pk.specialhi.x4 = 3 };
+    unsafe { fp.mv.pk.specialhi.x4 = 3; fp.mv.pk.speciallw.x4 = 3; /* same GC word */ };
 }
 
 pub fn ftPk_SpecialLw_SetState_Unk1_fp(fp: &mut Fighter) {
     melee_core::ct!("ftPk_SpecialLw_SetState_Unk1_fp");
-    unsafe { fp.mv.pk.specialhi.x4 = 0 };
+    unsafe { fp.mv.pk.specialhi.x4 = 0; fp.mv.pk.speciallw.x4 = 0; /* same GC word */ };
 }

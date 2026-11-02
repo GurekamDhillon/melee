@@ -2399,6 +2399,43 @@ static u32 geno_dgf(u32 h, f32 f)
  * counters, motion_land) and not the transient collision-callback edge words, which are zero at the
  * start of a logic frame. 0 for every fighter that is not a define, so no other fighter's hash changes
  * (RB_GameHash mixes the word only when it is nonzero). */
+/* NHV1 trailing column geno0..geno3 (docs/specs/nhv1.md 8.1): the Geno variable state of an attach (or any
+ * profiled/scripted) fighter, hashed with NHV1's own mix (h ^= v; h *= 0x01000193; h ^= h >> 15), seed 0x811C9DC5.
+ * Read-only; log-only (MELEE_NEUTRAL_HASHLOG + MELEE_NEUTRAL_HASHLOG_GENO=1). 0 when the fighter is inert
+ * (no profile and the escape never ran). */
+static u32 geno_nh(u32 h, u32 v)
+{
+    h ^= v;
+    h *= 0x01000193u;
+    return h ^ (h >> 15);
+}
+u32 Geno_NeutralDigest(Fighter* fp)
+{
+    GenoState* s;
+    u32 h = 0x811C9DC5u;
+    int i;
+    union {
+        f32 f;
+        u32 u;
+    } c;
+    if (fp == NULL) {
+        return 0;
+    }
+    s = geno_state(fp);
+    if (s->profile < 0 && (s->flags & GENO_SF_SCRIPT) == 0) {
+        return 0;
+    }
+    h = geno_nh(h, 0x474E5631u); /* "GNV1" */
+    for (i = 0; i < GENO_VARS_PER_BANK; i++) h = geno_nh(h, (u32) s->la_i[i]);
+    for (i = 0; i < GENO_VARS_PER_BANK; i++) { c.f = s->la_f[i]; h = geno_nh(h, c.u); }
+    for (i = 0; i < GENO_VARS_PER_BANK; i++) h = geno_nh(h, (u32) s->ra_i[i]);
+    for (i = 0; i < GENO_VARS_PER_BANK; i++) { c.f = s->ra_f[i]; h = geno_nh(h, c.u); }
+    for (i = 0; i < GENO_MOVE_VARS; i++) h = geno_nh(h, (u32) s->move_i[i]);
+    for (i = 0; i < GENO_MOVE_VARS; i++) { c.f = s->move_f[i]; h = geno_nh(h, c.u); }
+    h = geno_nh(h, (u32) s->action_time);
+    return h;
+}
+
 extern int Geno_DefineBaseKind(int kind);
 static u32 geno_art_digest(Fighter* fp); /* slice 3: the fighter's live articles (geno_game_articles.inc) */
 u32 GenoDefine_StateDigest(Fighter* fp)

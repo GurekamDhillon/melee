@@ -4525,6 +4525,22 @@ u32 RB_NeutralHashWord(int i)
     return i >= 0 && i < 16 ? nh_out[i] : 0;
 }
 
+/* NHV1 optional trailing column geno<port> (docs/specs/nhv1.md 8.1): the Geno variable digest of the port's
+ * main fighter, 0 when absent or inert. Sampled by the CSV writer right after RB_NeutralHash. */
+u32 RB_NeutralGenoWord(int port)
+{
+    extern u32 Geno_NeutralDigest(Fighter * fp);
+    HSD_GObj* fg;
+    if (port < 0 || port > 3) {
+        return 0;
+    }
+    fg = Player_GetEntityAtIndex(port, 0);
+    if (fg == NULL || fg->user_data == NULL) {
+        return 0;
+    }
+    return Geno_NeutralDigest(fg->user_data);
+}
+
 u32 RB_NeutralHash(void);
 u32 RB_NeutralHashForFrame(int frame);
 u32 RB_NeutralHash(void)

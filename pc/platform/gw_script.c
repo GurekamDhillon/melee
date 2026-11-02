@@ -10124,6 +10124,8 @@ void gw_Script_FramePost(void) {
             static int nh_tried;
             extern uint32_t gw_RB_NeutralHash(void);
             extern uint32_t gw_RB_NeutralHashWord(int i);
+            extern uint32_t gw_RB_NeutralGenoWord(int port);
+            static int nh_geno; /* MELEE_NEUTRAL_HASHLOG_GENO=1: trailing columns geno0..geno3 (docs/specs/nhv1.md 8.1) */
             if (!nh_tried) {
                 const char *path = getenv("MELEE_NEUTRAL_HASHLOG");
                 nh_tried = 1;
@@ -10133,6 +10135,10 @@ void gw_Script_FramePost(void) {
                         int k;
                         fprintf(nhlog, "frame,hash,seed,items,itemsum");
                         for (k = 0; k < 12; k++) fprintf(nhlog, ",s%d", k);
+                        {   const char *g = getenv("MELEE_NEUTRAL_HASHLOG_GENO");
+                            nh_geno = g != NULL && g[0] == '1';
+                            if (nh_geno) for (k = 0; k < 4; k++) fprintf(nhlog, ",geno%d", k);
+                        }
                         fprintf(nhlog, "\n");
                         gw_log("gw: neutral hash trace: %s", path);
                     } else gw_log("gw: neutral hash trace: cannot open %s", path);
@@ -10144,6 +10150,7 @@ void gw_Script_FramePost(void) {
                 fprintf(nhlog, "%d,%08X,%08X,%u,%08X", gs.match_frame, (unsigned) h, (unsigned) gw_RB_NeutralHashWord(1),
                         (unsigned) gw_RB_NeutralHashWord(2), (unsigned) gw_RB_NeutralHashWord(3));
                 for (k = 0; k < 12; k++) fprintf(nhlog, ",%08X", (unsigned) gw_RB_NeutralHashWord(4 + k));
+                if (nh_geno) for (k = 0; k < 4; k++) fprintf(nhlog, ",%08X", (unsigned) gw_RB_NeutralGenoWord(k));
                 fprintf(nhlog, "\n");
                 fflush(nhlog);
             }

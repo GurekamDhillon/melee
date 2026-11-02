@@ -1580,12 +1580,20 @@ static int gn_parse_text(gn_registry *r, const char *text, const char *mod) {
     return r->n - before;
 }
 
-/* FighterKind -> profile, once the m-ex slots exist. Two entries for one fighter: the later one
- * (mount order; later mods win a disc path too) wins, and the loser is logged. */
+/* FighterKind -> profile, once the m-ex slots exist. Two entries for one fighter are a REFUSAL, never
+ * "later wins" (docs/specs/geno-v5.md 3): neither entry applies (both go inactive, kind -1, and keep
+ * their profile index), and one log line per extra claimant names both mod ids. The result does not depend
+ * on load order. (Before 2026-11-02 the later entry in mount order won and the loser was logged.) */
 static void gn_build_kinds(gn_registry *r) {
     int i;
+    unsigned char conflict[GN_KINDS];
+    int first[GN_KINDS];
     gn_define_bind(r);
-    for (i = 0; i < GN_KINDS; ++i) r->kind_profile[i] = -1;
+    for (i = 0; i < GN_KINDS; ++i) {
+        r->kind_profile[i] = -1;
+        conflict[i] = 0;
+        first[i] = -1;
+    }
     for (i = 0; i < r->n; ++i) {
         gn_profile *p = &r->p[i];
         if (!p->defined) p->kind = gn_kind_for_file(p->plfile);
@@ -1595,9 +1603,24 @@ static void gn_build_kinds(gn_registry *r) {
             p->kind = -1;
             continue;
         }
-        if (r->kind_profile[p->kind] >= 0)
-            gw_log("geno: %s's entry for %s replaces %s's", p->mod, p->plfile,
-                   r->p[r->kind_profile[p->kind]].mod);
+        if (first[p->kind] < 0) {
+            first[p->kind] = i;
+        } else {
+            gw_log("geno: REFUSED: mods %s and %s both attach to %s (fighter kind %d); neither entry applies - "
+                   "remove one of them",
+                   r->p[first[p->kind]].mod, p->mod, p->plfile, p->kind);
+            conflict[p->kind] = 1;
+        }
+    }
+    for (i = 0; i < r->n; ++i) {
+        gn_profile *p = &r->p[i];
+        if (p->kind < 0) continue;
+        if (conflict[p->kind]) {
+            gw_log("geno: %s/%s refused: another mod attaches to %s too - inactive", p->mod, p->name,
+                   p->plfile);
+            p->kind = -1;
+            continue;
+        }
         r->kind_profile[p->kind] = i;
         gw_log("geno: fighter %s (%s) -> kind %d: id %s, %d attribute(s), max jumps %d, %d air vy, "
                "hooks %d/%d/%d/%d, %d special attribute(s), %d on_land, %d subaction overlay(s), "
@@ -1607,6 +1630,22 @@ static void gn_build_kinds(gn_registry *r) {
                p->nparam, p->nart, p->nhook[GENO_EV_HIT]);
     }
     r->kinds_built = 1;
+}
+
+/* The Geno load order: the active mods sorted by mod id, bytewise (strcmp on unsigned bytes), NOT the
+ * global mount order (which is base/misc/content rank, then case-insensitive id, then requirements).
+ * Returns the count; out[] holds gw_Mods indices. The profile index (and so the article kind
+ * arithmetic) follows this order. */
+static int gn_sorted_active(int *out, int cap) {
+    int n = gw_Mods_ActiveCount(), k, m = 0, j;
+    for (k = 0; k < n && m < cap; ++k) {
+        int i = gw_Mods_ActiveAt(k);
+        if (i < 0) continue;
+        for (j = m; j > 0 && strcmp(gw_Mods_Id(out[j - 1]), gw_Mods_Id(i)) > 0; --j) out[j] = out[j - 1];
+        out[j] = i;
+        ++m;
+    }
+    return m;
 }
 
 static char *gn_read_file(const char *path) {
@@ -1631,14 +1670,14 @@ static char *gn_read_file(const char *path) {
 
 static gn_registry *gn_reg(void) {
     if (!gn_boot_loaded) {
-        int n, k;
+        int n, k, gn_order[256];
         const char *dir = gw_Mods_Dir();
         gn_boot_loaded = 1;
         memset(&gn_boot, 0, sizeof gn_boot);
         for (k = 0; k < GN_KINDS; ++k) gn_boot.kind_profile[k] = -1;
-        n = gw_Mods_ActiveCount();
+        n = gn_sorted_active(gn_order, 256);
         for (k = 0; k < n && dir != NULL && dir[0]; ++k) {
-            int i = gw_Mods_ActiveAt(k);
+            int i = gn_order[k];
             char path[MAX_PATH];
             char *text;
             snprintf(path, sizeof path, "%s\\%s\\geno.json", dir, gw_Mods_Id(i));
@@ -2127,7 +2166,7 @@ static int gn_reload_layout_changed(const gn_registry *cur, const gn_registry *n
 
 int gw_Geno_Reload(char *msg, int cap) {
     gn_registry *cur = gn_reg();
-    int n, k, i, changed = 0, layout = 0, pool_changed;
+    int n, k, i, changed = 0, layout = 0, pool_changed, gn_order[256];
     const char *dir = gw_Mods_Dir();
     char why[160];
     why[0] = '\0';
@@ -2138,9 +2177,9 @@ int gw_Geno_Reload(char *msg, int cap) {
     }
     gn_registry_clear(&gn_next);
     for (k = 0; k < GN_KINDS; ++k) gn_next.kind_profile[k] = -1;
-    n = gw_Mods_ActiveCount();
+    n = gn_sorted_active(gn_order, 256);
     for (k = 0; k < n && dir != NULL && dir[0]; ++k) {
-        int m = gw_Mods_ActiveAt(k);
+        int m = gn_order[k];
         char path[MAX_PATH];
         char *text;
         snprintf(path, sizeof path, "%s\\%s\\geno.json", dir, gw_Mods_Id(m));
@@ -2276,6 +2315,45 @@ static int test_geno_registry_parse(void) {
     gn_build_kinds(&r);
     if (r.kind_profile[4] != 0 || r.p[1].kind != -1) {
         gw_test_fail("kind table: kirby -> %d, PlZz.dat kind %d", r.kind_profile[4], r.p[1].kind);
+        return 1;
+    }
+    return 0;
+}
+
+/* docs/specs/geno-v5.md 3: two mods attaching to one fighter are a refusal (neither applies), whatever
+ * the load order; a third mod on another fighter is unaffected. */
+static int test_geno_registry_attach_conflict(void) {
+    static gn_registry r;
+    int ab, ba;
+    const char *ka = "{\"geno\":1,\"fighters\":[{\"attach\":\"kirby\",\"jumps\":{\"max\":9}}]}";
+    const char *kb = "{\"geno\":1,\"fighters\":[{\"attach\":\"PlKb.dat\",\"jumps\":{\"max\":8}}]}";
+    const char *fx = "{\"geno\":1,\"fighters\":[{\"attach\":\"fox\"}]}";
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, ka, "mod-a") != 1 || gn_parse_text(&r, kb, "mod-b") != 1 ||
+        gn_parse_text(&r, fx, "mod-c") != 1) {
+        gw_test_fail("parse failed");
+        return 1;
+    }
+    gn_build_kinds(&r);
+    if (r.kind_profile[4] != -1 || r.p[0].kind != -1 || r.p[1].kind != -1) {
+        gw_test_fail("conflicting kirby entries were not both refused (kind_profile %d, kinds %d/%d)",
+                     r.kind_profile[4], r.p[0].kind, r.p[1].kind);
+        return 1;
+    }
+    if (r.kind_profile[1] != 2 || r.p[2].kind != 1) {
+        gw_test_fail("the unrelated fox entry was affected (kind_profile %d)", r.kind_profile[1]);
+        return 1;
+    }
+    ab = r.kind_profile[4];
+    gn_registry_clear(&r);
+    if (gn_parse_text(&r, kb, "mod-b") != 1 || gn_parse_text(&r, ka, "mod-a") != 1) {
+        gw_test_fail("parse failed (reverse)");
+        return 1;
+    }
+    gn_build_kinds(&r);
+    ba = r.kind_profile[4];
+    if (ab != -1 || ba != -1) {
+        gw_test_fail("the outcome depends on load order (%d vs %d)", ab, ba);
         return 1;
     }
     return 0;
@@ -2590,6 +2668,7 @@ void geno_registry_tests_register(void) {
     gw_test_register("geno_move_tags", test_geno_move_tags);
     gw_test_register("geno_registry_v1", test_geno_registry_v1);
     gw_test_register("geno_registry_parse", test_geno_registry_parse);
+    gw_test_register("geno_registry_attach_conflict", test_geno_registry_attach_conflict);
     gw_test_register("geno_registry_stable_ids", test_geno_registry_stable_ids);
     gw_test_register("geno_registry_bad_json", test_geno_registry_bad_json);
     gw_test_register("geno_registry_empty_is_inert", test_geno_registry_empty_is_inert);

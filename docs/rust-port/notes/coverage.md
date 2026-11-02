@@ -336,3 +336,34 @@ against C snapshots taken one frame at a time from a private C trace root (`SNAP
 - **Kirby hat archives** (`ftDataKirbyCopy*`, shared engine, noted): `KirbyHatStruct` is a variable table of differently typed pointer slots, not five `ftDynamics*`. New `dat_custom::kirbyhat` (symbol -> slot types): articles per hat (`ftKb_SpecialN_800F16D0` list, with the typed attribute blocks and the `fix_articles` tables), accessory joints (Mars/Marth slot 0, Popo slot 1), the hat's dynamics block per hat (swapped like a fighter's `x2C`), slot 2 also read as an `HSD_Joint` tree in slot 7 (`ftKb_SpecialN_800EF438`), eight slots (Game & Watch registers slots 5 and 6, Yoshi slot 5). In the generator (`gen_types.py` `POST_DECODE`, never hand-edit gen.rs): `hat_dynamics[1]` keeps the raw bone mask (the decoder read an unrelocated word as null, which is why the hat tree walked 50 joints against 46 flagged bones: the Jigglypuff hat adds 4 bones through `ftParts_800753D4` per mask bit), and a hat whose GC +0 word is not a pointer has a `FtPartsDesc` at +0 (`LOAD_HAT` passes `(FtPartsDesc*) hat`).
 - Note for reading the scenario names: `ck:N` in scenarios.tsv is the internal fighter kind (15 = Jigglypuff, 4 = Kirby, 19 = Zelda), not the CSS id; "Yoshi's hat" in the Kirby code is `hats[Ft_Kind_Yoshi]` = the Jigglypuff hat (`hats[]` is indexed by kind - 1).
 - *left*: Temple 2477 (Sheik chain item `It_Kind_Seak_Chain`, msid 3 in C, 1 in Rust; nothing else differs, the chain links' own `CollData` are not compared by `melee diff`), Great Bay 1623 (Tingle balloon `It_Kind_Tincle`, state 2 -> 3 transition in C, attributes decode fine: x28=200 x2C=120 x30=6; suspect the floor/ledge `Coll` result or the stage line set), Yoshi's Story 590 and items_hi_yoshistory 2805: Jigglypuff (blocker D, `retail_unresolved.txt`: `ftData_SpecialS[15]` and the rollout callbacks have no Rust function, the engine answers the C's `ftCo_SpecialS_CheckInput` with false where the C enters side-B); at Yoshi's Story 590 the C sequence also has two extra `fn_800DD6E4` callback calls in `mpCheckFloor`, which is the C evaluating the callback before the skip/flag tests.
+## cov3 round (cluster C: items, player, gm/gr, value-only), 2026-11-02
+Method: C snapshot at N-k (`triage.c_run(..., snap_frame)`), `melee diff --snap`, then value tracing with a private C trace build
+(`build_trace_reuse.sh <triage root> <_build/agents/cov3-ct>` after adding an `OSReport("VT ...")` to the C source; the C log keeps only
+the first 400 lines per call site and truncates some lines, so print only what you need) against the same `eprintln!("VT ...")` in the
+Rust TU. All debug prints were removed before committing.
+
+Fixed (each verified with run_rust.sh at the fast profile; the release gate is green at the end):
+- items_hi_stadium: the link table cast a GObj to `&mut Fighter` for `ft_0d31::ext::hook::ftCommon_8007FF74` (the hook takes `c_void`, so
+  `gen_link.py`'s class check could not see it). Entry removed from `gen_table.rs`, listed in `link_skip.txt`;
+  `tools/rust-port/golden/coverage/scan_hook_casts.py` finds this class (prints 0 offenders now).
+- Kirby copy abilities (char_younglink 1099 -> 1135 -> 2592): `KirbyHatStruct.hat_dynamics[k]` are `Article*` for the item slots of
+  `ftKb_SpecialN_800F16D0`; decoded as `ftDynamics` they handed a NULL `common_attr` to `Item_80267AA8` (segfault). New custom root
+  `kirbyhat` (dat_custom.rs); slots 5/6 (Game & Watch, Yoshi) go to `melee_chara::tu::ftkirby::HAT_EXTRA_ARTICLES` (the C indexes past the record).
+- THE COMMON CAUSE of most of the rest: **union members that alias at one GC offset do not alias natively** (pointers widen to 8 bytes, so
+  `mv.*`, `u.*` and `xDD4_itemVar.*` members of different structs sit at different native offsets). A C function that writes one member and
+  reads another reads stale or zero data in Rust. Fixed sites (write or read through the member the C really uses): CaptureKoopa
+  (`capturekoopa.x8` = `specialhi.vel.y`, `x10` = `walk.fast_anim_frame`: cpu_ffa4_levels), YoshiEgg (`x8` = `vel.y`, `x4` = `vel.x`, `x14` =
+  `x10`), Kirby egg (`x10`/`x14`), grIzumi (`izumi2.xDC` = `izumi3.xDC`: Fountain platform direction), Rebirth enter (`turn.*` = `common.x4`),
+  ThrownKirby (earlier). Other users of the same pattern may still be wrong: grep a Rust write to `mv.<a>.<f>` against reads of `mv.<b>.<g>`
+  whose C comments show the same `/* fp+XXXX */`.
+- Dat attribute blocks: `ftYs_DatAttrs` types `x1C`/`x20` as `void*`, so every field after `x1C` is shifted natively; Yoshi's `dat_attrs` is the
+  all-scalar `ftYoshiAttributes` record whose bytes 0xEC..0x114 are `pad_xEC` = raw big-endian (read with `swap_bytes`). Same for the chain
+  attributes of Sheik (`itSeakChain_Attrs.pad_4C`: x4C/x50 are raw BE): char_mewtwo, cpulv9_marth_sheik, stage_14_temple.
+
+Result of `run_rust.sh -j 2` (release exe, commit at the end of this round) over the 26 scenarios that failed in triage.tsv: 17 pass
+(char_bowser, char_captain, char_mario, char_mewtwo, char_ness, char_roy, char_yoshi, char_younglink, char_zelda, cpu_ffa4_levels,
+cpulv9_marth_sheik, items_hi_stadium, stage_02_fountain, sheik_cpu_vs_zelda_cpu, stage_14_temple, stage_19_mushroomkingdom, stage_22_venom).
+Still failing (first divergent frame): stage_07_corneria 955, stage_13_greatbay 1623, stage_20_mushroomkingdom2 1254 (was 803; crash at 1455
+after), stage_25_icemt 1953 (was 1472); not cluster C: char_kirby 755, cpulv5_puff_link 673, items_hi_yoshistory 2805, stage_08_yoshistory 448
+(pobj assertion), stage_11_rainbowcruise 177. Gate (release): OK. Leads for the four open ones are in STATUS.md "Current blockers (coverage, cov3)".
+Tooling left behind: `scan_hook_casts.py` (link hook class mismatches). The instrumented C trace root is `_build/agents/cov3-ct` (private).

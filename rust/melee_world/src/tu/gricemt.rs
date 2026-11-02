@@ -150,6 +150,8 @@ pub struct grIceMt_YakumonoParam {
     pub x0: i16,
     pub x2: i16,
     pub x4: i16,
+    /// the C's padding after `x4`: with `x4` the first float of the `x4 + 4 * idx` table (`grIceMt_801FA364`, index 0 reads both halves)
+    pub x6: i16,
     pub x8: f32,
     pub xC: f32,
     pub x10: f32,
@@ -1554,6 +1556,9 @@ pub unsafe extern "C" fn grIceMt_801FA364(state: *mut grIceMt_FA364_State, out: 
     let mut ret = true;
     let mut next_delay: i32 = 0;
     let table = (yakumono_param as *const u8).add(4) as *const f32;
+    // table[0] is the big-endian word at +4 (`x4` high half, the padding low half); the native record keeps those two halves apart
+    let table0 = f32::from_bits(((((*yakumono_param).x4 as u16) as u32) << 16) | ((*yakumono_param).x6 as u16) as u32);
+    let tbl = |i: isize| -> f32 { if i == 0 { table0 } else { *table.offset(i) } };
 
     match (*state).phase {
         0 => {
@@ -1570,11 +1575,11 @@ pub unsafe extern "C" fn grIceMt_801FA364(state: *mut grIceMt_FA364_State, out: 
             (*state).lerp_count = (*state).lerp_count.wrapping_sub(1);
             let tmp = (*state).lerp_count;
             if tmp != 0 {
-                (*state).cur += (*table.offset((*state).idx as isize) - (*state).cur) / (tmp as f32);
+                (*state).cur += (tbl((*state).idx as isize) - (*state).cur) / (tmp as f32);
                 ret = false;
             } else {
                 (*state).phase = 0;
-                (*state).cur = *table.offset((*state).idx as isize);
+                (*state).cur = tbl((*state).idx as isize);
             }
         }
         _ => {}

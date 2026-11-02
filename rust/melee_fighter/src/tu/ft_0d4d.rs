@@ -186,6 +186,10 @@ pub fn ftCo_800D4FF4(g: G) {
             f.mv.co.turn.facing_after = fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp44.x);
             f.mv.co.turn.x8 = sp44.y;
             f.mv.co.walk.middle_anim_frame = 0.0;
+            // turn.facing_after / turn.x8 / walk.middle_anim_frame are common.x4.x / .y / .z at their GC offsets (0x2344..); the native layouts differ
+            f.mv.co.common.x4.x = f.mv.co.turn.facing_after;
+            f.mv.co.common.x4.y = f.mv.co.turn.x8;
+            f.mv.co.common.x4.z = 0.0;
         } else {
             let mut sp14 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             ext::Stage_80224E38(&mut sp14, f.smash_attrs.x2135 as i32);
@@ -194,6 +198,10 @@ pub fn ftCo_800D4FF4(g: G) {
                 fmadds(f.facing_dir, (ext::ftCommon_800804EC(crate::mtu_ptr::ptr(&(f))) as f32), sp14.x + sp20.x);
             f.mv.co.turn.x8 = sp14.y + sp20.y;
             f.mv.co.walk.middle_anim_frame = 0.0;
+            // turn.facing_after / turn.x8 / walk.middle_anim_frame are common.x4.x / .y / .z at their GC offsets (0x2344..); the native layouts differ
+            f.mv.co.common.x4.x = f.mv.co.turn.facing_after;
+            f.mv.co.common.x4.y = f.mv.co.turn.x8;
+            f.mv.co.common.x4.z = 0.0;
         }
     }
     ext::ftCommon_8007D5D4(crate::mtu_ptr::ptr(&(f)));

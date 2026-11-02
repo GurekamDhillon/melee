@@ -2293,6 +2293,9 @@ pub fn ftKb_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
     }
 }
 
+/// Kirby hat archives: (hat record address, `hat_dynamics[5]`, `hat_dynamics[6]`) for the hats whose items sit past the record (Game & Watch, Yoshi).
+pub static mut HAT_EXTRA_ARTICLES: std::vec::Vec<(usize, [*mut c_void; 2])> = std::vec::Vec::new();
+
 /// `ftKb_SpecialN_800F16D0(gobj, kind)`: register the copied ability's items (articles) for `kind`.
 pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
     melee_core::ct!("ftKb_SpecialN_800F16D0");

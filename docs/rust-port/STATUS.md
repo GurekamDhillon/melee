@@ -188,8 +188,8 @@ was unlinked, and several GC-layout reads went through native structs; details i
   the seed after 1652 is equal, but `cpu.buffer` (the CPU command script, `ftcmdscript` writer) holds different command bytes after the frame (C `86 01 87 01 7f 7f 02 7f 7f 00 09 86`,
   engine `.. 0a 02 8e 01 09 86 01 0a 02 7f 7f 86`) and `cpu.x55C..x568` floats differ: the AI built a different action with the same draws. Suspects: the PlCo attack-entry tables
   for Samus (`dat_custom::attack_lists`, 9-word entries) or a float step of the command builder. Not yet instrumented per value.
-- D. Retail tables with unresolved callbacks (no callback at all on the engine): Crazy Hand `ftCh_*` (40), Jigglypuff `ftPr_*` (80), Crazy Hand captures (12)
-  (`melee_link/retail_unresolved.txt`). Not in a golden; any scenario with these fighters will freeze them.
+- D. (SOLVED, port/blockerd 2026-11-02) Retail tables with unresolved callbacks: Jigglypuff Rollout/Pound, Crazy Hand and the Crazy Hand captures are ported
+  and wired (`tools/rust-port/link/wire_unresolved.py`; `melee_link/retail_unresolved.txt` is empty). items_hi_yoshistory and cpulv5_puff_link now pass. See notes/consolidation.md "Blocker D".
 - E. Direct `todo!` stubs left in melee_fighter tu: `ftCo_Damage` (lbBgFlash_80021C48, efAsync_Spawn, Camera_RequestQuake), `JumpAerial` (HSD_JObjSetMtxDirtySub), `ft_0c8c`
   (lbBgFlash_80021C48, gm_80167470, ftMh / ftCh), `ft_0cdd` done, `ft_0cdf` done. They panic when reached (outside the render pass).
 - F. Peach's dress dynamics (`Dynamics P1 bone set 0`) run on the engine but are inactive in the C (bone id 0x100): not hashed, still a diff in `melee diff`.

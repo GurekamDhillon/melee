@@ -91,8 +91,10 @@ def collect():
     rows = []
     for p in sorted(SRC.glob("gr*.rs")):
         t = p.read_text(encoding="utf-8", errors="replace")
+        # records named otherwise (grGb_StageAttr) are found by the cast of Ground_GetYakumonoParam()
+        cast = set(re.findall(r"Ground_GetYakumonoParam\(\)\s+as\s+\*(?:mut|const)\s+(\w+)", t))
         for m in re.finditer(STRUCT_RE, t, re.S):
-            if "Yakumono" not in m.group(1):
+            if "Yakumono" not in m.group(1) and m.group(1) not in cast:
                 continue
             r = parse(m.group(2))
             if r is None:

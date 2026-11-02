@@ -570,7 +570,7 @@ pub unsafe fn grInishie2_801FD7A8(gobj: *mut HSD_GObj) {
             (*gp).u.inishie2.xC4_flags.set_b4(0);
 
             if !gobj_2.is_null() {
-                (*GET_GROUND(gobj_2)).u.inishie22.xC4 = gobj;
+                *inishie22_xc4_of_gobj1(GET_GROUND(gobj_2)) = gobj;
             }
         }
     }
@@ -703,6 +703,15 @@ unsafe fn checkBlastZone(pos: *mut Vec3) -> bool {
     }
 }
 
+/// `gp->u.inishie22.xC4` of stage gobj 1 (`grInishie2_801FDED8`: the gobj that spawned it, written by `grInishie2_801FD7A8`). In the
+/// C `Ground` union that 4-byte pointer at GC +0xC4 sits beside the `u.inishie23` fields gobj 1 also uses (`xC8_flags` at +0xC8, `xCA`);
+/// natively the pointer is 8 bytes wide and would overlap `xC8_flags` / `xCA` (the flag writes of `grInishie2_801FD9EC` broke the
+/// pointer and `grInishie2_801FDED8` dereferenced it), so it lives right after the native `u.inishie23` record instead.
+#[inline(always)]
+unsafe fn inishie22_xc4_of_gobj1(gp: *mut Ground) -> *mut *mut HSD_GObj {
+    (&raw mut (*gp).u.inishie23 as *mut u8).add(core::mem::size_of::<grInishie2_GroundVars3>().next_multiple_of(8)) as *mut *mut HSD_GObj
+}
+
 /// `static inline void grInishie2_801FDED8_inline(HSD_GObj*)`.
 unsafe fn grInishie2_801FDED8_inline(gobj: *mut HSD_GObj) {
     let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -711,7 +720,7 @@ unsafe fn grInishie2_801FDED8_inline(gobj: *mut HSD_GObj) {
     ext::lb_8000B1CC(ext::Ground_801C3FA4(gobj, 0), null_mut(), &mut pos);
 
     if checkBlastZone(&mut pos) && (*gp).u.inishie23.xC8_flags.b0() != 0 {
-        let gobj_2 = (*gp).u.inishie22.xC4;
+        let gobj_2 = *inishie22_xc4_of_gobj1(gp);
         let gp_2 = GET_GROUND(gobj_2);
         (*gp_2).u.inishie2.xC4_flags.set_b4(1);
         (*gp_2).u.inishie2.xCC = ((*yakumono_param).unk_c as i32 + grInishie2_801FDFB4((*yakumono_param).unk_e as i32)) as i16;

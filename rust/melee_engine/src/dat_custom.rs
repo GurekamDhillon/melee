@@ -90,6 +90,20 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
                             }
                         }
+                        if d.u32_at(rec) == melee_types::It_Kind_Arwing_Laser as u32 {
+                            // Arwing laser (Corneria, Venom): `ArwingLaserAttr { ItemAttr* x0; f32 x4, x8; }` starts with a relocated pointer
+                            // (`itArwinglaser_UnkMotion2_Phys` reads `attrs->x0->x4_throw_speed_mul`); the word swap leaves it a big-endian
+                            // image offset and puts x4 / x8 one word early in the 8-byte-pointer native record
+                            if let Some(sa) = d.target(ta + 4) {
+                                let rec = melee_items::tu::itarwinglaser::ArwingLaserAttr {
+                                    x0: d.ptr::<melee_types::ItemAttr>(sa),
+                                    x4: f32::from_bits(d.u32_at(sa + 4)),
+                                    x8: f32::from_bits(d.u32_at(sa + 8)),
+                                };
+                                let typed = Box::leak(Box::new(rec)) as *mut _ as *mut c_void;
+                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                            }
+                        }
                         arts.push(art);
                     }
                 }

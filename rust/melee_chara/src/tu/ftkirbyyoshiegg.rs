@@ -200,6 +200,9 @@ pub fn ftKb_SpecialNYs_8010AC78(victim: *mut HSD_GObj, gobj: *mut HSD_GObj) {
         melee_fighter::ftcommon2::ftcommon_8007efc0(&mut *fp, 1);
         (*fp).mv.co.walk.fast_anim_frame = ys::ftKb_SpecialNYs_801092BC(gobj);
         (*fp).mv.co.common.x14 = (*fp).mv.co.walk.fast_anim_frame as _;
+        // the same two words as yoshiegg.x10 / x14 at their GC offsets (0x2350 / 0x2354); the native layouts differ
+        (*fp).mv.co.yoshiegg.x10 = (*fp).mv.co.walk.fast_anim_frame;
+        (*fp).mv.co.yoshiegg.x14 = (*fp).mv.co.walk.fast_anim_frame;
         (*fp).mv.co.common.x4.z = ys::ftKb_SpecialNYs_801092AC(gobj);
         ext::ftCommon_InitGrab(fp, 0, ys::ftKb_SpecialNYs_801092CC(gobj));
         ext::HSD_JObjGetScale(jobj, &mut (*fp).mv.co.yoshiegg.x18);

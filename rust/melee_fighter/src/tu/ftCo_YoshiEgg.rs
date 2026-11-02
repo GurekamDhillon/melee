@@ -191,7 +191,7 @@ pub fn ftCo_800BBED4(g: G, arg1: G) {
     ext::ftCommon_8007EFC0(f, 1);
     fp(g).mv.co.yoshiegg.x10 = ext::ftYs_SpecialN_GetDatAttr20(arg1);
     let f = fp(g);
-    f.mv.co.yoshiegg.x14 = f.mv.co.walk.fast_anim_frame;
+    f.mv.co.yoshiegg.x14 = f.mv.co.yoshiegg.x10; // C reads walk.fast_anim_frame, the same GC offset (0x2350) as yoshiegg.x10
     fp(g).mv.co.yoshiegg.xC = ext::ftYs_SpecialN_GetDatAttr1C(arg1);
     let t = ext::ftYs_SpecialN_GetDatAttr24(arg1);
     ext::ftCommon_InitGrab(fp(g), 0, t);

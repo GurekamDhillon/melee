@@ -472,7 +472,7 @@ pub fn ftYs_SpecialN_GetDatAttr20(gobj: *mut HSD_GObj) -> f32 {
 pub fn ftYs_SpecialN_GetDatAttr24(gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr24");
     let fp = unsafe { &*((*gobj).user_data as *const Fighter) };
-    da::<ftYs_DatAttrs>(fp).x24
+    da::<ftYoshiAttributes>(fp).x24
 }
 
 pub fn ftYs_SpecialN_GetFacingDir(gobj: *mut HSD_GObj) -> f32 {

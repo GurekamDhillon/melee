@@ -39,7 +39,7 @@ da::<ftYoshiAttributes>(fp).x20
 
 pub fn ftYs_SpecialN_GetDatAttr24_fp(fp: &Fighter) -> f32 {
     melee_core::ct!("ftYs_SpecialN_GetDatAttr24_fp");
-da::<ftYs_DatAttrs>(fp).x24
+da::<ftYoshiAttributes>(fp).x24
 }
 
 pub fn ftYs_SpecialN_GetExtAttr28_fp() -> f32 {

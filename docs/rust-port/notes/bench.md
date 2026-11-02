@@ -1,5 +1,9 @@
 # Rust vs C benchmarks (2026-11-01)
 
+> **Superseded for the Rust sim, rollback and save/load numbers: see [perf.md](perf.md).** About half of the "Rust sim only" time below was the
+> `melee golden` harness rewriting its whole CSV every frame. After the perf pass (merged 7154861ba) the tick is 0.20 ms (pad_falcon_fox_fd) and
+> 0.53 ms (cpu_fox_falco_dl), a 7-frame resim is about 3.3 ms, and save/load is about 1 ms. The build-time rows still stand.
+
 One session on a quiet machine, headless, no OS input. Numbers are medians of 3 runs unless a row says otherwise.
 Hash CSVs and PNGs were written to scratch only; nothing disc-derived is committed.
 

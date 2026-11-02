@@ -149,9 +149,7 @@ pub unsafe extern "C" fn it_802B2FC8(parent: *mut HSD_GObj, pos: *mut Vec3, dir:
     spawn.x40 = 0;
     let item_gobj = ext::Item_80268B18(&mut spawn);
     if !item_gobj.is_null() {
-        { let ip = GET_ITEM(item_gobj); eprintln!("DBGSP1 pos={},{} cur={},{} prev={},{} ecbtop={} pecbtop={}", ((*ip).pos.x*1000.0) as i32, ((*ip).pos.y*1000.0) as i32, ((*ip).x378_itemColl.cur_pos.x*1000.0) as i32, ((*ip).x378_itemColl.cur_pos.y*1000.0) as i32, ((*ip).x378_itemColl.prev_pos.x*1000.0) as i32, ((*ip).x378_itemColl.prev_pos.y*1000.0) as i32, ((*ip).x378_itemColl.ecb.top.y*1000.0) as i32, ((*ip).x378_itemColl.prev_ecb.top.y*1000.0) as i32); }
         it_802B322C(item_gobj, parent);
-        { let ip = GET_ITEM(item_gobj); eprintln!("DBGSP2 pos={},{} vel={},{} prev={},{}", ((*ip).pos.x*1000.0) as i32, ((*ip).pos.y*1000.0) as i32, ((*ip).x40_vel.x*1000.0) as i32, ((*ip).x40_vel.y*1000.0) as i32, ((*ip).x378_itemColl.prev_pos.x*1000.0) as i32, ((*ip).x378_itemColl.prev_pos.y*1000.0) as i32); }
         ext::db_80225DD8(item_gobj, parent);
         return item_gobj;
     }

@@ -1,7 +1,6 @@
 #include "ftyoshispeciallw.h"
 
 #include <melee/ft/forward.h>
-#include <dolphin/os.h>
 #include <sysdolphin/baselib/forward.h>
 
 #include <placeholder.h>
@@ -33,7 +32,6 @@ void fn_8012E644(Fighter_GObj* gobj)
     PAD_STACK(4);
 
     lb_8000B1CC(fp->parts[FtPart_TransN].joint, NULL, &transn_pos);
-    OSReport("DBGSTAR flags=%x t=%d,%d,%d tr=%d,%d,%d par=%d\n", fp->parts[FtPart_TransN].joint->flags, (int)(transn_pos.x*1000), (int)(transn_pos.y*1000), (int)(transn_pos.z*1000), (int)(fp->parts[FtPart_TransN].joint->translate.x*1000), (int)(fp->parts[FtPart_TransN].joint->translate.y*1000), (int)(fp->parts[FtPart_TransN].joint->translate.z*1000), fp->parts[FtPart_TransN].joint->parent != NULL);
     star_pos.x = (-1.0f * da->speciallw_star_offset.x) + transn_pos.x;
     star_pos.y = transn_pos.y + da->speciallw_star_offset.y;
     star_pos.z = transn_pos.z;

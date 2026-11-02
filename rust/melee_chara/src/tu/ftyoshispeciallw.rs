@@ -59,8 +59,6 @@ pub fn fn_8012E644(gobj: *mut HSD_GObj) {
         let mut transn_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut star_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         ext::lb_8000B1CC((*(*fp).parts.add(FtPart_TransN as usize)).joint, core::ptr::null_mut(), &mut transn_pos);
-        eprintln!("DBGDA {} {} f110={} f114={} ptr={:p}", da.speciallw_star_offset.x, da.speciallw_star_offset.y, da.x110, 0, da);
-        { let j = (*(*fp).parts.add(FtPart_TransN as usize)).joint; eprintln!("DBGSTAR flags={:x} t={},{},{} tr={},{},{} par={}", (*j).flags, (transn_pos.x*1000.0) as i32, (transn_pos.y*1000.0) as i32, (transn_pos.z*1000.0) as i32, ((*j).translate.x*1000.0) as i32, ((*j).translate.y*1000.0) as i32, ((*j).translate.z*1000.0) as i32, !(*j).parent.is_null() as i32); }
         star_pos.x = fmadds(-1.0, da.speciallw_star_offset.x, transn_pos.x);
         star_pos.y = transn_pos.y + da.speciallw_star_offset.y;
         star_pos.z = transn_pos.z;

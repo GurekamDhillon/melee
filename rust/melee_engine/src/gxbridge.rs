@@ -61,7 +61,20 @@ fn col(c: _GXColor) -> GxColor {
 }
 
 /// How many bytes of game memory at `p` the GPU path may read: to the end of the archive image or heap block holding it.
+/// Host-owned data the draw callbacks hand to GX outside the archives and the arena (the main.dol SIS font atlas).
+static HOST_RANGES: std::sync::Mutex<Vec<(usize, usize)>> = std::sync::Mutex::new(Vec::new());
+
+/// Let `GXInitTexObj` and friends read `len` bytes at `p` (memory that lives for the rest of the run).
+pub fn register_host_range(p: *const u8, len: usize) {
+    HOST_RANGES.lock().unwrap().push((p as usize, len));
+}
+
 unsafe fn extent(p: usize, cap: usize) -> usize {
+    for &(b, n) in HOST_RANGES.lock().unwrap().iter() {
+        if p >= b && p < b + n {
+            return (b + n - p).min(cap);
+        }
+    }
     let h = crate::host::Host::get();
     for im in h.archives.values().chain(h.retired.iter()) {
         if p >= im.raw && p < im.raw + im.raw_len {
@@ -264,7 +277,9 @@ pub unsafe fn GXGetTexObjHeight(o: *const c_void) -> u16 { objs().tex.get(&(o as
 pub fn GXPixModeSync() { shim().pix_mode_sync() }
 pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) { shim().copy_disp(clear != 0) }
 pub fn GXCopyTex(dest: *mut c_void, clear: u8) { shim().copy_tex(dest as usize as u32, clear != 0) }
-pub fn GXSetCopyClear(c: _GXColor, depth: u32) { shim().set_copy_clear(col(c), depth) }
+pub fn GXSetCopyClear(c: _GXColor, depth: u32) {
+    shim().set_copy_clear(col(c), depth)
+}
 pub fn GXSetCopyClamp(c: u32) { shim().set_copy_clamp(c) }
 pub fn GXSetDispCopySrc(l: u16, t: u16, w: u16, h: u16) { shim().set_disp_copy_src(l, t, w, h) }
 pub fn GXSetDispCopyDst(w: u16, h: u16) { shim().set_disp_copy_dst(w, h) }
@@ -276,5 +291,12 @@ pub fn GXSetTexCopyDst(w: u16, h: u16, fmt: u32, mip: u8) { shim().set_tex_copy_
 /// End the frame the way `HSD_VICopyXFBAsync` would (`GXCopyDisp`): the engine's VI state has no XFB buffers, so that
 /// function returns before copying; the engine calls this after each scene tick instead.
 pub fn finish_frame() {
+    // video.c HSD_VICopyEFB2XFBPtr: GXSetCopyClear(vi->clear_clr, vi->clear_z) before the copy (initialize.c
+    // HSD_InitComponent sets them to black / GX_MAX_Z24; a VI status the engine never initialised is zero, also black)
+    unsafe {
+        let vi = melee_runtime::tu::video::HSD_VIGetVIStatus();
+        let z = if (*vi).clear_z == 0 { 0x00FF_FFFF } else { (*vi).clear_z };
+        GXSetCopyClear((*vi).clear_clr, z);
+    }
     shim().copy_disp(true)
 }

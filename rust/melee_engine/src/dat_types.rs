@@ -56,12 +56,22 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "MemCardIconData" { return Some(RootType::Custom("rawptrs")); }
     if name == "MemSnapIconData" { return Some(RootType::Raw); }
     if name == "sqEventInitDataLevelTbl" { return Some(RootType::Raw); }
+    if name == "tyModelFileTbl" { return Some(rt("ToyModelFile[]")); }
+    if name == "tyModelFileUsTbl" { return Some(rt("ToyModelFile[]")); }
+    if name == "tyInitModelTbl" { return Some(rt("TrophyData[]")); }
+    if name == "tyInitModelDTbl" { return Some(rt("TrophyData[]")); }
+    if name == "tyModelSortTbl" { return Some(rt("ToyNameData[]")); }
+    if name == "tyExpDifferentTbl" { return Some(RootType::Custom("rawhalves")); }
+    if name == "tyNoGetUsTbl" { return Some(RootType::Custom("rawhalves")); }
+    if name == "tyDisplayModelTbl" { return Some(rt("TyDspEntry[]")); }
+    if name == "tyDisplayModelUsTbl" { return Some(rt("TyDspEntry[]")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
     if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
     if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
+    if name.starts_with("ftDemo") { return Some(RootType::Raw); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
@@ -101,11 +111,19 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "MnSelectChrDataTable" => d.object::<MnSelectChrDataTable>(off) as *mut c_void,
             "MnSelectStageDataTable" => d.object::<MnSelectStageDataTable>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
+            "ToyModelFile" => d.object::<ToyModelFile>(off) as *mut c_void,
+            "ToyNameData" => d.object::<ToyNameData>(off) as *mut c_void,
+            "TrophyData" => d.object::<TrophyData>(off) as *mut c_void,
+            "TyDspEntry" => d.object::<TyDspEntry>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),
         },
         RootType::Array(n) => match n {
             "Fighter_804D653C_t" => d.array::<Fighter_804D653C_t>(off, (extent / <Fighter_804D653C_t as GcDecode>::GC_BYTES) as usize) as *mut c_void,
+            "ToyModelFile" => d.array::<ToyModelFile>(off, (extent / <ToyModelFile as GcDecode>::GC_BYTES) as usize) as *mut c_void,
+            "ToyNameData" => d.array::<ToyNameData>(off, (extent / <ToyNameData as GcDecode>::GC_BYTES) as usize) as *mut c_void,
+            "TrophyData" => d.array::<TrophyData>(off, (extent / <TrophyData as GcDecode>::GC_BYTES) as usize) as *mut c_void,
+            "TyDspEntry" => d.array::<TyDspEntry>(off, (extent / <TyDspEntry as GcDecode>::GC_BYTES) as usize) as *mut c_void,
             _ => panic!("dat_types: no decoder for array of {n}"),
         },
         RootType::PtrTo(n) => match n {

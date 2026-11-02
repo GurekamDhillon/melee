@@ -649,6 +649,41 @@ impl Engine {
         unsafe {
             crate::archive::RECLAIM = true;
             melee_modes::tu::ext_hook::AUDIO_LIB_OFF = true;
+            // PcUnlockAll (pc/platform/gw_runtime.c gw_PcUnlockAll): MELEE_UNLOCK_ALL wins, else ON (the C default).
+            melee_modes::tu::gmmain_lib::ext::PCUNLOCKALL = Some(pc_unlock_all);
+            // ifprize.rs carries its own HSD_SisLib_803A6B98 default (formats the C string into Some(&str)); the link table's
+            // install of the raw function casts *const u8 -> Option<&str> and panics, so the retail path keeps the local one.
+            melee_world::tu::ifprize::ext::hook::HSD_SisLib_803A6B98 = None;
+            // The SIS text draw (sislib.c HSD_SisLib_803A84BC) is a seam on the VS-only path (no text); the retail menus draw it,
+            // with its GX calls on the bridge.
+            melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = None;
+            melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = None;
+            crate::sis_gx::install();
+            melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
+            // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
+            melee_runtime::tu::lbcardgame::ext::hook::wait_idle = Some(|| {});
+            melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
+            // ft/ftdemo.c (results-screen fighters): its callees, and the demo motion-state table melee_link fills.
+            melee_fighter::tu::ftdemo::install_defaults(&raw mut melee_link::retail_ms::ftmotionstates::ftData_803C52A0 as *mut melee_types::MotionState);
+            // gmvsmelee.c's PC callees with no MELEE_SCENE launch and no netplay session (the C defaults): their ext
+            // defaults are todo!s, and the VS-only path never reaches them.
+            {
+                use melee_modes::tu::gmvsmelee::ext::hook as h;
+                if h::SceneLaunch_Active.is_none() { h::SceneLaunch_Active = Some(|| 0); }
+                if h::SceneLaunch_EntryStateId.is_none() { h::SceneLaunch_EntryStateId = Some(|| -1); }
+                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| 0); }
+                if h::Netplay_RunActive.is_none() { h::Netplay_RunActive = Some(|| 0); }
+                if h::Netplay_RematchPending.is_none() { h::Netplay_RematchPending = Some(|| 0); }
+                if h::Netplay_StageEnd.is_none() { h::Netplay_StageEnd = Some(|_, _, _| ()); }
+                if h::Netplay_GameResult.is_none() { h::Netplay_GameResult = Some(|_| ()); }
+                if h::Netplay_NoteTie.is_none() { h::Netplay_NoteTie = Some(|| ()); }
+            }
+            // OSTicksToCalendarTime (aurora OSTime.cpp): the prize / save dates; a seam ("no calendar") on the VS-only path.
+            melee_runtime::tu::lbtime::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            melee_runtime::tu::lbcardgame::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            melee_runtime::tu::lbsnap::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            // gm_1BFA.c gm_Mode_ChallengerApproach_States: the static table, built from the addresses of the other TUs.
+            melee_modes::tu::gmscdata::ext::gm_Mode_ChallengerApproach_States = melee_modes::tu::gm_1BFA::gm_Mode_ChallengerApproach_States();
             // the memory-card scene's one trophy draw on a fresh save (see boot_vs)
             let _ = melee_runtime::tu::random::global::HSD_Rand();
             gm_1A3F::gm_801A4510_init(Some(first));
@@ -714,5 +749,13 @@ impl Engine {
             self.run = Some(run);
         }
         true
+    }
+}
+
+/// `gw_PcUnlockAll` (pc/platform/gw_runtime.c): the environment wins, else the settings default ON.
+fn pc_unlock_all() -> i32 {
+    match std::env::var("MELEE_UNLOCK_ALL") {
+        Ok(v) if !v.is_empty() => (!v.starts_with('0')) as i32,
+        _ => 1,
     }
 }

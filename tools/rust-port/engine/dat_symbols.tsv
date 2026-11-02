@@ -51,3 +51,13 @@ sym	flmsce	SceneDesc	gm/types.h SceneDesc* flmsce (GmRst.dat, gmresult.c:1582)
 sym	MemCardIconData	custom:rawptrs	lb/lbcardgame.c:50 void** icon_data (LbMcGame.dat, banner / icon image blobs read byte-wise)
 sym	MemSnapIconData	raw	lb/lbsnap.c:54 LbMcSnapMemSnapIconData* icon_data (a union of byte blobs)
 sym	sqEventInitDataLevelTbl	raw	gm/gmevent.c:208 struct gm_804D6900_t** (mnmain onEnter loads it for the Event list; only Event Match reads it, through gmevent.rs native records: TODO a decoder before Event Match runs on the engine)
+sym	tyModelFileTbl	ToyModelFile[]	src/melee/ty/toy.c:341 ToyModelFile* _Toy_sbss_804D6EA8 (TyDataf.dat)
+sym	tyModelFileUsTbl	ToyModelFile[]	src/melee/ty/toy.c:341 ToyModelFile* _Toy_sbss_804D6EA4
+sym	tyInitModelTbl	TrophyData[]	src/melee/ty/toy.c:333 struct TrophyData* _Toy_sbss_804D6EC4
+sym	tyInitModelDTbl	TrophyData[]	src/melee/ty/toy.c:334 struct TrophyData* _Toy_sbss_804D6EC0
+sym	tyModelSortTbl	ToyNameData[]	src/melee/ty/toy.c:335 void* _Toy_sbss_804D6EBC (read as ToyNameData*)
+sym	tyExpDifferentTbl	custom:rawhalves	src/melee/ty/toy.c:336 void* _Toy_sbss_804D6EB8 (read as s16*)
+sym	tyNoGetUsTbl	custom:rawhalves	src/melee/ty/toy.c:337 s16* _Toy_sbss_804D6EB4
+sym	tyDisplayModelTbl	TyDspEntry[]	src/melee/ty/toy.c:338 TyDspEntry* Toy_sbss_804D6EB0
+sym	tyDisplayModelUsTbl	TyDspEntry[]	src/melee/ty/toy.c:339 TyDspEntry* Toy_sbss_804D6EAC
+prefix	ftDemo	raw	src/melee/ft/ftdemo.c:166 ftData_UnkIntPairs[].data (void*: the demo figatree block, read through gc_addr32 + per-anim offsets)

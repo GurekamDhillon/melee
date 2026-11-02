@@ -136,6 +136,17 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             }
             Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
         }
+        "rawhalves" => {
+            // a block of s16 the game code reads natively (toy.c `s16* _Toy_sbss_804D6EB4`, tyExpDifferentTbl): halfword-swapped copy
+            let n = (b.extent(off) / 2).max(1) as usize;
+            let buf = native_buf(n * 2 + 2);
+            for k in 0..n {
+                let w = d.u32_at(off + (2 * k as u32 & !3));
+                let h = if k % 2 == 0 { (w >> 16) as u16 } else { w as u16 };
+                unsafe { (buf as *mut u16).add(k).write(h) };
+            }
+            buf as *mut c_void
+        }
         "rawwords" => {
             // a block of 32-bit ints / floats the game code reads as a native struct (`yakumono_param`): word-swapped copy
             let n = (b.extent(off) / 4).max(1) as usize;

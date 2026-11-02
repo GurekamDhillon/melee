@@ -30,48 +30,83 @@ pub mod ext {
     use super::*;
     /// `HSD_SisLib_FontAtlas` base (sislib_font.c): 287 glyph textures of 0x200 bytes.
     pub use crate::tu::sislib_font::HSD_SisLib_FontAtlas;
+    /// The GX calls of the text draw: pointed at melee_engine::gxbridge by the engine (sis_gx::install).
+    pub mod hook {
+        use super::*;
+        pub static mut GXSetZMode: Option<fn(u32, u32, u32)> = None;
+        pub static mut GXSetViewport: Option<fn(f32, f32, f32, f32, f32, f32)> = None;
+        pub static mut GXSetScissor: Option<fn(u32, u32, u32, u32)> = None;
+        pub static mut GXSetProjection: Option<fn(*mut [f32; 4], u32)> = None;
+        pub static mut GXSetCurrentMtx: Option<fn(u32)> = None;
+        pub static mut GXSetTexCoordGen2: Option<fn(u32, u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetNumChans: Option<fn(u32)> = None;
+        pub static mut GXClearVtxDesc: Option<fn()> = None;
+        pub static mut GXSetCullMode: Option<fn(u32)> = None;
+        pub static mut GXSetNumTexGens: Option<fn(u32)> = None;
+        pub static mut GXSetNumTevStages: Option<fn(u32)> = None;
+        pub static mut GXSetVtxAttrFmt: Option<fn(u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetVtxDesc: Option<fn(u32, u32)> = None;
+        pub static mut GXSetTevOrder: Option<fn(u32, u32, u32, u32)> = None;
+        pub static mut GXSetBlendMode: Option<fn(u32, u32, u32, u32)> = None;
+        pub static mut GXSetAlphaCompare: Option<fn(u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetColorUpdate: Option<fn(u32)> = None;
+        pub static mut GXSetAlphaUpdate: Option<fn(u32)> = None;
+        pub static mut GXSetTevColorIn: Option<fn(u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetTevColorOp: Option<fn(u32, u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetTevAlphaOp: Option<fn(u32, u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetTevAlphaIn: Option<fn(u32, u32, u32, u32, u32)> = None;
+        pub static mut GXSetTevColor: Option<fn(u32, GXColor)> = None;
+        pub static mut GXSetTevKAlphaSel: Option<fn(u32, u32)> = None;
+        pub static mut GXSetTevKColor: Option<fn(u32, GXColor)> = None;
+        pub static mut GXBegin: Option<fn(u32, u32, u16)> = None;
+        pub static mut GXPosition3f32: Option<fn(f32, f32, f32)> = None;
+        pub static mut GXTexCoord2f32: Option<fn(f32, f32)> = None;
+        pub static mut GXEnd: Option<fn()> = None;
+        pub static mut GXInitTexObj: Option<fn(*mut GXTexObj, *mut u8, u16, u16, u32, u32, u32, u8)> = None;
+        pub static mut GXLoadTexObj: Option<fn(*mut GXTexObj, u32)> = None;
+    }
     /// A GameCube pointer stored in a SIS stream (host memory model).
     pub fn gc_ptr_to_u32(p: *const u8) -> u32 { todo!("gc_ptr_to_u32 (guest address of a SIS stream position)") }
     pub fn gc_u32_to_ptr(a: u32) -> *mut u8 { todo!("gc_u32_to_ptr (SIS stream position of a guest address)") }
     pub fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void { unsafe { melee_types::inline::HSD_GObjGetUserData(&*(gobj as *const _)) as _ } }
-    pub fn Mex_Enabled(name: &str) -> bool { todo!("Mex_Enabled (pc/platform mex)") }
+    pub fn Mex_Enabled(_name: &str) -> bool { false } // pc/platform mex: no mods mounted (the C default)
     pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { unsafe { crate::tu::state_native::HSD_StateSetZMode(enable as _, func as _, update as _); } }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
-    pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
-    pub fn GXSetZMode(a: u32, b: u32, c: u32) { }
-    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { }
-    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { }
+    pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { unsafe { crate::tu::cobj::HSD_CObjGetViewingMtx(cobj as _, mtx as _) } }
+    pub fn GXSetZMode(a: u32, b: u32, c: u32) { if let Some(hf) = unsafe { hook::GXSetZMode } { hf(a, b, c) } }
+    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { if let Some(hf) = unsafe { hook::GXSetViewport } { hf(l, t, w, h, n, f) } }
+    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { if let Some(hf) = unsafe { hook::GXSetScissor } { hf(l, t, w, h) } }
     pub fn MTXOrtho(mtx: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, n: f32, f: f32) { unsafe { crate::tu::mtx44::raw::MTXOrtho(mtx as _, t as _, b as _, l as _, r as _, n as _, f as _); } }
-    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { }
-    pub fn GXSetCurrentMtx(id: u32) { }
+    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { if let Some(hf) = unsafe { hook::GXSetProjection } { hf(mtx, ty) } }
+    pub fn GXSetCurrentMtx(id: u32) { if let Some(hf) = unsafe { hook::GXSetCurrentMtx } { hf(id) } }
     pub fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32) { unsafe { crate::tu::pobj::native::mx::GXLoadPosMtxImm(mtx as _, id as _); } }
-    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { }
+    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { if let Some(hf) = unsafe { hook::GXSetTexCoordGen2 } { hf(coord, ty, src, mtx, normalize, post_mtx) } }
     pub fn HSD_StateSetNumChans(n: u32) { unsafe { crate::tu::tev_native::HSD_StateSetNumChans(n as _); } }
-    pub fn GXSetNumChans(n: u32) { }
-    pub fn GXClearVtxDesc() { }
-    pub fn GXSetCullMode(mode: u32) { }
-    pub fn GXSetNumTexGens(n: u32) { }
-    pub fn GXSetNumTevStages(n: u32) { }
-    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { }
-    pub fn GXSetVtxDesc(attr: u32, ty: u32) { }
-    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { }
-    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { }
-    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { }
-    pub fn GXSetColorUpdate(on: u32) { }
-    pub fn GXSetAlphaUpdate(on: u32) { }
-    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
-    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
-    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
-    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
-    pub fn GXSetTevColor(id: u32, color: GXColor) { }
-    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { }
-    pub fn GXSetTevKColor(id: u32, color: GXColor) { }
-    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { }
-    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { }
-    pub fn GXTexCoord2f32(s: f32, t: f32) { }
-    pub fn GXEnd() { unsafe { crate::tu::sobjlib::GXEnd() } }
-    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { }
-    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { }
+    pub fn GXSetNumChans(n: u32) { if let Some(hf) = unsafe { hook::GXSetNumChans } { hf(n) } }
+    pub fn GXClearVtxDesc() { if let Some(hf) = unsafe { hook::GXClearVtxDesc } { hf() } }
+    pub fn GXSetCullMode(mode: u32) { if let Some(hf) = unsafe { hook::GXSetCullMode } { hf(mode) } }
+    pub fn GXSetNumTexGens(n: u32) { if let Some(hf) = unsafe { hook::GXSetNumTexGens } { hf(n) } }
+    pub fn GXSetNumTevStages(n: u32) { if let Some(hf) = unsafe { hook::GXSetNumTevStages } { hf(n) } }
+    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { if let Some(hf) = unsafe { hook::GXSetVtxAttrFmt } { hf(fmt, attr, cnt, ty, frac) } }
+    pub fn GXSetVtxDesc(attr: u32, ty: u32) { if let Some(hf) = unsafe { hook::GXSetVtxDesc } { hf(attr, ty) } }
+    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { if let Some(hf) = unsafe { hook::GXSetTevOrder } { hf(stage, coord, map, color) } }
+    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { if let Some(hf) = unsafe { hook::GXSetBlendMode } { hf(ty, src, dst, op) } }
+    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { if let Some(hf) = unsafe { hook::GXSetAlphaCompare } { hf(c0, r0, op, c1, r1) } }
+    pub fn GXSetColorUpdate(on: u32) { if let Some(hf) = unsafe { hook::GXSetColorUpdate } { hf(on) } }
+    pub fn GXSetAlphaUpdate(on: u32) { if let Some(hf) = unsafe { hook::GXSetAlphaUpdate } { hf(on) } }
+    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { if let Some(hf) = unsafe { hook::GXSetTevColorIn } { hf(stage, a, b, c, d) } }
+    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { if let Some(hf) = unsafe { hook::GXSetTevColorOp } { hf(stage, op, bias, scale, clamp, out) } }
+    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { if let Some(hf) = unsafe { hook::GXSetTevAlphaOp } { hf(stage, op, bias, scale, clamp, out) } }
+    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { if let Some(hf) = unsafe { hook::GXSetTevAlphaIn } { hf(stage, a, b, c, d) } }
+    pub fn GXSetTevColor(id: u32, color: GXColor) { if let Some(hf) = unsafe { hook::GXSetTevColor } { hf(id, color) } }
+    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { if let Some(hf) = unsafe { hook::GXSetTevKAlphaSel } { hf(stage, sel) } }
+    pub fn GXSetTevKColor(id: u32, color: GXColor) { if let Some(hf) = unsafe { hook::GXSetTevKColor } { hf(id, color) } }
+    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { if let Some(hf) = unsafe { hook::GXBegin } { hf(prim, fmt, n) } }
+    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { if let Some(hf) = unsafe { hook::GXPosition3f32 } { hf(x, y, z) } }
+    pub fn GXTexCoord2f32(s: f32, t: f32) { if let Some(hf) = unsafe { hook::GXTexCoord2f32 } { hf(s, t) } }
+    pub fn GXEnd() { if let Some(hf) = unsafe { hook::GXEnd } { hf() } }
+    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { if let Some(hf) = unsafe { hook::GXInitTexObj } { hf(obj, data, w, h, fmt, wrap_s, wrap_t, mipmap) } }
+    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { if let Some(hf) = unsafe { hook::GXLoadTexObj } { hf(obj, map) } }
     pub fn HSD_StateInvalidate(mask: i32) { unsafe { crate::tu::state_native::HSD_StateInvalidate(mask as _); } }
     pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { unsafe { crate::tu::lbarchive::lbArchive_LoadArchive(path as _) } }
     pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { unsafe { crate::tu::lbarchive::lbArchive_80016EFC(archive) } }

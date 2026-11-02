@@ -81,6 +81,14 @@ impl RetailPlay {
     fn boot(&mut self) -> Result<melee_engine::Engine, String> {
         let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
         crate::set_engine_mods(&margs)?;
+        // sislib_font.c HSD_SisLib_FontAtlas: the 287-glyph default atlas lives in main.dol (disc data, loaded here).
+        {
+            let mut d = crate::disc::Disc::open(&self.iso)?;
+            let atlas = d.dol_bytes(crate::retail::sis::ATLAS_ADDR, crate::retail::sis::ATLAS_BYTES)?;
+            let leaked: &'static mut [u8] = Box::leak(atlas.to_vec().into_boxed_slice());
+            unsafe { melee_runtime::tu::sislib_font::HSD_SisLib_FontAtlas = leaked.as_ptr() as *const melee_types::TextGlyphTexture };
+            melee_engine::gxbridge::register_host_range(leaked.as_ptr(), leaked.len());
+        }
         let disc = crate::engine_disc(&self.iso)?;
         unsafe {
             melee_engine::engine::RENDER = !self.headless;

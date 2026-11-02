@@ -172,7 +172,7 @@ pub mod ext {
     pub static mut gm_Mode_Boot_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
     pub use crate::tu::gmfixedcamera::gm_Mode_CameraVs_States;
     pub use crate::tu::gmcameramode::gm_Mode_Camera_States;
-    pub static mut gm_Mode_ChallengerApproach_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
+    pub static mut gm_Mode_ChallengerApproach_States: [GameModeState; 4] = unsafe { core::mem::zeroed() };
     pub use crate::tu::gmclassic::gm_Mode_Classic_States;
     pub use crate::tu::gmmultiman::gm_Mode_CruelVs_States;
     pub use crate::tu::gmopeningmode::gm_Mode_DebugCutscene_States;

@@ -15,6 +15,7 @@ pub mod engine;
 pub mod ext_dispatch;
 pub mod gcm;
 pub mod gxbridge;
+pub mod sis_gx;
 pub mod gxbridge_gen;
 pub mod host;
 pub mod install;

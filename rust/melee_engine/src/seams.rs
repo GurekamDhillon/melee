@@ -301,7 +301,20 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
 /// The callees the generated table cannot spell (C varargs, inlines of other calls, the engine's DVD); checked first.
 fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
     Some(match name {
-        // the variadic callees of the string-hook stubs (the table cannot spell a C `...`)
+        // ft/ftdemo.c (melee_fighter tu::ftdemo, snake_case names the dispatcher cannot match)
+        "ftDemo_ObjAllocInit" => { melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init(); 0 }
+        "ftDemo_CreateFighter" => unsafe {
+            melee_fighter::tu::ftdemo::ftdemo_create_fighter(&*(args[0] as usize as *const melee_types::plAllocInfo2)) as usize as u64
+        },
+        "ftDemo_SetArchiveData" => {
+            melee_fighter::tu::ftdemo::ftdemo_set_archive_data(args[0] as i32, args[1] as usize as *mut melee_types::HSD_Archive, args[2] as i32);
+            0
+        }
+        "ftDemo_GetMotionFileString" => melee_fighter::tu::ftdemo::ftdemo_get_motion_file_string(args[0] as i32, args[1] as i32) as usize as u64,
+        "ftDemo_SetFacingDirection" => {
+            melee_fighter::tu::ftdemo::ftdemo_set_facing_direction(args[0] as usize as *mut melee_types::HSD_GObj, f32::from_bits(args[1] as u32));
+            0
+        }
         "lbArchive_LoadSymbols" => unsafe {
             let rest: Vec<*mut c_void> = args[1..].iter().map(|&w| w as usize as *mut c_void).collect();
             melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(args[0] as usize as *const core::ffi::c_char, &rest) as usize as u64
@@ -404,5 +417,39 @@ fn log_stub(name: &str, v: u64) {
     if !seen.iter().any(|s| s == name) {
         seen.push(name.to_string());
         eprintln!("engine: stub {name} -> {v:#x}");
+    }
+}
+
+/// `OSTicksToCalendarTime` (extern/aurora/lib/dolphin/os/OSTime.cpp, which the C PC build links): `ticks` are UTC relative
+/// to the GameCube epoch (2000-01-01 00:00:00), broken up in the local time zone. Written natively (the C byte-swaps for
+/// its big-endian readers; the Rust TUs read the record natively).
+pub fn os_ticks_to_calendar_time(ticks: i64, td: *mut melee_types::OSCalendarTime) {
+    const OS_TIMER_CLOCK: i64 = 162_000_000 / 4;
+    let us = ticks / (OS_TIMER_CLOCK / 125_000) * 8; // OSTicksToMicroseconds: ticks * 8 / (clock / 125000)
+    let unix_us = us + 946_684_800i64 * 1_000_000;
+    let secs = unix_us.div_euclid(1_000_000);
+    let sub_us = unix_us.rem_euclid(1_000_000) as i32;
+    #[repr(C)]
+    #[derive(Default)]
+    struct Tm { sec: i32, min: i32, hour: i32, mday: i32, mon: i32, year: i32, wday: i32, yday: i32, isdst: i32 }
+    let mut tm = Tm::default();
+    #[cfg(windows)]
+    {
+        extern "C" { fn _localtime64_s(tm: *mut Tm, t: *const i64) -> i32; }
+        unsafe { _localtime64_s(&mut tm, &secs) };
+    }
+    #[cfg(not(windows))]
+    {
+        extern "C" { fn localtime_r(t: *const i64, tm: *mut Tm) -> *mut Tm; }
+        unsafe { localtime_r(&secs, &mut tm) };
+    }
+    if td.is_null() {
+        return;
+    }
+    unsafe {
+        *td = melee_types::OSCalendarTime {
+            sec: tm.sec, min: tm.min, hour: tm.hour, mday: tm.mday, mon: tm.mon, year: tm.year + 1900, wday: tm.wday,
+            yday: tm.yday, msec: sub_us / 1000, usec: sub_us % 1000,
+        };
     }
 }

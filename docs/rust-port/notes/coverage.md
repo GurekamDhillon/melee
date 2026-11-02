@@ -322,3 +322,11 @@ Fixed (each verified with run_rust.sh at the fast profile; the release gate is g
 - Dat attribute blocks: `ftYs_DatAttrs` types `x1C`/`x20` as `void*`, so every field after `x1C` is shifted natively; Yoshi's `dat_attrs` is the
   all-scalar `ftYoshiAttributes` record whose bytes 0xEC..0x114 are `pad_xEC` = raw big-endian (read with `swap_bytes`). Same for the chain
   attributes of Sheik (`itSeakChain_Attrs.pad_4C`: x4C/x50 are raw BE): char_mewtwo, cpulv9_marth_sheik, stage_14_temple.
+
+Result of `run_rust.sh -j 2` (release exe, commit at the end of this round) over the 26 scenarios that failed in triage.tsv: 17 pass
+(char_bowser, char_captain, char_mario, char_mewtwo, char_ness, char_roy, char_yoshi, char_younglink, char_zelda, cpu_ffa4_levels,
+cpulv9_marth_sheik, items_hi_stadium, stage_02_fountain, sheik_cpu_vs_zelda_cpu, stage_14_temple, stage_19_mushroomkingdom, stage_22_venom).
+Still failing (first divergent frame): stage_07_corneria 955, stage_13_greatbay 1623, stage_20_mushroomkingdom2 1254 (was 803; crash at 1455
+after), stage_25_icemt 1953 (was 1472); not cluster C: char_kirby 755, cpulv5_puff_link 673, items_hi_yoshistory 2805, stage_08_yoshistory 448
+(pobj assertion), stage_11_rainbowcruise 177. Gate (release): OK. Leads for the four open ones are in STATUS.md "Current blockers (coverage, cov3)".
+Tooling left behind: `scan_hook_casts.py` (link hook class mismatches). The instrumented C trace root is `_build/agents/cov3-ct` (private).

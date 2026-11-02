@@ -187,7 +187,7 @@ pub mod ext {
     pub use crate::tu::globals::HSD_RandSeedPtr;
     pub use melee_runtime::tu::sobjlib::HSD_SObjLib_8040C3A4;
     pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
-    pub static mut gmMainLib_8046B0F0: gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
     pub use crate::mn_inl::mn_804A04F0;
 }
 // @@ext-end

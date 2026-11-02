@@ -1,0 +1,12 @@
+# melee play (retail scenes), port 1: title -> main menu -> VS mode -> Melee -> the character select
+60 0000 0 0
+3 1000 0 0
+90 0000 0 0
+# stick down: 1P mode -> VS mode
+4 0000 0 -100
+30 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# VS mode's first entry: Melee
+3 0100 0 0
+200 0000 0 0

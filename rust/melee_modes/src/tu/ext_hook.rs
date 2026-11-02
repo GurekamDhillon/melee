@@ -170,3 +170,48 @@ impl Val for melee_types::_GXColor {
     #[inline] fn to_u64(self) -> u64 { u32::from_le_bytes([self.r, self.g, self.b, self.a]) as u64 }
     #[inline] fn from_u64(v: u64) -> Self { let b = (v as u32).to_le_bytes(); melee_types::_GXColor { r: b[0], g: b[1], b: b[2], a: b[3] } }
 }
+
+/// The by-name fallback for a stub whose callee is not linked: [`EXT_FALLBACK`] (the engine's table of canonical
+/// ports and host seams), else the TODO stop naming the callee.
+pub fn fallback(name: &'static str, args: &[u64]) -> u64 {
+    match unsafe { EXT_FALLBACK } {
+        Some(f) => unsafe { f(name, args) },
+        None => panic!("TODO: {name} is not ported"),
+    }
+}
+
+/// An argument's words for [`fallback`]: one for a scalar, each element for a C `...` passed as a slice.
+pub trait PushW {
+    fn push_w(self, w: &mut std::vec::Vec<u64>);
+}
+impl<T: Val> PushW for T {
+    #[inline] fn push_w(self, w: &mut std::vec::Vec<u64>) { w.push(self.to_u64()) }
+}
+impl PushW for &[usize] {
+    #[inline] fn push_w(self, w: &mut std::vec::Vec<u64>) { w.extend(self.iter().map(|&x| x as u64)) }
+}
+
+/// Set by the engine's retail mode loop (`Engine::boot_modes`): the game's sound library (lbaudio_ax.c) is a host seam
+/// there (its `main` init, `lbAudioAx_8002838C`, is not run; the sound is the audio driver's), so the menu TUs' direct
+/// `lbAudioAx_*` adapters answer the seam's "off" value (zero) instead of entering the uninitialised library.
+pub static mut AUDIO_LIB_OFF: bool = false;
+
+/// `MELEE_LOG_STUBS=1`: the first call of each callee answered with a seam's zero (`engine: stub NAME -> 0x0 (audio)`).
+pub fn log_off(name: &'static str) {
+    use std::sync::Mutex;
+    static SEEN: Mutex<Vec<&'static str>> = Mutex::new(Vec::new());
+    if std::env::var_os("MELEE_LOG_STUBS").is_none_or(|v| v == "0") {
+        return;
+    }
+    let mut seen = SEEN.lock().unwrap();
+    if !seen.contains(&name) {
+        seen.push(name);
+        eprintln!("engine: stub {name} -> 0x0 (audio)");
+    }
+}
+
+/// Reads [`AUDIO_LIB_OFF`].
+#[inline]
+pub fn audio_lib_off() -> bool {
+    unsafe { AUDIO_LIB_OFF }
+}

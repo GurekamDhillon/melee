@@ -49,19 +49,31 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
     if name == "effBehaviorTable" { return Some(RootType::Raw); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
+    if name == "MnSelectChrDataTable" { return Some(rt("MnSelectChrDataTable")); }
+    if name == "MnSelectStageDataTable" { return Some(rt("MnSelectStageDataTable")); }
+    if name == "pnlsce" { return Some(rt("SceneDesc")); }
+    if name == "flmsce" { return Some(rt("SceneDesc")); }
+    if name == "MemCardIconData" { return Some(RootType::Custom("rawptrs")); }
+    if name == "MemSnapIconData" { return Some(RootType::Raw); }
+    if name == "sqEventInitDataLevelTbl" { return Some(RootType::Raw); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
     if name.starts_with("eff") { return Some(RootType::Custom("efdat")); }
     if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
+    if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name.ends_with("_scene_lights") { return Some(RootType::Custom("ptrtable_lightlist")); }
     if name.ends_with("_scene_data") { return Some(rt("SceneDesc")); }
     if name.ends_with("_image_desc") { return Some(rt("HSD_ImageDesc")); }
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
     if name.ends_with("_figatree") { return Some(rt("FigaTree")); }
+    if name.ends_with("_sobjdesc") { return Some(rt("HSD_SObjDesc")); }
+    if name.ends_with("_camera") { return Some(rt("HSD_CObjDesc")); }
     if name.ends_with("_joint") { return Some(rt("HSD_Joint")); }
+    if name.ends_with("_fog") { return Some(rt("HSD_FogDesc")); }
     None
 }
 
@@ -78,11 +90,16 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "Fighter_804D653C_t" => d.object::<Fighter_804D653C_t>(off) as *mut c_void,
             "GroundParam" => d.object::<GroundParam>(off) as *mut c_void,
             "HSD_AnimJoint" => d.object::<HSD_AnimJoint>(off) as *mut c_void,
+            "HSD_CObjDesc" => d.object::<HSD_CObjDesc>(off) as *mut c_void,
+            "HSD_FogDesc" => d.object::<HSD_FogDesc>(off) as *mut c_void,
             "HSD_ImageDesc" => d.object::<HSD_ImageDesc>(off) as *mut c_void,
             "HSD_Joint" => d.object::<HSD_Joint>(off) as *mut c_void,
             "HSD_MatAnimJoint" => d.object::<HSD_MatAnimJoint>(off) as *mut c_void,
+            "HSD_SObjDesc" => d.object::<HSD_SObjDesc>(off) as *mut c_void,
             "HSD_ShapeAnimJoint" => d.object::<HSD_ShapeAnimJoint>(off) as *mut c_void,
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
+            "MnSelectChrDataTable" => d.object::<MnSelectChrDataTable>(off) as *mut c_void,
+            "MnSelectStageDataTable" => d.object::<MnSelectStageDataTable>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "UnkStageDat" => d.object::<UnkStageDat>(off) as *mut c_void,
             _ => panic!("dat_types: no decoder for record {n}"),

@@ -226,6 +226,20 @@ impl Engine {
                 crate::gxbridge_gen::install_gx();
             }
             crate::seams_gen::install_gen();
+            // the THP decoder's locked cache (the movies): the C build's shim_misc.c gw_LCStoreData / gw_LCQueueWait
+            {
+                use melee_runtime::tu::THPDec::ext as thp;
+                if thp::LCStoreData_HOOK.is_none() {
+                    thp::LCStoreData_HOOK = Some(|d, s, n| { core::ptr::copy(s as *const u8, d as *mut u8, n as usize); 0 });
+                }
+                if thp::LCQueueWait_HOOK.is_none() {
+                    thp::LCQueueWait_HOOK = Some(|_| ());
+                }
+            }
+            // the gmtou_ext! stubs (the title, the tournament screens) call by name: the same table as EXT_FALLBACK
+            if melee_modes::tu::gmtoulib::hook::HOOK.is_none() {
+                melee_modes::tu::gmtoulib::hook::HOOK = Some(crate::seams_gen::ext_fallback);
+            }
             if let Some(f) = POST_LINK { f(); }
             gmmain_lib::gmMainLib_init_statics();
             melee_runtime::tu::perf::__OSBusClock = 162_000_000; // OS_BUS_CLOCK (low memory 0xF8 on a GameCube)
@@ -616,3 +630,89 @@ unsafe extern "C" fn gmmain_pad_setup() {
 
 #[allow(dead_code)]
 fn _unused(_: *mut c_void) {}
+
+/// The mode `boot_modes` runs (`runGameMode`'s `mode`), null outside the mode loop.
+static mut LOOP_MODE: *mut melee_types::GameMode = core::ptr::null_mut();
+
+/// The whole retail mode loop, one scene-loop iteration per tick: `main` -> `gm_801A4510` (init) -> `runGameMode`
+/// (`runGameMode_load`, then `gm_801A4014` per scene until a mode change is pending, then the mode's `on_unload`) ->
+/// the next mode. The C runs it as nested loops; here each `tick_modes` steps the innermost one and, when a scene
+/// ends, does what the C does after `gm_801A4D34` returns.
+impl Engine {
+    /// Boot the host and start the mode loop at `first` (`GM_BOOT` as the C's `gm_801A4510` picks it, or e.g.
+    /// `GM_TITLE`), up to the first scene tick. A scenario installed before (`scenario::install`) seeds the VS mode the
+    /// way `SceneLaunch_SeedVs` does in the C build.
+    pub fn boot_modes(disc: Gcm, mem_size: usize, pads: PadSystem, first: u8) -> Result<Engine, String> {
+        let _scope = crate::arena::GameScope::enter();
+        crate::seams::fill_render_modes();
+        Self::boot_host(disc, mem_size, pads)?;
+        unsafe {
+            crate::archive::RECLAIM = true;
+            melee_modes::tu::ext_hook::AUDIO_LIB_OFF = true;
+            // the memory-card scene's one trophy draw on a fresh save (see boot_vs)
+            let _ = melee_runtime::tu::random::global::HSD_Rand();
+            gm_1A3F::gm_801A4510_init(Some(first));
+            let mode = gm_1A3F::runGameMode_load(first);
+            LOOP_MODE = mode;
+            let run = gm_1A3F::gm_801A4014_enter(mode);
+            gmscene::gm_801A4D34_begin(run.info);
+            Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false, run: Some(run) })
+        }
+    }
+
+    /// The current mode and the scene kind of its current state (`GameModeKind`, `GameSceneKind`).
+    pub fn mode_scene(&self) -> (u8, u8) {
+        unsafe {
+            let m = if LOOP_MODE.is_null() { 0xFF } else { (*LOOP_MODE).kind };
+            let k = if self.info.is_null() { 0xFF } else { (*self.info).scene_kind };
+            (m, k)
+        }
+    }
+
+    /// One iteration of the mode loop: the scene's tick, or, when the scene has ended, the rest of `gm_801A4014`, the
+    /// mode change of `runGameMode` / `gm_801A4510` when one is pending, and the next scene's entry.
+    /// Returns true when a new scene was entered this tick.
+    pub fn tick_modes(&mut self) -> bool {
+        if !self.ended {
+            self.tick();
+            return false;
+        }
+        let _scope = crate::arena::GameScope::enter();
+        unsafe {
+            let Some(run) = self.run.take() else { return false };
+            gmscene::gm_801A4D34_end();
+            gm_1A3F::gm_801A4014_leave(run);
+            let sm = &raw mut gm_1A3F::state_machine;
+            if (*sm).pending_mode_change != 0 {
+                // runGameMode's tail
+                if !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
+                    if let Some(f) = (*LOOP_MODE).on_unload {
+                        f();
+                    }
+                }
+                let mut next = (*sm).routing.pending_mode;
+                // gm_801A4510's loop body
+                if gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
+                    gm_1A3F::ext::set_gmMainLib_8046B0F0_resetting(false);
+                } else {
+                    next = gm_1A3F::ext::gmFrontend_Route((*sm).routing.curr_mode, next);
+                }
+                (*sm).routing.prev_mode = (*sm).routing.curr_mode;
+                if (*sm).routing.curr_mode == gm_1A3F::GM_FRONTEND {
+                    (*sm).routing.prev_mode = gm_1A3F::ext::gmFrontend_ReportedMode();
+                }
+                (*sm).routing.curr_mode = next;
+                LOOP_MODE = gm_1A3F::runGameMode_load(next);
+            }
+            // runGameMode's scene loop (the override modes are debug-only and never set on the retail path)
+            let run = gm_1A3F::gm_801A4014_enter(LOOP_MODE);
+            gmscene::gm_801A4D34_begin(run.info);
+            self.frames = 0;
+            self.info = run.info;
+            self.on_frame = run.frame_fn;
+            self.ended = false;
+            self.run = Some(run);
+        }
+        true
+    }
+}

@@ -1463,6 +1463,19 @@ pub fn play(args: &[String]) -> ExitCode {
         game.setup = Some(MatchSetup { slots, rules: game.rules, stage });
         game.scene = Scene::Loading;
     }
+    // The retail scenes (retail_flow.rs) unless MELEE_STANDIN_MENUS=1 keeps the stand-in flow below.
+    if std::env::var("MELEE_STANDIN_MENUS").map_or(true, |v| v != "1") {
+        let presets = crate::retail_flow::Presets {
+            stocks: get("--stocks").and_then(|s| s.parse().ok()),
+            time_secs: get("--time-secs").and_then(|s| s.parse().ok()),
+            items: get("--items").map(|_| game.rules.items),
+            scenario: game.setup.as_ref().map(Play::scenario_of),
+        };
+        let quit_after = has("--quit-after-matches").then_some(game.quit_after).or(game.quit_at_results.then_some(1));
+        let mut rp = crate::retail_flow::RetailPlay::new(game.iso.clone(), game.mods_dir.clone(), presets, has("--headless"), game.shot_dir.clone(), game.shot_ages.clone(), quit_after, game.max_frames);
+        rp.skip_intro = game.skip_intro;
+        return crate::retail_flow::run(rp, has("--headless"));
+    }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives
     // the ports and --max-frames / --quit-at-results end the run. --audio-wav keeps the mix.
     let headless = has("--headless");

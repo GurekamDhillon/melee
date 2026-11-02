@@ -84,7 +84,6 @@ pub mod ext {
     fn PSVECDotProduct(a0: *mut Vec, a1: *mut Vec) -> f32 = crate::mtx::vec_dot(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z });
     fn PSVECMag(a0: *mut Vec) -> f32 = crate::mtx::vec_mag(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z });
     fn PSVECNormalize(a0: *mut Vec, a1: *mut Vec) = { let r = crate::mtx::vec_normalize(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
-    fn PSVECScale(a0: *mut Vec, a1: *mut Vec, a2: f32) = { let r = crate::mtx::vec_scale(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, a2); *a1 = Vec { x: r.x, y: r.y, z: r.z }; };
     fn PSVECSubtract(a0: *mut Vec, a1: *mut Vec, a2: *mut Vec) = { let r = crate::mtx::vec_sub(&crate::mtx::Vec3 { x: (*a0).x, y: (*a0).y, z: (*a0).z }, &crate::mtx::Vec3 { x: (*a1).x, y: (*a1).y, z: (*a1).z }); *a2 = Vec { x: r.x, y: r.y, z: r.z }; };
     fn atan2f(a0: f32, a1: f32) -> f32 = crate::lbtrigf::atan2f(a0, a1);
     }
@@ -468,7 +467,7 @@ pub unsafe fn HSD_ViewingRectAddRect(
             return;
         }
         let scale = (*r).distance / dot;
-        ext::PSVECScale(&mut o2p, &mut o2p, scale);
+        crate::tu::mtx_pc::raw::PSVECScale(&mut o2p, &mut o2p, scale);
         ext::PSVECSubtract(&mut o2p, &mut (*r).eye_v, &mut e2p);
         x = ext::PSVECDotProduct(&mut (*r).right_v, &mut e2p);
         y = ext::PSVECDotProduct(&mut (*r).up_v, &mut e2p);
@@ -478,7 +477,7 @@ pub unsafe fn HSD_ViewingRectAddRect(
         right *= scale;
     } else {
         let mut tmp = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
-        ext::PSVECScale(&mut (*r).eye_vn, &mut tmp, dot);
+        crate::tu::mtx_pc::raw::PSVECScale(&mut (*r).eye_vn, &mut tmp, dot);
         ext::PSVECSubtract(&mut o2p, &mut tmp, &mut e2p);
         x = ext::PSVECDotProduct(&mut (*r).right_v, &mut e2p);
         y = ext::PSVECDotProduct(&mut (*r).up_v, &mut e2p);

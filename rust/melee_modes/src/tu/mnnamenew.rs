@@ -147,8 +147,8 @@ pub mod ext {
     pub use crate::tu::mnmain::MenMain_lights;
     pub use crate::tu::mnmain::MenMain_fog;
     pub use crate::tu::mnmain::MenMain_cam;
-    pub static mut NotAllowedNamesList: *mut *mut c_char = unsafe { core::mem::zeroed() };
-    pub static mut AutoNamesList: *mut *mut u8 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::mnname::NotAllowedNamesList;
+    pub use crate::tu::mnname::AutoNamesList;
     pub use melee_runtime::tu::sislib::HSD_SisLib_804D1124;
     pub use crate::tu::mnname::mnNameNew_804A06F0;
     pub use crate::tu::mnname::mnNameNew_804A0700;

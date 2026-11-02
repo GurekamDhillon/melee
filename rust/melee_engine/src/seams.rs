@@ -4,6 +4,7 @@
 //! turns out to carry game logic belongs in its TU instead.
 
 use melee_types::{OSAlarm, OSContext};
+use core::ffi::c_void;
 
 type AlarmHandler = unsafe extern "C" fn(*mut OSAlarm, *mut OSContext);
 
@@ -23,6 +24,37 @@ pub fn fire_alarm() {
 /// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`): the
 /// headless engine only stores them in `HSD_VIData`, so zeroed records stand in.
 static mut RMODES: [melee_types::GXRenderModeObj; 4] = unsafe { core::mem::zeroed() };
+
+/// The real render modes (libs/dolphin/src/dolphin/gx/GXFrameBuf.c `GXNtsc480Prog` / `GXNtsc480IntDf` /
+/// `GXNtsc480Int`, gm/gmmain_lib.c `gmMainLib_803D4A80`): SDK constants, not disc data. The retail mode loop
+/// (`Engine::boot_modes`) fills `RMODES` with them so `HSD_VISetConfigure` stores a real mode and the menu cameras'
+/// `setupNormalCamera` scales their viewports by fbWidth / viWidth (zeroed records give 0 / 0 = NaN viewports).
+/// The VS-only paths keep the zeroed records their goldens were recorded with.
+pub fn fill_render_modes() {
+    fn mode(tv: u32, xfb: u32, vf: [u8; 7]) -> melee_types::GXRenderModeObj {
+        let mut m: melee_types::GXRenderModeObj = unsafe { core::mem::zeroed() };
+        m.viTVmode = tv as _;
+        m.fbWidth = 640;
+        m.efbHeight = 480;
+        m.xfbHeight = 480;
+        m.viXOrigin = 40;
+        m.viYOrigin = 0;
+        m.viWidth = 640;
+        m.viHeight = 480;
+        m.xFBmode = xfb as _;
+        m.field_rendering = 0;
+        m.aa = 0;
+        m.sample_pattern = [[6, 6]; 12];
+        m.vfilter = vf;
+        m
+    }
+    unsafe {
+        RMODES[0] = mode(2, 0, [0, 0, 21, 22, 21, 0, 0]); // GXNtsc480Prog
+        RMODES[1] = mode(0, 1, [8, 8, 10, 12, 10, 8, 8]); // GXNtsc480IntDf
+        RMODES[2] = mode(0, 1, [0, 0, 21, 22, 21, 0, 0]); // GXNtsc480Int
+        RMODES[3] = mode(2, 0, [8, 8, 10, 12, 10, 8, 8]); // gmMainLib_803D4A80
+    }
+}
 
 unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     p
@@ -248,9 +280,129 @@ unsafe fn ar_addr(addr: u32, len: usize) -> *mut u8 {
 /// By-name `ext_fns!` callees (the `melee_modes::tu::ext_hook` form) that are real canonical functions, not "feature off":
 /// `ext_fallback` asks here first. Arguments and results are the hook's 64-bit words (floats as their bits).
 pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
+    // the retail scenes only: VS mode keeps the native character / stage select (the C build's MELEE_NATIVE_CSS=1),
+    // never the port's own kit screens
+    if name == "Frontend_NativeSelect" {
+        return Some(1);
+    }
+    if let Some(v) = ext_hand(name, args) {
+        return Some(v);
+    }
+    if let Some(v) = unsafe { crate::ext_dispatch::dispatch(name, args) } {
+        return Some(v);
+    }
+    if let Some(v) = crate::ext_dispatch::seam_off(name) {
+        log_stub(name, v);
+        return Some(v);
+    }
+    None
+}
+
+/// The callees the generated table cannot spell (C varargs, inlines of other calls, the engine's DVD); checked first.
+fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
     Some(match name {
+        // the variadic callees of the string-hook stubs (the table cannot spell a C `...`)
+        "lbArchive_LoadSymbols" => unsafe {
+            let rest: Vec<*mut c_void> = args[1..].iter().map(|&w| w as usize as *mut c_void).collect();
+            melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(args[0] as usize as *const core::ffi::c_char, &rest) as usize as u64
+        },
+        "lbArchive_LoadSections" => unsafe {
+            let rest: Vec<*mut c_void> = args[1..].iter().map(|&w| w as usize as *mut c_void).collect();
+            melee_runtime::tu::lbarchive::lbArchive_LoadSections(args[0] as usize as *mut melee_types::HSD_Archive, &rest);
+            0
+        },
+        "HSD_SisLib_803A6B98" => unsafe {
+            let s = c_format(args[3], &args[4..]);
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(args[0] as usize as *mut melee_types::HSD_Text, f32::from_bits(args[1] as u32), f32::from_bits(args[2] as u32), Some(&s)) as i64 as u64
+        },
+        "OSReport" => 0,
+        // gw_runtime.c gw_GxTex_OpenEnv: MELEE_MENUTEX names a replacement texture; unset (no mods) it is -1 and the
+        // CSS keeps the disc's art. The handle queries answer like the C does for a bad handle.
+        "GxTex_OpenEnv" | "GxTex_OpenUI" => -1i64 as u64,
+        "GxTex_Width" | "GxTex_Height" | "GxTex_ImageSize" | "GxTex_TlutSize" | "GxTex_TlutEntries" => 0,
+        "GxTex_Format" | "GxTex_TlutFormat" => -1i64 as u64,
+        "GxTex_Close" | "GxTex_CopyImage" | "GxTex_CopyTlut" => 0,
+        "HSD_SisLib_803A70A0" => unsafe {
+            let s = c_format(args[2], &args[3..]);
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64
+        },
+        // aobj.c HSD_ForeachAnim(obj, type, mask, func, arg_type, ...): the one variadic read by arg_type
+        // (AOBJ_ARG_*F: a double, *V: a pointer, *U: a u32, A / AO / AOT: none)
+        "HSD_ForeachAnim" => unsafe {
+            use melee_runtime::tu::aobj::CallbackArg;
+            let at = args[4] as u32;
+            let w = args.get(5).copied().unwrap_or(0);
+            let arg = match at {
+                1 | 5 | 9 => CallbackArg { f: f64::from_bits(w) as f32 },
+                2 | 6 | 10 => CallbackArg { v: w as usize as *mut c_void },
+                3 | 7 | 11 => CallbackArg { d: w as u32 },
+                _ => CallbackArg { d: 0 },
+            };
+            melee_runtime::tu::aobj::HSD_ForeachAnim(args[0] as usize as *mut c_void, args[1] as _, args[2] as _, args[3] as usize as *mut c_void, at as _, arg);
+            0
+        },
+        "DVDConvertPathToEntrynum" => crate::dvd::DVDConvertPathToEntrynum(args[0] as usize as *const core::ffi::c_char) as i64 as u64,
+        // baselib/jobj.c HSD_JObjReqAnim: HSD_JObjReqAnimByFlags(jobj, 0x7FF, frame)
+        "HSD_JObjReqAnim" => unsafe {
+            melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimByFlags(args[0] as usize as *mut melee_types::HSD_JObj, 0x7FF, f32::from_bits(args[1] as u32));
+            0
+        },
+        "HSD_JObjRemoveAll" => unsafe { melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(args[0] as usize as *mut melee_types::HSD_JObj); 0 },
+        // lb_80011E24(root, out, idx, ..., -1): the variadic index list
+        "lb_80011E24" => unsafe {
+            let idx: Vec<i32> = args[2..].iter().map(|&w| w as i32).collect();
+            melee_runtime::tu::lbspdisplay::lb_80011E24(args[0] as usize as *mut melee_types::HSD_JObj, args[1] as usize as *mut *mut melee_types::HSD_JObj, &idx) as i64 as u64
+        },
+        "fabsf" => f32::from_bits(args[0] as u32).abs().to_bits() as u64,
         "__frsqrte" => melee_runtime::tu::gekko_fp::__frsqrte(f64::from_bits(args[0])).to_bits(),
         "__fres" => melee_runtime::tu::gekko_fp::__fres(f64::from_bits(args[0])).to_bits(),
         _ => return None,
     })
+}
+
+/// A C `printf` of `fmt` (a NUL-terminated guest string) with its variadic words: %s %d %i %u %x %X %c %%, widths kept.
+pub unsafe fn c_format(fmt: u64, va: &[u64]) -> String {
+    let cstr = |p: u64| if p == 0 { String::new() } else { unsafe { std::ffi::CStr::from_ptr(p as usize as *const core::ffi::c_char) }.to_string_lossy().into_owned() };
+    let f = cstr(fmt);
+    let mut out = String::new();
+    let mut it = f.chars().peekable();
+    let mut k = 0;
+    while let Some(c) = it.next() {
+        if c != '%' { out.push(c); continue; }
+        let mut spec = String::new();
+        while let Some(&d) = it.peek() { if d.is_ascii_digit() || d == '-' || d == '.' || d == 'l' { spec.push(d); it.next(); } else { break; } }
+        let width: usize = spec.trim_start_matches('-').trim_start_matches('0').split('.').next().unwrap_or("").trim_end_matches('l').parse().unwrap_or(0);
+        let zero = spec.starts_with('0');
+        let w = va.get(k).copied().unwrap_or(0);
+        let body = match it.next() {
+            Some('%') => { out.push('%'); continue; }
+            Some('s') => { k += 1; cstr(w) }
+            Some('d') | Some('i') => { k += 1; (w as i32).to_string() }
+            Some('u') => { k += 1; (w as u32).to_string() }
+            Some('x') => { k += 1; format!("{:x}", w as u32) }
+            Some('X') => { k += 1; format!("{:X}", w as u32) }
+            Some('c') => { k += 1; ((w as u8) as char).to_string() }
+            Some(o) => { k += 1; o.to_string() }
+            None => break,
+        };
+        if body.len() < width { out.push_str(&(if zero { "0" } else { " " }).repeat(width - body.len())); }
+        out.push_str(&body);
+    }
+    out
+}
+
+/// `MELEE_LOG_STUBS=1`: the first call of each host seam answered with its "off" value through the by-name table
+/// (`engine: stub NAME -> VALUE`), so a run lists which ones a scene actually reached.
+fn log_stub(name: &str, v: u64) {
+    use std::sync::{Mutex, OnceLock};
+    static ON: OnceLock<bool> = OnceLock::new();
+    static SEEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    if !*ON.get_or_init(|| std::env::var_os("MELEE_LOG_STUBS").is_some_and(|v| v != "0")) {
+        return;
+    }
+    let mut seen = SEEN.lock().unwrap();
+    if !seen.iter().any(|s| s == name) {
+        seen.push(name.to_string());
+        eprintln!("engine: stub {name} -> {v:#x}");
+    }
 }

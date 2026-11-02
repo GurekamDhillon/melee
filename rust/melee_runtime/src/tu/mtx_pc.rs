@@ -129,6 +129,12 @@ pub mod raw {
         let r = mtx::vec_normalize(&v3(vec1));
         put(dst, r);
     }
+    /// `PSVECScale(src, dst, scale)` (pc/gameworld/mtx_pc.c:429): each component times `scale`, single precision.
+    pub unsafe fn PSVECScale(src: *mut Vec, dst: *mut Vec, scale: f32) {
+        (*dst).x = (*src).x * scale;
+        (*dst).y = (*src).y * scale;
+        (*dst).z = (*src).z * scale;
+    }
     /// `PSVECMag(v)`.
     pub unsafe fn PSVECMag(v: *mut Vec) -> f32 {
         mtx::vec_mag(&v3(v))

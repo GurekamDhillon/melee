@@ -37,6 +37,7 @@ mod gx_backend;
 mod ui;
 mod retail;
 mod play;
+mod retail_flow;
 mod audio;
 mod stage_anim;
 mod slpcheck;

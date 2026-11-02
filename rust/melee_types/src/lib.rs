@@ -14,3 +14,4 @@ pub mod neutral_hash;
 pub mod inline;
 /// Hand-written GcDecode for tag-selected unions (the rest is generated).
 pub mod decode;
+pub use decode::MnSelectStageDataTable;

@@ -2267,12 +2267,26 @@ pub mod ext {
                 }
             }
         };
+        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) -> !) => {
+            pub static mut $h: Option<unsafe extern "C" fn($($t),*) -> !> = None;
+            pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
+                match $h {
+                    Some(f) => f($($a),*),
+                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            }
+        };
         ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    // the engine's by-name table (ext_hook::fallback: the canonical port or the host seam), else the TODO stop
+                    None => {
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64($crate::tu::ext_hook::fallback(stringify!($name), &w))
+                    }
                 }
             }
         };
@@ -2464,6 +2478,6 @@ pub mod ext {
                     None => { unsafe { crate::tu::mncharsel::mnCharSel_802640A0(); } return; },
                 }
             }
-    pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 }

@@ -4,7 +4,7 @@
 #![allow(non_snake_case, unused_imports, unused_unsafe, unused_variables, clippy::all)]
 use core::ffi::{c_void, c_char, c_int, c_uint, c_uchar, c_ushort, c_short, c_schar, c_long, c_ulong, c_float, c_double};
 use melee_types::*;
-pub fn lbAudioAx_80024030__36458a(a0: i32) { melee_core::ct!("lbAudioAx_80024030__36458a"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
+pub fn lbAudioAx_80024030__36458a(a0: i32) { melee_core::ct!("lbAudioAx_80024030__36458a"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024030"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
 pub fn HSD_JObjSetMtxDirty__955390(a0: *mut HSD_JObj) { melee_core::ct!("HSD_JObjSetMtxDirty__955390"); unsafe { melee_world::tu::grinl::HSD_JObjSetMtxDirty(a0) } }
 pub fn HSD_SisLib_803A5ACC__27fcb1(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text { melee_core::ct!("HSD_SisLib_803A5ACC__27fcb1"); unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0, a1, a2, a3, a4, a5, a6) } }
 pub fn HSD_SisLib_803A6368__2e8f0d(a0: *mut HSD_Text, a1: i32) { melee_core::ct!("HSD_SisLib_803A6368__2e8f0d"); unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A6368(a0, a1) } }
@@ -152,11 +152,11 @@ pub fn gm_LoadAnnouncer__907f2e() { melee_core::ct!("gm_LoadAnnouncer__907f2e");
 pub fn gm_LoadRumbleEnabled__62a06a(a0: *mut StartMeleeData) { melee_core::ct!("gm_LoadRumbleEnabled__62a06a"); unsafe { crate::tu::gmvs::gm_LoadRumbleEnabled(a0) } }
 pub fn gm_SetNextGameModeStateId__031e98(a0: u8) { melee_core::ct!("gm_SetNextGameModeStateId__031e98"); unsafe { crate::tu::gm_1A3F::gm_SetNextGameModeStateId(a0) } }
 pub fn gm_SetupSubColors__761278(a0: *mut StartMeleeData) { melee_core::ct!("gm_SetupSubColors__761278"); unsafe { crate::tu::gm_1B03::gm_SetupSubColors(&mut *a0) } }
-pub fn lbAudioAx_80026E84__5dcc27(a0: u32) -> u64 { melee_core::ct!("lbAudioAx_80026E84__5dcc27"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026E84(a0 as _) } }
-pub fn lbAudioAx_80026EBC__431bc0(a0: u32) -> u64 { melee_core::ct!("lbAudioAx_80026EBC__431bc0"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026EBC(a0) } }
-pub fn lbAudioAx_80026F2C__c80d0b(a0: u32) { melee_core::ct!("lbAudioAx_80026F2C__c80d0b"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0) } }
-pub fn lbAudioAx_8002702C__208dc3(a0: u32, a1: u64) { melee_core::ct!("lbAudioAx_8002702C__208dc3"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) } }
-pub fn lbAudioAx_80027168__342616() { melee_core::ct!("lbAudioAx_80027168__342616"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168() } }
+pub fn lbAudioAx_80026E84__5dcc27(a0: u32) -> u64 { melee_core::ct!("lbAudioAx_80026E84__5dcc27"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80026E84"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026E84(a0 as _) } }
+pub fn lbAudioAx_80026EBC__431bc0(a0: u32) -> u64 { melee_core::ct!("lbAudioAx_80026EBC__431bc0"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80026EBC"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026EBC(a0) } }
+pub fn lbAudioAx_80026F2C__c80d0b(a0: u32) { melee_core::ct!("lbAudioAx_80026F2C__c80d0b"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80026F2C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80026F2C(a0) } }
+pub fn lbAudioAx_8002702C__208dc3(a0: u32, a1: u64) { melee_core::ct!("lbAudioAx_8002702C__208dc3"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_8002702C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002702C(a0, a1) } }
+pub fn lbAudioAx_80027168__342616() { melee_core::ct!("lbAudioAx_80027168__342616"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80027168"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027168() } }
 pub fn lbCardNew_AllocWorkArea__a2c203() { melee_core::ct!("lbCardNew_AllocWorkArea__a2c203"); unsafe { melee_runtime::tu::lbcardnew::lbCardNew_AllocWorkArea() } }
 pub fn lbDvd_80017740__447a8d(a0: i32, a1: i32, a2: i32, a3: i32, a4: u32, a5: i32, a6: i32, a7: u8, a8: i32) -> *mut c_void { melee_core::ct!("lbDvd_80017740__447a8d"); unsafe { melee_runtime::tu::lbdvd::lbDvd_80017740(a0, a1, a2, a3, a4, a5, a6, a7, a8) } }
 pub fn lbDvd_80018254__6be579() { melee_core::ct!("lbDvd_80018254__6be579"); unsafe { melee_runtime::tu::lbdvd::lbDvd_80018254() } }
@@ -214,8 +214,8 @@ pub fn gm_80166A98__8c24a8(a0: *mut MatchEnd, a1: u8, a2: i8, a3: u8, a4: i8, a5
 pub fn gm_801701A0__12d021() { melee_core::ct!("gm_801701A0__12d021"); unsafe { crate::tu::gm_16f1::gm_801701A0() } }
 pub fn gm_80177724__c19fac(a0: *mut ResultsMatchInfo) { melee_core::ct!("gm_80177724__c19fac"); unsafe { crate::gm_r7::gm_80177724(&mut *a0) } }
 pub fn gm_801A4B60__d469d9() { melee_core::ct!("gm_801A4B60__d469d9"); unsafe { crate::tu::gmscene::gm_801A4B60() } }
-pub fn lbAudioAx_800236DC__5d9f3e() -> i32 { melee_core::ct!("lbAudioAx_800236DC__5d9f3e"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() } }
-pub fn lbAudioAx_80027648__4f40c8() { melee_core::ct!("lbAudioAx_80027648__4f40c8"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648() } }
+pub fn lbAudioAx_800236DC__5d9f3e() -> i32 { melee_core::ct!("lbAudioAx_800236DC__5d9f3e"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_800236DC"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236DC() } }
+pub fn lbAudioAx_80027648__4f40c8() { melee_core::ct!("lbAudioAx_80027648__4f40c8"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80027648"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027648() } }
 pub fn un_802FFEE0__17ec63(a0: *mut c_void /* UnkSoundTestData0 */) { melee_core::ct!("un_802FFEE0__17ec63"); unsafe { melee_world::tu::soundtest::un_802FFEE0(a0 as _) } }
 pub fn un_802FFF2C__73c528(a0: *mut StartMeleeData) { melee_core::ct!("un_802FFF2C__73c528"); unsafe { melee_world::tu::soundtest::un_802FFF2C(a0) } }
 pub fn un_80301BA8__89da53(a0: *mut c_void /* UnkSoundTestData1 */) { melee_core::ct!("un_80301BA8__89da53"); unsafe { melee_world::tu::soundtest::un_80301BA8(a0 as _) } }
@@ -289,9 +289,9 @@ pub fn gm_SetupPlayerDefaults__e9a9ae(a0: *mut PlayerInitData) { melee_core::ct!
 pub fn gm_SetupRulesDefaults__e9563a(a0: *mut StartMeleeRules) { melee_core::ct!("gm_SetupRulesDefaults__e9563a"); unsafe { crate::tu::gm_1601::gm_SetupRulesDefaults(a0) } }
 pub fn ifStock_802FA2D0__60b4c4(a0: i32) { melee_core::ct!("ifStock_802FA2D0__60b4c4"); unsafe { melee_world::tu::ifstock::ifStock_802FA2D0(a0) } }
 pub fn itEvYoshiEgg_Spawn__b8d779(a0: *mut Vec) { melee_core::ct!("itEvYoshiEgg_Spawn__b8d779"); unsafe { melee_items::tu::itevyoshiegg::itEvYoshiEgg_Spawn(a0) } }
-pub fn lbAudioAx_8002438C__35c010(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_8002438C__35c010"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(a0) } }
-pub fn lbAudioAx_80028B6C__bb9f49() { melee_core::ct!("lbAudioAx_80028B6C__bb9f49"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80028B6C() } }
-pub fn lbAudioAx_80028B90__0093c2() { melee_core::ct!("lbAudioAx_80028B90__0093c2"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80028B90() } }
+pub fn lbAudioAx_8002438C__35c010(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_8002438C__35c010"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_8002438C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002438C(a0) } }
+pub fn lbAudioAx_80028B6C__bb9f49() { melee_core::ct!("lbAudioAx_80028B6C__bb9f49"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80028B6C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80028B6C() } }
+pub fn lbAudioAx_80028B90__0093c2() { melee_core::ct!("lbAudioAx_80028B90__0093c2"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80028B90"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80028B90() } }
 pub fn lbBgFlash_8002063C__95303c(a0: i32) { melee_core::ct!("lbBgFlash_8002063C__95303c"); unsafe { melee_runtime::tu::lbbgflash::lbBgFlash_8002063C(a0) } }
 pub fn lbBgFlash_80020688__4d10b5(a0: i32) { melee_core::ct!("lbBgFlash_80020688__4d10b5"); unsafe { melee_runtime::tu::lbbgflash::lbBgFlash_80020688(a0) } }
 pub fn lbBgFlash_SetFlashScale__f5c112(a0: f32) { melee_core::ct!("lbBgFlash_SetFlashScale__f5c112"); unsafe { crate::tu::lb_0219::lbBgFlash_SetFlashScale(a0) } }
@@ -354,7 +354,7 @@ pub fn fn_80171A88__4c9145() -> i32 { melee_core::ct!("fn_80171A88__4c9145"); un
 pub fn gm_801A36C0__4faf6f(a0: u8) -> u64 { melee_core::ct!("gm_801A36C0__4faf6f"); unsafe { crate::tu::gm_1A36::gm_801A36C0(a0) } }
 pub fn gm_GetButtonsTriggered__dca604(a0: u8) -> u64 { melee_core::ct!("gm_GetButtonsTriggered__dca604"); unsafe { crate::tu::gm_1A36::gm_GetButtonsTriggered(a0) } }
 pub fn grPushOn_80219204__ac5d9d(a0: i32, a1: *mut i32, a2: *mut i32) { melee_core::ct!("grPushOn_80219204__ac5d9d"); unsafe { melee_world::tu::grpushon::grPushOn_80219204(a0, a1, a2) } }
-pub fn lbAudioAx_80023F28__582fc2(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023F28__582fc2"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0) } }
+pub fn lbAudioAx_80023F28__582fc2(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023F28__582fc2"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023F28"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0) } }
 pub fn lbLang_IsSavedLanguageUS__90e41e() -> i32 { melee_core::ct!("lbLang_IsSavedLanguageUS__90e41e"); unsafe { (melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageUS()) as _ } }
 pub fn lb_8000B1CC__69851d(a0: *mut HSD_JObj, a1: *mut Vec3, a2: *mut Vec3) { melee_core::ct!("lb_8000B1CC__69851d"); unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(a0, a1 as _, a2 as _) } }
 pub fn lb_80011AC4__8bc38c(a0: *mut *mut LightList) -> *mut HSD_LObj { melee_core::ct!("lb_80011AC4__8bc38c"); unsafe { melee_runtime::tu::lbspdisplay::lb_80011AC4(a0) } }
@@ -377,7 +377,7 @@ pub fn gm_8016895C__f7ee90(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32
 pub fn gm_801A4BA8__1c9c2c() -> u32 { melee_core::ct!("gm_801A4BA8__1c9c2c"); unsafe { crate::tu::gmscene::gm_801A4BA8() } }
 pub fn gm_801BEFB0__a895fb() -> CharacterKind { melee_core::ct!("gm_801BEFB0__a895fb"); unsafe { crate::tu::gmgover::gm_801BEFB0() } }
 pub fn gm_GetCurrentSceneEnterData__3de8a4() -> *mut c_void { melee_core::ct!("gm_GetCurrentSceneEnterData__3de8a4"); unsafe { crate::tu::gmscene::gm_GetCurrentSceneEnterData() } }
-pub fn lbAudioAx_800237A8__95b1fa(a0: i32, a1: i32, a2: i32) -> i32 { melee_core::ct!("lbAudioAx_800237A8__95b1fa"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) } }
+pub fn lbAudioAx_800237A8__95b1fa(a0: i32, a1: i32, a2: i32) -> i32 { melee_core::ct!("lbAudioAx_800237A8__95b1fa"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_800237A8"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0, a1, a2) } }
 pub fn lb_8000C1C0__9b8c49(a0: *mut HSD_JObj, a1: *mut HSD_JObj) { melee_core::ct!("lb_8000C1C0__9b8c49"); unsafe { melee_runtime::tu::lb_00B0::lb_8000C1C0(a0, a1) } }
 pub fn lb_8000C290__3ed82e(a0: *mut HSD_JObj, a1: *mut HSD_JObj) { melee_core::ct!("lb_8000C290__3ed82e"); unsafe { melee_runtime::tu::lb_00B0::lb_8000C290(a0, a1) } }
 pub fn lb_80013B14__a63cd0(a0: *mut HSD_CameraDescPerspective) -> *mut HSD_CObj { melee_core::ct!("lb_80013B14__a63cd0"); unsafe { melee_runtime::tu::lbspdisplay::lb_80013B14(a0) } }
@@ -420,7 +420,7 @@ pub fn Player_SetPlayerId__dba656(a0: i32, a1: i32) { melee_core::ct!("Player_Se
 pub fn Player_SetScale__3c042c(a0: i32, a1: f32) { melee_core::ct!("Player_SetScale__3c042c"); unsafe { melee_fighter::tu::player::Player_SetScale(a0, a1) } }
 pub fn Toy_803102D0__0dcc17() { melee_core::ct!("Toy_803102D0__0dcc17"); unsafe { melee_items::tu::toy::Toy_803102D0() } }
 pub fn Toy_803124BC__320358() { melee_core::ct!("Toy_803124BC__320358"); unsafe { melee_items::tu::toy::Toy_803124BC() } }
-pub fn lbAudioAx_80023694__e3b7af() -> i32 { melee_core::ct!("lbAudioAx_80023694__e3b7af"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() } }
+pub fn lbAudioAx_80023694__e3b7af() -> i32 { melee_core::ct!("lbAudioAx_80023694__e3b7af"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023694"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023694() } }
 pub fn lb_8000BA0C__a558e3(a0: *mut HSD_JObj, a1: f32) { melee_core::ct!("lb_8000BA0C__a558e3"); unsafe { melee_runtime::tu::lb_00B0::lb_8000BA0C(a0, a1) } }
 pub fn mn_8022F0F0__97c62c(a0: i32) { melee_core::ct!("mn_8022F0F0__97c62c"); unsafe { crate::tu::mn_22EC::mn_8022F0F0(a0) } }
 pub fn HSD_GObj_80390EB8__5ed1a9(a0: i32) -> u32 { melee_core::ct!("HSD_GObj_80390EB8__5ed1a9"); unsafe { melee_runtime::tu::gobj::HSD_GObj_80390EB8(a0) } }
@@ -632,7 +632,7 @@ pub fn gm_801623FC__a1a1bf(a0: i32) { melee_core::ct!("gm_801623FC__a1a1bf"); un
 pub fn gm_GetCurrentSceneIndex__5f49a4() -> u8 { melee_core::ct!("gm_GetCurrentSceneIndex__5f49a4"); unsafe { crate::tu::gm_1A3F::gm_GetCurrentSceneIndex() } }
 pub fn gm_SetupHumanPlayer__13678a(a0: *mut PlayerInitData, a1: u8, a2: u8, a3: u8, a4: u8) { melee_core::ct!("gm_SetupHumanPlayer__13678a"); unsafe { crate::gm_r4::gm_SetupHumanPlayer(&mut *a0, a1, a2, a3, a4) } }
 pub fn grPushOn_80219230__68fe3c(a0: i32) -> i32 { melee_core::ct!("grPushOn_80219230__68fe3c"); unsafe { melee_world::tu::grpushon::grPushOn_80219230(a0) } }
-pub fn lbAudioAx_800237A8__04460b(a0: enum_t, a1: i32, a2: i32) -> i32 { melee_core::ct!("lbAudioAx_800237A8__04460b"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1, a2) } }
+pub fn lbAudioAx_800237A8__04460b(a0: enum_t, a1: i32, a2: i32) -> i32 { melee_core::ct!("lbAudioAx_800237A8__04460b"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_800237A8"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1, a2) } }
 pub fn lbBgFlash_800205F0__8f9470(a0: i32) { melee_core::ct!("lbBgFlash_800205F0__8f9470"); unsafe { melee_runtime::tu::lbbgflash::lbBgFlash_800205F0(a0) } }
 pub fn lbCardGame_SaveChanges__0fc9e6() { melee_core::ct!("lbCardGame_SaveChanges__0fc9e6"); unsafe { melee_runtime::tu::lbcardgame::lbCardGame_SaveChanges() } }
 pub fn lbTime_8000AF74__3857e8(a0: u32, a1: i32) -> u32 { melee_core::ct!("lbTime_8000AF74__3857e8"); unsafe { crate::lb::lbTime_8000AF74(a0, a1) } }
@@ -648,8 +648,8 @@ pub fn HSD_PadRumbleRemove__adbf79(a0: u8) { melee_core::ct!("HSD_PadRumbleRemov
 pub fn HSD_Init_803755A8__49528d() { melee_core::ct!("HSD_Init_803755A8__49528d"); unsafe { melee_runtime::tu::initialize::HSD_Init_803755A8() } }
 pub fn HSD_Rumble_80378524__8fd3f6(a0: i32) { melee_core::ct!("HSD_Rumble_80378524__8fd3f6"); unsafe { melee_runtime::tu::rumble::HSD_Rumble_80378524(a0) } }
 pub fn HSD_SisLib_803A84BC__b2aa0b(a0: *mut HSD_GObj, a1: *mut HSD_Text) { melee_core::ct!("HSD_SisLib_803A84BC__b2aa0b"); unsafe { melee_runtime::tu::hsd_3A76::HSD_SisLib_803A84BC(a0, a1 as _) } }
-pub fn lbAudioAx_80024F08__08bb8a() { melee_core::ct!("lbAudioAx_80024F08__08bb8a"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024F08() } }
-pub fn lbAudioAx_80024F6C__7ce9bf() { melee_core::ct!("lbAudioAx_80024F6C__7ce9bf"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024F6C() } }
+pub fn lbAudioAx_80024F08__08bb8a() { melee_core::ct!("lbAudioAx_80024F08__08bb8a"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024F08"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024F08() } }
+pub fn lbAudioAx_80024F6C__7ce9bf() { melee_core::ct!("lbAudioAx_80024F6C__7ce9bf"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024F6C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024F6C() } }
 pub fn lbLang_IsSavedLanguageJP__e2b095() -> i32 { melee_core::ct!("lbLang_IsSavedLanguageJP__e2b095"); unsafe { (melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageJP()) as _ } }
 pub fn HSD_PadGetRawQueueCount__b9c435() -> u8 { melee_core::ct!("HSD_PadGetRawQueueCount__b9c435"); unsafe { melee_runtime::tu::controller::HSD_PadGetRawQueueCount() } }
 pub fn HSD_PadGetResetSwitch__f7c5ee() -> i32 { melee_core::ct!("HSD_PadGetResetSwitch__f7c5ee"); unsafe { melee_runtime::tu::controller::HSD_PadGetResetSwitch() } }
@@ -657,7 +657,7 @@ pub fn HSD_PadRenewCopyStatus__300d10() { melee_core::ct!("HSD_PadRenewCopyStatu
 pub fn HSD_PadRenewGameStatus__5366e1() { melee_core::ct!("HSD_PadRenewGameStatus__5366e1"); unsafe { melee_runtime::tu::controller::HSD_PadRenewGameStatus() } }
 pub fn HSD_PadRenewMasterStatus__03a172() { melee_core::ct!("HSD_PadRenewMasterStatus__03a172"); unsafe { melee_runtime::tu::controller::HSD_PadRenewMasterStatus() } }
 pub fn HSD_PadRenewRawStatus__ba4cff(a0: i32) { melee_core::ct!("HSD_PadRenewRawStatus__ba4cff"); unsafe { melee_runtime::tu::controller::HSD_PadRenewRawStatus(a0 != 0) } }
-pub fn lbAudioAx_80027DBC__2be6f4() { melee_core::ct!("lbAudioAx_80027DBC__2be6f4"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DBC() } }
+pub fn lbAudioAx_80027DBC__2be6f4() { melee_core::ct!("lbAudioAx_80027DBC__2be6f4"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80027DBC"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027DBC() } }
 pub fn lbCardNew_CompleteNextTask__92582d() -> i32 { melee_core::ct!("lbCardNew_CompleteNextTask__92582d"); unsafe { melee_runtime::tu::lbcardnew::lbCardNew_CompleteNextTask() } }
 pub fn lbSnap_8001D2BC__4abedd() { melee_core::ct!("lbSnap_8001D2BC__4abedd"); unsafe { melee_runtime::tu::lbsnap::lbSnap_8001D2BC() } }
 pub fn lb_800192A8__02b4e0(a0: Option<unsafe extern "C" fn()>) { melee_core::ct!("lb_800192A8__02b4e0"); unsafe { crate::tu::lb_0192::lb_800192A8(a0) } }
@@ -736,8 +736,8 @@ pub fn gm_GetCruelHighscore__d78ce6(a0: u8) -> i32 { melee_core::ct!("gm_GetCrue
 pub fn gm_GetCruelTotalHighscore__ef30e1() -> i32 { melee_core::ct!("gm_GetCruelTotalHighscore__ef30e1"); unsafe { crate::tu::gm_1601::gm_GetCruelTotalHighscore() } }
 pub fn gm_GetEndlessHighscore__1fa523(a0: u8) -> i32 { melee_core::ct!("gm_GetEndlessHighscore__1fa523"); unsafe { crate::tu::gm_1601::gm_GetEndlessHighscore(a0) } }
 pub fn gm_GetEndlessTotalHighscore__6d2632() -> i32 { melee_core::ct!("gm_GetEndlessTotalHighscore__6d2632"); unsafe { crate::tu::gm_1601::gm_GetEndlessTotalHighscore() } }
-pub fn lbAudioAx_80023870__b1a847(a0: i32, a1: i32, a2: i32, a3: i32) -> i32 { melee_core::ct!("lbAudioAx_80023870__b1a847"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023870(a0, a1, a2, a3) } }
-pub fn lbAudioAx_8002411C__198044(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_8002411C__198044"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002411C(a0) } }
+pub fn lbAudioAx_80023870__b1a847(a0: i32, a1: i32, a2: i32, a3: i32) -> i32 { melee_core::ct!("lbAudioAx_80023870__b1a847"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023870"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023870(a0, a1, a2, a3) } }
+pub fn lbAudioAx_8002411C__198044(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_8002411C__198044"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_8002411C"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002411C(a0) } }
 pub fn lb_800145F4__895731() { melee_core::ct!("lb_800145F4__895731"); unsafe { crate::tu::lb_013B::lb_800145F4() } }
 pub fn mnNameNew_EnterFromMnCharSel__8b7caf(a0: *mut HSD_Archive, a1: i32) { melee_core::ct!("mnNameNew_EnterFromMnCharSel__8b7caf"); unsafe { crate::tu::mnnamenew::mnNameNew_EnterFromMnCharSel(a0, a1) } }
 pub fn mn_8022BA1C__3b39ba(a0: *mut HSD_GObj) { melee_core::ct!("mn_8022BA1C__3b39ba"); unsafe { crate::tu::mnmain::mn_8022BA1C(a0) } }
@@ -767,7 +767,7 @@ pub fn gm_GetPowerTime__6cb0de() -> *mut i32 { melee_core::ct!("gm_GetPowerTime_
 pub fn mnDiagram_GetFighterTotalFalls__925ac9(a0: u8) -> i32 { melee_core::ct!("mnDiagram_GetFighterTotalFalls__925ac9"); unsafe { crate::tu::mndiagram::mnDiagram_GetFighterTotalFalls(a0) } }
 pub fn mnDiagram_GetFighterTotalKOs__14ab9d(a0: u8) -> i32 { melee_core::ct!("mnDiagram_GetFighterTotalKOs__14ab9d"); unsafe { crate::tu::mndiagram::mnDiagram_GetFighterTotalKOs(a0) } }
 pub fn mn_8022ED6C__f73cae(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 { melee_core::ct!("mn_8022ED6C__f73cae"); unsafe { crate::tu::mn_22EC::mn_8022ED6C(a0, a1) } }
-pub fn lbAudioAx_80027AB0__27430d(a0: i32) { melee_core::ct!("lbAudioAx_80027AB0__27430d"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027AB0(a0) } }
+pub fn lbAudioAx_80027AB0__27430d(a0: i32) { melee_core::ct!("lbAudioAx_80027AB0__27430d"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80027AB0"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80027AB0(a0) } }
 pub fn mn_8022EC18__bee2c1(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 { melee_core::ct!("mn_8022EC18__bee2c1"); unsafe { crate::tu::mn_22EC::mn_8022EC18(a0, a1, a2) } }
 pub fn mn_8022EE84__fdce2b(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings, a2: HSD_TypeMask) -> f32 { melee_core::ct!("mn_8022EE84__fdce2b"); unsafe { crate::tu::mn_22EC::mn_8022EE84(a0, a1, a2) } }
 pub fn mn_8022EFD8__c1f371(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> f32 { melee_core::ct!("mn_8022EFD8__c1f371"); unsafe { crate::tu::mn_22EC::mn_8022EFD8(a0, a1) } }
@@ -830,7 +830,7 @@ pub fn mnDiagram_Init__3b569c(a0: u8, a1: u8) { melee_core::ct!("mnDiagram_Init_
 pub fn mnDiagram3_Init__319022(a0: *mut c_void) { melee_core::ct!("mnDiagram3_Init__319022"); unsafe { crate::tu::mndiagram3::mnDiagram3_Init(a0) } }
 pub fn GetNameText__db8135(a0: u8) -> *mut i8 { melee_core::ct!("GetNameText__db8135"); unsafe { (crate::tu::mnname::GetNameText(a0 as _)) as _ } }
 pub fn HSD_GObj_JObjCallback__b37ff8(a0: *mut HSD_GObj, a1: ::core::ffi::c_int) { melee_core::ct!("HSD_GObj_JObjCallback__b37ff8"); unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(a0, a1) } }
-pub fn lbAudioAx_80024030__52c54d(a0: ::core::ffi::c_int) { melee_core::ct!("lbAudioAx_80024030__52c54d"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
+pub fn lbAudioAx_80024030__52c54d(a0: ::core::ffi::c_int) { melee_core::ct!("lbAudioAx_80024030__52c54d"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024030"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024030(a0) } }
 pub fn mn_8022ED6C__a278c3(a0: *mut HSD_JObj, a1: *mut AnimLoopSettings) -> ::core::ffi::c_float { melee_core::ct!("mn_8022ED6C__a278c3"); unsafe { crate::tu::mn_22EC::mn_8022ED6C(a0, a1) } }
 pub fn HSD_SisLib_803A6754__6086ec(a0: ::core::ffi::c_int, a1: ::core::ffi::c_int) -> *mut HSD_Text { melee_core::ct!("HSD_SisLib_803A6754__6086ec"); unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0, a1) } }
 pub fn HSD_SisLib_803A5ACC__97831a(a0: ::core::ffi::c_int, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text { melee_core::ct!("HSD_SisLib_803A5ACC__97831a"); unsafe { melee_runtime::tu::sislib::HSD_SisLib_803A5ACC(a0, a1, a2, a3, a4, a5, a6) } }
@@ -864,7 +864,7 @@ pub fn HSD_CObjSetNear__29587b(a0: *mut HSD_CObj, a1: f32) { melee_core::ct!("HS
 pub fn HSD_CObjSetOrtho__9b799b(a0: *mut HSD_CObj, a1: f32, a2: f32, a3: f32, a4: f32) { melee_core::ct!("HSD_CObjSetOrtho__9b799b"); unsafe { melee_runtime::tu::cobj::HSD_CObjSetOrtho(a0, a1, a2, a3, a4) } }
 pub fn HSD_CObjSetViewport__55aa72(a0: *mut HSD_CObj, a1: *mut _HSD_RectS16) { melee_core::ct!("HSD_CObjSetViewport__55aa72"); unsafe { melee_runtime::tu::cobj::HSD_CObjSetViewport(a0, a1 as _) } }
 pub fn gm_801ACC94__d71db4() -> *mut c_void { melee_core::ct!("gm_801ACC94__d71db4"); unsafe { crate::tu::gmhowto::gm_801ACC94() } }
-pub fn lbAudioAx_80024E50__461466(a0: i32) { melee_core::ct!("lbAudioAx_80024E50__461466"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50(a0 != 0) } }
+pub fn lbAudioAx_80024E50__461466(a0: i32) { melee_core::ct!("lbAudioAx_80024E50__461466"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024E50"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50(a0 != 0) } }
 pub fn lbMthp_8001F410__492048(a0: *const i8, a1: *mut u32, a2: *mut c_void, a3: u32, a4: i32) { melee_core::ct!("lbMthp_8001F410__492048"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F410(a0 as _, a1, a2, a3 as _, a4) } }
 pub fn lbMthp_8001F578__cdae63() { melee_core::ct!("lbMthp_8001F578__cdae63"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F578() } }
 pub fn lbMthp_8001F604__d79d45() -> i32 { melee_core::ct!("lbMthp_8001F604__d79d45"); unsafe { melee_runtime::tu::lbmthp::lbMthp_8001F604() } }
@@ -900,14 +900,14 @@ pub fn lbSnap_8001D7B0__62c6a7(a0: i32, a1: i32, a2: i32) -> i32 { melee_core::c
 pub fn lbSnap_8001DE8C__fb044e(a0: *mut c_void) -> i32 { melee_core::ct!("lbSnap_8001DE8C__fb044e"); unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DE8C(a0) } }
 pub fn lbSnap_8001DF6C__d1d2db(a0: i32) -> i32 { melee_core::ct!("lbSnap_8001DF6C__d1d2db"); unsafe { melee_runtime::tu::lbsnap::lbSnap_8001DF6C(a0) } }
 pub fn lbSnap_8001E058__14a0b6(a0: i32, a1: i32) -> i32 { melee_core::ct!("lbSnap_8001E058__14a0b6"); unsafe { melee_runtime::tu::lbsnap::lbSnap_8001E058(a0, a1) } }
-pub fn lbAudioAx_80024BD0__eb4f5a() -> i32 { melee_core::ct!("lbAudioAx_80024BD0__eb4f5a"); unsafe { (melee_runtime::tu::lbaudio_ax::lbAudioAx_80024BD0()) as _ } }
-pub fn lbAudioAx_80024C08__87c4fa(a0: enum_t) -> i32 { melee_core::ct!("lbAudioAx_80024C08__87c4fa"); unsafe { (melee_runtime::tu::lbaudio_ax::lbAudioAx_80024C08(a0 as _)) as _ } }
-pub fn lbAudioAx_80023090__11c684(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023090__11c684"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023090(a0) } }
-pub fn lbAudioAx_80023968__138b6f(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023968__138b6f"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023968(a0) } }
-pub fn lbAudioAx_80023A44__d67545(a0: i32, a1: i32) -> i32 { melee_core::ct!("lbAudioAx_80023A44__d67545"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023A44(a0, a1) } }
-pub fn lbAudioAx_80023B24__808380(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023B24__808380"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023B24(a0) } }
-pub fn lbAudioAx_800245F4__23a8b4(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_800245F4__23a8b4"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800245F4(a0) } }
-pub fn lbAudioAx_80024614__7a0894(a0: i32) { melee_core::ct!("lbAudioAx_80024614__7a0894"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024614(a0) } }
+pub fn lbAudioAx_80024BD0__eb4f5a() -> i32 { melee_core::ct!("lbAudioAx_80024BD0__eb4f5a"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024BD0"); return unsafe { core::mem::zeroed() }; } unsafe { (melee_runtime::tu::lbaudio_ax::lbAudioAx_80024BD0()) as _ } }
+pub fn lbAudioAx_80024C08__87c4fa(a0: enum_t) -> i32 { melee_core::ct!("lbAudioAx_80024C08__87c4fa"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024C08"); return unsafe { core::mem::zeroed() }; } unsafe { (melee_runtime::tu::lbaudio_ax::lbAudioAx_80024C08(a0 as _)) as _ } }
+pub fn lbAudioAx_80023090__11c684(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023090__11c684"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023090"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023090(a0) } }
+pub fn lbAudioAx_80023968__138b6f(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023968__138b6f"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023968"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023968(a0) } }
+pub fn lbAudioAx_80023A44__d67545(a0: i32, a1: i32) -> i32 { melee_core::ct!("lbAudioAx_80023A44__d67545"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023A44"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023A44(a0, a1) } }
+pub fn lbAudioAx_80023B24__808380(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_80023B24__808380"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023B24"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023B24(a0) } }
+pub fn lbAudioAx_800245F4__23a8b4(a0: i32) -> i32 { melee_core::ct!("lbAudioAx_800245F4__23a8b4"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_800245F4"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800245F4(a0) } }
+pub fn lbAudioAx_80024614__7a0894(a0: i32) { melee_core::ct!("lbAudioAx_80024614__7a0894"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024614"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024614(a0) } }
 pub fn mn_8022EAE0__7ca08a(a0: *mut HSD_GObj) { melee_core::ct!("mn_8022EAE0__7ca08a"); unsafe { crate::tu::mnmain::mn_8022EAE0(a0) } }
 pub fn HSD_AObjStopAnim__99638d(a0: *mut HSD_AObj, a1: *mut c_void, a2: HSD_ObjUpdateFunc) { melee_core::ct!("HSD_AObjStopAnim__99638d"); unsafe { melee_runtime::tu::aobj::HSD_AObjStopAnim(a0, a1, a2) } }
 pub fn lb_8000C2F8__a15864(a0: *mut HSD_JObj, a1: *mut HSD_JObj) { melee_core::ct!("lb_8000C2F8__a15864"); unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(a0, a1) } }
@@ -1012,9 +1012,9 @@ pub fn it_8027C56C__612d2a(a0: * mut Item_GObj, a1: :: core :: ffi :: c_float) {
 pub fn it_802EA9FC__e2ed70(a0: * mut Vec, a1: s32) -> * mut Item_GObj { melee_core::ct!("it_802EA9FC__e2ed70"); unsafe { melee_items::tu::itleadead::it_802EA9FC(a0 as _, a1) } }
 pub fn it_802DC4BC__cbef47(a0: s32, a1: * mut Vec, a2: s32) -> * mut Item_GObj { melee_core::ct!("it_802DC4BC__cbef47"); unsafe { melee_items::tu::itlikelike::it_802DC4BC(a0, a1 as _, a2) } }
 pub fn it_802DD7F0__ea09a6(a0: s32, a1: * mut Vec, a2: * mut Vec, a3: s32) -> * mut Item_GObj { melee_core::ct!("it_802DD7F0__ea09a6"); unsafe { melee_items::tu::itnokonoko::it_802DD7F0(a0, a1 as _, a2 as _, a3) } }
-pub fn lbAudioAx_800237A8__3c5520(a0: enum_t, a1: :: core :: ffi :: c_int, a2: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_800237A8__3c5520"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1, a2) } }
-pub fn lbAudioAx_80023F28__469606(a0: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_80023F28__469606"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0) } }
-pub fn lbAudioAx_80024B94__675169(a0: :: core :: ffi :: c_int, a1: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_80024B94__675169"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B94(a0, a1) } }
+pub fn lbAudioAx_800237A8__3c5520(a0: enum_t, a1: :: core :: ffi :: c_int, a2: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_800237A8__3c5520"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_800237A8"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800237A8(a0 as _, a1, a2) } }
+pub fn lbAudioAx_80023F28__469606(a0: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_80023F28__469606"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80023F28"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023F28(a0) } }
+pub fn lbAudioAx_80024B94__675169(a0: :: core :: ffi :: c_int, a1: :: core :: ffi :: c_int) -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_80024B94__675169"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_80024B94"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024B94(a0, a1) } }
 pub fn mpColl_80043680__d5fb54(a0: * mut CollData, a1: * mut Vec) { melee_core::ct!("mpColl_80043680__d5fb54"); unsafe { melee_world::tu::mpcoll::mpColl_80043680(a0, a1) } }
 pub fn mpCollSetFacingDir__1c7fdb(a0: * mut CollData, a1: :: core :: ffi :: c_int) { melee_core::ct!("mpCollSetFacingDir__1c7fdb"); unsafe { melee_world::tu::mpcoll::mpCollSetFacingDir(a0, a1) } }
 pub fn HSD_Free__8fde16(a0: * mut :: core :: ffi :: c_void) { melee_core::ct!("HSD_Free__8fde16"); unsafe { melee_runtime::tu::memory::HSD_Free(a0) } }
@@ -1050,7 +1050,7 @@ pub fn gmVs_SetEndHold__fb59b4(a0: :: core :: ffi :: c_int) { melee_core::ct!("g
 pub fn gmVs_GetHeldOutcome__44145d() -> :: core :: ffi :: c_int { melee_core::ct!("gmVs_GetHeldOutcome__44145d"); unsafe { crate::tu::gmvs::gmVs_GetHeldOutcome() } }
 pub fn lbHeap_StageSlotTryAlloc__9c8eee(a0: :: core :: ffi :: c_uint) -> * mut :: core :: ffi :: c_void { melee_core::ct!("lbHeap_StageSlotTryAlloc__9c8eee"); unsafe { melee_runtime::tu::lbheap::lbHeap_StageSlotTryAlloc(a0) } }
 pub fn lbHeap_StageSlotDump__42ec51(a0: :: core :: ffi :: c_int) { melee_core::ct!("lbHeap_StageSlotDump__42ec51"); unsafe { melee_runtime::tu::lbheap::lbHeap_StageSlotDump(a0) } }
-pub fn lbAudioAx_StageSlotMusic__0aff91() -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_StageSlotMusic__0aff91"); unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_StageSlotMusic() } }
+pub fn lbAudioAx_StageSlotMusic__0aff91() -> :: core :: ffi :: c_int { melee_core::ct!("lbAudioAx_StageSlotMusic__0aff91"); if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_StageSlotMusic"); return unsafe { core::mem::zeroed() }; } unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_StageSlotMusic() } }
 pub fn grAnime_801C7FF8__b10a63(a0: * mut HSD_GObj, a1: :: core :: ffi :: c_int, a2: :: core :: ffi :: c_int, a3: :: core :: ffi :: c_int, a4: :: core :: ffi :: c_float, a5: :: core :: ffi :: c_float) { melee_core::ct!("grAnime_801C7FF8__b10a63"); unsafe { melee_world::tu::granime::grAnime_801C7FF8(a0 as _, a1, a2, a3, a4, a5) } }
 pub fn grAnime_801C8138__a8596a(a0: * mut HSD_GObj, a1: enum_t, a2: :: core :: ffi :: c_int) { melee_core::ct!("grAnime_801C8138__a8596a"); unsafe { melee_world::tu::granime::grAnime_801C8138(a0, a1, a2) } }
 pub fn grStory_801E3030__27bc16() { melee_core::ct!("grStory_801E3030__27bc16"); unsafe { melee_world::tu::grstory::grStory_801E3030() } }

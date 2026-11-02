@@ -1473,7 +1473,7 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
         } else {
             Box::new(std::io::BufWriter::new(std::fs::File::create(&v).ok()?))
         };
-        let _ = writeln!(w, "frame,draws,textures,configs,config_changes,verts,batches,copies");
+        let _ = writeln!(w, "frame,draws,textures,configs,config_changes,verts,batches,copies,missing_tex,direct_pos");
         Some(std::sync::Mutex::new(w))
     });
     let Some(out) = out else { return };
@@ -1486,9 +1486,22 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
     // uniforms, textures, matrix slot, viewport and scissor), the Source Port's per-display-list primitive merge.
     let mut batches = 0u32;
     let mut copies = 0u32;
+    let mut missing = 0u32;
+    let mut direct = 0u32;
     let mut prev_d: Option<&DrawCmd> = None;
     let mut last_copy = 0usize;
+    let dump = std::env::var("MELEE_GX_DRAWDUMP").ok().and_then(|v| v.parse::<u64>().ok()) == Some(frame);
     for (di, d) in draws.iter().enumerate() {
+        if d.copy.is_none() && d.config.shader.attrs[GX_VA_POS as usize].attr_type == GX_DIRECT as u8 {
+            direct += 1;
+        }
+        if dump {
+            let f = |o: usize| if d.verts.len() >= o + 4 { f32::from_be_bytes([d.verts[o], d.verts[o + 1], d.verts[o + 2], d.verts[o + 3]]) } else { f32::NAN };
+            eprintln!("DD {di} prim {:#x} n {} fmt {} vlen {} p0 {:.1} {:.1} {:.1} tex {:#x} t0 {}x{}f{} blend {} {} {} z {} {} acmp {:?} stages {} vp {:?} pnmtx {} attrs {:?}", d.prim, d.vtx_count, d.fmt, d.verts.len(), f(0), f(4), f(8), d.info.sampled_textures, d.textures[0].width(), d.textures[0].height(), d.textures[0].format(), d.config.blend_mode, d.config.blend_fac_src, d.config.blend_fac_dst, d.config.depth_compare, d.config.depth_func, d.config.shader.alpha_compare, d.config.shader.tev_stage_count, (d.render_viewport.left, d.render_viewport.width), d.current_pn_mtx, d.config.shader.attrs.iter().map(|a| a.attr_type).collect::<Vec<_>>());
+        }
+        if (d.prim == 0xA8 || d.prim == 0xB0 || d.prim == 0xB8) && frame % 120 == 0 && std::env::var_os("MELEE_GX_LINELOG").is_some() {
+            eprintln!("gx line frame {frame} draw {di} prim {:#x} verts {} fmt {} line_mode {} tex {:#x} vtx {:02x?}", d.prim, d.vtx_count, d.fmt, d.info.line_mode, d.info.sampled_textures, &d.verts[..d.verts.len().min(64)]);
+        }
         if let Some(c) = d.copy.as_deref() {
             copies += 1;
             prev_d = None;
@@ -1526,6 +1539,12 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
         for m in 0..MAX_TEXTURES {
             if d.info.sampled_textures & (1 << m) != 0 {
                 let t = &d.textures[m];
+                if t.data.is_none() {
+                    missing += 1;
+                    if std::env::var_os("MELEE_GX_MISSLOG").is_some() && frame % 60 == 0 {
+                        eprintln!("gx missing tex frame {frame} map {m} {}x{} fmt {} guest {:#x}", t.width(), t.height(), t.format(), t.guest);
+                    }
+                }
                 tex.insert((t.data.as_ref().map_or(0, |x| x.as_ptr() as usize), t.image0, t.tlut));
             }
         }
@@ -1538,7 +1557,7 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
         }
     }
     if let Ok(mut w) = out.lock() {
-        let _ = writeln!(w, "{frame},{},{},{},{changes},{verts},{batches},{copies}", draws.len() as u32 - copies, tex.len(), cfgs.len());
+        let _ = writeln!(w, "{frame},{},{},{},{changes},{verts},{batches},{copies},{missing},{direct}", draws.len() as u32 - copies, tex.len(), cfgs.len());
         let _ = w.flush();
     }
 }

@@ -117,6 +117,36 @@ mod imp {
         out.join("::")
     }
 
+    /// Names for code addresses (dbghelp; the release profile keeps a PDB, `MELEE_SAMPLE_PDB` adds a search path).
+    pub fn symbolize(addrs: impl Iterator<Item = u64>) -> HashMap<u64, String> {
+        let mut names: HashMap<u64, String> = HashMap::new();
+        unsafe {
+            let p = GetCurrentProcess();
+            SymSetOptions(2);
+            let sp = std::env::var("MELEE_SAMPLE_PDB").unwrap_or_default() + "\0";
+            SymInitialize(p, if sp.len() > 1 { sp.as_ptr() } else { core::ptr::null() }, 1);
+            let mut buf = vec![0u8; 88 + 1024];
+            let mut name = |a: u64| -> String {
+                buf.iter_mut().for_each(|x| *x = 0);
+                buf[0..4].copy_from_slice(&88u32.to_le_bytes());
+                buf[80..84].copy_from_slice(&1000u32.to_le_bytes());
+                let mut disp = 0u64;
+                if SymFromAddr(p, a, &mut disp, buf.as_mut_ptr()) != 0 {
+                    let nl = u32::from_le_bytes(buf[76..80].try_into().unwrap()) as usize;
+                    let s = String::from_utf8_lossy(&buf[84..84 + nl.min(1000)]).to_string();
+                    demangle(&s)
+                } else {
+                    if std::env::var_os("MELEE_SAMPLE_DBG").is_some() { eprintln!("SymFromAddr {a:#x}: {}", GetLastError()); }
+                    format!("{a:#x}")
+                }
+            };
+            for a in addrs {
+                names.entry(a).or_insert_with(|| name(a));
+            }
+        }
+        names
+    }
+
     impl Drop for Guard {
         fn drop(&mut self) {
             self.stop.store(true, Ordering::Relaxed);
@@ -125,33 +155,7 @@ mod imp {
             }
             let data = std::mem::take(&mut *self.data.lock().unwrap());
             let total = data.len();
-            let mut names: HashMap<u64, String> = HashMap::new();
-            unsafe {
-                let p = GetCurrentProcess();
-                SymSetOptions(2);
-                let sp = std::env::var("MELEE_SAMPLE_PDB").unwrap_or_default() + "\0";
-                SymInitialize(p, if sp.len() > 1 { sp.as_ptr() } else { core::ptr::null() }, 1);
-                let mut buf = vec![0u8; 88 + 1024];
-                let mut name = |a: u64| -> String {
-                    buf.iter_mut().for_each(|x| *x = 0);
-                    buf[0..4].copy_from_slice(&88u32.to_le_bytes());
-                    buf[80..84].copy_from_slice(&1000u32.to_le_bytes());
-                    let mut disp = 0u64;
-                    if SymFromAddr(p, a, &mut disp, buf.as_mut_ptr()) != 0 {
-                        let nl = u32::from_le_bytes(buf[76..80].try_into().unwrap()) as usize;
-                        let s = String::from_utf8_lossy(&buf[84..84 + nl.min(1000)]).to_string();
-                        demangle(&s)
-                    } else {
-                        if std::env::var_os("MELEE_SAMPLE_DBG").is_some() { eprintln!("SymFromAddr {a:#x}: {}", GetLastError()); }
-                        format!("{a:#x}")
-                    }
-                };
-                for s in &data {
-                    for &a in s {
-                        names.entry(a).or_insert_with(|| name(a));
-                    }
-                }
-            }
+            let names = symbolize(data.iter().flatten().copied());
             let data: Vec<Vec<u64>> = match std::env::var("MELEE_SAMPLE_ROOT") {
                 Ok(r) => data.into_iter().filter(|s| s.iter().any(|a| names[a].contains(&r))).collect(),
                 Err(_) => data,
@@ -187,7 +191,7 @@ mod imp {
 }
 
 #[cfg(windows)]
-pub use imp::Guard;
+pub use imp::{symbolize, Guard};
 
 #[cfg(windows)]
 pub fn from_env() -> Option<Guard> {

@@ -226,7 +226,13 @@ struct TexEntry {
     view: wgpu::TextureView,
     _data: GxData,
     _tlut: Option<GxData>,
+    /// The last [`Renderer::prepare`] count it was used at (see `TEX_KEEP`).
+    used: std::cell::Cell<u64>,
 }
+
+/// A decoded texture not used for this many prepared frames is dropped (with every cached bind group): the cache
+/// is keyed by guest address, so each match's files added entries that were never used again.
+const TEX_KEEP: u64 = 600;
 
 /// Offscreen GX renderer.
 pub struct Renderer {
@@ -250,6 +256,8 @@ pub struct Renderer {
     tex_bgs: FxMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
+    /// [`Renderer::prepare`] calls so far (texture eviction clock).
+    prepared: u64,
     empty_view: wgpu::TextureView,
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
@@ -296,7 +304,7 @@ struct FrameCache {
     /// 0: `ubuf` must be refilled from the draws; 1: it holds their uniforms; 2: `fill` rewrote parts of it.
     ubuf_state: u8,
     /// The previous draw's pipeline config and its pipeline (consecutive draws mostly share one).
-    last_pipe: Option<(crate::shader::PipelineConfig, Option<wgpu::RenderPipeline>)>,
+    last_pipe: Option<(std::sync::Arc<crate::shader::PipelineConfig>, Option<wgpu::RenderPipeline>)>,
 }
 
 /// Make `slot` hold at least `size` bytes; true when the buffer was (re)created.
@@ -510,6 +518,7 @@ impl Renderer {
             tex_bgs: FxMap::default(),
             samplers: FxMap::default(),
             textures: FxMap::default(),
+            prepared: 0,
             empty_view,
             empty_sampler,
             shader_errors: Vec::new(),
@@ -625,7 +634,9 @@ impl Renderer {
             _ => (0, 0, 0, 0),
         };
         let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w: o.width(), h: o.height(), fmt, mips: o.mip_count(), tlut: tlut_key };
-        self.textures.contains_key(&key).then_some(key)
+        let e = self.textures.get(&key)?;
+        e.used.set(self.prepared);
+        Some(key)
     }
 
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
@@ -642,6 +653,7 @@ impl Renderer {
         };
         let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w, h, fmt, mips, tlut: tlut_key };
         if let Some(e) = self.textures.get(&key) {
+            e.used.set(self.prepared);
             return Some(e.view.clone());
         }
         if w == 0 || h == 0 {
@@ -678,7 +690,7 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         let view = tex.create_view(&Default::default());
-        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data });
+        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data, used: std::cell::Cell::new(self.prepared) });
         Some(view)
     }
 
@@ -726,6 +738,15 @@ impl Renderer {
     /// the uniforms and records the pass.
     pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
         let t0 = std::time::Instant::now();
+        self.prepared += 1;
+        if self.prepared % TEX_KEEP == 0 {
+            let now = self.prepared;
+            let before = self.textures.len();
+            self.textures.retain(|_, e| now - e.used.get() < TEX_KEEP);
+            if self.textures.len() != before {
+                self.tex_bgs.clear();
+            }
+        }
         let mut fc = std::mem::take(&mut self.frame);
         fc.vbuf.clear();
         fc.abuf.clear();
@@ -836,7 +857,7 @@ impl Renderer {
                 None
             } else {
                 match last_pipe.as_ref() {
-                    Some((cfg, p)) if *cfg == d.config => p.clone(),
+                    Some((cfg, p)) if std::sync::Arc::ptr_eq(cfg, &d.config) || **cfg == *d.config => p.clone(),
                     _ => {
                         let p = self.pipeline(d);
                         last_pipe = Some((d.config.clone(), p.clone()));

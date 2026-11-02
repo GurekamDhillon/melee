@@ -498,8 +498,17 @@ fn tex_offset(o: u32) -> f32 {
 pub fn fill_uniform(st: &GxState, info: &ShaderInfo, textures: &[TexObj; MAX_TEXTURES]) -> Vec<u8> {
     let mut b: Vec<u8> = Vec::with_capacity(info.uniform_size as usize);
     let f = |b: &mut Vec<u8>, v: f32| b.extend_from_slice(&v.to_le_bytes());
-    let v4 = |b: &mut Vec<u8>, v: &Vec4| v.iter().for_each(|x| b.extend_from_slice(&x.to_le_bytes()));
-    let m34 = |b: &mut Vec<u8>, m: &Mat3x4| m.iter().for_each(|r| r.iter().for_each(|x| b.extend_from_slice(&x.to_le_bytes())));
+    // whole f32 runs at once (the little-endian bytes of each value, in order)
+    fn floats(b: &mut Vec<u8>, v: &[f32]) {
+        if cfg!(target_endian = "little") {
+            // SAFETY: f32 has no padding; a little-endian f32's bytes are its to_le_bytes.
+            b.extend_from_slice(unsafe { core::slice::from_raw_parts(v.as_ptr() as *const u8, v.len() * 4) });
+        } else {
+            v.iter().for_each(|x| b.extend_from_slice(&x.to_le_bytes()));
+        }
+    }
+    let v4 = |b: &mut Vec<u8>, v: &Vec4| floats(b, &v[..]);
+    let m34 = |b: &mut Vec<u8>, m: &Mat3x4| m.iter().for_each(|r| floats(b, &r[..]));
     f(&mut b, st.render_viewport.width);
     f(&mut b, st.render_viewport.height);
     f(&mut b, st.logical_viewport.width);

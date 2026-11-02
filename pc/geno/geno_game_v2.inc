@@ -623,6 +623,8 @@ static void geno_cb_phys_auto(Fighter_GObj* gobj)
     }
 }
 
+static int gb_glide_land(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s); /* geno_behaviours.inc */
+
 /* Landing from an air state: become grounded, then the state's landing target (a Geno state, a
  * motion) or Melee's landing (with the state's landing lag when it has one). */
 static void geno_land(Fighter_GObj* gobj)
@@ -632,13 +634,8 @@ static void geno_land(Fighter_GObj* gobj)
     int s = geno_cur_state(fp, st);
     u32 t = s >= 0 ? geno_land_of(st, s) : GENO_AUTO;
     f32 lag = s >= 0 ? geno_lag_of(st, s) : 0.0f;
-    if (s >= 0 && st->move_i[4] != 0 &&
-        (Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_END ||
-         Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_ATTACK))
-    {
-        /* v3: a helpless glide's GlideEnd / GlideAttack (move_i[4], geno_game_glide.inc) lands as a
-           helpless fall does */
-        ftCo_LandingFallSpecial_Enter_Basic(gobj);
+    if (s >= 0 && gb_glide_land(gobj, fp, st, s)) {
+        /* the glide's ground exit (geno_behaviours.inc): lag cancel, trip, or landing lag */
         return;
     }
     if (t == GENO_AUTO || t == GENO_NONE_T) {
@@ -753,6 +750,8 @@ static f32 geno_motion_gravity(GenoState* st, int s)
     return b.f;
 }
 
+void GenoBhv_AnimMotionFrameDelta(f32 fwd, f32 up, f32 lr, f32* dx, f32* dy); /* geno_behaviours.inc */
+
 static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -760,7 +759,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
     int s = geno_cur_state(fp, st);
     u32 o = geno_motion_opts(st, s);
     f32 g = st->motion_gravity >= 0.0f ? st->motion_gravity : geno_motion_gravity(st, s);
-    f32 fwd = 0.0f, up = 0.0f;
+    f32 fwd = 0.0f, up = 0.0f, dx, dy;
     f32 lr = fp->facing_dir < 0.0f ? -1.0f : 1.0f;
     if (o & GENO_MOTION_ENTRY_FACING) {
         if (!st->motion_started) {
@@ -777,6 +776,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
         }
     }
     st->motion_started = 1;
+    GenoBhv_AnimMotionFrameDelta(fwd, up, lr, &dx, &dy); /* spec 7 (geno-v5.1-behaviours.md) */
     if (fp->ground_or_air == GA_Ground) {
         if (!fp->x594_b0) {
             ft_80084F3C(gobj); /* no root motion: friction */
@@ -786,7 +786,7 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
             Geno_Event(23, fp->kind, fp->player_id, s, st->action_time);
             ftCommon_8007D5D4(fp); /* take off: the air rule below moves this frame */
         } else {
-            fp->gr_vel = fwd * lr;
+            fp->gr_vel = dx;
             ftCommon_SetSelfMovementFromGroundedMovement(gobj);
             return;
         }
@@ -802,8 +802,8 @@ static void geno_cb_phys_anim_motion(Fighter_GObj* gobj)
         fp->self_vel.y = 0.0f;
         return;
     }
-    fp->self_vel.x = fwd * lr;
-    fp->self_vel.y = up + st->motion_vy;
+    fp->self_vel.x = dx;
+    fp->self_vel.y = dy + st->motion_vy;
 }
 
 /* Landing out of a root-motion state (and any state that uses geno_land): as geno_land, logged. */
@@ -907,11 +907,8 @@ static int geno_jump_held(Fighter* fp)
             fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold);
 }
 
-/* ---- glide ---------------------------------------------------------------------------------------- */
-#include "geno_game_glide.inc"
-
-/* ---- Mach Tornado and Drill Rush ------------------------------------------------------------------ */
-#include "geno_game_specials.inc"
+/* ---- glide, tornado, drill, cape, multi-dash, anim_motion: clean-room v5.1 behaviours --------------- */
+#include "geno_behaviours.inc"
 
 /* ---- slice 5: fighter Lua ------------------------------------------------------------------------- */
 #include "geno_game_lua.inc"
@@ -946,6 +943,7 @@ enum {
     GENO_CBID_DRILL = 40,
     GENO_CBID_DRILL_END = 41,
     GENO_CBID_DRILL_START = 42,
+    GENO_CBID_MULTI_DASH = 55,  /* v5.1 */
 };
 
 /* Stable ids per slot; names are what geno.json's "anim" / "iasa" / "phys" / "coll" keys take. */
@@ -961,6 +959,9 @@ static const GenoCbDef geno_cbs[] = {
     { GENO_CBID_DRILL_END, GENO_CB_ANIM, "drill.end", geno_drill_end_anim },
     { GENO_CBID_GLIDE_AFTER, GENO_CB_ANIM, "glide.after", geno_glide_after_anim },
     { GENO_CBID_CAPE, GENO_CB_ANIM, "cape", geno_cape_anim },
+    { GENO_CBID_MULTI_DASH, GENO_CB_ANIM, "multi_dash", geno_multi_dash_anim },
+    { GENO_CBID_MULTI_DASH, GENO_CB_PHYS, "multi_dash", geno_multi_dash_phys },
+    { GENO_CBID_MULTI_DASH, GENO_CB_COLL, "multi_dash", geno_multi_dash_coll },
     { GENO_CBID_INTERRUPT, GENO_CB_IASA, "interrupt", geno_cb_iasa_interrupt },
     { GENO_CBID_CAPE, GENO_CB_PHYS, "cape", geno_cape_phys },
     { GENO_CBID_CAPE, GENO_CB_COLL, "cape", geno_cape_coll },
@@ -1048,6 +1049,9 @@ static const GenoBhvDef geno_bhvs[] = {
     { GENO_BHV_DRILL_START, "geno.drill.start",
       { GENO_CBID_NEXT, GENO_CBID_NONE, GENO_CBID_DRILL_START, GENO_CBID_DRILL_START },
       geno_drill_start_enter, BHV(GENO_BHV_DRILL), GENO_AUTO, ftCo_MS_Fall },
+    { GENO_BHV_MULTI_DASH, "geno.multi_dash",
+      { GENO_CBID_MULTI_DASH, GENO_CBID_NONE, GENO_CBID_MULTI_DASH, GENO_CBID_MULTI_DASH },
+      geno_multi_dash_enter, GENO_NONE_T, GENO_AUTO, ftCo_MS_Fall },
 };
 #define GENO_NBHVS ((int) (sizeof(geno_bhvs) / sizeof(geno_bhvs[0])))
 

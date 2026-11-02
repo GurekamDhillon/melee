@@ -314,6 +314,8 @@ enum {
                                    the profile's 6 in order: N, N air, F, F air, B, B air */
     GENO_BHV_CAPE_END = 42,     /* v3 "geno.cape.end": the reappear without the slash; 2 in order:
                                    ground, air */
+    GENO_BHV_MULTI_DASH = 50,   /* v5.1 "geno.multi_dash": a chain of up to 4 stick-aimed dashes,
+                                   re-press B to continue (geno-v5.1-behaviours.md section 6) */
     GENO_BHV_MAX = 32
 };
 

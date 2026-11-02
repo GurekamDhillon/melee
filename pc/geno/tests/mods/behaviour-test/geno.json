@@ -1,0 +1,25 @@
+{
+  "geno": 5,
+  "fighters": [
+    {
+      "attach": "kirby",
+      "states": [
+        { "name": "Tor", "behavior": "geno.tornado" },
+        { "name": "Dr", "behavior": "geno.drill" },
+        { "name": "Cp", "behavior": "geno.cape" },
+        { "name": "GS", "behavior": "geno.glide.start" },
+        { "name": "G", "behavior": "geno.glide" },
+        { "name": "GA", "behavior": "geno.glide.attack" },
+        { "name": "GE", "behavior": "geno.glide.end" }
+      ],
+      "specials": {
+        "n": "geno:Tor",
+        "s": "geno:Dr",
+        "lw": "geno:Cp",
+        "air_n": "geno:Tor",
+        "air_s": "geno:Dr",
+        "air_lw": "geno:Cp"
+      }
+    }
+  ]
+}

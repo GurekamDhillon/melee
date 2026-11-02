@@ -1391,7 +1391,8 @@ pub unsafe extern "C" fn grCastle_801CF308(gobj: *mut Ground_GObj) {
                 ));
                 ext::grMaterial_801C8DE0(u32_ptr((*gp).u.castle11.xD8), 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 4.0);
                 ext::grMaterial_801C8E08(u32_ptr((*gp).u.castle11.xD8));
-                (*gp).u.castle8.plat[0].state = yp().x54;
+                // PPC/x86-32 `plat[0].state` is the s16 at gp+CC (castle11.xCC): the native castle8 view puts it at gp+D0
+                (*gp).u.castle11.xCC = ((*gp).u.castle11.xCC & 0xFFFF_0000) | (yp().x54 as u16 as u32);
             }
         }
         var_r6 = 1;
@@ -1410,8 +1411,8 @@ pub unsafe extern "C" fn grCastle_801CF308(gobj: *mut Ground_GObj) {
             ext::Camera_RequestQuake(QuakeKind_Small, null_mut());
         }
         if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
-            let cnt = (*gp).u.castle8.plat[0].state;
-            (*gp).u.castle8.plat[0].state = cnt.wrapping_sub(1);
+            let cnt = (*gp).u.castle11.xCC as u16 as i16;
+            (*gp).u.castle11.xCC = ((*gp).u.castle11.xCC & 0xFFFF_0000) | (cnt.wrapping_sub(1) as u16 as u32);
             if cnt < 0 {
                 ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
             }

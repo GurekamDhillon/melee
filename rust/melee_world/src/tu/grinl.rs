@@ -299,18 +299,39 @@ pub unsafe fn HSD_JObjAddTranslationZ(j: *mut HSD_JObj, z: f32) {
     dirty_unless_indep(j);
 }
 
-/// A pointer stored in a `u32` field (`gp->u.castle11.xD8 = (u32) gobj`). Lossless only while the process lives below
-/// 4 GiB, which the stage oracle tests arrange (build.rs); the game needs a handle table before it can run natively.
+/// First handle value: a pointer that does not fit a `u32` field is stored as `PTR_HANDLE_BASE + index` into
+/// [`PTR_HANDLES`] (the native heap lives above 4 GiB; `gp->u.castle11.xD8 = (u32) gobj` truncated it, Castle crashed
+/// at frame 990). Pointers below 4 GiB (the stage oracle tests arrange that) are stored as they are.
+const PTR_HANDLE_BASE: u32 = 0xFFF0_0000;
+static PTR_HANDLES: std::sync::Mutex<std::vec::Vec<usize>> = std::sync::Mutex::new(std::vec::Vec::new());
+
+/// A pointer stored in a `u32` field (`gp->u.castle11.xD8 = (u32) gobj`).
 #[inline(always)]
 pub fn ptr_u32<T>(p: *mut T) -> u32 {
     melee_core::ct!("ptr_u32");
-    debug_assert!((p as usize) <= u32::MAX as usize, "pointer does not fit a u32 field");
-    p as usize as u32
+    let a = p as usize;
+    if a < PTR_HANDLE_BASE as usize {
+        return a as u32;
+    }
+    let mut t = PTR_HANDLES.lock().unwrap();
+    let i = match t.iter().position(|&x| x == a) {
+        Some(i) => i,
+        None => {
+            t.push(a);
+            t.len() - 1
+        }
+    };
+    PTR_HANDLE_BASE + i as u32
 }
 /// The inverse of [`ptr_u32`] (`(HSD_GObj*) gp->u.castle11.xD8`).
 #[inline(always)]
 pub fn u32_ptr<T>(v: u32) -> *mut T {
     melee_core::ct!("u32_ptr");
+    if v >= PTR_HANDLE_BASE {
+        if let Some(&a) = PTR_HANDLES.lock().unwrap().get((v - PTR_HANDLE_BASE) as usize) {
+            return a as *mut T;
+        }
+    }
     v as usize as *mut T
 }
 

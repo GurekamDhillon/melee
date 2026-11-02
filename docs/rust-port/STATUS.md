@@ -94,8 +94,8 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 | modes: targettest | 26 | 26 | 0 | 0 | 44247 | pending consolidation |
 | blocked modes | 8 | 0 | 0 | 8 | 0 | n/a |
 
-### Rust engine vs coverage goldens (2026-11-02, after covfix round 4; detail and per-scenario table in notes/coverage.md)
-`melee golden --engine tu` runs the VS coverage scenarios with idle pads (`run_rust.sh`; `MELEE_EXE=` runs a copy of the exe). 12 -> 28 (round 1) -> 34 (rounds 2, 3) -> **51 of the 79 wired**. Round 4: the goldens are the C PC build, so its widescreen projection scale (1920x1080 window, `Engine::boot_host`), its `Callback1` ABI mismatch (`HSD_AObjSetRate` reads the JObj pointer as the rate) and its UB `sqrtf` spill (`it_802A4BFC_sqrtf_offset` = `return x`) are reproduced; Unown / Zebes DAT pointers; `HSD_JObjResetRST`. The C call trace is buildable again in minutes (`tools/rust-port/trace/build_trace_reuse.sh`).
+### Rust engine vs coverage goldens (2026-11-02, after covfix round 5; detail and per-scenario table in notes/coverage.md)
+`melee golden --engine tu` runs the VS coverage scenarios with idle pads (`run_rust.sh`; `MELEE_EXE=` runs a copy of the exe). 12 -> 28 (round 1) -> 34 (rounds 2, 3) -> 51 (round 4) -> **53 of the 79 wired** (round 5). Round 4: the goldens are the C PC build, so its widescreen projection scale (1920x1080 window, `Engine::boot_host`), its `Callback1` ABI mismatch (`HSD_AObjSetRate` reads the JObj pointer as the rate) and its UB `sqrtf` spill (`it_802A4BFC_sqrtf_offset` = `return x`) are reproduced; Unown / Zebes DAT pointers; `HSD_JObjResetRST`. The C call trace is buildable again in minutes (`tools/rust-port/trace/build_trace_reuse.sh`).
 
 | result | scenarios |
 |---|---|
@@ -104,9 +104,9 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 | not wired (1p modes / Lua pads) | 79 |
 | no golden (C failed or blocked) | 10 |
 
-## Current blockers (coverage, covfix 2026-11-02, round 4)
-- Venom (1389): native union overlap, the venom view's `xF0..x100` ints against the starfox view's 8-byte `article_gobjs` (notes/coverage.md round 4).
-- Castle (990): `grCastle_801CF308` follows `castle11.xD0` to a gobj with `user_data == -1`. Yoshi's Story (448): envelope joint null in `HSD_PObjSetupMtx`. Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
+## Current blockers (coverage, covfix 2026-11-02, round 5)
+- Round 5 fixed: Kongo Jungle (Klap Klap hurtbone list rebuilt at full count, `dat_custom` ARTICLE_HURTBONES), Castle (native `castle8.plat[0].state` sat on the `castle11.xD0` slot; now the s16 at gp+CC; `ptr_u32` handle table for pointers above 4 GiB; Mewtwo shadow ball charge is `s32`), Venom crash (counters through the `starfox` view; 1389 -> 2777, now a hash divergence).
+- Yoshi's Story (448, Kirby hat load): the Yoshi hat joint tree walks 50 joints but Kirby's `parts` has 46 `flags_b1` bones (parts_num 59), so `ftKb_SpecialN_insert_joint_refs` runs off `fp->parts` and the envelope lookup fails. The tree structure itself decodes consistently; find why C has 50 flagged bones (or the hat has 46 joints). Items Stadium (3529): `ftCo_800D3158` death with a garbage `fp->player_id` (192). Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
 - Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
 ## Current blockers (golden)

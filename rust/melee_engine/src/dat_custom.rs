@@ -333,8 +333,16 @@ static mut ARTICLE_STATES: Vec<(*mut melee_types::Article, *mut melee_types::Ite
 /// {count, descs}` but the C (`it_8027163C`) reads `ItCollDynamics {pad[8], count, descs}`: rebuilt from the image by [`fix_articles`].
 static mut ARTICLE_DYNAMICS: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
 
+/// Articles with an `x8_hurtbones` list `{count, descs}`: the decoder gives `descs` room for one `ItHurtBoneDesc`, the C
+/// indexes it up to `count` (Klap Klap has 2). Rebuilt from the image by [`fix_articles`]: (article, image base, data offset).
+static mut ARTICLE_HURTBONES: Vec<(*mut melee_types::Article, usize, u32)> = Vec::new();
+
 /// Queue the full-extent state array of the article at data offset `ta` when its states run past 8 entries.
 fn note_article_states(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
+    if let Some(hb) = d.target(ta + 0x8) {
+        let art = d.object::<melee_types::Article>(ta);
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_HURTBONES)).push((art, b.1, hb)) };
+    }
     if let Some(dy) = d.target(ta + 0x14) {
         let art = d.object::<melee_types::Article>(ta);
         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_DYNAMICS)).push((art, b.1, dy)) };
@@ -439,6 +447,31 @@ pub fn fix_articles() {
             let dd = Box::leak(v.into_boxed_slice());
             let nd = Box::leak(Box::new(melee_items::tu::itcoll::ItCollDynamics { _pad: [0; 8], count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
             (*a).x14_dynamics = nd as *mut _ as *mut melee_types::ItemDynamics;
+        }
+    }
+    let hurts = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_HURTBONES)) };
+    for (a, base, off) in hurts {
+        unsafe {
+            let be = |at: usize| u32::from_be_bytes(*((base + at) as *const [u8; 4]));
+            let off = off as usize;
+            let count = be(off) as usize;
+            let descs_off = be(off + 4) as usize;
+            let mut v: Vec<melee_types::ItHurtBoneDesc> = Vec::new();
+            if count <= 8 && descs_off != 0 {
+                let f = |at: usize| f32::from_bits(be(at));
+                for k in 0..count {
+                    let d0 = descs_off + 0x20 * k;
+                    let mut e = melee_types::ItHurtBoneDesc::zeroed();
+                    e.bone_id = be(d0) as _;
+                    e.a_offset = melee_types::Vec3 { x: f(d0 + 4), y: f(d0 + 8), z: f(d0 + 12) };
+                    e.b_offset = melee_types::Vec3 { x: f(d0 + 16), y: f(d0 + 20), z: f(d0 + 24) };
+                    e.scale = f(d0 + 28);
+                    v.push(e);
+                }
+            }
+            let dd = Box::leak(v.into_boxed_slice());
+            let nl = Box::leak(Box::new(melee_types::ItHurtBoneList { count: count.min(8) as i32, descs: dd.as_mut_ptr() }));
+            (*a).x8_hurtbones = nl as *mut _;
         }
     }
     let states = unsafe { core::mem::take(&mut *core::ptr::addr_of_mut!(ARTICLE_STATES)) };

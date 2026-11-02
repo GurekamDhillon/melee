@@ -84,9 +84,9 @@ pub mod ext {
                     None => { unsafe { melee_items::tu::itmewtwoshadowball::it_802C53F0(item as _, pos as _, angle as _, charge as _, cycles as _); } return; },
                 }
             }
-    pub static mut IT_802C519C: Option<fn(*mut HSD_GObj, *const Vec3, i32, f32, f32, f32) > = None;
+    pub static mut IT_802C519C: Option<fn(*mut HSD_GObj, *const Vec3, i32, i32, f32, f32) > = None;
             #[allow(non_snake_case)]
-            pub fn it_802C519C(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, cycles: f32, angle: f32, facing_dir: f32)  {
+            pub fn it_802C519C(owner: *mut HSD_GObj, pos: *const Vec3, kind: i32, cycles: i32, angle: f32, facing_dir: f32)  {
                 match unsafe { IT_802C519C } {
                     Some(f) => f(owner, pos, kind, cycles, angle, facing_dir),
                     None => { unsafe { melee_items::tu::itmewtwoshadowball::it_802C519C(owner as _, pos as _, kind as _, cycles as _, angle as _, facing_dir as _); } return; },
@@ -776,7 +776,7 @@ pub fn ftMewtwo_SpecialN_LaunchShadowBall(gobj: *mut HSD_GObj) {
                     gobj,
                     &sp20,
                     It_Kind_Mewtwo_ShadowBall as i32,
-                    (*a).x0_MEWTWO_SHADOWBALL_CHARGE_CYCLES,
+                    (*a).x0_MEWTWO_SHADOWBALL_CHARGE_CYCLES as i32,
                     atan2f(sp20.y - sp2c.y, sp20.x - sp2c.x),
                     (*fp).facing_dir,
                 );

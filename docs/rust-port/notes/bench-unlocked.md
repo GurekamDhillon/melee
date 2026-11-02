@@ -61,3 +61,21 @@ GPU path entirely).
   LTCG. Boot noise on the Rust side is about +-0.6 s on a 1.5 - 4 s signal, hence the long N.
 - Rollback: not compared (melee-unlocked exposes savestate code but no headless rollback-cost mode); our synctest figures are in perf.md.
 - melee-unlocked build used a code list baked from this one replay; other replays (other Slippi versions) may diverge without a rebuild.
+
+
+## Update 2026-11-02: frame-exact on both sides (port/replays)
+The same file, `20476_06200225` (Final Destination, ext 32, 10071 frames), now passes `melee slpcheck` on the Rust side: 20142 fighter-frames compared
+against the console's post-frame data, floats bit-equal, 0 mismatches, last frame 9947 (no panic, the old row-8792 crash is gone). melee-unlocked passes
+its own gate on it (0 mismatches). Both timed on a frame-exact replay now.
+
+| measurement | Rust release (`slpcheck`, render off, includes the post-frame capture and compare) | melee-unlocked `--headless --fast` |
+|---|---|---|
+| per tick (boot subtracted: wall(full) - wall(`--frames 2`), 10194 ticks) | 0.40 ms median (0.40 / 0.27 / 0.44, 3 runs) | 3.77 ms cpu median over 6 runs (3.55 / 3.55 / 3.69 / 3.84 / 4.07 / 4.13; the last three while the PC was in use); sim_ms 3.6 - 4.4 |
+| frames per second | about 2500 | about 265 |
+| whole replay wall | 9.0 - 9.2 s (boot 4.7 - 6.3 s) | 38.4 - 45.9 s |
+| p99 frame | not measured | 5.2 - 6.7 ms |
+
+Rust is about 9x cheaper per frame (and about 4.5x on whole-replay wall, boot included). The Rust figure is a rustc `release` build (4m35s,
+`opt-level` release, no fat LTO; `--profile perf` is about 25% faster) and includes the compare work melee-unlocked does not do. The earlier caveats
+about different work per frame (Slippi event path and Gecko caves on their side) still apply. Hidden-window mode was not re-run (no window rule).
+Method: `melee slpcheck --slp F [--frames N]` with `MELEE_WINDOW_UNFOCUSED=1`, melee-unlocked via `scratch/ext/bench_unlocked.py` (`--headless --fast`), one process at a time.

@@ -187,9 +187,37 @@ fn install_capture(at_proc_map: bool) {
 /// `Replay_HasInput` call), so a mismatch means the engine drew a different number of random values earlier in that frame.
 static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
 static mut SEED_PROBE: bool = false;
+static mut RESEED_PRE: bool = false;
+static mut SLP_SEED: u32 = 0;
+static mut SEEDLOG_LAST: u32 = 0;
 
 pub(crate) fn seed_probe(port: i32, fol: i32) {
     unsafe {
+        if std::env::var_os("SLPCHECK_SEEDLOG").is_some() && fol == 0 {
+            let st = melee_runtime::tu::random::global::state();
+            let eng = *melee_runtime::tu::random::HSD_RandCurrentSeed(st);
+            let rec = crate::r_in().input(port, false).map(|i| i.seed).unwrap_or(0);
+            let f = crate::r_in().frame();
+            let steps = |a: u32, b: u32| -> i32 {
+                let mut x = a;
+                for k in 0..20000 {
+                    if x == b {
+                        return k;
+                    }
+                    x = x.wrapping_mul(214013).wrapping_add(2531011);
+                }
+                -1
+            };
+            eprintln!("SEEDLOG f{f} p{port} prev_to_rec={} prev_to_eng={} eng_to_rec={}", steps(SEEDLOG_LAST, rec), steps(SEEDLOG_LAST, eng), steps(eng, rec));
+            SEEDLOG_LAST = rec;
+        }
+        if RESEED_PRE && fol == 0 && crate::r_in().frame() > -123 {
+            if let Some(rec) = crate::r_in().input(port, false).map(|i| i.seed) {
+                if rec != 0 {
+                    melee_runtime::tu::random::global::state().set_logic_seed(rec);
+                }
+            }
+        }
         if !SEED_PROBE || fol != 0 || SEED_FIRST.is_some() || crate::r_in().frame() <= -123 {
             return;
         }
@@ -331,11 +359,21 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     }
     pl.frame = -124; // gw_Replay_ApplyMatch arms the counter: the first Replay_Tick makes it -123
     let seed = file.seed;
+    // gw_Replay_ApplyMatch returns r.seed as the match's RNG seed: the Game Start block's Random Seed
+    pl.r.seed = seed;
+    // The engine's seam answers 0 for Replay_ApplyMatch (the RNG was zeroed at the match start); answer the file's seed.
+    unsafe {
+        SLP_SEED = seed;
+        melee_modes::tu::gmvs::ext::hook::Replay_ApplyMatch = Some(|_| unsafe { SLP_SEED });
+    }
     // SAFETY: single-threaded start-up, before the engine reads them.
     unsafe {
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
-            std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "1");
+            // the console's stage load draws once more for the stages with several BGM tracks (Pokemon Stadium, Battlefield,
+            // Final Destination): measured on 125 replays, the engine is exactly one draw short before the first pre-frame there
+            let pre = if matches!(sm.stage, 3 | 31 | 32) { "1" } else { "0" };
+            std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre);
         }
     }
     crate::replay_modes_active();
@@ -349,7 +387,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     };
     crate::install_replay(pl);
     install_capture(file.version[0] < 3);
-    unsafe { SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
+    unsafe { RESEED_PRE = !args.iter().any(|a| a == "--no-pre-reseed"); SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
     let max_ticks: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(usize::MAX);
@@ -372,7 +410,11 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 break;
             }
             let sd = pl.resync_seed();
-            if sd != 0 {
+            if std::env::var_os("SLPCHECK_SEEDLOG").is_some() {
+                if fr == -123 { let rec0 = pl.input(ports[0] as i32, false).map(|i| i.seed).unwrap_or(0); let mut x = seed; let mut k = -1i32; for i in 0..100000 { if x == rec0 { k = i; break; } x = x.wrapping_mul(214013).wrapping_add(2531011); } unsafe { SEEDLOG_LAST = seed; } eprintln!("SEEDLOG-START game_seed={seed:08x} first_pre_rec={rec0:08x} steps={k}"); }
+            unsafe { eprintln!("SEEDLOG-FS f{fr} sd={sd:08x} cur={:08x} last={SEEDLOG_LAST:08x}", *melee_runtime::tu::random::HSD_RandCurrentSeed(melee_runtime::tu::random::global::state())); }
+            }
+            if sd != 0 && std::env::var_os("SLPCHECK_FS_RESYNC").is_some() {
                 melee_runtime::tu::random::global::state().set_logic_seed(sd);
             }
             unsafe { CAP = [None; 4] };
@@ -395,6 +437,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 if dump && std::env::var_os("SLPCHECK_ATK").is_some() {
                     eprintln!("ATK f{fr} p{} slp la={} combo={} | eng {:?}", port + 1, p.last_attack, p.combo, c.cand);
                 } else if dump {
+                    if let Some(i) = unsafe { crate::r_in() }.input(port as i32, false) { eprintln!("PRE f{fr} p{} lx={:?} ly={:?} cx={:?} cy={:?} raw={:?} btn={:x}", port + 1, i.lx, i.ly, i.cx, i.cy, i.raw, i.buttons); }
                     eprintln!("DUMP f{fr} p{} eng x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} | slp x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} misc={:?}", port + 1, c.x, c.y, c.action, c.state_frame, c.percent, c.hitlag, c.last_attack, c.shield, p.x, p.y, p.action, p.state_frame, p.percent, p.hitlag, p.last_attack, p.shield, p.misc_as);
                 }
                 for (k, ev, rv) in compare(&c, p) {

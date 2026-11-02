@@ -110,18 +110,16 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - Yoshi's Story (448, Kirby hat load): the Yoshi hat joint tree walks 50 joints but Kirby's `parts` has 46 `flags_b1` bones (parts_num 59), so `ftKb_SpecialN_insert_joint_refs` runs off `fp->parts` and the envelope lookup fails. The tree structure itself decodes consistently; find why C has 50 flagged bones (or the hat has 46 joints). Items Stadium (3529): `ftCo_800D3158` death with a garbage `fp->player_id` (192). Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
 - Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
-## Current blockers (slpcheck, 2026-11-02, port/slporacle)
-`melee slpcheck --slp F` compares the engine with the console's own post-frame data (notes/slpcheck.md). 125 of 125 external replays run, none matches yet (median first divergence frame 1157). Blockers, none solved inside the timebox:
-- S1. DamageFlyRoll (91) vs DamageFlyHi/N/Lw choice at a hit (39 files): RNG draw count between Frame Start and the damage code.
-- S2. Hit-connection timing (hitlag / percent / last attack / shield push, ~30 files).
-- S3. Pokemon Stadium / Fountain platform `y` (16 files) and Dream Land wind (16 files): stage state at start.
-Fixed on the way: VS-mode `Replay_Active` (Slippi Neutral Spawn), rumble motor hook, smash-charge shake table in the engine.
-
-**Leads for S1-S3: try these FIRST** (from melee-unlocked's frame-exact replay path, notes/unlocked-survey.md rows "Per-frame replay inputs and RNG", "UCF and the other gameplay codes", "Denylist and code list", "Replay compare gate"):
-1. Re-seed the RNG from the replay's pre-frame seed EVERY frame (likely S1: the tumble choice is a random draw).
-2. Decide UCF from the gameplay injections in the replay's own Gecko list, not from the per-player toggle words. Feed the RAW stick bytes from the pre-frame update into the pad queue (HSD_PadLibData queue) so UCF sees raw input, not just the processed values (likely S2).
-3. Slippi gameplay codes the replay enables: WhispyFix (Dream Land wind, S3), the 4 Pokemon Stadium codes, InitStage/InitPlayerData, NeutralSpawn, FreezeGlitch, BrawlOffscreenDamage, DeadUpFall, FD BG seed, Nana determinism, PreventWobbling. Gate each on the replay's Gecko list, using Slippi's InjectionLists "[affects-gameplay]" tags.
-4. Allow melee-unlocked's known baseline: one-ULP `y` differences at frames -118..-108 (spawn animation). Require exactness from frame 0.
+## Current blockers (slpcheck, 2026-11-02, port/replays)
+`melee slpcheck --slp F` compares the engine with the console's own post-frame data (notes/slpcheck.md). 125 external replays: **38 frame-exact**
+(was 0), median first divergence of the other 87 = frame 2322 (was 1157). Fixed this round: the match was seeded with 0 (`Replay_ApplyMatch` seam), the
+synthetic Frame Start seeds were forced every frame (the console RNG is continuous; Pre-Frame seeds chain by LCG steps), the BGM-pick draw on stages 3/31/32,
+per-fighter reseed from the Pre-Frame seed. RNG draw counts now equal the console's up to every file's first divergence. Remaining classes:
+- S1/S3 (Pokemon Stadium `y`, 16 files): falling fighters land on a y=25.0001 platform line the console fighter falls through. Fountain platform `y` (8 files).
+- 1-ULP `x`/`y` (about 25 files): float contraction sites (MWCC vs clang) in ported functions.
+- Hit timing (`percent`/`hitlag`/`shield`, about 20): not separated from the ULP drift yet.
+Leads 2 (raw sticks + Gecko-list UCF) and 3 (Whispy / Stadium codes): UCF 0.84 and the raw-stick pad queue were already in; the tournament Gecko lists carry no
+WhispyBlowDirFix, and the Stadium preload codes are the S1/S3 suspects (notes/slpcheck.md round 2). Lead 4 (spawn 1-ULP baseline) not needed: the 38 exact files match from frame -123.
 
 Licensing (user decision, 2026-11-02): implement the codes from Slippi's own public sources (slippi-ssbm-asm, GPL-3.0; InjectionLists), NOT from melee-unlocked's mu_gecko.c, mu_replay.c or mu_online.c. Taking GPL-3 code makes the combined work GPL-3, which the user accepts. Credit slippi-ssbm-asm in each file.
 

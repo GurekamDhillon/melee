@@ -141,3 +141,44 @@ Init Player Data zeroing, Frozen Stadium, Freeze Glitch Fix (Nana). Expected (no
 - Followers (Ice Climbers) are not compared; a replay with Popo/Nana would still run (none in the corpus).
 - The engine's match end (stock loss, time) stops the run even if the replay continues; the summary then shows `last_frame` < the replay's.
 - Stops at the first divergence by design; `--full` shows later fields but later values are consequences.
+
+
+## Round 2 (2026-11-02, port/replays): 0 -> 38 of 125 frame-exact
+
+Same 125 files, `fast` profile, `tools/rust-port/slp/run_all.sh` at 2 jobs (about 5 min). Frame-exact = status `match` over the whole replay.
+
+| step | fully matching | median first divergence (diverged files) |
+|---|---|---|
+| port/slporacle (start) | 0 | 1157 |
+| lead 1: RNG reseeded from each fighter's Pre-Frame seed (69fcaf59c) | 32 | 1262 |
+| + match seeded from the Game Start seed, no per-frame Frame Start reseed, BGM-pick draw (396345cfc) | 38 | 2322 |
+
+What fixed what (all in `melee/src/slpcheck.rs`; the engine only gained a seed column in `MELEE_RAND_TRACE`):
+- `Replay_ApplyMatch` (the seam answers 0) set the RNG to 0 at the match start, so the stage-init, fighter-create and stage-proc draws came from the
+  wrong stream. slpcheck now answers the Game Start Random Seed. Dream Land's first-divergence `x` (Whispy wind) went from 18 files to 7.
+- The Frame Start seeds of these files are synthetic (they advance by 0x10000 a frame). The console's RNG is a continuous LCG: consecutive
+  Pre-Frame seeds are `k` LCG steps apart with `k` = the draws made in between. Forcing the Frame Start seed every frame therefore destroyed the
+  stage's draws between the last fighter of frame N and the first fighter of N+1 (the stage procs run there). Not forced any more
+  (`SLPCHECK_FS_RESYNC=1` restores it). Disproves the note above: the DamageFlyRoll choice (S1) was this, not a missing code.
+- Game seed -> first Pre-Frame seed is 6 to 12 LCG steps; the engine matched that for Fountain, Yoshi's, Dream Land and was exactly one draw short on
+  Pokemon Stadium, Battlefield and Final Destination (a stage with several BGM tracks draws once more); slpcheck adds the dummy draw (`MELEE_ENGINE_PRE_DRAWS=1`) for stages 3, 31, 32.
+- Probe: `SLPCHECK_SEEDLOG=1` prints, per fighter pre-frame point, the LCG steps since the previous point in the console (`prev_to_rec`) and in the engine
+  (`prev_to_eng`). After the fixes they are equal at every point up to each file's first divergence on all 87 diverging files (so no remaining
+  divergence is an RNG draw-count problem). `SLPCHECK_DUMP=1` now also prints the recorded pre-frame stick (`PRE` lines).
+- The Gecko lists of these tournament files do NOT contain WhispyBlowDirFix (8008653C); `Slippi_Codes == 2` (online) gates it in the sim, which is right.
+  Present and affecting gameplay in every list: Init Stage Data (801C154C, zero 516 bytes), Init Player Data, Nana determinism and the Pokemon Stadium
+  preload codes (801D14C8, 801D45EC, 801D460C, 801D4610, 801D4724, 801D4F14: transformation chosen at load with `HSD_Randi(4)`, `SkipNormalDecision`), the PS camera-independent monitor (801D24FC).
+  Sources: slippi-ssbm-asm `Common/Preload Stadium Transformations`, `Online/Core/WhispyBlowDirFix`, `Common/Initialize Stage Data`, `Online/Core/Hacks/Stadium` (GPL-3.0, read only; nothing copied yet).
+
+Remaining first divergences (87 files):
+
+| class | files | notes |
+|---|---|---|
+| Pokemon Stadium `y` | 16 (+2 `x`) | the engine lands a falling fighter on a platform line at y=25.0001 (side platforms, x in 26..54 either side) that the console fighter falls through, at 25 to 3300 frames in. Spawn frame -33 in two files (p4 x=40). Stage state, not input (both ports hold down). Next: dump the engine's PS platform collision/animation phase against the Preload codes above; does Frozen PS keep the Normal form's platforms in a different state? |
+| Fountain `y` | 8 (+2 `x`) | platform heights: the random walk in `grIzumi_801CC358` (draws match, values differ); check `rand_range` / `HSD_Randf` use and the first-pose heights |
+| 1-ULP `x`/`y` (e.g. -30.344479 vs -30.344484) | about 25, all stages | float contraction sites where MWCC's fused ops differ from clang's (notes/fma.md); needs the per-function census melee-unlocked made (`MU_NO_CONTRACT` list). Candidate method: flip the site in the function that computes the field and re-run |
+| `percent`/`hitlag`/`shield`/`action` | about 20 | hits a frame apart; usually after a 1-ULP drift, not yet separated |
+| Dream Land `x` | 7 | 0.05 to 4 wide: not the wind any more |
+| `x` jumps of 3.96 / 3.81 | 7 | shield push / knockback one frame apart |
+
+Frame-exact on the benchmark file `20476_06200225` (Final Destination, 10071 frames, 20142 fighter-frames): see bench-unlocked.md.

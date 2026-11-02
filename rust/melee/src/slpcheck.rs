@@ -437,6 +437,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 if dump && std::env::var_os("SLPCHECK_ATK").is_some() {
                     eprintln!("ATK f{fr} p{} slp la={} combo={} | eng {:?}", port + 1, p.last_attack, p.combo, c.cand);
                 } else if dump {
+                    if let Some(i) = unsafe { crate::r_in() }.input(port as i32, false) { eprintln!("PRE f{fr} p{} lx={:?} ly={:?} cx={:?} cy={:?} raw={:?} btn={:x}", port + 1, i.lx, i.ly, i.cx, i.cy, i.raw, i.buttons); }
                     eprintln!("DUMP f{fr} p{} eng x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} | slp x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} misc={:?}", port + 1, c.x, c.y, c.action, c.state_frame, c.percent, c.hitlag, c.last_attack, c.shield, p.x, p.y, p.action, p.state_frame, p.percent, p.hitlag, p.last_attack, p.shield, p.misc_as);
                 }
                 for (k, ev, rv) in compare(&c, p) {

@@ -471,7 +471,9 @@ pub struct grZe_YakumonoParam {
     pub x08: f32,
     pub x0C: f32,
     pub x10: i32,
-    pub pad_14: [u8; 0x30 - 0x14],
+    pub pad_14: [u8; 0x2C - 0x14],
+    /// GameCube +0x2C: the relocated acid hit description (the C types it `DynamicsDesc*` but only reads word 1 and hands it to `lbColl_80008D30`) (the C reads it as `((HSD_GObj*) yakumono_param)->user_data`)
+    pub x2C_dyn: *mut lbColl_80008D30_arg1,
     pub x30: f32,
     pub x34: f32,
     pub x38: f32,
@@ -2816,7 +2818,7 @@ pub unsafe extern "C" fn grZebes_801DCBFC(_gobj: *mut Ground_GObj, fobj: *mut HS
     ext::ftLib_80086684(fobj, &mut prev);
     prev.y += intercept;
     if pos.y < slope {
-        *(arg as *mut *mut c_void) = (*(yakumono_param as *mut HSD_GObj)).user_data;
+        *(arg as *mut *mut c_void) = (*yakumono_param).x2C_dyn as *mut c_void;
         if prev.y > slope {
             ext::Ground_801C43A4(&mut pos as *mut Vec3 as *mut c_void);
             ext::Ground_801C53EC(0x61A82);

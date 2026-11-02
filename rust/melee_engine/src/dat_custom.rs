@@ -151,6 +151,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 None => core::ptr::null_mut(),
                                 Some(t) => match k {
                                     2 => d.object::<melee_types::DynamicsDesc>(t) as *mut c_void,
+                                    4 => d.object::<melee_types::lbColl_80008D30_arg1>(t) as *mut c_void,
                                     3 => d.array::<i16>(t, (b.extent(t) / 2).max(1) as usize) as *mut c_void,
                                     _ => b.raw_addr(t),
                                 },
@@ -375,6 +376,15 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                                 unsafe { melee_items::tu::itkinoko::KINOKO_JOINTS[k as usize] = d.ptr::<melee_types::HSD_AnimJoint>(sa + 4 * k) };
                             }
                         }
+                    }
+                }
+                // Unown (`itUnknownAttributes`: nine scalar words, then 26 `HSD_Joint*` letter models): the pointer array does not fit the word-swapped
+                // 4-byte slots (`it_802CE710` passes `attr->x24[HSD_Randi(26)]` to `HSD_JObjLoadJoint`), so the block is decoded as its record
+                if let Some(sa) = d.target(ta + 4) {
+                    if b.extent(sa) >= 0x8C && (9..35u32).all(|w| d.is_reloc(sa + 4 * w)) {
+                        let art = d.object::<melee_types::Article>(ta);
+                        let typed = d.object::<melee_types::itUnknownAttributes>(sa) as *mut c_void;
+                        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
                     }
                 }
                 if i == KIND_FOODS && n > KIND_FOODS as usize {

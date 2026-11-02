@@ -111,7 +111,8 @@ pub fn ftCo_800C0874(g: G, _arg1: *mut core::ffi::c_void, arg2: i32) {
 pub fn ftCo_800C08A0(g: G, arg1: G, arg2: *mut DynamicsDesc, arg3: i32) {
     melee_core::ct!("ftCo_800C08A0");
     let f = fp(g);
-    let mut v = ext::ftColl_800765F0(f, core::ptr::null_mut(), unsafe { (*arg2).count } as f32);
+    // the C reads `arg2->count` (`DynamicsDesc`, word 1); the stage hands over a `lbColl_80008D30_arg1` hit description whose word 1 is `damage`
+    let mut v = ext::ftColl_800765F0(f, core::ptr::null_mut(), unsafe { (*(arg2 as *const lbColl_80008D30_arg1)).damage } as f32);
     let f = fp(g);
     if arg3 == BuryType_Unk1 as i32 {
         f.bury_timer_1 = cd().bury_timer_unk1;

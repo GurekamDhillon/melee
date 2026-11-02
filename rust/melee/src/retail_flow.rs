@@ -226,6 +226,21 @@ impl Game for RetailPlay {
             log(&format!("max frames reached in {}", scene_name(self.cur.1)));
             self.quit = true;
         }
+        // MELEE_RETAIL_SHOT_TICKS="a-b,c": timeline shots (tick numbers from the first tick), for the transition captures
+        if self.shot_dir.is_some() {
+            if let Ok(v) = std::env::var("MELEE_RETAIL_SHOT_TICKS") {
+                let t = self.tick_no as u64;
+                let hit = v.split(',').any(|r| {
+                    let mut it = r.split('-').map(|x| x.trim().parse::<u64>().unwrap_or(u64::MAX));
+                    let a = it.next().unwrap_or(u64::MAX);
+                    let b = it.next().unwrap_or(a);
+                    t >= a && t <= b
+                });
+                if hit {
+                    self.shot_pending = Some(format!("tl_{:05}", t));
+                }
+            }
+        }
         if self.shot_dir.is_some() && self.shot_ages.contains(&self.age) {
             self.shot_pending = Some(format!("{:02}_{}_{:04}", self.scene_no, scene_name(self.cur.1), self.age));
         }
@@ -262,6 +277,10 @@ impl Game for RetailPlay {
     fn should_quit(&self) -> bool {
         self.quit
     }
+
+    fn present_now(&self) -> bool {
+        self.shot_pending.is_some()
+    }
 }
 
 pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
@@ -274,7 +293,8 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
         return if rp.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
-    let title = std::env::var("MELEE_WINDOW_TITLE").unwrap_or_else(|_| "GD's Melee (native)".into());
+    // play.rs window_title: MELEE_WINDOW_TITLE, else the build id ("melee [where hash]") and "retail menus"
+    let title = std::env::var("MELEE_WINDOW_TITLE").unwrap_or_else(|_| format!("{} retail menus", crate::play::window_title(None)));
     let cfg = melee_platform::WindowConfig { title, width: 1280, height: 960, active: !scripted };
     if scripted {
         std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");

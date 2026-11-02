@@ -34,6 +34,10 @@ pub trait Game {
     fn should_quit(&self) -> bool {
         false
     }
+    /// Return true to present before the next tick runs (a screenshot of this tick's frame is pending).
+    fn present_now(&self) -> bool {
+        false
+    }
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).
@@ -156,6 +160,9 @@ impl<G: Game> App<G> {
             if self.game.should_quit() {
                 self.quit = true;
                 break;
+            }
+            if self.game.present_now() {
+                break; // the rest of the due time stays in the clock
             }
         }
     }

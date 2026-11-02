@@ -1385,7 +1385,7 @@ impl Game for Play {
 
 /// The window title: `MELEE_WINDOW_TITLE`, else "melee [<worktree> <hash>] <stage> <fighters>" (build identity from build.rs,
 /// the scenario from `--match`), so several windows on one desktop can be told apart. The fps readout is appended later.
-fn window_title(spec: Option<&str>) -> String {
+pub(crate) fn window_title(spec: Option<&str>) -> String {
     if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
         return t;
     }

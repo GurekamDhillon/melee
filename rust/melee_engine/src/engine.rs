@@ -580,7 +580,9 @@ impl Engine {
                 eprintln!("engine: slow tick {} : {:.1} ms, {n} file parse(s) {:.1} ms", self.frames, el.as_secs_f64() * 1e3, pn as f64 / 1e6);
             }
         }
-        if unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
+        // gm_801A4D34's loop copies to the XFB only on a frame it rendered (HSD_VICopyXFBAsync after the draw); the tick on
+        // which the scene ends draws nothing, and the screen keeps showing the last copied frame (no empty frame here)
+        if more && unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
             crate::gxbridge::finish_frame();
         }
         self.frames += 1;

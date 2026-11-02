@@ -58,7 +58,7 @@ pub mod ext {
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void) = |a0: *mut HSD_GObj, a1: u8, a2: *mut c_void| { unsafe { melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _); } };
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32) = |a0: *mut HSD_GObj, a1: i32| { unsafe { melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _); } };
     fn Wb_RenderActive() -> i32;
-    fn hsd_80391A04(a0: f32, a1: f32, a2: i32);
+    fn hsd_80391A04(a0: f32, a1: f32, a2: i32) = |a0, a1, a2| unsafe { melee_runtime::tu::hsd_3915::native_80391A04(a0, a1, a2) };
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

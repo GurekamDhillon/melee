@@ -75,7 +75,7 @@ pub mod ext {
     fn HSD_SetupRenderMode(a0: u32);
     fn HSD_StateInitTev();
     fn HSD_StateInvalidate(a0: i32);
-    fn MTXRotRad(a0: *mut c_void, a1: i8, a2: f32);
+    fn MTXRotRad(a0: *mut c_void, a1: i8, a2: f32) = crate::tu::mtx_pc::MTXRotRad(&mut *(a0 as *mut melee_types::Mtx), a1 as u8, a2);
     fn PSMTXConcat(a0: *mut c_void, a1: *mut c_void, a2: *mut c_void);
     fn PSMTXCopy(a0: *mut c_void, a1: *mut c_void);
     fn PSMTXInverse(a0: *mut c_void, a1: *mut c_void) -> u32;

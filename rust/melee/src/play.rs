@@ -230,6 +230,10 @@ pub struct Play {
     /// `--shot-ticks a,b`: screenshots at those timeline ticks (tick_no - 1: the title's age under --skip-intro), named `tl_<n>`.
     shot_ticks: Vec<u64>,
     kit: Box<dyn crate::retail::MenuHook>,
+    /// Render-only interpolation of the match frames (set by the platform loop).
+    interp: bool,
+    /// A tick ran since the last present (the stand-in / menu scenes redraw only then).
+    dirty: bool,
 }
 
 fn log(msg: &str) {
@@ -795,17 +799,24 @@ impl Play {
     }
 
     /// Draw and present the current state: the engine's own frame during an engine match, else the stand-in scene.
-    fn present_now(&mut self) {
+    /// `alpha`: Some(t) for a render-only interpolated present between the last two sim frames.
+    fn present_now(&mut self, alpha: Option<f64>) {
         if self.scene == Scene::Match && self.em.is_some() {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
             let p = self.presenter.as_mut().unwrap();
-            p.present(&melee_engine::gxbridge::shim().gx.state, frame.as_deref());
+            p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, alpha);
+            return;
+        }
+        if !std::mem::take(&mut self.dirty) {
+            // no tick since the last present: show the last frame again
+            let p = self.presenter.as_mut().unwrap();
+            p.present_frames(&self.shim.gx.state, None, None);
             return;
         }
         self.draw_frame();
         let frame = self.shim.take_frame();
         let p = self.presenter.as_mut().unwrap();
-        p.present(&self.shim.gx.state, frame.as_deref());
+        p.present_frames(&self.shim.gx.state, frame, None);
         self.shim.log.clear();
     }
 
@@ -836,6 +847,7 @@ impl Game for Play {
         self.tick_no += 1;
         self.age += 1;
         self.tick_scene();
+        self.dirty = true;
         if let Some(a) = self.audio.as_mut() {
             a.tick();
         }
@@ -846,7 +858,7 @@ impl Game for Play {
         if self.shots && (self.shot_ages.contains(&self.age) || self.shot_ticks.contains(&(self.tick_no - 1))) && self.presenter.is_some() {
             // Age-exact: draw this tick's state now (the display may have skipped ticks), then write it.
             self.shot_pending = Some(if self.shot_ticks.contains(&(self.tick_no - 1)) { format!("tl_{:04}", self.tick_no - 1) } else { format!("{}_{:04}", self.scene.name(), self.age) });
-            self.present_now();
+            self.present_now(None);
             self.emit_shot();
         }
         if self.shots && self.shot_ages.is_empty() && self.age == 30 && self.shot_pending.is_none() {
@@ -864,7 +876,12 @@ impl Game for Play {
         }
     }
 
-    fn present(&mut self, window: &Arc<Window>, _alpha: f64) {
+    fn set_interp(&mut self, on: bool) {
+        log(&format!("render interpolation {}", if on { "on" } else { "off" }));
+        self.interp = on;
+    }
+
+    fn present(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
                 Ok(p) => self.presenter = Some(p),
@@ -875,7 +892,9 @@ impl Game for Play {
                 }
             }
         }
-        self.present_now();
+        // A pending screenshot is of the newest sim frame, never an interpolated one.
+        let a = (self.interp && self.shot_pending.is_none()).then_some(alpha);
+        self.present_now(a);
         self.emit_shot();
     }
 
@@ -947,6 +966,8 @@ pub fn play(args: &[String]) -> ExitCode {
         title: None,
         menu: None,
         kit: Box::new(crate::retail::NoKit),
+        interp: false,
+        dirty: true,
         shot_ticks: get("--shot-ticks").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
         shot_ages: get("--shot-ages").map(|v| v.split(',').filter_map(|x| x.trim().parse().ok()).collect()).unwrap_or_default(),
     };

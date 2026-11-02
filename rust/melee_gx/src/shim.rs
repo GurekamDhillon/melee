@@ -41,7 +41,7 @@ use crate::state::{TexObj, TlutObj};
 
 /// `GXRenderModeObj` (dolphin/gx/GXStruct.h). In the C build the game reads the three SDK modes
 /// as big-endian images; here they are plain native values.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct GxRenderModeObj {
     pub vi_tv_mode: u32,
     pub fb_width: u16,
@@ -120,7 +120,7 @@ pub const GW_GX_IND_MAX: usize = 4;
 /// while fp->x2226_b5 is set). A later draw with no texgens then has an indirect stage reading a
 /// texcoord nothing generates, which Aurora's shader builder treats as fatal. The guard mirrors
 /// shader_info.cpp's liveness rule and turns such a stage back into a direct one at the next draw.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IndGuard {
     pub num_texgens: u32,
     /// Bit per texcoord: a texgen was written at least once since GXInit (Aurora keeps slots).
@@ -332,7 +332,7 @@ pub fn init_light_dist_attn(o: &mut GxLightObj, ref_dist: f32, ref_br: f32, mut 
 // ------------------------------------------------------------------ the shim
 
 /// `gw_gx_get_stats` counters (+ `gw_gx_texobj_inits`, MELEE_PROFILE's).
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct GxStats {
     /// Finished EFB display copies (frames).
     pub copies: u32,

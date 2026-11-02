@@ -21,6 +21,60 @@ pub struct Presenter {
     /// Frames presented / swapchain images that could not be acquired (skipped).
     pub presented: u64,
     pub skipped: u64,
+    /// The last two sim frames (render-only interpolation: never fed back into the game).
+    prev: Option<Vec<DrawCmd>>,
+    cur: Option<Vec<DrawCmd>>,
+    scratch: Vec<Vec<u8>>,
+    /// The EFB holds a blend, not `cur` itself.
+    blended: bool,
+}
+
+/// `MELEE_VSYNC=off|on` (default on).
+pub fn vsync_from_env() -> bool {
+    !matches!(std::env::var("MELEE_VSYNC").as_deref().map(str::to_ascii_lowercase).as_deref(), Ok("off" | "0" | "false" | "no"))
+}
+
+/// Byte range of one draw's uniform block that holds the projection and the position matrices,
+/// and the range of the normal matrices (see `shader::fill_uniform`: header, [line], proj, pos x10, tex x10, nrm x10).
+fn mtx_ranges(d: &DrawCmd) -> [(usize, usize); 2] {
+    let base = 16 + if d.info.line_mode != 0 { 16 } else { 0 };
+    let pos_end = base + 64 + 480;
+    let nrm = pos_end + 480;
+    [(base, pos_end), (nrm, nrm + 480)]
+}
+
+/// Blend `prev` -> `cur` matrices at `t` into `out` (a copy of cur's uniform). Only structurally
+/// identical draws blend; anything else keeps the current frame's values.
+fn blend_uniform(prev: &DrawCmd, cur: &DrawCmd, t: f32, out: &mut Vec<u8>) {
+    out.clear();
+    out.extend_from_slice(&cur.uniform);
+    if prev.prim != cur.prim || prev.fmt != cur.fmt || prev.vtx_count != cur.vtx_count || prev.current_pn_mtx != cur.current_pn_mtx
+        || prev.uniform.len() != cur.uniform.len() || prev.info.line_mode != cur.info.line_mode
+    {
+        return;
+    }
+    let rd = |b: &[u8], o: usize| f32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]);
+    let [(a0, a1), (n0, n1)] = mtx_ranges(cur);
+    if n1 > cur.uniform.len() {
+        return;
+    }
+    // A projection-type change (ortho <-> perspective: proj[3][3]) or a cut: keep the projection.
+    let p33 = a0 + 60;
+    let mut start = a0;
+    if rd(&prev.uniform, p33) != rd(&cur.uniform, p33) {
+        start = a0 + 64;
+    }
+    for (lo, hi) in [(start, a1), (n0, n1)] {
+        let mut o = lo;
+        while o < hi {
+            let (p, c) = (rd(&prev.uniform, o), rd(&cur.uniform, o));
+            let v = p + (c - p) * t;
+            if v.is_finite() {
+                out[o..o + 4].copy_from_slice(&v.to_le_bytes());
+            }
+            o += 4;
+        }
+    }
 }
 
 impl Presenter {
@@ -45,13 +99,22 @@ impl Presenter {
             format,
             width: size.width.max(1),
             height: size.height.max(1),
-            present_mode: wgpu::PresentMode::AutoVsync,
+            present_mode: if vsync_from_env() {
+                wgpu::PresentMode::AutoVsync
+            } else if caps.present_modes.contains(&wgpu::PresentMode::Immediate) {
+                wgpu::PresentMode::Immediate
+            } else if caps.present_modes.contains(&wgpu::PresentMode::Mailbox) {
+                wgpu::PresentMode::Mailbox
+            } else {
+                wgpu::PresentMode::AutoNoVsync
+            },
             desired_maximum_frame_latency: 2,
             alpha_mode: caps.alpha_modes.first().copied().unwrap_or(wgpu::CompositeAlphaMode::Auto),
             view_formats: vec![],
         };
         surface.configure(&renderer.device, &config);
-        Ok(Self { renderer, surface, config, presented: 0, skipped: 0 })
+        crate::plog!("gw: video: present mode {:?}", config.present_mode);
+        Ok(Self { renderer, surface, config, presented: 0, skipped: 0, prev: None, cur: None, scratch: Vec::new(), blended: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -72,6 +135,44 @@ impl Presenter {
         if let Some(draws) = frame {
             self.renderer.render_frame(state, draws);
         }
+        self.swap_present();
+    }
+
+    /// Decoupled presentation: a new sim frame (if any) becomes current, the last becomes previous.
+    /// `alpha = Some(t)` renders the previous->current blend of the camera / model matrices at `t`
+    /// (one tick of latency); `None` renders the newest frame as is (only when it is new).
+    /// Everything here is render-only: the frames are copies the game no longer reads.
+    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, alpha: Option<f64>) {
+        let fresh = frame.is_some();
+        if let Some(f) = frame {
+            self.prev = self.cur.replace(f);
+        }
+        match (alpha, self.prev.as_ref(), self.cur.as_mut()) {
+            (Some(t), Some(prev), Some(cur)) if prev.len() == cur.len() => {
+                let t = t.clamp(0.0, 1.0) as f32;
+                self.scratch.resize_with(cur.len(), Vec::new);
+                for (i, d) in cur.iter().enumerate() {
+                    blend_uniform(&prev[i], d, t, &mut self.scratch[i]);
+                }
+                for (d, s) in cur.iter_mut().zip(self.scratch.iter_mut()) {
+                    std::mem::swap(&mut d.uniform, s);
+                }
+                self.renderer.render_frame(state, cur);
+                for (d, s) in cur.iter_mut().zip(self.scratch.iter_mut()) {
+                    std::mem::swap(&mut d.uniform, s);
+                }
+                self.blended = true;
+            }
+            (_, _, Some(cur)) if fresh || self.blended => {
+                self.renderer.render_frame(state, cur);
+                self.blended = false;
+            }
+            _ => {}
+        }
+        self.swap_present();
+    }
+
+    fn swap_present(&mut self) {
         let tex = match self.surface.get_current_texture() {
             Ok(t) => t,
             Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {

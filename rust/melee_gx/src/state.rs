@@ -40,7 +40,7 @@ pub type Vec4 = [f32; 4];
 pub type Mat3x4 = [[f32; 4]; 3];
 pub type Mat4x4 = [[f32; 4]; 4];
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TevPass {
     pub a: u32,
     pub b: u32,
@@ -48,7 +48,7 @@ pub struct TevPass {
     pub d: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TevOp {
     pub op: u32,
     pub bias: u32,
@@ -62,7 +62,7 @@ impl Default for TevOp {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TevStage {
     pub color_pass: TevPass,
     pub alpha_pass: TevPass,
@@ -112,7 +112,7 @@ impl Default for TevStage {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct IndStage {
     pub tex_coord_id: u32,
     pub tex_map_id: u32,
@@ -120,7 +120,7 @@ pub struct IndStage {
     pub scale_t: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ColorChannelConfig {
     pub mat_src: u32,
     pub amb_src: u32,
@@ -141,7 +141,7 @@ pub struct ColorChannelState {
     pub light_mask: u32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TcgConfig {
     pub ty: u32,
     pub src: u32,
@@ -188,7 +188,7 @@ impl Default for FogState {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TevSwap {
     pub red: u32,
     pub green: u32,
@@ -206,7 +206,7 @@ impl TevSwap {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct AlphaCompare {
     pub comp0: u32,
     pub ref0: u32,
@@ -234,7 +234,7 @@ pub struct IndTexMtxInfo {
     pub adj_scale_raw: u8,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct TexCoordScale {
     pub scale_s: u16,
     pub scale_t: u16,
@@ -246,7 +246,7 @@ pub struct TexCoordScale {
     pub point_offset: bool,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct VtxAttrFmt {
     pub cnt: u32,
     pub ty: u32,
@@ -414,7 +414,7 @@ pub struct Viewport {
     pub znear: f32,
     pub zfar: f32,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ClipRect {
     pub x: i32,
     pub y: i32,

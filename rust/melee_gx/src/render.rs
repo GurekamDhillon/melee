@@ -244,6 +244,8 @@ pub struct Renderer {
     bgl_textures: wgpu::BindGroupLayout,
     layout: wgpu::PipelineLayout,
     pipelines: HashMap<PipelineKey, wgpu::RenderPipeline>,
+    wgsl_hashes: HashMap<crate::shader::ShaderConfig, u64>,
+    tex_bgs: HashMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
     samplers: HashMap<SamplerKey, wgpu::Sampler>,
     textures: HashMap<TexKey, TexEntry>,
     empty_view: wgpu::TextureView,
@@ -403,6 +405,8 @@ impl Renderer {
             bgl_textures,
             layout,
             pipelines: HashMap::new(),
+            wgsl_hashes: HashMap::new(),
+            tex_bgs: HashMap::new(),
             samplers: HashMap::new(),
             textures: HashMap::new(),
             empty_view,
@@ -415,9 +419,17 @@ impl Renderer {
 
     fn pipeline(&mut self, d: &DrawCmd) -> Option<wgpu::RenderPipeline> {
         let pc = &d.config;
-        let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
+        // Generating the WGSL per draw per frame dominated render time: memoise its hash by config.
+        let wgsl_hash = match self.wgsl_hashes.get(&pc.shader) {
+            Some(&h) => h,
+            None => {
+                let h = fnv(crate::shader::build_shader_source(&pc.shader, u32::MAX).as_bytes());
+                self.wgsl_hashes.insert(pc.shader.clone(), h);
+                h
+            }
+        };
         let key = PipelineKey {
-            wgsl_hash: fnv(src.as_bytes()),
+            wgsl_hash,
             cull: pc.cull_mode,
             blend: (pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha != u32::MAX),
             depth: (pc.depth_compare, pc.depth_update, pc.depth_func),
@@ -427,6 +439,7 @@ impl Renderer {
         if let Some(p) = self.pipelines.get(&key) {
             return Some(p.clone());
         }
+        let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
         self.device.push_error_scope(wgpu::ErrorFilter::Validation);
         let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -496,6 +509,21 @@ impl Renderer {
         }
         self.pipelines.insert(key, pipeline.clone());
         Some(pipeline)
+    }
+
+    /// The cache key `texture_view` would use for `map`, if the texture is already decoded.
+    fn cached_tex_key(&self, d: &DrawCmd, map: usize) -> Option<TexKey> {
+        let o = &d.textures[map];
+        let data = o.data.as_ref()?;
+        let fmt = o.format();
+        let pal = matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2);
+        let tl = if pal { d.tluts.get(o.tlut as usize) } else { None };
+        let tlut_key = match (tl, tl.and_then(|t| t.data.as_ref())) {
+            (Some(t), Some(td)) => (td.as_ptr() as usize, td.len(), t.format, t.num_entries),
+            _ => (0, 0, 0, 0),
+        };
+        let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w: o.width(), h: o.height(), fmt, mips: o.mip_count(), tlut: tlut_key };
+        self.textures.contains_key(&key).then_some(key)
     }
 
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
@@ -586,6 +614,7 @@ impl Renderer {
     /// [`Renderer::render`] without the readback: clear, draw, submit (the EFB stays on the GPU
     /// for [`Renderer::blit_to`] / [`Renderer::read_color`]).
     pub fn render_frame(&mut self, state: &GxState, draws: &[DrawCmd]) {
+        let _t0 = std::time::Instant::now();
         // Pack every draw's vertices, array snapshots and uniforms into three buffers.
         let mut vbuf: Vec<u8> = Vec::new();
         let mut abuf: Vec<u8> = Vec::new();
@@ -597,6 +626,15 @@ impl Renderer {
             ioff: u64,
         }
         let mut prep = Vec::with_capacity(draws.len());
+        // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
+        // Keyed by the snapshot's allocation; the upload covers the most any draw this frame needs.
+        let mut arr_max: HashMap<usize, usize> = HashMap::new();
+        for a in draws.iter().flat_map(|d| d.arrays.iter().flatten()) {
+            let n = (a.needed as usize).min(a.data.len());
+            let e = arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
+            *e = (*e).max(n);
+        }
+        let mut arr_off: HashMap<usize, u32> = HashMap::new();
         for d in draws {
             let mut imm = [0u32; 16];
             imm[0] = vbuf.len() as u32;
@@ -607,8 +645,14 @@ impl Renderer {
             }
             for (i, a) in d.arrays.iter().enumerate() {
                 if let Some(a) = a {
+                    let k = a.data.as_ptr() as usize;
+                    let n = arr_max[&k];
+                    if let Some(&o) = arr_off.get(&k) {
+                        imm[4 + i] = o;
+                        continue;
+                    }
                     imm[4 + i] = abuf.len() as u32;
-                    let n = (a.needed as usize).min(a.data.len());
+                    arr_off.insert(k, abuf.len() as u32);
                     abuf.extend_from_slice(&a.data[..n]);
                     while abuf.len() % 4 != 0 {
                         abuf.push(0);
@@ -640,6 +684,7 @@ impl Renderer {
                 b.resize(256, 0);
             }
         }
+        let _t1 = std::time::Instant::now();
         use wgpu::util::DeviceExt;
         let mk = |data: &[u8], usage, label| {
             self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label: Some(label), contents: data, usage })
@@ -668,10 +713,30 @@ impl Renderer {
                 }),
             }],
         });
+        let _t2 = std::time::Instant::now();
         // Pipelines and texture groups first (they borrow self mutably).
         let mut per_draw = Vec::with_capacity(draws.len());
         for d in draws {
             let p = if d.config.cull_mode == GX_CULL_ALL { None } else { self.pipeline(d) };
+            // Texture bind groups are cached by (decoded texture, sampler) per map: the decoded
+            // texture cache never evicts, so its keys stay valid for the bind group's lifetime.
+            let mut bkey: [Option<(TexKey, SamplerKey)>; MAX_TEXTURES] = Default::default();
+            let mut cacheable = true;
+            for i in 0..MAX_TEXTURES {
+                let used = d.info.sampled_textures & (1 << i) != 0 || d.info.sampled_ind_textures & (1 << i) != 0;
+                if used {
+                    match self.cached_tex_key(d, i) {
+                        Some(k) => bkey[i] = Some((k, sampler_key(&d.textures[i]))),
+                        None => cacheable = false,
+                    }
+                }
+            }
+            if cacheable {
+                if let Some(bg) = self.tex_bgs.get(&bkey) {
+                    per_draw.push((p, bg.clone()));
+                    continue;
+                }
+            }
             let mut views = Vec::new();
             let mut samplers = Vec::new();
             for i in 0..MAX_TEXTURES {
@@ -701,8 +766,12 @@ impl Renderer {
                 layout: &self.bgl_textures,
                 entries: &entries,
             });
+            if cacheable {
+                self.tex_bgs.insert(bkey, tex_bg.clone());
+            }
             per_draw.push((p, tex_bg));
         }
+        let _t3 = std::time::Instant::now();
         let color_view = self.color.create_view(&Default::default());
         let depth_view = self.depth.create_view(&Default::default());
         let mut enc = self.device.create_command_encoder(&Default::default());
@@ -781,6 +850,8 @@ impl Renderer {
             }
         }
         self.queue.submit([enc.finish()]);
+        static PROF: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if *PROF.get_or_init(|| std::env::var_os("MELEE_GX_PROF").is_some()) { eprintln!("gxprof n={} pack={:?} bufs={:?} perdraw={:?} pass={:?} vb={} ab={}", draws.len(), _t1-_t0, _t2-_t1, _t3-_t2, _t3.elapsed(), vbuf.len(), abuf.len()); }
     }
 
     /// Scale the EFB colour target onto `target` (a `tw` x `th` swapchain image of `format`). This

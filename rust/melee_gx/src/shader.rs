@@ -11,7 +11,7 @@ use crate::state::*;
 use std::fmt::Write as _;
 
 /// Aurora `AttrConfig`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct AttrConfig {
     pub attr_type: u8,
     pub cnt: u8,
@@ -29,7 +29,7 @@ impl Default for AttrConfig {
 }
 
 /// Aurora `ShaderConfig`: everything the generated WGSL depends on.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct ShaderConfig {
     pub fog_type: u8,
     pub vtx_stride: u8,
@@ -89,7 +89,7 @@ pub struct PipelineConfig {
 }
 
 /// Aurora `ShaderInfo`; bitsets are masks.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct ShaderInfo {
     pub sampled_tex_coords: u32,
     pub sampled_textures: u32,

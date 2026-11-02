@@ -142,7 +142,7 @@ fn blend_state(mode: u32, src: u32, dst: u32, op: u32, dst_alpha: u32) -> wgpu::
             GX_LO_NOOP => BC { operation: O::Add, src_factor: B::Zero, dst_factor: B::One },
             // AND/OR/XOR/INV/SET and the rest need the destination in the shader (wgpu blending
             // has no logic ops). Melee's draws observed so far never rely on
-            // on them; draw as COPY and say so once per op instead of aborting the frame.
+            // them; draw as COPY and say so once per op instead of aborting the frame.
             _ => {
                 static SEEN: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(0);
                 if SEEN.fetch_or(1 << (op & 15), std::sync::atomic::Ordering::Relaxed) & (1 << (op & 15)) == 0 {

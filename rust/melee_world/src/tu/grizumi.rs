@@ -475,9 +475,11 @@ pub unsafe extern "C" fn grIzumi_801CBE64(gobj: *mut HSD_GObj) {
         ext::lb_8000B1CC(ext::Ground_801C3FA4(gobj, 4), null_mut(), &mut p);
         let mut plat = grIzumi_801CCBDC((*yakumono_param).x0, &mut p, 0, (*gp).u.izumi.xD0);
         (*GET_GROUND(plat)).u.izumi2.xDC = (*yakumono_param).xc;
+        (*GET_GROUND(plat)).u.izumi3.xDC = (*yakumono_param).xc; // izumi2.xDC and izumi3.xDC share a GC offset; the native layouts differ
         ext::lb_8000B1CC(ext::Ground_801C3FA4(gobj, 6), null_mut(), &mut p);
         plat = grIzumi_801CCBDC((*yakumono_param).x8, &mut p, 1, (*gp).u.izumi.xD4);
         (*GET_GROUND(plat)).u.izumi2.xDC = (*yakumono_param).xc;
+        (*GET_GROUND(plat)).u.izumi3.xDC = (*yakumono_param).xc; // izumi2.xDC and izumi3.xDC share a GC offset; the native layouts differ
         return;
     }
     (*gp).u.izumi.xC8 = grIzumi_801CCD98();
@@ -516,6 +518,7 @@ pub unsafe extern "C" fn grIzumi_801CBE64(gobj: *mut HSD_GObj) {
             let plat = grIzumi_801CCBDC((*yakumono_param).x0, &mut x38, 0, (*gp).u.izumi.xD0);
             let platground = GET_GROUND(plat);
             (*platground).u.izumi2.xDC = (*yakumono_param).xc;
+            (*platground).u.izumi3.xDC = (*yakumono_param).xc; // izumi2.xDC and izumi3.xDC share a GC offset; the native layouts differ
             (*platground).x10_flags.set_b3(1);
             (*platground).x18 = (*gp).u.izumi.xC8;
         }
@@ -525,6 +528,7 @@ pub unsafe extern "C" fn grIzumi_801CBE64(gobj: *mut HSD_GObj) {
             let plat = grIzumi_801CCBDC((*yakumono_param).x8, &mut x38, 1, (*gp).u.izumi.xD4);
             let platground = GET_GROUND(plat);
             (*platground).u.izumi2.xDC = (*yakumono_param).xc;
+            (*platground).u.izumi3.xDC = (*yakumono_param).xc; // izumi2.xDC and izumi3.xDC share a GC offset; the native layouts differ
             (*platground).x10_flags.set_b3(1);
             (*platground).x18 = (*gp).u.izumi.xC8;
         }

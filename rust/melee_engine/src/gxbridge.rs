@@ -167,7 +167,12 @@ pub fn GXInvalidateVtxCache() { shim().invalidate_vtx_cache() }
 pub fn GXSetVtxDesc(attr: u32, ty: u32) { shim().set_vtx_desc(attr, ty) }
 pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8) { shim().set_vtx_attr_fmt(fmt, attr, cnt, ty, frac) }
 pub unsafe fn GXSetArray(attr: u32, base: *mut c_void, stride: u8) {
-    let d = data_at(base, usize::MAX);
+    let mut d = data_at(base, usize::MAX);
+    if d.is_none() && !base.is_null() {
+        // An array in native static memory (psdisp's HSD_PSDisp_8040C340 texcoord table): neither archive nor
+        // heap, so read a bounded window that VirtualQuery says is mapped.
+        d = [4096usize, 1024, 256].into_iter().find_map(|n| tex_data_at(base, n));
+    }
     shim().set_array(attr, d.as_ref(), stride)
 }
 pub unsafe fn GXCallDisplayList(list: *mut c_void, nbytes: u32) {

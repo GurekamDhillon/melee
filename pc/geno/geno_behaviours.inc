@@ -1165,7 +1165,7 @@ static void gb_to_bhv(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int bhv)
 static void gb_finish(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int helpless)
 {
     int s = geno_cur_state(fp, st);
-    u32 nx = s >= 0 ? geno_next_of(st, s) : GENO_NONE_T;
+    u32 nx = s >= 0 ? (u32) Geno_StateNext(st->profile, s) : GENO_NONE_T; /* the state's own "next" only */
     u32 dflt = helpless ? GENO_TGT_HELPLESS : GENO_AUTO;
     geno_go(gobj, fp, st, nx != GENO_NONE_T ? nx : dflt);
 }

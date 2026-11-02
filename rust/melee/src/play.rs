@@ -1370,6 +1370,27 @@ impl Game for Play {
     }
 }
 
+/// The window title: `MELEE_WINDOW_TITLE`, else "melee [<worktree> <hash>] <stage> <fighters>" (build identity from build.rs,
+/// the scenario from `--match`), so several windows on one desktop can be told apart. The fps readout is appended later.
+fn window_title(spec: Option<&str>) -> String {
+    if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
+        return t;
+    }
+    let id = format!("melee [{} {}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"));
+    let Some(spec) = spec else { return id };
+    // "a/cpu9,b/cpu9,STAGE": fighters without their slot kind, then the stage first
+    let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
+    let (stage, fighters) = match parts.split_last() {
+        Some((s, f)) if !s.contains('/') => (Some(*s), f),
+        _ => (None, &parts[..]),
+    };
+    let f: Vec<&str> = fighters.iter().map(|x| x.split('/').next().unwrap_or(x)).collect();
+    match stage {
+        Some(s) => format!("{id} {s} {}", f.join(",")),
+        None => format!("{id} {}", f.join(",")),
+    }
+}
+
 pub fn play(args: &[String]) -> ExitCode {
     // `play` never snapshots the game arena (no rollback offline): big free blocks may give their pages back.
     melee_engine::arena::set_trim(std::env::var_os("MELEE_ARENA_NO_TRIM").is_none());
@@ -1521,7 +1542,7 @@ pub fn play(args: &[String]) -> ExitCode {
         return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
-    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960, active: !scripted };
+    let cfg = WindowConfig { title: window_title(get("--match").as_deref()), width: 1280, height: 960, active: !scripted };
     if scripted {
         std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
     }

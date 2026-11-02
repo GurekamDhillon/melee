@@ -234,9 +234,7 @@ enum {
     GENO_HOOK_ARTICLE_SPAWN = 5, /* v5 "geno.article.spawn": spawn the profile's article arg */
     GENO_HOOK_LOCKON = 6,        /* v5.2 "geno.lockon": aim at the nearest other fighter -> MOVE_F0/F1/I0 */
     GENO_HOOK_AIM_STICK = 7,     /* v5.3 "geno.aim_stick": heading from the stick's polar angle -> MOVE_F0/F1 */
-    GENO_HOOK_DASH_SEARCH = 8,   /* v5.4 "geno.dash.search": one frame of an aim window -> MOVE_I0/I1 target, MOVE_F2/F3/I2 stick */
-    GENO_HOOK_DASH_AIM = 9,      /* v5.4 "geno.dash.aim": the window's result -> MOVE_F0/F1 world heading, MOVE_I3 up/down, facing */
-    GENO_HOOK_BRAKE = 10,        /* v5.4 "geno.brake": clamp, then decelerate the fighter's own velocity along itself */
+    /* 8..10 retired (the v5.4 dash.search / dash.aim / brake hooks): geno.multi_dash replaces them */
     GENO_HOOK_BUILTIN_COUNT = 11,
     GENO_HOOK_MAX = 64
 };

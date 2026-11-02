@@ -641,7 +641,6 @@
       "air",
       "air_nodrift",
       "air_drift",
-      "brake",
       "ground",
       "auto",
       "anim_motion",

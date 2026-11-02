@@ -89,9 +89,6 @@ pub const HOOKS: &[(u32, &str)] = &[
     (GENO_HOOK_ARTICLE_SPAWN, "geno.article.spawn"),
     (GENO_HOOK_LOCKON, "geno.lockon"),
     (GENO_HOOK_AIM_STICK, "geno.aim_stick"),
-    (GENO_HOOK_DASH_SEARCH, "geno.dash.search"),
-    (GENO_HOOK_DASH_AIM, "geno.dash.aim"),
-    (GENO_HOOK_BRAKE, "geno.brake"),
 ];
 
 /// (family, name, id, default)
@@ -191,7 +188,6 @@ pub const CBID_NAMES: &[(&str, u32)] = &[
     ("GENO_CBID_ANIM_MOTION", 12),
     ("GENO_CBID_INTERRUPT", 13),
     ("GENO_CBID_AIR_DRIFT", 14),
-    ("GENO_CBID_BRAKE", 15),
     ("GENO_CBID_LUA", 60),
     ("GENO_CBID_CAPE", 50),
     ("GENO_CBID_CAPE_AFTER", 51),
@@ -229,7 +225,6 @@ pub const CALLBACKS: &[(u32, u32, &str)] = &[
     (5, GENO_CB_PHYS, "air"),
     (6, GENO_CB_PHYS, "air_nodrift"),
     (14, GENO_CB_PHYS, "air_drift"),
-    (15, GENO_CB_PHYS, "brake"),
     (7, GENO_CB_PHYS, "ground"),
     (11, GENO_CB_PHYS, "auto"),
     (12, GENO_CB_PHYS, "anim_motion"),

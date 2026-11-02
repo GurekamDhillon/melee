@@ -410,7 +410,7 @@ pub const GENO_SF_SCRIPT: u32 = 1 as u32;
 pub const GENO_PLAYERS: i32 = 6 as i32;
 
 pub const GENO_NHOOKS: i32 = (::core::mem::size_of::<
-    [Anon_anon_503; 10],
+    [Anon_anon_503; 7],
 >() as usize)
     .wrapping_div(::core::mem::size_of::<Anon_anon_503>() as usize)
     as i32;
@@ -438,7 +438,7 @@ pub const GENO_NPARAMDEFS: i32 = (::core::mem::size_of::<
 
 pub const GENO_DEG2RAD: f32 = 0.017453292f32;
 
-pub const GENO_NCBS: i32 = (::core::mem::size_of::<[GenoCbDef; 43]>()
+pub const GENO_NCBS: i32 = (::core::mem::size_of::<[GenoCbDef; 42]>()
     as usize)
     .wrapping_div(::core::mem::size_of::<GenoCbDef>() as usize) as i32;
 
@@ -506,7 +506,7 @@ pub static mut Geno_StateBlock: [[GenoState; 2]; 6] = unsafe { core::mem::zeroed
 
 pub static mut Geno_LuaBlock: [[GenoLuaBlock; 2]; 6] = unsafe { core::mem::zeroed() };
 
-pub static mut geno_hooks: [Anon_anon_503; 10] = unsafe {
+pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
     [
         Anon_anon_503 {
             id: GENO_HOOK_LOG as i32,
@@ -591,45 +591,6 @@ pub static mut geno_hooks: [Anon_anon_503; 10] = unsafe {
             name: b"geno.aim_stick\0" as *const u8 as *const i8,
             r#fn: Some(
                 hook_aim_stick
-                    as unsafe extern "C" fn(
-                        *mut Fighter_GObj,
-                        *mut Fighter,
-                        *mut GenoState,
-                        i32,
-                    ) -> i32,
-            ),
-        },
-        Anon_anon_503 {
-            id: GENO_HOOK_DASH_SEARCH as i32,
-            name: b"geno.dash.search\0" as *const u8 as *const i8,
-            r#fn: Some(
-                hook_dash_search
-                    as unsafe extern "C" fn(
-                        *mut Fighter_GObj,
-                        *mut Fighter,
-                        *mut GenoState,
-                        i32,
-                    ) -> i32,
-            ),
-        },
-        Anon_anon_503 {
-            id: GENO_HOOK_DASH_AIM as i32,
-            name: b"geno.dash.aim\0" as *const u8 as *const i8,
-            r#fn: Some(
-                hook_dash_aim
-                    as unsafe extern "C" fn(
-                        *mut Fighter_GObj,
-                        *mut Fighter,
-                        *mut GenoState,
-                        i32,
-                    ) -> i32,
-            ),
-        },
-        Anon_anon_503 {
-            id: GENO_HOOK_BRAKE as i32,
-            name: b"geno.brake\0" as *const u8 as *const i8,
-            r#fn: Some(
-                hook_brake
                     as unsafe extern "C" fn(
                         *mut Fighter_GObj,
                         *mut Fighter,
@@ -1542,7 +1503,7 @@ pub static mut geno_lua_io: GenoLuaIo = unsafe { core::mem::zeroed() };
 
 pub static mut geno_lua_depth: i32 = unsafe { core::mem::zeroed() };
 
-pub static mut geno_cbs: [GenoCbDef; 43] = unsafe {
+pub static mut geno_cbs: [GenoCbDef; 42] = unsafe {
     [
         GenoCbDef {
             id: GENO_CBID_NEXT as i32,
@@ -1688,14 +1649,6 @@ pub static mut geno_cbs: [GenoCbDef; 43] = unsafe {
             name: b"air_drift\0" as *const u8 as *const i8,
             r#fn: Some(
                 geno_cb_phys_air_drift as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
-            ),
-        },
-        GenoCbDef {
-            id: GENO_CBID_BRAKE as i32,
-            slot: GENO_CB_PHYS as i32,
-            name: b"brake\0" as *const u8 as *const i8,
-            r#fn: Some(
-                geno_cb_phys_brake as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
             ),
         },
         GenoCbDef {
@@ -3088,287 +3041,6 @@ pub unsafe extern "C" fn hook_lockon(
             (*st).move_f[0 as i32 as usize],
         ) as f32 * 180.0f32 / M_PI as f32) as i32,
     );
-    return 0 as i32;
-}
-
-pub unsafe extern "C" fn GenoGame_DashStick(
-    mut sx: f32,
-    mut sy: f32,
-    mut thr: f32,
-    mut cx: *mut f32,
-    mut cy: *mut f32,
-) -> i32 {
-    melee_core::ct!("GenoGame_DashStick");
-    let mut a: f32 = 0.;
-    if fmadds(sx, sx, sy * sy) < thr * thr || sx == 0.0f32 && sy == 0.0f32 {
-        return 0 as i32;
-    }
-    a = atan2f(sy as f32, sx as f32) as f32;
-    *cx = cosf(a as f32) as f32;
-    *cy = sinf(a as f32) as f32;
-    return 1 as i32;
-}
-
-pub unsafe extern "C" fn GenoGame_DashAim(
-    mut has_target: i32,
-    mut dx: f32,
-    mut dy: f32,
-    mut has_stick: i32,
-    mut cx: f32,
-    mut cy: f32,
-    mut facing: f32,
-    mut vert_deg: f32,
-    mut up_min: f32,
-    mut up_max: f32,
-    mut ux: *mut f32,
-    mut uy: *mut f32,
-    mut face: *mut f32,
-    mut kind: *mut i32,
-) {
-    melee_core::ct!("GenoGame_DashAim");
-    let mut lr: f32 = if facing < 0.0f32 { -1.0f32 } else { 1.0f32 };
-    let mut a: f32 = 0.;
-    let mut deg: f32 = 0.;
-    if has_target != 0 && (dx != 0.0f32 || dy != 0.0f32) {
-        a = atan2f(dy as f32, dx as f32) as f32;
-    } else if has_target == 0 && has_stick != 0 {
-        a = atan2f(cy as f32, cx as f32) as f32;
-    } else {
-        a = (if lr < 0.0f32 { M_PI as f32 } else { 0.0f32 }) as f32;
-    }
-    deg = a * 180.0f32 / M_PI as f32;
-    if deg < 0.0f32 {
-        deg += 360.0f32;
-    }
-    *ux = cosf(a as f32) as f32;
-    *uy = sinf(a as f32) as f32;
-    *face = lr;
-    if !(deg >= 90.0f32 - vert_deg && deg <= 90.0f32 + vert_deg
-        || deg >= 270.0f32 - vert_deg && deg <= 270.0f32 + vert_deg)
-    {
-        if *ux > 0.0001f32 {
-            *face = 1.0f32 as f32;
-        } else if *ux < -0.0001f32 {
-            *face = -1.0f32 as f32;
-        }
-    }
-    *kind = if deg >= up_min && deg <= up_max {
-        1 as i32
-    } else if deg >= up_min as f32 + 180.0f32
-        && deg <= up_max as f32 + 180.0f32
-    {
-        2 as i32
-    } else {
-        0 as i32
-    };
-}
-
-pub unsafe extern "C" fn GenoGame_Brake(
-    mut vx: *mut f32,
-    mut vy: *mut f32,
-    mut brake: f32,
-    mut max: f32,
-) {
-    melee_core::ct!("GenoGame_Brake");
-    let mut len: f32 = sqrtf(fmadds(*vx, *vx, *vy * *vy)) as f32;
-    let mut to: f32 = 0.;
-    if len <= 0.0f32 {
-        return;
-    }
-    to = if max > 0.0f32 && len > max { max } else { len };
-    to = (if to > brake {
-        to as f32 - brake as f32
-    } else {
-        0.0f32
-    }) as f32;
-    *vx *= to / len;
-    *vy *= to / len;
-}
-
-pub unsafe extern "C" fn geno_dash_target(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut port: i32,
-) -> *mut Fighter {
-    melee_core::ct!("geno_dash_target");
-    let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
-    if HSD_GObjPLinkHead.is_null() {
-        return ::core::ptr::null_mut::<Fighter>();
-    }
-    cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
-    while !cur.is_null() {
-        let mut o: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-        if !o.is_null() && cur != gobj as *mut HSD_GObj
-            && (*o).player_id as i32
-                != (*fp).player_id as i32
-            && (*o).player_id as i32 == port
-        {
-            return o;
-        }
-        cur = (*cur).next as *mut HSD_GObj;
-    }
-    return ::core::ptr::null_mut::<Fighter>();
-}
-
-pub unsafe extern "C" fn hook_dash_search(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut arg: i32,
-) -> i32 {
-    melee_core::ct!("hook_dash_search");
-    let mut range: f32 = (arg as i32 >> 8 as i32
-        & 0xffff as i32) as f32;
-    let mut best: f32 = -1.0f32;
-    if (*st).move_i[0 as i32 as usize] == 0 && range > 0.0f32
-        && !HSD_GObjPLinkHead.is_null()
-    {
-        let mut cur: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
-        cur = *HSD_GObjPLinkHead.offset(HSD_GOBJ_PLINK_FIGHTER as isize);
-        while !cur.is_null() {
-            let mut o: *mut Fighter = HSD_GObjGetUserData(cur) as *mut Fighter;
-            let mut dx: f32 = 0.;
-            let mut dy: f32 = 0.;
-            let mut d: f32 = 0.;
-            if !(o.is_null() || cur == gobj as *mut HSD_GObj
-                || (*o).player_id as i32
-                    == (*fp).player_id as i32)
-            {
-                dx = (*o).cur_pos.x - (*fp).cur_pos.x;
-                dy = (*o).cur_pos.y - (*fp).cur_pos.y;
-                d = fmadds(dx, dx, dy * dy);
-                if d <= range * range && (best < 0.0f32 || d < best) {
-                    best = d;
-                    (*st).move_i[0 as i32 as usize] = 1
-                        as i32 as i32;
-                    (*st).move_i[1 as i32 as usize] = (*o).player_id
-                        as i32;
-                }
-            }
-            cur = (*cur).next as *mut HSD_GObj;
-        }
-    }
-    if (*st).move_i[0 as i32 as usize] == 0 {
-        let mut cx: f32 = 0.;
-        let mut cy: f32 = 0.;
-        if GenoGame_DashStick(
-            (*fp).input.lstick[0 as i32 as usize].x,
-            (*fp).input.lstick[0 as i32 as usize].y,
-            (arg as i32 & 0xff as i32) as f32 / 100.0f32,
-            &raw mut cx,
-            &raw mut cy,
-        ) != 0
-        {
-            (*st).move_f[2 as i32 as usize] = cx;
-            (*st).move_f[3 as i32 as usize] = cy;
-            (*st).move_i[2 as i32 as usize] = 1 as i32
-                as i32;
-        }
-    }
-    Geno_Event(
-        43 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        if (*st).move_i[0 as i32 as usize] != 0 {
-            1 as i32 + (*st).move_i[1 as i32 as usize]
-        } else {
-            0 as i32
-        },
-        if (*st).move_i[2 as i32 as usize] != 0 {
-            (atan2f(
-                (*st).move_f[3 as i32 as usize],
-                (*st).move_f[2 as i32 as usize],
-            ) as f32 * 180.0f32 / M_PI as f32) as i32
-        } else {
-            -(1 as i32)
-        },
-    );
-    return 0 as i32;
-}
-
-pub unsafe extern "C" fn hook_dash_aim(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut arg: i32,
-) -> i32 {
-    melee_core::ct!("hook_dash_aim");
-    let mut o: *mut Fighter = if (*st).move_i[0 as i32 as usize] != 0 {
-        geno_dash_target(gobj, fp, (*st).move_i[1 as i32 as usize])
-    } else {
-        ::core::ptr::null_mut::<Fighter>()
-    };
-    let mut face: f32 = 0.;
-    let mut kind: i32 = 0;
-    if o.is_null() {
-        (*st).move_i[0 as i32 as usize] = 0 as i32 as i32;
-    }
-    GenoGame_DashAim(
-        (o != ::core::ptr::null_mut::<Fighter>()) as i32,
-        if !o.is_null() { (*o).cur_pos.x - (*fp).cur_pos.x } else { 0.0f32 },
-        if !o.is_null() { (*o).cur_pos.y - (*fp).cur_pos.y } else { 0.0f32 },
-        (*st).move_i[2 as i32 as usize],
-        (*st).move_f[2 as i32 as usize],
-        (*st).move_f[3 as i32 as usize],
-        (*fp).facing_dir as f32,
-        (arg as i32 & 0xff as i32) as f32,
-        (arg as i32 >> 8 as i32
-            & 0xff as i32) as f32,
-        (arg as i32 >> 16 as i32
-            & 0xff as i32) as f32,
-        (&raw mut (*st).move_f as *mut f32).offset(0 as i32 as isize)
-            as *mut f32,
-        (&raw mut (*st).move_f as *mut f32).offset(1 as i32 as isize)
-            as *mut f32,
-        &raw mut face,
-        &raw mut kind,
-    );
-    (*st).move_i[3 as i32 as usize] = kind as i32;
-    if face != (*fp).facing_dir {
-        (*fp).facing_dir = face as f32;
-        if !(*fp).parts.is_null() {
-            ftPartSetRotY(
-                fp,
-                0 as i32,
-                1.5707964f32 * (*fp).facing_dir as f32,
-            );
-        }
-    }
-    Geno_Event(
-        44 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        (o != ::core::ptr::null_mut::<Fighter>()) as i32
-            | (*st).move_i[2 as i32 as usize] << 1 as i32
-            | kind << 2 as i32,
-        (atan2f(
-            (*st).move_f[1 as i32 as usize],
-            (*st).move_f[0 as i32 as usize],
-        ) as f32 * 180.0f32 / M_PI as f32) as i32,
-    );
-    return 0 as i32;
-}
-
-pub unsafe extern "C" fn hook_brake(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut arg: i32,
-) -> i32 {
-    melee_core::ct!("hook_brake");
-    let mut brake: f32 = (arg as i32 & 0xffff as i32)
-        as f32 / 1000.0f32;
-    let mut max: f32 = (arg as i32 >> 16 as i32
-        & 0x7fff as i32) as f32 / 100.0f32;
-    let mut zero: f32 = 0.0f32;
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        GenoGame_Brake(&raw mut (*fp).gr_vel, &raw mut zero, brake, max);
-        (*fp).self_vel.x = (*fp).gr_vel as f32;
-    } else if arg as u32 >> 31 as i32 != 0 {
-        GenoGame_Brake(&raw mut (*fp).self_vel.x, &raw mut zero, brake, max);
-    } else {
-        GenoGame_Brake(&raw mut (*fp).self_vel.x, &raw mut (*fp).self_vel.y, brake, max);
-    }
     return 0 as i32;
 }
 
@@ -6975,55 +6647,6 @@ pub unsafe extern "C" fn geno_cb_phys_air_drift(mut gobj: *mut Fighter_GObj) {
     } else {
         ftCommon_CalcSelfAccel_Drift(fp);
     };
-}
-
-pub unsafe extern "C" fn geno_cb_phys_brake(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_cb_phys_brake");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut zero: f32 = 0.0f32;
-    if st.is_null() {
-        return;
-    }
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        GenoGame_Brake(
-            &raw mut (*fp).gr_vel,
-            &raw mut zero,
-            (*st).move_f[5 as i32 as usize],
-            0.0f32,
-        );
-        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
-        return;
-    }
-    if (*st).move_i[4 as i32 as usize] & 1 as i32 != 0 {
-        GenoGame_Brake(
-            &raw mut (*fp).self_vel.x,
-            &raw mut zero,
-            (*st).move_f[5 as i32 as usize],
-            0.0f32,
-        );
-    } else {
-        GenoGame_Brake(
-            &raw mut (*fp).self_vel.x,
-            &raw mut (*fp).self_vel.y,
-            (*st).move_f[5 as i32 as usize],
-            0.0f32,
-        );
-    }
-    if (*st).move_f[6 as i32 as usize] > 0.0f32 {
-        let mut lim: f32 = (*st).move_f[7 as i32 as usize];
-        (*fp).self_vel.y -= (*st).move_f[6 as i32 as usize];
-        if lim > 0.0f32 {
-            (*fp).self_vel.y = if (*fp).self_vel.y > lim {
-                lim
-            } else if (*fp).self_vel.y < -lim {
-                -lim
-            } else {
-                (*fp).self_vel.y
-            };
-        }
-    }
 }
 
 pub unsafe extern "C" fn geno_cb_phys_ground(mut gobj: *mut Fighter_GObj) {

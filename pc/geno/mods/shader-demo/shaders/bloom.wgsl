@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 // params: threshold, intensity, radius (floats). Bright extraction + compact blur, at half res.
 var glow = vec3f(0.0);
 let step = vec2f(max(params.radius.x, 1.0)) / resolution();

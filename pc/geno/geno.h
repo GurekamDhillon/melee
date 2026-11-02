@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno.h - Geno, GD's Melee's own fighter-extension layer: constants shared by the native half
  * (pc/platform/geno_registry.c, x86, little-endian) and the game half (pc/geno/geno_game.c,
  * compiled through the gwtool pipeline like the rest of melee, so it sees guest structs in their
@@ -315,6 +317,7 @@ enum {
     GENO_BHV_MAX = 32
 };
 
+/* the GENO_P_* Brawl-derived defaults below are excluded from the MIT grant, see LICENSE-MIT */
 /* Behaviour parameters: per profile, by stable id; geno.json names them "<family>.<name>" inside
  * the family's block ("glide": {...}, "tornado": {...}, "drill": {...}). Every family also takes
  * its Brawl block word by word ("w00".."wNN"), which is what the IR / translator has. */

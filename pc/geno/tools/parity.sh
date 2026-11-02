@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 # Vanilla-parity check: replays real console games (Slippi .slp) through the port and asserts that
 # every vanilla fighter matches the console frame for frame - action state, x, y, facing, percent,
 # stocks, and the RNG seed wherever the replay records it (gw_replay.c, MELEE_SLP_PARITY=1).

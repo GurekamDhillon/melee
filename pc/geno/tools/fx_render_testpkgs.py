@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Synthetic one-feature test packages for the Geno FX renderer features (no XV2 data): RxSoftTest (R3, RxSoftOff / RxSoftOn), RxDissolveTest
 (R4 + R5), RxBeamTest (R2 span ribbon + R1 glare).
 

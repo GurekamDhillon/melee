@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_state.h - Geno's per-fighter and per-article state (game half only: geno_game.c and geno_tests.c,
  * both compiled through gwtool, so the layout is the same in both). Never included by native code.
  *

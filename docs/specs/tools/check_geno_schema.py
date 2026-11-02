@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Validate the shipped Geno mods against docs/specs/geno-v5.schema.json.
 
     python docs/specs/tools/check_geno_schema.py [--mods DIR] [--negative]

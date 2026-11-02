@@ -171,6 +171,8 @@ whole sequence.
 
 ## Licence and legal
 
+Geno and the interop specs (`docs/specs`, most of `pc/geno`) are MIT-licensed; see the `LICENSE-MIT` files ([`docs/specs/LICENSE-MIT`](docs/specs/LICENSE-MIT), [`pc/geno/LICENSE-MIT`](pc/geno/LICENSE-MIT)). Everything else is GPL-2.0-or-later.
+
 `pc/` is licensed **GPL-2.0-or-later** — see [`pc/LICENSE`](pc/LICENSE). Upstream `doldecomp/melee`
 publishes no licence of its own; nothing here re-licences the decompilation. `pc/gameworld/gekko_fp.c`
 derives in part from Dolphin Emulator's `Common/FloatUtils.cpp` (GPL-2.0-or-later) and carries an

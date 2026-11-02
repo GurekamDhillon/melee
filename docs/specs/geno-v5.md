@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Geno fighter-extension format, v5 (with the additive v5.1-v5.5 features)
 
 Revision 2026-11-02 (rev 2: melee-unlocked's answers folded in; sections 3, 4.5, 4.6, 4.8, 8.2, 9, 11 changed). Standalone spec for an independent C reader/runtime (melee-unlocked's Source Port). Derived from our source only:

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 // params: strength, radius, softness (floats).
 let c = previous_color(in.uv);
 let delta = in.uv - vec2f(0.5);

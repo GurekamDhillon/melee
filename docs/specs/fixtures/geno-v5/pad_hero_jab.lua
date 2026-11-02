@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 -- @name: Geno spec fixture pad (vanilla-hero walk + jab, per-frame state log)
 -- @gameplay: true
 -- @rollback_safe: false

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Driven by the native synthetic registry/candidate fixture. Exercises the
  * actual coordinator, game cache gate, byte copy and next-load consumption.
  * No DVD/heap or disc assets. All game globals are restored before returning. */

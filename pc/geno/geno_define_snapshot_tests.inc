@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Snapshot-visible native-definition diagnostics and identity. Runtime suite
  * execution is still required after the integrator rebuild. */
 extern u32 GenoDefine_ContentIdentity[Ft_Kind_Max][2];

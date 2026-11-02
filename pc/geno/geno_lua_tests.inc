@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_lua_tests.inc - slice 5, game half: fighter Lua through a define fighter (included by geno_tests.c; uses its t_* fixtures).
  * Capture mode (GenoGame_TestCapture) records a change of action instead of performing it, as the other v2 tests do. */
 

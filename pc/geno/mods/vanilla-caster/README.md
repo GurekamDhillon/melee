@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Caster
 
 Third Geno native-definition fixture (slice 3, `geno: 8`): a define with its own article, its own effect and named sounds. Needs only the vanilla disc.

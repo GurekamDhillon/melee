@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_game_combo.inc - geno 11: the combo graph's game half (docs/geno.md section 25). Included at the end of geno_game.c (one
  * translation unit: it shares that file's statics: geno_state, geno_go, geno_do_change, geno_dg, geno_lua_block).
  *

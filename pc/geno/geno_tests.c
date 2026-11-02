@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_tests.c - Geno's game-side tests (the escape interpreter, the state block, multi-jump,
  * attributes, the savestate round trip). Compiled through the game pipeline like
  * pc/tests/mex_tests.c, so TestRegister/TestFail resolve to gw_TestRegister/gw_TestFail and every

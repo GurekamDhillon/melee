@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Hero
 
 The Geno engine native Mario-reference fixture. Offline only.

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """The Geno Lab's accent palette, in the kit's colour-module style (menu/pipeline/kit.py).
 
     python lab_palette.py         -> prints the checks; lab_art.py imports it

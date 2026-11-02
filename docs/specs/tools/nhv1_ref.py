@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Reference implementation of NHV1 (docs/specs/nhv1.md): the words, in pure Python.
 
     python docs/specs/tools/nhv1_ref.py            self-test: the C oracle vectors and the golden CSV hash column

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_game_articles.inc - Geno v5: articles (projectiles), the on_hit dispatch point and counter
  * windows. Included at the end of geno_game.c (one translation unit: it shares that file's statics).
  * Design and data format: docs/geno.md section 19.

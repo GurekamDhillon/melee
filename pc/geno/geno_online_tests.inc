@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_online_tests.inc - slice 7, game half: the rollback hash covers every word of a define's Geno state, by test, not by review.
  * Included by geno_tests.c after geno_lua_tests.inc (it uses tl_setup and the TL_* fixtures).
  *

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Striker
 
 Second Geno native-definition fixture (slice 2, `geno: 7`): a rushdown fighter with its own move set,

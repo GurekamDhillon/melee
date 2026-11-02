@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* hello_mod.c - mod-c-v1 example. Port 1's fighter (slot 0) takes +1% extra every time damage is applied to it.
  * All state is in globals below (no heap, no statics with dynamic init); that is what makes rollback correct with no
  * save/load code. Build:

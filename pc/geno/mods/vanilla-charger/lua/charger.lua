@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 -- Vanilla Charger: the neutral special, written as a Lua callback (Geno slice 5, docs/geno.md section 23).
 -- Hold B to charge (up to 60 frames), release to strike: the dash is faster and the hit harder the longer it was held.
 -- The only state is ctx.state (declared in geno.json "lua": {"state": ...}); the functions keep nothing between calls.

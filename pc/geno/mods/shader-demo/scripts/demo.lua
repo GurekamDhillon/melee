@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 local enabled = false
 local function add(path, options)
     local handle, error = gd.post_add("shaders/" .. path, options)

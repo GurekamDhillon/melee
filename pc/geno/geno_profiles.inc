@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Lazy profile descriptors in a fixed byte-budget arena, not the HSD heap.
  * Arena bytes, cursor, pointer tables and capacities are section-3 game globals:
  * gw_snap captures/restores them together, including in the headless suite.

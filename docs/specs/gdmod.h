@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* gdmod.h - mod-c-v1 (ABI 1.0). Spec: docs/specs/mod-c-v1.md. Hook table: docs/specs/hooks-v1.tsv.
  *
  * One C source, two targets: native (compiled into the host build, x86-64) and WebAssembly (wasm32, AOT, sandboxed).

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # mod-c-v1: one C mod source, native and WebAssembly
 
 Spec version: mod-c-v1, ABI 1.0, hook table `hooks-v1`, document revision 2026-11-02. Shared by melee-unlocked (native C/C++

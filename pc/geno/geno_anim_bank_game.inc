@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Included in ftdata.c under TARGET_PC. A bank can live in MEM1 or AllA's
  * ARAM preload heap; keep its allocation and replace only validated raw bytes.
  * No Fighter may retain x590/x598/x5A4/x5A8 or cached trees from the old bank.

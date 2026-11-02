@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Requires a loaded item system for allocation; no assets are read here.
  * Native test adapter binds a generated GXMS asset in the real visual cache. */
 int Geno_ItemInterleaveFixture(int def) {

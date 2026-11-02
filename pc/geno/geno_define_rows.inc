@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Same TU as the callback registry. Ordinary motion ids keep native semantics. */
 extern int Geno_DefineOverrideCount(int kind);
 extern int Geno_DefineOverrideField(int kind, int row, int field);

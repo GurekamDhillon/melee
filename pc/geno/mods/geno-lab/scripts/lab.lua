@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 -- Geno Lab - frame-steppable fighter inspection (private, Geno build). docs/geno.md "Geno Lab".
 --
 -- Offline only: pause, step and step-back need "gameplay": true, and every write the Lab makes

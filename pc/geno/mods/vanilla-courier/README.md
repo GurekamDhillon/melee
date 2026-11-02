@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Courier (Geno slice 4: own model, skeleton, clips, hurtboxes)
 
 **State of this fixture (2026-10-05): step (a), a static stand-in.** The folder holds text only. The engine assets are

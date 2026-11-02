@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Riposte
 
 The Geno slice 5 second fixture: a native Mario-reference define whose down special (ground and air) is a counter answered in Lua (`lua/riposte.lua`, slots `power`, `streak` and

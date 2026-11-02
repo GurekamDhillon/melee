@@ -1,0 +1,52 @@
+MIT License
+
+Copyright (c) 2026 GurekamDhillon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Files with a comment syntax carry the header lines "SPDX-License-Identifier: MIT" and
+"Copyright (c) 2026 GurekamDhillon". Files that cannot hold a comment (JSON, CSV, binary textures,
+.words, .genoasm, PNG, .gitkeep/.gitignore) are covered by this file and the list below.
+Paths are relative to the repository root. Everything not listed here is GPL-2.0-or-later (see pc/LICENSE).
+
+The Geno-side files under pc/geno/ are listed in pc/geno/LICENSE-MIT.
+
+Covered files (16)
+------------------
+docs/specs/examples/hello_mod.c
+docs/specs/fixtures/geno-v5/geno.json
+docs/specs/fixtures/geno-v5/nhv1_hero_jab.csv
+docs/specs/fixtures/geno-v5/nhv1_hero_jab_geno.csv
+docs/specs/fixtures/geno-v5/pad_hero_jab.lua
+docs/specs/fixtures/geno-v5/state_hero_jab.csv
+docs/specs/gdmod.h
+docs/specs/geno-v5.md
+docs/specs/geno-v5.schema.json
+docs/specs/hooks-v1.tsv
+docs/specs/mod-c-v1.md
+docs/specs/nhv1.md
+docs/specs/tools/check_geno_schema.py
+docs/specs/tools/geno_id.py
+docs/specs/tools/nhv1_ref.py
+tools/specs/gen_hook_table.py
+
+Excluded (remain GPL-2.0-or-later, no MIT header)
+-------------------------------------------------
+docs/geno.md
+all CLAUDE.md files

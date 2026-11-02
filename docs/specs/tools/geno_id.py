@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """The Geno stable fighter-entry id (docs/specs/geno-v5.md section 5), pure Python.
 
     python docs/specs/tools/geno_id.py             self-test against the value pinned by our C test

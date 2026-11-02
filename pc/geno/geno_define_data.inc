@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Native Mario-reference backend, included in ftdata.c after its tables.
  * Author owns independent effective attributes/animation/state rows. Shared
  * retail model/clip/effect/audio descriptors are immutable asset references.

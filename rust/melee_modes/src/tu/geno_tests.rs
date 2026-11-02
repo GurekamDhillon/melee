@@ -145,9 +145,6 @@ fn Geno_ArticleLogic(a0: i32) -> *mut c_void = crate::tu::adapt::Geno_ArticleLog
 fn Geno_OnHit(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::Geno_OnHit__5cbd6a;
 fn GenoGame_ArticleStep(a0: i32, a1: i32, a2: i32, a3: *mut f32, a4: *mut f32, a5: f32, a6: f32, a7: i32, a8: f32, a9: f32) = crate::tu::adapt::GenoGame_ArticleStep__051bee;
 fn Geno_SpecialSelect(a0: i32, a1: i32, a2: i32) -> i32;
-fn GenoGame_DashStick(a0: f32, a1: f32, a2: f32, a3: *mut f32, a4: *mut f32) -> i32 = crate::tu::adapt::GenoGame_DashStick__2b0e6e;
-fn GenoGame_DashAim(a0: i32, a1: f32, a2: f32, a3: i32, a4: f32, a5: f32, a6: f32, a7: f32, a8: f32, a9: f32, a10: *mut f32, a11: *mut f32, a12: *mut f32, a13: *mut i32) = crate::tu::adapt::GenoGame_DashAim__eaca5a;
-fn GenoGame_Brake(a0: *mut f32, a1: *mut f32, a2: f32, a3: f32) = crate::tu::adapt::GenoGame_Brake__13e65e;
 fn GenoGame_LockonAim(a0: i32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: i32, a7: f32, a8: f32, a9: *mut f32, a10: *mut f32, a11: *mut f32) = crate::tu::adapt::GenoGame_LockonAim__57d893;
 fn GenoFly_TestArm(a0: *mut Fighter) = crate::tu::adapt::GenoFly_TestArm__11059c;
 fn GenoFly_Fighter(a0: *mut Fighter) -> i32 = crate::tu::adapt::GenoFly_Fighter__f7b536;
@@ -7480,205 +7477,22 @@ pub unsafe extern "C" fn test_geno_v51() -> i32 {
     return rc;
 }
 
-pub unsafe extern "C" fn test_geno_v54_dash() -> i32 {
-    melee_core::ct!("test_geno_v54_dash");
-    let mut cx: f32 = 9.0f32;
-    let mut cy: f32 = 9.0f32;
-    let mut ux: f32 = 0.;
-    let mut uy: f32 = 0.;
-    let mut face: f32 = 0.;
-    let mut vx: f32 = 0.;
-    let mut vy: f32 = 0.;
-    let mut kind: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    if GenoGame_DashStick(0.15f32, 0.15f32, 0.25f32, &raw mut cx, &raw mut cy)
-        != 0 as i32 || cx != 9.0f32
+pub unsafe extern "C" fn test_geno_v54_retired() -> i32 {
+    melee_core::ct!("test_geno_v54_retired");
+    if GenoGame_HookFind(b"geno.dash.search\0" as *const u8 as *const i8) != -1
+        || GenoGame_HookFind(b"geno.dash.aim\0" as *const u8 as *const i8) != -1
+        || GenoGame_HookFind(b"geno.brake\0" as *const u8 as *const i8) != -1
     {
-        TestFail(
-            b"dash stick: inside the dead zone writes nothing\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
+        TestFail(b"a retired v5.4 dash hook still resolves\0" as *const u8 as *const i8);
+        return 1 as i32;
     }
-    if GenoGame_DashStick(0.0f32, -1.0f32, 0.25f32, &raw mut cx, &raw mut cy) == 0
-        || t_near(cx, 0.0f32) == 0 || t_near(cy, -1.0f32) == 0
+    if crate::tu::geno_game::GenoGame_CallbackFind(GENO_CB_PHYS as i32, b"brake\0" as *const u8 as *const i8) != -1
+        || crate::tu::geno_game::GenoGame_CallbackFind(GENO_CB_PHYS as i32, b"multi_dash\0" as *const u8 as *const i8) == -1
     {
-        TestFail(
-            b"dash stick: straight down is straight down\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
+        TestFail(b"phys names: \"brake\" must be gone and \"multi_dash\" present\0" as *const u8 as *const i8);
+        return 1 as i32;
     }
-    if GenoGame_DashStick(-0.5f32, 0.5f32, 0.25f32, &raw mut cx, &raw mut cy) == 0
-        || t_near(cx, -0.70710678f32) == 0 || t_near(cy, 0.70710678f32) == 0
-    {
-        TestFail(
-            b"dash stick: up-back is 135 degrees, unclamped\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_DashAim(
-        0 as i32,
-        0.0f32,
-        0.0f32,
-        1 as i32,
-        0.0f32,
-        1.0f32,
-        1.0f32,
-        20.0f32,
-        40.0f32,
-        140.0f32,
-        &raw mut ux,
-        &raw mut uy,
-        &raw mut face,
-        &raw mut kind,
-    );
-    if t_near(ux, 0.0f32) == 0 || t_near(uy, 1.0f32) == 0 || face != 1.0f32
-        || kind != 1 as i32
-    {
-        TestFail(
-            b"dash aim: straight up keeps the facing\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_DashAim(
-        0 as i32,
-        0.0f32,
-        0.0f32,
-        1 as i32,
-        -0.70710678f32,
-        -0.70710678f32,
-        1.0f32,
-        20.0f32,
-        40.0f32,
-        140.0f32,
-        &raw mut ux,
-        &raw mut uy,
-        &raw mut face,
-        &raw mut kind,
-    );
-    if t_near(ux, -0.70710678f32) == 0 || t_near(uy, -0.70710678f32) == 0
-        || face != -1.0f32 || kind != 2 as i32
-    {
-        TestFail(
-            b"dash aim: 225 degrees turns and aims down\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_DashAim(
-        1 as i32,
-        -30.0f32,
-        -40.0f32,
-        1 as i32,
-        1.0f32,
-        0.0f32,
-        1.0f32,
-        20.0f32,
-        40.0f32,
-        140.0f32,
-        &raw mut ux,
-        &raw mut uy,
-        &raw mut face,
-        &raw mut kind,
-    );
-    if t_near(ux, -0.6f32) == 0 || t_near(uy, -0.8f32) == 0 || face != -1.0f32
-        || kind != 2 as i32
-    {
-        TestFail(
-            b"dash aim: the target overrides the stick\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_DashAim(
-        1 as i32,
-        0.0f32,
-        0.0f32,
-        1 as i32,
-        0.0f32,
-        1.0f32,
-        -1.0f32,
-        20.0f32,
-        40.0f32,
-        140.0f32,
-        &raw mut ux,
-        &raw mut uy,
-        &raw mut face,
-        &raw mut kind,
-    );
-    if t_near(ux, -1.0f32) == 0 || t_near(uy, 0.0f32) == 0 || face != -1.0f32
-        || kind != 0 as i32
-    {
-        TestFail(
-            b"dash aim: a zero offset dashes along the facing\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_DashAim(
-        0 as i32,
-        0.0f32,
-        0.0f32,
-        0 as i32,
-        0.0f32,
-        1.0f32,
-        1.0f32,
-        20.0f32,
-        40.0f32,
-        140.0f32,
-        &raw mut ux,
-        &raw mut uy,
-        &raw mut face,
-        &raw mut kind,
-    );
-    if t_near(ux, 1.0f32) == 0 || t_near(uy, 0.0f32) == 0
-        || kind != 0 as i32
-    {
-        TestFail(
-            b"dash aim: no target and no stick is straight ahead\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    vx = 3.0f32 as f32;
-    vy = 4.0f32 as f32;
-    GenoGame_Brake(&raw mut vx, &raw mut vy, 0.34f32, 2.0f32);
-    if t_near(vx, 0.996f32) == 0 || t_near(vy, 1.328f32) == 0 {
-        TestFail(
-            b"brake: capped to 2.0 then 0.34 off along the vector\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    vx = -0.1f32 as f32;
-    vy = 0.0f32 as f32;
-    GenoGame_Brake(&raw mut vx, &raw mut vy, 0.24f32, 0.0f32);
-    if vx != 0.0f32 || vy != 0.0f32 {
-        TestFail(
-            b"brake: stops at rest, never reverses\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    if GenoGame_HookFind(
-        b"geno.dash.search\0" as *const u8 as *const i8,
-    ) != 8 as i32
-        || GenoGame_HookFind(
-            b"geno.dash.aim\0" as *const u8 as *const i8,
-        ) != 9 as i32
-        || GenoGame_HookFind(b"geno.brake\0" as *const u8 as *const i8)
-            != 10 as i32
-    {
-        TestFail(
-            b"dash hooks: stable ids 8, 9, 10\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    return rc;
+    return 0 as i32;
 }
 
 pub unsafe extern "C" fn test_geno_v52_lockon() -> i32 {
@@ -11955,8 +11769,8 @@ pub unsafe extern "C" fn GenoTestRegisterAll() {
         Some(test_geno_v52_lockon as unsafe extern "C" fn() -> i32),
     );
     TestRegister(
-        b"geno_v54_dash\0" as *const u8 as *const i8,
-        Some(test_geno_v54_dash as unsafe extern "C" fn() -> i32),
+        b"geno_v54_retired\0" as *const u8 as *const i8,
+        Some(test_geno_v54_retired as unsafe extern "C" fn() -> i32),
     );
 }
 

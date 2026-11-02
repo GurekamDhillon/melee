@@ -25929,13 +25929,10 @@ fn install_melee_modes() {
     // tu/geno_tests.rs
     unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrOffset = Some(|a0| unsafe { cast::<_, _, 1296000>(melee_modes::tu::geno_game::GenoGame_AttrOffset(cast::<_, _, 1296001>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_Brake = Some(|a0, a1, a2, a3| unsafe { melee_modes::tu::geno_game::GenoGame_Brake(cast::<_, _, 1296101>(a0), cast::<_, _, 1296102>(a1), cast::<_, _, 1296103>(a2), cast::<_, _, 1296104>(a3)) }); }
     // tu/geno_tests.rs
     unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_ComboBlockOf = Some(|a0| unsafe { cast::<_, _, 1296200>(melee_modes::tu::geno_game::GenoGame_ComboBlockOf(cast::<_, _, 1296201>(a0))) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_DashAim = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13| unsafe { melee_modes::tu::geno_game::GenoGame_DashAim(cast::<_, _, 1296301>(a0), cast::<_, _, 1296302>(a1), cast::<_, _, 1296303>(a2), cast::<_, _, 1296304>(a3), cast::<_, _, 1296305>(a4), cast::<_, _, 1296306>(a5), cast::<_, _, 1296307>(a6), cast::<_, _, 1296308>(a7), cast::<_, _, 1296309>(a8), cast::<_, _, 1296310>(a9), cast::<_, _, 1296311>(a10), cast::<_, _, 1296312>(a11), cast::<_, _, 1296313>(a12), cast::<_, _, 1296314>(a13)) }); }
     // tu/geno_tests.rs
-    unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_DashStick = Some(|a0, a1, a2, a3, a4| unsafe { cast::<_, _, 1296400>(melee_modes::tu::geno_game::GenoGame_DashStick(cast::<_, _, 1296401>(a0), cast::<_, _, 1296402>(a1), cast::<_, _, 1296403>(a2), cast::<_, _, 1296404>(a3), cast::<_, _, 1296405>(a4))) }); }
     // tu/geno_tests.rs
     unsafe { melee_modes::tu::geno_tests::ext::hook::GenoGame_HookFind = Some(|a0| unsafe { cast::<_, _, 1296500>(melee_modes::tu::geno_game::GenoGame_HookFind(cast::<_, _, 1296501>(a0))) }); }
     // tu/geno_tests.rs
@@ -39352,10 +39349,7 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("GenoGame_AttrFind", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrFind", true, false),
     ("GenoGame_AttrIsInt", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrIsInt", true, false),
     ("GenoGame_AttrOffset", "melee_modes::tu::geno_tests::ext::hook::GenoGame_AttrOffset", true, false),
-    ("GenoGame_Brake", "melee_modes::tu::geno_tests::ext::hook::GenoGame_Brake", true, false),
     ("GenoGame_ComboBlockOf", "melee_modes::tu::geno_tests::ext::hook::GenoGame_ComboBlockOf", true, false),
-    ("GenoGame_DashAim", "melee_modes::tu::geno_tests::ext::hook::GenoGame_DashAim", true, false),
-    ("GenoGame_DashStick", "melee_modes::tu::geno_tests::ext::hook::GenoGame_DashStick", true, false),
     ("GenoGame_HookFind", "melee_modes::tu::geno_tests::ext::hook::GenoGame_HookFind", true, false),
     ("GenoGame_LockonAim", "melee_modes::tu::geno_tests::ext::hook::GenoGame_LockonAim", true, false),
     ("GenoGame_LuaBlockOf", "melee_modes::tu::geno_tests::ext::hook::GenoGame_LuaBlockOf", true, false),

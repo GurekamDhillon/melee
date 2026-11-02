@@ -473,3 +473,18 @@ The first implementation followed sections 2-7 literally, and six rows could not
 | M-6 | renormalising after the clamp undid it (stick straight up gave `ay = 1.0`) | clamp the unit vector's `ay` and rebuild `ax` from it: `|ay| <= 0.9397` |
 
 T-7 is measured between accumulator hits. The loop-start hit is not "near the end", and frame 0's spin already counts toward the next hit. Re-recorded fixture: G-4 = 43 frames (it was 39 with `S_START = 1.20`).
+
+## 10. Addendum: the script-visible parameter set (2026-11-02, implementer)
+
+`pc/geno/geno_behaviour_params.h` is the one parameter set the v5.1 procedures and `geno.json` use. Every entry is a value from sections 2-5 and 9 above, with its tag; nothing was taken from any other code or data. Script names are the spec's parameter names in lower case. Where the spec names a value only in prose or as a timeline frame, the name is ours:
+
+- tornado: `start_frames` = 12 (loop starts at global frame 12, T-1 `[W]`), `end_frames` = 29 (T-3 `[W]`), `final_hit_ground` / `final_hit_air` = 3 / 2 (T-4 `[W]`), `loop_damage` / `final_damage` = 1 / 3 (T-10 `[W]`), `grav_tn`, `fall_tn` (section 3.3).
+- drill: `hit0` = 26, `hit_end` = 65, `final_frame` = 66, `final_end_ground` / `final_end_air` = 67 / 70, `total` = 96, `nhits` = 10, `rush_damage` / `final_damage` = 1 / 3 (all `[W]`, section 4.1); `hit_period` = 4 (`[D]`, 40 frames / 10 hits); `dr_speed` (`DR_SPEED`).
+- cape: `cape_start`, `cape_end`, `cape_total` (section 5.1); `ground_x` = 0.5 (the grounded `vx * 0.5` of section 5.2).
+
+Two host switches the engine adapter needs are not procedure parameters, so the spec gives no value; both are design choices from the spec's own text, no outside source:
+
+- `glide.auto_entry` = 1 (on): entry paths A and B of section 2.2 are run by the engine; a profile sets 0 to allow only chained entry (path C).
+- `glide.pose_center` = 0: the host owns animation (section 1.2); 0 starts the glide clip at frame 0. A character whose clip is posed by pitch sets the frame of its level pose.
+
+The previous Brawl-word lookup (`w00`..) was removed with the old table.

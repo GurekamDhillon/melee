@@ -163,7 +163,7 @@ State n becomes MotionState row for motion id `0x400 + n` (`GENO_MOTION_BASE`), 
 | `geno.cape.end` | next | interrupt | anim_motion | cape.after | helpless | stay |
 | `geno.multi_dash` | multi_dash | none | multi_dash | multi_dash | `next`, else Fall (FallSpecial in the air after the 4th segment) | stays |
 
-Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape multi_dash`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift brake ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape multi_dash`;
+Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape multi_dash`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape multi_dash`;
 coll: `none air air_noledge ground ground_stop both anim_motion glide drill drill.start cape cape.after multi_dash`; any slot: `like`. `air` = Melee's aerial physics/collision with ledge grab; `both` = ground and air without changing state.
 **IASA trap:** the default `iasa` is `none`; an IASA script command alone does not give an input callback; use `"iasa": "interrupt"`. Paired states are found by declaration order among the profile's states with that behaviour (cape start ground/air, cape.attack N/N-air/F/F-air/B/B-air, cape.end ground/air, drill.start ground/air, drill.end ground/air).
 Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion): `geno-v5.1-behaviours.md` is normative for their arithmetic, parameter names and defaults, and acceptance tables (clean-room spec, MIT).
@@ -222,9 +222,6 @@ Despawn reasons (log/event only): 0 timeout, 1 hit or absorbed, 2 shield, 3 stag
 | 5 | `geno.article.spawn` | `[7:0]` article, `[15:8]` spawn variant, `[31:16]` signed extra angle (deg) | spawn the profile's article (plain 0-7 = v5) |
 | 6 | `geno.lockon` | `[15:0]` range (0 any), `[23:16]` max angle, `[31:24]` stick angle | aim at the nearest other-port fighter -> MOVE_F0/F1 (unit forward/up), MOVE_I0 (1 = locked), turns to face it |
 | 7 | `geno.aim_stick` | `[7:0]` threshold x100, `[15:8]` max up, `[23:16]` max down, bit 24 may turn | heading from the stick polar angle -> MOVE_F0/F1 (saved in F2/F3, I2 = 1) |
-| 8 | `geno.dash.search` | `[7:0]` threshold x100, `[23:8]` range | one aim-window frame: lock target (I0, I1 = its port) or store a stick sample (F2/F3, I2) |
-| 9 | `geno.dash.aim` | `[7:0]` keep-facing degrees, `[15:8]` / `[23:16]` up ranges | MOVE_F0/F1 = world unit heading, MOVE_I3 = 1/2 in the up ranges; turns to the heading's side |
-| 10 | `geno.brake` | `[15:0]` brake x1000, `[30:16]` cap x100, bit 31 horizontal only | cap the fighter's own speed then decelerate along it, never past rest |
 
 A hook runs from the escape's `CALL` (sub 0x20; EXEC and ANIM passes only) or from a bound event. Pure parts (`GenoGame_LockonAim`, `GenoGame_AimStick`, `GenoGame_DashStick`, `GenoGame_DashAim`, `GenoGame_Brake`, `GenoGame_ArticleStep`) are in `geno_game.c` / `geno_game_articles.inc`.
 Events (stable): 0 `on_init` (spawn/respawn, after the state block reset), 1 `on_frame`, 2 `on_action`, 3 `on_land`, 4 `on_hit`.

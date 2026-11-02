@@ -38,3 +38,14 @@ pub fn ftCh_Entry_IASA(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftCh_Entry_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandentry.c).
+pub fn ftCh_Entry_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Entry_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88(gobj);
+    }
+}
+
+/// `ftCh_Entry_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandentry.c).
+pub fn ftCh_Entry_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Entry_Coll"); }

@@ -1233,7 +1233,7 @@ static const char t_v2_json[] =
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":17},"
     "{\"name\":\"Plain\",\"behavior\":\"geno.air\",\"subaction\":18,\"phys\":\"none\","
     "\"iasa\":\"like\",\"like\":\"motion:29\",\"next\":\"geno:Glide\",\"flags\":\"0x55\"}],"
-    "\"glide\":{\"hold_frames\":16},\"drill\":{\"angle_max\":60},"
+    "\"glide\":{\"entry_hold\":6},\"drill\":{\"psi_min\":-60},"
     "\"specials\":{\"n\":\"geno:Tornado\",\"s\":\"geno:Drill\"}}]}";
 
 static TestGenoState* t_v2_setup(void)
@@ -1579,10 +1579,10 @@ static const char t_cape_json[] =
     "{\"name\":\"CapeBAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":37},"
     "{\"name\":\"CapeEnd\",\"behavior\":\"geno.cape.end\",\"subaction\":38},"
     "{\"name\":\"CapeEndAir\",\"behavior\":\"geno.cape.end\",\"subaction\":39}],"
-    "\"cape\":{\"w00\":0.5,\"w01\":0.4,\"w02\":0.5,\"w03\":2.5,\"w04\":0.5,\"w05\":2.5},"
+    "\"cape\":{\"cape_start\":6,\"cape_end\":25},"
     "\"specials\":{\"lw\":\"geno:CapeStart\",\"air_lw\":\"geno:CapeStartAir\"}}]}";
 
-/* ---- v3: Drill Rush (Brawl's code) ------------------------------------------------------------- */
+/* ---- v3: Drill Rush (geno.drill) -------------------------------------------------------------------- */
 
 #define TD_START 0
 #define TD_START_AIR 1
@@ -1597,7 +1597,7 @@ static const char t_drill_json[] =
     "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
     "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
-    "\"drill\":{\"w00\":0.5,\"w01\":1.0,\"w02\":-0.08,\"w03\":3.0,\"w04\":10},"
+    "\"drill\":{\"dr_speed\":2.0,\"steer_rate\":2.0},"
     "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
 
 /* ---- v4: the model follows the move ------------------------------------------------------------ */
@@ -1615,7 +1615,7 @@ static const char t_drill_flat_json[] =
     "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
     "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
-    "\"drill\":{\"w03\":3.0,\"w04\":10,\"pitch_model\":0},"
+    "\"drill\":{\"dr_speed\":2.0},"
     "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
 
 static const char t_spin_json[] =
@@ -2297,81 +2297,25 @@ static int test_geno_v51(void)
     return rc;
 }
 
-/* v5.4: the directed dash's pure cores (Sonic Blade as Ultimate's status code aims it) */
-extern int GenoGame_DashStick(f32 sx, f32 sy, f32 thr, f32* cx, f32* cy);
-extern void GenoGame_DashAim(int has_target, f32 dx, f32 dy, int has_stick, f32 cx, f32 cy, f32 facing,
-                             f32 vert_deg, f32 up_min, f32 up_max, f32* ux, f32* uy, f32* face, int* kind);
-extern void GenoGame_Brake(f32* vx, f32* vy, f32 brake, f32 max);
+/* The v5.4 dash hooks and the "brake" phys were retired for geno.multi_dash: their names must not
+ * resolve, so a script that still names them gets the unknown-name error, not a stale number. */
 extern int GenoGame_HookFind(const char* name);
-
-static int test_geno_v54_dash(void)
+extern int GenoGame_CallbackFind(int slot, const char* name);
+static int test_geno_v54_retired(void)
 {
-    f32 cx = 9.0f, cy = 9.0f, ux, uy, face, vx, vy;
-    int kind, rc = 0;
-    /* the stick: a vector-length dead zone, then the raw polar angle, the whole circle */
-    if (GenoGame_DashStick(0.15f, 0.15f, 0.25f, &cx, &cy) != 0 || cx != 9.0f) {
-        TestFail("dash stick: inside the dead zone writes nothing");
-        rc = 1;
-    }
-    if (!GenoGame_DashStick(0.0f, -1.0f, 0.25f, &cx, &cy) || !t_near(cx, 0.0f) || !t_near(cy, -1.0f)) {
-        TestFail("dash stick: straight down is straight down");
-        rc = 1;
-    }
-    if (!GenoGame_DashStick(-0.5f, 0.5f, 0.25f, &cx, &cy) || !t_near(cx, -0.70710678f) || !t_near(cy, 0.70710678f)) {
-        TestFail("dash stick: up-back is 135 degrees, unclamped");
-        rc = 1;
-    }
-    /* stick straight up, facing right: heading up, facing kept (within 20 of vertical), up clip */
-    GenoGame_DashAim(0, 0.0f, 0.0f, 1, 0.0f, 1.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
-    if (!t_near(ux, 0.0f) || !t_near(uy, 1.0f) || face != 1.0f || kind != 1) {
-        TestFail("dash aim: straight up keeps the facing");
-        rc = 1;
-    }
-    /* stick back and down (225 deg): turns, down clip, on the ground too (no ground rule) */
-    GenoGame_DashAim(0, 0.0f, 0.0f, 1, -0.70710678f, -0.70710678f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
-    if (!t_near(ux, -0.70710678f) || !t_near(uy, -0.70710678f) || face != -1.0f || kind != 2) {
-        TestFail("dash aim: 225 degrees turns and aims down");
-        rc = 1;
-    }
-    /* a target wins over the stick; the heading is exactly at it, any angle */
-    GenoGame_DashAim(1, -30.0f, -40.0f, 1, 1.0f, 0.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
-    if (!t_near(ux, -0.6f) || !t_near(uy, -0.8f) || face != -1.0f || kind != 2) {
-        TestFail("dash aim: the target overrides the stick");
-        rc = 1;
-    }
-    /* a target exactly on top, or nothing at all: straight ahead along the facing */
-    GenoGame_DashAim(1, 0.0f, 0.0f, 1, 0.0f, 1.0f, -1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
-    if (!t_near(ux, -1.0f) || !t_near(uy, 0.0f) || face != -1.0f || kind != 0) {
-        TestFail("dash aim: a zero offset dashes along the facing");
-        rc = 1;
-    }
-    GenoGame_DashAim(0, 0.0f, 0.0f, 0, 0.0f, 1.0f, 1.0f, 20.0f, 40.0f, 140.0f, &ux, &uy, &face, &kind);
-    if (!t_near(ux, 1.0f) || !t_near(uy, 0.0f) || kind != 0) {
-        TestFail("dash aim: no target and no stick is straight ahead");
-        rc = 1;
-    }
-    /* the brake: cap 2.0 first, then 0.34 along the vector; never past rest */
-    vx = 3.0f;
-    vy = 4.0f;
-    GenoGame_Brake(&vx, &vy, 0.34f, 2.0f);
-    if (!t_near(vx, 0.996f) || !t_near(vy, 1.328f)) {
-        TestFail("brake: capped to 2.0 then 0.34 off along the vector");
-        rc = 1;
-    }
-    vx = -0.1f;
-    vy = 0.0f;
-    GenoGame_Brake(&vx, &vy, 0.24f, 0.0f);
-    if (vx != 0.0f || vy != 0.0f) {
-        TestFail("brake: stops at rest, never reverses");
-        rc = 1;
-    }
-    if (GenoGame_HookFind("geno.dash.search") != 8 || GenoGame_HookFind("geno.dash.aim") != 9 ||
-        GenoGame_HookFind("geno.brake") != 10)
+    if (GenoGame_HookFind("geno.dash.search") != -1 || GenoGame_HookFind("geno.dash.aim") != -1 ||
+        GenoGame_HookFind("geno.brake") != -1)
     {
-        TestFail("dash hooks: stable ids 8, 9, 10");
-        rc = 1;
+        TestFail("a retired v5.4 dash hook still resolves");
+        return 1;
     }
-    return rc;
+    if (GenoGame_CallbackFind(GENO_CB_PHYS, "brake") != -1 ||
+        GenoGame_CallbackFind(GENO_CB_PHYS, "multi_dash") == -1)
+    {
+        TestFail("phys names: \"brake\" must be gone and \"multi_dash\" present");
+        return 1;
+    }
+    return 0;
 }
 
 /* v5.2: geno.lockon's aim (Sonic Blade) and the "air_drift" phys name / hook 6 by name */
@@ -2786,7 +2730,7 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v5_on_hit", test_geno_v5_on_hit);
     TestRegister("geno_v51", test_geno_v51);
     TestRegister("geno_v52_lockon", test_geno_v52_lockon);
-    TestRegister("geno_v54_dash", test_geno_v54_dash);
+    TestRegister("geno_v54_retired", test_geno_v54_retired);
     TestRegister("geno_bhv_trig", test_geno_bhv_trig);
     TestRegister("geno_bhv_glide", test_geno_bhv_glide);
     TestRegister("geno_bhv_tornado", test_geno_bhv_tornado);

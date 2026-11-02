@@ -1235,3 +1235,15 @@ closed after 1904 ticks, exit 0, no `todo!` panic). The retail main menu is driv
 "NOT IN THE NATIVE PORT YET"; use the new script). The direct `todo!` defaults named in blocker E (`lbBgFlash_80021C48`, `efAsync_Spawn`, `Camera_RequestQuake`, `HSD_JObjSetMtxDirtySub` in
 `ftCo_Damage` / `ft_0c8c` / `JumpAerial`) are not in `melee_link/unresolved.txt` for melee_fighter any more (the link layer installs them); they stay as ext defaults, not panics, on the
 paths a match reaches. Menus other than VS (1P, Toy, Settings, Data) show the toast and do not enter a scene; they were not exercised beyond the toast.
+
+## Blocker D (port/blockerd, 2026-11-02)
+- Ported to tu/ with the C signature: `ftpurinspecialn.rs` (all of ftpurinspecialn.c: 52 Rollout callbacks + the `ftPr_SpecialS_8013D658..8013DD54`
+  and `ftPr_SpecialN_8014222C` helpers; FMA sites from fma_sites.py fused as in Kirby's copy), `ftpurinspecials.rs` (Enter x2, IASA x2, `ftPr_SpecialAirS_Phys`),
+  Crazy Hand Cancel / Damage / Damage2 / WaitSweep / Drill / Entry / FingerBeamLoop / FingerBeamEnd / BackPunch / FingerGun1 and the three
+  `ftCo_Capture*CrazyHand` states (new `ftcrazyhandcapturecrazyhand.rs`). The old `&mut Fighter` Purin phys and `ftCh_FingerGun1_Coll` became forwarders / `_fp`.
+- gen_retail.py / gen_retail_ms.py can no longer run (their c2r / raw inputs were deleted); `tools/rust-port/link/wire_unresolved.py` patches
+  retail_ms.rs / retail.rs in place with the same expressions (sites from 800000) and empties the resolved lines of retail_unresolved.txt.
+  The four `Option<&str>` costume/demo consts (Master Hand, wireframe Boy/Girl, Giga Bowser demo) go through `strs::costume_strings_opt` / `demo_strings_opt`.
+- Coverage (Jigglypuff scenarios): items_hi_yoshistory 2805 -> 3601 PASS, cpulv5_puff_link 673 -> 3601 PASS; char_link, char_jigglypuff, stage_05_jungle,
+  stage_08_yoshistory, stage_31_battlefield, cpulv1/9_puff_link stay PASS; pad_icies_jigglypuff_stadium and targettest_jigglypuff not wired (Lua pad, 1p).
+  No coverage scenario uses Crazy Hand, so those ports are compiled and wired but not run. Gate OK, 4 goldens and synctest unchanged.

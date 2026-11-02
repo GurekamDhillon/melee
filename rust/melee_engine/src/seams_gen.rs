@@ -141,7 +141,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::lbbgflash::ext::hook::GXBegin.is_none() { melee_runtime::tu::lbbgflash::ext::hook::GXBegin = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbbgflash::ext::hook::GXColor4u8.is_none() { melee_runtime::tu::lbbgflash::ext::hook::GXColor4u8 = Some(|_, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbbgflash::ext::hook::GXPosition2f32.is_none() { melee_runtime::tu::lbbgflash::ext::hook::GXPosition2f32 = Some(|_, _| ()); } }
-    unsafe { if melee_runtime::tu::lbbgflash::ext::hook::hsd_80391A04.is_none() { melee_runtime::tu::lbbgflash::ext::hook::hsd_80391A04 = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::lbcardgame::ext::hook::CARDProbe.is_none() { melee_runtime::tu::lbcardgame::ext::hook::CARDProbe = Some(|_| -3); } }
     unsafe { if melee_runtime::tu::lbcardgame::ext::hook::Mex_Enabled.is_none() { melee_runtime::tu::lbcardgame::ext::hook::Mex_Enabled = Some(|_| 0); } }
     unsafe { if melee_runtime::tu::lbcardgame::ext::hook::OSGetTime.is_none() { melee_runtime::tu::lbcardgame::ext::hook::OSGetTime = Some(|| crate::seams::os_get_time()); } }
@@ -528,13 +527,13 @@ pub fn install_gen() {
     unsafe { melee_world::tu::ifprize::ext::hook::lbAudioAx_80023F28 = Some(|_| 0); }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Mex_InsigniaForExt.is_none() { melee_world::tu::ifstatus::ext::hook::Mex_InsigniaForExt = Some(|_| 0); } }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Mex_PortCKindToExt.is_none() { melee_world::tu::ifstatus::ext::hook::Mex_PortCKindToExt = Some(|_| 0); } }
-    unsafe { if melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible = Some(|| 0); } }
+    unsafe { if melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible = Some(|| 1); } }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::ifstatus::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineArtBaseCK.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineArtBaseCK = Some(|_| -1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineArtOpen.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineArtOpen = Some(|_, _, _| 0); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineBaseCK.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineBaseCK = Some(|_| -1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineName.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineName = Some(|_, _, _| 0); } }
-    unsafe { if melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible = Some(|| 0); } }
+    unsafe { if melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible = Some(|| 1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::ifstock::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::iftime::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::iftime::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::mplib::ext::hook::GXBegin.is_none() { melee_world::tu::mplib::ext::hook::GXBegin = Some(|_, _, _| ()); } }
@@ -560,7 +559,6 @@ pub fn install_gen() {
     unsafe { melee_world::tu::soundtest::ext::hook::lbAudioAx_80024C08 = Some(|_| 0); }
     unsafe { melee_world::tu::soundtest::ext::hook::lbAudioAx_80024E50 = Some(|_| ()); }
     unsafe { if melee_world::tu::textdraw::ext::hook::Wb_RenderActive.is_none() { melee_world::tu::textdraw::ext::hook::Wb_RenderActive = Some(|| 0); } }
-    unsafe { if melee_world::tu::textdraw::ext::hook::hsd_80391A04.is_none() { melee_world::tu::textdraw::ext::hook::hsd_80391A04 = Some(|_, _, _| ()); } }
     unsafe { melee_world::tu::textlib_1::ext::hook::lbAudioAx_80024030 = Some(|_| ()); }
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_80023710 = Some(|_| 0); }
     unsafe { melee_fighter::tu::crowdsfx::ext::hook::lbAudioAx_800236B8 = Some(|_| ()); }

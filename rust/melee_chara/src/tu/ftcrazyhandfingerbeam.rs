@@ -85,9 +85,14 @@ pub fn fn_80159288(gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from chars blocks (consolidation step 20) ----
-pub fn ftCh_FingerGun1_Coll(fp: &mut Fighter) {
+pub fn ftCh_FingerGun1_Coll_fp(fp: &mut Fighter) {
     melee_core::ct!("ftCh_FingerGun1_Coll");
     crate::chars::ftCrazyHand::stop_if_x18_zero(fp)
+}
+
+/// `ftCh_FingerGun1_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c): the C signature.
+pub fn ftCh_FingerGun1_Coll(gobj: *mut HSD_GObj) {
+    ftCh_FingerGun1_Coll_fp(unsafe { &mut *((*gobj).user_data as *mut Fighter) })
 }
 
 // ---- folded from chars blocks (consolidation step 20) ----
@@ -147,5 +152,133 @@ pub fn ftCh_FingerGun1_IASA(gobj: *mut HSD_GObj) {
         if (st::Player_GetPlayerSlotType(((*fp).player_id as i32)) == 0 /* Gm_PKind_Human */) {
             st::ftBossLib_8015BD20(gobj);
         }
+    }
+}
+
+/// `fn_80159288` as the `grab_cb` (`HSD_GObjEvent`) value.
+pub unsafe extern "C" fn cb_fn_80159288(gobj: *mut HSD_GObj) {
+    fn_80159288(gobj)
+}
+
+/// `ftCh_FingerBeamLoop_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_FingerBeamLoop_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerBeamLoop_Anim");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let timer = (*fp).mv.ch.unk0.x8.wrapping_sub(1);
+        let is_zero = timer == 0;
+        (*fp).mv.ch.unk0.x8 = timer;
+        if is_zero {
+            ext::ftAnim_SetAnimRate(gobj, 1.0);
+            ftCh_Init_80158DFC(gobj);
+        }
+        if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+            ext::Fighter_ChangeMotionState(gobj, 0x16A, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
+            st::ftAnim_8006EBA4(gobj);
+        }
+    }
+}
+
+/// `ftCh_FingerBeamLoop_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+/// `my_lbVector_Len` holds the two fused f32 sites (fma_sites.py): the shared Master Hand copy.
+pub fn ftCh_FingerBeamLoop_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerBeamLoop_Phys");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
+        let mut pos: Vec3 = core::mem::zeroed();
+        let mut vel: Vec3 = core::mem::zeroed();
+        st::ft_80085134(gobj);
+        crate::adapt::ftBossLib_8015C208(gobj, &mut pos);
+        pos.x += (*da).xBC_pos.y;
+        pos.y += (*da).xC4_pos.x;
+        pos.z = 0.0;
+        melee_runtime::tu::lbvector::lbVector_Diff(&mut pos as *mut _ as *mut _, &mut (*fp).cur_pos as *mut _ as *mut _, &mut vel as *mut _ as *mut _);
+        let len = crate::tu::ftmasterhandbackdisappear::my_lbVector_Len(&vel);
+        if len < (*da).x14 {
+            (*fp).self_vel.x = vel.x;
+            (*fp).self_vel.y = vel.y;
+        } else {
+            melee_runtime::tu::lbvector::lbVector_Normalize(&mut vel as *mut _ as *mut _);
+            let speed = len * (*da).x10;
+            vel.x *= speed;
+            vel.y *= speed;
+            vel.z *= speed;
+            (*fp).self_vel.x = vel.x;
+            (*fp).self_vel.y = vel.y;
+        }
+    }
+}
+
+/// `ftCh_FingerBeamLoop_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_FingerBeamLoop_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_FingerBeamLoop_Coll"); }
+
+/// `ftCh_Init_80158DFC` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_Init_80158DFC(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Init_80158DFC");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        ext::Fighter_ChangeMotionState(gobj, 0x16B, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
+        st::ftAnim_8006EBA4(gobj);
+        melee_fighter::ftcommon2::ftcommon_8007e2d0(
+            &mut *fp,
+            0x100,
+            Some(cb_fn_80159288),
+            None,
+            Some(crate::tu::ftcrazyhandcapturecrazyhand::cb_fn_8015B548),
+        );
+        (*fp).mv.ch.unk0.x20 = 0;
+    }
+}
+
+/// `ftCh_FingerBeamEnd_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_FingerBeamEnd_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_FingerBeamEnd_Coll"); }
+
+/// `ftCh_BackPunch_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_BackPunch_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackPunch_Anim");
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88(gobj);
+    }
+}
+
+/// `ftCh_BackPunch_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_BackPunch_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_BackPunch_Phys");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
+        crate::tu::ftcrazyhandfingergun2::ftCh_UpdateBossMotion(gobj, fp, da);
+    }
+}
+
+/// `ftCh_BackPunch_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_BackPunch_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_BackPunch_Coll"); }
+
+/// `ftCh_FingerGun1_Anim` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c). The x24
+/// pre-decrement is a float countdown.
+pub fn ftCh_FingerGun1_Anim(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerGun1_Anim");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        (*fp).mv.ch.unk0.x24 -= 1.0;
+        if (*fp).mv.ch.unk0.x24 <= 0.0 && (*fp).cmd_vars[0] != 0 {
+            crate::tu::ftcrazyhandcapturewaitcrazyhand::ftCh_GrabUnk1_8015B800((*fp).victim_gobj as *mut HSD_GObj);
+            (*fp).mv.ch.unk0.x20 = 0;
+            (*fp).cmd_vars[0] = 0;
+        }
+    }
+    if st::ftAnim_IsFramesRemaining(gobj) == 0 {
+        crate::tu::ftcrazyhandfingerbeam0::ext::ftCh_GrabUnk1_8015BC88(gobj);
+    }
+}
+
+/// `ftCh_FingerGun1_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandfingerbeam.c).
+pub fn ftCh_FingerGun1_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_FingerGun1_Phys");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
+        crate::tu::ftcrazyhandfingergun2::ftCh_UpdateBossMotion(gobj, fp, da);
     }
 }

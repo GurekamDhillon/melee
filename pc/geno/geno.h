@@ -234,9 +234,7 @@ enum {
     GENO_HOOK_ARTICLE_SPAWN = 5, /* v5 "geno.article.spawn": spawn the profile's article arg */
     GENO_HOOK_LOCKON = 6,        /* v5.2 "geno.lockon": aim at the nearest other fighter -> MOVE_F0/F1/I0 */
     GENO_HOOK_AIM_STICK = 7,     /* v5.3 "geno.aim_stick": heading from the stick's polar angle -> MOVE_F0/F1 */
-    GENO_HOOK_DASH_SEARCH = 8,   /* v5.4 "geno.dash.search": one frame of an aim window -> MOVE_I0/I1 target, MOVE_F2/F3/I2 stick */
-    GENO_HOOK_DASH_AIM = 9,      /* v5.4 "geno.dash.aim": the window's result -> MOVE_F0/F1 world heading, MOVE_I3 up/down, facing */
-    GENO_HOOK_BRAKE = 10,        /* v5.4 "geno.brake": clamp, then decelerate the fighter's own velocity along itself */
+    /* 8..10 retired (the v5.4 dash.search / dash.aim / brake hooks): geno.multi_dash replaces them */
     GENO_HOOK_BUILTIN_COUNT = 11,
     GENO_HOOK_MAX = 64
 };
@@ -319,49 +317,7 @@ enum {
     GENO_BHV_MAX = 32
 };
 
-/* the GENO_P_* Brawl-derived defaults below are excluded from the MIT grant, see LICENSE-MIT */
-/* Behaviour parameters: per profile, by stable id; geno.json names them "<family>.<name>" inside
- * the family's block ("glide": {...}, "tornado": {...}, "drill": {...}). Every family also takes
- * its Brawl block word by word ("w00".."wNN"), which is what the IR / translator has. */
-#define GENO_PARAMS 128
-enum {
-    GENO_P_GLIDE_W0 = 0x00,       /* glide.w00..w21: Brawl's Misc Glide block, 0x00..0x15 */
-    GENO_P_GLIDE_HOLD = 0x18,     /* glide.hold_frames: jump held this long in an air jump */
-    GENO_P_GLIDE_FROM_JUMP = 0x19,/* glide.from_ground_jump: 1 = the ground jump counts too */
-    GENO_P_GLIDE_END_HELPLESS = 0x1A, /* glide.end_helpless: 1 = GlideEnd -> FallSpecial */
-    GENO_P_GLIDE_LANDING_LAG = 0x1B,  /* glide.landing_lag: GlideAttack's landing lag (frames) */
-    GENO_P_GLIDE_ENTRY = 0x1C,    /* glide.entry: 0 = no jump-hold entry (scripts only) */
-    GENO_P_GLIDE_MAX_FRAMES = 0x1D, /* glide.max_frames: a time limit (0 = none, as Brawl) */
-    GENO_P_GLIDE_POSE = 0x1E,     /* glide.pose_center: pose frame = this - angle (0 = off) */
-    GENO_P_GLIDE_END_BUTTONS = 0x1F, /* glide.end_buttons: GENO_BTN_* mask that ends the glide */
-    GENO_P_TORNADO_W0 = 0x20,     /* tornado.w00..w19: Brawl paramSpecialN, 0x20..0x33 */
-    GENO_P_TORNADO_MAX_SPEED = 0x38, /* tornado.max_speed: hard horizontal cap (Brawl 2.5) */
-    GENO_P_TORNADO_END_HELPLESS = 0x39, /* tornado.end_helpless: air end -> FallSpecial */
-    GENO_P_TORNADO_SPIN_ANIM = 0x3A, /* v4 tornado.spin_anim: the spin clip plays at spin_anim x the
-                                        spin rate (Brawl: Frame Speed Modifier = the rate, 1 clip
-                                        frame = 1 degree); 0 = rate 1 (v3) */
-    GENO_P_TORNADO_SPIN_PERIOD = 0x3B, /* v4 tornado.spin_period: the clip loops at this frame (MK 360:
-                                          frame 360 = frame 0); 0 = at the clip's end */
-    GENO_P_DRILL_W0 = 0x40,       /* drill.w00..w05: Brawl paramSpecialS, 0x40..0x45 */
-    GENO_P_DRILL_SPEED = 0x48,    /* drill.speed: travel speed when the clip has no root motion */
-    GENO_P_DRILL_ANGLE_MAX = 0x49,/* drill.angle_max: steering limit, degrees (0 = none, Brawl) */
-    GENO_P_DRILL_BOUNCE = 0x4A,   /* drill.bounce: 1 wall | 2 hit | 4 shield -> DrillEnd at once */
-    GENO_P_DRILL_POP_VX = 0x4B,   /* drill.pop_vx: DrillEnd's backward pop (Brawl 1.0) */
-    GENO_P_DRILL_POP_VY = 0x4C,   /* drill.pop_vy: DrillEnd's upward pop (Brawl 2.1) */
-    GENO_P_DRILL_END_HELPLESS = 0x4D, /* drill.end_helpless: 1 = FallSpecial unless it hit */
-    GENO_P_DRILL_PITCH_MODEL = 0x4E, /* v4 drill.pitch_model: 1 = the model (TopN) turns with the
-                                        rush pitch, hitboxes and hurtboxes with it (Brawl's posture
-                                        rot.x); 0 = the model stays level (v3) */
-    /* v3 */
-    GENO_P_GLIDE_SCRIPT_HELPLESS = 0x50, /* glide.script_entry_helpless: a Glide entered straight
-                                          from another action (not GlideStart; Brawl's up-B sets
-                                          LA-Bit61) ends helpless: GlideEnd / GlideAttack -> FallSpecial */
-    GENO_P_CAPE_W0 = 0x58,        /* cape.w00..w05: Brawl paramSpecialLw (ids 4021-4026), 0x58..0x5D */
-    GENO_P_CAPE_STEER_FRAME = 0x60, /* cape.steer_frame: the vanish (stick steering) starts (12) */
-    GENO_P_CAPE_DECIDE_FRAME = 0x61, /* cape.decide_frame: the reappear is chosen (26) */
-    GENO_P_CAPE_NEUTRAL_X = 0x62, /* cape.neutral_x: |stick x| below it = the neutral reappear */
-    GENO_P_CAPE_BUTTONS = 0x63,   /* cape.attack_buttons: GENO_BTN mask held = the slash (B | A) */
-};
+#include "geno_behaviour_params.h" /* v5.1 behaviour parameters (clean-room, spec only) */
 
 /* v3: per-state root-motion options ("geno.anim_motion"; geno.json state keys "ledge", "liftoff",
  * "origin", "gravity"). Packed as Geno_StateMotion(p, s). */

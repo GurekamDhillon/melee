@@ -39,3 +39,8 @@ pub fn ftCh_GrabUnk1_8015B778(gobj: *mut HSD_GObj) {
         st::ftAnim_8006EBA4(gobj);
     }
 }
+
+pub fn ftCo_CaptureWaitCrazyHand_Anim(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureWaitCrazyHand_Anim"); }
+pub fn ftCo_CaptureWaitCrazyHand_IASA(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureWaitCrazyHand_IASA"); }
+pub fn ftCo_CaptureWaitCrazyHand_Phys(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureWaitCrazyHand_Phys"); }
+pub fn ftCo_CaptureWaitCrazyHand_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCo_CaptureWaitCrazyHand_Coll"); }

@@ -13,3 +13,10 @@ pub mod cnames {
     }
 }
 pub use cnames::*;
+
+/// `HSD_MulColor` on the C's pointer arguments (`dest = a * b / 255` per channel).
+pub unsafe fn mul_color_ptr(a: *mut melee_types::_GXColor, b: *mut melee_types::_GXColor, dest: *mut melee_types::_GXColor) {
+    let v = |x: *mut melee_types::_GXColor| crate::hsd_util::GxColor { r: (*x).r, g: (*x).g, b: (*x).b, a: (*x).a };
+    let r = crate::hsd_util::mul_color(&v(a), &v(b));
+    *dest = melee_types::_GXColor { r: r.r, g: r.g, b: r.b, a: r.a };
+}

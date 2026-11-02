@@ -62,3 +62,16 @@ pub fn ftCh_Cancel_IASA(gobj: *mut HSD_GObj) {
         }
     }
 }
+
+/// `ftCh_Cancel_Phys` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c).
+pub fn ftCh_Cancel_Phys(gobj: *mut HSD_GObj) {
+    melee_core::ct!("ftCh_Cancel_Phys");
+    unsafe {
+        let fp = (*gobj).user_data as *mut Fighter;
+        let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
+        melee_fighter::tu::ftbosslib::ftBossLib_8015BF74(gobj, (*da).xDC);
+    }
+}
+
+/// `ftCh_Cancel_Coll` (src/melee/ft/kinds/ftCrazyHand/ftcrazyhandcancel.c).
+pub fn ftCh_Cancel_Coll(_gobj: *mut HSD_GObj) { melee_core::ct!("ftCh_Cancel_Coll"); }

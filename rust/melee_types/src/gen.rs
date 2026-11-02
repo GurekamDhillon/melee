@@ -5623,9 +5623,6 @@ pub const GENO_HOOK_COUNT_FRAMES: u32 = 4;
 pub const GENO_HOOK_ARTICLE_SPAWN: u32 = 5;
 pub const GENO_HOOK_LOCKON: u32 = 6;
 pub const GENO_HOOK_AIM_STICK: u32 = 7;
-pub const GENO_HOOK_DASH_SEARCH: u32 = 8;
-pub const GENO_HOOK_DASH_AIM: u32 = 9;
-pub const GENO_HOOK_BRAKE: u32 = 10;
 pub const GENO_HOOK_BUILTIN_COUNT: u32 = 11;
 pub const GENO_HOOK_MAX: u32 = 64;
 
@@ -6529,7 +6526,6 @@ pub const GENO_CBID_AUTO: u32 = 11;
 pub const GENO_CBID_ANIM_MOTION: u32 = 12;
 pub const GENO_CBID_INTERRUPT: u32 = 13;
 pub const GENO_CBID_AIR_DRIFT: u32 = 14;
-pub const GENO_CBID_BRAKE: u32 = 15;
 pub const GENO_CBID_LUA: u32 = 60;
 pub const GENO_CBID_CAPE: u32 = 50;
 pub const GENO_CBID_CAPE_AFTER: u32 = 51;

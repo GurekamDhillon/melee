@@ -122,6 +122,7 @@ pub fn install_retail() {
         (*t6)[31] = &raw const crate::retail_ms::ftgkoopa::ftGk_Init_UnkMotionStates0 as *mut _;
         // ftData_UnkMotionStates0: 4 slots
         let t7 = &raw mut melee_fighter::tu::ftdata::ftData_SpecialS;
+        (*t7)[15] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftpurinspecials::ftPr_SpecialS_Enter(cast::<_, _, 813001>(a0)); }));
         (*t7)[0] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftmariospecials::ftMr_SpecialS_Enter(cast::<_, _, 7001>(a0)); }));
         (*t7)[1] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftfoxspecials::ftFx_SpecialSStart_Enter(cast::<_, _, 7101>(a0)); }));
         (*t7)[2] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftcaptainspecials::ftCa_SpecialS_Enter(cast::<_, _, 7201>(a0)); }));
@@ -208,6 +209,7 @@ pub fn install_retail() {
         (*t9)[31] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftkoopaspeciallw::ftKp_SpecialAirLw_Enter(cast::<_, _, 14901>(a0)); }));
         // ftData_SpecialAirLw: 27 slots
         let t10 = &raw mut melee_fighter::tu::ftdata::ftData_SpecialAirS;
+        (*t10)[15] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftpurinspecials::ftPr_SpecialAirS_Enter(cast::<_, _, 808801>(a0)); }));
         (*t10)[0] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftmariospecials::ftMr_SpecialAirS_Enter(cast::<_, _, 15001>(a0)); }));
         (*t10)[1] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftfoxspecials::ftFx_SpecialAirSStart_Enter(cast::<_, _, 15101>(a0)); }));
         (*t10)[2] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftcaptainspecials::ftCa_SpecialAirS_Enter(cast::<_, _, 15201>(a0)); }));
@@ -236,6 +238,7 @@ pub fn install_retail() {
         (*t10)[31] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftkoopaspecials::ftKp_SpecialAirS_Enter(cast::<_, _, 17501>(a0)); }));
         // ftData_SpecialAirS: 26 slots
         let t11 = &raw mut melee_fighter::tu::ftdata::ftData_SpecialAirN;
+        (*t11)[15] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftpurinspecialn::ftPr_SpecialAirN_Enter(cast::<_, _, 808501>(a0)); }));
         (*t11)[0] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftmariospecialn::ftMr_SpecialAirN_Enter(cast::<_, _, 17601>(a0)); }));
         (*t11)[1] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftfoxspecialn::ftFx_SpecialAirN_Enter(cast::<_, _, 17701>(a0)); }));
         (*t11)[2] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftcaptainspecialn::ftCa_SpecialAirN_Enter(cast::<_, _, 17801>(a0)); }));
@@ -265,6 +268,7 @@ pub fn install_retail() {
         (*t11)[31] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftkoopaspecialn::ftKp_SpecialAirN_Enter(cast::<_, _, 20201>(a0)); }));
         // ftData_SpecialAirN: 27 slots
         let t12 = &raw mut melee_fighter::tu::ftdata::ftData_SpecialN;
+        (*t12)[15] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftpurinspecialn::ftPr_SpecialN_Enter(cast::<_, _, 812701>(a0)); }));
         (*t12)[0] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftmariospecialn::ftMr_SpecialN_Enter(cast::<_, _, 20301>(a0)); }));
         (*t12)[1] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftfoxspecialn::ftFx_SpecialN_Enter(cast::<_, _, 20401>(a0)); }));
         (*t12)[2] = Some(crate::cabi::c1(|a0| unsafe { let _ = melee_chara::tu::ftcaptainspecialn::ftCa_SpecialN_Enter(cast::<_, _, 20501>(a0)); }));
@@ -738,6 +742,9 @@ pub fn install_retail() {
         (*t32)[4].x4 = Some(crate::cabi::c3(|a0, a1, a2| unsafe { let _ = melee_chara::tu::ftkirby::ftKb_Init_UnkCallbackPairs0_1(cast::<_, _, 56701>(a0), cast::<_, _, 56702>(a1), cast::<_, _, 56703>(a2)); }));
         // ftData_UnkCallbackPairs0: 2 slots
         let t33 = &raw mut melee_fighter::tu::ftdata::ftData_803C2360;
+        (*t33)[27] = crate::strs::costume_strings_opt(&melee_chara::tu::ftmasterhand::ftMh_Init_CostumeStrings);
+        (*t33)[30] = crate::strs::costume_strings_opt(&melee_chara::tu::ftgirl::ftGl_Init_CostumeStrings);
+        (*t33)[29] = crate::strs::costume_strings_opt(&melee_chara::tu::ftboy::ftBo_Init_CostumeStrings);
         (*t33)[0] = crate::strs::costume_strings(&melee_chara::tu::ftmariostrings::ftMr_Init_CostumeStrings);
         (*t33)[1] = crate::strs::costume_strings(&melee_chara::tu::ftfox::ftFx_Init_CostumeStrings);
         (*t33)[2] = crate::strs::costume_strings(&melee_chara::tu::ftcaptain::ftCa_Init_CostumeStrings);
@@ -805,6 +812,7 @@ pub fn install_retail() {
         (*t34)[32] = crate::strs::cstr(melee_chara::tu::ftsandbag::ftSb_Init_AnimDatFilename);
         // ftData_803C23E4: 33 slots
         let t35 = &raw mut melee_fighter::tu::ftdata::ftData_803C2468;
+        (*t35)[31] = crate::strs::demo_strings_opt(&melee_chara::tu::ftgkoopa::ftGk_Init_DemoMotionFilenames);
         (*t35)[0] = crate::strs::demo_strings(&melee_chara::tu::ftmariostrings::ftMr_Init_DemoMotionFilenames);
         (*t35)[1] = crate::strs::demo_strings(&melee_chara::tu::ftfox::ftFx_Init_DemoMotionFilenames);
         (*t35)[2] = crate::strs::demo_strings(&melee_chara::tu::ftcaptain::ftCa_Init_DemoMotionFilenames);

@@ -1845,62 +1845,17 @@ sets what it needs. `hold_motion` / `hold_frames` are the glide entry's counter.
 
 ### 16.3 Parameters
 
-Per profile, in family blocks; each family also takes its Brawl block word by word (`w00`..).
+Per profile, in family blocks (`glide`, `tornado`, `drill`, `cape`), by the names of the v5.1
+clean-room parameter set in `pc/geno/geno_behaviour_params.h`. That set is defined only from
+`docs/specs/geno-v5.1-behaviours.md` (sections 2.5, 3.2-3.3, 4.1-4.2, 5.1-5.2, revision 1 in
+section 9, host switches in section 10); the header lists every name with its default and source
+tag. The old Brawl-word block (`w00`..) and its named defaults were removed.
 
 ```json
-"glide":   { "hold_frames": 16, "w07": 2.2, "end_buttons": 14 },
-"tornado": { "tap_cooldown": 10 },
-"drill":   { "angle_max": 75, "speed": 2.2 }
+"glide":   { "entry_hold": 6, "s_start": 1.5, "max_glides": 2 },
+"tornado": { "mash_add": 16 },
+"drill":   { "psi_min": -60, "dr_speed": 2.0 }
 ```
-
-**glide** (Brawl Misc Glide block, MK values as defaults):
-
-| word | name | MK | used for |
-|---|---|---|---|
-| w00 | angle_max | 80 | nose-up limit (deg) |
-| w01 | angle_min | -70 | nose-down limit |
-| w02 | start_vy | 0.75 | GlideStart: vy += w02 |
-| w03 | start_gravity | 1.0 | GlideStart gravity multiplier |
-| w04 | start_vx | 1.0 | GlideStart: vx *= w04 |
-| w05 | speed | 1.7 | Glide's initial speed |
-| w06 | speed_accel | 0.04 | speed change per frame at +-90 deg |
-| w07 | max_speed | 2.2 | velocity magnitude cap |
-| w08 | stall_speed | 0.7 | below it the glide stalls (ends) |
-| w09 | sink_accel | 0.03 | sink growth per frame |
-| w10 | max_sink | 0.6 | sink cap |
-| w11 | recover_angle | 15 | Brawl's stall recovery (the stall ends the glide first) |
-| w12 | dive_angle | -25 | steeper dives get a bonus |
-| w13 | dive_bonus | 0.03 | max extra speed per frame (at angle_min) |
-| w14 | - | 0.15 | not read by Brawl's code |
-| w15 | deadzone | 0.25 | stick magnitude dead zone |
-| w16 | pitch_up | 0.55 | angular accel nose up (deg/f^2) |
-| w17 | pitch_down | 0.75 | angular accel nose down |
-| w18 | max_pitch_rate | 7 | deg/f |
-| w19 | stall_pitch | 1.0 | stall auto pitch-up |
-| w20 | wing_node | 44 | Brawl's wing partial-animation joint (not used) |
-| w21 | - | 0 | not read |
-
-Geno extras: `hold_frames` 16 (jump held in an air jump), `from_ground_jump` 0, `entry` 1 (0 = only
-scripts enter), `end_buttons` 14 (GENO_BTN mask: shield 8 + special 2 + jump 4), `max_frames` 0 (no
-time limit, as Brawl), `end_helpless` 0, `pose_center` 0 (16.4), `landing_lag` (unused by the
-defaults).
-
-**tornado** (MK paramSpecialN; param ids 4000-4016 float, 24000-24001 int):
-w00 entry_vy 1.0, w01 entry_vx_mul 0.7, w02 start_rate 80, w03 ground_accel 0.12, w04 ground_speed
-2.0, w05 air_accel 0.1, w06 air_speed 1.7, w07 brake 0.008, w08 gravity -0.08, w09 max_fall 0.5,
-w10 tap_vy 1.0, w11 tap_cooldown 10 (int), w12 max_rise 1.4, w13 tap_rate 16, w14 max_rate 80, w15
-rate_decay 1.5, w16 spin_frames 70 (int), w17 late_decay 2.0, w18 end_rate 10, w19 -. Extras:
-`max_speed` 2.5, `end_helpless` 1.
-
-**drill** (MK paramSpecialS; ids 4017-4020, 24002): w00 start_vx_mul 0.5, w01 start_vy 1.0, w02
-start_gravity -0.08, w03 steer 3.0 (deg per frame at full stick), w04 end_frames 10 (int), w05 -.
-Extras: `speed` 2.0 (used when the clip has no root motion), `angle_max` 0 (0 = no limit, as
-Brawl), `bounce` 0 (v3; was 7 in v2: 1 wall, 2 hit, 4 shield - Brawl has no such check, 17.5),
-`pop_vx` 1.0, `pop_vy` 2.1, `end_helpless` 1 (v3: FallSpecial after an air end, hit or not).
-
-The param-id numbering is now confirmed (fn_111_81A8's getters): float ids count only the float
-words (4011 = N w12, 4012 = N w13, ..., 4015 = N w17, 4016 = N w18, 4017-4020 = S w00-w03), int
-ids 24000 = N w11, 24001 = N w16, 24002 = S w04.
 
 ### 16.4 The recovered Brawl logic (what is exact, what is approximated)
 
@@ -2458,21 +2413,14 @@ steady states rate x life {2 (flare1), 5.8 (fire1), 6.5 (fireline1), 6.6 (fire2)
 | sub **0x3B HBSTUN** (len 2, v5.5) | word0 `[15:8]` hitbox mask (Melee ids 0-3), `[7]` B is a var; word1 = extra hitstun frames (int immediate 0-255, or an int var ref). A hit by a masked hitbox id adds word1 frames to the victim's hitstun (the damage state's frame count, `mv.co.damage.x0`, after Melee's knockback x 0.4) - Ultimate's `AttackModule::set_add_reaction_frame_revised`. Kept for the rest of the action (cleared at the action change, like REHIT / LINK), so it may come before or after the hitbox command. Two bonused hits on one victim in one frame: the larger. Word0 = `0xEFB2mm00` (mm = mask; `| 0x80` for a var). Rollback: attacker per-hitbox values and the victim's pending bonus live in Geno_StateBlock (a game global). Checked (ACE): Sora jab (overlay on subaction 46: `0xEFB20F00, 20, 0xED310000`) on Fox: hitstun 11 -> 31 frames; `MELEE_GENO_STUNLOG=1` logs base + bonus |
 | sub **0x3C HBFLAGS** (len 2, v5.5) | word0 `[15:8]` hitbox mask (Melee ids 0-3), `[7]` B is a var; word1 = contact flags (int): 1 NO_HITLAG (no hitlag for the victim or the attacker), 2 FLINCHLESS (the damage lands; no knockback, no damage state), 4 ZERO_DAMAGE (the hit adds no damage: a detector), 8 FORCE_REACTION (the victim reacts even with `no_kb` set; wins over FLINCHLESS). Ultimate's ATTACK `disable_hitlag` / `flinchless` / zero damage and `AttackModule::set_force_reaction`. Kept for the action (cleared at the action change); fighter hitboxes on fighters. The hit still registers (on_hit, ATTACK_CONNECTED, the victim list). Word0 = `0xEFC2mm00`. Checked (ACE): Sora jab with flags 7 on Fox: 3 hits registered, 0 % and no damage state (without: 11 hitstun frames and 8.2 % after 3) |
 | value **0x1B ANIM_RATE writable** | `ftAnim_8006F0FC(gobj, rate)`: clip rate and `frame_speed_mul`; ftAction's timer steps by `frame_speed_mul`, so script waits stay in clip frames while game time stretches (Ultimate FT_MOTION_RATE r = PUT ANIM_RATE 1/r) |
-| hook **8 `geno.dash.search`** (v5.4) | arg `[7:0]` stick threshold x100, `[23:8]` range (units, 0 = none). One frame of an aim window between two dashes. No target yet: the nearest fighter of another port within range locks (MOVE_I0 = 1, MOVE_I1 = its port). Still none: a stick sample whose vector length reaches the threshold is stored as a world unit vector (MOVE_F2/F3, MOVE_I2 = 1), the raw polar angle, the full circle, no clamp and no ground rule. A script clears MOVE_I0 / MOVE_I2 where the window opens. Event 43 |
-| hook **9 `geno.dash.aim`** (v5.4) | arg `[7:0]` degrees from vertical inside which the facing is kept, `[15:8]` / `[23:16]` the "up" range in degrees. MOVE_F0/F1 = the heading as a **world** unit vector: at the locked target's position now, else the stored stick sample, else straight ahead. MOVE_I3 = 1 inside the up range, 2 inside the same range 180 degrees round, else 0. The fighter turns to the heading's side unless it is within the first argument of straight up or down. A target that is gone unlocks. Scripts multiply into a speed and PUT VEL_X / VEL_Y. Event 44 |
-| hook **10 `geno.brake`** (v5.4) | arg `[15:0]` brake x1000, `[30:16]` speed cap x100 (0 = none), bit 31 horizontal only: cap the fighter's own speed, then take the brake off it along its own direction, never past rest. On the ground it acts on the ground speed. One call = one step |
 | value **0x3D STICK_LEN** (f, v5.4) | the stick vector's length (the dead-zone test Ultimate's status code makes: `IFV STICK_LEN GE 0.25`) |
 | value **0x3E FALL_LIMIT** (f, W, v5.4) | this action's fall-speed limit: while it is above the fighter's terminal velocity, `ftCommon_Fall` clamps the vertical speed to it instead (every aerial phys that falls goes through there). Cleared at each action change; 0 = the fighter's own. For a script-set dive faster than terminal velocity (Ultimate's `SET_SPEED_EX` on a down air); a fighter whose scripts never PUT it is unchanged |
 | key **`motion_anims`** (v5.4) | `[{"motion": id, "subaction": row}]`, up to 8 per fighter: a common motion state plays this fighter's own row (clip and script) instead of the one Melee's state table names. Made for the grab pull-in: Melee's CatchPull (213) and CatchDashPull (215) carry the Catch clip on at its current frame, so a fighter with a pull clip of its own (every Ultimate fighter) looked like a whiff on a successful grab. With an entry for those states the grab-connect code (`fn_800D9CE8`) starts the row at frame 0; `Fighter_ChangeMotionState` applies the map to any state. Give the row an empty overlay script if the host row has one. No entry = unchanged |
-| phys **`brake`** (callback id 15, v5.4) | once a game frame, whatever the clip's rate: MOVE_F5 comes off the speed along its own direction (the ground speed on the ground; MOVE_I4 bit 0 = the horizontal only in the air); in the air MOVE_F6 is the gravity per frame and MOVE_F7 the vertical speed's clamp either way (0 = none). The script PUTs them where the state begins. For states whose kinetics are a status's own numbers, not the fighter's attributes |
 | coll **`both`**, landing (v5.4) | a state on a row whose clip drives the fighter (`x594_b0`) keeps the horizontal speed it had on landing; before, `ftCommon_8007D6A4` replaced it with the clip's root motion, so a scripted dash into the floor stopped dead |
 
-Sora's side special is the status code's own state machine (workspace
-`_research/ultimate-sonic-blade-spec-2026-10-03.md`): dash 1 straight and never aimed, then SEARCH
-(hook 8 each frame, phys `brake`), TURN (level / up / down clip), and a dash along hook 9's heading;
-the chain continues on stick deflection at a dash's last frame or the special button latched inside
-its window. Test `geno_v54_dash` (the three pure cores, hook names). Hooks 6 and 7 are unchanged and
-no longer used by that move.
+Hooks 8 `geno.dash.search`, 9 `geno.dash.aim`, 10 `geno.brake` and the phys `brake` (callback id 15)
+were retired: the behaviour `geno.multi_dash` (id 50) now runs Sora's side special. Their names no
+longer resolve (test `geno_v54_retired`); numbers 8-10 and 15 stay unassigned.
 
 Sora's side / up / down specials (workspace `ports/ir/tools/trail_specials_geno.py`, with `--magic` the
 combine step that puts trail_magic_geno.py's neutral special first) are 13 Geno states; long overlays go

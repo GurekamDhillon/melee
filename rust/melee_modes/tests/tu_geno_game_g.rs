@@ -49222,15 +49222,12 @@ unsafe fn init() {
     rt::fn_add(m::GenoGame_AttrIsInt as usize);
     rt::fn_add(m::GenoGame_AttrOffset as usize);
     rt::fn_add(m::GenoGame_BehaviorFind as usize);
-    rt::fn_add(m::GenoGame_Brake as usize);
     rt::fn_add(m::GenoGame_CallHook as usize);
     rt::fn_add(m::GenoGame_CallbackFind as usize);
     rt::fn_add(m::GenoGame_ClearProfileStorage as usize);
     rt::fn_add(m::GenoGame_ComboBlockOf as usize);
     rt::fn_add(m::GenoGame_ComboInfo as usize);
     rt::fn_add(m::GenoGame_ComboSetKi as usize);
-    rt::fn_add(m::GenoGame_DashAim as usize);
-    rt::fn_add(m::GenoGame_DashStick as usize);
     rt::fn_add(m::GenoGame_DefineApplyRows as usize);
     rt::fn_add(m::GenoGame_HookFind as usize);
     rt::fn_add(m::GenoGame_LabReload as usize);
@@ -49375,7 +49372,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_cb_phys_air_nodrift as usize);
     rt::fn_add(m::geno_cb_phys_anim_motion as usize);
     rt::fn_add(m::geno_cb_phys_auto as usize);
-    rt::fn_add(m::geno_cb_phys_brake as usize);
     rt::fn_add(m::geno_cb_phys_ground as usize);
     rt::fn_add(m::geno_check_true as usize);
     rt::fn_add(m::geno_clampf as usize);
@@ -49402,7 +49398,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_compare as usize);
     rt::fn_add(m::geno_cond as usize);
     rt::fn_add(m::geno_cur_state as usize);
-    rt::fn_add(m::geno_dash_target as usize);
     rt::fn_add(m::geno_dg as usize);
     rt::fn_add(m::geno_dgf as usize);
     rt::fn_add(m::geno_do_change as usize);
@@ -49529,10 +49524,7 @@ unsafe fn init() {
     rt::fn_add(m::geno_zero as usize);
     rt::fn_add(m::hook_aim_stick as usize);
     rt::fn_add(m::hook_article_spawn as usize);
-    rt::fn_add(m::hook_brake as usize);
     rt::fn_add(m::hook_count_frames as usize);
-    rt::fn_add(m::hook_dash_aim as usize);
-    rt::fn_add(m::hook_dash_search as usize);
     rt::fn_add(m::hook_jumps_refill as usize);
     rt::fn_add(m::hook_jumps_to_var as usize);
     rt::fn_add(m::hook_lockon as usize);

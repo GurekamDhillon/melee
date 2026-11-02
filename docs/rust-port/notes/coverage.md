@@ -298,3 +298,27 @@ layouts against 4-byte C fields that the generated views alias differently.
   site and an `i32` ext signature (castle's link-cast stop at 1898).
 - *left (Yoshi's Story 448, Kirby hat)*: see STATUS blockers: Yoshi hat tree 50 joints against 46 flagged Kirby bones.
 - *left*: items_hi_stadium 3529 (garbage `player_id` 192 in `ftCo_800D3158`), the item / fighter hash divergences listed in STATUS.
+
+## cov3 round (cluster C: items, player, gm/gr, value-only), 2026-11-02
+Method: C snapshot at N-k (`triage.c_run(..., snap_frame)`), `melee diff --snap`, then value tracing with a private C trace build
+(`build_trace_reuse.sh <triage root> <_build/agents/cov3-ct>` after adding an `OSReport("VT ...")` to the C source; the C log keeps only
+the first 400 lines per call site and truncates some lines, so print only what you need) against the same `eprintln!("VT ...")` in the
+Rust TU. All debug prints were removed before committing.
+
+Fixed (each verified with run_rust.sh at the fast profile; the release gate is green at the end):
+- items_hi_stadium: the link table cast a GObj to `&mut Fighter` for `ft_0d31::ext::hook::ftCommon_8007FF74` (the hook takes `c_void`, so
+  `gen_link.py`'s class check could not see it). Entry removed from `gen_table.rs`, listed in `link_skip.txt`;
+  `tools/rust-port/golden/coverage/scan_hook_casts.py` finds this class (prints 0 offenders now).
+- Kirby copy abilities (char_younglink 1099 -> 1135 -> 2592): `KirbyHatStruct.hat_dynamics[k]` are `Article*` for the item slots of
+  `ftKb_SpecialN_800F16D0`; decoded as `ftDynamics` they handed a NULL `common_attr` to `Item_80267AA8` (segfault). New custom root
+  `kirbyhat` (dat_custom.rs); slots 5/6 (Game & Watch, Yoshi) go to `melee_chara::tu::ftkirby::HAT_EXTRA_ARTICLES` (the C indexes past the record).
+- THE COMMON CAUSE of most of the rest: **union members that alias at one GC offset do not alias natively** (pointers widen to 8 bytes, so
+  `mv.*`, `u.*` and `xDD4_itemVar.*` members of different structs sit at different native offsets). A C function that writes one member and
+  reads another reads stale or zero data in Rust. Fixed sites (write or read through the member the C really uses): CaptureKoopa
+  (`capturekoopa.x8` = `specialhi.vel.y`, `x10` = `walk.fast_anim_frame`: cpu_ffa4_levels), YoshiEgg (`x8` = `vel.y`, `x4` = `vel.x`, `x14` =
+  `x10`), Kirby egg (`x10`/`x14`), grIzumi (`izumi2.xDC` = `izumi3.xDC`: Fountain platform direction), Rebirth enter (`turn.*` = `common.x4`),
+  ThrownKirby (earlier). Other users of the same pattern may still be wrong: grep a Rust write to `mv.<a>.<f>` against reads of `mv.<b>.<g>`
+  whose C comments show the same `/* fp+XXXX */`.
+- Dat attribute blocks: `ftYs_DatAttrs` types `x1C`/`x20` as `void*`, so every field after `x1C` is shifted natively; Yoshi's `dat_attrs` is the
+  all-scalar `ftYoshiAttributes` record whose bytes 0xEC..0x114 are `pad_xEC` = raw big-endian (read with `swap_bytes`). Same for the chain
+  attributes of Sheik (`itSeakChain_Attrs.pad_4C`: x4C/x50 are raw BE): char_mewtwo, cpulv9_marth_sheik, stage_14_temple.

@@ -163,13 +163,13 @@ pub mod ext {
     pub unsafe extern "C" fn hsd_80392E80() -> i32 { if let Some(h) = HOOK { let r = h("hsd_80392E80", &[]); return r as i32; } 0 }
     pub unsafe extern "C" fn ifMagnify_LogicDisarm() { if let Some(h) = HOOK { h("ifMagnify_LogicDisarm", &[]); return; } { unsafe { melee_world::tu::ifmagnify::ifMagnify_LogicDisarm(); } return; } }
     pub unsafe extern "C" fn ifMagnify_UpdateLogicOffscreen() { if let Some(h) = HOOK { h("ifMagnify_UpdateLogicOffscreen", &[]); return; } { unsafe { melee_world::tu::ifmagnify::ifMagnify_UpdateLogicOffscreen(); } return; } }
-    /// `lbAudioAx_80027DF8`'s target: the sound stack's per-frame update (sound objects, deferred sfx, the loop voices), set by the
+    /// What the scene loop runs where the C calls `lbAudioAx_80027DF8`: the sound stack's per-frame update (sound objects, deferred sfx, the loop voices), set by the
     /// host's audio driver. Unset = no sound stack.
     pub static mut AUDIO_FRAME: Option<fn()> = None;
     /// The sound objects' procs (`fn_800262A0` on `HSD_GOBJ_PLINK_AUDIO_AX`, the last p_link: they run after every other proc of the
     /// frame, so an object started this frame steps this frame). The sound stack keeps them outside the GObj list; set by the host.
     pub static mut AUDIO_PROCS: Option<fn()> = None;
-    pub unsafe extern "C" fn lbAudioAx_80027DF8() { if let Some(h) = HOOK { h("lbAudioAx_80027DF8", &[]); return; } if let Some(f) = AUDIO_FRAME { f() } }
+    pub unsafe extern "C" fn lbAudioAx_80027DF8() { if let Some(h) = HOOK { h("lbAudioAx_80027DF8", &[]); return; } { /* audio sink: wired in consolidation step 11 (lbAudioAx through the audio seam) */ return; } }
     pub unsafe extern "C" fn lbAudioAx_8002835C() { if let Some(h) = HOOK { h("lbAudioAx_8002835C", &[]); return; } { /* audio sink: wired in consolidation step 11 */ return; } }
     pub unsafe extern "C" fn lbCardGame_InitScene() { if let Some(h) = HOOK { h("lbCardGame_InitScene", &[]); return; } { unsafe { melee_runtime::tu::lbcardgame::lbCardGame_InitScene(); } return; } }
     pub unsafe extern "C" fn lbHeap_80015DF8() { if let Some(h) = HOOK { h("lbHeap_80015DF8", &[]); return; } { unsafe { melee_runtime::tu::lbheap::lbHeap_80015DF8(); } return; } }
@@ -947,6 +947,7 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             ext::db_CheckScreenshot();
         }
         ext::lbAudioAx_80027DF8();
+        if let Some(f) = ext::AUDIO_FRAME { f() } // the host's sound stack (the ext stub stays a sink)
         if held == 0 {
             // MELEE_SLP playback: count the frame, force the console's seed under RESYNC.
             if ext::Replay_Enabled() != 0 {

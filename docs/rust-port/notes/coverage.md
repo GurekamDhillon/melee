@@ -298,3 +298,27 @@ layouts against 4-byte C fields that the generated views alias differently.
   site and an `i32` ext signature (castle's link-cast stop at 1898).
 - *left (Yoshi's Story 448, Kirby hat)*: see STATUS blockers: Yoshi hat tree 50 joints against 46 flagged Kirby bones.
 - *left*: items_hi_stadium 3529 (garbage `player_id` 192 in `ftCo_800D3158`), the item / fighter hash divergences listed in STATUS.
+
+## Cluster A (lb/mp collision and vector TUs), port/cov1, 2026-11-02
+Result of `PROFILE=fast run_rust.sh -j 2` on the cluster: **char_mario PASS (3601/3601)**; the other nine still fail at their first frames
+(char_zelda 2446, cpulv9_marth_sheik 1798, stage_19_mushroomkingdom 2662, char_kirby 755, stage_20_mushroomkingdom2 803,
+sheik_cpu_vs_zelda_cpu 442, stage_25_icemt 1472, char_bowser 791, cpulv5_puff_link 673).
+- **Fixed (char_mario 455 -> pass)**: not an lb/mp bug. Yoshi Bomb stars (`fn_8012E644`, kind 88) were spawned at the wrong offset: the native
+  `ftYs_DatAttrs` has 8-byte pointers at `x1C`/`x20`, so `speciallw_star_offset` (GC 0x118) was read 8 bytes past the 0x120 block. Now read by GC
+  offset (`gc_f32` in ftyoshispeciallw.rs). The `ftyoshispecialhi` egg throw (frame 1754) read `xEC..x110`, which lie in the `pad_xEC` run of
+  `ftYoshiAttributes` that the loader leaves in file (big-endian) byte order; `gc_f32` byte-swaps that range. (Cleaner fix: name the ten floats in
+  `ftYoshiAttributes` in types.h and regenerate gen.rs; tried, the generator renumbers `Anon_anon_*` types and breaks melee_modes, so not done.)
+- **Triage noise** (tools/rust-port/golden/coverage/triage.py, `TRIAGE_EXTRA_NOISE`): the C build inlines `scriptgame_echoiscapsule` (inside
+  `ScriptGame_EchoSameGroup`), `ftlib_80086fd4/800866dc`, `it_8027346c/80273484`; these were reported as "first differing call" for zelda,
+  stage_19, mario, kirby, stage_20. They are not divergences. After dropping them: zelda/stage_19 -> `mpcollinterpolateecb` vs `mpcollend`.
+- **Findings, unsolved**:
+  - zelda 2446 / stage_19 2662: at match frame 2443 a third `mpColl_80043754` call per frame (an entity that moves ~12 units) starts from
+    `cur_pos.x` 49.52 (Rust) against 46.51 (C), exactly 3.0 apart, same `last_pos`; Rust runs 2 steps, C 3. The mover is set up before the
+    collision call (not in mpcoll). Need the entity (probably the needle item / a thrown fighter) and the code that writes its position.
+  - cpulv5_puff_link 673: state identical at 672 (snapshot diff with MELEE_ENGINE_PRE_DRAWS=1); in frame 673 the CPU AI output differs
+    (`cpu.lstick.x` 127 vs -80, `cpu.buttons` 0x200 vs 0, `cpu.x54.x` -27.0 vs -56.7). The anchored call sequence of the AI functions is
+    identical, so it is a value difference inside the AI (ftCo_0A01.c); `ftCo_800A0FB0` (ground query, mp) is the first suspect.
+  - stage_20 803 / kirby 755 / sheik_cpu_vs_zelda_cpu 442: P1 JObjs have `JOBJ_MTX_DIRTY` (0x40) set in Rust and clear in C, hidden `Dynamics`
+    words differ; C runs more `lbCopyJObjSRT` (ftAnim_8006FE9C/8006FF74 loops) in the frame before 442. Not found yet.
+  - Debug method that worked: `melee diff --frame N --snap` needs `MELEE_ENGINE_PRE_DRAWS=<pre>` (the `pre` column of triage.tsv) or the
+    Rust side is misaligned; C snapshots for other frames via `triage.c_run(s, d, 0, 0, frame, False, rows)`.

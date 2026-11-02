@@ -50,20 +50,35 @@ pub unsafe extern "C" fn cb_fn_8012E644(g: *mut HSD_GObj) {
     fn_8012E644(g);
 }
 
+/// Float at GameCube offset `gc` of the attribute block. The block keeps the GC layout (4-byte `x1C`/`x20`
+/// pointers), so the native `ftYs_DatAttrs` fields after `x20` sit 8 bytes too far; read by GC offset.
+/// Bytes 0xEC..0x114 are the `pad_xEC` run of `ftYoshiAttributes`, which the loader leaves in file
+/// (big-endian) byte order; those floats are decoded here.
+#[inline(always)]
+pub(crate) unsafe fn gc_f32(da: *const ftYs_DatAttrs, gc: usize) -> f32 {
+    let p = (da as *const u8).add(gc);
+    if (0xEC..0x114).contains(&gc) {
+        f32::from_bits(u32::from_be_bytes(core::ptr::read_unaligned(p as *const [u8; 4])))
+    } else {
+        core::ptr::read_unaligned(p as *const f32)
+    }
+}
+
 /// Spawn the two Yoshi Bomb stars either side of Yoshi's TransN joint.
 pub fn fn_8012E644(gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_8012E644");
     unsafe {
         let fp = fpp(gobj);
-        let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
+        let da = (*fp).dat_attrs as *const ftYs_DatAttrs;
+        let (off_x, off_y) = (gc_f32(da, 0x118), gc_f32(da, 0x11C));
         let mut transn_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut star_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         ext::lb_8000B1CC((*(*fp).parts.add(FtPart_TransN as usize)).joint, core::ptr::null_mut(), &mut transn_pos);
-        star_pos.x = fmadds(-1.0, da.speciallw_star_offset.x, transn_pos.x);
-        star_pos.y = transn_pos.y + da.speciallw_star_offset.y;
+        star_pos.x = fmadds(-1.0, off_x, transn_pos.x);
+        star_pos.y = transn_pos.y + off_y;
         star_pos.z = transn_pos.z;
         ext::it_802B2FC8(gobj, &mut star_pos, -1.0);
-        star_pos.x = transn_pos.x + da.speciallw_star_offset.x;
+        star_pos.x = transn_pos.x + off_x;
         ext::it_802B2FC8(gobj, &mut star_pos, 1.0);
         (*fp).accessory4_cb = None;
     }

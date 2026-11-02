@@ -799,7 +799,7 @@ impl Game for Viewer {
         if !self.shot_done && self.frame >= self.shot_frame {
             self.shot_done = true;
             let px = p.screenshot();
-            match write_png(&self.shot, EFB_WIDTH, EFB_HEIGHT, &px) {
+            match write_png(&self.shot, p.renderer.width, p.renderer.height, &px) {
                 Ok(()) => eprintln!("gx_viewer: frame {} saved to {}", self.frame, self.shot.display()),
                 Err(e) => eprintln!("gx_viewer: screenshot failed: {e}"),
             }

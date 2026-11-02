@@ -59,7 +59,7 @@ pub mod ext {
     fn GXTexCoord1x8(a0: u8);
     fn GXTexCoord2f32(a0: f32, a1: f32);
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj;
-    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void) = crate::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _);
     fn HSD_FogSet(a0: *mut HSD_Fog);
     fn HSD_LObjGetActiveByID(a0: u32) -> *mut HSD_LObj;
     fn HSD_LObjGetLightMaskAttnFunc() -> i32;

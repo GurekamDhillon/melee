@@ -70,7 +70,7 @@ pub mod ext {
     fn GXSetZCompLoc(a0: u8);
     fn GXSetZMode(a0: u8, a1: u32, a2: u8);
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
-    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void) = crate::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _);
     fn HSD_ClearVtxDesc() = crate::tu::pobj::HSD_ClearVtxDesc();
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
     fn HSD_MtxInverse(a0: *mut c_void, a1: *mut c_void) = { let r = crate::hsd_mtx::inverse(&*(a0 as *const [[f32; 4]; 3])); (a1 as *mut [[f32; 4]; 3]).write(r); };

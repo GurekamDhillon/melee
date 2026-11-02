@@ -76,7 +76,7 @@ pub mod ext {
         match unsafe { hook::HSD_CObjGetCurrent } { Some(f) => f(), None => { { return unsafe { crate::tu::cobj::HSD_CObjGetCurrent() as _ }; } } }
     }
     pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
-        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetViewingMtx is not ported") } }
+        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => unsafe { crate::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _) } }
     }
     pub fn HSD_JObjClearFlagsAll(a0: *mut HSD_JObj, a1: u32) {
         match unsafe { hook::HSD_JObjClearFlagsAll } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_JObjClearFlagsAll is not ported") } }

@@ -1025,3 +1025,9 @@ where
     let v1 = mtx::mult_vec_sr(&m, &v0);
     (0, Some(mtx::vec_normalize(&v1)))
 }
+
+/// `HSD_CObjGetViewingMtx`: `PSMTXCopy(HSD_CObjGetViewingMtxPtr(cobj), mtx)`.
+pub unsafe fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, out: *mut [f32; 4]) {
+    let src = super::cobj_world::HSD_CObjGetViewingMtxPtr(cobj);
+    core::ptr::copy(src as *const [f32; 4], out, 3);
+}

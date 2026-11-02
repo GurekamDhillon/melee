@@ -61,6 +61,34 @@ pub mod ext {
     }
 }
 
+/// The engine's host: hsd_3915.c's callees as the native TUs and the GX bridge provide them.
+pub struct NativeHost;
+impl Hsd3915Host for NativeHost {
+    fn GXBegin(&mut self, prim: u32, fmt: u32, n: u32) { crate::tu::lbbgflash::ext::GXBegin(prim, fmt, n as u16) }
+    fn GXPosition2f32(&mut self, x: f32, y: f32) { crate::tu::lbbgflash::ext::GXPosition2f32(x, y) }
+    fn GXColor4u8(&mut self, r: u8, g: u8, b: u8, a: u8) { crate::tu::lbbgflash::ext::GXColor4u8(r, g, b, a) }
+    fn HSD_ClearVtxDesc(&mut self) { unsafe { crate::tu::pobj::HSD_ClearVtxDesc() } }
+    fn GXSetCurrentMtx(&mut self, id: u32) { crate::tu::pobj::ext::GXSetCurrentMtx(id) }
+    fn HSD_CObjGetCurrent(&mut self) -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
+    fn HSD_CObjGetViewingMtx(&mut self, cobj: *mut HSD_CObj, out: &mut Mtx) { unsafe { crate::tu::cobj::HSD_CObjGetViewingMtx(cobj, out.as_mut_ptr()) } }
+    fn GXLoadPosMtxImm(&mut self, m: &Mtx, id: u32) { crate::tu::pobj::ext::GXLoadPosMtxImm(m.as_ptr() as *mut core::ffi::c_void, id) }
+    fn HSD_StateSetLineWidth(&mut self, width: u8, mode: i32) { unsafe { crate::tu::state_native::HSD_StateSetLineWidth(width, mode) } }
+    fn HSD_StateSetPointSize(&mut self, size: i32, mode: i32) { unsafe { crate::tu::state_native::HSD_StateSetPointSize(size as u8, mode) } }
+    fn HSD_SetupRenderMode(&mut self, mode: u32) { unsafe { crate::tu::state_native::HSD_SetupRenderMode(mode) } }
+    fn GXSetVtxAttrFmt(&mut self, fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u8) { crate::tu::pobj::ext::GXSetVtxAttrFmt(fmt, attr, cnt, ty, frac) }
+    fn GXSetVtxDesc(&mut self, attr: u32, ty: u32) { crate::tu::pobj::ext::GXSetVtxDesc(attr, ty) }
+    fn HSD_StateSetCullMode(&mut self, mode: u32) { unsafe { crate::tu::state_native::HSD_StateSetCullMode(mode as i32) } }
+}
+
+/// The TU's globals for the engine (`lbl_804D6070/74/78`).
+pub static mut NATIVE: Hsd3915 = Hsd3915 { lbl_804D6070: 12.0, lbl_804D6074: 12.0, lbl_804D6078: 12 };
+
+/// `hsd_80391A04` on the engine's GX: the 2D line / quad state the bg flash and the text drawer set before drawing.
+/// (Left out, the next immediate-mode quad streams with the previous draw's vertex format and the FIFO desynchronises.)
+pub unsafe fn native_80391A04(scale_x: f32, scale_y: f32, line_width: i32) {
+    (*core::ptr::addr_of_mut!(NATIVE)).hsd_80391A04(&mut NativeHost, scale_x, scale_y, line_width)
+}
+
 /// `lbl_80408630`: 47 glyphs of 13 bytes (nibble-packed x/y vertex pairs, 0xFF terminated).
 pub static LBL_80408630: [u8; 0x268] = [
     0x00, 0x60, 0x60, 0x66, 0x66, 0x06, 0x06, 0x00, 0xFF, 0x00, 0x00, 0x00,

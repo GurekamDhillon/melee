@@ -39,7 +39,7 @@ pub mod ext {
     fn HSD_GObjObject_80390A70(a0: *mut HSD_GObj, a1: u8, a2: *mut c_void);
     fn HSD_GObj_803910D8(a0: *mut HSD_GObj, a1: i32);
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc;
-    fn hsd_80391A04(a0: f32, a1: f32, a2: i32);
+    fn hsd_80391A04(a0: f32, a1: f32, a2: i32) = crate::tu::hsd_3915::native_80391A04(a0, a1, a2);
     }
     /// Functions of other TUs whose address this TU stores (callbacks): C-ABI shims over the hooks.
     pub mod cb {

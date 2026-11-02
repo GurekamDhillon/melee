@@ -736,13 +736,15 @@ impl GxState {
         let vtx_size = crate::draw::calc_vtx_size(self, fmt);
         let total = vtx_count as usize * vtx_size as usize;
         if total > r.remaining() {
-            // A command stream that runs past its end (a display list the game built with a vertex format or count that
-            // does not match what it wrote). The GPU would read whatever follows; the shim drops the rest of the list
-            // instead of stopping the game, and says so once per process.
-            static ONCE: std::sync::Once = std::sync::Once::new();
+            // A command stream that runs past its end: the display list's vertex format or count does not match
+            // what was written. This is an engine bug (the FIFO desync fixed in hsd_80391A04 was one), never a
+            // condition to paper over: panic in debug builds; in release log it as an
+            // ERROR on every occurrence (the bytes after a desync cannot be parsed, so they are consumed).
             let have = r.remaining();
-            ONCE.call_once(|| eprintln!("gx: draw vertex data overrun (prim {prim:#x} fmt {fmt} count {vtx_count}: need {total} bytes, have {have}); the rest of the list is dropped"));
-            self.warnings.push(format!("draw vertex data overrun: need {total} bytes, have {have}"));
+            let msg = format!("gx: draw vertex data overrun (prim {prim:#x} fmt {fmt} count {vtx_count}: need {total} bytes, have {have})");
+            debug_assert!(false, "{msg}");
+            eprintln!("ERROR {msg}");
+            self.warnings.push(msg);
             r.take(have);
             return;
         }

@@ -119,6 +119,20 @@ pub static RENDER_STUB: core::sync::atomic::AtomicBool = core::sync::atomic::Ato
 pub static DBG_FRAME: core::sync::atomic::AtomicI32 = core::sync::atomic::AtomicI32::new(-1);
 pub static IN_RENDER: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
 
+/// `MELEE_LOG_STUBS=1`: print each distinct render-stub answer once (a draw call that silently did nothing).
+pub fn log_stub(msg: &str) {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    if !*ON.get_or_init(|| std::env::var_os("MELEE_LOG_STUBS").is_some()) {
+        return;
+    }
+    static SEEN: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new());
+    let mut s = SEEN.lock().unwrap();
+    if !s.iter().any(|m| m == msg) {
+        s.push(msg.to_string());
+        eprintln!("render-stub: {msg}");
+    }
+}
+
 #[inline]
 pub fn render_stub() -> bool {
     RENDER_STUB.load(core::sync::atomic::Ordering::Relaxed) && IN_RENDER.load(core::sync::atomic::Ordering::Relaxed)
@@ -129,6 +143,7 @@ pub fn render_stub() -> bool {
 macro_rules! unported {
     ($msg:expr) => {{
         if $crate::ct::render_stub() {
+            $crate::ct::log_stub(&$msg);
             #[allow(unreachable_code)]
             return unsafe { core::mem::zeroed() };
         }

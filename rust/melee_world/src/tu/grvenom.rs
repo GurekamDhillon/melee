@@ -1717,9 +1717,9 @@ pub unsafe extern "C" fn grVenom_80205AD4(gobj: *mut Ground_GObj) {
     HSD_JObjSetScaleY(jobj, scale * (*yakumono_param).x34);
     HSD_JObjSetScaleZ(jobj, scale * (*yakumono_param).x34);
     Ground_ResetStarFoxArwingState(gp);
-    (*gp).u.venom.xF8 = (*yakumono_param).x2C as i32;
-    (*gp).u.venom.xFC = 0;
-    (*gp).u.venom.x100 = ext::HSD_Randi(2);
+    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
+    (*gp).u.starfox.xFC = 0;
+    (*gp).u.starfox.x100 = ext::HSD_Randi(2);
 }
 
 pub unsafe extern "C" fn grVenom_80205DF0(_arg: *mut Ground_GObj) -> i32 {
@@ -1740,7 +1740,7 @@ pub unsafe extern "C" fn grVenom_80205E84(pos: *mut Vec3) -> i32 {
 /// `grVe_GetAnimArg` (TARGET_PC branch): the 5x2 anim-arg table is `grVe_803E5644`.
 #[inline(always)]
 unsafe fn grVe_GetAnimArg(fire_kind: i32, gp: *mut Ground) -> i32 {
-    grVe_803E5644[((*gp).u.venom.xF4 * 2 + fire_kind) as usize]
+    grVe_803E5644[((*gp).u.starfox.xF4 * 2 + fire_kind) as usize]
 }
 
 #[inline(always)]
@@ -1781,10 +1781,10 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
             1 | 2 | 3 | 4 | 5 | 6 | 7 => {
                 HSD_JObjSetRotationY(jobj, 0.0f32);
 
-                let anim_state = (*gp).u.venom.xF4;
+                let anim_state = (*gp).u.starfox.xF4;
                 if anim_state == 0 {
-                    if (*gp).u.venom.xF8 <= 0 {
-                        (*gp).u.venom.xF4 = ext::HSD_Randi(4) + 1;
+                    if (*gp).u.starfox.xF8 <= 0 {
+                        (*gp).u.starfox.xF4 = ext::HSD_Randi(4) + 1;
                         let fire_kind = fire_kind_for(gobj);
                         let idx0 = grVe_803E5380[(*gp).u.venom.xC8 as usize];
                         let anim_arg = grVe_GetAnimArg(fire_kind, gp);
@@ -1796,12 +1796,12 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                         let tmp_jobj = ext::Ground_801C3FA4(gobj, anim_id);
                         HSD_JObjSetRotationZ(tmp_jobj, 0.0f32);
                     }
-                    (*gp).u.venom.xF8 -= 1;
+                    (*gp).u.starfox.xF8 -= 1;
                 } else if anim_state < 0 || anim_state >= 5 {
                     // no animation step
                 } else if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
-                    (*gp).u.venom.xF4 = 0;
-                    (*gp).u.venom.xF8 = (*yakumono_param).x2C as i32;
+                    (*gp).u.starfox.xF4 = 0;
+                    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
                 }
 
                 let other = grVe_803E5348.arwing.arwing_gobj[(*gp).u.venom.xC8 as usize];
@@ -1849,34 +1849,34 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                 }
             }
             8 | 9 | 10 | 11 => {
-                if ((*gp).u.venom.xF0 & 7) == 0 && ext::HSD_Randi(8) == 0 {
-                    (*gp).u.venom.xFC = 0;
+                if ((*gp).u.starfox.xF0 & 7) == 0 && ext::HSD_Randi(8) == 0 {
+                    (*gp).u.starfox.xFC = 0;
                     let type_idx = grVe_803E5348.arwing.arwing_type[(*gp).u.venom.xC8 as usize];
                     match type_idx {
                         8 => {
-                            if (*gp).u.venom.xF0 > 0x3C && (*gp).u.venom.xF0 < 0xE6 {
-                                (*gp).u.venom.xFC = 1;
+                            if (*gp).u.starfox.xF0 > 0x3C && (*gp).u.starfox.xF0 < 0xE6 {
+                                (*gp).u.starfox.xFC = 1;
                             }
                         }
                         9 => {
-                            if (*gp).u.venom.xF0 > 0x32 && (*gp).u.venom.xF0 < 0xE6 {
-                                (*gp).u.venom.xFC = 1;
+                            if (*gp).u.starfox.xF0 > 0x32 && (*gp).u.starfox.xF0 < 0xE6 {
+                                (*gp).u.starfox.xFC = 1;
                             }
                         }
                         10 => {
-                            if (*gp).u.venom.xF0 > 0x5A && (*gp).u.venom.xF0 < 0x104 {
-                                (*gp).u.venom.xFC = 1;
+                            if (*gp).u.starfox.xF0 > 0x5A && (*gp).u.starfox.xF0 < 0x104 {
+                                (*gp).u.starfox.xFC = 1;
                             }
                         }
                         11 => {
-                            if (*gp).u.venom.xF0 > 0x46 && (*gp).u.venom.xF0 < 0xF0 {
-                                (*gp).u.venom.xFC = 1;
+                            if (*gp).u.starfox.xF0 > 0x46 && (*gp).u.starfox.xF0 < 0xF0 {
+                                (*gp).u.starfox.xFC = 1;
                             }
                         }
                         _ => {}
                     }
                 } else {
-                    (*gp).u.venom.xFC = 0;
+                    (*gp).u.starfox.xFC = 0;
                 }
 
                 {
@@ -1897,8 +1897,8 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                     }
                 }
 
-                if -100.0f32 > sp94.z && sp94.z > -2000.0f32 && (*gp).u.venom.xFC != 0 {
-                    (*gp).u.venom.xFC = 0;
+                if -100.0f32 > sp94.z && sp94.z > -2000.0f32 && (*gp).u.starfox.xFC != 0 {
+                    (*gp).u.starfox.xFC = 0;
                     let mut slot_i = ext::HSD_Randi(4);
                     let mut retries = 0;
                     loop {
@@ -1921,14 +1921,14 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                             let j = ext::Ground_801C3FA4(gobj, 7);
                             ext::it_802E7654(gobj, j, &mut sp88, 3, 0, (*yakumono_param).x34);
                         } else {
-                            if (*gp).u.venom.x100 != 0 {
+                            if (*gp).u.starfox.x100 != 0 {
                                 let j = ext::Ground_801C3FA4(gobj, 5);
                                 ext::it_802E7654(gobj, j, &mut sp88, 1, 0, (*yakumono_param).x34);
                             } else {
                                 let j = ext::Ground_801C3FA4(gobj, 6);
                                 ext::it_802E7654(gobj, j, &mut sp88, 1, 0, (*yakumono_param).x34);
                             }
-                            (*gp).u.venom.x100 = ((*gp).u.venom.x100 + 1) & 1;
+                            (*gp).u.starfox.x100 = ((*gp).u.starfox.x100 + 1) & 1;
                         }
                         ext::grMaterial_801C9604(gobj, (*yakumono_param).x38, 0);
                     }
@@ -1937,7 +1937,7 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
             _ => {}
         }
 
-        (*gp).u.venom.xF0 += 1;
+        (*gp).u.starfox.xF0 += 1;
     } else {
         if !(*gp).u.starfox.article_gobjs[0].is_null() {
             ext::Ground_801C4A08((*gp).u.starfox.article_gobjs[0]);

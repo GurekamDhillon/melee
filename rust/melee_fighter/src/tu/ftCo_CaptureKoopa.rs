@@ -97,18 +97,18 @@ pub fn ftCo_800BC4A8(g: G) {
             if abs_c(a + ji::HSD_JObjGetTranslationZ(j)) <= f.mv.co.capturekoopa.x10 {
                 ji::HSD_JObjAddTranslationZ(j, a, &mut Dirty);
             }
-            if abs_c(b + ji::HSD_JObjGetTranslationY(j)) <= f.mv.co.walk.fast_anim_frame {
+            if abs_c(b + ji::HSD_JObjGetTranslationY(j)) <= f.mv.co.capturekoopa.x10 { // C reads walk.fast_anim_frame (same GC offset 0x2350)
                 ji::HSD_JObjAddTranslationY(j, b, &mut Dirty);
             }
-            f.mv.co.capturekoopa.x8 -= 1.0;
+            f.mv.ca.specialhi.vel.y -= 1.0; // capturekoopa.x8 shares the GC offset (0x2348) with specialhi.vel.y; the native layouts do not
             if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.capturekoopa.x0 == 0 {
                 ext::ftAnim_SetAnimRate(g, 1.0);
-                fp(g).mv.co.capturekoopa.x8 = 0.0;
+                fp(g).mv.ca.specialhi.vel.y = 0.0;
             }
         }
         let f = fp(g);
-        if f.mv.co.capturekoopa.x8 <= 0.0 && f.mv.co.capturekoopa.x0 != 0 {
-            f.mv.co.capturekoopa.x8 = ext::ftKp_SpecialS_80132DF0(f.victim_gobj);
+        if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.capturekoopa.x0 != 0 {
+            f.mv.ca.specialhi.vel.y = ext::ftKp_SpecialS_80132DF0(f.victim_gobj);
             let r = ext::ftKp_SpecialS_80132E00(fp(g).victim_gobj);
             ext::ftAnim_SetAnimRate(g, r);
         }

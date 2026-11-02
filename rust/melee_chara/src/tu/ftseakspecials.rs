@@ -591,7 +591,7 @@ pub fn ftSk_SpecialS_80110BCC(gobj: *mut HSD_GObj) {
             }
         }
 
-        let chain_val = (*chain).x4C;
+        let chain_val = f32::from_bits((*chain).x4C.to_bits().swap_bytes()); // x4C/x50 sit in the decoded record's raw padding (big-endian bytes)
         let chain_val_sq = chain_val * chain_val;
 
         if sums_of_squares[0] > chain_val_sq
@@ -780,7 +780,7 @@ pub fn ftSk_SpecialS_CheckInitChain(gobj: *mut HSD_GObj) -> bool {
             let ip = (*item_gobj).user_data as *mut Item;
             let segment = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itChainSegment;
 
-            vel.x = (*segment).x50;
+            vel.x = f32::from_bits((*segment).x50.to_bits().swap_bytes()); // raw big-endian padding of itSeakChain_Attrs
             vel.x *= (*ip).facing_dir;
             ext::it_802BCFC4(item_gobj, &mut vel);
         }

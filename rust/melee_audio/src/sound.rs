@@ -210,6 +210,8 @@ pub struct Sound {
     /// Call trace in the format of the C build's `MELEE_AUDIO_TRACE` (`<sub-frame> OP args`).
     pub trace: Option<Vec<String>>,
     pub trace_sub: u32,
+    /// The sound objects are stepped by [`crate::sim::sound_obj_procs`] (the engine's proc phase), not by the per-frame update.
+    pub objs_external: bool,
     pub(crate) trace_in_cb: bool,
 
     // ---- axdriver.c ----
@@ -300,6 +302,7 @@ impl Sound {
             ax_callback_registered: false,
             trace: None,
             trace_sub: 0,
+            objs_external: false,
             trace_in_cb: false,
             sm: [Sm::default(); SMS],
             free_head: None,

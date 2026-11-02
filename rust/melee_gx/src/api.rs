@@ -361,6 +361,7 @@ impl Gx {
                             let _ = ptx.send(buf);
                         }
                         Job::End => {
+                            if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
                             let draws = st.take_draws();
                             let packed = crate::render::pack(&draws);

@@ -110,6 +110,11 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 - Yoshi's Story (448, Kirby hat load): the Yoshi hat joint tree walks 50 joints but Kirby's `parts` has 46 `flags_b1` bones (parts_num 59), so `ftKb_SpecialN_insert_joint_refs` runs off `fp->parts` and the envelope lookup fails. The tree structure itself decodes consistently; find why C has 50 flagged bones (or the hat has 46 joints). Items Stadium (3529): `ftCo_800D3158` death with a garbage `fp->player_id` (192). Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
 - Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
+## Current blockers (coverage cluster A, port/cov1, 2026-11-02)
+- char_mario fixed (Yoshi attr offsets). Open: char_zelda 2446 and stage_19 2662 (a mover's `cur_pos.x` 3.0 off at frame 2443 before `mpColl_80043754`),
+  cpulv5_puff_link 673 (CPU AI output differs from identical state), stage_20 803 / char_kirby 755 / sheik_cpu_vs_zelda_cpu 442 (JObj MTX_DIRTY / `lbCopyJObjSRT` count),
+  cpulv9_marth_sheik 1798, stage_25_icemt 1472, char_bowser 791 (not analysed past triage). Details in notes/coverage.md "Cluster A".
+
 ## Current blockers (slpcheck, 2026-11-02, port/slporacle)
 `melee slpcheck --slp F` compares the engine with the console's own post-frame data (notes/slpcheck.md). 125 of 125 external replays run, none matches yet (median first divergence frame 1157). Blockers, none solved inside the timebox:
 - S1. DamageFlyRoll (91) vs DamageFlyHi/N/Lw choice at a hit (39 files): RNG draw count between Frame Start and the damage code.

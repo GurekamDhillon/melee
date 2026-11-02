@@ -103,18 +103,18 @@ pub fn ftYs_SpecialS_8012DF8C(gobj: *mut HSD_GObj, arg1: *mut Vec3) {
     melee_core::ct!("ftYs_SpecialS_8012DF8C");
     unsafe {
         let fp = fpp(gobj);
-        let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
+        let da = (*fp).dat_attrs as *const ftYs_DatAttrs;
         let mut mag: f32;
         {
             let sx = (*fp).input.lstick[0].x;
             let ax = if sx < 0.0 { -sx } else { sx };
-            let temp = ax / da.xEC;
+            let temp = ax / crate::tu::ftyoshispeciallw::gc_f32(da, 0xEC);
             mag = temp;
             if mag > 1.0 {
                 mag = 1.0;
             }
-            mag *= da.xF0;
-            if mag < da.xF4 {
+            mag *= crate::tu::ftyoshispeciallw::gc_f32(da, 0xF0);
+            if mag < crate::tu::ftyoshispeciallw::gc_f32(da, 0xF4) {
                 mag = 0.0;
             }
             mag *= ftinl::getStickDirX(fp) as f32;
@@ -122,14 +122,14 @@ pub fn ftYs_SpecialS_8012DF8C(gobj: *mut HSD_GObj, arg1: *mut Vec3) {
         {
             let angle: f32;
             if (*fp).facing_dir == 1.0 {
-                angle = da.specialhi_base_angle - mag;
+                angle = crate::tu::ftyoshispeciallw::gc_f32(da, 0xF8) - mag;
             } else {
                 // M_PI is a double: the subtractions happen in double, one rounding to float
-                angle = (3.14159265358979323846_f64 - da.specialhi_base_angle as f64 - mag as f64) as f32;
+                angle = (3.14159265358979323846_f64 - crate::tu::ftyoshispeciallw::gc_f32(da, 0xF8) as f64 - mag as f64) as f32;
             }
             let x4 = (*fp).mv.ys.specialhi.x4 as f32;
-            (*arg1).x = fmadds(x4, da.x100, da.xFC) * ext::cosf(angle);
-            (*arg1).y = fmadds(x4, da.x100, da.xFC) * ext::sinf(angle);
+            (*arg1).x = fmadds(x4, crate::tu::ftyoshispeciallw::gc_f32(da, 0x100), crate::tu::ftyoshispeciallw::gc_f32(da, 0xFC)) * ext::cosf(angle);
+            (*arg1).y = fmadds(x4, crate::tu::ftyoshispeciallw::gc_f32(da, 0x100), crate::tu::ftyoshispeciallw::gc_f32(da, 0xFC)) * ext::sinf(angle);
             (*arg1).z = 0.0;
         }
     }
@@ -145,7 +145,7 @@ pub fn fn_8012E110(gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_8012E110");
     unsafe {
         let fp = fpp(gobj);
-        let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
+        let da = (*fp).dat_attrs as *const ftYs_DatAttrs;
         if (*fp).anon_2210.anon_0.throw_flags_b0() != 0 {
             (*fp).anon_2210.anon_0.set_throw_flags_b0(0);
             let mut sp30 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -160,13 +160,13 @@ pub fn fn_8012E110(gobj: *mut HSD_GObj) {
             let mut sp18 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             (*fp).cmd_vars[0] = 0;
             (*fp).mv.ys.specialhi.x0 = 1;
-            sp24.x = da.x104 * (*fp).facing_dir;
-            sp24.y = da.x108;
+            sp24.x = crate::tu::ftyoshispeciallw::gc_f32(da, 0x104) * (*fp).facing_dir;
+            sp24.y = crate::tu::ftyoshispeciallw::gc_f32(da, 0x108);
             sp24.z = 0.0;
             ftYs_SpecialS_8012DF8C_outline(gobj, &mut sp18);
             {
                 let x4 = (*fp).mv.ys.specialhi.x4 as f32;
-                ext::it_802B28C8((*fp).u.ys.x2238, &mut sp18, &mut sp24, fmadds(x4, da.x110, da.x10C), x4);
+                ext::it_802B28C8((*fp).u.ys.x2238, &mut sp18, &mut sp24, fmadds(x4, crate::tu::ftyoshispeciallw::gc_f32(da, 0x110), crate::tu::ftyoshispeciallw::gc_f32(da, 0x10C)), x4);
             }
             (*fp).u.ys.x2238 = core::ptr::null_mut();
             (*fp).take_dmg_cb = None;

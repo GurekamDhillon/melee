@@ -219,5 +219,7 @@ void GenoBhv_AnimMotionBegin(GbAnimMotion* a, f32 pos_x, f32 pos_y);
 /* One frame. `blocked` = the host reports a wall hit for the previous request. */
 void GenoBhv_AnimMotionStep(GbAnimMotion* a, const f32* track, int n, const GbAnimMotionP* p, f32 facing,
                             s32 blocked);
+/* One engine frame of geno.anim_motion: the clip's sampled root delta (fwd, up) through one DELTA step. */
+void GenoBhv_AnimMotionFrameDelta(f32 fwd, f32 up, f32 lr, f32* dx, f32* dy);
 
 #endif

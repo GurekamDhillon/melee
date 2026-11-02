@@ -159,9 +159,10 @@ State n becomes MotionState row for motion id `0x400 + n` (`GENO_MOTION_BASE`), 
 | `geno.cape` | cape | none | cape | cape | decided at `decide_frame` | stays |
 | `geno.cape.attack` | next | none | anim_motion | cape.after | helpless | stay |
 | `geno.cape.end` | next | interrupt | anim_motion | cape.after | helpless | stay |
+| `geno.multi_dash` | multi_dash | none | multi_dash | multi_dash | `next`, else Fall (FallSpecial in the air after the 4th segment) | stays |
 
-Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift brake ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape`;
-coll: `none air air_noledge ground ground_stop both anim_motion glide drill drill.start cape cape.after`; any slot: `like`. `air` = Melee's aerial physics/collision with ledge grab; `both` = ground and air without changing state.
+Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape multi_dash`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift brake ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape multi_dash`;
+coll: `none air air_noledge ground ground_stop both anim_motion glide drill drill.start cape cape.after multi_dash`; any slot: `like`. `air` = Melee's aerial physics/collision with ledge grab; `both` = ground and air without changing state.
 **IASA trap:** the default `iasa` is `none`; an IASA script command alone does not give an input callback; use `"iasa": "interrupt"`. Paired states are found by declaration order among the profile's states with that behaviour (cape start ground/air, cape.attack N/N-air/F/F-air/B/B-air, cape.end ground/air, drill.start ground/air, drill.end ground/air).
 Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion): `geno-v5.1-behaviours.md` is normative for their arithmetic, parameter names and defaults, and acceptance tables (clean-room spec, MIT).
 

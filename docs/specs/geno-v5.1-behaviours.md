@@ -1,6 +1,6 @@
 # Geno v5.1 behaviour procedures: clean-room behaviour spec
 
-Status: stage 1 (spec writer). Written from public, observable sources only; see "Provenance" below.
+Status: stage 1 (spec writer), revision 1 (implementer, 2026-11-02: see section 9). Written from public, observable sources only; see "Provenance" below.
 Procedures covered: `glide`, `tornado`, `drill`, `cape`, `multi_dash`, `anim_motion`.
 
 ## 0. Provenance and honesty rules
@@ -80,7 +80,7 @@ Preconditions: airborne, `glides_used < max_glides`, not already helpless.
 Three entry paths (any one starts `GL_START`):
 - A. Midair-jump hold: a midair jump was consumed, and `jump_held` has been true for `entry_hold` consecutive frames since that jump, and `vel.y <= entry_vy_max`.
 - B. Apex flick: `|vel.y| <= apex_vy` and within the last `flick_window` frames the stick went from `sx*f <= -flick_thr` to `sx*f >= flick_thr`, or the reverse (left-then-right either way).
-- C. Chained from an up-special-style procedure (host flag `chain_slow`): enter with `slow = true` (speed cap multiplied by `chain_speed_mul`, turn rate multiplied by `chain_turn_mul`).
+- C. Chained from an up-special-style procedure (host flag `chain_slow`): enter with `slow = true` (speed cap and gravity gain `GK` multiplied by `chain_speed_mul`, turn rate multiplied by `chain_turn_mul`).
 
 On entry: `speed = clamp(length(vel), 0, s_start_cap)` computed as `speed = sqrt(vx*vx + vy*vy)` (f32 `sqrt`, correctly rounded, which is IEEE exact); `theta = theta_def`; `f` unchanged unless `sx*f < -flick_thr` at entry, then `f = -f`; `glides_used += 1`.
 
@@ -98,7 +98,8 @@ rate = TURN_RATE            // times chain_turn_mul when slow
 theta = approach(theta, theta_t, rate)
 // 4. speed: gravity component along heading, then drag
 s_th  = sin_deg(theta)
-g     = GK * s_th           // positive when nose up
+gk    = GK                  // times chain_speed_mul when slow (rev 1)
+g     = gk * s_th           // positive when nose up
 speed = speed - g           // nose down (s_th < 0) increases speed
 dr    = speed * DRAG
 speed = speed - dr
@@ -135,7 +136,7 @@ Helpless: if a glide begins after the last midair jump, `set_helpless(true)` whe
 | `flick_window` | 12 | `[E]` frames |
 | `flick_thr` | 0.55 | `[E]` |
 | `START_FRAMES` | 12 | `[E]` (wiki: "fastest startup" of the three, no number) |
-| `S_START` | 1.20 | `[E]` |
+| `S_START` | 1.50 | `[E]` (rev 1, was 1.20: with `DRAG = 0.002` a 1.20 start sits 7.5% under G-2's target at 600 frames) |
 | `START_ACCEL` | 0.12 | `[E]` |
 | `s_start_cap` | 2.0 | `[E]` |
 | `theta_def` | -5.0 | `[E]` slight downward default |
@@ -200,6 +201,7 @@ Per loop frame:
 if special_pressed { press_latch = true }
 // loop-hit generation (before spin update)
 if spin <= SPIN_END { goto TN_END }        // exit test happens at the top
+if k == 0 { spawn_hit(LOOP_HIT) }          // rev 1: the loop window opens with a hit (T-1, global frame 12)
 rot = rot + spin
 if rot >= 360.0 { rot = rot - 360.0; spawn_hit(LOOP_HIT) }
 // mash read, only on read frames and only inside the read window
@@ -213,7 +215,7 @@ if k < READ_LIMIT { spin = spin - DECAY_A } else { spin = spin - DECAY_B }
 // presses outside read frames stay latched until the next read frame (k<70), then are dropped
 ```
 Check with no mashing: `spin(k) = 80 - 1.5k`, `spin <= 10` first at `k = 47` (9.5), so the loop runs `k = 0..46`, 47 frames, i.e. global frames 12..58. This reproduces `[W]` exactly (T-2).
-Hit spacing: `360/spin` frames: at 80 deg/f it is 4.5 (spacing alternates 4 and 5); at 30 deg/f it is 12. Matches "as low as four frames and as high as 12+" `[W]`.
+Hit spacing: `360/spin` frames: at 80 deg/f it is 4.5 (the first two gaps are 4 then 5; the decay lengthens later gaps); at 30 deg/f it is 12 between accumulator hits. Unmashed loop hits: the loop-start hit plus `floor(2138.5/360) = 5` accumulator hits = 6 (T-16). Matches "as low as four frames and as high as 12+" `[W]`.
 Final hit: spawned by the host on ending-animation frame 1 (frames 1-3 grounded, 1-2 aerial).
 
 ### 3.3 Movement (our design)
@@ -367,10 +369,10 @@ else { len = sqrt(mm); ax = sx / len; ay = sy / len }
 // facing: if ax*f < 0 then flip facing
 dir = (ax, ay)
 ```
-Vertical component is limited: `ay = clamp(ay, -AY_MAX, AY_MAX)` with `AY_MAX = 0.9397` (sin 70 deg) `[E]`, then renormalise: `l2 = ax*ax; l3 = ay*ay; ll = l2 + l3; l = sqrt(ll); ax = ax / l; ay = ay / l`.
+Vertical component is limited (rev 1; renormalising `(ax, clamp(ay))` undid the clamp when `ax = 0`): if `|ay| > AY_MAX` with `AY_MAX = 0.9397` (sin 70 deg) `[E]`: `ay = clamp(ay, -AY_MAX, AY_MAX); l3 = ay*ay; ll = 1.0 - l3; l = sqrt(ll); ax = l * sgn` where `sgn` is the sign of `ax`, or the (possibly flipped) facing `f` when `ax == 0`.
 During `DASH`:
 ```
-speed = approach(speed, DASH_SPEED, DASH_SPEED / 2.0)     // two-frame ramp
+speed = approach(speed, DASH_SPEED, DASH_SPEED / 3.0)     // two ramp frames, full speed from frame 3 (rev 1, was / 2.0)
 vx = speed * ax;  vy = speed * ay
 ```
 No gravity. Distance per segment at full speed: frames 3..10 at 3.2 plus ramp = `DASH_SPEED*(0.5 + 1.0) ... ` computed exactly by the loop; target value is the fixture produced by running the formula (the sum is order-sensitive in f32).
@@ -384,7 +386,7 @@ Hit: each `DASH` frame spawns `DASH_HIT(seg)` (host).
 | M-2 | Segment timeline | aim 6 (later 4), dash 10, pause 3 | `[E]` | exact |
 | M-3 | Aim direction fixed during dash | yes | `[E]` | exact |
 | M-4 | Steady dash speed | 3.2 u/f | `[E]` | within 3% |
-| M-5 | Distance of one straight segment | fixture from the formula (about 29 u) | `[D]` of `[E]` params | bit-exact vs fixture, within 3% of 29 |
+| M-5 | Distance of one straight segment | fixture from the formula (about 29 u; rev 1 reference run 28.8 = 1.0667 + 2.1333 + 8 x 3.2) | `[D]` of `[E]` params | bit-exact vs fixture, within 3% of 29 |
 | M-6 | Aim clamp | |vertical| <= sin 70 deg | `[E]` | within 3% |
 | M-7 | Re-press window | last 8 dash frames + pause | `[E]` | exact |
 | M-8 | No re-press ends the move after the pause + 20 end-lag | yes | `[E]` | exact |
@@ -456,3 +458,18 @@ Blocked move: if the host reports a wall hit, the remaining `dx` is dropped and 
 3. Order of work per sim frame: input snapshot -> procedure step -> host collision -> hit detection. The procedure never reads collision results from the same frame it requests movement.
 4. All "frame counts" are counted from the first frame in which the state is active as frame 0, except wiki hit frames, which are 1-based in the wiki and 0-based here only where a row says "global frame n". Where a wiki row says "frames a-b" for a hit window, the implementation uses the inclusive range `a..=b` on the wiki's numbering; the implementer reconciles the base once at the animation layer and documents it.
 5. Open questions for a reviewer: confirm the glide `[E]` rows from public video (speed, angle limits, start-up); confirm the tornado mash extension (51 vs "up to 70"); confirm cape timing from a public frame-data table.
+
+## 9. Revision 1 (2026-11-02, implementer)
+
+The first implementation followed sections 2-7 literally, and six rows could not be reached by the spec's own formulas: G-2, G-12, T-6, T-16, M-5 and M-6. Revision 1 changes only `[E]` / designed values and our own formulas. It changes no `[W]` number and no acceptance target. Each change is our own design reasoning; no new source was consulted.
+
+| Row | Problem in stage 1 | Revision 1 |
+|---|---|---|
+| G-2 | `DRAG = 0.002` has a 500-frame time constant, so a start at `S_START = 1.20` is still 7.5% under 1.595 at frame 600 | `S_START = 1.50` `[E]` (1.564 at frame 600, 1.9% under; still monotone) |
+| G-12 | the slow glide only lowered the cap (1.8), which is above the neutral steady speed, so the steady speed did not change | the slow glide also multiplies `GK` by `chain_speed_mul`, so its steady speed is `0.75 x` (measured 1.194) |
+| T-16 | the accumulator alone gives `floor(5.94) = 5` loop hits | the loop window opens with a hit on loop frame 0 (global frame 12, consistent with T-1): 6 hits |
+| T-6 | with the 1.5 deg/frame decay and no hit at k = 0, the gaps ran 5, 6, 7 | with the loop-start hit, the first two gaps are 4 then 5; the decay makes the third gap 6, so "alternating 4 and 5" means the first two gaps |
+| M-5 | the `/ 2.0` ramp reaches full speed on frame 2: 30.4 u (4.8% over 29) | `/ 3.0`: two ramp frames, full speed on frames 3..10 as the text says: 28.8 u |
+| M-6 | renormalising after the clamp undid it (stick straight up gave `ay = 1.0`) | clamp the unit vector's `ay` and rebuild `ax` from it: `|ay| <= 0.9397` |
+
+T-7 is measured between accumulator hits. The loop-start hit is not "near the end", and frame 0's spin already counts toward the next hit. Re-recorded fixture: G-4 = 43 frames (it was 39 with `S_START = 1.20`).

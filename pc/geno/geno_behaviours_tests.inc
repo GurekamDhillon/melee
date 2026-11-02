@@ -6,9 +6,8 @@
  *
  * Part 1 drives the pure step functions through each acceptance table (rows G-*, T-*, D-*, C-*, M-*,
  * A-*) and prints one line per row to the log:
- *     GBACC <row> PASS|FAIL|SPEC-MISMATCH <measured, in thousandths where a float>
- * FAIL fails the test. SPEC-MISMATCH marks a row whose target the spec's OWN formulas cannot reach (the
- * implementation follows the formulas literally); the line carries the reason.
+ *     GBACC <row> PASS|FAIL <measured, in thousandths where a float>
+ * FAIL fails the test. (Revision 1 of the spec removed the rows its own formulas could not reach.)
  * Part 2 runs a Geno test fighter through each procedure's engine adapter: the state rows' callbacks,
  * frame by frame, with a scripted input (the in-engine equivalent of a pad script) and no OS input.
  */
@@ -35,11 +34,6 @@ static void gba(const char* id, int ok, int meas)
         TestFail(id);
         gba_rc = 1;
     }
-}
-
-static void gba_spec(const char* id, int ok, int meas, const char* why)
-{
-    OSReport("GBACC %s %s %d (%s)\n", id, ok ? "PASS" : "SPEC-MISMATCH", meas, why);
 }
 
 /* within `pct` percent of target */
@@ -191,19 +185,7 @@ static int test_geno_bhv_glide(void)
     sp600 = g.speed;
     steady = g.speed;
     ok = gba_near(sp600, tgt, 3.0f) && mono && first == p.s_start;
-    if (ok) {
-        gba("G-2", 1, gba_i(sp600));
-    } else {
-        for (i = 0; i < 6000; i++) {
-            GenoBhv_GlideStep(&g, &in, &p);
-        }
-        gba_spec("G-2", 0, gba_i(sp600),
-                 mono && gba_near(g.speed, tgt, 1.0f)
-                     ? "monotone and converges to 1.595 (asymptote ok at 6600 frames) but the spec's own DRAG=0.002 "
-                       "leaves a 7.5% gap at 600 frames"
-                     : "does not converge");
-        steady = sp600;
-    }
+    gba("G-2", ok, gba_i(sp600));
     first = tgt;
 
     /* G-3 down / forward gains speed, up / back loses it */
@@ -263,7 +245,7 @@ static int test_geno_bhv_glide(void)
         GenoBhv_GlideStep(&g, &in, &p);
         n++;
     }
-    gba("G-4", g.phase == GB_GL_END && g.end_reason == GB_GLE_STALL && n == 39 /* fixture: this reference run */, n);
+    gba("G-4", g.phase == GB_GL_END && g.end_reason == GB_GLE_STALL && n == 43 /* fixture: this reference run (spec rev 1) */, n);
 
     /* G-5 / G-7: full up reaches theta_def + 85 = 80 after 29 frames */
     gbt_glide_fly(&g, &p, 0, 0);
@@ -361,13 +343,7 @@ static int test_geno_bhv_glide(void)
         GenoBhv_GlideStep(&g, &in, &p);
     }
     tgt = first * p.chain_speed_mul;
-    if (gba_near(g.speed, tgt, 3.0f)) {
-        gba("G-12", 1, gba_i(g.speed));
-    } else {
-        gba_spec("G-12", 0, gba_i(g.speed),
-                 "the slow glide only lowers the speed CAP (1.8), and the neutral steady speed 1.595 is under it, "
-                 "so the steady speed is unchanged, not 0.75x");
-    }
+    gba("G-12", gba_near(g.speed, tgt, 3.0f), gba_i(g.speed));
     (void) steady;
     return gba_rc;
 }
@@ -430,8 +406,7 @@ static int test_geno_bhv_tornado(void)
     gba("T-2", last_loop == 58 && loop_frames == 47, last_loop);
     gba("T-3", end_frames == 29, end_frames);
     gba("T-9", maxspin <= 80.0f, gba_i(maxspin));
-    gba_spec("T-16", t.hits == 6, t.hits,
-             "the accumulator spawns 5 loop hits: sum(spin)/360 = 5.94 never reaches a sixth 360 degrees");
+    gba("T-16", t.hits == 6, t.hits);
 
     /* T-4: final hit window by the end-animation frame */
     ok = 1;
@@ -455,27 +430,11 @@ static int test_geno_bhv_tornado(void)
     }
     gba("T-4", ok, n);
 
-    /* T-6 / T-7: hit spacing */
-    ok = ng >= 3;
-    n = 0;
-    for (c = 0; c < ng && c < 3; c++) {
-        ok = ok && (gaps[c] == 4 || gaps[c] == 5);
-        n = n * 10 + gaps[c];
-    }
-    {
-        int has4 = 0, has5 = 0;
-        for (c = 0; c < ng; c++) {
-            has4 |= gaps[c] == 4;
-            has5 |= gaps[c] == 5;
-        }
-        ok = ok && has4 && has5;
-    }
-    if (ok) {
-        gba("T-6", 1, n);
-    } else {
-        gba_spec("T-6", 0, n,
-                 "with the spec's 1.5 deg/frame decay the gaps run 5, 6, 7: the spin is already below 80 at the first hit");
-    }
+    /* T-6 / T-7: hit spacing. At the start (spin 80 -> 360/80 = 4.5) the gaps alternate 4, 5; the
+       1.5 deg/frame decay then lengthens them (6 from the third gap on). */
+    ok = ng >= 2 && gaps[0] == 4 && gaps[1] == 5;
+    n = ng >= 2 ? gaps[0] * 10 + gaps[1] : 0;
+    gba("T-6", ok, n);
     {
         GbTornadoP q = p;
         int lastc = -1, mingap = 1000;
@@ -487,7 +446,9 @@ static int test_geno_bhv_tornado(void)
         for (c = 0; c < 140; c++) {
             gbt_tin(&in, 0.0f, 0, 0, 1);
             GenoBhv_TornadoStep(&t, &in, &q);
-            if (t.hit_spawn) {
+            /* near the end = the accumulator's hits; the loop-start hit (loop frame 0, global 12) is
+               not one, and frame 0's spin already counts toward the next hit */
+            if (t.hit_spawn && t.k > 1) { /* k was 0 on the step that spawned the loop-start hit */
                 if (lastc >= 0 && c - lastc < mingap) {
                     mingap = c - lastc;
                 }
@@ -856,12 +817,8 @@ static int test_geno_bhv_multi_dash(void)
         in.special_pressed = 0;
         GenoBhv_MultiDashStep(&m, &in, &p);
     }
-    if (gba_near(m.dist, 29.0f, 3.0f)) {
-        gba("M-5", 1, gba_i(m.dist));
-    } else {
-        gba_spec("M-5", 0, gba_i(m.dist),
-                 "the spec's own formula (1.6 on the ramp frame, then nine frames at 3.2) sums to 30.4, 4.8% over the about-29 target");
-    }
+    /* fixture: this reference run (1.0667 + 2.1333 on the ramp frames, then eight frames at 3.2 = 28.8) */
+    gba("M-5", gba_near(m.dist, 29.0f, 3.0f) && gba_i(m.dist) == 28800, gba_i(m.dist));
 
     /* M-1 / M-7: re-press every window -> 4 segments, and a press outside the window is ignored */
     GenoBhv_MultiDashBegin(&m, 1.0f);
@@ -959,12 +916,7 @@ static int test_geno_bhv_multi_dash(void)
         }
     }
     gba("M-9", bad == 0, bad);
-    if (gba_near(vmax, 0.9397f, 3.0f) || vmax <= 0.9397f * 1.03f) {
-        gba("M-6", 1, gba_i(vmax));
-    } else {
-        gba_spec("M-6", 0, gba_i(vmax),
-                 "the spec renormalises after clamping, which undoes the clamp: stick straight up gives ay = 1.0");
-    }
+    gba("M-6", gba_near(vmax, 0.9397f, 3.0f), gba_i(vmax));
     (void) lens;
     (void) aim1;
     (void) ratio0;
@@ -1106,7 +1058,8 @@ static const char gbt_json[] =
     "{\"name\":\"GS\",\"behavior\":\"geno.glide.start\",\"subaction\":10},"
     "{\"name\":\"G\",\"behavior\":\"geno.glide\",\"subaction\":11},"
     "{\"name\":\"GA\",\"behavior\":\"geno.glide.attack\",\"subaction\":12},"
-    "{\"name\":\"GE\",\"behavior\":\"geno.glide.end\",\"subaction\":14}]}]}";
+    "{\"name\":\"GE\",\"behavior\":\"geno.glide.end\",\"subaction\":14},"
+    "{\"name\":\"MD\",\"behavior\":\"geno.multi_dash\",\"subaction\":23}]}]}";
 
 extern int Geno_LabEnterState(Fighter* fp, int s);
 
@@ -1253,5 +1206,46 @@ static int test_geno_bhv_adapters(void)
     t_fp.input.pressed_buttons = 0;
     gba("AD-glide-attack", t_fp.motion_id == GENO_MOTION_BASE + 5, (int) t_fp.motion_id - GENO_MOTION_BASE);
     Geno_TestRestore();
+
+    /* multi-dash: one segment (aim 6, dash 10, pause 3, end 20 = 39 frames, 3.2 u/f along the stick, not
+     * helpless); then B held through every re-press window: 4 segments, 6+10+3 + 3*(4+10+3) + 20 = 90
+     * frames, helpless */
+    if ((st = gbt_setup(1)) == NULL) {
+        return 1;
+    }
+    Geno_LabEnterState(&t_fp, 7);
+    c0 = GenoGame_TestChanges();
+    ok = 1;
+    t_fp.input.lstick[0].x = 1.0f;
+    t_fp.input.lstick[0].y = 0.0f;
+    for (n = 0; n < 200 && GenoGame_TestChanges() == c0; n++) {
+        t_fp.input.pressed_buttons = 0;
+        gbt_row_tick(1);
+        if (n == 10) {
+            ok = ok && t_fp.self_vel.x == 3.2f && t_fp.self_vel.y == 0.0f;
+        }
+    }
+    gba("AD-multi-dash-frames", n == 39 && ok, n);
+    gba("AD-multi-dash-not-helpless", GenoGame_TestLastTarget() == GENO_TARGET(GENO_TGT_MOTION, ftCo_MS_Fall), 0);
+    Geno_LabEnterState(&t_fp, 7);
+    c0 = GenoGame_TestChanges();
+    for (n = 0; n < 300 && GenoGame_TestChanges() == c0; n++) {
+        t_fp.input.pressed_buttons = HSD_PAD_B;
+        gbt_row_tick(1);
+    }
+    t_fp.input.pressed_buttons = 0;
+    gba("AD-multi-dash-chain-frames", n == 90, n);
+    gba("AD-multi-dash-helpless", GenoGame_TestLastTarget() == GENO_TARGET(GENO_TGT_MOTION, ftCo_MS_FallSpecial), 0);
+    Geno_TestRestore();
+
+    /* anim_motion: geno.anim_motion's per-frame delta goes through the spec 7 procedure (facing mirrors x) */
+    {
+        f32 dx, dy;
+        GenoBhv_AnimMotionFrameDelta(2.0f, 1.0f, -1.0f, &dx, &dy);
+        ok = dx == -2.0f && dy == 1.0f;
+        GenoBhv_AnimMotionFrameDelta(0.75f, -0.5f, 1.0f, &dx, &dy);
+        ok = ok && dx == 0.75f && dy == -0.5f;
+        gba("AD-anim-motion-delta", ok, gba_i(dx));
+    }
     return gba_rc;
 }

@@ -541,7 +541,8 @@
       "geno.drill.start",
       "geno.cape",
       "geno.cape.attack",
-      "geno.cape.end"
+      "geno.cape.end",
+      "geno.multi_dash"
      ]
     },
     "subaction": {

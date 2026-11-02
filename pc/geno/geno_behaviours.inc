@@ -301,7 +301,7 @@ void GenoBhv_GlideParams(GbGlideP* p)
     p->entry_vy_max = 0.6f;
     p->apex_vy = 0.25f;
     p->flick_thr = 0.55f;
-    p->s_start = 1.20f;
+    p->s_start = 1.50f; /* spec 2.5 rev 1 (was 1.20): G-2 within 3% at 600 frames */
     p->start_accel = 0.12f;
     p->s_start_cap = 2.0f;
     p->theta_def = -5.0f;
@@ -423,7 +423,7 @@ void GenoBhv_GlideGround(GbGlide* g, const GbGlideP* p)
 
 void GenoBhv_GlideStep(GbGlide* g, const GbGlideIn* in, const GbGlideP* p)
 {
-    f32 t0, t1, d, r, theta_t, rate, s_th, grav, dr, cap, d4;
+    f32 t0, t1, d, r, theta_t, rate, s_th, grav, gk, dr, cap, d4;
     int pressed;
     g->hit_active = 0;
     g->jump_now = 0;
@@ -467,7 +467,11 @@ void GenoBhv_GlideStep(GbGlide* g, const GbGlideIn* in, const GbGlideP* p)
         }
         g->theta = gb_approach(g->theta, theta_t, rate);
         s_th = GenoBhv_SinDeg(g->theta);
-        grav = p->gk * s_th;
+        gk = p->gk;
+        if (g->slow) {
+            gk = gk * p->chain_speed_mul; /* spec 2.3 rev 1: the slow glide's gravity gain, so its steady speed is x0.75 */
+        }
+        grav = gk * s_th;
         g->speed = g->speed - grav;
         dr = g->speed * p->drag;
         g->speed = g->speed - dr;
@@ -618,6 +622,10 @@ void GenoBhv_TornadoStep(GbTornado* t, const GbTornadoIn* in, const GbTornadoP* 
             t->end_t = 0;
         } else {
             t->ledge_locked = 1;
+            if (t->k == 0) {
+                t->hit_spawn = 1; /* spec 3.2 rev 1: the first loop hit lands on loop frame 0 (global 12, T-1) */
+                t->hits++;
+            }
             t->rot = t->rot + t->spin;
             if (t->rot >= 360.0f) {
                 t->rot = t->rot - 360.0f;
@@ -903,13 +911,23 @@ static void gb_md_fix_direction(GbMultiDash* m, const GbMultiDashIn* in, const G
     if (chk < 0.0f) {
         m->f = -m->f;
     }
-    ay = gb_clamp(ay, -p->ay_max, p->ay_max);
-    l2 = ax * ax;
-    l3 = ay * ay;
-    ll = l2 + l3;
-    l = sqrtf(ll);
-    m->ax = ax / l;
-    m->ay = ay / l;
+    /* spec 6.2 rev 1: clamp the unit vector's vertical part, then rebuild the horizontal part from it
+       (renormalising (ax, clamp(ay)) would undo the clamp when ax = 0) */
+    if (ay > p->ay_max || ay < -p->ay_max) {
+        ay = gb_clamp(ay, -p->ay_max, p->ay_max);
+        l3 = ay * ay;
+        ll = 1.0f - l3;
+        l = sqrtf(ll);
+        l2 = m->f;
+        if (ax < 0.0f) {
+            l2 = -1.0f;
+        } else if (ax > 0.0f) {
+            l2 = 1.0f;
+        }
+        ax = l * l2;
+    }
+    m->ax = ax;
+    m->ay = ay;
 }
 
 void GenoBhv_MultiDashStep(GbMultiDash* m, const GbMultiDashIn* in, const GbMultiDashP* p)
@@ -938,7 +956,7 @@ void GenoBhv_MultiDashStep(GbMultiDash* m, const GbMultiDashIn* in, const GbMult
             m->dist = 0.0f;
         }
     } else if (m->phase == GB_MD_DASH) {
-        step = p->dash_speed / 2.0f;
+        step = p->dash_speed / 3.0f; /* spec 6.2 rev 1: two ramp frames, full speed from dash frame 3 */
         m->speed = gb_approach(m->speed, p->dash_speed, step);
         m->vx = m->speed * m->ax;
         m->vy = m->speed * m->ay;
@@ -1108,6 +1126,8 @@ void GenoBhv_AnimMotionStep(GbAnimMotion* a, const f32* track, int n, const GbAn
  *   drill    move_i[0] phase;  move_i[1] n;  move_i[2] hits;  move_i[3] done;
  *            move_f[0..3] psi, speed, vx, vy.
  *   cape     move_i[0] n | flipped << 8.
+ *   multi-dash move_i[0] phase | seg << 4 | repress << 8 | helpless << 9 | done << 10;  move_i[1] t;
+ *            move_f[0..6] ax, ay, f, speed, vx, vy, dist.
  * ================================================================================================== */
 
 #include <melee/ft/ftcoll.h>
@@ -1797,6 +1817,116 @@ static void geno_cape_coll(Fighter_GObj* gobj)
 static void geno_cape_after_coll(Fighter_GObj* gobj)
 {
     geno_cb_coll_anim_motion(gobj);
+}
+
+/* ---- multi-dash ----------------------------------------------------------------------------------- */
+
+static void gb_md_load(GenoState* st, GbMultiDash* m)
+{
+    s32 w = st->move_i[0];
+    m->phase = w & 15;
+    m->seg = (w >> 4) & 15;
+    m->repress = (w >> 8) & 1;
+    m->helpless = (w >> 9) & 1;
+    m->done = (w >> 10) & 1;
+    m->t = st->move_i[1];
+    m->hit_spawn = 0;
+    m->ax = st->move_f[0];
+    m->ay = st->move_f[1];
+    m->f = st->move_f[2];
+    m->speed = st->move_f[3];
+    m->vx = st->move_f[4];
+    m->vy = st->move_f[5];
+    m->dist = st->move_f[6];
+}
+
+static void gb_md_store(GenoState* st, const GbMultiDash* m)
+{
+    st->move_i[0] = m->phase | (m->seg << 4) | (m->repress << 8) | (m->helpless << 9) | (m->done << 10);
+    st->move_i[1] = m->t;
+    st->move_f[0] = m->ax;
+    st->move_f[1] = m->ay;
+    st->move_f[2] = m->f;
+    st->move_f[3] = m->speed;
+    st->move_f[4] = m->vx;
+    st->move_f[5] = m->vy;
+    st->move_f[6] = m->dist;
+}
+
+static void geno_multi_dash_enter(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s)
+{
+    GbMultiDash m;
+    int air = gb_airborne(fp);
+    GenoBhv_MultiDashBegin(&m, fp->facing_dir < 0.0f ? -1.0f : 1.0f);
+    m.vx = air ? fp->self_vel.x : fp->gr_vel;
+    m.vy = air ? fp->self_vel.y : 0.0f;
+    gb_md_store(st, &m);
+}
+
+/* One frame, from the anim callback: aim, dash, pause, end lag. The procedure owns the velocity for the
+ * whole move (no gravity, spec 6.2); each segment's hits are the clip's hitboxes re-armed (the victim
+ * lists cleared) on the segment's first dash frame (DASH_HIT(seg)). */
+static void geno_multi_dash_anim(Fighter_GObj* gobj)
+{
+    Fighter* fp = GET_FIGHTER(gobj);
+    GenoState* st = geno_state(fp);
+    GbMultiDashP p;
+    GbMultiDash m;
+    GbMultiDashIn in;
+    int air = gb_airborne(fp);
+    GenoBhv_MultiDashParams(&p);
+    gb_md_load(st, &m);
+    gb_stick_of(fp, &in.sx, &in.sy);
+    in.special_pressed = GB_PRESSED(fp, HSD_PAD_B);
+    GenoBhv_MultiDashStep(&m, &in, &p);
+    fp->facing_dir = m.f;
+    if (air) {
+        fp->self_vel.x = m.vx;
+        fp->self_vel.y = m.vy;
+    } else {
+        fp->gr_vel = m.vx;
+    }
+    if (m.hit_spawn && m.t == 1) {
+        gb_clear_hit_lists(fp);
+    }
+    gb_md_store(st, &m);
+    if (m.done) {
+        gb_finish(gobj, fp, st, air && m.helpless);
+    }
+}
+
+static void geno_multi_dash_phys(Fighter_GObj* gobj)
+{
+    if (!gb_airborne(GET_FIGHTER(gobj))) {
+        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+    }
+}
+
+static void geno_multi_dash_coll(Fighter_GObj* gobj)
+{
+    geno_coll_both(gobj);
+}
+
+/* ---- anim_motion ---------------------------------------------------------------------------------- */
+
+/* geno.anim_motion's per-frame displacement through the spec 7 procedure (DELTA mode, rate 1, scale 1).
+ * The host (Melee's animation system) samples the clip's root track: this frame's two samples are the
+ * previous root offset (0, 0) and this frame's TransN delta (fwd, up), so P = [(0,0), (fwd,up)] and one
+ * step plays it. Gravity and collision stay with the host (geno_cb_phys_anim_motion). */
+void GenoBhv_AnimMotionFrameDelta(f32 fwd, f32 up, f32 lr, f32* dx, f32* dy)
+{
+    f32 track[4];
+    GbAnimMotionP p;
+    GbAnimMotion a;
+    track[0] = 0.0f;
+    track[1] = 0.0f;
+    track[2] = fwd;
+    track[3] = up;
+    GenoBhv_AnimMotionParams(&p);
+    GenoBhv_AnimMotionBegin(&a, 0.0f, 0.0f);
+    GenoBhv_AnimMotionStep(&a, track, 2, &p, lr, 0);
+    *dx = a.vx;
+    *dy = a.vy;
 }
 
 /* ---- iasa "interrupt" ----------------------------------------------------------------------------- */

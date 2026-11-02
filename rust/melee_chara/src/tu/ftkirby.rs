@@ -1752,7 +1752,8 @@ pub fn ftKb_SpecialN_800EF35C(gobj: *mut HSD_GObj, arg1: i32, arg2: *mut u8) {
 pub fn ftKb_SpecialN_800EF438(gobj: *mut HSD_GObj, hat: *mut KirbyHatStruct) {
     melee_core::ct!("ftKb_SpecialN_800EF438");
     unsafe {
-        let root = (*hat).hat_dynamics[2] as *mut HSD_Joint;
+        // slot 7 of the engine's hat record holds slot 2 decoded as an HSD_Joint tree (dat_custom `kirbyhat`)
+        let root = *(*hat).hat_dynamics.as_ptr().add(7) as *mut HSD_Joint;
         let fp = fpp(gobj);
         if !root.is_null() {
             let mut current_joint: *mut HSD_Joint = null_mut();

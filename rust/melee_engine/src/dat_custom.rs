@@ -670,6 +670,8 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
     unsafe { core::ptr::copy_nonoverlapping(h as *const u8, buf, core::mem::size_of::<KirbyHatStruct>()) };
     let slots = unsafe { buf.add(base) as *mut *mut c_void };
     let word = |k: usize| off + 0xC + 4 * k as u32;
+    // slot 7: slot 2 read as an `HSD_Joint` tree (`ftKb_SpecialN_800EF438`: `root = hat->hat_dynamics[2]`; slot 2 is a dynamics block in some hats)
+    unsafe { *slots.add(7) = d.ptr::<HSD_Joint>(word(2)) as *mut c_void };
     let lower = sym.trim_start_matches("ftDataKirbyCopy").to_lowercase();
     // the slots holding an `Article*` (ftKb_SpecialN_800F16D0)
     let arts: &[usize] = match lower.as_str() {
@@ -698,6 +700,21 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((t as usize, cnt, b.1, b.0.clone())) };
     }
     typed_article_attrs_of(d, b, &lower, &tas);
+    // the slot holding the hat's dynamic bones (`ftCo_8009D074` .. `ftCo_8009DB50`, `ftKb_Init_800EEB00`; the C indexes `hats[]` by kind - 1),
+    // words swapped like a fighter's `x2C`
+    let dynamics: Option<usize> = match lower.as_str() {
+        "link" | "clink" | "pikachu" | "pichu" | "seak" => Some(2),
+        "koopa" | "mars" | "emblem" => Some(1),
+        "zelda" => Some(0),
+        "purin" => Some(3),
+        "mewtwo" | "gamewatch" => Some(4),
+        _ => None,
+    };
+    if let Some(k) = dynamics {
+        if d.is_reloc(word(k)) {
+            note_dynamics_at(d, unsafe { *slots.add(k) } as usize, word(k));
+        }
+    }
     // accessory models: Mars / Marth's emblem slot 0, the Ice Climbers' slot 1 (`ftCommon_SetAccessory(fp, (HSD_Joint*) hat_dynamics[k])`)
     let joint: Option<usize> = match lower.as_str() {
         "mars" | "emblem" => Some(0),
@@ -816,11 +833,16 @@ static mut DYNAMICS_FIX: Vec<(usize, Vec<(usize, Vec<u32>)>)> = Vec::new();
 /// 0x3C bytes each) that `lb_80011710` reads as an array. The generic decode kept the first `PolymorphicDesc` worth of
 /// raw big-endian bytes (two records, unswapped); [`fix_dynamics`] rebuilds the block native, `count` records long.
 fn note_dynamics(d: &mut GcDecoder<'_>, v: &melee_types::ftData, at_x2c: u32) {
+    note_dynamics_at(d, v.x2C as usize, at_x2c);
+}
+
+/// [`note_dynamics`] for the `ftDynamics` object `obj` decoded from the pointer word at `at_x2c` (a Kirby hat's `hat_dynamics[4]` too).
+fn note_dynamics_at(d: &mut GcDecoder<'_>, obj: usize, at_x2c: u32) {
     const REC: usize = 15;
     let Some(t) = d.target(at_x2c) else { return };
     let n = d.u32_at(t) as usize;
     let Some(tb) = d.target(t + 4) else { return };
-    if v.x2C.is_null() {
+    if obj == 0 {
         return;
     }
     let mut bones = Vec::new();
@@ -832,7 +854,7 @@ fn note_dynamics(d: &mut GcDecoder<'_>, v: &melee_types::ftData, at_x2c: u32) {
         }
         bones.push((i, (0..count * REC).map(|k| d.u32_at(td + 4 * k as u32)).collect::<Vec<_>>()));
     }
-    unsafe { (*core::ptr::addr_of_mut!(DYNAMICS_FIX)).push((v.x2C as usize, bones)) };
+    unsafe { (*core::ptr::addr_of_mut!(DYNAMICS_FIX)).push((obj, bones)) };
 }
 
 /// Applies [`note_dynamics`] (run by `archive.rs` right after `GcDecoder::finish`).

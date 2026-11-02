@@ -365,6 +365,9 @@ pub struct GxShim {
     /// Log lines (`gw_log` in the C); the platform layer drains and prints them.
     pub log: Vec<String>,
     stub_logged: u32,
+    /// GXSetTexCopySrc (x, y, w, h) and GXSetTexCopyDst (w, h, format, mipmap) for the next GXCopyTex.
+    tex_copy_src: [u16; 4],
+    tex_copy_dst: (u16, u16, u32, bool),
 }
 
 impl Default for GxShim {
@@ -395,6 +398,8 @@ impl GxShim {
             wait_frame: false,
             log: Vec::new(),
             stub_logged: 0,
+            tex_copy_src: [0, 0, 640, 480],
+            tex_copy_dst: (640, 480, 6, false),
         }
     }
     /// `gw_GXInit` on an existing shim (keeps the counters, as the C's statics do).
@@ -492,11 +497,10 @@ impl GxShim {
     }
     /// `gw_GXCopyTex`: counted; EFB-to-texture copies are not implemented in melee_gx (the decoder
     /// warns once per copy). Aurora resolves the EFB and, with `clear`, clears it.
-    pub fn copy_tex(&mut self, _dest: u32, clear: bool) {
+    pub fn copy_tex(&mut self, dest: u64, clear: bool) {
         self.stats.tex_copies = self.stats.tex_copies.wrapping_add(1);
-        if self.stats.tex_copies <= 4 {
-            self.log.push(format!("gx: GXCopyTex (clear={}) not implemented: copy skipped", clear as u8));
-        }
+        let (src, (w, h, fmt, half)) = (self.tex_copy_src, self.tex_copy_dst);
+        self.gx.copy_tex(dest, src, w, h, fmt, half, clear);
     }
     /// The last frame GXCopyDisp finished, if any (the presenter renders it against
     /// `self.gx.state`).
@@ -795,8 +799,12 @@ impl GxShim {
     pub fn set_disp_copy_gamma(&mut self, _gamma: u32) {}
     /// EFB-to-texture copy setup: recorded by Aurora for GXCopyTex, which melee_gx does not
     /// implement yet (see [`GxShim::copy_tex`]).
-    pub fn set_tex_copy_src(&mut self, _left: u16, _top: u16, _wd: u16, _ht: u16) {}
-    pub fn set_tex_copy_dst(&mut self, _wd: u16, _ht: u16, _fmt: u32, _mipmap: bool) {}
+    pub fn set_tex_copy_src(&mut self, left: u16, top: u16, wd: u16, ht: u16) {
+        self.tex_copy_src = [left, top, wd, ht];
+    }
+    pub fn set_tex_copy_dst(&mut self, wd: u16, ht: u16, fmt: u32, mipmap: bool) {
+        self.tex_copy_dst = (wd, ht, fmt, mipmap);
+    }
 
     // ---- culling / scissor / manage
 

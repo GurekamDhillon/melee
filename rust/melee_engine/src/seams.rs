@@ -20,9 +20,39 @@ pub fn fire_alarm() {
     }
 }
 
-/// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`): the
-/// headless engine only stores them in `HSD_VIData`, so zeroed records stand in.
-static mut RMODES: [melee_types::GXRenderModeObj; 4] = unsafe { core::mem::zeroed() };
+/// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`), with the
+/// Dolphin SDK's values (gmMainLib_803D4A80 is gm/gmmain_lib.c's). `HSD_VIData` keeps the chosen one; the HSD cameras
+/// scale their viewports by `fbWidth / viWidth` and `efbHeight / viHeight` (cobj.c setupNormalCamera), so zeroed records
+/// made every normal-camera viewport NaN (0 * inf): the Pokemon Stadium screen camera, the SIS text cameras and so on.
+static mut RMODES: [melee_types::GXRenderModeObj; 4] = {
+    const fn mode(tv: u32, xfb: u32, vfilter: [u8; 7]) -> melee_types::GXRenderModeObj {
+        melee_types::GXRenderModeObj {
+            viTVmode: tv,
+            fbWidth: 640,
+            efbHeight: 480,
+            xfbHeight: 480,
+            viXOrigin: 40,
+            viYOrigin: 0,
+            viWidth: 640,
+            viHeight: 480,
+            xFBmode: xfb,
+            field_rendering: 0,
+            aa: 0,
+            sample_pattern: [[6, 6]; 12],
+            vfilter,
+        }
+    }
+    const NTSC_INT: u32 = 0; // VI_TVMODE_NTSC_INT
+    const NTSC_PROG: u32 = 2; // VI_TVMODE_NTSC_PROG
+    const SF: u32 = 0; // VI_XFBMODE_SF
+    const DF: u32 = 1; // VI_XFBMODE_DF
+    [
+        mode(NTSC_PROG, SF, [0, 0, 21, 22, 21, 0, 0]),
+        mode(NTSC_INT, DF, [8, 8, 10, 12, 10, 8, 8]),
+        mode(NTSC_INT, DF, [0, 0, 21, 22, 21, 0, 0]),
+        mode(NTSC_PROG, SF, [8, 8, 10, 12, 10, 8, 8]),
+    ]
+};
 
 unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     p

@@ -205,6 +205,8 @@ const AURORA_LOAD_TLUT: u16 = 0x0031;
 const AURORA_DRAW_SIZED: u16 = 0x0040;
 const AURORA_DRAW_INDEXED: u16 = 0x0041;
 const GX2_SET_POLYGON_OFFSET: u16 = 0x1000;
+/// melee_gx's own: GXCopyTex (Aurora has no EFB-to-texture copy).
+const MGX_COPY_TEX: u16 = 0x1100;
 const CP_REG_ARRAYSTRIDE_ID: u8 = 0xB0;
 const BP_REG_DRAWDONE: u32 = 0x45;
 pub const GX_AUTO: u16 = 0xFFFF;
@@ -1818,6 +1820,7 @@ impl Gx {
         self.w8(o.has_mips() as u8);
         self.w32(o.tex_obj_id);
         self.w32(o.tex_data_version);
+        self.w64(o.guest);
     }
     pub fn init_tlut_obj(&mut self, o: &mut TlutObj, data: Option<GxData>, fmt: u32, entries: u16) {
         *o = TlutObj::default();
@@ -1899,6 +1902,21 @@ impl Gx {
                 self.wf32(x);
             }
         }
+    }
+    /// GXCopyTex with the GXSetTexCopySrc / GXSetTexCopyDst rectangle and format: the decoder turns it into an
+    /// [`crate::draw::EfbCopy`] in the draw list, in order with the draws.
+    #[allow(clippy::too_many_arguments)]
+    pub fn copy_tex(&mut self, dest: u64, src: [u16; 4], dst_w: u16, dst_h: u16, fmt: u32, half: bool, clear: bool) {
+        self.write_aurora(MGX_COPY_TEX);
+        self.w64(dest);
+        for v in src {
+            self.w32(v as u32);
+        }
+        self.w32(dst_w as u32);
+        self.w32(dst_h as u32);
+        self.w32(fmt);
+        self.w8(half as u8);
+        self.w8(clear as u8);
     }
     pub fn set_polygon_offset(&mut self, fo: f32, fs: f32, bo: f32, bs: f32, clamp: f32) {
         self.write_aurora(GX2_SET_POLYGON_OFFSET);

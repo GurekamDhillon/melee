@@ -101,10 +101,23 @@ pub fn data_cache_stats() -> (usize, usize) {
 
 /// The bytes at `p` as the shared data the shim hands to the renderer (cached by address and length).
 unsafe fn data_at(p: *const c_void, want: usize) -> Option<GxData> {
+    data_at_ex(p, want, false)
+}
+
+/// [`data_at`] for a texture image: memory outside the archive images and the heap (a native copy of DAT data,
+/// such as an SIS font's glyph textures) is read for the texture's own size, which the game vouches for.
+unsafe fn tex_data_at(p: *const c_void, want: usize) -> Option<GxData> {
+    data_at_ex(p, want, true)
+}
+
+unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxData> {
     if p.is_null() {
         return None;
     }
-    let n = extent(p as usize, want);
+    let mut n = extent(p as usize, want);
+    if n == 0 && trust && readable(p as usize, want) {
+        n = want;
+    }
     if n == 0 {
         return None;
     }
@@ -255,15 +268,17 @@ pub fn GXSetTevIndirect(stage: u32, ind_stage: u32, fmt: u32, bias: u32, mtx: u3
 // ---- textures
 pub unsafe fn GXInitTexObj(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8) {
     let want = get_tex_buffer_size(w, h, fmt, mip != 0, if mip != 0 { 11 } else { 0 }) as usize;
-    let d = data_at(image, want.max(32));
+    let d = tex_data_at(image, want.max(32));
     let t = objs().tex.entry(o as usize).or_default();
     shim().init_tex_obj(t, d, w, h, fmt, ws, wt, mip != 0);
+    t.guest = image as usize as u64;
 }
 pub unsafe fn GXInitTexObjCI(o: *mut c_void, image: *mut c_void, w: u16, h: u16, fmt: u32, ws: u32, wt: u32, mip: u8, tlut: u32) {
     let want = get_tex_buffer_size(w, h, fmt, mip != 0, if mip != 0 { 11 } else { 0 }) as usize;
-    let d = data_at(image, want.max(32));
+    let d = tex_data_at(image, want.max(32));
     let t = objs().tex.entry(o as usize).or_default();
     shim().init_tex_obj_ci(t, d, w, h, fmt, ws, wt, mip != 0, tlut);
+    t.guest = image as usize as u64;
 }
 pub unsafe fn GXInitTexObjLOD(o: *mut c_void, min_f: u32, mag_f: u32, min_lod: f32, max_lod: f32, bias: f32, bias_clamp: u8, edge: u8, aniso: u32) {
     let t = objs().tex.entry(o as usize).or_default();
@@ -291,7 +306,7 @@ pub unsafe fn GXGetTexObjHeight(o: *const c_void) -> u16 { objs().tex.get(&(o as
 // ---- copies and the frame
 pub fn GXPixModeSync() { shim().pix_mode_sync() }
 pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) { shim().copy_disp(clear != 0) }
-pub fn GXCopyTex(dest: *mut c_void, clear: u8) { shim().copy_tex(dest as usize as u32, clear != 0) }
+pub fn GXCopyTex(dest: *mut c_void, clear: u8) { shim().copy_tex(dest as usize as u64, clear != 0) }
 pub fn GXSetCopyClear(c: _GXColor, depth: u32) { shim().set_copy_clear(col(c), depth) }
 pub fn GXSetCopyClamp(c: u32) { shim().set_copy_clamp(c) }
 pub fn GXSetDispCopySrc(l: u16, t: u16, w: u16, h: u16) { shim().set_disp_copy_src(l, t, w, h) }
@@ -305,4 +320,46 @@ pub fn GXSetTexCopyDst(w: u16, h: u16, fmt: u32, mip: u8) { shim().set_tex_copy_
 /// function returns before copying; the engine calls this after each scene tick instead.
 pub fn finish_frame() {
     shim().copy_disp(true)
+}
+
+/// `[p, p + n)` is committed, readable memory of this process (VirtualQuery). A texture image pointer the game got from
+/// an unrelocated DAT offset (for example 0x1D200) is not, and reading it would fault.
+#[cfg(windows)]
+fn readable(p: usize, n: usize) -> bool {
+    #[repr(C)]
+    struct Mbi {
+        base: usize,
+        alloc_base: usize,
+        alloc_protect: u32,
+        partition: u16,
+        region_size: usize,
+        state: u32,
+        protect: u32,
+        ty: u32,
+    }
+    extern "system" {
+        fn VirtualQuery(addr: *const c_void, buf: *mut Mbi, len: usize) -> usize;
+    }
+    if p < 0x1_0000 {
+        return false;
+    }
+    let end = p.saturating_add(n);
+    let mut a = p;
+    while a < end {
+        let mut m: Mbi = unsafe { core::mem::zeroed() };
+        if unsafe { VirtualQuery(a as *const c_void, &mut m, core::mem::size_of::<Mbi>()) } == 0 {
+            return false;
+        }
+        const MEM_COMMIT: u32 = 0x1000;
+        const READ: u32 = 0x02 | 0x04 | 0x08 | 0x20 | 0x40 | 0x80;
+        if m.state != MEM_COMMIT || m.protect & READ == 0 || m.protect & 0x100 != 0 {
+            return false;
+        }
+        a = m.base + m.region_size;
+    }
+    true
+}
+#[cfg(not(windows))]
+fn readable(_p: usize, _n: usize) -> bool {
+    false
 }

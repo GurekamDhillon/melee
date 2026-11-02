@@ -319,7 +319,6 @@ pub fn install_gen() {
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetTexCopySrc.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetTexCopySrc = Some(|_, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetVtxAttrFmt.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetVtxAttrFmt = Some(|_, _, _, _, _| ()); } }
     unsafe { if melee_runtime::tu::shadow::ext::hook::GXSetVtxDesc.is_none() { melee_runtime::tu::shadow::ext::hook::GXSetVtxDesc = Some(|_, _| ()); } }
-    unsafe { melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = Some(|_, _| ()); }
     unsafe { if melee_runtime::tu::sislib::ext::hook::View_AspectBits.is_none() { melee_runtime::tu::sislib::ext::hook::View_AspectBits = Some(|| 0x3faaaaab); } }
     unsafe { if melee_runtime::tu::sobjlib::ext::hook::GXBegin.is_none() { melee_runtime::tu::sobjlib::ext::hook::GXBegin = Some(|_, _, _| ()); } }
     unsafe { if melee_runtime::tu::sobjlib::ext::hook::GXClearVtxDesc.is_none() { melee_runtime::tu::sobjlib::ext::hook::GXClearVtxDesc = Some(|| ()); } }
@@ -917,7 +916,6 @@ pub fn install_gen() {
     unsafe { if melee_modes::tu::lb_0192::ext::hook::DVDGetDriveStatus.is_none() { melee_modes::tu::lb_0192::ext::hook::DVDGetDriveStatus = Some(|| 0); } }
     unsafe { if melee_modes::tu::lb_0192::ext::hook::GXInvalidateTexAll.is_none() { melee_modes::tu::lb_0192::ext::hook::GXInvalidateTexAll = Some(|| ()); } }
     unsafe { if melee_modes::tu::lb_0192::ext::hook::GXInvalidateVtxCache.is_none() { melee_modes::tu::lb_0192::ext::hook::GXInvalidateVtxCache = Some(|| ()); } }
-    unsafe { melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = Some(|_, _| ()); }
     unsafe { melee_modes::tu::lb_0192::ext::hook::lbAudioAx_80024F08 = Some(|| ()); }
     unsafe { melee_modes::tu::lb_0192::ext::hook::lbAudioAx_80024F6C = Some(|| ()); }
     unsafe { if melee_modes::tu::lb_0195::ext::hook::OSCancelAlarm.is_none() { melee_modes::tu::lb_0195::ext::hook::OSCancelAlarm = Some(|_| ()); } }

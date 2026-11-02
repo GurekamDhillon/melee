@@ -1227,7 +1227,7 @@ static int test_geno_bhv_adapters(void)
         return 1;
     }
     t_fp.motion_id = ftCo_MS_JumpAerialF;
-    t_fp.x1968_jumpsUsed = 1;
+    t_fp.x1968_jumpsUsed = 2; /* the midair jump */
     Geno_OnActionChange(&t_gobj);
     t_fp.self_vel.x = 0.8f;
     t_fp.self_vel.y = 0.1f;

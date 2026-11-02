@@ -1220,7 +1220,7 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
     GbGlideP p;
     GbGlideEntry e;
     f32 sx, sy;
-    int msid, allowed, aerial_jump, midair, path, s_start;
+    int msid, allowed, jumps, midair, path, s_start;
     s_start = geno_state_with(st, GENO_BHV_GLIDE_START);
     if (s_start < 0) {
         return 0;
@@ -1236,9 +1236,20 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
         return 0;
     }
     msid = (int) fp->motion_id;
+    /* A midair jump is the jump counter passing 1 (the ground jump counts too, and the counter is 1 in
+     * the air after leaving the ground). hold_motion packs (counter << 16 | the motion that jump began
+     * in): a character's own extra-jump motions (not Melee's JumpAerial pair) are accepted for as long
+     * as that jump's motion lasts. */
+    jumps = (int) fp->x1968_jumpsUsed;
+    if (jumps >= 2 && (st->hold_motion < 0 || (st->hold_motion >> 16) != jumps)) {
+        st->hold_motion = (jumps << 16) | (msid & 0xFFFF);
+        st->hold_frames = 0;
+    }
+    midair = st->hold_motion >= 0 && (st->hold_motion >> 16) >= 2;
     allowed = msid == ftCo_MS_JumpF || msid == ftCo_MS_JumpB || msid == ftCo_MS_JumpAerialF ||
               msid == ftCo_MS_JumpAerialB || msid == ftCo_MS_Fall || msid == ftCo_MS_FallAerial ||
-              msid == ftCo_MS_FallAerialF || msid == ftCo_MS_FallAerialB;
+              msid == ftCo_MS_FallAerialF || msid == ftCo_MS_FallAerialB ||
+              (midair && msid == (st->hold_motion & 0xFFFF));
     if (!allowed) {
         return 0;
     }
@@ -1247,12 +1258,6 @@ static int geno_glide_entry(Fighter_GObj* gobj, Fighter* fp, GenoState* st)
     e.hold_frames = st->hold_frames;
     e.last_dir = (st->move_i[6] & 3) - 1;
     e.age = st->move_i[6] >> 2;
-    aerial_jump = msid == ftCo_MS_JumpAerialF || msid == ftCo_MS_JumpAerialB;
-    if (aerial_jump && (st->hold_motion != msid || st->action_time <= 1)) {
-        st->hold_motion = msid;
-        e.hold_frames = 0;
-    }
-    midair = st->hold_motion == ftCo_MS_JumpAerialF || st->hold_motion == ftCo_MS_JumpAerialB;
     path = GenoBhv_GlideEntryStep(&e, &p, midair, geno_jump_held(fp), fp->self_vel.y, sx, fp->facing_dir,
                                   st->move_i[7], 1, 0, 0);
     st->hold_frames = e.hold_frames;

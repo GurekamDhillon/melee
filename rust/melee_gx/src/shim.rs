@@ -358,6 +358,8 @@ pub struct GxShim {
     /// `gw_Fx_ShakeOffset`'s output for this render frame (NDC shift; zero when no shake).
     pub shake_offset: [f32; 2],
     draw_done_cb: Option<DrawDoneCallback>,
+    /// Async decode: [`GxShim::take_frame`] waits for the frame of the last GXCopyDisp (screenshots).
+    pub wait_frame: bool,
     /// The last finished frame (GXCopyDisp), waiting for the presenter.
     frame: Option<Vec<DrawCmd>>,
     /// Log lines (`gw_log` in the C); the platform layer drains and prints them.
@@ -390,6 +392,7 @@ impl GxShim {
             shake_offset: [0.0; 2],
             draw_done_cb: None,
             frame: None,
+            wait_frame: false,
             log: Vec::new(),
             stub_logged: 0,
         }
@@ -463,6 +466,12 @@ impl GxShim {
     /// [`GxShim::take_frame`]. `clear` is the copy-clear the next frame starts from (the renderer
     /// clears to the copy-clear colour at the start of every frame).
     pub fn copy_disp(&mut self, _clear: bool) {
+        if self.gx.is_async() {
+            self.gx.draw_done();
+            self.gx.end_frame();
+            self.stats.copies = self.stats.copies.wrapping_add(1);
+            return;
+        }
         self.gx.draw_done();
         let draws = self.gx.state.take_draws();
         if let Ok(v) = std::env::var("MELEE_GX_DRAWLOG") {
@@ -492,6 +501,9 @@ impl GxShim {
     /// The last frame GXCopyDisp finished, if any (the presenter renders it against
     /// `self.gx.state`).
     pub fn take_frame(&mut self) -> Option<Vec<DrawCmd>> {
+        if self.gx.is_async() {
+            return self.gx.take_async_frame(self.wait_frame);
+        }
         self.frame.take()
     }
     /// `gw_gx_get_stats`.

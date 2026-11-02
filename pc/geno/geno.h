@@ -38,8 +38,8 @@
  *
  * A var ref is 8 bits: [7:6] bank, [5:0] index. Banks: LA = long-term (kept across actions, reset
  * at spawn/respawn), RA = per-action (reset whenever the fighter changes action state), each in an
- * int and a float flavour - the split Brawl's PSA uses (LA/RA x basic/float; PSA bits map onto
- * SETBIT/CLRBIT/IF-bit on int vars).
+ * int and a float flavour (LA/RA x basic/float); bit operations are SETBIT/CLRBIT/IF-bit on int
+ * vars.
  *
  * Unknown subs are skipped by their len (logged once), so a script written for a newer Geno still
  * walks. Skips only go forward: a script can never loop inside one frame through Geno. */
@@ -141,7 +141,7 @@ enum {
 };
 #define GENO_SPECIAL_WORDS 265 /* 0x424 bytes: the per-fighter special-attribute buffer */
 
-/* Geno button mask (GENO_VAL_BUTTONS_*, the PRESSED / HELD conditions); bit n = Brawl button n */
+/* Geno button mask (GENO_VAL_BUTTONS_*, the PRESSED / HELD conditions); bit n = Geno button n */
 #define GENO_BTN_ATTACK 0x01
 #define GENO_BTN_SPECIAL 0x02
 #define GENO_BTN_JUMP 0x04

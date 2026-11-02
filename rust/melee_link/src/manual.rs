@@ -62,6 +62,12 @@ pub fn install() {
         melee_chara::tu::ftsamusspecialhi::ext::hook::ftCommon_UpdateFacing = Some(|fp| unsafe { melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(&mut *fp) });
         melee_fighter::tu::ftCo_SpecialAir::ext::hook::ftCommon_UpdateFacing = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(fp));
         melee_fighter::tu::ftCo_SpecialS::ext::hook::ftCommon_UpdateFacing = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_UpdateFacing_fp(fp));
+        // ftcommon.c `parasol_table_1[idx](item, v)` (the Parasol item, itparasol.c): every slot is set
+        melee_fighter::hooks::IT_PARASOL_TABLE_1 = Some(|idx, i, v| unsafe {
+            use melee_items::tu::itparasol as p;
+            let t: [unsafe extern "C" fn(*mut melee_types::Item_GObj, f32); 7] = [p::it_8028B718, p::it_8028B780, p::it_8028B7E8, p::it_8028B850, p::it_8028B648, p::it_8028B6B0, p::it_8028B618];
+            t[idx as usize](i as _, v)
+        });
         // ftcommon.c `parasol_table_3[idx](item, v)`: slot 4 is it_802BDD40, slot 6 is it_802BDDB4 (itpeachparasol.c); the rest are NULL
         melee_fighter::hooks::IT_PARASOL_TABLE_3 = Some(|idx, i, v| unsafe {
             match idx {

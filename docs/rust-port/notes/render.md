@@ -171,3 +171,20 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   no stage logic: the platforms, the reflection camera and water are not driven; error 30 / 8 at 60), Pokemon Stadium has no scenario; (d) Randall (YS) and the
   Shy Guys are not ported; (e) AppSRT particles still off by default; (f) the C shots are taken while the build hitches, so consecutive-frame comparisons
   alternate between two logic frames; compare spaced frames.
+
+## Render-stub audit (MELEE_LOG_STUBS=1, after the port/render merge 306c457f7)
+Runs: 4-CPU (falcon, fox, marth, peach, level 9) items HIGH, 60 s, on BF, Pokemon Stadium, Brinstar, Onett, Rainbow Cruise, Hyrule Temple; plus the
+CSS -> SSS -> results -> rematch loop (`play/css_rematch_4cpu.txt`). Every stage hit the same nine stubs and nothing else; no decomp (retail) draw function
+is reached unbound any more. All nine are TARGET_PC mod-platform hooks (pc/platform), and each one's zero answer is what the C build does with no mods loaded:
+
+| stub (as logged) | caller | C build with no mods | class |
+|---|---|---|---|
+| `SurfaceBegin` / `SurfaceEnd` (2 seams each) | ftDrawCommon_80080E18, grDisplay_801C5DB0 | `gw_surface.cpp`: no-op while `enabled_count == 0` | render-only, no picture effect |
+| `GenoToonEnsure` | ftDrawCommon_80080E18 | Geno cel surface; nothing without the Geno define | render-only, no picture effect |
+| `MotionFighterBegin` | ftDrawCommon_80080E18 (script_motion_draw_begin) | `gw_fx_motion.cpp`: returns 0 while `after_count == 0` | render-only, no picture effect |
+| `MotionWorldDraw` | camera.c (after the world cameras) | returns at once with no motion tracers | render-only, no picture effect |
+| `Shader_PostDraw` | camera.c | returns while `post_stages == 0` | render-only, no picture effect |
+| `env_cache_mode` | pobj.c SetupEnvelopeModelMtx | 0 (cache off) unless MELEE_ENV_CACHE is set | render-only, optimisation only |
+
+Not stubs, found by the same runs: Onett panics on the unported item group `it_8028B618..it_8028B850` (sim); Pokemon Stadium faulted in
+`HSD_JObjAddAnim` from ftCo_WarpStar (sim, the warpstar branch's area). CSS / SSS / results hit no stubs.

@@ -123,6 +123,19 @@ struct App<G: Game> {
     /// MELEE_FRAME_TIMES=<csv>: one row per tick (T) and per present (P): kind, index, ms since the loop
     /// started, ms the call took (benchmarks; off by default).
     trace: Option<std::io::BufWriter<std::fs::File>>,
+    /// MELEE_SHOW_FPS: every tick's duration and every frame's interval (µs), for the exit percentiles.
+    tick_us: Vec<u32>,
+    frame_us: Vec<u32>,
+    last_frame: Option<Instant>,
+}
+
+/// The `q` quantile of `v` (sorted in place).
+fn quantile(v: &mut [u32], q: f64) -> f64 {
+    if v.is_empty() {
+        return 0.0;
+    }
+    v.sort_unstable();
+    v[((v.len() - 1) as f64 * q).round() as usize] as f64 / 1e3
 }
 
 fn env_bool(k: &str) -> Option<bool> {
@@ -138,11 +151,14 @@ impl<G: Game> App<G> {
         for _ in 0..self.clock.advance(dt) {
             let t = Instant::now();
             self.game.tick(&mut self.pads);
-            let d = t.elapsed();
-            self.tick_time += d;
+            let el = t.elapsed();
+            self.tick_time += el;
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
                 use std::io::Write;
-                let _ = writeln!(f, "T,{},{:.3},{:.3}", self.clock.ticks, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
+                let _ = writeln!(f, "T,{},{:.3},{:.3}", self.clock.ticks, (t - t0).as_secs_f64() * 1e3, el.as_secs_f64() * 1e3);
+            }
+            if self.show_fps {
+                self.tick_us.push(el.as_micros().min(u32::MAX as u128) as u32);
             }
             if self.game.should_quit() {
                 self.quit = true;
@@ -247,6 +263,13 @@ impl<G: Game> ApplicationHandler for App<G> {
                         use std::io::Write;
                         let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
                     }
+                    if self.show_fps {
+                        let now = Instant::now();
+                        if let Some(l) = self.last_frame {
+                            self.frame_us.push((now - l).as_micros().min(u32::MAX as u128) as u32);
+                        }
+                        self.last_frame = Some(now);
+                    }
                     self.frames += 1;
                     self.fps_frames += 1;
                     self.fps_tick(&w);
@@ -302,6 +325,9 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         tick_time: Duration::ZERO,
         present_time: Duration::ZERO,
         trace: std::env::var_os("MELEE_FRAME_TIMES").and_then(|p| std::fs::File::create(p).ok()).map(|f| std::io::BufWriter::with_capacity(1 << 20, f)),
+        tick_us: Vec::new(),
+        frame_us: Vec::new(),
+        last_frame: None,
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;
@@ -320,6 +346,20 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
     if app.show_fps {
         let secs = app.run_t0.map(|t| t.elapsed().as_secs_f64()).unwrap_or(1.0).max(1e-9);
         plog!("gw: fps: run total: {} frames, {} ticks in {secs:.2}s = render {:.1} fps, sim {:.2} tps", app.frames, app.clock.ticks, app.frames as f64 / secs, app.clock.ticks as f64 / secs);
+        let (mut t, mut f) = (std::mem::take(&mut app.tick_us), std::mem::take(&mut app.frame_us));
+        // 1% low: the frame rate of the slowest 1% of frames (their mean interval)
+        let low = {
+            let mut g = f.clone();
+            g.sort_unstable_by(|a, b| b.cmp(a));
+            let n = (g.len() / 100).max(1).min(g.len());
+            let mean = g[..n].iter().map(|&x| x as f64).sum::<f64>() / n.max(1) as f64;
+            if mean > 0.0 { 1e6 / mean } else { 0.0 }
+        };
+        plog!(
+            "gw: perf: tick p50 {:.2} ms p99 {:.2} ms max {:.2} ms ({} ticks); frame p50 {:.2} ms p99 {:.2} ms max {:.2} ms, 1% low {:.0} fps ({} frames)",
+            quantile(&mut t, 0.5), quantile(&mut t, 0.99), quantile(&mut t, 1.0), t.len(),
+            quantile(&mut f, 0.5), quantile(&mut f, 0.99), quantile(&mut f, 1.0), low, f.len()
+        );
     }
     Ok((app.clock.ticks, app.clock.dropped))
 }

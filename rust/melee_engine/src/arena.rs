@@ -40,15 +40,59 @@ static mut LIVE: [i64; NCLASS] = [0; NCLASS];
 mod sys {
     extern "system" {
         pub fn VirtualAlloc(addr: *mut core::ffi::c_void, size: usize, ty: u32, prot: u32) -> *mut core::ffi::c_void;
+        pub fn VirtualFree(addr: *mut core::ffi::c_void, size: usize, ty: u32) -> i32;
     }
+    pub const MEM_DECOMMIT: u32 = 0x4000;
     pub const MEM_COMMIT: u32 = 0x1000;
     pub const MEM_RESERVE: u32 = 0x2000;
     pub const PAGE_READWRITE: u32 = 0x04;
 }
 
-/// True while the engine code runs (allocations go to the arena).
+/// Trim mode ([`set_trim`]): big free blocks give their pages back, and a big request with no block of its class
+/// free takes the smallest free block of a larger class. Off by default: a snapshot reads the whole used range, so
+/// only a run that never snapshots the arena (`melee play` offline) turns it on.
+static mut TRIM: bool = false;
+/// Blocks this big or bigger are trimmed.
+const TRIM_MIN: usize = 64 << 10;
+
+pub fn set_trim(on: bool) {
+    unsafe { TRIM = on }
+}
+/// Whether [`set_trim`] is on (the run never snapshots the arena).
+pub fn trim() -> bool {
+    unsafe { TRIM }
+}
+
+/// Decommit the whole pages inside `[a, b)` (their contents are dropped; the range stays reserved).
+#[cfg(windows)]
+unsafe fn decommit(a: usize, b: usize) {
+    let (a, b) = ((a + 0xFFF) & !0xFFF, b & !0xFFF);
+    if b > a {
+        sys::VirtualFree(a as *mut _, b - a, sys::MEM_DECOMMIT);
+    }
+}
+/// Commit the pages under `[a, b)` again (decommitted ones come back zeroed, committed ones are unchanged).
+#[cfg(windows)]
+unsafe fn recommit(a: usize, b: usize) -> bool {
+    let (a, b) = (a & !0xFFF, (b + 0xFFF) & !0xFFF);
+    !sys::VirtualAlloc(a as *mut _, b - a, sys::MEM_COMMIT, sys::PAGE_READWRITE).is_null()
+}
+
+thread_local! {
+    /// Set on threads that are never game code (the GX decode thread): their allocations stay on the system heap even
+    /// while the game thread is in a [`GameScope`].
+    static FOREIGN: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+}
+
+/// Mark the calling thread as one whose allocations never go to the arena.
+pub fn mark_foreign_thread() {
+    FOREIGN.with(|f| f.set(true));
+}
+
+/// True while the engine code runs (allocations go to the arena), on the game thread.
+#[inline]
 pub fn active() -> bool {
-    IN_GAME.load(Relaxed)
+    IN_GAME.load(Relaxed) && !FOREIGN.with(|f| f.get())
 }
 
 /// `(start, len)` of the part of the arena in use (page rounded), or `(0, 0)` before the first allocation.
@@ -142,7 +186,24 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
     let head = FREE[ab][c];
     if head != 0 {
         FREE[ab][c] = *(head as *const usize);
+        if TRIM && size >= TRIM_MIN && !recommit(head, head + size) {
+            return core::ptr::null_mut();
+        }
         return head as *mut u8;
+    }
+    if TRIM && size >= TRIM_MIN {
+        // the smallest free block of a larger class (up to about 4x): its tail past `size` is given back for good
+        for c2 in c + 1..(c + 17).min(NCLASS) {
+            let h2 = FREE[ab][c2];
+            if h2 != 0 {
+                FREE[ab][c2] = *(h2 as *const usize);
+                if !recommit(h2, h2 + size) {
+                    return core::ptr::null_mut();
+                }
+                decommit(h2 + size, h2 + class_size(c2));
+                return h2 as *mut u8;
+            }
+        }
     }
     let al = l.align().max(16);
     let p = (BUMP + al - 1) & !(al - 1);
@@ -173,6 +234,24 @@ pub unsafe fn free(p: *mut u8, l: Layout) {
     LIVE[c] -= 1;
     *(p as *mut usize) = FREE[ab][c];
     FREE[ab][c] = p as usize;
+    #[cfg(windows)]
+    if TRIM {
+        let size = class_size(c);
+        if size >= TRIM_MIN {
+            decommit(p as usize + 16, p as usize + size);
+        }
+    }
+}
+
+/// Block size of class `c` (inverse of [`class_of`]).
+fn class_size(c: usize) -> usize {
+    if c < 8 {
+        (c + 1) * 16
+    } else {
+        let k = 7 + (c - 8) / 8;
+        let sub = (c - 8) % 8 + 1;
+        (1usize << k) + sub * (1usize << (k - 3))
+    }
 }
 
 /// The size class a `realloc` stays in (the block can be reused in place).
@@ -227,6 +306,19 @@ pub fn note_miss(l: Layout) {
     if n < 16 {
         MISSED[2 * n].store(l.size(), Relaxed);
         MISSED[2 * n + 1].store(l.align(), Relaxed);
+    }
+}
+
+/// Diagnostics: live bytes in blocks handed out (by size class, so rounded up).
+pub fn live_bytes() -> usize {
+    unsafe {
+        (0..NCLASS)
+            .filter(|&c| LIVE[c] > 0)
+            .map(|c| {
+                let sz = if c < 8 { (c + 1) * 16 } else { let k = 7 + (c - 8) / 8; let sub = (c - 8) % 8 + 1; (1usize << k) + sub * (1usize << (k - 3)) };
+                sz * LIVE[c] as usize
+            })
+            .sum()
     }
 }
 

@@ -109,12 +109,20 @@ unsafe fn fill<T: GcDecode>(d: &mut GcDecoder<'_>, target: u32, dst: *mut u8) {
 /// Records decoded per entry of a `T**` table of arrays whose length is not in the data.
 pub const MAX_TABLE_ARRAY: usize = 64;
 
+/// Arrays of at least this many records go through [`GcDecoder::shared_array`] (counts read from the data: some are
+/// garbage, e.g. `_HSD_TexAnim.n_tluttbl` ~ 47000 in itCo / GrGr, once 128 MB of overlapping copies per file).
+const SHARED_MIN: usize = 1024;
+/// Elements past the end of the data a shared array still covers (records past the end decode as zero, like a separate array's).
+const SHARED_SLACK: usize = 65536;
+
 /// Issues a decoder keeps (see [`GcDecoder::issue`]).
 pub const MAX_ISSUES: usize = 256;
 
 pub struct GcDecoder<'a> {
     /// Issues past [`MAX_ISSUES`] (counted, not kept).
     pub dropped_issues: u64,
+    /// [`GcDecoder::shared_array`] storage per (phase, T): the array and which elements are decoded.
+    shared: HashMap<(u32, TypeId), (*mut u8, Vec<bool>)>,
     data: &'a [u8],
     relocs: &'a HashSet<u32>,
     memo: HashMap<(u32, TypeId), *mut u8>,
@@ -143,7 +151,7 @@ impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
-        Self { dropped_issues: 0, data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+        Self { dropped_issues: 0, shared: HashMap::new(), data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -469,6 +477,43 @@ impl<'a> GcDecoder<'a> {
         p as *mut T
     }
 
+    /// `n` `T`s at `target` as a window of one native array per (T, `target % T::GC_BYTES`) spanning the whole data
+    /// block: element `i` of every window is the decode of the same GC bytes, so overlapping windows share storage
+    /// instead of each holding its own copy. Only the elements some window covers are decoded (the same set as
+    /// separate arrays would decode). None when the window runs past the shared array.
+    fn shared_array<T: GcDecode>(&mut self, target: u32, n: usize) -> Option<*mut T> {
+        struct SharedKey<T>(core::marker::PhantomData<T>);
+        let stride = T::GC_BYTES.max(1);
+        let key = (target % stride, TypeId::of::<SharedKey<T>>());
+        let first = (target / stride) as usize;
+        if !self.shared.contains_key(&key) {
+            let len = self.data.len() / stride as usize + SHARED_SLACK;
+            let v: Vec<T> = (0..len).map(|_| T::gc_zeroed()).collect();
+            let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
+            self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * len });
+            self.shared.insert(key, (p, vec![false; len]));
+        }
+        let (base, len) = {
+            let (p, f) = &self.shared[&key];
+            (*p as *mut T, f.len())
+        };
+        if first + n > len {
+            return None;
+        }
+        let phase = target % stride;
+        for i in first..first + n {
+            if self.shared[&key].1[i] {
+                continue;
+            }
+            self.shared.get_mut(&key).unwrap().1[i] = true;
+            let v = T::gc_decode(self, phase + i as u32 * stride);
+            // SAFETY: i < len, the shared allocation holds len initialised T.
+            unsafe { *base.add(i) = v };
+        }
+        // SAFETY: first + n <= len.
+        Some(unsafe { base.add(first) })
+    }
+
     /// `n` consecutive `T`s at `target` (GC stride `T::GC_BYTES`) as one native array.
     pub fn array<T: GcDecode>(&mut self, target: u32, n: usize) -> *mut T {
         let v: Vec<T> = (0..n).map(|i| T::gc_decode(self, target + i as u32 * T::GC_BYTES)).collect();
@@ -490,6 +535,12 @@ impl<'a> GcDecoder<'a> {
         let key = (t, TypeId::of::<ArrayKey<T>>(), n.max(1));
         if let Some(&p) = self.arr_memo.get(&key) {
             return p as *mut T;
+        }
+        if n >= SHARED_MIN && core::mem::size_of::<T>() <= 16 {
+            if let Some(p) = self.shared_array::<T>(t, n) {
+                self.arr_memo.insert(key, p as *mut u8);
+                return p;
+            }
         }
         let p = self.array::<T>(t, n.max(1)) as *mut u8;
         self.arr_memo.insert(key, p);

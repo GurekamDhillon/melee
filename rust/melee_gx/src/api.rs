@@ -214,6 +214,8 @@ pub struct AsyncFrame {
     pub draws: Vec<crate::draw::DrawCmd>,
     pub clear_color: crate::state::Vec4,
     pub clear_depth: u32,
+    /// The renderer's CPU packing of `draws` (see [`crate::render::pack`]).
+    pub packed: crate::render::Packed,
 }
 
 enum Job {
@@ -237,6 +239,8 @@ struct Worker {
 /// The GX: shadow registers + FIFO + the decoded state and resources it drives.
 pub struct Gx {
     worker: Option<Worker>,
+    /// Async mode: the packing of the frame [`Gx::take_async_frame`] returned last, for the renderer.
+    pub packed: Option<crate::render::Packed>,
     sh: Shadow,
     saved: Option<Shadow>,
     fifo: Vec<u8>,
@@ -261,6 +265,7 @@ impl Gx {
     pub fn new() -> Self {
         let mut gx = Self {
             worker: None,
+            packed: None,
             sh: Shadow::default(),
             saved: None,
             fifo: Vec::with_capacity(1 << 16),
@@ -355,7 +360,9 @@ impl Gx {
                         }
                         Job::End => {
                             st.warnings.clear();
-                            let f = AsyncFrame { draws: st.take_draws(), clear_color: st.clear_color, clear_depth: st.clear_depth };
+                            let draws = st.take_draws();
+                            let packed = crate::render::pack(&draws);
+                            let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed };
                             if ftx.send(f).is_err() {
                                 break;
                             }
@@ -395,6 +402,7 @@ impl Gx {
             }
         }
         let f = last?;
+        self.packed = Some(f.packed);
         self.state.clear_color = f.clear_color;
         self.state.clear_depth = f.clear_depth;
         Some(f.draws)

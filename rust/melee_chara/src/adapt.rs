@@ -224,7 +224,7 @@ pub unsafe fn HSD_JObjAddAnimAll(jobj: *mut HSD_JObj, anim: *mut HSD_AnimJoint, 
 }
 /// The stub's `(jobj, mtx, rmode, flags)` names are the C's `(jobj, vmtx, flags, rendermode)` by position.
 pub unsafe fn HSD_JObjDispAll(jobj: *mut HSD_JObj, mtx: MtxPtr, flags: u32, rendermode: u32) {
-    melee_runtime::tu::jobj::HSD_JObjDispAll(jobj, &*(mtx as *const Mtx), flags, rendermode)
+    melee_runtime::tu::jobj::HSD_JObjDispAll(jobj, mtx as *const Mtx, flags, rendermode)
 }
 pub unsafe fn HSD_JObjSetTranslate(jobj: *mut HSD_JObj, v: *const Vec3) {
     melee_runtime::tu::jobj_ptr::HSD_JObjSetTranslate(jobj, v)

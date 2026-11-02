@@ -272,6 +272,8 @@ struct MatchSetup {
 struct EngMatch {
     e: melee_engine::Engine,
     frame: Option<Vec<melee_gx::draw::DrawCmd>>,
+    /// The decode thread's packing of `frame` (renderer CPU work done off the main thread).
+    packed: Option<melee_gx::render::Packed>,
     setup: MatchSetup,
     end_timer: Option<u32>,
     timed_out: bool,
@@ -859,6 +861,7 @@ impl Play {
             },
             Err(_) => Self::scenario_of(&su),
         };
+        let load_t0 = std::time::Instant::now();
         let built = if let Some(mut e) = self.spare.take() {
             // the next match of the run: the engine stays booted (Engine::next_vs, the C mode loop's next scene)
             e.next_vs(scn).map(|()| e)
@@ -892,9 +895,14 @@ impl Play {
                 if melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
                     melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
                     // screenshots show exactly their tick: take each frame when it is decoded
-                    melee_engine::gxbridge::shim().wait_frame = self.shots;
+                    melee_engine::gxbridge::shim().wait_frame = self.shots && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
                 }
-                self.em = Some(EngMatch { e, frame: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
+                self.em = Some(EngMatch { e, frame: None, packed: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
+                if std::env::var_os("MELEE_TICK_SPIKE").is_some() {
+                    let pn = melee_engine::archive::PARSE_NS.swap(0, std::sync::atomic::Ordering::Relaxed);
+                    let n = melee_engine::archive::PARSE_N.swap(0, std::sync::atomic::Ordering::Relaxed);
+                    log(&format!("match load: {:.1} ms, {n} file parse(s) {:.1} ms", load_t0.elapsed().as_secs_f64() * 1e3, pn as f64 / 1e6));
+                }
                 self.frame_mem("match start");
                 self.goto(Scene::Match);
             }
@@ -946,6 +954,7 @@ impl Play {
         let alive = m.e.tick();
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             m.frame = Some(f);
+            m.packed = melee_engine::gxbridge::shim().gx.packed.take();
         }
         if !alive {
             // GAME! / TIME! are the game's own (the match scene ends itself); the results follow after a moment
@@ -1264,7 +1273,11 @@ impl Play {
     fn present_now(&mut self, alpha: Option<f64>) {
         if self.scene == Scene::Match && self.em.is_some() {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
+            let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
+            if let Some(pk) = packed {
+                p.renderer.set_packed(pk);
+            }
             p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, alpha);
             return;
         }

@@ -134,7 +134,7 @@ impl Snap {
 
     /// The GameCube record at `va`, decoded with its generated `GcDecode` (raw-pointer mode).
     pub fn decode<T: GcDecode>(&self, va: u32) -> T {
-        let relocs = HashSet::new();
+        let relocs = melee_core::gcdecode::RelocSet::default();
         let mut d = GcDecoder::new_raw(self.must(va, T::GC_BYTES as usize), &relocs);
         T::gc_decode(&mut d, 0)
     }
@@ -143,7 +143,7 @@ impl Snap {
     /// the native sim keeps as plain data (its `Fighter`, the player table), where a guest address
     /// in a pointer slot would read as a live native pointer.
     pub fn decode_flat<T: GcDecode>(&self, va: u32) -> T {
-        let relocs = HashSet::new();
+        let relocs = melee_core::gcdecode::RelocSet::default();
         let mut d = GcDecoder::new(self.must(va, T::GC_BYTES as usize), &relocs);
         T::gc_decode(&mut d, 0)
     }

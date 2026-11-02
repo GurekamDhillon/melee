@@ -24,6 +24,41 @@ use core::any::TypeId;
 use core::ffi::c_void;
 use std::collections::{HashMap, HashSet};
 
+/// FxHash (rustc's multiply-rotate hash): the decoder's maps are keyed by small integers, and SipHash was a fifth of an
+/// archive parse. Lookups only (no map is iterated for its order), so the hasher changes nothing decoded.
+#[derive(Default, Clone, Copy)]
+pub struct FxHasher(u64);
+impl core::hash::Hasher for FxHasher {
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {
+        for c in bytes.chunks(8) {
+            let mut w = [0u8; 8];
+            w[..c.len()].copy_from_slice(c);
+            self.write_u64(u64::from_le_bytes(w));
+        }
+    }
+    #[inline]
+    fn write_u64(&mut self, i: u64) {
+        self.0 = (self.0.rotate_left(5) ^ i).wrapping_mul(0x51_7c_c1_b7_27_22_0a_95);
+    }
+    #[inline]
+    fn write_u32(&mut self, i: u32) {
+        self.write_u64(i as u64)
+    }
+    #[inline]
+    fn write_usize(&mut self, i: usize) {
+        self.write_u64(i as u64)
+    }
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+pub type FxBuild = core::hash::BuildHasherDefault<FxHasher>;
+pub type FxMap<K, V> = HashMap<K, V, FxBuild>;
+/// The relocation set a decoder checks pointer words against.
+pub type RelocSet = HashSet<u32, FxBuild>;
+
 /// A value that can be decoded from GameCube bytes.
 pub trait GcDecode: Sized + 'static {
     /// Bytes this type occupies on the GameCube (its `sizeof` there).
@@ -122,12 +157,12 @@ pub struct GcDecoder<'a> {
     /// Issues past [`MAX_ISSUES`] (counted, not kept).
     pub dropped_issues: u64,
     /// [`GcDecoder::shared_array`] storage per (phase, T): the array and which elements are decoded.
-    shared: HashMap<(u32, TypeId), (*mut u8, Vec<bool>)>,
+    shared: FxMap<(u32, TypeId), (*mut u8, Box<[bool]>)>,
     data: &'a [u8],
-    relocs: &'a HashSet<u32>,
-    memo: HashMap<(u32, TypeId), *mut u8>,
+    relocs: &'a RelocSet,
+    memo: FxMap<(u32, TypeId), *mut u8>,
     /// [`GcDecoder::ptr_array`] results per (target, T, length): two records may name one array with different counts.
-    arr_memo: HashMap<(u32, TypeId, usize), *mut u8>,
+    arr_memo: FxMap<(u32, TypeId, usize), *mut u8>,
     queue: Vec<Pending>,
     arena: GcArena,
     issues: Vec<String>,
@@ -150,8 +185,8 @@ pub struct GcDecoder<'a> {
 impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
-    pub fn new(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
-        Self { dropped_issues: 0, shared: HashMap::new(), data, relocs, memo: HashMap::new(), arr_memo: HashMap::new(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+    pub fn new(data: &'a [u8], relocs: &'a RelocSet) -> Self {
+        Self { dropped_issues: 0, shared: FxMap::default(), data, relocs, memo: FxMap::default(), arr_memo: FxMap::default(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -159,7 +194,7 @@ impl<'a> GcDecoder<'a> {
     /// the object's GameCube bytes, `at` offsets index it. Pointers are never followed; each
     /// decodes to its guest address stored in the native pointer (`addr as usize as *mut T`),
     /// for the caller to look up in the image itself. Function pointers decode to `None`.
-    pub fn new_raw(data: &'a [u8], relocs: &'a HashSet<u32>) -> Self {
+    pub fn new_raw(data: &'a [u8], relocs: &'a RelocSet) -> Self {
         let mut d = Self::new(data, relocs);
         d.raw = true;
         d
@@ -491,21 +526,23 @@ impl<'a> GcDecoder<'a> {
             let v: Vec<T> = (0..len).map(|_| T::gc_zeroed()).collect();
             let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
             self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * len });
-            self.shared.insert(key, (p, vec![false; len]));
+            self.shared.insert(key, (p, vec![false; len].into_boxed_slice()));
         }
-        let (base, len) = {
-            let (p, f) = &self.shared[&key];
-            (*p as *mut T, f.len())
+        // the flags live in a Box the map never moves or frees while decoding (entries are only added)
+        let (base, len, done) = {
+            let e = self.shared.get_mut(&key).unwrap();
+            (e.0 as *mut T, e.1.len(), e.1.as_mut_ptr())
         };
         if first + n > len {
             return None;
         }
         let phase = target % stride;
         for i in first..first + n {
-            if self.shared[&key].1[i] {
+            // SAFETY: i < len (checked above); `done` points into the entry's boxed flags.
+            if unsafe { *done.add(i) } {
                 continue;
             }
-            self.shared.get_mut(&key).unwrap().1[i] = true;
+            unsafe { *done.add(i) = true };
             let v = T::gc_decode(self, phase + i as u32 * stride);
             // SAFETY: i < len, the shared allocation holds len initialised T.
             unsafe { *base.add(i) = v };
@@ -751,7 +788,7 @@ mod tests {
             data.extend(24u32.to_be_bytes());
         }
         data.extend(b"hi\0\0");
-        let relocs: HashSet<u32> = [4, 8, 16, 20].into();
+        let relocs: RelocSet = [4, 8, 16, 20].into_iter().collect();
         let mut d = GcDecoder::new(&data, &relocs);
         let a = d.object::<Node>(0);
         let (arena, issues) = d.finish();
@@ -770,7 +807,7 @@ mod tests {
     #[test]
     fn unrelocated_word_is_null_with_issue() {
         let data = 0x1234u32.to_be_bytes();
-        let relocs = HashSet::new();
+        let relocs = RelocSet::default();
         let mut d = GcDecoder::new(&data, &relocs);
         let p = <*mut u32>::gc_decode(&mut d, 0);
         assert!(p.is_null());

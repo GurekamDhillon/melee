@@ -30,6 +30,8 @@ pub struct Presenter {
     prepared: bool,
     /// The EFB holds a blend, not `cur` itself.
     blended: bool,
+    /// A new frame waiting for the next present (see `present_frames`).
+    pending: Option<Vec<DrawCmd>>,
     /// Per-present µs of prepare / draw / swap (fresh frames only for prepare), for the MELEE_SHOW_FPS exit line.
     pub times: [Vec<u32>; 3],
 }
@@ -149,7 +151,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, times: Default::default() })
+        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default() })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -182,7 +184,26 @@ impl Presenter {
     /// `alpha = Some(t)` renders the previous->current blend of the camera / model matrices at `t`
     /// (one tick of latency); `None` renders the newest frame as is (only when it is new).
     /// Everything here is render-only: the frames are copies the game no longer reads.
-    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, alpha: Option<f64>) {
+    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, mut alpha: Option<f64>) {
+        // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
+        // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
+        // the current frame itself (t = 1: never a step back toward the previous one).
+        let mut frame = frame;
+        if alpha.is_some() && self.cur.is_some() {
+            if let Some(f) = frame.take() {
+                let late = self.pending.replace(f);
+                if late.is_some() {
+                    // two ticks without a present in between: the older one is skipped (as without deferral)
+                }
+                alpha = Some(1.0);
+            } else if let Some(f) = self.pending.take() {
+                frame = Some(f);
+            }
+        } else if let Some(p) = self.pending.take() {
+            if frame.is_none() {
+                frame = Some(p);
+            }
+        }
         let fresh = frame.is_some();
         if let Some(f) = frame {
             self.prev = self.cur.replace(f);

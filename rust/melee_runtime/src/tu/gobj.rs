@@ -43,7 +43,7 @@ pub mod ext {
     pub fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32) {
         match unsafe { HSD_JOBJDISPALL } {
             Some(f) => f(jobj, vmtx, flags, rendermode),
-            None => { unsafe { crate::tu::jobj::HSD_JObjDispAll(jobj as _, &*(vmtx as *const _), flags as _, rendermode as _); } },
+            None => { unsafe { crate::tu::jobj::HSD_JObjDispAll(jobj as _, vmtx as *const _, flags as _, rendermode as _); } },
         }
     }
     hook!(HSD_FOGSET, HSD_FogSet, (fog: *mut HSD_Fog));

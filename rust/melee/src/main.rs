@@ -200,9 +200,14 @@ mod guard {
 /// `MELEE_BIG_ALLOC=<bytes>`: print a backtrace for each game-arena allocation at least that big (diagnostics).
 static BIG_MIN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(usize::MAX);
 static IN_TRACE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// `MELEE_ALLOC_SAMPLE=<n>`: also backtrace every n-th game-arena allocation (who allocates per tick).
+static SAMPLE_EVERY: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static SAMPLE_N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 fn big_alloc_trace(n: usize) {
     use std::sync::atomic::Ordering::Relaxed;
-    if n < BIG_MIN.load(Relaxed) || IN_TRACE.swap(true, Relaxed) {
+    let every = SAMPLE_EVERY.load(Relaxed);
+    let sampled = every != 0 && SAMPLE_N.fetch_add(1, Relaxed) % every == every - 1;
+    if (n < BIG_MIN.load(Relaxed) && !sampled) || IN_TRACE.swap(true, Relaxed) {
         return;
     }
     eprintln!("big alloc {n} bytes:
@@ -299,6 +304,9 @@ fn main() -> ExitCode {
     }
     if let Some(n) = std::env::var("MELEE_BIG_ALLOC").ok().and_then(|v| v.parse().ok()) {
         BIG_MIN.store(n, std::sync::atomic::Ordering::Relaxed);
+    }
+    if let Some(n) = std::env::var("MELEE_ALLOC_SAMPLE").ok().and_then(|v| v.parse().ok()) {
+        SAMPLE_EVERY.store(n, std::sync::atomic::Ordering::Relaxed);
     }
     let _prof = prof::from_env();
     crash::install();

@@ -296,7 +296,7 @@ struct FrameCache {
     /// 0: `ubuf` must be refilled from the draws; 1: it holds their uniforms; 2: `fill` rewrote parts of it.
     ubuf_state: u8,
     /// The previous draw's pipeline config and its pipeline (consecutive draws mostly share one).
-    last_pipe: Option<(crate::shader::PipelineConfig, Option<wgpu::RenderPipeline>)>,
+    last_pipe: Option<(std::sync::Arc<crate::shader::PipelineConfig>, Option<wgpu::RenderPipeline>)>,
 }
 
 /// Make `slot` hold at least `size` bytes; true when the buffer was (re)created.
@@ -836,7 +836,7 @@ impl Renderer {
                 None
             } else {
                 match last_pipe.as_ref() {
-                    Some((cfg, p)) if *cfg == d.config => p.clone(),
+                    Some((cfg, p)) if std::sync::Arc::ptr_eq(cfg, &d.config) || **cfg == *d.config => p.clone(),
                     _ => {
                         let p = self.pipeline(d);
                         last_pipe = Some((d.config.clone(), p.clone()));

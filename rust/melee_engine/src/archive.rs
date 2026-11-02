@@ -238,7 +238,13 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     }
     if Host::get().archives.contains_key(&(archive as usize)) {
         // the C reused this HSD_Archive address: the old image's native graph stays alive (the game may still point into it)
-        eprintln!("engine: archive record {archive:p} re-parsed; keeping the previous native image alive");
+        // once per record (fighter animations re-parse the same record on every action change)
+        static mut LOGGED: Option<std::collections::HashSet<usize>> = None;
+        #[allow(static_mut_refs)]
+        let first = unsafe { LOGGED.get_or_insert_with(Default::default).insert(archive as usize) };
+        if first || std::env::var_os("MELEE_RECLAIM_LOG").is_some() {
+            eprintln!("engine: archive record {archive:p} re-parsed; keeping the previous native image alive (logged once per record)");
+        }
         let old = Host::get().archives.remove(&(archive as usize)).unwrap();
         Host::get().retired.push(old);
     }
@@ -251,6 +257,13 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
 /// them reads the new file's bytes; the native graphs would only keep a dead copy alive, and every match re-loads the
 /// fighters and the stage, so without this each match keeps hundreds of MB. Off for the single-scene runs (goldens).
 pub static mut RECLAIM: bool = false;
+
+/// Turn [`RECLAIM`] on from the first scene (`melee play`: no golden compare, and an action change re-parses a
+/// fighter's animation over the same buffer, ~20 times a second in a 4-player match: kept, they grew the retired list
+/// by ~20 MB a match and every GX array lookup scanned it).
+pub fn set_reclaim(on: bool) {
+    unsafe { RECLAIM = on }
+}
 
 fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     let h = Host::get();

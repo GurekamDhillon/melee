@@ -1,0 +1,2 @@
+# idle pads: the CPUs play
+100000 0

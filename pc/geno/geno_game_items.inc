@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Standalone, snapshotted items. Immutable definitions cross the native boundary
  * as scalars; all simulation state lives in Item.xDD4_itemVar. No DAT required. */
 #include "geno_items.h"

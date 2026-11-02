@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 -- Vanilla Riposte: the down special as a counter with a follow-up, written as Lua callbacks (Geno slice 5, docs/geno.md section 23).
 --   Parry    a stance. A hit taken in action frames 4-24 is countered by the ENGINE (the window is declared in geno.json: the hit's
 --            damage and knockback are dropped) and the fighter is sent to Riposte. Letting go of B after frame 8 cancels the stance;

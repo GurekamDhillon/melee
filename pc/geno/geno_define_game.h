@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_DEFINE_GAME_H
 #define GENO_DEFINE_GAME_H
 #include <melee/ft/forward.h>

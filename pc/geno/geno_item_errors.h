@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_ITEM_ERRORS_H
 #define GENO_ITEM_ERRORS_H
 /* Negative spawn results; positive values are handles. Shared with Lua adapter. */

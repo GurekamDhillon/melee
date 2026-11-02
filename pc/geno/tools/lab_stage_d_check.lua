@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: MIT
+-- Copyright (c) 2026 GurekamDhillon
 -- Stage D (TRAINING) logic check, off the game: a stub gd plays scripted frames through lab.lua and
 -- checks D1 (frame advantage, tech feedback, the move card), D3 (the dummy: DI, SDI, tech, ledge,
 -- out of shield, recording and playback), D4 (true combos) and D5 (drills, results).

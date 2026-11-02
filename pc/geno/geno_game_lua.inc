@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_game_lua.inc - Geno slice 5: the game half of fighter Lua (docs/geno.md section 23). Included by geno_game_v2.inc (one
  * translation unit with geno_game.c; it shares that file's statics).
  *

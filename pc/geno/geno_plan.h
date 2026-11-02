@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_PLAN_H
 #define GENO_PLAN_H
 /* The engine's flat reading of a `base: "none"` define's package (plan.json from tools/geno/build_courier.sh).

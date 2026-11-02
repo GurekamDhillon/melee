@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 // params: lift, gamma, gain (vec4), saturation (float). Scalars use .x.
 let c = previous_color(in.uv);
 let lifted = max(c.rgb + params.lift.xyz, vec3f(0.0));

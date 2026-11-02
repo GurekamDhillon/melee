@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_LAB_MODE_H
 #define GENO_LAB_MODE_H
 /*

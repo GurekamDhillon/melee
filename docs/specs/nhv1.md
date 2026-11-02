@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # NHV1: the byte-order-neutral per-frame gameplay hash
 
 Spec version: NHV1 (format tag `0x4E485631`), document revision 2026-11-02 (rev 2: melee-unlocked's answers folded in). Derived from our source only:

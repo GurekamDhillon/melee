@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Compare two Geno Lab frame-data exports and print the changed states and fields.
 
     python pc/geno/tools/framedata_diff.py <export A> <export B>

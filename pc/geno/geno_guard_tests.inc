@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Asset-free reproduction: the authored guard lowers the shield compared with
  * the costume's rest pose. A low smash must contact it before shield set-off
  * can run. Exercise the real guard pose and collision code, including an own

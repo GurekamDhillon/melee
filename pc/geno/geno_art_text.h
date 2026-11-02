@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_ART_TEXT_H
 #define GENO_ART_TEXT_H
 /* The first two words, or two letters of a single word. UI only. */

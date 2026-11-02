@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* geno_combo_tests.inc - geno 11, the combo graph (docs/geno.md section 25): parse, routes, buffer, hitlag, priority, meter, Lua
  * gate, string depth, the digest, and a resimulation from a snapshot. Included by geno_tests.c (uses its t_* fixtures and capture
  * mode: a change of action is recorded and performed on motion_id, not run through Fighter_ChangeMotionState). */

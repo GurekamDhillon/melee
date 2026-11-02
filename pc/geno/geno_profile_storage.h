@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* Descriptor arena arithmetic, shared with disc-free native tests. The caller
  * owns both buffer and cursor in snapshot-covered game globals. No game heap. */
 #ifndef GENO_PROFILE_STORAGE_H

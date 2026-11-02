@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Generate pc/platform/gw_motion_names.inc: motion-state (action-state) names for the Geno Lab.
 
     python pc/geno/tools/gen_motion_names.py

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Vanilla Charger
 
 The Geno slice 5 fixture: a native Mario-reference define whose neutral special (ground and air) is a Lua callback with typed per-fighter state

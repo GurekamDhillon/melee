@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 GurekamDhillon
 """Geno Lab UI art, in the kit's style and on the kit's pipeline (private: Geno build only).
 
     python lab_art.py                          build everything, convert, check, preview

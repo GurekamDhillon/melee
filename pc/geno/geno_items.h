@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #ifndef GENO_ITEMS_H
 #define GENO_ITEMS_H
 #include "geno.h"

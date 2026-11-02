@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 /* One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
  * of `frac`, the fixed-point shift the low 5. */
 static f32 genoArt_FObjValue(u8** p, u8 frac)

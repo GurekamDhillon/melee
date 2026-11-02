@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 // params: width, threshold, strength (float), tint (vec4). Full resolution recommended.
 let c = previous_color(in.uv);
 let step = vec2f(max(params.width.x, 1.0)) / resolution();

@@ -1,3 +1,5 @@
+<!-- SPDX-License-Identifier: MIT
+     Copyright (c) 2026 GurekamDhillon -->
 # Shader examples
 
 Copy this mod into your mods directory and enable `shader-demo`. In a match, F6

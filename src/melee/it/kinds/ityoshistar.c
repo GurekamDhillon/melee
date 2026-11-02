@@ -1,6 +1,7 @@
 #include "ityoshistar.h"
 
 #include "inlines.h"
+#include <dolphin/os.h>
 #include <melee/db/db.h>
 #include <melee/it/inlines.h>
 #include <melee/it/it_26B1.h>
@@ -32,7 +33,9 @@ Item_GObj* it_802B2FC8(HSD_GObj* parent, Vec3* pos, f32 dir)
     Item_InitSpawnCommonFields(&spawn, parent, dir, true);
     item_gobj = Item_80268B18(&spawn);
     if (item_gobj != NULL) {
+        { Item* ip = GET_ITEM(item_gobj); OSReport("DBGSP1 pos=%d,%d cur=%d,%d prev=%d,%d ecbtop=%d pecbtop=%d\n", (int)(ip->pos.x*1000),(int)(ip->pos.y*1000),(int)(ip->x378_itemColl.cur_pos.x*1000),(int)(ip->x378_itemColl.cur_pos.y*1000),(int)(ip->x378_itemColl.prev_pos.x*1000),(int)(ip->x378_itemColl.prev_pos.y*1000),(int)(ip->x378_itemColl.ecb.top.y*1000),(int)(ip->x378_itemColl.prev_ecb.top.y*1000)); }
         it_802B322C(item_gobj, parent);
+        { Item* ip = GET_ITEM(item_gobj); OSReport("DBGSP2 pos=%d,%d vel=%d,%d prev=%d,%d\n", (int)(ip->pos.x*1000),(int)(ip->pos.y*1000),(int)(ip->x40_vel.x*1000),(int)(ip->x40_vel.y*1000),(int)(ip->x378_itemColl.prev_pos.x*1000),(int)(ip->x378_itemColl.prev_pos.y*1000)); }
         db_80225DD8(item_gobj, parent);
         return item_gobj;
     }

@@ -962,7 +962,7 @@ pub mod ext {
     fn HSD_CObjAlloc() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjAlloc();
     fn HSD_CObjEndCurrent() = crate::tu::cobj::HSD_CObjEndCurrent();
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = crate::tu::cobj::HSD_CObjGetCurrent();
-    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void);
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut c_void) = crate::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _);
     fn HSD_CObjSetCurrent(a0: *mut HSD_CObj) -> i32 = crate::tu::cobj::HSD_CObjSetCurrent(a0) as _;
     fn HSD_CObjSetEyePosition(a0: *mut HSD_CObj, a1: *mut Vec);
     fn HSD_CObjSetFar(a0: *mut HSD_CObj, a1: f32) = crate::tu::cobj::HSD_CObjSetFar(a0, a1);

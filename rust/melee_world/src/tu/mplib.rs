@@ -72,7 +72,7 @@ pub mod ext {
     fn Ground_801C0498() -> f32 = || unsafe { crate::tu::ground::Ground_801C0498() as _ };
     fn Ground_801C2D24(a0: i32, a1: *mut Vec) -> i32 = |a0: i32, a1: *mut Vec| unsafe { crate::tu::ground::Ground_801C2D24(a0 as _, a1 as _) as _ };
     fn HSD_CObjGetCurrent() -> *mut HSD_CObj = || unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ };
-    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]);
+    fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) = |a0: *mut HSD_CObj, a1: *mut [f32; 4]| unsafe { melee_runtime::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _) };
     fn HSD_GObj_SetupProc(a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8) -> *mut HSD_GObjProc = |a0: *mut HSD_GObj, a1: Option<unsafe extern "C" fn(*mut HSD_GObj)>, a2: u8| unsafe { melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_JObjGetFlags(a0: *mut HSD_JObj) -> u32 = |a0: *mut HSD_JObj| unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(a0 as _) as _ };
     fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);

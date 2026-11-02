@@ -21,10 +21,13 @@ pub struct Presenter {
     /// Frames presented / swapchain images that could not be acquired (skipped).
     pub presented: u64,
     pub skipped: u64,
+    /// The internal scale follows the window (no `MELEE_RENDER_SCALE`).
+    auto_scale: bool,
     /// The last two sim frames (render-only interpolation: never fed back into the game).
     prev: Option<Vec<DrawCmd>>,
     cur: Option<Vec<DrawCmd>>,
-    scratch: Vec<Vec<u8>>,
+    /// `cur` is the renderer's prepared frame (geometry uploaded, pipelines looked up).
+    prepared: bool,
     /// The EFB holds a blend, not `cur` itself.
     blended: bool,
 }
@@ -43,11 +46,9 @@ fn mtx_ranges(d: &DrawCmd) -> [(usize, usize); 2] {
     [(base, pos_end), (nrm, nrm + 480)]
 }
 
-/// Blend `prev` -> `cur` matrices at `t` into `out` (a copy of cur's uniform). Only structurally
+/// Blend `prev` -> `cur` matrices at `t` into `out` (cur's uniform block, already copied). Only structurally
 /// identical draws blend; anything else keeps the current frame's values.
-fn blend_uniform(prev: &DrawCmd, cur: &DrawCmd, t: f32, out: &mut Vec<u8>) {
-    out.clear();
-    out.extend_from_slice(&cur.uniform);
+fn blend_into(prev: &DrawCmd, cur: &DrawCmd, t: f32, out: &mut [u8]) {
     if prev.prim != cur.prim || prev.fmt != cur.fmt || prev.vtx_count != cur.vtx_count || prev.current_pn_mtx != cur.current_pn_mtx
         || prev.uniform.len() != cur.uniform.len() || prev.info.line_mode != cur.info.line_mode
     {
@@ -64,14 +65,21 @@ fn blend_uniform(prev: &DrawCmd, cur: &DrawCmd, t: f32, out: &mut Vec<u8>) {
     if rd(&prev.uniform, p33) != rd(&cur.uniform, p33) {
         start = a0 + 64;
     }
-    for (lo, hi) in [(start, a1), (n0, n1)] {
+    // Without a per-vertex matrix index the draw reads only its current matrix slot (GXSetCurrentMtx: id / 3).
+    let slot = cur.current_pn_mtx as usize / 3;
+    let skinned = cur.config.shader.attrs[0].attr_type != melee_gx::consts::GX_NONE as u8;
+    let ranges: [(usize, usize); 3] = if skinned || slot >= 10 {
+        [(start, a1), (n0, n1), (0, 0)]
+    } else {
+        let pos = a0 + 64 + slot * 48;
+        [(start, a0 + 64), (pos, pos + 48), (n0 + slot * 48, n0 + slot * 48 + 48)]
+    };
+    for (lo, hi) in ranges {
         let mut o = lo;
         while o < hi {
             let (p, c) = (rd(&prev.uniform, o), rd(&cur.uniform, o));
-            let v = p + (c - p) * t;
-            if v.is_finite() {
-                out[o..o + 4].copy_from_slice(&v.to_le_bytes());
-            }
+            let v = if p != c { p + (c - p) * t } else { c };
+            out[o..o + 4].copy_from_slice(&(if v.is_finite() { v } else { c }).to_le_bytes());
             o += 4;
         }
     }
@@ -83,7 +91,12 @@ impl Presenter {
         let instance = Renderer::instance();
         let size = window.inner_size();
         let surface = instance.create_surface(window).map_err(|e| format!("create_surface: {e}"))?;
-        let renderer = Renderer::with_instance(&instance, Some(&surface), EFB_WIDTH, EFB_HEIGHT)?;
+        let mut renderer = Renderer::with_instance(&instance, Some(&surface), EFB_WIDTH, EFB_HEIGHT)?;
+        // Render the 3D scene at the window's resolution (the EFB's 4:3 coordinates scaled), not at 640x480 upscaled.
+        let auto_scale = Renderer::env_scale().is_none();
+        if auto_scale {
+            renderer.set_scale(Renderer::scale_for_window(size.width, size.height));
+        }
         let caps = surface.get_capabilities(&renderer.adapter);
         // The EFB holds display-space values already (no sRGB decode on the GC), so prefer a
         // non-sRGB swapchain format; the blit copies the bytes through.
@@ -114,7 +127,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, presented: 0, skipped: 0, prev: None, cur: None, scratch: Vec::new(), blended: false })
+        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -128,12 +141,17 @@ impl Presenter {
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.renderer.device, &self.config);
+        if self.auto_scale {
+            self.renderer.set_scale(Renderer::scale_for_window(width, height));
+            self.blended = true; // the targets were recreated: re-render the current frame
+        }
     }
 
     /// Render `frame` (if the game finished one) into the EFB, then present the EFB.
     pub fn present(&mut self, state: &GxState, frame: Option<&[DrawCmd]>) {
         if let Some(draws) = frame {
             self.renderer.render_frame(state, draws);
+            self.prepared = false;
         }
         self.swap_present();
     }
@@ -146,28 +164,32 @@ impl Presenter {
         let fresh = frame.is_some();
         if let Some(f) = frame {
             self.prev = self.cur.replace(f);
+            self.prepared = false;
         }
-        match (alpha, self.prev.as_ref(), self.cur.as_mut()) {
-            (Some(t), Some(prev), Some(cur)) if prev.len() == cur.len() => {
-                let t = t.clamp(0.0, 1.0) as f32;
-                self.scratch.resize_with(cur.len(), Vec::new);
-                for (i, d) in cur.iter().enumerate() {
-                    blend_uniform(&prev[i], d, t, &mut self.scratch[i]);
-                }
-                for (d, s) in cur.iter_mut().zip(self.scratch.iter_mut()) {
-                    std::mem::swap(&mut d.uniform, s);
-                }
-                self.renderer.render_frame(state, cur);
-                for (d, s) in cur.iter_mut().zip(self.scratch.iter_mut()) {
-                    std::mem::swap(&mut d.uniform, s);
-                }
-                self.blended = true;
+        let Some(cur) = self.cur.as_ref() else {
+            self.swap_present();
+            return;
+        };
+        let blend = match (alpha, self.prev.as_ref()) {
+            (Some(t), Some(prev)) if prev.len() == cur.len() => Some((t.clamp(0.0, 1.0) as f32, prev)),
+            _ => None,
+        };
+        if blend.is_some() || fresh || self.blended {
+            if !self.prepared {
+                self.renderer.prepare(state, cur);
+                self.prepared = true;
             }
-            (_, _, Some(cur)) if fresh || self.blended => {
-                self.renderer.render_frame(state, cur);
-                self.blended = false;
+            match blend {
+                Some((t, prev)) => {
+                    let mut f = |i: usize, out: &mut [u8]| blend_into(&prev[i], &cur[i], t, out);
+                    self.renderer.draw_prepared(state, cur, Some(&mut f));
+                    self.blended = true;
+                }
+                None => {
+                    self.renderer.draw_prepared(state, cur, None);
+                    self.blended = false;
+                }
             }
-            _ => {}
         }
         self.swap_present();
     }

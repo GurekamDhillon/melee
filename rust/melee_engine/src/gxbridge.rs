@@ -126,7 +126,7 @@ pub fn GXPosition3f32(x: f32, y: f32, z: f32) { vtx().gx.position3f32(x, y, z) }
 pub fn GXPosition2f32(x: f32, y: f32) { vtx().gx.position2f32(x, y) }
 pub fn GXNormal3f32(x: f32, y: f32, z: f32) { vtx().gx.normal3f32(x, y, z) }
 pub fn GXColor4u8(r: u8, g: u8, b: u8, a: u8) { vtx().gx.color4u8(r, g, b, a) }
-pub fn GXColor3u8(r: u8, g: u8, b: u8) { vtx().gx.color4u8(r, g, b, 255) }
+pub fn GXColor3u8(r: u8, g: u8, b: u8) { let g8 = &mut vtx().gx; g8.cmd1u8(r); g8.cmd1u8(g); g8.cmd1u8(b) } // 3 bytes (GX_RGB8), as the SDK and Aurora write it
 pub fn GXColor1x8(i: u8) { vtx().gx.color1x8(i) }
 pub fn GXColor1x16(i: u16) { vtx().gx.cmd1u16(i) }
 pub fn GXColor1u16(c: u16) { vtx().gx.cmd1u16(c) }

@@ -11,6 +11,7 @@ melee_core.workspace = true
 wgpu = "27"
 pollster = "0.4"
 bytemuck = "1"
+rustc-hash = "2.1"
 
 [dev-dependencies]
 png = "0.18"

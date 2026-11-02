@@ -846,7 +846,14 @@ impl Play {
         let r = su.rules;
         log(&format!("loading {} on {} ({}, items {}, teams {}), engine match {}", who.join(" v "), stage_name,
             if r.stock { format!("{} stock", r.stocks) } else { format!("{} s time", r.time_secs) }, ITEM_NAMES[r.items as usize], r.teams, self.matches_played + 1));
-        let scn = Self::scenario_of(&su);
+        // MELEE_PLAY_SCENE=<scene string>: any scenario's match instead (e.g. a 4-player CPU free-for-all for profiling).
+        let scn = match std::env::var("MELEE_PLAY_SCENE") {
+            Ok(s) => match melee_engine::scenario::Scenario::parse(&s) {
+                Ok(x) => x,
+                Err(e) => { log(&format!("MELEE_PLAY_SCENE: {e}")); Self::scenario_of(&su) }
+            },
+            Err(_) => Self::scenario_of(&su),
+        };
         let built = if let Some(mut e) = self.spare.take() {
             // the next match of the run: the engine stays booted (Engine::next_vs, the C mode loop's next scene)
             e.next_vs(scn).map(|()| e)
@@ -1234,7 +1241,7 @@ impl Play {
         let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
         let px = p.screenshot();
         let path = dir.join(format!("play_{name}.png"));
-        match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
+        match write_png(&path, p.renderer.width, p.renderer.height, &px) {
             Ok(()) => log(&format!("screenshot {}", path.display())),
             Err(e) => log(&format!("screenshot: {e}")),
         }

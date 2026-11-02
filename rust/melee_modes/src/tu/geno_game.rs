@@ -75,23 +75,16 @@ fn ftCommon_CalcSelfAccel_DeaccelAir(a0: *mut Fighter);
 fn ftCommon_CalcSelfAccel_Drift(a0: *mut Fighter);
 fn ftCommon_Fall(a0: *mut Fighter, a1: f32, a2: f32);
 fn ftCommon_8007D5D4(a0: *mut Fighter) = crate::tu::adapt::ftCommon_8007D5D4__8cebce;
-fn ftCommon_UseAllJumps(a0: *mut Fighter);
 fn ftCommon_8007D7FC(a0: *mut Fighter) = crate::tu::adapt::ftCommon_8007D7FC__490b7b;
-fn ftPartSetRotX(a0: *mut Fighter, a1: i32, a2: f32) = crate::tu::adapt::ftPartSetRotX__0c58b0;
 fn ftPartSetRotY(a0: *mut Fighter, a1: i32, a2: f32) = crate::tu::adapt::ftPartSetRotY__9ef908;
 fn ftCo_8009917C(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_8009917C__02d948;
 fn ftCo_Fall_Enter(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Fall_Enter__5f227e;
-fn ftCo_Fall_IASA(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Fall_IASA__163f16;
 fn ftCo_800968C8(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_800968C8__1d49d6;
 fn ftCo_80096CC8(a0: *mut Fighter_GObj, a1: i32) -> i32 = crate::tu::adapt::ftCo_80096CC8__f60bbf;
 fn ftCo_80096D28(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_80096D28__30b1a1;
 fn ftCo_Landing_Enter_Basic(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Landing_Enter_Basic__b5080f;
 fn ftCo_LandingFallSpecial_Enter_Basic(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_LandingFallSpecial_Enter_Basic__94c260;
 fn ftCo_LandingFallSpecial_Enter(a0: *mut Fighter_GObj, a1: i32, a2: f32) = crate::tu::adapt::ftCo_LandingFallSpecial_Enter__90d150;
-fn ftCo_Wait_IASA(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Wait_IASA__a48c3f;
-fn HSD_AObjSetFlags(a0: *mut HSD_AObj, a1: u32) = crate::tu::adapt::HSD_AObjSetFlags__2e5e0e;
-fn HSD_AObjSetRate(a0: *mut HSD_AObj, a1: f32) = crate::tu::adapt::HSD_AObjSetRate__1c2c90;
-fn HSD_AObjSetEndFrame(a0: *mut HSD_AObj, a1: f32) = crate::tu::adapt::HSD_AObjSetEndFrame__29ad4f;
 fn HSD_JObjSetupMatrixSub(a0: *mut HSD_JObj);
 fn HSD_JObjSetMtxDirtySub(a0: *mut HSD_JObj);
 fn HSD_JObjGetDObj(a0: *mut HSD_JObj) -> *mut HSD_DObj;
@@ -154,7 +147,8 @@ fn ft_80084104(a0: *mut Fighter_GObj) = crate::tu::adapt::ft_80084104__46f90b;
 fn ft_80084280(a0: *mut Fighter_GObj) = crate::tu::adapt::ft_80084280__930c83;
 fn ft_80084DB0(a0: *mut Fighter_GObj) = crate::tu::adapt::ft_80084DB0__838ea6;
 fn ft_80084F3C(a0: *mut Fighter_GObj) = crate::tu::adapt::ft_80084F3C__408261;
-fn ftCo_800D72A0(a0: *mut Fighter) -> i32 = crate::tu::adapt::ftCo_800D72A0__eb6456;
+fn ftCo_800D705C(a0: *mut Fighter_GObj) -> i32;
+fn ftCo_800D7100(a0: *mut Fighter_GObj) -> i32;
 fn mpCollSetFacingDir(a0: *mut CollData, a1: i32) = crate::tu::adapt::mpCollSetFacingDir__b3708c;
 fn mpColl_80047AC8(a0: *mut CollData, a1: Option<unsafe extern "C" fn(*mut Fighter_GObj, enum_t) -> i32>, a2: *mut Fighter_GObj) -> i32;
 fn mpColl_80047E14(a0: *mut CollData, a1: Option<unsafe extern "C" fn(*mut Fighter_GObj, enum_t) -> i32>, a2: *mut Fighter_GObj) -> i32;
@@ -162,6 +156,17 @@ fn ft_80081A00(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ft_80081A00__86
 fn ftCliffCommon_80081298(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCliffCommon_80081298__08ff6d;
 fn Geno_ProfileCount() -> i32;
 fn Geno_WarnIasa(a0: i32, a1: i32);
+fn ftColl_CreateReflectHit(a0: *mut Fighter_GObj, a1: *mut ReflectDesc, a2: HSD_GObjEvent);
+fn ftCo_800C3B10(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_800C3B10__3d9d5c;
+fn ftCo_AttackS4_CheckInput(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_AttackS4_CheckInput__48fe9d;
+fn ftCo_Dash_CheckInput(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_Dash_CheckInput__1e8d28;
+fn ftCo_80095328(a0: *mut Fighter_GObj, a1: *mut i32) -> i32;
+fn ftCo_Jump_CheckInput(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_Jump_CheckInput__ff2f50;
+fn ftCo_Jump_Enter(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Jump_Enter__230c83;
+fn ftCo_800CB870(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_800CB870__e3acbf;
+fn ftCo_JumpAerial_Enter_Basic(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_JumpAerial_Enter_Basic__4afd40;
+fn ftCo_Turn_CheckInput(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_Turn_CheckInput__96ef34;
+fn ftCo_Walk_CheckInput(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::ftCo_Walk_CheckInput__5c6c59;
 fn Geno_LuaFn(a0: i32, a1: i32, a2: i32) -> i32;
 fn Geno_LuaSlots(a0: i32) -> i32;
 fn Geno_LuaCall(a0: i32, a1: i32, a2: i32, a3: *mut c_void) -> i32;
@@ -226,18 +231,16 @@ fn snap_load(a0: i32) -> i32;
 fn Geno_ComboWord(a0: i32, a1: i32, a2: i32) -> i32;
 fn Geno_ComboNote(a0: i32, a1: i32, a2: i32, a3: i32, a4: i32, a5: i32);
 fn ftCo_AttackAir_EnterFromMsid(a0: *mut Fighter_GObj, a1: FtMotionId) = crate::tu::adapt::ftCo_AttackAir_EnterFromMsid__52a3a7;
-fn ftCo_JumpAerial_Enter_Basic(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_JumpAerial_Enter_Basic__4afd40;
-fn ftCo_Jump_Enter(a0: *mut Fighter_GObj) = crate::tu::adapt::ftCo_Jump_Enter__230c83;
 fn __frsqrte(a0: f64) -> f64;
 fn Geno_DefineVoiceState(a0: i32, a1: u32, a2: i32) -> i32;
 fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
 fn HSD_ForeachAnim(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64) = crate::tu::adapt::HSD_ForeachAnim__175c67;
 }
-pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
-pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
-pub use crate::tu::script_game::ftPartsTable;
-pub use crate::tu::script_game::p_ftCommonData;
-pub use melee_world::tu::mpcoll::mpColl_LedgeLevelOK;
+pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
+pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
+pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
+pub static mut mpColl_LedgeLevelOK: i32 = unsafe { core::mem::zeroed() };
 pub static mut ftData_MotionStateList: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftMr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftCa_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
@@ -247,18 +250,17 @@ pub static mut ftMs_Init_MotionStateTable: [MotionState; 400] = unsafe { core::m
 pub static mut ftPr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub use crate::tu::script_game::hsd_804D78FC;
-pub use crate::tu::script_game::hsd_804D0908;
-pub use melee_items::tu::it_3F14::it_803F14C4;
-pub use melee_world::itacc::it_804A0F60;
-pub use crate::tu::script_game::it_804D6D24;
-pub use melee_items::tu::it_3F14::it_804D6D28;
+pub static mut hsd_804D78FC: *mut HSD_Generator = unsafe { core::mem::zeroed() };
+pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
+pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
+pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
+pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
+pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
 }
 use ext::*;
+mod data;
+pub use data::{gb_sinq};
 pub const M_PI: f64 = 3.14159265358979323846f64;
-
-pub const Collide_WallMask: i32 = Collide_LeftWallMask
-    | Collide_RightWallMask;
 
 pub const HSD_PAD_XY: i32 = HSD_PAD_X | HSD_PAD_Y;
 
@@ -410,15 +412,15 @@ pub const GENO_SF_SCRIPT: u32 = 1 as u32;
 pub const GENO_PLAYERS: i32 = 6 as i32;
 
 pub const GENO_NHOOKS: i32 = (::core::mem::size_of::<
-    [Anon_anon_503; 7],
+    [Anon_anon_333; 7],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_503>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_333>() as usize)
     as i32;
 
 pub const GENO_NATTRS: i32 = (::core::mem::size_of::<
-    [Anon_anon_939; 76],
+    [Anon_anon_766; 76],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_939>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_766>() as usize)
     as i32;
 
 pub const GENO_PROFILE_STORAGE_BYTES: u32 = (2 as u32)
@@ -432,17 +434,20 @@ pub const GENO_AUTO: u32 = GENO_TGT_AUTO;
 pub const GENO_NONE_T: u32 = 0xffffffff as u32;
 
 pub const GENO_NPARAMDEFS: i32 = (::core::mem::size_of::<
-    [GenoParamDef; 78],
+    [GenoBhvParamDef; 90],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<GenoParamDef>() as usize) as i32;
+    .wrapping_div(::core::mem::size_of::<GenoBhvParamDef>() as usize)
+    as i32;
 
-pub const GENO_DEG2RAD: f32 = 0.017453292f32;
+pub const GENO_BHV_SINQ_N: i32 = 1025 as i32;
 
-pub const GENO_NCBS: i32 = (::core::mem::size_of::<[GenoCbDef; 42]>()
+pub const GENO_BHV_DZ2: f32 = 0.0826f32;
+
+pub const GENO_NCBS: i32 = (::core::mem::size_of::<[GenoCbDef; 45]>()
     as usize)
     .wrapping_div(::core::mem::size_of::<GenoCbDef>() as usize) as i32;
 
-pub const GENO_NBHVS: i32 = (::core::mem::size_of::<[GenoBhvDef; 16]>()
+pub const GENO_NBHVS: i32 = (::core::mem::size_of::<[GenoBhvDef; 17]>()
     as usize)
     .wrapping_div(::core::mem::size_of::<GenoBhvDef>() as usize) as i32;
 
@@ -451,9 +456,9 @@ pub const EF_MEX_MDL_START: i32 = 5000 as i32;
 pub const EF_MEX_END: i32 = 9000 as i32;
 
 pub const GENO_NSF: i32 = (::core::mem::size_of::<
-    [Anon_anon_2511; 42],
+    [Anon_anon_2375; 42],
 >() as usize)
-    .wrapping_div(::core::mem::size_of::<Anon_anon_2511>() as usize)
+    .wrapping_div(::core::mem::size_of::<Anon_anon_2375>() as usize)
     as i32;
 
 pub const GENO_ITEM_KIND_BASE: i32 = GENO_ART_KIND_END;
@@ -506,9 +511,9 @@ pub static mut Geno_StateBlock: [[GenoState; 2]; 6] = unsafe { core::mem::zeroed
 
 pub static mut Geno_LuaBlock: [[GenoLuaBlock; 2]; 6] = unsafe { core::mem::zeroed() };
 
-pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
+pub static mut geno_hooks: [Anon_anon_333; 7] = unsafe {
     [
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_LOG as i32,
             name: b"geno.log\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -521,7 +526,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_JUMPS_REFILL as i32,
             name: b"geno.jumps.refill\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -534,7 +539,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_JUMPS_TO_VAR as i32,
             name: b"geno.jumps.to_var\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -547,7 +552,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_COUNT_FRAMES as i32,
             name: b"geno.count_frames\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -560,7 +565,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_ARTICLE_SPAWN as i32,
             name: b"geno.article.spawn\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -573,7 +578,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_LOCKON as i32,
             name: b"geno.lockon\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -586,7 +591,7 @@ pub static mut geno_hooks: [Anon_anon_503; 7] = unsafe {
                     ) -> i32,
             ),
         },
-        Anon_anon_503 {
+        Anon_anon_333 {
             id: GENO_HOOK_AIM_STICK as i32,
             name: b"geno.aim_stick\0" as *const u8 as *const i8,
             r#fn: Some(
@@ -608,396 +613,396 @@ pub static mut Geno_ScriptPoolGen: i32 = unsafe { core::mem::zeroed() };
 
 pub static mut Geno_OverlayOrig: [*mut CmdUnion; 2560] = unsafe { core::mem::zeroed() };
 
-pub static mut geno_attrs: [Anon_anon_939; 76] = [
-    Anon_anon_939 {
+pub static mut geno_attrs: [Anon_anon_766; 76] = [
+    Anon_anon_766 {
         name: b"walk_accel_mul\0" as *const u8 as *const i8,
         offset: 0 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"walk_accel_base\0" as *const u8 as *const i8,
         offset: 4 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"walk_max_vel\0" as *const u8 as *const i8,
         offset: 8 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"slow_walk_max\0" as *const u8 as *const i8,
         offset: 12 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"mid_walk_point\0" as *const u8 as *const i8,
         offset: 16 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"fast_walk_min\0" as *const u8 as *const i8,
         offset: 20 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"ground_friction\0" as *const u8 as *const i8,
         offset: 24 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"dash_initial_velocity\0" as *const u8 as *const i8,
         offset: 28 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"dash_accel_mul\0" as *const u8 as *const i8,
         offset: 32 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"dash_accel_base\0" as *const u8 as *const i8,
         offset: 36 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"dash_max_velocity\0" as *const u8 as *const i8,
         offset: 40 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"run_animation_scaling\0" as *const u8 as *const i8,
         offset: 44 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"max_run_brake_frames\0" as *const u8 as *const i8,
         offset: 48 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"ground_max_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 52 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jump_startup_time\0" as *const u8 as *const i8,
         offset: 56 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jump_h_initial_velocity\0" as *const u8 as *const i8,
         offset: 60 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jump_v_initial_velocity\0" as *const u8 as *const i8,
         offset: 64 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"ground_to_air_jump_momentum_multiplier\0" as *const u8
             as *const i8,
         offset: 68 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jump_h_max_velocity\0" as *const u8 as *const i8,
         offset: 72 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"hop_v_initial_velocity\0" as *const u8 as *const i8,
         offset: 76 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"air_jump_v_multiplier\0" as *const u8 as *const i8,
         offset: 80 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"air_jump_h_multiplier\0" as *const u8 as *const i8,
         offset: 84 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"max_jumps\0" as *const u8 as *const i8,
         offset: 88 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"gravity\0" as *const u8 as *const i8,
         offset: 92 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"terminal_velocity\0" as *const u8 as *const i8,
         offset: 96 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"air_drift_stick_mul\0" as *const u8 as *const i8,
         offset: 100 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"aerial_drift_base\0" as *const u8 as *const i8,
         offset: 104 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"air_drift_max\0" as *const u8 as *const i8,
         offset: 108 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"aerial_friction\0" as *const u8 as *const i8,
         offset: 112 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"fast_fall_velocity\0" as *const u8 as *const i8,
         offset: 116 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"air_max_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 120 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jab_2_input_window\0" as *const u8 as *const i8,
         offset: 124 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"jab_3_input_window\0" as *const u8 as *const i8,
         offset: 128 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"standing_turn_frames\0" as *const u8 as *const i8,
         offset: 132 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"weight\0" as *const u8 as *const i8,
         offset: 136 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"model_scaling\0" as *const u8 as *const i8,
         offset: 140 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"initial_shield_size\0" as *const u8 as *const i8,
         offset: 144 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"shield_break_initial_velocity\0" as *const u8
             as *const i8,
         offset: 148 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"rapid_jab_window\0" as *const u8 as *const i8,
         offset: 152 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"clank_animation_length\0" as *const u8 as *const i8,
         offset: 156 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"hit_spark_variant\0" as *const u8 as *const i8,
         offset: 160 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"ledge_jump_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 168 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"ledge_jump_vertical_velocity\0" as *const u8
             as *const i8,
         offset: 172 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"item_throw_velocity_multiplier\0" as *const u8
             as *const i8,
         offset: 176 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"heavy_throw_velocity_multiplier\0" as *const u8
             as *const i8,
         offset: 180 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"specials_ground_speed_retention\0" as *const u8
             as *const i8,
         offset: 184 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"kirby_b_star_damage\0" as *const u8 as *const i8,
         offset: 224 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"normal_landing_lag\0" as *const u8 as *const i8,
         offset: 228 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"landingairn_lag\0" as *const u8 as *const i8,
         offset: 232 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"landingairf_lag\0" as *const u8 as *const i8,
         offset: 236 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"landingairb_lag\0" as *const u8 as *const i8,
         offset: 240 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"landingairhi_lag\0" as *const u8 as *const i8,
         offset: 244 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"landingairlw_lag\0" as *const u8 as *const i8,
         offset: 248 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"name_tag_height\0" as *const u8 as *const i8,
         offset: 252 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"passivewall_vel_x\0" as *const u8 as *const i8,
         offset: 256 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"wall_jump_horizontal_velocity\0" as *const u8
             as *const i8,
         offset: 260 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"wall_jump_vertical_velocity\0" as *const u8
             as *const i8,
         offset: 264 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"passiveceil_vel_x\0" as *const u8 as *const i8,
         offset: 268 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"trophy_scale\0" as *const u8 as *const i8,
         offset: 272 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"screw_attack_launch_velocity\0" as *const u8
             as *const i8,
         offset: 320 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"wall_jump_min_approach_speed\0" as *const u8
             as *const i8,
         offset: 328 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"damageice_ice_size\0" as *const u8 as *const i8,
         offset: 332 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"damageicejump_vel_y\0" as *const u8 as *const i8,
         offset: 344 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"damageicejump_vel_x_mult\0" as *const u8 as *const i8,
         offset: 348 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"respawn_platform_scale\0" as *const u8 as *const i8,
         offset: 352 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"warp_star_hitbox_scale\0" as *const u8 as *const i8,
         offset: 356 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"camera_zoom_target_bone\0" as *const u8 as *const i8,
         offset: 364 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"unused_0\0" as *const u8 as *const i8,
         offset: 164 as u64 as i32,
         is_int: 1 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"xDC\0" as *const u8 as *const i8,
         offset: 220 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x12C\0" as *const u8 as *const i8,
         offset: 300 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x13C\0" as *const u8 as *const i8,
         offset: 316 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x144\0" as *const u8 as *const i8,
         offset: 324 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x150_damageice_unk\0" as *const u8 as *const i8,
         offset: 336 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x154_damageice_unk\0" as *const u8 as *const i8,
         offset: 340 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x168\0" as *const u8 as *const i8,
         offset: 360 as u64 as i32,
         is_int: 0 as i32,
     },
-    Anon_anon_939 {
+    Anon_anon_766 {
         name: b"x17C\0" as *const u8 as *const i8,
         offset: 380 as u64 as i32,
         is_int: 0 as i32,
@@ -1020,490 +1025,560 @@ pub static mut Geno_RowCount: *mut i32 = unsafe { core::mem::zeroed() };
 
 pub static mut Geno_ProfileCapacity: i32 = unsafe { core::mem::zeroed() };
 
-pub static mut Geno_ProfileStorage: Anon_anon_14 = unsafe { core::mem::zeroed() };
+pub static mut Geno_ProfileStorage: Anon_anon_16 = unsafe { core::mem::zeroed() };
 
 pub static mut Geno_ProfileStorageUsed: u32 = unsafe { core::mem::zeroed() };
 
-pub static mut geno_params: [GenoParamDef; 78] = [
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"angle_max\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 0 as i32,
-        def: 80.0f32,
+pub static mut geno_bhv_params: [GenoBhvParamDef; 90] = [
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"max_glides\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_max_glides as i32,
+        def: 2 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"angle_min\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 1 as i32,
-        def: -70.0f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"entry_hold\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_entry_hold as i32,
+        def: 6 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"start_vy\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 2 as i32,
-        def: 0.75f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"flick_window\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_flick_window as i32,
+        def: 12 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"start_gravity\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 3 as i32,
-        def: 1.0f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"start_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_start_frames as i32,
+        def: 12 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"start_vx\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 4 as i32,
-        def: 1.0f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"trip_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_trip_frames as i32,
+        def: 30 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"speed\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 5 as i32,
-        def: 1.7f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"land_lag\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_land_lag as i32,
+        def: 14 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"speed_accel\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 6 as i32,
-        def: 0.04f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"jumpout_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_jumpout_frames as i32,
+        def: 8 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"max_speed\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 7 as i32,
-        def: 2.2f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_frames as i32,
+        def: 28 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"stall_speed\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 8 as i32,
-        def: 0.7f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_hit0\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_hit0 as i32,
+        def: 8 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"sink_accel\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 9 as i32,
-        def: 0.03f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_hit1\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_hit1 as i32,
+        def: 14 as i32 as f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"max_sink\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 10 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_endlag\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_endlag as i32,
+        def: 14 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_buf_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_buf_frames as i32,
+        def: 6 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"entry_vy_max\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_entry_vy_max as i32,
         def: 0.6f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"recover_angle\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 11 as i32,
-        def: 15.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"dive_angle\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 12 as i32,
-        def: -25.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"dive_bonus\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 13 as i32,
-        def: 0.03f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"w14\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 14 as i32,
-        def: 0.15f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"deadzone\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 15 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"apex_vy\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_apex_vy as i32,
         def: 0.25f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"pitch_up\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 16 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"flick_thr\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_flick_thr as i32,
         def: 0.55f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"pitch_down\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 17 as i32,
-        def: 0.75f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"s_start\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_s_start as i32,
+        def: 1.50f32,
     },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"max_pitch_rate\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 18 as i32,
-        def: 7.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"stall_pitch\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 19 as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"wing_node\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 20 as i32,
-        def: 44.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"w21\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_W0 as i32 + 21 as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"hold_frames\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_HOLD as i32,
-        def: 16.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"from_ground_jump\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_FROM_JUMP as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"end_helpless\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_END_HELPLESS as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"landing_lag\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_LANDING_LAG as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"entry\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_ENTRY as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"max_frames\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_MAX_FRAMES as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"pose_center\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_POSE as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"end_buttons\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_END_BUTTONS as i32,
-        def: (GENO_BTN_SHIELD | GENO_BTN_SPECIAL | GENO_BTN_JUMP) as f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"entry_vy\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 0 as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"entry_vx_mul\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 1 as i32,
-        def: 0.7f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"start_rate\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 2 as i32,
-        def: 80.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"ground_accel\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 3 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"start_accel\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_start_accel as i32,
         def: 0.12f32,
     },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"ground_speed\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 4 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"s_start_cap\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_s_start_cap as i32,
         def: 2.0f32,
     },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"air_accel\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 5 as i32,
-        def: 0.1f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"theta_def\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_theta_def as i32,
+        def: -5.0f32,
     },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"air_speed\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 6 as i32,
-        def: 1.7f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"r_down\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_r_down as i32,
+        def: 60.0f32,
     },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"brake\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 7 as i32,
-        def: 0.008f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"r_up\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_r_up as i32,
+        def: 85.0f32,
     },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"gravity\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 8 as i32,
-        def: -0.08f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"max_fall\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 9 as i32,
-        def: 0.5f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"tap_vy\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 10 as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"tap_cooldown\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 11 as i32,
-        def: 10.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"max_rise\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 12 as i32,
-        def: 1.4f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"tap_rate\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 13 as i32,
-        def: 16.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"max_rate\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 14 as i32,
-        def: 80.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"rate_decay\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 15 as i32,
-        def: 1.5f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"spin_frames\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 16 as i32,
-        def: 70.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"late_decay\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 17 as i32,
-        def: 2.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"end_rate\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 18 as i32,
-        def: 10.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"w19\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_W0 as i32 + 19 as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"max_speed\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_MAX_SPEED as i32,
-        def: 2.5f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"end_helpless\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_END_HELPLESS as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"spin_anim\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_SPIN_ANIM as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"tornado\0" as *const u8 as *const i8,
-        name: b"spin_period\0" as *const u8 as *const i8,
-        id: GENO_P_TORNADO_SPIN_PERIOD as i32,
-        def: 0.0f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"start_vx_mul\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 0 as i32,
-        def: 0.5f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"start_vy\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 1 as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"start_gravity\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 2 as i32,
-        def: -0.08f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"steer\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 3 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"turn_rate\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_turn_rate as i32,
         def: 3.0f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"end_frames\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 4 as i32,
-        def: 10.0f32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"gk\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_gk as i32,
+        def: 0.0366f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"w05\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_W0 as i32 + 5 as i32,
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"drag\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_drag as i32,
+        def: 0.002f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"s_max\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_s_max as i32,
+        def: 2.40f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"s_stall\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_s_stall as i32,
+        def: 0.35f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"trip_angle\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_trip_angle as i32,
+        def: 30.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_speed_keep\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_speed_keep as i32,
+        def: 0.6f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"chain_speed_mul\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_chain_speed_mul as i32,
+        def: 0.75f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"chain_turn_mul\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_chain_turn_mul as i32,
+        def: 1.4f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"attack_damage\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_attack_damage as i32,
+        def: 12 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"auto_entry\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_auto_entry as i32,
+        def: 1.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"GLIDE\0" as *const u8 as *const i8,
+        name: b"pose_center\0" as *const u8 as *const i8,
+        id: GENO_BP_GLIDE_pose_center as i32,
         def: 0.0f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"speed\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_SPEED as i32,
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"start_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_start_frames as i32,
+        def: 12 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"read_period\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_read_period as i32,
+        def: 10 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"read_limit\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_read_limit as i32,
+        def: 70 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"end_frames\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_end_frames as i32,
+        def: 29 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"ledge_lock\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_ledge_lock as i32,
+        def: 6 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"final_hit_ground\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_final_hit_ground as i32,
+        def: 3 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"final_hit_air\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_final_hit_air as i32,
+        def: 2 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"loop_damage\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_loop_damage as i32,
+        def: 1 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"final_damage\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_final_damage as i32,
+        def: 3 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"spin0\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_spin0 as i32,
+        def: 80.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"decay_a\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_decay_a as i32,
+        def: 1.5f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"decay_b\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_decay_b as i32,
         def: 2.0f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"angle_max\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_ANGLE_MAX as i32,
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"mash_add\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_mash_add as i32,
+        def: 16.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"spin_max\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_spin_max as i32,
+        def: 80.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"spin_end\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_spin_end as i32,
+        def: 10.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"grav_tn\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_grav as i32,
+        def: 0.0239f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"rise_impulse\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_rise_impulse as i32,
+        def: 0.9f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"rise_max\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_rise_max as i32,
+        def: 1.6f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"fall_tn\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_fall_max as i32,
+        def: 0.50f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"vx_max\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_vx_max as i32,
+        def: 1.1f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"vx_max_ground\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_vx_max_ground as i32,
+        def: 1.3f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"vx_accel\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_vx_accel as i32,
+        def: 0.06f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"jump_bonus\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_jump_bonus as i32,
+        def: 1.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"start_vy_keep\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_start_vy_keep as i32,
+        def: 0.2f32,
+    },
+    GenoBhvParamDef {
+        family: b"TORNADO\0" as *const u8 as *const i8,
+        name: b"start_vx_keep\0" as *const u8 as *const i8,
+        id: GENO_BP_TORNADO_start_vx_keep as i32,
+        def: 0.5f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"move0\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_move0 as i32,
+        def: 16 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"ramp\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_ramp as i32,
+        def: 4 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"hit0\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_hit0 as i32,
+        def: 26 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"hit_period\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_hit_period as i32,
+        def: 4 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"nhits\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_nhits as i32,
+        def: 10 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"hit_end\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_hit_end as i32,
+        def: 65 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"final_frame\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_final_frame as i32,
+        def: 66 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"final_end_ground\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_final_end_ground as i32,
+        def: 67 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"final_end_air\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_final_end_air as i32,
+        def: 70 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"total\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_total as i32,
+        def: 96 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"rush_damage\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_rush_damage as i32,
+        def: 1 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"final_damage\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_final_damage as i32,
+        def: 3 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"dive_default\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_dive_default as i32,
+        def: -20.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"psi_stick\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_psi_stick as i32,
+        def: 45.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"psi_min\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_psi_min as i32,
+        def: -60.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"psi_max\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_psi_max as i32,
+        def: 30.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"steer_rate\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_steer_rate as i32,
+        def: 2.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"dr_speed\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_speed as i32,
+        def: 2.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"recoil_vy\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_recoil_vy as i32,
+        def: 1.0f32,
+    },
+    GenoBhvParamDef {
+        family: b"DRILL\0" as *const u8 as *const i8,
+        name: b"end_vx_keep\0" as *const u8 as *const i8,
+        id: GENO_BP_DRILL_end_vx_keep as i32,
+        def: 0.2f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"cape_start\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_start as i32,
+        def: 6 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"cape_end\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_end as i32,
+        def: 25 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"cape_total\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_total as i32,
+        def: 40 as i32 as f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"turn_thr\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_turn_thr as i32,
+        def: 0.5f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"stall_x\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_stall_x as i32,
+        def: 0.80f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"stall_y_up\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_stall_y_up as i32,
+        def: 0.85f32,
+    },
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"stall_vy_hi\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_stall_vy_hi as i32,
         def: 0.0f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"bounce\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_BOUNCE as i32,
-        def: 0.0f32,
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"stall_grav\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_stall_grav as i32,
+        def: 0.015f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"pop_vx\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_POP_VX as i32,
-        def: 1.0f32,
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"stall_fall\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_stall_fall as i32,
+        def: 0.45f32,
     },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"pop_vy\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_POP_VY as i32,
-        def: 2.1f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"end_helpless\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_END_HELPLESS as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"drill\0" as *const u8 as *const i8,
-        name: b"pitch_model\0" as *const u8 as *const i8,
-        id: GENO_P_DRILL_PITCH_MODEL as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"glide\0" as *const u8 as *const i8,
-        name: b"script_entry_helpless\0" as *const u8 as *const i8,
-        id: GENO_P_GLIDE_SCRIPT_HELPLESS as i32,
-        def: 1.0f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"keep_vx\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 0 as i32,
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"ground_x\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_ground_x as i32,
         def: 0.5f32,
     },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"keep_vy\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 1 as i32,
-        def: 0.4f32,
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"reflect_dmg_mul\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_reflect_dmg_mul as i32,
+        def: 1.5f32,
     },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"steer_accel_x\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 2 as i32,
-        def: 0.5f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"steer_max_x\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 3 as i32,
-        def: 2.5f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"steer_accel_y\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 4 as i32,
-        def: 0.5f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"steer_max_y\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_W0 as i32 + 5 as i32,
-        def: 2.5f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"steer_frame\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_STEER_FRAME as i32,
-        def: 12.0f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"decide_frame\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_DECIDE_FRAME as i32,
-        def: 26.0f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"neutral_x\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_NEUTRAL_X as i32,
-        def: 0.3f32,
-    },
-    GenoParamDef {
-        family: b"cape\0" as *const u8 as *const i8,
-        name: b"attack_buttons\0" as *const u8 as *const i8,
-        id: GENO_P_CAPE_BUTTONS as i32,
-        def: (GENO_BTN_SPECIAL | GENO_BTN_ATTACK) as f32,
+    GenoBhvParamDef {
+        family: b"CAPE\0" as *const u8 as *const i8,
+        name: b"reflect_speed_mul\0" as *const u8 as *const i8,
+        id: GENO_BP_CAPE_reflect_speed_mul as i32,
+        def: 1.2f32,
     },
 ];
 
-pub static mut geno_test_rotx: f32 = unsafe { core::mem::zeroed() };
 
-pub static mut geno_test_joint_rate: f32 = unsafe { core::mem::zeroed() };
 
 pub static mut geno_lua_io: GenoLuaIo = unsafe { core::mem::zeroed() };
 
 pub static mut geno_lua_depth: i32 = unsafe { core::mem::zeroed() };
 
-pub static mut geno_cbs: [GenoCbDef; 42] = unsafe {
+pub static mut geno_cbs: [GenoCbDef; 45] = unsafe {
     [
         GenoCbDef {
             id: GENO_CBID_NEXT as i32,
@@ -1582,6 +1657,30 @@ pub static mut geno_cbs: [GenoCbDef; 42] = unsafe {
             slot: GENO_CB_ANIM as i32,
             name: b"cape\0" as *const u8 as *const i8,
             r#fn: Some(geno_cape_anim as unsafe extern "C" fn(*mut Fighter_GObj) -> ()),
+        },
+        GenoCbDef {
+            id: GENO_CBID_MULTI_DASH as i32,
+            slot: GENO_CB_ANIM as i32,
+            name: b"multi_dash\0" as *const u8 as *const i8,
+            r#fn: Some(
+                geno_multi_dash_anim as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
+            ),
+        },
+        GenoCbDef {
+            id: GENO_CBID_MULTI_DASH as i32,
+            slot: GENO_CB_PHYS as i32,
+            name: b"multi_dash\0" as *const u8 as *const i8,
+            r#fn: Some(
+                geno_multi_dash_phys as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
+            ),
+        },
+        GenoCbDef {
+            id: GENO_CBID_MULTI_DASH as i32,
+            slot: GENO_CB_COLL as i32,
+            name: b"multi_dash\0" as *const u8 as *const i8,
+            r#fn: Some(
+                geno_multi_dash_coll as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
+            ),
         },
         GenoCbDef {
             id: GENO_CBID_INTERRUPT as i32,
@@ -1808,7 +1907,7 @@ pub static mut geno_cbs: [GenoCbDef; 42] = unsafe {
     ]
 };
 
-pub static mut geno_bhvs: [GenoBhvDef; 16] = unsafe {
+pub static mut geno_bhvs: [GenoBhvDef; 17] = unsafe {
     [
         GenoBhvDef {
             id: GENO_BHV_NONE as i32,
@@ -2123,6 +2222,28 @@ pub static mut geno_bhvs: [GenoBhvDef; 16] = unsafe {
             land: GENO_AUTO,
             like: ftCo_MS_Fall as i32,
         },
+        GenoBhvDef {
+            id: GENO_BHV_MULTI_DASH as i32,
+            name: b"geno.multi_dash\0" as *const u8 as *const i8,
+            cb: [
+                GENO_CBID_MULTI_DASH as i32 as u8,
+                GENO_CBID_NONE as i32 as u8,
+                GENO_CBID_MULTI_DASH as i32 as u8,
+                GENO_CBID_MULTI_DASH as i32 as u8,
+            ],
+            enter: Some(
+                geno_multi_dash_enter
+                    as unsafe extern "C" fn(
+                        *mut Fighter_GObj,
+                        *mut Fighter,
+                        *mut GenoState,
+                        i32,
+                    ) -> (),
+            ),
+            next: GENO_NONE_T,
+            land: GENO_AUTO,
+            like: ftCo_MS_Fall as i32,
+        },
     ]
 };
 
@@ -2189,213 +2310,213 @@ pub static mut geno_art_logic: ItemLogicTable = unsafe {
     }
 };
 
-pub static mut geno_sfields: [Anon_anon_2511; 42] = unsafe { [
-        Anon_anon_2511 {
+pub static mut geno_sfields: [Anon_anon_2375; 42] = unsafe { [
+        Anon_anon_2375 {
             name: b"profile\0" as *const u8 as *const i8,
             off: 0 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"kind\0" as *const u8 as *const i8,
             off: 4 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"flags\0" as *const u8 as *const i8,
             off: 8 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"resets\0" as *const u8 as *const i8,
             off: 12 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"la_i\0" as *const u8 as *const i8,
             off: 16 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 64]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"ra_i\0" as *const u8 as *const i8,
             off: 272 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 64]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"la_f\0" as *const u8 as *const i8,
             off: 528 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 64]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"ra_f\0" as *const u8 as *const i8,
             off: 784 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 64]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hook_calls\0" as *const u8 as *const i8,
             off: 1040 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"extra_jumps\0" as *const u8 as *const i8,
             off: 1044 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"action_time\0" as *const u8 as *const i8,
             off: 1048 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"nchecks\0" as *const u8 as *const i8,
             off: 1052 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"last_check\0" as *const u8 as *const i8,
             off: 1056 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"checks\0" as *const u8 as *const i8,
             off: 1060 as u64 as i32,
             size: ::core::mem::size_of::<[GenoCheck; 8]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"rehit_period\0" as *const u8 as *const i8,
             off: 1444 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"rehit_count\0" as *const u8 as *const i8,
             off: 1460 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"link_mode\0" as *const u8 as *const i8,
             off: 1476 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 4]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"in_coll\0" as *const u8 as *const i8,
             off: 1540 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"edge_pending\0" as *const u8 as *const i8,
             off: 1544 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"edge_target\0" as *const u8 as *const i8,
             off: 1548 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"changes\0" as *const u8 as *const i8,
             off: 1552 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hold_motion\0" as *const u8 as *const i8,
             off: 1556 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hold_frames\0" as *const u8 as *const i8,
             off: 1560 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"move_i\0" as *const u8 as *const i8,
             off: 1564 as u64 as i32,
             size: ::core::mem::size_of::<[i32; 8]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"move_f\0" as *const u8 as *const i8,
             off: 1596 as u64 as i32,
             size: ::core::mem::size_of::<[f32; 8]>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"state_entries\0" as *const u8 as *const i8,
             off: 1628 as u64 as i32,
             size: ::core::mem::size_of::<u32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"enter_from\0" as *const u8 as *const i8,
             off: 1632 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hidden\0" as *const u8 as *const i8,
             off: 1636 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"ledge\0" as *const u8 as *const i8,
             off: 1668 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"motion_started\0" as *const u8 as *const i8,
             off: 1672 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"motion_vy\0" as *const u8 as *const i8,
             off: 1676 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"motion_land\0" as *const u8 as *const i8,
             off: 1680 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"motion_facing\0" as *const u8 as *const i8,
             off: 1684 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"motion_gravity\0" as *const u8 as *const i8,
             off: 1688 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"enter_keep\0" as *const u8 as *const i8,
             off: 1692 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hit_count\0" as *const u8 as *const i8,
             off: 1640 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hit_damage\0" as *const u8 as *const i8,
             off: 1644 as u64 as i32,
             size: ::core::mem::size_of::<f32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hit_port\0" as *const u8 as *const i8,
             off: 1648 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"hit_counter\0" as *const u8 as *const i8,
             off: 1652 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"counters\0" as *const u8 as *const i8,
             off: 1656 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"art_spawned\0" as *const u8 as *const i8,
             off: 1660 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
         },
-        Anon_anon_2511 {
+        Anon_anon_2375 {
             name: b"fall_ledge\0" as *const u8 as *const i8,
             off: 1664 as u64 as i32,
             size: ::core::mem::size_of::<i32>() as i32,
@@ -3271,8 +3392,8 @@ pub unsafe extern "C" fn geno_install_overlays(
                 {
                     Geno_OverlayOrig[slot as usize] = (*table.offset(anim as isize)).xC;
                 }
-                let ref mut fresh15 = (*table.offset(anim as isize)).xC;
-                *fresh15 = mine;
+                let ref mut fresh14 = (*table.offset(anim as isize)).xC;
+                *fresh14 = mine;
                 Geno_Event(
                     13 as i32,
                     (*fp).kind as i32,
@@ -3433,7 +3554,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
     ];
     let mut pc: *const u32 = script as *const u32;
     let mut ret: [*const u32; 8] = [::core::ptr::null::<u32>(); 8];
-    let mut pending: [Anon_anon_718; 32] = unsafe { core::mem::zeroed() };
+    let mut pending: [Anon_anon_545; 32] = unsafe { core::mem::zeroed() };
     let mut nret: i32 = 0 as i32;
     let mut npending: i32 = 0 as i32;
     let mut steps: i32 = 0;
@@ -3443,7 +3564,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
         let mut op: i32 = 0;
         let mut len: i32 = 0;
         if Geno_ScriptAddressValid(pc as u32, 4 as u32) == 0 {
-            current_block = 11039102284750001503;
+            current_block = 2781656338536092273;
         } else {
             w = *pc;
             op = (w >> 26 as i32) as i32;
@@ -3451,14 +3572,14 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                 return 1 as i32;
             }
             if op == 0 as i32 || op == 8 as i32 {
-                current_block = 11039102284750001503;
+                current_block = 2781656338536092273;
             } else if op == 5 as i32 || op == 7 as i32 {
                 if Geno_ScriptAddressValid(pc as u32, 8 as u32) == 0 {
-                    current_block = 11039102284750001503;
+                    current_block = 2781656338536092273;
                 } else {
                     if op == 5 as i32 {
                         if nret == 8 as i32 {
-                            current_block = 11039102284750001503;
+                            current_block = 2781656338536092273;
                         } else {
                             let fresh2 = nret;
                             nret = nret + 1;
@@ -3470,12 +3591,12 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                         current_block = 3512920355445576850;
                     }
                     match current_block {
-                        11039102284750001503 => {}
+                        2781656338536092273 => {}
                         _ => {
                             pc = *pc.offset(1 as i32 as isize)
                                 as *const u32;
                             if pc.is_null() {
-                                current_block = 11039102284750001503;
+                                current_block = 2781656338536092273;
                             } else {
                                 current_block = 12517898123489920830;
                             }
@@ -3484,7 +3605,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                 }
             } else if op == 6 as i32 {
                 if nret == 0 as i32 {
-                    current_block = 11039102284750001503;
+                    current_block = 2781656338536092273;
                 } else {
                     nret -= 1;
                     pc = ret[nret as usize];
@@ -3499,7 +3620,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                     {
                         pc = GenoGame_ScriptOriginal(pc as u32) as *const u32;
                         if pc.is_null() {
-                            current_block = 11039102284750001503;
+                            current_block = 2781656338536092273;
                         } else {
                             current_block = 12517898123489920830;
                         }
@@ -3510,13 +3631,13 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                         current_block = 3437258052017859086;
                     }
                 } else if op > 58 as i32 {
-                    current_block = 11039102284750001503;
+                    current_block = 2781656338536092273;
                 } else {
                     len = lengths[op as usize] as i32;
                     current_block = 3437258052017859086;
                 }
                 match current_block {
-                    11039102284750001503 => {}
+                    2781656338536092273 => {}
                     12517898123489920830 => {}
                     _ => {
                         if Geno_ScriptAddressValid(
@@ -3524,7 +3645,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                             (len * 4 as i32) as u32,
                         ) == 0
                         {
-                            current_block = 11039102284750001503;
+                            current_block = 2781656338536092273;
                         } else {
                             if op == GENO_FTCMD_OP {
                                 let mut sub: i32 = (w
@@ -3575,7 +3696,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                                             .wrapping_div(4 as u32)
                                             .wrapping_sub(len as u32)
                                     {
-                                        current_block = 11039102284750001503;
+                                        current_block = 2781656338536092273;
                                     } else {
                                         pc = (pc as u32)
                                             .wrapping_add(
@@ -3591,7 +3712,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                             }
                             match current_block {
                                 12517898123489920830 => {}
-                                11039102284750001503 => {}
+                                2781656338536092273 => {}
                                 _ => {
                                     pc = pc.offset(len as isize);
                                     current_block = 12517898123489920830;
@@ -3603,7 +3724,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
             }
         }
         match current_block {
-            11039102284750001503 => {
+            2781656338536092273 => {
                 if npending == 0 as i32 {
                     return 0 as i32;
                 }
@@ -3976,7 +4097,7 @@ pub unsafe extern "C" fn Geno_MultiJump(
         - 1 as i32;
     let mut rows: i32 = 0;
     let mut nvy: i32 = 0;
-    let mut bits: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut bits: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     if p < 0 as i32 || (*fp).x2D0.is_null() || n < 0 as i32
     {
         return;
@@ -4362,16 +4483,7 @@ pub unsafe extern "C" fn geno_val_get(
                 as f32 * (*fp).facing_dir) as f32;
         }
         61 => {
-            r.f = sqrtf(
-                (*fp).input.lstick[0 as i32 as usize].x
-                    as f32
-                    * (*fp).input.lstick[0 as i32 as usize].x
-                        as f32
-                    + (*fp).input.lstick[0 as i32 as usize].y
-                        as f32
-                        * (*fp).input.lstick[0 as i32 as usize].y
-                            as f32,
-            ) as f32;
+            r.f = sqrtf(fmadds((*fp).input.lstick[0].x, (*fp).input.lstick[0].x, (*fp).input.lstick[0].y * (*fp).input.lstick[0].y));
         }
         11 => {
             r.f = (*fp).input.cstick[0 as i32 as usize].x;
@@ -5837,9 +5949,70 @@ pub unsafe extern "C" fn geno_dg(mut h: u32, mut v: u32) -> u32 {
 
 pub unsafe extern "C" fn geno_dgf(mut h: u32, mut f: f32) -> u32 {
     melee_core::ct!("geno_dgf");
-    let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
+    let mut c: Anon_anon_109 = unsafe { core::mem::zeroed() };
     c.f = f;
     return geno_dg(h, c.u);
+}
+
+pub unsafe extern "C" fn geno_nh(mut h: u32, mut v: u32) -> u32 {
+    melee_core::ct!("geno_nh");
+    h ^= v;
+    h = (h as u32).wrapping_mul(0x1000193 as u32)
+        as u32 as u32;
+    return h ^ h >> 15 as i32;
+}
+
+pub unsafe extern "C" fn Geno_NeutralDigest(mut fp: *mut Fighter) -> u32 {
+    melee_core::ct!("Geno_NeutralDigest");
+    let mut s: *mut GenoState = ::core::ptr::null_mut::<GenoState>();
+    let mut h: u32 = 0x811c9dc5 as u32;
+    let mut i: i32 = 0;
+    let mut c: Anon_anon_109 = unsafe { core::mem::zeroed() };
+    if fp.is_null() {
+        return 0 as u32;
+    }
+    s = geno_state(fp);
+    if (*s).profile < 0 as i32
+        && (*s).flags as u32 & GENO_SF_SCRIPT == 0 as u32
+    {
+        return 0 as u32;
+    }
+    h = geno_nh(h, 0x474e5631 as u32);
+    i = 0 as i32;
+    while i < GENO_VARS_PER_BANK {
+        h = geno_nh(h, (*s).la_i[i as usize] as u32);
+        i += 1;
+    }
+    i = 0 as i32;
+    while i < GENO_VARS_PER_BANK {
+        c.f = (*s).la_f[i as usize];
+        h = geno_nh(h, c.u);
+        i += 1;
+    }
+    i = 0 as i32;
+    while i < GENO_VARS_PER_BANK {
+        h = geno_nh(h, (*s).ra_i[i as usize] as u32);
+        i += 1;
+    }
+    i = 0 as i32;
+    while i < GENO_VARS_PER_BANK {
+        c.f = (*s).ra_f[i as usize];
+        h = geno_nh(h, c.u);
+        i += 1;
+    }
+    i = 0 as i32;
+    while i < GENO_MOVE_VARS {
+        h = geno_nh(h, (*s).move_i[i as usize] as u32);
+        i += 1;
+    }
+    i = 0 as i32;
+    while i < GENO_MOVE_VARS {
+        c.f = (*s).move_f[i as usize];
+        h = geno_nh(h, c.u);
+        i += 1;
+    }
+    h = geno_nh(h, (*s).action_time as u32);
+    return h;
 }
 
 pub unsafe extern "C" fn GenoDefine_StateDigest(mut fp: *mut Fighter) -> u32 {
@@ -5987,7 +6160,7 @@ pub unsafe extern "C" fn geno_profile_alloc(
         );
         __assert(
             b"pc/geno/geno_profiles.inc\0" as *const u8 as *const i8,
-            28 as u32,
+            30 as u32,
             b"Geno profile descriptor byte budget exhausted\0" as *const u8
                 as *const i8,
         );
@@ -6017,10 +6190,10 @@ pub unsafe extern "C" fn geno_profiles_prepare() {
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < Geno_ProfileCapacity {
-        let ref mut fresh13 = *rows.offset(i as isize);
-        *fresh13 = *Geno_Rows.offset(i as isize);
-        let ref mut fresh14 = *params.offset(i as isize);
-        *fresh14 = *Geno_Params.offset(i as isize);
+        let ref mut fresh12 = *rows.offset(i as isize);
+        *fresh12 = *Geno_Rows.offset(i as isize);
+        let ref mut fresh13 = *params.offset(i as isize);
+        *fresh13 = *Geno_Params.offset(i as isize);
         *counts.offset(i as isize) = *Geno_RowCount.offset(i as isize);
         i += 1;
     }
@@ -6037,20 +6210,42 @@ pub unsafe extern "C" fn geno_profile_prepare(mut p: i32) {
         return;
     }
     if (*Geno_Rows.offset(p as isize)).is_null() {
-        let ref mut fresh11 = *Geno_Rows.offset(p as isize);
-        *fresh11 = geno_profile_alloc(
+        let ref mut fresh10 = *Geno_Rows.offset(p as isize);
+        *fresh10 = geno_profile_alloc(
             (GENO_MAX_STATES as usize)
                 .wrapping_mul(::core::mem::size_of::<MotionState>() as usize)
                 as i32,
         ) as *mut MotionState;
     }
     if (*Geno_Params.offset(p as isize)).is_null() {
-        let ref mut fresh12 = *Geno_Params.offset(p as isize);
-        *fresh12 = geno_profile_alloc(
+        let ref mut fresh11 = *Geno_Params.offset(p as isize);
+        *fresh11 = geno_profile_alloc(
             (GENO_PARAMS as usize).wrapping_mul(::core::mem::size_of::<f32>() as usize)
                 as i32,
         ) as *mut f32;
     }
+}
+
+pub unsafe extern "C" fn geno_fam_eq(
+    mut a: *const i8,
+    mut tag: *const i8,
+) -> i32 {
+    melee_core::ct!("geno_fam_eq");
+    while *a as i32 != 0 && *tag as i32 != 0 {
+        let mut c: i8 = *a;
+        if c as i32 >= 'a' as i32 && c as i32 <= 'z' as i32
+        {
+            c = (c as i32 - 'a' as i32 + 'A' as i32)
+                as i8;
+        }
+        if c as i32 != *tag as i32 {
+            return 0 as i32;
+        }
+        a = a.offset(1);
+        tag = tag.offset(1);
+    }
+    return (*a as i32 == *tag as i32)
+        as i32;
 }
 
 pub unsafe extern "C" fn GenoGame_ParamFind(
@@ -6061,49 +6256,12 @@ pub unsafe extern "C" fn GenoGame_ParamFind(
     let mut i: i32 = 0;
     i = 0 as i32;
     while i < GENO_NPARAMDEFS {
-        if geno_streq(family, geno_params[i as usize].family) != 0
-            && geno_streq(name, geno_params[i as usize].name) != 0
+        if geno_fam_eq(family, geno_bhv_params[i as usize].family) != 0
+            && geno_streq(name, geno_bhv_params[i as usize].name) != 0
         {
-            return geno_params[i as usize].id;
+            return geno_bhv_params[i as usize].id;
         }
         i += 1;
-    }
-    if *name.offset(0 as i32 as isize) as i32 == 'w' as i32
-        && *name.offset(1 as i32 as isize) as i32
-            >= '0' as i32
-        && *name.offset(1 as i32 as isize) as i32
-            <= '9' as i32
-        && *name.offset(2 as i32 as isize) as i32
-            >= '0' as i32
-        && *name.offset(2 as i32 as isize) as i32
-            <= '9' as i32
-        && *name.offset(3 as i32 as isize) as i32
-            == '\0' as i32
-    {
-        let mut w: i32 = (*name.offset(1 as i32 as isize)
-            as i32 - '0' as i32) * 10 as i32
-            + (*name.offset(2 as i32 as isize) as i32
-                - '0' as i32);
-        if geno_streq(family, b"glide\0" as *const u8 as *const i8) != 0
-            && w <= 21 as i32
-        {
-            return GENO_P_GLIDE_W0 as i32 + w;
-        }
-        if geno_streq(family, b"tornado\0" as *const u8 as *const i8)
-            != 0 && w <= 19 as i32
-        {
-            return GENO_P_TORNADO_W0 as i32 + w;
-        }
-        if geno_streq(family, b"drill\0" as *const u8 as *const i8) != 0
-            && w <= 5 as i32
-        {
-            return GENO_P_DRILL_W0 as i32 + w;
-        }
-        if geno_streq(family, b"cape\0" as *const u8 as *const i8) != 0
-            && w <= 5 as i32
-        {
-            return GENO_P_CAPE_W0 as i32 + w;
-        }
     }
     return -(1 as i32);
 }
@@ -6127,7 +6285,7 @@ pub unsafe extern "C" fn geno_build_params(mut p: i32) {
     melee_core::ct!("geno_build_params");
     let mut i: i32 = 0;
     let mut n: i32 = 0;
-    let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     i = 0 as i32;
     while i < GENO_PARAMS {
         *(*Geno_Params.offset(p as isize)).offset(i as isize) = 0.0f32 as f32;
@@ -6135,7 +6293,8 @@ pub unsafe extern "C" fn geno_build_params(mut p: i32) {
     }
     i = 0 as i32;
     while i < GENO_NPARAMDEFS {
-        *(*Geno_Params.offset(p as isize)).offset(geno_params[i as usize].id as isize) = geno_params[i
+        *(*Geno_Params.offset(p as isize))
+            .offset(geno_bhv_params[i as usize].id as isize) = geno_bhv_params[i
                 as usize]
             .def;
         i += 1;
@@ -6191,16 +6350,6 @@ pub unsafe extern "C" fn geno_state_with(
         s += 1;
     }
     return -(1 as i32);
-}
-
-pub unsafe extern "C" fn geno_clampf(mut v: f32, mut lo: f32, mut hi: f32) -> f32 {
-    melee_core::ct!("geno_clampf");
-    return if v < lo { lo } else if v > hi { hi } else { v };
-}
-
-pub unsafe extern "C" fn geno_absf(mut v: f32) -> f32 {
-    melee_core::ct!("geno_absf");
-    return if v < 0.0f32 { -v } else { v };
 }
 
 pub unsafe extern "C" fn geno_anim_ended(mut gobj: *mut Fighter_GObj) -> i32 {
@@ -6389,7 +6538,10 @@ pub unsafe extern "C" fn geno_start_frame(
     if Geno_StateBehavior((*st).profile as i32, s)
         == GENO_BHV_GLIDE as i32
     {
-        let mut pose: f32 = geno_param(st, GENO_P_GLIDE_POSE as i32);
+        let mut pose: f32 = geno_param(
+            st,
+            GENO_BP_GLIDE_pose_center as i32,
+        );
         if pose > 0.0f32 {
             return pose;
         }
@@ -6573,7 +6725,7 @@ pub unsafe extern "C" fn geno_lag_of(
     mut s: i32,
 ) -> f32 {
     melee_core::ct!("geno_lag_of");
-    let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     b.u = Geno_StateLagBits((*st).profile as i32, s) as u32;
     return b.f;
 }
@@ -6681,14 +6833,7 @@ pub unsafe extern "C" fn geno_land(mut gobj: *mut Fighter_GObj) {
     } else {
         0.0f32
     };
-    if s >= 0 as i32
-        && (*st).move_i[4 as i32 as usize] != 0 as i32
-        && (Geno_StateBehavior((*st).profile as i32, s)
-            == GENO_BHV_GLIDE_END as i32
-            || Geno_StateBehavior((*st).profile as i32, s)
-                == GENO_BHV_GLIDE_ATTACK as i32)
-    {
-        ftCo_LandingFallSpecial_Enter_Basic(gobj);
+    if s >= 0 as i32 && gb_glide_land(gobj, fp, st, s) != 0 {
         return;
     }
     if t == GENO_AUTO || t == GENO_NONE_T {
@@ -6793,7 +6938,7 @@ pub unsafe extern "C" fn geno_motion_gravity(
     mut s: i32,
 ) -> f32 {
     melee_core::ct!("geno_motion_gravity");
-    let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     b.u = (if s >= 0 as i32 {
         Geno_StateGravityBits((*st).profile as i32, s)
             as u32
@@ -6817,6 +6962,8 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
     };
     let mut fwd: f32 = 0.0f32;
     let mut up: f32 = 0.0f32;
+    let mut dx: f32 = 0.;
+    let mut dy: f32 = 0.;
     let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
     if o as u32 & GENO_MOTION_ENTRY_FACING != 0 {
         if (*st).motion_started == 0 {
@@ -6835,6 +6982,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
         }
     }
     (*st).motion_started = 1 as i32 as i32;
+    GenoBhv_AnimMotionFrameDelta(fwd, up, lr, &raw mut dx, &raw mut dy);
     if (*fp).ground_or_air as i32 == GA_Ground as i32 {
         if (*fp).anon_594.anon_0.x594_b0() == 0 {
             ft_80084F3C(gobj);
@@ -6850,7 +6998,7 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
             );
             ftCommon_8007D5D4(fp);
         } else {
-            (*fp).gr_vel = (fwd * lr) as f32;
+            (*fp).gr_vel = dx as f32;
             ftCommon_SetSelfMovementFromGroundedMovement(gobj);
             return;
         }
@@ -6866,8 +7014,8 @@ pub unsafe extern "C" fn geno_cb_phys_anim_motion(mut gobj: *mut Fighter_GObj) {
         (*fp).self_vel.y = 0.0f32 as f32;
         return;
     }
-    (*fp).self_vel.x = fwd * lr;
-    (*fp).self_vel.y = up + (*st).motion_vy;
+    (*fp).self_vel.x = dx;
+    (*fp).self_vel.y = dy + (*st).motion_vy;
 }
 
 pub unsafe extern "C" fn geno_motion_land(mut gobj: *mut Fighter_GObj) {
@@ -7049,30 +7197,1503 @@ pub unsafe extern "C" fn geno_jump_held(mut fp: *mut Fighter) -> i32 {
                 >= (*p_ftCommonData).tap_jump_threshold) as i32;
 }
 
-pub unsafe extern "C" fn geno_in_air_jump(
+pub unsafe extern "C" fn gb_floor(mut x: f32) -> f32 {
+    melee_core::ct!("gb_floor");
+    let mut i: i32 = x as i32;
+    let mut fi: f32 = i as f32;
+    return if fi > x { fi - 1.0f32 } else { fi };
+}
+
+pub unsafe extern "C" fn gb_clamp(mut x: f32, mut lo: f32, mut hi: f32) -> f32 {
+    melee_core::ct!("gb_clamp");
+    if x < lo { return lo } else if x > hi { return hi }
+    return x;
+}
+
+pub unsafe extern "C" fn gb_approach(
+    mut x: f32,
+    mut target: f32,
+    mut step: f32,
+) -> f32 {
+    melee_core::ct!("gb_approach");
+    let mut x2: f32 = 0.;
+    if x < target {
+        x2 = x + step;
+        if x2 > target {
+            return target;
+        }
+        return x2;
+    }
+    x2 = x - step;
+    if x2 < target {
+        return target;
+    }
+    return x2;
+}
+
+pub unsafe extern "C" fn gb_abs(mut x: f32) -> f32 {
+    melee_core::ct!("gb_abs");
+    return if x < 0.0f32 { -x } else { x };
+}
+
+pub unsafe extern "C" fn gb_sinq_at(mut i: i32) -> f32 {
+    melee_core::ct!("gb_sinq_at");
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
+    b.u = gb_sinq[i as usize];
+    return b.f;
+}
+
+pub unsafe extern "C" fn GenoBhv_SinqWord(mut i: i32) -> u32 {
+    melee_core::ct!("GenoBhv_SinqWord");
+    return if i >= 0 as i32 && i < GENO_BHV_SINQ_N {
+        gb_sinq[i as usize]
+    } else {
+        0 as u32
+    };
+}
+
+pub unsafe extern "C" fn GenoBhv_SinqCrc32() -> u32 {
+    melee_core::ct!("GenoBhv_SinqCrc32");
+    let mut crc: u32 = 0xffffffff as u32;
+    let mut i: i32 = 0;
+    let mut b: i32 = 0;
+    let mut k: i32 = 0;
+    i = 0 as i32;
+    while i < GENO_BHV_SINQ_N {
+        let mut w: u32 = gb_sinq[i as usize];
+        b = 0 as i32;
+        while b < 4 as i32 {
+            crc
+                ^= w as u32 >> 8 as i32 * b
+                    & 0xff as u32;
+            k = 0 as i32;
+            while k < 8 as i32 {
+                let mut mask: u32 = if crc as u32
+                    & 1 as u32 != 0
+                {
+                    0xedb88320 as u32
+                } else {
+                    0 as u32
+                };
+                crc = crc >> 1 as i32 ^ mask;
+                k += 1;
+            }
+            b += 1;
+        }
+        i += 1;
+    }
+    return !crc;
+}
+
+pub unsafe extern "C" fn GenoBhv_SinDeg(mut a: f32) -> f32 {
+    melee_core::ct!("GenoBhv_SinDeg");
+    let mut q: f32 = 0.;
+    let mut sgn: f32 = 0.;
+    let mut w: f32 = 0.;
+    let mut k: f32 = 0.;
+    let mut kt: f32 = 0.;
+    let mut p: f32 = 0.;
+    let mut fr: f32 = 0.;
+    let mut lo: f32 = 0.;
+    let mut hi: f32 = 0.;
+    let mut d: f32 = 0.;
+    let mut t: f32 = 0.;
+    let mut v: f32 = 0.;
+    let mut fi: f32 = 0.;
+    let mut i: i32 = 0;
+    k = gb_floor(a / 360.0f32);
+    kt = (k as f32 * 360.0f32) as f32;
+    w = a - kt;
+    if w < 90.0f32 {
+        q = w;
+        sgn = 1.0f32 as f32;
+    } else if w < 180.0f32 {
+        q = 180.0f32 - w;
+        sgn = 1.0f32 as f32;
+    } else if w < 270.0f32 {
+        q = (w as f32 - 180.0f32) as f32;
+        sgn = -1.0f32 as f32;
+    } else {
+        q = 360.0f32 - w;
+        sgn = -1.0f32 as f32;
+    }
+    p = (q as f32 * 11.377778f32) as f32;
+    i = p as i32;
+    if i < 0 as i32 {
+        i = 0 as i32 as i32;
+    }
+    if i > 1023 as i32 {
+        i = 1023 as i32 as i32;
+    }
+    fi = i as f32;
+    fr = p - fi;
+    lo = gb_sinq_at(i as i32);
+    hi = gb_sinq_at(i as i32 + 1 as i32);
+    d = hi - lo;
+    t = d * fr;
+    v = lo + t;
+    return sgn * v;
+}
+
+pub unsafe extern "C" fn GenoBhv_CosDeg(mut a: f32) -> f32 {
+    melee_core::ct!("GenoBhv_CosDeg");
+    let mut b: f32 = a + 90.0f32;
+    return GenoBhv_SinDeg(b);
+}
+
+pub unsafe extern "C" fn GenoBhv_Stick(
+    mut rx: f32,
+    mut ry: f32,
+    mut sx: *mut f32,
+    mut sy: *mut f32,
+) {
+    melee_core::ct!("GenoBhv_Stick");
+    let mut a: f32 = rx * rx;
+    let mut b: f32 = ry * ry;
+    let mut m: f32 = a + b;
+    if m < GENO_BHV_DZ2 {
+        *sx = 0.0f32 as f32;
+        *sy = 0.0f32 as f32;
+    } else {
+        *sx = rx;
+        *sy = ry;
+    };
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideParams(mut p: *mut GbGlideP) {
+    melee_core::ct!("GenoBhv_GlideParams");
+    (*p).max_glides = 2 as i32;
+    (*p).entry_hold = 6 as i32;
+    (*p).flick_window = 12 as i32;
+    (*p).start_frames = 12 as i32;
+    (*p).trip_frames = 30 as i32;
+    (*p).land_lag = 14 as i32;
+    (*p).jumpout_frames = 8 as i32;
+    (*p).attack_frames = 28 as i32;
+    (*p).attack_hit0 = 8 as i32;
+    (*p).attack_hit1 = 14 as i32;
+    (*p).attack_endlag = 14 as i32;
+    (*p).attack_buf_frames = 6 as i32;
+    (*p).entry_vy_max = 0.6f32;
+    (*p).apex_vy = 0.25f32;
+    (*p).flick_thr = 0.55f32;
+    (*p).s_start = 1.50f32;
+    (*p).start_accel = 0.12f32;
+    (*p).s_start_cap = 2.0f32;
+    (*p).theta_def = -5.0f32;
+    (*p).r_down = 60.0f32;
+    (*p).r_up = 85.0f32;
+    (*p).turn_rate = 3.0f32;
+    (*p).gk = 0.0366f32;
+    (*p).drag = 0.002f32;
+    (*p).s_max = 2.40f32;
+    (*p).s_stall = 0.35f32;
+    (*p).trip_angle = 30.0f32;
+    (*p).attack_speed_keep = 0.6f32;
+    (*p).chain_speed_mul = 0.75f32;
+    (*p).chain_turn_mul = 1.4f32;
+    (*p).attack_damage = 12 as i32;
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideEntryInit(mut e: *mut GbGlideEntry) {
+    melee_core::ct!("GenoBhv_GlideEntryInit");
+    (*e).hold_frames = -(1 as i32) as i32;
+    (*e).last_dir = 0 as i32 as i32;
+    (*e).age = 1000 as i32 as i32;
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideEntryStep(
+    mut e: *mut GbGlideEntry,
+    mut p: *const GbGlideP,
+    mut midair_jumped: i32,
+    mut jump_held: i32,
+    mut vy: f32,
+    mut sx: f32,
+    mut f: f32,
+    mut glides_used: i32,
+    mut airborne: i32,
+    mut helpless: i32,
+    mut chain: i32,
+) -> i32 {
+    melee_core::ct!("GenoBhv_GlideEntryStep");
+    let mut s: f32 = sx * f;
+    let mut avy: f32 = gb_abs(vy);
+    let mut cur: i32 = 0 as i32;
+    let mut flick: i32 = 0 as i32;
+    if s <= -(*p).flick_thr {
+        cur = -(1 as i32);
+    } else if s >= (*p).flick_thr {
+        cur = 1 as i32;
+    }
+    if cur != 0 as i32 {
+        if (*e).last_dir == -cur && (*e).age <= (*p).flick_window {
+            flick = 1 as i32;
+        }
+        (*e).last_dir = cur as i32;
+        (*e).age = 0 as i32 as i32;
+    } else if (*e).age < 1000 as i32 {
+        (*e).age += 1;
+    }
+    if midair_jumped == 0 || airborne == 0 {
+        (*e).hold_frames = -(1 as i32) as i32;
+    } else if jump_held != 0 && (*e).hold_frames >= 0 as i32 {
+        (*e).hold_frames += 1;
+    } else {
+        (*e).hold_frames = -(1 as i32) as i32;
+    }
+    if airborne == 0 || helpless != 0 || glides_used >= (*p).max_glides {
+        return GB_GLENTRY_NONE as i32;
+    }
+    if chain != 0 {
+        return GB_GLENTRY_CHAIN as i32;
+    }
+    if (*e).hold_frames >= (*p).entry_hold && vy <= (*p).entry_vy_max {
+        return GB_GLENTRY_HOLD as i32;
+    }
+    if flick != 0 && avy <= (*p).apex_vy {
+        return GB_GLENTRY_FLICK as i32;
+    }
+    return GB_GLENTRY_NONE as i32;
+}
+
+pub unsafe extern "C" fn gb_glide_velocity(mut g: *mut GbGlide) {
+    melee_core::ct!("gb_glide_velocity");
+    let mut s_th: f32 = GenoBhv_SinDeg((*g).theta);
+    let mut c_th: f32 = GenoBhv_CosDeg((*g).theta);
+    let mut vx: f32 = (*g).speed * c_th;
+    vx = vx * (*g).f;
+    (*g).vx = vx;
+    (*g).vy = (*g).speed * s_th;
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideBegin(
+    mut g: *mut GbGlide,
+    mut p: *const GbGlideP,
+    mut vx: f32,
+    mut vy: f32,
+    mut f: f32,
+    mut sx: f32,
+    mut slow: i32,
+    mut helpless: i32,
+    mut glides_used: i32,
+) {
+    melee_core::ct!("GenoBhv_GlideBegin");
+    let mut a: f32 = vx * vx;
+    let mut b: f32 = vy * vy;
+    let mut ss: f32 = a + b;
+    let mut len: f32 = sqrtf(ss as f32) as f32;
+    let mut t: f32 = sx * f;
+    (*g).phase = GB_GL_START as i32 as i32;
+    (*g).t = 0 as i32 as i32;
+    (*g).attack_buf = 0 as i32 as i32;
+    (*g).slow = slow;
+    (*g).helpless = helpless;
+    (*g).end_reason = GB_GLE_NONE as i32 as i32;
+    (*g).lag = 0 as i32 as i32;
+    (*g).hit_active = 0 as i32 as i32;
+    (*g).jump_now = 0 as i32 as i32;
+    (*g).endlag = 0 as i32 as i32;
+    (*g).speed = gb_clamp(len, 0.0f32, (*p).s_start_cap);
+    (*g).theta = (*p).theta_def;
+    (*g).f = f;
+    if t < -(*p).flick_thr {
+        (*g).f = -f;
+    }
+    (*g).glides_used = (glides_used as i32 + 1 as i32)
+        as i32;
+    (*g).vx = 0.0f32 as f32;
+    (*g).vy = 0.0f32 as f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideGround(
+    mut g: *mut GbGlide,
+    mut p: *const GbGlideP,
+) {
+    melee_core::ct!("GenoBhv_GlideGround");
+    if (*g).attack_buf > 0 as i32
+        || (*g).phase == GB_GL_ATTACK as i32
+    {
+        (*g).phase = GB_GL_LAND_CANCEL as i32 as i32;
+        (*g).lag = 0 as i32 as i32;
+    } else if (*g).theta < -(*p).trip_angle {
+        (*g).phase = GB_GL_TRIP as i32 as i32;
+        (*g).lag = (*p).trip_frames;
+    } else {
+        (*g).phase = GB_GL_LAND as i32 as i32;
+        (*g).lag = (*p).land_lag;
+    };
+}
+
+pub unsafe extern "C" fn GenoBhv_GlideStep(
+    mut g: *mut GbGlide,
+    mut in_0: *const GbGlideIn,
+    mut p: *const GbGlideP,
+) {
+    melee_core::ct!("GenoBhv_GlideStep");
+    let mut t0: f32 = 0.;
+    let mut t1: f32 = 0.;
+    let mut d: f32 = 0.;
+    let mut r: f32 = 0.;
+    let mut theta_t: f32 = 0.;
+    let mut rate: f32 = 0.;
+    let mut s_th: f32 = 0.;
+    let mut grav: f32 = 0.;
+    let mut gk: f32 = 0.;
+    let mut dr: f32 = 0.;
+    let mut cap: f32 = 0.;
+    let mut d4: f32 = 0.;
+    let mut pressed: i32 = 0;
+    (*g).hit_active = 0 as i32 as i32;
+    (*g).jump_now = 0 as i32 as i32;
+    if (*g).phase >= GB_GL_LAND as i32 {
+        return;
+    }
+    if (*g).attack_buf > 0 as i32 {
+        (*g).attack_buf -= 1;
+    }
+    pressed = ((*in_0).attack_pressed != 0 || (*in_0).special_pressed != 0)
+        as i32;
+    if pressed != 0 && (*in_0).height >= 0.0f32 {
+        let mut vym: f32 = gb_abs((*g).vy);
+        let mut reach: f32 = vym * (*p).attack_buf_frames as f32;
+        if (*in_0).height <= reach {
+            (*g).attack_buf = (*p).attack_buf_frames;
+        }
+    }
+    if (*g).phase == GB_GL_START as i32 {
+        (*g).theta = (*p).theta_def;
+        (*g).speed = gb_approach((*g).speed, (*p).s_start, (*p).start_accel);
+        gb_glide_velocity(g);
+        (*g).t += 1;
+        if (*g).t == (*p).start_frames {
+            (*g).phase = GB_GL_FLY as i32 as i32;
+            (*g).t = 0 as i32 as i32;
+        }
+    } else if (*g).phase == GB_GL_FLY as i32 {
+        t0 = (*in_0).sx * (*g).f;
+        t1 = 0.0f32 - (*in_0).sy;
+        d = t0 + t1;
+        d = gb_clamp(d, -1.0f32, 1.0f32);
+        if d > 0.0f32 {
+            r = d * (*p).r_down;
+        } else {
+            r = d * (*p).r_up;
+        }
+        theta_t = (*p).theta_def - r;
+        rate = (*p).turn_rate;
+        if (*g).slow != 0 {
+            rate = rate * (*p).chain_turn_mul;
+        }
+        (*g).theta = gb_approach((*g).theta, theta_t, rate);
+        s_th = GenoBhv_SinDeg((*g).theta);
+        gk = (*p).gk;
+        if (*g).slow != 0 {
+            gk = gk * (*p).chain_speed_mul;
+        }
+        grav = gk * s_th;
+        (*g).speed = (*g).speed - grav;
+        dr = (*g).speed * (*p).drag;
+        (*g).speed = (*g).speed - dr;
+        cap = (*p).s_max;
+        if (*g).slow != 0 {
+            cap = cap * (*p).chain_speed_mul;
+        }
+        if (*g).speed > cap {
+            (*g).speed = cap;
+        }
+        gb_glide_velocity(g);
+        (*g).t += 1;
+    } else if (*g).phase == GB_GL_ATTACK as i32 {
+        d4 = ((*p).drag as f32 * 4.0f32) as f32;
+        dr = (*g).speed * d4;
+        (*g).speed = (*g).speed - dr;
+        gb_glide_velocity(g);
+        (*g).hit_active = ((*g).t >= (*p).attack_hit0 && (*g).t <= (*p).attack_hit1)
+            as i32 as i32;
+        (*g).t += 1;
+        if (*in_0).ground != 0 {
+            GenoBhv_GlideGround(g, p);
+        } else if (*g).t >= (*p).attack_frames {
+            (*g).phase = GB_GL_END as i32 as i32;
+            (*g).end_reason = GB_GLE_ATTACK_END as i32 as i32;
+            (*g).endlag = (*p).attack_endlag;
+        }
+        return;
+    } else if (*g).phase == GB_GL_JUMPOUT as i32 {
+        dr = (*g).speed * (*p).drag;
+        (*g).speed = (*g).speed - dr;
+        gb_glide_velocity(g);
+        (*g).t += 1;
+        if (*in_0).ground != 0 {
+            GenoBhv_GlideGround(g, p);
+        } else if (*g).t >= (*p).jumpout_frames {
+            (*g).jump_now = 1 as i32 as i32;
+            (*g).phase = GB_GL_END as i32 as i32;
+            (*g).end_reason = GB_GLE_JUMPOUT as i32 as i32;
+        }
+        return;
+    }
+    if (*in_0).ground != 0 {
+        GenoBhv_GlideGround(g, p);
+        return;
+    }
+    if (*in_0).jump_pressed != 0 && (*in_0).jump_left != 0 {
+        (*g).phase = GB_GL_JUMPOUT as i32 as i32;
+        (*g).t = 0 as i32 as i32;
+        return;
+    }
+    if pressed != 0 {
+        (*g).phase = GB_GL_ATTACK as i32 as i32;
+        (*g).t = 0 as i32 as i32;
+        (*g).speed = (*g).speed * (*p).attack_speed_keep;
+        gb_glide_velocity(g);
+        return;
+    }
+    if (*g).speed < (*p).s_stall {
+        (*g).phase = GB_GL_END as i32 as i32;
+        (*g).end_reason = GB_GLE_STALL as i32 as i32;
+        (*g).endlag = 0 as i32 as i32;
+    }
+}
+
+pub unsafe extern "C" fn GenoBhv_TornadoParams(mut p: *mut GbTornadoP) {
+    melee_core::ct!("GenoBhv_TornadoParams");
+    (*p).start_frames = 12 as i32;
+    (*p).read_period = 10 as i32;
+    (*p).read_limit = 70 as i32;
+    (*p).end_frames = 29 as i32;
+    (*p).ledge_lock = 6 as i32;
+    (*p).final_hit_ground = 3 as i32;
+    (*p).final_hit_air = 2 as i32;
+    (*p).loop_damage = 1 as i32;
+    (*p).final_damage = 3 as i32;
+    (*p).spin0 = 80.0f32;
+    (*p).decay_a = 1.5f32;
+    (*p).decay_b = 2.0f32;
+    (*p).mash_add = 16.0f32;
+    (*p).spin_max = 80.0f32;
+    (*p).spin_end = 10.0f32;
+    (*p).grav = 0.0239f32;
+    (*p).rise_impulse = 0.9f32;
+    (*p).rise_max = 1.6f32;
+    (*p).fall_max = 0.50f32;
+    (*p).vx_max = 1.1f32;
+    (*p).vx_max_ground = 1.3f32;
+    (*p).vx_accel = 0.06f32;
+    (*p).jump_bonus = 1.0f32;
+    (*p).start_vy_keep = 0.2f32;
+    (*p).start_vx_keep = 0.5f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_TornadoBegin(
+    mut t: *mut GbTornado,
+    mut vx: f32,
+    mut vy: f32,
+) {
+    melee_core::ct!("GenoBhv_TornadoBegin");
+    (*t).phase = GB_TN_START as i32 as i32;
+    (*t).n = 0 as i32 as i32;
+    (*t).k = 0 as i32 as i32;
+    (*t).end_t = 0 as i32 as i32;
+    (*t).press_latch = 0 as i32 as i32;
+    (*t).rise_impulse = 0 as i32 as i32;
+    (*t).jump_start = 0 as i32 as i32;
+    (*t).hits = 0 as i32 as i32;
+    (*t).hit_spawn = 0 as i32 as i32;
+    (*t).final_spawn = 0 as i32 as i32;
+    (*t).final_active = 0 as i32 as i32;
+    (*t).ledge_locked = 0 as i32 as i32;
+    (*t).helpless = 0 as i32 as i32;
+    (*t).spin = 0.0f32 as f32;
+    (*t).rot = 0.0f32 as f32;
+    (*t).vx = vx;
+    (*t).vy = vy;
+}
+
+pub unsafe extern "C" fn GenoBhv_TornadoStep(
+    mut t: *mut GbTornado,
+    mut in_0: *const GbTornadoIn,
+    mut p: *const GbTornadoP,
+) {
+    melee_core::ct!("GenoBhv_TornadoStep");
+    let mut tx: f32 = 0.;
+    (*t).hit_spawn = 0 as i32 as i32;
+    (*t).final_spawn = 0 as i32 as i32;
+    (*t).final_active = 0 as i32 as i32;
+    (*t).ledge_locked = 0 as i32 as i32;
+    if (*t).phase == GB_TN_DONE as i32 {
+        return;
+    }
+    if (*t).n == 0 as i32 {
+        (*t).jump_start = (if (*in_0).jump_held != 0 {
+            1 as i32
+        } else {
+            0 as i32
+        }) as i32;
+        (*t).vy = (*t).vy * (*p).start_vy_keep;
+        (*t).vx = (*t).vx * (*p).start_vx_keep;
+    }
+    if (*in_0).special_pressed != 0 {
+        (*t).press_latch = 1 as i32 as i32;
+    }
+    if (*t).phase == GB_TN_START as i32 && (*t).n >= (*p).start_frames {
+        (*t).phase = GB_TN_LOOP as i32 as i32;
+        (*t).k = 0 as i32 as i32;
+        (*t).spin = (*p).spin0;
+        (*t).rot = 0.0f32 as f32;
+        if (*t).jump_start != 0 {
+            (*t).vy = (*t).vy + (*p).jump_bonus;
+        }
+    }
+    if (*t).phase == GB_TN_LOOP as i32 {
+        if (*t).spin <= (*p).spin_end {
+            (*t).phase = GB_TN_END as i32 as i32;
+            (*t).end_t = 0 as i32 as i32;
+        } else {
+            (*t).ledge_locked = 1 as i32 as i32;
+            if (*t).k == 0 as i32 {
+                (*t).hit_spawn = 1 as i32 as i32;
+                (*t).hits += 1;
+            }
+            (*t).rot = (*t).rot + (*t).spin;
+            if (*t).rot >= 360.0f32 {
+                (*t).rot = ((*t).rot as f32 - 360.0f32) as f32;
+                (*t).hit_spawn = 1 as i32 as i32;
+                (*t).hits += 1;
+            }
+            if (*t).k < (*p).read_limit
+                && (*t).k % (*p).read_period == 0 as i32
+                && (*t).press_latch != 0
+            {
+                (*t).spin = (*t).spin + (*p).mash_add;
+                if (*t).spin > (*p).spin_max {
+                    (*t).spin = (*p).spin_max;
+                }
+                (*t).rise_impulse = 1 as i32 as i32;
+                (*t).press_latch = 0 as i32 as i32;
+            }
+            if (*t).k < (*p).read_limit {
+                (*t).spin = (*t).spin - (*p).decay_a;
+            } else {
+                (*t).spin = (*t).spin - (*p).decay_b;
+            }
+            (*t).k += 1;
+        }
+    }
+    if (*t).phase == GB_TN_END as i32 {
+        (*t).end_t += 1;
+        if (*t).end_t == 1 as i32 {
+            (*t).final_spawn = 1 as i32 as i32;
+        }
+        (*t).final_active = ((*t).end_t
+            <= (if (*in_0).airborne != 0 {
+                (*p).final_hit_air
+            } else {
+                (*p).final_hit_ground
+            })) as i32 as i32;
+        (*t).ledge_locked = ((*t).end_t <= (*p).ledge_lock) as i32 as i32;
+    }
+    if (*in_0).airborne != 0 {
+        (*t).vy = (*t).vy - (*p).grav;
+        if (*t).rise_impulse != 0 {
+            (*t).vy = (*t).vy + (*p).rise_impulse;
+            if (*t).vy > (*p).rise_max {
+                (*t).vy = (*p).rise_max;
+            }
+            (*t).rise_impulse = 0 as i32 as i32;
+        }
+        if (*t).vy < -(*p).fall_max {
+            (*t).vy = -(*p).fall_max;
+        }
+        tx = (*in_0).sx * (*p).vx_max;
+        (*t).vx = gb_approach((*t).vx, tx, (*p).vx_accel);
+    } else {
+        tx = (*in_0).sx * (*p).vx_max_ground;
+        (*t).vx = gb_approach((*t).vx, tx, (*p).vx_accel);
+        (*t).vy = 0.0f32 as f32;
+        (*t).rise_impulse = 0 as i32 as i32;
+    }
+    (*t).n += 1;
+    if (*t).phase == GB_TN_END as i32 && (*t).end_t >= (*p).end_frames {
+        (*t).phase = GB_TN_DONE as i32 as i32;
+        (*t).helpless = (if (*in_0).airborne != 0 {
+            1 as i32
+        } else {
+            0 as i32
+        }) as i32;
+    }
+}
+
+pub unsafe extern "C" fn GenoBhv_DrillParams(mut p: *mut GbDrillP) {
+    melee_core::ct!("GenoBhv_DrillParams");
+    (*p).move0 = 16 as i32;
+    (*p).ramp = 4 as i32;
+    (*p).hit0 = 26 as i32;
+    (*p).hit_period = 4 as i32;
+    (*p).nhits = 10 as i32;
+    (*p).hit_end = 65 as i32;
+    (*p).final_frame = 66 as i32;
+    (*p).final_end_ground = 67 as i32;
+    (*p).final_end_air = 70 as i32;
+    (*p).total = 96 as i32;
+    (*p).rush_damage = 1 as i32;
+    (*p).final_damage = 3 as i32;
+    (*p).dive_default = -20.0f32;
+    (*p).psi_stick = 45.0f32;
+    (*p).psi_min = -60.0f32;
+    (*p).psi_max = 30.0f32;
+    (*p).steer_rate = 2.0f32;
+    (*p).speed = 2.0f32;
+    (*p).recoil_vy = 1.0f32;
+    (*p).end_vx_keep = 0.2f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_DrillBegin(
+    mut d: *mut GbDrill,
+    mut p: *const GbDrillP,
+    mut f: f32,
+    mut sy: f32,
+) {
+    melee_core::ct!("GenoBhv_DrillBegin");
+    let mut a: f32 = sy * (*p).psi_stick;
+    let mut psi: f32 = (*p).dive_default + a;
+    (*d).psi = gb_clamp(psi, (*p).psi_min, (*p).psi_max);
+    (*d).phase = GB_DR_WIND as i32 as i32;
+    (*d).n = 0 as i32 as i32;
+    (*d).hit_spawn = 0 as i32 as i32;
+    (*d).hits = 0 as i32 as i32;
+    (*d).final_active = 0 as i32 as i32;
+    (*d).helpless = 0 as i32 as i32;
+    (*d).done = 0 as i32 as i32;
+    (*d).speed = 0.0f32 as f32;
+    (*d).f = f;
+    (*d).vx = 0.0f32 as f32;
+    (*d).vy = 0.0f32 as f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_DrillStep(
+    mut d: *mut GbDrill,
+    mut in_0: *const GbDrillIn,
+    mut p: *const GbDrillP,
+) {
+    melee_core::ct!("GenoBhv_DrillStep");
+    let mut n: i32 = (*d).n as i32;
+    let mut a: f32 = 0.;
+    let mut tgt: f32 = 0.;
+    let mut step: f32 = 0.;
+    let mut cs: f32 = 0.;
+    let mut sn: f32 = 0.;
+    (*d).hit_spawn = 0 as i32 as i32;
+    (*d).final_active = 0 as i32 as i32;
+    if (*d).done != 0 {
+        return;
+    }
+    if n >= (*p).move0 && n <= (*p).hit_end {
+        a = (*in_0).sy * (*p).psi_stick;
+        tgt = (*p).dive_default + a;
+        tgt = gb_clamp(tgt, (*p).psi_min, (*p).psi_max);
+        (*d).psi = gb_approach((*d).psi, tgt, (*p).steer_rate);
+    }
+    if (*in_0).airborne == 0 && (*d).psi < (*in_0).slope {
+        (*d).psi = (*in_0).slope;
+    }
+    if n < (*p).final_frame {
+        if n < (*p).move0 {
+            (*d).speed = 0.0f32 as f32;
+        } else {
+            step = (*p).speed / (*p).ramp as f32;
+            (*d).speed = gb_approach((*d).speed, (*p).speed, step);
+        }
+        cs = GenoBhv_CosDeg((*d).psi);
+        sn = GenoBhv_SinDeg((*d).psi);
+        (*d).vx = (*d).speed * cs;
+        (*d).vx = (*d).vx * (*d).f;
+        (*d).vy = (*d).speed * sn;
+        if (*in_0).airborne == 0 {
+            (*d).vy = 0.0f32 as f32;
+        }
+    } else if n == (*p).final_frame {
+        (*d).vx = (*d).vx * (*p).end_vx_keep;
+        if (*in_0).airborne != 0 {
+            (*d).vy = (*p).recoil_vy;
+        }
+    }
+    if n >= (*p).hit0 && n <= (*p).hit_end
+        && (n as i32 - (*p).hit0) % (*p).hit_period == 0 as i32
+        && (*d).hits < (*p).nhits
+    {
+        (*d).hit_spawn = 1 as i32 as i32;
+        (*d).hits += 1;
+    }
+    if n >= (*p).final_frame {
+        (*d).phase = GB_DR_FINAL as i32 as i32;
+        (*d).final_active = (n
+            <= (if (*in_0).airborne != 0 {
+                (*p).final_end_air
+            } else {
+                (*p).final_end_ground
+            })) as i32 as i32;
+    } else if n >= (*p).hit0 {
+        (*d).phase = GB_DR_RUSH as i32 as i32;
+    } else {
+        (*d).phase = GB_DR_WIND as i32 as i32;
+    }
+    (*d).n += 1;
+    if (*d).n >= (*p).total {
+        (*d).done = 1 as i32 as i32;
+        (*d).phase = GB_DR_DONE as i32 as i32;
+        (*d).helpless = (if (*in_0).airborne != 0 {
+            1 as i32
+        } else {
+            0 as i32
+        }) as i32;
+    }
+}
+
+pub unsafe extern "C" fn GenoBhv_CapeParams(mut p: *mut GbCapeP) {
+    melee_core::ct!("GenoBhv_CapeParams");
+    (*p).start = 6 as i32;
+    (*p).end = 25 as i32;
+    (*p).total = 40 as i32;
+    (*p).turn_thr = 0.5f32;
+    (*p).stall_x = 0.80f32;
+    (*p).stall_y_up = 0.85f32;
+    (*p).stall_vy_hi = 0.0f32;
+    (*p).stall_grav = 0.015f32;
+    (*p).stall_fall = 0.45f32;
+    (*p).ground_x = 0.5f32;
+    (*p).reflect_dmg_mul = 1.5f32;
+    (*p).reflect_speed_mul = 1.2f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_CapeBegin(
+    mut c: *mut GbCape,
+    mut f: f32,
+    mut vx: f32,
+    mut vy: f32,
+) {
+    melee_core::ct!("GenoBhv_CapeBegin");
+    (*c).n = 0 as i32 as i32;
+    (*c).flipped = 0 as i32 as i32;
+    (*c).flip_now = 0 as i32 as i32;
+    (*c).reflect = 0 as i32 as i32;
+    (*c).done = 0 as i32 as i32;
+    (*c).f = f;
+    (*c).vx = vx;
+    (*c).vy = vy;
+}
+
+pub unsafe extern "C" fn GenoBhv_CapeStep(
+    mut c: *mut GbCape,
+    mut in_0: *const GbCapeIn,
+    mut p: *const GbCapeP,
+) {
+    melee_core::ct!("GenoBhv_CapeStep");
+    let mut active: i32 = 0;
+    let mut t: f32 = 0.;
+    (*c).flip_now = 0 as i32 as i32;
+    (*c).reflect = 0 as i32 as i32;
+    if (*c).done != 0 {
+        return;
+    }
+    if (*c).n == (*p).start && (*c).flipped == 0 {
+        (*c).flipped = 1 as i32 as i32;
+        t = (*in_0).sx * (*c).f;
+        if t < -(*p).turn_thr {
+            (*c).flip_now = 1 as i32 as i32;
+            (*c).f = -(*c).f;
+        }
+    }
+    active = ((*c).n >= (*p).start && (*c).n <= (*p).end) as i32;
+    if active != 0 {
+        (*c).reflect = 1 as i32 as i32;
+        if (*in_0).airborne != 0 {
+            (*c).vx = (*c).vx * (*p).stall_x;
+            if (*c).vy > (*p).stall_vy_hi {
+                (*c).vy = (*c).vy * (*p).stall_y_up;
+            } else {
+                (*c).vy = (*c).vy - (*p).stall_grav;
+            }
+            if (*c).vy < -(*p).stall_fall {
+                (*c).vy = -(*p).stall_fall;
+            }
+        } else {
+            (*c).vx = (*c).vx * (*p).ground_x;
+        }
+    }
+    (*c).n += 1;
+    if (*c).n >= (*p).total {
+        (*c).done = 1 as i32 as i32;
+    }
+}
+
+pub unsafe extern "C" fn GenoBhv_MultiDashParams(mut p: *mut GbMultiDashP) {
+    melee_core::ct!("GenoBhv_MultiDashParams");
+    (*p).max_seg = 4 as i32 as i32;
+    (*p).aim_first = 6 as i32 as i32;
+    (*p).aim_later = 4 as i32 as i32;
+    (*p).dash_frames = 10 as i32 as i32;
+    (*p).pause_frames = 3 as i32 as i32;
+    (*p).repress_frames = 8 as i32 as i32;
+    (*p).end_lag = 20 as i32 as i32;
+    (*p).dash_speed = 3.2f32 as f32;
+    (*p).end_keep = 0.15f32 as f32;
+    (*p).aim_slow = 0.1f32 as f32;
+    (*p).ay_max = 0.9397f32 as f32;
+    (*p).pause_keep = 0.3f32 as f32;
+}
+
+pub unsafe extern "C" fn GenoBhv_MultiDashBegin(mut m: *mut GbMultiDash, mut f: f32) {
+    melee_core::ct!("GenoBhv_MultiDashBegin");
+    (*m).seg = 0 as i32 as i32;
+    (*m).phase = GB_MD_AIM as i32 as i32;
+    (*m).t = 0 as i32 as i32;
+    (*m).repress = 0 as i32 as i32;
+    (*m).hit_spawn = 0 as i32 as i32;
+    (*m).helpless = 0 as i32 as i32;
+    (*m).done = 0 as i32 as i32;
+    (*m).f = f;
+    (*m).ax = f;
+    (*m).ay = 0.0f32 as f32;
+    (*m).speed = 0.0f32 as f32;
+    (*m).vx = 0.0f32 as f32;
+    (*m).vy = 0.0f32 as f32;
+    (*m).dist = 0.0f32 as f32;
+}
+
+pub unsafe extern "C" fn gb_md_fix_direction(
+    mut m: *mut GbMultiDash,
+    mut in_0: *const GbMultiDashIn,
+    mut p: *const GbMultiDashP,
+) {
+    melee_core::ct!("gb_md_fix_direction");
+    let mut m2: f32 = (*in_0).sx * (*in_0).sx;
+    let mut n2: f32 = (*in_0).sy * (*in_0).sy;
+    let mut mm: f32 = m2 + n2;
+    let mut ax: f32 = 0.;
+    let mut ay: f32 = 0.;
+    let mut len: f32 = 0.;
+    let mut l2: f32 = 0.;
+    let mut l3: f32 = 0.;
+    let mut ll: f32 = 0.;
+    let mut l: f32 = 0.;
+    let mut chk: f32 = 0.;
+    if mm < GENO_BHV_DZ2 {
+        ax = (*m).f;
+        ay = 0.0f32 as f32;
+    } else {
+        len = sqrtf(mm as f32) as f32;
+        ax = (*in_0).sx / len;
+        ay = (*in_0).sy / len;
+    }
+    chk = ax * (*m).f;
+    if chk < 0.0f32 {
+        (*m).f = -(*m).f;
+    }
+    if ay > (*p).ay_max || ay < -(*p).ay_max {
+        ay = gb_clamp(ay, -(*p).ay_max, (*p).ay_max);
+        l3 = ay * ay;
+        ll = 1.0f32 - l3;
+        l = sqrtf(ll as f32) as f32;
+        l2 = (*m).f;
+        if ax < 0.0f32 {
+            l2 = -1.0f32 as f32;
+        } else if ax > 0.0f32 {
+            l2 = 1.0f32 as f32;
+        }
+        ax = l * l2;
+    }
+    (*m).ax = ax;
+    (*m).ay = ay;
+}
+
+pub unsafe extern "C" fn GenoBhv_MultiDashStep(
+    mut m: *mut GbMultiDash,
+    mut in_0: *const GbMultiDashIn,
+    mut p: *const GbMultiDashP,
+) {
+    melee_core::ct!("GenoBhv_MultiDashStep");
+    let mut aim_len: i32 = 0;
+    let mut step: f32 = 0.;
+    (*m).hit_spawn = 0 as i32 as i32;
+    if (*m).done != 0 {
+        return;
+    }
+    if (*in_0).special_pressed != 0 {
+        if (*m).phase == GB_MD_DASH as i32
+            && (*m).t >= (*p).dash_frames - (*p).repress_frames
+            || (*m).phase == GB_MD_PAUSE as i32
+        {
+            (*m).repress = 1 as i32 as i32;
+        }
+    }
+    if (*m).phase == GB_MD_AIM as i32 {
+        aim_len = (if (*m).seg == 0 as i32 {
+            (*p).aim_first
+        } else {
+            (*p).aim_later
+        }) as i32;
+        (*m).vx = (*m).vx * (*p).aim_slow;
+        (*m).vy = (*m).vy * (*p).aim_slow;
+        (*m).t += 1;
+        if (*m).t >= aim_len {
+            gb_md_fix_direction(m, in_0, p);
+            (*m).phase = GB_MD_DASH as i32 as i32;
+            (*m).t = 0 as i32 as i32;
+            (*m).speed = 0.0f32 as f32;
+            (*m).dist = 0.0f32 as f32;
+        }
+    } else if (*m).phase == GB_MD_DASH as i32 {
+        step = ((*p).dash_speed as f32 / 3.0f32) as f32;
+        (*m).speed = gb_approach((*m).speed, (*p).dash_speed, step);
+        (*m).vx = (*m).speed * (*m).ax;
+        (*m).vy = (*m).speed * (*m).ay;
+        (*m).dist = (*m).dist + (*m).speed;
+        (*m).hit_spawn = 1 as i32 as i32;
+        (*m).t += 1;
+        if (*m).t >= (*p).dash_frames {
+            (*m).phase = GB_MD_PAUSE as i32 as i32;
+            (*m).t = 0 as i32 as i32;
+        }
+    } else if (*m).phase == GB_MD_PAUSE as i32 {
+        (*m).vx = (*m).vx * (*p).pause_keep;
+        (*m).vy = (*m).vy * (*p).pause_keep;
+        (*m).t += 1;
+        if (*m).t >= (*p).pause_frames {
+            if (*m).repress != 0
+                && ((*m).seg as i32 + 1 as i32)
+                    < (*p).max_seg
+            {
+                (*m).seg += 1;
+                (*m).phase = GB_MD_AIM as i32 as i32;
+                (*m).t = 0 as i32 as i32;
+                (*m).repress = 0 as i32 as i32;
+            } else {
+                (*m).phase = GB_MD_END as i32 as i32;
+                (*m).t = 0 as i32 as i32;
+                (*m).vx = (*m).vx * (*p).end_keep;
+                (*m).vy = (*m).vy * (*p).end_keep;
+            }
+        }
+    } else if (*m).phase == GB_MD_END as i32 {
+        (*m).t += 1;
+        if (*m).t >= (*p).end_lag {
+            (*m).phase = GB_MD_DONE as i32 as i32;
+            (*m).done = 1 as i32 as i32;
+            (*m).helpless = (if (*m).seg as i32 + 1 as i32
+                == (*p).max_seg
+            {
+                1 as i32
+            } else {
+                0 as i32
+            }) as i32;
+        }
+    }
+}
+
+pub unsafe extern "C" fn GenoBhv_AnimMotionParams(mut p: *mut GbAnimMotionP) {
+    melee_core::ct!("GenoBhv_AnimMotionParams");
+    (*p).rate = 1.0f32 as f32;
+    (*p).scale = 1.0f32 as f32;
+    (*p).grav = 0.095f32 as f32;
+    (*p).mode = GB_AM_DELTA as i32 as i32;
+    (*p).gravity_on = 0 as i32 as i32;
+    (*p).ignore_y = 0 as i32 as i32;
+    (*p).r#loop = 0 as i32 as i32;
+}
+
+pub unsafe extern "C" fn GenoBhv_AnimMotionSample(
+    mut track: *const f32,
+    mut n: i32,
+    mut t: f32,
+    mut x: *mut f32,
+    mut y: *mut f32,
+) {
+    melee_core::ct!("GenoBhv_AnimMotionSample");
+    let mut last: f32 = 0.;
+    let mut fr: f32 = 0.;
+    let mut ax: f32 = 0.;
+    let mut bx: f32 = 0.;
+    let mut dx: f32 = 0.;
+    let mut tx: f32 = 0.;
+    let mut ay: f32 = 0.;
+    let mut by: f32 = 0.;
+    let mut dy: f32 = 0.;
+    let mut ty: f32 = 0.;
+    let mut fi: f32 = 0.;
+    let mut i: i32 = 0;
+    if t <= 0.0f32 {
+        *x = *track.offset(0 as i32 as isize);
+        *y = *track.offset(1 as i32 as isize);
+        return;
+    }
+    last = (n - 1 as i32) as f32;
+    if t >= last {
+        *x = *track
+            .offset((2 as i32 * (n - 1 as i32)) as isize);
+        *y = *track
+            .offset(
+                (2 as i32 * (n - 1 as i32)
+                    + 1 as i32) as isize,
+            );
+        return;
+    }
+    i = gb_floor(t) as i32;
+    fi = i as f32;
+    fr = t - fi;
+    ax = *track.offset((2 as i32 * i) as isize);
+    bx = *track
+        .offset((2 as i32 * (i + 1 as i32)) as isize);
+    dx = bx - ax;
+    tx = dx * fr;
+    *x = ax + tx;
+    ay = *track.offset((2 as i32 * i + 1 as i32) as isize);
+    by = *track
+        .offset(
+            (2 as i32 * (i + 1 as i32)
+                + 1 as i32) as isize,
+        );
+    dy = by - ay;
+    ty = dy * fr;
+    *y = ay + ty;
+}
+
+pub unsafe extern "C" fn GenoBhv_AnimMotionBegin(
+    mut a: *mut GbAnimMotion,
+    mut pos_x: f32,
+    mut pos_y: f32,
+) {
+    melee_core::ct!("GenoBhv_AnimMotionBegin");
+    (*a).anim_t = 0.0f32 as f32;
+    (*a).vy_carry = 0.0f32 as f32;
+    (*a).origin_x = pos_x;
+    (*a).origin_y = pos_y;
+    (*a).vx = 0.0f32 as f32;
+    (*a).vy = 0.0f32 as f32;
+    (*a).pos_x = pos_x;
+    (*a).pos_y = pos_y;
+    (*a).ended = 0 as i32 as i32;
+    (*a).started = 1 as i32 as i32;
+}
+
+pub unsafe extern "C" fn GenoBhv_AnimMotionStep(
+    mut a: *mut GbAnimMotion,
+    mut track: *const f32,
+    mut n: i32,
+    mut p: *const GbAnimMotionP,
+    mut facing: f32,
+    mut blocked: i32,
+) {
+    melee_core::ct!("GenoBhv_AnimMotionStep");
+    let mut t0: f32 = 0.;
+    let mut t1: f32 = 0.;
+    let mut x0: f32 = 0.;
+    let mut y0: f32 = 0.;
+    let mut x1: f32 = 0.;
+    let mut y1: f32 = 0.;
+    let mut dx: f32 = 0.;
+    let mut dy: f32 = 0.;
+    let mut last: f32 = 0.;
+    let mut tx: f32 = 0.;
+    let mut ty: f32 = 0.;
+    let mut tgx: f32 = 0.;
+    let mut tgy: f32 = 0.;
+    let mut delta: f32 = 0.;
+    if (*a).ended != 0 {
+        return;
+    }
+    last = (n - 1 as i32) as f32;
+    t0 = (*a).anim_t;
+    t1 = (*a).anim_t + (*p).rate;
+    GenoBhv_AnimMotionSample(track, n, t0, &raw mut x0, &raw mut y0);
+    GenoBhv_AnimMotionSample(track, n, t1, &raw mut x1, &raw mut y1);
+    dx = x1 - x0;
+    dy = y1 - y0;
+    dx = dx * (*p).scale;
+    dy = dy * (*p).scale;
+    dx = dx * facing;
+    if (*p).ignore_y != 0 {
+        dy = 0.0f32 as f32;
+    }
+    if (*p).mode == GB_AM_DELTA as i32 {
+        if blocked != 0 {
+            dx = 0.0f32 as f32;
+        }
+        (*a).pos_x = (*a).pos_x + dx;
+        (*a).pos_y = (*a).pos_y + dy;
+    } else {
+        tx = x1 * (*p).scale;
+        tx = tx * facing;
+        ty = y1 * (*p).scale;
+        tgx = (*a).origin_x + tx;
+        tgy = (*a).origin_y + ty;
+        if (*p).ignore_y != 0 {
+            tgy = (*a).origin_y;
+        }
+        if blocked != 0 {
+            delta = tgx - (*a).pos_x;
+            (*a).origin_x = (*a).origin_x - delta;
+            tgx = (*a).pos_x;
+            dx = 0.0f32 as f32;
+        }
+        (*a).pos_x = tgx;
+        (*a).pos_y = tgy;
+    }
+    (*a).vx = dx;
+    (*a).vy = dy;
+    if (*p).gravity_on != 0 {
+        (*a).vy = (*a).vy + (*a).vy_carry;
+        (*a).vy_carry = (*a).vy_carry - (*p).grav;
+    }
+    (*a).anim_t = t1;
+    if (*a).anim_t >= last {
+        if (*p).r#loop != 0 {
+            (*a).anim_t = (*a).anim_t - last;
+        } else {
+            (*a).ended = 1 as i32 as i32;
+        }
+    }
+}
+
+pub unsafe extern "C" fn gb_profile_params(mut st: *mut GenoState) -> *const f32 {
+    melee_core::ct!("gb_profile_params");
+    let mut pr: i32 = (*st).profile as i32;
+    if pr < 0 as i32 || pr >= Geno_ProfileCapacity
+        || (*Geno_Params.offset(pr as isize)).is_null()
+    {
+        return ::core::ptr::null::<f32>();
+    }
+    return *Geno_Params.offset(pr as isize);
+}
+
+pub unsafe extern "C" fn gb_glide_params(mut st: *mut GenoState, mut p: *mut GbGlideP) {
+    melee_core::ct!("gb_glide_params");
+    let mut v: *const f32 = gb_profile_params(st);
+    GenoBhv_GlideParams(p);
+    if !v.is_null() {
+        (*p).max_glides = *v
+            .offset(GENO_BP_GLIDE_max_glides as i32 as isize) as i32;
+        (*p).entry_hold = *v
+            .offset(GENO_BP_GLIDE_entry_hold as i32 as isize) as i32;
+        (*p).flick_window = *v
+            .offset(GENO_BP_GLIDE_flick_window as i32 as isize) as i32;
+        (*p).start_frames = *v
+            .offset(GENO_BP_GLIDE_start_frames as i32 as isize) as i32;
+        (*p).trip_frames = *v
+            .offset(GENO_BP_GLIDE_trip_frames as i32 as isize) as i32;
+        (*p).land_lag = *v.offset(GENO_BP_GLIDE_land_lag as i32 as isize)
+            as i32;
+        (*p).jumpout_frames = *v
+            .offset(GENO_BP_GLIDE_jumpout_frames as i32 as isize) as i32;
+        (*p).attack_frames = *v
+            .offset(GENO_BP_GLIDE_attack_frames as i32 as isize) as i32;
+        (*p).attack_hit0 = *v
+            .offset(GENO_BP_GLIDE_attack_hit0 as i32 as isize) as i32;
+        (*p).attack_hit1 = *v
+            .offset(GENO_BP_GLIDE_attack_hit1 as i32 as isize) as i32;
+        (*p).attack_endlag = *v
+            .offset(GENO_BP_GLIDE_attack_endlag as i32 as isize) as i32;
+        (*p).attack_buf_frames = *v
+            .offset(GENO_BP_GLIDE_attack_buf_frames as i32 as isize)
+            as i32;
+        (*p).entry_vy_max = *v
+            .offset(GENO_BP_GLIDE_entry_vy_max as i32 as isize);
+        (*p).apex_vy = *v.offset(GENO_BP_GLIDE_apex_vy as i32 as isize);
+        (*p).flick_thr = *v
+            .offset(GENO_BP_GLIDE_flick_thr as i32 as isize);
+        (*p).s_start = *v.offset(GENO_BP_GLIDE_s_start as i32 as isize);
+        (*p).start_accel = *v
+            .offset(GENO_BP_GLIDE_start_accel as i32 as isize);
+        (*p).s_start_cap = *v
+            .offset(GENO_BP_GLIDE_s_start_cap as i32 as isize);
+        (*p).theta_def = *v
+            .offset(GENO_BP_GLIDE_theta_def as i32 as isize);
+        (*p).r_down = *v.offset(GENO_BP_GLIDE_r_down as i32 as isize);
+        (*p).r_up = *v.offset(GENO_BP_GLIDE_r_up as i32 as isize);
+        (*p).turn_rate = *v
+            .offset(GENO_BP_GLIDE_turn_rate as i32 as isize);
+        (*p).gk = *v.offset(GENO_BP_GLIDE_gk as i32 as isize);
+        (*p).drag = *v.offset(GENO_BP_GLIDE_drag as i32 as isize);
+        (*p).s_max = *v.offset(GENO_BP_GLIDE_s_max as i32 as isize);
+        (*p).s_stall = *v.offset(GENO_BP_GLIDE_s_stall as i32 as isize);
+        (*p).trip_angle = *v
+            .offset(GENO_BP_GLIDE_trip_angle as i32 as isize);
+        (*p).attack_speed_keep = *v
+            .offset(GENO_BP_GLIDE_attack_speed_keep as i32 as isize);
+        (*p).chain_speed_mul = *v
+            .offset(GENO_BP_GLIDE_chain_speed_mul as i32 as isize);
+        (*p).chain_turn_mul = *v
+            .offset(GENO_BP_GLIDE_chain_turn_mul as i32 as isize);
+        (*p).attack_damage = *v
+            .offset(GENO_BP_GLIDE_attack_damage as i32 as isize) as i32;
+    }
+}
+
+pub unsafe extern "C" fn gb_tornado_params(mut st: *mut GenoState, mut p: *mut GbTornadoP) {
+    melee_core::ct!("gb_tornado_params");
+    let mut v: *const f32 = gb_profile_params(st);
+    GenoBhv_TornadoParams(p);
+    if !v.is_null() {
+        (*p).start_frames = *v
+            .offset(GENO_BP_TORNADO_start_frames as i32 as isize) as i32;
+        (*p).read_period = *v
+            .offset(GENO_BP_TORNADO_read_period as i32 as isize) as i32;
+        (*p).read_limit = *v
+            .offset(GENO_BP_TORNADO_read_limit as i32 as isize) as i32;
+        (*p).end_frames = *v
+            .offset(GENO_BP_TORNADO_end_frames as i32 as isize) as i32;
+        (*p).ledge_lock = *v
+            .offset(GENO_BP_TORNADO_ledge_lock as i32 as isize) as i32;
+        (*p).final_hit_ground = *v
+            .offset(GENO_BP_TORNADO_final_hit_ground as i32 as isize)
+            as i32;
+        (*p).final_hit_air = *v
+            .offset(GENO_BP_TORNADO_final_hit_air as i32 as isize) as i32;
+        (*p).loop_damage = *v
+            .offset(GENO_BP_TORNADO_loop_damage as i32 as isize) as i32;
+        (*p).final_damage = *v
+            .offset(GENO_BP_TORNADO_final_damage as i32 as isize) as i32;
+        (*p).spin0 = *v.offset(GENO_BP_TORNADO_spin0 as i32 as isize);
+        (*p).decay_a = *v.offset(GENO_BP_TORNADO_decay_a as i32 as isize);
+        (*p).decay_b = *v.offset(GENO_BP_TORNADO_decay_b as i32 as isize);
+        (*p).mash_add = *v
+            .offset(GENO_BP_TORNADO_mash_add as i32 as isize);
+        (*p).spin_max = *v
+            .offset(GENO_BP_TORNADO_spin_max as i32 as isize);
+        (*p).spin_end = *v
+            .offset(GENO_BP_TORNADO_spin_end as i32 as isize);
+        (*p).grav = *v.offset(GENO_BP_TORNADO_grav as i32 as isize);
+        (*p).rise_impulse = *v
+            .offset(GENO_BP_TORNADO_rise_impulse as i32 as isize);
+        (*p).rise_max = *v
+            .offset(GENO_BP_TORNADO_rise_max as i32 as isize);
+        (*p).fall_max = *v
+            .offset(GENO_BP_TORNADO_fall_max as i32 as isize);
+        (*p).vx_max = *v.offset(GENO_BP_TORNADO_vx_max as i32 as isize);
+        (*p).vx_max_ground = *v
+            .offset(GENO_BP_TORNADO_vx_max_ground as i32 as isize);
+        (*p).vx_accel = *v
+            .offset(GENO_BP_TORNADO_vx_accel as i32 as isize);
+        (*p).jump_bonus = *v
+            .offset(GENO_BP_TORNADO_jump_bonus as i32 as isize);
+        (*p).start_vy_keep = *v
+            .offset(GENO_BP_TORNADO_start_vy_keep as i32 as isize);
+        (*p).start_vx_keep = *v
+            .offset(GENO_BP_TORNADO_start_vx_keep as i32 as isize);
+    }
+}
+
+pub unsafe extern "C" fn gb_drill_params(mut st: *mut GenoState, mut p: *mut GbDrillP) {
+    melee_core::ct!("gb_drill_params");
+    let mut v: *const f32 = gb_profile_params(st);
+    GenoBhv_DrillParams(p);
+    if !v.is_null() {
+        (*p).move0 = *v.offset(GENO_BP_DRILL_move0 as i32 as isize)
+            as i32;
+        (*p).ramp = *v.offset(GENO_BP_DRILL_ramp as i32 as isize) as i32;
+        (*p).hit0 = *v.offset(GENO_BP_DRILL_hit0 as i32 as isize) as i32;
+        (*p).hit_period = *v
+            .offset(GENO_BP_DRILL_hit_period as i32 as isize) as i32;
+        (*p).nhits = *v.offset(GENO_BP_DRILL_nhits as i32 as isize)
+            as i32;
+        (*p).hit_end = *v.offset(GENO_BP_DRILL_hit_end as i32 as isize)
+            as i32;
+        (*p).final_frame = *v
+            .offset(GENO_BP_DRILL_final_frame as i32 as isize) as i32;
+        (*p).final_end_ground = *v
+            .offset(GENO_BP_DRILL_final_end_ground as i32 as isize)
+            as i32;
+        (*p).final_end_air = *v
+            .offset(GENO_BP_DRILL_final_end_air as i32 as isize) as i32;
+        (*p).total = *v.offset(GENO_BP_DRILL_total as i32 as isize)
+            as i32;
+        (*p).rush_damage = *v
+            .offset(GENO_BP_DRILL_rush_damage as i32 as isize) as i32;
+        (*p).final_damage = *v
+            .offset(GENO_BP_DRILL_final_damage as i32 as isize) as i32;
+        (*p).dive_default = *v
+            .offset(GENO_BP_DRILL_dive_default as i32 as isize);
+        (*p).psi_stick = *v
+            .offset(GENO_BP_DRILL_psi_stick as i32 as isize);
+        (*p).psi_min = *v.offset(GENO_BP_DRILL_psi_min as i32 as isize);
+        (*p).psi_max = *v.offset(GENO_BP_DRILL_psi_max as i32 as isize);
+        (*p).steer_rate = *v
+            .offset(GENO_BP_DRILL_steer_rate as i32 as isize);
+        (*p).speed = *v.offset(GENO_BP_DRILL_speed as i32 as isize);
+        (*p).recoil_vy = *v
+            .offset(GENO_BP_DRILL_recoil_vy as i32 as isize);
+        (*p).end_vx_keep = *v
+            .offset(GENO_BP_DRILL_end_vx_keep as i32 as isize);
+    }
+}
+
+pub unsafe extern "C" fn gb_cape_params(mut st: *mut GenoState, mut p: *mut GbCapeP) {
+    melee_core::ct!("gb_cape_params");
+    let mut v: *const f32 = gb_profile_params(st);
+    GenoBhv_CapeParams(p);
+    if !v.is_null() {
+        (*p).start = *v.offset(GENO_BP_CAPE_start as i32 as isize) as i32;
+        (*p).end = *v.offset(GENO_BP_CAPE_end as i32 as isize) as i32;
+        (*p).total = *v.offset(GENO_BP_CAPE_total as i32 as isize) as i32;
+        (*p).turn_thr = *v.offset(GENO_BP_CAPE_turn_thr as i32 as isize);
+        (*p).stall_x = *v.offset(GENO_BP_CAPE_stall_x as i32 as isize);
+        (*p).stall_y_up = *v
+            .offset(GENO_BP_CAPE_stall_y_up as i32 as isize);
+        (*p).stall_vy_hi = *v
+            .offset(GENO_BP_CAPE_stall_vy_hi as i32 as isize);
+        (*p).stall_grav = *v
+            .offset(GENO_BP_CAPE_stall_grav as i32 as isize);
+        (*p).stall_fall = *v
+            .offset(GENO_BP_CAPE_stall_fall as i32 as isize);
+        (*p).ground_x = *v.offset(GENO_BP_CAPE_ground_x as i32 as isize);
+        (*p).reflect_dmg_mul = *v
+            .offset(GENO_BP_CAPE_reflect_dmg_mul as i32 as isize);
+        (*p).reflect_speed_mul = *v
+            .offset(GENO_BP_CAPE_reflect_speed_mul as i32 as isize);
+    }
+}
+
+pub unsafe extern "C" fn gb_stick_of(
+    mut fp: *mut Fighter,
+    mut sx: *mut f32,
+    mut sy: *mut f32,
+) {
+    melee_core::ct!("gb_stick_of");
+    GenoBhv_Stick(
+        (*fp).input.lstick[0 as i32 as usize].x,
+        (*fp).input.lstick[0 as i32 as usize].y,
+        sx,
+        sy,
+    );
+}
+
+pub unsafe extern "C" fn gb_airborne(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("gb_airborne");
+    return ((*fp).ground_or_air as i32 != GA_Ground as i32)
+        as i32;
+}
+
+pub unsafe extern "C" fn gb_jumps_left(mut fp: *mut Fighter) -> i32 {
+    melee_core::ct!("gb_jumps_left");
+    return ((*fp).co_attrs.max_jumps - (*fp).x1968_jumpsUsed as i32
+        > 0 as i32) as i32;
+}
+
+pub unsafe extern "C" fn gb_state_bhv(
+    mut st: *mut GenoState,
+    mut s: i32,
+) -> i32 {
+    melee_core::ct!("gb_state_bhv");
+    return if (*st).profile >= 0 as i32 && s >= 0 as i32
+        && s < GENO_MAX_STATES
+        && s < Geno_StateCount((*st).profile as i32)
+    {
+        Geno_StateBehavior((*st).profile as i32, s)
+    } else {
+        0 as i32
+    };
+}
+
+pub unsafe extern "C" fn gb_cur_bhv(
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
 ) -> i32 {
-    melee_core::ct!("geno_in_air_jump");
-    let mut m: i32 = (*fp).motion_id;
-    if (*fp).ground_or_air as i32 != GA_Air as i32 {
-        return 0 as i32;
+    melee_core::ct!("gb_cur_bhv");
+    return gb_state_bhv(st, geno_cur_state(fp, st));
+}
+
+pub unsafe extern "C" fn gb_from_bhv(mut st: *mut GenoState) -> i32 {
+    melee_core::ct!("gb_from_bhv");
+    return gb_state_bhv(st, (*st).enter_from as i32 - GENO_MOTION_BASE);
+}
+
+pub unsafe extern "C" fn gb_to_bhv(
+    mut gobj: *mut Fighter_GObj,
+    mut fp: *mut Fighter,
+    mut st: *mut GenoState,
+    mut bhv: i32,
+) {
+    melee_core::ct!("gb_to_bhv");
+    geno_go(
+        gobj,
+        fp,
+        st,
+        (3 as u32 & 15 as u32) << 28 as i32
+            | bhv as u32 & 0xffff as u32,
+    );
+}
+
+pub unsafe extern "C" fn gb_finish(
+    mut gobj: *mut Fighter_GObj,
+    mut fp: *mut Fighter,
+    mut st: *mut GenoState,
+    mut helpless: i32,
+) {
+    melee_core::ct!("gb_finish");
+    let mut s: i32 = geno_cur_state(fp, st);
+    let mut nx: u32 = if s >= 0 as i32 {
+        Geno_StateNext((*st).profile as i32, s) as u32
+    } else {
+        GENO_NONE_T
+    };
+    let mut dflt: u32 = if helpless != 0 { GENO_TGT_HELPLESS } else { GENO_AUTO };
+    geno_go(gobj, fp, st, if nx != GENO_NONE_T { nx } else { dflt });
+}
+
+pub unsafe extern "C" fn gb_clear_hit_lists(mut fp: *mut Fighter) {
+    melee_core::ct!("gb_clear_hit_lists");
+    let mut i: i32 = 0;
+    i = 0 as i32;
+    while i < GENO_MAX_REHIT {
+        lbColl_80008440(
+            (&raw mut (*fp).x914 as *mut HitCapsule).offset(i as isize)
+                as *mut HitCapsule,
+        );
+        i += 1;
     }
-    if m == ftCo_MS_JumpAerialF as i32
-        || m == ftCo_MS_JumpAerialB as i32
-    {
-        return 1 as i32;
-    }
-    if !(*fp).x2D0.is_null() && ftCo_800D72A0(fp) != 0 {
-        return 1 as i32;
-    }
-    if geno_param(st, GENO_P_GLIDE_FROM_JUMP as i32) != 0.0f32
-        && (m == ftCo_MS_JumpF as i32
-            || m == ftCo_MS_JumpB as i32)
-    {
-        return 1 as i32;
-    }
-    return 0 as i32;
+}
+
+pub unsafe extern "C" fn gb_glide_load(mut st: *mut GenoState, mut g: *mut GbGlide) {
+    melee_core::ct!("gb_glide_load");
+    let mut i0: i32 = (*st).move_i[0 as i32 as usize];
+    (*g).phase = (i0 as i32 & 15 as i32) as i32;
+    (*g).end_reason = (i0 as i32 >> 4 as i32
+        & 15 as i32) as i32;
+    (*g).slow = (i0 as i32 >> 8 as i32
+        & 1 as i32) as i32;
+    (*g).helpless = (i0 as i32 >> 9 as i32
+        & 1 as i32) as i32;
+    (*g).t = (*st).move_i[1 as i32 as usize];
+    (*g).attack_buf = ((*st).move_i[2 as i32 as usize]
+        & 255 as i32) as i32;
+    (*g).endlag = ((*st).move_i[2 as i32 as usize]
+        >> 8 as i32 & 255 as i32) as i32;
+    (*g).lag = (*st).move_i[3 as i32 as usize];
+    (*g).glides_used = (*st).move_i[7 as i32 as usize];
+    (*g).theta = (*st).move_f[0 as i32 as usize];
+    (*g).speed = (*st).move_f[1 as i32 as usize];
+    (*g).vx = (*st).move_f[2 as i32 as usize];
+    (*g).vy = (*st).move_f[3 as i32 as usize];
+    (*g).hit_active = 0 as i32 as i32;
+    (*g).jump_now = 0 as i32 as i32;
+    (*g).f = 1.0f32 as f32;
+}
+
+pub unsafe extern "C" fn gb_glide_store(mut st: *mut GenoState, mut g: *const GbGlide) {
+    melee_core::ct!("gb_glide_store");
+    (*st).move_i[0 as i32 as usize] = (*g).phase
+        | (*g).end_reason << 4 as i32
+        | (*g).slow << 8 as i32
+        | (*g).helpless << 9 as i32;
+    (*st).move_i[1 as i32 as usize] = (*g).t;
+    (*st).move_i[2 as i32 as usize] = (*g).attack_buf
+        | (*g).endlag << 8 as i32;
+    (*st).move_i[3 as i32 as usize] = (*g).lag;
+    (*st).move_i[7 as i32 as usize] = (*g).glides_used;
+    (*st).move_f[0 as i32 as usize] = (*g).theta;
+    (*st).move_f[1 as i32 as usize] = (*g).speed;
+    (*st).move_f[2 as i32 as usize] = (*g).vx;
+    (*st).move_f[3 as i32 as usize] = (*g).vy;
 }
 
 pub unsafe extern "C" fn geno_glide_entry(
@@ -7081,55 +8702,97 @@ pub unsafe extern "C" fn geno_glide_entry(
     mut st: *mut GenoState,
 ) -> i32 {
     melee_core::ct!("geno_glide_entry");
-    let mut start: i32 = 0;
-    let mut need: i32 = 0;
-    if geno_param(st, GENO_P_GLIDE_ENTRY as i32) == 0.0f32
-        || {
-            start = geno_state_with(st, GENO_BHV_GLIDE_START as i32);
-            start < 0 as i32
-        }
-    {
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut e: GbGlideEntry = unsafe { core::mem::zeroed() };
+    let mut sx: f32 = 0.;
+    let mut sy: f32 = 0.;
+    let mut msid: i32 = 0;
+    let mut allowed: i32 = 0;
+    let mut jumps: i32 = 0;
+    let mut midair: i32 = 0;
+    let mut path: i32 = 0;
+    let mut s_start: i32 = 0;
+    s_start = geno_state_with(st, GENO_BHV_GLIDE_START as i32);
+    if s_start < 0 as i32 {
         return 0 as i32;
     }
-    if geno_in_air_jump(fp, st) == 0 {
+    if gb_airborne(fp) == 0 {
+        (*st).move_i[7 as i32 as usize] = 0 as i32 as i32;
         (*st).hold_motion = -(1 as i32) as i32;
         (*st).hold_frames = -(1 as i32) as i32;
+        (*st).move_i[6 as i32 as usize] = ((1000 as i32)
+            << 2 as i32 | 1 as i32) as i32;
         return 0 as i32;
     }
-    if (*st).action_time <= 1 as i32
-        || (*st).hold_motion != (*fp).motion_id
+    if geno_cur_state(fp, st) >= 0 as i32
+        || geno_param(st, GENO_BP_GLIDE_auto_entry as i32) == 0.0f32
     {
-        (*st).hold_motion = (*fp).motion_id;
+        return 0 as i32;
+    }
+    msid = (*fp).motion_id;
+    jumps = (*fp).x1968_jumpsUsed as i32;
+    if jumps >= 2 as i32
+        && ((*st).hold_motion < 0 as i32
+            || (*st).hold_motion >> 16 as i32 != jumps)
+    {
+        (*st).hold_motion = (jumps << 16 as i32
+            | msid & 0xffff as i32) as i32;
         (*st).hold_frames = 0 as i32 as i32;
     }
-    if (*st).hold_frames < 0 as i32 {
+    midair = ((*st).hold_motion >= 0 as i32
+        && (*st).hold_motion >> 16 as i32 >= 2 as i32)
+        as i32;
+    allowed = (msid == ftCo_MS_JumpF as i32
+        || msid == ftCo_MS_JumpB as i32
+        || msid == ftCo_MS_JumpAerialF as i32
+        || msid == ftCo_MS_JumpAerialB as i32
+        || msid == ftCo_MS_Fall as i32
+        || msid == ftCo_MS_FallAerial as i32
+        || msid == ftCo_MS_FallAerialF as i32
+        || msid == ftCo_MS_FallAerialB as i32
+        || midair != 0
+            && msid
+                == (*st).hold_motion as i32
+                    & 0xffff as i32) as i32;
+    if allowed == 0 {
         return 0 as i32;
     }
-    if geno_jump_held(fp) == 0 {
-        (*st).hold_frames = -(1 as i32) as i32;
-        return 0 as i32;
-    }
-    (*st).hold_frames += 1;
-    need = geno_param(st, GENO_P_GLIDE_HOLD as i32) as i32;
-    if (*st).hold_frames
-        < (if need > 0 as i32 { need } else { 1 as i32 })
-    {
-        return 0 as i32;
-    }
-    Geno_Event(
-        17 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        (*st).hold_frames as i32,
-        (*fp).motion_id,
+    gb_glide_params(st, &raw mut p);
+    gb_stick_of(fp, &raw mut sx, &raw mut sy);
+    e.hold_frames = (*st).hold_frames;
+    e.last_dir = (((*st).move_i[6 as i32 as usize]
+        & 3 as i32) - 1 as i32) as i32;
+    e.age = (*st).move_i[6 as i32 as usize] >> 2 as i32;
+    path = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        midair as i32,
+        geno_jump_held(fp) as i32,
+        (*fp).self_vel.y,
+        sx,
+        (*fp).facing_dir as f32,
+        (*st).move_i[7 as i32 as usize],
+        1 as i32,
+        0 as i32,
+        0 as i32,
     );
+    (*st).hold_frames = e.hold_frames;
+    (*st).move_i[6 as i32 as usize] = ((e.age as i32)
+        << 2 as i32
+        | e.last_dir as i32 + 1 as i32) as i32;
+    if path == GB_GLENTRY_NONE as i32 {
+        return 0 as i32;
+    }
+    (*st).hold_motion = -(1 as i32) as i32;
     (*st).hold_frames = -(1 as i32) as i32;
-    return geno_do_change(
+    (*st).move_i[6 as i32 as usize] = ((1000 as i32)
+        << 2 as i32 | 1 as i32) as i32;
+    return geno_go(
         gobj,
         fp,
         st,
-        (2 as u32 & 15 as u32) << 28 as i32
-            | start as u32 & 0xffff as u32,
+        (3 as u32 & 15 as u32) << 28 as i32
+            | GENO_BHV_GLIDE_START as i32 as u32 & 0xffff as u32,
     );
 }
 
@@ -7140,93 +8803,26 @@ pub unsafe extern "C" fn geno_glide_start_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_glide_start_enter");
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        ftCommon_8007D5D4(fp);
-    }
-    (*fp).self_vel.y
-        += geno_param(
-            st,
-            GENO_P_GLIDE_W0 as i32 + 2 as i32,
-        );
-    (*fp).self_vel.x
-        *= geno_param(
-            st,
-            GENO_P_GLIDE_W0 as i32 + 4 as i32,
-        );
-    (*fp).set_fall_fast(0 as u8 as u8);
-    (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_f[1 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_f[2 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_f[3 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_i[0 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[1 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[2 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[3 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[4 as i32 as usize] = 0 as i32 as i32;
-}
-
-pub unsafe extern "C" fn geno_glide_start_anim(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_start_anim");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    if geno_anim_ended(gobj) != 0 && s >= 0 as i32 {
-        geno_go(gobj, fp, st, geno_next_of(st, s));
-    }
-}
-
-pub unsafe extern "C" fn geno_accel_brake(
-    mut v: f32,
-    mut a: f32,
-    mut stable: f32,
-    mut brake: f32,
-) -> f32 {
-    melee_core::ct!("geno_accel_brake");
-    let mut n: f32 = v + a;
-    if stable >= 0.0f32 && brake > 0.0f32 {
-        if n > stable && v > 0.0f32 {
-            let mut d: f32 = if a < -brake { a } else { -brake };
-            n = v + d;
-            if n < stable && v >= stable {
-                n = stable;
-            }
-            return n;
-        }
-        if n < -stable && v < 0.0f32 {
-            let mut d_0: f32 = if a > brake { a } else { brake };
-            n = v + d_0;
-            if n > -stable && v <= -stable {
-                n = -stable;
-            }
-            return n;
-        }
-    }
-    return n;
-}
-
-pub unsafe extern "C" fn geno_glide_start_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_start_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut ca: *mut ftCo_DatAttrs = &raw mut (*fp).co_attrs;
-    ftCommon_Fall(
-        fp,
-        (*ca).gravity
-            * geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 3 as i32,
-            ) as f32,
-        (*ca).terminal_velocity,
-    );
-    (*fp).self_vel.x = geno_accel_brake(
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    let mut sx: f32 = 0.;
+    let mut sy: f32 = 0.;
+    gb_glide_params(st, &raw mut p);
+    gb_stick_of(fp, &raw mut sx, &raw mut sy);
+    GenoBhv_GlideBegin(
+        &raw mut g,
+        &raw mut p,
         (*fp).self_vel.x,
-        0.0f32,
-        0.0f32,
-        (*ca).aerial_friction as f32,
+        (*fp).self_vel.y,
+        (*fp).facing_dir as f32,
+        sx,
+        0 as i32,
+        ((*fp).x1968_jumpsUsed as i32 >= (*fp).co_attrs.max_jumps)
+            as i32,
+        (*st).move_i[7 as i32 as usize],
     );
-    (*fp).self_vel.x = geno_clampf((*fp).self_vel.x, -2.5f32, 2.5f32);
+    (*fp).facing_dir = g.f as f32;
+    gb_glide_store(st, &raw mut g);
 }
 
 pub unsafe extern "C" fn geno_glide_enter(
@@ -7236,303 +8832,35 @@ pub unsafe extern "C" fn geno_glide_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_glide_enter");
-    (*st).move_f[1 as i32 as usize] = geno_param(
-        st,
-        GENO_P_GLIDE_W0 as i32 + 5 as i32,
-    );
-    (*st).move_f[2 as i32 as usize] = -(*fp).self_vel.y;
-    (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_f[3 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_i[2 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[3 as i32 as usize] = 0 as i32 as i32;
-    let mut gs: i32 = geno_state_with(
-        st,
-        GENO_BHV_GLIDE_START as i32,
-    );
-    (*st).move_i[4 as i32 as usize] = (geno_param(
-        st,
-        GENO_P_GLIDE_SCRIPT_HELPLESS as i32,
-    ) != 0.0f32
-        && (gs < 0 as i32 || (*st).enter_from != GENO_MOTION_BASE + gs))
-        as i32 as i32;
-    (*fp).self_vel.x = (geno_param(
-        st,
-        GENO_P_GLIDE_W0 as i32 + 5 as i32,
-    ) as f32 * (*fp).facing_dir) as f32;
-    (*fp).self_vel.y = 0.0f32 as f32;
-    (*fp).set_fall_fast(0 as u8 as u8);
-}
-
-pub unsafe extern "C" fn geno_glide_step(mut fp: *mut Fighter, mut st: *mut GenoState) {
-    melee_core::ct!("geno_glide_step");
-    let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
-    let mut sx: f32 = (*fp).input.lstick[0 as i32 as usize].x;
-    let mut sy: f32 = (*fp).input.lstick[0 as i32 as usize].y;
-    let mut ang: f32 = (*st).move_f[0 as i32 as usize];
-    let mut rate: f32 = (*st).move_f[3 as i32 as usize];
-    let mut mag: f32 = sqrtf(
-        fmadds(sx, sx, sy * sy),
-    ) as f32;
-    let mut dz: f32 = geno_param(
-        st,
-        GENO_P_GLIDE_W0 as i32 + 15 as i32,
-    );
-    let mut s: f32 = 0.;
-    let mut sink: f32 = 0.;
-    let mut vx: f32 = 0.;
-    let mut vy: f32 = 0.;
-    let mut len: f32 = 0.;
-    let mut rad: f32 = 0.;
-    if mag > dz {
-        let mut a: f32 = atan2f(sy as f32, sx as f32)
-            as f32 * 57.29578f32;
-        let mut acc: f32 = 0.;
-        if lr <= 0.0f32 {
-            a = (if a > 0.0f32 { 180.0f32 } else { -180.0f32 }) - a;
-        }
-        acc = if a >= 45.0f32 || a < -135.0f32 {
-            geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 16 as i32,
-            )
-        } else {
-            -geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 17 as i32,
-            )
-        };
-        acc *= ((mag - dz) / (1.0f32 - dz)) as f32;
-        if rate * acc < 0.0f32 {
-            rate = 0.0f32 as f32;
-        }
-        rate = geno_clampf(
-            rate + acc,
-            -geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 18 as i32,
-            ),
-            geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 18 as i32,
-            ),
-        );
-        (*st).move_f[3 as i32 as usize] = rate;
-        ang += rate;
-    } else if (*st).move_i[2 as i32 as usize] != 0 {
-        rate = (if rate > 0.0f32 { rate } else { 0.0f32 })
-            + geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 19 as i32,
-            );
-        rate = geno_clampf(
-            rate,
-            -geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 18 as i32,
-            ),
-            geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 18 as i32,
-            ),
-        );
-        (*st).move_f[3 as i32 as usize] = rate;
-        ang += rate;
-    }
-    ang = geno_clampf(
-        ang,
-        geno_param(st, GENO_P_GLIDE_W0 as i32 + 1 as i32),
-        geno_param(st, GENO_P_GLIDE_W0 as i32 + 0 as i32),
-    );
-    (*st).move_f[0 as i32 as usize] = ang;
-    s = ((*st).move_f[1 as i32 as usize]
-        - geno_param(st, GENO_P_GLIDE_W0 as i32 + 6 as i32)
-            as f32 * (ang as f32 / 90.0f32)) as f32;
-    if (*st).move_i[3 as i32 as usize] != 0 {
-        s -= 0.01f32;
-    }
-    if s < 0.0f32 {
-        s = 0.0f32 as f32;
-    }
-    if ang
-        < geno_param(
-            st,
-            GENO_P_GLIDE_W0 as i32 + 12 as i32,
-        )
-        && geno_param(
-            st,
-            GENO_P_GLIDE_W0 as i32 + 12 as i32,
-        )
-            != geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 1 as i32,
-            )
-    {
-        s
-            += geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 13 as i32,
-            )
-                * (geno_param(
-                    st,
-                    GENO_P_GLIDE_W0 as i32 + 12 as i32,
-                ) - ang)
-                / (geno_param(
-                    st,
-                    GENO_P_GLIDE_W0 as i32 + 12 as i32,
-                )
-                    - geno_param(
-                        st,
-                        GENO_P_GLIDE_W0 as i32 + 1 as i32,
-                    ));
-    }
-    rad = (ang as f32 * GENO_DEG2RAD) as f32;
-    vx = (lr as f32 * s as f32
-        * cosf(rad as f32)) as f32;
-    vy = (s as f32 * sinf(rad as f32)) as f32;
-    sink = geno_clampf(
-        (*st).move_f[2 as i32 as usize]
-            + geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 9 as i32,
-            ),
-        -geno_param(
-            st,
-            GENO_P_GLIDE_W0 as i32 + 10 as i32,
-        ),
-        geno_param(st, GENO_P_GLIDE_W0 as i32 + 10 as i32),
-    );
-    (*st).move_f[2 as i32 as usize] = sink;
-    vy -= sink;
-    len = sqrtf(
-        fmadds(vx, vx, vy * vy),
-    ) as f32;
-    if len
-        > geno_param(st, GENO_P_GLIDE_W0 as i32 + 7 as i32)
-        && len > 0.0f32
-    {
-        vx
-            *= geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 7 as i32,
-            ) / len;
-        vy
-            *= geno_param(
-                st,
-                GENO_P_GLIDE_W0 as i32 + 7 as i32,
-            ) / len;
-    }
-    if len
-        < geno_param(st, GENO_P_GLIDE_W0 as i32 + 8 as i32)
-        || s <= 0.0f32
-    {
-        (*st).move_i[2 as i32 as usize] = 1 as i32 as i32;
-        (*st).move_f[3 as i32 as usize] = 0.0f32 as f32;
-    }
-    (*fp).self_vel.x = vx;
-    (*fp).self_vel.y = vy;
-    (*st).move_f[1 as i32 as usize] = s;
-}
-
-pub unsafe extern "C" fn geno_glide_end(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut reason: i32,
-) {
-    melee_core::ct!("geno_glide_end");
-    let mut s: i32 = geno_cur_state(fp, st);
-    (*st).move_i[1 as i32 as usize] = reason as i32;
-    Geno_Event(
-        21 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        reason,
-        (*st).move_i[0 as i32 as usize],
-    );
-    if reason == 3 as i32 {
-        let mut k: i32 = geno_state_with(
-            st,
-            GENO_BHV_GLIDE_ATTACK as i32,
-        );
-        if k >= 0 as i32 {
-            geno_do_change(
-                gobj,
-                fp,
-                st,
-                (2 as u32 & 15 as u32) << 28 as i32
-                    | k as u32 & 0xffff as u32,
-            );
-            return;
-        }
-    }
-    geno_go(
-        gobj,
-        fp,
-        st,
-        if s >= 0 as i32 { geno_next_of(st, s) } else { GENO_AUTO },
-    );
-}
-
-pub unsafe extern "C" fn geno_glide_anim(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_anim");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut limit: f32 = geno_param(st, GENO_P_GLIDE_MAX_FRAMES as i32);
-    (*st).move_i[0 as i32 as usize] += 1;
-    if (*st).move_i[2 as i32 as usize] != 0 {
-        geno_glide_end(gobj, fp, st, 2 as i32);
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    let mut sx: f32 = 0.;
+    let mut sy: f32 = 0.;
+    if gb_from_bhv(st) == GENO_BHV_GLIDE_START as i32 {
+        gb_glide_load(st, &raw mut g);
+        g.phase = GB_GL_FLY as i32 as i32;
+        g.t = 0 as i32 as i32;
+        gb_glide_store(st, &raw mut g);
         return;
     }
-    if limit > 0.0f32 && (*st).move_i[0 as i32 as usize] as f32 >= limit
-    {
-        geno_glide_end(gobj, fp, st, 4 as i32);
-        return;
-    }
-    if geno_param(st, GENO_P_GLIDE_POSE as i32) == 0.0f32
-        && geno_anim_ended(gobj) != 0
-    {
-        geno_cb_anim_loop(gobj);
-    }
-}
-
-pub unsafe extern "C" fn geno_glide_iasa(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_iasa");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut pressed: u32 = geno_buttons(fp, 1 as i32);
-    let mut ends: u32 = geno_param(st, GENO_P_GLIDE_END_BUTTONS as i32)
-        as u32;
-    if pressed & GENO_BTN_ATTACK as u32 != 0 {
-        geno_glide_end(gobj, fp, st, 3 as i32);
-    } else if pressed & ends != 0 {
-        geno_glide_end(gobj, fp, st, 1 as i32);
-    }
-}
-
-pub unsafe extern "C" fn geno_glide_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut pose: f32 = geno_param(st, GENO_P_GLIDE_POSE as i32);
-    geno_glide_step(fp, st);
-    if pose != 0.0f32 && geno_test_capture == 0 {
-        let mut want: f32 = pose - (*st).move_f[0 as i32 as usize];
-        ftAnim_SetAnimRate(gobj, want as f32 - (*fp).cur_anim_frame);
-    }
-}
-
-pub unsafe extern "C" fn geno_glide_coll(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_coll");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    geno_cb_coll_air(gobj);
-    (*st).move_i[3 as i32 as usize] = ((*fp).coll_data.env_flags
-        as i32 & Collide_WallMask != 0 as i32)
-        as i32 as i32;
+    gb_glide_params(st, &raw mut p);
+    gb_stick_of(fp, &raw mut sx, &raw mut sy);
+    GenoBhv_GlideBegin(
+        &raw mut g,
+        &raw mut p,
+        (*fp).self_vel.x,
+        (*fp).self_vel.y,
+        (*fp).facing_dir as f32,
+        sx,
+        1 as i32,
+        ((*fp).x1968_jumpsUsed as i32 >= (*fp).co_attrs.max_jumps)
+            as i32,
+        (*st).move_i[7 as i32 as usize],
+    );
+    (*fp).facing_dir = g.f as f32;
+    g.phase = GB_GL_FLY as i32 as i32;
+    g.t = 0 as i32 as i32;
+    gb_glide_store(st, &raw mut g);
 }
 
 pub unsafe extern "C" fn geno_glide_attack_enter(
@@ -7542,13 +8870,12 @@ pub unsafe extern "C" fn geno_glide_attack_enter(
     mut s: i32,
 ) { melee_core::ct!("geno_glide_attack_enter");}
 
-pub unsafe extern "C" fn geno_glide_attack_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_glide_attack_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    ftCommon_Fall(fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
-    ftCommon_CalcSelfAccel_DeaccelAir(fp);
-}
+pub unsafe extern "C" fn geno_glide_end_enter(
+    mut gobj: *mut Fighter_GObj,
+    mut fp: *mut Fighter,
+    mut st: *mut GenoState,
+    mut s: i32,
+) { melee_core::ct!("geno_glide_end_enter");}
 
 pub unsafe extern "C" fn geno_glide_landing_enter(
     mut gobj: *mut Fighter_GObj,
@@ -7557,19 +8884,79 @@ pub unsafe extern "C" fn geno_glide_landing_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_glide_landing_enter");
-    (*fp).gr_vel = (*fp).self_vel.x as f32;
+    let mut lag: i32 = (*st).move_i[3 as i32 as usize];
+    if lag > 0 as i32 && geno_test_capture == 0 {
+        ftAnim_SetAnimRate(gobj, (0.1f32 + (*fp).x2EC) / lag as f32);
+    }
 }
 
-pub unsafe extern "C" fn geno_glide_end_enter(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut s: i32,
-) {
-    melee_core::ct!("geno_glide_end_enter");
-    if geno_param(st, GENO_P_GLIDE_END_HELPLESS as i32) != 0.0f32 {
-        ftCommon_UseAllJumps(fp);
+pub unsafe extern "C" fn gb_glide_tick(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("gb_glide_tick");
+    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
+        as *mut Fighter;
+    let mut st: *mut GenoState = geno_state(fp);
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    let mut in_0: GbGlideIn = unsafe { core::mem::zeroed() };
+    let mut bhv: i32 = 0;
+    gb_glide_load(st, &raw mut g);
+    if g.phase >= GB_GL_END as i32 {
+        return;
     }
+    gb_glide_params(st, &raw mut p);
+    gb_stick_of(fp, &raw mut in_0.sx, &raw mut in_0.sy);
+    in_0.jump_pressed = ((*fp).input.pressed_buttons
+        & ((1 as i32) << 10 as i32
+            | (1 as i32) << 11 as i32) as HSD_Pad
+        != 0 as HSD_Pad) as i32 as i32;
+    in_0.attack_pressed = ((*fp).input.pressed_buttons
+        & ((1 as i32) << 8 as i32) as HSD_Pad
+        != 0 as HSD_Pad) as i32 as i32;
+    in_0.special_pressed = ((*fp).input.pressed_buttons
+        & ((1 as i32) << 9 as i32) as HSD_Pad
+        != 0 as HSD_Pad) as i32 as i32;
+    in_0.jump_left = gb_jumps_left(fp) as i32;
+    in_0.ground = 0 as i32 as i32;
+    in_0.height = -1.0f32 as f32;
+    g.f = (if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 }) as f32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    gb_glide_store(st, &raw mut g);
+    bhv = gb_cur_bhv(fp, st);
+    if g.phase == GB_GL_FLY as i32
+        && bhv != GENO_BHV_GLIDE as i32
+    {
+        gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE as i32);
+    } else if g.phase == GB_GL_ATTACK as i32
+        && bhv != GENO_BHV_GLIDE_ATTACK as i32
+    {
+        gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE_ATTACK as i32);
+    } else if g.phase == GB_GL_JUMPOUT as i32
+        && bhv != GENO_BHV_GLIDE_END as i32
+    {
+        gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE_END as i32);
+    } else if g.phase == GB_GL_END as i32 {
+        if g.end_reason == GB_GLE_JUMPOUT as i32 {
+            if gb_jumps_left(fp) != 0 && geno_test_capture == 0 {
+                ftCo_JumpAerial_Enter_Basic(gobj);
+            } else {
+                gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE_END as i32);
+            }
+        } else if g.helpless != 0 {
+            geno_go(gobj, fp, st, GENO_TGT_HELPLESS);
+        } else if bhv != GENO_BHV_GLIDE_END as i32 {
+            gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE_END as i32);
+        }
+    }
+}
+
+pub unsafe extern "C" fn geno_glide_start_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_start_anim");
+    gb_glide_tick(gobj);
+}
+
+pub unsafe extern "C" fn geno_glide_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_anim");
+    gb_glide_tick(gobj);
 }
 
 pub unsafe extern "C" fn geno_glide_after_anim(mut gobj: *mut Fighter_GObj) {
@@ -7577,234 +8964,128 @@ pub unsafe extern "C" fn geno_glide_after_anim(mut gobj: *mut Fighter_GObj) {
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    if geno_anim_ended(gobj) == 0 {
-        return;
-    }
-    if (*st).move_i[4 as i32 as usize] != 0 {
-        geno_go(gobj, fp, st, GENO_TGT_HELPLESS);
-        return;
-    }
-    geno_go(
-        gobj,
-        fp,
-        st,
-        if s >= 0 as i32 { geno_next_of(st, s) } else { GENO_AUTO },
-    );
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    gb_glide_load(st, &raw mut g);
+    if g.phase == GB_GL_ATTACK as i32
+        || g.phase == GB_GL_JUMPOUT as i32
+    {
+        gb_glide_tick(gobj);
+    } else {
+        geno_cb_anim_next(gobj);
+    };
+}
+
+pub unsafe extern "C" fn geno_glide_iasa(mut gobj: *mut Fighter_GObj) { melee_core::ct!("geno_glide_iasa");}
+
+pub unsafe extern "C" fn gb_glide_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("gb_glide_phys");
+    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
+        as *mut Fighter;
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    gb_glide_load(geno_state(fp), &raw mut g);
+    if g.phase <= GB_GL_JUMPOUT as i32 {
+        (*fp).self_vel.x = g.vx;
+        (*fp).self_vel.y = g.vy;
+    } else {
+        geno_cb_phys_air(gobj);
+    };
+}
+
+pub unsafe extern "C" fn geno_glide_start_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_start_phys");
+    gb_glide_phys(gobj);
+}
+
+pub unsafe extern "C" fn geno_glide_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_phys");
+    gb_glide_phys(gobj);
+}
+
+pub unsafe extern "C" fn geno_glide_attack_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_attack_phys");
+    gb_glide_phys(gobj);
 }
 
 pub unsafe extern "C" fn geno_glide_end_phys(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_glide_end_phys");
-    geno_glide_attack_phys(gobj);
+    gb_glide_phys(gobj);
 }
 
-pub unsafe extern "C" fn GenoGame_TestModelRotX() -> f32 {
-    melee_core::ct!("GenoGame_TestModelRotX");
-    return geno_test_rotx;
-}
-
-pub unsafe extern "C" fn GenoGame_TestJointRate() -> f32 {
-    melee_core::ct!("GenoGame_TestJointRate");
-    return geno_test_joint_rate;
-}
-
-pub unsafe extern "C" fn GenoGame_TestPoseReset(mut v: f32) {
-    melee_core::ct!("GenoGame_TestPoseReset");
-    geno_test_rotx = v;
-    geno_test_joint_rate = v;
-}
-
-pub unsafe extern "C" fn geno_stick_dz(mut v: f32) -> f32 {
-    melee_core::ct!("geno_stick_dz");
-    return if geno_absf(v) < 0.2875f32 {
-        0.0f32
-    } else {
-        geno_clampf(v, -1.0f32, 1.0f32)
-    };
-}
-
-pub unsafe extern "C" fn geno_helpless(
+pub unsafe extern "C" fn gb_glide_land(
     mut gobj: *mut Fighter_GObj,
     mut fp: *mut Fighter,
     mut st: *mut GenoState,
-) {
-    melee_core::ct!("geno_helpless");
-    geno_do_change(
-        gobj,
-        fp,
-        st,
-        (0 as u32 & 15 as u32) << 28 as i32
-            | (if (*fp).ground_or_air as i32
-                == GA_Ground as i32
-            {
-                ftCo_MS_Wait as i32
-            } else {
-                ftCo_MS_FallSpecial as i32
-            }) as u32 & 0xffff as u32,
-    );
-}
-
-pub unsafe extern "C" fn geno_into_wall(
-    mut fp: *mut Fighter,
-    mut vx: f32,
+    mut s: i32,
 ) -> i32 {
-    melee_core::ct!("geno_into_wall");
-    let mut f: u32 = (*fp).coll_data.env_flags as u32;
-    return (vx >= 0.0f32 && f & Collide_RightWallMask as u32 != 0
-        || vx < 0.0f32 && f & Collide_LeftWallMask as u32 != 0) as i32;
+    melee_core::ct!("gb_glide_land");
+    let mut bhv: i32 = gb_state_bhv(st, s);
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    if bhv != GENO_BHV_GLIDE_START as i32
+        && bhv != GENO_BHV_GLIDE as i32
+        && bhv != GENO_BHV_GLIDE_ATTACK as i32
+        && bhv != GENO_BHV_GLIDE_END as i32
+    {
+        return 0 as i32;
+    }
+    gb_glide_params(st, &raw mut p);
+    gb_glide_load(st, &raw mut g);
+    GenoBhv_GlideGround(&raw mut g, &raw mut p);
+    (*st).move_i[3 as i32 as usize] = g.lag;
+    gb_glide_store(st, &raw mut g);
+    if g.phase == GB_GL_LAND_CANCEL as i32 {
+        ftCommon_8007D7FC(fp);
+        geno_go(gobj, fp, st, GENO_AUTO);
+    } else if g.helpless != 0 {
+        ftCo_LandingFallSpecial_Enter_Basic(gobj);
+    } else if g.phase == GB_GL_TRIP as i32 {
+        ftCo_LandingFallSpecial_Enter(gobj, 1, g.lag as f32);
+    } else if geno_state_with(st, GENO_BHV_GLIDE_LANDING as i32)
+        >= 0 as i32
+    {
+        ftCommon_8007D7FC(fp);
+        gb_to_bhv(gobj, fp, st, GENO_BHV_GLIDE_LANDING as i32);
+    } else {
+        ftCo_LandingFallSpecial_Enter(gobj, 1, g.lag as f32);
+    }
+    return 1 as i32;
 }
 
-pub unsafe extern "C" fn geno_turn(mut fp: *mut Fighter) {
-    melee_core::ct!("geno_turn");
-    (*fp).facing_dir = -(*fp).facing_dir;
-    if !(*fp).parts.is_null() {
-        ftPartSetRotY(
-            fp,
-            0 as i32,
-            1.5707964f32 * (*fp).facing_dir as f32,
-        );
-    }
+pub unsafe extern "C" fn geno_glide_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_glide_coll");
+    ft_80082C74(gobj, Some(geno_land as unsafe extern "C" fn(*mut Fighter_GObj) -> ()));
 }
 
-pub unsafe extern "C" fn geno_joint_anim_f(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut func: *mut c_void,
-    mut v: f32,
-) {
-    melee_core::ct!("geno_joint_anim_f");
-    let mut root: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj)
-        as *mut HSD_JObj;
-    if !root.is_null() {
-        HSD_ForeachAnim!(
-            root as *mut c_void,
-            JOBJ_TYPE,
-            64383 as HSD_TypeMask,
-            func,
-            AOBJ_ARG_AF,
-            v as f64,
-        );
-    }
-    if !(*fp).x8AC_animSkeleton.is_null() {
-        HSD_ForeachAnim!(
-            (*fp).x8AC_animSkeleton as *mut c_void,
-            JOBJ_TYPE,
-            64383 as HSD_TypeMask,
-            func,
-            AOBJ_ARG_AF,
-            v as f64,
-        );
-    }
+pub unsafe extern "C" fn gb_tornado_load(mut st: *mut GenoState, mut t: *mut GbTornado) {
+    melee_core::ct!("gb_tornado_load");
+    let mut i0: i32 = (*st).move_i[0 as i32 as usize];
+    (*t).phase = (i0 as i32 & 15 as i32) as i32;
+    (*t).press_latch = (i0 as i32 >> 4 as i32
+        & 1 as i32) as i32;
+    (*t).rise_impulse = (i0 as i32 >> 5 as i32
+        & 1 as i32) as i32;
+    (*t).jump_start = (i0 as i32 >> 6 as i32
+        & 1 as i32) as i32;
+    (*t).n = (*st).move_i[1 as i32 as usize];
+    (*t).k = (*st).move_i[2 as i32 as usize];
+    (*t).end_t = (*st).move_i[3 as i32 as usize];
+    (*t).hits = (*st).move_i[5 as i32 as usize];
+    (*t).spin = (*st).move_f[0 as i32 as usize];
+    (*t).rot = (*st).move_f[1 as i32 as usize];
 }
 
-pub unsafe extern "C" fn geno_joint_anim_loop(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-) {
-    melee_core::ct!("geno_joint_anim_loop");
-    let mut root: *mut HSD_JObj = HSD_GObjGetHSDObj(gobj as *mut HSD_GObj)
-        as *mut HSD_JObj;
-    if !root.is_null() {
-        HSD_ForeachAnim!(
-            root as *mut c_void,
-            JOBJ_TYPE,
-            64383 as HSD_TypeMask,
-            ::core::mem::transmute::<
-                Option<unsafe extern "C" fn(*mut HSD_AObj, u32) -> ()>,
-                *mut c_void,
-            >(
-                Some(
-                    HSD_AObjSetFlags as unsafe extern "C" fn(*mut HSD_AObj, u32) -> (),
-                ),
-            ),
-            AOBJ_ARG_AU,
-            AOBJ_LOOP,
-        );
-    }
-    if !(*fp).x8AC_animSkeleton.is_null() {
-        HSD_ForeachAnim!(
-            (*fp).x8AC_animSkeleton as *mut c_void,
-            JOBJ_TYPE,
-            64383 as HSD_TypeMask,
-            ::core::mem::transmute::<
-                Option<unsafe extern "C" fn(*mut HSD_AObj, u32) -> ()>,
-                *mut c_void,
-            >(
-                Some(
-                    HSD_AObjSetFlags as unsafe extern "C" fn(*mut HSD_AObj, u32) -> (),
-                ),
-            ),
-            AOBJ_ARG_AU,
-            AOBJ_LOOP,
-        );
-    }
-}
-
-pub unsafe extern "C" fn geno_tornado_spin_on(mut st: *mut GenoState) -> i32 {
-    melee_core::ct!("geno_tornado_spin_on");
-    return (geno_param(st, GENO_P_TORNADO_SPIN_ANIM as i32) != 0.0f32)
-        as i32;
-}
-
-pub unsafe extern "C" fn geno_tornado_spin_rate(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-) {
-    melee_core::ct!("geno_tornado_spin_rate");
-    let mut rate: f32 = geno_param(st, GENO_P_TORNADO_SPIN_ANIM as i32)
-        * (*st).move_f[0 as i32 as usize];
-    if geno_tornado_spin_on(st) == 0 {
-        return;
-    }
-    geno_test_joint_rate = rate;
-    if geno_test_capture != 0 || (*fp).x2223_b0() as i32 != 0 {
-        return;
-    }
-    geno_joint_anim_f(
-        gobj,
-        fp,
-        ::core::mem::transmute::<
-            Option<unsafe extern "C" fn(*mut HSD_AObj, f32) -> ()>,
-            *mut c_void,
-        >(Some(HSD_AObjSetRate as unsafe extern "C" fn(*mut HSD_AObj, f32) -> ())),
-        rate,
-    );
-}
-
-pub unsafe extern "C" fn geno_tornado_spin_start(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-) {
-    melee_core::ct!("geno_tornado_spin_start");
-    let mut period: f32 = geno_param(
-        st,
-        GENO_P_TORNADO_SPIN_PERIOD as i32,
-    );
-    if geno_tornado_spin_on(st) == 0 {
-        return;
-    }
-    if geno_test_capture == 0 {
-        geno_joint_anim_loop(gobj, fp);
-        if period > 0.0f32 {
-            geno_joint_anim_f(
-                gobj,
-                fp,
-                ::core::mem::transmute::<
-                    Option<unsafe extern "C" fn(*mut HSD_AObj, f32) -> ()>,
-                    *mut c_void,
-                >(
-                    Some(
-                        HSD_AObjSetEndFrame
-                            as unsafe extern "C" fn(*mut HSD_AObj, f32) -> (),
-                    ),
-                ),
-                period,
-            );
-        }
-    }
-    geno_tornado_spin_rate(gobj, fp, st);
+pub unsafe extern "C" fn gb_tornado_store(mut st: *mut GenoState, mut t: *const GbTornado) {
+    melee_core::ct!("gb_tornado_store");
+    (*st).move_i[0 as i32 as usize] = (*t).phase
+        | (*t).press_latch << 4 as i32
+        | (*t).rise_impulse << 5 as i32
+        | (*t).jump_start << 6 as i32;
+    (*st).move_i[1 as i32 as usize] = (*t).n;
+    (*st).move_i[2 as i32 as usize] = (*t).k;
+    (*st).move_i[3 as i32 as usize] = (*t).end_t;
+    (*st).move_i[5 as i32 as usize] = (*t).hits;
+    (*st).move_f[0 as i32 as usize] = (*t).spin;
+    (*st).move_f[1 as i32 as usize] = (*t).rot;
 }
 
 pub unsafe extern "C" fn geno_tornado_enter(
@@ -7814,36 +9095,14 @@ pub unsafe extern "C" fn geno_tornado_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_tornado_enter");
-    (*fp).self_vel.x
-        *= geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 1 as i32,
-        );
-    (*fp).gr_vel
-        *= geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 1 as i32,
-        ) as f32;
-    if (*fp).ground_or_air as i32 == GA_Air as i32 {
-        (*fp).self_vel.y
-            += geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 0 as i32,
-            );
-    }
-    (*fp).set_fall_fast(0 as u8 as u8);
-    (*st).move_f[0 as i32 as usize] = geno_param(
-        st,
-        GENO_P_TORNADO_W0 as i32 + 2 as i32,
+    let mut t: GbTornado = unsafe { core::mem::zeroed() };
+    let mut air: i32 = gb_airborne(fp);
+    GenoBhv_TornadoBegin(
+        &raw mut t,
+        if air != 0 { (*fp).self_vel.x } else { (*fp).gr_vel as f32 },
+        if air != 0 { (*fp).self_vel.y } else { 0.0f32 },
     );
-    (*st).move_i[0 as i32 as usize] = geno_param(
-        st,
-        GENO_P_TORNADO_W0 as i32 + 16 as i32,
-    ) as i32;
-    (*st).move_i[1 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[2 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[3 as i32 as usize] = 0 as i32 as i32;
-    geno_tornado_spin_start(gobj, fp, st);
+    gb_tornado_store(st, &raw mut t);
 }
 
 pub unsafe extern "C" fn geno_tornado_anim(mut gobj: *mut Fighter_GObj) {
@@ -7851,325 +9110,97 @@ pub unsafe extern "C" fn geno_tornado_anim(mut gobj: *mut Fighter_GObj) {
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    if s >= 0 as i32
-        && (*st).move_f[0 as i32 as usize]
-            <= geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 18 as i32,
-            )
-    {
-        let mut t: u32 = Geno_StateNext((*st).profile as i32, s)
-            as u32;
-        if t != GENO_NONE_T {
-            geno_go(gobj, fp, st, t);
-        } else if geno_param(st, GENO_P_TORNADO_END_HELPLESS as i32)
-            != 0.0f32
-        {
-            geno_helpless(gobj, fp, st);
-        } else {
-            geno_go(gobj, fp, st, GENO_AUTO);
-        }
-        return;
+    let mut p: GbTornadoP = unsafe { core::mem::zeroed() };
+    let mut t: GbTornado = unsafe { core::mem::zeroed() };
+    let mut in_0: GbTornadoIn = unsafe { core::mem::zeroed() };
+    let mut sy: f32 = 0.;
+    let mut air: i32 = gb_airborne(fp);
+    gb_tornado_params(st, &raw mut p);
+    gb_tornado_load(st, &raw mut t);
+    gb_stick_of(fp, &raw mut in_0.sx, &raw mut sy);
+    in_0.special_pressed = ((*fp).input.pressed_buttons
+        & ((1 as i32) << 9 as i32) as HSD_Pad
+        != 0 as HSD_Pad) as i32 as i32;
+    in_0.jump_held = geno_jump_held(fp) as i32;
+    in_0.airborne = air as i32;
+    t.vx = (if air != 0 {
+        (*fp).self_vel.x as f32
+    } else {
+        (*fp).gr_vel
+    }) as f32;
+    t.vy = (if air != 0 { (*fp).self_vel.y as f32 } else { 0.0f32 })
+        as f32;
+    GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+    if air != 0 {
+        (*fp).self_vel.x = t.vx;
+        (*fp).self_vel.y = t.vy;
+    } else {
+        (*fp).gr_vel = t.vx as f32;
     }
-    if geno_anim_ended(gobj) != 0 {
-        geno_cb_anim_loop(gobj);
-        geno_tornado_spin_start(gobj, fp, st);
+    if t.hit_spawn != 0 || t.final_spawn != 0 {
+        gb_clear_hit_lists(fp);
+    }
+    gb_tornado_store(st, &raw mut t);
+    if t.phase == GB_TN_DONE as i32 {
+        gb_finish(gobj, fp, st, t.helpless as i32);
     }
 }
 
 pub unsafe extern "C" fn geno_tornado_phys(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_tornado_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut sx: f32 = geno_stick_dz(
-        (*fp).input.lstick[0 as i32 as usize].x,
-    );
-    let mut r: f32 = (*st).move_f[0 as i32 as usize];
-    let mut lift: i32 = 0;
-    (*st).move_i[1 as i32 as usize] += 1;
-    if (*st).move_i[0 as i32 as usize] >= 0 as i32 {
-        (*st).move_i[0 as i32 as usize] -= 1;
-        r
-            -= geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 15 as i32,
-            );
-        if (*fp).input.pressed_buttons & HSD_PAD_B as HSD_Pad != 0 {
-            (*st).move_i[2 as i32 as usize] = 1 as i32
-                as i32;
-        }
-        lift = ((*st).move_i[1 as i32 as usize]
-            >= geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 11 as i32,
-            ) as i32 && (*st).move_i[2 as i32 as usize] != 0)
-            as i32;
-        if lift != 0 {
-            if (*fp).ground_or_air as i32
-                == GA_Ground as i32
-            {
-                ftCommon_8007D5D4(fp);
-            }
-            r
-                += geno_param(
-                    st,
-                    GENO_P_TORNADO_W0 as i32 + 13 as i32,
-                );
-        }
-        r = geno_clampf(
-            r,
-            0.0f32,
-            geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 14 as i32,
-            ),
-        );
-    } else {
-        r
-            -= geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 17 as i32,
-            );
-        if r < 0.0f32 {
-            r = 0.0f32 as f32;
-        }
-    }
-    (*st).move_f[0 as i32 as usize] = r;
-    geno_tornado_spin_rate(gobj, fp, st);
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        let mut v: f32 = geno_accel_brake(
-            (*fp).gr_vel as f32,
-            sx
-                * geno_param(
-                    st,
-                    GENO_P_TORNADO_W0 as i32 + 3 as i32,
-                ),
-            geno_absf(sx)
-                * geno_param(
-                    st,
-                    GENO_P_TORNADO_W0 as i32 + 4 as i32,
-                ),
-            geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 7 as i32,
-            ),
-        );
-        (*fp).gr_vel = geno_clampf(
-            v,
-            -geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 4 as i32,
-            ),
-            geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 4 as i32,
-            ),
-        ) as f32;
-        if geno_into_wall(fp, (*fp).gr_vel as f32) != 0 {
-            (*fp).gr_vel = -(*fp).gr_vel;
-            geno_turn(fp);
-        }
+    if gb_airborne(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter) == 0 {
         ftCommon_SetSelfMovementFromGroundedMovement(gobj);
-        return;
     }
-    if (*st).move_i[1 as i32 as usize]
-        >= geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 11 as i32,
-        ) as i32 && (*st).move_i[2 as i32 as usize] != 0
-    {
-        (*fp).self_vel.y
-            += geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 10 as i32,
-            );
-        (*st).move_i[2 as i32 as usize] = 0 as i32 as i32;
-        (*st).move_i[1 as i32 as usize] = 0 as i32 as i32;
-        (*st).move_i[3 as i32 as usize] += 1;
-        Geno_Event(
-            22 as i32,
-            (*fp).kind as i32,
-            (*fp).player_id as i32,
-            (*st).move_i[3 as i32 as usize],
-            ((*fp).self_vel.y as f32 * 100.0f32) as i32,
-        );
-    }
-    if (*fp).self_vel.y
-        > geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 12 as i32,
-        )
-    {
-        (*fp).self_vel.y = geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 12 as i32,
-        );
-    }
-    (*fp).self_vel.y
-        += geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 8 as i32,
-        );
-    if (*fp).self_vel.y
-        < -geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 9 as i32,
-        )
-    {
-        (*fp).self_vel.y = -geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 9 as i32,
-        );
-    }
-    let mut acc: f32 = sx
-        * geno_param(
-            st,
-            GENO_P_TORNADO_W0 as i32 + 5 as i32,
-        );
-    let mut cap: f32 = geno_param(st, GENO_P_TORNADO_MAX_SPEED as i32);
-    if sx != 0.0f32 {
-        acc
-            += if sx > 0.0f32 {
-                (*fp).co_attrs.aerial_drift_base
-            } else {
-                -(*fp).co_attrs.aerial_drift_base
-            };
-    }
-    (*fp).self_vel.x = geno_accel_brake(
-        (*fp).self_vel.x,
-        acc,
-        geno_absf(sx)
-            * geno_param(
-                st,
-                GENO_P_TORNADO_W0 as i32 + 6 as i32,
-            ),
-        geno_param(st, GENO_P_TORNADO_W0 as i32 + 7 as i32),
+}
+
+pub unsafe extern "C" fn gb_drill_load(mut st: *mut GenoState, mut d: *mut GbDrill) {
+    melee_core::ct!("gb_drill_load");
+    (*d).phase = (*st).move_i[0 as i32 as usize];
+    (*d).n = (*st).move_i[1 as i32 as usize];
+    (*d).hits = (*st).move_i[2 as i32 as usize];
+    (*d).done = (*st).move_i[3 as i32 as usize];
+    (*d).psi = (*st).move_f[0 as i32 as usize];
+    (*d).speed = (*st).move_f[1 as i32 as usize];
+    (*d).vx = (*st).move_f[2 as i32 as usize];
+    (*d).vy = (*st).move_f[3 as i32 as usize];
+    (*d).f = 1.0f32 as f32;
+}
+
+pub unsafe extern "C" fn gb_drill_store(mut st: *mut GenoState, mut d: *const GbDrill) {
+    melee_core::ct!("gb_drill_store");
+    (*st).move_i[0 as i32 as usize] = (*d).phase;
+    (*st).move_i[1 as i32 as usize] = (*d).n;
+    (*st).move_i[2 as i32 as usize] = (*d).hits;
+    (*st).move_i[3 as i32 as usize] = (*d).done;
+    (*st).move_f[0 as i32 as usize] = (*d).psi;
+    (*st).move_f[1 as i32 as usize] = (*d).speed;
+    (*st).move_f[2 as i32 as usize] = (*d).vx;
+    (*st).move_f[3 as i32 as usize] = (*d).vy;
+}
+
+pub unsafe extern "C" fn gb_drill_begin(mut fp: *mut Fighter, mut st: *mut GenoState) {
+    melee_core::ct!("gb_drill_begin");
+    let mut p: GbDrillP = unsafe { core::mem::zeroed() };
+    let mut d: GbDrill = unsafe { core::mem::zeroed() };
+    let mut sx: f32 = 0.;
+    let mut sy: f32 = 0.;
+    gb_drill_params(st, &raw mut p);
+    gb_stick_of(fp, &raw mut sx, &raw mut sy);
+    GenoBhv_DrillBegin(
+        &raw mut d,
+        &raw mut p,
+        if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 },
+        sy,
     );
-    (*fp).self_vel.x = geno_clampf((*fp).self_vel.x, -cap, cap);
-    if geno_into_wall(fp, (*fp).self_vel.x) != 0 {
-        (*fp).self_vel.x = -(*fp).self_vel.x;
-        geno_turn(fp);
-    }
+    gb_drill_store(st, &raw mut d);
 }
 
-pub unsafe extern "C" fn geno_state_nth(
-    mut st: *mut GenoState,
-    mut bhv: i32,
-    mut n: i32,
-) -> i32 {
-    melee_core::ct!("geno_state_nth");
-    let mut s: i32 = 0;
-    let mut k: i32 = 0 as i32;
-    let mut c: i32 = if (*st).profile >= 0 as i32 {
-        Geno_StateCount((*st).profile as i32)
-    } else {
-        0 as i32
-    };
-    s = 0 as i32;
-    while s < c && s < GENO_MAX_STATES {
-        if Geno_StateBehavior((*st).profile as i32, s) == bhv {
-            if k == n {
-                return s;
-            }
-            k += 1;
-        }
-        s += 1;
-    }
-    return -(1 as i32);
-}
-
-pub unsafe extern "C" fn geno_state_order(
-    mut st: *mut GenoState,
-    mut bhv: i32,
-    mut s: i32,
-) -> i32 {
-    melee_core::ct!("geno_state_order");
-    let mut i: i32 = 0;
-    let mut k: i32 = 0 as i32;
-    i = 0 as i32;
-    while i < s && i < GENO_MAX_STATES {
-        if Geno_StateBehavior((*st).profile as i32, i) == bhv {
-            k += 1;
-        }
-        i += 1;
-    }
-    return if s >= 0 as i32
-        && Geno_StateBehavior((*st).profile as i32, s) == bhv
-    {
-        k
-    } else {
-        -(1 as i32)
-    };
-}
-
-pub unsafe extern "C" fn geno_pair_swap(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut bhv: i32,
-) -> i32 {
-    melee_core::ct!("geno_pair_swap");
-    let mut s: i32 = geno_cur_state(fp, st);
-    let mut k: i32 = geno_state_order(st, bhv, s);
-    let mut want_air: i32 = ((*fp).ground_or_air as i32
-        == GA_Air as i32) as i32;
-    let mut t: i32 = 0;
-    if k < 0 as i32 || k & 1 as i32 == want_air {
-        return 0 as i32;
-    }
-    t = geno_state_nth(st, bhv, k & !(1 as i32) | want_air);
-    if t < 0 as i32 || t == s {
-        return 0 as i32;
-    }
-    return geno_do_change(
-        gobj,
-        fp,
-        st,
-        (2 as u32 & 15 as u32) << 28 as i32
-            | t as u32 & 0xffff as u32 | GENO_TGT_KEEP_FRAME,
-    );
-}
-
-pub unsafe extern "C" fn geno_drill_pose(mut fp: *mut Fighter, mut st: *mut GenoState) {
-    melee_core::ct!("geno_drill_pose");
-    let mut rx: f32 = 0.0f32;
-    if geno_param(st, GENO_P_DRILL_PITCH_MODEL as i32) != 0.0f32 {
-        rx = (-(*st).move_f[0 as i32 as usize] * GENO_DEG2RAD) as f32;
-    }
-    geno_test_rotx = rx;
-    if !(*fp).parts.is_null() && geno_test_capture == 0 {
-        ftPartSetRotX(fp, 0 as i32, rx);
-    }
-}
-
-pub unsafe extern "C" fn geno_drill_hit(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_hit");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    (*st).move_i[1 as i32 as usize] = 1 as i32 as i32;
-    if geno_param(st, GENO_P_DRILL_BOUNCE as i32) as i32
-        & 2 as i32 != 0
-        && (*st).move_i[2 as i32 as usize] == 0 as i32
-    {
-        (*st).move_i[2 as i32 as usize] = 1 as i32 as i32;
-        (*st).move_i[3 as i32 as usize] = 1 as i32 as i32;
-    }
-}
-
-pub unsafe extern "C" fn geno_drill_shield(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_shield");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    if geno_param(st, GENO_P_DRILL_BOUNCE as i32) as i32
-        & 4 as i32 != 0
-    {
-        (*st).move_i[2 as i32 as usize] = 1 as i32 as i32;
-        (*st).move_i[3 as i32 as usize] = 3 as i32 as i32;
-    }
+pub unsafe extern "C" fn gb_drill_continues(mut st: *mut GenoState) -> i32 {
+    melee_core::ct!("gb_drill_continues");
+    let mut b: i32 = gb_from_bhv(st);
+    return (b == GENO_BHV_DRILL_START as i32
+        || b == GENO_BHV_DRILL as i32
+        || b == GENO_BHV_DRILL_END as i32) as i32;
 }
 
 pub unsafe extern "C" fn geno_drill_start_enter(
@@ -8179,56 +9210,7 @@ pub unsafe extern "C" fn geno_drill_start_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_drill_start_enter");
-    if (*st).enter_keep != 0 {
-        return;
-    }
-    (*fp).self_vel.x
-        *= geno_param(
-            st,
-            GENO_P_DRILL_W0 as i32 + 0 as i32,
-        );
-    (*fp).gr_vel
-        *= geno_param(
-            st,
-            GENO_P_DRILL_W0 as i32 + 0 as i32,
-        ) as f32;
-    if (*fp).ground_or_air as i32 == GA_Air as i32 {
-        (*fp).self_vel.y = geno_param(
-            st,
-            GENO_P_DRILL_W0 as i32 + 1 as i32,
-        );
-    }
-    (*fp).set_fall_fast(0 as u8 as u8);
-    (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_i[1 as i32 as usize] = 0 as i32 as i32;
-}
-
-pub unsafe extern "C" fn geno_drill_start_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_start_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        ft_80084F3C(gobj);
-        return;
-    }
-    (*fp).self_vel.y
-        += geno_param(
-            st,
-            GENO_P_DRILL_W0 as i32 + 2 as i32,
-        );
-    if (*fp).self_vel.y < -(*fp).co_attrs.terminal_velocity {
-        (*fp).self_vel.y = -(*fp).co_attrs.terminal_velocity as f32;
-    }
-    ftCommon_CalcSelfAccel_DeaccelAir(fp);
-}
-
-pub unsafe extern "C" fn geno_drill_start_coll(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_start_coll");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    geno_coll_both(gobj);
-    geno_pair_swap(gobj, fp, geno_state(fp), GENO_BHV_DRILL_START as i32);
+    gb_drill_begin(fp, st);
 }
 
 pub unsafe extern "C" fn geno_drill_enter(
@@ -8238,163 +9220,8 @@ pub unsafe extern "C" fn geno_drill_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_drill_enter");
-    (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
-    (*st).move_f[1 as i32 as usize] = geno_param(
-        st,
-        GENO_P_DRILL_SPEED as i32,
-    );
-    (*st).move_i[0 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[1 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[2 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[3 as i32 as usize] = 0 as i32 as i32;
-    (*fp).set_fall_fast(0 as u8 as u8);
-    (*fp).deal_dmg_cb = Some(
-        geno_drill_hit as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
-    ) as HSD_GObjEvent;
-    (*fp).shield_hit_cb = Some(
-        geno_drill_shield as unsafe extern "C" fn(*mut Fighter_GObj) -> (),
-    ) as HSD_GObjEvent;
-    geno_drill_pose(fp, st);
-}
-
-pub unsafe extern "C" fn geno_drill_end_state(
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-) -> i32 {
-    melee_core::ct!("geno_drill_end_state");
-    let mut e: i32 = geno_state_nth(
-        st,
-        GENO_BHV_DRILL_END as i32,
-        if (*fp).ground_or_air as i32 == GA_Air as i32 {
-            1 as i32
-        } else {
-            0 as i32
-        },
-    );
-    return if e >= 0 as i32 {
-        e
-    } else {
-        geno_state_with(st, GENO_BHV_DRILL_END as i32)
-    };
-}
-
-pub unsafe extern "C" fn geno_drill_bounce(
-    mut gobj: *mut Fighter_GObj,
-    mut fp: *mut Fighter,
-    mut st: *mut GenoState,
-    mut reason: i32,
-) {
-    melee_core::ct!("geno_drill_bounce");
-    let mut e: i32 = geno_drill_end_state(fp, st);
-    Geno_Event(
-        19 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        reason,
-        (*st).move_i[0 as i32 as usize],
-    );
-    (*st).move_i[3 as i32 as usize] = reason as i32;
-    if e >= 0 as i32 {
-        geno_do_change(
-            gobj,
-            fp,
-            st,
-            (2 as u32 & 15 as u32) << 28 as i32
-                | e as u32 & 0xffff as u32,
-        );
-    } else {
-        geno_helpless(gobj, fp, st);
-    };
-}
-
-pub unsafe extern "C" fn geno_drill_anim(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_anim");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    (*st).move_i[0 as i32 as usize] += 1;
-    if (*st).move_i[2 as i32 as usize] != 0 as i32 {
-        geno_drill_bounce(gobj, fp, st, (*st).move_i[3 as i32 as usize]);
-        return;
-    }
-    if geno_anim_ended(gobj) != 0 && s >= 0 as i32 {
-        let mut t: u32 = Geno_StateNext((*st).profile as i32, s)
-            as u32;
-        let mut e: i32 = geno_drill_end_state(fp, st);
-        if t != GENO_NONE_T {
-            geno_go(gobj, fp, st, t);
-        } else if e >= 0 as i32 {
-            geno_do_change(
-                gobj,
-                fp,
-                st,
-                (2 as u32 & 15 as u32) << 28 as i32
-                    | e as u32 & 0xffff as u32,
-            );
-        } else {
-            geno_helpless(gobj, fp, st);
-        }
-    }
-}
-
-pub unsafe extern "C" fn geno_drill_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut sy: f32 = geno_stick_dz(
-        (*fp).input.lstick[0 as i32 as usize].y,
-    );
-    let mut lim: f32 = geno_param(st, GENO_P_DRILL_ANGLE_MAX as i32);
-    let mut a = fmadds(sy, geno_param(st, GENO_P_DRILL_W0 as i32 + 3), (*st).move_f[0]);
-    let mut spd: f32 = (*st).move_f[1 as i32 as usize];
-    let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
-    if lim > 0.0f32 {
-        a = geno_clampf(a, -lim, lim);
-    }
-    (*st).move_f[0 as i32 as usize] = a;
-    geno_drill_pose(fp, st);
-    if (*fp).anon_594.anon_0.x594_b0() != 0 {
-        spd = (*fp).x6A4_transNOffset.z;
-    }
-    (*fp).self_vel.x = (lr as f32 * spd as f32
-        * cosf(a as f32 * GENO_DEG2RAD)) as f32;
-    (*fp).self_vel.y = (spd as f32
-        * sinf(a as f32 * GENO_DEG2RAD)) as f32;
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        if (*fp).self_vel.y > 0.0f32 {
-            ftCommon_8007D5D4(fp);
-        } else {
-            (*fp).gr_vel = (*fp).self_vel.x as f32;
-            (*fp).self_vel.y = 0.0f32 as f32;
-        }
-    }
-}
-
-pub unsafe extern "C" fn geno_drill_coll(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_drill_coll");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    if (*fp).ground_or_air as i32 == GA_Air as i32
-        && (*st).ledge > 0 as i32
-    {
-        geno_coll_air_ledge(
-            gobj,
-            ((*st).ledge == 2 as i32) as i32,
-            Some(geno_become_ground as unsafe extern "C" fn(*mut Fighter_GObj) -> ()),
-        );
-    } else {
-        geno_coll_both(gobj);
-    }
-    if geno_param(st, GENO_P_DRILL_BOUNCE as i32) as i32
-        & 1 as i32 != 0
-        && geno_into_wall(fp, (*fp).facing_dir as f32) != 0
-        && (*st).move_i[2 as i32 as usize] == 0 as i32
-    {
-        (*st).move_i[2 as i32 as usize] = 1 as i32 as i32;
-        (*st).move_i[3 as i32 as usize] = 2 as i32 as i32;
+    if gb_drill_continues(st) == 0 {
+        gb_drill_begin(fp, st);
     }
 }
 
@@ -8405,61 +9232,150 @@ pub unsafe extern "C" fn geno_drill_end_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_drill_end_enter");
-    let mut lr: f32 = if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 };
-    geno_drill_pose(fp, st);
-    if (*st).enter_keep != 0 {
+    if gb_drill_continues(st) == 0 {
+        gb_drill_begin(fp, st);
+    }
+}
+
+pub unsafe extern "C" fn gb_drill_tick(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("gb_drill_tick");
+    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
+        as *mut Fighter;
+    let mut st: *mut GenoState = geno_state(fp);
+    let mut p: GbDrillP = unsafe { core::mem::zeroed() };
+    let mut d: GbDrill = unsafe { core::mem::zeroed() };
+    let mut in_0: GbDrillIn = unsafe { core::mem::zeroed() };
+    let mut sx: f32 = 0.;
+    let mut prev_n: i32 = 0;
+    let mut bhv: i32 = 0;
+    let mut want: i32 = 0;
+    let mut air: i32 = gb_airborne(fp);
+    gb_drill_params(st, &raw mut p);
+    gb_drill_load(st, &raw mut d);
+    if d.done != 0 {
         return;
     }
-    if (*fp).ground_or_air as i32 == GA_Air as i32 {
-        (*fp).self_vel.x = -lr
-            * geno_param(st, GENO_P_DRILL_POP_VX as i32);
-        (*fp).self_vel.y = geno_param(st, GENO_P_DRILL_POP_VY as i32);
+    d.f = (if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 }) as f32;
+    gb_stick_of(fp, &raw mut sx, &raw mut in_0.sy);
+    in_0.airborne = air as i32;
+    in_0.slope = 0.0f32 as f32;
+    prev_n = d.n as i32;
+    GenoBhv_DrillStep(&raw mut d, &raw mut in_0, &raw mut p);
+    if prev_n <= p.final_frame {
+        if air != 0 {
+            (*fp).self_vel.x = d.vx;
+            (*fp).self_vel.y = d.vy;
+        } else {
+            (*fp).gr_vel = d.vx as f32;
+        }
+    }
+    if d.hit_spawn != 0 {
+        gb_clear_hit_lists(fp);
+    }
+    gb_drill_store(st, &raw mut d);
+    if d.done != 0 {
+        gb_finish(gobj, fp, st, d.helpless as i32);
+        return;
+    }
+    bhv = gb_cur_bhv(fp, st);
+    want = if prev_n < p.hit0 {
+        GENO_BHV_DRILL_START as i32
+    } else if prev_n < p.final_frame {
+        GENO_BHV_DRILL as i32
     } else {
-        (*fp).gr_vel = 0.0f32;
+        GENO_BHV_DRILL_END as i32
     };
+    if want == GENO_BHV_DRILL_START as i32
+        && geno_state_with(st, want) < 0 as i32
+    {
+        want = GENO_BHV_DRILL as i32;
+    }
+    if want != bhv && geno_state_with(st, want) >= 0 as i32 {
+        gb_to_bhv(gobj, fp, st, want);
+    }
+}
+
+pub unsafe extern "C" fn gb_drill_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("gb_drill_phys");
+    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
+        as *mut Fighter;
+    let mut p: GbDrillP = unsafe { core::mem::zeroed() };
+    let mut d: GbDrill = unsafe { core::mem::zeroed() };
+    gb_drill_params(geno_state(fp), &raw mut p);
+    gb_drill_load(geno_state(fp), &raw mut d);
+    if gb_airborne(fp) == 0 {
+        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+    } else if d.n > p.final_frame as i32 + 1 as i32 {
+        ftCommon_Fall(fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
+    }
+}
+
+pub unsafe extern "C" fn geno_drill_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_anim");
+    gb_drill_tick(gobj);
 }
 
 pub unsafe extern "C" fn geno_drill_end_anim(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_drill_end_anim");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    if geno_anim_ended(gobj) == 0 || s < 0 as i32 {
-        return;
-    }
-    if Geno_StateNext((*st).profile as i32, s) as u32 != GENO_NONE_T {
-        geno_go(gobj, fp, st, geno_next_of(st, s));
-    } else if geno_param(st, GENO_P_DRILL_END_HELPLESS as i32) != 0.0f32 {
-        geno_helpless(gobj, fp, st);
-    } else {
-        geno_go(gobj, fp, st, GENO_AUTO);
-    };
+    gb_drill_tick(gobj);
+}
+
+pub unsafe extern "C" fn geno_drill_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_phys");
+    gb_drill_phys(gobj);
 }
 
 pub unsafe extern "C" fn geno_drill_end_phys(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_drill_end_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let mut n: f32 = geno_param(
-        st,
-        GENO_P_DRILL_W0 as i32 + 4 as i32,
-    );
-    if n > 0.0f32 {
-        (*st).move_f[0 as i32 as usize]
-            -= (2.0f32 * (*st).move_f[0 as i32 as usize] / n)
-                as f32;
-    } else {
-        (*st).move_f[0 as i32 as usize] = 0.0f32 as f32;
-    }
-    geno_drill_pose(fp, st);
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        ft_80084F3C(gobj);
+    gb_drill_phys(gobj);
+}
+
+pub unsafe extern "C" fn geno_drill_start_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_start_phys");
+    gb_drill_tick(gobj);
+    gb_drill_phys(gobj);
+}
+
+pub unsafe extern "C" fn geno_drill_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_coll");
+    geno_coll_both(gobj);
+}
+
+pub unsafe extern "C" fn geno_drill_start_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_drill_start_coll");
+    geno_coll_both(gobj);
+}
+
+pub unsafe extern "C" fn gb_cape_reflect(
+    mut gobj: *mut Fighter_GObj,
+    mut fp: *mut Fighter,
+    mut p: *const GbCapeP,
+    mut on: i32,
+) {
+    melee_core::ct!("gb_cape_reflect");
+    let mut d: ReflectDesc = unsafe { core::mem::zeroed() };
+    if on == 0 {
+        (*fp).set_reflecting(0 as u8 as u8);
         return;
     }
-    ftCommon_Fall(fp, (*fp).co_attrs.gravity, (*fp).co_attrs.terminal_velocity);
-    ftCommon_CalcSelfAccel_DeaccelAir(fp);
+    if (*fp).reflecting() != 0 {
+        return;
+    }
+    if geno_test_capture != 0 {
+        (*fp).set_reflecting(1 as u8 as u8);
+        return;
+    }
+    geno_zero(
+        &raw mut d as *mut c_void,
+        ::core::mem::size_of::<ReflectDesc>() as i32,
+    );
+    d.x0_bone_id = 1 as u32;
+    d.x4_max_damage = 999 as i32 as i32;
+    d.x14_size = 12.0f32;
+    d.x18_damage_mul = (*p).reflect_dmg_mul as f32;
+    d.x1C_speed_mul = (*p).reflect_speed_mul as f32;
+    d.x20_behavior = 0 as u8;
+    ftColl_CreateReflectHit(gobj, &raw mut d, None);
 }
 
 pub unsafe extern "C" fn geno_cape_enter(
@@ -8469,111 +9385,7 @@ pub unsafe extern "C" fn geno_cape_enter(
     mut s: i32,
 ) {
     melee_core::ct!("geno_cape_enter");
-    if (*st).enter_keep != 0 {
-        return;
-    }
-    (*fp).self_vel.x
-        *= geno_param(
-            st,
-            GENO_P_CAPE_W0 as i32 + 0 as i32,
-        );
-    (*fp).self_vel.y
-        *= geno_param(
-            st,
-            GENO_P_CAPE_W0 as i32 + 1 as i32,
-        );
-    (*fp).gr_vel
-        *= geno_param(st, GENO_P_CAPE_W0 as i32 + 0 as i32)
-            as f32;
-    (*fp).set_fall_fast(0 as u8 as u8);
     (*st).move_i[0 as i32 as usize] = 0 as i32 as i32;
-    (*st).move_i[1 as i32 as usize] = -(1 as i32) as i32;
-}
-
-pub unsafe extern "C" fn geno_cape_steer(
-    mut v: f32,
-    mut stick: f32,
-    mut acc: f32,
-    mut max: f32,
-) -> f32 {
-    melee_core::ct!("geno_cape_steer");
-    let mut want: f32 = stick * max;
-    let mut d: f32 = geno_clampf(want - v, -acc, acc);
-    return geno_clampf(v + d, -max, max);
-}
-
-pub unsafe extern "C" fn geno_cape_phys(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_cape_phys");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    let mut st: *mut GenoState = geno_state(fp);
-    let fresh10 = (*st).move_i[0 as i32 as usize];
-    (*st).move_i[0 as i32 as usize] = (*st)
-        .move_i[0 as i32 as usize] + 1;
-    let mut f: i32 = fresh10;
-    let mut sx: f32 = geno_stick_dz(
-        (*fp).input.lstick[0 as i32 as usize].x,
-    );
-    let mut sy: f32 = geno_stick_dz(
-        (*fp).input.lstick[0 as i32 as usize].y,
-    );
-    if f == geno_param(st, GENO_P_CAPE_STEER_FRAME as i32) as i32 {
-        Geno_Event(
-            26 as i32,
-            (*fp).kind as i32,
-            (*fp).player_id as i32,
-            f as i32,
-            (sx as f32 * 100.0f32) as i32,
-        );
-    }
-    if f < geno_param(st, GENO_P_CAPE_STEER_FRAME as i32) as i32 {
-        if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-            ftCommon_SetSelfMovementFromGroundedMovement(gobj);
-        }
-        return;
-    }
-    if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        if sy > 0.0f32 {
-            ftCommon_8007D5D4(fp);
-            (*fp).self_vel.x = (*fp).gr_vel as f32;
-            (*fp).self_vel.y = 0.0f32 as f32;
-        } else {
-            (*fp).gr_vel = geno_cape_steer(
-                (*fp).gr_vel as f32,
-                sx,
-                geno_param(
-                    st,
-                    GENO_P_CAPE_W0 as i32 + 2 as i32,
-                ),
-                geno_param(
-                    st,
-                    GENO_P_CAPE_W0 as i32 + 3 as i32,
-                ),
-            ) as f32;
-            ftCommon_SetSelfMovementFromGroundedMovement(gobj);
-            return;
-        }
-    }
-    (*fp).self_vel.x = geno_cape_steer(
-        (*fp).self_vel.x,
-        sx,
-        geno_param(st, GENO_P_CAPE_W0 as i32 + 2 as i32),
-        geno_param(st, GENO_P_CAPE_W0 as i32 + 3 as i32),
-    );
-    (*fp).self_vel.y = geno_cape_steer(
-        (*fp).self_vel.y,
-        sy,
-        geno_param(st, GENO_P_CAPE_W0 as i32 + 4 as i32),
-        geno_param(st, GENO_P_CAPE_W0 as i32 + 5 as i32),
-    );
-}
-
-pub unsafe extern "C" fn geno_cape_coll(mut gobj: *mut Fighter_GObj) {
-    melee_core::ct!("geno_cape_coll");
-    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
-        as *mut Fighter;
-    geno_coll_both(gobj);
-    geno_pair_swap(gobj, fp, geno_state(fp), GENO_BHV_CAPE as i32);
 }
 
 pub unsafe extern "C" fn geno_cape_anim(mut gobj: *mut Fighter_GObj) {
@@ -8581,84 +9393,210 @@ pub unsafe extern "C" fn geno_cape_anim(mut gobj: *mut Fighter_GObj) {
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
-    let mut air: i32 = ((*fp).ground_or_air as i32
-        == GA_Air as i32) as i32;
-    let mut held: u32 = geno_buttons(fp, 0 as i32);
-    let mut v: i32 = 0;
-    let mut t: i32 = 0;
-    if (*st).move_i[0 as i32 as usize]
-        < geno_param(st, GENO_P_CAPE_DECIDE_FRAME as i32) as i32
-    {
-        return;
-    }
-    if held & geno_param(st, GENO_P_CAPE_BUTTONS as i32) as u32 != 0 {
-        let mut fwd: f32 = geno_stick_dz(
-            (*fp).input.lstick[0 as i32 as usize].x,
-        ) * (if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 });
-        v = if geno_absf(fwd)
-            < geno_param(st, GENO_P_CAPE_NEUTRAL_X as i32)
-        {
-            1 as i32
-        } else if fwd < 0.0f32 {
-            2 as i32
-        } else {
-            3 as i32
-        };
-        t = geno_state_nth(
-            st,
-            GENO_BHV_CAPE_ATTACK as i32,
-            2 as i32 * (v - 1 as i32) + air,
-        );
-    } else {
-        v = 0 as i32;
-        t = geno_state_nth(st, GENO_BHV_CAPE_END as i32, air);
-    }
-    (*st).move_i[1 as i32 as usize] = (v
-        + (if air != 0 { 10 as i32 } else { 0 as i32 }))
+    let mut p: GbCapeP = unsafe { core::mem::zeroed() };
+    let mut c: GbCape = unsafe { core::mem::zeroed() };
+    let mut in_0: GbCapeIn = unsafe { core::mem::zeroed() };
+    let mut sy: f32 = 0.;
+    let mut air: i32 = gb_airborne(fp);
+    gb_cape_params(st, &raw mut p);
+    c.n = ((*st).move_i[0 as i32 as usize] & 255 as i32)
         as i32;
-    Geno_Event(
-        27 as i32,
-        (*fp).kind as i32,
-        (*fp).player_id as i32,
-        (*st).move_i[1 as i32 as usize],
-        held as i32,
-    );
-    if t < 0 as i32 {
-        geno_helpless(gobj, fp, st);
-        return;
+    c.flipped = ((*st).move_i[0 as i32 as usize]
+        >> 8 as i32 & 1 as i32) as i32;
+    c.done = 0 as i32 as i32;
+    c.f = (if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 }) as f32;
+    c.vx = (if air != 0 {
+        (*fp).self_vel.x as f32
+    } else {
+        (*fp).gr_vel
+    }) as f32;
+    c.vy = (if air != 0 { (*fp).self_vel.y as f32 } else { 0.0f32 })
+        as f32;
+    gb_stick_of(fp, &raw mut in_0.sx, &raw mut sy);
+    in_0.airborne = air as i32;
+    GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+    if c.flip_now != 0 {
+        (*fp).facing_dir = c.f as f32;
     }
-    geno_do_change(
-        gobj,
-        fp,
-        st,
-        (2 as u32 & 15 as u32) << 28 as i32
-            | t as u32 & 0xffff as u32,
-    );
+    if air != 0 {
+        (*fp).self_vel.x = c.vx;
+        (*fp).self_vel.y = c.vy;
+    } else {
+        (*fp).gr_vel = c.vx as f32;
+    }
+    gb_cape_reflect(gobj, fp, &raw mut p, c.reflect as i32);
+    (*st).move_i[0 as i32 as usize] = c.n
+        | c.flipped << 8 as i32;
+    if c.done != 0 {
+        gb_finish(gobj, fp, st, 0 as i32);
+    }
+}
+
+pub unsafe extern "C" fn geno_cape_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_phys");
+    let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
+        as *mut Fighter;
+    let mut p: GbCapeP = unsafe { core::mem::zeroed() };
+    let mut n: i32 = (*geno_state(fp))
+        .move_i[0 as i32 as usize] & 255 as i32;
+    let mut stalled: i32 = 0;
+    gb_cape_params(geno_state(fp), &raw mut p);
+    stalled = (n > p.start && n <= p.end as i32 + 1 as i32)
+        as i32;
+    if gb_airborne(fp) != 0 {
+        if stalled == 0 {
+            geno_cb_phys_air(gobj);
+        }
+    } else if stalled != 0 {
+        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+    } else {
+        ft_80084F3C(gobj);
+    };
+}
+
+pub unsafe extern "C" fn geno_cape_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_cape_coll");
+    geno_coll_both(gobj);
 }
 
 pub unsafe extern "C" fn geno_cape_after_coll(mut gobj: *mut Fighter_GObj) {
     melee_core::ct!("geno_cape_after_coll");
+    geno_cb_coll_anim_motion(gobj);
+}
+
+pub unsafe extern "C" fn gb_md_load(mut st: *mut GenoState, mut m: *mut GbMultiDash) {
+    melee_core::ct!("gb_md_load");
+    let mut w: i32 = (*st).move_i[0 as i32 as usize];
+    (*m).phase = (w as i32 & 15 as i32) as i32;
+    (*m).seg = (w as i32 >> 4 as i32
+        & 15 as i32) as i32;
+    (*m).repress = (w as i32 >> 8 as i32
+        & 1 as i32) as i32;
+    (*m).helpless = (w as i32 >> 9 as i32
+        & 1 as i32) as i32;
+    (*m).done = (w as i32 >> 10 as i32
+        & 1 as i32) as i32;
+    (*m).t = (*st).move_i[1 as i32 as usize];
+    (*m).hit_spawn = 0 as i32 as i32;
+    (*m).ax = (*st).move_f[0 as i32 as usize];
+    (*m).ay = (*st).move_f[1 as i32 as usize];
+    (*m).f = (*st).move_f[2 as i32 as usize];
+    (*m).speed = (*st).move_f[3 as i32 as usize];
+    (*m).vx = (*st).move_f[4 as i32 as usize];
+    (*m).vy = (*st).move_f[5 as i32 as usize];
+    (*m).dist = (*st).move_f[6 as i32 as usize];
+}
+
+pub unsafe extern "C" fn gb_md_store(mut st: *mut GenoState, mut m: *const GbMultiDash) {
+    melee_core::ct!("gb_md_store");
+    (*st).move_i[0 as i32 as usize] = (*m).phase
+        | (*m).seg << 4 as i32 | (*m).repress << 8 as i32
+        | (*m).helpless << 9 as i32
+        | (*m).done << 10 as i32;
+    (*st).move_i[1 as i32 as usize] = (*m).t;
+    (*st).move_f[0 as i32 as usize] = (*m).ax;
+    (*st).move_f[1 as i32 as usize] = (*m).ay;
+    (*st).move_f[2 as i32 as usize] = (*m).f;
+    (*st).move_f[3 as i32 as usize] = (*m).speed;
+    (*st).move_f[4 as i32 as usize] = (*m).vx;
+    (*st).move_f[5 as i32 as usize] = (*m).vy;
+    (*st).move_f[6 as i32 as usize] = (*m).dist;
+}
+
+pub unsafe extern "C" fn geno_multi_dash_enter(
+    mut gobj: *mut Fighter_GObj,
+    mut fp: *mut Fighter,
+    mut st: *mut GenoState,
+    mut s: i32,
+) {
+    melee_core::ct!("geno_multi_dash_enter");
+    let mut m: GbMultiDash = unsafe { core::mem::zeroed() };
+    let mut air: i32 = gb_airborne(fp);
+    GenoBhv_MultiDashBegin(
+        &raw mut m,
+        if (*fp).facing_dir < 0.0f32 { -1.0f32 } else { 1.0f32 },
+    );
+    m.vx = (if air != 0 {
+        (*fp).self_vel.x as f32
+    } else {
+        (*fp).gr_vel
+    }) as f32;
+    m.vy = (if air != 0 { (*fp).self_vel.y as f32 } else { 0.0f32 })
+        as f32;
+    gb_md_store(st, &raw mut m);
+}
+
+pub unsafe extern "C" fn geno_multi_dash_anim(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_multi_dash_anim");
     let mut fp: *mut Fighter = HSD_GObjGetUserData(gobj as *mut HSD_GObj)
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
-    let mut s: i32 = geno_cur_state(fp, st);
-    let mut bhv: i32 = if s >= 0 as i32 {
-        Geno_StateBehavior((*st).profile as i32, s)
+    let mut p: GbMultiDashP = unsafe { core::mem::zeroed() };
+    let mut m: GbMultiDash = unsafe { core::mem::zeroed() };
+    let mut in_0: GbMultiDashIn = unsafe { core::mem::zeroed() };
+    let mut air: i32 = gb_airborne(fp);
+    GenoBhv_MultiDashParams(&raw mut p);
+    gb_md_load(st, &raw mut m);
+    gb_stick_of(fp, &raw mut in_0.sx, &raw mut in_0.sy);
+    in_0.special_pressed = ((*fp).input.pressed_buttons
+        & ((1 as i32) << 9 as i32) as HSD_Pad
+        != 0 as HSD_Pad) as i32 as i32;
+    GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+    (*fp).facing_dir = m.f as f32;
+    if air != 0 {
+        (*fp).self_vel.x = m.vx;
+        (*fp).self_vel.y = m.vy;
     } else {
-        GENO_BHV_NONE as i32
-    };
-    geno_cb_coll_anim_motion(gobj);
-    if geno_cur_state(fp, st) == s {
-        geno_pair_swap(gobj, fp, st, bhv);
+        (*fp).gr_vel = m.vx as f32;
+    }
+    if m.hit_spawn != 0 && m.t == 1 as i32 {
+        gb_clear_hit_lists(fp);
+    }
+    gb_md_store(st, &raw mut m);
+    if m.done != 0 {
+        gb_finish(gobj, fp, st, (air != 0 && m.helpless != 0) as i32);
     }
 }
 
-pub unsafe extern "C" fn GenoGame_TestPairSwap(
-    mut fp: *mut Fighter,
-    mut bhv: i32,
-) -> i32 {
-    melee_core::ct!("GenoGame_TestPairSwap");
-    return geno_pair_swap((*fp).gobj as *mut Fighter_GObj, fp, geno_state(fp), bhv);
+pub unsafe extern "C" fn geno_multi_dash_phys(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_multi_dash_phys");
+    if gb_airborne(HSD_GObjGetUserData(gobj as *mut HSD_GObj) as *mut Fighter) == 0 {
+        ftCommon_SetSelfMovementFromGroundedMovement(gobj);
+    }
+}
+
+pub unsafe extern "C" fn geno_multi_dash_coll(mut gobj: *mut Fighter_GObj) {
+    melee_core::ct!("geno_multi_dash_coll");
+    geno_coll_both(gobj);
+}
+
+pub unsafe extern "C" fn GenoBhv_AnimMotionFrameDelta(
+    mut fwd: f32,
+    mut up: f32,
+    mut lr: f32,
+    mut dx: *mut f32,
+    mut dy: *mut f32,
+) {
+    melee_core::ct!("GenoBhv_AnimMotionFrameDelta");
+    let mut track: [f32; 4] = [0.; 4];
+    let mut p: GbAnimMotionP = unsafe { core::mem::zeroed() };
+    let mut a: GbAnimMotion = unsafe { core::mem::zeroed() };
+    track[0 as i32 as usize] = 0.0f32 as f32;
+    track[1 as i32 as usize] = 0.0f32 as f32;
+    track[2 as i32 as usize] = fwd;
+    track[3 as i32 as usize] = up;
+    GenoBhv_AnimMotionParams(&raw mut p);
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    GenoBhv_AnimMotionStep(
+        &raw mut a,
+        &raw mut track as *mut f32,
+        2 as i32,
+        &raw mut p,
+        lr,
+        0 as i32,
+    );
+    *dx = a.vx;
+    *dy = a.vy;
 }
 
 pub unsafe extern "C" fn geno_cb_iasa_interrupt(mut gobj: *mut Fighter_GObj) {
@@ -8669,22 +9607,30 @@ pub unsafe extern "C" fn geno_cb_iasa_interrupt(mut gobj: *mut Fighter_GObj) {
         return;
     }
     if (*fp).ground_or_air as i32 == GA_Ground as i32 {
-        ftCo_Wait_IASA(gobj);
-    } else {
-        ftCo_Fall_IASA(gobj);
-    };
+        if ftCo_AttackS4_CheckInput(gobj) != 0 || ftCo_Jump_CheckInput(gobj) != 0
+            || ftCo_Dash_CheckInput(gobj) != 0 || ftCo_Turn_CheckInput(gobj) != 0
+            || ftCo_Walk_CheckInput(gobj) != 0
+        {
+            return;
+        }
+    } else if ftCo_80095328(gobj, ::core::ptr::null_mut::<i32>()) != 0
+        || ftCo_800D7100(gobj) != 0 || ftCo_800C3B10(gobj) != 0
+        || ftCo_800D705C(gobj) != 0 || ftCo_800CB870(gobj) != 0
+    {
+        return
+    }
 }
 
 pub unsafe extern "C" fn geno_lua_fbits(mut f: f32) -> u32 {
     melee_core::ct!("geno_lua_fbits");
-    let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
+    let mut c: Anon_anon_109 = unsafe { core::mem::zeroed() };
     c.f = f;
     return c.u;
 }
 
 pub unsafe extern "C" fn geno_lua_bitsf(mut u: u32) -> f32 {
     melee_core::ct!("geno_lua_bitsf");
-    let mut c: Anon_anon_107 = unsafe { core::mem::zeroed() };
+    let mut c: Anon_anon_109 = unsafe { core::mem::zeroed() };
     c.u = u;
     return c.f;
 }
@@ -9357,7 +10303,7 @@ pub unsafe extern "C" fn GenoGame_DefineApplyRows(
             __assert(
                 b"pc/geno/geno_define_rows.inc\0" as *const u8
                     as *const i8,
-                26 as u32,
+                28 as u32,
                 b"value < subactions\0" as *const u8 as *const i8,
             );
         };
@@ -9386,7 +10332,7 @@ pub unsafe extern "C" fn GenoGame_DefineApplyRows(
                     __assert(
                         b"pc/geno/geno_define_rows.inc\0" as *const u8
                             as *const i8,
-                        35 as u32,
+                        37 as u32,
                         b"cb != NULL\0" as *const u8 as *const i8,
                     );
                 };
@@ -9452,7 +10398,7 @@ pub unsafe extern "C" fn geno_art_f(
     mut id: i32,
 ) -> f32 {
     melee_core::ct!("geno_art_f");
-    let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     b.u = Geno_ArticleParam(p, a, id) as u32;
     return b.f;
 }
@@ -9464,7 +10410,7 @@ pub unsafe extern "C" fn geno_art_hf(
     mut id: i32,
 ) -> f32 {
     melee_core::ct!("geno_art_hf");
-    let mut b: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut b: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     b.u = Geno_ArticleHitParam(p, a, h, id) as u32;
     return b.f;
 }
@@ -10920,7 +11866,7 @@ pub unsafe extern "C" fn geno_art_spawn(
         as f32;
     c = cosf(rad as f32) as f32;
     sn = sinf(rad as f32) as f32;
-    (*v).vx = facing * (vf * c - vu * sn);
+    (*v).vx = facing * fmadds(vf, c, -(vu * sn));
     (*v).vy = fmadds(vf, sn, vu * c);
     (*v).prev = (*ip).pos;
     Item_80268E5C(ig as *mut HSD_GObj, 0 as enum_t, ITEM_ANIM_UPDATE);
@@ -11242,14 +12188,14 @@ pub unsafe extern "C" fn Geno_ItemActive(
 
 pub unsafe extern "C" fn geno_item_bits(mut f: f32) -> i32 {
     melee_core::ct!("geno_item_bits");
-    let mut u: Anon_anon_33_2 = unsafe { core::mem::zeroed() };
+    let mut u: Anon_anon_35_2 = unsafe { core::mem::zeroed() };
     u.f = f;
     return u.i;
 }
 
 pub unsafe extern "C" fn geno_item_float(mut i: i32) -> f32 {
     melee_core::ct!("geno_item_float");
-    let mut u: Anon_anon_33_2 = unsafe { core::mem::zeroed() };
+    let mut u: Anon_anon_35_2 = unsafe { core::mem::zeroed() };
     u.i = i;
     return u.f;
 }
@@ -11305,13 +12251,7 @@ pub unsafe extern "C" fn geno_item_event(
 
 pub unsafe extern "C" fn geno_item_lift(mut d: i32, mut age: f32) -> f32 {
     melee_core::ct!("geno_item_lift");
-    return geno_item_paramf(d, GENO_IP_HOVER as i32)
-        + geno_item_paramf(d, GENO_IP_BOB as i32)
-            * sinf(
-                age as f32
-                    * geno_item_paramf(d, GENO_IP_BOB_SPEED as i32)
-                        as f32 * M_PI as f32 / 180.0f32,
-            ) as f32;
+    return fmadds(geno_item_paramf(d, GENO_IP_BOB as i32), sinf(age * geno_item_paramf(d, GENO_IP_BOB_SPEED as i32) * M_PI as f32 / 180.0f32), geno_item_paramf(d, GENO_IP_HOVER as i32));
 }
 
 pub unsafe extern "C" fn geno_item_in_capsule(
@@ -11484,9 +12424,7 @@ pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
                 dx,
                 dy,
                 r,
-                geno_item_lift(d, (*v).age as f32)
-                    + geno_item_paramf(d, GENO_IP_HEIGHT as i32)
-                        * geno_item_paramf(d, GENO_IP_SCALE as i32),
+                fmadds(geno_item_paramf(d, GENO_IP_HEIGHT as i32), geno_item_paramf(d, GENO_IP_SCALE as i32), geno_item_lift(d, (*v).age as f32)),
             ) != 0
             {
                 geno_item_event(
@@ -11723,9 +12661,9 @@ pub unsafe extern "C" fn geno_item_index(mut index: i32) -> *mut Item {
         if !ip.is_null() && geno_item_def(ip) >= 0 as i32
             && (*geno_item_vars(ip)).terminal == 0
             && {
-                let fresh16 = index;
+                let fresh15 = index;
                 index = index - 1;
-                fresh16 == 0 as i32
+                fresh15 == 0 as i32
             }
         {
             return ip;
@@ -12461,17 +13399,14 @@ pub unsafe extern "C" fn Geno_ItemFixture(
     heads[HSD_GOBJ_PLINK_FIGHTER as usize] = &raw mut fighter;
     let mut radius: f32 = geno_item_paramf(def, GENO_IP_RADIUS as i32)
         * geno_item_paramf(def, GENO_IP_SCALE as i32);
-    fp.cur_pos.y = ip.pos.y + geno_item_lift(def, 1 as i32 as f32)
-        + geno_item_paramf(def, GENO_IP_HEIGHT as i32)
-            * geno_item_paramf(def, GENO_IP_SCALE as i32);
+    fp.cur_pos.y = fmadds(geno_item_paramf(def, GENO_IP_HEIGHT as i32), geno_item_paramf(def, GENO_IP_SCALE as i32), ip.pos.y + geno_item_lift(def, 1 as i32 as f32));
     fp.cur_pos.x = (ip.pos.x as f32 + radius as f32
         + 0.1f32) as f32;
     if geno_item_anim(&raw mut g) != 0 || (*geno_item_vars(&raw mut ip)).terminal != 0 {
         failed += 1;
     }
     (*geno_item_vars(&raw mut ip)).age = 0 as i32;
-    fp.cur_pos.x = (ip.pos.x as f32
-        + radius as f32 * 0.99f32) as f32;
+    fp.cur_pos.x = fmadds(radius, 0.99f32, ip.pos.x);
     if geno_item_anim(&raw mut g) == 0 || (*geno_item_vars(&raw mut ip)).terminal == 0 {
         failed += 1;
     }

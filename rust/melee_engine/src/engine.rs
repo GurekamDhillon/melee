@@ -570,7 +570,16 @@ impl Engine {
         melee_core::ct::DBG_FRAME.store(self.frames as i32, core::sync::atomic::Ordering::Relaxed);
         unsafe { FEED_TICK = self.frames };
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
+        let t0 = std::time::Instant::now();
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
+        if let Some(ms) = spike_ms() {
+            let el = t0.elapsed();
+            let pn = crate::archive::PARSE_NS.swap(0, core::sync::atomic::Ordering::Relaxed);
+            let n = crate::archive::PARSE_N.swap(0, core::sync::atomic::Ordering::Relaxed);
+            if el.as_secs_f64() * 1e3 >= ms {
+                eprintln!("engine: slow tick {} : {:.1} ms, {n} file parse(s) {:.1} ms", self.frames, el.as_secs_f64() * 1e3, pn as f64 / 1e6);
+            }
+        }
         if unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
             crate::gxbridge::finish_frame();
         }
@@ -580,6 +589,12 @@ impl Engine {
         }
         more
     }
+}
+
+/// `MELEE_TICK_SPIKE=<ms>`: log each engine tick at least that long, with its file-parse time.
+fn spike_ms() -> Option<f64> {
+    static V: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
+    *V.get_or_init(|| std::env::var("MELEE_TICK_SPIKE").ok().and_then(|v| v.parse().ok()))
 }
 
 /// Called after the link table, the GX bridge and the fallback seams are installed: a viewer / audio driver overrides hooks here.

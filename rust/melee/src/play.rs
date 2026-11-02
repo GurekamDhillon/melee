@@ -272,6 +272,8 @@ struct MatchSetup {
 struct EngMatch {
     e: melee_engine::Engine,
     frame: Option<Vec<melee_gx::draw::DrawCmd>>,
+    /// The decode thread's packing of `frame` (renderer CPU work done off the main thread).
+    packed: Option<melee_gx::render::Packed>,
     setup: MatchSetup,
     end_timer: Option<u32>,
     timed_out: bool,
@@ -475,7 +477,12 @@ impl Play {
     /// The process's memory (working set, private bytes) in the log: checks that match after match does not grow.
     fn frame_mem(&self, what: &str) {
         let (ws, private) = proc_mem();
-        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024));
+        crate::heapprof::dump(&format!("after {} matches ({what})", self.matches_played));
+        if std::env::var_os("MELEE_ARENA_STATS").is_some() {
+            let (bumped, free, top) = melee_engine::arena::stats();
+            log(&format!("arena: bumped {} KB, on free lists {} KB, top free classes (size, blocks) {:?}", bumped >> 10, free >> 10, top));
+        }
+        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB (live {} KB, {} allocations so far), system heap {} KB, gx data cache {:?}, archives (live, retired, raw KB, arena KB) {:?}", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024, melee_engine::arena::live_bytes() / 1024, melee_engine::arena::allocations(), crate::SYS_LIVE.load(std::sync::atomic::Ordering::Relaxed) / 1024, { let (n, b) = melee_engine::gxbridge::data_cache_stats(); (n, b >> 20) }, { let (a, r, raw, c) = melee_engine::archive::stats(); (a, r, raw >> 10, c >> 10) }));
     }
 
     fn tick_scene(&mut self) {
@@ -854,6 +861,7 @@ impl Play {
             },
             Err(_) => Self::scenario_of(&su),
         };
+        let load_t0 = std::time::Instant::now();
         let built = if let Some(mut e) = self.spare.take() {
             // the next match of the run: the engine stays booted (Engine::next_vs, the C mode loop's next scene)
             e.next_vs(scn).map(|()| e)
@@ -882,7 +890,19 @@ impl Play {
                     crate::engine_audio::start_stage_bgm();
                 }
                 self.matches_played += 1;
-                self.em = Some(EngMatch { e, frame: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
+                // GX decode on its own thread (render-only; needs a run that never snapshots the arena, whose blocks
+                // the thread's frames hold): MELEE_GX_SYNC=1 keeps it in the tick
+                if melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
+                    melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                    // screenshots show exactly their tick: take each frame when it is decoded
+                    melee_engine::gxbridge::shim().wait_frame = self.shots && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
+                }
+                self.em = Some(EngMatch { e, frame: None, packed: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
+                if std::env::var_os("MELEE_TICK_SPIKE").is_some() {
+                    let pn = melee_engine::archive::PARSE_NS.swap(0, std::sync::atomic::Ordering::Relaxed);
+                    let n = melee_engine::archive::PARSE_N.swap(0, std::sync::atomic::Ordering::Relaxed);
+                    log(&format!("match load: {:.1} ms, {n} file parse(s) {:.1} ms", load_t0.elapsed().as_secs_f64() * 1e3, pn as f64 / 1e6));
+                }
                 self.frame_mem("match start");
                 self.goto(Scene::Match);
             }
@@ -934,6 +954,7 @@ impl Play {
         let alive = m.e.tick();
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             m.frame = Some(f);
+            m.packed = melee_engine::gxbridge::shim().gx.packed.take();
         }
         if !alive {
             // GAME! / TIME! are the game's own (the match scene ends itself); the results follow after a moment
@@ -1252,7 +1273,11 @@ impl Play {
     fn present_now(&mut self, alpha: Option<f64>) {
         if self.scene == Scene::Match && self.em.is_some() {
             let frame = self.em.as_mut().and_then(|m| m.frame.take());
+            let packed = self.em.as_mut().and_then(|m| m.packed.take());
             let p = self.presenter.as_mut().unwrap();
+            if let Some(pk) = packed {
+                p.renderer.set_packed(pk);
+            }
             p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, alpha);
             return;
         }
@@ -1358,7 +1383,32 @@ impl Game for Play {
     }
 }
 
+/// The window title: `MELEE_WINDOW_TITLE`, else "melee [<worktree> <hash>] <stage> <fighters>" (build identity from build.rs,
+/// the scenario from `--match`), so several windows on one desktop can be told apart. The fps readout is appended later.
+fn window_title(spec: Option<&str>) -> String {
+    if let Ok(t) = std::env::var("MELEE_WINDOW_TITLE") {
+        return t;
+    }
+    let id = format!("melee [{} {}]", env!("MELEE_GIT_WHERE"), env!("MELEE_GIT_HASH"));
+    let Some(spec) = spec else { return id };
+    // "a/cpu9,b/cpu9,STAGE": fighters without their slot kind, then the stage first
+    let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
+    let (stage, fighters) = match parts.split_last() {
+        Some((s, f)) if !s.contains('/') => (Some(*s), f),
+        _ => (None, &parts[..]),
+    };
+    let f: Vec<&str> = fighters.iter().map(|x| x.split('/').next().unwrap_or(x)).collect();
+    match stage {
+        Some(s) => format!("{id} {s} {}", f.join(",")),
+        None => format!("{id} {}", f.join(",")),
+    }
+}
+
 pub fn play(args: &[String]) -> ExitCode {
+    // `play` never snapshots the game arena (no rollback offline): big free blocks may give their pages back.
+    melee_engine::arena::set_trim(std::env::var_os("MELEE_ARENA_NO_TRIM").is_none());
+    // images whose raw bytes a later parse overwrote are freed from the first match on (not only after a rematch)
+    melee_engine::archive::set_reclaim(std::env::var_os("MELEE_NO_RECLAIM").is_none());
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let has = |k: &str| args.iter().any(|a| a == k);
     let Some(iso) = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
@@ -1518,7 +1568,7 @@ pub fn play(args: &[String]) -> ExitCode {
         return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
-    let cfg = WindowConfig { title: "GD's Melee (native)".into(), width: 1280, height: 960, active: !scripted };
+    let cfg = WindowConfig { title: window_title(get("--match").as_deref()), width: 1280, height: 960, active: !scripted };
     if scripted {
         std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
     }

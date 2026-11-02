@@ -499,6 +499,8 @@ pub struct GxState {
 
     /// Draws decoded since the last [`GxState::take_draws`].
     pub draws: Vec<crate::draw::DrawCmd>,
+    /// The last draw's pipeline config and its shader info (see `DrawCmd::config`).
+    pub last_config: Option<(std::sync::Arc<crate::shader::PipelineConfig>, crate::shader::ShaderInfo)>,
     /// Warnings worth surfacing (unknown subcommands, unsupported features).
     pub warnings: Vec<String>,
 }
@@ -583,6 +585,7 @@ impl Default for GxState {
             xf_reg_cache: [0; XF_REG_COUNT],
             xf_reg_valid: [false; XF_REG_COUNT],
             draws: Vec::new(),
+            last_config: None,
             warnings: Vec::new(),
         }
     }
@@ -1668,7 +1671,10 @@ impl GxState {
 
     /// Take the draws decoded so far.
     pub fn take_draws(&mut self) -> Vec<crate::draw::DrawCmd> {
-        std::mem::take(&mut self.draws)
+        // the next frame starts with this one's capacity (a growing Vec of these big records re-copied every draw
+        // list it doubled through: ~15% of a Temple 4-CPU tick)
+        let cap = self.draws.len();
+        std::mem::replace(&mut self.draws, Vec::with_capacity(cap))
     }
 }
 

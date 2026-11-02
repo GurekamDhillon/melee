@@ -28,6 +28,13 @@ impl Resources {
         self.by_ptr.insert(key, self.next);
         self.next
     }
+    /// Forget every buffer (handles already decoded stay valid where they were resolved; new ones keep counting up).
+    /// Called after each drain: a handle lives from the call that wrote it to the decode that read it, and keeping
+    /// them kept every vertex array / texture the game ever drew alive.
+    pub fn clear(&mut self) {
+        self.by_handle.clear();
+        self.by_ptr.clear();
+    }
     pub fn get(&self, handle: u64) -> Option<GxData> {
         if handle == 0 {
             None

@@ -25,8 +25,9 @@ Files with a comment syntax carry the header lines "SPDX-License-Identifier: MIT
 .words, .genoasm, PNG, .gitkeep/.gitignore) are covered by this file and the list below.
 Paths are relative to the repository root. Everything not listed here is GPL-2.0-or-later (see pc/LICENSE).
 
-Covered files (301)
+Covered files (304)
 ------------------
+docs/geno.md
 pc/geno/geno.h
 pc/geno/geno_anim_bank_cache_tests.inc
 pc/geno/geno_anim_bank_game.inc
@@ -38,10 +39,12 @@ pc/geno/geno_define_data.inc
 pc/geno/geno_define_game.h
 pc/geno/geno_define_rows.inc
 pc/geno/geno_define_snapshot_tests.inc
+pc/geno/geno_game.c
 pc/geno/geno_game_articles.inc
 pc/geno/geno_game_combo.inc
 pc/geno/geno_game_items.inc
 pc/geno/geno_game_lua.inc
+pc/geno/geno_game_v2.inc
 pc/geno/geno_guard_tests.inc
 pc/geno/geno_item_errors.h
 pc/geno/geno_items.h
@@ -331,13 +334,8 @@ pc/geno/tools/parity.sh
 
 Excluded (remain GPL-2.0-or-later, no MIT header)
 -------------------------------------------------
-pc/geno/geno_game_glide.inc
-pc/geno/geno_game_specials.inc
-pc/geno/geno_game_v2.inc
-pc/geno/geno_game.c
-docs/geno.md
 all CLAUDE.md files
 pc/geno/mods/geno-lab/art/README.md
-pc/geno/mods/geno-lab/art/preview/
+pc/geno/mods/geno-lab/art/preview/lab_sheet.png
 pc/geno/tools/xv2_fx_render_adapter.py
-pc/geno/tools/scan_ftcmd_opcodes.py
+pc/geno/tools/scan_ftcmd_opcodes.py (pending provenance review)

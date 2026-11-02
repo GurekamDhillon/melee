@@ -226,7 +226,13 @@ struct TexEntry {
     view: wgpu::TextureView,
     _data: GxData,
     _tlut: Option<GxData>,
+    /// The last [`Renderer::prepare`] count it was used at (see `TEX_KEEP`).
+    used: std::cell::Cell<u64>,
 }
+
+/// A decoded texture not used for this many prepared frames is dropped (with every cached bind group): the cache
+/// is keyed by guest address, so each match's files added entries that were never used again.
+const TEX_KEEP: u64 = 600;
 
 /// Offscreen GX renderer.
 pub struct Renderer {
@@ -250,6 +256,10 @@ pub struct Renderer {
     tex_bgs: FxMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
+    /// [`Renderer::prepare`] calls so far (texture eviction clock).
+    prepared: u64,
+    /// A packing handed over by the decode thread for the next prepared frame ([`Renderer::set_packed`]).
+    packed: Option<Packed>,
     empty_view: wgpu::TextureView,
     empty_sampler: wgpu::Sampler,
     /// WGSL sources that failed to compile, with naga's message.
@@ -269,6 +279,87 @@ struct PreparedDraw {
     first_index: u32,
     /// This draw owns its uniform block (false: it shares the previous draw's identical block).
     owner: bool,
+}
+
+/// One draw's packing (a [`PreparedDraw`] before its pipeline and texture lookups).
+#[derive(Clone, Copy)]
+pub struct PackedDraw {
+    imm: [u8; 64],
+    uoff: u32,
+    first_index: u32,
+    owner: bool,
+}
+
+/// The CPU half of [`Renderer::prepare`] for one frame ([`pack`]): built on the GX decode thread so the main thread only
+/// uploads, looks up pipelines and draws. `key` is the draw list's allocation and length.
+pub struct Packed {
+    key: (usize, usize),
+    draws: Vec<PackedDraw>,
+    vbuf: Vec<u8>,
+    abuf: Vec<u8>,
+    ibuf: Vec<u8>,
+    uoff: u32,
+    max_uniform: usize,
+}
+
+/// Pack every draw's vertices, array snapshots, indices and uniform layout (no GPU access: any thread).
+pub fn pack(draws: &[DrawCmd]) -> Packed {
+    let mut pk = Packed { key: (draws.as_ptr() as usize, draws.len()), draws: Vec::with_capacity(draws.len()), vbuf: Vec::new(), abuf: Vec::new(), ibuf: Vec::new(), uoff: 0, max_uniform: 16 };
+    let mut arr_max: FxMap<usize, usize> = FxMap::default();
+    let mut arr_off: FxMap<usize, u32> = FxMap::default();
+    // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
+    // Keyed by the snapshot's allocation; the upload covers the most any draw this frame needs.
+    for a in draws.iter().flat_map(|d| d.arrays.iter().flatten()) {
+        let n = (a.needed as usize).min(a.data.len());
+        let e = arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
+        *e = (*e).max(n);
+    }
+    let mut prev_d: Option<&DrawCmd> = None;
+    for d in draws {
+        let mut imm = [0u32; 16];
+        imm[0] = pk.vbuf.len() as u32;
+        imm[1] = d.current_pn_mtx;
+        pk.vbuf.extend_from_slice(&d.verts);
+        pk.vbuf.resize(pk.vbuf.len().next_multiple_of(4), 0);
+        for (i, a) in d.arrays.iter().enumerate() {
+            if let Some(a) = a {
+                let k = a.data.as_ptr() as usize;
+                if let Some(&o) = arr_off.get(&k) {
+                    imm[4 + i] = o;
+                    continue;
+                }
+                let n = arr_max[&k];
+                imm[4 + i] = pk.abuf.len() as u32;
+                arr_off.insert(k, pk.abuf.len() as u32);
+                pk.abuf.extend_from_slice(&a.data[..n]);
+                pk.abuf.resize(pk.abuf.len().next_multiple_of(4) + 4, 0);
+            }
+        }
+        let first_index = (pk.ibuf.len() / 2) as u32;
+        for i in &d.indices {
+            pk.ibuf.extend_from_slice(&i.to_le_bytes());
+        }
+        pk.ibuf.resize(pk.ibuf.len().next_multiple_of(4), 0);
+        let mut immb = [0u8; 64];
+        for (k, w) in imm.iter().enumerate() {
+            immb[k * 4..k * 4 + 4].copy_from_slice(&w.to_le_bytes());
+        }
+        // Consecutive draws of one joint mostly carry identical uniform blocks: share one (same matrix slot and
+        // skinning, so an interpolating `fill` of the owner covers them all).
+        let share = prev_d.is_some_and(|p: &DrawCmd| {
+            p.current_pn_mtx == d.current_pn_mtx && p.config.shader.attrs[0] == d.config.shader.attrs[0] && p.uniform == d.uniform
+        });
+        if share {
+            let u = pk.draws.last().unwrap().uoff;
+            pk.draws.push(PackedDraw { imm: immb, uoff: u, first_index, owner: false });
+        } else {
+            pk.draws.push(PackedDraw { imm: immb, uoff: pk.uoff, first_index, owner: true });
+            pk.uoff += (d.uniform.len() as u32).next_multiple_of(UNIFORM_ALIGN as u32);
+            pk.max_uniform = pk.max_uniform.max(d.uniform.len());
+        }
+        prev_d = Some(d);
+    }
+    pk
 }
 
 /// A GPU buffer reused across frames (grown to the next power of two when a frame needs more).
@@ -296,7 +387,7 @@ struct FrameCache {
     /// 0: `ubuf` must be refilled from the draws; 1: it holds their uniforms; 2: `fill` rewrote parts of it.
     ubuf_state: u8,
     /// The previous draw's pipeline config and its pipeline (consecutive draws mostly share one).
-    last_pipe: Option<(crate::shader::PipelineConfig, Option<wgpu::RenderPipeline>)>,
+    last_pipe: Option<(std::sync::Arc<crate::shader::PipelineConfig>, Option<wgpu::RenderPipeline>)>,
 }
 
 /// Make `slot` hold at least `size` bytes; true when the buffer was (re)created.
@@ -510,6 +601,8 @@ impl Renderer {
             tex_bgs: FxMap::default(),
             samplers: FxMap::default(),
             textures: FxMap::default(),
+            prepared: 0,
+            packed: None,
             empty_view,
             empty_sampler,
             shader_errors: Vec::new(),
@@ -625,7 +718,9 @@ impl Renderer {
             _ => (0, 0, 0, 0),
         };
         let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w: o.width(), h: o.height(), fmt, mips: o.mip_count(), tlut: tlut_key };
-        self.textures.contains_key(&key).then_some(key)
+        let e = self.textures.get(&key)?;
+        e.used.set(self.prepared);
+        Some(key)
     }
 
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
@@ -642,6 +737,7 @@ impl Renderer {
         };
         let key = TexKey { ptr: data.as_ptr() as usize, len: data.len(), w, h, fmt, mips, tlut: tlut_key };
         if let Some(e) = self.textures.get(&key) {
+            e.used.set(self.prepared);
             return Some(e.view.clone());
         }
         if w == 0 || h == 0 {
@@ -678,7 +774,7 @@ impl Renderer {
             mh = (mh >> 1).max(1);
         }
         let view = tex.create_view(&Default::default());
-        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data });
+        self.textures.insert(key, TexEntry { _tex: tex, view: view.clone(), _data: data.clone(), _tlut: tlut_data, used: std::cell::Cell::new(self.prepared) });
         Some(view)
     }
 
@@ -724,69 +820,36 @@ impl Renderer {
     /// snapshots and indices into the persistent buffers, look up its pipeline and texture bind group. A frame
     /// presented several times (interpolation) is prepared once; [`Renderer::draw_prepared`] then only rewrites
     /// the uniforms and records the pass.
+    /// Use `p` when the next [`Renderer::prepare`] gets the draws it was packed from.
+    pub fn set_packed(&mut self, p: Packed) {
+        self.packed = Some(p);
+    }
+
     pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
         let t0 = std::time::Instant::now();
+        self.prepared += 1;
+        if self.prepared % TEX_KEEP == 0 {
+            let now = self.prepared;
+            let before = self.textures.len();
+            self.textures.retain(|_, e| now - e.used.get() < TEX_KEEP);
+            if self.textures.len() != before {
+                self.tex_bgs.clear();
+            }
+        }
         let mut fc = std::mem::take(&mut self.frame);
-        fc.vbuf.clear();
-        fc.abuf.clear();
-        fc.ibuf.clear();
-        fc.arr_max.clear();
-        fc.arr_off.clear();
+        // the CPU packing, done on the GX decode thread when it handed one over for exactly these draws
+        let key = (draws.as_ptr() as usize, draws.len());
+        let pk = match self.packed.take() {
+            Some(p) if p.key == key => p,
+            _ => pack(draws),
+        };
+        fc.vbuf = pk.vbuf;
+        fc.abuf = pk.abuf;
+        fc.ibuf = pk.ibuf;
         fc.draws.clear();
-        // Draws share array snapshots (a model's vertex arrays): upload each one once per frame.
-        // Keyed by the snapshot's allocation; the upload covers the most any draw this frame needs.
-        for a in draws.iter().flat_map(|d| d.arrays.iter().flatten()) {
-            let n = (a.needed as usize).min(a.data.len());
-            let e = fc.arr_max.entry(a.data.as_ptr() as usize).or_insert(0);
-            *e = (*e).max(n);
-        }
-        let mut uoff = 0u32;
-        let mut max_uniform = 16usize;
-        let mut prev_d: Option<&DrawCmd> = None;
-        for d in draws {
-            let mut imm = [0u32; 16];
-            imm[0] = fc.vbuf.len() as u32;
-            imm[1] = d.current_pn_mtx;
-            fc.vbuf.extend_from_slice(&d.verts);
-            fc.vbuf.resize(fc.vbuf.len().next_multiple_of(4), 0);
-            for (i, a) in d.arrays.iter().enumerate() {
-                if let Some(a) = a {
-                    let k = a.data.as_ptr() as usize;
-                    if let Some(&o) = fc.arr_off.get(&k) {
-                        imm[4 + i] = o;
-                        continue;
-                    }
-                    let n = fc.arr_max[&k];
-                    imm[4 + i] = fc.abuf.len() as u32;
-                    fc.arr_off.insert(k, fc.abuf.len() as u32);
-                    fc.abuf.extend_from_slice(&a.data[..n]);
-                    fc.abuf.resize(fc.abuf.len().next_multiple_of(4) + 4, 0);
-                }
-            }
-            let first_index = (fc.ibuf.len() / 2) as u32;
-            for i in &d.indices {
-                fc.ibuf.extend_from_slice(&i.to_le_bytes());
-            }
-            fc.ibuf.resize(fc.ibuf.len().next_multiple_of(4), 0);
-            let mut immb = [0u8; 64];
-            for (k, w) in imm.iter().enumerate() {
-                immb[k * 4..k * 4 + 4].copy_from_slice(&w.to_le_bytes());
-            }
-            // Consecutive draws of one joint mostly carry identical uniform blocks: share one (same matrix slot and
-            // skinning, so an interpolating `fill` of the owner covers them all).
-            let share = prev_d.is_some_and(|p: &DrawCmd| {
-                p.current_pn_mtx == d.current_pn_mtx && p.config.shader.attrs[0] == d.config.shader.attrs[0] && p.uniform == d.uniform
-            });
-            if share {
-                let u = fc.draws.last().unwrap().uoff;
-                fc.draws.push(PreparedDraw { pipeline: None, tex_bg: None, imm: immb, uoff: u, first_index, owner: false });
-            } else {
-                fc.draws.push(PreparedDraw { pipeline: None, tex_bg: None, imm: immb, uoff, first_index, owner: true });
-                uoff += (d.uniform.len() as u32).next_multiple_of(UNIFORM_ALIGN as u32);
-                max_uniform = max_uniform.max(d.uniform.len());
-            }
-            prev_d = Some(d);
-        }
+        fc.draws.extend(pk.draws.iter().map(|c| PreparedDraw { pipeline: None, tex_bg: None, imm: c.imm, uoff: c.uoff, first_index: c.first_index, owner: c.owner }));
+        let uoff = pk.uoff;
+        let max_uniform = pk.max_uniform;
         fc.max_uniform = (max_uniform as u64).next_multiple_of(16);
         let ubytes = uoff as u64 + fc.max_uniform;
         fc.ubuf.resize(ubytes as usize, 0);
@@ -836,7 +899,7 @@ impl Renderer {
                 None
             } else {
                 match last_pipe.as_ref() {
-                    Some((cfg, p)) if *cfg == d.config => p.clone(),
+                    Some((cfg, p)) if std::sync::Arc::ptr_eq(cfg, &d.config) || **cfg == *d.config => p.clone(),
                     _ => {
                         let p = self.pipeline(d);
                         last_pipe = Some((d.config.clone(), p.clone()));

@@ -19,7 +19,8 @@ pub struct ArraySnap {
 pub struct DrawCmd {
     pub prim: u32,
     pub fmt: u32,
-    pub config: PipelineConfig,
+    /// Shared with the previous draw when equal (the record is ~2.8 KB; most consecutive draws share one).
+    pub config: std::sync::Arc<PipelineConfig>,
     pub info: ShaderInfo,
     pub uniform: Vec<u8>,
     /// Raw vertex bytes from the command stream (big-endian GC layout).
@@ -93,7 +94,15 @@ fn max_index_for_attr(st: &GxState, attr: u32, fmt: u32, verts: &[u8], n: u16) -
 
 /// Aurora `prepare_idx_buffer` (vtxStart = 0).
 pub fn prepare_idx_buffer(prim: u32, vtx_count: u16) -> Vec<u16> {
-    let mut b = Vec::new();
+    let n = vtx_count as usize;
+    // sized up front: growing it index by index was ~40% of all allocations in a 4-CPU Temple tick
+    let cap = match prim {
+        GX_QUADS => n.div_ceil(4) * 6,
+        GX_TRIANGLEFAN | GX_TRIANGLESTRIP => n.min(3) + 3 * n.saturating_sub(3),
+        GX_LINES | GX_LINESTRIP | GX_POINTS => 6,
+        _ => n,
+    };
+    let mut b = Vec::with_capacity(cap);
     match prim {
         GX_QUADS => {
             let mut v = 0u16;
@@ -159,7 +168,15 @@ pub fn build_draw(
         arrays[(i - GX_VA_POS) as usize] = Some(ArraySnap { data, needed });
     }
     let config = shader::populate_pipeline_config(st, prim, fmt);
-    let info = shader::build_shader_info(&config.shader);
+    let (config, info) = match st.last_config.as_ref() {
+        Some((c, info)) if **c == config => (c.clone(), *info),
+        _ => {
+            let info = shader::build_shader_info(&config.shader);
+            let c = std::sync::Arc::new(config);
+            st.last_config = Some((c.clone(), info));
+            (c, info)
+        }
+    };
     let textures: [TexObj; MAX_TEXTURES] = st.loaded_textures.clone();
     let uniform = shader::fill_uniform(st, &info, &textures);
     let indices = match indices {

@@ -30,6 +30,30 @@ pub struct Presenter {
     prepared: bool,
     /// The EFB holds a blend, not `cur` itself.
     blended: bool,
+    /// A new frame waiting for the next present (see `present_frames`).
+    pending: Option<Vec<DrawCmd>>,
+    /// Per-present µs of prepare / draw / swap (fresh frames only for prepare), for the MELEE_SHOW_FPS exit line.
+    pub times: [Vec<u32>; 3],
+}
+
+impl Drop for Presenter {
+    fn drop(&mut self) {
+        if std::env::var_os("MELEE_SHOW_FPS").is_none() {
+            return;
+        }
+        let q = |v: &mut Vec<u32>, f: f64| {
+            if v.is_empty() {
+                return 0.0;
+            }
+            v.sort_unstable();
+            v[((v.len() - 1) as f64 * f) as usize] as f64 / 1e3
+        };
+        let [a, b, c] = &mut self.times;
+        eprintln!(
+            "gw: perf: present prepare p50 {:.2} p99 {:.2} ms ({}), draw p50 {:.2} p99 {:.2} ms, swap p50 {:.2} p99 {:.2} ms",
+            q(a, 0.5), q(a, 0.99), a.len(), q(b, 0.5), q(b, 0.99), q(c, 0.5), q(c, 0.99)
+        );
+    }
 }
 
 /// `MELEE_VSYNC=off|on` (default on).
@@ -127,7 +151,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false })
+        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default() })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -160,7 +184,26 @@ impl Presenter {
     /// `alpha = Some(t)` renders the previous->current blend of the camera / model matrices at `t`
     /// (one tick of latency); `None` renders the newest frame as is (only when it is new).
     /// Everything here is render-only: the frames are copies the game no longer reads.
-    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, alpha: Option<f64>) {
+    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, mut alpha: Option<f64>) {
+        // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
+        // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
+        // the current frame itself (t = 1: never a step back toward the previous one).
+        let mut frame = frame;
+        if alpha.is_some() && self.cur.is_some() {
+            if let Some(f) = frame.take() {
+                let late = self.pending.replace(f);
+                if late.is_some() {
+                    // two ticks without a present in between: the older one is skipped (as without deferral)
+                }
+                alpha = Some(1.0);
+            } else if let Some(f) = self.pending.take() {
+                frame = Some(f);
+            }
+        } else if let Some(p) = self.pending.take() {
+            if frame.is_none() {
+                frame = Some(p);
+            }
+        }
         let fresh = frame.is_some();
         if let Some(f) = frame {
             self.prev = self.cur.replace(f);
@@ -176,9 +219,12 @@ impl Presenter {
         };
         if blend.is_some() || fresh || self.blended {
             if !self.prepared {
+                let t = std::time::Instant::now();
                 self.renderer.prepare(state, cur);
+                self.times[0].push(t.elapsed().as_micros() as u32);
                 self.prepared = true;
             }
+            let t = std::time::Instant::now();
             match blend {
                 Some((t, prev)) => {
                     let mut f = |i: usize, out: &mut [u8]| blend_into(&prev[i], &cur[i], t, out);
@@ -190,8 +236,11 @@ impl Presenter {
                     self.blended = false;
                 }
             }
+            self.times[1].push(t.elapsed().as_micros() as u32);
         }
+        let t = std::time::Instant::now();
         self.swap_present();
+        self.times[2].push(t.elapsed().as_micros() as u32);
     }
 
     fn swap_present(&mut self) {

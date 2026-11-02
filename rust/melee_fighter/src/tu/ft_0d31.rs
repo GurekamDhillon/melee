@@ -549,6 +549,8 @@ pub fn ftCo_800D4580(g: G, arg1: i32) {
         f.mv.co.common.x24 = 0.0;
         f.mv.co.common.x20 = 0.0;
         f.mv.co.common.x1C = 0.0;
+        // common.x1C/x20/x24 are unk_deadup.x5C.x/y/z at their GC offsets (the native layouts differ)
+        f.mv.co.unk_deadup.x5C = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     }
     h_change_motion(g, arg1, Ft_MF_None as u32, 0.0, 1.0, 0.0);
     fp(g).set_x2220_b7(1);

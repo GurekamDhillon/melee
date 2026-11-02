@@ -49,6 +49,16 @@ pub(crate) unsafe fn va_word<A>(a: A) -> *const core::ffi::c_void {
     w as usize as *const core::ffi::c_void
 }
 
+#[cold]
+#[inline(never)]
+fn null_ref(site: u32, a: &str, b: &str) {
+    static N: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
+    if N.fetch_add(1, core::sync::atomic::Ordering::Relaxed) < 64 {
+        eprintln!("link cast: NULL -> reference {a} -> {b} (site {site})");
+    }
+    debug_assert!(false, "link cast: NULL -> reference {a} -> {b} (site {site})");
+}
+
 /// Bit copy between a hook's parameter/return type and the canonical function's (i32/u32, `&mut T`/`*mut T`,
 /// `Option<fn>`/`Option<extern fn>`). Same size: transmute. Different sizes can only be scalars (bool vs i32, u8
 /// vs i32...): converted the way a C integer conversion does (zero or sign extension by the source type, truncation,
@@ -62,6 +72,14 @@ pub(crate) unsafe fn cast<A, B, const SITE: u32>(a: A) -> B {
         let fl = |n: &str| matches!(n, "f32" | "f64");
         if fl(core::any::type_name::<A>()) != fl(core::any::type_name::<B>()) {
             panic!("link cast: float/int mismatch {} -> {} (site {SITE})", core::any::type_name::<A>(), core::any::type_name::<B>());
+        }
+        // a NULL pointer bit-copied into `&T`/`&mut T` is UB that fat LTO exploits (it folds the callee's null
+        // checks: the invisible-fighter bug in HSD_JObjDispAll); a C NULL must land in a raw pointer or `Option<&T>`
+        if core::any::type_name::<B>().starts_with('&') && sa == core::mem::size_of::<usize>() {
+            let bits: usize = core::mem::transmute_copy::<A, usize>(&a);
+            if bits == 0 {
+                null_ref(SITE, core::any::type_name::<A>(), core::any::type_name::<B>());
+            }
         }
         return core::mem::transmute_copy::<A, B>(&a);
     }

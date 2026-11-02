@@ -151,7 +151,7 @@ pub mod ext {
     pub fn HSD_JObjDispAll(jobj: *mut HSD_JObj, vmtx: *mut [f32; 4], flags: u32, rendermode: u32) {
         match unsafe { HSD_JOBJDISPALL } {
             Some(f) => f(jobj, vmtx, flags, rendermode),
-            None => { unsafe { melee_runtime::tu::jobj::HSD_JObjDispAll(jobj as _, &*(vmtx as *const _), flags as _, rendermode as _); } },
+            None => { unsafe { melee_runtime::tu::jobj::HSD_JObjDispAll(jobj as _, vmtx as *const _, flags as _, rendermode as _); } },
         }
     }
     pub static mut HSD_GOBJ_80390EB8: Option<fn(i32) -> u32> = None;

@@ -386,7 +386,9 @@ unsafe extern "C" fn native_make_matrix(j:*mut HSD_JObj){if fast_matrix(j,false)
 pub(crate) unsafe fn native_setup_sub(j:*mut HSD_JObj){ melee_core::ct!("native_setup_sub");if !j.is_null(){if fast_matrix(j,true){return;}let(mut t,mut h)=snapshot(&[j]);t.setup_matrix_sub(&mut h,JObjId(0));finish(&t,h);}}
 pub(crate) unsafe fn native_make_matrix_pub(j:*mut HSD_JObj){ melee_core::ct!("native_make_matrix_pub");native_make_matrix(j)}
 unsafe fn native_setup(j:*mut HSD_JObj){if !j.is_null()&&raw_dirty(j){let(mut t,mut h)=snapshot(&[j]);t.setup_matrix(&mut h,Some(JObjId(0)));finish(&t,h);}}
-pub unsafe fn HSD_JObjDispAll(j:*mut HSD_JObj,v:&Mtx,flags:u32,mode:u32){
+/// `v` may be NULL (C: use the current CObj view), so it is a raw pointer, never `&Mtx`:
+/// a NULL reference is UB and fat LTO folds the callee's `vmtx.is_null()` check away.
+pub unsafe fn HSD_JObjDispAll(j:*mut HSD_JObj,v:*const Mtx,flags:u32,mode:u32){
     melee_core::ct!("HSD_JObjDispAll");
     if j.is_null(){return}
     if (*j).flags&JOBJ_INSTANCE!=0{
@@ -397,7 +399,7 @@ pub unsafe fn HSD_JObjDispAll(j:*mut HSD_JObj,v:&Mtx,flags:u32,mode:u32){
             let m=crate::mtx::concat(&(*c).view_mtx,&m);HSD_JObjDispAll((*j).child,&m,flags,mode);
         }
     }else{
-        if (*j).flags&flags.wrapping_shl(18)!=0{ext::HSD_JObjDisp(j,(v as *const Mtx as *mut Mtx).cast(),flags,mode);}
+        if (*j).flags&flags.wrapping_shl(18)!=0{ext::HSD_JObjDisp(j,(v as *mut Mtx).cast(),flags,mode);}
         if (*j).flags&flags.wrapping_shl(28)!=0{let mut c=(*j).child;while !c.is_null(){HSD_JObjDispAll(c,v,flags,mode);c=(*c).next;}}
     }
 }

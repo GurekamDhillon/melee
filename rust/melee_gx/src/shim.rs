@@ -358,6 +358,8 @@ pub struct GxShim {
     /// `gw_Fx_ShakeOffset`'s output for this render frame (NDC shift; zero when no shake).
     pub shake_offset: [f32; 2],
     draw_done_cb: Option<DrawDoneCallback>,
+    /// Async decode: [`GxShim::take_frame`] waits for the frame of the last GXCopyDisp (screenshots).
+    pub wait_frame: bool,
     /// The last finished frame (GXCopyDisp), waiting for the presenter.
     frame: Option<Vec<DrawCmd>>,
     /// Log lines (`gw_log` in the C); the platform layer drains and prints them.
@@ -390,6 +392,7 @@ impl GxShim {
             shake_offset: [0.0; 2],
             draw_done_cb: None,
             frame: None,
+            wait_frame: false,
             log: Vec::new(),
             stub_logged: 0,
         }
@@ -499,7 +502,7 @@ impl GxShim {
     /// `self.gx.state`).
     pub fn take_frame(&mut self) -> Option<Vec<DrawCmd>> {
         if self.gx.is_async() {
-            return self.gx.take_async_frame();
+            return self.gx.take_async_frame(self.wait_frame);
         }
         self.frame.take()
     }

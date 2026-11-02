@@ -229,6 +229,9 @@ struct Worker {
     frames: std::sync::mpsc::Receiver<AsyncFrame>,
     /// Emptied FIFO buffers coming back for reuse.
     pool: std::sync::mpsc::Receiver<Vec<u8>>,
+    /// Frames closed / collected.
+    sent: u64,
+    got: u64,
 }
 
 /// The GX: shadow registers + FIFO + the decoded state and resources it drives.
@@ -361,23 +364,35 @@ impl Gx {
                 }
             })
             .expect("gx decode thread");
-        self.worker = Some(Worker { tx, frames, pool });
+        self.worker = Some(Worker { tx, frames, pool, sent: 0, got: 0 });
     }
     pub fn is_async(&self) -> bool {
         self.worker.is_some()
     }
     /// Async mode: close the current frame (see [`Gx::enable_async`]).
     pub fn end_frame(&mut self) {
-        if let Some(w) = &self.worker {
+        if let Some(w) = &mut self.worker {
             let _ = w.tx.send(Job::End);
+            w.sent += 1;
         }
     }
     /// Async mode: the newest frame the worker finished since the last call (the copy-clear is mirrored into `state`).
-    pub fn take_async_frame(&mut self) -> Option<Vec<crate::draw::DrawCmd>> {
-        let w = self.worker.as_ref()?;
+    /// `wait`: block until the last closed frame is done (a screenshot of exactly this tick).
+    pub fn take_async_frame(&mut self, wait: bool) -> Option<Vec<crate::draw::DrawCmd>> {
+        let w = self.worker.as_mut()?;
         let mut last = None;
         while let Ok(f) = w.frames.try_recv() {
+            w.got += 1;
             last = Some(f);
+        }
+        while wait && w.got < w.sent {
+            match w.frames.recv() {
+                Ok(f) => {
+                    w.got += 1;
+                    last = Some(f);
+                }
+                Err(_) => break,
+            }
         }
         let f = last?;
         self.state.clear_color = f.clear_color;

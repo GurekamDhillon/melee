@@ -891,6 +891,8 @@ impl Play {
                 // the thread's frames hold): MELEE_GX_SYNC=1 keeps it in the tick
                 if melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
                     melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                    // screenshots show exactly their tick: take each frame when it is decoded
+                    melee_engine::gxbridge::shim().wait_frame = self.shots;
                 }
                 self.em = Some(EngMatch { e, frame: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
                 self.frame_mem("match start");

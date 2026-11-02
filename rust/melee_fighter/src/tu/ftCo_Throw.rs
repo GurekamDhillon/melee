@@ -382,6 +382,9 @@ pub fn ftCo_800DD724(g: G) {
             f.mv.co.fighterthrow.x4 = 1;
             f.cmd_vars[0] = 0;
             f.mv.co.throw_.xC = f.x6A4_transNOffset;
+            // throw_.xC.y / .z are fighterthrow.self_vel_y / self_vel_x at their GC offsets (0x2350 / 0x2354); the native layouts differ
+            f.mv.co.fighterthrow.self_vel_y = f.x6A4_transNOffset.y;
+            f.mv.co.fighterthrow.self_vel_x = f.x6A4_transNOffset.z;
             ext::ftAnim_SetAnimRate(g, 0.0);
             let f = fp(g);
             if !f.victim_gobj.is_null() {

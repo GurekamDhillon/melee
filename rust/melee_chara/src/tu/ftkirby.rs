@@ -2296,7 +2296,8 @@ pub fn ftKb_SpecialAirN_Enter(gobj: *mut HSD_GObj) {
 pub fn ftKb_SpecialN_800F16D0(_gobj: *mut HSD_GObj, kind: i32) {
     melee_core::ct!("ftKb_SpecialN_800F16D0");
     unsafe {
-        let art = |hat: *mut KirbyHatStruct, slot: usize| (*hat).hat_dynamics[slot] as *mut c_void;
+        // the engine's hat records carry eight slots (dat_custom `kirbyhat`); Game & Watch and Yoshi register slots 5 and 6
+        let art = |hat: *mut KirbyHatStruct, slot: usize| *(*hat).hat_dynamics.as_ptr().add(slot) as *mut c_void;
         // `hats[idx]` literals are the C's (hat table index = kind - 1 here).
         macro_rules! with_hat {
             ($idx:expr, |$h:ident| $body:block) => {{

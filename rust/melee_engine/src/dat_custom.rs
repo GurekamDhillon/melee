@@ -64,6 +64,7 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "plco" => plco(d, b, off),
         "itco" => itco(d, b, off),
         "ftdata" => ftdata(d, b, off, sym),
+        "kirbyhat" => kirbyhat(d, b, off, sym),
         "ptrtable_itemdata" => {
             // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
             let n = (b.extent(off) / 4).max(1);
@@ -654,6 +655,63 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     Box::leak(Box::new(v)) as *mut ftData as *mut c_void
 }
 
+/// `ftDataKirbyCopy*` (PlKbCpXx.dat): a `KirbyHatStruct` whose five-slot `hat_dynamics` is really a table of differently typed
+/// pointers (`void*` casts at the C call sites: articles registered with `it_8026B3F8` by `ftKb_SpecialN_800F16D0`, accessory joints),
+/// with up to seven slots (Game & Watch registers slots 5 and 6, Yoshi slot 5): the record is rebuilt in a buffer of eight slots.
+fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void {
+    use melee_types::KirbyHatStruct;
+    const SLOTS: usize = 8;
+    // by value: `d.object` hands back a record that is filled in later, and this copy is taken now
+    let v = <KirbyHatStruct as GcDecode>::gc_decode(d, off);
+    let h = &v as *const KirbyHatStruct;
+    let base = core::mem::offset_of!(KirbyHatStruct, hat_dynamics);
+    let size = base + SLOTS * core::mem::size_of::<usize>();
+    let buf = native_buf(size.max(core::mem::size_of::<KirbyHatStruct>()));
+    unsafe { core::ptr::copy_nonoverlapping(h as *const u8, buf, core::mem::size_of::<KirbyHatStruct>()) };
+    let slots = unsafe { buf.add(base) as *mut *mut c_void };
+    let word = |k: usize| off + 0xC + 4 * k as u32;
+    let lower = sym.trim_start_matches("ftDataKirbyCopy").to_lowercase();
+    // the slots holding an `Article*` (ftKb_SpecialN_800F16D0)
+    let arts: &[usize] = match lower.as_str() {
+        "luigi" | "popo" | "samus" | "koopa" | "drmario" => &[0],
+        "peach" | "fox" | "link" | "clink" | "ness" | "pikachu" | "pichu" | "seak" => &[0, 1],
+        "falco" => &[3, 4],
+        "mewtwo" => &[3],
+        "gamewatch" => &[5, 6],
+        "yoshi" => &[5],
+        _ => &[],
+    };
+    let mut tas: Vec<u32> = Vec::new();
+    let mut tbl: Vec<*mut Article> = Vec::new();
+    for &k in arts {
+        if let Some(ta) = d.target(word(k)) {
+            note_article_states(d, b, ta);
+            let art = d.object::<Article>(ta);
+            unsafe { *slots.add(k) = art as *mut c_void };
+            tas.push(ta);
+            tbl.push(art);
+        }
+    }
+    if !tbl.is_empty() {
+        let cnt = tbl.len();
+        let t = Box::leak(tbl.into_boxed_slice()).as_mut_ptr();
+        unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((t as usize, cnt, b.1, b.0.clone())) };
+    }
+    typed_article_attrs_of(d, b, &lower, &tas);
+    // accessory models: Mars / Marth's emblem slot 0, the Ice Climbers' slot 1 (`ftCommon_SetAccessory(fp, (HSD_Joint*) hat_dynamics[k])`)
+    let joint: Option<usize> = match lower.as_str() {
+        "mars" | "emblem" => Some(0),
+        "popo" => Some(1),
+        _ => None,
+    };
+    if let Some(k) = joint {
+        if d.is_reloc(word(k)) {
+            unsafe { *slots.add(k) = d.ptr::<HSD_Joint>(word(k)) as *mut c_void };
+        }
+    }
+    buf as *mut c_void
+}
+
 /// Fighter-owned articles whose special attributes hold `HSD_Joint*` fields (the grapple beam, the hookshot, the boomerang,
 /// the arrow, the chain, the yo-yo, the Ice Climbers' string): the 32-bit pointer slots of the raw block do not fit the native
 /// struct, so the block is decoded as its record and swapped in by [`fix_articles`]: (article, decoded attributes).
@@ -661,6 +719,14 @@ static mut ARTICLE_TYPED: Vec<(*mut melee_types::Article, *mut c_void)> = Vec::n
 
 /// Decode the fighter's `x48_items` articles whose attribute block is one of the pointer-bearing records of that fighter.
 fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32) {
+    let Some(t) = d.target(at_x48) else { return };
+    let n = (b.extent(t) / 4).max(1);
+    let tas: Vec<u32> = (0..n).filter_map(|i| d.target(t + 4 * i)).collect();
+    typed_article_attrs_of(d, b, sym, &tas);
+}
+
+/// [`typed_article_attrs`] over explicit article offsets.
+fn typed_article_attrs_of(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, tas: &[u32]) {
     use melee_types::{Article, itClimbersStringAttributes, itLinkArrowAttributes, itLinkBoomerangAttributes, itLinkHookshotAttributes, itSamusGrappleAttributes, itSeakChain_Attrs, itYoyoAttributes};
     type Dec = fn(&mut GcDecoder<'_>, u32) -> *mut c_void;
     fn dec<T: GcPointee + GcDecode>(d: &mut GcDecoder<'_>, sa: u32) -> *mut c_void {
@@ -677,10 +743,7 @@ fn typed_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, at_x48: u32
         "popo" | "nana" => std::vec![cand::<itClimbersStringAttributes>()],
         _ => return,
     };
-    let Some(t) = d.target(at_x48) else { return };
-    let n = (b.extent(t) / 4).max(1);
-    for i in 0..n {
-        let Some(ta) = d.target(t + 4 * i) else { continue };
+    for &ta in tas {
         let Some(sa) = d.target(ta + 4) else { continue };
         let ext = b.extent(sa);
         // The block's extent runs to the next object (it can fall short of the record by a word, or include the next block): the record

@@ -1,0 +1,2339 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://gdmelee.invalid/specs/geno-v5.schema.json",
+ "title": "Geno geno.json, format v5 (v1-v5.5 keys) with later keys tolerated",
+ "description": "docs/specs/geno-v5.md. Root = a mods/<id>/geno.json. $defs.gfxPackage and $defs.fxBindings validate the effect files. Readers ignore unknown keys; the schema allows them everywhere except where a closed key set is documented (attributes, parameter families). Readers also tolerate // comments and trailing commas, which strict JSON (and this schema) does not.",
+ "type": "object",
+ "required": [
+  "geno",
+  "fighters"
+ ],
+ "properties": {
+  "geno": {
+   "type": "integer",
+   "minimum": 1,
+   "description": "format version; v5 files write 5; a reader newer than the file reads it, an older reader logs and reads what it knows"
+  },
+  "fighters": {
+   "type": "array",
+   "items": {
+    "$ref": "#/$defs/fighter"
+   }
+  }
+ },
+ "x-attach-names": [
+  "mario",
+  "fox",
+  "captain",
+  "falcon",
+  "donkey",
+  "dk",
+  "kirby",
+  "koopa",
+  "bowser",
+  "link",
+  "seak",
+  "sheik",
+  "ness",
+  "peach",
+  "popo",
+  "nana",
+  "pikachu",
+  "samus",
+  "yoshi",
+  "purin",
+  "jigglypuff",
+  "mewtwo",
+  "luigi",
+  "mars",
+  "marth",
+  "zelda",
+  "clink",
+  "younglink",
+  "drmario",
+  "falco",
+  "pichu",
+  "gamewatch",
+  "gnw",
+  "ganon",
+  "ganondorf",
+  "emblem",
+  "roy"
+ ],
+ "$defs": {
+  "word": {
+   "description": "One script word: an integer in -2^31..2^32-1, or a string '0x..' / decimal (strtoull, <= 0xFFFFFFFF).",
+   "oneOf": [
+    {
+     "type": "integer",
+     "minimum": -2147483648,
+     "maximum": 4294967295
+    },
+    {
+     "type": "string",
+     "pattern": "^(0[xX][0-9a-fA-F]{1,8}|[0-9]{1,10})$"
+    }
+   ]
+  },
+  "target": {
+   "description": "A target: motion id 0..65535, 'motion:N', 'special:N', 'geno:N', 'geno:<state name>', 'auto', 'helpless', 'stay' (stay: only for 'land'). Readers match case-insensitively; canonical form is lower case.",
+   "oneOf": [
+    {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 65535
+    },
+    {
+     "type": "string",
+     "pattern": "^(auto|helpless|stay)$"
+    },
+    {
+     "type": "string",
+     "pattern": "^(motion|special|geno):(0[xX][0-9a-fA-F]+|[0-9]+)$"
+    },
+    {
+     "type": "string",
+     "pattern": "^geno:[A-Za-z_][A-Za-z0-9_]*$"
+    }
+   ]
+  },
+  "hookRef": {
+   "type": "string",
+   "pattern": "^(geno\\.log|geno\\.jumps\\.refill|geno\\.jumps\\.to_var|geno\\.count_frames|geno\\.article\\.spawn|geno\\.lockon|geno\\.aim_stick|geno\\.dash\\.search|geno\\.dash\\.aim|geno\\.brake)(:-?[0-9]+)?$",
+   "description": "'name' or 'name:arg' (arg via atoi; default 0). Names are the stable hook table (geno.h GENO_HOOK_*)."
+  },
+  "hooks": {
+   "type": "object",
+   "properties": {
+    "on_init": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hookRef"
+     },
+     "maxItems": 8
+    },
+    "on_frame": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hookRef"
+     },
+     "maxItems": 8
+    },
+    "on_action": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hookRef"
+     },
+     "maxItems": 8
+    },
+    "on_land": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hookRef"
+     },
+     "maxItems": 8
+    },
+    "on_hit": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/hookRef"
+     },
+     "maxItems": 8
+    }
+   },
+   "additionalProperties": true
+  },
+  "attributes": {
+   "description": "ftCo_DatAttrs fields by decomp name (index order of geno_attrs[]; the first 40 are v1-v5, the rest append-only from v7). max_jumps is clamped 1..250 by readers; the schema keeps files in range.",
+   "type": "object",
+   "properties": {
+    "walk_accel_mul": {
+     "type": "number"
+    },
+    "walk_accel_base": {
+     "type": "number"
+    },
+    "walk_max_vel": {
+     "type": "number"
+    },
+    "slow_walk_max": {
+     "type": "number"
+    },
+    "mid_walk_point": {
+     "type": "number"
+    },
+    "fast_walk_min": {
+     "type": "number"
+    },
+    "ground_friction": {
+     "type": "number"
+    },
+    "dash_initial_velocity": {
+     "type": "number"
+    },
+    "dash_accel_mul": {
+     "type": "number"
+    },
+    "dash_accel_base": {
+     "type": "number"
+    },
+    "dash_max_velocity": {
+     "type": "number"
+    },
+    "run_animation_scaling": {
+     "type": "number"
+    },
+    "max_run_brake_frames": {
+     "type": "number"
+    },
+    "ground_max_horizontal_velocity": {
+     "type": "number"
+    },
+    "jump_startup_time": {
+     "type": "number"
+    },
+    "jump_h_initial_velocity": {
+     "type": "number"
+    },
+    "jump_v_initial_velocity": {
+     "type": "number"
+    },
+    "ground_to_air_jump_momentum_multiplier": {
+     "type": "number"
+    },
+    "jump_h_max_velocity": {
+     "type": "number"
+    },
+    "hop_v_initial_velocity": {
+     "type": "number"
+    },
+    "air_jump_v_multiplier": {
+     "type": "number"
+    },
+    "air_jump_h_multiplier": {
+     "type": "number"
+    },
+    "gravity": {
+     "type": "number"
+    },
+    "terminal_velocity": {
+     "type": "number"
+    },
+    "air_drift_stick_mul": {
+     "type": "number"
+    },
+    "aerial_drift_base": {
+     "type": "number"
+    },
+    "air_drift_max": {
+     "type": "number"
+    },
+    "aerial_friction": {
+     "type": "number"
+    },
+    "fast_fall_velocity": {
+     "type": "number"
+    },
+    "air_max_horizontal_velocity": {
+     "type": "number"
+    },
+    "jab_2_input_window": {
+     "type": "number"
+    },
+    "jab_3_input_window": {
+     "type": "number"
+    },
+    "standing_turn_frames": {
+     "type": "number"
+    },
+    "weight": {
+     "type": "number"
+    },
+    "model_scaling": {
+     "type": "number"
+    },
+    "initial_shield_size": {
+     "type": "number"
+    },
+    "shield_break_initial_velocity": {
+     "type": "number"
+    },
+    "clank_animation_length": {
+     "type": "number"
+    },
+    "ledge_jump_horizontal_velocity": {
+     "type": "number"
+    },
+    "ledge_jump_vertical_velocity": {
+     "type": "number"
+    },
+    "item_throw_velocity_multiplier": {
+     "type": "number"
+    },
+    "heavy_throw_velocity_multiplier": {
+     "type": "number"
+    },
+    "specials_ground_speed_retention": {
+     "type": "number"
+    },
+    "kirby_b_star_damage": {
+     "type": "number"
+    },
+    "normal_landing_lag": {
+     "type": "number"
+    },
+    "landingairn_lag": {
+     "type": "number"
+    },
+    "landingairf_lag": {
+     "type": "number"
+    },
+    "landingairb_lag": {
+     "type": "number"
+    },
+    "landingairhi_lag": {
+     "type": "number"
+    },
+    "landingairlw_lag": {
+     "type": "number"
+    },
+    "name_tag_height": {
+     "type": "number"
+    },
+    "passivewall_vel_x": {
+     "type": "number"
+    },
+    "wall_jump_horizontal_velocity": {
+     "type": "number"
+    },
+    "wall_jump_vertical_velocity": {
+     "type": "number"
+    },
+    "passiveceil_vel_x": {
+     "type": "number"
+    },
+    "trophy_scale": {
+     "type": "number"
+    },
+    "screw_attack_launch_velocity": {
+     "type": "number"
+    },
+    "wall_jump_min_approach_speed": {
+     "type": "number"
+    },
+    "damageice_ice_size": {
+     "type": "number"
+    },
+    "damageicejump_vel_y": {
+     "type": "number"
+    },
+    "damageicejump_vel_x_mult": {
+     "type": "number"
+    },
+    "respawn_platform_scale": {
+     "type": "number"
+    },
+    "warp_star_hitbox_scale": {
+     "type": "number"
+    },
+    "xDC": {
+     "type": "number"
+    },
+    "x12C": {
+     "type": "number"
+    },
+    "x13C": {
+     "type": "number"
+    },
+    "x144": {
+     "type": "number"
+    },
+    "x150_damageice_unk": {
+     "type": "number"
+    },
+    "x154_damageice_unk": {
+     "type": "number"
+    },
+    "x168": {
+     "type": "number"
+    },
+    "x17C": {
+     "type": "number"
+    },
+    "rapid_jab_window": {
+     "type": "integer"
+    },
+    "hit_spark_variant": {
+     "type": "integer"
+    },
+    "camera_zoom_target_bone": {
+     "type": "integer"
+    },
+    "unused_0": {
+     "type": "integer"
+    },
+    "max_jumps": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 250
+    }
+   },
+   "additionalProperties": false
+  },
+  "subaction": {
+   "type": "object",
+   "required": [
+    "index"
+   ],
+   "properties": {
+    "index": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1023
+    },
+    "words": {
+     "type": "array",
+     "items": {
+      "$ref": "#/$defs/word"
+     }
+    },
+    "file": {
+     "type": "string",
+     "pattern": "^(?!.*\\.\\.)[^\\\\:]+$",
+     "description": "mod-relative words file (whitespace/comma separated numbers, '#' comments); '..' refused"
+    },
+    "move_tag": {
+     "enum": [
+      "jab",
+      "dash_attack",
+      "tilt",
+      "smash",
+      "aerial",
+      "grab",
+      "throw",
+      "special",
+      "projectile"
+     ]
+    }
+   },
+   "anyOf": [
+    {
+     "required": [
+      "words"
+     ]
+    },
+    {
+     "required": [
+      "file"
+     ]
+    }
+   ]
+  },
+  "specialAttribute": {
+   "type": "object",
+   "properties": {
+    "index": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 264
+    },
+    "offset": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/word"
+      }
+     ],
+     "description": "bytes, multiple of 4"
+    },
+    "float": {
+     "type": "number"
+    },
+    "int": {
+     "type": "integer"
+    }
+   },
+   "anyOf": [
+    {
+     "required": [
+      "index"
+     ]
+    },
+    {
+     "required": [
+      "offset"
+     ]
+    }
+   ],
+   "allOf": [
+    {
+     "anyOf": [
+      {
+       "required": [
+        "float"
+       ]
+      },
+      {
+       "required": [
+        "int"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  "onLand": {
+   "type": "object",
+   "required": [
+    "from",
+    "to"
+   ],
+   "properties": {
+    "from": {
+     "$ref": "#/$defs/target"
+    },
+    "to": {
+     "$ref": "#/$defs/target"
+    },
+    "keep_frame": {
+     "type": "boolean"
+    }
+   }
+  },
+  "motionAnim": {
+   "type": "object",
+   "required": [
+    "motion",
+    "subaction"
+   ],
+   "properties": {
+    "motion": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1023
+    },
+    "subaction": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 1023
+    }
+   }
+  },
+  "state": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "maxLength": 31
+    },
+    "behavior": {
+     "enum": [
+      "geno.air",
+      "geno.ground",
+      "geno.anim_motion",
+      "geno.glide.start",
+      "geno.glide",
+      "geno.glide.attack",
+      "geno.glide.landing",
+      "geno.glide.end",
+      "geno.tornado",
+      "geno.drill",
+      "geno.drill.end",
+      "geno.drill.start",
+      "geno.cape",
+      "geno.cape.attack",
+      "geno.cape.end"
+     ]
+    },
+    "subaction": {
+     "oneOf": [
+      {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 1023
+      },
+      {
+       "type": "string",
+       "pattern": "^(motion|special):[0-9]+$"
+      }
+     ]
+    },
+    "like": {
+     "$ref": "#/$defs/target"
+    },
+    "flags": {
+     "$ref": "#/$defs/word"
+    },
+    "move_id": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 255
+    },
+    "next": {
+     "$ref": "#/$defs/target"
+    },
+    "land": {
+     "$ref": "#/$defs/target"
+    },
+    "landing_lag": {
+     "type": "number"
+    },
+    "ledge": {
+     "oneOf": [
+      {
+       "enum": [
+        "none",
+        "front",
+        "both"
+       ]
+      },
+      {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 2
+      }
+     ]
+    },
+    "liftoff": {
+     "type": [
+      "boolean",
+      "number"
+     ]
+    },
+    "origin": {
+     "type": [
+      "boolean",
+      "number"
+     ]
+    },
+    "gravity": {
+     "type": "number"
+    },
+    "facing": {
+     "const": "entry"
+    },
+    "anim": {
+     "enum": [
+      "next",
+      "loop",
+      "hold",
+      "glide.start",
+      "glide",
+      "tornado",
+      "drill",
+      "drill.end",
+      "glide.after",
+      "cape",
+      "like"
+     ]
+    },
+    "iasa": {
+     "enum": [
+      "interrupt",
+      "none",
+      "glide",
+      "like"
+     ]
+    },
+    "phys": {
+     "enum": [
+      "none",
+      "air",
+      "air_nodrift",
+      "air_drift",
+      "brake",
+      "ground",
+      "auto",
+      "anim_motion",
+      "glide.start",
+      "glide",
+      "glide.attack",
+      "glide.end",
+      "tornado",
+      "drill",
+      "drill.end",
+      "drill.start",
+      "cape",
+      "like"
+     ]
+    },
+    "coll": {
+     "enum": [
+      "none",
+      "air",
+      "air_noledge",
+      "ground",
+      "ground_stop",
+      "both",
+      "anim_motion",
+      "glide",
+      "drill",
+      "drill.start",
+      "cape",
+      "cape.after",
+      "like"
+     ]
+    },
+    "move_tag": {
+     "enum": [
+      "jab",
+      "dash_attack",
+      "tilt",
+      "smash",
+      "aerial",
+      "grab",
+      "throw",
+      "special",
+      "projectile"
+     ]
+    },
+    "counter": {
+     "type": "object",
+     "properties": {
+      "from": {
+       "type": "integer"
+      },
+      "to": {
+       "type": "integer"
+      },
+      "target": {
+       "$ref": "#/$defs/target"
+      },
+      "negate": {
+       "type": [
+        "boolean",
+        "integer"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "glide": {
+   "type": "object",
+   "properties": {
+    "angle_max": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "angle_min": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_gravity": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_vx": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "speed_accel": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "stall_speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "sink_accel": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_sink": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "recover_angle": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "dive_angle": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "dive_bonus": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "deadzone": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pitch_up": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pitch_down": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_pitch_rate": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "stall_pitch": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "wing_node": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "hold_frames": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "from_ground_jump": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_helpless": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "landing_lag": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "entry": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_frames": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pose_center": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_buttons": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "script_entry_helpless": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "w00": {
+     "type": "number"
+    },
+    "w01": {
+     "type": "number"
+    },
+    "w02": {
+     "type": "number"
+    },
+    "w03": {
+     "type": "number"
+    },
+    "w04": {
+     "type": "number"
+    },
+    "w05": {
+     "type": "number"
+    },
+    "w06": {
+     "type": "number"
+    },
+    "w07": {
+     "type": "number"
+    },
+    "w08": {
+     "type": "number"
+    },
+    "w09": {
+     "type": "number"
+    },
+    "w10": {
+     "type": "number"
+    },
+    "w11": {
+     "type": "number"
+    },
+    "w12": {
+     "type": "number"
+    },
+    "w13": {
+     "type": "number"
+    },
+    "w14": {
+     "type": "number"
+    },
+    "w15": {
+     "type": "number"
+    },
+    "w16": {
+     "type": "number"
+    },
+    "w17": {
+     "type": "number"
+    },
+    "w18": {
+     "type": "number"
+    },
+    "w19": {
+     "type": "number"
+    },
+    "w20": {
+     "type": "number"
+    },
+    "w21": {
+     "type": "number"
+    }
+   },
+   "additionalProperties": false
+  },
+  "tornado": {
+   "type": "object",
+   "properties": {
+    "entry_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "entry_vx_mul": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_rate": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "ground_accel": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "ground_speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "air_accel": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "air_speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "brake": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "gravity": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_fall": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "tap_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "tap_cooldown": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_rise": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "tap_rate": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_rate": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "rate_decay": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "spin_frames": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "late_decay": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_rate": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "max_speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_helpless": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "spin_anim": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "spin_period": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "w00": {
+     "type": "number"
+    },
+    "w01": {
+     "type": "number"
+    },
+    "w02": {
+     "type": "number"
+    },
+    "w03": {
+     "type": "number"
+    },
+    "w04": {
+     "type": "number"
+    },
+    "w05": {
+     "type": "number"
+    },
+    "w06": {
+     "type": "number"
+    },
+    "w07": {
+     "type": "number"
+    },
+    "w08": {
+     "type": "number"
+    },
+    "w09": {
+     "type": "number"
+    },
+    "w10": {
+     "type": "number"
+    },
+    "w11": {
+     "type": "number"
+    },
+    "w12": {
+     "type": "number"
+    },
+    "w13": {
+     "type": "number"
+    },
+    "w14": {
+     "type": "number"
+    },
+    "w15": {
+     "type": "number"
+    },
+    "w16": {
+     "type": "number"
+    },
+    "w17": {
+     "type": "number"
+    },
+    "w18": {
+     "type": "number"
+    },
+    "w19": {
+     "type": "number"
+    }
+   },
+   "additionalProperties": false
+  },
+  "drill": {
+   "type": "object",
+   "properties": {
+    "start_vx_mul": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "start_gravity": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_frames": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "speed": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "angle_max": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "bounce": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pop_vx": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pop_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "end_helpless": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "pitch_model": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "w00": {
+     "type": "number"
+    },
+    "w01": {
+     "type": "number"
+    },
+    "w02": {
+     "type": "number"
+    },
+    "w03": {
+     "type": "number"
+    },
+    "w04": {
+     "type": "number"
+    },
+    "w05": {
+     "type": "number"
+    }
+   },
+   "additionalProperties": false
+  },
+  "cape": {
+   "type": "object",
+   "properties": {
+    "keep_vx": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "keep_vy": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer_accel_x": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer_max_x": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer_accel_y": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer_max_y": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "steer_frame": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "decide_frame": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "neutral_x": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "attack_buttons": {
+     "type": [
+      "number",
+      "boolean"
+     ]
+    },
+    "w00": {
+     "type": "number"
+    },
+    "w01": {
+     "type": "number"
+    },
+    "w02": {
+     "type": "number"
+    },
+    "w03": {
+     "type": "number"
+    },
+    "w04": {
+     "type": "number"
+    },
+    "w05": {
+     "type": "number"
+    }
+   },
+   "additionalProperties": false
+  },
+  "specials": {
+   "type": "object",
+   "properties": {
+    "n": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "s": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "hi": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "lw": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "air_n": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "air_s": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "air_hi": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    },
+    "air_lw": {
+     "oneOf": [
+      {
+       "$ref": "#/$defs/target"
+      },
+      {
+       "type": "object",
+       "required": [
+        "select",
+        "targets"
+       ],
+       "properties": {
+        "select": {
+         "type": "string",
+         "pattern": "^(la_i|ra_i):([0-9]|[1-5][0-9]|6[0-3])$"
+        },
+        "targets": {
+         "type": "array",
+         "items": {
+          "$ref": "#/$defs/target"
+         },
+         "maxItems": 4
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "hitbox": {
+   "type": "object",
+   "properties": {
+    "damage": {
+     "type": "number"
+    },
+    "size": {
+     "type": "number"
+    },
+    "offset": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     },
+     "maxItems": 3
+    },
+    "angle": {
+     "type": "integer"
+    },
+    "kbg": {
+     "type": "integer"
+    },
+    "wkb": {
+     "type": "integer"
+    },
+    "bkb": {
+     "type": "integer"
+    },
+    "element": {
+     "type": "integer"
+    },
+    "shield_damage": {
+     "type": "integer"
+    },
+    "sfx_severity": {
+     "type": "integer"
+    },
+    "sfx_kind": {
+     "type": "integer"
+    },
+    "start": {
+     "type": "integer"
+    },
+    "end": {
+     "type": "integer"
+    },
+    "slot": {
+     "type": "integer"
+    },
+    "stun": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 255
+    },
+    "hits": {
+     "type": "object",
+     "properties": {
+      "ground": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "air": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "reflect": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "absorb": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "counter": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "article": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string",
+     "maxLength": 31
+    },
+    "model": {
+     "type": "object",
+     "properties": {
+      "file": {
+       "type": "string",
+       "maxLength": 63
+      },
+      "symbol": {
+       "type": "string",
+       "maxLength": 63
+      }
+     }
+    },
+    "lifetime": {
+     "type": "number"
+    },
+    "velocity": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     },
+     "maxItems": 2
+    },
+    "spawn": {
+     "type": "array",
+     "items": {
+      "type": "number"
+     },
+     "maxItems": 2
+    },
+    "gravity": {
+     "type": "number"
+    },
+    "max_fall": {
+     "type": "number"
+    },
+    "accel": {
+     "type": "number"
+    },
+    "max_speed": {
+     "type": "number"
+    },
+    "min_speed": {
+     "type": "number"
+    },
+    "scale": {
+     "type": "number"
+    },
+    "spin": {
+     "type": "number"
+    },
+    "max_live": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "homing": {
+     "type": "object",
+     "properties": {
+      "turn": {
+       "type": "number"
+      },
+      "range": {
+       "type": "number"
+      },
+      "delay": {
+       "type": "number"
+      }
+     }
+    },
+    "despawn": {
+     "type": "object",
+     "properties": {
+      "hit": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "shield": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "stage": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      },
+      "clank": {
+       "type": [
+        "boolean",
+        "number"
+       ]
+      }
+     }
+    },
+    "angle": {
+     "type": "number"
+    },
+    "bone": {
+     "type": "integer"
+    },
+    "effect": {
+     "type": "integer"
+    },
+    "fx": {
+     "type": "string"
+    },
+    "show_model": {
+     "type": [
+      "boolean",
+      "number"
+     ]
+    },
+    "effects": {
+     "type": "array",
+     "maxItems": 8,
+     "items": {
+      "oneOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "integer"
+         },
+         "frame": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+         },
+         "joint": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+         },
+         "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+         }
+        }
+       }
+      ]
+     }
+    },
+    "spawns": {
+     "type": "array",
+     "maxItems": 4,
+     "items": {
+      "type": "array",
+      "items": {
+       "type": "number"
+      },
+      "maxItems": 2
+     }
+    },
+    "spins": {
+     "type": "array",
+     "maxItems": 4,
+     "items": {
+      "type": "object",
+      "properties": {
+       "joint": {
+        "type": "integer"
+       },
+       "z": {
+        "type": "number"
+       }
+      }
+     }
+    },
+    "children": {
+     "type": "array",
+     "maxItems": 2,
+     "items": {
+      "type": "object",
+      "properties": {
+       "article": {
+        "oneOf": [
+         {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+         },
+         {
+          "type": "string"
+         }
+        ]
+       },
+       "frame": {
+        "type": "integer"
+       },
+       "every": {
+        "type": "integer"
+       },
+       "count": {
+        "type": "integer"
+       },
+       "spawn": {
+        "type": "integer"
+       }
+      }
+     }
+    },
+    "hitboxes": {
+     "type": "array",
+     "maxItems": 8,
+     "items": {
+      "$ref": "#/$defs/hitbox"
+     }
+    },
+    "spawn_sound": {
+     "type": "string"
+    },
+    "end_sound": {
+     "type": "string"
+    }
+   }
+  },
+  "sound": {
+   "description": "v8 (out of v5 scope, listed so shipped mods validate)",
+   "type": "object",
+   "required": [
+    "name",
+    "retail_sfx"
+   ],
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 31
+    },
+    "retail_sfx": {
+     "type": "integer",
+     "minimum": 1,
+     "maximum": 999999
+    },
+    "volume": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 127
+    }
+   }
+  },
+  "fighter": {
+   "type": "object",
+   "properties": {
+    "attach": {
+     "type": "string",
+     "pattern": "^([A-Za-z]+|.+\\.[dD][aA][tT])$",
+     "description": "A retail name or alias (x-attach-names) or a Pl file ('PlKb.dat', an m-ex 'PlSh.dat'); case-insensitive."
+    },
+    "define": {
+     "type": "object",
+     "description": "OUT OF SCOPE for v5 (native definitions, geno >= 6): not validated here."
+    },
+    "name": {
+     "type": "string",
+     "maxLength": 63
+    },
+    "attributes": {
+     "$ref": "#/$defs/attributes"
+    },
+    "scale": {
+     "type": "number",
+     "minimum": 0.5,
+     "maximum": 2.0
+    },
+    "jumps": {
+     "type": "object",
+     "properties": {
+      "max": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 250
+      },
+      "air_vy": {
+       "type": "array",
+       "items": {
+        "type": "number"
+       },
+       "maxItems": 16
+      }
+     }
+    },
+    "hooks": {
+     "$ref": "#/$defs/hooks"
+    },
+    "fx_bindings": {
+     "type": "string",
+     "description": "mod-relative path of a geno_fx_bindings document"
+    },
+    "subactions": {
+     "type": "array",
+     "maxItems": 336,
+     "items": {
+      "$ref": "#/$defs/subaction"
+     }
+    },
+    "special_attributes": {
+     "type": "array",
+     "maxItems": 64,
+     "items": {
+      "$ref": "#/$defs/specialAttribute"
+     }
+    },
+    "on_land": {
+     "type": "array",
+     "maxItems": 16,
+     "items": {
+      "$ref": "#/$defs/onLand"
+     }
+    },
+    "motion_anims": {
+     "type": "array",
+     "maxItems": 8,
+     "items": {
+      "$ref": "#/$defs/motionAnim"
+     }
+    },
+    "states": {
+     "type": "array",
+     "maxItems": 48,
+     "items": {
+      "$ref": "#/$defs/state"
+     }
+    },
+    "glide": {
+     "$ref": "#/$defs/glide"
+    },
+    "tornado": {
+     "$ref": "#/$defs/tornado"
+    },
+    "drill": {
+     "$ref": "#/$defs/drill"
+    },
+    "cape": {
+     "$ref": "#/$defs/cape"
+    },
+    "specials": {
+     "$ref": "#/$defs/specials"
+    },
+    "articles": {
+     "type": "array",
+     "maxItems": 16,
+     "items": {
+      "$ref": "#/$defs/article"
+     }
+    },
+    "sounds": {
+     "type": "array",
+     "maxItems": 16,
+     "items": {
+      "$ref": "#/$defs/sound"
+     }
+    }
+   },
+   "anyOf": [
+    {
+     "required": [
+      "attach"
+     ]
+    },
+    {
+     "required": [
+      "define"
+     ]
+    }
+   ],
+   "additionalProperties": true
+  },
+  "gfxPackage": {
+   "description": "A Geno effect package <mod>/fx/<name>/<name>.gfx.json (geno_fx 1). Only the top level and the keys the loader reads are typed.",
+   "type": "object",
+   "required": [
+    "geno_fx",
+    "emitters"
+   ],
+   "properties": {
+    "geno_fx": {
+     "type": "integer",
+     "minimum": 1
+    },
+    "name": {
+     "type": "string"
+    },
+    "textures": {
+     "type": "array",
+     "maxItems": 24,
+     "items": {
+      "type": "object",
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "file": {
+        "type": "string"
+       },
+       "w": {
+        "type": "integer"
+       },
+       "h": {
+        "type": "integer"
+       },
+       "swizzle": {
+        "type": "string",
+        "minLength": 4,
+        "maxLength": 4
+       }
+      }
+     }
+    },
+    "meshes": {
+     "type": "array",
+     "maxItems": 24,
+     "items": {
+      "type": "object",
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "file": {
+        "type": "string"
+       }
+      }
+     }
+    },
+    "space": {
+     "type": "object",
+     "properties": {
+      "forward": {
+       "type": "array",
+       "items": {
+        "type": "number"
+       },
+       "maxItems": 3
+      },
+      "up": {
+       "type": "array",
+       "items": {
+        "type": "number"
+       },
+       "maxItems": 3
+      }
+     }
+    },
+    "emitters": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "name": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string"
+       },
+       "order": {
+        "type": "integer"
+       },
+       "priority": {
+        "type": "integer"
+       },
+       "mesh": {
+        "type": [
+         "string",
+         "null"
+        ]
+       },
+       "follow": {
+        "enum": [
+         "none",
+         "translate",
+         "srt"
+        ]
+       },
+       "ribbon": {
+        "type": "object"
+       },
+       "ring": {
+        "type": "object",
+        "properties": {
+         "inner": {
+          "type": "number"
+         },
+         "segments": {
+          "type": "integer"
+         }
+        }
+       },
+       "transform": {
+        "type": "object"
+       },
+       "emission": {
+        "type": "object"
+       },
+       "shape": {
+        "type": "object"
+       },
+       "particle": {
+        "type": "object"
+       },
+       "color": {
+        "type": "object"
+       },
+       "samplers": {
+        "type": "array"
+       },
+       "material": {
+        "type": "object"
+       },
+       "wave": {
+        "type": "object"
+       }
+      }
+     }
+    }
+   }
+  },
+  "fxBindings": {
+   "description": "A fighter effect binding set (geno_fx_bindings 1), named by a fighter's 'fx_bindings'.",
+   "type": "object",
+   "required": [
+    "geno_fx_bindings",
+    "states"
+   ],
+   "properties": {
+    "geno_fx_bindings": {
+     "const": 1
+    },
+    "fighter": {
+     "type": "string"
+    },
+    "host": {
+     "type": "string"
+    },
+    "unit_scale": {
+     "type": "number"
+    },
+    "states": {
+     "type": "array",
+     "maxItems": 96,
+     "items": {
+      "type": "object",
+      "properties": {
+       "state": {
+        "type": "string"
+       },
+       "subaction": {
+        "type": "integer"
+       },
+       "clock": {
+        "enum": [
+         "animation",
+         "game"
+        ]
+       },
+       "script": {
+        "type": "string"
+       },
+       "calls": {
+        "type": "array",
+        "maxItems": 32,
+        "items": {
+         "type": "object",
+         "properties": {
+          "frame": {
+           "type": "number"
+          },
+          "package": {
+           "type": "string"
+          },
+          "effect": {
+           "type": "string"
+          },
+          "macro": {
+           "type": "string"
+          },
+          "bone": {
+           "type": "string"
+          },
+          "joint": {
+           "type": "integer",
+           "minimum": 0
+          },
+          "joint2": {
+           "type": "integer",
+           "minimum": -1
+          },
+          "offset": {
+           "type": "array",
+           "items": {
+            "type": "number"
+           },
+           "maxItems": 3
+          },
+          "rotation": {
+           "type": "array",
+           "items": {
+            "type": "number"
+           },
+           "maxItems": 3
+          },
+          "scale": {
+           "type": "number"
+          },
+          "follow": {
+           "type": [
+            "boolean",
+            "number"
+           ]
+          },
+          "when": {
+           "type": "array"
+          },
+          "end_event": {
+           "enum": [
+            "off",
+            "detach",
+            "emitter_life",
+            "state_exit",
+            "owner_destroy"
+           ]
+          },
+          "end_frame": {
+           "type": "number"
+          },
+          "situation": {
+           "enum": [
+            "ground",
+            "air"
+           ]
+          },
+          "shake": {
+           "type": "object",
+           "properties": {
+            "amp": {
+             "type": "number"
+            },
+            "frames": {
+             "type": "integer"
+            },
+            "seed": {
+             "type": "integer"
+            }
+           }
+          },
+          "flash": {
+           "type": "object",
+           "properties": {
+            "color": {
+             "type": "array",
+             "items": {
+              "type": "number"
+             },
+             "maxItems": 3
+            },
+            "alpha": {
+             "type": "number"
+            },
+            "frames": {
+             "type": "integer"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ }
+}

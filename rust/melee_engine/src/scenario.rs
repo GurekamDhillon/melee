@@ -56,6 +56,14 @@ pub struct PlayerSpec {
     /// `Gm_PKind`: 0 human, 1 CPU.
     pub slot_type: i32,
     pub cpu_level: i32,
+    /// costume index (-1 = the launcher's default, the slot number)
+    pub color: i32,
+    /// team id (-1 = unset)
+    pub team: i32,
+    /// starting stocks (-1 = unset)
+    pub stocks: i32,
+    /// handicap (-1 = unset)
+    pub handicap: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -67,12 +75,18 @@ pub struct Scenario {
     pub rule_minutes: i32,
     /// `items=` value (-2 = off, else the frequency index), -1 leaves it alone
     pub item_freq: i32,
+    /// `is_teams` (-1 = leave alone)
+    pub teams: i32,
+    /// timer in seconds, 0 = no timer (-1 = leave alone)
+    pub time_limit: i32,
+    /// rule stock count (-1 = unset)
+    pub rule_stocks: i32,
 }
 
 impl Scenario {
     /// The `record.sh` scene strings: `p1=falcon/human;p2=fox/human;stage=fd;match=time;minutes=0;items=off`.
     pub fn parse(scene: &str) -> Result<Scenario, String> {
-        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1 };
+        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1 };
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
@@ -84,7 +98,7 @@ impl Scenario {
                 }
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
                 "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
-                "match" => s.rule_match = if v == "stock" { return Err("stock match not wired".into()) } else { 0 },
+                "match" => s.rule_match = if v == "stock" { 1 } else { 0 },
                 "minutes" => s.rule_minutes = v.parse().map_err(|_| "minutes")?,
                 "items" => s.item_freq = if v == "off" { -2 } else { v.parse().map_err(|_| "items")? },
                 _ if k.len() == 2 && k.starts_with('p') => {
@@ -107,7 +121,7 @@ impl Scenario {
                         Some(l) => (1, l.parse().unwrap_or(-1)),
                         None => (0, -1),
                     };
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team: -1, stocks: -1, handicap: -1 });
                 }
                 _ => {}
             }
@@ -135,11 +149,18 @@ pub fn install(s: Scenario) {
         h::SceneLaunch_PlayerCpuLevel = Some(|n| p(n).map_or(-1, |x| x.cpu_level));
         h::SceneLaunch_RuleMatch = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_match));
         h::SceneLaunch_RuleMinutes = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_minutes));
+        h::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| x.color));
+        h::SceneLaunch_PlayerTeam = Some(|n| p(n).map_or(-1, |x| x.team));
+        h::SceneLaunch_PlayerHandicap = Some(|n| p(n).map_or(-1, |x| x.handicap));
+        h::SceneLaunch_Teams = Some(|| SCN.as_ref().map_or(-1, |s| s.teams));
+        h::SceneLaunch_TimeLimit = Some(|| SCN.as_ref().map_or(-1, |s| s.time_limit));
+        h::SceneLaunch_RuleStocks = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_stocks));
         h::SceneLaunch_ItemFreq = Some(|| SCN.as_ref().map_or(-1, |s| s.item_freq));
         // the VS mode's own copies of the queries (gmvsmelee.rs)
         use melee_modes::tu::gmvsmelee::ext::hook as v;
         v::SceneLaunch_Active = Some(|| 1);
         v::SceneLaunch_EntryStateId = Some(|| 2);
-        v::SceneLaunch_PlayerStocks = Some(|_| -1);
+        v::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
+        h::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
     }
 }

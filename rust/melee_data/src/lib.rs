@@ -12,4 +12,5 @@ pub mod modreg;
 pub mod player;
 pub mod replay;
 pub mod slippi_pad;
+pub mod slp;
 pub mod settings;

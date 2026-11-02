@@ -2,3 +2,4 @@ tu::ftCo_AppealS::ext::hook::ftData_80085FD4 linked to the pointer-returning ftD
 tu::ftCo_SquatWait::ext::hook::ftData_80085FD4 same
 hooks::FTDATA_80085FD4_X8 same
 tu::ftCo_ItemThrow::ext::hook::Fighter_804D6550 pointer-typed static: the hook wants the table (the variable's value), not the variable's address (melee_link::manual)
+tu::ft_0d31::ext::hook::ftCommon_8007FF74 canonical ftcommon_8007ff74 takes &mut Fighter, the hook passes a GObj (cov3: items_hi_stadium panic); keep the tu default body

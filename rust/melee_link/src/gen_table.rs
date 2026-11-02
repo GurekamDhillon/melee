@@ -12836,8 +12836,6 @@ fn install_melee_fighter() {
     // tu/ft_0d31.rs
     unsafe { melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007F9B4 = Some(|a0| unsafe { melee_fighter::ftcommon3::ftcommon_8007f9b4(cast::<_, _, 640001>(a0)) }); }
     // tu/ft_0d31.rs
-    unsafe { melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007FF74 = Some(|a0| unsafe { melee_fighter::ftcommon2::ftcommon_8007ff74(cast::<_, _, 640101>(a0)) }); }
-    // tu/ft_0d31.rs
     unsafe { melee_fighter::tu::ft_0d31::ext::hook::ftCommon_Fall = Some(|a0, a1, a2| unsafe { melee_fighter::ftcommon_c::ftCommon_Fall(cast::<_, _, 640201>(a0), cast::<_, _, 640202>(a1), cast::<_, _, 640203>(a2)) }); }
     // tu/ft_0d31.rs
     unsafe { melee_fighter::tu::ft_0d31::ext::hook::ftParts_GetBoneIndex = Some(|a0, a1| unsafe { cast::<_, _, 640300>(melee_chara::adapt::ftParts_GetBoneIndex(cast::<_, _, 640301>(a0), cast::<_, _, 640302>(a1))) }); }
@@ -33560,7 +33558,6 @@ pub static HOOKS: &[(&str, &str, bool, bool)] = &[
     ("ftCommon_8007EFC0", "melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007EFC0", true, false),
     ("ftCommon_8007F8E8", "melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007F8E8", true, false),
     ("ftCommon_8007F9B4", "melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007F9B4", true, false),
-    ("ftCommon_8007FF74", "melee_fighter::tu::ft_0d31::ext::hook::ftCommon_8007FF74", true, false),
     ("ftCommon_Fall", "melee_fighter::tu::ft_0d31::ext::hook::ftCommon_Fall", true, false),
     ("ftParts_GetBoneIndex", "melee_fighter::tu::ft_0d31::ext::hook::ftParts_GetBoneIndex", true, false),
     ("ft_8008805C", "melee_fighter::tu::ft_0d31::ext::hook::ft_8008805C", true, false),

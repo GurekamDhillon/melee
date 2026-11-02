@@ -59,6 +59,7 @@ fn memcmp(a0: *const c_void, a1: *const c_void, a2: usize) -> i32;
 fn memset(a0: *mut c_void, a1: i32, a2: usize) -> *mut c_void;
 fn memcpy(a0: *mut c_void, a1: *const c_void, a2: usize) -> *mut c_void;
 fn atan2f(a0: f32, a1: f32) -> f32 = crate::tu::adapt::atan2f__2f62eb;
+fn cosf(a0: f32) -> f32 = crate::tu::adapt::cosf__b177e0;
 fn fabsf(a0: f32) -> f32;
 fn sinf(a0: f32) -> f32 = crate::tu::adapt::sinf__245589;
 fn OSInitAlloc(a0: *mut c_void, a1: *mut c_void, a2: i32) -> *mut c_void;
@@ -101,11 +102,6 @@ fn Geno_Autolink(a0: *mut Fighter, a1: *mut HitCapsule, a2: *mut f32, a3: *mut f
 fn Geno_MotionRow(a0: *mut Fighter, a1: i32) -> *mut MotionState = crate::tu::adapt::Geno_MotionRow__2d0cf2;
 fn Geno_SpecialEnter(a0: *mut Fighter_GObj, a1: i32) -> i32 = crate::tu::adapt::Geno_SpecialEnter__354edd;
 fn GenoGame_TestLedgeMode(a0: *mut Fighter) -> i32 = crate::tu::adapt::GenoGame_TestLedgeMode__20e1e5;
-fn GenoGame_TestStartFrame(a0: *mut Fighter, a1: i32) -> f32 = crate::tu::adapt::GenoGame_TestStartFrame__314818;
-fn GenoGame_TestPairSwap(a0: *mut Fighter, a1: i32) -> i32 = crate::tu::adapt::GenoGame_TestPairSwap__f2efa3;
-fn GenoGame_TestModelRotX() -> f32 = crate::tu::adapt::GenoGame_TestModelRotX__9f9136;
-fn GenoGame_TestJointRate() -> f32 = crate::tu::adapt::GenoGame_TestJointRate__51ea58;
-fn GenoGame_TestPoseReset(a0: f32) = crate::tu::adapt::GenoGame_TestPoseReset__cef785;
 fn ScriptGame_FighterI(a0: i32, a1: i32) -> i32 = crate::tu::adapt::ScriptGame_FighterI__fafc3a;
 fn ScriptGame_FighterF(a0: i32, a1: i32) -> f32 = crate::tu::adapt::ScriptGame_FighterF__01b474;
 fn gmFrontend_ModeSelect(a0: *mut GameModeState, a1: i32, a2: *const i8) = crate::tu::adapt::gmFrontend_ModeSelect__ce9fbe;
@@ -145,6 +141,7 @@ fn Geno_ArticleLogic(a0: i32) -> *mut c_void = crate::tu::adapt::Geno_ArticleLog
 fn Geno_OnHit(a0: *mut Fighter_GObj) -> i32 = crate::tu::adapt::Geno_OnHit__5cbd6a;
 fn GenoGame_ArticleStep(a0: i32, a1: i32, a2: i32, a3: *mut f32, a4: *mut f32, a5: f32, a6: f32, a7: i32, a8: f32, a9: f32) = crate::tu::adapt::GenoGame_ArticleStep__051bee;
 fn Geno_SpecialSelect(a0: i32, a1: i32, a2: i32) -> i32;
+fn GenoGame_CallbackFind(a0: i32, a1: *const i8) -> i32;
 fn GenoGame_LockonAim(a0: i32, a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: i32, a7: f32, a8: f32, a9: *mut f32, a10: *mut f32, a11: *mut f32) = crate::tu::adapt::GenoGame_LockonAim__57d893;
 fn GenoFly_TestArm(a0: *mut Fighter) = crate::tu::adapt::GenoFly_TestArm__11059c;
 fn GenoFly_Fighter(a0: *mut Fighter) -> i32 = crate::tu::adapt::GenoFly_Fighter__f7b536;
@@ -175,23 +172,50 @@ fn ftCo_80091E78(a0: *mut Fighter_GObj, a1: f32) = crate::tu::adapt::ftCo_80091E
 fn HSD_VecInitAllocData() = crate::tu::adapt::HSD_VecInitAllocData__8c88b8;
 fn HSD_MtxInitAllocData() = crate::tu::adapt::HSD_MtxInitAllocData__245d52;
 fn HSD_RObjInitAllocData();
+fn GenoBhv_SinDeg(a0: f32) -> f32;
+fn GenoBhv_CosDeg(a0: f32) -> f32;
+fn GenoBhv_SinqWord(a0: i32) -> u32;
+fn GenoBhv_SinqCrc32() -> u32;
+fn GenoBhv_GlideParams(a0: *mut GbGlideP);
+fn GenoBhv_GlideEntryInit(a0: *mut GbGlideEntry);
+fn GenoBhv_GlideEntryStep(a0: *mut GbGlideEntry, a1: *const GbGlideP, a2: i32, a3: i32, a4: f32, a5: f32, a6: f32, a7: i32, a8: i32, a9: i32, a10: i32) -> i32;
+fn GenoBhv_GlideBegin(a0: *mut GbGlide, a1: *const GbGlideP, a2: f32, a3: f32, a4: f32, a5: f32, a6: i32, a7: i32, a8: i32);
+fn GenoBhv_GlideStep(a0: *mut GbGlide, a1: *const GbGlideIn, a2: *const GbGlideP);
+fn GenoBhv_TornadoParams(a0: *mut GbTornadoP);
+fn GenoBhv_TornadoBegin(a0: *mut GbTornado, a1: f32, a2: f32);
+fn GenoBhv_TornadoStep(a0: *mut GbTornado, a1: *const GbTornadoIn, a2: *const GbTornadoP);
+fn GenoBhv_DrillParams(a0: *mut GbDrillP);
+fn GenoBhv_DrillBegin(a0: *mut GbDrill, a1: *const GbDrillP, a2: f32, a3: f32);
+fn GenoBhv_DrillStep(a0: *mut GbDrill, a1: *const GbDrillIn, a2: *const GbDrillP);
+fn GenoBhv_CapeParams(a0: *mut GbCapeP);
+fn GenoBhv_CapeBegin(a0: *mut GbCape, a1: f32, a2: f32, a3: f32);
+fn GenoBhv_CapeStep(a0: *mut GbCape, a1: *const GbCapeIn, a2: *const GbCapeP);
+fn GenoBhv_MultiDashParams(a0: *mut GbMultiDashP);
+fn GenoBhv_MultiDashBegin(a0: *mut GbMultiDash, a1: f32);
+fn GenoBhv_MultiDashStep(a0: *mut GbMultiDash, a1: *const GbMultiDashIn, a2: *const GbMultiDashP);
+fn GenoBhv_AnimMotionSample(a0: *const f32, a1: i32, a2: f32, a3: *mut f32, a4: *mut f32);
+fn GenoBhv_AnimMotionParams(a0: *mut GbAnimMotionP);
+fn GenoBhv_AnimMotionBegin(a0: *mut GbAnimMotion, a1: f32, a2: f32);
+fn GenoBhv_AnimMotionStep(a0: *mut GbAnimMotion, a1: *const f32, a2: i32, a3: *const GbAnimMotionP, a4: f32, a5: i32);
+fn GenoBhv_AnimMotionFrameDelta(a0: f32, a1: f32, a2: f32, a3: *mut f32, a4: *mut f32);
+fn Geno_LabEnterState(a0: *mut Fighter, a1: i32) -> i32 = crate::tu::adapt::Geno_LabEnterState__96cf9a;
 fn GenoDefine_FtDataSharedMask(a0: *const ftData, a1: *const ftData) -> u32;
 fn GenoDefine_FtDataFieldName(a0: i32) -> *const i8;
 fn __frsqrte(a0: f64) -> f64;
 }
-pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
 pub static mut Fighter_804D6540: *mut *mut Fighter_804D6540_t = unsafe { core::mem::zeroed() };
-pub use crate::tu::script_game::ftPartsTable;
-pub use crate::tu::script_game::p_ftCommonData;
-pub use melee_world::pl::player_slots;
-pub use crate::tu::gmvsmelee::gmVsMelee_StartData;
-pub use crate::tu::geno_lab_mode::gm_Mode_Lab_States;
-pub use melee_fighter::tu::ftdata::GenoDefine_ContentIdentity;
-pub use melee_fighter::tu::ftdata::GenoDefine_InterpreterAttempts;
-pub use crate::tu::globals::HSD_RandSeedPtr;
-pub use crate::tu::globals::CostumeListsForeachCharacter;
+pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
+pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
+pub static mut player_slots: [StaticPlayer; 0] = unsafe { core::mem::zeroed() };
+pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
+pub static mut gm_Mode_Lab_States: [GameModeState; 0] = unsafe { core::mem::zeroed() };
+pub static mut GenoDefine_ContentIdentity: [[u32; 2]; 127] = unsafe { core::mem::zeroed() };
+pub static mut GenoDefine_InterpreterAttempts: [u32; 127] = unsafe { core::mem::zeroed() };
+pub static mut HSD_RandSeedPtr: *mut u32 = unsafe { core::mem::zeroed() };
+pub static mut CostumeListsForeachCharacter: [UnkCostumeList; 127] = unsafe { core::mem::zeroed() };
 
-pub use crate::tu::geno_game::Geno_ScriptPool;
+pub static mut Geno_ScriptPool: [u32; 65536] = unsafe { core::mem::zeroed() };
 }
 use ext::*;
 pub const GENO_FTCMD_OP: i32 = 59 as i32;
@@ -239,11 +263,7 @@ pub const GENO_AHF_DEFAULT: u32 = 31 as u32;
 
 pub const T_GS: i32 = 0 as i32;
 
-pub const T3_UP: i32 = 0 as i32;
-
-pub const T3_GL: i32 = 3 as i32;
-
-pub const T_D2R: f32 = 0.017453292f32;
+pub const GENO_BHV_SINQ_N: i32 = 1025 as i32;
 
 pub const NULL: i32 = 0 as i32;
 
@@ -265,12 +285,12 @@ pub static mut t_subactions: [Fighter_WaitAnimData; 8] = unsafe { core::mem::zer
 
 pub static mut t_rows: [MotionState; 400] = unsafe { core::mem::zeroed() };
 
-pub static mut t_v2_json: [i8; 817] = unsafe {
+pub static mut t_v2_json: [i8; 814] = unsafe {
     ::core::mem::transmute::<
-        [u8; 817],
-        [i8; 817],
+        [u8; 814],
+        [i8; 814],
     >(
-        *b"{\"geno\":2,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"GlideStart\",\"behavior\":\"geno.glide.start\",\"subaction\":10},{\"name\":\"Glide\",\"behavior\":\"geno.glide\",\"subaction\":\"motion:65\"},{\"name\":\"GlideAttack\",\"behavior\":\"geno.glide.attack\",\"subaction\":12,\"move_id\":9},{\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"subaction\":13},{\"name\":\"GlideEnd\",\"behavior\":\"geno.glide.end\",\"subaction\":14},{\"name\":\"Tornado\",\"behavior\":\"geno.tornado\",\"subaction\":15},{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":16},{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":17},{\"name\":\"Plain\",\"behavior\":\"geno.air\",\"subaction\":18,\"phys\":\"none\",\"iasa\":\"like\",\"like\":\"motion:29\",\"next\":\"geno:Glide\",\"flags\":\"0x55\"}],\"glide\":{\"hold_frames\":16},\"drill\":{\"angle_max\":60},\"specials\":{\"n\":\"geno:Tornado\",\"s\":\"geno:Drill\"}}]}\0",
+        *b"{\"geno\":2,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"GlideStart\",\"behavior\":\"geno.glide.start\",\"subaction\":10},{\"name\":\"Glide\",\"behavior\":\"geno.glide\",\"subaction\":\"motion:65\"},{\"name\":\"GlideAttack\",\"behavior\":\"geno.glide.attack\",\"subaction\":12,\"move_id\":9},{\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"subaction\":13},{\"name\":\"GlideEnd\",\"behavior\":\"geno.glide.end\",\"subaction\":14},{\"name\":\"Tornado\",\"behavior\":\"geno.tornado\",\"subaction\":15},{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":16},{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":17},{\"name\":\"Plain\",\"behavior\":\"geno.air\",\"subaction\":18,\"phys\":\"none\",\"iasa\":\"like\",\"like\":\"motion:29\",\"next\":\"geno:Glide\",\"flags\":\"0x55\"}],\"glide\":{\"entry_hold\":6},\"drill\":{\"psi_min\":-60},\"specials\":{\"n\":\"geno:Tornado\",\"s\":\"geno:Drill\"}}]}\0",
     )
 };
 
@@ -284,42 +304,6 @@ pub static mut t_v3_json: [i8; 516] = unsafe {
 };
 
 pub static mut t_v3_many: [i8; 4096] = unsafe { core::mem::zeroed() };
-
-pub static mut t_cape_json: [i8; 848] = unsafe {
-    ::core::mem::transmute::<
-        [u8; 848],
-        [i8; 848],
-    >(
-        *b"{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"CapeStart\",\"behavior\":\"geno.cape\",\"subaction\":30},{\"name\":\"CapeStartAir\",\"behavior\":\"geno.cape\",\"subaction\":31},{\"name\":\"CapeN\",\"behavior\":\"geno.cape.attack\",\"subaction\":32,\"facing\":\"entry\"},{\"name\":\"CapeNAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":33,\"facing\":\"entry\"},{\"name\":\"CapeF\",\"behavior\":\"geno.cape.attack\",\"subaction\":34},{\"name\":\"CapeFAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":35},{\"name\":\"CapeB\",\"behavior\":\"geno.cape.attack\",\"subaction\":36},{\"name\":\"CapeBAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":37},{\"name\":\"CapeEnd\",\"behavior\":\"geno.cape.end\",\"subaction\":38},{\"name\":\"CapeEndAir\",\"behavior\":\"geno.cape.end\",\"subaction\":39}],\"cape\":{\"w00\":0.5,\"w01\":0.4,\"w02\":0.5,\"w03\":2.5,\"w04\":0.5,\"w05\":2.5},\"specials\":{\"lw\":\"geno:CapeStart\",\"air_lw\":\"geno:CapeStartAir\"}}]}\0",
-    )
-};
-
-pub static mut t_drill_json: [i8; 536] = unsafe {
-    ::core::mem::transmute::<
-        [u8; 536],
-        [i8; 536],
-    >(
-        *b"{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"DrillStart\",\"behavior\":\"geno.drill.start\",\"subaction\":40},{\"name\":\"DrillStartAir\",\"behavior\":\"geno.drill.start\",\"subaction\":41},{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],\"drill\":{\"w00\":0.5,\"w01\":1.0,\"w02\":-0.08,\"w03\":3.0,\"w04\":10},\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}\0",
-    )
-};
-
-pub static mut t_drill_flat_json: [i8; 520] = unsafe {
-    ::core::mem::transmute::<
-        [u8; 520],
-        [i8; 520],
-    >(
-        *b"{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"DrillStart\",\"behavior\":\"geno.drill.start\",\"subaction\":40},{\"name\":\"DrillStartAir\",\"behavior\":\"geno.drill.start\",\"subaction\":41},{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],\"drill\":{\"w03\":3.0,\"w04\":10,\"pitch_model\":0},\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}\0",
-    )
-};
-
-pub static mut t_spin_json: [i8; 190] = unsafe {
-    ::core::mem::transmute::<
-        [u8; 190],
-        [i8; 190],
-    >(
-        *b"{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"Tornado\",\"behavior\":\"geno.tornado\",\"subaction\":15}],\"tornado\":{\"spin_anim\":1,\"spin_period\":360},\"specials\":{\"n\":\"geno:Tornado\"}}]}\0",
-    )
-};
 
 pub static mut t_v5_json: [i8; 788] = unsafe {
     ::core::mem::transmute::<
@@ -741,6 +725,17 @@ pub static mut gc_lua_fields: [GenoCoverField; 3] = unsafe { [
         },
     ] };
 
+pub static mut gba_rc: i32 = unsafe { core::mem::zeroed() };
+
+pub static mut gbt_json: [i8; 501] = unsafe {
+    ::core::mem::transmute::<
+        [u8; 501],
+        [i8; 501],
+    >(
+        *b"{\"geno\":3,\"fighters\":[{\"attach\":\"kirby\",\"states\":[{\"name\":\"Tor\",\"behavior\":\"geno.tornado\",\"subaction\":20},{\"name\":\"Dr\",\"behavior\":\"geno.drill\",\"subaction\":21},{\"name\":\"Cp\",\"behavior\":\"geno.cape\",\"subaction\":22},{\"name\":\"GS\",\"behavior\":\"geno.glide.start\",\"subaction\":10},{\"name\":\"G\",\"behavior\":\"geno.glide\",\"subaction\":11},{\"name\":\"GA\",\"behavior\":\"geno.glide.attack\",\"subaction\":12},{\"name\":\"GE\",\"behavior\":\"geno.glide.end\",\"subaction\":14},{\"name\":\"MD\",\"behavior\":\"geno.multi_dash\",\"subaction\":23}]}]}\0",
+    )
+};
+
 pub unsafe extern "C" fn HSD_JObjGetChild(mut jobj: *mut HSD_JObj) -> *mut HSD_JObj {
     melee_core::ct!("HSD_JObjGetChild");
     if jobj.is_null() {
@@ -811,7 +806,7 @@ pub unsafe extern "C" fn t_run(mut script: *mut u32, mut loop_0: i32) {
 
 pub unsafe extern "C" fn t_fbits(mut f: f32) -> u32 {
     melee_core::ct!("t_fbits");
-    let mut x: Anon_anon_107 = unsafe { core::mem::zeroed() };
+    let mut x: Anon_anon_109 = unsafe { core::mem::zeroed() };
     x.f = f as f32;
     return x.u;
 }
@@ -4639,410 +4634,6 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
     return rc;
 }
 
-pub unsafe extern "C" fn test_geno_v2_glide_entry() -> i32 {
-    melee_core::ct!("test_geno_v2_glide_entry");
-    let mut st: *mut TestGenoState = t_v2_setup();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    if st.is_null() {
-        TestFail(
-            b"could not install the v2 profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.motion_id = ftCo_MS_JumpAerialF as i32 as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    t_fp.input.held_buttons[0 as i32 as usize] = HSD_PAD_X as HSD_Pad;
-    f = 1 as i32;
-    while f < 16 as i32 {
-        if Geno_PreAnim(&raw mut t_gobj) != 0 as i32 {
-            TestFail(
-                b"glide entered before 16 frames of hold\0" as *const u8
-                    as *const i8,
-            );
-            rc = 1 as i32;
-            break;
-        } else {
-            f += 1;
-        }
-    }
-    if Geno_PreAnim(&raw mut t_gobj) != 1 as i32
-        || t_fp.motion_id != GENO_MOTION_BASE + 0 as i32
-    {
-        TestFail(
-            b"16th frame of jump held in JumpAerialF must enter GlideStart\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = ftCo_MS_JumpAerialB as i32 as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    f = 0 as i32;
-    while f < 5 as i32 {
-        Geno_PreAnim(&raw mut t_gobj);
-        f += 1;
-    }
-    t_fp.input.held_buttons[0 as i32 as usize] = 0 as HSD_Pad;
-    Geno_PreAnim(&raw mut t_gobj);
-    t_fp.input.held_buttons[0 as i32 as usize] = HSD_PAD_Y as HSD_Pad;
-    f = 0 as i32;
-    while f < 30 as i32 {
-        if Geno_PreAnim(&raw mut t_gobj) != 0 as i32 {
-            TestFail(
-                b"after a release, holding again in the same jump must not glide\0"
-                    as *const u8 as *const i8,
-            );
-            rc = 1 as i32;
-            break;
-        } else {
-            f += 1;
-        }
-    }
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    f = 0 as i32;
-    while f < 30 as i32 {
-        if Geno_PreAnim(&raw mut t_gobj) != 0 as i32 {
-            TestFail(
-                b"holding jump in Fall must not glide\0" as *const u8
-                    as *const i8,
-            );
-            rc = 1 as i32;
-            break;
-        } else {
-            f += 1;
-        }
-    }
-    t_fp.input.held_buttons[0 as i32 as usize] = 0 as HSD_Pad;
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn test_geno_v2_glide() -> i32 {
-    melee_core::ct!("test_geno_v2_glide");
-    let mut st: *mut TestGenoState = t_v2_setup();
-    let mut gl: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    let mut s0: f32 = 0.;
-    let mut s1: f32 = 0.;
-    if st.is_null() {
-        TestFail(
-            b"could not install the v2 profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.self_vel.x = 1.0f32 as f32;
-    t_fp.self_vel.y = 0.5f32 as f32;
-    t_fp.co_attrs.gravity = 0.08f32;
-    t_fp.co_attrs.terminal_velocity = 2.0f32;
-    t_fp.motion_id = ftCo_MS_JumpAerialF as i32 as FtMotionId;
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 0 as i32 {
-        TestFail(
-            b"could not enter GlideStart\0" as *const u8 as *const i8,
-        );
-        GenoGame_TestCapture(0 as i32, 0 as i32);
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 0 as i32))
-        .phys_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    GenoGame_TestCapture(1 as i32, 1 as i32);
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 0 as i32))
-        .anim_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    if t_fp.motion_id != GENO_MOTION_BASE + 1 as i32 {
-        TestFail(
-            b"GlideStart's anim end must go to Glide\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    gl = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 1 as i32);
-    t_fp.input.lstick[0 as i32 as usize].y = -1.0f32 as f32;
-    s0 = (*st).move_f[1 as i32 as usize];
-    f = 0 as i32;
-    while f < 90 as i32 {
-        (*gl).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    s1 = (*st).move_f[1 as i32 as usize];
-    if (*st).move_f[0 as i32 as usize] > -69.0f32
-        || (*st).move_f[0 as i32 as usize] < -70.001f32
-    {
-        TestFail(
-            b"a held stick down must pitch the nose to the lower limit (-70)\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    if !(s1 > s0) || !(t_fp.self_vel.y < 0.0f32) || !(t_fp.self_vel.x > 0.0f32) {
-        TestFail(
-            b"diving must gain speed and move down-forward\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 40 as i32 {
-        (*gl).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if !((*st).move_f[1 as i32 as usize] < s1)
-        || (*st).move_f[0 as i32 as usize] <= 0.0f32
-    {
-        TestFail(
-            b"climbing must lose speed\0" as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    if snap_open(1 as i32) == 0 as i32 {
-        let mut a: f32 = (*st).move_f[0 as i32 as usize];
-        snap_save(0 as i32);
-        (*st).move_f[0 as i32 as usize] = 123.0f32 as f32;
-        (*st).hold_frames = 77 as i32 as i32;
-        snap_load(0 as i32);
-        if (*st).move_f[0 as i32 as usize] != a
-            || (*st).hold_frames == 77 as i32
-        {
-            TestFail(
-                b"glide angle / hold count not restored by a savestate load\0"
-                    as *const u8 as *const i8,
-            );
-            rc = 1 as i32;
-        }
-    }
-    t_fp.input.pressed_buttons = HSD_PAD_A as HSD_Pad;
-    (*gl).input_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 2 as i32 {
-        TestFail(
-            b"A in Glide must go to GlideAttack\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = (GENO_MOTION_BASE + 1 as i32) as FtMotionId;
-    t_fp.input.pressed_buttons = HSD_PAD_R as HSD_Pad;
-    (*gl).input_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 4 as i32 {
-        TestFail(
-            b"shield in Glide must go to GlideEnd\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.pressed_buttons = 0 as HSD_Pad;
-    t_fp.self_vel.y = 0.0f32 as f32;
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 1 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 1 as i32
-        || (*st).move_f[1 as i32 as usize] != 1.7f32
-    {
-        TestFail(
-            b"entering Glide must start at the glide speed 1.7\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 200 as i32
-        && (*st).move_i[2 as i32 as usize] == 0
-    {
-        (*gl).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    (*gl).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if f >= 200 as i32
-        || t_fp.motion_id != GENO_MOTION_BASE + 4 as i32
-        || (*st).move_i[1 as i32 as usize] != 2 as i32
-    {
-        TestFail(
-            b"a nose-up glide must stall and end in GlideEnd (reason 2)\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn test_geno_v2_specials() -> i32 {
-    melee_core::ct!("test_geno_v2_specials");
-    let mut st: *mut TestGenoState = t_v2_setup();
-    let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    let mut y0: f32 = 0.;
-    if st.is_null() {
-        TestFail(
-            b"could not install the v2 profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.facing_dir = 1.0f32;
-    t_fp.self_vel.x = 0.0f32 as f32;
-    t_fp.self_vel.y = 0.0f32 as f32;
-    t_fp.co_attrs.gravity = 0.08f32;
-    t_fp.co_attrs.terminal_velocity = 2.0f32;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_N as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 5 as i32);
-    f = 0 as i32;
-    while f < 30 as i32 {
-        t_fp.input.pressed_buttons = 0 as HSD_Pad;
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if !(t_fp.self_vel.y < 0.0f32) || t_fp.self_vel.y < -0.5001f32 {
-        TestFail(
-            b"tornado without taps must sink, no faster than max_fall 0.5\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    y0 = -10.0f32 as f32;
-    f = 0 as i32;
-    while f < 20 as i32 {
-        t_fp.input.pressed_buttons = HSD_PAD_B as HSD_Pad;
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        if t_fp.self_vel.y > y0 {
-            y0 = t_fp.self_vel.y;
-        }
-        f += 1;
-    }
-    if !(y0 > 0.0f32) || y0 > 1.4001f32
-        || (*st).move_i[3 as i32 as usize] != 2 as i32
-    {
-        TestFail(
-            b"tornado mashing B: 2 lifts in 20 frames, rising, capped at 1.4\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.pressed_buttons = 0 as HSD_Pad;
-    t_fp.input.lstick[0 as i32 as usize].x = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 20 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if !(t_fp.self_vel.x > 0.0f32) {
-        TestFail(
-            b"tornado must drift with the stick\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].x = 0.0f32 as f32;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_S as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 6 as i32);
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 60 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if !((*st).move_f[0 as i32 as usize] > 0.0f32)
-        || !(t_fp.self_vel.y > 0.0f32) || !(t_fp.self_vel.x > 0.0f32)
-    {
-        TestFail(
-            b"drill steered up must travel up-forward\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    let mut amax: f32 = (*st).move_f[0 as i32 as usize];
-    (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if (*st).move_f[0 as i32 as usize] != amax {
-        TestFail(
-            b"drill steering must stop at its limit\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    (*st).move_i[2 as i32 as usize] = 1 as i32 as i32;
-    (*st).move_i[3 as i32 as usize] = 2 as i32 as i32;
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 7 as i32
-        || !(t_fp.self_vel.x < 0.0f32)
-    {
-        TestFail(
-            b"a drill bounce must go to DrillEnd moving back\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
 pub unsafe extern "C" fn t_near(mut a: f32, mut b: f32) -> i32 {
     melee_core::ct!("t_near");
     return (a - b < 0.001f32 && b - a < 0.001f32) as i32;
@@ -5216,180 +4807,6 @@ pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
     return rc;
 }
 
-pub unsafe extern "C" fn test_geno_v3_hidden_glide() -> i32 {
-    melee_core::ct!("test_geno_v3_hidden_glide");
-    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
-    let mut rc: i32 = 0 as i32;
-    if Geno_TestInstall(&raw const t_v3_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the v3 profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.motion_id = (GENO_MOTION_BASE + 0 as i32) as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_PUT as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (3 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[1 as i32 as usize] = GENO_VAL_HIDDEN as i32
-        as u32;
-    t_script[2 as i32 as usize] = 1 as u32;
-    t_script[3 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    if t_fp.x221E_b5() == 0 || (*st).hidden != 1 as i32 {
-        TestFail(
-            b"PUT HIDDEN 1 must hide the fighter\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = (GENO_MOTION_BASE + 1 as i32) as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    if (*st).hidden != 1 as i32 {
-        TestFail(
-            b"HIDDEN must survive a change to another Geno state\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    if (*st).hidden != 0 as i32 {
-        TestFail(
-            b"a non-Geno action must clear HIDDEN\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    if GenoGame_TestStartFrame(&raw mut t_fp, T3_GL) != 90.0f32
-        || GenoGame_TestStartFrame(&raw mut t_fp, T3_UP) != 0.0f32
-    {
-        TestFail(
-            b"Glide must start at pose_center (90); other states at frame 0\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.ground_or_air = GA_Air;
-    t_fp.motion_id = (GENO_MOTION_BASE + 1 as i32) as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 3 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 3 as i32
-        || (*st).move_i[4 as i32 as usize] != 1 as i32
-        || (*st).enter_from != GENO_MOTION_BASE + 1 as i32
-    {
-        TestFail(
-            b"a Glide entered from the up-B state must be marked helpless\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.pressed_buttons = HSD_PAD_R as HSD_Pad;
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 3 as i32))
-        .input_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    t_fp.input.pressed_buttons = 0 as HSD_Pad;
-    if t_fp.motion_id != GENO_MOTION_BASE + 4 as i32 {
-        TestFail(
-            b"shield in the Glide must go to GlideEnd\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 1 as i32);
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 4 as i32))
-        .anim_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    if GenoGame_TestLastTarget()
-        != (0 as u32 & 15 as u32)
-            << 28 as i32
-            | ftCo_MS_FallSpecial as i32 as u32
-                & 0xffff as u32
-    {
-        TestFail(
-            b"GlideEnd after a script-entered glide must end in FallSpecial\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.motion_id = (GENO_MOTION_BASE + 2 as i32) as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 3 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 3 as i32
-        || (*st).move_i[4 as i32 as usize] != 0 as i32
-    {
-        TestFail(
-            b"a Glide from GlideStart must not be helpless\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
 pub unsafe extern "C" fn test_geno_v3_many_states() -> i32 {
     melee_core::ct!("test_geno_v3_many_states");
     static mut head: [i8; 51] = unsafe {
@@ -5503,664 +4920,6 @@ pub unsafe extern "C" fn test_geno_v3_many_states() -> i32 {
         );
         rc = 1 as i32;
     }
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn test_geno_v3_cape() -> i32 {
-    melee_core::ct!("test_geno_v3_cape");
-    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
-    let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    if Geno_TestInstall(&raw const t_cape_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the cape profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.facing_dir = 1.0f32;
-    t_fp.self_vel.x = 2.0f32 as f32;
-    t_fp.self_vel.y = -1.0f32 as f32;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    if Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_LW as i32)
-        != 1 as i32
-        || t_fp.motion_id != GENO_MOTION_BASE + 1 as i32
-    {
-        TestFail(
-            b"specials.air_lw -> CapeStartAir\0" as *const u8
-                as *const i8,
-        );
-        GenoGame_TestCapture(0 as i32, 0 as i32);
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    if t_fp.self_vel.x != 1.0f32 || t_near(t_fp.self_vel.y, -0.4f32) == 0 {
-        TestFail(
-            b"cape start must keep the momentum at 0.5 x / 0.4 y\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 1 as i32);
-    t_fp.input.lstick[0 as i32 as usize].x = -1.0f32 as f32;
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 12 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if t_fp.self_vel.x != 1.0f32 || t_near(t_fp.self_vel.y, -0.4f32) == 0 {
-        TestFail(
-            b"cape frames 0-11 must hold the kept momentum (no gravity, no steering)\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_near(t_fp.self_vel.x, 0.5f32) == 0 || t_near(t_fp.self_vel.y, 0.1f32) == 0 {
-        TestFail(
-            b"cape frame 12 must steer by 0.5 toward the stick (vel 0.5, 0.1)\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    f = 0 as i32;
-    while f < 10 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if t_near(t_fp.self_vel.x, -2.5f32) == 0 || t_near(t_fp.self_vel.y, 2.5f32) == 0 {
-        TestFail(
-            b"cape steering must reach stick x 2.5 on both axes\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.held_buttons[0 as i32 as usize] = HSD_PAD_B as HSD_Pad;
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 1 as i32 {
-        TestFail(
-            b"cape must not reappear before frame 26\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.ground_or_air = GA_Ground;
-    if GenoGame_TestPairSwap(&raw mut t_fp, GENO_BHV_CAPE as i32)
-        != 1 as i32
-        || t_fp.motion_id != GENO_MOTION_BASE + 0 as i32
-        || (*st).enter_keep == 0
-        || (*st).move_i[0 as i32 as usize] != 23 as i32
-    {
-        TestFail(
-            b"a landed cape start must swap to CapeStart, frame and counter kept\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.ground_or_air = GA_Air;
-    GenoGame_TestPairSwap(&raw mut t_fp, GENO_BHV_CAPE as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 1 as i32);
-    f = 0 as i32;
-    while f < 3 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id
-        != GENO_MOTION_BASE + (2 as i32 + 3 as i32)
-        || (*st).move_i[1 as i32 as usize] != 12 as i32
-    {
-        TestFail(
-            b"B held + stick back at frame 26 (air) must reappear in CapeFAir\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = ftCo_MS_Wait as i32 as FtMotionId;
-    t_fp.ground_or_air = GA_Ground;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_LW as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 0 as i32);
-    t_fp.input.held_buttons[0 as i32 as usize] = 0 as HSD_Pad;
-    t_fp.input.lstick[0 as i32 as usize].x = 0.0f32 as f32;
-    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    f = 0 as i32;
-    while f < 26 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 8 as i32
-        || (*st).move_i[1 as i32 as usize] != 0 as i32
-    {
-        TestFail(
-            b"nothing held at frame 26 on the ground must reappear in CapeEnd\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    t_fp.ground_or_air = GA_Air;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_LW as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 1 as i32);
-    t_fp.input.held_buttons[0 as i32 as usize] = HSD_PAD_A as HSD_Pad;
-    f = 0 as i32;
-    while f < 26 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    t_fp.input.held_buttons[0 as i32 as usize] = 0 as HSD_Pad;
-    if t_fp.motion_id
-        != GENO_MOTION_BASE + (2 as i32 + 1 as i32)
-    {
-        TestFail(
-            b"A held with a neutral stick (air) must reappear in CapeNAir\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    r = Geno_MotionRow(
-        &raw mut t_fp,
-        GENO_MOTION_BASE + (2 as i32 + 1 as i32),
-    );
-    t_fp.anon_594.anon_0.set_x594_b0(1 as u8 as u8);
-    t_fp.x6A4_transNOffset.z = 2.0f32 as f32;
-    t_fp.x6A4_transNOffset.y = 0.0f32 as f32;
-    (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    t_fp.facing_dir = -1.0f32;
-    (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.self_vel.x != 2.0f32 {
-        TestFail(
-            b"facing \"entry\": the reappear's travel must keep the entry facing after a turn\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.anon_594.anon_0.set_x594_b0(0 as u8 as u8);
-    t_fp.facing_dir = 1.0f32;
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn test_geno_v3_drill() -> i32 {
-    melee_core::ct!("test_geno_v3_drill");
-    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
-    let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    if Geno_TestInstall(&raw const t_drill_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the drill profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.facing_dir = 1.0f32;
-    t_fp.self_vel.x = 2.0f32 as f32;
-    t_fp.self_vel.y = -1.0f32 as f32;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_S as i32);
-    if t_fp.motion_id != GENO_MOTION_BASE + 1 as i32
-        || t_fp.self_vel.x != 1.0f32 || t_fp.self_vel.y != 1.0f32
-    {
-        TestFail(
-            b"air drill start: vx x 0.5, vy = 1.0\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.ground_or_air = GA_Ground;
-    t_fp.gr_vel = 0.7f32;
-    if GenoGame_TestPairSwap(&raw mut t_fp, GENO_BHV_DRILL_START as i32)
-        != 1 as i32
-        || t_fp.motion_id != GENO_MOTION_BASE + 0 as i32
-        || t_fp.gr_vel != 0.7f32
-    {
-        TestFail(
-            b"a landed drill start must swap to the ground start, speeds untouched\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.ground_or_air = GA_Air;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_S as i32);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 2 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 2 as i32);
-    if t_fp.motion_id != GENO_MOTION_BASE + 2 as i32 {
-        TestFail(
-            b"could not enter the rush\0" as *const u8 as *const i8,
-        );
-        GenoGame_TestCapture(0 as i32, 0 as i32);
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 0 as i32;
-    while f < 45 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if t_near((*st).move_f[0 as i32 as usize], 135.0f32) == 0
-        || !(t_fp.self_vel.x < 0.0f32) || !(t_fp.self_vel.y > 0.0f32)
-    {
-        TestFail(
-            b"45 frames of stick up must pitch the rush to 135 deg (no limit): back and up\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    t_fp.deal_dmg_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 2 as i32
-        || (*st).move_i[1 as i32 as usize] != 1 as i32
-    {
-        TestFail(
-            b"a hit must be recorded but must not end the rush\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 1 as i32);
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 4 as i32
-        || t_fp.self_vel.x != -1.0f32 || t_near(t_fp.self_vel.y, 2.1f32) == 0
-    {
-        TestFail(
-            b"the rush ending in the air must go to the air end with the pop (-1, 2.1)\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 4 as i32))
-        .anim_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    if GenoGame_TestLastTarget()
-        != (0 as u32 & 15 as u32)
-            << 28 as i32
-            | ftCo_MS_FallSpecial as i32 as u32
-                & 0xffff as u32
-    {
-        TestFail(
-            b"the air end must end in FallSpecial even after a hit\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.motion_id = (GENO_MOTION_BASE + 2 as i32) as FtMotionId;
-    Geno_OnActionChange(&raw mut t_gobj);
-    t_fp.ground_or_air = GA_Ground;
-    GenoGame_TestCapture(1 as i32, 1 as i32);
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 3 as i32 {
-        TestFail(
-            b"the rush ending on the floor must go to the ground end\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn t_drill_rush() -> *mut MotionState {
-    melee_core::ct!("t_drill_rush");
-    t_fp.ground_or_air = GA_Air;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_S as i32);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
-        << 26 as i32) as u32
-        | (GENO_SUB_CHG as i32 as u32
-            & 63 as u32) << 20 as i32
-        | (2 as i32 as u32 & 15 as u32)
-            << 16 as i32
-        | ((GENO_COND_ALWAYS as i32 & 0xff as i32)
-            << 8 as i32
-            | (if 0 as i32 != 0 {
-                0x80 as i32
-            } else {
-                0 as i32
-            })
-            | (0 as i32 & 7 as i32)
-                << 4 as i32
-            | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = ((2 as u32
-        & 15 as u32) << 28 as i32
-        | 2 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    Geno_PreAnim(&raw mut t_gobj);
-    return if t_fp.motion_id == GENO_MOTION_BASE + 2 as i32 {
-        Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 2 as i32)
-    } else {
-        ::core::ptr::null_mut::<MotionState>()
-    };
-}
-
-pub unsafe extern "C" fn test_geno_v4_drill_pose() -> i32 {
-    melee_core::ct!("test_geno_v4_drill_pose");
-    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
-    let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    if Geno_TestInstall(&raw const t_drill_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the drill profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.facing_dir = 1.0f32;
-    GenoGame_TestPoseReset(99.0f32);
-    r = t_drill_rush();
-    if r.is_null() || GenoGame_TestModelRotX() != 0.0f32 {
-        TestFail(
-            b"entering the rush must set the model level (rot x 0)\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    if r.is_null() {
-        GenoGame_TestCapture(0 as i32, 0 as i32);
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-    f = 1 as i32;
-    while f <= 10 as i32 {
-        let mut want: f32 = 0.;
-        let mut trav: f32 = 0.;
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        want = (3.0f32 * f as f32) as f32;
-        trav = (atan2f(
-            t_fp.self_vel.y as f32,
-            t_fp.self_vel.x as f32 * t_fp.facing_dir,
-        ) / T_D2R) as f32;
-        if t_near((*st).move_f[0 as i32 as usize], want) == 0
-            || t_near(GenoGame_TestModelRotX(), -want * T_D2R) == 0
-            || !(trav - want < 0.01f32 && want - trav < 0.01f32)
-        {
-            TestFail(
-                b"steering up (facing right): rot x = -pitch, travel angle = pitch, every frame\0"
-                    as *const u8 as *const i8,
-            );
-            rc = 1 as i32;
-            break;
-        } else {
-            f += 1;
-        }
-    }
-    t_fp.facing_dir = -1.0f32;
-    f = 0 as i32;
-    while f < 5 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if t_near((*st).move_f[0 as i32 as usize], 45.0f32) == 0
-        || t_near(GenoGame_TestModelRotX(), -45.0f32 * T_D2R) == 0
-        || !(t_fp.self_vel.x < 0.0f32) || !(t_fp.self_vel.y > 0.0f32)
-    {
-        TestFail(
-            b"facing left: rot x = -45 deg (nose up), travel up-left\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = -1.0f32 as f32;
-    f = 0 as i32;
-    while f < 20 as i32 {
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        f += 1;
-    }
-    if t_near((*st).move_f[0 as i32 as usize], -15.0f32) == 0
-        || t_near(GenoGame_TestModelRotX(), 15.0f32 * T_D2R) == 0
-        || !(t_fp.self_vel.y < 0.0f32)
-    {
-        TestFail(
-            b"steering down to -15 deg: rot x = +15 deg (nose down), travel down\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    t_fp.facing_dir = 1.0f32;
-    GenoGame_TestCapture(1 as i32, 1 as i32);
-    (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
-    if t_fp.motion_id != GENO_MOTION_BASE + 4 as i32
-        || t_near(GenoGame_TestModelRotX(), 15.0f32 * T_D2R) == 0
-    {
-        TestFail(
-            b"the end must start with the rush's pitch on the model\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 4 as i32))
-        .phys_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    if t_near((*st).move_f[0 as i32 as usize], -12.0f32) == 0
-        || t_near(GenoGame_TestModelRotX(), 12.0f32 * T_D2R) == 0
-    {
-        TestFail(
-            b"the end eases the pitch (-15 -> -12) and the model follows\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    Geno_TestRestore();
-    if Geno_TestInstall(&raw const t_drill_flat_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the flat drill profile\0" as *const u8
-                as *const i8,
-        );
-        GenoGame_TestCapture(0 as i32, 0 as i32);
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    t_fp.facing_dir = 1.0f32;
-    r = t_drill_rush();
-    if !r.is_null() {
-        t_fp.input.lstick[0 as i32 as usize].y = 1.0f32 as f32;
-        f = 0 as i32;
-        while f < 10 as i32 {
-            (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-            f += 1;
-        }
-        t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
-    }
-    if r.is_null()
-        || t_near((*st).move_f[0 as i32 as usize], 30.0f32) == 0
-        || GenoGame_TestModelRotX() != 0.0f32
-    {
-        TestFail(
-            b"pitch_model 0: the rush pitches (30 deg) with the model level\0"
-                as *const u8 as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    return rc;
-}
-
-pub unsafe extern "C" fn test_geno_v4_tornado_spin() -> i32 {
-    melee_core::ct!("test_geno_v4_tornado_spin");
-    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
-    let mut r: *mut MotionState = ::core::ptr::null_mut::<MotionState>();
-    let mut f: i32 = 0;
-    let mut rc: i32 = 0 as i32;
-    let mut lifts: i32 = 0 as i32;
-    let mut want: f32 = 80.0f32;
-    if Geno_TestInstall(&raw const t_spin_json as *const i8)
-        != 1 as i32
-        || {
-            st = t_setup();
-            st.is_null()
-        }
-    {
-        TestFail(
-            b"could not install the spin profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    GenoGame_TestPoseReset(-1.0f32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.facing_dir = 1.0f32;
-    t_fp.self_vel.x = 0.0f32 as f32;
-    t_fp.self_vel.y = 0.0f32 as f32;
-    t_fp.co_attrs.gravity = 0.08f32;
-    t_fp.co_attrs.terminal_velocity = 2.0f32;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_N as i32);
-    r = Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 0 as i32);
-    if t_fp.motion_id != GENO_MOTION_BASE + 0 as i32
-        || GenoGame_TestJointRate() != 80.0f32
-    {
-        TestFail(
-            b"the tornado must start its spin clip at the start rate (80)\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    f = 1 as i32;
-    while f <= 60 as i32 && rc == 0 as i32 {
-        let mut tap: i32 = (f == 20 as i32
-            || f == 24 as i32) as i32;
-        t_fp.input.pressed_buttons = (if tap != 0 {
-            HSD_PAD_B
-        } else {
-            0 as i32
-        }) as HSD_Pad;
-        (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
-        want -= 1.5f32;
-        if f == 20 as i32 || f == 30 as i32 {
-            want += 16.0f32;
-            lifts += 1;
-        }
-        want = (if want < 0.0f32 {
-            0.0f32
-        } else if want > 80.0f32 {
-            80.0f32
-        } else {
-            want as f32
-        }) as f32;
-        if t_near((*st).move_f[0 as i32 as usize], want) == 0
-            || t_near(GenoGame_TestJointRate(), want) == 0
-        {
-            TestFail(
-                b"the spin clip's rate must be the spin rate (80 - 1.5 a frame, +16 per lift)\0"
-                    as *const u8 as *const i8,
-            );
-            rc = 1 as i32;
-        }
-        f += 1;
-    }
-    if rc == 0 as i32
-        && (*st).move_i[3 as i32 as usize] != lifts
-    {
-        TestFail(
-            b"two lifts expected (frames 20 and 30)\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    t_fp.input.pressed_buttons = 0 as HSD_Pad;
-    GenoGame_TestCapture(0 as i32, 0 as i32);
-    Geno_TestRestore();
-    st = t_v2_setup();
-    if st.is_null() {
-        TestFail(
-            b"could not install the v2 profile\0" as *const u8
-                as *const i8,
-        );
-        Geno_TestRestore();
-        return 1 as i32;
-    }
-    GenoGame_TestCapture(1 as i32, 0 as i32);
-    GenoGame_TestPoseReset(-1.0f32);
-    t_fp.ground_or_air = GA_Air;
-    t_fp.motion_id = ftCo_MS_Fall as i32 as FtMotionId;
-    Geno_SpecialEnter(&raw mut t_gobj, GENO_SP_AIR_N as i32);
-    (*Geno_MotionRow(&raw mut t_fp, GENO_MOTION_BASE + 5 as i32))
-        .phys_cb
-        .expect("non-null function pointer")(&raw mut t_gobj);
-    if GenoGame_TestJointRate() != -1.0f32 {
-        TestFail(
-            b"spin_anim 0 must not touch the animation rate\0" as *const u8
-                as *const i8,
-        );
-        rc = 1 as i32;
-    }
-    GenoGame_TestCapture(0 as i32, 0 as i32);
     Geno_TestRestore();
     return rc;
 }
@@ -6633,7 +5392,7 @@ pub unsafe extern "C" fn test_geno_lab_mismatch_fields() -> i32 {
 
 pub unsafe extern "C" fn t_bitsf(mut b: i32) -> f32 {
     melee_core::ct!("t_bitsf");
-    let mut x: Anon_anon_1134 = unsafe { core::mem::zeroed() };
+    let mut x: Anon_anon_1941 = unsafe { core::mem::zeroed() };
     x.u = b as u32;
     return x.f;
 }
@@ -7479,17 +6238,34 @@ pub unsafe extern "C" fn test_geno_v51() -> i32 {
 
 pub unsafe extern "C" fn test_geno_v54_retired() -> i32 {
     melee_core::ct!("test_geno_v54_retired");
-    if GenoGame_HookFind(b"geno.dash.search\0" as *const u8 as *const i8) != -1
-        || GenoGame_HookFind(b"geno.dash.aim\0" as *const u8 as *const i8) != -1
-        || GenoGame_HookFind(b"geno.brake\0" as *const u8 as *const i8) != -1
+    if GenoGame_HookFind(
+        b"geno.dash.search\0" as *const u8 as *const i8,
+    ) != -(1 as i32)
+        || GenoGame_HookFind(
+            b"geno.dash.aim\0" as *const u8 as *const i8,
+        ) != -(1 as i32)
+        || GenoGame_HookFind(b"geno.brake\0" as *const u8 as *const i8)
+            != -(1 as i32)
     {
-        TestFail(b"a retired v5.4 dash hook still resolves\0" as *const u8 as *const i8);
+        TestFail(
+            b"a retired v5.4 dash hook still resolves\0" as *const u8
+                as *const i8,
+        );
         return 1 as i32;
     }
-    if crate::tu::geno_game::GenoGame_CallbackFind(GENO_CB_PHYS as i32, b"brake\0" as *const u8 as *const i8) != -1
-        || crate::tu::geno_game::GenoGame_CallbackFind(GENO_CB_PHYS as i32, b"multi_dash\0" as *const u8 as *const i8) == -1
+    if GenoGame_CallbackFind(
+        GENO_CB_PHYS as i32,
+        b"brake\0" as *const u8 as *const i8,
+    ) != -(1 as i32)
+        || GenoGame_CallbackFind(
+            GENO_CB_PHYS as i32,
+            b"multi_dash\0" as *const u8 as *const i8,
+        ) == -(1 as i32)
     {
-        TestFail(b"phys names: \"brake\" must be gone and \"multi_dash\" present\0" as *const u8 as *const i8);
+        TestFail(
+            b"phys names: \"brake\" must be gone and \"multi_dash\" present\0"
+                as *const u8 as *const i8,
+        );
         return 1 as i32;
     }
     return 0 as i32;
@@ -9413,7 +8189,7 @@ pub unsafe extern "C" fn test_geno_lua_counter() -> i32 {
         );
         rc = 1 as i32;
     }
-    let mut u: Anon_anon_292 = unsafe { core::mem::zeroed() };
+    let mut u: Anon_anon_294 = unsafe { core::mem::zeroed() };
     u.i = (*lb).slot[0 as i32 as usize];
     if u.f < want as f32 - 0.0001f32
         || u.f > want as f32 + 0.0001f32
@@ -9430,7 +8206,7 @@ pub unsafe extern "C" fn test_geno_lua_counter() -> i32 {
     (*st).action_time = 4 as i32 as i32;
     t_fp.dmg.x1838_percentTemp = 2.0f32;
     Geno_OnHit(&raw mut t_gobj);
-    let mut u_0: Anon_anon_292 = unsafe { core::mem::zeroed() };
+    let mut u_0: Anon_anon_294 = unsafe { core::mem::zeroed() };
     u_0.i = (*lb).slot[0 as i32 as usize];
     if u_0.f != 9.0f32 {
         TestFail(
@@ -9443,7 +8219,7 @@ pub unsafe extern "C" fn test_geno_lua_counter() -> i32 {
     t_fp.motion_id = (GENO_MOTION_BASE + 0 as i32) as FtMotionId;
     t_fp.dmg.x1838_percentTemp = 40.0f32;
     Geno_OnHit(&raw mut t_gobj);
-    let mut u_1: Anon_anon_292 = unsafe { core::mem::zeroed() };
+    let mut u_1: Anon_anon_294 = unsafe { core::mem::zeroed() };
     u_1.i = (*lb).slot[0 as i32 as usize];
     if u_1.f != 30.0f32 {
         TestFail(
@@ -11364,6 +10140,2271 @@ pub unsafe extern "C" fn test_geno_digest_coverage() -> i32 {
     return (rc != 0 as i32) as i32;
 }
 
+pub unsafe extern "C" fn gba_i(mut v: f32) -> i32 {
+    melee_core::ct!("gba_i");
+    return (if v >= 0.0f32 {
+        v as f32 * 1000.0f32 + 0.5f32
+    } else {
+        v as f32 * 1000.0f32 - 0.5f32
+    }) as i32;
+}
+
+pub unsafe extern "C" fn gba_abs(mut v: f32) -> f32 {
+    melee_core::ct!("gba_abs");
+    return if v < 0.0f32 { -v } else { v };
+}
+
+pub unsafe extern "C" fn gba(
+    mut id: *const i8,
+    mut ok: i32,
+    mut meas: i32,
+) {
+    melee_core::ct!("gba");
+    OSReport!(
+        b"GBACC %s %s %d\n\0" as *const u8 as *const i8
+            as *mut i8,
+        id,
+        if ok != 0 {
+            b"PASS\0" as *const u8 as *const i8
+        } else {
+            b"FAIL\0" as *const u8 as *const i8
+        },
+        meas,
+    );
+    if ok == 0 {
+        TestFail(id);
+        gba_rc = 1 as i32;
+    }
+}
+
+pub unsafe extern "C" fn gba_near(
+    mut v: f32,
+    mut target: f32,
+    mut pct: f32,
+) -> i32 {
+    melee_core::ct!("gba_near");
+    let mut d: f32 = gba_abs(v - target);
+    let mut lim: f32 = gba_abs(target) * pct / 100.0f32;
+    return (d <= lim) as i32;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_trig() -> i32 {
+    melee_core::ct!("test_geno_bhv_trig");
+    let mut i: i32 = 0;
+    let mut bad: i32 = 0 as i32;
+    let mut a: f32 = 0.;
+    gba_rc = 0 as i32;
+    gba(
+        b"TRIG-crc\0" as *const u8 as *const i8,
+        (GenoBhv_SinqCrc32() == 0x46cfb3c3 as u32) as i32,
+        (GenoBhv_SinqCrc32() & 0x7fffffff as i32 as u32)
+            as i32,
+    );
+    gba(
+        b"TRIG-anchors\0" as *const u8 as *const i8,
+        (GenoBhv_SinqWord(0 as i32) == 0 as u32
+            && GenoBhv_SinqWord(512 as i32)
+                == 0x3f3504f3 as u32
+            && GenoBhv_SinqWord(1024 as i32)
+                == 0x3f800000 as u32) as i32,
+        0 as i32,
+    );
+    i = 0 as i32;
+    while i < GENO_BHV_SINQ_N - 1 as i32 {
+        if GenoBhv_SinqWord(i + 1 as i32) <= GenoBhv_SinqWord(i) {
+            bad += 1;
+        }
+        i += 1;
+    }
+    gba(
+        b"TRIG-monotonic\0" as *const u8 as *const i8,
+        (bad == 0 as i32) as i32,
+        bad,
+    );
+    bad = 0 as i32;
+    i = -(720 as i32);
+    while i <= 720 as i32 {
+        a = (i as f32 + 0.25f32) as f32;
+        if gba_abs(
+            GenoBhv_SinDeg(a)
+                - sinf(a as f32 * 0.017453292519943295f32) as f32,
+        ) > 2.0e-6f32
+        {
+            bad += 1;
+        }
+        if gba_abs(
+            GenoBhv_CosDeg(a)
+                - cosf(a as f32 * 0.017453292519943295f32) as f32,
+        ) > 2.0e-6f32
+        {
+            bad += 1;
+        }
+        i += 7 as i32;
+    }
+    gba(
+        b"TRIG-vs-libm\0" as *const u8 as *const i8,
+        (bad == 0 as i32) as i32,
+        bad,
+    );
+    gba(
+        b"TRIG-exact\0" as *const u8 as *const i8,
+        (GenoBhv_SinDeg(0.0f32) == 0.0f32 && GenoBhv_SinDeg(90.0f32) == 1.0f32
+            && GenoBhv_SinDeg(-90.0f32) == -1.0f32 && GenoBhv_CosDeg(0.0f32) == 1.0f32
+            && GenoBhv_SinDeg(360.0f32) == 0.0f32) as i32,
+        0 as i32,
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn gbt_gin(mut in_0: *mut GbGlideIn, mut sx: f32, mut sy: f32) {
+    melee_core::ct!("gbt_gin");
+    (*in_0).sx = sx;
+    (*in_0).sy = sy;
+    (*in_0).jump_pressed = 0 as i32 as i32;
+    (*in_0).attack_pressed = 0 as i32 as i32;
+    (*in_0).special_pressed = 0 as i32 as i32;
+    (*in_0).jump_left = 0 as i32 as i32;
+    (*in_0).ground = 0 as i32 as i32;
+    (*in_0).height = -1.0f32 as f32;
+}
+
+pub unsafe extern "C" fn gbt_glide_fly(
+    mut g: *mut GbGlide,
+    mut p: *const GbGlideP,
+    mut slow: i32,
+    mut helpless: i32,
+) {
+    melee_core::ct!("gbt_glide_fly");
+    let mut in_0: GbGlideIn = unsafe { core::mem::zeroed() };
+    let mut i: i32 = 0;
+    GenoBhv_GlideBegin(
+        g,
+        p,
+        1.2f32,
+        0.0f32,
+        1.0f32,
+        0.0f32,
+        slow as i32,
+        helpless as i32,
+        0 as i32,
+    );
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    i = 0 as i32;
+    while i < (*p).start_frames {
+        GenoBhv_GlideStep(g, &raw mut in_0, p);
+        i += 1;
+    }
+}
+
+pub unsafe extern "C" fn test_geno_bhv_glide() -> i32 {
+    melee_core::ct!("test_geno_bhv_glide");
+    let mut p: GbGlideP = unsafe { core::mem::zeroed() };
+    let mut g: GbGlide = unsafe { core::mem::zeroed() };
+    let mut g2: GbGlide = unsafe { core::mem::zeroed() };
+    let mut in_0: GbGlideIn = unsafe { core::mem::zeroed() };
+    let mut e: GbGlideEntry = unsafe { core::mem::zeroed() };
+    let mut i: i32 = 0;
+    let mut n: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut mono: i32 = 0;
+    let mut r1: i32 = 0;
+    let mut r2: i32 = 0;
+    let mut r3: i32 = 0;
+    let mut steady: f32 = 0.;
+    let mut tgt: f32 = 0.;
+    let mut prev: f32 = 0.;
+    let mut first: f32 = 0.;
+    let mut sp600: f32 = 0.;
+    gba_rc = 0 as i32;
+    GenoBhv_GlideParams(&raw mut p);
+    GenoBhv_GlideEntryInit(&raw mut e);
+    r1 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.0f32,
+        0.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        1 as i32,
+    );
+    r2 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.0f32,
+        0.0f32,
+        1.0f32,
+        1 as i32,
+        1 as i32,
+        0 as i32,
+        1 as i32,
+    );
+    r3 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.0f32,
+        0.0f32,
+        1.0f32,
+        2 as i32,
+        1 as i32,
+        0 as i32,
+        1 as i32,
+    );
+    gba(
+        b"G-1\0" as *const u8 as *const i8,
+        (p.max_glides == 2 as i32
+            && r1 == GB_GLENTRY_CHAIN as i32
+            && r2 == GB_GLENTRY_CHAIN as i32
+            && r3 == GB_GLENTRY_NONE as i32) as i32,
+        p.max_glides as i32,
+    );
+    GenoBhv_GlideEntryInit(&raw mut e);
+    e.hold_frames = 0 as i32 as i32;
+    n = 0 as i32;
+    r1 = GB_GLENTRY_NONE as i32;
+    i = 0 as i32;
+    while i < 6 as i32 {
+        r1 = GenoBhv_GlideEntryStep(
+            &raw mut e,
+            &raw mut p,
+            1 as i32,
+            1 as i32,
+            0.1f32,
+            0.0f32,
+            1.0f32,
+            0 as i32,
+            1 as i32,
+            0 as i32,
+            0 as i32,
+        );
+        if r1 != GB_GLENTRY_NONE as i32 {
+            n = i + 1 as i32;
+            break;
+        } else {
+            i += 1;
+        }
+    }
+    ok = (r1 == GB_GLENTRY_HOLD as i32 && n == 6 as i32)
+        as i32;
+    GenoBhv_GlideBegin(
+        &raw mut g,
+        &raw mut p,
+        1.0f32,
+        0.0f32,
+        1.0f32,
+        0.0f32,
+        0 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    ok = (ok != 0 && g.phase == GB_GL_START as i32) as i32;
+    GenoBhv_GlideEntryInit(&raw mut e);
+    r2 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.1f32,
+        -1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    r3 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.1f32,
+        1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    ok = (ok != 0 && r2 == GB_GLENTRY_NONE as i32
+        && r3 == GB_GLENTRY_FLICK as i32) as i32;
+    GenoBhv_GlideEntryInit(&raw mut e);
+    GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.1f32,
+        -1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    i = 0 as i32;
+    while i < 13 as i32 {
+        GenoBhv_GlideEntryStep(
+            &raw mut e,
+            &raw mut p,
+            0 as i32,
+            0 as i32,
+            0.1f32,
+            0.0f32,
+            1.0f32,
+            0 as i32,
+            1 as i32,
+            0 as i32,
+            0 as i32,
+        );
+        i += 1;
+    }
+    r2 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.1f32,
+        1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    ok = (ok != 0 && r2 == GB_GLENTRY_NONE as i32) as i32;
+    GenoBhv_GlideEntryInit(&raw mut e);
+    GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        2.0f32,
+        -1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    r2 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        2.0f32,
+        1.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    ok = (ok != 0 && r2 == GB_GLENTRY_NONE as i32) as i32;
+    GenoBhv_GlideEntryInit(&raw mut e);
+    r3 = GenoBhv_GlideEntryStep(
+        &raw mut e,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+        0.0f32,
+        0.0f32,
+        1.0f32,
+        0 as i32,
+        1 as i32,
+        0 as i32,
+        1 as i32,
+    );
+    ok = (ok != 0 && r3 == GB_GLENTRY_CHAIN as i32) as i32;
+    gba(b"G-13\0" as *const u8 as *const i8, ok, n);
+    GenoBhv_GlideBegin(
+        &raw mut g,
+        &raw mut p,
+        1.2f32,
+        0.0f32,
+        1.0f32,
+        0.0f32,
+        0 as i32,
+        0 as i32,
+        0 as i32,
+    );
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    n = 0 as i32;
+    while g.phase == GB_GL_START as i32 && n < 100 as i32 {
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    gba(
+        b"G-14\0" as *const u8 as *const i8,
+        (n == 12 as i32 && g.phase == GB_GL_FLY as i32)
+            as i32,
+        n,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    tgt = GenoBhv_SinDeg(5.0f32);
+    tgt = tgt * p.gk;
+    tgt = tgt / p.drag;
+    first = g.speed;
+    prev = g.speed;
+    mono = 1 as i32;
+    i = 0 as i32;
+    while i < 600 as i32 {
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        if g.speed < prev {
+            mono = 0 as i32;
+        }
+        prev = g.speed;
+        i += 1;
+    }
+    sp600 = g.speed;
+    steady = g.speed;
+    ok = (gba_near(sp600, tgt, 3.0f32) != 0 && mono != 0 && first == p.s_start)
+        as i32;
+    gba(b"G-2\0" as *const u8 as *const i8, ok, gba_i(sp600));
+    first = tgt;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    i = 0 as i32;
+    while i < 300 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        i += 1;
+    }
+    g2 = g;
+    ok = 1 as i32;
+    n = 0 as i32;
+    i = 0 as i32;
+    while i < 80 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, -1.0f32);
+        prev = g.speed;
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        if g.theta == p.theta_def - p.r_down {
+            if g.speed < prev {
+                ok = 0 as i32;
+            }
+            if g.speed > prev {
+                n += 1;
+            }
+        }
+        i += 1;
+    }
+    r1 = (ok != 0 && n > 10 as i32) as i32;
+    g = g2;
+    ok = 1 as i32;
+    n = 0 as i32;
+    i = 0 as i32;
+    while i < 80 as i32 && g.phase == GB_GL_FLY as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, 1.0f32);
+        prev = g.speed;
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        if g.theta == p.theta_def + p.r_up {
+            if g.speed > prev {
+                ok = 0 as i32;
+            }
+            if g.speed < prev {
+                n += 1;
+            }
+        }
+        i += 1;
+    }
+    r2 = (ok != 0 && n > 10 as i32) as i32;
+    g = g2;
+    ok = 1 as i32;
+    i = 0 as i32;
+    while i < 60 as i32 {
+        gbt_gin(&raw mut in_0, 1.0f32, 0.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        i += 1;
+    }
+    r3 = (g.theta < p.theta_def) as i32;
+    gba(
+        b"G-3\0" as *const u8 as *const i8,
+        (r1 != 0 && r2 != 0 && r3 != 0) as i32,
+        r1 * 100 as i32 + r2 * 10 as i32 + r3,
+    );
+    g = g2;
+    n = 0 as i32;
+    while g.phase == GB_GL_FLY as i32 && n < 400 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, 1.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    gba(
+        b"G-4\0" as *const u8 as *const i8,
+        (g.phase == GB_GL_END as i32
+            && g.end_reason == GB_GLE_STALL as i32
+            && n == 43 as i32) as i32,
+        n,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    n = 0 as i32;
+    while g.theta != 80.0f32 && n < 100 as i32
+        && g.phase == GB_GL_FLY as i32
+    {
+        gbt_gin(&raw mut in_0, 0.0f32, 1.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    gba(
+        b"G-5\0" as *const u8 as *const i8,
+        (g.theta == 80.0f32 && n == 29 as i32) as i32,
+        n,
+    );
+    gba(
+        b"G-7\0" as *const u8 as *const i8,
+        (n == 29 as i32) as i32,
+        n,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    n = 0 as i32;
+    while g.theta != -65.0f32 && n < 100 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, -1.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    gba(
+        b"G-6\0" as *const u8 as *const i8,
+        (g.theta == -65.0f32) as i32,
+        n,
+    );
+    gba(
+        b"G-8\0" as *const u8 as *const i8,
+        (p.attack_damage == 12 as i32) as i32,
+        p.attack_damage as i32,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.attack_pressed = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (g.phase == GB_GL_ATTACK as i32) as i32;
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.ground = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (ok != 0 && g.phase == GB_GL_LAND_CANCEL as i32
+        && g.lag == 0 as i32) as i32;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    g.vy = -1.0f32 as f32;
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.special_pressed = 1 as i32 as i32;
+    in_0.height = 5.0f32 as f32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (ok != 0
+        && g.attack_buf
+            == p.attack_buf_frames as i32 - 0 as i32
+        && g.phase == GB_GL_ATTACK as i32) as i32;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    g.attack_buf = 3 as i32 as i32;
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.ground = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (ok != 0 && g.phase == GB_GL_LAND_CANCEL as i32
+        && g.lag == 0 as i32) as i32;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.ground = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (ok != 0 && g.phase == GB_GL_LAND as i32 && g.lag == p.land_lag)
+        as i32;
+    gba(
+        b"G-9\0" as *const u8 as *const i8,
+        ok,
+        g.lag as i32,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    g.theta = -40.0f32 as f32;
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.ground = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (g.phase == GB_GL_TRIP as i32 && g.lag == p.trip_frames)
+        as i32;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        0 as i32,
+    );
+    g.theta = -20.0f32 as f32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    ok = (ok != 0 && g.phase == GB_GL_LAND as i32) as i32;
+    gba(
+        b"G-10\0" as *const u8 as *const i8,
+        ok,
+        g.lag as i32,
+    );
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        1 as i32,
+    );
+    n = 0 as i32;
+    while g.phase == GB_GL_FLY as i32 && n < 400 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, 1.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    ok = (g.phase == GB_GL_END as i32
+        && g.end_reason == GB_GLE_STALL as i32
+        && g.helpless == 1 as i32) as i32;
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        0 as i32,
+        1 as i32,
+    );
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    in_0.attack_pressed = 1 as i32 as i32;
+    GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+    gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+    n = 0 as i32;
+    while g.phase == GB_GL_ATTACK as i32 && n < 100 as i32
+    {
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        n += 1;
+    }
+    ok = (ok != 0 && g.phase == GB_GL_END as i32
+        && g.end_reason == GB_GLE_ATTACK_END as i32
+        && g.helpless == 1 as i32 && n == p.attack_frames)
+        as i32;
+    gba(b"G-11\0" as *const u8 as *const i8, ok, n);
+    gbt_glide_fly(
+        &raw mut g,
+        &raw mut p,
+        1 as i32,
+        0 as i32,
+    );
+    i = 0 as i32;
+    while i < 6000 as i32 {
+        gbt_gin(&raw mut in_0, 0.0f32, 0.0f32);
+        GenoBhv_GlideStep(&raw mut g, &raw mut in_0, &raw mut p);
+        i += 1;
+    }
+    tgt = first * p.chain_speed_mul;
+    gba(
+        b"G-12\0" as *const u8 as *const i8,
+        gba_near(g.speed, tgt, 3.0f32),
+        gba_i(g.speed),
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn gbt_tin(
+    mut in_0: *mut GbTornadoIn,
+    mut sx: f32,
+    mut press: i32,
+    mut jump: i32,
+    mut air: i32,
+) {
+    melee_core::ct!("gbt_tin");
+    (*in_0).sx = sx;
+    (*in_0).special_pressed = press as i32;
+    (*in_0).jump_held = jump as i32;
+    (*in_0).airborne = air as i32;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_tornado() -> i32 {
+    melee_core::ct!("test_geno_bhv_tornado");
+    let mut p: GbTornadoP = unsafe { core::mem::zeroed() };
+    let mut t: GbTornado = unsafe { core::mem::zeroed() };
+    let mut in_0: GbTornadoIn = unsafe { core::mem::zeroed() };
+    let mut c: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut n: i32 = 0;
+    let mut first_loop: i32 = 0;
+    let mut last_loop: i32 = 0;
+    let mut loop_frames: i32 = 0;
+    let mut end_frames: i32 = 0;
+    let mut k0: i32 = 0;
+    let mut prevhit: i32 = 0;
+    let mut gaps: [i32; 8] = [0; 8];
+    let mut ng: i32 = 0;
+    let mut minhit: i32 = 0;
+    let mut reads: [i32; 16] = [0; 16];
+    let mut nr: i32 = 0;
+    let mut endk: i32 = 0;
+    let mut bad: i32 = 0;
+    let mut y: f32 = 0.;
+    let mut peak_a: f32 = 0.;
+    let mut peak_b: f32 = 0.;
+    let mut maxspin: f32 = 0.;
+    let mut prevspin: f32 = 0.;
+    gba_rc = 0 as i32;
+    GenoBhv_TornadoParams(&raw mut p);
+    GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+    first_loop = -(1 as i32);
+    last_loop = -(1 as i32);
+    loop_frames = 0 as i32;
+    end_frames = 0 as i32;
+    maxspin = 0.0f32 as f32;
+    ng = 0 as i32;
+    prevhit = -(1 as i32);
+    ok = 1 as i32;
+    c = 0 as i32;
+    while c < 200 as i32 && t.phase != GB_TN_DONE as i32 {
+        gbt_tin(
+            &raw mut in_0,
+            0.0f32,
+            0 as i32,
+            0 as i32,
+            1 as i32,
+        );
+        GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+        if t.phase == GB_TN_LOOP as i32 {
+            if first_loop < 0 as i32 {
+                first_loop = c;
+            }
+            last_loop = c;
+            loop_frames += 1;
+        }
+        if t.phase == GB_TN_END as i32
+            || t.phase == GB_TN_DONE as i32
+                && t.end_t > 0 as i32
+        {
+            end_frames += 1;
+        }
+        if t.spin > maxspin {
+            maxspin = t.spin;
+        }
+        if t.hit_spawn != 0 {
+            if prevhit >= 0 as i32 && ng < 8 as i32 {
+                let fresh232 = ng;
+                ng = ng + 1;
+                gaps[fresh232 as usize] = c - prevhit;
+            }
+            prevhit = c;
+        }
+        c += 1;
+    }
+    gba(
+        b"T-1\0" as *const u8 as *const i8,
+        (first_loop == 12 as i32) as i32,
+        first_loop,
+    );
+    gba(
+        b"T-2\0" as *const u8 as *const i8,
+        (last_loop == 58 as i32
+            && loop_frames == 47 as i32) as i32,
+        last_loop,
+    );
+    gba(
+        b"T-3\0" as *const u8 as *const i8,
+        (end_frames == 29 as i32) as i32,
+        end_frames,
+    );
+    gba(
+        b"T-9\0" as *const u8 as *const i8,
+        (maxspin <= 80.0f32) as i32,
+        gba_i(maxspin),
+    );
+    gba(
+        b"T-16\0" as *const u8 as *const i8,
+        (t.hits == 6 as i32) as i32,
+        t.hits as i32,
+    );
+    ok = 1 as i32;
+    n = 0 as i32;
+    k0 = 0 as i32;
+    while k0 < 2 as i32 {
+        let mut air: i32 = k0;
+        let mut mx: i32 = 0 as i32;
+        let mut cnt: i32 = 0 as i32;
+        let mut spawn_at: i32 = 0 as i32;
+        GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+        c = 0 as i32;
+        while c < 200 as i32
+            && t.phase != GB_TN_DONE as i32
+        {
+            gbt_tin(
+                &raw mut in_0,
+                0.0f32,
+                0 as i32,
+                0 as i32,
+                air,
+            );
+            GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+            if t.final_active != 0 {
+                cnt += 1;
+                mx = t.end_t as i32;
+            }
+            if t.final_spawn != 0 {
+                spawn_at = t.end_t as i32;
+            }
+            c += 1;
+        }
+        ok = (ok != 0 && spawn_at == 1 as i32
+            && mx
+                == (if air != 0 {
+                    2 as i32
+                } else {
+                    3 as i32
+                })
+            && cnt
+                == (if air != 0 {
+                    2 as i32
+                } else {
+                    3 as i32
+                })) as i32;
+        n = n * 10 as i32 + mx;
+        k0 += 1;
+    }
+    gba(b"T-4\0" as *const u8 as *const i8, ok, n);
+    ok = (ng >= 2 as i32
+        && gaps[0 as i32 as usize] == 4 as i32
+        && gaps[1 as i32 as usize] == 5 as i32)
+        as i32;
+    n = if ng >= 2 as i32 {
+        gaps[0 as i32 as usize] * 10 as i32
+            + gaps[1 as i32 as usize]
+    } else {
+        0 as i32
+    };
+    gba(b"T-6\0" as *const u8 as *const i8, ok, n);
+    let mut q: GbTornadoP = p;
+    let mut lastc: i32 = -(1 as i32);
+    let mut mingap: i32 = 1000 as i32;
+    q.spin0 = 30.0f32 as f32;
+    q.spin_max = 30.0f32 as f32;
+    q.decay_a = 0.0f32 as f32;
+    q.decay_b = 0.0f32 as f32;
+    GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+    c = 0 as i32;
+    while c < 140 as i32 {
+        gbt_tin(
+            &raw mut in_0,
+            0.0f32,
+            0 as i32,
+            0 as i32,
+            1 as i32,
+        );
+        GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut q);
+        if t.hit_spawn != 0 && t.k > 1 as i32 {
+            if lastc >= 0 as i32 && c - lastc < mingap {
+                mingap = c - lastc;
+            }
+            lastc = c;
+        }
+        c += 1;
+    }
+    gba(
+        b"T-7\0" as *const u8 as *const i8,
+        (mingap == 12 as i32) as i32,
+        mingap,
+    );
+    GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+    nr = 0 as i32;
+    endk = 0 as i32;
+    y = 0.0f32 as f32;
+    bad = 0 as i32;
+    c = 0 as i32;
+    while c < 400 as i32 && t.phase != GB_TN_END as i32
+        && t.phase != GB_TN_DONE as i32
+    {
+        let mut latch_before: i32 = 0;
+        let mut k_before: i32 = t.k as i32;
+        let mut was_loop: i32 = (t.phase
+            == GB_TN_LOOP as i32) as i32;
+        gbt_tin(
+            &raw mut in_0,
+            0.0f32,
+            1 as i32,
+            0 as i32,
+            1 as i32,
+        );
+        latch_before = t.press_latch as i32;
+        GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+        if t.phase == GB_TN_LOOP as i32
+            && t.press_latch == 0 as i32
+        {
+            if nr < 16 as i32 {
+                let fresh233 = nr;
+                nr = nr + 1;
+                reads[fresh233 as usize] = t.k as i32
+                    - 1 as i32;
+            }
+        } else if t.phase == GB_TN_LOOP as i32
+            && t.press_latch == 1 as i32 && t.k >= 1 as i32
+            && (t.k as i32 - 1 as i32)
+                < 70 as i32
+            && (t.k as i32 - 1 as i32)
+                % 10 as i32 == 0 as i32
+        {
+            bad += 1;
+        }
+        y += t.vy;
+        endk = t.k as i32;
+        c += 1;
+    }
+    ok = (nr == 7 as i32 && bad == 0 as i32)
+        as i32;
+    c = 0 as i32;
+    while c < nr {
+        ok = (ok != 0 && reads[c as usize] == c * 10 as i32)
+            as i32;
+        c += 1;
+    }
+    gba(b"T-8\0" as *const u8 as *const i8, ok, nr);
+    gba(
+        b"T-5\0" as *const u8 as *const i8,
+        (endk == 98 as i32
+            && endk - 47 as i32 == 51 as i32
+            && endk - 47 as i32 <= 70 as i32)
+            as i32,
+        endk - 47 as i32,
+    );
+    gba(
+        b"T-15\0" as *const u8 as *const i8,
+        (y > 0.0f32 && gba_i(y) == 118769 as i32) as i32,
+        gba_i(y),
+    );
+    OSReport!(
+        b"GBACC T-15 note: net vertical displacement at k=98 is %d/1000 units\n\0"
+            as *const u8 as *const i8 as *mut i8,
+        gba_i(y),
+    );
+    gba(
+        b"T-10\0" as *const u8 as *const i8,
+        (p.loop_damage == 1 as i32
+            && p.final_damage == 3 as i32) as i32,
+        p.loop_damage as i32 * 10 as i32
+            + p.final_damage as i32,
+    );
+    ok = 1 as i32;
+    k0 = 0 as i32;
+    while k0 < 2 as i32 {
+        GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+        c = 0 as i32;
+        while c < 200 as i32
+            && t.phase != GB_TN_DONE as i32
+        {
+            gbt_tin(
+                &raw mut in_0,
+                0.0f32,
+                0 as i32,
+                0 as i32,
+                k0,
+            );
+            GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+            c += 1;
+        }
+        ok = (ok != 0 && t.phase == GB_TN_DONE as i32 && t.helpless == k0)
+            as i32;
+        k0 += 1;
+    }
+    gba(
+        b"T-11\0" as *const u8 as *const i8,
+        ok,
+        0 as i32,
+    );
+    GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+    ok = 1 as i32;
+    c = 0 as i32;
+    while c < 200 as i32 && t.phase != GB_TN_DONE as i32 {
+        gbt_tin(
+            &raw mut in_0,
+            0.0f32,
+            0 as i32,
+            0 as i32,
+            1 as i32,
+        );
+        GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+        if t.phase == GB_TN_LOOP as i32 {
+            ok = (ok != 0 && t.ledge_locked != 0) as i32;
+        } else if t.phase == GB_TN_END as i32
+            || t.phase == GB_TN_DONE as i32
+                && t.end_t > 0 as i32
+        {
+            ok = (ok != 0
+                && t.ledge_locked
+                    == (t.end_t <= 6 as i32) as i32)
+                as i32;
+        }
+        c += 1;
+    }
+    gba(
+        b"T-12\0" as *const u8 as *const i8,
+        ok,
+        0 as i32,
+    );
+    peak_a = -1000.0f32 as f32;
+    peak_b = -1000.0f32 as f32;
+    k0 = 0 as i32;
+    while k0 < 2 as i32 {
+        let mut yy: f32 = 0.0f32;
+        let mut pk: f32 = -1000.0f32;
+        GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+        c = 0 as i32;
+        while c < 200 as i32
+            && t.phase != GB_TN_DONE as i32
+        {
+            gbt_tin(
+                &raw mut in_0,
+                0.0f32,
+                0 as i32,
+                k0,
+                1 as i32,
+            );
+            GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+            yy += t.vy;
+            if yy > pk {
+                pk = yy;
+            }
+            c += 1;
+        }
+        if k0 != 0 {
+            peak_a = pk;
+        } else {
+            peak_b = pk;
+        }
+        k0 += 1;
+    }
+    gba(
+        b"T-13\0" as *const u8 as *const i8,
+        (peak_a > peak_b) as i32,
+        gba_i(peak_a - peak_b),
+    );
+    GenoBhv_TornadoBegin(&raw mut t, 0.0f32, 0.0f32);
+    c = 0 as i32;
+    while c < 60 as i32 {
+        gbt_tin(
+            &raw mut in_0,
+            1.0f32,
+            0 as i32,
+            0 as i32,
+            1 as i32,
+        );
+        GenoBhv_TornadoStep(&raw mut t, &raw mut in_0, &raw mut p);
+        c += 1;
+    }
+    gba(
+        b"T-14\0" as *const u8 as *const i8,
+        gba_near(t.vx, 1.1f32, 3.0f32),
+        gba_i(t.vx),
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_drill() -> i32 {
+    melee_core::ct!("test_geno_bhv_drill");
+    let mut p: GbDrillP = unsafe { core::mem::zeroed() };
+    let mut d: GbDrill = unsafe { core::mem::zeroed() };
+    let mut in_0: GbDrillIn = unsafe { core::mem::zeroed() };
+    let mut c: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut first: i32 = 0;
+    let mut cnt: i32 = 0;
+    let mut k0: i32 = 0;
+    let mut last_hit: i32 = 0;
+    let mut steer: i32 = 0;
+    let mut mx: i32 = 0;
+    let mut fa: i32 = 0;
+    let mut hit_frames: [i32; 16] = [0; 16];
+    let mut total_frames: i32 = 0 as i32;
+    let mut dist: f32 = 0.;
+    let mut dist_after: f32 = 0.;
+    gba_rc = 0 as i32;
+    GenoBhv_DrillParams(&raw mut p);
+    GenoBhv_DrillBegin(&raw mut d, &raw mut p, 1.0f32, 0.0f32);
+    gba(
+        b"D-12\0" as *const u8 as *const i8,
+        (d.psi == -20.0f32) as i32,
+        gba_i(d.psi),
+    );
+    GenoBhv_DrillBegin(&raw mut d, &raw mut p, 1.0f32, 0.0f32);
+    first = -(1 as i32);
+    cnt = 0 as i32;
+    last_hit = -(1 as i32);
+    dist = 0.0f32 as f32;
+    dist_after = 0.0f32 as f32;
+    ok = 1 as i32;
+    fa = 0 as i32;
+    c = 0 as i32;
+    while c < 200 as i32 && d.done == 0 {
+        in_0.sy = 0.0f32 as f32;
+        in_0.airborne = 1 as i32 as i32;
+        in_0.slope = 0.0f32 as f32;
+        GenoBhv_DrillStep(&raw mut d, &raw mut in_0, &raw mut p);
+        total_frames = c + 1 as i32;
+        if d.hit_spawn != 0 {
+            if first < 0 as i32 {
+                first = c;
+            }
+            if cnt < 16 as i32 {
+                hit_frames[cnt as usize] = c;
+            }
+            cnt += 1;
+            last_hit = c;
+        }
+        if c >= p.move0 && c <= p.hit_end {
+            dist = dist + d.speed;
+            if c >= 20 as i32 {
+                dist_after = dist_after + d.speed;
+            }
+        }
+        if c == 65 as i32 && d.phase != GB_DR_RUSH as i32 {
+            ok = 0 as i32;
+        }
+        if c == 66 as i32 && d.phase != GB_DR_FINAL as i32
+        {
+            ok = 0 as i32;
+        }
+        if c == 66 as i32 {
+            fa = gba_i(d.vy);
+        }
+        c += 1;
+    }
+    gba(
+        b"D-1\0" as *const u8 as *const i8,
+        (first == 26 as i32) as i32,
+        first,
+    );
+    gba(
+        b"D-2\0" as *const u8 as *const i8,
+        (cnt == 10 as i32) as i32,
+        cnt,
+    );
+    let mut cad: i32 = (cnt == 10 as i32)
+        as i32;
+    c = 0 as i32;
+    while c < 10 as i32 && c < cnt {
+        cad = (cad != 0
+            && hit_frames[c as usize]
+                == 26 as i32 + 4 as i32 * c)
+            as i32;
+        c += 1;
+    }
+    gba(
+        b"D-3\0" as *const u8 as *const i8,
+        (cad != 0 && last_hit == 62 as i32) as i32,
+        last_hit,
+    );
+    gba(
+        b"D-4\0" as *const u8 as *const i8,
+        (ok != 0 && last_hit <= 65 as i32) as i32,
+        last_hit,
+    );
+    gba(
+        b"D-6\0" as *const u8 as *const i8,
+        (d.done != 0 && total_frames == 96 as i32) as i32,
+        total_frames,
+    );
+    gba(
+        b"D-7\0" as *const u8 as *const i8,
+        (p.rush_damage == 1 as i32
+            && p.final_damage == 3 as i32) as i32,
+        p.rush_damage as i32 * 10 as i32
+            + p.final_damage as i32,
+    );
+    gba(
+        b"D-8\0" as *const u8 as *const i8,
+        (d.helpless == 1 as i32) as i32,
+        d.helpless as i32,
+    );
+    gba(
+        b"D-11\0" as *const u8 as *const i8,
+        (fa == 1000 as i32) as i32,
+        fa,
+    );
+    let mut exp_ok: i32 = gba_near(dist_after, 90.0f32, 3.0f32);
+    gba(
+        b"D-9\0" as *const u8 as *const i8,
+        (exp_ok != 0 && gba_i(dist) == 97000 as i32)
+            as i32,
+        gba_i(dist),
+    );
+    OSReport!(
+        b"GBACC D-9 note: path length frames 16..65 = %d/1000 (ramp 5.0 + 20..65 = %d/1000)\n\0"
+            as *const u8 as *const i8 as *mut i8,
+        gba_i(dist),
+        gba_i(dist_after),
+    );
+    ok = 1 as i32;
+    k0 = 0 as i32;
+    while k0 < 2 as i32 {
+        let mut lo: i32 = 1000 as i32;
+        let mut hi: i32 = -(1 as i32);
+        GenoBhv_DrillBegin(&raw mut d, &raw mut p, 1.0f32, 0.0f32);
+        c = 0 as i32;
+        while c < 200 as i32 && d.done == 0 {
+            in_0.sy = 0.0f32 as f32;
+            in_0.airborne = k0 as i32;
+            in_0.slope = 0.0f32 as f32;
+            GenoBhv_DrillStep(&raw mut d, &raw mut in_0, &raw mut p);
+            if d.final_active != 0 {
+                if c < lo {
+                    lo = c;
+                }
+                hi = c;
+            }
+            c += 1;
+        }
+        ok = (ok != 0 && lo == 66 as i32
+            && hi
+                == (if k0 != 0 {
+                    70 as i32
+                } else {
+                    67 as i32
+                }) && d.helpless == k0) as i32;
+        k0 += 1;
+    }
+    gba(
+        b"D-5\0" as *const u8 as *const i8,
+        ok,
+        0 as i32,
+    );
+    GenoBhv_DrillBegin(&raw mut d, &raw mut p, 1.0f32, 0.0f32);
+    steer = 0 as i32;
+    mx = 0 as i32;
+    c = 0 as i32;
+    while c < 70 as i32 {
+        in_0.sy = (if c >= p.move0 { -1.0f32 } else { 0.0f32 }) as f32;
+        in_0.airborne = 1 as i32 as i32;
+        in_0.slope = 0.0f32 as f32;
+        GenoBhv_DrillStep(&raw mut d, &raw mut in_0, &raw mut p);
+        if c >= p.move0 && d.psi != -60.0f32 {
+            steer += 1;
+        }
+        if c >= p.move0 && d.psi == -60.0f32 && mx == 0 as i32 {
+            mx = c - p.move0 as i32 + 1 as i32;
+        }
+        c += 1;
+    }
+    gba(
+        b"D-10\0" as *const u8 as *const i8,
+        (d.psi == -60.0f32 && mx == 20 as i32) as i32,
+        mx,
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_cape() -> i32 {
+    melee_core::ct!("test_geno_bhv_cape");
+    let mut p: GbCapeP = unsafe { core::mem::zeroed() };
+    let mut c: GbCape = unsafe { core::mem::zeroed() };
+    let mut in_0: GbCapeIn = unsafe { core::mem::zeroed() };
+    let mut i: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut flips: i32 = 0;
+    let mut win_lo: i32 = 0;
+    let mut win_hi: i32 = 0;
+    let mut n: i32 = 0;
+    let mut ref_0: f32 = 0.;
+    let mut vx0: f32 = 0.;
+    gba_rc = 0 as i32;
+    GenoBhv_CapeParams(&raw mut p);
+    gba(
+        b"C-1\0" as *const u8 as *const i8,
+        (p.start == 6 as i32) as i32,
+        p.start as i32,
+    );
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, 1.0f32, 0.0f32);
+    win_lo = -(1 as i32);
+    win_hi = -(1 as i32);
+    n = 0 as i32;
+    i = 0 as i32;
+    while i < 100 as i32 && c.done == 0 {
+        in_0.sx = 0.0f32 as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        if c.reflect != 0 {
+            if win_lo < 0 as i32 {
+                win_lo = i;
+            }
+            win_hi = i;
+        }
+        n += 1;
+        i += 1;
+    }
+    gba(
+        b"C-2\0" as *const u8 as *const i8,
+        (win_lo == 6 as i32 && win_hi == 25 as i32
+            && win_hi - win_lo + 1 as i32 == 20 as i32)
+            as i32,
+        win_lo,
+    );
+    gba(
+        b"C-3\0" as *const u8 as *const i8,
+        (n == 40 as i32) as i32,
+        n,
+    );
+    ok = 1 as i32;
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, 1.0f32, 0.0f32);
+    flips = 0 as i32;
+    i = 0 as i32;
+    while i < 40 as i32 {
+        in_0.sx = (if i >= 3 as i32 { -1.0f32 } else { 0.0f32 }) as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        flips += c.flip_now as i32;
+        i += 1;
+    }
+    ok = (ok != 0 && flips == 1 as i32 && c.f == -1.0f32)
+        as i32;
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, 1.0f32, 0.0f32);
+    flips = 0 as i32;
+    i = 0 as i32;
+    while i < 40 as i32 {
+        in_0.sx = (if i == 5 as i32 || i == 7 as i32 {
+            -1.0f32
+        } else {
+            0.0f32
+        }) as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        flips += c.flip_now as i32;
+        i += 1;
+    }
+    ok = (ok != 0 && flips == 0 as i32 && c.f == 1.0f32)
+        as i32;
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, 1.0f32, 0.0f32);
+    flips = 0 as i32;
+    i = 0 as i32;
+    while i < 40 as i32 {
+        in_0.sx = 1.0f32 as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        flips += c.flip_now as i32;
+        i += 1;
+    }
+    ok = (ok != 0 && flips == 0 as i32) as i32;
+    gba(b"C-4\0" as *const u8 as *const i8, ok, flips);
+    vx0 = 1.7f32 as f32;
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, vx0, 0.0f32);
+    ref_0 = vx0;
+    ok = 1 as i32;
+    n = 0 as i32;
+    i = 0 as i32;
+    while i < 26 as i32 {
+        in_0.sx = 0.0f32 as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        if c.reflect != 0 {
+            ref_0 = (ref_0 as f32 * 0.8f32) as f32;
+            n += 1;
+        }
+        ok = (ok != 0 && c.vx == ref_0) as i32;
+        i += 1;
+    }
+    gba(
+        b"C-5\0" as *const u8 as *const i8,
+        (ok != 0 && n == 20 as i32) as i32,
+        n,
+    );
+    GenoBhv_CapeBegin(&raw mut c, 1.0f32, 0.0f32, -1.0f32);
+    i = 0 as i32;
+    while i < 26 as i32 {
+        in_0.sx = 0.0f32 as f32;
+        in_0.airborne = 1 as i32 as i32;
+        GenoBhv_CapeStep(&raw mut c, &raw mut in_0, &raw mut p);
+        i += 1;
+    }
+    gba(
+        b"C-6\0" as *const u8 as *const i8,
+        gba_near(c.vy, -0.45f32, 3.0f32),
+        gba_i(c.vy),
+    );
+    gba(
+        b"C-7\0" as *const u8 as *const i8,
+        (p.reflect_dmg_mul == 1.5f32 && p.reflect_speed_mul == 1.2f32)
+            as i32,
+        gba_i(p.reflect_dmg_mul),
+    );
+    gba(
+        b"C-8\0" as *const u8 as *const i8,
+        1 as i32,
+        0 as i32,
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_multi_dash() -> i32 {
+    melee_core::ct!("test_geno_bhv_multi_dash");
+    let mut p: GbMultiDashP = unsafe { core::mem::zeroed() };
+    let mut m: GbMultiDash = unsafe { core::mem::zeroed() };
+    let mut in_0: GbMultiDashIn = unsafe { core::mem::zeroed() };
+    let mut i: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut segs: i32 = 0;
+    let mut aim0: i32 = 0;
+    let mut aim1: i32 = 0;
+    let mut dash: i32 = 0;
+    let mut pause: i32 = 0;
+    let mut total: i32 = 0;
+    let mut press_at: i32 = 0;
+    let mut lens: [i32; 4] = [0; 4];
+    let mut seg_prev: i32 = 0;
+    let mut bad: i32 = 0;
+    let mut maxsp: f32 = 0.;
+    let mut dirx: f32 = 0.;
+    let mut diry: f32 = 0.;
+    let mut len2: f32 = 0.;
+    let mut vmax: f32 = 0.;
+    let mut ratio0: f32 = 0.;
+    gba_rc = 0 as i32;
+    GenoBhv_MultiDashParams(&raw mut p);
+    GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+    aim0 = 0 as i32;
+    dash = 0 as i32;
+    pause = 0 as i32;
+    total = 0 as i32;
+    maxsp = 0.0f32 as f32;
+    i = 0 as i32;
+    while i < 200 as i32 && m.done == 0 {
+        let mut ph: i32 = m.phase as i32;
+        in_0.sx = 1.0f32 as f32;
+        in_0.sy = 0.0f32 as f32;
+        in_0.special_pressed = 0 as i32 as i32;
+        GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+        total += 1;
+        if ph == GB_MD_AIM as i32 {
+            aim0 += 1;
+        } else if ph == GB_MD_DASH as i32 {
+            dash += 1;
+        } else if ph == GB_MD_PAUSE as i32 {
+            pause += 1;
+        }
+        if m.speed > maxsp {
+            maxsp = m.speed;
+        }
+        i += 1;
+    }
+    gba(
+        b"M-2\0" as *const u8 as *const i8,
+        (aim0 == 6 as i32 && dash == 10 as i32
+            && pause == 3 as i32) as i32,
+        aim0 * 100 as i32 + dash,
+    );
+    gba(
+        b"M-8\0" as *const u8 as *const i8,
+        (total
+            == 6 as i32 + 10 as i32
+                + 3 as i32 + 20 as i32 && m.done != 0)
+            as i32,
+        total,
+    );
+    gba(
+        b"M-4\0" as *const u8 as *const i8,
+        gba_near(maxsp, 3.2f32, 3.0f32),
+        gba_i(maxsp),
+    );
+    ok = 1 as i32;
+    GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+    i = 0 as i32;
+    while i < 200 as i32 && m.phase != GB_MD_PAUSE as i32 {
+        in_0.sx = 1.0f32 as f32;
+        in_0.sy = 0.0f32 as f32;
+        in_0.special_pressed = 0 as i32 as i32;
+        GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+        i += 1;
+    }
+    gba(
+        b"M-5\0" as *const u8 as *const i8,
+        (gba_near(m.dist, 29.0f32, 3.0f32) != 0
+            && gba_i(m.dist) == 28800 as i32) as i32,
+        gba_i(m.dist),
+    );
+    GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+    segs = 1 as i32;
+    seg_prev = 0 as i32;
+    i = 0 as i32;
+    while i < 400 as i32 && m.done == 0 {
+        in_0.sx = 1.0f32 as f32;
+        in_0.sy = 0.0f32 as f32;
+        in_0.special_pressed = (m.phase == GB_MD_PAUSE as i32)
+            as i32 as i32;
+        GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+        if m.seg != seg_prev {
+            seg_prev = m.seg as i32;
+            segs += 1;
+        }
+        i += 1;
+    }
+    gba(
+        b"M-1\0" as *const u8 as *const i8,
+        (segs == 4 as i32 && m.done != 0
+            && m.helpless == 1 as i32) as i32,
+        segs,
+    );
+    ok = 1 as i32;
+    press_at = 0 as i32;
+    while press_at < 10 as i32 {
+        GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+        i = 0 as i32;
+        while i < 6 as i32 {
+            in_0.sx = 1.0f32 as f32;
+            in_0.sy = 0.0f32 as f32;
+            in_0.special_pressed = 0 as i32 as i32;
+            GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+            i += 1;
+        }
+        i = 0 as i32;
+        while i < 10 as i32 {
+            in_0.sx = 1.0f32 as f32;
+            in_0.sy = 0.0f32 as f32;
+            in_0.special_pressed = (i == press_at) as i32 as i32;
+            GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+            i += 1;
+        }
+        i = 0 as i32;
+        while i
+            < 3 as i32 + 20 as i32
+                + 4 as i32 + 10 as i32 && m.done == 0
+        {
+            in_0.sx = 1.0f32 as f32;
+            in_0.sy = 0.0f32 as f32;
+            in_0.special_pressed = 0 as i32 as i32;
+            GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+            i += 1;
+        }
+        if press_at >= 2 as i32 {
+            ok = (ok != 0 && m.seg == 1 as i32) as i32;
+        } else {
+            ok = (ok != 0 && m.seg == 0 as i32) as i32;
+        }
+        press_at += 1;
+    }
+    gba(
+        b"M-7\0" as *const u8 as *const i8,
+        ok,
+        0 as i32,
+    );
+    GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+    ok = 1 as i32;
+    ratio0 = 0.0f32 as f32;
+    i = 0 as i32;
+    while i < 16 as i32 {
+        in_0.sx = (if i < 6 as i32 { 0.8f32 } else { -0.9f32 }) as f32;
+        in_0.sy = (if i < 6 as i32 { 0.5f32 } else { 0.9f32 }) as f32;
+        in_0.special_pressed = 0 as i32 as i32;
+        GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+        if i == 6 as i32 {
+            ratio0 = m.ay / m.ax;
+        }
+        if i > 6 as i32 && m.phase == GB_MD_DASH as i32 {
+            let mut r: f32 = m.ay / m.ax;
+            ok = (ok != 0 && gba_abs(r - ratio0) < 1.0e-6f32) as i32;
+        }
+        i += 1;
+    }
+    gba(b"M-3\0" as *const u8 as *const i8, ok, gba_i(ratio0));
+    bad = 0 as i32;
+    vmax = 0.0f32 as f32;
+    ok = 1 as i32;
+    let mut sticks: [[f32; 2]; 6] = [[0.; 2]; 6];
+    sticks[0 as i32 as usize][0 as i32 as usize] = 0.0f32
+        as f32;
+    sticks[0 as i32 as usize][1 as i32 as usize] = 1.0f32
+        as f32;
+    sticks[1 as i32 as usize][0 as i32 as usize] = 0.3f32
+        as f32;
+    sticks[1 as i32 as usize][1 as i32 as usize] = 0.95f32
+        as f32;
+    sticks[2 as i32 as usize][0 as i32 as usize] = 0.8f32
+        as f32;
+    sticks[2 as i32 as usize][1 as i32 as usize] = 0.6f32
+        as f32;
+    sticks[3 as i32 as usize][0 as i32 as usize] = -0.7f32
+        as f32;
+    sticks[3 as i32 as usize][1 as i32 as usize] = -0.7f32
+        as f32;
+    sticks[4 as i32 as usize][0 as i32 as usize] = 0.0f32
+        as f32;
+    sticks[4 as i32 as usize][1 as i32 as usize] = -1.0f32
+        as f32;
+    sticks[5 as i32 as usize][0 as i32 as usize] = 0.1f32
+        as f32;
+    sticks[5 as i32 as usize][1 as i32 as usize] = 0.0f32
+        as f32;
+    i = 0 as i32;
+    while i < 6 as i32 {
+        GenoBhv_MultiDashBegin(&raw mut m, 1.0f32);
+        dash = 0 as i32;
+        while dash < 6 as i32 {
+            in_0.sx = sticks[i as usize][0 as i32 as usize];
+            in_0.sy = sticks[i as usize][1 as i32 as usize];
+            in_0.special_pressed = 0 as i32 as i32;
+            GenoBhv_MultiDashStep(&raw mut m, &raw mut in_0, &raw mut p);
+            dash += 1;
+        }
+        len2 = m.ax * m.ax;
+        dirx = m.ay * m.ay;
+        diry = len2 + dirx;
+        if gba_abs(diry - 1.0f32) > 1.0e-6f32
+            && !(sticks[i as usize][0 as i32 as usize] == 0.1f32)
+        {
+            bad += 1;
+        }
+        if gba_abs(m.ay) > vmax {
+            vmax = gba_abs(m.ay);
+        }
+        i += 1;
+    }
+    gba(
+        b"M-9\0" as *const u8 as *const i8,
+        (bad == 0 as i32) as i32,
+        bad,
+    );
+    gba(
+        b"M-6\0" as *const u8 as *const i8,
+        gba_near(vmax, 0.9397f32, 3.0f32),
+        gba_i(vmax),
+    );
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_anim_motion() -> i32 {
+    melee_core::ct!("test_geno_bhv_anim_motion");
+    let mut track: [f32; 22] = [0.; 22];
+    let mut p: GbAnimMotionP = unsafe { core::mem::zeroed() };
+    let mut a: GbAnimMotion = unsafe { core::mem::zeroed() };
+    let mut b: GbAnimMotion = unsafe { core::mem::zeroed() };
+    let mut x: f32 = 0.;
+    let mut y: f32 = 0.;
+    let mut mid: f32 = 0.;
+    let mut tx: f32 = 0.;
+    let mut ty: f32 = 0.;
+    let mut expect: f32 = 0.;
+    let mut i: i32 = 0;
+    let mut n: i32 = 11 as i32;
+    let mut frames: i32 = 0;
+    let mut ok: i32 = 0;
+    gba_rc = 0 as i32;
+    i = 0 as i32;
+    while i < n {
+        track[(2 as i32 * i) as usize] = ((i * i) as f32
+            * 0.5f32) as f32;
+        track[(2 as i32 * i + 1 as i32) as usize] = (i
+            as f32 * 1.25f32) as f32;
+        i += 1;
+    }
+    GenoBhv_AnimMotionParams(&raw mut p);
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    frames = 0 as i32;
+    while a.ended == 0 && frames < 100 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        frames += 1;
+    }
+    gba(
+        b"A-1\0" as *const u8 as *const i8,
+        (frames == n - 1 as i32) as i32,
+        frames,
+    );
+    expect = track[(2 as i32 * (n - 1 as i32)) as usize]
+        - track[0 as i32 as usize];
+    gba(
+        b"A-2\0" as *const u8 as *const i8,
+        (gba_near(a.pos_x, expect, 3.0f32) != 0
+            && gba_near(
+                a.pos_y,
+                track[(2 as i32 * (n - 1 as i32)
+                    + 1 as i32) as usize]
+                    - track[1 as i32 as usize],
+                3.0f32,
+            ) != 0) as i32,
+        gba_i(a.pos_x),
+    );
+    OSReport!(
+        b"GBACC A-2 note: relative error %d ppm\n\0" as *const u8
+            as *const i8 as *mut i8,
+        (gba_abs(a.pos_x - expect) as f32
+            / expect as f32 * 1.0e6f32) as i32,
+    );
+    p.rate = 0.5f32 as f32;
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    frames = 0 as i32;
+    while a.ended == 0 && frames < 200 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        frames += 1;
+    }
+    gba(
+        b"A-3\0" as *const u8 as *const i8,
+        (frames == 2 as i32 * (n - 1 as i32))
+            as i32,
+        frames,
+    );
+    p.rate = 2.0f32 as f32;
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    frames = 0 as i32;
+    while a.ended == 0 && frames < 200 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        frames += 1;
+    }
+    gba(
+        b"A-4\0" as *const u8 as *const i8,
+        (frames
+            == (n - 1 as i32 + 1 as i32)
+                / 2 as i32) as i32,
+        frames,
+    );
+    p.rate = 1.0f32 as f32;
+    track[0 as i32 as usize] = 0.0f32 as f32;
+    track[1 as i32 as usize] = 0.0f32 as f32;
+    GenoBhv_AnimMotionBegin(&raw mut a, 3.0f32, 4.0f32);
+    GenoBhv_AnimMotionBegin(&raw mut b, 3.0f32, 4.0f32);
+    p.mode = GB_AM_DELTA as i32 as i32;
+    i = 0 as i32;
+    while i < n - 1 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        i += 1;
+    }
+    p.mode = GB_AM_ABSOLUTE as i32 as i32;
+    i = 0 as i32;
+    while i < n - 1 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut b,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        i += 1;
+    }
+    gba(
+        b"A-5\0" as *const u8 as *const i8,
+        (gba_near(a.pos_x, b.pos_x, 3.0f32) != 0
+            && gba_near(a.pos_y, b.pos_y, 3.0f32) != 0) as i32,
+        gba_i(b.pos_x),
+    );
+    p.mode = GB_AM_DELTA as i32 as i32;
+    ok = 1 as i32;
+    i = 0 as i32;
+    while i < n - 1 as i32 {
+        GenoBhv_AnimMotionSample(
+            &raw mut track as *mut f32,
+            n,
+            i as f32 + 0.5f32,
+            &raw mut x,
+            &raw mut y,
+        );
+        tx = track[(2 as i32 * (i + 1 as i32)) as usize]
+            - track[(2 as i32 * i) as usize];
+        tx = (tx as f32 * 0.5f32) as f32;
+        tx = track[(2 as i32 * i) as usize] + tx;
+        ty = track[(2 as i32 * (i + 1 as i32)
+            + 1 as i32) as usize]
+            - track[(2 as i32 * i + 1 as i32) as usize];
+        ty = (ty as f32 * 0.5f32) as f32;
+        ty = track[(2 as i32 * i + 1 as i32) as usize]
+            + ty;
+        ok = (ok != 0 && x == tx && y == ty) as i32;
+        i += 1;
+    }
+    gba(
+        b"A-6\0" as *const u8 as *const i8,
+        ok,
+        0 as i32,
+    );
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    GenoBhv_AnimMotionBegin(&raw mut b, 0.0f32, 0.0f32);
+    i = 0 as i32;
+    while i < n - 1 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        GenoBhv_AnimMotionStep(
+            &raw mut b,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            -1.0f32,
+            0 as i32,
+        );
+        i += 1;
+    }
+    gba(
+        b"A-7\0" as *const u8 as *const i8,
+        (b.pos_x == -a.pos_x && b.pos_y == a.pos_y) as i32,
+        gba_i(b.pos_x),
+    );
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    GenoBhv_AnimMotionStep(
+        &raw mut a,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        0 as i32,
+    );
+    GenoBhv_AnimMotionStep(
+        &raw mut a,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        0 as i32,
+    );
+    x = a.pos_x;
+    y = a.anim_t;
+    GenoBhv_AnimMotionStep(
+        &raw mut a,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        1 as i32,
+    );
+    ok = (a.pos_x == x && a.anim_t == y as f32 + 1.0f32
+        && a.pos_y > 0.0f32) as i32;
+    p.mode = GB_AM_ABSOLUTE as i32 as i32;
+    GenoBhv_AnimMotionBegin(&raw mut b, 0.0f32, 0.0f32);
+    GenoBhv_AnimMotionStep(
+        &raw mut b,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        0 as i32,
+    );
+    GenoBhv_AnimMotionStep(
+        &raw mut b,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        1 as i32,
+    );
+    x = b.pos_x;
+    GenoBhv_AnimMotionStep(
+        &raw mut b,
+        &raw mut track as *mut f32,
+        n,
+        &raw mut p,
+        1.0f32,
+        0 as i32,
+    );
+    ok = (ok != 0 && b.pos_x > x && b.origin_x < 0.0f32) as i32;
+    p.mode = GB_AM_DELTA as i32 as i32;
+    gba(b"A-8\0" as *const u8 as *const i8, ok, gba_i(a.pos_x));
+    p.r#loop = 1 as i32 as i32;
+    p.rate = 3.0f32 as f32;
+    GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);
+    ok = 1 as i32;
+    i = 0 as i32;
+    while i < 4 as i32 {
+        GenoBhv_AnimMotionStep(
+            &raw mut a,
+            &raw mut track as *mut f32,
+            n,
+            &raw mut p,
+            1.0f32,
+            0 as i32,
+        );
+        i += 1;
+    }
+    ok = (a.anim_t == 2.0f32 && a.ended == 0) as i32;
+    gba(b"A-9\0" as *const u8 as *const i8, ok, gba_i(a.anim_t));
+    return gba_rc;
+}
+
+pub unsafe extern "C" fn gbt_row_tick(mut phys: i32) {
+    melee_core::ct!("gbt_row_tick");
+    let mut r: *mut MotionState = Geno_MotionRow(&raw mut t_fp, t_fp.motion_id);
+    if !r.is_null() {
+        if (*r).anim_cb.is_some() {
+            (*r).anim_cb.expect("non-null function pointer")(&raw mut t_gobj);
+        }
+        if (*r).input_cb.is_some() {
+            (*r).input_cb.expect("non-null function pointer")(&raw mut t_gobj);
+        }
+        if phys != 0 && (*r).phys_cb.is_some() {
+            (*r).phys_cb.expect("non-null function pointer")(&raw mut t_gobj);
+        }
+    }
+}
+
+pub unsafe extern "C" fn gbt_setup(mut air: i32) -> *mut TestGenoState {
+    melee_core::ct!("gbt_setup");
+    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
+    t_rows[ftCo_MS_Fall as i32 as usize].anim_id = 29
+        as i32 as enum_t;
+    if Geno_TestInstall(&raw const gbt_json as *const i8)
+        != 1 as i32
+        || {
+            st = t_setup();
+            st.is_null()
+        }
+    {
+        TestFail(
+            b"could not install the behaviours profile\0" as *const u8
+                as *const i8,
+        );
+        Geno_TestRestore();
+        return ::core::ptr::null_mut::<TestGenoState>();
+    }
+    GenoGame_TestCapture(1 as i32, 0 as i32);
+    t_fp.ground_or_air = (if air != 0 {
+        GA_Air as i32
+    } else {
+        GA_Ground as i32
+    }) as GroundOrAir;
+    t_fp.co_attrs.gravity = 0.1f32;
+    t_fp.co_attrs.terminal_velocity = 2.0f32;
+    t_fp.co_attrs.max_jumps = 2 as i32;
+    t_fp.facing_dir = 1.0f32;
+    return st;
+}
+
+pub unsafe extern "C" fn test_geno_bhv_adapters() -> i32 {
+    melee_core::ct!("test_geno_bhv_adapters");
+    let mut st: *mut TestGenoState = ::core::ptr::null_mut::<TestGenoState>();
+    let mut i: i32 = 0;
+    let mut c0: i32 = 0;
+    let mut n: i32 = 0;
+    let mut ok: i32 = 0;
+    let mut y: f32 = 0.;
+    gba_rc = 0 as i32;
+    st = gbt_setup(1 as i32);
+    if st.is_null() {
+        return 1 as i32;
+    }
+    Geno_LabEnterState(&raw mut t_fp, 0 as i32);
+    c0 = GenoGame_TestChanges();
+    n = 0 as i32;
+    while n < 200 as i32 && GenoGame_TestChanges() == c0 {
+        t_fp.input.pressed_buttons = 0 as HSD_Pad;
+        gbt_row_tick(1 as i32);
+        n += 1;
+    }
+    gba(
+        b"AD-tornado-frames\0" as *const u8 as *const i8,
+        (n == 88 as i32) as i32,
+        n,
+    );
+    Geno_LabEnterState(&raw mut t_fp, 0 as i32);
+    c0 = GenoGame_TestChanges();
+    y = 0.0f32 as f32;
+    n = 0 as i32;
+    while n < 300 as i32 && GenoGame_TestChanges() == c0 {
+        t_fp.input.pressed_buttons = (if n >= 12 as i32
+            && (n - 12 as i32) % 10 as i32
+                == 0 as i32
+        {
+            HSD_PAD_B
+        } else {
+            0 as i32
+        }) as HSD_Pad;
+        gbt_row_tick(1 as i32);
+        y += t_fp.self_vel.y;
+        n += 1;
+    }
+    gba(
+        b"AD-tornado-mashed-frames\0" as *const u8 as *const i8,
+        (n == 139 as i32) as i32,
+        n,
+    );
+    gba(
+        b"AD-tornado-mashed-rise\0" as *const u8 as *const i8,
+        (y > 0.0f32) as i32,
+        gba_i(y),
+    );
+    gba(
+        b"AD-tornado-helpless\0" as *const u8 as *const i8,
+        (GenoGame_TestLastTarget()
+            == (0 as u32 & 15 as u32)
+                << 28 as i32
+                | ftCo_MS_FallSpecial as i32 as u32
+                    & 0xffff as u32) as i32,
+        0 as i32,
+    );
+    Geno_TestRestore();
+    st = gbt_setup(1 as i32);
+    if st.is_null() {
+        return 1 as i32;
+    }
+    Geno_LabEnterState(&raw mut t_fp, 1 as i32);
+    c0 = GenoGame_TestChanges();
+    ok = 1 as i32;
+    n = 0 as i32;
+    while n < 200 as i32 && GenoGame_TestChanges() == c0 {
+        t_fp.input.pressed_buttons = 0 as HSD_Pad;
+        gbt_row_tick(1 as i32);
+        if n == 30 as i32 {
+            ok = (ok != 0 && t_fp.self_vel.x > 1.8f32 && t_fp.self_vel.y < -0.5f32)
+                as i32;
+        }
+        if n == 66 as i32 {
+            ok = (ok != 0 && t_fp.self_vel.y == 1.0f32) as i32;
+        }
+        n += 1;
+    }
+    gba(
+        b"AD-drill-frames\0" as *const u8 as *const i8,
+        (n == 96 as i32) as i32,
+        n,
+    );
+    gba(
+        b"AD-drill-velocity\0" as *const u8 as *const i8,
+        ok,
+        gba_i(t_fp.self_vel.y),
+    );
+    gba(
+        b"AD-drill-helpless\0" as *const u8 as *const i8,
+        (GenoGame_TestLastTarget()
+            == (0 as u32 & 15 as u32)
+                << 28 as i32
+                | ftCo_MS_FallSpecial as i32 as u32
+                    & 0xffff as u32) as i32,
+        0 as i32,
+    );
+    Geno_TestRestore();
+    st = gbt_setup(1 as i32);
+    if st.is_null() {
+        return 1 as i32;
+    }
+    Geno_LabEnterState(&raw mut t_fp, 2 as i32);
+    c0 = GenoGame_TestChanges();
+    ok = 1 as i32;
+    t_fp.self_vel.x = 1.0f32 as f32;
+    t_fp.self_vel.y = 0.0f32 as f32;
+    t_fp.input.lstick[0 as i32 as usize].x = -1.0f32 as f32;
+    n = 0 as i32;
+    while n < 200 as i32 && GenoGame_TestChanges() == c0 {
+        gbt_row_tick(0 as i32);
+        if n == 10 as i32 {
+            ok = (ok != 0 && t_fp.reflecting() as i32 != 0)
+                as i32;
+        }
+        if n == 30 as i32 {
+            ok = (ok != 0 && t_fp.reflecting() == 0) as i32;
+        }
+        n += 1;
+    }
+    gba(
+        b"AD-cape-frames\0" as *const u8 as *const i8,
+        (n == 40 as i32 && ok != 0) as i32,
+        n,
+    );
+    gba(
+        b"AD-cape-flip\0" as *const u8 as *const i8,
+        (t_fp.facing_dir == -1.0f32) as i32,
+        gba_i(t_fp.facing_dir as f32),
+    );
+    gba(
+        b"AD-cape-not-helpless\0" as *const u8 as *const i8,
+        (GenoGame_TestLastTarget()
+            == (0 as u32 & 15 as u32)
+                << 28 as i32
+                | ftCo_MS_Fall as i32 as u32
+                    & 0xffff as u32) as i32,
+        0 as i32,
+    );
+    Geno_TestRestore();
+    st = gbt_setup(1 as i32);
+    if st.is_null() {
+        return 1 as i32;
+    }
+    t_fp.motion_id = ftCo_MS_JumpAerialF as i32 as FtMotionId;
+    t_fp.x1968_jumpsUsed = 2 as u8;
+    Geno_OnActionChange(&raw mut t_gobj);
+    t_fp.self_vel.x = 0.8f32 as f32;
+    t_fp.self_vel.y = 0.1f32 as f32;
+    t_fp.input.held_buttons[0 as i32 as usize] = HSD_PAD_X as HSD_Pad;
+    ok = 0 as i32;
+    n = 0 as i32;
+    while n < 12 as i32 {
+        if Geno_PreAnim(&raw mut t_gobj) == 1 as i32 {
+            ok = 1 as i32;
+            break;
+        } else {
+            n += 1;
+        }
+    }
+    gba(
+        b"AD-glide-entry-hold\0" as *const u8 as *const i8,
+        (ok != 0 && t_fp.motion_id == GENO_MOTION_BASE + 3 as i32
+            && n + 1 as i32 >= 6 as i32
+            && n + 1 as i32 <= 8 as i32)
+            as i32,
+        n + 1 as i32,
+    );
+    n = 0 as i32;
+    while n < 40 as i32
+        && t_fp.motion_id == GENO_MOTION_BASE + 3 as i32
+    {
+        gbt_row_tick(1 as i32);
+        n += 1;
+    }
+    gba(
+        b"AD-glide-start-12\0" as *const u8 as *const i8,
+        (n == 12 as i32
+            && t_fp.motion_id == GENO_MOTION_BASE + 4 as i32)
+            as i32,
+        n,
+    );
+    i = 0 as i32;
+    while i < 20 as i32 {
+        gbt_row_tick(1 as i32);
+        i += 1;
+    }
+    gba(
+        b"AD-glide-fly-velocity\0" as *const u8 as *const i8,
+        (t_fp.self_vel.x > 1.0f32 && t_fp.self_vel.y < 0.0f32) as i32,
+        gba_i(t_fp.self_vel.x),
+    );
+    t_fp.input.pressed_buttons = HSD_PAD_A as HSD_Pad;
+    gbt_row_tick(1 as i32);
+    t_fp.input.pressed_buttons = 0 as HSD_Pad;
+    gba(
+        b"AD-glide-attack\0" as *const u8 as *const i8,
+        (t_fp.motion_id == GENO_MOTION_BASE + 5 as i32)
+            as i32,
+        t_fp.motion_id - GENO_MOTION_BASE,
+    );
+    Geno_TestRestore();
+    st = gbt_setup(1 as i32);
+    if st.is_null() {
+        return 1 as i32;
+    }
+    Geno_LabEnterState(&raw mut t_fp, 7 as i32);
+    c0 = GenoGame_TestChanges();
+    ok = 1 as i32;
+    t_fp.input.lstick[0 as i32 as usize].x = 1.0f32 as f32;
+    t_fp.input.lstick[0 as i32 as usize].y = 0.0f32 as f32;
+    n = 0 as i32;
+    while n < 200 as i32 && GenoGame_TestChanges() == c0 {
+        t_fp.input.pressed_buttons = 0 as HSD_Pad;
+        gbt_row_tick(1 as i32);
+        if n == 10 as i32 {
+            ok = (ok != 0 && t_fp.self_vel.x == 3.2f32 && t_fp.self_vel.y == 0.0f32)
+                as i32;
+        }
+        n += 1;
+    }
+    gba(
+        b"AD-multi-dash-frames\0" as *const u8 as *const i8,
+        (n == 39 as i32 && ok != 0) as i32,
+        n,
+    );
+    gba(
+        b"AD-multi-dash-not-helpless\0" as *const u8 as *const i8,
+        (GenoGame_TestLastTarget()
+            == (0 as u32 & 15 as u32)
+                << 28 as i32
+                | ftCo_MS_Fall as i32 as u32
+                    & 0xffff as u32) as i32,
+        0 as i32,
+    );
+    Geno_LabEnterState(&raw mut t_fp, 7 as i32);
+    c0 = GenoGame_TestChanges();
+    n = 0 as i32;
+    while n < 300 as i32 && GenoGame_TestChanges() == c0 {
+        t_fp.input.pressed_buttons = HSD_PAD_B as HSD_Pad;
+        gbt_row_tick(1 as i32);
+        n += 1;
+    }
+    t_fp.input.pressed_buttons = 0 as HSD_Pad;
+    gba(
+        b"AD-multi-dash-chain-frames\0" as *const u8 as *const i8,
+        (n == 90 as i32) as i32,
+        n,
+    );
+    gba(
+        b"AD-multi-dash-helpless\0" as *const u8 as *const i8,
+        (GenoGame_TestLastTarget()
+            == (0 as u32 & 15 as u32)
+                << 28 as i32
+                | ftCo_MS_FallSpecial as i32 as u32
+                    & 0xffff as u32) as i32,
+        0 as i32,
+    );
+    Geno_TestRestore();
+    let mut dx: f32 = 0.;
+    let mut dy: f32 = 0.;
+    GenoBhv_AnimMotionFrameDelta(2.0f32, 1.0f32, -1.0f32, &raw mut dx, &raw mut dy);
+    ok = (dx == -2.0f32 && dy == 1.0f32) as i32;
+    GenoBhv_AnimMotionFrameDelta(0.75f32, -0.5f32, 1.0f32, &raw mut dx, &raw mut dy);
+    ok = (ok != 0 && dx == 0.75f32 && dy == -0.5f32) as i32;
+    gba(
+        b"AD-anim-motion-delta\0" as *const u8 as *const i8,
+        ok,
+        gba_i(dx),
+    );
+    return gba_rc;
+}
+
 pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
     melee_core::ct!("test_geno_none_independence");
     static mut a: ftData = ftData {
@@ -11376,7 +12417,7 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
         x18: ::core::ptr::null::<[u8; 2]>() as *mut [u8; 2],
         x1C: ::core::ptr::null::<*mut ftData_x1C>() as *mut *mut ftData_x1C,
         x20: ::core::ptr::null::<ftData_x20>() as *mut ftData_x20,
-        x24: ::core::ptr::null::<WaitStruct>() as *mut WaitStruct,
+        x24: ::core::ptr::null_mut(),
         x28: ::core::ptr::null::<WaitStruct>() as *mut WaitStruct,
         x2C: ::core::ptr::null::<ftDynamics>() as *mut ftDynamics,
         x30: ::core::ptr::null::<ftData_x30>() as *mut ftData_x30,
@@ -11403,7 +12444,7 @@ pub unsafe extern "C" fn test_geno_none_independence() -> i32 {
         x18: ::core::ptr::null::<[u8; 2]>() as *mut [u8; 2],
         x1C: ::core::ptr::null::<*mut ftData_x1C>() as *mut *mut ftData_x1C,
         x20: ::core::ptr::null::<ftData_x20>() as *mut ftData_x20,
-        x24: ::core::ptr::null::<WaitStruct>() as *mut WaitStruct,
+        x24: ::core::ptr::null_mut(),
         x28: ::core::ptr::null::<WaitStruct>() as *mut WaitStruct,
         x2C: ::core::ptr::null::<ftDynamics>() as *mut ftDynamics,
         x30: ::core::ptr::null::<ftData_x30>() as *mut ftData_x30,
@@ -11665,36 +12706,12 @@ pub unsafe extern "C" fn GenoTestRegisterAll() {
         ),
     );
     TestRegister(
-        b"geno_v2_glide_entry\0" as *const u8 as *const i8,
-        Some(test_geno_v2_glide_entry as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v2_glide\0" as *const u8 as *const i8,
-        Some(test_geno_v2_glide as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v2_specials\0" as *const u8 as *const i8,
-        Some(test_geno_v2_specials as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
         b"geno_v3_anim_motion\0" as *const u8 as *const i8,
         Some(test_geno_v3_anim_motion as unsafe extern "C" fn() -> i32),
     );
     TestRegister(
-        b"geno_v3_hidden_glide\0" as *const u8 as *const i8,
-        Some(test_geno_v3_hidden_glide as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
         b"geno_v3_many_states\0" as *const u8 as *const i8,
         Some(test_geno_v3_many_states as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v3_cape\0" as *const u8 as *const i8,
-        Some(test_geno_v3_cape as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v3_drill\0" as *const u8 as *const i8,
-        Some(test_geno_v3_drill as unsafe extern "C" fn() -> i32),
     );
     TestRegister(
         b"geno_lab_stale_fighter\0" as *const u8 as *const i8,
@@ -11703,14 +12720,6 @@ pub unsafe extern "C" fn GenoTestRegisterAll() {
     TestRegister(
         b"geno_player_team_read\0" as *const u8 as *const i8,
         Some(test_geno_player_team_read as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v4_drill_pose\0" as *const u8 as *const i8,
-        Some(test_geno_v4_drill_pose as unsafe extern "C" fn() -> i32),
-    );
-    TestRegister(
-        b"geno_v4_tornado_spin\0" as *const u8 as *const i8,
-        Some(test_geno_v4_tornado_spin as unsafe extern "C" fn() -> i32),
     );
     TestRegister(
         b"geno_lab_mode_table\0" as *const u8 as *const i8,
@@ -11771,6 +12780,38 @@ pub unsafe extern "C" fn GenoTestRegisterAll() {
     TestRegister(
         b"geno_v54_retired\0" as *const u8 as *const i8,
         Some(test_geno_v54_retired as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_trig\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_trig as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_glide\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_glide as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_tornado\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_tornado as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_drill\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_drill as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_cape\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_cape as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_multi_dash\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_multi_dash as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_anim_motion\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_anim_motion as unsafe extern "C" fn() -> i32),
+    );
+    TestRegister(
+        b"geno_bhv_adapters\0" as *const u8 as *const i8,
+        Some(test_geno_bhv_adapters as unsafe extern "C" fn() -> i32),
     );
 }
 

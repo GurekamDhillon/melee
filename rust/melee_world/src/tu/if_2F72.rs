@@ -270,7 +270,11 @@ pub unsafe extern "C" fn fn_802F770C(gobj: *mut HSD_GObj, callback: i32) {
     melee_core::ct!("fn_802F770C");
     let status = ext::ifStatus_GetHUDInfo();
     let slot = GetSlot(gobj);
-    if (*status).players[slot as usize].flags.hide_all_digits() == 0 {
+    // The C links the slot's second model (`gobj2`, `fn_802F77F8`) to this callback too, and GetSlot only matches `gobj`, so it reads
+    // `players[-1].flags` (`ifStatus_HudInfo` - 0x54 = 0x804A1074 on the GameCube): the zero bss padding after `ifAll_804A0FD8`
+    // (size 0x9C, ifall.c's .bss runs to 0x804A1078), so the digits are never hidden there
+    let hidden = if slot < 0 { 0 } else { (*status).players[slot as usize].flags.hide_all_digits() };
+    if hidden == 0 {
         ext::HSD_GObj_JObjCallback(gobj, callback);
     }
 }

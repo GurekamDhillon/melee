@@ -710,630 +710,478 @@
   },
   "glide": {
    "type": "object",
+   "description": "v5.1 glide procedure parameters by spec name (pc/geno/geno_behaviour_params.h, docs/specs/geno-v5.1-behaviours.md).",
    "properties": {
-    "angle_max": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "max_glides": {
+     "type": "integer",
+     "default": 2,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "angle_min": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "entry_hold": {
+     "type": "integer",
+     "default": 6,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "flick_window": {
+     "type": "integer",
+     "default": 12,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_gravity": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "start_frames": {
+     "type": "integer",
+     "default": 12,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_vx": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "trip_frames": {
+     "type": "integer",
+     "default": 30,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "land_lag": {
+     "type": "integer",
+     "default": 14,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "speed_accel": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "jumpout_frames": {
+     "type": "integer",
+     "default": 8,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "attack_frames": {
+     "type": "integer",
+     "default": 28,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "stall_speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "attack_hit0": {
+     "type": "integer",
+     "default": 8,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "sink_accel": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "attack_hit1": {
+     "type": "integer",
+     "default": 14,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_sink": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "attack_endlag": {
+     "type": "integer",
+     "default": 14,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "recover_angle": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "attack_buf_frames": {
+     "type": "integer",
+     "default": 6,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "dive_angle": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "entry_vy_max": {
+     "type": "number",
+     "default": 0.6,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "dive_bonus": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "apex_vy": {
+     "type": "number",
+     "default": 0.25,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "deadzone": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "flick_thr": {
+     "type": "number",
+     "default": 0.55,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "pitch_up": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "s_start": {
+     "type": "number",
+     "default": 1.5,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "pitch_down": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "start_accel": {
+     "type": "number",
+     "default": 0.12,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_pitch_rate": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "s_start_cap": {
+     "type": "number",
+     "default": 2.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "stall_pitch": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "theta_def": {
+     "type": "number",
+     "default": -5.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "wing_node": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "r_down": {
+     "type": "number",
+     "default": 60.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "hold_frames": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "r_up": {
+     "type": "number",
+     "default": 85.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "from_ground_jump": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "turn_rate": {
+     "type": "number",
+     "default": 3.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "end_helpless": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "gk": {
+     "type": "number",
+     "default": 0.0366,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "landing_lag": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "drag": {
+     "type": "number",
+     "default": 0.002,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "entry": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "s_max": {
+     "type": "number",
+     "default": 2.4,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_frames": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "s_stall": {
+     "type": "number",
+     "default": 0.35,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "trip_angle": {
+     "type": "number",
+     "default": 30.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "attack_speed_keep": {
+     "type": "number",
+     "default": 0.6,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "chain_speed_mul": {
+     "type": "number",
+     "default": 0.75,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "chain_turn_mul": {
+     "type": "number",
+     "default": 1.4,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "attack_damage": {
+     "type": "integer",
+     "default": 12,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "auto_entry": {
+     "type": "number",
+     "default": 1.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     },
     "pose_center": {
-     "type": [
-      "number",
-      "boolean"
-     ]
-    },
-    "end_buttons": {
-     "type": [
-      "number",
-      "boolean"
-     ]
-    },
-    "script_entry_helpless": {
-     "type": [
-      "number",
-      "boolean"
-     ]
-    },
-    "w00": {
-     "type": "number"
-    },
-    "w01": {
-     "type": "number"
-    },
-    "w02": {
-     "type": "number"
-    },
-    "w03": {
-     "type": "number"
-    },
-    "w04": {
-     "type": "number"
-    },
-    "w05": {
-     "type": "number"
-    },
-    "w06": {
-     "type": "number"
-    },
-    "w07": {
-     "type": "number"
-    },
-    "w08": {
-     "type": "number"
-    },
-    "w09": {
-     "type": "number"
-    },
-    "w10": {
-     "type": "number"
-    },
-    "w11": {
-     "type": "number"
-    },
-    "w12": {
-     "type": "number"
-    },
-    "w13": {
-     "type": "number"
-    },
-    "w14": {
-     "type": "number"
-    },
-    "w15": {
-     "type": "number"
-    },
-    "w16": {
-     "type": "number"
-    },
-    "w17": {
-     "type": "number"
-    },
-    "w18": {
-     "type": "number"
-    },
-    "w19": {
-     "type": "number"
-    },
-    "w20": {
-     "type": "number"
-    },
-    "w21": {
-     "type": "number"
+     "type": "number",
+     "default": 0.0,
+     "description": "geno_behaviour_params.h GENO_BP_GLIDE; docs/specs/geno-v5.1-behaviours.md"
     }
    },
    "additionalProperties": false
   },
   "tornado": {
    "type": "object",
+   "description": "v5.1 tornado procedure parameters by spec name (pc/geno/geno_behaviour_params.h, docs/specs/geno-v5.1-behaviours.md).",
    "properties": {
-    "entry_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "start_frames": {
+     "type": "integer",
+     "default": 12,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "entry_vx_mul": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "read_period": {
+     "type": "integer",
+     "default": 10,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_rate": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "read_limit": {
+     "type": "integer",
+     "default": 70,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "ground_accel": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "end_frames": {
+     "type": "integer",
+     "default": 29,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "ground_speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "ledge_lock": {
+     "type": "integer",
+     "default": 6,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "air_accel": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_hit_ground": {
+     "type": "integer",
+     "default": 3,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "air_speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_hit_air": {
+     "type": "integer",
+     "default": 2,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "brake": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "loop_damage": {
+     "type": "integer",
+     "default": 1,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "gravity": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_damage": {
+     "type": "integer",
+     "default": 3,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_fall": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "spin0": {
+     "type": "number",
+     "default": 80.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "tap_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "decay_a": {
+     "type": "number",
+     "default": 1.5,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "tap_cooldown": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "decay_b": {
+     "type": "number",
+     "default": 2.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_rise": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "mash_add": {
+     "type": "number",
+     "default": 16.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "tap_rate": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "spin_max": {
+     "type": "number",
+     "default": 80.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_rate": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "spin_end": {
+     "type": "number",
+     "default": 10.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "rate_decay": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "grav_tn": {
+     "type": "number",
+     "default": 0.0239,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "spin_frames": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "rise_impulse": {
+     "type": "number",
+     "default": 0.9,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "late_decay": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "rise_max": {
+     "type": "number",
+     "default": 1.6,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "end_rate": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "fall_tn": {
+     "type": "number",
+     "default": 0.5,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "max_speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "vx_max": {
+     "type": "number",
+     "default": 1.1,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "end_helpless": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "vx_max_ground": {
+     "type": "number",
+     "default": 1.3,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "spin_anim": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "vx_accel": {
+     "type": "number",
+     "default": 0.06,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "spin_period": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "jump_bonus": {
+     "type": "number",
+     "default": 1.0,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w00": {
-     "type": "number"
+    "start_vy_keep": {
+     "type": "number",
+     "default": 0.2,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w01": {
-     "type": "number"
-    },
-    "w02": {
-     "type": "number"
-    },
-    "w03": {
-     "type": "number"
-    },
-    "w04": {
-     "type": "number"
-    },
-    "w05": {
-     "type": "number"
-    },
-    "w06": {
-     "type": "number"
-    },
-    "w07": {
-     "type": "number"
-    },
-    "w08": {
-     "type": "number"
-    },
-    "w09": {
-     "type": "number"
-    },
-    "w10": {
-     "type": "number"
-    },
-    "w11": {
-     "type": "number"
-    },
-    "w12": {
-     "type": "number"
-    },
-    "w13": {
-     "type": "number"
-    },
-    "w14": {
-     "type": "number"
-    },
-    "w15": {
-     "type": "number"
-    },
-    "w16": {
-     "type": "number"
-    },
-    "w17": {
-     "type": "number"
-    },
-    "w18": {
-     "type": "number"
-    },
-    "w19": {
-     "type": "number"
+    "start_vx_keep": {
+     "type": "number",
+     "default": 0.5,
+     "description": "geno_behaviour_params.h GENO_BP_TORNADO; docs/specs/geno-v5.1-behaviours.md"
     }
    },
    "additionalProperties": false
   },
   "drill": {
    "type": "object",
+   "description": "v5.1 drill procedure parameters by spec name (pc/geno/geno_behaviour_params.h, docs/specs/geno-v5.1-behaviours.md).",
    "properties": {
-    "start_vx_mul": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "move0": {
+     "type": "integer",
+     "default": 16,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "ramp": {
+     "type": "integer",
+     "default": 4,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "start_gravity": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "hit0": {
+     "type": "integer",
+     "default": 26,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "hit_period": {
+     "type": "integer",
+     "default": 4,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "end_frames": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "nhits": {
+     "type": "integer",
+     "default": 10,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "speed": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "hit_end": {
+     "type": "integer",
+     "default": 65,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "angle_max": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_frame": {
+     "type": "integer",
+     "default": 66,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "bounce": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_end_ground": {
+     "type": "integer",
+     "default": 67,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "pop_vx": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_end_air": {
+     "type": "integer",
+     "default": 70,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "pop_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "total": {
+     "type": "integer",
+     "default": 96,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "end_helpless": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "rush_damage": {
+     "type": "integer",
+     "default": 1,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "pitch_model": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "final_damage": {
+     "type": "integer",
+     "default": 3,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w00": {
-     "type": "number"
+    "dive_default": {
+     "type": "number",
+     "default": -20.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w01": {
-     "type": "number"
+    "psi_stick": {
+     "type": "number",
+     "default": 45.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w02": {
-     "type": "number"
+    "psi_min": {
+     "type": "number",
+     "default": -60.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w03": {
-     "type": "number"
+    "psi_max": {
+     "type": "number",
+     "default": 30.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w04": {
-     "type": "number"
+    "steer_rate": {
+     "type": "number",
+     "default": 2.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w05": {
-     "type": "number"
+    "dr_speed": {
+     "type": "number",
+     "default": 2.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "recoil_vy": {
+     "type": "number",
+     "default": 1.0,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
+    },
+    "end_vx_keep": {
+     "type": "number",
+     "default": 0.2,
+     "description": "geno_behaviour_params.h GENO_BP_DRILL; docs/specs/geno-v5.1-behaviours.md"
     }
    },
    "additionalProperties": false
   },
   "cape": {
    "type": "object",
+   "description": "v5.1 cape procedure parameters by spec name (pc/geno/geno_behaviour_params.h, docs/specs/geno-v5.1-behaviours.md).",
    "properties": {
-    "keep_vx": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "cape_start": {
+     "type": "integer",
+     "default": 6,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "keep_vy": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "cape_end": {
+     "type": "integer",
+     "default": 25,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer_accel_x": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "cape_total": {
+     "type": "integer",
+     "default": 40,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer_max_x": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "turn_thr": {
+     "type": "number",
+     "default": 0.5,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer_accel_y": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "stall_x": {
+     "type": "number",
+     "default": 0.8,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer_max_y": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "stall_y_up": {
+     "type": "number",
+     "default": 0.85,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "steer_frame": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "stall_vy_hi": {
+     "type": "number",
+     "default": 0.0,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "decide_frame": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "stall_grav": {
+     "type": "number",
+     "default": 0.015,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "neutral_x": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "stall_fall": {
+     "type": "number",
+     "default": 0.45,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "attack_buttons": {
-     "type": [
-      "number",
-      "boolean"
-     ]
+    "ground_x": {
+     "type": "number",
+     "default": 0.5,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w00": {
-     "type": "number"
+    "reflect_dmg_mul": {
+     "type": "number",
+     "default": 1.5,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     },
-    "w01": {
-     "type": "number"
-    },
-    "w02": {
-     "type": "number"
-    },
-    "w03": {
-     "type": "number"
-    },
-    "w04": {
-     "type": "number"
-    },
-    "w05": {
-     "type": "number"
+    "reflect_speed_mul": {
+     "type": "number",
+     "default": 1.2,
+     "description": "geno_behaviour_params.h GENO_BP_CAPE; docs/specs/geno-v5.1-behaviours.md"
     }
    },
    "additionalProperties": false

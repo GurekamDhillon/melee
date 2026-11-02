@@ -5655,36 +5655,100 @@ pub const GENO_BHV_DRILL_START: u32 = 32;
 pub const GENO_BHV_CAPE: u32 = 40;
 pub const GENO_BHV_CAPE_ATTACK: u32 = 41;
 pub const GENO_BHV_CAPE_END: u32 = 42;
+pub const GENO_BHV_MULTI_DASH: u32 = 50;
 pub const GENO_BHV_MAX: u32 = 32;
 
-pub const GENO_P_GLIDE_W0: u32 = 0;
-pub const GENO_P_GLIDE_HOLD: u32 = 24;
-pub const GENO_P_GLIDE_FROM_JUMP: u32 = 25;
-pub const GENO_P_GLIDE_END_HELPLESS: u32 = 26;
-pub const GENO_P_GLIDE_LANDING_LAG: u32 = 27;
-pub const GENO_P_GLIDE_ENTRY: u32 = 28;
-pub const GENO_P_GLIDE_MAX_FRAMES: u32 = 29;
-pub const GENO_P_GLIDE_POSE: u32 = 30;
-pub const GENO_P_GLIDE_END_BUTTONS: u32 = 31;
-pub const GENO_P_TORNADO_W0: u32 = 32;
-pub const GENO_P_TORNADO_MAX_SPEED: u32 = 56;
-pub const GENO_P_TORNADO_END_HELPLESS: u32 = 57;
-pub const GENO_P_TORNADO_SPIN_ANIM: u32 = 58;
-pub const GENO_P_TORNADO_SPIN_PERIOD: u32 = 59;
-pub const GENO_P_DRILL_W0: u32 = 64;
-pub const GENO_P_DRILL_SPEED: u32 = 72;
-pub const GENO_P_DRILL_ANGLE_MAX: u32 = 73;
-pub const GENO_P_DRILL_BOUNCE: u32 = 74;
-pub const GENO_P_DRILL_POP_VX: u32 = 75;
-pub const GENO_P_DRILL_POP_VY: u32 = 76;
-pub const GENO_P_DRILL_END_HELPLESS: u32 = 77;
-pub const GENO_P_DRILL_PITCH_MODEL: u32 = 78;
-pub const GENO_P_GLIDE_SCRIPT_HELPLESS: u32 = 80;
-pub const GENO_P_CAPE_W0: u32 = 88;
-pub const GENO_P_CAPE_STEER_FRAME: u32 = 96;
-pub const GENO_P_CAPE_DECIDE_FRAME: u32 = 97;
-pub const GENO_P_CAPE_NEUTRAL_X: u32 = 98;
-pub const GENO_P_CAPE_BUTTONS: u32 = 99;
+pub const GENO_BP_GLIDE_max_glides: u32 = 0;
+pub const GENO_BP_GLIDE_entry_hold: u32 = 1;
+pub const GENO_BP_GLIDE_flick_window: u32 = 2;
+pub const GENO_BP_GLIDE_start_frames: u32 = 3;
+pub const GENO_BP_GLIDE_trip_frames: u32 = 4;
+pub const GENO_BP_GLIDE_land_lag: u32 = 5;
+pub const GENO_BP_GLIDE_jumpout_frames: u32 = 6;
+pub const GENO_BP_GLIDE_attack_frames: u32 = 7;
+pub const GENO_BP_GLIDE_attack_hit0: u32 = 8;
+pub const GENO_BP_GLIDE_attack_hit1: u32 = 9;
+pub const GENO_BP_GLIDE_attack_endlag: u32 = 10;
+pub const GENO_BP_GLIDE_attack_buf_frames: u32 = 11;
+pub const GENO_BP_GLIDE_entry_vy_max: u32 = 12;
+pub const GENO_BP_GLIDE_apex_vy: u32 = 13;
+pub const GENO_BP_GLIDE_flick_thr: u32 = 14;
+pub const GENO_BP_GLIDE_s_start: u32 = 15;
+pub const GENO_BP_GLIDE_start_accel: u32 = 16;
+pub const GENO_BP_GLIDE_s_start_cap: u32 = 17;
+pub const GENO_BP_GLIDE_theta_def: u32 = 18;
+pub const GENO_BP_GLIDE_r_down: u32 = 19;
+pub const GENO_BP_GLIDE_r_up: u32 = 20;
+pub const GENO_BP_GLIDE_turn_rate: u32 = 21;
+pub const GENO_BP_GLIDE_gk: u32 = 22;
+pub const GENO_BP_GLIDE_drag: u32 = 23;
+pub const GENO_BP_GLIDE_s_max: u32 = 24;
+pub const GENO_BP_GLIDE_s_stall: u32 = 25;
+pub const GENO_BP_GLIDE_trip_angle: u32 = 26;
+pub const GENO_BP_GLIDE_attack_speed_keep: u32 = 27;
+pub const GENO_BP_GLIDE_chain_speed_mul: u32 = 28;
+pub const GENO_BP_GLIDE_chain_turn_mul: u32 = 29;
+pub const GENO_BP_GLIDE_attack_damage: u32 = 30;
+pub const GENO_BP_GLIDE_auto_entry: u32 = 31;
+pub const GENO_BP_GLIDE_pose_center: u32 = 32;
+pub const GENO_BP_TORNADO_start_frames: u32 = 33;
+pub const GENO_BP_TORNADO_read_period: u32 = 34;
+pub const GENO_BP_TORNADO_read_limit: u32 = 35;
+pub const GENO_BP_TORNADO_end_frames: u32 = 36;
+pub const GENO_BP_TORNADO_ledge_lock: u32 = 37;
+pub const GENO_BP_TORNADO_final_hit_ground: u32 = 38;
+pub const GENO_BP_TORNADO_final_hit_air: u32 = 39;
+pub const GENO_BP_TORNADO_loop_damage: u32 = 40;
+pub const GENO_BP_TORNADO_final_damage: u32 = 41;
+pub const GENO_BP_TORNADO_spin0: u32 = 42;
+pub const GENO_BP_TORNADO_decay_a: u32 = 43;
+pub const GENO_BP_TORNADO_decay_b: u32 = 44;
+pub const GENO_BP_TORNADO_mash_add: u32 = 45;
+pub const GENO_BP_TORNADO_spin_max: u32 = 46;
+pub const GENO_BP_TORNADO_spin_end: u32 = 47;
+pub const GENO_BP_TORNADO_grav: u32 = 48;
+pub const GENO_BP_TORNADO_rise_impulse: u32 = 49;
+pub const GENO_BP_TORNADO_rise_max: u32 = 50;
+pub const GENO_BP_TORNADO_fall_max: u32 = 51;
+pub const GENO_BP_TORNADO_vx_max: u32 = 52;
+pub const GENO_BP_TORNADO_vx_max_ground: u32 = 53;
+pub const GENO_BP_TORNADO_vx_accel: u32 = 54;
+pub const GENO_BP_TORNADO_jump_bonus: u32 = 55;
+pub const GENO_BP_TORNADO_start_vy_keep: u32 = 56;
+pub const GENO_BP_TORNADO_start_vx_keep: u32 = 57;
+pub const GENO_BP_DRILL_move0: u32 = 58;
+pub const GENO_BP_DRILL_ramp: u32 = 59;
+pub const GENO_BP_DRILL_hit0: u32 = 60;
+pub const GENO_BP_DRILL_hit_period: u32 = 61;
+pub const GENO_BP_DRILL_nhits: u32 = 62;
+pub const GENO_BP_DRILL_hit_end: u32 = 63;
+pub const GENO_BP_DRILL_final_frame: u32 = 64;
+pub const GENO_BP_DRILL_final_end_ground: u32 = 65;
+pub const GENO_BP_DRILL_final_end_air: u32 = 66;
+pub const GENO_BP_DRILL_total: u32 = 67;
+pub const GENO_BP_DRILL_rush_damage: u32 = 68;
+pub const GENO_BP_DRILL_final_damage: u32 = 69;
+pub const GENO_BP_DRILL_dive_default: u32 = 70;
+pub const GENO_BP_DRILL_psi_stick: u32 = 71;
+pub const GENO_BP_DRILL_psi_min: u32 = 72;
+pub const GENO_BP_DRILL_psi_max: u32 = 73;
+pub const GENO_BP_DRILL_steer_rate: u32 = 74;
+pub const GENO_BP_DRILL_speed: u32 = 75;
+pub const GENO_BP_DRILL_recoil_vy: u32 = 76;
+pub const GENO_BP_DRILL_end_vx_keep: u32 = 77;
+pub const GENO_BP_CAPE_start: u32 = 78;
+pub const GENO_BP_CAPE_end: u32 = 79;
+pub const GENO_BP_CAPE_total: u32 = 80;
+pub const GENO_BP_CAPE_turn_thr: u32 = 81;
+pub const GENO_BP_CAPE_stall_x: u32 = 82;
+pub const GENO_BP_CAPE_stall_y_up: u32 = 83;
+pub const GENO_BP_CAPE_stall_vy_hi: u32 = 84;
+pub const GENO_BP_CAPE_stall_grav: u32 = 85;
+pub const GENO_BP_CAPE_stall_fall: u32 = 86;
+pub const GENO_BP_CAPE_ground_x: u32 = 87;
+pub const GENO_BP_CAPE_reflect_dmg_mul: u32 = 88;
+pub const GENO_BP_CAPE_reflect_speed_mul: u32 = 89;
+pub const GENO_BP_COUNT: u32 = 90;
 
 pub const GENO_AP_LIFETIME: u32 = 0;
 pub const GENO_AP_VEL_FWD: u32 = 1;
@@ -6444,7 +6508,7 @@ pub const CPU_CTL_G_FREE: u32 = 116;
 pub const CPU_CTL_G_GOTO_STATE: u32 = 117;
 pub const CPU_CTL_G_GOTO_TICKS: u32 = 118;
 
-/// C enum `GenoItemParam` (pc/geno/geno_items.h:9)
+/// C enum `GenoItemParam` (pc/geno/geno_items.h:11)
 pub type GenoItemParam = u32;
 pub const GENO_IP_DEFINED: GenoItemParam = 0;
 pub const GENO_IP_GRAVITY: GenoItemParam = 1;
@@ -6469,7 +6533,7 @@ pub const GENO_IP_TILT: GenoItemParam = 19;
 pub const GENO_IP_HEIGHT: GenoItemParam = 20;
 pub const GENO_IP_COUNT: GenoItemParam = 21;
 
-/// C enum `GenoItemRead` (pc/geno/geno_items.h:17)
+/// C enum `GenoItemRead` (pc/geno/geno_items.h:19)
 pub type GenoItemRead = u32;
 pub const GENO_II_HANDLE: GenoItemRead = 0;
 pub const GENO_II_DEF: GenoItemRead = 1;
@@ -6481,7 +6545,7 @@ pub const GENO_II_KIND: GenoItemRead = 6;
 pub const GENO_II_VISIBLE: GenoItemRead = 7;
 pub const GENO_II_COUNT: GenoItemRead = 8;
 
-/// C enum `GenoItemFloat` (pc/geno/geno_items.h:20)
+/// C enum `GenoItemFloat` (pc/geno/geno_items.h:22)
 pub type GenoItemFloat = u32;
 pub const GENO_IF_X: GenoItemFloat = 0;
 pub const GENO_IF_Y: GenoItemFloat = 1;
@@ -6490,7 +6554,7 @@ pub const GENO_IF_VY: GenoItemFloat = 3;
 pub const GENO_IF_Z: GenoItemFloat = 4;
 pub const GENO_IF_COUNT: GenoItemFloat = 5;
 
-/// C enum `GenoItemVisual` (pc/geno/geno_items.h:22)
+/// C enum `GenoItemVisual` (pc/geno/geno_items.h:24)
 pub type GenoItemVisual = u32;
 pub const GENO_IV_Y: GenoItemVisual = 0;
 pub const GENO_IV_ROT_Y: GenoItemVisual = 1;
@@ -6511,6 +6575,44 @@ pub const ST_CARRY_CLAMP: u32 = 1;
 pub const ST_CARRY_FLOOR: u32 = 2;
 pub const ST_CARRY_FALL: u32 = 3;
 pub const ST_CARRY_INVALID: u32 = 4;
+
+pub const GB_GL_START: u32 = 0;
+pub const GB_GL_FLY: u32 = 1;
+pub const GB_GL_ATTACK: u32 = 2;
+pub const GB_GL_JUMPOUT: u32 = 3;
+pub const GB_GL_LAND: u32 = 4;
+pub const GB_GL_TRIP: u32 = 5;
+pub const GB_GL_END: u32 = 6;
+pub const GB_GL_LAND_CANCEL: u32 = 7;
+
+pub const GB_GLE_NONE: u32 = 0;
+pub const GB_GLE_STALL: u32 = 1;
+pub const GB_GLE_ATTACK_END: u32 = 2;
+pub const GB_GLE_JUMPOUT: u32 = 3;
+
+pub const GB_GLENTRY_NONE: u32 = 0;
+pub const GB_GLENTRY_HOLD: u32 = 1;
+pub const GB_GLENTRY_FLICK: u32 = 2;
+pub const GB_GLENTRY_CHAIN: u32 = 3;
+
+pub const GB_TN_START: u32 = 0;
+pub const GB_TN_LOOP: u32 = 1;
+pub const GB_TN_END: u32 = 2;
+pub const GB_TN_DONE: u32 = 3;
+
+pub const GB_DR_WIND: u32 = 0;
+pub const GB_DR_RUSH: u32 = 1;
+pub const GB_DR_FINAL: u32 = 2;
+pub const GB_DR_DONE: u32 = 3;
+
+pub const GB_MD_AIM: u32 = 0;
+pub const GB_MD_DASH: u32 = 1;
+pub const GB_MD_PAUSE: u32 = 2;
+pub const GB_MD_END: u32 = 3;
+pub const GB_MD_DONE: u32 = 4;
+
+pub const GB_AM_DELTA: u32 = 0;
+pub const GB_AM_ABSOLUTE: u32 = 1;
 
 pub const GENO_CBID_NEXT: u32 = 1;
 pub const GENO_CBID_LOOP: u32 = 2;
@@ -6538,8 +6640,9 @@ pub const GENO_CBID_TORNADO: u32 = 30;
 pub const GENO_CBID_DRILL: u32 = 40;
 pub const GENO_CBID_DRILL_END: u32 = 41;
 pub const GENO_CBID_DRILL_START: u32 = 42;
+pub const GENO_CBID_MULTI_DASH: u32 = 55;
 
-/// C enum `GenoItemSpawnError` (pc/geno/geno_item_errors.h:4)
+/// C enum `GenoItemSpawnError` (pc/geno/geno_item_errors.h:6)
 pub type GenoItemSpawnError = i32;
 pub const GENO_ITEM_ERR_UNSUPPORTED: GenoItemSpawnError = -1;
 pub const GENO_ITEM_ERR_UNSAFE: GenoItemSpawnError = -2;
@@ -7374,6 +7477,7 @@ pub type PERFId = u8;
 pub type PERFAllocator = Option<unsafe extern "C" fn(u32) -> *mut c_void>;
 pub type PERFDeallocator = Option<unsafe extern "C" fn(*mut c_void)>;
 pub type PERFDrawCallback = Option<unsafe extern "C" fn()>;
+pub type geno_bp_fits_ = [i8; 1];
 pub type GenoHookFn = Option<unsafe extern "C" fn(*mut Fighter_GObj, *mut Fighter, *mut GenoState, i32) -> i32>;
 pub type GenoCbFn = Option<unsafe extern "C" fn(*mut Fighter_GObj)>;
 pub type GenoEnterFn = Option<unsafe extern "C" fn(*mut Fighter_GObj, *mut Fighter, *mut GenoState, i32)>;
@@ -105065,7 +105169,7 @@ impl GcLayout for StCarry {
 }
 const _: () = assert!(core::mem::size_of::<StCarry>() == 20);
 
-/// C `GenoArtVars` (pc/geno/geno_state.h:12); GameCube size 0x2C, align 4.
+/// C `GenoArtVars` (pc/geno/geno_state.h:14); GameCube size 0x2C, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoArtVars {
@@ -105118,7 +105222,7 @@ impl GcLayout for GenoArtVars {
 }
 const _: () = assert!(core::mem::size_of::<GenoArtVars>() == 44);
 
-/// C `GenoCond` (pc/geno/geno_state.h:23); GameCube size 0xC, align 4.
+/// C `GenoCond` (pc/geno/geno_state.h:25); GameCube size 0xC, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoCond {
@@ -105153,7 +105257,7 @@ impl GcLayout for GenoCond {
 }
 const _: () = assert!(core::mem::size_of::<GenoCond>() == 12);
 
-/// C `GenoCheck` (pc/geno/geno_state.h:29); GameCube size 0x30, align 4.
+/// C `GenoCheck` (pc/geno/geno_state.h:31); GameCube size 0x30, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoCheck {
@@ -105191,7 +105295,7 @@ impl GcLayout for GenoCheck {
 }
 const _: () = assert!(core::mem::size_of::<GenoCheck>() == 48);
 
-/// C `GenoState` (pc/geno/geno_state.h:36); GameCube size 0x6AC, align 4.
+/// C `GenoState` (pc/geno/geno_state.h:38); GameCube size 0x6AC, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoState {
@@ -105370,7 +105474,7 @@ impl GcLayout for GenoState {
 }
 const _: () = assert!(core::mem::size_of::<GenoState>() == 1708);
 
-/// C `GenoLuaBlock` (pc/geno/geno_state.h:104); GameCube size 0x48, align 4.
+/// C `GenoLuaBlock` (pc/geno/geno_state.h:106); GameCube size 0x48, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoLuaBlock {
@@ -105405,7 +105509,7 @@ impl GcLayout for GenoLuaBlock {
 }
 const _: () = assert!(core::mem::size_of::<GenoLuaBlock>() == 72);
 
-/// C `GenoComboBlock` (pc/geno/geno_state.h:113); GameCube size 0x84, align 4.
+/// C `GenoComboBlock` (pc/geno/geno_state.h:115); GameCube size 0x84, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoComboBlock {
@@ -105467,17 +105571,17 @@ impl GcLayout for GenoComboBlock {
 }
 const _: () = assert!(core::mem::size_of::<GenoComboBlock>() == 132);
 
-/// C `struct (unnamed at pc/geno/geno_game.c:503:14)` (pc/geno/geno_game.c:503); GameCube size 0xC, align 4.
+/// C `struct (unnamed at pc/geno/geno_game.c:333:14)` (pc/geno/geno_game.c:333); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub struct Anon_anon_503 {
+pub struct Anon_anon_333 {
     pub id: i32,
     pub name: *const i8,
     pub r#fn: GenoHookFn,
 }
-impl Anon_anon_503 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_333 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_503 {
+impl GcDecode for Anon_anon_333 {
     const GC_BYTES: u32 = 0xC;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105489,9 +105593,9 @@ impl GcDecode for Anon_anon_503 {
         v
     }
 }
-impl GcPointee for Anon_anon_503 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_503>(t) } }
-impl GcLayout for Anon_anon_503 {
-    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:503:14)";
+impl GcPointee for Anon_anon_333 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_333>(t) } }
+impl GcLayout for Anon_anon_333 {
+    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:333:14)";
     const GC_SIZE: u32 = 0xC;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105500,19 +105604,19 @@ impl GcLayout for Anon_anon_503 {
         GcField::new("fn", 0x8, 4, "GenoHookFn"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_503>() == 24);
+const _: () = assert!(core::mem::size_of::<Anon_anon_333>() == 24);
 
-/// C `struct (unnamed at pc/geno/geno_game.c:718:5)` (pc/geno/geno_game.c:718); GameCube size 0x28, align 4.
+/// C `struct (unnamed at pc/geno/geno_game.c:545:5)` (pc/geno/geno_game.c:545); GameCube size 0x28, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub struct Anon_anon_718 {
+pub struct Anon_anon_545 {
     pub pc: *const u32,
     pub ret: [*const u32; 8],
     pub nret: i32,
 }
-impl Anon_anon_718 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_545 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_718 {
+impl GcDecode for Anon_anon_545 {
     const GC_BYTES: u32 = 0x28;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105524,9 +105628,9 @@ impl GcDecode for Anon_anon_718 {
         v
     }
 }
-impl GcPointee for Anon_anon_718 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_718>(t) } }
-impl GcLayout for Anon_anon_718 {
-    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:718:5)";
+impl GcPointee for Anon_anon_545 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_545>(t) } }
+impl GcLayout for Anon_anon_545 {
+    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:545:5)";
     const GC_SIZE: u32 = 0x28;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105535,19 +105639,19 @@ impl GcLayout for Anon_anon_718 {
         GcField::new("nret", 0x24, 4, "int"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_718>() == 80);
+const _: () = assert!(core::mem::size_of::<Anon_anon_545>() == 80);
 
-/// C `struct (unnamed at pc/geno/geno_game.c:939:14)` (pc/geno/geno_game.c:939); GameCube size 0xC, align 4.
+/// C `struct (unnamed at pc/geno/geno_game.c:766:14)` (pc/geno/geno_game.c:766); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub struct Anon_anon_939 {
+pub struct Anon_anon_766 {
     pub name: *const i8,
     pub offset: i32,
     pub is_int: i32,
 }
-impl Anon_anon_939 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_766 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_939 {
+impl GcDecode for Anon_anon_766 {
     const GC_BYTES: u32 = 0xC;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105559,9 +105663,9 @@ impl GcDecode for Anon_anon_939 {
         v
     }
 }
-impl GcPointee for Anon_anon_939 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_939>(t) } }
-impl GcLayout for Anon_anon_939 {
-    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:939:14)";
+impl GcPointee for Anon_anon_766 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_766>(t) } }
+impl GcLayout for Anon_anon_766 {
+    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:766:14)";
     const GC_SIZE: u32 = 0xC;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105570,18 +105674,18 @@ impl GcLayout for Anon_anon_939 {
         GcField::new("is_int", 0x8, 4, "int"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_939>() == 16);
+const _: () = assert!(core::mem::size_of::<Anon_anon_766>() == 16);
 
-/// C `union (unnamed at pc/geno/geno_game.c:1134:5)` (pc/geno/geno_game.c:1134); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game.c:961:5)` (pc/geno/geno_game.c:961); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_1134 {
+pub union Anon_anon_961 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_1134 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_961 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_1134 {
+impl GcDecode for Anon_anon_961 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105591,9 +105695,9 @@ impl GcDecode for Anon_anon_1134 {
         v
     }
 }
-impl GcPointee for Anon_anon_1134 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_1134>(t) } }
-impl GcLayout for Anon_anon_1134 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game.c:1134:5)";
+impl GcPointee for Anon_anon_961 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_961>(t) } }
+impl GcLayout for Anon_anon_961 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game.c:961:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105601,9 +105705,9 @@ impl GcLayout for Anon_anon_1134 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_1134>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_961>() == 4);
 
-/// C `GenoWord` (pc/geno/geno_game.c:1171); GameCube size 0x4, align 4.
+/// C `GenoWord` (pc/geno/geno_game.c:998); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub union GenoWord {
@@ -105636,16 +105740,16 @@ impl GcLayout for GenoWord {
 }
 const _: () = assert!(core::mem::size_of::<GenoWord>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game.c:2388:5)` (pc/geno/geno_game.c:2388); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game.c:2215:5)` (pc/geno/geno_game.c:2215); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_2388 {
+pub union Anon_anon_2215 {
     pub f: f32,
     pub u: u32,
 }
-impl Anon_anon_2388 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_2215 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_2388 {
+impl GcDecode for Anon_anon_2215 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105655,9 +105759,9 @@ impl GcDecode for Anon_anon_2388 {
         v
     }
 }
-impl GcPointee for Anon_anon_2388 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2388>(t) } }
-impl GcLayout for Anon_anon_2388 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game.c:2388:5)";
+impl GcPointee for Anon_anon_2215 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2215>(t) } }
+impl GcLayout for Anon_anon_2215 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game.c:2215:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105665,18 +105769,49 @@ impl GcLayout for Anon_anon_2388 {
         GcField::new("u", 0x0, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_2388>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_2215>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_profiles.inc:14:8)` (pc/geno/geno_profiles.inc:14); GameCube size 0x200000, align 8.
+/// C `union (unnamed at pc/geno/geno_game.c:2244:5)` (pc/geno/geno_game.c:2244); GameCube size 0x4, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub union Anon_anon_2244 {
+    pub f: f32,
+    pub u: u32,
+}
+impl Anon_anon_2244 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Anon_anon_2244 {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.f = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for Anon_anon_2244 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2244>(t) } }
+impl GcLayout for Anon_anon_2244 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game.c:2244:5)";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("f", 0x0, 4, "f32"),
+        GcField::new("u", 0x0, 4, "u32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Anon_anon_2244>() == 4);
+
+/// C `union (unnamed at pc/geno/geno_profiles.inc:16:8)` (pc/geno/geno_profiles.inc:16); GameCube size 0x200000, align 8.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_14 {
+pub union Anon_anon_16 {
     pub align: u64,
     pub bytes: [u8; 2097152],
 }
-impl Anon_anon_14 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_16 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_14 {
+impl GcDecode for Anon_anon_16 {
     const GC_BYTES: u32 = 0x200000;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105686,9 +105821,9 @@ impl GcDecode for Anon_anon_14 {
         v
     }
 }
-impl GcPointee for Anon_anon_14 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_14>(t) } }
-impl GcLayout for Anon_anon_14 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_profiles.inc:14:8)";
+impl GcPointee for Anon_anon_16 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_16>(t) } }
+impl GcLayout for Anon_anon_16 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_profiles.inc:16:8)";
     const GC_SIZE: u32 = 0x200000;
     const GC_ALIGN: u32 = 8;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105696,20 +105831,20 @@ impl GcLayout for Anon_anon_14 {
         GcField::new("bytes", 0x0, 2097152, "unsigned char[2097152]"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_14>() == 2097152);
+const _: () = assert!(core::mem::size_of::<Anon_anon_16>() == 2097152);
 
-/// C `GenoParamDef` (pc/geno/geno_game_v2.inc:42); GameCube size 0x10, align 4.
+/// C `GenoBhvParamDef` (pc/geno/geno_game_v2.inc:44); GameCube size 0x10, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub struct GenoParamDef {
+pub struct GenoBhvParamDef {
     pub family: *const i8,
     pub name: *const i8,
     pub id: i32,
     pub def: f32,
 }
-impl GenoParamDef { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl GenoBhvParamDef { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for GenoParamDef {
+impl GcDecode for GenoBhvParamDef {
     const GC_BYTES: u32 = 0x10;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105722,9 +105857,9 @@ impl GcDecode for GenoParamDef {
         v
     }
 }
-impl GcPointee for GenoParamDef { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GenoParamDef>(t) } }
-impl GcLayout for GenoParamDef {
-    const GC_NAME: &'static str = "GenoParamDef";
+impl GcPointee for GenoBhvParamDef { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GenoBhvParamDef>(t) } }
+impl GcLayout for GenoBhvParamDef {
+    const GC_NAME: &'static str = "GenoBhvParamDef";
     const GC_SIZE: u32 = 0x10;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105734,18 +105869,18 @@ impl GcLayout for GenoParamDef {
         GcField::new("def", 0xC, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<GenoParamDef>() == 24);
+const _: () = assert!(core::mem::size_of::<GenoBhvParamDef>() == 24);
 
-/// C `union (unnamed at pc/geno/geno_game_v2.inc:185:5)` (pc/geno/geno_game_v2.inc:185); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_v2.inc:95:5)` (pc/geno/geno_game_v2.inc:95); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_185 {
+pub union Anon_anon_95 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_185 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_95 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_185 {
+impl GcDecode for Anon_anon_95 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105755,9 +105890,9 @@ impl GcDecode for Anon_anon_185 {
         v
     }
 }
-impl GcPointee for Anon_anon_185 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_185>(t) } }
-impl GcLayout for Anon_anon_185 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:185:5)";
+impl GcPointee for Anon_anon_95 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_95>(t) } }
+impl GcLayout for Anon_anon_95 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:95:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105765,9 +105900,9 @@ impl GcLayout for Anon_anon_185 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_185>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_95>() == 4);
 
-/// C `GenoCbDef` (pc/geno/geno_game_v2.inc:268); GameCube size 0x10, align 4.
+/// C `GenoCbDef` (pc/geno/geno_game_v2.inc:168); GameCube size 0x10, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct GenoCbDef {
@@ -105805,7 +105940,7 @@ impl GcLayout for GenoCbDef {
 }
 const _: () = assert!(core::mem::size_of::<GenoCbDef>() == 24);
 
-/// C `GenoBhvDef` (pc/geno/geno_game_v2.inc:275); GameCube size 0x1C, align 4.
+/// C `GenoBhvDef` (pc/geno/geno_game_v2.inc:175); GameCube size 0x1C, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct GenoBhvDef {
@@ -105852,16 +105987,16 @@ impl GcLayout for GenoBhvDef {
 }
 const _: () = assert!(core::mem::size_of::<GenoBhvDef>() == 48);
 
-/// C `union (unnamed at pc/geno/geno_game_v2.inc:507:5)` (pc/geno/geno_game_v2.inc:507); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_v2.inc:407:5)` (pc/geno/geno_game_v2.inc:407); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_507 {
+pub union Anon_anon_407 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_507 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_407 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_507 {
+impl GcDecode for Anon_anon_407 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105871,9 +106006,9 @@ impl GcDecode for Anon_anon_507 {
         v
     }
 }
-impl GcPointee for Anon_anon_507 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_507>(t) } }
-impl GcLayout for Anon_anon_507 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:507:5)";
+impl GcPointee for Anon_anon_407 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_407>(t) } }
+impl GcLayout for Anon_anon_407 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:407:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105881,18 +106016,18 @@ impl GcLayout for Anon_anon_507 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_507>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_407>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game_v2.inc:748:5)` (pc/geno/geno_game_v2.inc:748); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_v2.inc:612:5)` (pc/geno/geno_game_v2.inc:612); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_748 {
+pub union Anon_anon_612 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_748 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_612 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_748 {
+impl GcDecode for Anon_anon_612 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105902,9 +106037,9 @@ impl GcDecode for Anon_anon_748 {
         v
     }
 }
-impl GcPointee for Anon_anon_748 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_748>(t) } }
-impl GcLayout for Anon_anon_748 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:748:5)";
+impl GcPointee for Anon_anon_612 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_612>(t) } }
+impl GcLayout for Anon_anon_612 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_v2.inc:612:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105912,9 +106047,1129 @@ impl GcLayout for Anon_anon_748 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_748>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_612>() == 4);
 
-/// C `GenoLuaIo` (pc/geno/geno_game_lua.inc:24); GameCube size 0x100, align 4.
+/// C `GbGlideP` (pc/geno/geno_behaviours.h:44); GameCube size 0x7C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbGlideP {
+    pub max_glides: i32,
+    pub entry_hold: i32,
+    pub flick_window: i32,
+    pub start_frames: i32,
+    pub trip_frames: i32,
+    pub land_lag: i32,
+    pub jumpout_frames: i32,
+    pub attack_frames: i32,
+    pub attack_hit0: i32,
+    pub attack_hit1: i32,
+    pub attack_endlag: i32,
+    pub attack_buf_frames: i32,
+    pub entry_vy_max: f32,
+    pub apex_vy: f32,
+    pub flick_thr: f32,
+    pub s_start: f32,
+    pub start_accel: f32,
+    pub s_start_cap: f32,
+    pub theta_def: f32,
+    pub r_down: f32,
+    pub r_up: f32,
+    pub turn_rate: f32,
+    pub gk: f32,
+    pub drag: f32,
+    pub s_max: f32,
+    pub s_stall: f32,
+    pub trip_angle: f32,
+    pub attack_speed_keep: f32,
+    pub chain_speed_mul: f32,
+    pub chain_turn_mul: f32,
+    pub attack_damage: i32,
+}
+impl GbGlideP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbGlideP {
+    const GC_BYTES: u32 = 0x7C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.max_glides = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.entry_hold = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.flick_window = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.start_frames = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.trip_frames = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.land_lag = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.jumpout_frames = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.attack_frames = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.attack_hit0 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.attack_hit1 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.attack_endlag = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.attack_buf_frames = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.entry_vy_max = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.apex_vy = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.flick_thr = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.s_start = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.start_accel = <f32 as GcDecode>::gc_decode(d, at + 0x40);
+        v.s_start_cap = <f32 as GcDecode>::gc_decode(d, at + 0x44);
+        v.theta_def = <f32 as GcDecode>::gc_decode(d, at + 0x48);
+        v.r_down = <f32 as GcDecode>::gc_decode(d, at + 0x4C);
+        v.r_up = <f32 as GcDecode>::gc_decode(d, at + 0x50);
+        v.turn_rate = <f32 as GcDecode>::gc_decode(d, at + 0x54);
+        v.gk = <f32 as GcDecode>::gc_decode(d, at + 0x58);
+        v.drag = <f32 as GcDecode>::gc_decode(d, at + 0x5C);
+        v.s_max = <f32 as GcDecode>::gc_decode(d, at + 0x60);
+        v.s_stall = <f32 as GcDecode>::gc_decode(d, at + 0x64);
+        v.trip_angle = <f32 as GcDecode>::gc_decode(d, at + 0x68);
+        v.attack_speed_keep = <f32 as GcDecode>::gc_decode(d, at + 0x6C);
+        v.chain_speed_mul = <f32 as GcDecode>::gc_decode(d, at + 0x70);
+        v.chain_turn_mul = <f32 as GcDecode>::gc_decode(d, at + 0x74);
+        v.attack_damage = <i32 as GcDecode>::gc_decode(d, at + 0x78);
+        v
+    }
+}
+impl GcPointee for GbGlideP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbGlideP>(t) } }
+impl GcLayout for GbGlideP {
+    const GC_NAME: &'static str = "GbGlideP";
+    const GC_SIZE: u32 = 0x7C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("max_glides", 0x0, 4, "s32"),
+        GcField::new("entry_hold", 0x4, 4, "s32"),
+        GcField::new("flick_window", 0x8, 4, "s32"),
+        GcField::new("start_frames", 0xC, 4, "s32"),
+        GcField::new("trip_frames", 0x10, 4, "s32"),
+        GcField::new("land_lag", 0x14, 4, "s32"),
+        GcField::new("jumpout_frames", 0x18, 4, "s32"),
+        GcField::new("attack_frames", 0x1C, 4, "s32"),
+        GcField::new("attack_hit0", 0x20, 4, "s32"),
+        GcField::new("attack_hit1", 0x24, 4, "s32"),
+        GcField::new("attack_endlag", 0x28, 4, "s32"),
+        GcField::new("attack_buf_frames", 0x2C, 4, "s32"),
+        GcField::new("entry_vy_max", 0x30, 4, "f32"),
+        GcField::new("apex_vy", 0x34, 4, "f32"),
+        GcField::new("flick_thr", 0x38, 4, "f32"),
+        GcField::new("s_start", 0x3C, 4, "f32"),
+        GcField::new("start_accel", 0x40, 4, "f32"),
+        GcField::new("s_start_cap", 0x44, 4, "f32"),
+        GcField::new("theta_def", 0x48, 4, "f32"),
+        GcField::new("r_down", 0x4C, 4, "f32"),
+        GcField::new("r_up", 0x50, 4, "f32"),
+        GcField::new("turn_rate", 0x54, 4, "f32"),
+        GcField::new("gk", 0x58, 4, "f32"),
+        GcField::new("drag", 0x5C, 4, "f32"),
+        GcField::new("s_max", 0x60, 4, "f32"),
+        GcField::new("s_stall", 0x64, 4, "f32"),
+        GcField::new("trip_angle", 0x68, 4, "f32"),
+        GcField::new("attack_speed_keep", 0x6C, 4, "f32"),
+        GcField::new("chain_speed_mul", 0x70, 4, "f32"),
+        GcField::new("chain_turn_mul", 0x74, 4, "f32"),
+        GcField::new("attack_damage", 0x78, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbGlideP>() == 124);
+
+/// C `GbGlide` (pc/geno/geno_behaviours.h:53); GameCube size 0x40, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbGlide {
+    pub phase: i32,
+    pub t: i32,
+    pub glides_used: i32,
+    pub attack_buf: i32,
+    pub slow: i32,
+    pub helpless: i32,
+    pub end_reason: i32,
+    pub lag: i32,
+    pub hit_active: i32,
+    pub jump_now: i32,
+    pub endlag: i32,
+    pub theta: f32,
+    pub speed: f32,
+    pub f: f32,
+    pub vx: f32,
+    pub vy: f32,
+}
+impl GbGlide { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbGlide {
+    const GC_BYTES: u32 = 0x40;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.phase = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.t = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.glides_used = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.attack_buf = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.slow = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.helpless = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.end_reason = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.lag = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.hit_active = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.jump_now = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.endlag = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.theta = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.speed = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.f = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v
+    }
+}
+impl GcPointee for GbGlide { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbGlide>(t) } }
+impl GcLayout for GbGlide {
+    const GC_NAME: &'static str = "GbGlide";
+    const GC_SIZE: u32 = 0x40;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("phase", 0x0, 4, "s32"),
+        GcField::new("t", 0x4, 4, "s32"),
+        GcField::new("glides_used", 0x8, 4, "s32"),
+        GcField::new("attack_buf", 0xC, 4, "s32"),
+        GcField::new("slow", 0x10, 4, "s32"),
+        GcField::new("helpless", 0x14, 4, "s32"),
+        GcField::new("end_reason", 0x18, 4, "s32"),
+        GcField::new("lag", 0x1C, 4, "s32"),
+        GcField::new("hit_active", 0x20, 4, "s32"),
+        GcField::new("jump_now", 0x24, 4, "s32"),
+        GcField::new("endlag", 0x28, 4, "s32"),
+        GcField::new("theta", 0x2C, 4, "f32"),
+        GcField::new("speed", 0x30, 4, "f32"),
+        GcField::new("f", 0x34, 4, "f32"),
+        GcField::new("vx", 0x38, 4, "f32"),
+        GcField::new("vy", 0x3C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbGlide>() == 64);
+
+/// C `GbGlideIn` (pc/geno/geno_behaviours.h:69); GameCube size 0x20, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbGlideIn {
+    pub sx: f32,
+    pub sy: f32,
+    pub jump_pressed: i32,
+    pub attack_pressed: i32,
+    pub special_pressed: i32,
+    pub jump_left: i32,
+    pub ground: i32,
+    pub height: f32,
+}
+impl GbGlideIn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbGlideIn {
+    const GC_BYTES: u32 = 0x20;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sx = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.sy = <f32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.jump_pressed = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.attack_pressed = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.special_pressed = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.jump_left = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.ground = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.height = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v
+    }
+}
+impl GcPointee for GbGlideIn { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbGlideIn>(t) } }
+impl GcLayout for GbGlideIn {
+    const GC_NAME: &'static str = "GbGlideIn";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sx", 0x0, 4, "f32"),
+        GcField::new("sy", 0x4, 4, "f32"),
+        GcField::new("jump_pressed", 0x8, 4, "s32"),
+        GcField::new("attack_pressed", 0xC, 4, "s32"),
+        GcField::new("special_pressed", 0x10, 4, "s32"),
+        GcField::new("jump_left", 0x14, 4, "s32"),
+        GcField::new("ground", 0x18, 4, "s32"),
+        GcField::new("height", 0x1C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbGlideIn>() == 32);
+
+/// C `GbGlideEntry` (pc/geno/geno_behaviours.h:78); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbGlideEntry {
+    pub hold_frames: i32,
+    pub last_dir: i32,
+    pub age: i32,
+}
+impl GbGlideEntry { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbGlideEntry {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.hold_frames = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.last_dir = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.age = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for GbGlideEntry { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbGlideEntry>(t) } }
+impl GcLayout for GbGlideEntry {
+    const GC_NAME: &'static str = "GbGlideEntry";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("hold_frames", 0x0, 4, "s32"),
+        GcField::new("last_dir", 0x4, 4, "s32"),
+        GcField::new("age", 0x8, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbGlideEntry>() == 12);
+
+/// C `GbTornadoP` (pc/geno/geno_behaviours.h:99); GameCube size 0x64, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbTornadoP {
+    pub start_frames: i32,
+    pub read_period: i32,
+    pub read_limit: i32,
+    pub end_frames: i32,
+    pub ledge_lock: i32,
+    pub final_hit_ground: i32,
+    pub final_hit_air: i32,
+    pub loop_damage: i32,
+    pub final_damage: i32,
+    pub spin0: f32,
+    pub decay_a: f32,
+    pub decay_b: f32,
+    pub mash_add: f32,
+    pub spin_max: f32,
+    pub spin_end: f32,
+    pub grav: f32,
+    pub rise_impulse: f32,
+    pub rise_max: f32,
+    pub fall_max: f32,
+    pub vx_max: f32,
+    pub vx_max_ground: f32,
+    pub vx_accel: f32,
+    pub jump_bonus: f32,
+    pub start_vy_keep: f32,
+    pub start_vx_keep: f32,
+}
+impl GbTornadoP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbTornadoP {
+    const GC_BYTES: u32 = 0x64;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.start_frames = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.read_period = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.read_limit = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.end_frames = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.ledge_lock = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.final_hit_ground = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.final_hit_air = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.loop_damage = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.final_damage = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.spin0 = <f32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.decay_a = <f32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.decay_b = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.mash_add = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.spin_max = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.spin_end = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.grav = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.rise_impulse = <f32 as GcDecode>::gc_decode(d, at + 0x40);
+        v.rise_max = <f32 as GcDecode>::gc_decode(d, at + 0x44);
+        v.fall_max = <f32 as GcDecode>::gc_decode(d, at + 0x48);
+        v.vx_max = <f32 as GcDecode>::gc_decode(d, at + 0x4C);
+        v.vx_max_ground = <f32 as GcDecode>::gc_decode(d, at + 0x50);
+        v.vx_accel = <f32 as GcDecode>::gc_decode(d, at + 0x54);
+        v.jump_bonus = <f32 as GcDecode>::gc_decode(d, at + 0x58);
+        v.start_vy_keep = <f32 as GcDecode>::gc_decode(d, at + 0x5C);
+        v.start_vx_keep = <f32 as GcDecode>::gc_decode(d, at + 0x60);
+        v
+    }
+}
+impl GcPointee for GbTornadoP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbTornadoP>(t) } }
+impl GcLayout for GbTornadoP {
+    const GC_NAME: &'static str = "GbTornadoP";
+    const GC_SIZE: u32 = 0x64;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("start_frames", 0x0, 4, "s32"),
+        GcField::new("read_period", 0x4, 4, "s32"),
+        GcField::new("read_limit", 0x8, 4, "s32"),
+        GcField::new("end_frames", 0xC, 4, "s32"),
+        GcField::new("ledge_lock", 0x10, 4, "s32"),
+        GcField::new("final_hit_ground", 0x14, 4, "s32"),
+        GcField::new("final_hit_air", 0x18, 4, "s32"),
+        GcField::new("loop_damage", 0x1C, 4, "s32"),
+        GcField::new("final_damage", 0x20, 4, "s32"),
+        GcField::new("spin0", 0x24, 4, "f32"),
+        GcField::new("decay_a", 0x28, 4, "f32"),
+        GcField::new("decay_b", 0x2C, 4, "f32"),
+        GcField::new("mash_add", 0x30, 4, "f32"),
+        GcField::new("spin_max", 0x34, 4, "f32"),
+        GcField::new("spin_end", 0x38, 4, "f32"),
+        GcField::new("grav", 0x3C, 4, "f32"),
+        GcField::new("rise_impulse", 0x40, 4, "f32"),
+        GcField::new("rise_max", 0x44, 4, "f32"),
+        GcField::new("fall_max", 0x48, 4, "f32"),
+        GcField::new("vx_max", 0x4C, 4, "f32"),
+        GcField::new("vx_max_ground", 0x50, 4, "f32"),
+        GcField::new("vx_accel", 0x54, 4, "f32"),
+        GcField::new("jump_bonus", 0x58, 4, "f32"),
+        GcField::new("start_vy_keep", 0x5C, 4, "f32"),
+        GcField::new("start_vx_keep", 0x60, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbTornadoP>() == 100);
+
+/// C `GbTornado` (pc/geno/geno_behaviours.h:107); GameCube size 0x44, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbTornado {
+    pub phase: i32,
+    pub n: i32,
+    pub k: i32,
+    pub end_t: i32,
+    pub press_latch: i32,
+    pub rise_impulse: i32,
+    pub jump_start: i32,
+    pub hits: i32,
+    pub hit_spawn: i32,
+    pub final_spawn: i32,
+    pub final_active: i32,
+    pub ledge_locked: i32,
+    pub helpless: i32,
+    pub spin: f32,
+    pub rot: f32,
+    pub vx: f32,
+    pub vy: f32,
+}
+impl GbTornado { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbTornado {
+    const GC_BYTES: u32 = 0x44;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.phase = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.n = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.k = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.end_t = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.press_latch = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.rise_impulse = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.jump_start = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.hits = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.hit_spawn = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.final_spawn = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.final_active = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.ledge_locked = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.helpless = <i32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.spin = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.rot = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x40);
+        v
+    }
+}
+impl GcPointee for GbTornado { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbTornado>(t) } }
+impl GcLayout for GbTornado {
+    const GC_NAME: &'static str = "GbTornado";
+    const GC_SIZE: u32 = 0x44;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("phase", 0x0, 4, "s32"),
+        GcField::new("n", 0x4, 4, "s32"),
+        GcField::new("k", 0x8, 4, "s32"),
+        GcField::new("end_t", 0xC, 4, "s32"),
+        GcField::new("press_latch", 0x10, 4, "s32"),
+        GcField::new("rise_impulse", 0x14, 4, "s32"),
+        GcField::new("jump_start", 0x18, 4, "s32"),
+        GcField::new("hits", 0x1C, 4, "s32"),
+        GcField::new("hit_spawn", 0x20, 4, "s32"),
+        GcField::new("final_spawn", 0x24, 4, "s32"),
+        GcField::new("final_active", 0x28, 4, "s32"),
+        GcField::new("ledge_locked", 0x2C, 4, "s32"),
+        GcField::new("helpless", 0x30, 4, "s32"),
+        GcField::new("spin", 0x34, 4, "f32"),
+        GcField::new("rot", 0x38, 4, "f32"),
+        GcField::new("vx", 0x3C, 4, "f32"),
+        GcField::new("vy", 0x40, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbTornado>() == 68);
+
+/// C `GbTornadoIn` (pc/geno/geno_behaviours.h:120); GameCube size 0x10, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbTornadoIn {
+    pub sx: f32,
+    pub special_pressed: i32,
+    pub jump_held: i32,
+    pub airborne: i32,
+}
+impl GbTornadoIn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbTornadoIn {
+    const GC_BYTES: u32 = 0x10;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sx = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.special_pressed = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.jump_held = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.airborne = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v
+    }
+}
+impl GcPointee for GbTornadoIn { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbTornadoIn>(t) } }
+impl GcLayout for GbTornadoIn {
+    const GC_NAME: &'static str = "GbTornadoIn";
+    const GC_SIZE: u32 = 0x10;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sx", 0x0, 4, "f32"),
+        GcField::new("special_pressed", 0x4, 4, "s32"),
+        GcField::new("jump_held", 0x8, 4, "s32"),
+        GcField::new("airborne", 0xC, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbTornadoIn>() == 16);
+
+/// C `GbDrillP` (pc/geno/geno_behaviours.h:130); GameCube size 0x50, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbDrillP {
+    pub move0: i32,
+    pub ramp: i32,
+    pub hit0: i32,
+    pub hit_period: i32,
+    pub nhits: i32,
+    pub hit_end: i32,
+    pub final_frame: i32,
+    pub final_end_ground: i32,
+    pub final_end_air: i32,
+    pub total: i32,
+    pub rush_damage: i32,
+    pub final_damage: i32,
+    pub dive_default: f32,
+    pub psi_stick: f32,
+    pub psi_min: f32,
+    pub psi_max: f32,
+    pub steer_rate: f32,
+    pub speed: f32,
+    pub recoil_vy: f32,
+    pub end_vx_keep: f32,
+}
+impl GbDrillP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbDrillP {
+    const GC_BYTES: u32 = 0x50;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.move0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.ramp = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.hit0 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.hit_period = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.nhits = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.hit_end = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.final_frame = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.final_end_ground = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.final_end_air = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.total = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.rush_damage = <i32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.final_damage = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.dive_default = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.psi_stick = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v.psi_min = <f32 as GcDecode>::gc_decode(d, at + 0x38);
+        v.psi_max = <f32 as GcDecode>::gc_decode(d, at + 0x3C);
+        v.steer_rate = <f32 as GcDecode>::gc_decode(d, at + 0x40);
+        v.speed = <f32 as GcDecode>::gc_decode(d, at + 0x44);
+        v.recoil_vy = <f32 as GcDecode>::gc_decode(d, at + 0x48);
+        v.end_vx_keep = <f32 as GcDecode>::gc_decode(d, at + 0x4C);
+        v
+    }
+}
+impl GcPointee for GbDrillP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbDrillP>(t) } }
+impl GcLayout for GbDrillP {
+    const GC_NAME: &'static str = "GbDrillP";
+    const GC_SIZE: u32 = 0x50;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("move0", 0x0, 4, "s32"),
+        GcField::new("ramp", 0x4, 4, "s32"),
+        GcField::new("hit0", 0x8, 4, "s32"),
+        GcField::new("hit_period", 0xC, 4, "s32"),
+        GcField::new("nhits", 0x10, 4, "s32"),
+        GcField::new("hit_end", 0x14, 4, "s32"),
+        GcField::new("final_frame", 0x18, 4, "s32"),
+        GcField::new("final_end_ground", 0x1C, 4, "s32"),
+        GcField::new("final_end_air", 0x20, 4, "s32"),
+        GcField::new("total", 0x24, 4, "s32"),
+        GcField::new("rush_damage", 0x28, 4, "s32"),
+        GcField::new("final_damage", 0x2C, 4, "s32"),
+        GcField::new("dive_default", 0x30, 4, "f32"),
+        GcField::new("psi_stick", 0x34, 4, "f32"),
+        GcField::new("psi_min", 0x38, 4, "f32"),
+        GcField::new("psi_max", 0x3C, 4, "f32"),
+        GcField::new("steer_rate", 0x40, 4, "f32"),
+        GcField::new("speed", 0x44, 4, "f32"),
+        GcField::new("recoil_vy", 0x48, 4, "f32"),
+        GcField::new("end_vx_keep", 0x4C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbDrillP>() == 80);
+
+/// C `GbDrill` (pc/geno/geno_behaviours.h:135); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbDrill {
+    pub phase: i32,
+    pub n: i32,
+    pub hit_spawn: i32,
+    pub hits: i32,
+    pub final_active: i32,
+    pub helpless: i32,
+    pub done: i32,
+    pub psi: f32,
+    pub speed: f32,
+    pub f: f32,
+    pub vx: f32,
+    pub vy: f32,
+}
+impl GbDrill { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbDrill {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.phase = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.n = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.hit_spawn = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.hits = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.final_active = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.helpless = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.done = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.psi = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.speed = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.f = <f32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v
+    }
+}
+impl GcPointee for GbDrill { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbDrill>(t) } }
+impl GcLayout for GbDrill {
+    const GC_NAME: &'static str = "GbDrill";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("phase", 0x0, 4, "s32"),
+        GcField::new("n", 0x4, 4, "s32"),
+        GcField::new("hit_spawn", 0x8, 4, "s32"),
+        GcField::new("hits", 0xC, 4, "s32"),
+        GcField::new("final_active", 0x10, 4, "s32"),
+        GcField::new("helpless", 0x14, 4, "s32"),
+        GcField::new("done", 0x18, 4, "s32"),
+        GcField::new("psi", 0x1C, 4, "f32"),
+        GcField::new("speed", 0x20, 4, "f32"),
+        GcField::new("f", 0x24, 4, "f32"),
+        GcField::new("vx", 0x28, 4, "f32"),
+        GcField::new("vy", 0x2C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbDrill>() == 48);
+
+/// C `GbDrillIn` (pc/geno/geno_behaviours.h:145); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbDrillIn {
+    pub sy: f32,
+    pub airborne: i32,
+    pub slope: f32,
+}
+impl GbDrillIn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbDrillIn {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sy = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.airborne = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.slope = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for GbDrillIn { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbDrillIn>(t) } }
+impl GcLayout for GbDrillIn {
+    const GC_NAME: &'static str = "GbDrillIn";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sy", 0x0, 4, "f32"),
+        GcField::new("airborne", 0x4, 4, "s32"),
+        GcField::new("slope", 0x8, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbDrillIn>() == 12);
+
+/// C `GbCapeP` (pc/geno/geno_behaviours.h:155); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbCapeP {
+    pub start: i32,
+    pub end: i32,
+    pub total: i32,
+    pub turn_thr: f32,
+    pub stall_x: f32,
+    pub stall_y_up: f32,
+    pub stall_vy_hi: f32,
+    pub stall_grav: f32,
+    pub stall_fall: f32,
+    pub ground_x: f32,
+    pub reflect_dmg_mul: f32,
+    pub reflect_speed_mul: f32,
+}
+impl GbCapeP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbCapeP {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.start = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.end = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.total = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.turn_thr = <f32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.stall_x = <f32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.stall_y_up = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.stall_vy_hi = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.stall_grav = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.stall_fall = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.ground_x = <f32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.reflect_dmg_mul = <f32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.reflect_speed_mul = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v
+    }
+}
+impl GcPointee for GbCapeP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbCapeP>(t) } }
+impl GcLayout for GbCapeP {
+    const GC_NAME: &'static str = "GbCapeP";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("start", 0x0, 4, "s32"),
+        GcField::new("end", 0x4, 4, "s32"),
+        GcField::new("total", 0x8, 4, "s32"),
+        GcField::new("turn_thr", 0xC, 4, "f32"),
+        GcField::new("stall_x", 0x10, 4, "f32"),
+        GcField::new("stall_y_up", 0x14, 4, "f32"),
+        GcField::new("stall_vy_hi", 0x18, 4, "f32"),
+        GcField::new("stall_grav", 0x1C, 4, "f32"),
+        GcField::new("stall_fall", 0x20, 4, "f32"),
+        GcField::new("ground_x", 0x24, 4, "f32"),
+        GcField::new("reflect_dmg_mul", 0x28, 4, "f32"),
+        GcField::new("reflect_speed_mul", 0x2C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbCapeP>() == 48);
+
+/// C `GbCape` (pc/geno/geno_behaviours.h:160); GameCube size 0x20, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbCape {
+    pub n: i32,
+    pub flipped: i32,
+    pub flip_now: i32,
+    pub reflect: i32,
+    pub done: i32,
+    pub f: f32,
+    pub vx: f32,
+    pub vy: f32,
+}
+impl GbCape { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbCape {
+    const GC_BYTES: u32 = 0x20;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.n = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.flipped = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.flip_now = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.reflect = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.done = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.f = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v
+    }
+}
+impl GcPointee for GbCape { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbCape>(t) } }
+impl GcLayout for GbCape {
+    const GC_NAME: &'static str = "GbCape";
+    const GC_SIZE: u32 = 0x20;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("n", 0x0, 4, "s32"),
+        GcField::new("flipped", 0x4, 4, "s32"),
+        GcField::new("flip_now", 0x8, 4, "s32"),
+        GcField::new("reflect", 0xC, 4, "s32"),
+        GcField::new("done", 0x10, 4, "s32"),
+        GcField::new("f", 0x14, 4, "f32"),
+        GcField::new("vx", 0x18, 4, "f32"),
+        GcField::new("vy", 0x1C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbCape>() == 32);
+
+/// C `GbCapeIn` (pc/geno/geno_behaviours.h:168); GameCube size 0x8, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbCapeIn {
+    pub sx: f32,
+    pub airborne: i32,
+}
+impl GbCapeIn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbCapeIn {
+    const GC_BYTES: u32 = 0x8;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sx = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.airborne = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v
+    }
+}
+impl GcPointee for GbCapeIn { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbCapeIn>(t) } }
+impl GcLayout for GbCapeIn {
+    const GC_NAME: &'static str = "GbCapeIn";
+    const GC_SIZE: u32 = 0x8;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sx", 0x0, 4, "f32"),
+        GcField::new("airborne", 0x4, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbCapeIn>() == 8);
+
+/// C `GbMultiDashP` (pc/geno/geno_behaviours.h:178); GameCube size 0x30, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbMultiDashP {
+    pub max_seg: i32,
+    pub aim_first: i32,
+    pub aim_later: i32,
+    pub dash_frames: i32,
+    pub pause_frames: i32,
+    pub repress_frames: i32,
+    pub end_lag: i32,
+    pub dash_speed: f32,
+    pub end_keep: f32,
+    pub aim_slow: f32,
+    pub ay_max: f32,
+    pub pause_keep: f32,
+}
+impl GbMultiDashP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbMultiDashP {
+    const GC_BYTES: u32 = 0x30;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.max_seg = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.aim_first = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.aim_later = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.dash_frames = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.pause_frames = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.repress_frames = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.end_lag = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.dash_speed = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.end_keep = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.aim_slow = <f32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.ay_max = <f32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.pause_keep = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v
+    }
+}
+impl GcPointee for GbMultiDashP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbMultiDashP>(t) } }
+impl GcLayout for GbMultiDashP {
+    const GC_NAME: &'static str = "GbMultiDashP";
+    const GC_SIZE: u32 = 0x30;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("max_seg", 0x0, 4, "s32"),
+        GcField::new("aim_first", 0x4, 4, "s32"),
+        GcField::new("aim_later", 0x8, 4, "s32"),
+        GcField::new("dash_frames", 0xC, 4, "s32"),
+        GcField::new("pause_frames", 0x10, 4, "s32"),
+        GcField::new("repress_frames", 0x14, 4, "s32"),
+        GcField::new("end_lag", 0x18, 4, "s32"),
+        GcField::new("dash_speed", 0x1C, 4, "f32"),
+        GcField::new("end_keep", 0x20, 4, "f32"),
+        GcField::new("aim_slow", 0x24, 4, "f32"),
+        GcField::new("ay_max", 0x28, 4, "f32"),
+        GcField::new("pause_keep", 0x2C, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbMultiDashP>() == 48);
+
+/// C `GbMultiDash` (pc/geno/geno_behaviours.h:182); GameCube size 0x38, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbMultiDash {
+    pub seg: i32,
+    pub phase: i32,
+    pub t: i32,
+    pub repress: i32,
+    pub hit_spawn: i32,
+    pub helpless: i32,
+    pub done: i32,
+    pub ax: f32,
+    pub ay: f32,
+    pub f: f32,
+    pub speed: f32,
+    pub vx: f32,
+    pub vy: f32,
+    pub dist: f32,
+}
+impl GbMultiDash { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbMultiDash {
+    const GC_BYTES: u32 = 0x38;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.seg = <i32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.phase = <i32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.t = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.repress = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.hit_spawn = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.helpless = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.done = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.ax = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.ay = <f32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.f = <f32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.speed = <f32 as GcDecode>::gc_decode(d, at + 0x28);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x30);
+        v.dist = <f32 as GcDecode>::gc_decode(d, at + 0x34);
+        v
+    }
+}
+impl GcPointee for GbMultiDash { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbMultiDash>(t) } }
+impl GcLayout for GbMultiDash {
+    const GC_NAME: &'static str = "GbMultiDash";
+    const GC_SIZE: u32 = 0x38;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("seg", 0x0, 4, "s32"),
+        GcField::new("phase", 0x4, 4, "s32"),
+        GcField::new("t", 0x8, 4, "s32"),
+        GcField::new("repress", 0xC, 4, "s32"),
+        GcField::new("hit_spawn", 0x10, 4, "s32"),
+        GcField::new("helpless", 0x14, 4, "s32"),
+        GcField::new("done", 0x18, 4, "s32"),
+        GcField::new("ax", 0x1C, 4, "f32"),
+        GcField::new("ay", 0x20, 4, "f32"),
+        GcField::new("f", 0x24, 4, "f32"),
+        GcField::new("speed", 0x28, 4, "f32"),
+        GcField::new("vx", 0x2C, 4, "f32"),
+        GcField::new("vy", 0x30, 4, "f32"),
+        GcField::new("dist", 0x34, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbMultiDash>() == 56);
+
+/// C `GbMultiDashIn` (pc/geno/geno_behaviours.h:191); GameCube size 0xC, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbMultiDashIn {
+    pub sx: f32,
+    pub sy: f32,
+    pub special_pressed: i32,
+}
+impl GbMultiDashIn { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbMultiDashIn {
+    const GC_BYTES: u32 = 0xC;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.sx = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.sy = <f32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.special_pressed = <i32 as GcDecode>::gc_decode(d, at + 0x8);
+        v
+    }
+}
+impl GcPointee for GbMultiDashIn { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbMultiDashIn>(t) } }
+impl GcLayout for GbMultiDashIn {
+    const GC_NAME: &'static str = "GbMultiDashIn";
+    const GC_SIZE: u32 = 0xC;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("sx", 0x0, 4, "f32"),
+        GcField::new("sy", 0x4, 4, "f32"),
+        GcField::new("special_pressed", 0x8, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbMultiDashIn>() == 12);
+
+/// C `GbAnimMotionP` (pc/geno/geno_behaviours.h:201); GameCube size 0x1C, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbAnimMotionP {
+    pub rate: f32,
+    pub scale: f32,
+    pub grav: f32,
+    pub mode: i32,
+    pub gravity_on: i32,
+    pub ignore_y: i32,
+    pub r#loop: i32,
+}
+impl GbAnimMotionP { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbAnimMotionP {
+    const GC_BYTES: u32 = 0x1C;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.rate = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.scale = <f32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.grav = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.mode = <i32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.gravity_on = <i32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.ignore_y = <i32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.r#loop = <i32 as GcDecode>::gc_decode(d, at + 0x18);
+        v
+    }
+}
+impl GcPointee for GbAnimMotionP { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbAnimMotionP>(t) } }
+impl GcLayout for GbAnimMotionP {
+    const GC_NAME: &'static str = "GbAnimMotionP";
+    const GC_SIZE: u32 = 0x1C;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("rate", 0x0, 4, "f32"),
+        GcField::new("scale", 0x4, 4, "f32"),
+        GcField::new("grav", 0x8, 4, "f32"),
+        GcField::new("mode", 0xC, 4, "s32"),
+        GcField::new("gravity_on", 0x10, 4, "s32"),
+        GcField::new("ignore_y", 0x14, 4, "s32"),
+        GcField::new("loop", 0x18, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbAnimMotionP>() == 28);
+
+/// C `GbAnimMotion` (pc/geno/geno_behaviours.h:206); GameCube size 0x28, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub struct GbAnimMotion {
+    pub anim_t: f32,
+    pub vy_carry: f32,
+    pub origin_x: f32,
+    pub origin_y: f32,
+    pub vx: f32,
+    pub vy: f32,
+    pub pos_x: f32,
+    pub pos_y: f32,
+    pub ended: i32,
+    pub started: i32,
+}
+impl GbAnimMotion { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for GbAnimMotion {
+    const GC_BYTES: u32 = 0x28;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.anim_t = <f32 as GcDecode>::gc_decode(d, at + 0x0);
+        v.vy_carry = <f32 as GcDecode>::gc_decode(d, at + 0x4);
+        v.origin_x = <f32 as GcDecode>::gc_decode(d, at + 0x8);
+        v.origin_y = <f32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.vx = <f32 as GcDecode>::gc_decode(d, at + 0x10);
+        v.vy = <f32 as GcDecode>::gc_decode(d, at + 0x14);
+        v.pos_x = <f32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.pos_y = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.ended = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.started = <i32 as GcDecode>::gc_decode(d, at + 0x24);
+        v
+    }
+}
+impl GcPointee for GbAnimMotion { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<GbAnimMotion>(t) } }
+impl GcLayout for GbAnimMotion {
+    const GC_NAME: &'static str = "GbAnimMotion";
+    const GC_SIZE: u32 = 0x28;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("anim_t", 0x0, 4, "f32"),
+        GcField::new("vy_carry", 0x4, 4, "f32"),
+        GcField::new("origin_x", 0x8, 4, "f32"),
+        GcField::new("origin_y", 0xC, 4, "f32"),
+        GcField::new("vx", 0x10, 4, "f32"),
+        GcField::new("vy", 0x14, 4, "f32"),
+        GcField::new("pos_x", 0x18, 4, "f32"),
+        GcField::new("pos_y", 0x1C, 4, "f32"),
+        GcField::new("ended", 0x20, 4, "s32"),
+        GcField::new("started", 0x24, 4, "s32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<GbAnimMotion>() == 40);
+
+/// C `union (unnamed at pc/geno/geno_behaviours.inc:197:5)` (pc/geno/geno_behaviours.inc:197); GameCube size 0x4, align 4.
+#[repr(C, align(4))]
+#[derive(Clone, Copy)]
+pub union Anon_anon_197 {
+    pub u: u32,
+    pub f: f32,
+}
+impl Anon_anon_197 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+    #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
+impl GcDecode for Anon_anon_197 {
+    const GC_BYTES: u32 = 0x4;
+    #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
+    #[allow(unused_variables, unused_mut, unused_unsafe)]
+    fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
+        let mut v = Self::zeroed();
+        v.u = <u32 as GcDecode>::gc_decode(d, at + 0x0);
+        v
+    }
+}
+impl GcPointee for Anon_anon_197 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_197>(t) } }
+impl GcLayout for Anon_anon_197 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_behaviours.inc:197:5)";
+    const GC_SIZE: u32 = 0x4;
+    const GC_ALIGN: u32 = 4;
+    const GC_FIELDS: &'static [GcField] = &[
+        GcField::new("u", 0x0, 4, "u32"),
+        GcField::new("f", 0x0, 4, "f32"),
+    ];
+}
+const _: () = assert!(core::mem::size_of::<Anon_anon_197>() == 4);
+
+/// C `GenoLuaIo` (pc/geno/geno_game_lua.inc:26); GameCube size 0x100, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoLuaIo {
@@ -105943,16 +107198,16 @@ impl GcLayout for GenoLuaIo {
 }
 const _: () = assert!(core::mem::size_of::<GenoLuaIo>() == 256);
 
-/// C `union (unnamed at pc/geno/geno_game_lua.inc:33:5)` (pc/geno/geno_game_lua.inc:33); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_lua.inc:35:5)` (pc/geno/geno_game_lua.inc:35); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_33 {
+pub union Anon_anon_35 {
     pub f: f32,
     pub u: u32,
 }
-impl Anon_anon_33 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_35 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_33 {
+impl GcDecode for Anon_anon_35 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105962,9 +107217,9 @@ impl GcDecode for Anon_anon_33 {
         v
     }
 }
-impl GcPointee for Anon_anon_33 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_33>(t) } }
-impl GcLayout for Anon_anon_33 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_lua.inc:33:5)";
+impl GcPointee for Anon_anon_35 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_35>(t) } }
+impl GcLayout for Anon_anon_35 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_lua.inc:35:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -105972,18 +107227,18 @@ impl GcLayout for Anon_anon_33 {
         GcField::new("u", 0x0, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_33>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_35>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game_lua.inc:43:5)` (pc/geno/geno_game_lua.inc:43); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_lua.inc:45:5)` (pc/geno/geno_game_lua.inc:45); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_43 {
+pub union Anon_anon_45 {
     pub f: f32,
     pub u: u32,
 }
-impl Anon_anon_43 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_45 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_43 {
+impl GcDecode for Anon_anon_45 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -105993,9 +107248,9 @@ impl GcDecode for Anon_anon_43 {
         v
     }
 }
-impl GcPointee for Anon_anon_43 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_43>(t) } }
-impl GcLayout for Anon_anon_43 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_lua.inc:43:5)";
+impl GcPointee for Anon_anon_45 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_45>(t) } }
+impl GcLayout for Anon_anon_45 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_lua.inc:45:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106003,18 +107258,18 @@ impl GcLayout for Anon_anon_43 {
         GcField::new("u", 0x0, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_43>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_45>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game_articles.inc:75:5)` (pc/geno/geno_game_articles.inc:75); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_articles.inc:77:5)` (pc/geno/geno_game_articles.inc:77); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_75 {
+pub union Anon_anon_77 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_75 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_77 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_75 {
+impl GcDecode for Anon_anon_77 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106024,9 +107279,9 @@ impl GcDecode for Anon_anon_75 {
         v
     }
 }
-impl GcPointee for Anon_anon_75 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_75>(t) } }
-impl GcLayout for Anon_anon_75 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_articles.inc:75:5)";
+impl GcPointee for Anon_anon_77 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_77>(t) } }
+impl GcLayout for Anon_anon_77 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_articles.inc:77:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106034,18 +107289,18 @@ impl GcLayout for Anon_anon_75 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_75>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_77>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game_articles.inc:85:5)` (pc/geno/geno_game_articles.inc:85); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_articles.inc:87:5)` (pc/geno/geno_game_articles.inc:87); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_85 {
+pub union Anon_anon_87_3 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_85 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_87_3 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_85 {
+impl GcDecode for Anon_anon_87_3 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106055,9 +107310,9 @@ impl GcDecode for Anon_anon_85 {
         v
     }
 }
-impl GcPointee for Anon_anon_85 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_85>(t) } }
-impl GcLayout for Anon_anon_85 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_articles.inc:85:5)";
+impl GcPointee for Anon_anon_87_3 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_87_3>(t) } }
+impl GcLayout for Anon_anon_87_3 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_articles.inc:87:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106065,19 +107320,19 @@ impl GcLayout for Anon_anon_85 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_85>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_87_3>() == 4);
 
-/// C `struct (unnamed at pc/geno/geno_game.c:2511:14)` (pc/geno/geno_game.c:2511); GameCube size 0xC, align 4.
+/// C `struct (unnamed at pc/geno/geno_game.c:2375:14)` (pc/geno/geno_game.c:2375); GameCube size 0xC, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
-pub struct Anon_anon_2511 {
+pub struct Anon_anon_2375 {
     pub name: *const i8,
     pub off: i32,
     pub size: i32,
 }
-impl Anon_anon_2511 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_2375 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_2511 {
+impl GcDecode for Anon_anon_2375 {
     const GC_BYTES: u32 = 0xC;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106089,9 +107344,9 @@ impl GcDecode for Anon_anon_2511 {
         v
     }
 }
-impl GcPointee for Anon_anon_2511 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2511>(t) } }
-impl GcLayout for Anon_anon_2511 {
-    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:2511:14)";
+impl GcPointee for Anon_anon_2375 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2375>(t) } }
+impl GcLayout for Anon_anon_2375 {
+    const GC_NAME: &'static str = "struct (unnamed at pc/geno/geno_game.c:2375:14)";
     const GC_SIZE: u32 = 0xC;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106100,9 +107355,9 @@ impl GcLayout for Anon_anon_2511 {
         GcField::new("size", 0x8, 4, "int"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_2511>() == 16);
+const _: () = assert!(core::mem::size_of::<Anon_anon_2375>() == 16);
 
-/// C `GenoItemVars` (pc/geno/geno_game_items.inc:14); GameCube size 0x2C, align 4.
+/// C `GenoItemVars` (pc/geno/geno_game_items.inc:16); GameCube size 0x2C, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
 pub struct GenoItemVars {
@@ -106155,7 +107410,7 @@ impl GcLayout for GenoItemVars {
 }
 const _: () = assert!(core::mem::size_of::<GenoItemVars>() == 44);
 
-/// C `GenoFamilyItem` (pc/geno/geno_game_items.inc:25); GameCube size 0x20, align 4.
+/// C `GenoFamilyItem` (pc/geno/geno_game_items.inc:27); GameCube size 0x20, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct GenoFamilyItem {
@@ -106205,16 +107460,16 @@ impl GcLayout for GenoFamilyItem {
 }
 const _: () = assert!(core::mem::size_of::<GenoFamilyItem>() == 40);
 
-/// C `union (unnamed at pc/geno/geno_game_items.inc:33:36)` (pc/geno/geno_game_items.inc:33); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_items.inc:35:36)` (pc/geno/geno_game_items.inc:35); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_33_2 {
+pub union Anon_anon_35_2 {
     pub i: i32,
     pub f: f32,
 }
-impl Anon_anon_33_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_35_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_33_2 {
+impl GcDecode for Anon_anon_35_2 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106224,9 +107479,9 @@ impl GcDecode for Anon_anon_33_2 {
         v
     }
 }
-impl GcPointee for Anon_anon_33_2 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_33_2>(t) } }
-impl GcLayout for Anon_anon_33_2 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_items.inc:33:36)";
+impl GcPointee for Anon_anon_35_2 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_35_2>(t) } }
+impl GcLayout for Anon_anon_35_2 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_items.inc:35:36)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106234,18 +107489,18 @@ impl GcLayout for Anon_anon_33_2 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_33_2>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_35_2>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_game_items.inc:34:37)` (pc/geno/geno_game_items.inc:34); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_game_items.inc:36:37)` (pc/geno/geno_game_items.inc:36); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_34 {
+pub union Anon_anon_36 {
     pub i: i32,
     pub f: f32,
 }
-impl Anon_anon_34 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_36 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_34 {
+impl GcDecode for Anon_anon_36 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106255,9 +107510,9 @@ impl GcDecode for Anon_anon_34 {
         v
     }
 }
-impl GcPointee for Anon_anon_34 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_34>(t) } }
-impl GcLayout for Anon_anon_34 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_items.inc:34:37)";
+impl GcPointee for Anon_anon_36 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_36>(t) } }
+impl GcLayout for Anon_anon_36 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_game_items.inc:36:37)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106265,18 +107520,18 @@ impl GcLayout for Anon_anon_34 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_34>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_36>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_tests.c:107:5)` (pc/geno/geno_tests.c:107); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_tests.c:109:5)` (pc/geno/geno_tests.c:109); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_107 {
+pub union Anon_anon_109 {
     pub f: f32,
     pub u: u32,
 }
-impl Anon_anon_107 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_109 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_107 {
+impl GcDecode for Anon_anon_109 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106286,9 +107541,9 @@ impl GcDecode for Anon_anon_107 {
         v
     }
 }
-impl GcPointee for Anon_anon_107 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_107>(t) } }
-impl GcLayout for Anon_anon_107 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_tests.c:107:5)";
+impl GcPointee for Anon_anon_109 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_109>(t) } }
+impl GcLayout for Anon_anon_109 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_tests.c:109:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106296,18 +107551,18 @@ impl GcLayout for Anon_anon_107 {
         GcField::new("u", 0x0, 4, "u32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_107>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_109>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_tests.c:2705:5)` (pc/geno/geno_tests.c:2705); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_tests.c:1941:5)` (pc/geno/geno_tests.c:1941); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_2705 {
+pub union Anon_anon_1941 {
     pub u: u32,
     pub f: f32,
 }
-impl Anon_anon_2705 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_1941 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_2705 {
+impl GcDecode for Anon_anon_1941 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106317,9 +107572,9 @@ impl GcDecode for Anon_anon_2705 {
         v
     }
 }
-impl GcPointee for Anon_anon_2705 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_2705>(t) } }
-impl GcLayout for Anon_anon_2705 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_tests.c:2705:5)";
+impl GcPointee for Anon_anon_1941 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_1941>(t) } }
+impl GcLayout for Anon_anon_1941 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_tests.c:1941:5)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106327,18 +107582,18 @@ impl GcLayout for Anon_anon_2705 {
         GcField::new("f", 0x0, 4, "f32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_2705>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_1941>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_lua_tests.inc:292:9)` (pc/geno/geno_lua_tests.inc:292); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_lua_tests.inc:294:9)` (pc/geno/geno_lua_tests.inc:294); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_292 {
+pub union Anon_anon_294 {
     pub f: f32,
     pub i: i32,
 }
-impl Anon_anon_292 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_294 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_292 {
+impl GcDecode for Anon_anon_294 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106348,9 +107603,9 @@ impl GcDecode for Anon_anon_292 {
         v
     }
 }
-impl GcPointee for Anon_anon_292 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_292>(t) } }
-impl GcLayout for Anon_anon_292 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:292:9)";
+impl GcPointee for Anon_anon_294 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_294>(t) } }
+impl GcLayout for Anon_anon_294 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:294:9)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106358,18 +107613,18 @@ impl GcLayout for Anon_anon_292 {
         GcField::new("i", 0x0, 4, "s32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_292>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_294>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_lua_tests.inc:307:9)` (pc/geno/geno_lua_tests.inc:307); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_lua_tests.inc:309:9)` (pc/geno/geno_lua_tests.inc:309); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_307 {
+pub union Anon_anon_309 {
     pub f: f32,
     pub i: i32,
 }
-impl Anon_anon_307 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_309 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_307 {
+impl GcDecode for Anon_anon_309 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106379,9 +107634,9 @@ impl GcDecode for Anon_anon_307 {
         v
     }
 }
-impl GcPointee for Anon_anon_307 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_307>(t) } }
-impl GcLayout for Anon_anon_307 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:307:9)";
+impl GcPointee for Anon_anon_309 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_309>(t) } }
+impl GcLayout for Anon_anon_309 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:309:9)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106389,18 +107644,18 @@ impl GcLayout for Anon_anon_307 {
         GcField::new("i", 0x0, 4, "s32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_307>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_309>() == 4);
 
-/// C `union (unnamed at pc/geno/geno_lua_tests.inc:319:9)` (pc/geno/geno_lua_tests.inc:319); GameCube size 0x4, align 4.
+/// C `union (unnamed at pc/geno/geno_lua_tests.inc:321:9)` (pc/geno/geno_lua_tests.inc:321); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
 #[derive(Clone, Copy)]
-pub union Anon_anon_319_2 {
+pub union Anon_anon_321 {
     pub f: f32,
     pub i: i32,
 }
-impl Anon_anon_319_2 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
+impl Anon_anon_321 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
-impl GcDecode for Anon_anon_319_2 {
+impl GcDecode for Anon_anon_321 {
     const GC_BYTES: u32 = 0x4;
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
@@ -106410,9 +107665,9 @@ impl GcDecode for Anon_anon_319_2 {
         v
     }
 }
-impl GcPointee for Anon_anon_319_2 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_319_2>(t) } }
-impl GcLayout for Anon_anon_319_2 {
-    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:319:9)";
+impl GcPointee for Anon_anon_321 { fn gc_pointee(d: &mut GcDecoder<'_>, t: u32) -> *mut Self { d.object::<Anon_anon_321>(t) } }
+impl GcLayout for Anon_anon_321 {
+    const GC_NAME: &'static str = "union (unnamed at pc/geno/geno_lua_tests.inc:321:9)";
     const GC_SIZE: u32 = 0x4;
     const GC_ALIGN: u32 = 4;
     const GC_FIELDS: &'static [GcField] = &[
@@ -106420,9 +107675,9 @@ impl GcLayout for Anon_anon_319_2 {
         GcField::new("i", 0x0, 4, "s32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<Anon_anon_319_2>() == 4);
+const _: () = assert!(core::mem::size_of::<Anon_anon_321>() == 4);
 
-/// C `GenoCoverField` (pc/geno/geno_online_tests.inc:10); GameCube size 0x14, align 4.
+/// C `GenoCoverField` (pc/geno/geno_online_tests.inc:12); GameCube size 0x14, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct GenoCoverField {
@@ -108398,34 +109653,54 @@ pub static GC_RECORDS: &[(&str, u32, u32, &[GcField])] = &[
     (<GenoState as GcLayout>::GC_NAME, <GenoState as GcLayout>::GC_SIZE, <GenoState as GcLayout>::GC_ALIGN, <GenoState as GcLayout>::GC_FIELDS),
     (<GenoLuaBlock as GcLayout>::GC_NAME, <GenoLuaBlock as GcLayout>::GC_SIZE, <GenoLuaBlock as GcLayout>::GC_ALIGN, <GenoLuaBlock as GcLayout>::GC_FIELDS),
     (<GenoComboBlock as GcLayout>::GC_NAME, <GenoComboBlock as GcLayout>::GC_SIZE, <GenoComboBlock as GcLayout>::GC_ALIGN, <GenoComboBlock as GcLayout>::GC_FIELDS),
-    (<Anon_anon_503 as GcLayout>::GC_NAME, <Anon_anon_503 as GcLayout>::GC_SIZE, <Anon_anon_503 as GcLayout>::GC_ALIGN, <Anon_anon_503 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_718 as GcLayout>::GC_NAME, <Anon_anon_718 as GcLayout>::GC_SIZE, <Anon_anon_718 as GcLayout>::GC_ALIGN, <Anon_anon_718 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_939 as GcLayout>::GC_NAME, <Anon_anon_939 as GcLayout>::GC_SIZE, <Anon_anon_939 as GcLayout>::GC_ALIGN, <Anon_anon_939 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_1134 as GcLayout>::GC_NAME, <Anon_anon_1134 as GcLayout>::GC_SIZE, <Anon_anon_1134 as GcLayout>::GC_ALIGN, <Anon_anon_1134 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_333 as GcLayout>::GC_NAME, <Anon_anon_333 as GcLayout>::GC_SIZE, <Anon_anon_333 as GcLayout>::GC_ALIGN, <Anon_anon_333 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_545 as GcLayout>::GC_NAME, <Anon_anon_545 as GcLayout>::GC_SIZE, <Anon_anon_545 as GcLayout>::GC_ALIGN, <Anon_anon_545 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_766 as GcLayout>::GC_NAME, <Anon_anon_766 as GcLayout>::GC_SIZE, <Anon_anon_766 as GcLayout>::GC_ALIGN, <Anon_anon_766 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_961 as GcLayout>::GC_NAME, <Anon_anon_961 as GcLayout>::GC_SIZE, <Anon_anon_961 as GcLayout>::GC_ALIGN, <Anon_anon_961 as GcLayout>::GC_FIELDS),
     (<GenoWord as GcLayout>::GC_NAME, <GenoWord as GcLayout>::GC_SIZE, <GenoWord as GcLayout>::GC_ALIGN, <GenoWord as GcLayout>::GC_FIELDS),
-    (<Anon_anon_2388 as GcLayout>::GC_NAME, <Anon_anon_2388 as GcLayout>::GC_SIZE, <Anon_anon_2388 as GcLayout>::GC_ALIGN, <Anon_anon_2388 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_14 as GcLayout>::GC_NAME, <Anon_anon_14 as GcLayout>::GC_SIZE, <Anon_anon_14 as GcLayout>::GC_ALIGN, <Anon_anon_14 as GcLayout>::GC_FIELDS),
-    (<GenoParamDef as GcLayout>::GC_NAME, <GenoParamDef as GcLayout>::GC_SIZE, <GenoParamDef as GcLayout>::GC_ALIGN, <GenoParamDef as GcLayout>::GC_FIELDS),
-    (<Anon_anon_185 as GcLayout>::GC_NAME, <Anon_anon_185 as GcLayout>::GC_SIZE, <Anon_anon_185 as GcLayout>::GC_ALIGN, <Anon_anon_185 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_2215 as GcLayout>::GC_NAME, <Anon_anon_2215 as GcLayout>::GC_SIZE, <Anon_anon_2215 as GcLayout>::GC_ALIGN, <Anon_anon_2215 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_2244 as GcLayout>::GC_NAME, <Anon_anon_2244 as GcLayout>::GC_SIZE, <Anon_anon_2244 as GcLayout>::GC_ALIGN, <Anon_anon_2244 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_16 as GcLayout>::GC_NAME, <Anon_anon_16 as GcLayout>::GC_SIZE, <Anon_anon_16 as GcLayout>::GC_ALIGN, <Anon_anon_16 as GcLayout>::GC_FIELDS),
+    (<GenoBhvParamDef as GcLayout>::GC_NAME, <GenoBhvParamDef as GcLayout>::GC_SIZE, <GenoBhvParamDef as GcLayout>::GC_ALIGN, <GenoBhvParamDef as GcLayout>::GC_FIELDS),
+    (<Anon_anon_95 as GcLayout>::GC_NAME, <Anon_anon_95 as GcLayout>::GC_SIZE, <Anon_anon_95 as GcLayout>::GC_ALIGN, <Anon_anon_95 as GcLayout>::GC_FIELDS),
     (<GenoCbDef as GcLayout>::GC_NAME, <GenoCbDef as GcLayout>::GC_SIZE, <GenoCbDef as GcLayout>::GC_ALIGN, <GenoCbDef as GcLayout>::GC_FIELDS),
     (<GenoBhvDef as GcLayout>::GC_NAME, <GenoBhvDef as GcLayout>::GC_SIZE, <GenoBhvDef as GcLayout>::GC_ALIGN, <GenoBhvDef as GcLayout>::GC_FIELDS),
-    (<Anon_anon_507 as GcLayout>::GC_NAME, <Anon_anon_507 as GcLayout>::GC_SIZE, <Anon_anon_507 as GcLayout>::GC_ALIGN, <Anon_anon_507 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_748 as GcLayout>::GC_NAME, <Anon_anon_748 as GcLayout>::GC_SIZE, <Anon_anon_748 as GcLayout>::GC_ALIGN, <Anon_anon_748 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_407 as GcLayout>::GC_NAME, <Anon_anon_407 as GcLayout>::GC_SIZE, <Anon_anon_407 as GcLayout>::GC_ALIGN, <Anon_anon_407 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_612 as GcLayout>::GC_NAME, <Anon_anon_612 as GcLayout>::GC_SIZE, <Anon_anon_612 as GcLayout>::GC_ALIGN, <Anon_anon_612 as GcLayout>::GC_FIELDS),
+    (<GbGlideP as GcLayout>::GC_NAME, <GbGlideP as GcLayout>::GC_SIZE, <GbGlideP as GcLayout>::GC_ALIGN, <GbGlideP as GcLayout>::GC_FIELDS),
+    (<GbGlide as GcLayout>::GC_NAME, <GbGlide as GcLayout>::GC_SIZE, <GbGlide as GcLayout>::GC_ALIGN, <GbGlide as GcLayout>::GC_FIELDS),
+    (<GbGlideIn as GcLayout>::GC_NAME, <GbGlideIn as GcLayout>::GC_SIZE, <GbGlideIn as GcLayout>::GC_ALIGN, <GbGlideIn as GcLayout>::GC_FIELDS),
+    (<GbGlideEntry as GcLayout>::GC_NAME, <GbGlideEntry as GcLayout>::GC_SIZE, <GbGlideEntry as GcLayout>::GC_ALIGN, <GbGlideEntry as GcLayout>::GC_FIELDS),
+    (<GbTornadoP as GcLayout>::GC_NAME, <GbTornadoP as GcLayout>::GC_SIZE, <GbTornadoP as GcLayout>::GC_ALIGN, <GbTornadoP as GcLayout>::GC_FIELDS),
+    (<GbTornado as GcLayout>::GC_NAME, <GbTornado as GcLayout>::GC_SIZE, <GbTornado as GcLayout>::GC_ALIGN, <GbTornado as GcLayout>::GC_FIELDS),
+    (<GbTornadoIn as GcLayout>::GC_NAME, <GbTornadoIn as GcLayout>::GC_SIZE, <GbTornadoIn as GcLayout>::GC_ALIGN, <GbTornadoIn as GcLayout>::GC_FIELDS),
+    (<GbDrillP as GcLayout>::GC_NAME, <GbDrillP as GcLayout>::GC_SIZE, <GbDrillP as GcLayout>::GC_ALIGN, <GbDrillP as GcLayout>::GC_FIELDS),
+    (<GbDrill as GcLayout>::GC_NAME, <GbDrill as GcLayout>::GC_SIZE, <GbDrill as GcLayout>::GC_ALIGN, <GbDrill as GcLayout>::GC_FIELDS),
+    (<GbDrillIn as GcLayout>::GC_NAME, <GbDrillIn as GcLayout>::GC_SIZE, <GbDrillIn as GcLayout>::GC_ALIGN, <GbDrillIn as GcLayout>::GC_FIELDS),
+    (<GbCapeP as GcLayout>::GC_NAME, <GbCapeP as GcLayout>::GC_SIZE, <GbCapeP as GcLayout>::GC_ALIGN, <GbCapeP as GcLayout>::GC_FIELDS),
+    (<GbCape as GcLayout>::GC_NAME, <GbCape as GcLayout>::GC_SIZE, <GbCape as GcLayout>::GC_ALIGN, <GbCape as GcLayout>::GC_FIELDS),
+    (<GbCapeIn as GcLayout>::GC_NAME, <GbCapeIn as GcLayout>::GC_SIZE, <GbCapeIn as GcLayout>::GC_ALIGN, <GbCapeIn as GcLayout>::GC_FIELDS),
+    (<GbMultiDashP as GcLayout>::GC_NAME, <GbMultiDashP as GcLayout>::GC_SIZE, <GbMultiDashP as GcLayout>::GC_ALIGN, <GbMultiDashP as GcLayout>::GC_FIELDS),
+    (<GbMultiDash as GcLayout>::GC_NAME, <GbMultiDash as GcLayout>::GC_SIZE, <GbMultiDash as GcLayout>::GC_ALIGN, <GbMultiDash as GcLayout>::GC_FIELDS),
+    (<GbMultiDashIn as GcLayout>::GC_NAME, <GbMultiDashIn as GcLayout>::GC_SIZE, <GbMultiDashIn as GcLayout>::GC_ALIGN, <GbMultiDashIn as GcLayout>::GC_FIELDS),
+    (<GbAnimMotionP as GcLayout>::GC_NAME, <GbAnimMotionP as GcLayout>::GC_SIZE, <GbAnimMotionP as GcLayout>::GC_ALIGN, <GbAnimMotionP as GcLayout>::GC_FIELDS),
+    (<GbAnimMotion as GcLayout>::GC_NAME, <GbAnimMotion as GcLayout>::GC_SIZE, <GbAnimMotion as GcLayout>::GC_ALIGN, <GbAnimMotion as GcLayout>::GC_FIELDS),
+    (<Anon_anon_197 as GcLayout>::GC_NAME, <Anon_anon_197 as GcLayout>::GC_SIZE, <Anon_anon_197 as GcLayout>::GC_ALIGN, <Anon_anon_197 as GcLayout>::GC_FIELDS),
     (<GenoLuaIo as GcLayout>::GC_NAME, <GenoLuaIo as GcLayout>::GC_SIZE, <GenoLuaIo as GcLayout>::GC_ALIGN, <GenoLuaIo as GcLayout>::GC_FIELDS),
-    (<Anon_anon_33 as GcLayout>::GC_NAME, <Anon_anon_33 as GcLayout>::GC_SIZE, <Anon_anon_33 as GcLayout>::GC_ALIGN, <Anon_anon_33 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_43 as GcLayout>::GC_NAME, <Anon_anon_43 as GcLayout>::GC_SIZE, <Anon_anon_43 as GcLayout>::GC_ALIGN, <Anon_anon_43 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_75 as GcLayout>::GC_NAME, <Anon_anon_75 as GcLayout>::GC_SIZE, <Anon_anon_75 as GcLayout>::GC_ALIGN, <Anon_anon_75 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_85 as GcLayout>::GC_NAME, <Anon_anon_85 as GcLayout>::GC_SIZE, <Anon_anon_85 as GcLayout>::GC_ALIGN, <Anon_anon_85 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_2511 as GcLayout>::GC_NAME, <Anon_anon_2511 as GcLayout>::GC_SIZE, <Anon_anon_2511 as GcLayout>::GC_ALIGN, <Anon_anon_2511 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_35 as GcLayout>::GC_NAME, <Anon_anon_35 as GcLayout>::GC_SIZE, <Anon_anon_35 as GcLayout>::GC_ALIGN, <Anon_anon_35 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_45 as GcLayout>::GC_NAME, <Anon_anon_45 as GcLayout>::GC_SIZE, <Anon_anon_45 as GcLayout>::GC_ALIGN, <Anon_anon_45 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_77 as GcLayout>::GC_NAME, <Anon_anon_77 as GcLayout>::GC_SIZE, <Anon_anon_77 as GcLayout>::GC_ALIGN, <Anon_anon_77 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_87_3 as GcLayout>::GC_NAME, <Anon_anon_87_3 as GcLayout>::GC_SIZE, <Anon_anon_87_3 as GcLayout>::GC_ALIGN, <Anon_anon_87_3 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_2375 as GcLayout>::GC_NAME, <Anon_anon_2375 as GcLayout>::GC_SIZE, <Anon_anon_2375 as GcLayout>::GC_ALIGN, <Anon_anon_2375 as GcLayout>::GC_FIELDS),
     (<GenoItemVars as GcLayout>::GC_NAME, <GenoItemVars as GcLayout>::GC_SIZE, <GenoItemVars as GcLayout>::GC_ALIGN, <GenoItemVars as GcLayout>::GC_FIELDS),
     (<GenoFamilyItem as GcLayout>::GC_NAME, <GenoFamilyItem as GcLayout>::GC_SIZE, <GenoFamilyItem as GcLayout>::GC_ALIGN, <GenoFamilyItem as GcLayout>::GC_FIELDS),
-    (<Anon_anon_33_2 as GcLayout>::GC_NAME, <Anon_anon_33_2 as GcLayout>::GC_SIZE, <Anon_anon_33_2 as GcLayout>::GC_ALIGN, <Anon_anon_33_2 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_34 as GcLayout>::GC_NAME, <Anon_anon_34 as GcLayout>::GC_SIZE, <Anon_anon_34 as GcLayout>::GC_ALIGN, <Anon_anon_34 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_107 as GcLayout>::GC_NAME, <Anon_anon_107 as GcLayout>::GC_SIZE, <Anon_anon_107 as GcLayout>::GC_ALIGN, <Anon_anon_107 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_2705 as GcLayout>::GC_NAME, <Anon_anon_2705 as GcLayout>::GC_SIZE, <Anon_anon_2705 as GcLayout>::GC_ALIGN, <Anon_anon_2705 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_292 as GcLayout>::GC_NAME, <Anon_anon_292 as GcLayout>::GC_SIZE, <Anon_anon_292 as GcLayout>::GC_ALIGN, <Anon_anon_292 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_307 as GcLayout>::GC_NAME, <Anon_anon_307 as GcLayout>::GC_SIZE, <Anon_anon_307 as GcLayout>::GC_ALIGN, <Anon_anon_307 as GcLayout>::GC_FIELDS),
-    (<Anon_anon_319_2 as GcLayout>::GC_NAME, <Anon_anon_319_2 as GcLayout>::GC_SIZE, <Anon_anon_319_2 as GcLayout>::GC_ALIGN, <Anon_anon_319_2 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_35_2 as GcLayout>::GC_NAME, <Anon_anon_35_2 as GcLayout>::GC_SIZE, <Anon_anon_35_2 as GcLayout>::GC_ALIGN, <Anon_anon_35_2 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_36 as GcLayout>::GC_NAME, <Anon_anon_36 as GcLayout>::GC_SIZE, <Anon_anon_36 as GcLayout>::GC_ALIGN, <Anon_anon_36 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_109 as GcLayout>::GC_NAME, <Anon_anon_109 as GcLayout>::GC_SIZE, <Anon_anon_109 as GcLayout>::GC_ALIGN, <Anon_anon_109 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_1941 as GcLayout>::GC_NAME, <Anon_anon_1941 as GcLayout>::GC_SIZE, <Anon_anon_1941 as GcLayout>::GC_ALIGN, <Anon_anon_1941 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_294 as GcLayout>::GC_NAME, <Anon_anon_294 as GcLayout>::GC_SIZE, <Anon_anon_294 as GcLayout>::GC_ALIGN, <Anon_anon_294 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_309 as GcLayout>::GC_NAME, <Anon_anon_309 as GcLayout>::GC_SIZE, <Anon_anon_309 as GcLayout>::GC_ALIGN, <Anon_anon_309 as GcLayout>::GC_FIELDS),
+    (<Anon_anon_321 as GcLayout>::GC_NAME, <Anon_anon_321 as GcLayout>::GC_SIZE, <Anon_anon_321 as GcLayout>::GC_ALIGN, <Anon_anon_321 as GcLayout>::GC_FIELDS),
     (<GenoCoverField as GcLayout>::GC_NAME, <GenoCoverField as GcLayout>::GC_SIZE, <GenoCoverField as GcLayout>::GC_ALIGN, <GenoCoverField as GcLayout>::GC_FIELDS),
 ];
 

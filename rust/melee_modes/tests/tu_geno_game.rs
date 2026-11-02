@@ -662,87 +662,12 @@ unsafe fn h_Geno_WarnIasa(a: &[u64]) -> u64 {
     rt::t_i(a[1] as i64);
     0
 }
-unsafe fn h_HSD_AObjSetEndFrame(a: &[u64]) -> u64 {
-    rt::t_begin(84);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_AObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).flags as u64);
-        rt::h_f32((*p).curr_frame);
-        rt::h_f32((*p).rewind_frame);
-        rt::h_f32((*p).end_frame);
-        rt::h_f32((*p).framerate);
-        rt::h_p((*p).fobj as *const u8);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    rt::t_f32(f32::from_bits(a[1] as u32));
-    let p0 = a[0] as usize as *mut Q::HSD_AObj;
-    if !p0.is_null() {
-        (*p0).flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).curr_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).rewind_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).end_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).framerate = rt::draw_f32(&mut rt::MST);
-        (*p0).fobj = 0usize as _;
-        (*p0).hsd_obj = 0usize as _;
-    }
-    0
-}
-unsafe fn h_HSD_AObjSetFlags(a: &[u64]) -> u64 {
-    rt::t_begin(85);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_AObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).flags as u64);
-        rt::h_f32((*p).curr_frame);
-        rt::h_f32((*p).rewind_frame);
-        rt::h_f32((*p).end_frame);
-        rt::h_f32((*p).framerate);
-        rt::h_p((*p).fobj as *const u8);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    rt::t_i(a[1] as i64);
-    let p0 = a[0] as usize as *mut Q::HSD_AObj;
-    if !p0.is_null() {
-        (*p0).flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).curr_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).rewind_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).end_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).framerate = rt::draw_f32(&mut rt::MST);
-        (*p0).fobj = 0usize as _;
-        (*p0).hsd_obj = 0usize as _;
-    }
-    0
-}
-unsafe fn h_HSD_AObjSetRate(a: &[u64]) -> u64 {
-    rt::t_begin(86);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_AObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).flags as u64);
-        rt::h_f32((*p).curr_frame);
-        rt::h_f32((*p).rewind_frame);
-        rt::h_f32((*p).end_frame);
-        rt::h_f32((*p).framerate);
-        rt::h_p((*p).fobj as *const u8);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    rt::t_f32(f32::from_bits(a[1] as u32));
-    let p0 = a[0] as usize as *mut Q::HSD_AObj;
-    if !p0.is_null() {
-        (*p0).flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).curr_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).rewind_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).end_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).framerate = rt::draw_f32(&mut rt::MST);
-        (*p0).fobj = 0usize as _;
-        (*p0).hsd_obj = 0usize as _;
-    }
-    0
-}
 unsafe fn h_HSD_CObjGetCurrent(a: &[u64]) -> u64 {
-    rt::t_begin(87);
+    rt::t_begin(84);
     core::ptr::addr_of_mut!(MO_HSD_CObjGetCurrent) as usize as u64
 }
 unsafe fn h_HSD_CObjGetEyePosition(a: &[u64]) -> u64 {
-    rt::t_begin(88);
+    rt::t_begin(85);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_CObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).parent.parent.class_info as *const u8);
@@ -820,7 +745,7 @@ unsafe fn h_HSD_CObjGetEyePosition(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_HSD_CObjGetViewingMtxPtr(a: &[u64]) -> u64 {
-    rt::t_begin(89);
+    rt::t_begin(86);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_CObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).parent.parent.class_info as *const u8);
@@ -886,7 +811,7 @@ unsafe fn h_HSD_CObjGetViewingMtxPtr(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_HSD_CObjGetViewingMtxPtr) as usize as u64
 }
 unsafe fn h_HSD_DObjSetFlags(a: &[u64]) -> u64 {
-    rt::t_begin(90);
+    rt::t_begin(87);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_DObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).parent.class_info as *const u8);
@@ -908,17 +833,8 @@ unsafe fn h_HSD_DObjSetFlags(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_HSD_ForeachAnim(a: &[u64]) -> u64 {
-    rt::t_begin(91);
-    rt::t_p(a[0] as usize as *const u8);
-    rt::t_i(a[1] as i64);
-    rt::t_i(a[2] as i64);
-    rt::t_p(a[3] as usize as *const u8);
-    rt::t_i(a[4] as i64);
-    0
-}
 unsafe fn h_HSD_JObjGetDObj(a: &[u64]) -> u64 {
-    rt::t_begin(92);
+    rt::t_begin(88);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -984,7 +900,7 @@ unsafe fn h_HSD_JObjGetDObj(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_HSD_JObjGetDObj) as usize as u64
 }
 unsafe fn h_HSD_JObjSetMtxDirtySub(a: &[u64]) -> u64 {
-    rt::t_begin(93);
+    rt::t_begin(89);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -1050,7 +966,7 @@ unsafe fn h_HSD_JObjSetMtxDirtySub(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_HSD_JObjSetupMatrixSub(a: &[u64]) -> u64 {
-    rt::t_begin(94);
+    rt::t_begin(90);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -1116,28 +1032,28 @@ unsafe fn h_HSD_JObjSetupMatrixSub(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_HSD_Randf(a: &[u64]) -> u64 {
-    rt::t_begin(95);
+    rt::t_begin(91);
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
 unsafe fn h_HSD_Randi(a: &[u64]) -> u64 {
-    rt::t_begin(96);
+    rt::t_begin(92);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_HSD_StateInvalidate(a: &[u64]) -> u64 {
-    rt::t_begin(97);
+    rt::t_begin(93);
     rt::t_i(a[0] as i64);
     0
 }
 unsafe fn h_ItemDraw(a: &[u64]) -> u64 {
-    rt::t_begin(98);
+    rt::t_begin(94);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
     0
 }
 unsafe fn h_ItemEvent(a: &[u64]) -> u64 {
-    rt::t_begin(99);
+    rt::t_begin(95);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
@@ -1149,7 +1065,7 @@ unsafe fn h_ItemEvent(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_Item_80267978(a: &[u64]) -> u64 {
-    rt::t_begin(100);
+    rt::t_begin(96);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -1195,7 +1111,7 @@ unsafe fn h_Item_80267978(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_Item_80268B18(a: &[u64]) -> u64 {
-    rt::t_begin(101);
+    rt::t_begin(97);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::SpawnItem; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_parent_gobj as *const u8);
@@ -1307,7 +1223,7 @@ unsafe fn h_Item_80268B18(a: &[u64]) -> u64 {
     core::ptr::addr_of_mut!(MO_Item_80268B18) as usize as u64
 }
 unsafe fn h_Item_80268E5C(a: &[u64]) -> u64 {
-    rt::t_begin(102);
+    rt::t_begin(98);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -1355,7 +1271,7 @@ unsafe fn h_Item_80268E5C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_Item_8026A8EC(a: &[u64]) -> u64 {
-    rt::t_begin(103);
+    rt::t_begin(99);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -1401,7 +1317,7 @@ unsafe fn h_Item_8026A8EC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_Item_ScriptSpawnAtCap(a: &[u64]) -> u64 {
-    rt::t_begin(104);
+    rt::t_begin(100);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::SpawnItem; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_parent_gobj as *const u8);
@@ -1513,46 +1429,46 @@ unsafe fn h_Item_ScriptSpawnAtCap(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_Item_ScriptSpawnCapTest(a: &[u64]) -> u64 {
-    rt::t_begin(105);
+    rt::t_begin(101);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_Mex_ItemRangeAvailable(a: &[u64]) -> u64 {
-    rt::t_begin(106);
+    rt::t_begin(102);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_Mex_ItemReady(a: &[u64]) -> u64 {
-    rt::t_begin(107);
+    rt::t_begin(103);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_OSReport(a: &[u64]) -> u64 {
-    rt::t_begin(108);
+    rt::t_begin(104);
     rt::t_p(a[0] as usize as *const u8);
     0
 }
 unsafe fn h_Player_GetEntity(a: &[u64]) -> u64 {
-    rt::t_begin(109);
+    rt::t_begin(105);
     rt::t_i(a[0] as i64);
     core::ptr::addr_of_mut!(MO_Player_GetEntity) as usize as u64
 }
 unsafe fn h_ProfActive(a: &[u64]) -> u64 {
-    rt::t_begin(110);
+    rt::t_begin(106);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ProfBegin(a: &[u64]) -> u64 {
-    rt::t_begin(111);
+    rt::t_begin(107);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     0
 }
 unsafe fn h_ProfEnd(a: &[u64]) -> u64 {
-    rt::t_begin(112);
+    rt::t_begin(108);
     0
 }
 unsafe fn h_ScriptGame_HitRuleDamageOnly(a: &[u64]) -> u64 {
-    rt::t_begin(113);
+    rt::t_begin(109);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -1694,7 +1610,7 @@ unsafe fn h_ScriptGame_HitRuleDamageOnly(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ScriptGame_HitRuleForget(a: &[u64]) -> u64 {
-    rt::t_begin(114);
+    rt::t_begin(110);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -1836,7 +1752,7 @@ unsafe fn h_ScriptGame_HitRuleForget(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ScriptGame_HitRuleItemCreate(a: &[u64]) -> u64 {
-    rt::t_begin(115);
+    rt::t_begin(111);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Item; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0 as *const u8);
@@ -3244,7 +3160,7 @@ unsafe fn h_ScriptGame_HitRuleItemCreate(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
-    rt::t_begin(116);
+    rt::t_begin(112);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -6180,7 +6096,7 @@ unsafe fn h_ScriptGame_NoteSpecialInput(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h___assert(a: &[u64]) -> u64 {
-    rt::t_begin(117);
+    rt::t_begin(113);
     rt::t_i((a[0] != 0) as i64);
     rt::t_s(a[0] as usize as *const u8);
     rt::t_i(a[1] as i64);
@@ -6189,23 +6105,23 @@ unsafe fn h___assert(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h___frsqrte(a: &[u64]) -> u64 {
-    rt::t_begin(118);
+    rt::t_begin(114);
     rt::t_f64(f64::from_bits(a[0]));
     rt::draw_f64(&mut rt::MST).to_bits()
 }
 unsafe fn h_atan2f(a: &[u64]) -> u64 {
-    rt::t_begin(119);
+    rt::t_begin(115);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
 unsafe fn h_cosf(a: &[u64]) -> u64 {
-    rt::t_begin(120);
+    rt::t_begin(116);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
 unsafe fn h_db_80225DD8(a: &[u64]) -> u64 {
-    rt::t_begin(121);
+    rt::t_begin(117);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6293,7 +6209,7 @@ unsafe fn h_db_80225DD8(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_diag_fx_cam(a: &[u64]) -> u64 {
-    rt::t_begin(122);
+    rt::t_begin(118);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
@@ -6306,14 +6222,14 @@ unsafe fn h_diag_fx_cam(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_diag_geno_stun(a: &[u64]) -> u64 {
-    rt::t_begin(123);
+    rt::t_begin(119);
     rt::t_i(a[0] as i64);
     rt::t_i(a[1] as i64);
     rt::t_i(a[2] as i64);
     0
 }
 unsafe fn h_efAsync_MexSpawn(a: &[u64]) -> u64 {
-    rt::t_begin(124);
+    rt::t_begin(120);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6437,7 +6353,7 @@ unsafe fn h_efAsync_MexSpawn(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_efAsync_QueueFlush(a: &[u64]) -> u64 {
-    rt::t_begin(125);
+    rt::t_begin(121);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6484,7 +6400,7 @@ unsafe fn h_efAsync_QueueFlush(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_efAsync_Spawn(a: &[u64]) -> u64 {
-    rt::t_begin(126);
+    rt::t_begin(122);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6595,7 +6511,7 @@ unsafe fn h_efAsync_Spawn(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftAnim_8006F0FC(a: &[u64]) -> u64 {
-    rt::t_begin(127);
+    rt::t_begin(123);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6642,7 +6558,7 @@ unsafe fn h_ftAnim_8006F0FC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftAnim_IsFramesRemaining(a: &[u64]) -> u64 {
-    rt::t_begin(128);
+    rt::t_begin(124);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6688,7 +6604,7 @@ unsafe fn h_ftAnim_IsFramesRemaining(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ftAnim_SetAnimRate(a: &[u64]) -> u64 {
-    rt::t_begin(129);
+    rt::t_begin(125);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6735,7 +6651,7 @@ unsafe fn h_ftAnim_SetAnimRate(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCliffCommon_80081298(a: &[u64]) -> u64 {
-    rt::t_begin(130);
+    rt::t_begin(126);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6780,8 +6696,55 @@ unsafe fn h_ftCliffCommon_80081298(a: &[u64]) -> u64 {
     }
     rt::draw_int(&mut rt::MST) as u64
 }
+unsafe fn h_ftCo_80095328(a: &[u64]) -> u64 {
+    rt::t_begin(127);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    rt::t_p(a[1] as usize as *const u8);
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
 unsafe fn h_ftCo_800968C8(a: &[u64]) -> u64 {
-    rt::t_begin(131);
+    rt::t_begin(128);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6827,7 +6790,7 @@ unsafe fn h_ftCo_800968C8(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCo_80096CC8(a: &[u64]) -> u64 {
-    rt::t_begin(132);
+    rt::t_begin(129);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6874,7 +6837,7 @@ unsafe fn h_ftCo_80096CC8(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ftCo_80096D28(a: &[u64]) -> u64 {
-    rt::t_begin(133);
+    rt::t_begin(130);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6920,7 +6883,99 @@ unsafe fn h_ftCo_80096D28(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCo_8009917C(a: &[u64]) -> u64 {
-    rt::t_begin(134);
+    rt::t_begin(131);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_800C3B10(a: &[u64]) -> u64 {
+    rt::t_begin(132);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_800CB870(a: &[u64]) -> u64 {
+    rt::t_begin(133);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -6966,7 +7021,7 @@ unsafe fn h_ftCo_8009917C(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ftCo_800D105C(a: &[u64]) -> u64 {
-    rt::t_begin(135);
+    rt::t_begin(134);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -7011,2939 +7066,95 @@ unsafe fn h_ftCo_800D105C(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ftCo_800D72A0(a: &[u64]) -> u64 {
+unsafe fn h_ftCo_800D705C(a: &[u64]) -> u64 {
+    rt::t_begin(135);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_800D7100(a: &[u64]) -> u64 {
     rt::t_begin(136);
     rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_p((*p).gobj as *const u8);
-        rt::h_u((*p).kind as u64);
-        rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
-        rt::h_i((*p).motion_id as i64);
-        rt::h_i((*p).anim_id as i64);
-        rt::h_i((*p).x18 as i64);
-        rt::h_p((*p).x1C_actionStateList as *const u8);
-        rt::h_p((*p).x20_actionStateList as *const u8);
-        rt::h_p((*p).x24 as *const u8);
-        rt::h_p((*p).x28 as *const u8);
-        rt::h_f32((*p).facing_dir);
-        rt::h_f32((*p).facing_dir1);
-        rt::h_f32((*p).x34_scale.x);
-        rt::h_f32((*p).x34_scale.y);
-        rt::h_f32((*p).x34_scale.z);
-        rt::h_f32((*p).x40);
-        for i0 in 0..3 {
-            for i1 in 0..4 {
-                rt::h_f32((*p).x44_mtx[i0][i1]);
-            }
-        }
-        rt::h_f32((*p).x74_self_accel.x);
-        rt::h_f32((*p).x74_self_accel.y);
-        rt::h_f32((*p).x74_self_accel.z);
-        rt::h_f32((*p).self_vel.x);
-        rt::h_f32((*p).self_vel.y);
-        rt::h_f32((*p).self_vel.z);
-        rt::h_f32((*p).x8c_kb_vel.x);
-        rt::h_f32((*p).x8c_kb_vel.y);
-        rt::h_f32((*p).x8c_kb_vel.z);
-        rt::h_f32((*p).x98_atk_shield_kb.x);
-        rt::h_f32((*p).x98_atk_shield_kb.y);
-        rt::h_f32((*p).x98_atk_shield_kb.z);
-        rt::h_f32((*p).xA4_unk_vel.x);
-        rt::h_f32((*p).xA4_unk_vel.y);
-        rt::h_f32((*p).xA4_unk_vel.z);
-        rt::h_f32((*p).cur_pos.x);
-        rt::h_f32((*p).cur_pos.y);
-        rt::h_f32((*p).cur_pos.z);
-        rt::h_f32((*p).prev_pos.x);
-        rt::h_f32((*p).prev_pos.y);
-        rt::h_f32((*p).prev_pos.z);
-        rt::h_f32((*p).pos_delta.x);
-        rt::h_f32((*p).pos_delta.y);
-        rt::h_f32((*p).pos_delta.z);
-        rt::h_f32((*p).xD4_unk_vel.x);
-        rt::h_f32((*p).xD4_unk_vel.y);
-        rt::h_f32((*p).xD4_unk_vel.z);
-        rt::h_u((*p).ground_or_air as u64);
-        rt::h_f32((*p).xE4_ground_accel_1);
-        rt::h_f32((*p).xE8_ground_accel_2);
-        rt::h_f32((*p).gr_vel);
-        rt::h_f32((*p).xF0_ground_kb_vel);
-        rt::h_f32((*p).xF4_ground_attacker_shield_kb_vel);
-        rt::h_f32((*p).xF8_playerNudgeVel.x);
-        rt::h_f32((*p).xF8_playerNudgeVel.y);
-        rt::h_f32((*p).x100);
-        rt::h_u((*p).x104 as u64);
-        rt::h_i((*p).x105 as i64);
-        rt::h_i((*p).x106 as i64);
-        rt::h_i((*p).x107 as i64);
-        rt::h_p((*p).x108_costume_joint as *const u8);
-        rt::h_p((*p).ft_data as *const u8);
-        rt::h_f32((*p).co_attrs.walk_accel_mul);
-        rt::h_f32((*p).co_attrs.walk_accel_base);
-        rt::h_f32((*p).co_attrs.walk_max_vel);
-        rt::h_f32((*p).co_attrs.slow_walk_max);
-        rt::h_f32((*p).co_attrs.mid_walk_point);
-        rt::h_f32((*p).co_attrs.fast_walk_min);
-        rt::h_f32((*p).co_attrs.ground_friction);
-        rt::h_f32((*p).co_attrs.dash_initial_velocity);
-        rt::h_f32((*p).co_attrs.dash_accel_mul);
-        rt::h_f32((*p).co_attrs.dash_accel_base);
-        rt::h_f32((*p).co_attrs.dash_max_velocity);
-        rt::h_f32((*p).co_attrs.run_animation_scaling);
-        rt::h_f32((*p).co_attrs.max_run_brake_frames);
-        rt::h_f32((*p).co_attrs.ground_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jump_startup_time);
-        rt::h_f32((*p).co_attrs.jump_h_initial_velocity);
-        rt::h_f32((*p).co_attrs.jump_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.ground_to_air_jump_momentum_multiplier);
-        rt::h_f32((*p).co_attrs.jump_h_max_velocity);
-        rt::h_f32((*p).co_attrs.hop_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.air_jump_v_multiplier);
-        rt::h_f32((*p).co_attrs.air_jump_h_multiplier);
-        rt::h_i((*p).co_attrs.max_jumps as i64);
-        rt::h_f32((*p).co_attrs.gravity);
-        rt::h_f32((*p).co_attrs.terminal_velocity);
-        rt::h_f32((*p).co_attrs.air_drift_stick_mul);
-        rt::h_f32((*p).co_attrs.aerial_drift_base);
-        rt::h_f32((*p).co_attrs.air_drift_max);
-        rt::h_f32((*p).co_attrs.aerial_friction);
-        rt::h_f32((*p).co_attrs.fast_fall_velocity);
-        rt::h_f32((*p).co_attrs.air_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jab_2_input_window);
-        rt::h_f32((*p).co_attrs.jab_3_input_window);
-        rt::h_f32((*p).co_attrs.standing_turn_frames);
-        rt::h_f32((*p).co_attrs.weight);
-        rt::h_f32((*p).co_attrs.model_scaling);
-        rt::h_f32((*p).co_attrs.initial_shield_size);
-        rt::h_f32((*p).co_attrs.shield_break_initial_velocity);
-        rt::h_i((*p).co_attrs.rapid_jab_window as i64);
-        rt::h_f32((*p).co_attrs.clank_animation_length);
-        rt::h_i((*p).co_attrs.hit_spark_variant as i64);
-        rt::h_i((*p).co_attrs.unused_0 as i64);
-        rt::h_f32((*p).co_attrs.ledge_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.ledge_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.item_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.heavy_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.specials_ground_speed_retention);
-        rt::h_f32((*p).co_attrs.xBC.size);
-        rt::h_f32((*p).co_attrs.xBC.x4.x);
-        rt::h_f32((*p).co_attrs.xBC.x4.y);
-        rt::h_f32((*p).co_attrs.xBC.x4.z);
-        rt::h_f32((*p).co_attrs.xBC.x10.x);
-        rt::h_f32((*p).co_attrs.xBC.x10.y);
-        rt::h_f32((*p).co_attrs.xBC.x10.z);
-        rt::h_f32((*p).co_attrs.xBC.x1C);
-        rt::h_f32((*p).co_attrs.xDC);
-        rt::h_f32((*p).co_attrs.kirby_b_star_damage);
-        rt::h_f32((*p).co_attrs.normal_landing_lag);
-        rt::h_f32((*p).co_attrs.landingairn_lag);
-        rt::h_f32((*p).co_attrs.landingairf_lag);
-        rt::h_f32((*p).co_attrs.landingairb_lag);
-        rt::h_f32((*p).co_attrs.landingairhi_lag);
-        rt::h_f32((*p).co_attrs.landingairlw_lag);
-        rt::h_f32((*p).co_attrs.name_tag_height);
-        rt::h_f32((*p).co_attrs.passivewall_vel_x);
-        rt::h_f32((*p).co_attrs.wall_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.wall_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.passiveceil_vel_x);
-        rt::h_f32((*p).co_attrs.trophy_scale);
-        rt::h_f32((*p).co_attrs.x114.x);
-        rt::h_f32((*p).co_attrs.x114.y);
-        rt::h_f32((*p).co_attrs.x114.z);
-        rt::h_f32((*p).co_attrs.x120.x);
-        rt::h_f32((*p).co_attrs.x120.y);
-        rt::h_f32((*p).co_attrs.x120.z);
-        rt::h_f32((*p).co_attrs.x12C);
-        rt::h_f32((*p).co_attrs.x130.x);
-        rt::h_f32((*p).co_attrs.x130.y);
-        rt::h_f32((*p).co_attrs.x130.z);
-        rt::h_f32((*p).co_attrs.x13C);
-        rt::h_f32((*p).co_attrs.screw_attack_launch_velocity);
-        rt::h_f32((*p).co_attrs.x144);
-        rt::h_f32((*p).co_attrs.wall_jump_min_approach_speed);
-        rt::h_f32((*p).co_attrs.damageice_ice_size);
-        rt::h_f32((*p).co_attrs.x150_damageice_unk);
-        rt::h_f32((*p).co_attrs.x154_damageice_unk);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_y);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_x_mult);
-        rt::h_f32((*p).co_attrs.respawn_platform_scale);
-        rt::h_f32((*p).co_attrs.warp_star_hitbox_scale);
-        rt::h_f32((*p).co_attrs.x168);
-        rt::h_i((*p).co_attrs.camera_zoom_target_bone as i64);
-        rt::h_f32((*p).co_attrs.x170.x);
-        rt::h_f32((*p).co_attrs.x170.y);
-        rt::h_f32((*p).co_attrs.x170.z);
-        rt::h_f32((*p).co_attrs.x17C);
-        rt::h_u((*p).co_attrs.weight_independent_throws_mask as u64);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.w);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.w);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.w);
-        rt::h_f32((*p).x2C4.x);
-        rt::h_f32((*p).x2C4.y);
-        rt::h_p((*p).x2CC as *const u8);
-        rt::h_p((*p).x2D0 as *const u8);
-        rt::h_p((*p).dat_attrs as *const u8);
-        rt::h_p((*p).dat_attrs_backup as *const u8);
-        rt::h_f32((*p).x2DC);
-        rt::h_f32((*p).x2E0);
-        rt::h_f32((*p).x2E4);
-        rt::h_f32((*p).x2E8);
-        rt::h_f32((*p).x2EC);
-        for i0 in 0..10 {
-            rt::h_i((*p).dynamic_bone_sets[i0].bone_id as i64);
-            rt::h_p((*p).dynamic_bone_sets[i0].dyn_desc.data as *const u8);
-            rt::h_u((*p).dynamic_bone_sets[i0].dyn_desc.count as u64);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.x);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.y);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.z);
-        }
-        rt::h_i((*p).dynamics_num as i64);
-        rt::h_f32((*p).x3E4_fighterCmdScript.timer);
-        rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
-        for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
-        for i0 in 0..3 {
-            rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count_dup as u64);
-        rt::h_u((*p).x3E4_fighterCmdScript.unk_x18 as u64);
-        rt::h_i((*p).x408.x0_timer as i64);
-        rt::h_i((*p).x408.x4_pri as i64);
-        rt::h_p((*p).x408.x8_ptr1 as *const u8);
-        rt::h_i((*p).x408.xC_loop as i64);
-        rt::h_p((*p).x408.x10_ptr2 as *const u8);
-        rt::h_i((*p).x408.x14 as i64);
-        rt::h_p((*p).x408.x18_alloc as *const u8);
-        rt::h_i((*p).x408.x1c as i64);
-        rt::h_i((*p).x408.x20 as i64);
-        rt::h_i((*p).x408.x24 as i64);
-        rt::h_bytes(&(*p).x408.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x408.x2C_hex.r as u64);
-        rt::h_u((*p).x408.x2C_hex.g as u64);
-        rt::h_u((*p).x408.x2C_hex.b as u64);
-        rt::h_u((*p).x408.x2C_hex.a as u64);
-        rt::h_f32((*p).x408.x30_color_red);
-        rt::h_f32((*p).x408.x34_color_green);
-        rt::h_f32((*p).x408.x38_color_blue);
-        rt::h_f32((*p).x408.x3C_color_alpha);
-        rt::h_f32((*p).x408.x40_colorblend_red);
-        rt::h_f32((*p).x408.x44_colorblend_green);
-        rt::h_f32((*p).x408.x48_colorblend_blue);
-        rt::h_f32((*p).x408.x4C_colorblend_alpha);
-        rt::h_u((*p).x408.x50_light_color.r as u64);
-        rt::h_u((*p).x408.x50_light_color.g as u64);
-        rt::h_u((*p).x408.x50_light_color.b as u64);
-        rt::h_u((*p).x408.x50_light_color.a as u64);
-        rt::h_f32((*p).x408.x54_light_red);
-        rt::h_f32((*p).x408.x58_light_green);
-        rt::h_f32((*p).x408.x5C_light_blue);
-        rt::h_f32((*p).x408.x60_light_alpha);
-        rt::h_f32((*p).x408.x64_lightblend_red);
-        rt::h_f32((*p).x408.x68_lightblend_green);
-        rt::h_f32((*p).x408.x6C_lightblend_blue);
-        rt::h_f32((*p).x408.x70_lightblend_alpha);
-        rt::h_f32((*p).x408.x74_light_rot_x);
-        rt::h_f32((*p).x408.x78_light_rot_yz);
-        rt::h_u((*p).x408.x7C_color_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag2() as u64);
-        rt::h_u((*p).x408.x7C_light_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag4() as u64);
-        rt::h_u((*p).x408.x7C_flag5() as u64);
-        rt::h_u((*p).x408.x7C_flag6() as u64);
-        rt::h_u((*p).x408.x7C_flag7() as u64);
-        rt::h_u((*p).x408.x7C_flag8() as u64);
-        rt::h_i((*p).x488.x0_timer as i64);
-        rt::h_i((*p).x488.x4_pri as i64);
-        rt::h_p((*p).x488.x8_ptr1 as *const u8);
-        rt::h_i((*p).x488.xC_loop as i64);
-        rt::h_p((*p).x488.x10_ptr2 as *const u8);
-        rt::h_i((*p).x488.x14 as i64);
-        rt::h_p((*p).x488.x18_alloc as *const u8);
-        rt::h_i((*p).x488.x1c as i64);
-        rt::h_i((*p).x488.x20 as i64);
-        rt::h_i((*p).x488.x24 as i64);
-        rt::h_bytes(&(*p).x488.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x488.x2C_hex.r as u64);
-        rt::h_u((*p).x488.x2C_hex.g as u64);
-        rt::h_u((*p).x488.x2C_hex.b as u64);
-        rt::h_u((*p).x488.x2C_hex.a as u64);
-        rt::h_f32((*p).x488.x30_color_red);
-        rt::h_f32((*p).x488.x34_color_green);
-        rt::h_f32((*p).x488.x38_color_blue);
-        rt::h_f32((*p).x488.x3C_color_alpha);
-        rt::h_f32((*p).x488.x40_colorblend_red);
-        rt::h_f32((*p).x488.x44_colorblend_green);
-        rt::h_f32((*p).x488.x48_colorblend_blue);
-        rt::h_f32((*p).x488.x4C_colorblend_alpha);
-        rt::h_u((*p).x488.x50_light_color.r as u64);
-        rt::h_u((*p).x488.x50_light_color.g as u64);
-        rt::h_u((*p).x488.x50_light_color.b as u64);
-        rt::h_u((*p).x488.x50_light_color.a as u64);
-        rt::h_f32((*p).x488.x54_light_red);
-        rt::h_f32((*p).x488.x58_light_green);
-        rt::h_f32((*p).x488.x5C_light_blue);
-        rt::h_f32((*p).x488.x60_light_alpha);
-        rt::h_f32((*p).x488.x64_lightblend_red);
-        rt::h_f32((*p).x488.x68_lightblend_green);
-        rt::h_f32((*p).x488.x6C_lightblend_blue);
-        rt::h_f32((*p).x488.x70_lightblend_alpha);
-        rt::h_f32((*p).x488.x74_light_rot_x);
-        rt::h_f32((*p).x488.x78_light_rot_yz);
-        rt::h_u((*p).x488.x7C_color_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag2() as u64);
-        rt::h_u((*p).x488.x7C_light_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag4() as u64);
-        rt::h_u((*p).x488.x7C_flag5() as u64);
-        rt::h_u((*p).x488.x7C_flag6() as u64);
-        rt::h_u((*p).x488.x7C_flag7() as u64);
-        rt::h_u((*p).x488.x7C_flag8() as u64);
-        rt::h_i((*p).x508.x0_timer as i64);
-        rt::h_i((*p).x508.x4_pri as i64);
-        rt::h_p((*p).x508.x8_ptr1 as *const u8);
-        rt::h_i((*p).x508.xC_loop as i64);
-        rt::h_p((*p).x508.x10_ptr2 as *const u8);
-        rt::h_i((*p).x508.x14 as i64);
-        rt::h_p((*p).x508.x18_alloc as *const u8);
-        rt::h_i((*p).x508.x1c as i64);
-        rt::h_i((*p).x508.x20 as i64);
-        rt::h_i((*p).x508.x24 as i64);
-        rt::h_bytes(&(*p).x508.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x508.x2C_hex.r as u64);
-        rt::h_u((*p).x508.x2C_hex.g as u64);
-        rt::h_u((*p).x508.x2C_hex.b as u64);
-        rt::h_u((*p).x508.x2C_hex.a as u64);
-        rt::h_f32((*p).x508.x30_color_red);
-        rt::h_f32((*p).x508.x34_color_green);
-        rt::h_f32((*p).x508.x38_color_blue);
-        rt::h_f32((*p).x508.x3C_color_alpha);
-        rt::h_f32((*p).x508.x40_colorblend_red);
-        rt::h_f32((*p).x508.x44_colorblend_green);
-        rt::h_f32((*p).x508.x48_colorblend_blue);
-        rt::h_f32((*p).x508.x4C_colorblend_alpha);
-        rt::h_u((*p).x508.x50_light_color.r as u64);
-        rt::h_u((*p).x508.x50_light_color.g as u64);
-        rt::h_u((*p).x508.x50_light_color.b as u64);
-        rt::h_u((*p).x508.x50_light_color.a as u64);
-        rt::h_f32((*p).x508.x54_light_red);
-        rt::h_f32((*p).x508.x58_light_green);
-        rt::h_f32((*p).x508.x5C_light_blue);
-        rt::h_f32((*p).x508.x60_light_alpha);
-        rt::h_f32((*p).x508.x64_lightblend_red);
-        rt::h_f32((*p).x508.x68_lightblend_green);
-        rt::h_f32((*p).x508.x6C_lightblend_blue);
-        rt::h_f32((*p).x508.x70_lightblend_alpha);
-        rt::h_f32((*p).x508.x74_light_rot_x);
-        rt::h_f32((*p).x508.x78_light_rot_yz);
-        rt::h_u((*p).x508.x7C_color_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag2() as u64);
-        rt::h_u((*p).x508.x7C_light_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag4() as u64);
-        rt::h_u((*p).x508.x7C_flag5() as u64);
-        rt::h_u((*p).x508.x7C_flag6() as u64);
-        rt::h_u((*p).x508.x7C_flag7() as u64);
-        rt::h_u((*p).x508.x7C_flag8() as u64);
-        rt::h_p((*p).x588 as *const u8);
-        rt::h_u((*p).x58C as u64);
-        rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
-        rt::h_p((*p).x598 as *const u8);
-        rt::h_p((*p).x59C as *const u8);
-        rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
-        rt::h_u((*p).x5AC.model_num as u64);
-        for i0 in 0..5 {
-            rt::h_u((*p).x5AC.cleared[i0] as u64);
-        }
-        for i0 in 0..5 {
-            rt::h_p((*p).x5AC.xC[i0] as *const u8);
-        }
-        rt::h_u((*p).tobj_list.n_costume_tobjs as u64);
-        rt::h_p((*p).tobj_list.x5D0 as *const u8);
-        for i0 in 0..5 {
-            rt::h_p((*p).tobj_list.costume_tobjs[i0] as *const u8);
-        }
-        rt::h_p((*p).parts as *const u8);
-        rt::h_u((*p).dobj_list.count as u64);
-        rt::h_p((*p).dobj_list.data as *const u8);
-        for i0 in 0..12 {
-            rt::h_i((*p).x5F4_arr[i0].prev as i64);
-            rt::h_i((*p).x5F4_arr[i0].idx as i64);
-        }
-        rt::h_p((*p).x60C as *const u8);
-        for i0 in 0..2 {
-            rt::h_u((*p).x610_color_rgba[i0].r as u64);
-            rt::h_u((*p).x610_color_rgba[i0].g as u64);
-            rt::h_u((*p).x610_color_rgba[i0].b as u64);
-            rt::h_u((*p).x610_color_rgba[i0].a as u64);
-        }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
-        rt::h_u((*p).team as u64);
-        rt::h_i((*p).x61C as i64);
-        rt::h_u((*p).x61D as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).filler_x61E[i0] as u64);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.lstick[i0].x);
-            rt::h_f32((*p).input.lstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.cstick[i0].x);
-            rt::h_f32((*p).input.cstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.triggers[i0]);
-        }
-        for i0 in 0..3 {
-            rt::h_u((*p).input.held_buttons[i0] as u64);
-        }
-        rt::h_u((*p).input.pressed_buttons as u64);
-        rt::h_u((*p).input.released_buttons as u64);
-        rt::h_u((*p).active_timer.lstick.x as u64);
-        rt::h_u((*p).active_timer.lstick.y as u64);
-        rt::h_u((*p).active_timer.trigger as u64);
-        rt::h_u((*p).active_sticky.lstick.x as u64);
-        rt::h_u((*p).active_sticky.lstick.y as u64);
-        rt::h_u((*p).active_sticky.trigger as u64);
-        rt::h_u((*p).active_duration.lstick.x as u64);
-        rt::h_u((*p).active_duration.lstick.y as u64);
-        rt::h_u((*p).active_duration.trigger as u64);
-        rt::h_u((*p).activity_timer.lstick.x as u64);
-        rt::h_u((*p).activity_timer.lstick.y as u64);
-        rt::h_u((*p).activity_timer.trigger as u64);
-        rt::h_u((*p).x67C as u64);
-        rt::h_u((*p).x67D as u64);
-        rt::h_u((*p).x67E as u64);
-        rt::h_u((*p).x67F as u64);
-        rt::h_u((*p).x680 as u64);
-        rt::h_u((*p).x681 as u64);
-        rt::h_u((*p).x682 as u64);
-        rt::h_u((*p).x683 as u64);
-        rt::h_u((*p).x684 as u64);
-        rt::h_u((*p).x685 as u64);
-        rt::h_u((*p).x686 as u64);
-        rt::h_u((*p).x687 as u64);
-        rt::h_u((*p).x688 as u64);
-        rt::h_u((*p).x689 as u64);
-        rt::h_u((*p).x68A as u64);
-        rt::h_u((*p).x68B as u64);
-        rt::h_f32((*p).x68C_transNPos.x);
-        rt::h_f32((*p).x68C_transNPos.y);
-        rt::h_f32((*p).x68C_transNPos.z);
-        rt::h_f32((*p).x698.x);
-        rt::h_f32((*p).x698.y);
-        rt::h_f32((*p).x698.z);
-        rt::h_f32((*p).x6A4_transNOffset.x);
-        rt::h_f32((*p).x6A4_transNOffset.y);
-        rt::h_f32((*p).x6A4_transNOffset.z);
-        rt::h_f32((*p).x6B0.x);
-        rt::h_f32((*p).x6B0.y);
-        rt::h_f32((*p).x6B0.z);
-        rt::h_f32((*p).lstick_angle);
-        rt::h_f32((*p).x6C0.x);
-        rt::h_f32((*p).x6C0.y);
-        rt::h_f32((*p).x6C0.z);
-        rt::h_f32((*p).x6CC.x);
-        rt::h_f32((*p).x6CC.y);
-        rt::h_f32((*p).x6CC.z);
-        rt::h_f32((*p).x6D8.x);
-        rt::h_f32((*p).x6D8.y);
-        rt::h_f32((*p).x6D8.z);
-        rt::h_f32((*p).x6E4.x);
-        rt::h_f32((*p).x6E4.y);
-        rt::h_f32((*p).x6E4.z);
-        rt::h_p((*p).coll_data.x0_gobj as *const u8);
-        rt::h_f32((*p).coll_data.cur_pos.x);
-        rt::h_f32((*p).coll_data.cur_pos.y);
-        rt::h_f32((*p).coll_data.cur_pos.z);
-        rt::h_f32((*p).coll_data.prev_pos.x);
-        rt::h_f32((*p).coll_data.prev_pos.y);
-        rt::h_f32((*p).coll_data.prev_pos.z);
-        rt::h_f32((*p).coll_data.last_pos.x);
-        rt::h_f32((*p).coll_data.last_pos.y);
-        rt::h_f32((*p).coll_data.last_pos.z);
-        rt::h_f32((*p).coll_data.x28_vec.x);
-        rt::h_f32((*p).coll_data.x28_vec.y);
-        rt::h_f32((*p).coll_data.x28_vec.z);
-        rt::h_u((*p).coll_data.x34_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b7() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b7() as u64);
-        rt::h_i((*p).coll_data.facing_dir as i64);
-        rt::h_i((*p).coll_data.x38 as i64);
-        rt::h_i((*p).coll_data.floor_skip as i64);
-        rt::h_i((*p).coll_data.ledge_id_right as i64);
-        rt::h_i((*p).coll_data.ledge_id_left as i64);
-        rt::h_i((*p).coll_data.joint_id_skip as i64);
-        rt::h_i((*p).coll_data.joint_id_only as i64);
-        rt::h_f32((*p).coll_data.x50);
-        rt::h_f32((*p).coll_data.ledge_snap_x);
-        rt::h_f32((*p).coll_data.ledge_snap_y);
-        rt::h_f32((*p).coll_data.ledge_snap_height);
-        rt::h_f32((*p).coll_data.lstick_x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.y);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.x64_ecb.right.x);
-        rt::h_f32((*p).coll_data.x64_ecb.right.y);
-        rt::h_f32((*p).coll_data.x64_ecb.left.x);
-        rt::h_f32((*p).coll_data.x64_ecb.left.y);
-        rt::h_f32((*p).coll_data.desired_ecb.top.x);
-        rt::h_f32((*p).coll_data.desired_ecb.top.y);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.desired_ecb.right.x);
-        rt::h_f32((*p).coll_data.desired_ecb.right.y);
-        rt::h_f32((*p).coll_data.desired_ecb.left.x);
-        rt::h_f32((*p).coll_data.desired_ecb.left.y);
-        rt::h_f32((*p).coll_data.ecb.top.x);
-        rt::h_f32((*p).coll_data.ecb.top.y);
-        rt::h_f32((*p).coll_data.ecb.bottom.x);
-        rt::h_f32((*p).coll_data.ecb.bottom.y);
-        rt::h_f32((*p).coll_data.ecb.right.x);
-        rt::h_f32((*p).coll_data.ecb.right.y);
-        rt::h_f32((*p).coll_data.ecb.left.x);
-        rt::h_f32((*p).coll_data.ecb.left.y);
-        rt::h_f32((*p).coll_data.prev_ecb.top.x);
-        rt::h_f32((*p).coll_data.prev_ecb.top.y);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.prev_ecb.right.x);
-        rt::h_f32((*p).coll_data.prev_ecb.right.y);
-        rt::h_f32((*p).coll_data.prev_ecb.left.x);
-        rt::h_f32((*p).coll_data.prev_ecb.left.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.y);
-        rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
-        rt::h_f32((*p).coll_data.ecb_source.x124);
-        rt::h_f32((*p).coll_data.ecb_source.x128);
-        rt::h_f32((*p).coll_data.ecb_source.x12C);
-        rt::h_u((*p).coll_data.x130_flags as u64);
-        rt::h_i((*p).coll_data.env_flags as i64);
-        rt::h_i((*p).coll_data.prev_env_flags as i64);
-        rt::h_i((*p).coll_data.x13C as i64);
-        rt::h_f32((*p).coll_data.contact.x);
-        rt::h_f32((*p).coll_data.contact.y);
-        rt::h_f32((*p).coll_data.contact.z);
-        rt::h_i((*p).coll_data.floor.index as i64);
-        rt::h_u((*p).coll_data.floor.flags as u64);
-        rt::h_f32((*p).coll_data.floor.normal.x);
-        rt::h_f32((*p).coll_data.floor.normal.y);
-        rt::h_f32((*p).coll_data.floor.normal.z);
-        rt::h_i((*p).coll_data.left_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.left_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.right_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.right_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.ceiling.index as i64);
-        rt::h_u((*p).coll_data.ceiling.flags as u64);
-        rt::h_f32((*p).coll_data.ceiling.normal.x);
-        rt::h_f32((*p).coll_data.ceiling.normal.y);
-        rt::h_f32((*p).coll_data.ceiling.normal.z);
-        rt::h_i((*p).ecb_lock as i64);
-        rt::h_p((*p).x890_cameraBox as *const u8);
-        rt::h_f32((*p).cur_anim_frame);
-        rt::h_f32((*p).x898_unk);
-        rt::h_f32((*p).frame_speed_mul);
-        rt::h_f32((*p).x8A0_unk);
-        rt::h_f32((*p).x8A4_animBlendFrames);
-        rt::h_f32((*p).x8A8_anim_frame);
-        rt::h_p((*p).x8AC_animSkeleton as *const u8);
-        for i0 in 0..5 {
-            rt::h_i((*p).x8B0[i0].x0 as i64);
-            rt::h_f32((*p).x8B0[i0].x4);
-            rt::h_f32((*p).x8B0[i0].x8);
-            rt::h_f32((*p).x8B0[i0].xC);
-            rt::h_i((*p).x8B0[i0].x10 as i64);
-            rt::h_i((*p).x8B0[i0].x11 as i64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).x914[i0].state as u64);
-            rt::h_u((*p).x914[i0].x4 as u64);
-            rt::h_u((*p).x914[i0].unk_count as u64);
-            rt::h_f32((*p).x914[i0].damage);
-            rt::h_f32((*p).x914[i0].b_offset.x);
-            rt::h_f32((*p).x914[i0].b_offset.y);
-            rt::h_f32((*p).x914[i0].b_offset.z);
-            rt::h_f32((*p).x914[i0].scale);
-            rt::h_i((*p).x914[i0].kb_angle as i64);
-            rt::h_u((*p).x914[i0].x24 as u64);
-            rt::h_u((*p).x914[i0].x28 as u64);
-            rt::h_u((*p).x914[i0].x2C as u64);
-            rt::h_u((*p).x914[i0].element as u64);
-            rt::h_i((*p).x914[i0].x34 as i64);
-            rt::h_i((*p).x914[i0].sfx_severity as i64);
-            rt::h_i((*p).x914[i0].sfx_kind as i64);
-            rt::h_u((*p).x914[i0].x40_b0() as u64);
-            rt::h_u((*p).x914[i0].x40_b1() as u64);
-            rt::h_u((*p).x914[i0].x40_b2() as u64);
-            rt::h_u((*p).x914[i0].x40_b3() as u64);
-            rt::h_u((*p).x914[i0].x40_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b5() as u64);
-            rt::h_u((*p).x914[i0].x41_b6() as u64);
-            rt::h_u((*p).x914[i0].x41_b7() as u64);
-            rt::h_u((*p).x914[i0].x42_b0() as u64);
-            rt::h_u((*p).x914[i0].x42_b1() as u64);
-            rt::h_u((*p).x914[i0].x42_b2() as u64);
-            rt::h_u((*p).x914[i0].x42_b3() as u64);
-            rt::h_u((*p).x914[i0].x42_b4() as u64);
-            rt::h_u((*p).x914[i0].x42_b5() as u64);
-            rt::h_u((*p).x914[i0].x42_b6() as u64);
-            rt::h_u((*p).x914[i0].x42_b7() as u64);
-            rt::h_u((*p).x914[i0].x43_b0() as u64);
-            rt::h_u((*p).x914[i0].x43_b1() as u64);
-            rt::h_u((*p).x914[i0].x43_b2() as u64);
-            rt::h_u((*p).x914[i0].x43_b3() as u64);
-            rt::h_u((*p).x914[i0].x43_b4() as u64);
-            rt::h_u((*p).x914[i0].x43_b5() as u64);
-            rt::h_u((*p).x914[i0].x43_b6() as u64);
-            rt::h_u((*p).x914[i0].x43_b7() as u64);
-            rt::h_u((*p).x914[i0].x44 as u64);
-            rt::h_u((*p).x914[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).x914[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).x914[i0].jobj as *const u8);
-            rt::h_f32((*p).x914[i0].x4C.x);
-            rt::h_f32((*p).x914[i0].x4C.y);
-            rt::h_f32((*p).x914[i0].x4C.z);
-            rt::h_f32((*p).x914[i0].x58.x);
-            rt::h_f32((*p).x914[i0].x58.y);
-            rt::h_f32((*p).x914[i0].x58.z);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).x914[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
-        }
-        for i0 in 0..2 {
-            rt::h_u((*p).xDF4[i0].state as u64);
-            rt::h_u((*p).xDF4[i0].x4 as u64);
-            rt::h_u((*p).xDF4[i0].unk_count as u64);
-            rt::h_f32((*p).xDF4[i0].damage);
-            rt::h_f32((*p).xDF4[i0].b_offset.x);
-            rt::h_f32((*p).xDF4[i0].b_offset.y);
-            rt::h_f32((*p).xDF4[i0].b_offset.z);
-            rt::h_f32((*p).xDF4[i0].scale);
-            rt::h_i((*p).xDF4[i0].kb_angle as i64);
-            rt::h_u((*p).xDF4[i0].x24 as u64);
-            rt::h_u((*p).xDF4[i0].x28 as u64);
-            rt::h_u((*p).xDF4[i0].x2C as u64);
-            rt::h_u((*p).xDF4[i0].element as u64);
-            rt::h_i((*p).xDF4[i0].x34 as i64);
-            rt::h_i((*p).xDF4[i0].sfx_severity as i64);
-            rt::h_i((*p).xDF4[i0].sfx_kind as i64);
-            rt::h_u((*p).xDF4[i0].x40_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x44 as u64);
-            rt::h_u((*p).xDF4[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).xDF4[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).xDF4[i0].jobj as *const u8);
-            rt::h_f32((*p).xDF4[i0].x4C.x);
-            rt::h_f32((*p).xDF4[i0].x4C.y);
-            rt::h_f32((*p).xDF4[i0].x4C.z);
-            rt::h_f32((*p).xDF4[i0].x58.x);
-            rt::h_f32((*p).xDF4[i0].x58.y);
-            rt::h_f32((*p).xDF4[i0].x58.z);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).xDF4[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
-        }
-        rt::h_u((*p).x1064_thrownHitbox.state as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.unk_count as u64);
-        rt::h_f32((*p).x1064_thrownHitbox.damage);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.x);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.y);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.z);
-        rt::h_f32((*p).x1064_thrownHitbox.scale);
-        rt::h_i((*p).x1064_thrownHitbox.kb_angle as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x24 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x28 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x2C as u64);
-        rt::h_u((*p).x1064_thrownHitbox.element as u64);
-        rt::h_i((*p).x1064_thrownHitbox.x34 as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_severity as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_kind as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x44 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x45 as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).x1064_thrownHitbox.x46[i0] as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.jobj as *const u8);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.z);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.z);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.x);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.y);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.z);
-        rt::h_f32((*p).x1064_thrownHitbox.coll_distance);
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_1[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_1[i0].x4 as u64);
-        }
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
-        rt::h_u((*p).x119C_teamUnk as u64);
-        rt::h_u((*p).grabber_unk1 as u64);
-        rt::h_u((*p).hurt_capsules_len as u64);
-        rt::h_u((*p).x119F as u64);
-        for i0 in 0..15 {
-            rt::h_u((*p).hurt_capsules[i0].capsule.state as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.scale);
-            rt::h_p((*p).hurt_capsules[i0].capsule.bone as *const u8);
-            rt::h_u((*p).hurt_capsules[i0].capsule.skip_update_pos() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b1() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b2() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b3() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b4() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b5() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b6() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b7() as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.z);
-            rt::h_i((*p).hurt_capsules[i0].capsule.bone_idx as i64);
-            rt::h_u((*p).hurt_capsules[i0].height as u64);
-            rt::h_i((*p).hurt_capsules[i0].is_grabbable as i64);
-        }
-        for i0 in 0..2 {
-            rt::h_f32((*p).x1614[i0].x0);
-            rt::h_p((*p).x1614[i0].x4 as *const u8);
-            rt::h_f32((*p).x1614[i0].x8.x);
-            rt::h_f32((*p).x1614[i0].x8.y);
-            rt::h_f32((*p).x1614[i0].x8.z);
-            rt::h_f32((*p).x1614[i0].x14.x);
-            rt::h_f32((*p).x1614[i0].x14.y);
-            rt::h_f32((*p).x1614[i0].x14.z);
-            rt::h_f32((*p).x1614[i0].x20.x);
-            rt::h_f32((*p).x1614[i0].x20.y);
-            rt::h_f32((*p).x1614[i0].x20.z);
-        }
-        rt::h_u((*p).x166C as u64);
-        for i0 in 0..1 {
-            rt::h_f32((*p).x1670[i0].v1.x);
-            rt::h_f32((*p).x1670[i0].v1.y);
-            rt::h_f32((*p).x1670[i0].v1.z);
-            rt::h_f32((*p).x1670[i0].v2);
-            rt::h_p((*p).x1670[i0].jobj as *const u8);
-            rt::h_f32((*p).x1670[i0].x14);
-            rt::h_f32((*p).x1670[i0].x18.x);
-            rt::h_f32((*p).x1670[i0].x18.y);
-            rt::h_f32((*p).x1670[i0].x18.z);
-            rt::h_i((*p).x1670[i0].x24 as i64);
-        }
-        for i0 in 0..400 {
-            rt::h_u((*p).filler_x1674[i0] as u64);
-        }
-        rt::h_i((*p).x1828 as i64);
-        rt::h_f32((*p).dmg.x182c_behavior);
-        rt::h_f32((*p).dmg.x1830_percent);
-        rt::h_f32((*p).dmg.x1834);
-        rt::h_f32((*p).dmg.x1838_percentTemp);
-        rt::h_i((*p).dmg.x183C_applied as i64);
-        rt::h_i((*p).dmg.x1840 as i64);
-        rt::h_f32((*p).dmg.facing_dir_1);
-        rt::h_i((*p).dmg.x1848_kb_angle as i64);
-        rt::h_i((*p).dmg.x184c_damaged_hurtbox as i64);
-        rt::h_f32((*p).dmg.kb_applied);
-        rt::h_f32((*p).dmg.x1854_collpos.x);
-        rt::h_f32((*p).dmg.x1854_collpos.y);
-        rt::h_f32((*p).dmg.x1854_collpos.z);
-        rt::h_u((*p).dmg.x1860_element as u64);
-        rt::h_i((*p).dmg.x1864 as i64);
-        rt::h_p((*p).dmg.x1868_source as *const u8);
-        rt::h_i((*p).dmg.x186c as i64);
-        rt::h_p((*p).dmg.x1870 as *const u8);
-        rt::h_i((*p).dmg.x1874 as i64);
-        rt::h_i((*p).dmg.x1878 as i64);
-        rt::h_f32((*p).dmg.x187c);
-        rt::h_f32((*p).dmg.x1880.x);
-        rt::h_f32((*p).dmg.x1880.y);
-        rt::h_f32((*p).dmg.x1880.z);
-        rt::h_i((*p).dmg.x188c as i64);
-        rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
-        rt::h_f32((*p).dmg.x1898);
-        rt::h_f32((*p).dmg.x189C_unk_num_frames);
-        rt::h_f32((*p).dmg.x18a0);
-        rt::h_f32((*p).dmg.x18A4_knockbackMagnitude);
-        rt::h_f32((*p).dmg.x18A8);
-        rt::h_i((*p).dmg.x18ac_time_since_hit as i64);
-        rt::h_f32((*p).dmg.armor0);
-        rt::h_f32((*p).dmg.armor1);
-        rt::h_f32((*p).dmg.x18B8);
-        rt::h_f32((*p).dmg.x18BC);
-        rt::h_i((*p).dmg.x18C0 as i64);
-        rt::h_i((*p).dmg.x18c4_source_ply as i64);
-        rt::h_i((*p).dmg.x18C8 as i64);
-        rt::h_i((*p).dmg.x18CC as i64);
-        rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
-        rt::h_i((*p).dmg.x18d8.x0 as i64);
-        rt::h_i((*p).dmg.x18d8.x4 as i64);
-        rt::h_f32((*p).dmg.x18d8.kb_applied1);
-        rt::h_i((*p).dmg.x18d8.xC as i64);
-        rt::h_u((*p).dmg.x18d8.x10_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b4() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b5() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b6() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b7() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b4() as u64);
-        rt::h_u((*p).dmg.x18ec_instancehitby as u64);
-        rt::h_i((*p).dmg.x18F0 as i64);
-        rt::h_i((*p).dmg.x18F4 as i64);
-        rt::h_u((*p).dmg.x18F8 as u64);
-        rt::h_u((*p).dmg.x18f9 as u64);
-        rt::h_u((*p).dmg.x18fa_model_shift_frames as u64);
-        rt::h_u((*p).dmg.x18FC as u64);
-        rt::h_u((*p).dmg.x18FD as u64);
-        rt::h_f32((*p).dmg.x1900);
-        rt::h_f32((*p).dmg.x1904);
-        rt::h_i((*p).dmg.x1908 as i64);
-        rt::h_p((*p).dmg.x190C as *const u8);
-        rt::h_i((*p).dmg.x1910 as i64);
-        rt::h_i((*p).dmg.x1914 as i64);
-        rt::h_i((*p).dmg.int_value as i64);
-        rt::h_f32((*p).dmg.x191C);
-        rt::h_f32((*p).dmg.facing_dir);
-        rt::h_i((*p).dmg.x1924 as i64);
-        rt::h_f32((*p).dmg.x1928);
-        rt::h_f32((*p).dmg.x192c);
-        rt::h_f32((*p).dmg.x1930.x0.x);
-        rt::h_f32((*p).dmg.x1930.x0.y);
-        rt::h_f32((*p).dmg.x1930.x0.z);
-        rt::h_f32((*p).dmg.x1930.xC.x);
-        rt::h_f32((*p).dmg.x1930.xC.y);
-        rt::h_f32((*p).dmg.x1930.xC.z);
-        rt::h_i((*p).dmg.x1948 as i64);
-        rt::h_i((*p).dmg.x194C as i64);
-        rt::h_i((*p).dmg.x1950 as i64);
-        rt::h_f32((*p).dmg.x1954);
-        rt::h_f32((*p).dmg.x1958);
-        rt::h_f32((*p).dmg.x195c_hitlag_frames);
-        rt::h_f32((*p).x1960_vibrateMult);
-        rt::h_f32((*p).x1964);
-        rt::h_u((*p).x1968_jumpsUsed as u64);
-        rt::h_u((*p).x1969_walljumpUsed as u64);
-        rt::h_f32((*p).hitlag_mul);
-        rt::h_i((*p).unk_msid as i64);
-        rt::h_p((*p).item_gobj as *const u8);
-        rt::h_p((*p).x1978 as *const u8);
-        rt::h_p((*p).x197C as *const u8);
-        rt::h_p((*p).x1980 as *const u8);
-        rt::h_p((*p).x1984_heldItemSpec as *const u8);
-        rt::h_i((*p).x1988 as i64);
-        rt::h_i((*p).x198C as i64);
-        rt::h_i((*p).x1990 as i64);
-        rt::h_i((*p).x1994 as i64);
-        rt::h_f32((*p).shield_health);
-        rt::h_f32((*p).lightshield_amount);
-        rt::h_i((*p).x19A0_shieldDamageTaken as i64);
-        rt::h_i((*p).x19A4 as i64);
-        rt::h_p((*p).x19A8 as *const u8);
-        rt::h_f32((*p).specialn_facing_dir);
-        rt::h_i((*p).x19B0 as i64);
-        rt::h_f32((*p).shield_unk0);
-        rt::h_f32((*p).shield_unk1);
-        rt::h_i((*p).x19BC_shieldDamageTaken3 as i64);
-        rt::h_p((*p).shield_hit.bone as *const u8);
-        rt::h_u((*p).shield_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).shield_hit.pos.x);
-        rt::h_f32((*p).shield_hit.pos.y);
-        rt::h_f32((*p).shield_hit.pos.z);
-        rt::h_f32((*p).shield_hit.offset.x);
-        rt::h_f32((*p).shield_hit.offset.y);
-        rt::h_f32((*p).shield_hit.offset.z);
-        rt::h_f32((*p).shield_hit.size);
-        rt::h_p((*p).reflect_hit.bone as *const u8);
-        rt::h_u((*p).reflect_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).reflect_hit.pos.x);
-        rt::h_f32((*p).reflect_hit.pos.y);
-        rt::h_f32((*p).reflect_hit.pos.z);
-        rt::h_f32((*p).reflect_hit.offset.x);
-        rt::h_f32((*p).reflect_hit.offset.y);
-        rt::h_f32((*p).reflect_hit.offset.z);
-        rt::h_f32((*p).reflect_hit.size);
-        rt::h_p((*p).absorb_hit.bone as *const u8);
-        rt::h_u((*p).absorb_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).absorb_hit.pos.x);
-        rt::h_f32((*p).absorb_hit.pos.y);
-        rt::h_f32((*p).absorb_hit.pos.z);
-        rt::h_f32((*p).absorb_hit.offset.x);
-        rt::h_f32((*p).absorb_hit.offset.y);
-        rt::h_f32((*p).absorb_hit.offset.z);
-        rt::h_f32((*p).absorb_hit.size);
-        rt::h_f32((*p).ReflectAttr.x1A2C_reflectHitDirection);
-        rt::h_i((*p).ReflectAttr.x1A30_maxDamage as i64);
-        rt::h_f32((*p).ReflectAttr.x1A34_damageMul);
-        rt::h_f32((*p).ReflectAttr.x1A38_speedMul);
-        rt::h_i((*p).ReflectAttr.x1A3C_damageOver as i64);
-        rt::h_f32((*p).AbsorbAttr.x1A40_absorbHitDirection);
-        rt::h_i((*p).AbsorbAttr.x1A44_damageTaken as i64);
-        rt::h_i((*p).AbsorbAttr.x1A48_hitsTaken as i64);
-        rt::h_f32((*p).grab_timer);
-        rt::h_i((*p).x1A50 as i64);
-        rt::h_i((*p).x1A51 as i64);
-        rt::h_u((*p).x1A52 as u64);
-        rt::h_u((*p).x1A53 as u64);
-        rt::h_i((*p).x1A54 as i64);
-        rt::h_p((*p).victim_gobj as *const u8);
-        rt::h_p((*p).x1A5C as *const u8);
-        rt::h_p((*p).target_item_gobj as *const u8);
-        rt::h_p((*p).x1A64 as *const u8);
-        rt::h_u((*p).x1A68 as u64);
-        rt::h_u((*p).x1A6A as u64);
-        rt::h_f32((*p).x1A6C);
-        rt::h_f32((*p).x1A70.x);
-        rt::h_f32((*p).x1A70.y);
-        rt::h_f32((*p).x1A70.z);
-        rt::h_f32((*p).x1A7C.x);
-        rt::h_f32((*p).x1A7C.y);
-        rt::h_f32((*p).x1A7C.z);
-        rt::h_u((*p).cpu.buttons as u64);
-        rt::h_i((*p).cpu.lstick.x as i64);
-        rt::h_i((*p).cpu.lstick.y as i64);
-        rt::h_i((*p).cpu.cstick.x as i64);
-        rt::h_i((*p).cpu.cstick.y as i64);
-        rt::h_u((*p).cpu.ltrigger as u64);
-        rt::h_u((*p).cpu.rtrigger as u64);
-        rt::h_u((*p).cpu.kind as u64);
-        rt::h_i((*p).cpu.level as i64);
-        rt::h_i((*p).cpu.x14 as i64);
-        rt::h_i((*p).cpu.x18 as i64);
-        rt::h_i((*p).cpu.x1C as i64);
-        rt::h_i((*p).cpu.x20 as i64);
-        rt::h_i((*p).cpu.x24 as i64);
-        rt::h_i((*p).cpu.x28 as i64);
-        rt::h_i((*p).cpu.x2C as i64);
-        rt::h_i((*p).cpu.x30 as i64);
-        rt::h_i((*p).cpu.x34 as i64);
-        rt::h_f32((*p).cpu.x38);
-        rt::h_f32((*p).cpu.x3C);
-        rt::h_f32((*p).cpu.x40);
-        rt::h_p((*p).cpu.x44 as *const u8);
-        rt::h_p((*p).cpu.x48 as *const u8);
-        rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
-        rt::h_f32((*p).cpu.x54.x);
-        rt::h_f32((*p).cpu.x54.y);
-        rt::h_f32((*p).cpu.x5C);
-        rt::h_i((*p).cpu.x60 as i64);
-        rt::h_f32((*p).cpu.x64.x);
-        rt::h_f32((*p).cpu.x64.y);
-        rt::h_f32((*p).cpu.x6C.x);
-        rt::h_f32((*p).cpu.x6C.y);
-        rt::h_f32((*p).cpu.x74.x);
-        rt::h_f32((*p).cpu.x74.y);
-        rt::h_i((*p).cpu.x7C as i64);
-        rt::h_i((*p).cpu.x80 as i64);
-        rt::h_i((*p).cpu.x84 as i64);
-        rt::h_i((*p).cpu.x88 as i64);
-        rt::h_i((*p).cpu.x8C as i64);
-        rt::h_i((*p).cpu.x90 as i64);
-        rt::h_i((*p).cpu.x94 as i64);
-        rt::h_f32((*p).cpu.x98.x);
-        rt::h_f32((*p).cpu.x98.y);
-        rt::h_f32((*p).cpu.x98.z);
-        rt::h_i((*p).cpu.xA4 as i64);
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xA8_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xC8 as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xC9[i0] as u64);
-        }
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xCC_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xEC as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xED[i0] as u64);
-        }
-        rt::h_p((*p).cpu.xF0 as *const u8);
-        rt::h_p((*p).cpu.xF4 as *const u8);
-        rt::h_u((*p).cpu.xF8_b0() as u64);
-        rt::h_u((*p).cpu.xF8_b12() as u64);
-        rt::h_u((*p).cpu.xF8_b34() as u64);
-        rt::h_u((*p).cpu.xF8_b5() as u64);
-        rt::h_u((*p).cpu.xF8_b6() as u64);
-        rt::h_u((*p).cpu.xF8_b7() as u64);
-        rt::h_u((*p).cpu.xF9_b0() as u64);
-        rt::h_u((*p).cpu.xF9_b1() as u64);
-        rt::h_u((*p).cpu.xF9_b2() as u64);
-        rt::h_u((*p).cpu.xF9_b3() as u64);
-        rt::h_u((*p).cpu.xF9_b4() as u64);
-        rt::h_u((*p).cpu.xF9_b5() as u64);
-        rt::h_u((*p).cpu.xF9_b6() as u64);
-        rt::h_u((*p).cpu.xF9_b7() as u64);
-        rt::h_u((*p).cpu.xFA_b0() as u64);
-        rt::h_u((*p).cpu.xFA_b1() as u64);
-        rt::h_u((*p).cpu.xFA_b2() as u64);
-        rt::h_u((*p).cpu.xFA_b34() as u64);
-        rt::h_u((*p).cpu.xFA_b5() as u64);
-        rt::h_u((*p).cpu.xFA_b6() as u64);
-        rt::h_u((*p).cpu.xFA_b7() as u64);
-        rt::h_u((*p).cpu.xFB_b0() as u64);
-        rt::h_u((*p).cpu.xFB_b1() as u64);
-        rt::h_u((*p).cpu.xFB_b2() as u64);
-        rt::h_u((*p).cpu.xFB_b3() as u64);
-        rt::h_u((*p).cpu.xFB_b4() as u64);
-        rt::h_u((*p).cpu.xFB_b5() as u64);
-        rt::h_u((*p).cpu.xFB_b6() as u64);
-        rt::h_u((*p).cpu.xFB_b7() as u64);
-        for i0 in 0..30 {
-            rt::h_u((*p).cpu.xFC[i0].x0 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x4 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x5 as u64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.y as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.y as i64);
-            rt::h_u((*p).cpu.xFC[i0].xA as u64);
-            rt::h_u((*p).cpu.xFC[i0].xB as u64);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.x);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.y);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.z);
-            rt::h_f32((*p).cpu.xFC[i0].facing_dir);
-        }
-        rt::h_p((*p).cpu.x444 as *const u8);
-        rt::h_p((*p).cpu.x448 as *const u8);
-        rt::h_u((*p).cpu.command_duration as u64);
-        rt::h_p((*p).cpu.csP as *const u8);
-        for i0 in 0..256 {
-            rt::h_i((*p).cpu.buffer[i0] as i64);
-        }
-        rt::h_p((*p).cpu.write_pos as *const u8);
-        rt::h_f32((*p).cpu.x558);
-        rt::h_f32((*p).cpu.x55C);
-        rt::h_f32((*p).cpu.x560);
-        rt::h_f32((*p).cpu.x564);
-        rt::h_f32((*p).cpu.x568);
-        rt::h_f32((*p).cpu.x56C);
-        rt::h_f32((*p).cpu.x570);
-        rt::h_f32((*p).cpu.half_width);
-        rt::h_f32((*p).cpu.half_height);
-        rt::h_i((*p).x2004 as i64);
-        rt::h_i((*p).x2008 as i64);
-        rt::h_i((*p).x200C as i64);
-        rt::h_i((*p).x2010 as i64);
-        rt::h_i((*p).x2014 as i64);
-        rt::h_i((*p).x2018 as i64);
-        rt::h_i((*p).x201C as i64);
-        rt::h_i((*p).x2020 as i64);
-        rt::h_i((*p).x2021 as i64);
-        rt::h_i((*p).x2022 as i64);
-        rt::h_i((*p).x2024 as i64);
-        rt::h_i((*p).metal_timer as i64);
-        rt::h_i((*p).metal_health as i64);
-        rt::h_i((*p).x2030 as i64);
-        rt::h_i((*p).x2034 as i64);
-        rt::h_i((*p).x2038 as i64);
-        rt::h_u((*p).x203C.count as u64);
-        rt::h_p((*p).x203C.data as *const u8);
-        for i0 in 0..32 {
-            rt::h_u((*p).filler_x2044[i0] as u64);
-        }
-        rt::h_i((*p).x2064_ledgeCooldown as i64);
-        rt::h_i((*p).x2068_attackID as i64);
-        rt::h_u((*p).x206C_attack_instance as u64);
-        rt::h_i((*p).x206E as i64);
-        rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
-        rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
-        rt::h_u((*p).x2074.x2088 as u64);
-        rt::h_i((*p).x208C as i64);
-        rt::h_u((*p).x2090 as u64);
-        rt::h_u((*p).x2092 as u64);
-        rt::h_p((*p).x2094 as *const u8);
-        rt::h_u((*p).x2098 as u64);
-        rt::h_u((*p).x209A as u64);
-        rt::h_u((*p).x209C as u64);
-        rt::h_p((*p).x20A0_accessory as *const u8);
-        rt::h_u((*p).x20A4.x0_b0() as u64);
-        rt::h_u((*p).x20A4.x0_b1() as u64);
-        rt::h_u((*p).x20A4.x0_b2() as u64);
-        rt::h_u((*p).x20A4.x0_b3() as u64);
-        rt::h_u((*p).x20A4.x0_b4() as u64);
-        rt::h_u((*p).x20A4.x0_b5() as u64);
-        rt::h_u((*p).x20A4.x0_b6() as u64);
-        rt::h_u((*p).x20A4.x0_b7() as u64);
-        rt::h_p((*p).x20A4.shadow as *const u8);
-        rt::h_p((*p).unk_gobj as *const u8);
-        for i0 in 0..3 {
-            rt::h_f32((*p).x20B0[i0].x0.x);
-            rt::h_f32((*p).x20B0[i0].x0.y);
-            rt::h_f32((*p).x20B0[i0].x0.z);
-            rt::h_f32((*p).x20B0[i0].xC.x);
-            rt::h_f32((*p).x20B0[i0].xC.y);
-            rt::h_f32((*p).x20B0[i0].xC.z);
-        }
-        rt::h_f32((*p).x20F8);
-        rt::h_f32((*p).x20FC);
-        rt::h_i((*p).x2100 as i64);
-        rt::h_u((*p).x2101_bits_0to6() as u64);
-        rt::h_u((*p).x2101_bits_8() as u64);
-        rt::h_i((*p).x2102 as i64);
-        rt::h_i((*p).x2103 as i64);
-        rt::h_i((*p).x2104 as i64);
-        rt::h_i((*p).capture_timer as i64);
-        rt::h_u((*p).wall_jump_input_timer as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x210C[i0] as u64);
-        }
-        rt::h_f32((*p).x2110_walljumpWallSide);
-        rt::h_u((*p).smash_attrs.state as u64);
-        rt::h_f32((*p).smash_attrs.x2118_frames);
-        rt::h_f32((*p).smash_attrs.x211C_holdFrame);
-        rt::h_f32((*p).smash_attrs.x2120_damageMul);
-        rt::h_f32((*p).smash_attrs.x2124_frameSpeedMul);
-        rt::h_i((*p).smash_attrs.x2128 as i64);
-        rt::h_u((*p).smash_attrs.x212C as u64);
-        rt::h_u((*p).smash_attrs.x212D as u64);
-        rt::h_i((*p).smash_attrs.x212E as i64);
-        rt::h_i((*p).smash_attrs.x212F as i64);
-        rt::h_i((*p).smash_attrs.x2130_sfxBool as i64);
-        rt::h_u((*p).smash_attrs.x2134_vibrateFrame as u64);
-        rt::h_i((*p).smash_attrs.x2135 as i64);
-        rt::h_i((*p).smash_attrs.x2136 as i64);
-        rt::h_i((*p).smash_attrs.x2137 as i64);
-        rt::h_f32((*p).smash_attrs.x2138_smashSinceHitbox);
-        rt::h_i((*p).x213C as i64);
-        rt::h_f32((*p).x2140);
-        rt::h_i((*p).x2144 as i64);
-        rt::h_i((*p).x2148 as i64);
-        rt::h_i((*p).x214C as i64);
-        rt::h_i((*p).x2150 as i64);
-        rt::h_i((*p).x2154 as i64);
-        rt::h_i((*p).x2158 as i64);
-        rt::h_i((*p).x215C as i64);
-        rt::h_i((*p).x2160 as i64);
-        rt::h_i((*p).x2164 as i64);
-        rt::h_i((*p).x2168 as i64);
-        rt::h_f32((*p).unk_grab_val);
-        rt::h_f32((*p).x2170);
-        rt::h_f32((*p).x2174.x);
-        rt::h_f32((*p).x2174.y);
-        rt::h_f32((*p).x2174.z);
-        rt::h_i((*p).x2180 as i64);
-        rt::h_p((*p).x2184 as *const u8);
-        rt::h_i((*p).x2188.x as i64);
-        rt::h_i((*p).x2188.y as i64);
-        rt::h_fn((*p).grab_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x2194.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).grabbed_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).cam_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory4_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).deal_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).shield_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).reflect_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21CC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).pre_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).post_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21EC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x21FC[i0] as u64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).cmd_vars[i0] as u64);
-        }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
-        rt::h_f32((*p).cmd_timer);
-        rt::h_u((*p).allow_interrupt() as u64);
-        rt::h_u((*p).x2218_b1() as u64);
-        rt::h_u((*p).x2218_b2() as u64);
-        rt::h_u((*p).reflecting() as u64);
-        rt::h_u((*p).x2218_b4() as u64);
-        rt::h_u((*p).x2218_b5() as u64);
-        rt::h_u((*p).x2218_b6() as u64);
-        rt::h_u((*p).x2218_b7() as u64);
-        rt::h_u((*p).x2219_b0() as u64);
-        rt::h_u((*p).x2219_b1() as u64);
-        rt::h_u((*p).x2219_b2() as u64);
-        rt::h_u((*p).x2219_b3() as u64);
-        rt::h_u((*p).x2219_b4() as u64);
-        rt::h_u((*p).x2219_b5() as u64);
-        rt::h_u((*p).x2219_b6() as u64);
-        rt::h_u((*p).x2219_b7() as u64);
-        rt::h_u((*p).x221A_b0() as u64);
-        rt::h_u((*p).x221A_b1() as u64);
-        rt::h_u((*p).allow_sdi() as u64);
-        rt::h_u((*p).x221A_b3() as u64);
-        rt::h_u((*p).fall_fast() as u64);
-        rt::h_u((*p).x221A_b5() as u64);
-        rt::h_u((*p).x221A_b6() as u64);
-        rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
-        rt::h_u((*p).x221C_b0() as u64);
-        rt::h_u((*p).x221C_b1() as u64);
-        rt::h_u((*p).x221C_b2() as u64);
-        rt::h_u((*p).x221C_b3() as u64);
-        rt::h_u((*p).x221C_b4() as u64);
-        rt::h_u((*p).x221C_b5() as u64);
-        rt::h_u((*p).x221C_b6() as u64);
-        rt::h_u((*p).x221C_u16_y() as u64);
-        rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
-        rt::h_u((*p).x221D_b5() as u64);
-        rt::h_u((*p).x221D_b6() as u64);
-        rt::h_u((*p).x221D_b7() as u64);
-        rt::h_u((*p).invisible() as u64);
-        rt::h_u((*p).x221E_b1() as u64);
-        rt::h_u((*p).x221E_b2() as u64);
-        rt::h_u((*p).x221E_b3() as u64);
-        rt::h_u((*p).x221E_b4() as u64);
-        rt::h_u((*p).x221E_b5() as u64);
-        rt::h_u((*p).x221E_b6() as u64);
-        rt::h_u((*p).x221E_b7() as u64);
-        rt::h_u((*p).x221F_b0() as u64);
-        rt::h_u((*p).x221F_b1() as u64);
-        rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
-        rt::h_u((*p).is_sub_fighter() as u64);
-        rt::h_u((*p).x221F_b5() as u64);
-        rt::h_u((*p).x221F_b6() as u64);
-        rt::h_u((*p).x221F_b7() as u64);
-        rt::h_u((*p).x2220_b0() as u64);
-        rt::h_u((*p).x2220_b3() as u64);
-        rt::h_u((*p).x2220_b4() as u64);
-        rt::h_u((*p).x2220_b5() as u64);
-        rt::h_u((*p).x2220_b6() as u64);
-        rt::h_u((*p).x2220_b7() as u64);
-        rt::h_u((*p).x2221_b0() as u64);
-        rt::h_u((*p).x2221_b1() as u64);
-        rt::h_u((*p).x2221_b2() as u64);
-        rt::h_u((*p).x2221_b3() as u64);
-        rt::h_u((*p).x2221_b4() as u64);
-        rt::h_u((*p).x2221_b5() as u64);
-        rt::h_u((*p).x2221_b6() as u64);
-        rt::h_u((*p).x2221_b7() as u64);
-        rt::h_u((*p).x2222_b0() as u64);
-        rt::h_u((*p).can_multijump() as u64);
-        rt::h_u((*p).x2222_b2() as u64);
-        rt::h_u((*p).x2222_b3() as u64);
-        rt::h_u((*p).x2222_b4() as u64);
-        rt::h_u((*p).x2222_b5() as u64);
-        rt::h_u((*p).x2222_b6() as u64);
-        rt::h_u((*p).x2222_b7() as u64);
-        rt::h_u((*p).x2223_b0() as u64);
-        rt::h_u((*p).x2223_b1() as u64);
-        rt::h_u((*p).x2223_b2() as u64);
-        rt::h_u((*p).x2223_b3() as u64);
-        rt::h_u((*p).x2223_b4() as u64);
-        rt::h_u((*p).x2223_b5() as u64);
-        rt::h_u((*p).is_always_metal() as u64);
-        rt::h_u((*p).is_metal() as u64);
-        rt::h_u((*p).x2224_b0() as u64);
-        rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
-        rt::h_u((*p).x2224_b3() as u64);
-        rt::h_u((*p).x2224_b4() as u64);
-        rt::h_u((*p).x2224_b5() as u64);
-        rt::h_u((*p).x2224_b6() as u64);
-        rt::h_u((*p).can_walljump() as u64);
-        rt::h_u((*p).x2225_b0() as u64);
-        rt::h_u((*p).x2225_b1() as u64);
-        rt::h_u((*p).x2225_b2() as u64);
-        rt::h_u((*p).x2225_b3() as u64);
-        rt::h_u((*p).x2225_b4() as u64);
-        rt::h_u((*p).x2225_b5() as u64);
-        rt::h_u((*p).x2225_b6() as u64);
-        rt::h_u((*p).x2225_b7() as u64);
-        rt::h_u((*p).x2226_b0() as u64);
-        rt::h_u((*p).x2226_b1() as u64);
-        rt::h_u((*p).x2226_b2() as u64);
-        rt::h_u((*p).x2226_b3() as u64);
-        rt::h_u((*p).x2226_b4() as u64);
-        rt::h_u((*p).x2226_b5() as u64);
-        rt::h_u((*p).x2226_b6() as u64);
-        rt::h_u((*p).x2226_b7() as u64);
-        rt::h_u((*p).x2227_b0() as u64);
-        rt::h_u((*p).x2227_b1() as u64);
-        rt::h_u((*p).x2227_b2() as u64);
-        rt::h_u((*p).x2227_b3() as u64);
-        rt::h_u((*p).x2227_b4() as u64);
-        rt::h_u((*p).x2227_b5() as u64);
-        rt::h_u((*p).x2227_b6() as u64);
-        rt::h_u((*p).x2227_b7() as u64);
-        rt::h_u((*p).x2228_b0() as u64);
-        rt::h_u((*p).x2228_b1() as u64);
-        rt::h_u((*p).is_sandbag() as u64);
-        rt::h_u((*p).x2228_b3() as u64);
-        rt::h_u((*p).x2228_b5() as u64);
-        rt::h_u((*p).used_tether() as u64);
-        rt::h_u((*p).x2228_b7() as u64);
-        rt::h_u((*p).x2229_b0() as u64);
-        rt::h_u((*p).x2229_b1() as u64);
-        rt::h_u((*p).x2229_b2() as u64);
-        rt::h_u((*p).x2229_b3() as u64);
-        rt::h_u((*p).x2229_b4() as u64);
-        rt::h_u((*p).no_normal_motion() as u64);
-        rt::h_u((*p).x2229_b6() as u64);
-        rt::h_u((*p).no_kb() as u64);
-        rt::h_u((*p).x222A_b0() as u64);
-        rt::h_u((*p).x222A_b1() as u64);
-        rt::h_u((*p).x222A_b2() as u64);
-        rt::h_u((*p).x222A_b3() as u64);
-        rt::h_u((*p).x222A_b5() as u64);
-        rt::h_u((*p).x222A_b6() as u64);
-        rt::h_u((*p).x222A_b7() as u64);
-        rt::h_bytes(&(*p).u as *const _ as *const u8, 400);
-        rt::h_u((*p).bury_grkind as u64);
-        rt::h_u((*p).bury_timer_1 as u64);
-        rt::h_u((*p).bury_timer_2 as u64);
-        rt::h_i((*p).x2330.x as i64);
-        rt::h_i((*p).x2330.y as i64);
-        rt::h_i((*p).x2338.x as i64);
-        rt::h_i((*p).x2338.y as i64);
-        rt::h_bytes(&(*p).mv as *const _ as *const u8, 176);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
         rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::Fighter;
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
     if !p0.is_null() {
-        (*p0).gobj = 0usize as _;
-        (*p0).kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1C_actionStateList = 0usize as _;
-        (*p0).x20_actionStateList = 0usize as _;
-        (*p0).x24 = 0usize as _;
-        (*p0).x28 = 0usize as _;
-        (*p0).facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).facing_dir1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x40 = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..3 {
-            for i2 in 0..4 {
-                (*p0).x44_mtx[i1][i2] = rt::draw_f32(&mut rt::MST);
-            }
-        }
-        (*p0).x74_self_accel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.x = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.y = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ground_or_air = rt::draw_int(&mut rt::MST) as _;
-        (*p0).xE4_ground_accel_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).xE8_ground_accel_2 = rt::draw_f32(&mut rt::MST);
-        (*p0).gr_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF0_ground_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF4_ground_attacker_shield_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x100 = rt::draw_f32(&mut rt::MST);
-        (*p0).x104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x105 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x106 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x107 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x108_costume_joint = 0usize as _;
-        (*p0).ft_data = 0usize as _;
-        (*p0).co_attrs.walk_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_max_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.slow_walk_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.mid_walk_point = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_walk_min = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.run_animation_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_run_brake_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_startup_time = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_to_air_jump_momentum_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hop_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_v_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_h_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_jumps = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.gravity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.terminal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_stick_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_drift_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_fall_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_2_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_3_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.standing_turn_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.model_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.initial_shield_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.shield_break_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.rapid_jab_window = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.clank_animation_length = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hit_spark_variant = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.unused_0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.ledge_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ledge_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.item_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.heavy_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.specials_ground_speed_retention = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x1C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xDC = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.kirby_b_star_damage = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.normal_landing_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairn_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairf_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairb_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairhi_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairlw_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.name_tag_height = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passivewall_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passiveceil_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.trophy_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x13C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.screw_attack_launch_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x144 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_min_approach_speed = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageice_ice_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x150_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x154_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_x_mult = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.respawn_platform_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.warp_star_hitbox_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x168 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.camera_zoom_target_bone = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.x170.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x17C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight_independent_throws_mask = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x294_itPickup.gr_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2CC = 0usize as _;
-        (*p0).x2D0 = 0usize as _;
-        (*p0).dat_attrs = 0usize as _;
-        (*p0).dat_attrs_backup = 0usize as _;
-        (*p0).x2DC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E0 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E4 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2EC = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..10 {
-            (*p0).dynamic_bone_sets[i1].bone_id = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.data = 0usize as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).dynamics_num = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count_dup = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.unk_x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x8_ptr1 = 0usize as _;
-        (*p0).x408.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x10_ptr2 = 0usize as _;
-        (*p0).x408.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x18_alloc = 0usize as _;
-        (*p0).x408.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x408.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x408.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x408.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x8_ptr1 = 0usize as _;
-        (*p0).x488.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x10_ptr2 = 0usize as _;
-        (*p0).x488.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x18_alloc = 0usize as _;
-        (*p0).x488.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x488.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x488.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x488.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x8_ptr1 = 0usize as _;
-        (*p0).x508.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x10_ptr2 = 0usize as _;
-        (*p0).x508.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x18_alloc = 0usize as _;
-        (*p0).x508.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x508.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x508.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x508.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x588 = 0usize as _;
-        (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).x598 = 0usize as _;
-        (*p0).x59C = 0usize as _;
-        (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
-        (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..5 {
-            (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..5 {
-            (*p0).x5AC.xC[i1] = 0usize as _;
-        }
-        (*p0).tobj_list.n_costume_tobjs = rt::draw_int(&mut rt::MST) as _;
-        (*p0).tobj_list.x5D0 = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).tobj_list.costume_tobjs[i1] = 0usize as _;
-        }
-        (*p0).parts = 0usize as _;
-        (*p0).dobj_list.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dobj_list.data = 0usize as _;
-        for i1 in 0..12 {
-            (*p0).x5F4_arr[i1].prev = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x5F4_arr[i1].idx = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x60C = 0usize as _;
-        for i1 in 0..2 {
-            (*p0).x610_color_rgba[i1].r = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].g = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).team = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).filler_x61E[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..3 {
-            (*p0).input.lstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.lstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.cstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.cstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.triggers[i1] = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.held_buttons[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).input.pressed_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).input.released_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x680 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x681 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x682 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x683 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x684 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x685 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x686 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x687 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x688 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x689 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68B = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68C_transNPos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).lstick_angle = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x0_gobj = 0usize as _;
-        (*p0).coll_data.cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x34_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x34_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x35_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.facing_dir = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x38 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_right = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_left = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_only = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x50 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_height = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.lstick_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
-        (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x130_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.prev_env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x13C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.contact.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_lock = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x890_cameraBox = 0usize as _;
-        (*p0).cur_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x898_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).frame_speed_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A0_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A4_animBlendFrames = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A8_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x8AC_animSkeleton = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).x8B0[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x4 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x8 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].xC = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x10 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x11 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).x914[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).x914[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).x914[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].jobj = 0usize as _;
-            (*p0).x914[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
-        }
-        for i1 in 0..2 {
-            (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).xDF4[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).xDF4[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].jobj = 0usize as _;
-            (*p0).xDF4[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
-        }
-        (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.unk_count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.damage = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.scale = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_severity = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.x44 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x45 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).x1064_thrownHitbox.x46[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.jobj = 0usize as _;
-        (*p0).x1064_thrownHitbox.x4C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.coll_distance = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_1[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_1[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
-        (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x119F = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..15 {
-            (*p0).hurt_capsules[i1].capsule.state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].capsule.a_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.scale = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone = 0usize as _;
-            (*p0).hurt_capsules[i1].capsule.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.a_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone_idx = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].height = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].is_grabbable = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..2 {
-            (*p0).x1614[i1].x0 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x4 = 0usize as _;
-            (*p0).x1614[i1].x8.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x166C = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..1 {
-            (*p0).x1670[i1].v1.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v2 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].jobj = 0usize as _;
-            (*p0).x1670[i1].x14 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..400 {
-            (*p0).filler_x1674[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1828 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x182c_behavior = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1830_percent = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1834 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1838_percentTemp = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x183C_applied = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1840 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.facing_dir_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1848_kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x184c_damaged_hurtbox = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.kb_applied = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1860_element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1864 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1868_source = 0usize as _;
-        (*p0).dmg.x186c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1870 = 0usize as _;
-        (*p0).dmg.x1874 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1878 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x187c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A4_knockbackMagnitude = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18ac_time_since_hit = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.armor0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.armor1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18B8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18BC = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18C0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18c4_source_ply = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18d8.xC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.set_x10_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18ec_instancehitby = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18f9 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18fa_model_shift_frames = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FD = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1900 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1904 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1908 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x190C = 0usize as _;
-        (*p0).dmg.x1910 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1914 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.int_value = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x191C = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1924 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1928 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x192c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1948 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x194C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1950 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1954 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1958 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x195c_hitlag_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).x1960_vibrateMult = rt::draw_f32(&mut rt::MST);
-        (*p0).x1964 = rt::draw_f32(&mut rt::MST);
-        (*p0).x1968_jumpsUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1969_walljumpUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hitlag_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).unk_msid = rt::draw_int(&mut rt::MST) as _;
-        (*p0).item_gobj = 0usize as _;
-        (*p0).x1978 = 0usize as _;
-        (*p0).x197C = 0usize as _;
-        (*p0).x1980 = 0usize as _;
-        (*p0).x1984_heldItemSpec = 0usize as _;
-        (*p0).x1988 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x198C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1990 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1994 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_health = rt::draw_f32(&mut rt::MST);
-        (*p0).lightshield_amount = rt::draw_f32(&mut rt::MST);
-        (*p0).x19A0_shieldDamageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A8 = 0usize as _;
-        (*p0).specialn_facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).x19B0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_unk0 = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_unk1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x19BC_shieldDamageTaken3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_hit.bone = 0usize as _;
-        (*p0).shield_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).shield_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.bone = 0usize as _;
-        (*p0).reflect_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).reflect_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.bone = 0usize as _;
-        (*p0).absorb_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).absorb_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A2C_reflectHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A30_maxDamage = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ReflectAttr.x1A34_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A38_speedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A3C_damageOver = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A40_absorbHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).AbsorbAttr.x1A44_damageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A48_hitsTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grab_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A51 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A52 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A53 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A54 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).victim_gobj = 0usize as _;
-        (*p0).x1A5C = 0usize as _;
-        (*p0).target_item_gobj = 0usize as _;
-        (*p0).x1A64 = 0usize as _;
-        (*p0).x1A68 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6C = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.ltrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.rtrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.level = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x1C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x30 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x38 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x3C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x40 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x44 = 0usize as _;
-        (*p0).cpu.x48 = 0usize as _;
-        (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x60 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x64.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x64.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x7C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x80 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x84 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x88 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x8C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x90 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x94 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x98.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.xA4 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..8 {
-            (*p0).cpu.xA8_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xC8 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xC9[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..8 {
-            (*p0).cpu.xCC_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xEC = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xED[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xF0 = 0usize as _;
-        (*p0).cpu.xF4 = 0usize as _;
-        (*p0).cpu.set_xF8_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b12((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xFA_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..30 {
-            (*p0).cpu.xFC[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x5 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xA = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xB = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cur_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].facing_dir = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).cpu.x444 = 0usize as _;
-        (*p0).cpu.x448 = 0usize as _;
-        (*p0).cpu.command_duration = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.csP = 0usize as _;
-        for i1 in 0..256 {
-            (*p0).cpu.buffer[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.write_pos = 0usize as _;
-        (*p0).cpu.x558 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x55C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x560 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x564 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x568 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x56C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x570 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_width = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_height = rt::draw_f32(&mut rt::MST);
-        (*p0).x2004 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2008 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x200C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2010 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2014 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2018 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x201C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2020 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2021 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2022 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2024 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_health = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2030 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2034 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2038 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.data = 0usize as _;
-        for i1 in 0..32 {
-            (*p0).filler_x2044[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2064_ledgeCooldown = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2068_attackID = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2092 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2094 = 0usize as _;
-        (*p0).x2098 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x20A0_accessory = 0usize as _;
-        (*p0).x20A4.set_x0_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.shadow = 0usize as _;
-        (*p0).unk_gobj = 0usize as _;
-        for i1 in 0..3 {
-            (*p0).x20B0[i1].x0.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x20F8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x20FC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2100 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).set_x2101_bits_0to6((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).set_x2101_bits_8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x2102 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2103 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).capture_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).wall_jump_input_timer = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).filler_x210C[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2110_walljumpWallSide = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2118_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x211C_holdFrame = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2120_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2124_frameSpeedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2128 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2130_sfxBool = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2134_vibrateFrame = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2135 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2136 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2137 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2138_smashSinceHitbox = rt::draw_f32(&mut rt::MST);
-        (*p0).x213C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2140 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2144 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2148 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x214C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2150 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2154 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2158 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x215C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2160 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2164 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2168 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).unk_grab_val = rt::draw_f32(&mut rt::MST);
-        (*p0).x2170 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x2180 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2184 = 0usize as _;
-        (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..3 {
-            (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_reflecting((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_allow_sdi((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_fall_fast((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_invisible((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b0((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x2220_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_multijump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_always_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_walljump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sandbag((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x2228_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_used_tether((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_normal_motion((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_kb((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x222A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        { assert_eq!(core::mem::size_of_val(&(*p0).u), 400); for i1 in 0..400 { *(&mut (*p0).u as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).bury_grkind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_2 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.y = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).mv), 176); for i1 in 0..176 { *(&mut (*p0).mv as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
     }
     rt::draw_int(&mut rt::MST) as u64
 }
@@ -9994,7 +7205,7 @@ unsafe fn h_ftCo_AttackAir_EnterFromMsid(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ftCo_Fall_Enter(a: &[u64]) -> u64 {
+unsafe fn h_ftCo_AttackS4_CheckInput(a: &[u64]) -> u64 {
     rt::t_begin(138);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -10038,10 +7249,56 @@ unsafe fn h_ftCo_Fall_Enter(a: &[u64]) -> u64 {
         { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
         (*p0).x34_unk = 0usize as _;
     }
-    0
+    rt::draw_int(&mut rt::MST) as u64
 }
-unsafe fn h_ftCo_Fall_IASA(a: &[u64]) -> u64 {
+unsafe fn h_ftCo_Dash_CheckInput(a: &[u64]) -> u64 {
     rt::t_begin(139);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_Fall_Enter(a: &[u64]) -> u64 {
+    rt::t_begin(140);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -10087,7 +7344,7 @@ unsafe fn h_ftCo_Fall_IASA(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCo_IsCpuControlled(a: &[u64]) -> u64 {
-    rt::t_begin(140);
+    rt::t_begin(141);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -13023,52 +10280,6 @@ unsafe fn h_ftCo_IsCpuControlled(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ftCo_JumpAerial_Enter_Basic(a: &[u64]) -> u64 {
-    rt::t_begin(141);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).classifier as u64);
-        rt::h_u((*p).p_link as u64);
-        rt::h_u((*p).gx_link as u64);
-        rt::h_u((*p).p_priority as u64);
-        rt::h_u((*p).render_priority as u64);
-        rt::h_u((*p).obj_kind as u64);
-        rt::h_u((*p).user_data_kind as u64);
-        rt::h_p((*p).next as *const u8);
-        rt::h_p((*p).prev as *const u8);
-        rt::h_p((*p).next_gx as *const u8);
-        rt::h_p((*p).prev_gx as *const u8);
-        rt::h_p((*p).proc as *const u8);
-        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).gxlink_prios as u64);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::h_p((*p).user_data as *const u8);
-        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p((*p).x34_unk as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::HSD_GObj;
-    if !p0.is_null() {
-        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).next = 0usize as _;
-        (*p0).prev = 0usize as _;
-        (*p0).next_gx = 0usize as _;
-        (*p0).prev_gx = 0usize as _;
-        (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hsd_obj = 0usize as _;
-        (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
-        (*p0).x34_unk = 0usize as _;
-    }
-    0
-}
-unsafe fn h_ftCo_Jump_Enter(a: &[u64]) -> u64 {
     rt::t_begin(142);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -13114,8 +10325,100 @@ unsafe fn h_ftCo_Jump_Enter(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ftCo_LandingFallSpecial_Enter(a: &[u64]) -> u64 {
+unsafe fn h_ftCo_Jump_CheckInput(a: &[u64]) -> u64 {
     rt::t_begin(143);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_Jump_Enter(a: &[u64]) -> u64 {
+    rt::t_begin(144);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    0
+}
+unsafe fn h_ftCo_LandingFallSpecial_Enter(a: &[u64]) -> u64 {
+    rt::t_begin(145);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -13163,98 +10466,6 @@ unsafe fn h_ftCo_LandingFallSpecial_Enter(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCo_LandingFallSpecial_Enter_Basic(a: &[u64]) -> u64 {
-    rt::t_begin(144);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).classifier as u64);
-        rt::h_u((*p).p_link as u64);
-        rt::h_u((*p).gx_link as u64);
-        rt::h_u((*p).p_priority as u64);
-        rt::h_u((*p).render_priority as u64);
-        rt::h_u((*p).obj_kind as u64);
-        rt::h_u((*p).user_data_kind as u64);
-        rt::h_p((*p).next as *const u8);
-        rt::h_p((*p).prev as *const u8);
-        rt::h_p((*p).next_gx as *const u8);
-        rt::h_p((*p).prev_gx as *const u8);
-        rt::h_p((*p).proc as *const u8);
-        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).gxlink_prios as u64);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::h_p((*p).user_data as *const u8);
-        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p((*p).x34_unk as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::HSD_GObj;
-    if !p0.is_null() {
-        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).next = 0usize as _;
-        (*p0).prev = 0usize as _;
-        (*p0).next_gx = 0usize as _;
-        (*p0).prev_gx = 0usize as _;
-        (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hsd_obj = 0usize as _;
-        (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
-        (*p0).x34_unk = 0usize as _;
-    }
-    0
-}
-unsafe fn h_ftCo_Landing_Enter_Basic(a: &[u64]) -> u64 {
-    rt::t_begin(145);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).classifier as u64);
-        rt::h_u((*p).p_link as u64);
-        rt::h_u((*p).gx_link as u64);
-        rt::h_u((*p).p_priority as u64);
-        rt::h_u((*p).render_priority as u64);
-        rt::h_u((*p).obj_kind as u64);
-        rt::h_u((*p).user_data_kind as u64);
-        rt::h_p((*p).next as *const u8);
-        rt::h_p((*p).prev as *const u8);
-        rt::h_p((*p).next_gx as *const u8);
-        rt::h_p((*p).prev_gx as *const u8);
-        rt::h_p((*p).proc as *const u8);
-        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).gxlink_prios as u64);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::h_p((*p).user_data as *const u8);
-        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p((*p).x34_unk as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::HSD_GObj;
-    if !p0.is_null() {
-        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).next = 0usize as _;
-        (*p0).prev = 0usize as _;
-        (*p0).next_gx = 0usize as _;
-        (*p0).prev_gx = 0usize as _;
-        (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hsd_obj = 0usize as _;
-        (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
-        (*p0).x34_unk = 0usize as _;
-    }
-    0
-}
-unsafe fn h_ftCo_Wait_IASA(a: &[u64]) -> u64 {
     rt::t_begin(146);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -13300,8 +10511,217 @@ unsafe fn h_ftCo_Wait_IASA(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
+unsafe fn h_ftCo_Landing_Enter_Basic(a: &[u64]) -> u64 {
     rt::t_begin(147);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    0
+}
+unsafe fn h_ftCo_Turn_CheckInput(a: &[u64]) -> u64 {
+    rt::t_begin(148);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftCo_Walk_CheckInput(a: &[u64]) -> u64 {
+    rt::t_begin(149);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    rt::draw_int(&mut rt::MST) as u64
+}
+unsafe fn h_ftColl_CreateReflectHit(a: &[u64]) -> u64 {
+    rt::t_begin(150);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    rt::t_p(a[1] as usize as *const u8);
+    if a[1] != 0 { let p = a[1] as usize as *const Q::ReflectDesc; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).x0_bone_id as u64);
+        rt::h_i((*p).x4_max_damage as i64);
+        rt::h_f32((*p).x8_offset.x);
+        rt::h_f32((*p).x8_offset.y);
+        rt::h_f32((*p).x8_offset.z);
+        rt::h_f32((*p).x14_size);
+        rt::h_f32((*p).x18_damage_mul);
+        rt::h_f32((*p).x1C_speed_mul);
+        rt::h_u((*p).x20_behavior as u64);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    rt::t_fn(a[2] as usize);
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    let p1 = a[1] as usize as *mut Q::ReflectDesc;
+    if !p1.is_null() {
+        (*p1).x0_bone_id = rt::draw_int(&mut rt::MST) as _;
+        (*p1).x4_max_damage = rt::draw_int(&mut rt::MST) as _;
+        (*p1).x8_offset.x = rt::draw_f32(&mut rt::MST);
+        (*p1).x8_offset.y = rt::draw_f32(&mut rt::MST);
+        (*p1).x8_offset.z = rt::draw_f32(&mut rt::MST);
+        (*p1).x14_size = rt::draw_f32(&mut rt::MST);
+        (*p1).x18_damage_mul = rt::draw_f32(&mut rt::MST);
+        (*p1).x1C_speed_mul = rt::draw_f32(&mut rt::MST);
+        (*p1).x20_behavior = rt::draw_int(&mut rt::MST) as _;
+    }
+    0
+}
+unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
+    rt::t_begin(151);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -16237,7 +13657,7 @@ unsafe fn h_ftCommon_8007D5D4(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
-    rt::t_begin(148);
+    rt::t_begin(152);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -19173,7 +16593,7 @@ unsafe fn h_ftCommon_8007D7FC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCommon_CalcSelfAccel_DeaccelAir(a: &[u64]) -> u64 {
-    rt::t_begin(149);
+    rt::t_begin(153);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -22109,7 +19529,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_DeaccelAir(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCommon_CalcSelfAccel_Drift(a: &[u64]) -> u64 {
-    rt::t_begin(150);
+    rt::t_begin(154);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -25045,7 +22465,7 @@ unsafe fn h_ftCommon_CalcSelfAccel_Drift(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCommon_Fall(a: &[u64]) -> u64 {
-    rt::t_begin(151);
+    rt::t_begin(155);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -27983,7 +25403,7 @@ unsafe fn h_ftCommon_Fall(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ftCommon_SetSelfMovementFromGroundedMovement(a: &[u64]) -> u64 {
-    rt::t_begin(152);
+    rt::t_begin(156);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -28028,5882 +25448,8 @@ unsafe fn h_ftCommon_SetSelfMovementFromGroundedMovement(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ftCommon_UseAllJumps(a: &[u64]) -> u64 {
-    rt::t_begin(153);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_p((*p).gobj as *const u8);
-        rt::h_u((*p).kind as u64);
-        rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
-        rt::h_i((*p).motion_id as i64);
-        rt::h_i((*p).anim_id as i64);
-        rt::h_i((*p).x18 as i64);
-        rt::h_p((*p).x1C_actionStateList as *const u8);
-        rt::h_p((*p).x20_actionStateList as *const u8);
-        rt::h_p((*p).x24 as *const u8);
-        rt::h_p((*p).x28 as *const u8);
-        rt::h_f32((*p).facing_dir);
-        rt::h_f32((*p).facing_dir1);
-        rt::h_f32((*p).x34_scale.x);
-        rt::h_f32((*p).x34_scale.y);
-        rt::h_f32((*p).x34_scale.z);
-        rt::h_f32((*p).x40);
-        for i0 in 0..3 {
-            for i1 in 0..4 {
-                rt::h_f32((*p).x44_mtx[i0][i1]);
-            }
-        }
-        rt::h_f32((*p).x74_self_accel.x);
-        rt::h_f32((*p).x74_self_accel.y);
-        rt::h_f32((*p).x74_self_accel.z);
-        rt::h_f32((*p).self_vel.x);
-        rt::h_f32((*p).self_vel.y);
-        rt::h_f32((*p).self_vel.z);
-        rt::h_f32((*p).x8c_kb_vel.x);
-        rt::h_f32((*p).x8c_kb_vel.y);
-        rt::h_f32((*p).x8c_kb_vel.z);
-        rt::h_f32((*p).x98_atk_shield_kb.x);
-        rt::h_f32((*p).x98_atk_shield_kb.y);
-        rt::h_f32((*p).x98_atk_shield_kb.z);
-        rt::h_f32((*p).xA4_unk_vel.x);
-        rt::h_f32((*p).xA4_unk_vel.y);
-        rt::h_f32((*p).xA4_unk_vel.z);
-        rt::h_f32((*p).cur_pos.x);
-        rt::h_f32((*p).cur_pos.y);
-        rt::h_f32((*p).cur_pos.z);
-        rt::h_f32((*p).prev_pos.x);
-        rt::h_f32((*p).prev_pos.y);
-        rt::h_f32((*p).prev_pos.z);
-        rt::h_f32((*p).pos_delta.x);
-        rt::h_f32((*p).pos_delta.y);
-        rt::h_f32((*p).pos_delta.z);
-        rt::h_f32((*p).xD4_unk_vel.x);
-        rt::h_f32((*p).xD4_unk_vel.y);
-        rt::h_f32((*p).xD4_unk_vel.z);
-        rt::h_u((*p).ground_or_air as u64);
-        rt::h_f32((*p).xE4_ground_accel_1);
-        rt::h_f32((*p).xE8_ground_accel_2);
-        rt::h_f32((*p).gr_vel);
-        rt::h_f32((*p).xF0_ground_kb_vel);
-        rt::h_f32((*p).xF4_ground_attacker_shield_kb_vel);
-        rt::h_f32((*p).xF8_playerNudgeVel.x);
-        rt::h_f32((*p).xF8_playerNudgeVel.y);
-        rt::h_f32((*p).x100);
-        rt::h_u((*p).x104 as u64);
-        rt::h_i((*p).x105 as i64);
-        rt::h_i((*p).x106 as i64);
-        rt::h_i((*p).x107 as i64);
-        rt::h_p((*p).x108_costume_joint as *const u8);
-        rt::h_p((*p).ft_data as *const u8);
-        rt::h_f32((*p).co_attrs.walk_accel_mul);
-        rt::h_f32((*p).co_attrs.walk_accel_base);
-        rt::h_f32((*p).co_attrs.walk_max_vel);
-        rt::h_f32((*p).co_attrs.slow_walk_max);
-        rt::h_f32((*p).co_attrs.mid_walk_point);
-        rt::h_f32((*p).co_attrs.fast_walk_min);
-        rt::h_f32((*p).co_attrs.ground_friction);
-        rt::h_f32((*p).co_attrs.dash_initial_velocity);
-        rt::h_f32((*p).co_attrs.dash_accel_mul);
-        rt::h_f32((*p).co_attrs.dash_accel_base);
-        rt::h_f32((*p).co_attrs.dash_max_velocity);
-        rt::h_f32((*p).co_attrs.run_animation_scaling);
-        rt::h_f32((*p).co_attrs.max_run_brake_frames);
-        rt::h_f32((*p).co_attrs.ground_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jump_startup_time);
-        rt::h_f32((*p).co_attrs.jump_h_initial_velocity);
-        rt::h_f32((*p).co_attrs.jump_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.ground_to_air_jump_momentum_multiplier);
-        rt::h_f32((*p).co_attrs.jump_h_max_velocity);
-        rt::h_f32((*p).co_attrs.hop_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.air_jump_v_multiplier);
-        rt::h_f32((*p).co_attrs.air_jump_h_multiplier);
-        rt::h_i((*p).co_attrs.max_jumps as i64);
-        rt::h_f32((*p).co_attrs.gravity);
-        rt::h_f32((*p).co_attrs.terminal_velocity);
-        rt::h_f32((*p).co_attrs.air_drift_stick_mul);
-        rt::h_f32((*p).co_attrs.aerial_drift_base);
-        rt::h_f32((*p).co_attrs.air_drift_max);
-        rt::h_f32((*p).co_attrs.aerial_friction);
-        rt::h_f32((*p).co_attrs.fast_fall_velocity);
-        rt::h_f32((*p).co_attrs.air_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jab_2_input_window);
-        rt::h_f32((*p).co_attrs.jab_3_input_window);
-        rt::h_f32((*p).co_attrs.standing_turn_frames);
-        rt::h_f32((*p).co_attrs.weight);
-        rt::h_f32((*p).co_attrs.model_scaling);
-        rt::h_f32((*p).co_attrs.initial_shield_size);
-        rt::h_f32((*p).co_attrs.shield_break_initial_velocity);
-        rt::h_i((*p).co_attrs.rapid_jab_window as i64);
-        rt::h_f32((*p).co_attrs.clank_animation_length);
-        rt::h_i((*p).co_attrs.hit_spark_variant as i64);
-        rt::h_i((*p).co_attrs.unused_0 as i64);
-        rt::h_f32((*p).co_attrs.ledge_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.ledge_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.item_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.heavy_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.specials_ground_speed_retention);
-        rt::h_f32((*p).co_attrs.xBC.size);
-        rt::h_f32((*p).co_attrs.xBC.x4.x);
-        rt::h_f32((*p).co_attrs.xBC.x4.y);
-        rt::h_f32((*p).co_attrs.xBC.x4.z);
-        rt::h_f32((*p).co_attrs.xBC.x10.x);
-        rt::h_f32((*p).co_attrs.xBC.x10.y);
-        rt::h_f32((*p).co_attrs.xBC.x10.z);
-        rt::h_f32((*p).co_attrs.xBC.x1C);
-        rt::h_f32((*p).co_attrs.xDC);
-        rt::h_f32((*p).co_attrs.kirby_b_star_damage);
-        rt::h_f32((*p).co_attrs.normal_landing_lag);
-        rt::h_f32((*p).co_attrs.landingairn_lag);
-        rt::h_f32((*p).co_attrs.landingairf_lag);
-        rt::h_f32((*p).co_attrs.landingairb_lag);
-        rt::h_f32((*p).co_attrs.landingairhi_lag);
-        rt::h_f32((*p).co_attrs.landingairlw_lag);
-        rt::h_f32((*p).co_attrs.name_tag_height);
-        rt::h_f32((*p).co_attrs.passivewall_vel_x);
-        rt::h_f32((*p).co_attrs.wall_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.wall_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.passiveceil_vel_x);
-        rt::h_f32((*p).co_attrs.trophy_scale);
-        rt::h_f32((*p).co_attrs.x114.x);
-        rt::h_f32((*p).co_attrs.x114.y);
-        rt::h_f32((*p).co_attrs.x114.z);
-        rt::h_f32((*p).co_attrs.x120.x);
-        rt::h_f32((*p).co_attrs.x120.y);
-        rt::h_f32((*p).co_attrs.x120.z);
-        rt::h_f32((*p).co_attrs.x12C);
-        rt::h_f32((*p).co_attrs.x130.x);
-        rt::h_f32((*p).co_attrs.x130.y);
-        rt::h_f32((*p).co_attrs.x130.z);
-        rt::h_f32((*p).co_attrs.x13C);
-        rt::h_f32((*p).co_attrs.screw_attack_launch_velocity);
-        rt::h_f32((*p).co_attrs.x144);
-        rt::h_f32((*p).co_attrs.wall_jump_min_approach_speed);
-        rt::h_f32((*p).co_attrs.damageice_ice_size);
-        rt::h_f32((*p).co_attrs.x150_damageice_unk);
-        rt::h_f32((*p).co_attrs.x154_damageice_unk);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_y);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_x_mult);
-        rt::h_f32((*p).co_attrs.respawn_platform_scale);
-        rt::h_f32((*p).co_attrs.warp_star_hitbox_scale);
-        rt::h_f32((*p).co_attrs.x168);
-        rt::h_i((*p).co_attrs.camera_zoom_target_bone as i64);
-        rt::h_f32((*p).co_attrs.x170.x);
-        rt::h_f32((*p).co_attrs.x170.y);
-        rt::h_f32((*p).co_attrs.x170.z);
-        rt::h_f32((*p).co_attrs.x17C);
-        rt::h_u((*p).co_attrs.weight_independent_throws_mask as u64);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.w);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.w);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.w);
-        rt::h_f32((*p).x2C4.x);
-        rt::h_f32((*p).x2C4.y);
-        rt::h_p((*p).x2CC as *const u8);
-        rt::h_p((*p).x2D0 as *const u8);
-        rt::h_p((*p).dat_attrs as *const u8);
-        rt::h_p((*p).dat_attrs_backup as *const u8);
-        rt::h_f32((*p).x2DC);
-        rt::h_f32((*p).x2E0);
-        rt::h_f32((*p).x2E4);
-        rt::h_f32((*p).x2E8);
-        rt::h_f32((*p).x2EC);
-        for i0 in 0..10 {
-            rt::h_i((*p).dynamic_bone_sets[i0].bone_id as i64);
-            rt::h_p((*p).dynamic_bone_sets[i0].dyn_desc.data as *const u8);
-            rt::h_u((*p).dynamic_bone_sets[i0].dyn_desc.count as u64);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.x);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.y);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.z);
-        }
-        rt::h_i((*p).dynamics_num as i64);
-        rt::h_f32((*p).x3E4_fighterCmdScript.timer);
-        rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
-        for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
-        for i0 in 0..3 {
-            rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count_dup as u64);
-        rt::h_u((*p).x3E4_fighterCmdScript.unk_x18 as u64);
-        rt::h_i((*p).x408.x0_timer as i64);
-        rt::h_i((*p).x408.x4_pri as i64);
-        rt::h_p((*p).x408.x8_ptr1 as *const u8);
-        rt::h_i((*p).x408.xC_loop as i64);
-        rt::h_p((*p).x408.x10_ptr2 as *const u8);
-        rt::h_i((*p).x408.x14 as i64);
-        rt::h_p((*p).x408.x18_alloc as *const u8);
-        rt::h_i((*p).x408.x1c as i64);
-        rt::h_i((*p).x408.x20 as i64);
-        rt::h_i((*p).x408.x24 as i64);
-        rt::h_bytes(&(*p).x408.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x408.x2C_hex.r as u64);
-        rt::h_u((*p).x408.x2C_hex.g as u64);
-        rt::h_u((*p).x408.x2C_hex.b as u64);
-        rt::h_u((*p).x408.x2C_hex.a as u64);
-        rt::h_f32((*p).x408.x30_color_red);
-        rt::h_f32((*p).x408.x34_color_green);
-        rt::h_f32((*p).x408.x38_color_blue);
-        rt::h_f32((*p).x408.x3C_color_alpha);
-        rt::h_f32((*p).x408.x40_colorblend_red);
-        rt::h_f32((*p).x408.x44_colorblend_green);
-        rt::h_f32((*p).x408.x48_colorblend_blue);
-        rt::h_f32((*p).x408.x4C_colorblend_alpha);
-        rt::h_u((*p).x408.x50_light_color.r as u64);
-        rt::h_u((*p).x408.x50_light_color.g as u64);
-        rt::h_u((*p).x408.x50_light_color.b as u64);
-        rt::h_u((*p).x408.x50_light_color.a as u64);
-        rt::h_f32((*p).x408.x54_light_red);
-        rt::h_f32((*p).x408.x58_light_green);
-        rt::h_f32((*p).x408.x5C_light_blue);
-        rt::h_f32((*p).x408.x60_light_alpha);
-        rt::h_f32((*p).x408.x64_lightblend_red);
-        rt::h_f32((*p).x408.x68_lightblend_green);
-        rt::h_f32((*p).x408.x6C_lightblend_blue);
-        rt::h_f32((*p).x408.x70_lightblend_alpha);
-        rt::h_f32((*p).x408.x74_light_rot_x);
-        rt::h_f32((*p).x408.x78_light_rot_yz);
-        rt::h_u((*p).x408.x7C_color_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag2() as u64);
-        rt::h_u((*p).x408.x7C_light_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag4() as u64);
-        rt::h_u((*p).x408.x7C_flag5() as u64);
-        rt::h_u((*p).x408.x7C_flag6() as u64);
-        rt::h_u((*p).x408.x7C_flag7() as u64);
-        rt::h_u((*p).x408.x7C_flag8() as u64);
-        rt::h_i((*p).x488.x0_timer as i64);
-        rt::h_i((*p).x488.x4_pri as i64);
-        rt::h_p((*p).x488.x8_ptr1 as *const u8);
-        rt::h_i((*p).x488.xC_loop as i64);
-        rt::h_p((*p).x488.x10_ptr2 as *const u8);
-        rt::h_i((*p).x488.x14 as i64);
-        rt::h_p((*p).x488.x18_alloc as *const u8);
-        rt::h_i((*p).x488.x1c as i64);
-        rt::h_i((*p).x488.x20 as i64);
-        rt::h_i((*p).x488.x24 as i64);
-        rt::h_bytes(&(*p).x488.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x488.x2C_hex.r as u64);
-        rt::h_u((*p).x488.x2C_hex.g as u64);
-        rt::h_u((*p).x488.x2C_hex.b as u64);
-        rt::h_u((*p).x488.x2C_hex.a as u64);
-        rt::h_f32((*p).x488.x30_color_red);
-        rt::h_f32((*p).x488.x34_color_green);
-        rt::h_f32((*p).x488.x38_color_blue);
-        rt::h_f32((*p).x488.x3C_color_alpha);
-        rt::h_f32((*p).x488.x40_colorblend_red);
-        rt::h_f32((*p).x488.x44_colorblend_green);
-        rt::h_f32((*p).x488.x48_colorblend_blue);
-        rt::h_f32((*p).x488.x4C_colorblend_alpha);
-        rt::h_u((*p).x488.x50_light_color.r as u64);
-        rt::h_u((*p).x488.x50_light_color.g as u64);
-        rt::h_u((*p).x488.x50_light_color.b as u64);
-        rt::h_u((*p).x488.x50_light_color.a as u64);
-        rt::h_f32((*p).x488.x54_light_red);
-        rt::h_f32((*p).x488.x58_light_green);
-        rt::h_f32((*p).x488.x5C_light_blue);
-        rt::h_f32((*p).x488.x60_light_alpha);
-        rt::h_f32((*p).x488.x64_lightblend_red);
-        rt::h_f32((*p).x488.x68_lightblend_green);
-        rt::h_f32((*p).x488.x6C_lightblend_blue);
-        rt::h_f32((*p).x488.x70_lightblend_alpha);
-        rt::h_f32((*p).x488.x74_light_rot_x);
-        rt::h_f32((*p).x488.x78_light_rot_yz);
-        rt::h_u((*p).x488.x7C_color_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag2() as u64);
-        rt::h_u((*p).x488.x7C_light_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag4() as u64);
-        rt::h_u((*p).x488.x7C_flag5() as u64);
-        rt::h_u((*p).x488.x7C_flag6() as u64);
-        rt::h_u((*p).x488.x7C_flag7() as u64);
-        rt::h_u((*p).x488.x7C_flag8() as u64);
-        rt::h_i((*p).x508.x0_timer as i64);
-        rt::h_i((*p).x508.x4_pri as i64);
-        rt::h_p((*p).x508.x8_ptr1 as *const u8);
-        rt::h_i((*p).x508.xC_loop as i64);
-        rt::h_p((*p).x508.x10_ptr2 as *const u8);
-        rt::h_i((*p).x508.x14 as i64);
-        rt::h_p((*p).x508.x18_alloc as *const u8);
-        rt::h_i((*p).x508.x1c as i64);
-        rt::h_i((*p).x508.x20 as i64);
-        rt::h_i((*p).x508.x24 as i64);
-        rt::h_bytes(&(*p).x508.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x508.x2C_hex.r as u64);
-        rt::h_u((*p).x508.x2C_hex.g as u64);
-        rt::h_u((*p).x508.x2C_hex.b as u64);
-        rt::h_u((*p).x508.x2C_hex.a as u64);
-        rt::h_f32((*p).x508.x30_color_red);
-        rt::h_f32((*p).x508.x34_color_green);
-        rt::h_f32((*p).x508.x38_color_blue);
-        rt::h_f32((*p).x508.x3C_color_alpha);
-        rt::h_f32((*p).x508.x40_colorblend_red);
-        rt::h_f32((*p).x508.x44_colorblend_green);
-        rt::h_f32((*p).x508.x48_colorblend_blue);
-        rt::h_f32((*p).x508.x4C_colorblend_alpha);
-        rt::h_u((*p).x508.x50_light_color.r as u64);
-        rt::h_u((*p).x508.x50_light_color.g as u64);
-        rt::h_u((*p).x508.x50_light_color.b as u64);
-        rt::h_u((*p).x508.x50_light_color.a as u64);
-        rt::h_f32((*p).x508.x54_light_red);
-        rt::h_f32((*p).x508.x58_light_green);
-        rt::h_f32((*p).x508.x5C_light_blue);
-        rt::h_f32((*p).x508.x60_light_alpha);
-        rt::h_f32((*p).x508.x64_lightblend_red);
-        rt::h_f32((*p).x508.x68_lightblend_green);
-        rt::h_f32((*p).x508.x6C_lightblend_blue);
-        rt::h_f32((*p).x508.x70_lightblend_alpha);
-        rt::h_f32((*p).x508.x74_light_rot_x);
-        rt::h_f32((*p).x508.x78_light_rot_yz);
-        rt::h_u((*p).x508.x7C_color_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag2() as u64);
-        rt::h_u((*p).x508.x7C_light_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag4() as u64);
-        rt::h_u((*p).x508.x7C_flag5() as u64);
-        rt::h_u((*p).x508.x7C_flag6() as u64);
-        rt::h_u((*p).x508.x7C_flag7() as u64);
-        rt::h_u((*p).x508.x7C_flag8() as u64);
-        rt::h_p((*p).x588 as *const u8);
-        rt::h_u((*p).x58C as u64);
-        rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
-        rt::h_p((*p).x598 as *const u8);
-        rt::h_p((*p).x59C as *const u8);
-        rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
-        rt::h_u((*p).x5AC.model_num as u64);
-        for i0 in 0..5 {
-            rt::h_u((*p).x5AC.cleared[i0] as u64);
-        }
-        for i0 in 0..5 {
-            rt::h_p((*p).x5AC.xC[i0] as *const u8);
-        }
-        rt::h_u((*p).tobj_list.n_costume_tobjs as u64);
-        rt::h_p((*p).tobj_list.x5D0 as *const u8);
-        for i0 in 0..5 {
-            rt::h_p((*p).tobj_list.costume_tobjs[i0] as *const u8);
-        }
-        rt::h_p((*p).parts as *const u8);
-        rt::h_u((*p).dobj_list.count as u64);
-        rt::h_p((*p).dobj_list.data as *const u8);
-        for i0 in 0..12 {
-            rt::h_i((*p).x5F4_arr[i0].prev as i64);
-            rt::h_i((*p).x5F4_arr[i0].idx as i64);
-        }
-        rt::h_p((*p).x60C as *const u8);
-        for i0 in 0..2 {
-            rt::h_u((*p).x610_color_rgba[i0].r as u64);
-            rt::h_u((*p).x610_color_rgba[i0].g as u64);
-            rt::h_u((*p).x610_color_rgba[i0].b as u64);
-            rt::h_u((*p).x610_color_rgba[i0].a as u64);
-        }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
-        rt::h_u((*p).team as u64);
-        rt::h_i((*p).x61C as i64);
-        rt::h_u((*p).x61D as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).filler_x61E[i0] as u64);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.lstick[i0].x);
-            rt::h_f32((*p).input.lstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.cstick[i0].x);
-            rt::h_f32((*p).input.cstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.triggers[i0]);
-        }
-        for i0 in 0..3 {
-            rt::h_u((*p).input.held_buttons[i0] as u64);
-        }
-        rt::h_u((*p).input.pressed_buttons as u64);
-        rt::h_u((*p).input.released_buttons as u64);
-        rt::h_u((*p).active_timer.lstick.x as u64);
-        rt::h_u((*p).active_timer.lstick.y as u64);
-        rt::h_u((*p).active_timer.trigger as u64);
-        rt::h_u((*p).active_sticky.lstick.x as u64);
-        rt::h_u((*p).active_sticky.lstick.y as u64);
-        rt::h_u((*p).active_sticky.trigger as u64);
-        rt::h_u((*p).active_duration.lstick.x as u64);
-        rt::h_u((*p).active_duration.lstick.y as u64);
-        rt::h_u((*p).active_duration.trigger as u64);
-        rt::h_u((*p).activity_timer.lstick.x as u64);
-        rt::h_u((*p).activity_timer.lstick.y as u64);
-        rt::h_u((*p).activity_timer.trigger as u64);
-        rt::h_u((*p).x67C as u64);
-        rt::h_u((*p).x67D as u64);
-        rt::h_u((*p).x67E as u64);
-        rt::h_u((*p).x67F as u64);
-        rt::h_u((*p).x680 as u64);
-        rt::h_u((*p).x681 as u64);
-        rt::h_u((*p).x682 as u64);
-        rt::h_u((*p).x683 as u64);
-        rt::h_u((*p).x684 as u64);
-        rt::h_u((*p).x685 as u64);
-        rt::h_u((*p).x686 as u64);
-        rt::h_u((*p).x687 as u64);
-        rt::h_u((*p).x688 as u64);
-        rt::h_u((*p).x689 as u64);
-        rt::h_u((*p).x68A as u64);
-        rt::h_u((*p).x68B as u64);
-        rt::h_f32((*p).x68C_transNPos.x);
-        rt::h_f32((*p).x68C_transNPos.y);
-        rt::h_f32((*p).x68C_transNPos.z);
-        rt::h_f32((*p).x698.x);
-        rt::h_f32((*p).x698.y);
-        rt::h_f32((*p).x698.z);
-        rt::h_f32((*p).x6A4_transNOffset.x);
-        rt::h_f32((*p).x6A4_transNOffset.y);
-        rt::h_f32((*p).x6A4_transNOffset.z);
-        rt::h_f32((*p).x6B0.x);
-        rt::h_f32((*p).x6B0.y);
-        rt::h_f32((*p).x6B0.z);
-        rt::h_f32((*p).lstick_angle);
-        rt::h_f32((*p).x6C0.x);
-        rt::h_f32((*p).x6C0.y);
-        rt::h_f32((*p).x6C0.z);
-        rt::h_f32((*p).x6CC.x);
-        rt::h_f32((*p).x6CC.y);
-        rt::h_f32((*p).x6CC.z);
-        rt::h_f32((*p).x6D8.x);
-        rt::h_f32((*p).x6D8.y);
-        rt::h_f32((*p).x6D8.z);
-        rt::h_f32((*p).x6E4.x);
-        rt::h_f32((*p).x6E4.y);
-        rt::h_f32((*p).x6E4.z);
-        rt::h_p((*p).coll_data.x0_gobj as *const u8);
-        rt::h_f32((*p).coll_data.cur_pos.x);
-        rt::h_f32((*p).coll_data.cur_pos.y);
-        rt::h_f32((*p).coll_data.cur_pos.z);
-        rt::h_f32((*p).coll_data.prev_pos.x);
-        rt::h_f32((*p).coll_data.prev_pos.y);
-        rt::h_f32((*p).coll_data.prev_pos.z);
-        rt::h_f32((*p).coll_data.last_pos.x);
-        rt::h_f32((*p).coll_data.last_pos.y);
-        rt::h_f32((*p).coll_data.last_pos.z);
-        rt::h_f32((*p).coll_data.x28_vec.x);
-        rt::h_f32((*p).coll_data.x28_vec.y);
-        rt::h_f32((*p).coll_data.x28_vec.z);
-        rt::h_u((*p).coll_data.x34_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b7() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b7() as u64);
-        rt::h_i((*p).coll_data.facing_dir as i64);
-        rt::h_i((*p).coll_data.x38 as i64);
-        rt::h_i((*p).coll_data.floor_skip as i64);
-        rt::h_i((*p).coll_data.ledge_id_right as i64);
-        rt::h_i((*p).coll_data.ledge_id_left as i64);
-        rt::h_i((*p).coll_data.joint_id_skip as i64);
-        rt::h_i((*p).coll_data.joint_id_only as i64);
-        rt::h_f32((*p).coll_data.x50);
-        rt::h_f32((*p).coll_data.ledge_snap_x);
-        rt::h_f32((*p).coll_data.ledge_snap_y);
-        rt::h_f32((*p).coll_data.ledge_snap_height);
-        rt::h_f32((*p).coll_data.lstick_x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.y);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.x64_ecb.right.x);
-        rt::h_f32((*p).coll_data.x64_ecb.right.y);
-        rt::h_f32((*p).coll_data.x64_ecb.left.x);
-        rt::h_f32((*p).coll_data.x64_ecb.left.y);
-        rt::h_f32((*p).coll_data.desired_ecb.top.x);
-        rt::h_f32((*p).coll_data.desired_ecb.top.y);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.desired_ecb.right.x);
-        rt::h_f32((*p).coll_data.desired_ecb.right.y);
-        rt::h_f32((*p).coll_data.desired_ecb.left.x);
-        rt::h_f32((*p).coll_data.desired_ecb.left.y);
-        rt::h_f32((*p).coll_data.ecb.top.x);
-        rt::h_f32((*p).coll_data.ecb.top.y);
-        rt::h_f32((*p).coll_data.ecb.bottom.x);
-        rt::h_f32((*p).coll_data.ecb.bottom.y);
-        rt::h_f32((*p).coll_data.ecb.right.x);
-        rt::h_f32((*p).coll_data.ecb.right.y);
-        rt::h_f32((*p).coll_data.ecb.left.x);
-        rt::h_f32((*p).coll_data.ecb.left.y);
-        rt::h_f32((*p).coll_data.prev_ecb.top.x);
-        rt::h_f32((*p).coll_data.prev_ecb.top.y);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.prev_ecb.right.x);
-        rt::h_f32((*p).coll_data.prev_ecb.right.y);
-        rt::h_f32((*p).coll_data.prev_ecb.left.x);
-        rt::h_f32((*p).coll_data.prev_ecb.left.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.y);
-        rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
-        rt::h_f32((*p).coll_data.ecb_source.x124);
-        rt::h_f32((*p).coll_data.ecb_source.x128);
-        rt::h_f32((*p).coll_data.ecb_source.x12C);
-        rt::h_u((*p).coll_data.x130_flags as u64);
-        rt::h_i((*p).coll_data.env_flags as i64);
-        rt::h_i((*p).coll_data.prev_env_flags as i64);
-        rt::h_i((*p).coll_data.x13C as i64);
-        rt::h_f32((*p).coll_data.contact.x);
-        rt::h_f32((*p).coll_data.contact.y);
-        rt::h_f32((*p).coll_data.contact.z);
-        rt::h_i((*p).coll_data.floor.index as i64);
-        rt::h_u((*p).coll_data.floor.flags as u64);
-        rt::h_f32((*p).coll_data.floor.normal.x);
-        rt::h_f32((*p).coll_data.floor.normal.y);
-        rt::h_f32((*p).coll_data.floor.normal.z);
-        rt::h_i((*p).coll_data.left_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.left_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.right_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.right_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.ceiling.index as i64);
-        rt::h_u((*p).coll_data.ceiling.flags as u64);
-        rt::h_f32((*p).coll_data.ceiling.normal.x);
-        rt::h_f32((*p).coll_data.ceiling.normal.y);
-        rt::h_f32((*p).coll_data.ceiling.normal.z);
-        rt::h_i((*p).ecb_lock as i64);
-        rt::h_p((*p).x890_cameraBox as *const u8);
-        rt::h_f32((*p).cur_anim_frame);
-        rt::h_f32((*p).x898_unk);
-        rt::h_f32((*p).frame_speed_mul);
-        rt::h_f32((*p).x8A0_unk);
-        rt::h_f32((*p).x8A4_animBlendFrames);
-        rt::h_f32((*p).x8A8_anim_frame);
-        rt::h_p((*p).x8AC_animSkeleton as *const u8);
-        for i0 in 0..5 {
-            rt::h_i((*p).x8B0[i0].x0 as i64);
-            rt::h_f32((*p).x8B0[i0].x4);
-            rt::h_f32((*p).x8B0[i0].x8);
-            rt::h_f32((*p).x8B0[i0].xC);
-            rt::h_i((*p).x8B0[i0].x10 as i64);
-            rt::h_i((*p).x8B0[i0].x11 as i64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).x914[i0].state as u64);
-            rt::h_u((*p).x914[i0].x4 as u64);
-            rt::h_u((*p).x914[i0].unk_count as u64);
-            rt::h_f32((*p).x914[i0].damage);
-            rt::h_f32((*p).x914[i0].b_offset.x);
-            rt::h_f32((*p).x914[i0].b_offset.y);
-            rt::h_f32((*p).x914[i0].b_offset.z);
-            rt::h_f32((*p).x914[i0].scale);
-            rt::h_i((*p).x914[i0].kb_angle as i64);
-            rt::h_u((*p).x914[i0].x24 as u64);
-            rt::h_u((*p).x914[i0].x28 as u64);
-            rt::h_u((*p).x914[i0].x2C as u64);
-            rt::h_u((*p).x914[i0].element as u64);
-            rt::h_i((*p).x914[i0].x34 as i64);
-            rt::h_i((*p).x914[i0].sfx_severity as i64);
-            rt::h_i((*p).x914[i0].sfx_kind as i64);
-            rt::h_u((*p).x914[i0].x40_b0() as u64);
-            rt::h_u((*p).x914[i0].x40_b1() as u64);
-            rt::h_u((*p).x914[i0].x40_b2() as u64);
-            rt::h_u((*p).x914[i0].x40_b3() as u64);
-            rt::h_u((*p).x914[i0].x40_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b5() as u64);
-            rt::h_u((*p).x914[i0].x41_b6() as u64);
-            rt::h_u((*p).x914[i0].x41_b7() as u64);
-            rt::h_u((*p).x914[i0].x42_b0() as u64);
-            rt::h_u((*p).x914[i0].x42_b1() as u64);
-            rt::h_u((*p).x914[i0].x42_b2() as u64);
-            rt::h_u((*p).x914[i0].x42_b3() as u64);
-            rt::h_u((*p).x914[i0].x42_b4() as u64);
-            rt::h_u((*p).x914[i0].x42_b5() as u64);
-            rt::h_u((*p).x914[i0].x42_b6() as u64);
-            rt::h_u((*p).x914[i0].x42_b7() as u64);
-            rt::h_u((*p).x914[i0].x43_b0() as u64);
-            rt::h_u((*p).x914[i0].x43_b1() as u64);
-            rt::h_u((*p).x914[i0].x43_b2() as u64);
-            rt::h_u((*p).x914[i0].x43_b3() as u64);
-            rt::h_u((*p).x914[i0].x43_b4() as u64);
-            rt::h_u((*p).x914[i0].x43_b5() as u64);
-            rt::h_u((*p).x914[i0].x43_b6() as u64);
-            rt::h_u((*p).x914[i0].x43_b7() as u64);
-            rt::h_u((*p).x914[i0].x44 as u64);
-            rt::h_u((*p).x914[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).x914[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).x914[i0].jobj as *const u8);
-            rt::h_f32((*p).x914[i0].x4C.x);
-            rt::h_f32((*p).x914[i0].x4C.y);
-            rt::h_f32((*p).x914[i0].x4C.z);
-            rt::h_f32((*p).x914[i0].x58.x);
-            rt::h_f32((*p).x914[i0].x58.y);
-            rt::h_f32((*p).x914[i0].x58.z);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).x914[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
-        }
-        for i0 in 0..2 {
-            rt::h_u((*p).xDF4[i0].state as u64);
-            rt::h_u((*p).xDF4[i0].x4 as u64);
-            rt::h_u((*p).xDF4[i0].unk_count as u64);
-            rt::h_f32((*p).xDF4[i0].damage);
-            rt::h_f32((*p).xDF4[i0].b_offset.x);
-            rt::h_f32((*p).xDF4[i0].b_offset.y);
-            rt::h_f32((*p).xDF4[i0].b_offset.z);
-            rt::h_f32((*p).xDF4[i0].scale);
-            rt::h_i((*p).xDF4[i0].kb_angle as i64);
-            rt::h_u((*p).xDF4[i0].x24 as u64);
-            rt::h_u((*p).xDF4[i0].x28 as u64);
-            rt::h_u((*p).xDF4[i0].x2C as u64);
-            rt::h_u((*p).xDF4[i0].element as u64);
-            rt::h_i((*p).xDF4[i0].x34 as i64);
-            rt::h_i((*p).xDF4[i0].sfx_severity as i64);
-            rt::h_i((*p).xDF4[i0].sfx_kind as i64);
-            rt::h_u((*p).xDF4[i0].x40_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x44 as u64);
-            rt::h_u((*p).xDF4[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).xDF4[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).xDF4[i0].jobj as *const u8);
-            rt::h_f32((*p).xDF4[i0].x4C.x);
-            rt::h_f32((*p).xDF4[i0].x4C.y);
-            rt::h_f32((*p).xDF4[i0].x4C.z);
-            rt::h_f32((*p).xDF4[i0].x58.x);
-            rt::h_f32((*p).xDF4[i0].x58.y);
-            rt::h_f32((*p).xDF4[i0].x58.z);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).xDF4[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
-        }
-        rt::h_u((*p).x1064_thrownHitbox.state as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.unk_count as u64);
-        rt::h_f32((*p).x1064_thrownHitbox.damage);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.x);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.y);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.z);
-        rt::h_f32((*p).x1064_thrownHitbox.scale);
-        rt::h_i((*p).x1064_thrownHitbox.kb_angle as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x24 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x28 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x2C as u64);
-        rt::h_u((*p).x1064_thrownHitbox.element as u64);
-        rt::h_i((*p).x1064_thrownHitbox.x34 as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_severity as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_kind as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x44 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x45 as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).x1064_thrownHitbox.x46[i0] as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.jobj as *const u8);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.z);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.z);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.x);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.y);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.z);
-        rt::h_f32((*p).x1064_thrownHitbox.coll_distance);
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_1[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_1[i0].x4 as u64);
-        }
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
-        rt::h_u((*p).x119C_teamUnk as u64);
-        rt::h_u((*p).grabber_unk1 as u64);
-        rt::h_u((*p).hurt_capsules_len as u64);
-        rt::h_u((*p).x119F as u64);
-        for i0 in 0..15 {
-            rt::h_u((*p).hurt_capsules[i0].capsule.state as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.scale);
-            rt::h_p((*p).hurt_capsules[i0].capsule.bone as *const u8);
-            rt::h_u((*p).hurt_capsules[i0].capsule.skip_update_pos() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b1() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b2() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b3() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b4() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b5() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b6() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b7() as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.z);
-            rt::h_i((*p).hurt_capsules[i0].capsule.bone_idx as i64);
-            rt::h_u((*p).hurt_capsules[i0].height as u64);
-            rt::h_i((*p).hurt_capsules[i0].is_grabbable as i64);
-        }
-        for i0 in 0..2 {
-            rt::h_f32((*p).x1614[i0].x0);
-            rt::h_p((*p).x1614[i0].x4 as *const u8);
-            rt::h_f32((*p).x1614[i0].x8.x);
-            rt::h_f32((*p).x1614[i0].x8.y);
-            rt::h_f32((*p).x1614[i0].x8.z);
-            rt::h_f32((*p).x1614[i0].x14.x);
-            rt::h_f32((*p).x1614[i0].x14.y);
-            rt::h_f32((*p).x1614[i0].x14.z);
-            rt::h_f32((*p).x1614[i0].x20.x);
-            rt::h_f32((*p).x1614[i0].x20.y);
-            rt::h_f32((*p).x1614[i0].x20.z);
-        }
-        rt::h_u((*p).x166C as u64);
-        for i0 in 0..1 {
-            rt::h_f32((*p).x1670[i0].v1.x);
-            rt::h_f32((*p).x1670[i0].v1.y);
-            rt::h_f32((*p).x1670[i0].v1.z);
-            rt::h_f32((*p).x1670[i0].v2);
-            rt::h_p((*p).x1670[i0].jobj as *const u8);
-            rt::h_f32((*p).x1670[i0].x14);
-            rt::h_f32((*p).x1670[i0].x18.x);
-            rt::h_f32((*p).x1670[i0].x18.y);
-            rt::h_f32((*p).x1670[i0].x18.z);
-            rt::h_i((*p).x1670[i0].x24 as i64);
-        }
-        for i0 in 0..400 {
-            rt::h_u((*p).filler_x1674[i0] as u64);
-        }
-        rt::h_i((*p).x1828 as i64);
-        rt::h_f32((*p).dmg.x182c_behavior);
-        rt::h_f32((*p).dmg.x1830_percent);
-        rt::h_f32((*p).dmg.x1834);
-        rt::h_f32((*p).dmg.x1838_percentTemp);
-        rt::h_i((*p).dmg.x183C_applied as i64);
-        rt::h_i((*p).dmg.x1840 as i64);
-        rt::h_f32((*p).dmg.facing_dir_1);
-        rt::h_i((*p).dmg.x1848_kb_angle as i64);
-        rt::h_i((*p).dmg.x184c_damaged_hurtbox as i64);
-        rt::h_f32((*p).dmg.kb_applied);
-        rt::h_f32((*p).dmg.x1854_collpos.x);
-        rt::h_f32((*p).dmg.x1854_collpos.y);
-        rt::h_f32((*p).dmg.x1854_collpos.z);
-        rt::h_u((*p).dmg.x1860_element as u64);
-        rt::h_i((*p).dmg.x1864 as i64);
-        rt::h_p((*p).dmg.x1868_source as *const u8);
-        rt::h_i((*p).dmg.x186c as i64);
-        rt::h_p((*p).dmg.x1870 as *const u8);
-        rt::h_i((*p).dmg.x1874 as i64);
-        rt::h_i((*p).dmg.x1878 as i64);
-        rt::h_f32((*p).dmg.x187c);
-        rt::h_f32((*p).dmg.x1880.x);
-        rt::h_f32((*p).dmg.x1880.y);
-        rt::h_f32((*p).dmg.x1880.z);
-        rt::h_i((*p).dmg.x188c as i64);
-        rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
-        rt::h_f32((*p).dmg.x1898);
-        rt::h_f32((*p).dmg.x189C_unk_num_frames);
-        rt::h_f32((*p).dmg.x18a0);
-        rt::h_f32((*p).dmg.x18A4_knockbackMagnitude);
-        rt::h_f32((*p).dmg.x18A8);
-        rt::h_i((*p).dmg.x18ac_time_since_hit as i64);
-        rt::h_f32((*p).dmg.armor0);
-        rt::h_f32((*p).dmg.armor1);
-        rt::h_f32((*p).dmg.x18B8);
-        rt::h_f32((*p).dmg.x18BC);
-        rt::h_i((*p).dmg.x18C0 as i64);
-        rt::h_i((*p).dmg.x18c4_source_ply as i64);
-        rt::h_i((*p).dmg.x18C8 as i64);
-        rt::h_i((*p).dmg.x18CC as i64);
-        rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
-        rt::h_i((*p).dmg.x18d8.x0 as i64);
-        rt::h_i((*p).dmg.x18d8.x4 as i64);
-        rt::h_f32((*p).dmg.x18d8.kb_applied1);
-        rt::h_i((*p).dmg.x18d8.xC as i64);
-        rt::h_u((*p).dmg.x18d8.x10_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b4() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b5() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b6() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b7() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b4() as u64);
-        rt::h_u((*p).dmg.x18ec_instancehitby as u64);
-        rt::h_i((*p).dmg.x18F0 as i64);
-        rt::h_i((*p).dmg.x18F4 as i64);
-        rt::h_u((*p).dmg.x18F8 as u64);
-        rt::h_u((*p).dmg.x18f9 as u64);
-        rt::h_u((*p).dmg.x18fa_model_shift_frames as u64);
-        rt::h_u((*p).dmg.x18FC as u64);
-        rt::h_u((*p).dmg.x18FD as u64);
-        rt::h_f32((*p).dmg.x1900);
-        rt::h_f32((*p).dmg.x1904);
-        rt::h_i((*p).dmg.x1908 as i64);
-        rt::h_p((*p).dmg.x190C as *const u8);
-        rt::h_i((*p).dmg.x1910 as i64);
-        rt::h_i((*p).dmg.x1914 as i64);
-        rt::h_i((*p).dmg.int_value as i64);
-        rt::h_f32((*p).dmg.x191C);
-        rt::h_f32((*p).dmg.facing_dir);
-        rt::h_i((*p).dmg.x1924 as i64);
-        rt::h_f32((*p).dmg.x1928);
-        rt::h_f32((*p).dmg.x192c);
-        rt::h_f32((*p).dmg.x1930.x0.x);
-        rt::h_f32((*p).dmg.x1930.x0.y);
-        rt::h_f32((*p).dmg.x1930.x0.z);
-        rt::h_f32((*p).dmg.x1930.xC.x);
-        rt::h_f32((*p).dmg.x1930.xC.y);
-        rt::h_f32((*p).dmg.x1930.xC.z);
-        rt::h_i((*p).dmg.x1948 as i64);
-        rt::h_i((*p).dmg.x194C as i64);
-        rt::h_i((*p).dmg.x1950 as i64);
-        rt::h_f32((*p).dmg.x1954);
-        rt::h_f32((*p).dmg.x1958);
-        rt::h_f32((*p).dmg.x195c_hitlag_frames);
-        rt::h_f32((*p).x1960_vibrateMult);
-        rt::h_f32((*p).x1964);
-        rt::h_u((*p).x1968_jumpsUsed as u64);
-        rt::h_u((*p).x1969_walljumpUsed as u64);
-        rt::h_f32((*p).hitlag_mul);
-        rt::h_i((*p).unk_msid as i64);
-        rt::h_p((*p).item_gobj as *const u8);
-        rt::h_p((*p).x1978 as *const u8);
-        rt::h_p((*p).x197C as *const u8);
-        rt::h_p((*p).x1980 as *const u8);
-        rt::h_p((*p).x1984_heldItemSpec as *const u8);
-        rt::h_i((*p).x1988 as i64);
-        rt::h_i((*p).x198C as i64);
-        rt::h_i((*p).x1990 as i64);
-        rt::h_i((*p).x1994 as i64);
-        rt::h_f32((*p).shield_health);
-        rt::h_f32((*p).lightshield_amount);
-        rt::h_i((*p).x19A0_shieldDamageTaken as i64);
-        rt::h_i((*p).x19A4 as i64);
-        rt::h_p((*p).x19A8 as *const u8);
-        rt::h_f32((*p).specialn_facing_dir);
-        rt::h_i((*p).x19B0 as i64);
-        rt::h_f32((*p).shield_unk0);
-        rt::h_f32((*p).shield_unk1);
-        rt::h_i((*p).x19BC_shieldDamageTaken3 as i64);
-        rt::h_p((*p).shield_hit.bone as *const u8);
-        rt::h_u((*p).shield_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).shield_hit.pos.x);
-        rt::h_f32((*p).shield_hit.pos.y);
-        rt::h_f32((*p).shield_hit.pos.z);
-        rt::h_f32((*p).shield_hit.offset.x);
-        rt::h_f32((*p).shield_hit.offset.y);
-        rt::h_f32((*p).shield_hit.offset.z);
-        rt::h_f32((*p).shield_hit.size);
-        rt::h_p((*p).reflect_hit.bone as *const u8);
-        rt::h_u((*p).reflect_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).reflect_hit.pos.x);
-        rt::h_f32((*p).reflect_hit.pos.y);
-        rt::h_f32((*p).reflect_hit.pos.z);
-        rt::h_f32((*p).reflect_hit.offset.x);
-        rt::h_f32((*p).reflect_hit.offset.y);
-        rt::h_f32((*p).reflect_hit.offset.z);
-        rt::h_f32((*p).reflect_hit.size);
-        rt::h_p((*p).absorb_hit.bone as *const u8);
-        rt::h_u((*p).absorb_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).absorb_hit.pos.x);
-        rt::h_f32((*p).absorb_hit.pos.y);
-        rt::h_f32((*p).absorb_hit.pos.z);
-        rt::h_f32((*p).absorb_hit.offset.x);
-        rt::h_f32((*p).absorb_hit.offset.y);
-        rt::h_f32((*p).absorb_hit.offset.z);
-        rt::h_f32((*p).absorb_hit.size);
-        rt::h_f32((*p).ReflectAttr.x1A2C_reflectHitDirection);
-        rt::h_i((*p).ReflectAttr.x1A30_maxDamage as i64);
-        rt::h_f32((*p).ReflectAttr.x1A34_damageMul);
-        rt::h_f32((*p).ReflectAttr.x1A38_speedMul);
-        rt::h_i((*p).ReflectAttr.x1A3C_damageOver as i64);
-        rt::h_f32((*p).AbsorbAttr.x1A40_absorbHitDirection);
-        rt::h_i((*p).AbsorbAttr.x1A44_damageTaken as i64);
-        rt::h_i((*p).AbsorbAttr.x1A48_hitsTaken as i64);
-        rt::h_f32((*p).grab_timer);
-        rt::h_i((*p).x1A50 as i64);
-        rt::h_i((*p).x1A51 as i64);
-        rt::h_u((*p).x1A52 as u64);
-        rt::h_u((*p).x1A53 as u64);
-        rt::h_i((*p).x1A54 as i64);
-        rt::h_p((*p).victim_gobj as *const u8);
-        rt::h_p((*p).x1A5C as *const u8);
-        rt::h_p((*p).target_item_gobj as *const u8);
-        rt::h_p((*p).x1A64 as *const u8);
-        rt::h_u((*p).x1A68 as u64);
-        rt::h_u((*p).x1A6A as u64);
-        rt::h_f32((*p).x1A6C);
-        rt::h_f32((*p).x1A70.x);
-        rt::h_f32((*p).x1A70.y);
-        rt::h_f32((*p).x1A70.z);
-        rt::h_f32((*p).x1A7C.x);
-        rt::h_f32((*p).x1A7C.y);
-        rt::h_f32((*p).x1A7C.z);
-        rt::h_u((*p).cpu.buttons as u64);
-        rt::h_i((*p).cpu.lstick.x as i64);
-        rt::h_i((*p).cpu.lstick.y as i64);
-        rt::h_i((*p).cpu.cstick.x as i64);
-        rt::h_i((*p).cpu.cstick.y as i64);
-        rt::h_u((*p).cpu.ltrigger as u64);
-        rt::h_u((*p).cpu.rtrigger as u64);
-        rt::h_u((*p).cpu.kind as u64);
-        rt::h_i((*p).cpu.level as i64);
-        rt::h_i((*p).cpu.x14 as i64);
-        rt::h_i((*p).cpu.x18 as i64);
-        rt::h_i((*p).cpu.x1C as i64);
-        rt::h_i((*p).cpu.x20 as i64);
-        rt::h_i((*p).cpu.x24 as i64);
-        rt::h_i((*p).cpu.x28 as i64);
-        rt::h_i((*p).cpu.x2C as i64);
-        rt::h_i((*p).cpu.x30 as i64);
-        rt::h_i((*p).cpu.x34 as i64);
-        rt::h_f32((*p).cpu.x38);
-        rt::h_f32((*p).cpu.x3C);
-        rt::h_f32((*p).cpu.x40);
-        rt::h_p((*p).cpu.x44 as *const u8);
-        rt::h_p((*p).cpu.x48 as *const u8);
-        rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
-        rt::h_f32((*p).cpu.x54.x);
-        rt::h_f32((*p).cpu.x54.y);
-        rt::h_f32((*p).cpu.x5C);
-        rt::h_i((*p).cpu.x60 as i64);
-        rt::h_f32((*p).cpu.x64.x);
-        rt::h_f32((*p).cpu.x64.y);
-        rt::h_f32((*p).cpu.x6C.x);
-        rt::h_f32((*p).cpu.x6C.y);
-        rt::h_f32((*p).cpu.x74.x);
-        rt::h_f32((*p).cpu.x74.y);
-        rt::h_i((*p).cpu.x7C as i64);
-        rt::h_i((*p).cpu.x80 as i64);
-        rt::h_i((*p).cpu.x84 as i64);
-        rt::h_i((*p).cpu.x88 as i64);
-        rt::h_i((*p).cpu.x8C as i64);
-        rt::h_i((*p).cpu.x90 as i64);
-        rt::h_i((*p).cpu.x94 as i64);
-        rt::h_f32((*p).cpu.x98.x);
-        rt::h_f32((*p).cpu.x98.y);
-        rt::h_f32((*p).cpu.x98.z);
-        rt::h_i((*p).cpu.xA4 as i64);
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xA8_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xC8 as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xC9[i0] as u64);
-        }
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xCC_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xEC as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xED[i0] as u64);
-        }
-        rt::h_p((*p).cpu.xF0 as *const u8);
-        rt::h_p((*p).cpu.xF4 as *const u8);
-        rt::h_u((*p).cpu.xF8_b0() as u64);
-        rt::h_u((*p).cpu.xF8_b12() as u64);
-        rt::h_u((*p).cpu.xF8_b34() as u64);
-        rt::h_u((*p).cpu.xF8_b5() as u64);
-        rt::h_u((*p).cpu.xF8_b6() as u64);
-        rt::h_u((*p).cpu.xF8_b7() as u64);
-        rt::h_u((*p).cpu.xF9_b0() as u64);
-        rt::h_u((*p).cpu.xF9_b1() as u64);
-        rt::h_u((*p).cpu.xF9_b2() as u64);
-        rt::h_u((*p).cpu.xF9_b3() as u64);
-        rt::h_u((*p).cpu.xF9_b4() as u64);
-        rt::h_u((*p).cpu.xF9_b5() as u64);
-        rt::h_u((*p).cpu.xF9_b6() as u64);
-        rt::h_u((*p).cpu.xF9_b7() as u64);
-        rt::h_u((*p).cpu.xFA_b0() as u64);
-        rt::h_u((*p).cpu.xFA_b1() as u64);
-        rt::h_u((*p).cpu.xFA_b2() as u64);
-        rt::h_u((*p).cpu.xFA_b34() as u64);
-        rt::h_u((*p).cpu.xFA_b5() as u64);
-        rt::h_u((*p).cpu.xFA_b6() as u64);
-        rt::h_u((*p).cpu.xFA_b7() as u64);
-        rt::h_u((*p).cpu.xFB_b0() as u64);
-        rt::h_u((*p).cpu.xFB_b1() as u64);
-        rt::h_u((*p).cpu.xFB_b2() as u64);
-        rt::h_u((*p).cpu.xFB_b3() as u64);
-        rt::h_u((*p).cpu.xFB_b4() as u64);
-        rt::h_u((*p).cpu.xFB_b5() as u64);
-        rt::h_u((*p).cpu.xFB_b6() as u64);
-        rt::h_u((*p).cpu.xFB_b7() as u64);
-        for i0 in 0..30 {
-            rt::h_u((*p).cpu.xFC[i0].x0 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x4 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x5 as u64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.y as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.y as i64);
-            rt::h_u((*p).cpu.xFC[i0].xA as u64);
-            rt::h_u((*p).cpu.xFC[i0].xB as u64);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.x);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.y);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.z);
-            rt::h_f32((*p).cpu.xFC[i0].facing_dir);
-        }
-        rt::h_p((*p).cpu.x444 as *const u8);
-        rt::h_p((*p).cpu.x448 as *const u8);
-        rt::h_u((*p).cpu.command_duration as u64);
-        rt::h_p((*p).cpu.csP as *const u8);
-        for i0 in 0..256 {
-            rt::h_i((*p).cpu.buffer[i0] as i64);
-        }
-        rt::h_p((*p).cpu.write_pos as *const u8);
-        rt::h_f32((*p).cpu.x558);
-        rt::h_f32((*p).cpu.x55C);
-        rt::h_f32((*p).cpu.x560);
-        rt::h_f32((*p).cpu.x564);
-        rt::h_f32((*p).cpu.x568);
-        rt::h_f32((*p).cpu.x56C);
-        rt::h_f32((*p).cpu.x570);
-        rt::h_f32((*p).cpu.half_width);
-        rt::h_f32((*p).cpu.half_height);
-        rt::h_i((*p).x2004 as i64);
-        rt::h_i((*p).x2008 as i64);
-        rt::h_i((*p).x200C as i64);
-        rt::h_i((*p).x2010 as i64);
-        rt::h_i((*p).x2014 as i64);
-        rt::h_i((*p).x2018 as i64);
-        rt::h_i((*p).x201C as i64);
-        rt::h_i((*p).x2020 as i64);
-        rt::h_i((*p).x2021 as i64);
-        rt::h_i((*p).x2022 as i64);
-        rt::h_i((*p).x2024 as i64);
-        rt::h_i((*p).metal_timer as i64);
-        rt::h_i((*p).metal_health as i64);
-        rt::h_i((*p).x2030 as i64);
-        rt::h_i((*p).x2034 as i64);
-        rt::h_i((*p).x2038 as i64);
-        rt::h_u((*p).x203C.count as u64);
-        rt::h_p((*p).x203C.data as *const u8);
-        for i0 in 0..32 {
-            rt::h_u((*p).filler_x2044[i0] as u64);
-        }
-        rt::h_i((*p).x2064_ledgeCooldown as i64);
-        rt::h_i((*p).x2068_attackID as i64);
-        rt::h_u((*p).x206C_attack_instance as u64);
-        rt::h_i((*p).x206E as i64);
-        rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
-        rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
-        rt::h_u((*p).x2074.x2088 as u64);
-        rt::h_i((*p).x208C as i64);
-        rt::h_u((*p).x2090 as u64);
-        rt::h_u((*p).x2092 as u64);
-        rt::h_p((*p).x2094 as *const u8);
-        rt::h_u((*p).x2098 as u64);
-        rt::h_u((*p).x209A as u64);
-        rt::h_u((*p).x209C as u64);
-        rt::h_p((*p).x20A0_accessory as *const u8);
-        rt::h_u((*p).x20A4.x0_b0() as u64);
-        rt::h_u((*p).x20A4.x0_b1() as u64);
-        rt::h_u((*p).x20A4.x0_b2() as u64);
-        rt::h_u((*p).x20A4.x0_b3() as u64);
-        rt::h_u((*p).x20A4.x0_b4() as u64);
-        rt::h_u((*p).x20A4.x0_b5() as u64);
-        rt::h_u((*p).x20A4.x0_b6() as u64);
-        rt::h_u((*p).x20A4.x0_b7() as u64);
-        rt::h_p((*p).x20A4.shadow as *const u8);
-        rt::h_p((*p).unk_gobj as *const u8);
-        for i0 in 0..3 {
-            rt::h_f32((*p).x20B0[i0].x0.x);
-            rt::h_f32((*p).x20B0[i0].x0.y);
-            rt::h_f32((*p).x20B0[i0].x0.z);
-            rt::h_f32((*p).x20B0[i0].xC.x);
-            rt::h_f32((*p).x20B0[i0].xC.y);
-            rt::h_f32((*p).x20B0[i0].xC.z);
-        }
-        rt::h_f32((*p).x20F8);
-        rt::h_f32((*p).x20FC);
-        rt::h_i((*p).x2100 as i64);
-        rt::h_u((*p).x2101_bits_0to6() as u64);
-        rt::h_u((*p).x2101_bits_8() as u64);
-        rt::h_i((*p).x2102 as i64);
-        rt::h_i((*p).x2103 as i64);
-        rt::h_i((*p).x2104 as i64);
-        rt::h_i((*p).capture_timer as i64);
-        rt::h_u((*p).wall_jump_input_timer as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x210C[i0] as u64);
-        }
-        rt::h_f32((*p).x2110_walljumpWallSide);
-        rt::h_u((*p).smash_attrs.state as u64);
-        rt::h_f32((*p).smash_attrs.x2118_frames);
-        rt::h_f32((*p).smash_attrs.x211C_holdFrame);
-        rt::h_f32((*p).smash_attrs.x2120_damageMul);
-        rt::h_f32((*p).smash_attrs.x2124_frameSpeedMul);
-        rt::h_i((*p).smash_attrs.x2128 as i64);
-        rt::h_u((*p).smash_attrs.x212C as u64);
-        rt::h_u((*p).smash_attrs.x212D as u64);
-        rt::h_i((*p).smash_attrs.x212E as i64);
-        rt::h_i((*p).smash_attrs.x212F as i64);
-        rt::h_i((*p).smash_attrs.x2130_sfxBool as i64);
-        rt::h_u((*p).smash_attrs.x2134_vibrateFrame as u64);
-        rt::h_i((*p).smash_attrs.x2135 as i64);
-        rt::h_i((*p).smash_attrs.x2136 as i64);
-        rt::h_i((*p).smash_attrs.x2137 as i64);
-        rt::h_f32((*p).smash_attrs.x2138_smashSinceHitbox);
-        rt::h_i((*p).x213C as i64);
-        rt::h_f32((*p).x2140);
-        rt::h_i((*p).x2144 as i64);
-        rt::h_i((*p).x2148 as i64);
-        rt::h_i((*p).x214C as i64);
-        rt::h_i((*p).x2150 as i64);
-        rt::h_i((*p).x2154 as i64);
-        rt::h_i((*p).x2158 as i64);
-        rt::h_i((*p).x215C as i64);
-        rt::h_i((*p).x2160 as i64);
-        rt::h_i((*p).x2164 as i64);
-        rt::h_i((*p).x2168 as i64);
-        rt::h_f32((*p).unk_grab_val);
-        rt::h_f32((*p).x2170);
-        rt::h_f32((*p).x2174.x);
-        rt::h_f32((*p).x2174.y);
-        rt::h_f32((*p).x2174.z);
-        rt::h_i((*p).x2180 as i64);
-        rt::h_p((*p).x2184 as *const u8);
-        rt::h_i((*p).x2188.x as i64);
-        rt::h_i((*p).x2188.y as i64);
-        rt::h_fn((*p).grab_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x2194.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).grabbed_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).cam_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory4_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).deal_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).shield_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).reflect_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21CC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).pre_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).post_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21EC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x21FC[i0] as u64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).cmd_vars[i0] as u64);
-        }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
-        rt::h_f32((*p).cmd_timer);
-        rt::h_u((*p).allow_interrupt() as u64);
-        rt::h_u((*p).x2218_b1() as u64);
-        rt::h_u((*p).x2218_b2() as u64);
-        rt::h_u((*p).reflecting() as u64);
-        rt::h_u((*p).x2218_b4() as u64);
-        rt::h_u((*p).x2218_b5() as u64);
-        rt::h_u((*p).x2218_b6() as u64);
-        rt::h_u((*p).x2218_b7() as u64);
-        rt::h_u((*p).x2219_b0() as u64);
-        rt::h_u((*p).x2219_b1() as u64);
-        rt::h_u((*p).x2219_b2() as u64);
-        rt::h_u((*p).x2219_b3() as u64);
-        rt::h_u((*p).x2219_b4() as u64);
-        rt::h_u((*p).x2219_b5() as u64);
-        rt::h_u((*p).x2219_b6() as u64);
-        rt::h_u((*p).x2219_b7() as u64);
-        rt::h_u((*p).x221A_b0() as u64);
-        rt::h_u((*p).x221A_b1() as u64);
-        rt::h_u((*p).allow_sdi() as u64);
-        rt::h_u((*p).x221A_b3() as u64);
-        rt::h_u((*p).fall_fast() as u64);
-        rt::h_u((*p).x221A_b5() as u64);
-        rt::h_u((*p).x221A_b6() as u64);
-        rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
-        rt::h_u((*p).x221C_b0() as u64);
-        rt::h_u((*p).x221C_b1() as u64);
-        rt::h_u((*p).x221C_b2() as u64);
-        rt::h_u((*p).x221C_b3() as u64);
-        rt::h_u((*p).x221C_b4() as u64);
-        rt::h_u((*p).x221C_b5() as u64);
-        rt::h_u((*p).x221C_b6() as u64);
-        rt::h_u((*p).x221C_u16_y() as u64);
-        rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
-        rt::h_u((*p).x221D_b5() as u64);
-        rt::h_u((*p).x221D_b6() as u64);
-        rt::h_u((*p).x221D_b7() as u64);
-        rt::h_u((*p).invisible() as u64);
-        rt::h_u((*p).x221E_b1() as u64);
-        rt::h_u((*p).x221E_b2() as u64);
-        rt::h_u((*p).x221E_b3() as u64);
-        rt::h_u((*p).x221E_b4() as u64);
-        rt::h_u((*p).x221E_b5() as u64);
-        rt::h_u((*p).x221E_b6() as u64);
-        rt::h_u((*p).x221E_b7() as u64);
-        rt::h_u((*p).x221F_b0() as u64);
-        rt::h_u((*p).x221F_b1() as u64);
-        rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
-        rt::h_u((*p).is_sub_fighter() as u64);
-        rt::h_u((*p).x221F_b5() as u64);
-        rt::h_u((*p).x221F_b6() as u64);
-        rt::h_u((*p).x221F_b7() as u64);
-        rt::h_u((*p).x2220_b0() as u64);
-        rt::h_u((*p).x2220_b3() as u64);
-        rt::h_u((*p).x2220_b4() as u64);
-        rt::h_u((*p).x2220_b5() as u64);
-        rt::h_u((*p).x2220_b6() as u64);
-        rt::h_u((*p).x2220_b7() as u64);
-        rt::h_u((*p).x2221_b0() as u64);
-        rt::h_u((*p).x2221_b1() as u64);
-        rt::h_u((*p).x2221_b2() as u64);
-        rt::h_u((*p).x2221_b3() as u64);
-        rt::h_u((*p).x2221_b4() as u64);
-        rt::h_u((*p).x2221_b5() as u64);
-        rt::h_u((*p).x2221_b6() as u64);
-        rt::h_u((*p).x2221_b7() as u64);
-        rt::h_u((*p).x2222_b0() as u64);
-        rt::h_u((*p).can_multijump() as u64);
-        rt::h_u((*p).x2222_b2() as u64);
-        rt::h_u((*p).x2222_b3() as u64);
-        rt::h_u((*p).x2222_b4() as u64);
-        rt::h_u((*p).x2222_b5() as u64);
-        rt::h_u((*p).x2222_b6() as u64);
-        rt::h_u((*p).x2222_b7() as u64);
-        rt::h_u((*p).x2223_b0() as u64);
-        rt::h_u((*p).x2223_b1() as u64);
-        rt::h_u((*p).x2223_b2() as u64);
-        rt::h_u((*p).x2223_b3() as u64);
-        rt::h_u((*p).x2223_b4() as u64);
-        rt::h_u((*p).x2223_b5() as u64);
-        rt::h_u((*p).is_always_metal() as u64);
-        rt::h_u((*p).is_metal() as u64);
-        rt::h_u((*p).x2224_b0() as u64);
-        rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
-        rt::h_u((*p).x2224_b3() as u64);
-        rt::h_u((*p).x2224_b4() as u64);
-        rt::h_u((*p).x2224_b5() as u64);
-        rt::h_u((*p).x2224_b6() as u64);
-        rt::h_u((*p).can_walljump() as u64);
-        rt::h_u((*p).x2225_b0() as u64);
-        rt::h_u((*p).x2225_b1() as u64);
-        rt::h_u((*p).x2225_b2() as u64);
-        rt::h_u((*p).x2225_b3() as u64);
-        rt::h_u((*p).x2225_b4() as u64);
-        rt::h_u((*p).x2225_b5() as u64);
-        rt::h_u((*p).x2225_b6() as u64);
-        rt::h_u((*p).x2225_b7() as u64);
-        rt::h_u((*p).x2226_b0() as u64);
-        rt::h_u((*p).x2226_b1() as u64);
-        rt::h_u((*p).x2226_b2() as u64);
-        rt::h_u((*p).x2226_b3() as u64);
-        rt::h_u((*p).x2226_b4() as u64);
-        rt::h_u((*p).x2226_b5() as u64);
-        rt::h_u((*p).x2226_b6() as u64);
-        rt::h_u((*p).x2226_b7() as u64);
-        rt::h_u((*p).x2227_b0() as u64);
-        rt::h_u((*p).x2227_b1() as u64);
-        rt::h_u((*p).x2227_b2() as u64);
-        rt::h_u((*p).x2227_b3() as u64);
-        rt::h_u((*p).x2227_b4() as u64);
-        rt::h_u((*p).x2227_b5() as u64);
-        rt::h_u((*p).x2227_b6() as u64);
-        rt::h_u((*p).x2227_b7() as u64);
-        rt::h_u((*p).x2228_b0() as u64);
-        rt::h_u((*p).x2228_b1() as u64);
-        rt::h_u((*p).is_sandbag() as u64);
-        rt::h_u((*p).x2228_b3() as u64);
-        rt::h_u((*p).x2228_b5() as u64);
-        rt::h_u((*p).used_tether() as u64);
-        rt::h_u((*p).x2228_b7() as u64);
-        rt::h_u((*p).x2229_b0() as u64);
-        rt::h_u((*p).x2229_b1() as u64);
-        rt::h_u((*p).x2229_b2() as u64);
-        rt::h_u((*p).x2229_b3() as u64);
-        rt::h_u((*p).x2229_b4() as u64);
-        rt::h_u((*p).no_normal_motion() as u64);
-        rt::h_u((*p).x2229_b6() as u64);
-        rt::h_u((*p).no_kb() as u64);
-        rt::h_u((*p).x222A_b0() as u64);
-        rt::h_u((*p).x222A_b1() as u64);
-        rt::h_u((*p).x222A_b2() as u64);
-        rt::h_u((*p).x222A_b3() as u64);
-        rt::h_u((*p).x222A_b5() as u64);
-        rt::h_u((*p).x222A_b6() as u64);
-        rt::h_u((*p).x222A_b7() as u64);
-        rt::h_bytes(&(*p).u as *const _ as *const u8, 400);
-        rt::h_u((*p).bury_grkind as u64);
-        rt::h_u((*p).bury_timer_1 as u64);
-        rt::h_u((*p).bury_timer_2 as u64);
-        rt::h_i((*p).x2330.x as i64);
-        rt::h_i((*p).x2330.y as i64);
-        rt::h_i((*p).x2338.x as i64);
-        rt::h_i((*p).x2338.y as i64);
-        rt::h_bytes(&(*p).mv as *const _ as *const u8, 176);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::Fighter;
-    if !p0.is_null() {
-        (*p0).gobj = 0usize as _;
-        (*p0).kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1C_actionStateList = 0usize as _;
-        (*p0).x20_actionStateList = 0usize as _;
-        (*p0).x24 = 0usize as _;
-        (*p0).x28 = 0usize as _;
-        (*p0).facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).facing_dir1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x40 = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..3 {
-            for i2 in 0..4 {
-                (*p0).x44_mtx[i1][i2] = rt::draw_f32(&mut rt::MST);
-            }
-        }
-        (*p0).x74_self_accel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.x = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.y = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ground_or_air = rt::draw_int(&mut rt::MST) as _;
-        (*p0).xE4_ground_accel_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).xE8_ground_accel_2 = rt::draw_f32(&mut rt::MST);
-        (*p0).gr_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF0_ground_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF4_ground_attacker_shield_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x100 = rt::draw_f32(&mut rt::MST);
-        (*p0).x104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x105 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x106 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x107 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x108_costume_joint = 0usize as _;
-        (*p0).ft_data = 0usize as _;
-        (*p0).co_attrs.walk_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_max_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.slow_walk_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.mid_walk_point = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_walk_min = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.run_animation_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_run_brake_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_startup_time = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_to_air_jump_momentum_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hop_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_v_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_h_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_jumps = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.gravity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.terminal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_stick_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_drift_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_fall_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_2_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_3_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.standing_turn_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.model_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.initial_shield_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.shield_break_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.rapid_jab_window = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.clank_animation_length = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hit_spark_variant = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.unused_0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.ledge_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ledge_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.item_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.heavy_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.specials_ground_speed_retention = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x1C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xDC = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.kirby_b_star_damage = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.normal_landing_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairn_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairf_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairb_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairhi_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairlw_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.name_tag_height = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passivewall_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passiveceil_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.trophy_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x13C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.screw_attack_launch_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x144 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_min_approach_speed = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageice_ice_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x150_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x154_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_x_mult = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.respawn_platform_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.warp_star_hitbox_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x168 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.camera_zoom_target_bone = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.x170.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x17C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight_independent_throws_mask = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x294_itPickup.gr_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2CC = 0usize as _;
-        (*p0).x2D0 = 0usize as _;
-        (*p0).dat_attrs = 0usize as _;
-        (*p0).dat_attrs_backup = 0usize as _;
-        (*p0).x2DC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E0 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E4 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2EC = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..10 {
-            (*p0).dynamic_bone_sets[i1].bone_id = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.data = 0usize as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).dynamics_num = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count_dup = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.unk_x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x8_ptr1 = 0usize as _;
-        (*p0).x408.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x10_ptr2 = 0usize as _;
-        (*p0).x408.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x18_alloc = 0usize as _;
-        (*p0).x408.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x408.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x408.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x408.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x8_ptr1 = 0usize as _;
-        (*p0).x488.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x10_ptr2 = 0usize as _;
-        (*p0).x488.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x18_alloc = 0usize as _;
-        (*p0).x488.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x488.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x488.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x488.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x8_ptr1 = 0usize as _;
-        (*p0).x508.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x10_ptr2 = 0usize as _;
-        (*p0).x508.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x18_alloc = 0usize as _;
-        (*p0).x508.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x508.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x508.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x508.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x588 = 0usize as _;
-        (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).x598 = 0usize as _;
-        (*p0).x59C = 0usize as _;
-        (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
-        (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..5 {
-            (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..5 {
-            (*p0).x5AC.xC[i1] = 0usize as _;
-        }
-        (*p0).tobj_list.n_costume_tobjs = rt::draw_int(&mut rt::MST) as _;
-        (*p0).tobj_list.x5D0 = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).tobj_list.costume_tobjs[i1] = 0usize as _;
-        }
-        (*p0).parts = 0usize as _;
-        (*p0).dobj_list.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dobj_list.data = 0usize as _;
-        for i1 in 0..12 {
-            (*p0).x5F4_arr[i1].prev = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x5F4_arr[i1].idx = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x60C = 0usize as _;
-        for i1 in 0..2 {
-            (*p0).x610_color_rgba[i1].r = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].g = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).team = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).filler_x61E[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..3 {
-            (*p0).input.lstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.lstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.cstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.cstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.triggers[i1] = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.held_buttons[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).input.pressed_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).input.released_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x680 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x681 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x682 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x683 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x684 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x685 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x686 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x687 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x688 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x689 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68B = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68C_transNPos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).lstick_angle = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x0_gobj = 0usize as _;
-        (*p0).coll_data.cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x34_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x34_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x35_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.facing_dir = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x38 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_right = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_left = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_only = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x50 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_height = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.lstick_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
-        (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x130_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.prev_env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x13C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.contact.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_lock = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x890_cameraBox = 0usize as _;
-        (*p0).cur_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x898_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).frame_speed_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A0_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A4_animBlendFrames = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A8_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x8AC_animSkeleton = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).x8B0[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x4 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x8 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].xC = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x10 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x11 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).x914[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).x914[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).x914[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].jobj = 0usize as _;
-            (*p0).x914[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
-        }
-        for i1 in 0..2 {
-            (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).xDF4[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).xDF4[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].jobj = 0usize as _;
-            (*p0).xDF4[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
-        }
-        (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.unk_count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.damage = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.scale = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_severity = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.x44 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x45 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).x1064_thrownHitbox.x46[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.jobj = 0usize as _;
-        (*p0).x1064_thrownHitbox.x4C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.coll_distance = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_1[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_1[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
-        (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x119F = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..15 {
-            (*p0).hurt_capsules[i1].capsule.state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].capsule.a_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.scale = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone = 0usize as _;
-            (*p0).hurt_capsules[i1].capsule.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.a_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone_idx = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].height = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].is_grabbable = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..2 {
-            (*p0).x1614[i1].x0 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x4 = 0usize as _;
-            (*p0).x1614[i1].x8.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x166C = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..1 {
-            (*p0).x1670[i1].v1.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v2 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].jobj = 0usize as _;
-            (*p0).x1670[i1].x14 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..400 {
-            (*p0).filler_x1674[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1828 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x182c_behavior = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1830_percent = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1834 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1838_percentTemp = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x183C_applied = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1840 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.facing_dir_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1848_kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x184c_damaged_hurtbox = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.kb_applied = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1860_element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1864 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1868_source = 0usize as _;
-        (*p0).dmg.x186c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1870 = 0usize as _;
-        (*p0).dmg.x1874 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1878 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x187c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A4_knockbackMagnitude = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18ac_time_since_hit = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.armor0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.armor1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18B8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18BC = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18C0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18c4_source_ply = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18d8.xC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.set_x10_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18ec_instancehitby = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18f9 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18fa_model_shift_frames = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FD = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1900 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1904 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1908 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x190C = 0usize as _;
-        (*p0).dmg.x1910 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1914 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.int_value = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x191C = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1924 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1928 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x192c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1948 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x194C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1950 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1954 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1958 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x195c_hitlag_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).x1960_vibrateMult = rt::draw_f32(&mut rt::MST);
-        (*p0).x1964 = rt::draw_f32(&mut rt::MST);
-        (*p0).x1968_jumpsUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1969_walljumpUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hitlag_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).unk_msid = rt::draw_int(&mut rt::MST) as _;
-        (*p0).item_gobj = 0usize as _;
-        (*p0).x1978 = 0usize as _;
-        (*p0).x197C = 0usize as _;
-        (*p0).x1980 = 0usize as _;
-        (*p0).x1984_heldItemSpec = 0usize as _;
-        (*p0).x1988 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x198C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1990 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1994 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_health = rt::draw_f32(&mut rt::MST);
-        (*p0).lightshield_amount = rt::draw_f32(&mut rt::MST);
-        (*p0).x19A0_shieldDamageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A8 = 0usize as _;
-        (*p0).specialn_facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).x19B0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_unk0 = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_unk1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x19BC_shieldDamageTaken3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_hit.bone = 0usize as _;
-        (*p0).shield_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).shield_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.bone = 0usize as _;
-        (*p0).reflect_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).reflect_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.bone = 0usize as _;
-        (*p0).absorb_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).absorb_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A2C_reflectHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A30_maxDamage = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ReflectAttr.x1A34_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A38_speedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A3C_damageOver = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A40_absorbHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).AbsorbAttr.x1A44_damageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A48_hitsTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grab_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A51 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A52 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A53 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A54 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).victim_gobj = 0usize as _;
-        (*p0).x1A5C = 0usize as _;
-        (*p0).target_item_gobj = 0usize as _;
-        (*p0).x1A64 = 0usize as _;
-        (*p0).x1A68 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6C = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.ltrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.rtrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.level = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x1C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x30 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x38 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x3C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x40 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x44 = 0usize as _;
-        (*p0).cpu.x48 = 0usize as _;
-        (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x60 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x64.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x64.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x7C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x80 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x84 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x88 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x8C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x90 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x94 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x98.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.xA4 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..8 {
-            (*p0).cpu.xA8_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xC8 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xC9[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..8 {
-            (*p0).cpu.xCC_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xEC = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xED[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xF0 = 0usize as _;
-        (*p0).cpu.xF4 = 0usize as _;
-        (*p0).cpu.set_xF8_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b12((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xFA_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..30 {
-            (*p0).cpu.xFC[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x5 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xA = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xB = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cur_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].facing_dir = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).cpu.x444 = 0usize as _;
-        (*p0).cpu.x448 = 0usize as _;
-        (*p0).cpu.command_duration = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.csP = 0usize as _;
-        for i1 in 0..256 {
-            (*p0).cpu.buffer[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.write_pos = 0usize as _;
-        (*p0).cpu.x558 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x55C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x560 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x564 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x568 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x56C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x570 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_width = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_height = rt::draw_f32(&mut rt::MST);
-        (*p0).x2004 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2008 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x200C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2010 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2014 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2018 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x201C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2020 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2021 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2022 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2024 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_health = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2030 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2034 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2038 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.data = 0usize as _;
-        for i1 in 0..32 {
-            (*p0).filler_x2044[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2064_ledgeCooldown = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2068_attackID = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2092 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2094 = 0usize as _;
-        (*p0).x2098 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x20A0_accessory = 0usize as _;
-        (*p0).x20A4.set_x0_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.shadow = 0usize as _;
-        (*p0).unk_gobj = 0usize as _;
-        for i1 in 0..3 {
-            (*p0).x20B0[i1].x0.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x20F8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x20FC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2100 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).set_x2101_bits_0to6((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).set_x2101_bits_8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x2102 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2103 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).capture_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).wall_jump_input_timer = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).filler_x210C[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2110_walljumpWallSide = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2118_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x211C_holdFrame = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2120_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2124_frameSpeedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2128 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2130_sfxBool = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2134_vibrateFrame = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2135 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2136 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2137 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2138_smashSinceHitbox = rt::draw_f32(&mut rt::MST);
-        (*p0).x213C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2140 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2144 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2148 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x214C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2150 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2154 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2158 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x215C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2160 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2164 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2168 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).unk_grab_val = rt::draw_f32(&mut rt::MST);
-        (*p0).x2170 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x2180 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2184 = 0usize as _;
-        (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..3 {
-            (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_reflecting((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_allow_sdi((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_fall_fast((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_invisible((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b0((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x2220_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_multijump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_always_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_walljump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sandbag((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x2228_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_used_tether((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_normal_motion((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_kb((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x222A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        { assert_eq!(core::mem::size_of_val(&(*p0).u), 400); for i1 in 0..400 { *(&mut (*p0).u as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).bury_grkind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_2 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.y = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).mv), 176); for i1 in 0..176 { *(&mut (*p0).mv as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-    }
-    0
-}
-unsafe fn h_ftPartSetRotX(a: &[u64]) -> u64 {
-    rt::t_begin(154);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_p((*p).gobj as *const u8);
-        rt::h_u((*p).kind as u64);
-        rt::h_i((*p).x8_spawnNum as i64);
-        rt::h_u((*p).player_id as u64);
-        rt::h_i((*p).motion_id as i64);
-        rt::h_i((*p).anim_id as i64);
-        rt::h_i((*p).x18 as i64);
-        rt::h_p((*p).x1C_actionStateList as *const u8);
-        rt::h_p((*p).x20_actionStateList as *const u8);
-        rt::h_p((*p).x24 as *const u8);
-        rt::h_p((*p).x28 as *const u8);
-        rt::h_f32((*p).facing_dir);
-        rt::h_f32((*p).facing_dir1);
-        rt::h_f32((*p).x34_scale.x);
-        rt::h_f32((*p).x34_scale.y);
-        rt::h_f32((*p).x34_scale.z);
-        rt::h_f32((*p).x40);
-        for i0 in 0..3 {
-            for i1 in 0..4 {
-                rt::h_f32((*p).x44_mtx[i0][i1]);
-            }
-        }
-        rt::h_f32((*p).x74_self_accel.x);
-        rt::h_f32((*p).x74_self_accel.y);
-        rt::h_f32((*p).x74_self_accel.z);
-        rt::h_f32((*p).self_vel.x);
-        rt::h_f32((*p).self_vel.y);
-        rt::h_f32((*p).self_vel.z);
-        rt::h_f32((*p).x8c_kb_vel.x);
-        rt::h_f32((*p).x8c_kb_vel.y);
-        rt::h_f32((*p).x8c_kb_vel.z);
-        rt::h_f32((*p).x98_atk_shield_kb.x);
-        rt::h_f32((*p).x98_atk_shield_kb.y);
-        rt::h_f32((*p).x98_atk_shield_kb.z);
-        rt::h_f32((*p).xA4_unk_vel.x);
-        rt::h_f32((*p).xA4_unk_vel.y);
-        rt::h_f32((*p).xA4_unk_vel.z);
-        rt::h_f32((*p).cur_pos.x);
-        rt::h_f32((*p).cur_pos.y);
-        rt::h_f32((*p).cur_pos.z);
-        rt::h_f32((*p).prev_pos.x);
-        rt::h_f32((*p).prev_pos.y);
-        rt::h_f32((*p).prev_pos.z);
-        rt::h_f32((*p).pos_delta.x);
-        rt::h_f32((*p).pos_delta.y);
-        rt::h_f32((*p).pos_delta.z);
-        rt::h_f32((*p).xD4_unk_vel.x);
-        rt::h_f32((*p).xD4_unk_vel.y);
-        rt::h_f32((*p).xD4_unk_vel.z);
-        rt::h_u((*p).ground_or_air as u64);
-        rt::h_f32((*p).xE4_ground_accel_1);
-        rt::h_f32((*p).xE8_ground_accel_2);
-        rt::h_f32((*p).gr_vel);
-        rt::h_f32((*p).xF0_ground_kb_vel);
-        rt::h_f32((*p).xF4_ground_attacker_shield_kb_vel);
-        rt::h_f32((*p).xF8_playerNudgeVel.x);
-        rt::h_f32((*p).xF8_playerNudgeVel.y);
-        rt::h_f32((*p).x100);
-        rt::h_u((*p).x104 as u64);
-        rt::h_i((*p).x105 as i64);
-        rt::h_i((*p).x106 as i64);
-        rt::h_i((*p).x107 as i64);
-        rt::h_p((*p).x108_costume_joint as *const u8);
-        rt::h_p((*p).ft_data as *const u8);
-        rt::h_f32((*p).co_attrs.walk_accel_mul);
-        rt::h_f32((*p).co_attrs.walk_accel_base);
-        rt::h_f32((*p).co_attrs.walk_max_vel);
-        rt::h_f32((*p).co_attrs.slow_walk_max);
-        rt::h_f32((*p).co_attrs.mid_walk_point);
-        rt::h_f32((*p).co_attrs.fast_walk_min);
-        rt::h_f32((*p).co_attrs.ground_friction);
-        rt::h_f32((*p).co_attrs.dash_initial_velocity);
-        rt::h_f32((*p).co_attrs.dash_accel_mul);
-        rt::h_f32((*p).co_attrs.dash_accel_base);
-        rt::h_f32((*p).co_attrs.dash_max_velocity);
-        rt::h_f32((*p).co_attrs.run_animation_scaling);
-        rt::h_f32((*p).co_attrs.max_run_brake_frames);
-        rt::h_f32((*p).co_attrs.ground_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jump_startup_time);
-        rt::h_f32((*p).co_attrs.jump_h_initial_velocity);
-        rt::h_f32((*p).co_attrs.jump_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.ground_to_air_jump_momentum_multiplier);
-        rt::h_f32((*p).co_attrs.jump_h_max_velocity);
-        rt::h_f32((*p).co_attrs.hop_v_initial_velocity);
-        rt::h_f32((*p).co_attrs.air_jump_v_multiplier);
-        rt::h_f32((*p).co_attrs.air_jump_h_multiplier);
-        rt::h_i((*p).co_attrs.max_jumps as i64);
-        rt::h_f32((*p).co_attrs.gravity);
-        rt::h_f32((*p).co_attrs.terminal_velocity);
-        rt::h_f32((*p).co_attrs.air_drift_stick_mul);
-        rt::h_f32((*p).co_attrs.aerial_drift_base);
-        rt::h_f32((*p).co_attrs.air_drift_max);
-        rt::h_f32((*p).co_attrs.aerial_friction);
-        rt::h_f32((*p).co_attrs.fast_fall_velocity);
-        rt::h_f32((*p).co_attrs.air_max_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.jab_2_input_window);
-        rt::h_f32((*p).co_attrs.jab_3_input_window);
-        rt::h_f32((*p).co_attrs.standing_turn_frames);
-        rt::h_f32((*p).co_attrs.weight);
-        rt::h_f32((*p).co_attrs.model_scaling);
-        rt::h_f32((*p).co_attrs.initial_shield_size);
-        rt::h_f32((*p).co_attrs.shield_break_initial_velocity);
-        rt::h_i((*p).co_attrs.rapid_jab_window as i64);
-        rt::h_f32((*p).co_attrs.clank_animation_length);
-        rt::h_i((*p).co_attrs.hit_spark_variant as i64);
-        rt::h_i((*p).co_attrs.unused_0 as i64);
-        rt::h_f32((*p).co_attrs.ledge_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.ledge_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.item_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.heavy_throw_velocity_multiplier);
-        rt::h_f32((*p).co_attrs.specials_ground_speed_retention);
-        rt::h_f32((*p).co_attrs.xBC.size);
-        rt::h_f32((*p).co_attrs.xBC.x4.x);
-        rt::h_f32((*p).co_attrs.xBC.x4.y);
-        rt::h_f32((*p).co_attrs.xBC.x4.z);
-        rt::h_f32((*p).co_attrs.xBC.x10.x);
-        rt::h_f32((*p).co_attrs.xBC.x10.y);
-        rt::h_f32((*p).co_attrs.xBC.x10.z);
-        rt::h_f32((*p).co_attrs.xBC.x1C);
-        rt::h_f32((*p).co_attrs.xDC);
-        rt::h_f32((*p).co_attrs.kirby_b_star_damage);
-        rt::h_f32((*p).co_attrs.normal_landing_lag);
-        rt::h_f32((*p).co_attrs.landingairn_lag);
-        rt::h_f32((*p).co_attrs.landingairf_lag);
-        rt::h_f32((*p).co_attrs.landingairb_lag);
-        rt::h_f32((*p).co_attrs.landingairhi_lag);
-        rt::h_f32((*p).co_attrs.landingairlw_lag);
-        rt::h_f32((*p).co_attrs.name_tag_height);
-        rt::h_f32((*p).co_attrs.passivewall_vel_x);
-        rt::h_f32((*p).co_attrs.wall_jump_horizontal_velocity);
-        rt::h_f32((*p).co_attrs.wall_jump_vertical_velocity);
-        rt::h_f32((*p).co_attrs.passiveceil_vel_x);
-        rt::h_f32((*p).co_attrs.trophy_scale);
-        rt::h_f32((*p).co_attrs.x114.x);
-        rt::h_f32((*p).co_attrs.x114.y);
-        rt::h_f32((*p).co_attrs.x114.z);
-        rt::h_f32((*p).co_attrs.x120.x);
-        rt::h_f32((*p).co_attrs.x120.y);
-        rt::h_f32((*p).co_attrs.x120.z);
-        rt::h_f32((*p).co_attrs.x12C);
-        rt::h_f32((*p).co_attrs.x130.x);
-        rt::h_f32((*p).co_attrs.x130.y);
-        rt::h_f32((*p).co_attrs.x130.z);
-        rt::h_f32((*p).co_attrs.x13C);
-        rt::h_f32((*p).co_attrs.screw_attack_launch_velocity);
-        rt::h_f32((*p).co_attrs.x144);
-        rt::h_f32((*p).co_attrs.wall_jump_min_approach_speed);
-        rt::h_f32((*p).co_attrs.damageice_ice_size);
-        rt::h_f32((*p).co_attrs.x150_damageice_unk);
-        rt::h_f32((*p).co_attrs.x154_damageice_unk);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_y);
-        rt::h_f32((*p).co_attrs.damageicejump_vel_x_mult);
-        rt::h_f32((*p).co_attrs.respawn_platform_scale);
-        rt::h_f32((*p).co_attrs.warp_star_hitbox_scale);
-        rt::h_f32((*p).co_attrs.x168);
-        rt::h_i((*p).co_attrs.camera_zoom_target_bone as i64);
-        rt::h_f32((*p).co_attrs.x170.x);
-        rt::h_f32((*p).co_attrs.x170.y);
-        rt::h_f32((*p).co_attrs.x170.z);
-        rt::h_f32((*p).co_attrs.x17C);
-        rt::h_u((*p).co_attrs.weight_independent_throws_mask as u64);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_light_offset.w);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.x);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.y);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.z);
-        rt::h_f32((*p).x294_itPickup.gr_heavy_offset.w);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.x);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.y);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.z);
-        rt::h_f32((*p).x294_itPickup.air_light_offset.w);
-        rt::h_f32((*p).x2C4.x);
-        rt::h_f32((*p).x2C4.y);
-        rt::h_p((*p).x2CC as *const u8);
-        rt::h_p((*p).x2D0 as *const u8);
-        rt::h_p((*p).dat_attrs as *const u8);
-        rt::h_p((*p).dat_attrs_backup as *const u8);
-        rt::h_f32((*p).x2DC);
-        rt::h_f32((*p).x2E0);
-        rt::h_f32((*p).x2E4);
-        rt::h_f32((*p).x2E8);
-        rt::h_f32((*p).x2EC);
-        for i0 in 0..10 {
-            rt::h_i((*p).dynamic_bone_sets[i0].bone_id as i64);
-            rt::h_p((*p).dynamic_bone_sets[i0].dyn_desc.data as *const u8);
-            rt::h_u((*p).dynamic_bone_sets[i0].dyn_desc.count as u64);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.x);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.y);
-            rt::h_f32((*p).dynamic_bone_sets[i0].dyn_desc.pos.z);
-        }
-        rt::h_i((*p).dynamics_num as i64);
-        rt::h_f32((*p).x3E4_fighterCmdScript.timer);
-        rt::h_f32((*p).x3E4_fighterCmdScript.frame_count);
-        for i0 in 0..1 {
-            rt::h_p((*p).x3E4_fighterCmdScript.anon_8.ptr[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count as u64);
-        for i0 in 0..3 {
-            rt::h_p((*p).x3E4_fighterCmdScript.event_return[i0] as *const u8);
-        }
-        rt::h_u((*p).x3E4_fighterCmdScript.loop_count_dup as u64);
-        rt::h_u((*p).x3E4_fighterCmdScript.unk_x18 as u64);
-        rt::h_i((*p).x408.x0_timer as i64);
-        rt::h_i((*p).x408.x4_pri as i64);
-        rt::h_p((*p).x408.x8_ptr1 as *const u8);
-        rt::h_i((*p).x408.xC_loop as i64);
-        rt::h_p((*p).x408.x10_ptr2 as *const u8);
-        rt::h_i((*p).x408.x14 as i64);
-        rt::h_p((*p).x408.x18_alloc as *const u8);
-        rt::h_i((*p).x408.x1c as i64);
-        rt::h_i((*p).x408.x20 as i64);
-        rt::h_i((*p).x408.x24 as i64);
-        rt::h_bytes(&(*p).x408.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x408.x2C_hex.r as u64);
-        rt::h_u((*p).x408.x2C_hex.g as u64);
-        rt::h_u((*p).x408.x2C_hex.b as u64);
-        rt::h_u((*p).x408.x2C_hex.a as u64);
-        rt::h_f32((*p).x408.x30_color_red);
-        rt::h_f32((*p).x408.x34_color_green);
-        rt::h_f32((*p).x408.x38_color_blue);
-        rt::h_f32((*p).x408.x3C_color_alpha);
-        rt::h_f32((*p).x408.x40_colorblend_red);
-        rt::h_f32((*p).x408.x44_colorblend_green);
-        rt::h_f32((*p).x408.x48_colorblend_blue);
-        rt::h_f32((*p).x408.x4C_colorblend_alpha);
-        rt::h_u((*p).x408.x50_light_color.r as u64);
-        rt::h_u((*p).x408.x50_light_color.g as u64);
-        rt::h_u((*p).x408.x50_light_color.b as u64);
-        rt::h_u((*p).x408.x50_light_color.a as u64);
-        rt::h_f32((*p).x408.x54_light_red);
-        rt::h_f32((*p).x408.x58_light_green);
-        rt::h_f32((*p).x408.x5C_light_blue);
-        rt::h_f32((*p).x408.x60_light_alpha);
-        rt::h_f32((*p).x408.x64_lightblend_red);
-        rt::h_f32((*p).x408.x68_lightblend_green);
-        rt::h_f32((*p).x408.x6C_lightblend_blue);
-        rt::h_f32((*p).x408.x70_lightblend_alpha);
-        rt::h_f32((*p).x408.x74_light_rot_x);
-        rt::h_f32((*p).x408.x78_light_rot_yz);
-        rt::h_u((*p).x408.x7C_color_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag2() as u64);
-        rt::h_u((*p).x408.x7C_light_enable() as u64);
-        rt::h_u((*p).x408.x7C_flag4() as u64);
-        rt::h_u((*p).x408.x7C_flag5() as u64);
-        rt::h_u((*p).x408.x7C_flag6() as u64);
-        rt::h_u((*p).x408.x7C_flag7() as u64);
-        rt::h_u((*p).x408.x7C_flag8() as u64);
-        rt::h_i((*p).x488.x0_timer as i64);
-        rt::h_i((*p).x488.x4_pri as i64);
-        rt::h_p((*p).x488.x8_ptr1 as *const u8);
-        rt::h_i((*p).x488.xC_loop as i64);
-        rt::h_p((*p).x488.x10_ptr2 as *const u8);
-        rt::h_i((*p).x488.x14 as i64);
-        rt::h_p((*p).x488.x18_alloc as *const u8);
-        rt::h_i((*p).x488.x1c as i64);
-        rt::h_i((*p).x488.x20 as i64);
-        rt::h_i((*p).x488.x24 as i64);
-        rt::h_bytes(&(*p).x488.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x488.x2C_hex.r as u64);
-        rt::h_u((*p).x488.x2C_hex.g as u64);
-        rt::h_u((*p).x488.x2C_hex.b as u64);
-        rt::h_u((*p).x488.x2C_hex.a as u64);
-        rt::h_f32((*p).x488.x30_color_red);
-        rt::h_f32((*p).x488.x34_color_green);
-        rt::h_f32((*p).x488.x38_color_blue);
-        rt::h_f32((*p).x488.x3C_color_alpha);
-        rt::h_f32((*p).x488.x40_colorblend_red);
-        rt::h_f32((*p).x488.x44_colorblend_green);
-        rt::h_f32((*p).x488.x48_colorblend_blue);
-        rt::h_f32((*p).x488.x4C_colorblend_alpha);
-        rt::h_u((*p).x488.x50_light_color.r as u64);
-        rt::h_u((*p).x488.x50_light_color.g as u64);
-        rt::h_u((*p).x488.x50_light_color.b as u64);
-        rt::h_u((*p).x488.x50_light_color.a as u64);
-        rt::h_f32((*p).x488.x54_light_red);
-        rt::h_f32((*p).x488.x58_light_green);
-        rt::h_f32((*p).x488.x5C_light_blue);
-        rt::h_f32((*p).x488.x60_light_alpha);
-        rt::h_f32((*p).x488.x64_lightblend_red);
-        rt::h_f32((*p).x488.x68_lightblend_green);
-        rt::h_f32((*p).x488.x6C_lightblend_blue);
-        rt::h_f32((*p).x488.x70_lightblend_alpha);
-        rt::h_f32((*p).x488.x74_light_rot_x);
-        rt::h_f32((*p).x488.x78_light_rot_yz);
-        rt::h_u((*p).x488.x7C_color_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag2() as u64);
-        rt::h_u((*p).x488.x7C_light_enable() as u64);
-        rt::h_u((*p).x488.x7C_flag4() as u64);
-        rt::h_u((*p).x488.x7C_flag5() as u64);
-        rt::h_u((*p).x488.x7C_flag6() as u64);
-        rt::h_u((*p).x488.x7C_flag7() as u64);
-        rt::h_u((*p).x488.x7C_flag8() as u64);
-        rt::h_i((*p).x508.x0_timer as i64);
-        rt::h_i((*p).x508.x4_pri as i64);
-        rt::h_p((*p).x508.x8_ptr1 as *const u8);
-        rt::h_i((*p).x508.xC_loop as i64);
-        rt::h_p((*p).x508.x10_ptr2 as *const u8);
-        rt::h_i((*p).x508.x14 as i64);
-        rt::h_p((*p).x508.x18_alloc as *const u8);
-        rt::h_i((*p).x508.x1c as i64);
-        rt::h_i((*p).x508.x20 as i64);
-        rt::h_i((*p).x508.x24 as i64);
-        rt::h_bytes(&(*p).x508.x28_colanim as *const _ as *const u8, 8);
-        rt::h_u((*p).x508.x2C_hex.r as u64);
-        rt::h_u((*p).x508.x2C_hex.g as u64);
-        rt::h_u((*p).x508.x2C_hex.b as u64);
-        rt::h_u((*p).x508.x2C_hex.a as u64);
-        rt::h_f32((*p).x508.x30_color_red);
-        rt::h_f32((*p).x508.x34_color_green);
-        rt::h_f32((*p).x508.x38_color_blue);
-        rt::h_f32((*p).x508.x3C_color_alpha);
-        rt::h_f32((*p).x508.x40_colorblend_red);
-        rt::h_f32((*p).x508.x44_colorblend_green);
-        rt::h_f32((*p).x508.x48_colorblend_blue);
-        rt::h_f32((*p).x508.x4C_colorblend_alpha);
-        rt::h_u((*p).x508.x50_light_color.r as u64);
-        rt::h_u((*p).x508.x50_light_color.g as u64);
-        rt::h_u((*p).x508.x50_light_color.b as u64);
-        rt::h_u((*p).x508.x50_light_color.a as u64);
-        rt::h_f32((*p).x508.x54_light_red);
-        rt::h_f32((*p).x508.x58_light_green);
-        rt::h_f32((*p).x508.x5C_light_blue);
-        rt::h_f32((*p).x508.x60_light_alpha);
-        rt::h_f32((*p).x508.x64_lightblend_red);
-        rt::h_f32((*p).x508.x68_lightblend_green);
-        rt::h_f32((*p).x508.x6C_lightblend_blue);
-        rt::h_f32((*p).x508.x70_lightblend_alpha);
-        rt::h_f32((*p).x508.x74_light_rot_x);
-        rt::h_f32((*p).x508.x78_light_rot_yz);
-        rt::h_u((*p).x508.x7C_color_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag2() as u64);
-        rt::h_u((*p).x508.x7C_light_enable() as u64);
-        rt::h_u((*p).x508.x7C_flag4() as u64);
-        rt::h_u((*p).x508.x7C_flag5() as u64);
-        rt::h_u((*p).x508.x7C_flag6() as u64);
-        rt::h_u((*p).x508.x7C_flag7() as u64);
-        rt::h_u((*p).x508.x7C_flag8() as u64);
-        rt::h_p((*p).x588 as *const u8);
-        rt::h_u((*p).x58C as u64);
-        rt::h_p((*p).x590 as *const u8);
-        rt::h_u((*p).anon_594.anon_0.x594_b0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b1_loop() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b2() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b3() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b4() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b5() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b6() as u64);
-        rt::h_u((*p).anon_594.anon_0.x594_b7() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x0() as u64);
-        rt::h_u((*p).anon_594.anon_0.x596_bits.x7() as u64);
-        rt::h_p((*p).x598 as *const u8);
-        rt::h_p((*p).x59C as *const u8);
-        rt::h_p((*p).x5A0 as *const u8);
-        rt::h_p((*p).x5A4 as *const u8);
-        rt::h_p((*p).x5A8 as *const u8);
-        rt::h_u((*p).x5AC.model_num as u64);
-        for i0 in 0..5 {
-            rt::h_u((*p).x5AC.cleared[i0] as u64);
-        }
-        for i0 in 0..5 {
-            rt::h_p((*p).x5AC.xC[i0] as *const u8);
-        }
-        rt::h_u((*p).tobj_list.n_costume_tobjs as u64);
-        rt::h_p((*p).tobj_list.x5D0 as *const u8);
-        for i0 in 0..5 {
-            rt::h_p((*p).tobj_list.costume_tobjs[i0] as *const u8);
-        }
-        rt::h_p((*p).parts as *const u8);
-        rt::h_u((*p).dobj_list.count as u64);
-        rt::h_p((*p).dobj_list.data as *const u8);
-        for i0 in 0..12 {
-            rt::h_i((*p).x5F4_arr[i0].prev as i64);
-            rt::h_i((*p).x5F4_arr[i0].idx as i64);
-        }
-        rt::h_p((*p).x60C as *const u8);
-        for i0 in 0..2 {
-            rt::h_u((*p).x610_color_rgba[i0].r as u64);
-            rt::h_u((*p).x610_color_rgba[i0].g as u64);
-            rt::h_u((*p).x610_color_rgba[i0].b as u64);
-            rt::h_u((*p).x610_color_rgba[i0].a as u64);
-        }
-        rt::h_u((*p).x618_player_id as u64);
-        rt::h_u((*p).x619_costume_id as u64);
-        rt::h_u((*p).x61A_controller_index as u64);
-        rt::h_u((*p).team as u64);
-        rt::h_i((*p).x61C as i64);
-        rt::h_u((*p).x61D as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).filler_x61E[i0] as u64);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.lstick[i0].x);
-            rt::h_f32((*p).input.lstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.cstick[i0].x);
-            rt::h_f32((*p).input.cstick[i0].y);
-        }
-        for i0 in 0..3 {
-            rt::h_f32((*p).input.triggers[i0]);
-        }
-        for i0 in 0..3 {
-            rt::h_u((*p).input.held_buttons[i0] as u64);
-        }
-        rt::h_u((*p).input.pressed_buttons as u64);
-        rt::h_u((*p).input.released_buttons as u64);
-        rt::h_u((*p).active_timer.lstick.x as u64);
-        rt::h_u((*p).active_timer.lstick.y as u64);
-        rt::h_u((*p).active_timer.trigger as u64);
-        rt::h_u((*p).active_sticky.lstick.x as u64);
-        rt::h_u((*p).active_sticky.lstick.y as u64);
-        rt::h_u((*p).active_sticky.trigger as u64);
-        rt::h_u((*p).active_duration.lstick.x as u64);
-        rt::h_u((*p).active_duration.lstick.y as u64);
-        rt::h_u((*p).active_duration.trigger as u64);
-        rt::h_u((*p).activity_timer.lstick.x as u64);
-        rt::h_u((*p).activity_timer.lstick.y as u64);
-        rt::h_u((*p).activity_timer.trigger as u64);
-        rt::h_u((*p).x67C as u64);
-        rt::h_u((*p).x67D as u64);
-        rt::h_u((*p).x67E as u64);
-        rt::h_u((*p).x67F as u64);
-        rt::h_u((*p).x680 as u64);
-        rt::h_u((*p).x681 as u64);
-        rt::h_u((*p).x682 as u64);
-        rt::h_u((*p).x683 as u64);
-        rt::h_u((*p).x684 as u64);
-        rt::h_u((*p).x685 as u64);
-        rt::h_u((*p).x686 as u64);
-        rt::h_u((*p).x687 as u64);
-        rt::h_u((*p).x688 as u64);
-        rt::h_u((*p).x689 as u64);
-        rt::h_u((*p).x68A as u64);
-        rt::h_u((*p).x68B as u64);
-        rt::h_f32((*p).x68C_transNPos.x);
-        rt::h_f32((*p).x68C_transNPos.y);
-        rt::h_f32((*p).x68C_transNPos.z);
-        rt::h_f32((*p).x698.x);
-        rt::h_f32((*p).x698.y);
-        rt::h_f32((*p).x698.z);
-        rt::h_f32((*p).x6A4_transNOffset.x);
-        rt::h_f32((*p).x6A4_transNOffset.y);
-        rt::h_f32((*p).x6A4_transNOffset.z);
-        rt::h_f32((*p).x6B0.x);
-        rt::h_f32((*p).x6B0.y);
-        rt::h_f32((*p).x6B0.z);
-        rt::h_f32((*p).lstick_angle);
-        rt::h_f32((*p).x6C0.x);
-        rt::h_f32((*p).x6C0.y);
-        rt::h_f32((*p).x6C0.z);
-        rt::h_f32((*p).x6CC.x);
-        rt::h_f32((*p).x6CC.y);
-        rt::h_f32((*p).x6CC.z);
-        rt::h_f32((*p).x6D8.x);
-        rt::h_f32((*p).x6D8.y);
-        rt::h_f32((*p).x6D8.z);
-        rt::h_f32((*p).x6E4.x);
-        rt::h_f32((*p).x6E4.y);
-        rt::h_f32((*p).x6E4.z);
-        rt::h_p((*p).coll_data.x0_gobj as *const u8);
-        rt::h_f32((*p).coll_data.cur_pos.x);
-        rt::h_f32((*p).coll_data.cur_pos.y);
-        rt::h_f32((*p).coll_data.cur_pos.z);
-        rt::h_f32((*p).coll_data.prev_pos.x);
-        rt::h_f32((*p).coll_data.prev_pos.y);
-        rt::h_f32((*p).coll_data.prev_pos.z);
-        rt::h_f32((*p).coll_data.last_pos.x);
-        rt::h_f32((*p).coll_data.last_pos.y);
-        rt::h_f32((*p).coll_data.last_pos.z);
-        rt::h_f32((*p).coll_data.x28_vec.x);
-        rt::h_f32((*p).coll_data.x28_vec.y);
-        rt::h_f32((*p).coll_data.x28_vec.z);
-        rt::h_u((*p).coll_data.x34_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x34_flags.b7() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b0() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b1234() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b5() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b6() as u64);
-        rt::h_u((*p).coll_data.x35_flags.b7() as u64);
-        rt::h_i((*p).coll_data.facing_dir as i64);
-        rt::h_i((*p).coll_data.x38 as i64);
-        rt::h_i((*p).coll_data.floor_skip as i64);
-        rt::h_i((*p).coll_data.ledge_id_right as i64);
-        rt::h_i((*p).coll_data.ledge_id_left as i64);
-        rt::h_i((*p).coll_data.joint_id_skip as i64);
-        rt::h_i((*p).coll_data.joint_id_only as i64);
-        rt::h_f32((*p).coll_data.x50);
-        rt::h_f32((*p).coll_data.ledge_snap_x);
-        rt::h_f32((*p).coll_data.ledge_snap_y);
-        rt::h_f32((*p).coll_data.ledge_snap_height);
-        rt::h_f32((*p).coll_data.lstick_x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.x);
-        rt::h_f32((*p).coll_data.x64_ecb.top.y);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.x64_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.x64_ecb.right.x);
-        rt::h_f32((*p).coll_data.x64_ecb.right.y);
-        rt::h_f32((*p).coll_data.x64_ecb.left.x);
-        rt::h_f32((*p).coll_data.x64_ecb.left.y);
-        rt::h_f32((*p).coll_data.desired_ecb.top.x);
-        rt::h_f32((*p).coll_data.desired_ecb.top.y);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.desired_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.desired_ecb.right.x);
-        rt::h_f32((*p).coll_data.desired_ecb.right.y);
-        rt::h_f32((*p).coll_data.desired_ecb.left.x);
-        rt::h_f32((*p).coll_data.desired_ecb.left.y);
-        rt::h_f32((*p).coll_data.ecb.top.x);
-        rt::h_f32((*p).coll_data.ecb.top.y);
-        rt::h_f32((*p).coll_data.ecb.bottom.x);
-        rt::h_f32((*p).coll_data.ecb.bottom.y);
-        rt::h_f32((*p).coll_data.ecb.right.x);
-        rt::h_f32((*p).coll_data.ecb.right.y);
-        rt::h_f32((*p).coll_data.ecb.left.x);
-        rt::h_f32((*p).coll_data.ecb.left.y);
-        rt::h_f32((*p).coll_data.prev_ecb.top.x);
-        rt::h_f32((*p).coll_data.prev_ecb.top.y);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.prev_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.prev_ecb.right.x);
-        rt::h_f32((*p).coll_data.prev_ecb.right.y);
-        rt::h_f32((*p).coll_data.prev_ecb.left.x);
-        rt::h_f32((*p).coll_data.prev_ecb.left.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.top.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.bottom.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.right.y);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.x);
-        rt::h_f32((*p).coll_data.xE4_ecb.left.y);
-        rt::h_u((*p).coll_data.ecb_source.kind as u64);
-        rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x108_joint as *const u8);
-        for i0 in 0..6 {
-            rt::h_p((*p).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i0] as *const u8);
-        }
-        rt::h_f32((*p).coll_data.ecb_source.x124);
-        rt::h_f32((*p).coll_data.ecb_source.x128);
-        rt::h_f32((*p).coll_data.ecb_source.x12C);
-        rt::h_u((*p).coll_data.x130_flags as u64);
-        rt::h_i((*p).coll_data.env_flags as i64);
-        rt::h_i((*p).coll_data.prev_env_flags as i64);
-        rt::h_i((*p).coll_data.x13C as i64);
-        rt::h_f32((*p).coll_data.contact.x);
-        rt::h_f32((*p).coll_data.contact.y);
-        rt::h_f32((*p).coll_data.contact.z);
-        rt::h_i((*p).coll_data.floor.index as i64);
-        rt::h_u((*p).coll_data.floor.flags as u64);
-        rt::h_f32((*p).coll_data.floor.normal.x);
-        rt::h_f32((*p).coll_data.floor.normal.y);
-        rt::h_f32((*p).coll_data.floor.normal.z);
-        rt::h_i((*p).coll_data.left_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.left_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.left_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.right_facing_wall.index as i64);
-        rt::h_u((*p).coll_data.right_facing_wall.flags as u64);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.x);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.y);
-        rt::h_f32((*p).coll_data.right_facing_wall.normal.z);
-        rt::h_i((*p).coll_data.ceiling.index as i64);
-        rt::h_u((*p).coll_data.ceiling.flags as u64);
-        rt::h_f32((*p).coll_data.ceiling.normal.x);
-        rt::h_f32((*p).coll_data.ceiling.normal.y);
-        rt::h_f32((*p).coll_data.ceiling.normal.z);
-        rt::h_i((*p).ecb_lock as i64);
-        rt::h_p((*p).x890_cameraBox as *const u8);
-        rt::h_f32((*p).cur_anim_frame);
-        rt::h_f32((*p).x898_unk);
-        rt::h_f32((*p).frame_speed_mul);
-        rt::h_f32((*p).x8A0_unk);
-        rt::h_f32((*p).x8A4_animBlendFrames);
-        rt::h_f32((*p).x8A8_anim_frame);
-        rt::h_p((*p).x8AC_animSkeleton as *const u8);
-        for i0 in 0..5 {
-            rt::h_i((*p).x8B0[i0].x0 as i64);
-            rt::h_f32((*p).x8B0[i0].x4);
-            rt::h_f32((*p).x8B0[i0].x8);
-            rt::h_f32((*p).x8B0[i0].xC);
-            rt::h_i((*p).x8B0[i0].x10 as i64);
-            rt::h_i((*p).x8B0[i0].x11 as i64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).x914[i0].state as u64);
-            rt::h_u((*p).x914[i0].x4 as u64);
-            rt::h_u((*p).x914[i0].unk_count as u64);
-            rt::h_f32((*p).x914[i0].damage);
-            rt::h_f32((*p).x914[i0].b_offset.x);
-            rt::h_f32((*p).x914[i0].b_offset.y);
-            rt::h_f32((*p).x914[i0].b_offset.z);
-            rt::h_f32((*p).x914[i0].scale);
-            rt::h_i((*p).x914[i0].kb_angle as i64);
-            rt::h_u((*p).x914[i0].x24 as u64);
-            rt::h_u((*p).x914[i0].x28 as u64);
-            rt::h_u((*p).x914[i0].x2C as u64);
-            rt::h_u((*p).x914[i0].element as u64);
-            rt::h_i((*p).x914[i0].x34 as i64);
-            rt::h_i((*p).x914[i0].sfx_severity as i64);
-            rt::h_i((*p).x914[i0].sfx_kind as i64);
-            rt::h_u((*p).x914[i0].x40_b0() as u64);
-            rt::h_u((*p).x914[i0].x40_b1() as u64);
-            rt::h_u((*p).x914[i0].x40_b2() as u64);
-            rt::h_u((*p).x914[i0].x40_b3() as u64);
-            rt::h_u((*p).x914[i0].x40_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b4() as u64);
-            rt::h_u((*p).x914[i0].x41_b5() as u64);
-            rt::h_u((*p).x914[i0].x41_b6() as u64);
-            rt::h_u((*p).x914[i0].x41_b7() as u64);
-            rt::h_u((*p).x914[i0].x42_b0() as u64);
-            rt::h_u((*p).x914[i0].x42_b1() as u64);
-            rt::h_u((*p).x914[i0].x42_b2() as u64);
-            rt::h_u((*p).x914[i0].x42_b3() as u64);
-            rt::h_u((*p).x914[i0].x42_b4() as u64);
-            rt::h_u((*p).x914[i0].x42_b5() as u64);
-            rt::h_u((*p).x914[i0].x42_b6() as u64);
-            rt::h_u((*p).x914[i0].x42_b7() as u64);
-            rt::h_u((*p).x914[i0].x43_b0() as u64);
-            rt::h_u((*p).x914[i0].x43_b1() as u64);
-            rt::h_u((*p).x914[i0].x43_b2() as u64);
-            rt::h_u((*p).x914[i0].x43_b3() as u64);
-            rt::h_u((*p).x914[i0].x43_b4() as u64);
-            rt::h_u((*p).x914[i0].x43_b5() as u64);
-            rt::h_u((*p).x914[i0].x43_b6() as u64);
-            rt::h_u((*p).x914[i0].x43_b7() as u64);
-            rt::h_u((*p).x914[i0].x44 as u64);
-            rt::h_u((*p).x914[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).x914[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).x914[i0].jobj as *const u8);
-            rt::h_f32((*p).x914[i0].x4C.x);
-            rt::h_f32((*p).x914[i0].x4C.y);
-            rt::h_f32((*p).x914[i0].x4C.z);
-            rt::h_f32((*p).x914[i0].x58.x);
-            rt::h_f32((*p).x914[i0].x58.y);
-            rt::h_f32((*p).x914[i0].x58.z);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).x914[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).x914[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).x914[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).x914[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).x914[i0].anon_134.owner as *const u8);
-        }
-        for i0 in 0..2 {
-            rt::h_u((*p).xDF4[i0].state as u64);
-            rt::h_u((*p).xDF4[i0].x4 as u64);
-            rt::h_u((*p).xDF4[i0].unk_count as u64);
-            rt::h_f32((*p).xDF4[i0].damage);
-            rt::h_f32((*p).xDF4[i0].b_offset.x);
-            rt::h_f32((*p).xDF4[i0].b_offset.y);
-            rt::h_f32((*p).xDF4[i0].b_offset.z);
-            rt::h_f32((*p).xDF4[i0].scale);
-            rt::h_i((*p).xDF4[i0].kb_angle as i64);
-            rt::h_u((*p).xDF4[i0].x24 as u64);
-            rt::h_u((*p).xDF4[i0].x28 as u64);
-            rt::h_u((*p).xDF4[i0].x2C as u64);
-            rt::h_u((*p).xDF4[i0].element as u64);
-            rt::h_i((*p).xDF4[i0].x34 as i64);
-            rt::h_i((*p).xDF4[i0].sfx_severity as i64);
-            rt::h_i((*p).xDF4[i0].sfx_kind as i64);
-            rt::h_u((*p).xDF4[i0].x40_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x40_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x41_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x42_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b0() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b1() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b2() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b3() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b4() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b5() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b6() as u64);
-            rt::h_u((*p).xDF4[i0].x43_b7() as u64);
-            rt::h_u((*p).xDF4[i0].x44 as u64);
-            rt::h_u((*p).xDF4[i0].x45 as u64);
-            for i1 in 0..2 {
-                rt::h_u((*p).xDF4[i0].x46[i1] as u64);
-            }
-            rt::h_p((*p).xDF4[i0].jobj as *const u8);
-            rt::h_f32((*p).xDF4[i0].x4C.x);
-            rt::h_f32((*p).xDF4[i0].x4C.y);
-            rt::h_f32((*p).xDF4[i0].x4C.z);
-            rt::h_f32((*p).xDF4[i0].x58.x);
-            rt::h_f32((*p).xDF4[i0].x58.y);
-            rt::h_f32((*p).xDF4[i0].x58.z);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.x);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.y);
-            rt::h_f32((*p).xDF4[i0].hurt_coll_pos.z);
-            rt::h_f32((*p).xDF4[i0].coll_distance);
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_1[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_1[i1].x4 as u64);
-            }
-            for i1 in 0..12 {
-                rt::h_p((*p).xDF4[i0].victims_2[i1].victim as *const u8);
-                rt::h_u((*p).xDF4[i0].victims_2[i1].x4 as u64);
-            }
-            rt::h_p((*p).xDF4[i0].anon_134.owner as *const u8);
-        }
-        rt::h_u((*p).x1064_thrownHitbox.state as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x4 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.unk_count as u64);
-        rt::h_f32((*p).x1064_thrownHitbox.damage);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.x);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.y);
-        rt::h_f32((*p).x1064_thrownHitbox.b_offset.z);
-        rt::h_f32((*p).x1064_thrownHitbox.scale);
-        rt::h_i((*p).x1064_thrownHitbox.kb_angle as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x24 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x28 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x2C as u64);
-        rt::h_u((*p).x1064_thrownHitbox.element as u64);
-        rt::h_i((*p).x1064_thrownHitbox.x34 as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_severity as i64);
-        rt::h_i((*p).x1064_thrownHitbox.sfx_kind as i64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x40_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x41_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x42_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b0() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b1() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b2() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b3() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b4() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b5() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b6() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x43_b7() as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x44 as u64);
-        rt::h_u((*p).x1064_thrownHitbox.x45 as u64);
-        for i0 in 0..2 {
-            rt::h_u((*p).x1064_thrownHitbox.x46[i0] as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.jobj as *const u8);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x4C.z);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.x);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.y);
-        rt::h_f32((*p).x1064_thrownHitbox.x58.z);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.x);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.y);
-        rt::h_f32((*p).x1064_thrownHitbox.hurt_coll_pos.z);
-        rt::h_f32((*p).x1064_thrownHitbox.coll_distance);
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_1[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_1[i0].x4 as u64);
-        }
-        for i0 in 0..12 {
-            rt::h_p((*p).x1064_thrownHitbox.victims_2[i0].victim as *const u8);
-            rt::h_u((*p).x1064_thrownHitbox.victims_2[i0].x4 as u64);
-        }
-        rt::h_p((*p).x1064_thrownHitbox.anon_134.owner as *const u8);
-        rt::h_u((*p).x119C_teamUnk as u64);
-        rt::h_u((*p).grabber_unk1 as u64);
-        rt::h_u((*p).hurt_capsules_len as u64);
-        rt::h_u((*p).x119F as u64);
-        for i0 in 0..15 {
-            rt::h_u((*p).hurt_capsules[i0].capsule.state as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_offset.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.scale);
-            rt::h_p((*p).hurt_capsules[i0].capsule.bone as *const u8);
-            rt::h_u((*p).hurt_capsules[i0].capsule.skip_update_pos() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b1() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b2() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b3() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b4() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b5() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b6() as u64);
-            rt::h_u((*p).hurt_capsules[i0].capsule.x24_b7() as u64);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.a_pos.z);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.x);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.y);
-            rt::h_f32((*p).hurt_capsules[i0].capsule.b_pos.z);
-            rt::h_i((*p).hurt_capsules[i0].capsule.bone_idx as i64);
-            rt::h_u((*p).hurt_capsules[i0].height as u64);
-            rt::h_i((*p).hurt_capsules[i0].is_grabbable as i64);
-        }
-        for i0 in 0..2 {
-            rt::h_f32((*p).x1614[i0].x0);
-            rt::h_p((*p).x1614[i0].x4 as *const u8);
-            rt::h_f32((*p).x1614[i0].x8.x);
-            rt::h_f32((*p).x1614[i0].x8.y);
-            rt::h_f32((*p).x1614[i0].x8.z);
-            rt::h_f32((*p).x1614[i0].x14.x);
-            rt::h_f32((*p).x1614[i0].x14.y);
-            rt::h_f32((*p).x1614[i0].x14.z);
-            rt::h_f32((*p).x1614[i0].x20.x);
-            rt::h_f32((*p).x1614[i0].x20.y);
-            rt::h_f32((*p).x1614[i0].x20.z);
-        }
-        rt::h_u((*p).x166C as u64);
-        for i0 in 0..1 {
-            rt::h_f32((*p).x1670[i0].v1.x);
-            rt::h_f32((*p).x1670[i0].v1.y);
-            rt::h_f32((*p).x1670[i0].v1.z);
-            rt::h_f32((*p).x1670[i0].v2);
-            rt::h_p((*p).x1670[i0].jobj as *const u8);
-            rt::h_f32((*p).x1670[i0].x14);
-            rt::h_f32((*p).x1670[i0].x18.x);
-            rt::h_f32((*p).x1670[i0].x18.y);
-            rt::h_f32((*p).x1670[i0].x18.z);
-            rt::h_i((*p).x1670[i0].x24 as i64);
-        }
-        for i0 in 0..400 {
-            rt::h_u((*p).filler_x1674[i0] as u64);
-        }
-        rt::h_i((*p).x1828 as i64);
-        rt::h_f32((*p).dmg.x182c_behavior);
-        rt::h_f32((*p).dmg.x1830_percent);
-        rt::h_f32((*p).dmg.x1834);
-        rt::h_f32((*p).dmg.x1838_percentTemp);
-        rt::h_i((*p).dmg.x183C_applied as i64);
-        rt::h_i((*p).dmg.x1840 as i64);
-        rt::h_f32((*p).dmg.facing_dir_1);
-        rt::h_i((*p).dmg.x1848_kb_angle as i64);
-        rt::h_i((*p).dmg.x184c_damaged_hurtbox as i64);
-        rt::h_f32((*p).dmg.kb_applied);
-        rt::h_f32((*p).dmg.x1854_collpos.x);
-        rt::h_f32((*p).dmg.x1854_collpos.y);
-        rt::h_f32((*p).dmg.x1854_collpos.z);
-        rt::h_u((*p).dmg.x1860_element as u64);
-        rt::h_i((*p).dmg.x1864 as i64);
-        rt::h_p((*p).dmg.x1868_source as *const u8);
-        rt::h_i((*p).dmg.x186c as i64);
-        rt::h_p((*p).dmg.x1870 as *const u8);
-        rt::h_i((*p).dmg.x1874 as i64);
-        rt::h_i((*p).dmg.x1878 as i64);
-        rt::h_f32((*p).dmg.x187c);
-        rt::h_f32((*p).dmg.x1880.x);
-        rt::h_f32((*p).dmg.x1880.y);
-        rt::h_f32((*p).dmg.x1880.z);
-        rt::h_i((*p).dmg.x188c as i64);
-        rt::h_i((*p).dmg.x1890 as i64);
-        rt::h_i((*p).dmg.x1894 as i64);
-        rt::h_f32((*p).dmg.x1898);
-        rt::h_f32((*p).dmg.x189C_unk_num_frames);
-        rt::h_f32((*p).dmg.x18a0);
-        rt::h_f32((*p).dmg.x18A4_knockbackMagnitude);
-        rt::h_f32((*p).dmg.x18A8);
-        rt::h_i((*p).dmg.x18ac_time_since_hit as i64);
-        rt::h_f32((*p).dmg.armor0);
-        rt::h_f32((*p).dmg.armor1);
-        rt::h_f32((*p).dmg.x18B8);
-        rt::h_f32((*p).dmg.x18BC);
-        rt::h_i((*p).dmg.x18C0 as i64);
-        rt::h_i((*p).dmg.x18c4_source_ply as i64);
-        rt::h_i((*p).dmg.x18C8 as i64);
-        rt::h_i((*p).dmg.x18CC as i64);
-        rt::h_i((*p).dmg.x18D0 as i64);
-        rt::h_u((*p).dmg.x18d4.x0 as u64);
-        rt::h_u((*p).dmg.x18d4.x1 as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b0() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b1() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b2() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b3() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b4() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b5() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b6() as u64);
-        rt::h_u((*p).dmg.x18d4.x2_b7() as u64);
-        rt::h_u((*p).dmg.x18d4.x3 as u64);
-        rt::h_i((*p).dmg.x18d8.x0 as i64);
-        rt::h_i((*p).dmg.x18d8.x4 as i64);
-        rt::h_f32((*p).dmg.x18d8.kb_applied1);
-        rt::h_i((*p).dmg.x18d8.xC as i64);
-        rt::h_u((*p).dmg.x18d8.x10_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b4() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b5() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b6() as u64);
-        rt::h_u((*p).dmg.x18d8.x10_b7() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b0() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b1() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b2() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b3() as u64);
-        rt::h_u((*p).dmg.x18d8.x11_b4() as u64);
-        rt::h_u((*p).dmg.x18ec_instancehitby as u64);
-        rt::h_i((*p).dmg.x18F0 as i64);
-        rt::h_i((*p).dmg.x18F4 as i64);
-        rt::h_u((*p).dmg.x18F8 as u64);
-        rt::h_u((*p).dmg.x18f9 as u64);
-        rt::h_u((*p).dmg.x18fa_model_shift_frames as u64);
-        rt::h_u((*p).dmg.x18FC as u64);
-        rt::h_u((*p).dmg.x18FD as u64);
-        rt::h_f32((*p).dmg.x1900);
-        rt::h_f32((*p).dmg.x1904);
-        rt::h_i((*p).dmg.x1908 as i64);
-        rt::h_p((*p).dmg.x190C as *const u8);
-        rt::h_i((*p).dmg.x1910 as i64);
-        rt::h_i((*p).dmg.x1914 as i64);
-        rt::h_i((*p).dmg.int_value as i64);
-        rt::h_f32((*p).dmg.x191C);
-        rt::h_f32((*p).dmg.facing_dir);
-        rt::h_i((*p).dmg.x1924 as i64);
-        rt::h_f32((*p).dmg.x1928);
-        rt::h_f32((*p).dmg.x192c);
-        rt::h_f32((*p).dmg.x1930.x0.x);
-        rt::h_f32((*p).dmg.x1930.x0.y);
-        rt::h_f32((*p).dmg.x1930.x0.z);
-        rt::h_f32((*p).dmg.x1930.xC.x);
-        rt::h_f32((*p).dmg.x1930.xC.y);
-        rt::h_f32((*p).dmg.x1930.xC.z);
-        rt::h_i((*p).dmg.x1948 as i64);
-        rt::h_i((*p).dmg.x194C as i64);
-        rt::h_i((*p).dmg.x1950 as i64);
-        rt::h_f32((*p).dmg.x1954);
-        rt::h_f32((*p).dmg.x1958);
-        rt::h_f32((*p).dmg.x195c_hitlag_frames);
-        rt::h_f32((*p).x1960_vibrateMult);
-        rt::h_f32((*p).x1964);
-        rt::h_u((*p).x1968_jumpsUsed as u64);
-        rt::h_u((*p).x1969_walljumpUsed as u64);
-        rt::h_f32((*p).hitlag_mul);
-        rt::h_i((*p).unk_msid as i64);
-        rt::h_p((*p).item_gobj as *const u8);
-        rt::h_p((*p).x1978 as *const u8);
-        rt::h_p((*p).x197C as *const u8);
-        rt::h_p((*p).x1980 as *const u8);
-        rt::h_p((*p).x1984_heldItemSpec as *const u8);
-        rt::h_i((*p).x1988 as i64);
-        rt::h_i((*p).x198C as i64);
-        rt::h_i((*p).x1990 as i64);
-        rt::h_i((*p).x1994 as i64);
-        rt::h_f32((*p).shield_health);
-        rt::h_f32((*p).lightshield_amount);
-        rt::h_i((*p).x19A0_shieldDamageTaken as i64);
-        rt::h_i((*p).x19A4 as i64);
-        rt::h_p((*p).x19A8 as *const u8);
-        rt::h_f32((*p).specialn_facing_dir);
-        rt::h_i((*p).x19B0 as i64);
-        rt::h_f32((*p).shield_unk0);
-        rt::h_f32((*p).shield_unk1);
-        rt::h_i((*p).x19BC_shieldDamageTaken3 as i64);
-        rt::h_p((*p).shield_hit.bone as *const u8);
-        rt::h_u((*p).shield_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).shield_hit.pos.x);
-        rt::h_f32((*p).shield_hit.pos.y);
-        rt::h_f32((*p).shield_hit.pos.z);
-        rt::h_f32((*p).shield_hit.offset.x);
-        rt::h_f32((*p).shield_hit.offset.y);
-        rt::h_f32((*p).shield_hit.offset.z);
-        rt::h_f32((*p).shield_hit.size);
-        rt::h_p((*p).reflect_hit.bone as *const u8);
-        rt::h_u((*p).reflect_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).reflect_hit.pos.x);
-        rt::h_f32((*p).reflect_hit.pos.y);
-        rt::h_f32((*p).reflect_hit.pos.z);
-        rt::h_f32((*p).reflect_hit.offset.x);
-        rt::h_f32((*p).reflect_hit.offset.y);
-        rt::h_f32((*p).reflect_hit.offset.z);
-        rt::h_f32((*p).reflect_hit.size);
-        rt::h_p((*p).absorb_hit.bone as *const u8);
-        rt::h_u((*p).absorb_hit.skip_update_pos() as u64);
-        rt::h_f32((*p).absorb_hit.pos.x);
-        rt::h_f32((*p).absorb_hit.pos.y);
-        rt::h_f32((*p).absorb_hit.pos.z);
-        rt::h_f32((*p).absorb_hit.offset.x);
-        rt::h_f32((*p).absorb_hit.offset.y);
-        rt::h_f32((*p).absorb_hit.offset.z);
-        rt::h_f32((*p).absorb_hit.size);
-        rt::h_f32((*p).ReflectAttr.x1A2C_reflectHitDirection);
-        rt::h_i((*p).ReflectAttr.x1A30_maxDamage as i64);
-        rt::h_f32((*p).ReflectAttr.x1A34_damageMul);
-        rt::h_f32((*p).ReflectAttr.x1A38_speedMul);
-        rt::h_i((*p).ReflectAttr.x1A3C_damageOver as i64);
-        rt::h_f32((*p).AbsorbAttr.x1A40_absorbHitDirection);
-        rt::h_i((*p).AbsorbAttr.x1A44_damageTaken as i64);
-        rt::h_i((*p).AbsorbAttr.x1A48_hitsTaken as i64);
-        rt::h_f32((*p).grab_timer);
-        rt::h_i((*p).x1A50 as i64);
-        rt::h_i((*p).x1A51 as i64);
-        rt::h_u((*p).x1A52 as u64);
-        rt::h_u((*p).x1A53 as u64);
-        rt::h_i((*p).x1A54 as i64);
-        rt::h_p((*p).victim_gobj as *const u8);
-        rt::h_p((*p).x1A5C as *const u8);
-        rt::h_p((*p).target_item_gobj as *const u8);
-        rt::h_p((*p).x1A64 as *const u8);
-        rt::h_u((*p).x1A68 as u64);
-        rt::h_u((*p).x1A6A as u64);
-        rt::h_f32((*p).x1A6C);
-        rt::h_f32((*p).x1A70.x);
-        rt::h_f32((*p).x1A70.y);
-        rt::h_f32((*p).x1A70.z);
-        rt::h_f32((*p).x1A7C.x);
-        rt::h_f32((*p).x1A7C.y);
-        rt::h_f32((*p).x1A7C.z);
-        rt::h_u((*p).cpu.buttons as u64);
-        rt::h_i((*p).cpu.lstick.x as i64);
-        rt::h_i((*p).cpu.lstick.y as i64);
-        rt::h_i((*p).cpu.cstick.x as i64);
-        rt::h_i((*p).cpu.cstick.y as i64);
-        rt::h_u((*p).cpu.ltrigger as u64);
-        rt::h_u((*p).cpu.rtrigger as u64);
-        rt::h_u((*p).cpu.kind as u64);
-        rt::h_i((*p).cpu.level as i64);
-        rt::h_i((*p).cpu.x14 as i64);
-        rt::h_i((*p).cpu.x18 as i64);
-        rt::h_i((*p).cpu.x1C as i64);
-        rt::h_i((*p).cpu.x20 as i64);
-        rt::h_i((*p).cpu.x24 as i64);
-        rt::h_i((*p).cpu.x28 as i64);
-        rt::h_i((*p).cpu.x2C as i64);
-        rt::h_i((*p).cpu.x30 as i64);
-        rt::h_i((*p).cpu.x34 as i64);
-        rt::h_f32((*p).cpu.x38);
-        rt::h_f32((*p).cpu.x3C);
-        rt::h_f32((*p).cpu.x40);
-        rt::h_p((*p).cpu.x44 as *const u8);
-        rt::h_p((*p).cpu.x48 as *const u8);
-        rt::h_p((*p).cpu.x4C as *const u8);
-        rt::h_u((*p).cpu.x50 as u64);
-        rt::h_f32((*p).cpu.x54.x);
-        rt::h_f32((*p).cpu.x54.y);
-        rt::h_f32((*p).cpu.x5C);
-        rt::h_i((*p).cpu.x60 as i64);
-        rt::h_f32((*p).cpu.x64.x);
-        rt::h_f32((*p).cpu.x64.y);
-        rt::h_f32((*p).cpu.x6C.x);
-        rt::h_f32((*p).cpu.x6C.y);
-        rt::h_f32((*p).cpu.x74.x);
-        rt::h_f32((*p).cpu.x74.y);
-        rt::h_i((*p).cpu.x7C as i64);
-        rt::h_i((*p).cpu.x80 as i64);
-        rt::h_i((*p).cpu.x84 as i64);
-        rt::h_i((*p).cpu.x88 as i64);
-        rt::h_i((*p).cpu.x8C as i64);
-        rt::h_i((*p).cpu.x90 as i64);
-        rt::h_i((*p).cpu.x94 as i64);
-        rt::h_f32((*p).cpu.x98.x);
-        rt::h_f32((*p).cpu.x98.y);
-        rt::h_f32((*p).cpu.x98.z);
-        rt::h_i((*p).cpu.xA4 as i64);
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xA8_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xC8 as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xC9[i0] as u64);
-        }
-        for i0 in 0..8 {
-            rt::h_i((*p).cpu.xCC_array[i0] as i64);
-        }
-        rt::h_u((*p).cpu.xEC as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).cpu.pad_xED[i0] as u64);
-        }
-        rt::h_p((*p).cpu.xF0 as *const u8);
-        rt::h_p((*p).cpu.xF4 as *const u8);
-        rt::h_u((*p).cpu.xF8_b0() as u64);
-        rt::h_u((*p).cpu.xF8_b12() as u64);
-        rt::h_u((*p).cpu.xF8_b34() as u64);
-        rt::h_u((*p).cpu.xF8_b5() as u64);
-        rt::h_u((*p).cpu.xF8_b6() as u64);
-        rt::h_u((*p).cpu.xF8_b7() as u64);
-        rt::h_u((*p).cpu.xF9_b0() as u64);
-        rt::h_u((*p).cpu.xF9_b1() as u64);
-        rt::h_u((*p).cpu.xF9_b2() as u64);
-        rt::h_u((*p).cpu.xF9_b3() as u64);
-        rt::h_u((*p).cpu.xF9_b4() as u64);
-        rt::h_u((*p).cpu.xF9_b5() as u64);
-        rt::h_u((*p).cpu.xF9_b6() as u64);
-        rt::h_u((*p).cpu.xF9_b7() as u64);
-        rt::h_u((*p).cpu.xFA_b0() as u64);
-        rt::h_u((*p).cpu.xFA_b1() as u64);
-        rt::h_u((*p).cpu.xFA_b2() as u64);
-        rt::h_u((*p).cpu.xFA_b34() as u64);
-        rt::h_u((*p).cpu.xFA_b5() as u64);
-        rt::h_u((*p).cpu.xFA_b6() as u64);
-        rt::h_u((*p).cpu.xFA_b7() as u64);
-        rt::h_u((*p).cpu.xFB_b0() as u64);
-        rt::h_u((*p).cpu.xFB_b1() as u64);
-        rt::h_u((*p).cpu.xFB_b2() as u64);
-        rt::h_u((*p).cpu.xFB_b3() as u64);
-        rt::h_u((*p).cpu.xFB_b4() as u64);
-        rt::h_u((*p).cpu.xFB_b5() as u64);
-        rt::h_u((*p).cpu.xFB_b6() as u64);
-        rt::h_u((*p).cpu.xFB_b7() as u64);
-        for i0 in 0..30 {
-            rt::h_u((*p).cpu.xFC[i0].x0 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x4 as u64);
-            rt::h_u((*p).cpu.xFC[i0].x5 as u64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].lstick.y as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.x as i64);
-            rt::h_i((*p).cpu.xFC[i0].cstick.y as i64);
-            rt::h_u((*p).cpu.xFC[i0].xA as u64);
-            rt::h_u((*p).cpu.xFC[i0].xB as u64);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.x);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.y);
-            rt::h_f32((*p).cpu.xFC[i0].cur_pos.z);
-            rt::h_f32((*p).cpu.xFC[i0].facing_dir);
-        }
-        rt::h_p((*p).cpu.x444 as *const u8);
-        rt::h_p((*p).cpu.x448 as *const u8);
-        rt::h_u((*p).cpu.command_duration as u64);
-        rt::h_p((*p).cpu.csP as *const u8);
-        for i0 in 0..256 {
-            rt::h_i((*p).cpu.buffer[i0] as i64);
-        }
-        rt::h_p((*p).cpu.write_pos as *const u8);
-        rt::h_f32((*p).cpu.x558);
-        rt::h_f32((*p).cpu.x55C);
-        rt::h_f32((*p).cpu.x560);
-        rt::h_f32((*p).cpu.x564);
-        rt::h_f32((*p).cpu.x568);
-        rt::h_f32((*p).cpu.x56C);
-        rt::h_f32((*p).cpu.x570);
-        rt::h_f32((*p).cpu.half_width);
-        rt::h_f32((*p).cpu.half_height);
-        rt::h_i((*p).x2004 as i64);
-        rt::h_i((*p).x2008 as i64);
-        rt::h_i((*p).x200C as i64);
-        rt::h_i((*p).x2010 as i64);
-        rt::h_i((*p).x2014 as i64);
-        rt::h_i((*p).x2018 as i64);
-        rt::h_i((*p).x201C as i64);
-        rt::h_i((*p).x2020 as i64);
-        rt::h_i((*p).x2021 as i64);
-        rt::h_i((*p).x2022 as i64);
-        rt::h_i((*p).x2024 as i64);
-        rt::h_i((*p).metal_timer as i64);
-        rt::h_i((*p).metal_health as i64);
-        rt::h_i((*p).x2030 as i64);
-        rt::h_i((*p).x2034 as i64);
-        rt::h_i((*p).x2038 as i64);
-        rt::h_u((*p).x203C.count as u64);
-        rt::h_p((*p).x203C.data as *const u8);
-        for i0 in 0..32 {
-            rt::h_u((*p).filler_x2044[i0] as u64);
-        }
-        rt::h_i((*p).x2064_ledgeCooldown as i64);
-        rt::h_i((*p).x2068_attackID as i64);
-        rt::h_u((*p).x206C_attack_instance as u64);
-        rt::h_i((*p).x206E as i64);
-        rt::h_bytes(&(*p).x2070 as *const _ as *const u8, 4);
-        rt::h_f32((*p).x2074.x2074_vec.x);
-        rt::h_f32((*p).x2074.x2074_vec.y);
-        rt::h_i((*p).x2074.x207C.x as i64);
-        rt::h_i((*p).x2074.x207C.y as i64);
-        rt::h_u((*p).x2074.anon_10.x2084 as u64);
-        rt::h_u((*p).x2074.x2088 as u64);
-        rt::h_i((*p).x208C as i64);
-        rt::h_u((*p).x2090 as u64);
-        rt::h_u((*p).x2092 as u64);
-        rt::h_p((*p).x2094 as *const u8);
-        rt::h_u((*p).x2098 as u64);
-        rt::h_u((*p).x209A as u64);
-        rt::h_u((*p).x209C as u64);
-        rt::h_p((*p).x20A0_accessory as *const u8);
-        rt::h_u((*p).x20A4.x0_b0() as u64);
-        rt::h_u((*p).x20A4.x0_b1() as u64);
-        rt::h_u((*p).x20A4.x0_b2() as u64);
-        rt::h_u((*p).x20A4.x0_b3() as u64);
-        rt::h_u((*p).x20A4.x0_b4() as u64);
-        rt::h_u((*p).x20A4.x0_b5() as u64);
-        rt::h_u((*p).x20A4.x0_b6() as u64);
-        rt::h_u((*p).x20A4.x0_b7() as u64);
-        rt::h_p((*p).x20A4.shadow as *const u8);
-        rt::h_p((*p).unk_gobj as *const u8);
-        for i0 in 0..3 {
-            rt::h_f32((*p).x20B0[i0].x0.x);
-            rt::h_f32((*p).x20B0[i0].x0.y);
-            rt::h_f32((*p).x20B0[i0].x0.z);
-            rt::h_f32((*p).x20B0[i0].xC.x);
-            rt::h_f32((*p).x20B0[i0].xC.y);
-            rt::h_f32((*p).x20B0[i0].xC.z);
-        }
-        rt::h_f32((*p).x20F8);
-        rt::h_f32((*p).x20FC);
-        rt::h_i((*p).x2100 as i64);
-        rt::h_u((*p).x2101_bits_0to6() as u64);
-        rt::h_u((*p).x2101_bits_8() as u64);
-        rt::h_i((*p).x2102 as i64);
-        rt::h_i((*p).x2103 as i64);
-        rt::h_i((*p).x2104 as i64);
-        rt::h_i((*p).capture_timer as i64);
-        rt::h_u((*p).wall_jump_input_timer as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x210C[i0] as u64);
-        }
-        rt::h_f32((*p).x2110_walljumpWallSide);
-        rt::h_u((*p).smash_attrs.state as u64);
-        rt::h_f32((*p).smash_attrs.x2118_frames);
-        rt::h_f32((*p).smash_attrs.x211C_holdFrame);
-        rt::h_f32((*p).smash_attrs.x2120_damageMul);
-        rt::h_f32((*p).smash_attrs.x2124_frameSpeedMul);
-        rt::h_i((*p).smash_attrs.x2128 as i64);
-        rt::h_u((*p).smash_attrs.x212C as u64);
-        rt::h_u((*p).smash_attrs.x212D as u64);
-        rt::h_i((*p).smash_attrs.x212E as i64);
-        rt::h_i((*p).smash_attrs.x212F as i64);
-        rt::h_i((*p).smash_attrs.x2130_sfxBool as i64);
-        rt::h_u((*p).smash_attrs.x2134_vibrateFrame as u64);
-        rt::h_i((*p).smash_attrs.x2135 as i64);
-        rt::h_i((*p).smash_attrs.x2136 as i64);
-        rt::h_i((*p).smash_attrs.x2137 as i64);
-        rt::h_f32((*p).smash_attrs.x2138_smashSinceHitbox);
-        rt::h_i((*p).x213C as i64);
-        rt::h_f32((*p).x2140);
-        rt::h_i((*p).x2144 as i64);
-        rt::h_i((*p).x2148 as i64);
-        rt::h_i((*p).x214C as i64);
-        rt::h_i((*p).x2150 as i64);
-        rt::h_i((*p).x2154 as i64);
-        rt::h_i((*p).x2158 as i64);
-        rt::h_i((*p).x215C as i64);
-        rt::h_i((*p).x2160 as i64);
-        rt::h_i((*p).x2164 as i64);
-        rt::h_i((*p).x2168 as i64);
-        rt::h_f32((*p).unk_grab_val);
-        rt::h_f32((*p).x2170);
-        rt::h_f32((*p).x2174.x);
-        rt::h_f32((*p).x2174.y);
-        rt::h_f32((*p).x2174.z);
-        rt::h_i((*p).x2180 as i64);
-        rt::h_p((*p).x2184 as *const u8);
-        rt::h_i((*p).x2188.x as i64);
-        rt::h_i((*p).x2188.y as i64);
-        rt::h_fn((*p).grab_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x2194.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).grabbed_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).input_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).anim_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).phys_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).coll_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).cam_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).accessory4_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).deal_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).shield_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).reflect_hit_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21CC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).pre_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).post_hitlag_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death1_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).death3_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21EC.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).take_dmg_2_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).hurtbox_detect_cb.map_or(0usize, |f| f as usize));
-        rt::h_fn((*p).x21F8.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).x21FC_flag.anon_0.b0() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b1() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b2() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b3() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b4() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b5() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b6() as u64);
-        rt::h_u((*p).x21FC_flag.anon_0.b7() as u64);
-        for i0 in 0..3 {
-            rt::h_u((*p).filler_x21FC[i0] as u64);
-        }
-        for i0 in 0..4 {
-            rt::h_u((*p).cmd_vars[i0] as u64);
-        }
-        rt::h_u((*p).anon_2210.throw_flags as u64);
-        rt::h_f32((*p).cmd_timer);
-        rt::h_u((*p).allow_interrupt() as u64);
-        rt::h_u((*p).x2218_b1() as u64);
-        rt::h_u((*p).x2218_b2() as u64);
-        rt::h_u((*p).reflecting() as u64);
-        rt::h_u((*p).x2218_b4() as u64);
-        rt::h_u((*p).x2218_b5() as u64);
-        rt::h_u((*p).x2218_b6() as u64);
-        rt::h_u((*p).x2218_b7() as u64);
-        rt::h_u((*p).x2219_b0() as u64);
-        rt::h_u((*p).x2219_b1() as u64);
-        rt::h_u((*p).x2219_b2() as u64);
-        rt::h_u((*p).x2219_b3() as u64);
-        rt::h_u((*p).x2219_b4() as u64);
-        rt::h_u((*p).x2219_b5() as u64);
-        rt::h_u((*p).x2219_b6() as u64);
-        rt::h_u((*p).x2219_b7() as u64);
-        rt::h_u((*p).x221A_b0() as u64);
-        rt::h_u((*p).x221A_b1() as u64);
-        rt::h_u((*p).allow_sdi() as u64);
-        rt::h_u((*p).x221A_b3() as u64);
-        rt::h_u((*p).fall_fast() as u64);
-        rt::h_u((*p).x221A_b5() as u64);
-        rt::h_u((*p).x221A_b6() as u64);
-        rt::h_u((*p).x221A_b7() as u64);
-        rt::h_u((*p).anon_221b.x221B_b0() as u64);
-        rt::h_u((*p).anon_221b.x221B_b1() as u64);
-        rt::h_u((*p).anon_221b.x221B_b2() as u64);
-        rt::h_u((*p).anon_221b.x221B_b3() as u64);
-        rt::h_u((*p).anon_221b.x221B_b4() as u64);
-        rt::h_u((*p).anon_221b.x221B_b5() as u64);
-        rt::h_u((*p).anon_221b.x221B_b6() as u64);
-        rt::h_u((*p).anon_221b.x221B_b7() as u64);
-        rt::h_u((*p).x221C_b0() as u64);
-        rt::h_u((*p).x221C_b1() as u64);
-        rt::h_u((*p).x221C_b2() as u64);
-        rt::h_u((*p).x221C_b3() as u64);
-        rt::h_u((*p).x221C_b4() as u64);
-        rt::h_u((*p).x221C_b5() as u64);
-        rt::h_u((*p).x221C_b6() as u64);
-        rt::h_u((*p).x221C_u16_y() as u64);
-        rt::h_u((*p).x221D_b2() as u64);
-        rt::h_u((*p).x221D_b3() as u64);
-        rt::h_u((*p).x221D_b4() as u64);
-        rt::h_u((*p).x221D_b5() as u64);
-        rt::h_u((*p).x221D_b6() as u64);
-        rt::h_u((*p).x221D_b7() as u64);
-        rt::h_u((*p).invisible() as u64);
-        rt::h_u((*p).x221E_b1() as u64);
-        rt::h_u((*p).x221E_b2() as u64);
-        rt::h_u((*p).x221E_b3() as u64);
-        rt::h_u((*p).x221E_b4() as u64);
-        rt::h_u((*p).x221E_b5() as u64);
-        rt::h_u((*p).x221E_b6() as u64);
-        rt::h_u((*p).x221E_b7() as u64);
-        rt::h_u((*p).x221F_b0() as u64);
-        rt::h_u((*p).x221F_b1() as u64);
-        rt::h_u((*p).x221F_b2() as u64);
-        rt::h_u((*p).x221F_b3() as u64);
-        rt::h_u((*p).is_sub_fighter() as u64);
-        rt::h_u((*p).x221F_b5() as u64);
-        rt::h_u((*p).x221F_b6() as u64);
-        rt::h_u((*p).x221F_b7() as u64);
-        rt::h_u((*p).x2220_b0() as u64);
-        rt::h_u((*p).x2220_b3() as u64);
-        rt::h_u((*p).x2220_b4() as u64);
-        rt::h_u((*p).x2220_b5() as u64);
-        rt::h_u((*p).x2220_b6() as u64);
-        rt::h_u((*p).x2220_b7() as u64);
-        rt::h_u((*p).x2221_b0() as u64);
-        rt::h_u((*p).x2221_b1() as u64);
-        rt::h_u((*p).x2221_b2() as u64);
-        rt::h_u((*p).x2221_b3() as u64);
-        rt::h_u((*p).x2221_b4() as u64);
-        rt::h_u((*p).x2221_b5() as u64);
-        rt::h_u((*p).x2221_b6() as u64);
-        rt::h_u((*p).x2221_b7() as u64);
-        rt::h_u((*p).x2222_b0() as u64);
-        rt::h_u((*p).can_multijump() as u64);
-        rt::h_u((*p).x2222_b2() as u64);
-        rt::h_u((*p).x2222_b3() as u64);
-        rt::h_u((*p).x2222_b4() as u64);
-        rt::h_u((*p).x2222_b5() as u64);
-        rt::h_u((*p).x2222_b6() as u64);
-        rt::h_u((*p).x2222_b7() as u64);
-        rt::h_u((*p).x2223_b0() as u64);
-        rt::h_u((*p).x2223_b1() as u64);
-        rt::h_u((*p).x2223_b2() as u64);
-        rt::h_u((*p).x2223_b3() as u64);
-        rt::h_u((*p).x2223_b4() as u64);
-        rt::h_u((*p).x2223_b5() as u64);
-        rt::h_u((*p).is_always_metal() as u64);
-        rt::h_u((*p).is_metal() as u64);
-        rt::h_u((*p).x2224_b0() as u64);
-        rt::h_u((*p).x2224_b1() as u64);
-        rt::h_u((*p).x2224_b2() as u64);
-        rt::h_u((*p).x2224_b3() as u64);
-        rt::h_u((*p).x2224_b4() as u64);
-        rt::h_u((*p).x2224_b5() as u64);
-        rt::h_u((*p).x2224_b6() as u64);
-        rt::h_u((*p).can_walljump() as u64);
-        rt::h_u((*p).x2225_b0() as u64);
-        rt::h_u((*p).x2225_b1() as u64);
-        rt::h_u((*p).x2225_b2() as u64);
-        rt::h_u((*p).x2225_b3() as u64);
-        rt::h_u((*p).x2225_b4() as u64);
-        rt::h_u((*p).x2225_b5() as u64);
-        rt::h_u((*p).x2225_b6() as u64);
-        rt::h_u((*p).x2225_b7() as u64);
-        rt::h_u((*p).x2226_b0() as u64);
-        rt::h_u((*p).x2226_b1() as u64);
-        rt::h_u((*p).x2226_b2() as u64);
-        rt::h_u((*p).x2226_b3() as u64);
-        rt::h_u((*p).x2226_b4() as u64);
-        rt::h_u((*p).x2226_b5() as u64);
-        rt::h_u((*p).x2226_b6() as u64);
-        rt::h_u((*p).x2226_b7() as u64);
-        rt::h_u((*p).x2227_b0() as u64);
-        rt::h_u((*p).x2227_b1() as u64);
-        rt::h_u((*p).x2227_b2() as u64);
-        rt::h_u((*p).x2227_b3() as u64);
-        rt::h_u((*p).x2227_b4() as u64);
-        rt::h_u((*p).x2227_b5() as u64);
-        rt::h_u((*p).x2227_b6() as u64);
-        rt::h_u((*p).x2227_b7() as u64);
-        rt::h_u((*p).x2228_b0() as u64);
-        rt::h_u((*p).x2228_b1() as u64);
-        rt::h_u((*p).is_sandbag() as u64);
-        rt::h_u((*p).x2228_b3() as u64);
-        rt::h_u((*p).x2228_b5() as u64);
-        rt::h_u((*p).used_tether() as u64);
-        rt::h_u((*p).x2228_b7() as u64);
-        rt::h_u((*p).x2229_b0() as u64);
-        rt::h_u((*p).x2229_b1() as u64);
-        rt::h_u((*p).x2229_b2() as u64);
-        rt::h_u((*p).x2229_b3() as u64);
-        rt::h_u((*p).x2229_b4() as u64);
-        rt::h_u((*p).no_normal_motion() as u64);
-        rt::h_u((*p).x2229_b6() as u64);
-        rt::h_u((*p).no_kb() as u64);
-        rt::h_u((*p).x222A_b0() as u64);
-        rt::h_u((*p).x222A_b1() as u64);
-        rt::h_u((*p).x222A_b2() as u64);
-        rt::h_u((*p).x222A_b3() as u64);
-        rt::h_u((*p).x222A_b5() as u64);
-        rt::h_u((*p).x222A_b6() as u64);
-        rt::h_u((*p).x222A_b7() as u64);
-        rt::h_bytes(&(*p).u as *const _ as *const u8, 400);
-        rt::h_u((*p).bury_grkind as u64);
-        rt::h_u((*p).bury_timer_1 as u64);
-        rt::h_u((*p).bury_timer_2 as u64);
-        rt::h_i((*p).x2330.x as i64);
-        rt::h_i((*p).x2330.y as i64);
-        rt::h_i((*p).x2338.x as i64);
-        rt::h_i((*p).x2338.y as i64);
-        rt::h_bytes(&(*p).mv as *const _ as *const u8, 176);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    rt::t_i(a[1] as i64);
-    rt::t_f32(f32::from_bits(a[2] as u32));
-    let p0 = a[0] as usize as *mut Q::Fighter;
-    if !p0.is_null() {
-        (*p0).gobj = 0usize as _;
-        (*p0).kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x8_spawnNum = rt::draw_int(&mut rt::MST) as _;
-        (*p0).player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).motion_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).anim_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1C_actionStateList = 0usize as _;
-        (*p0).x20_actionStateList = 0usize as _;
-        (*p0).x24 = 0usize as _;
-        (*p0).x28 = 0usize as _;
-        (*p0).facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).facing_dir1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x34_scale.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x40 = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..3 {
-            for i2 in 0..4 {
-                (*p0).x44_mtx[i1][i2] = rt::draw_f32(&mut rt::MST);
-            }
-        }
-        (*p0).x74_self_accel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x74_self_accel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).self_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x8c_kb_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x98_atk_shield_kb.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xA4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.x = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.y = rt::draw_f32(&mut rt::MST);
-        (*p0).pos_delta.z = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).xD4_unk_vel.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ground_or_air = rt::draw_int(&mut rt::MST) as _;
-        (*p0).xE4_ground_accel_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).xE8_ground_accel_2 = rt::draw_f32(&mut rt::MST);
-        (*p0).gr_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF0_ground_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF4_ground_attacker_shield_kb_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.x = rt::draw_f32(&mut rt::MST);
-        (*p0).xF8_playerNudgeVel.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x100 = rt::draw_f32(&mut rt::MST);
-        (*p0).x104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x105 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x106 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x107 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x108_costume_joint = 0usize as _;
-        (*p0).ft_data = 0usize as _;
-        (*p0).co_attrs.walk_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.walk_max_vel = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.slow_walk_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.mid_walk_point = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_walk_min = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_accel_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.dash_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.run_animation_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_run_brake_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_startup_time = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ground_to_air_jump_momentum_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jump_h_max_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hop_v_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_v_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_jump_h_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.max_jumps = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.gravity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.terminal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_stick_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_drift_base = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_drift_max = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.aerial_friction = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.fast_fall_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.air_max_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_2_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.jab_3_input_window = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.standing_turn_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.model_scaling = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.initial_shield_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.shield_break_initial_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.rapid_jab_window = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.clank_animation_length = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.hit_spark_variant = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.unused_0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.ledge_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.ledge_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.item_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.heavy_throw_velocity_multiplier = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.specials_ground_speed_retention = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x10.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xBC.x1C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.xDC = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.kirby_b_star_damage = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.normal_landing_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairn_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairf_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairb_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairhi_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.landingairlw_lag = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.name_tag_height = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passivewall_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_horizontal_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_vertical_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.passiveceil_vel_x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.trophy_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x114.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x120.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x130.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x13C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.screw_attack_launch_velocity = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x144 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.wall_jump_min_approach_speed = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageice_ice_size = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x150_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x154_damageice_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.damageicejump_vel_x_mult = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.respawn_platform_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.warp_star_hitbox_scale = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x168 = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.camera_zoom_target_bone = rt::draw_int(&mut rt::MST) as _;
-        (*p0).co_attrs.x170.x = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.y = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x170.z = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.x17C = rt::draw_f32(&mut rt::MST);
-        (*p0).co_attrs.weight_independent_throws_mask = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x294_itPickup.gr_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.gr_heavy_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x294_itPickup.air_light_offset.w = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2C4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2CC = 0usize as _;
-        (*p0).x2D0 = 0usize as _;
-        (*p0).dat_attrs = 0usize as _;
-        (*p0).dat_attrs_backup = 0usize as _;
-        (*p0).x2DC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E0 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E4 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2E8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2EC = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..10 {
-            (*p0).dynamic_bone_sets[i1].bone_id = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.data = 0usize as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).dynamic_bone_sets[i1].dyn_desc.pos.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).dynamics_num = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x3E4_fighterCmdScript.frame_count = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..1 {
-            (*p0).x3E4_fighterCmdScript.anon_8.ptr[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).x3E4_fighterCmdScript.event_return[i1] = 0usize as _;
-        }
-        (*p0).x3E4_fighterCmdScript.loop_count_dup = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x3E4_fighterCmdScript.unk_x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x8_ptr1 = 0usize as _;
-        (*p0).x408.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x10_ptr2 = 0usize as _;
-        (*p0).x408.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x18_alloc = 0usize as _;
-        (*p0).x408.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x408.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x408.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x408.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x408.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x408.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x408.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x8_ptr1 = 0usize as _;
-        (*p0).x488.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x10_ptr2 = 0usize as _;
-        (*p0).x488.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x18_alloc = 0usize as _;
-        (*p0).x488.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x488.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x488.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x488.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x488.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x488.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x488.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.x0_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x4_pri = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x8_ptr1 = 0usize as _;
-        (*p0).x508.xC_loop = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x10_ptr2 = 0usize as _;
-        (*p0).x508.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x18_alloc = 0usize as _;
-        (*p0).x508.x1c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x24 = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x508.x28_colanim), 8); for i1 in 0..8 { *(&mut (*p0).x508.x28_colanim as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x508.x2C_hex.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x2C_hex.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x30_color_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x34_color_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x38_color_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x3C_color_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x40_colorblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x44_colorblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x48_colorblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x4C_colorblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x50_light_color.r = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.g = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.b = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x50_light_color.a = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x508.x54_light_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x58_light_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x5C_light_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x60_light_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x64_lightblend_red = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x68_lightblend_green = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x6C_lightblend_blue = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x70_lightblend_alpha = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x74_light_rot_x = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.x78_light_rot_yz = rt::draw_f32(&mut rt::MST);
-        (*p0).x508.set_x7C_color_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_light_enable((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x508.set_x7C_flag8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x588 = 0usize as _;
-        (*p0).x58C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x590 = 0usize as _;
-        (*p0).anon_594.anon_0.set_x594_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b1_loop((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.set_x594_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x0((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).anon_594.anon_0.x596_bits.set_x7((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).x598 = 0usize as _;
-        (*p0).x59C = 0usize as _;
-        (*p0).x5A0 = 0usize as _;
-        (*p0).x5A4 = 0usize as _;
-        (*p0).x5A8 = 0usize as _;
-        (*p0).x5AC.model_num = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..5 {
-            (*p0).x5AC.cleared[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..5 {
-            (*p0).x5AC.xC[i1] = 0usize as _;
-        }
-        (*p0).tobj_list.n_costume_tobjs = rt::draw_int(&mut rt::MST) as _;
-        (*p0).tobj_list.x5D0 = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).tobj_list.costume_tobjs[i1] = 0usize as _;
-        }
-        (*p0).parts = 0usize as _;
-        (*p0).dobj_list.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dobj_list.data = 0usize as _;
-        for i1 in 0..12 {
-            (*p0).x5F4_arr[i1].prev = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x5F4_arr[i1].idx = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x60C = 0usize as _;
-        for i1 in 0..2 {
-            (*p0).x610_color_rgba[i1].r = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].g = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].b = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x610_color_rgba[i1].a = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x618_player_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x619_costume_id = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61A_controller_index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).team = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x61D = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).filler_x61E[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..3 {
-            (*p0).input.lstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.lstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.cstick[i1].x = rt::draw_f32(&mut rt::MST);
-            (*p0).input.cstick[i1].y = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.triggers[i1] = rt::draw_f32(&mut rt::MST);
-        }
-        for i1 in 0..3 {
-            (*p0).input.held_buttons[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).input.pressed_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).input.released_buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_sticky.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).active_duration.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).activity_timer.trigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x67F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x680 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x681 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x682 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x683 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x684 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x685 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x686 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x687 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x688 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x689 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68B = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x68C_transNPos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x68C_transNPos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x698.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6A4_transNOffset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6B0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).lstick_angle = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6C0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6CC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6D8.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x6E4.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x0_gobj = 0usize as _;
-        (*p0).coll_data.cur_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.cur_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.last_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x28_vec.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x34_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x34_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x34_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b1234((rt::draw_int(&mut rt::MST) & 0xF) as _);
-        (*p0).coll_data.x35_flags.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.x35_flags.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).coll_data.facing_dir = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x38 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_right = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ledge_id_left = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_skip = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.joint_id_only = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x50 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ledge_snap_height = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.lstick_x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x64_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.desired_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.prev_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.top.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.bottom.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.right.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.xE4_ecb.left.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ecb_source.anon_4.anon_0.x108_joint = 0usize as _;
-        for i1 in 0..6 {
-            (*p0).coll_data.ecb_source.anon_4.anon_0.x10C_joint[i1] = 0usize as _;
-        }
-        (*p0).coll_data.ecb_source.x124 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x128 = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ecb_source.x12C = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.x130_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.prev_env_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.x13C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.contact.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.contact.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.floor.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.floor.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.left_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.left_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.right_facing_wall.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.right_facing_wall.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.index = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).coll_data.ceiling.normal.x = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.y = rt::draw_f32(&mut rt::MST);
-        (*p0).coll_data.ceiling.normal.z = rt::draw_f32(&mut rt::MST);
-        (*p0).ecb_lock = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x890_cameraBox = 0usize as _;
-        (*p0).cur_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x898_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).frame_speed_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A0_unk = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A4_animBlendFrames = rt::draw_f32(&mut rt::MST);
-        (*p0).x8A8_anim_frame = rt::draw_f32(&mut rt::MST);
-        (*p0).x8AC_animSkeleton = 0usize as _;
-        for i1 in 0..5 {
-            (*p0).x8B0[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x4 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x8 = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].xC = rt::draw_f32(&mut rt::MST);
-            (*p0).x8B0[i1].x10 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x8B0[i1].x11 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).x914[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).x914[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).x914[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).x914[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).x914[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].jobj = 0usize as _;
-            (*p0).x914[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x914[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).x914[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).x914[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).x914[i1].anon_134.owner = 0usize as _;
-        }
-        for i1 in 0..2 {
-            (*p0).xDF4[i1].state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].unk_count = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].damage = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].scale = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].kb_angle = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x28 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x2C = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].element = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x34 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_severity = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].sfx_kind = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-            (*p0).xDF4[i1].set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).xDF4[i1].x44 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).xDF4[i1].x45 = rt::draw_int(&mut rt::MST) as _;
-            for i2 in 0..2 {
-                (*p0).xDF4[i1].x46[i2] = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].jobj = 0usize as _;
-            (*p0).xDF4[i1].x4C.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x4C.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].x58.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).xDF4[i1].coll_distance = rt::draw_f32(&mut rt::MST);
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_1[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_1[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            for i2 in 0..12 {
-                (*p0).xDF4[i1].victims_2[i2].victim = 0usize as _;
-                (*p0).xDF4[i1].victims_2[i2].x4 = rt::draw_int(&mut rt::MST) as _;
-            }
-            (*p0).xDF4[i1].anon_134.owner = 0usize as _;
-        }
-        (*p0).x1064_thrownHitbox.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.unk_count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.damage = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.b_offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.scale = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_severity = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.sfx_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.set_x40_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x40_b4((rt::draw_int(&mut rt::MST) & 0xFF) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x41_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x42_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.set_x43_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x1064_thrownHitbox.x44 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1064_thrownHitbox.x45 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..2 {
-            (*p0).x1064_thrownHitbox.x46[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.jobj = 0usize as _;
-        (*p0).x1064_thrownHitbox.x4C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x4C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.x58.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.hurt_coll_pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1064_thrownHitbox.coll_distance = rt::draw_f32(&mut rt::MST);
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_1[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_1[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..12 {
-            (*p0).x1064_thrownHitbox.victims_2[i1].victim = 0usize as _;
-            (*p0).x1064_thrownHitbox.victims_2[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1064_thrownHitbox.anon_134.owner = 0usize as _;
-        (*p0).x119C_teamUnk = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grabber_unk1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hurt_capsules_len = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x119F = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..15 {
-            (*p0).hurt_capsules[i1].capsule.state = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].capsule.a_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_offset.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.scale = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone = 0usize as _;
-            (*p0).hurt_capsules[i1].capsule.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.set_x24_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-            (*p0).hurt_capsules[i1].capsule.a_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.a_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.b_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).hurt_capsules[i1].capsule.bone_idx = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].height = rt::draw_int(&mut rt::MST) as _;
-            (*p0).hurt_capsules[i1].is_grabbable = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..2 {
-            (*p0).x1614[i1].x0 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x4 = 0usize as _;
-            (*p0).x1614[i1].x8.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x8.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x14.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1614[i1].x20.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x166C = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..1 {
-            (*p0).x1670[i1].v1.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v1.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].v2 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].jobj = 0usize as _;
-            (*p0).x1670[i1].x14 = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x18.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x1670[i1].x24 = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..400 {
-            (*p0).filler_x1674[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x1828 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x182c_behavior = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1830_percent = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1834 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1838_percentTemp = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x183C_applied = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1840 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.facing_dir_1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1848_kb_angle = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x184c_damaged_hurtbox = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.kb_applied = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1854_collpos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1860_element = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1864 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1868_source = 0usize as _;
-        (*p0).dmg.x186c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1870 = 0usize as _;
-        (*p0).dmg.x1874 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1878 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x187c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1880.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x188c = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1890 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1894 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1898 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x189C_unk_num_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18a0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A4_knockbackMagnitude = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18A8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18ac_time_since_hit = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.armor0 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.armor1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18B8 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18BC = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18C0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18c4_source_ply = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18C8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18CC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18D0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.x1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d4.set_x2_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.set_x2_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d4.x3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.x4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.kb_applied1 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x18d8.xC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18d8.set_x10_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x10_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18d8.set_x11_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).dmg.x18ec_instancehitby = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18F8 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18f9 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18fa_model_shift_frames = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FC = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x18FD = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1900 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1904 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1908 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x190C = 0usize as _;
-        (*p0).dmg.x1910 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1914 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.int_value = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x191C = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1924 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1928 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x192c = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.x0.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.x = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.y = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1930.xC.z = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1948 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x194C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1950 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).dmg.x1954 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x1958 = rt::draw_f32(&mut rt::MST);
-        (*p0).dmg.x195c_hitlag_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).x1960_vibrateMult = rt::draw_f32(&mut rt::MST);
-        (*p0).x1964 = rt::draw_f32(&mut rt::MST);
-        (*p0).x1968_jumpsUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1969_walljumpUsed = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hitlag_mul = rt::draw_f32(&mut rt::MST);
-        (*p0).unk_msid = rt::draw_int(&mut rt::MST) as _;
-        (*p0).item_gobj = 0usize as _;
-        (*p0).x1978 = 0usize as _;
-        (*p0).x197C = 0usize as _;
-        (*p0).x1980 = 0usize as _;
-        (*p0).x1984_heldItemSpec = 0usize as _;
-        (*p0).x1988 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x198C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1990 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1994 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_health = rt::draw_f32(&mut rt::MST);
-        (*p0).lightshield_amount = rt::draw_f32(&mut rt::MST);
-        (*p0).x19A0_shieldDamageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A4 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x19A8 = 0usize as _;
-        (*p0).specialn_facing_dir = rt::draw_f32(&mut rt::MST);
-        (*p0).x19B0 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_unk0 = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_unk1 = rt::draw_f32(&mut rt::MST);
-        (*p0).x19BC_shieldDamageTaken3 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).shield_hit.bone = 0usize as _;
-        (*p0).shield_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).shield_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).shield_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.bone = 0usize as _;
-        (*p0).reflect_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).reflect_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).reflect_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.bone = 0usize as _;
-        (*p0).absorb_hit.set_skip_update_pos((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).absorb_hit.pos.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.pos.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.x = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.y = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.offset.z = rt::draw_f32(&mut rt::MST);
-        (*p0).absorb_hit.size = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A2C_reflectHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A30_maxDamage = rt::draw_int(&mut rt::MST) as _;
-        (*p0).ReflectAttr.x1A34_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A38_speedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).ReflectAttr.x1A3C_damageOver = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A40_absorbHitDirection = rt::draw_f32(&mut rt::MST);
-        (*p0).AbsorbAttr.x1A44_damageTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).AbsorbAttr.x1A48_hitsTaken = rt::draw_int(&mut rt::MST) as _;
-        (*p0).grab_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A51 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A52 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A53 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A54 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).victim_gobj = 0usize as _;
-        (*p0).x1A5C = 0usize as _;
-        (*p0).target_item_gobj = 0usize as _;
-        (*p0).x1A64 = 0usize as _;
-        (*p0).x1A68 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x1A6C = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A70.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x1A7C.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.buttons = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.lstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.cstick.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.ltrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.rtrigger = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.level = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x14 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x18 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x1C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x20 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x24 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x28 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x2C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x30 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x34 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x38 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x3C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x40 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x44 = 0usize as _;
-        (*p0).cpu.x48 = 0usize as _;
-        (*p0).cpu.x4C = 0usize as _;
-        (*p0).cpu.x50 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x54.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x54.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x5C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x60 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x64.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x64.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x6C.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x74.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x7C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x80 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x84 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x88 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x8C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x90 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x94 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.x98.x = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.y = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x98.z = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.xA4 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..8 {
-            (*p0).cpu.xA8_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xC8 = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xC9[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..8 {
-            (*p0).cpu.xCC_array[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xEC = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).cpu.pad_xED[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.xF0 = 0usize as _;
-        (*p0).cpu.xF4 = 0usize as _;
-        (*p0).cpu.set_xF8_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b12((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xF8_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF8_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xF9_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b34((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).cpu.set_xFA_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFA_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).cpu.set_xFB_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..30 {
-            (*p0).cpu.xFC[i1].x0 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x4 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].x5 = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].lstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.x = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cstick.y = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xA = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].xB = rt::draw_int(&mut rt::MST) as _;
-            (*p0).cpu.xFC[i1].cur_pos.x = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.y = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].cur_pos.z = rt::draw_f32(&mut rt::MST);
-            (*p0).cpu.xFC[i1].facing_dir = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).cpu.x444 = 0usize as _;
-        (*p0).cpu.x448 = 0usize as _;
-        (*p0).cpu.command_duration = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cpu.csP = 0usize as _;
-        for i1 in 0..256 {
-            (*p0).cpu.buffer[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).cpu.write_pos = 0usize as _;
-        (*p0).cpu.x558 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x55C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x560 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x564 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x568 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x56C = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.x570 = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_width = rt::draw_f32(&mut rt::MST);
-        (*p0).cpu.half_height = rt::draw_f32(&mut rt::MST);
-        (*p0).x2004 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2008 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x200C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2010 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2014 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2018 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x201C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2020 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2021 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2022 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2024 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).metal_health = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2030 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2034 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2038 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.count = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x203C.data = 0usize as _;
-        for i1 in 0..32 {
-            (*p0).filler_x2044[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2064_ledgeCooldown = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2068_attackID = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206C_attack_instance = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x206E = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).x2070), 4); for i1 in 0..4 { *(&mut (*p0).x2070 as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).x2074.x2074_vec.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x2074_vec.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2074.x207C.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x207C.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.anon_10.x2084 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2074.x2088 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x208C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2090 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2092 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2094 = 0usize as _;
-        (*p0).x2098 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209A = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x209C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x20A0_accessory = 0usize as _;
-        (*p0).x20A4.set_x0_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.set_x0_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x20A4.shadow = 0usize as _;
-        (*p0).unk_gobj = 0usize as _;
-        for i1 in 0..3 {
-            (*p0).x20B0[i1].x0.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].x0.z = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.x = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.y = rt::draw_f32(&mut rt::MST);
-            (*p0).x20B0[i1].xC.z = rt::draw_f32(&mut rt::MST);
-        }
-        (*p0).x20F8 = rt::draw_f32(&mut rt::MST);
-        (*p0).x20FC = rt::draw_f32(&mut rt::MST);
-        (*p0).x2100 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).set_x2101_bits_0to6((rt::draw_int(&mut rt::MST) & 0x7F) as _);
-        (*p0).set_x2101_bits_8((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x2102 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2103 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2104 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).capture_timer = rt::draw_int(&mut rt::MST) as _;
-        (*p0).wall_jump_input_timer = rt::draw_int(&mut rt::MST) as _;
-        for i1 in 0..3 {
-            (*p0).filler_x210C[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).x2110_walljumpWallSide = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.state = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2118_frames = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x211C_holdFrame = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2120_damageMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2124_frameSpeedMul = rt::draw_f32(&mut rt::MST);
-        (*p0).smash_attrs.x2128 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212D = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212E = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x212F = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2130_sfxBool = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2134_vibrateFrame = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2135 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2136 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2137 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).smash_attrs.x2138_smashSinceHitbox = rt::draw_f32(&mut rt::MST);
-        (*p0).x213C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2140 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2144 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2148 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x214C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2150 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2154 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2158 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x215C = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2160 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2164 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2168 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).unk_grab_val = rt::draw_f32(&mut rt::MST);
-        (*p0).x2170 = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.x = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.y = rt::draw_f32(&mut rt::MST);
-        (*p0).x2174.z = rt::draw_f32(&mut rt::MST);
-        (*p0).x2180 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2184 = 0usize as _;
-        (*p0).x2188.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2188.y = rt::draw_int(&mut rt::MST) as _;
-        { let d = rt::next(&mut rt::MST); (*p0).grab_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x2194 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).grabbed_cb = if d & 1 != 0 { Some(cb1) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).input_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).anim_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).phys_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).coll_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).cam_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).accessory4_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).deal_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).shield_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).reflect_hit_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21CC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).pre_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).post_hitlag_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death1_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).death3_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21EC = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).take_dmg_2_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).hurtbox_detect_cb = if d & 1 != 0 { Some(cb0) } else { None }; }
-        { let d = rt::next(&mut rt::MST); (*p0).x21F8 = if d & 1 != 0 { Some(cb0) } else { None }; }
-        (*p0).x21FC_flag.anon_0.set_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).x21FC_flag.anon_0.set_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        for i1 in 0..3 {
-            (*p0).filler_x21FC[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        for i1 in 0..4 {
-            (*p0).cmd_vars[i1] = rt::draw_int(&mut rt::MST) as _;
-        }
-        (*p0).anon_2210.throw_flags = rt::draw_int(&mut rt::MST) as _;
-        (*p0).cmd_timer = rt::draw_f32(&mut rt::MST);
-        (*p0).set_allow_interrupt((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_reflecting((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2218_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2219_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_allow_sdi((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_fall_fast((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).anon_221b.set_x221B_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221C_u16_y((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x221D_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221D_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_invisible((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221E_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sub_fighter((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x221F_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b0((rt::draw_int(&mut rt::MST) & 0x7) as _);
-        (*p0).set_x2220_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2220_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2221_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_multijump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2222_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2223_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_always_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_metal((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2224_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_can_walljump((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2225_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2226_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2227_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_is_sandbag((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x2228_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_used_tether((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2228_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b3((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b4((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_normal_motion((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x2229_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_no_kb((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b0((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b1((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b2((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b3((rt::draw_int(&mut rt::MST) & 0x3) as _);
-        (*p0).set_x222A_b5((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b6((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        (*p0).set_x222A_b7((rt::draw_int(&mut rt::MST) & 0x1) as _);
-        { assert_eq!(core::mem::size_of_val(&(*p0).u), 400); for i1 in 0..400 { *(&mut (*p0).u as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-        (*p0).bury_grkind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_1 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).bury_timer_2 = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2330.y = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.x = rt::draw_int(&mut rt::MST) as _;
-        (*p0).x2338.y = rt::draw_int(&mut rt::MST) as _;
-        { assert_eq!(core::mem::size_of_val(&(*p0).mv), 176); for i1 in 0..176 { *(&mut (*p0).mv as *mut _ as *mut u8).add(i1) = rt::draw_int(&mut rt::MST) as u8; } }
-    }
-    0
-}
 unsafe fn h_ftPartSetRotY(a: &[u64]) -> u64 {
-    rt::t_begin(155);
+    rt::t_begin(157);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -36841,7 +28387,7 @@ unsafe fn h_ftPartSetRotY(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ft_80081A00(a: &[u64]) -> u64 {
-    rt::t_begin(156);
+    rt::t_begin(158);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -36887,7 +28433,7 @@ unsafe fn h_ft_80081A00(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_ft_80082C74(a: &[u64]) -> u64 {
-    rt::t_begin(157);
+    rt::t_begin(159);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -36934,7 +28480,7 @@ unsafe fn h_ft_80082C74(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ft_80083090(a: &[u64]) -> u64 {
-    rt::t_begin(158);
+    rt::t_begin(160);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -36982,7 +28528,7 @@ unsafe fn h_ft_80083090(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ft_8008403C(a: &[u64]) -> u64 {
-    rt::t_begin(159);
+    rt::t_begin(161);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -37029,98 +28575,6 @@ unsafe fn h_ft_8008403C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_ft_80084104(a: &[u64]) -> u64 {
-    rt::t_begin(160);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).classifier as u64);
-        rt::h_u((*p).p_link as u64);
-        rt::h_u((*p).gx_link as u64);
-        rt::h_u((*p).p_priority as u64);
-        rt::h_u((*p).render_priority as u64);
-        rt::h_u((*p).obj_kind as u64);
-        rt::h_u((*p).user_data_kind as u64);
-        rt::h_p((*p).next as *const u8);
-        rt::h_p((*p).prev as *const u8);
-        rt::h_p((*p).next_gx as *const u8);
-        rt::h_p((*p).prev_gx as *const u8);
-        rt::h_p((*p).proc as *const u8);
-        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).gxlink_prios as u64);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::h_p((*p).user_data as *const u8);
-        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p((*p).x34_unk as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::HSD_GObj;
-    if !p0.is_null() {
-        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).next = 0usize as _;
-        (*p0).prev = 0usize as _;
-        (*p0).next_gx = 0usize as _;
-        (*p0).prev_gx = 0usize as _;
-        (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hsd_obj = 0usize as _;
-        (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
-        (*p0).x34_unk = 0usize as _;
-    }
-    0
-}
-unsafe fn h_ft_80084280(a: &[u64]) -> u64 {
-    rt::t_begin(161);
-    rt::t_p(a[0] as usize as *const u8);
-    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
-        rt::h_u((*p).classifier as u64);
-        rt::h_u((*p).p_link as u64);
-        rt::h_u((*p).gx_link as u64);
-        rt::h_u((*p).p_priority as u64);
-        rt::h_u((*p).render_priority as u64);
-        rt::h_u((*p).obj_kind as u64);
-        rt::h_u((*p).user_data_kind as u64);
-        rt::h_p((*p).next as *const u8);
-        rt::h_p((*p).prev as *const u8);
-        rt::h_p((*p).next_gx as *const u8);
-        rt::h_p((*p).prev_gx as *const u8);
-        rt::h_p((*p).proc as *const u8);
-        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
-        rt::h_u((*p).gxlink_prios as u64);
-        rt::h_p((*p).hsd_obj as *const u8);
-        rt::h_p((*p).user_data as *const u8);
-        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
-        rt::h_p((*p).x34_unk as *const u8);
-        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
-    let p0 = a[0] as usize as *mut Q::HSD_GObj;
-    if !p0.is_null() {
-        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
-        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
-        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
-        (*p0).next = 0usize as _;
-        (*p0).prev = 0usize as _;
-        (*p0).next_gx = 0usize as _;
-        (*p0).prev_gx = 0usize as _;
-        (*p0).proc = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
-        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
-        (*p0).hsd_obj = 0usize as _;
-        (*p0).user_data = 0usize as _;
-        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
-        (*p0).x34_unk = 0usize as _;
-    }
-    0
-}
-unsafe fn h_ft_80084DB0(a: &[u64]) -> u64 {
     rt::t_begin(162);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -37166,7 +28620,7 @@ unsafe fn h_ft_80084DB0(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ft_80084F3C(a: &[u64]) -> u64 {
+unsafe fn h_ft_80084280(a: &[u64]) -> u64 {
     rt::t_begin(163);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -37212,7 +28666,7 @@ unsafe fn h_ft_80084F3C(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ft_8008A2BC(a: &[u64]) -> u64 {
+unsafe fn h_ft_80084DB0(a: &[u64]) -> u64 {
     rt::t_begin(164);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
@@ -37258,8 +28712,100 @@ unsafe fn h_ft_8008A2BC(a: &[u64]) -> u64 {
     }
     0
 }
-unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
+unsafe fn h_ft_80084F3C(a: &[u64]) -> u64 {
     rt::t_begin(165);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    0
+}
+unsafe fn h_ft_8008A2BC(a: &[u64]) -> u64 {
+    rt::t_begin(166);
+    rt::t_p(a[0] as usize as *const u8);
+    if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
+        rt::h_u((*p).classifier as u64);
+        rt::h_u((*p).p_link as u64);
+        rt::h_u((*p).gx_link as u64);
+        rt::h_u((*p).p_priority as u64);
+        rt::h_u((*p).render_priority as u64);
+        rt::h_u((*p).obj_kind as u64);
+        rt::h_u((*p).user_data_kind as u64);
+        rt::h_p((*p).next as *const u8);
+        rt::h_p((*p).prev as *const u8);
+        rt::h_p((*p).next_gx as *const u8);
+        rt::h_p((*p).prev_gx as *const u8);
+        rt::h_p((*p).proc as *const u8);
+        rt::h_fn((*p).render_cb.map_or(0usize, |f| f as usize));
+        rt::h_u((*p).gxlink_prios as u64);
+        rt::h_p((*p).hsd_obj as *const u8);
+        rt::h_p((*p).user_data as *const u8);
+        rt::h_fn((*p).user_data_remove_func.map_or(0usize, |f| f as usize));
+        rt::h_p((*p).x34_unk as *const u8);
+        rt::TRACE = rt::mix(rt::TRACE, rt::H); rt::H = sv; }
+    let p0 = a[0] as usize as *mut Q::HSD_GObj;
+    if !p0.is_null() {
+        (*p0).classifier = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).gx_link = rt::draw_int(&mut rt::MST) as _;
+        (*p0).p_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).render_priority = rt::draw_int(&mut rt::MST) as _;
+        (*p0).obj_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).user_data_kind = rt::draw_int(&mut rt::MST) as _;
+        (*p0).next = 0usize as _;
+        (*p0).prev = 0usize as _;
+        (*p0).next_gx = 0usize as _;
+        (*p0).prev_gx = 0usize as _;
+        (*p0).proc = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).render_cb = if d & 1 != 0 { Some(cb3) } else { None }; }
+        (*p0).gxlink_prios = rt::draw_int(&mut rt::MST) as _;
+        (*p0).hsd_obj = 0usize as _;
+        (*p0).user_data = 0usize as _;
+        { let d = rt::next(&mut rt::MST); (*p0).user_data_remove_func = if d & 1 != 0 { Some(cb4) } else { None }; }
+        (*p0).x34_unk = 0usize as _;
+    }
+    0
+}
+unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
+    rt::t_begin(167);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Fighter; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).gobj as *const u8);
@@ -40198,7 +31744,7 @@ unsafe fn h_ft_PlaySFX(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_hsd_8039D5DC(a: &[u64]) -> u64 {
-    rt::t_begin(166);
+    rt::t_begin(168);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -40264,7 +31810,7 @@ unsafe fn h_hsd_8039D5DC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8026B40C(a: &[u64]) -> u64 {
-    rt::t_begin(167);
+    rt::t_begin(169);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Article; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_common_attr as *const u8);
@@ -40287,7 +31833,7 @@ unsafe fn h_it_8026B40C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8026B894(a: &[u64]) -> u64 {
-    rt::t_begin(168);
+    rt::t_begin(170);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -40375,7 +31921,7 @@ unsafe fn h_it_8026B894(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_it_8026BB68(a: &[u64]) -> u64 {
-    rt::t_begin(169);
+    rt::t_begin(171);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -40433,7 +31979,7 @@ unsafe fn h_it_8026BB68(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8026E9A4(a: &[u64]) -> u64 {
-    rt::t_begin(170);
+    rt::t_begin(172);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -40515,7 +32061,7 @@ unsafe fn h_it_8026E9A4(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_it_8026FCF8(a: &[u64]) -> u64 {
-    rt::t_begin(171);
+    rt::t_begin(173);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::Item; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0 as *const u8);
@@ -41923,7 +33469,7 @@ unsafe fn h_it_8026FCF8(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_8027129C(a: &[u64]) -> u64 {
-    rt::t_begin(172);
+    rt::t_begin(174);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -41970,7 +33516,7 @@ unsafe fn h_it_8027129C(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_80272460(a: &[u64]) -> u64 {
-    rt::t_begin(173);
+    rt::t_begin(175);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -42155,7 +33701,7 @@ unsafe fn h_it_80272460(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_80275594(a: &[u64]) -> u64 {
-    rt::t_begin(174);
+    rt::t_begin(176);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_GObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).classifier as u64);
@@ -42203,11 +33749,11 @@ unsafe fn h_it_80275594(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_it_ResetStageArticleTable(a: &[u64]) -> u64 {
-    rt::t_begin(175);
+    rt::t_begin(177);
     0
 }
 unsafe fn h_lbColl_80008440(a: &[u64]) -> u64 {
-    rt::t_begin(176);
+    rt::t_begin(178);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HitCapsule; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_u((*p).state as u64);
@@ -42349,7 +33895,7 @@ unsafe fn h_lbColl_80008440(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_lb_8000B1CC(a: &[u64]) -> u64 {
-    rt::t_begin(177);
+    rt::t_begin(179);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::HSD_JObj; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).object.parent.class_info as *const u8);
@@ -42439,7 +33985,7 @@ unsafe fn h_lb_8000B1CC(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpCheckCeiling(a: &[u64]) -> u64 {
-    rt::t_begin(178);
+    rt::t_begin(180);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -42475,7 +34021,7 @@ unsafe fn h_mpCheckCeiling(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCheckFloor(a: &[u64]) -> u64 {
-    rt::t_begin(179);
+    rt::t_begin(181);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -42556,7 +34102,7 @@ unsafe fn h_mpCheckFloor(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCheckLeftWall(a: &[u64]) -> u64 {
-    rt::t_begin(180);
+    rt::t_begin(182);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -42592,7 +34138,7 @@ unsafe fn h_mpCheckLeftWall(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCheckRightWall(a: &[u64]) -> u64 {
-    rt::t_begin(181);
+    rt::t_begin(183);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::t_f32(f32::from_bits(a[1] as u32));
     rt::t_f32(f32::from_bits(a[2] as u32));
@@ -42628,7 +34174,7 @@ unsafe fn h_mpCheckRightWall(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpCollSetFacingDir(a: &[u64]) -> u64 {
-    rt::t_begin(182);
+    rt::t_begin(184);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_gobj as *const u8);
@@ -42859,7 +34405,7 @@ unsafe fn h_mpCollSetFacingDir(a: &[u64]) -> u64 {
     0
 }
 unsafe fn h_mpColl_80047AC8(a: &[u64]) -> u64 {
-    rt::t_begin(183);
+    rt::t_begin(185);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_gobj as *const u8);
@@ -43132,7 +34678,7 @@ unsafe fn h_mpColl_80047AC8(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpColl_80047E14(a: &[u64]) -> u64 {
-    rt::t_begin(184);
+    rt::t_begin(186);
     rt::t_p(a[0] as usize as *const u8);
     if a[0] != 0 { let p = a[0] as usize as *const Q::CollData; let sv = rt::H; rt::H = rt::FNV0;
         rt::h_p((*p).x0_gobj as *const u8);
@@ -43405,7 +34951,7 @@ unsafe fn h_mpColl_80047E14(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_mpGetSpeed(a: &[u64]) -> u64 {
-    rt::t_begin(185);
+    rt::t_begin(187);
     rt::t_i(a[0] as i64);
     rt::t_p(a[1] as usize as *const u8);
     if a[1] != 0 { let p = a[1] as usize as *const Q::Vec; let sv = rt::H; rt::H = rt::FNV0;
@@ -43434,22 +34980,22 @@ unsafe fn h_mpGetSpeed(a: &[u64]) -> u64 {
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_sinf(a: &[u64]) -> u64 {
-    rt::t_begin(186);
+    rt::t_begin(188);
     rt::t_f32(f32::from_bits(a[0] as u32));
     rt::draw_f32(&mut rt::MST).to_bits() as u64
 }
 unsafe fn h_snap_load(a: &[u64]) -> u64 {
-    rt::t_begin(187);
+    rt::t_begin(189);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_snap_open(a: &[u64]) -> u64 {
-    rt::t_begin(188);
+    rt::t_begin(190);
     rt::t_i(a[0] as i64);
     rt::draw_int(&mut rt::MST) as u64
 }
 unsafe fn h_snap_save(a: &[u64]) -> u64 {
-    rt::t_begin(189);
+    rt::t_begin(191);
     rt::t_i(a[0] as i64);
     0
 }
@@ -43540,14 +35086,10 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "Geno_StateMoveId" => h_Geno_StateMoveId(a),
         "Geno_StateNext" => h_Geno_StateNext(a),
         "Geno_WarnIasa" => h_Geno_WarnIasa(a),
-        "HSD_AObjSetEndFrame" => h_HSD_AObjSetEndFrame(a),
-        "HSD_AObjSetFlags" => h_HSD_AObjSetFlags(a),
-        "HSD_AObjSetRate" => h_HSD_AObjSetRate(a),
         "HSD_CObjGetCurrent" => h_HSD_CObjGetCurrent(a),
         "HSD_CObjGetEyePosition" => h_HSD_CObjGetEyePosition(a),
         "HSD_CObjGetViewingMtxPtr" => h_HSD_CObjGetViewingMtxPtr(a),
         "HSD_DObjSetFlags" => h_HSD_DObjSetFlags(a),
-        "HSD_ForeachAnim" => h_HSD_ForeachAnim(a),
         "HSD_JObjGetDObj" => h_HSD_JObjGetDObj(a),
         "HSD_JObjSetMtxDirtySub" => h_HSD_JObjSetMtxDirtySub(a),
         "HSD_JObjSetupMatrixSub" => h_HSD_JObjSetupMatrixSub(a),
@@ -43587,30 +35129,36 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "ftAnim_IsFramesRemaining" => h_ftAnim_IsFramesRemaining(a),
         "ftAnim_SetAnimRate" => h_ftAnim_SetAnimRate(a),
         "ftCliffCommon_80081298" => h_ftCliffCommon_80081298(a),
+        "ftCo_80095328" => h_ftCo_80095328(a),
         "ftCo_800968C8" => h_ftCo_800968C8(a),
         "ftCo_80096CC8" => h_ftCo_80096CC8(a),
         "ftCo_80096D28" => h_ftCo_80096D28(a),
         "ftCo_8009917C" => h_ftCo_8009917C(a),
+        "ftCo_800C3B10" => h_ftCo_800C3B10(a),
+        "ftCo_800CB870" => h_ftCo_800CB870(a),
         "ftCo_800D105C" => h_ftCo_800D105C(a),
-        "ftCo_800D72A0" => h_ftCo_800D72A0(a),
+        "ftCo_800D705C" => h_ftCo_800D705C(a),
+        "ftCo_800D7100" => h_ftCo_800D7100(a),
         "ftCo_AttackAir_EnterFromMsid" => h_ftCo_AttackAir_EnterFromMsid(a),
+        "ftCo_AttackS4_CheckInput" => h_ftCo_AttackS4_CheckInput(a),
+        "ftCo_Dash_CheckInput" => h_ftCo_Dash_CheckInput(a),
         "ftCo_Fall_Enter" => h_ftCo_Fall_Enter(a),
-        "ftCo_Fall_IASA" => h_ftCo_Fall_IASA(a),
         "ftCo_IsCpuControlled" => h_ftCo_IsCpuControlled(a),
         "ftCo_JumpAerial_Enter_Basic" => h_ftCo_JumpAerial_Enter_Basic(a),
+        "ftCo_Jump_CheckInput" => h_ftCo_Jump_CheckInput(a),
         "ftCo_Jump_Enter" => h_ftCo_Jump_Enter(a),
         "ftCo_LandingFallSpecial_Enter" => h_ftCo_LandingFallSpecial_Enter(a),
         "ftCo_LandingFallSpecial_Enter_Basic" => h_ftCo_LandingFallSpecial_Enter_Basic(a),
         "ftCo_Landing_Enter_Basic" => h_ftCo_Landing_Enter_Basic(a),
-        "ftCo_Wait_IASA" => h_ftCo_Wait_IASA(a),
+        "ftCo_Turn_CheckInput" => h_ftCo_Turn_CheckInput(a),
+        "ftCo_Walk_CheckInput" => h_ftCo_Walk_CheckInput(a),
+        "ftColl_CreateReflectHit" => h_ftColl_CreateReflectHit(a),
         "ftCommon_8007D5D4" => h_ftCommon_8007D5D4(a),
         "ftCommon_8007D7FC" => h_ftCommon_8007D7FC(a),
         "ftCommon_CalcSelfAccel_DeaccelAir" => h_ftCommon_CalcSelfAccel_DeaccelAir(a),
         "ftCommon_CalcSelfAccel_Drift" => h_ftCommon_CalcSelfAccel_Drift(a),
         "ftCommon_Fall" => h_ftCommon_Fall(a),
         "ftCommon_SetSelfMovementFromGroundedMovement" => h_ftCommon_SetSelfMovementFromGroundedMovement(a),
-        "ftCommon_UseAllJumps" => h_ftCommon_UseAllJumps(a),
-        "ftPartSetRotX" => h_ftPartSetRotX(a),
         "ftPartSetRotY" => h_ftPartSetRotY(a),
         "ft_80081A00" => h_ft_80081A00(a),
         "ft_80082C74" => h_ft_80082C74(a),
@@ -43660,17 +35208,19 @@ static mut SNAP6: Vec<u8> = Vec::new();
 static mut SNAP7: Vec<u8> = Vec::new();
 static mut SNAP8: Vec<u8> = Vec::new();
 static mut SNAP9: Vec<u8> = Vec::new();
+static mut SNAP10: Vec<u8> = Vec::new();
 unsafe fn fill_all() {
-    core::ptr::copy_nonoverlapping(SNAP0.as_ptr(), core::ptr::addr_of_mut!(m::geno_art_logic) as *mut u8, SNAP0.len());
-    core::ptr::copy_nonoverlapping(SNAP1.as_ptr(), core::ptr::addr_of_mut!(m::geno_art_states) as *mut u8, SNAP1.len());
-    core::ptr::copy_nonoverlapping(SNAP2.as_ptr(), core::ptr::addr_of_mut!(m::geno_attrs) as *mut u8, SNAP2.len());
-    core::ptr::copy_nonoverlapping(SNAP3.as_ptr(), core::ptr::addr_of_mut!(m::geno_bhvs) as *mut u8, SNAP3.len());
-    core::ptr::copy_nonoverlapping(SNAP4.as_ptr(), core::ptr::addr_of_mut!(m::geno_cbs) as *mut u8, SNAP4.len());
-    core::ptr::copy_nonoverlapping(SNAP5.as_ptr(), core::ptr::addr_of_mut!(m::geno_hooks) as *mut u8, SNAP5.len());
-    core::ptr::copy_nonoverlapping(SNAP6.as_ptr(), core::ptr::addr_of_mut!(m::geno_item_logic) as *mut u8, SNAP6.len());
-    core::ptr::copy_nonoverlapping(SNAP7.as_ptr(), core::ptr::addr_of_mut!(m::geno_item_states) as *mut u8, SNAP7.len());
-    core::ptr::copy_nonoverlapping(SNAP8.as_ptr(), core::ptr::addr_of_mut!(m::geno_params) as *mut u8, SNAP8.len());
-    core::ptr::copy_nonoverlapping(SNAP9.as_ptr(), core::ptr::addr_of_mut!(m::geno_sfields) as *mut u8, SNAP9.len());
+    core::ptr::copy_nonoverlapping(SNAP0.as_ptr(), core::ptr::addr_of_mut!(m::gb_sinq) as *mut u8, SNAP0.len());
+    core::ptr::copy_nonoverlapping(SNAP1.as_ptr(), core::ptr::addr_of_mut!(m::geno_art_logic) as *mut u8, SNAP1.len());
+    core::ptr::copy_nonoverlapping(SNAP2.as_ptr(), core::ptr::addr_of_mut!(m::geno_art_states) as *mut u8, SNAP2.len());
+    core::ptr::copy_nonoverlapping(SNAP3.as_ptr(), core::ptr::addr_of_mut!(m::geno_attrs) as *mut u8, SNAP3.len());
+    core::ptr::copy_nonoverlapping(SNAP4.as_ptr(), core::ptr::addr_of_mut!(m::geno_bhv_params) as *mut u8, SNAP4.len());
+    core::ptr::copy_nonoverlapping(SNAP5.as_ptr(), core::ptr::addr_of_mut!(m::geno_bhvs) as *mut u8, SNAP5.len());
+    core::ptr::copy_nonoverlapping(SNAP6.as_ptr(), core::ptr::addr_of_mut!(m::geno_cbs) as *mut u8, SNAP6.len());
+    core::ptr::copy_nonoverlapping(SNAP7.as_ptr(), core::ptr::addr_of_mut!(m::geno_hooks) as *mut u8, SNAP7.len());
+    core::ptr::copy_nonoverlapping(SNAP8.as_ptr(), core::ptr::addr_of_mut!(m::geno_item_logic) as *mut u8, SNAP8.len());
+    core::ptr::copy_nonoverlapping(SNAP9.as_ptr(), core::ptr::addr_of_mut!(m::geno_item_states) as *mut u8, SNAP9.len());
+    core::ptr::copy_nonoverlapping(SNAP10.as_ptr(), core::ptr::addr_of_mut!(m::geno_sfields) as *mut u8, SNAP10.len());
     (*core::ptr::addr_of_mut!(m::Geno_ArtAttr)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::Geno_ArtDesc)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::Geno_ArtModel)) = 0usize as _;
@@ -44564,8 +36114,6 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::geno_test_anim_end)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::geno_test_capture)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::geno_test_changes)) = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::geno_test_joint_rate)) = rt::draw_f32(&mut rt::ST);
-    (*core::ptr::addr_of_mut!(m::geno_test_rotx)) = rt::draw_f32(&mut rt::ST);
     (*core::ptr::addr_of_mut!(m::geno_test_target)) = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::HSD_GObj_CurrentInvokedProc)) = 0usize as _;
@@ -44988,6 +36536,11 @@ unsafe fn hash_objs() {
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
+    for i0 in 0..1025 {
+        rt::h_u((*core::ptr::addr_of_mut!(m::gb_sinq))[i0] as u64);
+    }
+    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
+    rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(m::geno_art_logic)).states as *const u8);
     rt::h_fn((*core::ptr::addr_of_mut!(m::geno_art_logic)).spawned.map_or(0usize, |f| f as usize));
     rt::h_fn((*core::ptr::addr_of_mut!(m::geno_art_logic)).destroyed.map_or(0usize, |f| f as usize));
@@ -45020,7 +36573,15 @@ unsafe fn hash_objs() {
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    for i0 in 0..16 {
+    for i0 in 0..90 {
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].family as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].family as *const u8);
+        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].name as *const u8);
+        rt::h_i((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].id as i64);
+        rt::h_f32((*core::ptr::addr_of_mut!(m::geno_bhv_params))[i0].def);
+    }
+    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
+    rt::H = rt::FNV0;
+    for i0 in 0..17 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].id as i64);
         rt::h_i((((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_bhvs))[i0].name as *const u8);
         for i1 in 0..4 {
@@ -45033,7 +36594,7 @@ unsafe fn hash_objs() {
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    for i0 in 0..43 {
+    for i0 in 0..45 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].id as i64);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].slot as i64);
         rt::h_i((((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_cbs))[i0].name as *const u8);
@@ -45062,7 +36623,7 @@ unsafe fn hash_objs() {
     rt::h_p((*core::ptr::addr_of_mut!(m::geno_fx_gobj)) as *const u8);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    for i0 in 0..10 {
+    for i0 in 0..7 {
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].id as i64);
         rt::h_i((((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].name as *const u8);
         rt::h_fn((*core::ptr::addr_of_mut!(m::geno_hooks))[i0].r#fn.map_or(0usize, |f| f as usize));
@@ -45849,14 +37410,6 @@ unsafe fn hash_objs() {
     }
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    for i0 in 0..78 {
-        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].family as *const u8);
-        rt::h_i((((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_params))[i0].name as *const u8);
-        rt::h_i((*core::ptr::addr_of_mut!(m::geno_params))[i0].id as i64);
-        rt::h_f32((*core::ptr::addr_of_mut!(m::geno_params))[i0].def);
-    }
-    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
-    rt::H = rt::FNV0;
     for i0 in 0..42 {
         rt::h_i((((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8) != core::ptr::null()) as i64); rt::h_cstr((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].name as *const u8);
         rt::h_i((*core::ptr::addr_of_mut!(m::geno_sfields))[i0].off as i64);
@@ -45871,12 +37424,6 @@ unsafe fn hash_objs() {
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_i((*core::ptr::addr_of_mut!(m::geno_test_changes)) as i64);
-    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
-    rt::H = rt::FNV0;
-    rt::h_f32((*core::ptr::addr_of_mut!(m::geno_test_joint_rate)));
-    rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
-    rt::H = rt::FNV0;
-    rt::h_f32((*core::ptr::addr_of_mut!(m::geno_test_rotx)));
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_u((*core::ptr::addr_of_mut!(m::geno_test_target)) as u64);
@@ -46195,9 +37742,11 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::Geno_ScriptPool))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::Geno_ScriptPool))), "Geno_ScriptPool");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::Geno_ScriptPoolGen))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::Geno_ScriptPoolGen))), "Geno_ScriptPoolGen");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::Geno_StateBlock))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::Geno_StateBlock))), "Geno_StateBlock");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::gb_sinq))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::gb_sinq))), "gb_sinq");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_art_logic))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_art_logic))), "geno_art_logic");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_art_states))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_art_states))), "geno_art_states");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_attrs))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_attrs))), "geno_attrs");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_bhv_params))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_bhv_params))), "geno_bhv_params");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_bhvs))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_bhvs))), "geno_bhvs");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_cbs))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_cbs))), "geno_cbs");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_combo_entering))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_combo_entering))), "geno_combo_entering");
@@ -46217,13 +37766,10 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_item_states))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_item_states))), "geno_item_states");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_lua_depth))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_lua_depth))), "geno_lua_depth");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_lua_io))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_lua_io))), "geno_lua_io");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_params))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_params))), "geno_params");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_sfields))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_sfields))), "geno_sfields");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_anim_end))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_anim_end))), "geno_test_anim_end");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_capture))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_capture))), "geno_test_capture");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_changes))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_changes))), "geno_test_changes");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_joint_rate))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_joint_rate))), "geno_test_joint_rate");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_rotx))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_rotx))), "geno_test_rotx");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::geno_test_target))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::geno_test_target))), "geno_test_target");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::HSD_GObjPLinkHead))), "HSD_GObjPLinkHead");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::HSD_GObj_CurrentInvokedProc))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::HSD_GObj_CurrentInvokedProc))), "HSD_GObj_CurrentInvokedProc");
@@ -46252,18 +37798,47 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(MO_HSD_JObjGetDObj))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(MO_HSD_JObjGetDObj))), "mo_HSD_JObjGetDObj");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(MO_Item_80268B18))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(MO_Item_80268B18))), "mo_Item_80268B18");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(MO_Player_GetEntity))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(MO_Player_GetEntity))), "mo_Player_GetEntity");
-    SNAP0 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_art_logic) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_art_logic))).to_vec();
-    SNAP1 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_art_states) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_art_states))).to_vec();
-    SNAP2 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_attrs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_attrs))).to_vec();
-    SNAP3 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_bhvs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_bhvs))).to_vec();
-    SNAP4 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_cbs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_cbs))).to_vec();
-    SNAP5 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_hooks) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_hooks))).to_vec();
-    SNAP6 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_item_logic) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_item_logic))).to_vec();
-    SNAP7 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_item_states) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_item_states))).to_vec();
-    SNAP8 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_params) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_params))).to_vec();
-    SNAP9 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_sfields) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_sfields))).to_vec();
+    SNAP0 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::gb_sinq) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::gb_sinq))).to_vec();
+    SNAP1 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_art_logic) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_art_logic))).to_vec();
+    SNAP2 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_art_states) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_art_states))).to_vec();
+    SNAP3 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_attrs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_attrs))).to_vec();
+    SNAP4 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_bhv_params) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_bhv_params))).to_vec();
+    SNAP5 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_bhvs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_bhvs))).to_vec();
+    SNAP6 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_cbs) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_cbs))).to_vec();
+    SNAP7 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_hooks) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_hooks))).to_vec();
+    SNAP8 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_item_logic) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_item_logic))).to_vec();
+    SNAP9 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_item_states) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_item_states))).to_vec();
+    SNAP10 = core::slice::from_raw_parts(core::ptr::addr_of_mut!(m::geno_sfields) as *const u8, core::mem::size_of_val(&*core::ptr::addr_of_mut!(m::geno_sfields))).to_vec();
     rt::NSTATIC = rt::REGS.len();
-    rt::CONSTS = vec![-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 87, 88, 89, 98, 99, 100, 101, 126, 127, 128, 129, 199, 200, 201, 236, 237, 238, 254, 255, 256, 257, 700, 701, 702, 703, 730, 731, 732, 999, 1000, 1001, 1022, 1023, 1024, 1999, 2000, 2001, 4999, 5000, 5001, 9998, 9999, 10000, 32766, 32767, 32768, 64382, 64383, 64384, 65534, 65535, 65536, 65537, 16777618, 16777619, 16777620, 1073743664, 1073743665, 1073743666, 1095914566, 1095914567, 1095914568, 1095914569, 1095914570, 1129270593, 1129270594, 1129270595, 1195657541, 1195657542, 1195657543, 1280655664, 1280655665, 1280655666, 1946157055, 1946157056, 1946157057, 1962934271, 1962934272, 1962934273];
+    rt::CONSTS = vec![-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 67, 68, 69, 87, 88, 89, 98, 99, 100, 101, 126, 127, 128, 129, 199, 200, 201, 236, 237, 238, 254, 255, 256, 257, 700, 701, 702, 703, 730, 731, 732, 998, 999, 1000, 1001, 1022, 1023, 1024, 1999, 2000, 2001, 4999, 5000, 5001, 9998, 9999, 10000, 65534, 65535, 65536, 65537, 16777618, 16777619, 16777620, 1073743664, 1073743665, 1073743666, 1095914566, 1095914567, 1095914568, 1095914569, 1095914570, 1129270593, 1129270594, 1129270595, 1195657541, 1195657542, 1195657543, 1196316208, 1196316209, 1196316210, 1280655664, 1280655665, 1280655666, 1946157055, 1946157056, 1946157057, 1962934271, 1962934272, 1962934273];
+    rt::fn_add(m::GenoBhv_AnimMotionBegin as usize);
+    rt::fn_add(m::GenoBhv_AnimMotionFrameDelta as usize);
+    rt::fn_add(m::GenoBhv_AnimMotionParams as usize);
+    rt::fn_add(m::GenoBhv_AnimMotionSample as usize);
+    rt::fn_add(m::GenoBhv_AnimMotionStep as usize);
+    rt::fn_add(m::GenoBhv_CapeBegin as usize);
+    rt::fn_add(m::GenoBhv_CapeParams as usize);
+    rt::fn_add(m::GenoBhv_CapeStep as usize);
+    rt::fn_add(m::GenoBhv_CosDeg as usize);
+    rt::fn_add(m::GenoBhv_DrillBegin as usize);
+    rt::fn_add(m::GenoBhv_DrillParams as usize);
+    rt::fn_add(m::GenoBhv_DrillStep as usize);
+    rt::fn_add(m::GenoBhv_GlideBegin as usize);
+    rt::fn_add(m::GenoBhv_GlideEntryInit as usize);
+    rt::fn_add(m::GenoBhv_GlideEntryStep as usize);
+    rt::fn_add(m::GenoBhv_GlideGround as usize);
+    rt::fn_add(m::GenoBhv_GlideParams as usize);
+    rt::fn_add(m::GenoBhv_GlideStep as usize);
+    rt::fn_add(m::GenoBhv_MultiDashBegin as usize);
+    rt::fn_add(m::GenoBhv_MultiDashParams as usize);
+    rt::fn_add(m::GenoBhv_MultiDashStep as usize);
+    rt::fn_add(m::GenoBhv_SinDeg as usize);
+    rt::fn_add(m::GenoBhv_SinqCrc32 as usize);
+    rt::fn_add(m::GenoBhv_SinqWord as usize);
+    rt::fn_add(m::GenoBhv_Stick as usize);
+    rt::fn_add(m::GenoBhv_TornadoBegin as usize);
+    rt::fn_add(m::GenoBhv_TornadoParams as usize);
+    rt::fn_add(m::GenoBhv_TornadoStep as usize);
     rt::fn_add(m::GenoDefine_StateDigest as usize);
     rt::fn_add(m::GenoGame_AimStick as usize);
     rt::fn_add(m::GenoGame_ArticleSpawn as usize);
@@ -46294,12 +37869,8 @@ unsafe fn init() {
     rt::fn_add(m::GenoGame_StateSize as usize);
     rt::fn_add(m::GenoGame_TestCapture as usize);
     rt::fn_add(m::GenoGame_TestChanges as usize);
-    rt::fn_add(m::GenoGame_TestJointRate as usize);
     rt::fn_add(m::GenoGame_TestLastTarget as usize);
     rt::fn_add(m::GenoGame_TestLedgeMode as usize);
-    rt::fn_add(m::GenoGame_TestModelRotX as usize);
-    rt::fn_add(m::GenoGame_TestPairSwap as usize);
-    rt::fn_add(m::GenoGame_TestPoseReset as usize);
     rt::fn_add(m::GenoGame_TestStartFrame as usize);
     rt::fn_add(m::Geno_ApplyAttrs as usize);
     rt::fn_add(m::Geno_ArtStableKind as usize);
@@ -46350,6 +37921,7 @@ unsafe fn init() {
     rt::fn_add(m::Geno_MotionRow as usize);
     rt::fn_add(m::Geno_MotionRowIfAny as usize);
     rt::fn_add(m::Geno_MultiJump as usize);
+    rt::fn_add(m::Geno_NeutralDigest as usize);
     rt::fn_add(m::Geno_NoHitlag as usize);
     rt::fn_add(m::Geno_OnActionChange as usize);
     rt::fn_add(m::Geno_OnFrame as usize);
@@ -46358,8 +37930,43 @@ unsafe fn init() {
     rt::fn_add(m::Geno_ProfileStorageBytes as usize);
     rt::fn_add(m::Geno_SpecialEnter as usize);
     rt::fn_add(m::Geno_TakeStunBonus as usize);
-    rt::fn_add(m::geno_absf as usize);
-    rt::fn_add(m::geno_accel_brake as usize);
+    rt::fn_add(m::gb_abs as usize);
+    rt::fn_add(m::gb_airborne as usize);
+    rt::fn_add(m::gb_approach as usize);
+    rt::fn_add(m::gb_cape_params as usize);
+    rt::fn_add(m::gb_cape_reflect as usize);
+    rt::fn_add(m::gb_clamp as usize);
+    rt::fn_add(m::gb_clear_hit_lists as usize);
+    rt::fn_add(m::gb_cur_bhv as usize);
+    rt::fn_add(m::gb_drill_begin as usize);
+    rt::fn_add(m::gb_drill_continues as usize);
+    rt::fn_add(m::gb_drill_load as usize);
+    rt::fn_add(m::gb_drill_params as usize);
+    rt::fn_add(m::gb_drill_phys as usize);
+    rt::fn_add(m::gb_drill_store as usize);
+    rt::fn_add(m::gb_drill_tick as usize);
+    rt::fn_add(m::gb_finish as usize);
+    rt::fn_add(m::gb_floor as usize);
+    rt::fn_add(m::gb_from_bhv as usize);
+    rt::fn_add(m::gb_glide_land as usize);
+    rt::fn_add(m::gb_glide_load as usize);
+    rt::fn_add(m::gb_glide_params as usize);
+    rt::fn_add(m::gb_glide_phys as usize);
+    rt::fn_add(m::gb_glide_store as usize);
+    rt::fn_add(m::gb_glide_tick as usize);
+    rt::fn_add(m::gb_glide_velocity as usize);
+    rt::fn_add(m::gb_jumps_left as usize);
+    rt::fn_add(m::gb_md_fix_direction as usize);
+    rt::fn_add(m::gb_md_load as usize);
+    rt::fn_add(m::gb_md_store as usize);
+    rt::fn_add(m::gb_profile_params as usize);
+    rt::fn_add(m::gb_sinq_at as usize);
+    rt::fn_add(m::gb_state_bhv as usize);
+    rt::fn_add(m::gb_stick_of as usize);
+    rt::fn_add(m::gb_to_bhv as usize);
+    rt::fn_add(m::gb_tornado_load as usize);
+    rt::fn_add(m::gb_tornado_params as usize);
+    rt::fn_add(m::gb_tornado_store as usize);
     rt::fn_add(m::geno_and_check as usize);
     rt::fn_add(m::geno_anim_ended as usize);
     rt::fn_add(m::geno_apply_special as usize);
@@ -46405,7 +38012,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_cape_coll as usize);
     rt::fn_add(m::geno_cape_enter as usize);
     rt::fn_add(m::geno_cape_phys as usize);
-    rt::fn_add(m::geno_cape_steer as usize);
     rt::fn_add(m::geno_cb_anim_loop as usize);
     rt::fn_add(m::geno_cb_anim_lua as usize);
     rt::fn_add(m::geno_cb_anim_next as usize);
@@ -46424,7 +38030,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_cb_phys_auto as usize);
     rt::fn_add(m::geno_cb_phys_ground as usize);
     rt::fn_add(m::geno_check_true as usize);
-    rt::fn_add(m::geno_clampf as usize);
     rt::fn_add(m::geno_clear_action as usize);
     rt::fn_add(m::geno_cmp as usize);
     rt::fn_add(m::geno_coll_air_ledge as usize);
@@ -46452,22 +38057,18 @@ unsafe fn init() {
     rt::fn_add(m::geno_dgf as usize);
     rt::fn_add(m::geno_do_change as usize);
     rt::fn_add(m::geno_drill_anim as usize);
-    rt::fn_add(m::geno_drill_bounce as usize);
     rt::fn_add(m::geno_drill_coll as usize);
     rt::fn_add(m::geno_drill_end_anim as usize);
     rt::fn_add(m::geno_drill_end_enter as usize);
     rt::fn_add(m::geno_drill_end_phys as usize);
-    rt::fn_add(m::geno_drill_end_state as usize);
     rt::fn_add(m::geno_drill_enter as usize);
-    rt::fn_add(m::geno_drill_hit as usize);
     rt::fn_add(m::geno_drill_phys as usize);
-    rt::fn_add(m::geno_drill_pose as usize);
-    rt::fn_add(m::geno_drill_shield as usize);
     rt::fn_add(m::geno_drill_start_coll as usize);
     rt::fn_add(m::geno_drill_start_enter as usize);
     rt::fn_add(m::geno_drill_start_phys as usize);
     rt::fn_add(m::geno_drop_once as usize);
     rt::fn_add(m::geno_enter_state as usize);
+    rt::fn_add(m::geno_fam_eq as usize);
     rt::fn_add(m::geno_fx_drive as usize);
     rt::fn_add(m::geno_fx_owner_alive as usize);
     rt::fn_add(m::geno_fx_render as usize);
@@ -46478,7 +38079,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_glide_attack_enter as usize);
     rt::fn_add(m::geno_glide_attack_phys as usize);
     rt::fn_add(m::geno_glide_coll as usize);
-    rt::fn_add(m::geno_glide_end as usize);
     rt::fn_add(m::geno_glide_end_enter as usize);
     rt::fn_add(m::geno_glide_end_phys as usize);
     rt::fn_add(m::geno_glide_enter as usize);
@@ -46489,13 +38089,9 @@ unsafe fn init() {
     rt::fn_add(m::geno_glide_start_anim as usize);
     rt::fn_add(m::geno_glide_start_enter as usize);
     rt::fn_add(m::geno_glide_start_phys as usize);
-    rt::fn_add(m::geno_glide_step as usize);
     rt::fn_add(m::geno_go as usize);
-    rt::fn_add(m::geno_helpless as usize);
-    rt::fn_add(m::geno_in_air_jump as usize);
     rt::fn_add(m::geno_inert as usize);
     rt::fn_add(m::geno_install_overlays as usize);
-    rt::fn_add(m::geno_into_wall as usize);
     rt::fn_add(m::geno_item_anim as usize);
     rt::fn_add(m::geno_item_bits as usize);
     rt::fn_add(m::geno_item_coll as usize);
@@ -46510,8 +38106,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_item_paramf as usize);
     rt::fn_add(m::geno_item_phys as usize);
     rt::fn_add(m::geno_item_vars as usize);
-    rt::fn_add(m::geno_joint_anim_f as usize);
-    rt::fn_add(m::geno_joint_anim_loop as usize);
     rt::fn_add(m::geno_jump_held as usize);
     rt::fn_add(m::geno_lag_of as usize);
     rt::fn_add(m::geno_land as usize);
@@ -46529,10 +38123,14 @@ unsafe fn init() {
     rt::fn_add(m::geno_motion_gravity as usize);
     rt::fn_add(m::geno_motion_land as usize);
     rt::fn_add(m::geno_motion_opts as usize);
+    rt::fn_add(m::geno_multi_dash_anim as usize);
+    rt::fn_add(m::geno_multi_dash_coll as usize);
+    rt::fn_add(m::geno_multi_dash_enter as usize);
+    rt::fn_add(m::geno_multi_dash_phys as usize);
     rt::fn_add(m::geno_next_of as usize);
+    rt::fn_add(m::geno_nh as usize);
     rt::fn_add(m::geno_operand as usize);
     rt::fn_add(m::geno_operand_b as usize);
-    rt::fn_add(m::geno_pair_swap as usize);
     rt::fn_add(m::geno_param as usize);
     rt::fn_add(m::geno_pool_sync as usize);
     rt::fn_add(m::geno_profile_alloc as usize);
@@ -46546,11 +38144,8 @@ unsafe fn init() {
     rt::fn_add(m::geno_slot_of as usize);
     rt::fn_add(m::geno_start_frame as usize);
     rt::fn_add(m::geno_state as usize);
-    rt::fn_add(m::geno_state_nth as usize);
-    rt::fn_add(m::geno_state_order as usize);
     rt::fn_add(m::geno_state_valid as usize);
     rt::fn_add(m::geno_state_with as usize);
-    rt::fn_add(m::geno_stick_dz as usize);
     rt::fn_add(m::geno_streq as usize);
     rt::fn_add(m::geno_stun_frame as usize);
     rt::fn_add(m::geno_target_motion as usize);
@@ -46558,10 +38153,6 @@ unsafe fn init() {
     rt::fn_add(m::geno_tornado_anim as usize);
     rt::fn_add(m::geno_tornado_enter as usize);
     rt::fn_add(m::geno_tornado_phys as usize);
-    rt::fn_add(m::geno_tornado_spin_on as usize);
-    rt::fn_add(m::geno_tornado_spin_rate as usize);
-    rt::fn_add(m::geno_tornado_spin_start as usize);
-    rt::fn_add(m::geno_turn as usize);
     rt::fn_add(m::geno_v2_build as usize);
     rt::fn_add(m::geno_v2_preanim as usize);
     rt::fn_add(m::geno_val_get as usize);
@@ -46663,14 +38254,10 @@ unsafe fn init() {
     rt::fn_add(m::ext::Geno_StateMoveId as usize);
     rt::fn_add(m::ext::Geno_StateNext as usize);
     rt::fn_add(m::ext::Geno_WarnIasa as usize);
-    rt::fn_add(m::ext::HSD_AObjSetEndFrame as usize);
-    rt::fn_add(m::ext::HSD_AObjSetFlags as usize);
-    rt::fn_add(m::ext::HSD_AObjSetRate as usize);
     rt::fn_add(m::ext::HSD_CObjGetCurrent as usize);
     rt::fn_add(m::ext::HSD_CObjGetEyePosition as usize);
     rt::fn_add(m::ext::HSD_CObjGetViewingMtxPtr as usize);
     rt::fn_add(m::ext::HSD_DObjSetFlags as usize);
-    rt::fn_add(m::ext::HSD_ForeachAnim as usize);
     rt::fn_add(m::ext::HSD_JObjGetDObj as usize);
     rt::fn_add(m::ext::HSD_JObjSetMtxDirtySub as usize);
     rt::fn_add(m::ext::HSD_JObjSetupMatrixSub as usize);
@@ -46710,30 +38297,36 @@ unsafe fn init() {
     rt::fn_add(m::ext::ftAnim_IsFramesRemaining as usize);
     rt::fn_add(m::ext::ftAnim_SetAnimRate as usize);
     rt::fn_add(m::ext::ftCliffCommon_80081298 as usize);
+    rt::fn_add(m::ext::ftCo_80095328 as usize);
     rt::fn_add(m::ext::ftCo_800968C8 as usize);
     rt::fn_add(m::ext::ftCo_80096CC8 as usize);
     rt::fn_add(m::ext::ftCo_80096D28 as usize);
     rt::fn_add(m::ext::ftCo_8009917C as usize);
+    rt::fn_add(m::ext::ftCo_800C3B10 as usize);
+    rt::fn_add(m::ext::ftCo_800CB870 as usize);
     rt::fn_add(m::ext::ftCo_800D105C as usize);
-    rt::fn_add(m::ext::ftCo_800D72A0 as usize);
+    rt::fn_add(m::ext::ftCo_800D705C as usize);
+    rt::fn_add(m::ext::ftCo_800D7100 as usize);
     rt::fn_add(m::ext::ftCo_AttackAir_EnterFromMsid as usize);
+    rt::fn_add(m::ext::ftCo_AttackS4_CheckInput as usize);
+    rt::fn_add(m::ext::ftCo_Dash_CheckInput as usize);
     rt::fn_add(m::ext::ftCo_Fall_Enter as usize);
-    rt::fn_add(m::ext::ftCo_Fall_IASA as usize);
     rt::fn_add(m::ext::ftCo_IsCpuControlled as usize);
     rt::fn_add(m::ext::ftCo_JumpAerial_Enter_Basic as usize);
+    rt::fn_add(m::ext::ftCo_Jump_CheckInput as usize);
     rt::fn_add(m::ext::ftCo_Jump_Enter as usize);
     rt::fn_add(m::ext::ftCo_LandingFallSpecial_Enter as usize);
     rt::fn_add(m::ext::ftCo_LandingFallSpecial_Enter_Basic as usize);
     rt::fn_add(m::ext::ftCo_Landing_Enter_Basic as usize);
-    rt::fn_add(m::ext::ftCo_Wait_IASA as usize);
+    rt::fn_add(m::ext::ftCo_Turn_CheckInput as usize);
+    rt::fn_add(m::ext::ftCo_Walk_CheckInput as usize);
+    rt::fn_add(m::ext::ftColl_CreateReflectHit as usize);
     rt::fn_add(m::ext::ftCommon_8007D5D4 as usize);
     rt::fn_add(m::ext::ftCommon_8007D7FC as usize);
     rt::fn_add(m::ext::ftCommon_CalcSelfAccel_DeaccelAir as usize);
     rt::fn_add(m::ext::ftCommon_CalcSelfAccel_Drift as usize);
     rt::fn_add(m::ext::ftCommon_Fall as usize);
     rt::fn_add(m::ext::ftCommon_SetSelfMovementFromGroundedMovement as usize);
-    rt::fn_add(m::ext::ftCommon_UseAllJumps as usize);
-    rt::fn_add(m::ext::ftPartSetRotX as usize);
     rt::fn_add(m::ext::ftPartSetRotY as usize);
     rt::fn_add(m::ext::ft_80081A00 as usize);
     rt::fn_add(m::ext::ft_80082C74 as usize);

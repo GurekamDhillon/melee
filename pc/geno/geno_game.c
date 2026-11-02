@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (c) 2026 GurekamDhillon */
 #if defined(TARGET_PC)
 #include <gameworld/script_hit_rules.h>
 #endif
@@ -952,7 +954,7 @@ float Geno_FighterScale(Fighter* fp)
  * past the table repeat the penultimate state while jumps remain (its script opens the next-jump
  * gate); the last state is reserved for the final jump. ftCo_800D72A0 recognises both. Impulses
  * come from the profile's air_vy list (the last entry repeats), else the table's
- * last row. air_vy also overrides the table's own rows, which is how Brawl numbers ship. */
+ * last row. air_vy also overrides the table's own rows, so a profile can set every jump's impulse. */
 void Geno_MultiJump(Fighter* fp, int first_state, int* msid, float* vy)
 {
     int p = Geno_ProfileForKind(fp->kind);
@@ -1878,7 +1880,7 @@ void Geno_GroundEdge(Fighter* fp, int landing)
     }
 }
 
-/* ftcoll.c (ftColl_8007A06C, a fighter's hitbox won the hit): LINK - Brawl's autolink angle 365.
+/* ftcoll.c (ftColl_8007A06C, a fighter's hitbox won the hit): LINK - autolink angle 365.
  * The victim is launched along the attacker's momentum: `dir` / `angle` are rewritten so the
  * launch vector (-dir * cos(angle), sin(angle)) points where the attacker is going. Mode SPEED
  * also raises `kb` so the launch speed is at least the attacker's. An attacker slower than 0.05

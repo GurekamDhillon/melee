@@ -1986,8 +1986,12 @@ pub unsafe extern "C" fn grVenom_80206874(gobj: *mut Ground_GObj) {
 
     Ground_ResetStarFoxArwingState(gp);
 
-    (*gp).u.venom.xF8 = (*yakumono_param).x2C as i32;
-    (*gp).u.venom.xFC = 0;
+    // the C writes `u.venom.xF8` / `xFC` (gp+F8 / gp+FC, GC +0x34 / +0x38): the same words as `u.starfox.xF8` / `xFC`, which
+    // grVenom_80205F30 (this gobj's update, via grVenom_80206B70) reads. Natively `grVenom_GroundVars` has its 8-byte `linked_gobj`
+    // union and `starfox` its 8-byte `article_gobjs`, so `venom.xF8` / `xFC` land on `starfox.article_gobjs[3]` and the
+    // 80205F30 clean-up branch then frees a pointer built from the yakumono word; write the starfox fields at the GC offsets
+    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
+    (*gp).u.starfox.xFC = 0;
 }
 
 pub unsafe extern "C" fn grVenom_80206B68(_arg: *mut Ground_GObj) -> i32 {

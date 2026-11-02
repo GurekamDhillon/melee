@@ -17,7 +17,7 @@ OUT = ROOT / "rust/melee_engine/src/yakumono_layouts.rs"
 W = {"s8": 1, "s16": 2, "s32": 4, "i8": 1, "u8": 1, "i16": 2, "u16": 2, "i32": 4, "u32": 4, "f32": 4}
 # pointer fields: the GameCube record holds a 4-byte relocated pointer, the native struct an 8-byte one. The kind says how the
 # engine builds the native pointer: 1 = address in the raw big-endian image (colour-overlay / command streams the lb code reads
-# as bytes), 2 = decoded DynamicsDesc, 3 = decoded s16 array, 4 = decoded lbColl hit description record.
+# as bytes), 2 = DynamicsDesc, decoded as the lbColl hit description it is read as, 3 = decoded s16 array, 4 = decoded lbColl hit description record.
 PTR_KIND = {"c_void": 1, "DynamicsDesc": 2, "i16": 3, "lbColl_80008D30_arg1": 4}
 STRUCTS = {}
 STRUCT_RE = r"#\[repr\(C[^\]]*\)\]\s*(?:#\[derive[^\]]*\]\s*)?pub struct (\w+)\s*\{(.*?)\n\}"

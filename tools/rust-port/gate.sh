@@ -78,10 +78,14 @@ if [ "$engine" = tu ] && [ -z "$only" ]; then
 fi
 # baselines may only shrink
 bmax=tools/rust-port/diff/baseline_max.tsv
+# CRLF checkouts: strip CRs so the counts compare; a row that still does not parse FAILs instead of being skipped
 while IFS=$'\t' read -r sub max; do
+  sub=${sub//$'\r'/}; max=${max//$'\r'/}
   [ "$sub" = subsystem ] && continue
-  cur=$(grep -vc '^#\|^$' "tools/rust-port/diff/baseline/$sub.txt" 2>/dev/null || true)
-  if [ "${cur:-0}" -gt "$max" ]; then echo "FAIL baseline $sub grew: $cur lines, max $max"; fail=1; fi
+  [ -z "$sub$max" ] && continue
+  cur=$(tr -d '\r' <"tools/rust-port/diff/baseline/$sub.txt" 2>/dev/null | grep -vc '^#\|^$' || true)
+  if ! [[ "$max" =~ ^[0-9]+$ && "$cur" =~ ^[0-9]+$ ]]; then echo "FAIL baseline $sub: check not run (max '$max', count '$cur')"; fail=1; continue; fi
+  if [ "$cur" -gt "$max" ]; then echo "FAIL baseline $sub grew: $cur lines, max $max"; fail=1; fi
 done < "$bmax"
 echo "ok   baselines: $(cat tools/rust-port/diff/baseline/*.txt | grep -vc '^#\|^$') entries in total"
 # migrated subsystems: zero fields outside the baseline at the sampled frames

@@ -114,7 +114,7 @@ POSITIVE = [
         {"name": "GlideStart", "behavior": "geno.glide.start", "subaction": 57},
         {"name": "Plain", "behavior": "geno.air", "subaction": 18, "like": "motion:65", "flags": "0x55", "move_id": 13,
          "next": "geno:Glide", "land": "helpless", "landing_lag": 12, "anim": "next", "iasa": "like", "phys": "auto", "coll": "air"}],
-        "glide": {"hold_frames": 16, "w07": 2.2, "end_buttons": 14}, "tornado": {"tap_cooldown": 10}, "drill": {"angle_max": 75, "speed": 2.2}}]}),
+        "glide": {"entry_hold": 16, "s_start": 1.6, "max_glides": 1}, "tornado": {"read_period": 10}, "drill": {"psi_max": 30, "dr_speed": 2.2}}]}),
     ("docs example 19.2", {"geno": 5, "fighters": [{"attach": "kirby", "articles": [
         {"name": "Fire", "model": {"file": "GnSoraFire.dat", "symbol": "fire_joint"}, "scale": 1.0, "spin": 0, "lifetime": 60,
          "spawn": [8, 8], "velocity": [2.5, 0], "gravity": 0, "max_fall": 0, "accel": 0, "max_speed": 0,

@@ -983,7 +983,7 @@ static void gn_add_v2(gn_profile *p, const jdoc *d, int e, const char *where) {
             }
         }
     }
-    /* parameter blocks: "glide": { "hold_frames": 16, "w00": 80, ... } */
+    /* parameter blocks: "glide": { "entry_hold": 6, "s_start": 1.5, ... } (geno_behaviour_params.h) */
     for (f = 0; f < (int) (sizeof fams / sizeof fams[0]); ++f) {
         x = jd_get(d, e, fams[f]);
         if (x < 0 || d->n[x].type != JN_OBJ) continue;
@@ -2492,8 +2492,8 @@ static int test_geno_registry_v2(void) {
         "{\"name\":\"GlideLanding\",\"behavior\":\"geno.glide.landing\",\"phys\":\"none\",\"coll\":\"like\","
         "\"anim\":\"nope\",\"like\":\"motion:43\",\"landing_lag\":12,\"move_id\":7,\"flags\":\"0x10\"},"
         "{\"name\":\"X\",\"behavior\":\"geno.nope\",\"next\":\"geno:Glide\"}],"
-        "\"glide\":{\"hold_frames\":20,\"w07\":2.5,\"bogus\":1},"
-        "\"tornado\":{\"w13\":17},"
+        "\"glide\":{\"entry_hold\":20,\"s_start\":2.5,\"bogus\":1},"
+        "\"tornado\":{\"mash_add\":17},"
         "\"specials\":{\"n\":\"geno:Glide\",\"hi\":\"special:3\",\"air_hi\":\"geno:X\",\"lw\":\"geno:Nope\"},"
         "\"on_land\":[{\"from\":\"geno:Glide\",\"to\":\"geno:GlideLanding\"}]}]}";
     gn_registry_clear(&r);
@@ -2520,14 +2520,14 @@ static int test_geno_registry_v2(void) {
         gw_test_fail("states: landing_lag 12, phys none, coll like, unknown anim -> behaviour's");
         return 1;
     }
-    if (p->nparam != 3 || p->param_id[0] != GENO_P_GLIDE_HOLD || p->param_id[1] != GENO_P_GLIDE_W0 + 7 ||
-        p->param_id[2] != GENO_P_TORNADO_W0 + 13) {
-        gw_test_fail("parameters: hold_frames, glide w07, tornado w13 (bogus ignored); got %d", p->nparam);
+    if (p->nparam != 3 || p->param_id[0] != GENO_BP_GLIDE_entry_hold || p->param_id[1] != GENO_BP_GLIDE_s_start ||
+        p->param_id[2] != GENO_BP_TORNADO_mash_add) {
+        gw_test_fail("parameters: glide entry_hold, glide s_start, tornado mash_add (bogus ignored); got %d", p->nparam);
         return 1;
     }
     memcpy(&f, &p->param_bits[1], 4);
     if (f != 2.5f) {
-        gw_test_fail("glide.w07 = %g", f);
+        gw_test_fail("glide.s_start = %g", f);
         return 1;
     }
     if (p->special[GENO_SP_N] != GENO_TARGET(GENO_TGT_GENO, 1) ||

@@ -1845,62 +1845,17 @@ sets what it needs. `hold_motion` / `hold_frames` are the glide entry's counter.
 
 ### 16.3 Parameters
 
-Per profile, in family blocks; each family also takes its Brawl block word by word (`w00`..).
+Per profile, in family blocks (`glide`, `tornado`, `drill`, `cape`), by the names of the v5.1
+clean-room parameter set in `pc/geno/geno_behaviour_params.h`. That set is defined only from
+`docs/specs/geno-v5.1-behaviours.md` (sections 2.5, 3.2-3.3, 4.1-4.2, 5.1-5.2, revision 1 in
+section 9, host switches in section 10); the header lists every name with its default and source
+tag. The old Brawl-word block (`w00`..) and its named defaults were removed.
 
 ```json
-"glide":   { "hold_frames": 16, "w07": 2.2, "end_buttons": 14 },
-"tornado": { "tap_cooldown": 10 },
-"drill":   { "angle_max": 75, "speed": 2.2 }
+"glide":   { "entry_hold": 6, "s_start": 1.5, "max_glides": 2 },
+"tornado": { "mash_add": 16 },
+"drill":   { "psi_min": -60, "dr_speed": 2.0 }
 ```
-
-**glide** (Brawl Misc Glide block, MK values as defaults):
-
-| word | name | MK | used for |
-|---|---|---|---|
-| w00 | angle_max | 80 | nose-up limit (deg) |
-| w01 | angle_min | -70 | nose-down limit |
-| w02 | start_vy | 0.75 | GlideStart: vy += w02 |
-| w03 | start_gravity | 1.0 | GlideStart gravity multiplier |
-| w04 | start_vx | 1.0 | GlideStart: vx *= w04 |
-| w05 | speed | 1.7 | Glide's initial speed |
-| w06 | speed_accel | 0.04 | speed change per frame at +-90 deg |
-| w07 | max_speed | 2.2 | velocity magnitude cap |
-| w08 | stall_speed | 0.7 | below it the glide stalls (ends) |
-| w09 | sink_accel | 0.03 | sink growth per frame |
-| w10 | max_sink | 0.6 | sink cap |
-| w11 | recover_angle | 15 | Brawl's stall recovery (the stall ends the glide first) |
-| w12 | dive_angle | -25 | steeper dives get a bonus |
-| w13 | dive_bonus | 0.03 | max extra speed per frame (at angle_min) |
-| w14 | - | 0.15 | not read by Brawl's code |
-| w15 | deadzone | 0.25 | stick magnitude dead zone |
-| w16 | pitch_up | 0.55 | angular accel nose up (deg/f^2) |
-| w17 | pitch_down | 0.75 | angular accel nose down |
-| w18 | max_pitch_rate | 7 | deg/f |
-| w19 | stall_pitch | 1.0 | stall auto pitch-up |
-| w20 | wing_node | 44 | Brawl's wing partial-animation joint (not used) |
-| w21 | - | 0 | not read |
-
-Geno extras: `hold_frames` 16 (jump held in an air jump), `from_ground_jump` 0, `entry` 1 (0 = only
-scripts enter), `end_buttons` 14 (GENO_BTN mask: shield 8 + special 2 + jump 4), `max_frames` 0 (no
-time limit, as Brawl), `end_helpless` 0, `pose_center` 0 (16.4), `landing_lag` (unused by the
-defaults).
-
-**tornado** (MK paramSpecialN; param ids 4000-4016 float, 24000-24001 int):
-w00 entry_vy 1.0, w01 entry_vx_mul 0.7, w02 start_rate 80, w03 ground_accel 0.12, w04 ground_speed
-2.0, w05 air_accel 0.1, w06 air_speed 1.7, w07 brake 0.008, w08 gravity -0.08, w09 max_fall 0.5,
-w10 tap_vy 1.0, w11 tap_cooldown 10 (int), w12 max_rise 1.4, w13 tap_rate 16, w14 max_rate 80, w15
-rate_decay 1.5, w16 spin_frames 70 (int), w17 late_decay 2.0, w18 end_rate 10, w19 -. Extras:
-`max_speed` 2.5, `end_helpless` 1.
-
-**drill** (MK paramSpecialS; ids 4017-4020, 24002): w00 start_vx_mul 0.5, w01 start_vy 1.0, w02
-start_gravity -0.08, w03 steer 3.0 (deg per frame at full stick), w04 end_frames 10 (int), w05 -.
-Extras: `speed` 2.0 (used when the clip has no root motion), `angle_max` 0 (0 = no limit, as
-Brawl), `bounce` 0 (v3; was 7 in v2: 1 wall, 2 hit, 4 shield - Brawl has no such check, 17.5),
-`pop_vx` 1.0, `pop_vy` 2.1, `end_helpless` 1 (v3: FallSpecial after an air end, hit or not).
-
-The param-id numbering is now confirmed (fn_111_81A8's getters): float ids count only the float
-words (4011 = N w12, 4012 = N w13, ..., 4015 = N w17, 4016 = N w18, 4017-4020 = S w00-w03), int
-ids 24000 = N w11, 24001 = N w16, 24002 = S w04.
 
 ### 16.4 The recovered Brawl logic (what is exact, what is approximated)
 

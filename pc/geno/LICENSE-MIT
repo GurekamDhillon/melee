@@ -25,16 +25,14 @@ Files with a comment syntax carry the header lines "SPDX-License-Identifier: MIT
 .words, .genoasm, PNG, .gitkeep/.gitignore) are covered by this file and the list below.
 Paths are relative to the repository root. Everything not listed here is GPL-2.0-or-later (see pc/LICENSE).
 
-Exception inside a covered file: pc/geno/geno.h is MIT except its GENO_P_* Brawl-derived parameter
-layout/defaults block, which is excluded from the MIT grant and stays GPL-2.0-or-later.
-
-Covered files (300)
+Covered files (301)
 ------------------
 pc/geno/geno.h
 pc/geno/geno_anim_bank_cache_tests.inc
 pc/geno/geno_anim_bank_game.inc
 pc/geno/geno_art_anim.inc
 pc/geno/geno_art_text.h
+pc/geno/geno_behaviour_params.h
 pc/geno/geno_combo_tests.inc
 pc/geno/geno_define_data.inc
 pc/geno/geno_define_game.h
@@ -343,4 +341,3 @@ pc/geno/mods/geno-lab/art/README.md
 pc/geno/mods/geno-lab/art/preview/
 pc/geno/tools/xv2_fx_render_adapter.py
 pc/geno/tools/scan_ftcmd_opcodes.py
-In pc/geno/geno.h: the GENO_P_* Brawl-derived parameter layout/defaults block (the enum following the comment 'the GENO_P_* Brawl-derived defaults below are excluded from the MIT grant'); the rest of geno.h is MIT

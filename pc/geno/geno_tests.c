@@ -1233,7 +1233,7 @@ static const char t_v2_json[] =
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":17},"
     "{\"name\":\"Plain\",\"behavior\":\"geno.air\",\"subaction\":18,\"phys\":\"none\","
     "\"iasa\":\"like\",\"like\":\"motion:29\",\"next\":\"geno:Glide\",\"flags\":\"0x55\"}],"
-    "\"glide\":{\"hold_frames\":16},\"drill\":{\"angle_max\":60},"
+    "\"glide\":{\"entry_hold\":6},\"drill\":{\"psi_min\":-60},"
     "\"specials\":{\"n\":\"geno:Tornado\",\"s\":\"geno:Drill\"}}]}";
 
 static TestGenoState* t_v2_setup(void)
@@ -1579,10 +1579,10 @@ static const char t_cape_json[] =
     "{\"name\":\"CapeBAir\",\"behavior\":\"geno.cape.attack\",\"subaction\":37},"
     "{\"name\":\"CapeEnd\",\"behavior\":\"geno.cape.end\",\"subaction\":38},"
     "{\"name\":\"CapeEndAir\",\"behavior\":\"geno.cape.end\",\"subaction\":39}],"
-    "\"cape\":{\"w00\":0.5,\"w01\":0.4,\"w02\":0.5,\"w03\":2.5,\"w04\":0.5,\"w05\":2.5},"
+    "\"cape\":{\"cape_start\":6,\"cape_end\":25},"
     "\"specials\":{\"lw\":\"geno:CapeStart\",\"air_lw\":\"geno:CapeStartAir\"}}]}";
 
-/* ---- v3: Drill Rush (Brawl's code) ------------------------------------------------------------- */
+/* ---- v3: Drill Rush (geno.drill) -------------------------------------------------------------------- */
 
 #define TD_START 0
 #define TD_START_AIR 1
@@ -1597,7 +1597,7 @@ static const char t_drill_json[] =
     "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
     "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
-    "\"drill\":{\"w00\":0.5,\"w01\":1.0,\"w02\":-0.08,\"w03\":3.0,\"w04\":10},"
+    "\"drill\":{\"dr_speed\":2.0,\"steer_rate\":2.0},"
     "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
 
 /* ---- v4: the model follows the move ------------------------------------------------------------ */
@@ -1615,7 +1615,7 @@ static const char t_drill_flat_json[] =
     "{\"name\":\"Drill\",\"behavior\":\"geno.drill\",\"subaction\":42},"
     "{\"name\":\"DrillEndGround\",\"behavior\":\"geno.drill.end\",\"subaction\":43,\"next\":\"auto\"},"
     "{\"name\":\"DrillEnd\",\"behavior\":\"geno.drill.end\",\"subaction\":44,\"next\":\"helpless\"}],"
-    "\"drill\":{\"w03\":3.0,\"w04\":10,\"pitch_model\":0},"
+    "\"drill\":{\"dr_speed\":2.0},"
     "\"specials\":{\"s\":\"geno:DrillStart\",\"air_s\":\"geno:DrillStartAir\"}}]}";
 
 static const char t_spin_json[] =

@@ -30,6 +30,8 @@ pub struct Audio {
     in_match: std::cell::Cell<bool>,
     /// The pause duck is on (a leave from the pause screen undoes it; a normal leave does not).
     ducked: std::cell::Cell<bool>,
+    /// MELEE_AUDIO_DBG: the underrun count last reported.
+    last_underruns: u32,
 }
 
 impl Drop for Audio {
@@ -118,20 +120,31 @@ impl Audio {
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
         crate::engine_audio::boot_sound(iso, false)?;
         if headless {
-            return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into() });
+            return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }
         let out = sim::Output::new(melee_audio::output::DriverConfig::from_env(false));
-        Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into() })
+        Ok(Audio { out: Some(out), dev_open: false, capture: None, resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 })
     }
 
     /// Once per video frame: the game's own per-frame audio (`lbAudioAx_80027DF8`), then the 5 ms
     /// frames the device is owed.
     pub fn tick(&mut self) {
-        sim::game_frame();
+        // an engine scene runs `lbAudioAx_80027DF8` itself (gmscene's loop); the stand-in scenes get it here
+        if !crate::engine_audio::take_frame_ran() {
+            sim::game_frame();
+        }
         match (&mut self.out, &mut self.capture) {
             (Some(o), _) => {
                 o.tick();
                 self.dev_open = o.driver.device_open();
+                if std::env::var_os("MELEE_AUDIO_DBG").is_some() {
+                    use std::sync::atomic::Ordering::Relaxed;
+                    let u = o.driver.ring.underruns.load(Relaxed);
+                    if u != self.last_underruns {
+                        eprintln!("audio: +{} underrun frames (ring {} frames)", u - self.last_underruns, o.driver.ring.len());
+                        self.last_underruns = u;
+                    }
+                }
             }
             (None, Some(c)) => {
                 sim::virtual_frame_into(c);
@@ -150,7 +163,7 @@ impl Audio {
 
     /// A handle for the headless `golden` run, which owns the DSP clock itself.
     pub fn detached() -> Audio {
-        Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: true.into(), ducked: false.into() }
+        Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: true.into(), ducked: false.into(), last_underruns: 0 }
     }
     /// The pause itself: duck, the pause sound.
     pub fn pause_start(&self) {

@@ -114,8 +114,19 @@ pub fn load_match_banks(ckinds: &[i32], stkind: i32, grkind: i32) {
 /// One game frame of audio: `lbAudioAx_80027DF8` (deferred sfx, the two loop voices).
 pub fn game_frame() {
     with(|s| {
-        s.step_sound_objs();
+        if !s.objs_external {
+            s.step_sound_objs();
+        }
         s.lb_audio_ax_80027df8()
+    });
+}
+
+/// The sound objects' proc phase on its own (the engine runs it after the GObj procs, where the C's `HSD_GOBJ_PLINK_AUDIO_AX` procs
+/// run); from the first call on, [`game_frame`] leaves the objects to it.
+pub fn sound_obj_procs() {
+    with(|s| {
+        s.objs_external = true;
+        s.step_sound_objs()
     });
 }
 
@@ -155,32 +166,114 @@ pub fn virtual_frame_into(out: &mut Vec<i16>) -> u32 {
 
 /// The output side: the frame driver (device clock, WAV dump, turbo mute) over the installed
 /// sound. Call [`Output::tick`] once per video frame on the game thread.
+///
+/// Once the device is playing, the mix moves to its own thread (`melee-audio-mixer`): it wakes every millisecond or two and
+/// tops the ring up to its cushion under the sound lock, so a slow or stalled game frame (a scene load, a hitch) no longer
+/// starves the device. The game thread's `tick` then only reports. `MELEE_AUDIO_GAME_THREAD=1` keeps the C's
+/// mix-on-the-game-thread pacing; a `MELEE_AUDIO_DUMP` capture keeps it too (the WAV writer lives on the game thread).
 pub struct Output {
     pub driver: Driver,
+    mixer: Option<(Arc<AtomicBool>, std::thread::JoinHandle<()>)>,
 }
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 impl Output {
     pub fn new(cfg: DriverConfig) -> Self {
-        Output { driver: Driver::new(cfg) }
+        Output { driver: Driver::new(cfg), mixer: None }
+    }
+
+    /// Whether the mix runs on the mixer thread.
+    pub fn threaded(&self) -> bool {
+        self.mixer.is_some()
     }
 
     /// gw_ax_frame_tick: generate the sub-frames the device (or the wall clock) is owed.
-    /// Returns how many 5 ms sub-frames ran.
+    /// Returns how many 5 ms sub-frames ran (0 once the mixer thread owns the mix).
     pub fn tick(&mut self) -> u32 {
-        let mut g = lock();
-        let Some(s) = g.as_mut() else { return 0 };
-        let registered = s.ax_callback_registered;
-        // Driver::tick wants the Ax and a closure over it; the closure needs the whole Sound,
-        // so lend the Ax out and run the synth around it.
-        let mut ax = std::mem::take(&mut s.ax);
-        let n = self.driver.tick(&mut ax, registered, |ax| {
-            std::mem::swap(&mut s.ax, ax);
-            let out = s.sub_frame();
-            std::mem::swap(&mut s.ax, ax);
-            out
-        });
-        s.ax = ax;
+        if self.mixer.is_some() {
+            return 0;
+        }
+        let n = {
+            let mut g = lock();
+            let Some(s) = g.as_mut() else { return 0 };
+            let registered = s.ax_callback_registered;
+            // Driver::tick wants the Ax and a closure over it; the closure needs the whole Sound,
+            // so lend the Ax out and run the synth around it.
+            let mut ax = std::mem::take(&mut s.ax);
+            let n = self.driver.tick(&mut ax, registered, |ax| {
+                std::mem::swap(&mut s.ax, ax);
+                let out = s.sub_frame();
+                std::mem::swap(&mut s.ax, ax);
+                out
+            });
+            s.ax = ax;
+            n
+        };
+        if self.driver.device_open() && self.driver.cfg.dump.is_none() && std::env::var_os("MELEE_AUDIO_GAME_THREAD").is_none() {
+            self.start_mixer();
+        }
         n
+    }
+
+    fn start_mixer(&mut self) {
+        let stop = Arc::new(AtomicBool::new(false));
+        let (ring, target) = (self.driver.ring.clone(), self.driver.cfg.target_frames.max(2));
+        let st = stop.clone();
+        let h = std::thread::Builder::new().name("melee-audio-mixer".into()).spawn(move || {
+            raise_mixer_priority();
+            // Everything this loop touches is preallocated: the ring, the Sound's voices / ARAM; a sub-frame is a fixed array.
+            while !st.load(Ordering::Relaxed) {
+                let buffered = ring.len() / crate::FRAME_SAMPLES as u32;
+                let n = target.saturating_sub(buffered).min(crate::output::MAX_BURST);
+                if n > 0 {
+                    let mut g = lock();
+                    if let Some(s) = g.as_mut() {
+                        for _ in 0..n {
+                            let out = s.sub_frame();
+                            ring.push(&out);
+                        }
+                    }
+                }
+                std::thread::sleep(std::time::Duration::from_millis(1));
+            }
+        });
+        if let Ok(h) = h {
+            self.mixer = Some((stop, h));
+        }
+    }
+}
+
+/// The mixer is the one thread that must not wait behind the game: time-critical within the process's class (a game started at
+/// idle / below-normal priority would otherwise starve it), and a 1 ms timer so its 1 ms sleeps are 1 ms.
+#[cfg(windows)]
+fn raise_mixer_priority() {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn GetCurrentThread() -> isize;
+        fn SetThreadPriority(h: isize, p: i32) -> i32;
+    }
+    #[link(name = "winmm")]
+    unsafe extern "system" {
+        fn timeBeginPeriod(ms: u32) -> u32;
+    }
+    const THREAD_PRIORITY_TIME_CRITICAL: i32 = 15;
+    // SAFETY: plain Win32 calls on the current thread's pseudo-handle.
+    unsafe {
+        SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+        timeBeginPeriod(1);
+    }
+}
+#[cfg(not(windows))]
+fn raise_mixer_priority() {}
+
+impl Drop for Output {
+    fn drop(&mut self) {
+        if let Some((stop, h)) = self.mixer.take() {
+            stop.store(true, Ordering::Relaxed);
+            let _ = h.join();
+        }
     }
 }
 

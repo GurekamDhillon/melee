@@ -45,6 +45,8 @@ pub fn ax_800233EC(id: i32) -> i32 { sim::lbaudioax_800233ec(id) }
 pub fn ax_80023694() -> i32 { with(0, |s| s.lb_audio_ax_80023694()) }
 pub fn ax_800236B8(voice: i32) -> i32 { with(0, |s| s.lb_audio_ax_800236b8(voice)) }
 pub fn ax_800236DC() -> i32 { with(0, |s| s.lb_audio_ax_800236dc()) }
+/// `lbAudioAx_80023710(voice)`: whether a voice is still playing (HSD_AudioSFXCheck).
+pub fn ax_80023710(voice: i32) -> i32 { with(false, |s| s.audio_sfx_check(voice)) as i32 }
 pub fn ax_80023730() -> i32 { with(false, |s| s.lb_audio_ax_80023730()) as i32 }
 pub fn ax_800237A8(id: i32, vol: i32, pan: i32) -> i32 {
     if std::env::var_os("MELEE_AUDIO_BT").is_some_and(|v| v.to_str().and_then(|v| v.parse::<i32>().ok()) == Some(id)) {
@@ -80,7 +82,14 @@ pub fn ax_800240B4(id: i32) -> i32 { with(0, |s| s.lb_audio_ax_800240b4(id)) }
 pub fn ax_80024304(id: i32) -> i32 { with(0, |s| s.lb_audio_ax_80024304(id)) }
 pub fn ax_80024B94(handle: i32, pitch: i32) -> i32 { sim::lbaudioax_80024b94(handle, pitch) }
 /// `lbAudioAx_80027DF8`: the per-frame audio update, called from the scene's own frame (so it runs where the C runs it).
-pub fn ax_80027DF8() { sim::game_frame() }
+pub fn ax_80027DF8() {
+    FRAME_RAN.store(true, std::sync::atomic::Ordering::Relaxed);
+    sim::game_frame()
+}
+/// Set when the engine's scene loop ran the per-frame audio update; the live player's own tick then skips its copy.
+static FRAME_RAN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+/// Whether the scene loop ran `lbAudioAx_80027DF8` since the last call (and clear it).
+pub fn take_frame_ran() -> bool { FRAME_RAN.swap(false, std::sync::atomic::Ordering::Relaxed) }
 pub fn ax_80024030(n: i32) {
     if std::env::var_os("MELEE_AUDIO_BT").is_some() {
         let bt = std::backtrace::Backtrace::force_capture().to_string();
@@ -132,6 +141,9 @@ pub fn ax_80026F2C(flags: u32) { with((), |s| s.lb_audio_ax_80026f2c(flags)) }
 pub fn ax_8002702C(flags: u32, mask: u64) {
     if std::env::var_os("MELEE_AUDIO_DBG").is_some() { eprintln!("audio: banks flags {flags:x} mask {mask:x}"); }
  with((), |s| s.lb_audio_ax_8002702c(flags, mask)) }
+/// `lbAudioAx_80027648()`: wait for the requested banks. melee_audio's bank loads complete inside the request, so there is nothing to wait for
+/// (the TU default would spin on melee_runtime's own, unmixed, bank manager).
+pub fn ax_80027648() {}
 pub fn ax_80027168() { with((), |s| s.lb_audio_ax_80027168()) }
 pub fn ax_80027AB0(id: i32) {
     let us = melee_runtime::tu::lblanguage::lbLang_IsSettingUS();
@@ -245,6 +257,10 @@ pub fn cast<A, B: Cast<A>>(a: A) -> B { B::cast(a) }
 /// would otherwise point at the lbaudio_ax TU.
 fn post_link() {
     crate::engine_audio_gen::install_gen();
+    // the scene loop's per-frame audio update (gmscene.c calls lbAudioAx_80027DF8 every iteration): the sound objects' pan / volume
+    // steps, the deferred sfx, the two loop voices
+    unsafe { melee_modes::tu::gmscene::ext::AUDIO_FRAME = Some(ax_80027DF8) };
+    unsafe { melee_modes::tu::gmscene::ext::AUDIO_PROCS = Some(sim::sound_obj_procs) };
     {
         use melee_fighter::hooks as h;
         unsafe {

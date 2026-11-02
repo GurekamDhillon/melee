@@ -55,15 +55,15 @@ pub fn fn_8012E644(gobj: *mut HSD_GObj) {
     melee_core::ct!("fn_8012E644");
     unsafe {
         let fp = fpp(gobj);
-        let da = &*((*fp).dat_attrs as *const ftYs_DatAttrs);
+        let da = &*((*fp).dat_attrs as *const ftYoshiAttributes);
         let mut transn_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         let mut star_pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
         ext::lb_8000B1CC((*(*fp).parts.add(FtPart_TransN as usize)).joint, core::ptr::null_mut(), &mut transn_pos);
-        star_pos.x = fmadds(-1.0, da.speciallw_star_offset.x, transn_pos.x);
-        star_pos.y = transn_pos.y + da.speciallw_star_offset.y;
+        star_pos.x = fmadds(-1.0, da.x118, transn_pos.x);
+        star_pos.y = transn_pos.y + da.x11C;
         star_pos.z = transn_pos.z;
         ext::it_802B2FC8(gobj, &mut star_pos, -1.0);
-        star_pos.x = transn_pos.x + da.speciallw_star_offset.x;
+        star_pos.x = transn_pos.x + da.x118;
         ext::it_802B2FC8(gobj, &mut star_pos, 1.0);
         (*fp).accessory4_cb = None;
     }

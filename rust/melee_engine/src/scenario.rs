@@ -162,5 +162,9 @@ pub fn install(s: Scenario) {
         v::SceneLaunch_EntryStateId = Some(|| 2);
         v::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
         h::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
+        // gm_1B03's copies (team costumes, `SceneLaunch_UntintedEnemy`): gw_sl_cfg.enemy_team_colors defaults to 0
+        use melee_modes::tu::gm_1B03::ext as t;
+        t::SCENELAUNCH_ACTIVE = Some(|| 1);
+        t::SCENELAUNCH_ENEMYTEAMCOLORS = Some(|| 0);
     }
 }

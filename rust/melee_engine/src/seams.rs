@@ -31,6 +31,15 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
 pub fn install() {
     unsafe {
         {
+            // gm_801A4014's leave path (a scene ending inside one run: `melee play`'s next match) reads the reset flag
+            // of gmMainLib_8046B0F0 (gm/gmmain_lib.c); nothing on the engine path sets it (no reset button).
+            use melee_modes::tu::gm_1A3F::ext as m;
+            use melee_modes::tu::gmmain_lib::gmMainLib_8046B0F0 as st;
+            m::GMMAINLIB_8046B0F0_RESETTING = Some(|| unsafe { st.resetting != 0 });
+            m::SET_GMMAINLIB_8046B0F0_RESETTING = Some(|v| unsafe { st.resetting = v as i32 });
+            m::SET_GMMAINLIB_8046B0F0_SKIP_INTRO = Some(|v| unsafe { st.skip_intro = v as i32 });
+        }
+        {
             use melee_modes::tu::gmmain_lib::ext as g;
             g::GXNTSC480PROG = Some(|| (&raw mut RMODES[0]) as *mut core::ffi::c_void);
             g::GXNTSC480INTDF = Some(|| (&raw mut RMODES[1]) as *mut core::ffi::c_void);

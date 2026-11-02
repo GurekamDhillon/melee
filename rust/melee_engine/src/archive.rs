@@ -85,6 +85,7 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         );
         return -1;
     }
+    crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
     // Parse (and validate) the untouched file first; the relocation below rewrites it.
     let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
     let h = dat.header;
@@ -207,6 +208,9 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
         }
     }
 
+    if unsafe { RECLAIM } {
+        reclaim_overlapping(archive as usize, src as usize, file_size);
+    }
     if Host::get().archives.contains_key(&(archive as usize)) {
         // the C reused this HSD_Archive address: the old image's native graph stays alive (the game may still point into it)
         eprintln!("engine: archive record {archive:p} re-parsed; keeping the previous native image alive");
@@ -215,6 +219,26 @@ pub unsafe fn host_parse(archive: *mut HSD_Archive, src: *mut u8, file_size: usi
     }
     Host::get().archives.insert(archive as usize, image);
     0
+}
+
+/// Set by `Engine::next_vs` (a later scene of the same run, `melee play`'s rematches): a file parsed over the raw
+/// bytes of earlier images frees those images. Their bytes were overwritten, so in the C anything still pointing into
+/// them reads the new file's bytes; the native graphs would only keep a dead copy alive, and every match re-loads the
+/// fighters and the stage, so without this each match keeps hundreds of MB. Off for the single-scene runs (goldens).
+pub static mut RECLAIM: bool = false;
+
+fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
+    let h = Host::get();
+    let hit = |im: &ArchiveImage| im.raw < raw + len && raw < im.raw + im.raw_len;
+    let before = h.retired.len();
+    h.retired.retain(|im| !hit(im));
+    let dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();
+    for k in &dead {
+        h.archives.remove(k);
+    }
+    if std::env::var_os("MELEE_RECLAIM_LOG").is_some() && (before != h.retired.len() || !dead.is_empty()) {
+        eprintln!("engine: reclaimed {} archive image(s) under {raw:#x}+{len:#x}", before - h.retired.len() + dead.len());
+    }
 }
 
 /// `host_public_address`: the native root of public `symbols` (null when the archive has no such

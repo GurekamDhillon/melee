@@ -200,7 +200,7 @@ pub mod ext {
         match unsafe { hook::HSD_CObjGetScissor } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetScissor is not ported") } }
     }
     pub fn HSD_CObjGetViewingMtx(a0: *mut HSD_CObj, a1: *mut [f32; 4]) {
-        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => { melee_core::unported!("TODO: HSD_CObjGetViewingMtx is not ported") } }
+        match unsafe { hook::HSD_CObjGetViewingMtx } { Some(f) => f(a0, a1), None => unsafe { crate::tu::cobj::HSD_CObjGetViewingMtx(a0 as _, a1 as _) } }
     }
     pub fn HSD_CObjLoadDesc(a0: *mut HSD_CObjDesc) -> *mut HSD_CObj {
         match unsafe { hook::HSD_CObjLoadDesc } { Some(f) => f(a0), None => { { return unsafe { crate::tu::cobj::HSD_CObjLoadDesc(a0 as _) as _ }; } } }

@@ -528,13 +528,13 @@ pub fn install_gen() {
     unsafe { melee_world::tu::ifprize::ext::hook::lbAudioAx_80023F28 = Some(|_| 0); }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Mex_InsigniaForExt.is_none() { melee_world::tu::ifstatus::ext::hook::Mex_InsigniaForExt = Some(|_| 0); } }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Mex_PortCKindToExt.is_none() { melee_world::tu::ifstatus::ext::hook::Mex_PortCKindToExt = Some(|_| 0); } }
-    unsafe { if melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible = Some(|| 0); } }
+    unsafe { if melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstatus::ext::hook::Script_StatusHUDVisible = Some(|| 1); } }
     unsafe { if melee_world::tu::ifstatus::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::ifstatus::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineArtBaseCK.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineArtBaseCK = Some(|_| -1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineArtOpen.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineArtOpen = Some(|_, _, _| 0); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineBaseCK.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineBaseCK = Some(|_| -1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Geno_DefineName.is_none() { melee_world::tu::ifstock::ext::hook::Geno_DefineName = Some(|_, _, _| 0); } }
-    unsafe { if melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible = Some(|| 0); } }
+    unsafe { if melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible.is_none() { melee_world::tu::ifstock::ext::hook::Script_StatusHUDVisible = Some(|| 1); } }
     unsafe { if melee_world::tu::ifstock::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::ifstock::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::iftime::ext::hook::Ui_RetailHidden.is_none() { melee_world::tu::iftime::ext::hook::Ui_RetailHidden = Some(|_| 0); } }
     unsafe { if melee_world::tu::mplib::ext::hook::GXBegin.is_none() { melee_world::tu::mplib::ext::hook::GXBegin = Some(|_, _, _| ()); } }

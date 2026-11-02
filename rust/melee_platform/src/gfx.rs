@@ -21,6 +21,8 @@ pub struct Presenter {
     /// Frames presented / swapchain images that could not be acquired (skipped).
     pub presented: u64,
     pub skipped: u64,
+    /// The internal scale follows the window (no `MELEE_RENDER_SCALE`).
+    auto_scale: bool,
     /// The last two sim frames (render-only interpolation: never fed back into the game).
     prev: Option<Vec<DrawCmd>>,
     cur: Option<Vec<DrawCmd>>,
@@ -83,7 +85,12 @@ impl Presenter {
         let instance = Renderer::instance();
         let size = window.inner_size();
         let surface = instance.create_surface(window).map_err(|e| format!("create_surface: {e}"))?;
-        let renderer = Renderer::with_instance(&instance, Some(&surface), EFB_WIDTH, EFB_HEIGHT)?;
+        let mut renderer = Renderer::with_instance(&instance, Some(&surface), EFB_WIDTH, EFB_HEIGHT)?;
+        // Render the 3D scene at the window's resolution (the EFB's 4:3 coordinates scaled), not at 640x480 upscaled.
+        let auto_scale = Renderer::env_scale().is_none();
+        if auto_scale {
+            renderer.set_scale(Renderer::scale_for_window(size.width, size.height));
+        }
         let caps = surface.get_capabilities(&renderer.adapter);
         // The EFB holds display-space values already (no sRGB decode on the GC), so prefer a
         // non-sRGB swapchain format; the blit copies the bytes through.
@@ -114,7 +121,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, presented: 0, skipped: 0, prev: None, cur: None, scratch: Vec::new(), blended: false })
+        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, scratch: Vec::new(), blended: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -128,6 +135,10 @@ impl Presenter {
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.renderer.device, &self.config);
+        if self.auto_scale {
+            self.renderer.set_scale(Renderer::scale_for_window(width, height));
+            self.blended = true; // the targets were recreated: re-render the current frame
+        }
     }
 
     /// Render `frame` (if the game finished one) into the EFB, then present the EFB.

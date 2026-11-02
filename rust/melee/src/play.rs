@@ -524,6 +524,8 @@ impl Play {
             _ => "fd",
         };
         let scene = format!("mode=vs;at=match;p1={}/human;p2={}/human;p3=none;p4=none;stage={stage};match=time;minutes=0;items=off", names[0], names[1]);
+        // MELEE_PLAY_SCENE=<scene string>: any scenario's match instead (e.g. a 4-player CPU free-for-all for profiling).
+        let scene = std::env::var("MELEE_PLAY_SCENE").unwrap_or(scene);
         let built = (|| -> Result<EngMatch, String> {
             let scn = melee_engine::scenario::Scenario::parse(&scene)?;
             let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
@@ -792,7 +794,7 @@ impl Play {
         let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
         let px = p.screenshot();
         let path = dir.join(format!("play_{name}.png"));
-        match write_png(&path, EFB_WIDTH, EFB_HEIGHT, &px) {
+        match write_png(&path, p.renderer.width, p.renderer.height, &px) {
             Ok(()) => log(&format!("screenshot {}", path.display())),
             Err(e) => log(&format!("screenshot: {e}")),
         }

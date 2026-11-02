@@ -272,6 +272,46 @@ impl Renderer {
         Self::with_instance(&Self::instance(), None, width, height)
     }
 
+    /// `MELEE_RENDER_SCALE` (1..=4), when set.
+    pub fn env_scale() -> Option<u32> {
+        std::env::var("MELEE_RENDER_SCALE").ok().and_then(|v| v.parse::<u32>().ok()).map(|s| s.clamp(1, 4))
+    }
+
+    /// The internal scale that renders a 640x480 EFB at (at least) a `w` x `h` window's native resolution.
+    pub fn scale_for_window(w: u32, h: u32) -> u32 {
+        (w.div_ceil(640)).max(h.div_ceil(480)).clamp(1, 4)
+    }
+
+    /// Change the internal resolution multiplier: recreates the colour / depth targets (contents are lost).
+    pub fn set_scale(&mut self, scale: u32) {
+        let scale = scale.clamp(1, 4);
+        if scale == self.scale {
+            return;
+        }
+        let (w, h) = (self.width / self.scale * scale, self.height / self.scale * scale);
+        let mk = |format, usage, label| {
+            self.device.create_texture(&wgpu::TextureDescriptor {
+                label: Some(label),
+                size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format,
+                usage,
+                view_formats: &[],
+            })
+        };
+        self.color = mk(
+            COLOR_FORMAT,
+            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
+            "GX EFB color",
+        );
+        self.depth = mk(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT, "GX EFB depth");
+        self.width = w;
+        self.height = h;
+        self.scale = scale;
+    }
+
     /// The wgpu instance [`Renderer::new`] uses (primary backends, WGPU_BACKEND overrides).
     pub fn instance() -> wgpu::Instance {
         let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
@@ -286,7 +326,7 @@ impl Renderer {
         width: u32,
         height: u32,
     ) -> Result<Self, String> {
-        let scale = std::env::var("MELEE_RENDER_SCALE").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(1).clamp(1, 4);
+        let scale = Self::env_scale().unwrap_or(1);
         let (width, height) = (width * scale, height * scale);
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,

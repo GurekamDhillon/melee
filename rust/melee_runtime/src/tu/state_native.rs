@@ -46,7 +46,7 @@ pub mod ext {
     fn HSD_LObjGetLightMaskSpecular() -> i32;
     fn HSD_LObjGetNbActive() -> i32;
     fn HSD_LObjSetup(a0: *mut HSD_LObj, a1: _GXColor, a2: f32);
-    fn HSD_MulColor(a0: *mut _GXColor, a1: *mut _GXColor, a2: *mut _GXColor);
+    fn HSD_MulColor(a0: *mut _GXColor, a1: *mut _GXColor, a2: *mut _GXColor) = crate::tu::util::mul_color_ptr(a0, a1, a2);
     fn HSD_SetTevRegAll() = crate::tu::tev_native::HSD_SetTevRegAll();
     fn HSD_SetupChannel(a0: *mut HSD_Chan) = crate::tu::tev_native::HSD_SetupChannel(a0);
     fn HSD_SetupTevStage(a0: *mut _HSD_TevDesc) = crate::tu::tev_native::HSD_SetupTevStage(a0);

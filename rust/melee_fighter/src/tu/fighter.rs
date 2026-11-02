@@ -634,6 +634,7 @@ pub unsafe fn Fighter_LoadCommonData() {
     h::FIGHTER_804D6530 = d(9) as _;
     h::FIGHTER_GRAB_MASH_SHAKE = d(10) as _;
     Fighter_SmashChargeShakeTable = d(11) as _;
+    h::FIGHTER_SMASH_CHARGE_SHAKE_TABLE = d(11) as _;
     Fighter_804D6524 = d(12) as _;
     h::FIGHTER_804D6520 = d(13) as _;
     Fighter_804D651C = d(14) as _;

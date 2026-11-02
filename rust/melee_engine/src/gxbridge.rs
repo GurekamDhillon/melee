@@ -24,7 +24,13 @@ struct Objs {
     tlut: HashMap<usize, TlutObj>,
     light: HashMap<usize, GxLightObj>,
     data: HashMap<(usize, usize), GxData>,
+    /// Bytes held by `data`.
+    data_bytes: usize,
 }
+
+/// `data` is emptied when it would hold more than this (its keys are guest addresses that later loads reuse; the copies
+/// are re-made on the next draw).
+const DATA_CAP: usize = 48 << 20;
 
 static mut SHIM: Option<GxShim> = None;
 static mut OBJS: Option<Objs> = None;
@@ -76,6 +82,17 @@ unsafe fn extent(p: usize, cap: usize) -> usize {
     0
 }
 
+/// Drop the cached copies of game memory starting in `[lo, hi)` (an archive image whose bytes were freed or overwritten:
+/// its copies are stale, and nothing else ever removed them).
+pub fn forget_range(lo: usize, hi: usize) {
+    unsafe {
+        if let Some(o) = OBJS.as_mut() {
+            o.data.retain(|&(p, _), _| p < lo || p >= hi);
+            o.data_bytes = o.data.values().map(|d| d.len()).sum();
+        }
+    }
+}
+
 /// Diagnostics: (entries, bytes) of the copied game-memory cache.
 pub fn data_cache_stats() -> (usize, usize) {
     let o = objs();
@@ -97,6 +114,11 @@ unsafe fn data_at(p: *const c_void, want: usize) -> Option<GxData> {
         return Some(d.clone());
     }
     let d: GxData = core::slice::from_raw_parts(p as *const u8, n).into();
+    if o.data_bytes + n > DATA_CAP {
+        o.data.clear();
+        o.data_bytes = 0;
+    }
+    o.data_bytes += n;
     o.data.insert(key, d.clone());
     Some(d)
 }

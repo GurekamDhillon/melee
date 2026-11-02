@@ -475,6 +475,7 @@ impl Play {
     /// The process's memory (working set, private bytes) in the log: checks that match after match does not grow.
     fn frame_mem(&self, what: &str) {
         let (ws, private) = proc_mem();
+        crate::heapprof::dump(&format!("after {} matches ({what})", self.matches_played));
         if std::env::var_os("MELEE_ARENA_STATS").is_some() {
             let (bumped, free, top) = melee_engine::arena::stats();
             log(&format!("arena: bumped {} KB, on free lists {} KB, top free classes (size, blocks) {:?}", bumped >> 10, free >> 10, top));
@@ -886,6 +887,11 @@ impl Play {
                     crate::engine_audio::start_stage_bgm();
                 }
                 self.matches_played += 1;
+                // GX decode on its own thread (render-only; needs a run that never snapshots the arena, whose blocks
+                // the thread's frames hold): MELEE_GX_SYNC=1 keeps it in the tick
+                if melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
+                    melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
+                }
                 self.em = Some(EngMatch { e, frame: None, setup: su, end_timer: None, timed_out: false, quit_hold: 0 });
                 self.frame_mem("match start");
                 self.goto(Scene::Match);

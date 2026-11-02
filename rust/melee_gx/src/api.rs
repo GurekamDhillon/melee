@@ -209,8 +209,31 @@ const CP_REG_ARRAYSTRIDE_ID: u8 = 0xB0;
 const BP_REG_DRAWDONE: u32 = 0x45;
 pub const GX_AUTO: u16 = 0xFFFF;
 
+/// A frame decoded on the [`Gx::enable_async`] worker: its draws and the copy-clear the presenter needs.
+pub struct AsyncFrame {
+    pub draws: Vec<crate::draw::DrawCmd>,
+    pub clear_color: crate::state::Vec4,
+    pub clear_depth: u32,
+}
+
+enum Job {
+    /// FIFO bytes and the handle table they refer to.
+    Process(Vec<u8>, Resources),
+    /// GXCopyDisp: hand the draws decoded so far over as a frame.
+    End,
+}
+
+/// The decode thread: it owns the `GxState` while async decoding is on.
+struct Worker {
+    tx: std::sync::mpsc::Sender<Job>,
+    frames: std::sync::mpsc::Receiver<AsyncFrame>,
+    /// Emptied FIFO buffers coming back for reuse.
+    pool: std::sync::mpsc::Receiver<Vec<u8>>,
+}
+
 /// The GX: shadow registers + FIFO + the decoded state and resources it drives.
 pub struct Gx {
+    worker: Option<Worker>,
     sh: Shadow,
     saved: Option<Shadow>,
     fifo: Vec<u8>,
@@ -234,6 +257,7 @@ impl Gx {
     /// A GX after `GXInit` (and its FIFO drained).
     pub fn new() -> Self {
         let mut gx = Self {
+            worker: None,
             sh: Shadow::default(),
             saved: None,
             fifo: Vec::with_capacity(1 << 16),
@@ -299,10 +323,80 @@ impl Gx {
         self.dl.as_ref().map_or(self.fifo.len(), |d| d.len())
     }
 
+    /// Decode on a thread of its own from now on: [`Gx::drain`] sends the FIFO there, [`Gx::end_frame`] closes a
+    /// frame and [`Gx::take_async_frame`] collects the newest finished one (older unpresented ones are dropped).
+    /// The decoded state moves to the thread: `self.state` only mirrors the copy-clear of the last collected frame.
+    /// `init` runs first on the new thread. Decoding is render-only: no game code reads `GxState`.
+    pub fn enable_async(&mut self, init: fn()) {
+        if self.worker.is_some() {
+            return;
+        }
+        self.drain();
+        let mut st = std::mem::take(&mut self.state);
+        self.state.clear_color = st.clear_color;
+        self.state.clear_depth = st.clear_depth;
+        let (tx, jobs) = std::sync::mpsc::channel::<Job>();
+        let (ftx, frames) = std::sync::mpsc::channel::<AsyncFrame>();
+        let (ptx, pool) = std::sync::mpsc::channel::<Vec<u8>>();
+        std::thread::Builder::new()
+            .name("gx decode".into())
+            .spawn(move || {
+                init();
+                while let Ok(job) = jobs.recv() {
+                    match job {
+                        Job::Process(mut buf, res) => {
+                            st.process(&buf, &res);
+                            drop(res);
+                            buf.clear();
+                            let _ = ptx.send(buf);
+                        }
+                        Job::End => {
+                            st.warnings.clear();
+                            let f = AsyncFrame { draws: st.take_draws(), clear_color: st.clear_color, clear_depth: st.clear_depth };
+                            if ftx.send(f).is_err() {
+                                break;
+                            }
+                        }
+                    }
+                }
+            })
+            .expect("gx decode thread");
+        self.worker = Some(Worker { tx, frames, pool });
+    }
+    pub fn is_async(&self) -> bool {
+        self.worker.is_some()
+    }
+    /// Async mode: close the current frame (see [`Gx::enable_async`]).
+    pub fn end_frame(&mut self) {
+        if let Some(w) = &self.worker {
+            let _ = w.tx.send(Job::End);
+        }
+    }
+    /// Async mode: the newest frame the worker finished since the last call (the copy-clear is mirrored into `state`).
+    pub fn take_async_frame(&mut self) -> Option<Vec<crate::draw::DrawCmd>> {
+        let w = self.worker.as_ref()?;
+        let mut last = None;
+        while let Ok(f) = w.frames.try_recv() {
+            last = Some(f);
+        }
+        let f = last?;
+        self.state.clear_color = f.clear_color;
+        self.state.clear_depth = f.clear_depth;
+        Some(f.draws)
+    }
+
     /// Decode everything written so far (Aurora `fifo::drain`).
     pub fn drain(&mut self) {
+        if let Some(w) = &self.worker {
+            let next = w.pool.try_recv().unwrap_or_else(|_| Vec::with_capacity(1 << 16));
+            let buf = std::mem::replace(&mut self.fifo, next);
+            let res = std::mem::take(&mut self.res);
+            let _ = w.tx.send(Job::Process(buf, res));
+            return;
+        }
         let buf = std::mem::take(&mut self.fifo);
         self.state.process(&buf, &self.res);
+        self.res.clear();
         self.fifo = buf;
         self.fifo.clear();
     }

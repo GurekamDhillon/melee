@@ -58,6 +58,10 @@ const TRIM_MIN: usize = 64 << 10;
 pub fn set_trim(on: bool) {
     unsafe { TRIM = on }
 }
+/// Whether [`set_trim`] is on (the run never snapshots the arena).
+pub fn trim() -> bool {
+    unsafe { TRIM }
+}
 
 /// Decommit the whole pages inside `[a, b)` (their contents are dropped; the range stays reserved).
 #[cfg(windows)]
@@ -74,9 +78,21 @@ unsafe fn recommit(a: usize, b: usize) -> bool {
     !sys::VirtualAlloc(a as *mut _, b - a, sys::MEM_COMMIT, sys::PAGE_READWRITE).is_null()
 }
 
-/// True while the engine code runs (allocations go to the arena).
+thread_local! {
+    /// Set on threads that are never game code (the GX decode thread): their allocations stay on the system heap even
+    /// while the game thread is in a [`GameScope`].
+    static FOREIGN: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+}
+
+/// Mark the calling thread as one whose allocations never go to the arena.
+pub fn mark_foreign_thread() {
+    FOREIGN.with(|f| f.set(true));
+}
+
+/// True while the engine code runs (allocations go to the arena), on the game thread.
+#[inline]
 pub fn active() -> bool {
-    IN_GAME.load(Relaxed)
+    IN_GAME.load(Relaxed) && !FOREIGN.with(|f| f.get())
 }
 
 /// `(start, len)` of the part of the arena in use (page rounded), or `(0, 0)` before the first allocation.

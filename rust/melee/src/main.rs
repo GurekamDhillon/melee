@@ -29,6 +29,7 @@ use std::process::ExitCode;
 
 mod crash;
 mod prof;
+mod heapprof;
 mod disc;
 mod cfg;
 mod ident;
@@ -289,8 +290,44 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         }
     }
 }
+/// [`DebugAlloc`] with the live-heap sampler's hooks (`heapprof`, off unless MELEE_HEAP_SAMPLE is set).
+struct Hooked;
+unsafe impl std::alloc::GlobalAlloc for Hooked {
+    #[inline]
+    unsafe fn alloc(&self, l: std::alloc::Layout) -> *mut u8 {
+        let p = DebugAlloc.alloc(l);
+        if heapprof::enabled() {
+            heapprof::on_alloc(p, l.size());
+        }
+        p
+    }
+    #[inline]
+    unsafe fn dealloc(&self, p: *mut u8, l: std::alloc::Layout) {
+        if heapprof::enabled() {
+            heapprof::on_free(p);
+        }
+        DebugAlloc.dealloc(p, l)
+    }
+    #[inline]
+    unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
+        let p = DebugAlloc.alloc_zeroed(l);
+        if heapprof::enabled() {
+            heapprof::on_alloc(p, l.size());
+        }
+        p
+    }
+    #[inline]
+    unsafe fn realloc(&self, p: *mut u8, l: std::alloc::Layout, n: usize) -> *mut u8 {
+        let q = DebugAlloc.realloc(p, l, n);
+        if heapprof::enabled() && !q.is_null() {
+            heapprof::on_free(p);
+            heapprof::on_alloc(q, n);
+        }
+        q
+    }
+}
 #[global_allocator]
-static GLOBAL: DebugAlloc = DebugAlloc;
+static GLOBAL: Hooked = Hooked;
 
 fn main() -> ExitCode {
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {
@@ -308,6 +345,7 @@ fn main() -> ExitCode {
     if let Some(n) = std::env::var("MELEE_ALLOC_SAMPLE").ok().and_then(|v| v.parse().ok()) {
         SAMPLE_EVERY.store(n, std::sync::atomic::Ordering::Relaxed);
     }
+    heapprof::init();
     let _prof = prof::from_env();
     crash::install();
     let args: std::vec::Vec<String> = std::env::args().skip(1).collect();

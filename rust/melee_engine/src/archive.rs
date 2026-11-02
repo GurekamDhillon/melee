@@ -268,6 +268,10 @@ pub fn set_reclaim(on: bool) {
 fn reclaim_overlapping(_record: usize, raw: usize, len: usize) {
     let h = Host::get();
     let hit = |im: &ArchiveImage| im.raw < raw + len && raw < im.raw + im.raw_len;
+    for im in h.archives.values().chain(h.retired.iter()).filter(|im| hit(im)) {
+        crate::gxbridge::forget_range(im.raw, im.raw + im.raw_len);
+    }
+    crate::gxbridge::forget_range(raw, raw + len);
     let before = h.retired.len();
     h.retired.retain(|im| !hit(im));
     let dead: Vec<usize> = h.archives.iter().filter(|(_, im)| hit(im)).map(|(&k, _)| k).collect();

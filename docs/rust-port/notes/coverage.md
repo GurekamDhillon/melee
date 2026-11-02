@@ -52,113 +52,113 @@ No OS input, no focus: pad scripts (Lua, `tools/rust-port/golden/coverage/pads/`
 
 `melee golden --engine tu --scenario NAME` accepts every scenario of `docs/rust-port/golden/coverage/scenarios.tsv` (generated from scenarios.json by `tools/rust-port/golden/coverage/gen_tsv.py`). Wired: VS-mode scenarios with the idle pad script (scene strings with `ck:N`, `ext:N` stage ids, `cpuN`/`human`/`idle`); not wired: 1p modes (adventure/classic/allstar/targettest: the engine boots VS matches only), VS scenarios whose pad is a Lua script (`rand_s*`, `randabs_*`, kirby/zelda_sheik: needs a Lua pad host in the engine), scenes with `stocks=`/`teams=`/team suffixes. Runner: `bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out R.tsv] --all|NAME...` (headless, unfocused; per scenario it finds the number of `MELEE_ENGINE_PRE_DRAWS` 0..3 that makes frame 0..1 match, since the BGM-pick/stage-init HSD_Rand draws are still dummies; the chosen N shows in the detail; `MELEE_EXE=path` runs a copy of the exe so the build tree stays free).
 
-Result over all 168 scenarios: **34 pass, 45 fail, 79 not wired, 10 no golden** (was 12 pass / 67 fail before the covfix rounds, 28 after round 1; the wired total is 79). 'First divergent frame' = number of leading rows that matched (the engine and the golden disagree, or the engine died, at that frame; engine deaths at load show 0).
+Result over all 168 scenarios: **51 pass, 28 fail, 79 not wired, 10 no golden** (was 12 pass / 67 fail before the covfix rounds, 28 after round 1, 34 after rounds 2 and 3; the wired total is 79). 'First divergent frame' = number of leading rows that matched (the engine and the golden disagree, or the engine died, at that frame; engine deaths at load show 0). Table regenerated after round 4 (2026-11-02).
 
 | class | scenarios |
 |---|---|
 | not wired: 1p mode | 65 |
-| pass | 34 |
-| hash divergence (hash, seed) | 14 |
+| pass | 51 |
 | not wired: Lua pad | 14 |
 | no golden (C failed/blocked) | 10 |
-| hash divergence (hash, s2) | 6 |
+| hash divergence (hash, itemsum) | 6 |
 | hash divergence (hash, s0) | 5 |
-| hash divergence (hash, itemsum) | 5 |
-| hash divergence (hash, seed, items, itemsum, s0, s2) | 3 |
-| hash divergence (hash, items, itemsum) | 3 |
-| engine crashed (access violation) mid-match | 2 |
-| hash divergence (hash, s0, s2) | 2 |
+| hash divergence (hash, s2) | 4 |
+| hash divergence (hash, seed) | 4 |
 | hash divergence (hash, seed, s2) | 1 |
-| engine panic: granime.rs:92 TODO: HSD_JObjResetRST is not ported | 1 |
-| engine panic: pobj.rs:204 assertion failed: !(*e).jobj.is_null() | 1 |
-| hash divergence (hash, itemsum, s0, s2) | 1 |
-| hash divergence (hash, seed, items, itemsum, s2) | 1 |
+| engine panic: melee_world\src\tu\granime.rs:92:5: TODO: HSD_JObjResetRST is not ported | 1 |
+| engine panic: melee_items\src\tu\itcoll.rs:1089:32: index out of bounds: the len is 100 but the index is | 1 |
+| hash divergence (hash, seed, items, itemsum) | 1 |
+| engine panic: melee_runtime\src\tu\pobj.rs:204:422: assertion failed: !(*e).jobj.is_null() | 1 |
+| hash divergence (hash, seed, s0) | 1 |
+| engine crashed (access violation) mid-match | 1 |
+| hash divergence (hash, itemsum, s2) | 1 |
+| engine panic: melee_fighter\src\tu\player.rs:155:9: src/melee/pl/player.c:102: cant get player struct! 1 | 1 |
 
 | scenario | status | first divergent frame | class |
 |---|---|---|---|
-| char_gaw | FAIL | 1567 | hash divergence (hash, seed) |
-| char_kirby | FAIL | 755 | hash divergence (hash, s0) |
-| char_bowser | FAIL | 4 | hash divergence (hash, seed) |
-| char_captain | FAIL | 3502 | hash divergence (hash, s2) |
-| char_dk | PASS | - | pass |
-| char_link | FAIL | 172 | hash divergence (hash, itemsum) |
-| char_luigi | PASS | - | pass |
 | char_fox | PASS | - | pass |
+| char_dk | PASS | - | pass |
+| char_gaw | PASS | - | pass |
+| char_kirby | FAIL | 755 | hash divergence (hash, s0) |
+| char_captain | FAIL | 3502 | hash divergence (hash, s2) |
+| char_bowser | FAIL | 791 | hash divergence (hash, seed) |
+| char_mario | FAIL | 455 | hash divergence (hash, itemsum) |
+| char_luigi | PASS | - | pass |
+| char_link | PASS | - | pass |
+| char_marth | PASS | - | pass |
 | char_mewtwo | FAIL | 2116 | hash divergence (hash, itemsum) |
-| char_marth | FAIL | 3303 | hash divergence (hash, seed) |
-| char_ness | FAIL | 4 | hash divergence (hash, seed) |
+| char_ness | FAIL | 1795 | hash divergence (hash, seed) |
 | char_icies | PASS | - | pass |
 | char_pikachu | PASS | - | pass |
-| char_peach | FAIL | 198 | hash divergence (hash, itemsum) |
+| char_peach | PASS | - | pass |
+| char_jigglypuff | PASS | - | pass |
 | char_samus | PASS | - | pass |
-| char_jigglypuff | FAIL | 3498 | hash divergence (hash, seed) |
-| char_mario | FAIL | 455 | hash divergence (hash, itemsum) |
-| char_yoshi | FAIL | 4 | hash divergence (hash, seed) |
-| char_falco | PASS | - | pass |
-| char_younglink | FAIL | 539 | hash divergence (hash, s2) |
-| char_zelda | FAIL | 2446 | hash divergence (hash, seed, s2) |
+| char_yoshi | FAIL | 742 | hash divergence (hash, s0) |
 | char_sheik | PASS | - | pass |
-| char_pichu | PASS | - | pass |
+| char_falco | PASS | - | pass |
+| char_zelda | FAIL | 2446 | hash divergence (hash, seed, s2) |
+| char_younglink | FAIL | 1099 | hash divergence (hash, s0) |
+| char_drmario | PASS | - | pass |
 | zelda_sheik_transform | NOT_WIRED | - | not wired: Lua pad |
 | kirby_copy_a | NOT_WIRED | - | not wired: Lua pad |
 | kirby_copy_b | NOT_WIRED | - | not wired: Lua pad |
 | ic_vs_fox_human | NOT_WIRED | - | not wired: Lua pad |
-| char_roy | FAIL | 4 | hash divergence (hash, seed) |
+| char_roy | FAIL | 787 | hash divergence (hash, seed) |
 | char_ganondorf | PASS | - | pass |
+| stage_02_fountain | FAIL | 3275 | hash divergence (hash, seed) |
+| char_pichu | PASS | - | pass |
 | sheik_cpu_vs_zelda_cpu | FAIL | 442 | hash divergence (hash, s2) |
-| stage_04_castle | FAIL | 397 | engine stopped: melee_world\src\tu\granime.rs:92:5: TODO: HSD_JObjResetRST is not ported |
-| stage_02_fountain | FAIL | 4 | hash divergence (hash, seed) |
-| stage_03_stadium | FAIL | 725 | hash divergence (hash, seed) |
+| stage_04_castle | FAIL | 397 | engine panic: melee_world\src\tu\granime.rs:92:5: TODO: HSD_JObjResetRST is not ported |
+| stage_05_jungle | FAIL | 3588 | engine panic: melee_items\src\tu\itcoll.rs:1089:32: index out of bounds: the len is 100 but the index is |
+| stage_03_stadium | PASS | - | pass |
+| stage_06_brinstar | PASS | - | pass |
 | stage_07_corneria | FAIL | 955 | hash divergence (hash, seed, items, itemsum) |
-| char_drmario | PASS | - | pass |
-| stage_06_brinstar | FAIL | 1739 | hash divergence (hash, s0) |
-| stage_08_yoshistory | FAIL | 448 | engine stopped: melee_runtime\src\tu\pobj.rs:204:422: assertion failed: !(*e).jobj.is_null() |
+| stage_08_yoshistory | FAIL | 448 | engine panic: melee_runtime\src\tu\pobj.rs:204:422: assertion failed: !(*e).jobj.is_null() |
+| stage_09_onett | PASS | - | pass |
 | stage_11_rainbowcruise | FAIL | 177 | hash divergence (hash, s2) |
-| stage_10_mutecity | FAIL | 877 | hash divergence (hash, s2) |
-| stage_05_jungle | FAIL | 3588 | engine stopped: melee_items\src\tu\itcoll.rs:1089:32: index out of bounds: the len is 100 but th |
-| stage_09_onett | FAIL | 2373 | hash divergence (hash, s0) |
+| stage_12_garden | PASS | - | pass |
+| stage_10_mutecity | PASS | - | pass |
 | stage_13_greatbay | FAIL | 1623 | hash divergence (hash, itemsum) |
+| stage_14_temple | FAIL | 2477 | hash divergence (hash, itemsum) |
 | stage_15_kraid | PASS | - | pass |
 | stage_16_yoshiisland | PASS | - | pass |
-| stage_14_temple | FAIL | 2477 | hash divergence (hash, itemsum) |
-| stage_12_garden | PASS | - | pass |
-| stage_20_mushroomkingdom2 | FAIL | 803 | hash divergence (hash, itemsum) |
+| stage_18_fourside | PASS | - | pass |
 | stage_21_akaneia | NO_GOLDEN | - | no golden (C failed/blocked) |
-| stage_18_fourside | FAIL | 1334 | hash divergence (hash, s2) |
 | stage_19_mushroomkingdom | FAIL | 2662 | hash divergence (hash, seed, s0) |
 | stage_17_greens | PASS | - | pass |
-| stage_22_venom | FAIL | 19 | hash divergence (hash, s0, s2) |
+| stage_22_venom | FAIL | 1389 | engine crashed (access violation) mid-match |
+| stage_20_mushroomkingdom2 | FAIL | 803 | hash divergence (hash, itemsum) |
 | stage_26_icetop | NO_GOLDEN | - | no golden (C failed/blocked) |
 | stage_23_pokefloats | PASS | - | pass |
 | stage_24_bigblue | PASS | - | pass |
+| stage_27_flatzone | PASS | - | pass |
 | stage_25_icemt | FAIL | 1472 | hash divergence (hash, itemsum, s2) |
-| stage_27_flatzone | FAIL | 1324 | hash divergence (hash, itemsum, s0, s2) |
-| stage_30_kongojungle64 | FAIL | 102 | hash divergence (hash, itemsum) |
 | stage_28_dreamland64 | PASS | - | pass |
-| stage_29_yoshistory64 | FAIL | 2959 | hash divergence (hash, s0) |
-| items_hi_finaldestination | PASS | - | pass |
-| stage_32_finaldestination | PASS | - | pass |
+| stage_29_yoshistory64 | PASS | - | pass |
+| stage_30_kongojungle64 | PASS | - | pass |
 | stage_31_battlefield | PASS | - | pass |
 | items_hi_battlefield | PASS | - | pass |
-| items_hi_dreamland64 | FAIL | 2763 | engine stopped: no panic message |
+| stage_32_finaldestination | PASS | - | pass |
 | items_hi_yoshistory | FAIL | 2805 | hash divergence (hash, s0) |
+| items_hi_finaldestination | PASS | - | pass |
+| items_hi_dreamland64 | PASS | - | pass |
 | items_hi_human_bf | NOT_WIRED | - | not wired: Lua pad |
-| items_hi_stadium | FAIL | 2092 | hash divergence (hash, seed) |
+| items_hi_stadium | FAIL | 3529 | engine panic: melee_fighter\src\tu\player.rs:155:9: src/melee/pl/player.c:102: cant get player struct! 1 |
 | items_hi_4p_ffa | PASS | - | pass |
 | items_low_fd | PASS | - | pass |
+| items_off_4p_ps | PASS | - | pass |
 | items_off_fd | PASS | - | pass |
 | cpulv1_marth_sheik | PASS | - | pass |
-| cpulv1_fox_falco | PASS | - | pass |
 | cpulv1_ganon_peach | PASS | - | pass |
-| items_off_4p_ps | FAIL | 725 | hash divergence (hash, seed) |
-| cpulv1_puff_link | FAIL | 1674 | hash divergence (hash, seed) |
-| cpulv5_fox_falco | PASS | - | pass |
+| cpulv1_fox_falco | PASS | - | pass |
+| cpulv1_puff_link | PASS | - | pass |
 | cpulv5_ganon_peach | PASS | - | pass |
 | cpulv5_marth_sheik | PASS | - | pass |
-| cpulv5_puff_link | FAIL | 460 | hash divergence (hash, itemsum, s0, s2) |
+| cpulv5_fox_falco | PASS | - | pass |
+| cpulv5_puff_link | FAIL | 673 | hash divergence (hash, s0) |
 | cpulv9_marth_sheik | FAIL | 1798 | hash divergence (hash, itemsum) |
+| cpulv9_ganon_peach | PASS | - | pass |
 | cpulv9_fox_falco | PASS | - | pass |
-| cpu_ffa4_levels | FAIL | 120 | hash divergence (hash, s2) |
 | cpu_teams4 | NOT_WIRED | - | not wired: 1p mode |
 | cpu_stock2_fd | NOT_WIRED | - | not wired: 1p mode |
 | cpu_stock1_bf | NOT_WIRED | - | not wired: 1p mode |
@@ -166,8 +166,8 @@ Result over all 168 scenarios: **34 pass, 45 fail, 79 not wired, 10 no golden** 
 | pad_marth_sheik_battlefield | NOT_WIRED | - | not wired: Lua pad |
 | pad_bowser_ganondorf_yoshistory | NOT_WIRED | - | not wired: Lua pad |
 | pad_icies_jigglypuff_stadium | NOT_WIRED | - | not wired: Lua pad |
+| cpulv9_puff_link | PASS | - | pass |
 | pad_peach_samus_dreamland64 | NOT_WIRED | - | not wired: Lua pad |
-| cpulv9_puff_link | FAIL | 2402 | hash divergence (hash, itemsum, s0, s2) |
 | pad_luigi_drmario_fountain | NOT_WIRED | - | not wired: Lua pad |
 | padcpu_fox_vs_cpu_marth | NOT_WIRED | - | not wired: Lua pad |
 | padcpu_pikachu_vs_cpu_pichu | NOT_WIRED | - | not wired: Lua pad |
@@ -228,22 +228,22 @@ Result over all 168 scenarios: **34 pass, 45 fail, 79 not wired, 10 no golden** 
 | allstar_step04 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step05 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step06 | NOT_WIRED | - | not wired: 1p mode |
-| allstar_step07 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step08 | NOT_WIRED | - | not wired: 1p mode |
+| allstar_step07 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step09 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step10 | NOT_WIRED | - | not wired: 1p mode |
 | allstar_step11 | NOT_WIRED | - | not wired: 1p mode |
+| cpu_ffa4_levels | FAIL | 120 | hash divergence (hash, s2) |
+| allstar_step12 | NOT_WIRED | - | not wired: 1p mode |
 | homerun_contest | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_10 | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_100 | NO_GOLDEN | - | no golden (C failed/blocked) |
-| allstar_step12 | NOT_WIRED | - | not wired: 1p mode |
 | multiman_3min | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_15min | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_endless | NO_GOLDEN | - | no golden (C failed/blocked) |
 | multiman_cruel | NO_GOLDEN | - | no golden (C failed/blocked) |
 | event_match | NO_GOLDEN | - | no golden (C failed/blocked) |
 | cpu_mixed_1_9 | PASS | - | pass |
-| cpulv9_ganon_peach | PASS | - | pass |
 
 Notes on the classes (covfix rounds, 2026-11-01; what was fixed and what is left):
 - **fixed: stage archive symbols** (`dat_symbols.tsv`): `_image_desc` -> HSD_ImageDesc (Fountain mirror, Stadium BG), `dynamicsdata_*` -> DynamicsDesc (Castle flags, Rainbow Cruise ship), `ftDataKirbyCopy*` -> KirbyHatStruct, `SIS_*` -> the new `custom:sis` table (words 0/1 typed kerning/textures, the rest raw string pointers; Stadium text `HSD_SisLib_803A660C` read garbage before). `yakumono_param` stays `custom:rawwords` (a regenerated `dat_types.rs` had silently reverted it to raw).
@@ -275,3 +275,11 @@ Round 3 (covfix, still 34 of the 79 wired pass, but 17 scenarios moved on by 100
 - *Fountain narrowed (5 scenarios, frame 4)*: the C rand trace (`_build/agents/covfix3`, coverage-bin + `MELEE_RAND_TRACE`, see `rand_resolve.py`) shows the C makes the same 46 draws at match frames 3 and 4 and creates its child generators (`hsd_8039F05C` draws) at frame 5, while Rust creates four genLife-1 parents (bank 30, idx 30000 / 30002 twice) at frame 4 and runs them at once (11 draws each). Rust's new parents sit in the generator list before the two older ones. So either the C animation event fires one frame later for these (two JObj anims firing together in Rust), or the C creates them after the particle proc. The C call trace build (`build_trace.sh`) could not be made: the Aurora (ax86m) dependency build fails in a fresh private root (`vswhere` missing in that shell), copying `cov-trace/ax86m` into the new root is not enough. Next step: a C trace build in a root that already has `ax86m` built (rebuild only the game TUs), then `seqdiff.py` on match frames 3..5.
 - *Left, unchanged*: Stadium 725 (9 scenarios share it), Castle (`HSD_JObjResetRST` pointer form), Yoshi's Story pobj assertion, Rainbow Cruise 177, Venom 19 (rand identical for 30 frames, so fighter physics), Great Bay / Temple / Mushroom Kingdom II / Mario Yoshi stars (itemsum), G&W 1567.
 - Debug helpers used this round (not committed): per-frame draw-count comparison of the C `MELEE_RAND_TRACE` (script frame of the first `ftCo_800B33B0` draw = match frame 0) against the engine's `MELEE_RAND_TRACE`; the first frame whose count differs names the stage or fighter function that draws too much or too little (Mute City: `grMuteCity_801F106C` drew 13, 12, 11 against 14 times, which was the yakumono layout).
+
+Round 4 (covfix, 34 -> 51 of the 79 wired pass; gate and the 4 goldens green, lint unchanged at 398). Theme: the goldens are the C PC build, including what its compiler and ABI do to the retail code, plus the recording host.
+- **C call trace works again** (`tools/rust-port/trace/build_trace_reuse.sh`): a fresh private root cannot build Aurora, so the new root reuses the `ax86m` libraries of `cov-trace` (copy the `.lib`s, junction `_deps`, a `sitecustomize` that skips the CMake step; the generated `*.inc` fonts must exist under `build/GALE01/include`). The rebuild after a C edit is minutes (only the changed TU recompiles). With it: `MELEE_CALLTRACE_SEQ=<f> MELEE_CALLTRACE_FRAMES=a-b` through `record_coverage.sh --bin <root>`, the Rust side from `cargo build -p melee --release --features melee_core/calltrace` into `build/cargo-ct`, `seqdiff.py --anchor Fighter_8006A1BC --auto-ignore N --ignore-inlined LIST --filter REGEX` (inlined self-recursion such as `lbFindJObjWithAObj` needs the ignore list). **Use `MELEE_ENGINE_PRE_DRAWS` = the value `run_rust.sh` picked (often 0), or the traces are misaligned.** Temporary `OSReport("DBG.. %d", (int)(x*1000))` lines in the C TUs (integer casts: floats come out as `-0.000000`) next to `eprintln!` in the Rust body is the fastest way to find the first differing value; revert them before committing.
+- **Recording host: widescreen** (9 scenarios: Stadium; also moved char_gaw, char_jigglypuff, char_marth ...): the golden runs use the default 1920x1080 window with the match scene wide, so `gw_view_projection_scale(16/9, wide)` = `aspect * (60/73)` scales every perspective camera's aspect (`HSD_CObjUpdateView`). It reaches the simulation through `Camera_LogicToScreen` / `lbVector_WorldToScreen` (Stadium's Display proc re-picked when the nametag did not fit the 4:3 screen: the "725" blocker). `Engine::boot_host` now installs `View_ProjectionScaleBits` = that scale when the run is headless or not drawing (`MELEE_ENGINE_NO_WIDE=1` restores 1.0); a window that is drawn keeps 4:3.
+- **PC-build ABI: `Callback1` for `HSD_AObjSetRate`** (Fountain, 5 scenarios): `grAnime_801C6F50` calls the rate setter through `(aobj, obj, flags, float)`; the console passes the float in f1, the x86-32 PC build pushes all four, so `HSD_AObjSetRate(aobj, rate)` reads `rate` from the `obj` slot: the JObj pointer's bits as a float (a tiny negative number). Every stage animation started through `grAnime_801C7C1C/801C7A04/801C7A94` has that rate in the C goldens (Fountain's four effect JObjs never loop, so no new generators at frame 4). `granime::ext::HSD_AObjSetRate_cb` reproduces it.
+- **PC-build UB: `it_802A4BFC_sqrtf_offset`** (Link / Young Link / Peach / Kongo Jungle 64, 4 scenarios): the MSL sqrt expansion stores through `*(&y + 6)` (outside the local); the x86 build turns it into `return x`, so the hookshot chain measures the SQUARED distance and activates its links several per frame (5-6 instead of 1-2; the chain is complete at frame 3 and retracts). The Rust body returns `x` with that comment. Other `*(&y + N)` / `[-1]` spill hacks (`ft_0899.c:189`, `ftcpuattack.c`, `ftCo_0A01.c` `sqrtf_store`) have the same shape and have NOT been checked against the C: if a floor/CPU hash diverges there, test `return x` first.
+- **Dat decode**: Unown (`itUnknownAttributes`, 26 `HSD_Joint*` letters) typed in `dat_custom::rtable_articles` (items_hi_dreamland64); Zebes `yakumono_param` word 0x2C is a relocated pointer to a `lbColl_80008D30_arg1` hit record that the C reads as `((HSD_GObj*) yakumono_param)->user_data` (new pointer kind 4 in `gen_yakumono.py`, `x2C_dyn` in `grZe_YakumonoParam`; `ftCo_800C08A0` / `ftColl_80076764` read word 1 as `damage` for the C's `DynamicsDesc.count`), Brinstar passes. `HSD_JObjResetRST` / `JObjResetRST` pointer bodies live in `tu/jobj.rs` now (the unused generic twins were removed, lint unchanged); Castle 397 -> 990.
+- *left, with the first useful facts*: Venom 1389 (`grVenom_80205F30` else branch: the slots `starfox.article_gobjs[2/3]` hold `0x400000316` / `0xffffffff`, i.e. the venom view's `xF0..x100` ints overlap the 8-byte gobj slots of the starfox view in the native union); Castle 990 (`grCastle_801CF308` state 4 follows `castle11.xD0` to a stage gobj whose `user_data` is -1: freed or never set); Yoshi's Story 448 (`pobj.rs` envelope joint null in `HSD_PObjSetupMtx`); Fountain 3275 (rand seed only, next differing call not traced); Rainbow Cruise 177; Corneria 955 (512 owned-gobj cap); Mario 455 (Yoshi stars), Great Bay 1623, Temple 2477, Mushroom Kingdom II 803, Ice Mt 1472 (item hashes, trace with the new C build); chars at 742 to 3502 (hash s0 / s2 / seed); items_hi_stadium and Jungle (panics at 3529 / 3588).

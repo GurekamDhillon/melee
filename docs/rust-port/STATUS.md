@@ -94,21 +94,20 @@ C build, 8 blocked (no `MELEE_SCENE` keyword). Hash CSVs only, `docs/rust-port/g
 | modes: targettest | 26 | 26 | 0 | 0 | 44247 | pending consolidation |
 | blocked modes | 8 | 0 | 0 | 8 | 0 | n/a |
 
-### Rust engine vs coverage goldens (2026-11-01, after covfix round 2; detail and per-scenario table in notes/coverage.md)
-`melee golden --engine tu` runs the VS coverage scenarios with idle pads (`run_rust.sh`; `MELEE_EXE=` runs a copy of the exe). 12 -> 28 (round 1) -> **34 of the 79 wired** (round 3 left it at 34, 17 failing scenarios ran 100 to 3500 frames further: yakumono records with pointers, Zebes item spawn, Link attribute ints). Round 2: G&W article attribute pointer (`it_8026EECC` crashes), 26 chara bodies that took `&Fighter` where the C takes the gobj (link cast; `scan_gobj_refs.py` is the check), union-view pointer widths (Venom `xE4`, Pikachu / Pichu thunder pointer), Sheik `x48_items` joint tables, Ice Climbers shared figatree, Star Rod / Lipstick swing stubs. Left: Fountain particle draws (frame 4, 5 scenarios), Stadium Display proc (725), Corneria gobj cap, Castle / Yoshi's Story panics, item hash divergences (Yoshi stars at Mario 455, ...).
+### Rust engine vs coverage goldens (2026-11-02, after covfix round 4; detail and per-scenario table in notes/coverage.md)
+`melee golden --engine tu` runs the VS coverage scenarios with idle pads (`run_rust.sh`; `MELEE_EXE=` runs a copy of the exe). 12 -> 28 (round 1) -> 34 (rounds 2, 3) -> **51 of the 79 wired**. Round 4: the goldens are the C PC build, so its widescreen projection scale (1920x1080 window, `Engine::boot_host`), its `Callback1` ABI mismatch (`HSD_AObjSetRate` reads the JObj pointer as the rate) and its UB `sqrtf` spill (`it_802A4BFC_sqrtf_offset` = `return x`) are reproduced; Unown / Zebes DAT pointers; `HSD_JObjResetRST`. The C call trace is buildable again in minutes (`tools/rust-port/trace/build_trace_reuse.sh`).
 
 | result | scenarios |
 |---|---|
-| pass | 28 |
-| fail | 51 |
+| pass | 51 |
+| fail | 28 |
 | not wired (1p modes / Lua pads) | 79 |
 | no golden (C failed or blocked) | 10 |
 
-## Current blockers (coverage, covfix 2026-11-01, round 3)
-- Fountain (5 scenarios, frame 4): the C creates its stage particle generators one frame later than Rust (C rand trace: same 46 draws at frames 3 and 4, children created at 5; Rust creates four genLife-1 parents at 4). Needs a C call trace (`MELEE_CALLTRACE_SEQ`) from a root that already has `ax86m` built; the fresh-root Aurora build fails. 90+ min spent over two rounds, parked (notes/coverage.md).
-- Stadium: the Display proc re-picks one frame after the pick (frame 725); 9 scenarios.
-- Castle: pointer `HSD_JObjResetRST` missing; Yoshi's Story: pobj envelope joint; Rainbow Cruise 177 (hash s2 only, rand identical); Venom 19 (fighter physics).
-- Item hash divergences (`itemsum`): Link / Young Link hookshot (char_link 172, stage_30 102), Peach 198, Mario 455 (Yoshi stars), Great Bay 1623, Temple 2477, Mushroom Kingdom II 803, Ice Mt 1472, Flat Zone 1324, G&W 1567: need the C sequence trace to find the first differing call.
+## Current blockers (coverage, covfix 2026-11-02, round 4)
+- Venom (1389): native union overlap, the venom view's `xF0..x100` ints against the starfox view's 8-byte `article_gobjs` (notes/coverage.md round 4).
+- Castle (990): `grCastle_801CF308` follows `castle11.xD0` to a gobj with `user_data == -1`. Yoshi's Story (448): envelope joint null in `HSD_PObjSetupMtx`. Rainbow Cruise (177), Corneria (955, 512 owned-gobj cap), Fountain (3275, seed only).
+- Item hash divergences (`itemsum`): Mario 455 (Yoshi stars), Mushroom Kingdom II 803, Ice Mt 1472, Great Bay 1623, Temple 2477, Mewtwo 2116, cpulv9_marth_sheik 1798. Fighter hashes at 442 to 3502 (Sheik / Zelda, Kirby, Yoshi, Roy, Bowser, Ness, Zelda, Captain). Method: C call trace + temporary DBG prints (notes/coverage.md round 4); suspect more PC-build ABI/UB differences in the goldens before suspecting the Rust ports.
 
 ## Current blockers (golden)
 1. Fighter-vs-fighter hit detection corners (shields, clanks, smash hitboxes via script) and air damage states.

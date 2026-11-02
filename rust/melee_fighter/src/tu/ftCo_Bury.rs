@@ -197,7 +197,8 @@ pub fn ftCo_800C0B20(g: G) {
         d = ext::Ground_801C5700(fp(g).coll_data.left_facing_wall.index);
     }
     if !d.is_null() {
-        let mut v = ext::ftColl_800765F0(fp(g), core::ptr::null_mut(), unsafe { (*d).count } as f32);
+        // `unk_anim->count` (word 1, as in ftCo_800C08A0): the stage's record is a `lbColl_80008D30_arg1` hit description, word 1 `damage`
+        let mut v = ext::ftColl_800765F0(fp(g), core::ptr::null_mut(), unsafe { (*(d as *const lbColl_80008D30_arg1)).damage } as f32);
         fp(g).bury_timer_1 = cd().bury_timer_unk1;
         if ext::ftColl_80076640(fp(g), &mut v) {
             let f = fp(g);

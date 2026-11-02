@@ -42,6 +42,17 @@ overflow-checks = false
 overflow-checks = false
 debug = 1
 
+# `cargo build -p melee --profile fast` (tools/rust-port/cargo_fast.sh, PROFILE=fast for gate.sh and the golden scripts): the
+# agents' edit-build-test loop. Same opt-level and overflow-checks as release (so the same floating-point code: Rust never
+# contracts, fmadds sites are explicit), but incremental, 256 codegen units, no LTO, no debuginfo. Output equal to release
+# on the goldens/synctest/audio/coverage (notes/fastbuild.md). Release is unchanged.
+[profile.fast]
+inherits = "release"
+incremental = true
+codegen-units = 256
+lto = false
+debug = 0
+
 # `cargo build -p melee --profile perf`: fat LTO, one codegen unit. About 25% faster ticks than release, 2.3x the build time
 # (9 min vs 4); output bit-identical (notes/perf.md). Release stays as it was so everyday builds stay fast.
 [profile.perf]

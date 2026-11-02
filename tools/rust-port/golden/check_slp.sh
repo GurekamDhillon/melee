@@ -6,7 +6,7 @@
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$here/../../.."
-exe="${1:-$root/build/cargo/release/melee.exe}"
+exe="${1:-$root/build/cargo/${PROFILE:-release}/melee.exe}"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 set -a; . "$ws/.env"; set +a
 out="$(mktemp -d)"

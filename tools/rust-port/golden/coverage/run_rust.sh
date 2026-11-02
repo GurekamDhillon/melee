@@ -2,12 +2,13 @@
 # Run coverage scenarios against the Rust engine and compare with the C goldens (docs/rust-port/golden/coverage/<name>.csv).
 #   bash tools/rust-port/golden/coverage/run_rust.sh [-j N] [--out RESULTS.tsv] [NAME...|--all]
 # Output rows: name <TAB> status (PASS|FAIL|NOT_WIRED|NO_GOLDEN) <TAB> matched frames <TAB> golden rows <TAB> first divergence / reason.
-# Headless, unfocused, no OS input. Needs a built build/cargo/release/melee.exe and GW_ISO_VANILLA (workspace .env, never printed).
+# Headless, unfocused, no OS input. Needs a built build/cargo/${PROFILE:-release}/melee.exe (PROFILE=fast: cargo_fast.sh build -p melee --profile fast) and GW_ISO_VANILLA (workspace .env, never printed).
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; repo="$(cd "$here/../../../.." && pwd)"; cd "$repo"
 ws="${GW_WORKSPACE:-E:/Projects/Melee Workspace}"
 [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ] && { set -a; . "$ws/.env"; set +a; }
 export MELEE_WINDOW_UNFOCUSED=1
+exe_default="build/cargo/${PROFILE:-release}/melee.exe"; MELEE_EXE="${MELEE_EXE:-$exe_default}"
 jobs=3; out=""; names=()
 while [ $# -gt 0 ]; do case "$1" in -j) jobs="$2"; shift ;; --out) out="$2"; shift ;; --all) mapfile -t names < <(grep -v '^#' docs/rust-port/golden/coverage/scenarios.tsv | cut -f1) ;; *) names+=("$1") ;; esac; shift; done
 tmp="${TEMP:-/tmp}/covrun.$$"; mkdir -p "$tmp"
@@ -19,12 +20,12 @@ one() {
   # found by the first 2 frames (0..3); the chosen N is part of the detail so the gap stays visible (tools/rust-port/engine/pre_draws.tsv)
   pre=0
   for k in 0 1 2 3; do
-    MELEE_ENGINE_PRE_DRAWS=$k "${MELEE_EXE:-build/cargo/release/melee.exe}" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
+    MELEE_ENGINE_PRE_DRAWS=$k "$MELEE_EXE" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
     [ -s "$tmp/$s.cal.csv" ] || break
     c=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.cal.csv" --allow-short --print-count 2>&1 | awk '/^COUNT/{print $2}')
     [ "${c:-0}" -ge 2 ] && { pre=$k; break; }
   done
-  MELEE_ENGINE_PRE_DRAWS=$pre "${MELEE_EXE:-build/cargo/release/melee.exe}" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
+  MELEE_ENGINE_PRE_DRAWS=$pre "$MELEE_EXE" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   if grep -q "not wired" "$tmp/$s.log" && [ ! -s "$tmp/$s.csv" ]; then printf '%s\tNOT_WIRED\t0\t%s\t%s\n' "$s" "$rows" "$(grep -m1 'not wired' "$tmp/$s.log" | sed 's/.*not wired/not wired/' | cut -c1-120)"; return; fi
   [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
   res=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.csv" --allow-short --print-count 2>&1)

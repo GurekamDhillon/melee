@@ -1,7 +1,8 @@
 #!/bin/bash
 # The consolidation gate (docs/rust-port/notes/consolidation.md section 4). Run from anywhere; needs GW_ISO_VANILLA
 # (the workspace .env, never printed) and, for the diff part, C snapshots (tools/rust-port/snap/dump.sh).
-#   bash tools/rust-port/gate.sh [--engine legacy] [--update-progress] [--skip-build] [--scenarios a,b]
+#   [PROFILE=fast] bash tools/rust-port/gate.sh [--engine legacy] [--update-progress] [--skip-build] [--scenarios a,b]
+#   PROFILE (default release): cargo profile of the exe under test; `fast` builds through cargo_fast.sh (notes/fastbuild.md).
 # Checks (any failure exits non-zero):
 #   1. each golden scenario matches its CSV from frame 0 for at least the count recorded for the engine in
 #      docs/rust-port/engine_progress.tsv (latest step's row per scenario/engine);
@@ -29,11 +30,17 @@ if [ -z "${GW_ISO_VANILLA:-}" ] && [ -f "$ws/.env" ]; then set -a; . "$ws/.env";
 [ -n "${GW_ISO_VANILLA:-}" ] || { echo "gate: GW_ISO_VANILLA not set" >&2; exit 2; }
 export MELEE_WINDOW_UNFOCUSED=1
 case "$engine" in tu) ;; legacy) echo "gate: the legacy model was removed (consolidation step 19)" >&2; exit 2 ;; *) echo "gate: unknown engine '$engine' (tu)" >&2; exit 2 ;; esac
-exe="$repo/build/cargo/release/melee.exe"
+profile="${PROFILE:-release}"
+case "$profile" in release|fast|perf) ;; *) echo "gate: unknown PROFILE '$profile' (release|fast|perf)" >&2; exit 2 ;; esac
+exe="$repo/build/cargo/$profile/melee.exe"
 tmp="${TEMP:-/tmp}/gate.$$"; mkdir -p "$tmp"
 fail=0
 if [ $build = 1 ]; then
-  (cd rust && set -o pipefail && CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 cargo build -p melee --release 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
+  if [ "$profile" = release ]; then
+    (cd rust && set -o pipefail && CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 CARGO_INCREMENTAL=0 cargo build -p melee --release 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
+  else
+    (set -o pipefail && bash tools/rust-port/cargo_fast.sh build -p melee --profile "$profile" 2>&1 | tail -2) || { echo "FAIL build: cargo build failed, the checks below would run a stale exe"; exit 1; }
+  fi
 fi
 progress=docs/rust-port/engine_progress.tsv
 declare -A counts

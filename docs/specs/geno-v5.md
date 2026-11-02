@@ -1,6 +1,6 @@
 # Geno fighter-extension format, v5 (with the additive v5.1-v5.5 features)
 
-Revision 2026-11-02. Standalone spec for an independent C reader/runtime (melee-unlocked's Source Port). Derived from our source only:
+Revision 2026-11-02 (rev 2: melee-unlocked's answers folded in; sections 3, 4.5, 4.6, 4.8, 8.2, 9, 11 changed). Standalone spec for an independent C reader/runtime (melee-unlocked's Source Port). Derived from our source only:
 `docs/geno.md` (sections 1-20; 14 for the LAB), `pc/geno/geno.h`, `pc/geno/geno_state.h`, `pc/geno/geno_game*.c|inc`,
 `pc/platform/geno_registry.c`, `pc/platform/gw_fx.c`, `src/melee/ft/fighter.c`, `src/melee/it/item.c`, the mods under `pc/geno/mods/`,
 and the Rust side (`rust/melee/src/ident.rs`, `rust/melee_data/src/gdlp.rs`: only the Geno version/identity words; the Rust engine has no Geno runtime).
@@ -53,16 +53,16 @@ Feature levels inside "v5": v0 (registry, escape variables/if, 4 hooks, attribut
 | item | rule |
 |---|---|
 | mods folder | `MELEE_MODS_DIR`, else `mods/` next to the executable (`gw_Mods_Dir`). A mod is a folder `<id>/` with a `mod.json` (`id`, `name`, `version`, `kind`; `kind` `fighter` for the shipped fighter mods) |
-| which mods | the **active** (enabled) set, in **mount order** (`gw_Mods_ActiveAt(0..n-1)`); a folder not in the set is not read |
+| which mods | the **active** (enabled) set in **Geno load order: sorted by mod id, bytewise** (`strcmp` on the raw id bytes, so `Zeta` < `alpha`: upper case before lower case, no case folding, no locale); a folder not in the set is not read. **What it was before 2026-11-02:** the global mount order (`gw_Mods_ActiveAt(0..n-1)`: `base`-kind mods first, then `misc`, then content mods; inside a rank by case-insensitive id; a mod after the mods it requires). That order equals the bytewise order only when all active mods share a kind, ids differ in more than case and no requirement points at a later id, which holds for the six `fighter`-kind mods shipped in `pc/geno/mods/` (all `vanilla-*`), so none of their profile indexes moved. The mount order is still used for disc-file overlays and for effects packages |
 | the file | `<mods>/<id>/geno.json`, beside `mod.json`; never a disc file. Missing file = the mod has no Geno part (not an error). Size limit **1 MiB** (`gn_read_file` returns NULL above it: the file is treated as missing) |
 | when | once, at install time, before the first fighter spawns (lazily on the first registry query); never changed during a match. Hot reload exists only in the LAB (docs/geno.md 14.10) and refuses layout changes |
-| parse | one pass per file in mount order; fighter entries in file order. Entries are numbered by load order (profile index); articles/overlay slots are numbered by it, so **the profile index is part of the layout** |
+| parse | one pass per file in Geno load order (above); fighter entries in file order. Entries are numbered by load order (profile index); articles/overlay slots are numbered by it, so **the profile index is part of the layout** and, through the article kinds (4.8), of what the rollback hash and the NHV1 `items` columns see. Two independent readers must therefore sort identically before they number |
 | JSON dialect | the reader accepts, beyond strict JSON: `//` line comments, a trailing comma before `}`/`]`, a UTF-8 BOM; `\uXXXX` escapes decode to `?`. Limits: **32768** values per file, **512 KiB** of string data, nesting depth **32**. Writers should emit strict JSON (the schema assumes it) |
 | words files | `subactions[].file`: `<mods>/<id>/<file>` (path containing `..` refused; absolute paths are not specially handled, **OPEN**). Content: numbers separated by whitespace or commas, `0x..` or decimal (`strtoull`, <= 0xFFFFFFFF), `#` to end of line is a comment. Appended to the shared pool |
 | models | `articles[].model.file`: any HSD archive readable through the DVD file layer (a mod's `files/` overlay or a disc file), `model.symbol` the public symbol (default: the first public symbol ending `_joint`). Loaded once per (profile, file, symbol) into a withheld read-only region of 1 MiB; articles of one profile with the same file+symbol share the load. The region exists only if a mounted mod's `geno.json` text contains `"articles"` at boot |
 | effects | package `<mods>/<id>/fx/<name>/<name>.gfx.json`; the **last** mounting mod wins; textures/meshes relative to the package folder. Bindings: `<mods>/<id>/<fx_bindings path>` |
 | target resolution | `attach` name -> Pl file (`PlMr.dat`...); the install's FighterKind for a Pl file: retail by code, m-ex by scanning the dense slots. Not installed -> the entry is inactive (kind -1) |
-| two entries, one fighter | the later one in mount order wins, the loser is logged. Per-profile merging is not defined (roadmap: "later") |
+| two entries, one fighter | **a refusal, never "later wins"** (changed 2026-11-02; before it the later entry in mount order won and the loser was logged). If two entries (from two mods, or twice in one file) attach to the same fighter (same resolved FighterKind), **neither applies**: both entries go inactive (kind -1) but keep their profile index, so the layout does not change, and one log line per extra claimant names both mod ids: `geno: REFUSED: mods <A> and <B> both attach to <Pl file> (fighter kind <k>); neither entry applies - remove one of them`, then `geno: <mod>/<name> refused: another mod attaches to <Pl file> too - inactive` for each claimant. The outcome does not depend on load order. Per-profile merging is not defined |
 
 Retail names (aliases after `/`): `mario fox captain/falcon donkey/dk kirby koopa/bowser link seak/sheik ness peach popo nana pikachu samus yoshi purin/jigglypuff mewtwo luigi mars/marth zelda clink/younglink drmario falco pichu gamewatch/gnw ganon/ganondorf emblem/roy`
 (27, FighterKind 0..26 in this order, Pl code `Mr Fx Ca Dk Kb Kp Lk Sk Ns Pe Pp Nn Pk Ss Ys Pr Mt Lg Ms Zd Cl Dr Fc Pc Gw Gn Fe`). Matching is case-insensitive; `attach` may also be a Pl file name ending `.dat`.
@@ -163,18 +163,11 @@ State n becomes MotionState row for motion id `0x400 + n` (`GENO_MOTION_BASE`), 
 Callback names by slot. anim: `next loop hold glide.start glide tornado drill drill.end glide.after cape`; iasa: `none interrupt glide`; phys: `none air air_nodrift air_drift brake ground auto anim_motion glide.start glide glide.attack glide.end tornado drill drill.end drill.start cape`;
 coll: `none air air_noledge ground ground_stop both anim_motion glide drill drill.start cape cape.after`; any slot: `like`. `air` = Melee's aerial physics/collision with ledge grab; `both` = ground and air without changing state.
 **IASA trap:** the default `iasa` is `none`; an IASA script command alone does not give an input callback; use `"iasa": "interrupt"`. Paired states are found by declaration order among the profile's states with that behaviour (cape start ground/air, cape.attack N/N-air/F/F-air/B/B-air, cape.end ground/air, drill.start ground/air, drill.end ground/air).
-The numeric procedures of the behaviours (glide, tornado, drill, cape, anim_motion) are **specified by the source files**, not restated: `geno_game_glide.inc`, `geno_game_specials.inc`, `geno_game_v2.inc` and docs/geno.md 16.4, 17, 18. **OPEN:** an independent port must port those files; this spec gives no second statement of their arithmetic.
+Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity.
 
-### 4.6 Parameter blocks (float; bool accepted as 0/1; `wNN` = Brawl word NN also accepted)
+### 4.6 Parameter blocks
 
-| block | name = default |
-|---|---|
-| `glide` | `angle_max` 80, `angle_min` -70, `start_vy` 0.75, `start_gravity` 1, `start_vx` 1, `speed` 1.7, `speed_accel` 0.04, `max_speed` 2.2, `stall_speed` 0.7, `sink_accel` 0.03, `max_sink` 0.6, `recover_angle` 15, `dive_angle` -25, `dive_bonus` 0.03, `w14` 0.15, `deadzone` 0.25, `pitch_up` 0.55, `pitch_down` 0.75, `max_pitch_rate` 7, `stall_pitch` 1, `wing_node` 44 (unused), `w21` 0; extras `hold_frames` 16, `from_ground_jump` 0, `end_helpless` 0, `landing_lag` 0, `entry` 1, `max_frames` 0, `pose_center` 0, `end_buttons` 14 (Geno button mask), `script_entry_helpless` 1; words `w00..w21` |
-| `tornado` | `entry_vy` 1, `entry_vx_mul` 0.7, `start_rate` 80, `ground_accel` 0.12, `ground_speed` 2, `air_accel` 0.1, `air_speed` 1.7, `brake` 0.008, `gravity` -0.08, `max_fall` 0.5, `tap_vy` 1, `tap_cooldown` 10, `max_rise` 1.4, `tap_rate` 16, `max_rate` 80, `rate_decay` 1.5, `spin_frames` 70, `late_decay` 2, `end_rate` 10, `w19` 0; extras `max_speed` 2.5, `end_helpless` 1, `spin_anim` 0, `spin_period` 0; words `w00..w19` |
-| `drill` | `start_vx_mul` 0.5, `start_vy` 1, `start_gravity` -0.08, `steer` 3, `end_frames` 10, `w05` 0; extras `speed` 2, `angle_max` 0, `bounce` 0, `pop_vx` 1, `pop_vy` 2.1, `end_helpless` 1, `pitch_model` 1; words `w00..w05` |
-| `cape` | `keep_vx` 0.5, `keep_vy` 0.4, `steer_accel_x` 0.5, `steer_max_x` 2.5, `steer_accel_y` 0.5, `steer_max_y` 2.5, `steer_frame` 12, `decide_frame` 26, `neutral_x` 0.3, `attack_buttons` 3; words `w00..w05` |
-
-Defaults are Meta Knight's Brawl values and apply to **every** profile (the parameter array is initialised from this table, then overridden). A block key that is not a number/bool, or not in the table, is ignored (logged); **128** parameter slots.
+The parameter blocks `glide`, `tornado`, `drill` and `cape` (float; bool accepted as 0/1; `wNN` = numbered word also accepted) configure the behaviours of 4.5. Their key names, default values and meaning belong to the behaviour procedures: Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity. A reader accepts the four keys, ignores unknown names (logged) and has **128** parameter slots.
 Geno button mask: ATTACK 1, SPECIAL 2, JUMP 4, SHIELD 8, GRAB 0x10, TAUNT 0x20, BLAST 0x40 (the last is geno 11).
 
 ### 4.7 `specials`
@@ -212,7 +205,7 @@ With `select`, the int variable's value n picks `targets[n]`; out of range = the
 Hitbox entry: `damage` 1, `size` 3 (radius), `offset` [0,0,0], `angle` 361, `kbg` 100, `wkb` 0, `bkb` 0, `element` 0 (0 normal 1 fire 2 electric 3 slash 4 coin 5 ice), `shield_damage` 0, `sfx_severity` 1, `sfx_kind` 0,
 `start` 1 / `end` 0 (active frames of the article's life, 1-based; 0 = to the end), `slot` (entry index mod 4; entries sharing a slot hand over in place and keep the victim list), `stun` 0 (0..255, extra hitstun frames),
 `hits` `{ground, air, reflect, absorb, counter}` all true.
-**Kinds:** article a of profile p is item kind `0x1000 + 8p + a` for a < 8, `0x1100 + 8p + (a-8)` for a >= 8, for p < 32; for p >= 32, `0x20000 + (p-32)*16 + a`. All are above m-ex's custom kinds and below m-ex's `5000+n`. Profile index p = load order (section 3), so **kinds are profile arithmetic**; the rollback hash identifies an article by (profile id, article index) instead (`Geno_ArtStableKind`).
+**Kinds:** article a of profile p is item kind `0x1000 + 8p + a` for a < 8, `0x1100 + 8p + (a-8)` for a >= 8, for p < 32; for p >= 32, `0x20000 + (p-32)*16 + a`. All are above m-ex's custom kinds and below m-ex's `5000+n`. Profile index p = load order (section 3: **mods sorted by id, bytewise**, then file order; before 2026-11-02 it was the global mount order, which gives the same numbers for the six shipped mods), so **kinds are profile arithmetic**, and two implementations agree on them only if they sort identically; the rollback hash identifies an article by (profile id, article index) instead (`Geno_ArtStableKind`).
 Despawn reasons (log/event only): 0 timeout, 1 hit or absorbed, 2 shield, 3 stage, 4 clank.
 
 ### 4.9 Hooks (native, stable numbers)
@@ -424,7 +417,7 @@ No pointer is in `GenoState`; floats are IEEE binary32; the block is plain big-e
 | 1708 | end | | |
 
 Reset (`Geno_FighterReset`) zeroes the whole block and then sets the non-zero initial values listed in 8.1; `resets` is carried over and incremented.
-The Geno-specific state is **not** folded into `NHV1` (`docs/specs/nhv1.md` section 6); it is folded into our rollback hash by `GenoDefine_StateDigest` for defines only. **OPEN:** a Geno-state digest for `attach` fighters, so a cross-build comparison can see LA/RA/MOVE variables, does not exist.
+The Geno-specific state is **not** folded into `NHV1` (`docs/specs/nhv1.md` section 6); it is folded into our rollback hash by `GenoDefine_StateDigest` for defines only. **Geno digest for `attach` fighters (added 2026-11-02):** an optional trailing NHV1 column group `geno0`..`geno3` (one word per port) hashes the LA/RA/MOVE variable banks and `action_time` with NHV1's mix; field order, hashing and inert rule are in `docs/specs/nhv1.md` 8.1, reference code `docs/specs/tools/nhv1_ref.py geno_digest()`. Our C build writes it when `MELEE_NEUTRAL_HASHLOG_GENO=1` is set beside `MELEE_NEUTRAL_HASHLOG`. The Rust engine has no Geno runtime, so it cannot write it.
 
 Determinism rules (docs/geno.md 4): no host time or randomness (RNG = the game's `HSD_Rand` only); no intra-frame loops (skips go forward only); logs rate-limited (resimulation repeats frames); registry and hook table never change during a match; peers run the same executable.
 
@@ -441,6 +434,7 @@ Determinism rules (docs/geno.md 4): no host time or randomness (RNG = the game's
 | neither `attach` nor `define` | `entry has no attach or define - refused` |
 | `attach` names no known fighter | `unknown attach target - refused` |
 | target fighter not installed | entry kept but **inactive** (kind -1) |
+| two entries attach to one fighter | **both refused** (inactive, kind -1, profile index kept); log `geno: REFUSED: mods <A> and <B> both attach to <Pl file> ...` naming both mod ids (section 3) |
 | `define` entry in a v5 reader | skipped (logged); in our build it parses the native-definition path |
 | unknown attribute / non-number | that key ignored (logged) |
 | `max_jumps` / `jumps.max` outside 1..250 | clamped (logged) |
@@ -487,17 +481,26 @@ MELEE_SCENE='<scene above>' bash tools/port/run.sh --max-seconds 200 <sandbox> -
 # the state rows are the GENOFIX lines of <sandbox>/melee-pc.log
 python tools/rust-port/compare_golden.py docs/specs/fixtures/geno-v5/nhv1_hero_jab.csv <out>.csv
 ```
-To produce a fixture for an `attach` v5 fighter (states, articles, escape variables): write a mod with `geno.json` (`{"geno":5,"fighters":[{"attach":"mario", ...}]}`), run the same scene with `p1=mario/human`, and log with a pad script. **OPEN:** no per-frame dump of `GenoState` (LA/RA/MOVE variables, `action_time`, checks) exists in headless runs; it needs either a new env switch in `geno_game.c` or a Lua read, so a fixture can only show Geno state through fighter fields and NHV1 today.
+To produce a fixture for an `attach` v5 fighter (states, articles, escape variables): write a mod with `geno.json` (`{"geno":5,"fighters":[{"attach":"mario", ...}]}`), run the same scene with `p1=mario/human`, and log with a pad script. The LA/RA/MOVE variables and `action_time` are now visible per frame through the NHV1 trailing columns `geno0..geno3` (`MELEE_NEUTRAL_HASHLOG_GENO=1`, `docs/specs/nhv1.md` 8.1); `nhv1_hero_jab_geno.csv` in this folder is the hero-jab run with them. The checks, rehit tables and motion scratch are still not dumped (OPEN 4).
 
 ## 11. OPEN items
 
 | # | item |
 |---|---|
-| 1 | numeric procedures of glide/tornado/drill/cape/anim_motion/lockon are specified by source files, not restated here (4.5) |
+| 1 | behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) and their parameter defaults: Behaviour procedures (glide, tornado, drill, cape, multi-dash, anim_motion) are being re-specified clean-room in geno-v5.1; their arithmetic will be defined there. Until then they are implementation-defined and excluded from cross-build parity. Hooks 6-10 and `GenoGame_ArticleStep` arithmetic are also not restated |
 | 2 | words-file path handling beyond `..` refusal (absolute paths, drive letters) |
 | 3 | meaning of `x221F_b3` (the guard around `Fighter_8006A360` and `ProcessHit`'s body); assumed "fighter not frozen" |
-| 4 | per-frame `GenoState` dump / Geno digest for `attach` fighters (8.2, 10) |
-| 5 | merge rule for two mods attaching to one fighter (later wins; per-profile merge is roadmap) |
+| 4 | digest of `attach` state is specified and implemented (nhv1.md 8.1, columns `geno0..3`) for the variable banks and `action_time` only; the change-action checks, rehit/link/stun tables and motion scratch are not in it |
+| 5 | **closed 2026-11-02 (melee-unlocked asked for it):** two mods attaching to one fighter are a refusal naming both mod ids, never later-wins (section 3, 9). Per-profile merging stays undefined |
 | 6 | the fixture covers a `define` fighter only; no shipped `attach` mod exists to record |
 | 7 | row/frame alignment of `state_hero_jab.csv` vs `nhv1_hero_jab.csv` is inferred |
 | 8 | `GENO_LEVEL` is stale (3) and unused; do not read it as the feature level |
+
+## 12. Agreed with melee-unlocked (hero88go, 2026-11-02)
+
+| item | decision |
+|---|---|
+| 4.5 numeric procedures | **not written out**: re-specified clean-room in geno-v5.1 (provenance); implementation-defined and excluded from cross-build parity until then |
+| 3 / 9 two mods, one fighter | refusal naming both mods; our C loader changed to match (`geno_registry.c`, test `geno_registry_attach_conflict`) |
+| 3 / 4.8 load order | sorted by mod id, bytewise; previous order documented; our C loader changed (`gn_sorted_active`) |
+| 8.2 Geno digest | NHV1 trailing columns `geno0..geno3` (nhv1.md 8.1); implemented in our C build behind `MELEE_NEUTRAL_HASHLOG` + `MELEE_NEUTRAL_HASHLOG_GENO=1` |

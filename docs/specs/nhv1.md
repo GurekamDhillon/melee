@@ -1,6 +1,6 @@
 # NHV1: the byte-order-neutral per-frame gameplay hash
 
-Spec version: NHV1 (format tag `0x4E485631`), document revision 2026-11-02. Derived from our source only:
+Spec version: NHV1 (format tag `0x4E485631`), document revision 2026-11-02 (rev 2: melee-unlocked's answers folded in). Derived from our source only:
 `src/melee/ft/fighter.c` (`nh_*`, `RB_NeutralHash`), `src/melee/gm/gmscene.c` (`gm_801A4D34`),
 `pc/platform/gw_script.c` (the CSV writer), `rust/melee_types/src/neutral_hash.rs`,
 `tools/rust-port/compare_golden.py`, `docs/rust-port/golden/`. It supersedes `docs/rust-port/neutral-hash.md`
@@ -10,19 +10,24 @@ the 8 C-oracle vectors, all pass).
 
 ## 0. Agreed with melee-unlocked
 
+hero88go (maintainer of melee-unlocked, a decomp-faithful C/C++ source port) accepted NHV1 as written. Rows he has agreed are marked
+`agreed (melee-unlocked)`; the rest keep their earlier status.
+
 | # | item | decision | status |
 |---|---|---|---|
-| 1 | hash function, field set, field order, CPU block, item sum | unchanged from NHV1 (sections 4-6) | agreed |
-| 2 | CSV layout | exactly section 7; `tools/rust-port/compare_golden.py` reads either build's file unchanged | agreed |
-| 3 | log point | in `gm_801A4D34`, immediately after `HSD_GObj_RunProcs()` returns and before `gm_80479D58.unk_0++` (section 2) | agreed in principle; OPEN: melee-unlocked confirms the same point in its loop |
-| 4 | `frame` column | `gm_80479D58.unk_0` (scene frame counter) at the log point, minus its value at the first logged row (so row 0 is frame 0) (section 3) | agreed; OPEN: our build's offset to `unk_0` (H) not measured |
-| 5 | `seed` column | `*HSD_RandSeedPtr` at the log point (end of logic); unchanged number in our goldens | agreed |
-| 6 | second seed column `seed_post` | the seed after the frame's render/draw pass (= start of the next iteration), appended after `s11`; optional (section 8) | proposed, OPEN |
-| 7 | render-side `HSD_Rand` draws | our build isolates them on a separate stream; a hardware-faithful build does not. `seed_post` makes the difference visible (section 8) | OPEN: melee-unlocked states which semantics it has |
+| 1 | hash function, field set, field order, CPU block, item sum | unchanged from NHV1 (sections 4-6) | agreed (melee-unlocked) |
+| 2 | CSV layout | exactly section 7; `tools/rust-port/compare_golden.py` reads either build's file unchanged | agreed (melee-unlocked) |
+| 3 | log point | in `gm_801A4D34`, immediately after `HSD_GObj_RunProcs()` returns and before `gm_80479D58.unk_0++` (section 2) | agreed (melee-unlocked): he hooks `gmscene` at the same place |
+| 4 | `frame` column | `gm_80479D58.unk_0` (scene frame counter) at the log point, minus its value at the first logged row (so row 0 is frame 0) (section 3) | agreed (melee-unlocked): his H is 0, because he has no held iterations (he will confirm with the probe). OPEN: our build's H not measured |
+| 5 | `seed` column | `*HSD_RandSeedPtr` at the log point (end of logic); unchanged number in our goldens | agreed (melee-unlocked) |
+| 6 | second seed column `seed_post` | the seed after the frame's render/draw pass (= start of the next iteration), appended after `s11`; optional (section 8) | proposed; melee-unlocked's render draws advance the shared seed, so his `seed_post != seed` whenever a frame drew (section 8) |
+| 7 | render-side `HSD_Rand` draws | our build isolates them on a separate stream; a hardware-faithful build does not. `seed_post` makes the difference visible (section 8) | agreed (melee-unlocked): his build has hardware semantics (render draws advance the shared seed, as on console); ours is the divergence, and his Dolphin oracle will match HIS seed column, not ours. OPEN row 16 (section 14) asks whether we add a hardware-faithful seed mode |
 | 8 | cross-build input | `.slp` replays for non-CPU scenarios, pad scripts for `cpu_*` scenarios; Dolphin memory read is a third oracle (section 9) | agreed in principle |
 | 9 | `compare_golden.py` | gains `--common` (compare the columns both files have, by name) so `seed_post` or NHV2 columns do not break a comparison | done (this commit) |
 | 10 | NHV2 stage state | candidate fields in section 12; versioned separately, not part of NHV1 | proposed |
-| 11 | line terminator | writers: LF or CRLF; readers must accept both (our C build on Windows writes CRLF, the Rust writer LF) | agreed |
+| 11 | line terminator | writers: LF or CRLF; readers must accept both (our C build on Windows writes CRLF, the Rust writer LF) | agreed (melee-unlocked) |
+| 12 | first exchange | `pad_falcon_fox_fd` frame 0 `hash` = `FC467705`, which is our golden's value (section 11 recomputes it) | agreed (melee-unlocked): his first exchange |
+| 13 | Geno state digest | optional trailing columns `geno0`..`geno3` (section 8.1); implemented in our C build behind `MELEE_NEUTRAL_HASHLOG` (+ `MELEE_NEUTRAL_HASHLOG_GENO=1`) | proposed (asked for by melee-unlocked) |
 
 ## 1. What it is
 
@@ -195,6 +200,48 @@ named; a comparison of files with different headers needs `compare_golden.py --c
 | replays | a replay forces the seed every frame (`seed + ((frame+123)<<16)` online, the file's Frame Start seed offline) before the logic runs, so `seed` and `hash` cannot show RNG-count divergence; compare with `--ignore-seed` (skips `hash` and `seed`) |
 | netplay variant | `RB_NeutralHashForFrame(frame)` hashes with the seed the frame will consume (`Replay_ChecksumSeed`); not a CSV column |
 
+**Hardware semantics and our divergence (decided with melee-unlocked, 2026-11-02).** melee-unlocked's render draws advance the shared seed exactly as on a console, so in
+his build `seed_post != seed` whenever a frame drew, and a Dolphin memory oracle will match HIS `seed` column, not ours. Our render-draw isolation (private stream since `0f3376ee3`)
+is therefore a **divergence from hardware**, recorded here as ours (not a defect of his). The simulation is not affected (render draws feed no logic in either build);
+only the number in `seed`, and so `hash` (which mixes `seed`), differs after the first frame that drew.
+
+### Seed comparison across builds
+
+| situation | do this |
+|---|---|
+| two builds with the same render-draw semantics | compare normally; `seed`, `hash` and `seed_post` must all agree |
+| ours vs melee-unlocked (or Dolphin), any scenario | `python tools/rust-port/compare_golden.py ours.csv theirs.csv --common --ignore-seed` (skips `hash` and `seed`; `s0..s11`, `items`, `itemsum` still decide) |
+| ours vs melee-unlocked, wanting `seed`/`hash` too | compare those two columns only at frames with no render draws (in the hardware-semantics file: rows where nothing drew before the log point, e.g. the first row, which precedes any render pass) |
+| `--common` | compares the columns both files have, by name, so a `seed_post` or `geno0..3` column on one side does not break the comparison |
+
+If a simulation column disagrees while `seed` also disagrees, first rule out a pre-draw count (the `pre_draws` row above) before suspecting the simulation.
+
+### 8.1 Optional trailing columns `geno0`..`geno3` (Geno variable digest)
+
+Trailing-column rules are those of section 7: appended after `s11` (after `seed_post` when both are present, then NHV2 `st*`), named in the header, compared with `--common`.
+Our C build emits them only when `MELEE_NEUTRAL_HASHLOG_GENO=1` is set next to `MELEE_NEUTRAL_HASHLOG`, so the four committed goldens (headers ending at `s11`) are unchanged.
+One column per player port 0..3 (`geno<port>`), 8 upper-case hex digits, sampled at the same log point as the rest of the row (section 2).
+
+The word of port `i` comes from the Geno state block of the fighter object `Player_GetEntityAtIndex(i, 0)` (the main fighter in its active transformed form; a follower such as Nana is not covered):
+
+```
+fighter absent:                                                       word = 0
+block.profile < 0 AND (block.flags & 1) == 0   (GENO_SF_SCRIPT):       word = 0     (inert: no Geno profile and the script escape never ran)
+h = 0x811C9DC5
+h = mix(h, 0x474E5631)                      "GNV1"      (mix is NHV1's: h ^= v; h *= 0x01000193; h ^= h >> 15)
+for k in 0..63: h = mix(h, la_i[k])         long-term ints,    s32 taken as u32
+for k in 0..63: h = mix(h, bits(la_f[k]))   long-term floats,  binary32 bit pattern, no canonicalisation (NHV1 section 4)
+for k in 0..63: h = mix(h, ra_i[k])         per-action ints
+for k in 0..63: h = mix(h, bits(ra_f[k]))   per-action floats
+for k in 0..7:  h = mix(h, move_i[k])       behaviour per-move ints   (MOVE_I0..7)
+for k in 0..7:  h = mix(h, bits(move_f[k])) behaviour per-move floats (MOVE_F0..7)
+h = mix(h, action_time)                     ACTION_FRAME, s32 (1 on the first frame of an action)
+word = h
+```
+Not hashed: the diagnostics (`resets`, `hook_calls`, `changes`, `state_entries`, `art_spawned`, `counters`, `motion_land`), the change-action checks, the rehit/link/stun tables and the root-motion scratch. Only the variable banks and the action clock.
+Block offsets (`docs/specs/geno-v5.md` 8.2): `la_i` +16, `ra_i` +272, `la_f` +528, `ra_f` +784, `move_i` +1564, `move_f` +1596, `action_time` +1048.
+An active fighter whose word is exactly 0 reads as inert (probability 2^-32). Geno state is not part of the `hash` column (section 6). Reference code: `docs/specs/tools/nhv1_ref.py` `geno_digest()`. Checked: `docs/specs/fixtures/geno-v5/nhv1_hero_jab_geno.csv` (the hero-jab run with `MELEE_NEUTRAL_HASHLOG_GENO=1`; columns up to `s11` equal `nhv1_hero_jab.csv`, `compare_golden.py --common`) has all 301 `geno0` words equal to `geno_digest_zero(action_time)` for a plausible action clock; `geno1..3` are `00000000` (no Geno fighter on those ports).
+
 ## 9. Replays and pad scenarios
 
 | scenario kind | input | used for | frame mapping |
@@ -320,10 +367,12 @@ of the CSV body (lines after the header, LF-normalised).
 |---|---|
 | `nhv1_ref.py` reproduces 8 C-oracle vectors and 10,804 golden `hash` cells | done, passing |
 | loader-off vs empty-loader on `pad_falcon_fox_fd` | done 2026-11-02: both runs 1801 frames, `compare_golden.py` OK against the committed golden, and byte-identical to each other (our log shows `geno: 1 geno.json file(s), 0 fighter entries` in the empty-loader run). Body SHA-256 of the golden: `d17699ab75fdcb47dfd839a32d6fa1333d501ac2f39b627f5d5f6b1fbf4165ee` |
-| `frame` offset H to `unk_0` | OPEN |
+| `frame` offset H to `unk_0` | melee-unlocked: H = 0 (he will confirm with the probe). Ours: OPEN, not measured |
 | `seed_post == seed` in our build | OPEN |
-| render-draw semantics of melee-unlocked's build | OPEN |
-| same log point in melee-unlocked's loop | OPEN |
+| render-draw semantics of melee-unlocked's build | closed: hardware semantics; ours is the divergence (section 8) |
+| same log point in melee-unlocked's loop | closed: he hooks `gmscene` at the same place (row 3) |
+| 16: optional hardware-faithful seed mode in our builds (render draws on the shared stream, behind a switch) | OPEN: do we add it? It would need its own golden set (ours are recorded with isolation); benefit: `seed`/`hash` comparable with melee-unlocked and Dolphin without `--ignore-seed` |
+| Geno digest `geno0..3` (8.1) | implemented in our C build; the Rust engine has no Geno runtime; melee-unlocked has not implemented it |
 | NHV2 field list | proposed |
 | Dolphin memory oracle | not built |
 | UCF / non-vanilla replays | not comparable to the vanilla sim |

@@ -122,6 +122,31 @@ def oracle_fill(k):
     return f, c, item
 
 
+def geno_digest(la_i, la_f, ra_i, ra_f, move_i, move_f, action_time):
+    """The optional geno<port> word (nhv1.md section 8.1) for an ACTIVE (non-inert) fighter.
+    la_*/ra_*: 64 values each; move_*: 8 each; ints are s32 (taken as u32), floats are Python floats (binary32 bits)."""
+    assert len(la_i) == len(la_f) == len(ra_i) == len(ra_f) == 64 and len(move_i) == len(move_f) == 8
+    h = mix(0x811C9DC5, 0x474E5631)
+    for v in la_i:
+        h = mix(h, u32(v))
+    for v in la_f:
+        h = mix(h, bits(v))
+    for v in ra_i:
+        h = mix(h, u32(v))
+    for v in ra_f:
+        h = mix(h, bits(v))
+    for v in move_i:
+        h = mix(h, u32(v))
+    for v in move_f:
+        h = mix(h, bits(v))
+    return mix(h, u32(action_time))
+
+
+def geno_digest_zero(action_time):
+    """geno_digest of an active fighter whose variable banks are all zero (only the action clock set)."""
+    return geno_digest([0] * 64, [0.0] * 64, [0] * 64, [0.0] * 64, [0] * 8, [0.0] * 8, action_time)
+
+
 def selftest():
     bad = 0
     p = ROOT / "rust/melee_types/tests/data/nh_expected.txt"

@@ -242,16 +242,18 @@ The NHV1 log point is directly after `HSD_GObj_RunProcs()` in `gm_801A4D34` (nhv
 
 ## 11. OPEN
 
+melee-unlocked (hero88go, 2026-11-02) accepted mod-c-v1 as written and decided rows 1, 2, 4 and 8, which are closed below; the others are unchanged.
+
 | # | question | proposed default |
 |---|---|---|
-| 1 | which implementation backs `gd_sinf/cosf/atan2f/powf`: the game's own tables or a shared pure-C one | the game's (gameplay already depends on it); both builds must show bit equality on a sweep |
-| 2 | denormals: x86 MXCSR FTZ/DAZ in melee-unlocked's process vs wasm (never flushes) | host sets FTZ=0, DAZ=0 before native mod code |
+| ~~1~~ **closed** | which implementation backs `gd_sinf/cosf/atan2f/powf` | **decided: the game's own math tables** (agreed, melee-unlocked). Both builds must still show bit equality on a sweep |
+| ~~2~~ **closed** | denormals: FTZ/DAZ | **decided: melee-unlocked turns FTZ and DAZ off before native mod code** (host MXCSR FTZ=0, DAZ=0, as proposed) |
 | 3 | `frame` post ordering vs the NHV1 sample (nhv1.md OPEN row 3) | mod post hook runs before the sample |
-| 4 | `proc` / `state` sites in melee-unlocked: wrap pointers at registration, or patch call sites | his choice; observable behaviour must match |
+| ~~4~~ **closed** | `proc` / `state` sites | **decided: melee-unlocked wraps `MotionState` and proc pointers at registration, at zero cost when no hook is installed.** Observable behaviour must match, as before |
 | 5 | `ftCo_*_Coll` prototypes in `src/` are `void`; the retail function may return a flag for some states. A changed signature needs a hooks-v1 revision | verify against the matched object; until then `replace` is refused on `action.coll` |
 | 6 | Nana and other sub-fighters: addressable? | not in v1; add `gd_fighter_partner` in a minor |
 | 7 | m-ex extended characters and stages in `gd_stage_kind` / `kind` numbering | v1 reports the vanilla id or -1 |
-| 8 | MSVC: does `/fp:precise` without `/arch:AVX2` never fuse on his toolchain | require clang for native mods |
+| ~~8~~ **closed** | MSVC / `/fp:precise` fusing | **no issue: his game DLL is GCC, and mods use the same toolchain with contraction off** (`-ffp-contract=off`); the "require clang" default is not needed for him |
 | 9 | watchdog: a mod that never returns hangs the frame | out of scope for v1 |
 | 10 | session handshake format for the mod set (netplay, replay headers) | sorted list of (id, version, sha-256) |
 | 11 | `gd_ptr` arguments (`StageIdPair*`, scene arg) are 0 in v1; do any need data | add typed handles in a minor |

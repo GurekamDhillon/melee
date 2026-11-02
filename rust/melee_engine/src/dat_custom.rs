@@ -173,7 +173,11 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                             let p: *mut c_void = match d.target(off + o) {
                                 None => core::ptr::null_mut(),
                                 Some(t) => match k {
-                                    2 => d.object::<melee_types::DynamicsDesc>(t) as *mut c_void,
+                                    // the stages' `DynamicsDesc*` (Mute City, Poke Floats, the Mewtwo / Jigglypuff targets) are the
+                                    // `on_touch_line` hit descriptions every consumer reads as `lbColl_80008D30_arg1` (ftCo_800C0B20's cast,
+                                    // `->count` is its word 1): the native `DynamicsDesc` starts with an 8-byte pointer, so it is decoded as that
+                                    // all-word record, each field at its GameCube offset
+                                    2 => d.object::<melee_types::lbColl_80008D30_arg1>(t) as *mut c_void,
                                     4 => d.object::<melee_types::lbColl_80008D30_arg1>(t) as *mut c_void,
                                     3 => d.array::<i16>(t, (b.extent(t) / 2).max(1) as usize) as *mut c_void,
                                     _ => b.raw_addr(t),
@@ -387,6 +391,8 @@ static mut ARTICLE_JOINT_ROWS: Vec<(usize, Vec<melee_types::itFoodsAttributes>)>
 const KIND_FOODS: u32 = 18;
 /// `ItemKind` of the Super Mushroom: its attribute block is `KinokoAnim { HSD_AnimJoint* joint }` entries (`it_80293660` reads `[idx + 2]`).
 const KIND_KINOKO: u32 = 26;
+/// `ItemKind` of the Warp Star (`It_Kind_WStar`): its attribute block ends in pointer-bearing `itWstarAttrEntry` rows.
+const KIND_WSTAR: u32 = melee_types::It_Kind_WStar as u32;
 
 /// `rtable::<Article>`; see [`fix_articles`].
 fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut melee_types::Article {
@@ -416,6 +422,33 @@ fn rtable_articles(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) -> *mut *mut mele
                         let art = d.object::<melee_types::Article>(ta);
                         let typed = d.object::<melee_types::itUnknownAttributes>(sa) as *mut c_void;
                         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                    }
+                }
+                if i == KIND_WSTAR && n > KIND_WSTAR as usize {
+                    // Warp Star (`itWstarAttributes`: nine f32, `s32 x24_count`, then `itWstarAttrEntry { HSD_AnimJoint* x0_anim_joint;
+                    // enum_t x4_sfx; }[x24_count]` at GC +0x28): the entries are 8 bytes on the GameCube and 16 natively, and the word swap
+                    // leaves each anim joint a big-endian image word (`ftCo_800C4724` hands `it_80294364`'s pick to `HSD_JObjAddAnim`).
+                    // The block is rebuilt as the native record: the header words swapped at their GC offsets, the entries decoded.
+                    if let Some(sa) = d.target(ta + 4) {
+                        let count = d.u32_at(sa + 0x24);
+                        if (1..=7).contains(&count) && (0..count).all(|k| d.is_reloc(sa + 0x28 + 8 * k)) {
+                            use melee_types::{itWstarAttrEntry, itWstarAttributes};
+                            let words = core::mem::size_of::<itWstarAttributes>() / 8 + (count as usize - 1) * core::mem::size_of::<itWstarAttrEntry>() / 8;
+                            let buf: &mut [u64] = Box::leak(std::vec![0u64; words].into_boxed_slice());
+                            let rec = buf.as_mut_ptr() as *mut itWstarAttributes;
+                            unsafe {
+                                let w = rec as *mut u32;
+                                for k in 0..10u32 {
+                                    *w.add(k as usize) = d.u32_at(sa + 4 * k);
+                                }
+                                let es = &raw mut (*rec).x28_entries as *mut itWstarAttrEntry;
+                                for k in 0..count {
+                                    *es.add(k as usize) = <itWstarAttrEntry as GcDecode>::gc_decode(d, sa + 0x28 + 8 * k);
+                                }
+                            }
+                            let art = d.object::<melee_types::Article>(ta);
+                            unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, rec as *mut c_void)) };
+                        }
                     }
                 }
                 if i == KIND_FOODS && n > KIND_FOODS as usize {

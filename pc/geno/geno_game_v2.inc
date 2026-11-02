@@ -623,6 +623,8 @@ static void geno_cb_phys_auto(Fighter_GObj* gobj)
     }
 }
 
+static int gb_glide_land(Fighter_GObj* gobj, Fighter* fp, GenoState* st, int s); /* geno_behaviours.inc */
+
 /* Landing from an air state: become grounded, then the state's landing target (a Geno state, a
  * motion) or Melee's landing (with the state's landing lag when it has one). */
 static void geno_land(Fighter_GObj* gobj)
@@ -632,13 +634,8 @@ static void geno_land(Fighter_GObj* gobj)
     int s = geno_cur_state(fp, st);
     u32 t = s >= 0 ? geno_land_of(st, s) : GENO_AUTO;
     f32 lag = s >= 0 ? geno_lag_of(st, s) : 0.0f;
-    if (s >= 0 && st->move_i[4] != 0 &&
-        (Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_END ||
-         Geno_StateBehavior(st->profile, s) == GENO_BHV_GLIDE_ATTACK))
-    {
-        /* v3: a helpless glide's GlideEnd / GlideAttack (move_i[4], geno_game_glide.inc) lands as a
-           helpless fall does */
-        ftCo_LandingFallSpecial_Enter_Basic(gobj);
+    if (s >= 0 && gb_glide_land(gobj, fp, st, s)) {
+        /* the glide's ground exit (geno_behaviours.inc): lag cancel, trip, or landing lag */
         return;
     }
     if (t == GENO_AUTO || t == GENO_NONE_T) {
@@ -907,11 +904,8 @@ static int geno_jump_held(Fighter* fp)
             fp->input.lstick[0].y >= p_ftCommonData->tap_jump_threshold);
 }
 
-/* ---- glide ---------------------------------------------------------------------------------------- */
-#include "geno_game_glide.inc"
-
-/* ---- Mach Tornado and Drill Rush ------------------------------------------------------------------ */
-#include "geno_game_specials.inc"
+/* ---- glide, tornado, drill, cape, multi-dash, anim_motion: clean-room v5.1 behaviours --------------- */
+#include "geno_behaviours.inc"
 
 /* ---- slice 5: fighter Lua ------------------------------------------------------------------------- */
 #include "geno_game_lua.inc"

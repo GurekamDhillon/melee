@@ -3469,6 +3469,7 @@ static int test_geno_fly(void)
 #include "geno_combo_tests.inc"
 #include "geno_guard_tests.inc"
 #include "geno_online_tests.inc"
+#include "geno_behaviours_tests.inc"
 
 /* Slice 4d: the independence census. A base "none" define's ftData must hold no pointer of the donor's that it does not
  * list as shared (docs/geno.md 22.4). The census function is pure: it names the pointer fields two ftData share. */
@@ -3558,4 +3559,12 @@ void GenoTestRegisterAll(void)
     TestRegister("geno_v51", test_geno_v51);
     TestRegister("geno_v52_lockon", test_geno_v52_lockon);
     TestRegister("geno_v54_dash", test_geno_v54_dash);
+    TestRegister("geno_bhv_trig", test_geno_bhv_trig);
+    TestRegister("geno_bhv_glide", test_geno_bhv_glide);
+    TestRegister("geno_bhv_tornado", test_geno_bhv_tornado);
+    TestRegister("geno_bhv_drill", test_geno_bhv_drill);
+    TestRegister("geno_bhv_cape", test_geno_bhv_cape);
+    TestRegister("geno_bhv_multi_dash", test_geno_bhv_multi_dash);
+    TestRegister("geno_bhv_anim_motion", test_geno_bhv_anim_motion);
+    TestRegister("geno_bhv_adapters", test_geno_bhv_adapters);
 }

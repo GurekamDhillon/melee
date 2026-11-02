@@ -9,7 +9,7 @@ contract between the two halves and holds only `#define`s and enums.
 | half | file | compiled as |
 |---|---|---|
 | native | `pc/platform/geno_registry.c` | x86: reads `geno.json`, the registry, stable ids |
-| game | `geno_game.c` (+ `_glide.inc`, `_specials.inc`, `_v2.inc`, `_articles.inc`), `geno_lab_mode.c` | through gwtool: sees guest structs in their byte order |
+| game | `geno_game.c` (+ `_behaviours.inc` (the v5.1 clean-room glide, tornado, drill, cape procedures; spec docs/specs/geno-v5.1-behaviours.md), `_v2.inc`, `_articles.inc`), `geno_lab_mode.c` | through gwtool: sees guest structs in their byte order |
 
 They talk through scalar functions only. A layout change (a struct both halves see) is a hot-reload
 "layout change" and restarts the match (`docs/geno.md` 14.10).

@@ -485,7 +485,7 @@ pub(crate) fn install_replay(mut pl: melee_data::player::Player) {
         REPLAY = Some(pl);
         let r = || REPLAY.as_mut().unwrap();
         h::Replay_Active = Some(|| 1);
-        h::Replay_HasInput = Some(|p, f| unsafe { r_in().has_input(p, f != 0) as i32 });
+        h::Replay_HasInput = Some(|p, f| unsafe { slpcheck::seed_probe(p, f); r_in().has_input(p, f != 0) as i32 });
         h::Replay_StickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.lx) });
         h::Replay_StickY = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.ly) });
         h::Replay_CStickX = Some(|p, f| unsafe { r_in().input(p, f != 0).map_or(0.0, |i| i.cx) });

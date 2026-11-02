@@ -143,14 +143,17 @@ struct Cap {
 }
 
 static mut CAP: [Option<Cap>; 4] = [None; 4];
+/// Slippi 1.x/2.x recorded post-frame at `Fighter_procMap`, 3.x at `Fighter_UnkCallCameraCallback` (gw_Replay_TraceAtProcMap)
+static mut AT_PROC_MAP: bool = false;
 
 /// Route the fighter code's trace hook (`ftReplay_TraceFighter`, run at the end of `Fighter_procMap`, the end of the
 /// frame's collision work as Slippi's post-frame is) into [`CAP`]. Before this only the replay input hooks were set.
-fn install_capture() {
+fn install_capture(at_proc_map: bool) {
     use melee_fighter::platform::hook as h;
     unsafe {
+        AT_PROC_MAP = at_proc_map;
         h::Replay_Tracing = Some(|| 1);
-        h::Replay_TraceAtProcMap = Some(|| 0);
+        h::Replay_TraceAtProcMap = Some(|| unsafe { AT_PROC_MAP } as i32);
         h::Replay_TraceFighter = Some(|port, fol, _ck, action, x, y, facing, pct, stocks, _ax, _ay, _kx, _ky, _gx| {
             if fol != 0 || !(0..4).contains(&port) {
                 return;
@@ -176,6 +179,27 @@ fn install_capture() {
                 cand: [fp.x2068_attackID as i64, fp.x208C as i64, fp.x2090 as i64, fp.x2092 as i64, fp.x2098 as i64, fp.x206C_attack_instance as i64],
             });
         });
+    }
+}
+
+/// EXPERIMENTAL (env SLPCHECK_SEEDS=1; unexplained, see notes/slpcheck.md): first fighter whose RNG state at its pre-frame point differs from the Random Seed its Pre-Frame Update (0x37) recorded:
+/// (frame, port, engine seed, recorded seed). The pre-frame point is `Fighter_Spaghetti_8006AD10` (Slippi hooks 0x8006B0E0, the
+/// `Replay_HasInput` call), so a mismatch means the engine drew a different number of random values earlier in that frame.
+static mut SEED_FIRST: Option<(i32, i32, u32, u32)> = None;
+static mut SEED_PROBE: bool = false;
+
+pub(crate) fn seed_probe(port: i32, fol: i32) {
+    unsafe {
+        if !SEED_PROBE || fol != 0 || SEED_FIRST.is_some() || crate::r_in().frame() <= -123 {
+            return;
+        }
+        let pl = crate::r_in();
+        let Some(rec) = pl.input(port, false).map(|i| i.seed) else { return };
+        let st = melee_runtime::tu::random::global::state();
+        let eng = *melee_runtime::tu::random::HSD_RandCurrentSeed(st);
+        if eng != rec && rec != 0 {
+            SEED_FIRST = Some((pl.frame(), port, eng, rec));
+        }
     }
 }
 
@@ -324,7 +348,8 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
         }
     };
     crate::install_replay(pl);
-    install_capture();
+    install_capture(file.version[0] < 3);
+    unsafe { SEED_PROBE = std::env::var_os("SLPCHECK_SEEDS").is_some(); SEED_FIRST = None };
     let ports: Vec<usize> = (0..4).filter(|&i| conv.scn.players[i].is_some()).collect();
     let posts: Vec<Vec<Option<slp::Post>>> = (0..4).map(|p| if ports.contains(&p) { file.post_by_port(p) } else { Vec::new() }).collect();
     let max_ticks: usize = get("--frames").and_then(|s| s.parse().ok()).unwrap_or(usize::MAX);
@@ -370,7 +395,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
                 if dump && std::env::var_os("SLPCHECK_ATK").is_some() {
                     eprintln!("ATK f{fr} p{} slp la={} combo={} | eng {:?}", port + 1, p.last_attack, p.combo, c.cand);
                 } else if dump {
-                    eprintln!("DUMP f{fr} p{} eng x={:?} y={:?} act={} sf={:?} face={:?} | slp x={:?} y={:?} act={} sf={:?} face={:?}", port + 1, c.x, c.y, c.action, c.state_frame, c.facing, p.x, p.y, p.action, p.state_frame, p.facing);
+                    eprintln!("DUMP f{fr} p{} eng x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} | slp x={:?} y={:?} act={} sf={:?} pct={:?} hl={:?} la={} sh={:?} misc={:?}", port + 1, c.x, c.y, c.action, c.state_frame, c.percent, c.hitlag, c.last_attack, c.shield, p.x, p.y, p.action, p.state_frame, p.percent, p.hitlag, p.last_attack, p.shield, p.misc_as);
                 }
                 for (k, ev, rv) in compare(&c, p) {
                     if per_field[k].is_none() {
@@ -390,6 +415,7 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if let Err(p) = run {
         panic_msg = Some(if let Some(s) = p.downcast_ref::<&str>() { (*s).to_string() } else if let Some(s) = p.downcast_ref::<String>() { s.clone() } else { "panic".into() });
     }
+    sm.seed_first = unsafe { SEED_FIRST };
     sm.frames_compared = compared;
     sm.last_frame = last_frame;
     if let Some(m) = panic_msg {
@@ -434,6 +460,7 @@ struct Summary {
     per_field: [Option<i32>; 12],
     panic: String,
     notes: String,
+    seed_first: Option<(i32, i32, u32, u32)>,
 }
 
 fn finish(args: &[String], name: &str, s: &Summary) -> std::process::ExitCode {
@@ -446,10 +473,10 @@ fn finish(args: &[String], name: &str, s: &Summary) -> std::process::ExitCode {
     let row = format!(
         "{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
         name, csvq(&s.status), s.version, s.stage, s.roster, s.ucf, s.frozen_ps as i32, s.pal as i32, s.gecko_codes, s.gecko_hash,
-        s.replay_frames, s.frames_compared, s.last_frame, ff, fp, fl, csvq(&fe), csvq(&fr), pf.join(","), csvq(&s.panic), csvq(&s.notes), ""
+        s.replay_frames, s.frames_compared, s.last_frame, ff, fp, fl, csvq(&fe), csvq(&fr), pf.join(","), csvq(&s.panic), csvq(&s.notes), s.seed_first.map_or(String::new(), |(f, p, e, r)| format!("{f}:p{}:{e:08x}:{r:08x}", p + 1))
     );
     let header = format!(
-        "file,status,slippi,stage,roster,ucf_dash_shield,frozen_ps,pal,gecko_codes,gecko_hash,replay_frames,frames_compared,last_frame,first_frame,first_port,first_field,engine_value,replay_value,{},panic,notes,",
+        "file,status,slippi,stage,roster,ucf_dash_shield,frozen_ps,pal,gecko_codes,gecko_hash,replay_frames,frames_compared,last_frame,first_frame,first_port,first_field,engine_value,replay_value,{},panic,notes,seed_first",
         FIELDS.iter().map(|f| format!("fd_{f}")).collect::<Vec<_>>().join(",")
     );
     if let Some(path) = args.iter().position(|a| a == "--csv").and_then(|i| args.get(i + 1)) {

@@ -115,3 +115,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-01 rust-port: external tournament replay harvest (125 Ausmash .slp, 20 playable, 0/5 match C playback from frame 0), see notes/replays-ext.md
 - 2026-11-01 rust-port: port/perf, sampling profiler (MELEE_SAMPLE), golden CSV append, cow-bitmap snapshot dirty tracking, jobj matrix fast path: tick 7.1-9.2 -> 0.2-0.5 ms, 7-frame rollback tick 65 -> 7.4 ms, see notes/perf.md
 - 2026-11-02 port/covfix round 4: coverage 34 -> 51 of 79 wired; the C goldens carry the PC build's widescreen projection, `Callback1` ABI mismatch and UB sqrt spill, reproduced; C call trace buildable again (`build_trace_reuse.sh`), see notes/coverage.md
+- 2026-11-02 port/slporacle: `melee slpcheck` (a .slp replay as a direct oracle vs the console post-frame data), Game Start conversion in golden --slp; 125/125 external replays run, 0 match, median first divergence 1157, see notes/slpcheck.md

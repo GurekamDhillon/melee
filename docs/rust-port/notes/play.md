@@ -26,3 +26,28 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   preset (WASD/IJKL/Space/Shift/Enter; `MELEE_KEYBOARD=0` off). `view` renders any stage's map groups, not just FD.
   Re-run: full_loop.txt (1360 ticks to results), vs_to_ko.txt --golden-pads (1875 ticks, winner port 2 by falls), pause_quit_rematch.txt (two matches, 1563 ticks), all with the window in the background.
   Still stand-ins: ui.rs menus (gmfrontend.c's .inc units and the retail mn* scenes are not driven), opening card, 7 fighters, 4 stages.
+
+## Round 4: full roster, rules, repeatable matches (2026-11-02, port/parity1)
+- CSS (stand-in, ui.rs): all 26 fighters in the retail order (Sheik has her own icon; Jigglypuff marked "SPECIALS INCOMPLETE (BLOCKER D)"),
+  4 slots HMN / CPU LV1-9 / NA, costume (Y) or team in a team match, and a rules bar: TIME (minutes) or STOCK (1-99), ITEMS OFF / very low..very high,
+  TEAMS. Port 1 moves its focus with Z (P1 -> P2 -> P3 -> P4 -> RULES); ports 2-4 edit their own slot. X cycles HMN/CPU/NA, L/R the CPU level.
+  The setup becomes a `melee_engine::scenario::Scenario` (no string) and reaches the game through `SceneLaunch_SeedVs`: GameRules mode /
+  stock_count / time_limit, StartMeleeRules is_teams, items via `SceneLaunch_ApplyItemFrequency`, per-player slot_type / cpu_level / color / team.
+  The match ends the game's own way (TIME! / GAME!); results read Player_* (KOs, falls, stocks, percent) and pick the winner per team.
+- SSS: all 29 retail VS stages (2..32 without Akaneia 21 and Icetop 26) plus RANDOM (play's own LCG, never the game RNG). Headless 1-minute
+  fox v marth CPU9 sweep: 25 stages finish; Corneria, Great Bay (grgreatbay.rs:577 panic), Mushroom Kingdom II and Venom crash: marked on the SSS.
+  All 26 fighters finish a 1-minute 4-CPU match (7 runs of 4).
+- Rematch: `Engine::next_vs` leaves the scene like `gm_801A4014` (`gm_801A4D34_end`, `gm_801A4014_leave`: the VS scene's and state's on_exit) and
+  runs `runGameMode_load(GM_VS)` -> `gm_801A4014_enter` again; the host, link table and `main`'s libraries stay. Fixes this needed:
+  the gmMainLib_8046B0F0 reset-flag seams; gm_1B03's SceneLaunch_Active / EnemyTeamColors copies (teams); `pl_80038914_fp` returning player.c's
+  loaded `pl_804D6470`; `pl_800386D8` reading past `by_attack_hi[65]` as the C does (ids 0x65..0x72); the particle bank memo
+  (`dat_custom::forget_banks`: a file re-read at the same raw address got the already relocated bank, double relocation -> crash in match 3);
+  and `archive::RECLAIM` (set by next_vs only): a file parsed over the raw bytes of older images frees them (they leaked ~0.4-0.8 GB per match).
+- Memory (`play: mem after N matches` lines, working set): 5 consecutive 4-CPU matches Brinstar, Jungle Japes, Green Greens, Poke Floats,
+  Kongo Jungle 64: 3.62, 4.19, 6.38, 6.39, 6.39 GB at match start (flat from match 3 on; one match was already 3.6 GB before this work).
+  Same stage 5 times: 3.62, 4.42, 5.21, 5.21, 5.21 GB.
+- melee_gx: a draw whose vertex data runs past the command list (prim 0xF8 fmt 7 count 65535, seen at frame 1905 of a falcon v fox CPU match
+  on FD, windowed only) panicked the game; it now drops the rest of that list with one log line. The cause is not found.
+- Tests (no OS input; self-closing): `bash tools/rust-port/play/rematch.sh [--windowed] [css|x5|all]` runs css_rematch_4cpu.txt (CSS ->
+  4 CPUs, 1-minute time, items very low, Brinstar -> results -> CSS -> 2v2 teams, 1 stock, Onett -> results) and rematch_x5.txt.
+  Headless and windowed runs give the same results (deterministic).

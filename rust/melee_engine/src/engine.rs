@@ -75,6 +75,8 @@ pub struct Engine {
     pub on_frame: Option<unsafe extern "C" fn()>,
     /// `gm_801A4D34_tick` returned false (the scene ended).
     pub ended: bool,
+    /// The VS scene `boot_vs` / `next_vs` entered (`gm_801A4014_enter`), left again by `leave_scene`.
+    run: Option<gm_1A3F::SceneRun>,
 }
 
 impl Engine {
@@ -86,7 +88,7 @@ impl Engine {
             gmscene::gm_801A4BD4();
             gmscene::gm_801A4D34_begin(core::ptr::null_mut());
         }
-        Ok(Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false })
+        Ok(Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false, run: None })
     }
 
     /// Step 7: boot the host, then start the VS mode the way `main` -> `gm_801A4510` -> `runGameMode` -> `gm_801A4014` does
@@ -115,8 +117,45 @@ impl Engine {
                     melee_runtime::tu::random::global::state().rand();
                 }
             }
-            Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false })
+            Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false, run: Some(run) })
         }
+    }
+
+    /// Leave the current scene the way `gm_801A4014` does after its loop: a scene still running is told to end
+    /// (`gm_80479D58.unk_C`, what a scene sets itself), then the loop's teardown (`gm_801A4D34_end`) and the
+    /// scene's and state's `on_exit`s (`gm_801A4014_leave`). Idempotent.
+    pub fn leave_scene(&mut self) {
+        let Some(run) = self.run.take() else { return };
+        let _scope = crate::arena::GameScope::enter();
+        unsafe {
+            if gmscene::gm_80479D58.unk_C == 0 {
+                gmscene::gm_80479D58.unk_C = 1;
+            }
+            gmscene::gm_801A4D34_end();
+            gm_1A3F::gm_801A4014_leave(run);
+        }
+        self.ended = true;
+    }
+
+    /// The next VS match in the same process, as the C mode loop starts one after the results (`runGameMode(GM_VS)`
+    /// -> the mode's `on_load` -> `SceneLaunch_SeedVs`, entry state 2 = the match): the host, the link table and the
+    /// libraries `main` brought up stay; the scene setup (`gm_801A4BD4`: GObj and heap init) runs again.
+    pub fn next_vs(&mut self, scn: crate::scenario::Scenario) -> Result<(), String> {
+        self.leave_scene();
+        let _scope = crate::arena::GameScope::enter();
+        unsafe { crate::archive::RECLAIM = true };
+        crate::scenario::install(scn);
+        unsafe {
+            let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
+            let run = gm_1A3F::gm_801A4014_enter(mode);
+            gmscene::gm_801A4D34_begin(run.info);
+            self.frames = 0;
+            self.info = run.info;
+            self.on_frame = run.frame_fn;
+            self.ended = false;
+            self.run = Some(run);
+        }
+        Ok(())
     }
 
     fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
@@ -554,7 +593,7 @@ pub struct Captured {
 
 impl Engine {
     fn capture_now() -> Captured {
-        let e = Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false };
+        let e = Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false, run: None };
         let mut fighters = Vec::new();
         for slot in 0..2 {
             if let Some(b) = e.fighter_bytes(slot) { fighters.push((slot, b)); }

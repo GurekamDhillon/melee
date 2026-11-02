@@ -909,6 +909,17 @@ fn memo(key: (usize, u32), make: impl FnOnce() -> *mut c_void) -> *mut c_void {
     p
 }
 
+/// A new file image parsed at raw data address `base` (`host_parse`): the banks built from an earlier file at that address
+/// are not this file's (a later scene loads another file, or the same one again, into the same heap block). Their memo
+/// entries go, so the next lookup builds and `psInitDataBankLocate` relocates a fresh bank, as the C relocates the
+/// freshly read file.
+#[allow(static_mut_refs)]
+pub fn forget_banks(base: usize) {
+    if let Some(m) = unsafe { BANKS.as_mut() } {
+        m.retain(|k, _| k.0 != base);
+    }
+}
+
 /// A zeroed 8-aligned native buffer of `n` bytes that lives for the rest of the process.
 /// A `SIS_*Data` root (`HSD_SisLib_804D1124[font]`): word 0 / 1 are the kerning and glyph-texture tables (`SIS { kerning, textures }`, typed
 /// arrays), the following words are the pointers to the text strings, which the text code (`HSD_SisLib_803A6368`, `803A660C`, ...) reads as

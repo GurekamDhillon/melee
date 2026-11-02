@@ -1216,7 +1216,9 @@ pub fn fn_8003D2EC(player: i32) {
 /// `pl_800386D8`.
 pub fn pl_800386d8(arg0: &plActionStats, arg1: i32) -> u32 {
     melee_core::ct!("pl_800386d8");
-    unsafe { arg0.anon_358.anon_0.by_attack_hi[arg1 as usize] }
+    // The C indexes `by_attack_hi[arg1]` with ids past its 65 entries (plbonus.c reads 0x65..0x72: the bonus checks),
+    // so it reads the plActionStats words that follow the union (x504.., x568..). Same address arithmetic here.
+    unsafe { core::ptr::addr_of!(arg0.anon_358.anon_0.by_attack_hi).cast::<u32>().add(arg1 as usize).read_unaligned() }
 }
 
 /// `pl_800386E8`.
@@ -1268,7 +1270,9 @@ pub fn pl_80038898_fp(player: i32, kind: i32) {
 /// `pl_80038914_fp`: the `pl_804D6470` constants pointer.
 pub fn pl_80038914_fp() -> *const pl_804D6470_t {
     melee_core::ct!("pl_80038914_fp");
-    unsafe { h::PL_804D6470 }
+    // player.c's `pl_804D6470` (set by the PlCo loader, `tu::player`); the hook only where that loader has not run (tests)
+    let p = unsafe { crate::tu::player::pl_804D6470 } as *const pl_804D6470_t;
+    if p.is_null() { unsafe { h::PL_804D6470 } } else { p }
 }
 
 /// `pl_80038F10`.

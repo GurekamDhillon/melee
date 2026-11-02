@@ -226,16 +226,16 @@ pub fn ftCo_YoshiEgg_Anim(g: G) {
         return;
     }
     let f = fp(g);
-    if f.mv.co.yoshiegg.x8 != 0.0 {
-        f.mv.co.yoshiegg.x8 -= 1.0;
-        if f.mv.co.yoshiegg.x8 <= 0.0 && f.mv.co.yoshiegg.x4 == 0 {
+    if f.mv.ca.specialhi.vel.y != 0.0 {
+        f.mv.ca.specialhi.vel.y -= 1.0;
+        if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.yoshiegg.x4 == 0 {
             ext::ftAnim_SetAnimRate(g, 1.0);
-            fp(g).mv.co.yoshiegg.x8 = 0.0;
+            fp(g).mv.ca.specialhi.vel.y = 0.0;
         }
     }
     let f = fp(g);
-    if f.mv.co.yoshiegg.x8 <= 0.0 && f.mv.co.yoshiegg.x4 != 0 {
-        fp(g).mv.co.yoshiegg.x8 = ext::ftYs_SpecialN_8012CD40();
+    if f.mv.ca.specialhi.vel.y <= 0.0 && f.mv.co.yoshiegg.x4 != 0 {
+        fp(g).mv.ca.specialhi.vel.y = ext::ftYs_SpecialN_8012CD40();
         let r = ext::ftYs_SpecialN_GetExtAttr34();
         ext::ftAnim_SetAnimRate(g, r);
     }

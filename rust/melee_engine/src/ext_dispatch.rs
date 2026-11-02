@@ -14,7 +14,13 @@ fn p2w<T>(r: T) -> u64 { assert!(core::mem::size_of::<T>() == 8); let w: usize =
 /// The canonical port of a string-hook ext callee, called with its arguments as words. None: not resolved here.
 pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
     Some(match name {
+        "Camera_8002E6FC" => { let r = melee_world::tu::camera::Camera_8002E6FC(a[0] as i32); { r; 0 } }
+        "Camera_8002EB5C" => { let r = melee_world::tu::camera::Camera_8002EB5C(f32::from_bits(a[0] as u32)); { r; 0 } }
+        "Camera_8002EC7C" => { let r = melee_world::tu::camera::Camera_8002EC7C(f32::from_bits(a[0] as u32)); { r; 0 } }
+        "Camera_8002ED9C" => { let r = melee_world::tu::camera::Camera_8002ED9C(f32::from_bits(a[0] as u32)); { r; 0 } }
+        "Camera_8002EEC8" => { let r = melee_world::tu::camera::Camera_8002EEC8(f32::from_bits(a[0] as u32)); { r; 0 } }
         "Camera_8002F7AC" => { let r = melee_world::tu::camera::Camera_8002F7AC(a[0] as i8); { r; 0 } }
+        "Camera_800304E0" => { let r = melee_world::tu::camera::Camera_800304E0(w2p(a[0])); { r; 0 } }
         "Camera_80030730" => { let r = melee_world::tu::camera::Camera_80030730(f32::from_bits(a[0] as u32)); { r; 0 } }
         "Camera_80030A50" => { let r = melee_world::tu::camera::Camera_80030A50(); p2w(r) }
         "Camera_80030A60" => { let r = melee_world::tu::camera::Camera_80030A60(a[0] as i32); { r; 0 } }
@@ -33,6 +39,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "Camera_800313E0" => { let r = melee_world::tu::camera::Camera_800313E0(w2p(a[0]), a[1] as u64); { r; 0 } }
         "Camera_LargeMapRestore" => { let r = melee_world::tu::camera::Camera_LargeMapRestore(); { r; 0 } }
         "Camera_RequestQuake" => { let r = melee_world::tu::camera::Camera_RequestQuake(w2v(a[0]), w2p(a[1])); { r; 0 } }
+        "Camera_SetModeToStandard" => { let r = melee_world::tu::camera::Camera_SetModeToStandard(); { r; 0 } }
         "Camera_StageSlotClipGet" => { let r = melee_world::tu::camera::Camera_StageSlotClipGet(w2p(a[0]), w2p(a[1])); { r; 0 } }
         "GObj_Create" => { let r = melee_runtime::tu::gobjplink::GObj_Create(a[0] as u16, a[1] as u8, a[2] as u8); p2w(r) }
         "GObj_InitUserData" => { let r = melee_runtime::tu::gobjuserdata::GObj_InitUserData(w2p(a[0]), a[1] as u8, w2p(a[2]), w2p(a[3])); { r; 0 } }
@@ -122,6 +129,8 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_SisLib_803A62A0" => { let r = melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a[0] as i32, a[1] as *mut ::core::ffi::c_char, a[2] as *mut ::core::ffi::c_char); { r; 0 } }
         "HSD_SisLib_803A6368" => { let r = melee_runtime::tu::sislib::HSD_SisLib_803A6368(w2p(a[0]), a[1] as i32); { r; 0 } }
         "HSD_SisLib_803A6754" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a[0] as i32, a[1] as i32); p2w(r) }
+        "HSD_SisLib_803A6B98" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(w2p(a[0]), f32::from_bits(a[1] as u32), f32::from_bits(a[2] as u32), w2p(a[3])); r as i64 as u64 }
+        "HSD_SisLib_803A70A0" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(w2p(a[0]), a[1] as i32, w2p(a[2])); r as i64 as u64 }
         "HSD_SisLib_803A746C" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A746C(w2p(a[0]), a[1] as i32, f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32)); { r; 0 } }
         "HSD_SisLib_803A74F0" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(w2p(a[0]), a[1] as i32, w2p(a[2])); { r; 0 } }
         "HSD_SisLib_803A7548" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(w2p(a[0]), a[1] as i32, f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32)); { r; 0 } }
@@ -135,6 +144,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_StateSetNumTevStages" => { let r = melee_runtime::tu::tev_native::HSD_StateSetNumTevStages(); { r; 0 } }
         "HSD_StateSetNumTexGens" => { let r = melee_runtime::tu::tev_native::HSD_StateSetNumTexGens(); { r; 0 } }
         "IsNameListFull" => { let r = melee_modes::tu::mnname::IsNameListFull(); v2w(r) }
+        "MTXOrtho" => { let r = melee_runtime::tu::mtx44::raw::MTXOrtho(w2p(a[0]), f32::from_bits(a[1] as u32), f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32), f32::from_bits(a[4] as u32), f32::from_bits(a[5] as u32), f32::from_bits(a[6] as u32)); { r; 0 } }
         "PSMTXCopy" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXCopy(w2p(a[0]), w2p(a[1])); v2w(r) }
         "PSMTXMultVec" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXMultVec(w2p(a[0]), w2p(a[1]), w2p(a[2])); { r; 0 } }
         "PSMTXRotAxisRad" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXRotAxisRad(w2p(a[0]), w2p(a[1]), f32::from_bits(a[2] as u32)); { r; 0 } }
@@ -250,6 +260,7 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXSetBlendMode" => 0i64 as u64,
         "GXSetChanCtrl" => 0i64 as u64,
         "GXSetChanMatColor" => 0i64 as u64,
+        "GXSetColorUpdate" => 0i64 as u64,
         "GXSetCullMode" => 0i64 as u64,
         "GXSetCurrentMtx" => 0i64 as u64,
         "GXSetNumChans" => 0i64 as u64,
@@ -410,4 +421,70 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "lbAudioAx_80027648" => 0i64 as u64,
         _ => return None,
     })
+}
+
+/// Points every unported `melee_modes::tu_ext` hook at the by-name ext path (see `seams::ext_real`).
+pub unsafe fn install_tu_ext() {
+    use melee_modes::tu_ext as m;
+    use melee_types::*;
+        m::HOOK_Camera_8002E6FC = Some(|a0: i32| unsafe { crate::seams::ext_real("Camera_8002E6FC", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_8002E6FC is not ported")); });
+        m::HOOK_Camera_8002EB5C = Some(|a0: f32| unsafe { crate::seams::ext_real("Camera_8002EB5C", &[a0.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_8002EB5C is not ported")); });
+        m::HOOK_Camera_8002EC7C = Some(|a0: f32| unsafe { crate::seams::ext_real("Camera_8002EC7C", &[a0.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_8002EC7C is not ported")); });
+        m::HOOK_Camera_8002ED9C = Some(|a0: f32| unsafe { crate::seams::ext_real("Camera_8002ED9C", &[a0.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_8002ED9C is not ported")); });
+        m::HOOK_Camera_8002EEC8 = Some(|a0: f32| unsafe { crate::seams::ext_real("Camera_8002EEC8", &[a0.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_8002EEC8 is not ported")); });
+        m::HOOK_Camera_800304E0 = Some(|a0: *mut HSD_GObj| unsafe { crate::seams::ext_real("Camera_800304E0", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_800304E0 is not ported")); });
+        m::HOOK_Camera_800313E0 = Some(|a0: *mut HSD_GObj, a1: u64| unsafe { crate::seams::ext_real("Camera_800313E0", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_800313E0 is not ported")); });
+        m::HOOK_Camera_SetModeToStandard = Some(|| unsafe { crate::seams::ext_real("Camera_SetModeToStandard", &[]).unwrap_or_else(|| melee_core::unported!("TODO: Camera_SetModeToStandard is not ported")); });
+        m::HOOK_GObj_Create = Some(|a0: u16, a1: u8, a2: u8| unsafe { let w = crate::seams::ext_real("GObj_Create", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GObj_Create is not ported")); w2p(w) });
+        m::HOOK_GObj_SetupGXLink = Some(|a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u8, a3: u32| unsafe { crate::seams::ext_real("GObj_SetupGXLink", &[p2w(a0), p2w(a1), a2 as i64 as u64, a3 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GObj_SetupGXLink is not ported")); });
+        m::HOOK_GObj_SetupGXLinkMax = Some(|a0: *mut HSD_GObj, a1: GObj_RenderFunc, a2: u32| unsafe { crate::seams::ext_real("GObj_SetupGXLinkMax", &[p2w(a0), p2w(a1), a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GObj_SetupGXLinkMax is not ported")); });
+        m::HOOK_GXBegin = Some(|a0: i32, a1: i32, a2: u16| unsafe { crate::seams::ext_real("GXBegin", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXBegin is not ported")); });
+        m::HOOK_GXClearVtxDesc = Some(|| unsafe { crate::seams::ext_real("GXClearVtxDesc", &[]).unwrap_or_else(|| melee_core::unported!("TODO: GXClearVtxDesc is not ported")); });
+        m::HOOK_GXLoadPosMtxImm = Some(|a0: *const [f32; 4], a1: u32| unsafe { crate::seams::ext_real("GXLoadPosMtxImm", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXLoadPosMtxImm is not ported")); });
+        m::HOOK_GXPosition3f32 = Some(|a0: f32, a1: f32, a2: f32| unsafe { crate::seams::ext_real("GXPosition3f32", &[a0.to_bits() as u64, a1.to_bits() as u64, a2.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXPosition3f32 is not ported")); });
+        m::HOOK_GXSetAlphaCompare = Some(|a0: i32, a1: u8, a2: i32, a3: i32, a4: u8| unsafe { crate::seams::ext_real("GXSetAlphaCompare", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64, a3 as i64 as u64, a4 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetAlphaCompare is not ported")); });
+        m::HOOK_GXSetBlendMode = Some(|a0: i32, a1: i32, a2: i32, a3: i32| unsafe { crate::seams::ext_real("GXSetBlendMode", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64, a3 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetBlendMode is not ported")); });
+        m::HOOK_GXSetChanCtrl = Some(|a0: i32, a1: u8, a2: i32, a3: i32, a4: u32, a5: i32, a6: i32| unsafe { crate::seams::ext_real("GXSetChanCtrl", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64, a3 as i64 as u64, a4 as i64 as u64, a5 as i64 as u64, a6 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetChanCtrl is not ported")); });
+        m::HOOK_GXSetColorUpdate = Some(|a0: u8| unsafe { crate::seams::ext_real("GXSetColorUpdate", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetColorUpdate is not ported")); });
+        m::HOOK_GXSetCullMode = Some(|a0: i32| unsafe { crate::seams::ext_real("GXSetCullMode", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetCullMode is not ported")); });
+        m::HOOK_GXSetCurrentMtx = Some(|a0: u32| unsafe { crate::seams::ext_real("GXSetCurrentMtx", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetCurrentMtx is not ported")); });
+        m::HOOK_GXSetNumChans = Some(|a0: u8| unsafe { crate::seams::ext_real("GXSetNumChans", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetNumChans is not ported")); });
+        m::HOOK_GXSetNumTevStages = Some(|a0: u8| unsafe { crate::seams::ext_real("GXSetNumTevStages", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetNumTevStages is not ported")); });
+        m::HOOK_GXSetNumTexGens = Some(|a0: u8| unsafe { crate::seams::ext_real("GXSetNumTexGens", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetNumTexGens is not ported")); });
+        m::HOOK_GXSetProjection = Some(|a0: *const [f32; 4], a1: i32| unsafe { crate::seams::ext_real("GXSetProjection", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetProjection is not ported")); });
+        m::HOOK_GXSetTevOp = Some(|a0: i32, a1: i32| unsafe { crate::seams::ext_real("GXSetTevOp", &[a0 as i64 as u64, a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetTevOp is not ported")); });
+        m::HOOK_GXSetTevOrder = Some(|a0: i32, a1: i32, a2: i32, a3: i32| unsafe { crate::seams::ext_real("GXSetTevOrder", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64, a3 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetTevOrder is not ported")); });
+        m::HOOK_GXSetVtxAttrFmt = Some(|a0: i32, a1: i32, a2: i32, a3: i32, a4: u8| unsafe { crate::seams::ext_real("GXSetVtxAttrFmt", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64, a3 as i64 as u64, a4 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetVtxAttrFmt is not ported")); });
+        m::HOOK_GXSetVtxDesc = Some(|a0: i32, a1: i32| unsafe { crate::seams::ext_real("GXSetVtxDesc", &[a0 as i64 as u64, a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetVtxDesc is not ported")); });
+        m::HOOK_GXSetZMode = Some(|a0: u8, a1: i32, a2: u8| unsafe { crate::seams::ext_real("GXSetZMode", &[a0 as i64 as u64, a1 as i64 as u64, a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: GXSetZMode is not ported")); });
+        m::HOOK_HSD_CObjGetEyePosition = Some(|a0: *mut HSD_CObj, a1: *mut Vec3| unsafe { crate::seams::ext_real("HSD_CObjGetEyePosition", &[p2w(a0), p2w(a1)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_CObjGetEyePosition is not ported")); });
+        m::HOOK_HSD_CObjGetInterest = Some(|a0: *mut HSD_CObj, a1: *mut Vec3| unsafe { crate::seams::ext_real("HSD_CObjGetInterest", &[p2w(a0), p2w(a1)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_CObjGetInterest is not ported")); });
+        m::HOOK_HSD_CObjSetEyePosition = Some(|a0: *mut HSD_CObj, a1: *mut Vec3| unsafe { crate::seams::ext_real("HSD_CObjSetEyePosition", &[p2w(a0), p2w(a1)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_CObjSetEyePosition is not ported")); });
+        m::HOOK_HSD_CObjSetInterest = Some(|a0: *mut HSD_CObj, a1: *mut Vec3| unsafe { crate::seams::ext_real("HSD_CObjSetInterest", &[p2w(a0), p2w(a1)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_CObjSetInterest is not ported")); });
+        m::HOOK_HSD_FogLoadDesc = Some(|a0: *mut HSD_FogDesc| unsafe { let w = crate::seams::ext_real("HSD_FogLoadDesc", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_FogLoadDesc is not ported")); w2p(w) });
+        m::HOOK_HSD_GObjFree = Some(|a0: *mut HSD_GObj| unsafe { crate::seams::ext_real("HSD_GObjFree", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObjFree is not ported")); });
+        m::HOOK_HSD_GObjGXLink_8039084C = Some(|a0: *mut HSD_GObj| unsafe { crate::seams::ext_real("HSD_GObjGXLink_8039084C", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObjGXLink_8039084C is not ported")); });
+        m::HOOK_HSD_GObjObject_80390A70 = Some(|a0: *mut HSD_GObj, a1: u8, a2: *mut core::ffi::c_void| unsafe { crate::seams::ext_real("HSD_GObjObject_80390A70", &[p2w(a0), a1 as i64 as u64, p2w(a2)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObjObject_80390A70 is not ported")); });
+        m::HOOK_HSD_GObj_80390ED0 = Some(|a0: *mut HSD_GObj, a1: u32| unsafe { crate::seams::ext_real("HSD_GObj_80390ED0", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObj_80390ED0 is not ported")); });
+        m::HOOK_HSD_GObj_803910D8 = Some(|a0: *mut HSD_GObj, a1: i32| unsafe { crate::seams::ext_real("HSD_GObj_803910D8", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObj_803910D8 is not ported")); });
+        m::HOOK_HSD_GObj_SetupProc = Some(|a0: *mut HSD_GObj, a1: HSD_GObjEvent, a2: u8| unsafe { let w = crate::seams::ext_real("HSD_GObj_SetupProc", &[p2w(a0), p2w(a1), a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_GObj_SetupProc is not ported")); w2p(w) });
+        m::HOOK_HSD_JObjAnimAll = Some(|a0: *mut HSD_JObj| unsafe { crate::seams::ext_real("HSD_JObjAnimAll", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjAnimAll is not ported")); });
+        m::HOOK_HSD_JObjClearFlags = Some(|a0: *mut HSD_JObj, a1: u32| unsafe { crate::seams::ext_real("HSD_JObjClearFlags", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjClearFlags is not ported")); });
+        m::HOOK_HSD_JObjClearFlagsAll = Some(|a0: *mut HSD_JObj, a1: u32| unsafe { crate::seams::ext_real("HSD_JObjClearFlagsAll", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjClearFlagsAll is not ported")); });
+        m::HOOK_HSD_JObjReqAnimAll = Some(|a0: *mut HSD_JObj, a1: f32| unsafe { crate::seams::ext_real("HSD_JObjReqAnimAll", &[p2w(a0), a1.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjReqAnimAll is not ported")); });
+        m::HOOK_HSD_JObjSetFlags = Some(|a0: *mut HSD_JObj, a1: u32| unsafe { crate::seams::ext_real("HSD_JObjSetFlags", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjSetFlags is not ported")); });
+        m::HOOK_HSD_JObjSetFlagsAll = Some(|a0: *mut HSD_JObj, a1: u32| unsafe { crate::seams::ext_real("HSD_JObjSetFlagsAll", &[p2w(a0), a1 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjSetFlagsAll is not ported")); });
+        m::HOOK_HSD_JObjSetMtxDirtySub = Some(|a0: *mut HSD_JObj| unsafe { crate::seams::ext_real("HSD_JObjSetMtxDirtySub", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_JObjSetMtxDirtySub is not ported")); });
+        m::HOOK_HSD_MObjAnim = Some(|a0: *mut HSD_MObj| unsafe { crate::seams::ext_real("HSD_MObjAnim", &[p2w(a0)]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_MObjAnim is not ported")); });
+        m::HOOK_HSD_MObjReqAnim = Some(|a0: *mut HSD_MObj, a1: f32| unsafe { crate::seams::ext_real("HSD_MObjReqAnim", &[p2w(a0), a1.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_MObjReqAnim is not ported")); });
+        m::HOOK_HSD_Randf = Some(|| unsafe { let w = crate::seams::ext_real("HSD_Randf", &[]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_Randf is not ported")); f32::from_bits(w as u32) });
+        m::HOOK_HSD_Randi = Some(|a0: i32| unsafe { let w = crate::seams::ext_real("HSD_Randi", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_Randi is not ported")); w as i32 });
+        m::HOOK_HSD_SisLib_803A6B98 = Some(|a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const core::ffi::c_char| unsafe { let w = crate::seams::ext_real("HSD_SisLib_803A6B98", &[p2w(a0), a1.to_bits() as u64, a2.to_bits() as u64, a3 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_SisLib_803A6B98 is not ported")); w as i32 });
+        m::HOOK_HSD_SisLib_803A70A0 = Some(|a0: *mut HSD_Text, a1: i32, a2: *const core::ffi::c_char| unsafe { let w = crate::seams::ext_real("HSD_SisLib_803A70A0", &[p2w(a0), a1 as i64 as u64, a2 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_SisLib_803A70A0 is not ported")); w as i32 });
+        m::HOOK_HSD_StateInvalidate = Some(|a0: i32| unsafe { crate::seams::ext_real("HSD_StateInvalidate", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: HSD_StateInvalidate is not ported")); });
+        m::HOOK_MTXOrtho = Some(|a0: *mut [f32; 4], a1: f32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32| unsafe { crate::seams::ext_real("MTXOrtho", &[p2w(a0), a1.to_bits() as u64, a2.to_bits() as u64, a3.to_bits() as u64, a4.to_bits() as u64, a5.to_bits() as u64, a6.to_bits() as u64]).unwrap_or_else(|| melee_core::unported!("TODO: MTXOrtho is not ported")); });
+        m::HOOK_Mex_Enabled = Some(|a0: *const core::ffi::c_char| unsafe { let w = crate::seams::ext_real("Mex_Enabled", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: Mex_Enabled is not ported")); w as i32 });
+        m::HOOK_efAsync_LoadSync = Some(|a0: i32| unsafe { crate::seams::ext_real("efAsync_LoadSync", &[a0 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: efAsync_LoadSync is not ported")); });
+        m::HOOK_ftDemo_ObjAllocInit = Some(|| unsafe { crate::seams::ext_real("ftDemo_ObjAllocInit", &[]).unwrap_or_else(|| melee_core::unported!("TODO: ftDemo_ObjAllocInit is not ported")); });
+        m::HOOK_lb_80011E24 = Some(|a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, a2: i32, a3: i32| unsafe { let w = crate::seams::ext_real("lb_80011E24", &[p2w(a0), p2w(a1), a2 as i64 as u64, a3 as i64 as u64]).unwrap_or_else(|| melee_core::unported!("TODO: lb_80011E24 is not ported")); w as i32 });
 }

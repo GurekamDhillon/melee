@@ -12,12 +12,22 @@ type AlarmHandler = unsafe extern "C" fn(*mut OSAlarm, *mut OSContext);
 /// interrupt here: the engine fires it once per frame (`fire_alarm`), the 60 Hz case.
 static mut ALARM: Option<AlarmHandler> = None;
 
+/// The movie player's frame alarm (lb/lbmthp.c `lbMthp_8001F410`: `OSSetPeriodicAlarm(&alarm, OSSecondsToTicks(1/60), ...,
+/// fn_8001F2A4)`, cancelled by `lbMthp_8001F800`). Its period is one 60 Hz frame, so it fires with the pad alarm. Without it
+/// the display counter never advances and the opening movie (gm_Scene_Opening_OnFrame) never reaches its end.
+static mut MOVIE_ALARM: (Option<AlarmHandler>, *mut OSAlarm) = (None, core::ptr::null_mut());
+
 /// One alarm period elapsed.
 pub fn fire_alarm() {
     unsafe {
         if let Some(h) = ALARM {
             h(core::ptr::null_mut(), core::ptr::null_mut());
         }
+        if let (Some(h), a) = MOVIE_ALARM {
+            h(a, core::ptr::null_mut());
+        }
+        // the movie's disc reads issued up to now complete (dvd.rs host_dev_com_deferred)
+        crate::dvd::run_deferred_completions();
     }
 }
 
@@ -61,6 +71,9 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
 
 pub fn install() {
     unsafe {
+        // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
+        // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
+        crate::ext_dispatch::install_tu_ext();
         {
             // gm_801A4014's leave path (a scene ending inside one run: `melee play`'s next match) reads the reset flag
             // of gmMainLib_8046B0F0 (gm/gmmain_lib.c); nothing on the engine path sets it (no reset button).
@@ -177,6 +190,11 @@ pub fn install() {
             let _ = k;
         }
 
+        {
+            use melee_runtime::tu::lbmthp::ext as mt;
+            mt::H_OSSetPeriodicAlarm = Some(|a, _, _, h| unsafe { MOVIE_ALARM = (h, a) });
+            mt::H_OSCancelAlarm = Some(|_| unsafe { MOVIE_ALARM = (None, core::ptr::null_mut()) });
+        }
         use melee_modes::tu::lb_0195::ext::hook as l;
         l::OSCancelAlarm = Some(|_| {});
         l::OSCreateAlarm = Some(|_| {});

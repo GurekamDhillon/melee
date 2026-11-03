@@ -75,6 +75,31 @@ pub fn install() {
         // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
         crate::ext_dispatch::install_tu_ext();
         {
+            // ...except the GX calls of those TUs (the attract demo's own draws): the GX bridge, as every other
+            // TU's GX calls, not the seams.txt "off" no-op the by-name path falls to
+            use crate::gxbridge as g;
+            use melee_modes::tu_ext as m;
+            m::HOOK_GXBegin = Some(|p, f, n| g::GXBegin(p as u32, f as u32, n));
+            m::HOOK_GXClearVtxDesc = Some(g::GXClearVtxDesc);
+            m::HOOK_GXLoadPosMtxImm = Some(|mtx, id| unsafe { g::GXLoadPosMtxImm(mtx as *mut _, id) });
+            m::HOOK_GXPosition3f32 = Some(g::GXPosition3f32);
+            m::HOOK_GXSetAlphaCompare = Some(|c0, r0, op, c1, r1| g::GXSetAlphaCompare(c0 as u32, r0, op as u32, c1 as u32, r1));
+            m::HOOK_GXSetBlendMode = Some(|t, s, d, o| g::GXSetBlendMode(t as u32, s as u32, d as u32, o as u32));
+            m::HOOK_GXSetChanCtrl = Some(|c, e, a, mt, l, d, at| g::GXSetChanCtrl(c as u32, e, a as u32, mt as u32, l, d as u32, at as u32));
+            m::HOOK_GXSetColorUpdate = Some(g::GXSetColorUpdate);
+            m::HOOK_GXSetCullMode = Some(|c| g::GXSetCullMode(c as u32));
+            m::HOOK_GXSetCurrentMtx = Some(g::GXSetCurrentMtx);
+            m::HOOK_GXSetNumChans = Some(g::GXSetNumChans);
+            m::HOOK_GXSetNumTevStages = Some(g::GXSetNumTevStages);
+            m::HOOK_GXSetNumTexGens = Some(g::GXSetNumTexGens);
+            m::HOOK_GXSetProjection = Some(|mtx, ty| unsafe { g::GXSetProjection(mtx as *mut _, ty as u32) });
+            m::HOOK_GXSetTevOp = Some(|s, o| g::GXSetTevOp(s as u32, o as u32));
+            m::HOOK_GXSetTevOrder = Some(|s, t, mp, c| g::GXSetTevOrder(s as u32, t as u32, mp as u32, c as u32));
+            m::HOOK_GXSetVtxAttrFmt = Some(|f, a, c, t, fr| g::GXSetVtxAttrFmt(f as u32, a as u32, c as u32, t as u32, fr));
+            m::HOOK_GXSetVtxDesc = Some(|a, t| g::GXSetVtxDesc(a as u32, t as u32));
+            m::HOOK_GXSetZMode = Some(|e, f, u| g::GXSetZMode(e, f as u32, u));
+        }
+        {
             // gm_801A4014's leave path (a scene ending inside one run: `melee play`'s next match) reads the reset flag
             // of gmMainLib_8046B0F0 (gm/gmmain_lib.c); nothing on the engine path sets it (no reset button).
             use melee_modes::tu::gm_1A3F::ext as m;

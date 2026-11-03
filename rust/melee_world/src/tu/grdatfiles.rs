@@ -193,9 +193,12 @@ pub unsafe fn grDatFiles_801C6228(arg0: *mut UnkStageDat) {
     if !arg0.is_null() && !(*arg0).unk28.is_null() && (*arg0).unk2C != 0 {
         let mut i = 0;
         while i < (*arg0).unk2C {
-            let temp_r4 = *(*arg0).unk28.offset(i as isize);
+            // the entries are the stage's shadow-receiving HSD_MObjDescs (UnkStageDatInternal is the C's view of
+            // one: +4 is `rendermode`); the decoder hands them over as the MObjDesc objects the joints share
+            // (arrays.tsv), so the RENDER_SHADOW bit lands where HSD_MObjLoadDesc reads it
+            let temp_r4 = *(*arg0).unk28.offset(i as isize) as *mut HSD_MObjDesc;
             if !temp_r4.is_null() {
-                (*temp_r4).unk4 |= 0x4000000;
+                (*temp_r4).rendermode |= 0x4000000;
             }
             i += 1;
         }

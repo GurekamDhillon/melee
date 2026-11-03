@@ -7,7 +7,7 @@ MapCollData.joints	joint_count
 UnkStageDat.unk8	unkC
 UnkStageDat.unk10	unk14
 UnkStageDat.unk20	unk24
-UnkStageDat.unk28	unk2C
+UnkStageDat.unk28	unk2C	*mut HSD_MObjDesc
 # UnkStageDat_x8_t: per-model tables (stage .dat model set), NULL terminated `T**`; unk20 runs unk24 entries
 UnkStageDat_x8_t.unk4	null[]
 UnkStageDat_x8_t.unk8	null[]

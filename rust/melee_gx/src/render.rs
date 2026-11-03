@@ -286,6 +286,8 @@ pub struct Renderer {
     pub shader_errors: Vec<String>,
     blit: HashMap<wgpu::TextureFormat, (wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
     blit_sampler: Option<wgpu::Sampler>,
+    /// The HUD overlay's flat-colour quad pipeline per target format (`overlay_to`).
+    overlay_pipes: HashMap<wgpu::TextureFormat, wgpu::RenderPipeline>,
     /// The last [`Renderer::prepare`]d frame: persistent GPU buffers, per-draw pipeline / bind group / offsets.
     frame: FrameCache,
     /// EFB copies (GXCopyTex) by guest destination address: textures later draws sample.
@@ -989,6 +991,7 @@ impl Renderer {
             shader_errors: Vec::new(),
             blit: HashMap::new(),
             blit_sampler: None,
+            overlay_pipes: HashMap::new(),
             frame: FrameCache::default(),
             efb_copies: FxMap::default(),
             copy_pipe: None,
@@ -1734,6 +1737,111 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
     }
 
 
+    /// Draw `quads` (target pixels: x, y, w, h, RGBA8 straight alpha) alpha-blended over `target`, after
+    /// [`Renderer::blit_to`]. The HUD overlay (fps, ping, rollbacks): it never touches the EFB, the GX state or any
+    /// draw list, so the game's frames, their hashes and the EFB copies the game reads are unchanged.
+    pub fn overlay_to(&mut self, target: &wgpu::TextureView, format: wgpu::TextureFormat, tw: u32, th: u32, quads: &[OverlayQuad]) {
+        const OVERLAY_WGSL: &str = "
+struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) c: vec4<f32> };
+@vertex fn vs_main(@location(0) p: vec2<f32>, @location(1) c: vec4<f32>) -> VsOut {
+    var o: VsOut;
+    o.pos = vec4<f32>(p, 0.0, 1.0);
+    o.c = c;
+    return o;
+}
+@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    return v.c;
+}
+";
+        if quads.is_empty() {
+            return;
+        }
+        if !self.overlay_pipes.contains_key(&format) {
+            let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("HUD overlay"), source: wgpu::ShaderSource::Wgsl(OVERLAY_WGSL.into()) });
+            let layout = self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("HUD overlay"), bind_group_layouts: &[], push_constant_ranges: &[] });
+            let attrs = [
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Float32x2, offset: 0, shader_location: 0 },
+                wgpu::VertexAttribute { format: wgpu::VertexFormat::Unorm8x4, offset: 8, shader_location: 1 },
+            ];
+            let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("HUD overlay"),
+                layout: Some(&layout),
+                vertex: wgpu::VertexState {
+                    module: &module,
+                    entry_point: Some("vs_main"),
+                    compilation_options: Default::default(),
+                    buffers: &[wgpu::VertexBufferLayout { array_stride: 12, step_mode: wgpu::VertexStepMode::Vertex, attributes: &attrs }],
+                },
+                primitive: wgpu::PrimitiveState::default(),
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState::default(),
+                fragment: Some(wgpu::FragmentState {
+                    module: &module,
+                    entry_point: Some("fs_main"),
+                    compilation_options: Default::default(),
+                    targets: &[Some(wgpu::ColorTargetState { format, blend: Some(wgpu::BlendState::ALPHA_BLENDING), write_mask: wgpu::ColorWrites::COLOR })],
+                }),
+                multiview: None,
+                cache: None,
+            });
+            self.overlay_pipes.insert(format, pipeline);
+        }
+        // two triangles per quad, in clip space
+        let (fw, fh) = (tw.max(1) as f32, th.max(1) as f32);
+        let mut v: Vec<u8> = Vec::with_capacity(quads.len() * 6 * 12);
+        for q in quads {
+            let (x0, y0) = (q.x / fw * 2.0 - 1.0, 1.0 - q.y / fh * 2.0);
+            let (x1, y1) = ((q.x + q.w) / fw * 2.0 - 1.0, 1.0 - (q.y + q.h) / fh * 2.0);
+            for (px, py) in [(x0, y0), (x1, y0), (x1, y1), (x0, y0), (x1, y1), (x0, y1)] {
+                v.extend_from_slice(&px.to_le_bytes());
+                v.extend_from_slice(&py.to_le_bytes());
+                v.extend_from_slice(&q.c);
+            }
+        }
+        let buf = self.device.create_buffer(&wgpu::BufferDescriptor { label: Some("HUD overlay"), size: v.len() as u64, usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        self.queue.write_buffer(&buf, 0, &v);
+        let mut enc = self.device.create_command_encoder(&Default::default());
+        {
+            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("HUD overlay"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: target,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            });
+            pass.set_pipeline(&self.overlay_pipes[&format]);
+            pass.set_vertex_buffer(0, buf.slice(..));
+            pass.draw(0..(quads.len() * 6) as u32, 0..1);
+        }
+        self.queue.submit([enc.finish()]);
+    }
+
+    /// What the window shows at the EFB's size: the EFB blitted (alpha opaque) with `quads` drawn over it, read back
+    /// as RGBA8 (screenshots with the HUD overlay).
+    pub fn read_composed(&mut self, quads: &[OverlayQuad]) -> Vec<u8> {
+        let (w, h) = (self.width, self.height);
+        let fmt = wgpu::TextureFormat::Rgba8Unorm;
+        let tex = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("HUD composed"),
+            size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: fmt,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = tex.create_view(&Default::default());
+        self.blit_to(&view, fmt, w, h);
+        self.overlay_to(&view, fmt, w, h, quads);
+        read_texture(&self.device, &self.queue, &tex, w, h)
+    }
+
     /// Copy the colour target back to the CPU (RGBA8, row-major, tight rows).
     pub fn read_color(&self) -> Vec<u8> {
         read_texture(&self.device, &self.queue, &self.color, self.width, self.height)
@@ -1758,6 +1866,16 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
             let _ = std::fs::write(format!("gxcopy_{dest:x}.ppm"), f);
         }
     }
+}
+
+/// One HUD overlay rectangle in target pixels (see [`Renderer::overlay_to`]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct OverlayQuad {
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32,
+    pub c: [u8; 4],
 }
 
 /// Read back an RGBA8 texture.

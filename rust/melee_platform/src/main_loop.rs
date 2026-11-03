@@ -44,6 +44,13 @@ pub trait Game {
     fn status_line(&mut self) -> Option<String> {
         None
     }
+    /// The game's lines for the HUD overlay (netplay: ping, delay, rollbacks, health), asked a few times a second
+    /// while it is on. Read-only: nothing here may change the simulation.
+    fn overlay_lines(&mut self) -> Vec<crate::overlay::Line> {
+        Vec::new()
+    }
+    /// The HUD overlay's lines to draw from now on (None: off); a game with a Presenter puts them in `Presenter::hud`.
+    fn set_hud(&mut self, _lines: Option<Vec<crate::overlay::Line>>) {}
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).
@@ -173,10 +180,12 @@ pub struct WindowConfig {
     /// Start fullscreen (Alt+Enter toggles at run time). Ignored under MELEE_WINDOW_UNFOCUSED (test runs never take
     /// the user's screen).
     pub fullscreen: FullscreenMode,
+    /// The HUD overlay is on at start (F3 toggles it at run time).
+    pub overlay: bool,
 }
 impl Default for WindowConfig {
     fn default() -> Self {
-        Self { title: "GD's Melee".into(), width: 1280, height: 960, active: true, fullscreen: FullscreenMode::Off }
+        Self { title: "GD's Melee".into(), width: 1280, height: 960, active: true, fullscreen: FullscreenMode::Off, overlay: false }
     }
 }
 
@@ -236,6 +245,13 @@ struct App<G: Game> {
     tick_us: Vec<u32>,
     frame_us: Vec<u32>,
     last_frame: Option<Instant>,
+    /// HUD overlay (F3): on/off, its refresh clock, and the frame intervals / frames / ticks since the last refresh.
+    hud_on: bool,
+    hud_t0: Option<Instant>,
+    hud_frames: crate::overlay::FrameWindow,
+    hud_last_frame: Option<Instant>,
+    hud_n: (u64, u64),
+    hud_shown: bool,
 }
 
 /// The `q` quantile of `v` (sorted in place).
@@ -313,6 +329,46 @@ impl<G: Game> App<G> {
                 plog!("gw: status:{extra}");
             }
             w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
+        }
+    }
+
+    /// Twice a second while the overlay is on: fps, frame time (mean / worst), sim rate, then the game's lines.
+    fn hud_tick(&mut self) {
+        let now = Instant::now();
+        if let Some(l) = self.hud_last_frame.replace(now) {
+            self.hud_frames.push((now - l).as_micros().min(u32::MAX as u128) as u32);
+        }
+        let t0 = *self.hud_t0.get_or_insert(now);
+        let dt = (now - t0).as_secs_f64();
+        if dt < 0.5 && self.hud_shown {
+            return;
+        }
+        self.hud_t0 = Some(now);
+        let (frames, ticks) = (self.frames - self.hud_n.0, self.clock.ticks - self.hud_n.1);
+        self.hud_n = (self.frames, self.clock.ticks);
+        let (mean, worst) = self.hud_frames.take();
+        let (fps, tps) = if dt > 0.0 { (frames as f64 / dt, ticks as f64 / dt) } else { (0.0, 0.0) };
+        use crate::overlay::*;
+        let mut lines = vec![
+            (format!("{fps:.0} fps  {mean:.1} ms (worst {worst:.1})"), if worst > 34.0 { WARN } else { WHITE }),
+            (format!("sim {tps:.1} tps{}", if self.interp { "  interp" } else { "" }), if dt > 0.0 && (tps - 60.0).abs() > 1.5 { WARN } else { DIM }),
+        ];
+        lines.extend(self.game.overlay_lines());
+        self.hud_shown = true;
+        self.game.set_hud(Some(lines));
+    }
+
+    fn hud_toggle(&mut self) {
+        self.hud_on = !self.hud_on;
+        plog!("gw: overlay {}", if self.hud_on { "on" } else { "off" });
+        if !self.hud_on {
+            self.hud_shown = false;
+            self.game.set_hud(None);
+        } else {
+            self.hud_t0 = None;
+            self.hud_last_frame = None;
+            self.hud_frames.take();
+            self.hud_n = (self.frames, self.clock.ticks);
         }
     }
 
@@ -400,6 +456,13 @@ impl<G: Game> ApplicationHandler for App<G> {
                         }
                         return;
                     }
+                    if k == KeyCode::F3 {
+                        // F3: the HUD overlay on/off (the key never reaches the pads)
+                        if event.state == ElementState::Pressed && !event.repeat {
+                            self.hud_toggle();
+                        }
+                        return;
+                    }
                     self.pads.key_event(k, event.state == ElementState::Pressed);
                 }
             }
@@ -424,6 +487,9 @@ impl<G: Game> ApplicationHandler for App<G> {
                     self.frames += 1;
                     self.fps_frames += 1;
                     self.fps_tick(&w);
+                    if self.hud_on {
+                        self.hud_tick();
+                    }
                 }
             }
             _ => {}
@@ -453,6 +519,7 @@ impl<G: Game> ApplicationHandler for App<G> {
 /// Open a window and run until it closes or the game quits. Returns (ticks run, ticks dropped).
 pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Result<(u64, u64), winit::error::EventLoopError> {
     let el = EventLoop::new()?;
+    let hud_on = cfg.overlay || env_bool("MELEE_OVERLAY").unwrap_or(false);
     let mut app = App {
         game,
         pads,
@@ -481,6 +548,12 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         tick_us: Vec::new(),
         frame_us: Vec::new(),
         last_frame: None,
+        hud_on,
+        hud_t0: None,
+        hud_frames: Default::default(),
+        hud_last_frame: None,
+        hud_n: (0, 0),
+        hud_shown: false,
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;

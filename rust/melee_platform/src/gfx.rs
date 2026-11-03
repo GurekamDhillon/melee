@@ -280,13 +280,21 @@ impl Presenter {
         };
         let view = tex.texture.create_view(&Default::default());
         self.renderer.blit_to(&view, self.config.format, self.config.width, self.config.height);
+        let hud = crate::overlay::quads(self.config.width, self.config.height);
+        self.renderer.overlay_to(&view, self.config.format, self.config.width, self.config.height, &hud);
         tex.present();
         self.presented += 1;
     }
 
     /// The EFB as RGBA8 with alpha forced opaque (what the window shows, before scaling).
-    pub fn screenshot(&self) -> Vec<u8> {
-        let mut px = self.renderer.read_color();
+    /// With the HUD overlay on, the shot shows it too (drawn over the EFB at its size; the EFB itself is untouched).
+    pub fn screenshot(&mut self) -> Vec<u8> {
+        let mut px = if crate::overlay::active() {
+            let hud = crate::overlay::quads(self.renderer.width, self.renderer.height);
+            self.renderer.read_composed(&hud)
+        } else {
+            self.renderer.read_color()
+        };
         for p in px.chunks_mut(4) {
             p[3] = 255;
         }

@@ -1667,6 +1667,10 @@ pub fn play(args: &[String]) -> ExitCode {
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
+        rp.delay_line = crate::input_delay::DelayLine::from_args(&args);
+        if rp.delay_line.frames > 0 {
+            log(&format!("offline input delay {} frames (matches only)", rp.delay_line.frames));
+        }
         rp.feed = feed;
         rp.sync = sync_k.map(|k| crate::play_net::PlaySync { st: melee_net::session::SyncTest::new(k), g: None });
         if let Some(path) = get("--record") {

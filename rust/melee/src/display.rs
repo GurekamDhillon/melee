@@ -179,7 +179,7 @@ impl Display {
 
     /// The platform window config for `title`.
     pub fn window_config(&self, title: String, active: bool) -> melee_platform::WindowConfig {
-        melee_platform::WindowConfig { title, width: self.window.0, height: self.window.1, active, fullscreen: self.fullscreen }
+        melee_platform::WindowConfig { title, width: self.window.0, height: self.window.1, active, fullscreen: self.fullscreen, overlay: crate::cfg::flag("overlay", false) }
     }
 }
 

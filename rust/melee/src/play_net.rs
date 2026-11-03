@@ -874,7 +874,8 @@ impl NetDriver {
         };
         let target = if host { None } else { Some(args.iter().position(|a| a == "--netplay").and_then(|i| args.get(i + 2)).cloned().ok_or("--netplay join ADDR[:PORT] or CODE")?) };
         let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
-        let delay = num("--np-delay", 2) as i32;
+        let (delay, auto) = crate::np_hud::parse_delay(arg(args, "--np-delay").as_deref());
+        crate::np_hud::AUTO_DELAY.store(auto, std::sync::atomic::Ordering::Relaxed);
         let maxb = num("--np-rollback", 7) as i32;
         let netem = Netem::from_args(args);
         let timeout = num("--np-timeout", 60) as u64;
@@ -1029,6 +1030,13 @@ impl NetDriver {
         if self.match_no > 250 {
             return Err("netplay: too many matches on one connection".into());
         }
+        if self.host && crate::np_hud::AUTO_DELAY.load(std::sync::atomic::Ordering::Relaxed) {
+            // --np-delay auto: this match's delay from the ping of the last one (the guest adopts the host's)
+            let d = crate::np_hud::auto_delay(self.net.as_ref().map_or(0, |n| n.rtt_ms()));
+            log(&format!("netplay host: auto delay {d} for match {}", self.match_no + 1));
+            self.params.settings.delay = d;
+            self.params.rcfg.delay = d;
+        }
         let t0 = Instant::now();
         let (room, sess, nlog) = open_room(&mut self.params, 2 + self.match_no, None)?;
         let adelay = room.sh.borrow().s.delay;
@@ -1182,6 +1190,39 @@ impl NetDriver {
             return self.linger < 90;
         }
         false
+    }
+
+    /// A read-only snapshot for the HUD overlay (np_hud.rs).
+    pub fn hud(&self) -> crate::np_hud::NetHud {
+        let s = self.sess.borrow();
+        let st = s.stats;
+        let net = self.net.as_ref().or_else(|| self.room.as_ref().and_then(|r| r.net.as_ref()));
+        let phase = if self.error.is_some() {
+            "error"
+        } else if self.end_frame.is_some() {
+            "match over"
+        } else if self.started_at.is_some() {
+            "match"
+        } else if matches!(self.phase, NetPhase::InMatch(_)) {
+            "connecting"
+        } else {
+            "menus"
+        };
+        crate::np_hud::NetHud {
+            host: self.host,
+            ping_ms: net.map_or(0, |n| n.rtt_ms()),
+            silent_ms: net.map_or(0, |n| n.silent_ms()),
+            delay: s.cfg.delay,
+            auto: crate::np_hud::AUTO_DELAY.load(std::sync::atomic::Ordering::Relaxed),
+            rollbacks: st.rollbacks,
+            resim: st.resim,
+            depth_max: st.depth_max,
+            stall_ticks: st.stall_ticks,
+            phase,
+            frame: self.started_at.map(|_| s.current_frame() - FIRST),
+            lockstep: self.ls.as_ref().filter(|_| phase == "menus").map(|l| (l.frame, l.stalls)),
+            error: self.error.clone(),
+        }
     }
 
     /// The MELEE_SHOW_FPS title line part.

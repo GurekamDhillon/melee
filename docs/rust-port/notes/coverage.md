@@ -367,3 +367,27 @@ Still failing (first divergent frame): stage_07_corneria 955, stage_13_greatbay 
 after), stage_25_icemt 1953 (was 1472); not cluster C: char_kirby 755, cpulv5_puff_link 673, items_hi_yoshistory 2805, stage_08_yoshistory 448
 (pobj assertion), stage_11_rainbowcruise 177. Gate (release): OK. Leads for the four open ones are in STATUS.md "Current blockers (coverage, cov3)".
 Tooling left behind: `scan_hook_casts.py` (link hook class mismatches). The instrumented C trace root is `_build/agents/cov3-ct` (private).
+
+## port/correct round 3 (2026-11-03): 1P harness alignment
+`run_rust.sh -j 2 --all` (release): **184 pass, 10 fail, 10 no golden** (was 128 / 66 / 10 at 895896df2). Per-scenario rows:
+`docs/rust-port/golden/coverage/results.tsv`.
+- **1P row numbering** (all Classic / Adventure stages): the C harness's `gs_1p_start_dispatch` (Script_FramePre,
+  pc/platform/gw_script_1p.inc) makes a stage live before its first frame once `Script_OnePStage` ran (modes 3/4), so the
+  stage's NHV1 rows start at 1. `gm_17c0` sets `ONEP_STAGE_EVENT`, `cov1p::frame_post` mirrors the dispatch.
+- **1P seed**: a scene launch through the boot scene runs the memory-card scene, whose own `Toy_80305058` is the trophy draw;
+  the engine's extra dummy draw (`boot_modes`) shifted every 1P seed by one. Skipped when the boot scene runs.
+- **1P pad phase**: no randabs task pre-run before logic frame 0 (`MELEE_COV1P_PRERUN=1` restores it); with it the Start tap
+  skipped Adventure's intro a frame early.
+- **Target Test**: `mode=tt` was parsed as no 1P mode (a VS match on Fountain). Now GM_TARGET_TEST with
+  `TestTargetTestCKind` = p1's character; `gm_801B6428`'s OSReport went through a variadic link cast and panicked.
+  grTFalco / TFox / TGanon `yakumono_param` words are hit descriptions (`*mut DynamicsDesc`, decoded like Mewtwo's), not raw
+  bytes (Bury wall hit read a big-endian record); grTSeak's vanilla `Mex_GrCallbacks` = NULL, `Mex_GrTrace` = 0.
+- **human_dk_onett**: `mpLib_80056C54`'s `sqrtf_store(x, sqrt_tmp - 4)` stores outside the local; the x86 C build folds it to
+  `return x` (squared segment lengths), as `it_802A4BFC`. DK's Hand Slap hitbox positions now match.
+- **cpu_stock1_bf**: a VS golden whose match ends continues into the results screen (the C hashes it as a second live run,
+  frame restarting at 0); `run_rust.sh` compares a VS scenario's rows up to that restart.
+- *left*: human_gaw_bigblue 845 (item kind 122 pos.y; C frame 842 runs `HSD_JObjUnref` + AObj/FObj removal where Rust goes to
+  `HSD_ObjFree`: a particle/JObj teardown order in `hsd_8039d3ac`), items_hi3_yoshistory64 1196 (P1 LightThrowF in C vs
+  LightThrowDash in Rust out of GuardSetOff; the call trace only shows plbonuslib `itGetKind` noise, need a C snapshot at 1195),
+  targettest_gaw 352 / icies 699 (engine stops, no panic), classic_step01 1207 / 09 366, adventure_step00 270 / 02 86 / 09 1 /
+  11 3288 (items / itemsum first: item code).

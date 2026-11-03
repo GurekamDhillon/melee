@@ -1450,12 +1450,20 @@ pub unsafe fn gm_Scene_Vs_OnFrame() {
     }
 }
 
+/// TEST-ONLY: `MELEE_TEST_P1_CPU`'s level (0 = off); the bonus screen (gmregclear) also takes port 1's pad then
+pub fn test_p1_cpu() -> i32 {
+    std::env::var("MELEE_TEST_P1_CPU").ok().and_then(|v| v.parse::<i32>().ok()).filter(|l| (1..=9).contains(l)).unwrap_or(0)
+}
+
 pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
     melee_core::ct!("fn_8016D8AC");
     let tmp = gmVs_GetSceneController();
     let a = arg0 as usize;
 
-    ext::Player_SetSlottype(arg0, (*arg1).slot_type as Gm_PKind);
+    // TEST-ONLY (port): MELEE_TEST_P1_CPU=<1..9> hands port 1's human to a CPU of that level (normal fighting kind 4),
+    // so the 1P modes' win paths (Classic / Adventure / All-Star clears, endings, records) can run unattended
+    let p1_cpu = if arg0 == 0 && (*arg1).slot_type == Gm_PKind_Human as u8 { test_p1_cpu() } else { 0 };
+    ext::Player_SetSlottype(arg0, if p1_cpu > 0 { Gm_PKind_Cpu } else { (*arg1).slot_type as Gm_PKind });
     ext::Player_SetPlayerCharacter(arg0, (*arg1).ckind as CharacterKind);
 
     (*tmp).state.fighters[a].x0 = (*arg1).ckind as u8;
@@ -1493,8 +1501,8 @@ pub unsafe fn fn_8016D8AC(arg0: i32, arg1: *mut PlayerInitData) {
         ext::Player_SetFlagsBit3(arg0, 1);
         ext::Player_SetUnk4C(arg0, (*tmp).state.unk_A);
     }
-    ext::Player_SetPlayerAndEntityCpuType(arg0, (*arg1).cpu_kind as i32);
-    ext::Player_SetPlayerAndEntityCpuLevel(arg0, (*arg1).cpu_level as i32);
+    ext::Player_SetPlayerAndEntityCpuType(arg0, if p1_cpu > 0 { 4 } else { (*arg1).cpu_kind as i32 });
+    ext::Player_SetPlayerAndEntityCpuLevel(arg0, if p1_cpu > 0 { p1_cpu } else { (*arg1).cpu_level as i32 });
     if (*arg1).damage != 0 {
         ext::Player_SetHUDDamage(arg0, (*arg1).damage as i32);
     } else {

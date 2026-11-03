@@ -85,7 +85,8 @@ pub mod ext {
     fn gm_8016A164() = crate::tu::adapt::gm_8016A164__b4c98b;
     fn gm_8016A21C(a0: *mut StartMeleeRules) = crate::tu::adapt::gm_8016A21C__1e76b5;
     fn gm_8016A22C(a0: i8, a1: i8, a2: i8, a3: u8, a4: u8, a5: u8, a6: i32, a7: i32, a8: u8, a9: u8, a10: u8, a11: i32, a12: i32, a13: i32, a14: i32, a15: i32, a16: i32, a17: f32, a18: f32) = crate::tu::adapt::gm_8016A22C__e5b47e;
-    fn gm_8016A404(a0: i32);
+    // the C passes the callback as an s32 (a PPC address); natively it is the 64-bit function pointer
+    fn gm_8016A404(a0: crate::tu::gm_16A2::GmEventPlayerInitCallback);
     fn gm_8016A414(a0: f32) = crate::tu::adapt::gm_8016A414__f962ef;
     fn gm_8016A424(a0: i8) = crate::tu::adapt::gm_8016A424__d0ff6a;
     fn gm_8016A434() = crate::tu::adapt::gm_8016A434__76ff7e;
@@ -362,10 +363,12 @@ pub struct gm_804D6900_t {
     pub evinit: *mut gm_evinit,
     pub evbonus: *mut gm_evbonus,
     pub evstage_table: *mut gm_evstage_table,
-    pub player_init: [*mut gm_801BAB40_src; 5],
+    /// The C declares `player_init[5]`, but onEnterVs's skip-the-NULLs loop reads `player_init[5]` (the word after the
+    /// record in GmEvent.dat) when a 6-player level's fifth entry is NULL (event 37); the sixth slot holds that word
+    pub player_init: [*mut gm_801BAB40_src; 6],
 }
 
-melee_core::gc_layout!(gm_804D6900_t, "gm_804D6900_t", size 0x28, align 4, [
+melee_core::gc_layout!(gm_804D6900_t, "gm_804D6900_t", size 0x2C, align 4, [
     kind @ 0x0: 1 "u8",
     flags @ 0x1: 1 "u8",
     pad2 @ 0x2: 2 "u8[2]",
@@ -373,7 +376,7 @@ melee_core::gc_layout!(gm_804D6900_t, "gm_804D6900_t", size 0x28, align 4, [
     evinit @ 0x8: 4 "gm_evinit*",
     evbonus @ 0xC: 4 "gm_evbonus*",
     evstage_table @ 0x10: 4 "gm_evstage_table*",
-    player_init @ 0x14: 20 "gm_801BAB40_src*[5]",
+    player_init @ 0x14: 24 "gm_801BAB40_src*[6]",
 ]);
 
 /// 497758
@@ -897,7 +900,7 @@ pub unsafe extern "C" fn onEnterVs(arg0: *mut GameModeState) {
         }
         if (*(*event_info.add(level as usize))).x4.is_some() {
             let f = (*(*event_info.add(level as usize))).x4;
-            ext::gm_8016A404(core::mem::transmute::<_, usize>(f) as i32);
+            ext::gm_8016A404(core::mem::transmute(f));
         }
         if (*(*lvl).evbonus).x15 != 0 {
             ext::gm_8016A424((*(*lvl).evbonus).x15 as i8);

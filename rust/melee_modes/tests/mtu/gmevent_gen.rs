@@ -63,7 +63,7 @@ pub fn install() {
         gm_8016A164 = Some(|| { t(1049); });
         gm_8016A21C = Some(|a0| { t(1050); t(pi(a0)); });
         gm_8016A22C = Some(|a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18| { t(1051); t(a0 as u32); t(a1 as u32); t(a2 as u32); t(a3 as u32); t(a4 as u32); t(a5 as u32); t(a6 as u32); t(a7 as u32); t(a8 as u32); t(a9 as u32); t(a10 as u32); t(a11 as u32); t(a12 as u32); t(a13 as u32); t(a14 as u32); t(a15 as u32); t(a16 as u32); t(a17.to_bits()); t(a18.to_bits()); });
-        gm_8016A404 = Some(|a0| { t(1052); t(fi32(a0 as u32)); });
+        gm_8016A404 = Some(|a0| { t(1052); t(fi32(a0.map_or(0, |f| f as usize as u32))); });
         gm_8016A414 = Some(|a0| { t(1053); t(a0.to_bits()); });
         gm_8016A424 = Some(|a0| { t(1054); t(a0 as u32); });
         gm_8016A434 = Some(|| { t(1055); });

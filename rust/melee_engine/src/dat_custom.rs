@@ -1304,7 +1304,7 @@ fn efdat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
 
 /// GmEvent.dat `sqEventInitDataLevelTbl` (gmevent.c `struct gm_804D6900_t**`, read by gmevent.rs and mnevent.rs as
 /// native records): the table of level pointers, each level's `x4` / `evinit` / `evbonus` / `evstage_table` /
-/// `player_init[5]` decoded into the native structs, field by field at their GameCube offsets.
+/// `player_init[5]` (+ the word after it, which onEnterVs reads for event 37) decoded into the native structs, field by field at their GameCube offsets.
 fn event_levels(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     use melee_modes::tu::gmevent::{gm_801BAB40_src, gm_804D6900_t, gm_804D6900_x4_t, gm_evbonus, gm_evinit, gm_evstage_table};
     use std::collections::HashMap;
@@ -1352,8 +1352,12 @@ fn event_levels(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
             Some(t) => {
                 let len = b.extent(t).max(40) as usize;
                 let buf = native_buf(len);
+                // evinit x18 == 1 (rules x28: it_8027A9B8 draws the Poke Ball Pokemon from it, Legendary Pokemon):
+                // x4 is an s32 ItemKind list ending at It_PKind_Terminate, so its words are swapped to native order
+                let words = d.target(l + 8).is_some_and(|e| d.u32_at(e + 0x18) == 1);
                 for k in 0..b.extent(t) {
-                    unsafe { *buf.add(k as usize) = d.u8_at(t + k) };
+                    let at = if words { t + (k & !3) + (3 - (k & 3)) } else { t + k };
+                    unsafe { *buf.add(k as usize) = d.u8_at(at) };
                 }
                 buf as *mut gm_804D6900_x4_t
             }
@@ -1390,7 +1394,7 @@ fn event_levels(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
                 leak(gm_evstage_table { count, pad1, stage, entries })
             }
         };
-        let player_init: [*mut gm_801BAB40_src; 5] = core::array::from_fn(|k| src(d, &mut memo, l + 0x14 + 4 * k as u32));
+        let player_init: [*mut gm_801BAB40_src; 6] = core::array::from_fn(|k| src(d, &mut memo, l + 0x14 + 4 * k as u32));
         levels.push(leak(gm_804D6900_t { kind: head[0], flags: head[1], pad2: [head[2], head[3]], x4, evinit, evbonus, evstage_table, player_init }));
     }
     Box::leak(levels.into_boxed_slice()).as_mut_ptr() as *mut c_void

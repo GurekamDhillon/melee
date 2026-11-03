@@ -346,6 +346,17 @@ unsafe fn word_hash(mut h: u64, img: &[u8]) -> u64 {
     h
 }
 static mut WH: std::vec::Vec<u64> = std::vec::Vec::new();
+unsafe fn stdump() {
+    { let mut line = String::from("  ST0:"); let base = addr_of!(t::grDatFiles_8049EE10) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(t::grDatFiles_8049EE10))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST1:"); let base = addr_of!(t::grDatFiles_803E07E4) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E07E4))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST2:"); let base = addr_of!(t::grDatFiles_803E0848) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E0848))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST3:"); let base = addr_of!(t::grDatFiles_803E0924) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(t::grDatFiles_803E0924))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST4:"); let base = addr_of!(OSD) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(OSD))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST5:"); let base = addr_of!(OX8) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(OX8))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST6:"); let base = addr_of!(OSI) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(OSI))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    { let mut line = String::from("  ST7:"); let base = addr_of!(OPI) as *const u8; for w in (0..core::mem::size_of_val(&*addr_of!(OPI))).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+    for (i, f) in OFNS.iter().enumerate() { println!("  FN{}: {:x}", i, f); }
+}
 unsafe fn world_hash(fi: usize) -> u64 {
     let mut h = FNV0;
     WH.clear();
@@ -428,8 +439,8 @@ fn state_matches_c() {
                 if vb {
                     let hs: std::vec::Vec<std::string::String> = WH.iter().map(|x| format!("{:x},", x & 0xFF_FFFF)).collect();
                     println!("{} {:016x} ret={:x} W={:016x} L={:016x} H={}
-  {}", k, h, rv, hw, ho, hs.concat(), LG);
-                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); }
+  {}", k, h, rv, hw, ho, hs.concat(), LG); println!("  ARGS: {}", a.v3.iter().flat_map(|v| [v.x, v.y, v.z]).chain(a.v2.iter().flat_map(|v| [v.x, v.y])).chain(a.pf.iter().copied()).map(|f| format!("{:08x}", f.to_bits())).collect::<std::vec::Vec<_>>().join(" "));
+                    for q in 0..NGO { let mut line = format!("  OGP{}:", q); let base = addr_of!(OGP[q]) as *const u8; for w in (0..core::mem::size_of::<Ground>()).step_by(4) { line.push_str(&format!(" {:08x}", core::ptr::read_unaligned(base.add(w) as *const u32))); } println!("{}", line); } stdump();
                 }
                 agg = fnv(agg, &h.to_le_bytes());
             }

@@ -201,6 +201,20 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
             // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
             let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
+            if kind == melee_types::Gr_Kind_KinokoRoute as i32 {
+                // grNKr_YakumonoParam { int x0; grZakoGenerator_SpawnDesc x4; }: grZakoGenerator_801CA8B4 reads x4 as an array
+                // to the record end (see the descriptor tail below), so every word from 4 on is a (u16, u8, u8) descriptor
+                for k in 1..n {
+                    let w = d.u32_at(off + 4 * k as u32);
+                    unsafe {
+                        let o = (buf as *mut u8).add(4 * k);
+                        (o as *mut u16).write_unaligned((w >> 16) as u16);
+                        *o.add(2) = (w >> 8) as u8;
+                        *o.add(3) = w as u8;
+                    }
+                }
+                return buf as *mut c_void;
+            }
             if let Some((_, name, csize, rsize, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
                 if (*csize as usize) <= n * 4 {
                     // grZakoGenerator_801CA8B4 indexes the record's `grZakoGenerator_SpawnDesc` (u16 kind, u8, u8) as an array:
@@ -718,6 +732,9 @@ fn zako_attrs(d: &mut GcDecoder<'_>, b: &Bounds, kind: u32, ta: u32) {
         d.object::<t::itOldottoseaAttributes>(sa) as *mut c_void
     } else if k == t::It_Kind_Whitebea as u32 {
         d.object::<t::itWhiteBeaAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Nokonoko as u32 {
+        // `attr->x0->x4` (the walk speed), as the Like Like's
+        d.object::<t::itNokoNoko_DatAttrs>(sa) as *mut c_void
     } else if k == t::It_Kind_Likelike as u32 {
         // `attr->x0.x0_f32->y` (the walk speed): adventure_step02 read the pointer from the word-swapped block
         d.object::<t::itLikelikeAttributes>(sa) as *mut c_void

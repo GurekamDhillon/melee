@@ -696,7 +696,7 @@ impl Engine {
                 use melee_modes::tu::gmvsmelee::ext::hook as h;
                 if h::SceneLaunch_Active.is_none() { h::SceneLaunch_Active = Some(|| 0); }
                 if h::SceneLaunch_EntryStateId.is_none() { h::SceneLaunch_EntryStateId = Some(|| -1); }
-                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| 0); }
+                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| -1); } // gw_sl_cfg.p[n].stocks: -1 unset
                 if h::Netplay_RunActive.is_none() { h::Netplay_RunActive = Some(|| 0); }
                 if h::Netplay_RematchPending.is_none() { h::Netplay_RematchPending = Some(|| 0); }
                 if h::Netplay_StageEnd.is_none() { h::Netplay_StageEnd = Some(|_, _, _| ()); }

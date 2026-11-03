@@ -82,6 +82,10 @@ thread_local! {
     /// Set on threads that are never game code (the GX decode thread): their allocations stay on the system heap even
     /// while the game thread is in a [`GameScope`].
     static FOREIGN: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
+    /// Set on the thread that entered a [`GameScope`] (the game thread). Other threads (audio callbacks, the GPU
+    /// driver's workers) allocating while the game thread is in its scope stay on the system heap: a rollback load
+    /// rewrites the arena under them otherwise.
+    static GAME_THREAD: core::cell::Cell<bool> = const { core::cell::Cell::new(false) };
 }
 
 /// Mark the calling thread as one whose allocations never go to the arena.
@@ -92,7 +96,7 @@ pub fn mark_foreign_thread() {
 /// True while the engine code runs (allocations go to the arena), on the game thread.
 #[inline]
 pub fn active() -> bool {
-    IN_GAME.load(Relaxed) && !FOREIGN.with(|f| f.get())
+    IN_GAME.load(Relaxed) && GAME_THREAD.with(|g| g.get()) && !FOREIGN.with(|f| f.get())
 }
 
 /// `(start, len)` of the part of the arena in use (page rounded), or `(0, 0)` before the first allocation.
@@ -119,6 +123,7 @@ pub struct GameScope(bool);
 
 impl GameScope {
     pub fn enter() -> GameScope {
+        GAME_THREAD.with(|g| g.set(true));
         GameScope(IN_GAME.swap(true, Relaxed))
     }
 }

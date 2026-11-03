@@ -1432,7 +1432,14 @@ pub fn play(args: &[String]) -> ExitCode {
                 a.push(args[i].clone());
                 i += 1;
             }
-            a.extend(r.args.iter().cloned());
+            let mut it = r.args.iter();
+            while let Some(x) = it.next() {
+                if x == "--match" && r.meta("np_scene").is_some() {
+                    it.next(); // a netplay match comes from its agreed scene
+                    continue;
+                }
+                a.push(x.clone());
+            }
             merged = a;
             feed = Some(crate::play_net::ReplayFeed::new(r));
             &merged
@@ -1591,6 +1598,9 @@ pub fn play(args: &[String]) -> ExitCode {
         let rollback_mode = net.is_some() || sync_k.is_some() || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0);
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
+            // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
+            let _s = melee_engine::arena::GameScope::enter();
+            let _ = melee_engine::gxbridge::shim();
         }
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());

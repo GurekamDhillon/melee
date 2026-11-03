@@ -31,6 +31,49 @@ pub fn prepare_rollback_run() {
     melee_engine::arena::set_trim(false);
     // the GX decode thread would hold arena blocks across a load
     std::env::set_var("MELEE_GX_SYNC", "1");
+    // the sound is game state (a static, its buffers in the arena) a load restores: the mix stays on the game thread
+    // (the mixer thread would hold the sound's lock while a snapshot copies it)
+    std::env::set_var("MELEE_AUDIO_GAME_THREAD", "1");
+}
+
+// ------------------------------------------------------------------------------------------------ frames
+
+/// A copy of a drawn frame that shares nothing with the game arena: every Vec on the system heap and every `Arc` (the
+/// pipeline configs, texture / TLUT / array data) re-created, so the presenter's clones and drops never touch an
+/// ArcInner a snapshot load rewrites. Call outside the game scope; the original is freed inside it.
+pub fn detach_frame(f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
+    use std::collections::HashMap;
+    use std::sync::Arc;
+    let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
+    let mut datas: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
+    let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
+        datas.entry(Arc::as_ptr(d) as *const u8 as usize).or_insert_with(|| Arc::from(&d[..])).clone()
+    };
+    let out: Vec<melee_gx::draw::DrawCmd> = f
+        .iter()
+        .map(|c| {
+            let mut n = c.clone();
+            n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
+            for a in n.arrays.iter_mut().flatten() {
+                a.data = data(&a.data);
+            }
+            for t in n.textures.iter_mut() {
+                if let Some(d) = &t.data {
+                    t.data = Some(data(d));
+                }
+            }
+            for t in n.tluts.iter_mut() {
+                if let Some(d) = &t.data {
+                    t.data = Some(data(d));
+                }
+            }
+            n
+        })
+        .collect();
+    let _s = melee_engine::arena::GameScope::enter();
+    drop(f);
+    drop(melee_engine::gxbridge::shim().gx.packed.take());
+    out
 }
 
 // ------------------------------------------------------------------------------------------------ pads
@@ -83,10 +126,10 @@ pub fn neutral_pads() -> [PADStatus; 4] {
 pub struct ModesGame {
     pub e: Engine,
     base: RefCell<Option<Base>>,
-    /// The newest frame's draw list (system heap).
-    pub frame: Option<Vec<melee_gx::draw::DrawCmd>>,
     /// `Engine::frames` when the session took the engine (its frame `FIRST - 1`)
     f0: u32,
+    /// the newest drawn frame, still in the arena; taken (detached) before the next snapshot load can happen
+    raw: Option<Vec<melee_gx::draw::DrawCmd>>,
 }
 
 #[derive(Clone)]
@@ -98,7 +141,7 @@ pub struct ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), frame: None }
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -107,20 +150,31 @@ impl ModesGame {
         f(self.base.borrow().as_ref().unwrap())
     }
     /// Give the engine back (the snapshot base is released: its copy-on-write watch ends).
-    pub fn into_engine(self) -> (Engine, Option<Vec<melee_gx::draw::DrawCmd>>) {
+    pub fn into_engine(mut self) -> (Engine, Option<Vec<melee_gx::draw::DrawCmd>>) {
+        let f = self.take_frame();
         drop(self.base.into_inner());
-        (self.e, self.frame)
+        (self.e, f)
     }
     /// One engine tick with these pads; the frame it drew is kept on the system heap.
     pub fn step(&mut self, pads: [PADStatus; 4]) {
         self.e.set_pads(Some(pads));
         self.e.tick();
-        if let Some(f) = melee_engine::gxbridge::take_frame() {
-            self.frame = Some(f.clone()); // outside the game scope: system heap
+        let f = {
             let _s = melee_engine::arena::GameScope::enter();
-            drop(f);
-            drop(melee_engine::gxbridge::shim().gx.packed.take());
+            melee_engine::gxbridge::take_frame()
+        };
+        if let Some(f) = f {
+            // only the newest frame of a tick is shown: detach (copy) it lazily, at the end of the tick
+            if let Some(old) = self.raw.replace(f) {
+                let _s = melee_engine::arena::GameScope::enter();
+                drop(old);
+            }
         }
+    }
+
+    /// The tick's newest frame as a detached copy (after the session's frames of this tick).
+    pub fn take_frame(&mut self) -> Option<Vec<melee_gx::draw::DrawCmd>> {
+        self.raw.take().map(detach_frame)
     }
 }
 
@@ -142,6 +196,8 @@ impl RbGame for ModesGame {
         ModesSnap { mem: self.with_base(|b| b.save()), frames: self.e.frames, ended: self.e.ended }
     }
     fn load(&mut self, s: &ModesSnap) {
+        // the held frame's blocks belong to the timeline being discarded: the load decides what they are now
+        std::mem::forget(self.raw.take());
         self.with_base(|b| b.load(&s.mem));
         self.e.frames = s.frames;
         self.e.ended = s.ended;
@@ -152,7 +208,7 @@ impl RbGame for ModesGame {
     fn game_hash(&self) -> u32 {
         self.e.neutral_row()[0]
     }
-    fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], _resim: bool) {
+    fn run_frame(&mut self, inputs: &[Option<RbInput>; SLOTS], resim: bool) {
         if self.e.ended {
             return;
         }
@@ -160,7 +216,11 @@ impl RbGame for ModesGame {
         for (port, slot) in p.iter_mut().enumerate() {
             *slot = pad_of(&inputs[port * 2], port);
         }
+        // a resimulated frame is never shown: its render pass runs (the game state it touches stays the same as a
+        // shown frame's) but the display lists are not decoded (gw_gx_suppress_draws, as the C build's resim)
+        melee_engine::gxbridge::shim().set_suppress_draws(resim);
         self.step(p);
+        melee_engine::gxbridge::shim().set_suppress_draws(false);
     }
 }
 
@@ -280,12 +340,15 @@ impl Replay {
 
 /// The play options a replay keeps (they decide the boot: intro, presets, the seeded match).
 pub fn replay_args(args: &[String]) -> Vec<String> {
+    // a netplay match is set up by its agreed scene (the np_scene header line), not by the peer's own --match
+    let netplay = args.iter().any(|a| a == "--netplay");
     let mut out = Vec::new();
     let mut i = 0;
     while i < args.len() {
         let a = &args[i];
         match a.as_str() {
             "--skip-intro" | "--teams" => out.push(a.clone()),
+            "--match" if netplay => i += 1,
             "--stocks" | "--time-secs" | "--items" | "--match" | "--mods" => {
                 if let Some(v) = args.get(i + 1) {
                     out.push(a.clone());

@@ -239,6 +239,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if melee_engine::arena::contains(p) {
             return melee_engine::arena::free(p, l);
         }
+        if rollback_pinned() {
+            return; // a snapshot may still point at this system block (see `rollback_pinned`)
+        }
         if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return;
         }
@@ -277,7 +280,7 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             return q;
         }
         let guarded = |sz: usize| sz >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed);
-        if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
+        if rollback_pinned() || LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
             if !q.is_null() {
                 core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
@@ -292,6 +295,15 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             q
         }
     }
+}
+/// A rollback run (snapshot base live) inside the game scope: a system-heap block the game frees or grows is kept
+/// (leaked) instead. The game's statics and arena are rolled back by a load, and an older state may still hold the
+/// block's address (a Vec the engine created outside the scope, e.g. the GX shim's buffers, then grew inside it);
+/// freeing it would leave that state pointing at freed memory. Each such block moves to the arena on its first growth,
+/// so the leak is bounded.
+#[inline]
+fn rollback_pinned() -> bool {
+    melee_engine::arena::active() && melee_engine::cow::active()
 }
 /// [`DebugAlloc`] with the live-heap sampler's hooks (`heapprof`, off unless MELEE_HEAP_SAMPLE is set).
 struct Hooked;

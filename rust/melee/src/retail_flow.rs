@@ -168,7 +168,7 @@ impl RetailPlay {
                 NetPhase::InMatch(_) => {
                     nd.tick_match(&four[0], self.rec.as_mut().map(|r| &mut r.1));
                     if let NetPhase::InMatch(g) = &mut nd.phase {
-                        if let Some(f) = g.frame.take() {
+                        if let Some(f) = g.take_frame() {
                             self.frame = Some(f);
                             self.frame_aspect = melee_engine::view::aspect();
                         }
@@ -199,7 +199,7 @@ impl RetailPlay {
             if ps.g.is_some() {
                 ps.tick(four);
                 let g = ps.g.as_mut().unwrap();
-                if let Some(f) = g.frame.take() {
+                if let Some(f) = g.take_frame() {
                     self.frame = Some(f);
                     self.frame_aspect = melee_engine::view::aspect();
                 }
@@ -208,11 +208,14 @@ impl RetailPlay {
                 }
                 if g.e.ended {
                     let st = &ps.st;
-                    log(&format!("synctest depth {}: {} passes, {} hash checks, {} MISMATCHES", st.k, st.passes, st.checked, st.mismatches.len()));
-                    for m in st.mismatches.iter().take(5) {
+                    // the whole-state hash differs on a windowed run (a resimulated frame's display lists are not decoded, so
+                    // the render pass leaves other bytes behind); the neutral (gameplay) hash is the one that must agree
+                    let bad: Vec<_> = st.mismatches.iter().filter(|m| m.3 != m.4).collect();
+                    log(&format!("synctest depth {}: {} passes, {} hash checks, {} NEUTRAL MISMATCHES ({} whole-state differences)", st.k, st.passes, st.checked, bad.len(), st.mismatches.len()));
+                    for m in bad.iter().take(5) {
                         log(&format!("synctest:   mismatch frame {} full {:08x}/{:08x} neutral {:08x}/{:08x}", m.0, m.1, m.2, m.3, m.4));
                     }
-                    if !st.mismatches.is_empty() {
+                    if !bad.is_empty() {
                         self.failed = Some("synctest mismatches".into());
                     }
                     let (e, _) = ps.g.take().unwrap().into_engine();
@@ -356,15 +359,14 @@ impl Game for RetailPlay {
             }
         }
         if let Some(au) = self.audio.as_mut() {
+            // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
+            let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             au.tick();
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             if self.rollback_mode {
-                // a snapshot load rewrites the arena: keep a system-heap copy, free the original in the game scope
-                self.frame = Some(f.clone());
-                let _s = melee_engine::arena::GameScope::enter();
-                drop(f);
-                drop(melee_engine::gxbridge::shim().gx.packed.take());
+                // a snapshot load rewrites the arena: keep a detached copy (no Vec or Arc shared with the arena)
+                self.frame = Some(crate::play_net::detach_frame(f));
             } else {
                 self.frame = Some(f);
                 self.packed = melee_engine::gxbridge::shim().gx.packed.take();

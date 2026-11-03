@@ -109,9 +109,22 @@ impl RetailPlay {
         // intro is skipped. MELEE_RETAIL_FIRST=<GameModeKind> starts elsewhere.
         let boot_pick = if self.skip_intro { melee_types::GM_TITLE } else { melee_types::GM_OPENING_MV } as u8;
         let mut first = std::env::var("MELEE_RETAIL_FIRST").ok().and_then(|v| v.parse::<u8>().ok()).unwrap_or(boot_pick);
+        // The memory card (MELEE_CARD=0 turns it off; MELEE_CARD_PATH moves it): with it the boot mode is the real
+        // memory-card scene (gmboot.c / gmscmemcard.c: load the save, or offer to create one), which then hands over
+        // to the opening or the title. A scenario launch stays save-less (the C's scene launches skip the card).
+        let mut card = false;
         if let Some(scn) = self.presets.scenario.take() {
             melee_engine::scenario::install(scn);
             first = melee_types::GM_VS as u8;
+        } else if melee_engine::card::configured_base().is_some() {
+            card = true;
+            if std::env::var_os("MELEE_RETAIL_FIRST").is_none() {
+                first = melee_types::GM_BOOT as u8;
+            }
+        }
+        unsafe {
+            melee_engine::engine::CARD_ON = card;
+            melee_engine::engine::BOOT_SKIP_INTRO = self.skip_intro;
         }
         let e = melee_engine::Engine::boot_modes(disc, 64 << 20, PadSystem::headless(), first)?;
         if self.audio.is_some() {

@@ -80,6 +80,8 @@ pub mod ext {
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
     // ---- defined by this TU
     rw pub mnDeflicker_804D6C3C: u8 = 0;
@@ -89,8 +91,6 @@ crate::globals! {
     ro pub mnDeflicker_803EEFE4: AnimLoopSettings = AnimLoopSettings { start_frame: 20.0, end_frame: 30.0, loop_frame: -0.1 };
     ro pub mnDeflicker_803EEFF0: AnimLoopSettings = AnimLoopSettings { start_frame: 50.0, end_frame: 350.0, loop_frame: 50.0 };
     // ---- defined by other TUs (placeholders until they are ported)
-    /// baselib/gobjproc.c
-    rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = null_mut();
 }
 
 /// mn/inlines.h `Menu_InitCenterText`.

@@ -117,6 +117,8 @@ const TEXT_COLOR: GXColor = GXColor { r: 0xAA, g: 0xAA, b: 0xAA, a: 0xFF };
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use super::mnmain::{mn_804A04F0, mn_804D4B64, mn_804D6BB8, mn_804D6BC8};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
     // ---- defined by this TU
     ro pub mnCount_803EFA88: [AnimLoopSettings; 2] = [
@@ -131,8 +133,6 @@ crate::globals! {
         0xDD, 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6,
     ];
     // ---- defined by other TUs (placeholders until they are ported)
-    /// baselib/gobjproc.c
-    rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = null_mut();
 }
 
 #[inline]

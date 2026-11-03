@@ -74,6 +74,8 @@ use ext::*;
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use super::mnmain::{mn_804A04F0, mn_804D4B64};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
 rw pub mnDiagram3_804D6C20: *mut HSD_GObj  = ::core::ptr::null::<HSD_GObj>()
     as *mut HSD_GObj;
@@ -158,7 +160,6 @@ rw pub mnDiagram3_803EEC4C: mnDiagram3_StatTable  = mnDiagram3_StatTable {
         0x7b as ::core::ffi::c_int as u16,
     ],
 };
-rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe {core::mem::zeroed()};
 rw pub MenMainConB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
 rw pub MenMainCursorB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
 }

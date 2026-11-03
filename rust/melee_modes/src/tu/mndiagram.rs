@@ -65,6 +65,8 @@ use ext::*;
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use super::mnmain::{mn_804A04F0, mn_804D6BB8};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
 rw pub MenMainCursorB1_Top: StaticModelDesc = StaticModelDesc {
     joint: ::core::ptr::null::<HSD_Joint>() as *mut HSD_Joint,
@@ -297,7 +299,6 @@ rw pub mnDiagram_StringTerminator: [i8; 1] = unsafe {
 };
 
 
-rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = core::ptr::null_mut();
 }
 pub unsafe extern "C" fn mnDiagram_GetFighterByIndex(
     mut idx: i32,

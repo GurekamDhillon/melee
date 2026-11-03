@@ -38,14 +38,16 @@ pub unsafe fn gm_Scene_HowTo_OnEnter(_unused: *mut c_void) {
 
     gobj = ext::GObj_Create(0xE, 0xF, 0);
     gm_804D6850 = gobj;
-    ext::HSD_GObjObject_80390A70(gobj, ext::HSD_SObjLib_804D7960(), core::ptr::null_mut());
+    // the C passes the u8 global HSD_SObjLib_804D7960 (the SObj kind); the hook hands its address
+    ext::HSD_GObjObject_80390A70(gobj, *(ext::HSD_SObjLib_804D7960() as *mut u8), core::ptr::null_mut());
     ext::GObj_SetupGXLink(gobj, ext::lbMthp_8001F67C, 0xB, 0);
     ext::lbMthp_8001F624(gobj, 0x280, 0x1E0);
     ext::lbAudioAx_80023F28(0x24);
     ext::lbAudioAx_80024E50(1);
-    ext::lbMthp_8001F410("MvHowto.mth", addr_of_mut!(gm_803DD2C0) as *mut u32, 0, 0, 0);
+    ext::lbMthp_8001F410(c"MvHowto.mth".as_ptr(), addr_of_mut!(gm_803DD2C0) as *mut u32, 0, 0, 0);
     ext::lbAudioAx_80024E50(0);
-    ext::set_gm_804D6724(ext::fn_801AA0E8);
+    // C: gm_804D6724 = fn_801AA0E8 (gmscene.rs owns it; gmopening.rs ports the callback)
+    crate::tu::gmscene::gm_804D6724 = Some(crate::tu::gmopening::fn_801AA0E8);
 }
 
 /// C `gm_Scene_HowTo_OnFrame`.
@@ -114,7 +116,7 @@ pub mod ext {
                     None => { unsafe { crate::tu::gmopening::gm_801A9DD0(gobj as _, a as _, b as _, c as _, d as _); } return; },
                 }
             }
-    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, sobj: *mut c_void, p: *mut c_void));
+    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, p: *mut c_void));
     hook!(HSD_SOBJLIB_804D7960, HSD_SObjLib_804D7960, () -> *mut c_void);
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj), prio: i32, a: i32));
     hook!(LBMTHP_8001F67C, lbMthp_8001F67C, (gobj: *mut HSD_GObj));
@@ -142,7 +144,7 @@ pub mod ext {
             None => { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80024E50((a != 0)); } },
         }
     }
-    hook!(LBMTHP_8001F410, lbMthp_8001F410, (path: &str, table: *mut u32, a: i32, b: i32, c: i32));
+    hook!(LBMTHP_8001F410, lbMthp_8001F410, (path: *const i8, table: *mut u32, a: i32, b: i32, c: i32));
     pub static mut LBMTHP_8001F578: Option<fn()> = None;
     #[allow(non_snake_case)]
     pub fn lbMthp_8001F578() {

@@ -3064,7 +3064,7 @@ pub unsafe extern "C" fn fn_8023DBE8(mut arg0: *mut HSD_GObj) {
     let mut cursor: u8 = 0;
     let mut sel: u8 = 0;
     let mut i: i32 = 0;
-    flow = &raw mut mn_804A04F0;
+    flow = (&raw mut mn_804A04F0).cast(); // same layout as mnmain::_MenuFlow
     gobj = arg0;
     data = (*gobj).user_data as *mut NameNewEntry;
     if (*flow).x10 as i32 != 1 {

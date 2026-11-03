@@ -57,6 +57,8 @@ use ext::*;
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
 rw pub MenMainConEv: StaticModelDesc  = StaticModelDesc {
     joint: ::core::ptr::null::<HSD_Joint>() as *mut HSD_Joint,
@@ -111,8 +113,6 @@ rw pub mnEvent_804D502C: GXColor  = GXColor {
     b: 0 as u8,
     a: 0xff as u8,
 };
-/// db
-rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = ::core::ptr::null_mut();
 rw pub DbLevel: i32 = 0;
 }
 unsafe extern "C" fn mnEvent_CountUnlocked() -> i32 {

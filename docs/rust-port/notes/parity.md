@@ -161,7 +161,7 @@ Playable in the menu: 7 of 26 (Falcon, Fox, Falco, Marth, Sheik, Peach, Samus). 
 | Direct host/join over UDP, delay, loss | works | OK on loopback with injected lag/loss (78 rollbacks, 0 desyncs) | net.md "netplay on the real game loop" | - |
 | Lobby, room codes, random matchmaking server, STUN, hole-punch | works | OK on local server and loopback | net.md | - |
 | Real internet play vs another machine | works | UNVER: never run | platform.md "What only the user can check" | S |
-| Wired into `melee play` menus (Online screen) | kit online lobby | MISSING from play; only `melee netplay` command; kit lobby is intentionally dropped, so a retail-style entry is needed | rust/melee/src/netplay.rs, play.rs | M |
+| Wired into `melee play` | kit online lobby | PART: `melee play --netplay host\|join ADDR` (direct, rollback, desync error, ping/rollbacks in the MELEE_SHOW_FPS title), loopback-proven at 0/50/150 ms + 5 % loss; no menu entry, no CSS over the wire, one match per connection | net.md "Netplay and replays in melee play", play_net.rs | M |
 | UPnP, Envoy/stage-run/saved-run messages, mod sync, identity exchange | works | MISSING | net.md "Not ported" | M |
 | Rematch / rejoin, CPUs and items in the scene, Turbo rules, non-zero controls words | works | MISSING | net.md "Not ported" | M |
 | Characters/stages online | all | PART: scene parser handles `ck:N`; proven only Falcon/Fox FD (BF only in lobby) | net.md | S |
@@ -173,6 +173,7 @@ Playable in the menu: 7 of 26 (Falcon, Fox, Falco, Marth, Sheik, Peach, Samus). 
 | feature | C build | Rust | evidence | effort |
 |---|---|---|---|---|
 | `.gdlp` record/playback (`gw_replay`) | works | PART: player + identity gate in `melee golden`; no recorder in the bin, no in-game replay viewer, no embedded-state restore, no CPU players | notes/data.md:60-61 | M |
+| `melee play` recorder / playback | works (.gdlp, .slp) | PART: native `.mrpl` (`--record`, `--replay`), bit-exact incl. netplay matches; no `.slp` writer yet | net.md "Netplay and replays in melee play" | M |
 | `.slp` playback of Falcon/Fox/Marth/Sheik on FD/BF | works | PART: ok on 38 of 125 external files (frame-exact); median first divergence frame 2322 | STATUS "slpcheck, port/replays" | M |
 | `.slp` for other stages/characters | works (full roster) | PART: slpcheck now runs 125 of 125; `golden --slp` accepts only ck 0/2/9/19 on stages 31/32 | replays-ext.md; STATUS | M |
 | Slippi gameplay codes (UCF 0.84, Whispy, 4 Stadium codes, FD BG seed, etc.) | handled by the Slippi mode | PART: UCF in; Stadium / Whispy / Neutral spawn codes are the open S1/S3 suspects | slpcheck.md; STATUS Leads 1-4 | M |

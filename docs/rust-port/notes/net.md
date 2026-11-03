@@ -79,3 +79,54 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   Rust effect code does not make on that path), and at index 211 Falcon's landing word differs (5715B485 vs
   5615B536). This is a sim gap found by netplay (different input timing from the offline golden), not a
   transport problem; fixing it belongs to the fighter / effect ports.
+
+## Netplay and replays in `melee play` (port/netplay, 2026-11-03)
+- `melee play --netplay host [--np-port 51500]` / `--netplay join 127.0.0.1[:PORT]`: a 2-player rollback match on the
+  retail flow (`rust/melee/src/play_net.rs`, `retail_flow.rs` `step`). The connection is the direct room of
+  `melee_net::app::room` (HELLO / ACCEPT / the `J c0 c1 scene` blob, the same wire as `melee netplay` and the C
+  build's gw_netplay.c), made before the window opens. The host's `--match a,STAGE` gives its fighter and the stage,
+  the guest's `--match b` its fighter; `--stocks N`, `--time-secs S` (minutes, rounded up) the rules. Port 1 is the
+  host, port 2 the guest; each plays with its own port-1 controller. Options: `--np-delay D` (input delay, default 2,
+  the guest adopts the host's), `--np-rollback N` (window, default 7, max 12), `--np-seed`, `--np-lag-ms` /
+  `--np-loss-pct` (inbound degradation, the loopback test), `--np-hash-out F.csv` (final hash per frame),
+  `--np-timeout S`. The socket binds 127.0.0.1 (loopback only in this build).
+- The session (`RbSession` over `ModesGame`, the mode loop's engine) takes over one frame into the VS scene; before that
+  both peers run the boot with neutral pads, so they enter it in the same state. Desync check: the transport's
+  checksum exchange (neutral hash per final frame); a mismatch ends both peers with `netplay host|guest: ERROR: DESYNC
+  at frame F (game frame G): local hash X, peer hash Y` and a non-zero exit. One match per connection: after the
+  match's last confirmed frame both peers linger 1.5 s (the peer's last checksums) and quit. The CSS/SSS flow over the
+  wire is not done (follow-up: a session governing the CSS scene too).
+- `MELEE_SHOW_FPS=1`: the title line gets `netplay host | ping N ms | delay D | rollbacks R/s (total T, max K frames)
+  | frame F` (`Game::status_line`, melee_platform), also logged as `gw: status:`.
+- `MELEE_PLAY_SYNCTEST=K`: GGPO SyncTest on every match frame of `melee play` (windowed or headless).
+- Replays: `melee play ... --record FILE|auto` (auto = `Replays/melee-<unix time>.mrpl`), `melee play --replay FILE`
+  [`--headless`]. Native format `.mrpl` (play_net.rs `Replay`): `MRPL`, u16 version 1, u16 flags (bit 0: recorded with
+  the rollback allocator modes), u32 + UTF-8 header (`arg=` the play options that set the boot up, `seed=`, `build=`,
+  `np_scene=` / `np_role=` for a netplay match), u32 count, then per engine tick 4 x 16-byte pads (button u16, stick,
+  c-stick, L, R, analog A/B, err, extButton u32) and the u32 neutral hash (|1) after a match frame (0 elsewhere). The
+  playback feeds the same pads to the same boot and checks every hash; `replay: N ticks played, M match frames
+  hashed, K mismatches, final hash H (file H)`. A netplay peer records the confirmed inputs (both ports), so either
+  peer's file replays the whole match offline. `.slp`: not written (follow-up: a Slippi exporter needs the pre/post
+  frame records per fighter, which the engine can produce from the same playback; the reader is melee_data::slp).
+- Memory rules a rollback in the windowed process needs (all in this branch): the arena is the game thread's only
+  (`arena::GAME_THREAD`); a system-heap block the game frees or grows while a snapshot base exists is kept
+  (`main.rs rollback_pinned`); the drawn frame is detached from the arena with fresh Arcs (`play_net::detach_frame`);
+  the GX shim is created inside the game scope; the sound mixes on the game thread (`MELEE_AUDIO_GAME_THREAD`: the
+  mixer thread held the sound's lock while a snapshot copied it, and a load restored it locked = a hang); a
+  resimulated frame runs its render pass with display lists suppressed; disc reads pre-touch their buffer while the
+  arena is copy-on-write (`ReadFile` fails with ERROR_NOACCESS on a protected page). `MELEE_HANG_SECS=N` with
+  `MELEE_SAMPLE` prints the main thread's stack of a tick that has not returned for N s.
+- Proofs (`bash tools/rust-port/netplay/play_pair.sh NAME LAG LOSS [args]`: two windowed peers on 127.0.0.1, scripted pads
+  np_fight.txt / np_fight2.txt, Falcon v Fox on FD, 4 stocks, 1 minute; per-frame hash CSVs compared; the host's
+  replay played back headless):
+  - 0 ms: 2936 frames, all equal; rollbacks 34 / 25 (max depth 2 / 5); replay final 1A9DC5B9 = live.
+  - 50 ms inbound each side + 5 % loss (ping ~160 ms): 2121 frames, all equal; rollbacks 263 / 256 (max 7); replay equal.
+  - 150 ms + 5 % loss, `--np-delay 4 --np-rollback 12` (ping ~335 ms): 2050 frames, all equal; rollbacks 247 / 241
+    (max 10 / 12); replay equal.
+  - `MELEE_NP_TEST_DESYNC=600` on the guest: both stop at game frame 601 with the DESYNC error.
+  - windowed `MELEE_PLAY_SYNCTEST=4`, whole match: 0 neutral mismatches (the whole-state hash differs on resimulated
+    frames because their display lists are not decoded).
+- Melee Unlocked (reference only, nothing taken): its players use `mu_net` v1 (docs/mu-net-protocol.md there: ENet
+  framing, Ed25519 identities, X25519 + XChaCha20-Poly1305, its own message ids), not this wire, so the two cannot
+  meet; joining his launcher as a third engine would need a `mu_net` implementation. His users expect `.slp` replays
+  in `Replays\` and `--replay <file.slp>`, so the `.slp` exporter is the replay follow-up that matters for them.

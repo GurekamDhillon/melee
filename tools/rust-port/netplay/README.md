@@ -14,3 +14,6 @@ and the release build `build/cargo/release/melee.exe`.
   "match agreed" log line; hashes of disc files, so never committed) and a C log with the
   handshake words (`cnet-c-host/melee-pc.log`).
 - The C build needs `MELEE_RB_NEUTRAL_HASH=1` on its side so both checksums are the neutral hash.
+- `play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [play args]`: two `melee play --netplay` peers (windowed unless
+  `--headless`, scripted pads `np_fight.txt` / `np_fight2.txt`), per-frame hash compare, the host's `.mrpl` replayed.
+- `idle.sh CMD...`: run a command at idle priority.

@@ -90,6 +90,14 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
                             }
                         }
+                        if d.u32_at(rec) == melee_types::It_Kind_Kyasarin_Egg as u32 {
+                            // Birdo's egg: `itKyasarinEggAttributes { s32* x0; f32 x4, x8; s32 xC, x10; }` has the same leading pointer, so
+                            // word-swapped `ap->x4` (the roll speed, it_802EFB0C) read the bounce `x8` natively (stage_20_mushroomkingdom2 1430)
+                            if let Some(sa) = d.target(ta + 4) {
+                                let typed = d.object::<melee_types::itKyasarinEggAttributes>(sa) as *mut c_void;
+                                unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+                            }
+                        }
                         if d.u32_at(rec) == melee_types::It_Kind_Arwing_Laser as u32 {
                             // Arwing laser (Corneria, Venom): `ArwingLaserAttr { ItemAttr* x0; f32 x4, x8; }` starts with a relocated pointer
                             // (`itArwinglaser_UnkMotion2_Phys` reads `attrs->x0->x4_throw_speed_mul`); the word swap leaves it a big-endian

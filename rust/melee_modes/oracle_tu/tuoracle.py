@@ -894,6 +894,9 @@ class TuGen:
             return [f"for i in 0..{o['raw']} {{ *({o['r_ptr']} as *mut u8).add(i) = rt::draw_int(&mut rt::ST) as u8; }}"]
         if o.get("bytes"):
             return [f"for i in 0..{o['bytes']} {{ {o['r']}[i] = rt::draw_int(&mut rt::ST) as u8; }}"]
+        if o["name"] in self.cfg.get("rust_ptr_globals", ()):
+            # a C `u32` the Rust port keeps as a native pointer (one global shared with its owning TU): 32-bit draw
+            return [f"{o['r']} = (rt::draw_int(&mut rt::ST) as u32) as usize as _;"]
         t = o["t"]
         if o.get("size"):
             k = classify(t)
@@ -920,6 +923,8 @@ class TuGen:
             return [f"rt::h_bytes({o['r_ptr']} as *const u8, {o['raw']});"]
         if o.get("bytes"):
             return [f"rt::h_bytes({o['r']}.as_ptr(), {o['bytes']});"]
+        if o["name"] in self.cfg.get("rust_ptr_globals", ()):
+            return [f"rt::h_u(({o['r']} as usize as u32) as u64);"]
         t = o["t"]
         if o.get("size"):
             k = classify(t)
@@ -1278,6 +1283,8 @@ class TuGen:
         for o in self.objs:
             if o.get("bytes"):
                 L.append(f'    rt::reg_add({o["r"]}.as_ptr(), {o["bytes"]}, "{o["name"]}");')
+            elif o["name"] in self.cfg.get("rust_ptr_globals", ()):
+                L.append(f'    rt::reg_add(core::ptr::addr_of!({o["r"]}) as *const u8, 4, "{o["name"]}");  // the C u32 (little-endian low half)')
             else:
                 L.append(f'    rt::reg_add(core::ptr::addr_of!({o["r"]}), core::mem::size_of_val(&{o["r"]}), "{o["name"]}");')
         for k, o in enumerate(self.snap_objs()):

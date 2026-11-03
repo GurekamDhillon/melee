@@ -90772,7 +90772,7 @@ unsafe fn fill_all() {
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).alloc_data.next = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60)).pad = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) = rt::draw_int(&mut rt::ST) as _;
-    (*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) = rt::draw_int(&mut rt::ST) as _;
+    (*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) = (rt::draw_int(&mut rt::ST) as u32) as usize as _;
     (*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC)) = 0usize as _;
     (*core::ptr::addr_of_mut!(m::ext::it_804A0E30)).x0 = rt::draw_int(&mut rt::ST) as _;
     (*core::ptr::addr_of_mut!(m::ext::it_804A0E30)).x4.size = rt::draw_int(&mut rt::ST) as _;
@@ -93872,7 +93872,7 @@ unsafe fn hash_objs() {
     rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2)) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
-    rt::h_u((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) as u64);
+    rt::h_u(((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4)) as usize as u32) as u64);
     rt::OBJ_HASH.push(rt::H); tot = rt::mix(tot, rt::H);
     rt::H = rt::FNV0;
     rt::h_p((*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC)) as *const u8);
@@ -94864,7 +94864,7 @@ unsafe fn init() {
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0948))), "hsd_804D0948");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D0F60))), "hsd_804D0F60");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78E2))), "hsd_804D78E2");
-    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4))), "hsd_804D78F4");
+    rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78F4))) as *const u8, 4, "hsd_804D78F4");  // the C u32 (little-endian low half)
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::hsd_804D78FC))), "hsd_804D78FC");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804A0E30))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804A0E30))), "it_804A0E30");
     rt::reg_add(core::ptr::addr_of!((*core::ptr::addr_of_mut!(m::ext::it_804A0E70))), core::mem::size_of_val(&(*core::ptr::addr_of_mut!(m::ext::it_804A0E70))), "it_804A0E70");

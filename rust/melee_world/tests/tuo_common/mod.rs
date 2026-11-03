@@ -403,6 +403,21 @@ impl V {
         }
     }
 
+    /// [`Self::bytes`] for a region the port keeps in GameCube byte order (32-bit words): the C's
+    /// native little-endian bytes are filled and dumped, the Rust memory holds each word swapped.
+    pub fn bytes_be32(&mut self, path: &str, p: *mut u8, n: usize) {
+        let mut t = vec![0u8; n];
+        if self.mode != 1 {
+            unsafe { std::ptr::copy_nonoverlapping(p, t.as_mut_ptr(), n) };
+            t.chunks_exact_mut(4).for_each(|w| w.reverse());
+        }
+        self.bytes(path, t.as_mut_ptr(), n);
+        if self.mode == 1 {
+            t.chunks_exact_mut(4).for_each(|w| w.reverse());
+            unsafe { std::ptr::copy_nonoverlapping(t.as_ptr(), p, n) };
+        }
+    }
+
     // ---- stub call logging ----
     pub fn call_begin(&mut self, name: &str) {
         self.cl = format!("call {name}(");

@@ -50,6 +50,8 @@ mod imp {
             let th = thv as *mut c_void;
             let mut ctx = Box::new(Ctx([0; 1232]));
             let mut frames = [0u64; 48];
+            let hang_secs: Option<u64> = std::env::var("MELEE_HANG_SECS").ok().and_then(|v| v.parse().ok());
+            let mut last_tick = (u64::MAX, std::time::Instant::now());
             while !s2.load(Ordering::Relaxed) {
                 std::thread::sleep(std::time::Duration::from_millis(1));
                 // Only while the main thread is inside a gated region (play's Game::tick): suspended in a driver or
@@ -92,6 +94,20 @@ mod imp {
                 }
                 if n > 0 {
                     d2.lock().unwrap().push(frames[..n].to_vec());
+                }
+                // MELEE_HANG_SECS=N: a tick that has not returned for N s is a hang: print the main thread's stack, exit 3
+                if let Some(secs) = hang_secs {
+                    let t = super::TICKS.load(Ordering::Relaxed);
+                    if t != last_tick.0 {
+                        last_tick = (t, std::time::Instant::now());
+                    } else if n > 0 && last_tick.1.elapsed().as_secs() >= secs {
+                        let names = symbolize(frames[..n].iter().copied());
+                        eprintln!("prof: HANG: tick {t} running for {secs} s; main thread stack:");
+                        for a in &frames[..n] {
+                            eprintln!("prof:   {a:#x} {}", names[a]);
+                        }
+                        std::process::exit(3);
+                    }
                 }
             }
         });
@@ -222,6 +238,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// MELEE_SAMPLE_GATE (default on in `play`): sample only between [`gate`]`(true)` and `gate(false)`.
 static GATED: AtomicBool = AtomicBool::new(false);
 static IN_GATE: AtomicBool = AtomicBool::new(false);
+/// Gated regions left so far (the hang watchdog's progress counter).
+static TICKS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 /// Turn gating on (samples are then taken only inside [`gate`] regions).
 pub fn set_gated(on: bool) {
@@ -246,6 +264,9 @@ impl Drop for Gate {
 #[inline]
 pub fn gate(inside: bool) {
     IN_GATE.store(inside, Ordering::Release);
+    if !inside {
+        TICKS.fetch_add(1, Ordering::Relaxed);
+    }
 }
 
 #[cfg(windows)]

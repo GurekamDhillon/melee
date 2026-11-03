@@ -203,7 +203,9 @@ impl Engine {
                 FRAME_ROW = Some(Engine::compute_row());
                 if CAPTURE_FRAME == RAND_FRAME as i64 { CAPTURED = Some(Engine::capture_now()); }
             });
-            melee_core::ct::RENDER_STUB.store(!melee_runtime::tu::gobj_native::HEADLESS_RENDER, core::sync::atomic::Ordering::Relaxed);
+            // the retail draw callbacks always run (headless too: they have simulation-visible effects, gobj_native::HEADLESS_RENDER);
+            // whatever they reach that draws answers zero
+            melee_core::ct::RENDER_STUB.store(true, core::sync::atomic::Ordering::Relaxed);
             melee_runtime::tu::particle::CMD_STREAM_BIG_ENDIAN = true;
             melee_items::tu::itmaterial::it_mobj_static_init(); // the C data initialiser of the item material class
             

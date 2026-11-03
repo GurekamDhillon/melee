@@ -66,3 +66,9 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
 
 - Round 5 (plat-play): vs_to_ko.txt --golden-pads re-run hands-off (MELEE_PAD_IGNORE_ADAPTER=1, unfocused window, --shots): title/CSS/match/live/results
   reached, 1875 ticks, time-up on Final Destination (port 2 wins, falls 5-0 on the timer). No OS-level input was sent. Menus are still ui.rs stand-ins.
+
+## 2026-11-03 port/saves: the memory card in `melee` (Rust writes, C reads, and back)
+- `melee_engine::card` = shim_card.c over `melee_data::card`; installed by the retail flow only (golden/synctest/scenario runs stay save-less). `MELEE_CARD_PATH` (folder; create it first: Aurora in the C build drops the last component of a missing folder and its C++ code throws), default `card/` beside the exe; `MELEE_CARD=0` off; `MELEE_SKIP_MEMCARD=1`; `MELEE_CARD_DIAG=1`.
+- Save files stay GameCube bytes on the card: `lbcardgame::GC_IMAGE` stages GmSaveData + 7 NameTagDataBanks through the GcDecode byte permutation (`tests/save_image.rs`). Log lines `gw: card: load result N (per-file errors ...)` and `save image -> native: ...` are what tests check.
+- `tools/rust-port/saves/roundtrip.sh` (C_EXE = a C build with the try/catch in aurora OSTime.cpp: older C exes die in chrono::current_zone under the "British Columbia Standard Time" zone): all checks pass, 2026-11-03.
+- Known: tu_lbcardgame oracle fails on the base commit too (op 10 case 30); VS records count only human results (gm_SetupHumanResultsScreen), so CPU-only scripted matches leave them 0.

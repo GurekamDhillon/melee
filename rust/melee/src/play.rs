@@ -1275,6 +1275,7 @@ impl Play {
             if let Some(pk) = packed {
                 p.renderer.set_packed(pk);
             }
+            p.set_content_aspect(melee_engine::view::aspect());
             p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, alpha);
             return;
         }
@@ -1372,6 +1373,7 @@ impl Game for Play {
     }
 
     fn resized(&mut self, w: u32, h: u32) {
+        melee_engine::view::set_window(w, h);
         if let Some(p) = self.presenter.as_mut() {
             p.resize(w, h);
         }
@@ -1403,6 +1405,9 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
     }
 }
 
+const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--match a,b/cpu9,..,STAGE] [--quit-after-matches N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro] [--headless] [--no-audio]
+       [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]";
+
 pub fn play(args: &[String]) -> ExitCode {
     crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").map_or(true, |v| v != "0"));
     // `play` never snapshots the game arena (no rollback offline): big free blocks may give their pages back.
@@ -1411,8 +1416,18 @@ pub fn play(args: &[String]) -> ExitCode {
     melee_engine::archive::set_reclaim(std::env::var_os("MELEE_NO_RECLAIM").is_none());
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let has = |k: &str| args.iter().any(|a| a == k);
+    if has("--help") || has("-h") {
+        println!("{USAGE}
+
+{}", crate::display::HELP);
+        return ExitCode::SUCCESS;
+    }
+    if let Err(e) = crate::display::setup(args) {
+        eprintln!("play: {e}");
+        return ExitCode::from(2);
+    }
     let Some(iso) = get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()) else {
-        eprintln!("usage: melee play --iso DISC.iso [--time-secs N | --stocks N] [--items OFF|LOW|..] [--teams] [--match a,b/cpu9,..,STAGE] [--quit-after-matches N] [--shots] [--shot-dir DIR] [--quit-at-results] [--max-frames N] [--skip-intro]");
+        eprintln!("{USAGE}");
         return ExitCode::from(2);
     };
     crate::crash::note_disc(&iso);
@@ -1570,7 +1585,7 @@ pub fn play(args: &[String]) -> ExitCode {
         return if game.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
-    let cfg = WindowConfig { title: window_title(get("--match").as_deref()), width: 1280, height: 960, active: !scripted };
+    let cfg: WindowConfig = crate::display::current().window_config(window_title(get("--match").as_deref()), !scripted);
     if scripted {
         std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
     }

@@ -23,6 +23,8 @@ pub struct Presenter {
     pub skipped: u64,
     /// The internal scale follows the window (no `MELEE_RENDER_SCALE`).
     auto_scale: bool,
+    /// The content aspect of the frames being presented (4:3, or the window's with widescreen in a wide scene).
+    aspect: f32,
     /// The last two sim frames (render-only interpolation: never fed back into the game).
     prev: Option<Vec<DrawCmd>>,
     cur: Option<Vec<DrawCmd>>,
@@ -121,6 +123,7 @@ impl Presenter {
         if auto_scale {
             renderer.set_scale(Renderer::scale_for_window(size.width, size.height));
         }
+        crate::plog!("gw: video: render scale {} ({}), MSAA {}x", renderer.scale, if auto_scale { "auto" } else { "MELEE_RENDER_SCALE" }, renderer.samples);
         let caps = surface.get_capabilities(&renderer.adapter);
         // The EFB holds display-space values already (no sRGB decode on the GC), so prefer a
         // non-sRGB swapchain format; the blit copies the bytes through.
@@ -151,7 +154,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, auto_scale, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default() })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default() })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -166,8 +169,22 @@ impl Presenter {
         self.config.height = height;
         self.surface.configure(&self.renderer.device, &self.config);
         if self.auto_scale {
-            self.renderer.set_scale(Renderer::scale_for_window(width, height));
+            self.renderer.set_scale(Renderer::scale_for_window_aspect(width, height, self.aspect));
             self.blended = true; // the targets were recreated: re-render the current frame
+        }
+    }
+
+    /// The content aspect of the next frames (melee_engine `view::aspect`): reshapes the EFB target when it changed.
+    /// The blit then letterboxes / pillarboxes that aspect inside the window.
+    pub fn set_content_aspect(&mut self, aspect: f32) {
+        if aspect.to_bits() == self.aspect.to_bits() {
+            return;
+        }
+        self.aspect = aspect;
+        let scale = if self.auto_scale { Renderer::scale_for_window_aspect(self.config.width, self.config.height, aspect) } else { self.renderer.scale };
+        if self.renderer.set_target(scale, aspect) {
+            self.blended = true;
+            crate::plog!("gw: video: content aspect {aspect:.4}: EFB target {}x{}", self.renderer.width, self.renderer.height);
         }
     }
 

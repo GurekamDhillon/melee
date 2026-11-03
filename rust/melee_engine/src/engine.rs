@@ -184,6 +184,9 @@ impl Engine {
                     melee_runtime::tu::cobj::ext::hook::View_ProjectionScaleBits = Some(WIDE_SCALE_BITS_FN);
                     WIDE_SCALE_BITS = scale.to_bits() as i32;
                 }
+            } else {
+                // a drawn window: the view policy follows the widescreen setting and the scene (view.rs; 4:3 when off)
+                crate::view::install();
             }
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
             melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);
@@ -585,6 +588,7 @@ impl Engine {
         melee_core::ct::DBG_FRAME.store(self.frames as i32, core::sync::atomic::Ordering::Relaxed);
         unsafe { FEED_TICK = self.frames };
         crate::seams::fire_alarm(); // the periodic pad-sampling alarm (lb_80019628) fires once per frame
+        crate::card::pump(); // gw_frame_tick pumps gw_defer: the card completions
         let t0 = std::time::Instant::now();
         let more = unsafe { gmscene::gm_801A4D34_tick(self.on_frame, self.info) };
         if let Some(ms) = spike_ms() {
@@ -676,6 +680,9 @@ impl Engine {
     /// way `SceneLaunch_SeedVs` does in the C build.
     pub fn boot_modes(disc: Gcm, mem_size: usize, pads: PadSystem, first: u8) -> Result<Engine, String> {
         let _scope = crate::arena::GameScope::enter();
+        // The memory card (pc/platform/shim_card.c): only when the caller asked for it (the retail flow), never for
+        // the golden / synctest runs. gw_CARDInit runs before the game's init, so lbCardGame_Init's first probe sees it.
+        let card = unsafe { CARD_ON } && crate::card::install();
         Self::boot_host(disc, mem_size, pads)?;
         unsafe {
             crate::archive::RECLAIM = true;
@@ -691,8 +698,10 @@ impl Engine {
             melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = None;
             melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
             // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
-            melee_runtime::tu::lbcardgame::ext::hook::wait_idle = Some(|| {});
-            melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
+            if !card {
+                melee_runtime::tu::lbcardgame::ext::hook::wait_idle = Some(|| {});
+                melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
+            }
             // ft/ftdemo.c (results-screen fighters): its callees, and the demo motion-state table melee_link fills.
             melee_fighter::tu::ftdemo::install_defaults(&raw mut melee_link::retail_ms::ftmotionstates::ftData_803C52A0 as *mut melee_types::MotionState);
             // gmvsmelee.c's PC callees with no MELEE_SCENE launch and no netplay session (the C defaults): their ext
@@ -714,8 +723,35 @@ impl Engine {
             melee_runtime::tu::lbsnap::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
             // gm_1BFA.c gm_Mode_ChallengerApproach_States: the static table, built from the addresses of the other TUs.
             melee_modes::tu::gmscdata::ext::gm_Mode_ChallengerApproach_States = melee_modes::tu::gm_1BFA::gm_Mode_ChallengerApproach_States();
-            // the memory-card scene's one trophy draw on a fresh save (see boot_vs)
-            let _ = melee_runtime::tu::random::global::HSD_Rand();
+            if card {
+                crate::card::install_scene_hooks();
+            }
+            // gmboot.c's state tables and its PC callees (the boot mode is the memory-card scene)
+            {
+                use melee_modes::tu::{gmboot, gmscdata};
+                gmscdata::ext::gm_Mode_Boot_States = gmboot::gm_Mode_Boot_States();
+                gmscdata::ext::gm_Mode_MemCard_States = gmboot::gm_Mode_MemCard_States();
+                gmboot::ext::GM_MAIN_LIB_SKIP_INTRO = Some(|| BOOT_SKIP_INTRO);
+                gmboot::ext::SCENELAUNCH_BOOTGAMEMODE = Some(|| -1);
+                gmboot::ext::CONTENTPROBENAME = Some(|| None);
+                gmboot::ext::GM_SETGAMEMODEOVERRIDE = Some(|f| {
+                    // the only override the game sets is lbCardGame_DecideGameMode
+                    let _ = f;
+                    melee_modes::tu::gm_1A3F::gm_SetGameModeOverride(Some(decide_game_mode));
+                });
+                gmboot::ext::LB_8001C2D8 = Some(|chan, company, game, name| {
+                    let c = |s: &str| std::ffi::CString::new(s).unwrap();
+                    let (a, b, n) = (c(company), c(game), c(name));
+                    unsafe { melee_runtime::tu::lbcardnew::lb_8001C2D8(chan, a.as_ptr(), b.as_ptr(), n.as_ptr()) }
+                });
+            }
+            // MELEE_SKIP_MEMCARD=1 takes the prompt's "continue without saving" exit (SceneLaunch_SkipMemcard)
+            melee_modes::tu::gmscmemcard::ext::SCENELAUNCH_SKIPMEMCARD =
+                Some(|| std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false) as i32);
+            // the memory-card scene's one trophy draw on a fresh save (see boot_vs), when the scene itself is skipped
+            if !(card && first == melee_types::GM_BOOT as u8) {
+                let _ = melee_runtime::tu::random::global::HSD_Rand();
+            }
             gm_1A3F::gm_801A4510_init(Some(first));
             let mode = gm_1A3F::runGameMode_load(first);
             LOOP_MODE = mode;
@@ -748,6 +784,10 @@ impl Engine {
             gmscene::gm_801A4D34_end();
             gm_1A3F::gm_801A4014_leave(run);
             let sm = &raw mut gm_1A3F::state_machine;
+            // runGameMode: an override scene (lbCardGame_DecideGameMode -> GM_MEMCARD) restores the routing after it
+            if core::mem::take(&mut OVERRIDE_ACTIVE) && !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
+                (*sm).routing = (*sm).backup_routing;
+            }
             if (*sm).pending_mode_change != 0 {
                 // runGameMode's tail
                 if !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
@@ -769,8 +809,20 @@ impl Engine {
                 (*sm).routing.curr_mode = next;
                 LOOP_MODE = gm_1A3F::runGameMode_load(next);
             }
-            // runGameMode's scene loop (the override modes are debug-only and never set on the retail path)
-            let run = gm_1A3F::gm_801A4014_enter(LOOP_MODE);
+            // runGameMode's scene loop: `get_override` (bootOnLeave sets lbCardGame_DecideGameMode) may run another
+            // mode's scene first, e.g. the memory-card scene when the card changed
+            let over = match (*sm).get_override { Some(f) => f(), None => melee_types::GM_COUNT as u8 };
+            let run = if over != melee_types::GM_COUNT as u8 {
+                (*sm).backup_routing = (*sm).routing;
+                (*sm).pending_mode_change = 0;
+                (*sm).routing.curr_state_id = 0;
+                (*sm).routing.prev_state_id = 0;
+                (*sm).routing.next_state_id = 0;
+                OVERRIDE_ACTIVE = true;
+                gm_1A3F::gm_801A4014_enter(gm_1A3F::findMode(over))
+            } else {
+                gm_1A3F::gm_801A4014_enter(LOOP_MODE)
+            };
             gmscene::gm_801A4D34_begin(run.info);
             self.frames = 0;
             self.info = run.info;
@@ -781,6 +833,19 @@ impl Engine {
         true
     }
 }
+
+/// `gmMainLib_8046B0F0.skip_intro` as the boot scene reads it (the retail flow's --skip-intro).
+pub static mut BOOT_SKIP_INTRO: bool = false;
+
+unsafe extern "C" fn decide_game_mode() -> u8 {
+    melee_runtime::tu::lbcardgame::lbCardGame_DecideGameMode()
+}
+
+/// Set by the retail flow before `boot_modes`: install the memory card (`crate::card`).
+pub static mut CARD_ON: bool = false;
+
+/// The routing saved while an override mode's scene runs (runGameMode's `backup_routing` restore).
+static mut OVERRIDE_ACTIVE: bool = false;
 
 /// `gw_PcUnlockAll` (pc/platform/gw_runtime.c): the environment wins, else the settings default ON.
 fn pc_unlock_all() -> i32 {

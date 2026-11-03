@@ -3,6 +3,7 @@
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
 pub mod arena;
 pub mod archive;
+pub mod card;
 pub mod cdata;
 pub mod cow;
 pub mod crash;
@@ -23,6 +24,7 @@ pub mod os;
 pub mod scenario;
 pub mod seams;
 pub mod seams_gen;
+pub mod view;
 pub mod snapshot;
 
 pub use engine::Engine;

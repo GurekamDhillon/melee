@@ -12,8 +12,8 @@ use std::time::{Duration, Instant};
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
-use winit::keyboard::PhysicalKey;
-use winit::window::{Window, WindowId};
+use winit::keyboard::{KeyCode, ModifiersState, PhysicalKey};
+use winit::window::{Fullscreen, Window, WindowId};
 
 pub const TICK_HZ: u64 = 60;
 const NS: u64 = 1_000_000_000;
@@ -74,6 +74,31 @@ impl FixedStep {
     }
 }
 
+#[cfg(test)]
+mod display_tests {
+    use super::*;
+
+    #[test]
+    fn fullscreen_parse_and_toggle() {
+        assert_eq!(FullscreenMode::parse("exclusive"), Some(FullscreenMode::Exclusive));
+        assert_eq!(FullscreenMode::parse("1"), Some(FullscreenMode::Borderless));
+        assert_eq!(FullscreenMode::parse("Off"), Some(FullscreenMode::Off));
+        assert_eq!(FullscreenMode::parse("maybe"), None);
+        use FullscreenMode::*;
+        assert_eq!(FullscreenMode::toggled(Off, Off), Borderless);
+        assert_eq!(FullscreenMode::toggled(Off, Exclusive), Exclusive);
+        assert_eq!(FullscreenMode::toggled(Borderless, Borderless), Off);
+        assert_eq!(FullscreenMode::toggled(Exclusive, Exclusive), Off);
+    }
+
+    #[test]
+    fn exclusive_mode_choice() {
+        let m = [(1920, 1080, 60000, 32), (2560, 1440, 59950, 32), (2560, 1440, 143998, 32), (1280, 720, 240000, 32)];
+        assert_eq!(choose_video_mode(&m), Some(2));
+        assert_eq!(choose_video_mode(&[]), None);
+    }
+}
+
 /// Run `frames` ticks with no window (the C's turbo / headless test mode). Returns ticks run.
 pub fn run_headless<G: Game>(game: &mut G, pads: &mut PadSystem, frames: u64) -> u64 {
     let mut n = 0;
@@ -87,16 +112,82 @@ pub fn run_headless<G: Game>(game: &mut G, pads: &mut PadSystem, frames: u64) ->
     n
 }
 
+/// How the window fills the screen (`--fullscreen`, `MELEE_FULLSCREEN`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum FullscreenMode {
+    /// A normal window.
+    #[default]
+    Off,
+    /// Borderless fullscreen on the window's monitor (the desktop's mode; no mode switch).
+    Borderless,
+    /// Exclusive fullscreen: the monitor's largest video mode (highest refresh at that size). Falls back to
+    /// borderless when the monitor reports no modes.
+    Exclusive,
+}
+
+impl FullscreenMode {
+    /// `0/off/no/false/windowed` -> Off, `1/on/yes/true/borderless` -> Borderless, `exclusive` -> Exclusive.
+    pub fn parse(v: &str) -> Option<Self> {
+        Some(match v.trim().to_ascii_lowercase().as_str() {
+            "" | "0" | "off" | "no" | "false" | "windowed" => Self::Off,
+            "1" | "on" | "yes" | "true" | "borderless" => Self::Borderless,
+            "2" | "exclusive" => Self::Exclusive,
+            _ => return None,
+        })
+    }
+
+    /// The mode Alt+Enter switches to from `current` (`preferred`: the configured fullscreen kind, borderless when Off).
+    pub fn toggled(current: Self, preferred: Self) -> Self {
+        match current {
+            Self::Off => if preferred == Self::Off { Self::Borderless } else { preferred },
+            _ => Self::Off,
+        }
+    }
+}
+
+/// The video mode exclusive fullscreen picks from `modes` (width, height, refresh in mHz, bit depth): the largest area,
+/// then the highest refresh, then the deepest colour. Its index.
+pub fn choose_video_mode(modes: &[(u32, u32, u32, u16)]) -> Option<usize> {
+    (0..modes.len()).max_by_key(|&i| {
+        let (w, h, r, b) = modes[i];
+        (w as u64 * h as u64, r, b)
+    })
+}
+
 pub struct WindowConfig {
     pub title: String,
     pub width: u32,
     pub height: u32,
     /// false: create the window without taking focus (scripted / test runs, so the user's keyboard stays where it is).
     pub active: bool,
+    /// Start fullscreen (Alt+Enter toggles at run time). Ignored under MELEE_WINDOW_UNFOCUSED (test runs never take
+    /// the user's screen).
+    pub fullscreen: FullscreenMode,
 }
 impl Default for WindowConfig {
     fn default() -> Self {
-        Self { title: "GD's Melee".into(), width: 1280, height: 960, active: true }
+        Self { title: "GD's Melee".into(), width: 1280, height: 960, active: true, fullscreen: FullscreenMode::Off }
+    }
+}
+
+/// The winit fullscreen value for `mode` on `w`'s current monitor.
+fn winit_fullscreen(w: &Window, mode: FullscreenMode) -> Option<Fullscreen> {
+    match mode {
+        FullscreenMode::Off => None,
+        FullscreenMode::Borderless => Some(Fullscreen::Borderless(None)),
+        FullscreenMode::Exclusive => {
+            let mon = w.current_monitor().or_else(|| w.primary_monitor())?;
+            let modes: Vec<_> = mon.video_modes().collect();
+            let keys: Vec<_> = modes.iter().map(|m| (m.size().width, m.size().height, m.refresh_rate_millihertz(), m.bit_depth())).collect();
+            match choose_video_mode(&keys) {
+                Some(i) => {
+                    let (a, b, r, _) = keys[i];
+                    plog!("gw: video: exclusive fullscreen {a}x{b} @ {:.2} Hz", r as f64 / 1000.0);
+                    Some(Fullscreen::Exclusive(modes[i].clone()))
+                }
+                None => Some(Fullscreen::Borderless(Some(mon))),
+            }
+        }
     }
 }
 
@@ -119,6 +210,10 @@ struct App<G: Game> {
     fps_t0: Option<Instant>,
     fps_frames: u64,
     fps_ticks0: u64,
+    /// Alt held (Alt+Enter toggles fullscreen).
+    mods: ModifiersState,
+    /// The current fullscreen state (what the last switch asked for).
+    fullscreen: FullscreenMode,
     /// Rendered frames over the whole run (for the exit log).
     pub frames: u64,
     run_t0: Option<Instant>,
@@ -231,8 +326,21 @@ impl<G: Game> ApplicationHandler for App<G> {
                 attrs = attrs.with_window_level(winit::window::WindowLevel::AlwaysOnBottom);
             }
         }
+        let unattended = std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_some();
+        if self.cfg.fullscreen != FullscreenMode::Off && unattended {
+            plog!("gw: video: fullscreen ignored under MELEE_WINDOW_UNFOCUSED (a test run never takes the screen)");
+        }
         match el.create_window(attrs) {
-            Ok(w) => self.window = Some(Arc::new(w)),
+            Ok(w) => {
+                if self.cfg.fullscreen != FullscreenMode::Off && !unattended {
+                    w.set_fullscreen(winit_fullscreen(&w, self.cfg.fullscreen));
+                    self.fullscreen = self.cfg.fullscreen;
+                    plog!("gw: video: fullscreen {:?}", self.fullscreen);
+                }
+                let sz = w.inner_size();
+                self.game.resized(sz.width, sz.height);
+                self.window = Some(Arc::new(w));
+            }
             Err(e) => {
                 plog!("gw: video: window creation failed: {e}");
                 el.exit();
@@ -254,8 +362,22 @@ impl<G: Game> ApplicationHandler for App<G> {
                     self.pads.focused = false;
                 }
             }
+            WindowEvent::ModifiersChanged(m) => self.mods = m.state(),
             WindowEvent::KeyboardInput { event, .. } => {
                 if let PhysicalKey::Code(k) = event.physical_key {
+                    let enter = matches!(k, KeyCode::Enter | KeyCode::NumpadEnter);
+                    if enter && self.mods.alt_key() {
+                        // Alt+Enter: fullscreen <-> window (the key never reaches the pads)
+                        if event.state == ElementState::Pressed && !event.repeat {
+                            if let Some(w) = self.window.as_ref() {
+                                let next = FullscreenMode::toggled(self.fullscreen, self.cfg.fullscreen);
+                                w.set_fullscreen(winit_fullscreen(w, next));
+                                self.fullscreen = next;
+                                plog!("gw: video: Alt+Enter -> fullscreen {next:?}");
+                            }
+                        }
+                        return;
+                    }
                     self.pads.key_event(k, event.state == ElementState::Pressed);
                 }
             }
@@ -327,6 +449,8 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         fps_t0: None,
         fps_frames: 0,
         fps_ticks0: 0,
+        mods: ModifiersState::empty(),
+        fullscreen: FullscreenMode::Off,
         frames: 0,
         run_t0: Some(Instant::now()),
         tick_time: Duration::ZERO,

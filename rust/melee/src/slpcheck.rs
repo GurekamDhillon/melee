@@ -59,6 +59,7 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
             team: if info.is_teams() { p.team as i32 } else { -1 },
             stocks: p.stocks as i32,
             handicap: p.handicap as i32,
+            cpu_idle: false,
         });
     }
     if scn.players.iter().flatten().count() < 2 {

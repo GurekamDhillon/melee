@@ -348,6 +348,10 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
     if let Some(v) = ext_hand(name, args) {
         return Some(v);
     }
+    // gw_Script_CpuIdleDefault (gw_runtime.c): the scene's `pN=.../idle` slots stand still (2), else follow the retail AI
+    if name == "Script_CpuIdleDefault" {
+        return Some(crate::scenario::cpu_idle_default(args.first().copied().unwrap_or(0) as i32) as u64);
+    }
     if let Some(v) = unsafe { crate::ext_dispatch::dispatch(name, args) } {
         return Some(v);
     }

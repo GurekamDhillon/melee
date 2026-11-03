@@ -827,6 +827,7 @@ impl Play {
                 team: if r.teams { sl.team as i32 } else { -1 },
                 stocks: -1,
                 handicap: -1,
+                cpu_idle: false,
             });
         }
         Scenario {

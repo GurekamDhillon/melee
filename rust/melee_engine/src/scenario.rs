@@ -64,6 +64,8 @@ pub struct PlayerSpec {
     pub stocks: i32,
     /// handicap (-1 = unset)
     pub handicap: i32,
+    /// `pN=.../idle`: a CPU that stands still (gw_sl_cfg.p[slot].cpu_idle)
+    pub cpu_idle: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -125,12 +127,14 @@ impl Scenario {
                     if it.next().is_some() {
                         return Err(format!("team suffix in {v} not wired"));
                     }
-                    let kind = if kind == "idle" { "human" } else { kind };
+                    // gw_runtime.c: `idle` is a CPU slot (level unset) whose fighter stands still (Script_CpuIdleDefault 2)
+                    let cpu_idle = kind == "idle";
                     let (slot_type, cpu_level) = match kind.strip_prefix("cpu") {
                         Some(l) => (1, l.parse().unwrap_or(-1)),
+                        None if cpu_idle => (1, -1),
                         None => (0, -1),
                     };
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team: -1, stocks: -1, handicap: -1 });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team: -1, stocks: -1, handicap: -1, cpu_idle });
                 }
                 _ => {}
             }
@@ -143,6 +147,11 @@ static mut SCN: Option<Scenario> = None;
 
 fn p(n: i32) -> Option<PlayerSpec> {
     unsafe { SCN.as_ref().and_then(|s| s.players.get(n as usize).copied().flatten()) }
+}
+
+/// `gw_Script_CpuIdleDefault(slot)`: 2 for a scene `idle` slot, else 0 (no `cpus=` / MELEE_CPU_IDLE default in the engine).
+pub fn cpu_idle_default(slot: i32) -> i32 {
+    if p(slot).is_some_and(|x| x.cpu_idle) { 2 } else { 0 }
 }
 
 /// The mode a scenario boots into: its 1P mode, else VS.

@@ -128,7 +128,8 @@ unsafe fn data_at_ex(p: *const c_void, want: usize, trust: bool) -> Option<GxDat
         return None;
     }
     let mut n = extent(p as usize, want);
-    if n == 0 && trust && readable(p as usize, want) {
+    // a texture larger than the heap cap (the 640x480 I8 movie luma plane, 300 KB) is read whole, not cut at it
+    if n < want && trust && readable(p as usize, want) {
         n = want;
     }
     if n == 0 {

@@ -1727,6 +1727,8 @@ pub fn play(args: &[String]) -> ExitCode {
     if !scripted && std::env::var("MELEE_KEYBOARD").map_or(true, |v| v != "0") {
         pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
     }
+    // the launcher's own controls, when it started us (launcher_compat.rs)
+    crate::launcher_compat::apply_input(&mut pads);
     match run_windowed(game, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));

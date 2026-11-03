@@ -501,6 +501,10 @@ impl Game for RetailPlay {
             self.age = 0;
             self.scene_no += 1;
             log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
+            if now.0 == melee_types::GM_EVENT as u8 && std::env::var_os("MELEE_MENU_LOG").is_some() {
+                // Event Match: which event (gmevent.c's level index, 0-based) the scene plays
+                log(&format!("tick {}: event {}", self.tick_no, unsafe { (*melee_modes::tu::gmmain_lib::gmMainLib_804D3EE0).vs.unk_530.unk_535 }));
+            }
             self.arm = now.1 == crate::play_net::SCENE_VS;
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
@@ -628,6 +632,8 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     if !scripted && std::env::var("MELEE_KEYBOARD").map_or(true, |v| v != "0") {
         pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
     }
+    // the launcher's own controls, when it started us (launcher_compat.rs)
+    crate::launcher_compat::apply_input(&mut pads);
     match melee_platform::run_windowed(rp, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));

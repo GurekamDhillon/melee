@@ -1,0 +1,18 @@
+[package]
+name = "melee_modhost"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# The WebAssembly mod host (mod-c-v1, docs/rust-port/notes/modhost.md): sandboxed wasm code mods behind hooks-v1 rows.
+[dependencies]
+melee_core.workspace = true
+melee_types.workspace = true
+melee_runtime.workspace = true
+melee_fighter.workspace = true
+melee_modes.workspace = true
+wasmi = { version = "2.0.0", default-features = false, features = ["std", "validate", "deterministic"] }
+
+[dev-dependencies]
+wat = "1"

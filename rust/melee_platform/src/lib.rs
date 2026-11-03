@@ -12,6 +12,7 @@ pub mod log;
 pub mod pad;
 pub mod adapter;
 pub mod aurora;
+pub mod bindings;
 pub mod gamepads;
 pub mod script;
 pub mod pad_read;

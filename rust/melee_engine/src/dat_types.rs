@@ -55,7 +55,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "flmsce" { return Some(rt("SceneDesc")); }
     if name == "MemCardIconData" { return Some(RootType::Custom("rawptrs")); }
     if name == "MemSnapIconData" { return Some(RootType::Raw); }
-    if name == "sqEventInitDataLevelTbl" { return Some(RootType::Raw); }
+    if name == "sqEventInitDataLevelTbl" { return Some(RootType::Custom("eventlevels")); }
     if name == "tyModelFileTbl" { return Some(rt("ToyModelFile[]")); }
     if name == "tyModelFileUsTbl" { return Some(rt("ToyModelFile[]")); }
     if name == "tyInitModelTbl" { return Some(rt("TrophyData[]")); }
@@ -67,6 +67,11 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "tyDisplayModelUsTbl" { return Some(rt("TyDspEntry[]")); }
     if name == "gmIntroEasyTable" { return Some(RootType::Custom("rawwords")); }
     if name == "standScene" { return Some(rt("SceneDesc")); }
+    if name == "cut1CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut2CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3BgScene" { return Some(rt("SceneDesc")); }
+    if name == "ScGamRegStaffrollNames_scene_modelset" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
@@ -74,6 +79,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
     if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("ftDemo") { return Some(RootType::Raw); }
+    if name.starts_with("gmKumiteSystemTable") { return Some(RootType::Custom("kumitetable")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }

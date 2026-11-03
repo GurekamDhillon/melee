@@ -809,6 +809,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
                             "xE8" => core::mem::offset_of!(melee_types::Fighter, xE8_ground_accel_2),
                             "mv24" => core::mem::offset_of!(melee_types::Fighter, mv) + 24,
                             "mv28" => core::mem::offset_of!(melee_types::Fighter, mv) + 28,
+                            o if o.starts_with("mv") => core::mem::offset_of!(melee_types::Fighter, mv) + o[2..].parse::<usize>().unwrap_or(0),
                             _ => 0,
                         };
                         if off != 0 {

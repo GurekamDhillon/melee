@@ -229,7 +229,13 @@ pub fn GXSetDstAlpha(enable: u8, a: u8) { shim().set_dst_alpha(enable != 0, a) }
 pub fn GXSetAlphaCompare(c0: u32, r0: u8, op: u32, c1: u32, r1: u8) { shim().set_alpha_compare(c0, r0, op, c1, r1) }
 pub fn GXSetPixelFmt(pix: u32, z: u32) { shim().set_pixel_fmt(pix, z) }
 pub fn GXSetFieldMode(field: u8, half: u8) { shim().set_field_mode(field != 0, half != 0) }
-pub fn GXSetZTexture(op: u32, fmt: u32, bias: u32) { shim().set_z_texture(op, fmt, bias) }
+pub fn GXSetZTexture(op: u32, fmt: u32, bias: u32) {
+    // MELEE_GX_ZTEX_LOG=1: every Z-texture state change on stderr (the endings' depth-replace SObjs, task #33)
+    if std::env::var_os("MELEE_GX_ZTEX_LOG").is_some() {
+        eprintln!("gx: GXSetZTexture op {op} fmt {fmt} bias {bias}");
+    }
+    shim().set_z_texture(op, fmt, bias)
+}
 pub fn GXSetFog(ty: u32, start: f32, end: f32, near: f32, far: f32, c: _GXColor) { shim().set_fog(ty, start, end, near, far, col(c)) }
 pub unsafe fn GXInitFogAdjTable(table: *mut c_void, width: u16, m: *mut c_void) {
     let t = melee_gx::shim::init_fog_adj_table(width, mtx44(m));

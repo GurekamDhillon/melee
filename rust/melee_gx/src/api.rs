@@ -241,6 +241,9 @@ struct Worker {
 /// The GX: shadow registers + FIFO + the decoded state and resources it drives.
 pub struct Gx {
     worker: Option<Worker>,
+    /// The renderer's pipeline cache once one exists: the decode thread creates each frame's new pipelines before it
+    /// hands the frame over (pipeline creation was the prepare-time p99 spike).
+    pipes: std::sync::Arc<std::sync::Mutex<Option<std::sync::Arc<crate::render::PipeFactory>>>>,
     /// Async mode: the packing of the frame [`Gx::take_async_frame`] returned last, for the renderer.
     pub packed: Option<crate::render::Packed>,
     sh: Shadow,
@@ -267,6 +270,7 @@ impl Gx {
     pub fn new() -> Self {
         let mut gx = Self {
             worker: None,
+            pipes: Default::default(),
             packed: None,
             sh: Shadow::default(),
             saved: None,
@@ -348,6 +352,7 @@ impl Gx {
         let (tx, jobs) = std::sync::mpsc::channel::<Job>();
         let (ftx, frames) = std::sync::mpsc::channel::<AsyncFrame>();
         let (ptx, pool) = std::sync::mpsc::channel::<Vec<u8>>();
+        let pipes = self.pipes.clone();
         std::thread::Builder::new()
             .name("gx decode".into())
             .spawn(move || {
@@ -364,6 +369,10 @@ impl Gx {
                             if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
                             let draws = st.take_draws();
+                            let f = pipes.lock().unwrap().clone();
+                            if let Some(f) = f {
+                                f.warm(&draws);
+                            }
                             let packed = crate::render::pack(&draws);
                             let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed };
                             if ftx.send(f).is_err() {
@@ -375,6 +384,13 @@ impl Gx {
             })
             .expect("gx decode thread");
         self.worker = Some(Worker { tx, frames, pool, sent: 0, got: 0 });
+    }
+    /// Give the decode thread the renderer's pipeline cache (see `pipes`).
+    pub fn set_pipe_factory(&mut self, f: std::sync::Arc<crate::render::PipeFactory>) {
+        if std::env::var_os("MELEE_GX_NOWARM").is_some() {
+            return;
+        }
+        *self.pipes.lock().unwrap() = Some(f);
     }
     pub fn is_async(&self) -> bool {
         self.worker.is_some()

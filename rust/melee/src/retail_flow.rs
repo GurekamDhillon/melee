@@ -166,6 +166,7 @@ impl RetailPlay {
 
 impl Game for RetailPlay {
     fn tick(&mut self, pads: &mut PadSystem) {
+        let _sampled = crate::prof::Gate::enter();
         if self.quit {
             return;
         }
@@ -186,9 +187,14 @@ impl Game for RetailPlay {
         four.copy_from_slice(&st[..4]);
         let e = self.e.as_mut().unwrap();
         e.set_pads(Some(four));
-        crate::prof::gate(true);
         let entered = e.tick_modes();
-        crate::prof::gate(false);
+        // MELEE_MEM_EVERY=<ticks>: the play `mem after` line (and a heap-sampler section) every N ticks, for creep checks
+        static MEM_EVERY: std::sync::OnceLock<Option<u64>> = std::sync::OnceLock::new();
+        if let Some(n) = *MEM_EVERY.get_or_init(|| std::env::var("MELEE_MEM_EVERY").ok().and_then(|v| v.parse::<u64>().ok()).filter(|&n| n > 0)) {
+            if self.tick_no % n == 0 {
+                crate::play::mem_line(self.matches, &format!("tick {}", self.tick_no));
+            }
+        }
         if let Some(au) = self.audio.as_mut() {
             au.tick();
         }

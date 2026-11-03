@@ -476,13 +476,7 @@ impl Play {
 
     /// The process's memory (working set, private bytes) in the log: checks that match after match does not grow.
     fn frame_mem(&self, what: &str) {
-        let (ws, private) = proc_mem();
-        crate::heapprof::dump(&format!("after {} matches ({what})", self.matches_played));
-        if std::env::var_os("MELEE_ARENA_STATS").is_some() {
-            let (bumped, free, top) = melee_engine::arena::stats();
-            log(&format!("arena: bumped {} KB, on free lists {} KB, top free classes (size, blocks) {:?}", bumped >> 10, free >> 10, top));
-        }
-        log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB (live {} KB, {} allocations so far), system heap {} KB, gx data cache {:?}, archives (live, retired, raw KB, arena KB) {:?}", self.matches_played, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024, melee_engine::arena::live_bytes() / 1024, melee_engine::arena::allocations(), crate::SYS_LIVE.load(std::sync::atomic::Ordering::Relaxed) / 1024, { let (n, b) = melee_engine::gxbridge::data_cache_stats(); (n, b >> 20) }, { let (a, r, raw, c) = melee_engine::archive::stats(); (a, r, raw >> 10, c >> 10) }));
+        mem_line(self.matches_played, what);
     }
 
     fn tick_scene(&mut self) {
@@ -1632,4 +1626,16 @@ fn proc_mem() -> (usize, usize) {
 #[cfg(not(windows))]
 fn proc_mem() -> (usize, usize) {
     (0, 0)
+}
+
+/// The process's memory (working set, private bytes, arena, system heap, caches) as a `mem after` log line, with a
+/// heap-sampler section when MELEE_HEAP_SAMPLE is on. Also the retail flow's MELEE_MEM_EVERY line.
+pub(crate) fn mem_line(matches: u32, what: &str) {
+    let (ws, private) = proc_mem();
+    crate::heapprof::dump(&format!("after {matches} matches ({what})"));
+    if std::env::var_os("MELEE_ARENA_STATS").is_some() {
+        let (bumped, free, top) = melee_engine::arena::stats();
+        log(&format!("arena: bumped {} KB, on free lists {} KB, top free classes (size, blocks) {:?}", bumped >> 10, free >> 10, top));
+    }
+    log(&format!("mem after {} matches ({what}): working set {} KB, private {} KB, arena used {} KB (live {} KB, {} allocations so far), system heap {} KB, gx data cache {:?}, archives (live, retired, raw KB, arena KB) {:?}", matches, ws / 1024, private / 1024, melee_engine::arena::used_range().1 / 1024, melee_engine::arena::live_bytes() / 1024, melee_engine::arena::allocations(), crate::SYS_LIVE.load(std::sync::atomic::Ordering::Relaxed) / 1024, { let (n, b) = melee_engine::gxbridge::data_cache_stats(); (n, b >> 20) }, { let (a, r, raw, c) = melee_engine::archive::stats(); (a, r, raw >> 10, c >> 10) }));
 }

@@ -190,6 +190,23 @@ mod imp {
             for (n, c) in v.iter().take(120) {
                 rep += &format!("{:6.2}% {:7} {}\n", *c as f64 * 100.0 / total as f64, c, n);
             }
+            // MELEE_SAMPLE_STACKS=<leaf substring>: the commonest call stacks (innermost 10 frames) of samples whose
+            // innermost frame matches, to see who calls a hot leaf such as memmove
+            if let Ok(leaf) = std::env::var("MELEE_SAMPLE_STACKS") {
+                let mut st: HashMap<Vec<&str>, usize> = HashMap::new();
+                for s in data.iter().filter(|s| names[&s[0]].contains(&leaf)) {
+                    *st.entry(s.iter().take(10).map(|a| names[a].as_str()).collect()).or_default() += 1;
+                }
+                let mut v: Vec<_> = st.into_iter().collect();
+                v.sort_by(|a, b| b.1.cmp(&a.1));
+                rep += &format!("
+== stacks ending in {leaf} ==
+");
+                for (k, c) in v.iter().take(15) {
+                    rep += &format!("{c:6}  {}
+", k.join(" <- "));
+                }
+            }
             match std::fs::write(&self.out, rep) {
                 Ok(()) => eprintln!("prof: {total} samples -> {}", self.out),
                 Err(e) => eprintln!("prof: {}: {e}", self.out),
@@ -209,6 +226,20 @@ static IN_GATE: AtomicBool = AtomicBool::new(false);
 /// Turn gating on (samples are then taken only inside [`gate`] regions).
 pub fn set_gated(on: bool) {
     GATED.store(on, Ordering::Relaxed);
+}
+
+/// A sampled region for the guard's lifetime (every return path of a tick).
+pub struct Gate;
+impl Gate {
+    pub fn enter() -> Gate {
+        gate(true);
+        Gate
+    }
+}
+impl Drop for Gate {
+    fn drop(&mut self) {
+        gate(false);
+    }
 }
 
 /// Enter / leave a sampled region (cheap: one atomic store).

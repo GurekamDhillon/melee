@@ -155,7 +155,11 @@ impl Gcm {
 
 fn read_at(f: Option<&mut std::fs::File>, off: u64, n: usize) -> Result<Vec<u8>, String> {
     let f = f.ok_or_else(|| "no disc".to_string())?;
-    let mut v = vec![0; n];
-    f.seek(SeekFrom::Start(off)).and_then(|_| f.read_exact(&mut v)).map_err(|e| format!("disc read @{off:#x}: {e}"))?;
+    // Not zeroed first: the read fills it (the zeroing was ~5% of the boot tick, first-touch page faults included).
+    let mut v = Vec::with_capacity(n);
+    f.seek(SeekFrom::Start(off)).and_then(|_| (&mut *f).take(n as u64).read_to_end(&mut v)).map_err(|e| format!("disc read @{off:#x}: {e}"))?;
+    if v.len() != n {
+        return Err(format!("disc read @{off:#x}: short read ({} of {n} bytes)", v.len()));
+    }
     Ok(v)
 }

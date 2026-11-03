@@ -41,7 +41,7 @@ pub mod ext {
         MEX_ON_ZAIR Mex_OnZairDispatch(kind: i32, g: G);
         CHANGE_MOTION Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G);
         FTCO_800968C8 ftCo_800968C8(g: G);
-        IT_802A2BA4 it_802A2BA4(g: G, pos: &mut Vec3, facing: f32, x: f32) -> *mut Item_GObj;
+        IT_802A2BA4 it_802A2BA4(g: G, pos: &mut Vec3, facing: f32, x: i32) -> *mut Item_GObj;
         IT_802A2B10 it_802A2B10(item: *mut Item_GObj);
         IT_802A78B8 it_802A78B8(item: *mut Item_GObj, pos: &mut Vec3);
         IT_802A77DC it_802A77DC(item: *mut Item_GObj);
@@ -189,7 +189,7 @@ pub fn ftco_aircatch_anim(g: G) {
             let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
             let b = crate::ftdmgfall::ftparts_get_bone_index(f, FtPart_RThumbNb as i32);
             ss::lb_8000B1CC(unsafe { (*f.parts.offset(b as isize)).joint }, None, &mut pos);
-            let it = ext::it_802A2BA4(g, &mut pos, f.facing_dir, da.xBC as f32);
+            let it = ext::it_802A2BA4(g, &mut pos, f.facing_dir, da.xBC as i32);
             f.u.lk.xC = it;
             if it.is_null() {
                 ext::ftCo_800968C8(g);

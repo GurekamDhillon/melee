@@ -46,6 +46,15 @@ pub struct ShaderConfig {
     pub alpha_compare: AlphaCompare,
     pub ind_stages: [IndStage; MAX_IND_STAGES],
     pub num_ind_stages: u32,
+    /// GXSetZTexture when it reaches the depth: `op | fmt << 2 | bias << 8` (0: off). Only set with a late depth test
+    /// (GXSetZCompLoc(GX_FALSE)) and z compare on: an early test resolves depth before texturing, so the hardware
+    /// never sees the texel (HSD_EraseRect's depth pass); a disabled test writes no depth.
+    pub ztex: u32,
+}
+impl ShaderConfig {
+    fn ztex_stage(&self) -> Option<usize> {
+        (self.ztex & 3 != 0 && self.tev_stage_count > 0).then(|| self.tev_stage_count as usize - 1)
+    }
 }
 impl Default for ShaderConfig {
     fn default() -> Self {
@@ -64,6 +73,7 @@ impl Default for ShaderConfig {
             alpha_compare: AlphaCompare::default(),
             ind_stages: [IndStage::default(); MAX_IND_STAGES],
             num_ind_stages: 0,
+            ztex: 0,
         }
     }
 }
@@ -242,6 +252,12 @@ pub fn populate_pipeline_config(st: &GxState, primitive: u32, fmt: u32) -> Pipel
     if st.alpha_compare.enabled() {
         sc.alpha_compare = st.alpha_compare;
     }
+    if st.ztex_op != 0 && st.depth_compare && !st.z_comp_loc_before_tex && st.num_tev_stages > 0 {
+        let last = &st.tev_stages[st.num_tev_stages as usize - 1];
+        if last.tex_map_id != GX_TEXMAP_NULL && last.tex_coord_id != GX_TEXCOORD_NULL {
+            sc.ztex = st.ztex_op | (st.ztex_fmt << 2) | ((st.ztex_bias & 0xFF_FFFF) << 8);
+        }
+    }
     let cull = if sc.line_mode == 0 { st.cull_mode } else { GX_CULL_NONE };
     let (po, ps) = if cull == GX_CULL_FRONT { (st.back_offset, st.back_scale) } else { (st.front_offset, st.front_scale) };
     PipelineConfig {
@@ -376,6 +392,12 @@ pub fn build_shader_info(c: &ShaderConfig) -> ShaderInfo {
             info.loads_tev_reg |= 1 << s.alpha_op.out_reg;
             info.writes_tev_reg |= 1 << s.alpha_op.out_reg;
         }
+    }
+    if let Some(i) = c.ztex_stage() {
+        // the Z texture is the last TEV stage's texel, read whatever the stage's colour inputs are
+        let s = &c.tev_stages[i];
+        info.sampled_tex_coords |= 1 << s.tex_coord_id;
+        info.sampled_textures |= 1 << s.tex_map_id;
     }
     for s in &c.tev_stages[..c.tev_stage_count as usize] {
         if s.ind_tex_stage >= c.num_ind_stages {
@@ -1583,7 +1605,7 @@ pub fn build_shader_source(c: &ShaderConfig, normal_attachment: u32) -> String {
         let has_ind_stage = s.ind_tex_stage < c.num_ind_stages;
         let needs_tev_tc =
             needs_ind_coord || s.ind_tex_wrap_s != GX_ITW_OFF || s.ind_tex_wrap_t != GX_ITW_OFF || s.ind_tex_add_prev;
-        let needs_sample = uses_texture_sample(s);
+        let needs_sample = uses_texture_sample(s) || c.ztex_stage() == Some(i);
         if !needs_tev_tc && !needs_sample {
             continue;
         }
@@ -1778,7 +1800,32 @@ pub fn build_shader_source(c: &ShaderConfig, normal_attachment: u32) -> String {
     let mut frag_output = String::new();
     let mut frag_out_type = "@location(0) vec4f";
     let mut frag_ret = "\n    return prev;".to_string();
-    if normal_attachment != u32::MAX {
+    // GXSetZTexture: z = (texel . zbias + bias [+ the rasterised z]) & 0xFFFFFF on the 24-bit EFB scale, from the
+    // last stage's texel bytes (Z8: A; Z16: A high, R low; Z24X8: R, G, B high to low)
+    let ztex = c.ztex_stage().map(|i| {
+        let (op, fmt, bias) = (c.ztex & 3, (c.ztex >> 2) & 3, c.ztex >> 8);
+        let w = match fmt {
+            0 => "vec4u(0u, 0u, 0u, 1u)",
+            1 => "vec4u(1u, 0u, 0u, 256u)",
+            _ => "vec4u(65536u, 256u, 1u, 0u)",
+        };
+        let raster = if USE_REVERSED_Z { "(1.0 - in.pos.z)" } else { "in.pos.z" };
+        let add = if op == 1 { " + zRaster" } else { "" };
+        let out = if USE_REVERSED_Z { "1.0 - f32(zCoord) / 16777215.0" } else { "f32(zCoord) / 16777215.0" };
+        format!(
+            "\n    // Z texture\n    let zRaster = u32(clamp(round({raster} * 16777215.0), 0.0, 16777215.0));\n    let zTexel = vec4u(round(clamp(sampled{i}, vec4f(0.0), vec4f(1.0)) * 255.0));\n    let zw = {w};\n    let zCoord = (zTexel.x * zw.x + zTexel.y * zw.y + zTexel.z * zw.z + zTexel.w * zw.w + {bias}u{add}) & 0xFFFFFFu;\n    out.depth = {out};"
+        )
+    });
+    if let Some(z) = &ztex {
+        let nrm = if normal_attachment != u32::MAX { format!("\n    @location({normal_attachment}) normal: vec4f,") } else { String::new() };
+        frag_output = format!("\nstruct FragmentOutput {{\n    @location(0) color: vec4f,{nrm}\n    @builtin(frag_depth) depth: f32,\n}};\n");
+        frag_out_type = "FragmentOutput";
+        frag_ret = format!("\n    var out: FragmentOutput;\n    out.color = prev;{z}");
+        if normal_attachment != u32::MAX {
+            frag_ret += "\n    out.normal = vec4f(0.5, 0.5, 0.5, 0.0);";
+        }
+        frag_ret += "\n    return out;";
+    } else if normal_attachment != u32::MAX {
         frag_output = format!(
             "\nstruct FragmentOutput {{\n    @location(0) color: vec4f,\n    @location({normal_attachment}) normal: vec4f,\n}};\n"
         );

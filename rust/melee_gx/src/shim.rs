@@ -712,8 +712,7 @@ impl GxShim {
         self.gx.set_tev_order(stage, coord, map, color);
     }
     fwd!(set_alpha_compare => set_alpha_compare(comp0: u32, ref0: u8, op: u32, comp1: u32, ref1: u8));
-    /// Aurora's GXSetZTexture is a TODO no-op.
-    pub fn set_z_texture(&mut self, _op: u32, _fmt: u32, _bias: u32) {}
+    fwd!(set_z_texture => set_z_texture(op: u32, fmt: u32, bias: u32));
     pub fn set_tev_direct(&mut self, stage: u32) {
         if (stage as usize) < GW_GX_TEV_MAX {
             let i = stage as usize;

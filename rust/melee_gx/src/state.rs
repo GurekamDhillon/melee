@@ -450,6 +450,10 @@ pub struct GxState {
     pub pixel_fmt: u32,
     pub z_fmt: u32,
     pub z_comp_loc_before_tex: bool,
+    /// GXSetZTexture (BP 0xF4 / 0xF5): op (0 disable, 1 add, 2 replace), texel format (0 Z8, 1 Z16, 2 Z24X8), bias.
+    pub ztex_op: u32,
+    pub ztex_fmt: u32,
+    pub ztex_bias: u32,
     /// u8 alpha, or u32::MAX when disabled.
     pub dst_alpha: u32,
     pub alpha_compare: AlphaCompare,
@@ -537,6 +541,9 @@ impl Default for GxState {
             pixel_fmt: GX_PF_RGB8_Z24,
             z_fmt: GX_ZC_LINEAR,
             z_comp_loc_before_tex: false,
+            ztex_op: 0,
+            ztex_fmt: 0,
+            ztex_bias: 0,
             dst_alpha: 0,
             alpha_compare: AlphaCompare::default(),
             color_regs: [[0.0; 4]; MAX_TEV_REGS],
@@ -1153,6 +1160,11 @@ impl GxState {
                 ac.comp0 = reg_get(value, 3, 16);
                 ac.comp1 = reg_get(value, 3, 19);
                 ac.op = reg_get(value, 2, 22);
+            }
+            0xF4 => self.ztex_bias = reg_get(value, 24, 0),
+            0xF5 => {
+                self.ztex_fmt = reg_get(value, 2, 0);
+                self.ztex_op = reg_get(value, 2, 2);
             }
             0xF6..=0xFD => self.bp_ksel(reg, value),
             _ => {}

@@ -1512,6 +1512,18 @@ impl Gx {
         self.write_ras_reg(v);
         self.sh.bp_sent = 1;
     }
+    /// `GXSetZTexture`: BP 0xF4 holds the 24-bit bias, 0xF5 the texel format (0 Z8, 1 Z16, 2 Z24X8) and the op
+    /// (bits 2-3: 0 disable, 1 add, 2 replace), as the SDK writes them.
+    pub fn set_z_texture(&mut self, op: u32, fmt: u32, bias: u32) {
+        let zfmt = match fmt {
+            GX_TF_Z8 => 0,
+            GX_TF_Z16 => 1,
+            _ => 2,
+        };
+        self.write_ras_reg((0xF4 << 24) | (bias & 0xFF_FFFF));
+        self.write_ras_reg((0xF5 << 24) | zfmt | ((op & 3) << 2));
+        self.sh.bp_sent = 1;
+    }
     pub fn set_z_comp_loc(&mut self, before_tex: bool) {
         set_field(&mut self.sh.pe_ctrl, 1, 6, before_tex as u32);
         let v = self.sh.pe_ctrl;

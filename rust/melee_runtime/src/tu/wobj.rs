@@ -77,10 +77,10 @@ pub unsafe fn native_mtx_mult_vec(m: *mut [f32; 4], src: *mut Vec3, dst: *mut Ve
     let v = crate::mtx::mult_vec(m, &melee_core::vec::Vec3 { x: (*src).x, y: (*src).y, z: (*src).z });
     *dst = Vec3 { x: v.x, y: v.y, z: v.z };
 }
-/// TODO: `splArcLengthPoint` (spline.c) has no native-pointer port yet.
-pub unsafe fn native_spline_point(_: *mut Vec3, _: *mut HSD_Spline, _: f32) {
+/// `splArcLengthPoint` (spline.c): the native-pointer port in `spline_world` (the link layer installs the same).
+pub unsafe fn native_spline_point(p: *mut Vec3, s: *mut HSD_Spline, len: f32) {
     melee_core::ct!("native_spline_point");
-    todo!("splArcLengthPoint (spline.c)")
+    super::spline_world::splArcLengthPoint(p as _, s as _, len)
 }
 
 /// jobj.h `HSD_JObjSetupMatrix` (inline): rebuild when dirty and not user-defined.

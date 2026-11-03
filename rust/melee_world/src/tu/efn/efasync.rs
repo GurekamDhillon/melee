@@ -1602,7 +1602,12 @@ pub unsafe extern "C" fn efAsync_MexResolve(mut gobj: *mut HSD_GObj, mut gfx_id:
     *final_id = (bank * 1000) + int_id;
     *owner = gobj;
     {
-        let _ = ext::sprintf(efAsync_MexResolve_buf.as_mut_ptr(), (c"drawn as bank %d (%s) %s %d, behaviour %d, in motion %d".as_ptr() as *mut i8) as *const i8, &[(bank) as isize as *const c_void, efAsync_DatEntries[bank as usize].ef_DAT_file as *const c_void, if (*is_ptcl) != 0 { c"generator".as_ptr() as *mut i8 } else { c"model".as_ptr() as *mut i8 } as *const c_void, (int_id) as isize as *const c_void, (r#type) as isize as *const c_void, ((*fp).motion_id) as isize as *const c_void]);
+        // the C's sprintf of the diagnostic line (efAsync_MexMiss logs it once per key)
+        let file = if efAsync_DatEntries[bank as usize].ef_DAT_file.is_null() { std::borrow::Cow::Borrowed("(null)") } else { core::ffi::CStr::from_ptr(efAsync_DatEntries[bank as usize].ef_DAT_file as *const core::ffi::c_char).to_string_lossy() };
+        let line = format!("drawn as bank {} ({}) {} {}, behaviour {}, in motion {}", bank, file, if *is_ptcl != 0 { "generator" } else { "model" }, int_id, r#type, (*fp).motion_id);
+        let n = line.len().min(127);
+        for (k, b) in line.bytes().take(n).enumerate() { efAsync_MexResolve_buf[k] = b as i8; }
+        efAsync_MexResolve_buf[n] = 0;
         efAsync_MexMiss(kind, gfx_id + 100000, (efAsync_MexResolve_buf.as_mut_ptr()) as *const i8);
     }
     return r#type;

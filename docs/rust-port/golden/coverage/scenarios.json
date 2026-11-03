@@ -1687,6 +1687,54 @@
     "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
    },
    "note": "Geno's LAB mode (GM_LAB 0x2F) by scene: CPU9 Kirby and Fox with the geno-cov profiles, LAB rules (no timer, no stocks, respawn)"
+  },
+  "mex_ace_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/none"
+   },
+   "note": "ACE disc (m-ex MxDt.dat, no mods): CPU9 Kirby vs Fox, FD. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_halberd_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=mexint:52/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/halberd"
+   },
+   "note": "Halberd (Brawl Meta Knight, metaknight-slot, m-ex internal 52) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_ukirby_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=ultimatekirby/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/ukirby"
+   },
+   "note": "Ultimate Kirby (ultimate-kirby-slot, internal 52) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_sora_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/sora"
+   },
+   "note": "Sora (ultimate-trail-slot, installed name Ultimate Sora, internal 52) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
   }
  },
  "batches": {

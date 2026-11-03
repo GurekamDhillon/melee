@@ -675,6 +675,60 @@ pub fn ftData_PcInstallRows(fk: i32, native: i32, have: i32, native_at: StringAt
     }
 }
 
+
+/// The value `ftData_MexInitKinds` would install from m-ex `fighter_function` slot `idx` for retail kind `fk`
+/// (0..=26): the native table entry as a pointer. The host's m-ex bridge maps a vanilla guest address that MxDt.dat gives
+/// a retail row to the native function of that row (gw_mex_bridge_lookup's role). Null for a slot the port does not fill.
+pub fn ftData_MexRetailSlot(idx: i32, fk: usize) -> *mut c_void {
+    if fk >= KMAX {
+        return core::ptr::null_mut();
+    }
+    // SAFETY: every table element is a (nullable) pointer-sized fn or data pointer.
+    unsafe {
+        match idx {
+            0 => core::mem::transmute_copy(&ftData_OnLoad[fk]),
+            1 => core::mem::transmute_copy(&ftData_OnDeath[fk]),
+            2 => core::mem::transmute_copy(&ftData_OnUserDataRemove[fk]),
+            3 => core::mem::transmute_copy(&ftData_CharacterStateTables[fk]),
+            4 => core::mem::transmute_copy(&ftData_SpecialN[fk]),
+            5 => core::mem::transmute_copy(&ftData_SpecialAirN[fk]),
+            6 => core::mem::transmute_copy(&ftData_SpecialS[fk]),
+            7 => core::mem::transmute_copy(&ftData_SpecialAirS[fk]),
+            8 => core::mem::transmute_copy(&ftData_SpecialHi[fk]),
+            9 => core::mem::transmute_copy(&ftData_SpecialAirHi[fk]),
+            10 => core::mem::transmute_copy(&ftData_SpecialLw[fk]),
+            11 => core::mem::transmute_copy(&ftData_SpecialAirLw[fk]),
+            12 => core::mem::transmute_copy(&ftData_OnAbsorb[fk]),
+            13 => core::mem::transmute_copy(&ftData_OnItemPickupExt[fk]),
+            14 => core::mem::transmute_copy(&ftData_OnItemInvisible[fk]),
+            15 => core::mem::transmute_copy(&ftData_OnItemVisible[fk]),
+            16 => core::mem::transmute_copy(&ftData_OnItemDropExt[fk]),
+            17 => core::mem::transmute_copy(&ftData_OnItemPickup[fk]),
+            18 => core::mem::transmute_copy(&ftData_OnItemDrop[fk]),
+            19 => core::mem::transmute_copy(&ftData_UnkMotionStates1[fk]),
+            20 => core::mem::transmute_copy(&ftData_UnkMotionStates2[fk]),
+            21 => core::mem::transmute_copy(&ftData_OnKnockbackEnter[fk]),
+            22 => core::mem::transmute_copy(&ftData_OnKnockbackExit[fk]),
+            23 => core::mem::transmute_copy(&ftData_UnkMotionStates3[fk]),
+            24 => core::mem::transmute_copy(&ftData_UnkMotionStates4[fk]),
+            25 => core::mem::transmute_copy(&ftKindCalcIndiviParamTable[fk]),
+            26 => core::mem::transmute_copy(&ftData_UnkMtxFunc0[fk]),
+            38 => core::mem::transmute_copy(&ftData_803C24EC[fk]),
+            39 => core::mem::transmute_copy(&ftData_UnkDemoCallbacks0[fk]),
+            40 => core::mem::transmute_copy(&ftData_UnkMotionStates0[fk]),
+            _ => core::ptr::null_mut(),
+        }
+    }
+}
+
+/// Per m-ex kind: the class of each main / demo motion row of its Pl file (1 real, 2 hole), found on the raw image by
+/// the archive decoder (ftData_MexMotionRowOk's walk); the list stops at the first row that is neither.
+pub static mut MEX_MOTION_ROWS: std::collections::BTreeMap<usize, (std::vec::Vec<u8>, std::vec::Vec<u8>)> = std::collections::BTreeMap::new();
+
+/// The kind whose Pl file `ftData_8008572C` is loading (-1 otherwise): an m-ex fighter's file may name its data with
+/// its clone base's symbol (Halberd's PlBm.dat has `ftDataKirby`), so the archive decoder cannot tell the kind by name.
+pub static mut FTDATA_LOADING_KIND: i32 = -1;
+
 static mut MEX_INIT_DONE: bool = false;
 
 /// Fill `table[fk]` from m-ex slot `idx`, or the clone base's row when m-ex left it empty.
@@ -891,61 +945,45 @@ pub fn ftData_8008572C(kind: i32) {
     unsafe {
         if gFtDataList[k].is_null() {
             let mut ar: *mut HSD_Archive = core::ptr::null_mut();
+            FTDATA_LOADING_KIND = kind;
             ext::lbArchive_80017040_ftdata(&mut ar, ftData_803C1F40[k].a, &mut gFtDataList[k], ftData_803C1F40[k].b);
+            FTDATA_LOADING_KIND = -1;
             if ftData_IsMexKind(kind) {
                 report(format!("gw: ftData_8008572C kind={kind} file={} sym={}\n",
                                cstr(ftData_803C1F40[k].a), cstr(ftData_803C1F40[k].b)));
                 let fd = gFtDataList[k];
-                let row_sz = core::mem::size_of::<Fighter_WaitAnimData>();
-                let arch_lo = (*ar).data;
-                let arch_hi = arch_lo.add((*ar).header.data_size as usize);
+                // the row classes the decoder found on the raw image (dat_custom mex_motion_rows: the C's
+                // ftData_MexMotionRowOk bounds are archive addresses, which native rows do not have)
+                let (main, demo) = MEX_MOTION_ROWS.get(&k).cloned().unwrap_or_default();
                 {
-                    let tab_lo = (*fd).xC as *mut u8;
-                    let tab_hi = table_bound(fd, tab_lo, arch_lo, arch_hi);
-                    let (mut n_main, mut n_holes) = (0, 0);
                     let cnt = ftData_Table_Unk0[k].count;
-                    let mut i = 0;
-                    while i < cnt {
-                        let row = (*fd).xC.add(i as usize);
-                        let entry = row as *mut u8;
-                        if entry < arch_lo || entry.add(row_sz) > tab_hi {
-                            break;
+                    let (mut n_main, mut n_holes) = (0, 0);
+                    for (i, &c) in main.iter().enumerate() {
+                        if c == 2 {
+                            n_holes += 1;
+                            continue;
                         }
-                        if !ftData_MexMotionRowOk(&*row, arch_lo, arch_hi) {
-                            if (*row).x0.is_null() && (*row).xC.is_null() && (*row).x4 == 0 && (*row).x8 == 0 {
-                                n_holes += 1;
-                                i += 1;
-                                continue;
-                            }
-                            break;
-                        }
+                        let row = (*fd).xC.add(i);
                         (*row).x10_animCurrFlags = ftData_MexAnimFlags((*row).x10_animCurrFlags as u32, kind) as i32;
                         n_main += 1;
-                        i += 1;
                     }
                     if n_main + n_holes != cnt {
-                        report(format!("gw: kind {kind}: motion table ends after {} entries (the base has {cnt}); the rest keep their authored flags\n", n_main + n_holes));
+                        report(format!("gw: kind {kind}: motion table ends after {} entries (the base has {cnt}); the rest keep their authored flags
+", n_main + n_holes));
                     }
-                    report(format!("gw: kind {kind}: {n_main} motion rows rewritten, {n_holes} empty rows skipped\n"));
+                    report(format!("gw: kind {kind}: {n_main} motion rows rewritten, {n_holes} empty rows skipped
+"));
                 }
                 if !(*fd).x14.is_null() {
-                    let demo_lo = (*fd).x14 as *mut u8;
-                    let demo_hi = table_bound(fd, demo_lo, arch_lo, arch_hi);
-                    let mut n_demo = 0;
                     let cnt = ftData_UnkIntPairs[k].count;
-                    for i in 0..cnt.max(0) as usize {
+                    let n_demo = demo.len() as i32;
+                    for i in 0..n_demo as usize {
                         let row = (*fd).x14.add(i);
-                        let entry = row as *mut u8;
-                        if entry < arch_lo || entry.add(row_sz) > arch_hi || entry.add(row_sz) > demo_hi
-                            || !ftData_MexMotionRowOk(&*row, arch_lo, arch_hi)
-                        {
-                            break;
-                        }
                         (*row).x10_animCurrFlags = ftData_MexAnimFlags((*row).x10_animCurrFlags as u32, kind) as i32;
-                        n_demo += 1;
                     }
                     if n_demo != cnt {
-                        report(format!("gw: kind {kind} has {n_demo} demo motions, not the base's {cnt}\n"));
+                        report(format!("gw: kind {kind} has {n_demo} demo motions, not the base's {cnt}
+"));
                         ftData_UnkIntPairs[k].count = n_demo;
                     }
                 }

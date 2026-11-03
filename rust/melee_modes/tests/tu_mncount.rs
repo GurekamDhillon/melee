@@ -292,7 +292,9 @@ fn mncount_vs_c() {
         ("HSD_Free", ext::HSD_Free as usize),
     ];
     let _ = (&mut fn_table, null_mut::<c_void>());
-    run_tu(&TuOracle { tu: "mncount", funcs: &funcs, globals: tu::oracle_globals(), fn_table });
+    // the C oracle defines these externs zero-initialised; the re-exported owners (mnmain, gobj) carry their own initialisers
+    for g in tu::oracle_globals_ext() { unsafe { core::ptr::write_bytes(g.addr, 0, g.size) } }
+    run_tu(&TuOracle { tu: "mncount", funcs: &funcs, globals: tu::oracle_globals().into_iter().chain(tu::oracle_globals_ext()).collect(), fn_table });
 }
 
 fn b_ud_gobj_row(c: &mut Case) {

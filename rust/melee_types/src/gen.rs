@@ -67751,7 +67751,7 @@ impl GcDecode for UnkStageDat {
         v.unk1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
         { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x24) as i64)).max(0) as usize; v.unk20 = d.ptr_array::<GroundShadowEntry>(at + 0x20, n) as *mut GroundShadowEntry; }
         v.unk24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
-        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x2C) as i64)).max(0) as usize; v.unk28 = d.ptr_array::<*mut UnkStageDatInternal>(at + 0x28, n) as *mut *mut UnkStageDatInternal; }
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x2C) as i64)).max(0) as usize; v.unk28 = d.ptr_array::<*mut HSD_MObjDesc>(at + 0x28, n) as *mut *mut UnkStageDatInternal; }
         v.unk2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v
     }

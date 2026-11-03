@@ -76,7 +76,7 @@ def load_array_fields():
         for ln in open(path, encoding="utf8"):
             ln = ln.split("#", 1)[0].strip()
             if ln:
-                parts = ln.split()
+                parts = [p.strip() for p in ln.split("	") if p.strip()]
                 out[parts[0]] = (parts[1], parts[2] if len(parts) > 2 else None)
     return out
 ARRAY_FIELDS = load_array_fields()

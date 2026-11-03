@@ -224,6 +224,8 @@ impl Build {
             .warnings(false) // Suppress all warnings
             .flag_if_supported("-fno-common") // Compile common globals like normal definitions
             .add_files_by_ext(&source_dir, "c")?
+            // Geno fighter Lua's closure scan (melee_script::geno::lua): needs lobject.h / lopcodes.h of these sources
+            .file(manifest_dir.join("extra").join("geno_lua_scan.c"))
             .out_dir(&lib_dir)
             .try_compile(&lua_lib)?;
 

@@ -137,9 +137,20 @@ impl Scenario {
                     }
                     let mut it = v.split('/');
                     let name = it.next().unwrap();
+                    // gw_sl_parse_char: ck:N, then a Geno define by key or name ("geno:<key>" names only a define), then
+                    // a retail name
                     let ck = match name.strip_prefix("ck:") {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
-                        None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
+                        None => {
+                            let g = crate::geno_host::DefineResolve(name.strip_prefix("geno:").unwrap_or(name));
+                            if g >= 0 {
+                                g
+                            } else if name.starts_with("geno:") {
+                                return Err(format!("no Geno define {name} is mounted"));
+                            } else {
+                                ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?
+                            }
+                        }
                     };
                     // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
                     // teamN, stocksN, hmpN, cN (color)

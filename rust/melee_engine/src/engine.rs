@@ -247,6 +247,7 @@ impl Engine {
                 crate::gxbridge_gen::install_gx();
             }
             crate::geno_host::install();
+            crate::geno_host::install_define();
             crate::geno_host::install_callees();
             melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid = Some(|a, b| (a != 0 && b != 0 && a.checked_add(b).is_some() && a & 3 == 0) as i32);
             crate::seams_gen::install_gen();

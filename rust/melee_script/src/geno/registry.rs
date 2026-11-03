@@ -65,7 +65,7 @@ pub trait Env {
 pub struct NoEnv;
 impl Env for NoEnv {}
 
-const VANILLA: [(&str, &str, Option<&str>); 27] = [
+pub(super) const VANILLA: [(&str, &str, Option<&str>); 27] = [
     ("Mr", "mario", None),
     ("Fx", "fox", None),
     ("Ca", "captain", Some("falcon")),
@@ -96,7 +96,7 @@ const VANILLA: [(&str, &str, Option<&str>); 27] = [
 ];
 
 /// snprintf into a char[cap]: at most cap-1 bytes.
-fn cap(s: &str, n: usize) -> String {
+pub(super) fn cap(s: &str, n: usize) -> String {
     if s.len() < n {
         return s.to_string();
     }
@@ -107,7 +107,7 @@ fn cap(s: &str, n: usize) -> String {
     s[..e].to_string()
 }
 
-fn eq_ic(a: &str, b: &str) -> bool {
+pub(super) fn eq_ic(a: &str, b: &str) -> bool {
     a.eq_ignore_ascii_case(b)
 }
 
@@ -128,7 +128,7 @@ pub fn target_file(t: &str) -> String {
     String::new()
 }
 
-fn fbits(v: f64) -> u32 {
+pub(super) fn fbits(v: f64) -> u32 {
     (v as f32).to_bits()
 }
 
@@ -227,7 +227,7 @@ pub fn param_find(family: &str, name: &str) -> i32 {
 }
 
 // ---- hashing ----
-fn mix(mut h: u64, v: u64) -> u64 {
+pub(super) fn mix(mut h: u64, v: u64) -> u64 {
     h ^= v;
     h = h.wrapping_mul(0x9E37_79B9_7F4A_7C15);
     h ^= h >> 31;
@@ -287,7 +287,6 @@ pub fn cmd_words(w0: u32) -> usize {
     }
 }
 
-#[derive(Clone)]
 pub struct Profile {
     pub id: u64,
     pub hex: String,
@@ -359,6 +358,8 @@ pub struct Profile {
     pub art_sym: Vec<String>,
     pub toon_on: bool,
     pub toon: [f32; 16],
+    /// The native define half (geno_define_registry.inc and its slices); `define::Def::default()` for an attach entry.
+    pub def: super::define::Def,
 }
 
 impl Profile {
@@ -434,12 +435,15 @@ impl Profile {
             art_sym: vec![String::new(); MAX_ARTICLES],
             toon_on: false,
             toon: [0.0; 16],
+            def: super::define::Def::default(),
         })
     }
 }
 
 pub struct Registry {
     pub p: Vec<Box<Profile>>,
+    /// The define catalogue (GdfCatalog): rows by (mod, key), the profile and resident alias of each.
+    pub definitions: super::define::Catalog,
     pub files: i32,
     pub kind_profile: Vec<i32>,
     pub kinds_built: bool,
@@ -455,6 +459,7 @@ impl Default for Registry {
     fn default() -> Self {
         Registry {
             p: Vec::new(),
+            definitions: Default::default(),
             files: 0,
             kind_profile: vec![-1; GN_KINDS],
             kinds_built: false,
@@ -470,7 +475,7 @@ impl Default for Registry {
 // ---- target / word helpers (take the doc) ----
 
 /// A geno.json target: a number (motion id), "motion:N", "special:N", "geno:N" or (v2) "geno:<state name>".
-fn target_p(d: &Doc, x: i32, p: Option<&Profile>) -> Option<u32> {
+pub(super) fn target_p(d: &Doc, x: i32, p: Option<&Profile>) -> Option<u32> {
     if x < 0 {
         return None;
     }
@@ -520,7 +525,7 @@ fn target_p(d: &Doc, x: i32, p: Option<&Profile>) -> Option<u32> {
     Some(target(kind, id as u32))
 }
 
-fn move_tag(d: &Doc, obj: i32) -> i32 {
+pub(super) fn move_tag(d: &Doc, obj: i32) -> i32 {
     const NAMES: [&str; 10] = ["", "jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"];
     let v = d.get(obj, "move_tag");
     if !d.is(v, Ty::Str) {
@@ -600,7 +605,7 @@ impl Registry {
         self.p.len()
     }
 
-    fn logf(&mut self, s: String) {
+    pub(super) fn logf(&mut self, s: String) {
         self.log.push(s);
     }
 
@@ -743,7 +748,36 @@ impl Registry {
                 }
                 self.pool.push(0);
                 n += 1;
-                self.slot_rel.push(false);
+                if p.defined {
+                    // A define's overlay has no absolute pointers: a Subroutine (5) or Goto (7) operand is the word index,
+                    // inside this overlay, of its target, and every target must be a command boundary.
+                    let mut isb = vec![false; n + 1];
+                    let mut q = 0;
+                    while q < n {
+                        isb[q] = true;
+                        q += cmd_words(self.pool[start + q]);
+                    }
+                    let mut bad = false;
+                    q = 0;
+                    while q < n {
+                        let op = self.pool[start + q] >> 26;
+                        if (op == 5 || op == 7)
+                            && (q + 1 >= n || self.pool[start + q + 1] as usize >= n || !isb[self.pool[start + q + 1] as usize])
+                        {
+                            bad = true;
+                        }
+                        q += cmd_words(self.pool[start + q]);
+                    }
+                    if bad {
+                        self.logf(format!(
+                            "geno: {where_}: subaction {}: a Subroutine or Goto operand is not a command inside the overlay - ignored",
+                            d.n[ix as usize].num as i32
+                        ));
+                        self.pool.truncate(start);
+                        continue;
+                    }
+                }
+                self.slot_rel.push(p.defined);
                 p.ov_anim.push(d.n[ix as usize].num as i32);
                 p.ov_tag.push(move_tag(d, c));
                 p.ov_slot.push(self.slot_off.len() as i32);
@@ -1343,7 +1377,7 @@ impl Registry {
     }
 
     // ---- one fighters[] entry ----
-    fn add_fighter(&mut self, d: &Doc, e: i32, mod_id: &str, where_: &str, _version: i32, env: &dyn Env) {
+    fn add_fighter(&mut self, d: &Doc, e: i32, mod_id: &str, where_: &str, version: i32, env: &dyn Env) {
         const EV_NAMES: [&str; 5] = ["on_init", "on_frame", "on_action", "on_land", "on_hit"];
         let pool_before = self.pool.len();
         let slots_before = self.slot_off.len();
@@ -1361,23 +1395,28 @@ impl Registry {
             self.logf(format!("geno: {where_}: profile allocation/id space exhausted - refused"));
             return;
         }
-        if is_define {
-            self.logf(format!("geno: {where_}: native define entries are not supported by the Rust port yet - skipped"));
-            return;
-        }
         let mut p = Profile::new();
         p.mod_id = cap(mod_id, 64);
-        p.target = cap(&d.text(x), 64);
-        p.plfile = target_file(&p.target);
-        if p.plfile.is_empty() {
-            self.logf(format!("geno: {where_}: unknown attach target - refused"));
-            return;
+        if is_define {
+            if !self.define_parse(&mut p, d, e, version, where_) {
+                return;
+            }
+            p.target = cap(&p.def.define_key, 64);
+            p.plfile = "PlMr.dat".into();
+        } else {
+            p.target = cap(&d.text(x), 64);
+            p.plfile = target_file(&p.target);
+            if p.plfile.is_empty() {
+                self.logf(format!("geno: {where_}: unknown attach target - refused"));
+                return;
+            }
+            let nm = d.get(e, "name");
+            p.name = if d.is(nm, Ty::Str) { cap(&d.text(nm), 64) } else { p.plfile.clone() };
         }
-        let nm = d.get(e, "name");
-        p.name = if d.is(nm, Ty::Str) { cap(&d.text(nm), 64) } else { p.plfile.clone() };
 
+        // "controls" (the menus' control schema of a define) is presentation and is not hosted; an attach entry's is ignored
         let x = d.get(e, "controls");
-        if x >= 0 {
+        if x >= 0 && !p.defined {
             self.logf(format!("geno: {where_}: controls requires a define - ignored"));
         }
 
@@ -1515,37 +1554,32 @@ impl Registry {
             }
         }
         self.add_v2(&mut p, d, e, where_);
+        if !self.define_audio_states(&mut p, d, e, where_) {
+            return;
+        }
         self.add_v5(&mut p, d, e, env, where_);
         self.add_v1(&mut p, d, e, env, mod_id, where_);
-        // slice 5/geno 11 blocks belong to a define: an attach entry that carries one is refused (geno_*_registry.inc)
-        let states = d.get(e, "states");
-        let mut any_lua = false;
-        if d.is(states, Ty::Arr) {
-            any_lua = d.kids(states).into_iter().any(|c| d.get(c, "lua") >= 0);
-        }
-        if d.get(e, "lua") >= 0 || any_lua {
-            self.logf(format!("geno: {where_}: fighter Lua is for a define; an attach entry cannot carry a \"lua\" block - refused"));
-            self.pool.truncate(pool_before);
-            self.slot_off.truncate(slots_before);
-            self.slot_len.truncate(slots_before);
-            self.slot_rel.truncate(slots_before);
+        let undo = |r: &mut Registry| {
+            r.pool.truncate(pool_before);
+            r.slot_off.truncate(slots_before);
+            r.slot_len.truncate(slots_before);
+            r.slot_rel.truncate(slots_before);
+        };
+        // slice 5 / geno 11: the lua, combo and meter blocks (each refuses an attach entry that carries one)
+        if !self.lua_parse(&mut p, d, e, env, mod_id, where_, version)
+            || !self.combo_parse(&mut p, d, e, where_, version)
+            || !self.meter_parse(&mut p, d, e, where_)
+        {
+            undo(self);
             return;
         }
-        if d.get(e, "combo") >= 0 {
-            self.logf(format!("geno: {where_}: a combo graph is for a define; an attach entry cannot carry \"combo\" - refused"));
-            self.pool.truncate(pool_before);
-            self.slot_off.truncate(slots_before);
-            self.slot_len.truncate(slots_before);
-            self.slot_rel.truncate(slots_before);
-            return;
-        }
-        if d.get(e, "meter") >= 0 {
-            self.logf(format!("geno: {where_}: \"meter\" shows the combo ki value: it needs a define with a combo block - refused"));
-            self.pool.truncate(pool_before);
-            self.slot_off.truncate(slots_before);
-            self.slot_len.truncate(slots_before);
-            self.slot_rel.truncate(slots_before);
-            return;
+        if p.defined {
+            let overlays = d.get(e, "subactions");
+            if overlays >= 0 && (!d.is(overlays, Ty::Arr) || d.n[overlays as usize].count as usize != p.nov) {
+                undo(self);
+                self.logf(format!("geno: {where_}: native definition refused: invalid overlay or script budget exhausted"));
+                return;
+            }
         }
         // the id covers the whole entry as written, including keys this version ignores
         let mut id = hash_node(d, e, mix(0x47454E4F00000000, GENO_ID_VERSION as u64));
@@ -1556,6 +1590,7 @@ impl Registry {
                 id = mix(id, self.pool[self.slot_off[s] + w] as u64);
             }
         }
+        id = super::define::fold_lua(id, &p);
         if id == 0 {
             id = 1;
         }
@@ -1608,11 +1643,24 @@ impl Registry {
         -1
     }
 
-    /// FighterKind -> profile, once the m-ex slots exist. A later entry for the same fighter wins.
+    /// FighterKind -> profile, once the m-ex slots exist (and the defines are bound to their aliases). Two entries for
+    /// one fighter are a REFUSAL, never "later wins" (docs/specs/geno-v5.md 3): neither applies, one log line per extra
+    /// claimant names both mod ids, and the result does not depend on load order.
     pub fn build_kinds(&mut self, env: &dyn Env) {
+        // gw_Mex_SlotInternal: the dense slots up to the first absent one
+        let mut occupied = vec![false; GW_MEX_SLOT_COUNT];
+        for (s, o) in occupied.iter_mut().enumerate() {
+            if env.mex_pl_file(s).is_none() {
+                break;
+            }
+            *o = true;
+        }
+        self.define_bind(&occupied);
         for k in self.kind_profile.iter_mut() {
             *k = -1;
         }
+        let mut conflict = vec![false; GN_KINDS];
+        let mut first = vec![-1i32; GN_KINDS];
         for i in 0..self.p.len() {
             if !self.p[i].defined {
                 self.p[i].kind = Self::kind_for_file(&self.p[i].plfile, env);
@@ -1625,10 +1673,29 @@ impl Registry {
                 self.log.push(m);
                 continue;
             }
-            let prev = self.kind_profile[kind as usize];
-            if prev >= 0 {
-                let m = format!("geno: {}'s entry for {} replaces {}'s", self.p[i].mod_id, self.p[i].plfile, self.p[prev as usize].mod_id);
+            let k = kind as usize;
+            if first[k] < 0 {
+                first[k] = i as i32;
+            } else {
+                let m = format!(
+                    "geno: REFUSED: mods {} and {} both attach to {} (fighter kind {}); neither entry applies - remove one of them",
+                    self.p[first[k] as usize].mod_id, self.p[i].mod_id, self.p[i].plfile, kind
+                );
                 self.log.push(m);
+                conflict[k] = true;
+            }
+        }
+        for i in 0..self.p.len() {
+            let kind = self.p[i].kind;
+            if kind < 0 {
+                continue;
+            }
+            if conflict[kind as usize] {
+                let p = &self.p[i];
+                let m = format!("geno: {}/{} refused: another mod attaches to {} too - inactive", p.mod_id, p.name, p.plfile);
+                self.p[i].kind = -1;
+                self.log.push(m);
+                continue;
             }
             self.kind_profile[kind as usize] = i as i32;
             let p = &self.p[i];

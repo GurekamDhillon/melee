@@ -27,7 +27,18 @@ pub static mut Fighter_804D6534: *mut core::ffi::c_void = core::ptr::null_mut();
 
 /// ftdata.c `ftData_UnkBytePerCharacter` (`-1` entries are 0xFF): the effect bank per character kind, read by
 /// the effect loader (efasync) and the fighter data.
-pub static mut ftData_UnkBytePerCharacter: [u8; 33] = [
-    1, 3, 4, 8, 5, 12, 6, 17, 10, 15, 14, 14, 7, 2, 9, 11, 13, 18, 16, 17, 6, 1, 3, 7, 0xFF, 19,
-    49, 0xFF, 0xFF, 0xFF, 0xFF, 12, 0xFF,
-];
+/// `u8 ftData_UnkBytePerCharacter[Ft_Kind_Max]`: the m-ex and Geno define kinds past the retail 33 start at 0 and take
+/// their base kind's bank when they are installed (ftData_MexInitKinds / GenoDefine_InitKinds).
+pub static mut ftData_UnkBytePerCharacter: [u8; 127] = {
+    let retail: [u8; 33] = [
+        1, 3, 4, 8, 5, 12, 6, 17, 10, 15, 14, 14, 7, 2, 9, 11, 13, 18, 16, 17, 6, 1, 3, 7, 0xFF, 19,
+        49, 0xFF, 0xFF, 0xFF, 0xFF, 12, 0xFF,
+    ];
+    let mut t = [0u8; 127];
+    let mut i = 0;
+    while i < 33 {
+        t[i] = retail[i];
+        i += 1;
+    }
+    t
+};

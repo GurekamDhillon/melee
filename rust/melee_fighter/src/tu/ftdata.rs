@@ -56,7 +56,14 @@ pub mod ext {
         GENO_GAME_CLEAR_PROFILE_STORAGE GenoGame_ClearProfileStorage();
         GENO_DEFINE_RESET_DESCRIPTORS GenoDefine_ResetDescriptors() = super::GenoDefine_ResetDescriptors();
         GENO_DEFINE_INIT_KINDS GenoDefine_InitKinds() = super::GenoDefine_InitKinds();
-        GENO_DEFINE_LOAD GenoDefine_Load(kind: i32, base: i32);
+        GENO_DEFINE_LOAD GenoDefine_Load(kind: i32, base: i32) = super::GenoDefine_Load(kind, base);
+        // `ftData_MotionStateList` (melee_link::retail_ms, which this crate cannot name): the common motion rows.
+        GENO_COMMON_ROWS ftData_CommonRows() -> *mut MotionState;
+        // `GenoGame_DefineApplyRows` (pc/geno/geno_define_rows.inc, the game half).
+        GENO_DEFINE_APPLY_ROWS GenoGame_DefineApplyRows(kind: i32, common: *mut MotionState, specific: *mut MotionState, subactions: i32);
+        // The define budgets line's figures: overlays / max, profile pool words, all pool words / max, slots / max,
+        // states / max, arena bytes.
+        GENO_DEFINE_BUDGETS Geno_DefineBudgets(kind: i32) -> [i32; 10] = [0; 10];
         GENO_DEFINE_CAPTURE_BASE GenoDefine_CaptureBase(kind: i32) = super::GenoDefine_CaptureBase(kind);
         // The Geno registry queries (pc/geno): unset = the default configuration, no Geno define registered.
         GENO_DEFINE_BASE_KIND Geno_DefineBaseKind(kind: i32) -> i32 = crate::platform::Geno_DefineBaseKind(kind);
@@ -499,6 +506,126 @@ pub fn GenoDefine_InitKinds() {
             GenoDefine_ContentIdentity[f][0] = ext::Geno_DefineIdentityWord(fk, 0);
             GenoDefine_ContentIdentity[f][1] = ext::Geno_DefineIdentityWord(fk, 1);
         }
+    }
+}
+
+/// `GenoDefine_SelfCount`: the template's own (non-common) motion-state count.
+fn GenoDefine_SelfCount(base: i32) -> usize {
+    (if base == Ft_Kind_Captain as i32 {
+        ftCa_MS_SelfCount
+    } else if base == Ft_Kind_Fox as i32 || base == Ft_Kind_Falco as i32 {
+        ftFx_MS_SelfCount
+    } else if base == Ft_Kind_Mars as i32 {
+        ftMs_MS_SelfCount
+    } else if base == Ft_Kind_Purin as i32 {
+        ftPr_MS_SelfCount
+    } else if base == Ft_Kind_Seak as i32 {
+        ftSk_MS_SelfCount
+    } else if base == Ft_Kind_Zelda as i32 {
+        ftZd_MS_SelfCount
+    } else {
+        ftMr_MS_SelfCount
+    }) as usize
+}
+
+/// `GenoDefine_ExtAttrBytes`: the size of the template's special-attribute block.
+fn GenoDefine_ExtAttrBytes(base: i32) -> usize {
+    if base == Ft_Kind_Captain as i32 {
+        core::mem::size_of::<ftCaptain_DatAttrs>()
+    } else if base == Ft_Kind_Fox as i32 || base == Ft_Kind_Falco as i32 {
+        core::mem::size_of::<ftFox_DatAttrs>()
+    } else if base == Ft_Kind_Zelda as i32 {
+        core::mem::size_of::<ftZelda_DatAttrs>()
+    } else if base == Ft_Kind_Mars as i32 || base == Ft_Kind_Purin as i32 || base == Ft_Kind_Seak as i32 {
+        // MarsAttributes / ftPurinAttributes / ftSeakAttributes: only a base "none" define's templates (not hosted)
+        melee_core::unported!("GenoDefine_ExtAttrBytes: a Marth / Jigglypuff / Sheik template (base \"none\" defines)")
+    } else {
+        core::mem::size_of::<ftMario_DatAttrs>()
+    }
+}
+
+/// `GenoDefine_Load`: a define fighter's own ftData, copied from its template's (attributes, special attributes, the
+/// pristine animation rows and the demo rows, each row's authoring kind rewritten to the define's), and its own common
+/// and specific motion-state rows with the define's common_states applied. A base "none" define builds its model,
+/// bank, parts and joint fields from its package (GenoDefine_BuildOwn): not hosted in this engine.
+pub fn GenoDefine_Load(kind: i32, base: i32) {
+    melee_core::ct!("GenoDefine_Load");
+    let (k, b) = (kind as usize, base as usize);
+    unsafe {
+        if !gFtDataList[k].is_null() {
+            return;
+        }
+        if ext::Geno_DefineIsNone(kind) != 0 {
+            melee_core::unported!("GenoDefine_Load: a base \"none\" define (GenoDefine_BuildOwn: the package's model, bank and plan)");
+        }
+        let source = gFtDataList[b];
+        let n = ftData_Table_Unk0[b].count as usize;
+        let demo = ftData_UnkIntPairs[b].count as usize;
+        let row_sz = core::mem::size_of::<Fighter_WaitAnimData>();
+        let out = gd_data_copy(source as *const c_void, core::mem::size_of::<ftData>()) as *mut ftData;
+        (*out).x0 = gd_data_copy((*source).x0 as *const c_void, core::mem::size_of::<ftCo_DatAttrs>()) as *mut ftCo_DatAttrs;
+        (*out).ext_attr = gd_data_copy((*source).ext_attr, GenoDefine_ExtAttrBytes(base));
+        let baseline = GenoDefine_RowBaseline[GenoDefine_TmplIndex(base)];
+        assert!(!baseline.is_null(), "Geno native template preset baseline unavailable");
+        (*out).xC = gd_data_copy(baseline as *const c_void, n * row_sz) as *mut Fighter_WaitAnimData;
+        (*out).x14 = gd_data_copy((*source).x14 as *const c_void, demo * row_sz) as *mut Fighter_WaitAnimData;
+        for i in 0..n + demo {
+            let row = if i < n { &mut *(*out).xC.add(i) } else { &mut *(*out).x14.add(i - n) };
+            let flags = row.x10_animCurrFlags;
+            // Paired thrown clips keep the generic victim skeleton author id.
+            if flags & 0x3f != 0x21 {
+                row.x10_animCurrFlags = (flags & !0x3f) | if kind < 64 { kind } else { FT_ANIM_KIND_SELF };
+            }
+        }
+        let nself = GenoDefine_SelfCount(base);
+        let ms = core::mem::size_of::<MotionState>();
+        GenoDefine_CommonRows[k] = gd_data_copy(ext::ftData_CommonRows() as *const c_void, ms * ftCo_MS_Count as usize) as *mut MotionState;
+        GenoDefine_SpecificRows[k] = gd_data_copy(ftData_CharacterStateTables[b] as *const c_void, ms * nself) as *mut MotionState;
+        ext::GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[k], GenoDefine_SpecificRows[k], n as i32);
+        ftData_CharacterStateTables[k] = GenoDefine_SpecificRows[k];
+        gFtDataList[k] = out;
+        report(format!(
+            "geno: native define kind {kind} loaded: retail:mario; independent common/special rows; interpreter attempts {}\n",
+            GenoDefine_InterpreterAttempts[k]
+        ));
+        let bud = ext::Geno_DefineBudgets(kind);
+        report(format!(
+            "geno: define budgets: kind {kind} overlays {}/{}, pool {} words (all profiles {}/{}), slots {}/{}, states {}/{}, arena {}/{}\n",
+            bud[0], bud[1], bud[2], bud[3], bud[4], bud[5], bud[6], bud[7], bud[8], bud[9] as u32, 2u32 * 1024 * 1024
+        ));
+    }
+}
+
+/// The ftData pointer fields, by name, in struct order (the census; docs/geno.md 22.4 "independence").
+const GENO_FTDATA_FIELDS: [&str; 24] = [
+    "x0", "ext_attr", "x8", "xC", "x10", "x14", "x18", "x1C", "x20", "x24", "x28", "x2C", "x30", "x34", "x38", "x3C", "x40",
+    "x44", "x48", "x4C", "x50", "x54", "x58", "x5C",
+];
+
+/// `GenoDefine_FtDataSharedMask`: which ftData pointer fields of a define are the very (non-null) pointers of the
+/// donor's (bit i = field i). Pure: the independence test runs it on synthetic structs.
+pub fn GenoDefine_FtDataSharedMask(own: *const ftData, donor: *const ftData) -> u32 {
+    let mut mask = 0u32;
+    for i in 0..GENO_FTDATA_FIELDS.len() {
+        unsafe {
+            let a = *(own as *const *const c_void).add(i);
+            let b = *(donor as *const *const c_void).add(i);
+            if a == b && !a.is_null() {
+                mask |= 1 << i;
+            }
+        }
+    }
+    mask
+}
+/// `GenoDefine_FtDataFieldName`.
+pub fn GenoDefine_FtDataFieldName(i: i32) -> &'static str {
+    GENO_FTDATA_FIELDS.get(i as usize).copied().filter(|_| i >= 0).unwrap_or("?")
+}
+
+/// `GenoGame_DefinePPCViolation`: called only from the interpreter entry probe; counts attempted guest execution.
+pub fn GenoGame_DefinePPCViolation(kind: i32) {
+    if (0..Ft_Kind_Max as i32).contains(&kind) {
+        unsafe { GenoDefine_InterpreterAttempts[kind as usize] += 1 };
     }
 }
 

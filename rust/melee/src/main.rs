@@ -52,6 +52,7 @@ mod engine_audio_gen;
 mod diff_layout;
 mod netmatch;
 mod netplay;
+mod play_net;
 mod np_env;
 mod menu_support;
 mod pads;

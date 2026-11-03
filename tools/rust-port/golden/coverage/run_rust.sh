@@ -17,6 +17,13 @@ one() {
   export MELEE_WINDOW_TITLE="${COV_TITLE:-coverage}: $s"   # every visible window names its scenario
   [ -f "$g" ] || { printf '%s\tNO_GOLDEN\t0\t0\t-\n' "$s"; return; }
   rows=$(( $(wc -l < "$g") - 1 ))
+  # a VS golden whose match ends (stock matches) goes on into the results screen, which the C hashes as a second live
+  # "match" (frame restarts at 0) while the engine's VS boot stops at the match end: compare the match rows only
+  kind=$(awk -F'	' -v s="$s" '$1==s{print $2}' docs/rust-port/golden/coverage/scenarios.tsv)
+  if [ "$kind" != "1p" ]; then
+    m=$(awk -F, 'NR>2 && $1+0==0 {print NR-2; exit}' "$g")
+    [ -n "$m" ] && rows=$m
+  fi
   # the C boot makes HSD_Rand draws the engine's boot flow does not yet (BGM pick, stage init): MELEE_ENGINE_PRE_DRAWS per scenario,
   # found by the first 2 frames (0..3); the chosen N is part of the detail so the gap stays visible (tools/rust-port/engine/pre_draws.tsv)
   pre=0

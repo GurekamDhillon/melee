@@ -136,6 +136,17 @@ impl RandAbs {
 
     /// `gw_Script_FramePost` up to the hash row: the hold, `gs.frame`, the match flags. Returns whether the frame is live.
     pub fn frame_post(&mut self, any_fighter: bool) -> bool {
+        // gs_1p_start_dispatch in Script_FramePre (classic / adventure): after a stage's `Script_OnePStage`, the first frame
+        // with a fighter goes live before the frame runs (match_frame 0), so its FramePost row is frame 1. The fighters of a
+        // stage exist from the scene's enter on, so their presence at FramePre is their presence now.
+        let onep = unsafe { &mut *core::ptr::addr_of_mut!(melee_modes::tu::gm_17c0::ONEP_STAGE_EVENT) };
+        if any_fighter && *onep {
+            *onep = false;
+            if !self.active {
+                self.active = true;
+                self.match_frame = 0;
+            }
+        }
         if let Some((_, n)) = self.claim.as_mut() {
             if *n > 0 {
                 *n -= 1;

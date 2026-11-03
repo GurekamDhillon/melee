@@ -879,7 +879,11 @@ pub unsafe fn gm_8017CE34(
     let player_idx: i32;
     let mut player_idx_m: i32;
 
-    ext::Script_OnePStage(ext::gm_GetCurrentGameMode() as i32, count, (*arg1).x8 as i32, 0);
+    let onep_mode = ext::gm_GetCurrentGameMode() as i32;
+    if onep_mode == 3 || onep_mode == 4 {
+        ONEP_STAGE_EVENT = true; // gw_Script_OnePStage's `gs_1p.events |= 1` (classic / adventure only)
+    }
+    ext::Script_OnePStage(onep_mode, count, (*arg1).x8 as i32, 0);
     (*arg1).xC.xC = 1;
     fn_8017E21C();
     ext::fn_8016F030(arg0);
@@ -1605,3 +1609,8 @@ pub fn gm_8017C984_fp(arg0: &mut [u8]) {
     melee_core::ct!("gm_8017C984_fp");
     memzero_gm_r7(arg0, 0x74);
 }
+
+/// The harness side of `gw_Script_OnePStage` (pc/platform/gw_script_1p.inc): a Classic / Adventure stage began. The C's
+/// `gs_1p_start_dispatch` (Script_FramePre) makes the match live at the first frame with a fighter, one frame before
+/// Script_FramePost would, so that stage's hash rows count from 1. Consumed by the 1P coverage harness (melee cov1p.rs).
+pub static mut ONEP_STAGE_EVENT: bool = false;

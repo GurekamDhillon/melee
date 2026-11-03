@@ -793,7 +793,8 @@ impl Engine {
             melee_modes::tu::gmscmemcard::ext::SCENELAUNCH_SKIPMEMCARD =
                 Some(|| (BOOT_GAME_MODE >= 0 || std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false)) as i32);
             // the memory-card scene's one trophy draw on a fresh save (see boot_vs), when the scene itself is skipped
-            if !(card && first == melee_types::GM_BOOT as u8) {
+            // (a scene launch through the boot scene runs the memory-card scene save-less: its own Toy_80305058 makes the draw)
+            if !((card || BOOT_GAME_MODE >= 0) && first == melee_types::GM_BOOT as u8) {
                 let _ = melee_runtime::tu::random::global::HSD_Rand();
             }
             gm_1A3F::gm_801A4510_init(Some(first));

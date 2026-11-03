@@ -107,3 +107,5 @@ rust/melee_modes/src/tu/gmtoulib.rs:HSD_SisLib_803A6B98
 rust/melee_modes/src/tu/gmopening.rs:lbAudioAx_80024E50
 rust/melee_modes/src/tu/gmmultiman.rs:gm_80181A44
 rust/melee_modes/src/tu/gmtitle.rs:lbArchive_LoadSymbols
+rust/melee_modes/src/tu/gmregclear.rs:lb_80011E24
+rust/melee_modes/src/tu/gmresult.rs:lb_80011E24

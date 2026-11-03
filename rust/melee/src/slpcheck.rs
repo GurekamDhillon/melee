@@ -376,7 +376,10 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
             std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre);
         }
     }
-    crate::replay_modes_active();
+    // SLPCHECK_VANILLA_SPAWN=1: no Slippi Neutral Spawn (the port's own .slp exports, played without it)
+    if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
+        crate::replay_modes_active();
+    }
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,

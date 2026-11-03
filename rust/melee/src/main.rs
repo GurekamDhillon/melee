@@ -54,6 +54,8 @@ mod diff_layout;
 mod netmatch;
 mod netplay;
 mod play_net;
+mod slp_export;
+mod np_lockstep;
 mod np_env;
 mod menu_support;
 mod pads;

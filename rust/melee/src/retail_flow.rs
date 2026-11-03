@@ -134,7 +134,14 @@ impl RetailPlay {
             if let Ok(v) = std::env::var("MELEE_SCENE") {
                 match melee_engine::scenario::Scenario::parse(&v) {
                     Ok(s) if s.onep_mode >= 0 => self.presets.scenario = Some(s),
-                    Ok(_) => log("MELEE_SCENE: only the 1P modes are launched this way here (VS: --match)"),
+                    // Geno's LAB (gw_sl_modes "lab": GM_LAB, its own mode row over VS's machinery). Its select screens
+                    // are the port's kit screens, which the retail flow does not run: the scene launches its match only.
+                    Ok(s) if s.game_mode == melee_modes::tu::geno_lab_mode::GM_LAB as i32 && matches!(s.entry_state, -1 | 2) => {
+                        log("MELEE_SCENE: Geno LAB match (mode=lab)");
+                        self.presets.scenario = Some(s)
+                    }
+                    Ok(s) if s.game_mode == melee_modes::tu::geno_lab_mode::GM_LAB as i32 => log("MELEE_SCENE: mode=lab launches the LAB match only (its CSS/SSS are kit screens, not in the retail flow)"),
+                    Ok(_) => log("MELEE_SCENE: only the 1P modes and mode=lab are launched this way here (VS: --match)"),
                     Err(e) => log(&format!("MELEE_SCENE: {e}")),
                 }
             }

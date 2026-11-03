@@ -607,6 +607,8 @@ pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine
     let Some(m) = mods else { return Ok(None) };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
     eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    // Geno reads each mounted mod's geno.json (geno_registry.c gn_reg: the active mods in id order)
+    melee_engine::geno_host::set_boot_mods(&m.dir, &ids);
     Ok(Some(Box::new(move |path: &str| m.lookup(path).and_then(|p| std::fs::read(p).ok()))))
 }
 

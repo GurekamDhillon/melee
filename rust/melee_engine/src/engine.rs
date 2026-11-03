@@ -96,6 +96,8 @@ impl Engine {
     pub fn boot_vs(disc: Gcm, mem_size: usize, pads: PadSystem, scn: crate::scenario::Scenario) -> Result<Engine, String> {
         let _scope = crate::arena::GameScope::enter();
         Self::boot_host(disc, mem_size, pads)?;
+        // VS, or Geno's LAB (mode=lab: its own mode row, VS's machinery, gm_Mode_Lab_OnLoad seeds it from the scene)
+        let boot_mode = if scn.game_mode >= 0 { scn.game_mode as u8 } else { melee_types::GM_VS as u8 };
         crate::scenario::install(scn);
         unsafe {
             // The C boot runs the memory-card scene on a fresh save before the menus: `gmMainLib_8015F600(1, 0)` draws one
@@ -103,8 +105,8 @@ impl Engine {
             // (grLast's sway rates, the item spawner), depend on that one RNG step. The trophy tables (ty, `Toy_803124BC`)
             // are not loaded on the engine path yet, so only the draw is made (the selected id is unused for the hash).
             let _ = melee_runtime::tu::random::global::HSD_Rand();
-            gm_1A3F::gm_801A4510_init(Some(melee_types::GM_VS as u8));
-            let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
+            gm_1A3F::gm_801A4510_init(Some(boot_mode));
+            let mode = gm_1A3F::runGameMode_load(boot_mode);
             eprintln!("vs mode {:p} kind {} states {:p} curr_state {}", mode, (*mode).kind, (*mode).states, gm_1A3F::state_machine.routing.curr_state_id);
             { let mut j = 0; while j < 12 { let st = (*mode).states.add(j); eprintln!("  state[{j}] id {}", (*st).id); if (*st).id == 0xFF { break; } j += 1; } }
             let run = gm_1A3F::gm_801A4014_enter(mode);

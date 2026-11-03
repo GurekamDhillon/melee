@@ -20,7 +20,9 @@ if a[0] == "names":
 elif a[0] == "tsv":
     for n in a[1:]:
         v = sc[n]
-        env = ",".join("%s=%s" % kv for kv in sorted(v.get("env", {}).items()))
+        # "{wt}" in an env value: this worktree (Windows form), so a run root elsewhere still finds the scenario's mods
+        wt = os.path.abspath(os.path.join(here, "..", "..", "..", "..")).replace("\\", "/")
+        env = ",".join("%s=%s" % (k, val.replace("{wt}", wt)) for k, val in sorted(v.get("env", {}).items()))
         print("\t".join([n, v["pad"], v.get("scene", ""), str(v.get("seed", d["defaults"]["seed"])),
                          str(v.get("max_seconds", d["defaults"]["max_seconds"])), env]))
 elif a[0] == "batch":

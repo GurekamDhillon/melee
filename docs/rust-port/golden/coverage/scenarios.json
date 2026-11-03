@@ -1643,6 +1643,50 @@
    "frames": 0,
    "kind": "menu",
    "note": "GM_EVENT (0x2B): no MELEE_SCENE keyword; needs the event select screen"
+  },
+  "geno_kirby_bhv": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=ck:4/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/geno_kirby_bhv.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
+   },
+   "note": "Geno v5.1 behaviours (mods/geno-cov): Kirby tornado, drill rush, cape, glide + glide attack, air variants; Fox (multi-dash profile) idle"
+  },
+  "geno_fox_dash": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=ck:2/human;p2=ck:4/idle;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/geno_fox_dash.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
+   },
+   "note": "Geno multi-dash side special and max_jumps 4 on Fox (mods/geno-cov), Kirby (v5.1 profile) idle, Battlefield"
+  },
+  "geno_cpu_kirby_fox": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
+   },
+   "note": "CPU9 Kirby and Fox with the geno-cov profiles (their specials enter Geno states)"
+  },
+  "geno_lab_cpu": {
+   "group": "geno",
+   "scene": "mode=lab;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
+   },
+   "note": "Geno's LAB mode (GM_LAB 0x2F) by scene: CPU9 Kirby and Fox with the geno-cov profiles, LAB rules (no timer, no stocks, respawn)"
   }
  },
  "batches": {

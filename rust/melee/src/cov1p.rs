@@ -244,7 +244,7 @@ fn frame_post_hook() {
                     let ip = (*g).user_data as *mut melee_types::Item;
                     if !ip.is_null() {
                         let (p, v) = (&(*ip).pos, &(*ip).x40_vel);
-                        eprintln!("f{} item kind {} msid {} pos {:.4} {:.4} {:.4} vel {:.4} {:.4} {:.4}", r.ra.match_frame, (*ip).kind as i32, (*ip).msid as i32, p.x, p.y, p.z, v.x, v.y, v.z); if (*ip).kind as i32 == 46 { let o = &(*ip).xDD4_itemVar.oldottosea; eprintln!("   ott @{:p} x24 {} x28 {} x2C {:x} frame {} spd {}", &raw const o.x28, o.x24, o.x28, o.x2C, (*ip).x5CC_currentAnimFrame, (*ip).x5D0_animFrameSpeed); }
+                        eprintln!("f{} item kind {} msid {} pos {:.4} {:.4} {:.4} vel {:.4} {:.4} {:.4}", r.ra.match_frame, (*ip).kind as i32, (*ip).msid as i32, p.x, p.y, p.z, v.x, v.y, v.z);
                     }
                     g = (*g).next;
                 }

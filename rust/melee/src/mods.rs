@@ -29,6 +29,8 @@ pub struct Mods {
     overlay: Overlay,
     /// Lowercased bare file name -> file on disk (Disc::read looks files up by bare name).
     by_name: HashMap<String, PathBuf>,
+    /// The mods folder.
+    pub dir: PathBuf,
 }
 
 impl Mods {
@@ -54,7 +56,7 @@ impl Mods {
             let name = f.disc.rsplit('/').next().unwrap_or(&f.disc).to_ascii_lowercase();
             by_name.insert(name, f.host.clone());
         }
-        Ok(Mods { active, set, overlay, by_name })
+        Ok(Mods { active, set, overlay, by_name, dir: dir.to_path_buf() })
     }
 
     /// The mounted file answering disc path `path` ("/PlWf.dat", "audio/us/wolf.ssm") or bare name.

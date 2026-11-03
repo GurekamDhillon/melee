@@ -17,6 +17,9 @@ one() {
   export MELEE_WINDOW_TITLE="${COV_TITLE:-coverage}: $s"   # every visible window names its scenario
   [ -f "$g" ] || { printf '%s\tNO_GOLDEN\t0\t0\t-\n' "$s"; return; }
   rows=$(( $(wc -l < "$g") - 1 ))
+  # the scenario's env (scenarios.json "env", e.g. MELEE_MODS_DIR for the Geno mods), as record_coverage.sh passes to the C
+  envs=$(python tools/rust-port/golden/coverage/scn.py tsv "$s" 2>/dev/null | cut -f6)
+  IFS=',' read -ra kv <<< "$envs"; for e in "${kv[@]}"; do [ -n "$e" ] && export "$e"; done
   # a VS golden whose match ends (stock matches) goes on into the results screen, which the C hashes as a second live
   # "match" (frame restarts at 0) while the engine's VS boot stops at the match end: compare the match rows only
   kind=$(awk -F'	' -v s="$s" '$1==s{print $2}' docs/rust-port/golden/coverage/scenarios.tsv)

@@ -1,6 +1,6 @@
 //! Geno's native half for the engine: the registry (melee_script::geno, ported from pc/platform/geno_registry.c)
 //! behind the scalar API the game half (melee_modes::tu::geno_game) calls, `gw_Geno_*` in the C. One registry per
-//! process: the boot one (every mounted mod's geno.json, MELEE_GENO_MODS) or, under the test suite, one parsed from a
+//! process: the boot one (every mounted mod's geno.json, set_boot_mods) or, under the test suite, one parsed from a
 //! test's text (`Geno_TestInstall` / `Geno_TestRestore`).
 #![allow(non_snake_case, static_mut_refs)]
 use melee_script::geno::consts::*;
@@ -19,22 +19,32 @@ fn flush_log(r: &mut Registry) {
     }
 }
 
-/// The installed registry; the boot one is read on first use from the mods named by `MELEE_GENO_MODS`
-/// (`id=dir;id=dir...`, each dir holding a geno.json; mount order).
+static mut BOOT_MODS: Option<(std::path::PathBuf, Vec<String>)> = None;
+
+/// The mounted mods whose geno.json the boot registry reads (the folder and the active ids). Before the first query.
+pub fn set_boot_mods(dir: &std::path::Path, ids: &[&str]) {
+    unsafe {
+        BOOT_MODS = Some((dir.to_path_buf(), ids.iter().map(|s| s.to_string()).collect()));
+        BOOT = None;
+        POOL_GEN += 1;
+    }
+}
+
+/// The installed registry; the boot one is read on first use from the mounted mods (`set_boot_mods`), every active
+/// mod's `<dir>/<id>/geno.json` in id order, as gn_reg does.
 fn reg() -> &'static mut Registry {
     unsafe {
         if BOOT.is_none() {
             let mut r = Registry::default();
-            if let Ok(list) = std::env::var("MELEE_GENO_MODS") {
-                for item in list.split(';').filter(|s| !s.is_empty()) {
-                    let (id, dir) = item.split_once('=').unwrap_or((item, item));
-                    let id = if id == dir { std::path::Path::new(dir).file_name().and_then(|s| s.to_str()).unwrap_or(dir) } else { id };
-                    match std::fs::read(std::path::Path::new(dir).join("geno.json")) {
-                        Ok(t) => {
-                            r.parse_text(&t, id, &NoEnv);
-                        }
-                        Err(e) => eprintln!("geno: {dir}/geno.json: {e}"),
+            if let Some((dir, ids)) = BOOT_MODS.as_ref() {
+                let mut ids = ids.clone();
+                ids.sort();
+                for id in &ids {
+                    let Ok(t) = std::fs::read(dir.join(id).join("geno.json")) else { continue };
+                    if t.len() > 1 << 20 {
+                        continue;
                     }
+                    r.parse_text(&t, id, &NoEnv);
                 }
                 if r.files > 0 {
                     let n = r.p.len();

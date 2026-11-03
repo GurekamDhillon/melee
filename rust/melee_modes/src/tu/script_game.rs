@@ -12,7 +12,7 @@ crate::ext_fns! {extern "C" fn PSMTXMultVec(a0 : * mut [:: core :: ffi :: c_floa
 crate::ext_fns! {extern "C" fn OSCheckHeap(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_long;}
 crate::ext_fns! {extern "C" fn DVDConvertPathToEntrynum(a0 : * const :: core :: ffi :: c_char) -> s32;}
 pub unsafe fn OSReport(a0: *mut ::core::ffi::c_char, _va: &[crate::oracle::Va]) { melee_core::ct!("OSReport"); match crate::tu::ext_hook::EXT_HOOK { Some(h) => { h("OSReport", &[a0 as usize as u64]); } None => {} } }
-pub unsafe extern "C" fn __assert(a0 : * const :: core :: ffi :: c_char, a1 : :: core :: ffi :: c_uint, a2 : * const :: core :: ffi :: c_char) -> ! { melee_core::ct!("__assert"); panic!("TODO(ext) __assert") }
+pub unsafe extern "C" fn __assert(a0 : * const :: core :: ffi :: c_char, a1 : :: core :: ffi :: c_uint, a2 : * const :: core :: ffi :: c_char) -> ! { melee_core::ct!("__assert"); melee_runtime::tu::debug::__assert(a0, a1, a2); panic!("__assert returned") }
 crate::ext_fns! {extern "C" fn HSD_CObjGetViewingMtx(a0 : * mut HSD_CObj, a1 : * mut [:: core :: ffi :: c_float ; 4]) -> ();}
 crate::ext_fns! {extern "C" fn HSD_CObjGetCurrent() -> * mut HSD_CObj = crate::tu::adapt::HSD_CObjGetCurrent__ad58db;}
 crate::ext_fns! {extern "C" fn Camera_80030730(a0 : :: core :: ffi :: c_float) -> ();}
@@ -186,7 +186,7 @@ crate::ext_fns! {extern "C" fn it_8027C56C(a0 : * mut Item_GObj, a1 : :: core ::
 crate::ext_fns! {extern "C" fn it_802EA9FC(a0 : * mut Vec, a1 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802EA9FC__e2ed70;}
 crate::ext_fns! {extern "C" fn it_802DC4BC(a0 : s32, a1 : * mut Vec, a2 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DC4BC__cbef47;}
 crate::ext_fns! {extern "C" fn it_802DD7F0(a0 : s32, a1 : * mut Vec, a2 : * mut Vec, a3 : s32) -> * mut Item_GObj = crate::tu::adapt::it_802DD7F0__ea09a6;}
-pub unsafe fn lbArchive_800171CC(a0: *mut *mut HSD_Archive, a1: *const ::core::ffi::c_char, a2: *mut ::core::ffi::c_void, _va: &[crate::oracle::Va]) -> ::core::ffi::c_int { melee_core::ct!("lbArchive_800171CC"); match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_800171CC", &[a0 as usize as u64, a1 as usize as u64, a2 as usize as u64]) as ::core::ffi::c_int, None => panic!("TODO(ext) lbArchive_800171CC") } }
+pub unsafe fn lbArchive_800171CC(a0: *mut *mut HSD_Archive, a1: *const ::core::ffi::c_char, a2: *mut ::core::ffi::c_void, _va: &[crate::oracle::Va]) -> ::core::ffi::c_int { melee_core::ct!("lbArchive_800171CC"); crate::tu::ext_hook::archive_800171cc(a0, a1, a2, _va) }
 crate::ext_fns! {extern "C" fn lbAudioAx_800237A8(a0 : enum_t, a1 : :: core :: ffi :: c_int, a2 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_800237A8__3c5520;}
 crate::ext_fns! {extern "C" fn lbAudioAx_80023F28(a0 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80023F28__469606;}
 crate::ext_fns! {extern "C" fn lbAudioAx_80024B94(a0 : :: core :: ffi :: c_int, a1 : :: core :: ffi :: c_int) -> :: core :: ffi :: c_int = crate::tu::adapt::lbAudioAx_80024B94__675169;}

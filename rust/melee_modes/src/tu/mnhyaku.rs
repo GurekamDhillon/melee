@@ -151,30 +151,36 @@ pub unsafe extern "C" fn mnHyaku_8024C68C(mut arg0: *mut HSD_GObj) {
     }
     if events & MenuInput_Confirm as ::core::ffi::c_int as u64_0 != 0 {
         sfxForward();
-        mn_802295AC();
-        gm_801677E8();
+        // the C declares gm_801677E8(void) and relies on mn_802295AC's r3 reaching it: pass the port explicitly
+        crate::tu::gm_1601::gm_801677E8(mn_802295AC() as i8);
         match (*menu).cursor as ::core::ffi::c_int {
             0 => {
+                if crate::menuguard::deny(GM_10MAN_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_10MAN_VS as ::core::ffi::c_int as s8);
                 return;
             }
             1 => {
+                if crate::menuguard::deny(GM_100MAN_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_100MAN_VS as ::core::ffi::c_int as s8);
                 return;
             }
             2 => {
+                if crate::menuguard::deny(GM_3MIN_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_3MIN_VS as ::core::ffi::c_int as s8);
                 return;
             }
             3 => {
+                if crate::menuguard::deny(GM_15MIN_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_15MIN_VS as ::core::ffi::c_int as s8);
                 return;
             }
             4 => {
+                if crate::menuguard::deny(GM_ENDLESS_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_ENDLESS_VS as ::core::ffi::c_int as s8);
                 return;
             }
             5 => {
+                if crate::menuguard::deny(GM_CRUEL_VS as i32) { return; } // menuguard: not ported yet
                 mn_80229860(GM_CRUEL_VS as ::core::ffi::c_int as s8);
                 return;
             }
@@ -376,7 +382,13 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => {
+                        // the engine's by-name table (__assert: melee_runtime debug::__assert, which reports file:line and panics)
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        $crate::tu::ext_hook::fallback(stringify!($name), &w);
+                        panic!(concat!(stringify!($name), " returned"))
+                    }
                 }
             }
         };

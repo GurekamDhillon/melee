@@ -67,11 +67,13 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_DObjGetFlags" => { let r = melee_runtime::tu::dobj::hsd::HSD_DObjGetFlags(w2p(a[0])); r as i64 as u64 }
         "HSD_DObjReqAnimAll" => { let r = melee_runtime::tu::dobj::hsd::HSD_DObjReqAnimAll(w2p(a[0]), f32::from_bits(a[1] as u32)); { r; 0 } }
         "HSD_DObjSetFlags" => { let r = melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(w2p(a[0]), a[1] as u32); { r; 0 } }
+        "HSD_FObjStopAnim" => { let r = melee_runtime::tu::fobj::HSD_FObjStopAnim(w2p(a[0]), w2p(a[1]), w2p(a[2]), f32::from_bits(a[3] as u32)); { r; 0 } }
         "HSD_FogInterpretAnim" => { let r = melee_runtime::tu::fog::HSD_FogInterpretAnim(w2p(a[0])); { r; 0 } }
         "HSD_FogLoadDesc" => { let r = melee_runtime::tu::fog::HSD_FogLoadDesc(w2p(a[0])); p2w(r) }
         "HSD_FogReqAnim" => { let r = melee_runtime::tu::fog::HSD_FogReqAnim(w2p(a[0]), f32::from_bits(a[1] as u32)); { r; 0 } }
         "HSD_FogSet" => { let r = melee_runtime::tu::fog::HSD_FogSet(w2p(a[0])); { r; 0 } }
         "HSD_Fog_8037DE7C" => { let r = melee_runtime::tu::fog::HSD_Fog_8037DE7C(w2p(a[0]), w2p(a[1])); { r; 0 } }
+        "HSD_ForeachAnim" => { let r = melee_runtime::tu::aobj::HSD_ForeachAnim(w2p(a[0]), w2v(a[1]), w2v(a[2]), w2p(a[3]), w2v(a[4]), w2v(a[5])); { r; 0 } }
         "HSD_GObjFree" => { let r = melee_runtime::tu::gobjplink::HSD_GObjFree(w2p(a[0])); { r; 0 } }
         "HSD_GObjGXLink_8039084C" => { let r = melee_runtime::tu::gobjgxlink::HSD_GObjGXLink_8039084C(w2p(a[0])); { r; 0 } }
         "HSD_GObjGXLink_803909D8" => { let r = melee_runtime::tu::gobjgxlink::HSD_GObjGXLink_803909D8(w2p(a[0]), w2p(a[1])); { r; 0 } }
@@ -111,6 +113,10 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_MObjRemoveAnimByFlags" => { let r = melee_runtime::tu::mobj::native::HSD_MObjRemoveAnimByFlags(w2p(a[0]), a[1] as u32); { r; 0 } }
         "HSD_MObjReqAnim" => { let r = melee_runtime::tu::mobj::native::HSD_MObjReqAnim(w2p(a[0]), f32::from_bits(a[1] as u32)); { r; 0 } }
         "HSD_MObjSetAlpha" => { let r = melee_runtime::tu::mobj::native::HSD_MObjSetAlpha(w2p(a[0]), f32::from_bits(a[1] as u32)); { r; 0 } }
+        "HSD_MkRotationMtx" => { let r = melee_runtime::tu::mtx::HSD_MkRotationMtx(w2p(a[0]), w2p(a[1])); { r; 0 } }
+        "HSD_MtxInverseConcat" => { let r = melee_runtime::tu::mtx_world::HSD_MtxInverseConcat(w2p(a[0]), w2p(a[1]), w2p(a[2])); { r; 0 } }
+        "HSD_MtxQuat" => { let r = melee_runtime::tu::mtx::HSD_MtxQuat(w2p(a[0]), w2p(a[1])); { r; 0 } }
+        "HSD_QuatLib_8037EB28" => { let r = melee_runtime::tu::quatlib::HSD_QuatLib_8037EB28(w2p(a[0]), w2p(a[1])); r as i64 as u64 }
         "HSD_RObjAlloc" => { let r = melee_runtime::tu::robj::HSD_RObjAlloc(); p2w(r) }
         "HSD_RObjSetConstraintObj" => { let r = melee_runtime::tu::robj::HSD_RObjSetConstraintObj(w2p(a[0]), w2p(a[1])); { r; 0 } }
         "HSD_RObjSetFlags" => { let r = melee_runtime::tu::robj::HSD_RObjSetFlags(w2p(a[0]), a[1] as u32); { r; 0 } }
@@ -129,8 +135,6 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_SisLib_803A62A0" => { let r = melee_runtime::tu::sislib::HSD_SisLib_803A62A0(a[0] as i32, a[1] as *mut ::core::ffi::c_char, a[2] as *mut ::core::ffi::c_char); { r; 0 } }
         "HSD_SisLib_803A6368" => { let r = melee_runtime::tu::sislib::HSD_SisLib_803A6368(w2p(a[0]), a[1] as i32); { r; 0 } }
         "HSD_SisLib_803A6754" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a[0] as i32, a[1] as i32); p2w(r) }
-        "HSD_SisLib_803A6B98" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(w2p(a[0]), f32::from_bits(a[1] as u32), f32::from_bits(a[2] as u32), w2p(a[3])); r as i64 as u64 }
-        "HSD_SisLib_803A70A0" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(w2p(a[0]), a[1] as i32, w2p(a[2])); r as i64 as u64 }
         "HSD_SisLib_803A746C" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A746C(w2p(a[0]), a[1] as i32, f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32)); { r; 0 } }
         "HSD_SisLib_803A74F0" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A74F0(w2p(a[0]), a[1] as i32, w2p(a[2])); { r; 0 } }
         "HSD_SisLib_803A7548" => { let r = melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(w2p(a[0]), a[1] as i32, f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32)); { r; 0 } }
@@ -138,6 +142,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_StageSlotParticlesClear" => { let r = melee_runtime::tu::generator::HSD_StageSlotParticlesClear(); { r; 0 } }
         "HSD_StateAssignTev" => { let r = melee_runtime::tu::tev_native::HSD_StateAssignTev(); r as i64 as u64 }
         "HSD_StateGetCommittedTevStages" => { let r = melee_runtime::tu::tev_native::HSD_StateGetCommittedTevStages(); r as i64 as u64 }
+        "HSD_StateInitDirect" => { let r = melee_runtime::tu::displayfunc_native::HSD_StateInitDirect(a[0] as i32, a[1] as u32); { r; 0 } }
         "HSD_StateInitTev" => { let r = melee_runtime::tu::tev_native::HSD_StateInitTev(); { r; 0 } }
         "HSD_StateInvalidate" => { let r = melee_runtime::tu::state_native::HSD_StateInvalidate(a[0] as i32); { r; 0 } }
         "HSD_StateSetNumChans" => { let r = melee_runtime::tu::tev_native::HSD_StateSetNumChans(a[0] as i32); { r; 0 } }
@@ -145,6 +150,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "HSD_StateSetNumTexGens" => { let r = melee_runtime::tu::tev_native::HSD_StateSetNumTexGens(); { r; 0 } }
         "IsNameListFull" => { let r = melee_modes::tu::mnname::IsNameListFull(); v2w(r) }
         "MTXOrtho" => { let r = melee_runtime::tu::mtx44::raw::MTXOrtho(w2p(a[0]), f32::from_bits(a[1] as u32), f32::from_bits(a[2] as u32), f32::from_bits(a[3] as u32), f32::from_bits(a[4] as u32), f32::from_bits(a[5] as u32), f32::from_bits(a[6] as u32)); { r; 0 } }
+        "MatToQuat" => { let r = melee_runtime::tu::quatlib::MatToQuat(w2p(a[0]), w2p(a[1])); r as i64 as u64 }
         "PSMTXCopy" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXCopy(w2p(a[0]), w2p(a[1])); v2w(r) }
         "PSMTXMultVec" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXMultVec(w2p(a[0]), w2p(a[1]), w2p(a[2])); { r; 0 } }
         "PSMTXRotAxisRad" => { let r = melee_runtime::tu::mtx_pc::raw::PSMTXRotAxisRad(w2p(a[0]), w2p(a[1]), f32::from_bits(a[2] as u32)); { r; 0 } }
@@ -168,6 +174,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "gmMainLib_8015ED30" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_8015ED30(); r as i64 as u64 }
         "gmMainLib_GetGamePrefs" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_GetGamePrefs(); p2w(r) }
         "gmMainLib_GetGameRules" => { let r = melee_modes::tu::gmmain_lib::gmMainLib_GetGameRules(); p2w(r) }
+        "gmVsMelee_UpdateKOCounts" => { let r = melee_modes::tu::gmvsmelee::gmVsMelee_UpdateKOCounts(w2p(a[0]), w2p(a[1])); { r; 0 } }
         "gm_8016247C" => { let r = melee_modes::tu::gm_1601::gm_8016247C(a[0] as i32); r as i64 as u64 }
         "gm_80162800" => { let r = melee_modes::tu::gm_1601::gm_80162800(w2p(a[0])); r as i64 as u64 }
         "gm_801629B4" => { let r = melee_modes::tu::gm_1601::gm_801629B4(a[0] as i32); r as i64 as u64 }
@@ -175,9 +182,14 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "gm_80167858" => { let r = melee_modes::tu::gm_1601::gm_80167858(a[0] as i32, a[1] as i32, a[2] as i32, a[3] as i32); { r; 0 } }
         "gm_8016895C" => { let r = melee_modes::tu::gm_1601::gm_8016895C(w2p(a[0]), w2p(a[1]), a[2] as i32); { r; 0 } }
         "gm_801692E8" => { let r = melee_modes::tu::gm_1601::gm_801692E8(a[0] as u32, w2p(a[1])); { r; 0 } }
+        "gm_8016A404" => { let r = melee_modes::tu::gm_16A2::gm_8016A404(w2p(a[0])); { r; 0 } }
         "gm_80172898" => { let r = melee_modes::tu::gm_16f1::gm_80172898(a[0] as u16); r as i64 as u64 }
         "gm_80173754" => { let r = melee_modes::tu::gm_1736::gm_80173754(a[0] as u8, a[1] as u8); r as i64 as u64 }
         "gm_80173EEC" => { let r = melee_modes::tu::gm_1736::gm_80173EEC(); { r; 0 } }
+        "gm_8017C984" => { let r = melee_modes::tu::gm_17c0::gm_8017C984(w2p(a[0])); { r; 0 } }
+        "gm_8017DB58" => { let r = melee_modes::tu::gm_17c0::gm_8017DB58(w2p(a[0])); { r; 0 } }
+        "gm_8017DB6C" => { let r = melee_modes::tu::gm_17c0::gm_8017DB6C(w2p(a[0]), a[1] as i32); r as i64 as u64 }
+        "gm_8017DB78" => { let r = melee_modes::tu::gm_17c0::gm_8017DB78(w2p(a[0]), a[1] as i32); r as i64 as u64 }
         "gm_801A36C0" => { let r = melee_modes::tu::gm_1A36::gm_801A36C0(a[0] as u8); r as i64 as u64 }
         "gm_801A4B60" => { let r = melee_modes::tu::gmscene::gm_801A4B60(); { r; 0 } }
         "gm_801BF708" => { let r = melee_modes::tu::gmopeningmode::gm_801BF708(a[0] as i8); { r; 0 } }
@@ -217,6 +229,7 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
         "lb_80011AC4" => { let r = melee_runtime::tu::lbspdisplay::lb_80011AC4(w2p(a[0])); p2w(r) }
         "lb_800138EC" => { let r = melee_runtime::tu::lbspdisplay::lb_800138EC(w2p(a[0]), w2p(a[1]), a[2] as i32, a[3] as i8, f32::from_bits(a[4] as u32), f32::from_bits(a[5] as u32), f32::from_bits(a[6] as u32), f32::from_bits(a[7] as u32)); p2w(r) }
         "lb_80013B14" => { let r = melee_runtime::tu::lbspdisplay::lb_80013B14(w2p(a[0])); p2w(r) }
+        "lb_80014258" => { let r = melee_modes::tu::lb_013B::lb_80014258(w2p(a[0]), w2p(a[1]), w2v(a[2])); r as u64 }
         "memzero" => { let r = melee_runtime::tu::lb_00B0::memzero(w2p(a[0]), a[1] as i32); { r; 0 } }
         "mnNameNew_8023EA08" => { let r = melee_modes::tu::mnnamenew::mnNameNew_8023EA08(w2p(a[0])); { r; 0 } }
         "mnSelStageRandom" => { let r = melee_modes::tu::mnstagesel::mnSelStageRandom(); r as i64 as u64 }
@@ -238,6 +251,8 @@ pub unsafe fn dispatch(name: &str, a: &[u64]) -> Option<u64> {
 /// The host-seam callees of the string-hook stubs (seams.txt): the "feature off" value.
 pub fn seam_off(name: &str) -> Option<u64> {
     Some(match name {
+        "DCInvalidateRange" => 0i64 as u64,
+        "DVDGetDriveStatus" => 0i64 as u64,
         "Frontend_NativeSelect" => 0i64 as u64,
         "Frontend_TrainingSelect" => 0i64 as u64,
         "GXBegin" => 0i64 as u64,
@@ -249,6 +264,8 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXInitTexObjCI" => 0i64 as u64,
         "GXInitTexObjLOD" => 0i64 as u64,
         "GXInitTlutObj" => 0i64 as u64,
+        "GXInvalidateTexAll" => 0i64 as u64,
+        "GXInvalidateVtxCache" => 0i64 as u64,
         "GXLoadPosMtxImm" => 0i64 as u64,
         "GXLoadTexObj" => 0i64 as u64,
         "GXLoadTlut" => 0i64 as u64,
@@ -256,6 +273,7 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXPosition2f32" => 0i64 as u64,
         "GXPosition3f32" => 0i64 as u64,
         "GXSetAlphaCompare" => 0i64 as u64,
+        "GXSetAlphaUpdate" => 0i64 as u64,
         "GXSetArray" => 0i64 as u64,
         "GXSetBlendMode" => 0i64 as u64,
         "GXSetChanCtrl" => 0i64 as u64,
@@ -263,6 +281,7 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXSetColorUpdate" => 0i64 as u64,
         "GXSetCullMode" => 0i64 as u64,
         "GXSetCurrentMtx" => 0i64 as u64,
+        "GXSetLineWidth" => 0i64 as u64,
         "GXSetNumChans" => 0i64 as u64,
         "GXSetNumIndStages" => 0i64 as u64,
         "GXSetNumTevStages" => 0i64 as u64,
@@ -271,6 +290,7 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXSetScissor" => 0i64 as u64,
         "GXSetTevAlphaIn" => 0i64 as u64,
         "GXSetTevAlphaOp" => 0i64 as u64,
+        "GXSetTevClampMode" => 0i64 as u64,
         "GXSetTevColor" => 0i64 as u64,
         "GXSetTevColorIn" => 0i64 as u64,
         "GXSetTevColorOp" => 0i64 as u64,
@@ -283,6 +303,7 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "GXSetViewport" => 0i64 as u64,
         "GXSetVtxAttrFmt" => 0i64 as u64,
         "GXSetVtxDesc" => 0i64 as u64,
+        "GXSetZCompLoc" => 0i64 as u64,
         "GXSetZMode" => 0i64 as u64,
         "GXTexCoord2f32" => 0i64 as u64,
         "Geno_CommonMoveTag" => 0i64 as u64,
@@ -343,8 +364,14 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "Netplay_SetTurbo" => 0i64 as u64,
         "Netplay_StageMode" => 0i64 as u64,
         "Netplay_TurboPref" => 0i64 as u64,
+        "OSCancelAlarm" => 0i64 as u64,
         "OSCheckHeap" => 0i64 as u64,
+        "OSCreateAlarm" => 0i64 as u64,
+        "OSDisableInterrupts" => 0i64 as u64,
         "OSReport" => 0i64 as u64,
+        "OSResetSystem" => 0i64 as u64,
+        "OSRestoreInterrupts" => 0i64 as u64,
+        "OSSetPeriodicAlarm" => 0i64 as u64,
         "OSSetProgressiveMode" => 0i64 as u64,
         "PcFrontendEnabled" => 0i64 as u64,
         "PcFrontendMenusEnabled" => 0i64 as u64,
@@ -403,6 +430,11 @@ pub fn seam_off(name: &str) -> Option<u64> {
         "Ui_RetailHidden" => 0i64 as u64,
         "Ui_SelCanOpen" => 0i64 as u64,
         "Ui_SelNextScene" => 0i64 as u64,
+        "VIFlush" => 0i64 as u64,
+        "VISetBlack" => 0i64 as u64,
+        "VISetPostRetraceCallback" => 0i64 as u64,
+        "VISetPreRetraceCallback" => 0i64 as u64,
+        "VIWaitForRetrace" => 0i64 as u64,
         "View_AspectBits" => 0i64 as u64,
         "Wb_RenderActive" => 0i64 as u64,
         "Wb_RenderOption" => 0i64 as u64,

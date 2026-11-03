@@ -450,6 +450,7 @@ const fn ko_star(x4: f32, joint: u8) -> CSSKOStar {
     CSSKOStar { text: null_mut(), x4, joint, joint2: 0, xc: 0, x10: 0, x14: 0, x18: 0, x1c: 0 }
 }
 
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 crate::globals! {
     rw mnCharSel_804D50C8: [u8; 4] = [1, 2, 4, 8];
     rw mnCharSel_804D50CC: [u8; 4] = [1, 0, 0, 2];

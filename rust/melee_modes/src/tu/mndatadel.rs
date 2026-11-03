@@ -29,7 +29,7 @@ fn HSD_JObjAddChild(jobj: *mut HSD_JObj, child: *mut HSD_JObj) -> ();
 fn HSD_SisLib_803A6368(a0: *mut HSD_Text, a1: i32) -> () = crate::tu::adapt::HSD_SisLib_803A6368__2e8f0d;
 fn HSD_SisLib_803A5ACC(a0: i32, a1: i32, a2: f32, a3: f32, a4: f32, a5: f32, a6: f32) -> *mut HSD_Text = crate::tu::adapt::HSD_SisLib_803A5ACC__27fcb1;
 fn HSD_SisLib_803A5CC4(a0: *mut HSD_Text) -> () = crate::tu::adapt::HSD_SisLib_803A5CC4__6c7e38;
-fn mn_80231634(a0: *mut mn_80231634_t) -> i32;
+fn mn_80231634(a0: *mut mn_80231634_t) -> isize; // jobj->child, pointer-wide (mnmainrule.rs)
 fn gm_801603B0() -> () = crate::tu::adapt::gm_801603B0__bf3f82;
 fn gm_801641CC(a0: u8) -> u16 = crate::tu::adapt::gm_801641CC__003261;
 fn gm_801641E4(stage: u8, enable: u8) -> () = crate::tu::adapt::gm_801641E4__a151c2;
@@ -69,13 +69,12 @@ crate::ext_va! { fn OSReport(fmt: *const i8) va 0 -> (); fn HSD_SisLib_803A6B98(
 crate::ext_vk! { fn lb_80011E24(j:*mut HSD_JObj,out:*mut *mut HSD_JObj) vk "ii" -> i32; }
 }
 use ext::*;
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
 crate::globals! {
-rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-rw pub HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-rw pub HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-rw pub mn_804D6BB8: *mut HSD_Archive = unsafe { core::mem::zeroed() };
-rw pub mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
 rw pub mnDataDel_803EF870: MnDataDelData  = MnDataDelData {
     x0: AnimLoopSettings {
         start_frame: 0 as i32 as f32,
@@ -1031,9 +1030,7 @@ pub unsafe extern "C" fn fn_8024FBA4(mut gobj: *mut HSD_GObj) {
     i = 0 as i32 as i32;
     while i < 6 as i32 {
         mn_8022EE84(
-            *(user_data
-                .offset(mnDataDel_803EF8AC[i as usize].wrapping_mul(4 as u32) as isize)
-                .offset(0x10 as i32 as isize) as *mut *mut HSD_JObj),
+            *((&raw mut (*(user_data as *mut MnDataDelGObjUserData)).x10[mnDataDel_803EF8AC[i as usize] as usize]) as *mut *mut HSD_JObj),
             &raw mut (*data).xC,
             1152 as HSD_TypeMask,
         );
@@ -1043,7 +1040,7 @@ pub unsafe extern "C" fn fn_8024FBA4(mut gobj: *mut HSD_GObj) {
         HSD_GObjFree(gobj);
     }
 }
-unsafe extern "C" fn fn_8024FC48_inline(mut arg0: i32) -> *mut HSD_JObj {
+unsafe extern "C" fn fn_8024FC48_inline(mut arg0: isize) -> *mut HSD_JObj { // C: int; host: pointer-wide (mn_80231634)
     return arg0 as *mut HSD_JObj;
 }
 pub unsafe extern "C" fn fn_8024FC48(mut gobj: *mut HSD_GObj) {
@@ -1062,20 +1059,14 @@ pub unsafe extern "C" fn fn_8024FC48(mut gobj: *mut HSD_GObj) {
         );
         (*proc_0).set_flags_3(HSD_GObj_804D783C as u8 as u8);
         HSD_SisLib_803A5CC4(
-            *(user_data.offset(0xc as i32 as isize) as *mut *mut HSD_Text),
+            (*(user_data as *mut MnDataDelGObjUserData)).xC,
         );
     } else {
         i = 0 as i32 as i32;
         while i < 6 as i32 {
             lb_80011E24(fn_8024FC48_inline(
                     mn_80231634(
-                        *(((*gobj).user_data as *mut u8)
-                            .offset(
-                                mnDataDel_803EF8AC[i as usize].wrapping_mul(4 as u32)
-                                    as isize,
-                            )
-                            .offset(0x10 as i32 as isize)
-                            as *mut *mut mn_80231634_t),
+                        *((&raw mut (*((*gobj).user_data as *mut MnDataDelGObjUserData)).x10[mnDataDel_803EF8AC[i as usize] as usize]) as *mut *mut mn_80231634_t),
                     ),
                 ) as *mut HSD_JObj, &raw mut jobj, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
             if *user_data.offset(0 as i32 as isize) as i32
@@ -1123,7 +1114,7 @@ pub unsafe extern "C" fn fn_8024FD40(mut gobj: *mut HSD_GObj) {
         );
         (*proc_0).set_flags_3(HSD_GObj_804D783C as u8 as u8);
         HSD_SisLib_803A5CC4(
-            *(user_data.offset(0xc as i32 as isize) as *mut *mut HSD_Text),
+            (*(user_data as *mut MnDataDelGObjUserData)).xC,
         );
         return;
     }
@@ -1135,9 +1126,7 @@ pub unsafe extern "C" fn fn_8024FD40(mut gobj: *mut HSD_GObj) {
     i = 0 as i32 as i32;
     while i < 6 as i32 {
         mn_8022EE84(
-            *(user_data
-                .offset(mnDataDel_803EF8AC[i as usize].wrapping_mul(4 as u32) as isize)
-                .offset(0x10 as i32 as isize) as *mut *mut HSD_JObj),
+            *((&raw mut (*(user_data as *mut MnDataDelGObjUserData)).x10[mnDataDel_803EF8AC[i as usize] as usize]) as *mut *mut HSD_JObj),
             mnDataDel_GetAnimSettings(data),
             1152 as HSD_TypeMask,
         );
@@ -1228,7 +1217,7 @@ pub unsafe extern "C" fn mnDataDel_8024FE4C(mut arg0: u8) {
     cursor = (user_data as *mut u8)
         .offset((i as i32 * 4 as i32) as isize);
     loop {
-        lb_80011E24(root as *mut HSD_JObj, cursor.offset(0x10 as i32 as isize) as *mut *mut HSD_JObj, &[Va::I32(i), Va::I32(-(1 as i32))]);
+        lb_80011E24(root as *mut HSD_JObj, (&raw mut (*user_data).x10[i as usize]) as *mut *mut HSD_JObj /* menuguard: the C's ud+0x10+4*i, host field */, &[Va::I32(i), Va::I32(-(1 as i32))]);
         i += 1;
         cursor = cursor.offset(4 as i32 as isize);
         if !(i

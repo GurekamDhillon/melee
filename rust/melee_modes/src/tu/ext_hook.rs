@@ -61,6 +61,11 @@ macro_rules! val_fnptr {
             #[inline] fn to_u64(self) -> u64 { self.map_or(0, |f| f as usize as u64) }
             #[inline] fn from_u64(v: u64) -> Self { if v == 0 { None } else { Some(unsafe { core::mem::transmute(v as usize) }) } }
         }
+        // a bare callback (ext_dflt's by-name arm passes one): its address; a NULL word cannot be one
+        impl<$($A,)* R> Val for unsafe extern "C" fn($($A),*) -> R {
+            #[inline] fn to_u64(self) -> u64 { self as usize as u64 }
+            #[inline] fn from_u64(v: u64) -> Self { assert!(v != 0); unsafe { core::mem::transmute(v as usize) } }
+        }
     )*};
 }
 val_fnptr!((), (A0), (A0, A1), (A0, A1, A2), (A0, A1, A2, A3), (A0, A1, A2, A3, A4), (A0, A1, A2, A3, A4, A5));
@@ -127,8 +132,9 @@ macro_rules! ext_none {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! ext_dflt {
+    // menuguard: no verified port: the engine's by-name table (ext_hook::fallback), else the TODO stop
     ([] ($($a:ident),*) $name:ident) => {
-        melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported"))
+        $crate::tu::ext_hook::Val::from_u64($crate::tu::ext_hook::fallback(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*]))
     };
     ([$def:path] ($($a:ident),*) $name:ident) => {
         return $def($($a),*)
@@ -239,4 +245,30 @@ impl FromAudio for u32 {
 }
 impl FromAudio for u64 {
     fn from_audio(v: u64) -> Self { v }
+}
+
+/// menuguard: the C `lbArchive_LoadSections(archive, out0, name0, out1, ..., NULL)` of the variadic stubs: the state
+/// oracle's recorder when one is installed, else the real port (melee_runtime lbarchive.rs), NULL-terminated.
+pub unsafe fn archive_sections(archive: *mut melee_types::HSD_Archive, out0: *mut *mut core::ffi::c_void, rest: &[*const core::ffi::c_void]) {
+    use crate::oracle::{arg, ext_call, K};
+    if ext_call("lbArchive_LoadSections", &[arg(archive), arg(out0)], K::V).is_some() { return; }
+    melee_runtime::tu::lbarchive::lbArchive_LoadSections(archive, &va_words(out0.cast(), rest));
+}
+/// As [`archive_sections`] for `lbArchive_LoadSymbols(file, out0, name0, ..., NULL)`.
+pub unsafe fn archive_symbols(file: *const i8, out0: *mut core::ffi::c_void, rest: &[*const core::ffi::c_void]) -> *mut melee_types::HSD_Archive {
+    use crate::oracle::{arg, ext_call, OVal, K};
+    if let Some(v) = ext_call("lbArchive_LoadSymbols", &[arg(file), arg(out0)], K::P) { return <*mut melee_types::HSD_Archive as OVal>::from_bits(v); }
+    melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file, &va_words(out0, rest))
+}
+/// As [`archive_sections`] for `lbArchive_800171CC(dst, file, out0, name0, ..., NULL)` (the script_game Va form).
+pub unsafe fn archive_800171cc(dst: *mut *mut melee_types::HSD_Archive, file: *const i8, out0: *mut core::ffi::c_void, va: &[crate::oracle::Va]) -> i32 {
+    if let Some(h) = EXT_HOOK { return h("lbArchive_800171CC", &[dst as usize as u64, file as usize as u64, out0 as usize as u64]) as i32; }
+    let rest: std::vec::Vec<*const core::ffi::c_void> = va.iter().map(|x| match *x { crate::oracle::Va::P(p) => p, crate::oracle::Va::I32(i) => i as isize as *const _, crate::oracle::Va::I64(i) => i as isize as *const _, crate::oracle::Va::D(_) => core::ptr::null() }).collect();
+    melee_runtime::tu::lbarchive::lbArchive_800171CC(dst, file, &va_words(out0, &rest)) as i32
+}
+fn va_words(first: *mut core::ffi::c_void, rest: &[*const core::ffi::c_void]) -> std::vec::Vec<*mut core::ffi::c_void> {
+    let mut v = std::vec![first];
+    v.extend(rest.iter().map(|p| *p as *mut core::ffi::c_void));
+    if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
+    v
 }

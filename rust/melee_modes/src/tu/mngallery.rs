@@ -92,19 +92,18 @@ pub mod ext {
     }
     /// lbarchive.c, variadic in C: `lbArchive_LoadSections(archive, out0, name0, out1, name1, ..., 0)`.
     /// The recorder logs the two fixed arguments only (the names are literals in the caller).
-    pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, out0: *mut *mut c_void, _rest: &[*const c_void]) {
-        use crate::oracle::{arg, ext_call, K};
-        if ext_call("lbArchive_LoadSections", &[arg(archive), arg(out0)], K::V).is_some() {
-            return;
-        }
-        panic!("TODO(ext) lbArchive_LoadSections: its TU is not ported")
-    }
+    pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, out0: *mut *mut c_void, _rest: &[*const c_void]) { crate::tu::ext_hook::archive_sections(archive, out0, _rest) }
 }
 
 pub use melee_types::{mnGallery_804D6C88_userdata, mnGallery_child_userdata};
 
 const HEAP_SIZE: u32 = 0x271000;
 
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CameraKind};
 crate::globals! {
     // ---- defined by this TU
     rw pub mnGallery_804A0BA0: StaticModelDesc = StaticModelDesc { joint: null_mut(), animjoint: null_mut(), matanim_joint: null_mut(), shapeanim_joint: null_mut() };
@@ -112,18 +111,6 @@ crate::globals! {
     rw pub mnGallery_804D6C88: *mut HSD_GObj = null_mut();
     rw pub rate_table: *mut u32 = null_mut();
     // ---- defined by other TUs (placeholders until they are ported)
-    /// mnmain.c
-    rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BB8: *mut HSD_Archive = null_mut();
-    /// baselib/gobj.c
-    rw pub HSD_GObj_804D783C: i32 = 0;
-    /// baselib/gobj.c
-    rw pub HSD_GObj_CameraKind: u8 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_JObjKind: u8 = 0;
     /// baselib/controller.c
     rw pub HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
     /// gm/gmmain_lib.c

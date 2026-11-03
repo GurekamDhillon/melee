@@ -8,16 +8,9 @@ use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 use melee_types::*;
 
-/// `mnmain.c` `/* 4A04F0 */ MenuFlow mn_804A04F0`.
-pub static mut mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-/// `mnmain.c` `/* 4D6BC8 */ MenuInputState mn_804D6BC8`.
-pub static mut mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
-/// `mnmain.c` `/* 4D6BB8 */ HSD_Archive* mn_804D6BB8` (the menu model archive).
-pub static mut mn_804D6BB8: *mut HSD_Archive = null_mut();
-/// `mnmain.c` `/* 4D6BB4 */ u8 mn_804D6BB4`.
-pub static mut mn_804D6BB4: u8 = 0;
-/// `mnmain.c` `/* 4D6BB5 */ u8 mn_804D6BB5`.
-pub static mut mn_804D6BB5: u8 = 0;
+/// The mnmain.c menu globals: mnmain's own statics (menuguard: these were private copies, so the menus that
+/// read them saw a NULL archive and a menu flow nobody else wrote).
+pub use crate::tu::mnmain::{mn_804A04F0, mn_804D6BC8, mn_804D6BB8, mn_804D6BB4, mn_804D6BB5};
 
 ext_fns! {
     fn lbAudioAx_80024030(sfx: i32) = crate::tu::adapt::lbAudioAx_80024030__36458a;
@@ -66,14 +59,16 @@ pub unsafe fn HSD_ForeachAnim(obj: *mut c_void, ty: HSD_Type, mask: HSD_TypeMask
 /// `lbArchive_LoadSections(archive, &sym0, "name0", &sym1, "name1", ..., 0)` (lb/lbarchive.c, not
 /// ported): the (symbol slot, section name) pairs.
 pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, sections: &[(*mut *mut c_void, *const c_char)]) {
-    let mut a: std::vec::Vec<u64> = std::vec![archive as usize as u64];
+    // menuguard: the real port (melee_runtime lbarchive.rs; the by-name table could not carry the C `...`)
+    let mut v: std::vec::Vec<*mut c_void> = std::vec::Vec::new();
     for (slot, name) in sections {
-        a.push(*slot as usize as u64);
-        a.push(*name as usize as u64);
+        if slot.is_null() { break; }
+        v.push(*slot as *mut c_void);
+        v.push(*name as *mut c_void);
     }
-    // the test hook, else the engine's by-name table (ext_hook::fallback), else the TODO stop
-    let r = match crate::tu::ext_hook::EXT_HOOK { Some(h) => h("lbArchive_LoadSections", &a), None => crate::tu::ext_hook::fallback("lbArchive_LoadSections", &a) };
-    let _ = r;
+    v.push(core::ptr::null_mut());
+    if let Some(h) = crate::tu::ext_hook::EXT_HOOK { let mut a = std::vec![archive as usize as u64]; a.extend(v.iter().map(|p| *p as usize as u64)); h("lbArchive_LoadSections", &a); return; }
+    melee_runtime::tu::lbarchive::lbArchive_LoadSections(archive, &v);
 }
 
 /// `__assert(file, line, expr)`: the baselib assert failure (aborts).

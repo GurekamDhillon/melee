@@ -110,13 +110,7 @@ pub mod ext {
     /// lbarchive.c, variadic in C: `lbArchive_LoadSymbols(file, out0, name1, out1, ..., NULL)`.
     /// The recorder logs the two fixed arguments only (the symbol names are literals in the caller);
     /// `rest` carries the C varargs.
-    pub unsafe fn lbArchive_LoadSymbols(file: *const i8, out0: *mut c_void, _rest: &[*const c_void]) -> *mut HSD_Archive {
-        use crate::oracle::{arg, ext_call, OVal, K};
-        if let Some(v) = ext_call("lbArchive_LoadSymbols", &[arg(file), arg(out0)], K::P) {
-            return <*mut HSD_Archive as OVal>::from_bits(v);
-        }
-        panic!("TODO(ext) lbArchive_LoadSymbols: its TU is not ported")
-    }
+    pub unsafe fn lbArchive_LoadSymbols(file: *const i8, out0: *mut c_void, _rest: &[*const c_void]) -> *mut HSD_Archive { crate::tu::ext_hook::archive_symbols(file, out0, _rest) }
 }
 
 /// `struct ImageDesc_Array` (file-local): two EFB capture slots of two images, then 0xC bytes.

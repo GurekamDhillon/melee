@@ -47,7 +47,7 @@ pub mod ext {
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ftCommon_8007E3EC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e3ec(a0);
-        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |a0, a1| crate::ftcommon2::grab_mash(a0, a1);
+        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |_, _| todo!("ftCommon_GrabMash: installed by melee_link");
         fn_800DC044(g: G) -> bool = crate::tu::ftCo_CaptureWait::fn_800DC044;
         fn_800DC070(g: G) = crate::tu::ftCo_CaptureJump::fn_800DC070;
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;

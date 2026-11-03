@@ -33,7 +33,7 @@ pub mod ext {
     use super::*;
     ext_fns! {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         ftAnim_SetAnimRate(g: G, rate: f32) = |g: G, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, rate as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
@@ -41,7 +41,7 @@ pub mod ext {
         fn_800C9CEC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_TurnRun::fn_800C9CEC(g as _) as _ } };
         ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::ftcommon_c::ftCommon_SetSelfMovementFromGroundedMovement(a0);
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(a0);
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
     }
 }

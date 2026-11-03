@@ -41,7 +41,7 @@ pub mod ext {
         ftCo_KneeBend_Enter(g: G, input: i32) = |g: G, input: i32| { unsafe { crate::tu::ftCo_KneeBend::ftCo_KneeBend_Enter(g as _, input as _); } };
         ftCo_800DF910(fp: &mut Fighter) -> bool = |a0| crate::tu::ft_0df1::ftco_800df910(a0);
         ft_800881D8(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::tu::ft_0881::ft_800881d8(a0, a1, a2, a3);
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;

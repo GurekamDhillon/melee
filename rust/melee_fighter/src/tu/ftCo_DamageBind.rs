@@ -41,8 +41,8 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         Player_GetHandicap(slot: i32) -> i32 = crate::player::get_handicap;
         Player_80033BB8(slot: i32) -> i32 = crate::player::player_80033bb8;
-        ftCommon_InitGrab(fp: &mut Fighter, arg1: i32, timer: f32) = |a0, a1, a2| crate::ftcommon2::init_grab(a0, a1, a2);
-        ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |a0, a1| crate::ftcommon2::grab_mash(a0, a1);
+        ftCommon_InitGrab(fp: &mut Fighter, arg1: i32, timer: f32) = |_, _, _| todo!("ftCommon_InitGrab: installed by melee_link");
+        ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |_, _| todo!("ftCommon_GrabMash: installed by melee_link");
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;

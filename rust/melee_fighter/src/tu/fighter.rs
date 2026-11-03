@@ -166,7 +166,7 @@ pub mod ext {
         fn Geno_FighterReset(fp: F) = { todo!("Geno_FighterReset (pc/geno)") };
         fn ftCo_800D105C(g: G) = { unsafe { crate::tu::ftchangeparam::ftco_800d105c(g); } };
         fn ftCo_800C09B4(g: G) = { unsafe { crate::tu::ftCo_Bury::ftCo_800C09B4(g); } };
-        fn ftCommon_8007E2FC(g: G) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(fpg(g)); } };
+        fn ftCommon_8007E2FC(g: G) = { unsafe { let _ = crate::tu::ftcommon::ftcommon_8007e2fc(fpg(g)); } };
         fn ft_80088A50(fp: F) = { unsafe { let _ = crate::ft0881::ft_80088a50(&mut *fp); } };
         fn ft_800890BC(fp: F) = { unsafe { let _ = crate::stale::clear_attack_id(&mut *(fp as *mut Fighter)); } };
         fn ft_800892D4(fp: F) = { unsafe { let _ = crate::ft0892::ft_800892d4(&mut *fp); } };

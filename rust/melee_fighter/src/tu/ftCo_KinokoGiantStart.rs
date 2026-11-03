@@ -38,7 +38,7 @@ pub mod ext {
         ftCo_800D2600(g: G, arg1: i32) = crate::tu::ftCo_KinokoSmallEnd::ftCo_800D2600;
         fn_800D2BF8(g: G) = k::fn_800d2bf8;
         ftCo_800D2770(g: G, scale: f32) = k::ftco_800d2770;
-        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ft_8008A324(g: G) = crate::tu::ft_08a1::ft_8008A324;
         fn_800D2B30(g: G) = k::fn_800d2b30;
         fn_800D2890(g: G, msid: i32) = k::fn_800d2890;

@@ -51,7 +51,7 @@ pub mod ext {
         fn_800C9D40(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_TurnRun::fn_800C9D40(g as _) as _ } };
         ftCo_RunBrake_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_RunBrake::ftCo_RunBrake_CheckInput(g as _) as _ } };
         ftCommon_CalcGroundAccel_DashRun(fp: &mut Fighter, accel: f32, target: f32, friction: f32) = crate::ftcommon::calc_ground_accel_dash_run;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::ftcommon_c::ftCommon_SetSelfMovementFromGroundedMovement(a0);
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(a0);
         ft_800844EC(g: G) = crate::tu::ft_081b::ft_800844ec;
     }
 }

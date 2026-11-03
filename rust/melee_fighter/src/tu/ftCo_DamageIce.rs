@@ -39,7 +39,7 @@ pub mod ext {
         ftCo_80098928(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_PassiveStand::ftCo_80098928(g as _) as _ } };
         ftCo_8009872C(g: G) -> bool = crate::tu::ftCo_DownAttack::ftCo_8009872C;
         ftCo_80097D40(g: G) = crate::tu::ftCo_DownBound::ftCo_80097D40;
-        ftParts_GetBoneIndex(fp: &mut Fighter, part: i32) -> i32 = |a0, a1| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*(a0 as *const Fighter) }, a1 as _) as _;
+        ftParts_GetBoneIndex(fp: &mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         // `lb_8000B1CC(jobj, NULL, out)`: world position of a joint (offset pointer may be NULL).
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         lbVector_Sub(a: &mut Vec3, b: &Vec3) = |a0, a1| unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Sub(a0 as *mut _, a1 as *const _ as *mut _); };
@@ -70,8 +70,8 @@ pub mod ext {
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftCo_800886D8(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::tu::ft_0881::ftco_800886d8(a0, a1, a2, a3);
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
-        ftCommon_CalcSelfAccel_DeaccelAir(fp: &mut Fighter) = |a0| crate::ftcommon_c::ftCommon_CalcSelfAccel_DeaccelAir(a0);
-        ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |a0, a1, a2| crate::ftcommon_c::ftCommon_Fall(a0, a1, a2);
+        ftCommon_CalcSelfAccel_DeaccelAir(fp: &mut Fighter) = |a0| crate::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelAir_fp(a0);
+        ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |a0, a1, a2| crate::tu::ftcommon::ftCommon_Fall_fp(a0, a1, a2);
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ft_800824A0(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_800824a0(g as _, b as _) as _ } };
@@ -79,7 +79,7 @@ pub mod ext {
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };
         ft_80081D0C(g: G) -> i32 = |g: G| -> i32 { unsafe { crate::tu::ft_081b::ft_80081d0c(g as _) as _ } };

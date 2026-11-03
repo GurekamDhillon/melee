@@ -41,7 +41,7 @@ pub mod ext {
         it_8026C334(i: I, pos: *mut Vec3) = |i: I, pos: *mut Vec3| { unsafe { melee_items::tu::it_26B1::it_8026C334(i as _, pos as _); } };
         itGetOwner(i: I) -> G = |i: I| -> G { unsafe { melee_items::tu::it_26B1::itGetOwner(i as _) as _ } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         ftColl_800787B4(i: I, g: G, v: i32) = |i: I, g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_800787b4(i as _, g as _, v as _); } };

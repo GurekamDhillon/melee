@@ -38,7 +38,7 @@ pub mod ext {
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftKb_SpecialN_800F598C(g: G, a: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F598C (ftkirby)");
         ftKb_SpecialN_800F597C(g: G) -> bool = |_| todo!("ftKb_SpecialN_800F597C: installed by melee_link");
         ftKb_SpecialN_800F5954(g: G) = |_| todo!("TODO(port) ftKb_SpecialN_800F5954 (ftkirby)");

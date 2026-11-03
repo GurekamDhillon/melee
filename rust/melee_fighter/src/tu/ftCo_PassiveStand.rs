@@ -33,7 +33,7 @@ pub mod ext {
         ftCommon_8007D7FC(fp: &mut Fighter) = |a0| crate::tu::ftcommon::ftcommon_8007d7fc(a0);
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::tu::ft_0881::ft_800881d8(a0, a1, a2, a3);
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) = |a0, a1, a2, a3, a4| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[]); };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;

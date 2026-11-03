@@ -50,7 +50,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftColl_8007B6A0(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
         ftColl_8007B6EC(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007b6ec(g as _); } };
-        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnim(a0 as _, a1 as _, a2 as _, a3 as _); };
         ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };
         HSD_JObjAnim(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnim(a0 as _) };

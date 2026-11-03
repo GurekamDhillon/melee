@@ -177,7 +177,7 @@ pub fn fn_800d2b30(g: G) {
         c.x58 = f.xD4_unk_vel;
     }
     let fg = fp(g).gobj;
-    match unsafe { FTCOMMON_8007E2FC } { Some(h) => h(fg), None => crate::ftcommon2::ftcommon_8007e2fc(fp(fg)) }
+    match unsafe { FTCOMMON_8007E2FC } { Some(h) => h(fg), None => crate::tu::ftcommon::ftcommon_8007e2fc(fp(fg)) }
 }
 
 /// `fn_800D2BF8`: restore the saved velocities.

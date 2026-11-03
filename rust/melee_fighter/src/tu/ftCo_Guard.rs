@@ -61,7 +61,7 @@ pub mod ext {
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
         efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |a0, a1, a2, a3| unsafe { let _ = melee_world::tu::efn::efsync::efSync_Spawn(a0 as _, a1 as _, &[a2 as *const core::ffi::c_void, a3 as isize as *const core::ffi::c_void]); };
         ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |a0, a1, a2| crate::tu::ftcoll::ftColl_8007B1B8(a0, a1 as *mut _ as *const _, a2);
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineTemplateSkeleton(kind) } };
         Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
         ftYs_Init_8012BECC(g: G) = |_| todo!("TODO(port) ftYs_Init_8012BECC (ftYoshi)");

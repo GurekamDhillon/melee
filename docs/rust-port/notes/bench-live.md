@@ -71,3 +71,36 @@ Reading:
 
 ## Side note: Static Recomp (`melee_port.exe`)
 This was timed first, then stopped in favour of the Source Port (the user's call), so there is no full 3-run set. The same script and flags reached the same Temple 4-CPU match. In short probe runs its log reported 700 to 2200 fps uncapped (1400 to 1500 typical in the match). Its game-thread `cpu_ms` was about 7.8 ms per match frame on Temple, about 1.8x the Source Port's 4.4 ms.
+
+## Re-run 2026-11-03: after memfix, GX parity rounds 1-2, sound parity and demofix
+Rust is rust-port f0c3a13aa merged into this branch (release profile, built in the `bench2` worktree only). The Source Port is the same v0.9.86 build as above, re-run now. Same scenarios and method; 3 runs each, one game at a time, medians. Rust runs used `MELEE_VOLUME=3`, `MELEE_WINDOW_TITLE="bench: rust-release <scenario>"`, `MELEE_PAD_IGNORE_ADAPTER=1`, `MELEE_WINDOW_UNFOCUSED=1`; the Source Port ran `--volume 0 --no-music --hidden`. Draw counts come from a separate extra run per scenario with `MELEE_GX_STATS` (so the stats cost is not in the timings). Scripts: `bench-live/all4.sh` (loop), `run_r.sh`, `analyze.py`.
+
+Background load: another agent's cargo/rustc was running before most runs (CPU 17 to 24% machine-wide before each run, see `all4.log`); no other game was running during timed runs. Pre-parity runs of this session (before the invisible-fighter fix, and an aborted rerun) are discarded.
+
+### Results (medians of 3)
+| | Rust Temple 4P | Source Port Temple 4P | Rust FD 2P | Source Port FD 2P |
+|---|---|---|---|---|
+| render fps, average | 1295 (was 334) | 555 (was 425) | 2451 (was 952) | 1326 (was 1103) |
+| render fps, 1% low | 125 (was 54) | 184 (was 152) | 238 (was 127) | 398 (was 143) |
+| frame time p50 / p95 / p99 (ms) | 0.17 / 4.88 / 6.89 (was 1.10 / 9.67 / 14.8) | 1.51 / 3.75 / 4.82 (was 2.00 / 4.45 / 5.40) | 0.19 / 1.52 / 3.61 (was 0.64 / 4.47 / 6.04) | 0.66 / 1.59 / 2.10 (was 0.72 / 1.85 / 2.92) |
+| sim per tick | 5.38 ms p50, 5.59 mean, 7.55 p99 (wall of `Game::tick`; was 7.5) | 4.03 ms p50, 4.17 mean (game-thread `cpu_ms`; was 4.37) | 2.96 ms p50, 3.06 mean, 4.22 p99 (was 4.06) | 2.16 ms p50, 2.20 mean (was 2.24) |
+| process CPU, cores busy | 0.95 | 1.30 | 0.91 | 1.10 |
+| process CPU per rendered frame | 0.74 ms | 2.36 ms | 0.37 ms | 0.84 ms |
+| GPU utilisation (nvidia-smi proxy) | 14% | 25% | 19% | 34% |
+| working set, peak / last sample | 504 / 418 MB (was 3310 / 882) | 929 / 415 MB | 446 / 368 MB (was 4564 / 683) | 865 / 299 MB |
+| private bytes, peak / last sample | 657 / 552 MB (was 3560 / 3162) | 1109 / 541 MB (was 1150 peak) | 585 / 491 MB (was 4999 / 4604) | 1053 / 389 MB |
+| presents in 3600 match frames | 77605 | 33276 | 146863 | 79535 |
+| draws per presented frame | 2519 raw, 587 after merging state-identical runs | 1027 (863 paired) | 1280 raw, 292 merged | 471 (372 paired) |
+| distinct textures / pipeline configs per frame | 205 / 58 | not logged | 107 / 47 | not logged |
+| copies (EFB) per frame | 4 | not logged | 2 | not logged |
+
+Per-run fps: Rust Temple 1335 / 1295 / 1173, FD 2363 / 2879 / 2451; Source Port Temple 639 / 555 / 548, FD 1341 / 1326 / 1218. The Source Port is faster than in the first set (425 / 1103 before): same binary, so this is machine state (the earlier set ran with other load).
+
+### Reading
+- We are now ahead on average fps (2.3x Temple, 1.85x FD) and on CPU per frame, and our memory is about half theirs. Our 1% low is still lower than theirs (125 vs 184 on Temple, 238 vs 398 on FD) and our p99 frame is 1.4x (Temple) and 1.7x (FD) theirs.
+- Sim tick: ours is 5.4 ms (Temple) / 3.0 ms (FD) wall against their 4.0 / 2.2 ms game-thread CPU, i.e. 1.3x; still different quantities (see caveats).
+- **Our present rate is not like for like.** Our presents are far more numerous (77605 vs 33276) with a 0.17 ms median: only about one frame per sim tick is actually prepared and drawn (3575 prepare rows in 3600 ticks; `present prepare` p50 1.9 ms, `draw` p50 1.06 ms in the perf line), the rest re-present with interpolation alpha. So the fps figure above is largely cheap re-presents; the cost per prepared frame is the better number to compare, and the Source Port's `interval_ms` rows are also sub-frame presents.
+- **Draws per frame**: ours counts every GX draw (2519 / 1280), his `draws` column counts after his per-display-list primitive merge (1027 / 471). Our comparable number is the run-merged count `batches`: 587 / 292, which is 0.57x and 0.62x of his. We therefore still issue fewer draws than he does, consistent with missing content.
+
+### Caveat: our GX parity is not complete
+Still missing on our side at this point: Stadium lamps, the Corneria shadow, depth copies, and the shield / magnifier effects (a gxparity3 agent is working on them). Fewer draws and less GPU work mean our numbers are flattering until parity lands. Everything in the Caveats section above also still applies (hidden window on his side, Slippi/UCF layer, different sim quantities, different renderers, GCC -O2).

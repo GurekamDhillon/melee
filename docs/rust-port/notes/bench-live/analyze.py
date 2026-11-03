@@ -26,7 +26,7 @@ def rust(d):
     rows=[l.rstrip().split(',') for l in open(d+'/ft.csv')]
     S=float(rows[0][2]); T=[r for r in rows if r[0]=='T']; P=[r for r in rows if r[0]=='P']
     log=open(d+'/stdout.log',errors='replace').read()
-    import re; mt=int(re.search(r'tick (\d+): loading -> match',log).group(1))
+    import re; m_=re.search(r'tick (\d+): loading -> match',log); mt=int(m_.group(1)) if m_ else 3  # newer logs print "scene vs" instead; match starts at tick 3
     T=T[mt:]  # match ticks (tick index order)
     tm0=float(T[0][2]); tm1=float(T[-1][2])+float(T[-1][3])
     pr=[float(r[2]) for r in P if tm0<=float(r[2])<=tm1]

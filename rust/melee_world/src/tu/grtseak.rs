@@ -43,9 +43,9 @@ pub mod ext {
     unsafe fn todo_OSReport(_fmt: &CStr, _file: &CStr, _line: i32, _id: i32) { melee_runtime::tu::os_error::OSReport(_fmt.as_ptr(), &[_file.as_ptr() as usize, _line as usize, _id as usize]) }
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
-    unsafe fn todo_Mex_GrCallbacks() -> *mut c_void { panic!("TODO(pc: m-ex (Mex_GrCallbacks, NULL for a vanilla stage)) Mex_GrCallbacks") }
-    unsafe fn todo_Mex_GrTrace() -> i32 { panic!("TODO(pc: m-ex (Mex_GrTrace, the grtrace debug switch)) Mex_GrTrace") }
-    unsafe fn todo_OSReport_grtrace(_fmt: &CStr, _args: &[usize]) { panic!("TODO(os: OSReport (varargs, %p arguments)) OSReport_grtrace") }
+    unsafe fn todo_Mex_GrCallbacks() -> *mut c_void { core::ptr::null_mut() } // gw_Mex_GrCallbacks: no MxDt row on a vanilla disc
+    unsafe fn todo_Mex_GrTrace() -> i32 { 0 } // gw_Mex_GrTrace: MELEE_GR_TRACE unset
+    unsafe fn todo_OSReport_grtrace(_fmt: &CStr, _args: &[usize]) {} // only behind Mex_GrTrace
     impl Hooks {
         pub const fn todo() -> Hooks {
             Hooks {

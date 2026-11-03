@@ -89,10 +89,10 @@ pub mod ext {
 /// `struct grT_YakumonoParam` (UNK_T = void* fields).
 #[repr(C)]
 pub struct YakumonoParam {
-    pub unk0: *mut c_void,
-    pub unk4: *mut c_void,
-    pub unk8: *mut c_void,
-    pub unkC: *mut c_void,
+    pub unk0: *mut DynamicsDesc, // a hit description (on_touch_line), as Mewtwo's / Jigglypuff's
+    pub unk4: *mut DynamicsDesc, // a hit description (on_touch_line), as Mewtwo's / Jigglypuff's
+    pub unk8: *mut DynamicsDesc, // a hit description (on_touch_line), as Mewtwo's / Jigglypuff's
+    pub unkC: *mut DynamicsDesc, // a hit description (on_touch_line), as Mewtwo's / Jigglypuff's
 }
 
 static YAKUMONO_PARAM: AtomicPtr<YakumonoParam> = AtomicPtr::new(null_mut());

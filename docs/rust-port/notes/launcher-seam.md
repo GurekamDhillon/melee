@@ -113,3 +113,30 @@ mapped (window 640x480, scale 2, vsync, volume 3), title -> VS -> match -> resul
 - **Launcher UI/packaging:** no GAME BUILD segment, no `FileVersion` resource on `melee.exe` (his version check
   skips it), no release-zip layout (`rust\melee.exe`) or updater channel, the in-game settings panel he opens
   (`--settings-window`) does not exist in ours.
+
+## 5. Drop-in round two (2026-11-03, port/launch2)
+
+Closes the UI/packaging gaps of §4; what is left of §4 is online, code mods, .slp replays, box mode and the
+DualShock/Switch/HID tables.
+
+- **GAME BUILD row** (patch commit 385e535 + test hooks, branch `ours/rust-engine`): a "Rust Port" segment when
+  `rust\melee.exe` is there (no-Slippi build: Source Port | Rust Port; normal build: a fourth segment before
+  Vanilla); picking it saves `engine=2`. Its exe is exempt from the `FileVersion` match (its own version).
+  **Settings** with the Rust engine opens the Source Port's panel (it writes the `port-settings.ini` we read), or a
+  message without one; `melee.exe --settings-window` exits 0 at once.
+- **Build tab / warm cache**: `--hidden --frames N` -> `--headless --max-frames N`, `--log-file` honoured
+  (`launcher_build.log`), no replay recorded.
+- **Version resource**: `rust/melee/build.rs` writes a VS_VERSIONINFO .res (FileVersion = workspace version,
+  Comments = git hash) and links it; no rc.exe.
+- **Controls** (`melee_platform::bindings`, `MELEE_PORT_SETTINGS`): `key_<Action> <VK>` -> port 1's keyboard,
+  `pad<n>_<Action> <XInput mask>` (0x400/0x800 = LT/RT) -> the gilrs pad on port n, `gc<n>_*` adapter remaps
+  when not the identity, `backgroundinput` -> the adapter keeps reading unfocused. Without the file, input is unchanged.
+- **Mods**: `--mod-iso` (or `--iso <mod> --mod-base-iso <retail>`) plays when the mod disc's main.dol is the retail
+  one byte for byte (a data-only mod); otherwise refused (exit 3). `--mod-gci`, `--mod-dir`, profiles: refused.
+- **Replays**: `--replay-dir D` -> our `.mrpl` recorded to `D\RustPort\` (his viewer lists .slp only).
+- **Packaging**: `bash tools/rust-port/launcher/package.sh <out> [patched launcher exe]` -> `<out>\rust\melee.exe`,
+  `version.txt`, `README.txt` (+ launcher), checked for disc-shaped files, and `<out>.zip`.
+- **Tests**: `SEGMENT=3 BUILD=1 bash tools/rust-port/launcher/launch_test.sh <folder>` -> BUILD OK;
+  `SEGMENT=3 bash ... <folder>` (launcher.ini engine=1 to start) -> engine=2 saved, LAUNCH OK. Both passed on a
+  folder made by package.sh. The launcher process exits 127 in test mode either way (its own quit path; the game's
+  code is what the test checks).

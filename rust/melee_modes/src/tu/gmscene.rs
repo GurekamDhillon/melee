@@ -29,6 +29,9 @@ use crate::hook::A;
 /// Callees in TUs that are not ported yet (TODO stubs named like the C functions), and the
 /// globals the C file reads from other TUs. With [`HOOK`] set (state oracle, tests/s497_*.rs)
 /// every call is routed to the hook instead.
+/// The wasm mod host's `frame.run_procs` row (false = pre, true = post); None when no mod hooks it (melee_modhost).
+pub static mut MOD_FRAME: Option<fn(post: bool)> = None;
+
 pub mod ext {
     #![allow(non_snake_case, non_upper_case_globals, unused_variables, unused_unsafe, dead_code, improper_ctypes_definitions)]
     use core::ffi::{c_char, c_void};
@@ -969,7 +972,10 @@ pub unsafe fn gm_801A4D34_tick(on_frame: Option<unsafe extern "C" fn()>, info: *
             if let Some(pre) = (*temp_r25).unk_10.pre_gobj_proc {
                 pre();
             }
+            // mod host (melee_modhost, hooks-v1 `frame.run_procs`): pre = frame begin, post = frame end, before the NHV1 sample
+            if let Some(m) = MOD_FRAME { m(false) }
             ext::HSD_GObj_RunProcs();
+            if let Some(m) = MOD_FRAME { m(true) }
             if let Some(f) = ext::AUDIO_PROCS { f() }
             ext::Netplay_Background(); // an online lobby stays connected on the CSS too
             ext::Camera_RefreshViewingMtx();

@@ -110,6 +110,8 @@ impl Scenario {
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
                 "mode" => s.onep_mode = match v {
                     "classic" => 3, "adventure" => 4, "allstar" => 5,
+                    // `{"tt", 0x0F}`: Target Test, booted through gm_Mode_TargetTest_OnLoad's TestTargetTestCKind direct launch
+                    "tt" => 0x0F,
                     // port test entry, not in gw_sl_modes: GM_CLASSIC_GOVER (0x15), where gm_8017CBAC sends a
                     // cleared Classic (the ending movie, the credits, the trophy) - boots it without beating Master Hand
                     "classicend" => 0x15,
@@ -169,6 +171,11 @@ fn p(n: i32) -> Option<PlayerSpec> {
 /// `gw_Script_CpuIdleDefault(slot)`: 2 for a scene `idle` slot, else 0 (no `cpus=` / MELEE_CPU_IDLE default in the engine).
 pub fn cpu_idle_default(slot: i32) -> i32 {
     if p(slot).is_some_and(|x| x.cpu_idle) { 2 } else { 0 }
+}
+
+/// gw_SceneLaunch_TargetTestCKind (gw_runtime.c): p1's character when the scene launches Target Test, else -1 (not set).
+pub fn target_test_ckind() -> i32 {
+    unsafe { SCN.as_ref().filter(|s| s.onep_mode == 0x0F).and_then(|_| p(0)).map_or(-1, |x| x.ckind) }
 }
 
 /// The mode a scenario boots into: its 1P mode, else VS.

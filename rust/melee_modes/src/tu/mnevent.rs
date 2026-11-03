@@ -116,6 +116,12 @@ rw pub mnEvent_804D502C: GXColor  = GXColor {
 rw pub DbLevel: i32 = 0;
 }
 unsafe extern "C" fn mnEvent_CountUnlocked() -> i32 {
+    // TEST-ONLY (port): MELEE_TEST_EVENTS_UNLOCKED=1 counts all 51 events as cleared and opens the whole list
+    // (mnEvent_8024CE74 answers as the debug level does), without a crafted save; the save and the other unlock checks
+    // are untouched
+    if std::env::var("MELEE_TEST_EVENTS_UNLOCKED").is_ok_and(|v| v.starts_with('1')) {
+        return 0x33;
+    }
     let mut i: i32 = 0;
     let mut count: i32 = 0 as i32;
     i = 0 as i32 as i32;
@@ -130,7 +136,7 @@ unsafe extern "C" fn mnEvent_CountUnlocked() -> i32 {
 pub unsafe extern "C" fn mnEvent_8024CE74() -> i32 {
     melee_core::ct!("mnEvent_8024CE74");
     let mut count: i32 = 0;
-    if DbLevel as i32 > DbLKind_DebugDevelop as i32 {
+    if DbLevel as i32 > DbLKind_DebugDevelop as i32 || std::env::var("MELEE_TEST_EVENTS_UNLOCKED").is_ok_and(|v| v.starts_with('1')) {
         return 0x2a as i32;
     }
     count = mnEvent_CountUnlocked();

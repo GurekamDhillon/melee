@@ -3131,7 +3131,13 @@ pub unsafe fn Camera_8002E948(mut cb: Option<unsafe extern "C" fn(*mut Vec) -> i
 
 pub unsafe fn Camera_8002EA64(mut arg0: *mut Vec) {
     melee_core::ct!("Camera_8002EA64");
-    todo!("Camera_8002EA64: goto, hand port")
+    if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
+        Camera_8002FE38();
+    }
+    // the C sets the mode to 1 and then switches on it: only the fixed-position case runs
+    game_camera.set_x341_b3_b4(1);
+    game_camera.x35C.vec = *arg0;
+    game_camera.transform.target_position = game_camera.x35C.vec;
 }
 
 /// `Camera_8002EB5C`

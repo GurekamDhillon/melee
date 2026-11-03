@@ -67519,7 +67519,7 @@ impl GcDecode for GroundParam {
         v.x64 = <f32 as GcDecode>::gc_decode(d, at + 0x64);
         v.x68 = <i16 as GcDecode>::gc_decode(d, at + 0x68);
         v.x6A = <[i16; 35] as GcDecode>::gc_decode(d, at + 0x6A);
-        v.stage_params = <*mut StageParam as GcDecode>::gc_decode(d, at + 0xB0);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0xB4) as i64)).max(0) as usize; v.stage_params = d.ptr_array::<StageParam>(at + 0xB0, n) as *mut StageParam; }
         v.stage_param_count = <i32 as GcDecode>::gc_decode(d, at + 0xB4);
         v.xB8 = <_GXColor as GcDecode>::gc_decode(d, at + 0xB8);
         v.xBC = <_GXColor as GcDecode>::gc_decode(d, at + 0xBC);

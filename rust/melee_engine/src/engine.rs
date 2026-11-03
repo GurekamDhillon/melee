@@ -687,6 +687,10 @@ impl Engine {
             // with its GX calls on the bridge.
             melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = None;
             melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = None;
+            // gm_1601.c (the 1P stage-intro name plates): the link table casts the C string to Option<&str> and stops; the
+            // TU's own defaults format it (as ifprize's).
+            melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A6B98 = None;
+            melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A70A0 = None;
             melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
             // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
             melee_runtime::tu::lbcardgame::ext::hook::wait_idle = Some(|| {});

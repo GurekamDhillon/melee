@@ -95,8 +95,7 @@ AI[A-Z]\w+
 AX[A-Z]\w+
 DSP\w+
 EXI\w+
-# trophy (Toy) data is display only: TyDataf/Datai symbols are not typed yet (dat_symbols.tsv), the VS sim never reads them
-!tyDisplay_8031C2CC
+# trophy (Toy) data: no longer a seam, the TyDatai symbols are typed (dat_symbols.tsv)
 HeapCheck\w*
 # the headless engine draws nothing: the GObj render pass is the renderer step's (melee_gx sink) job
 !HSD_GObj_80390FC0

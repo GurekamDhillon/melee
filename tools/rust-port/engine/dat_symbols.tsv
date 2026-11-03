@@ -61,3 +61,4 @@ sym	tyNoGetUsTbl	custom:rawhalves	src/melee/ty/toy.c:337 s16* _Toy_sbss_804D6EB4
 sym	tyDisplayModelTbl	TyDspEntry[]	src/melee/ty/toy.c:338 TyDspEntry* Toy_sbss_804D6EB0
 sym	tyDisplayModelUsTbl	TyDspEntry[]	src/melee/ty/toy.c:339 TyDspEntry* Toy_sbss_804D6EAC
 prefix	ftDemo	raw	src/melee/ft/ftdemo.c:166 ftData_UnkIntPairs[].data (void*: the demo figatree block, read through gc_addr32 + per-anim offsets)
+sym	gmIntroEasyTable	custom:rawwords	gm/gm_1832.c:155 the anonymous all-f32 struct lbl_804D6604 (GmIntEz.dat; Rust ClassicIntroTable)

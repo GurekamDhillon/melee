@@ -27,4 +27,13 @@
 60 0000 0 0
 # Regular Match's first entry: Classic
 3 0100 0 0
-300 0000 0 0
+200 0000 0 0
+# CSS: the hand up to Fox
+30 0000 0 127
+6 0000 127 0
+10 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# START: the Classic ladder
+3 1000 0 0
+400 0000 0 0

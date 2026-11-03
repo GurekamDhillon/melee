@@ -95,8 +95,9 @@ fn joint_graph_decodes_to_native() {
         assert_eq!(sib.flags, 0x8000_0000);
         assert_eq!(sib.child as *const HSD_Joint, l.root as *const _, "cycle shares the root object");
     }
-    // 3 joints, 1 dobj, 1 matrix, 4 strings.
-    assert_eq!(l.arena.len(), 9);
+    // 3 joints, 1 dobj, 4 strings, and 2 matrix allocations: the field decoder's one row, then
+    // HSD_Joint's decode replaces `mtx` with the whole 3-row envelope matrix jobj.c copies.
+    assert_eq!(l.arena.len(), 10);
 }
 
 #[test]

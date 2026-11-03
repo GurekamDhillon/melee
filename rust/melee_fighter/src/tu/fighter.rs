@@ -1540,6 +1540,12 @@ pub unsafe fn Fighter_ChangeMotionState(g: G, msid: i32, mut flags: u32, anim_st
 /// `Fighter_8006A1BC` (proc 0): hitlag / SDI timers and mushroom queues.
 pub unsafe fn Fighter_8006A1BC(g: G) {
     melee_core::ct!("Fighter_8006A1BC");
+    // mod host site (hooks-v1 0x8006A1BC, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x8006A1BC, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_8006A1BC__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_8006A1BC__orig(g) }
+}
+
+unsafe fn Fighter_8006A1BC__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -1605,6 +1611,12 @@ pub unsafe fn ftSlippi_IsOffscreen(fp: &Fighter) -> bool {
 /// `Fighter_8006A360` (proc 1): per-frame timers, animation advance, anim callback.
 pub unsafe fn Fighter_8006A360(g: G) {
     melee_core::ct!("Fighter_8006A360");
+    // mod host site (hooks-v1 0x8006A360, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x8006A360, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_8006A360__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_8006A360__orig(g) }
+}
+
+unsafe fn Fighter_8006A360__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
     if fp.x221F_b3() != 0 {
@@ -2160,6 +2172,12 @@ pub unsafe fn Fighter_Spaghetti_8006AD10(g: G) {
 /// `Fighter_procUpdate` (proc 4): physics integration.
 pub unsafe fn Fighter_procUpdate(g: G) {
     melee_core::ct!("Fighter_procUpdate");
+    // mod host site (hooks-v1 0x8006B82C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x8006B82C, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procUpdate__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_procUpdate__orig(g) }
+}
+
+unsafe fn Fighter_procUpdate__orig(g: G) {
     use ext as e;
     use melee_runtime::gekko::{cosf, sinf, sqrtf};
     use melee_runtime::lbtrigf::atan2f;
@@ -2354,6 +2372,12 @@ pub unsafe fn ftReplay_TraceFighter(fp: &Fighter) {
 /// `Fighter_procMap` (proc 6): map collision callback (+ TARGET_PC curated SyncTest record).
 pub unsafe fn Fighter_procMap(g: G) {
     melee_core::ct!("Fighter_procMap");
+    // mod host site (hooks-v1 0x8006C27C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x8006C27C, [melee_core::modhook::Arg::Fighter(g as _)], Fighter_procMap__orig(g));
+    #[allow(unused_unsafe)] unsafe { Fighter_procMap__orig(g) }
+}
+
+unsafe fn Fighter_procMap__orig(g: G) {
     use ext as e;
     let fp = fpm(g);
     if fp.motion_id == ftCo_MS_Wait as _ && ext::ScriptGame_LabPreviewRow(fp, ftCo_MS_Wait as i32) >= 0 {
@@ -2573,9 +2597,8 @@ pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, d: f32) {
     melee_core::ct!("Fighter_TakeDamage_8006CC7C");
     // mod host (melee_modhost, hooks-v1 `damage.fighter_take_damage`): None unless a loaded mod hooks the row
     if let Some(m) = crate::hooks::MOD_TAKE_DAMAGE {
-        if m(fp, d, false) { m(fp, d, true); return; } // a pre hook skipped the original: the post chain still runs
-        fighter_take_damage_orig(fp, d);
-        m(fp, d, true);
+        let p: *mut Fighter = fp;
+        m(fp, d, &mut || { fighter_take_damage_orig(&mut *p, d); melee_core::modhook::Ret::Void });
         return;
     }
     fighter_take_damage_orig(fp, d);

@@ -86,6 +86,12 @@ pub fn ftCo_Fall_inline(g: G) -> bool {
 
 pub fn ftCo_Fall_Enter(g: G) {
     melee_core::ct!("ftCo_Fall_Enter");
+    // mod host site (hooks-v1 0x800CC730, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800CC730, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_Fall_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_Fall_Enter__orig(g) }
+}
+
+fn ftCo_Fall_Enter__orig(g: G) {
     if ext::ftLib_GetKind(g) == Ft_Kind_MasterH {
         ext::ftMh_MS_389_80151018(g);
         return;

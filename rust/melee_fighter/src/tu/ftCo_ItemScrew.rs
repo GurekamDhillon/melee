@@ -50,6 +50,12 @@ pub mod ext {
 
 pub fn ftCo_ItemScrew_Enter(g: G) {
     melee_core::ct!("ftCo_ItemScrew_Enter");
+    // mod host site (hooks-v1 0x800D2D50, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800D2D50, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_ItemScrew_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_ItemScrew_Enter__orig(g) }
+}
+
+fn ftCo_ItemScrew_Enter__orig(g: G) {
     ext::ftCommon_8007D5D4(fp(g));
     ext::Fighter_ChangeMotionState(g, ftCo_MS_ItemScrew as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftCo_800CB110(g, false, cd().x800);

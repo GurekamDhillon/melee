@@ -85,6 +85,12 @@ pub fn ftCo_Dash_CheckInput(g: G) -> bool {
 
 pub fn ftCo_Dash_Enter(g: G, arg1: i32) {
     melee_core::ct!("ftCo_Dash_Enter");
+    // mod host site (hooks-v1 0x800CA120, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800CA120, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::I32(arg1 as i32)], ftCo_Dash_Enter__orig(g, arg1));
+    #[allow(unused_unsafe)] unsafe { ftCo_Dash_Enter__orig(g, arg1) }
+}
+
+fn ftCo_Dash_Enter__orig(g: G, arg1: i32) {
     fp(g).cmd_vars[0] = 0;
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Dash as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);

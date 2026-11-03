@@ -56,3 +56,24 @@ pub fn envoy_mode_valid(w: u32) -> bool {
 
 /// One slot's input for one frame (`gw_net_input`): the first `payload_bytes` are meaningful.
 pub type Input = [u8; MAX_PAYLOAD];
+
+/// A refusal reason as the guest shows it: the host's "different global game data; host has: X" names only the
+/// host's set, so the guest appends its own ("; you have: Y"). The wire text stays the C's (net_oracle); this is
+/// display only. Other reasons are returned unchanged.
+pub fn refusal_both_sides(why: &str, own_desc: Option<&str>) -> String {
+    if !why.starts_with("different global game data") || why.contains("; you have: ") {
+        return why.to_string();
+    }
+    let mine = match own_desc {
+        Some(s) if !s.is_empty() => s,
+        _ => "none",
+    };
+    let mine = if mine.len() > 200 {
+        let mut n = 197;
+        while !mine.is_char_boundary(n) { n -= 1; }
+        format!("{}...", &mine[..n])
+    } else {
+        mine.to_string()
+    };
+    format!("{why}; you have: {mine}")
+}

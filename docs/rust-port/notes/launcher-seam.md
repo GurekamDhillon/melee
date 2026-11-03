@@ -138,5 +138,18 @@ DualShock/Switch/HID tables.
   `version.txt`, `README.txt` (+ launcher), checked for disc-shaped files, and `<out>.zip`.
 - **Tests**: `SEGMENT=3 BUILD=1 bash tools/rust-port/launcher/launch_test.sh <folder>` -> BUILD OK;
   `SEGMENT=3 bash ... <folder>` (launcher.ini engine=1 to start) -> engine=2 saved, LAUNCH OK. Both passed on a
-  folder made by package.sh. The launcher process exits 127 in test mode either way (its own quit path; the game's
-  code is what the test checks).
+  folder made by package.sh.
+
+## 6. Mod launches and the test-mode exit (2026-11-03, port/modhost2; patch commit 1937c29)
+
+- **Mods page -> Rust engine**: with the Rust Port picked, PLAY on an installed disc mod (any kind but TE `.gci`)
+  starts `rust\melee.exe --iso <retail> --mod-iso <mod>` with the settings, `Sys`, replay and the mod's own card
+  folder (`User\GC\Mods\<key>`, which launcher_compat maps to its `RustPort` sibling). A data-only disc plays; one
+  with its own main.dol exits 3 (refused, logged). TE packs and lobby mod matches keep the engine his catalog picks.
+- Test hook `MELEE_LAUNCHER_TEST_MOD_ISO=<disc>`: autoplay launches that disc as the Mods page does.
+  `MELEE_LAUNCHER_TEST_MOD_ISO=<retail iso> bash tools/rust-port/launcher/launch_test.sh <folder>` gives the command
+  line above, `mod disc ...: the retail game's code`, one match, game exit 0: **LAUNCH OK**.
+- **The exit 127**: our test hooks ended the launcher with `PostQuitMessage`, which skips `WM_DESTROY`, so the lobby's
+  worker `std::thread` was still joinable when statics were destroyed: `std::terminate`, CRT fail-fast, process exit
+  `0xC0000409` (bash shows 127). Not a bug in his launcher (its close path goes through `WM_DESTROY`). The hooks now
+  call `DestroyWindow`; the launcher exits 0 (LAUNCH OK and BUILD OK both print `launcher exit: 0`).

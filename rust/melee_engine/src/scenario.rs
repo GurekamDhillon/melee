@@ -104,7 +104,9 @@ impl Scenario {
                     }
                 }
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
-                "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
+                // the saved VS rules (gw_sl_set: teams=0|1, stocks=N)
+                "teams" => s.teams = v.starts_with('1') as i32,
+                "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
                 "mode" => s.onep_mode = match v { "classic" => 3, "adventure" => 4, "allstar" => 5, _ => -1 },
                 "step" => s.onep_step = v.parse().map_err(|_| "step")?,
@@ -123,18 +125,22 @@ impl Scenario {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
                         None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
                     };
-                    let kind = it.next().unwrap_or("human");
-                    if it.next().is_some() {
-                        return Err(format!("team suffix in {v} not wired"));
+                    // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
+                    // teamN, stocksN, hmpN
+                    let (mut slot_type, mut cpu_level, mut cpu_idle) = (0, -1, false);
+                    let (mut team, mut stocks, mut handicap) = (-1, -1, -1);
+                    let digits = |t: &str, pre: &str| t.strip_prefix(pre).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())).map(|r| r.parse::<i32>().unwrap());
+                    for t in it {
+                        if t == "human" || t == "hu" { slot_type = 0; }
+                        else if t == "cpu" { slot_type = 1; }
+                        else if t == "idle" { cpu_idle = true; slot_type = 1; }
+                        else if let Some(n) = digits(t, "team") { team = n; }
+                        else if let Some(n) = digits(t, "stocks") { stocks = n; }
+                        else if let Some(n) = digits(t, "hmp") { handicap = n; }
+                        else if let Some(n) = digits(t, "cpu") { slot_type = 1; cpu_level = n; }
+                        else { return Err(format!("slot token {t} in {v} not wired")); }
                     }
-                    // gw_runtime.c: `idle` is a CPU slot (level unset) whose fighter stands still (Script_CpuIdleDefault 2)
-                    let cpu_idle = kind == "idle";
-                    let (slot_type, cpu_level) = match kind.strip_prefix("cpu") {
-                        Some(l) => (1, l.parse().unwrap_or(-1)),
-                        None if cpu_idle => (1, -1),
-                        None => (0, -1),
-                    };
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team: -1, stocks: -1, handicap: -1, cpu_idle });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team, stocks, handicap, cpu_idle });
                 }
                 _ => {}
             }

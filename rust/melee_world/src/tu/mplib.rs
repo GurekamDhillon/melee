@@ -4493,6 +4493,7 @@ pub unsafe fn mpLib_80056B34(mut arg0: i32, mut arg1: *mut i32) -> i32 {
 }
 
 /// `sqrtf_store`
+#[allow(dead_code)] // the C body; its only callers pass an out-of-local pointer (sqrtf_store_pc)
 unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
     if x > 0.0f32 {
         let mut guess: f64 = melee_core::fp::frsqrte(x as f64);
@@ -4503,6 +4504,13 @@ unsafe fn sqrtf_store(mut x: f32, mut y: *mut f32) -> f32 {
         return *y;
     }
     return x;
+}
+
+/// The C call `sqrtf_store(x, sqrt_tmp - 4)` (and `- 5`) stores outside the local: undefined behaviour that the x86 PC build
+/// (what the goldens record) folds to `return x`, as `it_802A4BFC_sqrtf_offset`. So `mpLib_80056C54` walks the floor with
+/// SQUARED segment lengths (human_dk_onett: DK's Hand Slap hitbox positions, ftDk_Init_8010DB3C).
+unsafe fn sqrtf_store_pc(x: f32, _y: *mut f32) -> f32 {
+    x
 }
 
 /// `mpJointFromLine`
@@ -4566,7 +4574,7 @@ pub unsafe fn mpLib_80056C54(mut line_id: i32, mut pos: *mut Vec3, mut line_id_o
             mpLineGetV1Pos(line_id, &mut sp4C);
             x_f2 = (sp58.x - sp4C.x) * (sp58.x - sp4C.x);
             y_f0 = (sp58.y - sp4C.y) * (sp58.y - sp4C.y);
-            dist_f28 = sqrtf_store(x_f2 + y_f0, &mut sqrt_tmp);
+            dist_f28 = sqrtf_store_pc(x_f2 + y_f0, &mut sqrt_tmp);
             flags_r0 = mpLineGetKind(line_id) as u32;
             let mut run = false;
             if flags_r0 & 0xC != 0 {
@@ -4601,7 +4609,7 @@ pub unsafe fn mpLib_80056C54(mut line_id: i32, mut pos: *mut Vec3, mut line_id_o
             mpLineGetV0Pos(line_id, &mut sp4C);
             x_f2 = (sp58.x - sp4C.x) * (sp58.x - sp4C.x);
             y_f0 = (sp58.y - sp4C.y) * (sp58.y - sp4C.y);
-            dist_f28 = sqrtf_store(x_f2 + y_f0, &mut sqrt_tmp);
+            dist_f28 = sqrtf_store_pc(x_f2 + y_f0, &mut sqrt_tmp);
             flags_r0 = mpLineGetKind(line_id) as u32;
             let mut run = false;
             if flags_r0 & 0xC != 0 {

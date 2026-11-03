@@ -718,6 +718,9 @@ fn zako_attrs(d: &mut GcDecoder<'_>, b: &Bounds, kind: u32, ta: u32) {
         d.object::<t::itOldottoseaAttributes>(sa) as *mut c_void
     } else if k == t::It_Kind_Whitebea as u32 {
         d.object::<t::itWhiteBeaAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Likelike as u32 {
+        // `attr->x0.x0_f32->y` (the walk speed): adventure_step02 read the pointer from the word-swapped block
+        d.object::<t::itLikelikeAttributes>(sa) as *mut c_void
     } else if (k == t::It_Kind_Old_Kuri as u32 || k == t::It_Kind_Kuriboh as u32) && d.is_reloc(sa) {
         let words = (b.extent(sa) / 4).max(4);
         let pt = d.target(sa);

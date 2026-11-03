@@ -228,6 +228,7 @@ fn frame_post_hook() {
     if r.quit {
         return;
     }
+    if std::env::var_os("MELEE_CT_LIVE").is_some() { eprintln!("ct --- frame_post gframe {} seed {:08x}", r.ra.gframe, unsafe { *melee_runtime::tu::random::HSD_RandCurrentSeed(melee_runtime::tu::random::global::state()) }); }
     if r.ra.frame_post(any_fighter()) {
         let w = melee_engine::Engine::frame_row();
         let mut line = format!("{},{:08X},{:08X},{},{:08X}", r.ra.match_frame, w[0], w[1], w[2], w[3]);

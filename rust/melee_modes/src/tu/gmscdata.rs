@@ -39,9 +39,9 @@ pub mod ext {
     pub unsafe extern "C" fn gm_Mode_10ManVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_10ManVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmmultiman::gm_Mode_10ManVs_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_AdventureGOver_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AdventureGOver_OnLoad", &[]); return; } { unsafe { crate::tu::gmmenu::gm_Mode_AdventureGOver_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_Adventure_OnInit() { if let Some(h) = HOOK { h("gm_Mode_Adventure_OnInit", &[]); return; } { unsafe { crate::tu::gmmode_init::gm_Mode_Adventure_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_Adventure_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Adventure_OnLoad", &[]); return; } panic!("TODO(group6): gm_Mode_Adventure_OnLoad is not ported") }
+    pub unsafe extern "C" fn gm_Mode_Adventure_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_Adventure_OnLoad", &[]); return; } { unsafe { crate::tu::gmadventure::gm_Mode_Adventure_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_AllStar_OnInit() { if let Some(h) = HOOK { h("gm_Mode_AllStar_OnInit", &[]); return; } { unsafe { crate::tu::gmmode_init::gm_Mode_AllStar_OnInit(); } return; } }
-    pub unsafe extern "C" fn gm_Mode_AllStar_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AllStar_OnLoad", &[]); return; } panic!("TODO(group6): gm_Mode_AllStar_OnLoad is not ported") }
+    pub unsafe extern "C" fn gm_Mode_AllStar_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AllStar_OnLoad", &[]); return; } { unsafe { crate::tu::gmallstar::gm_Mode_AllStar_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_AllstarGOver_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_AllstarGOver_OnLoad", &[]); return; } { unsafe { crate::tu::gmmenu::gm_Mode_AllstarGOver_OnLoad(); } return; } }
     pub unsafe extern "C" fn gm_Mode_CameraVs_OnInit() { if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnInit", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnInit(); } return; } }
     pub unsafe extern "C" fn gm_Mode_CameraVs_OnLoad() { if let Some(h) = HOOK { h("gm_Mode_CameraVs_OnLoad", &[]); return; } { unsafe { crate::tu::gmfixedcamera::gm_Mode_CameraVs_OnLoad(); } return; } }
@@ -167,8 +167,8 @@ pub mod ext {
     pub use crate::tu::gmmultiman::gm_Mode_10ManVs_States;
     pub use crate::tu::gmmultiman::gm_Mode_15Min_States;
     pub use crate::tu::gmmultiman::gm_Mode_3Min_States;
-    pub static mut gm_Mode_Adventure_States: [GameModeState; 49] = unsafe { core::mem::zeroed() };
-    pub static mut gm_Mode_AllStar_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmadventure::gm_Mode_Adventure_States;
+    pub use crate::tu::gmallstar::gm_Mode_AllStar_States;
     pub static mut gm_Mode_Boot_States: [GameModeState; 2] = unsafe { core::mem::zeroed() };
     pub use crate::tu::gmfixedcamera::gm_Mode_CameraVs_States;
     pub use crate::tu::gmcameramode::gm_Mode_Camera_States;

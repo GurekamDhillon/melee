@@ -82,6 +82,9 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
                                 }
                             }
                         }
+                        // the Adventure stages' enemies (see zako_attrs)
+                        let kind = d.u32_at(rec);
+                        zako_attrs(d, b, kind, ta);
                         if d.u32_at(rec) == melee_types::It_Kind_Kyasarin as u32 {
                             // Kyasarin: `itKyasarinAttributes` starts with a pointer (`x0`, unused), so the native record is 4 bytes wider than the
                             // word-swapped block and every `attr->xN` read natively would land one word late (the walk speed read the next field)
@@ -670,6 +673,61 @@ fn coin_attrs(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) {
     unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
 }
 
+/// The enemies' ("zako") articles, of the Adventure stages (stage `itemdata`) and of the character-item table (ItCo.dat:
+/// Kuriboh, Leadead, Octarock, Ottosea): their attribute records start with a relocated pointer (`attr->x0->x4`, the walk
+/// speed), which the 4-byte slot of the word-swapped block cannot hold, and every later field would read one word early
+/// natively. Decoded as their records (the pointee as its record). The Goombas' `s32* x0` is read as `((f32*) x0)[1]`, so
+/// their pointee is the block's words, and their record (all 4-byte scalars) is `[native ptr][the remaining words]`.
+fn zako_attrs(d: &mut GcDecoder<'_>, b: &Bounds, kind: u32, ta: u32) {
+    use melee_types as t;
+    let Some(sa) = d.target(ta + 4) else { return };
+    let k = kind;
+    let typed: *mut c_void = if k == t::It_Kind_Patapata as u32 {
+        d.object::<t::itPatapataAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Old_Lead as u32 || k == t::It_Kind_Leadead as u32 {
+        d.object::<t::itLeadeadAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Old_Octa as u32 || k == t::It_Kind_Octarock as u32 {
+        d.object::<t::itOctarockAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Old_Otto as u32 || k == t::It_Kind_Ottosea as u32 {
+        d.object::<t::itOldottoseaAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Whitebea as u32 {
+        d.object::<t::itWhiteBeaAttributes>(sa) as *mut c_void
+    } else if (k == t::It_Kind_Old_Kuri as u32 || k == t::It_Kind_Kuriboh as u32) && d.is_reloc(sa) {
+        let words = (b.extent(sa) / 4).max(4);
+        let pt = d.target(sa);
+        let pw = pt.map_or(0, |pt| (b.extent(pt) / 4).max(2));
+        let pointee = native_buf(4 * pw as usize + 8);
+        let out = native_buf(8 + 4 * words as usize + 16);
+        unsafe {
+            if let Some(pt) = pt {
+                for w in 0..pw {
+                    (pointee.add(4 * w as usize) as *mut u32).write_unaligned(d.u32_at(pt + 4 * w));
+                }
+            }
+            (out as *mut *mut u8).write(pointee);
+            for w in 1..words {
+                (out.add(4 + 4 * w as usize) as *mut u32).write_unaligned(d.u32_at(sa + 4 * w));
+            }
+        }
+        out as *mut c_void
+    } else {
+        return;
+    };
+    let art = d.object::<melee_types::Article>(ta);
+    unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, typed)) };
+}
+
+/// [`zako_attrs`] for the character-item table's enemies (`It_Kind_Kuriboh` .. `It_Kind_Ottosea`, entries 0..3).
+fn zako_char_items(d: &mut GcDecoder<'_>, b: &Bounds, at: u32) {
+    let Some(t) = d.target(at) else { return };
+    let n = b.extent(t) / 4;
+    for idx in 0..4u32.min(n) {
+        if let Some(ta) = d.target(t + 4 * idx) {
+            zako_attrs(d, b, melee_types::It_Kind_Kuriboh as u32 + idx, ta);
+        }
+    }
+}
+
 /// `itPublicData` (ItCo.dat / ItCoUS.dat): `it_804D6D20_t`, whose `Article**` tables run to the next boundary.
 fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     let at = |i: u32| off + 4 * i;
@@ -678,6 +736,7 @@ fn itco(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
     r.x4 = rtable_articles(d, b, at(1));
     r.x8 = rtable_articles(d, b, at(2));
     coin_attrs(d, b, at(2));
+    zako_char_items(d, b, at(2));
     r.xC = rtable_articles(d, b, at(3));
     r.x10 = d.ptr::<it_804D6D40_t>(at(4));
     r.x14 = parr::<Fighter_804D653C_t>(d, b, at(5)) as *mut Fighter_804D653C_t;

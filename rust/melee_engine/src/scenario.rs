@@ -127,16 +127,25 @@ impl Scenario {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
                         None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
                     };
-                    let kind = it.next().unwrap_or("human");
-                    if it.next().is_some() {
-                        return Err(format!("team suffix in {v} not wired"));
+                    // `<fighter>[/<kind>][/cN][/stocksN]` (gw_runtime.c's 1P launch: color and stocks of the player)
+                    let (mut kind, mut color, mut stocks) = ("human", -1, -1);
+                    for part in it {
+                        if let Some(n) = part.strip_prefix("stocks") {
+                            stocks = n.parse().map_err(|_| format!("stocks in {v}"))?;
+                        } else if let Some(n) = part.strip_prefix('c').filter(|n| n.parse::<i32>().is_ok()) {
+                            color = n.parse().unwrap();
+                        } else if part == "human" || part == "idle" || part.starts_with("cpu") {
+                            kind = part;
+                        } else {
+                            return Err(format!("team suffix in {v} not wired"));
+                        }
                     }
                     let kind = if kind == "idle" { "human" } else { kind };
                     let (slot_type, cpu_level) = match kind.strip_prefix("cpu") {
                         Some(l) => (1, l.parse().unwrap_or(-1)),
                         None => (0, -1),
                     };
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team: -1, stocks: -1, handicap: -1 });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team: -1, stocks, handicap: -1 });
                 }
                 _ => {}
             }

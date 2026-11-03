@@ -192,7 +192,7 @@ pub unsafe fn run_op(op: u32) -> u32 {
         69 => { let a0: i32 = rnd() as i32; m::gmVs_SetEndHold(a0); }
         70 => {  let r = m::gmVs_GetHeldOutcome(); ret = r as i32 as u32; }
         71 => {  let r = m::gm_GetMatchOutcome(); ret = r as u32; }
-        72 => { let a0: i32 = rnd() as i32; m::fn_8016C46C(a0); }
+        72 => { let a0: i32 = rnd() as i32; m::fn_8016C46C(a0 as isize); }
         73 => { let a0 = addr_of_mut!(ME); m::fn_8016C4F4(a0); }
         74 => { let a0: i32 = (rnd() % 6) as i32; let r = m::gm_8016C5C0(a0); ret = r as i32 as u32; }
         75 => { let a0: i32 = (rnd() % 6) as i32; let r = m::gm_GetMatchEndPlayerScore(a0); ret = r as i32 as u32; }

@@ -27,10 +27,8 @@ pub static mut lbl_80472C30: UnkAdventureData = unsafe { core::mem::zeroed() };
 /// Callees (and data) in TUs that are not ported yet.
 pub mod ext {
     use super::*;
-    /// gm_unsplit data: the Adventure scene-state table (49 entries).
-    pub static mut gm_Mode_Adventure_States: [GameModeState; 49] = unsafe { core::mem::zeroed() };
-    /// gm_unsplit data: per-scene records, terminated by `x0 == 0xFF` (46 entries).
-    pub static mut gm_803DE650: [gm_803DE650_t; 46] = unsafe { core::mem::zeroed() };
+    /// gmadventure.c data: the Adventure scene table and its per-scene records.
+    pub use crate::tu::gmadventure::{gm_803DE650, gm_Mode_Adventure_States};
     ext_fns! {
         fn Player_GetPlayerCharacter(a0: i32) -> CharacterKind = crate::tu::adapt::Player_GetPlayerCharacter__96861a;
         fn Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__2d05e5;

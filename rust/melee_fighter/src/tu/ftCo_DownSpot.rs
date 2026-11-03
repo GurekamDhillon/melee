@@ -48,6 +48,12 @@ pub mod ext {
 
 pub fn ftCo_DownSpot_Enter(g: G) {
     melee_core::ct!("ftCo_DownSpot_Enter");
+    // mod host site (hooks-v1 0x800C8B74, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C8B74, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_DownSpot_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_DownSpot_Enter__orig(g) }
+}
+
+fn ftCo_DownSpot_Enter__orig(g: G) {
     let r = ext::ftData_80085FD4(fp(g), ftCo_MS_DownSpotU);
     let msid = if unsafe { (*r).x14 } != 0 { ftCo_MS_DownSpotU } else { ftCo_MS_DownSpotD };
     ext::Fighter_ChangeMotionState(g, msid, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());

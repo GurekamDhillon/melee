@@ -1154,6 +1154,7 @@ dependencies = [
  "melee_items",
  "melee_link",
  "melee_modes",
+ "melee_modhost",
  "melee_net",
  "melee_platform",
  "melee_runtime",
@@ -1210,6 +1211,7 @@ dependencies = [
  "melee_modhost",
  "melee_platform",
  "melee_runtime",
+ "melee_script",
  "melee_types",
  "melee_world",
 ]
@@ -1284,6 +1286,7 @@ dependencies = [
  "melee_modes",
  "melee_runtime",
  "melee_types",
+ "melee_world",
  "wasmi",
  "wat",
 ]

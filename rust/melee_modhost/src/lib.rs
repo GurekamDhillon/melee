@@ -2,21 +2,22 @@
 //!
 //! Notes: docs/rust-port/notes/modhost.md. Spec: docs/specs/mod-c-v1.md (declarations: docs/specs/gdmod.h).
 //!
-//! * Off by default. `MELEE_WASM_MODS=<dir>` loads every `<dir>/*.wasm` (sorted by mod id, so the order on disk never
-//!   matters). Unset, empty or `0`: nothing is loaded and no hook pointer is installed, so the game runs exactly as
-//!   before (identical hashes by construction: every hook site is a `None` check).
+//! * Off by default. `MELEE_WASM_MODS=<dir>` loads every `<dir>/*.wasm` (chains ordered by mod id, so the order on
+//!   disk never matters). Unset, empty or `0`: nothing is loaded and no hook pointer is installed, so the game runs
+//!   exactly as before (identical hashes by construction: every hook site is a `None` check).
 //! * Runtime: wasmi (an interpreter in pure Rust) with its `deterministic` profile (NaN canonicalisation), fuel
-//!   metering (a deterministic watchdog: a hook that runs out of fuel traps at the same instruction on every machine),
-//!   no SIMD, no threads, fixed memory, no start function, imports only from module `gd`.
+//!   metering (a deterministic watchdog), no SIMD, no threads, fixed memory, no start function, imports only from `gd`.
 //! * Rollback: the host (wasmi engine, store, instances, linear memories) is created inside the engine's
 //!   `GameScope`, so every byte of it lives in the game arena / statics that `melee_engine::snapshot` saves and loads.
-//!   A rollback restores the mods' memories, globals and fuel with the rest of the game; mods need no save/load code.
-//! * Hooks: every row of hooks-v1 is accepted by the address check, but this host wires the rows listed in
-//!   [`WIRED`]; a mod that declares any other row is refused (never a silent no-op).
+//! * Hooks: `frame.run_procs` and `damage.fighter_take_damage` have their own sites; every other row in [`WIRED`] is a
+//!   generic `melee_core::mod_hook!` site dispatched by [`dispatch`]. A mod that declares an unwired row is refused.
 #![allow(static_mut_refs)]
 
-use melee_types::Fighter;
-use wasmi::{Caller, Config, Engine, Extern, Func, Linker, Memory, Module, Store, TypedFunc};
+use core::ffi::c_void;
+use melee_core::modhook::{Arg, Ret};
+use melee_types::{Fighter, HSD_GObj, Item, SpawnItem};
+use std::collections::BTreeMap;
+use wasmi::{AsContextMut, Caller, Config, Engine, Extern, Func, FuncType, Linker, Memory, Module, Store, StoreContextMut, Val, ValType};
 
 pub const ABI_VERSION: u32 = 1 << 16; // 1.0
 pub const HOOK_TABLE_VERSION: u32 = 1;
@@ -27,26 +28,125 @@ pub const MAX_HOOKS: u32 = 256;
 pub const MAX_PAGES: u64 = 16; // 1 MiB
 /// Fuel per hook invocation (wasmi fuel units, about one per instruction). Running out traps and disables the mod.
 pub const HOOK_FUEL: u64 = 1_000_000;
-const FEATURES_HOST: u32 = 1 << 3; // GD_FEATURE_LOG only
+/// Activations of one address deeper than this run the original only (spec section 5, re-entrancy).
+pub const MAX_DEPTH: u32 = 8;
+/// Hooks per address across all mods (spec limits): pre and post each.
+pub const MAX_PER_ADDR: usize = 8;
+
+pub const FEATURE_ITEM_WRITE: u32 = 1 << 0;
+pub const FEATURE_ACTION_REQUEST: u32 = 1 << 1;
+pub const FEATURE_REPLACE: u32 = 1 << 2;
+pub const FEATURE_LOG: u32 = 1 << 3;
+const FEATURES_HOST: u32 = FEATURE_ITEM_WRITE | FEATURE_ACTION_REQUEST | FEATURE_REPLACE | FEATURE_LOG;
 
 pub const PRE: u32 = 1;
 pub const POST: u32 = 2;
 pub const REPLACE: u32 = 3;
 
-/// hooks-v1 rows this host implements: (name, address).
-pub const WIRED: &[(&str, u32)] = &[("frame.run_procs", 0x8039_0CFC), ("damage.fighter_take_damage", 0x8006_CC7C)];
 const ADDR_FRAME: u32 = 0x8039_0CFC;
 const ADDR_DAMAGE: u32 = 0x8006_CC7C;
 
+/// hooks-v1 rows this host implements: (name, address). Each generic row has a `mod_hook!` site in the game crates.
+pub const WIRED: &[(&str, u32)] = &[
+    ("frame.run_procs", ADDR_FRAME),
+    ("damage.fighter_take_damage", ADDR_DAMAGE),
+    ("fighter.proc00", 0x8006_A1BC),
+    ("fighter.proc01", 0x8006_A360),
+    ("fighter.proc04", 0x8006_B82C),
+    ("fighter.proc06", 0x8006_C27C),
+    ("action.HammerLanding.enter", 0x800C_5F88),
+    ("action.DownSpot.enter", 0x800C_8B74),
+    ("action.Barrel.enter", 0x800C_9078),
+    ("action.Walk.enter", 0x800C_9528),
+    ("action.Turn.enter", 0x800C_9840),
+    ("action.TurnRun.enter", 0x800C_9D94),
+    ("action.Dash.enter", 0x800C_A120),
+    ("action.Run.enter", 0x800C_A6F4),
+    ("action.RunBrake.enter", 0x800C_AC18),
+    ("action.Jump.enter", 0x800C_B250),
+    ("action.KneeBend.enter", 0x800C_B4E0),
+    ("action.Fall.enter", 0x800C_C730),
+    ("action.FallAerial.enter", 0x800C_CDA8),
+    ("action.ItemScrew.enter", 0x800D_2D50),
+    ("action.Landing.enter", 0x800D_5AEC),
+    ("action.LandingFallSpecial.enter", 0x800D_5CB0),
+    ("action.Squat.enter", 0x800D_600C),
+    ("action.SquatRv.enter", 0x800D_6620),
+    ("action.CaptureCut.enter", 0x800D_C750),
+    ("item.spawn", 0x8026_862C),
+    ("item.spawn_gobj", 0x8026_8B18),
+    ("item.spawn_gobj2", 0x8026_8B5C),
+    ("item.spawn_void", 0x8026_8B9C),
+    ("item.destroy", 0x8026_80CC),
+    ("item.change_state", 0x8026_8E5C),
+    ("item.update0", 0x8026_93E4),
+    ("item.update5", 0x8026_9978),
+    ("stage.update", 0x801C_0C2C),
+    ("stage.on_start", 0x801C_0FB8),
+];
+
 const HOOKS_V1: &str = include_str!("../../../docs/specs/hooks-v1.tsv");
 
-/// The address of hooks-v1 row `addr` -> (name, sig_src), None when the address is not in the table.
-pub fn hook_row(addr: u32) -> Option<(&'static str, &'static str)> {
+/// hooks-v1 row `addr` -> (name, signature, sig_src), None when the address is not in the table.
+pub fn hook_row(addr: u32) -> Option<(&'static str, &'static str, &'static str)> {
     HOOKS_V1.lines().filter(|l| !l.starts_with('#') && !l.starts_with("name\t")).find_map(|l| {
         let c: Vec<&str> = l.split('\t').collect();
         let a = u32::from_str_radix(c.get(1)?.trim_start_matches("0x"), 16).ok()?;
-        (a == addr).then(|| (c[0], c.get(7).copied().unwrap_or("")))
+        (a == addr).then(|| (c[0], c.get(2).copied().unwrap_or(""), c.get(7).copied().unwrap_or("")))
     })
+}
+
+/// An ABI type of a row's signature.
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Ty {
+    I32,
+    F32,
+    /// gd_fighter / gd_item / gd_gobj / gd_spawn / gd_ptr: an i32 handle
+    Handle,
+}
+
+#[derive(Clone, Debug)]
+struct Sig {
+    args: Vec<Ty>,
+    ret: Option<Ty>,
+}
+
+fn parse_sig(s: &str) -> Option<Sig> {
+    let (r, rest) = s.split_once('(')?;
+    let ty = |t: &str| match t.trim() {
+        "f32" => Some(Ty::F32),
+        "i32" | "u32" | "gd_bool" => Some(Ty::I32),
+        t if t.starts_with("gd_") => Some(Ty::Handle),
+        _ => None,
+    };
+    let args = rest.trim_end_matches(')');
+    let args = if args.trim().is_empty() { Vec::new() } else { args.split(',').map(ty).collect::<Option<Vec<_>>>()? };
+    let ret = if r.trim() == "void" { None } else { Some(ty(r)?) };
+    Some(Sig { args, ret })
+}
+
+fn vt(t: Ty) -> ValType {
+    if t == Ty::F32 { ValType::F32 } else { ValType::I32 }
+}
+
+/// The wasm function type a hook of `mode` must have for `sig` (spec section 5).
+fn func_type(sig: &Sig, mode: u32) -> FuncType {
+    let mut p: Vec<ValType> = sig.args.iter().map(|t| vt(*t)).collect();
+    let r: Vec<ValType> = match mode {
+        PRE => vec![ValType::I32],
+        REPLACE => sig.ret.map(vt).into_iter().collect(),
+        _ => {
+            if let Some(t) = sig.ret { p.push(vt(t)); }
+            sig.ret.map(vt).into_iter().collect()
+        }
+    };
+    FuncType::new(p, r)
+}
+
+/// One running replace hook's original (for `gd_orig_call_*`): erased-lifetime pointer, valid while the hook runs.
+struct OrigFrame {
+    f: *mut (dyn FnMut() -> Ret + 'static),
+    used: bool,
 }
 
 /// Per-store data the accessors see.
@@ -54,10 +154,26 @@ pub fn hook_row(addr: u32) -> Option<(&'static str, &'static str)> {
 pub struct HostData {
     /// `gd_match_frame`: frame.begin calls since the host was loaded (rolls back with the arena).
     pub frame: i32,
-    /// Messages from `gd_log` (drained to stderr after each hook chain).
+    /// Messages from `gd_log` (drained to stderr after each hook).
     pub log: Vec<String>,
     /// Host accessor calls with a stale or foreign handle (spec section 3.3: counted, not an error).
     pub bad_handles: u32,
+    /// Activations past [`MAX_DEPTH`] that ran the original only.
+    pub deep_calls: u32,
+    /// The module whose hook is running (feature checks), and each module's declared features.
+    cur_module: usize,
+    features: Vec<u32>,
+    /// Handle tables for items and other gobjs: valid for the logic frame they were issued in (cleared at frame begin).
+    items: Vec<usize>,
+    gobjs: Vec<usize>,
+    /// `SpawnItem*` of the item.spawn* activations in progress, with whether a pre hook is running.
+    spawns: Vec<(usize, bool)>,
+    /// `gd_set_return_*` of the current pre chain.
+    set_return: Option<Val>,
+    /// Queued `gd_fighter_request_action_state` (handle, state), applied after the chain.
+    requests: Vec<(u32, i32)>,
+    origs: Vec<OrigFrame>,
+    depth: BTreeMap<u32, u32>,
 }
 
 struct Hook {
@@ -75,26 +191,34 @@ pub struct LoadedMod {
     /// FNV-1a 64 of the module bytes (the session identity until OPEN 10 settles on sha-256).
     pub digest: u64,
     pub disabled: bool,
+    pub features: u32,
     hooks: Vec<Hook>,
 }
 
-/// One entry of a per-address chain.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct Entry {
     module: usize,
     func: Func,
 }
 
+#[derive(Clone)]
+struct Chain {
+    sig: Sig,
+    pre: Vec<Entry>,
+    replace: Option<Entry>,
+    post: Vec<Entry>,
+}
+
 pub struct Host {
     store: Store<HostData>,
     pub mods: Vec<LoadedMod>,
-    frame_pre: Vec<(Entry, TypedFunc<(), i32>)>,
-    frame_post: Vec<(Entry, TypedFunc<(), ()>)>,
-    dmg_pre: Vec<(Entry, TypedFunc<(u32, f32), i32>)>,
-    dmg_post: Vec<(Entry, TypedFunc<(u32, f32), ()>)>,
+    chains: BTreeMap<u32, Chain>,
 }
 
 static mut HOST: Option<Box<Host>> = None;
+/// Callers of the host functions currently running game code (`gd_orig_call_*`): a hook reached from there runs in
+/// that context (wasmi re-entrancy through `Caller`), never through a second borrow of the store.
+static mut CTX: Vec<*mut c_void> = Vec::new();
 
 pub fn engine_config() -> Config {
     let mut c = Config::default();
@@ -143,13 +267,21 @@ fn canon(x: f32) -> f32 {
     if x.is_nan() { f32::from_bits(0x7FC0_0000) } else { x }
 }
 
-/// Fighter handle encoding: (generation 1 << 16) + slot + 1. Resolved each call; stale -> null.
+// ---- handles ------------------------------------------------------------------------------------------------
+// (kind << 16) | (index + 1). Fighters: kind 1, index = slot, re-resolved through Player_GetEntity on every call.
+// Items: kind 2, gobjs: kind 3, index into a per-frame table (an item handle is valid for the logic frame it was
+// issued in and while the item is alive). Spawn requests: kind 4, the innermost item.spawn* activation.
+const H_FIGHTER: u32 = 1;
+const H_ITEM: u32 = 2;
+const H_GOBJ: u32 = 3;
+const H_SPAWN: u32 = 4;
+
 fn handle_of(slot: i32) -> u32 {
-    (1 << 16) | (slot as u32 + 1)
+    (H_FIGHTER << 16) | (slot as u32 + 1)
 }
 
 fn fighter_ptr(h: u32) -> *mut Fighter {
-    if h >> 16 != 1 {
+    if h >> 16 != H_FIGHTER {
         return core::ptr::null_mut();
     }
     let slot = (h & 0xFFFF) as i32 - 1;
@@ -163,6 +295,79 @@ fn fighter_ptr(h: u32) -> *mut Fighter {
     unsafe { (*g).user_data as *mut Fighter }
 }
 
+/// The handle of a fighter GObj; 0 for a sub-fighter (Nana is not addressable in v1) or a non-fighter.
+fn fighter_handle_of_gobj(g: *mut HSD_GObj) -> u32 {
+    if g.is_null() {
+        return 0;
+    }
+    unsafe {
+        if (*g).classifier as i32 != melee_types::HSD_GOBJ_CLASS_FIGHTER || (*g).user_data.is_null() {
+            return 0;
+        }
+        let fp = &*((*g).user_data as *const Fighter);
+        if fp.is_sub_fighter() != 0 || !(0..4).contains(&(fp.player_id as i32)) {
+            return 0;
+        }
+        handle_of(fp.player_id as i32)
+    }
+}
+
+fn item_list() -> impl Iterator<Item = *mut HSD_GObj> {
+    let mut g = unsafe { *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize) };
+    core::iter::from_fn(move || {
+        if g.is_null() {
+            return None;
+        }
+        let r = g;
+        g = unsafe { (*g).next };
+        Some(r)
+    })
+}
+
+fn table_handle(t: &mut Vec<usize>, kind: u32, p: *mut HSD_GObj) -> u32 {
+    if p.is_null() {
+        return 0;
+    }
+    let i = t.iter().position(|&x| x == p as usize).unwrap_or_else(|| {
+        t.push(p as usize);
+        t.len() - 1
+    });
+    (kind << 16) | (i as u32 + 1)
+}
+
+fn item_handle(d: &mut HostData, g: *mut HSD_GObj) -> u32 {
+    table_handle(&mut d.items, H_ITEM, g)
+}
+
+fn item_gobj(d: &HostData, h: u32) -> *mut HSD_GObj {
+    if h >> 16 != H_ITEM {
+        return core::ptr::null_mut();
+    }
+    let Some(&p) = d.items.get((h & 0xFFFF) as usize - 1) else { return core::ptr::null_mut() };
+    let p = p as *mut HSD_GObj;
+    if item_list().any(|g| g == p) && unsafe { !(*p).user_data.is_null() } { p } else { core::ptr::null_mut() }
+}
+
+fn gobj_handle(d: &mut HostData, g: *mut HSD_GObj) -> u32 {
+    table_handle(&mut d.gobjs, H_GOBJ, g)
+}
+
+fn gobj_ptr(d: &HostData, h: u32) -> *mut HSD_GObj {
+    match h >> 16 {
+        H_FIGHTER => {
+            let f = fighter_ptr(h);
+            if f.is_null() { core::ptr::null_mut() } else { unsafe { (*f).gobj } }
+        }
+        H_ITEM => item_gobj(d, h),
+        H_GOBJ => d.gobjs.get(((h & 0xFFFF) as usize).wrapping_sub(1)).map_or(core::ptr::null_mut(), |&p| p as *mut HSD_GObj),
+        _ => core::ptr::null_mut(),
+    }
+}
+
+fn spawn_ptr(d: &HostData, h: u32) -> Option<(*mut SpawnItem, bool)> {
+    (h == (H_SPAWN << 16) | 1).then(|| d.spawns.last().map(|&(p, pre)| (p as *mut SpawnItem, pre))).flatten()
+}
+
 fn with_fighter<R>(c: &mut Caller<'_, HostData>, h: u32, dflt: R, f: impl FnOnce(&mut Fighter) -> R) -> R {
     let p = fighter_ptr(h);
     if p.is_null() {
@@ -170,6 +375,59 @@ fn with_fighter<R>(c: &mut Caller<'_, HostData>, h: u32, dflt: R, f: impl FnOnce
         return dflt;
     }
     f(unsafe { &mut *p })
+}
+
+fn with_item<R>(c: &mut Caller<'_, HostData>, h: u32, dflt: R, f: impl FnOnce(&mut Item) -> R) -> R {
+    let g = item_gobj(c.data(), h);
+    if g.is_null() {
+        c.data_mut().bad_handles += 1;
+        return dflt;
+    }
+    f(unsafe { &mut *((*g).user_data as *mut Item) })
+}
+
+fn read_f32s<const N: usize>(c: &Caller<'_, HostData>, at: u32) -> Option<[f32; N]> {
+    let m = mem_of(c)?;
+    let src = m.data(c).get(at as usize..at as usize + N * 4)?;
+    let mut v = [0f32; N];
+    for (i, x) in v.iter_mut().enumerate() {
+        *x = canon(f32::from_le_bytes(src[i * 4..i * 4 + 4].try_into().unwrap()));
+    }
+    Some(v)
+}
+
+fn write_words(c: &mut Caller<'_, HostData>, at: u32, w: &[u32]) {
+    if let Some(m) = mem_of(c) {
+        let d = m.data_mut(c);
+        if let Some(dst) = d.get_mut(at as usize..at as usize + w.len() * 4) {
+            for (i, x) in w.iter().enumerate() {
+                dst[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes());
+            }
+        }
+    }
+}
+
+fn has_feature(c: &Caller<'_, HostData>, f: u32) -> bool {
+    let d = c.data();
+    d.features.get(d.cur_module).is_some_and(|x| x & f != 0)
+}
+
+/// `gd_orig_call_*`: run the replaced original once, with `c` as the store context for hooks it reaches.
+fn orig_call(c: &mut Caller<'_, HostData>) -> Ret {
+    let Some(top) = c.data_mut().origs.last_mut() else { return Ret::Void };
+    if top.used {
+        return Ret::Void; // once per replace activation (spec section 5)
+    }
+    top.used = true;
+    let f = top.f;
+    let fuel = c.get_fuel().unwrap_or(0);
+    unsafe {
+        CTX.push(c as *mut Caller<'_, HostData> as *mut c_void);
+        let r = (*f)();
+        CTX.pop();
+        let _ = c.set_fuel(fuel); // nested hooks had their own budgets
+        r
+    }
 }
 
 /// Module `gd`: the implemented subset of gdmod.h. An import outside it refuses the load (wasmi reports the name).
@@ -182,13 +440,49 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     }
     w!("gd_abi_host_version", || -> u32 { ABI_VERSION });
     w!("gd_match_frame", |c: Caller<'_, HostData>| -> i32 { c.data().frame });
+    // gobjs
+    w!("gd_gobj_kind", |c: Caller<'_, HostData>, h: u32| -> u32 {
+        let g = gobj_ptr(c.data(), h);
+        if g.is_null() { return 0; }
+        match unsafe { (*g).classifier } as i32 {
+            melee_types::HSD_GOBJ_CLASS_FIGHTER => 1,
+            melee_types::HSD_GOBJ_CLASS_ITEM => 2,
+            melee_types::HSD_GOBJ_CLASS_STAGE | melee_types::HSD_GOBJ_CLASS_GROUND => 3,
+            _ => 0,
+        }
+    });
+    w!("gd_gobj_to_fighter", |c: Caller<'_, HostData>, h: u32| -> u32 { fighter_handle_of_gobj(gobj_ptr(c.data(), h)) });
+    w!("gd_gobj_to_item", |mut c: Caller<'_, HostData>, h: u32| -> u32 {
+        let g = gobj_ptr(c.data(), h);
+        if g.is_null() || unsafe { (*g).classifier } as i32 != melee_types::HSD_GOBJ_CLASS_ITEM { return 0; }
+        item_handle(c.data_mut(), g)
+    });
+    // fighters
     w!("gd_fighter_from_slot", |slot: i32| -> u32 {
         if (0..4).contains(&slot) && !fighter_ptr(handle_of(slot)).is_null() { handle_of(slot) } else { 0 }
     });
     w!("gd_player_present", |slot: i32| -> i32 { ((0..4).contains(&slot) && !fighter_ptr(handle_of(slot)).is_null()) as i32 });
+    w!("gd_player_stocks", |slot: i32| -> i32 {
+        if (0..4).contains(&slot) { unsafe { melee_fighter::stale::PLAYER_SLOTS[slot as usize].stocks as i32 } } else { 0 }
+    });
+    w!("gd_player_character", |slot: i32| -> i32 {
+        if (0..4).contains(&slot) { melee_fighter::player::get_player_character(slot) as i32 } else { -1 }
+    });
+    w!("gd_fighter_gobj", |mut c: Caller<'_, HostData>, h: u32| -> u32 {
+        let g = with_fighter(&mut c, h, core::ptr::null_mut(), |f| f.gobj);
+        gobj_handle(c.data_mut(), g)
+    });
     w!("gd_fighter_slot", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.player_id as i32) });
     w!("gd_fighter_kind", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.kind as i32) });
     w!("gd_fighter_get_action_state", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_fighter(&mut c, h, -1, |f| f.motion_id as i32) });
+    w!("gd_fighter_request_action_state", |mut c: Caller<'_, HostData>, h: u32, state: i32| -> i32 {
+        if !has_feature(&c, FEATURE_ACTION_REQUEST) || fighter_ptr(h).is_null() {
+            c.data_mut().bad_handles += fighter_ptr(h).is_null() as u32;
+            return 0;
+        }
+        c.data_mut().requests.push((h, state));
+        1
+    });
     w!("gd_fighter_get_percent", |mut c: Caller<'_, HostData>, h: u32| -> f32 { with_fighter(&mut c, h, 0.0, |f| canon(f.dmg.x1830_percent)) });
     w!("gd_fighter_set_percent", |mut c: Caller<'_, HostData>, h: u32, v: f32| { with_fighter(&mut c, h, (), |f| f.dmg.x1830_percent = canon(v)) });
     w!("gd_fighter_get_facing", |mut c: Caller<'_, HostData>, h: u32| -> f32 { with_fighter(&mut c, h, 0.0, |f| canon(f.facing_dir)) });
@@ -207,33 +501,30 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
     w!("gd_fighter_set_vel", |mut c: Caller<'_, HostData>, h: u32, x: f32, y: f32, z: f32| {
         with_fighter(&mut c, h, (), |f| { f.self_vel.x = canon(x); f.self_vel.y = canon(y); f.self_vel.z = canon(z); })
     });
+    // gd_fighter_get_input(h, gd_input* out): 32 bytes, Fighter.input slot 0
+    w!("gd_fighter_get_input", |mut c: Caller<'_, HostData>, h: u32, out: u32| {
+        let w = with_fighter(&mut c, h, [0u32; 8], |f| {
+            let i = &f.input;
+            [canon(i.lstick[0].x).to_bits(), canon(i.lstick[0].y).to_bits(), canon(i.cstick[0].x).to_bits(), canon(i.cstick[0].y).to_bits(),
+             canon(i.triggers[0]).to_bits(), i.held_buttons[0], i.pressed_buttons, i.released_buttons]
+        });
+        write_words(&mut c, out, &w);
+    });
     // gd_fighter_read(h, gd_fighter_view* out): 80 bytes, little-endian
     w!("gd_fighter_read", |mut c: Caller<'_, HostData>, h: u32, out: u32| {
         let mut v = [0u32; 20];
-        let ok = with_fighter(&mut c, h, false, |f| {
+        with_fighter(&mut c, h, (), |f| {
             let fl = [f.cur_pos.x, f.cur_pos.y, f.cur_pos.z, f.self_vel.x, f.self_vel.y, f.self_vel.z, f.x8c_kb_vel.x, f.x8c_kb_vel.y, f.x8c_kb_vel.z, f.facing_dir, f.dmg.x1830_percent];
             for (i, x) in fl.iter().enumerate() { v[i] = canon(*x).to_bits(); }
             v[11] = f.motion_id as u32;
             v[12] = f.kind as u32;
             v[13] = f.player_id as u32;
-            true
         });
-        let _ = ok;
-        if let Some(m) = mem_of(&c) {
-            let d = m.data_mut(&mut c);
-            let o = out as usize;
-            if let Some(dst) = d.get_mut(o..o + 80) {
-                for (i, w) in v.iter().enumerate() { dst[i * 4..i * 4 + 4].copy_from_slice(&w.to_le_bytes()); }
-            }
-        }
+        write_words(&mut c, out, &v);
     });
     // gd_fighter_write(h, const gd_fighter_view* in, mask): POS 1, VEL 2, KB_VEL 4, FACING 8, PERCENT 16
     w!("gd_fighter_write", |mut c: Caller<'_, HostData>, h: u32, inp: u32, mask: u32| {
-        let Some(m) = mem_of(&c) else { return };
-        let o = inp as usize;
-        let Some(src) = m.data(&c).get(o..o + 80) else { return };
-        let mut v = [0f32; 11];
-        for (i, x) in v.iter_mut().enumerate() { *x = canon(f32::from_le_bytes(src[i * 4..i * 4 + 4].try_into().unwrap())); }
+        let Some(v) = read_f32s::<11>(&c, inp) else { return };
         with_fighter(&mut c, h, (), |f| {
             if mask & 1 != 0 { f.cur_pos.x = v[0]; f.cur_pos.y = v[1]; f.cur_pos.z = v[2]; }
             if mask & 2 != 0 { f.self_vel.x = v[3]; f.self_vel.y = v[4]; f.self_vel.z = v[5]; }
@@ -242,11 +533,81 @@ fn linker(engine: &Engine) -> Result<Linker<HostData>, String> {
             if mask & 16 != 0 { f.dmg.x1830_percent = v[10]; }
         });
     });
+    // items
+    w!("gd_item_count", || -> i32 { item_list().count() as i32 });
+    w!("gd_item_at", |mut c: Caller<'_, HostData>, i: i32| -> u32 {
+        let g = if i < 0 { None } else { item_list().nth(i as usize) };
+        g.map_or(0, |g| item_handle(c.data_mut(), g))
+    });
+    w!("gd_item_kind", |mut c: Caller<'_, HostData>, h: u32| -> i32 { with_item(&mut c, h, -1, |ip| ip.kind as i32) });
+    w!("gd_item_gobj", |mut c: Caller<'_, HostData>, h: u32| -> u32 {
+        let g = item_gobj(c.data(), h);
+        if g.is_null() { c.data_mut().bad_handles += 1; 0 } else { h } // an item's gobj handle is its item handle
+    });
+    // gd_item_read(h, gd_item_view* out): 52 bytes
+    w!("gd_item_read", |mut c: Caller<'_, HostData>, h: u32, out: u32| {
+        let mut v = [0u32; 13];
+        with_item(&mut c, h, (), |ip| {
+            let fl = [ip.pos.x, ip.pos.y, ip.pos.z, ip.x40_vel.x, ip.x40_vel.y, ip.x40_vel.z, ip.facing_dir];
+            for (i, x) in fl.iter().enumerate() { v[i] = canon(*x).to_bits(); }
+            v[7] = ip.kind as u32;
+            let o = fighter_handle_of_gobj(ip.owner);
+            v[8] = if o == 0 { u32::MAX } else { (o & 0xFFFF) - 1 };
+        });
+        write_words(&mut c, out, &v);
+    });
+    w!("gd_item_write", |mut c: Caller<'_, HostData>, h: u32, inp: u32, mask: u32| {
+        if !has_feature(&c, FEATURE_ITEM_WRITE) { return; }
+        let Some(v) = read_f32s::<7>(&c, inp) else { return };
+        with_item(&mut c, h, (), |ip| {
+            if mask & 1 != 0 { ip.pos.x = v[0]; ip.pos.y = v[1]; ip.pos.z = v[2]; }
+            if mask & 2 != 0 { ip.x40_vel.x = v[3]; ip.x40_vel.y = v[4]; ip.x40_vel.z = v[5]; }
+            if mask & 8 != 0 && (v[6] == 1.0 || v[6] == -1.0) { ip.facing_dir = v[6]; }
+        });
+    });
+    // spawn requests (inside item.spawn* only; setters in pre hooks only)
+    w!("gd_spawn_get_kind", |mut c: Caller<'_, HostData>, h: u32| -> i32 {
+        match spawn_ptr(c.data(), h) { Some((p, _)) => unsafe { (*p).kind as i32 }, None => { c.data_mut().bad_handles += 1; -1 } }
+    });
+    w!("gd_spawn_set_kind", |mut c: Caller<'_, HostData>, h: u32, kind: i32| {
+        match spawn_ptr(c.data(), h) {
+            // only vanilla common item kinds (0..It_Kind_Kuriboh): a kind whose article is not loaded spawns nothing
+            Some((p, true)) if has_feature(&c, FEATURE_ITEM_WRITE) && (0..melee_types::It_Kind_Kuriboh as i32).contains(&kind) => unsafe { (*p).kind = kind as _ },
+            _ => c.data_mut().bad_handles += 1,
+        }
+    });
+    w!("gd_spawn_get_pos", |mut c: Caller<'_, HostData>, h: u32, out: u32| {
+        let w = match spawn_ptr(c.data(), h) {
+            Some((p, _)) => unsafe { [canon((*p).pos.x).to_bits(), canon((*p).pos.y).to_bits(), canon((*p).pos.z).to_bits()] },
+            None => { c.data_mut().bad_handles += 1; [0; 3] }
+        };
+        write_words(&mut c, out, &w);
+    });
+    w!("gd_spawn_set_pos", |mut c: Caller<'_, HostData>, h: u32, inp: u32| {
+        let Some(v) = read_f32s::<3>(&c, inp) else { return };
+        match spawn_ptr(c.data(), h) {
+            Some((p, true)) if has_feature(&c, FEATURE_ITEM_WRITE) => unsafe { (*p).pos.x = v[0]; (*p).pos.y = v[1]; (*p).pos.z = v[2]; },
+            _ => c.data_mut().bad_handles += 1,
+        }
+    });
+    // stage
+    w!("gd_stage_kind", || -> i32 { unsafe { melee_world::tu::stage::selected_stage.stkind as i32 } });
     // the game's RNG (HSD_Randi / HSD_Randf on the logic seed): the draws are game state and roll back with it
     w!("gd_rand_u32", |bound: u32| -> u32 {
         if bound == 0 { 0 } else { melee_runtime::tu::random::global::HSD_Randi(bound.min(i32::MAX as u32) as i32) as u32 }
     });
     w!("gd_rand_f32", || -> f32 { melee_runtime::tu::random::global::HSD_Randf() });
+    // trig: the game's own implementations (MSL sinf/cosf as retail computes them, lbtrigf atan2f, lb powf)
+    w!("gd_sinf", |x: f32| -> f32 { canon(melee_runtime::tu::gekko_fp::sinf(canon(x))) });
+    w!("gd_cosf", |x: f32| -> f32 { canon(melee_runtime::tu::gekko_fp::cosf(canon(x))) });
+    w!("gd_atan2f", |y: f32, x: f32| -> f32 { canon(melee_runtime::lbtrigf::atan2f(canon(y), canon(x))) });
+    w!("gd_powf", |x: f32, y: f32| -> f32 { canon(melee_runtime::tu::lb_00CE::powf(canon(x), canon(y))) });
+    // original call / return value
+    w!("gd_orig_call_void", |mut c: Caller<'_, HostData>| { orig_call(&mut c); });
+    w!("gd_orig_call_i32", |mut c: Caller<'_, HostData>| -> i32 { if let Ret::I32(v) = orig_call(&mut c) { v } else { 0 } });
+    w!("gd_orig_call_f32", |mut c: Caller<'_, HostData>| -> f32 { if let Ret::F32(v) = orig_call(&mut c) { canon(v) } else { 0.0 } });
+    w!("gd_set_return_i32", |mut c: Caller<'_, HostData>, v: i32| { c.data_mut().set_return = Some(Val::I32(v)); });
+    w!("gd_set_return_f32", |mut c: Caller<'_, HostData>, v: f32| { c.data_mut().set_return = Some(Val::F32(canon(v).into())); });
     w!("gd_log", |mut c: Caller<'_, HostData>, msg: u32, value: i32| {
         let s = mem_of(&c).map(|m| {
             let d = m.data(&c);
@@ -275,10 +636,15 @@ fn data_export(inst: &wasmi::Instance, store: &Store<HostData>, name: &str) -> R
     g.get(store).i32().map(|v| v as u32 as usize).ok_or_else(|| format!("export {name}: not an i32 global (refuse)"))
 }
 
+/// The row signature as the host dispatches it; None when the row has no usable signature.
+fn row_sig(addr: u32) -> Option<Sig> {
+    parse_sig(hook_row(addr)?.1)
+}
+
 impl Host {
     pub fn new() -> Host {
         let engine = Engine::new(&engine_config());
-        Host { store: Store::new(&engine, HostData::default()), mods: Vec::new(), frame_pre: Vec::new(), frame_post: Vec::new(), dmg_pre: Vec::new(), dmg_post: Vec::new() }
+        Host { store: Store::new(&engine, HostData::default()), mods: Vec::new(), chains: BTreeMap::new() }
     }
 
     /// Validate and instantiate one module. Any failure refuses the whole mod with a message naming the check.
@@ -322,7 +688,7 @@ impl Host {
         if f(1)? != MANIFEST_SIZE {
             return Err(format!("manifest struct_size: {} != {MANIFEST_SIZE}", f(1)?));
         }
-        let (abi_min, abi_max, table_v, version, req, _opt, state_bytes, count, hooks_at) = (f(2)?, f(3)?, f(4)?, f(5)?, f(6)?, f(7)?, f(8)?, f(9)?, f(10)? as usize);
+        let (abi_min, abi_max, table_v, version, req, opt, state_bytes, count, hooks_at) = (f(2)?, f(3)?, f(4)?, f(5)?, f(6)?, f(7)?, f(8)?, f(9)?, f(10)? as usize);
         if abi_min >> 16 != ABI_VERSION >> 16 || abi_min > ABI_VERSION {
             return Err(format!("manifest abi_min: {abi_min:#x} not satisfied by host {ABI_VERSION:#x}"));
         }
@@ -349,43 +715,49 @@ impl Host {
         if abi_max < ABI_VERSION {
             eprintln!("modhost: {id}: abi_max {abi_max:#x} below host {ABI_VERSION:#x} (loaded)");
         }
+        let features = (req | opt) & FEATURES_HOST;
         let mut hooks = Vec::new();
         for i in 0..count as usize {
             let at = hooks_at + i * 20;
             let (addr, mode, prio, flags, idx) = (rd_u32(d, at)?, rd_u32(d, at + 4)?, rd_u32(d, at + 8)? as i32, rd_u32(d, at + 12)?, rd_u32(d, at + 16)?);
-            let Some((row, _sig)) = hook_row(addr) else {
+            let Some((row, sig_s, sig_src)) = hook_row(addr) else {
                 return Err(format!("hook {i}: address {addr:#010x} is not in hooks-v1"));
             };
             if !WIRED.iter().any(|w| w.1 == addr) {
                 return Err(format!("hook {i}: row {row} ({addr:#010x}) is not wired by this host yet (wired: {:?})", WIRED.iter().map(|w| w.0).collect::<Vec<_>>()));
             }
-            if mode == REPLACE {
-                return Err(format!("hook {i}: replace on {row}: GD_FEATURE_REPLACE not provided by this host"));
-            }
-            if mode != PRE && mode != POST {
+            if mode != PRE && mode != POST && mode != REPLACE {
                 return Err(format!("hook {i}: mode {mode} invalid"));
+            }
+            let sig = parse_sig(sig_s).ok_or_else(|| format!("hook {i}: row {row} signature {sig_s:?} not understood"))?;
+            if mode == REPLACE {
+                if req & FEATURE_REPLACE == 0 {
+                    return Err(format!("hook {i}: replace on {row}: GD_FEATURE_REPLACE not in required_features"));
+                }
+                if sig_src != "decomp" || addr == ADDR_FRAME || sig.ret == Some(Ty::Handle) {
+                    return Err(format!("hook {i}: replace on {row}: not allowed on this row (sig_src {sig_src}, frame row or handle result)"));
+                }
+                if let Some((m, _)) = self.mods.iter().find_map(|m| m.hooks.iter().find(|h| h.addr == addr && h.mode == REPLACE).map(|h| (m, h))) {
+                    return Err(format!("hook {i}: replace on {row}: {} already replaces it (one replace per address)", m.id));
+                }
             }
             if !(-1000..=1000).contains(&prio) || flags != 0 {
                 return Err(format!("hook {i}: priority {prio} / flags {flags} out of range"));
             }
             let func = table.get(&self.store, idx as u64).and_then(|r| r.as_func().and_then(|n| n.val().map(|f| (*f).clone()))).ok_or_else(|| format!("hook {i}: fn {idx} not a function in the table"))?;
+            // the function's wasm signature against the row, checked now so a dispatch can never fail on a type
+            let want = func_type(&sig, mode);
+            if func.ty(&self.store) != want {
+                return Err(format!("hook {i}: signature of fn {idx} does not match row {row} {sig_s} mode {mode} (want {want:?})"));
+            }
+            let n = self.mods.iter().flat_map(|m| m.hooks.iter()).chain(hooks.iter()).filter(|h: &&Hook| h.addr == addr && h.mode == mode).count();
+            if mode != REPLACE && n >= MAX_PER_ADDR {
+                return Err(format!("hook {i}: {row}: more than {MAX_PER_ADDR} hooks of mode {mode} on one address"));
+            }
             hooks.push(Hook { addr, mode, priority: prio, index: i as u32, func });
         }
-        // signatures per row, checked now so a dispatch can never fail on a type
-        for h in &hooks {
-            let s = &self.store;
-            let ok = match (h.addr, h.mode) {
-                (ADDR_FRAME, PRE) => h.func.typed::<(), i32>(s).is_ok(),
-                (ADDR_FRAME, POST) => h.func.typed::<(), ()>(s).is_ok(),
-                (ADDR_DAMAGE, PRE) => h.func.typed::<(u32, f32), i32>(s).is_ok(),
-                (ADDR_DAMAGE, POST) => h.func.typed::<(u32, f32), ()>(s).is_ok(),
-                _ => false,
-            };
-            if !ok {
-                return Err(format!("hook {}: signature does not match row {:#010x} mode {}", h.index, h.addr, h.mode));
-            }
-        }
-        self.mods.push(LoadedMod { id, name, version, digest: fnv64(bytes), disabled: false, hooks });
+        self.mods.push(LoadedMod { id, name, version, digest: fnv64(bytes), disabled: false, features, hooks });
+        self.store.data_mut().features.push(features);
         self.rebuild();
         Ok(self.mods.len() - 1)
     }
@@ -399,74 +771,29 @@ impl Host {
             }
         }
         all.sort_by(|a, b| (a.2, a.3.as_bytes(), a.4).cmp(&(b.2, b.3.as_bytes(), b.4)));
-        let s = &self.store;
-        let pick = |addr: u32, mode: u32| all.iter().filter(move |h| h.0 == addr && h.1 == mode).map(|h| Entry { module: h.5, func: h.6 });
-        self.frame_pre = pick(ADDR_FRAME, PRE).map(|e| { let t = e.func.typed(s).unwrap(); (e, t) }).collect();
-        self.frame_post = pick(ADDR_FRAME, POST).map(|e| { let t = e.func.typed(s).unwrap(); (e, t) }).collect();
-        self.dmg_pre = pick(ADDR_DAMAGE, PRE).map(|e| { let t = e.func.typed(s).unwrap(); (e, t) }).collect();
-        self.dmg_post = pick(ADDR_DAMAGE, POST).map(|e| { let t = e.func.typed(s).unwrap(); (e, t) }).collect();
-        self.frame_post.reverse();
-        self.dmg_post.reverse();
-    }
-
-    /// Run one hook body with a fresh fuel budget; a trap disables that mod for the rest of the session (deterministic:
-    /// fuel and traps do not depend on the machine). Returns the hook's result, None when skipped or trapped.
-    fn guard<R>(&mut self, module: usize, f: impl FnOnce(&mut Store<HostData>) -> Result<R, wasmi::Error>) -> Option<R> {
-        if self.mods[module].disabled {
-            return None;
-        }
-        self.store.set_fuel(HOOK_FUEL).ok()?;
-        let r = f(&mut self.store);
-        for l in self.store.data_mut().log.drain(..) {
-            eprintln!("modhost: {}: {l}", self.mods[module].id);
-        }
-        match r {
-            Ok(v) => Some(v),
-            Err(e) => {
-                eprintln!("modhost: {}: trapped ({e}); the mod is disabled for this session", self.mods[module].id);
-                self.mods[module].disabled = true;
-                None
+        self.chains.clear();
+        for h in &all {
+            let c = self.chains.entry(h.0).or_insert_with(|| Chain { sig: row_sig(h.0).unwrap(), pre: Vec::new(), replace: None, post: Vec::new() });
+            let e = Entry { module: h.5, func: h.6 };
+            match h.1 {
+                PRE => c.pre.push(e),
+                POST => c.post.push(e),
+                _ => c.replace = Some(e),
             }
         }
-    }
-
-    pub fn run_frame(&mut self, post: bool) {
-        if !post {
-            self.store.data_mut().frame += 1;
-            for (e, t) in self.frame_pre.clone() {
-                if self.guard(e.module, |s| t.call(s, ())) == Some(1) {
-                    break; // GD_SKIP: the later pre hooks do not run (the procs still run: frame skipping is not offered)
-                }
-            }
-        } else {
-            for (e, t) in self.frame_post.clone() {
-                self.guard(e.module, |s| t.call(s, ()));
-            }
+        for c in self.chains.values_mut() {
+            c.post.reverse();
         }
-    }
-
-    /// The damage row; for pre returns true when a hook returned GD_SKIP.
-    pub fn damage(&mut self, slot: i32, d: f32, post: bool) -> bool {
-        let h = handle_of(slot);
-        let d = canon(d);
-        if !post {
-            for (e, t) in self.dmg_pre.clone() {
-                if self.guard(e.module, |s| t.call(s, (h, d))) == Some(1) {
-                    return true;
-                }
-            }
-        } else {
-            for (e, t) in self.dmg_post.clone() {
-                self.guard(e.module, |s| t.call(s, (h, d)));
-            }
-        }
-        false
     }
 
     pub fn host_data(&self) -> &HostData {
         self.store.data()
     }
 
+    /// Addresses with at least one hook, sorted.
+    pub fn hooked(&self) -> Vec<u32> {
+        self.chains.keys().copied().collect()
+    }
 }
 
 impl Default for Host {
@@ -475,27 +802,222 @@ impl Default for Host {
     }
 }
 
-fn frame_hook(post: bool) {
-    unsafe {
-        if let Some(h) = HOST.as_mut() {
-            h.run_frame(post)
+/// The store context hooks run in: the innermost `gd_orig_call_*` caller, else the host's store.
+unsafe fn ctx(host: *mut Host) -> StoreContextMut<'static, HostData> {
+    match CTX.last() {
+        Some(&c) => (*(c as *mut Caller<'static, HostData>)).as_context_mut(),
+        None => (*host).store.as_context_mut(),
+    }
+}
+
+/// Run one hook with a fresh fuel budget; a trap disables that mod for the rest of the session (deterministic: fuel
+/// and traps do not depend on the machine). None when the mod is disabled or trapped.
+unsafe fn call_hook(host: *mut Host, e: Entry, args: &[Val], nres: usize) -> Option<Option<Val>> {
+    if (&(*host).mods)[e.module].disabled {
+        return None;
+    }
+    let mut c = ctx(host);
+    let prev = c.data().cur_module;
+    c.data_mut().cur_module = e.module;
+    c.set_fuel(HOOK_FUEL).ok()?;
+    let mut out = [Val::I32(0)];
+    let r = e.func.call(&mut c, args, &mut out[..nres]);
+    let mut c = ctx(host);
+    c.data_mut().cur_module = prev;
+    let id = (&(*host).mods)[e.module].id.clone();
+    for l in c.data_mut().log.drain(..) {
+        eprintln!("modhost: {id}: {l}");
+    }
+    match r {
+        Ok(()) => Some((nres == 1).then(|| out[0].clone())),
+        Err(err) => {
+            eprintln!("modhost: {id}: trapped ({err}); the mod is disabled for this session");
+            (&mut (*host).mods)[e.module].disabled = true;
+            None
         }
     }
 }
 
-fn damage_hook(fp: &mut Fighter, d: f32, post: bool) -> bool {
-    let slot = fp.player_id as i32;
-    if std::env::var_os("MELEE_MODHOST_TRACE").is_some() { eprintln!("modhost: damage slot {slot} {d} post {post}"); }
-    // sub-fighters (Nana) are not addressable in v1: their damage runs no hook
-    if fp.is_sub_fighter() != 0 {
-        return false;
+/// Apply the action-state requests queued by the chain just run (game defaults: no flags, frame 0, rate 1, no blend).
+/// Only a small set of common states that need no context is accepted, each only in its own ground / air situation.
+unsafe fn apply_requests(host: *mut Host) {
+    let reqs: Vec<(u32, i32)> = ctx(host).data_mut().requests.drain(..).collect();
+    for (h, state) in reqs {
+        let fp = fighter_ptr(h);
+        if fp.is_null() {
+            continue;
+        }
+        let grounded = (*fp).ground_or_air == melee_types::GA_Ground;
+        let ok = match state {
+            s if s == melee_types::ftCo_MS_Wait as i32 || s == melee_types::ftCo_MS_Squat as i32 || s == melee_types::ftCo_MS_SquatWait as i32 => grounded,
+            s if s == melee_types::ftCo_MS_Fall as i32 || s == melee_types::ftCo_MS_FallSpecial as i32 => !grounded,
+            _ => false,
+        };
+        if ok {
+            melee_fighter::tu::fighter::Fighter_ChangeMotionState((*fp).gobj as _, state, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
+        } else {
+            eprintln!("modhost: action request {state} for slot {} refused (allowed: Wait/Squat/SquatWait grounded, Fall/FallSpecial airborne)", (h & 0xFFFF) - 1);
+        }
     }
-    unsafe { HOST.as_mut().map_or(false, |h| h.damage(slot, d, post)) }
+}
+
+fn ret_val(t: Ty, r: Ret, d: &mut HostData) -> Val {
+    match (t, r) {
+        (Ty::F32, Ret::F32(v)) => Val::F32(canon(v).into()),
+        (_, Ret::I32(v)) => Val::I32(v),
+        (Ty::Handle, Ret::Ptr(p)) => {
+            let g = p as *mut HSD_GObj;
+            let h = fighter_handle_of_gobj(g);
+            Val::I32(if h != 0 { h } else if !g.is_null() && unsafe { (*g).classifier } as i32 == melee_types::HSD_GOBJ_CLASS_ITEM { item_handle(d, g) } else { gobj_handle(d, g) } as i32)
+        }
+        (Ty::F32, _) => Val::F32(0f32.into()),
+        _ => Val::I32(0),
+    }
+}
+
+fn val_ret(t: Option<Ty>, v: Option<Val>) -> Ret {
+    match (t, v) {
+        (None, _) => Ret::Void,
+        (Some(Ty::F32), Some(Val::F32(x))) => Ret::F32(canon(x.into())),
+        (Some(Ty::F32), _) => Ret::F32(0.0),
+        (Some(_), Some(Val::I32(x))) => Ret::I32(x),
+        (Some(_), _) => Ret::I32(0),
+    }
+}
+
+/// The generic dispatcher (`melee_core::modhook::DISPATCH`): pre chain, then replace or the original, then post.
+fn dispatch(addr: u32, args: &[Arg], orig: &mut dyn FnMut() -> Ret) -> Ret {
+    unsafe {
+        let Some(host) = HOST.as_deref_mut().map(|h| h as *mut Host) else { return orig() };
+        let Some(chain) = (*host).chains.get(&addr).cloned() else { return orig() };
+        // sub-fighters (Nana) are not addressable in v1: their activations run the original only
+        if let Some(Arg::Fighter(g)) = args.first() {
+            if fighter_handle_of_gobj(*g as *mut HSD_GObj) == 0 {
+                return orig();
+            }
+        }
+        {
+            let mut c = ctx(host);
+            let d = c.data_mut().depth.entry(addr).or_insert(0);
+            if *d >= MAX_DEPTH {
+                c.data_mut().deep_calls += 1;
+                return orig();
+            }
+            *d += 1;
+        }
+        let mut spawn = false;
+        let vals: Vec<Val> = {
+            let mut c = ctx(host);
+            let d = c.data_mut();
+            args.iter().map(|a| match *a {
+                Arg::Fighter(g) => Val::I32(fighter_handle_of_gobj(g as _) as i32),
+                Arg::Item(g) => Val::I32(item_handle(d, g as _) as i32),
+                Arg::Gobj(g) => Val::I32(gobj_handle(d, g as _) as i32),
+                Arg::Spawn(p) => {
+                    spawn = true;
+                    d.spawns.push((p as usize, true));
+                    Val::I32(((H_SPAWN << 16) | 1) as i32)
+                }
+                Arg::Ptr(_) => Val::I32(0),
+                Arg::I32(v) => Val::I32(v),
+                Arg::F32(v) => Val::F32(canon(v).into()),
+            }).collect()
+        };
+        let set_spawn_pre = |pre: bool| if spawn { if let Some(s) = ctx(host).data_mut().spawns.last_mut() { s.1 = pre; } };
+        // pre
+        ctx(host).data_mut().set_return = None;
+        let mut skipped = false;
+        for e in &chain.pre {
+            if let Some(Some(Val::I32(1))) = call_hook(host, *e, &vals, 1) {
+                skipped = true; // GD_SKIP: the later pre hooks, the replace and the original do not run
+                break;
+            }
+        }
+        set_spawn_pre(false);
+        let mut ret = if skipped {
+            match chain.sig.ret {
+                Some(Ty::Handle) | None => if chain.sig.ret.is_some() { Ret::Ptr(core::ptr::null_mut()) } else { Ret::Void },
+                t => val_ret(t, ctx(host).data_mut().set_return.take()),
+            }
+        } else if let Some(e) = chain.replace {
+            let f: *mut (dyn FnMut() -> Ret + '_) = orig;
+            ctx(host).data_mut().origs.push(OrigFrame { f: core::mem::transmute(f), used: false });
+            let r = call_hook(host, e, &vals, chain.sig.ret.is_some() as usize);
+            let used = ctx(host).data_mut().origs.pop().is_some_and(|o| o.used);
+            match r {
+                Some(v) => val_ret(chain.sig.ret, v),
+                // the replacing mod trapped: run the original, unless it already did
+                None if !used => orig(),
+                None => val_ret(chain.sig.ret, None),
+            }
+        } else {
+            orig()
+        };
+        apply_requests(host);
+        // post: void(args) or R(args, ret)
+        for e in &chain.post {
+            match chain.sig.ret {
+                None => { call_hook(host, *e, &vals, 0); }
+                Some(t) => {
+                    let mut a = vals.clone();
+                    a.push(ret_val(t, ret, ctx(host).data_mut()));
+                    let r = call_hook(host, *e, &a, 1);
+                    // a handle result (gd_gobj / gd_fighter rows) is passed through unchanged in this host
+                    if t != Ty::Handle { if let Some(v) = r { ret = val_ret(Some(t), v); } }
+                }
+            }
+        }
+        apply_requests(host);
+        let mut c = ctx(host);
+        if spawn {
+            c.data_mut().spawns.pop();
+        }
+        if let Some(d) = c.data_mut().depth.get_mut(&addr) {
+            *d -= 1;
+        }
+        ret
+    }
+}
+
+fn frame_hook(post: bool) {
+    unsafe {
+        let Some(host) = HOST.as_deref_mut().map(|h| h as *mut Host) else { return };
+        if !post {
+            let d = (*host).store.data_mut();
+            d.frame += 1;
+            d.items.clear();
+            d.gobjs.clear();
+        }
+        let Some(chain) = (*host).chains.get(&ADDR_FRAME).cloned() else { return };
+        if !post {
+            for e in &chain.pre {
+                if let Some(Some(Val::I32(1))) = call_hook(host, *e, &[], 1) {
+                    break; // GD_SKIP: the later pre hooks do not run (the procs still run: frame skipping is not offered)
+                }
+            }
+        } else {
+            for e in &chain.post {
+                call_hook(host, *e, &[], 0);
+            }
+        }
+        apply_requests(host);
+    }
+}
+
+/// The damage row through the generic dispatcher (the site keeps its own pointer: it hands a `&mut Fighter`).
+fn damage_hook(fp: &mut Fighter, d: f32, orig: &mut dyn FnMut() -> Ret) {
+    if std::env::var_os("MELEE_MODHOST_TRACE").is_some() { eprintln!("modhost: damage slot {} {d}", fp.player_id); }
+    dispatch(ADDR_DAMAGE, &[Arg::Fighter(fp.gobj as _), Arg::F32(d)], orig);
 }
 
 /// The loaded host, if any.
 pub fn host() -> Option<&'static Host> {
     unsafe { HOST.as_deref() }
+}
+
+/// Test entry: run the generic dispatcher for `addr` (the game sites call it through `melee_core::modhook`).
+pub fn dispatch_for_test(addr: u32, args: &[Arg], orig: &mut dyn FnMut() -> Ret) -> Ret {
+    dispatch(addr, args, orig)
 }
 
 /// `MELEE_WASM_MODS`: the mods directory, None when unset / empty / `0` (off by default).
@@ -504,9 +1026,9 @@ pub fn dir_from_env() -> Option<std::path::PathBuf> {
     (!v.is_empty() && v != "0").then(|| v.into())
 }
 
-/// Load every `*.wasm` of `dir` (sorted by mod id after loading, so load order never matters) and install the hook
-/// pointers the loaded set needs. Call on the game thread inside the engine's `GameScope` (the host must live in the
-/// arena to roll back). A refused mod fails the whole call: the match must not start without a mod it was asked for.
+/// Load every `*.wasm` of `dir` and install the hook pointers the loaded set needs. Call on the game thread inside the
+/// engine's `GameScope` (the host must live in the arena to roll back). A refused mod fails the whole call: the match
+/// must not start without a mod it was asked for.
 pub fn install_dir(dir: &std::path::Path) -> Result<(), String> {
     let mut files: Vec<_> = std::fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?
         .filter_map(|e| e.ok().map(|e| e.path()))
@@ -519,7 +1041,7 @@ pub fn install_dir(dir: &std::path::Path) -> Result<(), String> {
         h.load(&b).map_err(|e| format!("{}: refused: {e}", f.display()))?;
     }
     for m in &h.mods {
-        eprintln!("modhost: loaded {} \"{}\" v{:#x} fnv64 {:016x} ({} hooks)", m.id, m.name, m.version, m.digest, m.hooks.len());
+        eprintln!("modhost: loaded {} \"{}\" v{:#x} fnv64 {:016x} ({} hooks, features {:#x})", m.id, m.name, m.version, m.digest, m.hooks.len(), m.features);
     }
     install(h);
     Ok(())
@@ -528,11 +1050,14 @@ pub fn install_dir(dir: &std::path::Path) -> Result<(), String> {
 /// Make `h` the active host and install exactly the hook pointers its chains need.
 pub fn install(h: Box<Host>) {
     unsafe {
-        let frame = !h.mods.is_empty(); // gd_match_frame counts frames whenever a mod is loaded
-        let dmg = !h.dmg_pre.is_empty() || !h.dmg_post.is_empty();
+        let frame = !h.mods.is_empty(); // gd_match_frame and the per-frame handle tables run whenever a mod is loaded
+        let hooked: Vec<u32> = h.hooked().into_iter().filter(|&a| a != ADDR_FRAME && a != ADDR_DAMAGE).collect();
+        let dmg = h.chains.contains_key(&ADDR_DAMAGE);
         HOST = Some(h);
         melee_modes::tu::gmscene::MOD_FRAME = frame.then_some(frame_hook as fn(bool));
-        melee_fighter::hooks::MOD_TAKE_DAMAGE = dmg.then_some(damage_hook as fn(&mut Fighter, f32, bool) -> bool);
+        melee_fighter::hooks::MOD_TAKE_DAMAGE = dmg.then_some(damage_hook as fn(&mut Fighter, f32, &mut dyn FnMut() -> Ret));
+        melee_core::modhook::DISPATCH = (!hooked.is_empty()).then_some(dispatch as melee_core::modhook::Dispatch);
+        melee_core::modhook::HOOKED = hooked;
     }
 }
 
@@ -542,6 +1067,11 @@ pub fn install_from_env() -> Result<(), String> {
         Some(d) => install_dir(&d),
         None => Ok(()),
     }
+}
+
+/// Loaded mods as (id, version, fnv64), in load order: the netplay handshake's mod list.
+pub fn loaded_ids() -> Vec<(String, u32, u64)> {
+    host().map(|h| h.mods.iter().map(|m| (m.id.clone(), m.version, m.digest)).collect()).unwrap_or_default()
 }
 
 #[cfg(test)]

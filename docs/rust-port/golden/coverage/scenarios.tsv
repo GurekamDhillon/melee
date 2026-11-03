@@ -203,3 +203,7 @@ multiman_15min	menu	0
 multiman_endless	menu	0		
 multiman_cruel	menu	0		
 event_match	menu	0		
+geno_kirby_bhv	vs	2400	geno_kirby_bhv.lua	mode=vs;at=match;p1=ck:4/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+geno_fox_dash	vs	2400	geno_fox_dash.lua	mode=vs;at=match;p1=ck:2/human;p2=ck:4/idle;p3=none;p4=none;stage=ext:31;match=time;minutes=0;items=off
+geno_cpu_kirby_fox	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+geno_lab_cpu	vs	3600	idle_3600.lua	mode=lab;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;items=off

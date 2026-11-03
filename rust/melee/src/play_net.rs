@@ -478,11 +478,35 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
         }
         None => crate::mods::Mods::from_env()?,
     };
-    let Some(m) = m.filter(|m| !m.active.is_empty()) else { return Ok((0, "no mods".into())) };
+    let wasm = wasm_mods_identity();
+    let Some(m) = m.filter(|m| !m.active.is_empty()) else {
+        return Ok(match wasm {
+            None => (0, "no mods".into()),
+            Some(w) => (melee_net::hash64(format!("|wasm {w}").as_bytes(), 0), format!("code mods {w}")),
+        });
+    };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
     let fp = m.set.fingerprint();
-    let h = melee_net::hash64(format!("{}|{fp:016x}", ids.join(",")).as_bytes(), 0);
-    Ok((h, format!("mods {} ({fp:016x})", ids.join(", "))))
+    let w = wasm.map(|w| format!("|wasm {w}")).unwrap_or_default();
+    let h = melee_net::hash64(format!("{}|{fp:016x}{w}", ids.join(",")).as_bytes(), 0);
+    Ok((h, format!("mods {} ({fp:016x}){}", ids.join(", "), w.replace("|wasm ", "; code mods "))))
+}
+
+/// The wasm code mods `MELEE_WASM_MODS` will load (notes/modhost.md), as "file#fnv64, ..." sorted by file name; None when
+/// off. Both peers must run the same code mods, so they enter the handshake digest (read from the files before boot).
+fn wasm_mods_identity() -> Option<String> {
+    let dir = melee_modhost::dir_from_env()?;
+    let mut v: Vec<String> = std::fs::read_dir(&dir).ok()?
+        .filter_map(|e| e.ok().map(|e| e.path()))
+        .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("wasm")))
+        .filter_map(|p| {
+            let b = std::fs::read(&p).ok()?;
+            let h = b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &x| (h ^ x as u64).wrapping_mul(0x100_0000_01b3));
+            Some(format!("{}#{:08x}", p.file_stem()?.to_string_lossy(), h as u32))
+        })
+        .collect();
+    v.sort();
+    (!v.is_empty()).then(|| v.join(", "))
 }
 
 impl melee_net::app::lobby::LobbyEnv for PlayEnv {
@@ -699,7 +723,7 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
         rule_stocks: p.stocks,
         onep_mode: -1,
         onep_step: -1,
-        onep_level: -1,
+        onep_level: -1, game_mode: -1, entry_state: -1,
     })
 }
 

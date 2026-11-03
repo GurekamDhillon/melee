@@ -275,7 +275,12 @@ impl Callbacks for RoomCb {
                 Event::Started => s.started = true,
                 Event::Refused | Event::Disconnected => {
                     s.dead = true;
-                    let m = format!("{}: {}", if ev == Event::Refused { "Refused" } else { "Disconnected" }, msg.unwrap_or("the other player left"));
+                    let why = match msg {
+                        Some(w) if ev == Event::Refused => crate::refusal_both_sides(w, Some(&s.env.global_describe())),
+                        Some(w) => w.to_string(),
+                        None => "the other player left".to_string(),
+                    };
+                    let m = format!("{}: {}", if ev == Event::Refused { "Refused" } else { "Disconnected" }, why);
                     s.status(m);
                 }
                 _ => {}

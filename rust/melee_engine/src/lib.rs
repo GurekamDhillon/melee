@@ -2,6 +2,7 @@
 //! loaders (`lbFile`, `lbArchive`, `HSD_ArchiveParse`) run on. No game logic lives here.
 #![allow(static_mut_refs, non_snake_case, clippy::missing_safety_doc)]
 pub mod arena;
+pub mod geno_host;
 pub mod archive;
 pub mod card;
 pub mod cdata;

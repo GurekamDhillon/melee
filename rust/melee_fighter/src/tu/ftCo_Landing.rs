@@ -82,6 +82,12 @@ fn canon_template_kind(f: &Fighter) -> i32 {
 
 pub fn ftCo_Landing_Enter(g: G, msid: i32, allow_interrupt: bool, flags: u32, anim_start: f32, anim_speed: f32) {
     melee_core::ct!("ftCo_Landing_Enter");
+    // mod host site (hooks-v1 0x800D5AEC, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800D5AEC, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::I32(msid as i32), melee_core::modhook::Arg::I32(allow_interrupt as i32), melee_core::modhook::Arg::I32(flags as i32), melee_core::modhook::Arg::F32(anim_start), melee_core::modhook::Arg::F32(anim_speed)], ftCo_Landing_Enter__orig(g, msid, allow_interrupt, flags, anim_start, anim_speed));
+    #[allow(unused_unsafe)] unsafe { ftCo_Landing_Enter__orig(g, msid, allow_interrupt, flags, anim_start, anim_speed) }
+}
+
+fn ftCo_Landing_Enter__orig(g: G, msid: i32, allow_interrupt: bool, flags: u32, anim_start: f32, anim_speed: f32) {
     ext::ftCommon_8007D7FC(fp(g));
     ext::Fighter_ChangeMotionState(g, msid, flags, anim_start, anim_speed, 0.0, core::ptr::null_mut());
     unsafe { fp(g).mv.co.landing.allow_interrupt = allow_interrupt as i32 };
@@ -133,6 +139,12 @@ pub fn ftCo_LandingFallSpecial_Enter_Basic(g: G) {
 
 pub fn ftCo_LandingFallSpecial_Enter(g: G, allow_interrupt: bool, landing_lag: f32) {
     melee_core::ct!("ftCo_LandingFallSpecial_Enter");
+    // mod host site (hooks-v1 0x800D5CB0, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800D5CB0, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::I32(allow_interrupt as i32), melee_core::modhook::Arg::F32(landing_lag)], ftCo_LandingFallSpecial_Enter__orig(g, allow_interrupt, landing_lag));
+    #[allow(unused_unsafe)] unsafe { ftCo_LandingFallSpecial_Enter__orig(g, allow_interrupt, landing_lag) }
+}
+
+fn ftCo_LandingFallSpecial_Enter__orig(g: G, allow_interrupt: bool, landing_lag: f32) {
     if ext::ftCo_800C5240(g) {
         ext::ftCo_HammerLanding_Enter(g);
     } else {

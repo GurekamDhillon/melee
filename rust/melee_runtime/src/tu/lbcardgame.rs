@@ -624,6 +624,19 @@ unsafe fn log_save(what: &str) {
         what, sd.unlocked_characters, sd.x1CB0.rumble_enabled, sd.x1CB0.sound_balance, sd.x1CB0.deflicker, sd.x1CB0.saved_language,
         sd.trophy_count, sd.time_matches, sd.stock_matches, sd.x1A38
     );
+    // the 1P records: the event clears and scores, the per-fighter records (Classic / Adventure / All-Star / Target
+    // Test / Home-Run / Multi-Man) and the Stadium words, as an FNV-1a each so a run can tell they changed
+    let fnv = |p: *const u8, n: usize| core::slice::from_raw_parts(p, n).iter().fold(0x811C9DC5u32, |h, &b| (h ^ b as u32).wrapping_mul(0x0100_0193));
+    let ev = (&raw const sd.x1A70) as *const i32;
+    let ev_sum: i64 = (0..51).map(|i| *ev.add(i) as i64).sum();
+    eprintln!(
+        "gw: card: {}: events_cleared={:#015x} event_score_sum={} fighter_records_fnv={:08x} stadium_fnv={:08x} mode_records_fnv={:08x}",
+        what, sd.x1A68, ev_sum,
+        fnv((&raw const sd.x1F2C) as *const u8, core::mem::size_of_val(&sd.x1F2C)),
+        fnv((&raw const sd.x1B40) as *const u8, (&raw const sd.x1CB0) as usize - (&raw const sd.x1B40) as usize),
+        // unk_8 .. unk_1A8: the per-mode record tables (the Home-Run distances are unk_30.xB0)
+        fnv((&raw const sd.unk_8) as *const u8, (&raw const sd.time_matches) as usize - (&raw const sd.unk_8) as usize)
+    );
 }
 
 unsafe fn native_save() -> *mut u8 {

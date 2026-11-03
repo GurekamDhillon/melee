@@ -997,6 +997,12 @@ pub unsafe extern "C" fn Item_80267AA8(gobj: *mut HSD_GObj, spawnItem: *mut Spaw
 /// Setup Item JObj
 pub unsafe extern "C" fn Item_802680CC(gobj: *mut HSD_GObj) {
     melee_core::ct!("Item_802680CC");
+    // mod host site (hooks-v1 0x802680CC, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x802680CC, [melee_core::modhook::Arg::Item(gobj as _)], Item_802680CC__orig(gobj));
+    #[allow(unused_unsafe)] unsafe { Item_802680CC__orig(gobj) }
+}
+
+unsafe extern "C" fn Item_802680CC__orig(gobj: *mut HSD_GObj) {
     let item_data = get_item(gobj);
     if !(*item_data).xC8_joint.is_null() {
         let jobj = ext::HSD_JObjLoadJoint((*item_data).xC8_joint);
@@ -1175,6 +1181,12 @@ static mut reported: [u8; 208] = [0; 208];
 /// Create Item
 pub unsafe extern "C" fn Item_8026862C(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     melee_core::ct!("Item_8026862C");
+    // mod host site (hooks-v1 0x8026862C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x8026862C, [melee_core::modhook::Arg::Spawn(spawnItem as _)], Item_8026862C__orig(spawnItem));
+    #[allow(unused_unsafe)] unsafe { Item_8026862C__orig(spawnItem) }
+}
+
+unsafe extern "C" fn Item_8026862C__orig(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     if (*spawnItem).kind >= 5000 && !geno_art_is_kind((*spawnItem).kind) {
         let parent = (*spawnItem).x0_parent_gobj;
         let cls: i32 = if !parent.is_null() { (*parent).classifier as i32 } else { -1 };
@@ -1293,6 +1305,12 @@ pub unsafe extern "C" fn Item_ScriptSpawnCapTest() -> i32 {
 /// Item spawn prefunction - spawn airborne
 pub unsafe extern "C" fn Item_80268B18(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     melee_core::ct!("Item_80268B18");
+    // mod host site (hooks-v1 0x80268B18, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x80268B18, [melee_core::modhook::Arg::Spawn(spawnItem as _)], Item_80268B18__orig(spawnItem));
+    #[allow(unused_unsafe)] unsafe { Item_80268B18__orig(spawnItem) }
+}
+
+unsafe extern "C" fn Item_80268B18__orig(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     (*spawnItem).x48_ground_or_air = GA_Air;
     (*spawnItem).x10 = 0;
     Item_802674AC(spawnItem);
@@ -1302,6 +1320,12 @@ pub unsafe extern "C" fn Item_80268B18(spawnItem: *mut SpawnItem) -> *mut HSD_GO
 /// Item spawn prefunction - spawn grounded
 pub unsafe extern "C" fn Item_80268B5C(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     melee_core::ct!("Item_80268B5C");
+    // mod host site (hooks-v1 0x80268B5C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x80268B5C, [melee_core::modhook::Arg::Spawn(spawnItem as _)], Item_80268B5C__orig(spawnItem));
+    #[allow(unused_unsafe)] unsafe { Item_80268B5C__orig(spawnItem) }
+}
+
+unsafe extern "C" fn Item_80268B5C__orig(spawnItem: *mut SpawnItem) -> *mut HSD_GObj {
     (*spawnItem).x48_ground_or_air = GA_Ground;
     (*spawnItem).x10 = 0;
     Item_802674AC(spawnItem);
@@ -1311,6 +1335,12 @@ pub unsafe extern "C" fn Item_80268B5C(spawnItem: *mut SpawnItem) -> *mut HSD_GO
 /// Item spawn prefunction - spawn grounded and toggle unknown true
 pub unsafe extern "C" fn Item_80268B9C(spawnItem: *mut SpawnItem) {
     melee_core::ct!("Item_80268B9C");
+    // mod host site (hooks-v1 0x80268B9C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x80268B9C, [melee_core::modhook::Arg::Spawn(spawnItem as _)], Item_80268B9C__orig(spawnItem));
+    #[allow(unused_unsafe)] unsafe { Item_80268B9C__orig(spawnItem) }
+}
+
+unsafe extern "C" fn Item_80268B9C__orig(spawnItem: *mut SpawnItem) {
     (*spawnItem).x48_ground_or_air = GA_Ground;
     (*spawnItem).x10 = 1;
     Item_802674AC(spawnItem);
@@ -1418,6 +1448,12 @@ pub unsafe extern "C" fn Item_80268E40(item_data: *mut Item, itemStateDesc: *mut
 /// Change item state
 pub unsafe extern "C" fn Item_80268E5C(gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags) {
     melee_core::ct!("Item_80268E5C");
+    // mod host site (hooks-v1 0x80268E5C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x80268E5C, [melee_core::modhook::Arg::Item(gobj as _), melee_core::modhook::Arg::I32(msid as i32), melee_core::modhook::Arg::I32(flags as i32)], Item_80268E5C__orig(gobj, msid, flags));
+    #[allow(unused_unsafe)] unsafe { Item_80268E5C__orig(gobj, msid, flags) }
+}
+
+unsafe extern "C" fn Item_80268E5C__orig(gobj: *mut HSD_GObj, msid: enum_t, flags: Item_StateChangeFlags) {
     let mut sp4C: Vec3 = core::mem::zeroed();
     let mut scl: Vec3 = core::mem::zeroed();
 
@@ -1523,6 +1559,12 @@ pub unsafe extern "C" fn Item_80268E5C(gobj: *mut HSD_GObj, msid: enum_t, flags:
 
 pub unsafe extern "C" fn Item_802693E4(gobj: *mut HSD_GObj) {
     melee_core::ct!("Item_802693E4");
+    // mod host site (hooks-v1 0x802693E4, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x802693E4, [melee_core::modhook::Arg::Item(gobj as _)], Item_802693E4__orig(gobj));
+    #[allow(unused_unsafe)] unsafe { Item_802693E4__orig(gobj) }
+}
+
+unsafe extern "C" fn Item_802693E4__orig(gobj: *mut HSD_GObj) {
     let item_data = (*gobj).user_data as *mut Item;
     if (*item_data).xDC8_word.flags.x5() != 0 {
         Item_8026A0A0(gobj);
@@ -1669,6 +1711,12 @@ pub unsafe extern "C" fn Item_802697D4(gobj: *mut HSD_GObj) {
 
 pub unsafe extern "C" fn Item_80269978(gobj: *mut HSD_GObj) {
     melee_core::ct!("Item_80269978");
+    // mod host site (hooks-v1 0x80269978, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x80269978, [melee_core::modhook::Arg::Item(gobj as _)], Item_80269978__orig(gobj));
+    #[allow(unused_unsafe)] unsafe { Item_80269978__orig(gobj) }
+}
+
+unsafe extern "C" fn Item_80269978__orig(gobj: *mut HSD_GObj) {
     let item_data = get_item(gobj);
     let mut destroyed = false;
     if let Some(f) = (*item_data).collided {

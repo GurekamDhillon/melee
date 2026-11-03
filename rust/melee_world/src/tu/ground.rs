@@ -1055,6 +1055,12 @@ pub unsafe extern "C" fn Ground_801C0A70(pos: *mut Vec3) -> i32 {
 
 pub unsafe extern "C" fn Ground_801C0C2C(arg0: *mut HSD_GObj) {
     melee_core::ct!("Ground_801C0C2C");
+    // mod host site (hooks-v1 0x801C0C2C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x801C0C2C, [melee_core::modhook::Arg::Gobj(arg0 as _)], Ground_801C0C2C__orig(arg0));
+    #[allow(unused_unsafe)] unsafe { Ground_801C0C2C__orig(arg0) }
+}
+
+unsafe extern "C" fn Ground_801C0C2C__orig(arg0: *mut HSD_GObj) {
     let mut sp50 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
     let mut sp44 = sp50;
     let mut sp38 = sp50;
@@ -1179,6 +1185,12 @@ struct QueueNode {
 
 pub unsafe extern "C" fn Ground_801C0FB8(pair: *mut StageIdPair) {
     melee_core::ct!("Ground_801C0FB8");
+    // mod host site (hooks-v1 0x801C0FB8, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x801C0FB8, [melee_core::modhook::Arg::Ptr(pair as _)], Ground_801C0FB8__orig(pair));
+    #[allow(unused_unsafe)] unsafe { Ground_801C0FB8__orig(pair) }
+}
+
+unsafe extern "C" fn Ground_801C0FB8__orig(pair: *mut StageIdPair) {
     if stage_datas[(*pair).grkind as usize].is_null() {
         return;
     }

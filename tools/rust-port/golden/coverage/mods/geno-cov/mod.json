@@ -1,0 +1,6 @@
+{
+  "id": "geno-cov",
+  "name": "Geno coverage goldens",
+  "version": "0.1.0",
+  "kind": "fighter"
+}

@@ -18,6 +18,7 @@ melee_chara.workspace = true
 melee_items.workspace = true
 melee_modes.workspace = true
 melee_engine.workspace = true
+melee_modhost = { path = "../melee_modhost" }
 melee_link.workspace = true
 # Platform: the sound stack the fighter code's sfx hooks call (`golden --audio`); no device here.
 melee_audio = { path = "../melee_audio" }

@@ -170,6 +170,12 @@ pub fn ftCo_800CB110(g: G, arg1: bool, jump_mul: f32) {
 
 pub fn ftCo_Jump_Enter(g: G) {
     melee_core::ct!("ftCo_Jump_Enter");
+    // mod host site (hooks-v1 0x800CB250, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800CB250, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_Jump_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_Jump_Enter__orig(g) }
+}
+
+fn ftCo_Jump_Enter__orig(g: G) {
     ext::ftCommon_8007D5D4(fp(g));
     let f = fp(g);
     let msid = if f.input.lstick[0].x * f.facing_dir > -cd().x78 { ftCo_MS_JumpF } else { ftCo_MS_JumpB };

@@ -1211,6 +1211,7 @@ dependencies = [
  "melee_modhost",
  "melee_platform",
  "melee_runtime",
+ "melee_script",
  "melee_types",
  "melee_world",
 ]

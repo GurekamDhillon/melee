@@ -213,6 +213,9 @@ impl Engine {
         melee_link::install();
         melee_link::install_retail();
         unsafe { melee_runtime::tu::generator::GEN_TRACE = std::env::var_os("MELEE_PS_TRACE").is_some(); }
+        // wasm code mods (MELEE_WASM_MODS, off by default; notes/modhost.md). Inside the GameScope: the host lives in
+        // the arena, so the snapshots roll its state back with the game's.
+        melee_modhost::install_from_env().map_err(|e| format!("modhost: {e}"))?;
         if let Some(path) = std::env::var_os("MELEE_RAND_TRACE") {
             unsafe {
                 RAND_TRACE = std::fs::File::create(path).ok();

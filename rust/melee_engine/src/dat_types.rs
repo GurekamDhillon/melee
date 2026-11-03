@@ -67,6 +67,36 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "tyDisplayModelUsTbl" { return Some(rt("TyDspEntry[]")); }
     if name == "gmIntroEasyTable" { return Some(RootType::Custom("rawwords")); }
     if name == "standScene" { return Some(rt("SceneDesc")); }
+    if name == "mc01" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc02" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc03" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc04" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc05" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc06" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc07" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc08" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc09" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc10" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc11" { return Some(rt("SceneCameraDesc")); }
+    if name == "mc12" { return Some(rt("SceneCameraDesc")); }
+    if name == "visual0102Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0401Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0401InfoScene" { return Some(rt("SceneDesc")); }
+    if name == "visual0402Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0501Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0502Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0601Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual0801Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual1101Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual1101Cam2Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual1201v1Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual1201v2Scene" { return Some(rt("SceneDesc")); }
+    if name == "visual1202Scene" { return Some(rt("SceneDesc")); }
+    if name == "cut1CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut2CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3BgScene" { return Some(rt("SceneDesc")); }
+    if name == "ScGamRegStaffrollNames_scene_modelset" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }
@@ -112,6 +142,7 @@ pub fn decode_root(d: &mut GcDecoder<'_>, ty: RootType, off: u32, extent: u32, b
             "MapCollData" => d.object::<MapCollData>(off) as *mut c_void,
             "MnSelectChrDataTable" => d.object::<MnSelectChrDataTable>(off) as *mut c_void,
             "MnSelectStageDataTable" => d.object::<MnSelectStageDataTable>(off) as *mut c_void,
+            "SceneCameraDesc" => d.object::<SceneCameraDesc>(off) as *mut c_void,
             "SceneDesc" => d.object::<SceneDesc>(off) as *mut c_void,
             "ToyModelFile" => d.object::<ToyModelFile>(off) as *mut c_void,
             "ToyNameData" => d.object::<ToyNameData>(off) as *mut c_void,

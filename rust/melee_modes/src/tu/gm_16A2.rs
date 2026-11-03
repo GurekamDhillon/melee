@@ -71,7 +71,7 @@ pub mod ext {
         Player_SetDefenseRatio(a0: i32, a1: f32) = |a0: i32, a1: f32| { unsafe { melee_fighter::tu::player::Player_SetDefenseRatio(a0 as _, a1 as _); } };
         Player_SetMoreFlagsBit5(a0: i32, a1: u8) = |a0: i32, a1: u8| { unsafe { melee_fighter::tu::player::Player_SetMoreFlagsBit5(a0 as _, a1 as _); } };
         Player_SetUnk4D(a0: i32, a1: i8) = |a0: i32, a1: i8| { unsafe { melee_fighter::tu::player::Player_SetUnk4D(a0 as _, a1 as _); } };
-        Player_SetFlagsAEBit1(a0: i32, a1: u8) -> u8 = |_, _| todo!("TODO(port) Player_SetFlagsAEBit1 (player.c)");
+        Player_SetFlagsAEBit1(a0: i32, a1: u8) -> u8 = |a0: i32, a1: u8| -> u8 { melee_fighter::tu::player::Player_SetFlagsAEBit1(a0, a1); 0 }; // the C falls off its end (no return value)
         Player_80031AD0(a0: i32) = |a0: i32| { unsafe { melee_fighter::tu::player::Player_80031AD0(a0 as _); } };
         ifStatus_802F6508(a0: i32) = |a0: i32| { unsafe { melee_world::tu::ifstatus::ifStatus_802F6508(a0 as _); } };
         un_802FD28C(a0: i32) = |a0: i32| { unsafe { melee_world::tu::ifnametag::un_802FD28C(a0 as _); } };

@@ -90,9 +90,9 @@ pub mod ext {
         Player_GetFlagsBit1(a0: i32) -> i32 = |a0: i32| -> i32 { unsafe { melee_fighter::tu::player::Player_GetFlagsBit1(a0 as _) as _ } };
         Player_GetTeam(a0: i32) -> i32 = |a0: i32| -> i32 { unsafe { melee_fighter::tu::player::Player_GetTeam(a0 as _) as _ } };
         Ground_801C1D84() -> u32 = || -> u32 { unsafe { melee_world::tu::ground::Ground_801C1D84() as _ } };
-        fn_8017EE40(a0: i32) = |a0: i32| { unsafe { crate::tu::gm_17eb::fn_8017EE40(a0 as _); } };
-        fn_8017E8A4(a0: i32) = |a0: i32| { unsafe { crate::tu::gm_17e4::fn_8017E8A4(a0 as _); } };
-        fn_8018A364(a0: i32) = |a0: i32| { unsafe { crate::tu::gm_18A1::fn_8018A364(a0 as _); } };
+        fn_8017EE40(a0: isize) = |a0: isize| { unsafe { crate::tu::gm_17eb::fn_8017EE40(a0 as _); } };
+        fn_8017E8A4(a0: isize) = |a0: isize| { unsafe { crate::tu::gm_17e4::fn_8017E8A4(a0 as _); } };
+        fn_8018A364(a0: isize) = |a0: isize| { unsafe { crate::tu::gm_18A1::fn_8018A364(a0 as _); } };
         pl_80039450(a0: i32) = |a0: i32| { unsafe { melee_fighter::tu::plbonus::pl_80039450(a0 as _); } };
         fn_80170110(a0: *mut c_void, a1: i32, a2: i32, a3: u8) -> i32 = |a0: *mut c_void, a1: i32, a2: i32, a3: u8| -> i32 { unsafe { crate::tu::gm_16f1::fn_80170110(a0 as _, a1 as _, a2 as _, a3 as _) as _ } };
         fn_8016FAD4(a0: *mut MatchEnd, a1: i32, a2: i32, a3: u8) -> i32 = |a0: *mut MatchEnd, a1: i32, a2: i32, a3: u8| -> i32 { unsafe { crate::tu::gm_16f1::fn_8016FAD4(a0 as _, a1 as _, a2 as _, a3 as _) as _ } };
@@ -907,7 +907,8 @@ pub unsafe fn gm_GetMatchOutcome() -> MatchOutcome {
     OUTCOME_NONE
 }
 
-pub unsafe fn fn_8016C46C(arg0: i32) {
+/// The C passes the `MatchEnd*` as an `int` (a 32-bit GameCube address); here it is the full native address.
+pub unsafe fn fn_8016C46C(arg0: isize) {
     melee_core::ct!("fn_8016C46C");
     if (*gmVs_GetSceneController()).state.unk_9 != 0 {
         match ext::gm_GetCurrentGameMode() as u32 {
@@ -1408,7 +1409,7 @@ pub unsafe fn fn_8016D634() {
             (*copied_dst).is_teams = controller.start.is_teams;
             (*copied_dst).outcome = (*tmp).state.match_result;
             ext::gm_80166378(copied_dst);
-            fn_8016C46C(copied_dst as usize as i32);
+            fn_8016C46C(copied_dst as isize);
             if (*tmp).state.match_result as u32 != OUTCOME_NO_CONTEST && (*tmp).state.match_result as u32 != OUTCOME_RETRY {
                 fn_8016C4F4(copied_dst);
             }
@@ -2108,7 +2109,7 @@ pub unsafe fn gm_Scene_Vs_OnExit(user_data: *mut c_void) {
         (*data).xC.is_teams = controller.start.is_teams;
         (*data).xC.outcome = controller.state.match_result;
         ext::gm_80166378(addr_of_mut!((*data).xC));
-        fn_8016C46C(addr_of_mut!((*data).xC) as usize as i32);
+        fn_8016C46C(addr_of_mut!((*data).xC) as isize);
         if (*tmp).state.match_result as u32 != OUTCOME_NO_CONTEST && (*tmp).state.match_result as u32 != OUTCOME_RETRY {
             fn_8016C4F4(addr_of_mut!((*data).xC));
         }

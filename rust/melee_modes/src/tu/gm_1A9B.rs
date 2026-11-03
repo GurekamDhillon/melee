@@ -65,7 +65,8 @@ pub mod ext {
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
     hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
     /// `HSD_SObjLib_804D7960` (sysdolphin/baselib/sobjlib.c): the SObj object kind.
-    hook!(HSD_SOBJLIB_804D7960, hsd_sobjlib_804d7960, () -> u8);
+    fn sobj_kind() -> u8 { unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960 as u8 } }
+    hook!(HSD_SOBJLIB_804D7960, hsd_sobjlib_804d7960, () -> u8, sobj_kind);
     // lb/lbaudio_ax.c, lb/lbbgflash.c, lb/lbmthp.c
     pub static mut LBAUDIOAX_80026F2C: Option<fn(u32) > = None;
             #[allow(non_snake_case)]
@@ -147,7 +148,7 @@ pub mod ext {
                     None => { return unsafe { crate::tu::lb_01F8::lbMthp8001F890(g as _) as _ }; },
                 }
             }
-    hook!(LBMTHP_8001FAA0, lbMthp8001FAA0, (filename: &str, w: i32, h: i32));
+    hook!(LBMTHP_8001FAA0, lbMthp8001FAA0, (filename: *const i8, w: i32, h: i32));
     // gm/gmevent.c, gm/gm_1A3F.c, gm/gmregclear.c, gm/gmregtyfall.c, gm/gm_1601.c (TARGET_PC)
     pub static mut GM_801BEFB0: Option<fn() -> i32> = None;
             #[allow(non_snake_case)]
@@ -249,7 +250,8 @@ pub fn gm_Scene_Congrats_OnEnter(_unused: *mut c_void) {
         } else {
             gmRegend_AllstarThpFiles[ckind as usize]
         };
-        ext::lbMthp8001FAA0(thpfile, 0x230, 0x1A0);
+        let thp_c = std::ffi::CString::new(thpfile.trim_end_matches(' ')).unwrap();
+        ext::lbMthp8001FAA0(thp_c.as_ptr() as *const i8, 0x230, 0x1A0);
         let thp_disp = ext::lbMthp8001F890(gobj);
         (*thp_disp).x10 = 320.0;
         (*thp_disp).x14 = 240.0;

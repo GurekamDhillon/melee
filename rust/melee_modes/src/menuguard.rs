@@ -13,7 +13,7 @@ pub static mut ENABLED: bool = false;
 
 /// The modes the menu may launch: they reach their scenes and back without a TODO stop.
 pub const KNOWN_WORKING: &[GameModeKind] = &[
-    GM_TITLE, GM_MENU, GM_VS, GM_CLASSIC, GM_TRAINING,
+    GM_TITLE, GM_MENU, GM_VS, GM_CLASSIC, GM_TRAINING, GM_ADVENTURE, GM_ALLSTAR,
 ];
 
 fn name(mode: i32) -> &'static str {

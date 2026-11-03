@@ -34,6 +34,26 @@ pub struct MnName_GObj {
     pub x38: *mut ::core::ffi::c_void,
     pub text: *mut HSD_Text,
     pub text2: *mut HSD_Text,
+    /// host only: the C keeps a jobj at 0x24, inside HSD_GObj's 8-byte gxlink_prios with the one at 0x20; the
+    /// host has room for one pointer there (see `mnName_Slot`)
+    pub x24: *mut ::core::ffi::c_void,
+}
+/// The C reads and writes this user data's 13 jobjs (lb_80011E24 indices 0..12) at the GC offsets 0x08 + 4*i, i.e.
+/// through HSD_GObj's 4-byte pointer fields. With host pointers those raw offsets overlap (each store clobbered the
+/// previous one's high half: the name-entry jobjs were garbage and HSD_JObjGetTranslationX asserted on NULL), so every
+/// raw-offset access goes through the host field that the C offset names.
+pub unsafe fn mnName_Slot(p: *mut ::core::ffi::c_void, gc_off: i32) -> *mut *mut HSD_JObj {
+    let d = p as *mut MnName_GObj;
+    (match gc_off {
+        0x08 => &raw mut (*d).gobj.next as *mut u8, 0x0C => &raw mut (*d).gobj.prev as *mut u8,
+        0x10 => &raw mut (*d).gobj.next_gx as *mut u8, 0x14 => &raw mut (*d).gobj.prev_gx as *mut u8,
+        0x18 => &raw mut (*d).gobj.proc as *mut u8, 0x1C => &raw mut (*d).gobj.render_cb as *mut u8,
+        0x20 => &raw mut (*d).gobj.gxlink_prios as *mut u8, 0x24 => &raw mut (*d).x24 as *mut u8,
+        0x28 => &raw mut (*d).gobj.hsd_obj as *mut u8, 0x2C => &raw mut (*d).gobj.user_data as *mut u8,
+        0x30 => &raw mut (*d).gobj.user_data_remove_func as *mut u8, 0x34 => &raw mut (*d).gobj.x34_unk as *mut u8,
+        0x38 => &raw mut (*d).x38 as *mut u8,
+        _ => panic!("mnName_Slot: GC offset {gc_off:#x}"),
+    }) as *mut *mut HSD_JObj
 }
 melee_core::gc_layout!(MnName_GObj, "MnName_GObj", size 0x48, align 8, [
     gobj @ 0x0: 56 "HSD_GObj",
@@ -1244,8 +1264,7 @@ pub unsafe extern "C" fn mnName_802388D4(
     let mut p: *mut u8_0 = gobj as *mut u8_0;
     let mut result: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     if (index as ::core::ffi::c_int) < 0x18 as ::core::ffi::c_int {
-        let mut jobj: *mut HSD_JObj = *(p.offset(0x30 as ::core::ffi::c_int as isize)
-            as *mut *mut HSD_JObj);
+        let mut jobj: *mut HSD_JObj = *mnName_Slot(p.cast(), 0x30);
         let mut i: s32 = 0;
         result = (if jobj.is_null() {
             ::core::ptr::null_mut::<HSD_JObj>()
@@ -1265,13 +1284,13 @@ pub unsafe extern "C" fn mnName_802388D4(
     }
     match index as ::core::ffi::c_int {
         24 => {
-            return *(p.offset(0x24 as ::core::ffi::c_int as isize) as *mut *mut HSD_JObj);
+            return *mnName_Slot(p.cast(), 0x24);
         }
         25 => {
-            return *(p.offset(0x18 as ::core::ffi::c_int as isize) as *mut *mut HSD_JObj);
+            return *mnName_Slot(p.cast(), 0x18);
         }
         26 => {
-            return *(p.offset(0x1c as ::core::ffi::c_int as isize) as *mut *mut HSD_JObj);
+            return *mnName_Slot(p.cast(), 0x1c);
         }
         _ => {}
     }
@@ -2392,7 +2411,7 @@ pub unsafe extern "C" fn mnName_8023A59C(mut arg0: u8_0) -> *mut HSD_GObj {
     );
     HSD_JObjReqAnimAll(root_jobj[0 as ::core::ffi::c_int as usize], 0.0f32);
     HSD_JObjAnimAll(root_jobj[0 as ::core::ffi::c_int as usize]);
-    user_data = HSD_MemAlloc(0x44 as ssize_t) as *mut MnName_GObj;
+    user_data = HSD_MemAlloc(::core::mem::size_of::<MnName_GObj>() as ssize_t) as *mut MnName_GObj; // C: 0x44, host pointers
     if !user_data.is_null() {} else {
         OSReport(b"Can't get user_data.\n\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char, &[]);
@@ -2419,9 +2438,7 @@ pub unsafe extern "C" fn mnName_8023A59C(mut arg0: u8_0) -> *mut HSD_GObj {
     (*user_data).text2 = ::core::ptr::null_mut::<HSD_Text>();
     i = 0 as ::core::ffi::c_int as s32;
     while i < 0xd as ::core::ffi::c_int {
-        lb_80011E24(root_jobj[0 as ::core::ffi::c_int as usize], (user_data as *mut u8_0)
-                .offset((i << 2 as ::core::ffi::c_int) as isize)
-                .offset(8 as ::core::ffi::c_int as isize) as *mut *mut HSD_JObj, &[(i) as usize, (-(1 as ::core::ffi::c_int)) as usize]);
+        lb_80011E24(root_jobj[0 as ::core::ffi::c_int as usize], mnName_Slot(user_data.cast(), 8 + (i << 2)), &[(i) as usize, (-(1 as ::core::ffi::c_int)) as usize]);
         i += 1;
     }
     if mn_804A04F0.x10 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
@@ -2460,8 +2477,7 @@ pub unsafe extern "C" fn mnName_8023A59C(mut arg0: u8_0) -> *mut HSD_GObj {
         mnName_80239A24(user_data as *mut HSD_GObj);
         mnName_80238754_noinline(user_data as *mut HSD_GObj);
     }
-    jobj7[0 as ::core::ffi::c_int as usize] = *(user_data as *mut *mut HSD_JObj)
-        .offset(9 as ::core::ffi::c_int as isize);
+    jobj7[0 as ::core::ffi::c_int as usize] = *mnName_Slot(user_data.cast(), 0x24);
     HSD_JObjReqAnimAll(
         jobj7[0 as ::core::ffi::c_int as usize],
         mnName_804D4BD0[(mn_804A04F0.hovered_selection as ::core::ffi::c_int
@@ -2688,7 +2704,13 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => {
+                        // the engine's by-name table (__assert: melee_runtime debug::__assert, which reports file:line and panics)
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        $crate::tu::ext_hook::fallback(stringify!($name), &w);
+                        panic!(concat!(stringify!($name), " returned"))
+                    }
                 }
             }
         };

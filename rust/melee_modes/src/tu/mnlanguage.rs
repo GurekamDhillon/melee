@@ -334,7 +334,13 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => {
+                        // the engine's by-name table (__assert: melee_runtime debug::__assert, which reports file:line and panics)
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        $crate::tu::ext_hook::fallback(stringify!($name), &w);
+                        panic!(concat!(stringify!($name), " returned"))
+                    }
                 }
             }
         };

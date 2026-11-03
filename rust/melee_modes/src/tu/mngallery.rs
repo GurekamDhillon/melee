@@ -92,17 +92,7 @@ pub mod ext {
     }
     /// lbarchive.c, variadic in C: `lbArchive_LoadSections(archive, out0, name0, out1, name1, ..., 0)`.
     /// The recorder logs the two fixed arguments only (the names are literals in the caller).
-    pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, out0: *mut *mut c_void, _rest: &[*const c_void]) {
-        use crate::oracle::{arg, ext_call, K};
-        if ext_call("lbArchive_LoadSections", &[arg(archive), arg(out0)], K::V).is_some() {
-            return;
-        }
-        // menuguard: the real port (melee_runtime lbarchive.rs) takes [out0, name0, out1, name1, ..., NULL]
-        let mut v: std::vec::Vec<*mut c_void> = std::vec![out0.cast()];
-        v.extend(_rest.iter().map(|p| *p as *mut c_void));
-        if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
-        melee_runtime::tu::lbarchive::lbArchive_LoadSections(archive, &v)
-    }
+    pub unsafe fn lbArchive_LoadSections(archive: *mut HSD_Archive, out0: *mut *mut c_void, _rest: &[*const c_void]) { crate::tu::ext_hook::archive_sections(archive, out0, _rest) }
 }
 
 pub use melee_types::{mnGallery_804D6C88_userdata, mnGallery_child_userdata};

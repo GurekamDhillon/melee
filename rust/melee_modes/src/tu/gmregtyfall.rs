@@ -110,17 +110,7 @@ pub mod ext {
     /// lbarchive.c, variadic in C: `lbArchive_LoadSymbols(file, out0, name1, out1, ..., NULL)`.
     /// The recorder logs the two fixed arguments only (the symbol names are literals in the caller);
     /// `rest` carries the C varargs.
-    pub unsafe fn lbArchive_LoadSymbols(file: *const i8, out0: *mut c_void, _rest: &[*const c_void]) -> *mut HSD_Archive {
-        use crate::oracle::{arg, ext_call, OVal, K};
-        if let Some(v) = ext_call("lbArchive_LoadSymbols", &[arg(file), arg(out0)], K::P) {
-            return <*mut HSD_Archive as OVal>::from_bits(v);
-        }
-        // menuguard: the real port (melee_runtime lbarchive.rs) takes [out0, name0, ..., NULL]
-        let mut v: std::vec::Vec<*mut c_void> = std::vec![out0];
-        v.extend(_rest.iter().map(|p| *p as *mut c_void));
-        if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
-        melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file, &v)
-    }
+    pub unsafe fn lbArchive_LoadSymbols(file: *const i8, out0: *mut c_void, _rest: &[*const c_void]) -> *mut HSD_Archive { crate::tu::ext_hook::archive_symbols(file, out0, _rest) }
 }
 
 /// `struct ImageDesc_Array` (file-local): two EFB capture slots of two images, then 0xC bytes.

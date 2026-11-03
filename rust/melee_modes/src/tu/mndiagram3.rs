@@ -71,6 +71,9 @@ crate::ext_va! { fn OSReport(fmt: *const i8) va 0 -> (); fn HSD_SisLib_803A6B98(
 crate::ext_vk! { fn lb_80011E24(j:*mut HSD_JObj,out:*mut *mut HSD_JObj) vk "ii" -> i32; }
 }
 use ext::*;
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D4B64};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 crate::globals! {
 rw pub mnDiagram3_804D6C20: *mut HSD_GObj  = ::core::ptr::null::<HSD_GObj>()
     as *mut HSD_GObj;
@@ -156,12 +159,8 @@ rw pub mnDiagram3_803EEC4C: mnDiagram3_StatTable  = mnDiagram3_StatTable {
     ],
 };
 rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe {core::mem::zeroed()};
-rw pub HSD_GObj_804D783C: i32 = unsafe {core::mem::zeroed()};
-rw pub HSD_GObj_JObjKind: u8 = unsafe {core::mem::zeroed()};
-rw pub mn_804A04F0: MenuFlow = unsafe {core::mem::zeroed()};
 rw pub MenMainConB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
 rw pub MenMainCursorB3_Top: StaticModelDesc = unsafe {core::mem::zeroed()};
-rw pub mn_804D4B64: GXColor = unsafe {core::mem::zeroed()};
 }
 pub unsafe fn Menu_GetAllInputs()->u64 { melee_core::ct!("Menu_GetAllInputs"); mn_804A04F0.buttons=mn_80229624(4) as u64;mn_804A04F0.buttons }
 
@@ -1024,7 +1023,7 @@ pub unsafe extern "C" fn mnDiagram3_Init(mut arg0: *mut ::core::ffi::c_void) {
     let mut gobj: *mut HSD_GObj = ::core::ptr::null_mut::<HSD_GObj>();
     let mut archive: *mut StaticModelDesc = ::core::ptr::null_mut::<StaticModelDesc>();
     let mut row_spacing: f32 = 0.;
-    let mut flow: *mut MenuFlow = &raw mut mn_804A04F0;
+    let mut flow: *mut MenuFlow = (&raw mut mn_804A04F0).cast(); // same layout as mnmain::_MenuFlow
     (*flow).x10 = 2 as u8;
     (*flow).hovered_selection = 0 as u16;
     mnDiagram3_Create(arg0 as ::core::ffi::c_int);

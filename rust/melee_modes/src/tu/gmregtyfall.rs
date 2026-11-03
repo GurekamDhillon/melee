@@ -115,7 +115,11 @@ pub mod ext {
         if let Some(v) = ext_call("lbArchive_LoadSymbols", &[arg(file), arg(out0)], K::P) {
             return <*mut HSD_Archive as OVal>::from_bits(v);
         }
-        panic!("TODO(ext) lbArchive_LoadSymbols: its TU is not ported")
+        // menuguard: the real port (melee_runtime lbarchive.rs) takes [out0, name0, ..., NULL]
+        let mut v: std::vec::Vec<*mut c_void> = std::vec![out0];
+        v.extend(_rest.iter().map(|p| *p as *mut c_void));
+        if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
+        melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(file, &v)
     }
 }
 

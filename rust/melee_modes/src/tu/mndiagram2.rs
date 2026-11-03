@@ -78,11 +78,11 @@ crate::ext_va! { fn OSReport(fmt: *const i8) va 0 -> (); fn HSD_SisLib_803A6B98(
 crate::ext_vk! { fn lb_80011E24(j:*mut HSD_JObj,out:*mut *mut HSD_JObj) vk "ii" -> i32; }
 }
 use ext::*;
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 crate::globals! {
 rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-rw pub HSD_GObj_804D783C: i32 = unsafe { core::mem::zeroed() };
-rw pub HSD_GObj_JObjKind: u8 = unsafe { core::mem::zeroed() };
-rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
 rw pub MenMainConB2_Top: StaticModelDesc = unsafe { core::mem::zeroed() };
 rw pub mnDiagram2_804D4FB8: GXColor  = GXColor {
     r: 0 as u8,
@@ -1285,7 +1285,7 @@ pub unsafe extern "C" fn mnDiagram2_Create(mut arg0: i32) {
 }
 pub unsafe extern "C" fn mnDiagram2_Init() {
     melee_core::ct!("mnDiagram2_Init");
-    let mut data: *mut MenuFlow = &raw mut mn_804A04F0;
+    let mut data: *mut MenuFlow = (&raw mut mn_804A04F0).cast(); // same layout as mnmain::_MenuFlow
     let mut gobj: *mut HSD_GObjProc = ::core::ptr::null_mut::<HSD_GObjProc>();
     (*data).x10 = 1 as u8;
     (*data).hovered_selection = 0 as u16;

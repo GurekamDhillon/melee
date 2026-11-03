@@ -2407,7 +2407,8 @@ pub unsafe extern "C" fn mn_8022A5D0(
 ) {
     melee_core::ct!("mn_8022A5D0");
     let mut _pad: [u8_0; 8] = [0; 8];
-    let mut spA0: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
+    // C: HSD_JObj* spA0[7], indexed up to selection_count (10 in Special Melee): the C overruns its frame; host: room
+    let mut spA0: [*mut HSD_JObj; 32] = [::core::ptr::null_mut::<HSD_JObj>(); 32];
     let mut sp84: [*mut HSD_JObj; 7] = [::core::ptr::null_mut::<HSD_JObj>(); 7];
     let mut sp80: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut sp74: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
@@ -3606,18 +3607,21 @@ pub unsafe extern "C" fn mn_8022C4F4(mut gp: *mut HSD_GObj) {
         mn_804A04F0.entering_menu = 1 as u8_0;
         match mn_804A04F0.hovered_selection as ::core::ffi::c_int {
             0 => {
+                if crate::menuguard::deny(GM_CAMERA_MODE as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_CAMERA_MODE as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             1 => {
+                if crate::menuguard::deny(GM_STAMINA_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_STAMINA_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             2 => {
+                if crate::menuguard::deny(GM_SUPER_SUDDEN_DEATH_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_SUPER_SUDDEN_DEATH_VS as ::core::ffi::c_int
@@ -3625,42 +3629,49 @@ pub unsafe extern "C" fn mn_8022C4F4(mut gp: *mut HSD_GObj) {
                 gm_801A4B60();
             }
             3 => {
+                if crate::menuguard::deny(GM_GIANT_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_GIANT_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             4 => {
+                if crate::menuguard::deny(GM_TINY_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TINY_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             5 => {
+                if crate::menuguard::deny(GM_INVISIBLE_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_INVISIBLE_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             6 => {
+                if crate::menuguard::deny(GM_CAMERA_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_CAMERA_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             7 => {
+                if crate::menuguard::deny(GM_SINGLE_BUTTON_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_SINGLE_BUTTON_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             8 => {
+                if crate::menuguard::deny(GM_LIGHTNING_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_LIGHTNING_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             9 => {
+                if crate::menuguard::deny(GM_SLOMO_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_SLOMO_VS as ::core::ffi::c_int as s8;
@@ -3723,6 +3734,7 @@ pub unsafe extern "C" fn mn_8022C7CC(mut gp: *mut HSD_GObj) {
         mn_804A04F0.entering_menu = 1 as u8_0;
         match mn_804A04F0.hovered_selection as ::core::ffi::c_int {
             0 => {
+                if crate::menuguard::deny(GM_TARGET_TEST as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 gm_801677E8(mn_8022C7CC_inline() as s8);
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
@@ -3731,6 +3743,7 @@ pub unsafe extern "C" fn mn_8022C7CC(mut gp: *mut HSD_GObj) {
                 return;
             }
             1 => {
+                if crate::menuguard::deny(GM_HOME_RUN_CONTEST as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 gm_801677E8(mn_8022C7CC_inline() as s8);
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
@@ -3867,6 +3880,7 @@ pub unsafe extern "C" fn mn_8022CC28(mut gp: *mut HSD_GObj) {
             as ::core::ffi::c_int
         {
             0 => {
+                if crate::menuguard::deny(GM_CLASSIC as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_CLASSIC as ::core::ffi::c_int as s8;
@@ -3874,6 +3888,7 @@ pub unsafe extern "C" fn mn_8022CC28(mut gp: *mut HSD_GObj) {
                 return;
             }
             1 => {
+                if crate::menuguard::deny(GM_ADVENTURE as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_ADVENTURE as ::core::ffi::c_int as s8;
@@ -3881,6 +3896,7 @@ pub unsafe extern "C" fn mn_8022CC28(mut gp: *mut HSD_GObj) {
                 return;
             }
             2 => {
+                if crate::menuguard::deny(GM_ALLSTAR as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_ALLSTAR as ::core::ffi::c_int as s8;
@@ -4177,6 +4193,7 @@ pub unsafe extern "C" fn mn_8022D34C(mut gp: *mut HSD_GObj) {
         gm_801677E8(mn_8022C7CC_inline() as s8);
         match mn_804A04F0.hovered_selection as ::core::ffi::c_int {
             0 => {
+                if crate::menuguard::deny(GM_TOY_GALLERY as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TOY_GALLERY as ::core::ffi::c_int as s8;
@@ -4184,6 +4201,7 @@ pub unsafe extern "C" fn mn_8022D34C(mut gp: *mut HSD_GObj) {
                 return;
             }
             1 => {
+                if crate::menuguard::deny(GM_TOY_LOTTERY as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TOY_LOTTERY as ::core::ffi::c_int as s8;
@@ -4191,6 +4209,7 @@ pub unsafe extern "C" fn mn_8022D34C(mut gp: *mut HSD_GObj) {
                 return;
             }
             3 => {
+                if crate::menuguard::deny(GM_TOY_COLLECTION as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TOY_COLLECTION as ::core::ffi::c_int as s8;
@@ -4273,12 +4292,14 @@ pub unsafe extern "C" fn mn_8022D594(mut gp: *mut HSD_GObj) {
         mn_804A04F0.entering_menu = 1 as u8_0;
         match mn_804A04F0.hovered_selection as ::core::ffi::c_int {
             0 => {
+                if crate::menuguard::deny(GM_VS as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_VS as ::core::ffi::c_int as s8;
                 gm_801A4B60();
             }
             1 => {
+                if crate::menuguard::deny(GM_TOURNAMENT as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TOURNAMENT as ::core::ffi::c_int as s8;
@@ -4417,11 +4438,13 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
                 }
             }
             1 => {
+                if crate::menuguard::deny(GM_EVENT as i32) { return; } // menuguard: the Event menu reads GmEvent.dat's 32-bit tables
                 sfxForward();
                 mnEvent_8024E838(0 as ::core::ffi::c_int, true_0);
                 HSD_GObjFree(gp);
             }
             4 => {
+                if crate::menuguard::deny(GM_TRAINING as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 data = gm_GetCurrentSceneExitData() as *mut MenuExitData;
                 (*data).pending_mode = GM_TRAINING as ::core::ffi::c_int as s8;
@@ -4982,7 +5005,13 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => {
+                        // the engine's by-name table (__assert: melee_runtime debug::__assert, which reports file:line and panics)
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        $crate::tu::ext_hook::fallback(stringify!($name), &w);
+                        panic!(concat!(stringify!($name), " returned"))
+                    }
                 }
             }
         };

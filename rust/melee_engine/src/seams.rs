@@ -74,6 +74,8 @@ pub fn install() {
         // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
         // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
         crate::ext_dispatch::install_tu_ext();
+        // menuguard: the menu refuses the modes the port does not run yet (melee_modes/src/menuguard.rs)
+        melee_modes::menuguard::ENABLED = true;
         {
             // ...except the GX calls of those TUs (the attract demo's own draws): the GX bridge, as every other
             // TU's GX calls, not the seams.txt "off" no-op the by-name path falls to

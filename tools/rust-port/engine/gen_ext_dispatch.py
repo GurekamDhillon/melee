@@ -36,7 +36,9 @@ def decls():
             if cl < 0: continue
             body = t[im.end():cl]
             # local `macro_rules! ext_fns` (pub mod hook form) is linked by gen_link: only the crate macros route by name
-            if im.group(1) == 'ext_fns' and re.search(r'macro_rules!\s+ext_fns', t): continue
+            # menuguard: ...but a local form's name with no `= port` (ext_dflt's empty arm) also falls to ext_hook::fallback now
+            local = im.group(1) == 'ext_fns' and re.search(r'macro_rules!\s+ext_fns', t)
+            if local and 'ext_dflt!' not in t: continue
             for d in re.finditer(r'(?:extern\s+fn|fn)\s+(\w+)\s*\(', body):
                 op = im.end() + d.end() - 1
                 pc = gl.match_close(t, op, '(', ')')

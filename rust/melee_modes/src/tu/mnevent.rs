@@ -54,6 +54,9 @@ crate::ext_va! { fn OSReport(fmt: *const i8) va 0 -> (); fn HSD_SisLib_803A6B98(
 crate::ext_vk! { fn lb_80011E24(j:*mut HSD_JObj,out:*mut *mut HSD_JObj) vk "ii" -> i32; }
 }
 use ext::*;
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 crate::globals! {
 rw pub MenMainConEv: StaticModelDesc  = StaticModelDesc {
     joint: ::core::ptr::null::<HSD_Joint>() as *mut HSD_Joint,
@@ -108,16 +111,6 @@ rw pub mnEvent_804D502C: GXColor  = GXColor {
     b: 0 as u8,
     a: 0xff as u8,
 };
-/// mnmain.c
-rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-/// mnmain.c
-rw pub mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
-/// mnmain.c
-rw pub mn_804D6BB8: *mut HSD_Archive = ::core::ptr::null_mut();
-/// baselib/gobj.c
-rw pub HSD_GObj_804D783C: i32 = 0;
-/// baselib/gobjobject.c
-rw pub HSD_GObj_JObjKind: u8 = 0;
 /// db
 rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = ::core::ptr::null_mut();
 rw pub DbLevel: i32 = 0;
@@ -568,6 +561,7 @@ pub unsafe extern "C" fn mnEvent_8024D864(mut gobj: *mut HSD_GObj) {
     }
     data = (*mnEvent_804D6C60).user_data as *mut MnEventData;
     if inputs & MenuInput_Confirm as ::core::ffi::c_int as u64 != 0 {
+        if crate::menuguard::deny(GM_EVENT as i32) { return; } // menuguard: not ported yet
         sfxForward();
         gm_801BEB74(
             ((*data).first_event as ::core::ffi::c_int

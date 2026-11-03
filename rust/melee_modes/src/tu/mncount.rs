@@ -104,12 +104,19 @@ pub mod ext {
         if ext_call("lbArchive_LoadSections", &[arg(archive), arg(out0)], K::V).is_some() {
             return;
         }
-        panic!("TODO(ext) lbArchive_LoadSections: its TU is not ported")
+        // menuguard: the real port (melee_runtime lbarchive.rs) takes [out0, name0, out1, name1, ..., NULL]
+        let mut v: std::vec::Vec<*mut c_void> = std::vec![out0.cast()];
+        v.extend(_rest.iter().map(|p| *p as *mut c_void));
+        if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
+        melee_runtime::tu::lbarchive::lbArchive_LoadSections(archive, &v)
     }
 }
 
 const TEXT_COLOR: GXColor = GXColor { r: 0xAA, g: 0xAA, b: 0xAA, a: 0xFF };
 
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D4B64, mn_804D6BB8, mn_804D6BC8};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 crate::globals! {
     // ---- defined by this TU
     ro pub mnCount_803EFA88: [AnimLoopSettings; 2] = [
@@ -124,20 +131,8 @@ crate::globals! {
         0xDD, 0xDE, 0xDF, 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6,
     ];
     // ---- defined by other TUs (placeholders until they are ported)
-    /// mnmain.c
-    rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BB8: *mut HSD_Archive = null_mut();
-    /// mnmain.c (`GXColor mn_804D4B64`)
-    rw pub mn_804D4B64: GXColor = GXColor { r: 0, g: 0, b: 0, a: 0 };
     /// baselib/gobjproc.c
     rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = null_mut();
-    /// baselib/gobj.c
-    rw pub HSD_GObj_804D783C: i32 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_JObjKind: u8 = 0;
 }
 
 #[inline]

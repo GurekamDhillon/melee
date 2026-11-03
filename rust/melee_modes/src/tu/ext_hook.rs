@@ -61,6 +61,11 @@ macro_rules! val_fnptr {
             #[inline] fn to_u64(self) -> u64 { self.map_or(0, |f| f as usize as u64) }
             #[inline] fn from_u64(v: u64) -> Self { if v == 0 { None } else { Some(unsafe { core::mem::transmute(v as usize) }) } }
         }
+        // a bare callback (ext_dflt's by-name arm passes one): its address; a NULL word cannot be one
+        impl<$($A,)* R> Val for unsafe extern "C" fn($($A),*) -> R {
+            #[inline] fn to_u64(self) -> u64 { self as usize as u64 }
+            #[inline] fn from_u64(v: u64) -> Self { assert!(v != 0); unsafe { core::mem::transmute(v as usize) } }
+        }
     )*};
 }
 val_fnptr!((), (A0), (A0, A1), (A0, A1, A2), (A0, A1, A2, A3), (A0, A1, A2, A3, A4), (A0, A1, A2, A3, A4, A5));
@@ -127,8 +132,9 @@ macro_rules! ext_none {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! ext_dflt {
+    // menuguard: no verified port: the engine's by-name table (ext_hook::fallback), else the TODO stop
     ([] ($($a:ident),*) $name:ident) => {
-        melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported"))
+        $crate::tu::ext_hook::Val::from_u64($crate::tu::ext_hook::fallback(stringify!($name), &[$($crate::tu::ext_hook::Val::to_u64($a)),*]))
     };
     ([$def:path] ($($a:ident),*) $name:ident) => {
         return $def($($a),*)

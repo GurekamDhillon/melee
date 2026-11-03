@@ -69,10 +69,17 @@ pub mod ext {
         if ext_call("lbArchive_LoadSections", &[arg(archive), arg(out0)], K::V).is_some() {
             return;
         }
-        panic!("TODO(ext) lbArchive_LoadSections: its TU is not ported")
+        // menuguard: the real port (melee_runtime lbarchive.rs) takes [out0, name0, out1, name1, ..., NULL]
+        let mut v: std::vec::Vec<*mut c_void> = std::vec![out0.cast()];
+        v.extend(_rest.iter().map(|p| *p as *mut c_void));
+        if v.last().is_some_and(|p| !p.is_null()) { v.push(core::ptr::null_mut()); }
+        melee_runtime::tu::lbarchive::lbArchive_LoadSections(archive, &v)
     }
 }
 
+// menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
+pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 crate::globals! {
     // ---- defined by this TU
     rw pub mnDeflicker_804D6C3C: u8 = 0;
@@ -82,18 +89,8 @@ crate::globals! {
     ro pub mnDeflicker_803EEFE4: AnimLoopSettings = AnimLoopSettings { start_frame: 20.0, end_frame: 30.0, loop_frame: -0.1 };
     ro pub mnDeflicker_803EEFF0: AnimLoopSettings = AnimLoopSettings { start_frame: 50.0, end_frame: 350.0, loop_frame: 50.0 };
     // ---- defined by other TUs (placeholders until they are ported)
-    /// mnmain.c
-    rw pub mn_804A04F0: MenuFlow = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BC8: MenuInputState = unsafe { core::mem::zeroed() };
-    /// mnmain.c
-    rw pub mn_804D6BB8: *mut HSD_Archive = null_mut();
     /// baselib/gobjproc.c
     rw pub HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = null_mut();
-    /// baselib/gobj.c
-    rw pub HSD_GObj_804D783C: i32 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_JObjKind: u8 = 0;
 }
 
 /// mn/inlines.h `Menu_InitCenterText`.

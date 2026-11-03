@@ -136,7 +136,7 @@ pub mod hook {
     pub unsafe fn call(name: &'static str, args: &[u64]) -> u64 {
         match HOOK {
             Some(h) => h(name, args),
-            None => panic!("TODO(ext) {name}"),
+            None => crate::tu::ext_hook::fallback(name, args), // menuguard: the engine by-name table
         }
     }
 }

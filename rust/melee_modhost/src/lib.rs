@@ -430,7 +430,7 @@ impl Host {
         }
     }
 
-    pub fn frame(&mut self, post: bool) {
+    pub fn run_frame(&mut self, post: bool) {
         if !post {
             self.store.data_mut().frame += 1;
             for (e, t) in self.frame_pre.clone() {
@@ -478,7 +478,7 @@ impl Default for Host {
 fn frame_hook(post: bool) {
     unsafe {
         if let Some(h) = HOST.as_mut() {
-            h.frame(post)
+            h.run_frame(post)
         }
     }
 }

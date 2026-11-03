@@ -68,8 +68,8 @@ fn hello_mod_loads() {
     let mut h = Host::new();
     h.load(&b).unwrap();
     assert_eq!(h.mods[0].id, "gd.hello");
-    h.frame(false);
-    h.frame(true);
+    h.run_frame(false);
+    h.run_frame(true);
     h.damage(0, 5.0, true); // no fighter: the accessors read 0 and count the stale handle
     assert!(h.host_data().bad_handles > 0);
     assert!(!h.mods[0].disabled);

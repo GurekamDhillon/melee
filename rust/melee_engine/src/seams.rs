@@ -426,7 +426,7 @@ fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
         },
         "HSD_SisLib_803A6B98" => unsafe {
             let s = c_format(args[3], &args[4..]);
-            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(args[0] as usize as *mut melee_types::HSD_Text, f32::from_bits(args[1] as u32), f32::from_bits(args[2] as u32), Some(&s)) as i64 as u64
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(args[0] as usize as *mut melee_types::HSD_Text, f32::from_bits(args[1] as u32), f32::from_bits(args[2] as u32), Some(&s)) as i64 as u64
         },
         "OSReport" => 0,
         // gw_runtime.c gw_GxTex_OpenEnv: MELEE_MENUTEX names a replacement texture; unset (no mods) it is -1 and the
@@ -437,7 +437,7 @@ fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
         "GxTex_Close" | "GxTex_CopyImage" | "GxTex_CopyTlut" => 0,
         "HSD_SisLib_803A70A0" => unsafe {
             let s = c_format(args[2], &args[3..]);
-            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0_bytes(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64
         },
         // aobj.c HSD_ForeachAnim(obj, type, mask, func, arg_type, ...): the one variadic read by arg_type
         // (AOBJ_ARG_*F: a double, *V: a pointer, *U: a u32, A / AO / AOT: none)
@@ -474,32 +474,33 @@ fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
 }
 
 /// A C `printf` of `fmt` (a NUL-terminated guest string) with its variadic words: %s %d %i %u %x %X %c %%, widths kept.
-pub unsafe fn c_format(fmt: u64, va: &[u64]) -> String {
-    let cstr = |p: u64| if p == 0 { String::new() } else { unsafe { std::ffi::CStr::from_ptr(p as usize as *const core::ffi::c_char) }.to_string_lossy().into_owned() };
+/// Byte-exact: the game's text is Shift-JIS, so nothing goes through a Rust `String`.
+pub unsafe fn c_format(fmt: u64, va: &[u64]) -> Vec<u8> {
+    let cstr = |p: u64| if p == 0 { Vec::new() } else { unsafe { std::ffi::CStr::from_ptr(p as usize as *const core::ffi::c_char) }.to_bytes().to_vec() };
     let f = cstr(fmt);
-    let mut out = String::new();
-    let mut it = f.chars().peekable();
+    let mut out = Vec::new();
+    let mut it = f.iter().copied().peekable();
     let mut k = 0;
     while let Some(c) = it.next() {
-        if c != '%' { out.push(c); continue; }
+        if c != b'%' { out.push(c); continue; }
         let mut spec = String::new();
-        while let Some(&d) = it.peek() { if d.is_ascii_digit() || d == '-' || d == '.' || d == 'l' { spec.push(d); it.next(); } else { break; } }
+        while let Some(&d) = it.peek() { if d.is_ascii_digit() || d == b'-' || d == b'.' || d == b'l' { spec.push(d as char); it.next(); } else { break; } }
         let width: usize = spec.trim_start_matches('-').trim_start_matches('0').split('.').next().unwrap_or("").trim_end_matches('l').parse().unwrap_or(0);
         let zero = spec.starts_with('0');
         let w = va.get(k).copied().unwrap_or(0);
-        let body = match it.next() {
-            Some('%') => { out.push('%'); continue; }
-            Some('s') => { k += 1; cstr(w) }
-            Some('d') | Some('i') => { k += 1; (w as i32).to_string() }
-            Some('u') => { k += 1; (w as u32).to_string() }
-            Some('x') => { k += 1; format!("{:x}", w as u32) }
-            Some('X') => { k += 1; format!("{:X}", w as u32) }
-            Some('c') => { k += 1; ((w as u8) as char).to_string() }
-            Some(o) => { k += 1; o.to_string() }
+        let body: Vec<u8> = match it.next() {
+            Some(b'%') => { out.push(b'%'); continue; }
+            Some(b's') => { k += 1; cstr(w) }
+            Some(b'd') | Some(b'i') => { k += 1; (w as i32).to_string().into_bytes() }
+            Some(b'u') => { k += 1; (w as u32).to_string().into_bytes() }
+            Some(b'x') => { k += 1; format!("{:x}", w as u32).into_bytes() }
+            Some(b'X') => { k += 1; format!("{:X}", w as u32).into_bytes() }
+            Some(b'c') => { k += 1; vec![w as u8] }
+            Some(o) => { k += 1; vec![o] }
             None => break,
         };
-        if body.len() < width { out.push_str(&(if zero { "0" } else { " " }).repeat(width - body.len())); }
-        out.push_str(&body);
+        if body.len() < width { out.extend(std::iter::repeat(if zero { b'0' } else { b' ' }).take(width - body.len())); }
+        out.extend_from_slice(&body);
     }
     out
 }

@@ -54,7 +54,7 @@ pub mod ext {
     fn HSD_SisLib_803A6530(a0: i32, a1: i32, a2: i32) -> *mut u8 = |a0: i32, a1: i32, a2: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6530(a0 as _, a1 as _, a2 as _) as _ };
     fn HSD_SisLib_803A660C(a0: i32, a1: i32, a2: i32) = |a0: i32, a1: i32, a2: i32| { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A660C(a0 as _, a1 as _, a2 as _); } };
     fn HSD_SisLib_803A6754(a0: i32, a1: i32) -> *mut HSD_Text = |a0: i32, a1: i32| unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6754(a0 as _, a1 as _) as _ };
-    fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32 = |a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8| { unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a3 as *const i8, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(a0, a1, a2, if a3.is_null() { None } else { Some(&s) }) } };
+    fn HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8) -> i32 = |a0: *mut HSD_Text, a1: f32, a2: f32, a3: *const u8| { unsafe { let s = melee_runtime::cformat::c_format(a3 as *const i8, &[]); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(a0, a1, a2, if a3.is_null() { None } else { Some(&s) }) } };
     fn HSD_SisLib_803A7664(a0: *mut HSD_Text) = |a0: *mut HSD_Text| { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7664(a0 as _); } };
     fn Toy_803063D4(a0: i32, a1: i32, a2: i32) -> i32;
     fn Toy_803124BC();

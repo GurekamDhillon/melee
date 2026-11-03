@@ -204,16 +204,16 @@ fn GenoDefine_FtDataFieldName(a0: i32) -> *const i8;
 fn __frsqrte(a0: f64) -> f64;
 }
 pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
-pub static mut Fighter_804D6540: *mut *mut Fighter_804D6540_t = unsafe { core::mem::zeroed() };
+pub use melee_fighter::hooks::FIGHTER_804D6540 as Fighter_804D6540;
 pub use melee_fighter::hooks::FT_PARTS_TABLE as ftPartsTable;
 pub use melee_runtime::shared::p_ftCommonData;
-pub static mut player_slots: [StaticPlayer; 0] = unsafe { core::mem::zeroed() };
-pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
+pub use melee_world::pl::player_slots;
+pub use crate::tu::gmvsmelee::gmVsMelee_StartData;
 pub use crate::tu::geno_lab_mode::gm_Mode_Lab_States;
-pub static mut GenoDefine_ContentIdentity: [[u32; 2]; 127] = unsafe { core::mem::zeroed() };
-pub static mut GenoDefine_InterpreterAttempts: [u32; 127] = unsafe { core::mem::zeroed() };
-pub static mut HSD_RandSeedPtr: *mut u32 = unsafe { core::mem::zeroed() };
-pub static mut CostumeListsForeachCharacter: [UnkCostumeList; 127] = unsafe { core::mem::zeroed() };
+pub use melee_fighter::tu::ftdata::GenoDefine_ContentIdentity;
+pub use melee_fighter::tu::ftdata::GenoDefine_InterpreterAttempts;
+pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
+pub use melee_fighter::tu::ftdata::CostumeListsForeachCharacter;
 
 pub use crate::tu::geno_game::Geno_ScriptPool;
 }

@@ -362,3 +362,75 @@ pub fn install() {
         Geno_SpecialSelect = SpecialSelect,
     );
 }
+
+// ---- gw_snap's slots for the game half (geno_game_items.inc, the define snapshot tests): snap_open(k) opens a
+// session, snap_save(frame) / snap_load(frame) keep and put back whole-game states (crate::snapshot) ----
+struct SnapStore {
+    base: crate::snapshot::Base,
+    slots: Vec<(i32, crate::snapshot::SnapRef)>,
+}
+/// Set once by the first snap_open and never changed after, so a load (which puts the static sections back) keeps it.
+static mut SNAP: *mut SnapStore = core::ptr::null_mut();
+
+fn host_heap<R>(f: impl FnOnce() -> R) -> R {
+    let was = crate::arena::active();
+    crate::arena::set_active(false);
+    let r = f();
+    crate::arena::set_active(was);
+    r
+}
+pub fn snap_open(_k: i32) -> i32 {
+    unsafe {
+        if SNAP.is_null() {
+            SNAP = host_heap(|| Box::into_raw(Box::new(SnapStore { base: crate::snapshot::Base::capture(), slots: Vec::new() })));
+        }
+    }
+    0
+}
+pub fn snap_save(frame: i32) {
+    unsafe {
+        if SNAP.is_null() {
+            snap_open(1);
+        }
+        let st = &mut *SNAP;
+        host_heap(|| {
+            let s = st.base.save();
+            st.slots.retain(|x| x.0 != frame);
+            st.slots.push((frame, s));
+        });
+    }
+}
+pub fn snap_load(frame: i32) -> i32 {
+    unsafe {
+        if SNAP.is_null() {
+            return -1;
+        }
+        let st = &mut *SNAP;
+        let Some(s) = st.slots.iter().find(|x| x.0 == frame).map(|x| x.1.clone()) else { return -1 };
+        let was = crate::arena::active();
+        crate::arena::set_active(false);
+        st.base.load(&s);
+        crate::arena::set_active(was);
+        0
+    }
+}
+
+/// The out-of-TU callees the game half and its tests reach that no link-table row answers.
+pub fn install_callees() {
+    use melee_modes::tu::geno_game::ext::hook as g;
+    use melee_modes::tu::geno_tests::ext::hook as t;
+    unsafe {
+        g::snap_open = Some(snap_open);
+        g::snap_save = Some(snap_save);
+        g::snap_load = Some(snap_load);
+        t::snap_open = Some(snap_open);
+        t::snap_save = Some(snap_save);
+        t::snap_load = Some(snap_load);
+        t::memset = Some(|d, c, n| { core::ptr::write_bytes(d as *mut u8, c as u8, n); d });
+        t::memcpy = Some(|d, s, n| { core::ptr::copy(s as *const u8, d as *mut u8, n); d });
+        g::ftCommon_SetSelfMovementFromGroundedMovement = Some(|gobj| melee_fighter::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(gobj as _));
+        g::ftCommon_CalcSelfAccel_DeaccelAir = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_DeaccelAir_fp(&mut *fp));
+        g::ftCommon_CalcSelfAccel_Drift = Some(|fp| melee_fighter::tu::ftcommon::ftCommon_CalcSelfAccel_Drift_fp(&mut *fp));
+        g::ftCommon_Fall = Some(|fp, a, b| melee_fighter::tu::ftcommon::ftCommon_Fall_fp(&mut *fp, a, b));
+    }
+}

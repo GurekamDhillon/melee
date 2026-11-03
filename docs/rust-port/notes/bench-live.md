@@ -104,3 +104,29 @@ Per-run fps: Rust Temple 1335 / 1295 / 1173, FD 2363 / 2879 / 2451; Source Port 
 
 ### Caveat: our GX parity is not complete
 Still missing on our side at this point: Stadium lamps, the Corneria shadow, depth copies, and the shield / magnifier effects (a gxparity3 agent is working on them). Fewer draws and less GPU work mean our numbers are flattering until parity lands. Everything in the Caveats section above also still applies (hidden window on his side, Slippi/UCF layer, different sim quantities, different renderers, GCC -O2).
+
+## Re-run 2026-11-03 (port/perf2): async GX decode in the retail flow
+Rust is port/perf2 (rust-port 01058c072 with gxparity3, plus perf2), release profile, built in the `perf2` worktree. The Source Port is the same v0.9.86 build. Method as above: 3 runs each, one game at a time (Rust then Source Port, per scenario), medians. Rust runs used `MELEE_WINDOW_TITLE="perf2: bench <scenario> run <i>"` with the same env; the Source Port ran `--volume 0 --no-music --hidden`. Machine CPU load before runs was 0 to 15%. Loop: scratchpad `all_p2.sh` (same as `all4.sh`).
+
+**Cause of the earlier sim-tick gap**: a regression after memfix, not a measurement artefact. Since port/retail-menus (d323c49bb), `play --match` runs `RetailPlay` (retail_flow.rs), and that never called `Gx::enable_async`. memfix had moved the GX FIFO decode and draw packing off the tick only in `Play`'s engine match, so in the bench the decode ran inside `Game::tick` again (Temple 5.4 ms). perf2 enables it in `RetailPlay::boot` (windowed, arena trim on) and hands the packed buffers over as `Play` does. The old 0.2-0.5 ms figures are headless `melee golden` ticks, which have no render pass, so they are a different quantity.
+
+| | Rust Temple 4P | Source Port Temple 4P | Rust FD 2P | Source Port FD 2P |
+|---|---|---|---|---|
+| sim per tick p50 / mean / p99 | **1.30** / 1.34 / 2.00 ms (was 5.38 / 5.59 / 7.55) | 3.97 / 3.99 ms (game-thread `cpu_ms`) | **0.81** / 0.86 / 1.36 ms (was 2.96 / 3.06 / 4.22) | 2.15 / 2.19 ms |
+| render fps, 1% low | **219** (was 125) | 226 | **444** (was 238) | 437 |
+| frame time p50 / p95 / p99 (ms) | 0.19 / 1.65 / **3.78** (was 6.89) | 1.33 / 3.38 / 4.02 | 0.19 / 0.90 / **1.80** (was 3.61) | 0.66 / 1.34 / 1.96 |
+| render fps, average | 2282 | 641 | 3350 | 1356 |
+| process CPU per rendered frame | 0.53 ms | 1.95 ms | 0.30 ms | 0.80 ms |
+| working set peak / last | 519 / 396 MB | 928 / 318 MB | 461 / 403 MB | 866 / 616 MB |
+| private bytes peak / last | 690 / 564 MB | 1109 / 405 MB | 608 / 556 MB | 1064 / 737 MB |
+| first (boot + load) tick | 122-134 ms | n/a | 102-114 ms | n/a |
+
+Per-run Rust tick p50: Temple 1.30 / 1.40 / 1.29, FD 0.81 / 0.81 / 0.83 ms. 1% low: Temple 219 / 219 / 240, FD 444 / 449 / 423.
+
+### Reading
+- The sim tick is now 0.33x (Temple) and 0.38x (FD) of his game-thread CPU per tick. Frame p99 is below his (3.78 vs 4.02, 1.80 vs 1.96 ms). The 1% low is level on Temple (219 vs 226) and ahead on FD (444 vs 437).
+- The remaining tail is the frames that prepare a new sim frame (`present prepare` p99 about 4 ms), not the tick.
+- Load tick: 100-135 ms on this machine in every run, including the earlier sets; ~270 ms was not reproduced. Profile (MELEE_SAMPLE, gated over `RetailPlay::tick`): about 42% archive parse (`GcDecoder`), 13% the WASAPI device open, and the rest disc reads and the fighter/item file loads. Disc reads are no longer zero-filled first (small gain). Pre-sizing the decoder collections did not help and was dropped.
+- Memory: over 3 min of Temple, private bytes go 641 -> 715 MB, slowing down (+8 MB in the last 30 s). The Rust heap accounts for +17 MB and the arena for +5 MB. Renderer caches are bounded (MELEE_GX_CACHE_LOG: about 300 textures, 15 samplers); pipelines grow 108 -> 187 as GX configs first appear. So this is warm-up (driver pipeline objects, caches reaching their caps), not a leak.
+- Exit segfault (older note, pre-consolidation): not reproduced. Every run here and the headless, windowed, results and stand-in exits returned 0.
+- The parity caveat above still applies, though gxparity3 (shadow receivers) is now included.

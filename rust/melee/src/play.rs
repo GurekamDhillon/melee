@@ -843,7 +843,7 @@ impl Play {
             rule_stocks: if r.stock { r.stocks } else { -1 },
             onep_mode: -1,
             onep_step: -1,
-            onep_level: -1,
+            onep_level: -1, game_mode: -1, entry_state: -1,
         }
     }
 

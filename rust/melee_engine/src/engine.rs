@@ -244,6 +244,9 @@ impl Engine {
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
                 crate::gxbridge_gen::install_gx();
             }
+            crate::geno_host::install();
+            crate::geno_host::install_callees();
+            melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid = Some(|a, b| (a != 0 && b != 0 && a.checked_add(b).is_some() && a & 3 == 0) as i32);
             crate::seams_gen::install_gen();
             // the THP decoder's locked cache (the movies): the C build's shim_misc.c gw_LCStoreData / gw_LCQueueWait
             {

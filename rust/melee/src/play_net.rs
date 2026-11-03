@@ -723,7 +723,7 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
         rule_stocks: p.stocks,
         onep_mode: -1,
         onep_step: -1,
-        onep_level: -1,
+        onep_level: -1, game_mode: -1, entry_state: -1,
     })
 }
 

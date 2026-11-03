@@ -19,6 +19,8 @@ pub const TICK_HZ: u64 = 60;
 const NS: u64 = 1_000_000_000;
 /// Most ticks run per wake before the clock drops the backlog (a stall, a debugger break).
 pub const MAX_CATCH_UP: u32 = 5;
+/// A tick at least this long is a load (see `run_due_ticks`): the time it took is not caught up.
+pub const LOAD_TICK: Duration = Duration::from_millis(50);
 
 /// What the platform drives.
 pub trait Game {
@@ -71,6 +73,10 @@ impl FixedStep {
     pub fn alpha_after(&self, extra: Duration) -> f64 {
         let a = (self.acc as u128 + extra.as_nanos() * TICK_HZ as u128) as f64 / NS as f64;
         a.min(0.999_999)
+    }
+    /// Drop the fraction accumulated (a long load tick: its wall time is not owed to the sim).
+    pub fn forgive(&mut self) {
+        self.acc = 0;
     }
     /// Time until the next tick is due.
     pub fn until_next(&self) -> Duration {
@@ -269,6 +275,14 @@ impl<G: Game> App<G> {
             }
             if self.game.present_now() {
                 break; // the rest of the due time stays in the clock
+            }
+            if el >= LOAD_TICK {
+                // A scene load (archive parse, device open): the real time it took is not owed to the sim. Without
+                // this the next advance runs MAX_CATCH_UP ticks back to back (a fast-forward burst right after the
+                // load, no presents in between). Pacing only: the ticks themselves are unchanged.
+                self.last = Some(Instant::now());
+                self.clock.forgive();
+                break;
             }
         }
     }

@@ -130,3 +130,66 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   framing, Ed25519 identities, X25519 + XChaCha20-Poly1305, its own message ids), not this wire, so the two cannot
   meet; joining his launcher as a third engine would need a `mu_net` implementation. His users expect `.slp` replays
   in `Replays\` and `--replay <file.slp>`, so the `.slp` exporter is the replay follow-up that matters for them.
+
+## Slippi export, CSS netplay with rematches (port/net2, 2026-11-03)
+### `.slp` export (`--slp FILE|auto`, `rust/melee/src/slp_export.rs`)
+- Written from the public spec (slippi-wiki SPEC.md), declared Slippi 3.18.0: Event Payloads; Game Start (0x36); per
+  frame Frame Start (0x3A), one Pre-Frame (0x37) and one Post-Frame (0x38) per fighter (port order, leader before
+  follower), Frame Bookend (0x3C, latest finalized = the frame); Game End (0x39); UBJSON `metadata` (`startAt`,
+  `lastFrame`, `players.N.characters` / `names.netplay`, `playedOn`). No Item Update / Message Splitter / Gecko list.
+- Sources: VS `Replay_RecordMatch` (gmvs fn_8016E730: the StartMeleeData and the seed), the fighter code's
+  `Replay_RecordInput` (the pre-frame point) and `Replay_TraceFighter` at the 3.x post-frame point
+  (`Replay_TraceAtProcMap` = 0). `begin_tick` / `end_tick` around each engine tick of `retail_flow::step` group them; the
+  first tick with fighter input is frame -123. `auto` = `MELEE_SLP_DIR` (default `Replays`) `/Game_<UTC>.slp`; later
+  matches of a run with an explicit name get `-2`, `-3`.
+- Rollback runs: the hooks also fire on resimulated frames, so a netplay peer with `--slp` needs `--record` and exports
+  after the match from a headless child `melee play --replay <mrpl> --slp <spec>` (a linear playback). `--slp` with a
+  synctest run is refused.
+- Faithful (engine values at the spec's points): Game Info Block (encoded GC-style field by field from the native
+  StartMeleeData: bitfields, stage, timer, item bits, damage ratio, the six player records), Random Seed, frame
+  numbers, pre-frame seed / action / position / facing / processed sticks, trigger and buttons / percent, post-frame
+  internal character, action, position, facing, percent, shield, last hitting attack (`x208C`), combo count (`x2090`),
+  stocks, action state frame, ground/air, the five speeds, hitlag. Game End method: GAME! (one or no fighter with
+  stocks), TIME! (timed match past its clock), else No Contest; placements by stocks then percent.
+- Derived / approximate: physical buttons (the PADStatus bits, which are the spec's), physical L/R (`analog / 140`),
+  raw UCF stick bytes (the pad's sticks), last hit by (`dmg.x18c4_source_ply`, 6 = none), misc AS (first word of the
+  motion vars), last ground id (`coll_data.floor.index`), jumps remaining (`max_jumps - jumpsUsed`), hurtbox state
+  (`x198C`), animation index (`anim_id`). Zero: state bit flags 1-5, L-cancel status, instance ids, nametags, display
+  names / codes, dashback / shield-drop fixes (vanilla: off, which is the truth), scene frame counter is the frame index.
+  `playedOn` is `network` for a netplay match and `console` otherwise (py-slippi accepts only Slippi's values).
+- Validation, three independent readers: peppi-py 0.8 and py-slippi 1.6 (pip, outside the repo) parse every file
+  (version, stage, players, frame count, end, metadata); `melee slpcheck` (melee_data::slp + the engine) re-simulates
+  each export from its Game Start and pre-frame inputs and compares every post-frame row: netplay 0 ms (from the
+  .mrpl) 6722 fighter-frames equal, offline vs a level-9 CPU 7448 equal, netplay 50 ms + 5 % loss 3240 equal; the two
+  peers' exports of one match are byte-identical.
+- Launcher seam: `--replay-dir D` -> `MELEE_SLP_DIR=D --slp auto` (his users' Replays folder).
+
+### Netplay from the retail CSS (`--np-css`) and rematches
+- `melee play --netplay host|join ... --np-css`: after the room handshake both peers boot straight into VS mode
+  (`MELEE_RETAIL_FIRST=2`, no memory card: a card's unlocks would differ per machine) and play the character select,
+  the stage select and the results in **lockstep** (`np_lockstep.rs`, its own socket at room port + 1: every packet
+  repeats the unacknowledged pads, a frame runs when both ports' pads are in; port 1 = host, port 2 = guest). Each
+  render tick schedules one local pad, so a pad script's frame k is menu frame k + delay whatever the stalls. The match
+  scene is handed to the rollback session as before; the hand-over now counts engine frames (`e.frames`), not render
+  ticks, so a stall cannot move it.
+- After a match both peers go back to the menus (results -> CSS -> START -> SSS) and the next match opens a new direct
+  room on port base + 1 + k (a `Net` is one session from frame -123; reusing it would need a frame base like mu_net's).
+  `--quit-after-matches N` ends the run after N results. Both peers must pass the same rules options (`--time-secs`,
+  `--stocks`, `--items`): the menus' rules come from each side's presets.
+- The `.mrpl` of such a run (meta `np_css=1`) holds the menu ticks and every match; the end frame of each match is
+  recorded at the hand-back (`flush_rec`: it has no start-of-next-frame checksum).
+- Test: `bash tools/rust-port/netplay/css_pair.sh NAME LAG LOSS [args]` (pad scripts generated by
+  `gen_css_scripts.py`: Mario v Fox, two matches, the second a rematch from the results; match 1 on Battlefield,
+  match 2 wherever the SSS cursor then is, ext 9 in the runs).
+- Verified (windowed peers, loopback, this machine): 0 ms: 2 matches, 12681 frames, 0 hash differences; 50 ms + 5 % loss
+  with `--slp auto`: 8051 frames (3973 in match 2), 0 differences, host replay 9792 ticks / 8053 match frames, 0
+  mismatches; four .slp files (two per peer, one per match) parse in peppi and py-slippi. `play_pair.sh` after the
+  change: 0 ms 2154 frames, 50 ms + 5 % 1727, 150 ms + 5 % (`--np-delay 4 --np-rollback 12`) 3080, all equal on both
+  peers and in the replay.
+- Open: `melee slpcheck` (SLPCHECK_VANILLA_SPAWN=1) on the exports of the CSS-started matches diverges at frame ~870-930
+  (a hitlag / x difference), while the same characters and stage started from `--match` (Mario v Fox, Battlefield)
+  match over all 7448 fighter-frames. The file's values are the live engine's; the gap is state that a CSS-started
+  match carries and the Game Info Block (slpcheck's scenario boot) does not. Not isolated.
+- Slippi playback caveat: Slippi players apply Neutral Spawn (and UCF) to every replay; these exports were played
+  without either, so a Slippi Dolphin viewer can drift from frame -123 on stages whose vanilla spawns differ (FD
+  matched in slpcheck with Neutral Spawn on, Battlefield did not).

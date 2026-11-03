@@ -22,6 +22,23 @@ pub static mut gmRegend_ExitTimer: u8 = 0;
 /// `gm_GetButtonsTriggered`, which defaults to this crate's port.
 pub mod ext {
     use super::*;
+    /// The ported callees the hooks default to (an unset hook used to panic: the Classic ending reached them).
+    mod port {
+        use super::super::*;
+        use melee_runtime::tu as rt;
+        pub fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { unsafe { rt::gobjplink::GObj_Create(classifier, p_link, priority) } }
+        pub fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) { unsafe { rt::gobjobject::HSD_GObjObject_80390A70(gobj, kind, obj) } }
+        /// `render` is the callback's address (the C passes the function).
+        pub fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32) {
+            unsafe { rt::gobjgxlink::GObj_SetupGXLink(gobj, core::mem::transmute::<usize, GObj_RenderFunc>(render), gx_link, priority) }
+        }
+        pub fn sobj_kind() -> u8 { unsafe { rt::sobjlib::HSD_SObjLib_804D7960 } }
+        /// lbmthp.c takes the C string: `filename` with its NUL.
+        pub fn lbMthp8001FAA0(filename: &str, w: i32, h: i32) {
+            let c = std::ffi::CString::new(filename).unwrap_or_default();
+            unsafe { crate::tu::lb_01F8::lbMthp8001FAA0(c.as_ptr(), w, h) }
+        }
+    }
     macro_rules! hook {
         ($hook:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?, $port:path) => {
             pub static mut $hook: Option<fn($($t),*) $(-> $r)?> = None;
@@ -53,7 +70,7 @@ pub mod ext {
         }
     }
     // sysdolphin/baselib/gobj.c, gobjgxlink.c, gobjobject.c, sobjlib.c
-    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
+    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, port::GObj_Create);
     pub static mut HSD_SOBJLIB_803A55DC: Option<fn(*mut HSD_GObj, u16, u16, i32) > = None;
             #[allow(non_snake_case)]
             pub fn HSD_SObjLib_803A55DC(g: *mut HSD_GObj, w: u16, h: u16, n: i32)  {
@@ -62,11 +79,10 @@ pub mod ext {
                     None => { unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_803A55DC(g as _, w as _, h as _, n as _); } return; },
                 }
             }
-    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
-    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
+    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), port::HSD_GObjObject_80390A70);
+    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32), port::GObj_SetupGXLink);
     /// `HSD_SObjLib_804D7960` (sysdolphin/baselib/sobjlib.c): the SObj object kind.
-    fn sobj_kind() -> u8 { unsafe { melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960 as u8 } }
-    hook!(HSD_SOBJLIB_804D7960, hsd_sobjlib_804d7960, () -> u8, sobj_kind);
+    hook!(HSD_SOBJLIB_804D7960, hsd_sobjlib_804d7960, () -> u8, port::sobj_kind);
     // lb/lbaudio_ax.c, lb/lbbgflash.c, lb/lbmthp.c
     pub static mut LBAUDIOAX_80026F2C: Option<fn(u32) > = None;
             #[allow(non_snake_case)]
@@ -148,7 +164,7 @@ pub mod ext {
                     None => { return unsafe { crate::tu::lb_01F8::lbMthp8001F890(g as _) as _ }; },
                 }
             }
-    hook!(LBMTHP_8001FAA0, lbMthp8001FAA0, (filename: *const i8, w: i32, h: i32));
+    hook!(LBMTHP_8001FAA0, lbMthp8001FAA0, (filename: &str, w: i32, h: i32), port::lbMthp8001FAA0);
     // gm/gmevent.c, gm/gm_1A3F.c, gm/gmregclear.c, gm/gmregtyfall.c, gm/gm_1601.c (TARGET_PC)
     pub static mut GM_801BEFB0: Option<fn() -> i32> = None;
             #[allow(non_snake_case)]
@@ -250,8 +266,7 @@ pub fn gm_Scene_Congrats_OnEnter(_unused: *mut c_void) {
         } else {
             gmRegend_AllstarThpFiles[ckind as usize]
         };
-        let thp_c = std::ffi::CString::new(thpfile.trim_end_matches(' ')).unwrap();
-        ext::lbMthp8001FAA0(thp_c.as_ptr() as *const i8, 0x230, 0x1A0);
+        ext::lbMthp8001FAA0(thpfile, 0x230, 0x1A0);
         let thp_disp = ext::lbMthp8001F890(gobj);
         (*thp_disp).x10 = 320.0;
         (*thp_disp).x14 = 240.0;

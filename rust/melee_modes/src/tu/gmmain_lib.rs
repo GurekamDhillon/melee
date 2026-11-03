@@ -339,12 +339,13 @@ pub unsafe fn gmMainLib_8015CEFC(arg0: i32) -> bool {
 
 pub unsafe fn gmMainLib_8015CF5C(arg0: i32) -> i32 {
     melee_core::ct!("gmMainLib_8015CF5C");
-    (*save()).x1A70[arg0 as usize]
+    // the C indexes `s32 x1A70[4]` by event (0..50): the record's padding up to x1B3C holds the rest (51 words)
+    *(addr_of_mut!((*save()).x1A70) as *mut i32).add(arg0 as usize)
 }
 
 pub unsafe fn gmMainLib_8015CF70(arg0: i32, arg1: i32) {
     melee_core::ct!("gmMainLib_8015CF70");
-    (*save()).x1A70[arg0 as usize] = arg1;
+    *(addr_of_mut!((*save()).x1A70) as *mut i32).add(arg0 as usize) = arg1; // event 0..50 (see gmMainLib_8015CF5C)
 }
 
 pub unsafe fn gmMainLib_8015CF84() {
@@ -500,7 +501,8 @@ pub unsafe fn gmMainLib_8015D438(arg0: u8) -> *mut u32 {
 
 pub unsafe fn gmMainLib_8015D450(arg0: u8) -> *mut i32 {
     melee_core::ct!("gmMainLib_8015D450");
-    addr_of_mut!((*gmMainLib_8015EDBC()).x4C[arg0 as usize])
+    // the C indexes `s32 x4C[4]` by selkind (0..24): the record's padding up to xB0 holds the rest (25 words)
+    (addr_of_mut!((*gmMainLib_8015EDBC()).x4C) as *mut i32).add(arg0 as usize)
 }
 
 

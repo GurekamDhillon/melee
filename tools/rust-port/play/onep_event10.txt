@@ -1,0 +1,64 @@
+# melee play (retail scenes), port 1: title -> 1P -> Event Match -> down 9 to event 10 (the last one a new save has) -> its CSS (Fox) -> the event (no input) -> the event list -> B back to the 1P menu
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, no memory card): eight A presses, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# main menu's first entry: 1P mode
+3 0100 0 0
+60 0000 0 0
+# 1P menu: down once to Event Match, A
+4 0004 0 0
+20 0000 0 0
+3 0100 0 0
+200 0000 0 0
+# event menu: down to the event, A
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+4 0004 0 0
+16 0000 0 0
+3 0100 0 0
+200 0000 0 0
+3 0100 0 0
+# CSS: hand to Fox, A, START
+200 0000 0 0
+30 0000 0 127
+6 0000 127 0
+10 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 1000 0 0
+# the event: no input
+3500 0000 0 0
+# back to the 1P menu: B
+3 0200 0 0
+120 0000 0 0

@@ -147,6 +147,27 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             }
             Box::leak(v.into_boxed_slice()).as_mut_ptr() as *mut c_void
         }
+        "eventlevels" => event_levels(d, b, off),
+        "kumitetable" => {
+            // gm_181A.c `RegClearSpawnEntry*` (GmKumite.dat gmKumiteSystemTable*: Multi-Man spawn rows, read natively by
+            // copy_spawn_table): { s32 x0; u8 x4..x7; f32 x8; f32 xC; } per 16 bytes, each field swapped by its own width
+            let n = (b.extent(off) / 16).max(1) as usize;
+            let buf = native_buf(n * 16);
+            for k in 0..n {
+                let r = off + 16 * k as u32;
+                let o = unsafe { buf.add(16 * k) };
+                unsafe {
+                    (o as *mut u32).write_unaligned(d.u32_at(r));
+                    let w = d.u32_at(r + 4);
+                    for i in 0..4 {
+                        *o.add(4 + i) = (w >> (8 * (3 - i))) as u8;
+                    }
+                    (o.add(8) as *mut u32).write_unaligned(d.u32_at(r + 8));
+                    (o.add(12) as *mut u32).write_unaligned(d.u32_at(r + 12));
+                }
+            }
+            buf as *mut c_void
+        }
         "rawhalves" => {
             // a block of s16 the game code reads natively (toy.c `s16* _Toy_sbss_804D6EB4`, tyExpDifferentTbl): halfword-swapped copy
             let n = (b.extent(off) / 2).max(1) as usize;
@@ -1279,4 +1300,98 @@ fn efdat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
         }
     }
     img as *mut c_void
+}
+
+/// GmEvent.dat `sqEventInitDataLevelTbl` (gmevent.c `struct gm_804D6900_t**`, read by gmevent.rs and mnevent.rs as
+/// native records): the table of level pointers, each level's `x4` / `evinit` / `evbonus` / `evstage_table` /
+/// `player_init[5]` decoded into the native structs, field by field at their GameCube offsets.
+fn event_levels(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
+    use melee_modes::tu::gmevent::{gm_801BAB40_src, gm_804D6900_t, gm_804D6900_x4_t, gm_evbonus, gm_evinit, gm_evstage_table};
+    use std::collections::HashMap;
+    fn leak<T>(v: T) -> *mut T {
+        Box::into_raw(Box::new(v))
+    }
+    fn bytes<const N: usize>(d: &mut GcDecoder<'_>, at: u32) -> [u8; N] {
+        core::array::from_fn(|i| d.u8_at(at + i as u32))
+    }
+    fn f(d: &mut GcDecoder<'_>, at: u32) -> f32 {
+        f32::from_bits(d.u32_at(at))
+    }
+    fn src(d: &mut GcDecoder<'_>, memo: &mut HashMap<u32, usize>, at: u32) -> *mut gm_801BAB40_src {
+        let Some(t) = d.target(at) else { return core::ptr::null_mut() };
+        if let Some(&p) = memo.get(&t) {
+            return p as *mut gm_801BAB40_src;
+        }
+        let bb: [u8; 12] = bytes(d, t);
+        let p = leak(gm_801BAB40_src {
+            c_kind: bb[0] as i8, slot_type: bb[1], stocks: bb[2], color: bb[3], x5: bb[4], sub_color: bb[5], team: bb[6],
+            xB: bb[7], flags: bb[8], xE: bb[9], cpu_level: bb[10], pad: bb[11],
+            x12: d.u16_at(t + 0xC), hp: d.u16_at(t + 0xE), x18: f(d, t + 0x10), x1C: f(d, t + 0x14), x20: f(d, t + 0x18),
+        });
+        memo.insert(t, p as usize);
+        p
+    }
+    let mut memo: HashMap<u32, usize> = HashMap::new();
+    let n = (b.extent(off) / 4).max(1);
+    let mut levels: Vec<*mut gm_804D6900_t> = Vec::new();
+    for i in 0..n {
+        let Some(l) = d.target(off + 4 * i) else {
+            levels.push(core::ptr::null_mut());
+            continue;
+        };
+        let head: [u8; 4] = bytes(d, l);
+        // x4: the event's character list (gm_event_char_list, 33 bytes read as-is) or, when its word 1 is relocated,
+        // `gm_804D6900_x4_t { int x0; intptr_t x4 /* gm_801BAB40_src* */ }` (gm_801BA8FC case 43)
+        let x4 = match d.target(l + 4) {
+            None => core::ptr::null_mut(),
+            Some(t) if d.target(t + 4).is_some() => {
+                let x0 = d.u32_at(t) as i32;
+                let e = src(d, &mut memo, t + 4);
+                leak(gm_804D6900_x4_t { x0, x4: e as isize })
+            }
+            Some(t) => {
+                let len = b.extent(t).max(40) as usize;
+                let buf = native_buf(len);
+                for k in 0..b.extent(t) {
+                    unsafe { *buf.add(k as usize) = d.u8_at(t + k) };
+                }
+                buf as *mut gm_804D6900_x4_t
+            }
+        };
+        let evinit = match d.target(l + 8) {
+            None => core::ptr::null_mut(),
+            Some(t) => {
+                let bb: [u8; 6] = bytes(d, t);
+                leak(gm_evinit {
+                    bf_0: [bb[0], bb[1]], is_teams: bb[2], item_freq: bb[3] as i8, sd_penalty: bb[4] as i8, unk5: bb[5],
+                    stkind: d.u16_at(t + 6), time_limit: d.u32_at(t + 8), padC: bytes(d, t + 0xC), x10: d.u64_at(t + 0x10),
+                    x18: d.u32_at(t + 0x18) as i32, x1C: f(d, t + 0x1C), game_speed: f(d, t + 0x20), unk24: f(d, t + 0x24),
+                })
+            }
+        };
+        let evbonus = match d.target(l + 0xC) {
+            None => core::ptr::null_mut(),
+            Some(t) => {
+                let a: [u8; 8] = bytes(d, t);
+                let z: [u8; 4] = bytes(d, t + 0x14);
+                leak(gm_evbonus {
+                    c_kind: a[0] as i8, x1: a[1], x2: a[2], x3: a[3], x4: a[4], x5: a[5], color: a[6], pad7: a[7],
+                    x8: f(d, t + 8), xC: f(d, t + 0xC), x10: f(d, t + 0x10), flags: z[0], x15: z[1], x16: z[2], x17: z[3],
+                })
+            }
+        };
+        let evstage_table = match d.target(l + 0x10) {
+            None => core::ptr::null_mut(),
+            Some(t) => {
+                let count = d.u8_at(t);
+                let pad1 = d.u8_at(t + 1);
+                let stage: [u16; 7] = core::array::from_fn(|k| d.u16_at(t + 2 + 2 * k as u32));
+                let entries: [*mut gm_801BAB40_src; 6] = core::array::from_fn(|k| src(d, &mut memo, t + 0x10 + 4 * k as u32));
+                leak(gm_evstage_table { count, pad1, stage, entries })
+            }
+        };
+        let player_init: [*mut gm_801BAB40_src; 5] = core::array::from_fn(|k| src(d, &mut memo, l + 0x14 + 4 * k as u32));
+        levels.push(leak(gm_804D6900_t { kind: head[0], flags: head[1], pad2: [head[2], head[3]], x4, evinit, evbonus, evstage_table, player_init }));
+    }
+    Box::leak(levels.into_boxed_slice()).as_mut_ptr() as *mut c_void
 }

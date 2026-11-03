@@ -49,7 +49,7 @@ pub mod ext {
     unsafe fn todo_Ground_GetStageGObj(_id: i32) -> *mut HSD_GObj { { return unsafe { crate::tu::ground::Ground_GetStageGObj(_id as _) as _ }; } }
     unsafe fn todo_grZakoGenerator_801CAE04(_d: *mut c_void) { { unsafe { crate::tu::grzakogenerator::grZakoGenerator_801CAE04(_d as _); } return; } }
     unsafe fn todo_Ground_801C53EC(_a: u32) { { unsafe { crate::tu::ground::Ground_801C53EC(_a as _); } return; } }
-    unsafe fn todo_ftCo_800C07F8(_g: *mut HSD_GObj, _k: u32, _f: *const c_void) { panic!("TODO(group3: ft/ftdevice.c) ftCo_800C07F8") }
+    unsafe fn todo_ftCo_800C07F8(_g: *mut HSD_GObj, _k: u32, _f: *const c_void) { crate::ftdevice::ftCo_800C07F8(_g as _, _k, core::mem::transmute::<*const c_void, melee_types::ftDevice_Callback0>(_f)) }
     unsafe fn todo_Ground_801C10B8(_g: *mut HSD_GObj, _f: HSD_GObjEvent) { { unsafe { crate::tu::ground::Ground_801C10B8(_g as _, _f as _); } return; } }
     unsafe fn todo_Ground_801C0498() -> f32 { { return unsafe { crate::tu::ground::Ground_801C0498() as _ }; } }
     unsafe fn todo_ftLib_80086644(_g: *mut HSD_GObj, _out: *mut Vec3) { unsafe { let _ = crate::ftlib::ftLib_80086644(_g as _, _out as _); } }

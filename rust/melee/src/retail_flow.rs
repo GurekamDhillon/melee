@@ -212,14 +212,44 @@ impl RetailPlay {
                         log(&format!("netplay {}: match over at game frame {}", nd.tag(), nd.end_frame.unwrap() - melee_net::session::FIRST));
                         log(&nd.summary());
                         nd.write_hashes();
-                        if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, NetPhase::Done) {
+                        // --np-css: back to the menus in lockstep (results -> CSS -> the next match); else one match
+                        let next = if nd.css() { NetPhase::PreMatch } else { NetPhase::Done };
+                        if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, next) {
                             let (e, _) = g.into_engine();
                             log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
+                            if let Some(r) = self.rec.as_mut() {
+                                nd.flush_rec(&mut r.1, e.neutral_row()[0] | 1);
+                            }
                             self.e = Some(e);
                         }
-                        self.quit = true;
+                        if !nd.css() {
+                            self.quit = true;
+                        }
                     }
                     return false;
+                }
+                NetPhase::PreMatch if nd.css() => {
+                    // the menus in lockstep: this tick's local pad is scheduled; a frame runs once the peer's is in
+                    let host = nd.host;
+                    let ls = nd.ls.as_mut().unwrap();
+                    ls.push_local(&four[0]);
+                    ls.poll();
+                    match ls.ready() {
+                        Some((l, r)) => {
+                            four = neutral_pads();
+                            four[0] = if host { l } else { r };
+                            four[1] = if host { r } else { l };
+                            four[0].err = 0;
+                            four[1].err = 0;
+                        }
+                        None => {
+                            if ls.silent_secs() > 20 {
+                                self.failed = Some("netplay: the peer went silent in the menus".into());
+                                self.quit = true;
+                            }
+                            return false;
+                        }
+                    }
                 }
                 NetPhase::PreMatch => four = neutral_pads(),
                 NetPhase::Done => {}
@@ -258,9 +288,18 @@ impl RetailPlay {
         // the first frame of a match scene: the session takes the engine from here on
         // (after the scene's first frames: the scene's first frame re-creates the host heap block, which a snapshot base
         // must not straddle)
-        if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && self.age >= ARM_FRAMES {
+        // (engine frames, not render ticks: a lockstep stall must not move the hand-over)
+        if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && e.frames >= ARM_FRAMES {
             self.arm = false;
             if let Some(nd) = self.net.as_mut() {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() {
+                    if let Err(er) = nd.next_room() {
+                        log(&format!("netplay: {er}"));
+                        self.failed = Some(er);
+                        self.quit = true;
+                        return false;
+                    }
+                }
                 if matches!(nd.phase, NetPhase::PreMatch) {
                     nd.begin_match(self.e.take().unwrap());
                     return self.step(four);
@@ -273,7 +312,9 @@ impl RetailPlay {
         let e = self.e.as_mut().unwrap();
         let vs_tick = !e.ended && e.mode_scene().1 == SCENE_VS;
         e.set_pads(Some(four));
+        crate::slp_export::begin_tick(&four);
         let entered = e.tick_modes();
+        crate::slp_export::end_tick(!e.ended && e.mode_scene().1 == SCENE_VS);
         let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
         if let Some(r) = self.rec.as_mut() {
             r.1.ticks.push((four, hash));
@@ -292,6 +333,7 @@ impl RetailPlay {
             return;
         }
         self.save_replay();
+        crate::slp_export::finish();
         if let Some(f) = &self.failed {
             log(&format!("failed: {f}"));
             crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -302,7 +344,10 @@ impl RetailPlay {
     pub fn save_replay(&mut self) {
         if let Some((p, r)) = self.rec.take() {
             match r.write(&p) {
-                Ok(()) => log(&format!("replay: {} ticks written to {p}", r.ticks.len())),
+                Ok(()) => {
+                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
+                    crate::play_net::slp_from_replay(&p, &self.iso);
+                }
                 Err(e) => log(&format!("replay: {e}")),
             }
         }
@@ -466,6 +511,10 @@ impl Game for RetailPlay {
             };
             let onep = onep.map_or(String::new(), |n| format!(", 1P stocks {n}"));
             log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {}{onep})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
+            if now.0 == melee_types::GM_EVENT as u8 && std::env::var_os("MELEE_MENU_LOG").is_some() {
+                // Event Match: which event (gmevent.c's level index, 0-based) the scene plays
+                log(&format!("tick {}: event {}", self.tick_no, unsafe { (*melee_modes::tu::gmmain_lib::gmMainLib_804D3EE0).vs.unk_530.unk_535 }));
+            }
             self.arm = now.1 == crate::play_net::SCENE_VS;
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
@@ -593,6 +642,8 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     if !scripted && std::env::var("MELEE_KEYBOARD").map_or(true, |v| v != "0") {
         pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
     }
+    // the launcher's own controls, when it started us (launcher_compat.rs)
+    crate::launcher_compat::apply_input(&mut pads);
     match melee_platform::run_windowed(rp, pads, cfg) {
         Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));

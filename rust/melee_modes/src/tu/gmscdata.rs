@@ -187,7 +187,7 @@ pub mod ext {
     pub use crate::tu::gmgiant::gm_Mode_GiantVs_States;
     pub use crate::tu::gmhanyucss::gm_Mode_HanyuCss_States;
     pub static mut gm_Mode_HanyuSss_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
-    pub static mut gm_Mode_Homerun_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmhomerun::gm_Mode_Homerun_States;
     pub static mut gm_Mode_InvisibleVs_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
     pub use crate::tu::geno_lab_mode::gm_Mode_Lab_States;
     pub static mut gm_Mode_LightningVs_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };

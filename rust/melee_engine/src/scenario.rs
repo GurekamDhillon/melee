@@ -104,7 +104,13 @@ impl Scenario {
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
                 "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
-                "mode" => s.onep_mode = match v { "classic" => 3, "adventure" => 4, "allstar" => 5, _ => -1 },
+                "mode" => s.onep_mode = match v {
+                    "classic" => 3, "adventure" => 4, "allstar" => 5,
+                    // port test entry, not in gw_sl_modes: GM_CLASSIC_GOVER (0x15), where gm_8017CBAC sends a
+                    // cleared Classic (the ending movie, the credits, the trophy) - boots it without beating Master Hand
+                    "classicend" => 0x15,
+                    _ => -1,
+                },
                 "step" => s.onep_step = v.parse().map_err(|_| "step")?,
                 "difficulty" => s.onep_level = v.parse().map_err(|_| "difficulty")?,
                 "match" => s.rule_match = if v == "stock" { 1 } else { 0 },

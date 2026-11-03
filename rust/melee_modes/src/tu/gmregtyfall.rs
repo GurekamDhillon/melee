@@ -169,16 +169,12 @@ crate::globals! {
     ];
     /// `static struct { u8 x0, x1, x2, x3; } gm_804D4278 = { 0xAA, 0xAA, 0xFF, 0xFF }`
     ro pub gm_804D4278: [u8; 4] = [0xAA, 0xAA, 0xFF, 0xFF];
-    // ---- defined by other TUs (placeholders until they are ported)
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_CameraKind: u8 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_JObjKind: u8 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_LightKind: i8 = 0;
-    /// baselib/sobjlib.c
-    rw pub HSD_SObjLib_804D7960: u8 = 0;
 }
+
+// Defined by other TUs: the real statics. Zeroed stand-ins here gave every object of this scene kind 0, so
+// HSD_GObjFree released the pedestal's JObj as an SObj list (the Classic ending's trophy fall crashed).
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CameraKind, HSD_GObj_JObjKind, HSD_GObj_LightKind};
+pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
 
 /// gm_801A659C: the trophy lookup for the current mode.
 /// (`bool` is `typedef int bool` in this codebase: the callee's int result is returned as is.)

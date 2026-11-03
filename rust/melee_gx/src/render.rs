@@ -271,8 +271,8 @@ pub struct Renderer {
     bgl_uniform: wgpu::BindGroupLayout,
     bgl_textures: wgpu::BindGroupLayout,
     layout: wgpu::PipelineLayout,
-    pipelines: FxMap<PipelineKey, wgpu::RenderPipeline>,
-    wgsl_hashes: FxMap<crate::shader::ShaderConfig, u64>,
+    /// Pipelines by key, shared with the decode thread's warm-up ([`Renderer::pipe_factory`]).
+    pipes: std::sync::Arc<PipeFactory>,
     tex_bgs: FxMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
@@ -420,6 +420,10 @@ struct PreparedDraw {
     first_index: u32,
     /// This draw owns its uniform block (false: it shares the previous draw's identical block).
     owner: bool,
+    /// Indices (indexed) or vertices drawn: this draw's own plus those of the later draws merged into it.
+    count: u32,
+    /// Merged into an earlier draw of the same state (see [`pack`]): not recorded on its own.
+    merged: bool,
 }
 
 /// One draw's packing (a [`PreparedDraw`] before its pipeline and texture lookups).
@@ -429,6 +433,8 @@ pub struct PackedDraw {
     uoff: u32,
     first_index: u32,
     owner: bool,
+    count: u32,
+    merged: bool,
 }
 
 /// The CPU half of [`Renderer::prepare`] for one frame ([`pack`]): built on the GX decode thread so the main thread only
@@ -456,7 +462,38 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
         *e = (*e).max(n);
     }
     let mut prev_d: Option<&DrawCmd> = None;
+    // The draw later draws may be merged into (index into pk.draws), its first vertex byte and the vertices it covers.
+    let mut head: Option<(usize, u32, u32)> = None;
+    let mut ibuf_end = 0usize; // ibuf length before the last draw's padding
+    let batching = batching();
     for d in draws {
+        // Batching: a draw that changes no state (same pipeline config, uniforms, matrix slot, arrays, textures,
+        // viewport and scissor) and whose vertices follow the previous one's directly is drawn as part of it. Within
+        // one draw call the primitives rasterise in order, so the output is the same as two back-to-back calls.
+        if let (true, Some(p), Some((h, h_vtx, h_n))) = (batching, prev_d, head) {
+            if can_merge(p, d) && pk.vbuf.len() as u32 == h_vtx + h_n * d.config.shader.vtx_stride as u32 {
+                let indexed = !d.indices.is_empty();
+                let fits = !indexed || d.indices.iter().all(|&i| (i as u32 + h_n) <= u16::MAX as u32);
+                if fits {
+                    pk.vbuf.extend_from_slice(&d.verts);
+                    if indexed {
+                        pk.ibuf.truncate(ibuf_end);
+                        for &i in &d.indices {
+                            pk.ibuf.extend_from_slice(&((i as u32 + h_n) as u16).to_le_bytes());
+                        }
+                        ibuf_end = pk.ibuf.len();
+                        pk.ibuf.resize(pk.ibuf.len().next_multiple_of(4), 0);
+                    }
+                    let hd = &mut pk.draws[h];
+                    hd.count += if indexed { d.indices.len() as u32 } else { d.vtx_count };
+                    let last = pk.draws[h];
+                    pk.draws.push(PackedDraw { imm: last.imm, uoff: last.uoff, first_index: last.first_index, owner: false, count: 0, merged: true });
+                    head = Some((h, h_vtx, h_n + d.vtx_count));
+                    prev_d = Some(d);
+                    continue;
+                }
+            }
+        }
         let mut imm = [0u32; 16];
         imm[0] = pk.vbuf.len() as u32;
         imm[1] = d.current_pn_mtx;
@@ -480,6 +517,7 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
         for i in &d.indices {
             pk.ibuf.extend_from_slice(&i.to_le_bytes());
         }
+        ibuf_end = pk.ibuf.len();
         pk.ibuf.resize(pk.ibuf.len().next_multiple_of(4), 0);
         let mut immb = [0u8; 64];
         for (k, w) in imm.iter().enumerate() {
@@ -490,17 +528,194 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
         let share = prev_d.is_some_and(|p: &DrawCmd| {
             p.current_pn_mtx == d.current_pn_mtx && p.config.shader.attrs[0] == d.config.shader.attrs[0] && p.uniform == d.uniform
         });
+        let count = if d.indices.is_empty() { d.vtx_count } else { d.indices.len() as u32 };
+        // a head for later merges: plain-stride vertices (nothing padded after them)
+        head = (d.copy.is_none() && d.config.shader.vtx_stride != 0 && d.verts.len() as u32 == d.vtx_count * d.config.shader.vtx_stride as u32)
+            .then_some((pk.draws.len(), imm[0], d.vtx_count));
         if share {
             let u = pk.draws.last().unwrap().uoff;
-            pk.draws.push(PackedDraw { imm: immb, uoff: u, first_index, owner: false });
+            pk.draws.push(PackedDraw { imm: immb, uoff: u, first_index, owner: false, count, merged: false });
         } else {
-            pk.draws.push(PackedDraw { imm: immb, uoff: pk.uoff, first_index, owner: true });
+            pk.draws.push(PackedDraw { imm: immb, uoff: pk.uoff, first_index, owner: true, count, merged: false });
             pk.uoff += (d.uniform.len() as u32).next_multiple_of(UNIFORM_ALIGN as u32);
             pk.max_uniform = pk.max_uniform.max(d.uniform.len());
         }
         prev_d = Some(d);
     }
     pk
+}
+
+/// `MELEE_GX_NOBATCH=1` turns the draw merging of [`pack`] off (A/B screenshots).
+fn batching() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("MELEE_GX_NOBATCH").is_none())
+}
+
+/// `d` draws with exactly `p`'s state, so it can be appended to `p`'s draw call (see [`pack`]).
+fn can_merge(p: &DrawCmd, d: &DrawCmd) -> bool {
+    if p.copy.is_some() || d.copy.is_some() || p.instance_count != 1 || d.instance_count != 1 || p.info.line_mode != 0 || d.info.line_mode != 0 {
+        return false;
+    }
+    if p.indices.is_empty() != d.indices.is_empty() || p.fmt != d.fmt || p.current_pn_mtx != d.current_pn_mtx {
+        return false;
+    }
+    if !(std::sync::Arc::ptr_eq(&p.config, &d.config) || *p.config == *d.config) || p.config.shader.vtx_stride == 0 {
+        return false;
+    }
+    if d.verts.len() as u32 != d.vtx_count * d.config.shader.vtx_stride as u32 {
+        return false;
+    }
+    if p.render_viewport != d.render_viewport || p.render_scissor != d.render_scissor || p.uniform != d.uniform {
+        return false;
+    }
+    if p.info.sampled_textures != d.info.sampled_textures || p.info.sampled_ind_textures != d.info.sampled_ind_textures {
+        return false;
+    }
+    let same_arr = p.arrays.iter().zip(d.arrays.iter()).all(|(a, b)| match (a, b) {
+        (None, None) => true,
+        (Some(a), Some(b)) => a.data.as_ptr() == b.data.as_ptr(),
+        _ => false,
+    });
+    if !same_arr {
+        return false;
+    }
+    let ptr = |x: &Option<crate::resources::GxData>| x.as_ref().map(|v| (v.as_ptr() as usize, v.len()));
+    let used = p.info.sampled_textures | p.info.sampled_ind_textures;
+    for m in 0..MAX_TEXTURES {
+        if used & (1 << m) == 0 {
+            continue;
+        }
+        let (a, b) = (&p.textures[m], &d.textures[m]);
+        if a.mode0 != b.mode0 || a.mode1 != b.mode1 || a.image0 != b.image0 || a.image3 != b.image3 || a.width != b.width || a.height != b.height
+            || a.format != b.format || a.tlut != b.tlut || a.guest != b.guest || a.flags != b.flags || ptr(&a.data) != ptr(&b.data)
+        {
+            return false;
+        }
+    }
+    p.tluts.len() == d.tluts.len()
+        && p.tluts.iter().zip(d.tluts.iter()).all(|(a, b)| a.format == b.format && a.num_entries == b.num_entries && ptr(&a.data) == ptr(&b.data))
+}
+
+/// The render pipelines by key (every config's WGSL is built once). Shared by the renderer and the GX decode thread:
+/// a pipeline is a function of its key alone, so which thread creates it does not change what is drawn.
+pub struct PipeFactory {
+    device: wgpu::Device,
+    layout: wgpu::PipelineLayout,
+    samples: u32,
+    pipelines: std::sync::Mutex<FxMap<PipelineKey, wgpu::RenderPipeline>>,
+    wgsl_hashes: std::sync::Mutex<FxMap<crate::shader::ShaderConfig, u64>>,
+}
+
+impl PipeFactory {
+    /// Create the pipelines `draws` need that do not exist yet (the decode thread, before handing the frame over).
+    pub fn warm(&self, draws: &[DrawCmd]) {
+        let mut last: Option<&std::sync::Arc<crate::shader::PipelineConfig>> = None;
+        for d in draws {
+            if d.copy.is_some() || d.config.cull_mode == GX_CULL_ALL || last.is_some_and(|l| std::sync::Arc::ptr_eq(l, &d.config)) {
+                continue;
+            }
+            last = Some(&d.config);
+            let _ = self.get(&d.config);
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.pipelines.lock().unwrap().len()
+    }
+
+    /// The pipeline of `pc` (created and cached on a miss; Err: the WGSL failed validation, with the source).
+    pub fn get(&self, pc: &crate::shader::PipelineConfig) -> Result<wgpu::RenderPipeline, String> {
+        // Generating the WGSL per draw per frame dominated render time: memoise its hash by config.
+        let known = self.wgsl_hashes.lock().unwrap().get(&pc.shader).copied();
+        let wgsl_hash = match known {
+            Some(h) => h,
+            None => {
+                let h = fnv(crate::shader::build_shader_source(&pc.shader, u32::MAX).as_bytes());
+                self.wgsl_hashes.lock().unwrap().insert(pc.shader.clone(), h);
+                h
+            }
+        };
+        let key = PipelineKey {
+            wgsl_hash,
+            cull: pc.cull_mode,
+            blend: (pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha != u32::MAX),
+            depth: (pc.depth_compare, pc.depth_update, pc.depth_func),
+            write: (pc.color_update, pc.alpha_update),
+            bias: (pc.polygon_offset.to_bits(), pc.polygon_offset_scale.to_bits(), pc.polygon_offset_clamp.to_bits()),
+        };
+        if let Some(p) = self.pipelines.lock().unwrap().get(&key) {
+            return Ok(p.clone());
+        }
+        let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
+        let wgsl = adapt_wgsl(&src);
+        self.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("GX shader"),
+            source: wgpu::ShaderSource::Wgsl(wgsl.clone().into()),
+        });
+        let cull = match pc.cull_mode {
+            GX_CULL_FRONT => Some(wgpu::Face::Front),
+            GX_CULL_BACK => Some(wgpu::Face::Back),
+            _ => None,
+        };
+        let writes_depth = pc.depth_compare && pc.depth_update;
+        let mut write_mask = wgpu::ColorWrites::empty();
+        if pc.color_update {
+            write_mask |= wgpu::ColorWrites::COLOR;
+        }
+        if pc.alpha_update {
+            write_mask |= wgpu::ColorWrites::ALPHA;
+        }
+        let bias_const = -pc.polygon_offset;
+        let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("GX pipeline"),
+            layout: Some(&self.layout),
+            vertex: wgpu::VertexState {
+                module: &module,
+                entry_point: Some("vs_main"),
+                compilation_options: Default::default(),
+                buffers: &[],
+            },
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Cw,
+                cull_mode: cull,
+                unclipped_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: DEPTH_FORMAT,
+                depth_write_enabled: writes_depth,
+                depth_compare: if pc.depth_compare { compare(pc.depth_func) } else { wgpu::CompareFunction::Always },
+                stencil: Default::default(),
+                bias: wgpu::DepthBiasState {
+                    constant: if bias_const < 0.0 { bias_const.floor() as i32 } else { bias_const.ceil() as i32 },
+                    slope_scale: -pc.polygon_offset_scale,
+                    clamp: pc.polygon_offset_clamp,
+                },
+            }),
+            multisample: wgpu::MultisampleState { count: self.samples, ..Default::default() },
+            fragment: Some(wgpu::FragmentState {
+                module: &module,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState {
+                    format: COLOR_FORMAT,
+                    blend: Some(blend_state(pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha)),
+                    write_mask,
+                })],
+            }),
+            multiview: None,
+            cache: None,
+        });
+        if let Some(e) = pollster::block_on(self.device.pop_error_scope()) {
+            return Err(format!("{e}\n--- WGSL ---\n{wgsl}"));
+        }
+        self.pipelines.lock().unwrap().insert(key, pipeline.clone());
+        Ok(pipeline)
+    }
 }
 
 /// A GPU buffer reused across frames (grown to the next power of two when a frame needs more).
@@ -744,6 +959,7 @@ impl Renderer {
         });
         let empty_view = empty.create_view(&Default::default());
         let empty_sampler = device.create_sampler(&wgpu::SamplerDescriptor::default());
+        let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default() });
         Ok(Self {
             adapter,
             device,
@@ -762,8 +978,7 @@ impl Renderer {
             bgl_uniform,
             bgl_textures,
             layout,
-            pipelines: FxMap::default(),
-            wgsl_hashes: FxMap::default(),
+            pipes,
             tex_bgs: FxMap::default(),
             samplers: FxMap::default(),
             textures: FxMap::default(),
@@ -782,97 +997,19 @@ impl Renderer {
     }
 
     fn pipeline(&mut self, d: &DrawCmd) -> Option<wgpu::RenderPipeline> {
-        let pc = &d.config;
-        // Generating the WGSL per draw per frame dominated render time: memoise its hash by config.
-        let wgsl_hash = match self.wgsl_hashes.get(&pc.shader) {
-            Some(&h) => h,
-            None => {
-                let h = fnv(crate::shader::build_shader_source(&pc.shader, u32::MAX).as_bytes());
-                self.wgsl_hashes.insert(pc.shader.clone(), h);
-                h
+        match self.pipes.get(&d.config) {
+            Ok(p) => Some(p),
+            Err(e) => {
+                self.shader_errors.push(e);
+                None
             }
-        };
-        let key = PipelineKey {
-            wgsl_hash,
-            cull: pc.cull_mode,
-            blend: (pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha != u32::MAX),
-            depth: (pc.depth_compare, pc.depth_update, pc.depth_func),
-            write: (pc.color_update, pc.alpha_update),
-            bias: (pc.polygon_offset.to_bits(), pc.polygon_offset_scale.to_bits(), pc.polygon_offset_clamp.to_bits()),
-        };
-        if let Some(p) = self.pipelines.get(&key) {
-            return Some(p.clone());
         }
-        let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
-        let wgsl = adapt_wgsl(&src);
-        self.device.push_error_scope(wgpu::ErrorFilter::Validation);
-        let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("GX shader"),
-            source: wgpu::ShaderSource::Wgsl(wgsl.clone().into()),
-        });
-        let cull = match pc.cull_mode {
-            GX_CULL_FRONT => Some(wgpu::Face::Front),
-            GX_CULL_BACK => Some(wgpu::Face::Back),
-            _ => None,
-        };
-        let writes_depth = pc.depth_compare && pc.depth_update;
-        let mut write_mask = wgpu::ColorWrites::empty();
-        if pc.color_update {
-            write_mask |= wgpu::ColorWrites::COLOR;
-        }
-        if pc.alpha_update {
-            write_mask |= wgpu::ColorWrites::ALPHA;
-        }
-        let bias_const = -pc.polygon_offset;
-        let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("GX pipeline"),
-            layout: Some(&self.layout),
-            vertex: wgpu::VertexState {
-                module: &module,
-                entry_point: Some("vs_main"),
-                compilation_options: Default::default(),
-                buffers: &[],
-            },
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Cw,
-                cull_mode: cull,
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: DEPTH_FORMAT,
-                depth_write_enabled: writes_depth,
-                depth_compare: if pc.depth_compare { compare(pc.depth_func) } else { wgpu::CompareFunction::Always },
-                stencil: Default::default(),
-                bias: wgpu::DepthBiasState {
-                    constant: if bias_const < 0.0 { bias_const.floor() as i32 } else { bias_const.ceil() as i32 },
-                    slope_scale: -pc.polygon_offset_scale,
-                    clamp: pc.polygon_offset_clamp,
-                },
-            }),
-            multisample: wgpu::MultisampleState { count: self.samples, ..Default::default() },
-            fragment: Some(wgpu::FragmentState {
-                module: &module,
-                entry_point: Some("fs_main"),
-                compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: COLOR_FORMAT,
-                    blend: Some(blend_state(pc.blend_mode, pc.blend_fac_src, pc.blend_fac_dst, pc.blend_op, pc.dst_alpha)),
-                    write_mask,
-                })],
-            }),
-            multiview: None,
-            cache: None,
-        });
-        if let Some(e) = pollster::block_on(self.device.pop_error_scope()) {
-            self.shader_errors.push(format!("{e}\n--- WGSL ---\n{wgsl}"));
-            return None;
-        }
-        self.pipelines.insert(key, pipeline.clone());
-        Some(pipeline)
+    }
+
+    /// The pipeline cache, for [`crate::api::Gx::set_pipe_factory`]: the decode thread creates a frame's new pipelines
+    /// before it hands the frame over, so the main thread's prepare finds them made.
+    pub fn pipe_factory(&self) -> std::sync::Arc<PipeFactory> {
+        self.pipes.clone()
     }
 
     /// The cache key `texture_view` would use for `map`, if the texture is already decoded.
@@ -1132,7 +1269,7 @@ impl Renderer {
         }
         if self.prepared % TEX_KEEP == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
             let f = &self.frame;
-            eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipelines.len(), self.efb_copies.len(), self.wgsl_hashes.len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubuf.capacity(), f.draws.capacity());
+            eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipes.len(), self.efb_copies.len(), self.pipes.wgsl_hashes.lock().unwrap().len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubuf.capacity(), f.draws.capacity());
         }
         let mut fc = std::mem::take(&mut self.frame);
         // the CPU packing, done on the GX decode thread when it handed one over for exactly these draws
@@ -1145,7 +1282,7 @@ impl Renderer {
         fc.abuf = pk.abuf;
         fc.ibuf = pk.ibuf;
         fc.draws.clear();
-        fc.draws.extend(pk.draws.iter().map(|c| PreparedDraw { pipeline: None, tex_bg: None, imm: c.imm, uoff: c.uoff, first_index: c.first_index, owner: c.owner }));
+        fc.draws.extend(pk.draws.iter().map(|c| PreparedDraw { pipeline: None, tex_bg: None, imm: c.imm, uoff: c.uoff, first_index: c.first_index, owner: c.owner, count: c.count, merged: c.merged }));
         let uoff = pk.uoff;
         let max_uniform = pk.max_uniform;
         fc.max_uniform = (max_uniform as u64).next_multiple_of(16);
@@ -1214,8 +1351,9 @@ impl Renderer {
             self.ensure_copy_target(c);
         }
         let mut last_pipe = fc.last_pipe.take();
+        let (mut miss_pipe, mut miss_tex, mut n_pipe, mut n_tex) = (std::time::Duration::ZERO, std::time::Duration::ZERO, 0usize, 0usize);
         for (i, d) in draws.iter().enumerate() {
-            if d.copy.is_some() {
+            if d.copy.is_some() || fc.draws[i].merged {
                 fc.draws[i].pipeline = None;
                 fc.draws[i].tex_bg = None;
                 continue;
@@ -1226,27 +1364,42 @@ impl Renderer {
                 match last_pipe.as_ref() {
                     Some((cfg, p)) if std::sync::Arc::ptr_eq(cfg, &d.config) || **cfg == *d.config => p.clone(),
                     _ => {
+                        let (n0, tp) = (self.pipes.len(), std::time::Instant::now());
                         let p = self.pipeline(d);
+                        if self.pipes.len() != n0 {
+                            miss_pipe += tp.elapsed();
+                            n_pipe += 1;
+                        }
                         last_pipe = Some((d.config.clone(), p.clone()));
                         p
                     }
                 }
             };
             fc.draws[i].pipeline = p;
+            let (n0, tt) = (self.textures.len(), std::time::Instant::now());
             fc.draws[i].tex_bg = Some(self.tex_bind_group(d));
+            if self.textures.len() != n0 {
+                miss_tex += tt.elapsed();
+                n_tex += self.textures.len() - n0;
+            }
         }
         fc.last_pipe = last_pipe;
         self.frame = fc;
         if prof() {
             eprintln!(
-                "gxprof prepare n={} pack={:?} upload={:?} lookup={:?} vb={} ab={} ub={}",
+                "gxprof prepare n={} calls={} pack={:?} upload={:?} lookup={:?} vb={} ab={} ub={} newpipe={} pipe={:?} newtex={} tex={:?}",
                 draws.len(),
+                self.frame.draws.iter().filter(|d| !d.merged && d.pipeline.is_some()).count(),
                 t1 - t0,
                 t2 - t1,
                 t2.elapsed(),
                 self.frame.vbuf.len(),
                 self.frame.abuf.len(),
-                self.frame.ubuf.len()
+                self.frame.ubuf.len(),
+                n_pipe,
+                miss_pipe,
+                n_tex,
+                miss_tex
             );
         }
     }
@@ -1840,10 +1993,9 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
             }
         }
         if d.indices.is_empty() {
-            pass.draw(0..d.vtx_count, 0..d.instance_count);
+            pass.draw(0..pd.count, 0..d.instance_count);
         } else {
-            let n = d.indices.len() as u32;
-            pass.draw_indexed(pd.first_index..pd.first_index + n, 0, 0..d.instance_count);
+            pass.draw_indexed(pd.first_index..pd.first_index + pd.count, 0, 0..d.instance_count);
         }
     }
 }

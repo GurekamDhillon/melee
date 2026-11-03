@@ -360,7 +360,38 @@ mod device {
             stream.play().map_err(|e| e.to_string())?;
             Ok(Device { _stream: stream, rate })
         }
+
+        /// [`Device::open`] on a thread of its own, which then keeps the stream until the returned handle is dropped.
+        /// Opening the device (WASAPI activation, RPC to the audio service) took 20-60% of the first match tick; done
+        /// from the driver's creation on, it is ready (or nearly) by the time the game first needs it.
+        pub fn open_async(ring: Arc<Ring>, gain: Arc<AtomicU32>) -> std::sync::mpsc::Receiver<Result<(u32, Held), String>> {
+            let (tx, rx) = std::sync::mpsc::channel();
+            let spawned = std::thread::Builder::new().name("audio open".into()).spawn(move || {
+                let (stop_tx, stop) = std::sync::mpsc::channel::<()>();
+                match Device::open(ring, gain) {
+                    Ok(d) => {
+                        if tx.send(Ok((d.rate, Held(stop_tx)))).is_ok() {
+                            // blocks until the Held handle is dropped (its sender closes the channel)
+                            let _ = stop.recv();
+                        }
+                        drop(d);
+                    }
+                    Err(e) => {
+                        let _ = tx.send(Err(e));
+                    }
+                }
+            });
+            if let Err(e) = spawned {
+                let (tx, rx2) = std::sync::mpsc::channel();
+                let _ = tx.send(Err(format!("audio open thread: {e}")));
+                return rx2;
+            }
+            rx
+        }
     }
+
+    /// Keeps an [`Device::open_async`] stream alive; dropping it closes the stream.
+    pub struct Held(#[allow(dead_code)] std::sync::mpsc::Sender<()>);
 }
 
 // ---- frame driver ---------------------------------------------------------------------------
@@ -401,7 +432,9 @@ pub struct Driver {
     gain: Arc<AtomicU32>,
     volume: i32,
     #[cfg(feature = "device")]
-    device: Option<device::Device>,
+    device: Option<device::Held>,
+    #[cfg(feature = "device")]
+    opening: Option<std::sync::mpsc::Receiver<Result<(u32, device::Held), String>>>,
     dev_ok: bool,
     attempted: bool,
     wav: Option<Wav>,
@@ -413,13 +446,19 @@ const STALL: Duration = Duration::from_millis(100);
 
 impl Driver {
     pub fn new(cfg: DriverConfig) -> Self {
+        let ring = Arc::new(Ring::new());
+        let gain = Arc::new(AtomicU32::new(1.0f32.to_bits()));
+        #[cfg(feature = "device")]
+        let opening = (cfg.device && !cfg.turbo).then(|| device::Device::open_async(ring.clone(), gain.clone()));
         Driver {
             cfg,
-            ring: Arc::new(Ring::new()),
-            gain: Arc::new(AtomicU32::new(1.0f32.to_bits())),
+            ring,
+            gain,
             volume: -1,
             #[cfg(feature = "device")]
             device: None,
+            #[cfg(feature = "device")]
+            opening,
             dev_ok: false,
             attempted: false,
             wav: None,
@@ -482,10 +521,33 @@ impl Driver {
             return;
         }
         #[cfg(feature = "device")]
-        match device::Device::open(self.ring.clone(), self.gain.clone()) {
-            Ok(d) => {
+        {
+            if self.opening.is_none() {
+                self.opening = Some(device::Device::open_async(self.ring.clone(), self.gain.clone()));
+            }
+            self.poll_open(ax);
+        }
+    }
+
+    /// The device being opened ([`device::Device::open_async`]): adopt it once it is ready. Until then the frames
+    /// run on the wall clock as without a device (never blocks the game thread).
+    #[cfg(feature = "device")]
+    fn poll_open(&mut self, ax: &mut Ax) {
+        let log = |ax: &mut Ax, s: String| {
+            if let Some(l) = ax.log.as_mut() {
+                l(&s);
+            }
+        };
+        let Some(rx) = self.opening.as_ref() else { return };
+        let opened = match rx.try_recv() {
+            Ok(r) => r,
+            Err(std::sync::mpsc::TryRecvError::Empty) => return,
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => Err("audio open thread ended".into()),
+        };
+        self.opening = None;
+        match opened {
+            Ok((rate, d)) => {
                 self.apply_volume();
-                let rate = d.rate;
                 self.device = Some(d);
                 self.dev_ok = true;
                 log(ax, format!("gw: AX: master volume {}%", self.volume()));
@@ -519,6 +581,10 @@ impl Driver {
         }
         if !self.attempted {
             self.open(ax);
+        }
+        #[cfg(feature = "device")]
+        if self.opening.is_some() {
+            self.poll_open(ax);
         }
         let mut n = if self.dev_ok {
             let buffered = self.ring.len() / FRAME_SAMPLES as u32;

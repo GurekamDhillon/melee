@@ -106,7 +106,9 @@ impl RetailPlay {
         let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
         crate::set_engine_mods(&margs)?;
         // HSD_SisLib_FontAtlas (main.dol) is loaded by Engine::boot_host.
+        let t_boot = std::time::Instant::now();
         let disc = crate::engine_disc(&self.iso)?;
+        let t_disc = t_boot.elapsed();
         unsafe {
             melee_engine::engine::RENDER = !self.headless;
         }
@@ -159,7 +161,12 @@ impl RetailPlay {
             melee_engine::engine::CARD_ON = card;
             melee_engine::engine::BOOT_SKIP_INTRO = self.skip_intro;
         }
+        let t_pre = t_boot.elapsed();
         let e = melee_engine::Engine::boot_modes(disc, 64 << 20, PadSystem::headless(), first)?;
+        if std::env::var_os("MELEE_BOOT_TIMES").is_some() {
+            let pn = melee_engine::archive::PARSE_NS.load(std::sync::atomic::Ordering::Relaxed);
+            log(&format!("boot times: disc {:.1} ms, to engine {:.1} ms, engine boot {:.1} ms ({:.1} ms archive parse so far)", t_disc.as_secs_f64() * 1e3, t_pre.as_secs_f64() * 1e3, (t_boot.elapsed() - t_pre).as_secs_f64() * 1e3, pn as f64 / 1e6));
+        }
         if self.audio.is_some() {
             // the menu TUs' sound hooks, over the seams' silent defaults (which the link above installs)
             crate::engine_audio_gen::install_menus();
@@ -429,7 +436,9 @@ impl Game for RetailPlay {
             }
             four = f.r.ticks[f.at].0;
         }
+        let t_step = std::time::Instant::now();
         let entered = self.step(four);
+        let t_step = t_step.elapsed();
         if self.quit {
             self.on_quit();
             return;
@@ -444,7 +453,11 @@ impl Game for RetailPlay {
         if let Some(au) = self.audio.as_mut() {
             // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
             let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
+            let t = std::time::Instant::now();
             au.tick();
+            if std::env::var_os("MELEE_BOOT_TIMES").is_some() && (t_step + t.elapsed()).as_millis() >= 20 {
+                log(&format!("slow tick {}: step {:.1} ms, audio {:.1} ms", self.tick_no, t_step.as_secs_f64() * 1e3, t.elapsed().as_secs_f64() * 1e3));
+            }
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             if self.rollback_mode {
@@ -564,7 +577,10 @@ impl Game for RetailPlay {
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
-                Ok(p) => self.presenter = Some(p),
+                Ok(p) => {
+                    melee_engine::gxbridge::shim().gx.set_pipe_factory(p.renderer.pipe_factory());
+                    self.presenter = Some(p)
+                }
                 Err(e) => {
                     self.failed = Some(e);
                     self.quit = true;

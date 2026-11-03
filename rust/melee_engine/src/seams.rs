@@ -73,7 +73,7 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
 
 /// gw_TestTargetTestCKind with no MELEE_TARGET_TEST: not set.
 unsafe extern "C" fn no_target_test_ckind() -> i32 {
-    -1
+    crate::scenario::target_test_ckind()
 }
 
 pub fn install() {

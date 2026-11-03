@@ -797,10 +797,8 @@ pub unsafe extern "C" fn gm_801B6428(arg0: *mut GameModeState) {
 
     // TARGET_PC
     if ext::TestTargetTestCKind() >= 0 {
-        ext::OSReport(
-            c"Target Test direct launch: starting with ckind=%d\n".as_ptr() as *mut i8,
-            (*temp_r31).unk_584 as i32,
-        );
+        // the C OSReport is log-only; the link table's variadic OSReport cast cannot carry the int
+        eprintln!("Target Test direct launch: starting with ckind={}", (*temp_r31).unk_584 as i32);
     }
 
     (*temp_r3).rules = gm_80490960.vs.start.rules;

@@ -67,6 +67,11 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "tyDisplayModelUsTbl" { return Some(rt("TyDspEntry[]")); }
     if name == "gmIntroEasyTable" { return Some(RootType::Custom("rawwords")); }
     if name == "standScene" { return Some(rt("SceneDesc")); }
+    if name == "cut1CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut2CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3CanimScene" { return Some(rt("SceneDesc")); }
+    if name == "cut3BgScene" { return Some(rt("SceneDesc")); }
+    if name == "ScGamRegStaffrollNames_scene_modelset" { return Some(RootType::Custom("ptrtable_dynmodel")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }

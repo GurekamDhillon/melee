@@ -700,6 +700,9 @@ impl Engine {
             // TU's own defaults format it (as ifprize's).
             melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A6B98 = None;
             melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A70A0 = None;
+            // gm_1A9B.c (the Classic ending's congratulations movie): the link table casts the file name &str -> *const i8
+            // and stops; the TU's own default passes the C string.
+            melee_modes::tu::gm_1A9B::ext::LBMTHP_8001FAA0 = None;
             melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
             // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
             if !card {

@@ -38,21 +38,47 @@ pub mod ext {
             }
         };
     }
+    /// The ported callees the hooks default to (an unset hook used to panic: the Classic ending reached them).
+    mod port {
+        use super::super::*;
+        use melee_runtime::tu as rt;
+        pub fn gm_804D6798() -> *mut HSD_Joint { unsafe { crate::tu::gmregtyfall::gm_804D6798 } }
+        pub fn gm_804D67A8() -> *mut SceneDesc { unsafe { crate::tu::gmregtyfall::gm_804D67A8 } }
+        pub fn gm_804D67AC() -> *mut SceneDesc { unsafe { crate::tu::gmregtyfall::gm_804D67AC } }
+        pub fn GObj_Create(classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj { unsafe { rt::gobjplink::GObj_Create(classifier, p_link, priority) } }
+        pub fn HSD_GObjObject_80390A70(gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void) { unsafe { rt::gobjobject::HSD_GObjObject_80390A70(gobj, kind, obj) } }
+        /// `render` is the callback's address (the C passes the function).
+        pub fn GObj_SetupGXLink(gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32) {
+            unsafe { rt::gobjgxlink::GObj_SetupGXLink(gobj, core::mem::transmute::<usize, GObj_RenderFunc>(render), gx_link, priority) }
+        }
+        pub fn GObj_SetupGXLinkMax(gobj: *mut HSD_GObj, render: usize, priority: u32) {
+            unsafe { rt::gobjgxlink::GObj_SetupGXLinkMax(gobj, core::mem::transmute::<usize, GObj_RenderFunc>(render), priority) }
+        }
+        pub fn HSD_GObj_SetupProc(gobj: *mut HSD_GObj, proc: usize, prio: u8) {
+            unsafe { rt::gobjproc::HSD_GObj_SetupProc(gobj, core::mem::transmute::<usize, HSD_GObjEvent>(proc), prio); }
+        }
+        pub fn HSD_GObjFree(gobj: *mut HSD_GObj) { unsafe { rt::gobjplink::HSD_GObjFree(gobj) } }
+        pub fn light_kind() -> i8 { unsafe { rt::gobj_native::HSD_GObj_LightKind } }
+        pub fn jobj_kind() -> u8 { unsafe { rt::gobj_native::HSD_GObj_JObjKind } }
+        pub fn camera_kind() -> u8 { unsafe { rt::gobj_native::HSD_GObj_CameraKind } }
+        pub fn HSD_JObjReqAnimAll(jobj: *mut HSD_JObj, frame: f32) { unsafe { rt::jobj_ptr::HSD_JObjReqAnimAll(jobj, frame) } }
+        pub fn HSD_JObjAnimAll(jobj: *mut HSD_JObj) { unsafe { rt::jobj_ptr::HSD_JObjAnimAll(jobj) } }
+    }
     // The scene data the regular-trophy TU (gmregtyfall.c) loaded: `gm_804D6798`, `gm_804D67A8`, `gm_804D67AC`.
-    hook!(GM_804D6798, gm_804D6798, () -> *mut HSD_Joint);
-    hook!(GM_804D67A8, gm_804D67A8, () -> *mut SceneDesc);
-    hook!(GM_804D67AC, gm_804D67AC, () -> *mut SceneDesc);
+    hook!(GM_804D6798, gm_804D6798, () -> *mut HSD_Joint, port::gm_804D6798);
+    hook!(GM_804D67A8, gm_804D67A8, () -> *mut SceneDesc, port::gm_804D67A8);
+    hook!(GM_804D67AC, gm_804D67AC, () -> *mut SceneDesc, port::gm_804D67AC);
     // sysdolphin/baselib/gobj*.c
-    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj);
-    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void));
-    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32));
-    hook!(GOBJ_SETUPGXLINKMAX, GObj_SetupGXLinkMax, (gobj: *mut HSD_GObj, render: usize, priority: u32));
-    hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (gobj: *mut HSD_GObj, proc: usize, prio: u8));
-    hook!(HSD_GOBJFREE, HSD_GObjFree, (gobj: *mut HSD_GObj));
+    hook!(GOBJ_CREATE, GObj_Create, (classifier: u16, p_link: u8, priority: u8) -> *mut HSD_GObj, port::GObj_Create);
+    hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, obj: *mut c_void), port::HSD_GObjObject_80390A70);
+    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, render: usize, gx_link: u8, priority: u32), port::GObj_SetupGXLink);
+    hook!(GOBJ_SETUPGXLINKMAX, GObj_SetupGXLinkMax, (gobj: *mut HSD_GObj, render: usize, priority: u32), port::GObj_SetupGXLinkMax);
+    hook!(HSD_GOBJ_SETUPPROC, HSD_GObj_SetupProc, (gobj: *mut HSD_GObj, proc: usize, prio: u8), port::HSD_GObj_SetupProc);
+    hook!(HSD_GOBJFREE, HSD_GObjFree, (gobj: *mut HSD_GObj), port::HSD_GObjFree);
     /// `HSD_GObj_LightKind` / `HSD_GObj_JObjKind` / `HSD_GObj_CameraKind` (sysdolphin/baselib/gobj.c).
-    hook!(HSD_GOBJ_LIGHTKIND, hsd_gobj_light_kind, () -> i8);
-    hook!(HSD_GOBJ_JOBJKIND, hsd_gobj_jobj_kind, () -> u8);
-    hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8);
+    hook!(HSD_GOBJ_LIGHTKIND, hsd_gobj_light_kind, () -> i8, port::light_kind);
+    hook!(HSD_GOBJ_JOBJKIND, hsd_gobj_jobj_kind, () -> u8, port::jobj_kind);
+    hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8, port::camera_kind);
     // sysdolphin/baselib/jobj.c, cobj.c
     pub static mut HSD_JOBJLOADJOINT: Option<fn(*mut HSD_Joint) -> *mut HSD_JObj> = None;
             #[allow(non_snake_case)]
@@ -62,8 +88,8 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(joint as _) as _ }; },
                 }
             }
-    hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32));
-    hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj));
+    hook!(HSD_JOBJREQANIMALL, HSD_JObjReqAnimAll, (jobj: *mut HSD_JObj, frame: f32), port::HSD_JObjReqAnimAll);
+    hook!(HSD_JOBJANIMALL, HSD_JObjAnimAll, (jobj: *mut HSD_JObj), port::HSD_JObjAnimAll);
     /// The out-of-line `HSD_JObjSetMtxDirty` (the `WithMtxDirty` setters call it, not the macro).
     pub static mut HSD_JOBJSETMTXDIRTY: Option<fn(*mut HSD_JObj) > = None;
             #[allow(non_snake_case)]
@@ -193,7 +219,7 @@ pub mod ext {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_LObjCallback(_gobj as _, _unused as _); } return; };
     }
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
+        unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code) }
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };

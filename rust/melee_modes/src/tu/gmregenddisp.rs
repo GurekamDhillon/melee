@@ -88,9 +88,10 @@ crate::globals! {
     rw pub gm_804D67BC: *mut HSD_GObj = null_mut();
     rw pub gm_804D67C0: *mut HSD_GObj = null_mut();
     rw pub gm_804D67C4: i32 = 0;
-    /// baselib/gobjobject.c
-    rw pub HSD_GObj_FogKind: i8 = 0;
 }
+
+// baselib/gobjobject.c's real kind (a zeroed stand-in made this TU's fog objects kind 0)
+pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
 
 crate::globals_ext! {
     rw gm_804D6798 = super::gmregtyfall::gm_804D6798: *mut HSD_Joint;

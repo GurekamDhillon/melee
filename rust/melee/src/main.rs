@@ -28,6 +28,7 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod crash;
+mod launcher_compat;
 mod display;
 mod prof;
 mod heapprof;
@@ -349,8 +350,24 @@ fn main() -> ExitCode {
     }
     heapprof::init();
     let _prof = prof::from_env();
+    let mut args: std::vec::Vec<String> = std::env::args().skip(1).collect();
+    // The Melee Unlocked launcher's command line (launcher_compat.rs): its environment is set before the log redirect.
+    let compat = launcher_compat::prepare(&args);
     crash::install();
-    let args: std::vec::Vec<String> = std::env::args().skip(1).collect();
+    match compat {
+        None => {}
+        Some(Err(refused)) => {
+            eprintln!("launcher-compat: not supported by the Rust engine yet: {}", refused.join(", "));
+            return ExitCode::from(launcher_compat::EXIT_UNSUPPORTED);
+        }
+        Some(Ok((play_args, notes))) => {
+            for n in notes {
+                eprintln!("launcher-compat: {n}");
+            }
+            eprintln!("launcher-compat: melee {}", play_args.join(" "));
+            args = play_args;
+        }
+    }
     if args.windows(2).any(|w| w[0] == "--engine" && w[1] == "legacy") {
         eprintln!("melee: --engine legacy was removed with the vs_match model (consolidation step 19); the engine is the only game loop");
         return ExitCode::from(2);

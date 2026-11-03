@@ -253,6 +253,8 @@ struct Rules {
     stocks: i32,
     /// time limit in seconds (time mode; the menu steps whole minutes, `--time-secs` may set any value)
     time_secs: i32,
+    /// a stock match's time limit in seconds (`GameRules.stock_time_limit`): `--time-secs` with `--stocks`; 0 = none
+    stock_time_secs: i32,
     /// 0 off, 1..5 = item frequency 0..4 (very low .. very high)
     items: i32,
     teams: bool,
@@ -834,8 +836,9 @@ impl Play {
             rule_minutes: -1,
             item_freq: if r.items == 0 { -2 } else { r.items - 1 },
             teams: r.teams as i32,
-            // a stock match has no timer here; a time match counts its seconds
-            time_limit: if r.stock { 0 } else { r.time_secs },
+            // a time match counts its seconds; a stock match runs the stock time limit when one was given
+            // (the C VS mode's GameRules.stock_time_limit: the HUD clock and the Stadium screen show it)
+            time_limit: if r.stock { r.stock_time_secs } else { r.time_secs },
             rule_stocks: if r.stock { r.stocks } else { -1 },
         }
     }
@@ -1431,6 +1434,7 @@ pub fn play(args: &[String]) -> ExitCode {
             stock: get("--stocks").is_some(),
             stocks: get("--stocks").and_then(|s| s.parse().ok()).unwrap_or(4).clamp(1, 99),
             time_secs: get("--time-secs").and_then(|s| s.parse().ok()).unwrap_or(120).max(1),
+            stock_time_secs: get("--time-secs").and_then(|s| s.parse::<i32>().ok()).map_or(0, |s| s.max(1)),
             items: get("--items").map_or(0, |v| ITEM_NAMES.iter().position(|n| n.eq_ignore_ascii_case(&v.replace('_', " "))).unwrap_or(3) as i32),
             teams: has("--teams"),
         },

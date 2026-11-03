@@ -57507,6 +57507,9 @@ impl GcDecode for ftDynamics {
         v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
         { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x8) as i64)).max(0) as usize; v.x8 = d.ptr_array::<ftData_x38>(at + 0xC, n) as *mut ftData_x38; }
         { let n = (10).max(0) as usize; v.x10 = d.ptr_table_extent_arrays_n::<*mut FigaTree>(at + 0x10, n) as *mut *mut *mut FigaTree; }
+        // ftCo_8009E4A8 hands these `FigaTree*` words to ftCo_8009CB40, which reads them as a node count (`(s32) arg3`):
+        // an unrelocated word is that count (1, 2, 0x100), kept as the value (the pointer decode would make it null)
+        if !v.x10.is_null() { if let Some(t) = d.target(at + 0x10) { let rows = (d.extent(t) / 4).max(1); for r in 0..rows { if let Some(e) = d.target(t + 4 * r) { let a = unsafe { *v.x10.add(r as usize) }; if !a.is_null() { for i in 0..10u32 { if !d.is_reloc(e + 4 * i) { let w = d.u32_at(e + 4 * i); unsafe { *a.add(i as usize) = w as usize as *mut FigaTree; } } } } } } } }
         v
     }
 }
@@ -67751,7 +67754,7 @@ impl GcDecode for UnkStageDat {
         v.unk1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
         { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x24) as i64)).max(0) as usize; v.unk20 = d.ptr_array::<GroundShadowEntry>(at + 0x20, n) as *mut GroundShadowEntry; }
         v.unk24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
-        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x2C) as i64)).max(0) as usize; v.unk28 = d.ptr_array::<*mut UnkStageDatInternal>(at + 0x28, n) as *mut *mut UnkStageDatInternal; }
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0x2C) as i64)).max(0) as usize; v.unk28 = d.ptr_array::<*mut HSD_MObjDesc>(at + 0x28, n) as *mut *mut UnkStageDatInternal; }
         v.unk2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v
     }

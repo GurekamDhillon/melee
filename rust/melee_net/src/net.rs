@@ -885,7 +885,7 @@ impl Net {
             return;
         }
 
-        if from.ip != self.peer.ip || from.port != self.peer.port {
+        if *from != self.peer {
             if self.is_host && ty == T_HELLO {
                 self.send_refuse_to(from, 2, "session full");
             }

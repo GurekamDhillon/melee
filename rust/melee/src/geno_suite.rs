@@ -20,7 +20,7 @@ pub fn run(args: &[String]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
-    let scene = get("--scene").unwrap_or_else(|| "p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off".into());
+    let scene = get("--scene").unwrap_or_else(|| "p1=none;p2=none;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off".into());
     let scn = melee_engine::scenario::Scenario::parse(&format!("mode=vs;at=match;{scene}")).expect("scene");
     let _e = match melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn) {
         Ok(e) => e,

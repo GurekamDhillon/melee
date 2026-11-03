@@ -102,6 +102,19 @@ _pp = {
 for _k, _o in enumerate(("xE0", "xE4", "xE8", "xEC")):
     _pp[f"if (*(u32*) &gp->u.venom.{_o} != 0U) {{"] = f"if (gp->u.starfox.article_gobjs[{_k}] != 0) {{"
     _pp[f"Ground_801C4A08(*(HSD_GObj**) &gp->u.venom.{_o});"] = f"Ground_801C4A08(gp->u.starfox.article_gobjs[{_k}]);"
+# The port's native-layout relocations (tu/grvenom.rs), mirrored so the native C reads/writes the same words:
+# - `u.venom.xE4` of the stage gobj (grVenom_80204428 / 8020454C): natively it would overlap the 8-byte `u.venom2`
+#   JObj pointers, so the float lives right after `u.venom2.xE0_state` (tu/grvenom.rs venom2_xe4)
+_XE4 = "(*(float*) ((char*) &gp->u.venom2.xE0_state + 4))"
+_CRLF2 = chr(10) + chr(10) + "    "
+_pp["gp->u.venom2.xE0_state.b6 = 0;" + _CRLF2 + "gp->u.venom.xE4 = 0.0F;"] = "gp->u.venom2.xE0_state.b6 = 0;" + _CRLF2 + _XE4 + " = 0.0F;"
+_pp["gp->u.venom.xE4 <"] = _XE4 + " <"
+_pp["gp->u.venom.xE4 >"] = _XE4 + " >"
+_pp["gp->u.venom.xE4 = frame;"] = _XE4 + " = frame;"
+# - the arwing counters `u.venom.xF0..x100` are the GC words of `u.starfox.xF0..x100` (grVenom_80205F30 reads them
+#   through that view; natively the two views' offsets differ): the port uses the starfox view throughout
+for _f in ("xF0", "xF4", "xF8", "xFC", "x100"):
+    _pp[f"gp->u.venom.{_f}"] = f"gp->u.starfox.{_f}"
 PATCH = list(_pp.items())
 PORTED = {"Stage_80225194": "crate::tu::stage::Stage_80225194",
           "Stage_GetBlastZoneRightOffset": "crate::tu::stage::Stage_GetBlastZoneRightOffset",

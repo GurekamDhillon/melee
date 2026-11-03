@@ -204,6 +204,16 @@ pub fn ftKb_SpecialNYs_8010AC78(victim: *mut HSD_GObj, gobj: *mut HSD_GObj) {
         (*fp).mv.co.yoshiegg.x10 = (*fp).mv.co.walk.fast_anim_frame;
         (*fp).mv.co.yoshiegg.x14 = (*fp).mv.co.walk.fast_anim_frame;
         (*fp).mv.co.common.x4.z = ys::ftKb_SpecialNYs_801092AC(gobj);
+        // the GC words fn_8010AA64 reads back through the yoshiegg view: 0x2348 x8 = ca.specialhi.vel.y (0),
+        // 0x234C xC = common.x4.z; natively the views' offsets differ (the yoshiegg x0 pointer is 8 bytes), and the
+        // native stores above may land on yoshiegg.scale, so it is set again (human_yoshi_jungle f978: scale -18.9)
+        let (xc, frames) = ((*fp).mv.co.common.x4.z, (*fp).mv.co.walk.fast_anim_frame);
+        (*fp).mv.co.yoshiegg.x8 = 0.0;
+        (*fp).mv.co.yoshiegg.xC = xc;
+        (*fp).mv.co.yoshiegg.x10 = frames;
+        (*fp).mv.co.yoshiegg.x14 = frames;
+        (*fp).mv.co.yoshiegg.scale = scale;
+        (*fp).mv.co.yoshiegg.x0 = gobj;
         ext::ftCommon_InitGrab(fp, 0, ys::ftKb_SpecialNYs_801092CC(gobj));
         ext::HSD_JObjGetScale(jobj, &mut (*fp).mv.co.yoshiegg.x18);
         (*fp).accessory4_cb = Some(cb_fn_8010AA64);

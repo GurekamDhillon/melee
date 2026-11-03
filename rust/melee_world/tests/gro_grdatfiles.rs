@@ -12,6 +12,20 @@ static mut OSD: [UnkStageDat; 4] = unsafe { core::mem::zeroed() };
 static mut OX8: [UnkStageDat_x8_t; 4] = unsafe { core::mem::zeroed() };
 static mut OSI: [UnkStageDatInternal; 6] = unsafe { core::mem::zeroed() };
 static mut OPI: [*mut UnkStageDatInternal; 6] = [core::ptr::null_mut(); 6];
+// grDatFiles_801C6228's entries are HSD_MObjDescs (the C's UnkStageDatInternal +4 is the 32-bit `rendermode`); the port
+// writes HSD_MObjDesc.rendermode (+8 natively), so each call that reaches it runs on MObjDesc twins and projects rendermode back to unk4
+static mut OSM: [HSD_MObjDesc; 6] = unsafe { core::mem::zeroed() };
+unsafe fn osm<R>(f: impl FnOnce() -> R) -> R {
+    let saved = OPI;
+    for i in 0..6 { if !OPI[i].is_null() { OSM[i].rendermode = OSI[i].unk4; OPI[i] = addr_of_mut!(OSM[i]) as *mut UnkStageDatInternal; } }
+    let r = f();
+    OPI = saved;
+    for i in 0..6 { if !OPI[i].is_null() { OSI[i].unk4 = OSM[i].rendermode; } }
+    r
+}
+unsafe fn osm_801C6228(p: *mut UnkStageDat) { osm(|| t::grDatFiles_801C6228(p)) }
+unsafe fn osm_801C6478(d: *mut c_void, n: i32) -> *mut UnkArchiveStruct { osm(|| t::grDatFiles_801C6478(d, n)) }
+unsafe fn osm_StageSlotInstall(a: *mut HSD_Archive) { osm(|| t::grDatFiles_StageSlotInstall(a)) }
 
 pub fn gr_lg_ps(p: *const u8, n: usize, d: &[ODesc]) {
     lg_c('@');
@@ -270,13 +284,13 @@ unsafe fn call_fn(fi: usize, a: &mut Args) -> (u64, u32) {
     match fi {
         0 => { t::grDatFiles_801C5FC0(addr_of_mut!(OGO[0]) as *mut _, addr_of_mut!(OGO[1]) as *mut _, a.i[0]); (0, 0) }
         1 => { t::grDatFiles_801C6038(if a.i[0] & 1 != 0 { addr_of_mut!(OSTR) as *mut c_void } else { core::ptr::null_mut() }, (a.i[1] & 1) as i32, (a.i[2] & 1) as i32); (0, 0) }
-        2 => { t::grDatFiles_801C6228(if a.i[0] == 3 { core::ptr::null_mut() } else { addr_of_mut!(OSD[a.i[0] as usize]) }); (0, 0) }
+        2 => { osm_801C6228(if a.i[0] == 3 { core::ptr::null_mut() } else { addr_of_mut!(OSD[a.i[0] as usize]) }); (0, 0) }
         3 => { t::grDatFiles_801C6288(); (0, 0) }
         4 => { let r = normptr(t::grDatFiles_801C62B4() as *const u8 as usize); (r, r as u32) }
         5 => { let r = normptr(t::grDatFiles_GetArchive() as *const u8 as usize); (r, r as u32) }
         6 => { let r = normptr(t::grDatFiles_801C6330(a.i[0] as i32 - 1) as *const u8 as usize); (r, r as u32) }
-        7 => { let r = normptr(t::grDatFiles_801C6478(addr_of_mut!(OGO[2]) as *mut _, a.i[0] as i32) as *const u8 as usize); (r, r as u32) }
-        8 => { t::grDatFiles_StageSlotInstall(addr_of_mut!(OGO[3]) as *mut _); (0, 0) }
+        7 => { let r = normptr(osm_801C6478(addr_of_mut!(OGO[2]) as *mut _, a.i[0] as i32) as *const u8 as usize); (r, r as u32) }
+        8 => { osm_StageSlotInstall(addr_of_mut!(OGO[3]) as *mut _); (0, 0) }
         _ => unreachable!(),
     }
 }

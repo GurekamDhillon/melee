@@ -346,6 +346,28 @@ impl Replay {
     }
 }
 
+thread_local! {
+    /// `--slp` on a run that rolls back (netplay): the .slp is made from the `--record` file once it is written.
+    pub static SLP_AFTER: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) };
+}
+
+/// A rollback run's `.slp`: play its `.mrpl` back headless in a child process (the playback runs linearly, so the
+/// exporter's hooks see each frame once) with `--slp`.
+pub fn slp_from_replay(mrpl: &str, iso: &str) {
+    let Some(spec) = SLP_AFTER.with(|c| c.borrow_mut().take()) else { return };
+    let Ok(exe) = std::env::current_exe() else { return };
+    log(&format!("slp: exporting {mrpl} to {spec} (headless playback)"));
+    let st = std::process::Command::new(exe)
+        .args(["play", "--iso", iso, "--replay", mrpl, "--headless", "--no-audio", "--slp", &spec])
+        .env("MELEE_WINDOW_UNFOCUSED", "1")
+        .status();
+    match st {
+        Ok(s) if s.success() => log("slp: export done"),
+        Ok(s) => log(&format!("slp: export playback failed ({s})")),
+        Err(e) => log(&format!("slp: {e}")),
+    }
+}
+
 /// The play options a replay keeps (they decide the boot: intro, presets, the seeded match).
 pub fn replay_args(args: &[String]) -> Vec<String> {
     // a netplay match is set up by its agreed scene (the np_scene header line), not by the peer's own --match

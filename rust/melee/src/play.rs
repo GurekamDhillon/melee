@@ -1641,6 +1641,21 @@ pub fn play(args: &[String]) -> ExitCode {
             let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }
+        // `--slp FILE|auto`: Slippi export. Live only when nothing rolls back; otherwise from the .mrpl playback (play_net).
+        if let Some(spec) = get("--slp") {
+            if rollback_mode && rp.feed.is_none() {
+                if net.is_some() && rp.rec.is_some() {
+                    crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));
+                } else {
+                    eprintln!("play: --slp with netplay or synctest needs --record (the .slp is made from its playback)");
+                    return ExitCode::from(2);
+                }
+            } else {
+                // playedOn: readers take only Slippi's values (py-slippi: console, dolphin, network, nintendont)
+                let online = net.is_some() || rp.feed.as_ref().map_or(false, |f| f.r.meta("np_role").is_some());
+                crate::slp_export::install(&spec, if online { "network" } else { "console" }, ["P1".into(), "P2".into(), "P3".into(), "P4".into()]);
+            }
+        }
         rp.net = net;
         return crate::retail_flow::run(rp, has("--headless"));
     }

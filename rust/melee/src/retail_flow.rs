@@ -273,7 +273,9 @@ impl RetailPlay {
         let e = self.e.as_mut().unwrap();
         let vs_tick = !e.ended && e.mode_scene().1 == SCENE_VS;
         e.set_pads(Some(four));
+        crate::slp_export::begin_tick(&four);
         let entered = e.tick_modes();
+        crate::slp_export::end_tick(!e.ended && e.mode_scene().1 == SCENE_VS);
         let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
         if let Some(r) = self.rec.as_mut() {
             r.1.ticks.push((four, hash));
@@ -292,6 +294,7 @@ impl RetailPlay {
             return;
         }
         self.save_replay();
+        crate::slp_export::finish();
         if let Some(f) = &self.failed {
             log(&format!("failed: {f}"));
             crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -302,7 +305,10 @@ impl RetailPlay {
     pub fn save_replay(&mut self) {
         if let Some((p, r)) = self.rec.take() {
             match r.write(&p) {
-                Ok(()) => log(&format!("replay: {} ticks written to {p}", r.ticks.len())),
+                Ok(()) => {
+                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
+                    crate::play_net::slp_from_replay(&p, &self.iso);
+                }
                 Err(e) => log(&format!("replay: {e}")),
             }
         }

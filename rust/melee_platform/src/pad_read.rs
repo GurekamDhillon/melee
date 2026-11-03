@@ -60,6 +60,11 @@ pub struct PadSystem {
     pub keyboard: [KeyboardBindings; PAD_CHANMAX],
     pub keys_down: HashSet<KeyCode>,
     pub dead_zones: DeadZones,
+    /// Remapped gilrs pads / adapter controllers per port (`bindings`, the launcher's tables); None = default.
+    pub pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    pub gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    /// Keep the adapter read while the window is in the background (`backgroundinput 1`).
+    pub background_input: bool,
     pub script: Option<PadScript>,
     pub focused: bool,
     pub sources: [Source; PAD_CHANMAX],
@@ -105,6 +110,9 @@ impl PadSystem {
             keyboard: Default::default(),
             keys_down: HashSet::new(),
             dead_zones: DeadZones::default(),
+            pad_maps: Default::default(),
+            gc_maps: Default::default(),
+            background_input: false,
             script,
             focused: true,
             sources: [Source::None; PAD_CHANMAX],
@@ -124,8 +132,8 @@ impl PadSystem {
     pub fn set_focus(&mut self, focused: bool) {
         self.focused = focused;
         if let Some(a) = self.adapter.as_ref() {
-            a.set_focused(focused);
-            if focused { a.resume() } else { a.suspend(); }
+            a.set_focused(focused || self.background_input);
+            if focused || self.background_input { a.resume() } else { a.suspend(); }
         }
     }
 
@@ -145,6 +153,11 @@ impl PadSystem {
         };
         let keys = if self.focused { self.keys_down.clone() } else { HashSet::new() };
         let ret = aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
+        for i in 0..PAD_CHANMAX {
+            if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
+                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            }
+        }
 
         let suspended = self.adapter.as_ref().is_some_and(|a| a.suspended());
         if self.mode == InputMode::None || suspended {
@@ -173,6 +186,9 @@ impl PadSystem {
                 a.read(&mut adp);
                 for i in 0..PAD_CHANMAX {
                     if adp[i].err == 0 {
+                        if let Some(m) = self.gc_maps[i].as_ref() {
+                            crate::bindings::apply_gc(m, &mut adp[i]);
+                        }
                         st[i] = adp[i];
                         src[i] = Source::Adapter;
                     }

@@ -1,0 +1,60 @@
+# melee play (retail scenes), port 1: title -> 1P -> Stadium -> Multi-Man Melee -> Endless -> CSS (Fox) -> the match (no input, Fox is KOd) -> its result -> CSS -> B back to the menu
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, no memory card): eight A presses, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# main menu's first entry: 1P mode
+3 0100 0 0
+60 0000 0 0
+# 1P menu: down twice to Stadium (entry 2 is skipped), A
+4 0004 0 0
+20 0000 0 0
+4 0004 0 0
+20 0000 0 0
+3 0100 0 0
+120 0000 0 0
+4 0004 0 0
+20 0000 0 0
+4 0004 0 0
+20 0000 0 0
+3 0100 0 0
+200 0000 0 0
+# multi-man menu: right 4, A
+4 0002 0 0
+20 0000 0 0
+4 0002 0 0
+20 0000 0 0
+4 0002 0 0
+20 0000 0 0
+4 0002 0 0
+20 0000 0 0
+3 0100 0 0
+200 0000 0 0
+30 0000 0 127
+6 0000 127 0
+10 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 1000 0 0
+200 0000 0 0
+# the match: no input until Fox is KOd and the result shows, then the CSS
+2400 0000 0 0
+# back out of the CSS to the Multi-Man menu: B held
+120 0200 0 0
+300 0000 0 0

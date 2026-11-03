@@ -55,7 +55,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "flmsce" { return Some(rt("SceneDesc")); }
     if name == "MemCardIconData" { return Some(RootType::Custom("rawptrs")); }
     if name == "MemSnapIconData" { return Some(RootType::Raw); }
-    if name == "sqEventInitDataLevelTbl" { return Some(RootType::Raw); }
+    if name == "sqEventInitDataLevelTbl" { return Some(RootType::Custom("eventlevels")); }
     if name == "tyModelFileTbl" { return Some(rt("ToyModelFile[]")); }
     if name == "tyModelFileUsTbl" { return Some(rt("ToyModelFile[]")); }
     if name == "tyInitModelTbl" { return Some(rt("TrophyData[]")); }
@@ -79,6 +79,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name.starts_with("dynamicsdata_") { return Some(rt("DynamicsDesc")); }
     if name.starts_with("mnName") { return Some(RootType::Custom("rawptrs")); }
     if name.starts_with("ftDemo") { return Some(RootType::Raw); }
+    if name.starts_with("gmKumiteSystemTable") { return Some(RootType::Custom("kumitetable")); }
     if name.ends_with("_shapeanim_joint") { return Some(rt("HSD_ShapeAnimJoint")); }
     if name.ends_with("_matanim_joint") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_scene_models") { return Some(RootType::Custom("ptrtable_dynmodel")); }

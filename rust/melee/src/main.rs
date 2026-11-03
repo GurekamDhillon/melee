@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod geno_suite;
 mod crash;
 mod launcher_compat;
 mod display;
@@ -438,6 +439,7 @@ fn main() -> ExitCode {
         }
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
+        Some("geno-tests") => geno_suite::run(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
         Some("diff") => diff::diff(&args),
         Some("synctest") => netmatch::engine_game::synctest(&args),

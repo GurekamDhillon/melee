@@ -108,7 +108,13 @@ impl Scenario {
                 "teams" => s.teams = v.starts_with('1') as i32,
                 "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
-                "mode" => s.onep_mode = match v { "classic" => 3, "adventure" => 4, "allstar" => 5, _ => -1 },
+                "mode" => s.onep_mode = match v {
+                    "classic" => 3, "adventure" => 4, "allstar" => 5,
+                    // port test entry, not in gw_sl_modes: GM_CLASSIC_GOVER (0x15), where gm_8017CBAC sends a
+                    // cleared Classic (the ending movie, the credits, the trophy) - boots it without beating Master Hand
+                    "classicend" => 0x15,
+                    _ => -1,
+                },
                 "step" => s.onep_step = v.parse().map_err(|_| "step")?,
                 "difficulty" => s.onep_level = v.parse().map_err(|_| "difficulty")?,
                 "match" => s.rule_match = if v == "stock" { 1 } else { 0 },
@@ -126,9 +132,9 @@ impl Scenario {
                         None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
                     };
                     // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
-                    // teamN, stocksN, hmpN
+                    // teamN, stocksN, hmpN, cN (color)
                     let (mut slot_type, mut cpu_level, mut cpu_idle) = (0, -1, false);
-                    let (mut team, mut stocks, mut handicap) = (-1, -1, -1);
+                    let (mut team, mut stocks, mut handicap, mut color) = (-1, -1, -1, -1);
                     let digits = |t: &str, pre: &str| t.strip_prefix(pre).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())).map(|r| r.parse::<i32>().unwrap());
                     for t in it {
                         if t == "human" || t == "hu" { slot_type = 0; }
@@ -137,13 +143,18 @@ impl Scenario {
                         else if let Some(n) = digits(t, "team") { team = n; }
                         else if let Some(n) = digits(t, "stocks") { stocks = n; }
                         else if let Some(n) = digits(t, "hmp") { handicap = n; }
+                        else if let Some(n) = digits(t, "c") { color = n; }
                         else if let Some(n) = digits(t, "cpu") { slot_type = 1; cpu_level = n; }
                         else { return Err(format!("slot token {t} in {v} not wired")); }
                     }
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color: -1, team, stocks, handicap, cpu_idle });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle });
                 }
                 _ => {}
             }
+        }
+        // the 1P launch takes `idle` as the human player standing still (gw_runtime.c's 1P slot)
+        if s.onep_mode >= 0 {
+            for x in s.players.iter_mut().flatten() { if x.cpu_idle { x.cpu_idle = false; x.slot_type = 0; } }
         }
         Ok(s)
     }

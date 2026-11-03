@@ -447,6 +447,29 @@ pub unsafe extern "C" fn grHomeRun_8021CB20(gobj: *mut Ground_GObj) {
     (*gp).u.homerun.xE8_flags.set_b0(0);
 }
 
+/// The C's `(int) ptr` stores into the 32-bit `u.unk` words (read back as `(T*) (intptr_t) word`). A host pointer
+/// that does not survive the round trip (above 2 GiB) is kept here by (ground, field) and the word holds its low half
+/// (never 0 for a non-null pointer, so the C's `!= 0` tests still hold); one below 2 GiB is stored exactly as the C does.
+static mut PTR_SLOTS: std::vec::Vec<(usize, u32, *mut c_void)> = std::vec::Vec::new();
+
+unsafe fn ptr_slot_put(gp: *mut Ground, field: u32, p: *mut c_void) -> i32 {
+    let w = p as isize as i32;
+    PTR_SLOTS.retain(|e| !(e.0 == gp as usize && e.1 == field));
+    if w as isize as *mut c_void == p {
+        return w;
+    }
+    let w = if w == 0 { 1 } else { w };
+    PTR_SLOTS.push((gp as usize, field, p));
+    w
+}
+
+unsafe fn ptr_slot_get(gp: *mut Ground, field: u32, w: i32) -> *mut c_void {
+    match PTR_SLOTS.iter().find(|e| e.0 == gp as usize && e.1 == field) {
+        Some(e) if w != 0 && (w == 1 || w == e.2 as isize as i32) => e.2,
+        _ => w as isize as *mut c_void,
+    }
+}
+
 /// The text coordinate block shared by grHomeRun_8021D680 and the four `*_Callback2` of the text
 /// stages: `pos` is the joint position, `text` the freshly created text.
 unsafe fn set_text_pos(text: *mut HSD_Text, pos: &Vec3) {
@@ -501,12 +524,14 @@ pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
         }
     }
     (*gp).u.homerun.xE8_flags.set_b0(0);
-    if (*gp).u.unk.xD0 as u32 != 0 && (*gp).u.unk.xCC as u32 == 0 {
-        (*gp).u.unk.xCC = grHomeRun_8021EC58(0) as isize as i32;
-        let jobj2 = (*gp).u.unk.xD0 as isize as *mut HSD_JObj;
+    // the C's `u.unk.xD0 / xCC` are `u.homerun.xD0 / xCC` on the GameCube (one 32-bit word each); natively the views do
+    // not overlap, so the pointer view the stage set up above is read
+    if !(*gp).u.homerun.xD0.is_null() && (*gp).u.homerun.xCC.is_null() {
+        (*gp).u.homerun.xCC = grHomeRun_8021EC58(0);
+        let jobj2 = (*gp).u.homerun.xD0;
         ext::lb_8000B1CC(jobj2, null_mut(), &mut pos2);
 
-        let text = (*gp).u.unk.xCC as isize as *mut HSD_Text;
+        let text = (*gp).u.homerun.xCC;
         set_text_pos(text, &pos2);
     }
 
@@ -620,7 +645,7 @@ unsafe fn text_stage_init(gobj: *mut Ground_GObj) {
     let gp = GET_GROUND(gobj);
     ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
     (*gp).u.unk.xC8 = 0;
-    (*gp).u.unk.xCC = ext::Ground_801C3FA4(gobj, 1) as isize as i32;
+    (*gp).u.unk.xCC = ptr_slot_put(gp, 0xCC, ext::Ground_801C3FA4(gobj, 1) as *mut c_void);
 }
 
 /// the gobj_proc shared by the text stages (21DF50, 21E0D4, 21E258, 21E3DC)
@@ -630,10 +655,10 @@ unsafe fn text_stage_proc(gobj: *mut Ground_GObj) {
         if (*gp).u.unk.xC8 as u32 == 0 {
             let mut pos = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
 
-            (*gp).u.unk.xC8 = grHomeRun_8021EC58((*gp).u.homerun2.xC6 as i32) as isize as i32;
-            ext::lb_8000B1CC((*gp).u.unk.xCC as isize as *mut HSD_JObj, null_mut(), &mut pos);
+            (*gp).u.unk.xC8 = ptr_slot_put(gp, 0xC8, grHomeRun_8021EC58((*gp).u.homerun2.xC6 as i32) as *mut c_void);
+            ext::lb_8000B1CC(ptr_slot_get(gp, 0xCC, (*gp).u.unk.xCC) as *mut HSD_JObj, null_mut(), &mut pos);
 
-            let text = (*gp).u.unk.xC8 as isize as *mut HSD_Text;
+            let text = ptr_slot_get(gp, 0xC8, (*gp).u.unk.xC8) as *mut HSD_Text;
             set_text_pos(text, &pos);
         }
     }
@@ -643,7 +668,7 @@ unsafe fn text_stage_proc(gobj: *mut Ground_GObj) {
 unsafe fn text_stage_free(gobj: *mut Ground_GObj) {
     let gp = GET_GROUND(gobj);
     if (*gp).u.unk.xC8 as u32 != 0 {
-        ext::HSD_SisLib_803A5CC4((*gp).u.unk.xC8 as isize as *mut HSD_Text);
+        ext::HSD_SisLib_803A5CC4(ptr_slot_get(gp, 0xC8, (*gp).u.unk.xC8) as *mut HSD_Text);
     }
 }
 

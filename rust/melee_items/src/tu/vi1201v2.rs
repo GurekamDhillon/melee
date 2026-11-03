@@ -25,9 +25,19 @@ macro_rules! cstr {
 pub mod ext {
     #![allow(unreachable_code, non_upper_case_globals, non_snake_case, unused_imports, dead_code, unused_variables)]
     use super::*;
+    // `hook::<name>`: set by the engine (melee_engine::seams::install_vi_hooks) for the callees in crates this one cannot
+    // name (the players, the scene loop, the menus); checked before the default
     macro_rules! todo_fns {
         ($(fn $name:ident($($a:ident: $t:ty),*) $(-> $r:ty)? $(=> $fb:expr)?;)*) => {
+            pub mod hook {
+                #[allow(unused_imports)]
+                use super::*;
+                $( pub static mut $name: Option<unsafe fn($($t),*) $(-> $r)?> = None; )*
+            }
             $( pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
+                if let Some(f) = unsafe { hook::$name } {
+                    return f($($a),*);
+                }
                 $( return $fb; )? melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported"))
             } )*
         };

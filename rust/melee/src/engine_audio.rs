@@ -257,6 +257,56 @@ pub fn cast<A, B: Cast<A>>(a: A) -> B { B::cast(a) }
 /// would otherwise point at the lbaudio_ax TU.
 fn post_link() {
     crate::engine_audio_gen::install_gen();
+    // melee_modes::tu_ext's sound-bank calls (gm_1879's intro scenes): not in the generated table (no ext::hook statics)
+    unsafe {
+        use melee_modes::tu_ext as t;
+        t::HOOK_lbAudioAx_80026E84 = Some(|a0| ax_80026E84(a0));
+        t::HOOK_lbAudioAx_80026F2C = Some(|a0| ax_80026F2C(a0));
+        t::HOOK_lbAudioAx_8002702C = Some(|a0, a1| ax_8002702C(a0, a1));
+        t::HOOK_lbAudioAx_80027168 = Some(|| ax_80027168());
+        t::HOOK_lbAudioAx_80027648 = Some(|| ax_80027648());
+    }
+    // the todo_fns! cutscenes of Adventure (vi0801, vi1101, vi1201v1 / v2, vi1202): their sound calls
+    unsafe {
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_800236DC = Some(|| { let _ = ax_800236DC(); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80023F28 = Some(|a0| { let _ = ax_80023F28(a0 as _); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80024E50 = Some(|a0| { let _ = ax_80024E50(a0 as _); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80026F2C = Some(|a0| { let _ = ax_80026F2C(a0 as _); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_8002702C = Some(|a0, a1| { let _ = ax_8002702C(a0 as _, a1 as _); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80027168 = Some(|| { let _ = ax_80027168(); });
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80027648 = Some(|| { let _ = ax_80027648(); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_800236DC = Some(|| { let _ = ax_800236DC(); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_800237A8 = Some(|a0, a1, a2| { let _r = ax_800237A8(a0 as _, a1 as _, a2 as _); _r as _ });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80023F28 = Some(|a0| { let _ = ax_80023F28(a0 as _); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80024E50 = Some(|a0| { let _ = ax_80024E50(a0 as _); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80026E84 = Some(|a0| { let _r = ax_80026E84(a0 as _); _r as _ });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80026F2C = Some(|a0| { let _ = ax_80026F2C(a0 as _); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_8002702C = Some(|a0, a1| { let _ = ax_8002702C(a0 as _, a1 as _); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80027168 = Some(|| { let _ = ax_80027168(); });
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80027648 = Some(|| { let _ = ax_80027648(); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_800236DC = Some(|| { let _ = ax_800236DC(); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_800237A8 = Some(|a0, a1, a2| { let _r = ax_800237A8(a0 as _, a1 as _, a2 as _); _r as _ });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80023F28 = Some(|a0| { let _ = ax_80023F28(a0 as _); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80024E50 = Some(|a0| { let _ = ax_80024E50(a0 as _); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80026F2C = Some(|a0| { let _ = ax_80026F2C(a0 as _); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_8002702C = Some(|a0, a1| { let _ = ax_8002702C(a0 as _, a1 as _); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80027168 = Some(|| { let _ = ax_80027168(); });
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80027648 = Some(|| { let _ = ax_80027648(); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80023F28 = Some(|a0| { let _ = ax_80023F28(a0 as _); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80024E50 = Some(|a0| { let _ = ax_80024E50(a0 as _); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80026F2C = Some(|a0| { let _ = ax_80026F2C(a0 as _); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_8002702C = Some(|a0, a1| { let _ = ax_8002702C(a0 as _, a1 as _); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80027168 = Some(|| { let _ = ax_80027168(); });
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80027648 = Some(|| { let _ = ax_80027648(); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80023694 = Some(|| { let _ = ax_80023694(); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_800236DC = Some(|| { let _ = ax_800236DC(); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80023F28 = Some(|a0| { let _ = ax_80023F28(a0 as _); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80024E50 = Some(|a0| { let _ = ax_80024E50(a0 as _); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80026F2C = Some(|a0| { let _ = ax_80026F2C(a0 as _); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_8002702C = Some(|a0, a1| { let _ = ax_8002702C(a0 as _, a1 as _); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80027168 = Some(|| { let _ = ax_80027168(); });
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80027648 = Some(|| { let _ = ax_80027648(); });
+    }
     // the scene loop's per-frame audio update (gmscene.c calls lbAudioAx_80027DF8 every iteration): the sound objects' pan / volume
     // steps, the deferred sfx, the two loop voices
     unsafe { melee_modes::tu::gmscene::ext::AUDIO_FRAME = Some(ax_80027DF8) };

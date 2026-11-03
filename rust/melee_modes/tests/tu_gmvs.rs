@@ -83,11 +83,11 @@ fn fnid(p: usize) -> u32 {
 }
 
 /// A MatchEnd address handed over as an int: which of the two blocks the TU passes (or neither).
-unsafe fn meid(a: i32) -> u32 {
-    if a == addr_of_mut!(controller.state.x24C) as usize as i32 {
+unsafe fn meid(a: isize) -> u32 {
+    if a == addr_of_mut!(controller.state.x24C) as isize {
         return 1;
     }
-    if a == addr_of_mut!(EMD.xC) as usize as i32 {
+    if a == addr_of_mut!(EMD.xC) as isize {
         return 2;
     }
     0

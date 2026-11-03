@@ -264,9 +264,9 @@ fn fullwidth_utf8_to_sjis(b0: u8, b1: u8, b2: u8) -> Option<(u8, u8)> {
 
 /// `vsnprintf((char*)buffer, sizeof buffer, ...)` result: the formatted text in the C's 128-byte
 /// buffer (127 characters at most, NUL-terminated).
-fn format_buffer(s: &str) -> [u8; 128] {
+fn format_buffer(s: &[u8]) -> [u8; 128] {
     let mut buffer = [0u8; 128];
-    for (d, b) in buffer.iter_mut().take(127).zip(s.bytes()) {
+    for (d, &b) in buffer.iter_mut().take(127).zip(s.iter()) {
         *d = b;
     }
     buffer
@@ -297,6 +297,12 @@ unsafe fn sis_grow(text: *mut HSD_Text, alloc: *mut SisBlock, old_buf: *mut u8) 
 /// `HSD_SisLib_803A6B98` (0x803A6B98): append a positioned, coloured, scaled string entry.
 /// `fmt` is the formatted text (`None` for the C's NULL format). Returns the new entry index.
 pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: Option<&str>) -> i32 {
+    HSD_SisLib_803A6B98_bytes(text, x, y, fmt.map(str::as_bytes))
+}
+
+/// `HSD_SisLib_803A6B98` on the formatted C bytes: the game's strings are Shift-JIS (the results' sign glyphs 0x817B /
+/// 0x817C, the CSS's 0x8145 dots), which a `&str` cannot carry.
+pub unsafe fn HSD_SisLib_803A6B98_bytes(text: *mut HSD_Text, x: f32, y: f32, fmt: Option<&[u8]>) -> i32 {
     melee_core::ct!("HSD_SisLib_803A6B98");
     let mut encoded = [0u8; 128];
     let mut encoded_len: i32 = 0;
@@ -398,6 +404,11 @@ pub unsafe fn fn_803A6FEC(mut sis_data: *mut u8, mut entry_idx: i32, out_size: O
 /// `HSD_SisLib_803A70A0` (0x803A70A0): replace the text of entry `entry_idx` (`fmt` already
 /// formatted; `None` clears it). Returns 1 if the entry exists, else 0.
 pub unsafe fn HSD_SisLib_803A70A0(text: *mut HSD_Text, entry_idx: i32, fmt: Option<&str>) -> i32 {
+    HSD_SisLib_803A70A0_bytes(text, entry_idx, fmt.map(str::as_bytes))
+}
+
+/// `HSD_SisLib_803A70A0` on the formatted C bytes (Shift-JIS, see `HSD_SisLib_803A6B98_bytes`).
+pub unsafe fn HSD_SisLib_803A70A0_bytes(text: *mut HSD_Text, entry_idx: i32, fmt: Option<&[u8]>) -> i32 {
     melee_core::ct!("HSD_SisLib_803A70A0");
     let mut encoded = [0u8; 128];
     let mut old_size: i32 = 0;

@@ -48,6 +48,8 @@ pub struct RetailPlay {
     presets: Presets,
     e: Option<melee_engine::Engine>,
     frame: Option<Vec<melee_gx::draw::DrawCmd>>,
+    /// The decode thread's packed vertex/index data for `frame` (async GX, see `boot`).
+    packed: Option<melee_gx::render::Packed>,
     presenter: Option<Presenter>,
     headless: bool,
     tick_no: u64,
@@ -74,7 +76,7 @@ pub struct RetailPlay {
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
         RetailPlay {
-            iso, mods_dir, presets, e: None, frame: None, presenter: None, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
+            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
@@ -115,6 +117,15 @@ impl RetailPlay {
             crate::engine_audio_gen::install_menus();
         }
         self.apply_rules();
+        // GX decode on its own thread, as play.rs does for its engine match (port/memfix): the windowed retail flow
+        // never snapshots the arena (play turns trim on), so the thread's frames may hold its blocks. Without this the
+        // FIFO decode and draw packing ran inside every tick (Temple 4P: tick p50 5.7 ms instead of ~2).
+        // MELEE_GX_SYNC=1 keeps decoding in the tick; headless runs (golden, gate) never decode on a thread.
+        if !self.headless && melee_engine::arena::trim() && std::env::var_os("MELEE_GX_SYNC").is_none() {
+            melee_engine::gxbridge::shim().gx.enable_async(melee_engine::arena::mark_foreign_thread);
+            // screenshots show exactly their tick: take each frame when it is decoded
+            melee_engine::gxbridge::shim().wait_frame = self.shot_dir.is_some() && std::env::var_os("MELEE_SHOT_NOWAIT").is_none();
+        }
         Ok(e)
     }
 
@@ -175,12 +186,15 @@ impl Game for RetailPlay {
         four.copy_from_slice(&st[..4]);
         let e = self.e.as_mut().unwrap();
         e.set_pads(Some(four));
+        crate::prof::gate(true);
         let entered = e.tick_modes();
+        crate::prof::gate(false);
         if let Some(au) = self.audio.as_mut() {
             au.tick();
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             self.frame = Some(f);
+            self.packed = melee_engine::gxbridge::shim().gx.packed.take();
         }
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
@@ -278,6 +292,9 @@ impl Game for RetailPlay {
         let a = (self.interp && self.shot_pending.is_none()).then_some(alpha);
         let frame = self.frame.take();
         let p = self.presenter.as_mut().unwrap();
+        if let Some(pk) = self.packed.take() {
+            p.renderer.set_packed(pk);
+        }
         p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, a);
         self.emit_shot();
     }

@@ -52,6 +52,11 @@ mod imp {
             let mut frames = [0u64; 48];
             while !s2.load(Ordering::Relaxed) {
                 std::thread::sleep(std::time::Duration::from_millis(1));
+                // Only while the main thread is inside a gated region (play's Game::tick): suspended in a driver or
+                // the loader it can hold the function-table lock RtlLookupFunctionEntry takes, a deadlock at boot.
+                if super::GATED.load(Ordering::Relaxed) && !super::IN_GATE.load(Ordering::Acquire) {
+                    continue;
+                }
                 let mut n = 0;
                 unsafe {
                     if SuspendThread(th) == u32::MAX {
@@ -185,13 +190,32 @@ mod imp {
             for (n, c) in v.iter().take(120) {
                 rep += &format!("{:6.2}% {:7} {}\n", *c as f64 * 100.0 / total as f64, c, n);
             }
-            let _ = std::fs::write(&self.out, rep);
+            match std::fs::write(&self.out, rep) {
+                Ok(()) => eprintln!("prof: {total} samples -> {}", self.out),
+                Err(e) => eprintln!("prof: {}: {e}", self.out),
+            }
         }
     }
 }
 
 #[cfg(windows)]
 pub use imp::{symbolize, Guard};
+
+use std::sync::atomic::{AtomicBool, Ordering};
+/// MELEE_SAMPLE_GATE (default on in `play`): sample only between [`gate`]`(true)` and `gate(false)`.
+static GATED: AtomicBool = AtomicBool::new(false);
+static IN_GATE: AtomicBool = AtomicBool::new(false);
+
+/// Turn gating on (samples are then taken only inside [`gate`] regions).
+pub fn set_gated(on: bool) {
+    GATED.store(on, Ordering::Relaxed);
+}
+
+/// Enter / leave a sampled region (cheap: one atomic store).
+#[inline]
+pub fn gate(inside: bool) {
+    IN_GATE.store(inside, Ordering::Release);
+}
 
 #[cfg(windows)]
 pub fn from_env() -> Option<Guard> {

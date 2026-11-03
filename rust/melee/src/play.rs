@@ -1320,7 +1320,9 @@ impl Game for Play {
         }
         self.tick_no += 1;
         self.age += 1;
+        crate::prof::gate(true);
         self.tick_scene();
+        crate::prof::gate(false);
         self.dirty = true;
         if let Some(a) = self.audio.as_mut() {
             a.tick();
@@ -1405,6 +1407,7 @@ pub(crate) fn window_title(spec: Option<&str>) -> String {
 }
 
 pub fn play(args: &[String]) -> ExitCode {
+    crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").map_or(true, |v| v != "0"));
     // `play` never snapshots the game arena (no rollback offline): big free blocks may give their pages back.
     melee_engine::arena::set_trim(std::env::var_os("MELEE_ARENA_NO_TRIM").is_none());
     // images whose raw bytes a later parse overwrote are freed from the first match on (not only after a rematch)

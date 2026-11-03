@@ -221,6 +221,13 @@ pub fn install() {
             use melee_runtime::tu::lbmthp::ext as mt;
             mt::H_OSSetPeriodicAlarm = Some(|a, _, _, h| unsafe { MOVIE_ALARM = (h, a) });
             mt::H_OSCancelAlarm = Some(|_| unsafe { MOVIE_ALARM = (None, core::ptr::null_mut()) });
+            // the frame's three I8 planes (lbMthp_8001F67C) go to GX like any texture; the decoder rewrites them in
+            // place every frame and DCStoreRange's them (fn_8001EF5C), so that is where the cached copy goes stale
+            use crate::gxbridge as gb;
+            mt::H_GXInitTexObj = Some(|o, img, w, h, f, ws, wt, m| unsafe { gb::GXInitTexObj(o as _, img, w, h, f as u32, ws as u32, wt as u32, m) });
+            mt::H_GXInitTexObjLOD = Some(|o, mn, mg, a, b, c, d, e, an| unsafe { gb::GXInitTexObjLOD(o as _, mn as u32, mg as u32, a, b, c, d, e, an as u32) });
+            mt::H_GXLoadTexObj = Some(|o, id| unsafe { gb::GXLoadTexObj(o as _, id as u32) });
+            mt::H_DCStoreRange = Some(|p, n| gb::forget_range(p as usize, p as usize + n as usize));
         }
         use melee_modes::tu::lb_0195::ext::hook as l;
         l::OSCancelAlarm = Some(|_| {});

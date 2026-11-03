@@ -1070,6 +1070,22 @@ impl Renderer {
         // compare with the previous draw's before hashing.
         // EFB copy targets first: a draw may sample a copy made earlier in this frame (or in an earlier one).
         let now = self.prepared;
+        // A copy's bytes stay in guest memory until overwritten (the results screen copies the winner's portrait once and
+        // samples it every frame after): a target this frame's draws sample is kept as if copied now.
+        if !self.efb_copies.is_empty() {
+            for d in draws.iter().filter(|d| d.copy.is_none()) {
+                for (i, o) in d.textures.iter().enumerate() {
+                    if (d.info.sampled_textures | d.info.sampled_ind_textures) & (1 << i) == 0 || o.guest == 0 {
+                        continue;
+                    }
+                    if let Some(t) = self.efb_copies.get_mut(&o.guest) {
+                        if t.dst_w == o.width() && t.dst_h == o.height() {
+                            t.copied = now;
+                        }
+                    }
+                }
+            }
+        }
         self.efb_copies.retain(|_, t| now - t.copied < COPY_KEEP);
         for c in draws.iter().filter_map(|d| d.copy.as_deref()) {
             self.ensure_copy_target(c);

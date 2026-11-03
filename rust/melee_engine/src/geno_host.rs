@@ -434,3 +434,28 @@ pub fn install_callees() {
         g::ftCommon_Fall = Some(|fp, a, b| melee_fighter::tu::ftcommon::ftCommon_Fall_fp(&mut *fp, a, b));
     }
 }
+
+/// The registry API by name, for the `ext_fns!` callees that reach the engine's by-name table (script_game, ...).
+/// Define-only queries (native definitions are not hosted yet) answer the "no define" value.
+pub fn by_name(name: &str, a: &[u64]) -> Option<u64> {
+    let i = |k: usize| a.get(k).copied().unwrap_or(0) as i32;
+    let v: i32 = match name {
+        "Geno_ProfileForKind" => ProfileForKind(i(0)),
+        "Geno_ProfileCount" => ProfileCount(),
+        "Geno_StateMoveTag" => StateMoveTag(i(0), i(1)),
+        "Geno_OverlayMoveTag" => OverlayMoveTag(i(0), i(1)),
+        "Geno_OverlayCount" => OverlayCount(i(0)),
+        "Geno_OverlayAnim" => OverlayAnim(i(0), i(1)),
+        "Geno_CommonMoveTag" => 0,
+        "Geno_StateCount" => StateCount(i(0)),
+        "Geno_StateCounter" => StateCounter(i(0), i(1), i(2)),
+        "Geno_HookCount" => HookCount(i(0), i(1)),
+        "Geno_ArticleCount" => ArticleCount(i(0)),
+        "Geno_MaxJumps" => MaxJumps(i(0)),
+        "Geno_SpecialSelect" => SpecialSelect(i(0), i(1), i(2)),
+        "Geno_DefineBaseKind" | "Geno_DefineBaseCK" | "Geno_DefineArtBaseCK" | "Geno_DefineAiLike" => -1,
+        "Geno_DefineIsNone" | "Geno_DefinePlanInt" | "Geno_DefineCount" => 0,
+        _ => return None,
+    };
+    Some(v as i64 as u64)
+}

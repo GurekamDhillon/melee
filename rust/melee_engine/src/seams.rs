@@ -364,6 +364,12 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
             return Some(v);
         }
     }
+    // Geno's scalar API reached by name (script_game's and others' `ext_fns!` callees)
+    if name.starts_with("Geno_") {
+        if let Some(v) = crate::geno_host::by_name(name, args) {
+            return Some(v);
+        }
+    }
     if let Some(v) = ext_hand(name, args) {
         return Some(v);
     }

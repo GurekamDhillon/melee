@@ -15,6 +15,17 @@ inside Fighter_MotionVars (0xAC). GC offsets (gc_decode / GcLayout) are unchange
 import sys
 
 PATCHES = [
+    ("""pub struct itGamewatchchef_ItemVars {
+    pub x0: i32,
+    pub x4: i32,
+}""", """pub struct itGamewatchchef_ItemVars {
+    pub x0: i32,
+    /// native only (gen/native_unions.py): x0 and this word are `gamewatch.attr`'s 8-byte pointer (it_8027CE64 stores it
+    /// after it_802C84A0 set x4; in the C the 4-byte attr is x0 alone)
+    pub _attr_hi: i32,
+    pub x4: i32,
+}"""),
+    ("const _: () = assert!(core::mem::size_of::<itGamewatchchef_ItemVars>() == 8);", "const _: () = assert!(core::mem::size_of::<itGamewatchchef_ItemVars>() == 12);"),
     # ftCommon itemthrow: x18/x1C are UNK_T (never used as pointers); the C's x20 is fp+2360, the slot ftCo_Guard's
     # guard.x20 (an int) writes before the item throw reads it (ftCo_8009515C). 8-byte pointers moved x20 to mv+0x28.
     ("""    pub x14: i32,

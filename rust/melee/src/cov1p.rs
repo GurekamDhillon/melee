@@ -236,6 +236,20 @@ fn frame_post_hook() {
         }
         line.push('\n');
         let _ = r.out.write_all(line.as_bytes());
+        if std::env::var_os("MELEE_ENGINE_ITEMS").is_some() {
+            // the live items' hashed fields (the C side: a MELEE_SNAP_DUMP snapshot of the same frame)
+            unsafe {
+                let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize);
+                while !g.is_null() {
+                    let ip = (*g).user_data as *mut melee_types::Item;
+                    if !ip.is_null() {
+                        let (p, v) = (&(*ip).pos, &(*ip).x40_vel);
+                        eprintln!("f{} item kind {} msid {} pos {:.4} {:.4} {:.4} vel {:.4} {:.4} {:.4}", r.ra.match_frame, (*ip).kind as i32, (*ip).msid as i32, p.x, p.y, p.z, v.x, v.y, v.z); if (*ip).kind as i32 == 46 { let o = &(*ip).xDD4_itemVar.oldottosea; eprintln!("   ott @{:p} x24 {} x28 {} x2C {:x} frame {} spd {}", &raw const o.x28, o.x24, o.x28, o.x2C, (*ip).x5CC_currentAnimFrame, (*ip).x5D0_animFrameSpeed); }
+                    }
+                    g = (*g).next;
+                }
+            }
+        }
         r.written += 1;
     }
     if r.written >= r.rows || !r.ra.run_task() {

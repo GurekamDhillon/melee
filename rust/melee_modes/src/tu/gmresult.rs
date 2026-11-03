@@ -172,10 +172,11 @@ pub mod ext {
     /// the two fixed arguments only.
     pub unsafe fn lbArchive_80016DBC(filename: *const i8, symbols: *mut c_void, _rest: &[*const c_void]) -> *mut HSD_Archive {
         use crate::oracle::{arg, ext_call, OVal, K};
-        if let Some(v) = ext_call("lbArchive_80016DBC", &[arg(filename), arg(symbols)], K::P) {
-            return <*mut HSD_Archive as OVal>::from_bits(v);
-        }
-        panic!("TODO(ext) lbArchive_80016DBC: its TU is not ported")
+        // the recorder first; else lbarchive.c (melee_runtime), `rest` after the symbols pointer being the (name, out, ..., NULL) list
+        ext_call("lbArchive_80016DBC", &[arg(filename), arg(symbols)], K::P).map(<*mut HSD_Archive as OVal>::from_bits).unwrap_or_else(|| {
+            let all: std::vec::Vec<*mut c_void> = core::iter::once(symbols).chain(_rest.iter().map(|p| *p as *mut c_void)).collect();
+            melee_runtime::tu::lbarchive::lbArchive_80016DBC(filename as _, &all) as _
+        })
     }
     /// lb_00B0.c, variadic in C: `(jobj, out, id, -1)`; fixed arguments logged only.
     pub unsafe fn lb_80011E24(a0: *mut HSD_JObj, a1: *mut *mut HSD_JObj, _rest: &[i32]) -> i32 { unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(a0 as _, a1 as _, _rest as _) as _ } }

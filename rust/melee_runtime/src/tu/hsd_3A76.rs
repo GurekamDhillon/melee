@@ -31,47 +31,70 @@ pub mod ext {
     /// `HSD_SisLib_FontAtlas` base (sislib_font.c): 287 glyph textures of 0x200 bytes.
     pub use crate::tu::sislib_font::HSD_SisLib_FontAtlas;
     /// A GameCube pointer stored in a SIS stream (host memory model).
-    pub fn gc_ptr_to_u32(p: *const u8) -> u32 { todo!("gc_ptr_to_u32 (guest address of a SIS stream position)") }
-    pub fn gc_u32_to_ptr(a: u32) -> *mut u8 { todo!("gc_u32_to_ptr (SIS stream position of a guest address)") }
+    /// SIS stream positions as the 32-bit words the stream stores. A pointer that is not a 32-bit address gets a handle
+    /// from a dedup table (0xF000_0000 | index), so the push / pop round trip returns the same pointer.
+    pub fn gc_ptr_to_u32(p: *const u8) -> u32 {
+        let a = p as usize;
+        if a < 0xF000_0000 {
+            return a as u32;
+        }
+        let t = unsafe { &mut *core::ptr::addr_of_mut!(SIS_PTRS) };
+        let i = match t.iter().position(|&x| x == a) {
+            Some(i) => i,
+            None => {
+                t.push(a);
+                t.len() - 1
+            }
+        };
+        0xF000_0000 | i as u32
+    }
+    static mut SIS_PTRS: std::vec::Vec<usize> = std::vec::Vec::new();
+    pub fn gc_u32_to_ptr(a: u32) -> *mut u8 {
+        if a >= 0xF000_0000 {
+            let t = unsafe { &*core::ptr::addr_of!(SIS_PTRS) };
+            return t.get((a & 0x0FFF_FFFF) as usize).copied().unwrap_or(0) as *mut u8;
+        }
+        a as usize as *mut u8
+    }
     pub fn HSD_GObjGetUserData(gobj: *mut HSD_GObj) -> *mut c_void { unsafe { melee_types::inline::HSD_GObjGetUserData(&*(gobj as *const _)) as _ } }
-    pub fn Mex_Enabled(name: &str) -> bool { todo!("Mex_Enabled (pc/platform mex)") }
+    pub fn Mex_Enabled(name: &str) -> bool { false }
     pub fn HSD_StateSetZMode(enable: u32, func: u32, update: u32) { unsafe { crate::tu::state_native::HSD_StateSetZMode(enable as _, func as _, update as _); } }
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { crate::tu::cobj::HSD_CObjGetCurrent() } }
-    pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { todo!("HSD_CObjGetViewingMtx (baselib/cobj.c)") }
-    pub fn GXSetZMode(a: u32, b: u32, c: u32) { }
-    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { }
-    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { }
+    pub fn HSD_CObjGetViewingMtx(cobj: *mut HSD_CObj, mtx: *mut [f32; 4]) { unsafe { crate::tu::cobj::HSD_CObjGetViewingMtx(cobj, mtx) } }
+    pub fn GXSetZMode(a: u32, b: u32, c: u32) { crate::tu::psdisp::ext::GXSetZMode(a as _, b as _, c as _) }
+    pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, n: f32, f: f32) { crate::tu::cobj::ext::GXSetViewport(l, t, w, h, n, f) }
+    pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { crate::tu::cobj::ext::GXSetScissor(l, t, w, h) }
     pub fn MTXOrtho(mtx: *mut [f32; 4], t: f32, b: f32, l: f32, r: f32, n: f32, f: f32) { unsafe { crate::tu::mtx44::raw::MTXOrtho(mtx as _, t as _, b as _, l as _, r as _, n as _, f as _); } }
-    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { }
-    pub fn GXSetCurrentMtx(id: u32) { }
+    pub fn GXSetProjection(mtx: *mut [f32; 4], ty: u32) { crate::tu::cobj::ext::GXSetProjection(mtx as _, ty) }
+    pub fn GXSetCurrentMtx(id: u32) { crate::tu::sobjlib::ext::GXSetCurrentMtx(id as _) }
     pub fn GXLoadPosMtxImm(mtx: *mut [f32; 4], id: u32) { unsafe { crate::tu::pobj::native::mx::GXLoadPosMtxImm(mtx as _, id as _); } }
-    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { }
+    pub fn GXSetTexCoordGen2(coord: u32, ty: u32, src: u32, mtx: u32, normalize: u32, post_mtx: u32) { crate::tu::sobjlib::ext::GXSetTexCoordGen2(coord as _, ty as _, src as _, mtx as _, normalize as _, post_mtx as _) }
     pub fn HSD_StateSetNumChans(n: u32) { unsafe { crate::tu::tev_native::HSD_StateSetNumChans(n as _); } }
-    pub fn GXSetNumChans(n: u32) { }
-    pub fn GXClearVtxDesc() { }
-    pub fn GXSetCullMode(mode: u32) { }
-    pub fn GXSetNumTexGens(n: u32) { }
-    pub fn GXSetNumTevStages(n: u32) { }
-    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { }
-    pub fn GXSetVtxDesc(attr: u32, ty: u32) { }
-    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { }
-    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { }
-    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { }
-    pub fn GXSetColorUpdate(on: u32) { }
-    pub fn GXSetAlphaUpdate(on: u32) { }
-    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
-    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
-    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { }
-    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { }
-    pub fn GXSetTevColor(id: u32, color: GXColor) { }
-    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { }
-    pub fn GXSetTevKColor(id: u32, color: GXColor) { }
-    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { }
-    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { }
-    pub fn GXTexCoord2f32(s: f32, t: f32) { }
+    pub fn GXSetNumChans(n: u32) { crate::tu::displayfunc_native::ext::GXSetNumChans(n as _) }
+    pub fn GXClearVtxDesc() { crate::tu::sobjlib::ext::GXClearVtxDesc() }
+    pub fn GXSetCullMode(mode: u32) { crate::tu::sobjlib::ext::GXSetCullMode(mode as _) }
+    pub fn GXSetNumTexGens(n: u32) { crate::tu::sobjlib::ext::GXSetNumTexGens(n as _) }
+    pub fn GXSetNumTevStages(n: u32) { crate::tu::sobjlib::ext::GXSetNumTevStages(n as _) }
+    pub fn GXSetVtxAttrFmt(fmt: u32, attr: u32, cnt: u32, ty: u32, frac: u32) { crate::tu::sobjlib::ext::GXSetVtxAttrFmt(fmt as _, attr as _, cnt as _, ty as _, frac as _) }
+    pub fn GXSetVtxDesc(attr: u32, ty: u32) { crate::tu::sobjlib::ext::GXSetVtxDesc(attr as _, ty as _) }
+    pub fn GXSetTevOrder(stage: u32, coord: u32, map: u32, color: u32) { crate::tu::sobjlib::ext::GXSetTevOrder(stage as _, coord as _, map as _, color as _) }
+    pub fn GXSetBlendMode(ty: u32, src: u32, dst: u32, op: u32) { crate::tu::sobjlib::ext::GXSetBlendMode(ty as _, src as _, dst as _, op as _) }
+    pub fn GXSetAlphaCompare(c0: u32, r0: u32, op: u32, c1: u32, r1: u32) { crate::tu::sobjlib::ext::GXSetAlphaCompare(c0 as _, r0 as _, op as _, c1 as _, r1 as _) }
+    pub fn GXSetColorUpdate(on: u32) { crate::tu::sobjlib::ext::GXSetColorUpdate(on as _) }
+    pub fn GXSetAlphaUpdate(on: u32) { crate::tu::sobjlib::ext::GXSetAlphaUpdate(on as _) }
+    pub fn GXSetTevColorIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { crate::tu::sobjlib::ext::GXSetTevColorIn(stage as _, a as _, b as _, c as _, d as _) }
+    pub fn GXSetTevColorOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { crate::tu::sobjlib::ext::GXSetTevColorOp(stage as _, op as _, bias as _, scale as _, clamp as _, out as _) }
+    pub fn GXSetTevAlphaOp(stage: u32, op: u32, bias: u32, scale: u32, clamp: u32, out: u32) { crate::tu::sobjlib::ext::GXSetTevAlphaOp(stage as _, op as _, bias as _, scale as _, clamp as _, out as _) }
+    pub fn GXSetTevAlphaIn(stage: u32, a: u32, b: u32, c: u32, d: u32) { crate::tu::sobjlib::ext::GXSetTevAlphaIn(stage as _, a as _, b as _, c as _, d as _) }
+    pub fn GXSetTevColor(id: u32, color: GXColor) { crate::tu::sobjlib::ext::GXSetTevColor(id as _, color as _) }
+    pub fn GXSetTevKAlphaSel(stage: u32, sel: u32) { crate::tu::sobjlib::ext::GXSetTevKAlphaSel(stage as _, sel as _) }
+    pub fn GXSetTevKColor(id: u32, color: GXColor) { crate::tu::sobjlib::ext::GXSetTevKColor(id as _, color as _) }
+    pub fn GXBegin(prim: u32, fmt: u32, n: u16) { crate::tu::sobjlib::ext::GXBegin(prim as _, fmt as _, n as _) }
+    pub fn GXPosition3f32(x: f32, y: f32, z: f32) { crate::tu::psdisp::ext::GXPosition3f32(x as _, y as _, z as _) }
+    pub fn GXTexCoord2f32(s: f32, t: f32) { crate::tu::sobjlib::ext::GXTexCoord2f32(s as _, t as _) }
     pub fn GXEnd() { unsafe { crate::tu::sobjlib::GXEnd() } }
-    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { }
-    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { }
+    pub fn GXInitTexObj(obj: *mut GXTexObj, data: *mut u8, w: u16, h: u16, fmt: u32, wrap_s: u32, wrap_t: u32, mipmap: u8) { crate::tu::sobjlib::ext::GXInitTexObj(obj as _, data as _, w as _, h as _, fmt as _, wrap_s as _, wrap_t as _, mipmap as _) }
+    pub fn GXLoadTexObj(obj: *mut GXTexObj, map: u32) { crate::tu::sobjlib::ext::GXLoadTexObj(obj as _, map as _) }
     pub fn HSD_StateInvalidate(mask: i32) { unsafe { crate::tu::state_native::HSD_StateInvalidate(mask as _); } }
     pub fn lbArchive_LoadArchive(path: *mut i8) -> *mut HSD_Archive { unsafe { crate::tu::lbarchive::lbArchive_LoadArchive(path as _) } }
     pub fn lbArchive_80016EFC(archive: *mut HSD_Archive) { unsafe { crate::tu::lbarchive::lbArchive_80016EFC(archive) } }

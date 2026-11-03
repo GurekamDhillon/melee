@@ -16,7 +16,7 @@ out="${TEMP:-/tmp}/rematch.$$"; mkdir -p "$out"
 export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1
 fail=0
 run() { # name script matches
-  MELEE_PAD_SCRIPT="$here/$2" "$exe" play $mode --no-audio --skip-intro --iso "$GW_ISO_VANILLA" --time-secs 60 --quit-at-results \
+  MELEE_STANDIN_MENUS=1 MELEE_PAD_SCRIPT="$here/$2" "$exe" play $mode --no-audio --skip-intro --iso "$GW_ISO_VANILLA" --time-secs 60 --quit-at-results \
     --quit-after-matches "$3" --max-frames 60000 >"$out/$1.log" 2>&1; rc=$?
   n=$(grep -c "^play: results of match" "$out/$1.log")
   grep "^play: \(loading\|results of\|mem after\)" "$out/$1.log"

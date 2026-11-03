@@ -39,7 +39,7 @@ pub mod ext {
     pub unsafe extern "C" fn gm_ModeState_Prize_OnEnter(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_Prize_OnEnter", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gm_1BFA::gm_ModeState_Prize_OnEnter(p0 as _); } return; } }
     pub unsafe extern "C" fn gm_ModeState_Prize_OnExit(p0: *mut GameModeState) { if let Some(h) = HOOK { h("gm_ModeState_Prize_OnExit", &[A::P(p0 as usize)]); return; } { unsafe { crate::tu::gmmovieend::gm_ModeState_Prize_OnExit(p0 as _); } return; } }
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
-    pub static mut gmVsMelee_ApproachData: VsApproachData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::globals::gmVsMelee_ApproachData;
     pub use crate::tu::gmvsmelee::gmVsMelee_CssData;
     pub use crate::tu::gmvsmelee::gmVsMelee_ResultsEnterData;
     pub use crate::tu::gmvsmelee::gmVsMelee_SssData;

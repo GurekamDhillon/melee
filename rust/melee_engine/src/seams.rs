@@ -4,6 +4,7 @@
 //! turns out to carry game logic belongs in its TU instead.
 
 use melee_types::{OSAlarm, OSContext};
+use core::ffi::c_void;
 
 type AlarmHandler = unsafe extern "C" fn(*mut OSAlarm, *mut OSContext);
 
@@ -11,18 +12,58 @@ type AlarmHandler = unsafe extern "C" fn(*mut OSAlarm, *mut OSContext);
 /// interrupt here: the engine fires it once per frame (`fire_alarm`), the 60 Hz case.
 static mut ALARM: Option<AlarmHandler> = None;
 
+/// The movie player's frame alarm (lb/lbmthp.c `lbMthp_8001F410`: `OSSetPeriodicAlarm(&alarm, OSSecondsToTicks(1/60), ...,
+/// fn_8001F2A4)`, cancelled by `lbMthp_8001F800`). Its period is one 60 Hz frame, so it fires with the pad alarm. Without it
+/// the display counter never advances and the opening movie (gm_Scene_Opening_OnFrame) never reaches its end.
+static mut MOVIE_ALARM: (Option<AlarmHandler>, *mut OSAlarm) = (None, core::ptr::null_mut());
+
 /// One alarm period elapsed.
 pub fn fire_alarm() {
     unsafe {
         if let Some(h) = ALARM {
             h(core::ptr::null_mut(), core::ptr::null_mut());
         }
+        if let (Some(h), a) = MOVIE_ALARM {
+            h(a, core::ptr::null_mut());
+        }
+        // the movie's disc reads issued up to now complete (dvd.rs host_dev_com_deferred)
+        crate::dvd::run_deferred_completions();
     }
 }
 
-/// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`): the
-/// headless engine only stores them in `HSD_VIData`, so zeroed records stand in.
-static mut RMODES: [melee_types::GXRenderModeObj; 4] = unsafe { core::mem::zeroed() };
+/// The GX render mode objects (`GXNtsc480Prog` / `GXNtsc480IntDf` / `GXNtsc480Int`, `gmMainLib_803D4A80`), with the
+/// Dolphin SDK's values (gmMainLib_803D4A80 is gm/gmmain_lib.c's). `HSD_VIData` keeps the chosen one; the HSD cameras
+/// scale their viewports by `fbWidth / viWidth` and `efbHeight / viHeight` (cobj.c setupNormalCamera), so zeroed records
+/// made every normal-camera viewport NaN (0 * inf): the Pokemon Stadium screen camera, the SIS text cameras and so on.
+static mut RMODES: [melee_types::GXRenderModeObj; 4] = {
+    const fn mode(tv: u32, xfb: u32, vfilter: [u8; 7]) -> melee_types::GXRenderModeObj {
+        melee_types::GXRenderModeObj {
+            viTVmode: tv,
+            fbWidth: 640,
+            efbHeight: 480,
+            xfbHeight: 480,
+            viXOrigin: 40,
+            viYOrigin: 0,
+            viWidth: 640,
+            viHeight: 480,
+            xFBmode: xfb,
+            field_rendering: 0,
+            aa: 0,
+            sample_pattern: [[6, 6]; 12],
+            vfilter,
+        }
+    }
+    const NTSC_INT: u32 = 0; // VI_TVMODE_NTSC_INT
+    const NTSC_PROG: u32 = 2; // VI_TVMODE_NTSC_PROG
+    const SF: u32 = 0; // VI_XFBMODE_SF
+    const DF: u32 = 1; // VI_XFBMODE_DF
+    [
+        mode(NTSC_PROG, SF, [0, 0, 21, 22, 21, 0, 0]),
+        mode(NTSC_INT, DF, [8, 8, 10, 12, 10, 8, 8]),
+        mode(NTSC_INT, DF, [0, 0, 21, 22, 21, 0, 0]),
+        mode(NTSC_PROG, SF, [8, 8, 10, 12, 10, 8, 8]),
+    ]
+};
 
 unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi::c_void {
     p
@@ -30,6 +71,9 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
 
 pub fn install() {
     unsafe {
+        // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
+        // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
+        crate::ext_dispatch::install_tu_ext();
         {
             // gm_801A4014's leave path (a scene ending inside one run: `melee play`'s next match) reads the reset flag
             // of gmMainLib_8046B0F0 (gm/gmmain_lib.c); nothing on the engine path sets it (no reset button).
@@ -146,6 +190,11 @@ pub fn install() {
             let _ = k;
         }
 
+        {
+            use melee_runtime::tu::lbmthp::ext as mt;
+            mt::H_OSSetPeriodicAlarm = Some(|a, _, _, h| unsafe { MOVIE_ALARM = (h, a) });
+            mt::H_OSCancelAlarm = Some(|_| unsafe { MOVIE_ALARM = (None, core::ptr::null_mut()) });
+        }
         use melee_modes::tu::lb_0195::ext::hook as l;
         l::OSCancelAlarm = Some(|_| {});
         l::OSCreateAlarm = Some(|_| {});
@@ -248,9 +297,185 @@ unsafe fn ar_addr(addr: u32, len: usize) -> *mut u8 {
 /// By-name `ext_fns!` callees (the `melee_modes::tu::ext_hook` form) that are real canonical functions, not "feature off":
 /// `ext_fallback` asks here first. Arguments and results are the hook's 64-bit words (floats as their bits).
 pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
+    // the retail scenes only: VS mode keeps the native character / stage select (the C build's MELEE_NATIVE_CSS=1),
+    // never the port's own kit screens
+    if name == "Frontend_NativeSelect" {
+        return Some(1);
+    }
+    // the sound stack the `melee` crate runs (melee_audio's sim, as in the match), when on
+    if name.starts_with("lbAudioAx_") {
+        if let Some(v) = melee_modes::tu::ext_hook::audio_route(name, args) {
+            return Some(v);
+        }
+    }
+    if let Some(v) = ext_hand(name, args) {
+        return Some(v);
+    }
+    if let Some(v) = unsafe { crate::ext_dispatch::dispatch(name, args) } {
+        return Some(v);
+    }
+    if let Some(v) = crate::ext_dispatch::seam_off(name) {
+        log_stub(name, v);
+        return Some(v);
+    }
+    None
+}
+
+/// The callees the generated table cannot spell (C varargs, inlines of other calls, the engine's DVD); checked first.
+fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
     Some(match name {
+        // GX calls reached by name (string-hook TUs): the bridge / the SDK size formula, not the "off" zero
+        "GXSetScissor" => { crate::gxbridge::GXSetScissor(args[0] as u32, args[1] as u32, args[2] as u32, args[3] as u32); 0 }
+        "GXGetTexBufferSize" => gx_tex_buffer_size(args[0] as u16, args[1] as u16, args[2] as u32, args[3] as u8, args[4] as u8) as u64,
+        // ft/ftdemo.c (melee_fighter tu::ftdemo, snake_case names the dispatcher cannot match)
+        "ftDemo_ObjAllocInit" => { melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init(); 0 }
+        "ftDemo_CreateFighter" => unsafe {
+            melee_fighter::tu::ftdemo::ftdemo_create_fighter(&*(args[0] as usize as *const melee_types::plAllocInfo2)) as usize as u64
+        },
+        "ftDemo_SetArchiveData" => {
+            melee_fighter::tu::ftdemo::ftdemo_set_archive_data(args[0] as i32, args[1] as usize as *mut melee_types::HSD_Archive, args[2] as i32);
+            0
+        }
+        "ftDemo_GetMotionFileString" => melee_fighter::tu::ftdemo::ftdemo_get_motion_file_string(args[0] as i32, args[1] as i32) as usize as u64,
+        "ftDemo_SetFacingDirection" => {
+            melee_fighter::tu::ftdemo::ftdemo_set_facing_direction(args[0] as usize as *mut melee_types::HSD_GObj, f32::from_bits(args[1] as u32));
+            0
+        }
+        "lbArchive_LoadSymbols" => unsafe {
+            let rest: Vec<*mut c_void> = args[1..].iter().map(|&w| w as usize as *mut c_void).collect();
+            melee_runtime::tu::lbarchive::lbArchive_LoadSymbols(args[0] as usize as *const core::ffi::c_char, &rest) as usize as u64
+        },
+        "lbArchive_LoadSections" => unsafe {
+            let rest: Vec<*mut c_void> = args[1..].iter().map(|&w| w as usize as *mut c_void).collect();
+            melee_runtime::tu::lbarchive::lbArchive_LoadSections(args[0] as usize as *mut melee_types::HSD_Archive, &rest);
+            0
+        },
+        "HSD_SisLib_803A6B98" => unsafe {
+            let s = c_format(args[3], &args[4..]);
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(args[0] as usize as *mut melee_types::HSD_Text, f32::from_bits(args[1] as u32), f32::from_bits(args[2] as u32), Some(&s)) as i64 as u64
+        },
+        "OSReport" => 0,
+        // gw_runtime.c gw_GxTex_OpenEnv: MELEE_MENUTEX names a replacement texture; unset (no mods) it is -1 and the
+        // CSS keeps the disc's art. The handle queries answer like the C does for a bad handle.
+        "GxTex_OpenEnv" | "GxTex_OpenUI" => -1i64 as u64,
+        "GxTex_Width" | "GxTex_Height" | "GxTex_ImageSize" | "GxTex_TlutSize" | "GxTex_TlutEntries" => 0,
+        "GxTex_Format" | "GxTex_TlutFormat" => -1i64 as u64,
+        "GxTex_Close" | "GxTex_CopyImage" | "GxTex_CopyTlut" => 0,
+        "HSD_SisLib_803A70A0" => unsafe {
+            let s = c_format(args[2], &args[3..]);
+            melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(args[0] as usize as *mut melee_types::HSD_Text, args[1] as i32, Some(&s)) as i64 as u64
+        },
+        // aobj.c HSD_ForeachAnim(obj, type, mask, func, arg_type, ...): the one variadic read by arg_type
+        // (AOBJ_ARG_*F: a double, *V: a pointer, *U: a u32, A / AO / AOT: none)
+        "HSD_ForeachAnim" => unsafe {
+            use melee_runtime::tu::aobj::CallbackArg;
+            let at = args[4] as u32;
+            let w = args.get(5).copied().unwrap_or(0);
+            let arg = match at {
+                1 | 5 | 9 => CallbackArg { f: f64::from_bits(w) as f32 },
+                2 | 6 | 10 => CallbackArg { v: w as usize as *mut c_void },
+                3 | 7 | 11 => CallbackArg { d: w as u32 },
+                _ => CallbackArg { d: 0 },
+            };
+            melee_runtime::tu::aobj::HSD_ForeachAnim(args[0] as usize as *mut c_void, args[1] as _, args[2] as _, args[3] as usize as *mut c_void, at as _, arg);
+            0
+        },
+        "DVDConvertPathToEntrynum" => crate::dvd::DVDConvertPathToEntrynum(args[0] as usize as *const core::ffi::c_char) as i64 as u64,
+        // baselib/jobj.c HSD_JObjReqAnim: HSD_JObjReqAnimByFlags(jobj, 0x7FF, frame)
+        "HSD_JObjReqAnim" => unsafe {
+            melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimByFlags(args[0] as usize as *mut melee_types::HSD_JObj, 0x7FF, f32::from_bits(args[1] as u32));
+            0
+        },
+        "HSD_JObjRemoveAll" => unsafe { melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(args[0] as usize as *mut melee_types::HSD_JObj); 0 },
+        // lb_80011E24(root, out, idx, ..., -1): the variadic index list
+        "lb_80011E24" => unsafe {
+            let idx: Vec<i32> = args[2..].iter().map(|&w| w as i32).collect();
+            melee_runtime::tu::lbspdisplay::lb_80011E24(args[0] as usize as *mut melee_types::HSD_JObj, args[1] as usize as *mut *mut melee_types::HSD_JObj, &idx) as i64 as u64
+        },
+        "fabsf" => f32::from_bits(args[0] as u32).abs().to_bits() as u64,
         "__frsqrte" => melee_runtime::tu::gekko_fp::__frsqrte(f64::from_bits(args[0])).to_bits(),
         "__fres" => melee_runtime::tu::gekko_fp::__fres(f64::from_bits(args[0])).to_bits(),
         _ => return None,
     })
+}
+
+/// A C `printf` of `fmt` (a NUL-terminated guest string) with its variadic words: %s %d %i %u %x %X %c %%, widths kept.
+pub unsafe fn c_format(fmt: u64, va: &[u64]) -> String {
+    let cstr = |p: u64| if p == 0 { String::new() } else { unsafe { std::ffi::CStr::from_ptr(p as usize as *const core::ffi::c_char) }.to_string_lossy().into_owned() };
+    let f = cstr(fmt);
+    let mut out = String::new();
+    let mut it = f.chars().peekable();
+    let mut k = 0;
+    while let Some(c) = it.next() {
+        if c != '%' { out.push(c); continue; }
+        let mut spec = String::new();
+        while let Some(&d) = it.peek() { if d.is_ascii_digit() || d == '-' || d == '.' || d == 'l' { spec.push(d); it.next(); } else { break; } }
+        let width: usize = spec.trim_start_matches('-').trim_start_matches('0').split('.').next().unwrap_or("").trim_end_matches('l').parse().unwrap_or(0);
+        let zero = spec.starts_with('0');
+        let w = va.get(k).copied().unwrap_or(0);
+        let body = match it.next() {
+            Some('%') => { out.push('%'); continue; }
+            Some('s') => { k += 1; cstr(w) }
+            Some('d') | Some('i') => { k += 1; (w as i32).to_string() }
+            Some('u') => { k += 1; (w as u32).to_string() }
+            Some('x') => { k += 1; format!("{:x}", w as u32) }
+            Some('X') => { k += 1; format!("{:X}", w as u32) }
+            Some('c') => { k += 1; ((w as u8) as char).to_string() }
+            Some(o) => { k += 1; o.to_string() }
+            None => break,
+        };
+        if body.len() < width { out.push_str(&(if zero { "0" } else { " " }).repeat(width - body.len())); }
+        out.push_str(&body);
+    }
+    out
+}
+
+/// `MELEE_LOG_STUBS=1`: the first call of each host seam answered with its "off" value through the by-name table
+/// (`engine: stub NAME -> VALUE`), so a run lists which ones a scene actually reached.
+fn log_stub(name: &str, v: u64) {
+    use std::sync::{Mutex, OnceLock};
+    static ON: OnceLock<bool> = OnceLock::new();
+    static SEEN: Mutex<Vec<String>> = Mutex::new(Vec::new());
+    if !*ON.get_or_init(|| std::env::var_os("MELEE_LOG_STUBS").is_some_and(|v| v != "0")) {
+        return;
+    }
+    let mut seen = SEEN.lock().unwrap();
+    if !seen.iter().any(|s| s == name) {
+        seen.push(name.to_string());
+        eprintln!("engine: stub {name} -> {v:#x}");
+    }
+}
+
+/// `OSTicksToCalendarTime` (extern/aurora/lib/dolphin/os/OSTime.cpp, which the C PC build links): `ticks` are UTC relative
+/// to the GameCube epoch (2000-01-01 00:00:00), broken up in the local time zone. Written natively (the C byte-swaps for
+/// its big-endian readers; the Rust TUs read the record natively).
+pub fn os_ticks_to_calendar_time(ticks: i64, td: *mut melee_types::OSCalendarTime) {
+    const OS_TIMER_CLOCK: i64 = 162_000_000 / 4;
+    let us = ticks / (OS_TIMER_CLOCK / 125_000) * 8; // OSTicksToMicroseconds: ticks * 8 / (clock / 125000)
+    let unix_us = us + 946_684_800i64 * 1_000_000;
+    let secs = unix_us.div_euclid(1_000_000);
+    let sub_us = unix_us.rem_euclid(1_000_000) as i32;
+    #[repr(C)]
+    #[derive(Default)]
+    struct Tm { sec: i32, min: i32, hour: i32, mday: i32, mon: i32, year: i32, wday: i32, yday: i32, isdst: i32 }
+    let mut tm = Tm::default();
+    #[cfg(windows)]
+    {
+        extern "C" { fn _localtime64_s(tm: *mut Tm, t: *const i64) -> i32; }
+        unsafe { _localtime64_s(&mut tm, &secs) };
+    }
+    #[cfg(not(windows))]
+    {
+        extern "C" { fn localtime_r(t: *const i64, tm: *mut Tm) -> *mut Tm; }
+        unsafe { localtime_r(&secs, &mut tm) };
+    }
+    if td.is_null() {
+        return;
+    }
+    unsafe {
+        *td = melee_types::OSCalendarTime {
+            sec: tm.sec, min: tm.min, hour: tm.hour, mday: tm.mday, mon: tm.mon, year: tm.year + 1900, wday: tm.wday,
+            yday: tm.yday, msec: sub_us / 1000, usec: sub_us % 1000,
+        };
+    }
 }

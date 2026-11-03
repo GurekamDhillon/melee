@@ -102,72 +102,9 @@ pub struct U32Pair {
     pub hi: u32,
 }
 
-/// `lbl_8046E3AC_t` (GC size 0x2314): the results-screen state.
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct lbl_8046E3AC_t {
-    /// 0x00: `x0_0:4` (bits 7..4), `x0_4:2` (bits 3..2), `x0_6:2` (bits 1..0), MSB-first as on the GameCube
-    pub bf_0: u8,
-    /// 0x01
-    pub player_flags: [u8; 4],
-    /// 0x05
-    pub pad_x5: u8,
-    /// 0x06
-    pub x6: [u16; 4],
-    /// 0x0E
-    pub variant: [u8; 4],
-    /// 0x12
-    pub pad_12: [u8; 2],
-    /// 0x14
-    pub char_kind: [i32; 4],
-    /// 0x24
-    pub costume_override: [u8; 4],
-    /// 0x28
-    pub match_end: MatchEnd,
-    /// 0x22A4
-    pub scissor_x: [u16; 4],
-    /// 0x22AC
-    pub scissor_y: [u16; 4],
-    /// 0x22B4
-    pub dim_w1: [u16; 4],
-    /// 0x22BC
-    pub dim_w2: [u16; 4],
-    /// 0x22C4
-    pub dim_h1: [u16; 4],
-    /// 0x22CC
-    pub dim_h2: [u16; 4],
-    /// 0x22D4
-    pub score_tbl: [PackedS16x4; 4],
-    /// 0x22F4
-    pub x22F4: [PackedS16x4; 4],
-}
+/// `lbl_8046E3AC_t` (GC size 0x2314): the results-screen state (melee_types; one global with gmresultplayer.c).
+pub type lbl_8046E3AC_t = melee_types::lbl_8046E3AC_t;
 
-impl lbl_8046E3AC_t {
-    #[inline]
-    pub fn x0_0(&self) -> u8 {
-        (self.bf_0 >> 4) & 0xF
-    }
-    #[inline]
-    pub fn set_x0_0(&mut self, v: u8) {
-        self.bf_0 = (self.bf_0 & 0x0F) | ((v & 0xF) << 4);
-    }
-    #[inline]
-    pub fn x0_4(&self) -> u8 {
-        (self.bf_0 >> 2) & 0x3
-    }
-    #[inline]
-    pub fn set_x0_4(&mut self, v: u8) {
-        self.bf_0 = (self.bf_0 & !0x0C) | ((v & 0x3) << 2);
-    }
-    #[inline]
-    pub fn x0_6(&self) -> u8 {
-        self.bf_0 & 0x3
-    }
-    #[inline]
-    pub fn set_x0_6(&mut self, v: u8) {
-        self.bf_0 = (self.bf_0 & !0x03) | (v & 0x3);
-    }
-}
 
 /// `ResultsDisplayData` (GC size 0x1DC): the image descriptors the per-player cameras render into.
 #[repr(C)]
@@ -200,23 +137,23 @@ pub struct ResultsCharacterData {
 pub static mut lbl_8046E1B0: ResultsDisplayData = unsafe { core::mem::zeroed() };
 pub static mut lbl_8046E38C: [*mut HSD_GObj; 4] = [core::ptr::null_mut(); 4];
 pub static mut lbl_8046E39C: [*mut HSD_JObj; 4] = [core::ptr::null_mut(); 4];
-pub static mut lbl_8046E3AC: lbl_8046E3AC_t = unsafe { core::mem::zeroed() };
+pub use crate::tu::gmresultplayer::lbl_8046E3AC;
 
 /// Callees (and data) in TUs that are not ported yet.
 pub mod ext {
     use super::*;
-    pub static mut lbl_8046DBE8: ResultsData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmresult::lbl_8046DBE8;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
-    pub static mut lbl_803B7B68: ResultsPlayerConfig = unsafe { core::mem::zeroed() };
-    pub static mut gmResultCameraDesc: HSD_CameraDescPerspective = unsafe { core::mem::zeroed() };
-    pub static mut gmResultPlayerColors: [u32; 4] = [0; 4];
+    pub use crate::tu::gmresultplayer::lbl_803B7B68;
+    pub use crate::tu::gmresultplayer::gmResultCameraDesc;
+    pub use crate::tu::gmresultplayer::gmResultPlayerColors;
     /// 32 rows (the C declares an unsized array; the results tables have 32 rows)
-    pub static mut gmResultCharacterScaleData: [CharScaleEntry; 32] = unsafe { core::mem::zeroed() };
-    pub static mut gmResultCharacterData: ResultsCharacterData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmresultplayer::gmResultCharacterScaleData;
+    pub use crate::tu::gmresultplayer::gmResultCharacterData;
     pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
-    pub static mut gmResultScoreTableInit: [u32; 8] = [0; 8];
-    pub static mut gmResultX22F4Init: [u32; 8] = [0; 8];
+    pub use crate::tu::gmresultplayer::gmResultScoreTableInit;
+    pub use crate::tu::gmresultplayer::gmResultX22F4Init;
     ext_fns! {
         fn Camera_800313E0(a0: *mut HSD_GObj, a1: u64);
         fn Camera_Init(a0: i32) = crate::tu::adapt::Camera_Init__cmc;
@@ -872,8 +809,8 @@ pub unsafe fn fn_8017AA78(arg0: *const u8) {
             (*st).match_end.team_standings[team].is_big_loser = 1;
         }
         (*st).x6[i] = 0;
-        (*st).score_tbl[i] = *(core::ptr::addr_of!(ext::gmResultScoreTableInit) as *const PackedS16x4).add(i);
-        (*st).x22F4[i] = *(core::ptr::addr_of!(ext::gmResultX22F4Init) as *const PackedS16x4).add(i);
+        (*st).score_tbl[i] = *(core::ptr::addr_of!(ext::gmResultScoreTableInit) as *const melee_types::PackedS16x4).add(i);
+        (*st).x22F4[i] = *(core::ptr::addr_of!(ext::gmResultX22F4Init) as *const melee_types::PackedS16x4).add(i);
     }
 }
 

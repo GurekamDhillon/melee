@@ -140,7 +140,7 @@ pub mod ext {
     }
 }
 
-use super::gmregclear::HSD_PadMasterStatus;
+use melee_runtime::tu::controller::{HSD_PadCopyStatus, HSD_PadMasterStatus};
 use super::gmresult::lbl_8046DBE8;
 
 
@@ -151,8 +151,6 @@ crate::globals! {
     rw pub gmRst_GenoChrArt: *mut HSD_Archive = null_mut();
     /// `static bool gmRst_GenoChrTried` (a 32-bit int)
     rw pub gmRst_GenoChrTried: i32 = 0;
-    /// baselib/controller.c: `HSD_PadStatus HSD_PadCopyStatus[4]`
-    rw pub HSD_PadCopyStatus: [HSD_PadStatus; 4] = unsafe { core::mem::zeroed() };
     /// gm_1798.c: `lbl_8046E3AC_t lbl_8046E3AC` (that TU is not ported: the state lives here)
     rw pub lbl_8046E3AC: lbl_8046E3AC_t = unsafe { core::mem::zeroed() };
     /// `u32 gmResultPlayerColors[4]` (RGBA)
@@ -312,7 +310,8 @@ crate::globals! {
 crate::globals_ext! {
     rw lbl_8046DBE8 = super::gmresult::lbl_8046DBE8: ResultsData;
     rw lbl_803D6878 = super::gmresult::lbl_803D6878: [super::gmresult::StatsList; 4];
-    rw HSD_PadMasterStatus = super::gmregclear::HSD_PadMasterStatus: [HSD_PadStatus; 4];
+    rw HSD_PadMasterStatus = melee_runtime::tu::controller::HSD_PadMasterStatus: [HSD_PadStatus; 4];
+    rw HSD_PadCopyStatus = melee_runtime::tu::controller::HSD_PadCopyStatus: [HSD_PadStatus; 4];
 }
 
 #[inline]

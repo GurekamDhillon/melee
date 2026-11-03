@@ -158,8 +158,18 @@ impl Engine {
         Ok(())
     }
 
-    fn boot_host(disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
+    fn boot_host(mut disc: Gcm, mem_size: usize, pads: PadSystem) -> Result<(), String> {
         crate::crash::install();
+        // The SIS text renderer's default glyph atlas (`HSD_SisLib_FontAtlas`, main.dol 0x8040CD40, 287 glyphs of 0x200
+        // bytes): dynamic text (the Pokemon Stadium screen's names and time, ...) draws its glyphs from it. Render data
+        // only; a disc without it leaves the pointer null (those glyphs then draw untextured).
+        if let Ok(atlas) = disc.dol_bytes(0x8040_CD40, 0x23E00) {
+            unsafe {
+                let leaked: &'static [u8] = Box::leak(atlas.into_boxed_slice());
+                melee_runtime::tu::sislib_font::HSD_SisLib_FontAtlas = leaked.as_ptr() as *const _;
+                crate::gxbridge::register_host_range(leaked.as_ptr(), leaked.len());
+            }
+        }
         Host::boot(disc, mem_size)?;
         unsafe {
             melee_runtime::tu::gobj_native::HEADLESS_RENDER = std::env::var_os("MELEE_ENGINE_HEADLESS").is_some();
@@ -226,6 +236,20 @@ impl Engine {
                 crate::gxbridge_gen::install_gx();
             }
             crate::seams_gen::install_gen();
+            // the THP decoder's locked cache (the movies): the C build's shim_misc.c gw_LCStoreData / gw_LCQueueWait
+            {
+                use melee_runtime::tu::THPDec::ext as thp;
+                if thp::LCStoreData_HOOK.is_none() {
+                    thp::LCStoreData_HOOK = Some(|d, s, n| { core::ptr::copy(s as *const u8, d as *mut u8, n as usize); 0 });
+                }
+                if thp::LCQueueWait_HOOK.is_none() {
+                    thp::LCQueueWait_HOOK = Some(|_| ());
+                }
+            }
+            // the gmtou_ext! stubs (the title, the tournament screens) call by name: the same table as EXT_FALLBACK
+            if melee_modes::tu::gmtoulib::hook::HOOK.is_none() {
+                melee_modes::tu::gmtoulib::hook::HOOK = Some(crate::seams_gen::ext_fallback);
+            }
             if let Some(f) = POST_LINK { f(); }
             gmmain_lib::gmMainLib_init_statics();
             melee_runtime::tu::perf::__OSBusClock = 162_000_000; // OS_BUS_CLOCK (low memory 0xF8 on a GameCube)
@@ -566,7 +590,9 @@ impl Engine {
                 eprintln!("engine: slow tick {} : {:.1} ms, {n} file parse(s) {:.1} ms", self.frames, el.as_secs_f64() * 1e3, pn as f64 / 1e6);
             }
         }
-        if unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
+        // gm_801A4D34's loop copies to the XFB only on a frame it rendered (HSD_VICopyXFBAsync after the draw); the tick on
+        // which the scene ends draws nothing, and the screen keeps showing the last copied frame (no empty frame here)
+        if more && unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
             crate::gxbridge::finish_frame();
         }
         self.frames += 1;
@@ -631,3 +657,130 @@ unsafe extern "C" fn gmmain_pad_setup() {
 
 #[allow(dead_code)]
 fn _unused(_: *mut c_void) {}
+
+/// The mode `boot_modes` runs (`runGameMode`'s `mode`), null outside the mode loop.
+static mut LOOP_MODE: *mut melee_types::GameMode = core::ptr::null_mut();
+
+/// The whole retail mode loop, one scene-loop iteration per tick: `main` -> `gm_801A4510` (init) -> `runGameMode`
+/// (`runGameMode_load`, then `gm_801A4014` per scene until a mode change is pending, then the mode's `on_unload`) ->
+/// the next mode. The C runs it as nested loops; here each `tick_modes` steps the innermost one and, when a scene
+/// ends, does what the C does after `gm_801A4D34` returns.
+impl Engine {
+    /// Boot the host and start the mode loop at `first` (`GM_BOOT` as the C's `gm_801A4510` picks it, or e.g.
+    /// `GM_TITLE`), up to the first scene tick. A scenario installed before (`scenario::install`) seeds the VS mode the
+    /// way `SceneLaunch_SeedVs` does in the C build.
+    pub fn boot_modes(disc: Gcm, mem_size: usize, pads: PadSystem, first: u8) -> Result<Engine, String> {
+        let _scope = crate::arena::GameScope::enter();
+        Self::boot_host(disc, mem_size, pads)?;
+        unsafe {
+            crate::archive::RECLAIM = true;
+            melee_modes::tu::ext_hook::AUDIO_LIB_OFF = true;
+            // PcUnlockAll (pc/platform/gw_runtime.c gw_PcUnlockAll): MELEE_UNLOCK_ALL wins, else ON (the C default).
+            melee_modes::tu::gmmain_lib::ext::PCUNLOCKALL = Some(pc_unlock_all);
+            // ifprize.rs carries its own HSD_SisLib_803A6B98 default (formats the C string into Some(&str)); the link table's
+            // install of the raw function casts *const u8 -> Option<&str> and panics, so the retail path keeps the local one.
+            melee_world::tu::ifprize::ext::hook::HSD_SisLib_803A6B98 = None;
+            // The SIS text draw (sislib.c HSD_SisLib_803A84BC) is a seam on the VS-only path (no text); the retail menus draw it,
+            // with its GX calls on the bridge.
+            melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = None;
+            melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = None;
+            melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
+            // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
+            melee_runtime::tu::lbcardgame::ext::hook::wait_idle = Some(|| {});
+            melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
+            // ft/ftdemo.c (results-screen fighters): its callees, and the demo motion-state table melee_link fills.
+            melee_fighter::tu::ftdemo::install_defaults(&raw mut melee_link::retail_ms::ftmotionstates::ftData_803C52A0 as *mut melee_types::MotionState);
+            // gmvsmelee.c's PC callees with no MELEE_SCENE launch and no netplay session (the C defaults): their ext
+            // defaults are todo!s, and the VS-only path never reaches them.
+            {
+                use melee_modes::tu::gmvsmelee::ext::hook as h;
+                if h::SceneLaunch_Active.is_none() { h::SceneLaunch_Active = Some(|| 0); }
+                if h::SceneLaunch_EntryStateId.is_none() { h::SceneLaunch_EntryStateId = Some(|| -1); }
+                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| 0); }
+                if h::Netplay_RunActive.is_none() { h::Netplay_RunActive = Some(|| 0); }
+                if h::Netplay_RematchPending.is_none() { h::Netplay_RematchPending = Some(|| 0); }
+                if h::Netplay_StageEnd.is_none() { h::Netplay_StageEnd = Some(|_, _, _| ()); }
+                if h::Netplay_GameResult.is_none() { h::Netplay_GameResult = Some(|_| ()); }
+                if h::Netplay_NoteTie.is_none() { h::Netplay_NoteTie = Some(|| ()); }
+            }
+            // OSTicksToCalendarTime (aurora OSTime.cpp): the prize / save dates; a seam ("no calendar") on the VS-only path.
+            melee_runtime::tu::lbtime::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            melee_runtime::tu::lbcardgame::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            melee_runtime::tu::lbsnap::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
+            // gm_1BFA.c gm_Mode_ChallengerApproach_States: the static table, built from the addresses of the other TUs.
+            melee_modes::tu::gmscdata::ext::gm_Mode_ChallengerApproach_States = melee_modes::tu::gm_1BFA::gm_Mode_ChallengerApproach_States();
+            // the memory-card scene's one trophy draw on a fresh save (see boot_vs)
+            let _ = melee_runtime::tu::random::global::HSD_Rand();
+            gm_1A3F::gm_801A4510_init(Some(first));
+            let mode = gm_1A3F::runGameMode_load(first);
+            LOOP_MODE = mode;
+            let run = gm_1A3F::gm_801A4014_enter(mode);
+            gmscene::gm_801A4D34_begin(run.info);
+            Ok(Engine { frames: 0, info: run.info, on_frame: run.frame_fn, ended: false, run: Some(run) })
+        }
+    }
+
+    /// The current mode and the scene kind of its current state (`GameModeKind`, `GameSceneKind`).
+    pub fn mode_scene(&self) -> (u8, u8) {
+        unsafe {
+            let m = if LOOP_MODE.is_null() { 0xFF } else { (*LOOP_MODE).kind };
+            let k = if self.info.is_null() { 0xFF } else { (*self.info).scene_kind };
+            (m, k)
+        }
+    }
+
+    /// One iteration of the mode loop: the scene's tick, or, when the scene has ended, the rest of `gm_801A4014`, the
+    /// mode change of `runGameMode` / `gm_801A4510` when one is pending, and the next scene's entry.
+    /// Returns true when a new scene was entered this tick.
+    pub fn tick_modes(&mut self) -> bool {
+        if !self.ended {
+            self.tick();
+            return false;
+        }
+        let _scope = crate::arena::GameScope::enter();
+        unsafe {
+            let Some(run) = self.run.take() else { return false };
+            gmscene::gm_801A4D34_end();
+            gm_1A3F::gm_801A4014_leave(run);
+            let sm = &raw mut gm_1A3F::state_machine;
+            if (*sm).pending_mode_change != 0 {
+                // runGameMode's tail
+                if !gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
+                    if let Some(f) = (*LOOP_MODE).on_unload {
+                        f();
+                    }
+                }
+                let mut next = (*sm).routing.pending_mode;
+                // gm_801A4510's loop body
+                if gm_1A3F::ext::gmMainLib_8046B0F0_resetting() {
+                    gm_1A3F::ext::set_gmMainLib_8046B0F0_resetting(false);
+                } else {
+                    next = gm_1A3F::ext::gmFrontend_Route((*sm).routing.curr_mode, next);
+                }
+                (*sm).routing.prev_mode = (*sm).routing.curr_mode;
+                if (*sm).routing.curr_mode == gm_1A3F::GM_FRONTEND {
+                    (*sm).routing.prev_mode = gm_1A3F::ext::gmFrontend_ReportedMode();
+                }
+                (*sm).routing.curr_mode = next;
+                LOOP_MODE = gm_1A3F::runGameMode_load(next);
+            }
+            // runGameMode's scene loop (the override modes are debug-only and never set on the retail path)
+            let run = gm_1A3F::gm_801A4014_enter(LOOP_MODE);
+            gmscene::gm_801A4D34_begin(run.info);
+            self.frames = 0;
+            self.info = run.info;
+            self.on_frame = run.frame_fn;
+            self.ended = false;
+            self.run = Some(run);
+        }
+        true
+    }
+}
+
+/// `gw_PcUnlockAll` (pc/platform/gw_runtime.c): the environment wins, else the settings default ON.
+fn pc_unlock_all() -> i32 {
+    match std::env::var("MELEE_UNLOCK_ALL") {
+        Ok(v) if !v.is_empty() => (!v.starts_with('0')) as i32,
+        _ => 1,
+    }
+}

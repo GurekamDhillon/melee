@@ -53,30 +53,31 @@ pub mod ext {
     pub fn HSD_CObjGetCurrent() -> *mut HSD_CObj { unsafe { melee_runtime::tu::cobj::HSD_CObjGetCurrent() as _ } }
     /// `HSD_CObjGetViewingMtxPtrDirect` (cobj.h static inline): `cobj->view_mtx`.
     pub fn HSD_CObjGetViewingMtxPtrDirect(c: *mut HSD_CObj) -> *mut Mtx { unsafe { &mut (*c).view_mtx } }
-    pub fn HSD_StateInvalidate(_s: i32) { if melee_core::ct::render_stub() { return; } todo!("HSD_StateInvalidate") }
+    pub fn HSD_StateInvalidate(_s: i32) { unsafe { melee_runtime::tu::state_native::HSD_StateInvalidate(_s as _) } }
     // GX (render backend). Arguments are the GX enum values the C passes.
-    pub fn GXSetColorUpdate(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetColorUpdate") }
-    pub fn GXSetAlphaUpdate(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetAlphaUpdate") }
-    pub fn GXSetBlendMode(_a: i32, _b: i32, _c: i32, _d: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetBlendMode") }
-    pub fn GXSetAlphaCompare(_a: i32, _b: u8, _c: i32, _d: i32, _e: u8) { if melee_core::ct::render_stub() { return; } todo!("GXSetAlphaCompare") }
-    pub fn GXSetZMode(_a: i32, _b: i32, _c: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetZMode") }
-    pub fn GXSetZCompLoc(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetZCompLoc") }
-    pub fn GXSetNumTexGens(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetNumTexGens") }
-    pub fn GXSetTevClampMode(_a: i32, _b: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetTevClampMode") }
-    pub fn GXSetNumTevStages(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetNumTevStages") }
-    pub fn GXSetTevOrder(_a: i32, _b: i32, _c: i32, _d: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetTevOrder") }
-    pub fn GXSetTevOp(_a: i32, _b: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetTevOp") }
-    pub fn GXSetNumChans(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetNumChans") }
-    pub fn GXSetChanCtrl(_a: i32, _b: i32, _c: i32, _d: i32, _e: i32, _f: i32, _g: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetChanCtrl") }
-    pub fn GXSetCullMode(_a: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetCullMode") }
-    pub fn GXClearVtxDesc() { if melee_core::ct::render_stub() { return; } todo!("GXClearVtxDesc") }
-    pub fn GXSetVtxAttrFmt(_a: i32, _b: i32, _c: i32, _d: i32, _e: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetVtxAttrFmt") }
-    pub fn GXSetVtxDesc(_a: i32, _b: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetVtxDesc") }
-    pub fn GXLoadPosMtxImm(_m: *mut Mtx, _id: i32) { if melee_core::ct::render_stub() { return; } todo!("GXLoadPosMtxImm") }
-    pub fn GXSetCurrentMtx(_id: i32) { if melee_core::ct::render_stub() { return; } todo!("GXSetCurrentMtx") }
-    pub fn GXBegin(_prim: i32, _fmt: i32, _n: i32) { if melee_core::ct::render_stub() { return; } todo!("GXBegin") }
-    pub fn GXPosition3f32(_x: f32, _y: f32, _z: f32) { if melee_core::ct::render_stub() { return; } todo!("GXPosition3f32") }
-    pub fn GXColor4u8(_r: u8, _g: u8, _b: u8, _a: u8) { if melee_core::ct::render_stub() { return; } todo!("GXColor4u8") }
+    pub fn GXSetColorUpdate(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetColorUpdate(_a as _) }
+    pub fn GXSetAlphaUpdate(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetAlphaUpdate(_a as _) }
+    pub fn GXSetBlendMode(_a: i32, _b: i32, _c: i32, _d: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetBlendMode(_a as _, _b as _, _c as _, _d as _) }
+    pub fn GXSetAlphaCompare(_a: i32, _b: u8, _c: i32, _d: i32, _e: u8) { melee_runtime::tu::displayfunc_native::ext::GXSetAlphaCompare(_a as _, _b as _, _c as _, _d as _, _e as _) }
+    pub fn GXSetZMode(_a: i32, _b: i32, _c: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetZMode(_a as _, _b as _, _c as _) }
+    pub fn GXSetZCompLoc(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetZCompLoc(_a as _) }
+    pub fn GXSetNumTexGens(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetNumTexGens(_a as _) }
+    /// GC-only register; Aurora (and so melee_gx) ignores it.
+    pub fn GXSetTevClampMode(_a: i32, _b: i32) {}
+    pub fn GXSetNumTevStages(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetNumTevStages(_a as _) }
+    pub fn GXSetTevOrder(_a: i32, _b: i32, _c: i32, _d: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetTevOrder(_a as _, _b as _, _c as _, _d as _) }
+    pub fn GXSetTevOp(_a: i32, _b: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetTevOp(_a as _, _b as _) }
+    pub fn GXSetNumChans(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetNumChans(_a as _) }
+    pub fn GXSetChanCtrl(_a: i32, _b: i32, _c: i32, _d: i32, _e: i32, _f: i32, _g: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetChanCtrl(_a as _, _b as _, _c as _, _d as _, _e as _, _f as _, _g as _) }
+    pub fn GXSetCullMode(_a: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetCullMode(_a as _) }
+    pub fn GXClearVtxDesc() { melee_runtime::tu::displayfunc_native::ext::GXClearVtxDesc() }
+    pub fn GXSetVtxAttrFmt(_a: i32, _b: i32, _c: i32, _d: i32, _e: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetVtxAttrFmt(_a as _, _b as _, _c as _, _d as _, _e as _) }
+    pub fn GXSetVtxDesc(_a: i32, _b: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetVtxDesc(_a as _, _b as _) }
+    pub fn GXLoadPosMtxImm(_m: *mut Mtx, _id: i32) { unsafe { melee_runtime::tu::pobj::native::mx::GXLoadPosMtxImm(_m as _, _id as _) } }
+    pub fn GXSetCurrentMtx(_id: i32) { melee_runtime::tu::displayfunc_native::ext::GXSetCurrentMtx(_id as _) }
+    pub fn GXBegin(_prim: i32, _fmt: i32, _n: i32) { melee_runtime::tu::displayfunc_native::ext::GXBegin(_prim as _, _fmt as _, _n as _) }
+    pub fn GXPosition3f32(_x: f32, _y: f32, _z: f32) { melee_runtime::tu::displayfunc_native::ext::GXPosition3f32(_x as _, _y as _, _z as _) }
+    pub fn GXColor4u8(_r: u8, _g: u8, _b: u8, _a: u8) { melee_runtime::tu::displayfunc_native::ext::GXColor4u8(_r as _, _g as _, _b as _, _a as _) }
 }
 
 /// `ftGetTemplateKind` (ft/inlines.h, TARGET_PC Geno base kind).

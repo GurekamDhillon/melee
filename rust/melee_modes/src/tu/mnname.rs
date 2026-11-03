@@ -2656,7 +2656,7 @@ pub static mut mnName_RefuseNameName: [::core::ffi::c_char; 17] = unsafe {
 pub unsafe extern "C" fn IsNameNotAllowed(mut name: *mut ::core::ffi::c_char) -> bool_0 {
     melee_core::ct!("IsNameNotAllowed");
     let mut list: *mut *mut ::core::ffi::c_char = NotAllowedNamesList;
-    while !(mnNameNew_NullCharacter as ::core::ffi::c_int
+    while !(mnNameNew_NullCharacter[0] as ::core::ffi::c_int
         == **list as ::core::ffi::c_int)
     {
         if CompareNameStrings(*list, name) == 0 {
@@ -2683,12 +2683,26 @@ pub mod ext {
                 }
             }
         };
+        ($h:ident, $name:ident, ($($a:ident: $t:ty),*) -> !) => {
+            pub static mut $h: Option<unsafe extern "C" fn($($t),*) -> !> = None;
+            pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
+                match $h {
+                    Some(f) => f($($a),*),
+                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                }
+            }
+        };
         ($h:ident, $name:ident, ($($a:ident: $t:ty),*) $(-> $r:ty)?) => {
             pub static mut $h: Option<unsafe extern "C" fn($($t),*) $(-> $r)?> = None;
             pub unsafe extern "C" fn $name($($a: $t),*) $(-> $r)? {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    // the engine's by-name table (ext_hook::fallback: the canonical port or the host seam), else the TODO stop
+                    None => {
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        <$crate::ext_rty!($($r)?) as $crate::tu::ext_hook::Val>::from_u64($crate::tu::ext_hook::fallback(stringify!($name), &w))
+                    }
                 }
             }
         };
@@ -2862,11 +2876,11 @@ pub mod ext {
                     None => { return unsafe { melee_runtime::tu::memory::HSD_MemAlloc(a0 as _) as _ }; },
                 }
             }
-    pub static mut HSD_GObj_804D783C: s32 = unsafe { core::mem::zeroed() };
-    pub static mut HSD_GObj_JObjKind: u8_0 = unsafe { core::mem::zeroed() };
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_804D783C;
+    pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
     // the real tables (mnnamenew.c): a zero-length stand-in here would be read past its end
     pub use crate::tu::mnnamenew::{mnNameNew_803EE720, mnNameNew_803EE724};
-    pub static mut mnNameNew_NullCharacter: ::core::ffi::c_char = unsafe { core::mem::zeroed() };
+    pub use crate::tu::mnnamenew::mnNameNew_NullCharacter;
 }
 
 // ---- folded from mn.rs (consolidation steps 21/22) ----

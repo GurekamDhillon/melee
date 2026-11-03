@@ -140,7 +140,16 @@ fn blend_state(mode: u32, src: u32, dst: u32, op: u32, dst_alpha: u32) -> wgpu::
             GX_LO_CLEAR => BC { operation: O::Add, src_factor: B::Zero, dst_factor: B::Zero },
             GX_LO_COPY => BC { operation: O::Add, src_factor: B::One, dst_factor: B::Zero },
             GX_LO_NOOP => BC { operation: O::Add, src_factor: B::Zero, dst_factor: B::One },
-            _ => panic!("unsupported logic op {op}"),
+            // AND/OR/XOR/INV/SET and the rest need the destination in the shader (wgpu blending
+            // has no logic ops). Melee's draws observed so far never rely on
+            // them; draw as COPY and say so once per op instead of aborting the frame.
+            _ => {
+                static SEEN: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(0);
+                if SEEN.fetch_or(1 << (op & 15), std::sync::atomic::Ordering::Relaxed) & (1 << (op & 15)) == 0 {
+                    eprintln!("gx: logic op {op} is drawn as GX_LO_COPY (not expressible as wgpu blending)");
+                }
+                BC { operation: O::Add, src_factor: B::One, dst_factor: B::Zero }
+            }
         },
         _ => panic!("unsupported blend mode {mode}"),
     };
@@ -268,7 +277,77 @@ pub struct Renderer {
     blit_sampler: Option<wgpu::Sampler>,
     /// The last [`Renderer::prepare`]d frame: persistent GPU buffers, per-draw pipeline / bind group / offsets.
     frame: FrameCache,
+    /// EFB copies (GXCopyTex) by guest destination address: textures later draws sample.
+    efb_copies: FxMap<u64, CopyTarget>,
+    copy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout, wgpu::Sampler)>,
 }
+
+/// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
+struct CopyTarget {
+    _tex: wgpu::Texture,
+    view: wgpu::TextureView,
+    dst_w: u32,
+    dst_h: u32,
+    scale: u32,
+    /// The [`Renderer::prepare`] count of the last frame that copied into it.
+    copied: u64,
+}
+
+/// A copy target nobody copied into for this many prepared frames is dropped (its guest address may hold an ordinary
+/// texture by then).
+const COPY_KEEP: u64 = 120;
+
+/// The copy shader's mode for a GXSetTexCopyDst format (see `COPY_WGSL`); None: a depth copy (not implemented).
+fn copy_mode(fmt: u32) -> Option<u32> {
+    Some(match fmt {
+        0x0 | 0x1 => 1,          // I4, I8: luma
+        0x2 | 0x3 => 2,          // IA4, IA8: luma + alpha
+        0x4 => 10,               // RGB565
+        0x5 | 0x6 => 0,          // RGB5A3, RGBA8
+        0x20 | 0x28 => 3,        // R4, R8
+        0x22 | 0x23 => 4,        // RA4, RA8
+        0x26 => 0,               // YUVA8
+        0x27 => 5,               // A8
+        0x29 => 6,               // G8
+        0x2A => 7,               // B8
+        0x2B => 8,               // RG8
+        0x2C => 9,               // GB8
+        _ => return None,
+    })
+}
+
+const COPY_WGSL: &str = "
+struct P { rect: vec4<f32>, mode: u32, efb_alpha: u32, p0: u32, p1: u32 };
+var<push_constant> pc: P;
+@group(0) @binding(0) var efb: texture_2d<f32>;
+@group(0) @binding(1) var smp: sampler;
+struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
+@vertex fn vs_main(@builtin(vertex_index) i: u32) -> VsOut {
+    let uv = vec2<f32>(f32((i << 1u) & 2u), f32(i & 2u));
+    var o: VsOut;
+    o.pos = vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, 0.0, 1.0);
+    o.uv = uv;
+    return o;
+}
+@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    var c = textureSampleLevel(efb, smp, pc.rect.xy + v.uv * pc.rect.zw, 0.0);
+    if (pc.efb_alpha == 0u) { c.a = 1.0; }
+    let y = clamp(0.257 * c.r + 0.504 * c.g + 0.098 * c.b + 16.0 / 255.0, 0.0, 1.0);
+    switch (pc.mode) {
+        case 1u: { return vec4<f32>(y, y, y, y); }
+        case 2u: { return vec4<f32>(y, y, y, c.a); }
+        case 3u: { return vec4<f32>(c.r, c.r, c.r, c.r); }
+        case 4u: { return vec4<f32>(c.r, c.r, c.r, c.a); }
+        case 5u: { return vec4<f32>(c.a, c.a, c.a, c.a); }
+        case 6u: { return vec4<f32>(c.g, c.g, c.g, c.g); }
+        case 7u: { return vec4<f32>(c.b, c.b, c.b, c.b); }
+        case 8u: { return vec4<f32>(c.r, c.r, c.r, c.g); }
+        case 9u: { return vec4<f32>(c.g, c.g, c.g, c.b); }
+        case 10u: { return vec4<f32>(c.rgb, 1.0); }
+        default: { return c; }
+    }
+}
+";
 
 /// One draw of the prepared frame.
 struct PreparedDraw {
@@ -609,6 +688,8 @@ impl Renderer {
             blit: HashMap::new(),
             blit_sampler: None,
             frame: FrameCache::default(),
+            efb_copies: FxMap::default(),
+            copy_pipe: None,
         })
     }
 
@@ -723,6 +804,95 @@ impl Renderer {
         Some(key)
     }
 
+    /// The EFB copy `o` samples: its image address is a copy destination of the same size.
+    fn copy_view(&self, o: &TexObj) -> Option<wgpu::TextureView> {
+        if o.guest == 0 {
+            return None;
+        }
+        let t = self.efb_copies.get(&o.guest)?;
+        (t.dst_w == o.width() && t.dst_h == o.height()).then(|| t.view.clone())
+    }
+
+    fn ensure_copy_target(&mut self, c: &crate::draw::EfbCopy) {
+        let now = self.prepared;
+        if let Some(t) = self.efb_copies.get_mut(&c.dest) {
+            if t.dst_w == c.dst_w && t.dst_h == c.dst_h && t.scale == self.scale {
+                t.copied = now;
+                return;
+            }
+        }
+        if c.dst_w == 0 || c.dst_h == 0 {
+            return;
+        }
+        let (w, h) = ((c.dst_w * self.scale).min(8192), (c.dst_h * self.scale).min(8192));
+        let tex = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("GX EFB copy"),
+            size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = tex.create_view(&Default::default());
+        // cached bind groups may hold the replaced target's view
+        self.tex_bgs.clear();
+        self.efb_copies.insert(c.dest, CopyTarget { _tex: tex, view, dst_w: c.dst_w, dst_h: c.dst_h, scale: self.scale, copied: now });
+    }
+
+    fn copy_pipeline(&mut self) {
+        if self.copy_pipe.is_some() {
+            return;
+        }
+        let d = &self.device;
+        let module = d.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("GX EFB copy"), source: wgpu::ShaderSource::Wgsl(COPY_WGSL.into()) });
+        let bgl = d.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("GX EFB copy"),
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        view_dimension: wgpu::TextureViewDimension::D2,
+                        multisampled: false,
+                    },
+                    count: None,
+                },
+                wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
+            ],
+        });
+        let layout = d.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("GX EFB copy"),
+            bind_group_layouts: &[&bgl],
+            push_constant_ranges: &[wgpu::PushConstantRange { stages: wgpu::ShaderStages::FRAGMENT, range: 0..32 }],
+        });
+        let pipe = d.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("GX EFB copy"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState { module: &module, entry_point: Some("vs_main"), compilation_options: Default::default(), buffers: &[] },
+            fragment: Some(wgpu::FragmentState {
+                module: &module,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState { format: wgpu::TextureFormat::Rgba8Unorm, blend: None, write_mask: wgpu::ColorWrites::ALL })],
+            }),
+            primitive: Default::default(),
+            depth_stencil: None,
+            multisample: Default::default(),
+            multiview: None,
+            cache: None,
+        });
+        let smp = d.create_sampler(&wgpu::SamplerDescriptor {
+            label: Some("GX EFB copy"),
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            ..Default::default()
+        });
+        self.copy_pipe = Some((pipe, bgl, smp));
+    }
+
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
         let o = &d.textures[map];
         let data = o.data.as_ref()?;
@@ -828,6 +998,7 @@ impl Renderer {
     pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
         let t0 = std::time::Instant::now();
         self.prepared += 1;
+        frame_stats(self.prepared, draws);
         if self.prepared % TEX_KEEP == 0 {
             let now = self.prepared;
             let before = self.textures.len();
@@ -893,8 +1064,19 @@ impl Renderer {
         let t2 = std::time::Instant::now();
         // Pipelines and texture groups (they borrow self mutably). Consecutive draws mostly share a config:
         // compare with the previous draw's before hashing.
+        // EFB copy targets first: a draw may sample a copy made earlier in this frame (or in an earlier one).
+        let now = self.prepared;
+        self.efb_copies.retain(|_, t| now - t.copied < COPY_KEEP);
+        for c in draws.iter().filter_map(|d| d.copy.as_deref()) {
+            self.ensure_copy_target(c);
+        }
         let mut last_pipe = fc.last_pipe.take();
         for (i, d) in draws.iter().enumerate() {
+            if d.copy.is_some() {
+                fc.draws[i].pipeline = None;
+                fc.draws[i].tex_bg = None;
+                continue;
+            }
             let p = if d.config.cull_mode == GX_CULL_ALL {
                 None
             } else {
@@ -934,7 +1116,9 @@ impl Renderer {
         let mut bkey: [Option<(TexKey, SamplerKey)>; MAX_TEXTURES] = Default::default();
         let mut cacheable = true;
         for (i, k) in bkey.iter_mut().enumerate() {
-            if used(i) {
+            if used(i) && self.copy_view(&d.textures[i]).is_some() {
+                cacheable = false;
+            } else if used(i) {
                 match self.cached_tex_key(d, i) {
                     Some(t) => *k = Some((t, sampler_key(&d.textures[i]))),
                     None => cacheable = false,
@@ -949,7 +1133,13 @@ impl Renderer {
         let mut views = Vec::with_capacity(MAX_TEXTURES);
         let mut samplers = Vec::with_capacity(MAX_TEXTURES);
         for i in 0..MAX_TEXTURES {
-            let v = if used(i) { self.texture_view(d, i) } else { None };
+            let v = if !used(i) {
+                None
+            } else if let Some(v) = self.copy_view(&d.textures[i]) {
+                Some(v)
+            } else {
+                self.texture_view(d, i)
+            };
             if let Some(v) = v {
                 views.push(v);
                 samplers.push(self.sampler(&d.textures[i]));
@@ -1001,95 +1191,89 @@ impl Renderer {
             self.queue.write_buffer(&g.buf, 0, &fc.ubuf);
         }
         let t1 = std::time::Instant::now();
+        if draws.iter().any(|d| d.copy.is_some()) {
+            self.copy_pipeline();
+        }
         let color_view = self.color.create_view(&Default::default());
         let depth_view = self.depth.create_view(&Default::default());
         let mut enc = self.device.create_command_encoder(&Default::default());
-        {
-            let cc = state.clear_color;
-            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("GX EFB"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &color_view,
-                    resolve_target: None,
-                    depth_slice: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color { r: cc[0] as f64, g: cc[1] as f64, b: cc[2] as f64, a: cc[3] as f64 }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
-                    view: &depth_view,
-                    depth_ops: Some(wgpu::Operations { load: wgpu::LoadOp::Clear(state.clear_depth_value()), store: wgpu::StoreOp::Store }),
-                    stencil_ops: None,
-                }),
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            });
-            if let (Some(sbg), Some(gi), Some((ubg, _))) = (fc.storage_bg.as_ref(), fc.gi.as_ref(), fc.uniform_bg.as_ref()) {
-                pass.set_bind_group(0, sbg, &[]);
-                pass.set_index_buffer(gi.buf.slice(..), wgpu::IndexFormat::Uint16);
-                let (w, h) = (self.width as f32, self.height as f32);
-                let k = self.scale as f32;
-                let ki = self.scale as i32;
-                let mut cur_vp = [f32::NAN; 6];
-                let mut cur_sc = [u32::MAX; 4];
-                let mut cur_pipe: Option<&wgpu::RenderPipeline> = None;
-                let mut cur_tex: Option<&wgpu::BindGroup> = None;
-                let mut cur_blend = f64::NAN;
-                let mut cur_uoff = u32::MAX;
-                for (i, d) in draws.iter().enumerate() {
-                    let pd = &fc.draws[i];
-                    let (Some(p), Some(tex_bg)) = (pd.pipeline.as_ref(), pd.tex_bg.as_ref()) else { continue };
-                    let sc = d.render_scissor;
-                    let sx = (sc.x * ki).clamp(0, self.width as i32) as u32;
-                    let sy = (sc.y * ki).clamp(0, self.height as i32) as u32;
-                    let sw = ((sc.width * ki).max(0) as u32).min(self.width - sx);
-                    let sh = ((sc.height * ki).max(0) as u32).min(self.height - sy);
-                    if sw == 0 || sh == 0 {
-                        continue;
-                    }
-                    let vp = d.render_viewport;
-                    let left = (vp.left * k).clamp(0.0, w);
-                    let top = (vp.top * k).clamp(0.0, h);
-                    let v = [left, top, (vp.width * k).min(w - left).max(1.0), (vp.height * k).min(h - top).max(1.0), 1.0 - vp.zfar, 1.0 - vp.znear];
-                    if v.iter().zip(cur_vp.iter()).any(|(a, b)| a.to_bits() != b.to_bits()) {
-                        pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
-                        cur_vp = v;
-                    }
-                    if [sx, sy, sw, sh] != cur_sc {
-                        pass.set_scissor_rect(sx, sy, sw, sh);
-                        cur_sc = [sx, sy, sw, sh];
-                    }
-                    if cur_pipe.is_none_or(|c| c != p) {
-                        pass.set_pipeline(p);
-                        cur_pipe = Some(p);
-                    }
-                    if pd.uoff != cur_uoff {
-                        pass.set_bind_group(1, ubg, &[pd.uoff]);
-                        cur_uoff = pd.uoff;
-                    }
-                    if cur_tex.is_none_or(|c| c != tex_bg) {
-                        pass.set_bind_group(2, tex_bg, &[]);
-                        cur_tex = Some(tex_bg);
-                    }
-                    pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &pd.imm);
-                    if d.config.dst_alpha != u32::MAX {
-                        let a = d.config.dst_alpha as f64 / 255.0;
-                        if a.to_bits() != cur_blend.to_bits() {
-                            pass.set_blend_constant(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a });
-                            cur_blend = a;
-                        }
-                    }
-                    if d.indices.is_empty() {
-                        pass.draw(0..d.vtx_count, 0..d.instance_count);
-                    } else {
-                        let n = d.indices.len() as u32;
-                        pass.draw_indexed(pd.first_index..pd.first_index + n, 0, 0..d.instance_count);
-                    }
-                }
+        let fc = &self.frame;
+        let dims = (self.width, self.height, self.scale);
+        // One EFB pass per run of draws between EFB copies; a copy with `clear` starts the next pass cleared.
+        let cc = state.clear_color;
+        let mut clear = Some((wgpu::Color { r: cc[0] as f64, g: cc[1] as f64, b: cc[2] as f64, a: cc[3] as f64 }, state.clear_depth_value()));
+        let mut start = 0;
+        loop {
+            let end = draws[start..].iter().position(|d| d.copy.is_some()).map_or(draws.len(), |k| start + k);
+            {
+                let (cload, dload) = match clear.take() {
+                    Some((c, z)) => (wgpu::LoadOp::Clear(c), wgpu::LoadOp::Clear(z)),
+                    None => (wgpu::LoadOp::Load, wgpu::LoadOp::Load),
+                };
+                let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("GX EFB"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &color_view,
+                        resolve_target: None,
+                        depth_slice: None,
+                        ops: wgpu::Operations { load: cload, store: wgpu::StoreOp::Store },
+                    })],
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &depth_view,
+                        depth_ops: Some(wgpu::Operations { load: dload, store: wgpu::StoreOp::Store }),
+                        stencil_ops: None,
+                    }),
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                });
+                record_draws(&mut pass, fc, draws, start..end, dims);
             }
+            if end == draws.len() {
+                break;
+            }
+            let c = draws[end].copy.as_deref().unwrap();
+            if let (Some(t), Some(mode), Some((pipe, bgl, smp))) = (self.efb_copies.get(&c.dest), copy_mode(c.fmt), self.copy_pipe.as_ref()) {
+                let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("GX EFB copy"),
+                    layout: bgl,
+                    entries: &[
+                        wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&color_view) },
+                        wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(smp) },
+                    ],
+                });
+                let (ew, eh) = ((self.width / self.scale) as f32, (self.height / self.scale) as f32);
+                let r = [c.src[0] as f32 / ew, c.src[1] as f32 / eh, c.src[2] as f32 / ew, c.src[3] as f32 / eh];
+                let mut pc = [0u8; 32];
+                for (k, v) in r.iter().enumerate() {
+                    pc[k * 4..k * 4 + 4].copy_from_slice(&v.to_le_bytes());
+                }
+                pc[16..20].copy_from_slice(&mode.to_le_bytes());
+                pc[20..24].copy_from_slice(&(c.efb_alpha as u32).to_le_bytes());
+                let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("GX EFB copy"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &t.view,
+                        resolve_target: None,
+                        depth_slice: None,
+                        ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                });
+                pass.set_pipeline(pipe);
+                pass.set_bind_group(0, &bg, &[]);
+                pass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, &pc);
+                pass.draw(0..3, 0..1);
+            }
+            if c.clear {
+                let cc = c.clear_color;
+                clear = Some((wgpu::Color { r: cc[0] as f64, g: cc[1] as f64, b: cc[2] as f64, a: cc[3] as f64 }, c.clear_depth));
+            }
+            start = end + 1;
         }
         self.queue.submit([enc.finish()]);
+        self.dump_copies();
         if prof() {
             eprintln!("gxprof draw n={} uniforms={:?} pass={:?}", draws.len(), t1 - t0, t1.elapsed());
         }
@@ -1222,33 +1406,237 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
 
     /// Copy the colour target back to the CPU (RGBA8, row-major, tight rows).
     pub fn read_color(&self) -> Vec<u8> {
-        let row = self.width * 4;
+        read_texture(&self.device, &self.queue, &self.color, self.width, self.height)
+    }
+
+    /// `MELEE_GX_COPYDUMP=<prepared frame>`: write every EFB copy target as `gxcopy_<dest>.ppm` in the working directory.
+    fn dump_copies(&self) {
+        let Some(n) = std::env::var("MELEE_GX_COPYDUMP").ok().and_then(|v| v.parse::<u64>().ok()) else { return };
+        if self.prepared != n {
+            return;
+        }
+        for (dest, t) in &self.efb_copies {
+            let (w, h) = (t._tex.width(), t._tex.height());
+            let px = read_texture(&self.device, &self.queue, &t._tex, w, h);
+            let mut f = format!("P6
+{w} {h}
+255
+").into_bytes();
+            for p in px.chunks(4) {
+                f.extend_from_slice(&p[..3]);
+            }
+            let _ = std::fs::write(format!("gxcopy_{dest:x}.ppm"), f);
+        }
+    }
+}
+
+/// Read back an RGBA8 texture.
+fn read_texture(device: &wgpu::Device, queue: &wgpu::Queue, tex: &wgpu::Texture, width: u32, height: u32) -> Vec<u8> {
+    {
+        let row = width * 4;
         let padded = row.div_ceil(256) * 256;
-        let buf = self.device.create_buffer(&wgpu::BufferDescriptor {
+        let buf = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("GX readback"),
-            size: (padded * self.height) as u64,
+            size: (padded * height) as u64,
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
-        let mut enc = self.device.create_command_encoder(&Default::default());
+        let mut enc = device.create_command_encoder(&Default::default());
         enc.copy_texture_to_buffer(
-            wgpu::TexelCopyTextureInfo { texture: &self.color, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: Default::default() },
+            wgpu::TexelCopyTextureInfo { texture: tex, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: Default::default() },
             wgpu::TexelCopyBufferInfo {
                 buffer: &buf,
-                layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(padded), rows_per_image: Some(self.height) },
+                layout: wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(padded), rows_per_image: Some(height) },
             },
-            wgpu::Extent3d { width: self.width, height: self.height, depth_or_array_layers: 1 },
+            wgpu::Extent3d { width: width, height: height, depth_or_array_layers: 1 },
         );
-        self.queue.submit([enc.finish()]);
+        queue.submit([enc.finish()]);
         let slice = buf.slice(..);
         slice.map_async(wgpu::MapMode::Read, |_| {});
-        self.device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
+        device.poll(wgpu::PollType::wait_indefinitely()).expect("poll");
         let data = slice.get_mapped_range();
-        let mut out = Vec::with_capacity((row * self.height) as usize);
-        for y in 0..self.height {
+        let mut out = Vec::with_capacity((row * height) as usize);
+        for y in 0..height {
             let o = (y * padded) as usize;
             out.extend_from_slice(&data[o..o + row as usize]);
         }
         out
+    }
+}
+
+impl Renderer {
+}
+
+/// `MELEE_GX_STATS=<csv path>` (or `1` for stderr): one row per prepared frame with the draw count, the
+/// distinct sampled textures (by data address), the distinct pipeline configs (TEV + fixed-function
+/// state, compared by value) and the config changes between consecutive draws. Comparable to the Source
+/// Port's frames.csv `draws` column. Off by default; render-only.
+fn frame_stats(frame: u64, draws: &[DrawCmd]) {
+    use std::io::Write;
+    use std::sync::OnceLock;
+    static OUT: OnceLock<Option<std::sync::Mutex<Box<dyn Write + Send>>>> = OnceLock::new();
+    let out = OUT.get_or_init(|| {
+        let v = std::env::var("MELEE_GX_STATS").ok()?;
+        let mut w: Box<dyn Write + Send> = if v == "1" {
+            Box::new(std::io::stderr())
+        } else {
+            Box::new(std::io::BufWriter::new(std::fs::File::create(&v).ok()?))
+        };
+        let _ = writeln!(w, "frame,draws,textures,configs,config_changes,verts,batches,copies,missing_tex,direct_pos");
+        Some(std::sync::Mutex::new(w))
+    });
+    let Some(out) = out else { return };
+    let mut tex: std::collections::HashSet<(usize, u32, u32)> = Default::default();
+    let mut cfgs: Vec<&std::sync::Arc<crate::shader::PipelineConfig>> = Vec::new();
+    let mut changes = 0u32;
+    let mut verts = 0u64;
+    let mut prev: Option<&std::sync::Arc<crate::shader::PipelineConfig>> = None;
+    // `batches`: draws left after merging each run of back-to-back draws that change no state (same pipeline config,
+    // uniforms, textures, matrix slot, viewport and scissor), the Source Port's per-display-list primitive merge.
+    let mut batches = 0u32;
+    let mut copies = 0u32;
+    let mut missing = 0u32;
+    let mut direct = 0u32;
+    let mut prev_d: Option<&DrawCmd> = None;
+    let mut last_copy = 0usize;
+    let dump = std::env::var("MELEE_GX_DRAWDUMP").ok().and_then(|v| v.parse::<u64>().ok()) == Some(frame);
+    for (di, d) in draws.iter().enumerate() {
+        if d.copy.is_none() && d.config.shader.attrs[GX_VA_POS as usize].attr_type == GX_DIRECT as u8 {
+            direct += 1;
+        }
+        if dump {
+            let f = |o: usize| if d.verts.len() >= o + 4 { f32::from_be_bytes([d.verts[o], d.verts[o + 1], d.verts[o + 2], d.verts[o + 3]]) } else { f32::NAN };
+            eprintln!("DD {di} prim {:#x} n {} fmt {} vlen {} p0 {:.1} {:.1} {:.1} tex {:#x} t0 {}x{}f{} blend {} {} {} z {} {} acmp {:?} stages {} vp {:?} pnmtx {} attrs {:?}", d.prim, d.vtx_count, d.fmt, d.verts.len(), f(0), f(4), f(8), d.info.sampled_textures, d.textures[0].width(), d.textures[0].height(), d.textures[0].format(), d.config.blend_mode, d.config.blend_fac_src, d.config.blend_fac_dst, d.config.depth_compare, d.config.depth_func, d.config.shader.alpha_compare, d.config.shader.tev_stage_count, (d.render_viewport.left, d.render_viewport.width), d.current_pn_mtx, d.config.shader.attrs.iter().map(|a| a.attr_type).collect::<Vec<_>>());
+        }
+        if (d.prim == 0xA8 || d.prim == 0xB0 || d.prim == 0xB8) && frame % 120 == 0 && std::env::var_os("MELEE_GX_LINELOG").is_some() {
+            eprintln!("gx line frame {frame} draw {di} prim {:#x} verts {} fmt {} line_mode {} tex {:#x} vtx {:02x?}", d.prim, d.vtx_count, d.fmt, d.info.line_mode, d.info.sampled_textures, &d.verts[..d.verts.len().min(64)]);
+        }
+        if let Some(c) = d.copy.as_deref() {
+            copies += 1;
+            prev_d = None;
+            if std::env::var_os("MELEE_GX_COPYLOG").is_some() && frame % 120 == 0 {
+                eprintln!("gx copy frame {frame} at draw {di} (+{}) dest {:#x} src {:?} dst {}x{} fmt {:#x} half {} clear {} alpha {}", di - last_copy, c.dest, c.src, c.dst_w, c.dst_h, c.fmt, c.half, c.clear, c.efb_alpha);
+                for k in last_copy..di {
+                    let e = &draws[k];
+                    if e.copy.is_none() {
+                        eprintln!("   draw {k} prim {:#x} verts {} tex {:#x} stages {} vp {:?} cull {} zcmp {} blend {}", e.prim, e.vtx_count, e.info.sampled_textures, e.config.shader.tev_stage_count, e.render_viewport, e.config.cull_mode, e.config.depth_compare, e.config.blend_mode);
+                        if k == last_copy + 1 && std::env::var_os("MELEE_GX_COPYLOG_TEV").is_some() {
+                            for t in 0..e.config.shader.tev_stage_count as usize { eprintln!("     TEV {t}: {:?}", e.config.shader.tev_stages[t]); }
+                            eprintln!("     ALPHACMP {:?} blend {} {} {} chans {:?}", e.config.shader.alpha_compare, e.config.blend_fac_src, e.config.blend_fac_dst, e.config.blend_op, &e.config.shader.color_channels[..2]);
+                            let t0 = &e.textures[0];
+                            eprintln!("     TEX0 {}x{} fmt {} data {:?} guest {:#x} verts {:02x?} uniform {}", t0.width(), t0.height(), t0.format(), t0.data.as_ref().map(|d| d.len()), t0.guest, &e.verts[..e.verts.len().min(40)], e.uniform.len());
+                        }
+                    }
+                }
+            }
+            last_copy = di + 1;
+            continue;
+        }
+        let same = prev_d.is_some_and(|p| {
+            (std::sync::Arc::ptr_eq(&p.config, &d.config) || *p.config == *d.config)
+                && p.uniform == d.uniform
+                && p.current_pn_mtx == d.current_pn_mtx
+                && p.render_viewport == d.render_viewport
+                && p.render_scissor == d.render_scissor
+                && (0..MAX_TEXTURES).all(|m| p.textures[m].tex_obj_id == d.textures[m].tex_obj_id && p.textures[m].guest == d.textures[m].guest)
+        });
+        if !same {
+            batches += 1;
+        }
+        prev_d = Some(d);
+        verts += d.vtx_count as u64;
+        for m in 0..MAX_TEXTURES {
+            if d.info.sampled_textures & (1 << m) != 0 {
+                let t = &d.textures[m];
+                if t.data.is_none() {
+                    missing += 1;
+                    if std::env::var_os("MELEE_GX_MISSLOG").is_some() && frame % 60 == 0 {
+                        eprintln!("gx missing tex frame {frame} map {m} {}x{} fmt {} guest {:#x}", t.width(), t.height(), t.format(), t.guest);
+                    }
+                }
+                tex.insert((t.data.as_ref().map_or(0, |x| x.as_ptr() as usize), t.image0, t.tlut));
+            }
+        }
+        if prev.map_or(true, |p| !std::sync::Arc::ptr_eq(p, &d.config) && **p != *d.config) {
+            changes += 1;
+        }
+        prev = Some(&d.config);
+        if !cfgs.iter().any(|c| std::sync::Arc::ptr_eq(c, &d.config) || ***c == *d.config) {
+            cfgs.push(&d.config);
+        }
+    }
+    if let Ok(mut w) = out.lock() {
+        let _ = writeln!(w, "{frame},{},{},{},{changes},{verts},{batches},{copies},{missing},{direct}", draws.len() as u32 - copies, tex.len(), cfgs.len());
+        let _ = w.flush();
+    }
+}
+
+/// Record `draws[range]` of the prepared frame `fc` into `pass` (an EFB pass; redundant state changes skipped).
+fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawCmd], range: std::ops::Range<usize>, (width, height, scale): (u32, u32, u32)) {
+    let (Some(sbg), Some(gi), Some((ubg, _))) = (fc.storage_bg.as_ref(), fc.gi.as_ref(), fc.uniform_bg.as_ref()) else { return };
+    if range.is_empty() {
+        return;
+    }
+    pass.set_bind_group(0, sbg, &[]);
+    pass.set_index_buffer(gi.buf.slice(..), wgpu::IndexFormat::Uint16);
+    let (w, h) = (width as f32, height as f32);
+    let k = scale as f32;
+    let ki = scale as i32;
+    let mut cur_vp = [f32::NAN; 6];
+    let mut cur_sc = [u32::MAX; 4];
+    let mut cur_pipe: Option<&wgpu::RenderPipeline> = None;
+    let mut cur_tex: Option<&wgpu::BindGroup> = None;
+    let mut cur_blend = f64::NAN;
+    let mut cur_uoff = u32::MAX;
+    for i in range {
+        let d = &draws[i];
+        let pd = &fc.draws[i];
+        let (Some(p), Some(tex_bg)) = (pd.pipeline.as_ref(), pd.tex_bg.as_ref()) else { continue };
+        let sc = d.render_scissor;
+        let sx = (sc.x * ki).clamp(0, width as i32) as u32;
+        let sy = (sc.y * ki).clamp(0, height as i32) as u32;
+        let sw = ((sc.width * ki).max(0) as u32).min(width - sx);
+        let sh = ((sc.height * ki).max(0) as u32).min(height - sy);
+        if sw == 0 || sh == 0 {
+            continue;
+        }
+        let vp = d.render_viewport;
+        let left = (vp.left * k).clamp(0.0, w);
+        let top = (vp.top * k).clamp(0.0, h);
+        let v = [left, top, (vp.width * k).min(w - left).max(1.0), (vp.height * k).min(h - top).max(1.0), 1.0 - vp.zfar, 1.0 - vp.znear];
+        if v.iter().zip(cur_vp.iter()).any(|(a, b)| a.to_bits() != b.to_bits()) {
+            pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
+            cur_vp = v;
+        }
+        if [sx, sy, sw, sh] != cur_sc {
+            pass.set_scissor_rect(sx, sy, sw, sh);
+            cur_sc = [sx, sy, sw, sh];
+        }
+        if cur_pipe.is_none_or(|c| c != p) {
+            pass.set_pipeline(p);
+            cur_pipe = Some(p);
+        }
+        if pd.uoff != cur_uoff {
+            pass.set_bind_group(1, ubg, &[pd.uoff]);
+            cur_uoff = pd.uoff;
+        }
+        if cur_tex.is_none_or(|c| c != tex_bg) {
+            pass.set_bind_group(2, tex_bg, &[]);
+            cur_tex = Some(tex_bg);
+        }
+        pass.set_push_constants(wgpu::ShaderStages::VERTEX_FRAGMENT, 0, &pd.imm);
+        if d.config.dst_alpha != u32::MAX {
+            let a = d.config.dst_alpha as f64 / 255.0;
+            if a.to_bits() != cur_blend.to_bits() {
+                pass.set_blend_constant(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a });
+                cur_blend = a;
+            }
+        }
+        if d.indices.is_empty() {
+            pass.draw(0..d.vtx_count, 0..d.instance_count);
+        } else {
+            let n = d.indices.len() as u32;
+            pass.draw_indexed(pd.first_index..pd.first_index + n, 0, 0..d.instance_count);
+        }
     }
 }

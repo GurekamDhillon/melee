@@ -353,10 +353,10 @@ pub unsafe extern "C" fn lbColl_80005BB0(arg0: *mut HitCapsule, arg1: i32) -> i3
     if kind == 0xD {
         let sev = (*arg0).sfx_severity as u32;
         if sev == 2 {
-            return crate::tu::lbaudio_ax::lbAudioAx_80024184(lbColl_803B9880[(kind * 3 + sev) as usize], 127, 64, arg1);
+            return ext::lbAudioAx_80024184(lbColl_803B9880[(kind * 3 + sev) as usize], 127, 64, arg1);
         }
     }
-    crate::tu::lbaudio_ax::lbAudioAx_80024184(lbColl_803B9880[(kind * 3 + (*arg0).sfx_severity as u32) as usize], 127, 64, -1)
+    ext::lbAudioAx_80024184(lbColl_803B9880[(kind * 3 + (*arg0).sfx_severity as u32) as usize], 127, 64, -1)
 }
 
 pub unsafe extern "C" fn lbColl_80005C44(arg0: *const Vec3, arg1: *const Vec3, arg2: *const Vec3, arg3: *mut Vec3, arg8: f32, arg9: f32) -> bool {

@@ -387,6 +387,10 @@ pub fn convert_texture(format: u32, width: u32, height: u32, mips: u32, data: &[
     let data_out = match format {
         GX_TF_I4 => decode_tiled(Tiled::I4, width, height, mips, data),
         GX_TF_I8 => decode_tiled(Tiled::I8, width, height, mips, data),
+        // HSD_EraseRect's depth pass (displayfunc.c) binds a 4x4 GX_TF_Z8 texture for GXSetZTexture, which the GX layer
+        // does not emulate (shim.rs set_z_texture); TEV stage 0 is GX_PASSCLR, so the texels are never read. Z8 is I8's 8x4
+        // tiling of 8-bit texels: decoded as I8 so the bind uploads instead of stopping.
+        GX_TF_Z8 => decode_tiled(Tiled::I8, width, height, mips, data),
         GX_TF_IA4 => decode_tiled(Tiled::IA4, width, height, mips, data),
         GX_TF_IA8 => decode_tiled(Tiled::IA8, width, height, mips, data),
         GX_TF_C4 => decode_tiled(Tiled::C4, width, height, mips, data),
@@ -471,7 +475,7 @@ pub fn texture_source_size(format: u32, width: u32, height: u32, mips: u32) -> u
         let mh = (height >> mip).max(1);
         let (bx, by, bytes) = match format {
             GX_TF_I4 | GX_TF_C4 | GX_TF_CMPR => (8, 8, 32),
-            GX_TF_I8 | GX_TF_IA4 | GX_TF_C8 => (8, 4, 32),
+            GX_TF_I8 | GX_TF_Z8 | GX_TF_IA4 | GX_TF_C8 => (8, 4, 32),
             GX_TF_IA8 | GX_TF_RGB565 | GX_TF_RGB5A3 | GX_TF_C14X2 => (4, 4, 32),
             GX_TF_RGBA8 => (4, 4, 64),
             _ => return 0,

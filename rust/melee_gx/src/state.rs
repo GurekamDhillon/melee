@@ -297,6 +297,9 @@ pub struct TexObj {
     pub tex_obj_id: u32,
     pub tex_data_version: u32,
     pub flags: u8,
+    /// The guest address of the image (`GXInitTexObj`'s `image`): an EFB copy to that address replaces the bytes
+    /// (see [`crate::draw::EfbCopy`]). 0 = unknown.
+    pub guest: u64,
 }
 pub const INVALID_TEXTURE_FORMAT: u32 = u32::MAX;
 impl Default for TexObj {
@@ -314,6 +317,7 @@ impl Default for TexObj {
             tex_obj_id: 0,
             tex_data_version: 0,
             flags: 0,
+            guest: 0,
         }
     }
 }
@@ -405,7 +409,7 @@ pub struct TlutObj {
     pub flags: u8,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct Viewport {
     pub left: f32,
     pub top: f32,
@@ -414,7 +418,7 @@ pub struct Viewport {
     pub znear: f32,
     pub zfar: f32,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub struct ClipRect {
     pub x: i32,
     pub y: i32,
@@ -767,6 +771,7 @@ impl GxState {
         const DRAW_SIZED: u16 = 0x0040;
         const DRAW_INDEXED: u16 = 0x0041;
         const SET_POLYGON_OFFSET: u16 = 0x1000;
+        const COPY_TEX: u16 = 0x1100;
         let sub = r.u16();
         match sub {
             LOAD_VIEWPORT_RENDER => {
@@ -816,6 +821,7 @@ impl GxState {
                 slot.flags = flags;
                 slot.tex_obj_id = r.u32();
                 slot.tex_data_version = r.u32();
+                slot.guest = r.u64();
             }
             LOAD_TLUT => {
                 let idx = r.u8() as usize;
@@ -828,6 +834,30 @@ impl GxState {
                 slot.tlut_obj_id = r.u32();
                 slot.tlut_data_version = r.u32();
                 slot.flags &= !0x80;
+            }
+            COPY_TEX => {
+                let dest = r.u64();
+                let src = [r.u32(), r.u32(), r.u32(), r.u32()];
+                let (dst_w, dst_h, fmt) = (r.u32(), r.u32(), r.u32());
+                let half = r.u8() != 0;
+                let clear = r.u8() != 0;
+                let c = crate::draw::EfbCopy {
+                    dest,
+                    src,
+                    dst_w,
+                    dst_h,
+                    fmt,
+                    half,
+                    clear,
+                    clear_color: self.clear_color,
+                    clear_depth: self.clear_depth_value(),
+                    efb_alpha: self.pixel_fmt == GX_PF_RGBA6_Z24,
+                };
+                // The marker borrows the last draw's config (it has no pipeline of its own); a copy before any draw
+                // was ever made copies an EFB nothing has drawn to and is dropped.
+                if let Some((cfg, _)) = self.last_config.clone() {
+                    self.draws.push(crate::draw::DrawCmd::copy_marker(cfg, c));
+                }
             }
             SET_POLYGON_OFFSET => {
                 self.front_offset = r.f32();

@@ -47,7 +47,7 @@ pub mod ext {
         use super::*;
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut gmMainLib_8046B0F0: gmMainLib_8046B0F0_t = unsafe { core::mem::zeroed() };
+    pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
 }
 // END GENERATED EXT
 

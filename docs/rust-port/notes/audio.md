@@ -112,3 +112,21 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   in turbo (screenshots identical), so the SSS and the match start were not reached this way. Next step if wanted: an in-engine
   scripted-input hook for the kit UI, or `MELEE_SCENE` presets for the retail SSS. No audio fixture was added this round; the
   six pinned captures still match the C mix sample for sample. Nothing was listened to.
+
+## SFX parity (port/sfxparity, 2026-11-02): every in-match sound reaches the mixed stack
+- Method: the C build's `MELEE_AUDIO_TRACE` and `melee golden --audio --audio-trace` (same `<sub-frame> OP args` format) for the 4
+  goldens + stage_03_stadium, stage_14_temple, items_hi_battlefield; compared as op sequences with voice handles masked and time re-based
+  on the first START (scratch tool, not committed). Run golden with `MELEE_ENGINE_RENDER_AUDIO=1` against a C capture that rendered:
+  the headless engine (no render pass) diverges from the goldens at frame 142 of cpu_fox_falco_dl.
+- Found silent (calls reaching melee_runtime's own, unmixed lbaudio_ax/axdriver/synth): hit sounds (lbColl_80005BB0 called
+  lbAudioAx_80024184 directly), hooks the bridge generator never saw (crowd, several stages, ifcoget; it read only the link table),
+  and the scene loop's lbAudioAx_80027DF8 (a stub: sound objects never stepped, so no positional PAN/VOL). Sound objects now step
+  after HSD_GObj_RunProcs (the C's HSD_GOBJ_PLINK_AUDIO_AX procs), the same frame they start.
+- Result: 0 op differences on 5 of 7 scenarios (peach_samus and marth_sheik with 0 timing skew; the others +-1 sub-frame, the load phase
+  of each C capture). Stadium / Battlefield: 2 crowd cheers each (0x13E/0x13F) the C plays twice and the port once. un_803224DC falls
+  off the end without a return in the C; the PC build evidently returns 0 there (knockback is not cleared, so the cheer fires again),
+  where the GameCube (r3 = un_8032201C's result) and the port return 1. Left as is: the port follows the GameCube.
+- Live output: mixer thread (time-critical, 1 ms timer) once the device opens; sinc resampler; 3-minute 4-CPU live match: 112226
+  underrun frames before, 0 after (process at idle priority). Mix WAVs vs these new C captures: same mean level, envelope correlation
+  0.60-0.81 (the C's BGM started earlier in its own load); the gate's bit-exact mix check (pad_falcon_fox_fd) still passes.
+- Not bridged (no hook statics): gmtou_*, gm_17c0, hsd, vi* cutscenes; menus (mn*, gmtitle) left to the retail-menu work.

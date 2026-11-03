@@ -37,6 +37,51 @@ pub struct DrawCmd {
     pub tluts: Vec<TlutObj>,
     pub render_viewport: Viewport,
     pub render_scissor: ClipRect,
+    /// Not a draw: GXCopyTex at this point of the frame (everything else in the record is a placeholder).
+    pub copy: Option<Box<EfbCopy>>,
+}
+
+/// One GXCopyTex: the EFB rectangle `src` (x, y, w, h in EFB pixels) to a `dst_w` x `dst_h` texture of copy format
+/// `fmt` at guest address `dest` (`half`: the 2:1 box-filtered mip copy), then, with `clear`, the EFB is cleared to the
+/// copy-clear colour and depth. On the GPU the copy stays a texture keyed by `dest`; later draws whose texture object
+/// points at `dest` sample it (the GC reads the bytes the copy wrote to main memory).
+#[derive(Clone, Debug)]
+pub struct EfbCopy {
+    pub dest: u64,
+    pub src: [u32; 4],
+    pub dst_w: u32,
+    pub dst_h: u32,
+    pub fmt: u32,
+    pub half: bool,
+    pub clear: bool,
+    pub clear_color: Vec4,
+    pub clear_depth: f32,
+    /// The EFB keeps alpha (RGBA6_Z24); otherwise copies read alpha as 1.
+    pub efb_alpha: bool,
+}
+
+impl DrawCmd {
+    /// The draw-list entry of an EFB copy.
+    pub fn copy_marker(config: std::sync::Arc<PipelineConfig>, c: EfbCopy) -> Self {
+        DrawCmd {
+            prim: 0,
+            fmt: 0,
+            config,
+            info: ShaderInfo::default(),
+            uniform: Vec::new(),
+            verts: Vec::new(),
+            vtx_count: 0,
+            indices: Vec::new(),
+            instance_count: 0,
+            arrays: Default::default(),
+            current_pn_mtx: 0,
+            textures: Default::default(),
+            tluts: Vec::new(),
+            render_viewport: Viewport::default(),
+            render_scissor: ClipRect::default(),
+            copy: Some(Box::new(c)),
+        }
+    }
 }
 
 /// Aurora `calc_vtx_size`.
@@ -206,5 +251,6 @@ pub fn build_draw(
         tluts: st.loaded_tluts.to_vec(),
         render_viewport: st.render_viewport,
         render_scissor: st.render_scissor,
+        copy: None,
     })
 }

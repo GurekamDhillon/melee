@@ -457,11 +457,11 @@ crate::globals! {
     rw mnCharSel_804D50D8: [u8; 8] = [2, 0, 8, 1, 7, 7, 7, 7];
     rw mnCharSel_804D50E0: [u8; 3] = [0, 1, 3];
 
-    rw mnCharSel_804D6CB0: *mut CSSData = null_mut();
+    rw pub mnCharSel_804D6CB0: *mut CSSData = null_mut();
     rw css_data_table: *mut MnSelectChrDataTable = null_mut();
     rw mnCharSel_804D6CB8: *mut HSD_GObj = null_mut();
     rw mnCharSel_804D6CBC: *mut HSD_GObj = null_mut();
-    rw mnCharSel_804D6CC0: *mut HSD_JObj = null_mut();
+    rw pub mnCharSel_804D6CC0: *mut HSD_JObj = null_mut();
     rw mnCharSel_804D6CC4: *mut HSD_JObj = null_mut();
     rw mnCharSel_804D6CC8: *mut HSD_JObj = null_mut();
     rw mnCharSel_804D6CCC: *mut HSD_JObj = null_mut();
@@ -530,7 +530,7 @@ crate::globals! {
 
     rw icons: [CSSIcon; CSS_ICON_MAX + 1] = icons_init();
 
-    rw mnCharSel_803F0DFC: CSSDoorsData = CSSDoorsData {
+    rw pub mnCharSel_803F0DFC: CSSDoorsData = CSSDoorsData {
         doors: [
             door_row([0x2E, 0x33, 0x38, 0x85, 0x29, 0xA6, 0x3D, 0x41, 0x40], [-35.6_f64 as f32, -28.6_f64 as f32, -26.8_f64 as f32, -21.0]),
             door_row([0x2F, 0x34, 0x39, 0x8D, 0x2A, 0xA8, 0x43, 0x47, 0x46], [-19.4_f64 as f32, -13.4_f64 as f32, -11.4_f64 as f32, -6.0]),
@@ -568,31 +568,28 @@ crate::globals! {
         ko_stars: [ko_star(-22.5_f64 as f32, 0x57), ko_star(-7.1_f64 as f32, 0x5D), ko_star(8.3_f64 as f32, 0x63), ko_star(23.7_f64 as f32, 0x69)],
     };
 
-    rw mnCharSel_804A0BC0: [*mut CSSCursorData; 4] = [null_mut(); 4];
+    rw pub mnCharSel_804A0BC0: [*mut CSSCursorData; 4] = [null_mut(); 4];
     rw mnCharSel_804A0BD0: [*mut CSSCharModel; 4] = [null_mut(); 4];
 
-    // ---- data defined in TUs that are not ported (they live here until they are) ----
-    /// gobj.c `u8 HSD_GObj_CameraKind`
-    rw HSD_GObj_CameraKind: u8 = 0;
-    /// gobj.c `s8 HSD_GObj_FogKind`
-    rw HSD_GObj_FogKind: i8 = 0;
-    /// gobj.c `u8 HSD_GObj_JObjKind`
-    rw HSD_GObj_JObjKind: u8 = 0;
-    /// gobj.c `s8 HSD_GObj_LightKind`
-    rw HSD_GObj_LightKind: i8 = 0;
-    /// sobjlib.c `u8 HSD_SObjLib_804D7960`
-    rw HSD_SObjLib_804D7960: u8 = 0;
-    /// sislib.c `SIS* HSD_SisLib_804D1124[5]`
-    rw HSD_SisLib_804D1124: [*mut SIS; 5] = [null_mut(); 5];
-    /// menu camera descriptor
-    rw MenMain_cam: *mut HSD_CObjDesc = null_mut();
-    /// pc `gm_CStickSmashTargetTest`
-    rw gm_CStickSmashTargetTest: i32 = 0;
 }
 
 crate::globals_ext! {
     rw HSD_PadCopyStatus = super::globals::HSD_PadCopyStatus: [HSD_PadStatus; 4];
+    // data of other TUs: their one canonical static (a private copy here was a second, never-set global)
+    rw HSD_GObj_CameraKind = melee_runtime::tu::gobj_native::HSD_GObj_CameraKind: u8;
+    rw HSD_GObj_FogKind = melee_runtime::tu::gobj_native::HSD_GObj_FogKind: i8;
+    rw HSD_GObj_JObjKind = melee_runtime::tu::gobj_native::HSD_GObj_JObjKind: u8;
+    rw HSD_GObj_LightKind = melee_runtime::tu::gobj_native::HSD_GObj_LightKind: i8;
+    rw HSD_SObjLib_804D7960 = melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960: u8;
+    rw HSD_SisLib_804D1124 = melee_runtime::tu::sislib::HSD_SisLib_804D1124: [*mut SIS; 5];
+    rw MenMain_cam = super::mnmain::MenMain_cam: *mut HSD_CObjDesc;
+    rw gm_CStickSmashTargetTest = melee_runtime::shared::gm_CStickSmashTargetTest: i32;
 }
+pub use melee_runtime::tu::gobj_native::{HSD_GObj_CameraKind, HSD_GObj_FogKind, HSD_GObj_JObjKind, HSD_GObj_LightKind};
+pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
+pub use melee_runtime::tu::sislib::HSD_SisLib_804D1124;
+pub use super::mnmain::MenMain_cam;
+pub use melee_runtime::shared::gm_CStickSmashTargetTest;
 
 
 // ------------------------------------------------------------------------------------------

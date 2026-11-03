@@ -59,7 +59,7 @@ pub mod ext {
     }
     // Data defined in other TUs (the tests set them).
     pub use melee_world::gmmain::gmMainLib_804D3EE0;
-    pub static mut gmVsMelee_ApproachData: VsApproachData = unsafe { core::mem::zeroed() };
+    pub use crate::tu::globals::gmVsMelee_ApproachData;
     pub use crate::tu::gmvsmelee::gmVsMelee_CssData;
     pub use crate::tu::gmvsmelee::gmVsMelee_ResultsEnterData;
     pub use crate::tu::gmvsmelee::gmVsMelee_SssData;

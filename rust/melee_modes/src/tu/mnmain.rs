@@ -4438,7 +4438,7 @@ pub unsafe extern "C" fn mn_8022D7F4(mut gp: *mut HSD_GObj) {
                 }
             }
             1 => {
-                if crate::menuguard::deny(GM_EVENT as i32) { return; } // menuguard: the Event menu reads GmEvent.dat's 32-bit tables
+                if crate::menuguard::deny(GM_EVENT as i32) { return; } // menuguard: not ported yet
                 sfxForward();
                 mnEvent_8024E838(0 as ::core::ffi::c_int, true_0);
                 HSD_GObjFree(gp);

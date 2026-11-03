@@ -249,6 +249,7 @@ impl Engine {
             crate::geno_host::install();
             crate::geno_host::install_define();
             crate::geno_host::install_callees();
+            crate::mex_host::install(); // an m-ex disc's MxDt.dat (ACE): fighter slots, sound banks, effects, stage tables
             melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid = Some(|a, b| (a != 0 && b != 0 && a.checked_add(b).is_some() && a & 3 == 0) as i32);
             crate::seams_gen::install_gen();
             // the THP decoder's locked cache (the movies): the C build's shim_misc.c gw_LCStoreData / gw_LCQueueWait

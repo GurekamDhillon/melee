@@ -35,6 +35,12 @@ fn flush_log(r: &mut Registry) {
 
 static mut BOOT_MODS: Option<(std::path::PathBuf, Vec<String>)> = None;
 
+/// The mounted mods folder (empty when none): the boot registry's words files and the m-ex slots come from the host
+/// (`mex_host::GenoEnv`, gw_Geno's gn_reg file reads and `gw_Mex_SlotInternal`).
+fn dir_of_boot() -> std::path::PathBuf {
+    unsafe { BOOT_MODS.as_ref().map(|b| b.0.clone()).unwrap_or_default() }
+}
+
 /// The mounted mods whose geno.json the boot registry reads (the folder and the active ids). Before the first query.
 pub fn set_boot_mods(dir: &std::path::Path, ids: &[&str]) {
     unsafe {
@@ -58,14 +64,14 @@ fn reg() -> &'static mut Registry {
                     if t.len() > 1 << 20 {
                         continue;
                     }
-                    r.parse_text(&t, id, &FsEnv);
+                    r.parse_text(&t, id, &crate::mex_host::GenoEnv { dir: dir.clone() });
                 }
                 if r.files > 0 {
                     let n = r.p.len();
                     r.log.push(format!("geno: {} geno.json file(s), {} fighter entr{}", r.files, n, if n == 1 { "y" } else { "ies" }));
                 }
             }
-            r.build_kinds(&NoEnv);
+            r.build_kinds(&crate::mex_host::GenoEnv { dir: dir_of_boot() });
             flush_log(&mut r);
             BOOT = Some(r);
         }
@@ -92,7 +98,7 @@ pub fn ProfileForKind(kind: i32) -> i32 {
     if r.p.is_empty() {
         return -1;
     }
-    let k = r.profile_for_kind(kind, &NoEnv);
+    let k = r.profile_for_kind(kind, &crate::mex_host::GenoEnv { dir: dir_of_boot() });
     flush_log(r);
     k
 }

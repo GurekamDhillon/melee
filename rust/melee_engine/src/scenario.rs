@@ -147,8 +147,12 @@ impl Scenario {
                                 g
                             } else if name.starts_with("geno:") {
                                 return Err(format!("no Geno define {name} is mounted"));
+                            } else if crate::mex_host::is_reference(name) || ckind_by_name(name).is_none() {
+                                // gw_sl_parse_char: an m-ex reference or a name the disc's MxDt.dat may carry is
+                                // resolved once the disc is mounted (`install`)
+                                pending_fighter(name)
                             } else {
-                                ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?
+                                ckind_by_name(name).unwrap()
                             }
                         }
                     };
@@ -182,6 +186,41 @@ impl Scenario {
 }
 
 static mut SCN: Option<Scenario> = None;
+
+/// Fighter tokens the parse could not resolve without the disc (m-ex names and references): `ckind` holds
+/// `PENDING - index` until `install` resolves it.
+static mut PENDING_NAMES: Vec<String> = Vec::new();
+const PENDING: i32 = -1000;
+
+fn pending_fighter(name: &str) -> i32 {
+    unsafe {
+        PENDING_NAMES.push(name.to_string());
+        PENDING - (PENDING_NAMES.len() as i32 - 1)
+    }
+}
+
+/// Resolve the pending fighter tokens of `s` against the mounted disc (gw_sl_parse_char's m-ex branches, then the
+/// retail names). An unknown name is logged and leaves the slot empty-handed (-1), as the C's parse error does.
+fn resolve_pending(s: &mut Scenario) {
+    for (n, p) in s.players.iter_mut().enumerate() {
+        let Some(p) = p else { continue };
+        if p.ckind > PENDING {
+            // a retail name on an m-ex disc: the disc's own name for that slot wins (gw_sl_mex_name)
+            continue;
+        }
+        let tok = unsafe { PENDING_NAMES.get((PENDING - p.ckind) as usize).cloned().unwrap_or_default() };
+        match crate::mex_host::resolve_fighter(&tok).or_else(|| ckind_by_name(&tok)) {
+            Some(ck) => {
+                eprintln!("scene: p{} '{tok}' -> ck={ck}", n + 1);
+                p.ckind = ck;
+            }
+            None => {
+                eprintln!("scene: p{} '{tok}' is not a fighter on this disc", n + 1);
+                p.ckind = -1;
+            }
+        }
+    }
+}
 
 fn p(n: i32) -> Option<PlayerSpec> {
     unsafe { SCN.as_ref().and_then(|s| s.players.get(n as usize).copied().flatten()) }
@@ -260,7 +299,8 @@ fn install_onep() {
 }
 
 /// Make `SceneLaunch_*` answer for `s`, as `MELEE_SCENE` does in the C build (entry state 2 = the match).
-pub fn install(s: Scenario) {
+pub fn install(mut s: Scenario) {
+    resolve_pending(&mut s);
     install_geno();
     if s.onep_mode >= 0 {
         unsafe { SCN = Some(s) };

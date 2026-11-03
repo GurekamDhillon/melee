@@ -211,3 +211,7 @@ geno_vanilla_striker_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=geno:vanilla-
 geno_vanilla_charger	vs	3000	geno_define_moves.lua	mode=vs;at=match;p1=geno:vanilla-charger/human;p2=ck:2/idle;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none
 geno_vanilla_riposte	vs	3000	geno_define_moves.lua	mode=vs;at=match;p1=geno:vanilla-riposte/human;p2=ck:2/cpu9;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none
 geno_vanilla_hero_caster	vs	3600	idle_3600.lua	mode=vs;at=match;p1=geno:vanilla-hero/cpu9;p2=geno:vanilla-caster/cpu9;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none
+mex_ace_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_halberd_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=mexint:52/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_ukirby_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ultimatekirby/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_sora_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off

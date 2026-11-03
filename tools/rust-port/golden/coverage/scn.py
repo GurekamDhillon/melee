@@ -24,7 +24,11 @@ elif a[0] == "tsv":
         v = sc[n]
         # "{wt}" in an env value: this worktree (Windows form), so a run root elsewhere still finds the scenario's mods
         wt = os.path.abspath(os.path.join(here, "..", "..", "..", "..")).replace("\\", "/")
+        # "{ws}": the workspace (GW_WORKSPACE), where local generated mod sets live (_build/mex-mods, never committed)
+        ws = os.environ.get("GW_WORKSPACE", "E:/Projects/Melee Workspace").replace("\\", "/")
         envd = dict(v.get("env", {}))
+        if v.get("iso"):  # a disc other than the vanilla one: the recorders read GW_ISO_<iso> from .env
+            envd["COV_ISO"] = v["iso"]
         if v.get("mods"):
             # only the named mods mounted (gw_mods mounts every folder of the dir): a fresh copy per scenario
             md = os.path.join(wt, "build", "covmods", n)
@@ -32,7 +36,7 @@ elif a[0] == "tsv":
             for m in v["mods"]:
                 shutil.copytree(os.path.join(wt, "pc", "geno", "mods", m), os.path.join(md, m))
             envd["MELEE_MODS_DIR"] = md.replace("\\", "/")
-        env = ",".join("%s=%s" % (k, val.replace("{wt}", wt)) for k, val in sorted(envd.items()))
+        env = ",".join("%s=%s" % (k, val.replace("{wt}", wt).replace("{ws}", ws)) for k, val in sorted(envd.items()))
         print("\t".join([n, v["pad"], v.get("scene", ""), str(v.get("seed", d["defaults"]["seed"])),
                          str(v.get("max_seconds", d["defaults"]["max_seconds"])), env]))
 elif a[0] == "batch":

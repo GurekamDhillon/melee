@@ -35,9 +35,9 @@ lua += ["}", "local want = {" + ",".join(map(str, want)) + "}",
   end
   gd.log("MENUPROOF scene " .. gd.scene().name .. " at frame " .. gd.frame())
   local t0 = gd.frame()
-  -- expand the script to one entry per tick; the C game consumes a gd.input hold two logic frames after the script sets it (measured
+  -- expand the script to one entry per tick; the row of tick k is set at Lua age k-LUA_LEAD (see the end of this file; the old note:
   -- with a START at the title: the menu's first frame lines up with the Rust tick when the input of tick k is
-  -- set at Lua age k-2)
+  -- set at Lua age k-2, measured on the title only)
   local ticks = {}
   for _, r in ipairs(rows) do
     for k = 1, r[1] do ticks[#ticks + 1] = r end
@@ -45,7 +45,7 @@ lua += ["}", "local want = {" + ",".join(map(str, want)) + "}",
   local last = want[#want] + 1
   local wi = 1
   for age = 1, last do
-    local r = ticks[age + 2]
+    local r = ticks[age + @LEAD@]
     if r then gd.input(1, {buttons = r[2], x = r[3], y = r[4]}, 1) else gd.input(1, {buttons = 0, x = 0, y = 0}, 1) end
     gd.wait(1)
     while wi <= #want and want[wi] == age + 1 do
@@ -57,4 +57,7 @@ lua += ["}", "local want = {" + ",".join(map(str, want)) + "}",
   gd.wait(40)
   gd.quit()
 end)""".replace("@START@", start)]
-open(out, "w").write("\n".join(lua))
+# LUA_LEAD: how many ticks ahead of the Lua age a script row is fed. 1 lines the C build's input up with melee play's ticks:
+# the CSS cursor, the SSS cursor and every scene cut are frame-exact (measured 2026-11-03; the old 2 was a title-only fit).
+import os
+open(out, "w").write("\n".join(lua).replace("@LEAD@", os.environ.get("LUA_LEAD", "1")))

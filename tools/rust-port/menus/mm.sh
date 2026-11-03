@@ -1,7 +1,7 @@
 #!/bin/bash
 # mm.sh SCRIPT TICKS TAG: C vs Rust shots of a navigation script run from the title (timeline ticks).
 set -e
-D="$(cd "$(dirname "$0")" && pwd)"; WS="/e/Projects/Melee Workspace"; B="$WS/_build/agents/plat-menus"
+D="$(cd "$(dirname "$0")" && pwd)"; WS="/e/Projects/Melee Workspace"; B="${SHOT_BASE:-$WS/_build/agents/plat-menus}"
 S="$D/$1"; T=$2; TAG=$3
 set -a; . "$WS/.env"; set +a
 export CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0

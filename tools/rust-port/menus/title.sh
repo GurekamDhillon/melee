@@ -1,7 +1,7 @@
 #!/bin/bash
 # title.sh: Rust title scene shots vs the C build's, same ages (scene age = ticks since the first title frame).
 set -e
-D="$(cd "$(dirname "$0")" && pwd)"; WS="/e/Projects/Melee Workspace"; B="$WS/_build/agents/plat-menus"
+D="$(cd "$(dirname "$0")" && pwd)"; WS="/e/Projects/Melee Workspace"; B="${SHOT_BASE:-$WS/_build/agents/plat-menus}"
 AGES=${AGES:-1,2,3,5,10,30,60,120,200}
 set -a; . "$WS/.env"; set +a
 export CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0

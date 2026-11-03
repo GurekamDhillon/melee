@@ -13,7 +13,8 @@ mode=--headless; which=all
 for a in "$@"; do case "$a" in --windowed) mode="" ;; css|x5|all) which=$a ;; esac; done
 exe="$repo/build/cargo/${PROFILE:-release}/melee.exe"
 out="${TEMP:-/tmp}/rematch.$$"; mkdir -p "$out"
-export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1
+# save-less (MELEE_CARD=0): the scripts start at the title, and a card would add the boot memory-card prompt
+export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_CARD=0
 fail=0
 run() { # name script matches
   MELEE_STANDIN_MENUS=1 MELEE_PAD_SCRIPT="$here/$2" "$exe" play $mode --no-audio --skip-intro --iso "$GW_ISO_VANILLA" --time-secs 60 --quit-at-results \

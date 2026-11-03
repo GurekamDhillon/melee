@@ -209,3 +209,30 @@ pub fn memcardOnLoad(scene: *mut GameModeState) {
 /// `GM_OPENING_MV` / `GM_TITLE` as the bytes the boot scene stores.
 pub const BOOT_MODE_TITLE: u8 = GM_TITLE as u8;
 pub const BOOT_MODE_OPENING_MV: u8 = GM_OPENING_MV as u8;
+
+unsafe extern "C" fn c_bootOnLoad(s: *mut GameModeState) { bootOnLoad(s) }
+unsafe extern "C" fn c_bootOnLeave(s: *mut GameModeState) { bootOnLeave(s) }
+unsafe extern "C" fn c_memcardOnLoad(s: *mut GameModeState) { memcardOnLoad(s) }
+
+/// `gm_Mode_Boot_States` (gmboot.c): one GS_MEMCARD scene, preload 1, over `load_data` / `leave_data`.
+pub fn gm_Mode_Boot_States() -> [GameModeState; 2] {
+    let mut t = [GameModeState::zeroed(); 2];
+    t[0].id = 0;
+    t[0].preload = 1;
+    t[0].on_enter = Some(c_bootOnLoad);
+    t[0].on_exit = Some(c_bootOnLeave);
+    t[0].info.scene_kind = melee_types::GS_MEMCARD as u8;
+    t[0].info.enter_data = (&raw mut load_data) as *mut c_void;
+    t[0].info.exit_data = (&raw mut leave_data) as *mut c_void;
+    t[1].id = melee_types::GM_GAMEMODESTATE_TERMINATE as u8;
+    t
+}
+
+/// `gm_Mode_MemCard_States` (gmboot.c): the same scene, preload 3, `memcardOnLoad` and no exit handler.
+pub fn gm_Mode_MemCard_States() -> [GameModeState; 2] {
+    let mut t = gm_Mode_Boot_States();
+    t[0].preload = 3;
+    t[0].on_enter = Some(c_memcardOnLoad);
+    t[0].on_exit = None;
+    t
+}

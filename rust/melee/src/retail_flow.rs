@@ -107,9 +107,20 @@ impl RetailPlay {
         // intro is skipped. MELEE_RETAIL_FIRST=<GameModeKind> starts elsewhere.
         let boot_pick = if self.skip_intro { melee_types::GM_TITLE } else { melee_types::GM_OPENING_MV } as u8;
         let mut first = std::env::var("MELEE_RETAIL_FIRST").ok().and_then(|v| v.parse::<u8>().ok()).unwrap_or(boot_pick);
+        // MELEE_SCENE="mode=classic;p1=fox;step=N;difficulty=D" (the C build's 1P scene launch, gw_runtime.c): the mode's
+        // OnLoad skips its character select and starts at stage N
+        if self.presets.scenario.is_none() {
+            if let Ok(v) = std::env::var("MELEE_SCENE") {
+                match melee_engine::scenario::Scenario::parse(&v) {
+                    Ok(s) if s.onep_mode >= 0 => self.presets.scenario = Some(s),
+                    Ok(_) => log("MELEE_SCENE: only the 1P modes are launched this way here (VS: --match)"),
+                    Err(e) => log(&format!("MELEE_SCENE: {e}")),
+                }
+            }
+        }
         if let Some(scn) = self.presets.scenario.take() {
+            first = melee_engine::scenario::boot_mode(&scn);
             melee_engine::scenario::install(scn);
-            first = melee_types::GM_VS as u8;
         }
         let e = melee_engine::Engine::boot_modes(disc, 64 << 20, PadSystem::headless(), first)?;
         if self.audio.is_some() {
@@ -247,7 +258,7 @@ impl Game for RetailPlay {
             self.cur = now;
             self.age = 0;
             self.scene_no += 1;
-            log(&format!("tick {}: scene {} (mode {}, scene kind {})", self.tick_no, scene_name(now.1), now.0, now.1));
+            log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
                 if self.quit_after.is_some_and(|n| self.matches >= n) {

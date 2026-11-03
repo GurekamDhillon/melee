@@ -56,6 +56,7 @@ pub struct RetailPlay {
     headless: bool,
     tick_no: u64,
     age: u32,
+    menu_at: Option<(u8, u16)>,
     /// (mode, scene kind) of the current scene
     cur: (u8, u8),
     /// scenes entered so far (the shot index)
@@ -78,7 +79,7 @@ pub struct RetailPlay {
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
         RetailPlay {
-            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
+            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
@@ -275,6 +276,11 @@ impl Game for RetailPlay {
         self.tick_no += 1;
         self.age += 1;
         let now = e.mode_scene();
+        if now.1 == 1 && std::env::var_os("MELEE_MENU_LOG").is_some() {
+            // the main menu's cursor (mn_804A04F0): which list and entry a scripted run is on
+            let m = unsafe { (melee_modes::tu::mnmain::mn_804A04F0.cur_menu, melee_modes::tu::mnmain::mn_804A04F0.hovered_selection) };
+            if self.menu_at != Some(m) { self.menu_at = Some(m); log(&format!("tick {}: menu {} entry {}", self.tick_no, m.0, m.1)); }
+        }
         if entered || now != self.cur {
             let prev = self.cur;
             self.cur = now;

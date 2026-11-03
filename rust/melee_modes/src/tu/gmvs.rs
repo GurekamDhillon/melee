@@ -1097,6 +1097,9 @@ pub unsafe fn gm_DoPauseChecksAndRoutine(arg0: *mut VsSceneController, arg1: i32
                     ext::gm_EnablePlayerPauseCamera(pauser_slot as i32, pauser);
                 }
             }
+            // TARGET_PC: the game's own pause, for the scripted-run logs (gmvs.c's OSReport)
+            eprintln!("scene: game pause by player {pauser} (kind {arg1} hud={} unpause_timer={} disable_pausing={} frame={})",
+                (*arg0).state.hud_enabled, (*arg0).state.unpause_timer, (*arg0).start.disable_pausing(), (*arg0).state.frame_count);
             ext::HSD_PadRumblePauseAll();
             (*arg0).state.pauser = pauser as i8;
             (*arg0).state.pause_timer = 0xA;

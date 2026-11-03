@@ -33,6 +33,29 @@ pub mod ext {
 
 const FILE: &str = "src/melee/lb/lbmemory.c";
 
+/// The heap compaction's one-shot RAM-copy alarm (`start_ram_copy` / `fn_80015184`: `OSSetAlarm(3 ms)`). There is no
+/// timer interrupt here, so the armed alarm waits in `COPY_ALARM` until `lbMemory_FireCopyAlarm` runs it: the engine's
+/// per-frame alarm tick, and the spins that wait on the compaction (lbDvd_800189EC waiting for a preload on the heap
+/// being compacted) where the console's alarm interrupt would fire. Without it the compaction never finishes, the
+/// heap stays `persistent_heap` and the preload wait spins forever (Training's stage load).
+pub static mut COPY_ALARM: (*mut OSAlarm, OSAlarmHandler) = (core::ptr::null_mut(), None);
+
+/// `OSSetAlarm` for this TU's copy alarm: arm it (see `COPY_ALARM`).
+pub fn lbMemory_ArmCopyAlarm(alarm: *mut OSAlarm, _ticks: i64, handler: OSAlarmHandler) {
+    unsafe { COPY_ALARM = (alarm, handler); }
+}
+
+/// Fires the armed copy alarm, if any (one 3 ms period elapsed). Returns whether one fired.
+pub fn lbMemory_FireCopyAlarm() -> bool {
+    unsafe {
+        let (alarm, handler) = COPY_ALARM;
+        let Some(h) = handler else { return false };
+        COPY_ALARM = (core::ptr::null_mut(), None);
+        h(alarm, core::ptr::null_mut());
+        true
+    }
+}
+
 // TU-local records, including pointer-sized LBMgr.cb_arg, are generated from the C.
 pub use melee_types::{MemEntry, LBMgr, Allocator};
 

@@ -1,0 +1,64 @@
+# melee play (retail scenes), port 1: title -> main menu -> 1P mode -> Training -> CSS -> SSS -> training (menu open, then idle)
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, no memory card): eight A presses, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# main menu's first entry: 1P mode
+3 0100 0 0
+60 0000 0 0
+# 1P mode (menu 1): D-pad down to Training, entry 4 (entry 2 is locked and skipped; MELEE_MENU_LOG prints the cursor)
+4 0004 0 0
+20 0000 0 0
+4 0004 0 0
+20 0000 0 0
+4 0004 0 0
+20 0000 0 0
+3 0100 0 0
+200 0000 0 0
+# CSS: the hand up to Fox, then START
+30 0000 0 127
+6 0000 127 0
+10 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 1000 0 0
+200 0000 0 0
+# SSS: START takes a random stage
+3 1000 0 0
+600 0000 0 0
+# training: START opens its menu; hold it open, then close
+3 1000 0 0
+200 0000 0 0
+4 0004 0 0
+20 0000 0 0
+3 1000 0 0
+400 0000 0 0
+# exit: START (the training menu, its cursor still on entry 1), up twice wraps it to the last entry (Exit,
+# gm_1884.c fn_801891F4 case 8: gm_8016B328 ends the match), A
+3 1000 0 0
+60 0000 0 0
+4 0008 0 0
+30 0000 0 0
+4 0008 0 0
+30 0000 0 0
+3 0100 0 0
+600 0000 0 0
+# back out of the CSS to the 1P menu: B held
+120 0200 0 0
+300 0000 0 0

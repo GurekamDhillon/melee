@@ -20,6 +20,7 @@ melee_fighter.workspace = true
 melee_chara.workspace = true
 melee_items.workspace = true
 melee_data = { path = "../melee_data" }
+melee_modhost = { path = "../melee_modhost" }
 
 [features]
 guard = []

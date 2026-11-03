@@ -2569,8 +2569,19 @@ pub unsafe fn Fighter_UnkTakeDamage_8006CC30(fp: &mut Fighter, mut d: f32) {
 }
 
 /// `Fighter_TakeDamage_8006CC7C` (TARGET_PC: script damage overlay).
-pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, mut d: f32) {
+pub unsafe fn Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, d: f32) {
     melee_core::ct!("Fighter_TakeDamage_8006CC7C");
+    // mod host (melee_modhost, hooks-v1 `damage.fighter_take_damage`): None unless a loaded mod hooks the row
+    if let Some(m) = crate::hooks::MOD_TAKE_DAMAGE {
+        if m(fp, d, false) { m(fp, d, true); return; } // a pre hook skipped the original: the post chain still runs
+        fighter_take_damage_orig(fp, d);
+        m(fp, d, true);
+        return;
+    }
+    fighter_take_damage_orig(fp, d);
+}
+
+unsafe fn fighter_take_damage_orig(fp: &mut Fighter, mut d: f32) {
     use ext as e;
     d = e::ScriptGame_ModDamage(fp.player_id as i32, 1, d);
     if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {

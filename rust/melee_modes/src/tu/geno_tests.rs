@@ -203,19 +203,19 @@ fn GenoDefine_FtDataSharedMask(a0: *const ftData, a1: *const ftData) -> u32;
 fn GenoDefine_FtDataFieldName(a0: i32) -> *const i8;
 fn __frsqrte(a0: f64) -> f64;
 }
-pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 pub static mut Fighter_804D6540: *mut *mut Fighter_804D6540_t = unsafe { core::mem::zeroed() };
-pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
-pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
+pub use melee_fighter::hooks::FT_PARTS_TABLE as ftPartsTable;
+pub use melee_runtime::shared::p_ftCommonData;
 pub static mut player_slots: [StaticPlayer; 0] = unsafe { core::mem::zeroed() };
 pub static mut gmVsMelee_StartData: StartMeleeData = unsafe { core::mem::zeroed() };
-pub static mut gm_Mode_Lab_States: [GameModeState; 0] = unsafe { core::mem::zeroed() };
+pub use crate::tu::geno_lab_mode::gm_Mode_Lab_States;
 pub static mut GenoDefine_ContentIdentity: [[u32; 2]; 127] = unsafe { core::mem::zeroed() };
 pub static mut GenoDefine_InterpreterAttempts: [u32; 127] = unsafe { core::mem::zeroed() };
 pub static mut HSD_RandSeedPtr: *mut u32 = unsafe { core::mem::zeroed() };
 pub static mut CostumeListsForeachCharacter: [UnkCostumeList; 127] = unsafe { core::mem::zeroed() };
 
-pub static mut Geno_ScriptPool: [u32; 65536] = unsafe { core::mem::zeroed() };
+pub use crate::tu::geno_game::Geno_ScriptPool;
 }
 use ext::*;
 pub const GENO_FTCMD_OP: i32 = 59 as i32;
@@ -816,7 +816,7 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
     let mut n: i32 = 0 as i32;
     let fresh2 = n;
     n = n + 1;
-    *s.offset(fresh2 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh2 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -833,13 +833,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh3 = n;
     n = n + 1;
-    *s.offset(fresh3 as isize) = 5 as u32;
+    *s.offset(fresh3 as isize) = (5 as u32).to_be();
     let fresh4 = n;
     n = n + 1;
-    *s.offset(fresh4 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh4 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IF as i32 as u32
             & 63 as u32) << 20 as i32
@@ -856,16 +856,16 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (GENO_CMP_EQ as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh5 = n;
     n = n + 1;
-    *s.offset(fresh5 as isize) = 5 as u32;
+    *s.offset(fresh5 as isize) = (5 as u32).to_be();
     let fresh6 = n;
     n = n + 1;
-    *s.offset(fresh6 as isize) = 5 as u32;
+    *s.offset(fresh6 as isize) = (5 as u32).to_be();
     let fresh7 = n;
     n = n + 1;
-    *s.offset(fresh7 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh7 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -882,31 +882,31 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh8 = n;
     n = n + 1;
-    *s.offset(fresh8 as isize) = 111 as u32;
+    *s.offset(fresh8 as isize) = (111 as u32).to_be();
     let fresh9 = n;
     n = n + 1;
-    *s.offset(fresh9 as isize) = (19 as u32) << 26 as i32
+    *s.offset(fresh9 as isize) = ((19 as u32) << 26 as i32
         | (1 as i32 as u32) << 24 as i32
-        | 42 as i32 as u32;
+        | 42 as i32 as u32).to_be();
     let fresh10 = n;
     n = n + 1;
-    *s.offset(fresh10 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh10 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SKIP as i32 as u32
             & 63 as u32) << 20 as i32
         | (2 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh11 = n;
     n = n + 1;
-    *s.offset(fresh11 as isize) = 3 as u32;
+    *s.offset(fresh11 as isize) = (3 as u32).to_be();
     let fresh12 = n;
     n = n + 1;
-    *s.offset(fresh12 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh12 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -923,18 +923,18 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh13 = n;
     n = n + 1;
-    *s.offset(fresh13 as isize) = 222 as u32;
+    *s.offset(fresh13 as isize) = (222 as u32).to_be();
     let fresh14 = n;
     n = n + 1;
-    *s.offset(fresh14 as isize) = (19 as u32) << 26 as i32
+    *s.offset(fresh14 as isize) = ((19 as u32) << 26 as i32
         | (1 as i32 as u32) << 24 as i32
-        | 99 as i32 as u32;
+        | 99 as i32 as u32).to_be();
     let fresh15 = n;
     n = n + 1;
-    *s.offset(fresh15 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh15 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IF as i32 as u32
             & 63 as u32) << 20 as i32
@@ -951,16 +951,16 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (GENO_CMP_NE as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh16 = n;
     n = n + 1;
-    *s.offset(fresh16 as isize) = 5 as u32;
+    *s.offset(fresh16 as isize) = (5 as u32).to_be();
     let fresh17 = n;
     n = n + 1;
-    *s.offset(fresh17 as isize) = 4 as u32;
+    *s.offset(fresh17 as isize) = (4 as u32).to_be();
     let fresh18 = n;
     n = n + 1;
-    *s.offset(fresh18 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh18 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -977,26 +977,26 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh19 = n;
     n = n + 1;
-    *s.offset(fresh19 as isize) = 1 as u32;
+    *s.offset(fresh19 as isize) = (1 as u32).to_be();
     let fresh20 = n;
     n = n + 1;
-    *s.offset(fresh20 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh20 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SKIP as i32 as u32
             & 63 as u32) << 20 as i32
         | (2 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh21 = n;
     n = n + 1;
-    *s.offset(fresh21 as isize) = 2 as u32;
+    *s.offset(fresh21 as isize) = (2 as u32).to_be();
     let fresh22 = n;
     n = n + 1;
-    *s.offset(fresh22 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh22 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1013,13 +1013,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh23 = n;
     n = n + 1;
-    *s.offset(fresh23 as isize) = 2 as u32;
+    *s.offset(fresh23 as isize) = (2 as u32).to_be();
     let fresh24 = n;
     n = n + 1;
-    *s.offset(fresh24 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh24 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_ADD as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1036,13 +1036,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh25 = n;
     n = n + 1;
-    *s.offset(fresh25 as isize) = 10 as u32;
+    *s.offset(fresh25 as isize) = (10 as u32).to_be();
     let fresh26 = n;
     n = n + 1;
-    *s.offset(fresh26 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh26 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SUB as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1059,13 +1059,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh27 = n;
     n = n + 1;
-    *s.offset(fresh27 as isize) = 1 as u32;
+    *s.offset(fresh27 as isize) = (1 as u32).to_be();
     let fresh28 = n;
     n = n + 1;
-    *s.offset(fresh28 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh28 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_MUL as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1082,13 +1082,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh29 = n;
     n = n + 1;
-    *s.offset(fresh29 as isize) = 3 as u32;
+    *s.offset(fresh29 as isize) = (3 as u32).to_be();
     let fresh30 = n;
     n = n + 1;
-    *s.offset(fresh30 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh30 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1105,13 +1105,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh31 = n;
     n = n + 1;
-    *s.offset(fresh31 as isize) = t_fbits(1.5f32);
+    *s.offset(fresh31 as isize) = (t_fbits(1.5f32)).to_be();
     let fresh32 = n;
     n = n + 1;
-    *s.offset(fresh32 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh32 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_MUL as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1128,13 +1128,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh33 = n;
     n = n + 1;
-    *s.offset(fresh33 as isize) = t_fbits(2.0f32);
+    *s.offset(fresh33 as isize) = (t_fbits(2.0f32)).to_be();
     let fresh34 = n;
     n = n + 1;
-    *s.offset(fresh34 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh34 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IF as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1151,16 +1151,16 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (GENO_CMP_GT as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh35 = n;
     n = n + 1;
-    *s.offset(fresh35 as isize) = t_fbits(2.5f32);
+    *s.offset(fresh35 as isize) = (t_fbits(2.5f32)).to_be();
     let fresh36 = n;
     n = n + 1;
-    *s.offset(fresh36 as isize) = 2 as u32;
+    *s.offset(fresh36 as isize) = (2 as u32).to_be();
     let fresh37 = n;
     n = n + 1;
-    *s.offset(fresh37 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh37 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1177,13 +1177,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh38 = n;
     n = n + 1;
-    *s.offset(fresh38 as isize) = 7 as u32;
+    *s.offset(fresh38 as isize) = (7 as u32).to_be();
     let fresh39 = n;
     n = n + 1;
-    *s.offset(fresh39 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh39 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SETBIT as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1200,13 +1200,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh40 = n;
     n = n + 1;
-    *s.offset(fresh40 as isize) = 3 as u32;
+    *s.offset(fresh40 as isize) = (3 as u32).to_be();
     let fresh41 = n;
     n = n + 1;
-    *s.offset(fresh41 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh41 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SETBIT as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1223,13 +1223,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh42 = n;
     n = n + 1;
-    *s.offset(fresh42 as isize) = 0 as u32;
+    *s.offset(fresh42 as isize) = (0 as u32).to_be();
     let fresh43 = n;
     n = n + 1;
-    *s.offset(fresh43 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh43 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CLRBIT as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1246,13 +1246,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh44 = n;
     n = n + 1;
-    *s.offset(fresh44 as isize) = 0 as u32;
+    *s.offset(fresh44 as isize) = (0 as u32).to_be();
     let fresh45 = n;
     n = n + 1;
-    *s.offset(fresh45 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh45 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IF as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1269,16 +1269,16 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (GENO_CMP_BIT as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh46 = n;
     n = n + 1;
-    *s.offset(fresh46 as isize) = 3 as u32;
+    *s.offset(fresh46 as isize) = (3 as u32).to_be();
     let fresh47 = n;
     n = n + 1;
-    *s.offset(fresh47 as isize) = 2 as u32;
+    *s.offset(fresh47 as isize) = (2 as u32).to_be();
     let fresh48 = n;
     n = n + 1;
-    *s.offset(fresh48 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh48 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1295,13 +1295,13 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh49 = n;
     n = n + 1;
-    *s.offset(fresh49 as isize) = 1 as u32;
+    *s.offset(fresh49 as isize) = (1 as u32).to_be();
     let fresh50 = n;
     n = n + 1;
-    *s.offset(fresh50 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh50 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1318,15 +1318,15 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh51 = n;
     n = n + 1;
-    *s.offset(fresh51 as isize) = ((0 as i32 & 3 as i32)
+    *s.offset(fresh51 as isize) = (((0 as i32 & 3 as i32)
         << 6 as i32 | 0 as i32 & 63 as i32)
-        as u32;
+        as u32).to_be();
     let fresh52 = n;
     n = n + 1;
-    *s.offset(fresh52 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh52 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -1343,52 +1343,52 @@ pub unsafe extern "C" fn t_build(mut s: *mut u32) -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh53 = n;
     n = n + 1;
-    *s.offset(fresh53 as isize) = ((2 as i32 & 3 as i32)
+    *s.offset(fresh53 as isize) = (((2 as i32 & 3 as i32)
         << 6 as i32 | 0 as i32 & 63 as i32)
-        as u32;
+        as u32).to_be();
     let fresh54 = n;
     n = n + 1;
-    *s.offset(fresh54 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh54 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CALL as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh55 = n;
     n = n + 1;
-    *s.offset(fresh55 as isize) = GENO_HOOK_COUNT_FRAMES as i32 as u32;
+    *s.offset(fresh55 as isize) = (GENO_HOOK_COUNT_FRAMES as i32 as u32).to_be();
     let fresh56 = n;
     n = n + 1;
-    *s.offset(fresh56 as isize) = 7 as u32;
+    *s.offset(fresh56 as isize) = (7 as u32).to_be();
     let fresh57 = n;
     n = n + 1;
-    *s.offset(fresh57 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh57 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (0x3e as i32 as u32 & 63 as u32)
             << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh58 = n;
     n = n + 1;
-    *s.offset(fresh58 as isize) = 0xffffffff as u32 as u32;
+    *s.offset(fresh58 as isize) = (0xffffffff as u32 as u32).to_be();
     let fresh59 = n;
     n = n + 1;
-    *s.offset(fresh59 as isize) = 0xffffffff as u32 as u32;
+    *s.offset(fresh59 as isize) = (0xffffffff as u32 as u32).to_be();
     let fresh60 = n;
     n = n + 1;
-    *s.offset(fresh60 as isize) = (19 as u32) << 26 as i32
+    *s.offset(fresh60 as isize) = ((19 as u32) << 26 as i32
         | (2 as i32 as u32) << 24 as i32
-        | 7 as i32 as u32;
+        | 7 as i32 as u32).to_be();
     let fresh61 = n;
     n = n + 1;
-    *s.offset(fresh61 as isize) = 0 as u32;
+    *s.offset(fresh61 as isize) = (0 as u32).to_be();
     return n;
 }
 
@@ -1479,15 +1479,15 @@ pub unsafe extern "C" fn test_geno_ftcmd_loops() -> i32 {
 pub unsafe extern "C" fn test_geno_vanilla_script_untouched() -> i32 {
     melee_core::ct!("test_geno_vanilla_script_untouched");
     let mut st: *mut TestGenoState = t_setup();
-    t_script[0 as i32 as usize] = (19 as u32)
+    t_script[0 as i32 as usize] = ((19 as u32)
         << 26 as i32
         | (0 as i32 as u32) << 24 as i32
-        | 5 as i32 as u32;
-    t_script[1 as i32 as usize] = (19 as u32)
+        | 5 as i32 as u32).to_be();
+    t_script[1 as i32 as usize] = ((19 as u32)
         << 26 as i32
         | (3 as i32 as u32) << 24 as i32
-        | 9 as i32 as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
+        | 9 as i32 as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if t_fp.cmd_vars[0 as i32 as usize] != 5 as u32
         || t_fp.cmd_vars[3 as i32 as usize] != 9 as u32
@@ -1808,18 +1808,18 @@ pub unsafe extern "C" fn test_geno_effective_script_range() -> i32 {
         );
         rc = 1 as i32;
     }
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CALL as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[1 as i32 as usize] = 0x5c000000 as i32
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_script[3 as i32 as usize] = 0 as u32;
+        as u32).to_be();
+    t_script[1 as i32 as usize] = (0x5c000000 as i32
+        as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
+    t_script[3 as i32 as usize] = (0 as u32).to_be();
     if GenoGame_ScriptHasIasa(
         &raw mut t_script as *mut u32 as *const c_void,
     ) != 0
@@ -2597,7 +2597,7 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
     t_dat_attrs[4 as i32 as usize] = 9 as u32;
     let fresh62 = n;
     n = n + 1;
-    *s.offset(fresh62 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh62 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2614,13 +2614,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh63 = n;
     n = n + 1;
-    *s.offset(fresh63 as isize) = GENO_VAL_VEL_X as i32 as u32;
+    *s.offset(fresh63 as isize) = (GENO_VAL_VEL_X as i32 as u32).to_be();
     let fresh64 = n;
     n = n + 1;
-    *s.offset(fresh64 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh64 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2637,13 +2637,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh65 = n;
     n = n + 1;
-    *s.offset(fresh65 as isize) = GENO_VAL_AIR as i32 as u32;
+    *s.offset(fresh65 as isize) = (GENO_VAL_AIR as i32 as u32).to_be();
     let fresh66 = n;
     n = n + 1;
-    *s.offset(fresh66 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh66 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2660,13 +2660,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh67 = n;
     n = n + 1;
-    *s.offset(fresh67 as isize) = GENO_VAL_STICK_FWD as i32 as u32;
+    *s.offset(fresh67 as isize) = (GENO_VAL_STICK_FWD as i32 as u32).to_be();
     let fresh68 = n;
     n = n + 1;
-    *s.offset(fresh68 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh68 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2683,14 +2683,14 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh69 = n;
     n = n + 1;
-    *s.offset(fresh69 as isize) = (GENO_VAL_CMD_VAR0 as i32
-        + 2 as i32) as u32;
+    *s.offset(fresh69 as isize) = ((GENO_VAL_CMD_VAR0 as i32
+        + 2 as i32) as u32).to_be();
     let fresh70 = n;
     n = n + 1;
-    *s.offset(fresh70 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh70 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2707,14 +2707,14 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh71 = n;
     n = n + 1;
-    *s.offset(fresh71 as isize) = (GENO_VAL_SPECIAL_F as i32
-        + 3 as i32) as u32;
+    *s.offset(fresh71 as isize) = ((GENO_VAL_SPECIAL_F as i32
+        + 3 as i32) as u32).to_be();
     let fresh72 = n;
     n = n + 1;
-    *s.offset(fresh72 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh72 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2731,14 +2731,14 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh73 = n;
     n = n + 1;
-    *s.offset(fresh73 as isize) = (GENO_VAL_SPECIAL_I as i32
-        + 4 as i32) as u32;
+    *s.offset(fresh73 as isize) = ((GENO_VAL_SPECIAL_I as i32
+        + 4 as i32) as u32).to_be();
     let fresh74 = n;
     n = n + 1;
-    *s.offset(fresh74 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh74 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2755,114 +2755,114 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh75 = n;
     n = n + 1;
-    *s.offset(fresh75 as isize) = GENO_VAL_MOTION as i32 as u32;
+    *s.offset(fresh75 as isize) = (GENO_VAL_MOTION as i32 as u32).to_be();
     let fresh76 = n;
     n = n + 1;
-    *s.offset(fresh76 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh76 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh77 = n;
     n = n + 1;
-    *s.offset(fresh77 as isize) = GENO_VAL_VEL_Y as i32 as u32;
+    *s.offset(fresh77 as isize) = (GENO_VAL_VEL_Y as i32 as u32).to_be();
     let fresh78 = n;
     n = n + 1;
-    *s.offset(fresh78 as isize) = t_fbits(3.0f32);
+    *s.offset(fresh78 as isize) = (t_fbits(3.0f32)).to_be();
     let fresh79 = n;
     n = n + 1;
-    *s.offset(fresh79 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh79 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh80 = n;
     n = n + 1;
-    *s.offset(fresh80 as isize) = GENO_VAL_FWD_VEL as i32 as u32;
+    *s.offset(fresh80 as isize) = (GENO_VAL_FWD_VEL as i32 as u32).to_be();
     let fresh81 = n;
     n = n + 1;
-    *s.offset(fresh81 as isize) = t_fbits(2.0f32);
+    *s.offset(fresh81 as isize) = (t_fbits(2.0f32)).to_be();
     let fresh82 = n;
     n = n + 1;
-    *s.offset(fresh82 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh82 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0x80 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh83 = n;
     n = n + 1;
-    *s.offset(fresh83 as isize) = GENO_VAL_CMD_VAR0 as i32 as u32;
+    *s.offset(fresh83 as isize) = (GENO_VAL_CMD_VAR0 as i32 as u32).to_be();
     let fresh84 = n;
     n = n + 1;
-    *s.offset(fresh84 as isize) = ((0 as i32 & 3 as i32)
+    *s.offset(fresh84 as isize) = (((0 as i32 & 3 as i32)
         << 6 as i32 | 3 as i32 & 63 as i32)
-        as u32;
+        as u32).to_be();
     let fresh85 = n;
     n = n + 1;
-    *s.offset(fresh85 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh85 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh86 = n;
     n = n + 1;
-    *s.offset(fresh86 as isize) = GENO_VAL_FACING as i32 as u32;
+    *s.offset(fresh86 as isize) = (GENO_VAL_FACING as i32 as u32).to_be();
     let fresh87 = n;
     n = n + 1;
-    *s.offset(fresh87 as isize) = t_fbits(0.0f32);
+    *s.offset(fresh87 as isize) = (t_fbits(0.0f32)).to_be();
     let fresh88 = n;
     n = n + 1;
-    *s.offset(fresh88 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh88 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh89 = n;
     n = n + 1;
-    *s.offset(fresh89 as isize) = GENO_VAL_MOTION as i32 as u32;
+    *s.offset(fresh89 as isize) = (GENO_VAL_MOTION as i32 as u32).to_be();
     let fresh90 = n;
     n = n + 1;
-    *s.offset(fresh90 as isize) = 5 as u32;
+    *s.offset(fresh90 as isize) = (5 as u32).to_be();
     let fresh91 = n;
     n = n + 1;
-    *s.offset(fresh91 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh91 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IFV as i32 as u32
             & 63 as u32) << 20 as i32
         | (4 as i32 as u32 & 15 as u32)
             << 16 as i32
         | ((GENO_CMP_GT as i32) << 4 as i32)
-            as u32 & 0xffff as u32) as u32;
+            as u32 & 0xffff as u32) as u32).to_be();
     let fresh92 = n;
     n = n + 1;
-    *s.offset(fresh92 as isize) = GENO_VAL_STICK_X as i32 as u32;
+    *s.offset(fresh92 as isize) = (GENO_VAL_STICK_X as i32 as u32).to_be();
     let fresh93 = n;
     n = n + 1;
-    *s.offset(fresh93 as isize) = t_fbits(0.25f32);
+    *s.offset(fresh93 as isize) = (t_fbits(0.25f32)).to_be();
     let fresh94 = n;
     n = n + 1;
-    *s.offset(fresh94 as isize) = 2 as u32;
+    *s.offset(fresh94 as isize) = (2 as u32).to_be();
     let fresh95 = n;
     n = n + 1;
-    *s.offset(fresh95 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh95 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2879,32 +2879,32 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh96 = n;
     n = n + 1;
-    *s.offset(fresh96 as isize) = 1 as u32;
+    *s.offset(fresh96 as isize) = (1 as u32).to_be();
     let fresh97 = n;
     n = n + 1;
-    *s.offset(fresh97 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh97 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_IFV as i32 as u32
             & 63 as u32) << 20 as i32
         | (4 as i32 as u32 & 15 as u32)
             << 16 as i32
         | ((GENO_CMP_EQ as i32) << 4 as i32)
-            as u32 & 0xffff as u32) as u32;
+            as u32 & 0xffff as u32) as u32).to_be();
     let fresh98 = n;
     n = n + 1;
-    *s.offset(fresh98 as isize) = GENO_VAL_AIR as i32 as u32;
+    *s.offset(fresh98 as isize) = (GENO_VAL_AIR as i32 as u32).to_be();
     let fresh99 = n;
     n = n + 1;
-    *s.offset(fresh99 as isize) = 0 as u32;
+    *s.offset(fresh99 as isize) = (0 as u32).to_be();
     let fresh100 = n;
     n = n + 1;
-    *s.offset(fresh100 as isize) = 2 as u32;
+    *s.offset(fresh100 as isize) = (2 as u32).to_be();
     let fresh101 = n;
     n = n + 1;
-    *s.offset(fresh101 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh101 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2921,13 +2921,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh102 = n;
     n = n + 1;
-    *s.offset(fresh102 as isize) = 1 as u32;
+    *s.offset(fresh102 as isize) = (1 as u32).to_be();
     let fresh103 = n;
     n = n + 1;
-    *s.offset(fresh103 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh103 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2944,13 +2944,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh104 = n;
     n = n + 1;
-    *s.offset(fresh104 as isize) = 10 as u32;
+    *s.offset(fresh104 as isize) = (10 as u32).to_be();
     let fresh105 = n;
     n = n + 1;
-    *s.offset(fresh105 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh105 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_DIV as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2967,13 +2967,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh106 = n;
     n = n + 1;
-    *s.offset(fresh106 as isize) = 3 as u32;
+    *s.offset(fresh106 as isize) = (3 as u32).to_be();
     let fresh107 = n;
     n = n + 1;
-    *s.offset(fresh107 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh107 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_DIV as i32 as u32
             & 63 as u32) << 20 as i32
@@ -2990,13 +2990,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh108 = n;
     n = n + 1;
-    *s.offset(fresh108 as isize) = 0 as u32;
+    *s.offset(fresh108 as isize) = (0 as u32).to_be();
     let fresh109 = n;
     n = n + 1;
-    *s.offset(fresh109 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh109 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_SET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3013,13 +3013,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh110 = n;
     n = n + 1;
-    *s.offset(fresh110 as isize) = t_fbits(5.0f32);
+    *s.offset(fresh110 as isize) = (t_fbits(5.0f32)).to_be();
     let fresh111 = n;
     n = n + 1;
-    *s.offset(fresh111 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh111 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_DIV as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3036,13 +3036,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh112 = n;
     n = n + 1;
-    *s.offset(fresh112 as isize) = t_fbits(2.0f32);
+    *s.offset(fresh112 as isize) = (t_fbits(2.0f32)).to_be();
     let fresh113 = n;
     n = n + 1;
-    *s.offset(fresh113 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh113 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_RAND as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3059,13 +3059,13 @@ pub unsafe extern "C" fn test_geno_v1_values() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh114 = n;
     n = n + 1;
-    *s.offset(fresh114 as isize) = 5 as u32;
+    *s.offset(fresh114 as isize) = (5 as u32).to_be();
     let fresh115 = n;
     n = n + 1;
-    *s.offset(fresh115 as isize) = 0 as u32;
+    *s.offset(fresh115 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if !t_fp.x3E4_fighterCmdScript.anon_8.u.is_null() {
         TestFail(
@@ -3132,7 +3132,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     t_fp.ground_or_air = GA_Air;
     let fresh116 = n;
     n = n + 1;
-    *s.offset(fresh116 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh116 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3148,19 +3148,19 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh117 = n;
     n = n + 1;
-    *s.offset(fresh117 as isize) = ((0 as u32
+    *s.offset(fresh117 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 60 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh118 = n;
     n = n + 1;
-    *s.offset(fresh118 as isize) = GENO_BTN_ATTACK as u32;
+    *s.offset(fresh118 as isize) = (GENO_BTN_ATTACK as u32).to_be();
     let fresh119 = n;
     n = n + 1;
-    *s.offset(fresh119 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh119 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3176,24 +3176,24 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh120 = n;
     n = n + 1;
-    *s.offset(fresh120 as isize) = ((1 as u32
+    *s.offset(fresh120 as isize) = (((1 as u32
         & 15 as u32) << 28 as i32
         | 2 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh121 = n;
     n = n + 1;
-    *s.offset(fresh121 as isize) = ((1 as i32 & 3 as i32)
+    *s.offset(fresh121 as isize) = (((1 as i32 & 3 as i32)
         << 6 as i32 | 0 as i32 & 63 as i32)
-        as u32;
+        as u32).to_be();
     let fresh122 = n;
     n = n + 1;
-    *s.offset(fresh122 as isize) = 3 as u32;
+    *s.offset(fresh122 as isize) = (3 as u32).to_be();
     let fresh123 = n;
     n = n + 1;
-    *s.offset(fresh123 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh123 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHGAND as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3209,13 +3209,13 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh124 = n;
     n = n + 1;
-    *s.offset(fresh124 as isize) = 10 as u32;
+    *s.offset(fresh124 as isize) = (10 as u32).to_be();
     let fresh125 = n;
     n = n + 1;
-    *s.offset(fresh125 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh125 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3231,16 +3231,16 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh126 = n;
     n = n + 1;
-    *s.offset(fresh126 as isize) = ((0 as u32
+    *s.offset(fresh126 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 14 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh127 = n;
     n = n + 1;
-    *s.offset(fresh127 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh127 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3257,16 +3257,16 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
                 << 4 as i32
             | (0x8 as i32 | 0x4 as i32)
                 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh128 = n;
     n = n + 1;
-    *s.offset(fresh128 as isize) = ((0 as u32
+    *s.offset(fresh128 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 70 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh129 = n;
     n = n + 1;
-    *s.offset(fresh129 as isize) = 0 as u32;
+    *s.offset(fresh129 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).nchecks != 4 as u32
         || (*st).checks[1 as i32 as usize].ncond != 2 as u32
@@ -3326,7 +3326,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh130 = n;
     n = n + 1;
-    *s.offset(fresh130 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh130 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3342,19 +3342,19 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh131 = n;
     n = n + 1;
-    *s.offset(fresh131 as isize) = ((0 as u32
+    *s.offset(fresh131 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 60 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh132 = n;
     n = n + 1;
-    *s.offset(fresh132 as isize) = (GENO_BTN_ATTACK | GENO_BTN_SPECIAL) as u32;
+    *s.offset(fresh132 as isize) = ((GENO_BTN_ATTACK | GENO_BTN_SPECIAL) as u32).to_be();
     let fresh133 = n;
     n = n + 1;
-    *s.offset(fresh133 as isize) = 0 as u32;
+    *s.offset(fresh133 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     t_fp.input.pressed_buttons = HSD_PAD_B as HSD_Pad;
     if Geno_PreAnim(&raw mut t_gobj) != 1 as i32
@@ -3370,7 +3370,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh134 = n;
     n = n + 1;
-    *s.offset(fresh134 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh134 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3386,16 +3386,16 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh135 = n;
     n = n + 1;
-    *s.offset(fresh135 as isize) = ((0 as u32
+    *s.offset(fresh135 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 14 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh136 = n;
     n = n + 1;
-    *s.offset(fresh136 as isize) = 0 as u32;
+    *s.offset(fresh136 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if Geno_PreAnim(&raw mut t_gobj) != 0 as i32 {
         TestFail(
@@ -3418,7 +3418,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh137 = n;
     n = n + 1;
-    *s.offset(fresh137 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh137 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3434,22 +3434,22 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (GENO_CMP_GE as i32 & 7 as i32)
                 << 4 as i32
             | 0x4 as i32 & 0xc as i32)
-            as u32 & 0xffff as u32) as u32;
+            as u32 & 0xffff as u32) as u32).to_be();
     let fresh138 = n;
     n = n + 1;
-    *s.offset(fresh138 as isize) = ((0 as u32
+    *s.offset(fresh138 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 80 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh139 = n;
     n = n + 1;
-    *s.offset(fresh139 as isize) = GENO_VAL_ACTION_FRAME as i32 as u32;
+    *s.offset(fresh139 as isize) = (GENO_VAL_ACTION_FRAME as i32 as u32).to_be();
     let fresh140 = n;
     n = n + 1;
-    *s.offset(fresh140 as isize) = 1 as u32;
+    *s.offset(fresh140 as isize) = (1 as u32).to_be();
     let fresh141 = n;
     n = n + 1;
-    *s.offset(fresh141 as isize) = 0 as u32;
+    *s.offset(fresh141 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_SKIP);
     if (*st).nchecks != 0 as u32 {
         TestFail(
@@ -3471,7 +3471,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh142 = n;
     n = n + 1;
-    *s.offset(fresh142 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh142 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3487,24 +3487,24 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (GENO_CMP_GT as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh143 = n;
     n = n + 1;
-    *s.offset(fresh143 as isize) = ((0 as u32
+    *s.offset(fresh143 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 81 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh144 = n;
     n = n + 1;
-    *s.offset(fresh144 as isize) = ((2 as i32 & 3 as i32)
+    *s.offset(fresh144 as isize) = (((2 as i32 & 3 as i32)
         << 6 as i32 | 0 as i32 & 63 as i32)
-        as u32;
+        as u32).to_be();
     let fresh145 = n;
     n = n + 1;
-    *s.offset(fresh145 as isize) = t_fbits(1.5f32);
+    *s.offset(fresh145 as isize) = (t_fbits(1.5f32)).to_be();
     let fresh146 = n;
     n = n + 1;
-    *s.offset(fresh146 as isize) = 0 as u32;
+    *s.offset(fresh146 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     (*st).la_f[0 as i32 as usize] = 1.0f32 as f32;
     if Geno_PreAnim(&raw mut t_gobj) != 0 as i32 {
@@ -3526,7 +3526,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh147 = n;
     n = n + 1;
-    *s.offset(fresh147 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh147 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3542,16 +3542,16 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh148 = n;
     n = n + 1;
-    *s.offset(fresh148 as isize) = ((2 as u32
+    *s.offset(fresh148 as isize) = (((2 as u32
         & 15 as u32) << 28 as i32
         | 1 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh149 = n;
     n = n + 1;
-    *s.offset(fresh149 as isize) = 0 as u32;
+    *s.offset(fresh149 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     i = GenoGame_TestChanges();
     if Geno_PreAnim(&raw mut t_gobj) != 0 as i32
@@ -3563,7 +3563,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
         );
         rc = 1 as i32;
     }
-    *s.offset(0 as i32 as isize) = ((GENO_FTCMD_OP
+    *s.offset(0 as i32 as isize) = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3579,12 +3579,12 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
-    *s.offset(1 as i32 as isize) = ((0 as u32
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(1 as i32 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 35 as i32 as u32
-            & 0xffff as u32) as u32;
-    *s.offset(2 as i32 as isize) = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(2 as i32 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if Geno_PreAnim(&raw mut t_gobj) != 1 as i32
         || t_fp.motion_id != 35 as i32
@@ -3598,7 +3598,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     n = 0 as i32;
     let fresh150 = n;
     n = n + 1;
-    *s.offset(fresh150 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh150 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3614,26 +3614,26 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh151 = n;
     n = n + 1;
-    *s.offset(fresh151 as isize) = ((2 as u32
+    *s.offset(fresh151 as isize) = (((2 as u32
         & 15 as u32) << 28 as i32
         | 1 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh152 = n;
     n = n + 1;
-    *s.offset(fresh152 as isize) = 0 as u32;
+    *s.offset(fresh152 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CHGCLR as i32 as u32
             & 63 as u32) << 20 as i32
         | (1 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[1 as i32 as usize] = 0 as u32;
+        as u32).to_be();
+    t_script[1 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).nchecks != 0 as u32 {
         TestFail(
@@ -3646,7 +3646,7 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
     while i < 9 as i32 {
         let fresh153 = n;
         n = n + 1;
-        *s.offset(fresh153 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+        *s.offset(fresh153 as isize) = (((GENO_FTCMD_OP << 26 as i32)
             as u32
             | (GENO_SUB_CHG as i32 as u32
                 & 63 as u32) << 20 as i32
@@ -3662,21 +3662,21 @@ pub unsafe extern "C" fn test_geno_v1_change_action() -> i32 {
                 | (0 as i32 & 7 as i32)
                     << 4 as i32
                 | 0 as i32 & 0xc as i32)
-                as u32 & 0xffff as u32) as u32;
+                as u32 & 0xffff as u32) as u32).to_be();
         let fresh154 = n;
         n = n + 1;
-        *s.offset(fresh154 as isize) = ((0 as u32
+        *s.offset(fresh154 as isize) = (((0 as u32
             & 15 as u32) << 28 as i32
             | (90 as i32 + i) as u32
-                & 0xffff as u32) as u32;
+                & 0xffff as u32) as u32).to_be();
         let fresh155 = n;
         n = n + 1;
-        *s.offset(fresh155 as isize) = GENO_BTN_TAUNT as u32;
+        *s.offset(fresh155 as isize) = (GENO_BTN_TAUNT as u32).to_be();
         i += 1;
     }
     let fresh156 = n;
     n = n + 1;
-    *s.offset(fresh156 as isize) = 0 as u32;
+    *s.offset(fresh156 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).nchecks != GENO_MAX_CHECKS as u32 {
         TestFail(
@@ -3696,7 +3696,7 @@ pub unsafe extern "C" fn test_geno_v1_ground_edge() -> i32 {
     let mut s: *mut u32 = &raw mut t_script as *mut u32;
     GenoGame_TestCapture(1 as i32, 0 as i32);
     t_fp.motion_id = 50 as i32 as FtMotionId;
-    *s.offset(0 as i32 as isize) = ((GENO_FTCMD_OP
+    *s.offset(0 as i32 as isize) = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3712,12 +3712,12 @@ pub unsafe extern "C" fn test_geno_v1_ground_edge() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
-    *s.offset(1 as i32 as isize) = ((0 as u32
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(1 as i32 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 43 as i32 as u32
-            & 0xffff as u32) as u32;
-    *s.offset(2 as i32 as isize) = ((GENO_FTCMD_OP
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(2 as i32 as isize) = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -3733,12 +3733,12 @@ pub unsafe extern "C" fn test_geno_v1_ground_edge() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
-    *s.offset(3 as i32 as isize) = ((0 as u32
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(3 as i32 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | 30 as i32 as u32
-            & 0xffff as u32) as u32;
-    *s.offset(4 as i32 as isize) = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    *s.offset(4 as i32 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     t_fp.ground_or_air = GA_Ground;
     Geno_GroundEdge(&raw mut t_fp, 1 as i32);
@@ -3855,16 +3855,16 @@ pub unsafe extern "C" fn test_geno_v1_rehit() -> i32 {
         .victims_1[0 as i32 as usize]
         .victim = &raw mut t_gobj as *mut c_void;
     t_fp.x914[0 as i32 as usize].x44 = 1 as u8;
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_REHIT as i32 as u32
             & 63 as u32) << 20 as i32
         | (2 as i32 as u32 & 15 as u32)
             << 16 as i32
         | ((0x2 as i32) << 8 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = 3 as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    t_script[1 as i32 as usize] = (3 as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     f = 1 as i32;
     while f <= 2 as i32 {
@@ -3961,17 +3961,17 @@ pub unsafe extern "C" fn test_geno_v1_autolink() -> i32 {
         rc = 1 as i32;
     }
     st = t_setup();
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_LINK as i32 as u32
             & 63 as u32) << 20 as i32
         | (2 as i32 as u32 & 15 as u32)
             << 16 as i32
         | ((0x1 as i32) << 8 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = GENO_LINK_DIRECTION
-        as i32 as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    t_script[1 as i32 as usize] = (GENO_LINK_DIRECTION
+        as i32 as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     t_fp.ground_or_air = GA_Air;
     t_fp.self_vel.x = -1.0f32 as f32;
@@ -4110,7 +4110,7 @@ pub unsafe extern "C" fn test_geno_v1_special_attrs() -> i32 {
         );
         rc = 1 as i32;
     }
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4127,10 +4127,10 @@ pub unsafe extern "C" fn test_geno_v1_special_attrs() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = (GENO_VAL_SPECIAL_F
-        as i32 + 2 as i32) as u32;
-    t_script[2 as i32 as usize] = ((GENO_FTCMD_OP
+            & 0xffff as u32) as u32).to_be();
+    t_script[1 as i32 as usize] = ((GENO_VAL_SPECIAL_F
+        as i32 + 2 as i32) as u32).to_be();
+    t_script[2 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4147,10 +4147,10 @@ pub unsafe extern "C" fn test_geno_v1_special_attrs() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[3 as i32 as usize] = (GENO_VAL_SPECIAL_I
-        as i32 + 4 as i32) as u32;
-    t_script[4 as i32 as usize] = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    t_script[3 as i32 as usize] = ((GENO_VAL_SPECIAL_I
+        as i32 + 4 as i32) as u32).to_be();
+    t_script[4 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).la_f[5 as i32 as usize] != 1.25f32
         || (*st).la_i[5 as i32 as usize] != 77 as i32
@@ -4215,10 +4215,10 @@ pub unsafe extern "C" fn test_geno_v1_overlay() -> i32 {
         );
         return 1 as i32;
     }
-    orig[0 as i32 as usize] = (19 as u32) << 26 as i32
+    orig[0 as i32 as usize] = ((19 as u32) << 26 as i32
         | (1 as i32 as u32) << 24 as i32
-        | 42 as i32 as u32;
-    orig[1 as i32 as usize] = 0 as u32;
+        | 42 as i32 as u32).to_be();
+    orig[1 as i32 as usize] = (0 as u32).to_be();
     t_zero(
         &raw mut t_subactions as *mut Fighter_WaitAnimData as *mut c_void,
         ::core::mem::size_of::<[Fighter_WaitAnimData; 8]>() as i32,
@@ -4442,7 +4442,7 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
     t_fp.ground_or_air = GA_Air;
     let fresh157 = n;
     n = n + 1;
-    *s.offset(fresh157 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh157 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4458,16 +4458,16 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh158 = n;
     n = n + 1;
-    *s.offset(fresh158 as isize) = ((2 as u32
+    *s.offset(fresh158 as isize) = (((2 as u32
         & 15 as u32) << 28 as i32
         | 12 as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh159 = n;
     n = n + 1;
-    *s.offset(fresh159 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh159 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4483,16 +4483,16 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh160 = n;
     n = n + 1;
-    *s.offset(fresh160 as isize) = ((2 as u32
+    *s.offset(fresh160 as isize) = (((2 as u32
         & 15 as u32) << 28 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh161 = n;
     n = n + 1;
-    *s.offset(fresh161 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh161 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHGAND as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4508,10 +4508,10 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh162 = n;
     n = n + 1;
-    *s.offset(fresh162 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh162 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_CHG as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4527,16 +4527,16 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
             | (0 as i32 & 7 as i32)
                 << 4 as i32
             | 0 as i32 & 0xc as i32) as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh163 = n;
     n = n + 1;
-    *s.offset(fresh163 as isize) = ((0 as u32
+    *s.offset(fresh163 as isize) = (((0 as u32
         & 15 as u32) << 28 as i32
         | ftCo_MS_FallSpecial as i32 as u32
-            & 0xffff as u32) as u32;
+            & 0xffff as u32) as u32).to_be();
     let fresh164 = n;
     n = n + 1;
-    *s.offset(fresh164 as isize) = 0 as u32;
+    *s.offset(fresh164 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if Geno_PreAnim(&raw mut t_gobj) != 1 as i32
         || t_fp.motion_id != GENO_MOTION_BASE + 0 as i32
@@ -4552,7 +4552,7 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
         );
         rc = 1 as i32;
     }
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -4569,10 +4569,10 @@ pub unsafe extern "C" fn test_geno_v2_change_to_state() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = GENO_VAL_GENO_STATE
-        as i32 as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
+            & 0xffff as u32) as u32).to_be();
+    t_script[1 as i32 as usize] = (GENO_VAL_GENO_STATE
+        as i32 as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).la_i[3 as i32 as usize] != T_GS {
         TestFail(
@@ -4718,18 +4718,18 @@ pub unsafe extern "C" fn test_geno_v3_anim_motion() -> i32 {
         );
         rc = 1 as i32;
     }
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[1 as i32 as usize] = GENO_VAL_LEDGE as i32
-        as u32;
-    t_script[2 as i32 as usize] = 0 as u32;
-    t_script[3 as i32 as usize] = 0 as u32;
+        as u32).to_be();
+    t_script[1 as i32 as usize] = (GENO_VAL_LEDGE as i32
+        as u32).to_be();
+    t_script[2 as i32 as usize] = (0 as u32).to_be();
+    t_script[3 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if GenoGame_TestLedgeMode(&raw mut t_fp) != 0 as i32
         || (*st).ledge != 0 as i32
@@ -5916,7 +5916,7 @@ pub unsafe extern "C" fn test_geno_v5_on_hit() -> i32 {
         );
         rc = 1 as i32;
     }
-    t_script[0 as i32 as usize] = ((GENO_FTCMD_OP
+    t_script[0 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -5933,10 +5933,10 @@ pub unsafe extern "C" fn test_geno_v5_on_hit() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[1 as i32 as usize] = GENO_VAL_HIT_COUNT as i32
-        as u32;
-    t_script[2 as i32 as usize] = ((GENO_FTCMD_OP
+            & 0xffff as u32) as u32).to_be();
+    t_script[1 as i32 as usize] = (GENO_VAL_HIT_COUNT as i32
+        as u32).to_be();
+    t_script[2 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_GET as i32 as u32
             & 63 as u32) << 20 as i32
@@ -5953,21 +5953,21 @@ pub unsafe extern "C" fn test_geno_v5_on_hit() -> i32 {
             })
             | (0 as i32 & 7 as i32)
                 << 4 as i32) as u32
-            & 0xffff as u32) as u32;
-    t_script[3 as i32 as usize] = GENO_VAL_HIT_COUNTER
-        as i32 as u32;
-    t_script[4 as i32 as usize] = ((GENO_FTCMD_OP
+            & 0xffff as u32) as u32).to_be();
+    t_script[3 as i32 as usize] = (GENO_VAL_HIT_COUNTER
+        as i32 as u32).to_be();
+    t_script[4 as i32 as usize] = (((GENO_FTCMD_OP
         << 26 as i32) as u32
         | (GENO_SUB_CALL as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
-    t_script[5 as i32 as usize] = GENO_HOOK_ARTICLE_SPAWN
-        as i32 as u32;
-    t_script[6 as i32 as usize] = 0 as u32;
-    t_script[7 as i32 as usize] = 0 as u32;
+        as u32).to_be();
+    t_script[5 as i32 as usize] = (GENO_HOOK_ARTICLE_SPAWN
+        as i32 as u32).to_be();
+    t_script[6 as i32 as usize] = (0 as u32).to_be();
+    t_script[7 as i32 as usize] = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if (*st).la_i[3 as i32 as usize] != 4 as i32
         || (*st).la_i[4 as i32 as usize] != 1 as i32
@@ -6388,39 +6388,39 @@ pub unsafe extern "C" fn test_geno_v52_lockon() -> i32 {
     t_fp.frame_speed_mul = 1.0f32;
     let fresh177 = n;
     n = n + 1;
-    *s.offset(fresh177 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh177 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh178 = n;
     n = n + 1;
-    *s.offset(fresh178 as isize) = GENO_VAL_ANIM_RATE as i32 as u32;
+    *s.offset(fresh178 as isize) = (GENO_VAL_ANIM_RATE as i32 as u32).to_be();
     let fresh179 = n;
     n = n + 1;
-    *s.offset(fresh179 as isize) = t_fbits(0.5f32);
+    *s.offset(fresh179 as isize) = (t_fbits(0.5f32)).to_be();
     let fresh180 = n;
     n = n + 1;
-    *s.offset(fresh180 as isize) = ((GENO_FTCMD_OP << 26 as i32)
+    *s.offset(fresh180 as isize) = (((GENO_FTCMD_OP << 26 as i32)
         as u32
         | (GENO_SUB_PUT as i32 as u32
             & 63 as u32) << 20 as i32
         | (3 as i32 as u32 & 15 as u32)
             << 16 as i32
         | 0 as i32 as u32 & 0xffff as u32)
-        as u32;
+        as u32).to_be();
     let fresh181 = n;
     n = n + 1;
-    *s.offset(fresh181 as isize) = GENO_VAL_ANIM_RATE as i32 as u32;
+    *s.offset(fresh181 as isize) = (GENO_VAL_ANIM_RATE as i32 as u32).to_be();
     let fresh182 = n;
     n = n + 1;
-    *s.offset(fresh182 as isize) = t_fbits(0.0f32);
+    *s.offset(fresh182 as isize) = (t_fbits(0.0f32)).to_be();
     let fresh183 = n;
     n = n + 1;
-    *s.offset(fresh183 as isize) = 0 as u32;
+    *s.offset(fresh183 as isize) = (0 as u32).to_be();
     t_run(&raw mut t_script as *mut u32, GENO_MODE_EXEC);
     if t_fp.frame_speed_mul != 0.5f32 {
         TestFail(

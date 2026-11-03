@@ -236,11 +236,11 @@ fn Geno_DefineVoiceState(a0: i32, a1: u32, a2: i32) -> i32;
 fn efAsync_Spawn(a0: *mut HSD_GObj, a1: *mut c_void, a2: u32, a3: u32, a4: *mut HSD_JObj);
 fn HSD_ForeachAnim(a0: *mut c_void, a1: HSD_Type, a2: HSD_TypeMask, a3: *mut c_void, a4: AObj_Arg_Type, a5: u64) = crate::tu::adapt::HSD_ForeachAnim__175c67;
 }
-pub static mut HSD_GObjPLinkHead: *mut *mut HSD_GObj = unsafe { core::mem::zeroed() };
-pub static mut HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc = unsafe { core::mem::zeroed() };
-pub static mut ftPartsTable: *mut *mut FighterPartsTable = unsafe { core::mem::zeroed() };
-pub static mut p_ftCommonData: *mut ftCommonData = unsafe { core::mem::zeroed() };
-pub static mut mpColl_LedgeLevelOK: i32 = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
+pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
+pub use melee_fighter::hooks::FT_PARTS_TABLE as ftPartsTable;
+pub use melee_runtime::shared::p_ftCommonData;
+pub use melee_world::tu::mpcoll::mpColl_LedgeLevelOK;
 pub static mut ftData_MotionStateList: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftMr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftCa_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
@@ -250,12 +250,12 @@ pub static mut ftMs_Init_MotionStateTable: [MotionState; 400] = unsafe { core::m
 pub static mut ftPr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
 pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut hsd_804D78FC: *mut HSD_Generator = unsafe { core::mem::zeroed() };
-pub static mut hsd_804D0908: [*mut HSD_Particle; 16] = unsafe { core::mem::zeroed() };
-pub static mut it_803F14C4: [ItemLogicTable; 43] = unsafe { core::mem::zeroed() };
-pub static mut it_804A0F60: [*mut Article; 30] = unsafe { core::mem::zeroed() };
-pub static mut it_804D6D24: *mut *mut Article = unsafe { core::mem::zeroed() };
-pub static mut it_804D6D28: *mut ItemCommonData = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::generator::hsd_804D78FC;
+pub use melee_runtime::tu::particle::hsd_804D0908;
+pub use melee_items::tu::it_3F14::it_803F14C4;
+pub use melee_world::itacc::it_804A0F60;
+pub use melee_items::tu::it_3F14::it_804D6D24;
+pub use melee_runtime::shared::it_804D6D28;
 }
 use ext::*;
 mod data;
@@ -3286,7 +3286,7 @@ pub unsafe extern "C" fn geno_pool_sync() {
     }
     i = 0 as i32;
     while i < n {
-        Geno_ScriptPool[i as usize] = Geno_PoolWord(i) as u32;
+        Geno_ScriptPool[i as usize] = (Geno_PoolWord(i) as u32).to_be();
         i += 1;
     }
     let mut s: i32 = 0;
@@ -3302,19 +3302,19 @@ pub unsafe extern "C" fn geno_pool_sync() {
             if !(off < 0 as i32 || off + len > n) {
                 q = 0 as i32;
                 while q < len {
-                    let mut w: u32 = Geno_ScriptPool[(off + q) as usize];
+                    let mut w: u32 = u32::from_be(Geno_ScriptPool[(off + q) as usize]);
                     let mut op: u32 = w >> 26 as i32;
                     if (op == 5 as u32 || op == 7 as u32)
                         && (q + 1 as i32) < len
                     {
-                        Geno_ScriptPool[(off + q + 1 as i32) as usize] = (&raw mut Geno_ScriptPool
+                        Geno_ScriptPool[(off + q + 1 as i32) as usize] = ((&raw mut Geno_ScriptPool
                             as *mut u32)
                             .offset(
                                 (off
-                                    + *(&raw mut Geno_ScriptPool as *mut u32)
-                                        .offset((off + q + 1 as i32) as isize)
+                                    + u32::from_be(*(&raw mut Geno_ScriptPool as *mut u32)
+                                        .offset((off + q + 1 as i32) as isize))
                                         as i32) as isize,
-                            ) as *mut u32 as u32;
+                            ) as *mut u32 as u32).to_be();
                     }
                     q += geno_cmd_words(w as u32);
                 }
@@ -3566,7 +3566,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
         if Geno_ScriptAddressValid(pc as u32, 4 as u32) == 0 {
             current_block = 2781656338536092273;
         } else {
-            w = *pc;
+            w = u32::from_be(*pc);
             op = (w >> 26 as i32) as i32;
             if op == 23 as i32 {
                 return 1 as i32;
@@ -3593,7 +3593,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                     match current_block {
                         2781656338536092273 => {}
                         _ => {
-                            pc = *pc.offset(1 as i32 as isize)
+                            pc = u32::from_be(*pc.offset(1 as i32 as isize)) as usize
                                 as *const u32;
                             if pc.is_null() {
                                 current_block = 2781656338536092273;
@@ -3663,7 +3663,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                                 if skip_word != 0 && len > skip_word
                                     && npending < 32 as i32
                                 {
-                                    let mut skip: u32 = *pc.offset(skip_word as isize);
+                                    let mut skip: u32 = u32::from_be(*pc.offset(skip_word as isize));
                                     if skip
                                         <= (0xffffffff as u32)
                                             .wrapping_sub(pc as u32)
@@ -3671,10 +3671,8 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                                             .wrapping_sub(len as u32)
                                     {
                                         let mut r: i32 = 0;
-                                        pending[npending as usize].pc = (pc as u32)
-                                            .wrapping_add(
-                                                (len as u32).wrapping_add(skip).wrapping_mul(4 as u32),
-                                            ) as *const u32;
+                                        pending[npending as usize].pc = pc
+                                            .wrapping_add((len as u32).wrapping_add(skip) as usize);
                                         pending[npending as usize].nret = nret;
                                         r = 0 as i32;
                                         while r < nret {
@@ -3688,8 +3686,8 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                                 } else if sub == GENO_SUB_SKIP as i32
                                     && len >= 2 as i32
                                 {
-                                    let mut skip_0: u32 = *pc
-                                        .offset(1 as i32 as isize);
+                                    let mut skip_0: u32 = u32::from_be(*pc
+                                        .offset(1 as i32 as isize));
                                     if skip_0
                                         > (0xffffffff as u32)
                                             .wrapping_sub(pc as u32)
@@ -3698,10 +3696,7 @@ pub unsafe extern "C" fn GenoGame_ScriptHasIasa(
                                     {
                                         current_block = 2781656338536092273;
                                     } else {
-                                        pc = (pc as u32)
-                                            .wrapping_add(
-                                                (len as u32).wrapping_add(skip_0).wrapping_mul(4 as u32),
-                                            ) as *const u32;
+                                        pc = pc.wrapping_add((len as u32).wrapping_add(skip_0) as usize);
                                         current_block = 12517898123489920830;
                                     }
                                 } else {
@@ -5460,7 +5455,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         as *mut Fighter;
     let mut st: *mut GenoState = geno_state(fp);
     let mut w: *mut u32 = (*cmd).anon_8.u as *mut u32;
-    let mut w0: u32 = *w.offset(0 as i32 as isize);
+    let mut w0: u32 = u32::from_be(*w.offset(0 as i32 as isize));
     let mut sub: i32 = (w0 >> 20 as i32 & 63 as u32)
         as i32;
     let mut len: i32 = (w0 >> 16 as i32 & 15 as u32)
@@ -5484,7 +5479,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     a,
                     w0,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5502,7 +5497,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                         a,
                         w0,
                         if len > 1 as i32 {
-                            *w.offset(1 as i32 as isize)
+                            u32::from_be(*w.offset(1 as i32 as isize))
                         } else {
                             0 as u32
                         },
@@ -5512,7 +5507,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         }
         8 => {
             let mut id: u32 = if len > 1 as i32 {
-                *w.offset(1 as i32 as isize)
+                u32::from_be(*w.offset(1 as i32 as isize))
             } else {
                 0 as u32
             };
@@ -5527,7 +5522,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         }
         9 => {
             let mut id_0: u32 = if len > 1 as i32 {
-                *w.offset(1 as i32 as isize)
+                u32::from_be(*w.offset(1 as i32 as isize))
             } else {
                 0 as u32
             };
@@ -5539,7 +5534,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     geno_val_is_float(id_0),
                     (w0 & 0x80 as u32 != 0 as u32) as i32,
                     if len > 2 as i32 {
-                        *w.offset(2 as i32 as isize)
+                        u32::from_be(*w.offset(2 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5556,7 +5551,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     a,
                     w0,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5564,7 +5559,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             ) == 0
             {
                 skip = (if len > 2 as i32 {
-                    *w.offset(2 as i32 as isize) as u32
+                    u32::from_be(*w.offset(2 as i32 as isize)) as u32
                 } else {
                     0 as u32
                 }) as u32;
@@ -5572,7 +5567,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         }
         18 => {
             let mut id_1: u32 = if len > 1 as i32 {
-                *w.offset(1 as i32 as isize)
+                u32::from_be(*w.offset(1 as i32 as isize))
             } else {
                 0 as u32
             };
@@ -5586,7 +5581,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     is_f_0,
                     (w0 & 0x80 as u32 != 0 as u32) as i32,
                     if len > 2 as i32 {
-                        *w.offset(2 as i32 as isize)
+                        u32::from_be(*w.offset(2 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5594,7 +5589,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             ) == 0
             {
                 skip = (if len > 3 as i32 {
-                    *w.offset(3 as i32 as isize) as u32
+                    u32::from_be(*w.offset(3 as i32 as isize)) as u32
                 } else {
                     0 as u32
                 }) as u32;
@@ -5602,7 +5597,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         }
         17 => {
             skip = (if len > 1 as i32 {
-                *w.offset(1 as i32 as isize) as u32
+                u32::from_be(*w.offset(1 as i32 as isize)) as u32
             } else {
                 0 as u32
             }) as u32;
@@ -5622,13 +5617,13 @@ pub unsafe extern "C" fn Geno_FtCmd(
                 GenoGame_CallHook(
                     gobj,
                     (if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                             as u32
                     } else {
                         0 as u32
                     }) as i32,
                     (if len > 2 as i32 {
-                        *w.offset(2 as i32 as isize)
+                        u32::from_be(*w.offset(2 as i32 as isize))
                             as u32
                     } else {
                         0 as u32
@@ -5643,17 +5638,17 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     st,
                     w0 & 0xffff as u32,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },
                     if len > 2 as i32 {
-                        *w.offset(2 as i32 as isize)
+                        u32::from_be(*w.offset(2 as i32 as isize))
                     } else {
                         0 as u32
                     },
                     if len > 3 as i32 {
-                        *w.offset(3 as i32 as isize)
+                        u32::from_be(*w.offset(3 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5665,12 +5660,12 @@ pub unsafe extern "C" fn Geno_FtCmd(
                 st,
                 w0 & 0xffff as u32,
                 if len > 1 as i32 {
-                    *w.offset(1 as i32 as isize)
+                    u32::from_be(*w.offset(1 as i32 as isize))
                 } else {
                     0 as u32
                 },
                 if len > 2 as i32 {
-                    *w.offset(2 as i32 as isize)
+                    u32::from_be(*w.offset(2 as i32 as isize))
                 } else {
                     0 as u32
                 },
@@ -5683,7 +5678,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
         56 => {
             let mut i: i32 = 0;
             let mut n: i32 = (if len > 1 as i32 {
-                *w.offset(1 as i32 as isize) as u32
+                u32::from_be(*w.offset(1 as i32 as isize)) as u32
             } else {
                 0 as u32
             }) as i32;
@@ -5706,7 +5701,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             while i_0 < GENO_MAX_REHIT {
                 if a & (1 as i32) << i_0 != 0 {
                     (*st).link_mode[i_0 as usize] = (if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                             as u32
                     } else {
                         0 as u32
@@ -5722,7 +5717,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     0 as i32,
                     (w0 & 0x80 as u32 != 0 as u32) as i32,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5749,7 +5744,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     0 as i32,
                     (w0 & 0x80 as u32 != 0 as u32) as i32,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },
@@ -5771,7 +5766,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                     1 as i32,
                     (w0 & 0x80 as u32 != 0 as u32) as i32,
                     if len > 1 as i32 {
-                        *w.offset(1 as i32 as isize)
+                        u32::from_be(*w.offset(1 as i32 as isize))
                     } else {
                         0 as u32
                     },

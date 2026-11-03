@@ -242,6 +242,9 @@ impl Engine {
                 if thp::LCStoreData_HOOK.is_none() {
                     thp::LCStoreData_HOOK = Some(|d, s, n| { core::ptr::copy(s as *const u8, d as *mut u8, n as usize); 0 });
                 }
+                // DCZeroRange (dcbz) zeroes the lines: THPVideoDecode clears its work prefix with it, and the generated
+                // no-op left last movie's / last frame's tables there (MvHowto crashed in __THPHuffDecodePC on them)
+                thp::DCZeroRange_HOOK = Some(|p, n| core::ptr::write_bytes(p as *mut u8, 0, n as usize));
                 if thp::LCQueueWait_HOOK.is_none() {
                     thp::LCQueueWait_HOOK = Some(|_| ());
                 }

@@ -29,6 +29,13 @@ pub unsafe fn gm_801ACC94() -> *mut c_void {
     addr_of_mut!(gm_803DD2C0) as *mut c_void
 }
 
+/// The movie GObj's GX callback, `lbMthp_8001F67C(gobj, pass)` itself. It used to go through the unbound
+/// `ext::lbMthp_8001F67C` hook, which drew and decoded nothing, so the frame ring filled, the display counter stalled at
+/// frame 31 and lbMthp_8001F604 never reported the end (the scene sat forever).
+unsafe extern "C" fn movie_draw(gobj: *mut HSD_GObj, pass: i32) {
+    melee_runtime::tu::lbmthp::lbMthp_8001F67C(gobj, pass)
+}
+
 /// C `gm_Scene_HowTo_OnEnter`.
 pub unsafe fn gm_Scene_HowTo_OnEnter(_unused: *mut c_void) {
     melee_core::ct!("gm_Scene_HowTo_OnEnter");
@@ -40,7 +47,7 @@ pub unsafe fn gm_Scene_HowTo_OnEnter(_unused: *mut c_void) {
     gm_804D6850 = gobj;
     // the C passes the u8 global HSD_SObjLib_804D7960 (the SObj kind); the hook hands its address
     ext::HSD_GObjObject_80390A70(gobj, *(ext::HSD_SObjLib_804D7960() as *mut u8), core::ptr::null_mut());
-    ext::GObj_SetupGXLink(gobj, ext::lbMthp_8001F67C, 0xB, 0);
+    ext::GObj_SetupGXLink(gobj, Some(movie_draw), 0xB, 0);
     ext::lbMthp_8001F624(gobj, 0x280, 0x1E0);
     ext::lbAudioAx_80023F28(0x24);
     ext::lbAudioAx_80024E50(1);
@@ -118,7 +125,7 @@ pub mod ext {
             }
     hook!(HSD_GOBJOBJECT_80390A70, HSD_GObjObject_80390A70, (gobj: *mut HSD_GObj, kind: u8, p: *mut c_void));
     hook!(HSD_SOBJLIB_804D7960, HSD_SObjLib_804D7960, () -> *mut c_void);
-    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj), prio: i32, a: i32));
+    hook!(GOBJ_SETUPGXLINK, GObj_SetupGXLink, (gobj: *mut HSD_GObj, cb: Option<unsafe extern "C" fn(*mut HSD_GObj, i32)>, prio: i32, a: i32));
     hook!(LBMTHP_8001F67C, lbMthp_8001F67C, (gobj: *mut HSD_GObj));
     pub static mut LBMTHP_8001F624: Option<fn(*mut HSD_GObj, i32, i32) > = None;
             #[allow(non_snake_case)]

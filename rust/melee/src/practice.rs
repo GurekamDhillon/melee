@@ -158,7 +158,7 @@ impl Practice {
     /// The helper (gameplay change, opt-in): analog L on alternate frames for every human port whose fighter is in an
     /// aerial in the air. `slot_of_port[i]` is the player slot port `i` drives. Skips frames where A or Z is newly
     /// pressed (held L/R + A is a grab / tether). Analog only: the digital L bit (air dodge, tech) is never set.
-    pub fn helper(&mut self, pads: &mut [melee_types::PADStatus; 4], slot_of_port: impl Fn(usize) -> Option<i32>) {
+    pub fn auto_lcancel(&mut self, pads: &mut [melee_types::PADStatus; 4], slot_of_port: impl Fn(usize) -> Option<i32>) {
         if !self.opts.lcancel_helper || !self.helper_allowed {
             return;
         }

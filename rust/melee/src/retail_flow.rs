@@ -455,7 +455,7 @@ impl Game for RetailPlay {
             }
             // the VS match only: player slot i is driven by port i in the retail VS mode
             if in_vs {
-                pr.helper(&mut four, |p| Some(p as i32));
+                pr.auto_lcancel(&mut four, |p| Some(p as i32));
             }
         }
         let t_step = std::time::Instant::now();

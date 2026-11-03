@@ -202,6 +202,7 @@ impl Engine {
             melee_modes::tu::gmscene::ext::FRAME_POST = Some(|| unsafe {
                 FRAME_ROW = Some(Engine::compute_row());
                 if CAPTURE_FRAME == RAND_FRAME as i64 { CAPTURED = Some(Engine::capture_now()); }
+                if let Some(f) = FRAME_POST_HOOK { f(); }
             });
             // the retail draw callbacks always run (headless too: they have simulation-visible effects, gobj_native::HEADLESS_RENDER);
             // whatever they reach that draws answers zero
@@ -577,6 +578,16 @@ impl Engine {
         unsafe { DIRECT_PADS = p };
     }
 
+    /// [`Engine::set_pads`] from a [`FRAME_POST_HOOK`] (the next logic frame's pads, inside a tick).
+    pub fn set_next_pads(p: Option<[PADStatus; 4]>) {
+        unsafe { DIRECT_PADS = p };
+    }
+
+    /// The hash row of the logic frame that just ran (for a [`FRAME_POST_HOOK`]).
+    pub fn frame_row() -> [u32; 16] {
+        unsafe { FRAME_ROW.unwrap_or_else(Self::compute_row) }
+    }
+
     /// Exactly one iteration of the scene loop (pad queue, logic frame(s), `HSD_GObj_RunProcs`, render).
     /// Returns false once the scene has ended.
     pub fn tick(&mut self) -> bool {
@@ -625,6 +636,9 @@ pub static mut RENDER: bool = false;
 static mut WIDE_SCALE_BITS: i32 = 0x3f800000;
 const WIDE_SCALE_BITS_FN: fn() -> i32 = || unsafe { WIDE_SCALE_BITS };
 static mut FRAME_ROW: Option<[u32; 16]> = None;
+/// Called at every logic frame's `Script_FramePost`, after its hash row (`neutral_row`): a harness's per-frame step (the
+/// 1P coverage runs' pad script and row log, melee/src/cov1p.rs).
+pub static mut FRAME_POST_HOOK: Option<fn()> = None;
 /// `melee diff --engine tu`: capture the state at `Script_FramePost` of this frame (the C snapshot point: after the logic
 /// procs, before the render pass; joints are still matrix-dirty there).
 pub static mut CAPTURE_FRAME: i64 = -1;

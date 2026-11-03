@@ -57,6 +57,7 @@ mod play_net;
 mod np_env;
 mod menu_support;
 mod pads;
+mod cov1p;
 
 /// What the frame driver needs from a simulation, per frame.
 pub(crate) trait Sim {
@@ -516,6 +517,26 @@ fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine,
     let tsv = std::fs::read_to_string("docs/rust-port/golden/coverage/scenarios.tsv").map_err(|_| format!("scenario {name:?} not wired"))?;
     let row = tsv.lines().find_map(|l| { let c: Vec<&str> = l.split(char::from(9u8)).collect(); (c.len() == 5 && c[0] == name).then(|| (c[1].to_string(), c[3].to_string(), c[4].to_string())) });
     let Some((kind, pad, scene)) = row else { return Err(format!("scenario {name:?} not wired")) };
+    if kind == "1p" {
+        // the C launch: the boot scene (no memory card) hands over to the mode, whose OnLoad skips its CSS (cov1p.rs)
+        let ra = cov1p::RandAbs::from_file(&format!("tools/rust-port/golden/coverage/pads/{pad}"))
+            .ok_or(format!("scenario {name:?} not wired: 1P pad script {pad} (only the randabs pads run natively)"))?;
+        if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
+            // SAFETY: single-threaded start-up, before the engine reads it.
+            unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "0") };
+        }
+        let disc = engine_disc(iso)?;
+        let scn = melee_engine::scenario::Scenario::parse(&scene)?;
+        unsafe {
+            melee_engine::engine::BOOT_GAME_MODE = melee_engine::scenario::boot_mode(&scn) as i32;
+            melee_engine::engine::CARD_ON = false;
+        }
+        melee_engine::scenario::install(scn);
+        let e = melee_engine::Engine::boot_modes(disc, 64 << 20, melee_platform::PadSystem::headless(), melee_types::GM_BOOT as u8)
+            .map_err(|e| format!("engine boot: {e}"))?;
+        unsafe { COV1P = Some(ra) };
+        return Ok(e);
+    }
     if kind != "vs" { return Err(format!("scenario {name:?} not wired: {kind} mode (the engine boots VS matches only)")); }
     if !pad.starts_with("idle_") { return Err(format!("scenario {name:?} not wired: pad script {pad} needs the Lua pad host")); }
     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
@@ -613,6 +634,30 @@ pub(crate) unsafe fn r_in() -> &'static mut melee_data::player::Player {
     REPLAY.as_mut().unwrap()
 }
 
+/// The 1P coverage scenario booted by `boot_coverage_scenario` (its randabs pad), for `golden_engine`.
+static mut COV1P: Option<cov1p::RandAbs> = None;
+
+/// A 1P coverage run (cov1p.rs): the mode's scenes from the boot on, one CSV row per live match frame (`frame` = the
+/// match frame, as the C's `MELEE_NEUTRAL_HASHLOG`), until `rows` rows or the pad script quits.
+fn golden_1p(mut e: melee_engine::Engine, ra: cov1p::RandAbs, rows: usize, out: &str) -> ExitCode {
+    if let Err(er) = cov1p::start(ra, rows, out) {
+        eprintln!("melee: {er}");
+        return ExitCode::FAILURE;
+    }
+    // a scene's begin (gm_801A4D34_begin -> Script_SceneBegin) runs inside tick_modes' mode/scene change
+    let mut guard = 0u64;
+    let (written, frames) = loop {
+        if let Some(d) = cov1p::done() { break d; }
+        if e.tick_modes() {
+            cov1p::scene_began();
+        }
+        guard += 1;
+        if guard > 1_000_000 { break (0, 0); }
+    };
+    eprintln!("melee: 1P coverage: {written} rows, {frames} logic frames");
+    ExitCode::SUCCESS
+}
+
 /// `melee golden --engine tu`: the same CSV from the consolidated engine (melee_engine): the real StartMelee path,
 /// the TU-ported game code over native structs, `RB_NeutralHash` (NHV1) after each scene tick. `--frames N`
 /// (default 1) ticks; row k is the state after tick k (frame 0 = the first tick).
@@ -698,6 +743,9 @@ fn golden_engine(args: &[String]) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
+    if let Some(ra) = unsafe { (*std::ptr::addr_of_mut!(COV1P)).take() } {
+        return golden_1p(e, ra, frames, &out);
+    }
     let frames = if replay && get("--frames").is_none() { 1802 } else { frames };
     if audio {
         engine_audio::start_stage_bgm();

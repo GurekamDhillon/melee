@@ -822,7 +822,7 @@ impl Engine {
 
     /// One iteration of the mode loop: the scene's tick, or, when the scene has ended, the rest of `gm_801A4014`, the
     /// mode change of `runGameMode` / `gm_801A4510` when one is pending, and the next scene's entry.
-    /// Returns true when a new scene was entered this tick.
+    /// Returns true when a new scene was entered this tick (its first frame has then run too).
     pub fn tick_modes(&mut self) -> bool {
         if !self.ended {
             self.tick();
@@ -880,9 +880,20 @@ impl Engine {
             self.ended = false;
             self.run = Some(run);
         }
+        // gm_801A4510 enters the next scene and runs its loop at once: the new scene's first frame belongs to this tick
+        // (an entry-only tick put every scene one frame behind the C build: the SSS, the title's exit, measured against
+        // the C lane's shots on 2026-11-03)
+        // (the retail flow's timing, ENTRY_RUNS_FRAME; the 1P coverage runs keep the entry-only tick they were matched with)
+        drop(_scope);
+        if unsafe { ENTRY_RUNS_FRAME } {
+            self.tick();
+        }
         true
     }
 }
+
+/// `tick_modes` runs the new scene's first frame in the tick that enters it (set by `melee play`'s retail flow).
+pub static mut ENTRY_RUNS_FRAME: bool = false;
 
 /// `gmMainLib_8046B0F0.skip_intro` as the boot scene reads it (the retail flow's --skip-intro).
 pub static mut BOOT_SKIP_INTRO: bool = false;

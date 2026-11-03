@@ -138,6 +138,17 @@ unsafe fn nametag_slot(banks: *mut NameTagDataBank, idx: i32) -> *mut NameTagDat
     addr_of_mut!((*bank).inner[(idx % GM_NAMETAG_BANK_SIZE) as usize])
 }
 
+/// `save_data.x1C88` as C indexes it: the declared `u32[3]` plus the 0x1C bytes of padding after it (10 words).
+/// gmresult's per-player loop passes bits up to 0xFF, so C sets bits in the padding; a 3-word slice panicked there.
+#[inline]
+unsafe fn x1c88_words() -> &'static mut [u32] {
+    let s = save();
+    const WORDS: usize = (core::mem::size_of::<[u32; 3]>() + 0x1C) / 4;
+    const _: () = assert!(WORDS == 10);
+    let _ = addr_of_mut!((*s).padding_x1C88);
+    core::slice::from_raw_parts_mut(addr_of_mut!((*s).x1C88) as *mut u32, WORDS)
+}
+
 #[inline]
 fn bitset_set(words: &mut [u32], bit: u32) {
     words[(bit / 32) as usize] |= bitset_mask(bit);
@@ -685,12 +696,12 @@ pub unsafe fn gmMainLib_8015DA90(arg0: u32) -> i32 {
 
 pub unsafe fn gmMainLib_8015DAB4(arg0: u32) {
     melee_core::ct!("gmMainLib_8015DAB4");
-    bitset_set(&mut (*save()).x1C88, arg0);
+    bitset_set(x1c88_words(), arg0);
 }
 
 pub unsafe fn gmMainLib_8015DADC(arg0: u32) -> bool {
     melee_core::ct!("gmMainLib_8015DADC");
-    bitset_test(&(*save()).x1C88, arg0) != 0
+    bitset_test(x1c88_words(), arg0) != 0
 }
 
 pub unsafe fn gmMainLib_8015DB00() -> u8 {

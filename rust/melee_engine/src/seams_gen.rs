@@ -866,7 +866,7 @@ pub fn install_gen() {
     unsafe { melee_modes::tu::gmvs::ext::hook::lbAudioAx_80024E84 = Some(|_| ()); }
     unsafe { melee_modes::tu::gmvs::ext::hook::lbAudioAx_80024030 = Some(|_| ()); }
     unsafe { if melee_modes::tu::gmvs::ext::hook::Ui_RetailPause.is_none() { melee_modes::tu::gmvs::ext::hook::Ui_RetailPause = Some(|_, _| ()); } }
-    unsafe { if melee_modes::tu::gmvs::ext::hook::Ui_TakeUnpause.is_none() { melee_modes::tu::gmvs::ext::hook::Ui_TakeUnpause = Some(|| 0); } }
+    unsafe { if melee_modes::tu::gmvs::ext::hook::Ui_TakeUnpause.is_none() { melee_modes::tu::gmvs::ext::hook::Ui_TakeUnpause = Some(|| -1); } }
     unsafe { melee_modes::tu::gmvs::ext::hook::lbAudioAx_800237A8 = Some(|_, _, _| 0); }
     unsafe { melee_modes::tu::gmvs::ext::hook::lbAudioAx_80023870 = Some(|_, _, _, _| 0); }
     unsafe { melee_modes::tu::gmvs::ext::hook::lbAudioAx_80024D50 = Some(|| ()); }

@@ -77,6 +77,8 @@ OSEnableInterrupts
 StageSkin_\w+
 Env\w*
 OSReport
+# the Atlas pause's Resume request: -1 = none (C gw_Ui_TakeUnpause); 0 would resume port 1's pause at once
+Ui_TakeUnpause	-1
 Ui_\w+
 Fad_\w+
 FighterControls_\w+

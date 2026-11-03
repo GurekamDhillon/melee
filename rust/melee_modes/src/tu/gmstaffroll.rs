@@ -79,7 +79,7 @@ pub mod ext {
     pub unsafe extern "C" fn HSD_JObjGetFlags(jobj: *mut HSD_JObj) -> u32 { if let Some(h) = HOOK { let r = h("HSD_JObjGetFlags", &[A::P(jobj as usize)]); return r as u32; } { return unsafe { melee_runtime::tu::jobj_world::HSD_JObjGetFlags(jobj as _) as _ }; } }
     pub unsafe extern "C" fn HSD_JObjLoadJoint(p0: *mut HSD_Joint) -> *mut HSD_JObj { if let Some(h) = HOOK { let r = h("HSD_JObjLoadJoint", &[A::P(p0 as usize)]); return r as usize as *mut HSD_JObj; } { return unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(p0 as _) as _ }; } }
     pub unsafe extern "C" fn HSD_JObjReparent(jobj: *mut HSD_JObj, parent: *mut HSD_JObj) -> *mut HSD_JObj { if let Some(h) = HOOK { let r = h("HSD_JObjReparent", &[A::P(jobj as usize), A::P(parent as usize)]); return r as usize as *mut HSD_JObj; } { return unsafe { melee_runtime::tu::jobj_world::HSD_JObjReparent(jobj as _, parent as _) as _ }; } }
-    pub unsafe extern "C" fn HSD_JObjReqAnim(jobj: *mut HSD_JObj, frame: f32) { if let Some(h) = HOOK { h("HSD_JObjReqAnim", &[A::P(jobj as usize), A::F(frame)]); return; } { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimByFlags(jobj, 0x7FF, frame); } return; } }
+    pub unsafe extern "C" fn HSD_JObjReqAnim(jobj: *mut HSD_JObj, frame: f32) { if let Some(h) = HOOK { h("HSD_JObjReqAnim", &[A::P(jobj as usize), A::F(frame)]); return; } { unsafe { aud::HSD_JObjReqAnim(jobj, frame); } return; } }
     pub unsafe extern "C" fn HSD_JObjReqAnimAll(p0: *mut HSD_JObj, p1: f32) { if let Some(h) = HOOK { h("HSD_JObjReqAnimAll", &[A::P(p0 as usize), A::F(p1)]); return; } { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(p0 as _, p1 as _); } return; } }
     pub unsafe extern "C" fn HSD_JObjSetMtxDirtySub(p0: *mut HSD_JObj) { if let Some(h) = HOOK { h("HSD_JObjSetMtxDirtySub", &[A::P(p0 as usize)]); return; } { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetMtxDirtySub(p0 as _); } return; } }
     pub unsafe extern "C" fn HSD_JObjSetupMatrixSub(p0: *mut HSD_JObj) { if let Some(h) = HOOK { h("HSD_JObjSetupMatrixSub", &[A::P(p0 as usize)]); return; } { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(p0 as _); } return; } }
@@ -108,17 +108,17 @@ pub mod ext {
     pub unsafe extern "C" fn gm_801BF010() -> i32 { if let Some(h) = HOOK { let r = h("gm_801BF010", &[]); return r as i32; } { return unsafe { crate::tu::gmgover::gm_801BF010() as _ }; } }
     pub unsafe extern "C" fn gm_IsCKindUnlocked(ckind: u8) -> i32 { if let Some(h) = HOOK { let r = h("gm_IsCKindUnlocked", &[A::I(ckind as u8 as u64)]); return r as i32; } { return unsafe { crate::tu::gm_1601::gm_IsCKindUnlocked(ckind as _) as _ }; } }
     pub unsafe extern "C" fn hsd_8039F05C(linkNo: i32, bank: i32, idx: i32) -> *mut HSD_Generator { if let Some(h) = HOOK { let r = h("hsd_8039F05C", &[A::I(linkNo as u32 as u64), A::I(bank as u32 as u64), A::I(idx as u32 as u64)]); return r as usize as *mut HSD_Generator; } { return unsafe { melee_runtime::tu::generator::hsd_8039F05C(linkNo as _, bank as _, idx as _) as _ }; } }
-    pub unsafe extern "C" fn lbAudioAx_8002305C(p0: i32, p1: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_8002305C", &[A::I(p0 as u32 as u64), A::I(p1 as u32 as u64)]); return r as i32; } { if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_8002305C"); return 0; } return unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002305C(p0 as _, p1 as _) as _ }; } }
-    pub unsafe extern "C" fn lbAudioAx_80023694() -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_80023694", &[]); return r as i32; } { return crate::tu::adapt::lbAudioAx_80023694__e3b7af() as _; } }
-    pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_800236DC", &[]); return r as i32; } { return crate::tu::adapt::lbAudioAx_800236DC__5d9f3e() as _; } }
-    pub unsafe extern "C" fn lbAudioAx_800237A8(sfx_id: i32, sfx_vol: i32, sfx_pan: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_800237A8", &[A::I(sfx_id as u32 as u64), A::I(sfx_vol as u32 as u64), A::I(sfx_pan as u32 as u64)]); return r as i32; } { return crate::tu::adapt::lbAudioAx_800237A8__95b1fa(sfx_id as _, sfx_vol as _, sfx_pan as _) as _; } }
-    pub unsafe extern "C" fn lbAudioAx_80023F28(p0: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_80023F28", &[A::I(p0 as u32 as u64)]); return r as i32; } { return crate::tu::adapt::lbAudioAx_80023F28__582fc2(p0 as _) as _; } }
-    pub unsafe extern "C" fn lbAudioAx_80026F2C(p0: u32) { if let Some(h) = HOOK { h("lbAudioAx_80026F2C", &[A::I(p0 as u32 as u64)]); return; } { crate::tu::adapt::lbAudioAx_80026F2C__c80d0b(p0 as _); return; } }
-    pub unsafe extern "C" fn lbAudioAx_8002702C(flags: u32, mask: u64) { if let Some(h) = HOOK { h("lbAudioAx_8002702C", &[A::I(flags as u32 as u64), A::I(mask as u64 as u64)]); return; } { crate::tu::adapt::lbAudioAx_8002702C__208dc3(flags as _, mask as _); return; } }
-    pub unsafe extern "C" fn lbAudioAx_80027168() { if let Some(h) = HOOK { h("lbAudioAx_80027168", &[]); return; } { crate::tu::adapt::lbAudioAx_80027168__342616(); return; } }
-    pub unsafe extern "C" fn lbAudioAx_80027648() { if let Some(h) = HOOK { h("lbAudioAx_80027648", &[]); return; } { crate::tu::adapt::lbAudioAx_80027648__4f40c8(); return; } }
-    pub unsafe extern "C" fn lbAudioAx_80028B6C() { if let Some(h) = HOOK { h("lbAudioAx_80028B6C", &[]); return; } { crate::tu::adapt::lbAudioAx_80028B6C__bb9f49(); return; } }
-    pub unsafe extern "C" fn lbAudioAx_80028B90() { if let Some(h) = HOOK { h("lbAudioAx_80028B90", &[]); return; } { crate::tu::adapt::lbAudioAx_80028B90__0093c2(); return; } }
+    pub unsafe extern "C" fn lbAudioAx_8002305C(p0: i32, p1: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_8002305C", &[A::I(p0 as u32 as u64), A::I(p1 as u32 as u64)]); return r as i32; } { return unsafe { aud::lbAudioAx_8002305C(p0, p1) }; } }
+    pub unsafe extern "C" fn lbAudioAx_80023694() -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_80023694", &[]); return r as i32; } { return aud::lbAudioAx_80023694() as _; } }
+    pub unsafe extern "C" fn lbAudioAx_800236DC() -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_800236DC", &[]); return r as i32; } { return aud::lbAudioAx_800236DC() as _; } }
+    pub unsafe extern "C" fn lbAudioAx_800237A8(sfx_id: i32, sfx_vol: i32, sfx_pan: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_800237A8", &[A::I(sfx_id as u32 as u64), A::I(sfx_vol as u32 as u64), A::I(sfx_pan as u32 as u64)]); return r as i32; } { return aud::lbAudioAx_800237A8(sfx_id as _, sfx_vol as _, sfx_pan as _) as _; } }
+    pub unsafe extern "C" fn lbAudioAx_80023F28(p0: i32) -> i32 { if let Some(h) = HOOK { let r = h("lbAudioAx_80023F28", &[A::I(p0 as u32 as u64)]); return r as i32; } { return aud::lbAudioAx_80023F28(p0 as _) as _; } }
+    pub unsafe extern "C" fn lbAudioAx_80026F2C(p0: u32) { if let Some(h) = HOOK { h("lbAudioAx_80026F2C", &[A::I(p0 as u32 as u64)]); return; } { aud::lbAudioAx_80026F2C(p0 as _); return; } }
+    pub unsafe extern "C" fn lbAudioAx_8002702C(flags: u32, mask: u64) { if let Some(h) = HOOK { h("lbAudioAx_8002702C", &[A::I(flags as u32 as u64), A::I(mask as u64 as u64)]); return; } { aud::lbAudioAx_8002702C(flags as _, mask as _); return; } }
+    pub unsafe extern "C" fn lbAudioAx_80027168() { if let Some(h) = HOOK { h("lbAudioAx_80027168", &[]); return; } { aud::lbAudioAx_80027168(); return; } }
+    pub unsafe extern "C" fn lbAudioAx_80027648() { if let Some(h) = HOOK { h("lbAudioAx_80027648", &[]); return; } { aud::lbAudioAx_80027648(); return; } }
+    pub unsafe extern "C" fn lbAudioAx_80028B6C() { if let Some(h) = HOOK { h("lbAudioAx_80028B6C", &[]); return; } { aud::lbAudioAx_80028B6C(); return; } }
+    pub unsafe extern "C" fn lbAudioAx_80028B90() { if let Some(h) = HOOK { h("lbAudioAx_80028B90", &[]); return; } { aud::lbAudioAx_80028B90(); return; } }
     pub unsafe extern "C" fn lbBgFlash_800206D4(p0: *mut _GXColor, p1: *mut _GXColor, p2: i32) { if let Some(h) = HOOK { h("lbBgFlash_800206D4", &[A::P(p0 as usize), A::P(p1 as usize), A::I(p2 as u32 as u64)]); return; } { unsafe { melee_runtime::tu::lbbgflash::lbBgFlash_800206D4(p0 as _, p1 as _, p2 as _); } return; } }
     pub unsafe extern "C" fn lbBgFlash_800209F4() { if let Some(h) = HOOK { h("lbBgFlash_800209F4", &[]); return; } { unsafe { melee_runtime::tu::lbbgflash::lbBgFlash_800209F4(); } return; } }
     pub unsafe extern "C" fn lbLang_IsSavedLanguageJP() -> i32 { if let Some(h) = HOOK { let r = h("lbLang_IsSavedLanguageJP", &[]); return r as i32; } { return unsafe { melee_runtime::tu::lblanguage::lbLang_IsSavedLanguageJP() as _ }; } }
@@ -134,7 +134,7 @@ pub mod ext {
         { return unsafe { melee_runtime::tu::lbspdisplay::lb_80011E24(root as _, out as _, ids as _) as _ }; }
     }
     /// `int HSD_SisLib_803A6B98(HSD_Text*, float, float, const char* fmt, ...)`
-    pub unsafe fn HSD_SisLib_803A6B98(text: *mut HSD_Text, x: f32, y: f32, fmt: *const c_char, va: &[A]) -> i32 {
+    pub unsafe fn sis_text_va(text: *mut HSD_Text, x: f32, y: f32, fmt: *const c_char, va: &[A]) -> i32 {
         if let Some(h) = HOOK { let mut v = vec![A::P(text as usize), A::F(x), A::F(y), A::S(fmt)]; v.extend_from_slice(va); return h("HSD_SisLib_803A6B98", &v) as i32; }
         // hsd_3A64 takes the formatted text (sislib.c vsprintfs `fmt` with the arguments the same way)
         let pa: std::vec::Vec<melee_runtime::cformat::PrintfArg> = va.iter().map(|a| match *a {
@@ -149,7 +149,7 @@ pub mod ext {
         melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(text, x, y, if fmt.is_null() { None } else { Some(&s) })
     }
     /// `HSD_Archive* lbArchive_80016DBC(const char* file, void* out0, ...)`: (name, out, name, out, ..., NULL) pairs follow.
-    pub unsafe fn lbArchive_80016DBC(file: *const c_char, out0: *mut c_void, va: &[A]) -> *mut HSD_Archive {
+    pub unsafe fn archive_va(file: *const c_char, out0: *mut c_void, va: &[A]) -> *mut HSD_Archive {
         if let Some(h) = HOOK { let mut v = vec![A::S(file), A::P(out0 as usize)]; v.extend_from_slice(va); return h("lbArchive_80016DBC", &v) as usize as *mut HSD_Archive; }
         // lbarchive.c (melee_runtime): every pointer after `file`, out0 first, the (name, out, ..., NULL) list after it
         let all: std::vec::Vec<*mut c_void> = core::iter::once(out0).chain(va.iter().map(|a| match *a {
@@ -159,6 +159,23 @@ pub mod ext {
         })).collect();
         melee_runtime::tu::lbarchive::lbArchive_80016DBC(file as _, &all)
     }
+    /// the callees routed elsewhere under their C names (audio through the adapters: the audio lib can be off)
+    mod aud {
+        pub use super::super::glue::req_anim as HSD_JObjReqAnim;
+        pub use super::super::glue::sfx_8002305c as lbAudioAx_8002305C;
+        pub use crate::tu::adapt::lbAudioAx_80023694__e3b7af as lbAudioAx_80023694;
+        pub use crate::tu::adapt::lbAudioAx_800236DC__5d9f3e as lbAudioAx_800236DC;
+        pub use crate::tu::adapt::lbAudioAx_800237A8__3c5520 as lbAudioAx_800237A8;
+        pub use crate::tu::adapt::lbAudioAx_80023F28__469606 as lbAudioAx_80023F28;
+        pub use crate::tu::adapt::lbAudioAx_80026F2C__c80d0b as lbAudioAx_80026F2C;
+        pub use crate::tu::adapt::lbAudioAx_8002702C__208dc3 as lbAudioAx_8002702C;
+        pub use crate::tu::adapt::lbAudioAx_80027168__342616 as lbAudioAx_80027168;
+        pub use crate::tu::adapt::lbAudioAx_80027648__4f40c8 as lbAudioAx_80027648;
+        pub use crate::tu::adapt::lbAudioAx_80028B6C__bb9f49 as lbAudioAx_80028B6C;
+        pub use crate::tu::adapt::lbAudioAx_80028B90__0093c2 as lbAudioAx_80028B90;
+    }
+    pub use self::sis_text_va as HSD_SisLib_803A6B98;
+    pub use self::archive_va as lbArchive_80016DBC;
     pub use melee_runtime::tu::gobj_native::HSD_GObjGXLinkHead;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_CameraKind;
     pub use melee_runtime::tu::gobj_native::HSD_GObj_FogKind;
@@ -167,6 +184,20 @@ pub mod ext {
     pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 }
 // @@ext-end
+
+/// Bodies behind gmstaffroll's ext forwarders that are not a plain call of the same name.
+mod glue {
+    use melee_types::HSD_JObj;
+    /// `lbAudioAx_8002305C` with the audio lib off answers 0 (lbaudio_ax asserts on an uninitialised lib)
+    pub unsafe fn sfx_8002305c(p0: i32, p1: i32) -> i32 {
+        if crate::tu::ext_hook::audio_lib_off() { crate::tu::ext_hook::log_off("lbAudioAx_8002305C"); return 0; }
+        unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_8002305C(p0 as _, p1 as _) as _ }
+    }
+    /// `HSD_JObjReqAnim` (jobj.h inline): `HSD_JObjReqAnimByFlags(jobj, JOBJ_ANIM_ALL, frame)`
+    pub unsafe fn req_anim(jobj: *mut HSD_JObj, frame: f32) {
+        unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimByFlags(jobj, 0x7FF, frame) }
+    }
+}
 
 /// `struct staffInfo_t`'s entry (the C names the whole array `staffInfo`): the two text windows of
 /// one credit entry and its hit count.

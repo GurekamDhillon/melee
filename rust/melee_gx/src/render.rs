@@ -280,6 +280,8 @@ pub struct Renderer {
     /// EFB copies (GXCopyTex) by guest destination address: textures later draws sample.
     efb_copies: FxMap<u64, CopyTarget>,
     copy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout, wgpu::Sampler)>,
+    /// The depth-format EFB copy (reads the depth target).
+    zcopy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
 }
 
 /// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
@@ -297,7 +299,56 @@ struct CopyTarget {
 /// texture by then).
 const COPY_KEEP: u64 = 120;
 
-/// The copy shader's mode for a GXSetTexCopyDst format (see `COPY_WGSL`); None: a depth copy (not implemented).
+/// A depth copy's mode for a GXSetTexCopyDst Z format (see `ZCOPY_WGSL`): the texel bytes of the 24-bit EFB depth the
+/// destination format keeps, laid out as the Z texture formats are read back (Z24X8: R, G, B = bits 23-16, 15-8, 7-0;
+/// Z16: A high, R low; the 8-bit ones in every channel).
+fn zcopy_mode(fmt: u32) -> Option<u32> {
+    Some(match fmt {
+        0x11 => 0,        // GX_TF_Z8: bits 23-16
+        0x13 => 1,        // GX_TF_Z16: bits 23-8
+        0x16 => 2,        // GX_TF_Z24X8
+        0x30 => 3,        // GX_CTF_Z4: bits 23-20
+        0x39 => 4,        // GX_CTF_Z8M: bits 15-8
+        0x3A => 5,        // GX_CTF_Z8L: bits 7-0
+        0x3C => 6,        // GX_CTF_Z16L: bits 15-0
+        _ => return None,
+    })
+}
+
+const ZCOPY_WGSL: &str = "
+struct P { rect: vec4<f32>, mode: u32, reversed: u32, p0: u32, p1: u32 };
+var<push_constant> pc: P;
+@group(0) @binding(0) var efbz: texture_depth_2d;
+struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
+@vertex fn vs_main(@builtin(vertex_index) i: u32) -> VsOut {
+    let uv = vec2<f32>(f32((i << 1u) & 2u), f32(i & 2u));
+    var o: VsOut;
+    o.pos = vec4<f32>(uv.x * 2.0 - 1.0, 1.0 - uv.y * 2.0, 0.0, 1.0);
+    o.uv = uv;
+    return o;
+}
+@fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    let dims = vec2<f32>(textureDimensions(efbz));
+    let p = clamp(vec2<i32>((pc.rect.xy + v.uv * pc.rect.zw) * dims), vec2<i32>(0), vec2<i32>(dims) - vec2<i32>(1));
+    var d = textureLoad(efbz, p, 0);
+    if (pc.reversed != 0u) { d = 1.0 - d; }
+    let z = u32(clamp(round(d * 16777215.0), 0.0, 16777215.0));
+    let hi = f32((z >> 16u) & 255u) / 255.0;
+    let mid = f32((z >> 8u) & 255u) / 255.0;
+    let lo = f32(z & 255u) / 255.0;
+    switch (pc.mode) {
+        case 0u: { return vec4<f32>(hi, hi, hi, hi); }
+        case 1u: { return vec4<f32>(mid, mid, mid, hi); }
+        case 2u: { return vec4<f32>(hi, mid, lo, 1.0); }
+        case 3u: { let n = f32((z >> 20u) & 15u) / 15.0; return vec4<f32>(n, n, n, n); }
+        case 4u: { return vec4<f32>(mid, mid, mid, mid); }
+        case 5u: { return vec4<f32>(lo, lo, lo, lo); }
+        default: { return vec4<f32>(lo, lo, lo, mid); }
+    }
+}
+";
+
+/// The copy shader's mode for a GXSetTexCopyDst colour format (see `COPY_WGSL`); None: not a colour format.
 fn copy_mode(fmt: u32) -> Option<u32> {
     Some(match fmt {
         0x0 | 0x1 => 1,          // I4, I8: luma
@@ -537,7 +588,7 @@ impl Renderer {
             wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
             "GX EFB color",
         );
-        self.depth = mk(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT, "GX EFB depth");
+        self.depth = mk(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, "GX EFB depth");
         self.width = w;
         self.height = h;
         self.scale = scale;
@@ -594,7 +645,7 @@ impl Renderer {
             wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
             "GX EFB color",
         );
-        let depth = mk_target(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT, "GX EFB depth");
+        let depth = mk_target(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, "GX EFB depth");
         let vs_fs = wgpu::ShaderStages::VERTEX_FRAGMENT;
         let storage = |b| wgpu::BindGroupLayoutEntry {
             binding: b,
@@ -690,6 +741,7 @@ impl Renderer {
             frame: FrameCache::default(),
             efb_copies: FxMap::default(),
             copy_pipe: None,
+            zcopy_pipe: None,
         })
     }
 
@@ -891,6 +943,38 @@ impl Renderer {
             ..Default::default()
         });
         self.copy_pipe = Some((pipe, bgl, smp));
+        let module = d.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("GX EFB depth copy"), source: wgpu::ShaderSource::Wgsl(ZCOPY_WGSL.into()) });
+        let bgl = d.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some("GX EFB depth copy"),
+            entries: &[wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false },
+                count: None,
+            }],
+        });
+        let layout = d.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("GX EFB depth copy"),
+            bind_group_layouts: &[&bgl],
+            push_constant_ranges: &[wgpu::PushConstantRange { stages: wgpu::ShaderStages::FRAGMENT, range: 0..32 }],
+        });
+        let pipe = d.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("GX EFB depth copy"),
+            layout: Some(&layout),
+            vertex: wgpu::VertexState { module: &module, entry_point: Some("vs_main"), compilation_options: Default::default(), buffers: &[] },
+            fragment: Some(wgpu::FragmentState {
+                module: &module,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
+                targets: &[Some(wgpu::ColorTargetState { format: wgpu::TextureFormat::Rgba8Unorm, blend: None, write_mask: wgpu::ColorWrites::ALL })],
+            }),
+            primitive: Default::default(),
+            depth_stencil: None,
+            multisample: Default::default(),
+            multiview: None,
+            cache: None,
+        });
+        self.zcopy_pipe = Some((pipe, bgl));
     }
 
     fn texture_view(&mut self, d: &DrawCmd, map: usize) -> Option<wgpu::TextureView> {
@@ -1236,7 +1320,40 @@ impl Renderer {
                 break;
             }
             let c = draws[end].copy.as_deref().unwrap();
-            if let (Some(t), Some(mode), Some((pipe, bgl, smp))) = (self.efb_copies.get(&c.dest), copy_mode(c.fmt), self.copy_pipe.as_ref()) {
+            // a Z-format copy (GXSetTexCopyDst GX_TF_Z*/GX_CTF_Z*) reads the depth target, as the hardware copies the
+            // EFB's z buffer for those formats (gm_1832's costume snapshots: GX_TF_Z24X8 next to the colour copy)
+            if let (Some(t), Some(mode), Some((pipe, bgl))) = (self.efb_copies.get(&c.dest), zcopy_mode(c.fmt), self.zcopy_pipe.as_ref()) {
+                let zview = self.depth.create_view(&wgpu::TextureViewDescriptor { aspect: wgpu::TextureAspect::DepthOnly, ..Default::default() });
+                let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("GX EFB depth copy"),
+                    layout: bgl,
+                    entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&zview) }],
+                });
+                let (ew, eh) = ((self.width / self.scale) as f32, (self.height / self.scale) as f32);
+                let r = [c.src[0] as f32 / ew, c.src[1] as f32 / eh, c.src[2] as f32 / ew, c.src[3] as f32 / eh];
+                let mut pc = [0u8; 32];
+                for (k, v) in r.iter().enumerate() {
+                    pc[k * 4..k * 4 + 4].copy_from_slice(&v.to_le_bytes());
+                }
+                pc[16..20].copy_from_slice(&mode.to_le_bytes());
+                pc[20..24].copy_from_slice(&(crate::state::USE_REVERSED_Z as u32).to_le_bytes());
+                let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    label: Some("GX EFB depth copy"),
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        view: &t.view,
+                        resolve_target: None,
+                        depth_slice: None,
+                        ops: wgpu::Operations { load: wgpu::LoadOp::Load, store: wgpu::StoreOp::Store },
+                    })],
+                    depth_stencil_attachment: None,
+                    timestamp_writes: None,
+                    occlusion_query_set: None,
+                });
+                pass.set_pipeline(pipe);
+                pass.set_bind_group(0, &bg, &[]);
+                pass.set_push_constants(wgpu::ShaderStages::FRAGMENT, 0, &pc);
+                pass.draw(0..3, 0..1);
+            } else if let (Some(t), Some(mode), Some((pipe, bgl, smp))) = (self.efb_copies.get(&c.dest), copy_mode(c.fmt), self.copy_pipe.as_ref()) {
                 let bg = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
                     label: Some("GX EFB copy"),
                     layout: bgl,

@@ -131,10 +131,9 @@ pub mod ext {
         pub unsafe extern "C" fn gm_8017ED8C(a0: u8, a1: u8) -> f32 { super::gm_8017ED8C(a0, a1) }
     }
     // Data defined in other TUs (the tests set them).
-    pub static mut gmClassic_80470708: [*mut c_void; 1] = unsafe { core::mem::zeroed() };
-    pub use crate::tu::gm_17c0::gmClassic_80470850;
-    pub static mut gmClassic_8047086C: *mut c_void = unsafe { core::mem::zeroed() };
-    pub static mut gmClassic_80472AF8: *mut c_void = unsafe { core::mem::zeroed() };
+    // gm_17c0.c defines them (CSSData, DebugGameOverData, MatchExitInfo, StartMeleeData): the 8-byte stand-ins here
+    // were overrun by gm_801B06B0's CSSData writes (the scene table points at them as each state's enter/exit data).
+    pub use crate::tu::gm_17c0::{gmClassic_80470708, gmClassic_80470850, gmClassic_8047086C, gmClassic_80472AF8};
 }
 // END GENERATED EXT
 

@@ -706,6 +706,18 @@ impl Engine {
                 if h::Netplay_GameResult.is_none() { h::Netplay_GameResult = Some(|_| ()); }
                 if h::Netplay_NoteTie.is_none() { h::Netplay_NoteTie = Some(|| ()); }
             }
+            // gmclassic.c's PC callees with no MELEE_SCENE 1P launch (gw_runtime.c gw_SceneLaunch_OneP*: not configured):
+            // the mode runs its own character select. A 1P scenario (scenario::install) sets them first.
+            {
+                use melee_modes::tu::gmclassic::ext::hook as h;
+                if h::SceneLaunch_OnePDirect.is_none() { h::SceneLaunch_OnePDirect = Some(|_| 0); }
+                if h::SceneLaunch_OnePStep.is_none() { h::SceneLaunch_OnePStep = Some(|| 0); }
+                if h::SceneLaunch_OnePLevel.is_none() { h::SceneLaunch_OnePLevel = Some(|| 2); }
+                if h::SceneLaunch_PlayerCKind.is_none() { h::SceneLaunch_PlayerCKind = Some(|_| -1); }
+                if h::SceneLaunch_PlayerColor.is_none() { h::SceneLaunch_PlayerColor = Some(|_| -1); }
+                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| -1); }
+                if h::Script_OnePScripted.is_none() { h::Script_OnePScripted = Some(|| 0); }
+            }
             // OSTicksToCalendarTime (aurora OSTime.cpp): the prize / save dates; a seam ("no calendar") on the VS-only path.
             melee_runtime::tu::lbtime::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
             melee_runtime::tu::lbcardgame::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));

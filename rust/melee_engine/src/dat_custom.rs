@@ -201,12 +201,38 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
             // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
             let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
-            if let Some((_, _, csize, rsize, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
+            if let Some((_, name, csize, rsize, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
                 if (*csize as usize) <= n * 4 {
+                    // grZakoGenerator_801CA8B4 indexes the record's `grZakoGenerator_SpawnDesc` (u16 kind, u8, u8) as an array:
+                    // the C reads every 4 bytes from it to the record's end as further descriptors (Icicle Mountain's xC0..xCC are
+                    // declared floats, the route stages' descriptor is the last field). Those words are swapped as descriptors.
+                    let zako: Option<u32> = match *name {
+                        "grIceMt_YakumonoParam" => Some(0xBC),
+                        "grShrineRoute_YakumonoParam" => Some(0x28),
+                        _ => None,
+                    };
+                    let zako_r = zako.and_then(|zo| fields.iter().find(|f| f.0 == zo).map(|f| (zo, f.1)));
+                    let need = zako_r.map(|(zo, zr)| (zr + (n as u32 * 4 - zo)) as usize).unwrap_or(0);
                     // the native struct differs from the GameCube record when it holds pointers (8 bytes against 4): build it
                     // field by field at its own offsets
-                    let out = if rsize != csize { native_buf((*rsize as usize).max(n * 4)) } else { buf };
+                    let out = if rsize != csize { native_buf((*rsize as usize).max(n * 4).max(need)) } else { buf };
+                    if let Some((zo, zr)) = zako_r {
+                        let mut o = zo;
+                        while o + 4 <= n as u32 * 4 {
+                            let w = d.u32_at(off + o);
+                            let r = (zr + (o - zo)) as usize;
+                            unsafe {
+                                (out.add(r) as *mut u16).write_unaligned((w >> 16) as u16);
+                                *out.add(r + 2) = (w >> 8) as u8;
+                                *out.add(r + 3) = w as u8;
+                            }
+                            o += 4;
+                        }
+                    }
                     for &(o, r, w, k) in fields.iter() {
+                        if zako_r.is_some_and(|(zo, _)| o >= zo) {
+                            continue;
+                        }
                         if k == 0 {
                             for i in 0..w as u32 {
                                 let byte = (d.u32_at(off + (o & !3)) >> (8 * (3 - ((o & 3) + i)))) as u8;

@@ -25431,8 +25431,9 @@ pub struct ftCommon_MotionVars_itemthrow {
     pub xC: i32,
     pub x10: f32,
     pub x14: i32,
-    pub x18: *mut c_void,
-    pub x1C: *mut c_void,
+    /// native only (gen/native_unions.py): UNK_T in the C, kept 4 bytes so x20 is guard.x20's slot (fp+2360)
+    pub x18: u32,
+    pub x1C: u32,
     pub x20: i32,
 }
 impl ftCommon_MotionVars_itemthrow { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -25449,8 +25450,8 @@ impl GcDecode for ftCommon_MotionVars_itemthrow {
         v.xC = <i32 as GcDecode>::gc_decode(d, at + 0xC);
         v.x10 = <f32 as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <i32 as GcDecode>::gc_decode(d, at + 0x14);
-        v.x18 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x18);
-        v.x1C = <*mut c_void as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x18 = <u32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <u32 as GcDecode>::gc_decode(d, at + 0x1C);
         v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
         v
     }
@@ -25472,7 +25473,7 @@ impl GcLayout for ftCommon_MotionVars_itemthrow {
         GcField::new("x20", 0x20, 4, "int"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_itemthrow>() == 48);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_itemthrow>() == 40);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:185:5)` (src/melee/ft/kinds/ftCommon/types.h:185); GameCube size 0x14, align 4.
 #[repr(C, align(4))]
@@ -38446,7 +38447,8 @@ impl GcDecode for ftMasterHand_FingerBeamVars {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
+        let mut v = Self::zeroed();
+
         v.x34 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x34);
         v.x38 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x38);
         v.x3C = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x3C);
@@ -38487,7 +38489,8 @@ impl GcDecode for ftMasterHand_GrabVars {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
+        let mut v = Self::zeroed();
+
         v.x28 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x2C);
         v.x30 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x30);
@@ -38532,7 +38535,8 @@ impl GcDecode for ftMasterHand_Damage_0 {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
+        let mut v = Self::zeroed();
+
         v.x28 = <i32 as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v.x30 = <i32 as GcDecode>::gc_decode(d, at + 0x30);

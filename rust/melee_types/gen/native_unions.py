@@ -15,6 +15,35 @@ inside Fighter_MotionVars (0xAC). GC offsets (gc_decode / GcLayout) are unchange
 import sys
 
 PATCHES = [
+    # ftCommon itemthrow: x18/x1C are UNK_T (never used as pointers); the C's x20 is fp+2360, the slot ftCo_Guard's
+    # guard.x20 (an int) writes before the item throw reads it (ftCo_8009515C). 8-byte pointers moved x20 to mv+0x28.
+    ("""    pub x14: i32,
+    pub x18: *mut c_void,
+    pub x1C: *mut c_void,
+    pub x20: i32,
+}
+impl ftCommon_MotionVars_itemthrow {""", """    pub x14: i32,
+    /// native only (gen/native_unions.py): UNK_T in the C, kept 4 bytes so x20 is guard.x20's slot (fp+2360)
+    pub x18: u32,
+    pub x1C: u32,
+    pub x20: i32,
+}
+impl ftCommon_MotionVars_itemthrow {"""),
+    ("const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_itemthrow>() == 48);",
+     "const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_itemthrow>() == 40);"),
+    ("""        v.x18 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <*mut c_void as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v
+    }
+}
+impl GcPointee for ftCommon_MotionVars_itemthrow {""", """        v.x18 = <u32 as GcDecode>::gc_decode(d, at + 0x18);
+        v.x1C = <u32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
+        v
+    }
+}
+impl GcPointee for ftCommon_MotionVars_itemthrow {"""),
     ("""pub struct ftMasterHand_FingerBeamVars {
     pub pad_0: [i8; 52],""", """pub struct ftMasterHand_FingerBeamVars {
     /// native only (gen/native_unions.py): the item slots past ftMasterHand_Unk0Vars' 0x88 bytes

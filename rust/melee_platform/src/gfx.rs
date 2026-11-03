@@ -36,6 +36,8 @@ pub struct Presenter {
     pending: Option<Vec<DrawCmd>>,
     /// Per-present µs of prepare / draw / swap (fresh frames only for prepare), for the MELEE_SHOW_FPS exit line.
     pub times: [Vec<u32>; 3],
+    /// The HUD overlay's lines (None: off), drawn over every present (overlay.rs).
+    pub hud: Option<Vec<crate::overlay::Line>>,
 }
 
 impl Drop for Presenter {
@@ -154,7 +156,7 @@ impl Presenter {
         };
         surface.configure(&renderer.device, &config);
         crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default() })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default(), hud: None })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -280,13 +282,21 @@ impl Presenter {
         };
         let view = tex.texture.create_view(&Default::default());
         self.renderer.blit_to(&view, self.config.format, self.config.width, self.config.height);
+        let hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, self.config.width, self.config.height));
+        self.renderer.overlay_to(&view, self.config.format, self.config.width, self.config.height, &hud);
         tex.present();
         self.presented += 1;
     }
 
     /// The EFB as RGBA8 with alpha forced opaque (what the window shows, before scaling).
-    pub fn screenshot(&self) -> Vec<u8> {
-        let mut px = self.renderer.read_color();
+    /// With the HUD overlay on, the shot shows it too (drawn over the EFB at its size; the EFB itself is untouched).
+    pub fn screenshot(&mut self) -> Vec<u8> {
+        let mut px = if let Some(l) = self.hud.as_ref() {
+            let hud = crate::overlay::layout(l, self.renderer.width, self.renderer.height);
+            self.renderer.read_composed(&hud)
+        } else {
+            self.renderer.read_color()
+        };
         for p in px.chunks_mut(4) {
             p[3] = 255;
         }

@@ -98,6 +98,12 @@ pub fn fn_800CA698(g: G) -> bool {
 
 pub fn ftCo_Run_Enter(g: G, arg0: f32) {
     melee_core::ct!("ftCo_Run_Enter");
+    // mod host site (hooks-v1 0x800CA6F4, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800CA6F4, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::F32(arg0)], ftCo_Run_Enter__orig(g, arg0));
+    #[allow(unused_unsafe)] unsafe { ftCo_Run_Enter__orig(g, arg0) }
+}
+
+fn ftCo_Run_Enter__orig(g: G, arg0: f32) {
     ftCo_Run_Enter_Full(g, arg0, 0.0, 1.0);
 }
 

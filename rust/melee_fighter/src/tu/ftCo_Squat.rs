@@ -82,6 +82,12 @@ pub fn ftCo_800D5FB0(g: G) -> bool {
 /// static `ftCo_Squat_Enter`.
 pub fn ftCo_Squat_Enter(g: G) {
     melee_core::ct!("ftCo_Squat_Enter");
+    // mod host site (hooks-v1 0x800D600C, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800D600C, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_Squat_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_Squat_Enter__orig(g) }
+}
+
+fn ftCo_Squat_Enter__orig(g: G) {
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Squat as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
     let f = fp(g);

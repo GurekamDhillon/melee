@@ -91,6 +91,12 @@ pub fn ftCo_SquatRv_CheckInput(g: G) -> bool {
 /// static `ftCo_SquatRv_Enter`.
 pub fn ftCo_SquatRv_Enter(g: G) {
     melee_core::ct!("ftCo_SquatRv_Enter");
+    // mod host site (hooks-v1 0x800D6620, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800D6620, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_SquatRv_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_SquatRv_Enter__orig(g) }
+}
+
+fn ftCo_SquatRv_Enter__orig(g: G) {
     ext::Fighter_ChangeMotionState(g, ftCo_MS_SquatRv as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
 }
 

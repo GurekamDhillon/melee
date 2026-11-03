@@ -80,6 +80,12 @@ pub fn ftCo_Walk_CheckInput_Ottotto(g: G) -> bool {
 
 pub fn ftCo_Walk_Enter(g: G, arg8: f32) {
     melee_core::ct!("ftCo_Walk_Enter");
+    // mod host site (hooks-v1 0x800C9528, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C9528, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::F32(arg8)], ftCo_Walk_Enter__orig(g, arg8));
+    #[allow(unused_unsafe)] unsafe { ftCo_Walk_Enter__orig(g, arg8) }
+}
+
+fn ftCo_Walk_Enter__orig(g: G, arg8: f32) {
     let f = fp(g);
     let mut accel_mul = 1.0f32;
     if f.is_metal() != 0 {

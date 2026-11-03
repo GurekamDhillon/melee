@@ -4238,13 +4238,13 @@ pub unsafe extern "C" fn test_geno_v1_overlay() -> i32 {
     st = t_setup();
     if t_subactions[3 as i32 as usize].xC as *mut u32
         == &raw mut orig as *mut u32
-        || *(t_subactions[3 as i32 as usize].xC as *mut u32)
-            .offset(0 as i32 as isize)
+        || u32::from_be(*(t_subactions[3 as i32 as usize].xC as *mut u32)
+            .offset(0 as i32 as isize))
             != 0xec120100 as u32
-        || *(t_subactions[3 as i32 as usize].xC as *mut u32)
-            .offset(1 as i32 as isize) != 5 as u32
-        || *(t_subactions[3 as i32 as usize].xC as *mut u32)
-            .offset(3 as i32 as isize) != 0 as u32
+        || u32::from_be(*(t_subactions[3 as i32 as usize].xC as *mut u32)
+            .offset(1 as i32 as isize)) != 5 as u32
+        || u32::from_be(*(t_subactions[3 as i32 as usize].xC as *mut u32)
+            .offset(3 as i32 as isize)) != 0 as u32
     {
         TestFail(
             b"subaction 3 does not point at the overlay words (with an End appended)\0"
@@ -5050,7 +5050,8 @@ pub unsafe extern "C" fn test_geno_lab_mode_table() -> i32 {
             found += 1;
             if (*m).states != &raw mut gm_Mode_Lab_States as *mut GameModeState
                 || (*m).on_load
-                    != Some(gm_Mode_Lab_OnLoad as unsafe extern "C" fn() -> ())
+                    // the mode table's entry for LAB's on_load (gmscdata's call-through to geno_lab_mode's)
+                    != Some(crate::tu::gmscdata::ext::gm_Mode_Lab_OnLoad as unsafe extern "C" fn() -> ())
             {
                 TestFail(
                     b"the GM_LAB row does not point at LAB's states / on_load\0"

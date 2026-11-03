@@ -4366,7 +4366,7 @@ pub unsafe extern "C" fn geno_buttons(
     mut pressed: i32,
 ) -> u32 {
     melee_core::ct!("geno_buttons");
-    let mut b: HSD_Pad = unsafe { core::mem::zeroed() };
+    let mut b: HSD_Pad = if pressed != 0 { (*fp).input.pressed_buttons } else { (*fp).input.held_buttons[0] };
     let mut m: u32 = 0 as u32;
     if b & HSD_PAD_A as HSD_Pad != 0 {
         m |= GENO_BTN_ATTACK as u32;

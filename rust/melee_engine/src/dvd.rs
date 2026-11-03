@@ -84,6 +84,20 @@ pub fn host_dev_com_request(file: i32, src: usize, dst: usize, size: usize, ty: 
         eprintln!("engine: dev_com file {file} src {src:#x} dst {dst:#x} size {size:#x} type {ty:#x}");
         h.disc.read_entry(file, 0, 16).map(|b| eprintln!("engine:   head {:02x?} flen {:#x}", b, h.disc.entry_len(file).unwrap_or(0))).ok();
     }
+    // 0x1B: an ARAM-to-ARAM move, no disc file (lbMemory_80015320 compacting the ARAM heap; devcom.c relays it through
+    // a main-RAM buffer in DEVCOM_BUF_SIZE pieces, front to back, which for its downward moves is a memmove). The
+    // callback gets no buffer, as HSD_DevComARAMCallback passes NULL for every type but 0x1A.
+    if ty == 0x1B {
+        let end = (src + size).max(dst + size);
+        if h.aram.len() < end {
+            h.aram.resize(end, 0);
+        }
+        h.aram.copy_within(src..src + size, dst);
+        if let Some(f) = cb {
+            unsafe { f(0, args, core::ptr::null_mut(), 0) };
+        }
+        return 0;
+    }
     let flen = h.disc.entry_len(file).unwrap_or_else(|| panic!("host_dev_com_request: entry {file} is not a file")) as usize;
     let want = size.min(flen.saturating_sub(src));
     let bytes = h.disc.read_entry(file, src as u32, want).unwrap_or_else(|e| panic!("host_dev_com_request: {e}"));

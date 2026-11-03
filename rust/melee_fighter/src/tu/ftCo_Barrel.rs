@@ -88,6 +88,12 @@ pub unsafe extern "C" fn ftCo_Barrel_Death2_Cb(g: G) {
 
 pub fn ftCo_Barrel_Enter(g: G, item: *mut Item_GObj) {
     melee_core::ct!("ftCo_Barrel_Enter");
+    // mod host site (hooks-v1 0x800C9078, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C9078, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::Item(item as _)], ftCo_Barrel_Enter__orig(g, item));
+    #[allow(unused_unsafe)] unsafe { ftCo_Barrel_Enter__orig(g, item) }
+}
+
+fn ftCo_Barrel_Enter__orig(g: G, item: *mut Item_GObj) {
     ftCo_ReleaseItemAndVictim(g);
     ext::Fighter_ChangeMotionState(g, ftCo_MS_Barrel as i32, Ft_MF_None as u32, 0.0, 1.0, 0.0, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);

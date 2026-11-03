@@ -44,6 +44,12 @@ pub mod ext {
 
 pub fn ftCo_HammerLanding_Enter(g: G) {
     melee_core::ct!("ftCo_HammerLanding_Enter");
+    // mod host site (hooks-v1 0x800C5F88, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C5F88, [melee_core::modhook::Arg::Fighter(g as _)], ftCo_HammerLanding_Enter__orig(g));
+    #[allow(unused_unsafe)] unsafe { ftCo_HammerLanding_Enter__orig(g) }
+}
+
+fn ftCo_HammerLanding_Enter__orig(g: G) {
     unsafe { fp(g).mv.co.hammerlanding.x4 = cd().x6B4 as f32 };
     let flags = ext::ftCo_800C54C4(fp(g));
     let start = ext::ftCo_800C548C(fp(g));

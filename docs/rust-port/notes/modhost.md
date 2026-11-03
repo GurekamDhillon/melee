@@ -36,16 +36,44 @@ silent, never partial. Loaded mods are logged with id, version, FNV-1a-64 of the
 Every hooks-v1 address passes the table check, but only these rows are wired; a mod declaring any other row is refused
 ("not wired by this host yet"), never accepted as a silent no-op.
 
-| row | site | modes |
+| rows | site | modes |
 |---|---|---|
-| `frame.run_procs` 0x80390CFC | `gm_801A4D34_tick` around `HSD_GObj_RunProcs` (`gmscene::MOD_FRAME`); post runs before `Script_FramePost`, i.e. before the NHV1 sample (OPEN 3 default) | pre `i32()`, post `void()` |
-| `damage.fighter_take_damage` 0x8006CC7C | `Fighter_TakeDamage_8006CC7C` (`melee_fighter::hooks::MOD_TAKE_DAMAGE`); a pre `GD_SKIP` omits the original, the post chain still runs | pre `i32(fighter,f32)`, post `void(fighter,f32)` |
+| `frame.run_procs` 0x80390CFC | `gm_801A4D34_tick` around `HSD_GObj_RunProcs` (`gmscene::MOD_FRAME`); post before `Script_FramePost` (OPEN 3 default). Frame begin also clears the per-frame handle tables | pre / post (no replace) |
+| `damage.fighter_take_damage` 0x8006CC7C | `Fighter_TakeDamage_8006CC7C` (`melee_fighter::hooks::MOD_TAKE_DAMAGE`, which hands the generic dispatcher an `orig` closure) | pre / replace / post |
+| `fighter.proc00/01/04/06` | `Fighter_8006A1BC` (read input there with `gd_fighter_get_input`), `Fighter_8006A360`, `Fighter_procUpdate`, `Fighter_procMap` | pre / replace / post |
+| all 19 `action.*.enter` rows (action-state changes) | the `ftCo_*_Enter` definitions | pre / replace / post |
+| `item.spawn`, `item.spawn_gobj`, `item.spawn_gobj2`, `item.spawn_void` | `Item_8026862C`, `Item_80268B18/5C/9C` | pre / post; replace refused (handle result). A pre `GD_SKIP` returns a null item (no spawn) |
+| `item.destroy`, `item.change_state`, `item.update0`, `item.update5` | `Item_802680CC`, `Item_80268E5C`, `Item_802693E4`, `Item_80269978` | pre / replace / post |
+| `stage.update`, `stage.on_start` | `Ground_801C0C2C`, `Ground_801C0FB8` | pre / replace / post |
 
-Replace (`GD_FEATURE_REPLACE`) is refused. Accessors implemented: `gd_abi_host_version`, `gd_match_frame`,
-`gd_fighter_from_slot`, `gd_player_present`, `gd_fighter_{slot,kind,get_action_state}`, get/set `percent`, `facing`,
-`pos`, `vel` (per axis), `gd_fighter_read/write` (the 80-byte view, mask POS/VEL/KB_VEL/FACING/PERCENT),
-`gd_rand_u32/f32`, `gd_log`. Not yet: items, spawn, input, stage, stocks, trig (`gd_sinf...`, OPEN 1 says the game's
-tables), `gd_orig_call_*`, `gd_set_return_*`, `gd_fighter_request_action_state`.
+Generic sites are `melee_core::mod_hook!(addr, [args], orig)` at the top of the function (the body moved to
+`<name>__orig`). With no mod hooking that address the cost is a `None` load and branch, then the same body.
+`melee_core::modhook::{DISPATCH, HOOKED}` are installed only for addresses some mod hooks.
+
+**Dispatch** (`melee_modhost::dispatch`): the pre chain (ascending order; `GD_SKIP` stops it and skips the replace and
+the original; `gd_set_return_*` sets a skipped non-void row's result), then the replace hook or the original, then the
+post chain (reverse order; a non-void post gets `(args, ret)` and returns the new result; for handle results this host
+ignores the returned value). Queued `gd_fighter_request_action_state` calls are applied after the pre/replace part and
+after the post chain. Re-entrancy: depth 8 per address, deeper activations run the original only (`deep_calls`). A
+sub-fighter (Nana) argument runs the original only. Each hook's wasm signature is checked at load against its row.
+
+**Replace** (`GD_FEATURE_REPLACE` required): at most one per address across all mods (a second is a refusal), only on
+`sig_src = decomp` rows, never on the frame row or a handle-returning row. `gd_orig_call_void/i32/f32` runs the
+original once per activation (a second call is a no-op returning 0). While it runs, hooks of other addresses fire in
+the caller's store context (wasmi re-entrancy through `Caller`; the outer fuel is restored afterwards). A trapping
+replace falls back to the original unless it already ran.
+
+**Accessors**: all of gdmod.h. Fighters (`get_input`, `request_action_state`, `gobj`, pos/vel/percent/facing, the
+view), players (`stocks`, `character`, `present`), items (`count`, `at`, `kind`, `gobj`, `read`, `write`), spawn
+requests (`get/set_kind`, `get/set_pos`; setters in pre hooks only, kinds limited to the common items), gobjs (`kind`,
+`to_fighter`, `to_item`), `gd_stage_kind`, RNG, trig (`gd_sinf/cosf` = MSL as retail computes them, `gd_atan2f` =
+lbtrigf, `gd_powf` = lb; closes OPEN 1 for this host), `gd_orig_call_*`, `gd_set_return_*`, `gd_log`. Item and spawn
+writes need `GD_FEATURE_ITEM_WRITE`, action requests `GD_FEATURE_ACTION_REQUEST` (declared required or optional).
+
+**Handles**: fighters `(1<<16)+slot+1`, re-resolved each call; items `(2<<16)+n` and other gobjs `(3<<16)+n` from
+per-frame tables (valid in the logic frame they were issued in; an item only while it is on the item list); the spawn
+request `(4<<16)+1` (the innermost spawn activation). Action requests accept only Wait / Squat / SquatWait on the
+ground and Fall / FallSpecial in the air (no flags, frame 0, rate 1); anything else is refused and logged (OPEN 12).
 
 ## Mods off = unchanged hashes
 
@@ -61,23 +89,33 @@ restores mod state together with the game; mods have no save/load code (spec sec
 no state outside its heap objects and statics (true for 2.0: no threads, no OS handles). Rule for future work: never
 create or grow the host outside a `GameScope`.
 
-## Verified (2026-11-03, this branch)
+## Verified (2026-11-03, port/modhost2)
 
 | check | result |
 |---|---|
-| mods off, `cpu_fox_falco_dl` vs golden | 3601/3601 frames |
-| hello_mod loaded, two runs | byte-identical NHV1 CSV (3602 rows) |
-| hello_mod effect | first differing row 119 (slot 0's first damage + 1%); the mod's frame hook logs 6, 12 hits at frames 600, 1200 |
-| synctest depth 4, 600 frames, mod loaded | 2388 hash checks, 0 mismatches |
-| loader refusals (V6) | growable memory, abi_min, address not in table, replace, wrong signature, unwired row, start function, duplicate id, foreign import |
+| mods off, `cpu_fox_falco_dl` vs golden (all generic sites compiled in) | 3601/3601 frames |
+| hello + moves + world loaded, two runs | byte-identical NHV1 CSV (3602 rows) |
+| effect | first differing row 119; the logs show every row firing: input reads, jumps (+10% vy), replaced squats, landings, 94 item spawns, 118 item state changes, 9 live items, a stage update every frame, `gd_sinf(1)` = 0.841471 |
+| synctest depth 4, 600 frames, three mods | 2388 hash checks, 0 mismatches |
+| loader refusals | as before, plus replace without the feature, replace on a handle row, a second replace on one address |
+| unit: replace calling `gd_orig_call_void` twice (the original runs once), pre `GD_SKIP` on `stage.on_start`, unhooked rows stay off | pass |
+| live `melee play` (retail menus, scripted pad, one VS match) with the three mods | loaded, hooks ran through title / CSS / SSS / match / results, exit 0 |
 
-`pad_falcon_fox_fd` has no damage to slot 0, so the test uses the CPU scenario. Not verified: the C build / melee-unlocked
-running the same mod (V3 needs a host there), netplay sessions carrying the mod list (OPEN 10; the FNV digest is logged
-only), live play (`melee play`) with mods (it boots through the same `boot_host`, so it loads them, but no run was made).
+Not verified: the C build / melee-unlocked running the same mods (V3 needs a host there).
 
-## Example mod
+**Netplay**: `play_net::mods_identity` adds the wasm files (`file#fnv32`, sorted) to the handshake digest and its
+description, so peers with different code mods are refused. The guest's refusal text lists both sides
+(`melee_net::refusal_both_sides`, applied where the room shows it: "...host has: X; you have: Y"); the wire text stays
+the C's (net_oracle).
+
+## Example mods
 
 `rust/mods/hello_mod` (a `no_std` cdylib, not a workspace member): the Rust twin of `docs/specs/examples/hello_mod.c`.
 Post hook on damage: slot 0 takes 1% extra per hit, counted in a static; post hook on the frame: logs the count every
 600 frames. Build flags (build_mods.sh): `--initial-memory=--max-memory=1048576`, `-zstack-size=16384`, `--export-table`,
 `-simd128`.
+
+`rust/mods/moves_mod` (`gd.moves`): input read on `fighter.proc00`, post on `action.Jump.enter`, replace on
+`action.Squat.enter` through `gd_orig_call_void`, pre on `action.Landing.enter`, an action request at frame 900.
+`rust/mods/world_mod` (`gd.world`): `item.spawn` pre / post with the spawn accessors, `item.change_state` post,
+`stage.update` pre, `stage.on_start` post, an item walk and trig in the frame hook. build_mods.sh builds all three.

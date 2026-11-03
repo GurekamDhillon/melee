@@ -507,3 +507,11 @@ fn udp_loopback() {
     assert_eq!(h.st.borrow().bad + g.st.borrow().bad, 0);
     assert!(h.delivered() >= 200 && g.delivered() >= 200, "delivered {}/{}", h.delivered(), g.delivered());
 }
+
+#[test]
+fn refusal_lists_both_sides() {
+    let w = melee_net::refusal_both_sides("different global game data; host has: mods a (01)", Some("mods b (02)"));
+    assert_eq!(w, "different global game data; host has: mods a (01); you have: mods b (02)");
+    assert_eq!(melee_net::refusal_both_sides("different global game data; host has: x", None), "different global game data; host has: x; you have: none");
+    assert_eq!(melee_net::refusal_both_sides("session full", Some("y")), "session full");
+}

@@ -81,6 +81,12 @@ pub fn fn_800C9D40(g: G) -> bool {
 
 pub fn ftCo_TurnRun_Enter(g: G, anim_start: f32) {
     melee_core::ct!("ftCo_TurnRun_Enter");
+    // mod host site (hooks-v1 0x800C9D94, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C9D94, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::F32(anim_start)], ftCo_TurnRun_Enter__orig(g, anim_start));
+    #[allow(unused_unsafe)] unsafe { ftCo_TurnRun_Enter__orig(g, anim_start) }
+}
+
+fn ftCo_TurnRun_Enter__orig(g: G, anim_start: f32) {
     let f = fp(g);
     f.cmd_vars[1] = 0;
     unsafe { f.mv.co.turnrun.accel_mul = f.facing_dir };

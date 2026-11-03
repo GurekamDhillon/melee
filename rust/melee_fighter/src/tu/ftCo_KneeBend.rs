@@ -42,6 +42,12 @@ pub mod ext {
 
 pub fn ftCo_KneeBend_Enter(g: G, jump_input: ftCo_JumpInput) {
     melee_core::ct!("ftCo_KneeBend_Enter");
+    // mod host site (hooks-v1 0x800CB4E0, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800CB4E0, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::I32(jump_input as i32)], ftCo_KneeBend_Enter__orig(g, jump_input));
+    #[allow(unused_unsafe)] unsafe { ftCo_KneeBend_Enter__orig(g, jump_input) }
+}
+
+fn ftCo_KneeBend_Enter__orig(g: G, jump_input: ftCo_JumpInput) {
     let f = fp(g);
     unsafe {
         f.mv.co.kneebend.jump_input = jump_input;

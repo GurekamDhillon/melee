@@ -80,6 +80,12 @@ pub fn ftCo_Turn_CheckInput(g: G) -> bool {
 
 pub fn ftCo_Turn_Enter(g: G, msid: i32, flags: u32, arg3: f32, frames_to_turn: f32, anim_start: f32) {
     melee_core::ct!("ftCo_Turn_Enter");
+    // mod host site (hooks-v1 0x800C9840, melee_core::modhook): one None check when no mod hooks it
+    melee_core::mod_hook!(0x800C9840, [melee_core::modhook::Arg::Fighter(g as _), melee_core::modhook::Arg::I32(msid as i32), melee_core::modhook::Arg::I32(flags as i32), melee_core::modhook::Arg::F32(arg3), melee_core::modhook::Arg::F32(frames_to_turn), melee_core::modhook::Arg::F32(anim_start)], ftCo_Turn_Enter__orig(g, msid, flags, arg3, frames_to_turn, anim_start));
+    #[allow(unused_unsafe)] unsafe { ftCo_Turn_Enter__orig(g, msid, flags, arg3, frames_to_turn, anim_start) }
+}
+
+fn ftCo_Turn_Enter__orig(g: G, msid: i32, flags: u32, arg3: f32, frames_to_turn: f32, anim_start: f32) {
     let f = fp(g);
     let neg = -f.facing_dir;
     let t = unsafe { &mut f.mv.co.turn };

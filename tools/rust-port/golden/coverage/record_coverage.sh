@@ -54,11 +54,13 @@ for name in "${names[@]}"; do
     IFS=$'\t' read -r _ pad scene seed secs envs < <(python "$here/scn.py" tsv "$name") || { echo "$name: unknown scenario"; rc=1; continue; }
     extra=()
     IFS=',' read -ra kv <<< "$envs"; for e in "${kv[@]}"; do [ -n "$e" ] && extra+=("$e"); done
+    iso="$GW_ISO_VANILLA"   # COV_ISO=<NAME> (scenarios.json "iso"): GW_ISO_<NAME> from .env (never printed)
+    for e in "${extra[@]}"; do case "$e" in COV_ISO=*) v="GW_ISO_${e#COV_ISO=}"; iso="${!v:-}"; [ -n "$iso" ] || { echo "$name: $v not set"; continue 2; } ;; esac; done
     for pass in a b; do
         rm -f "$out/$name.$pass.csv"
         env MELEE_TEST_SEED="$seed" MELEE_PAD_SCRIPT="$padroot/$pad" ${scene:+"MELEE_SCENE=$scene"} \
             MELEE_NEUTRAL_HASHLOG="$outw/$name.$pass.csv" "${extra[@]}" \
-            bash "$ws/tools/port/run.sh" --max-seconds "$secs" "cov-$name-$pass" --iso "$GW_ISO_VANILLA" \
+            bash "$ws/tools/port/run.sh" --max-seconds "$secs" "cov-$name-$pass" --iso "$iso" \
             > "$out/$name.$pass.out" 2>&1
         echo "$name pass $pass: run rc=$? rows=$(($(wc -l < "$out/$name.$pass.csv" 2>/dev/null || echo 1) - 1))"
     done

@@ -265,7 +265,7 @@ fn mk_rd(c: &mut Case, me: *mut MatchEnd) {
             }
             (*pd).stats_position = Vec3 { x: c.rng.f32(), y: c.rng.f32(), z: c.rng.f32() };
         }
-        let pads = &mut *addr_of_mut!(tu::HSD_PadCopyStatus);
+        let pads = &mut *addr_of_mut!(melee_runtime::tu::controller::HSD_PadCopyStatus);
         let master = &mut *addr_of_mut!(melee_modes::tu::gmregclear::HSD_PadMasterStatus);
         for i in 0..4usize {
             pads[i].err = pick(c, &[0i8, 0, 0, -1, 5]);

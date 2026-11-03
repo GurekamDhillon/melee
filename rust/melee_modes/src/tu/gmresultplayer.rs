@@ -154,9 +154,9 @@ crate::globals! {
     /// gm_1798.c: `lbl_8046E3AC_t lbl_8046E3AC` (that TU is not ported: the state lives here)
     rw pub lbl_8046E3AC: lbl_8046E3AC_t = unsafe { core::mem::zeroed() };
     /// `u32 gmResultPlayerColors[4]` (RGBA)
-    ro pub gmResultPlayerColors: [u32; 4] = [0x013C59FF, 0x064E01FF, 0x54010BFF, 0x408080FF];
+    rw pub gmResultPlayerColors: [u32; 4] = [0x013C59FF, 0x064E01FF, 0x54010BFF, 0x408080FF];
     /// `CharScaleEntry gmResultCharacterScaleData[]`
-    ro pub gmResultCharacterScaleData: [CharScaleEntry; 32] = [
+    rw pub gmResultCharacterScaleData: [CharScaleEntry; 32] = [
         CharScaleEntry { x0: [0.2f32, 0.0f32, 2.8f32, 0.0f32, 10.0f32, 13.5f32, 24.0f32, 7.0f32], x20: [3.6f32, 4.0f32, 3.8f32, 1.5f32] },
         CharScaleEntry { x0: [-3.0f32, 0.0f32, -0.8f32, 0.0f32, 12.0f32, 11.0f32, 12.0f32, 1.0f32], x20: [2.3f32, 2.0f32, 2.5f32, 1.0f32] },
         CharScaleEntry { x0: [3.5f32, -3.0f32, 1.0f32, 0.0f32, 17.0f32, 16.0f32, 18.0f32, 5.0f32], x20: [3.5f32, 3.3f32, 3.5f32, 1.5f32] },
@@ -191,11 +191,11 @@ crate::globals! {
         CharScaleEntry { x0: [0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32], x20: [1.0f32, 1.0f32, 1.0f32, 1.0f32] },
     ];
     /// `u32 gmResultX22F4Init[8]`
-    ro pub gmResultX22F4Init: [u32; 8] = [0x00180000, 0x00000000, 0x00150015, 0x00000000, 0x00120012, 0x00120000, 0x000E000E, 0x000E000E];
+    rw pub gmResultX22F4Init: [u32; 8] = [0x00180000, 0x00000000, 0x00150015, 0x00000000, 0x00120012, 0x00120000, 0x000E000E, 0x000E000E];
     /// `u32 gmResultScoreTableInit[8]`
-    ro pub gmResultScoreTableInit: [u32; 8] = [0x00000000, 0x00000000, 0xFFF2000E, 0x00000000, 0xFFEE0000, 0x00120000, 0xFFEAFFF9, 0x00070016];
+    rw pub gmResultScoreTableInit: [u32; 8] = [0x00000000, 0x00000000, 0xFFF2000E, 0x00000000, 0xFFEE0000, 0x00120000, 0xFFEAFFF9, 0x00070016];
     /// `ResultsCharacterData gmResultCharacterData`
-    ro pub gmResultCharacterData: ResultsCharacterData = ResultsCharacterData {
+    rw pub gmResultCharacterData: ResultsCharacterData = ResultsCharacterData {
         scale: [0.85f32, 0.8f32, 1.0f32, 1.0f32, 1.0f32, 0.7f32, 0.9f32, 1.0f32, 1.0f32, 0.88f32, 0.8f32, 1.0f32, 0.9f32, 1.0f32, 0.9f32, 1.0f32, 0.9f32, 0.9f32, 0.9f32, 0.9f32, 1.0f32, 1.0f32, 1.0f32, 1.0f32, 1.0f32, 0.79f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32],
         slot_off: [
             [[0.0f32, 0.0f32, 0.0f32, 0.0f32], [0.0f32, -2.7f32, -3.5f32, -4.0f32], [0.0f32, 0.0f32, 0.0f32, 0.0f32]],

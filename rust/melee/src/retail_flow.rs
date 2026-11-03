@@ -212,14 +212,44 @@ impl RetailPlay {
                         log(&format!("netplay {}: match over at game frame {}", nd.tag(), nd.end_frame.unwrap() - melee_net::session::FIRST));
                         log(&nd.summary());
                         nd.write_hashes();
-                        if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, NetPhase::Done) {
+                        // --np-css: back to the menus in lockstep (results -> CSS -> the next match); else one match
+                        let next = if nd.css() { NetPhase::PreMatch } else { NetPhase::Done };
+                        if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, next) {
                             let (e, _) = g.into_engine();
                             log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
+                            if let Some(r) = self.rec.as_mut() {
+                                nd.flush_rec(&mut r.1, e.neutral_row()[0] | 1);
+                            }
                             self.e = Some(e);
                         }
-                        self.quit = true;
+                        if !nd.css() {
+                            self.quit = true;
+                        }
                     }
                     return false;
+                }
+                NetPhase::PreMatch if nd.css() => {
+                    // the menus in lockstep: this tick's local pad is scheduled; a frame runs once the peer's is in
+                    let host = nd.host;
+                    let ls = nd.ls.as_mut().unwrap();
+                    ls.push_local(&four[0]);
+                    ls.poll();
+                    match ls.ready() {
+                        Some((l, r)) => {
+                            four = neutral_pads();
+                            four[0] = if host { l } else { r };
+                            four[1] = if host { r } else { l };
+                            four[0].err = 0;
+                            four[1].err = 0;
+                        }
+                        None => {
+                            if ls.silent_secs() > 20 {
+                                self.failed = Some("netplay: the peer went silent in the menus".into());
+                                self.quit = true;
+                            }
+                            return false;
+                        }
+                    }
                 }
                 NetPhase::PreMatch => four = neutral_pads(),
                 NetPhase::Done => {}
@@ -258,9 +288,18 @@ impl RetailPlay {
         // the first frame of a match scene: the session takes the engine from here on
         // (after the scene's first frames: the scene's first frame re-creates the host heap block, which a snapshot base
         // must not straddle)
-        if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && self.age >= ARM_FRAMES {
+        // (engine frames, not render ticks: a lockstep stall must not move the hand-over)
+        if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && e.frames >= ARM_FRAMES {
             self.arm = false;
             if let Some(nd) = self.net.as_mut() {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.room.is_none() {
+                    if let Err(er) = nd.next_room() {
+                        log(&format!("netplay: {er}"));
+                        self.failed = Some(er);
+                        self.quit = true;
+                        return false;
+                    }
+                }
                 if matches!(nd.phase, NetPhase::PreMatch) {
                     nd.begin_match(self.e.take().unwrap());
                     return self.step(four);

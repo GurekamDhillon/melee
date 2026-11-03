@@ -587,7 +587,7 @@ pub struct NetDriver {
     pub host: bool,
     pub sess: Rc<RefCell<Sess>>,
     pub log: Rc<RefCell<NetLog>>,
-    room: Option<Room>,
+    pub room: Option<Room>,
     pub net: Option<Net>,
     pub agreed: Agreed,
     pub phase: NetPhase,
@@ -605,6 +605,60 @@ pub struct NetDriver {
     last_rb: (i32, i32, i32),
     pub ticks: u64,
     pub held_ticks: u64,
+    /// `--np-css`: the menus' lockstep channel
+    pub ls: Option<crate::np_lockstep::Lockstep>,
+    params: RoomParams,
+    /// matches played on this connection before the current one
+    pub match_no: u32,
+    /// the final hashes of the earlier matches
+    pub all_finals: Vec<Vec<(i32, u32)>>,
+}
+
+/// What a room is opened with (kept for the rematches of `--np-css`).
+pub struct RoomParams {
+    host: bool,
+    rcfg: RbConfig,
+    lag: Duration,
+    loss: u32,
+    timeout: u64,
+    settings: RoomSettings,
+    /// the host's room port (the lockstep socket is + 1, the k-th rematch's room + 1 + k)
+    base_port: u16,
+}
+
+/// Open a direct room (HELLO / ACCEPT / the scene blob) and wait until it is connected.
+fn open_room(p: &RoomParams, bind_port: u16, peer: Option<melee_net::transport::Addr>) -> Result<(Room, Rc<RefCell<Sess>>, Rc<RefCell<NetLog>>, u16), String> {
+    let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(p.rcfg.clone())));
+    let nlog = Rc::new(RefCell::new(NetLog::default()));
+    let inner = Box::new(NetAdapter::new(sess.clone(), nlog.clone(), None));
+    let udp = UdpTransport::open(0x7F00_0001, bind_port).map_err(|e| format!("bind 127.0.0.1:{bind_port}: {e}"))?;
+    let host_port = udp.local_port();
+    let tp: Box<dyn Transport> = Box::new(Degraded { inner: Box::new(udp), lag: p.lag, loss_pct: p.loss, rng: 0x1234_5678 ^ p.rcfg.local_port as u32, q: Default::default() });
+    let mut settings = p.settings.clone();
+    settings.peer = peer;
+    let mut room = Room::begin(settings, Box::new(PlayEnv), inner, tp, None, None, false, host_port)?;
+    let tag = if p.host { "host" } else { "guest" };
+    if p.host {
+        log(&format!("netplay: hosting on 127.0.0.1:{host_port}, waiting for the guest"));
+    } else {
+        log(&format!("netplay: joining 127.0.0.1:{}", peer.map_or(0, |a| a.port)));
+    }
+    let t0 = Instant::now();
+    loop {
+        if t0.elapsed().as_secs() > p.timeout {
+            return Err(format!("netplay {tag}: no match agreed after {} s: {}", p.timeout, room.sh.borrow().status));
+        }
+        match room.phase() {
+            Phase::Working => {
+                room.poll();
+            }
+            Phase::Connected => break,
+            Phase::Lobby => return Err("netplay: the peer asked for a lobby (not offered by melee play)".into()),
+            _ => return Err(format!("netplay {tag}: {}", room.sh.borrow().status)),
+        }
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    Ok((room, sess, nlog, host_port))
 }
 
 fn arg(args: &[String], k: &str) -> Option<String> {
@@ -637,54 +691,37 @@ impl NetDriver {
         let stocks = num("--stocks", 4) as i32;
         let minutes = arg(args, "--time-secs").and_then(|s| s.parse::<i32>().ok()).map_or(8, |s| (s.max(1) + 59) / 60);
         let local_port = if host { 0 } else { 1 };
-        let rcfg = RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() };
-        let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(rcfg)));
-        let nlog = Rc::new(RefCell::new(NetLog::default()));
-        let inner = Box::new(NetAdapter::new(sess.clone(), nlog.clone(), None));
         // loopback only: the socket binds 127.0.0.1
-        let bind_port = if host { num("--np-port", 51500) as u16 } else { 0 };
-        let udp = UdpTransport::open(0x7F00_0001, bind_port).map_err(|e| format!("bind 127.0.0.1:{bind_port}: {e}"))?;
-        let host_port = udp.local_port();
-        let tp: Box<dyn Transport> = Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x1234_5678 ^ local_port as u32, q: Default::default() });
-        let settings = RoomSettings {
+        let base_port = if host { num("--np-port", 51500) as u16 } else { 0 };
+        let peer = join_addr.as_deref().and_then(|j| addr_parse(j, 51500));
+        if !host && peer.is_none() {
+            return Err(format!("--netplay join {}: not an IPv4 address", join_addr.clone().unwrap_or_default()));
+        }
+        let mut rp = RoomParams {
             host,
-            ck,
-            color: num("--np-color", 0) as i32,
-            stocks,
-            minutes,
-            delay,
-            stage_ext,
-            use_lobby: false,
-            peer: join_addr.as_deref().and_then(|j| addr_parse(j, 51500)),
-            name: arg(args, "--np-name").unwrap_or_default(),
-            seed: arg(args, "--np-seed").and_then(|s| s.parse().ok()),
-            ..RoomSettings::default()
+            rcfg: RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() },
+            lag,
+            loss,
+            timeout,
+            settings: RoomSettings {
+                host,
+                ck,
+                color: num("--np-color", 0) as i32,
+                stocks,
+                minutes,
+                delay,
+                stage_ext,
+                use_lobby: false,
+                peer,
+                name: arg(args, "--np-name").unwrap_or_default(),
+                seed: arg(args, "--np-seed").and_then(|s| s.parse().ok()),
+                ..RoomSettings::default()
+            },
+            base_port,
         };
-        if !host && settings.peer.is_none() {
-            return Err(format!("--netplay join {}: not an IPv4 address", join_addr.unwrap_or_default()));
-        }
-        let mut room = Room::begin(settings, Box::new(PlayEnv), inner, tp, None, None, false, host_port)?;
         let tag = if host { "host" } else { "guest" };
-        if host {
-            log(&format!("netplay: hosting on 127.0.0.1:{host_port}, waiting for the guest"));
-        } else {
-            log(&format!("netplay: joining {}", join_addr.as_deref().unwrap_or("")));
-        }
         let t0 = Instant::now();
-        loop {
-            if t0.elapsed().as_secs() > timeout {
-                return Err(format!("netplay {tag}: no match agreed after {timeout} s: {}", room.sh.borrow().status));
-            }
-            match room.phase() {
-                Phase::Working => {
-                    room.poll();
-                }
-                Phase::Connected => break,
-                Phase::Lobby => return Err("netplay: the peer asked for a lobby (not offered by melee play)".into()),
-                _ => return Err(format!("netplay {tag}: {}", room.sh.borrow().status)),
-            }
-            std::thread::sleep(Duration::from_millis(2));
-        }
+        let (room, sess, nlog, host_port) = open_room(&rp, base_port, peer)?;
         let (scene_str, seed, adelay) = {
             let b = room.sh.borrow();
             (b.scene.clone(), b.seed, b.s.delay)
@@ -692,6 +729,20 @@ impl NetDriver {
         let scene = parse_scene(&scene_str).ok_or_else(|| format!("netplay: the agreed scene does not parse: {scene_str}"))?;
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
         sess.borrow_mut().set_delay(adelay);
+        // --np-css: the character / stage select and the results run in lockstep on a second socket (room port + 1),
+        // and every match after the first is a new room on the next port (np_lockstep.rs)
+        let css = args.iter().any(|a| a == "--np-css");
+        let room_port = if host { host_port } else { peer.map_or(0, |a| a.port) };
+        let ls = if css {
+            let bind = if host { room_port.wrapping_add(1) } else { 0 };
+            let udp = UdpTransport::open(0x7F00_0001, bind).map_err(|e| format!("bind 127.0.0.1:{bind}: {e}"))?;
+            let tp: Box<dyn Transport> = Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x9E37_79B9 ^ local_port as u32, q: Default::default() });
+            let pa = peer.map(|a| melee_net::transport::Addr::new(a.ip, a.port.wrapping_add(1)));
+            Some(crate::np_lockstep::Lockstep::new(tp, pa, host, adelay.max(1) as u32))
+        } else {
+            None
+        };
+        rp.base_port = room_port;
         Ok(NetDriver {
             host,
             sess,
@@ -710,7 +761,40 @@ impl NetDriver {
             last_rb: (0, 0, 0),
             ticks: 0,
             held_ticks: 0,
+            ls,
+            params: rp,
+            match_no: 0,
+            all_finals: Vec::new(),
         })
+    }
+
+    /// `--np-css`: the menus run in lockstep (np_lockstep.rs).
+    pub fn css(&self) -> bool {
+        self.ls.is_some()
+    }
+
+    /// The match after the first (`--np-css`): a new room (and session) on the next port; both peers get here on the
+    /// same lockstep frame (the VS scene's first frame). Blocking, like the first connection.
+    pub fn next_room(&mut self) -> Result<(), String> {
+        self.match_no += 1;
+        let port = self.params.base_port.wrapping_add(1 + self.match_no as u16);
+        let peer = self.params.settings.peer.map(|a| melee_net::transport::Addr::new(a.ip, port));
+        let t0 = Instant::now();
+        let (room, sess, nlog, _) = open_room(&self.params, if self.host { port } else { 0 }, peer)?;
+        let adelay = room.sh.borrow().s.delay;
+        sess.borrow_mut().set_delay(adelay);
+        log(&format!("netplay {}: match {} connected after {:.2}s (port {port})", self.tag(), self.match_no + 1, t0.elapsed().as_secs_f32()));
+        self.all_finals.push(std::mem::take(&mut self.finals));
+        self.sess = sess;
+        self.log = nlog;
+        self.room = Some(room);
+        self.net = None;
+        self.started_at = None;
+        self.rec_next = FIRST;
+        self.end_frame = None;
+        self.linger = 0;
+        self.last_rb = (0, 0, 0);
+        Ok(())
     }
 
     pub fn scene_string(&self) -> String {
@@ -823,6 +907,24 @@ impl NetDriver {
         true
     }
 
+    /// The match is over: the frames the replay has not taken yet, through the one the scene ended on (it has no
+    /// start-of-next-frame checksum, so `tick_match` never records it), each with the hash after it; `last` is the
+    /// engine's hash after the end frame.
+    pub fn flush_rec(&mut self, rec: &mut Replay, last: u32) {
+        let Some(endf) = self.end_frame else { return };
+        let s = self.sess.borrow();
+        while self.rec_next <= endf {
+            let fr = self.rec_next;
+            let h = if fr == endf { last } else { s.checksum(fr + 1) };
+            let mut pads = [PADStatus::zeroed(); 4];
+            for (port, pd) in pads.iter_mut().enumerate() {
+                *pd = pad_of(&if port < 2 { s.input_any(port, fr).copied() } else { None }, port);
+            }
+            rec.ticks.push((pads, h));
+            self.rec_next += 1;
+        }
+    }
+
     /// Ticks to keep polling after the end (the peer still needs our last inputs and checksums).
     pub fn lingering(&mut self) -> bool {
         if self.end_frame.is_some() {
@@ -875,8 +977,11 @@ impl NetDriver {
     pub fn write_hashes(&self) {
         if let Some(p) = &self.hash_out {
             let mut t = String::from("frame,hash\n");
-            for &(f, h) in &self.finals {
-                t += &format!("{},{:08X}\n", f - 1 - FIRST, h);
+            // match k > 0 of an --np-css connection: its frames are keyed k * 1000000 + frame
+            for (k, fin) in self.all_finals.iter().chain(std::iter::once(&self.finals)).enumerate() {
+                for &(f, h) in fin {
+                    t += &format!("{},{:08X}\n", k as i64 * 1_000_000 + (f - 1 - FIRST) as i64, h);
+                }
             }
             if let Err(e) = std::fs::write(p, t) {
                 log(&format!("{p}: {e}"));

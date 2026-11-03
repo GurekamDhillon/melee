@@ -1608,6 +1608,14 @@ pub fn play(args: &[String]) -> ExitCode {
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         let mut presets = presets;
+        // --np-css (or a replay of such a run): no agreed scene, the players pick on the retail character select. Both
+        // peers boot straight into VS mode with no memory card (a card's unlocks and settings would differ per machine).
+        let np_css = net.as_ref().map_or(false, |n| n.css()) || rp_feed_css(&feed);
+        if np_css {
+            std::env::set_var("MELEE_RETAIL_FIRST", (melee_types::GM_VS as u8).to_string());
+            std::env::set_var("MELEE_CARD", "0");
+            np_scene = None;
+        }
         if let Some(sc) = &np_scene {
             match crate::play_net::scenario_of_scene(sc) {
                 Ok(s) => presets.scenario = Some(s),
@@ -1632,6 +1640,9 @@ pub fn play(args: &[String]) -> ExitCode {
                 path
             };
             let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+            if np_css {
+                meta.push(("np_css".into(), "1".into()));
+            }
             if let Some(sc) = &np_scene {
                 meta.push(("np_scene".into(), sc.clone()));
             }
@@ -1726,6 +1737,10 @@ pub fn play(args: &[String]) -> ExitCode {
             ExitCode::FAILURE
         }
     }
+}
+
+fn rp_feed_css(feed: &Option<crate::play_net::ReplayFeed>) -> bool {
+    feed.as_ref().map_or(false, |f| f.r.meta("np_css").is_some())
 }
 
 /// (working set, private bytes) of this process (`K32GetProcessMemoryInfo`); zeros elsewhere.

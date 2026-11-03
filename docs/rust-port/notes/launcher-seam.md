@@ -70,7 +70,7 @@ Detection: argv starts with a flag only the launcher sends (`--iso`, `--settings
 | `--settings-path` | reads `port-settings.ini`; `fullscreen`/`exclusivefullscreen` -> `MELEE_FULLSCREEN` off/borderless/exclusive, `widescreen`/`truewidescreen` -> `MELEE_WIDESCREEN`, `window WxH` -> `MELEE_WINDOW` (`follow` = ours), `scale` -> `MELEE_RENDER_SCALE` (<=0 auto), `msaa`, `vsync`, `volume` -> `MELEE_VOLUME` |
 | `--volume`, `--fullscreen`, `--widescreen`, `--vsync`, `--window`, `--scale`, `--log-file` | override the file |
 | `--card-dir <..>\User\GC\CardA` | `MELEE_CARD_PATH=<..>\User\GC\RustPort` (our `USA\Card A` .gci tree, kept apart from his folder) |
-| `--threaded-renderer`, `--sys-dir`, `--user-dir`, `--replay-dir`, `--lobby-status-file`, vanilla flags, `--fps`, `--backend`, `--dlss*`... | accepted, logged, no effect |
+| `--threaded-renderer`, `--sys-dir`, `--user-dir`, `--lobby-status-file`, vanilla flags, `--fps`, `--backend`, `--dlss*`... | accepted, logged, no effect |
 | `--mod-*`, `--replay`, `--lobby-*`, `--local-peer`, `--p2p-*` | refused: log line, exit code 3 |
 | `MELEE_NO_GC_ADAPTER` | `MELEE_PAD_IGNORE_ADAPTER=1` |
 | anything else | passed to `melee play` unchanged (so test args like `--skip-intro --quit-after-matches 1` work) |
@@ -97,11 +97,11 @@ mapped (window 640x480, scale 2, vsync, volume 3), title -> VS -> match -> resul
 
 ## 4. Gaps for parity with what his launcher offers
 
-- **Online:** no Slippi lobby (`--lobby-direct`), no P2P Direct (`--p2p-*`, his mu_net protocol), no lobby status
+- **Online:** no Slippi lobby (`--lobby-direct`), no P2P Direct (`--p2p-*`, his mu_net protocol: mu-net-feasibility.md), no lobby status
   JSON. Our netplay (`melee netplay`) is a different protocol.
 - **Mods:** `--mod-iso`/`--mod-gci`/`--mod-base-iso` (20XX TE, m-ex discs like Akaneia/ACE), mod profiles,
   cosmetic imports, music packs, Gecko codes, the built-in UCF/unlock codes, training packs. Refused today.
-- **Replays:** no `.slp` recording into `--replay-dir`, no `--replay` playback / as-experienced traces.
+- **Replays:** every match is exported as a Slippi `.slp` into `--replay-dir` (`Game_<UTC time>.slp`, net.md "Slippi export"); no `--replay` playback / as-experienced traces.
 - **1P modes** through the retail menus as far as melee_modes has them (onep's work); his launcher assumes all.
 - **Controller mapping:** his per-device binding tables (`pad/gc/ds4/swpro<n>_*` masks), rumble,
   background input, PhobGCC tools are not read; we use our own pad defaults.

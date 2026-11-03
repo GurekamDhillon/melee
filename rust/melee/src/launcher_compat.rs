@@ -18,16 +18,17 @@
 //!   never write each other's saves;
 //! * the log is `melee_port.log` in the working directory (`MELEE_LOG_FILE`), and a crash also writes
 //!   `melee_port_crash.txt` there (`MELEE_CRASH_COPY`, crash.rs): the two files the launcher's crash flow reads;
+//! * `--replay-dir D`: every match is exported there as a Slippi `.slp` (`--slp auto`, `MELEE_SLP_DIR`);
 //! * `MELEE_NO_GC_ADAPTER` (the launcher's test runs) means `MELEE_PAD_IGNORE_ADAPTER=1`.
 //!
 //! Options with no Rust counterpart that change nothing for an offline game (`--threaded-renderer`, `--sys-dir`,
-//! `--user-dir`, `--replay-dir`, `--lobby-status-file`, the vanilla flags) are accepted and logged. Ones that would
+//! `--user-dir`, `--lobby-status-file`, the vanilla flags) are accepted and logged. Ones that would
 //! change the game (mods, peer-to-peer and Slippi lobby matches, replays) are refused with exit code 3 and a line in the
 //! log, rather than starting a game other than the one asked for. Anything else is passed to `melee play` as given.
 use std::path::{Path, PathBuf};
 
 /// Launcher options that take a value and are accepted without effect.
-const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--replay-dir", "--lobby-status-file", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
+const IGNORED_VALUE: &[&str] = &["--sys-dir", "--user-dir", "--lobby-status-file", "--slippi-menus", "--online-delay", "--language", "--backend", "--fps", "--aspect", "--dlss", "--dlss-mode", "--ssao", "--frame-mode"];
 /// Launcher switches accepted without effect.
 const IGNORED_SWITCH: &[&str] = &["--threaded-renderer", "--vanilla-only", "--vanilla-game", "--no-mod-autodetect", "--quiet"];
 /// Options that would start a different game than an offline vanilla one; refused.
@@ -157,6 +158,15 @@ pub fn plan(args: &[String], cwd: &Path, read: &dyn Fn(&Path) -> Option<String>)
                     push_env(&mut p.env, "MELEE_CARD_PATH", base.display().to_string());
                 }
             }
+            "--replay-dir" => {
+                // the Source Port's Slippi replays folder: our matches are exported there as .slp (slp_export.rs)
+                if let Some(d) = take(&mut i) {
+                    p.notes.push(format!("replays -> {d} (.slp)"));
+                    push_env(&mut p.env, "MELEE_SLP_DIR", d);
+                    p.play_args.push("--slp".into());
+                    p.play_args.push("auto".into());
+                }
+            }
             "--volume" => {
                 if let Some(v) = take(&mut i).and_then(|v| v.parse::<i32>().ok()) {
                     push_env(&mut cli_env, "MELEE_VOLUME", v.clamp(0, 100).to_string());
@@ -249,7 +259,7 @@ mod tests {
         ]);
         let p = plan(&args, Path::new("C:\\g"), &|_| Some(ini.to_string()));
         assert!(p.refused.is_empty());
-        assert_eq!(p.play_args, s(&["play", "--iso", "C:\\d\\melee.iso", "--quit-after-matches", "1"]));
+        assert_eq!(p.play_args, s(&["play", "--iso", "C:\\d\\melee.iso", "--slp", "auto", "--quit-after-matches", "1"]));
         let env = |k: &str| p.env.iter().find(|(a, _)| a == k).map(|(_, v)| v.as_str());
         assert_eq!(env("MELEE_FULLSCREEN"), Some("borderless"));
         assert_eq!(env("MELEE_WIDESCREEN"), Some("1"));
@@ -258,6 +268,7 @@ mod tests {
         assert_eq!(env("MELEE_MSAA"), Some("4"));
         assert_eq!(env("MELEE_VSYNC"), Some("off"));
         assert_eq!(env("MELEE_VOLUME"), Some("40"));
+        assert_eq!(env("MELEE_SLP_DIR"), Some(r"C:\g\Replays"));
         assert_eq!(env("MELEE_CARD_PATH"), Some(Path::new("C:\\g\\User\\GC").join("RustPort").display().to_string().as_str()));
         assert!(env("MELEE_LOG_FILE").unwrap().ends_with("melee_port.log"));
         assert!(env("MELEE_CRASH_COPY").unwrap().ends_with("melee_port_crash.txt"));

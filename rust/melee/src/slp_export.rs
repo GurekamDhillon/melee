@@ -46,7 +46,7 @@ struct Match {
 }
 
 pub struct Exporter {
-    /// `auto` (Replays/Game_<time>.slp) or a path (a second match gets `-2` before the extension, and so on)
+    /// `auto` (`MELEE_SLP_DIR`, default Replays, /Game_<time>.slp) or a path (a second match gets `-2` before the extension, and so on)
     spec: String,
     played_on: String,
     names: [String; 4],
@@ -151,7 +151,8 @@ impl Exporter {
         if self.spec == "auto" {
             let t = iso_now().replace([':', '-'], "");
             let t = t.trim_end_matches('Z');
-            let base = format!("Replays/Game_{t}");
+            let dir = std::env::var("MELEE_SLP_DIR").ok().filter(|d| !d.is_empty()).unwrap_or_else(|| "Replays".into());
+            let base = format!("{dir}/Game_{t}");
             let mut p = format!("{base}.slp");
             let mut k = 2;
             while std::path::Path::new(&p).exists() {
@@ -299,6 +300,11 @@ fn record_input(port: i32, fol: i32, lx: f32, ly: f32, cx: f32, cy: f32, t: f32,
     if !(0..4).contains(&port) {
         return;
     }
+    if m.pre.iter().any(|p| p.port == port as u8 && p.fol == (fol != 0)) {
+        // this fighter's second pre-frame in one engine tick (the scene loop ran two logic frames): close the first
+        flush_frame(m);
+        m.seed_at_tick = seed_now();
+    }
     let pad = m.pads[port as usize];
     let mut ev = vec![0u8; 1 + SZ_PRE];
     ev[0] = 0x37;
@@ -398,6 +404,14 @@ pub fn end_tick(in_match: bool) {
         if m.started && !in_match {
             x.end_match(false);
         }
+        return;
+    }
+    flush_frame(m);
+}
+
+/// The buffered events as one Slippi frame (Frame Start, pre-frames, post-frames, Bookend).
+fn flush_frame(m: &mut Match) {
+    if m.pre.is_empty() {
         return;
     }
     m.started = true;

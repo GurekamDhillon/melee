@@ -196,6 +196,11 @@ impl RetailPlay {
         if let Some(nd) = self.net.as_mut() {
             match nd.phase {
                 NetPhase::InMatch(_) => {
+                    // test pad scripts (css_pair.sh) are timed in render ticks; a START meant for the results that lands in
+                    // the next match would pause it, so MELEE_NP_SCRIPT_NO_START=1 drops START in a match
+                    if std::env::var("MELEE_NP_SCRIPT_NO_START").map_or(false, |v| v == "1") {
+                        four[0].button &= !0x1000;
+                    }
                     nd.tick_match(&four[0], self.rec.as_mut().map(|r| &mut r.1));
                     if let NetPhase::InMatch(g) = &mut nd.phase {
                         if let Some(f) = g.take_frame() {
@@ -214,6 +219,9 @@ impl RetailPlay {
                         nd.write_hashes();
                         // --np-css: back to the menus in lockstep (results -> CSS -> the next match); else one match
                         let next = if nd.css() { NetPhase::PreMatch } else { NetPhase::Done };
+                        if let Some(ls) = nd.ls.as_mut() {
+                            ls.resume();
+                        }
                         if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, next) {
                             let (e, _) = g.into_engine();
                             log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
@@ -244,7 +252,7 @@ impl RetailPlay {
                         }
                         None => {
                             if ls.silent_secs() > 20 {
-                                self.failed = Some("netplay: the peer went silent in the menus".into());
+                                self.failed = Some("netplay: connection lost: no packets from the other player for 20 s in the menus (they quit, or the network dropped)".into());
                                 self.quit = true;
                             }
                             return false;

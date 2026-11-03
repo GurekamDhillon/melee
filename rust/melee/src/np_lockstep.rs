@@ -3,7 +3,7 @@
 //! for it are known (no prediction, no snapshots: the menus are not under the rollback session, whose snapshot base must
 //! not straddle a scene's heap setup). The match itself stays under `RbSession` (play_net.rs).
 //!
-//! Wire (its own UDP socket, host port = `--np-port` + 1): `MLS1`, u32 ack (the next peer frame this side needs), u32
+//! Wire (channel 1 of the run's one socket, np_mux.rs): `MLS1`, u32 ack (the next peer frame this side needs), u32
 //! first frame, u8 count, then `count` pads of 12 bytes (button u16 LE, stick x/y, c-stick x/y, L, R, analog A, analog
 //! B, err, 0) for frames first.. . Every packet repeats all pads the peer has not acknowledged, so a lost datagram costs
 //! nothing but its successor's arrival.
@@ -17,7 +17,8 @@ use std::time::Instant;
 
 const MAGIC: &[u8; 4] = b"MLS1";
 const PAD: usize = 12;
-const MAX_PER_PACKET: usize = 100;
+// 13 + 90 * 12 = 1093 bytes: under the 1280-byte IPv6 minimum MTU with the relay and IP/UDP headers
+const MAX_PER_PACKET: usize = 90;
 
 pub struct Lockstep {
     tp: Box<dyn Transport>,
@@ -141,6 +142,11 @@ impl Lockstep {
                 None
             }
         }
+    }
+
+    /// Back from a match (the lockstep was idle while the session ran): the silence count starts now.
+    pub fn resume(&mut self) {
+        self.last_heard = Instant::now();
     }
 
     /// Seconds since the peer was last heard from.

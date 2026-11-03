@@ -1311,6 +1311,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "melee_relay"
+version = "0.1.0"
+
+[[package]]
 name = "melee_runtime"
 version = "0.1.0"
 dependencies = [

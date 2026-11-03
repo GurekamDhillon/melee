@@ -30,7 +30,7 @@ pub use hash::{hash64, hash_file};
 pub use net::{Callbacks, Config, Event, Net, RemoteConfig, State, Stats};
 pub use pad::{np_decode, np_encode, RbInput, NP_PAYLOAD};
 pub use rollback::{NetAdapter, RollbackDriver, RollbackSession, Simulation};
-pub use transport::{addr_parse, Addr, Transport, UdpTransport};
+pub use transport::{addr_parse, addr_resolve, Addr, Transport, UdpTransport};
 
 /// `GW_NET_PROTOCOL_VERSION` (gw_net.h; see its history comment for what each bump means).
 pub const PROTOCOL_VERSION: u32 = 9;

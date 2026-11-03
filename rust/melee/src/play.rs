@@ -1583,6 +1583,10 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut net = None;
         let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
         let mut seed = feed.as_ref().and_then(|f| f.r.meta("seed").and_then(|s| s.parse::<u32>().ok()));
+        // the guest plays by the host's rules (sent in the agreed scene): its own --stocks / --time-secs / --items are
+        // replaced, for the presets and for the replay's boot options
+        let mut eff_args: Vec<String> = args.to_vec();
+        let mut np_rules: Option<crate::play_net::HostRules> = None;
         if netplay {
             let ck_of = |n: &str| melee_engine::scenario::ckind_by_name(n);
             let stage_of = |p: &str| STAGES.iter().find(|s| s.0.to_string() == p || s.1.eq_ignore_ascii_case(p) || (p.eq_ignore_ascii_case("fd") && s.0 == 32) || (p.eq_ignore_ascii_case("bf") && s.0 == 31)).map(|s| s.0);
@@ -1590,6 +1594,30 @@ pub fn play(args: &[String]) -> ExitCode {
                 Ok(n) => {
                     np_scene = Some(n.scene_string());
                     seed = Some(n.agreed.seed);
+                    if !n.host {
+                        let r = n.host_rules.clone();
+                        let mut a = Vec::new();
+                        let mut i = 0;
+                        while i < eff_args.len() {
+                            if matches!(eff_args[i].as_str(), "--stocks" | "--time-secs" | "--items") {
+                                i += 2;
+                                continue;
+                            }
+                            a.push(eff_args[i].clone());
+                            i += 1;
+                        }
+                        if let Some(v) = r.stocks {
+                            a.extend(["--stocks".to_string(), v.to_string()]);
+                        }
+                        if let Some(v) = r.time_secs {
+                            a.extend(["--time-secs".to_string(), v.to_string()]);
+                        }
+                        if let Some(v) = &r.items {
+                            a.extend(["--items".to_string(), v.clone()]);
+                        }
+                        eff_args = a;
+                        np_rules = Some(r);
+                    }
                     net = Some(n);
                 }
                 Err(e) => {
@@ -1609,6 +1637,11 @@ pub fn play(args: &[String]) -> ExitCode {
         let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
         std::env::set_var("MELEE_TEST_SEED", seed.to_string());
         let mut presets = presets;
+        if let Some(r) = &np_rules {
+            presets.stocks = r.stocks;
+            presets.time_secs = r.time_secs;
+            presets.items = r.items.as_ref().map(|v| ITEM_NAMES.iter().position(|n| n.eq_ignore_ascii_case(&v.replace('_', " "))).unwrap_or(3) as i32);
+        }
         // --np-css (or a replay of such a run): no agreed scene, the players pick on the retail character select. Both
         // peers boot straight into VS mode with no memory card (a card's unlocks and settings would differ per machine).
         let np_css = net.as_ref().map_or(false, |n| n.css()) || rp_feed_css(&feed);
@@ -1650,7 +1683,7 @@ pub fn play(args: &[String]) -> ExitCode {
             if let Some(n) = &net {
                 meta.push(("np_role".into(), n.tag().into()));
             }
-            let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(args), meta, ticks: Vec::new() };
+            let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() };
             rp.rec = Some((path, r));
         }
         // `--slp FILE|auto`: Slippi export. Live only when nothing rolls back; otherwise from the .mrpl playback (play_net).

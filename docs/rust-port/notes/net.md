@@ -193,3 +193,77 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
 - Slippi playback caveat: Slippi players apply Neutral Spawn (and UCF) to every replay; these exports were played
   without either, so a Slippi Dolphin viewer can drift from frame -123 on stages whose vanilla spawns differ (FD
   matched in slpcheck with Neutral Spawn on, Battlefield did not).
+
+## Internet play (port/net3, 2026-11-03)
+### How two people play
+Both players need the same `melee.exe` build (the same git commit; the handshake refuses another build with
+`different game build (host X, you Y)`), the same disc and the same mods (`different global game data; host has: mods
+...`). The host's rules are sent to the guest: the guest's own `--stocks` / `--time-secs` / `--items` are replaced (the
+log says `the host's rules win: ...`), so only the host sets them.
+
+**Direct IP** (one player can receive UDP: a port forward, the same LAN, or IPv6 without a blocking firewall):
+- host: `melee play --iso DISC --netplay host [--np-port 51500] [--np-css] [--stocks 4 --time-secs 480]`
+- guest: `melee play --iso DISC --netplay join HOST[:PORT] [--np-css]`, where HOST is an IPv4 address (`203.0.113.7`),
+  an IPv6 address (`[2001:db8::7]:51500`, or bare without a port) or a host name. Port default 51500.
+- The host binds UDP `--np-port` on all interfaces, IPv4 and IPv6 (`--np-bind IP` binds one address). Across the
+  internet over IPv4 the host's router must forward UDP 51500 to the host PC; on a LAN use the host's LAN address.
+
+**Match code** (neither can receive: hole punching through a rendezvous server, relay as the fallback):
+- someone runs the server, `melee_relay [--port 51600] [--bind 0.0.0.0] [--bind6 ::|off]` (rust/melee_relay, std only,
+  no state on disk) on a machine both can reach (a VPS, or a PC with UDP 51600 forwarded). Nothing is baked in: the
+  address is `--np-server HOST[:PORT]` or `MELEE_NP_SERVER`.
+- host: `melee play ... --netplay host --np-server SERVER` prints `netplay host: MATCH CODE K7QX`;
+- guest: `melee play ... --netplay join K7QX --np-server SERVER`.
+- The server tells each side the other's public and LAN address (`PEER`); both send punch packets and the room's
+  HELLO to it (same public IP = dial the LAN address). With no direct packet after 3 s both switch to the server's relay
+  (`no direct path after 3000 ms - relaying through the server`); `--np-relay` forces it. The log says which:
+  `path direct (hole punched)` / `path RELAYED through the server`. The relay costs the server about 60 small packets
+  a second each way.
+
+**Windows firewall**: the first time `melee.exe` listens on a non-loopback address Windows asks whether to allow it;
+allow it on Private networks (Public if the internet link is classed public). Without that, inbound UDP is blocked and
+only the outbound half of hole punching works (direct IP as the host fails; match codes usually still work, or fall
+back to the relay). An explicit rule, for whoever runs it (not done by any agent): `netsh advfirewall firewall add rule
+name="melee netplay" dir=in action=allow protocol=UDP localport=51500` (51600 for `melee_relay`). The guest needs no
+rule. Routers: forward UDP 51500 for direct IPv4 hosting; nothing for match codes.
+
+**Errors** end the run with a reason: no answer in `--np-timeout` s (default 60, with what to check); refused for
+build / mods / protocol; `connection lost: peer timed out (the other player quit, or the network dropped)` after 5 s
+of silence in a match; `no packets from the other player for 20 s in the menus` in the lockstep menus; DESYNC as
+before. No reconnect.
+
+### What changed
+- `melee_net::transport`: `Addr` gains `ip6` (IPv6; `ip` is then a fold used only as a hash input), `Display`
+  (`1.2.3.4:5` / `[v6]:5`), `addr_resolve` (literals of both families and host names). `UdpTransport::open(0, port)`
+  binds IPv4 and IPv6 on the same port (two sockets: Windows' IPv6 sockets are V6ONLY); `open_at(ip)` one address.
+  The netcode compares whole addresses. `rdv` (the server client) reads `[v6]:port` addresses and resolves the server
+  by name; `stun` is not used by `melee play` (it would contact public STUN servers).
+- `rust/melee/src/np_mux.rs`: one socket per run. The first room is unprefixed (gw_net `GN` packets, C-compatible), the
+  lockstep menus `MLS1`, rematch room k `MRM`+k. So a punched NAT mapping / relay serves every match of `--np-css`
+  (before, the lockstep was room port + 1 and rematch k room port + 1 + k: three ports through a NAT).
+- Handshake words: exe = `build_hash()` (git commit of the build; `MELEE_NP_BUILD_HASH=hex` fakes another for the
+  test), global data = `mods_identity()` (FNV of the mounted mod ids + the mod set fingerprint, 0 = vanilla, described
+  as `mods a, b (fingerprint)`). Before, both words were the git hash and the mods were not compared. A dirty tree on
+  the same commit has the same hash.
+- Host rules: the agreed scene carries `;np_rules=s<stocks>,t<secs>,i<items>` (`-` = default). The guest adopts it
+  for the presets (CSS) and for its replay's boot options; the `--match` path takes `t` as the time limit.
+- Network simulation (`Degraded`, inbound): `--np-lag-ms`, `--np-jitter-ms` (uniform extra 0..J), `--np-loss-pct`,
+  `--np-dup-pct`, `--np-reorder-pct` (held lag/2 + 10 ms behind its successors).
+- MTU: the largest datagram is a lockstep packet, now at most 90 pads (1093 bytes; + 4 relay + 48 IPv6/UDP < 1280).
+- Fixed: the menus' 20 s silence check counted the match's duration (the lockstep is idle during a match), so a
+  peer that reached the results a moment later ended the run; `Lockstep::resume` at the hand-back.
+- Test pads: `MELEE_NP_SCRIPT_NO_START=1` (set by css_pair.sh) drops START inside a match: the scripts are timed in
+  render ticks, and with the match-code flow (both peers start together) a results START landed in match 2 and paused it.
+
+### Verified (one machine; non-loopback = the Hyper-V adapter 172.21.48.1, IPv6 = ::1; local melee_relay)
+- `play_pair.sh` (scripted pads, per-frame hashes of both peers + the host's replay): loopback 0 ms 2011 frames equal;
+  `NP_BIND=172.21.48.1` 50 ms + 5 % loss + 30 ms jitter + 5 % dup + 10 % reorder 2230 equal (281 rollbacks, max 7);
+  `NP_BIND=::1` 150 ms + 5 % loss + 20 ms jitter + 3 % dup + 5 % reorder, `--np-delay 4 --np-rollback 12`: 2687
+  equal (max depth 12); match code over IPv6 (`NP_SERVER=[::1]:51990`): 2893 equal, punched; match code with the LAN
+  address made unreachable (`--np-lan 127.0.0.2`): relay fallback after 3 s, 50 ms + 5 %, 2152 equal. Replays equal.
+- `css_pair.sh` (CSS, two matches, rematch on the same socket): loopback 0 ms 7911 frames equal; match code on
+  172.21.48.1 0 ms 7674 equal (punched); forced relay 50 ms + 5 % loss + jitter / dup / reorder 7674 equal.
+- Refusals: guest with another build hash, host with a mod the guest lacks; timeouts on both sides; guest killed
+  mid-match -> host `connection lost: peer timed out ...` 5 s later.
+- Not verified: two real machines, a real NAT (hole punching was only exercised between two local sockets), the
+  firewall prompt path, IPv6 over a real network, host names.

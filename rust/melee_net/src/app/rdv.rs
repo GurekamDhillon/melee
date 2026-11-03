@@ -76,23 +76,31 @@ pub struct Rdv {
 pub type RdvRef = Rc<RefCell<Rdv>>;
 
 pub fn fmt_addr(a: &Addr) -> String {
-    format!("{}.{}.{}.{}:{}", a.ip >> 24, (a.ip >> 16) & 255, (a.ip >> 8) & 255, a.ip & 255, a.port)
+    a.to_string()
+}
+
+/// An address literal of the server's messages: `1.2.3.4:5` or `[v6]:5` (no name lookups).
+pub fn addr_lit(s: &str) -> Option<Addr> {
+    if let Ok(sa) = s.parse::<std::net::SocketAddr>() {
+        return Some(Addr::from_socket(sa));
+    }
+    crate::addr_parse(s, 1)
 }
 
 /// A CODE is "public:port/lan:port"; a plain "ip[:port]" works too (`np_parse_code`).
 pub fn parse_code(s: &str) -> Option<(Addr, Option<Addr>)> {
     let (a, lan) = match s.split_once('/') {
-        Some((a, l)) => (a, crate::addr_parse(l, 51500).filter(|x| x.ip != 0)),
+        Some((a, l)) => (a, crate::addr_resolve(l, 51500, false).ok().filter(|x| x.ip != 0)),
         None => (s, None),
     };
-    let p = crate::addr_parse(a, 51500).filter(|x| x.ip != 0)?;
+    let p = crate::addr_resolve(a, 51500, false).ok().filter(|x| x.ip != 0)?;
     Some((p, lan))
 }
 
 /// Which of a peer's addresses to dial (`np_pick`).
 pub fn pick(mypub: Option<Addr>, pubaddr: Addr, lan: Option<Addr>) -> Addr {
     match lan {
-        Some(l) if mypub.map_or(true, |m| m.ip == pubaddr.ip) => l,
+        Some(l) if mypub.map_or(true, |m| m.ip == pubaddr.ip && m.ip6 == pubaddr.ip6) => l,
         _ => pubaddr,
     }
 }
@@ -167,14 +175,9 @@ pub fn stun(t: &mut dyn Transport) -> Option<Addr> {
 impl Rdv {
     /// `server` is "host[:port]". `inner` is the real socket.
     pub fn new(server: &str, inner: Box<dyn Transport>) -> Result<RdvRef, String> {
-        let (host, port) = match server.rsplit_once(':') {
-            Some((h, p)) => (h.to_string(), p.parse::<u16>().map_err(|_| "bad server port".to_string())?),
-            None => (server.to_string(), NP_SERVER_DEFAULT_PORT),
-        };
-        let sa = (host.as_str(), port).to_socket_addrs().map_err(|e| format!("cannot resolve the server \"{server}\": {e}"))?.find(|a| a.is_ipv4()).ok_or("no IPv4 address for the server")?;
-        let std::net::SocketAddr::V4(sa) = sa else { return Err("no IPv4".into()) };
+        let srv = crate::addr_resolve(server, NP_SERVER_DEFAULT_PORT, false).map_err(|e| format!("matchmaking server \"{server}\": {e}"))?;
         Ok(Rc::new(RefCell::new(Rdv {
-            srv: Addr::new(u32::from(*sa.ip()), sa.port()),
+            srv,
             inner,
             host: false,
             peer_code: String::new(),
@@ -254,15 +257,15 @@ impl Rdv {
         if w0 == "CODE" && !self.have_code {
             self.code = w1.chars().take(4).collect();
             self.have_code = true;
-            if let Some(me) = crate::addr_parse(w2, 1) {
+            if let Some(me) = addr_lit(w2) {
                 if self.mypub.is_none() {
                     self.mypub = Some(me);
                 }
             }
             self.status = "Waiting for an opponent to join...".into();
         } else if w0 == "PEER" && !self.have_peer {
-            let lan = if w2 != "-" { crate::addr_parse(w2, 1).filter(|a| a.ip != 0) } else { None };
-            let Some(p) = crate::addr_parse(w1, 1) else { return };
+            let lan = if w2 != "-" { addr_lit(w2).filter(|a| a.ip != 0) } else { None };
+            let Some(p) = addr_lit(w1) else { return };
             self.peer = pick(self.mypub, p, lan);
             self.have_peer = true;
             self.peer_at = self.now();

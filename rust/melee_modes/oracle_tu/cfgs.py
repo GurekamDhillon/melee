@@ -365,6 +365,8 @@ SCRIPT_GAME_T_FUNCS = "ScriptGame_StageSlotProcEnd ScriptParts_Draw ScriptParts_
 CFGS["script_game"] = dict(src="pc/gameworld/script_game.c", module="script_game", cases=40, all=False,
                           funcs={n: {} for n in SCRIPT_GAME_FUNCS if n not in SCRIPT_GAME_T_FUNCS},
                           # (functions whose C side faults on the synthetic state are dropped by tuoracle.py --build and reported)
+                          # particle.c's `u32 hsd_804D78F4` is a native `*mut HSD_SList` in melee_runtime (shared static)
+                          rust_ptr_globals=["hsd_804D78F4"],
                           noext=["memcpy", "memset", "memmove", "strcpy", "strlen", "strcmp", "strncpy", "strncmp", "strcat"],
                           # the owned-object lists hold object pointers a seeded fill leaves NULL; a random count walks past the 512 entries
                           fixups=[("script_slot_owned.count = 0; script_retail_owned.count = 0;",

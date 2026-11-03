@@ -265,7 +265,7 @@ fn mk_rd(c: &mut Case, me: *mut MatchEnd) {
             }
             (*pd).stats_position = Vec3 { x: c.rng.f32(), y: c.rng.f32(), z: c.rng.f32() };
         }
-        let pads = &mut *addr_of_mut!(tu::HSD_PadCopyStatus);
+        let pads = &mut *addr_of_mut!(melee_runtime::tu::controller::HSD_PadCopyStatus);
         let master = &mut *addr_of_mut!(melee_modes::tu::gmregclear::HSD_PadMasterStatus);
         for i in 0..4usize {
             pads[i].err = pick(c, &[0i8, 0, 0, -1, 5]);
@@ -691,6 +691,13 @@ fn gmresultplayer_vs_c() {
     ];
     let mut globals = tu::oracle_globals();
     globals.extend(tu::oracle_globals_ext());
+    // HSD_PadCopyStatus sat after gmRst_GenoChrTried in this TU's table when the C data was
+    // generated (now melee_runtime's single global, listed in the ext table): keep that layout.
+    if let Some(i) = globals.iter().position(|g| g.name == "HSD_PadCopyStatus") {
+        let g = globals.remove(i);
+        let at = globals.iter().position(|g| g.name == "gmRst_GenoChrTried").unwrap() + 1;
+        globals.insert(at, g);
+    }
     let mut fn_table: std::vec::Vec<(&str, usize)> = std::vec![];
     macro_rules! reg {
         ($($n:ident),*) => { $( fn_table.push((stringify!($n), ext::$n as usize)); )* };

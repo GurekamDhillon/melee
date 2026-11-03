@@ -60,6 +60,11 @@ def rs_elem(ty):
     return ty.strip()
 
 
+
+# (record, anonymous union field) pairs the Rust port keeps in GameCube byte order: `StageCallbacks.flags`
+# (src/melee/gr/types.h:135) is read through its bitfield view, whose GC bit order needs the big-endian word
+BE32_UNIONS = {("StageCallbacks", "anon_10")}
+
 class Spec:
     def __init__(self, path):
         sp = importlib.util.spec_from_file_location("spec", path)
@@ -371,7 +376,10 @@ class Walker:
                     p_c = f'tuo_cat(_pb, {path_c}, ".{an}")'
                     p_r = f'&format!("{{}}.{an}", {self.strip_amp(path_r)})'
                     e.c.append(f"tuo_bytes({p_c}, &{cx_}.{first.spelling}, {f.type.get_size()});")
-                    e.r.append(f"v.bytes({p_r}, &mut {rx_}.{an} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}.{an}));")
+                    # unions the port stores in GameCube byte order (a `u32 flags` word over a bitfield
+                    # struct, initialised with `u32::to_be`): the Rust bytes are the C's, word-swapped
+                    fn_ = "bytes_be32" if (decl.spelling, an) in BE32_UNIONS else "bytes"
+                    e.r.append(f"v.{fn_}({p_r}, &mut {rx_}.{an} as *mut _ as *mut u8, core::mem::size_of_val(&{rx_}.{an}));")
                 else:
                     # anonymous struct: its members are members of the parent in C
                     sub_r = rs_elem(rtys[an]) if an else None

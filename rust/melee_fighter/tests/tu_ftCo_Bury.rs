@@ -109,7 +109,8 @@ fn ftCo_Bury_matches_c() {
             unsafe { (*go2()).hsd_obj = jo(4) as *mut HSD_JObj as _; }
             let fr = f();
             fr.parts = unsafe { PARTS as *mut FighterBone };
-            unsafe { (*DD).count = rnd() % 100; SI = KINDS[(rnd() % 8) as usize]; }
+            // the C reads `count` as GC word 1; natively the stage record is a lbColl_80008D30_arg1 whose word 1 is `damage` (ftCo_800C08A0)
+            unsafe { (*(DD as *mut melee_types::lbColl_80008D30_arg1)).damage = rnd() % 100; SI = KINDS[(rnd() % 8) as usize]; }
             let cdm = cd();
             cdm.bury_timer_unk1 = rnd(); cdm.bury_timer_unk2 = rnd(); cdm.bury_timer_unk3 = rnd();
             cdm.x5F4 = (rnd() % 5) as i32;

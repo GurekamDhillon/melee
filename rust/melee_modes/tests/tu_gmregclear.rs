@@ -402,6 +402,14 @@ fn gmregclear_vs_c() {
         fd!("fn_80180AC0", "", "i32", 6, b_f294, |a| { r(tu::fn_80180AC0()) }),
     ];
     let mut globals = tu::oracle_globals();
+    // HSD_PadMasterStatus (controller.c) was the last global of this TU's table when the C data
+    // was generated; it is now melee_runtime's single global: keep its place in the layout.
+    globals.push(GlobalDesc {
+        name: "HSD_PadMasterStatus",
+        addr: core::ptr::addr_of_mut!(tu::HSD_PadMasterStatus) as *mut u8,
+        size: core::mem::size_of::<[HSD_PadStatus; 4]>(),
+        mode: GMode::Rw,
+    });
     globals.extend(tu::oracle_globals_ext());
     let fn_table: std::vec::Vec<(&str, usize)> = std::vec![
         ("fn_8017FE54", tu::fn_8017FE54 as usize),

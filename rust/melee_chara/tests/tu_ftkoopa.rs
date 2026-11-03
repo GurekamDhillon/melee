@@ -81,5 +81,5 @@ fn smoke() {
     // The attribute getters take the fighter.
     ea.x4C = 1.5;
     backup.x4C = 1.5;
-    assert_eq!(t::ftKp_SpecialS_80132DC0(&f), 1.5);
+    assert_eq!(t::ftKp_SpecialS_80132DC0(gp), 1.5);
 }

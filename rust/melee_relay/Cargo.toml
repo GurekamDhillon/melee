@@ -1,0 +1,9 @@
+[package]
+name = "melee_relay"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Self-hostable rendezvous / relay server for netplay: room codes, address introduction for UDP hole punching, relay fallback, random queue (the GDMR/GDMD protocol of tools/netplay/server/gdmelee_server.py)"
+
+[dependencies]

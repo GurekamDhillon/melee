@@ -1,20 +1,57 @@
 //! The pluggable socket (`gw_net_transport`), real UDP, and `gw_net_addr_parse`.
+//!
+//! IPv4 is the C build's address type (`ip` in host byte order). IPv6 (net3) rides in `ip6`: non-zero means the
+//! endpoint is an IPv6 address and `ip` is then a fold of it (only used as a hash input by the netcode).
 
-use std::net::{Ipv4Addr, SocketAddrV4, UdpSocket};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs, UdpSocket};
 
-/// An IPv4 endpoint in host byte order (`gw_net_addr`).
+/// A UDP endpoint (`gw_net_addr`, widened for IPv6).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Addr {
     pub ip: u32,
     pub port: u16,
+    /// the IPv6 address (big-endian as a number), 0 for IPv4
+    pub ip6: u128,
 }
 
 impl Addr {
     pub fn new(ip: u32, port: u16) -> Self {
-        Addr { ip, port }
+        Addr { ip, port, ip6: 0 }
     }
-    pub fn to_socket(self) -> SocketAddrV4 {
-        SocketAddrV4::new(Ipv4Addr::from(self.ip), self.port)
+    pub fn new6(ip6: u128, port: u16) -> Self {
+        let ip = (ip6 as u32) ^ ((ip6 >> 32) as u32) ^ ((ip6 >> 64) as u32) ^ ((ip6 >> 96) as u32);
+        Addr { ip, port, ip6 }
+    }
+    pub fn is_v6(&self) -> bool {
+        self.ip6 != 0
+    }
+    /// The same host on another port.
+    pub fn with_port(self, port: u16) -> Self {
+        Addr { port, ..self }
+    }
+    pub fn to_socket(self) -> SocketAddr {
+        if self.is_v6() {
+            SocketAddr::V6(SocketAddrV6::new(Ipv6Addr::from(self.ip6), self.port, 0, 0))
+        } else {
+            SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::from(self.ip), self.port))
+        }
+    }
+    /// An IPv4-mapped IPv6 address (`::ffff:a.b.c.d`) becomes plain IPv4.
+    pub fn from_socket(a: SocketAddr) -> Self {
+        match a {
+            SocketAddr::V4(a) => Addr::new(u32::from(*a.ip()), a.port()),
+            SocketAddr::V6(a) => match a.ip().to_ipv4_mapped() {
+                Some(v4) => Addr::new(u32::from(v4), a.port()),
+                None => Addr::new6(u128::from(*a.ip()), a.port()),
+            },
+        }
+    }
+}
+
+impl std::fmt::Display for Addr {
+    /// `1.2.3.4:5` / `[2001:db8::1]:5` (what `addr_resolve` reads back).
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_socket())
     }
 }
 
@@ -30,51 +67,125 @@ pub trait Transport {
     }
 }
 
-/// Real UDP (the C's Winsock transport, here on `std::net`). Non-blocking.
+/// Real UDP (the C's Winsock transport, here on `std::net`). Non-blocking. Bound to all interfaces it is two sockets
+/// on the same port, IPv4 and IPv6 (Windows' IPv6 sockets are V6ONLY by default and std cannot clear that); a
+/// datagram leaves through the socket of its family.
 pub struct UdpTransport {
     sock: UdpSocket,
+    sock6: Option<UdpSocket>,
     port: u16,
 }
 
+fn recv_kind(r: std::io::Result<(usize, SocketAddr)>, from: &mut Addr) -> i32 {
+    match r {
+        Ok((n, a)) => {
+            *from = Addr::from_socket(a);
+            n as i32
+        }
+        Err(e) => {
+            use std::io::ErrorKind;
+            match e.kind() {
+                // WSAECONNRESET on UDP is an ICMP port-unreachable for an earlier send
+                ErrorKind::WouldBlock | ErrorKind::ConnectionReset => 0,
+                // WSAEMSGSIZE (10040) / EMSGSIZE: an oversized datagram, dropped like the C
+                _ if matches!(e.raw_os_error(), Some(10040) | Some(90)) => 0,
+                _ => -1,
+            }
+        }
+    }
+}
+
 impl UdpTransport {
-    /// `bind_ip` 0 = all interfaces; `bind_port` 0 = ephemeral (`gw_net_udp_open`).
+    /// `bind_ip` 0 = all interfaces (IPv4, plus IPv6 on the same port when the system has it); `bind_port` 0 =
+    /// ephemeral (`gw_net_udp_open`).
     pub fn open(bind_ip: u32, bind_port: u16) -> std::io::Result<Self> {
         let sock = UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::from(bind_ip), bind_port))?;
         sock.set_nonblocking(true)?;
         let port = sock.local_addr().map(|a| a.port()).unwrap_or(0);
-        Ok(UdpTransport { sock, port })
+        let sock6 = if bind_ip == 0 { Self::bind6(Ipv6Addr::UNSPECIFIED, port).ok() } else { None };
+        Ok(UdpTransport { sock, sock6, port })
+    }
+
+    /// Bind one address of either family (`--np-bind`). An IPv6 address gets no IPv4 path (its IPv4 socket is a
+    /// loopback placeholder).
+    pub fn open_at(ip: IpAddr, bind_port: u16) -> std::io::Result<Self> {
+        match ip {
+            IpAddr::V4(v4) => Self::open(u32::from(v4), bind_port),
+            IpAddr::V6(v6) => {
+                let s6 = Self::bind6(v6, bind_port)?;
+                let port = s6.local_addr().map(|a| a.port()).unwrap_or(0);
+                let sock = UdpSocket::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 0))?;
+                sock.set_nonblocking(true)?;
+                Ok(UdpTransport { sock, sock6: Some(s6), port })
+            }
+        }
+    }
+
+    fn bind6(ip: Ipv6Addr, port: u16) -> std::io::Result<UdpSocket> {
+        let s = UdpSocket::bind(SocketAddrV6::new(ip, port, 0, 0))?;
+        s.set_nonblocking(true)?;
+        Ok(s)
+    }
+
+    pub fn has_v6(&self) -> bool {
+        self.sock6.is_some()
     }
 }
 
 impl Transport for UdpTransport {
     fn send(&mut self, to: &Addr, data: &[u8]) -> i32 {
-        match self.sock.send_to(data, to.to_socket()) {
+        let r = if to.is_v6() {
+            match &self.sock6 {
+                Some(s) => s.send_to(data, to.to_socket()),
+                None => return -1,
+            }
+        } else {
+            self.sock.send_to(data, to.to_socket())
+        };
+        match r {
             Ok(n) => n as i32,
             Err(_) => -1,
         }
     }
     fn recv(&mut self, from: &mut Addr, buf: &mut [u8]) -> i32 {
-        match self.sock.recv_from(buf) {
-            Ok((n, std::net::SocketAddr::V4(a))) => {
-                *from = Addr::new(u32::from(*a.ip()), a.port());
-                n as i32
-            }
-            Ok(_) => 0, // IPv6 sender on an IPv4 socket: cannot happen; ignore
-            Err(e) => {
-                use std::io::ErrorKind;
-                match e.kind() {
-                    // WSAECONNRESET on UDP is an ICMP port-unreachable for an earlier send
-                    ErrorKind::WouldBlock | ErrorKind::ConnectionReset => 0,
-                    // WSAEMSGSIZE (10040) / EMSGSIZE: an oversized datagram, dropped like the C
-                    _ if matches!(e.raw_os_error(), Some(10040) | Some(90)) => 0,
-                    _ => -1,
-                }
-            }
+        let n = recv_kind(self.sock.recv_from(buf), from);
+        if n != 0 {
+            return n;
+        }
+        match &self.sock6 {
+            Some(s) => recv_kind(s.recv_from(buf), from),
+            None => 0,
         }
     }
     fn local_port(&self) -> u16 {
         self.port
     }
+}
+
+/// Any endpoint text: `1.2.3.4[:port]`, `[v6]:port`, `[v6]`, a bare IPv6 address, or `hostname[:port]` (resolved by
+/// the system resolver; IPv4 preferred unless `prefer_v6`).
+pub fn addr_resolve(text: &str, default_port: u16, prefer_v6: bool) -> Result<Addr, String> {
+    let t = text.trim();
+    if let Ok(sa) = t.parse::<SocketAddr>() {
+        return Ok(Addr::from_socket(sa));
+    }
+    if let Ok(ip) = t.parse::<IpAddr>() {
+        return Ok(Addr::from_socket(SocketAddr::new(ip, default_port)));
+    }
+    if let Some(inner) = t.strip_prefix('[').and_then(|r| r.strip_suffix(']')) {
+        let ip: Ipv6Addr = inner.parse().map_err(|_| format!("{t}: not an IPv6 address"))?;
+        return Ok(Addr::from_socket(SocketAddr::new(IpAddr::V6(ip), default_port)));
+    }
+    let (host, port) = match t.rsplit_once(':') {
+        Some((h, p)) => (h, p.parse::<u16>().map_err(|_| format!("{t}: bad port"))?),
+        None => (t, default_port),
+    };
+    if host.is_empty() || port == 0 {
+        return Err(format!("{t}: not host:port"));
+    }
+    let all: Vec<SocketAddr> = (host, port).to_socket_addrs().map_err(|e| format!("cannot resolve \"{host}\": {e}"))?.collect();
+    let pick = all.iter().find(|a| a.is_ipv6() == prefer_v6).or(all.first()).ok_or_else(|| format!("\"{host}\" has no address"))?;
+    Ok(Addr::from_socket(*pick))
 }
 
 /// `"1.2.3.4:5678"` or `"1.2.3.4"` (then `default_port`), parsed like the C's

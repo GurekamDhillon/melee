@@ -441,13 +441,49 @@ use melee_net::app::scene::{parse_scene, ParsedScene};
 use melee_net::net::Net;
 use melee_net::rollback::{NetAdapter, NetLog};
 use melee_net::session::{run_tick, InputSource, RbConfig, RbSession, SyncTest};
-use melee_net::transport::{addr_parse, Transport, UdpTransport};
+use melee_net::transport::{Transport, UdpTransport};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 /// This install's identities for the direct room: every VS fighter (`ck:N` = the external character id the
-/// scenario launcher takes) and every VS stage (`ext:N`).
-pub struct PlayEnv;
+/// scenario launcher takes) and every VS stage (`ext:N`). The handshake's "global data" word is the mounted mod set
+/// (`mods_hash`, described by `mods_desc`); the engine build is the separate exe word (`build_hash`).
+#[derive(Clone, Default)]
+pub struct PlayEnv {
+    pub mods_hash: u64,
+    pub mods_desc: String,
+}
+
+/// The engine build both peers must share (the sim is compared bit for bit): the git commit this exe was built from.
+pub fn build_hash() -> u64 {
+    if let Some(h) = std::env::var("MELEE_NP_BUILD_HASH").ok().and_then(|v| u64::from_str_radix(&v, 16).ok()) {
+        return h; // test hook: pretend to be another build
+    }
+    let h = u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0);
+    if h == 0 {
+        1
+    } else {
+        h
+    }
+}
+
+/// The mounted mod set (`--mods DIR [--enable ..]`, else settings / MELEE_MODS_DIR) as the handshake's digest and
+/// description: 0 / "no mods" for vanilla.
+pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    let m = match get("--mods") {
+        Some(dir) => {
+            let en: Option<Vec<String>> = get("--enable").map(|s| s.split(',').map(str::to_string).collect());
+            crate::mods::Mods::open(std::path::Path::new(&dir), en.as_deref()).map(Some)?
+        }
+        None => crate::mods::Mods::from_env()?,
+    };
+    let Some(m) = m.filter(|m| !m.active.is_empty()) else { return Ok((0, "no mods".into())) };
+    let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
+    let fp = m.set.fingerprint();
+    let h = melee_net::hash64(format!("{}|{fp:016x}", ids.join(",")).as_bytes(), 0);
+    Ok((h, format!("mods {} ({fp:016x})", ids.join(", "))))
+}
 
 impl melee_net::app::lobby::LobbyEnv for PlayEnv {
     fn stage_available(&self, ext: i32) -> bool {
@@ -475,11 +511,10 @@ impl RoomEnv for PlayEnv {
         tok.strip_prefix("ck:").and_then(|n| n.parse().ok()).unwrap_or(-1)
     }
     fn global_hash(&self) -> u64 {
-        // both peers must run the same build (the sim is compared bit for bit)
-        u64::from_str_radix(&env!("MELEE_GIT_HASH").chars().filter(|c| c.is_ascii_hexdigit()).take(15).collect::<String>(), 16).unwrap_or(0)
+        self.mods_hash
     }
     fn global_describe(&self) -> String {
-        format!("melee (rust) {}", env!("MELEE_GIT_HASH"))
+        self.mods_desc.clone()
     }
     fn scene_check(&self, p: &ParsedScene) -> Result<(), String> {
         for t in [&p.host_tok, &p.guest_tok] {
@@ -494,13 +529,106 @@ impl RoomEnv for PlayEnv {
     }
 }
 
-/// Inbound lag / loss on the socket (`--np-lag-ms`, `--np-loss-pct`): the loopback test's simulated network.
+/// The host's rules as the agreed scene carries them (`;np_rules=s<stocks>,t<secs>,i<items>`, `-` = the default):
+/// the guest adopts these, so the two need not pass the same options.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct HostRules {
+    pub stocks: Option<i32>,
+    pub time_secs: Option<i32>,
+    /// the `--items` text (`_` for spaces)
+    pub items: Option<String>,
+}
+
+impl HostRules {
+    pub fn from_args(args: &[String]) -> HostRules {
+        HostRules {
+            stocks: arg(args, "--stocks").and_then(|s| s.parse().ok()),
+            time_secs: arg(args, "--time-secs").and_then(|s| s.parse().ok()),
+            items: arg(args, "--items").map(|s| s.trim().replace(' ', "_")),
+        }
+    }
+    pub fn encode(&self) -> String {
+        let o = |v: &Option<String>| v.clone().unwrap_or_else(|| "-".into());
+        format!(";np_rules=s{},t{},i{}", o(&self.stocks.map(|x| x.to_string())), o(&self.time_secs.map(|x| x.to_string())), o(&self.items))
+    }
+    pub fn from_scene(p: &ParsedScene) -> Option<HostRules> {
+        let v = p.extras.iter().find_map(|e| e.strip_prefix("np_rules="))?;
+        let mut r = HostRules::default();
+        for f in v.split(',') {
+            let (k, x) = f.split_at(1.min(f.len()));
+            if x == "-" || x.is_empty() {
+                continue;
+            }
+            match k {
+                "s" => r.stocks = x.parse().ok(),
+                "t" => r.time_secs = x.parse().ok(),
+                "i" => r.items = Some(x.to_string()),
+                _ => {}
+            }
+        }
+        Some(r)
+    }
+    pub fn describe(&self) -> String {
+        format!(
+            "stocks {}, time {}, items {}",
+            self.stocks.map_or("default".into(), |x| x.to_string()),
+            self.time_secs.map_or("default".into(), |x| format!("{x} s")),
+            self.items.clone().unwrap_or_else(|| "default".into())
+        )
+    }
+}
+
+/// A netem-like simulated network on the inbound side of the socket (`--np-lag-ms`, `--np-jitter-ms`,
+/// `--np-loss-pct`, `--np-dup-pct`, `--np-reorder-pct`): each datagram is dropped, delayed by lag + a random part of
+/// the jitter, held back an extra lag/2 + 10 ms (reordered behind its successors) or delivered twice.
 pub struct Degraded {
     pub inner: Box<dyn Transport>,
     pub lag: Duration,
+    pub jitter: Duration,
     pub loss_pct: u32,
+    pub dup_pct: u32,
+    pub reorder_pct: u32,
     pub rng: u32,
-    pub q: std::collections::VecDeque<(Instant, melee_net::transport::Addr, Vec<u8>)>,
+    pub q: Vec<(Instant, melee_net::transport::Addr, Vec<u8>)>,
+    pub stats: [u64; 4],
+}
+
+impl Degraded {
+    pub fn new(inner: Box<dyn Transport>, n: &Netem, seed: u32) -> Degraded {
+        Degraded { inner, lag: n.lag, jitter: n.jitter, loss_pct: n.loss, dup_pct: n.dup, reorder_pct: n.reorder, rng: seed | 1, q: Vec::new(), stats: [0; 4] }
+    }
+    fn roll(&mut self) -> u32 {
+        self.rng = self.rng.wrapping_mul(1664525).wrapping_add(1013904223);
+        self.rng >> 8
+    }
+    fn delay(&mut self) -> Duration {
+        let j = self.jitter.as_micros() as u32;
+        let extra = if j > 0 { self.roll() % (j + 1) } else { 0 };
+        self.lag + Duration::from_micros(extra as u64)
+    }
+}
+
+/// The simulated network's settings.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Netem {
+    pub lag: Duration,
+    pub jitter: Duration,
+    pub loss: u32,
+    pub dup: u32,
+    pub reorder: u32,
+}
+
+impl Netem {
+    pub fn from_args(args: &[String]) -> Netem {
+        let num = |k: &str| arg(args, k).and_then(|s| s.parse::<u64>().ok()).unwrap_or(0);
+        Netem {
+            lag: Duration::from_millis(num("--np-lag-ms")),
+            jitter: Duration::from_millis(num("--np-jitter-ms")),
+            loss: num("--np-loss-pct").min(100) as u32,
+            dup: num("--np-dup-pct").min(100) as u32,
+            reorder: num("--np-reorder-pct").min(100) as u32,
+        }
+    }
 }
 
 impl Transport for Degraded {
@@ -515,22 +643,32 @@ impl Transport for Degraded {
             if n <= 0 {
                 break;
             }
-            self.rng = self.rng.wrapping_mul(1664525).wrapping_add(1013904223);
-            if self.loss_pct > 0 && (self.rng >> 16) % 100 < self.loss_pct {
+            let d = tmp[..n as usize].to_vec();
+            if self.loss_pct > 0 && self.roll() % 100 < self.loss_pct {
+                self.stats[0] += 1;
                 continue;
             }
-            self.q.push_back((Instant::now() + self.lag, a, tmp[..n as usize].to_vec()));
-        }
-        if let Some(f) = self.q.front() {
-            if f.0 <= Instant::now() {
-                let (_, a, d) = self.q.pop_front().unwrap();
-                *from = a;
-                let n = d.len().min(buf.len());
-                buf[..n].copy_from_slice(&d[..n]);
-                return n as i32;
+            let mut at = Instant::now() + self.delay();
+            if self.reorder_pct > 0 && self.roll() % 100 < self.reorder_pct {
+                at += self.lag / 2 + Duration::from_millis(10);
+                self.stats[1] += 1;
             }
+            if self.dup_pct > 0 && self.roll() % 100 < self.dup_pct {
+                let at2 = Instant::now() + self.delay();
+                self.q.push((at2, a, d.clone()));
+                self.stats[2] += 1;
+            }
+            self.q.push((at, a, d));
         }
-        0
+        // the earliest due datagram (jitter and the reorder hold make the queue unordered)
+        let now = Instant::now();
+        let Some(i) = (0..self.q.len()).filter(|&i| self.q[i].0 <= now).min_by_key(|&i| self.q[i].0) else { return 0 };
+        let (_, a, d) = self.q.remove(i);
+        *from = a;
+        let n = d.len().min(buf.len());
+        buf[..n].copy_from_slice(&d[..n]);
+        self.stats[3] += 1;
+        n as i32
     }
     fn local_port(&self) -> u16 {
         self.inner.local_port()
@@ -544,20 +682,20 @@ pub type Sess = RbSession<ModesGame>;
 pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, String> {
     use melee_engine::scenario::{PlayerSpec, Scenario};
     let p = parse_scene(sc).ok_or_else(|| format!("netplay scene does not parse: {sc}"))?;
-    PlayEnv.scene_check(&p)?;
-    let ck = |t: &str| PlayEnv.ck_for_token(t);
+    PlayEnv::default().scene_check(&p)?;
+    let ck = |t: &str| PlayEnv::default().ck_for_token(t);
     let spec = |c: i32, color: i32| PlayerSpec { ckind: c, slot_type: 0, cpu_level: -1, color, team: -1, stocks: -1, handicap: -1 };
     let mut players = [None; 6];
     players[0] = Some(spec(ck(&p.host_tok), p.host_color));
     players[1] = Some(spec(ck(&p.guest_tok), p.guest_color));
     Ok(Scenario {
-        stage: melee_net::app::lobby::LobbyEnv::ext_for_token(&PlayEnv, &p.stage_tok),
+        stage: melee_net::app::lobby::LobbyEnv::ext_for_token(&PlayEnv::default(), &p.stage_tok),
         players,
         rule_match: 1,
         rule_minutes: -1,
         item_freq: -2,
         teams: 0,
-        time_limit: p.minutes * 60,
+        time_limit: HostRules::from_scene(&p).and_then(|r| r.time_secs).map_or(p.minutes * 60, |s| s.max(1)),
         rule_stocks: p.stocks,
         onep_mode: -1,
         onep_step: -1,
@@ -590,6 +728,8 @@ pub struct NetDriver {
     pub room: Option<Room>,
     pub net: Option<Net>,
     pub agreed: Agreed,
+    /// the host's rules (the guest adopts them)
+    pub host_rules: HostRules,
     pub phase: NetPhase,
     pub started_at: Option<Instant>,
     /// final hashes by session frame (start-of-frame checksums, `RbSession::checksum`)
@@ -618,39 +758,56 @@ pub struct NetDriver {
 pub struct RoomParams {
     host: bool,
     rcfg: RbConfig,
-    lag: Duration,
-    loss: u32,
     timeout: u64,
     settings: RoomSettings,
-    /// the host's room port (the lockstep socket is + 1, the k-th rematch's room + 1 + k)
-    base_port: u16,
+    env: PlayEnv,
+    /// the run's one socket (np_mux.rs): room 0, the lockstep, the rematch rooms
+    mux: crate::np_mux::MuxRef,
+    /// the rendezvous client below the mux (`--np-server`)
+    rdv: Option<melee_net::app::rdv::RdvRef>,
+    /// the guest's way to the host (direct address, or the server's introduction); the host learns the guest's
+    peer: Option<melee_net::transport::Addr>,
 }
 
-/// Open a direct room (HELLO / ACCEPT / the scene blob) and wait until it is connected.
-fn open_room(p: &RoomParams, bind_port: u16, peer: Option<melee_net::transport::Addr>) -> Result<(Room, Rc<RefCell<Sess>>, Rc<RefCell<NetLog>>, u16), String> {
+/// Open a room on mux channel `ch` (HELLO / ACCEPT / the scene blob) and wait until it is connected. The first room
+/// (`code`: Some for a match-code guest, "" for a match-code host) goes through the rendezvous server when there is one.
+fn open_room(p: &mut RoomParams, ch: u32, code: Option<String>) -> Result<(Room, Rc<RefCell<Sess>>, Rc<RefCell<NetLog>>), String> {
     let sess: Rc<RefCell<Sess>> = Rc::new(RefCell::new(Sess::new(p.rcfg.clone())));
     let nlog = Rc::new(RefCell::new(NetLog::default()));
     let inner = Box::new(NetAdapter::new(sess.clone(), nlog.clone(), None));
-    let udp = UdpTransport::open(0x7F00_0001, bind_port).map_err(|e| format!("bind 127.0.0.1:{bind_port}: {e}"))?;
-    let host_port = udp.local_port();
-    let tp: Box<dyn Transport> = Box::new(Degraded { inner: Box::new(udp), lag: p.lag, loss_pct: p.loss, rng: 0x1234_5678 ^ p.rcfg.local_port as u32, q: Default::default() });
+    let tp: Box<dyn Transport> = Box::new(crate::np_mux::Chan { core: p.mux.clone(), ch });
+    let host_port = tp.local_port();
     let mut settings = p.settings.clone();
-    settings.peer = peer;
-    let mut room = Room::begin(settings, Box::new(PlayEnv), inner, tp, None, None, false, host_port)?;
+    settings.peer = p.peer;
+    let rdv = if code.is_some() { p.rdv.clone() } else { None };
+    let room_code = code.filter(|c| !c.is_empty());
+    let mut room = Room::begin(settings, Box::new(p.env.clone()), inner, tp, rdv, room_code, false, host_port)?;
     let tag = if p.host { "host" } else { "guest" };
-    if p.host {
-        log(&format!("netplay: hosting on 127.0.0.1:{host_port}, waiting for the guest"));
-    } else {
-        log(&format!("netplay: joining 127.0.0.1:{}", peer.map_or(0, |a| a.port)));
-    }
     let t0 = Instant::now();
+    let mut shown = String::new();
     loop {
         if t0.elapsed().as_secs() > p.timeout {
-            return Err(format!("netplay {tag}: no match agreed after {} s: {}", p.timeout, room.sh.borrow().status));
+            let st = room.sh.borrow().status.clone();
+            let hint = if p.host {
+                "nobody connected; check that the guest has your address and port, that UDP to it is allowed through the firewall / forwarded by the router, or use a match code (--np-server)"
+            } else {
+                "the host did not answer; check the address and port, the host's firewall / port forward, or use a match code (--np-server)"
+            };
+            return Err(format!("netplay {tag}: no connection after {} s ({st}): {hint}", p.timeout));
         }
         match room.phase() {
             Phase::Working => {
                 room.poll();
+                let c = room.code();
+                if p.host && !c.is_empty() && c != shown {
+                    log(&format!("netplay host: MATCH CODE {c} (give it to the other player)"));
+                    shown = c;
+                }
+                if let Some(r) = &p.rdv {
+                    for m in r.borrow_mut().log.drain(..) {
+                        log(&format!("netplay {tag}: {m}"));
+                    }
+                }
             }
             Phase::Connected => break,
             Phase::Lobby => return Err("netplay: the peer asked for a lobby (not offered by melee play)".into()),
@@ -658,50 +815,112 @@ fn open_room(p: &RoomParams, bind_port: u16, peer: Option<melee_net::transport::
         }
         std::thread::sleep(Duration::from_millis(2));
     }
-    Ok((room, sess, nlog, host_port))
+    if let Some(r) = p.rdv.as_ref().filter(|_| ch == 0) {
+        let r = r.borrow();
+        if r.have_peer && p.peer.is_none() && !p.host {
+            p.peer = Some(r.peer);
+        }
+        log(&format!("netplay {tag}: path {}", if r.relay { "RELAYED through the server" } else { "direct (hole punched)" }));
+    }
+    Ok((room, sess, nlog))
 }
 
 fn arg(args: &[String], k: &str) -> Option<String> {
     args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned()
 }
 
+/// A match code: 4 characters of the server's alphabet (dashes and case ignored).
+fn looks_like_code(s: &str) -> bool {
+    let c: String = s.chars().filter(|c| *c != '-').collect::<String>().to_ascii_uppercase();
+    c.len() == 4 && c.chars().all(|ch| melee_net::app::rdv::NP_ALPHABET.contains(ch))
+}
+
 impl NetDriver {
-    /// `--netplay host [--np-port P]` / `--netplay join ADDR[:PORT]`: connect (blocking, before the window) and agree the
-    /// match. The host's `--match a,b,STAGE` gives its own fighter (the first) and the stage; the guest's `--match a,..`
-    /// its own fighter (the first). `--stocks N` / `--time-secs S` (host) set the rules.
+    /// `--netplay host [--np-port P]` / `--netplay join ADDR[:PORT] | CODE`: connect (blocking, before the window) and
+    /// agree the match. The host's `--match a,b,STAGE` gives its own fighter (the first) and the stage; the guest's
+    /// `--match a,..` its own fighter (the first). The host's `--stocks N` / `--time-secs S` / `--items F` are the rules
+    /// (the guest adopts them). `--np-server HOST[:PORT]` = match codes through a rendezvous server (melee_relay).
     pub fn connect(args: &[String], ck_of: &dyn Fn(&str) -> Option<i32>, stage_of: &dyn Fn(&str) -> Option<i32>) -> Result<NetDriver, String> {
+        use melee_net::app::rdv::{Rdv, RdvTransport};
         let mode = arg(args, "--netplay").ok_or("--netplay host|join ADDR")?;
         let host = match mode.as_str() {
             "host" => true,
             "join" => false,
             m => return Err(format!("--netplay {m}: host or join")),
         };
-        let join_addr = if host { None } else { Some(args.iter().position(|a| a == "--netplay").and_then(|i| args.get(i + 2)).cloned().ok_or("--netplay join ADDR")?) };
+        let target = if host { None } else { Some(args.iter().position(|a| a == "--netplay").and_then(|i| args.get(i + 2)).cloned().ok_or("--netplay join ADDR[:PORT] or CODE")?) };
         let num = |k: &str, d: i64| arg(args, k).and_then(|s| s.parse::<i64>().ok()).unwrap_or(d);
         let delay = num("--np-delay", 2) as i32;
         let maxb = num("--np-rollback", 7) as i32;
-        let lag = Duration::from_millis(num("--np-lag-ms", 0) as u64);
-        let loss = num("--np-loss-pct", 0) as u32;
+        let netem = Netem::from_args(args);
         let timeout = num("--np-timeout", 60) as u64;
+        let server = arg(args, "--np-server").or_else(|| std::env::var("MELEE_NP_SERVER").ok().filter(|s| !s.is_empty()));
         // the own fighter: the first of --match (default Falcon / Fox); the host's stage: the --match stage (default FD)
         let spec = arg(args, "--match").unwrap_or_else(|| if host { "falcon,fox,32".into() } else { "fox".into() });
         let parts: Vec<&str> = spec.split(',').map(str::trim).collect();
         let ck = ck_of(parts[0]).ok_or_else(|| format!("--match: unknown fighter '{}'", parts[0]))?;
         let stage_ext = parts.iter().skip(1).find_map(|p| stage_of(p)).unwrap_or(32);
-        let stocks = num("--stocks", 4) as i32;
-        let minutes = arg(args, "--time-secs").and_then(|s| s.parse::<i32>().ok()).map_or(8, |s| (s.max(1) + 59) / 60);
+        let rules = HostRules::from_args(args);
+        let stocks = rules.stocks.unwrap_or(4);
+        let minutes = rules.time_secs.map_or(8, |s| (s.max(1) + 59) / 60);
         let local_port = if host { 0 } else { 1 };
-        // loopback only: the socket binds 127.0.0.1
-        let base_port = if host { num("--np-port", 51500) as u16 } else { 0 };
-        let peer = join_addr.as_deref().and_then(|j| addr_parse(j, 51500));
-        if !host && peer.is_none() {
-            return Err(format!("--netplay join {}: not an IPv4 address", join_addr.clone().unwrap_or_default()));
+        let tag = if host { "host" } else { "guest" };
+        // where the guest goes: a match code (with a server) or an address (IPv4, [IPv6], host name; port 51500 default)
+        let code = match (&target, &server) {
+            (Some(t), Some(_)) if looks_like_code(t) => Some(t.chars().filter(|c| *c != '-').collect::<String>().to_ascii_uppercase()),
+            (None, Some(_)) => Some(String::new()),
+            _ => None,
+        };
+        let peer = match (&target, &code) {
+            (Some(t), None) => Some(melee_net::addr_resolve(t, 51500, arg(args, "--np-bind").map_or(false, |b| b.contains(':'))).map_err(|e| format!("--netplay join {t}: {e}"))?),
+            _ => None,
+        };
+        // the socket: all interfaces (IPv4 + IPv6) unless --np-bind; the host on --np-port (default 51500), the guest on
+        // --np-port or an ephemeral port
+        let bind_port = num("--np-port", if host { 51500 } else { 0 }) as u16;
+        let udp = match arg(args, "--np-bind") {
+            Some(b) => {
+                let ip: std::net::IpAddr = b.trim_matches(['[', ']']).parse().map_err(|_| format!("--np-bind {b}: not an IP address"))?;
+                UdpTransport::open_at(ip, bind_port).map_err(|e| format!("bind {b} port {bind_port}: {e}"))?
+            }
+            None => UdpTransport::open(0, bind_port).map_err(|e| format!("bind UDP port {bind_port}: {e} (is another copy running?)"))?,
+        };
+        let port = udp.local_port();
+        let v6 = udp.has_v6();
+        let deg: Box<dyn Transport> = Box::new(Degraded::new(Box::new(udp), &netem, 0x1234_5678 ^ local_port as u32));
+        let (rdv, base): (Option<melee_net::app::rdv::RdvRef>, Box<dyn Transport>) = match &server {
+            Some(sv) => {
+                let r = Rdv::new(sv, deg)?;
+                if arg(args, "--np-bind").map_or(false, |b| b.contains(':')) {
+                    r.borrow_mut().lan_override = Some(0); // an IPv6-only socket: no IPv4 LAN address to offer
+                }
+                if let Some(l) = arg(args, "--np-lan") {
+                    let a = melee_net::addr_parse(&l, 1).ok_or_else(|| format!("--np-lan {l}: an IPv4 address"))?;
+                    r.borrow_mut().lan_override = Some(a.ip);
+                }
+                r.borrow_mut().force_relay = args.iter().any(|a| a == "--np-relay");
+                log(&format!("netplay {tag}: rendezvous server {}", r.borrow().srv));
+                (Some(r.clone()), Box::new(RdvTransport(r)))
+            }
+            None => (None, deg),
+        };
+        if host {
+            log(&format!(
+                "netplay: hosting on UDP port {port} ({}), waiting for the guest{}",
+                match arg(args, "--np-bind") { Some(b) => format!("bound to {b}"), None => format!("all interfaces, {}", if v6 { "IPv4 and IPv6" } else { "IPv4" }) },
+                if server.is_some() { " (match code from the server)" } else { "; the guest joins YOUR-PUBLIC-IP:PORT (UDP port forwarded) or YOUR-LAN-IP:PORT" }
+            ));
+        } else if let Some(p) = &peer {
+            log(&format!("netplay: joining {p} from UDP port {port}"));
+        } else {
+            log(&format!("netplay: joining match code {} from UDP port {port}", code.clone().unwrap_or_default()));
         }
+        let (mods_hash, mods_desc) = mods_identity(args)?;
+        let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
+        log(&format!("netplay {tag}: build {:015x}, {mods_desc}", build_hash()));
         let mut rp = RoomParams {
             host,
             rcfg: RbConfig { net: true, local_port, delay, maxb, src: InputSource::Live, ..RbConfig::default() },
-            lag,
-            loss,
             timeout,
             settings: RoomSettings {
                 host,
@@ -715,34 +934,39 @@ impl NetDriver {
                 peer,
                 name: arg(args, "--np-name").unwrap_or_default(),
                 seed: arg(args, "--np-seed").and_then(|s| s.parse().ok()),
+                exe_hash: build_hash(),
+                scene_extra: if host { rules.encode() } else { String::new() },
                 ..RoomSettings::default()
             },
-            base_port,
+            env,
+            mux: crate::np_mux::new(base),
+            rdv,
+            peer,
         };
-        let tag = if host { "host" } else { "guest" };
         let t0 = Instant::now();
-        let (room, sess, nlog, host_port) = open_room(&rp, base_port, peer)?;
+        let (room, sess, nlog) = open_room(&mut rp, 0, code)?;
         let (scene_str, seed, adelay) = {
             let b = room.sh.borrow();
             (b.scene.clone(), b.seed, b.s.delay)
         };
         let scene = parse_scene(&scene_str).ok_or_else(|| format!("netplay: the agreed scene does not parse: {scene_str}"))?;
         log(&format!("netplay {tag}: match agreed after {:.2}s: \"{scene_str}\" (seed {seed}, delay {adelay}, rollback window {maxb})", t0.elapsed().as_secs_f32()));
+        let host_rules = HostRules::from_scene(&scene).unwrap_or_default();
+        if !host {
+            if rules != HostRules::default() && rules != host_rules {
+                log(&format!("netplay guest: the host's rules win: {} (yours: {})", host_rules.describe(), rules.describe()));
+            } else {
+                log(&format!("netplay guest: the host's rules: {}", host_rules.describe()));
+            }
+        }
         sess.borrow_mut().set_delay(adelay);
-        // --np-css: the character / stage select and the results run in lockstep on a second socket (room port + 1),
-        // and every match after the first is a new room on the next port (np_lockstep.rs)
+        // --np-css: the character / stage select and the results run in lockstep (mux channel 1), and every match after
+        // the first is a new room on mux channel 2 + k
         let css = args.iter().any(|a| a == "--np-css");
-        let room_port = if host { host_port } else { peer.map_or(0, |a| a.port) };
-        let ls = if css {
-            let bind = if host { room_port.wrapping_add(1) } else { 0 };
-            let udp = UdpTransport::open(0x7F00_0001, bind).map_err(|e| format!("bind 127.0.0.1:{bind}: {e}"))?;
-            let tp: Box<dyn Transport> = Box::new(Degraded { inner: Box::new(udp), lag, loss_pct: loss, rng: 0x9E37_79B9 ^ local_port as u32, q: Default::default() });
-            let pa = peer.map(|a| melee_net::transport::Addr::new(a.ip, a.port.wrapping_add(1)));
-            Some(crate::np_lockstep::Lockstep::new(tp, pa, host, adelay.max(1) as u32))
-        } else {
-            None
-        };
-        rp.base_port = room_port;
+        let ls = css.then(|| {
+            let tp: Box<dyn Transport> = Box::new(crate::np_mux::Chan { core: rp.mux.clone(), ch: 1 });
+            crate::np_lockstep::Lockstep::new(tp, rp.peer, host, adelay.max(1) as u32)
+        });
         Ok(NetDriver {
             host,
             sess,
@@ -750,6 +974,7 @@ impl NetDriver {
             room: Some(room),
             net: None,
             agreed: Agreed { scene, scene_str: scene_str.clone(), seed, delay: adelay, host },
+            host_rules,
             phase: NetPhase::PreMatch,
             started_at: None,
             finals: Vec::new(),
@@ -773,17 +998,18 @@ impl NetDriver {
         self.ls.is_some()
     }
 
-    /// The match after the first (`--np-css`): a new room (and session) on the next port; both peers get here on the
-    /// same lockstep frame (the VS scene's first frame). Blocking, like the first connection.
+    /// The match after the first (`--np-css`): a new room (and session) on the next mux channel of the same socket; both
+    /// peers get here on the same lockstep frame (the VS scene's first frame). Blocking, like the first connection.
     pub fn next_room(&mut self) -> Result<(), String> {
         self.match_no += 1;
-        let port = self.params.base_port.wrapping_add(1 + self.match_no as u16);
-        let peer = self.params.settings.peer.map(|a| melee_net::transport::Addr::new(a.ip, port));
+        if self.match_no > 250 {
+            return Err("netplay: too many matches on one connection".into());
+        }
         let t0 = Instant::now();
-        let (room, sess, nlog, _) = open_room(&self.params, if self.host { port } else { 0 }, peer)?;
+        let (room, sess, nlog) = open_room(&mut self.params, 2 + self.match_no, None)?;
         let adelay = room.sh.borrow().s.delay;
         sess.borrow_mut().set_delay(adelay);
-        log(&format!("netplay {}: match {} connected after {:.2}s (port {port})", self.tag(), self.match_no + 1, t0.elapsed().as_secs_f32()));
+        log(&format!("netplay {}: match {} connected after {:.2}s", self.tag(), self.match_no + 1, t0.elapsed().as_secs_f32()));
         self.all_finals.push(std::mem::take(&mut self.finals));
         self.sess = sess;
         self.log = nlog;
@@ -836,7 +1062,7 @@ impl NetDriver {
         if matches!(net.state(), melee_net::net::State::Refused | melee_net::net::State::Dead) {
             let r = net.last_reason().to_string();
             if self.end_frame.is_none() {
-                self.fail(format!("connection lost: {r}"));
+                self.fail(format!("connection lost: {r} (the other player quit, or the network dropped)"));
             }
             return false;
         }

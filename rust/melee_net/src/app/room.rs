@@ -58,11 +58,13 @@ pub struct RoomSettings {
     pub stage_mode: i32,
     pub seed: Option<u32>,
     pub controls: u32,
+    /// Appended to the agreed scene (`;key=value...`): what the host also dictates (net3: `np_rules=`).
+    pub scene_extra: String,
 }
 
 impl Default for RoomSettings {
     fn default() -> Self {
-        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0 }
+        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0, scene_extra: String::new() }
     }
 }
 
@@ -111,7 +113,7 @@ impl Shared {
         self.send(m);
     }
     fn build_scene_for(&self, hck: i32, hc: i32, gck: i32, gc: i32) -> String {
-        build_scene(&self.env.token_for_ck(hck), hc, &self.env.token_for_ck(gck), gc, &self.env.token_for_ext(self.s.stage_ext), self.s.stocks, self.s.minutes, 0)
+        build_scene(&self.env.token_for_ck(hck), hc, &self.env.token_for_ck(gck), gc, &self.env.token_for_ext(self.s.stage_ext), self.s.stocks, self.s.minutes, 0) + &self.s.scene_extra
     }
 
     /// np_cb_guest_hello.

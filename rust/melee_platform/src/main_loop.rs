@@ -124,6 +124,9 @@ struct App<G: Game> {
     run_t0: Option<Instant>,
     tick_time: Duration,
     present_time: Duration,
+    /// MELEE_FRAME_TIMES=<csv>: one row per tick (T) and per present (P): kind, index, ms since the loop
+    /// started, ms the call took (benchmarks; off by default).
+    trace: Option<std::io::BufWriter<std::fs::File>>,
     /// MELEE_SHOW_FPS: every tick's duration and every frame's interval (µs), for the exit percentiles.
     tick_us: Vec<u32>,
     frame_us: Vec<u32>,
@@ -154,6 +157,10 @@ impl<G: Game> App<G> {
             self.game.tick(&mut self.pads);
             let el = t.elapsed();
             self.tick_time += el;
+            if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
+                use std::io::Write;
+                let _ = writeln!(f, "T,{},{:.3},{:.3}", self.clock.ticks, (t - t0).as_secs_f64() * 1e3, el.as_secs_f64() * 1e3);
+            }
             if self.show_fps {
                 self.tick_us.push(el.as_micros().min(u32::MAX as u128) as u32);
             }
@@ -257,7 +264,12 @@ impl<G: Game> ApplicationHandler for App<G> {
                     let extra = self.last.map(|l| l.elapsed()).unwrap_or_default();
                     let t = Instant::now();
                     self.game.present(&w, self.clock.alpha_after(extra));
-                    self.present_time += t.elapsed();
+                    let d = t.elapsed();
+                    self.present_time += d;
+                    if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {
+                        use std::io::Write;
+                        let _ = writeln!(f, "P,{},{:.3},{:.3}", self.frames, (t - t0).as_secs_f64() * 1e3, d.as_secs_f64() * 1e3);
+                    }
                     if self.show_fps {
                         let now = Instant::now();
                         if let Some(l) = self.last_frame {
@@ -319,15 +331,25 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         run_t0: Some(Instant::now()),
         tick_time: Duration::ZERO,
         present_time: Duration::ZERO,
+        trace: std::env::var_os("MELEE_FRAME_TIMES").and_then(|p| std::fs::File::create(p).ok()).map(|f| std::io::BufWriter::with_capacity(1 << 20, f)),
         tick_us: Vec::new(),
         frame_us: Vec::new(),
         last_frame: None,
     };
+    if let Some(f) = app.trace.as_mut() {
+        use std::io::Write;
+        let unix = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
+        let _ = writeln!(f, "S,0,{:.3},0", unix.as_secs_f64() * 1e3);
+    }
     if app.interp_env == Some(true) {
         app.interp = true;
         app.game.set_interp(true);
     }
     el.run_app(&mut app)?;
+    if let Some(f) = app.trace.as_mut() {
+        use std::io::Write;
+        let _ = f.flush();
+    }
     if app.show_fps {
         let secs = app.run_t0.map(|t| t.elapsed().as_secs_f64()).unwrap_or(1.0).max(1e-9);
         plog!("gw: fps: run total: {} frames, {} ticks in {secs:.2}s = render {:.1} fps, sim {:.2} tps", app.frames, app.clock.ticks, app.frames as f64 / secs, app.clock.ticks as f64 / secs);

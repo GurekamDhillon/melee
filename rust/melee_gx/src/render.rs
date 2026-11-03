@@ -1007,6 +1007,10 @@ impl Renderer {
                 self.tex_bgs.clear();
             }
         }
+        if self.prepared % TEX_KEEP == 0 && std::env::var_os("MELEE_GX_CACHE_LOG").is_some() {
+            let f = &self.frame;
+            eprintln!("gx cache: prepared {} textures {} tex_bgs {} samplers {} pipelines {} efb_copies {} wgsl {} frame vecs {} {} {} {} draws {}", self.prepared, self.textures.len(), self.tex_bgs.len(), self.samplers.len(), self.pipelines.len(), self.efb_copies.len(), self.wgsl_hashes.len(), f.vbuf.capacity(), f.abuf.capacity(), f.ibuf.capacity(), f.ubuf.capacity(), f.draws.capacity());
+        }
         let mut fc = std::mem::take(&mut self.frame);
         // the CPU packing, done on the GX decode thread when it handed one over for exactly these draws
         let key = (draws.as_ptr() as usize, draws.len());

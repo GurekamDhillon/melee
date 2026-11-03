@@ -58,9 +58,9 @@ pub mod ext {
     fn Player_SetModelScale(a0: i32, a1: f32) = crate::tu::adapt::Player_SetModelScale__1d6c7a;
     fn Player_SetPlayerAndEntityCpuType(a0: i32, a1: i32) = crate::tu::adapt::Player_SetPlayerAndEntityCpuType__534529;
     fn Player_SetStocks(a0: i32, a1: i32) = crate::tu::adapt::Player_SetStocks__1270f2;
-    fn ftBossLib_8015C74C() -> i32;
-    fn ftBossLib_8015C7EC() -> i32;
-    fn ftBossLib_8015C92C() -> i32;
+    fn ftBossLib_8015C74C() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C74C;
+    fn ftBossLib_8015C7EC() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C7EC;
+    fn ftBossLib_8015C92C() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C92C;
     fn ftBossLib_8015CB9C(a0: i32) = crate::tu::adapt::ftBossLib_8015CB9C__c24da3;
     fn ftBossLib_8015CC14() = crate::tu::adapt::ftBossLib_8015CC14__f4f13c;
     fn ftLib_8008731C(a0: *mut HSD_GObj) -> i32 = crate::tu::adapt::ftLib_8008731C__becdfc;

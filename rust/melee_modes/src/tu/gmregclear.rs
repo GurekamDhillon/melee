@@ -66,7 +66,7 @@ pub mod ext {
         fn Player_GetPlayerId(slot: i32) -> i32 = crate::tu::adapt::Player_GetPlayerId__aaadbd;
         fn Player_GetPlayerSlotType(slot: i32) -> Gm_PKind = crate::tu::adapt::Player_GetPlayerSlotType__2d05e5;
         fn fn_801689E4(a0: *mut HSD_JObj, a1: *mut DynamicModelDesc, a2: i32) -> () = crate::tu::adapt::fn_801689E4__f8906a;
-        fn fn_80168A6C(a0: *mut c_void, a1: *mut c_void, a2: i32) -> ();
+        fn fn_80168A6C(a0: *mut c_void, a1: *mut c_void, a2: i32) -> () = crate::tu::gm_1601::fn_80168A6C_native;
         fn fn_80168F2C(a0: i8) -> () = crate::tu::adapt::fn_80168F2C__69f670;
         fn fn_80168F7C() -> () = crate::tu::adapt::fn_80168F7C__c9139a;
         fn fn_8016F140(a0: i32) -> () = crate::tu::adapt::fn_8016F140__cc064d;
@@ -148,6 +148,10 @@ pub struct RegClear {
     pub x4C: DynamicModelDesc,
     pub x5C: *mut c_void,
     pub x60: *mut c_void,
+    /// x64 / x68: the last two of the eight words `fn_80168A6C` writes from x4C (the scene's camera anims and fogs;
+    /// C `pad_5C[0x10]`). With native 8-byte pointers they must be their own fields, or the copy runs into x6C / x70.
+    pub x64: *mut c_void,
+    pub x68: *mut c_void,
     pub x6C: *mut HSD_Text,
     pub x70: *mut HSD_Text,
     pub x74: *mut HSD_Text,

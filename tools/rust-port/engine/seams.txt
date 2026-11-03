@@ -100,3 +100,6 @@ HeapCheck\w*
 # the headless engine draws nothing: the GObj render pass is the renderer step's (melee_gx sink) job
 !HSD_GObj_80390FC0
 ItemEvent
+# data-driven Target Test layouts (gw_runtime.c gw_TTMod_*, mods/targettest/<name>.tt): no mods, no layout (-1 / 0)
+TTMod_ForCharacter	-1
+TTMod_\w+

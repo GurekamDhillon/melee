@@ -504,6 +504,11 @@ pub fn install_gen() {
     unsafe { if melee_world::tu::ground::ext::hook::Mex_GrTrace.is_none() { melee_world::tu::ground::ext::hook::Mex_GrTrace = Some(|| 0); } }
     unsafe { if melee_world::tu::ground::ext::hook::Mex_GuestLr.is_none() { melee_world::tu::ground::ext::hook::Mex_GuestLr = Some(|| 0); } }
     unsafe { if melee_world::tu::ground::ext::hook::StageSkin_ApplyForLoad.is_none() { melee_world::tu::ground::ext::hook::StageSkin_ApplyForLoad = Some(|_, _, _| ()); } }
+    unsafe { if melee_world::tu::ground::ext::hook::TTMod_ForCharacter.is_none() { melee_world::tu::ground::ext::hook::TTMod_ForCharacter = Some(|_| -1); } }
+    unsafe { if melee_world::tu::ground::ext::hook::TTMod_Platform.is_none() { melee_world::tu::ground::ext::hook::TTMod_Platform = Some(|_, _, _, _, _, _, _| ()); } }
+    unsafe { if melee_world::tu::ground::ext::hook::TTMod_PlatformCount.is_none() { melee_world::tu::ground::ext::hook::TTMod_PlatformCount = Some(|_| 0); } }
+    unsafe { if melee_world::tu::ground::ext::hook::TTMod_Target.is_none() { melee_world::tu::ground::ext::hook::TTMod_Target = Some(|_, _, _, _, _| ()); } }
+    unsafe { if melee_world::tu::ground::ext::hook::TTMod_TargetCount.is_none() { melee_world::tu::ground::ext::hook::TTMod_TargetCount = Some(|_| 0); } }
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_8002305C = Some(|_, _| 0); }
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_800236B8 = Some(|_| 0); }
     unsafe { melee_world::tu::ground::ext::hook::lbAudioAx_80023710 = Some(|_| 0); }

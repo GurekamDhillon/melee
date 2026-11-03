@@ -490,6 +490,17 @@ impl GxShim {
                         for k in 0..c.shader.tev_stage_count as usize { eprintln!("   TEV {k}: {:?}", c.shader.tev_stages[k]); }
                         eprintln!("   ALPHACMP {:?}", c.shader.alpha_compare);
                         eprintln!("   CHAN {:?}", &c.shader.color_channels[..2]);
+                        eprintln!("   TCG {:?}", &c.shader.tcgs[..2]);
+                        eprintln!("   ATTR {:?} fmt {} verts {:02x?}", &c.shader.attrs[..13], d.fmt, &d.verts[..d.verts.len().min(96)]);
+                        for t in 0..2 {
+                            let x = &d.textures[t];
+                            eprintln!("   TEX{t} {}x{} fmt {} tlut {} mode0 {:#x} mode1 {:#x}", x.width, x.height, x.format, x.tlut, x.mode0, x.mode1);
+                        }
+                        for (k, t) in d.tluts.iter().enumerate() {
+                            let bytes = t.data.as_ref().map(|g| g[..g.len().min(64)].to_vec());
+                            eprintln!("   TLUT{k} tlut {} load {:#x} n {} fmt {} data {:02x?}", t.tlut, t.load_tlut0, t.num_entries, t.format, bytes);
+                        }
+                        eprintln!("   UBUF {:02x?}", &d.uniform[..d.uniform.len().min(512)]);
                     }
                 }
             }
@@ -502,6 +513,7 @@ impl GxShim {
     pub fn copy_tex(&mut self, dest: u64, clear: bool) {
         self.stats.tex_copies = self.stats.tex_copies.wrapping_add(1);
         let (src, (w, h, fmt, half)) = (self.tex_copy_src, self.tex_copy_dst);
+        if { static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new(); *ON.get_or_init(|| std::env::var_os("MELEE_GX_TEXCOPYLOG").is_some()) } { eprintln!("TEXCOPY copy# {} src {:?} {}x{} fmt {:#x}", self.stats.copies, src, w, h, fmt); }
         self.gx.copy_tex(dest, src, w, h, fmt, half, clear);
     }
     /// The last frame GXCopyDisp finished, if any (the presenter renders it against

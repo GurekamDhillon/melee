@@ -64,6 +64,11 @@ pub fn ftMh_FingerBeamLoop_Anim(gobj: *mut HSD_GObj) {
             (*fp).mv.mh.unk0.x38 = 0;
             (*fp).mv.mh.unk0.x3C = 0;
             (*fp).mv.mh.unk0.x40 = 0;
+            // ...the item slots (their native place: melee_types gen/native_unions.py)
+            (*fp).mv.mh.fingerbeam.x34 = core::ptr::null_mut();
+            (*fp).mv.mh.fingerbeam.x38 = core::ptr::null_mut();
+            (*fp).mv.mh.fingerbeam.x3C = core::ptr::null_mut();
+            (*fp).mv.mh.fingerbeam.x40 = core::ptr::null_mut();
         }
     }
 }

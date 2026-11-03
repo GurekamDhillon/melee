@@ -151,10 +151,10 @@ pub mod ext {
         fn fn_8017EDDC() -> i32 = crate::tu::gm_17eb::fn_8017EDDC;
         fn ftBossLib_8015C2A8() -> i32 = crate::tu::adapt::ftBossLib_8015C2A8__1b0da4;
         fn ftBossLib_8015C530(a0: i32) -> i32 = crate::tu::adapt::ftBossLib_8015C530__eca1c0;
-        fn ftBossLib_8015C74C() -> i32;
-        fn ftBossLib_8015C7EC() -> i32;
-        fn ftBossLib_8015C88C() -> i32;
-        fn ftBossLib_8015C9CC() -> i32;
+        fn ftBossLib_8015C74C() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C74C;
+        fn ftBossLib_8015C7EC() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C7EC;
+        fn ftBossLib_8015C88C() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C88C;
+        fn ftBossLib_8015C9CC() -> i32 = melee_fighter::tu::ftbosslib::ftBossLib_8015C9CC;
         fn ftBossLib_8015CA6C(a0: i32) = crate::tu::adapt::ftBossLib_8015CA6C__e73ae5;
         fn ftBossLib_8015CB7C() = crate::tu::adapt::ftBossLib_8015CB7C__08c5b8;
         fn ftBossLib_8015CB9C(a0: i32) = crate::tu::adapt::ftBossLib_8015CB9C__c24da3;

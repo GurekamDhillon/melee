@@ -169,7 +169,7 @@ pub mod ext {
     pub use crate::tu::gmmultiman::gm_Mode_3Min_States;
     pub static mut gm_Mode_Adventure_States: [GameModeState; 49] = unsafe { core::mem::zeroed() };
     pub static mut gm_Mode_AllStar_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
-    pub static mut gm_Mode_Boot_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
+    pub static mut gm_Mode_Boot_States: [GameModeState; 2] = unsafe { core::mem::zeroed() };
     pub use crate::tu::gmfixedcamera::gm_Mode_CameraVs_States;
     pub use crate::tu::gmcameramode::gm_Mode_Camera_States;
     pub static mut gm_Mode_ChallengerApproach_States: [GameModeState; 4] = unsafe { core::mem::zeroed() };
@@ -191,7 +191,7 @@ pub mod ext {
     pub static mut gm_Mode_InvisibleVs_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
     pub use crate::tu::geno_lab_mode::gm_Mode_Lab_States;
     pub static mut gm_Mode_LightningVs_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
-    pub static mut gm_Mode_MemCard_States: [GameModeState; 1] = unsafe { core::mem::zeroed() };
+    pub static mut gm_Mode_MemCard_States: [GameModeState; 2] = unsafe { core::mem::zeroed() };
     pub use crate::tu::gmmenumode::gm_Mode_Menu_States;
     pub use crate::tu::gmopeningmode::gm_Mode_Opening_States;
     pub use crate::tu::gmprogressivemode::gm_Mode_ProgScan_States;

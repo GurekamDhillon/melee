@@ -229,13 +229,16 @@ pub unsafe extern "C" fn getCurrentIcon() -> *mut c_void {
 /// 01C87C
 pub unsafe extern "C" fn lb_8001C87C() -> u32 {
     melee_core::ct!("lb_8001C87C");
-    ext::lb_8001B7E0(
+    gc_stage();
+    let r = ext::lb_8001B7E0(
         0,
         filename.as_mut_ptr() as *mut i8,
         (&raw mut manifest) as *mut c_void,
         (&raw mut lb_803BAB60) as *mut c_void,
         (&raw mut state.unk_status) as *mut i32,
-    )
+    );
+    gc_unstage();
+    r
 }
 
 /// 01C8BC
@@ -244,6 +247,7 @@ pub unsafe extern "C" fn lb_8001C8BC() -> i32 {
     assert!(state.enable != 0, "lbcardgame.c:320 enable");
     let a4 = lb_8001C658();
     let a5 = getCurrentIcon();
+    gc_stage();
     ext::lb_8001BC18(
         0,
         filename.as_mut_ptr() as *mut i8,
@@ -294,12 +298,18 @@ pub unsafe extern "C" fn lb_8001CBBC() -> u32 {
     if updateCardStatus() != LbCardStatus_0 {
         return LbCardResult_Invalid;
     }
+    gc_stage();
     let result = ext::lb_8001BD34(
         0,
         filename.as_ptr() as *const i8,
         (&raw mut manifest) as *mut c_void,
         (&raw mut state.unk_status) as *mut c_void,
     ) as u32;
+    gc_unstage();
+    if GC_IMAGE {
+        let errs: SVec<i32> = (1..9).map(|i| crate::tu::lbcardnew::lb_8001B6E0(i)).collect();
+        eprintln!("gw: card: load result {} (per-file errors, save + 7 name-tag banks: {:?})", result, errs);
+    }
     if result != LbCardResult_Ready && result != LbCardResult_2 {
         state.card_status = LbCardStatus_2;
     }
@@ -328,6 +338,7 @@ pub unsafe extern "C" fn dont_inline_helper() -> u32 {
     }
     let icon = getCurrentIcon();
     let comment = lb_8001C658();
+    gc_stage();
     ext::lb_8001BE30(
         0,
         filename.as_ptr() as *const i8,
@@ -520,5 +531,133 @@ pub unsafe extern "C" fn lbCardGame_Init() {
     manifest[1].data = (&raw mut (*ext::gmMainLib_GetCardData()).save_data) as *mut c_void;
     for i in 0..GM_NAMETAG_BANK_COUNT as usize {
         manifest[2 + i].data = ext::gmMainLib_GetNameTagDataBanks().add(i) as *mut c_void;
+    }
+}
+
+// ---- TARGET_PC: the save files in GameCube byte order ----------------------------------------------------------
+use melee_core::gcdecode::GcDecode;
+use std::vec::Vec as SVec;
+//
+// The C build keeps game memory big-endian, so its lbcardnew writes GmSaveData and the name-tag banks to the card as
+// GameCube bytes. Here those structs are native, so with a card installed (`GC_IMAGE`, set by the engine's card
+// shim) the manifest points at staging buffers holding the GameCube image instead: each call that hands the
+// manifest to lbcardnew first encodes native -> image, and each read decodes image -> native afterwards. That is the
+// C's in-place semantics (a read overwrites the live struct with whatever came off the card, valid or not), and the
+// card bytes match the C build's, so a save made by one build loads in the other. Off (the TU oracle and the
+// save-less golden runs), the manifest points at the native structs exactly as the C does.
+
+/// Set by the card shim: the manifest's data is the GameCube image of the save structs.
+pub static mut GC_IMAGE: bool = false;
+
+/// The GameCube byte each native byte of `T` is decoded from (`u32::MAX`: none). `T` must be pointer-free plain data
+/// whose decode is a byte permutation (scalars swapped, bitfield runs copied); `gc_image` checks that once.
+pub fn gc_permutation<T: GcDecode>() -> SVec<u32> {
+    let n = core::mem::size_of::<T>();
+    let g = T::GC_BYTES as usize;
+    assert!(g < 0xFF00, "gc_permutation: {} bytes", g);
+    let relocs = melee_core::gcdecode::RelocSet::default();
+    let decode = |bytes: &[u8]| -> SVec<u8> {
+        let mut d = melee_core::gcdecode::GcDecoder::new(bytes, &relocs);
+        let v = T::gc_decode(&mut d, 0);
+        let p = &v as *const T as *const u8;
+        let out = unsafe { core::slice::from_raw_parts(p, n) }.to_vec();
+        core::mem::forget(v);
+        out
+    };
+    let lo: SVec<u8> = (0..g).map(|i| i as u8).collect();
+    let hi: SVec<u8> = (0..g).map(|i| ((i >> 8) + 1) as u8).collect();
+    let (nl, nh) = (decode(&lo), decode(&hi));
+    let perm: SVec<u32> = (0..n).map(|j| if nh[j] == 0 { u32::MAX } else { (((nh[j] as u32) - 1) << 8) | nl[j] as u32 }).collect();
+    // a byte permutation decodes any image to the same bytes the map predicts
+    let probe: SVec<u8> = (0..g).map(|i| (i as u32).wrapping_mul(2654435761).rotate_left(7) as u8 | 1).collect();
+    let np = decode(&probe);
+    for j in 0..n {
+        let want = if perm[j] == u32::MAX { 0 } else { probe[perm[j] as usize] };
+        assert_eq!(np[j], want, "gc_permutation: byte {} of a {}-byte struct is not a plain copy", j, n);
+    }
+    perm
+}
+
+/// native -> image (bytes the native struct does not cover keep what the image held: what was read off the card)
+pub unsafe fn gc_encode(perm: &[u32], native: *const u8, image: &mut [u8]) {
+    for (j, &k) in perm.iter().enumerate() {
+        if k != u32::MAX {
+            image[k as usize] = *native.add(j);
+        }
+    }
+}
+
+/// image -> native
+pub unsafe fn gc_decode_into(perm: &[u32], image: &[u8], native: *mut u8) {
+    for (j, &k) in perm.iter().enumerate() {
+        if k != u32::MAX {
+            *native.add(j) = image[k as usize];
+        }
+    }
+}
+
+struct GcImage {
+    save_perm: SVec<u32>,
+    tag_perm: SVec<u32>,
+    save: SVec<u8>,
+    tags: SVec<SVec<u8>>,
+}
+static mut IMAGE: Option<GcImage> = None;
+
+unsafe fn image() -> &'static mut GcImage {
+    if IMAGE.is_none() {
+        IMAGE = Some(GcImage {
+            save_perm: gc_permutation::<GmSaveData>(),
+            tag_perm: gc_permutation::<NameTagDataBank>(),
+            save: std::vec![0; <GmSaveData as GcDecode>::GC_BYTES as usize],
+            tags: (0..GM_NAMETAG_BANK_COUNT as usize).map(|_| std::vec![0; <NameTagDataBank as GcDecode>::GC_BYTES as usize]).collect(),
+        });
+    }
+    IMAGE.as_mut().unwrap()
+}
+
+/// One line with the fields a persistence test checks (MELEE_CARD_DIAG=1 also logs every write).
+unsafe fn log_save(what: &str) {
+    let sd = &*(native_save() as *const GmSaveData);
+    eprintln!(
+        "gw: card: {}: unlocked_characters={:#06x} rumble={:?} sound_balance={} deflicker={} language={} trophies={} vs_matches(time/stock)={}/{} vs_play_time={}",
+        what, sd.unlocked_characters, sd.x1CB0.rumble_enabled, sd.x1CB0.sound_balance, sd.x1CB0.deflicker, sd.x1CB0.saved_language,
+        sd.trophy_count, sd.time_matches, sd.stock_matches, sd.x1A38
+    );
+}
+
+unsafe fn native_save() -> *mut u8 {
+    (&raw mut (*ext::gmMainLib_GetCardData()).save_data) as *mut u8
+}
+
+/// Before a call that takes the manifest: point it at the image and refresh the image from the native structs.
+unsafe fn gc_stage() {
+    if !GC_IMAGE {
+        return;
+    }
+    if std::env::var_os("MELEE_CARD_DIAG").is_some() {
+        log_save("native -> save image");
+    }
+    let im = image();
+    gc_encode(&im.save_perm, native_save(), &mut im.save);
+    manifest[1].data = im.save.as_mut_ptr() as *mut c_void;
+    manifest[1].file_size = im.save.len() as i32;
+    for i in 0..GM_NAMETAG_BANK_COUNT as usize {
+        gc_encode(&im.tag_perm, ext::gmMainLib_GetNameTagDataBanks().add(i) as *const u8, &mut im.tags[i]);
+        manifest[2 + i].data = im.tags[i].as_mut_ptr() as *mut c_void;
+        manifest[2 + i].file_size = im.tags[i].len() as i32;
+    }
+}
+
+/// After a read: the native structs take what the card read left in the image.
+unsafe fn gc_unstage() {
+    if !GC_IMAGE {
+        return;
+    }
+    let im = image();
+    gc_decode_into(&im.save_perm, &im.save, native_save());
+    log_save("save image -> native");
+    for i in 0..GM_NAMETAG_BANK_COUNT as usize {
+        gc_decode_into(&im.tag_perm, &im.tags[i], ext::gmMainLib_GetNameTagDataBanks().add(i) as *mut u8);
     }
 }

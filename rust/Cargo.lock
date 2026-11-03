@@ -1195,6 +1195,7 @@ version = "0.1.0"
 dependencies = [
  "melee_chara",
  "melee_core",
+ "melee_data",
  "melee_fighter",
  "melee_gx",
  "melee_items",

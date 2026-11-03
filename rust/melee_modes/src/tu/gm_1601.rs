@@ -3880,6 +3880,34 @@ pub fn gm_MatchHasMultipleWinners_fp(end: &MatchEnd_gm_r4) -> bool {
     false
 }
 
+/// gm_1601.c `fn_80168A6C(arg0, arg1, idx)` on the native records: `arg0` is a `SceneDesc` (models, cameras, lights,
+/// fogs) and `arg1` the eight pointer words that follow a `DynamicModelDesc` (gmregclear.c x4C..x68). The C copies them
+/// as s32 words (4-byte pointers); here each word is a pointer: words 0..3 = `*models[idx]` (joint, anims, matanims,
+/// shapeanims), 4 = lights, 5..6 = `*cameras` (desc, anims), 7 = fogs.
+///
+/// # Safety
+/// `arg0` points at a SceneDesc whose `models` holds index `idx`; `arg1` at eight writable pointer words.
+pub unsafe fn fn_80168A6C_native(arg0: *mut c_void, arg1: *mut c_void, idx: i32) {
+    melee_core::ct!("fn_80168A6C");
+    let src = arg0 as *const SceneDesc;
+    let w = arg1 as *mut *mut c_void;
+    core::ptr::write_bytes(w, 0, 8);
+    let m = *(*src).models.offset(idx as isize);
+    if !m.is_null() {
+        let mw = m as *const *mut c_void;
+        for k in 0..4 {
+            *w.add(k) = *mw.add(k);
+        }
+    }
+    if !(*src).cameras.is_null() {
+        let cw = (*src).cameras as *const *mut c_void;
+        *w.add(5) = *cw;
+        *w.add(6) = *cw.add(1);
+    }
+    *w.add(4) = (*src).lights as *mut c_void;
+    *w.add(7) = (*src).fogs as *mut c_void;
+}
+
 // ---- folded from gm_r7.rs (consolidation steps 21/22) ----
 /// gm_1601.c `fn_80168A6C_fp`: zero eight words of `arg1`, then copy `src->x0[idx][0..4]` (when
 /// non-NULL) to words 0..3, `src->x4[0..2]` (when non-NULL) to 5..6, x8 to 4 and xC to 7.

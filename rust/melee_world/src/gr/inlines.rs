@@ -47,7 +47,8 @@ pub mod ext {
     unsafe fn todo_Ground_UpdateMapColl(_g: *mut HSD_GObj) -> i32 { { return unsafe { crate::tu::ground::Ground_UpdateMapColl(_g as _) as _ }; } }
     unsafe fn todo_lb_800115F4() { { unsafe { let _ = melee_runtime::tu::lb_00F9::lb_800115F4(); } return; } }
     unsafe fn todo_GObj_SetupGXLink(_g: *mut HSD_GObj, _cb: GObj_RenderFunc, _gx: u8, _pri: u32) { unsafe { let _ = melee_runtime::tu::gobj_native::GObj_SetupGXLink(_g as _, _cb as _, _gx as _, _pri as _); } }
-    unsafe fn todo_Mex_GrBind(_f: *mut c_void) -> *mut c_void { panic!("TODO(group2: pc/mex Mex_GrBind) Mex_GrBind") }
+    // gw_Mex_GrBind: no m-ex blob is loaded here, so every callback is already a native pointer and passes through
+    unsafe fn todo_Mex_GrBind(_f: *mut c_void) -> *mut c_void { _f }
     unsafe fn todo_HSD_GObj_SetupProc(_g: *mut HSD_GObj, _f: HSD_GObjEvent, _pri: u8) { unsafe { let _ = melee_runtime::tu::gobj_native::HSD_GObj_SetupProc(_g as _, _f as _, _pri as _); } }
     unsafe fn todo_stage_info() -> *mut StageInfo { unsafe { core::ptr::addr_of_mut!(crate::tu::ground::stage_info) } }
     unsafe fn todo_Ground_801C39C0() { { unsafe { let _ = crate::tu::ground::Ground_801C39C0(); } return; } }

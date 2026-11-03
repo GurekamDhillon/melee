@@ -205,7 +205,7 @@ pub mod ext {
 
     /// `HSD_GObj_803910D8` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): GX-link render callbacks; address only.
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
+        unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj as _, _code as _) };
     }
     pub unsafe extern "C" fn HSD_GObj_JObjCallback(_gobj: *mut HSD_GObj, _code: i32) {
         { unsafe { melee_runtime::tu::gobj::HSD_GObj_JObjCallback(_gobj as _, _code as _); } return; };

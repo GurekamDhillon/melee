@@ -252,10 +252,21 @@ pub struct Renderer {
     pub width: u32,
     pub height: u32,
     /// Internal resolution multiplier over the 640x480 EFB (`MELEE_RENDER_SCALE`): GX viewport / scissor
-    /// coordinates are scaled by it.
+    /// coordinates are scaled by it (vertically; horizontally by `width / 640`, see `aspect`).
     pub scale: u32,
+    /// The content aspect the target is shaped to ([`Renderer::set_target`]): 4:3 by default. Widescreen (the C
+    /// build's AURORA_VIEWPORT_ASPECT policy) widens the target and maps the logical 640-wide GX viewport across it.
+    pub aspect: f32,
+    /// MSAA sample count of the EFB pass (`MELEE_MSAA`, 1 = off). `color` is always the single-sample (resolved)
+    /// target that the EFB copies, the blit and the readback read.
+    pub samples: u32,
+    /// The logical EFB size GX coordinates are in (the constructor's `width` x `height`: 640x480 for the game).
+    base: (u32, u32),
     color: wgpu::Texture,
     depth: wgpu::Texture,
+    /// The multisampled colour target the EFB pass draws into when `samples > 1` (resolved into `color` at the end
+    /// of every pass, so an EFB copy between passes reads the resolved image).
+    msaa: Option<wgpu::Texture>,
     bgl_storage: wgpu::BindGroupLayout,
     bgl_uniform: wgpu::BindGroupLayout,
     bgl_textures: wgpu::BindGroupLayout,
@@ -554,44 +565,73 @@ impl Renderer {
         Self::with_instance(&Self::instance(), None, width, height)
     }
 
-    /// `MELEE_RENDER_SCALE` (1..=4), when set.
+    /// Largest internal scale (`MELEE_RENDER_SCALE`); the target is further capped by the device's texture limit.
+    pub const MAX_SCALE: u32 = 8;
+
+    /// `MELEE_RENDER_SCALE` (1..=8), when set to a number (`auto` or unset: follow the window).
     pub fn env_scale() -> Option<u32> {
-        std::env::var("MELEE_RENDER_SCALE").ok().and_then(|v| v.parse::<u32>().ok()).map(|s| s.clamp(1, 4))
+        std::env::var("MELEE_RENDER_SCALE").ok().and_then(|v| v.trim().parse::<u32>().ok()).filter(|&s| s > 0).map(|s| s.clamp(1, Self::MAX_SCALE))
+    }
+
+    /// `MELEE_MSAA` (1, 2, 4 or 8, an optional trailing `x`; other counts round down to one of them), default 1 (off).
+    pub fn env_msaa() -> u32 {
+        let n = std::env::var("MELEE_MSAA").ok().and_then(|v| v.trim().trim_end_matches(['x', 'X']).parse::<u32>().ok()).unwrap_or(1);
+        match n {
+            0 | 1 => 1,
+            2 | 3 => 2,
+            4..=7 => 4,
+            _ => 8,
+        }
     }
 
     /// The internal scale that renders a 640x480 EFB at (at least) a `w` x `h` window's native resolution.
     pub fn scale_for_window(w: u32, h: u32) -> u32 {
-        (w.div_ceil(640)).max(h.div_ceil(480)).clamp(1, 4)
+        Self::scale_for_window_aspect(w, h, 4.0 / 3.0)
+    }
+
+    /// [`Renderer::scale_for_window`] for a target of content aspect `aspect` (480 logical lines, `480 * aspect` wide).
+    pub fn scale_for_window_aspect(w: u32, h: u32, aspect: f32) -> u32 {
+        let lw = (480.0 * aspect.max(0.1)).round().max(1.0) as u32;
+        (w.div_ceil(lw)).max(h.div_ceil(480)).clamp(1, 4)
+    }
+
+    /// Target size in pixels for a logical `base` EFB at `scale` and content aspect `aspect`: `base.1 * scale` lines and
+    /// `round(lines * aspect)` columns (exactly `base.0 * scale` at the base's own aspect), shrunk to fit `max` (the
+    /// device's 2D texture limit).
+    pub fn target_size(base: (u32, u32), scale: u32, aspect: f32, max: u32) -> (u32, u32) {
+        let h = base.1 * scale;
+        let native = base.0 as f32 / base.1.max(1) as f32;
+        let w = if (aspect - native).abs() < 1e-6 { base.0 * scale } else { (h as f64 * aspect as f64).round() as u32 };
+        if w <= max && h <= max {
+            return (w.max(1), h);
+        }
+        let k = (max as f64 / w as f64).min(max as f64 / h as f64);
+        (((w as f64 * k).floor() as u32).max(1), ((h as f64 * k).floor() as u32).max(1))
     }
 
     /// Change the internal resolution multiplier: recreates the colour / depth targets (contents are lost).
     pub fn set_scale(&mut self, scale: u32) {
-        let scale = scale.clamp(1, 4);
-        if scale == self.scale {
-            return;
+        self.set_target(scale, self.aspect);
+    }
+
+    /// Change the scale and the content aspect (widescreen): recreates the targets when either changed. Returns
+    /// true when they were recreated (their contents are lost).
+    pub fn set_target(&mut self, scale: u32, aspect: f32) -> bool {
+        let scale = scale.clamp(1, Self::MAX_SCALE);
+        let aspect = if aspect.is_finite() && aspect > 0.0 { aspect } else { 4.0 / 3.0 };
+        if scale == self.scale && aspect.to_bits() == self.aspect.to_bits() {
+            return false;
         }
-        let (w, h) = (self.width / self.scale * scale, self.height / self.scale * scale);
-        let mk = |format, usage, label| {
-            self.device.create_texture(&wgpu::TextureDescriptor {
-                label: Some(label),
-                size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format,
-                usage,
-                view_formats: &[],
-            })
-        };
-        self.color = mk(
-            COLOR_FORMAT,
-            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
-            "GX EFB color",
-        );
-        self.depth = mk(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, "GX EFB depth");
+        let (w, h) = Self::target_size(self.base, scale, aspect, self.device.limits().max_texture_dimension_2d);
+        let (color, depth, msaa) = make_targets(&self.device, w, h, self.samples);
+        self.color = color;
+        self.depth = depth;
+        self.msaa = msaa;
         self.width = w;
         self.height = h;
         self.scale = scale;
+        self.aspect = aspect;
+        true
     }
 
     /// The wgpu instance [`Renderer::new`] uses (primary backends, WGPU_BACKEND overrides).
@@ -609,7 +649,8 @@ impl Renderer {
         height: u32,
     ) -> Result<Self, String> {
         let scale = Self::env_scale().unwrap_or(1);
-        let (width, height) = (width * scale, height * scale);
+        let base = (width, height);
+        let aspect = width as f32 / height.max(1) as f32;
         let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::HighPerformance,
             force_fallback_adapter: false,
@@ -628,24 +669,15 @@ impl Renderer {
             ..Default::default()
         }))
         .map_err(|e| format!("request_device: {e}"))?;
-        let mk_target = |format, usage, label| {
-            device.create_texture(&wgpu::TextureDescriptor {
-                label: Some(label),
-                size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format,
-                usage,
-                view_formats: &[],
-            })
-        };
-        let color = mk_target(
-            COLOR_FORMAT,
-            wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
-            "GX EFB color",
-        );
-        let depth = mk_target(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, "GX EFB depth");
+        // MSAA: the largest count not above the request that both EFB formats support.
+        let want = Self::env_msaa();
+        let ok = |n: u32| [COLOR_FORMAT, DEPTH_FORMAT].iter().all(|&f| adapter.get_texture_format_features(f).flags.sample_count_supported(n));
+        let samples = [8u32, 4, 2, 1].into_iter().find(|&n| n <= want && (n == 1 || ok(n))).unwrap_or(1);
+        if samples != want {
+            eprintln!("gx: MSAA {want}x not supported by {}: using {samples}x", adapter_info.name);
+        }
+        let (width, height) = Self::target_size(base, scale, aspect, device.limits().max_texture_dimension_2d);
+        let (color, depth, msaa) = make_targets(&device, width, height, samples);
         let vs_fs = wgpu::ShaderStages::VERTEX_FRAGMENT;
         let storage = |b| wgpu::BindGroupLayoutEntry {
             binding: b,
@@ -720,8 +752,12 @@ impl Renderer {
             width,
             height,
             scale,
+            aspect,
+            samples,
+            base,
             color,
             depth,
+            msaa,
             bgl_storage,
             bgl_uniform,
             bgl_textures,
@@ -817,7 +853,7 @@ impl Renderer {
                     clamp: pc.polygon_offset_clamp,
                 },
             }),
-            multisample: Default::default(),
+            multisample: wgpu::MultisampleState { count: self.samples, ..Default::default() },
             fragment: Some(wgpu::FragmentState {
                 module: &module,
                 entry_point: Some("fs_main"),
@@ -943,13 +979,16 @@ impl Renderer {
             ..Default::default()
         });
         self.copy_pipe = Some((pipe, bgl, smp));
-        let module = d.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("GX EFB depth copy"), source: wgpu::ShaderSource::Wgsl(ZCOPY_WGSL.into()) });
+        // with MSAA the depth target is multisampled: the copy reads sample 0 (textureLoad's last argument)
+        let ms = self.samples > 1;
+        let src = if ms { ZCOPY_WGSL.replace("texture_depth_2d", "texture_depth_multisampled_2d") } else { ZCOPY_WGSL.to_string() };
+        let module = d.create_shader_module(wgpu::ShaderModuleDescriptor { label: Some("GX EFB depth copy"), source: wgpu::ShaderSource::Wgsl(src.into()) });
         let bgl = d.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: Some("GX EFB depth copy"),
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
                 visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false },
+                ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Depth, view_dimension: wgpu::TextureViewDimension::D2, multisampled: ms },
                 count: None,
             }],
         });
@@ -1300,9 +1339,10 @@ impl Renderer {
         }
         let color_view = self.color.create_view(&Default::default());
         let depth_view = self.depth.create_view(&Default::default());
+        let msaa_view = self.msaa.as_ref().map(|t| t.create_view(&Default::default()));
         let mut enc = self.device.create_command_encoder(&Default::default());
         let fc = &self.frame;
-        let dims = (self.width, self.height, self.scale);
+        let dims = (self.width, self.height, self.width as f32 / self.base.0 as f32, self.height as f32 / self.base.1 as f32);
         // One EFB pass per run of draws between EFB copies; a copy with `clear` starts the next pass cleared.
         let cc = state.clear_color;
         let mut clear = Some((wgpu::Color { r: cc[0] as f64, g: cc[1] as f64, b: cc[2] as f64, a: cc[3] as f64 }, state.clear_depth_value()));
@@ -1317,8 +1357,8 @@ impl Renderer {
                 let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("GX EFB"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: &color_view,
-                        resolve_target: None,
+                        view: msaa_view.as_ref().unwrap_or(&color_view),
+                        resolve_target: msaa_view.as_ref().map(|_| &color_view),
                         depth_slice: None,
                         ops: wgpu::Operations { load: cload, store: wgpu::StoreOp::Store },
                     })],
@@ -1345,7 +1385,7 @@ impl Renderer {
                     layout: bgl,
                     entries: &[wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(&zview) }],
                 });
-                let (ew, eh) = ((self.width / self.scale) as f32, (self.height / self.scale) as f32);
+                let (ew, eh) = (self.base.0 as f32, self.base.1 as f32); // copy rectangles are in logical EFB pixels
                 let r = [c.src[0] as f32 / ew, c.src[1] as f32 / eh, c.src[2] as f32 / ew, c.src[3] as f32 / eh];
                 let mut pc = [0u8; 32];
                 for (k, v) in r.iter().enumerate() {
@@ -1378,7 +1418,7 @@ impl Renderer {
                         wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(smp) },
                     ],
                 });
-                let (ew, eh) = ((self.width / self.scale) as f32, (self.height / self.scale) as f32);
+                let (ew, eh) = (self.base.0 as f32, self.base.1 as f32); // copy rectangles are in logical EFB pixels
                 let r = [c.src[0] as f32 / ew, c.src[1] as f32 / eh, c.src[2] as f32 / ew, c.src[3] as f32 / eh];
                 let mut pc = [0u8; 32];
                 for (k, v) in r.iter().enumerate() {
@@ -1708,8 +1748,34 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
     }
 }
 
+/// The EFB colour (single-sample: the resolve target with MSAA), the depth (`samples`) and, with MSAA, the
+/// multisampled colour target, all `w` x `h`.
+fn make_targets(device: &wgpu::Device, w: u32, h: u32, samples: u32) -> (wgpu::Texture, wgpu::Texture, Option<wgpu::Texture>) {
+    let mk = |format, usage, label, n| {
+        device.create_texture(&wgpu::TextureDescriptor {
+            label: Some(label),
+            size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: n,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage,
+            view_formats: &[],
+        })
+    };
+    let color = mk(
+        COLOR_FORMAT,
+        wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
+        "GX EFB color",
+        1,
+    );
+    let depth = mk(DEPTH_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING, "GX EFB depth", samples);
+    let msaa = (samples > 1).then(|| mk(COLOR_FORMAT, wgpu::TextureUsages::RENDER_ATTACHMENT, "GX EFB color (MSAA)", samples));
+    (color, depth, msaa)
+}
+
 /// Record `draws[range]` of the prepared frame `fc` into `pass` (an EFB pass; redundant state changes skipped).
-fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawCmd], range: std::ops::Range<usize>, (width, height, scale): (u32, u32, u32)) {
+fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawCmd], range: std::ops::Range<usize>, (width, height, kx, ky): (u32, u32, f32, f32)) {
     let (Some(sbg), Some(gi), Some((ubg, _))) = (fc.storage_bg.as_ref(), fc.gi.as_ref(), fc.uniform_bg.as_ref()) else { return };
     if range.is_empty() {
         return;
@@ -1717,8 +1783,12 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
     pass.set_bind_group(0, sbg, &[]);
     pass.set_index_buffer(gi.buf.slice(..), wgpu::IndexFormat::Uint16);
     let (w, h) = (width as f32, height as f32);
-    let k = scale as f32;
-    let ki = scale as i32;
+    // Logical GX pixels -> target pixels: `kx == ky == scale` at 4:3; a widescreen target stretches x, as Aurora's
+    // map_logical_viewport / map_logical_scissor do. Scissor edges snap outward to whole pixels.
+    let edge = |v: i32, k: f32, up: bool, max: u32| -> u32 {
+        let f = v as f32 * k;
+        (if up { f.ceil() } else { f.floor() }).clamp(0.0, max as f32) as u32
+    };
     let mut cur_vp = [f32::NAN; 6];
     let mut cur_sc = [u32::MAX; 4];
     let mut cur_pipe: Option<&wgpu::RenderPipeline> = None;
@@ -1730,17 +1800,17 @@ fn record_draws(pass: &mut wgpu::RenderPass<'_>, fc: &FrameCache, draws: &[DrawC
         let pd = &fc.draws[i];
         let (Some(p), Some(tex_bg)) = (pd.pipeline.as_ref(), pd.tex_bg.as_ref()) else { continue };
         let sc = d.render_scissor;
-        let sx = (sc.x * ki).clamp(0, width as i32) as u32;
-        let sy = (sc.y * ki).clamp(0, height as i32) as u32;
-        let sw = ((sc.width * ki).max(0) as u32).min(width - sx);
-        let sh = ((sc.height * ki).max(0) as u32).min(height - sy);
+        let sx = edge(sc.x, kx, false, width);
+        let sy = edge(sc.y, ky, false, height);
+        let sw = edge(sc.x + sc.width.max(0), kx, true, width).saturating_sub(sx);
+        let sh = edge(sc.y + sc.height.max(0), ky, true, height).saturating_sub(sy);
         if sw == 0 || sh == 0 {
             continue;
         }
         let vp = d.render_viewport;
-        let left = (vp.left * k).clamp(0.0, w);
-        let top = (vp.top * k).clamp(0.0, h);
-        let v = [left, top, (vp.width * k).min(w - left).max(1.0), (vp.height * k).min(h - top).max(1.0), 1.0 - vp.zfar, 1.0 - vp.znear];
+        let left = (vp.left * kx).clamp(0.0, w);
+        let top = (vp.top * ky).clamp(0.0, h);
+        let v = [left, top, (vp.width * kx).min(w - left).max(1.0), (vp.height * ky).min(h - top).max(1.0), 1.0 - vp.zfar, 1.0 - vp.znear];
         if v.iter().zip(cur_vp.iter()).any(|(a, b)| a.to_bits() != b.to_bits()) {
             pass.set_viewport(v[0], v[1], v[2], v[3], v[4], v[5]);
             cur_vp = v;

@@ -27,12 +27,12 @@ pub mod ext {
     pub fn HSD_JObjSetRotation(_j: *mut HSD_JObj, _q: &Quaternion) { unsafe { melee_world::tu::grinl::HSD_JObjSetRotation(_j as _, _q as *const _ as *mut _); } }
     pub fn mpFloorGetRight(_line: i32, _out: &mut Vec3) { unsafe { melee_world::tu::mplib::mpFloorGetRight(_line as _, _out as *mut _ as *mut _); } }
     pub fn mpFloorGetLeft(_line: i32, _out: &mut Vec3) { unsafe { melee_world::tu::mplib::mpFloorGetLeft(_line as _, _out as *mut _ as *mut _); } }
-    pub fn it_8026C3FC() { todo!("it_8026C3FC (it/it_26B1.c)") }
-    pub fn it_8026C42C() { todo!("it_8026C42C (it/it_26B1.c)") }
-    pub fn Camera_8002E818(_v: &Vec3) { todo!("Camera_8002E818 (cm/camera.c)") }
-    pub fn Camera_8002EA64(_v: &Vec3) { todo!("Camera_8002EA64 (cm/camera.c)") }
-    pub fn Camera_8002F0E4(_n: i32) { todo!("Camera_8002F0E4 (cm/camera.c)") }
-    pub fn Camera_SetModeToStandard() { todo!("Camera_SetModeToStandard (cm/camera.c)") }
+    pub fn it_8026C3FC() { unsafe { melee_items::tu::it_26B1::it_8026C3FC() } }
+    pub fn it_8026C42C() { unsafe { melee_items::tu::it_26B1::it_8026C42C() } }
+    pub fn Camera_8002E818(_v: &Vec3) { unsafe { melee_world::tu::camera::Camera_8002E818(_v as *const Vec3 as *mut _) } }
+    pub fn Camera_8002EA64(_v: &Vec3) { unsafe { melee_world::tu::camera::Camera_8002EA64(_v as *const Vec3 as *mut _) } }
+    pub fn Camera_8002F0E4(_n: i32) { unsafe { melee_world::tu::camera::Camera_8002F0E4(_n) } }
+    pub fn Camera_SetModeToStandard() { unsafe { melee_world::tu::camera::Camera_SetModeToStandard() } }
     #[allow(dead_code)]
     pub fn _unused(_g: G) {}
 }

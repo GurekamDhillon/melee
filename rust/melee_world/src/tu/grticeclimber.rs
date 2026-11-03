@@ -55,13 +55,13 @@ pub mod ext {
     unsafe fn todo_Ground_801C3FA4(_g: *mut HSD_GObj, _depth: i32) -> *mut HSD_JObj { { return unsafe { crate::tu::ground::Ground_801C3FA4(_g as _, _depth as _) as _ }; } }
     unsafe fn todo_HSD_JObjSetFlagsAll(_j: *mut HSD_JObj, _f: u32) { unsafe { melee_runtime::tu::jobj_world::HSD_JObjSetFlagsAll(_j as _, _f as _); } }
     unsafe fn todo_Ground_801C33C0(_a: i32, _b: i32) -> i32 { { return unsafe { crate::tu::ground::Ground_801C33C0(_a as _, _b as _) as _ }; } }
-    unsafe fn todo_grMaterial_801C8CFC(_a: i32, _b: i32, _gp: *mut Ground, _j: *mut HSD_JObj, _cb4: *const c_void, _cb5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, _cb6: *const c_void) -> *mut HSD_GObj { panic!("TODO(group2: gr/grmaterial.c) grMaterial_801C8CFC") }
+    unsafe fn todo_grMaterial_801C8CFC(_a: i32, _b: i32, _gp: *mut Ground, _j: *mut HSD_JObj, _cb4: *const c_void, _cb5: Option<unsafe extern "C" fn(*mut HSD_GObj, *mut Ground, *mut Vec3, *mut HSD_GObj, f32)>, _cb6: *const c_void) -> *mut HSD_GObj { crate::tu::grmaterial::grMaterial_801C8CFC(_a as _, _b as _, _gp as _, _j as _, core::mem::transmute(_cb4), core::mem::transmute(_cb5), core::mem::transmute(_cb6)) as _ }
     unsafe fn todo_grMaterial_801C8DE0(_g: *mut HSD_GObj, _a: f32, _b: f32, _c: f32, _d: f32, _e: f32, _f: f32, _h: f32) { { unsafe { crate::tu::grmaterial::grMaterial_801C8DE0(_g as _, _a as _, _b as _, _c as _, _d as _, _e as _, _f as _, _h as _); } return; } }
     unsafe fn todo_grMaterial_801C8E08(_g: *mut HSD_GObj) { { unsafe { crate::tu::grmaterial::grMaterial_801C8E08(_g as _); } return; } }
     unsafe fn todo_grMaterial_801C8CDC(_g: *mut HSD_GObj) { { unsafe { crate::tu::grmaterial::grMaterial_801C8CDC(_g as _); } return; } }
     unsafe fn todo_Ground_801C53EC(_a: u32) { { unsafe { crate::tu::ground::Ground_801C53EC(_a as _); } return; } }
-    unsafe fn todo_Camera_RequestQuake(_kind: i32, _pos: *mut Vec3) { panic!("TODO(group2: cm/camera.c) Camera_RequestQuake") }
-    unsafe fn todo_efSync_Spawn(_id: i32, _g: *mut HSD_GObj, _pos: *mut Vec3) { panic!("TODO(group2: ef/efsync.c (varargs: Vec3*)) efSync_Spawn") }
+    unsafe fn todo_Camera_RequestQuake(_kind: i32, _pos: *mut Vec3) { crate::tu::camera::Camera_RequestQuake(_kind as _, _pos as _) }
+    unsafe fn todo_efSync_Spawn(_id: i32, _g: *mut HSD_GObj, _pos: *mut Vec3) { let _ = crate::tu::efsync::efSync_Spawn(_id as _, _g as _, &[_pos as *const c_void]); }
     unsafe fn todo_lb_8000B1CC(_j: *mut HSD_JObj, _a: *const Vec3, _out: *mut Vec3) { { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(_j as _, _a as _, _out as _); } return; } }
     unsafe fn todo_grAnime_801C7FF8(_g: *mut HSD_GObj, _a: i32, _b: i32, _c: i32, _d: f32, _e: f32) { { unsafe { crate::tu::granime::grAnime_801C7FF8(_g as _, _a as _, _b as _, _c as _, _d as _, _e as _); } return; } }
     impl Hooks {

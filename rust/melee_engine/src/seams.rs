@@ -71,12 +71,19 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
     p
 }
 
+/// gw_TestTargetTestCKind with no MELEE_TARGET_TEST: not set.
+unsafe extern "C" fn no_target_test_ckind() -> i32 {
+    -1
+}
+
 pub fn install() {
     unsafe {
         melee_runtime::tu::lbmemory::ext::H_OSSetAlarm = Some(melee_runtime::tu::lbmemory::lbMemory_ArmCopyAlarm);
         // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
         // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
         crate::ext_dispatch::install_tu_ext();
+        // gw_TestTargetTestCKind (gw_runtime.c): the dev boot-into-Target-Test hook; -1 = not set (the menu's flow)
+        melee_modes::tu::gmmultiman::ext::H_TestTargetTestCKind = Some(no_target_test_ckind);
         // menuguard: the menu refuses the modes the port does not run yet (melee_modes/src/menuguard.rs)
         melee_modes::menuguard::ENABLED = true;
         {

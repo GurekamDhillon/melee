@@ -1,7 +1,5 @@
 //! src/melee/gm/gmhomerun.c: Home Run Contest mode (scene callbacks, the VS record it owns).
 //! Verification: none yet (state oracle not written; every callback drives unported gm/lb code).
-//! The `gm_Mode_Homerun_States` table is not ported in this pass (it names the unported
-//! gmVsMelee CSS/SSS data and GameModeState arrays).
 #![allow(non_snake_case, non_upper_case_globals, unused_unsafe, static_mut_refs, unused_variables, dead_code)]
 
 use core::ptr::addr_of_mut;
@@ -154,6 +152,25 @@ pub unsafe fn gm_801B9DD8(arg0: *mut GameModeState) {
 }
 
 /// C `gm_Mode_Homerun_OnInit`.
+unsafe extern "C" fn gm_801B98E8_c(s: *mut GameModeState) { gm_801B98E8(s) }
+unsafe extern "C" fn gm_801B999C_c(s: *mut GameModeState) { gm_801B999C(s) }
+unsafe extern "C" fn gm_801B9A3C_c(s: *mut GameModeState) { gm_801B9A3C(s) }
+unsafe extern "C" fn gm_801B9DD8_c(s: *mut GameModeState) { gm_801B9DD8(s) }
+
+/// C: `GameModeState gm_Mode_Homerun_States[]`: the CSS (gmVsMelee_CssData both ways), then the contest
+/// (gmVsMelee_StartData in, gmVsMelee_VsExitInfo out), then the `{ -1 }` end.
+pub static mut gm_Mode_Homerun_States: [GameModeState; 3] = unsafe {
+    use crate::tu::gmvsmelee::{gmVsMelee_CssData, gmVsMelee_StartData, gmVsMelee_VsExitInfo};
+    [
+        GameModeState { id: 0, preload: 3, flags: 0, on_enter: Some(gm_801B98E8_c), on_exit: Some(gm_801B999C_c),
+            info: GameSceneInfo { scene_kind: GS_CSS as u8, enter_data: &raw mut gmVsMelee_CssData as *mut core::ffi::c_void, exit_data: &raw mut gmVsMelee_CssData as *mut core::ffi::c_void } },
+        GameModeState { id: 1, preload: 3, flags: 0, on_enter: Some(gm_801B9A3C_c), on_exit: Some(gm_801B9DD8_c),
+            info: GameSceneInfo { scene_kind: GS_VS as u8, enter_data: &raw mut gmVsMelee_StartData as *mut core::ffi::c_void, exit_data: &raw mut gmVsMelee_VsExitInfo as *mut core::ffi::c_void } },
+        GameModeState { id: 0xFF, preload: 0, flags: 0, on_enter: None, on_exit: None,
+            info: GameSceneInfo { scene_kind: 0, enter_data: core::ptr::null_mut(), exit_data: core::ptr::null_mut() } },
+    ]
+};
+
 pub unsafe fn gm_Mode_Homerun_OnInit() {
     melee_core::ct!("gm_Mode_Homerun_OnInit");
     ext::gm_InitVsMode(addr_of_mut!(gmHomeRun_VsModeData));

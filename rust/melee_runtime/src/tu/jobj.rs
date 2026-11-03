@@ -127,7 +127,8 @@ pub mod ext_native {
     pub fn HSD_DObjReqAnimAllByFlags(_d:&[*mut HSD_DObj],_x:f32,_f:u32){todo!("cross-TU HSD_DObjReqAnimAllByFlags")}
     pub fn HSD_DObjAddAnimAll(_d:&[*mut HSD_DObj],_m:Option<&()>,_s:Option<&()>){todo!("cross-TU HSD_DObjAddAnimAll")}
     pub fn HSD_DObjAnimAll(_d:&[*mut HSD_DObj]){todo!("cross-TU HSD_DObjAnimAll")}
-    pub fn splArcLengthPoint(_j:*mut HSD_JObj,_s:f32)->crate::mtx::Vec3{todo!("cross-TU splArcLengthPoint")}
+    /// `splArcLengthPoint(&p, j->u.spline, s)` through the native-pointer port in `spline_world`.
+    pub fn splArcLengthPoint(j:*mut HSD_JObj,s:f32)->crate::mtx::Vec3{unsafe{let mut p:Vec=core::mem::zeroed();crate::tu::spline_world::splArcLengthPoint(&mut p,(*j).u.spline as _,s);crate::mtx::Vec3{x:p.x,y:p.y,z:p.z}}}
 }
 /// class.h `hsdDelete` (static inline): release then destroy through the object class.
 unsafe fn hsd_delete_ext(o:*mut HSD_JObj){

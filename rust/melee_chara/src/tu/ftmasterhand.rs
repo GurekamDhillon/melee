@@ -56,6 +56,12 @@ pub fn ftMh_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).mv.mh.unk0.x38 = 0;
         (*fp).mv.mh.unk0.x3C = 0;
         (*fp).mv.mh.unk0.x40 = 0;
+        // the C's int stores above are the laser item slots too (fingerbeam/dmg0.x34..x40 share their GC offsets);
+        // natively the slots have their own place (melee_types gen/native_unions.py): NULL them as the stores did
+        (*fp).mv.mh.fingerbeam.x34 = core::ptr::null_mut();
+        (*fp).mv.mh.fingerbeam.x38 = core::ptr::null_mut();
+        (*fp).mv.mh.fingerbeam.x3C = core::ptr::null_mut();
+        (*fp).mv.mh.fingerbeam.x40 = core::ptr::null_mut();
         (*fp).mv.mh.unk0.x28 = -1;
         (*fp).mv.mh.unk0.x2C = -1;
         (*fp).mv.mh.unk0.x30 = -1;

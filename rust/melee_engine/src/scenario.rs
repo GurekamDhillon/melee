@@ -81,12 +81,17 @@ pub struct Scenario {
     pub time_limit: i32,
     /// rule stock count (-1 = unset)
     pub rule_stocks: i32,
+    /// `mode=` as a GameModeKind for the 1P modes (`classic` 3; -1 = the VS match), gw_sl_cfg.game_mode
+    pub onep_mode: i32,
+    /// `step=` (gw_sl_cfg.onep_step, -1 unset) and `difficulty=` (onep_level, -1 unset)
+    pub onep_step: i32,
+    pub onep_level: i32,
 }
 
 impl Scenario {
     /// The `record.sh` scene strings: `p1=falcon/human;p2=fox/human;stage=fd;match=time;minutes=0;items=off`.
     pub fn parse(scene: &str) -> Result<Scenario, String> {
-        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1 };
+        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1 };
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
@@ -98,6 +103,10 @@ impl Scenario {
                 }
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
                 "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
+                // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
+                "mode" => s.onep_mode = match v { "classic" => 3, "adventure" => 4, "allstar" => 5, _ => -1 },
+                "step" => s.onep_step = v.parse().map_err(|_| "step")?,
+                "difficulty" => s.onep_level = v.parse().map_err(|_| "difficulty")?,
                 "match" => s.rule_match = if v == "stock" { 1 } else { 0 },
                 "minutes" => s.rule_minutes = v.parse().map_err(|_| "minutes")?,
                 "items" => s.item_freq = if v == "off" { -2 } else { v.parse().map_err(|_| "items")? },
@@ -136,8 +145,37 @@ fn p(n: i32) -> Option<PlayerSpec> {
     unsafe { SCN.as_ref().and_then(|s| s.players.get(n as usize).copied().flatten()) }
 }
 
+/// The mode a scenario boots into: its 1P mode, else VS.
+pub fn boot_mode(s: &Scenario) -> u8 {
+    if s.onep_mode >= 0 { s.onep_mode as u8 } else { melee_types::GM_VS as u8 }
+}
+
+/// Make the 1P modes' `SceneLaunch_OneP*` queries answer for `s` (gw_runtime.c gw_SceneLaunch_OnePDirect / Step / Level).
+fn install_onep() {
+    unsafe {
+        use melee_modes::tu::gmclassic::ext::hook as c;
+        c::SceneLaunch_OnePDirect = Some(|m| SCN.as_ref().map_or(0, |s| (s.onep_mode >= 0 && s.onep_mode == m && p(0).is_some_and(|x| x.ckind >= 0)) as i32));
+        c::SceneLaunch_OnePStep = Some(|| {
+            let Some(s) = SCN.as_ref() else { return 0 };
+            let step = s.onep_step.max(0);
+            // gm_Mode_*_States: Classic 0..10, Adventure 0..11, All-Star 0..12
+            let max = match s.onep_mode { 3 => 10, 4 => 11, 5 => 12, _ => return step };
+            step.min(max)
+        });
+        c::SceneLaunch_OnePLevel = Some(|| SCN.as_ref().map_or(2, |s| if s.onep_level < 0 { 2 } else { s.onep_level }));
+        c::SceneLaunch_PlayerCKind = Some(|n| p(n).map_or(-1, |x| x.ckind));
+        c::SceneLaunch_PlayerColor = Some(|n| p(n).map_or(-1, |x| x.color));
+        c::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
+    }
+}
+
 /// Make `SceneLaunch_*` answer for `s`, as `MELEE_SCENE` does in the C build (entry state 2 = the match).
 pub fn install(s: Scenario) {
+    if s.onep_mode >= 0 {
+        unsafe { SCN = Some(s) };
+        install_onep();
+        return;
+    }
     unsafe {
         SCN = Some(s);
         h::SceneLaunch_Active = Some(|| 1);

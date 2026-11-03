@@ -38258,7 +38258,7 @@ impl GcLayout for ftMasterHand_MotionVars {
         GcField::new("ch_backcrush", 0x0, 96, "struct ftCrazyHand_BackCrushVars"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftMasterHand_MotionVars>() == 136);
+const _: () = assert!(core::mem::size_of::<ftMasterHand_MotionVars>() == 168);
 
 /// C `ftMasterHand_Unk0Vars` (src/melee/ft/kinds/ftMasterHand/types.h:109); GameCube size 0x7C, align 4.
 #[repr(C, align(8))]
@@ -38432,7 +38432,8 @@ const _: () = assert!(core::mem::size_of::<ftMasterHand_Unk13Vars>() == 8);
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftMasterHand_FingerBeamVars {
-    pub pad_0: [i8; 52],
+    /// native only (gen/native_unions.py): the item slots past ftMasterHand_Unk0Vars' 0x88 bytes
+    pub pad_0: [i8; 0x88],
     pub x34: *mut Item_GObj,
     pub x38: *mut Item_GObj,
     pub x3C: *mut Item_GObj,
@@ -38445,8 +38446,7 @@ impl GcDecode for ftMasterHand_FingerBeamVars {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
-        v.pad_0 = <[i8; 52] as GcDecode>::gc_decode(d, at + 0x0);
+        let mut v = Self::zeroed();
         v.x34 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x34);
         v.x38 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x38);
         v.x3C = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x3C);
@@ -38467,13 +38467,14 @@ impl GcLayout for ftMasterHand_FingerBeamVars {
         GcField::new("x40", 0x40, 4, "Item_GObj *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftMasterHand_FingerBeamVars>() == 88);
+const _: () = assert!(core::mem::size_of::<ftMasterHand_FingerBeamVars>() == 168);
 
 /// C `ftMasterHand_GrabVars` (src/melee/ft/kinds/ftMasterHand/types.h:156); GameCube size 0x38, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftMasterHand_GrabVars {
-    pub pad_0: [i8; 40],
+    /// native only (gen/native_unions.py): the item slots past ftMasterHand_Unk0Vars' 0x88 bytes
+    pub pad_0: [i8; 0x88],
     pub x28: *mut Item_GObj,
     pub x2C: *mut Item_GObj,
     pub x30: *mut Item_GObj,
@@ -38486,8 +38487,7 @@ impl GcDecode for ftMasterHand_GrabVars {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
-        v.pad_0 = <[i8; 40] as GcDecode>::gc_decode(d, at + 0x0);
+        let mut v = Self::zeroed();
         v.x28 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x2C);
         v.x30 = <*mut Item_GObj as GcDecode>::gc_decode(d, at + 0x30);
@@ -38508,16 +38508,18 @@ impl GcLayout for ftMasterHand_GrabVars {
         GcField::new("x34", 0x34, 4, "Item_GObj *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftMasterHand_GrabVars>() == 72);
+const _: () = assert!(core::mem::size_of::<ftMasterHand_GrabVars>() == 168);
 
 /// C `ftMasterHand_Damage_0` (src/melee/ft/kinds/ftMasterHand/types.h:164); GameCube size 0x44, align 4.
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftMasterHand_Damage_0 {
-    pub pad_0: [i8; 40],
+    /// native only (gen/native_unions.py): x28..x30 on ftMasterHand_Unk0Vars.x28..x30, the items past its 0x88 bytes
+    pub pad_0: [i8; 0x30],
     pub x28: i32,
     pub x2C: i32,
     pub x30: i32,
+    pub pad_3C: [i8; 0x4C],
     pub x34: *mut Item_GObj,
     pub x38: *mut Item_GObj,
     pub x3C: *mut Item_GObj,
@@ -38530,8 +38532,7 @@ impl GcDecode for ftMasterHand_Damage_0 {
     #[inline] fn gc_zeroed() -> Self { Self::zeroed() }
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
-        let mut v = Self::zeroed();
-        v.pad_0 = <[i8; 40] as GcDecode>::gc_decode(d, at + 0x0);
+        let mut v = Self::zeroed();
         v.x28 = <i32 as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v.x30 = <i32 as GcDecode>::gc_decode(d, at + 0x30);
@@ -38558,7 +38559,7 @@ impl GcLayout for ftMasterHand_Damage_0 {
         GcField::new("x40", 0x40, 4, "Item_GObj *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftMasterHand_Damage_0>() == 88);
+const _: () = assert!(core::mem::size_of::<ftMasterHand_Damage_0>() == 168);
 
 /// C `ftCrazyHand_DamageVars` (src/melee/ft/kinds/ftMasterHand/types.h:175); GameCube size 0x68, align 4.
 #[repr(C, align(4))]
@@ -67519,7 +67520,7 @@ impl GcDecode for GroundParam {
         v.x64 = <f32 as GcDecode>::gc_decode(d, at + 0x64);
         v.x68 = <i16 as GcDecode>::gc_decode(d, at + 0x68);
         v.x6A = <[i16; 35] as GcDecode>::gc_decode(d, at + 0x6A);
-        v.stage_params = <*mut StageParam as GcDecode>::gc_decode(d, at + 0xB0);
+        { let n = ((<i32 as GcDecode>::gc_decode(d, at + 0xB4) as i64)).max(0) as usize; v.stage_params = d.ptr_array::<StageParam>(at + 0xB0, n) as *mut StageParam; }
         v.stage_param_count = <i32 as GcDecode>::gc_decode(d, at + 0xB4);
         v.xB8 = <_GXColor as GcDecode>::gc_decode(d, at + 0xB8);
         v.xBC = <_GXColor as GcDecode>::gc_decode(d, at + 0xBC);

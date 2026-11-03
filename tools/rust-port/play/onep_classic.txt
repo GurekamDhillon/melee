@@ -1,0 +1,39 @@
+# melee play (retail scenes), port 1, --skip-intro: title -> main menu -> 1P mode -> Regular Match -> Classic -> CSS
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, no memory card): eight A presses, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# main menu's first entry: 1P mode
+3 0100 0 0
+60 0000 0 0
+# 1P mode's first entry: Regular Match
+3 0100 0 0
+60 0000 0 0
+# Regular Match's first entry: Classic
+3 0100 0 0
+200 0000 0 0
+# CSS: the hand up to Fox
+30 0000 0 127
+6 0000 127 0
+10 0000 0 0
+3 0100 0 0
+60 0000 0 0
+# START: the Classic ladder
+3 1000 0 0
+400 0000 0 0

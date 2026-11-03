@@ -843,6 +843,8 @@ pub unsafe extern "C" fn lbDvd_800187F4(entry_num: i32) -> i32 {
 unsafe fn lbDvd_800189EC(entry_num: i32) {
     while lbDvd_800187F4(entry_num) == 1 {
         ext::lb_800195D0();
+        // TARGET_PC: the alarm interrupt that steps a heap compaction (lbmemory.rs COPY_ALARM) fires during the wait
+        crate::tu::lbmemory::lbMemory_FireCopyAlarm();
     }
 }
 

@@ -1183,6 +1183,9 @@ def main():
         "    let m = ((1u128 << w) - 1) << shift;\n    v = (v & !m) | (((val as u128) << shift) & m);\n"
         "    for x in b.iter_mut().rev() { *x = v as u8; v >>= 8; }\n}\n")
     out = ROOT / "rust/melee_types/src/gen.rs"
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import native_unions  # the MH/CH motion-var union's native item slots
+    txt = native_unions.apply(txt)
     out.write_text(txt + helpers, newline="\n")
     print(f"gen_types: {nprobe} headers, {len(g.records)} records, {len(g.enums)} enums, {len(g.typedefs)} typedefs, "
           f"{len(g.opaque)} opaque refs, {g.n_consts} constants; dump has {n_dump} layouts, {miss} generated layouts missing from dump -> {out}")

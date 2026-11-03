@@ -537,6 +537,9 @@ pub fn scenario_of_scene(sc: &str) -> Result<melee_engine::scenario::Scenario, S
         teams: 0,
         time_limit: p.minutes * 60,
         rule_stocks: p.stocks,
+        onep_mode: -1,
+        onep_step: -1,
+        onep_level: -1,
     })
 }
 

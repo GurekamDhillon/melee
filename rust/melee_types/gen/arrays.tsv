@@ -66,3 +66,5 @@ UNK_SAMUS_S1.x4_anim_joints	4
 _FtSFXArr.sfx_ids	num
 # ft/fighter.h: ftParts_8007506C / ftParts_800753D4 / ftKb_SpecialN_800EF040 walk x4 consecutive Fighter_804D6540_x0_t rows (Kirby has several)
 Fighter_804D6540_t.x0	x4
+# gr/ground.c Ground_801C24F8: the BGM pick loops stage_param_count rows of stage_params (1P stage kinds have several rows)
+GroundParam.stage_params	stage_param_count

@@ -499,6 +499,40 @@ pub unsafe extern "C" fn Ground_MexInitStages() {
         return;
     }
     Ground_MexInitStages_done = true;
+    // The target-test stages (grt*.c) and the test stage (grtest.c) build their StageData at run time (`stage_data()`):
+    // the static table holds zeroed stand-ins for them until this first use (C: `&grTMr_StageData` ... in stage_datas[]).
+    {
+        let te = &raw mut ext::grTe_StageData;
+        let real_te = crate::tu::grtest::stage_data();
+        for row in stage_datas.iter_mut() {
+            if *row == te {
+                *row = real_te;
+            }
+        }
+        stage_datas[40] = crate::tu::grtmario::stage_data();
+        stage_datas[44] = crate::tu::grtdrmario::stage_data();
+        stage_datas[45] = crate::tu::grtfalco::stage_data();
+        stage_datas[46] = crate::tu::grtfox::stage_data();
+        stage_datas[47] = crate::tu::grticeclimber::stage_data();
+        stage_datas[48] = crate::tu::grtkirby::stage_data();
+        stage_datas[49] = crate::tu::grtkoopa::stage_data();
+        stage_datas[50] = crate::tu::grtlink::stage_data();
+        stage_datas[51] = crate::tu::grtluigi::stage_data();
+        stage_datas[52] = crate::tu::grtmars::stage_data();
+        stage_datas[53] = crate::tu::grtmewtwo::stage_data();
+        stage_datas[54] = crate::tu::grtness::stage_data();
+        stage_datas[55] = crate::tu::grtpeach::stage_data();
+        stage_datas[56] = crate::tu::grtpichu::stage_data();
+        stage_datas[57] = crate::tu::grtpikachu::stage_data();
+        stage_datas[58] = crate::tu::grtpurin::stage_data();
+        stage_datas[59] = crate::tu::grtsamus::stage_data();
+        stage_datas[60] = crate::tu::grtseak::stage_data();
+        stage_datas[61] = crate::tu::grtyoshi::stage_data();
+        stage_datas[62] = crate::tu::grtzelda::stage_data();
+        stage_datas[63] = crate::tu::grtgamewatch::stage_data();
+        stage_datas[64] = crate::tu::grtemblem::stage_data();
+        stage_datas[65] = crate::tu::grtganon::stage_data();
+    }
     let mut n = ext::Mex_GrInternalCount();
     // (the truncation notice is an OSReport)
     if n > STAGE_DATAS_LEN as i32 {

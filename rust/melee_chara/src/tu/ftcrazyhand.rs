@@ -85,6 +85,12 @@ pub fn ftCh_Init_OnLoad(gobj: *mut HSD_GObj) {
         (*fp).mv.ch.unk0.x2C = 0;
         (*fp).mv.ch.unk0.x30 = 0;
         (*fp).mv.ch.unk0.x34 = 0;
+        // the C's int stores above are the grab item slots (grab.x28..x34 share their GC offsets); natively the slots
+        // have their own place (melee_types gen/native_unions.py): NULL them as the stores did
+        (*fp).mv.ch.grab.x28 = core::ptr::null_mut();
+        (*fp).mv.ch.grab.x2C = core::ptr::null_mut();
+        (*fp).mv.ch.grab.x30 = core::ptr::null_mut();
+        (*fp).mv.ch.grab.x34 = core::ptr::null_mut();
         (*fp).mv.ch.unk0.x38 = -1;
         (*fp).mv.ch.unk0.x3C = -1;
         (*fp).mv.ch.unk0.x40 = -1;

@@ -696,6 +696,10 @@ impl Engine {
             // with its GX calls on the bridge.
             melee_runtime::tu::sislib::ext::hook::HSD_SisLib_803A84BC = None;
             melee_modes::tu::lb_0192::ext::hook::HSD_SisLib_803A84BC = None;
+            // gm_1601.c (the 1P stage-intro name plates): the link table casts the C string to Option<&str> and stops; the
+            // TU's own defaults format it (as ifprize's).
+            melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A6B98 = None;
+            melee_modes::tu::gm_1601::ext::hook::HSD_SisLib_803A70A0 = None;
             melee_modes::tu::gmvsmode::RETAIL_NO_LOADING_SCREEN = true;
             // gw_wait_idle (shim_vi.c) pumps the port's deferred queue; the engine is synchronous (as lbarq / synth).
             if !card {
@@ -703,6 +707,13 @@ impl Engine {
                 melee_runtime::tu::lbcardnew::ext::hook::wait_idle = Some(|| {});
             }
             // ft/ftdemo.c (results-screen fighters): its callees, and the demo motion-state table melee_link fills.
+            // ft/ftlib.c ftLib_80087508 / 80087574 (the 1P modes preload the next stage's fighters): the table reads gen_link
+            // leaves unlinked
+            {
+                use melee_fighter::tu::{fighter, ftdata, ftlib::ext as l};
+                l::FTDATA_UNK_BYTE = Some(|k| fighter::ext::ftData_UnkBytePerCharacter(k));
+                l::COSTUME_COUNT = Some(|k| unsafe { ftdata::CostumeListsForeachCharacter[k as usize].numCostumes });
+            }
             melee_fighter::tu::ftdemo::install_defaults(&raw mut melee_link::retail_ms::ftmotionstates::ftData_803C52A0 as *mut melee_types::MotionState);
             // gmvsmelee.c's PC callees with no MELEE_SCENE launch and no netplay session (the C defaults): their ext
             // defaults are todo!s, and the VS-only path never reaches them.
@@ -717,13 +728,26 @@ impl Engine {
                 if h::Netplay_GameResult.is_none() { h::Netplay_GameResult = Some(|_| ()); }
                 if h::Netplay_NoteTie.is_none() { h::Netplay_NoteTie = Some(|| ()); }
             }
+            // gmclassic.c's PC callees with no MELEE_SCENE 1P launch (gw_runtime.c gw_SceneLaunch_OneP*: not configured):
+            // the mode runs its own character select. A 1P scenario (scenario::install) sets them first.
+            {
+                use melee_modes::tu::gmclassic::ext::hook as h;
+                if h::SceneLaunch_OnePDirect.is_none() { h::SceneLaunch_OnePDirect = Some(|_| 0); }
+                if h::SceneLaunch_OnePStep.is_none() { h::SceneLaunch_OnePStep = Some(|| 0); }
+                if h::SceneLaunch_OnePLevel.is_none() { h::SceneLaunch_OnePLevel = Some(|| 2); }
+                if h::SceneLaunch_PlayerCKind.is_none() { h::SceneLaunch_PlayerCKind = Some(|_| -1); }
+                if h::SceneLaunch_PlayerColor.is_none() { h::SceneLaunch_PlayerColor = Some(|_| -1); }
+                if h::SceneLaunch_PlayerStocks.is_none() { h::SceneLaunch_PlayerStocks = Some(|_| -1); }
+                if h::Script_OnePScripted.is_none() { h::Script_OnePScripted = Some(|| 0); }
+            }
             // OSTicksToCalendarTime (aurora OSTime.cpp): the prize / save dates; a seam ("no calendar") on the VS-only path.
             melee_runtime::tu::lbtime::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
             melee_runtime::tu::lbcardgame::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
             melee_runtime::tu::lbsnap::ext::hook::OSTicksToCalendarTime = Some(|t, td| crate::seams::os_ticks_to_calendar_time(t, td as _));
             // gm_1BFA.c gm_Mode_ChallengerApproach_States: the static table, built from the addresses of the other TUs.
             melee_modes::tu::gmscdata::ext::gm_Mode_ChallengerApproach_States = melee_modes::tu::gm_1BFA::gm_Mode_ChallengerApproach_States();
-            if card {
+            // the memory-card scene's callees: with a card, or when a scene launch runs the boot scene save-less
+            if card || (BOOT_GAME_MODE >= 0 && first == melee_types::GM_BOOT as u8) {
                 crate::card::install_scene_hooks();
             }
             // gmboot.c's state tables and its PC callees (the boot mode is the memory-card scene)
@@ -732,7 +756,7 @@ impl Engine {
                 gmscdata::ext::gm_Mode_Boot_States = gmboot::gm_Mode_Boot_States();
                 gmscdata::ext::gm_Mode_MemCard_States = gmboot::gm_Mode_MemCard_States();
                 gmboot::ext::GM_MAIN_LIB_SKIP_INTRO = Some(|| BOOT_SKIP_INTRO);
-                gmboot::ext::SCENELAUNCH_BOOTGAMEMODE = Some(|| -1);
+                gmboot::ext::SCENELAUNCH_BOOTGAMEMODE = Some(|| BOOT_GAME_MODE);
                 gmboot::ext::CONTENTPROBENAME = Some(|| None);
                 gmboot::ext::GM_SETGAMEMODEOVERRIDE = Some(|f| {
                     // the only override the game sets is lbCardGame_DecideGameMode
@@ -747,7 +771,7 @@ impl Engine {
             }
             // MELEE_SKIP_MEMCARD=1 takes the prompt's "continue without saving" exit (SceneLaunch_SkipMemcard)
             melee_modes::tu::gmscmemcard::ext::SCENELAUNCH_SKIPMEMCARD =
-                Some(|| std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false) as i32);
+                Some(|| (BOOT_GAME_MODE >= 0 || std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false)) as i32);
             // the memory-card scene's one trophy draw on a fresh save (see boot_vs), when the scene itself is skipped
             if !(card && first == melee_types::GM_BOOT as u8) {
                 let _ = melee_runtime::tu::random::global::HSD_Rand();
@@ -840,6 +864,10 @@ pub static mut BOOT_SKIP_INTRO: bool = false;
 unsafe extern "C" fn decide_game_mode() -> u8 {
     melee_runtime::tu::lbcardgame::lbCardGame_DecideGameMode()
 }
+
+/// A scene launch's mode (gw_runtime.c gw_SceneLaunch_BootGameMode: `MELEE_SCENE="mode=classic;..."`), -1 = none: the boot
+/// scene hands over to it and the memory-card prompt is skipped (gw_SceneLaunch_SkipMemcard: a configured scene skips it).
+pub static mut BOOT_GAME_MODE: i32 = -1;
 
 /// Set by the retail flow before `boot_modes`: install the memory card (`crate::card`).
 pub static mut CARD_ON: bool = false;

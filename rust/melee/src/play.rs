@@ -840,6 +840,9 @@ impl Play {
             // (the C VS mode's GameRules.stock_time_limit: the HUD clock and the Stadium screen show it)
             time_limit: if r.stock { r.stock_time_secs } else { r.time_secs },
             rule_stocks: if r.stock { r.stocks } else { -1 },
+            onep_mode: -1,
+            onep_step: -1,
+            onep_level: -1,
         }
     }
 

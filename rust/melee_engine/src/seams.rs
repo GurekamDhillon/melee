@@ -26,6 +26,8 @@ pub fn fire_alarm() {
         if let (Some(h), a) = MOVIE_ALARM {
             h(a, core::ptr::null_mut());
         }
+        // the heap compaction's RAM-copy alarm (lbmemory.rs COPY_ALARM): one step per frame when nothing waits on it
+        melee_runtime::tu::lbmemory::lbMemory_FireCopyAlarm();
         // the movie's disc reads issued up to now complete (dvd.rs host_dev_com_deferred)
         crate::dvd::run_deferred_completions();
     }
@@ -71,6 +73,7 @@ unsafe extern "C" fn mex_gr_bind_c(p: *mut core::ffi::c_void) -> *mut core::ffi:
 
 pub fn install() {
     unsafe {
+        melee_runtime::tu::lbmemory::ext::H_OSSetAlarm = Some(melee_runtime::tu::lbmemory::lbMemory_ArmCopyAlarm);
         // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
         // by name through ext_real, the same path as the string-hook menus (ext_dispatch.rs, gen_ext_dispatch.py)
         crate::ext_dispatch::install_tu_ext();

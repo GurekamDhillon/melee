@@ -59,6 +59,7 @@ pub struct RetailPlay {
     headless: bool,
     tick_no: u64,
     age: u32,
+    menu_at: Option<(u8, u16)>,
     /// (mode, scene kind) of the current scene
     cur: (u8, u8),
     /// scenes entered so far (the shot index)
@@ -93,7 +94,7 @@ pub struct RetailPlay {
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
         RetailPlay {
-            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
+            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, menu_at: None, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
@@ -125,13 +126,29 @@ impl RetailPlay {
         // intro is skipped. MELEE_RETAIL_FIRST=<GameModeKind> starts elsewhere.
         let boot_pick = if self.skip_intro { melee_types::GM_TITLE } else { melee_types::GM_OPENING_MV } as u8;
         let mut first = std::env::var("MELEE_RETAIL_FIRST").ok().and_then(|v| v.parse::<u8>().ok()).unwrap_or(boot_pick);
+        // MELEE_SCENE="mode=classic;p1=fox;step=N;difficulty=D" (the C build's 1P scene launch, gw_runtime.c): the mode's
+        // OnLoad skips its character select and starts at stage N
+        if self.presets.scenario.is_none() {
+            if let Ok(v) = std::env::var("MELEE_SCENE") {
+                match melee_engine::scenario::Scenario::parse(&v) {
+                    Ok(s) if s.onep_mode >= 0 => self.presets.scenario = Some(s),
+                    Ok(_) => log("MELEE_SCENE: only the 1P modes are launched this way here (VS: --match)"),
+                    Err(e) => log(&format!("MELEE_SCENE: {e}")),
+                }
+            }
+        }
         // The memory card (MELEE_CARD=0 turns it off; MELEE_CARD_PATH moves it): with it the boot mode is the real
         // memory-card scene (gmboot.c / gmscmemcard.c: load the save, or offer to create one), which then hands over
         // to the opening or the title. A scenario launch stays save-less (the C's scene launches skip the card).
         let mut card = false;
         if let Some(scn) = self.presets.scenario.take() {
+            first = melee_engine::scenario::boot_mode(&scn);
+            if scn.onep_mode >= 0 {
+                // as the C: the boot (memory-card) scene runs, skips its prompt and hands over to the mode
+                unsafe { melee_engine::engine::BOOT_GAME_MODE = first as i32 };
+                first = melee_types::GM_BOOT as u8;
+            }
             melee_engine::scenario::install(scn);
-            first = melee_types::GM_VS as u8;
         } else if melee_engine::card::configured_base().is_some() {
             card = true;
             if std::env::var_os("MELEE_RETAIL_FIRST").is_none() {
@@ -428,12 +445,17 @@ impl Game for RetailPlay {
         self.age += 1;
         let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
+        if now.1 == 1 && std::env::var_os("MELEE_MENU_LOG").is_some() {
+            // the main menu's cursor (mn_804A04F0): which list and entry a scripted run is on
+            let m = unsafe { (melee_modes::tu::mnmain::mn_804A04F0.cur_menu, melee_modes::tu::mnmain::mn_804A04F0.hovered_selection) };
+            if self.menu_at != Some(m) { self.menu_at = Some(m); log(&format!("tick {}: menu {} entry {}", self.tick_no, m.0, m.1)); }
+        }
         if entered || now != self.cur {
             let prev = self.cur;
             self.cur = now;
             self.age = 0;
             self.scene_no += 1;
-            log(&format!("tick {}: scene {} (mode {}, scene kind {})", self.tick_no, scene_name(now.1), now.0, now.1));
+            log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
             self.arm = now.1 == crate::play_net::SCENE_VS;
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;

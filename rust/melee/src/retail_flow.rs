@@ -327,6 +327,12 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
         let limit = rp.max_frames.unwrap_or(60 * 600);
         let ticks = melee_platform::run_headless(&mut rp, &mut pads, limit);
         log(&format!("headless: {ticks} ticks, {}", scene_name(rp.cur.1)));
+        // MELEE_RETAIL_WAV=<path>: the headless mix as a WAV (the movie / menu sound checks against the C's MELEE_AUDIO_DUMP)
+        if let (Ok(p), Some(cap)) = (std::env::var("MELEE_RETAIL_WAV"), rp.audio.as_ref().and_then(|a| a.capture.as_ref())) {
+            if let Err(e) = crate::write_wav(&p, cap) {
+                eprintln!("play: {p}: {e}");
+            }
+        }
         return if rp.failed.is_some() { ExitCode::FAILURE } else { ExitCode::SUCCESS };
     }
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());

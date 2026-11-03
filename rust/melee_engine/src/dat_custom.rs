@@ -748,7 +748,8 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
 /// with up to seven slots (Game & Watch registers slots 5 and 6, Yoshi slot 5): the record is rebuilt in a buffer of eight slots.
 fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void {
     use melee_types::KirbyHatStruct;
-    const SLOTS: usize = 8;
+    // slots 0..4 are the record's, 5/6 the extra articles, 7 the slot-2 joint tree, 8 the raw address of slot 4 (Game & Watch colours)
+    const SLOTS: usize = 9;
     // by value: `d.object` hands back a record that is filled in later, and this copy is taken now
     let v = <KirbyHatStruct as GcDecode>::gc_decode(d, off);
     let h = &v as *const KirbyHatStruct;
@@ -760,10 +761,17 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
     let word = |k: usize| off + 0xC + 4 * k as u32;
     // slot 7: slot 2 read as an `HSD_Joint` tree (`ftKb_SpecialN_800EF438`: `root = hat->hat_dynamics[2]`; slot 2 is a dynamics block in some hats)
     unsafe { *slots.add(7) = d.ptr::<HSD_Joint>(word(2)) as *mut c_void };
+    // a slot word that is not relocated is a plain value the C casts back (`u32 mask = (u32) hat->hat_dynamics[1]`, the part
+    // mask of every LOAD_HAT hat, ftKb_SpecialN_800EF040): keep the word instead of the decoder's null
+    for k in 0..5 {
+        if !d.is_reloc(word(k)) {
+            unsafe { *slots.add(k) = d.u32_at(word(k)) as usize as *mut c_void };
+        }
+    }
     let lower = sym.trim_start_matches("ftDataKirbyCopy").to_lowercase();
-    // the slots holding an `Article*` (ftKb_SpecialN_800F16D0)
+    // the slots holding an `Article*` (ftKb_SpecialN_800F16D0; Mario's hat is `Kirby_Unk`, its `xC` is slot 0)
     let arts: &[usize] = match lower.as_str() {
-        "luigi" | "popo" | "samus" | "koopa" | "drmario" => &[0],
+        "mario" | "luigi" | "popo" | "samus" | "koopa" | "drmario" => &[0],
         "peach" | "fox" | "link" | "clink" | "ness" | "pikachu" | "pichu" | "seak" => &[0, 1],
         "falco" => &[3, 4],
         "mewtwo" => &[3],
@@ -788,6 +796,11 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
         unsafe { (*core::ptr::addr_of_mut!(ARTICLE_TABLES)).push((t as usize, cnt, b.1, b.0.clone())) };
     }
     typed_article_attrs_of(d, b, &lower, &tas);
+    if lower == "gamewatch" {
+        for &ta in &tas {
+            gw_article_attr(d, b, ta);
+        }
+    }
     // the slot holding the hat's dynamic bones (`ftCo_8009D074` .. `ftCo_8009DB50`, `ftKb_Init_800EEB00`; the C indexes `hats[]` by kind - 1),
     // words swapped like a fighter's `x2C`
     let dynamics: Option<usize> = match lower.as_str() {
@@ -801,6 +814,42 @@ fn kirbyhat(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_vo
     if let Some(k) = dynamics {
         if d.is_reloc(word(k)) {
             note_dynamics_at(d, unsafe { *slots.add(k) } as usize, word(k));
+        }
+    }
+    // Game & Watch (`ftKb_SpecialN_800F14B4`, the C's `hats[Ft_Kind_Pichu]`): slot 3 is the `FtPartsVisLookup` array of the
+    // hat's models (`fp->x5AC.xC[4]`, walked by ftParts_80074D7C), and the colour words are read as raw bytes
+    // at slot 4 + 4 / + 8 (slot 4 itself stays the dynamics block): slot 8 holds slot 4's raw address
+    if lower == "gamewatch" {
+        if d.is_reloc(word(3)) {
+            // `model_num` is the record's first word (LOAD_HAT passes the hat itself as the `FtPartsDesc`). The lookup is walked
+            // for the WEARER's model count (Kirby's `fp->x5AC.model_num`, 2) while the hat has 1 entry: the C reads on into the
+            // next words (a relocated pointer as the count, negative, so no iterations). The native array is padded with empty
+            // rows up to the parts-model maximum (11) so the extra rows are the same no-op instead of a read past the decode.
+            use melee_types::FtPartsVisLookup;
+            const MAX_MODELS: usize = 11;
+            let models = (d.u32_at(off) as usize).min(MAX_MODELS);
+            let src = d.ptr_array::<FtPartsVisLookup>(word(3), models);
+            let dst = native_buf(MAX_MODELS * core::mem::size_of::<FtPartsVisLookup>()) as *mut FtPartsVisLookup;
+            if !src.is_null() {
+                unsafe { core::ptr::copy_nonoverlapping(src, dst, models) };
+            }
+            unsafe { *slots.add(3) = dst as *mut c_void };
+        }
+        if let Some(t) = d.target(word(4)) {
+            unsafe { *slots.add(8) = b.raw_addr(t) };
+        }
+    }
+    // Yoshi (the C's `hats[Ft_Kind_Samus]` / `hats[0xD]`, ftkirbyspecialyoshi.c): slots 1..4 are `HSD_AnimJoint*` trees for
+    // `HSD_JObjAddAnimAll`; slot 0 is the egg's `HSD_Joint` tree (ftKb_SpecialNYs_801093A0 returns it typed `ftDynamics*`, and
+    // ftKb_SpecialNYs_8010AC78 passes it to `ftCommon_SetAccessory` as `(HSD_Joint*)`)
+    if lower == "yoshi" {
+        if d.is_reloc(word(0)) {
+            unsafe { *slots.add(0) = d.ptr::<HSD_Joint>(word(0)) as *mut c_void };
+        }
+        for k in 1..5 {
+            if d.is_reloc(word(k)) {
+                unsafe { *slots.add(k) = d.ptr::<melee_types::HSD_AnimJoint>(word(k)) as *mut c_void };
+            }
         }
     }
     // accessory models: Mars / Marth's emblem slot 0, the Ice Climbers' slot 1 (`ftCommon_SetAccessory(fp, (HSD_Joint*) hat_dynamics[k])`)
@@ -887,26 +936,33 @@ fn typed_article_attrs_of(d: &mut GcDecoder<'_>, b: &Bounds, sym: &str, tas: &[u
 /// the word-swapped block cannot hold the native pointer, so the block is rebuilt as `[native ptr][the remaining words, swapped]`
 /// (the layout the native structs have: a pointer, then 4-byte fields), and swapped in by [`fix_articles`].
 fn gw_article_attrs(d: &mut GcDecoder<'_>, b: &Bounds, at_x48: u32) {
-    use melee_types::{Article, it_266F_ItemVars};
     let Some(t) = d.target(at_x48) else { return };
     let n = (b.extent(t) / 4).max(1);
     for i in 0..n {
-        let Some(ta) = d.target(t + 4 * i) else { continue };
-        let Some(sa) = d.target(ta + 4) else { continue };
-        if !d.is_reloc(sa) {
-            continue;
+        if let Some(ta) = d.target(t + 4 * i) {
+            gw_article_attr(d, b, ta);
         }
-        let words = (b.extent(sa) / 4).max(1);
-        let rec = d.ptr::<it_266F_ItemVars>(sa);
-        let out = native_buf(8 + 4 * words as usize + 16);
-        unsafe {
-            (out as *mut *mut it_266F_ItemVars).write(rec);
-            for k in 1..words {
-                (out.add(4 + 4 * k as usize) as *mut u32).write_unaligned(d.u32_at(sa + 4 * k));
-            }
-            let art = d.object::<Article>(ta);
-            (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, out as *mut c_void));
+    }
+}
+
+/// [`gw_article_attrs`] for the one article at data offset `ta` (also Kirby's Game & Watch hat articles, `kirbyhat` slots 5 / 6:
+/// the chef's pan reads `xDD4.gamewatch.attr` = special attribute word 0 as its `it_266F_ItemVars*` in `it_8026EECC`).
+fn gw_article_attr(d: &mut GcDecoder<'_>, b: &Bounds, ta: u32) {
+    use melee_types::{Article, it_266F_ItemVars};
+    let Some(sa) = d.target(ta + 4) else { return };
+    if !d.is_reloc(sa) {
+        return;
+    }
+    let words = (b.extent(sa) / 4).max(1);
+    let rec = d.ptr::<it_266F_ItemVars>(sa);
+    let out = native_buf(8 + 4 * words as usize + 16);
+    unsafe {
+        (out as *mut *mut it_266F_ItemVars).write(rec);
+        for k in 1..words {
+            (out.add(4 + 4 * k as usize) as *mut u32).write_unaligned(d.u32_at(sa + 4 * k));
         }
+        let art = d.object::<Article>(ta);
+        (*core::ptr::addr_of_mut!(ARTICLE_TYPED)).push((art, out as *mut c_void));
     }
 }
 

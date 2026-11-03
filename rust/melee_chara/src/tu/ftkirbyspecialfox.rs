@@ -46,9 +46,9 @@ pub mod ext {
                     None => { unsafe { melee_items::tu::itfoxblaster::it_802AEAB4(item as _); } return; },
                 }
             }
-    pub static mut IT_8029C6A4: Option<fn(f64, f32, *mut HSD_GObj, *mut Vec3, u32) > = None;
+    pub static mut IT_8029C6A4: Option<fn(f32, f32, *mut HSD_GObj, *mut Vec3, u32) > = None;
             #[allow(non_snake_case)]
-            pub fn it_8029C6A4(angle: f64, speed: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, id: u32)  {
+            pub fn it_8029C6A4(angle: f32, speed: f32, gobj: *mut HSD_GObj, pos: *mut Vec3, id: u32)  {
                 match unsafe { IT_8029C6A4 } {
                     Some(f) => f(angle, speed, gobj, pos, id),
                     None => { unsafe { melee_items::tu::itfoxlaser::it_8029C6A4(angle as _, speed as _, gobj as _, pos as _, id as _); } return; },
@@ -379,7 +379,7 @@ pub fn ftKb_SpecialNFx_800FDF30(gobj: *mut HSD_GObj) {
                     } else {
                         core::f64::consts::PI - (*da).specialn_fx_launch_angle as f64
                     };
-                    ext::it_8029C6A4(launch_angle, (*da).specialn_fx_launch_speed, gobj, &mut sp2c, (*da).specialn_fx_blaster_projectile_id);
+                    ext::it_8029C6A4(launch_angle as f32, (*da).specialn_fx_launch_speed, gobj, &mut sp2c, (*da).specialn_fx_blaster_projectile_id);
                     ext::it_802AE1D0((*fp).u.kb.xB0 as *mut Item_GObj);
                     melee_fighter::hooks::play_sfx(&mut *fp, ftKb_Init_804D3DB8[left] as i32, 0x7F, 0x40);
                 }
@@ -389,7 +389,7 @@ pub fn ftKb_SpecialNFx_800FDF30(gobj: *mut HSD_GObj) {
                     } else {
                         core::f64::consts::PI - (*da).specialn_fc_launch_angle as f64
                     };
-                    ext::it_8029C6A4(launch_angle, (*da).specialn_fc_launch_speed, gobj, &mut sp2c, (*da).specialn_fc_blaster_projectile_id);
+                    ext::it_8029C6A4(launch_angle as f32, (*da).specialn_fc_launch_speed, gobj, &mut sp2c, (*da).specialn_fc_blaster_projectile_id);
                     ext::it_802AE1D0((*fp).u.kb.xB0 as *mut Item_GObj);
                     melee_fighter::hooks::play_sfx(&mut *fp, ftKb_Init_804D3DC0[left] as i32, 0x7F, 0x40);
                 }

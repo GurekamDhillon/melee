@@ -2242,7 +2242,13 @@ pub fn ftKb_SpecialN_800F14B4(gobj: *mut HSD_GObj) {
         (*fp).u.kb.hat.x24.xC[4] = lookup;
         (*fp).x5AC.xC[4] = lookup;
         ext::ftParts_80074D7C(&raw mut (*fp).u.kb.hat.x24, 4, &(*fp).u.kb.hat.x14);
-        let colours = (*hat).hat_dynamics[4] as *const u8;
+        // the colour words are raw archive bytes behind slot 4 (the engine's hat record keeps slot 4's raw address in slot 8;
+        // slot 4 itself is the decoded dynamics block)
+        let colours = *(*hat).hat_dynamics.as_ptr().add(8) as *const u8;
+        if colours.is_null() {
+            ext::Fighter_UpdateModelScale(gobj);
+            return;
+        }
         ftKb_SpecialN_800F1420(gobj, colours.add(4) as *const u32);
         core::ptr::write_unaligned(
             &raw mut (*fp).x610_color_rgba[1] as *mut u32,

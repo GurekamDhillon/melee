@@ -46,6 +46,8 @@ pub struct Presets {
 }
 
 pub struct RetailPlay {
+    /// The practice aids (crate::practice), all off by default.
+    pub practice: Option<crate::practice::Practice>,
     iso: String,
     mods_dir: Option<String>,
     presets: Presets,
@@ -87,6 +89,9 @@ pub struct RetailPlay {
     pub sync: Option<crate::play_net::PlaySync>,
     /// The run snapshots the engine (netplay, synctest, or a replay of such a run): frames are copied off the arena.
     pub rollback_mode: bool,
+    /// Offline input delay (practice parity, input_delay.rs): matches only, never under netplay / a replay feed.
+    pub delay_line: crate::input_delay::DelayLine,
+    hud_rates: crate::np_hud::HudRates,
     /// A match scene was entered: the session takes the engine at the next tick.
     arm: bool,
 }
@@ -98,7 +103,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, rollback_mode: false, arm: false,
+            rec: None, feed: None, net: None, sync: None, rollback_mode: false, delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
         }
     }
 
@@ -445,8 +450,24 @@ impl Game for RetailPlay {
             }
             four = f.r.ticks[f.at].0;
         }
+        let gameplay = matches!(self.cur.1, 2 | 3);
+        four = self.delay_line.apply(four, gameplay && self.net.is_none() && self.feed.is_none() && self.sync.is_none());
+        let in_vs = self.engine().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS);
+        if let Some(pr) = self.practice.as_mut() {
+            pr.keys(pads);
+            if self.net.is_some() || self.sync.is_some() || self.feed.is_some() {
+                pr.forbid_helper("netplay / synctest / replay playback");
+            }
+            // the VS match only: player slot i is driven by port i in the retail VS mode
+            if in_vs {
+                pr.auto_lcancel(&mut four, |p| Some(p as i32));
+            }
+        }
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
+        if let Some(pr) = self.practice.as_mut() {
+            pr.observe();
+        }
         let t_step = t_step.elapsed();
         if self.quit {
             self.on_quit();
@@ -475,6 +496,11 @@ impl Game for RetailPlay {
             } else {
                 self.frame = Some(f);
                 self.packed = melee_engine::gxbridge::shim().gx.packed.take();
+            }
+            if let (Some(pr), Some(f)) = (self.practice.as_mut(), self.frame.as_mut()) {
+                if pr.decorate(f) {
+                    self.packed = None; // the decode thread's packing was for the undecorated draws
+                }
             }
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
@@ -625,6 +651,22 @@ impl Game for RetailPlay {
 
     fn status_line(&mut self) -> Option<String> {
         self.net.as_mut().map(|n| n.status())
+    }
+
+    fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {
+        if let Some(p) = self.presenter.as_mut() {
+            p.hud = lines;
+        }
+    }
+
+    fn overlay_lines(&mut self) -> Vec<melee_platform::overlay::Line> {
+        let Some(n) = self.net.as_ref() else {
+            let d = self.delay_line.frames;
+            return vec![(if d > 0 { format!("offline input delay {d}f") } else { "offline".into() }, melee_platform::overlay::DIM)];
+        };
+        let h = n.hud();
+        self.hud_rates.update(&h);
+        crate::np_hud::lines(&h, &self.hud_rates)
     }
 }
 

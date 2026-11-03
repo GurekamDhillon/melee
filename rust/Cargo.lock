@@ -1304,6 +1304,7 @@ dependencies = [
 name = "melee_platform"
 version = "0.1.0"
 dependencies = [
+ "font8x8",
  "gilrs",
  "melee_gx",
  "melee_types",

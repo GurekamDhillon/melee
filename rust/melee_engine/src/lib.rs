@@ -23,6 +23,7 @@ pub mod os;
 pub mod scenario;
 pub mod seams;
 pub mod seams_gen;
+pub mod view;
 pub mod snapshot;
 
 pub use engine::Engine;

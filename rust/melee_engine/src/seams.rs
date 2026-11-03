@@ -358,6 +358,9 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
 /// The callees the generated table cannot spell (C varargs, inlines of other calls, the engine's DVD); checked first.
 fn ext_hand(name: &str, args: &[u64]) -> Option<u64> {
     Some(match name {
+        // shim_vi.c gw_View_SceneBegin / gw_View_AspectBits (view.rs)
+        "View_SceneBegin" => { crate::view::scene_begin(args.first().copied().unwrap_or(u64::MAX) as u32 as i32); 0 }
+        "View_AspectBits" => crate::view::aspect_bits() as u32 as u64,
         // GX calls reached by name (string-hook TUs): the bridge / the SDK size formula, not the "off" zero
         "GXSetScissor" => { crate::gxbridge::GXSetScissor(args[0] as u32, args[1] as u32, args[2] as u32, args[3] as u32); 0 }
         "GXGetTexBufferSize" => gx_tex_buffer_size(args[0] as u16, args[1] as u16, args[2] as u32, args[3] as u8, args[4] as u8) as u64,

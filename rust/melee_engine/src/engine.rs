@@ -184,6 +184,9 @@ impl Engine {
                     melee_runtime::tu::cobj::ext::hook::View_ProjectionScaleBits = Some(WIDE_SCALE_BITS_FN);
                     WIDE_SCALE_BITS = scale.to_bits() as i32;
                 }
+            } else {
+                // a drawn window: the view policy follows the widescreen setting and the scene (view.rs; 4:3 when off)
+                crate::view::install();
             }
             // render draws (particle generators created while drawing) use the private render seed, not the logic stream
             melee_runtime::tu::gobj_native::HSD_RandRenderBegin = Some(melee_runtime::tu::random::global::HSD_RandRenderBegin);

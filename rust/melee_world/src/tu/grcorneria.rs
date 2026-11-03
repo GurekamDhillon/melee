@@ -1139,7 +1139,8 @@ pub unsafe extern "C" fn grCorneria_801DE024(gobj: *mut Ground_GObj) {
                 (*gp).u.arwing.xD4 = 0;
                 {
                     let idx = arwing_types[(*gp).u.arwing.xC8 as usize] as usize;
-                    ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, (grCn_803E2030[idx] != 0) as i32);
+                    // `bool arg2` is MSL's `typedef int bool`: the C passes the animation index itself, not `index != 0`
+                    ext::grAnime_801C8138(gobj, (*gp).map_id as enum_t, grCn_803E2030[idx]);
                 }
                 return;
             }

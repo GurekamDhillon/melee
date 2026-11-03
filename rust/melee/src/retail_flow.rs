@@ -508,7 +508,17 @@ impl Game for RetailPlay {
             self.cur = now;
             self.age = 0;
             self.scene_no += 1;
-            log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
+            // the 1P modes: the player's stocks left as the mode's record holds them (Classic keeps its record in the All-Star one)
+            let onep = unsafe {
+                match now.0 as u32 {
+                    melee_types::GM_CLASSIC => Some((*melee_modes::tu::gm_17eb::gm_GetAllStarData()).x0.x0.stocks),
+                    melee_types::GM_ADVENTURE => Some((*melee_modes::tu::gm_17e4::gm_GetAdventureData()).x0.x0.stocks),
+                    melee_types::GM_ALLSTAR => Some((*core::ptr::addr_of!(melee_runtime::shared::gm_80473A18)).x0.x0.stocks),
+                    _ => None,
+                }
+            };
+            let onep = onep.map_or(String::new(), |n| format!(", 1P stocks {n}"));
+            log(&format!("tick {}: scene {} (mode {}, scene kind {}, state {}{onep})", self.tick_no, scene_name(now.1), now.0, now.1, unsafe { melee_modes::tu::gm_1A3F::state_machine.routing.curr_state_id }));
             if now.0 == melee_types::GM_EVENT as u8 && std::env::var_os("MELEE_MENU_LOG").is_some() {
                 // Event Match: which event (gmevent.c's level index, 0-based) the scene plays
                 log(&format!("tick {}: event {}", self.tick_no, unsafe { (*melee_modes::tu::gmmain_lib::gmMainLib_804D3EE0).vs.unk_530.unk_535 }));

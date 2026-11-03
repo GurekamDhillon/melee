@@ -72,6 +72,15 @@ pub use super::mnmain::{mn_804A04F0, mn_804D6BB8, mn_804D6BC8};
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_804D783C, HSD_GObj_JObjKind};
 // menuguard: the menu state is mnmain's and gobj.c's, not a private copy (a NULL mn_804D6BB8 faulted the Event menu)
 pub use melee_runtime::tu::gobj_native::{HSD_GObj_CurrentInvokedProc};
+// the oracle state still covers the re-exported menu / gobj globals (registered in the C oracle's order, tests/tu_mndeflicker.rs)
+crate::globals_ext! {
+    rw mn_804A04F0 = super::mnmain::mn_804A04F0: MenuFlow;
+    rw mn_804D6BC8 = super::mnmain::mn_804D6BC8: MenuInputState;
+    rw mn_804D6BB8 = super::mnmain::mn_804D6BB8: *mut HSD_Archive;
+    rw HSD_GObj_CurrentInvokedProc = melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc: *mut HSD_GObjProc;
+    rw HSD_GObj_804D783C = melee_runtime::tu::gobj_native::HSD_GObj_804D783C: i32;
+    rw HSD_GObj_JObjKind = melee_runtime::tu::gobj_native::HSD_GObj_JObjKind: u8;
+}
 crate::globals! {
     // ---- defined by this TU
     rw pub mnDeflicker_804D6C3C: u8 = 0;

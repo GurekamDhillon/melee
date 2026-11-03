@@ -13,7 +13,7 @@ pub static mut ENABLED: bool = false;
 
 /// The modes the menu may launch: they reach their scenes and back without a TODO stop.
 pub const KNOWN_WORKING: &[GameModeKind] = &[
-    GM_TITLE, GM_MENU, GM_VS, GM_CLASSIC, GM_TRAINING,
+    GM_TITLE, GM_MENU, GM_VS, GM_CLASSIC, GM_TRAINING, GM_ADVENTURE, GM_ALLSTAR,
     // Event Match and the Stadium (tools/rust-port/play/onep_modes.sh)
     GM_EVENT, GM_TARGET_TEST, GM_HOME_RUN_CONTEST,
     GM_10MAN_VS, GM_100MAN_VS, GM_3MIN_VS, GM_15MIN_VS, GM_ENDLESS_VS, GM_CRUEL_VS,

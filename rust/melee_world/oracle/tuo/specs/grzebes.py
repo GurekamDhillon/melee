@@ -89,6 +89,10 @@ OUT_INTS = {"Ground_801C2090": {0: 32}}
 PTR_BYTES = {"Ground_801C205C": {0: 4}}
 EXTERN_ARRAY_LEN = {"HSD_GObjGXLinkHead": 8}
 PATCH = [
+    # the port's native layout (tu/grzebes.rs, debda3c36): the +0x2C word is a native pointer to the acid hit record,
+    # which the C reads as `((HSD_GObj*) yakumono_param)->user_data` (GC offset 0x2C)
+    ("/* 0x14 */ u8 pad_14[0x30 - 0x14];", "/* 0x14 */ u8 pad_14[0x2C - 0x14]; /* 0x2C */ void* x2C_dyn;"),
+    ("*(void**) arg = ((HSD_GObj*) yakumono_param)->user_data;", "*(void**) arg = yakumono_param->x2C_dyn;"),
     ("/* +14 */ HSD_JObj* x14_jobj1;", "/* +14 */ u32 x14_jobj1;"),
     ("/* +18 */ HSD_JObj* x18_jobj2;", "/* +18 */ u32 x18_jobj2;"),
     ("/* +1C */ Item_GObj* x1C_mat;", "/* +1C */ u32 x1C_mat;"),
@@ -99,12 +103,11 @@ PATCH = [
     ("grMaterial_801C8E28((HSD_GObj*) st->x1C_mat);", "grMaterial_801C8E28((HSD_GObj*) (uintptr_t) st->x1C_mat);"),
     ("HSD_JObjSetTranslateX(st->x14_jobj1,", "HSD_JObjSetTranslateX((HSD_JObj*) (uintptr_t) st->x14_jobj1,"),
     ("HSD_JObjSetTranslateX(st->x18_jobj2,", "HSD_JObjSetTranslateX((HSD_JObj*) (uintptr_t) st->x18_jobj2,"),
-    ("*(HSD_ShapeAnimJoint***) (dat + 0x74)", "(HSD_ShapeAnimJoint**) (uintptr_t) *(u32*) (dat + 0x74)"),
-    ("*(HSD_AnimJoint***) (dat + 0x6C)", "(HSD_AnimJoint**) (uintptr_t) *(u32*) (dat + 0x6C)"),
-    ("*(HSD_MatAnimJoint***) (dat + 0x70)", "(HSD_MatAnimJoint**) (uintptr_t) *(u32*) (dat + 0x70)"),
-    ("sa = *sap;", "sa = (HSD_ShapeAnimJoint*) (uintptr_t) *(u32*) sap;"),
-    ("ma = *mjp;", "ma = (HSD_MatAnimJoint*) (uintptr_t) *(u32*) mjp;"),
-    ("aj = *ajp;", "aj = (HSD_AnimJoint*) (uintptr_t) *(u32*) ajp;"),
+    # the port reads the GC bytes +0x6C/+0x70/+0x74 of `unk4->unk8` as the typed `unk8[2].unk4/unk8/unkC` (UnkStageDat_x8_t
+    # is 0x34 bytes; tu/grzebes.rs, 303222ac9): the native C does the same so both walk the same native records
+    ("*(HSD_ShapeAnimJoint***) (dat + 0x74)", "((struct UnkStageDat_x8_t*) dat)[2].unkC"),
+    ("*(HSD_AnimJoint***) (dat + 0x6C)", "((struct UnkStageDat_x8_t*) dat)[2].unk4"),
+    ("*(HSD_MatAnimJoint***) (dat + 0x70)", "((struct UnkStageDat_x8_t*) dat)[2].unk8"),
 ]
 DOM = {
     "arg:grZebes_801D8558#0": list(range(12)),
@@ -202,7 +205,9 @@ LINKS = {
     "ret:grZakoGenerator_801CA394": "new:HSD_GObj",
     "ret:grDatFiles_801C6330": "new:UnkArchiveStruct",
     ".unk4": "new:UnkStageDat",
-    ".unk8": "datblk:256:108:112:116",
+    # unk4->unk8 as the native UnkStageDat_x8_t records the port reads (0x68 bytes each): record [2]'s anim / matanim /
+    # shapeanim list pointers at native +8 / +0x10 / +0x18
+    ".unk8": "datblkp:312:216:224:232",
     "g:HSD_GObjGXLinkHead": "ptrs:HSD_GObj:8",
     ".next": "maybe:HSD_LObj",
     ".x04": "maybe:HSD_JObj",
@@ -229,7 +234,9 @@ UNION_VIEW = {"Ground.u": {
     "zebes": _zf("801D9508", "801D95B8", "801D9758", "fn_801D94F0", "fn_801DA9D8", "fn_801DA9F0", "801D84A4", "801D8558"),
     "zebes2": _zf("801D9F30", "801D9F84", "801D84A4", "801D8558"),
     "zebes3": _zf("801DAE70", "801DB088", "801DB3CC", "801DC9DC", "801DC408", "801DC744", "801D881C", "801D8644"),
-    "zebes4": _zf("801D9100", "801D925C", "801DA254", "801D8558", "801D8644"),
+    "zebes4": _zf("801D9100", "801D925C", "801DA254", "801D8644"),
+    # (grZebes_801D8558 runs grZebes_801D9508, which sets the `u.zebes.x0_b0` bit the port keeps in GC bit order (bit 7):
+    #  the zebes4 byte view of +0xC4 would compare that aliased byte, so 801D8558 dumps through the zebes view only)
     "zebes5": _zf("801D8644", "801D881C", "801D9798", "801D99E0", "801DC408", "801D84A4", "801D8558"),
 }}
 # HSD_Randi(n) is in [0, n): the generated value is reduced modulo n

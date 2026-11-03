@@ -276,6 +276,12 @@ fn mngallery_vs_c() {
         ("HSD_GObj_JObjCallback", ext::HSD_GObj_JObjCallback as usize),
         ("HSD_Free", ext::HSD_Free as usize),
     ];
-    let globals = tu::oracle_globals();
+    // the C order: this TU's four, the menu / gobj globals, then the pad copy and gmMainLib
+    let mut globals = tu::oracle_globals();
+    let tail = globals.split_off(4);
+    globals.extend(tu::oracle_globals_ext());
+    globals.extend(tail);
+    // the C oracle defines these externs zero-initialised; the re-exported owners (mnmain, gobj) carry their own initialisers
+    for g in tu::oracle_globals_ext() { unsafe { core::ptr::write_bytes(g.addr, 0, g.size) } }
     run_tu(&TuOracle { tu: "mngallery", funcs: &funcs, globals, fn_table });
 }

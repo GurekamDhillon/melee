@@ -86,6 +86,19 @@ for k, (a, b) in enumerate([(2, 9), (13, 24), (23, 21)]):
     vs("padcpu_%s_vs_cpu_%s" % (CK[a], CK[b]), "pads", "ck:%d/human" % a, "ck:%d/cpu9" % b, 31,
        "coverage/pads/rand_s%d.lua" % (k + 4), 1800, note="port 1 human pad; port 2 is a CPU slot")
 
+# 6. round 2 (2026-11-03): every character on a human-style pad (port 1) against a CPU 9, over every VS stage the C
+#    records (Akaneia and Icicle Mountain top have no golden), and high items on the stages section 3 left out
+R2_STAGES = [e for e in sorted(STAGES) if e not in (21, 26)]
+for i, n in enumerate(CK):
+    j = (i + 13) % 26
+    st = R2_STAGES[(i * 7) % len(R2_STAGES)]
+    vs("human_%s_%s" % (n, STAGES[st]), "human", "ck:%d/human" % i, "ck:%d/cpu9" % j, st,
+       "coverage/pads/rand_s%d.lua" % (i % 6 + 1), 1800, note="port 1 human pad %s vs CPU9 %s" % (n, CK[j]))
+for k, e in enumerate([2, 6, 9, 12, 16, 18, 23, 24, 27, 29]):
+    a, b, c = (k * 5 + 3) % 26, (k * 5 + 11) % 26, (k * 5 + 19) % 26
+    vs("items_hi3_%s" % STAGES[e], "items", "ck:%d/cpu9" % a, "ck:%d/cpu9" % b, e, IDLE, 3600, items="4",
+       p3="ck:%d/cpu9" % c, note="3 CPUs, item frequency 4")
+
 # 7. Target Test (every character) and the 1P modes (step = stage index, difficulty 0..4)
 def onep(name, mode, ck, step, diff, pad, frames):
     sc[name] = {"group": mode, "scene": "mode=%s;p1=ck:%d;step=%d;difficulty=%d" % (mode, ck, step, diff), "pad": pad,

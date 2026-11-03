@@ -502,26 +502,29 @@ pub(crate) fn boot_engine_scenario(iso: &str, scenario: &str) -> Result<melee_en
     let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
     // the scenario's pad script (pad_fixed.lua): golden frame k reads sample k-1 (a fixed one-frame latency), as the legacy path does
     if scenario.starts_with("pad_") {
-        e.set_pad_feed(|tick, port| {
-            let r = pads::pad_fixed(port, tick as i32);
-            let mut st = melee_types::PADStatus::zeroed();
-            st.button = r.button as u16;
-            st.stickX = r.stick_x;
-            st.stickY = r.stick_y;
-            st.substickX = r.sub_x;
-            st.substickY = r.sub_y;
-            st.triggerLeft = r.analog_l;
-            st.triggerRight = r.analog_r;
-            // the scripted match has two controllers: ports 3 and 4 report PAD_ERR_NO_CONTROLLER (the controller indicator's sound reads it)
-            if port >= 2 { st.err = -1; }
-            st
-        });
+        e.set_pad_feed(|tick, port| raw_pad_status(pads::pad_fixed(port, tick as i32), port));
     }
     Ok(e)
 }
 
-/// A coverage scenario (docs/rust-port/golden/coverage/scenarios.tsv, notes/coverage.md): only the VS ones with an idle pad
-/// script are wired (scene parse + no pad feed); 1p modes and the Lua random-input pads return "not wired".
+/// One raw scripted sample as the `PADStatus` the engine's pad layer reads (two controllers: ports 3 and 4 report
+/// PAD_ERR_NO_CONTROLLER, which the controller indicator's sound reads).
+fn raw_pad_status(r: pads::RawPad, port: usize) -> melee_types::PADStatus {
+    let mut st = melee_types::PADStatus::zeroed();
+    st.button = r.button as u16;
+    st.stickX = r.stick_x;
+    st.stickY = r.stick_y;
+    st.substickX = r.sub_x;
+    st.substickY = r.sub_y;
+    st.triggerLeft = r.analog_l;
+    st.triggerRight = r.analog_r;
+    // the scripted match has two controllers: ports 3 and 4 report PAD_ERR_NO_CONTROLLER (the controller indicator's sound reads it)
+    if port >= 2 { st.err = -1; }
+    st
+}
+
+/// A coverage scenario (docs/rust-port/golden/coverage/scenarios.tsv, notes/coverage.md): the VS ones are wired (scene parse;
+/// idle pads feed nothing, the generated rand / cycle pads come from their Lua source); 1p modes return "not wired".
 fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine, String> {
     let tsv = std::fs::read_to_string("docs/rust-port/golden/coverage/scenarios.tsv").map_err(|_| format!("scenario {name:?} not wired"))?;
     let row = tsv.lines().find_map(|l| { let c: Vec<&str> = l.split(char::from(9u8)).collect(); (c.len() == 5 && c[0] == name).then(|| (c[1].to_string(), c[3].to_string(), c[4].to_string())) });
@@ -547,14 +550,22 @@ fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine,
         return Ok(e);
     }
     if kind != "vs" { return Err(format!("scenario {name:?} not wired: {kind} mode (the engine boots VS matches only)")); }
-    if !pad.starts_with("idle_") { return Err(format!("scenario {name:?} not wired: pad script {pad} needs the Lua pad host")); }
+    // idle pads feed nothing; the generated rand / cycle pads are read from their Lua source (pads::LuaPad)
+    let lua = if pad.starts_with("idle_") { None } else {
+        Some(pads::LuaPad::load(&format!("tools/rust-port/golden/coverage/pads/{pad}"))
+            .map_err(|e| format!("scenario {name:?} not wired: pad script {pad}: {e}"))?)
+    };
     if std::env::var_os("MELEE_ENGINE_PRE_DRAWS").is_none() {
         // SAFETY: single-threaded start-up, before the engine reads it.
         unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", "0") };
     }
     let disc = engine_disc(iso)?;
     let scn = melee_engine::scenario::Scenario::parse(&scene)?;
-    melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))
+    let mut e = melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), scn).map_err(|e| format!("engine boot: {e}"))?;
+    if let Some(lp) = lua {
+        e.set_pad_feed(move |tick, port| raw_pad_status(lp.at(port, tick as i32), port));
+    }
+    Ok(e)
 }
 
 /// The consolidated engine is the only game loop (step 19 removed the `vs_match` model). Kept for the callers that asked "engine or model".

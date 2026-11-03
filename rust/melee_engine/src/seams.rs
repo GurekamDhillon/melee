@@ -77,6 +77,7 @@ unsafe extern "C" fn no_target_test_ckind() -> i32 {
 }
 
 pub fn install() {
+    install_vi_hooks();
     unsafe {
         melee_runtime::tu::lbmemory::ext::H_OSSetAlarm = Some(melee_runtime::tu::lbmemory::lbMemory_ArmCopyAlarm);
         // the shard 529-536 gm TUs' `tu_ext` hooks (the title's attract demo and the VS scene setup reach them):
@@ -137,6 +138,17 @@ pub fn install() {
         melee_fighter::hooks::LBAUDIOAX_80023130 = Some(|id| melee_runtime::tu::lbaudio_ax::lbAudioAx_80023130(id));
         // a stage's callback table entry is a native pointer here (no guest code): the m-ex bind is the identity
         melee_world::tu_ext::HOOK_Mex_GrBind = Some(|p| p);
+        // melee_modes::tu_ext's sound-bank calls (gm_1879's intro scenes import them directly): with no sound library, the
+        // no-ops seams_gen gives the TU hooks (the engine audio bridge replaces them in post_link); unset they reach
+        // melee_runtime's own lbaudio_ax, whose FGM heap nobody sized ("FGM load size is over")
+        {
+            use melee_modes::tu_ext as t;
+            t::HOOK_lbAudioAx_80026E84 = Some(|_| 0);
+            t::HOOK_lbAudioAx_80026F2C = Some(|_| ());
+            t::HOOK_lbAudioAx_8002702C = Some(|_, _| ());
+            t::HOOK_lbAudioAx_80027168 = Some(|| ());
+            t::HOOK_lbAudioAx_80027648 = Some(|| ());
+        }
         // the remaining `tu_ext` stage-proc hooks (their defaults stop on "not ported"): the engine's canonical bodies
         melee_world::tu_ext::HOOK_HSD_DObjSetFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjSetFlags(d, f) });
         melee_world::tu_ext::HOOK_HSD_DObjClearFlags = Some(|d, f| unsafe { melee_runtime::tu::dobj::hsd::HSD_DObjClearFlags(d, f) });
@@ -355,6 +367,10 @@ pub fn ext_real(name: &str, args: &[u64]) -> Option<u64> {
     if let Some(v) = ext_hand(name, args) {
         return Some(v);
     }
+    // gw_Script_CpuIdleDefault (gw_runtime.c): the scene's `pN=.../idle` slots stand still (2), else follow the retail AI
+    if name == "Script_CpuIdleDefault" {
+        return Some(crate::scenario::cpu_idle_default(args.first().copied().unwrap_or(0) as i32) as u64);
+    }
     if let Some(v) = unsafe { crate::ext_dispatch::dispatch(name, args) } {
         return Some(v);
     }
@@ -525,4 +541,205 @@ pub fn os_ticks_to_calendar_time(ticks: i64, td: *mut melee_types::OSCalendarTim
             yday: tm.yday, msec: sub_us / 1000, usec: sub_us % 1000,
         };
     }
+}
+
+/// The Adventure cutscenes whose ext blocks are `todo_fns!` (no link-table hooks): vi0801 (F-Zero), vi1101 (Metal Mario),
+/// vi1201v1 / vi1201v2 (Bowser's trophy, Giga Bowser), vi1202 (Giga Bowser defeated). Their callees in crates melee_items
+/// cannot name, pointed at the canonical ports.
+#[allow(clippy::unnecessary_cast)]
+pub fn install_vi_hooks() {
+    unsafe {
+        // ftData_803C24EC (the demo motion file getters of Mario, Luigi, Giga Bowser): the link table's adapters cast their
+        // `&str` / `Option<&str>` result to the C's `char*` and stop on the size check; NUL-terminated copies here
+        let t = &raw mut melee_fighter::tu::ftdata::ftData_803C24EC;
+        (*t)[0] = Some(demo_motion_mario);
+        (*t)[17] = Some(demo_motion_luigi);
+        (*t)[31] = Some(demo_motion_gkoopa);
+        // the todo_fns! cutscenes' sound calls: no-ops with no sound library (their defaults reach melee_runtime's lbaudio_ax,
+        // whose FGM heap nobody sized); melee's engine_audio post_link points them at the bridge
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_800236DC = Some(|| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80023F28 = Some(|_a0| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80024E50 = Some(|_a0| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80026F2C = Some(|_a0| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_8002702C = Some(|_a0, _a1| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80027168 = Some(|| ());
+        melee_items::tu::vi0801::ext::hook::lbAudioAx_80027648 = Some(|| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_800236DC = Some(|| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_800237A8 = Some(|_a0, _a1, _a2| 0);
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80023F28 = Some(|_a0| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80024E50 = Some(|_a0| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80026E84 = Some(|_a0| 0);
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80026F2C = Some(|_a0| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_8002702C = Some(|_a0, _a1| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80027168 = Some(|| ());
+        melee_items::tu::vi1101::ext::hook::lbAudioAx_80027648 = Some(|| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_800236DC = Some(|| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_800237A8 = Some(|_a0, _a1, _a2| 0);
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80023F28 = Some(|_a0| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80024E50 = Some(|_a0| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80026F2C = Some(|_a0| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_8002702C = Some(|_a0, _a1| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80027168 = Some(|| ());
+        melee_items::tu::vi1201v1::ext::hook::lbAudioAx_80027648 = Some(|| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80023F28 = Some(|_a0| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80024E50 = Some(|_a0| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80026F2C = Some(|_a0| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_8002702C = Some(|_a0, _a1| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80027168 = Some(|| ());
+        melee_items::tu::vi1201v2::ext::hook::lbAudioAx_80027648 = Some(|| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80023694 = Some(|| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_800236DC = Some(|| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80023F28 = Some(|_a0| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80024E50 = Some(|_a0| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80026F2C = Some(|_a0| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_8002702C = Some(|_a0, _a1| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80027168 = Some(|| ());
+        melee_items::tu::vi1202::ext::hook::lbAudioAx_80027648 = Some(|| ());
+        // vi0102 / vi0401 / vi0501 / vi0502: their ftDemo_ObjAllocInit hook (the link table leaves it unresolved)
+        melee_items::tu::vi0102::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi0401::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi0501::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi0502::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi0801::ext::hook::Camera_800310A0 = Some(|a0| melee_world::tu::camera::Camera_800310A0(a0 as _));
+        melee_items::tu::vi0801::ext::hook::efAsync_LoadSync = Some(|a0| { melee_world::tu::efn::efasync::efAsync_LoadSync(a0 as _); 0 });
+        melee_items::tu::vi0801::ext::hook::gm_801A4B60 = Some(|| melee_modes::tu::gmscene::gm_801A4B60());
+        melee_items::tu::vi0801::ext::hook::gm_8016895C = Some(|a0, a1, a2| melee_modes::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi0801::ext::hook::Stage_InitScene = Some(|a0, a1| melee_modes::tu::hsd::Stage_InitScene(a0 as _, a1 as _));
+        melee_items::tu::vi0801::ext::hook::lb_80011E24 = Some(|a0, a1, a2, a3| melee_runtime::tu::lbspdisplay::lb_80011E24(a0, a1, &[a2, a3]));
+        melee_items::tu::vi0801::ext::hook::lb_800145F4 = Some(|| melee_modes::tu::lb_013B::lb_800145F4());
+        melee_items::tu::vi0801::ext::hook::Player_InitAllPlayers = Some(|| melee_fighter::tu::player::Player_InitAllPlayers());
+        melee_items::tu::vi0801::ext::hook::GObj_Create = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _);
+        melee_items::tu::vi0801::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi0801::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi0801::ext::hook::HSD_FogLoadDesc = Some(|a0| melee_runtime::tu::fog::HSD_FogLoadDesc(a0 as _) as _);
+        melee_items::tu::vi0801::ext::hook::HSD_GObj_80390ED0 = Some(|a0, a1| melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _));
+        melee_items::tu::vi0801::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi0801::ext::hook::HSD_JObjAnimAll = Some(|a0| melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _));
+        melee_items::tu::vi0801::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(a0 as _, a1 as _));
+        melee_items::tu::vi0801::ext::hook::HSD_SetEraseColor = Some(|a0, a1, a2, a3| melee_runtime::tu::displayfunc_native::HSD_SetEraseColor(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1101::ext::hook::efAsync_LoadSync = Some(|a0| { melee_world::tu::efn::efasync::efAsync_LoadSync(a0 as _); 0 });
+        melee_items::tu::vi1101::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi1101::ext::hook::gm_801A4B60 = Some(|| melee_modes::tu::gmscene::gm_801A4B60());
+        melee_items::tu::vi1101::ext::hook::gm_8016895C = Some(|a0, a1, a2| melee_modes::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1101::ext::hook::gm_IsCKindUnlocked = Some(|a0| melee_modes::tu::gm_1601::gm_IsCKindUnlocked(a0 as _) as _);
+        melee_items::tu::vi1101::ext::hook::Stage_InitScene = Some(|a0, a1| melee_modes::tu::hsd::Stage_InitScene(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::lb_800145F4 = Some(|| melee_modes::tu::lb_013B::lb_800145F4());
+        melee_items::tu::vi1101::ext::hook::Player_80032768 = Some(|a0, a1| melee_fighter::tu::player::Player_80032768(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_80036E20 = Some(|a0, a1, a2| melee_fighter::tu::player::Player_80036E20(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1101::ext::hook::Player_80036F34 = Some(|a0, a1| melee_fighter::tu::player::Player_80036F34(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_GetEntity = Some(|a0| melee_fighter::tu::player::Player_GetEntity(a0 as _) as _);
+        melee_items::tu::vi1101::ext::hook::Player_InitAllPlayers = Some(|| melee_fighter::tu::player::Player_InitAllPlayers());
+        melee_items::tu::vi1101::ext::hook::Player_SetCostumeId = Some(|a0, a1| melee_fighter::tu::player::Player_SetCostumeId(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_SetFacingDirection = Some(|a0, a1| melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_SetFlagsBit5 = Some(|a0, a1| melee_fighter::tu::player::Player_SetFlagsBit5(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_SetPlayerCharacter = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerCharacter(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_SetPlayerId = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerId(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::Player_SetSlottype = Some(|a0, a1| melee_fighter::tu::player::Player_SetSlottype(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::GObj_Create = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _);
+        melee_items::tu::vi1101::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1101::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1101::ext::hook::HSD_GObj_80390ED0 = Some(|a0, a1| melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1101::ext::hook::HSD_JObjAnimAll = Some(|a0| melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _));
+        melee_items::tu::vi1101::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(a0 as _, a1 as _));
+        melee_items::tu::vi1101::ext::hook::HSD_SetEraseColor = Some(|a0, a1, a2, a3| melee_runtime::tu::displayfunc_native::HSD_SetEraseColor(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1201v1::ext::hook::efAsync_LoadSync = Some(|a0| { melee_world::tu::efn::efasync::efAsync_LoadSync(a0 as _); 0 });
+        melee_items::tu::vi1201v1::ext::hook::efSync_Spawn = Some(|a0, a1, a2, a3, a4, a5, a6| melee_world::tu::efn::efsync::efSync_Spawn(a0, a1, &[a2 as *const c_void, a3 as *const c_void, a4 as *const c_void, a5 as usize as *const c_void, a6 as usize as *const c_void]));
+        melee_items::tu::vi1201v1::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi1201v1::ext::hook::gm_801A4B60 = Some(|| melee_modes::tu::gmscene::gm_801A4B60());
+        melee_items::tu::vi1201v1::ext::hook::gm_8016895C = Some(|a0, a1, a2| melee_modes::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v1::ext::hook::gm_80160438 = Some(|a0| melee_modes::tu::gm_1601::gm_80160438(a0 as _) as _);
+        melee_items::tu::vi1201v1::ext::hook::Stage_802251E8 = Some(|a0, a1| melee_world::tu::stage::Stage_802251E8(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::lb_80011E24 = Some(|a0, a1, a2, a3| melee_runtime::tu::lbspdisplay::lb_80011E24(a0, a1, &[a2, a3]));
+        melee_items::tu::vi1201v1::ext::hook::lb_800145F4 = Some(|| melee_modes::tu::lb_013B::lb_800145F4());
+        melee_items::tu::vi1201v1::ext::hook::mn_8022F298 = Some(|a0| melee_modes::tu::mn_22EC::mn_8022F298(a0 as _) as _);
+        melee_items::tu::vi1201v1::ext::hook::Player_80032768 = Some(|a0, a1| melee_fighter::tu::player::Player_80032768(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_80036E20 = Some(|a0, a1, a2| melee_fighter::tu::player::Player_80036E20(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_80036F34 = Some(|a0, a1| melee_fighter::tu::player::Player_80036F34(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_GetEntity = Some(|a0| melee_fighter::tu::player::Player_GetEntity(a0 as _) as _);
+        melee_items::tu::vi1201v1::ext::hook::Player_InitAllPlayers = Some(|| melee_fighter::tu::player::Player_InitAllPlayers());
+        melee_items::tu::vi1201v1::ext::hook::Player_SetCostumeId = Some(|a0, a1| melee_fighter::tu::player::Player_SetCostumeId(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_SetFacingDirection = Some(|a0, a1| melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_SetPlayerCharacter = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerCharacter(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_SetPlayerId = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerId(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::Player_SetSlottype = Some(|a0, a1| melee_fighter::tu::player::Player_SetSlottype(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::GObj_Create = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _);
+        melee_items::tu::vi1201v1::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1201v1::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_FogLoadDesc = Some(|a0| melee_runtime::tu::fog::HSD_FogLoadDesc(a0 as _) as _);
+        melee_items::tu::vi1201v1::ext::hook::HSD_GObj_80390ED0 = Some(|a0, a1| melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_GObjFree = Some(|a0| melee_runtime::tu::gobjplink::HSD_GObjFree(a0 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_JObjAnimAll = Some(|a0| melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(a0 as _, a1 as _));
+        melee_items::tu::vi1201v1::ext::hook::HSD_SetEraseColor = Some(|a0, a1, a2, a3| melee_runtime::tu::displayfunc_native::HSD_SetEraseColor(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1201v2::ext::hook::efAsync_LoadSync = Some(|a0| { melee_world::tu::efn::efasync::efAsync_LoadSync(a0 as _); 0 });
+        melee_items::tu::vi1201v2::ext::hook::ftDemo_ObjAllocInit = Some(|| melee_fighter::tu::ftdemo::ftdemo_obj_alloc_init());
+        melee_items::tu::vi1201v2::ext::hook::gm_801A4B60 = Some(|| melee_modes::tu::gmscene::gm_801A4B60());
+        melee_items::tu::vi1201v2::ext::hook::gm_8016895C = Some(|a0, a1, a2| melee_modes::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v2::ext::hook::Stage_InitScene = Some(|a0, a1| melee_modes::tu::hsd::Stage_InitScene(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::lb_80011E24 = Some(|a0, a1, a2, a3| melee_runtime::tu::lbspdisplay::lb_80011E24(a0, a1, &[a2, a3]));
+        melee_items::tu::vi1201v2::ext::hook::lb_800145F4 = Some(|| melee_modes::tu::lb_013B::lb_800145F4());
+        melee_items::tu::vi1201v2::ext::hook::mn_8022EAE0 = Some(|a0| melee_modes::tu::mnmain::mn_8022EAE0(a0 as _));
+        melee_items::tu::vi1201v2::ext::hook::mn_8022F298 = Some(|a0| melee_modes::tu::mn_22EC::mn_8022F298(a0 as _) as _);
+        melee_items::tu::vi1201v2::ext::hook::Player_80032768 = Some(|a0, a1| melee_fighter::tu::player::Player_80032768(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_80032BB0 = Some(|a0| melee_fighter::tu::player::Player_80032BB0(a0 as _) as _);
+        melee_items::tu::vi1201v2::ext::hook::Player_80036E20 = Some(|a0, a1, a2| melee_fighter::tu::player::Player_80036E20(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_80036F34 = Some(|a0, a1| melee_fighter::tu::player::Player_80036F34(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_InitAllPlayers = Some(|| melee_fighter::tu::player::Player_InitAllPlayers());
+        melee_items::tu::vi1201v2::ext::hook::Player_SetCostumeId = Some(|a0, a1| melee_fighter::tu::player::Player_SetCostumeId(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetFacingDirection = Some(|a0, a1| melee_fighter::tu::player::Player_SetFacingDirection(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetPlayerAndEntityFacingDirection = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerAndEntityFacingDirection(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetPlayerCharacter = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerCharacter(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetPlayerId = Some(|a0, a1| melee_fighter::tu::player::Player_SetPlayerId(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetScale = Some(|a0, a1| melee_fighter::tu::player::Player_SetScale(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::Player_SetSlottype = Some(|a0, a1| melee_fighter::tu::player::Player_SetSlottype(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::GObj_Create = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _);
+        melee_items::tu::vi1201v2::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1201v2::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_FogInterpretAnim = Some(|a0| melee_runtime::tu::fog::HSD_FogInterpretAnim(a0 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_FogLoadDesc = Some(|a0| melee_runtime::tu::fog::HSD_FogLoadDesc(a0 as _) as _);
+        melee_items::tu::vi1201v2::ext::hook::HSD_FogReqAnim = Some(|a0, a1| melee_runtime::tu::fog::HSD_FogReqAnim(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_Fog_8037DE7C = Some(|a0, a1| melee_runtime::tu::fog::HSD_Fog_8037DE7C(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_GObj_80390ED0 = Some(|a0, a1| melee_runtime::tu::gobj_native::HSD_GObj_80390ED0(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_GObjFree = Some(|a0| melee_runtime::tu::gobjplink::HSD_GObjFree(a0 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_JObjAnimAll = Some(|a0| melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(a0 as _, a1 as _));
+        melee_items::tu::vi1201v2::ext::hook::HSD_SetEraseColor = Some(|a0, a1, a2, a3| melee_runtime::tu::displayfunc_native::HSD_SetEraseColor(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1202::ext::hook::efAsync_LoadSync = Some(|a0| { melee_world::tu::efn::efasync::efAsync_LoadSync(a0 as _); 0 });
+        melee_items::tu::vi1202::ext::hook::gm_801A4B60 = Some(|| melee_modes::tu::gmscene::gm_801A4B60());
+        melee_items::tu::vi1202::ext::hook::gm_8016895C = Some(|a0, a1, a2| melee_modes::tu::gm_1601::gm_8016895C(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1202::ext::hook::lb_80011E24 = Some(|a0, a1, a2, a3| melee_runtime::tu::lbspdisplay::lb_80011E24(a0, a1, &[a2, a3]));
+        melee_items::tu::vi1202::ext::hook::lb_800145F4 = Some(|| melee_modes::tu::lb_013B::lb_800145F4());
+        melee_items::tu::vi1202::ext::hook::GObj_Create = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_Create(a0 as _, a1 as _, a2 as _) as _);
+        melee_items::tu::vi1202::ext::hook::GObj_SetupGXLink = Some(|a0, a1, a2, a3| melee_runtime::tu::gobj_native::GObj_SetupGXLink(a0 as _, a1 as _, a2 as _, a3 as _));
+        melee_items::tu::vi1202::ext::hook::GObj_SetupGXLinkMax = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::GObj_SetupGXLinkMax(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1202::ext::hook::HSD_GObj_803910D8 = Some(|a0, a1| melee_runtime::tu::gobj_native::HSD_GObj_803910D8(a0 as _, a1 as _));
+        melee_items::tu::vi1202::ext::hook::HSD_GObjObject_80390A70 = Some(|a0, a1, a2| melee_runtime::tu::gobj_native::HSD_GObjObject_80390A70(a0 as _, a1 as _, a2 as _));
+        melee_items::tu::vi1202::ext::hook::HSD_JObjAnimAll = Some(|a0| melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _));
+        melee_items::tu::vi1202::ext::hook::HSD_JObjReqAnimAll = Some(|a0, a1| melee_runtime::tu::jobj_ptr::HSD_JObjReqAnimAll(a0 as _, a1 as _));
+    }
+}
+
+/// A `'static` name as the C string the demo loader reads (one leaked copy per name).
+fn demo_cstr(name: Option<&'static str>) -> *mut i8 {
+    static CACHE: std::sync::Mutex<Vec<(&'static str, usize)>> = std::sync::Mutex::new(Vec::new());
+    let Some(name) = name else { return core::ptr::null_mut() };
+    let mut c = CACHE.lock().unwrap();
+    if let Some(&(_, p)) = c.iter().find(|(n, _)| *n == name) {
+        return p as *mut i8;
+    }
+    let p = std::ffi::CString::new(name).unwrap().into_raw() as usize;
+    c.push((name, p));
+    p as *mut i8
+}
+unsafe extern "C" fn demo_motion_mario(k: melee_types::enum_t) -> *mut i8 {
+    demo_cstr(Some(melee_chara::tu::ftmario::ftMr_Init_GetMotionFileString(k as u32)))
+}
+unsafe extern "C" fn demo_motion_luigi(k: melee_types::enum_t) -> *mut i8 {
+    demo_cstr(melee_chara::tu::ftluigi::ftLg_Init_GetMotionFileString(k as i32))
+}
+unsafe extern "C" fn demo_motion_gkoopa(k: melee_types::enum_t) -> *mut i8 {
+    demo_cstr(melee_chara::tu::ftgkoopa::ftGk_Init_GetMotionFileString(k as i32))
 }

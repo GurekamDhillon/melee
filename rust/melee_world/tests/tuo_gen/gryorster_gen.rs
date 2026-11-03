@@ -59,7 +59,7 @@ if v.set() { (*p).gobj_proc = unsafe { core::mem::transmute::<usize, _>(v.leaf_p
 {
 if v.set() { (*p).callback3 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.callback3", path))) }; } else { v.dump_p(&format!("{}.callback3", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).callback3) }); }
 }
-v.bytes(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
+v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_grYt_804D6A20_t(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_world::tu::gryorster::grYt_804D6A20_t; unsafe {
@@ -386,6 +386,7 @@ if v.set() { (*p).map_id = v.leaf_int(&format!("{}.map_id", path), 32, 0) as _; 
 if v.set() { (*p).x1C_callback = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.x1C_callback", path))) }; } else { v.dump_p(&format!("{}.x1C_callback", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).x1C_callback) }); }
 }
 {
+if v.view_on("Ground.u", "yorster") {
 {
 {
 if v.set() { (*p).u.yorster.xC4 = v.leaf_int(&format!("{}.xC4", format!("{}.yorster", format!("{}.u", path))), 32, 1) as _; } else { v.dump_i(&format!("{}.xC4", format!("{}.yorster", format!("{}.u", path))), (((*p).u.yorster.xC4) as i32) as i64); }
@@ -421,6 +422,7 @@ if v.set() { (*p).u.yorster.elements[_i6].x18 = v.leaf_ptr(&format!("{}.x18", fo
 }
 {
 if v.set() { (*p).u.yorster.elements[_i6].x1C = v.leaf_ptr(&format!("{}.x1C", format!("{}[{}]", format!("{}.elements", format!("{}.yorster", format!("{}.u", path))), _i6))) as _; } else { v.dump_p(&format!("{}.x1C", format!("{}[{}]", format!("{}.elements", format!("{}.yorster", format!("{}.u", path))), _i6)), ((*p).u.yorster.elements[_i6].x1C) as usize); }
+}
 }
 }
 }

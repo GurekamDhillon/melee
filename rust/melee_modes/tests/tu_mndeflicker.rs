@@ -113,5 +113,8 @@ fn mndeflicker_vs_c() {
     ];
     let _ = (addr_of!(tu::mn_804D6BB8), null_mut::<c_void>());
     let mut globals = tu::oracle_globals();
+    globals.extend(tu::oracle_globals_ext());
+    // the C oracle defines these externs zero-initialised; the re-exported owners (mnmain, gobj) carry their own initialisers
+    for g in tu::oracle_globals_ext() { unsafe { core::ptr::write_bytes(g.addr, 0, g.size) } }
     run_tu(&TuOracle { tu: "mndeflicker", funcs: &funcs, globals, fn_table });
 }

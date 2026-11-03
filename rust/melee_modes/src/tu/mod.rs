@@ -42,6 +42,8 @@ pub mod support;
 pub mod adapt;
 pub mod gmcameramode;
 pub mod gmclassic;
+pub mod gmadventure;
+pub mod gmallstar;
 pub mod gmdebugmode;
 pub mod gmevent;
 pub mod gmfixedcamera;

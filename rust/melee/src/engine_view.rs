@@ -102,7 +102,7 @@ pub fn view_golden(args: &[String]) -> ExitCode {
         quit: false,
         pending_shot: None,
     };
-    let cfg = WindowConfig { title: format!("melee view-golden - {scenario}"), width: 1280, height: 960, active: std::env::var_os("MELEE_PAD_SCRIPT").is_none() && std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_none() };
+    let cfg = WindowConfig { title: format!("melee view-golden - {scenario}"), width: 1280, height: 960, active: std::env::var_os("MELEE_PAD_SCRIPT").is_none() && std::env::var_os("MELEE_WINDOW_UNFOCUSED").is_none(), ..Default::default() };
     match run_windowed(view, PadSystem::headless(), cfg) {
         Ok((ticks, _)) => {
             eprintln!("view-golden: closed after {ticks} ticks");

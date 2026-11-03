@@ -904,7 +904,7 @@ fn main() {
         failed: None,
         fit: synthetic || args.iter().any(|a| a == "--fit"),
     };
-    let cfg = WindowConfig { title: format!("gx_viewer - {}", if synthetic { "synthetic" } else { &stage }), width: 960, height: 720, active: std::env::var_os("MELEE_PAD_SCRIPT").is_none() };
+    let cfg = WindowConfig { title: format!("gx_viewer - {}", if synthetic { "synthetic" } else { &stage }), width: 960, height: 720, active: std::env::var_os("MELEE_PAD_SCRIPT").is_none(), ..Default::default() };
     match run_windowed(viewer, PadSystem::headless(), cfg) {
         Ok((ticks, _)) => eprintln!("gx_viewer: closed after {ticks} ticks"),
         Err(e) => {

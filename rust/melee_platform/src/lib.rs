@@ -18,6 +18,6 @@ pub mod pad_read;
 pub mod main_loop;
 pub mod gfx;
 
-pub use main_loop::{run_headless, run_windowed, FixedStep, Game, WindowConfig};
+pub use main_loop::{run_headless, run_windowed, FixedStep, FullscreenMode, Game, WindowConfig};
 pub use pad::PADStatus;
 pub use pad_read::{InputMode, PadSystem, Source};

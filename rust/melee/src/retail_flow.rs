@@ -51,6 +51,8 @@ pub struct RetailPlay {
     /// The decode thread's packed vertex/index data for `frame` (async GX, see `boot`).
     packed: Option<melee_gx::render::Packed>,
     presenter: Option<Presenter>,
+    /// The content aspect of `frame` (melee_engine view::aspect when it was taken).
+    frame_aspect: f32,
     headless: bool,
     tick_no: u64,
     age: u32,
@@ -76,7 +78,7 @@ pub struct RetailPlay {
 impl RetailPlay {
     pub fn new(iso: String, mods_dir: Option<String>, presets: Presets, headless: bool, shot_dir: Option<PathBuf>, shot_ages: Vec<u32>, quit_after: Option<u32>, max_frames: Option<u64>) -> RetailPlay {
         RetailPlay {
-            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
+            iso, mods_dir, presets, e: None, frame: None, packed: None, presenter: None, frame_aspect: 4.0 / 3.0, headless, tick_no: 0, age: 0, cur: (0xFF, 0xFF), scene_no: 0,
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
@@ -200,6 +202,8 @@ impl Game for RetailPlay {
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             self.frame = Some(f);
+            // the view the frame was drawn for (its cameras' projection and the target shape must agree)
+            self.frame_aspect = melee_engine::view::aspect();
             self.packed = melee_engine::gxbridge::shim().gx.packed.take();
         }
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
@@ -301,11 +305,13 @@ impl Game for RetailPlay {
         if let Some(pk) = self.packed.take() {
             p.renderer.set_packed(pk);
         }
+        p.set_content_aspect(self.frame_aspect);
         p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, a);
         self.emit_shot();
     }
 
     fn resized(&mut self, w: u32, h: u32) {
+        melee_engine::view::set_window(w, h);
         if let Some(p) = self.presenter.as_mut() {
             p.resize(w, h);
         }
@@ -338,7 +344,7 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     let scripted = std::env::var_os("MELEE_PAD_SCRIPT").is_some_and(|v| !v.is_empty());
     // play.rs window_title: MELEE_WINDOW_TITLE, else the build id ("melee [where hash]") and "retail menus"
     let title = std::env::var("MELEE_WINDOW_TITLE").unwrap_or_else(|_| format!("{} retail menus", crate::play::window_title(None)));
-    let cfg = melee_platform::WindowConfig { title, width: 1280, height: 960, active: !scripted };
+    let cfg = crate::display::current().window_config(title, !scripted);
     if scripted {
         std::env::set_var("MELEE_PAD_IGNORE_ADAPTER", "1");
     }

@@ -28,6 +28,7 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod crash;
+mod display;
 mod prof;
 mod heapprof;
 mod disc;

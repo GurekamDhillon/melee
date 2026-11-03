@@ -1389,6 +1389,12 @@ impl Game for Play {
     fn should_quit(&self) -> bool {
         self.quit
     }
+
+    fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {
+        if let Some(p) = self.presenter.as_mut() {
+            p.hud = lines;
+        }
+    }
 }
 
 /// The window title: `MELEE_WINDOW_TITLE`, else "melee [<worktree> <hash>] <stage> <fighters>" (build identity from build.rs,

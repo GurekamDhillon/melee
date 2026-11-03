@@ -49,6 +49,8 @@ pub trait Game {
     fn overlay_lines(&mut self) -> Vec<crate::overlay::Line> {
         Vec::new()
     }
+    /// The HUD overlay's lines to draw from now on (None: off); a game with a Presenter puts them in `Presenter::hud`.
+    fn set_hud(&mut self, _lines: Option<Vec<crate::overlay::Line>>) {}
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).
@@ -249,6 +251,7 @@ struct App<G: Game> {
     hud_frames: crate::overlay::FrameWindow,
     hud_last_frame: Option<Instant>,
     hud_n: (u64, u64),
+    hud_shown: bool,
 }
 
 /// The `q` quantile of `v` (sorted in place).
@@ -337,7 +340,7 @@ impl<G: Game> App<G> {
         }
         let t0 = *self.hud_t0.get_or_insert(now);
         let dt = (now - t0).as_secs_f64();
-        if dt < 0.5 && crate::overlay::active() {
+        if dt < 0.5 && self.hud_shown {
             return;
         }
         self.hud_t0 = Some(now);
@@ -351,14 +354,16 @@ impl<G: Game> App<G> {
             (format!("sim {tps:.1} tps{}", if self.interp { "  interp" } else { "" }), if dt > 0.0 && (tps - 60.0).abs() > 1.5 { WARN } else { DIM }),
         ];
         lines.extend(self.game.overlay_lines());
-        crate::overlay::set(Some(lines));
+        self.hud_shown = true;
+        self.game.set_hud(Some(lines));
     }
 
     fn hud_toggle(&mut self) {
         self.hud_on = !self.hud_on;
         plog!("gw: overlay {}", if self.hud_on { "on" } else { "off" });
         if !self.hud_on {
-            crate::overlay::set(None);
+            self.hud_shown = false;
+            self.game.set_hud(None);
         } else {
             self.hud_t0 = None;
             self.hud_last_frame = None;
@@ -548,6 +553,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         hud_frames: Default::default(),
         hud_last_frame: None,
         hud_n: (0, 0),
+        hud_shown: false,
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;

@@ -632,6 +632,12 @@ impl Game for RetailPlay {
         self.net.as_mut().map(|n| n.status())
     }
 
+    fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {
+        if let Some(p) = self.presenter.as_mut() {
+            p.hud = lines;
+        }
+    }
+
     fn overlay_lines(&mut self) -> Vec<melee_platform::overlay::Line> {
         let Some(n) = self.net.as_ref() else {
             let d = self.delay_line.frames;

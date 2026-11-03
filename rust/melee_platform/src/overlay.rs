@@ -6,7 +6,6 @@
 //! after the EFB blit ([`melee_gx::render::Renderer::overlay_to`]). It never enters the GX shim, a draw list, the EFB
 //! or anything the simulation reads, so frames, hashes and replays are the same with it on or off.
 use melee_gx::render::OverlayQuad;
-use std::sync::Mutex;
 
 /// A line of overlay text and its colour.
 pub type Line = (String, [u8; 4]);
@@ -17,24 +16,11 @@ pub const GOOD: [u8; 4] = [110, 225, 135, 255];
 pub const WARN: [u8; 4] = [250, 205, 80, 255];
 pub const BAD: [u8; 4] = [245, 95, 80, 255];
 
-/// The lines to draw (None: overlay off). Written by the main loop a few times a second, read by every present.
-static LINES: Mutex<Option<Vec<Line>>> = Mutex::new(None);
+// The lines live in the Presenter (`Presenter::hud`, handed over through `Game::set_hud`), never in a static: a
+// rollback run's snapshots restore the program's statics, which would bring back a freed Vec.
 
-pub fn set(lines: Option<Vec<Line>>) {
-    *LINES.lock().unwrap() = lines;
-}
-
-pub fn active() -> bool {
-    LINES.lock().unwrap().is_some()
-}
-
-/// The overlay's quads for a `tw` x `th` target (empty when off). Top-left panel; the glyph scale follows the
-/// target height (one 8x8 cell per 480 lines, at least 1).
-pub fn quads(tw: u32, th: u32) -> Vec<OverlayQuad> {
-    let g = LINES.lock().unwrap();
-    let Some(lines) = g.as_ref() else { return Vec::new() };
-    layout(lines, tw, th)
-}
+/// The overlay's quads for a `tw` x `th` target. Top-left panel; the glyph scale follows the target height (one
+/// 8x8 cell per 480 lines, at least 1).
 
 pub fn layout(lines: &[Line], _tw: u32, th: u32) -> Vec<OverlayQuad> {
     let s = ((th as f32 / 480.0).round()).max(1.0);

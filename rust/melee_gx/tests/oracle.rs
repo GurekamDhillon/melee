@@ -325,3 +325,43 @@ fn gx_state_matches_aurora() {
     }
     assert_eq!(checked, 301);
 }
+
+/// GXSetZTexture shaders (not in Aurora, so no oracle text): every oracle config whose last stage samples a texture,
+/// with each Z format and op, must still pass naga's WGSL validation (the frag_depth output, the forced sample).
+#[test]
+fn ztex_wgsl_validates() {
+    use wgpu::naga;
+    let text = data("shader_oracle.txt");
+    let lines: Vec<&str> = text.lines().filter(|l| !l.starts_with('#')).collect();
+    let mut n = 0;
+    for pair in lines.chunks(2) {
+        let (mut cfg, na) = parse_config(pair[0]);
+        if cfg.tev_stage_count == 0 {
+            continue;
+        }
+        let last = cfg.tev_stages[cfg.tev_stage_count as usize - 1];
+        if last.tex_map_id == melee_gx::consts::GX_TEXMAP_NULL || last.tex_coord_id == melee_gx::consts::GX_TEXCOORD_NULL {
+            continue;
+        }
+        let ok = |src: &str| naga::front::wgsl::parse_str(src).ok().is_some_and(|m| {
+            naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all()).validate(&m).is_ok()
+        });
+        if !ok(&melee_gx::render::adapt_wgsl(&shader::build_shader_source(&cfg, na))) {
+            continue; // the oracle's random configs include ones no game draw makes (invalid without a Z texture too)
+        }
+        if (GX_TG_BUMP0..=GX_TG_BUMP7).contains(&cfg.tcgs[last.tex_coord_id as usize].ty) {
+            continue; // an emboss coordinate needs its source coordinate generated too (not a Z texture's case)
+        }
+        for (op, fmt) in [(2u32, 2u32), (1, 0), (2, 1)] {
+            cfg.ztex = op | (fmt << 2) | (0x10 << 8);
+            let src = melee_gx::render::adapt_wgsl(&shader::build_shader_source(&cfg, na));
+            assert!(src.contains("frag_depth"), "config {n}: no depth output");
+            let module = naga::front::wgsl::parse_str(&src).unwrap_or_else(|e| panic!("config {n}: {}", e.emit_to_string(&src)));
+            naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
+                .validate(&module)
+                .unwrap_or_else(|e| panic!("config {n}: {e:?}"));
+        }
+        n += 1;
+    }
+    assert!(n > 0);
+}

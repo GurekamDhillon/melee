@@ -14,6 +14,7 @@ while [ $# -gt 0 ]; do case "$1" in -j) jobs="$2"; shift ;; --out) out="$2"; shi
 tmp="${TEMP:-/tmp}/covrun.$$"; mkdir -p "$tmp"
 one() {
   s="$1"; g="docs/rust-port/golden/coverage/$s.csv"
+  export MELEE_WINDOW_TITLE="${COV_TITLE:-coverage}: $s"   # every visible window names its scenario
   [ -f "$g" ] || { printf '%s\tNO_GOLDEN\t0\t0\t-\n' "$s"; return; }
   rows=$(( $(wc -l < "$g") - 1 ))
   # the C boot makes HSD_Rand draws the engine's boot flow does not yet (BGM pick, stage init): MELEE_ENGINE_PRE_DRAWS per scenario,

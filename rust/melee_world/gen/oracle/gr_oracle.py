@@ -119,8 +119,19 @@ def bf_paths(pr, tname, rs_tname=None, keep=None):
 
 
 class GProbe(O.Probe):
-    """Probe whose descriptor walk skips members for which keep(path) is false."""
+    """Probe whose descriptor walk skips members for which keep(path) is false.
+    Also records function-local declarations (`extern T f(..);` inside a body, e.g. grdatfiles'
+    ScriptGame_StageSlotArchive) so the callee gets a stub like a file-scope extern."""
     keep = None
+
+    def __init__(self, src_c, includes):
+        super().__init__(src_c, includes)
+        for fn in list(self.funcs.values()):
+            if not fn.is_definition():
+                continue
+            for c in fn.walk_preorder():
+                if c.kind == K.FUNCTION_DECL and c != fn and c.spelling not in self.funcs:
+                    self.funcs[c.spelling] = c
 
     def _rec(self, c, base, path, out, prefer):
         decl = c.get_declaration()
@@ -144,6 +155,49 @@ class GProbe(O.Probe):
                 self._leaf(ch.type, boff, p, out, prefer)
         for b in sorted(bf_bytes):
             out.append((b, 1, "b"))
+
+
+
+# ------------------------------------------------------------------ the TU's hooks (all three forms)
+def parse_tu_hooks(rs_text):
+    """name -> dict(hook, params, ret) over the hook forms the stage TUs use:
+      * `hook!(HOOK, name, (..) -> R)` / `hook_or!(..)` / `port_hook!(..)` (O.parse_hooks);
+      * the expanded form gen_link writes: `pub static mut HOOK: Option<fn(..)> = None;` followed by `pub fn name(a: T, ..) -> R {`;
+      * `ext_fns! { fn name(a: T, ..) -> R [= default]; }` (the static is `hook::name`).
+    Each is rewritten as a `hook!` line and handed to O.parse_hooks, so the parameter / return scan is the same."""
+    out = O.parse_hooks(rs_text)
+    t = rs_text
+    fn_re = re.compile(r'\bpub (?:unsafe )?(?:extern "C" )?fn (\w+)\(')
+    for m in re.finditer(r'^\s*pub static mut (\w+): Option<(?:unsafe )?(?:extern "C" )?fn\(', t, re.M):
+        fm = fn_re.search(t, m.end())
+        if not fm or t.count("\n", m.end(), fm.start()) > 2:
+            continue
+        name = fm.group(1)
+        if name in out:
+            continue
+        params = O.scan_balanced(t, fm.end())
+        rest = t[fm.end() + len(params) + 1:fm.end() + len(params) + 400]
+        rm = re.match(r"\s*(->\s*[^{]+?)\s*\{", rest)
+        out.update(O.parse_hooks(f"hook!({m.group(1)}, {name}, ({params}) {rm.group(1) if rm else ''});"))
+    for im in re.finditer(r"\bext_fns!\s*\{", t):
+        start = im.end()
+        depth, j = 1, start
+        while depth and j < len(t):
+            depth += {"{": 1, "}": -1}.get(t[j], 0)
+            j += 1
+        for em in re.finditer(r"^\s*fn (\w+)\(", t[start:j], re.M):
+            name = em.group(1)
+            if name in out:
+                continue
+            k = start + em.end()
+            params = O.scan_balanced(t, k)
+            rest = t[k + len(params) + 1:k + len(params) + 400]
+            rm = re.match(r"\s*(->\s*.+?)\s*(?:=|;)", rest, re.S)
+            info = O.parse_hooks(f"hook!(HOOK_, {name}, ({params}) {rm.group(1) if rm else ''});").get(name)
+            if info:
+                info["hook"] = f"hook::{name}"
+                out[name] = info
+    return out
 
 
 def ret_pool(ret):
@@ -188,7 +242,7 @@ def build(stem, verbose_fn=None):
     rs_main = spec["rust_mod"]
     hooks = {}
     for m in [rs_main] + list(spec.get("ext_mods", [])):
-        for n, info in O.parse_hooks((CRATE / f"src/tu/{m}.rs").read_text(encoding="utf-8")).items():
+        for n, info in parse_tu_hooks((CRATE / f"src/tu/{m}.rs").read_text(encoding="utf-8")).items():
             hooks.setdefault(n, []).append((m, info))
     pr = GProbe(srcpath, includes)
     fspecs = []
@@ -830,7 +884,9 @@ fn state_matches_c() {
 
 def rs_hook_install(name, rh, kinds, rk, ret_t, modpath, pool):
     params = rh["params"]
-    if len(params) != len(kinds):
+    # a C variadic (`...`) is a trailing `&[usize]` slice on the Rust side; the stub logs only the named arguments
+    va = len(params) == len(kinds) + 1 and params[-1][1].replace(" ", "").startswith("&[")
+    if len(params) != len(kinds) and not va:
         raise SystemExit(f"gro: hook {name}: Rust has {len(params)} params, C has {len(kinds)}")
     sig = ", ".join(f"a{i}: {t}" for i, (_, t) in enumerate(params))
     body = [f'lg_s("{name}(");']

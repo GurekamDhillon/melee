@@ -1247,3 +1247,13 @@ paths a match reaches. Menus other than VS (1P, Toy, Settings, Data) show the to
 - Coverage (Jigglypuff scenarios): items_hi_yoshistory 2805 -> 3601 PASS, cpulv5_puff_link 673 -> 3601 PASS; char_link, char_jigglypuff, stage_05_jungle,
   stage_08_yoshistory, stage_31_battlefield, cpulv1/9_puff_link stay PASS; pad_icies_jigglypuff_stadium and targettest_jigglypuff not wired (Lua pad, 1p).
   No coverage scenario uses Crazy Hand, so those ports are compiled and wired but not run. Gate OK, 4 goldens and synctest unchanged.
+
+## Headless runs keep the draw callbacks (port/correct, 2026-11-03)
+`MELEE_ENGINE_HEADLESS` (set by `golden --audio` without `MELEE_ENGINE_RENDER_AUDIO`) used to return from `HSD_GObj_80390ED0/80390FC0`
+at once; cpu_fox_falco_dl then left the golden at frame 142 (P1 bone dynamics). The draw pass is not simulation-free: `HSD_JObjDispAll`
+runs `HSD_JObjSetupMatrix` and clears `JOBJ_MTX_DIRTY`, and the next logic frame's `HSD_JObjSetMtxDirty` only propagates to the
+children (`HSD_JObjSetMtxDirtySub`) from a clean parent (call-trace diff, frames 138-140: every `JObjUpdateFunc -> SetMtxDirty` lost
+its `SetMtxDirtySub`), so child bones kept stale world matrices. The C build has the same dependency and always runs the callbacks
+(turbo frames only suppress display lists, `Gx_SuppressDraws`). Headless now means: no GX bridge, no presented frame, callbacks run
+in render-stub mode (`RENDER_STUB` is on for every run). All four goldens match headless; gate (audio mix included) and
+`rematch.sh css` pass.

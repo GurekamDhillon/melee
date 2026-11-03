@@ -219,6 +219,14 @@ impl RbGame for ModesGame {
         // a resimulated frame is never shown: its render pass runs (the game state it touches stays the same as a
         // shown frame's) but the display lists are not decoded (gw_gx_suppress_draws, as the C build's resim)
         melee_engine::gxbridge::shim().set_suppress_draws(resim);
+        // MELEE_NP_TEST_DESYNC=<game frame>: this peer's logic RNG is perturbed before that frame (the desync check's test)
+        static TEST_DESYNC: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
+        if let Some(f) = *TEST_DESYNC.get_or_init(|| std::env::var("MELEE_NP_TEST_DESYNC").ok().and_then(|v| v.parse().ok())) {
+            if self.frame() + 1 - FIRST == f {
+                let rs = melee_runtime::tu::random::global::state();
+                rs.set_logic_seed(0x0BAD_5EED);
+            }
+        }
         self.step(p);
         melee_engine::gxbridge::shim().set_suppress_draws(false);
     }

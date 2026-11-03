@@ -340,4 +340,3 @@ pub fn scene_reset() {
 pub fn scene_init() {
     with(|s| s.lb_audio_ax_80028690());
 }
-

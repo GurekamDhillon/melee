@@ -1409,6 +1409,43 @@ const USAGE: &str = "usage: melee play --iso DISC.iso [--time-secs N | --stocks 
        [--widescreen] [--fullscreen[=exclusive]] [--window WxH] [--render-scale N|auto] [--msaa N] [--vsync on|off] [--save-display]";
 
 pub fn play(args: &[String]) -> ExitCode {
+    // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
+    let mut feed = None;
+    let merged: Vec<String>;
+    let args: &[String] = match args.iter().position(|a| a == "--replay").and_then(|i| args.get(i + 1)) {
+        Some(path) => {
+            let r = match std::fs::read(path).map_err(|e| format!("{path}: {e}")).and_then(|d| crate::play_net::Replay::parse(&d)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("play: --replay: {e}");
+                    return ExitCode::from(2);
+                }
+            };
+            eprintln!("play: replay {path}: {} ticks, options {:?}, {}", r.ticks.len(), r.args, r.meta.iter().map(|m| format!("{}={}", m.0, m.1)).collect::<Vec<_>>().join(" "));
+            let mut a: Vec<String> = Vec::new();
+            let mut i = 0;
+            while i < args.len() {
+                if args[i] == "--replay" || args[i] == "--record" || args[i] == "--netplay" {
+                    i += if args[i] == "--netplay" && args.get(i + 1).map_or(false, |m| m == "join") { 3 } else { 2 };
+                    continue;
+                }
+                a.push(args[i].clone());
+                i += 1;
+            }
+            let mut it = r.args.iter();
+            while let Some(x) = it.next() {
+                if x == "--match" && r.meta("np_scene").is_some() {
+                    it.next(); // a netplay match comes from its agreed scene
+                    continue;
+                }
+                a.push(x.clone());
+            }
+            merged = a;
+            feed = Some(crate::play_net::ReplayFeed::new(r));
+            &merged
+        }
+        None => args,
+    };
     crate::prof::set_gated(std::env::var_os("MELEE_SAMPLE_GATE").map_or(true, |v| v != "0"));
     // `play` never snapshots the game arena (no rollback offline): big free blocks may give their pages back.
     melee_engine::arena::set_trim(std::env::var_os("MELEE_ARENA_NO_TRIM").is_none());
@@ -1498,7 +1535,8 @@ pub fn play(args: &[String]) -> ExitCode {
     let mut game = game;
     // `--match falcon,fox[,fox,...][,STAGE]`: skip the menus (a hands-off test of the match path). Fighters as the scene
     // names them (`falcon`, `jigglypuff`, ...; `name/cpuN` for a CPU), the stage by its external id or display name.
-    if let Some(spec) = get("--match") {
+    let netplay = has("--netplay");
+    if let Some(spec) = get("--match").filter(|_| !netplay) {
         let mut slots = [Slot::new(SlotKind::Off, 0, 0); 4];
         let mut stage = 0;
         let mut n = 0;
@@ -1537,10 +1575,70 @@ pub fn play(args: &[String]) -> ExitCode {
             items: get("--items").map(|_| game.rules.items),
             scenario: game.setup.as_ref().map(Play::scenario_of),
         };
+        // netplay: connect first (blocking: the room agrees the match), then boot straight into it
+        let mut net = None;
+        let mut np_scene = feed.as_ref().and_then(|f: &crate::play_net::ReplayFeed| f.r.meta("np_scene").map(str::to_string));
+        let mut seed = feed.as_ref().and_then(|f| f.r.meta("seed").and_then(|s| s.parse::<u32>().ok()));
+        if netplay {
+            let ck_of = |n: &str| melee_engine::scenario::ckind_by_name(n);
+            let stage_of = |p: &str| STAGES.iter().find(|s| s.0.to_string() == p || s.1.eq_ignore_ascii_case(p) || (p.eq_ignore_ascii_case("fd") && s.0 == 32) || (p.eq_ignore_ascii_case("bf") && s.0 == 31)).map(|s| s.0);
+            match crate::play_net::NetDriver::connect(args, &ck_of, &stage_of) {
+                Ok(n) => {
+                    np_scene = Some(n.scene_string());
+                    seed = Some(n.agreed.seed);
+                    net = Some(n);
+                }
+                Err(e) => {
+                    eprintln!("play: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+        }
+        let sync_k = std::env::var("MELEE_PLAY_SYNCTEST").ok().and_then(|v| v.parse::<i32>().ok()).filter(|&k| k > 0);
+        let rollback_mode = net.is_some() || sync_k.is_some() || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0);
+        if rollback_mode {
+            crate::play_net::prepare_rollback_run();
+            // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
+            let _s = melee_engine::arena::GameScope::enter();
+            let _ = melee_engine::gxbridge::shim();
+        }
+        let seed = seed.unwrap_or_else(|| std::env::var("MELEE_TEST_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(12345));
+        std::env::set_var("MELEE_TEST_SEED", seed.to_string());
+        let mut presets = presets;
+        if let Some(sc) = &np_scene {
+            match crate::play_net::scenario_of_scene(sc) {
+                Ok(s) => presets.scenario = Some(s),
+                Err(e) => {
+                    eprintln!("play: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+        }
         let quit_after = has("--quit-after-matches").then_some(game.quit_after).or(game.quit_at_results.then_some(1));
         let mut rp = crate::retail_flow::RetailPlay::new(game.iso.clone(), game.mods_dir.clone(), presets, has("--headless"), game.shot_dir.clone(), game.shot_ages.clone(), quit_after, game.max_frames);
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
+        rp.rollback_mode = rollback_mode;
+        rp.feed = feed;
+        rp.sync = sync_k.map(|k| crate::play_net::PlaySync { st: melee_net::session::SyncTest::new(k), g: None });
+        if let Some(path) = get("--record") {
+            let path = if path == "auto" {
+                let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+                format!("Replays/melee-{t}.mrpl")
+            } else {
+                path
+            };
+            let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+            if let Some(sc) = &np_scene {
+                meta.push(("np_scene".into(), sc.clone()));
+            }
+            if let Some(n) = &net {
+                meta.push(("np_role".into(), n.tag().into()));
+            }
+            let r = crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(args), meta, ticks: Vec::new() };
+            rp.rec = Some((path, r));
+        }
+        rp.net = net;
         return crate::retail_flow::run(rp, has("--headless"));
     }
     // --headless: no window, no device, no gamepads; the pad script (MELEE_PAD_SCRIPT) drives

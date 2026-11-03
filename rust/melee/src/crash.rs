@@ -212,6 +212,14 @@ fn write_report_with(kind: &str, reason: &str, fault: &str) {
     let dir = Path::new("crashlogs");
     let _ = std::fs::create_dir_all(dir);
     let path = dir.join(format!("crash-{y:04}{mo:02}{d:02}-{h:02}{mi:02}{s:02}-{}.log", std::process::id()));
+    // MELEE_CRASH_COPY (launcher_compat.rs): the Melee Unlocked launcher reads `melee_port_crash.txt` in the game folder
+    // when it is newer than the launch, first line "CRASH: ...".
+    if let Ok(copy) = std::env::var("MELEE_CRASH_COPY") {
+        if !copy.is_empty() {
+            let _ = std::fs::write(&copy, format!("CRASH: {kind}: {reason}, engine rust (melee)
+{text}"));
+        }
+    }
     match std::fs::File::create(&path).and_then(|mut f| f.write_all(text.as_bytes())) {
         Ok(()) => eprintln!("melee: crash report written to {}", path.display()),
         Err(e) => eprintln!("melee: could not write the crash report {}: {e}", path.display()),

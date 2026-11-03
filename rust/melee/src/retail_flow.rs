@@ -14,6 +14,9 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use winit::window::Window;
 
+/// The match scene's frames run before the session takes the engine.
+const ARM_FRAMES: u32 = 1;
+
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
@@ -73,6 +76,18 @@ pub struct RetailPlay {
     /// Sound on (no --no-audio, audio.cfg on): melee_audio's sim, as the match (port/sfxparity), the menus' calls routed by name.
     pub audio_on: bool,
     audio: Option<crate::audio::Audio>,
+    /// `--record FILE`: the replay being written (path, contents).
+    pub rec: Option<(String, crate::play_net::Replay)>,
+    /// `--replay FILE`: the replay being played back.
+    pub feed: Option<crate::play_net::ReplayFeed>,
+    /// `--netplay host|join ADDR`: the rollback peer.
+    pub net: Option<crate::play_net::NetDriver>,
+    /// `MELEE_PLAY_SYNCTEST=K`: SyncTest on every match frame.
+    pub sync: Option<crate::play_net::PlaySync>,
+    /// The run snapshots the engine (netplay, synctest, or a replay of such a run): frames are copied off the arena.
+    pub rollback_mode: bool,
+    /// A match scene was entered: the session takes the engine at the next tick.
+    arm: bool,
 }
 
 impl RetailPlay {
@@ -82,6 +97,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
+            rec: None, feed: None, net: None, sync: None, rollback_mode: false, arm: false,
         }
     }
 
@@ -144,6 +160,137 @@ impl RetailPlay {
         Ok(e)
     }
 
+    /// The engine wherever it is (the retail flow's, or under the netplay / synctest session).
+    fn engine(&self) -> Option<&melee_engine::Engine> {
+        use crate::play_net::NetPhase;
+        if let Some(e) = self.e.as_ref() {
+            return Some(e);
+        }
+        if let Some(NetPhase::InMatch(g)) = self.net.as_ref().map(|n| &n.phase) {
+            return Some(&g.e);
+        }
+        self.sync.as_ref().and_then(|s| s.g.as_ref()).map(|g| &g.e)
+    }
+
+    /// One engine tick with these pads: the mode loop, or the match frame(s) under the netplay / synctest session.
+    /// Returns whether a new scene was entered.
+    fn step(&mut self, mut four: [melee_types::PADStatus; 4]) -> bool {
+        use crate::play_net::*;
+        if let Some(nd) = self.net.as_mut() {
+            match nd.phase {
+                NetPhase::InMatch(_) => {
+                    nd.tick_match(&four[0], self.rec.as_mut().map(|r| &mut r.1));
+                    if let NetPhase::InMatch(g) = &mut nd.phase {
+                        if let Some(f) = g.take_frame() {
+                            self.frame = Some(f);
+                            self.frame_aspect = melee_engine::view::aspect();
+                        }
+                    }
+                    if let Some(err) = nd.error.clone() {
+                        log(&nd.summary());
+                        nd.write_hashes();
+                        self.failed = Some(err);
+                        self.quit = true;
+                    } else if nd.end_frame.is_some() && !nd.lingering() {
+                        log(&format!("netplay {}: match over at game frame {}", nd.tag(), nd.end_frame.unwrap() - melee_net::session::FIRST));
+                        log(&nd.summary());
+                        nd.write_hashes();
+                        if let NetPhase::InMatch(g) = std::mem::replace(&mut nd.phase, NetPhase::Done) {
+                            let (e, _) = g.into_engine();
+                            log(&format!("netplay {}: final hash {:08X}", nd.tag(), e.neutral_row()[0] | 1));
+                            self.e = Some(e);
+                        }
+                        self.quit = true;
+                    }
+                    return false;
+                }
+                NetPhase::PreMatch => four = neutral_pads(),
+                NetPhase::Done => {}
+            }
+        }
+        if let Some(ps) = self.sync.as_mut() {
+            if ps.g.is_some() {
+                ps.tick(four);
+                let g = ps.g.as_mut().unwrap();
+                if let Some(f) = g.take_frame() {
+                    self.frame = Some(f);
+                    self.frame_aspect = melee_engine::view::aspect();
+                }
+                if let Some(r) = self.rec.as_mut() {
+                    r.1.ticks.push((four, g.e.neutral_row()[0] | 1));
+                }
+                if g.e.ended {
+                    let st = &ps.st;
+                    // the whole-state hash differs on a windowed run (a resimulated frame's display lists are not decoded, so
+                    // the render pass leaves other bytes behind); the neutral (gameplay) hash is the one that must agree
+                    let bad: Vec<_> = st.mismatches.iter().filter(|m| m.3 != m.4).collect();
+                    log(&format!("synctest depth {}: {} passes, {} hash checks, {} NEUTRAL MISMATCHES ({} whole-state differences)", st.k, st.passes, st.checked, bad.len(), st.mismatches.len()));
+                    for m in bad.iter().take(5) {
+                        log(&format!("synctest:   mismatch frame {} full {:08x}/{:08x} neutral {:08x}/{:08x}", m.0, m.1, m.2, m.3, m.4));
+                    }
+                    if !bad.is_empty() {
+                        self.failed = Some("synctest mismatches".into());
+                    }
+                    let (e, _) = ps.g.take().unwrap().into_engine();
+                    self.e = Some(e);
+                }
+                return false;
+            }
+        }
+        let e = self.e.as_mut().unwrap();
+        // the first frame of a match scene: the session takes the engine from here on
+        // (after the scene's first frames: the scene's first frame re-creates the host heap block, which a snapshot base
+        // must not straddle)
+        if self.arm && !e.ended && e.mode_scene().1 == SCENE_VS && self.age >= ARM_FRAMES {
+            self.arm = false;
+            if let Some(nd) = self.net.as_mut() {
+                if matches!(nd.phase, NetPhase::PreMatch) {
+                    nd.begin_match(self.e.take().unwrap());
+                    return self.step(four);
+                }
+            } else if let Some(ps) = self.sync.as_mut() {
+                ps.g = Some(Box::new(ModesGame::new(self.e.take().unwrap())));
+                return self.step(four);
+            }
+        }
+        let e = self.e.as_mut().unwrap();
+        let vs_tick = !e.ended && e.mode_scene().1 == SCENE_VS;
+        e.set_pads(Some(four));
+        let entered = e.tick_modes();
+        let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
+        if let Some(r) = self.rec.as_mut() {
+            r.1.ticks.push((four, hash));
+        }
+        if let Some(f) = self.feed.as_mut() {
+            let i = f.at;
+            f.check(i, hash);
+            f.at += 1;
+        }
+        entered
+    }
+
+    /// The run ends: the replay is written, a failure is noted for the exit code.
+    fn on_quit(&mut self) {
+        if !self.quit {
+            return;
+        }
+        self.save_replay();
+        if let Some(f) = &self.failed {
+            log(&format!("failed: {f}"));
+            crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Write the `--record` replay (at the end of the run).
+    pub fn save_replay(&mut self) {
+        if let Some((p, r)) = self.rec.take() {
+            match r.write(&p) {
+                Ok(()) => log(&format!("replay: {} ticks written to {p}", r.ticks.len())),
+                Err(e) => log(&format!("replay: {e}")),
+            }
+        }
+    }
+
     /// The presets into the saved VS rules (what the rules menu edits and `gm_InitVsMode` reads).
     fn apply_rules(&self) {
         let p = &self.presets;
@@ -185,7 +332,7 @@ impl Game for RetailPlay {
         if self.quit {
             return;
         }
-        if self.e.is_none() {
+        if self.engine().is_none() {
             match self.boot() {
                 Ok(e) => self.e = Some(e),
                 Err(err) => {
@@ -200,9 +347,23 @@ impl Game for RetailPlay {
         pads.read(&mut st);
         let mut four = [melee_types::PADStatus::zeroed(); 4];
         four.copy_from_slice(&st[..4]);
-        let e = self.e.as_mut().unwrap();
-        e.set_pads(Some(four));
-        let entered = e.tick_modes();
+        if let Some(f) = self.feed.as_mut() {
+            if f.at >= f.r.ticks.len() {
+                log(&f.summary());
+                if f.bad > 0 {
+                    self.failed = Some(format!("replay diverged at tick {}", f.first_bad.map_or(0, |b| b.0)));
+                }
+                self.quit = true;
+                self.on_quit();
+                return;
+            }
+            four = f.r.ticks[f.at].0;
+        }
+        let entered = self.step(four);
+        if self.quit {
+            self.on_quit();
+            return;
+        }
         // MELEE_MEM_EVERY=<ticks>: the play `mem after` line (and a heap-sampler section) every N ticks, for creep checks
         static MEM_EVERY: std::sync::OnceLock<Option<u64>> = std::sync::OnceLock::new();
         if let Some(n) = *MEM_EVERY.get_or_init(|| std::env::var("MELEE_MEM_EVERY").ok().and_then(|v| v.parse::<u64>().ok()).filter(|&n| n > 0)) {
@@ -211,13 +372,20 @@ impl Game for RetailPlay {
             }
         }
         if let Some(au) = self.audio.as_mut() {
+            // a rollback run: the sound state is a static the load restores, so what it allocates must be in the arena too
+            let _s = self.rollback_mode.then(melee_engine::arena::GameScope::enter);
             au.tick();
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
-            self.frame = Some(f);
+            if self.rollback_mode {
+                // a snapshot load rewrites the arena: keep a detached copy (no Vec or Arc shared with the arena)
+                self.frame = Some(crate::play_net::detach_frame(f));
+            } else {
+                self.frame = Some(f);
+                self.packed = melee_engine::gxbridge::shim().gx.packed.take();
+            }
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
-            self.packed = melee_engine::gxbridge::shim().gx.packed.take();
         }
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
@@ -258,6 +426,7 @@ impl Game for RetailPlay {
         }
         self.tick_no += 1;
         self.age += 1;
+        let Some(e) = self.engine() else { return };
         let now = e.mode_scene();
         if entered || now != self.cur {
             let prev = self.cur;
@@ -265,6 +434,7 @@ impl Game for RetailPlay {
             self.age = 0;
             self.scene_no += 1;
             log(&format!("tick {}: scene {} (mode {}, scene kind {})", self.tick_no, scene_name(now.1), now.0, now.1));
+            self.arm = now.1 == crate::play_net::SCENE_VS;
             if prev.1 == melee_types::GS_RESULTS as u8 {
                 self.matches += 1;
                 if self.quit_after.is_some_and(|n| self.matches >= n) {
@@ -277,6 +447,7 @@ impl Game for RetailPlay {
             log(&format!("max frames reached in {}", scene_name(self.cur.1)));
             self.quit = true;
         }
+        self.on_quit();
         // MELEE_RETAIL_SHOT_TICKS="a-b,c": timeline shots (tick numbers from the first tick), for the transition captures
         if self.shot_dir.is_some() {
             if let Ok(v) = std::env::var("MELEE_RETAIL_SHOT_TICKS") {
@@ -337,6 +508,10 @@ impl Game for RetailPlay {
     fn present_now(&self) -> bool {
         self.shot_pending.is_some()
     }
+
+    fn status_line(&mut self) -> Option<String> {
+        self.net.as_mut().map(|n| n.status())
+    }
 }
 
 pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
@@ -344,7 +519,24 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     if headless {
         let mut pads = PadSystem::headless();
         let limit = rp.max_frames.unwrap_or(60 * 600);
-        let ticks = melee_platform::run_headless(&mut rp, &mut pads, limit);
+        let ticks = if rp.net.is_some() {
+            // netplay is real time: one tick per 1/60 s
+            let mut n = 0u64;
+            let t0 = std::time::Instant::now();
+            while n < limit && !rp.should_quit() {
+                rp.tick(&mut pads);
+                n += 1;
+                let due = t0 + std::time::Duration::from_micros(n * 16_667);
+                let now = std::time::Instant::now();
+                if due > now {
+                    std::thread::sleep(due - now);
+                }
+            }
+            n
+        } else {
+            melee_platform::run_headless(&mut rp, &mut pads, limit)
+        };
+        rp.save_replay();
         log(&format!("headless: {ticks} ticks, {}", scene_name(rp.cur.1)));
         // MELEE_RETAIL_WAV=<path>: the headless mix as a WAV (the movie / menu sound checks against the C's MELEE_AUDIO_DUMP)
         if let (Ok(p), Some(cap)) = (std::env::var("MELEE_RETAIL_WAV"), rp.audio.as_ref().and_then(|a| a.capture.as_ref())) {
@@ -370,14 +562,23 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
         pads.keyboard[0] = melee_platform::aurora::KeyboardBindings::preset_default();
     }
     match melee_platform::run_windowed(rp, pads, cfg) {
-        Ok((ticks, g)) => {
+        Ok((ticks, _)) => {
             log(&format!("closed after {ticks} ticks"));
-            let _ = g;
+            if crate::play_net::RUN_FAILED.load(std::sync::atomic::Ordering::Relaxed) {
+                return ExitCode::FAILURE;
+            }
             ExitCode::SUCCESS
         }
         Err(e) => {
             eprintln!("play: event loop: {e}");
             ExitCode::FAILURE
         }
+    }
+}
+
+impl Drop for RetailPlay {
+    /// A window closed by hand still writes its `--record` replay.
+    fn drop(&mut self) {
+        self.save_replay();
     }
 }

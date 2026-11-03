@@ -38,6 +38,10 @@ pub trait Game {
     fn present_now(&self) -> bool {
         false
     }
+    /// Extra state for the MELEE_SHOW_FPS title line (netplay: ping, rollbacks), asked once a second.
+    fn status_line(&mut self) -> Option<String> {
+        None
+    }
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).
@@ -290,7 +294,11 @@ impl<G: Game> App<G> {
         }
         if self.show_fps {
             plog!("gw: fps: render {fps:.1} sim {tps:.1} tps (interp {}; sim {:.0} ms, render {:.0} ms of {:.0})", if self.interp { "on" } else { "off" }, sim_ms, ren_ms, dt * 1e3);
-            w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps", self.cfg.title));
+            let extra = self.game.status_line().map_or(String::new(), |x| format!(" - {x}"));
+            if !extra.is_empty() {
+                plog!("gw: status:{extra}");
+            }
+            w.set_title(&format!("{} - {fps:.0} fps / {tps:.1} tps{extra}", self.cfg.title));
         }
     }
 

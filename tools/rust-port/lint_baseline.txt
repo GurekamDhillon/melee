@@ -397,3 +397,4 @@ R4	rust/melee_fighter/src/tu/ftCo_Damage.rs	PSVECCrossProduct
 R4	rust/melee_fighter/src/tu/ftCo_ItemThrow.rs	ftCo_GetCStickAngle
 R4	rust/melee_fighter/src/tu/ftCo_SpecialS.rs	ftCommon_UpdateFacing
 R4	rust/melee_fighter/src/tu/ftCo_Walk.rs	Fighter_804D6520_x0
+R2	rust/melee/src/play_net.rs	frame

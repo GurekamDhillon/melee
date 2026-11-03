@@ -28,6 +28,7 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod crash;
+mod launcher_compat;
 mod display;
 mod prof;
 mod heapprof;
@@ -52,6 +53,7 @@ mod engine_audio_gen;
 mod diff_layout;
 mod netmatch;
 mod netplay;
+mod play_net;
 mod np_env;
 mod menu_support;
 mod pads;
@@ -238,6 +240,9 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
         if melee_engine::arena::contains(p) {
             return melee_engine::arena::free(p, l);
         }
+        if rollback_pinned() {
+            return; // a snapshot may still point at this system block (see `rollback_pinned`)
+        }
         if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) {
             return;
         }
@@ -276,7 +281,7 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             return q;
         }
         let guarded = |sz: usize| sz >= guard_min() && GUARD_ALLOC.load(std::sync::atomic::Ordering::Relaxed);
-        if LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
+        if rollback_pinned() || LEAK_ALLOC.load(std::sync::atomic::Ordering::Relaxed) || guarded(l.size()) || guarded(n) {
             let q = self.alloc(std::alloc::Layout::from_size_align_unchecked(n, l.align()));
             if !q.is_null() {
                 core::ptr::copy_nonoverlapping(p, q, l.size().min(n));
@@ -291,6 +296,15 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
             q
         }
     }
+}
+/// A rollback run (snapshot base live) inside the game scope: a system-heap block the game frees or grows is kept
+/// (leaked) instead. The game's statics and arena are rolled back by a load, and an older state may still hold the
+/// block's address (a Vec the engine created outside the scope, e.g. the GX shim's buffers, then grew inside it);
+/// freeing it would leave that state pointing at freed memory. Each such block moves to the arena on its first growth,
+/// so the leak is bounded.
+#[inline]
+fn rollback_pinned() -> bool {
+    melee_engine::arena::active() && melee_engine::cow::active()
 }
 /// [`DebugAlloc`] with the live-heap sampler's hooks (`heapprof`, off unless MELEE_HEAP_SAMPLE is set).
 struct Hooked;
@@ -349,8 +363,24 @@ fn main() -> ExitCode {
     }
     heapprof::init();
     let _prof = prof::from_env();
+    let mut args: std::vec::Vec<String> = std::env::args().skip(1).collect();
+    // The Melee Unlocked launcher's command line (launcher_compat.rs): its environment is set before the log redirect.
+    let compat = launcher_compat::prepare(&args);
     crash::install();
-    let args: std::vec::Vec<String> = std::env::args().skip(1).collect();
+    match compat {
+        None => {}
+        Some(Err(refused)) => {
+            eprintln!("launcher-compat: not supported by the Rust engine yet: {}", refused.join(", "));
+            return ExitCode::from(launcher_compat::EXIT_UNSUPPORTED);
+        }
+        Some(Ok((play_args, notes))) => {
+            for n in notes {
+                eprintln!("launcher-compat: {n}");
+            }
+            eprintln!("launcher-compat: melee {}", play_args.join(" "));
+            args = play_args;
+        }
+    }
     if args.windows(2).any(|w| w[0] == "--engine" && w[1] == "legacy") {
         eprintln!("melee: --engine legacy was removed with the vs_match model (consolidation step 19); the engine is the only game loop");
         return ExitCode::from(2);

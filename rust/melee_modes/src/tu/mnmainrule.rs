@@ -2100,14 +2100,16 @@ pub unsafe extern "C" fn mn_80230E38(mut arg0: ::core::ffi::c_int) -> *mut HSD_G
     );
     return gobj as *mut HSD_GObj;
 }
+/// `jobj->child` (the C reads GC offset 0x10 as an int). Host: the HSD_JObj field, pointer-wide, so the callers'
+/// `(HSD_JObj*)` cast round-trips (an int return truncated it: the name-entry and data-delete menus faulted).
 pub unsafe extern "C" fn mn_80231634(
     mut arg0: *mut mn_80231634_t,
-) -> ::core::ffi::c_int {
+) -> isize {
     melee_core::ct!("mn_80231634");
     if arg0.is_null() {
-        return 0 as ::core::ffi::c_int;
+        return 0;
     }
-    return (*arg0).x10;
+    return (*(arg0 as *mut HSD_JObj)).child as isize;
 }
 pub unsafe extern "C" fn mn_8023164C() {
     melee_core::ct!("mn_8023164C");
@@ -2272,7 +2274,13 @@ pub mod ext {
             pub unsafe extern "C" fn $name($($a: $t),*) -> ! {
                 match $h {
                     Some(f) => f($($a),*),
-                    None => melee_core::unported!(concat!("TODO: ", stringify!($name), " is not ported")),
+                    None => {
+                        // the engine's by-name table (__assert: melee_runtime debug::__assert, which reports file:line and panics)
+                        let mut w: std::vec::Vec<u64> = std::vec::Vec::new();
+                        $( $crate::tu::ext_hook::PushW::push_w($a, &mut w); )*
+                        $crate::tu::ext_hook::fallback(stringify!($name), &w);
+                        panic!(concat!(stringify!($name), " returned"))
+                    }
                 }
             }
         };

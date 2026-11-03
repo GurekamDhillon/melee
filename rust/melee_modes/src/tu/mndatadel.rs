@@ -282,7 +282,7 @@ pub unsafe extern "C" fn mnDataDel_8024E940() {
     let mut tmp2: f32 = 0.;
     let mut temp_f31: f32 = 0.;
     let mut data: *mut i32 = ::core::ptr::null_mut::<i32>();
-    let mut temp_ret: i32 = 0;
+    let mut temp_ret: isize = 0;
     let mut temp_r31: *mut MnDataDelGObjUserData = ::core::ptr::null_mut::<
         MnDataDelGObjUserData,
     >();
@@ -293,7 +293,7 @@ pub unsafe extern "C" fn mnDataDel_8024E940() {
     temp_ret = mn_80231634(
         (*temp_r31).x10[mnDataDel_803EF8AC[1 as i32 as usize] as usize]
             as *mut mn_80231634_t,
-    ) as i32;
+    ) as isize;
     lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp18, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
     temp_f31 = mnDataDel_8024E940_inline(sp18);
     HSD_JObjReqAnimAll(sp18, 1.0f32);
@@ -349,20 +349,20 @@ pub unsafe extern "C" fn mnDataDel_8024EA6C() {
     let mut data: *mut u32 = ::core::ptr::null_mut::<u32>();
     let mut lang: enum_t = 0;
     let mut i: i32 = 0;
-    let mut temp_ret: i32 = 0;
+    let mut temp_ret: isize = 0;
     let mut pad: [u8; 8] = [0; 8];
     let mut sp18: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
     let mut _pad: [u8; 16] = [0; 16];
     temp_f30 = 1.0f32 as f32;
     temp_r31 = (*mnDataDel_804D6C68).user_data as *mut MnDataDelGObjUserData;
-    temp_ret = 0 as i32 as i32;
+    temp_ret = 0;
     i = temp_ret as i32;
     data = (&raw mut mnDataDel_803EF8AC as *mut u32).offset(i as isize) as *mut u32;
     loop {
         temp_ret = mn_80231634(
             (*((*mnDataDel_804D6C68).user_data as *mut MnDataDelGObjUserData))
                 .x10[*data as usize] as *mut mn_80231634_t,
-        ) as i32;
+        ) as isize;
         lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp18, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
         mnDataDel_8024EA6C_inline(
             &raw mut sp18,
@@ -644,7 +644,7 @@ pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
     let mut text: *mut HSD_Text = ::core::ptr::null_mut::<HSD_Text>();
     let mut tmp2: f32 = 0.;
     let mut frame: f32 = 0.;
-    let mut temp_ret: i32 = 0;
+    let mut temp_ret: isize = 0;
     let mut sis_id: i32 = 0;
     let mut buttons: u32 = 0;
     let mut cursor: u8 = 0;
@@ -722,7 +722,7 @@ pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
                         as *mut MnDataDelGObjUserData;
                     temp_ret = mn_80231634(
                         mnDataDel_GetMenuJObj(case_user_data, 0 as i32),
-                    ) as i32;
+                    ) as isize;
                     lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp68, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
                     frame = mnDataDel_8024E940_inline(sp68);
                     HSD_JObjReqAnimAll(sp68, 1.0f32);
@@ -751,7 +751,7 @@ pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
                         as *mut MnDataDelGObjUserData;
                     temp_ret = mn_80231634(
                         mnDataDel_GetMenuJObj(case_user_data, 2 as i32),
-                    ) as i32;
+                    ) as isize;
                     lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp60, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
                     frame = mnDataDel_8024E940_inline(sp60);
                     HSD_JObjReqAnimAll(sp60, 1.0f32);
@@ -775,7 +775,7 @@ pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
                         as *mut MnDataDelGObjUserData;
                     temp_ret = mn_80231634(
                         mnDataDel_GetMenuJObj(case_user_data, 3 as i32),
-                    ) as i32;
+                    ) as isize;
                     lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp58, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
                     frame = mnDataDel_8024E940_inline(sp58);
                     HSD_JObjReqAnimAll(sp58, 1.0f32);
@@ -800,7 +800,7 @@ pub unsafe extern "C" fn fn_8024F318(mut gobj: *mut HSD_GObj) {
                         as *mut MnDataDelGObjUserData;
                     temp_ret = mn_80231634(
                         mnDataDel_GetMenuJObj(case_user_data, 4 as i32),
-                    ) as i32;
+                    ) as isize;
                     lb_80011E24(temp_ret as *mut HSD_JObj, &raw mut sp50, &[Va::I32(1 as i32), Va::I32(-(1 as i32))]);
                     frame = mnDataDel_8024E940_inline(sp50);
                     HSD_JObjReqAnimAll(sp50, 1.0f32);

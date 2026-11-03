@@ -51,7 +51,7 @@ pub mod ext {
         ftCo_800DE9D8(g: G) -> bool = crate::tu::ftCo_AppealS::ftCo_800DE9D8;
         ftCo_Jump_CheckInput(g: G) -> bool = crate::tu::ftCo_Jump::ftCo_Jump_CheckInput;
         ftCo_Walk_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Walk::ftCo_Walk_CheckInput(g as _) as _ } };
-        ft_80084F3C(g: G) = |_| todo!("ft_80084F3C: installed by melee_link");
+        ft_80084F3C(g: G) = |a0| crate::tu::ft_084e::ft_80084f3c(a0);
         ft_80083F88(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80083f88(g as _); } };
     }
 }

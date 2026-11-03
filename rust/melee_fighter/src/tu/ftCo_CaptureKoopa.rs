@@ -44,7 +44,7 @@ pub mod ext {
         ftCo_ReleaseItemAndVictim(g: G) = crate::tu::ftco_800c7590::ftco_release_item_and_victim;
         ftCo_800DB368(att: &mut Fighter, f: &mut Fighter) = crate::tu::ftCo_CapturePulled::ftCo_800DB368;
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
+        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftCo_800BC9C8(g: G) = crate::tu::ftCo_CaptureDamageKoopa::ftCo_800BC9C8;
         ftCo_800BCAF4(g: G) = crate::tu::ftCo_CaptureDamageKoopa::ftCo_800BCAF4;
     }

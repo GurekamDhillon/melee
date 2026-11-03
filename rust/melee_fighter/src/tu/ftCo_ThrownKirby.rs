@@ -48,14 +48,14 @@ pub mod ext {
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftColl_8007B62C(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b62c(g as _, v as _); } };
         ftCommon_8007EFC0(f: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |_, _, _| todo!("ftCommon_InitGrab: installed by melee_link");
+        ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = |a0, a1, a2| crate::ftcommon2::init_grab(a0, a1, a2);
         ftAnim_8006EBA4(g: G) = |g| unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g) };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |_, _| todo!("ftCommon_SetAccessory: installed by melee_link");
+        ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |a0, a1| crate::ftcommon3::set_accessory(a0, a1);
         ftKb_SpecialN_800F5898(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftKb_SpecialN_800F5898 (ftKb_Init.c)");
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
-        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
+        ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |a0, a1| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*(a0 as *const Fighter) }, a1 as _) as _;
         ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |hit: *mut HitCapsule, dmg: u32, g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007abd0(hit as _, dmg as _, g as _); } };
         ftColl_8007AFF8(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         ftKb_SpecialN_800F5820(g: G, b: *mut ftCollisionBox, s: f32) = |_, _, _| todo!("TODO(port) ftKb_SpecialN_800F5820 (ftKb_Init.c)");
@@ -70,7 +70,7 @@ pub mod ext {
         ftKb_SpecialN_800EEEC4(g: G, kind: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800EEEC4 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A98() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A98 (ftKb_Init.c)");
         ftKb_SpecialN_800F5A70() -> f32 = || todo!("TODO(port) ftKb_SpecialN_800F5A70 (ftKb_Init.c)");
-        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |_, _| todo!("ftCommon_GrabMash: installed by melee_link");
+        ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = |a0, a1| crate::ftcommon2::grab_mash(a0, a1);
         lbVector_Mirror(a: *mut Vec3, b: *mut Vec3) = |a: *mut Vec3, b: *mut Vec3| { unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a as _, b as _); } };
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
     }

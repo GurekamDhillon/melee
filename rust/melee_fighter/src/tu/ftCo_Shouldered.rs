@@ -33,13 +33,13 @@ pub mod ext {
     use super::*;
     ext_fns! {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
+        ftCommon_8007E2FC(g: G) = |a0| crate::ftcommon2::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCo_800DB464(g: G) = crate::tu::ftCo_CapturePulled::ftCo_800DB464;
         ftCommon_InitGrab(f: &mut Fighter, a: i32, v: f32) = crate::ftcommon2::init_grab;
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ftCo_800DC920(a: G, b: G) = crate::tu::ftCo_CaptureCut::ftCo_800DC920;
-        ftParts_GetBoneIndex(f: *mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
+        ftParts_GetBoneIndex(f: *mut Fighter, part: i32) -> i32 = |a0, a1| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*(a0 as *const Fighter) }, a1 as _) as _;
         lb_8000B1CC(jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3) = |jobj: *mut HSD_JObj, pos0: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(jobj as _, pos0 as _, out as _); } };
         ftColl_80079C70(f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32) -> f32 = |f: *mut Fighter, victim: *mut Fighter, hit: *mut HitCapsule, count: i32| -> f32 { unsafe { crate::tu::ftcoll::ftcoll_80079c70(f as _, victim as _, hit as _, count as _) } };
         ftColl_80078710(victim: G, g: G, facing: *mut f32) = |victim: G, g: G, facing: *mut f32| { unsafe { crate::tu::ftcoll::ftcoll_80078710(victim as _, g as _, facing as _); } };

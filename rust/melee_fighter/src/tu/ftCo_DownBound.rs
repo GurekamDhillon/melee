@@ -31,12 +31,12 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftParts_GetBoneIndex(fp: &mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
+        ftParts_GetBoneIndex(fp: &mut Fighter, part: i32) -> i32 = |a0, a1| crate::ftdmgfall::ftparts_get_bone_index(unsafe { &*(a0 as *const Fighter) }, a1 as _) as _;
         HSD_JObjSetupMatrixSub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetupMatrixSub(a0 as _) };
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, float* param)` (variadic in C).
         efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, jobj: *mut HSD_JObj, param: *mut f32) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };
-        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
+        ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| crate::ft0877::play_sfx(a0, a1, a2, a3);
         ft_80084C74(g: G, sfx: &mut [i32; 4], a2: &mut i32, a3: &mut i32) -> bool = |g: G, sfx: &mut [i32; 4], a2: &mut i32, a3: &mut i32| -> bool { unsafe { crate::tu::ft_081b::ft_80084c74(g as _, sfx as _, a2 as _, a3 as _) as _ } };
         ftCo_8009F834(g: G, id: i32, part: i32, a: i32, b: i32, v1: &mut Vec3, v0: &mut Vec3, f: f32) = |a0, a1, a2, a3, a4, a5, a6, a7| unsafe { crate::tu::ftCo_09f7::ftCo_8009F834(a0, a1, a2, a3, a4, a5 as *const _, a6 as *const _, a7) };
         Camera_RequestQuake(kind: i32, pos: *mut Vec) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };

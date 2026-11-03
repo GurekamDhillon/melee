@@ -90,7 +90,7 @@ pub mod ext {
         ScriptGame_HitRuleWon(hit: *mut HitCapsule, f: *mut Fighter) = |_, _| todo!("TODO(pc script) ScriptGame_HitRuleWon");
         ScriptGame_HitRuleReport(att: *mut Fighter, vic: *mut Fighter, hit: *mut HitCapsule, damage: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleReport");
         ftColl_80078710(g: G, victim: G, facing: *mut f32) = |g: G, victim: G, facing: *mut f32| { unsafe { crate::tu::ftcoll::ftcoll_80078710(g as _, victim as _, facing as _); } };
-        ftCommon_8007EE0C(f: &mut Fighter, v: i32) = |_, _| todo!("ftCommon_8007EE0C: installed by melee_link");
+        ftCommon_8007EE0C(f: &mut Fighter, v: i32) = |a0, a1| crate::tu::ftcommon::ftcommon_8007ee0c(a0, a1);
         ftCo_Damage_CalcKnockback(f: &mut Fighter) = |f: &mut Fighter| { unsafe { crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(f as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };

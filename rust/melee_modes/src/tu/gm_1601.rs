@@ -68,9 +68,9 @@ pub mod ext {
         Player_GetPlayerSlotType(a0: i32) -> Gm_PKind = |a0: i32| -> Gm_PKind { unsafe { melee_fighter::tu::player::Player_GetPlayerSlotType(a0 as _) as _ } };
         Player_GetPlayerCharacter(a0: i32) -> CharacterKind = |a0: i32| -> CharacterKind { unsafe { melee_fighter::tu::player::Player_GetPlayerCharacter(a0 as _) as _ } };
         Player_80036394(a0: i32) -> FighterKind = |a0: i32| -> FighterKind { unsafe { melee_fighter::tu::player::Player_80036394(a0 as _) as _ } };
-        HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *mut i8) -> i32 = |a0: *mut HSD_Text, a1: f32, a2: f32, a3: *mut i8| { unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a3, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(a0, a1, a2, if a3.is_null() { None } else { Some(&s) }) } };
+        HSD_SisLib_803A6B98(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *mut i8) -> i32 = crate::tu::gm_1601::sis_text_new_c;
         HSD_SisLib_803A7548(a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32) = |a0: *mut HSD_Text, a1: i32, a2: f32, a3: f32| { unsafe { melee_runtime::tu::hsd_3A64::HSD_SisLib_803A7548(a0 as _, a1 as _, a2 as _, a3 as _); } };
-        HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *mut i8) -> i32 = |a0: *mut HSD_Text, a1: i32, a2: *mut i8| { unsafe { let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a2, &[])).into_owned(); melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(a0, a1, if a2.is_null() { None } else { Some(&s) }) } };
+        HSD_SisLib_803A70A0(a0: *mut HSD_Text, a1: i32, a2: *mut i8) -> i32 = crate::tu::gm_1601::sis_text_set_c;
         gmMainLib_8015EDBC() -> *mut gmm_retval_EDBC = || -> *mut gmm_retval_EDBC { unsafe { crate::tu::gmmain_lib::gmMainLib_8015EDBC() as _ } };
         GetPersistentFighterData(a0: SelectableCharacterKind) -> *mut FighterData = |a0: SelectableCharacterKind| -> *mut FighterData { unsafe { crate::tu::gmmain_lib::GetPersistentFighterData(a0 as _) as _ } };
         GetPersistentNameData(a0: i32) -> *mut NameTagData = |a0: i32| -> *mut NameTagData { unsafe { crate::tu::gmmain_lib::GetPersistentNameData(a0 as _) as _ } };
@@ -3878,6 +3878,23 @@ pub fn gm_MatchHasMultipleWinners_fp(end: &MatchEnd_gm_r4) -> bool {
         }
     }
     false
+}
+
+/// `HSD_SisLib_803A6B98(text, x, y, fmt)` with this TU's C string: the hsd_3A64 port takes the formatted `&str`
+/// (the names this TU passes carry no conversions; `c_format` copies them as the C's vsprintf would).
+pub fn sis_text_new_c(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *mut i8) -> i32 {
+    unsafe {
+        let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a3, &[])).into_owned();
+        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(a0, a1, a2, if a3.is_null() { None } else { Some(&s) })
+    }
+}
+
+/// `HSD_SisLib_803A70A0(text, idx, fmt)` with this TU's C string (see `sis_text_new_c`).
+pub fn sis_text_set_c(a0: *mut HSD_Text, a1: i32, a2: *mut i8) -> i32 {
+    unsafe {
+        let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a2, &[])).into_owned();
+        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(a0, a1, if a2.is_null() { None } else { Some(&s) })
+    }
 }
 
 /// gm_1601.c `fn_80168A6C(arg0, arg1, idx)` on the native records: `arg0` is a `SceneDesc` (models, cameras, lights,

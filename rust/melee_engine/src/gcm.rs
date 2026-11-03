@@ -12,7 +12,12 @@ pub struct Gcm {
     /// Mounted mods: a path they answer resolves to the same entry number, whose bytes are replaced.
     overlay: Option<Overlay>,
     replaced: std::cell::RefCell<std::collections::HashMap<i32, std::sync::Arc<[u8]>>>,
+    /// Paths only the mods have (a new fighter's PlBm.dat): an entry number past the FST each, by lowercased path.
+    added: std::cell::RefCell<std::collections::HashMap<String, i32>>,
 }
+
+/// The first entry number given to a file that is only in the mods (the C's shim_dvd numbers them past the FST too).
+const ADDED_BASE: i32 = 0x10_0000;
 
 fn be32(b: &[u8], at: usize) -> u32 {
     u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
@@ -23,7 +28,7 @@ impl Gcm {
         let mut f = std::fs::File::open(path).map_err(|e| format!("{path}: {e}"))?;
         let h = read_at(Some(&mut f), 0x424, 8)?;
         let fst = read_at(Some(&mut f), be32(&h, 0) as u64, be32(&h, 4) as usize)?;
-        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default() })
+        Ok(Self { f: Some(f), fst, overlay: None, replaced: Default::default(), added: Default::default() })
     }
 
     /// A disc with only the root directory: for headless runs that load no files.
@@ -31,7 +36,7 @@ impl Gcm {
         let mut fst = vec![0u8; 12];
         fst[0] = 1;
         fst[11] = 1;
-        Self { f: None, fst, overlay: None, replaced: Default::default() }
+        Self { f: None, fst, overlay: None, replaced: Default::default(), added: Default::default() }
     }
 
     /// Mount `f` over the disc: every file it answers replaces the disc's file of that path (same entry number).
@@ -81,6 +86,18 @@ impl Gcm {
                         self.replaced.borrow_mut().insert(n, b.into());
                     }
                 }
+            }
+        } else if let Some(o) = &self.overlay {
+            let key = path.trim_start_matches(['/', '\\']).to_ascii_lowercase();
+            if let Some(&e) = self.added.borrow().get(&key) {
+                return e;
+            }
+            if let Some(b) = o(path) {
+                let e = ADDED_BASE + self.added.borrow().len() as i32;
+                eprintln!("engine: {path} is only in the mods ({} bytes, entry {e:#x})", b.len());
+                self.added.borrow_mut().insert(key, e);
+                self.replaced.borrow_mut().insert(e, b.into());
+                return e;
             }
         }
         n

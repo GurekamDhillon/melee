@@ -33,7 +33,7 @@ pub mod ext {
         ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
+        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };
         ftCo_80090574(g: G) = |_| todo!("ftCo_80090574: installed by melee_link");
         ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_800881D8: installed by melee_link");
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");

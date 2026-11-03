@@ -36,7 +36,7 @@ pub mod ext {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // TARGET_PC `FT_SCRIPT_VALUE(fp, field, base)` = `ScriptGame_ModValue(fp->player_id, ...)`.
-        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
+        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |a0, a1, a2| crate::tu::player::ext::ScriptGame_ModValue(a0, a1, a2);
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         ftAnim_SetAnimRate(g: G, rate: f32) = |g, r| unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g, r) };

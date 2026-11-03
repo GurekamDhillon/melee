@@ -48,7 +48,7 @@ pub mod ext {
         ftKb_SpecialN_800F5B10(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5B10: installed by melee_link");
         ftKb_SpecialN_800F5A60(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5A60: installed by melee_link");
         ftCommon_GrabMash(f: &mut Fighter, a: f32) -> bool = crate::ftcommon2::grab_mash;
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
         ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
     }

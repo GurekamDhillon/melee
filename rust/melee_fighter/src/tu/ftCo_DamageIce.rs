@@ -42,29 +42,29 @@ pub mod ext {
         ftParts_GetBoneIndex(fp: &mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         // `lb_8000B1CC(jobj, NULL, out)`: world position of a joint (offset pointer may be NULL).
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
-        lbVector_Sub(a: &mut Vec3, b: &Vec3) = |_, _| todo!("lbVector_Sub: installed by melee_link");
+        lbVector_Sub(a: &mut Vec3, b: &Vec3) = |a0, a1| unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Sub(a0 as *mut _, a1 as *const _ as *mut _); };
         ftCommon_UnlockECB(fp: &mut Fighter) = crate::ftcommon2::unlock_ecb;
         ft_80082638(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082638(g as _, b as _) as _ } };
         ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082888(g as _, b as _) as _ } };
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, ...)`: kind 3 passes `float*`,
         // kind 5 passes `Vec3*, float*` (a1, a2 here; a2 null when unused).
-        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, jobj: *mut HSD_JObj, a1: *mut core::ffi::c_void, a2: *mut core::ffi::c_void) = |_, _, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (ef/efasync.c)");
+        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, jobj: *mut HSD_JObj, a1: *mut core::ffi::c_void, a2: *mut core::ffi::c_void) = |a0, a1, a2, a3, a4, a5, a6| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void, a6 as *const core::ffi::c_void]); };
         ftCo_8009750C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
         ftCo_800DD168(g: G) = |g: G| { unsafe { crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
         ftCommon_8007DB58(g: G) = |_| todo!("ftCommon_8007DB58: installed by melee_link");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_InitGrab(fp: &mut Fighter, a: i32, timer: f32) = crate::ftcommon2::init_grab;
-        PSMTXTrans(m: &mut Mtx, x: f32, y: f32, z: f32) = |_, _, _, _| todo!("PSMTXTrans: installed by melee_link");
-        HSD_MkRotationMtx(m: &mut Mtx, r: &Vec3) = |_, _| todo!("HSD_MkRotationMtx: installed by melee_link");
-        HSD_MtxQuat(m: &mut Mtx, q: &Quaternion) = |_, _| todo!("HSD_MtxQuat: installed by melee_link");
-        PSMTXTranspose(s: &Mtx, d: &mut Mtx) = |_, _| todo!("PSMTXTranspose: installed by melee_link");
-        PSMTXConcat(a: &Mtx, b: &Mtx, ab: &mut Mtx) = |_, _, _| todo!("PSMTXConcat: installed by melee_link");
+        PSMTXTrans(m: &mut Mtx, x: f32, y: f32, z: f32) = |a0, a1, a2, a3| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXTrans(((a0) as &mut Mtx).as_mut_ptr(), a1, a2, a3) };
+        HSD_MkRotationMtx(m: &mut Mtx, r: &Vec3) = |a0, a1| unsafe { melee_runtime::tu::mtx::HSD_MkRotationMtx(((a0) as &mut Mtx).as_mut_ptr(), a1 as *const _ as *mut _) };
+        HSD_MtxQuat(m: &mut Mtx, q: &Quaternion) = |a0, a1| unsafe { melee_runtime::tu::mtx::HSD_MtxQuat(((a0) as &mut Mtx).as_mut_ptr(), a1 as *const _ as *mut _) };
+        PSMTXTranspose(s: &Mtx, d: &mut Mtx) = |a0, a1| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXTranspose(((a0) as &Mtx).as_ptr() as *mut _, ((a1) as &mut Mtx).as_mut_ptr()) };
+        PSMTXConcat(a: &Mtx, b: &Mtx, ab: &mut Mtx) = |a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSMTXConcat(((a0) as &Mtx).as_ptr() as *mut _, ((a1) as &Mtx).as_ptr() as *mut _, ((a2) as &mut Mtx).as_mut_ptr()) };
         HSD_MtxGetTranslate(m: &Mtx, v: &mut Vec3) = get_translate;
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftCo_8009E140(fp: &mut Fighter, b: i32) = |fp: &mut Fighter, b: i32| { unsafe { crate::tu::ftdynamics::ftCo_8009E140(fp as _, b as _); } };
         ftCommon_8007F824(g: G) = |_| todo!("ftCommon_8007F824: installed by melee_link");
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
-        HSD_Randf() -> f32 = || todo!("HSD_Randf: installed by melee_link");
+        HSD_Randf() -> f32 = || melee_runtime::tu::random::global::HSD_Randf();
         ftColl_8007B0C0(g: G, state: i32) = |g: G, state: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b0c0(g as _, state as _); } };
         ftColl_HurtboxInit(fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit) = |fp: &mut Fighter, hurt: *mut FighterHurtCapsule, init: &ftHurtboxInit| { unsafe { crate::tu::ftcoll::ftcoll_hurtbox_init(fp, hurt as _, init); } };
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
@@ -78,7 +78,7 @@ pub mod ext {
         ftKb_SpecialN_800F1F1C(g: G, v: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
-        Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
+        Camera_RequestQuake(kind: i32, pos: *mut Vec) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         ftCo_80090780(g: G) = |g: G| { unsafe { crate::tu::ftCo_DamageFall::ftCo_80090780(g as _); } };
         lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };

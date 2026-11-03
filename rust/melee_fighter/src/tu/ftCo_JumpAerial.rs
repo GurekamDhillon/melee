@@ -36,9 +36,9 @@ pub mod ext {
         ScriptGame_ModJump(slot: i32, field: i32, base: f32) -> f32 = |s, f, b| crate::tu::ftCo_Jump::ext::ScriptGame_ModJump(s, f, b);
         ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = crate::hooks::script_mod_value;
         // TARGET_PC `FT_CAPS_MAX_JUMPS(fp)` (pc/gameworld/script_fighter_caps.h).
-        ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 = |_| todo!("TODO(port) ScriptGame_CapsMaxJumps (pc/gameworld/script_game.c)");
+        ScriptGame_CapsMaxJumps(fp: &Fighter) -> i32 = |a0| unsafe { crate::script_caps::ScriptGame_CapsMaxJumps(a0 as *const Fighter as *mut Fighter) };
         Mex_OnDoubleJumpDispatch(kind: i32, g: G, vanilla: *mut core::ffi::c_void) = |kind: i32, g: G, vanilla: *mut core::ffi::c_void| { unsafe { let _ = crate::platform::mex_dispatch(crate::platform::MEX_EVENT_ON_DOUBLE_JUMP, kind, g, vanilla); } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(group1 jobj) HSD_JObjSetMtxDirtySub");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftCo_800C5240(g: G) -> bool = |g| crate::tu::ftCo_Jump::ext::ftCo_800C5240(g);
         ftCo_800D730C(g: G, arg1: bool) -> bool = crate::tu::ftCo_JumpAerialF1::ftCo_800D730C;
         ft_800D2D0C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_0d27::ft_800d2d0c(g as _) as _ } };
@@ -61,7 +61,7 @@ pub mod ext {
         ftPe_8011BAD8(g: G) -> bool = |_| todo!("TODO(port) ftPe_8011BAD8 (ftpeachfloat.c)");
         ftCo_800CEE70(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_ItemParasolOpen::ftCo_800CEE70(g as _) as _ } };
         ft_80084DB0(g: G) = crate::ft084e::ft_80084db0;
-        ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |_, _| todo!("ftCommon_CalcSelfAccel_DriftFrom: installed by melee_link");
+        ftCommon_CalcSelfAccel_DriftFrom(fp: &mut Fighter, v: f32) = |a0, a1| crate::tu::ftcommon::ftCommon_CalcSelfAccel_DriftFrom(a0, a1);
         ftCommon_CalcSelfAccel_Drift(fp: &mut Fighter) = |_| todo!("ftCommon_CalcSelfAccel_Drift: installed by melee_link");
         ft_800851D0(g: G) = crate::ft084e::ft_800851d0;
         ft_800835B0(g: G, a: fn(G, i32) -> bool, b: fn(G)) = |g: G, a: fn(G, i32) -> bool, b: fn(G)| { unsafe { crate::tu::ft_081b::ft_800835b0(g as _, a as _, b as _); } };

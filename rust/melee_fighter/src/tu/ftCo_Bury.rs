@@ -47,7 +47,7 @@ pub mod ext {
         ftColl_80078384(fp: *mut Fighter, h: FH, hit: *mut HitCapsule) = |fp: *mut Fighter, h: FH, hit: *mut HitCapsule| { unsafe { crate::tu::ftcoll::ftcoll_80078384(fp as _, h as _, hit as _); } };
         pl_8003EC30(slot: i32, sub: i32, kind: i32, f: f32) = |slot: i32, sub: i32, kind: i32, f: f32| { unsafe { crate::tu::plbonuslib::pl_8003EC30(slot as _, sub as _, kind as _, f as _); } };
         stage_info_grkind() -> i32 = || todo!("TODO(port) stage_info.grkind (ground.c global)");
-        Ground_801C5700(i: i32) -> D = |_| todo!("TODO(port) Ground_801C5700 (ground.c)");
+        Ground_801C5700(i: i32) -> D = |a0| unsafe { melee_world::tu::ground::Ground_801C5700(a0) as _ };
         ftCo_8008DCE0(g: G, a: i32, facing: f32) = |g: G, a: i32, facing: f32| { unsafe { crate::tu::ftCo_Damage::ftCo_8008DCE0(g as _, a as _, facing as _); } };
         ftCommon_8007D7FC(fp: &mut Fighter) = crate::ftcommon3::ftcommon_8007d7fc;
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
@@ -59,14 +59,14 @@ pub mod ext {
         ft_80084CB0(fp: &Fighter, b: &mut ftCollisionBox) = crate::ft084e::ft_80084cb0;
         lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
         ftParts_GetBoneIndex(fp: *mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
-        efSync_Spawn(id: i32, g: G, pos: *mut Vec3, s: *mut f32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c)");
+        efSync_Spawn(id: i32, g: G, pos: *mut Vec3, s: *mut f32) = |a0, a1, a2, a3| unsafe { let _ = melee_world::tu::efn::efsync::efSync_Spawn(a0 as _, a1 as _, &[a2 as *const core::ffi::c_void, a3 as *const core::ffi::c_void]); };
         ftCommon_GrabMash(fp: &mut Fighter, v: f32) -> bool = |_, _| todo!("ftCommon_GrabMash: installed by melee_link");
         mpLib_80054ED8(line: i32) -> bool = |line: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLib_80054ED8(line as _) != 0 as _) } };
         mpLineGetNormal(line: i32, n: *mut Vec3) -> *mut Vec3 = |line: i32, n: *mut Vec3| -> *mut Vec3 { unsafe { melee_world::tu::mplib::mpLineGetNormal(line as _, n as _) as _ } };
-        atan2f(y: f32, x: f32) -> f32 = |_, _| todo!("atan2f: installed by melee_link");
+        atan2f(y: f32, x: f32) -> f32 = |a0, a1| melee_runtime::tu::lbtrigf::atan2f(a0, a1);
         HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = t!("HSD_JObjSetMtxDirtySub (jobj.c)");
         mpGetSpeed(line: i32, pos: *mut Vec3, speed: *mut Vec3) -> bool = |line: i32, pos: *mut Vec3, speed: *mut Vec3| -> bool { unsafe { (melee_world::tu::mplib::mpGetSpeed(line as _, pos as _, speed as _) != 0 as _) } };
-        PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |_, _, _| todo!("PSVECAdd: installed by melee_link");
+        PSVECAdd(a: *mut Vec3, b: *mut Vec3, c: *mut Vec3) = |a0, a1, a2| unsafe { melee_runtime::tu::mtx_pc::raw::PSVECAdd(a0, a1, a2) };
         ft_80082888(g: G, b: *mut ftCollisionBox) -> bool = |g: G, b: *mut ftCollisionBox| -> bool { unsafe { crate::tu::ft_081b::ft_80082888(g as _, b as _) as _ } };
         ftCo_800C5240(g: G) -> bool = t!("ftCo_800C5240 (ftCo_HammerWait.c)");
         ftCo_800C5A98(g: G) = t!("ftCo_800C5A98 (ftCo_HammerJump.c)");

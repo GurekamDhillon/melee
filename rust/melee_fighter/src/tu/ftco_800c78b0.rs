@@ -124,18 +124,18 @@ pub mod ext {
     use crate::types::*;
     type G = *mut HSD_GObj;
     hooks! {
-        FTANIM_8006EBA4 ftAnim_8006EBA4(g: G) => panic!("TODO(group3 ftanim) ftAnim_8006EBA4({:?}) is not ported", g);
-        IT_802DBA68 it_802DBA68(i: *mut Item_GObj) => panic!("TODO(group5 itlikelike.c) it_802DBA68({:?}) is not ported", i);
-        IT_802DB9F4 it_802DB9F4(i: *mut Item_GObj) => panic!("TODO(group5 itlikelike.c) it_802DB9F4({:?}) is not ported", i);
+        FTANIM_8006EBA4 ftAnim_8006EBA4(g: G) => unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g) };
+        IT_802DBA68 it_802DBA68(i: *mut Item_GObj) => unsafe { melee_items::tu::itlikelike::it_802DBA68(i as _) };
+        IT_802DB9F4 it_802DB9F4(i: *mut Item_GObj) => unsafe { melee_items::tu::itlikelike::it_802DB9F4(i as _) };
         IT_8026B294 it_8026B294(i: *mut Item_GObj, pos: &mut Vec3) => melee_items::itlib::it_8026b294(unsafe { &*((*i).user_data as *const Item) }, pos);
-        MPCOLL_80043670 mpColl_80043670(c: &mut CollData) => panic!("TODO(group2 mp) mpColl_80043670({:?}) is not ported", c as *const CollData);
-        MPCOLL_800471F8 mpColl_800471F8(c: &mut CollData) -> bool => panic!("TODO(group2 mp) mpColl_800471F8({:?}) is not ported", c as *const CollData);
-        LBCOLL_80008D30 lbColl_80008D30(h: &mut HitCapsule, a: *mut lbColl_80008D30_arg1) => panic!("TODO(group1 lb) lbColl_80008D30({:?}, {:?}) is not ported here (melee_modes::lb_ptr has one)", h as *const HitCapsule, a);
-        FTCOLL_800788D4 ftColl_800788D4(g: G) => panic!("TODO(group3 ftcoll) ftColl_800788D4({:?}) is not ported", g);
-        FTCOLL_80079EA8 ftColl_80079EA8(fp: &mut Fighter, h: &mut HitCapsule, n: u32) -> f32 => panic!("TODO(group3 ftcoll) ftColl_80079EA8({:?}, {:?}, {n}) is not ported", fp as *const Fighter, h as *const HitCapsule);
-        FIGHTER_UNK_TAKE_DAMAGE_8006CC30 Fighter_UnkTakeDamage_8006CC30(fp: &mut Fighter, d: f32) => panic!("TODO(group3 fighter.c) Fighter_UnkTakeDamage_8006CC30({:?}, {d}) is not ported", fp as *const Fighter);
-        FTCO_DAMAGE_CALC_KNOCKBACK ftCo_Damage_CalcKnockback(fp: &mut Fighter) => panic!("TODO(group3 ftCo_Damage) ftCo_Damage_CalcKnockback({:?}) is not ported", fp as *const Fighter);
-        FTCO_8008E908 ftCo_8008E908(g: G, f: f32) => panic!("TODO(group3 ftCo_Damage) ftCo_8008E908({:?}, {f}) is not ported", g);
-        FIGHTER_TAKE_DAMAGE_8006CC7C Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, d: f32) => panic!("TODO(group3 fighter.c) Fighter_TakeDamage_8006CC7C({:?}, {d}) is not ported", fp as *const Fighter);
+        MPCOLL_80043670 mpColl_80043670(c: &mut CollData) => unsafe { melee_world::tu::mpcoll::mpColl_80043670(c as *mut CollData as _) };
+        MPCOLL_800471F8 mpColl_800471F8(c: &mut CollData) -> bool => unsafe { melee_world::tu::mpcoll::mpColl_800471F8(c as *mut CollData as _) != 0 };
+        LBCOLL_80008D30 lbColl_80008D30(h: &mut HitCapsule, a: *mut lbColl_80008D30_arg1) => unsafe { melee_runtime::tu::lbcollision::lbColl_80008D30(h as *mut HitCapsule as _, a as _) };
+        FTCOLL_800788D4 ftColl_800788D4(g: G) => crate::tu::ftcoll::ftcoll_800788d4(g);
+        FTCOLL_80079EA8 ftColl_80079EA8(fp: &mut Fighter, h: &mut HitCapsule, n: u32) -> f32 => crate::tu::ftcoll::ftcoll_80079ea8(fp, h, n);
+        FIGHTER_UNK_TAKE_DAMAGE_8006CC30 Fighter_UnkTakeDamage_8006CC30(fp: &mut Fighter, d: f32) => unsafe { crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(fp, d) };
+        FTCO_DAMAGE_CALC_KNOCKBACK ftCo_Damage_CalcKnockback(fp: &mut Fighter) => crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(fp);
+        FTCO_8008E908 ftCo_8008E908(g: G, f: f32) => crate::tu::ftCo_Damage::ftCo_8008E908(g as _, f);
+        FIGHTER_TAKE_DAMAGE_8006CC7C Fighter_TakeDamage_8006CC7C(fp: &mut Fighter, d: f32) => unsafe { crate::tu::fighter::Fighter_TakeDamage_8006CC7C(fp, d) };
     }
 }

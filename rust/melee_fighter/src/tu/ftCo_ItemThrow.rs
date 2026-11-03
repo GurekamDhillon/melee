@@ -41,7 +41,7 @@ pub mod ext {
     }
     ext_fns! {
         it_8026B30C(item: *mut HSD_GObj) -> i32 = |item: *mut HSD_GObj| -> i32 { unsafe { melee_items::tu::it_26B1::it_8026B30C(item as _) as _ } };
-        ftCo_GetLStickAngle(fp: &mut Fighter) -> f32 = |_| todo!("ftCo_GetLStickAngle: installed by melee_link");
+        ftCo_GetLStickAngle(fp: &mut Fighter) -> f32 = |a0| crate::tu::ftcommon::ftCo_GetLStickAngle(a0);
         ftCo_GetCStickAngle(fp: &mut Fighter) -> f32 = |f| crate::ftcommon3::ftco_get_cstick_angle(f);
         ftCo_800DF50C(fp: &mut Fighter) -> bool = |_| todo!("ftCo_800DF50C: installed by melee_link");
         ftGetParasolStatus(g: G) -> i32 = crate::ftcommon3::ft_get_parasol_status;
@@ -97,7 +97,7 @@ pub unsafe extern "C" fn ftCo_80096498_c(g: G) {
 #[inline(always)]
 fn absf(x: f32) -> f32 { unsafe { melee_runtime::tu::lb_00F9::absf(x as _) as _ } }
 
-pub fn ftCo_80094E54(f: &mut Fighter) -> bool {
+pub fn ftCo_80094E54(f: &Fighter) -> bool {
     melee_core::ct!("ftCo_80094E54");
     f.input.pressed_buttons & HSD_PAD_A != 0
         && (f.input.held_buttons[0] & HSD_PAD_LR != 0 || ext::it_8026B30C(f.item_gobj) == 0)

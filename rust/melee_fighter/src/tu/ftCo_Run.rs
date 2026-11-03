@@ -32,7 +32,7 @@ pub mod ext {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` = `ScriptGame_CapsActionAllowed`.
         ScriptGame_CapsActionAllowed(fp: &Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
         // TARGET_PC `FT_SCRIPT_VALUE(fp, field, base)` = `ScriptGame_ModValue(fp->player_id, ...)`.
-        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
+        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |a0, a1, a2| crate::tu::player::ext::ScriptGame_ModValue(a0, a1, a2);
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_GetGroundFrictionMultiplier(fp: &mut Fighter) -> f32 = |fp: &mut Fighter| -> f32 { unsafe { crate::tu::ft_081b::ft_get_ground_friction_multiplier(fp) } };
         ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };

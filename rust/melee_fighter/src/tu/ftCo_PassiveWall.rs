@@ -33,7 +33,7 @@ pub mod ext {
         ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
-        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
+        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, pos: *mut Vec3) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };
         ft_80081F2C(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ft_081b::ft_80081f2c(g as _) as _ } };
         ft_800881D8(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_800881D8: installed by melee_link");
         ftCommon_8007EBAC(fp: &mut Fighter, a: u32, b: u32) = |_, _, _| todo!("ftCommon_8007EBAC: installed by melee_link");
@@ -41,7 +41,7 @@ pub mod ext {
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: bool) -> bool = |fp: &mut Fighter, a: i32, b: bool| -> bool { unsafe { crate::tu::ftcolanim::ftco_800bffd0(fp as _, a as _, b as _) as _ } };
         ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftAnim_SetAnimRate(g: G, r: f32) = |g: G, r: f32| { unsafe { crate::tu::ftanim::ftAnim_SetAnimRate(g as _, r as _); } };
-        powf(x: f32, y: f32) -> f32 = |_, _| todo!("powf: installed by melee_link");
+        powf(x: f32, y: f32) -> f32 = |a0, a1| melee_runtime::tu::lb_00CE::powf(a0, a1);
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;
         ftCo_SpecialAir_CheckInput(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_SpecialAir::ftCo_SpecialAir_CheckInput(g as _) as _ } };
@@ -56,7 +56,7 @@ pub mod ext {
         ftCommon_CheckFallFast(fp: &mut Fighter) -> bool = crate::ftcommon::check_fall_fast;
         ftCommon_FallFast(fp: &mut Fighter) = crate::ftcommon::fall_fast;
         ftCommon_Fall(fp: &mut Fighter, grav: f32, term: f32) = |_, _, _| todo!("ftCommon_Fall: installed by melee_link");
-        ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, a: f32, b: f32, c: f32) = |_, _, _, _| todo!("ftCommon_CalcSelfAccel_AccelToVelClamped: installed by melee_link");
+        ftCommon_CalcSelfAccel_AccelToVelClamped(fp: &mut Fighter, a: f32, b: f32, c: f32) = |a0, a1, a2, a3| crate::tu::ftcommon::ftCommon_CalcSelfAccel_AccelToVelClamped(a0, a1, a2, a3);
         ft_80083318(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_80083318;
         ft_800831CC(g: G, a: fn(G, i32) -> bool, b: fn(G)) = crate::tu::ft_081b::ft_800831cc;
         ftCo_80096CC8(g: G, line_id: i32) -> bool = |g: G, line_id: i32| -> bool { unsafe { crate::tu::ftCo_FallSpecial::ftCo_80096CC8(g as _, line_id as _) as _ } };

@@ -437,6 +437,14 @@ impl Transport for RdvTransport {
     fn local_port(&self) -> u16 {
         self.0.borrow().local_port()
     }
+    fn thread_sender(&self) -> Option<crate::transport::ThreadSender> {
+        let r = self.0.borrow();
+        let mut t = r.inner.thread_sender()?;
+        if r.relay {
+            t.relay = Some(r.srv);
+        }
+        Some(t)
+    }
 }
 
 impl Drop for RdvTransport {

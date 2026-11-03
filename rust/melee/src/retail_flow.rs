@@ -431,6 +431,9 @@ impl Game for RetailPlay {
         }
         let mut st = [pad_disconnected(); PAD_CHANMAX];
         pads.read(&mut st);
+        if let Some(nd) = self.net.as_mut() {
+            nd.pre_tick(pads);
+        }
         let mut four = [melee_types::PADStatus::zeroed(); 4];
         four.copy_from_slice(&st[..4]);
         if let Some(f) = self.feed.as_mut() {

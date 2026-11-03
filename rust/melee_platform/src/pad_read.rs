@@ -22,6 +22,7 @@ use crate::pad::*;
 use crate::plog;
 use crate::script::PadScript;
 use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
 use winit::keyboard::KeyCode;
 
 /// `GW_INPUT_GC` / `GW_INPUT_NONE`.
@@ -73,6 +74,66 @@ pub struct PadSystem {
     reset_armed: bool,
     /// Times the reset combo fired (`PADRecalibrate` calls).
     pub reset_combo_fired: u32,
+    /// The keys held and the focus, for a [`PadSampler`] on another thread.
+    shared_keys: Arc<Mutex<(HashSet<KeyCode>, bool)>>,
+}
+
+/// The controllers read off the game thread (early inputs' sampler, rust/melee/src/np_early.rs): the same pipeline as
+/// [`PadSystem::read`] (keyboard, gamepads with their maps, the adapter) without the pad script, the reset combo or
+/// the F9 recalibration. Its gamepad layer is its own gilrs instance, opened on first read (on the reading thread).
+pub struct PadSampler {
+    mode: InputMode,
+    adapter: Option<crate::adapter::AdapterPeek>,
+    ignore_adapter: bool,
+    gamepads: Option<Gamepads>,
+    use_gilrs: bool,
+    keyboard: [KeyboardBindings; PAD_CHANMAX],
+    dead_zones: DeadZones,
+    pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    keys: Arc<Mutex<(HashSet<KeyCode>, bool)>>,
+}
+
+impl PadSampler {
+    pub fn read(&mut self, st: &mut [PADStatus; PAD_CHANMAX]) {
+        let pads = if self.use_gilrs {
+            self.gamepads.get_or_insert_with(Gamepads::new).poll()
+        } else {
+            Default::default()
+        };
+        let keys = {
+            let k = self.keys.lock().unwrap();
+            if k.1 { k.0.clone() } else { HashSet::new() }
+        };
+        aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
+        for i in 0..PAD_CHANMAX {
+            if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
+                crate::bindings::apply_xinput(m, p, &mut st[i]);
+            }
+        }
+        if self.mode == InputMode::None {
+            for s in st.iter_mut() {
+                *s = pad_disconnected();
+            }
+        }
+        if !self.ignore_adapter {
+            if let Some(a) = self.adapter.as_mut() {
+                let mut adp = [pad_disconnected(); PAD_CHANMAX];
+                a.read(&mut adp);
+                for i in 0..PAD_CHANMAX {
+                    if adp[i].err == 0 {
+                        if let Some(m) = self.gc_maps[i].as_ref() {
+                            crate::bindings::apply_gc(m, &mut adp[i]);
+                        }
+                        st[i] = adp[i];
+                    }
+                }
+            }
+        }
+        if self.mode == InputMode::None {
+            st[0] = pad_zero();
+        }
+    }
 }
 
 impl PadSystem {
@@ -120,6 +181,31 @@ impl PadSystem {
             f9_was_down: false,
             reset_armed: false,
             reset_combo_fired: 0,
+            shared_keys: Arc::new(Mutex::new((HashSet::new(), true))),
+        }
+    }
+
+    /// A reader of the same controllers for another thread (see [`PadSampler`]).
+    pub fn sampler(&self) -> PadSampler {
+        self.sync_keys();
+        PadSampler {
+            mode: self.mode,
+            adapter: self.adapter.as_ref().map(|a| a.peeker()),
+            ignore_adapter: self.ignore_adapter,
+            gamepads: None,
+            use_gilrs: matches!(self.gamepads, GamepadSource::Gilrs(_)),
+            keyboard: self.keyboard.clone(),
+            dead_zones: self.dead_zones,
+            pad_maps: self.pad_maps.clone(),
+            gc_maps: self.gc_maps.clone(),
+            keys: self.shared_keys.clone(),
+        }
+    }
+
+    fn sync_keys(&self) {
+        if let Ok(mut k) = self.shared_keys.lock() {
+            k.0 = self.keys_down.clone();
+            k.1 = self.focused;
         }
     }
 
@@ -131,6 +217,7 @@ impl PadSystem {
     /// Window focus change. The C acts on a loss after 100 ms; here the caller debounces.
     pub fn set_focus(&mut self, focused: bool) {
         self.focused = focused;
+        self.sync_keys();
         if let Some(a) = self.adapter.as_ref() {
             a.set_focused(focused || self.background_input);
             if focused || self.background_input { a.resume() } else { a.suspend(); }
@@ -143,6 +230,7 @@ impl PadSystem {
         } else {
             self.keys_down.remove(&key);
         }
+        self.sync_keys();
     }
 
     /// `PADRead`. Returns Aurora's rumble-support mask, as the C does.
@@ -152,6 +240,7 @@ impl PadSystem {
             GamepadSource::Fixed(f) => f.clone(),
         };
         let keys = if self.focused { self.keys_down.clone() } else { HashSet::new() };
+        self.sync_keys();
         let ret = aurora::aurora_read(st, &keys, &self.keyboard, &pads, &self.dead_zones);
         for i in 0..PAD_CHANMAX {
             if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {

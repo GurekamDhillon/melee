@@ -126,6 +126,14 @@ impl PadScript {
         }
     }
 
+    /// The segment the next `apply` will deliver (None: no script), without consuming it.
+    pub fn peek_next(&self) -> Option<Segment> {
+        if self.segments.is_empty() {
+            return None;
+        }
+        Some(self.segments[self.cursor.min(self.segments.len() - 1)])
+    }
+
     /// `gw_pad_script_apply`: returns the mask of channels driven.
     pub fn apply(&mut self, st: &mut [PADStatus; PAD_CHANMAX]) -> u32 {
         if self.segments.is_empty() {

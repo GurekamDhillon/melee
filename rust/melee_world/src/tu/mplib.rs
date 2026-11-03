@@ -1139,7 +1139,7 @@ pub unsafe fn mpCheckFloor(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f32, m
                                 let mut y1_sp3C: f32 = 0.0;
                                 let mut dist2: f32 = 0.0;
                                 let mut line_offset: i32 = 0;
-                                if (cb.is_some()) && (!(cb.unwrap()(gobj, (line_r26.offset_from(groundCollLine) as i64) as i32) != 0)) {
+                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line_r26.offset_from(groundCollLine) as i64) as i32)))) {
                                     break 'c188;
                                 }
                                 if line_id_skip == melee_runtime::cabi::sdiv({ line_offset = ((line_r26 as usize as i64) - (groundCollLine as usize as i64)) as i32; line_offset }, 16_u64 as i32) {
@@ -1262,7 +1262,7 @@ pub unsafe fn mpCheckFloorRemap(mut ax: f32, mut ay: f32, mut bx: f32, mut by: f
                     'p190: loop {
                         'l191: while i < count {
                             'c191: {
-                                if (cb.is_some()) && (!(cb.unwrap()(gobj, (line.offset_from(groundCollLine) as i64) as i32) != 0)) {
+                                if (cb.is_some()) && (!(cb_bool(cb.unwrap()(gobj, (line.offset_from(groundCollLine) as i64) as i32)))) {
                                     break 'c191;
                                 }
                                 if (line_id_skip as i64) == (line.offset_from(groundCollLine) as i64) {
@@ -6257,4 +6257,14 @@ pub unsafe fn mpScriptStageIsolationSet(lines: i32, joints: i32, isolate: i32) -
         }
     }
     1
+}
+
+/// The result of a `bool (*)(Fighter_GObj*, int)` line callback. The fighter side hands Rust `fn(..) -> bool` callbacks
+/// (ft_081b `CollCb`) through the link table, which bit-casts them to this TU's `extern "C" fn(..) -> i32`: a `bool` return
+/// only defines AL, so the upper bits of EAX are whatever the callee left there (a false ftCo_80096CC8 read as true let a
+/// fast-falling fighter land on an Icicle Mountain platform, stage_25_icemt f1953). Every such callback returns 0/1, so the
+/// low byte is the value for both callee kinds.
+#[inline(always)]
+pub fn cb_bool(r: i32) -> bool {
+    (r & 0xff) != 0
 }

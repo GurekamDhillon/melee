@@ -15,3 +15,6 @@ rust/melee_world/src/tu/mplib.rs	PSMTXMultVec
 *	hsdDumpClassStat
 *	lbArchive_LoadSections
 *	lb_80011E24
+rust/melee_world/src/tu/gricemt.rs	stageGObj3_Callback3
+rust/melee_world/src/tu/gricemt.rs	stageGObj4_OnInit
+rust/melee_world/src/tu/gricemt.rs	stageGObj4_Callback3

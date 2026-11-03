@@ -1233,7 +1233,7 @@ pub unsafe fn mpColl_80044628_Floor(mut coll: *mut CollData, mut cb: Option<unsa
             if (floor_id != (-1_i32)) && (y > 0.0f32) {
                 (*coll).floor.index = floor_id;
                 if (!(((*coll).floor.flags & ((1 << 8) as u32)) != 0)) || ((*coll).floor.index != (*coll).floor_skip) {
-                    if (cb.is_none()) || (cb.unwrap()(gobj, (*coll).floor.index) != 0) {
+                    if (cb.is_none()) || super::mplib::cb_bool(cb.unwrap()(gobj, (*coll).floor.index)) {
                         (*coll).env_flags = (*coll).env_flags | 32768;
                         return 1;
                     }

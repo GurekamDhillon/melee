@@ -46,7 +46,7 @@ if v.set() { (*p).joint_count = v.leaf_int(&format!("{}.joint_count", path), 32,
 }
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
-fn vis_struct_StageCallbacks(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageCallbacks; unsafe {
+fn vis_StageCallbacks(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageCallbacks; unsafe {
 {
 if v.set() { (*p).on_init = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.on_init", path))) }; } else { v.dump_p(&format!("{}.on_init", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).on_init) }); }
 }
@@ -59,7 +59,7 @@ if v.set() { (*p).gobj_proc = unsafe { core::mem::transmute::<usize, _>(v.leaf_p
 {
 if v.set() { (*p).callback3 = unsafe { core::mem::transmute::<usize, _>(v.leaf_ptr(&format!("{}.callback3", path))) }; } else { v.dump_p(&format!("{}.callback3", path), unsafe { core::mem::transmute_copy::<_, usize>(&(*p).callback3) }); }
 }
-v.bytes(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
+v.bytes_be32(&format!("{}.anon_10", path), &mut (*p).anon_10 as *mut _ as *mut u8, core::mem::size_of_val(&(*p).anon_10));
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn vis_StageInfo(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut melee_types::StageInfo; unsafe {
@@ -784,7 +784,7 @@ vis_StageData(v, path, &mut (*p) as *mut _ as *mut u8);
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
 fn gv_grZe_Route_StageCallbacks(v: &mut V, path: &str, vp: *mut u8) { let p = vp as *mut [melee_types::StageCallbacks; 4]; unsafe {
 for _i1 in 0..4usize {
-vis_struct_StageCallbacks(v, &format!("{}[{}]", path, _i1), &mut (*p)[_i1] as *mut _ as *mut u8);
+vis_StageCallbacks(v, &format!("{}[{}]", path, _i1), &mut (*p)[_i1] as *mut _ as *mut u8);
 }
 } }
 #[allow(unused_variables, unused_mut, unused_unsafe, unused_parens, non_snake_case)]
@@ -832,7 +832,7 @@ pub fn glue() -> Glue {
     Glue {
         types: vec![
             TypeInfo { name: "StageData", size: core::mem::size_of::<melee_types::StageData>(), align: core::mem::align_of::<melee_types::StageData>(), vis: vis_StageData },
-            TypeInfo { name: "struct~StageCallbacks", size: core::mem::size_of::<melee_types::StageCallbacks>(), align: core::mem::align_of::<melee_types::StageCallbacks>(), vis: vis_struct_StageCallbacks },
+            TypeInfo { name: "StageCallbacks", size: core::mem::size_of::<melee_types::StageCallbacks>(), align: core::mem::align_of::<melee_types::StageCallbacks>(), vis: vis_StageCallbacks },
             TypeInfo { name: "StageInfo", size: core::mem::size_of::<melee_types::StageInfo>(), align: core::mem::align_of::<melee_types::StageInfo>(), vis: vis_StageInfo },
             TypeInfo { name: "HSD_GObj", size: core::mem::size_of::<melee_types::HSD_GObj>(), align: core::mem::align_of::<melee_types::HSD_GObj>(), vis: vis_HSD_GObj },
             TypeInfo { name: "HSD_GObjProc", size: core::mem::size_of::<melee_types::HSD_GObjProc>(), align: core::mem::align_of::<melee_types::HSD_GObjProc>(), vis: vis_HSD_GObjProc },

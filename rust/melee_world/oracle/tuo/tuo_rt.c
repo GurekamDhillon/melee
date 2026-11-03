@@ -440,6 +440,24 @@ static void* mk_target(const char* path, const char* tgt)
         }
         return b;
     }
+    if (!strncmp(tgt, "datblkp:", 8)) {
+        /* datblkp:SIZE:OFF...: datblk with native pointer slots: slot -> 8-byte cell -> pointer to a 16-byte block */
+        char sp[200]; strcpy(sp, tgt + 8);
+        char* tk = strtok(sp, ":");
+        size_t size = (size_t) atoi(tk);
+        char* b = (char*) tuo_newbuf(0, size);
+        while ((tk = strtok(0, ":"))) {
+            int off = atoi(tk);
+            u64 d = tuo_draw();
+            if ((d & 3) == 0) { *(void**) (b + off) = 0; continue; }
+            char* cell = (char*) tuo_newbuf(0, 8);
+            u64 d2 = tuo_draw();
+            void* joint = (d2 & 1) ? 0 : tuo_newbuf(0, 16);
+            *(void**) cell = joint;
+            *(void**) (b + off) = cell;
+        }
+        return b;
+    }
     if (!strncmp(tgt, "zero:", 5)) {
         /* a new, zeroed object (not filled) */
         nofill = 1; void* r = tuo_new(0, tgt + 5, 0); nofill = 0; return r;

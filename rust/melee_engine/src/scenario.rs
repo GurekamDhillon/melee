@@ -64,6 +64,8 @@ pub struct PlayerSpec {
     pub stocks: i32,
     /// handicap (-1 = unset)
     pub handicap: i32,
+    /// `pN=.../idle`: a CPU that stands still (gw_sl_cfg.p[slot].cpu_idle)
+    pub cpu_idle: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -102,7 +104,9 @@ impl Scenario {
                     }
                 }
                 // coverage scenarios (scenarios.tsv): modes and rules the engine's launcher does not answer yet
-                "teams" | "stocks" => return Err(format!("scene key {k} not wired")),
+                // the saved VS rules (gw_sl_set: teams=0|1, stocks=N)
+                "teams" => s.teams = v.starts_with('1') as i32,
+                "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
                 "mode" => s.onep_mode = match v {
                     "classic" => 3, "adventure" => 4, "allstar" => 5,
@@ -127,28 +131,30 @@ impl Scenario {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
                         None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
                     };
-                    // `<fighter>[/<kind>][/cN][/stocksN]` (gw_runtime.c's 1P launch: color and stocks of the player)
-                    let (mut kind, mut color, mut stocks) = ("human", -1, -1);
-                    for part in it {
-                        if let Some(n) = part.strip_prefix("stocks") {
-                            stocks = n.parse().map_err(|_| format!("stocks in {v}"))?;
-                        } else if let Some(n) = part.strip_prefix('c').filter(|n| n.parse::<i32>().is_ok()) {
-                            color = n.parse().unwrap();
-                        } else if part == "human" || part == "idle" || part.starts_with("cpu") {
-                            kind = part;
-                        } else {
-                            return Err(format!("team suffix in {v} not wired"));
-                        }
+                    // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
+                    // teamN, stocksN, hmpN, cN (color)
+                    let (mut slot_type, mut cpu_level, mut cpu_idle) = (0, -1, false);
+                    let (mut team, mut stocks, mut handicap, mut color) = (-1, -1, -1, -1);
+                    let digits = |t: &str, pre: &str| t.strip_prefix(pre).filter(|r| !r.is_empty() && r.bytes().all(|b| b.is_ascii_digit())).map(|r| r.parse::<i32>().unwrap());
+                    for t in it {
+                        if t == "human" || t == "hu" { slot_type = 0; }
+                        else if t == "cpu" { slot_type = 1; }
+                        else if t == "idle" { cpu_idle = true; slot_type = 1; }
+                        else if let Some(n) = digits(t, "team") { team = n; }
+                        else if let Some(n) = digits(t, "stocks") { stocks = n; }
+                        else if let Some(n) = digits(t, "hmp") { handicap = n; }
+                        else if let Some(n) = digits(t, "c") { color = n; }
+                        else if let Some(n) = digits(t, "cpu") { slot_type = 1; cpu_level = n; }
+                        else { return Err(format!("slot token {t} in {v} not wired")); }
                     }
-                    let kind = if kind == "idle" { "human" } else { kind };
-                    let (slot_type, cpu_level) = match kind.strip_prefix("cpu") {
-                        Some(l) => (1, l.parse().unwrap_or(-1)),
-                        None => (0, -1),
-                    };
-                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team: -1, stocks, handicap: -1 });
+                    s.players[n] = Some(PlayerSpec { ckind: ck, slot_type, cpu_level, color, team, stocks, handicap, cpu_idle });
                 }
                 _ => {}
             }
+        }
+        // the 1P launch takes `idle` as the human player standing still (gw_runtime.c's 1P slot)
+        if s.onep_mode >= 0 {
+            for x in s.players.iter_mut().flatten() { if x.cpu_idle { x.cpu_idle = false; x.slot_type = 0; } }
         }
         Ok(s)
     }
@@ -158,6 +164,11 @@ static mut SCN: Option<Scenario> = None;
 
 fn p(n: i32) -> Option<PlayerSpec> {
     unsafe { SCN.as_ref().and_then(|s| s.players.get(n as usize).copied().flatten()) }
+}
+
+/// `gw_Script_CpuIdleDefault(slot)`: 2 for a scene `idle` slot, else 0 (no `cpus=` / MELEE_CPU_IDLE default in the engine).
+pub fn cpu_idle_default(slot: i32) -> i32 {
+    if p(slot).is_some_and(|x| x.cpu_idle) { 2 } else { 0 }
 }
 
 /// The mode a scenario boots into: its 1P mode, else VS.

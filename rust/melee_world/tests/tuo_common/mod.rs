@@ -302,6 +302,28 @@ impl V {
             }
             return b as usize;
         }
+        if let Some(spec) = tgt.strip_prefix("datblkp:") {
+            // datblkp:SIZE:OFF...: datblk with native pointer slots: slot -> 8-byte cell -> pointer to a 16-byte block
+            let mut it = spec.split(':');
+            let size: usize = it.next().unwrap().parse().unwrap();
+            let b = self.new_buf(None, size);
+            for off in it {
+                let off: usize = off.parse().unwrap();
+                let d = self.draw();
+                if d & 3 == 0 {
+                    unsafe { *(b.add(off) as *mut usize) = 0 };
+                    continue;
+                }
+                let cell = self.new_buf(None, 8);
+                let d2 = self.draw();
+                let joint = if d2 & 1 != 0 { std::ptr::null_mut() } else { self.new_buf(None, 16) };
+                unsafe {
+                    *(cell as *mut usize) = joint as usize;
+                    *(b.add(off) as *mut usize) = cell as usize;
+                }
+            }
+            return b as usize;
+        }
         if let Some(t) = tgt.strip_prefix("zero:") {
             // a new, zeroed object (not filled)
             self.nofill = true;

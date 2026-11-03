@@ -207,7 +207,10 @@ pub fn start(mut ra: RandAbs, rows: usize, out: &str) -> Result<(), String> {
     use std::io::Write;
     let mut f = std::fs::File::create(out).map_err(|e| format!("{out}: {e}"))?;
     let _ = f.write_all(b"frame,hash,seed,items,itemsum,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11\n");
-    if std::env::var("MELEE_COV1P_PRERUN").map_or(true, |v| v != "0") {
+    // MELEE_COV1P_PRERUN=1: resume the task once before logic frame 0. Off by default: the C task first sets a pad at the
+    // boot scene's first FramePost, so logic frame 0 reads a neutral pad (with the pre-run, Adventure's intro was skipped
+    // one frame early by the Start tap).
+    if std::env::var("MELEE_COV1P_PRERUN").is_ok_and(|v| v == "1") {
         ra.run_task();
     }
     melee_engine::Engine::set_next_pads(Some(ra.pads()));

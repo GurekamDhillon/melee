@@ -1,0 +1,77 @@
+# melee play retail: retail_full.txt's menus (4 CPUs, Battlefield) with the CSS default rules (2-minute time), the whole match,
+# then the results screen held ~13 s, START out to the CSS. For C-vs-Rust shot pairs (tools/rust-port/menus/pair.sh).
+# Mario at level 9 on the slider, slots 2-4 opened from their N/A buttons: the CSS picks their fighters) -> START ->
+# SSS: Battlefield -> the match (TIME runs out with --time-secs) -> results -> CSS -> START -> SSS -> second match.
+# Cursor speed on the CSS: 1.24 world units a frame at full stick.
+60 0000 0 0
+3 1000 0 0
+# the special messages (unlock-all, the C default; no memory card): eight A presses, one a message, then the main menu
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+27 0000 0 0
+3 0100 0 0
+60 0000 0 0
+4 0000 0 -100
+30 0000 0 0
+3 0100 0 0
+60 0000 0 0
+3 0100 0 0
+240 0000 0 0
+# P1's coin onto Mario, then the HMN button -> CPU
+6 0000 127 0
+34 0000 0 127
+3 0100 0 0
+10 0000 0 0
+5 0000 -127 0
+18 0000 0 -127
+3 0100 0 0
+30 0000 0 0
+# grab the CPU-level knob, drag it to 9, release
+1 0000 -127 0
+10 0000 0 -127
+5 0000 0 0
+3 0100 0 0
+5 0000 0 0
+9 0000 127 0
+5 0000 0 0
+3 0100 0 0
+10 0000 0 0
+# slots 2, 3, 4: their N/A buttons
+5 0000 127 0
+10 0000 0 127
+5 0000 0 0
+3 0100 0 0
+20 0000 0 0
+13 0000 127 0
+5 0000 0 0
+3 0100 0 0
+20 0000 0 0
+12 0000 127 0
+5 0000 0 0
+3 0100 0 0
+40 0000 0 0
+# START: the stage select
+3 1000 0 0
+120 0000 0 0
+# SSS: the cursor starts below the bottom row; three frames up-right reach Battlefield, A picks it
+3 0000 25 127
+15 0000 0 0
+3 0100 0 0
+# the match: 2 minutes + the GAME! and the results' entry
+8000 0000 0 0
+3 1000 0 0
+120 0000 0 0
+3 1000 0 0
+120 0000 0 0

@@ -145,8 +145,8 @@ pub mod ext {
             A::P(p) => melee_runtime::cformat::PrintfArg::Int(p as i32),
             _ => melee_runtime::cformat::PrintfArg::Int(0),
         }).collect();
-        let s = std::string::String::from_utf8_lossy(&melee_runtime::cformat::c_format(fmt as *const i8, &pa)).into_owned();
-        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(text, x, y, if fmt.is_null() { None } else { Some(&s) })
+        let s = melee_runtime::cformat::c_format(fmt as *const i8, &pa);
+        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(text, x, y, if fmt.is_null() { None } else { Some(&s) })
     }
     /// `HSD_Archive* lbArchive_80016DBC(const char* file, void* out0, ...)`: (name, out, name, out, ..., NULL) pairs follow.
     pub unsafe fn archive_va(file: *const c_char, out0: *mut c_void, va: &[A]) -> *mut HSD_Archive {

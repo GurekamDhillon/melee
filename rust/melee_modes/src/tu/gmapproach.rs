@@ -167,9 +167,9 @@ pub mod ext {
     hook!(HSD_GOBJ_LIGHTKIND, hsd_gobj_light_kind, () -> u8);
     hook!(HSD_GOBJ_CAMERAKIND, hsd_gobj_camera_kind, () -> u8);
 
-    /// `HSD_GObj_803910D8` (render callback, gm's GX link): address only; not ported yet.
+    /// `HSD_GObj_803910D8` (render callback, gm's GX link): address only.
     pub unsafe extern "C" fn HSD_GObj_803910D8(_gobj: *mut HSD_GObj, _code: i32) {
-        panic!("TODO(sysdolphin): HSD_GObj_803910D8 is not ported");
+        unsafe { melee_runtime::tu::gobj::HSD_GObj_803910D8(_gobj, _code) }
     }
     /// `HSD_GObj_LObjCallback` / `HSD_GObj_JObjCallback` (sysdolphin/baselib/gobj.c): addresses only.
     pub unsafe extern "C" fn HSD_GObj_LObjCallback(_gobj: *mut HSD_GObj, _code: i32) {

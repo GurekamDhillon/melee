@@ -63,4 +63,9 @@ sym	tyDisplayModelUsTbl	TyDspEntry[]	src/melee/ty/toy.c:339 TyDspEntry* Toy_sbss
 prefix	ftDemo	raw	src/melee/ft/ftdemo.c:166 ftData_UnkIntPairs[].data (void*: the demo figatree block, read through gc_addr32 + per-anim offsets)
 sym	gmIntroEasyTable	custom:rawwords	gm/gm_1832.c:155 the anonymous all-f32 struct lbl_804D6604 (GmIntEz.dat; Rust ClassicIntroTable)
 sym	standScene	SceneDesc	gm/gm_19EF.c:37 SceneDesc* lbl_804D66A8 (GmRgStnd.dat; gmregtyfall.c, vi1201v1/v2.c, vi1202.c the same)
+sym	cut1CanimScene	SceneDesc	gm/gmregtyfall.c:39 SceneDesc* gm_804D67A8 (GmRegEnd, gmregtyfall.c:383)
+sym	cut2CanimScene	SceneDesc	gm/gmregtyfall.c:40 SceneDesc* gm_804D67A4
+sym	cut3CanimScene	SceneDesc	gm/gmregtyfall.c:41 SceneDesc* gm_804D67A0
+sym	cut3BgScene	SceneDesc	gm/gmregtyfall.c:385 (loaded, no pointer kept)
+sym	ScGamRegStaffrollNames_scene_modelset	custom:ptrtable_dynmodel	gm/gmstaffroll.c:84 DynamicModelDesc** gm_804D6844 (GmStRoll.dat, indexed 0..9)
 prefix	gmKumiteSystemTable	custom:kumitetable	gm/gm_181A.c:459 RegClearSpawnEntry* lbl_80472ED8.x6A4..x6B8 (GmKumite.dat Multi-Man spawn tables; copy_spawn_table reads them natively)

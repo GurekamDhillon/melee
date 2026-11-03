@@ -745,9 +745,12 @@ pub unsafe extern "C" fn grGreatBay_801F5914(user_data: *mut c_void, _joint_id: 
 
     let temp_r0 = (*coll).x34_flags.b1234() as i32;
     if temp_r0 == 1 || temp_r0 == 2 || temp_r0 == 3 {
-        (*gp).u.greatbay.xD4 = ((*coll).env_flags as u32 & (Collide_LeftLedgeGrab | Collide_RightLedgeGrab) as u32) as i32;
-        (*gp).u.greatbay.xD8 = (*gp).u.greatbay.xD8.wrapping_add(1);
-        (*gp).u.greatbay.xE0 += coll_x50 as f32 / 100.0;
+        // The C writes `u.greatbay.xD4/xD8/xE0` and grGreatBay_801F5600 reads the same GC offsets (gp+D4/D8/E0) as
+        // `u.greatbay4.xD4/xD8/xE0`. Natively `greatbay.xC8` is an 8-byte HSD_Generator*, so the two views no longer
+        // alias: write through the view the reader uses (a fighter standing on Tingle's balloon, stage_13_greatbay 1623).
+        (*gp).u.greatbay4.xD4 = ((*coll).env_flags as u32 & (Collide_LeftLedgeGrab | Collide_RightLedgeGrab) as u32) as i32;
+        (*gp).u.greatbay4.xD8 = (*gp).u.greatbay4.xD8.wrapping_add(1);
+        (*gp).u.greatbay4.xE0 += coll_x50 as f32 / 100.0;
     }
 }
 

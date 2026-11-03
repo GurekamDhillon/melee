@@ -41,6 +41,61 @@ LOWER = ROOT / "rust/melee_runtime/oracle/lower.py"
 FTCOMMON = [("src/melee/ft/ftcommon.c", "void ftCommon_CalcGroundAccel_Deaccel(", "void ftCommon_UseAllJumps("),
             ("src/melee/ft/ftcommon.c", "void ftCommon_UpdateFacing(", "void ftCommon_8007DB24("),
             ("src/melee/ft/ftcommon.c", "void ftCommon_8007E2F4(", "void ftCommon_8007E358(")]
+# Rust ports that take the C's HSD_GObj* (folded into tu/): the gobj, not the fighter, is passed
+RS_GOBJ = {
+    "ftPr_SpecialAirNChargeFull_Phys", "ftPr_SpecialAirNChargeLoop_Phys", "ftPr_SpecialAirNEnd_Phys", "ftPr_SpecialAirNStart_Phys",
+    "ftPr_SpecialNEnd_Phys", "ftPr_SpecialNHit_Phys", "ftPr_SpecialNStart_Phys",
+    "ftGw_Attack11_ItemGreenhouse_CheckAll",
+    "ftGw_Attack11_ItemGreenhouse_CheckAttack11",
+    "ftGw_AttackAirN_ItemCheckParachuteRemove",
+    "ftGw_AttackAirN_ItemCheckSparkyRemove",
+    "ftGw_AttackAirN_ItemCheckTurtleRemove",
+    "ftGw_AttackLw3_ItemCheckManholeRemove",
+    "ftGw_AttackS4_ItemCheckTorchRemove",
+    "ftGw_SpecialLw_ItemCheckPanicRemove",
+    "ftGw_SpecialS_ItemCheckJudgementRemove",
+    "ftKb_SpecialNGw_8010D160",
+    "ftKp_SpecialS_80132DC0",
+    "ftKp_SpecialS_80132DD0",
+    "ftKp_SpecialS_80132DE0",
+    "ftKp_SpecialS_80132DF0",
+    "ftKp_SpecialS_80132E00",
+    "ftKp_SpecialS_80132E10",
+    "ftKp_SpecialS_80132E20",
+    "ftPe_SpecialN_IsActive",
+    "ftSk_SpecialS_80110F58",
+    "ftSk_SpecialS_80110F64",
+    "ftYs_SpecialN_GetDatAttr18",
+    "ftYs_SpecialN_GetDatAttr1C",
+    "ftYs_SpecialN_GetDatAttr20",
+    "ftYs_SpecialN_GetDatAttr24",
+    "ftYs_SpecialN_GetFacingDir",
+    "ftYs_SpecialN_SetupItemVel",
+}
+# the gobj-taking C name is the tu/ port; the fighter-taking body these rows check is `<name>_fp`
+RS_FP = {
+    "ftDk_SpecialLwLoop_IASA",
+    "ftLg_SpecialAirSStart_Phys",
+    "ftMt_SpecialHiLost_Phys",
+    "ftNs_SpecialAirLwStart_Phys",
+    "ftNs_SpecialAirNEnd_Phys",
+    "ftNs_SpecialAirNRelease_Phys",
+    "ftNs_SpecialAirNStart_Phys",
+    "ftPe_SpecialAirNHit_Phys",
+    "ftPe_SpecialAirSJump_Phys",
+    "ftPe_SpecialSStart_Phys",
+    "ftSk_SpecialAirLw2_Phys",
+    "ftSk_SpecialAirLw_Phys",
+    "ftSk_SpecialAirSStart_Phys",
+    "ftYs_SpecialAirSLanding_IASA",
+    "ftYs_SpecialAirSStart_0_Phys",
+    "ftYs_SpecialAirSStart_1_IASA",
+    "ftZd_SpecialAirLw2_Phys",
+    "ftZd_SpecialAirLw_Phys",
+    "ftZd_SpecialAirSEnd_Phys",
+    "ftZd_SpecialAirSLoop_Phys",
+    "ftZd_SpecialAirSStart_Phys",
+}
 # functions whose gobj may be NULL (they test it): Rust takes Option<&Fighter>
 NULLABLE = {"ftSs_SpecialN_801291A8", "ftSs_SpecialLw_80129158"}
 
@@ -229,11 +284,13 @@ def c_args(kinds):
     return ", ".join(out)
 
 
-def rs_args(kinds):
+def rs_args(kinds, name=None):
     out, np = [], 0
-    for k in kinds:
+    for i, k in enumerate(kinds):
         if k == "P":
             out.append(["o1", "o2"][np]); np += 1
+        elif k == "G" and i == 0 and name in RS_GOBJ:
+            out.append("g")
         else:
             out.append({"G": "fp", "Gn": "if nul { None } else { Some(&*fp) }", "F": "fp", "V": "&*fp",
                         "V3": "v3", "V2": "v2", "A": "a", "I": "ia & 3", "K": "ia", "R": "g"}[k])
@@ -345,7 +402,7 @@ def write_sources(funcs):
           "            o1: &mut i32, o2: &mut i32) -> u32 {",
           "    match which {"]
     for fi, (tu, name, rk, kinds) in enumerate(funcs):
-        call = f"{module_path(tu, name)}::{name}({rs_args(kinds)})"
+        call = f"{f'melee_chara::tu::{Path(tu).stem}' if name in RS_GOBJ else module_path(tu, name)}::{name}{'_fp' if name in RS_FP else ''}({rs_args(kinds, name)})"
         if rk == "f":
             e = f"{call}.to_bits()"
         elif rk == "i":

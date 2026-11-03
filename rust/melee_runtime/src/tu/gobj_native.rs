@@ -288,7 +288,13 @@ pub static mut HSD_RandRenderEnd: Option<fn()> = None;
 
 
 /// `HSD_GObj_80390FC0` (`GObj_RunGXLinkMaxCallbacks`): the max-link render callbacks.
-/// The headless engine draws nothing: the render passes return at once (the renderer step lifts this).
+/// Headless engine (`MELEE_ENGINE_HEADLESS`): no GX bridge and no presented frame, but the render callbacks still run, in
+/// render-stub mode (display calls answer nothing), like the C build's turbo frames (`Gx_SuppressDraws`, the callbacks run
+/// without display lists). They must: the draw pass has simulation-visible effects. `HSD_JObjDispAll` sets up the world
+/// matrices and clears `JOBJ_MTX_DIRTY`, and `HSD_JObjSetMtxDirty` only propagates to the children (`HSD_JObjSetMtxDirtySub`)
+/// from a clean parent; skipped, the fighters' child bones kept stale matrices and the bone dynamics drifted
+/// (cpu_fox_falco_dl frame 142). The main camera's `fn_800301D0` also copies the camera pose into the CObj the offscreen
+/// tests read (`Camera_8002A4AC`, `HSD_CObjSetCurrent`).
 pub static mut HEADLESS_RENDER: bool = false;
 
 

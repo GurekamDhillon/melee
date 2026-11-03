@@ -282,9 +282,6 @@ pub fn HSD_GObj_80390EB8(i: i32) -> u32 {
 /// camera `gobj` selects (`gxlink_prios`), for each camera index set in `mask`.
 pub unsafe fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mut mask: u32) {
     melee_core::ct!("HSD_GObj_80390ED0");
-    if HEADLESS_RENDER {
-        return;
-    }
     let mut i = 0i32;
     if let Some(f) = HSD_RandRenderBegin {
         f();
@@ -320,9 +317,6 @@ pub unsafe fn HSD_GObj_80390ED0(gobj: *mut HSD_GObj, mut mask: u32) {
 
 pub unsafe fn HSD_GObj_80390FC0() {
     melee_core::ct!("HSD_GObj_80390FC0");
-    if HEADLESS_RENDER {
-        return;
-    }
     if let Some(f) = HSD_RandRenderBegin {
         f();
     }

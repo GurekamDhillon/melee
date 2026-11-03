@@ -82,6 +82,75 @@ import re
 PAD_DECODES = ["ftMasterHand_FingerBeamVars", "ftMasterHand_GrabVars", "ftMasterHand_Damage_0"]
 
 
+# Motion-var records whose C `UNK_T` (void*) fields no code uses as pointers: natively 4 bytes, so every later field keeps the
+# GameCube offset its union siblings alias (Yoshi's guard.x20/x24 are ftCommon guard.x20/x24; a state's ints read what another
+# state stored at the same fp offset). (struct, [fields])
+UNK_U32 = [
+    ("ftCommon_MotionVars_capturekirby", ["x1C", "x20", "x24", "x28"]),
+    ("ftCommon_MotionVars_capturekoopa", ["x4"]),
+    ("ftCommon_MotionVars_common", ["x10"]),
+    ("ftCommon_MotionVars_damage", ["xC", "x10"]),
+    ("ftCommon_MotionVars_fighterthrow", ["x0"]),
+    ("ftCommon_MotionVars_guard", ["x28"]),
+    ("ftCommon_MotionVars_hammerlanding", ["x0"]),
+    ("ftCommon_MotionVars_thrown", ["x8"]),
+    ("ftCommon_MotionVars_unk_800D3680", ["x74"]),
+    ("ftYoshi_GuardVars", ["x1C"]),
+]
+
+
+def native_size(txt, name):
+    """repr(C) size of a generated struct of scalars / pointers / arrays / known records (8-byte pointers)."""
+    prim = {"u8": 1, "i8": 1, "u16": 2, "i16": 2, "u32": 4, "i32": 4, "f32": 4, "u64": 8, "i64": 8, "f64": 8, "usize": 8, "isize": 8, "bool": 1}
+
+    def lay(ty):
+        ty = ty.strip()
+        if ty in prim:
+            return prim[ty], prim[ty]
+        if ty.startswith(("*", "Option<", "unsafe extern", "extern")):
+            return 8, 8
+        am = re.fullmatch(r"\[(.+);\s*([0-9a-fA-Fx]+)\]", ty)
+        if am:
+            sz, al = lay(am.group(1))
+            return sz * int(am.group(2), 0), al
+        m = re.search(r"#\[repr\(C(?:, align\((\d+)\))?\)\]\s*(?:#\[derive[^\]]*\]\s*)?pub (struct|union) %s \{(.*?)\n\}" % re.escape(ty), txt, re.S)
+        if not m:
+            raise SystemExit(f"native_unions: no layout for {ty}")
+        al = int(m.group(1) or 1)
+        off = 0
+        for ft in re.findall(r"^\s*pub (?:r#)?\w+:\s*(.+?),\s*$", m.group(3), re.M):
+            fs, fa = lay(ft)
+            al = max(al, fa)
+            off = max(off, fs) if m.group(2) == "union" else (off + fa - 1) // fa * fa + fs
+        return (off + al - 1) // al * al, al
+
+    return lay(name)[0]
+
+
+def apply_unk_u32(txt):
+    for name, fields in UNK_U32:
+        m = re.search(r"pub struct %s \{.*?\n\}" % name, txt, re.S)
+        if not m:
+            raise SystemExit(f"native_unions: struct {name} not found")
+        body = m.group(0)
+        for f in fields:
+            old = f"    pub {f}: *mut c_void,\n"
+            if body.count(old) != 1:
+                raise SystemExit(f"native_unions: {name}.{f} is not one `*mut c_void`")
+            body = body.replace(old, f"    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T\n    pub {f}: u32,\n")
+        txt = txt[:m.start()] + body + txt[m.end():]
+        for f in fields:
+            pat = re.compile(r"(impl GcDecode for %s \{.*?v\.%s = <)\*mut c_void( as GcDecode>)" % (name, f), re.S)
+            txt, n = pat.subn(lambda mm: mm.group(1) + "u32" + mm.group(2), txt, count=1)
+            if n != 1:
+                raise SystemExit(f"native_unions: decode of {name}.{f} not found")
+        pat = re.compile(r"(const _: \(\) = assert!\(core::mem::size_of::<%s>\(\) == )\d+(\);)" % name)
+        txt, n = pat.subn(lambda mm: mm.group(1) + str(native_size(txt, name)) + mm.group(2), txt, count=1)
+        if n != 1:
+            raise SystemExit(f"native_unions: size assert of {name} not found")
+    return txt
+
+
 def apply(txt):
     for name in PAD_DECODES:
         pat = re.compile(r"(impl GcDecode for %s \{.*?)\n\s*v\.pad_0 = <\[i8; \d+\] as GcDecode>::gc_decode\(d, at \+ 0x0\);" % name, re.S)
@@ -92,7 +161,7 @@ def apply(txt):
         if txt.count(old) != 1:
             raise SystemExit(f"native_unions: patch target not found once: {old.splitlines()[0]!r}")
         txt = txt.replace(old, new)
-    return txt
+    return apply_unk_u32(txt)
 
 
 if __name__ == "__main__":

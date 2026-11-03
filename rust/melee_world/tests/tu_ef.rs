@@ -110,13 +110,13 @@ unsafe fn argd(d: usize, i: usize) -> *const c_void {
 unsafe fn fill_fighter(p: &mut Fighter) {
     p.facing_dir = rg(); p.motion_id = fv() as _; p.cmd_vars[0] = fv(); p.cmd_vars[1] = fv(); p.cmd_vars[2] = fv(); p.cmd_vars[3] = fv();
     p.mv.co.common.x4.x = rg(); p.mv.co.common.x4.y = rg(); p.mv.co.common.x4.z = rg();
-    p.mv.co.common.x10 = if rnd() & 1 != 0 { &raw mut AJ[0] as *mut c_void } else { null_mut() };
+    p.mv.co.common.x10 = rnd() & 1;
     p.coll_data.floor.normal.x = rg(); p.coll_data.floor.normal.y = rg();
     p.u.kb.hat.kind = fv() as _; p.kind = fv() as _;
 }
 unsafe fn hash_fighter(p: &Fighter) {
     hm(p.facing_dir.to_bits()); hm(p.motion_id as u32); hm(p.cmd_vars[0]); hm(p.cmd_vars[1]); hm(p.cmd_vars[2]); hm(p.cmd_vars[3]);
-    hm(p.mv.co.common.x4.x.to_bits()); hm(p.mv.co.common.x4.y.to_bits()); hm(p.mv.co.common.x4.z.to_bits()); hm(pi(p.mv.co.common.x10));
+    hm(p.mv.co.common.x4.x.to_bits()); hm(p.mv.co.common.x4.y.to_bits()); hm(p.mv.co.common.x4.z.to_bits()); hm(p.mv.co.common.x10);
     hm(p.coll_data.floor.normal.x.to_bits()); hm(p.coll_data.floor.normal.y.to_bits()); hm(p.u.kb.hat.kind as u32); hm(p.kind as u32);
 }
 

@@ -24527,7 +24527,8 @@ impl GcLayout for ftCommon_MotionVars {
 pub struct ftCommon_MotionVars_common {
     pub x0: i32,
     pub x4: Vec,
-    pub x10: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x10: u32,
     pub x14: f32,
     pub x18: f32,
     pub x1C: f32,
@@ -24549,7 +24550,7 @@ impl GcDecode for ftCommon_MotionVars_common {
         let mut v = Self::zeroed();
         v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
         v.x4 = <Vec as GcDecode>::gc_decode(d, at + 0x4);
-        v.x10 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x10);
+        v.x10 = <u32 as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <f32 as GcDecode>::gc_decode(d, at + 0x14);
         v.x18 = <f32 as GcDecode>::gc_decode(d, at + 0x18);
         v.x1C = <f32 as GcDecode>::gc_decode(d, at + 0x1C);
@@ -25173,8 +25174,10 @@ pub struct ftCommon_MotionVars_damage {
     pub x0: f32,
     pub x4: i32,
     pub x8: i32,
-    pub xC: *mut c_void,
-    pub x10: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub xC: u32,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x10: u32,
     pub x14: f32,
     pub x18: u8,
     pub x19: u8,
@@ -25192,8 +25195,8 @@ impl GcDecode for ftCommon_MotionVars_damage {
         v.x0 = <f32 as GcDecode>::gc_decode(d, at + 0x0);
         v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
         v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
-        v.xC = <*mut c_void as GcDecode>::gc_decode(d, at + 0xC);
-        v.x10 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x10);
+        v.xC = <u32 as GcDecode>::gc_decode(d, at + 0xC);
+        v.x10 = <u32 as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <f32 as GcDecode>::gc_decode(d, at + 0x14);
         v.x18 = <u8 as GcDecode>::gc_decode(d, at + 0x18);
         v.x19 = <u8 as GcDecode>::gc_decode(d, at + 0x19);
@@ -25220,7 +25223,7 @@ impl GcLayout for ftCommon_MotionVars_damage {
         GcField::new("x1B", 0x1B, 1, "u8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_damage>() == 40);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_damage>() == 32);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:141:5)` (src/melee/ft/kinds/ftCommon/types.h:141); GameCube size 0x20, align 4.
 #[repr(C, align(4))]
@@ -25300,7 +25303,8 @@ pub struct ftCommon_MotionVars_guard {
     pub x1C: i32,
     pub x20: i32,
     pub x24: i32,
-    pub x28: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x28: u32,
     pub x2C: f32,
 }
 impl ftCommon_MotionVars_guard { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -25321,7 +25325,7 @@ impl GcDecode for ftCommon_MotionVars_guard {
         v.x1C = <i32 as GcDecode>::gc_decode(d, at + 0x1C);
         v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
         v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
-        v.x28 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x28);
+        v.x28 = <u32 as GcDecode>::gc_decode(d, at + 0x28);
         v.x2C = <f32 as GcDecode>::gc_decode(d, at + 0x2C);
         v
     }
@@ -25346,7 +25350,7 @@ impl GcLayout for ftCommon_MotionVars_guard {
         GcField::new("x2C", 0x2C, 4, "float"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_guard>() == 56);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_guard>() == 48);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:163:5)` (src/melee/ft/kinds/ftCommon/types.h:163); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -25381,7 +25385,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_itemget>() == 4);
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftCommon_MotionVars_fighterthrow {
-    pub x0: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x0: u32,
     pub x4: i32,
     pub x8: i32,
     pub victim: *mut HSD_GObj,
@@ -25396,7 +25401,7 @@ impl GcDecode for ftCommon_MotionVars_fighterthrow {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.x0 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x0);
+        v.x0 = <u32 as GcDecode>::gc_decode(d, at + 0x0);
         v.x4 = <i32 as GcDecode>::gc_decode(d, at + 0x4);
         v.x8 = <i32 as GcDecode>::gc_decode(d, at + 0x8);
         v.victim = <*mut HSD_GObj as GcDecode>::gc_decode(d, at + 0xC);
@@ -26086,7 +26091,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_yoshiegg>() == 56
 #[derive(Clone, Copy)]
 pub struct ftCommon_MotionVars_capturekoopa {
     pub x0: i32,
-    pub x4: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x4: u32,
     pub x8: f32,
     pub xC: f32,
     pub x10: f32,
@@ -26100,7 +26106,7 @@ impl GcDecode for ftCommon_MotionVars_capturekoopa {
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
         v.x0 = <i32 as GcDecode>::gc_decode(d, at + 0x0);
-        v.x4 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x4);
+        v.x4 = <u32 as GcDecode>::gc_decode(d, at + 0x4);
         v.x8 = <f32 as GcDecode>::gc_decode(d, at + 0x8);
         v.xC = <f32 as GcDecode>::gc_decode(d, at + 0xC);
         v.x10 = <f32 as GcDecode>::gc_decode(d, at + 0x10);
@@ -26120,7 +26126,7 @@ impl GcLayout for ftCommon_MotionVars_capturekoopa {
         GcField::new("x10", 0x10, 4, "float"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_capturekoopa>() == 32);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_capturekoopa>() == 24);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:278:5)` (src/melee/ft/kinds/ftCommon/types.h:278); GameCube size 0x38, align 4.
 #[repr(C, align(8))]
@@ -26130,10 +26136,14 @@ pub struct ftCommon_MotionVars_capturekirby {
     pub x8: Vec2,
     pub x10: Vec2,
     pub x18: i32,
-    pub x1C: *mut c_void,
-    pub x20: *mut c_void,
-    pub x24: *mut c_void,
-    pub x28: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x1C: u32,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x20: u32,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x24: u32,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x28: u32,
     pub scale: Vec,
 }
 impl ftCommon_MotionVars_capturekirby { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -26148,10 +26158,10 @@ impl GcDecode for ftCommon_MotionVars_capturekirby {
         v.x8 = <Vec2 as GcDecode>::gc_decode(d, at + 0x8);
         v.x10 = <Vec2 as GcDecode>::gc_decode(d, at + 0x10);
         v.x18 = <i32 as GcDecode>::gc_decode(d, at + 0x18);
-        v.x1C = <*mut c_void as GcDecode>::gc_decode(d, at + 0x1C);
-        v.x20 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x20);
-        v.x24 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x24);
-        v.x28 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x28);
+        v.x1C = <u32 as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x20 = <u32 as GcDecode>::gc_decode(d, at + 0x20);
+        v.x24 = <u32 as GcDecode>::gc_decode(d, at + 0x24);
+        v.x28 = <u32 as GcDecode>::gc_decode(d, at + 0x28);
         v.scale = <Vec as GcDecode>::gc_decode(d, at + 0x2C);
         v
     }
@@ -26173,7 +26183,7 @@ impl GcLayout for ftCommon_MotionVars_capturekirby {
         GcField::new("scale", 0x2C, 12, "Vec3"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_capturekirby>() == 80);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_capturekirby>() == 56);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:289:5)` (src/melee/ft/kinds/ftCommon/types.h:289); GameCube size 0x40, align 4.
 #[repr(C, align(8))]
@@ -26587,7 +26597,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_hammerkneebend>()
 #[repr(C, align(8))]
 #[derive(Clone, Copy)]
 pub struct ftCommon_MotionVars_hammerlanding {
-    pub x0: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x0: u32,
     pub x4: f32,
 }
 impl ftCommon_MotionVars_hammerlanding { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -26598,7 +26609,7 @@ impl GcDecode for ftCommon_MotionVars_hammerlanding {
     #[allow(unused_variables, unused_mut, unused_unsafe)]
     fn gc_decode(d: &mut GcDecoder<'_>, at: u32) -> Self {
         let mut v = Self::zeroed();
-        v.x0 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x0);
+        v.x0 = <u32 as GcDecode>::gc_decode(d, at + 0x0);
         v.x4 = <f32 as GcDecode>::gc_decode(d, at + 0x4);
         v
     }
@@ -26613,7 +26624,7 @@ impl GcLayout for ftCommon_MotionVars_hammerlanding {
         GcField::new("x4", 0x4, 4, "float"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_hammerlanding>() == 16);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_hammerlanding>() == 8);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:351:5)` (src/melee/ft/kinds/ftCommon/types.h:351); GameCube size 0x4, align 4.
 #[repr(C, align(8))]
@@ -26941,7 +26952,8 @@ pub struct ftCommon_MotionVars_unk_800D3680 {
     pub pad_x44: [u8; 40],
     pub x6C: i32,
     pub x70: i32,
-    pub x74: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x74: u32,
 }
 impl ftCommon_MotionVars_unk_800D3680 { /// All-zero value (every generated record is plain data: null pointers, None fns). 
     #[inline] pub fn zeroed() -> Self { unsafe { core::mem::zeroed() } } }
@@ -26955,7 +26967,7 @@ impl GcDecode for ftCommon_MotionVars_unk_800D3680 {
         v.pad_x44 = <[u8; 40] as GcDecode>::gc_decode(d, at + 0x4);
         v.x6C = <i32 as GcDecode>::gc_decode(d, at + 0x2C);
         v.x70 = <i32 as GcDecode>::gc_decode(d, at + 0x30);
-        v.x74 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x34);
+        v.x74 = <u32 as GcDecode>::gc_decode(d, at + 0x34);
         v
     }
 }
@@ -26972,7 +26984,7 @@ impl GcLayout for ftCommon_MotionVars_unk_800D3680 {
         GcField::new("x74", 0x34, 4, "void *"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_unk_800D3680>() == 64);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_unk_800D3680>() == 56);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:404:5)` (src/melee/ft/kinds/ftCommon/types.h:404); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -27056,7 +27068,8 @@ const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_unk_deadup>() == 
 pub struct ftCommon_MotionVars_thrown {
     pub unk_bool: i32,
     pub anim_timer: f32,
-    pub x8: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x8: u32,
     pub xC: u8,
 }
 impl ftCommon_MotionVars_thrown { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -27069,7 +27082,7 @@ impl GcDecode for ftCommon_MotionVars_thrown {
         let mut v = Self::zeroed();
         v.unk_bool = <i32 as GcDecode>::gc_decode(d, at + 0x0);
         v.anim_timer = <f32 as GcDecode>::gc_decode(d, at + 0x4);
-        v.x8 = <*mut c_void as GcDecode>::gc_decode(d, at + 0x8);
+        v.x8 = <u32 as GcDecode>::gc_decode(d, at + 0x8);
         v.xC = <u8 as GcDecode>::gc_decode(d, at + 0xC);
         v
     }
@@ -27086,7 +27099,7 @@ impl GcLayout for ftCommon_MotionVars_thrown {
         GcField::new("xC", 0xC, 1, "u8"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_thrown>() == 24);
+const _: () = assert!(core::mem::size_of::<ftCommon_MotionVars_thrown>() == 16);
 
 /// C `struct (unnamed at src/melee/ft/kinds/ftCommon/types.h:422:5)` (src/melee/ft/kinds/ftCommon/types.h:422); GameCube size 0x4, align 4.
 #[repr(C, align(4))]
@@ -42527,7 +42540,8 @@ pub struct ftYoshi_GuardVars {
     pub x10: f32,
     pub x14: f32,
     pub x18: f32,
-    pub x1C: *mut c_void,
+    /// native only (gen/native_unions.py UNK_U32): the C's 4-byte UNK_T
+    pub x1C: u32,
     pub x20: i32,
     pub x24: i32,
 }
@@ -42545,7 +42559,7 @@ impl GcDecode for ftYoshi_GuardVars {
         v.x10 = <f32 as GcDecode>::gc_decode(d, at + 0x10);
         v.x14 = <f32 as GcDecode>::gc_decode(d, at + 0x14);
         v.x18 = <f32 as GcDecode>::gc_decode(d, at + 0x18);
-        v.x1C = <*mut c_void as GcDecode>::gc_decode(d, at + 0x1C);
+        v.x1C = <u32 as GcDecode>::gc_decode(d, at + 0x1C);
         v.x20 = <i32 as GcDecode>::gc_decode(d, at + 0x20);
         v.x24 = <i32 as GcDecode>::gc_decode(d, at + 0x24);
         v
@@ -42568,7 +42582,7 @@ impl GcLayout for ftYoshi_GuardVars {
         GcField::new("x24", 0x24, 4, "int"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<ftYoshi_GuardVars>() == 48);
+const _: () = assert!(core::mem::size_of::<ftYoshi_GuardVars>() == 40);
 
 /// C `ftZakoBoy_FighterVars` (src/melee/ft/kinds/ftZakoBoy/types.h:8); GameCube size 0xF8, align 1.
 #[repr(C, align(1))]

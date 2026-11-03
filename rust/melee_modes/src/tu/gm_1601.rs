@@ -3884,16 +3884,16 @@ pub fn gm_MatchHasMultipleWinners_fp(end: &MatchEnd_gm_r4) -> bool {
 /// (the names this TU passes carry no conversions; `c_format` copies them as the C's vsprintf would).
 pub fn sis_text_new_c(a0: *mut HSD_Text, a1: f32, a2: f32, a3: *mut i8) -> i32 {
     unsafe {
-        let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a3, &[])).into_owned();
-        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98(a0, a1, a2, if a3.is_null() { None } else { Some(&s) })
+        let s = melee_runtime::cformat::c_format(a3, &[]);
+        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A6B98_bytes(a0, a1, a2, if a3.is_null() { None } else { Some(&s) })
     }
 }
 
 /// `HSD_SisLib_803A70A0(text, idx, fmt)` with this TU's C string (see `sis_text_new_c`).
 pub fn sis_text_set_c(a0: *mut HSD_Text, a1: i32, a2: *mut i8) -> i32 {
     unsafe {
-        let s = String::from_utf8_lossy(&melee_runtime::cformat::c_format(a2, &[])).into_owned();
-        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0(a0, a1, if a2.is_null() { None } else { Some(&s) })
+        let s = melee_runtime::cformat::c_format(a2, &[]);
+        melee_runtime::tu::hsd_3A64::HSD_SisLib_803A70A0_bytes(a0, a1, if a2.is_null() { None } else { Some(&s) })
     }
 }
 

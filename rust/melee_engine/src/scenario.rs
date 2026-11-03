@@ -88,12 +88,16 @@ pub struct Scenario {
     /// `step=` (gw_sl_cfg.onep_step, -1 unset) and `difficulty=` (onep_level, -1 unset)
     pub onep_step: i32,
     pub onep_level: i32,
+    /// gw_sl_modes' game mode for `mode=vs|melee|lab|workbench` (GM_VS 2, GM_LAB 0x2F); -1 = not named (VS).
+    pub game_mode: i32,
+    /// `at=css|sss|match` (0 / 1 / 2); -1 = the match.
+    pub entry_state: i32,
 }
 
 impl Scenario {
     /// The `record.sh` scene strings: `p1=falcon/human;p2=fox/human;stage=fd;match=time;minutes=0;items=off`.
     pub fn parse(scene: &str) -> Result<Scenario, String> {
-        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1 };
+        let mut s = Scenario { stage: -1, players: [None; 6], rule_match: -1, rule_minutes: -1, item_freq: -1, teams: -1, time_limit: -1, rule_stocks: -1, onep_mode: -1, onep_step: -1, onep_level: -1, game_mode: -1, entry_state: -1 };
         for kv in scene.split(';') {
             let Some((k, v)) = kv.split_once('=') else { continue };
             match k {
@@ -108,6 +112,10 @@ impl Scenario {
                 "teams" => s.teams = v.starts_with('1') as i32,
                 "stocks" => s.rule_stocks = v.parse().map_err(|_| "stocks")?,
                 // gw_sl_modes (pc/platform/gw_runtime.c): the 1P modes a scene launches through their OnLoad (gm_OnePSceneDirect)
+                "at" => s.entry_state = match v { "css" => 0, "sss" => 1, "match" => 2, _ => return Err(format!("at={v}")) },
+                // VS and Geno's LAB (geno_lab_mode.h GM_LAB = GM_COUNT + 2): the modes that seed players and take at=
+                "mode" if matches!(v, "vs" | "melee") => s.game_mode = melee_types::GM_VS as i32,
+                "mode" if matches!(v, "lab" | "workbench") => s.game_mode = melee_modes::tu::geno_lab_mode::GM_LAB as i32,
                 "mode" => s.onep_mode = match v {
                     "classic" => 3, "adventure" => 4, "allstar" => 5,
                     // `{"tt", 0x0F}`: Target Test, booted through gm_Mode_TargetTest_OnLoad's TestTargetTestCKind direct launch
@@ -131,7 +139,11 @@ impl Scenario {
                     let name = it.next().unwrap();
                     let ck = match name.strip_prefix("ck:") {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
-                        None => ckind_by_name(name).ok_or(format!("unknown fighter in {v}"))?,
+                        // gw_sl_parse_char: an m-ex reference (mexint:/mex:/mexext:) or a name the disc's MxDt.dat may
+                        // carry is resolved once the disc is mounted (`install`); a plain retail name that no m-ex
+                        // disc answers stays checked here
+                        None if crate::mex_host::is_reference(name) || ckind_by_name(name).is_none() => pending_fighter(name),
+                        None => ckind_by_name(name).unwrap(),
                     };
                     // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
                     // teamN, stocksN, hmpN, cN (color)
@@ -164,6 +176,41 @@ impl Scenario {
 
 static mut SCN: Option<Scenario> = None;
 
+/// Fighter tokens the parse could not resolve without the disc (m-ex names and references): `ckind` holds
+/// `PENDING - index` until `install` resolves it.
+static mut PENDING_NAMES: Vec<String> = Vec::new();
+const PENDING: i32 = -1000;
+
+fn pending_fighter(name: &str) -> i32 {
+    unsafe {
+        PENDING_NAMES.push(name.to_string());
+        PENDING - (PENDING_NAMES.len() as i32 - 1)
+    }
+}
+
+/// Resolve the pending fighter tokens of `s` against the mounted disc (gw_sl_parse_char's m-ex branches, then the
+/// retail names). An unknown name is logged and leaves the slot empty-handed (-1), as the C's parse error does.
+fn resolve_pending(s: &mut Scenario) {
+    for (n, p) in s.players.iter_mut().enumerate() {
+        let Some(p) = p else { continue };
+        if p.ckind > PENDING {
+            // a retail name on an m-ex disc: the disc's own name for that slot wins (gw_sl_mex_name)
+            continue;
+        }
+        let tok = unsafe { PENDING_NAMES.get((PENDING - p.ckind) as usize).cloned().unwrap_or_default() };
+        match crate::mex_host::resolve_fighter(&tok).or_else(|| ckind_by_name(&tok)) {
+            Some(ck) => {
+                eprintln!("scene: p{} '{tok}' -> ck={ck}", n + 1);
+                p.ckind = ck;
+            }
+            None => {
+                eprintln!("scene: p{} '{tok}' is not a fighter on this disc", n + 1);
+                p.ckind = -1;
+            }
+        }
+    }
+}
+
 fn p(n: i32) -> Option<PlayerSpec> {
     unsafe { SCN.as_ref().and_then(|s| s.players.get(n as usize).copied().flatten()) }
 }
@@ -178,9 +225,47 @@ pub fn target_test_ckind() -> i32 {
     unsafe { SCN.as_ref().filter(|s| s.onep_mode == 0x0F).and_then(|_| p(0)).map_or(-1, |x| x.ckind) }
 }
 
-/// The mode a scenario boots into: its 1P mode, else VS.
+/// The mode a scenario boots into: its 1P mode, LAB, else VS.
 pub fn boot_mode(s: &Scenario) -> u8 {
-    if s.onep_mode >= 0 { s.onep_mode as u8 } else { melee_types::GM_VS as u8 }
+    if s.onep_mode >= 0 { s.onep_mode as u8 } else if s.game_mode >= 0 { s.game_mode as u8 } else { melee_types::GM_VS as u8 }
+}
+
+/// gw_SceneLaunch_BootGameMode: the configured scene's mode, -1 none.
+pub fn boot_game_mode() -> i32 {
+    unsafe { SCN.as_ref().map_or(-1, |s| boot_mode(s) as i32) }
+}
+/// gw_SceneLaunch_EntryStateId: 0 CSS, 1 SSS, 2 match (the default) for the VS-machinery modes; -1 otherwise.
+pub fn entry_state_id() -> i32 {
+    unsafe { SCN.as_ref().filter(|s| s.onep_mode < 0).map_or(-1, |s| if s.entry_state < 0 { 2 } else { s.entry_state }) }
+}
+/// gw_SceneLaunch_ItemFreq: -2 off, -1 unset, else the frequency index.
+pub fn item_freq() -> i32 {
+    unsafe { SCN.as_ref().map_or(-1, |s| s.item_freq) }
+}
+/// gw_SceneLaunch_LoadForTest: configure from `text` (None: no scene), as MELEE_SCENE would.
+pub fn load_for_test(text: Option<&str>) {
+    match text.map(Scenario::parse) {
+        Some(Ok(s)) => install(s),
+        Some(Err(e)) => { eprintln!("gw: scene: {e}"); unsafe { SCN = None } }
+        None => unsafe { SCN = None },
+    }
+    install_geno();
+}
+/// The LAB's and the Geno tests' copies of the scene queries.
+fn install_geno() {
+    unsafe {
+        use melee_modes::tu::geno_lab_mode::ext::hook as l;
+        l::SceneLaunch_BootGameMode = Some(boot_game_mode);
+        l::SceneLaunch_ItemFreq = Some(item_freq);
+        use melee_modes::tu::geno_tests::ext::hook as t;
+        t::SceneLaunch_BootGameMode = Some(boot_game_mode);
+        t::SceneLaunch_EntryStateId = Some(entry_state_id);
+        t::SceneLaunch_StageExternal = Some(|| SCN.as_ref().map_or(-1, |s| s.stage));
+        t::SceneLaunch_ItemFreq = Some(item_freq);
+        t::SceneLaunch_PlayerCKind = Some(|n| p(n).map_or(-1, |x| x.ckind));
+        t::SceneLaunch_PlayerSlotType = Some(|n| p(n).map_or(-1, |x| x.slot_type));
+        t::SceneLaunch_LoadForTest = Some(|t| { let s = if t.is_null() { None } else { Some(core::ffi::CStr::from_ptr(t).to_string_lossy().into_owned()) }; load_for_test(s.as_deref()) });
+    }
 }
 
 /// Make the 1P modes' `SceneLaunch_OneP*` queries answer for `s` (gw_runtime.c gw_SceneLaunch_OnePDirect / Step / Level).
@@ -203,7 +288,9 @@ fn install_onep() {
 }
 
 /// Make `SceneLaunch_*` answer for `s`, as `MELEE_SCENE` does in the C build (entry state 2 = the match).
-pub fn install(s: Scenario) {
+pub fn install(mut s: Scenario) {
+    resolve_pending(&mut s);
+    install_geno();
     if s.onep_mode >= 0 {
         unsafe { SCN = Some(s) };
         install_onep();
@@ -213,7 +300,7 @@ pub fn install(s: Scenario) {
         SCN = Some(s);
         h::SceneLaunch_Active = Some(|| 1);
         h::SceneLaunch_VsModeIndex = Some(|| melee_types::GmVsMode_Melee as i32);
-        h::SceneLaunch_EntryStateId = Some(|| 2);
+        h::SceneLaunch_EntryStateId = Some(entry_state_id);
         h::SceneLaunch_StageExternal = Some(|| SCN.as_ref().map_or(-1, |s| s.stage));
         h::SceneLaunch_PlayerCKind = Some(|n| p(n).map_or(-1, |x| x.ckind));
         h::SceneLaunch_PlayerSlotType = Some(|n| p(n).map_or(-1, |x| x.slot_type));
@@ -230,7 +317,7 @@ pub fn install(s: Scenario) {
         // the VS mode's own copies of the queries (gmvsmelee.rs)
         use melee_modes::tu::gmvsmelee::ext::hook as v;
         v::SceneLaunch_Active = Some(|| 1);
-        v::SceneLaunch_EntryStateId = Some(|| 2);
+        v::SceneLaunch_EntryStateId = Some(entry_state_id);
         v::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
         h::SceneLaunch_PlayerStocks = Some(|n| p(n).map_or(-1, |x| x.stocks));
         // gm_1B03's copies (team costumes, `SceneLaunch_UntintedEnemy`): gw_sl_cfg.enemy_team_colors defaults to 0

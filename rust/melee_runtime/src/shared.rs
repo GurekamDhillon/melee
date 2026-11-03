@@ -27,7 +27,17 @@ pub static mut Fighter_804D6534: *mut core::ffi::c_void = core::ptr::null_mut();
 
 /// ftdata.c `ftData_UnkBytePerCharacter` (`-1` entries are 0xFF): the effect bank per character kind, read by
 /// the effect loader (efasync) and the fighter data.
-pub static mut ftData_UnkBytePerCharacter: [u8; 33] = [
-    1, 3, 4, 8, 5, 12, 6, 17, 10, 15, 14, 14, 7, 2, 9, 11, 13, 18, 16, 17, 6, 1, 3, 7, 0xFF, 19,
-    49, 0xFF, 0xFF, 0xFF, 0xFF, 12, 0xFF,
-];
+/// Sized `Ft_Kind_Max` as the C: the m-ex kind slots are filled at fighter init (ftData_MexInitKinds); the rest are 0.
+pub static mut ftData_UnkBytePerCharacter: [u8; melee_types::Ft_Kind_Max as usize] = {
+    let head: [u8; 33] = [
+        1, 3, 4, 8, 5, 12, 6, 17, 10, 15, 14, 14, 7, 2, 9, 11, 13, 18, 16, 17, 6, 1, 3, 7, 0xFF, 19,
+        49, 0xFF, 0xFF, 0xFF, 0xFF, 12, 0xFF,
+    ];
+    let mut t = [0u8; melee_types::Ft_Kind_Max as usize];
+    let mut i = 0;
+    while i < 33 {
+        t[i] = head[i];
+        i += 1;
+    }
+    t
+};

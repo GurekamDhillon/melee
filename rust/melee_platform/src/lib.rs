@@ -18,6 +18,7 @@ pub mod script;
 pub mod pad_read;
 pub mod main_loop;
 pub mod gfx;
+pub mod overlay;
 
 pub use main_loop::{run_headless, run_windowed, FixedStep, FullscreenMode, Game, WindowConfig};
 pub use pad::PADStatus;

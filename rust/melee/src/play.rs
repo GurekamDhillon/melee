@@ -843,7 +843,7 @@ impl Play {
             rule_stocks: if r.stock { r.stocks } else { -1 },
             onep_mode: -1,
             onep_step: -1,
-            onep_level: -1,
+            onep_level: -1, game_mode: -1, entry_state: -1,
         }
     }
 
@@ -1389,6 +1389,12 @@ impl Game for Play {
     fn should_quit(&self) -> bool {
         self.quit
     }
+
+    fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {
+        if let Some(p) = self.presenter.as_mut() {
+            p.hud = lines;
+        }
+    }
 }
 
 /// The window title: `MELEE_WINDOW_TITLE`, else "melee [<worktree> <hash>] <stage> <fighters>" (build identity from build.rs,
@@ -1667,6 +1673,11 @@ pub fn play(args: &[String]) -> ExitCode {
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
+        rp.practice = Some(crate::practice::Practice::new(crate::practice::Opts::from_args(args)));
+        rp.delay_line = crate::input_delay::DelayLine::from_args(&args);
+        if rp.delay_line.frames > 0 {
+            log(&format!("offline input delay {} frames (matches only)", rp.delay_line.frames));
+        }
         rp.feed = feed;
         rp.sync = sync_k.map(|k| crate::play_net::PlaySync { st: melee_net::session::SyncTest::new(k), g: None });
         if let Some(path) = get("--record") {

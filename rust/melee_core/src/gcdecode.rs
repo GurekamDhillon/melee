@@ -468,6 +468,11 @@ impl<'a> GcDecoder<'a> {
         u64::from_be_bytes(self.bytes(at))
     }
 
+    /// Bytes in the data block.
+    pub fn data_len(&self) -> usize {
+        self.data.len()
+    }
+
     /// Is the word at data offset `at` a pointer (listed in the relocation table)?
     pub fn is_reloc(&self, at: u32) -> bool {
         self.relocs.contains(&at)

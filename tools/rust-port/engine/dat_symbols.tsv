@@ -34,7 +34,7 @@ sym	lbRumbleData	Fighter_804D653C_t[]	src/melee/lb/lb_013B.c:241 Fighter_804D653
 sym	ftLoadCommonData	custom:plco	src/melee/ft/fighter.c:312 Fighter_LoadCommonData (23 differently typed pointers)
 sym	plLoadCommonData	*pl_804D6470_t	src/melee/pl/player.c Player_80036DD8 pl_804D6470 = *sp8
 sym	lbRefData	custom:lbrefdata	src/melee/lb/lbrefract.c:373
-sym	effBehaviorTable	raw	src/melee/ef/efasync.c (effect behavior table; typed by step 10)
+sym	effBehaviorTable	custom:efbhv	src/melee/ef/efasync.c efAsync_MexNoteArchive EfMexBehavior* {s32 mdl_num; u8* mdl_type; s32 ptcl_num; u8* ptcl_type}
 prefix	eff	custom:efdat	src/melee/ef/efasync.c effDataTable_name: every eff*DataTable of the EfXxData.dat files
 sym	ALDYakuAll	custom:rawptrs	src/melee/gr/grdatfiles.c:73 ald_yaku_all (UNK_T**: item scripts, raw)
 suffix	_image_desc	HSD_ImageDesc	gr/grizumi.c:758, grpstadium.c:261 HSD_ImageDesc* (mirror / BG image desc, zeroed and refilled by the stage)
@@ -94,3 +94,4 @@ sym	cut3CanimScene	SceneDesc	gm/gmregtyfall.c:41 SceneDesc* gm_804D67A0
 sym	cut3BgScene	SceneDesc	gm/gmregtyfall.c:385 (loaded, no pointer kept)
 sym	ScGamRegStaffrollNames_scene_modelset	custom:ptrtable_dynmodel	gm/gmstaffroll.c:84 DynamicModelDesc** gm_804D6844 (GmStRoll.dat, indexed 0..9)
 prefix	gmKumiteSystemTable	custom:kumitetable	gm/gm_181A.c:459 RegClearSpawnEntry* lbl_80472ED8.x6A4..x6B8 (GmKumite.dat Multi-Man spawn tables; copy_spawn_table reads them natively)
+sym	Stc_icns	custom:stcicns	gm/gm_1601.c:4191 MexStcIcns* (m-ex IfAll stock-icon atlas: u16 reserved, u16 stride, HSD_MatAnimJoint*)

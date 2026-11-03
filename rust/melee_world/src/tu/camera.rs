@@ -242,6 +242,10 @@ pub struct cm_largemap_t {
 
 pub static mut cm_script: cm_script_t = unsafe { core::mem::zeroed() };
 pub static mut cm_largemap: cm_largemap_t = unsafe { core::mem::zeroed() };
+/// PORT (practice option, off by default): drop the screen shake from the rendered camera (see Camera_8002AF68).
+pub static NO_SCREEN_SHAKE: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+/// Render passes whose quake offset NO_SCREEN_SHAKE left out (evidence for tests).
+pub static SHAKE_SUPPRESSED: core::sync::atomic::AtomicU32 = core::sync::atomic::AtomicU32::new(0);
 pub static mut game_camera: Camera = unsafe { core::mem::zeroed() };
 pub static mut cm_80453004: CameraDebugMode = unsafe { core::mem::zeroed() };
 pub static mut cm_803BCB18: CameraModeCallbacks = CameraModeCallbacks { callback: [Some(Camera_8002B3D4), Some(Camera_8002CDDC), Some(Camera_8002D318), Some(Camera_8002D85C), Some(Camera_8002DDC4), Some(Camera_8002C908), Some(Camera_8002E490), None, None] };
@@ -1522,13 +1526,23 @@ pub unsafe fn Camera_8002AF68(mut cobj: *mut HSD_CObj, mut transform: *mut Camer
     ext::diag_game_camera((core::ptr::addr_of_mut!((*transform).interest) as *mut Vec) as *const f32, (core::ptr::addr_of_mut!((*transform).position) as *mut Vec) as *const f32, (core::ptr::addr_of_mut!(game_camera.translation) as *mut Vec2) as *const f32);
     ext::diag_camera_consts(cm_803BCCA0.x64, cm_803BCCA0.x6C, cm_803BCCA0.x70, cm_803BCCA0.x3C);
     ext::diag_camera_track((core::ptr::addr_of_mut!(game_camera.transform.interest) as *mut Vec) as *const f32, (core::ptr::addr_of_mut!(game_camera.transform.position) as *mut Vec) as *const f32);
+    // PORT (practice, presentation only): `NO_SCREEN_SHAKE` leaves the quake offset (`translation`, written only by
+    // Camera_ApplyQuake through Camera_80030DE4) out of the render CObj's pose. `game_camera` itself is untouched.
+    let (tx, ty) = if NO_SCREEN_SHAKE.load(core::sync::atomic::Ordering::Relaxed) {
+        if game_camera.translation.x != 0.0 || game_camera.translation.y != 0.0 {
+            SHAKE_SUPPRESSED.fetch_add(1, core::sync::atomic::Ordering::Relaxed);
+        }
+        (0.0f32, 0.0f32)
+    } else {
+        (game_camera.translation.x, game_camera.translation.y)
+    };
     vec = (*transform).interest;
-    vec.x = vec.x + game_camera.translation.x;
-    vec.y = vec.y + game_camera.translation.y;
+    vec.x = vec.x + tx;
+    vec.y = vec.y + ty;
     ext::HSD_CObjSetInterest(cobj, core::ptr::addr_of_mut!(vec) as *mut Vec);
     vec = (*transform).position;
-    vec.x = vec.x + game_camera.translation.x;
-    vec.y = vec.y + game_camera.translation.y;
+    vec.x = vec.x + tx;
+    vec.y = vec.y + ty;
     eye_y_bound = -f32::MAX;
     's51: {
         match ext::stage_info.grkind {
@@ -3131,7 +3145,13 @@ pub unsafe fn Camera_8002E948(mut cb: Option<unsafe extern "C" fn(*mut Vec) -> i
 
 pub unsafe fn Camera_8002EA64(mut arg0: *mut Vec) {
     melee_core::ct!("Camera_8002EA64");
-    todo!("Camera_8002EA64: goto, hand port")
+    if game_camera.mode != ((CAMERA_BOSS_INTRO as i32) as u32) {
+        Camera_8002FE38();
+    }
+    // the C sets the mode to 1 and then switches on it: only the fixed-position case runs
+    game_camera.set_x341_b3_b4(1);
+    game_camera.x35C.vec = *arg0;
+    game_camera.transform.target_position = game_camera.x35C.vec;
 }
 
 /// `Camera_8002EB5C`

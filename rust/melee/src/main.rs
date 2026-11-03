@@ -27,6 +27,7 @@ use melee_types::neutral_hash::nh_game;
 use std::io::Write;
 use std::process::ExitCode;
 
+mod geno_suite;
 mod crash;
 mod launcher_compat;
 mod display;
@@ -58,8 +59,11 @@ mod slp_export;
 mod np_lockstep;
 mod np_mux;
 mod np_env;
+mod np_hud;
+mod input_delay;
 mod menu_support;
 mod pads;
+mod practice;
 mod cov1p;
 
 /// What the frame driver needs from a simulation, per frame.
@@ -438,6 +442,7 @@ fn main() -> ExitCode {
         }
         Some("crash-test") => crash::crash_test(args.get(1).map(String::as_str).unwrap_or("panic")),
         Some("golden") => golden(&args),
+        Some("geno-tests") => geno_suite::run(&args),
         Some("slpcheck") => slpcheck::slpcheck(&args),
         Some("diff") => diff::diff(&args),
         Some("synctest") => netmatch::engine_game::synctest(&args),
@@ -605,6 +610,8 @@ pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine
     let Some(m) = mods else { return Ok(None) };
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
     eprintln!("melee: mods mounted: {} ({} files)", ids.join(", "), m.files());
+    // Geno reads each mounted mod's geno.json (geno_registry.c gn_reg: the active mods in id order)
+    melee_engine::geno_host::set_boot_mods(&m.dir, &ids);
     Ok(Some(Box::new(move |path: &str| m.lookup(path).and_then(|p| std::fs::read(p).ok()))))
 }
 
@@ -790,6 +797,8 @@ fn golden_engine(args: &[String]) -> ExitCode {
             melee_core::ct::set_range(a, b);
         }
     }
+    // the practice aids from settings / MELEE_<KEY> / flags: goldens re-run with them on must not change
+    let mut practice = practice::Practice::new(practice::Opts::from_args(args));
     for f in 0..frames {
         melee_core::ct::begin_frame(f as i64);
         if melee_core::ct::ENABLED {
@@ -839,6 +848,7 @@ fn golden_engine(args: &[String]) -> ExitCode {
         if !e.tick() {
             break;
         }
+        practice.observe();
         if audio {
             engine_audio::dsp_frame();
         }
@@ -847,7 +857,10 @@ fn golden_engine(args: &[String]) -> ExitCode {
             eprintln!("PADDBG tick {f} btn {:X} sx {} sy {} nx {} ny {}", q.button, q.stickX, q.stickY, q.nml_stickX, q.nml_stickY);
         }
         if !shots.is_empty() {
-            let frame = melee_engine::gxbridge::take_frame();
+            let mut frame = melee_engine::gxbridge::take_frame();
+            if let Some(fr) = frame.as_mut().filter(|_| shots.contains(&f)) {
+                practice.decorate(fr);
+            }
             if shots.contains(&f) {
                 match frame {
                     Some(draws) => {
@@ -912,6 +925,12 @@ fn golden_engine(args: &[String]) -> ExitCode {
             let _ = f.write_all(&csv.as_bytes()[csv_written..]);
             csv_written = csv.len();
         }
+    }
+    if !practice.log.is_empty() {
+        let ok = practice.log.iter().filter(|l| l.1.success).count();
+        eprintln!("practice: {} L-cancel landings, {ok} OK; shake suppressed in {} render passes", practice.log.len(), melee_world::tu::camera::SHAKE_SUPPRESSED.load(std::sync::atomic::Ordering::Relaxed));
+    } else if practice.opts.no_screen_shake {
+        eprintln!("practice: shake suppressed in {} render passes", melee_world::tu::camera::SHAKE_SUPPRESSED.load(std::sync::atomic::Ordering::Relaxed));
     }
     if let Some(p) = &calltrace_out {
         match melee_core::ct::write(p) {

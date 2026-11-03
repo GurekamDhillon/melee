@@ -47,7 +47,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "ftLoadCommonData" { return Some(RootType::Custom("plco")); }
     if name == "plLoadCommonData" { return Some(rt("*pl_804D6470_t")); }
     if name == "lbRefData" { return Some(RootType::Custom("lbrefdata")); }
-    if name == "effBehaviorTable" { return Some(RootType::Raw); }
+    if name == "effBehaviorTable" { return Some(RootType::Custom("efbhv")); }
     if name == "ALDYakuAll" { return Some(RootType::Custom("rawptrs")); }
     if name == "MnSelectChrDataTable" { return Some(rt("MnSelectChrDataTable")); }
     if name == "MnSelectStageDataTable" { return Some(rt("MnSelectStageDataTable")); }
@@ -97,6 +97,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name == "cut3CanimScene" { return Some(rt("SceneDesc")); }
     if name == "cut3BgScene" { return Some(rt("SceneDesc")); }
     if name == "ScGamRegStaffrollNames_scene_modelset" { return Some(RootType::Custom("ptrtable_dynmodel")); }
+    if name == "Stc_icns" { return Some(RootType::Custom("stcicns")); }
     if name.starts_with("SIS_") { return Some(RootType::Custom("sis")); }
     if name.starts_with("ftDataKirbyCopy") { return Some(RootType::Custom("kirbyhat")); }
     if name.starts_with("ftData") { return Some(RootType::Custom("ftdata")); }

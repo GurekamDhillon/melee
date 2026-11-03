@@ -96,6 +96,8 @@ impl Engine {
     pub fn boot_vs(disc: Gcm, mem_size: usize, pads: PadSystem, scn: crate::scenario::Scenario) -> Result<Engine, String> {
         let _scope = crate::arena::GameScope::enter();
         Self::boot_host(disc, mem_size, pads)?;
+        // VS, or Geno's LAB (mode=lab: its own mode row, VS's machinery, gm_Mode_Lab_OnLoad seeds it from the scene)
+        let boot_mode = if scn.game_mode >= 0 { scn.game_mode as u8 } else { melee_types::GM_VS as u8 };
         crate::scenario::install(scn);
         unsafe {
             // The C boot runs the memory-card scene on a fresh save before the menus: `gmMainLib_8015F600(1, 0)` draws one
@@ -103,8 +105,8 @@ impl Engine {
             // (grLast's sway rates, the item spawner), depend on that one RNG step. The trophy tables (ty, `Toy_803124BC`)
             // are not loaded on the engine path yet, so only the draw is made (the selected id is unused for the hash).
             let _ = melee_runtime::tu::random::global::HSD_Rand();
-            gm_1A3F::gm_801A4510_init(Some(melee_types::GM_VS as u8));
-            let mode = gm_1A3F::runGameMode_load(melee_types::GM_VS as u8);
+            gm_1A3F::gm_801A4510_init(Some(boot_mode));
+            let mode = gm_1A3F::runGameMode_load(boot_mode);
             eprintln!("vs mode {:p} kind {} states {:p} curr_state {}", mode, (*mode).kind, (*mode).states, gm_1A3F::state_machine.routing.curr_state_id);
             { let mut j = 0; while j < 12 { let st = (*mode).states.add(j); eprintln!("  state[{j}] id {}", (*st).id); if (*st).id == 0xFF { break; } j += 1; } }
             let run = gm_1A3F::gm_801A4014_enter(mode);
@@ -244,6 +246,10 @@ impl Engine {
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
                 crate::gxbridge_gen::install_gx();
             }
+            crate::geno_host::install();
+            crate::geno_host::install_callees();
+            crate::mex_host::install(); // an m-ex disc's MxDt.dat (ACE): fighter slots, sound banks, effects, stage tables
+            melee_modes::tu::geno_game::ext::hook::Geno_ScriptAddressValid = Some(|a, b| (a != 0 && b != 0 && a.checked_add(b).is_some() && a & 3 == 0) as i32);
             crate::seams_gen::install_gen();
             // the THP decoder's locked cache (the movies): the C build's shim_misc.c gw_LCStoreData / gw_LCQueueWait
             {
@@ -817,7 +823,7 @@ impl Engine {
 
     /// One iteration of the mode loop: the scene's tick, or, when the scene has ended, the rest of `gm_801A4014`, the
     /// mode change of `runGameMode` / `gm_801A4510` when one is pending, and the next scene's entry.
-    /// Returns true when a new scene was entered this tick.
+    /// Returns true when a new scene was entered this tick (its first frame has then run too).
     pub fn tick_modes(&mut self) -> bool {
         if !self.ended {
             self.tick();
@@ -875,9 +881,20 @@ impl Engine {
             self.ended = false;
             self.run = Some(run);
         }
+        // gm_801A4510 enters the next scene and runs its loop at once: the new scene's first frame belongs to this tick
+        // (an entry-only tick put every scene one frame behind the C build: the SSS, the title's exit, measured against
+        // the C lane's shots on 2026-11-03)
+        // (the retail flow's timing, ENTRY_RUNS_FRAME; the 1P coverage runs keep the entry-only tick they were matched with)
+        drop(_scope);
+        if unsafe { ENTRY_RUNS_FRAME } {
+            self.tick();
+        }
         true
     }
 }
+
+/// `tick_modes` runs the new scene's first frame in the tick that enters it (set by `melee play`'s retail flow).
+pub static mut ENTRY_RUNS_FRAME: bool = false;
 
 /// `gmMainLib_8046B0F0.skip_intro` as the boot scene reads it (the retail flow's --skip-intro).
 pub static mut BOOT_SKIP_INTRO: bool = false;

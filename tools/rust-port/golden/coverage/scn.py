@@ -20,7 +20,14 @@ if a[0] == "names":
 elif a[0] == "tsv":
     for n in a[1:]:
         v = sc[n]
-        env = ",".join("%s=%s" % kv for kv in sorted(v.get("env", {}).items()))
+        # "{wt}" in an env value: this worktree (Windows form), so a run root elsewhere still finds the scenario's mods
+        wt = os.path.abspath(os.path.join(here, "..", "..", "..", "..")).replace("\\", "/")
+        # "{ws}": the workspace (GW_WORKSPACE), where local generated mod sets live (_build/mex-mods, never committed)
+        ws = os.environ.get("GW_WORKSPACE", "E:/Projects/Melee Workspace").replace("\\", "/")
+        envd = dict(v.get("env", {}))
+        if v.get("iso"):  # a disc other than the vanilla one: the recorders read GW_ISO_<iso> from .env
+            envd["COV_ISO"] = v["iso"]
+        env = ",".join("%s=%s" % (k, val.replace("{wt}", wt).replace("{ws}", ws)) for k, val in sorted(envd.items()))
         print("\t".join([n, v["pad"], v.get("scene", ""), str(v.get("seed", d["defaults"]["seed"])),
                          str(v.get("max_seconds", d["defaults"]["max_seconds"])), env]))
 elif a[0] == "batch":

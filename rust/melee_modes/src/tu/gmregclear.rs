@@ -781,7 +781,7 @@ pub unsafe extern "C" fn fn_8017FF1C(gobj: *mut HSD_GObj) {
     }
 
     for i in 0..6 {
-        if ext::Player_GetPlayerSlotType(i) == Gm_PKind_Human
+        if (ext::Player_GetPlayerSlotType(i) == Gm_PKind_Human || (i == 0 && crate::tu::gmvs::test_p1_cpu() > 0))
             && (*addr_of_mut!(HSD_PadMasterStatus))[ext::Player_GetPlayerId(i) as u8 as usize].trigger & HSD_PAD_A != 0
         {
             (*state).xFC = (*state).x104;
@@ -792,7 +792,7 @@ pub unsafe extern "C" fn fn_8017FF1C(gobj: *mut HSD_GObj) {
 
     if (*state).x110 > 0x3E {
         for i in 0..6 {
-            if ext::Player_GetPlayerSlotType(i) == Gm_PKind_Human
+            if (ext::Player_GetPlayerSlotType(i) == Gm_PKind_Human || (i == 0 && crate::tu::gmvs::test_p1_cpu() > 0))
                 && (*addr_of_mut!(HSD_PadMasterStatus))[ext::Player_GetPlayerId(i) as u8 as usize].trigger & 0x1000 != 0
             {
                 (*state).xFC = (*state).x104;

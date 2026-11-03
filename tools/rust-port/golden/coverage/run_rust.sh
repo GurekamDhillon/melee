@@ -17,6 +17,11 @@ one() {
   export MELEE_WINDOW_TITLE="${COV_TITLE:-coverage}: $s"   # every visible window names its scenario
   [ -f "$g" ] || { printf '%s\tNO_GOLDEN\t0\t0\t-\n' "$s"; return; }
   rows=$(( $(wc -l < "$g") - 1 ))
+  # the scenario's env (scenarios.json "env", e.g. MELEE_MODS_DIR for the Geno mods), as record_coverage.sh passes to the C
+  envs=$(python tools/rust-port/golden/coverage/scn.py tsv "$s" 2>/dev/null | cut -f6)
+  IFS=',' read -ra kv <<< "$envs"; for e in "${kv[@]}"; do [ -n "$e" ] && export "$e"; done
+  iso="$GW_ISO_VANILLA"; if [ -n "${COV_ISO:-}" ]; then v="GW_ISO_$COV_ISO"; iso="${!v:-}"; [ -n "$iso" ] || { printf '%s	FAIL	0	%s	%s not set
+' "$s" "$rows" "$v"; return; }; fi
   # a VS golden whose match ends (stock matches) goes on into the results screen, which the C hashes as a second live
   # "match" (frame restarts at 0) while the engine's VS boot stops at the match end: compare the match rows only
   kind=$(awk -F'	' -v s="$s" '$1==s{print $2}' docs/rust-port/golden/coverage/scenarios.tsv)
@@ -28,12 +33,12 @@ one() {
   # found by the first 2 frames (0..3); the chosen N is part of the detail so the gap stays visible (tools/rust-port/engine/pre_draws.tsv)
   pre=0
   for k in 0 1 2 3; do
-    MELEE_ENGINE_PRE_DRAWS=$k "$MELEE_EXE" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
+    MELEE_ENGINE_PRE_DRAWS=$k "$MELEE_EXE" golden --engine tu --iso "$iso" --scenario "$s" --frames 2 --out "$tmp/$s.cal.csv" >"$tmp/$s.log" 2>&1
     [ -s "$tmp/$s.cal.csv" ] || break
     c=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.cal.csv" --allow-short --print-count 2>&1 | awk '/^COUNT/{print $2}')
     [ "${c:-0}" -ge 2 ] && { pre=$k; break; }
   done
-  MELEE_ENGINE_PRE_DRAWS=$pre "$MELEE_EXE" golden --engine tu --iso "$GW_ISO_VANILLA" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
+  MELEE_ENGINE_PRE_DRAWS=$pre "$MELEE_EXE" golden --engine tu --iso "$iso" --scenario "$s" --frames "$rows" --out "$tmp/$s.csv" >"$tmp/$s.log" 2>&1
   if grep -q "not wired" "$tmp/$s.log" && [ ! -s "$tmp/$s.csv" ]; then printf '%s\tNOT_WIRED\t0\t%s\t%s\n' "$s" "$rows" "$(grep -m1 'not wired' "$tmp/$s.log" | sed 's/.*not wired/not wired/' | cut -c1-120)"; return; fi
   [ -f "$tmp/$s.csv" ] || : > "$tmp/$s.csv"
   res=$(python tools/rust-port/compare_golden.py "$g" "$tmp/$s.csv" --allow-short --print-count 2>&1)

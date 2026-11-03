@@ -5,6 +5,12 @@ pub use melee_types::FlyCursor;
 use core::ffi::c_void;
 use core::ptr::{null_mut,null};
 pub const GM_LAB:u32=GM_COUNT+2;
+/// The platform state the LAB asks about (gw_netplay.c / gw_rollback.c / gw_script.c in the C): the engine sets the
+/// first two when a netplay / rollback session runs; `LAB_REQUESTS` counts `Script_LabRequest` calls (the Lab script
+/// host turns the Lab on for the match when it sees a new one).
+pub static mut LAB_NETPLAY: i32 = 0;
+pub static mut LAB_ROLLBACK: i32 = 0;
+pub static mut LAB_REQUESTS: u32 = 0;
 pub static mut lab_vs:VsModeData=unsafe {core::mem::zeroed()};
 pub static mut lab_in_match:i32=0;
 pub static mut lab_next:i32=0;
@@ -25,16 +31,16 @@ pub mod ext {
     use crate::tu::ext_fns_h;
     ext_fns_h! {
         Fighter_ChangeMotionState(a0: *mut HSD_GObj, a1: i32, a2: u32, a3: f32, a4: f32, a5: f32, a6: *mut HSD_GObj) = |a0, a1, a2, a3, a4, a5, a6| unsafe { melee_fighter::tu::fighter::Fighter_ChangeMotionState(a0, a1, a2, a3, a4, a5, a6) };
-        Netplay_Enabled() -> i32 = || todo!("TODO(port): Netplay_Enabled");
+        Netplay_Enabled() -> i32 = || unsafe { LAB_NETPLAY };
         Player_GetEntity(a0: i32) -> *mut HSD_GObj = |a0| melee_fighter::player::get_entity(a0);
-        RB_Enabled() -> i32 = || todo!("TODO(port): RB_Enabled");
-        Replay_Active() -> i32 = || todo!("TODO(port): Replay_Active");
-        SceneLaunch_BootGameMode() -> i32 = || todo!("TODO(port): SceneLaunch_BootGameMode");
-        SceneLaunch_ItemFreq() -> i32 = || todo!("TODO(port): SceneLaunch_ItemFreq");
+        RB_Enabled() -> i32 = || unsafe { LAB_ROLLBACK };
+        Replay_Active() -> i32 = || 0;
+        SceneLaunch_BootGameMode() -> i32 = || -1;
+        SceneLaunch_ItemFreq() -> i32 = || crate::tu::gmscenelaunch::ext::SceneLaunch_ItemFreq();
         SceneLaunch_SeedPlayers(a0: *mut VsModeData, a1: i32) -> i32 = |a0, a1| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedPlayers(a0, a1) };
         SceneLaunch_SeedVs(a0: *mut VsModeData, a1: i32) = |a0, a1| unsafe { crate::tu::gmscenelaunch::SceneLaunch_SeedVs(a0, a1); };
         ScriptGame_HitRuleCreate(a0: *mut Fighter, a1: *mut HitCapsule, a2: i32) = |a0: *mut Fighter, a1: *mut HitCapsule, a2: i32| { unsafe { crate::tu::script_game::ScriptGame_HitRuleCreate(a0 as _, a1 as _, a2 as _); } };
-        Script_LabRequest() = || todo!("TODO(port): Script_LabRequest");
+        Script_LabRequest() = || unsafe { LAB_REQUESTS += 1; };
         ftAnim_IsFramesRemaining(a0: *mut HSD_GObj) -> i32 = |a0| unsafe { melee_fighter::tu::ftanim::ftAnim_IsFramesRemaining(a0) as i32 };
         ftAnim_SetAnimRate(a0: *mut HSD_GObj, a1: f32) = |a0, a1| unsafe { melee_fighter::tu::ftanim::ftAnim_SetAnimRate(a0, a1) };
         ftCo_Fall_Enter(a0: *mut HSD_GObj) = |a0| melee_fighter::tu::ftCo_Fall::ftCo_Fall_Enter(a0);

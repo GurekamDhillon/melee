@@ -361,7 +361,25 @@ unsafe impl std::alloc::GlobalAlloc for Hooked {
 #[global_allocator]
 static GLOBAL: Hooked = Hooked;
 
+/// `arena::set_misuse_hook`: a double free / write after free of an arena block, with the raw return addresses
+/// (symbolise with llvm-symbolizer against the exe; this runs under the arena lock, so nothing here allocates).
+#[cfg(windows)]
+fn arena_misuse(what: &str, p: usize, n: usize) {
+    extern "system" {
+        fn RtlCaptureStackBackTrace(skip: u32, count: u32, frames: *mut *mut core::ffi::c_void, hash: *mut u32) -> u16;
+        fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
+    }
+    let mut f = [core::ptr::null_mut::<core::ffi::c_void>(); 40];
+    let k = unsafe { RtlCaptureStackBackTrace(0, 40, f.as_mut_ptr(), core::ptr::null_mut()) } as usize;
+    let base = unsafe { GetModuleHandleW(core::ptr::null()) } as usize;
+    eprintln!("melee: ARENA MISUSE: {what}: {p:#x} ({n} bytes), game scope {}", melee_engine::arena::active());
+    for a in &f[..k] {
+        eprintln!("melee:   at melee.exe+0x{:X}", (*a as usize).wrapping_sub(base));
+    }
+}
 fn main() -> ExitCode {
+    #[cfg(windows)]
+    melee_engine::arena::set_misuse_hook(arena_misuse);
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {
         LEAK_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
     }

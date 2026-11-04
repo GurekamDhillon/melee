@@ -1688,6 +1688,51 @@
    },
    "note": "Geno's LAB mode (GM_LAB 0x2F) by scene: CPU9 Kirby and Fox with the geno-cov profiles, LAB rules (no timer, no stocks, respawn)"
   },
+  "geno_vanilla_striker_cpu": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=geno:vanilla-striker/cpu9;p2=ck:2/cpu9;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "mods": [
+    "vanilla-striker"
+   ],
+   "note": "Geno native define vanilla-striker (geno 7: base mario, own attributes, states, overlays, fx bindings) as CPU9 against CPU9 Fox"
+  },
+  "geno_vanilla_charger": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=geno:vanilla-charger/human;p2=ck:2/idle;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none",
+   "pad": "coverage/pads/geno_define_moves.lua",
+   "frames": 3000,
+   "kind": "vs",
+   "mods": [
+    "vanilla-charger"
+   ],
+   "note": "Geno native define vanilla-charger (fighter Lua: neutral special charge with typed state) driven by geno_define_moves, Fox idle"
+  },
+  "geno_vanilla_riposte": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=geno:vanilla-riposte/human;p2=ck:2/cpu9;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none",
+   "pad": "coverage/pads/geno_define_moves.lua",
+   "frames": 3000,
+   "kind": "vs",
+   "mods": [
+    "vanilla-riposte"
+   ],
+   "note": "Geno native define vanilla-riposte (fighter Lua: down special counter) driven by geno_define_moves against CPU9 Fox"
+  },
+  "geno_vanilla_hero_caster": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=geno:vanilla-hero/cpu9;p2=geno:vanilla-caster/cpu9;stage=ext:32;match=time;minutes=0;items=off;p3=none;p4=none",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "mods": [
+    "vanilla-caster",
+    "vanilla-hero"
+   ],
+   "note": "two native defines at once (vanilla-hero geno 6, vanilla-caster geno 8: own article, effect, named sounds) as CPU9s"
+  },
   "mex_ace_cpu": {
    "group": "mex",
    "scene": "mode=vs;at=match;p1=ck:4/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",

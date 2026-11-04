@@ -106,9 +106,23 @@ Interactions to keep in mind:
   rules (fuel, no I/O) instead of a second Lua VM, but Geno Lua is source-level Lua 5.4, not wasm; nothing here depends
   on that.
 
+## Native defines (ported)
+
+- `melee_script::geno::define` (catalog, define parse, presentation keys, audio states, Lua fold, bind to aliases
+  127 downward skipping m-ex slots, the query API, records), `geno::lua` (geno_lua_core on the vendored Lua 5.4.7 via
+  `mlua::ffi`; the closure scan is a C shim, `third_party/lua-src/extra/geno_lua_scan.c`), `geno::combo` (combo and
+  meter blocks). `melee_engine::geno_host::install_define` sets every define hook (ftdata, fighter hooks, per-crate
+  copies such as `ftmariospecialn::ext::GENO_DEFINE_BASE_KIND`, geno_game's MotionState table pointers, gm_1601,
+  ifstock, lbaudio_ax). geno-tests 64/64.
+- Coverage: `geno_vanilla_striker_cpu`, `geno_vanilla_charger`, `geno_vanilla_riposte`, `geno_vanilla_hero_caster`
+  (scenario `"mods"` copies `pc/geno/mods/<id>` into `build/covmods/<name>`); C goldens, Rust PASS hash for hash.
+- Not hosted: base `"none"` defines (GenoDefine_BuildOwn: own model/bank/plan, e.g. courier), audio clips, the
+  controls schema, the records memory-card path (only `MELEE_GENO_RECORDS`), art open/textures, define overlays using
+  Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool below 4 GiB; no shipped mod uses them).
+- Gotcha: a define query hook left at the seams default (-1) silently changes gameplay (Mario-base define fired Dr.
+  Mario pills: `Geno_DefineBaseKind` unset in ftmariospecialn). Set every per-crate copy.
+
 ## Next
 
-1. Native defines in the Rust registry (`define` entries, records, the common/donor rows, anim bank), then fighter
-   Lua and combo/meter: the 14 remaining tests, and the `vanilla-*` mods.
-2. Attach `melee_script` (the Lua host) to the engine loop so the `geno-lab` mod's UI runs in a LAB match.
-3. Wire `salt_for_pl_file` into the engine's netplay identity.
+1. Attach `melee_script` (the Lua host) to the engine loop so the `geno-lab` mod's UI runs in a LAB match.
+2. Wire `salt_for_pl_file` into the engine's netplay identity.

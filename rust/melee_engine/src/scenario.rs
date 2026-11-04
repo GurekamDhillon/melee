@@ -137,13 +137,24 @@ impl Scenario {
                     }
                     let mut it = v.split('/');
                     let name = it.next().unwrap();
+                    // gw_sl_parse_char: ck:N, then a Geno define by key or name ("geno:<key>" names only a define), then
+                    // a retail name
                     let ck = match name.strip_prefix("ck:") {
                         Some(n) => n.parse().map_err(|_| format!("fighter {v}"))?,
-                        // gw_sl_parse_char: an m-ex reference (mexint:/mex:/mexext:) or a name the disc's MxDt.dat may
-                        // carry is resolved once the disc is mounted (`install`); a plain retail name that no m-ex
-                        // disc answers stays checked here
-                        None if crate::mex_host::is_reference(name) || ckind_by_name(name).is_none() => pending_fighter(name),
-                        None => ckind_by_name(name).unwrap(),
+                        None => {
+                            let g = crate::geno_host::DefineResolve(name.strip_prefix("geno:").unwrap_or(name));
+                            if g >= 0 {
+                                g
+                            } else if name.starts_with("geno:") {
+                                return Err(format!("no Geno define {name} is mounted"));
+                            } else if crate::mex_host::is_reference(name) || ckind_by_name(name).is_none() {
+                                // gw_sl_parse_char: an m-ex reference or a name the disc's MxDt.dat may carry is
+                                // resolved once the disc is mounted (`install`)
+                                pending_fighter(name)
+                            } else {
+                                ckind_by_name(name).unwrap()
+                            }
+                        }
                     };
                     // gw_runtime.c's slot tokens after the fighter: human/hu, cpu, cpuN, idle (a CPU that stands still),
                     // teamN, stocksN, hmpN, cN (color)

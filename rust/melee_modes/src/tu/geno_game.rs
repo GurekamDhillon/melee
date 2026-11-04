@@ -241,15 +241,24 @@ pub use melee_runtime::tu::gobj_native::HSD_GObj_CurrentInvokedProc;
 pub use melee_fighter::hooks::FT_PARTS_TABLE as ftPartsTable;
 pub use melee_runtime::shared::p_ftCommonData;
 pub use melee_world::tu::mpcoll::mpColl_LedgeLevelOK;
-pub static mut ftData_MotionStateList: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftMr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftCa_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftFx_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftFc_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftMs_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftPr_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftSk_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
-pub static mut ftZd_Init_MotionStateTable: [MotionState; 400] = unsafe { core::mem::zeroed() };
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftData_MotionStateList: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftMr_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftCa_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftFx_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftFc_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftMs_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftPr_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftSk_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
+/// The real table (melee_link::retail_ms), set by the engine: melee_modes cannot name melee_link.
+pub static mut ftZd_Init_MotionStateTable: *mut MotionState = core::ptr::null_mut();
 pub use melee_runtime::tu::generator::hsd_804D78FC;
 pub use melee_runtime::tu::particle::hsd_804D0908;
 pub use melee_items::tu::it_3F14::it_803F14C4;
@@ -10257,34 +10266,34 @@ pub unsafe extern "C" fn GenoGame_DefineApplyRows(
         let mut value: i32 = 0;
         if like >= 0 as i32 {
             *row = if like < ftCo_MS_Count as i32 {
-                *(&raw mut ftData_MotionStateList as *mut MotionState)
+                *ftData_MotionStateList
                     .offset(like as isize)
             } else {
                 *if Geno_DefineBaseKind(kind) == Ft_Kind_Captain as i32 {
-                    &raw mut ftCa_Init_MotionStateTable as *mut MotionState
+                    ftCa_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind) == Ft_Kind_Fox as i32
                 {
-                    &raw mut ftFx_Init_MotionStateTable as *mut MotionState
+                    ftFx_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind)
                     == Ft_Kind_Falco as i32
                 {
-                    &raw mut ftFc_Init_MotionStateTable as *mut MotionState
+                    ftFc_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind) == Ft_Kind_Mars as i32
                 {
-                    &raw mut ftMs_Init_MotionStateTable as *mut MotionState
+                    ftMs_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind)
                     == Ft_Kind_Purin as i32
                 {
-                    &raw mut ftPr_Init_MotionStateTable as *mut MotionState
+                    ftPr_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind) == Ft_Kind_Seak as i32
                 {
-                    &raw mut ftSk_Init_MotionStateTable as *mut MotionState
+                    ftSk_Init_MotionStateTable
                 } else if Geno_DefineBaseKind(kind)
                     == Ft_Kind_Zelda as i32
                 {
-                    &raw mut ftZd_Init_MotionStateTable as *mut MotionState
+                    ftZd_Init_MotionStateTable
                 } else {
-                    &raw mut ftMr_Init_MotionStateTable as *mut MotionState
+                    ftMr_Init_MotionStateTable
                 }
                     .offset((like - ftCo_MS_Count as i32) as isize)
             };

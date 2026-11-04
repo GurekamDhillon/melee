@@ -3,4 +3,7 @@ pub mod consts;
 pub mod json;
 pub mod registry;
 pub mod tables;
+pub mod define;
+pub mod lua;
+pub mod combo;
 pub use registry::{Env, NoEnv, Profile, Registry};

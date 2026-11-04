@@ -245,6 +245,9 @@ impl Engine {
             // the render pass draws into melee_gx unless the run is headless (MELEE_ENGINE_HEADLESS): then the GX hooks answer nothing
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
                 crate::gxbridge_gen::install_gx();
+                // the PC matrix palette (pobj.c geno_pal_pobj_v1, a mod's `engine.pobj_palette`): Aurora's LOAD_PALETTE
+                melee_runtime::tu::pobj::native::ext::hook::GXAuroraLoadPalette = Some(|n, k, d| unsafe { crate::gxbridge::GXAuroraLoadPalette(n, k, d) });
+                melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette = Some(crate::gxbridge::GXAuroraEndPalette);
             }
             crate::geno_host::install();
             crate::geno_host::install_define();

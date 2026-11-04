@@ -39,6 +39,8 @@ pub struct DrawCmd {
     pub render_scissor: ClipRect,
     /// Not a draw: GXCopyTex at this point of the frame (everything else in the record is a placeholder).
     pub copy: Option<Box<EfbCopy>>,
+    /// The PC matrix palette this draw reads (`config.shader.pn_palette`), 24 floats a slot.
+    pub palette: Option<std::sync::Arc<Vec<f32>>>,
 }
 
 /// One GXCopyTex: the EFB rectangle `src` (x, y, w, h in EFB pixels) to a `dst_w` x `dst_h` texture of copy format
@@ -80,6 +82,7 @@ impl DrawCmd {
             render_viewport: Viewport::default(),
             render_scissor: ClipRect::default(),
             copy: Some(Box::new(c)),
+            palette: None,
         }
     }
 }
@@ -222,6 +225,7 @@ pub fn build_draw(
             (c, info)
         }
     };
+    let palette = if config.shader.pn_palette { st.palette.clone() } else { None };
     let textures: [TexObj; MAX_TEXTURES] = st.loaded_textures.clone();
     let uniform = shader::fill_uniform(st, &info, &textures);
     let indices = match indices {
@@ -252,5 +256,6 @@ pub fn build_draw(
         render_viewport: st.render_viewport,
         render_scissor: st.render_scissor,
         copy: None,
+        palette,
     })
 }

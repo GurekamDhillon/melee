@@ -216,3 +216,7 @@ mex_halberd_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=mexint:52/cpu9;p2=ck:2
 mex_ukirby_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ultimatekirby/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
 mex_sora_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
 geno_glide	vs	600	geno_glide.lua	mode=vs;at=match;p1=ck:4/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_sorapal_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_halberd_bhv	vs	2400	geno_kirby_bhv.lua	mode=vs;at=match;p1=brawlmetaknight/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_sorapal_bhv	vs	2400	geno_kirby_bhv.lua	mode=vs;at=match;p1=ultimatesora/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+mex_goku_cpu	vs	3600	idle_3600.lua	mode=vs;at=match;p1=geno:goku-xv2/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off

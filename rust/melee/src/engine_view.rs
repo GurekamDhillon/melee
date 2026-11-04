@@ -83,6 +83,11 @@ pub fn view_golden(args: &[String]) -> ExitCode {
     };
     let scenario = get("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
     unsafe { melee_engine::engine::RENDER = true };
+    // the mounted mods (`--mods DIR`, else MELEE_MODS_DIR), as `melee golden` mounts them: an m-ex fighter slot's files
+    if let Err(er) = crate::set_engine_mods(args) {
+        eprintln!("view-golden: mods: {er}");
+        return ExitCode::FAILURE;
+    }
     let e = match crate::boot_engine_scenario(&iso, &scenario) {
         Ok(e) => e,
         Err(er) => {

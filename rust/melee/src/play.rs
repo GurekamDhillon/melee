@@ -1631,7 +1631,25 @@ pub fn play(args: &[String]) -> ExitCode {
         let mut eff_args: Vec<String> = args.to_vec();
         let mut np_rules: Option<crate::play_net::HostRules> = None;
         if netplay {
-            let ck_of = |n: &str| melee_engine::scenario::ckind_by_name(n);
+            // the scenario parser's fighter tokens: ck:N, a Geno define by key or name ("geno:<key>" names only a
+            // define), then a retail name. A define resolves from the mounted mods (boot registry), so mount them first.
+            if let Err(e) = crate::engine_mods_overlay(args) {
+                eprintln!("play: --netplay: mods: {e}");
+                return ExitCode::from(2);
+            }
+            let ck_of = |n: &str| -> Option<i32> {
+                if let Some(k) = n.strip_prefix("ck:") {
+                    return k.parse().ok();
+                }
+                if let Some(k) = n.strip_prefix("geno:") {
+                    let g = melee_engine::geno_host::DefineResolve(k);
+                    return (g >= 0).then_some(g);
+                }
+                melee_engine::scenario::ckind_by_name(n).or_else(|| {
+                    let g = melee_engine::geno_host::DefineResolve(n);
+                    (g >= 0).then_some(g)
+                })
+            };
             let stage_of = |p: &str| STAGES.iter().find(|s| s.0.to_string() == p || s.1.eq_ignore_ascii_case(p) || (p.eq_ignore_ascii_case("fd") && s.0 == 32) || (p.eq_ignore_ascii_case("bf") && s.0 == 31)).map(|s| s.0);
             match crate::play_net::NetDriver::connect(args, &ck_of, &stage_of) {
                 Ok(n) => {
@@ -1702,6 +1720,13 @@ pub fn play(args: &[String]) -> ExitCode {
             np_scene = None;
         }
         if let Some(sc) = &np_scene {
+            // a netplay replay may name a Geno define (ck >= 34): its mods resolve the scene's fighters
+            if !netplay {
+                if let Err(e) = crate::engine_mods_overlay(args) {
+                    eprintln!("play: mods: {e}");
+                    return ExitCode::from(2);
+                }
+            }
             match crate::play_net::scenario_of_scene(sc) {
                 Ok(s) => presets.scenario = Some(s),
                 Err(e) => {

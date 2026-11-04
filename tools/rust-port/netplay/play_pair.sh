@@ -1,6 +1,7 @@
 #!/bin/bash
 # Two `melee play --netplay` instances on loopback (127.0.0.1), scripted pads (no OS input), a 60 s match.
 #   bash tools/rust-port/netplay/play_pair.sh NAME LAG_MS LOSS_PCT [--headless] [extra play args]
+# NP_MATCH_HOST / NP_MATCH_GUEST: the peers' --match (default falcon,32 / fox; e.g. geno:<key>,32 with --mods DIR)
 # Each peer delays its INBOUND datagrams by LAG_MS and drops LOSS_PCT % of them (--np-lag-ms / --np-loss-pct), so
 # the round trip is 2 x LAG_MS. Writes $NP_SCRATCH/NAME-{host,guest}.{log,csv,mrpl}; compares the per-frame final hash
 # CSVs of both peers and plays the host's recorded replay back to the same final hash. Exit 0 = all equal.
@@ -19,7 +20,7 @@ srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind
 export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
 common=(play --iso "$GW_ISO_VANILLA" --time-secs 60 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 9000 "$@")
 MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="$here/np_fight.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
-  --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match falcon,32 --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
+  --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
 if [ -n "${NP_SERVER:-}" ]; then
@@ -27,7 +28,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   echo "$name: match code $dial"
 fi
 MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="$here/np_fight2.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
-  --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match fox --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
+  --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match "${NP_MATCH_GUEST:-fox}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?
 grep -h "netplay \(host\|guest\): \(match over\|final\|ERROR\|[0-9]* final\)" "$out/$name-host.log" "$out/$name-guest.log"

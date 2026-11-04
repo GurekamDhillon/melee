@@ -29,6 +29,7 @@ use std::process::ExitCode;
 
 mod geno_suite;
 mod cosmetics;
+mod cosmetics_import;
 mod settings_overlay;
 mod crash;
 mod launcher_compat;
@@ -360,7 +361,58 @@ unsafe impl std::alloc::GlobalAlloc for Hooked {
 #[global_allocator]
 static GLOBAL: Hooked = Hooked;
 
+/// `arena::set_misuse_hook`: a double free / write after free of an arena block, with the raw return addresses
+/// (symbolise with llvm-symbolizer against the exe). This runs under the arena lock, so it must not allocate or take
+/// the std stderr lock / formatting machinery: it builds each line in a stack buffer and hands it to `WriteFile`.
+#[cfg(windows)]
+fn arena_misuse(what: &str, p: usize, n: usize) {
+    extern "system" {
+        fn RtlCaptureStackBackTrace(skip: u32, count: u32, frames: *mut *mut core::ffi::c_void, hash: *mut u32) -> u16;
+        fn GetModuleHandleW(name: *const u16) -> *mut core::ffi::c_void;
+        fn GetStdHandle(n: u32) -> *mut core::ffi::c_void;
+        fn WriteFile(h: *mut core::ffi::c_void, b: *const u8, n: u32, w: *mut u32, o: *mut core::ffi::c_void) -> i32;
+    }
+    struct Line { b: [u8; 256], n: usize }
+    impl Line {
+        fn s(&mut self, t: &[u8]) -> &mut Self {
+            for &c in t { if self.n < self.b.len() { self.b[self.n] = c; self.n += 1; } }
+            self
+        }
+        fn hex(&mut self, v: usize) -> &mut Self {
+            let mut d = [0u8; 16];
+            for (i, x) in d.iter_mut().enumerate() { *x = b"0123456789ABCDEF"[(v >> ((15 - i) * 4)) & 15]; }
+            let z = d.iter().position(|&c| c != b'0').unwrap_or(15);
+            self.s(b"0x").s(&d[z..])
+        }
+        fn dec(&mut self, mut v: usize) -> &mut Self {
+            let mut d = [0u8; 20];
+            let mut i = 20;
+            loop { i -= 1; d[i] = b'0' + (v % 10) as u8; v /= 10; if v == 0 { break; } }
+            self.s(&d[i..])
+        }
+        fn out(&mut self) {
+            self.s(b"
+");
+            unsafe {
+                let mut w = 0u32;
+                WriteFile(GetStdHandle(-12i32 as u32), self.b.as_ptr(), self.n as u32, &mut w, core::ptr::null_mut());
+            }
+            self.n = 0;
+        }
+    }
+    let mut f = [core::ptr::null_mut::<core::ffi::c_void>(); 40];
+    let k = unsafe { RtlCaptureStackBackTrace(0, 40, f.as_mut_ptr(), core::ptr::null_mut()) } as usize;
+    let base = unsafe { GetModuleHandleW(core::ptr::null()) } as usize;
+    let mut l = Line { b: [0; 256], n: 0 };
+    l.s(b"melee: ARENA MISUSE: ").s(what.as_bytes()).s(b": ").hex(p).s(b" (").dec(n).s(b" bytes), game scope ")
+        .s(if melee_engine::arena::active() { b"true" } else { b"false" }).out();
+    for a in &f[..k] {
+        l.s(b"melee:   at melee.exe+").hex((*a as usize).wrapping_sub(base)).out();
+    }
+}
 fn main() -> ExitCode {
+    #[cfg(windows)]
+    melee_engine::arena::set_misuse_hook(arena_misuse);
     if std::env::var_os("MELEE_LEAK_ALLOC").is_some() {
         LEAK_ALLOC.store(true, std::sync::atomic::Ordering::Relaxed);
     }

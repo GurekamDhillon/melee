@@ -8,7 +8,7 @@ use std::any::Any;
 
 /// gd-ui-v1 / gd-lab-v1 ABI (major<<16 | minor); a mod's `gdmod_ui_abi` / `gdmod_lab_abi` must match the major
 /// and may have a lower minor.
-pub const UI_ABI_VERSION: u32 = (1 << 16) | 1; // 1.1: text style bits (GD_UI_TEXT_*)
+pub const UI_ABI_VERSION: u32 = (1 << 16) | 2; // 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests
 pub const LAB_ABI_VERSION: u32 = 1 << 16;
 
 pub const FEATURE_UI_DRAW: u32 = 1 << 4;
@@ -23,8 +23,10 @@ pub const FEATURE_LAB_INPUT: u32 = 1 << 12;
 pub const FEATURE_LAB_CPU: u32 = 1 << 13;
 pub const FEATURE_LAB_OVERLAY: u32 = 1 << 14;
 pub const FEATURE_UI_VECTOR: u32 = 1 << 15;
+/// gd-ui-v1.2: host catalogs (`gd_ui_list_*`) and requests (`gd_ui_request`) for the in-game browser.
+pub const FEATURE_UI_HOST: u32 = 1 << 16;
 pub const FEATURES_UI: u32 = FEATURE_UI_DRAW | FEATURE_UI_MENU | FEATURE_UI_INPUT | FEATURE_UI_SCENE
-    | FEATURE_UI_SIM_INPUT | FEATURE_UI_HTML | FEATURE_UI_VECTOR;
+    | FEATURE_UI_SIM_INPUT | FEATURE_UI_HTML | FEATURE_UI_VECTOR | FEATURE_UI_HOST;
 pub const FEATURES_LAB: u32 = FEATURE_LAB | FEATURE_LAB_STATE | FEATURE_LAB_INPUT | FEATURE_LAB_CPU | FEATURE_LAB_OVERLAY;
 
 pub const GD_OK: i32 = 0;

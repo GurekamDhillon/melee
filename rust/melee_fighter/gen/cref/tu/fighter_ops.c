@@ -3,6 +3,9 @@
  * callee out of it is a recording stub (gen/mtu/stubs.py); the state is a random fighter world filled field by
  * field (gen/mtu/fill.py). Each line: op case ret state-hash trace. */
 #include TU_SRC
+/* fighter.c's RUSTPORT_TMP trace hooks (RB_NeutralHash): off in the oracle */
+int rp_ecb_on(void) { return 0; }
+void rp_ecb_log(const char* fmt, ...) { (void) fmt; }
 /* the game links lbtrigf.c's atan2f (not the CRT's); the port calls melee_runtime::lbtrigf */
 #include <melee/lb/lbtrigf.c>
 #include "mtu_common.h"
@@ -103,6 +106,7 @@ static void world(void)
         int r, k;
         for (i = 0; i < 23; i++) PLCO[i] = PADB[72 + i];
         for (r = 72; r < 96; r++) for (k = 0; k < 256; k++) ((void**) PADB[r])[k] = PADB[(u32) (k * 7 + r) % 72];
+        for (k = 0; k < 512; k++) ((u32*) PADB[79])[k] = 0x3F800000u + (u32) k * 0x9E37u; /* x20: f32 per kind (plain words) */
         zero(&SRC64, sizeof SRC64);
         SRC64.x4 = (void*) PADB[72]; SRC64.x8 = (void*) PADB[73]; SRC64.xC = (void*) PADB[74]; SRC64.x10 = (void*) PADB[75];
         SRC64.x14 = (void*) PADB[76]; SRC64.x18 = (void*) PADB[77]; SRC64.x1C = (void*) PADB[78]; SRC64.x20 = (void*) PADB[79];
@@ -132,8 +136,9 @@ static void hglob(void)
     if (Fighter_804D64FC) {
         f64[0] = (void***) &Fighter_804D64FC->x4; f64[1] = (void***) &Fighter_804D64FC->x8; f64[2] = (void***) &Fighter_804D64FC->xC;
         f64[3] = (void***) &Fighter_804D64FC->x10; f64[4] = (void***) &Fighter_804D64FC->x14; f64[5] = (void***) &Fighter_804D64FC->x18;
-        f64[6] = (void***) &Fighter_804D64FC->x1C; f64[7] = (void***) &Fighter_804D64FC->x20;
-        for (j = 0; j < 8; j++) { HM(PI(*f64[j])); if (*f64[j]) for (i = 0; i < Ft_Kind_Max; i++) HM(PI((*f64[j])[i])); }
+        f64[6] = (void***) &Fighter_804D64FC->x1C;
+        for (j = 0; j < 7; j++) { HM(PI(*f64[j])); if (*f64[j]) for (i = 0; i < Ft_Kind_Max; i++) HM(PI((*f64[j])[i])); }
+        HM(PI(Fighter_804D64FC->x20)); if (Fighter_804D64FC->x20) for (i = 0; i < Ft_Kind_Max; i++) HM(((u32*) Fighter_804D64FC->x20)[i]); /* f32 per kind */
     }
     for (i = 0; i < 16; i++) HM(nh_out[i]);
 }

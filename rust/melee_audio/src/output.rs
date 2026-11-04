@@ -19,6 +19,21 @@ use std::time::{Duration, Instant};
 use crate::ax::Ax;
 use crate::{FRAME_SAMPLES, RATE};
 
+/// The host's "allocate on the system heap" switch: `HOST_HEAP(true)` turns the game arena off for this thread and
+/// returns whether it was on; `HOST_HEAP(prev)` restores it. A rollback run ticks the audio inside the game scope,
+/// but the device, its stream and the mixer thread are the harness's: opened there they would land in the arena a
+/// snapshot load rewrites (the audio capture bug, 63287ac06). Unset (tests, tools): a no-op.
+pub static HOST_HEAP: std::sync::OnceLock<fn(bool) -> bool> = std::sync::OnceLock::new();
+
+/// Run `f` with the game arena off (see [`HOST_HEAP`]).
+pub fn on_host_heap<R>(f: impl FnOnce() -> R) -> R {
+    let Some(sw) = HOST_HEAP.get() else { return f() };
+    let prev = sw(false);
+    let r = f();
+    sw(prev);
+    r
+}
+
 /// 512 ms of stereo frames (the C's 65536-byte ring).
 pub const RING_FRAMES: u32 = 16384;
 /// 80 ms of catch-up per call.
@@ -831,11 +846,11 @@ impl Driver {
             return 0;
         }
         if !self.attempted {
-            self.open(ax);
+            on_host_heap(|| self.open(ax));
         }
         #[cfg(feature = "device")]
         if self.opening.is_some() {
-            self.poll_open(ax);
+            on_host_heap(|| self.poll_open(ax));
         }
         let mut n = if self.dev_ok {
             let buffered = self.ring.len() / FRAME_SAMPLES as u32;

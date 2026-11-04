@@ -119,6 +119,12 @@ impl Audio {
     /// Boot the sound from the disc and open the output. `Err` leaves the game silent.
     pub fn boot(iso: &str, headless: bool) -> Result<Audio, String> {
         crate::engine_audio::boot_sound(iso, false)?;
+        // the device / mixer allocations are the harness's, never the game arena's (melee_audio::output::HOST_HEAP)
+        let _ = melee_audio::output::HOST_HEAP.set(|on| {
+            let prev = melee_engine::arena::active();
+            melee_engine::arena::set_active(on);
+            prev
+        });
         if headless {
             return Ok(Audio { out: None, dev_open: false, capture: Some(Vec::new()), resume_cd: 0, in_match: false.into(), ducked: false.into(), last_underruns: 0 });
         }

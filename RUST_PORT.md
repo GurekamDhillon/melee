@@ -118,3 +118,4 @@ The long history and topic detail that used to live here is in `docs/rust-port/n
 - 2026-11-02 port/slporacle: `melee slpcheck` (a .slp replay as a direct oracle vs the console post-frame data), Game Start conversion in golden --slp; 125/125 external replays run, 0 match, median first divergence 1157, see notes/slpcheck.md
 - 2026-11-02 port/blockerd: blocker D solved (Jigglypuff Rollout/Pound, Crazy Hand, Crazy Hand captures ported and wired, retail_unresolved.txt empty); items_hi_yoshistory and cpulv5_puff_link pass, see notes/consolidation.md "Blocker D"
 - 2026-11-03 port/saves: memory card in the Rust port (melee_engine::card over melee_data::card, lbcardgame GC image codec, boot memory-card scene, runGameMode override); cross-build round trip tools/rust-port/saves/roundtrip.sh -> notes/data.md
+- 2026-11-04 port/play-perf: frame drop off the present path (p99 3.76 -> 3.05 ms), VS-load parse 47 -> 35 ms, Stadium screenshot determinism -> notes/perf.md

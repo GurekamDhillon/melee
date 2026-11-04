@@ -82,3 +82,30 @@ Tick: `melee golden --engine tu --frames N` wall minus the same command with `--
 `MELEE_WINDOW_UNFOCUSED=1`, no window, no render. Rollback: `melee synctest --scenario S --depth K --frames 600`, the per-tick
 counters it prints (boot excluded). Scripts are scratch only (not committed). Before binaries are rebuilt from d373bba89 with
 only the timing counters added, so the snapshot/jobj code measured is the original.
+
+# Play polish (2026-11-04, branch port/play-perf)
+Medians of 3, Temple 4 CPUs (fox/marth/falco/peach cpu9, 3603 frames, vsync off, interp on, scale 2, the bench-live
+method), visible unfocused window; load times headless. Before = rust-port 66d48cc1b, release.
+
+| measurement | before | after |
+|---|---|---|
+| archive parse in the VS load (`MELEE_BOOT_TIMES`) | 47.2 ms | 35.1 ms |
+| engine boot incl. the VS load | 92 ms | 78 ms |
+| load tick (max tick in the bench) | 98-108 ms | 85-91 ms |
+| frame interval p99, match frames (ft.csv) | 3.76 ms | 3.05 ms |
+| frame p99 / 1% low (MELEE_SHOW_FPS line) | 3.78 ms / 228 fps | 3.32 ms / 252 fps |
+| Stadium shots at ages 400-1000, 3 runs | 3 different | identical (= MELEE_INTERP=0) |
+
+- Frame-time tail: `MELEE_PRESENT_SPIKE=<ms>` logs each slow present with prepare / draw / swap / adopt. Every fresh-frame
+  present spent 1.0-1.5 ms dropping the retired frame (~2500 DrawCmds); `Presenter::retire` now frees it on a helper
+  thread when the draw list is not arena memory (`offthread_drop`; the async GX decode thread's frames are system heap).
+  What is left of the tail is one fresh frame's prepare + draw + swap (~3 ms), plus occasional driver stalls in draw/swap.
+- Archive parse: `MELEE_ARCHIVE_LOG` prints per-file phases. itPublicData (ItCo, every VS load) was 29 of 49 ms: 93 PObj
+  `verts` lists with no GX_VA_NULL for thousands of records (records the item tables reach with another type) and the
+  garbage-count TLUT tables. Long until-word lists now use the shared per-phase table, repeated terminator scans are
+  remembered, shared tables come from `arena::alloc_zeroed` (no memset for fresh bump memory while the arena was never
+  snapshotted), and the decoder tests relocations in a bitmap. Decoded values are unchanged (gate, 212 coverage pass).
+  Not done: moving the parse off the game thread (its allocations are arena state the sim's later allocations depend on).
+- Stadium variance: re-posed in-between presents re-ran the frame's EFB copies at a wall-clock phase; the screen samples the
+  previous frame's copy, so a shot depended on timing. A screenshot present now first redraws the previous sim frame
+  exactly (`Presenter::shot`). Live in-between presents still copy at their phase (by design phase-dependent).

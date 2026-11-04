@@ -6,7 +6,8 @@
 //! the frame the runs are sorted on (layer, z, mod order, submission index), a total order, and copied into the frame.
 //! Every vector here is reused frame to frame: nothing allocates once the high-water mark is reached.
 
-use melee_gx::ui::{self as gu, Atlas, AtlasRect, UiFrame, UiQuad, NO_CLIP, Q_WINDOW};
+use melee_gx::ui::{self as gu, Atlas, AtlasRect, UiFrame, UiQuad, NO_CLIP, Q_SDF, Q_WINDOW};
+use melee_gx::ui_font::{self as gu_font, TextStyle};
 
 pub const OP_LAYER: u16 = 1;
 pub const OP_RECT: u16 = 2;
@@ -37,6 +38,30 @@ pub const ALIGN_RIGHT: i32 = 2;
 /// Text roles: pixel size at scale 1 (base size 13: label fs-2, value fs-1, body fs, big fs+5, title, toast) and bold.
 pub const ROLES: [(f32, bool); 6] = [(11.0, false), (12.0, false), (13.0, false), (18.0, true), (14.0, true), (13.0, true)];
 pub const ROLE_LABEL: i32 = 0;
+
+/// gd-ui-v1.1 text style bits in the `role` word (GD_UI_TEXT_* in gd-ui-lab-v1.h): bits 0-7 role, 8-9 weight
+/// (0 role default, 1 regular, 2 bold), bit 10 monospace, bits 16-23 pixel size (0: the role's).
+pub const TEXT_REGULAR: i32 = 1 << 8;
+pub const TEXT_BOLD: i32 = 2 << 8;
+pub const TEXT_MONO: i32 = 1 << 10;
+
+/// The resolved style of a `role` word. v1.0 roles (0..5) resolve as before; out-of-range roles clamp.
+pub fn style(role: i32) -> TextStyle {
+    let r = (role & 0xFF).min(ROLES.len() as i32 - 1);
+    let (mut size, mut bold) = ROLES[r as usize];
+    match (role >> 8) & 3 {
+        1 => bold = false,
+        2 => bold = true,
+        _ => {}
+    }
+    let px = (role >> 16) & 0xFF;
+    if px > 0 {
+        size = px as f32;
+    }
+    let mut st = TextStyle::new(size, bold, role & TEXT_MONO != 0);
+    st.upper = r == ROLE_LABEL;
+    st
+}
 
 pub const CLIP_DEPTH: usize = 8;
 
@@ -86,6 +111,8 @@ pub struct Batch {
     staging: Vec<UiQuad>,
     runs: Vec<Run>,
     seq: u32,
+    /// Instance flags OR-ed onto every pushed quad (Q_SDF while a text run is emitted).
+    extra_flags: u32,
     pub frame: UiFrame,
 }
 
@@ -95,7 +122,7 @@ fn f32_ok(v: f32) -> bool {
 
 impl Batch {
     pub fn with_capacity(quads: usize) -> Batch {
-        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false } }
+        Batch { staging: Vec::with_capacity(quads), runs: Vec::with_capacity(256), seq: 0, extra_flags: 0, frame: UiFrame { quads: Vec::with_capacity(quads), hide_gx: false } }
     }
 
     pub fn begin(&mut self) {
@@ -131,7 +158,7 @@ impl Batch {
     fn push(&mut self, p: &Pen, rect: [f32; 4], uv: [f32; 4], rgba: u32, shear: f32) {
         self.open(p);
         let s = p.scale;
-        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags(), _pad: 0 });
+        self.staging.push(UiQuad { rect: [rect[0] * s, rect[1] * s, rect[2] * s, rect[3] * s], uv, clip: p.clip(), rgba, shear, flags: p.flags() | self.extra_flags, _pad: 0 });
         self.runs.last_mut().unwrap().len += 1;
     }
 
@@ -185,30 +212,16 @@ impl Batch {
         self.push(p, [x, y, r.w as f32 * scale, r.h as f32 * scale], r.uv(), rgba, 0.0);
     }
 
-    /// Text at (x, y) (top of the line; `align` anchors x), cut at `max_w` (0: no limit).
+    /// Text at (x, y) (top of the line; `align` anchors x), cut at `max_w` (0: no limit). `role` carries the
+    /// gd-ui-v1.1 style bits ([`style`]).
     pub fn text(&mut self, p: &Pen, a: &Atlas, x: f32, y: f32, role: i32, rgba: u32, align: i32, max_w: f32, s: &str) {
-        let (size, bold) = ROLES[role.clamp(0, ROLES.len() as i32 - 1) as usize];
-        let (k, adv, _) = gu::text_metrics(size);
-        let mut n = s.chars().count();
-        if max_w > 0.0 {
-            n = n.min((max_w / adv).floor().max(0.0) as usize);
-        }
-        let w = n as f32 * adv;
+        let st = style(role);
+        let (n, w) = gu_font::fit(&a.faces, st, s, max_w);
         let x0 = match align { ALIGN_CENTER => x - w * 0.5, ALIGN_RIGHT => x - w, _ => x };
-        let y0 = y + (size - 8.0 * k) * 0.5;
-        let upper = role == ROLE_LABEL;
-        for (i, ch) in s.chars().take(n).enumerate() {
-            if ch == ' ' {
-                continue;
-            }
-            let ch = if upper { ch.to_ascii_uppercase() } else { ch };
-            let g = a.glyphs[gu::glyph_index(ch)];
-            let gx = x0 + i as f32 * adv;
-            self.push(p, [gx, y0, 8.0 * k, 8.0 * k], g.uv(), rgba, 0.0);
-            if bold {
-                self.push(p, [gx + k * 0.6, y0, 8.0 * k, 8.0 * k], g.uv(), rgba, 0.0);
-            }
-        }
+        let (save, sdf) = (self.extra_flags, Q_SDF);
+        self.extra_flags |= sdf;
+        gu_font::emit(&a.faces, st, s, n, x0, y, |r, uv| self.push(p, r, uv, rgba, 0.0));
+        self.extra_flags = save;
     }
 
     /// Sort the runs and lay the quads out in draw order in `frame.quads`.

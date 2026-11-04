@@ -1094,7 +1094,7 @@ impl LabRun {
     }
 
     /// The frame's hash (the desync check's and the tests').
-    pub fn hash(&self) -> u32 {
+    pub fn frame_hash(&self) -> u32 {
         self.g.e.neutral_row()[0] | 1
     }
 

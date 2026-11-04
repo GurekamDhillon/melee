@@ -453,7 +453,7 @@ impl RetailPlay {
         };
         let lab = self.lab.as_mut().unwrap();
         let ran = lab.tick(four, &cmds);
-        let hash = if ran { lab.hash() } else { 0 };
+        let hash = if ran { lab.frame_hash() } else { 0 };
         if let (true, Some(fr)) = (online, self.lab_frame.take()) {
             if let Some(ls) = self.net.as_mut().and_then(|n| n.ls.as_mut()) {
                 ls.record_hash(fr, hash);

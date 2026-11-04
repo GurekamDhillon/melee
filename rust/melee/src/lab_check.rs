@@ -37,7 +37,7 @@ fn run(lab: &mut LabRun, n: usize, first: &[LabCmd]) -> Vec<u32> {
     for _ in 0..n {
         let p = script_pads(lab);
         lab.tick(p, &[]);
-        h.push(lab.hash());
+        h.push(lab.frame_hash());
     }
     h
 }
@@ -116,7 +116,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         let p = script_pads(&lab);
         lab.tick(p, &[]);
         recorded_pads.push(lab.last_pads);
-        hr.push(lab.hash());
+        hr.push(lab.frame_hash());
     }
     lab.apply(&c(OP_REC_STOP, 0, 0, rec as u32, 0, 0));
     let len = sh.borrow().rec_len.get(&rec).copied();
@@ -129,7 +129,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         p[2].err = -1;
         p[3].err = -1;
         lab.tick(p, &[]);
-        hp.push(lab.hash());
+        hp.push(lab.frame_hash());
     }
     check(diff(&hp, &hr).is_none(), format!("play(FROM_SLOT) reproduces the recorded frames: first difference {:?}", diff(&hp, &hr)));
     lab.apply(&c(OP_PLAY_STOP, 0, 0xF, 0, 0, 0));
@@ -183,7 +183,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         for _ in 0..600 {
             let p = script_pads(&lab);
             lab.tick(p, &[]);
-            out.push(lab.hash());
+            out.push(lab.frame_hash());
             for e in sh.borrow().events.iter() {
                 ev[e.kind as usize & 15] += 1;
             }
@@ -199,7 +199,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         for _ in 0..600 {
             let p = script_pads(&lab);
             lab.tick(p, &[]);
-            d3.push(lab.hash());
+            d3.push(lab.frame_hash());
         }
     }
     let base: Vec<u32> = {
@@ -214,7 +214,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         for _ in 0..600 {
             let p = script_pads(&lab);
             lab.tick(p, &[]);
-            v.push(lab.hash());
+            v.push(lab.frame_hash());
         }
         v
     };

@@ -214,8 +214,11 @@ pub unsafe fn fn_801695BC(arg0: u8, arg1: u8, arg2: u8, arg3: *const u8, arg4: *
             }
             i += 1;
         }
+        // an empty queue (arg4[0] == -2) would start past its terminator and walk (and byte-swap) whatever follows
+        // the record until some -2: here the statics after lbl_8046B488 (it overwrote a hook pointer, adventure
+        // step 2). Stop at the terminator (the C does the same under TARGET_PC).
         i = 1;
-        while *arg4.add(i) != -2 {
+        while *arg4 != -2 && *arg4.add(i) != -2 {
             if arg0 as i8 == *arg3.add(i) as i8 && arg0 as i8 == *arg3.add(i - 1) as i8 {
                 if ext::HSD_Randi(2) != 0 {
                     let tmp2 = *arg4.add(i);

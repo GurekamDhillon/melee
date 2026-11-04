@@ -517,6 +517,23 @@ pub fn pack(draws: &[DrawCmd]) -> Packed {
                 pk.abuf.resize(pk.abuf.len().next_multiple_of(4) + 4, 0);
             }
         }
+        // the PC matrix palette (Aurora: push_storage, `immediates._pad` = its abuf word offset)
+        if let Some(p) = &d.palette {
+            let k = std::sync::Arc::as_ptr(p) as usize;
+            let o = match arr_off.get(&k) {
+                Some(&o) => o,
+                None => {
+                    pk.abuf.resize(pk.abuf.len().next_multiple_of(4), 0);
+                    let o = pk.abuf.len() as u32;
+                    for x in p.iter() {
+                        pk.abuf.extend_from_slice(&x.to_bits().to_le_bytes());
+                    }
+                    arr_off.insert(k, o);
+                    o
+                }
+            };
+            imm[3] = o / 4;
+        }
         let first_index = (pk.ibuf.len() / 2) as u32;
         for i in &d.indices {
             pk.ibuf.extend_from_slice(&i.to_le_bytes());
@@ -562,6 +579,12 @@ fn can_merge(p: &DrawCmd, d: &DrawCmd) -> bool {
     }
     if p.indices.is_empty() != d.indices.is_empty() || p.fmt != d.fmt || p.current_pn_mtx != d.current_pn_mtx {
         return false;
+    }
+    // no merge across palettes (Aurora: a palette load dirties the immediates)
+    match (&p.palette, &d.palette) {
+        (None, None) => {}
+        (Some(a), Some(b)) if std::sync::Arc::ptr_eq(a, b) => {}
+        _ => return false,
     }
     if !(std::sync::Arc::ptr_eq(&p.config, &d.config) || *p.config == *d.config) || p.config.shader.vtx_stride == 0 {
         return false;

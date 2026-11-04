@@ -202,6 +202,14 @@ pub unsafe fn GXLoadPosMtxImm(m: *mut c_void, id: u32) { shim().load_pos_mtx_imm
 pub unsafe fn GXLoadNrmMtxImm(m: *mut c_void, id: u32) { shim().load_nrm_mtx_imm(mtx34(m), id) }
 pub unsafe fn GXLoadTexMtxImm(m: *mut c_void, id: u32, ty: u32) { shim().load_tex_mtx_imm(mtx34(m), id, ty) }
 pub fn GXSetCurrentMtx(id: u32) { shim().set_current_mtx(id) }
+/// `GXAuroraLoadPalette(n, key, data)`: pobj.c's PC matrix palette (native floats, 24 a slot).
+pub unsafe fn GXAuroraLoadPalette(n: u32, key: u32, data: *const f32) {
+    if data.is_null() || n == 0 || n > 64 {
+        return;
+    }
+    shim().load_palette(n, key, core::slice::from_raw_parts(data, n as usize * 24))
+}
+pub fn GXAuroraEndPalette() { shim().end_palette() }
 pub fn GXSetViewport(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32) { shim().set_viewport(l, t, w, h, nz, fz) }
 pub fn GXSetViewportJitter(l: f32, t: f32, w: f32, h: f32, nz: f32, fz: f32, field: u32) { shim().set_viewport_jitter(l, t, w, h, nz, fz, field) }
 pub fn GXSetScissor(l: u32, t: u32, w: u32, h: u32) { shim().set_scissor(l, t, w, h) }

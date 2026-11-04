@@ -511,6 +511,9 @@ pub struct GxState {
     pub last_config: Option<(std::sync::Arc<crate::shader::PipelineConfig>, crate::shader::ShaderInfo)>,
     /// Warnings worth surfacing (unknown subcommands, unsupported features).
     pub warnings: Vec<String>,
+    /// The PC matrix palette (Aurora `g_palette`): set by GX_AURORA_LOAD_PALETTE, cleared by END_PALETTE and with
+    /// the frame (`take_draws`).
+    pub palette: Option<std::sync::Arc<Vec<f32>>>,
 }
 
 impl Default for GxState {
@@ -597,6 +600,7 @@ impl Default for GxState {
             xf_reg_valid: [false; XF_REG_COUNT],
             draws: Vec::new(),
             last_config: None,
+            palette: None,
             warnings: Vec::new(),
         }
     }
@@ -901,6 +905,18 @@ impl GxState {
                     r.take(vtx_count as usize * vs);
                 }
             }
+            0x0044 => {
+                // LOAD_PALETTE: u16 n, u32 key, n * 24 floats
+                let n = r.u16() as usize;
+                let _key = r.u32();
+                if n == 0 || n > 64 {
+                    self.warnings.push(format!("LOAD_PALETTE: {n} entries (1..64) - ignored"));
+                    return;
+                }
+                let v: Vec<f32> = (0..n * 24).map(|_| r.f32()).collect();
+                self.palette = Some(std::sync::Arc::new(v));
+            }
+            0x0045 => self.palette = None,
             _ => self.warnings.push(format!("Unknown/unsupported Aurora subcommand: {sub:04X}")),
         }
     }
@@ -1716,6 +1732,7 @@ impl GxState {
         // the next frame starts with this one's capacity (a growing Vec of these big records re-copied every draw
         // list it doubled through: ~15% of a Temple 4-CPU tick)
         let cap = self.draws.len();
+        self.palette = None; // a palette never outlives the frame
         std::mem::replace(&mut self.draws, Vec::with_capacity(cap))
     }
 }

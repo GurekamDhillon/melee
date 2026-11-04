@@ -183,8 +183,7 @@ pub fn color_channel(id: u32) -> u32 {
 
 // ----------------------------------------------------------------------------- populate_pipeline_config
 
-/// Aurora `populate_pipeline_config(config, primitive, fmt)` (without the PC matrix palette, whose
-/// `g_palette` is never active here).
+/// Aurora `populate_pipeline_config(config, primitive, fmt)`.
 pub fn populate_pipeline_config(st: &GxState, primitive: u32, fmt: u32) -> PipelineConfig {
     let vf = &st.vtx_fmts[fmt as usize];
     let mut sc = ShaderConfig { fog_type: st.fog.ty as u8, fog_range_enabled: st.fog.range_enabled, ..Default::default() };
@@ -231,7 +230,8 @@ pub fn populate_pipeline_config(st: &GxState, primitive: u32, fmt: u32) -> Pipel
         GX_POINTS => 3,
         _ => 0,
     };
-    sc.pn_palette = false;
+    // PC matrix palette: only triangle draws whose matrix index comes per vertex (DIRECT PNMTXIDX)
+    sc.pn_palette = st.palette.is_some() && sc.line_mode == 0 && st.vtx_desc[GX_VA_PNMTXIDX as usize] == GX_DIRECT;
     sc.tev_swap_table = st.tev_swap_table;
     for i in 0..st.num_tev_stages as usize {
         sc.tev_stages[i] = st.tev_stages[i];

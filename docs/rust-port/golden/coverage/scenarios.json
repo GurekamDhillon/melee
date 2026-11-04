@@ -1780,6 +1780,55 @@
     "MELEE_MODS_DIR": "{ws}/_build/mex-mods/sora"
    },
    "note": "Sora (ultimate-trail-slot, installed name Ultimate Sora, internal 52) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_sorapal_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/sorapal"
+   },
+   "note": "Sora built with PC palette POBJs (--pc-palette 64, mod engine pobj_palette 1; Marth host, Geno articles) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_halberd_bhv": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=brawlmetaknight/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/geno_kirby_bhv.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/halberd"
+   },
+   "note": "Halberd human (geno_kirby_bhv pad: neutral/side/down B ground and air, jumps, glide input) vs idle Fox on the ACE disc: the Geno specials on MK's clips. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_sorapal_bhv": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=ultimatesora/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/geno_kirby_bhv.lua",
+   "frames": 2400,
+   "kind": "vs",
+   "iso": "ACE",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/sorapal"
+   },
+   "note": "Sora (PC palette build, Marth host, Geno magic/physical specials and articles) human with the geno_kirby_bhv pad vs idle Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "mex_goku_cpu": {
+   "group": "mex",
+   "scene": "mode=vs;at=match;p1=geno:goku-xv2/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/goku"
+   },
+   "note": "Goku (goku-xv2: a native Geno define, base none, PC palette POBJs) CPU9 vs Fox on the vanilla disc. Needs Geno defines in the Rust registry (port/geno). Mods: tools/rust-port/golden/coverage/mex_mods.sh",
+   "status": "blocked",
+   "blocked": "the Rust Geno registry skips native define entries (port/geno); the C golden is recorded"
   }
  },
  "batches": {

@@ -340,7 +340,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some(m) = mem(&c) else { return 0.0 };
         let Some(b) = m.data(&c).get(s as usize..(s as usize).saturating_add(len as usize)) else { return 0.0 };
         let Ok(t) = core::str::from_utf8(b) else { return 0.0 };
-        melee_gx::ui::measure(t, cmd::ROLES[role.clamp(0, cmd::ROLES.len() as i32 - 1) as usize].0)
+        c.data().ui().borrow().atlas.measure(t, cmd::style(role))
     });
     f!("gd_ui_kit_id", |c: Caller<'_, PresData>, s: u32, len: u32| -> u32 {
         let Some(t) = read_str(&c, s, len) else { return 0 };

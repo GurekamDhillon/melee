@@ -16,8 +16,6 @@ pub struct Gcm {
     added: std::cell::RefCell<std::collections::HashMap<String, i32>>,
 }
 
-/// The first entry number given to a file that is only in the mods (the C's shim_dvd numbers them past the FST too).
-const ADDED_BASE: i32 = 0x10_0000;
 
 fn be32(b: &[u8], at: usize) -> u32 {
     u32::from_be_bytes(b[at..at + 4].try_into().unwrap())
@@ -93,7 +91,8 @@ impl Gcm {
                 return e;
             }
             if let Some(b) = o(path) {
-                let e = ADDED_BASE + self.added.borrow().len() as i32;
+                // past the FST, as the C's shim_dvd numbers them: the preload cache keeps entry numbers as s16
+                let e = self.count() as i32 + self.added.borrow().len() as i32;
                 eprintln!("engine: {path} is only in the mods ({} bytes, entry {e:#x})", b.len());
                 self.added.borrow_mut().insert(key, e);
                 self.replaced.borrow_mut().insert(e, b.into());

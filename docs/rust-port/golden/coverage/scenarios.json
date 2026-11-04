@@ -1837,9 +1837,18 @@
    "env": {
     "MELEE_MODS_DIR": "{ws}/_build/mex-mods/goku"
    },
-   "note": "Goku (goku-xv2: a native Geno define, base none, PC palette POBJs) CPU9 vs Fox on the vanilla disc. Needs Geno defines in the Rust registry (port/geno). Mods: tools/rust-port/golden/coverage/mex_mods.sh",
-   "status": "blocked",
-   "blocked": "the Rust Geno registry skips native define entries (port/geno); the C golden is recorded"
+   "note": "Goku (goku-xv2: a native Geno define, base none, PC palette POBJs) CPU9 vs Fox on the vanilla disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
+  },
+  "geno_courier_cpu": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=geno:vanilla-courier/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/idle_3600.lua",
+   "frames": 3600,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{ws}/_build/mex-mods/courier"
+   },
+   "note": "Vanilla Courier (a native Geno define, base none: own model, skeleton, clips, parts, hurtboxes from plan.json) CPU9 vs CPU9 Fox. Mods: tools/rust-port/golden/coverage/mex_mods.sh (original-art assets, local)"
   }
  },
  "batches": {

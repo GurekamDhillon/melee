@@ -72678,6 +72678,9 @@ impl GcLayout for itUnk4_ItemVars {
 #[derive(Clone, Copy)]
 pub struct itGamewatchchef_ItemVars {
     pub x0: i32,
+    /// native only (gen/native_unions.py): x0 and this word are `gamewatch.attr`'s 8-byte pointer (it_8027CE64 stores it
+    /// after it_802C84A0 set x4; in the C the 4-byte attr is x0 alone)
+    pub _attr_hi: i32,
     pub x4: i32,
 }
 impl itGamewatchchef_ItemVars { /// All-zero value (every generated record is plain data: null pointers, None fns). 
@@ -72703,7 +72706,7 @@ impl GcLayout for itGamewatchchef_ItemVars {
         GcField::new("x4", 0x4, 4, "s32"),
     ];
 }
-const _: () = assert!(core::mem::size_of::<itGamewatchchef_ItemVars>() == 8);
+const _: () = assert!(core::mem::size_of::<itGamewatchchef_ItemVars>() == 12);
 
 /// C `itGamewatchchefAttrEntry` (src/melee/it/itCharItems.h:845); GameCube size 0x14, align 4.
 #[repr(C, align(4))]

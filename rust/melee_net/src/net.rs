@@ -114,6 +114,9 @@ pub struct Config {
     pub handshake_timeout_ms: u32,
     pub notify_timeout_ms: u32,
     pub frame_us: u32,
+    /// Capability bits sent as a trailing byte of HELLO / ACCEPT (0 = not sent, the C build's wire;
+    /// `early::CAP_EARLY`). Older peers (and the C build) ignore trailing bytes.
+    pub caps: u8,
 }
 
 /// What `gw_net_remote_config` fills.
@@ -242,6 +245,7 @@ pub struct Net {
     desync_fired: bool,
 
     st: Stats,
+    peer_caps: u8,
 }
 
 impl Net {
@@ -329,6 +333,7 @@ impl Net {
             desync_frame: NO_FRAME,
             desync_fired: false,
             st: Stats::default(),
+            peer_caps: 0,
         };
         // the C mixes the object's address into the session id; any per-instance value will do
         n.salt = (n.remote.as_ptr() as usize as u64 ^ ((n.remote.as_ptr() as usize as u64) >> 32)) as u32;
@@ -498,6 +503,9 @@ impl Net {
         w.u8(self.cfg.envoy_expect as u8);
         w.u8(self.cfg.guest_info.len() as u8);
         w.bytes(&self.cfg.guest_info);
+        if self.cfg.caps != 0 {
+            w.u8(self.cfg.caps);
+        }
         self.send_packet(&w.buf);
     }
 
@@ -525,6 +533,9 @@ impl Net {
         w.u32(self.cfg.envoy);
         w.u16(self.blob_len as u32);
         w.bytes(&self.blob[..self.blob_len as usize]);
+        if self.cfg.caps != 0 {
+            w.u8(self.cfg.caps);
+        }
         self.send_packet(&w.buf);
     }
 
@@ -861,6 +872,9 @@ impl Net {
                 }
                 let info = &buf[r.pos..r.pos + il];
                 self.cb.guest_hello(info, &mut self.blob[..], &mut self.blob_len);
+                // the trailing caps byte, right after the declared guest info
+                let declared = buf.get(r.pos - 1).copied().unwrap_or(0) as usize;
+                self.peer_caps = if r.left() > declared { buf[r.pos + declared] } else { 0 };
             }
             if self.blob_len as usize > MAX_BLOB {
                 self.blob_len = 0;
@@ -952,6 +966,7 @@ impl Net {
                 }
                 self.blob_len = bl as u16;
                 self.blob[..bl].copy_from_slice(r.take(bl));
+                self.peer_caps = if r.left() >= 1 { r.u8() } else { 0 };
                 self.session = session;
                 self.have_remote_cfg = true;
                 self.setup_slots();
@@ -1280,6 +1295,14 @@ impl Net {
     }
     pub fn unacked(&self) -> u32 {
         self.local_next.wrapping_sub(self.peer_ack)
+    }
+    /// The peer's capability bits (0: an older build or the C build).
+    pub fn peer_caps(&self) -> u8 {
+        self.peer_caps
+    }
+    /// Where the peer is (valid once connected).
+    pub fn peer_addr(&self) -> Addr {
+        self.peer
     }
     pub fn rtt_ms(&self) -> u32 {
         self.rtt_ms

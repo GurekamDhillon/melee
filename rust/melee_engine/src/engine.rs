@@ -670,7 +670,7 @@ pub struct Captured {
 }
 
 impl Engine {
-    fn capture_now() -> Captured {
+    pub fn capture_now() -> Captured {
         let e = Engine { frames: 0, info: core::ptr::null_mut(), on_frame: None, ended: false, run: None };
         let mut fighters = Vec::new();
         for slot in 0..2 {

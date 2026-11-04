@@ -202,6 +202,9 @@ struct Run {
 }
 static mut RUN: Option<Run> = None;
 
+/// `melee diff`: the match frame whose state frame_post captures (-1: none).
+pub static mut DIFF_CAPTURE: i64 = -1;
+
 /// Start a run: the CSV header, the task's first pass (`gd.run` resumes it at once: it sets logic frame 0's pad).
 pub fn start(mut ra: RandAbs, rows: usize, out: &str) -> Result<(), String> {
     use std::io::Write;
@@ -251,7 +254,12 @@ fn frame_post_hook() {
                 }
             }
         }
+        // `melee diff` on a 1P scenario: capture the state at this match frame (the C snapshot's frame)
+        if unsafe { DIFF_CAPTURE } == r.ra.match_frame as i64 {
+            unsafe { melee_engine::engine::CAPTURED = Some(melee_engine::Engine::capture_now()) };
+        }
         r.written += 1;
+        melee_core::ct::begin_frame(r.ra.match_frame as i64 + 1);
     }
     if r.written >= r.rows || !r.ra.run_task() {
         r.quit = true;

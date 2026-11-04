@@ -186,6 +186,23 @@ fn engine_state(iso: &str, scn: &str, frame: i32) -> Result<State, String> {
         unsafe { std::env::set_var("MELEE_ENGINE_PRE_DRAWS", pre.unwrap_or_else(|| "0".into())) };
     }
     let mut e = crate::boot_engine_scenario(iso, scn)?;
+    // a 1P scenario: the mode's scenes from the boot on, rows numbered by match frame (cov1p.rs)
+    if let Some(ra) = unsafe { (*std::ptr::addr_of_mut!(crate::COV1P)).take() } {
+        let tmp = std::env::temp_dir().join(format!("melee_diff_1p_{}.csv", std::process::id()));
+        crate::cov1p::start(ra, 1 << 20, &tmp.to_string_lossy())?;
+        // SAFETY: single-threaded.
+        unsafe { crate::cov1p::DIFF_CAPTURE = frame as i64; }
+        let mut guard = 0u64;
+        while crate::cov1p::done().is_none() && guard < 2_000_000 && unsafe { (*std::ptr::addr_of!(melee_engine::engine::CAPTURED)).is_none() } {
+            if e.tick_modes() { crate::cov1p::scene_began(); }
+            guard += 1;
+        }
+        let _ = std::fs::remove_file(&tmp);
+        let Some(c) = (unsafe { (*std::ptr::addr_of_mut!(melee_engine::engine::CAPTURED)).take() }) else {
+            return Err(format!("the 1P run ended before match frame {frame}"));
+        };
+        return Ok(State { frame, seed: c.row[1], render_seed: 0, fighters: c.fighters, items: c.items, item_bytes: c.item_bytes, respawn_busy: [0; 6], stocks: vec![], dump: String::new(), engine: true, joints: c.joints, alt: c.alt, dyns: c.dyns });
+    }
     // the C snapshot is taken in Script_FramePost (before the render pass): capture there unless MELEE_DIFF_POST_RENDER=1
     let post = std::env::var_os("MELEE_DIFF_POST_RENDER").is_none();
     // SAFETY: single-threaded.

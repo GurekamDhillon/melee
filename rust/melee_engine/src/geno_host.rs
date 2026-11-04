@@ -503,10 +503,21 @@ pub fn by_name(name: &str, a: &[u64]) -> Option<u64> {
 fn built() -> &'static mut Registry {
     let r = reg();
     if !r.kinds_built {
-        r.build_kinds(&NoEnv);
+        r.build_kinds(&crate::mex_host::GenoEnv { dir: dir_of_boot() });
         flush_log(r);
     }
     r
+}
+
+/// Re-attach the profiles once the m-ex slots exist (`mex_host::install`): a query made earlier (a scenario's
+/// define token resolves at parse time) built the kinds without them, and an attach to an m-ex Pl file stayed inactive.
+pub fn rebind_kinds() {
+    unsafe {
+        if let Some(r) = BOOT.as_mut() {
+            r.build_kinds(&crate::mex_host::GenoEnv { dir: dir_of_boot() });
+            r.log.clear();
+        }
+    }
 }
 
 pub fn DefineCount() -> i32 { built().define_count() }

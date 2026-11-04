@@ -6,6 +6,7 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 out="$repo/build/mods"; mkdir -p "$out"
 for m in "$repo"/rust/mods/*/; do
   n=$(basename "$m")
+  grep -q cdylib "$m/Cargo.toml" || continue  # a helper library (gd_ui_enc), not a mod
   RUSTFLAGS="-C target-feature=-simd128 -C link-arg=--initial-memory=1048576 -C link-arg=--max-memory=1048576 -C link-arg=-zstack-size=16384 -C link-arg=--export-table" \
     cargo build --quiet --release --target wasm32-unknown-unknown --manifest-path "$m/Cargo.toml" --target-dir "$repo/build/cargo-mods"
   cp "$repo/build/cargo-mods/wasm32-unknown-unknown/release/$n.wasm" "$out/$n.wasm"

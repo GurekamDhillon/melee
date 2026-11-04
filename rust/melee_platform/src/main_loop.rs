@@ -463,6 +463,32 @@ impl<G: Game> ApplicationHandler for App<G> {
                         }
                         return;
                     }
+                    if let Some(q) = self.pads.ui_keys.as_mut() {
+                        // a UI mod holds the keyboard: its events, never the pads (melee_modhost::ui KEY_*)
+                        let down = event.state == ElementState::Pressed;
+                        let code = match k {
+                            KeyCode::Enter | KeyCode::NumpadEnter => 1,
+                            KeyCode::Escape => 2,
+                            KeyCode::Backspace => 3,
+                            KeyCode::ArrowUp => 4,
+                            KeyCode::ArrowDown => 5,
+                            KeyCode::ArrowLeft => 6,
+                            KeyCode::ArrowRight => 7,
+                            KeyCode::Tab => 8,
+                            _ => 0,
+                        };
+                        if code != 0 && q.len() < 256 {
+                            q.push((if down { 1 } else { 2 }) << 24 | code);
+                        }
+                        if down {
+                            for ch in event.text.as_deref().unwrap_or("").chars().filter(|c| !c.is_control()) {
+                                if q.len() < 256 {
+                                    q.push(3 << 24 | (ch as u32 & 0xFF_FFFF));
+                                }
+                            }
+                        }
+                        return;
+                    }
                     self.pads.key_event(k, event.state == ElementState::Pressed);
                 }
             }

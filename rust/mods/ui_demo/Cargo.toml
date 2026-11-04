@@ -1,0 +1,21 @@
+# Example gd-ui-v1 presentation mod: the LAB "Frame data" HUD preset's panels in theme A with static data, and a
+# host-node menu (D-pad left opens it). Built by tools/rust-port/modhost/build_mods.sh for wasm32-unknown-unknown.
+[package]
+name = "ui_demo"
+version = "0.1.0"
+edition = "2021"
+license = "CC0-1.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gd_ui_enc = { path = "../gd_ui_enc" }
+
+[profile.release]
+opt-level = "s"
+panic = "abort"
+lto = true
+
+[workspace]

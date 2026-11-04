@@ -291,6 +291,23 @@ impl Presenter {
         self.presented += 1;
     }
 
+    /// The swapchain size (window pixels).
+    pub fn size(&self) -> (u32, u32) {
+        (self.config.width, self.config.height)
+    }
+
+    /// What the window shows at the window's size (EFB blit, gd_ui batch, HUD overlay), alpha opaque: the shot for
+    /// window-space UI (gd-ui-v1 GAP-0), which an EFB-sized shot would cut off.
+    pub fn screenshot_window(&mut self) -> (u32, u32, Vec<u8>) {
+        let (w, h) = (self.config.width, self.config.height);
+        let hud = self.hud.as_ref().map_or(Vec::new(), |l| crate::overlay::layout(l, w, h));
+        let mut px = self.renderer.read_composed_size(w, h, &hud);
+        for p in px.chunks_mut(4) {
+            p[3] = 255;
+        }
+        (w, h, px)
+    }
+
     /// The EFB as RGBA8 with alpha forced opaque (what the window shows, before scaling).
     /// With the HUD overlay on, the shot shows it too (drawn over the EFB at its size; the EFB itself is untouched).
     pub fn screenshot(&mut self) -> Vec<u8> {

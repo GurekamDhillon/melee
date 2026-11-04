@@ -1,5 +1,5 @@
 //! Presentation interface stubs (gd-ui-v1 / gd-lab-v1, docs/rust-port/notes/wasm-ui-lab-api.md section C).
-//! Shared between the UI half (A) and the Lab half (B). Nothing here is wired into the host yet.
+//! Shared between the UI half (A, crate::ui, which implements the host side) and the Lab half (B).
 //! Constants mirror docs/specs/gd-ui-lab-v1.h.
 
 use melee_gx::draw::DrawCmd;
@@ -81,12 +81,26 @@ pub trait PresExtension {
     fn overlay(&mut self, f: &PresFrame, out: &mut Vec<DrawCmd>);
 }
 
-/// Per-mod presentation store data (stub).
+/// Per-mod presentation store data: what every `gd_ui` / `gd_lab` import sees (`Caller<PresData>`).
 #[derive(Default)]
 pub struct PresData {
+    /// Declared UI / LAB feature bits (the imports check them).
     pub features: u32,
     pub captures: u32,
     pub draws: Vec<DrawCmd>,
     /// B's per-mod state.
     pub ext: Option<Box<dyn Any>>,
+    /// The mod's index in the presentation host (draw order, ownership of nodes, captures and scenes).
+    pub module: u16,
+    /// The mod's exported linear memory.
+    pub mem: Option<wasmi::Memory>,
+    /// The UI host state shared by every presentation store (one game thread).
+    pub ui: Option<std::rc::Rc<std::cell::RefCell<crate::ui::Shared>>>,
+}
+
+impl PresData {
+    /// The shared UI host state (set for every store the presentation host creates).
+    pub fn ui(&self) -> &std::rc::Rc<std::cell::RefCell<crate::ui::Shared>> {
+        self.ui.as_ref().expect("presentation store without the UI host")
+    }
 }

@@ -20,6 +20,7 @@ use std::collections::BTreeMap;
 use wasmi::{AsContextMut, Caller, Config, Engine, Extern, Func, FuncType, Linker, Memory, Module, Store, StoreContextMut, Val, ValType};
 
 pub mod pres;
+pub mod ui;
 
 pub const ABI_VERSION: u32 = 1 << 16; // 1.0
 pub const HOOK_TABLE_VERSION: u32 = 1;
@@ -1050,6 +1051,10 @@ pub fn install_dir(dir: &std::path::Path) -> Result<(), String> {
     let mut h = Box::new(Host::new());
     for f in &files {
         let b = std::fs::read(f).map_err(|e| format!("{}: {e}", f.display()))?;
+        // a gd_ui presentation mod is sim-inert: the play flow's presentation host loads it (ui::PresHost), not this one
+        if ui::is_presentation(&b) {
+            continue;
+        }
         h.load(&b).map_err(|e| format!("{}: refused: {e}", f.display()))?;
     }
     for m in &h.mods {

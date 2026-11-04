@@ -70,6 +70,9 @@ pub struct PadSystem {
     /// Keep the adapter read while the window is in the background (`backgroundinput 1`).
     pub background_input: bool,
     pub script: Option<PadScript>,
+    /// gd-ui-v1 keyboard capture (GAP-14): Some while a UI mod holds a KEYBOARD capture. Key events then go here
+    /// (`kind << 24 | value`, see melee_modhost::ui::KEY_*) instead of to the pads. None: the keys drive the pads.
+    pub ui_keys: Option<Vec<u32>>,
     pub focused: bool,
     pub sources: [Source; PAD_CHANMAX],
     ignore_adapter: bool,
@@ -185,6 +188,7 @@ impl PadSystem {
             profile_state: Default::default(),
             background_input: false,
             script,
+            ui_keys: None,
             focused: true,
             sources: [Source::None; PAD_CHANMAX],
             ignore_adapter,

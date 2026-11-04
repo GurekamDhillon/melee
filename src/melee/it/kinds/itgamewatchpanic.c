@@ -25,7 +25,8 @@ HSD_GObj* it_802C7D60(Item_GObj* parent, Vec3* pos, Fighter_Part arg2, f32 dir)
     result = Item_80268B18(&spawn);
     if (result != NULL) {
         Item* item = GET_ITEM(result);
-        void** attr = item->xC4_article_data->x4_specialAttributes;
+        itGamewatchAttributes* attr =
+            &item->xC4_article_data->x4_specialAttributes->gamewatch;
         Item_AttachGameWatchArticle(parent, arg2, result, attr);
         return result;
     }
@@ -65,7 +66,7 @@ void itGameWatchPanic_Logic78_PickedUp(Item_GObj* gobj)
     ip->xDB0_itcmd_var1 = 0;
     ip->xDAC_itcmd_var0 = 0;
     if (ip->owner != NULL) {
-        ip->ground_or_air = ftLib_800865CC(ip->owner);
+        ip->ground_or_air = ftLib_GetGroundAir(ip->owner);
         if (ip->ground_or_air == GA_Ground) {
             Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
         } else {

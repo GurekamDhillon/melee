@@ -43,10 +43,10 @@ ASSERT_SIZE(ToyAnimState, 0x14);
 /* Used by _Toy_803109A0 for table lookup */
 struct ToyEntry {
     s32 id;
-    union {
+    union ToyEntry_x4 {
         s8 value_byte;
         s32 value;
-    };
+    } x4;
 };
 
 /* Trophy metadata entry. Size: 0x24 bytes. */
@@ -94,7 +94,7 @@ struct Toy {
     /* +3E8 */ char pad_3E8[0x3EC - 0x3E8];
     /* +3EC */ s16 trophyCount;
 };
-// TODO: This struct should only be 0x58
+/// @TODO: This struct should only be 0x58
 // STATIC_ASSERT(sizeof(struct Toy) == 0x58);
 
 struct TyDspEntry {
@@ -182,10 +182,10 @@ struct Toy26B8 {
     /* 0x3EA */ s16 selectedTrophyId;
     /* 0x3EC */ s16 trophy_count;
     /* 0x3EE */ u8 pad_3EE[0x3F0 - 0x3EE];
-    /* 0x3F0 */ union {
+    /* 0x3F0 */ union Toy26B8_x3F0 {
         ToyAnimState anim;
         HSD_GObj* x3F0;
-    };
+    } x3F0_u;
 };
 
 struct _Toy_804A26B8_t {
@@ -341,22 +341,6 @@ struct ToyNameData {
     s16 x6;
     s16 x8;
     s16 xA;
-};
-
-struct TyLightSymbolEntry {
-    char* name;
-    void* unk;
-};
-
-struct TyLightIndexEntry {
-    s32 idx;
-    u8 pad[8];
-};
-
-struct TyLightFile {
-    u8 pad0[0xCC];
-    TyLightSymbolEntry symbols[6];
-    TyLightIndexEntry entries[1];
 };
 
 struct tyUnkStruct {
@@ -516,13 +500,6 @@ struct TyListData {
     HSD_CObj* cobj;
 };
 
-struct SisFontData {
-    u8 pad[0x4B8];
-    /* The list edits twelve per-row glyph strings at 0x4B8. Describe the
-     * pointer slots so the native type generator can widen them with digits. */
-    u8* rows[12];
-    u8* digits;
-};
 
 struct TyListWaitData {
     u8 pad[0x20];
@@ -612,11 +589,11 @@ struct PosArrayFull {
 };
 
 struct lbl_803FDDE4_t {
-    struct {
+    struct lbl_803FDDE4_t_symbols {
         char* name;
         UNK_T empty;
     } symbols[6];
-    struct {
+    struct lbl_803FDDE4_t_values {
         int index;
         GXColor color;
         bool flag;

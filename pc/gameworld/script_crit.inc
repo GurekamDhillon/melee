@@ -109,7 +109,7 @@ void ScriptGame_CritHit(Fighter* atk, HitCapsule* hit, Fighter* vic, float damag
 {
     int ae = atk ? ScriptGame_CapsEntity(atk) : 0, slot, forced = 0, crit = 0, k;
     ScriptCritCfg* c; float chance, mult, strength, extra;
-    if (ae < 1 || !vic || vic->player_id >= 6 || !script_crit_ok(damage) || damage <= 0 || !hr_ordinary(hit->element)) return;
+    if (ae < 1 || !vic || vic->player_idx >= 6 || !script_crit_ok(damage) || damage <= 0 || !hr_ordinary(hit->element)) return;
     c = &script_crit_cfg[ae-1];
     if (!c->owner || c->fighter != atk || !(c->has & 1u)) return;
     slot = projectile ? 9 : script_hit_family_move(atk);

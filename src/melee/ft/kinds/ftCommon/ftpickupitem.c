@@ -111,7 +111,7 @@ Item_GObj* ftpickupitem_800942A0(Fighter_GObj* gobj, u32 flags)
     pickup = ftpickupitem_800942A0_inline(fp);
     offset0 = fp->ground_or_air == GA_Ground ? &pickup->gr_light_offset
                                              : &pickup->air_light_offset;
-    if (ftCo_IsCpuControlled(fp) && (signed) fp->cpu.kind == 28) {
+    if (ftCo_IsCpuControlled(fp) && (signed) fp->cpu.kind == CpuKind_28) {
         return NULL;
     }
     {
@@ -140,8 +140,8 @@ Item_GObj* ftpickupitem_800942A0(Fighter_GObj* gobj, u32 flags)
                 if ((!fp->x2222_b4 || !it_8026B47C(cur)) &&
                     (fp->item_gobj == NULL || it_8026B4F0(cur)))
                 {
-                    if ((unk_enum == 0 && flags & (1 << 0)) ||
-                        (unk_enum == 1 && flags & (1 << 1)))
+                    if ((unk_enum == false && flags & (1 << 0)) ||
+                        (unk_enum == true && flags & (1 << 1)))
                     {
                         Vec3 it_pos;
                         Vec4* vec;
@@ -151,8 +151,8 @@ Item_GObj* ftpickupitem_800942A0(Fighter_GObj* gobj, u32 flags)
                         {
                             float x_range = itGetGrabRangeX(cur);
                             float y_range = itGetGrabRangeY(cur);
-                            vec = unk_enum == 0 ? offset0
-                                                : &pickup->gr_heavy_offset;
+                            vec = unk_enum == false ? offset0
+                                                    : &pickup->gr_heavy_offset;
                             {
                                 float x1 = vec->z;
                                 float x0 =
@@ -189,7 +189,7 @@ bool ftpickupitem_8009447C(Fighter_GObj* gobj, Item_GObj* item_gobj)
     HSD_ASSERTREPORT(174, item_gobj, "ftGetImmItem item_gobj is NULL!!\n");
     if (it_8026B30C(item_gobj) == 5) {
 #if defined(TARGET_PC)
-        geno_consumable_collect(item_gobj, fp->player_id);
+        geno_consumable_collect(item_gobj, fp->player_idx);
 #endif
         switch (itGetKind(item_gobj)) {
         case It_Kind_Heart:
@@ -214,19 +214,19 @@ bool ftpickupitem_8009447C(Fighter_GObj* gobj, Item_GObj* item_gobj)
             break;
         case It_Kind_WStar:
             ftCo_800C4724(gobj);
-            return 1;
+            return true;
         case It_Kind_Hammer:
             ftCo_800C52F4(gobj);
-            return 1;
+            return true;
         case It_Kind_RabbitC:
             ftCommon_8007FA58(gobj, item_gobj);
             break;
         case It_Kind_MetalB:
-            ftLib_800871A8(gobj, item_gobj);
+            ftLib_ApplyMetalBox(gobj, item_gobj);
             Item_8026A8EC(item_gobj);
             break;
         case It_Kind_Spycloak:
-            ftCo_800C88D4(gobj, p_ftCommonData->x7CC, 1);
+            ftCo_800C88D4(gobj, p_ftCommonData->x7CC, true);
             Item_8026A8EC(item_gobj);
             break;
         case It_Kind_Coin:
@@ -250,7 +250,7 @@ void ftpickupitem_80094694(Fighter_GObj* gobj, FtMotionId msid, bool loop)
         } else {
             anim_spd = 1;
         }
-        fp->throw_flags = 0;
+        fp->x2210.throw_flags = 0;
         Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 0, anim_spd, 0,
                                   NULL);
     }
@@ -292,12 +292,12 @@ void ftpickupitem_80094818(Fighter_GObj* gobj, bool arg1)
     Fighter* fp = gobj->user_data;
     PAD_STACK(8);
     if (fp->x1978 != NULL) {
-        pl_8003E17C(fp->player_id, fp->is_sub_fighter, fp->x1978);
+        pl_8003E17C(fp->player_idx, fp->is_sub_fighter, fp->x1978);
     } else if (fp->item_gobj != NULL) {
         if (ftData_OnItemPickupExt[fp->kind] != NULL) {
             ftData_OnItemPickupExt[fp->kind](gobj, arg1);
         }
-        pl_8003E17C(fp->player_id, fp->is_sub_fighter, fp->item_gobj);
+        pl_8003E17C(fp->player_idx, fp->is_sub_fighter, fp->item_gobj);
     }
 }
 
@@ -328,7 +328,7 @@ void ftpickupitem_800948A8(Fighter_GObj* gobj, Item_GObj* item_gobj)
         } else {
             ret_part = fp->ft_data->x8->x11;
         }
-        pl_8003E854(fp->player_id, fp->is_sub_fighter, item_gobj);
+        pl_8003E854(fp->player_idx, fp->is_sub_fighter, item_gobj);
         Item_8026AB54(item_gobj, gobj, ret_part);
         if (itIsHeavy(item_gobj) == 1) {
             ft_800881D8(fp, fp->ft_data->x4C_sfx->x2C, 127, 64);
@@ -348,7 +348,7 @@ void ftpickupitem_Anim(Fighter_GObj* gobj)
             extern float Geno_ItemPressDist(HSD_GObj*, Fighter*);
             extern void Geno_ItemPressCollect(HSD_GObj*, int);
             if (Geno_ItemPressDist(item_gobj, fp) >= 0.0f) {
-                Geno_ItemPressCollect(item_gobj, fp->player_id);
+                Geno_ItemPressCollect(item_gobj, fp->player_idx);
             } else
 #endif
             ftpickupitem_800948A8(gobj, item_gobj);
@@ -397,7 +397,7 @@ void ftpickupitem_80094B6C(Fighter_GObj* gobj, Item_GObj* item_gobj)
     HSD_ASSERTREPORT(399, item_gobj, "ftGetImmItem item_gobj is NULL!!\n");
     if (it_8026B30C(item_gobj) == 5) {
 #if defined(TARGET_PC)
-        geno_consumable_collect(item_gobj, fp->player_id);
+        geno_consumable_collect(item_gobj, fp->player_idx);
 #endif
         switch (itGetKind(item_gobj)) {
         case It_Kind_Heart:
@@ -431,7 +431,7 @@ void ftpickupitem_80094B6C(Fighter_GObj* gobj, Item_GObj* item_gobj)
             ftCommon_8007FA58(gobj, item_gobj);
             return;
         case It_Kind_MetalB:
-            ftLib_800871A8(gobj, item_gobj);
+            ftLib_ApplyMetalBox(gobj, item_gobj);
             Item_8026A8EC(item_gobj);
             return;
         case It_Kind_Spycloak:

@@ -77,12 +77,6 @@ extern StaticModelDesc MenMainCursorSs_Top;
 /// Sync stage toggle states from user data to unlock system.
 /// For each stage, if it's unlocked, set its enable state from user_data[i+2].
 /// Stack padding required to match original frame size.
-/// Pragma prevents inlining - function is called from fn_80235F80, not
-/// inlined.
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 static void mnStageSw_8023593C(HSD_GObj* gobj)
 {
     s32 i;
@@ -98,9 +92,6 @@ static void mnStageSw_8023593C(HSD_GObj* gobj)
         }
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static void mnStageSw_802359C8(MnStageSwData* data)
 {
@@ -151,18 +142,37 @@ static void mnStageSw_802359C8(MnStageSwData* data)
     }
 }
 
+static inline bool isPageEmpty(u8 arg0)
+{
+    s32 i;
+    u8 start;
+    u8 end;
+
+    if (arg0 < 15) {
+        start = 0;
+        end = 14;
+    } else {
+        start = 15;
+        end = 28;
+    }
+    for (i = start; i <= end; i++) {
+        if (gm_80164430(gm_801641CC(mnStageSw_803ED4C4[(u8) i])) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 static s32 mnStageSw_80235C58(u8 arg0)
 {
     s32 next;
     s32 found;
-    s32 temp;
     s32 curr;
+    s32 temp;
     s32 low_bound;
     s32 high_bound;
     s32 idx;
     u8 low;
-    u8 end;
-    u8 start;
     u8 high;
     s32 prev;
     s32 i;
@@ -174,26 +184,7 @@ static s32 mnStageSw_80235C58(u8 arg0)
         low = 15;
         high = 28;
     }
-    if (arg0 < 15) {
-        start = 0;
-        end = 14;
-    } else {
-        start = 15;
-        end = 28;
-    }
-
-    curr = start;
-    next = end;
-    while (curr <= next) {
-        if (gm_80164430(gm_801641CC(mnStageSw_803ED4C4[(u8) curr])) != 0) {
-            found = 0;
-            goto loop_done;
-        }
-        curr++;
-    }
-    found = 1;
-loop_done:
-    if (found != 0) {
+    if (isPageEmpty(arg0)) {
         return -1;
     }
 
@@ -301,10 +292,14 @@ static inline s32 mnStageSw_CountEnabled(const u8* user_data)
     return count;
 }
 
+static inline void saveSettings(void)
+{
+    mnStageSw_8023593C(mnStageSw_804D6BF0);
+    lbCardGame_SaveChanges();
+}
+
 static void fn_80235F80(HSD_GObj* gobj)
 {
-    s32 i;
-    u8* stage_ids;
     s32 enabled;
     s32 result;
     u32 buttons;
@@ -314,12 +309,11 @@ static void fn_80235F80(HSD_GObj* gobj)
 
     user_data = mnStageSw_804D6BF0->user_data;
     buttons = mn_804A04F0.buttons = mn_80229624(4U);
-    PAD_STACK(0x28);
+    PAD_STACK(0x18);
     if (buttons & 0x20) {
         sfxBack();
         mn_804A04F0.entering_menu = 0;
-        mnStageSw_8023593C(mnStageSw_804D6BF0);
-        lbCardGame_SaveChanges();
+        saveSettings();
         mn_804D6BC8.cooldown = 5;
         mn_802339FC();
         HSD_GObjFree(gobj);
@@ -346,37 +340,23 @@ static void fn_80235F80(HSD_GObj* gobj)
                     sfxMove();
                     *confirmed = 1;
                 }
-                user_data = mnStageSw_804D6BF0->user_data;
-                for (stage_ids = mnStageSw_803ED4C4, i = 0; i < NUM_STAGES;
-                     i++, stage_ids++)
-                {
-                    if (gm_80164430(gm_801641CC(mnStageSw_803ED4C4[(u8) i])) !=
-                        0)
-                    {
-                        gm_801641E4(*stage_ids, user_data[i + 2]);
-                    }
-                }
+                mnStageSw_8023593C(mnStageSw_804D6BF0);
                 return;
             }
-            goto check_dpad;
-        }
-        if (buttons & 0x100) {
+        } else if (buttons & 0x100) {
             sfxForward();
             result = gm_GetCurrentGameMode();
             switch (result) {
             case GM_MENU:
-                mnStageSw_8023593C(mnStageSw_804D6BF0);
-                lbCardGame_SaveChanges();
+                saveSettings();
                 mn_80229860(GM_VS);
                 return;
             default:
-                mnStageSw_8023593C(mnStageSw_804D6BF0);
-                lbCardGame_SaveChanges();
+                saveSettings();
                 mn_8022F4CC();
                 return;
             }
         }
-    check_dpad:
         if (buttons & 0xF) {
             sfxMove();
             mnStageSw_80235DC8(user_data, buttons);

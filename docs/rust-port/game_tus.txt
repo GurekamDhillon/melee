@@ -991,3 +991,9 @@ pc/gameworld/script_game.c
 pc/geno/geno_game.c
 pc/geno/geno_tests.c
 pc/geno/geno_lab_mode.c
+src/melee/ft/ft_0763.c
+src/melee/gm/gm_17DB.c
+src/melee/if/if_2FFC.c
+src/melee/if/if_3004.c
+src/melee/sfx/crowdsfx_1.c
+src/sysdolphin/baselib/hsd_3910.c

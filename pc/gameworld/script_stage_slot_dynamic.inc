@@ -59,8 +59,8 @@ int ScriptGame_StageSlotDynamic(int handle,int owner,int want)
             if(!script_slot_ptr(s->archive,&rows[i],sizeof rows[i]))return -2;
             if(!rows[i])break;
             if(i==30 || !script_slot_ptr(s->archive,rows[i],sizeof *rows[i]) ||
-               !script_slot_ptr(s->archive,rows[i]->unk4,sizeof *rows[i]->unk4))return -2;
-            if(rows[i]->unk0==It_Kind_Heiho)found=1;
+               !script_slot_ptr(s->archive,rows[i]->article_data,sizeof *rows[i]->article_data))return -2;
+            if(rows[i]->gr_itkind==It_Kind_Heiho)found=1;
         }
         if(kind==Gr_Kind_Story && !found)return -2;
     }
@@ -68,9 +68,9 @@ int ScriptGame_StageSlotDynamic(int handle,int owner,int want)
      * objects. The legal archive's HSD descriptors are trusted engine input. */
     for(g=0;g<s->ngroups;++g)if(s->models[g]) {
         struct UnkStageDat_x8_t* d=&head->unk8[g];
-        if((d->unk4 && !script_slot_ptr(s->archive,d->unk4,sizeof *d->unk4)) ||
-           (d->unk8 && !script_slot_ptr(s->archive,d->unk8,sizeof *d->unk8)) ||
-           (d->unkC && !script_slot_ptr(s->archive,d->unkC,sizeof *d->unkC)) ||
+        if((d->anims && !script_slot_ptr(s->archive,d->anims,sizeof *d->anims)) ||
+           (d->matanims && !script_slot_ptr(s->archive,d->matanims,sizeof *d->matanims)) ||
+           (d->shapeanims && !script_slot_ptr(s->archive,d->shapeanims,sizeof *d->shapeanims)) ||
            d->unk24<0 || d->unk24>256 ||
            (d->unk24 && !script_slot_ptr(s->archive,d->unk20,d->unk24*sizeof *d->unk20)))return -2;
         for(i=0;i<d->unk24;++i)if(d->unk20[i].x<0 || d->unk20[i].x>=s->njoints || d->unk20[i].z<0)return -2;
@@ -146,11 +146,11 @@ static void script_slot_dynamic_bind(void)
         CollVtx* vertices;
         if(at<0 || group<0 || group>=256 || !s->collision_joints[group])continue;
         j=script_stage.base_j+at;
-        mpGetGroundCollJoint()[j].x20=s->collision_joints[group];
+        mpGetGroundCollJoint()[j].jobj=s->collision_joints[group];
         /* The JObj matrix already contains the destination stage scale. */
         vertices=&mpGetGroundCollVtx()[script_stage.base_v+2*at];
-        vertices[0].x0=s->lines[i].x0;vertices[0].x4=s->lines[i].y0;
-        vertices[1].x0=s->lines[i].x1;vertices[1].x4=s->lines[i].y1;
+        vertices[0].base_pos.x=s->lines[i].x0;vertices[0].base_pos.y=s->lines[i].y0;
+        vertices[1].base_pos.x=s->lines[i].x1;vertices[1].base_pos.y=s->lines[i].y1;
         mpLib_80055E9C(j);mpLib_80057424(j);mpLib_8005667C(j);
         vertices=&mpGetGroundCollVtx()[script_stage.base_v+2*at];
         script_stage.line[at].x0=vertices[0].pos.x;script_stage.line[at].y0=vertices[0].pos.y;

@@ -6,7 +6,6 @@
 #include "forward.h"
 #include "ftdata.h"
 #include "ftmaterial.h"
-#include "ftparts.static.h"
 #include "inlines.h"
 #include "types.h"
 #include <dolphin/mtx.h>
@@ -20,6 +19,13 @@
 #include <sysdolphin/baselib/perf.h>
 #include <sysdolphin/baselib/pobj.h>
 #include <sysdolphin/baselib/util.h>
+
+/// .bss
+struct ft_jobj_scale_t {
+    Mtx mtx;
+    u8 has_z_scale : 1;
+    char unk_31[7];
+} ft_jobj_scale;
 
 HSD_JObjInfo ftJObj = { ftParts_JObjInfoInit };
 HSD_JObjInfo ftIntpJObj = { ftParts_IntpJObjInfoInit };
@@ -126,14 +132,14 @@ void ftPartsSetupRigidMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx, u32 rendermode)
     MtxPtr tmp;          // r29
     PObjSetupFlag flags; // r28
 
-    Mtx mtx;             // sp54
-    HSD_JObj* mark_jobj; // sp50
-    u32 mark;            // sp4C
+    Mtx mtx;        // sp54
+    void* mark_obj; // sp50
+    u32 mark;       // sp4C
 
     tmp = pmtx;
     jobj = HSD_JObjGetCurrent();
-    HSD_PObjGetMtxMark(0, (void**) &mark_jobj, &mark);
-    if (mark_jobj != jobj || mark != HSD_MTX_RIGID) {
+    HSD_PObjGetMtxMark(0, &mark_obj, &mark);
+    if (mark_obj != jobj || mark != HSD_MTX_RIGID) {
         HSD_PObjSetMtxMark(0, jobj, HSD_MTX_RIGID);
         GXSetCurrentMtx(GX_PNMTX0);
 
@@ -157,22 +163,22 @@ void ftPartsSetupSharedVtxMtx(HSD_PObj* pobj, MtxPtr vmtx, MtxPtr pmtx,
     HSD_JObj* jobj;
     PObjSetupFlag flags = SETUP_NONE; // r28
 
-    Mtx mtx0;            // spE4
-    Mtx mtx1;            // spB4
-    Mtx tmp;             // sp84
-    HSD_JObj* mark_jobj; // sp80
-    u32 mark;            // sp7C
+    Mtx mtx0;       // spE4
+    Mtx mtx1;       // spB4
+    Mtx tmp;        // sp84
+    void* mark_obj; // sp80
+    u32 mark;       // sp7C
 
     jobj = HSD_JObjGetCurrent();
 
-    HSD_PObjGetMtxMark(0, (void**) &mark_jobj, &mark);
-    if (mark_jobj != jobj && mark != HSD_MTX_RIGID) {
+    HSD_PObjGetMtxMark(0, &mark_obj, &mark);
+    if (mark_obj != jobj && mark != HSD_MTX_RIGID) {
         flags |= SETUP_JOINT0;
     }
     HSD_PObjSetMtxMark(0, jobj, HSD_MTX_RIGID);
 
-    HSD_PObjGetMtxMark(1, (void**) &mark_jobj, &mark);
-    if (mark_jobj != pobj->u.jobj && mark != HSD_MTX_RIGID) {
+    HSD_PObjGetMtxMark(1, &mark_obj, &mark);
+    if (mark_obj != pobj->u.jobj && mark != HSD_MTX_RIGID) {
         flags |= SETUP_JOINT1;
     }
     HSD_PObjSetMtxMark(1, pobj->u.jobj, HSD_MTX_RIGID);
@@ -350,14 +356,14 @@ void ftParts_80074194(Fighter* fighter, FighterBone* bone, HSD_JObj* jobj,
 
     bone->joint = jobj;
 
-    bone->flags_b1 = true;
-    bone->flags_b7 = jobj_flags & JOBJ_LIGHTING ? true : false;
-    bone->flags2_b0 = jobj_flags & JOBJ_TEXGEN ? true : false;
-    bone->flags2_b1 = jobj_flags & JOBJ_SPECULAR ? true : false;
-    bone->flags2_b2 = jobj_flags & JOBJ_UNK_B18 ? true : false;
-    bone->flags2_b3 = jobj_flags & JOBJ_UNK_B20 ? true : false;
-    bone->flags2_b4 = jobj_flags & JOBJ_UNK_B19 ? true : false;
-    bone->xC = tree_depth;
+    bone->x8.x0.flags_b1 = true;
+    bone->x8.x0.flags_b7 = jobj_flags & JOBJ_LIGHTING ? true : false;
+    bone->x8.x0.flags2_b0 = jobj_flags & JOBJ_TEXGEN ? true : false;
+    bone->x8.x0.flags2_b1 = jobj_flags & JOBJ_SPECULAR ? true : false;
+    bone->x8.x0.flags2_b2 = jobj_flags & JOBJ_UNK_B18 ? true : false;
+    bone->x8.x0.flags2_b3 = jobj_flags & JOBJ_UNK_B20 ? true : false;
+    bone->x8.x0.flags2_b4 = jobj_flags & JOBJ_UNK_B19 ? true : false;
+    bone->xC_u.x0.xC = tree_depth;
 
     while (true) {
         if (dobj == NULL) {
@@ -366,7 +372,7 @@ void ftParts_80074194(Fighter* fighter, FighterBone* bone, HSD_JObj* jobj,
         if (*dobj_index >= 124) {
             HSD_ASSERTREPORT(466, 0,
                              "fighter parts model dobj num over! player %d\n",
-                             fighter->player_id);
+                             fighter->player_idx);
         }
         fighter->dobj_list.data[*dobj_index] = dobj;
         mobj = dobj != NULL ? dobj->mobj : NULL;
@@ -379,14 +385,14 @@ void ftParts_80074194(Fighter* fighter, FighterBone* bone, HSD_JObj* jobj,
     }
     if (dobj_count >= 128) {
         HSD_ASSERTREPORT(480, 0, "fighter dobj num over! player %d\n",
-                         fighter->player_id);
+                         fighter->player_idx);
     }
     if (*dobj_index != 0) {
-        bone->xD = *dobj_index - 1;
+        bone->xC_u.x0.xD = *dobj_index - 1;
     } else {
-        bone->xD = 0;
+        bone->xC_u.x0.xD = 0;
     }
-    bone->flags2_b6 = dobj_count != 0 ? true : false;
+    bone->x8.x0.flags2_b6 = dobj_count != 0 ? true : false;
 }
 
 void ftParts_SetupParts(Fighter_GObj* fighter_obj)
@@ -399,7 +405,7 @@ void ftParts_SetupParts(Fighter_GObj* fighter_obj)
 
     if (ftPartsTable[fp->kind]->parts_num > MAX_FT_PARTS) {
         HSD_ASSERTREPORT(503, 0, "fighter parts num over! player %d\n",
-                         fp->player_id);
+                         fp->player_idx);
     }
 
     while (jobj != NULL) {
@@ -450,7 +456,7 @@ void ftParts_SetupParts(Fighter_GObj* fighter_obj)
 
     if (part != ftPartsTable[fp->kind]->parts_num) {
         HSD_ASSERTREPORT(546, 0, "fighter parts num not match! player %d\n",
-                         fp->player_id);
+                         fp->player_idx);
     }
 }
 
@@ -493,7 +499,7 @@ void ftParts_8007462C(Fighter_GObj* gobj)
     }
     if (i != ftPartsTable[fp->kind]->parts_num) {
         HSD_ASSERTREPORT(593, 0, "fighter parts num not match! player %d\n",
-                         fp->player_id);
+                         fp->player_idx);
     }
 }
 
@@ -509,7 +515,7 @@ HSD_JObj* ftParts_8007482C(HSD_Joint* joint)
 void ftParts_8007487C(FtPartsDesc* desc, FtPartsVis* vis, u32 costume_id,
                       DObjList* arg3, DObjList* arg4)
 {
-    void*(*vis_table)[4];
+    FtPartsVisLookup*(*vis_table)[4];
     PAD_STACK(0x8);
 
     vis_table = desc->vis_table;
@@ -708,18 +714,18 @@ void ftParts_80074E58(Fighter* fp)
     fp->dobj_list.data = HSD_ObjAlloc(&fighter_dobj_list_alloc_data);
 
     for (i = 0; i < ftPartsTable[fp->kind]->parts_num; i++) {
-        fp->parts[i].flags8 = 0;
-        fp->parts[i].flagsC = 0;
+        fp->parts[i].x8.flags8 = 0;
+        fp->parts[i].xC_u.flagsC = 0;
     }
 
-    fp->parts[0].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN)].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_XRotN)].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_YRotN)].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_HipN)].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN2)].flags_b3 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN)].flags_b4 = true;
-    fp->parts[ftParts_GetBoneIndex(fp, 0x35)].flags_b4 = true;
+    fp->parts[0].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN)].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_XRotN)].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_YRotN)].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_HipN)].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN2)].x8.x0.flags_b3 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, FtPart_TransN)].x8.x0.flags_b4 = true;
+    fp->parts[ftParts_GetBoneIndex(fp, 0x35)].x8.x0.flags_b4 = true;
 }
 
 Fighter_Part ftParts_GetBoneIndex(Fighter* fp, Fighter_Part part)
@@ -944,7 +950,7 @@ void ftParts_800753D4(Fighter* arg0, struct Fighter_804D6540_x0_t* arg1,
     ftParts_80075304(arg1->x2, arg0->parts[arg1->x1].joint, temp_r30);
     ftParts_80075304(arg1->x2, arg0->parts[arg1->x1].x4_jobj2, temp_r31);
 
-    tree_depth = arg0->parts[arg1->x1].xC;
+    tree_depth = arg0->parts[arg1->x1].xC_u.x0.xC;
     if (arg1->x2 == 0 || arg1->x2 == 1) {
         tree_depth++;
     }
@@ -953,7 +959,7 @@ void ftParts_800753D4(Fighter* arg0, struct Fighter_804D6540_x0_t* arg1,
                      tree_depth);
 
     arg0->parts[arg1->x0].x4_jobj2 = temp_r31;
-    arg0->parts[arg1->x0].flags_b2 = true;
+    arg0->parts[arg1->x0].x8.x0.flags_b2 = true;
 }
 
 void ftParts_800755E8(Fighter* fp, struct Fighter_804D6540_x0_t* arg1)
@@ -963,8 +969,8 @@ void ftParts_800755E8(Fighter* fp, struct Fighter_804D6540_x0_t* arg1)
     HSD_JObjRemove(bone->x4_jobj2);
     bone->joint = NULL;
     bone->x4_jobj2 = NULL;
-    bone->flags_b1 = false;
-    bone->flags_b2 = false;
+    bone->x8.x0.flags_b1 = false;
+    bone->x8.x0.flags_b2 = false;
 }
 
 void ftParts_80075650(Fighter_GObj* arg0, HSD_JObj* jobj, DObjList* arg2)

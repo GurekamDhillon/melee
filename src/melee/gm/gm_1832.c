@@ -51,7 +51,7 @@ static int gm_IntroTeamRow(int ckind)
 #define INTRO_TEAM_CK(ck) (ck)
 #endif
 
-static struct {
+static struct lbl_804735A8_t {
     int x0;
     HSD_JObj* x4[13];
     u16 x38;
@@ -60,7 +60,7 @@ static struct {
     u16 x3E;
 } lbl_804735A8;
 /// @brief related to 1p splash screen
-static struct {
+static struct lbl_804735E8_t {
     HSD_ImageDesc x40[3];
     HSD_ImageDesc x88[3];
     u8 xD0[10]; ///< image descriptor indices for splash effect
@@ -110,49 +110,7 @@ ClassicProcArray const lbl_803B7C40 = {
     fn_80184A4C, fn_80184A70, fn_80184A94,
 };
 
-typedef struct {
-    /* 0x00 */ f32 vals[3];
-} ClassicSlotVals;
-ASSERT_SIZE(ClassicSlotVals, 0xC);
-
-typedef struct {
-    /* 0x00 */ f32 x00;
-    /* 0x04 */ f32 x04;
-    /* 0x08 */ Vec3 x08;
-    /* 0x14 */ u8 pad_14[0x8];
-} ClassicCharLayout;
-ASSERT_SIZE(ClassicCharLayout, 0x1C);
-
-typedef struct {
-    /* 0x00 */ f32 x00;
-    /* 0x04 */ f32 x04;
-    /* 0x08 */ f32 x08;
-    /* 0x0C */ u8 pad_0C[0x8];
-} ClassicTeamEntry;
-ASSERT_SIZE(ClassicTeamEntry, 0x14);
-
-typedef struct {
-    /* 0x00 */ f32 x00[3];
-    /* 0x0C */ f32 x0C[3];
-    /* 0x18 */ f32 x18[3];
-    /* 0x24 */ f32 x24[3];
-} ClassicSplashRow;
-ASSERT_SIZE(ClassicSplashRow, 0x30);
-
-static struct {
-    /* 0x000 */ ClassicSlotVals x00[2];
-    /* 0x018 */ ClassicSlotVals x18[3];
-    /* 0x03C */ ClassicSlotVals x3C[4];
-    /* 0x06C */ ClassicCharLayout x6C[28];
-    /* 0x37C */ ClassicTeamEntry x37C[25];
-    /* 0x570 */ u8 pad_570[0xC];
-    /* 0x57C */ ClassicSplashRow x57C[3];
-    /* 0x60C */ u8 pad_60C[0x24];
-    /* 0x630 */ ClassicSlotVals x630[3];
-    /* 0x654 */ ClassicSlotVals x654[3];
-    /* 0x678 */ ClassicSlotVals x678[4];
-    /* 0x6A8 */ ClassicCharLayout x6A8[28];
-}* lbl_804D6604;
+static struct lbl_804D6604_t* lbl_804D6604;
 
 static int lbl_804D6608;
 
@@ -561,7 +519,7 @@ s32 fn_801851C0(void)
     for (i = 0; i < (s32) lbl_804735E8.xE0; i++) {
         result = i + 1;
         Player_SetPlayerCharacter(result, (CharacterKind) lbl_8047368C.xF4[0]);
-        Player_SetPlayerId(result, 0);
+        Player_SetPadPort(result, 0);
         Player_SetSlottype(result, Gm_PKind_Demo);
         Player_SetFacingDirection(result, 0.0f);
         Player_SetCostumeId(result, i);
@@ -683,39 +641,23 @@ void fn_80185408(int x, float arg8, float arg9, float argA, float argB)
 extern float MSL_TrigF_80400770[];
 extern float MSL_TrigF_80400774[];
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
-double fn_801855BC(double arg8)
+double fn_801855BC(double x)
 {
-    f64 temp_f2;
-    f64 temp_f2_2;
-    f64 temp_f2_3;
-    f64 temp_f2_4;
-
-    if (arg8 > 0.0) {
-        temp_f2_2 = __frsqrte(arg8);
-        temp_f2_3 =
-            0.5 * temp_f2_2 * -(((f64) arg8 * (temp_f2_2 * temp_f2_2)) - 3.0);
-        temp_f2_4 =
-            0.5 * temp_f2_3 * -(((f64) arg8 * (temp_f2_3 * temp_f2_3)) - 3.0);
-        temp_f2 =
-            0.5 * temp_f2_4 * -(((f64) arg8 * (temp_f2_4 * temp_f2_4)) - 3.0);
-        return arg8 *
-               (0.5 * temp_f2 * -(((f64) arg8 * (temp_f2 * temp_f2)) - 3.0));
-    }
-    if (0.0 == arg8) {
-        return 0.0;
-    }
-    if (arg8) {
+    if (x > 0.0) {
+        double guess = __frsqrte(x);
+        guess = 0.5 * guess * (3.0 - guess * guess * x);
+        guess = 0.5 * guess * (3.0 - guess * guess * x);
+        guess = 0.5 * guess * (3.0 - guess * guess * x);
+        guess = 0.5 * guess * (3.0 - guess * guess * x);
+        return x * guess;
+    } else if (x == 0) {
+        return 0;
+    } else if (x) {
         return MSL_TrigF_80400770[0];
+    } else {
+        return MSL_TrigF_80400774[0];
     }
-    return MSL_TrigF_80400774[0];
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void fn_8018564C(HSD_GObj* gobj)
 {
@@ -929,7 +871,7 @@ s32 fn_80185E34(void)
             Player_SetPlayerCharacter(player_slot,
                                       (CharacterKind) lbl_8047368C.xF1[i]);
             Player_SetCostumeId(player_slot, (s32) lbl_8047368C.xF7[i]);
-            Player_SetPlayerId(player_slot, 0);
+            Player_SetPadPort(player_slot, 0);
             Player_SetSlottype(player_slot, Gm_PKind_Demo);
             Player_SetFacingDirection(player_slot, 0.0f);
             Player_SetModelScale(player_slot, 1.0f);
@@ -960,7 +902,7 @@ void fn_80185F5C(s32 arg0)
             Player_SetPlayerCharacter(arg0,
                                       (CharacterKind) lbl_8047368C.xF4[i]);
             Player_SetCostumeId(arg0, (s32) lbl_8047368C.xFA[i]);
-            Player_SetPlayerId(arg0, 0);
+            Player_SetPadPort(arg0, 0);
             Player_SetSlottype(arg0, Gm_PKind_Demo);
             Player_SetFacingDirection(arg0, 0.0f);
             Player_SetModelScale(arg0, 1.0f);
@@ -1227,13 +1169,13 @@ typedef struct ClassicModeEnterData {
     /* 0x04 */ int x4;
     /* 0x08 */ int x8;
     /* 0x0C */ int xC;
-    /* 0x10 */ union {
+    /* 0x10 */ union ClassicModeEnterData_x10 {
         int x10_int;
-        struct {
+        struct ClassicModeEnterData_x10_x0 {
             u8 x10;
             u8 x11;
-        };
-    };
+        } x0;
+    } x10_u;
     /* 0x14 */ int x14;
     /* 0x18 */ int x18;
     /* 0x1C */ int x1C;
@@ -1243,7 +1185,7 @@ void gm_Scene_IntroEasy_OnEnter(void* arg0_)
 {
     ClassicModeEnterData* arg0 = arg0_;
 
-    if (arg0->x10 == 0x1A || arg0->x11 == 0x1A) {
+    if (arg0->x10_u.x0.x10 == 0x1A || arg0->x10_u.x0.x11 == 0x1A) {
         lbl_804735A8.x0 = 1;
         return;
     }

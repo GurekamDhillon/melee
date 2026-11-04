@@ -28,7 +28,6 @@
 #include <melee/lb/lbaudio_ax.h>
 #include <melee/lb/lbcollision.h>
 #include <melee/lb/lbvector.h>
-#include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/jobj.h>
@@ -344,8 +343,9 @@ void it_802701BC(Item_GObj* gobj)
     fighter_gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
     while (fighter_gobj != NULL) {
         Fighter* fp = GET_FIGHTER(fighter_gobj);
-        if ((!ftLib_80086FD4(fighter_gobj, ip->owner) || ip->xDCD_flag.b5) &&
-            (!gm_8016B168() || gm_8016B0D4() || ip->xDCD_flag.b6 ||
+        if ((!ftLib_IsSamePlayer(fighter_gobj, ip->owner) ||
+             ip->xDCD_flag.x0.b5) &&
+            (!gm_8016B168() || gm_8016B0D4() || ip->xDCD_flag.x0.b6 ||
              (ip->x20_team_id != fp->team)) &&
             !fp->x2219_b1 && !fp->x222A_b0 && (fp->x1988 == 0) &&
             (fp->x198C == 0) && !fp->x221D_b6 && !(fp->x1A6A & ip->xD08))
@@ -374,7 +374,7 @@ void it_802701BC(Item_GObj* gobj)
                             pos_x = ABS(fp->cur_pos.x - ip->pos.x);
                             if (pos_x < ip->xD10) {
                                 ip->grab_victim = ip->atk_victim = fp->gobj;
-                                ip->xDD0_flag.b1 = 1;
+                                ip->xDD0_flag.x0.b1 = 1;
                                 ip->xD10 = pos_x;
                             }
                             return;
@@ -415,22 +415,24 @@ void it_802703E8(Item_GObj* arg_item_gobj)
     for (fighter_gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
          fighter_gobj != NULL; fighter_gobj = fighter_gobj->next)
     {
-        if (((arg_item->owner == fighter_gobj) && !arg_item->xDCE_flag.b0)) {
-            continue;
-        }
-        fighter = fighter_gobj->user_data;
-        if (!((fighter->x1064_thrownHitbox.owner == NULL) ||
-              (fighter->x1064_thrownHitbox.owner != arg_item->owner) ||
-              arg_item->xDCE_flag.b0))
+        if (((arg_item->owner == fighter_gobj) && !arg_item->xDCE_flag.x0.b0))
         {
             continue;
         }
-        if (fighter->x1064_thrownHitbox.owner != NULL) {
-            ft_team = ftLib_80086EB4(fighter->x1064_thrownHitbox.owner) & 0xFF;
+        fighter = fighter_gobj->user_data;
+        if (!((fighter->x1064_thrownHitbox.x134.owner == NULL) ||
+              (fighter->x1064_thrownHitbox.x134.owner != arg_item->owner) ||
+              arg_item->xDCE_flag.x0.b0))
+        {
+            continue;
+        }
+        if (fighter->x1064_thrownHitbox.x134.owner != NULL) {
+            ft_team =
+                ftLib_GetTeam(fighter->x1064_thrownHitbox.x134.owner) & 0xFF;
         } else {
             ft_team = fighter->team;
         }
-        if (gm_8016B168() && !gm_8016B0D4() && !arg_item->xDCE_flag.b1 &&
+        if (gm_8016B168() && !gm_8016B0D4() && !arg_item->xDCE_flag.x0.b1 &&
             (ft_team == arg_item->x20_team_id))
         {
             continue;
@@ -564,18 +566,18 @@ void it_802706D0(Item_GObj* arg_item_gobj)
             chk = true;
             continue;
         } else if (((arg_item->owner == NULL) && (item->owner == NULL) &&
-                    !item->xDCD_flag.b7 && !arg_item->xDCE_flag.b2) ||
-                   (ftLib_80086960(item->owner) &&
-                    ftLib_80086960(arg_item->owner) &&
-                    ftLib_80086FD4(arg_item->owner, item->owner) &&
-                    !item->xDCD_flag.b7 && !arg_item->xDCE_flag.b2) ||
-                   (gm_8016B168() && !gm_8016B0D4() && !item->xDCD_flag.b6 &&
-                    !arg_item->xDCE_flag.b1 &&
+                    !item->xDCD_flag.x0.b7 && !arg_item->xDCE_flag.x0.b2) ||
+                   (ftLib_IsFighter(item->owner) &&
+                    ftLib_IsFighter(arg_item->owner) &&
+                    ftLib_IsSamePlayer(arg_item->owner, item->owner) &&
+                    !item->xDCD_flag.x0.b7 && !arg_item->xDCE_flag.x0.b2) ||
+                   (gm_8016B168() && !gm_8016B0D4() &&
+                    !item->xDCD_flag.x0.b6 && !arg_item->xDCE_flag.x0.b1 &&
                     (item->x20_team_id == arg_item->x20_team_id)))
         {
             continue;
         }
-        if (chk && !arg_item->xDD0_flag.b1) {
+        if (chk && !arg_item->xDD0_flag.x0.b1) {
             count = 0;
             for (hit_index = 0; hit_index < 4; hit_index++) {
                 HitCapsule* arg_hit = &arg_item->x5D4_hitboxes[hit_index].hit;
@@ -603,7 +605,7 @@ void it_802706D0(Item_GObj* arg_item_gobj)
             {
                 continue;
             }
-            if (chk && !arg_item->xDD0_flag.b1 && (count != 0)) {
+            if (chk && !arg_item->xDD0_flag.x0.b1 && (count != 0)) {
                 u32 i;
                 bool chk2 = false;
                 for (i = 0; i < 4U; i++) {
@@ -618,10 +620,10 @@ void it_802706D0(Item_GObj* arg_item_gobj)
                                                 arg_item->scl))
                             {
                                 if (hit->element == HitElement_Inert) {
-                                    item->xDCE_flag.b6 = 1;
+                                    item->xDCE_flag.x0.b6 = 1;
                                     item->toucher = arg_item_gobj;
                                 } else {
-                                    arg_item->xDCE_flag.b6 = 1;
+                                    arg_item->xDCE_flag.x0.b6 = 1;
                                     arg_item->toucher = item->entity;
                                 }
                                 chk2 = true;
@@ -651,7 +653,7 @@ void it_802706D0(Item_GObj* arg_item_gobj)
                     if (lbColl_80008248(hit, &arg_item->xACC_itemHurtbox[i],
                                         NULL, item->scl, arg_item->scl, 0.0f))
                     {
-                        item->xDCE_flag.b6 = 1;
+                        item->xDCE_flag.x0.b6 = 1;
                         item->toucher = arg_item_gobj;
                     }
                 }
@@ -705,17 +707,25 @@ f32 it_80270CD8(Item* ip, HitCapsule* hit)
     return f1;
 }
 
+struct it_80270E30_hurt_pos {
+    Vec3 v;
+};
+
+struct it_80270E30_damage_log {
+    DamageLogEntry* v;
+};
+
+struct it_80270E30_hurt_pos_p {
+    Vec3* v;
+};
+
 void it_80270E30(Item_GObj* arg_item_gobj)
 {
     Item* arg_item;
     u32 index;
     UNUSED f32 unused_float1;
-    struct {
-        Vec3 v;
-    } hurt_pos;
-    struct {
-        DamageLogEntry* v;
-    } damage_log;
+    struct it_80270E30_hurt_pos hurt_pos;
+    struct it_80270E30_damage_log damage_log;
     HSD_GObj* item_owner_gobj;
     f32 knockback_cap;
     f32 dir;
@@ -729,9 +739,7 @@ void it_80270E30(Item_GObj* arg_item_gobj)
     s32 element;
     Item* item;
     DamageLogEntry* temp_r29;
-    struct {
-        Vec3* v;
-    } hurt_pos_p;
+    struct it_80270E30_hurt_pos_p hurt_pos_p;
     u32 index2;
     HitCapsule* hit2;
     ItemAttr* attr;
@@ -779,9 +787,9 @@ void it_80270E30(Item_GObj* arg_item_gobj)
                 if (knockback >= knockback_cap) {
                     knockback = knockback_cap;
                 }
-                if (!arg_item->xDCF_flag.b1) {
-                    if ((arg_item->hold_kind == 4) ||
-                        (arg_item->hold_kind == 6))
+                if (!arg_item->xDCF_flag.x0.b1) {
+                    if ((arg_item->hold_kind == ITEM_HOLD_4) ||
+                        (arg_item->hold_kind == ITEM_HOLD_6))
                     {
                         sp18 = hit->damage;
                         hit2 = damage_log.v->x8;
@@ -826,7 +834,7 @@ void it_80270E30(Item_GObj* arg_item_gobj)
         switch (temp_r29->x0) {
         case 1:
             fighter = temp_r29->x4;
-            arg_item->xCB0_source_ply = (s32) fighter->player_id;
+            arg_item->xCB0_source_ply = (s32) fighter->player_idx;
             arg_item->xCEC_fighterGObj = fighter->gobj;
             arg_item->xCF0_itemGObj = NULL;
             if (arg_item->pos.x > fighter->cur_pos.x) {
@@ -840,9 +848,10 @@ void it_80270E30(Item_GObj* arg_item_gobj)
         case 2:
             item = temp_r29->x4;
             item_owner_gobj = item->owner;
-            if ((item_owner_gobj != NULL) && ftLib_80086960(item_owner_gobj)) {
+            if ((item_owner_gobj != NULL) && ftLib_IsFighter(item_owner_gobj))
+            {
                 arg_item->xCB0_source_ply =
-                    (s32) ((Fighter*) item_owner_gobj->user_data)->player_id;
+                    (s32) ((Fighter*) item_owner_gobj->user_data)->player_idx;
                 arg_item->xCEC_fighterGObj = NULL;
                 arg_item->xCF0_itemGObj = item_owner_gobj;
             } else {
@@ -870,7 +879,7 @@ void it_80270E30(Item_GObj* arg_item_gobj)
         arg_item->xCAC_angle = temp_r29->x8->kb_angle;
         arg_item->xCC8_knockback = max_knockback;
         arg_item->xCC4 = temp_r29->x8->element;
-        arg_item->xDCF_flag.b6 = temp_r29->x8->x43_b0;
+        arg_item->xDCF_flag.x0.b6 = temp_r29->x8->x43_b0;
     }
 }
 
@@ -889,7 +898,7 @@ void it_8027129C(Item_GObj* arg_item_gobj, s32 index)
         lb_8000B1CC(hit->jobj, &hit->b_offset, &hit->x4C);
         hit->x58 = hit->x4C;
         hit->state = HitCapsule_Unk2;
-        item->xDAA_flag.b2 = 1;
+        item->xDAA.xDAA_flag.x0.b2 = 1;
         return;
     case HitCapsule_Unk2:
         hit->state = HitCapsule_Unk3;
@@ -922,7 +931,7 @@ void it_8027137C(Item_GObj* arg_item_gobj)
             lb_8000B1CC(hit->jobj, &hit->b_offset, &hit->x4C);
             hit->x58 = hit->x4C;
             hit->state = HitCapsule_Unk2;
-            arg_item->xDAA_flag.b2 = 1;
+            arg_item->xDAA.xDAA_flag.x0.b2 = 1;
             break;
         case HitCapsule_Unk2:
             hit->state = HitCapsule_Unk3;
@@ -958,7 +967,7 @@ void it_802714C0(Item_GObj* item_gobj)
         hurt->skip_update_pos = 0;
         index++;
     }
-    item->xDAA_flag.b1 = 1;
+    item->xDAA.xDAA_flag.x0.b1 = 1;
 }
 
 void it_80271508(Item_GObj* item_gobj, HurtCapsuleState state)
@@ -1167,7 +1176,7 @@ void it_80271B60(Item_GObj* item_gobj)
 
     item_jobj = GET_JOBJ(item_gobj);
     item = GET_ITEM(item_gobj);
-    if (Item_804A0CCC.x154.b0 != 1) {
+    if (Item_804A0CCC.x154.x0.b0 != 1) {
         HSD_JObjGetTranslation(item_jobj, &sp24);
         cnt = 0U;
 
@@ -1217,9 +1226,9 @@ void it_80271D2C(Item_GObj* arg_item_gobj)
         item_jobj = GET_JOBJ(item_gobj);
         item = GET_ITEM(item_gobj);
         if ((arg_item_gobj != item_gobj) && !item->xDC8_word.flags.x13 &&
-            (item->ground_or_air == GA_Ground) && !item->xDD1_flag.b0 &&
-            ((item->hold_kind != 3) ||
-             ((item->hold_kind == 3) &&
+            (item->ground_or_air == GA_Ground) && !item->xDD1_flag.x0.b0 &&
+            ((item->hold_kind != ITEM_HOLD_3) ||
+             ((item->hold_kind == ITEM_HOLD_3) &&
               arg_item->xDC8_word.flags
                   .x1E)) // hold_kind 3 is open palm, facing down(?)
         )
@@ -1273,7 +1282,7 @@ void it_80271F78(Item_GObj* gobj)
         item_jobj = GET_JOBJ(item_gobj);
         item = GET_ITEM(item_gobj);
         if ((gobj != item_gobj) && !item->xDC8_word.flags.x13 &&
-            (item->ground_or_air == GA_Ground) && !item->xDD1_flag.b0 &&
+            (item->ground_or_air == GA_Ground) && !item->xDD1_flag.x0.b0 &&
             (itIsHeavy(item_gobj) == 1))
         {
             HSD_JObjGetTranslation(item_jobj, &sp28);
@@ -1354,7 +1363,7 @@ void it_802722B0(Item_GObj* item_gobj)
 {
     if (item_gobj == HSD_GObjPLinkHead[HSD_GOBJ_PLINK_ITEM]) {
         ftCo_80098634(&Item_804A0CCC);
-        Item_804A0CCC.x154.b0 = 0;
+        Item_804A0CCC.x154.x0.b0 = 0;
     }
 }
 
@@ -1378,12 +1387,12 @@ HSD_GObj* it_8027236C(Item_GObj* arg_item_gobj)
     fighter_gobj = arg_item->xCEC_fighterGObj;
     if (fighter_gobj != NULL) {
         arg_item->owner = fighter_gobj;
-        arg_item->x20_team_id = ftLib_80086EB4(arg_item->xCEC_fighterGObj);
+        arg_item->x20_team_id = ftLib_GetTeam(arg_item->xCEC_fighterGObj);
     } else {
         unk_owner_gobj = arg_item->xCF0_itemGObj;
         if (unk_owner_gobj != NULL) {
             arg_item->owner = unk_owner_gobj;
-            arg_item->x20_team_id = ftLib_80086EB4(arg_item->xCF0_itemGObj);
+            arg_item->x20_team_id = ftLib_GetTeam(arg_item->xCF0_itemGObj);
         } else {
             arg_item->owner = NULL;
             arg_item->x20_team_id = U8_MAX;
@@ -1398,9 +1407,9 @@ HSD_GObj* it_802723FC(Item_GObj* arg_item_gobj)
     Item* arg_item;
 
     arg_item = arg_item_gobj->user_data;
-    if (ftLib_80086960(arg_item->xCFC)) {
+    if (ftLib_IsFighter(arg_item->xCFC)) {
         arg_item->owner = arg_item->xCFC;
-        arg_item->x20_team_id = ftLib_80086EB4(arg_item->owner);
+        arg_item->x20_team_id = ftLib_GetTeam(arg_item->owner);
     } else {
         arg_item->owner = NULL;
         arg_item->x20_team_id = U8_MAX;
@@ -1418,7 +1427,7 @@ void it_80272460(HitCapsule* hitbox, u32 damage, Item_GObj* arg_item_gobj)
     dmg = damage;
     arg_item = GET_ITEM(arg_item_gobj);
     owner_gobj = arg_item->owner;
-    if (ftLib_80086960(owner_gobj)) {
+    if (ftLib_IsFighter(owner_gobj)) {
         owner = GET_FIGHTER(owner_gobj);
         if (owner->x34_scale.y != 1.0f) {
             dmg = 0.999f + ftCo_CalcYScaledKnockback(dmg, owner->x34_scale.y,

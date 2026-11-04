@@ -13,10 +13,10 @@ static void script_clank_observe(Fighter* a,HitCapsule* ha,Fighter* b,
     if(!ca && !cb)return;
     if(b){ /* online Envoy stage 4: the native triggered rules see a fighter-against-fighter clank here, wanted by a script or not */
         extern void ScriptMods_Clank(int,int,float,float);
-        ScriptMods_Clank(a->player_id,b->player_id,ha->damage,hb->damage);
+        ScriptMods_Clank(a->player_idx,b->player_idx,ha->damage,hb->damage);
     }
     if(!Script_ClankWanted())return;
-    Script_Clank(a->player_id,b?b->player_id:-1,
+    Script_Clank(a->player_idx,b?b->player_idx:-1,
         item?(int)item->entity:0,item?(int)item->kind:-1,
         script_clank_bits((ha->hurt_coll_pos.x+hb->hurt_coll_pos.x)*0.5f),
         script_clank_bits((ha->hurt_coll_pos.y+hb->hurt_coll_pos.y)*0.5f),

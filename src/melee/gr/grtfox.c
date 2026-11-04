@@ -8,13 +8,6 @@
 #include <melee/mp/mplib.h>
 #include <sysdolphin/baselib/gobjproc.h>
 
-struct grTFox_YakumonoParam {
-    UNK_T unk0;
-    UNK_T unk4;
-    UNK_T unk8;
-    UNK_T unkC;
-};
-
 static void grTFox_80220B80(bool);
 static void grTFox_80220B84(void);
 static void grTFox_UnkStage0_OnLoad(void);
@@ -33,7 +26,7 @@ static void stageGObj1_OnInit(Ground_GObj*);
 static bool grTFox_80220E30(Ground_GObj*);
 static void stageGObj1_GObjProc(Ground_GObj*);
 static void grTFox_80220E58(Ground_GObj*);
-static DynamicsDesc* grTFox_80220E5C(enum_t);
+static lbColl_80008D30_arg1* grTFox_80220E5C(enum_t);
 static bool grTFox_80220F08(Vec3*, int, HSD_JObj*);
 
 static struct grTFox_YakumonoParam* yakumono_param;
@@ -146,7 +139,7 @@ static void stageGObj1_GObjProc(Ground_GObj* gobj)
 
 void grTFox_80220E58(Ground_GObj* gobj) {}
 
-DynamicsDesc* grTFox_80220E5C(enum_t arg0)
+lbColl_80008D30_arg1* grTFox_80220E5C(enum_t arg0)
 {
     if (arg0 != -1) {
         enum_t i = mpJointFromLine(arg0);

@@ -15,7 +15,7 @@ bool DevText_IsListed(DevText* text);
 #endif
 /* 302164 */ void DevText_SetupCObj(void);
 /* 3022BC */ void DevText_Draw(DevText* text);
-/* 302608 */ void DevText_DrawAll(HSD_GObj* gobj, int pass);
+/* 302608 */ void DevText_DrawAll(HSD_GObj* gobj, intptr_t pass);
 /* 30265C */ void DevText_CreateCObj(int classifier, int p_link,
                                      int gobj_priority, int gx_link,
                                      u8 gx_priority);
@@ -24,5 +24,7 @@ bool DevText_IsListed(DevText* text);
                                      u8 camera_priority);
 /* 3027A0 */ void DevText_AddToList(DevText** list, DevText* text);
 /* 302810 */ void DevText_Show(HSD_GObj* gobj, DevText* text);
+/* 4D6E18 */ extern DevText* devtext_drawlist;
+/* 4D6E38 */ extern DevText* devtext_poolhead;
 
 #endif

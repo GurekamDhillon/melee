@@ -17,7 +17,7 @@ void it_802753DC(Item_GObj* item_gobj)
     item->xC48 = 0;
     item->xC4C = 0;
     item->xC50 = 0;
-    item->xDCE_flag.b6 = 0;
+    item->xDCE_flag.x0.b6 = 0;
 }
 
 void it_80275414(Item_GObj* item_gobj)
@@ -25,7 +25,7 @@ void it_80275414(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCD_flag.b7 = 1;
+    item->xDCD_flag.x0.b7 = 1;
 }
 
 void it_8027542C(Item_GObj* item_gobj)
@@ -33,7 +33,7 @@ void it_8027542C(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCD_flag.b7 = 0;
+    item->xDCD_flag.x0.b7 = 0;
 }
 
 void it_80275444(Item_GObj* item_gobj)
@@ -41,9 +41,9 @@ void it_80275444(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCD_flag.b5 = 1;
-    item->xDCD_flag.b7 = 1;
-    item->xDCD_flag.b6 = 1;
+    item->xDCD_flag.x0.b5 = 1;
+    item->xDCD_flag.x0.b7 = 1;
+    item->xDCD_flag.x0.b6 = 1;
 }
 
 void it_80275474(Item_GObj* item_gobj)
@@ -51,9 +51,9 @@ void it_80275474(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCD_flag.b5 = 0;
-    item->xDCD_flag.b7 = 0;
-    item->xDCD_flag.b6 = 0;
+    item->xDCD_flag.x0.b5 = 0;
+    item->xDCD_flag.x0.b7 = 0;
+    item->xDCD_flag.x0.b6 = 0;
 }
 
 void it_802754A4(Item_GObj* item_gobj)
@@ -61,7 +61,7 @@ void it_802754A4(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCE_flag.b2 = 1;
+    item->xDCE_flag.x0.b2 = 1;
 }
 
 void it_802754BC(Item_GObj* item_gobj)
@@ -69,7 +69,7 @@ void it_802754BC(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCE_flag.b2 = 0;
+    item->xDCE_flag.x0.b2 = 0;
 }
 
 void it_802754D4(Item_GObj* item_gobj)
@@ -77,9 +77,9 @@ void it_802754D4(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCE_flag.b0 = 1;
-    item->xDCE_flag.b2 = 1;
-    item->xDCE_flag.b1 = 1;
+    item->xDCE_flag.x0.b0 = 1;
+    item->xDCE_flag.x0.b2 = 1;
+    item->xDCE_flag.x0.b1 = 1;
 }
 
 void it_80275504(Item_GObj* item_gobj)
@@ -87,9 +87,9 @@ void it_80275504(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->xDCE_flag.b0 = 0;
-    item->xDCE_flag.b2 = 0;
-    item->xDCE_flag.b1 = 0;
+    item->xDCE_flag.x0.b0 = 0;
+    item->xDCE_flag.x0.b2 = 0;
+    item->xDCE_flag.x0.b1 = 0;
 }
 
 void it_80275534(Item_GObj* item_gobj, f32 scale)
@@ -194,7 +194,7 @@ void it_80275788(Item_GObj* item_gobj)
         hitcapsule = (0, &item->x5D4_hitboxes[var_ctr].hit);
         if (hitcapsule->state != HitCapsule_Disabled) {
             hitcapsule->state = state;
-            item->xDAA_flag.b2 = 1;
+            item->xDAA.xDAA_flag.x0.b2 = 1;
         }
     }
 }

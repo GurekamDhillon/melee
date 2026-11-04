@@ -37,6 +37,7 @@
 #include <melee/lb/lblanguage.h>
 #include <melee/lb/lbmthp.h>
 #include <melee/sc/types.h>
+#include <sysdolphin/baselib/cobj.h> // IWYU pragma: keep
 #include <sysdolphin/baselib/controller.h>
 #include <sysdolphin/baselib/displayfunc.h>
 #include <sysdolphin/baselib/dobj.h>
@@ -1401,6 +1402,10 @@ static inline u8 CountUnlockedSelections(MenuKind kind)
     return count;
 }
 
+struct mn_8022B3A0_jobj {
+    HSD_JObj* value;
+};
+
 /// @brief sets up a new menu when transitioning from another.
 HSD_GObj* mn_8022B3A0(u8 state)
 {
@@ -1420,9 +1425,7 @@ HSD_GObj* mn_8022B3A0(u8 state)
     StaticModelDesc* model = &MenMainConTop_Top;
     u8 hovered_selection;
     AnimLoopSettings* anim_loop;
-    struct {
-        HSD_JObj* value;
-    } jobj;
+    struct mn_8022B3A0_jobj jobj;
     u32 unlocked_count;
     HSD_JObj* root_jobj;
     PAD_STACK(16);
@@ -1615,7 +1618,7 @@ void mn_8022BA1C(HSD_GObj* gp)
     HSD_CObjSetEyePosition(cobj, &sp24);
 }
 
-void fn_8022BCD4(HSD_GObj* gobj, int unused)
+void fn_8022BCD4(HSD_GObj* gobj, intptr_t unused)
 {
     HSD_FogSet(gobj->hsd_obj);
 }
@@ -1645,7 +1648,7 @@ void mn_8022BD8C(void)
     mn_804D6BB0->gxlink_prios = 0x80;
 }
 
-void fn_8022BDB4(HSD_GObj* gobj, int unused)
+void fn_8022BDB4(HSD_GObj* gobj, intptr_t unused)
 {
     HSD_Fog* fog = GET_FOG(mn_804D6BA8);
     if (HSD_CObjSetCurrent(GET_COBJ(gobj)) != 0) {

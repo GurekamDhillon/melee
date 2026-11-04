@@ -80,7 +80,7 @@ pub mod ext {
 
 /// `x >= 0 ? +1 : -1` (NaN gives -1).
 #[inline(always)]
-fn sign(x: f32) -> f32 {
+fn stick_sign(x: f32) -> f32 {
     if x >= 0.0 { 1.0 } else { -1.0 }
 }
 
@@ -98,9 +98,9 @@ pub fn ftCo_AttackS4_CheckInput(g: G) -> bool {
     melee_core::ct!("ftCo_AttackS4_CheckInput");
     let f = fp(g);
     let (sx, ang) = if checkLStick(f) {
-        (sign(f.input.lstick[0].x), ext::ftCo_GetLStickAngle(f))
+        (stick_sign(f.input.lstick[0].x), ext::ftCo_GetLStickAngle(f))
     } else if ext::ftCo_800DF1C8(f) {
-        (sign(f.input.cstick[0].x), ext::ftCo_GetCStickAngle(f))
+        (stick_sign(f.input.cstick[0].x), ext::ftCo_GetCStickAngle(f))
     } else {
         return false;
     };
@@ -125,7 +125,7 @@ pub fn ftCo_AttackS4_8008C114(g: G) -> bool {
     let (sx, ang) = if checkFacingDir(f) {
         (f.facing_dir, ext::ftCo_GetLStickAngle(f))
     } else if ext::ftCo_800DF1C8(f) {
-        (sign(f.input.cstick[0].x), ext::ftCo_GetCStickAngle(f))
+        (stick_sign(f.input.cstick[0].x), ext::ftCo_GetCStickAngle(f))
     } else {
         return false;
     };

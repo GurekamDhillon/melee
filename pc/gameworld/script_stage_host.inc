@@ -2,7 +2,7 @@
  * grDisplay and mpLib ranges. Special scene stages and m-ex callbacks remain
  * excluded until their non-stage-class hazards have an explicit teardown. */
 int ScriptStageHostHidden;
-static DynamicsDesc* (*script_host_touch)(int);
+static GrTouchLineCallback script_host_touch;
 static bool (*script_host_shadow)(Vec3*,int,HSD_JObj*);
 static int script_stage_host_allowed(void)
 {

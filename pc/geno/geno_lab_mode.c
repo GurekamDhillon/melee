@@ -327,7 +327,7 @@ int GenoFly_OfflineAllowed(void)
 
 static FlyCursor* fly_cursor_for(Fighter* fp)
 {
-    int slot = fp->player_id;
+    int slot = fp->player_idx;
     return slot >= 0 && slot < 6 && fly_cursor[slot].fighter == fp ? &fly_cursor[slot] : NULL;
 }
 
@@ -480,7 +480,7 @@ static int hold_live(Fighter* fp)
 static void hold_step(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    int slot = fp->player_id, i;
+    int slot = fp->player_idx, i;
     if (slot < 0 || slot >= 6 || !hold_on[slot]) {
         return;
     }
@@ -682,7 +682,7 @@ int GenoFly_Pulses(int slot) { return GenoFly_State(slot, 6); }
  * the entry, holding someone, the hands */
 static int fly_refused(Fighter* fp)
 {
-    if (fp->x221F_b3 || fp->kind == Ft_Kind_MasterH || fp->kind == Ft_Kind_CrezyH) {
+    if (fp->is_sleeping || fp->kind == Ft_Kind_MasterH || fp->kind == Ft_Kind_CrezyH) {
         return 1;
     }
     if (fp->motion_id >= ftCo_MS_DeadDown && fp->motion_id <= ftCo_MS_RebirthWait) {
@@ -912,7 +912,7 @@ int GenoFly_CursorTest(void)
     float speed = fly_speed;
     int solid = fly_solid, rc = 0, instance;
     memset(&fp, 0, sizeof fp); memset(&gobj, 0, sizeof gobj);
-    gobj.user_data = &fp; fp.player_id = 0;
+    gobj.user_data = &fp; fp.player_idx = 0;
     GenoFly_TestArm(&fp); fly_speed = 2; fly_solid = 1;
     memset(&fly_cursor[0], 0, sizeof fly_cursor[0]);
     fly_cursor[0].fighter = &fp; fly_cursor[0].target = 1;

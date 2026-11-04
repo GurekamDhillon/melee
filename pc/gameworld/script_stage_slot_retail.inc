@@ -7,9 +7,8 @@
 #include <sysdolphin/baselib/list.h>
 extern HSD_Particle* hsd_804D0908[16];
 extern struct hsd_804D0F60_t hsd_804D0F60;
-extern u16 hsd_804D78E2;
+extern u16 numActiveParticles;
 extern u32* hsd_804D0948[65];
-extern HSD_PSFormGroup** psFormGroupArray[65];
 extern int Stage_StageSlotSelect(int);
 extern void Ground_StageSlotRetailInstall(StageIdPair*,HSD_Archive*);
 extern void Ground_StageSlotFighterLightingClear(void);
@@ -83,7 +82,7 @@ static void script_retail_particles(void)
         HSD_Generator* g=node->data;
         if(script_retail_bank(g->bank)) {
             HSD_SList* next=HSD_SListRemove(node);
-            if(prevnode)prevnode->next=next;else hsd_804D78F4=(u32)next;
+            if(prevnode)prevnode->next=next;else hsd_804D78F4=next;
             node=next;
         } else {prevnode=node;node=node->next;}
     }
@@ -97,7 +96,7 @@ static void script_retail_particles(void)
                     p->gen->userfunc->hookDelete(p);
                 if(p->gen)p->gen->numChild--;
                 if(p->appsrt)psRemoveParticleAppSRT(p);
-                hsd_8039D048(p);HSD_ObjFree(&hsd_804D0F60.alloc_data,p);hsd_804D78E2--;
+                psClearPointJObj(p);HSD_ObjFree(&hsd_804D0F60.alloc_data,p);numActiveParticles--;
             } else prev=p;
             p=next;
         }
@@ -241,7 +240,7 @@ void ScriptGame_StageSlotRetailCollision(void)
             dst->verts[nv+2*i+k]=old->verts[ov+2*i+k];
             mpGetGroundCollVtx()[nv+2*i+k]=oldv[ov+2*i+k];
         }
-        mpGetGroundCollLine()[nl+i]=oldl[ol+i];mpGetGroundCollLine()[nl+i].x0=line;
+        mpGetGroundCollLine()[nl+i]=oldl[ol+i];mpGetGroundCollLine()[nl+i].inner=line;
         *runtime=oldj[oj+i];runtime->inner=joint;runtime->next=NULL;
         if(script_stage.line[i].active && ScriptGame_AreaVisible(script_stage.line[i].area))mpJointListAdd(nj+i);
     }

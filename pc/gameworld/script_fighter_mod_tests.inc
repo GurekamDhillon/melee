@@ -24,10 +24,10 @@ int ScriptGame_FighterModTest(void)
     memset(heads,0,sizeof heads); memset(&thrower,0,sizeof thrower);
     thrower.user_data=&fp; heads[HSD_GOBJ_PLINK_FIGHTER]=&thrower;
     HSD_GObjPLinkHead=heads;
-    respawn.player_id=1; respawn.x1064_thrownHitbox.owner=&thrower;
+    respawn.player_idx=1; respawn.x1064_thrownHitbox.x134.owner=&thrower;
     memset(&script_fighter_mod[1],0,sizeof script_fighter_mod[1]);
     if (ScriptGame_FighterDealtDamage(&respawn,10)!=20 || ScriptGame_ModDamage(0,1,10)!=5) rc++;
-    respawn.x1064_thrownHitbox.owner=NULL;
+    respawn.x1064_thrownHitbox.x134.owner=NULL;
     if (ScriptGame_FighterDealtDamage(&respawn,10)!=10) rc++;
     HSD_GObjPLinkHead=old_heads;
     if (!ScriptGame_FighterMod(0,1,1,script_mesh_bits(2),script_mesh_bits(0.5f),
@@ -35,7 +35,7 @@ int ScriptGame_FighterModTest(void)
     if (ScriptGame_FighterModRead(0,0)!=script_mesh_bits(2) ||
         ScriptGame_FighterModRead(0,1)!=script_mesh_bits(0.5f)) rc++;
     if (ScriptGame_ModValue(0,0,3)!=6) rc++; /* replacement, not multiplication */
-    respawn.player_id=0; respawn.co_attrs.air_max_horizontal_velocity=3;
+    respawn.player_idx=0; respawn.co_attrs.air_max_horizontal_velocity=3;
     if (FT_SCRIPT_VALUE(&respawn,3,respawn.co_attrs.air_max_horizontal_velocity)!=6) rc++;
     {
         static struct ftCommonData common;

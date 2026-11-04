@@ -19,7 +19,7 @@ int ScriptGame_CapsEntity(Fighter* fp)
 }
 static int script_caps_opponent(Fighter* from,Fighter* to,int teams)
 {
-    return from && to && from!=to && from->player_id!=to->player_id &&
+    return from && to && from!=to && from->player_idx!=to->player_idx &&
         (!teams || from->team!=to->team) && to->motion_id>=ftCo_MS_Wait &&
         !to->no_normal_motion;
 }

@@ -986,3 +986,9 @@ src/MSL/ansi_files.c
 src/sysdolphin/baselib/card.c
 libs/dolphin/src/dolphin/thp/THPDec.c
 pc/tests/mex_tests.c
+src/melee/ft/ft_0763.c
+src/melee/gm/gm_17DB.c
+src/melee/if/if_2FFC.c
+src/melee/if/if_3004.c
+src/melee/sfx/crowdsfx_1.c
+src/sysdolphin/baselib/hsd_3910.c

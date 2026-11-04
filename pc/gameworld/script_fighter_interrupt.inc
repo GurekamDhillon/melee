@@ -245,9 +245,9 @@ void ScriptGame_IntrWinTick(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     int entity;
     IntrWin* w;
-    if (fp == NULL || fp->player_id < 0 || fp->player_id > 5) return;
+    if (fp == NULL || fp->player_idx < 0 || fp->player_idx > 5) return;
     /* the entity number without the 12-way search: port + 1, +6 for the follower (Nana) */
-    entity = fp->player_id + 1 + (fp->is_sub_fighter ? 6 : 0);
+    entity = fp->player_idx + 1 + (fp->is_sub_fighter ? 6 : 0);
     w = &ft_intrwin[entity - 1];
     if (w->ind > 0 && --w->ind == 0) ftCo_800C0074(fp); /* the overlay's own list: stop it */
     intrwin_carry_tick(w);

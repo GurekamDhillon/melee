@@ -209,8 +209,9 @@ void ftCo_800D6B00(Fighter_GObj* gobj, enum_t msid)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (!ftpickupitem_80094790(gobj)) {
-        fp->throw_flags = 0;
-        Fighter_ChangeMotionState(gobj, msid, 0, 0.0F, 1.0F, 0.0F, NULL);
+        fp->x2210.throw_flags = 0;
+        Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 0.0F, 1.0F, 0.0F,
+                                  NULL);
         ftAnim_8006EBA4(gobj);
         fp->mv.co.attack100.x0 = false;
         fp->mv.co.attack100.x4 = false;
@@ -242,8 +243,8 @@ void ftCo_800D6C60(Fighter_GObj* gobj, HSD_GObjEvent callback)
         ft_800892A0(gobj);
         ft_80089824(gobj);
     }
-    if (fp->throw_flags_b3) {
-        fp->throw_flags_b3 = false;
+    if (fp->x2210.x0.throw_flags_b3) {
+        fp->x2210.x0.throw_flags_b3 = false;
         var_r0 = true;
     } else {
         var_r0 = false;
@@ -268,16 +269,16 @@ void ftCo_Attack100Loop_Anim(Fighter_GObj* gobj)
         ft_800892A0(gobj);
         ft_80089824(gobj);
     }
-    if (fp->throw_flags_b3) {
-        fp->throw_flags_b3 = false;
+    if (fp->x2210.x0.throw_flags_b3) {
+        fp->x2210.x0.throw_flags_b3 = false;
         var_r0 = true;
     } else {
         var_r0 = false;
     }
     if (var_r0) {
         if (fp->mv.co.attack100.x0 && !fp->mv.co.attack100.x4) {
-            Fighter_ChangeMotionState(gobj, ftCo_MS_Attack100End, 0, 0.0F,
-                                      1.0F, 0.0F, NULL);
+            Fighter_ChangeMotionState(gobj, ftCo_MS_Attack100End, Ft_MF_None,
+                                      0.0F, 1.0F, 0.0F, NULL);
         } else if (!ftpickupitem_80094790(gobj)) {
             fp->mv.co.attack100.x4 = false;
         }
@@ -340,7 +341,7 @@ void fn_800D6F58(Fighter_GObj* gobj, Item_GObj* item_gobj)
         extern float Geno_ItemPressDist(HSD_GObj*, Fighter*);
         extern void Geno_ItemPressCollect(HSD_GObj*, int);
         if (Geno_ItemPressDist(item_gobj, fp) >= 0.0f) {
-            Geno_ItemPressCollect(item_gobj, fp->player_id);
+            Geno_ItemPressCollect(item_gobj, fp->player_idx);
             fp->x2224_b1 = true;
             return;
         }
@@ -357,7 +358,7 @@ void fn_800D6F58(Fighter_GObj* gobj, Item_GObj* item_gobj)
     } else {
         part = fp->ft_data->x8->x10;
     }
-    pl_8003E854(fp->player_id, fp->is_sub_fighter, item_gobj);
+    pl_8003E854(fp->player_idx, fp->is_sub_fighter, item_gobj);
     Item_8026AB54(item_gobj, gobj, part);
     ftpickupitem_8009447C(gobj, item_gobj);
     {

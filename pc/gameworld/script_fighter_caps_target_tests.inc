@@ -6,16 +6,16 @@ int ScriptGame_CapsTargetTest(void)
     ScriptCapsStatus state, saved;
     int rc=0;
     memset(&a,0,sizeof a); memset(&b,0,sizeof b); memset(&c,0,sizeof c);
-    a.player_id=0; b.player_id=1; c.player_id=2;
+    a.player_idx=0; b.player_idx=1; c.player_idx=2;
     a.team=0; b.team=0; c.team=1;
     b.cur_pos.x=3; b.cur_pos.y=4; c.cur_pos.x=-5;
     b.motion_id=c.motion_id=ftCo_MS_Wait;
     if (script_caps_opponent(&a,&a,0) || !script_caps_opponent(&a,&b,0) ||
         script_caps_opponent(&a,&b,1) || !script_caps_opponent(&a,&c,1)) rc++;
     if (script_caps_distance2(&a,&b)!=25 || script_caps_distance2(&a,&c)!=25) rc++;
-    b.player_id=0;
+    b.player_idx=0;
     if (script_caps_opponent(&a,&b,0)) rc++; /* Nana shares a port */
-    b.player_id=1; b.motion_id=ftCo_MS_DeadDown;
+    b.player_idx=1; b.motion_id=ftCo_MS_DeadDown;
     if (script_caps_opponent(&a,&b,0)) rc++;
     memset(&state,0,sizeof state);
     if (!script_caps_status_set(&state,&a,1,2.5f,3) ||

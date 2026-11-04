@@ -64,7 +64,7 @@ enum {
     LAB_I_KIND,           /* fp->kind (the port's fighter kind: m-ex slots from 0x21) */
     LAB_I_LR_AGE,         /* fp->x67F: frames since L / R / Z was pressed (255 = none); the L-cancel reads it (stage D) */
     LAB_I_JUMP_AGE,       /* fp->x67E: frames since X / Y was pressed (255 = none) (stage D) */
-    LAB_I_SHIELD_ON,      /* fp->x221B_b0: the shield bubble is up (ftColl_8007B1B8) (stage D) */
+    LAB_I_SHIELD_ON,      /* fp->x221B.x221B_b0: the shield bubble is up (ftColl_8007B1B8) (stage D) */
     LAB_I_ON_FLOOR,
     LAB_I_FLOOR_VALID,    /* floor_y can be read without an invalid line lookup */
     LAB_I_FLOOR_PASSTHROUGH,

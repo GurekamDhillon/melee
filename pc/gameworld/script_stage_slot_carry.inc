@@ -36,7 +36,7 @@ static void script_retail_carry(void)
         if(result.rule==ST_CARRY_INVALID) {
             /* Finite open-air and over-floor positions never take this path.
              * Melee maps are collision surfaces, not solid-volume definitions. */
-            if(!Ground_801C2D24(fp->player_id,&p))p=(Vec3){0,0,0};
+            if(!Ground_801C2D24(fp->player_idx,&p))p=(Vec3){0,0,0};
             fp->cur_pos=p;ftCo_Fall_Enter(g);rule="spawn-nonfinite-or-invalid-bounds";
         } else {
             fp->cur_pos.x=result.x;fp->cur_pos.y=result.y;fp->cur_pos.z=result.z;
@@ -56,7 +56,7 @@ static void script_retail_carry(void)
         fp->self_vel=self;fp->x8c_kb_vel=kb;fp->x98_atk_shield_kb=shield;fp->gr_vel=grvel;
         ftCamera_80076064(fp);fp->cpu=cpu;
         OSReport("stage switch: carry player=%d sub=%d rule=%s clamped=%d pos=(%g,%g,%g)\n",
-                 fp->player_id,fp->is_sub_fighter,rule,result.clamped,
+                 fp->player_idx,fp->is_sub_fighter,rule,result.clamped,
                  fp->cur_pos.x,fp->cur_pos.y,fp->cur_pos.z);
     }
 }

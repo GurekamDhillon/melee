@@ -2,7 +2,7 @@
 
 #include <melee/ft/kinds/ftCommon/forward.h>
 
-#include <placeholder.h>
+#include <stdbool.h>
 
 #include "forward.h"
 #include "ftpurinspecialhi.h"
@@ -413,13 +413,14 @@ Fighter_DemoStrings ftPr_Init_DemoMotionFilenames = {
     "ftDemoViWaitMotionFilePurin",
 };
 
-Fighter_CostumeStrings ftPr_Init_CostumeStrings[] = {
-    { ftPr_Init_803D0308, ftPr_Init_803D0314, ftPr_Init_803D032C },
-    { ftPr_Init_803D034C, ftPr_Init_803D0358, ftPr_Init_803D0374 },
-    { ftPr_Init_803D0398, ftPr_Init_803D03A4, ftPr_Init_803D03C0 },
-    { ftPr_Init_803D03E4, ftPr_Init_803D03F0, ftPr_Init_803D040C },
-    { ftPr_Init_803D0430, ftPr_Init_803D043C, ftPr_Init_803D0458 },
-};
+Fighter_CostumeStrings
+    ftPr_Init_CostumeStrings[ARRAY_SIZE(ftPr_CostumeList)] = {
+        { ftPr_Init_803D0308, ftPr_Init_803D0314, ftPr_Init_803D032C },
+        { ftPr_Init_803D034C, ftPr_Init_803D0358, ftPr_Init_803D0374 },
+        { ftPr_Init_803D0398, ftPr_Init_803D03A4, ftPr_Init_803D03C0 },
+        { ftPr_Init_803D03E4, ftPr_Init_803D03F0, ftPr_Init_803D040C },
+        { ftPr_Init_803D0430, ftPr_Init_803D043C, ftPr_Init_803D0458 },
+    };
 
 char* ftPr_Init_803D05B4[] = {
     NULL,
@@ -461,6 +462,7 @@ void ftPr_Init_8013C360(HSD_GObj* gobj)
 {
     HSD_Joint** joints = ft_8045A1E0;
     Fighter* fp = GET_FIGHTER(gobj);
+
     /* Jigglypuff's hat: ftPr_Init_803D05B4 has one entry per RETAIL costume (five) and
      * ft_8045A1E0 six, while Akaneia gives her seven. The hat joint, its cache and the hat's own
      * part-visibility table are all the fighter's own per-costume data, so all three take the
@@ -469,16 +471,14 @@ void ftPr_Init_8013C360(HSD_GObj* gobj)
     u32 vis = FT_COSTUME_VIS_IDX(fp);
 
     if (ftPr_Init_803D05B4[vis]) {
-        /// @todo clean up memory accesses - this looks similar to
-        /// ftKb_SpecialN_800EFB4C
-        UNK_T* items = fp->ft_data->x48_items;
-        UNK_T* items_shifted = items[1];
+        union ftData_Item* items = fp->ft_data->x48_items;
+        struct ftData_x48_x4* parts = items[1].parts;
 
         if (!joints[vis]) {
             UnkCostumeStruct* costume_list =
                 CostumeListsForeachCharacter[fp->kind].costume_list;
-            joints[vis] = HSD_ArchiveGetPublicAddress(
-                costume_list[fp->x619_costume_id].x14_archive,
+            joints[vis] = HSD_ArchiveGetPublicAs(
+                HSD_Joint, costume_list[fp->costume_id].x14_archive,
                 ftPr_Init_803D05B4[vis]);
         }
 
@@ -489,8 +489,8 @@ void ftPr_Init_8013C360(HSD_GObj* gobj)
         ftPartsPObjClearDefaultClass();
         ftParts_80075650(gobj, fp->u.pr.x223C, &fp->u.pr.x2240);
 
-        ftParts_8007487C((FtPartsDesc*) &items_shifted[1], &fp->u.pr.x2248, vis,
-                         &fp->u.pr.x2240, &fp->u.pr.x2240);
+        ftParts_8007487C(&parts->x4, &fp->u.pr.x2248, vis, &fp->u.pr.x2240,
+                         &fp->u.pr.x2240);
         ftCo_8009DC54(fp);
         return;
     }
@@ -605,7 +605,7 @@ void ftPr_Init_OnItemVisible(HSD_GObj* gobj)
 
 void ftPr_Init_OnItemDrop(HSD_GObj* gobj, bool bool1)
 {
-    Fighter_OnItemDrop(gobj, bool1, 0, 0);
+    Fighter_OnItemDrop(gobj, bool1, false, false);
 }
 
 void ftPr_Init_LoadSpecialAttrs(HSD_GObj* gobj)

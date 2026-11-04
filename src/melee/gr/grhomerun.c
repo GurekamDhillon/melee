@@ -236,7 +236,7 @@ void grHomeRun_8021CB20(Ground_GObj* gobj)
                             0, 7);
     }
     HSD_SisLib_804D1124[1] =
-        HSD_ArchiveGetPublicAddress(archive->unk0, "SIS_GrHomerunData");
+        HSD_ArchiveGetPublicAs(u8*, archive->unk0, "SIS_GrHomerunData");
     HSD_ASSERT(418, INIT_ADD_PARTS_RANGE*2<Gr_Homerun_Parts_Max);
 
     for (i = 0; (float) i < INIT_ADD_PARTS_RANGE; i++) {
@@ -324,15 +324,15 @@ void grHomeRun_8021D680(Ground_GObj* gobj)
     gp = gobj->user_data;
     fighter = Ground_GetP1Fighter();
     if (fighter != NULL) {
-        ftLib_80086644(fighter, &pos0);
-        subject = ftLib_80086B74(fighter);
+        ftLib_GetPos(fighter, &pos0);
+        subject = ftLib_GetCameraSubject(fighter);
         if (subject != NULL) {
             subject->state = CmSubjectState_Inactive;
             subject->force_inactive = 1;
         }
         fighter = Ground_GetP1Fighter2();
         if (fighter != NULL) {
-            subject = ftLib_80086B74(fighter);
+            subject = ftLib_GetCameraSubject(fighter);
             if (subject != NULL) {
                 subject->state = CmSubjectState_Inactive;
                 subject->force_inactive = 1;
@@ -344,7 +344,7 @@ void grHomeRun_8021D680(Ground_GObj* gobj)
     {
         HSD_GObj* sandbag_gobj = gm_80180AF4();
         if (sandbag_gobj != NULL) {
-            ftLib_80086644(sandbag_gobj, &pos1);
+            ftLib_GetPos(sandbag_gobj, &pos1);
             grHomeRun_8021EA30(&pos1.x);
             if (pos1.y < 4.0F && gp->u.homerun.xE8_flags.b0 != 0) {
                 grHomeRun_8021EAF8();
@@ -848,7 +848,7 @@ void grHomeRun_8021EAF8(void)
 }
 
 /// Copies the main camera into a target camera
-void fn_8021EB10(HSD_GObj* target_cam_gobj, int code)
+void fn_8021EB10(HSD_GObj* target_cam_gobj, intptr_t code)
 {
     HSD_GObj* main_cam_gobj;
     HSD_CObj* main_cam_cobj;
@@ -923,7 +923,7 @@ void grHomeRun_8021ED74(void)
     bobomb_rain.x4 = NULL;
     bobomb_rain.x14 = 0xB;
     bobomb_rain.x18 = 0;
-    bobomb_rain.x1C.b0 = 1;
+    bobomb_rain.x1C.x0.b0 = 1;
     lb_8000B1CC(jobj, NULL, &bobomb_rain.x8_vec);
     it_8026BE84(&bobomb_rain);
 }
@@ -958,7 +958,7 @@ void grHomeRun_8021EDD4(void)
     grHr_804D6AE4 = ratio / (num_ticks * dist);
 }
 
-DynamicsDesc* grHomeRun_8021EEB4(enum_t arg)
+lbColl_80008D30_arg1* grHomeRun_8021EEB4(enum_t arg)
 {
     return NULL;
 }

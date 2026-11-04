@@ -8,7 +8,7 @@
 #include <sysdolphin/baselib/archive.h>
 
 void lbArchive_InitializeDAT(HSD_Archive* archive, void* data, size_t length);
-void lbArchive_LoadSections(HSD_Archive* archive, void** symbols, ...);
+void lbArchive_LoadSections(HSD_Archive* archive, void* symbols, ...);
 HSD_Archive* lbArchive_LoadArchive(const char* filename);
 HSD_Archive* lbArchive_LoadSymbols(const char* filename, void* symbols, ...);
 HSD_Archive* lbArchive_80016DBC(const char* filename, void* symbols, ...);
@@ -19,5 +19,34 @@ bool lbArchive_80017040(HSD_Archive** dst, const char* filename, void* symbols,
 bool lbArchive_800171CC(HSD_Archive** dst, const char* filename, void* symbols,
                         ...);
 int lbArchiveRelocate(HSD_Archive*, u8*, size_t file_size, intptr_t base_addr);
+
+#ifdef DAT_ROOTS_ENABLED
+// Record the type each loaded symbol is written to
+#define lbArchive_LoadSections(archive, ...)                                  \
+    ({                                                                        \
+        DAT_ROOTS(__VA_ARGS__)                                                \
+        (lbArchive_LoadSections)(archive, __VA_ARGS__);                       \
+    })
+#define lbArchive_LoadSymbols(filename, ...)                                  \
+    ({                                                                        \
+        DAT_ROOTS(__VA_ARGS__)                                                \
+        (lbArchive_LoadSymbols)(filename, __VA_ARGS__);                       \
+    })
+#define lbArchive_80016DBC(filename, ...)                                     \
+    ({                                                                        \
+        DAT_ROOTS(__VA_ARGS__)                                                \
+        (lbArchive_80016DBC)(filename, __VA_ARGS__);                          \
+    })
+#define lbArchive_80017040(dst, filename, ...)                                \
+    ({                                                                        \
+        DAT_ROOTS(__VA_ARGS__)                                                \
+        (lbArchive_80017040)(dst, filename, __VA_ARGS__);                     \
+    })
+#define lbArchive_800171CC(dst, filename, ...)                                \
+    ({                                                                        \
+        DAT_ROOTS(__VA_ARGS__)                                                \
+        (lbArchive_800171CC)(dst, filename, __VA_ARGS__);                     \
+    })
+#endif
 
 #endif

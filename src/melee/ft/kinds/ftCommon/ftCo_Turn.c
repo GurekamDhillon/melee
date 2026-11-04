@@ -114,8 +114,8 @@ static void ftCo_Turn_Ucf073Dashback(Fighter* fp)
         f32 f;
         u32 u;
     } fc;
-    int port = fp->player_id, d;
-    if (Replay_UcfVersion(fp->x618_player_id) != 73) {
+    int port = fp->player_idx, d;
+    if (Replay_UcfVersion(fp->pad_port) != 73) {
         return;
     }
     fc.f = fp->x3E4_fighterCmdScript.frame_count;
@@ -150,7 +150,7 @@ static void ftCo_Turn_Ucf084Dashback(Fighter* fp)
         f32 f;
         u32 u;
     } fc;
-    int port = fp->x618_player_id, d;
+    int port = fp->pad_port, d;
     if (Replay_UcfVersion(port) != 84 || fp->is_sub_fighter) {
         return;
     }

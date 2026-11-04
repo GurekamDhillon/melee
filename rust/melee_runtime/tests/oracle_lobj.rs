@@ -201,7 +201,7 @@ fn oracle_lobj() {
             }
             11 => res.push(lobj::light_id_to_index(IDS[(w0 % 9) as usize])),
             12 => res.push(lobj::index_to_light_id(w0 % 11)),
-            13 => sys.get_mut(c).set_color(w0.to_be_bytes()),
+            13 => sys.get_mut(c).set_lobj_color(w0.to_be_bytes()),
             14 => res.push(col(sys.get(c).get_color())),
             15 => {
                 if let Some(l) = cn {

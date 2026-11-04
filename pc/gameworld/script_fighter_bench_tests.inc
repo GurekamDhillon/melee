@@ -46,16 +46,16 @@ int ScriptGame_FighterBenchTest(void)
     a.motion_id=ftCo_MS_Wait;
     script_bench_save(&sa,&a,0); script_bench_save(&sb,&b,0);
     script_bench_assert(&a); script_bench_assert(&b);
-    if (!a.x221F_b3 || !a.x2219_b1 || !a.invisible ||
+    if (!a.is_sleeping || !a.x2219_b1 || !a.invisible ||
         ca.state!=CmSubjectState_Inactive || a.cpu.kind!=CpuKind_5) rc++;
-    a.x221F_b3=0; script_bench_assert(&a); /* every-frame reassertion */
+    a.is_sleeping=0; script_bench_assert(&a); /* every-frame reassertion */
     a.cpu.x18=10; a.cpu.x24=0; /* disabled controller must not leak its brain */
-    if (!a.x221F_b3) rc++;
+    if (!a.is_sleeping) rc++;
     script_bench_restore(&sa,&a); script_bench_restore(&sb,&b);
-    if (a.x221F_b3 || a.x2219_b1 || a.invisible || a.cpu.kind!=CpuKind_4 ||
+    if (a.is_sleeping || a.x2219_b1 || a.invisible || a.cpu.kind!=CpuKind_4 ||
         !b.invisible || b.cpu.kind!=CpuKind_5 || a.cpu.x18!=4 || a.cpu.x24!=123) rc++;
     script_bench[0].owner=1; script_bench[0].entity[0]=sa;
-    a.player_id=0; a.cpu.kind=CpuKind_0; a.cpu.x18=4; a.cpu.x24=300;
+    a.player_idx=0; a.cpu.kind=CpuKind_0; a.cpu.x18=4; a.cpu.x24=300;
     script_bench_cpu_changed(&a); /* cpu_mode selected while benched */
     if (a.cpu.kind!=CpuKind_5) rc++;
     script_bench_restore(&script_bench[0].entity[0],&a);
@@ -89,17 +89,17 @@ int ScriptGame_FighterBenchTest(void)
         HSD_GObjPLinkHead=old_heads;
     }
     /* The dormant transform half stays frozen and invisible after restoration. */
-    b.kind=Ft_Kind_Zelda; b.x221F_b3=1; b.motion_id=ftCo_MS_Sleep;
+    b.kind=Ft_Kind_Zelda; b.is_sleeping=1; b.motion_id=ftCo_MS_Sleep;
     if (script_bench_refused(&b,0,1)) rc++;
     script_bench_save(&sb,&b,1); script_bench_assert(&b); script_bench_restore(&sb,&b);
-    if (!b.x221F_b3 || !b.invisible) rc++;
+    if (!b.is_sleeping || !b.invisible) rc++;
     a.kind=Ft_Kind_Zelda; a.motion_id=ftZd_MS_SpecialLw;
     if (script_bench_refused(&a,0,0)!=6) rc++;
     if (script_bench_entity_read(&a,0,0,2)!=ftZd_MS_SpecialLw ||
         script_bench_entity_read(&a,0,0,13)!=6 ||
         script_bench_entity_read(&b,1,1,11)!=1 ||
         script_bench_entity_read(&b,1,1,2)!=ftCo_MS_Sleep) rc++;
-    b.kind=Ft_Kind_Nana; b.motion_id=ftCo_MS_Attack11; b.x221F_b3=0;
+    b.kind=Ft_Kind_Nana; b.motion_id=ftCo_MS_Attack11; b.is_sleeping=0;
     if (script_bench_entity_read(&b,0,0,1)!=Ft_Kind_Nana ||
         script_bench_entity_read(&b,0,0,13)!=7) rc++;
     b.kind=Ft_Kind_Seak; b.motion_id=ftSk_MS_SpecialAirLw;

@@ -3147,7 +3147,7 @@ static void gw_mex_interp_onload(void *gobj) {
     gw_mex_movelogic_after_onload(gobj);
 }
 
-/* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_8006A360 ->
+/* onFrame (slot 23) - runs Sonic's PPC onFrame per fighter per frame (Fighter_procAnim ->
  * Mex_OnFrameDispatch -> gw_Mex_GObjDispatch(GW_MEX_EVENT_ON_FRAME)). The log is throttled to one
  * line per second (60 invocations), since OnFrame fires at 60 Hz per fighter. */
 /* MELEE_MEX_TRACE_SCALE=1: each frame, walk the fighter's joint tree (gobj->hsd_obj, HSD_JObj:

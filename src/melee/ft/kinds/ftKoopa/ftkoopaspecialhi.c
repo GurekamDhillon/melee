@@ -8,6 +8,7 @@
 
 #include <melee/ft/forward.h>
 
+#include "forward.h"
 #include "ftkoopa.h"
 #include "ftkoopaspecialn.h"
 #include <melee/ef/eflib.h>
@@ -27,7 +28,8 @@ void ftKp_SpecialHi_Enter(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     PAD_STACK(8);
-    Fighter_ChangeMotionState(gobj, 0x167, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialHi, Ft_MF_None, 0.0f, 1.0f,
+                              0.0f, NULL);
     Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
     Fighter_ClearCmdVars(fp);
     fp->self_vel.y = 0.0f;
@@ -45,7 +47,8 @@ void ftKp_SpecialAirHi_Enter(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     ftKoopaAttributes* da = fp->dat_attrs;
     PAD_STACK(8);
-    Fighter_ChangeMotionState(gobj, 0x168, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialAirHi, Ft_MF_None, 0.0f,
+                              1.0f, 0.0f, NULL);
     Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
     Fighter_ClearCmdVars(fp);
     ftCommon_ClampGroundVel(fp, da->x60);
@@ -150,8 +153,8 @@ void ftKp_SpecialHi_Coll(Fighter_GObj* gobj)
     PAD_STACK(8);
     if (ft_80082708(gobj) == GA_Ground) {
         ftCommon_8007D60C(fp);
-        Fighter_ChangeMotionState(gobj, 0x168, 0x0C4C5292, fp->cur_anim_frame,
-                                  1.0f, 0.0f, NULL);
+        Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialAirHi, 0x0C4C5292,
+                                  fp->cur_anim_frame, 1.0f, 0.0f, NULL);
         Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
         ftCommon_ClampSelfVelX(fp, da->x64);
         Fighter_SetEffectHitlagCallbacks(fp);
@@ -172,13 +175,13 @@ static inline void ftKp_SpecialAirHi_Coll_inline(Fighter_GObj* gobj,
     if ((da->x70 < fp->mv.co.walk.middle_anim_frame) &&
         (fp->mv.co.walk.middle_anim_frame < da->x70))
     {
-        Fighter_ChangeMotionState(gobj, 0x167, 0x0C4C5292,
+        Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialHi, 0x0C4C5292,
                                   fp->cur_anim_frame - da->x78, 1.0f, 0.0f,
                                   NULL);
         Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
     } else {
-        Fighter_ChangeMotionState(gobj, 0x167, 0x0C4C5292, fp->cur_anim_frame,
-                                  1.0f, 0.0f, NULL);
+        Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialHi, 0x0C4C5292,
+                                  fp->cur_anim_frame, 1.0f, 0.0f, NULL);
         Fighter_SetDamageCallback(gobj, ftKp_Init_80132B38);
     }
     ftCommon_ClampGroundVel(fp, da->x60);

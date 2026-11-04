@@ -60,7 +60,7 @@ void fn_800D9CE8(Fighter_GObj* gobj)
         break;
     }
 
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
 #if defined(TARGET_PC)
     {
         /* A fighter with a pull-in clip of its own (Geno "motion_anims" on this state) plays it
@@ -69,15 +69,15 @@ void fn_800D9CE8(Fighter_GObj* gobj)
         if (Geno_MotionAnimRow(fp, nextMotion) >= 0) {
             Fighter_ChangeMotionState(gobj, nextMotion, 0, 0.0f, 1.0f, 0.0f, NULL);
             fp->accessory1_cb = fn_800DA190;
-            fp->x221B_b7 = 0;
+            fp->x221B.x221B_b7 = 0;
             return;
         }
     }
 #endif
-    Fighter_ChangeMotionState(gobj, nextMotion, 0x4000, startFrame, 1.0f, 0.0f,
-                              NULL);
+    Fighter_ChangeMotionState(gobj, nextMotion, Ft_MF_UpdateCmd, startFrame,
+                              1.0f, 0.0f, NULL);
     fp->accessory1_cb = fn_800DA190;
-    fp->x221B_b7 = 0;
+    fp->x221B.x221B_b7 = 0;
 }
 
 void ftCo_CatchPull_Anim(Fighter_GObj* gobj)
@@ -115,8 +115,8 @@ void ftCo_CatchPull_Anim(Fighter_GObj* gobj)
     default:
         if (ftAnim_IsFramesRemaining(gobj) != 0) {
             int result;
-            if (fp->throw_flags_b3) {
-                fp->throw_flags_b3 = 0;
+            if (fp->x2210.x0.throw_flags_b3) {
+                fp->x2210.x0.throw_flags_b3 = 0;
                 result = 1;
             } else {
                 result = 0;
@@ -194,16 +194,11 @@ void fn_800DA054(Fighter_GObj* gobj)
         dx = victimPos.x - selfPos.x;
         dy = new_var3 + fp->x2170;
 
-        if ((dx * facing > p_ftCommonData->x34C)) {
-            goto jmp;
-        }
-
-        if (dy < 0.0f) {
-            dy = -dy;
-        }
-        if (dy > p_ftCommonData->x350) {
-        jmp:
+        if (dx * facing > p_ftCommonData->x34C ||
+            ABS(dy) > p_ftCommonData->x350)
+        {
             ftCo_800DA698(gobj, 1);
+
         } else if (dx * facing < 0.0f) {
             v = (dx < 0.0f ? -dx : dx);
             spd = (tmp = fp->co_attrs.walk_max_vel);

@@ -33,7 +33,7 @@ static int script_bench_refused(Fighter* fp, int owned, int dormant)
         (ms>=ftCo_MS_CapturePulledHi && ms<=ftCo_MS_CaptureFoot) ||
         (ms>=ftCo_MS_ThrownF && ms<=ftCo_MS_ThrownlwWomen) ||
         (ms>=ftCo_MS_ShoulderedWait && ms<=ftCo_MS_ThrownCrazyHand)) return 4;
-    if (fp->dmg.x195c_hitlag_frames>0 || (fp->x221F_b3 && !owned)) return 5;
+    if (fp->dmg.x195c_hitlag_frames>0 || (fp->is_sleeping && !owned)) return 5;
     if ((fp->kind==Ft_Kind_Zelda && ms>=ftZd_MS_SpecialLw && ms<=ftZd_MS_SpecialAirLw2) ||
         (fp->kind==Ft_Kind_Seak && ms>=ftSk_MS_SpecialLw && ms<=ftSk_MS_SpecialAirLw2)) return 6;
     /* Interrupting a bespoke state can leave character-owned articles/callbacks.
@@ -45,7 +45,7 @@ static int script_bench_refused(Fighter* fp, int owned, int dormant)
 static void script_bench_save(ScriptBenchEntity* e, Fighter* fp, int dormant)
 {
     e->fighter=fp; e->dormant=dormant; e->cpu=fp->cpu;
-    e->frozen=fp->x221F_b3; e->intangible=fp->x2219_b1;
+    e->frozen=fp->is_sleeping; e->intangible=fp->x2219_b1;
     e->invisible=fp->invisible; e->hide1=fp->x221E_b1;
     e->hide2=fp->x221E_b2; e->ignore=fp->x221F_b1;
     e->camera_state=fp->x890_cameraBox->state;
@@ -55,7 +55,7 @@ static void script_bench_save(ScriptBenchEntity* e, Fighter* fp, int dormant)
 }
 static void script_bench_assert(Fighter* fp)
 {
-    fp->x221F_b3=1; fp->cpu.kind=CpuKind_5; fp->invisible=1;
+    fp->is_sleeping=1; fp->cpu.kind=CpuKind_5; fp->invisible=1;
     fp->x2219_b1=1; fp->x221E_b1=1; fp->x221E_b2=1; fp->x221F_b1=1;
     fp->x890_cameraBox->state=CmSubjectState_Inactive;
     fp->x890_cameraBox->force_inactive=1;
@@ -88,7 +88,7 @@ static void script_bench_restore(ScriptBenchEntity* e, Fighter* fp)
         fp->cpu.xF8_b5=fp->cpu.xF8_b6=fp->cpu.xF8_b7=0;
         fp->cpu.xF9_b1=fp->cpu.xF9_b7=0;
     }
-    fp->x221F_b3=e->frozen; fp->x2219_b1=e->intangible;
+    fp->is_sleeping=e->frozen; fp->x2219_b1=e->intangible;
     fp->invisible=e->invisible; fp->x221E_b1=e->hide1;
     fp->x221E_b2=e->hide2; fp->x221F_b1=e->ignore;
     fp->x890_cameraBox->state=e->camera_state;
@@ -100,7 +100,7 @@ static void script_bench_restore(ScriptBenchEntity* e, Fighter* fp)
  * latest selection in the snapshot-owned record, then keep the reserve inert. */
 static void script_bench_cpu_changed(Fighter* fp)
 {
-    int slot=fp->player_id, i;
+    int slot=fp->player_idx, i;
     if (slot<0 || slot>=6 || !script_bench[slot].owner) return;
     for (i=0; i<2; ++i) if (script_bench[slot].entity[i].fighter==fp) {
         script_bench[slot].entity[i].cpu=fp->cpu;
@@ -119,7 +119,7 @@ static int script_bench_pair(int slot, Fighter** pair, int* dormant)
         pair[1]=GET_FIGHTER(gobj);
         if (!pair[1]) return 1;
         dormant[1]=(pair[0]->kind==Ft_Kind_Zelda || pair[0]->kind==Ft_Kind_Seak) &&
-                   (pair[1]->kind==Ft_Kind_Zelda || pair[1]->kind==Ft_Kind_Seak) && pair[1]->x221F_b3;
+                   (pair[1]->kind==Ft_Kind_Zelda || pair[1]->kind==Ft_Kind_Seak) && pair[1]->is_sleeping;
         if (!pair[1]->is_sub_fighter && !dormant[1]) return 6;
     }
     return 0;
@@ -160,7 +160,7 @@ static int script_bench_entity_read(Fighter* fp, int benched, int dormant, int f
     case 4: return script_mesh_bits(fp->cur_pos.x);
     case 5: return script_mesh_bits(fp->cur_pos.y);
     case 6: return fp->cpu.kind;
-    case 7: return fp->x221F_b3;
+    case 7: return fp->is_sleeping;
     case 8: return fp->invisible;
     case 9: return fp->x2219_b1;
     case 10: return !fp->x890_cameraBox || fp->x890_cameraBox->force_inactive ||
@@ -190,7 +190,7 @@ int ScriptGame_FighterReserveRead(int slot, int entity, int field)
         owned=1; dormant=b->entity[entity].dormant;
     } else if (entity) {
         dormant=(primary->kind==Ft_Kind_Zelda || primary->kind==Ft_Kind_Seak) &&
-                (fp->kind==Ft_Kind_Zelda || fp->kind==Ft_Kind_Seak) && fp->x221F_b3;
+                (fp->kind==Ft_Kind_Zelda || fp->kind==Ft_Kind_Seak) && fp->is_sleeping;
     }
     return script_bench_entity_read(fp,owned,dormant,field);
 }
@@ -229,7 +229,7 @@ int ScriptGame_FighterBench_profile_body(int slot, int owner)
  * lose races to state entry. A stale/replaced entity is never dereferenced. */
 int ScriptGame_FighterBenchTick(Fighter* fp)
 {
-    int slot=fp->player_id, i;
+    int slot=fp->player_idx, i;
     if (slot<0 || slot>=6 || !script_bench[slot].owner) return 0;
     for (i=0; i<2; ++i) if (script_bench[slot].entity[i].fighter==fp) {
         script_bench_assert(fp); return 1;

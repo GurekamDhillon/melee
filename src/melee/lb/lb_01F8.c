@@ -47,7 +47,7 @@ HSD_SObj* lbMthp8001F890(HSD_GObj* gobj)
     return lbl_804335B8.x90;
 }
 
-void lbMthp8001F928(HSD_GObj* gobj, int arg1)
+void lbMthp8001F928(HSD_GObj* gobj, intptr_t arg1)
 {
     u16* pWidth = &lbl_804335B8.x6C;
     u16* pHeight = &lbl_804335B8.x6E;
@@ -73,13 +73,15 @@ void lbMthp8001F928(HSD_GObj* gobj, int arg1)
     HSD_SObjLib_803A49E0(gobj, arg1);
 }
 
+struct lbMthp8001FAA0_header {
+    u16 w;
+    u16 h;
+    u8 pad[0x18];
+};
+
 void lbMthp8001FAA0(const char* filename, int width, int height)
 {
-    struct {
-        u16 w;
-        u16 h;
-        u8 pad[0x18];
-    } header;
+    struct lbMthp8001FAA0_header header;
     s32 output;
     s32 yuv_size;
     s32 uv_size;

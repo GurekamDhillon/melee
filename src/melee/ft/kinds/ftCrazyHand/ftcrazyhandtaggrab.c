@@ -22,7 +22,7 @@
 static inline void func_8015ADD0_inline(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+    ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
     fp->self_vel.x = fp->self_vel.y = fp->self_vel.z = 0;
     it_802F046C(fp->mv.ch.grab.x28);
     it_802F046C(fp->mv.ch.grab.x2C);
@@ -51,7 +51,8 @@ void ftCh_GrabUnk1_8015ADD0(HSD_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     fp->cmd_vars[0] = 0;
     func_8015ADD0_inline(gobj);
-    Fighter_ChangeMotionState(gobj, 0x181, 0, 0, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftMh_MS_TagGrab, Ft_MF_None, 0, 1.0f, 0.0f,
+                              NULL);
     ftAnim_8006EBA4(gobj);
     ft_800881D8(fp, 0x4E217, 127, 64);
     ft_PlaySFX(fp, 0x4E219, 127, 64);
@@ -63,7 +64,7 @@ void ftCh_TagGrab_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->cmd_vars[0]) {
-        ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+        ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
         if (++fp->mv.ch.ch_dmg.x60 <= da->x124) {
             lbAudioAx_8002438C(0x81652);
         } else {
@@ -74,7 +75,8 @@ void ftCh_TagGrab_Anim(HSD_GObj* gobj)
         fp->cmd_vars[0] = 0;
     }
     if (fp->mv.ch.unk0.x8 > 0 && !ftAnim_IsFramesRemaining(gobj)) {
-        Fighter_ChangeMotionState(gobj, 0x182, 0, 0, 1.0f, 0.0f, NULL);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_TagSqueeze, Ft_MF_None, 0,
+                                  1.0f, 0.0f, NULL);
         ftAnim_8006EBA4(gobj);
     }
     if (--fp->mv.ch.unk0.x8 == 0) {
@@ -86,7 +88,7 @@ void ftCh_TagSqueeze_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     if (fp->cmd_vars[0]) {
-        ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+        ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
         if (++fp->mv.ch.ch_dmg.x60 <= da->x124) {
             lbAudioAx_8002438C(0x81652);
         } else {
@@ -97,7 +99,8 @@ void ftCh_TagSqueeze_Anim(HSD_GObj* gobj)
         fp->cmd_vars[0] = 0;
     }
     if (fp->mv.ch.unk0.x8 > 0 && !ftAnim_IsFramesRemaining(gobj)) {
-        Fighter_ChangeMotionState(gobj, 0x182, 0, 0, 1.0f, 0.0f, NULL);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_TagSqueeze, Ft_MF_None, 0,
+                                  1.0f, 0.0f, NULL);
         ftAnim_8006EBA4(gobj);
     }
     if (--fp->mv.ch.unk0.x8 == 0) {
@@ -108,7 +111,7 @@ void ftCh_TagSqueeze_Anim(HSD_GObj* gobj)
 void ftCh_TagGrab_IASA(HSD_GObj* gobj)
 {
     Fighter* ft = GET_FIGHTER(gobj);
-    if (Player_GetPlayerSlotType(ft->player_id) == Gm_PKind_Human) {
+    if (Player_GetPlayerSlotType(ft->player_idx) == Gm_PKind_Human) {
         ftBossLib_8015BD20(gobj);
     }
 }
@@ -116,7 +119,7 @@ void ftCh_TagGrab_IASA(HSD_GObj* gobj)
 void ftCh_TagGrab_Phys(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+    ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
     fp->self_vel.y += da->x12C_pos.y;
     fp->self_vel.z += da->x134_pos.y;
 }

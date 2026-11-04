@@ -1,7 +1,7 @@
 /* The CPU's virtual controller, driven by a script: gd.cpu_pad / gd.cpu_script / gd.cpu_dest.
  *
  * Mode "script" (script_cpu_override == 3): the retail AI does not run and does not write
- * fp->cpu.*. At the same point in the frame (ftCo_800B3900, from Fighter_8006ABA0) this file
+ * fp->cpu.*. At the same point in the frame (ftCo_800B3900, from Fighter_procCpu) this file
  * writes it instead, either from a held pad sample or by running a retail command script
  * (ftCo_800B3E04, the interpreter the AI itself uses) over the 0x100-byte buffer in
  * fp->cpu. Everything it keeps is in fp->cpu or in script_cpu_ctl below, both game memory, so
@@ -210,7 +210,7 @@ static void script_cpu_ctl_tick(Fighter* fp, ScriptCpuCtl* c, Fighter* target)
 
 static void script_cpu_script_tick(Fighter* fp)
 {
-    int slot = fp->player_id, i;
+    int slot = fp->player_idx, i;
     ScriptCpuCtl* c = &script_cpu_ctl[slot][fp->is_sub_fighter ? 1 : 0];
     Fighter* target = NULL;
     if (c->target >= 0) {

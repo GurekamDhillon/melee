@@ -63,7 +63,7 @@ Item_GObj* it_80286088(Item_GObj* parent_gobj)
         spawn.vel.x = 0.0F;
         spawn.x0_parent_gobj = NULL;
         spawn.x4_parent_gobj2 = spawn.x0_parent_gobj;
-        spawn.x44_flag.b0 = 0;
+        spawn.x44_flag.x0.b0 = 0;
         spawn.x40 = 0;
 
         result = Item_80268B18(&spawn);
@@ -91,7 +91,7 @@ Item_GObj* it_80286088(Item_GObj* parent_gobj)
 void itBox_Logic1_Spawned(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    ip->xDCE_flag.b7 = 0;
+    ip->xDCE_flag.x0.b7 = 0;
     ip->xDD4_itemVar.box.opened = 0;
     ip->xDD4_itemVar.box.spawned_gobj = NULL;
     it_8028655C(gobj);
@@ -147,10 +147,6 @@ void it_80286248(Item_GObj* gobj, s32 arg1, s32 arg2, s32 arg3, s32 arg4)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 bool it_80286340(Item_GObj* gobj, s32 arg1, s32 arg2, s32 arg3, s32 arg4)
 {
     s32 sum1 = arg1 + arg2;
@@ -167,9 +163,6 @@ bool it_80286340(Item_GObj* gobj, s32 arg1, s32 arg2, s32 arg3, s32 arg4)
     }
     return false;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 /// Check if box bounced off a surface nearly upright. If the bounce angle
 /// relative to vertical is below threshold, clear velocity vectors and
@@ -178,7 +171,7 @@ bool it_802863BC(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     CollData* coll = &ip->x378_itemColl;
-    itBoxAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itBoxAttributes* attr = &ip->xC4_article_data->x4_specialAttributes->box;
     Vec3 dir;
     Vec3 unit;
 
@@ -315,7 +308,7 @@ void itBox_UnkMotion4_Phys(Item_GObj* gobj)
 static inline void itBox_TryOpen_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itBoxAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itBoxAttributes* attr = &ip->xC4_article_data->x4_specialAttributes->box;
     efSync_Spawn(0x427, gobj, &ip->pos);
     if (it_80286340(gobj, attr->spawn_weight_0, attr->spawn_weight_1,
                     attr->spawn_weight_2, attr->empty_weight))
@@ -354,7 +347,7 @@ void itBox_Logic1_Dropped(Item_GObj* gobj)
 bool itBox_UnkMotion4_Coll(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itBoxAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itBoxAttributes* attr = &ip->xC4_article_data->x4_specialAttributes->box;
     PAD_STACK(24);
 
     if (it_8026DA08(gobj)) {
@@ -391,7 +384,7 @@ void it_80286AA4(Item_GObj* gobj)
 
     ip->x40_vel.x = 0.0F;
     ip->x40_vel.y = 0.0F;
-    ip->xDCF_flag.b2 = 1;
+    ip->xDCF_flag.x0.b2 = 1;
     ip->xDD4_itemVar.box.opened = 1;
     ip->xDD4_itemVar.box.despawn_timer = 40;
 
@@ -420,7 +413,7 @@ bool itBox_UnkMotion6_Coll(Item_GObj* gobj)
 void it_80286BA0(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itBoxAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itBoxAttributes* attr = &ip->xC4_article_data->x4_specialAttributes->box;
     HSD_JObj* jobj = gobj->hsd_obj;
     PAD_STACK(8);
 
@@ -433,7 +426,7 @@ void it_80286BA0(Item_GObj* gobj)
 
     ip->x40_vel.x = 0.0F;
     ip->x40_vel.y = 0.0F;
-    ip->xDCF_flag.b2 = 1;
+    ip->xDCF_flag.x0.b2 = 1;
     ip->xDD4_itemVar.box.opened = 1;
     ip->xDD4_itemVar.box.despawn_timer = 40;
 
@@ -509,18 +502,11 @@ bool itBox_Logic1_Reflected(Item_GObj* gobj)
 bool itBox_Logic1_DmgReceived(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itBoxAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
-    PAD_STACK(16);
+    itBoxAttributes* attr = &ip->xC4_article_data->x4_specialAttributes->box;
+    PAD_STACK(8);
     if (ip->xDD4_itemVar.box.opened == 0) {
         if (ip->xC9C >= attr->damage_threshold) {
-            efSync_Spawn(0x427, gobj, &ip->pos);
-            if (it_80286340(gobj, attr->spawn_weight_0, attr->spawn_weight_1,
-                            attr->spawn_weight_2, attr->empty_weight))
-            {
-                it_80286BA0(gobj);
-            } else {
-                it_80286AA4(gobj);
-            }
+            itBox_TryOpen_inline(gobj);
         }
     }
     return false;

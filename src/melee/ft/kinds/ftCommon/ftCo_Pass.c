@@ -61,8 +61,8 @@ static bool ftCo_8009A080_Check(Fighter_GObj* gobj)
     extern int ftUcf_FlickCounter(int port);
     Fighter* fp = gobj->user_data;
     bool down = fp->input.lstick[0].y <= -p_ftCommonData->x464;
-    if (!down && Replay_UcfVersion(fp->x618_player_id) == 84) {
-        down = ftUcf_FlickCounter(fp->x618_player_id) > 1;
+    if (!down && Replay_UcfVersion(fp->pad_port) == 84) {
+        down = ftUcf_FlickCounter(fp->pad_port) > 1;
     }
     return down && fp->active_timer.lstick.y < p_ftCommonData->x468 &&
            mpColl_IsOnPlatform(&fp->coll_data);

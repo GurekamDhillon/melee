@@ -838,7 +838,7 @@ void gm_801A4D34(void (*on_frame)(void), UNUSED GameSceneInfo* info)
                the console at full speed. Catching up with several logic frames per render made
                render-coupled state go stale for game logic - the magnifier's off-screen flag is
                set in its render callback (ifMagnify_802FBBDC) and read every logic frame by the
-               1%-per-interval off-screen damage (Fighter_8006A1BC), so under load that 1% landed a
+               1%-per-interval off-screen damage (Fighter_procHitlag), so under load that 1% landed a
                frame early or late and two runs of one replay parted ways. The rest of the queue
                stays queued and runs next iteration: the game slows under load instead of
                skipping renders. */

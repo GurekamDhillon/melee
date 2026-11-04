@@ -1,3 +1,5 @@
+#include "gm_181A.h"
+
 #include <Runtime/platform.h>
 
 #include <sysdolphin/baselib/forward.h>
@@ -25,16 +27,6 @@
 #include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/tobj.h>
-
-typedef struct RegClearSpawnEntry {
-    /* 0x00 */ s32 x0;
-    /* 0x04 */ u8 x4;
-    /* 0x05 */ u8 x5;
-    /* 0x06 */ u8 x6;
-    /* 0x07 */ u8 x7;
-    /* 0x08 */ f32 x8;
-    /* 0x0C */ f32 xC;
-} RegClearSpawnEntry;
 
 typedef struct RegClearCharEntry {
     /* 0x00 */ u8 x0;
@@ -236,10 +228,6 @@ void gm_80181B64(int c_kind, int arg1, s32 arg2)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 int fn_80181BFC(int* arg0)
 {
     int i;
@@ -256,9 +244,6 @@ int fn_80181BFC(int* arg0)
     }
     return count;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static inline s32 fn_80181C80_CountPlayers(volatile s32* out)
 {
@@ -309,9 +294,10 @@ void fn_80181C80(s32 arg0)
     }
 }
 
-static inline s32 fn_80181E18_ComputeRemaining100(const s32* x4, s32 count)
+// Counts occupied slots 1-5 with zero falls.
+static inline int countActiveOpponents(void)
 {
-    return 0x64 - (count + *x4);
+    return fn_80181BFC(NULL);
 }
 
 void fn_80181E18(void)
@@ -324,8 +310,6 @@ void fn_80181E18(void)
     s32 entry_idx;
     s32 next;
     s32 temp;
-    s32 count;
-    s32 i;
     s32 mode = gm_GetCurrentGameMode();
 
     field = &data->x8;
@@ -368,7 +352,7 @@ void fn_80181E18(void)
             break;
         }
 
-        temp = entry_idx - fn_80181BFC(NULL);
+        temp = entry_idx - countActiveOpponents();
         if (temp < 0) {
             temp = 0;
         }
@@ -379,21 +363,21 @@ void fn_80181E18(void)
 
         switch (mode) {
         case 0x21:
-            temp = entry_idx - fn_80181BFC(NULL);
+            temp = entry_idx - countActiveOpponents();
             if (temp < 0) {
                 temp = 0;
             }
             ifStock_802FA2D0(0xA - (temp + *x4));
             break;
         case 0x22:
-            temp = entry_idx - fn_80181BFC(NULL);
+            temp = entry_idx - countActiveOpponents();
             if (temp < 0) {
                 temp = 0;
             }
-            ifStock_802FA2D0(fn_80181E18_ComputeRemaining100(x4, temp));
+            ifStock_802FA2D0(100 - (temp + *x4));
             break;
         default:
-            temp = entry_idx - fn_80181BFC(NULL);
+            temp = entry_idx - countActiveOpponents();
             if (temp < 0) {
                 temp = 0;
             }
@@ -409,15 +393,7 @@ void fn_80181E18(void)
         }
 
         if (next == 0x3E7) {
-            count = 0;
-            for (i = 1; i < 6; i++) {
-                if (Player_GetFalls(i) == 0 &&
-                    Player_GetPlayerSlotType(i) != Gm_PKind_NA)
-                {
-                    count += 1;
-                }
-            }
-            if (count == 0) {
+            if (fn_80181BFC(NULL) == 0) {
                 REGCLEAR_RECORD.x0 = 1;
                 gm_8016B33C(7);
                 gm_8016B328();
@@ -430,7 +406,7 @@ void fn_80181E18(void)
                 *x4 += 1;
             }
             fn_80181C80(data->x54[entry_idx].x0);
-            temp = entry_idx - fn_80181BFC(NULL);
+            temp = entry_idx - countActiveOpponents();
             if (temp < 0) {
                 temp = 0;
             }
@@ -586,7 +562,7 @@ void gm_80182174(void)
         break;
     }
 
-    lbl_80473594.x10 = Player_GetPlayerId(0);
+    lbl_80473594.x10 = Player_GetPadPort(0);
     lbl_80473594.x11 = Player_GetNametagSlotID(0);
     HSD_GObj_SetupProc(GObj_Create(0xFU, 0x11U, 0U),
                        (HSD_GObjEvent) fn_80181E18, 0x15U);
@@ -612,17 +588,18 @@ bool gm_IsMultimanSmashMode(void)
 /// relocations are lbl_80472ED8+0x6BC..+0x6C8): lbl_80473594 overlays
 /// lbl_80472ED8+0x6BC (0x80472ED8 + 0x6BC == 0x80473594), and gm_80182578
 /// below already reads the same storage via lbl_80473594.
+typedef struct {
+    u8 pad_0[0x6BC];
+    u8 x6BC;
+    u8 pad_6BD;
+    u16 x6BE;
+    int x6C0;
+    int x6C4;
+    int x6C8;
+} regclear_record_state;
+
 void gm_80182554(int arg0, int arg1)
 {
-    typedef struct {
-        u8 pad_0[0x6BC];
-        u8 x6BC;
-        u8 pad_6BD;
-        u16 x6BE;
-        int x6C0;
-        int x6C4;
-        int x6C8;
-    } regclear_record_state;
     regclear_record_state* s = (regclear_record_state*) &lbl_80472ED8;
 
     s->x6C8 = arg0;

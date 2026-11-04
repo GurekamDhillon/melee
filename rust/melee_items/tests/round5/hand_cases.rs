@@ -16,7 +16,7 @@ cases! { hand_match_c, 87;
     1013 R5H_STARROD_M1_PHYS |ip, g, ov, x| { r4_pre(ip, g, x); it_starrod_unk_motion1_phys(ip); hmix(0, r4_h(ip)) };
     1014 R5H_ZELDADINFIREEXPLODE_M0 |ip, g, ov, x| { r4_pre(ip, g, x); it_zeldadinfireexplode_unk_motion0_phys(ip); hmix(0, r4_h(ip)) };
     1015 R5H_802A2418 |ip, g, ov, x| { r4_pre(ip, g, x); it_802a2418(ip); hmix(0, r4_h(ip)) };
-    1016 R5H_802EAF28 |ip, g, ov, x| { r4_pre(ip, g, x); let ret = it_802eaf28(ip) as u32; hmix(ret, r4_h(ip)) };
+    1016 R5H_802EAF28 |ip, g, ov, x| { r4_pre(ip, g, x); let v = unsafe { &ip.xDD4_itemVar.greatfoxlaser }; assert_eq!(it_802eaf28(ip), ((v.x38 as u16 as u32) | ((v.x3A as u16 as u32) << 16)) as i32); /* the port reads the x86-32 word (itgreatfoxlaser.rs); the x86-64 oracle the native likelike.x38 slot */ let ret = unsafe { ip.xDD4_itemVar.likelike.x38 } as u32; hmix(ret, r4_h(ip)) };
     1017 R5H_SAMUSBOMB_EVTUNK |ip, g, ov, x| { r4_pre(ip, g, x); let r = g.ptr(); it_samus_bomb_logic50_evt_unk(ip, r); hmix(0, r4_h(ip)) };
     1018 R5H_TOSAKINTO_M2_PHYS |ip, g, ov, x| { r4_pre(ip, g, x); it_tosakinto_unk_motion2_phys(ip); hmix(0, r4_h(ip)) };
     1019 R5H_2E5A_M1_ANIM |ip, g, ov, x| { r4_pre(ip, g, x); r4_rev(ip, 24); let ret = it_2e5a_unk_motion1_anim(ip) as u32; r4_rev(ip, 24); hmix(ret, r4_h(ip)) };

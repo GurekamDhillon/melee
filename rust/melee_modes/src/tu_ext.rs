@@ -1161,5 +1161,5 @@ pub use melee_runtime::tu::gobj_native::HSD_GObj_LightKind;
 pub use melee_runtime::tu::controller::HSD_PadCopyStatus;
 /// extern global `HSD_SObjLib_804D7960` (owner TU is elsewhere)
 pub use melee_runtime::tu::sobjlib::HSD_SObjLib_804D7960;
-/// extern global `HSD_identityMtx` (owner TU is elsewhere)
-pub static mut HSD_identityMtx: [[f32; 4]; 3] = unsafe { core::mem::zeroed() };
+/// extern global `HSD_identityMtx` (owner TU is elsewhere): util.c's identity (a zeroed private copy loaded a null position matrix)
+pub static mut HSD_identityMtx: [[f32; 4]; 3] = melee_runtime::hsd_util::HSD_IDENTITY_MTX;

@@ -348,7 +348,7 @@ plat! {
     Geno_DefineTemplateSkeleton(kind: i32) -> i32 = 0;
     Geno_DefineKirbyCopy(kind: i32) -> i32 = -2;
     Geno_ToonUnlit(kind: i32) -> i32 = 0;
-    GenoDefine_PartsTable(kind: i32) -> *mut FighterPartsTable = core::ptr::null_mut();
+    GenoDefine_PartsTable(kind: i32) -> *mut FighterPartsTable = crate::tu::ftdata::GenoDefine_PartsTable(kind);
     GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = crate::tu::ftdata::GenoDefine_RestPoseTree(fp);
     GenoDefine_BindFighter(fp: F) = unsafe { crate::tu::ftdata::GenoDefine_BindFighter(&mut *fp) };
     GenoDefine_InitKinds() = crate::tu::ftdata::GenoDefine_InitKinds();

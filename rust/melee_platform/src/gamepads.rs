@@ -53,7 +53,12 @@ impl Gamepads {
                 continue;
             }
             if let Some(port) = self.ports.iter().position(|p| p.is_none()) {
-                plog!("gw: input: gamepad \"{}\" -> port {}", gp.name(), port + 1);
+                plog!(
+                    "gw: input: gamepad \"{}\" ({}) -> port {}",
+                    gp.name(),
+                    crate::profiles::Family::detect(gp.vendor_id(), gp.product_id(), gp.name()).name(),
+                    port + 1
+                );
                 self.ports[port] = Some(id);
             }
         }
@@ -77,7 +82,7 @@ impl Gamepads {
         for (i, id) in self.ports.iter().enumerate() {
             let Some(gp) = id.and_then(|id| g.connected_gamepad(id)) else { continue };
             let mut r = RawGamepad::default();
-            const MAP: [(Button, NativeButton); 15] = [
+            const MAP: [(Button, NativeButton); 19] = [
                 (Button::South, NativeButton::South),
                 (Button::East, NativeButton::East),
                 (Button::West, NativeButton::West),
@@ -93,6 +98,10 @@ impl Gamepads {
                 (Button::DPadDown, NativeButton::DpadDown),
                 (Button::DPadLeft, NativeButton::DpadLeft),
                 (Button::DPadRight, NativeButton::DpadRight),
+                (Button::LeftTrigger2, NativeButton::LeftTrigger2),
+                (Button::RightTrigger2, NativeButton::RightTrigger2),
+                (Button::C, NativeButton::C),
+                (Button::Z, NativeButton::Z),
             ];
             for (b, nb) in MAP {
                 if gp.is_pressed(b) {
@@ -107,6 +116,8 @@ impl Gamepads {
             r.trigger_l = to_sdl(t(Button::LeftTrigger2).max(0.0));
             r.trigger_r = to_sdl(t(Button::RightTrigger2).max(0.0));
             r.has_rumble = gp.is_ff_supported();
+            r.name = gp.name().to_string();
+            r.family = crate::profiles::Family::detect(gp.vendor_id(), gp.product_id(), gp.name());
             out[i] = Some(r);
         }
         out

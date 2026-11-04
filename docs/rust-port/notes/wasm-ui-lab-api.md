@@ -226,6 +226,29 @@ Contract:
 4. In netplay and synctest, `EXCLUSIVE` is allowed on **local ports only** and only in non-match scenes. `INJECT`
    and `KEYBOARD` return `EOFFLINE` there.
 
+### A6. Host catalogs and requests (`UI_HOST`, gd-ui-v1.2): the in-game browser
+
+Feature bit 16 `UI_HOST`, `gdmod_ui_abi` 1.2. Three imports: `gd_ui_list_info(kind) -> gen << 16 | count`,
+`gd_ui_list_get(kind, i, out, cap) -> bytes`, `gd_ui_request(op, arg, len)`. Catalogs (MODES, MODS, REPLAYS, SKINS,
+STATUS, ONLINE) and request ops (LAUNCH, MOD_SET, REPLAY_PLAY, SKIN_SET, NET_HOST, NET_JOIN, NET_SPECTATE, REFRESH)
+and their record fields are in `gd-ui-lab-v1.h`. Host: `ui::PresHost::{wants_host, set_list, take_requests}`; the
+play flow side is `rust/melee/src/browser.rs` (catalogs built only at the first present and after a changing request).
+
+What a request does: a retail mode (Training, Event Match, 1P, Stadium; Special Melee is listed but refused, as the
+menu's `menuguard` refuses it) starts in place from the main menu with the menu's own two writes
+(`MenuExitData.pending_mode`, `gm_801A4B60`), offline only. Like any menu choice that is not an input, a `--record`
+replay of a session that used it does not reproduce it. Boot-time modes relaunch `melee play` with this run's options
+plus the new ones and quit this run: the LAB / workbench (`MELEE_SCENE=mode=lab|workbench..`), a `.mrpl` replay
+(`--replay`, with replay_ctl's controls), online host / join (`--netplay host|join CODE --np-css`), spectate
+(`--spectate`, a bare code through `relay:<MELEE_NP_SERVER>/CODE`). `MELEE_BROWSER_DRY_RUN=1` logs the relaunch
+instead (headless checks); the log replaces the disc path with `<iso>`. MOD_SET writes enabled.txt (next launch).
+SKIN_SET writes `skin_<slot>=` and mounts live offline through `cosmetics::mount` (next match), as the settings
+overlay does. Envoy is listed as unavailable (not in this build).
+
+The mod: `rust/mods/browser` (theme A, the LAB's parts). Z on the main menu opens it (a SHARED capture watches the
+pads while closed; open: EXCLUSIVE + KEYBOARD on all ports); closed, it submits nothing. Open: one `gd_ui_submit`, at
+most 9 host calls per present (4 pads, keys, scene, 2 list infos, submit), no allocation (no_std).
+
 ### A5. Scene flow (`UI_SCENE`)
 
 | import | signature |

@@ -207,6 +207,11 @@ impl LabRun {
             exchange: None, events: Vec::new(), perf: Perf::default(), last_pads: [PADStatus::zeroed(); 4], drew: false,
         };
         r.sh.borrow_mut().active = true;
+        // the match's timer (as ifTime_CreateTimers decides whether to show it); read once, the rules are fixed
+        r.sh.borrow_mut().timed = unsafe {
+            let rules = melee_world::gm::gm_GetStartMeleeRules();
+            !rules.is_null() && ((*rules).timer_enabled() != 0 || (*rules).x1_0() != 0)
+        };
         // the snapshot base now (as the rollback session takes it at its first frame): a base taken lazily at a later
         // savestate would be captured inside the frame's own allocations
         let t = std::time::Instant::now();
@@ -759,6 +764,8 @@ impl LabRun {
         }
         if self.g.e.ended {
             self.publish();
+            // the match is over (results): no more lab commands (the results' START presses are not freezes)
+            self.sh.borrow_mut().active = false;
             return false;
         }
         if self.paused && self.steps == 0 {
@@ -1019,7 +1026,10 @@ impl LabRun {
         for (i, sl) in self.slots.iter().enumerate() {
             s.slot_frame[i] = sl.as_ref().map_or(-1, |x| x.0);
         }
-        s.rec_len = self.recs.iter().map(|(k, r)| (*k, r.frames.len() as i32)).collect();
+        s.rec_len.fill(-1);
+        for (k, r) in &self.recs {
+            s.rec_len[*k as usize] = r.frames.len() as i32;
+        }
         s.recording_mask = self.recs.values().filter(|r| r.open).fold(0, |m, r| m | r.mask as u32);
         let ev = std::mem::take(&mut self.events);
         s.publish_events(&ev);

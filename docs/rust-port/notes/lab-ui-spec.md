@@ -16,6 +16,12 @@ below are copied from it exactly; it is not copied into the repo.
 | M4 (part) | frame meter (part 4, stun hatch), move readout (from the observed frame data of P1's last move with a hitbox), state readout (action names from the decomp's ftCommon enum, `tools/rust-port/modhost/lab_names.py`), dummy panel (defaults until the M3 menu), combo panel, input display (part 6, numpad history); Frame data and Full presets; Z + D-up cycles the preset |
 | online | freeze / rewind / step / load apply to both players (no consent prompt, open question 4 decided); the other player's action shows as a toast |
 
+Since the font merge (gd-ui 1.1): numbers in JetBrains Mono (`TEXT_MONO`); the subset fonts have no arrow glyphs,
+so hints keep "D-dn" / "D-up". Keep-out: input display and hints sit above the percent row whenever they overlap the
+band (4:3 and 16:9); in a timed match (`gd_lab_timed`) the meter drops below the timer (band y 125 of 720). Online
+check: `LAB_MOD=lab tools/rust-port/netplay/lab_pair.sh` (both peers freeze, rewind, take over, save, load; 0 desyncs;
+toasts are in the log through `gd_ui_log`).
+
 Layout: the presets are laid out on 1280x720 and scaled to fit the window (`SPACE_WINDOW`); a 4:3 window gets the
 extra height, the frozen widgets sit above the percent-row keep-out. Measured in the game (1280x960 window, retail
 flow, Full preset with the frozen scrubber part of the run): gd_ui present p50 63 us, p99 157 us (all UI host work plus

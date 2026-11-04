@@ -35,6 +35,7 @@ extern "C" {
     fn gd_lab_ring(frames: u32) -> i32;
     fn gd_lab_pause(on: i32) -> i32;
     fn gd_lab_step(n: i32) -> i32;
+    fn gd_lab_rewind(n: u32) -> i32;
     fn gd_lab_go_live() -> i32;
     fn gd_lab_overlay(mask: u32, bits: u32) -> i32;
     fn gd_lab_fighter(port: u32, out: *mut u8, len: u32) -> i32;
@@ -45,6 +46,7 @@ extern "C" {
     fn gd_lab_meter(port: u32, out: *mut u8, n: u32) -> i32;
     fn gd_lab_status(out: *mut i32) -> i32;
     fn gd_lab_applied(out: *mut u8, max: u32) -> i32;
+    fn gd_lab_timed() -> i32;
 }
 
 const FEATURE_LAB: u32 = 1 << 10;
@@ -97,6 +99,12 @@ const OP_PAUSE: u8 = 5;
 const OP_STEP: u8 = 6;
 const OP_GO_LIVE: u8 = 7;
 const CELL_STUN: u8 = 4;
+
+// gd-ui-v1.1 text styles: theme A's number font is JetBrains Mono (spec 7.1)
+const R_NUM: i32 = ROLE_VALUE | TEXT_MONO;
+const R_TOAST: i32 = ROLE_TOAST | TEXT_MONO;
+const R_LAB: i32 = ROLE_TITLE | TEXT_MONO;
+const R_ADV: i32 = ROLE_VALUE | TEXT_MONO | TEXT_BOLD | text_size(16);
 
 const CLEAN: u8 = 0;
 const FRAMEDATA: u8 = 1;
@@ -167,6 +175,7 @@ struct Lab {
     kit_hatch: u32,
     preset: u8,
     slot: u32,
+    timed: bool,
     status: [i32; 10],
     last_frame: i32,
     head: i32,
@@ -183,7 +192,8 @@ struct Lab {
     p1_char: i32,
     pending_fd: i32,
     pending_tries: u8,
-    act_damage: i32,
+    dmg_action: i32,
+    dmg_sum: i32,
     mv: Move,
     mv_title: Row,
     mv_rows: [Row; 6],
@@ -238,6 +248,7 @@ static mut L: Lab = Lab {
     kit_hatch: 0,
     preset: FRAMEDATA,
     slot: 0,
+    timed: false,
     status: [0; 10],
     last_frame: -1,
     head: 0,
@@ -253,7 +264,8 @@ static mut L: Lab = Lab {
     p1_char: -1,
     pending_fd: -1,
     pending_tries: 0,
-    act_damage: 0,
+    dmg_action: -1,
+    dmg_sum: 0,
     mv: Move { action: -1, n: 0, first: -1, last: -1, iasa: -1, landing: -1, lcancel: false, damage: 0, adv: 0, on_shield: false, have_adv: false },
     mv_title: Row::new(),
     mv_rows: [Row::new(); 6],
@@ -361,8 +373,9 @@ impl Lab {
             t.sub = *s;
         }
         t.life = 150;
-        t.w = measure(t.main.as_str(), ROLE_TOAST) + 24.0;
-        t.sub_w = if t.sub.is_empty() { 0.0 } else { measure(t.sub.as_str(), ROLE_VALUE) + 20.0 };
+        gd_ui_enc::log(t.main.as_str());
+        t.w = measure(t.main.as_str(), R_TOAST) + 24.0;
+        t.sub_w = if t.sub.is_empty() { 0.0 } else { measure(t.sub.as_str(), R_NUM) + 20.0 };
     }
     fn toast_s(&mut self, s: &str) {
         let mut m = Txt::new();
@@ -384,7 +397,7 @@ impl Lab {
             // ports 1 and 2 observed (the game keeps its input)
             self.cap = gd_ui_capture(0x3, CAP_SHARED);
         }
-        self.lab_w = measure("LAB", ROLE_TITLE);
+        self.lab_w = measure("LAB", R_LAB);
         for (i, (k, l)) in HINTS_PLAY.iter().chain(HINTS_FROZEN.iter()).enumerate() {
             self.w_hint[i * 2] = measure(k, ROLE_LABEL) + 12.0;
             self.w_hint[i * 2 + 1] = measure(l, ROLE_VALUE);
@@ -394,6 +407,7 @@ impl Lab {
     fn match_setup(&mut self) {
         unsafe {
             gd_lab_ring(RING as u32);
+            self.timed = gd_lab_timed() > 0;
         }
         self.apply_preset();
         self.slots_dirty = true;
@@ -471,11 +485,11 @@ impl Lab {
             }
             if self.paused {
                 if edge & DL != 0 || (repeat && dir == DL) {
-                    gd_lab_step(-1);
+                    gd_lab_rewind(1);
                 } else if edge & DR != 0 || (repeat && dir == DR) {
                     gd_lab_step(1);
                 } else if edge & BL != 0 {
-                    gd_lab_step(-10);
+                    gd_lab_rewind(10);
                 } else if edge & BR != 0 {
                     gd_lab_step(10);
                 } else if edge & BA != 0 {
@@ -582,7 +596,15 @@ impl Lab {
                 }
                 EV_HIT => {
                     if a == 0 && port == 1 {
-                        self.act_damage += b;
+                        // damage by the action that dealt it, so the move readout finds it whatever ends first
+                        if self.dmg_action != self.p1_action {
+                            self.dmg_action = self.p1_action;
+                            self.dmg_sum = 0;
+                        }
+                        self.dmg_sum += b;
+                        if self.mv.action == self.p1_action && self.pending_fd != self.p1_action {
+                            self.mv.damage = self.dmg_sum;
+                        }
                         if !self.combo_live {
                             self.combo_hits = 0;
                             self.combo_dmg = 0;
@@ -651,15 +673,12 @@ impl Lab {
                 if name.starts_with("LandingAir") {
                     self.mv.landing = cells;
                 } else if first >= 0 {
-                    self.mv = Move { action: a, n: cells, first, last, iasa, landing: -1, lcancel: false, damage: self.act_damage, adv: 0, on_shield: false, have_adv: false };
+                    self.mv = Move { action: a, n: cells, first, last, iasa, landing: -1, lcancel: false, damage: if self.dmg_action == a { self.dmg_sum } else { 0 }, adv: 0, on_shield: false, have_adv: false };
                 }
                 self.pending_fd = -1;
             }
             if self.pending_tries == 0 {
                 self.pending_fd = -1;
-            }
-            if self.pending_fd < 0 {
-                self.act_damage = 0;
             }
         }
         // the move's advantage once both can act (frame_adv is "after the last exchange")
@@ -744,28 +763,41 @@ impl Lab {
         self.enc.layer(LAYER_OVERLAY, 0).space(SPACE_WINDOW, sc);
         self.chip(20.0, 20.0);
         let full = self.preset == FULL;
+        // keep-out (spec 5.2): nothing over the retail percent / stock row (the band's bottom 160 of 720) or, in a
+        // timed match, the timer (the meter drops to y 120)
+        let keep = (b[1] + b[3] * 560.0 / 720.0) / sc;
+        let (bx0, bx1) = (b[0] / sc, (b[0] + b[2]) / sc);
+        let over = |x0: f32, x1: f32| x1 > bx0 && x0 < bx1;
+        let bottom = |x0: f32, x1: f32, h: f32, margin: f32| if over(x0, x1) { keep - 8.0 - h } else { vh - margin - h };
+        // the timer is the band's top 110 of 720: below it, scaled with the band
+        let meter_y = if self.timed { (b[1] + b[3] * 125.0 / 720.0) / sc } else { 20.0 };
         if self.preset != CLEAN {
-            self.frame_meter(vw * 0.5 - 350.0, 20.0);
+            self.frame_meter(vw * 0.5 - 350.0, meter_y);
             self.move_readout(vw - 240.0, 20.0);
         }
         if full {
             self.state_readout(vw - 240.0, 236.0);
             self.dummy_panel(20.0, 70.0);
             self.combo_panel(20.0, 300.0);
-            self.input_display(20.0, vh - 20.0 - 80.0);
+            if !self.paused {
+                self.input_display(20.0, bottom(20.0, 270.0, 80.0, 20.0));
+            }
         }
+        let hints = |s: &Lab, w0: usize, n: usize| (w0..w0 + n).map(|i| s.w_hint[i * 2] + 5.0 + s.w_hint[i * 2 + 1] + 12.0).sum::<f32>();
         if self.paused {
-            // above the retail percent / stock row (keep-out, spec 5.2: the band's bottom 160 of 720)
-            let keep = vh * 560.0 / 720.0;
-            self.slot_cards(vw * 0.5, keep - 8.0 - 52.0 - 8.0 - 88.0);
-            self.scrubber(vw * 0.5 - 400.0, keep - 8.0 - 52.0);
-            self.hints(vw - 20.0, vh - 22.0 - 18.0, &HINTS_FROZEN, 4, 4);
+            let hy = bottom(vw - 20.0 - hints(self, 4, 4), vw - 20.0, 18.0, 22.0);
+            let sy = (hy - 8.0 - 52.0).min(keep - 8.0 - 52.0);
+            self.slot_cards(vw * 0.5, sy - 8.0 - 88.0);
+            self.scrubber(vw * 0.5 - 400.0, sy);
+            self.hints(vw - 20.0, hy, &HINTS_FROZEN, 4, 4);
         } else if full {
-            self.hints(vw - 20.0, vh - 22.0 - 18.0, &HINTS_PLAY, 0, 4);
+            let hy = bottom(vw - 20.0 - hints(self, 0, 4), vw - 20.0, 18.0, 22.0);
+            self.hints(vw - 20.0, hy, &HINTS_PLAY, 0, 4);
         } else if self.preset == CLEAN {
-            self.hints(vw - 20.0, vh - 22.0 - 18.0, &HINTS_PLAY, 0, 1);
+            let hy = bottom(vw - 20.0 - hints(self, 0, 1), vw - 20.0, 18.0, 22.0);
+            self.hints(vw - 20.0, hy, &HINTS_PLAY, 0, 1);
         }
-        self.toasts(vw * 0.5, if self.preset == CLEAN { 40.0 } else { 120.0 });
+        self.toasts(vw * 0.5, if self.preset == CLEAN { if self.timed { meter_y } else { 40.0 } } else { meter_y + 100.0 });
         self.enc.submit();
     }
 
@@ -782,7 +814,7 @@ impl Lab {
         let (dv, mu, tx) = (self.t(T_DIVIDER), self.t(T_MUTED), self.t(T_TEXT));
         self.enc.rect(x, y, w, 1.0, dv);
         self.enc.text(x, y + 4.0, ROLE_VALUE, mu, k);
-        self.enc.text_ex(x + w, y + 4.0, ROLE_VALUE, tx, ALIGN_RIGHT, 0.0, v);
+        self.enc.text_ex(x + w, y + 4.0, R_NUM, tx, ALIGN_RIGHT, 0.0, v);
     }
 
     /// Part 7: a key cap at (x, y) of width w.
@@ -815,7 +847,7 @@ impl Lab {
         let w = 12.0 + self.lab_w + 12.0 + self.chip_w + 12.0;
         self.panel(x, y, w, 30.0);
         let (ac, mu) = (self.t(T_ACCENT), self.t(T_MUTED));
-        self.enc.text(x + 12.0, y + 8.0, ROLE_TITLE, ac, "LAB");
+        self.enc.text(x + 12.0, y + 8.0, R_LAB, ac, "LAB");
         self.enc.text(x + 24.0 + self.lab_w, y + 10.0, ROLE_LABEL, mu, self.chip.as_str());
     }
 
@@ -833,11 +865,11 @@ impl Lab {
             let op = [255u32, 191, 128][i] * if t.life > 30 { 30 } else { t.life } / 30;
             let fade = |c: u32| (c & 0xFFFF_FF00) | ((c & 0xFF) * op / 255);
             self.enc.slice(SLICE_FILL_R4, cx - t.w * 0.5, y, t.w, 26.0, fade(bg)).slice(SLICE_LINE_R4, cx - t.w * 0.5, y, t.w, 26.0, fade(ac));
-            self.enc.text_ex(cx, y + 6.0, ROLE_TOAST, fade(ac), ALIGN_CENTER, 0.0, t.main.as_str());
+            self.enc.text_ex(cx, y + 6.0, R_TOAST, fade(ac), ALIGN_CENTER, 0.0, t.main.as_str());
             y += 30.0;
             if !t.sub.is_empty() {
                 self.enc.slice(SLICE_FILL_R4, cx - t.sub_w * 0.5, y, t.sub_w, 22.0, fade(0x080B11B3)).slice(SLICE_LINE_R4, cx - t.sub_w * 0.5, y, t.sub_w, 22.0, fade(bd));
-                self.enc.text_ex(cx, y + 5.0, ROLE_VALUE, fade(mu), ALIGN_CENTER, 0.0, t.sub.as_str());
+                self.enc.text_ex(cx, y + 5.0, R_NUM, fade(mu), ALIGN_CENTER, 0.0, t.sub.as_str());
                 y += 26.0;
             }
         }
@@ -860,8 +892,8 @@ impl Lab {
         self.adv_row.set((adv as u32 as u64) | (sh as u64) << 32, |t| {
             t.int(adv, true).s(if sh { " on shield" } else { " on hit" });
         });
-        self.enc.text_ex(x + 350.0, y + 11.0, ROLE_VALUE, mu, ALIGN_CENTER, 0.0, self.sum_row.v.as_str());
-        self.enc.text_ex(x + 686.0, y + 8.0, ROLE_TITLE, ac, ALIGN_RIGHT, 0.0, self.adv_row.v.as_str());
+        self.enc.text_ex(x + 350.0, y + 11.0, R_NUM, mu, ALIGN_CENTER, 0.0, self.sum_row.v.as_str());
+        self.enc.text_ex(x + 686.0, y + 8.0, R_ADV, ac, ALIGN_RIGHT, 0.0, self.adv_row.v.as_str());
         let cells_x = x + 14.0 + 24.0;
         for p in 0..2 {
             let ry = y + 36.0 + p as f32 * 17.0;
@@ -1150,7 +1182,7 @@ const fn text<const N: usize>(s: &[u8]) -> [u8; N] {
 #[no_mangle]
 pub static gdmod_abi_version: u32 = 1 << 16;
 #[no_mangle]
-pub static gdmod_ui_abi: u32 = UI_ABI;
+pub static gdmod_ui_abi: u32 = UI_ABI_1_1;
 #[no_mangle]
 pub static gdmod_lab_abi: u32 = 1 << 16;
 

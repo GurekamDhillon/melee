@@ -272,7 +272,10 @@ pub struct LabShared {
     /// Events of the last EVENT_HISTORY frames (GAP-1).
     pub history: std::collections::VecDeque<LabEvent>,
     pub slot_frame: [i32; SLOTS],
-    pub rec_len: std::collections::BTreeMap<u8, i32>,
+    /// Recording length in frames by handle (-1: no such recording); a fixed table so publishing never allocates.
+    pub rec_len: [i32; 256],
+    /// The lab match has a timer (the HUD moves the frame meter below it): `gd_lab_timed`.
+    pub timed: bool,
     pub recording_mask: u32,
     pub meter: [std::collections::VecDeque<u8>; 4],
     pub frame_adv: i32,
@@ -310,7 +313,8 @@ impl Default for LabShared {
             events: Vec::new(),
             history: Default::default(),
             slot_frame: [-1; SLOTS],
-            rec_len: Default::default(),
+            rec_len: [-1; 256],
+            timed: false,
             recording_mask: 0,
             meter: Default::default(),
             frame_adv: 0,
@@ -513,7 +517,7 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     f!("gd_lab_play_stop", |c: Caller<'_, PresData>| -> i32 { cmd!(c, FEATURE_LAB_INPUT, LabCmd::new(OP_PLAY_STOP, 0, 0xF, 0, 0, 0)) });
     f!("gd_lab_rec_len", |c: Caller<'_, PresData>, rec: u32| -> i32 {
         match gate(&c, FEATURE_LAB_INPUT) {
-            Ok(l) => l.borrow().rec_len.get(&(rec as u8)).copied().unwrap_or(GD_EINVAL),
+            Ok(l) => { let v = if rec < 256 { l.borrow().rec_len[rec as usize] } else { -1 }; if v < 0 { GD_EINVAL } else { v } },
             Err(e) => e,
         }
     });
@@ -645,6 +649,10 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         if port > 3 { return GD_EINVAL }
         let v: Vec<u8> = { let s = l.borrow(); let m = &s.meter[port as usize]; m.iter().skip(m.len().saturating_sub(n as usize)).copied().collect() };
         if write(&mut c, out, &v) { v.len() as i32 } else { GD_EINVAL }
+    });
+    // 1 when the lab match has a timer (the retail timer HUD is up), 0 when it is untimed
+    f!("gd_lab_timed", |c: Caller<'_, PresData>| -> i32 {
+        match gate(&c, 0) { Ok(l) => l.borrow().timed as i32, Err(e) => e }
     });
     // the last frame's applied commands: 20 bytes each = u8 issuer (0 offline / host, 1 guest), 3 zero, the 16-byte record
     f!("gd_lab_applied", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {

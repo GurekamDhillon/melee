@@ -101,6 +101,7 @@ enum { GD_UI_SESSION_OFFLINE = 0, GD_UI_SESSION_NETPLAY, GD_UI_SESSION_SYNCTEST,
 int      gd_ui_submit(const void* buf, unsigned len);
 float    gd_ui_measure(const char* s, unsigned len, int role);
 unsigned gd_ui_kit_id(const char* name, unsigned len);
+int      gd_ui_log(const char* s, unsigned len);                  /* a log line (headless checks); <= 16 per present */
 unsigned gd_ui_tex_load(const char* path, unsigned len);        /* .png in the mod's package dir, <= 512x512 */
 int      gd_ui_band_rect(float out[6]);                          /* GAP-0: band x,y,w,h and window w,h in pixels */
 int      gd_ui_theme(int theme);

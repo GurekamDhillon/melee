@@ -119,7 +119,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
         hr.push(lab.frame_hash());
     }
     lab.apply(&c(OP_REC_STOP, 0, 0, rec as u32, 0, 0));
-    let len = sh.borrow().rec_len.get(&rec).copied();
+    let len = Some(sh.borrow().rec_len[rec as usize]).filter(|&v| v >= 0);
     check(len == Some(120), format!("record 120 frames of ports 1-2: gd_lab_rec_len {len:?}"));
     // playback from the recording's start state, with neutral live pads: the recording alone drives both ports
     lab.apply(&c(OP_PLAY, 0, 0b11, rec as u32, PLAY_FROM_SLOT, 0));

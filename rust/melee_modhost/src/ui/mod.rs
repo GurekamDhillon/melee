@@ -342,6 +342,15 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Ok(t) = core::str::from_utf8(b) else { return 0.0 };
         c.data().ui().borrow().atlas.measure(t, cmd::style(role))
     });
+    // a line in the game's log (headless checks of what a mod showed); at most 16 lines of 160 bytes per present
+    f!("gd_ui_log", |c: Caller<'_, PresData>, s: u32, len: u32| -> i32 {
+        let Some(t) = read_str(&c, s, len.min(160)) else { return GD_EINVAL };
+        let ui = c.data().ui();
+        let mut sh = ui.borrow_mut();
+        if sh.log.len() >= 16 { return GD_EFULL }
+        sh.log.push(format!("log: {t}"));
+        GD_OK
+    });
     f!("gd_ui_kit_id", |c: Caller<'_, PresData>, s: u32, len: u32| -> u32 {
         let Some(t) = read_str(&c, s, len) else { return 0 };
         melee_gx::ui::KIT_PIECES.iter().position(|p| !p.0.is_empty() && p.0 == t).unwrap_or(0) as u32

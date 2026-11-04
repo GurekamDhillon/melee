@@ -44,8 +44,10 @@ Geno is the fighter-extension engine (C: `pc/geno/`, `pc/platform/geno_registry.
 
 The mod is `tools/rust-port/golden/coverage/mods/geno-cov` (attach entries only, no disc data). A scenario's `env`
 (`MELEE_MODS_DIR={wt}/...`) reaches both recorders: `scn.py tsv` expands `{wt}`, `run_rust.sh` exports it.
-Not covered: the glide itself (the held-jump input enters no Geno glide state in either build, so the jump-hold entry
-needs a `glide` config the test mod does not give), defines (native fighters: `vanilla-*` mods), fighter Lua, articles.
+Glide: `geno_glide` (Kirby, geno-cov) covers entry path A, glide, glide end and glide attack. The trigger
+(geno_glide_entry / GenoBhv_GlideEntryStep): a midair jump (jumpsUsed >= 2), the jump held for >= entry_hold (6) frames
+AND vy <= entry_vy_max (0.6) while still held. Kirby's midair jump only falls to 0.56 on its 17th held frame, so
+geno_kirby_bhv's 45-frame hold (released early by the seq timing) never entered it; geno_glide holds 80. Not covered, defines (native fighters: `vanilla-*` mods), fighter Lua, articles.
 
 ## Rules the translation needed (fixed on this branch)
 
@@ -100,7 +102,8 @@ Interactions to keep in mind:
   Geno state (>= 1024), and a Geno state is just another action id to the modhost's `action.*` rows (none of the 19
   wired rows is a Geno state's enter).
 - Both change netplay identity in their own way: Geno salts a fighter's identity with its profile id
-  (`gw_Geno_SaltForPlFile`, ported as `Registry::salt_for_pl_file`, not yet wired to the engine's netplay identity);
+  (`gw_Geno_SaltForPlFile`): wired as `geno_host::netplay_identity`, folded into play_net's `mods_identity` handshake
+  word (every attached Pl file's salt + every define's online id; 0 and so unchanged when no geno.json);
   modhost logs each module's FNV-1a-64. A netplay session must agree on both.
 - Possible later convergence: Geno's fighter Lua (`geno_lua_*`, not ported) could be hosted on the modhost's sandbox
   rules (fuel, no I/O) instead of a second Lua VM, but Geno Lua is source-level Lua 5.4, not wasm; nothing here depends
@@ -125,4 +128,3 @@ Interactions to keep in mind:
 ## Next
 
 1. Attach `melee_script` (the Lua host) to the engine loop so the `geno-lab` mod's UI runs in a LAB match.
-2. Wire `salt_for_pl_file` into the engine's netplay identity.

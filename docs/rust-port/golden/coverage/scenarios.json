@@ -1781,6 +1781,17 @@
    },
    "note": "Sora (ultimate-trail-slot, installed name Ultimate Sora, internal 52) CPU9 vs Fox on the ACE disc. Mods: tools/rust-port/golden/coverage/mex_mods.sh"
   },
+  "geno_glide": {
+   "group": "geno",
+   "scene": "mode=vs;at=match;p1=ck:4/human;p2=ck:2/idle;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",
+   "pad": "coverage/pads/geno_glide.lua",
+   "frames": 600,
+   "kind": "vs",
+   "env": {
+    "MELEE_MODS_DIR": "{wt}/tools/rust-port/golden/coverage/mods"
+   },
+   "note": "Geno glide (mods/geno-cov): human Kirby jump, midair jump held into geno.glide.start (entry path A), glide, glide attack"
+  },
   "mex_sorapal_cpu": {
    "group": "mex",
    "scene": "mode=vs;at=match;p1=ultimatesora/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off",

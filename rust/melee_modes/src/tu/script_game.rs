@@ -424,22 +424,22 @@ pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
 pub use melee_runtime::tu::gobj_native::HSD_GObj_JObjKind;
 pub use melee_runtime::tu::gobj_native::gobj_alloc_data;
 pub use melee_runtime::tu::gobj_native::gobjproc_alloc_data;
-pub static mut ftPartsTable: * mut * mut FighterPartsTable = unsafe { core::mem::zeroed() };
+pub use melee_fighter::hooks::FT_PARTS_TABLE as ftPartsTable;
 pub use melee_runtime::shared::p_ftCommonData;
 pub use melee_fighter::tu::ftdata::ftData_Table_Unk0;
 pub use crate::tu::gmmain_lib::gmMainLib_8046B0F0;
 pub use melee_world::tu::ground::stage_info;
 pub use melee_items::tu::itspawn::it_804A0E30;
-pub static mut it_804A0E70: [DamageLogEntry ; 15] = unsafe { core::mem::zeroed() };
+pub use melee_items::tu::itcoll::ext::it_804A0E70;
 pub use melee_world::itacc::it_804A0F60;
-pub static mut it_804D6D18: :: core :: ffi :: c_uint = unsafe { core::mem::zeroed() };
+pub use melee_items::tu::itcoll::ext::it_804D6D18;
 pub use melee_items::tu::it_3F14::it_804D6D24;
 pub use melee_items::tu::it_3F14::it_804D6D30;
 pub use melee_runtime::shared::it_804D6D38;
 pub use melee_items::tu::item::Item_804A0C64;
-pub static mut gx_suppress_draws: :: core :: ffi :: c_int = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::pobj::ext::gx_suppress_draws;
 pub use melee_runtime::tu::random::global::HSD_RandSeedPtr;
-pub static mut grPushOn_803E7CCC: [:: core :: ffi :: c_float ; 13] = unsafe { core::mem::zeroed() };
+pub use melee_world::tu::grpushon::grPushOn_803E7CCC;
 pub use melee_world::ftdevice::ft_80459A68;
 pub use melee_world::ftdevice::ftDevice_BuryThings;
 pub use melee_world::ftdevice::ft_80459A8C;
@@ -456,8 +456,8 @@ pub use melee_runtime::tu::generator::hsd_804D78FC;
 pub use melee_runtime::tu::particle::hsd_804D0908;
 pub use melee_runtime::tu::particle::hsd_804D78E2;
 pub use melee_runtime::tu::particle::hsd_804D0948;
-pub static mut psFormGroupArray: [* mut * mut HSD_PSFormGroup ; 65] = unsafe { core::mem::zeroed() };
-pub static mut gm_804D6720: * mut GameSceneInfo = unsafe { core::mem::zeroed() };
+pub use melee_runtime::tu::particle::psFormGroupArray;
+pub use crate::tu::gmscene::gm_804D6720;
 pub use melee_world::tu::mplib::mpLib_803BF760;
 
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
@@ -33945,9 +33945,7 @@ pub unsafe extern "C" fn script_retail_clear_banks() {
             0x1e as ::core::ffi::c_int
         };
         hsd_804D0948[bank as usize] = ::core::ptr::null_mut::<::core::ffi::c_uint>();
-        psFormGroupArray[bank as usize] = ::core::ptr::null_mut::<
-            *mut HSD_PSFormGroup,
-        >();
+        psFormGroupArray[bank as usize] = 0;
         psTexGroupArray[bank as usize] = ::core::ptr::null_mut::<*mut HSD_PSTexGroup>();
         psNumCmdList[bank as usize] = ::core::ptr::null_mut::<*mut HSD_PSFormGroup>();
         psCmdListArray[bank as usize] = 0 as ::core::ffi::c_int;

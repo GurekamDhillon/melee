@@ -1023,7 +1023,7 @@ impl Lab {
                 if self.menu.recording == s as i32 {
                     t.s("● rec");
                 } else if l < 0 {
-                    t.s("—");
+                    t.s("empty");
                 } else {
                     t.fix(l as f32 / 60.0, 1).s("s ×").i(self.menu.weights[s]);
                 }
@@ -1032,7 +1032,7 @@ impl Lab {
         }
         // part 7 hints at the bottom of the help pane
         let hy = by + h - 34.0 - 26.0;
-        self.enc.text(hx + 14.0, hy, ROLE_LABEL, mu, "A apply · ◀▶ change · L R tab · X search · B close");
+        self.enc.text_ex(hx + 14.0, hy, ROLE_LABEL, mu, ALIGN_LEFT, hw - 28.0, "A apply · ◀▶ change · L R tab · X find · B close");
         if self.menu.cmd {
             self.draw_cmd(x0 + 60.0, y0 + 60.0, w - 120.0);
         }

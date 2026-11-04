@@ -45,38 +45,95 @@ pub fn prepare_rollback_run() {
 /// pipeline configs, texture / TLUT / array data) re-created, so the presenter's clones and drops never touch an
 /// ArcInner a snapshot load rewrites. Call outside the game scope; the original is freed inside it.
 pub fn detach_frame(f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
-    use std::collections::HashMap;
-    use std::sync::Arc;
-    let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
-    let mut datas: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
-    let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
-        datas.entry(Arc::as_ptr(d) as *const u8 as usize).or_insert_with(|| Arc::from(&d[..])).clone()
-    };
-    let out: Vec<melee_gx::draw::DrawCmd> = f
-        .iter()
-        .map(|c| {
-            let mut n = c.clone();
-            n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
-            for a in n.arrays.iter_mut().flatten() {
-                a.data = data(&a.data);
-            }
-            for t in n.textures.iter_mut() {
-                if let Some(d) = &t.data {
-                    t.data = Some(data(d));
+    Detacher::default().detach(f)
+}
+
+/// [`detach_frame`] with the copies kept from frame to frame, by content. The renderer caches its decoded GPU
+/// textures by the data `Arc`'s address: fresh copies every frame made every texture a cache miss, ~100 new GPU
+/// textures a frame kept alive until the 600-frame eviction (60k textures, ~2.7 GB of video memory per windowed
+/// rollback peer: issue #42, the device was lost with a few games open). Identical bytes now detach to the same
+/// `Arc`, so the texture cache hits as it does offline.
+///
+/// Rollback rule: this cache must be owned by a value on the system heap (it is a field of [`ModesGame`] / the
+/// retail flow), never a static: a snapshot load rewrites every static, so a static map's header would be put back
+/// pointing at buckets the system heap has since freed or reused.
+#[derive(Default)]
+pub struct Detacher {
+    datas: std::collections::HashMap<(u64, u64, usize), (melee_gx::resources::GxData, u64)>,
+    frame: u64,
+}
+
+/// A 128-bit content hash (two independent multiply-xorshift lanes over 8-byte words).
+fn hash128(b: &[u8]) -> (u64, u64) {
+    let (mut h1, mut h2) = (0x9E37_79B9_7F4A_7C15u64 ^ b.len() as u64, 0xC2B2_AE3D_27D4_EB4Fu64);
+    let mut ch = b.chunks_exact(8);
+    for c in &mut ch {
+        let w = u64::from_le_bytes(c.try_into().unwrap());
+        h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD).rotate_left(29);
+        h2 = (h2 ^ w.rotate_left(32)).wrapping_mul(0xC4CE_B9FE_1A85_EC53).rotate_left(31);
+    }
+    let mut t = [0u8; 8];
+    t[..ch.remainder().len()].copy_from_slice(ch.remainder());
+    let w = u64::from_le_bytes(t);
+    h1 = (h1 ^ w).wrapping_mul(0xFF51_AFD7_ED55_8CCD);
+    h2 = (h2 ^ w).wrapping_mul(0xC4CE_B9FE_1A85_EC53);
+    (h1 ^ (h1 >> 33), h2 ^ (h2 >> 29))
+}
+
+/// Detached copies not used for this many frames are dropped.
+const DETACH_KEEP: u64 = 120;
+
+impl Detacher {
+    /// [`detach_frame`]. Call outside the game scope; the original is freed inside it.
+    pub fn detach(&mut self, f: Vec<melee_gx::draw::DrawCmd>) -> Vec<melee_gx::draw::DrawCmd> {
+        use std::collections::HashMap;
+        use std::sync::Arc;
+        debug_assert!(!melee_engine::arena::contains(self as *const Self as *const u8), "Detacher must not live in the arena");
+        self.frame += 1;
+        let now = self.frame;
+        let mut cfgs: HashMap<usize, Arc<melee_gx::shader::PipelineConfig>> = HashMap::new();
+        // per frame by the arena Arc's address (stable within the frame), across frames by content
+        let mut seen: HashMap<usize, melee_gx::resources::GxData> = HashMap::new();
+        let datas = &mut self.datas;
+        let mut data = |d: &melee_gx::resources::GxData| -> melee_gx::resources::GxData {
+            seen.entry(Arc::as_ptr(d) as *const u8 as usize)
+                .or_insert_with(|| {
+                    let (a, b) = hash128(d);
+                    let e = datas.entry((a, b, d.len())).or_insert_with(|| (Arc::from(&d[..]), now));
+                    e.1 = now;
+                    e.0.clone()
+                })
+                .clone()
+        };
+        let out: Vec<melee_gx::draw::DrawCmd> = f
+            .iter()
+            .map(|c| {
+                let mut n = c.clone();
+                n.config = cfgs.entry(Arc::as_ptr(&c.config) as usize).or_insert_with(|| Arc::new((*c.config).clone())).clone();
+                for a in n.arrays.iter_mut().flatten() {
+                    a.data = data(&a.data);
                 }
-            }
-            for t in n.tluts.iter_mut() {
-                if let Some(d) = &t.data {
-                    t.data = Some(data(d));
+                for t in n.textures.iter_mut() {
+                    if let Some(d) = &t.data {
+                        t.data = Some(data(d));
+                    }
                 }
-            }
-            n
-        })
-        .collect();
-    let _s = melee_engine::arena::GameScope::enter();
-    drop(f);
-    drop(melee_engine::gxbridge::shim().gx.packed.take());
-    out
+                for t in n.tluts.iter_mut() {
+                    if let Some(d) = &t.data {
+                        t.data = Some(data(d));
+                    }
+                }
+                n
+            })
+            .collect();
+        if now % DETACH_KEEP == 0 {
+            self.datas.retain(|_, e| now - e.1 < DETACH_KEEP);
+        }
+        let _s = melee_engine::arena::GameScope::enter();
+        drop(f);
+        drop(melee_engine::gxbridge::shim().gx.packed.take());
+        out
+    }
 }
 
 // ------------------------------------------------------------------------------------------------ pads
@@ -133,6 +190,7 @@ pub struct ModesGame {
     f0: u32,
     /// the newest drawn frame, still in the arena; taken (detached) before the next snapshot load can happen
     raw: Option<Vec<melee_gx::draw::DrawCmd>>,
+    detach: Detacher,
 }
 
 #[derive(Clone)]
@@ -144,7 +202,7 @@ pub struct ModesSnap {
 
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
-        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None }
+        ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, detach: Detacher::default() }
     }
     fn with_base<R>(&self, f: impl FnOnce(&Base) -> R) -> R {
         if self.base.borrow().is_none() {
@@ -177,7 +235,7 @@ impl ModesGame {
 
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
     pub fn take_frame(&mut self) -> Option<Vec<melee_gx::draw::DrawCmd>> {
-        self.raw.take().map(detach_frame)
+        self.raw.take().map(|f| self.detach.detach(f))
     }
 }
 

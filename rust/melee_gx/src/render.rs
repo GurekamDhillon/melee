@@ -274,6 +274,8 @@ pub struct Renderer {
     /// Pipelines by key, shared with the decode thread's warm-up ([`Renderer::pipe_factory`]).
     pipes: std::sync::Arc<PipeFactory>,
     tex_bgs: FxMap<[Option<(TexKey, SamplerKey)>; MAX_TEXTURES], wgpu::BindGroup>,
+    /// Device lost / unexpected wgpu errors ([`Renderer::gpu_fault`]).
+    gpu: std::sync::Arc<GpuHealth>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
@@ -598,6 +600,71 @@ fn can_merge(p: &DrawCmd, d: &DrawCmd) -> bool {
         && p.tluts.iter().zip(d.tluts.iter()).all(|(a, b)| a.format == b.format && a.num_entries == b.num_entries && ptr(&a.data) == ptr(&b.data))
 }
 
+/// GPU error routing. wgpu's error scopes are one stack per DEVICE, not per thread: the GX decode thread's
+/// pipeline warm-up used to push a Validation scope, so an error raised meanwhile on the main thread (a failed
+/// `create_texture`) was swallowed into that scope, and the next use of the invalid texture panicked in wgpu's
+/// default handler ("Texture with 'GX texture' label is invalid", issue #42). The wgpu-core backend calls the
+/// uncaptured-error handler synchronously on the thread that made the failing call, so [`guarded`] collects the
+/// errors of one thread's calls exactly; every other error is recorded in [`GpuHealth`] (a clean exit, not a panic).
+pub struct GpuHealth {
+    fault: std::sync::Mutex<Option<String>>,
+    lost: std::sync::atomic::AtomicBool,
+}
+
+impl GpuHealth {
+    fn set_fault(&self, msg: String) {
+        let mut f = self.fault.lock().unwrap();
+        if f.is_none() {
+            eprintln!("gx: GPU error: {msg}");
+            *f = Some(msg);
+        }
+    }
+}
+
+thread_local! {
+    static GUARD: std::cell::RefCell<Option<Vec<wgpu::Error>>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Run `f` collecting the wgpu errors its calls raise on this thread (instead of reporting them as faults).
+fn guarded<T>(f: impl FnOnce() -> T) -> (T, Vec<wgpu::Error>) {
+    let outer = GUARD.with(|g| g.borrow_mut().replace(Vec::new()));
+    let r = f();
+    let errs = GUARD.with(|g| std::mem::replace(&mut *g.borrow_mut(), outer)).unwrap_or_default();
+    (r, errs)
+}
+
+fn install_error_handling(device: &wgpu::Device) -> std::sync::Arc<GpuHealth> {
+    let h = std::sync::Arc::new(GpuHealth { fault: Default::default(), lost: Default::default() });
+    let hl = h.clone();
+    device.set_device_lost_callback(move |reason, msg| {
+        hl.lost.store(true, std::sync::atomic::Ordering::SeqCst);
+        if reason != wgpu::DeviceLostReason::Destroyed {
+            hl.set_fault(format!("GPU device lost ({reason:?}): {msg} (driver reset or out of video memory)"));
+        }
+    });
+    let he = h.clone();
+    device.on_uncaptured_error(std::sync::Arc::new(move |e: wgpu::Error| {
+        let Some(e) = GUARD.with(|g| match g.borrow_mut().as_mut() {
+            Some(v) => {
+                v.push(e);
+                None
+            }
+            None => Some(e),
+        }) else {
+            return;
+        };
+        if he.lost.load(std::sync::atomic::Ordering::SeqCst) {
+            return; // consequences of the loss, already reported
+        }
+        let msg = match &e {
+            wgpu::Error::OutOfMemory { .. } => format!("out of video memory: {e}"),
+            _ => format!("{e}"),
+        };
+        he.set_fault(msg);
+    }));
+    h
+}
+
 /// The render pipelines by key (every config's WGSL is built once). Shared by the renderer and the GX decode thread:
 /// a pipeline is a function of its key alone, so which thread creates it does not change what is drawn.
 pub struct PipeFactory {
@@ -650,7 +717,7 @@ impl PipeFactory {
         }
         let src = crate::shader::build_shader_source(&pc.shader, u32::MAX);
         let wgsl = adapt_wgsl(&src);
-        self.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let (pipeline, errs) = guarded(|| {
         let module = self.device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("GX shader"),
             source: wgpu::ShaderSource::Wgsl(wgsl.clone().into()),
@@ -669,7 +736,7 @@ impl PipeFactory {
             write_mask |= wgpu::ColorWrites::ALPHA;
         }
         let bias_const = -pc.polygon_offset;
-        let pipeline = self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        self.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("GX pipeline"),
             layout: Some(&self.layout),
             vertex: wgpu::VertexState {
@@ -711,8 +778,9 @@ impl PipeFactory {
             }),
             multiview: None,
             cache: None,
+        })
         });
-        if let Some(e) = pollster::block_on(self.device.pop_error_scope()) {
+        if let Some(e) = errs.first() {
             return Err(format!("{e}\n--- WGSL ---\n{wgsl}"));
         }
         self.pipelines.lock().unwrap().insert(key, pipeline.clone());
@@ -886,6 +954,7 @@ impl Renderer {
             ..Default::default()
         }))
         .map_err(|e| format!("request_device: {e}"))?;
+        let gpu = install_error_handling(&device);
         // MSAA: the largest count not above the request that both EFB formats support.
         let want = Self::env_msaa();
         let ok = |n: u32| [COLOR_FORMAT, DEPTH_FORMAT].iter().all(|&f| adapter.get_texture_format_features(f).flags.sample_count_supported(n));
@@ -966,6 +1035,7 @@ impl Renderer {
             adapter,
             device,
             queue,
+            gpu,
             adapter_info,
             width,
             height,
@@ -997,6 +1067,12 @@ impl Renderer {
             copy_pipe: None,
             zcopy_pipe: None,
         })
+    }
+
+    /// A fatal GPU error (device lost, out of video memory, an unexpected wgpu error): the caller should stop
+    /// with this message. Once set, frames are no longer prepared or drawn.
+    pub fn gpu_fault(&self) -> Option<String> {
+        self.gpu.fault.lock().unwrap().clone()
     }
 
     fn pipeline(&mut self, d: &DrawCmd) -> Option<wgpu::RenderPipeline> {
@@ -1182,7 +1258,7 @@ impl Renderer {
         } else {
             texture::convert_texture(fmt, w, h, mips, data)
         };
-        let tex = self.device.create_texture(&wgpu::TextureDescriptor {
+        let desc = wgpu::TextureDescriptor {
             label: Some("GX texture"),
             size: wgpu::Extent3d { width: w, height: h, depth_or_array_layers: 1 },
             mip_level_count: mips,
@@ -1191,7 +1267,24 @@ impl Renderer {
             format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
             view_formats: &[],
-        });
+        };
+        // Out of video memory: drop every cached texture (re-decoded on use) and try once more; a texture that
+        // still fails is drawn as the empty one, and an error that is not memory is a fault.
+        let (mut tex, mut errs) = guarded(|| self.device.create_texture(&desc));
+        if !errs.is_empty() && errs.iter().all(|e| matches!(e, wgpu::Error::OutOfMemory { .. })) {
+            eprintln!("gx: out of video memory creating a {w}x{h} texture ({} cached): evicting the texture cache", self.textures.len());
+            self.tex_bgs.clear();
+            self.textures.clear();
+            (tex, errs) = guarded(|| self.device.create_texture(&desc));
+            if errs.iter().all(|e| matches!(e, wgpu::Error::OutOfMemory { .. })) && !errs.is_empty() {
+                eprintln!("gx: out of video memory again: drawing it untextured");
+                return None;
+            }
+        }
+        if let Some(e) = errs.first() {
+            self.gpu.set_fault(format!("create_texture {w}x{h} mips {mips}: {e}"));
+            return None;
+        }
         let (mut mw, mut mh) = (w, h);
         let mut off = 0usize;
         for mip in 0..mips {
@@ -1259,6 +1352,9 @@ impl Renderer {
     }
 
     pub fn prepare(&mut self, _state: &GxState, draws: &[DrawCmd]) {
+        if self.gpu_fault().is_some() {
+            return;
+        }
         let t0 = std::time::Instant::now();
         self.prepared += 1;
         frame_stats(self.prepared, draws);
@@ -1463,6 +1559,9 @@ impl Renderer {
     /// draw's uniform block is copied from `draws`, then `fill(i, block)` may rewrite it (interpolated
     /// matrices); the blocks are uploaded once and the pass is recorded with redundant state changes skipped.
     pub fn draw_prepared(&mut self, state: &GxState, draws: &[DrawCmd], mut fill: Option<&mut dyn FnMut(usize, &mut [u8])>) {
+        if self.gpu_fault().is_some() {
+            return;
+        }
         let t0 = std::time::Instant::now();
         let fc = &mut self.frame;
         assert_eq!(fc.draws.len(), draws.len(), "draw_prepared: not the prepared frame");

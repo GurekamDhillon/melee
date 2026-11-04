@@ -19,6 +19,7 @@ use melee_types::{Fighter, HSD_GObj, Item, SpawnItem};
 use std::collections::BTreeMap;
 use wasmi::{AsContextMut, Caller, Config, Engine, Extern, Func, FuncType, Linker, Memory, Module, Store, StoreContextMut, Val, ValType};
 
+pub mod lab;
 pub mod pres;
 pub mod ui;
 

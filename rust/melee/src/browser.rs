@@ -112,7 +112,7 @@ impl RetailPlay {
         self.browser_fill_skins();
         let srv = np_server();
         let u = self.ui.as_mut().unwrap();
-        u.set_list(mui::LIST_ONLINE, vec![rec(&[if srv.is_some() { "1" } else { "0" }, if srv.is_some() { "Room codes through the configured server." } else { "No server set (MELEE_NP_SERVER or np_server= in settings.cfg): join and spectate take HOST:PORT." }])]);
+        u.set_list(mui::LIST_ONLINE, vec![rec(&[if srv.is_some() { "1" } else { "0" }, if srv.is_some() { "Room codes via the configured server." } else { "No server set: join and spectate take HOST:PORT." }])]);
         status(u, 0, "ready");
     }
 

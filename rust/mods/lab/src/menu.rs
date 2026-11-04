@@ -760,7 +760,8 @@ impl Lab {
             }
             "Reset" => self.reset_pos(),
             "Record" => {
-                self.vals[R_PORT] = port as i32 & 1;
+                // this player's own inputs (online the pads are this machine's, the port is the peer's player)
+                self.vals[R_PORT] = if self.online { self.status[8] } else { port as i32 } & 1;
                 self.toggle_record();
             }
             "Play" => {

@@ -17,6 +17,9 @@ use winit::window::Window;
 /// The match scene's frames run before the session takes the engine.
 const ARM_FRAMES: u32 = 1;
 
+#[path = "browser.rs"]
+mod browser;
+
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
@@ -127,6 +130,8 @@ pub struct RetailPlay {
     rticks: u64,
     seek_base: Option<melee_engine::snapshot::Base>,
     seek_snaps: Vec<(usize, melee_engine::snapshot::SnapRef, u32, bool)>,
+    /// gd-ui-v1.2 host side of the in-game browser (browser.rs).
+    browser: browser::State,
 }
 
 impl RetailPlay {
@@ -138,7 +143,7 @@ impl RetailPlay {
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345,
-            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -667,6 +672,7 @@ impl RetailPlay {
             }
             _ => {}
         }
+        self.browser_tick();
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
             if self.cur.1 == melee_types::GS_CSS as u8 && n > 0 && self.tick_no % n == 0 {

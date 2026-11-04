@@ -582,7 +582,11 @@ pub unsafe fn ftCommonData_ExtendKindTable(loaded: *mut *mut core::ffi::c_void, 
 }
 
 static mut CPU_COPY: core::mem::MaybeUninit<Fighter_804D64FC_t> = core::mem::MaybeUninit::uninit();
-static mut CPU_TABLES: [[*mut core::ffi::c_void; Ft_Kind_Max as usize]; 8] = [[core::ptr::null_mut(); Ft_Kind_Max as usize]; 8];
+static mut CPU_TABLES: [[*mut core::ffi::c_void; Ft_Kind_Max as usize]; 7] = [[core::ptr::null_mut(); Ft_Kind_Max as usize]; 7];
+/// x20 is `f32[kind]`: the C copies it as 4-byte words (`void*` is 4 bytes on the GameCube), so natively it
+/// needs its own 4-byte-stride table. Treating it as an 8-byte `void*` table read twice the decoded extent
+/// (faulting when the decode ended on a page edge, entering the results screen) and handed the AI misplaced floats.
+static mut CPU_X20: [u32; Ft_Kind_Max as usize] = [0; Ft_Kind_Max as usize];
 
 /// `ftCommonData_ExtendCpuTables` (static, TARGET_PC): m-ex kinds take their AI-like row.
 pub unsafe fn ftCommonData_ExtendCpuTables(src: *mut Fighter_804D64FC_t) -> *mut Fighter_804D64FC_t {
@@ -592,11 +596,20 @@ pub unsafe fn ftCommonData_ExtendCpuTables(src: *mut Fighter_804D64FC_t) -> *mut
     }
     CPU_COPY.write(*src);
     let copy = CPU_COPY.as_mut_ptr();
-    // x4..x20: eight kind-indexed pointer words in a row.
-    let fields: [*mut *mut *mut core::ffi::c_void; 8] = [
+    // the row each kind reads (C: identical for all eight fields)
+    let row = |i: i32| -> i32 {
+        if i >= Ft_Kind_Mex0 as i32 {
+            let like = ext::Geno_DefineAiLike(i);
+            if like >= 0 { like } else { ext::gm_MexVanillaKind(i, 0) }
+        } else {
+            i
+        }
+    };
+    // x4..x1C: seven kind-indexed pointer tables.
+    let fields: [*mut *mut *mut core::ffi::c_void; 7] = [
         &mut (*copy).x4 as *mut _ as _, &mut (*copy).x8 as *mut _ as _, &mut (*copy).xC as *mut _ as _,
         &mut (*copy).x10 as *mut _ as _, &mut (*copy).x14 as *mut _ as _, &mut (*copy).x18 as *mut _ as _,
-        &mut (*copy).x1C as *mut _ as _, &mut (*copy).x20 as *mut _ as _,
+        &mut (*copy).x1C as *mut _ as _,
     ];
     for (j, f) in fields.iter().enumerate() {
         let loaded = **f;
@@ -604,14 +617,19 @@ pub unsafe fn ftCommonData_ExtendCpuTables(src: *mut Fighter_804D64FC_t) -> *mut
             continue;
         }
         for i in 0..Ft_Kind_Max as i32 {
-            let mut k = i;
-            if i >= Ft_Kind_Mex0 as i32 {
-                let like = ext::Geno_DefineAiLike(i);
-                k = if like >= 0 { like } else { ext::gm_MexVanillaKind(i, 0) };
-            }
+            let k = row(i);
             CPU_TABLES[j][i as usize] = if k >= 0 { *loaded.offset(k as isize) } else { core::ptr::null_mut() };
         }
         **f = CPU_TABLES[j].as_mut_ptr();
+    }
+    // x20: f32 per kind, copied as 4-byte words.
+    let loaded = (*copy).x20 as *const u32;
+    if !loaded.is_null() {
+        for i in 0..Ft_Kind_Max as i32 {
+            let k = row(i);
+            CPU_X20[i as usize] = if k >= 0 { *loaded.offset(k as isize) } else { 0 };
+        }
+        (*copy).x20 = CPU_X20.as_mut_ptr() as *mut f32;
     }
     copy
 }

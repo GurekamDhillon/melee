@@ -1,0 +1,20 @@
+# The in-game browser (wasm-ui-lab-api.md A6): a gd-ui-v1.2 presentation mod. Built by tools/rust-port/modhost/build_mods.sh.
+[package]
+name = "browser"
+version = "0.1.0"
+edition = "2021"
+license = "CC0-1.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gd_ui_enc = { path = "../gd_ui_enc" }
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+lto = true
+
+[workspace]

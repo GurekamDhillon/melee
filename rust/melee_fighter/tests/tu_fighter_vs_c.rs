@@ -126,6 +126,7 @@ unsafe fn world() {
     (*PAI).internal_id = ((*PAI).internal_id as u32 % 27) as _; (*PAI).slot %= 4;
     for i in 0..23 { PLCO[i] = (*PADB)[72 + i].as_mut_ptr() as *mut c_void; }
     for r in 72..96 { for k in 0..256usize { *((*PADB)[r].as_mut_ptr() as *mut *mut c_void).add(k) = (*PADB)[(k * 7 + r) % 72].as_mut_ptr() as *mut c_void; } }
+    for k in 0..512usize { *((*PADB)[79].as_mut_ptr() as *mut u32).add(k) = 0x3F80_0000u32.wrapping_add(k as u32 * 0x9E37); } // x20: f32 per kind (plain words)
     *SRC64 = core::mem::zeroed();
     (*SRC64).x4 = (*PADB)[72].as_mut_ptr() as _; (*SRC64).x8 = (*PADB)[73].as_mut_ptr() as _; (*SRC64).xC = (*PADB)[74].as_mut_ptr() as _; (*SRC64).x10 = (*PADB)[75].as_mut_ptr() as _;
     (*SRC64).x14 = (*PADB)[76].as_mut_ptr() as _; (*SRC64).x18 = (*PADB)[77].as_mut_ptr() as _; (*SRC64).x1C = (*PADB)[78].as_mut_ptr() as _; (*SRC64).x20 = (*PADB)[79].as_mut_ptr() as _;
@@ -156,8 +157,9 @@ unsafe fn hglob() {
     if !h::FIGHTER_804D6540.is_null() { for i in 0..Ft_Kind_Max as usize { hm(pi(*(h::FIGHTER_804D6540 as *const *const c_void).add(i))); } }
     if !m::Fighter_804D64FC.is_null() {
         let c = m::Fighter_804D64FC;
-        let f: [*const *mut *mut c_void; 8] = [&raw const (*c).x4 as _, &raw const (*c).x8 as _, &raw const (*c).xC as _, &raw const (*c).x10 as _, &raw const (*c).x14 as _, &raw const (*c).x18 as _, &raw const (*c).x1C as _, &raw const (*c).x20 as _];
-        for j in 0..8 { let t = *f[j]; hm(pi(t)); if !t.is_null() { for i in 0..Ft_Kind_Max as usize { hm(pi(*t.add(i))); } } }
+        let f: [*const *mut *mut c_void; 7] = [&raw const (*c).x4 as _, &raw const (*c).x8 as _, &raw const (*c).xC as _, &raw const (*c).x10 as _, &raw const (*c).x14 as _, &raw const (*c).x18 as _, &raw const (*c).x1C as _];
+        for j in 0..7 { let t = *f[j]; hm(pi(t)); if !t.is_null() { for i in 0..Ft_Kind_Max as usize { hm(pi(*t.add(i))); } } }
+        let w = (*c).x20 as *const u32; hm(pi(w)); if !w.is_null() { for i in 0..Ft_Kind_Max as usize { hm(*w.add(i)); } }
     }
     for i in 0..16 { hm(m::RB_NeutralHashWord(i)); }
 }

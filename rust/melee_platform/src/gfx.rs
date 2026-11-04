@@ -190,7 +190,11 @@ impl Presenter {
         }
         if interpolate && alpha.is_some() && self.cur.is_some() && self.force_phase.is_none() {
             if let Some(f) = frame.take() {
-                let _late = self.pending.replace(f); // two ticks without a present: the older one is skipped
+                // two ticks without a present: the older one is skipped, but its EFB copies (GXCopyTex, e.g. the results
+                // cards' portraits, copied once) still run, as every frame's do in the C build
+                if let Some(late) = self.pending.replace(f) {
+                    self.render_copies(state, &late.draws, None);
+                }
                 alpha = Some(1.0);
             } else if let Some(f) = self.pending.take() {
                 frame = Some(f);
@@ -251,6 +255,19 @@ impl Presenter {
         let t0 = std::time::Instant::now();
         self.swap_present();
         self.times[2].push(t0.elapsed().as_micros() as u32);
+    }
+
+    /// A sim frame that will never be presented (a newer one replaced it): when it holds EFB copies, render it
+    /// offscreen so the copy targets later frames sample exist. `packed` is the decode thread's packing of `draws`.
+    pub fn render_copies(&mut self, state: &GxState, draws: &[DrawCmd], packed: Option<melee_gx::render::Packed>) {
+        if !draws.iter().any(|d| d.copy.is_some()) {
+            return;
+        }
+        if let Some(p) = packed {
+            self.renderer.set_packed(p);
+        }
+        self.renderer.render_frame(state, draws);
+        self.prepared = false; // the persistent buffers now hold this frame's packing
     }
 
     /// The renderer-side widening for the current content aspect (None: off or a 4:3 frame).

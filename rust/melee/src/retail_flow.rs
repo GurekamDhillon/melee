@@ -605,6 +605,10 @@ impl RetailPlay {
             }
         }
         if let Some(f) = melee_engine::gxbridge::take_frame() {
+            // a frame no present showed (several ticks ran first): its EFB copies still have to happen
+            if let (Some(old), Some(p)) = (self.frame.take(), self.presenter.as_mut()) {
+                p.render_copies(&melee_engine::gxbridge::shim().gx.state, &old, self.packed.take());
+            }
             if self.rollback_mode {
                 // a snapshot load rewrites the arena: keep a detached copy (no Vec or Arc shared with the arena)
                 self.frame = Some(self.detach.detach(f));

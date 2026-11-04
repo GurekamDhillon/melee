@@ -21,8 +21,8 @@ char_sheik	PASS	3601	3601	-
 char_falco	PASS	3601	3601	-
 char_drmario	PASS	3601	3601	-
 char_younglink	PASS	3601	3601	-
-char_roy	PASS	3601	3601	-
 char_pichu	PASS	3601	3601	-
+char_roy	PASS	3601	3601	-
 zelda_sheik_transform	PASS	2401	2401	-
 char_ganondorf	PASS	3601	3601	-
 kirby_copy_a	PASS	2401	2401	-
@@ -68,8 +68,8 @@ items_hi_dreamland64	PASS	3601	3601	-
 items_low_fd	PASS	3601	3601	-
 items_hi_4p_ffa	PASS	3601	3601	-
 items_hi_human_bf	PASS	1801	1801	-
-items_off_fd	PASS	3601	3601	-
 items_off_4p_ps	PASS	3601	3601	-
+items_off_fd	PASS	3601	3601	-
 cpulv1_fox_falco	PASS	3601	3601	-
 cpulv1_marth_sheik	PASS	3601	3601	-
 cpulv1_ganon_peach	PASS	3601	3601	-
@@ -78,10 +78,10 @@ cpulv5_fox_falco	PASS	3601	3601	-
 cpulv5_marth_sheik	PASS	3601	3601	-
 cpulv5_ganon_peach	PASS	3601	3601	-
 cpulv5_puff_link	PASS	3601	3601	-
-cpulv9_marth_sheik	PASS	3601	3601	-
 cpulv9_fox_falco	PASS	3601	3601	-
-cpulv9_puff_link	PASS	3601	3601	-
+cpulv9_marth_sheik	PASS	3601	3601	-
 cpulv9_ganon_peach	PASS	3601	3601	-
+cpulv9_puff_link	PASS	3601	3601	-
 cpu_mixed_1_9	PASS	3601	3601	-
 cpu_ffa4_levels	PASS	3601	3601	-
 cpu_teams4	PASS	3601	3601	-
@@ -132,7 +132,7 @@ items_hi3_pokefloats	PASS	3601	3601	-
 items_hi3_bigblue	PASS	3601	3601	-
 items_hi3_flatzone	PASS	3601	3601	-
 targettest_captain	PASS	1713	1713	-
-items_hi3_yoshistory64	FAIL	1838	3601	frame 1838: differs in hash, itemsum     hash     golden D7B4E6CC  candidate BA2AB7FF 
+items_hi3_yoshistory64	PASS	3601	3601	-
 targettest_dk	PASS	1798	1798	-
 targettest_fox	PASS	1761	1761	-
 targettest_gaw	PASS	1798	1798	-
@@ -150,8 +150,8 @@ targettest_icies	PASS	1665	1665	-
 targettest_jigglypuff	PASS	1798	1798	-
 targettest_samus	PASS	1761	1761	-
 targettest_yoshi	PASS	1761	1761	-
-targettest_sheik	PASS	598	598	-
 targettest_zelda	PASS	1724	1724	-
+targettest_sheik	PASS	598	598	-
 targettest_falco	PASS	1761	1761	-
 targettest_younglink	PASS	1798	1798	-
 targettest_drmario	PASS	1617	1617	-
@@ -159,7 +159,7 @@ targettest_roy	PASS	1665	1665	-
 targettest_pichu	PASS	1665	1665	-
 targettest_ganondorf	PASS	1713	1713	-
 classic_step00	PASS	3598	3598	-
-classic_step01	FAIL	1348	3598	frame 1207: differs in hash, itemsum     hash     golden 70E9EBF4  candidate 3C0A748E 
+classic_step01	PASS	3598	3598	-
 classic_step02	PASS	3456	3456	-
 classic_step03	PASS	3598	3598	-
 classic_step04	PASS	3283	3283	-
@@ -179,8 +179,8 @@ adventure_step06	PASS	3368	3368	-
 adventure_step07	PASS	3534	3534	-
 adventure_step09	PASS	3171	3171	-
 adventure_step08	PASS	3536	3536	-
-adventure_step11	FAIL	3287	3536	frame 3288: differs in hash, s0, s2     hash     golden 3246B4DD  candidate 568916AE 
 adventure_step10	PASS	3368	3368	-
+adventure_step11	PASS	3536	3536	-
 allstar_step00	PASS	3598	3598	-
 allstar_step01	PASS	3598	3598	-
 allstar_step02	PASS	3598	3598	-
@@ -201,4 +201,22 @@ multiman_15min	NO_GOLDEN	0	0	-
 multiman_endless	NO_GOLDEN	0	0	-
 multiman_cruel	NO_GOLDEN	0	0	-
 event_match	NO_GOLDEN	0	0	-
+geno_kirby_bhv	PASS	2401	2401	-
 allstar_step12	PASS	3283	3283	-
+geno_fox_dash	PASS	2401	2401	-
+geno_cpu_kirby_fox	PASS	3601	3601	-
+geno_lab_cpu	PASS	3601	3601	-
+geno_vanilla_striker_cpu	PASS	3601	3601	-
+geno_vanilla_charger	PASS	3001	3001	-
+geno_vanilla_riposte	PASS	3001	3001	-
+geno_vanilla_hero_caster	PASS	3601	3601	-
+mex_ace_cpu	PASS	3601	3601	-
+mex_halberd_cpu	PASS	3601	3601	-
+mex_ukirby_cpu	PASS	3601	3601	-
+geno_glide	PASS	601	601	-
+mex_sorapal_cpu	PASS	3601	3601	-
+mex_sora_cpu	PASS	3601	3601	-
+mex_halberd_bhv	PASS	2401	2401	-
+mex_sorapal_bhv	PASS	2401	2401	-
+geno_courier_cpu	PASS	3601	3601	-
+mex_goku_cpu	PASS	3601	3601	-

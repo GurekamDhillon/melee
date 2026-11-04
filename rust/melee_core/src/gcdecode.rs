@@ -172,6 +172,8 @@ pub struct GcDecoder<'a> {
     relocs: &'a RelocSet,
     /// `relocs` as one bit per data offset (a hash lookup per pointer word was a large part of a big file's decode).
     rbits: Vec<u64>,
+    /// [`GcDecoder::ptr_array_until_word`] scans per (phase, word, T): (first record, terminator record) offsets.
+    scans: FxMap<(u32, u32, TypeId), Vec<(u32, u32)>>,
     memo: FxMap<(u32, TypeId), *mut u8>,
     /// [`GcDecoder::ptr_array`] results per (target, T, length): two records may name one array with different counts.
     arr_memo: FxMap<(u32, TypeId, usize), *mut u8>,
@@ -198,7 +200,7 @@ impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a RelocSet) -> Self {
-        Self { dropped_issues: 0, shared: FxMap::default(), data, relocs, rbits: reloc_bits(relocs), memo: FxMap::default(), arr_memo: FxMap::default(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+        Self { dropped_issues: 0, shared: FxMap::default(), data, relocs, rbits: reloc_bits(relocs), scans: FxMap::default(), memo: FxMap::default(), arr_memo: FxMap::default(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -331,10 +333,23 @@ impl<'a> GcDecoder<'a> {
         if let Some(&p) = self.memo.get(&key) {
             return p as *mut T;
         }
-        let mut n = 0u32;
-        while t + n * T::GC_BYTES + 4 <= self.data.len() as u32 && self.u32_at(t + n * T::GC_BYTES) != word {
-            n += 1;
-        }
+        // overlapping lists of one phase end at the same terminator: an earlier scan [start, end] holding `t` answers it
+        let stride = T::GC_BYTES.max(1);
+        let skey = (t % stride, word, TypeId::of::<UntilKey<T>>());
+        let known = self.scans.get(&skey).and_then(|v| v.iter().find(|&&(a, e)| a <= t && t <= e).map(|&(_, e)| e));
+        let n = match known {
+            Some(e) => (e - t) / stride,
+            None => {
+                let mut n = 0u32;
+                while t + n * T::GC_BYTES + 4 <= self.data.len() as u32 && self.u32_at(t + n * T::GC_BYTES) != word {
+                    n += 1;
+                }
+                if n >= 64 {
+                    self.scans.entry(skey).or_default().push((t, t + n * stride));
+                }
+                n
+            }
+        };
         if n as usize + 1 >= SHARED_MIN {
             // a list with no terminator for thousands of records (PObj `verts` of records the item file's tables reach
             // with another type: 93 lists, 711k records per VS load): overlapping windows share one decode of the

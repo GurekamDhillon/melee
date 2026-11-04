@@ -94,10 +94,11 @@ pub fn Ucf_Reload() { unsafe { UCF_OFF_MODE = -1 } }
 pub fn Ucf_OfflineMode() -> i32 {
     unsafe {
         if UCF_OFF_MODE < 0 {
-            UCF_OFF_MODE = match std::env::var("MELEE_UCF") {
+            // `--codes` given: the UCF code bit decides (notes/gameplay-codes.md); else the C build's setting
+            UCF_OFF_MODE = if melee_core::codes::configured() { if melee_core::codes::on(melee_core::codes::UCF) { 84 } else { 0 } } else { match std::env::var("MELEE_UCF") {
                 Ok(v) if !v.is_empty() => if matches!(v.as_str(), "0" | "off" | "OFF" | "false" | "no") { 0 } else { 84 },
                 _ => if Settings_Int("ucf", 84) != 0 { 84 } else { 0 },
-            };
+            } };
         }
         UCF_OFF_MODE
     }

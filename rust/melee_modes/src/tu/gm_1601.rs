@@ -2161,10 +2161,16 @@ pub unsafe fn fn_80165AC0(arg0: *mut MatchEnd) -> i32 {
     melee_core::ct!("fn_80165AC0");
     let me = &mut *arg0;
     let mut max_loser: i32 = 0;
+    // Slippi Ledge Grab Limit (LGL, injected at 80165C48 here and in the sudden-death setup): on a time-out a player
+    // over the limit ranks below every player who is not, so a tie with them is no sudden death but a loss. With the
+    // code off (or nobody over) `over` is all false and this is the game's own comparison.
+    let timeout = me.outcome == 1;
+    let over = |k: usize| timeout && melee_core::codes::over_ledge_limit(k);
+    let worse = |me: &MatchEnd, i: usize, j: usize| (over(i) && !over(j)) || (over(i) == over(j) && me.player_standings[i].score < me.player_standings[j].score);
     for i in 0..6usize {
         if me.player_standings[i].pkind != 3 {
             for j in 0..6usize {
-                if me.player_standings[j].pkind != 3 && i != j && me.player_standings[i].score < me.player_standings[j].score {
+                if me.player_standings[j].pkind != 3 && i != j && worse(me, i, j) {
                     me.player_standings[i].is_big_loser = me.player_standings[i].is_big_loser.wrapping_add(1);
                 }
             }

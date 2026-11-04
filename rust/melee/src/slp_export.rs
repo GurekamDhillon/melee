@@ -182,7 +182,14 @@ impl Exporter {
         let gi = game_info(sm);
         ev[5..5 + 0x138].copy_from_slice(&gi);
         put32(&mut ev, 0x13D, seed);
-        // controller fixes: the vanilla engine has none (0 = off)
+        // controller fixes (dashback / shield drop words per port, 1 = UCF) and Frozen PS (0x1A2): what this engine
+        // plays with, i.e. the UCF mode (`--codes ucf`, else the `ucf` setting) and the frozen-stage codes
+        let ucf = (melee_fighter::platform::Ucf_OfflineMode() == 84) as u32;
+        for p in 0..4 {
+            put32(&mut ev, 0x141 + 8 * p, ucf);
+            put32(&mut ev, 0x145 + 8 * p, ucf);
+        }
+        ev[0x1A2] = melee_core::codes::on(melee_core::codes::FROZEN_PS | melee_core::codes::FROZEN_STAGES) as u8;
         ev[0x1A3] = 2; // minor scene
         ev[0x1A4] = 2; // major scene: VS mode
         ev[0x2BD] = 1; // English
@@ -252,6 +259,12 @@ impl Exporter {
             o.push(b'}');
         }
         o.push(b'}');
+        // the opt-in gameplay codes (melee_core::codes): word (hex, `:limit` with LGL) and names; our own key
+        let (cw, cl) = (melee_core::codes::word(), melee_core::codes::lgl_limit());
+        ub_key(&mut o, "gameplayCodes");
+        ub_str(&mut o, &melee_core::codes::encode(cw, cl));
+        ub_key(&mut o, "gameplayCodesNames");
+        ub_str(&mut o, &melee_core::codes::describe(cw, cl));
         ub_key(&mut o, "playedOn");
         ub_str(&mut o, &self.played_on);
         o.push(b'}');

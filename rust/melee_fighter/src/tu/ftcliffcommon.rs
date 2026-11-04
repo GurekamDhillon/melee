@@ -59,8 +59,16 @@ pub fn ftcliffcommon_80081298(g: G) -> bool {
         return false;
     }
     if f.coll_data.env_flags & LEDGE_GRAB_MASK != 0 && (f.is_sandbag() & 1) == 0 {
-        let og = ext::ft_80082E3C(g);
+        let mut og = ext::ft_80082E3C(g);
+        // 20XX TE hand-warmers: no edge-hogging, both can hang on
+        if !og.is_null() && melee_core::codes::handwarmers_active() {
+            og = core::ptr::null_mut();
+        }
         if og.is_null() {
+            // Slippi Ledge Grab Limit: count the grab
+            if f.is_sub_fighter() == 0 {
+                melee_core::codes::note_ledge_grab(f.player_id as i32);
+            }
             crate::plbonus::pl_80040048(f.player_id as i32, f.is_sub_fighter() as i32);
             ftcliffcommon_80081370(g);
             return true;

@@ -6,6 +6,7 @@
 //! the C build's `-fwrapv` (use `wrapping_*` where it matters; overflow checks are off).
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+pub mod codes;
 pub mod ct;
 pub mod fp;
 pub mod gc;

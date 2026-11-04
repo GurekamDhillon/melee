@@ -1802,6 +1802,10 @@ unsafe fn Fighter_8006A360__orig(g: G) {
         ext::ftAnim_8006EBA4(g);
         e::ftCo_800D71D8(g);
         e::ftColl_800764DC(g);
+        // 20XX TE hand-warmers: intangible every frame (x198C = 2, as TE sets it after ftColl_800764DC)
+        if melee_core::codes::handwarmers_active() {
+            fp.x198C = 2;
+        }
         if fp.x221C_b6() == 0 {
             e::pl_800411C4(fp.player_id as i32, fp.is_sub_fighter() as i32);
         }

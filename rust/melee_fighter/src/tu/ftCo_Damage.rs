@@ -777,6 +777,76 @@ fn inlineB2(g: G) {
     ext::ftCommon_800804FC(fp(g));
 }
 
+/// Slippi "Disable Wobbling" (External/PreventWobbling, injected at 8008F090 in this function and 800DB880 /
+/// 800DBBD4 in the capture enters): per grabbed fighter a count of distinct attacks by the grabbing Ice Climber's
+/// partner; the 4th one breaks the grab (`ftCo_800DA698` on the grabber) instead of the capture-damage motion.
+/// Not in teams (`gm_8016B168`). State: (count, last attack id) per victim slot, a static so a rollback restores it.
+pub static mut WOBBLE: [[(u8, u16); 2]; 6] = [[(0, 0xFFFF); 2]; 6];
+
+fn wobble_slot(f: &Fighter) -> (usize, usize) {
+    ((f.x618_player_id as usize).min(5), (f.is_sub_fighter() != 0) as usize)
+}
+
+/// `fn_800DB790` / `fn_800DBAE4` (capture start): the count starts again.
+pub fn wobble_reset(g: G) {
+    if melee_core::codes::on(melee_core::codes::NO_WOBBLE) {
+        let (a, b) = wobble_slot(fp(g));
+        unsafe { WOBBLE[a][b] = (0, 0xFFFF) };
+    }
+}
+
+/// True when the grab broke.
+fn wobble_check(g: G) -> bool {
+    let f = fp(g);
+    let m = f.motion_id as i32;
+    if !(0xDF..=0xE4).contains(&m) || f.victim_gobj.is_null() || f.dmg.x1868_source.is_null() {
+        return false;
+    }
+    let grabber = f.victim_gobj;
+    let src = f.dmg.x1868_source;
+    // only a fighter hit counts, from the grabber's partner (same player, other gobj): Nana's ftilt / dsmash
+    if src == grabber || unsafe { (*src).classifier } as i32 != HSD_GOBJ_CLASS_FIGHTER {
+        return false;
+    }
+    let (sf, gf) = (fp(src), fp(grabber));
+    if sf.x618_player_id != gf.x618_player_id {
+        return false;
+    }
+    let id = sf.x2074.x2088;
+    let (a, b) = wobble_slot(f);
+    let w = unsafe { &mut WOBBLE[a][b] };
+    if id == w.1 {
+        return false;
+    }
+    w.1 = id;
+    w.0 = w.0.wrapping_add(1);
+    if crate::tu::player::ext::gm_8016B168() || w.0 <= 3 {
+        return false;
+    }
+    crate::tu::ftCo_CatchCut::ftCo_800DA698(grabber, false);
+    true
+}
+
+/// `inlineB2` with the wobble check after `ftCo_800C8D00`.
+fn inlineB2_wobble(g: G) {
+    ext::ftCo_800C8D00(g);
+    if !wobble_check(g) {
+        let m = fp(g).motion_id as i32;
+        if m == 0xe0 || m == 0xe1 {
+            ext::ftCo_800DC284(g);
+        }
+        if m == 0xe3 || m == 0xe4 {
+            ext::ftCo_800DC3A4(g);
+        }
+    }
+    let f = fp(g);
+    let lvl = ftCo_8008D8E8(f.dmg.kb_applied * cd().x154);
+    if ftCo_8008DA4C(g, f.dmg.x1860_element, lvl) {
+        ext::ftCo_800C0408(g);
+    }
+    ext::ftCommon_800804FC(fp(g));
+}
+
 /// static inline `inlineB3`.
 fn inlineB3(g: G) {
     let f = fp(g);
@@ -856,7 +926,11 @@ pub fn ftCo_8008EC90(g: G) {
                         }
                         fp(g).input.pressed_buttons = 0;
                         fp(g).input.released_buttons = 0;
-                        inlineB2(g);
+                        if melee_core::codes::on(melee_core::codes::NO_WOBBLE) {
+                            inlineB2_wobble(g);
+                        } else {
+                            inlineB2(g);
+                        }
                         break 'ret;
                     }
                     if other_fp.dmg.kb_applied != 0.0 {

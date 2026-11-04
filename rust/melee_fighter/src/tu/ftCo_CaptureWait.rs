@@ -118,6 +118,8 @@ pub fn fn_800DB790(g: G) {
     melee_core::ct!("fn_800DB790");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitHi as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
+    // Slippi PreventWobbling Init Wobble Count (800DB880 / 800DBBD4)
+    crate::tu::ftCo_Damage::wobble_reset(g);
 }
 
 /// `fn_800DB8A4`.
@@ -192,6 +194,8 @@ pub fn fn_800DBAE4(g: G) {
     melee_core::ct!("fn_800DBAE4");
     ext::Fighter_ChangeMotionState(g, ftCo_MS_CaptureWaitLw as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
     yoshi_hurtbox(g);
+    // Slippi PreventWobbling Init Wobble Count (800DB880 / 800DBBD4)
+    crate::tu::ftCo_Damage::wobble_reset(g);
 }
 
 /// `fn_800DBBF8`: landed while held -> CaptureWaitLw.

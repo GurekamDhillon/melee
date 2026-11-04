@@ -12,7 +12,7 @@
 use std::fs::File;
 use std::io::{Seek, SeekFrom, Write};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -24,7 +24,14 @@ pub const RING_FRAMES: u32 = 16384;
 /// 80 ms of catch-up per call.
 pub const MAX_BURST: u32 = 16;
 
+/// Sub-frame production stamps kept for the latency measurement (more than the ring holds at any cushion used).
+const STAMPS: usize = 128;
+
 /// SPSC ring of stereo frames, each packed as `L as u16 | (R as u16) << 16`.
+///
+/// Besides the samples it carries the output-side bookkeeping, none of which feeds back into the mix: the cushion the
+/// producer tops up to (`target`, in 5 ms sub-frames, raised by the consumer after an underrun and lowered again after a
+/// clean stretch), and the latency measurement (each sub-frame's push time, read when the device takes its first sample).
 pub struct Ring {
     buf: Box<[AtomicU32]>,
     /// frames produced / consumed (monotonic, wrapping)
@@ -32,6 +39,37 @@ pub struct Ring {
     r: AtomicU32,
     pub underruns: AtomicU32,
     pub overruns: AtomicU32,
+    /// Underrun events (a starved stretch counts once; `underruns` counts frames).
+    pub underrun_events: AtomicU32,
+    /// Cushion in sub-frames the producer keeps buffered (adaptive; see [`Ring::target`]).
+    target: AtomicU32,
+    target_min: AtomicU32,
+    target_max: AtomicU32,
+    /// Push time (ns since `epoch`) of sub-frame k at `stamp[k % STAMPS]`.
+    stamp: Box<[AtomicU64]>,
+    epoch: Instant,
+    /// Latency stats (microseconds): ring residency of each sub-frame plus the device's hold time.
+    pub lat_sum_us: AtomicU64,
+    pub lat_n: AtomicU64,
+    pub lat_max_us: AtomicU64,
+    pub lat_min_us: AtomicU64,
+    /// Largest device callback seen (frames at the device rate) and the device rate.
+    pub cb_frames_max: AtomicU32,
+    /// The latest device callback's length (frames at the device rate).
+    pub cb_frames_last: AtomicU32,
+    pub dev_rate: AtomicU32,
+}
+
+/// A latency summary ([`Ring::latency`]).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Latency {
+    pub mean_ms: f64,
+    pub min_ms: f64,
+    pub max_ms: f64,
+    pub samples: u64,
+    pub callback_frames: u32,
+    pub device_rate: u32,
+    pub target_ms: u32,
 }
 
 impl Default for Ring {
@@ -48,6 +86,85 @@ impl Ring {
             r: AtomicU32::new(0),
             underruns: AtomicU32::new(0),
             overruns: AtomicU32::new(0),
+            underrun_events: AtomicU32::new(0),
+            target: AtomicU32::new(12),
+            target_min: AtomicU32::new(12),
+            target_max: AtomicU32::new(12),
+            stamp: (0..STAMPS).map(|_| AtomicU64::new(0)).collect(),
+            epoch: Instant::now(),
+            lat_sum_us: AtomicU64::new(0),
+            lat_n: AtomicU64::new(0),
+            lat_max_us: AtomicU64::new(0),
+            lat_min_us: AtomicU64::new(u64::MAX),
+            cb_frames_max: AtomicU32::new(0),
+            cb_frames_last: AtomicU32::new(0),
+            dev_rate: AtomicU32::new(0),
+        }
+    }
+    /// Set the cushion: start at `target` sub-frames, adapt between `min` and `max`.
+    pub fn set_target(&self, target: u32, min: u32, max: u32) {
+        let min = min.max(1);
+        let max = max.max(min);
+        self.target_min.store(min, Ordering::Relaxed);
+        self.target_max.store(max, Ordering::Relaxed);
+        self.target.store(target.clamp(min, max), Ordering::Relaxed);
+    }
+    /// The cushion the producer tops the ring up to, in 5 ms sub-frames.
+    pub fn target(&self) -> u32 {
+        self.target.load(Ordering::Relaxed)
+    }
+    /// Consumer: an underrun happened; keep one more sub-frame from now on (up to the max).
+    fn widen(&self) {
+        let (t, max) = (self.target.load(Ordering::Relaxed), self.target_max.load(Ordering::Relaxed));
+        if t < max {
+            self.target.store(t + 1, Ordering::Relaxed);
+        }
+    }
+    /// Consumer: a long clean stretch; give one sub-frame back (down to the min).
+    fn narrow(&self) {
+        let (t, min) = (self.target.load(Ordering::Relaxed), self.target_min.load(Ordering::Relaxed));
+        if t > min {
+            self.target.store(t - 1, Ordering::Relaxed);
+        }
+    }
+    fn now_ns(&self) -> u64 {
+        self.epoch.elapsed().as_nanos() as u64
+    }
+    /// Consumer: the device is about to take frame `r`, a sub-frame's first sample; `queued_ns` is how long the device
+    /// holds it before it is heard.
+    fn note_latency(&self, r: u32, queued_ns: u64) {
+        let k = (r / FRAME_SAMPLES as u32) as usize % STAMPS;
+        let t = self.stamp[k].load(Ordering::Relaxed);
+        if t == 0 {
+            return;
+        }
+        let us = (self.now_ns().saturating_sub(t) + queued_ns) / 1000;
+        self.lat_sum_us.fetch_add(us, Ordering::Relaxed);
+        self.lat_n.fetch_add(1, Ordering::Relaxed);
+        self.lat_max_us.fetch_max(us, Ordering::Relaxed);
+        self.lat_min_us.fetch_min(us, Ordering::Relaxed);
+    }
+    /// Forget the latency stats (after a warm-up).
+    pub fn reset_latency(&self) {
+        self.lat_sum_us.store(0, Ordering::Relaxed);
+        self.lat_n.store(0, Ordering::Relaxed);
+        self.lat_max_us.store(0, Ordering::Relaxed);
+        self.lat_min_us.store(u64::MAX, Ordering::Relaxed);
+        self.cb_frames_max.store(0, Ordering::Relaxed);
+    }
+    /// Output latency measured so far: from a mixed sub-frame being handed to the ring to the device playing its first
+    /// sample (ring residency, measured, plus the device's queue at that callback as cpal reports it).
+    pub fn latency(&self) -> Latency {
+        let n = self.lat_n.load(Ordering::Relaxed);
+        let ms = |us: u64| us as f64 / 1000.0;
+        Latency {
+            mean_ms: if n == 0 { 0.0 } else { ms(self.lat_sum_us.load(Ordering::Relaxed)) / n as f64 },
+            min_ms: if n == 0 { 0.0 } else { ms(self.lat_min_us.load(Ordering::Relaxed)) },
+            max_ms: ms(self.lat_max_us.load(Ordering::Relaxed)),
+            samples: n,
+            callback_frames: self.cb_frames_max.load(Ordering::Relaxed),
+            device_rate: self.dev_rate.load(Ordering::Relaxed),
+            target_ms: self.target() * 5,
         }
     }
     /// Frames currently buffered.
@@ -62,6 +179,10 @@ impl Ring {
         let w = self.w.load(Ordering::Relaxed);
         let avail = RING_FRAMES - w.wrapping_sub(self.r.load(Ordering::Acquire));
         let mut n = (stereo.len() / 2) as u32;
+        if w % FRAME_SAMPLES as u32 == 0 {
+            let k = (w / FRAME_SAMPLES as u32) as usize % STAMPS;
+            self.stamp[k].store(self.now_ns().max(1), Ordering::Relaxed);
+        }
         if avail < n {
             self.overruns.fetch_add(1, Ordering::Relaxed);
             n = avail;
@@ -75,9 +196,18 @@ impl Ring {
     }
     /// Consumer: one frame, or None on underrun.
     pub fn pop(&self) -> Option<(i16, i16)> {
+        self.pop_timed(None)
+    }
+    /// [`Ring::pop`], measuring the latency at each sub-frame start when `queued_ns` (the device's hold time) is given.
+    pub fn pop_timed(&self, queued_ns: Option<u64>) -> Option<(i16, i16)> {
         let r = self.r.load(Ordering::Relaxed);
         if self.w.load(Ordering::Acquire) == r {
             return None;
+        }
+        if let Some(q) = queued_ns {
+            if r % FRAME_SAMPLES as u32 == 0 {
+                self.note_latency(r, q);
+            }
         }
         let v = self.buf[(r % RING_FRAMES) as usize].load(Ordering::Relaxed);
         self.r.store(r.wrapping_add(1), Ordering::Release);
@@ -244,6 +374,7 @@ mod device {
         k
     }
 
+    #[derive(Clone)]
     struct Feed {
         ring: Arc<Ring>,
         gain: Arc<AtomicU32>,
@@ -256,20 +387,53 @@ mod device {
         kernel: Vec<f32>,
         /// The ring has delivered once: silence before the first mix (device opened ahead of the game) is not an underrun.
         primed: bool,
+        /// Underrun handling: the last frame played and the gain ramp (1.0 = the ring's frames as they are). On a starved
+        /// pop the output decays from the last frame to silence over `FADE_OUT` frames instead of stepping to 0 (a click);
+        /// when frames arrive again they fade in over `FADE_IN`. Output side only: the ring's frames are never altered.
+        last: (f32, f32),
+        ramp: f32,
+        starved: bool,
+        /// Device frames since the last underrun (the cushion gives a sub-frame back after `NARROW_AFTER_S` clean seconds).
+        clean: u64,
+        /// The device's hold time for the frame being written (ns), for the latency measurement.
+        queued_ns: u64,
+        /// Nominal 16.16 step, and the drift correction: the step is nudged by the ring's offset from its cushion (at most
+        /// `MAX_SKEW`), so a device clock a little off 32 kHz (or the producer's 5 ms granularity) is absorbed by a pitch
+        /// change far below hearing instead of the fill wandering into an underrun. Only when resampling (rate != 32 kHz).
+        nominal: u32,
+        rate: u32,
     }
 
+    /// 2 ms of decay to silence, 4 ms of fade-in, at the device rate (set at open).
+    const FADE_OUT_MS: f32 = 2.0;
+    const FADE_IN_MS: f32 = 4.0;
+    const NARROW_AFTER_S: u64 = 10;
+    /// 0.2% at most (about 3.5 cents).
+    const MAX_SKEW: f64 = 0.002;
+
     impl Feed {
+        /// Once per callback: steer the resampler step by the ring's fill against its cushion.
+        fn steer(&mut self) {
+            if self.nominal == 0x10000 {
+                return;
+            }
+            let fill = self.ring.len() as f64 / FRAME_SAMPLES as f64; // sub-frames buffered
+            let want = self.ring.target() as f64 - 0.5; // the producer keeps target-1 .. target
+            let err = ((fill - want) / want.max(1.0)).clamp(-1.0, 1.0);
+            let skew = (err * MAX_SKEW).clamp(-MAX_SKEW, MAX_SKEW);
+            self.step = ((self.nominal as f64) * (1.0 + skew)).round().max(1.0) as u32;
+        }
         fn frame(&mut self) -> (f32, f32) {
             let g = f32::from_bits(self.gain.load(Ordering::Relaxed)) / 32768.0;
-            if self.step == 0x10000 {
+            if self.step == 0x10000 && self.nominal == 0x10000 {
                 let a = self.pop();
-                return (a.0 as f32 * g, a.1 as f32 * g);
+                return (a.0 * g, a.1 * g);
             }
             self.frac += self.step;
             while self.frac >= 0x10000 {
                 self.frac -= 0x10000;
                 let v = self.pop();
-                self.hist[self.pos] = (v.0 as f32, v.1 as f32);
+                self.hist[self.pos] = v;
                 self.pos = (self.pos + 1) % TAPS;
             }
             let p = ((self.frac as u64 * PHASES as u64) >> 16) as usize;
@@ -282,24 +446,55 @@ mod device {
             }
             (l * g, r * g)
         }
-        fn pop(&mut self) -> (i16, i16) {
-            match self.ring.pop() {
+        fn pop(&mut self) -> (f32, f32) {
+            let rate = self.rate.max(1) as f32;
+            match self.ring.pop_timed(Some(self.queued_ns)) {
                 Some(v) => {
                     self.primed = true;
-                    v
+                    let v = (v.0 as f32, v.1 as f32);
+                    if self.starved {
+                        self.starved = false;
+                        self.ramp = 0.0;
+                    }
+                    if self.ramp < 1.0 {
+                        self.ramp = (self.ramp + 1000.0 / (FADE_IN_MS * rate)).min(1.0);
+                    }
+                    self.clean += 1;
+                    if self.clean >= NARROW_AFTER_S * rate as u64 {
+                        self.clean = 0;
+                        self.ring.narrow();
+                    }
+                    self.last = v;
+                    (v.0 * self.ramp, v.1 * self.ramp)
                 }
                 None => {
-                    if self.primed {
-                        self.ring.underruns.fetch_add(1, Ordering::Relaxed);
+                    if !self.primed {
+                        return (0.0, 0.0);
                     }
-                    (0, 0)
+                    self.ring.underruns.fetch_add(1, Ordering::Relaxed);
+                    if !self.starved {
+                        self.starved = true;
+                        self.clean = 0;
+                        self.ring.underrun_events.fetch_add(1, Ordering::Relaxed);
+                        self.ring.widen();
+                    }
+                    self.ramp = (self.ramp - 1000.0 / (FADE_OUT_MS * rate)).max(0.0);
+                    (self.last.0 * self.ramp, self.last.1 * self.ramp)
                 }
             }
         }
     }
 
-    fn fill<T: cpal::SizedSample + cpal::FromSample<f32>>(feed: &mut Feed, data: &mut [T], ch: usize) {
-        for f in data.chunks_mut(ch) {
+    fn fill<T: cpal::SizedSample + cpal::FromSample<f32>>(feed: &mut Feed, data: &mut [T], ch: usize, info: &cpal::OutputCallbackInfo) {
+        let frames = (data.len() / ch.max(1)) as u32;
+        feed.ring.cb_frames_max.fetch_max(frames, Ordering::Relaxed);
+        feed.ring.cb_frames_last.store(frames, Ordering::Relaxed);
+        let ts = info.timestamp();
+        let base = ts.playback.duration_since(&ts.callback).map_or(0, |d| d.as_nanos() as u64);
+        let per = 1_000_000_000u64 / feed.rate.max(1) as u64;
+        feed.steer();
+        for (i, f) in data.chunks_mut(ch).enumerate() {
+            feed.queued_ns = base + i as u64 * per;
             let (l, r) = feed.frame();
             for (c, s) in f.iter_mut().enumerate() {
                 let v = match c {
@@ -313,8 +508,10 @@ mod device {
     }
 
     impl Device {
-        /// The default output device, preferring 32 kHz stereo.
-        pub fn open(ring: Arc<Ring>, gain: Arc<AtomicU32>) -> Result<Device, String> {
+        /// The default output device, preferring 32 kHz stereo. `buffer_ms` > 0 asks for a device buffer of that length
+        /// (WASAPI shared mode, event driven: the audio engine rounds it up to its period; cpal 0.15 has no exclusive
+        /// mode); when the device refuses it the default buffer is used.
+        pub fn open(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32) -> Result<Device, String> {
             let host = cpal::default_host();
             let dev = host.default_output_device().ok_or("no default output device")?;
             let want = cpal::SampleRate(RATE);
@@ -329,7 +526,8 @@ mod device {
             let rate = cfg.sample_rate().0;
             let ch = cfg.channels() as usize;
             let fmt = cfg.sample_format();
-            let config: cpal::StreamConfig = cfg.into();
+            let mut config: cpal::StreamConfig = cfg.into();
+            ring.dev_rate.store(rate, Ordering::Relaxed);
             let mut feed = Feed {
                 ring,
                 gain,
@@ -339,24 +537,52 @@ mod device {
                 pos: 0,
                 kernel: if rate == RATE { Vec::new() } else { sinc_table(rate) },
                 primed: false,
+                last: (0.0, 0.0),
+                ramp: 1.0,
+                starved: false,
+                clean: 0,
+                queued_ns: 0,
+                nominal: 0,
+                rate,
             };
             if rate == RATE {
                 feed.step = 0x10000;
             }
-            let err = |e| eprintln!("melee_audio: stream error: {e}");
+            feed.nominal = feed.step;
             macro_rules! build {
-                ($t:ty) => {
-                    dev.build_output_stream(&config, move |d: &mut [$t], _: &_| fill(&mut feed, d, ch), err, None)
-                };
+                ($t:ty, $config:expr, $feed:expr) => {{
+                    let mut feed = $feed;
+                    dev.build_output_stream(
+                        $config,
+                        move |d: &mut [$t], info: &cpal::OutputCallbackInfo| fill(&mut feed, d, ch, info),
+                        |e| eprintln!("melee_audio: stream error: {e}"),
+                        None,
+                    )
+                }};
             }
-            let stream = match fmt {
-                cpal::SampleFormat::F32 => build!(f32),
-                cpal::SampleFormat::I16 => build!(i16),
-                cpal::SampleFormat::U16 => build!(u16),
-                cpal::SampleFormat::I32 => build!(i32),
-                other => return Err(format!("unsupported sample format {other:?}")),
+            let try_build = |config: &cpal::StreamConfig, feed: Feed| match fmt {
+                cpal::SampleFormat::F32 => build!(f32, config, feed),
+                cpal::SampleFormat::I16 => build!(i16, config, feed),
+                cpal::SampleFormat::U16 => build!(u16, config, feed),
+                cpal::SampleFormat::I32 => build!(i32, config, feed),
+                _ => Err(cpal::BuildStreamError::StreamConfigNotSupported),
+            };
+            if !matches!(fmt, cpal::SampleFormat::F32 | cpal::SampleFormat::I16 | cpal::SampleFormat::U16 | cpal::SampleFormat::I32) {
+                return Err(format!("unsupported sample format {fmt:?}"));
             }
-            .map_err(|e| e.to_string())?;
+            let stream = if buffer_ms > 0 {
+                config.buffer_size = cpal::BufferSize::Fixed((rate * buffer_ms / 1000).max(32));
+                match try_build(&config, feed.clone()) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        eprintln!("melee_audio: a {buffer_ms} ms device buffer was refused ({e}); using the default buffer");
+                        config.buffer_size = cpal::BufferSize::Default;
+                        try_build(&config, feed).map_err(|e| e.to_string())?
+                    }
+                }
+            } else {
+                try_build(&config, feed).map_err(|e| e.to_string())?
+            };
             stream.play().map_err(|e| e.to_string())?;
             Ok(Device { _stream: stream, rate })
         }
@@ -364,11 +590,11 @@ mod device {
         /// [`Device::open`] on a thread of its own, which then keeps the stream until the returned handle is dropped.
         /// Opening the device (WASAPI activation, RPC to the audio service) took 20-60% of the first match tick; done
         /// from the driver's creation on, it is ready (or nearly) by the time the game first needs it.
-        pub fn open_async(ring: Arc<Ring>, gain: Arc<AtomicU32>) -> std::sync::mpsc::Receiver<Result<(u32, Held), String>> {
+        pub fn open_async(ring: Arc<Ring>, gain: Arc<AtomicU32>, buffer_ms: u32) -> std::sync::mpsc::Receiver<Result<(u32, Held), String>> {
             let (tx, rx) = std::sync::mpsc::channel();
             let spawned = std::thread::Builder::new().name("audio open".into()).spawn(move || {
                 let (stop_tx, stop) = std::sync::mpsc::channel::<()>();
-                match Device::open(ring, gain) {
+                match Device::open(ring, gain, buffer_ms) {
                     Ok(d) => {
                         if tx.send(Ok((d.rate, Held(stop_tx)))).is_ok() {
                             // blocks until the Held handle is dropped (its sender closes the channel)
@@ -401,8 +627,14 @@ mod device {
 pub struct DriverConfig {
     /// Turbo: keep the 5 ms synth/DSP clock but never open a device (MELEE_TURBO).
     pub turbo: bool,
-    /// Ring cushion in sub-frames (MELEE_AUDIO_LATENCY_MS / 5, from 10..200 ms; default 12).
+    /// Ring cushion in sub-frames (MELEE_AUDIO_LATENCY_MS / 5, from 5..200 ms; default 12, low-latency mode 2). The
+    /// cushion adapts: +1 sub-frame per underrun up to `max_frames`, -1 after 10 s without one, never below this.
     pub target_frames: u32,
+    pub max_frames: u32,
+    /// Device buffer request in ms (0 = the device default). Low-latency mode asks for 5 ms.
+    pub buffer_ms: u32,
+    /// MELEE_AUDIO_LOW_LATENCY=1 (or MELEE_AUDIO_MODE=low): small cushion, small device buffer.
+    pub low_latency: bool,
     pub nofx: bool,
     pub dump: Option<String>,
     /// Open the output device (false for tests / headless).
@@ -411,13 +643,23 @@ pub struct DriverConfig {
 
 impl DriverConfig {
     pub fn from_env(turbo: bool) -> Self {
-        let mut target_frames = 12;
+        let flag = |k: &str| std::env::var(k).ok().filter(|v| !v.is_empty() && v != "0");
+        let low_latency = flag("MELEE_AUDIO_LOW_LATENCY").is_some()
+            || std::env::var("MELEE_AUDIO_MODE").is_ok_and(|v| v.eq_ignore_ascii_case("low"));
+        let (mut target_frames, mut buffer_ms) = if low_latency { (2, 5) } else { (12, 0) };
         if let Ok(v) = std::env::var("MELEE_AUDIO_LATENCY_MS") {
-            target_frames = ((atoi(&v).clamp(10, 200) / 5) as u32).max(2);
+            target_frames = ((atoi(&v).clamp(5, 200) / 5) as u32).max(1);
         }
+        if let Ok(v) = std::env::var("MELEE_AUDIO_BUFFER_MS") {
+            buffer_ms = atoi(&v).clamp(0, 100) as u32;
+        }
+        let max_frames = target_frames.max(if low_latency { 8 } else { target_frames + 8 });
         DriverConfig {
             turbo,
             target_frames,
+            max_frames,
+            buffer_ms,
+            low_latency,
             nofx: std::env::var_os("MELEE_AUDIO_NOFX").is_some(),
             dump: std::env::var("MELEE_AUDIO_DUMP").ok().filter(|s| !s.is_empty()),
             device: true,
@@ -447,9 +689,10 @@ const STALL: Duration = Duration::from_millis(100);
 impl Driver {
     pub fn new(cfg: DriverConfig) -> Self {
         let ring = Arc::new(Ring::new());
+        ring.set_target(cfg.target_frames, cfg.target_frames, cfg.max_frames);
         let gain = Arc::new(AtomicU32::new(1.0f32.to_bits()));
         #[cfg(feature = "device")]
-        let opening = (cfg.device && !cfg.turbo).then(|| device::Device::open_async(ring.clone(), gain.clone()));
+        let opening = (cfg.device && !cfg.turbo).then(|| device::Device::open_async(ring.clone(), gain.clone(), cfg.buffer_ms));
         Driver {
             cfg,
             ring,
@@ -523,7 +766,7 @@ impl Driver {
         #[cfg(feature = "device")]
         {
             if self.opening.is_none() {
-                self.opening = Some(device::Device::open_async(self.ring.clone(), self.gain.clone()));
+                self.opening = Some(device::Device::open_async(self.ring.clone(), self.gain.clone(), self.cfg.buffer_ms));
             }
             self.poll_open(ax);
         }
@@ -554,8 +797,10 @@ impl Driver {
                 log(
                     ax,
                     format!(
-                        "gw: AX: audio device open ({rate} Hz device, 32 kHz stereo s16 mix, {} ms target latency)",
-                        self.cfg.target_frames * 5
+                        "gw: AX: audio device open ({rate} Hz device, 32 kHz stereo s16 mix, {} ms cushion{}, device buffer {})",
+                        self.cfg.target_frames * 5,
+                        if self.cfg.low_latency { ", low-latency mode" } else { "" },
+                        if self.cfg.buffer_ms > 0 { format!("{} ms requested", self.cfg.buffer_ms) } else { "default".into() }
                     ),
                 );
             }
@@ -588,7 +833,7 @@ impl Driver {
         }
         let mut n = if self.dev_ok {
             let buffered = self.ring.len() / FRAME_SAMPLES as u32;
-            self.cfg.target_frames.saturating_sub(buffered)
+            self.ring.target().saturating_sub(buffered)
         } else {
             let Some(last) = self.last_tick else {
                 self.last_tick = Some(now);
@@ -648,7 +893,7 @@ mod tests {
             assert_eq!(load_volume(), want, "MELEE_VOLUME={env}");
         }
         std::env::set_var("MELEE_VOLUME", "40");
-        let mut d = Driver::new(DriverConfig { turbo: true, target_frames: 0, nofx: false, dump: None, device: false });
+        let mut d = Driver::new(DriverConfig { turbo: true, target_frames: 0, max_frames: 0, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false });
         assert_eq!(d.volume(), 40);
         d.apply_volume();
         assert_eq!(f32::from_bits(d.gain.load(Ordering::Relaxed)), 0.4);
@@ -665,7 +910,7 @@ mod tests {
     #[test]
     fn wall_clock_tick_without_device() {
         let mut ax = Ax::new();
-        let mut d = Driver::new(DriverConfig { turbo: false, target_frames: 12, nofx: false, dump: None, device: false });
+        let mut d = Driver::new(DriverConfig { turbo: false, target_frames: 12, max_frames: 20, buffer_ms: 0, low_latency: false, nofx: false, dump: None, device: false });
         let aram = vec![0u8; 64];
         assert_eq!(d.tick(&mut ax, true, |ax| *ax.run_frame(&aram)), 0); // first call arms the clock
         std::thread::sleep(Duration::from_millis(22));

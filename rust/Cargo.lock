@@ -1233,6 +1233,7 @@ name = "melee_gx"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
+ "font8x8",
  "melee_core",
  "png",
  "pollster",
@@ -1288,6 +1289,7 @@ dependencies = [
  "melee_runtime",
  "melee_types",
  "melee_world",
+ "png",
  "wasmi",
  "wat",
 ]

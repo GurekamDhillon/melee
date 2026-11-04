@@ -128,8 +128,15 @@ fn examples_load_together() {
     let mut h = Host::new();
     let mut files: Vec<_> = rd.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().is_some_and(|x| x == "wasm")).collect();
     files.sort();
+    let mut ui = crate::ui::PresHost::new();
     for f in &files {
-        h.load(&std::fs::read(f).unwrap()).unwrap_or_else(|e| panic!("{}: {e}", f.display()));
+        let b = std::fs::read(f).unwrap();
+        // gd_ui presentation mods go to the presentation host (install_dir skips them the same way)
+        if crate::ui::is_presentation(&b) {
+            ui.load(&b, std::env::temp_dir()).unwrap_or_else(|e| panic!("{}: {e}", f.display()));
+            continue;
+        }
+        h.load(&b).unwrap_or_else(|e| panic!("{}: {e}", f.display()));
     }
     let ids: Vec<&str> = h.mods.iter().map(|m| m.id.as_str()).collect();
     for want in ["gd.hello", "gd.moves", "gd.world"] {

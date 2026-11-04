@@ -1,4 +1,4 @@
-# Wasm UI and Lab API (design, not implemented)
+# Wasm UI and Lab API (A implemented; B design)
 
 Decision (user): GD's LAB and GD's custom menu system are **rebuilt** as wasm mods on the Rust mod host
 (`rust/melee_modhost`, see `modhost.md`). They are not ported through the C/Lua script host (`pc/gameworld/script_*.c`,
@@ -7,6 +7,32 @@ mod loaded, retail menus run vanilla and nothing below exists at runtime (hashes
 
 This note defines two ABI extensions to mod-c-v1, **gd-ui-v1** (A) and **gd-lab-v1** (B), plus the shared
 interface that lets both halves be built in parallel.
+
+## Status: half A (gd-ui-v1) implemented
+
+| piece | where |
+|---|---|
+| presentation host (one wasmi `Store` per mod, harness-owned, `UI_FUEL`, trap = disable + release + pop) | `rust/melee_modhost/src/ui/mod.rs` (`PresHost`); the sim host skips any module importing `gd_ui` |
+| command buffer (`gd_ui_submit`: LAYER RECT TEX TEXT KIT CLIP UNCLIP SLICE SPACE; VECTOR refused without Vello) and the sort | `ui/cmd.rs` |
+| batched quad + atlas renderer: one 64-byte instance per quad, one 1024x1024 atlas page (glyphs, 9-slices, kit pieces, mod PNGs), per-instance clip, drawn in the EFB blit pass | `rust/melee_gx/src/ui.rs`, `Renderer::blit_to` |
+| node tree (focus, wrap, repeat 15/4, A/B/L/R, layout cached until dirty) | `ui/nodes.rs` |
+| theme tokens A C E G | `ui/theme.rs` |
+| input boundary (capture, inject, exclusive masks before `set_pads`) and keyboard (GAP-14) | `PresHost::input`, `melee_platform` `PadSystem::ui_keys`, `retail_flow.rs` |
+| window space (GAP-0): `SPACE` record + `gd_ui_band_rect` | `ui/cmd.rs`, shader `to_px` |
+| scenes: register, replace (on entering the retail scene: custom scene on top, GX hidden, ports held), goto, back | `PresHost::retail_scene`, `scene_switch` |
+| encoder crate, example mod | `rust/mods/gd_ui_enc`, `rust/mods/ui_demo` (Frame data HUD preset, theme A, static data; D-pad left opens a node menu) |
+| bench | `cargo run -p melee_modhost --example ui_bench --profile fast -- ../build/mods/ui_demo.wasm` |
+
+Measured (dev box, fast profile, 3480 frames after warm-up): HUD p50 16.5 us / p99 19.7 us, 1152 quads; HUD + menu
+(42 nodes, ~110 text runs) p50 21.3 us / p99 26.1 us, 1715 quads; **0 allocations** per present after warm-up; 1 draw
+call per frame (one atlas page). In the game (`melee play`, retail flow, 1280x720, `ui_demo`): p50 43 us, p99 111 us
+per present including the wasm call; 1646 UI draw calls over 1646 presents (1 per present). Mods off: `PresHost` is
+None, `Renderer::ui` stays None, the blit pass is unchanged.
+
+Not done in A yet: `gd_ui_match_start` (returns `GD_ESTATE` until `gd_match_setup` is defined), driving the retail
+scene machine from `gd_ui_scene_goto` (only "back to the retail scene underneath"), the read-only gdmod.h getters in the
+presentation linker, `melee_kit`/Parley/Taffy (the host draws the 8x8 glyph font; GAP-17 fonts), `.gxtex` textures,
+the stand-in flow (`MELEE_STANDIN_MENUS`, play.rs). Netplay: captures mask the pads handed to `step`, which feeds the peer.
 
 ## 0. Ground rules
 

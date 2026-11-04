@@ -14,6 +14,7 @@ melee_fighter.workspace = true
 melee_modes.workspace = true
 melee_world.workspace = true
 melee_gx.workspace = true
+png = "0.18"
 wasmi = { version = "2.0.0", default-features = false, features = ["std", "validate", "deterministic"] }
 
 [dev-dependencies]

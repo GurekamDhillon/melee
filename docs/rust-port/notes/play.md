@@ -51,3 +51,33 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
 - Tests (no OS input; self-closing): `bash tools/rust-port/play/rematch.sh [--windowed] [css|x5|all]` runs css_rematch_4cpu.txt (CSS ->
   4 CPUs, 1-minute time, items very low, Brinstar -> results -> CSS -> 2v2 teams, 1 stock, Onett -> results) and rematch_x5.txt.
   Headless and windowed runs give the same results (deterministic).
+
+## Settings overlay and costume skins (port/net-cosmetics, 2026-11-04)
+- `rust/melee/src/settings_overlay.rs`: F1, or hold D-pad Down and press Start. Pages VIDEO (widescreen, fullscreen,
+  vsync, frame cap, interpolation + mode, internal resolution, MSAA), AUDIO (master volume, live), OVERLAYS (performance
+  HUD, input display, L-cancel indicator, no screen shake: live), GAME (skip intro, offline input delay, netplay early
+  inputs), CUSTOMIZE (overlay theme: the four gd-ui themes, live; one row per skin slot). Every change is saved to
+  settings.cfg at once; rows say `live` or `next launch`, and a `MELEE_<KEY>` env value that wins is reported.
+  `settings_overlay=0` turns it off. Drawn through the gd-ui-v1 host renderer (melee_modhost `Batch` + the shared
+  `Atlas`): into the UI mods' batch via `PresHost::present_with` (layer MODAL, after the mods) or its own batch; one draw
+  per present; nothing while closed. `MELEE_OVERLAY_SHOT=F.png` (headless): a CPU raster of the overlay frame.
+- Sim boundary: harness-owned, system heap (`SysHeap` in retail_flow.rs). While open it zeroes the owning port's pad at
+  the input boundary (like an exclusive gd-ui capture), before the recorder and the rollback submit; never a replay feed.
+- `rust/melee/src/cosmetics.rs`: catalog `Cosmetics/skins/<slot>/<name>.dat` (`cosmetics_dir=` moves it), `melee
+  cosmetics list|import FILE [--slot PlXxYy.dat] [--name N]|select SLOT NAME|none|check`, choice `skin_<slot>=name`. A
+  skin mounts only when its root symbol names and its `*_Share_joint` tree (shape, transform-relevant JObj flags, rest
+  pose bits) equal the vanilla costume's; anything else is refused everywhere (logged, shown in the overlay). So skins
+  are a local choice and never enter the netplay handshake. Offline a changed choice applies at the next match
+  (`Gcm::forget_replaced`); under netplay / rollback at the next launch.
+- Verified (headless, Fox green-costume data renamed into the PlFxNr slot as the test skin, scratch only): recorded
+  match with the skin on and the overlay toggling HUD / input display / skin mid-match, replayed with cosmetics and the
+  overlay off: 3839 match frames, 0 mismatches (same with the skin on). Falcon's costume as a Fox skin: refused (symbols
+  and 63 vs 73 joints). Netplay pair, skins on, the overlay opened on the host mid-match, 150 ms + 5 % loss, delay 4,
+  window 12: 2946 frames equal, 0 desyncs, replay equal.
+- Open: Hero's archive / Nucleus vault importers, stage and effect skins (stages carry collision: need their own rule),
+  portraits / stock icons, a live apply of video rows (fps cap, vsync, render scale need the presenter / main loop),
+  F1 not verified on a real keyboard (agents send no OS input), the overlay not seen on the GPU path (headless only:
+  the CPU raster is the check).
+- Pre-existing, not from this branch: headless `play_pair.sh NAME 50 5 --headless` crashes a peer with
+  `access violation (execute at 0x0)` in about half the runs on the unmodified tip 15be29360 too (tip: 4 of 6 failed;
+  this branch with the overlay off: 3 of 10). 150 ms runs passed.

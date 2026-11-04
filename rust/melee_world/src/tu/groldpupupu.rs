@@ -599,6 +599,10 @@ pub unsafe fn grOldPupupu_Advance(gobj: *mut HSD_GObj) {
         (*gp).u.oldpupupu.xC4 = 0;
     }
     (*gp).u.oldpupupu.xC8 = grOp_803E67D8[(*gp).u.oldpupupu.xC4 as usize];
+    // Slippi "Frozen Stages" (Frozen All/Core/1.asm writes grOp_803E67D8[2] @ 803E67E0): the wind state (2) never comes
+    if (*gp).u.oldpupupu.xC8 == 2 && melee_core::codes::on(melee_core::codes::FROZEN_STAGES) {
+        (*gp).u.oldpupupu.xC8 = 0;
+    }
     (*gp).u.oldpupupu.xD4 = 1;
 }
 

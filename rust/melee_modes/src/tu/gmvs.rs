@@ -1910,7 +1910,7 @@ pub unsafe fn fn_8016E2BC() {
                 }
                 ext::Player_80032768(i, &mut sp18);
                 // m-ex "neutral_spawn" (Slippi's console codesets carry the same Neutral Spawn: a replay always uses it)
-                if (ext::Mex_Enabled(b"neutral_spawn\0".as_ptr() as *mut i8) != 0 || ext::Replay_Active() != 0)
+                if (ext::Mex_Enabled(b"neutral_spawn\0".as_ptr() as *mut i8) != 0 || ext::Replay_Active() != 0 || melee_core::codes::on(melee_core::codes::NEUTRAL_SPAWN))
                     && !gm_IsCurrently1PMode_inline()
                     && i < 5
                     && ext::Player_GetPlayerSlotType(4) == Gm_PKind_NA
@@ -2016,6 +2016,8 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
         *HSD_RandSeedPtr = ext::Replay_ApplyMatch(arg0 as *mut c_void);
     }
     ext::FighterControls_MatchBegin(arg0 as *mut c_void);
+    // gameplay codes: per-match state (hand-warmers from this match's rules, LGL counters)
+    melee_core::codes::match_begin((*arg0).rules.is_stock() != 0, (*arg0).rules.timer_enabled() != 0, (*arg0).rules.time_limit);
     // MELEE_SLP_RECORD: the same point, for the port's own replays
     ext::Replay_RecordMatch(arg0 as *mut c_void, *HSD_RandSeedPtr);
     ext::db_Setup();

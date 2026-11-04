@@ -130,7 +130,7 @@ Interactions to keep in mind:
   stock icon (`DefineArtOpen` + a .gxtex handle table in geno_host, `uigen::UI_TextI4` over GDI for the initials
   fallback; render-only). Netplay identity: a base "none" define's resource files' bytes join its handshake part
   (mx_add_defines; a missing file drops it), test `geno_host::tests::identity_covers_base_none_files`.
-- Not hosted: define audio clips (DefineVoiceState / AudioPlay answer 0), the controls schema, the records memory-card
+- Not hosted: the controls schema, the records memory-card
   path (only `MELEE_GENO_RECORDS`), installed skins, the CSS/results art paths (`gm_1601` / gmresultplayer `UI_TextI4`
   and kit textures), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
   matches C hash for hash, so the C does not use them either there, but the C log was not compared line by line), define overlays using Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool
@@ -142,3 +142,35 @@ Interactions to keep in mind:
 ## Next
 
 1. Attach `melee_script` (the Lua host) to the engine loop so the `geno-lab` mod's UI runs in a LAB match.
+
+## Define audio (port/audio2, 2026-11-04)
+- `geno_host` slice 6: `DefineAudioPlay` (announcer, gm_80168C5C), `DefineVoicePlayOwner` (ft_0877 / ft_0881 voice calls, hook
+  `melee_fighter::hooks::GENO_DEFINE_VOICE_PLAY_OWNER`, was unset), `DefineVoiceState` (state-exit / reset cuts), the .gnsnd
+  decoder and the per-profile clip cache, played on `melee_audio::Ax`'s native clip slots (shim_ax.c gw_Audio_PlayOwnedClip).
+  Same answers as gn_define_audio_play: declared-but-unusable = 1 (silent), stop id 540001, unmapped ids logged once.
+  Netplay (port/genorb): see "Define audio under rollback" below; rb_active is the harness's resim flag.
+- Tests: `geno_host::clip_tests` ports test_geno_gnsnd_audio and the audio-lifetime fixture of geno_define_tests.inc.
+- End to end: a copy of vanilla-striker with an audio block (geno 10, synthesized tones; `build/covmods-audio`, not committed)
+  in geno_vanilla_striker_cpu: C (sfxparity lane, turbo + MELEE_AUDIO_DUMP) and Rust (`golden --audio`) print the same 24
+  define-audio log lines with the same counts (clip loads, 2 voice-line plays of sfx 1, the unmapped ids), and the Rust run
+  still matches the hash golden 3600/3600. The WAVs were not compared sample for sample: the C dump includes the boot and
+  load phase (14013 vs 12106 sub-frames) and no preroll alignment exists for a geno scenario; the vanilla mix itself is
+  only proven bit-exact for pad_falcon_fox_fd. No shipped mod has an audio block, so no coverage scenario exercises clips.
+
+## Define audio under rollback (port/genorb, 2026-11-04)
+- Defines run in netplay (`--match geno:<key>` / `ck:N` / a define name, with `--mods DIR`; the room's scene check accepts a
+  mounted define's ck >= 34). The clip cache, PCM, unmapped-id list and a start ledger live in `geno_host::GnHost` on the
+  system heap (`host_heap`), reached by `GN_HOST`, a pointer set before the match and never changed (net.md's rule). The
+  mixer's clip slots are boxed (`melee_audio::ax::ClipBank`), so a load puts back only the pointer: clips play in real time
+  and no `Arc` refcount is rewound.
+- `play_net::ModesGame::run_frame` reports each logic frame (`geno_host::net_frame(frame, resim)`), the tick reports
+  `net_confirmed(confirmed_frame)`. Starts are keyed (owner, row, start frame): a resimulated start the ledger holds keeps
+  the playing instance; after a rollback the starts at or after the loaded frame are tentative and the ones the new
+  timeline does not repeat are cut (`Ax::stop_clip_id`) at the first new frame; confirmed starts leave the ledger.
+  Stops (540001, state exits) apply on resimulated frames too. Log: `geno: define audio: ... start / confirmed start /
+  cut mispredicted start / rollback to frame`.
+- Limit: a stop in a discarded timeline that the new one does not repeat cannot be undone (the clip stays cut).
+- Proof: `NP_MATCH_HOST=geno:vanilla-striker,32 NP_MATCH_GUEST=fox play_pair.sh genorb 50 0 --headless --np-jitter-ms 10
+  --mods build/covmods-audio` (the audio2 striker copy): 3594 frames, 0 different hashes, replay 0 mismatches. Both peers
+  log the same 4 confirmed starts of sfx 1 (frames 591, 1687, 1790, 2926), one start line each; the host cut one
+  mispredicted start (frame 2710) after a rollback. Gate OK, rematch css OK, coverage 212 pass, geno-tests 64/64.

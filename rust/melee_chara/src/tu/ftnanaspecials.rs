@@ -148,7 +148,7 @@ pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool 
                 // TARGET_PC: Slippi's FreezeGlitchFix (@ 0x801239A8) removes this store in the
                 // online codeset and in console codesets from 2020-07.
                 let codes = fh::slippi_codes();
-                if !(codes == 2 || (codes == 1 && ext::Slippi_Version() >= 20000)) {
+                if !(codes == 2 || (codes == 1 && ext::Slippi_Version() >= 20000) || melee_core::codes::on(melee_core::codes::FREEZE_FIX)) {
                     (*nana_fp).x1A5C = core::ptr::null_mut();
                 }
                 true

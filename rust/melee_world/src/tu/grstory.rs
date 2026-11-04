@@ -116,7 +116,10 @@ pub unsafe extern "C" fn grStory_801E3234(gobj: *mut HSD_GObj) {
 
 pub unsafe extern "C" fn grStory_801E3334(gobj: *mut HSD_GObj) {
     melee_core::ct!("grStory_801E3334");
-    grStory_801E3418(gobj);
+    // Slippi "Frozen Stages" (Frozen All/Core/4.asm @ 801E3348): the Shy Guy spawner is not called
+    if !melee_core::codes::on(melee_core::codes::FROZEN_STAGES) {
+        grStory_801E3418(gobj);
+    }
     ext::Ground_UpdateMapColl(gobj);
     ext::lb_800115F4();
 }

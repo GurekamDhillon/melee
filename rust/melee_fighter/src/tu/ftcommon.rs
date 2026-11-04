@@ -645,6 +645,10 @@ pub fn ftcommon_8007db58(g: G_ftcommon3) {
 /// `ftCommon_8007DD7C`: push apart from grounded fighters on the same / adjacent floor line.
 pub fn ftcommon_8007dd7c(g: G_ftcommon3, v: &Vec3) {
     melee_core::ct!("ftcommon_8007dd7c");
+    // 20XX TE hand-warmers: fighters do not push each other
+    if melee_core::codes::handwarmers_active() {
+        return;
+    }
     let arg = unsafe { (*g).user_data as *mut Fighter };
     let mut phi_r28 = false;
     let mut cur = h::plink_head(HSD_GOBJ_PLINK_FIGHTER);

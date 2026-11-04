@@ -200,6 +200,13 @@ pub struct ModesSnap {
     ended: bool,
 }
 
+impl ModesSnap {
+    /// Page bytes held (the Lab's savestate / ring cost).
+    pub fn bytes(&self) -> usize {
+        self.mem.bytes()
+    }
+}
+
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
         ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, detach: Detacher::default() }
@@ -231,6 +238,26 @@ impl ModesGame {
                 drop(old);
             }
         }
+    }
+
+    /// A snapshot sharing `prev`'s unchanged pages (the Lab's rewind ring), and the bytes newly copied.
+    pub fn save_after(&self, prev: Option<&ModesSnap>) -> (ModesSnap, usize) {
+        let (mem, n) = self.with_base(|b| b.save_after(prev.map(|p| &*p.mem)));
+        (ModesSnap { mem, frames: self.e.frames, ended: self.e.ended }, n)
+    }
+
+    /// Distinct page bytes held by a set of snapshots.
+    pub fn distinct_bytes<'a>(snaps: impl Iterator<Item = &'a ModesSnap>) -> usize {
+        let mut set = std::collections::HashSet::new();
+        for s in snaps {
+            set.extend(s.mem.page_ids());
+        }
+        set.len() * 4096
+    }
+
+    /// Debug: where two snapshots differ.
+    pub fn snap_diff(&self, a: &ModesSnap, b: &ModesSnap, max: usize) -> Vec<String> {
+        self.with_base(|base| base.diff(&a.mem, &b.mem, max))
     }
 
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
@@ -289,6 +316,8 @@ impl RbGame for ModesGame {
                 rs.set_logic_seed(0x0BAD_5EED);
             }
         }
+        // the define audio's start ledger (geno_host: real-time clips, keyed by start frame)
+        melee_engine::geno_host::net_frame(self.frame() + 1, resim);
         self.step(p);
         melee_engine::gxbridge::shim().set_suppress_draws(false);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = 0 };
@@ -315,7 +344,7 @@ pub struct Replay {
 }
 
 const PAD_BYTES: usize = 16;
-const REC_BYTES: usize = 4 * PAD_BYTES + 4;
+pub const REC_BYTES: usize = 4 * PAD_BYTES + 4;
 
 impl Replay {
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -334,12 +363,7 @@ impl Replay {
         o.extend_from_slice(h.as_bytes());
         o.extend_from_slice(&(self.ticks.len() as u32).to_le_bytes());
         for (pads, hash) in &self.ticks {
-            for p in pads {
-                o.extend_from_slice(&p.button.to_le_bytes());
-                o.extend_from_slice(&[p.stickX as u8, p.stickY as u8, p.substickX as u8, p.substickY as u8, p.triggerLeft, p.triggerRight, p.analogA, p.analogB, p.err as u8, 0]);
-                o.extend_from_slice(&p.extButton.to_le_bytes());
-            }
-            o.extend_from_slice(&hash.to_le_bytes());
+            encode_tick(pads, *hash, &mut o);
         }
         o
     }
@@ -374,28 +398,12 @@ impl Replay {
         }
         r.ticks.reserve(n);
         for _ in 0..n {
-            let mut pads = [PADStatus::zeroed(); 4];
-            for p in pads.iter_mut() {
-                let b = &d[o..o + PAD_BYTES];
-                p.button = u16::from_le_bytes([b[0], b[1]]);
-                p.stickX = b[2] as i8;
-                p.stickY = b[3] as i8;
-                p.substickX = b[4] as i8;
-                p.substickY = b[5] as i8;
-                p.triggerLeft = b[6];
-                p.triggerRight = b[7];
-                p.analogA = b[8];
-                p.analogB = b[9];
-                p.err = b[10] as i8;
-                p.extButton = u32::from_le_bytes([b[12], b[13], b[14], b[15]]);
-                o += PAD_BYTES;
-            }
-            let hash = u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]]);
-            o += 4;
-            r.ticks.push((pads, hash));
+            r.ticks.push(decode_tick(&d[o..o + REC_BYTES]));
+            o += REC_BYTES;
         }
         Ok(r)
     }
+
 
     pub fn meta(&self, k: &str) -> Option<&str> {
         self.meta.iter().find(|m| m.0 == k).map(|m| m.1.as_str())
@@ -407,6 +415,36 @@ impl Replay {
         }
         std::fs::write(path, self.to_bytes()).map_err(|e| format!("{path}: {e}"))
     }
+}
+
+/// One tick record (REC_BYTES): the four pads and the hash.
+pub fn encode_tick(pads: &[PADStatus; 4], hash: u32, o: &mut Vec<u8>) {
+    for p in pads {
+        o.extend_from_slice(&p.button.to_le_bytes());
+        o.extend_from_slice(&[p.stickX as u8, p.stickY as u8, p.substickX as u8, p.substickY as u8, p.triggerLeft, p.triggerRight, p.analogA, p.analogB, p.err as u8, 0]);
+        o.extend_from_slice(&p.extButton.to_le_bytes());
+    }
+    o.extend_from_slice(&hash.to_le_bytes());
+}
+
+pub fn decode_tick(d: &[u8]) -> ([PADStatus; 4], u32) {
+    let mut pads = [PADStatus::zeroed(); 4];
+    for (i, p) in pads.iter_mut().enumerate() {
+        let b = &d[i * PAD_BYTES..(i + 1) * PAD_BYTES];
+        p.button = u16::from_le_bytes([b[0], b[1]]);
+        p.stickX = b[2] as i8;
+        p.stickY = b[3] as i8;
+        p.substickX = b[4] as i8;
+        p.substickY = b[5] as i8;
+        p.triggerLeft = b[6];
+        p.triggerRight = b[7];
+        p.analogA = b[8];
+        p.analogB = b[9];
+        p.err = b[10] as i8;
+        p.extButton = u32::from_le_bytes([b[12], b[13], b[14], b[15]]);
+    }
+    let o = 4 * PAD_BYTES;
+    (pads, u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]]))
 }
 
 thread_local! {
@@ -464,14 +502,32 @@ pub struct ReplayFeed {
     pub bad: u32,
     pub first_bad: Option<(usize, u32, u32)>,
     pub last_hash: u32,
+    /// ticks hashed before (a seek back re-plays them): compared again, counted apart
+    pub checked_to: usize,
+    pub rehashed: u32,
+    pub rebad: u32,
 }
 
 impl ReplayFeed {
     pub fn new(r: Replay) -> Self {
-        ReplayFeed { r, at: 0, hashed: 0, bad: 0, first_bad: None, last_hash: 0 }
+        ReplayFeed { r, at: 0, hashed: 0, bad: 0, first_bad: None, last_hash: 0, checked_to: 0, rehashed: 0, rebad: 0 }
     }
     pub fn check(&mut self, i: usize, got: u32) {
         let want = self.r.ticks[i].1;
+        if i < self.checked_to {
+            if want != 0 || got != 0 {
+                self.rehashed += 1;
+                self.last_hash = got;
+                if want != got {
+                    if self.rebad == 0 {
+                        log(&format!("replay: hash mismatch at re-played tick {i}: file {want:08X}, playback {got:08X}"));
+                    }
+                    self.rebad += 1;
+                }
+            }
+            return;
+        }
+        self.checked_to = i + 1;
         if want != 0 || got != 0 {
             self.hashed += 1;
             self.last_hash = got;
@@ -486,13 +542,14 @@ impl ReplayFeed {
     }
     pub fn summary(&self) -> String {
         format!(
-            "replay: {} ticks played, {} match frames hashed, {} mismatches{}, final hash {:08X} (file {:08X})",
+            "replay: {} ticks played, {} match frames hashed, {} mismatches{}, final hash {:08X} (file {:08X}){}",
             self.at,
             self.hashed,
             self.bad,
             self.first_bad.map_or(String::new(), |b| format!(" (first at tick {})", b.0)),
             self.last_hash,
-            self.r.ticks.iter().rev().find(|t| t.1 != 0).map_or(0, |t| t.1)
+            self.r.ticks.iter().rev().find(|t| t.1 != 0).map_or(0, |t| t.1),
+            if self.rehashed > 0 { format!("; after seeks {} frames re-played, {} re-play mismatches", self.rehashed, self.rebad) } else { String::new() }
         )
     }
 }
@@ -541,7 +598,14 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
         }
         None => crate::mods::Mods::from_env()?,
     };
-    let wasm = wasm_mods_identity();
+    // the online lab: both peers must run a lab session with the same command version (a lab peer and a plain one
+    // never match: one would run the match in lockstep, the other under rollback)
+    let lab = args.iter().any(|a| a == "--np-lab").then(|| format!("lab cmd v{}", melee_modhost::lab::LAB_CMD_VERSION));
+    let wasm = match (wasm_mods_identity(args.iter().any(|a| a == "--np-lab")), lab) {
+        (Some(w), Some(l)) => Some(format!("{w}; {l}")),
+        (None, Some(l)) => Some(l),
+        (w, None) => w,
+    };
     let Some(m) = m.filter(|m| !m.active.is_empty()) else {
         return Ok(match wasm {
             None => (0, "no mods".into()),
@@ -559,15 +623,31 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
     Ok((h, format!("mods {} ({fp:016x}){}{}", ids.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
 }
 
+/// The gameplay codes (melee_core::codes) enter the same handshake word: both peers must run the same codes, and the
+/// refusal names them. No codes leaves the word as it was (vanilla peers of older builds still match).
+pub fn with_codes((h, d): (u64, String)) -> (u64, String) {
+    let (w, l) = (melee_core::codes::word(), melee_core::codes::lgl_limit());
+    if w == 0 {
+        return (h, d);
+    }
+    (melee_net::hash64(format!("{h:016x}|codes {}", melee_core::codes::encode(w, l)).as_bytes(), 0), format!("{d}; gameplay codes {}", melee_core::codes::describe(w, l)))
+}
+
 /// The wasm code mods `MELEE_WASM_MODS` will load (notes/modhost.md), as "file#fnv64, ..." sorted by file name; None when
-/// off. Both peers must run the same code mods, so they enter the handshake digest (read from the files before boot).
-fn wasm_mods_identity() -> Option<String> {
+/// off. Both peers must run the same sim code mods, so they enter the handshake digest (read from the files before boot).
+/// Presentation-only mods (gd-ui-v1: they import `gd_ui` and have no sim hooks) are sim-inert and are not hashed, so a
+/// different menu or HUD mod never splits two peers (wasm-ui-lab-api.md section 0). Lab mods (they import `gd_lab`)
+/// are hashed in an online lab session (`lab`), where both peers must load the same Lab mods (the 2-player amendment).
+fn wasm_mods_identity(lab: bool) -> Option<String> {
     let dir = melee_modhost::dir_from_env()?;
     let mut v: Vec<String> = std::fs::read_dir(&dir).ok()?
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("wasm")))
         .filter_map(|p| {
             let b = std::fs::read(&p).ok()?;
+            if melee_modhost::ui::is_presentation(&b) && !(lab && melee_modhost::lab::imports_lab(&b)) {
+                return None;
+            }
             let h = b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &x| (h ^ x as u64).wrapping_mul(0x100_0000_01b3));
             Some(format!("{}#{:08x}", p.file_stem()?.to_string_lossy(), h as u32))
         })
@@ -609,7 +689,9 @@ impl RoomEnv for PlayEnv {
     }
     fn scene_check(&self, p: &ParsedScene) -> Result<(), String> {
         for t in [&p.host_tok, &p.guest_tok] {
-            if !(0..=25).contains(&self.ck_for_token(t)) {
+            let ck = self.ck_for_token(t);
+            // a retail VS fighter, or a mounted Geno define (the mods identity check made both peers mount the same)
+            if !(0..=25).contains(&ck) && !(ck >= 34 && melee_engine::geno_host::DefineBaseCK(ck) >= 0) {
                 return Err(format!("fighter {t} is not a VS fighter"));
             }
         }
@@ -841,6 +923,9 @@ pub struct NetDriver {
     pub held_ticks: u64,
     /// `--np-css`: the menus' lockstep channel
     pub ls: Option<crate::np_lockstep::Lockstep>,
+    /// `--np-lab` (with --np-css): an online Lab session (`LabNetplay`). The match stays in lockstep too, and lab
+    /// commands ride the lockstep stream (np_lockstep.rs MLS2).
+    pub lab: bool,
     params: RoomParams,
     /// matches played on this connection before the current one
     pub match_no: u32,
@@ -1017,7 +1102,7 @@ impl NetDriver {
         } else {
             log(&format!("netplay: joining match code {} from UDP port {port}", code.clone().unwrap_or_default()));
         }
-        let (mods_hash, mods_desc) = mods_identity(args)?;
+        let (mods_hash, mods_desc) = with_codes(mods_identity(args)?);
         let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
         log(&format!("netplay {tag}: build {:015x}, {mods_desc}", build_hash()));
         let mut rp = RoomParams {
@@ -1065,11 +1150,17 @@ impl NetDriver {
         sess.borrow_mut().set_delay(adelay);
         // --np-css: the character / stage select and the results run in lockstep (mux channel 1), and every match after
         // the first is a new room on mux channel 2 + k
-        let css = args.iter().any(|a| a == "--np-css");
+        let lab = args.iter().any(|a| a == "--np-lab");
+        let css = lab || args.iter().any(|a| a == "--np-css");
         let ls = css.then(|| {
             let tp: Box<dyn Transport> = Box::new(crate::np_mux::Chan { core: rp.mux.clone(), ch: 1 });
-            crate::np_lockstep::Lockstep::new(tp, rp.peer, host, adelay.max(1) as u32)
+            let mut l = crate::np_lockstep::Lockstep::new(tp, rp.peer, host, adelay.max(1) as u32);
+            l.lab = lab;
+            l
         });
+        if lab {
+            log(&format!("netplay {tag}: online lab (LabNetplay): the match runs in lockstep, lab commands v{} ride the input stream", melee_modhost::lab::LAB_CMD_VERSION));
+        }
         Ok(NetDriver {
             host,
             sess,
@@ -1090,6 +1181,7 @@ impl NetDriver {
             ticks: 0,
             held_ticks: 0,
             ls,
+            lab,
             params: rp,
             match_no: 0,
             all_finals: Vec::new(),
@@ -1150,6 +1242,7 @@ impl NetDriver {
             room.release();
             self.net = room.net.take();
         }
+        melee_engine::geno_host::net_begin();
         self.phase = NetPhase::InMatch(Box::new(ModesGame::new(e)));
         log(&format!("netplay {}: match scene, waiting for the peer", self.tag()));
     }
@@ -1259,6 +1352,7 @@ impl NetDriver {
         let p = local;
         s.pad_latch(0, p.button as i32, p.stickX as i32, p.stickY as i32, p.substickX as i32, p.substickY as i32, p.triggerLeft as i32, p.triggerRight as i32, p.analogA as i32, p.analogB as i32, 0);
         run_tick(&mut s, g, None);
+        melee_engine::geno_host::net_confirmed(s.confirmed_frame());
         if let Some(e) = self.early.as_mut() {
             let slot = if self.host { 0 } else { 2 };
             let newest = s.current_frame() + s.cfg.delay + 1;
@@ -1488,3 +1582,33 @@ impl PlaySync {
 
 /// A failure of the run (netplay error, replay divergence) for the exit code after the window loop.
 pub static RUN_FAILED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(test)]
+mod lab_identity_tests {
+    /// Presentation-only mods are sim-inert: they never enter the handshake digest; Lab mods do, in an online lab.
+    #[test]
+    fn presentation_mods_are_not_hashed() {
+        let dir = std::env::temp_dir().join(format!("melee_wasm_ident_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let hdr = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
+        let ty = [0x01, 0x04, 0x01, 0x60, 0x00, 0x00];
+        let ui_imp = [0x05, b'g', b'd', b'_', b'u', b'i', 0x01, b'f', 0x00, 0x00];
+        let lab_imp = [0x06, b'g', b'd', b'_', b'l', b'a', b'b', 0x01, b'g', 0x00, 0x00];
+        let sim: Vec<u8> = hdr.to_vec();
+        let ui: Vec<u8> = [&hdr[..], &ty[..], &[0x02, 0x0b, 0x01], &ui_imp[..]].concat();
+        let lab: Vec<u8> = [&hdr[..], &ty[..], &[0x02, 0x16, 0x02], &ui_imp[..], &lab_imp[..]].concat();
+        std::fs::write(dir.join("a_sim.wasm"), &sim).unwrap();
+        std::fs::write(dir.join("b_menu.wasm"), &ui).unwrap();
+        std::fs::write(dir.join("c_lab.wasm"), &lab).unwrap();
+        assert!(melee_modhost::ui::is_presentation(&ui) && melee_modhost::ui::is_presentation(&lab));
+        assert!(melee_modhost::lab::imports_lab(&lab) && !melee_modhost::lab::imports_lab(&ui));
+        std::env::set_var("MELEE_WASM_MODS", &dir);
+        let plain = super::wasm_mods_identity(false).unwrap();
+        let online_lab = super::wasm_mods_identity(true).unwrap();
+        std::env::remove_var("MELEE_WASM_MODS");
+        assert!(plain.starts_with("a_sim#") && !plain.contains("b_menu") && !plain.contains("c_lab"), "{plain}");
+        assert!(online_lab.contains("a_sim#") && online_lab.contains("c_lab#") && !online_lab.contains("b_menu"), "{online_lab}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

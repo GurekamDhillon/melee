@@ -466,7 +466,10 @@ pub unsafe extern "C" fn grLast_8021AAB0(gobj: *mut HSD_GObj) {
     if (*gp).u.map.xC4_b1() == 0 && (*gp).u.map.xC4_b0() == 0 {
         // TARGET_PC: Slippi online wraps the backdrop think in a save / restore of the RNG seed
         let fd_seed = *ext::HSD_RandSeedPtr;
-        grLast_8021B2E8(gobj);
+        // Slippi "Frozen Stages" (Frozen All/Core/2.asm @ 8021AAE4): the backdrop think is skipped, FD holds still
+        if !melee_core::codes::on(melee_core::codes::FROZEN_STAGES) {
+            grLast_8021B2E8(gobj);
+        }
         if ext::Slippi_Codes() == 2 {
             *ext::HSD_RandSeedPtr = fd_seed;
         }

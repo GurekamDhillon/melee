@@ -99,6 +99,25 @@ pub struct RetailPlay {
     /// gd-ui-v1 presentation mods (MELEE_WASM_MODS, modules importing gd_ui): harness-owned, never in the arena, so a
     /// savestate load or rollback never rewinds them. None with no UI mod: nothing runs and nothing is drawn.
     pub ui: Option<melee_modhost::ui::PresHost>,
+    /// gd-lab-v1: the lab match (the engine while a Lab mod runs a match), its overlay painter, the clock of the
+    /// offline commands and this tick's commands.
+    pub lab: Option<crate::lab::LabRun>,
+    lab_gfx: Option<(crate::ui::Ui, melee_gx::shim::GxShim)>,
+    lab_clock: i32,
+    lab_cmds: Vec<melee_modhost::lab::LabCmd>,
+    /// The lockstep frame of this tick's pads (online lab: the desync check's key).
+    lab_frame: Option<u32>,
+    /// The lab RNG's seed (the agreed netplay seed, else the test seed).
+    pub lab_seed: u32,
+    /// `--np-spectate`: the match host's spectate service (spectate.rs).
+    pub spec_server: Option<crate::spectate::SpecServer>,
+    /// `--spectate`: this run is a spectator; the feed's records arrive from the host.
+    pub spec_client: Option<crate::spectate::SpecClient>,
+    /// Replay playback controls (replay_ctl.rs).
+    pub ctl: Option<crate::replay_ctl::Ctl>,
+    rticks: u64,
+    seek_base: Option<melee_engine::snapshot::Base>,
+    seek_snaps: Vec<(usize, melee_engine::snapshot::SnapRef, u32, bool)>,
 }
 
 impl RetailPlay {
@@ -109,6 +128,8 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_frame: None, lab_seed: 12345,
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -226,6 +247,9 @@ impl RetailPlay {
         if let Some(NetPhase::InMatch(g)) = self.net.as_ref().map(|n| &n.phase) {
             return Some(&g.e);
         }
+        if let Some(l) = self.lab.as_ref() {
+            return Some(&l.g.e);
+        }
         self.sync.as_ref().and_then(|s| s.g.as_ref()).map(|g| &g.e)
     }
 
@@ -279,10 +303,37 @@ impl RetailPlay {
                 NetPhase::PreMatch if nd.css() => {
                     // the menus in lockstep: this tick's local pad is scheduled; a frame runs once the peer's is in
                     let host = nd.host;
+                    let lab_on = nd.lab;
                     let ls = nd.ls.as_mut().unwrap();
-                    ls.push_local(&four[0]);
-                    ls.poll();
-                    match ls.ready() {
+                    let ready = if lab_on {
+                        // GAP-13: this peer's queued lab commands ride with this tick's pad (they apply on its frame)
+                        let lab_sh = self.ui.as_ref().and_then(|u| u.lab.clone());
+                        let mine: Vec<[u8; 16]> = lab_sh.as_ref().map_or(Vec::new(), |sh| {
+                            let mut s = sh.borrow_mut();
+                            let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
+                            s.outbox.drain(..n).map(|c| c.to_bytes()).collect()
+                        });
+                        ls.push_local_cmds(&four[0], mine);
+                        if let Some(sh) = &lab_sh {
+                            let mut s = sh.borrow_mut();
+                            s.apply_frame = ls.next_push_frame() as i32;
+                            s.issuer = if host { 0 } else { 1 };
+                            s.delay = ls.delay();
+                        }
+                        ls.poll();
+                        ls.ready_lab().map(|(l, r, lc, rc, fr)| {
+                            // the host's commands first on both peers
+                            let (hc, gc) = if host { (lc, rc) } else { (rc, lc) };
+                            self.lab_cmds = hc.iter().chain(gc.iter()).filter_map(|b| melee_modhost::lab::LabCmd::from_bytes(b)).collect();
+                            self.lab_frame = Some(fr);
+                            (l, r)
+                        })
+                    } else {
+                        ls.push_local(&four[0]);
+                        ls.poll();
+                        ls.ready()
+                    };
+                    match ready {
                         Some((l, r)) => {
                             four = neutral_pads();
                             four[0] = if host { l } else { r };
@@ -302,6 +353,10 @@ impl RetailPlay {
                 NetPhase::PreMatch => four = neutral_pads(),
                 NetPhase::Done => {}
             }
+        }
+        if self.lab.is_some() {
+            self.lab_step(four);
+            return false;
         }
         if let Some(ps) = self.sync.as_mut() {
             if ps.g.is_some() {
@@ -348,13 +403,30 @@ impl RetailPlay {
                         return false;
                     }
                 }
-                if matches!(nd.phase, NetPhase::PreMatch) {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.lab {
+                    // LabNetplay: the match stays in lockstep; the lab takes the engine on both peers
+                    if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
+                        self.lab = Some(crate::lab::LabRun::new(ModesGame::new(self.e.take().unwrap()), sh, self.lab_seed));
+                        log("lab: online lab match: the lab takes the engine (lockstep)");
+                        self.lab_step(four);
+                        return false;
+                    }
+                }
+                if matches!(nd.phase, NetPhase::PreMatch) && !nd.lab {
                     nd.begin_match(self.e.take().unwrap());
                     return self.step(four);
                 }
             } else if let Some(ps) = self.sync.as_mut() {
                 ps.g = Some(Box::new(ModesGame::new(self.e.take().unwrap())));
                 return self.step(four);
+            } else if self.feed.is_none() && self.rollback_mode {
+                if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
+                    // offline Lab: the lab takes the engine for the match (snapshots need the rollback run modes)
+                    self.lab = Some(crate::lab::LabRun::new(ModesGame::new(self.e.take().unwrap()), sh, self.lab_seed));
+                    log("lab: lab match: the lab takes the engine");
+                    self.lab_step(four);
+                    return false;
+                }
             }
         }
         let e = self.e.as_mut().unwrap();
@@ -378,70 +450,64 @@ impl RetailPlay {
         entered
     }
 
-    /// The run ends: the replay is written, a failure is noted for the exit code.
-    fn on_quit(&mut self) {
-        if !self.quit {
-            return;
-        }
-        self.save_replay();
-        crate::slp_export::finish();
-        if let Some(f) = &self.failed {
-            log(&format!("failed: {f}"));
-            crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
-        }
-    }
-
-    /// Write the `--record` replay (at the end of the run).
-    pub fn save_replay(&mut self) {
-        if let Some((p, r)) = self.rec.take() {
-            match r.write(&p) {
-                Ok(()) => {
-                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
-                    crate::play_net::slp_from_replay(&p, &self.iso);
+    /// One command-clock frame of the lab match (offline: this tick; online: the lockstep frame that just became ready).
+    fn lab_step(&mut self, four: [melee_types::PADStatus; 4]) {
+        let online = self.net.as_ref().is_some_and(|n| n.lab);
+        let cmds: Vec<melee_modhost::lab::LabCmd> = if online {
+            std::mem::take(&mut self.lab_cmds)
+        } else {
+            let sh = self.lab.as_ref().unwrap().sh.clone();
+            let mut s = sh.borrow_mut();
+            let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
+            let v = s.outbox.drain(..n).collect();
+            self.lab_clock += 1;
+            s.apply_frame = self.lab_clock + 1;
+            v
+        };
+        let lab = self.lab.as_mut().unwrap();
+        let ran = lab.tick(four, &cmds);
+        let hash = if ran { lab.frame_hash() } else { 0 };
+        if let (true, Some(fr)) = (online, self.lab_frame.take()) {
+            if let Some(ls) = self.net.as_mut().and_then(|n| n.ls.as_mut()) {
+                ls.record_hash(fr, hash);
+                if fr % 600 == 0 && hash != 0 {
+                    log(&format!("lab netplay: lockstep frame {fr} match frame {} hash {hash:08X} ({} checked, {} desyncs)", lab.f, ls.checked, ls.desyncs));
                 }
-                Err(e) => log(&format!("replay: {e}")),
             }
         }
-    }
-
-    /// The presets into the saved VS rules (what the rules menu edits and `gm_InitVsMode` reads).
-    fn apply_rules(&self) {
-        let p = &self.presets;
-        unsafe {
-            let gr = melee_modes::tu::gmmain_lib::gmMainLib_GetGameRules();
-            let gp = melee_modes::tu::gmmain_lib::gmMainLib_GetGamePrefs();
-            if let Some(n) = p.stocks {
-                (*gr).mode = 1;
-                (*gr).stock_count = n.clamp(1, 99) as u8;
-            }
-            if let Some(s) = p.time_secs {
-                if p.stocks.is_none() {
-                    (*gr).mode = 0;
+        if let Some(r) = self.rec.as_mut() {
+            r.1.ticks.push((four, hash));
+        }
+        if let Some(f) = lab.g.take_frame() {
+            let mut f = f;
+            let gfx = self.lab_gfx.get_or_insert_with(|| (crate::ui::Ui::new(), melee_gx::shim::GxShim::new()));
+            gfx.0.clear();
+            if lab.overlay(&mut gfx.0) && gfx.0.len() > 0 {
+                gfx.0.flush(&mut gfx.1);
+                gfx.1.copy_disp(true);
+                if let Some(d) = gfx.1.take_frame() {
+                    f.extend(d);
                 }
-                let minutes = ((s.max(1) + 59) / 60) as u8;
-                (*gr).time_limit = minutes;
-                (*gr).stock_time_limit = minutes;
             }
-            if let Some(i) = p.items {
-                (*gp).item_freq = if i == 0 { 0xFF } else { (i - 1) as u8 };
+            self.frame = Some(f);
+            self.frame_aspect = melee_engine::view::aspect();
+        }
+        if lab.g.e.ended {
+            log(&lab.perf_line());
+            if let Some(ls) = self.net.as_ref().and_then(|n| n.ls.as_ref()) {
+                log(&format!("lab netplay: match over: {} hash checks, {} desyncs{}", ls.checked, ls.desyncs, ls.first_desync.map_or(String::new(), |f| format!(" (first at lockstep frame {f})"))));
+                if ls.desyncs > 0 {
+                    self.failed = Some("lab netplay desync".into());
+                }
             }
+            let lab = self.lab.take().unwrap();
+            let (e, _) = lab.finish().into_engine();
+            log(&format!("lab: match over, final hash {:08X}", e.neutral_row()[0] | 1));
+            self.e = Some(e);
         }
     }
 
-    fn emit_shot(&mut self) {
-        let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
-        // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
-        let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
-        let path = dir.join(format!("retail_{name}.png"));
-        match write_png(&path, w, h, &px) {
-            Ok(()) => log(&format!("screenshot {}", path.display())),
-            Err(e) => log(&format!("screenshot: {e}")),
-        }
-    }
-}
-
-impl Game for RetailPlay {
-    fn tick(&mut self, pads: &mut PadSystem) {
+    fn tick_once(&mut self, pads: &mut PadSystem) {
         let _sampled = crate::prof::Gate::enter();
         if self.quit {
             return;
@@ -467,7 +533,7 @@ impl Game for RetailPlay {
         if let Some(f) = self.feed.as_mut() {
             if f.at >= f.r.ticks.len() {
                 log(&f.summary());
-                if f.bad > 0 {
+                if f.bad > 0 || f.rebad > 0 {
                     self.failed = Some(format!("replay diverged at tick {}", f.first_bad.map_or(0, |b| b.0)));
                 }
                 self.quit = true;
@@ -491,7 +557,7 @@ impl Game for RetailPlay {
         }
         // gd-ui-v1 input boundary (A4): the same place as lcancel_helper, before set_pads and the rollback submit
         let pres_frame = melee_modhost::pres::PresFrame {
-            session: if self.net.is_some() { melee_modhost::pres::Session::Netplay } else if self.sync.is_some() { melee_modhost::pres::Session::Synctest } else if self.feed.is_some() { melee_modhost::pres::Session::Replay } else { melee_modhost::pres::Session::Offline },
+            session: if self.net.as_ref().is_some_and(|n| n.lab) { melee_modhost::pres::Session::LabNetplay } else if self.net.is_some() { melee_modhost::pres::Session::Netplay } else if self.sync.is_some() { melee_modhost::pres::Session::Synctest } else if self.feed.is_some() { melee_modhost::pres::Session::Replay } else { melee_modhost::pres::Session::Offline },
             scene: (self.cur.0 as i32, self.cur.1 as i32),
             match_frame: self.age as i32,
         };
@@ -658,6 +724,239 @@ impl Game for RetailPlay {
         }
     }
 
+
+    /// The match host's spectate service: this tick's confirmed records out.
+    fn spec_serve(&mut self) {
+        if let (Some(ss), Some(r)) = (self.spec_server.as_mut(), self.rec.as_ref()) {
+            let done = self.quit || self.net.as_ref().is_some_and(|n| matches!(n.phase, crate::play_net::NetPhase::Done));
+            ss.update(&r.1, done);
+        }
+    }
+
+    /// A replay / spectator render tick: the stream in, the controls, then 0..n feed ticks.
+    fn tick_playback(&mut self, pads: &mut PadSystem) {
+        if self.quit {
+            return;
+        }
+        if let (Some(sc), Some(f)) = (self.spec_client.as_mut(), self.feed.as_mut()) {
+            sc.poll(&mut f.r.ticks);
+            if sc.lost {
+                log(&f.summary());
+                self.failed = Some("spectate: the stream stopped".into());
+                self.quit = true;
+                self.on_quit();
+                return;
+            }
+        }
+        self.rticks += 1;
+        let mut n = 1usize;
+        let mut ff = false;
+        if let Some(c) = self.ctl.as_mut() {
+            c.on_tick(self.rticks);
+            if self.ui.is_none() && !self.headless {
+                match pads.ui_keys.as_mut() {
+                    Some(q) => {
+                        c.keys(q);
+                        q.clear();
+                    }
+                    None => pads.ui_keys = Some(Vec::with_capacity(64)),
+                }
+            }
+        }
+        self.do_seek();
+        if let Some(c) = self.ctl.as_mut() {
+            if c.ff_to.is_some() {
+                ff = true;
+                n = if self.headless { usize::MAX } else { 240 };
+            } else {
+                n = c.steps();
+            }
+        }
+        if let (Some(sc), Some(f)) = (self.spec_client.as_ref(), self.feed.as_ref()) {
+            if !sc.ended() {
+                // the delay buffer: never closer than `delay` ticks to the newest record
+                let ready = f.r.ticks.len().saturating_sub(sc.delay);
+                let behind = ready.saturating_sub(f.at);
+                n = if behind > 2 { n.max(behind.min(sc.catch_up)) } else { n.min(behind) };
+                if behind > 2 * sc.catch_up && self.rticks % 60 == 0 {
+                    log(&format!("spectate: catching up, {behind} ticks behind"));
+                }
+            }
+        }
+        let mut k = 0;
+        while k < n {
+            if let (true, Some(c), Some(f)) = (ff, self.ctl.as_mut(), self.feed.as_ref()) {
+                if c.ff_to.is_some_and(|t| f.at >= t || f.at >= f.r.ticks.len()) {
+                    c.ff_to = None;
+                    log(&format!("replay ctl: at tick {} ({})", f.at, c.state()));
+                    break;
+                }
+            }
+            if let Some(c) = self.ctl.as_ref() {
+                if self.engine().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS) {
+                    c.apply_camera();
+                }
+            }
+            self.tick_once(pads);
+            self.seek_snapshot();
+            k += 1;
+            if self.quit {
+                break;
+            }
+        }
+    }
+
+    /// A seekable playback: a snapshot of the VS match every `snap_every` feed ticks (the base lives for one match).
+    fn seek_snapshot(&mut self) {
+        let Some(c) = self.ctl.as_ref() else { return };
+        if !self.rollback_mode {
+            return;
+        }
+        let every = c.snap_every;
+        let in_vs = self.e.as_ref().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS && e.frames > ARM_FRAMES);
+        if !in_vs {
+            if self.seek_base.is_some() {
+                self.seek_snaps.clear();
+                self.seek_base = None;
+            }
+            return;
+        }
+        let Some(f) = self.feed.as_ref() else { return };
+        let at = f.at;
+        let due = self.seek_snaps.is_empty() || (at % every == 0 && !self.seek_snaps.iter().any(|s| s.0 == at));
+        if !due {
+            return;
+        }
+        let base = self.seek_base.get_or_insert_with(melee_engine::snapshot::Base::capture);
+        let e = self.e.as_ref().unwrap();
+        let snap = base.save();
+        self.seek_snaps.push((at, snap, e.frames, e.ended));
+        self.seek_snaps.sort_by_key(|s| s.0);
+    }
+
+    /// A pending seek: forward = play on unpaced; back = load the nearest snapshot at or before it, then forward.
+    fn do_seek(&mut self) {
+        use crate::replay_ctl::Seek;
+        let (Some(c), Some(f)) = (self.ctl.as_mut(), self.feed.as_mut()) else { return };
+        let Some(s) = c.seek.take() else { return };
+        let at = f.at;
+        let len = f.r.ticks.len();
+        let target = match s {
+            Seek::Tick(t) => t,
+            Seek::Rel(d) => (at as i64 + d).max(0) as usize,
+            Seek::First => self.seek_snaps.first().map_or(at, |x| x.0),
+            Seek::MatchFrame(m) => match f.r.ticks.iter().enumerate().filter(|t| t.1 .1 != 0).nth(m as usize) {
+                Some((i, _)) => i + 1,
+                None => len,
+            },
+        }
+        .min(len);
+        if target >= at {
+            c.ff_to = Some(target);
+            log(&format!("replay ctl: seek to tick {target} (forward from {at})"));
+            return;
+        }
+        let Some(sn) = self.seek_snaps.iter().rev().find(|x| x.0 <= target).cloned() else {
+            let why = if !self.rollback_mode {
+                "this playback is not seekable".to_string()
+            } else if self.seek_snaps.is_empty() {
+                "snapshots cover the VS match only".to_string()
+            } else {
+                format!("this match's snapshots start at tick {}", self.seek_snaps[0].0)
+            };
+            log(&format!("replay ctl: seek to tick {target}: no snapshot at or before it ({why}); staying at {at}"));
+            return;
+        };
+        let (Some(base), Some(e)) = (self.seek_base.as_ref(), self.e.as_mut()) else { return };
+        base.load(&sn.1);
+        e.frames = sn.2;
+        e.ended = sn.3;
+        f.at = sn.0;
+        c.ff_to = Some(target);
+        log(&format!("replay ctl: seek to tick {target}: snapshot of tick {} loaded (from {at})", sn.0));
+    }
+
+    /// The run ends: the replay is written, a failure is noted for the exit code.
+    fn on_quit(&mut self) {
+        if !self.quit {
+            return;
+        }
+        if let (Some(ss), Some(r)) = (self.spec_server.as_mut(), self.rec.as_ref()) {
+            ss.drain(&r.1, 8);
+        }
+        if let Some(sc) = self.spec_client.as_ref() {
+            sc.bye();
+        }
+        self.save_replay();
+        crate::slp_export::finish();
+        if let Some(f) = &self.failed {
+            log(&format!("failed: {f}"));
+            crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Write the `--record` replay (at the end of the run).
+    pub fn save_replay(&mut self) {
+        if let Some((p, r)) = self.rec.take() {
+            if p.is_empty() {
+                return; // kept only for the spectators
+            }
+            match r.write(&p) {
+                Ok(()) => {
+                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
+                    crate::play_net::slp_from_replay(&p, &self.iso);
+                }
+                Err(e) => log(&format!("replay: {e}")),
+            }
+        }
+    }
+
+    /// The presets into the saved VS rules (what the rules menu edits and `gm_InitVsMode` reads).
+    fn apply_rules(&self) {
+        let p = &self.presets;
+        unsafe {
+            let gr = melee_modes::tu::gmmain_lib::gmMainLib_GetGameRules();
+            let gp = melee_modes::tu::gmmain_lib::gmMainLib_GetGamePrefs();
+            if let Some(n) = p.stocks {
+                (*gr).mode = 1;
+                (*gr).stock_count = n.clamp(1, 99) as u8;
+            }
+            if let Some(s) = p.time_secs {
+                if p.stocks.is_none() {
+                    (*gr).mode = 0;
+                }
+                let minutes = ((s.max(1) + 59) / 60) as u8;
+                (*gr).time_limit = minutes;
+                (*gr).stock_time_limit = minutes;
+            }
+            if let Some(i) = p.items {
+                (*gp).item_freq = if i == 0 { 0xFF } else { (i - 1) as u8 };
+            }
+        }
+    }
+
+    fn emit_shot(&mut self) {
+        let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
+        // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
+        let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
+        let path = dir.join(format!("retail_{name}.png"));
+        match write_png(&path, w, h, &px) {
+            Ok(()) => log(&format!("screenshot {}", path.display())),
+            Err(e) => log(&format!("screenshot: {e}")),
+        }
+    }
+}
+
+impl Game for RetailPlay {
+    fn tick(&mut self, pads: &mut PadSystem) {
+        if self.feed.is_none() {
+            self.tick_once(pads);
+            self.spec_serve();
+            return;
+        }
+        self.tick_playback(pads);
+    }
+
     fn set_interp(&mut self, on: bool) {
         self.interp = on;
         melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
@@ -750,7 +1049,7 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     if headless {
         let mut pads = PadSystem::headless();
         let limit = rp.max_frames.unwrap_or(60 * 600);
-        let ticks = if rp.net.is_some() {
+        let ticks = if rp.net.is_some() || rp.spec_client.is_some() {
             // netplay is real time: one tick per 1/60 s
             let mut n = 0u64;
             let t0 = std::time::Instant::now();

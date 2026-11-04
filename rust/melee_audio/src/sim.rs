@@ -219,14 +219,15 @@ impl Output {
 
     fn start_mixer(&mut self) {
         let stop = Arc::new(AtomicBool::new(false));
-        let (ring, target) = (self.driver.ring.clone(), self.driver.cfg.target_frames.max(2));
+        let ring = self.driver.ring.clone();
         let st = stop.clone();
         let h = std::thread::Builder::new().name("melee-audio-mixer".into()).spawn(move || {
             raise_mixer_priority();
             // Everything this loop touches is preallocated: the ring, the Sound's voices / ARAM; a sub-frame is a fixed array.
             while !st.load(Ordering::Relaxed) {
+                // the cushion is the ring's (adaptive: the device callback widens it after an underrun)
                 let buffered = ring.len() / crate::FRAME_SAMPLES as u32;
-                let n = target.saturating_sub(buffered).min(crate::output::MAX_BURST);
+                let n = ring.target().saturating_sub(buffered).min(crate::output::MAX_BURST);
                 if n > 0 {
                     let mut g = lock();
                     if let Some(s) = g.as_mut() {
@@ -248,7 +249,7 @@ impl Output {
 /// The mixer is the one thread that must not wait behind the game: time-critical within the process's class (a game started at
 /// idle / below-normal priority would otherwise starve it), and a 1 ms timer so its 1 ms sleeps are 1 ms.
 #[cfg(windows)]
-fn raise_mixer_priority() {
+pub fn raise_mixer_priority() {
     #[link(name = "kernel32")]
     unsafe extern "system" {
         fn GetCurrentThread() -> isize;
@@ -266,7 +267,7 @@ fn raise_mixer_priority() {
     }
 }
 #[cfg(not(windows))]
-fn raise_mixer_priority() {}
+pub fn raise_mixer_priority() {}
 
 impl Drop for Output {
     fn drop(&mut self) {

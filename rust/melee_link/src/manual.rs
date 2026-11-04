@@ -43,7 +43,7 @@ pub fn install() {
         // pc/platform gw_replay.c `gw_Slippi_FrozenStadium` outside playback: `MELEE_SLIPPI_FROZEN_PS=1` enables Slippi's Frozen PS (default off, as the C goldens)
         melee_world::tu::grpstadium::ext::hook::Slippi_FrozenStadium = Some(|| {
             static LIVE: std::sync::OnceLock<i32> = std::sync::OnceLock::new();
-            *LIVE.get_or_init(|| std::env::var("MELEE_SLIPPI_FROZEN_PS").map_or(0, |v| v.starts_with('1') as i32))
+            *LIVE.get_or_init(|| std::env::var("MELEE_SLIPPI_FROZEN_PS").map_or(0, |v| v.starts_with('1') as i32)) | melee_core::codes::on(melee_core::codes::FROZEN_PS | melee_core::codes::FROZEN_STAGES) as i32
         });
         // the three `ftAction_*` skip handlers the macro in ftaction.rs defines (the generator only sees `fn` items): ColAnim command stream
         melee_fighter::tu::ftcolanim::ext::FTACTION_800711DC = Some(|g, c| unsafe { melee_fighter::tu::ftaction::ftAction_800711DC(g, &mut *c) });

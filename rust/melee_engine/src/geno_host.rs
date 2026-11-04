@@ -636,10 +636,333 @@ pub fn DefinePlanInt(kind: i32, what: i32, i: i32) -> i32 {
 pub fn DefinePlanText(kind: i32, which: i32, i: i32) -> *const core::ffi::c_char {
     plan(kind).and_then(|p| p.text(which, i)).map_or(core::ptr::null(), |p| p as *const _)
 }
-/// gw_Geno_DefineVoiceState / AudioPlay: a define's own sound clips are not hosted (the C plays nothing during rollback
-/// either); nothing is stopped or played.
-pub fn DefineVoiceState(_kind: i32, _owner: u32, _motion: i32) -> i32 { 0 }
-pub fn DefineAudioPlay(_ck: i32, _which: i32, _sfx: i32) -> i32 { 0 }
+// ---- slice 6: a define's own sound clips (geno_define_registry.inc gn_clip_load / gn_define_audio_play / VoiceState) ----
+//
+// A clip is a .gnsnd from the define's mod `files/` (tools/geno/audio.py: 32-byte big-endian header, s16 BE samples, 32 kHz),
+// decoded once (first use) and kept for the process. It plays through `melee_audio`'s native clip slots (shim_ax.c
+// gw_Audio_PlayOwnedClip): summed into the main mix after the voices and aux buses, one 5 ms sub-frame at a time. Nothing
+// here is simulation state; the owner is the fighter address as an opaque scalar (arena-allocated, so the same in a
+// resimulation of the same frame).
+//
+// Rollback (netplay): the clip cache, the PCM and the start ledger live in one host-heap value reached through a pointer
+// set before the match ([`GnHost`], `host_heap`), never in a static a load rewrites (net.md's rule), and the mixer's clip
+// slots are boxed outside the restored `Sound` (melee_audio `ClipBank`): clips play in real time. The netplay harness
+// reports each logic frame ([`net_frame`]) and the confirmed frame ([`net_confirmed`]). A start is keyed by (owner, row,
+// start frame): a resimulated frame that starts a clip the ledger already holds keeps the playing instance; after a
+// rollback the starts at or after the loaded frame are tentative until resimulated again, and the ones the new timeline
+// does not repeat are cut at the first new frame; a start at or before the confirmed frame leaves the ledger.
+
+/// The retail "stop this voice slot" id (gn_define_audio_play).
+const GN_STOP_SFX: i32 = 540001;
+
+#[derive(Default)]
+struct GnClip {
+    tried: bool,
+    pcm: Option<(std::sync::Arc<[i16]>, i32, i32)>, // samples (interleaved), frames, channels
+}
+
+/// One started define clip instance (the netplay ledger).
+struct GnStart {
+    owner: u32,
+    p: usize,
+    slot: usize,
+    sfx: i32,
+    frame: i32,
+    id: u32,
+    tentative: bool,
+}
+
+#[derive(Default)]
+struct GnNet {
+    on: bool,
+    frame: i32,
+    resim: bool,
+    last: i32,
+    live: Vec<GnStart>,
+}
+
+/// Define audio state that must not roll back: on the system heap (made outside the arena), reached through [`GN_HOST`].
+#[derive(Default)]
+struct GnHost {
+    /// Clip cache per profile: [0] the announcer call, [1 + row] the voice rows.
+    clips: Vec<Vec<GnClip>>,
+    /// Retail sound ids a define played without an audio.voice row (named once each, at most 64).
+    seen: Vec<i32>,
+    net: GnNet,
+}
+/// Set once (before a match: [`net_begin`], or the first offline use) and never changed after, so a load keeps it.
+static mut GN_HOST: *mut GnHost = core::ptr::null_mut();
+
+/// The host value, made on first use; every change to it goes through `host_heap` so nothing it owns is in the arena.
+fn gn_host() -> &'static mut GnHost {
+    unsafe {
+        if GN_HOST.is_null() {
+            GN_HOST = host_heap(|| Box::into_raw(Box::default()));
+        }
+        &mut *GN_HOST
+    }
+}
+
+/// Netplay: a rollback match is about to start (call outside the game scope, before the first snapshot).
+pub fn net_begin() {
+    let h = gn_host();
+    host_heap(|| h.net = GnNet { on: true, frame: i32::MIN, last: i32::MIN, ..Default::default() });
+}
+
+/// Netplay: the match is over; the ledger is dropped (the clips play out).
+pub fn net_end() {
+    let h = gn_host();
+    host_heap(|| h.net = GnNet::default());
+}
+
+fn gn_name(p: usize) -> String {
+    built().p.get(p).map_or_else(|| "?".to_string(), |x| x.name.clone())
+}
+
+/// Netplay: logic frame `frame` is about to run (`resim`: a resimulation of an earlier tick's frame).
+pub fn net_frame(frame: i32, resim: bool) {
+    let h = gn_host();
+    if !h.net.on {
+        return;
+    }
+    if frame <= h.net.last {
+        let mut n = 0;
+        for e in h.net.live.iter_mut().filter(|e| e.frame >= frame) {
+            e.tentative = true;
+            n += 1;
+        }
+        if n != 0 {
+            eprintln!("geno: define audio: rollback to frame {frame}: {n} start(s) await resimulation");
+        }
+    }
+    if !resim && h.net.live.iter().any(|e| e.tentative) {
+        let cut: Vec<GnStart> = host_heap(|| {
+            let (cut, keep) = std::mem::take(&mut h.net.live).into_iter().partition(|e| e.tentative);
+            h.net.live = keep;
+            cut
+        });
+        for e in &cut {
+            let n = melee_audio::sim::with(|s| s.ax.stop_clip_id(e.id)).unwrap_or(0);
+            eprintln!(
+                "geno: define audio: {}: cut mispredicted start sfx {} owner {:08x} frame {} ({n} playing instance)",
+                gn_name(e.p), e.sfx, e.owner, e.frame
+            );
+        }
+        host_heap(|| drop(cut));
+    }
+    h.net.frame = frame;
+    h.net.resim = resim;
+    h.net.last = frame;
+}
+
+/// Netplay: every frame up to `conf` has both peers' inputs; its starts are final.
+pub fn net_confirmed(conf: i32) {
+    let h = gn_host();
+    if !h.net.on || !h.net.live.iter().any(|e| e.frame <= conf && !e.tentative) {
+        return;
+    }
+    let done: Vec<GnStart> = host_heap(|| {
+        let (done, keep) = std::mem::take(&mut h.net.live).into_iter().partition(|e| e.frame <= conf && !e.tentative);
+        h.net.live = keep;
+        done
+    });
+    for e in &done {
+        eprintln!("geno: define audio: {}: confirmed start sfx {} owner {:08x} frame {}", gn_name(e.p), e.sfx, e.owner, e.frame);
+    }
+    host_heap(|| drop(done));
+}
+
+/// gn_gnsnd_decode: a v1 .gnsnd to native s16, or why it is not usable.
+pub fn gnsnd_decode(b: &[u8]) -> Result<(Vec<i16>, i32, i32), &'static str> {
+    if b.len() < 32 || &b[0..4] != b"GNSD" {
+        return Err("not a .gnsnd (magic)");
+    }
+    let w = |i: usize| u32::from_be_bytes([b[i * 4], b[i * 4 + 1], b[i * 4 + 2], b[i * 4 + 3]]);
+    if w(1) != 1 {
+        return Err("unknown .gnsnd version");
+    }
+    if w(2) != 32000 {
+        return Err("sample rate is not 32000");
+    }
+    if !(1..=2).contains(&w(3)) {
+        return Err("channels must be 1 or 2");
+    }
+    if !(1..=320000).contains(&w(4)) {
+        return Err("frames must be 1..320000");
+    }
+    if w(5) != 32 || w(7) != 0 || w(6) != w(4) * w(3) * 2 || b.len() as u64 != 32 + w(6) as u64 {
+        return Err("header and length disagree");
+    }
+    let n = (w(4) * w(3)) as usize;
+    let pcm = (0..n).map(|i| i16::from_be_bytes([b[32 + i * 2], b[33 + i * 2]])).collect();
+    Ok((pcm, w(4) as i32, w(3) as i32))
+}
+
+fn gn_clip_slot(p: usize, slot: usize) -> &'static mut GnClip {
+    let c = &mut gn_host().clips;
+    host_heap(|| {
+        if c.len() <= p {
+            c.resize_with(p + 1, Vec::new);
+        }
+        if c[p].len() <= slot {
+            c[p].resize_with(slot + 1, GnClip::default);
+        }
+    });
+    &mut c[p][slot]
+}
+
+#[cfg(test)]
+fn gn_clips_clear() {
+    host_heap(|| gn_host().clips.clear());
+}
+
+/// gn_clip_load: decode the clip on first use; None (logged once) when the file is missing or unusable.
+fn gn_clip_load(p: usize, slot: usize, file: &str) -> Option<(std::sync::Arc<[i16]>, i32, i32)> {
+    let c = gn_clip_slot(p, slot);
+    if let Some(x) = c.pcm.as_ref() {
+        return Some(x.clone());
+    }
+    if c.tried {
+        return None;
+    }
+    c.tried = true;
+    let r = built();
+    let (mod_id, name) = (r.p[p].mod_id.clone(), r.p[p].name.clone());
+    let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
+    use melee_script::geno::Env as _;
+    // on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
+    let Some(raw) = host_heap(|| env.read_mod_file(&mod_id, &format!("files/{file}"))) else {
+        eprintln!("geno: {name}: audio file {file} is not in the mod's files/");
+        return None;
+    };
+    match host_heap(|| gnsnd_decode(&raw).map(|(pcm, f, ch)| (std::sync::Arc::<[i16]>::from(pcm), f, ch))) {
+        Ok((pcm, frames, ch)) => {
+            eprintln!("geno: {name}: audio {file}: {frames} frames, {ch} channel(s)");
+            c.pcm = Some((pcm, frames, ch));
+            c.pcm.clone()
+        }
+        Err(why) => {
+            eprintln!("geno: {name}: audio file {file} is not usable: {why}");
+            None
+        }
+    }
+}
+
+/// gw_rb_active (as the define audio sees it): the netplay harness is running a resimulated frame ([`net_frame`]).
+fn gn_rb_active() -> bool {
+    let n = &gn_host().net;
+    n.on && n.resim
+}
+
+/// gn_define_audio_play: start the define's clip (`which` 0 = its announcer call, `sfx` ignored; 1 = the voice row for retail
+/// sound id `sfx`). 1 when the define answers for it (played, or declared but unusable: stay silent rather than fall back to
+/// the donor's voice), 0 when it has nothing (the caller plays the retail sound). The stop id cuts its stoppable rows.
+pub fn define_audio_play(ck: i32, which: i32, sfx: i32, owner: u32) -> i32 {
+    let r = built();
+    let p = r.define_profile_ck(ck);
+    if p < 0 {
+        return 0;
+    }
+    let p = p as usize;
+    let Some(a) = r.p[p].def.aud.as_ref() else { return 0 };
+    let name = r.p[p].name.clone();
+    if which == 1 && sfx == GN_STOP_SFX {
+        let (mut any, mut stopped) = (false, 0);
+        for i in 0..a.voice_sfx.len() {
+            if !a.voice_stop.get(i).copied().unwrap_or(false) {
+                continue;
+            }
+            any = true;
+            // stopping an unloaded clip must not load it
+            let pcm = gn_clip_slot(p, 1 + i).pcm.as_ref().map(|x| x.0.clone());
+            // a resimulated stop is applied too (idempotent on the real-time clips): the new timeline's stops count
+            if let Some(pcm) = pcm {
+                stopped += melee_audio::sim::with(|s| s.ax.stop_owned_clips(&pcm, owner)).unwrap_or(0);
+            }
+        }
+        if any && !gn_rb_active() {
+            eprintln!("geno: {name}: stop id 540001 cut {stopped} stoppable clip instance(s)");
+        }
+        return any as i32;
+    }
+    let (slot, file, vol) = if which == 0 {
+        if a.announcer.is_empty() {
+            return 0;
+        }
+        (0, a.announcer.clone(), 127)
+    } else {
+        let Some(i) = a.voice_sfx.iter().position(|&x| x == sfx) else {
+            // a define with an audio block is being authored: name each retail sound id it plays that has no row, once
+            let seen = &mut gn_host().seen;
+            if !seen.contains(&sfx) && seen.len() < 64 {
+                host_heap(|| seen.push(sfx));
+                eprintln!("geno: {name}: plays retail sound {sfx} (no audio.voice row for it)");
+            }
+            return 0;
+        };
+        (1 + i, a.voice_file[i].clone(), a.voice_vol[i])
+    };
+    let Some((pcm, frames, ch)) = gn_clip_load(p, slot, &file) else { return 1 };
+    let net = &mut gn_host().net;
+    if net.on {
+        let f = net.frame;
+        if let Some(e) = net.live.iter_mut().find(|e| e.owner == owner && e.p == p && e.slot == slot && e.frame == f) {
+            // the same start, resimulated: the playing instance is it
+            e.tentative = false;
+            return 1;
+        }
+        let id = host_heap(|| melee_audio::sim::with(|s| s.ax.play_owned_clip_id(pcm, frames, ch, vol, owner)).unwrap_or(0));
+        host_heap(|| net.live.push(GnStart { owner, p, slot, sfx, frame: f, id, tentative: false }));
+        eprintln!(
+            "geno: define audio: {name}: start sfx {sfx} owner {owner:08x} frame {f}{} ({file})",
+            if net.resim { " (resimulated)" } else { "" }
+        );
+        return 1;
+    }
+    host_heap(|| melee_audio::sim::with(|s| s.ax.play_owned_clip(pcm, frames, ch, vol, owner)));
+    eprintln!("geno: {name}: plays its own {} ({file})", if which == 0 { "announcer call" } else { "voice line" });
+    1
+}
+
+/// gw_Geno_DefineAudioPlay (the announcer call from gm_1601: no owner).
+pub fn DefineAudioPlay(ck: i32, which: i32, sfx: i32) -> i32 {
+    define_audio_play(ck, which, sfx, 0)
+}
+
+/// gw_Geno_DefineVoicePlayOwner (ft_0877 / ft_0881's voice calls): by FighterKind, owned by the fighter.
+pub fn DefineVoicePlayOwner(kind: i32, sfx: i32, owner: u32) -> i32 {
+    if kind < 0x21 { 0 } else { define_audio_play(kind + 1, 1, sfx, owner) }
+}
+
+/// gw_Geno_DefineVoiceState: on an action change (motion set; -1 on a fighter reset), cut the owner's state-scoped clips whose
+/// row's state mask does not include the new state. Returns how many instances were stopped.
+pub fn DefineVoiceState(kind: i32, owner: u32, motion: i32) -> i32 {
+    if kind < 0x21 {
+        return 0;
+    }
+    let r = built();
+    let p = r.define_profile_ck(kind + 1);
+    if p < 0 {
+        return 0;
+    }
+    let p = p as usize;
+    let Some(a) = r.p[p].def.aud.as_ref() else { return 0 };
+    let s = motion - melee_script::gd::players::GENO_MOTION_BASE;
+    let nstate = r.p[p].nstate as i32;
+    let mut stopped = 0;
+    for i in 0..a.voice_sfx.len() {
+        let mask = a.voice_states.get(i).copied().unwrap_or(0);
+        if mask == 0 || (s >= 0 && s < nstate && s < 64 && mask & (1u64 << s) != 0) {
+            continue;
+        }
+        let Some(pcm) = gn_clip_slot(p, 1 + i).pcm.as_ref().map(|x| x.0.clone()) else { continue };
+        stopped += melee_audio::sim::with(|x| x.ax.stop_owned_clips(&pcm, owner)).unwrap_or(0);
+    }
+    if stopped != 0 && !gn_rb_active() {
+        eprintln!("geno: {}: state exit to {motion} cut {stopped} stoppable clip instance(s), owner {owner:08x}", r.p[p].name);
+    }
+    stopped
+}
 
 // slice 5: fighter Lua
 pub fn LuaFn(p: i32, s: i32, phase: i32) -> i32 { reg().lua_fn(p, s, phase) as i32 }
@@ -808,6 +1131,7 @@ pub fn install_define() {
         g::Geno_DefineOverrideCount = Some(DefineOverrideCount);
         g::Geno_DefineOverrideField = Some(DefineOverrideField);
         g::Geno_DefineVoiceState = Some(|k, o, m| DefineVoiceState(k, o as u32, m));
+        melee_fighter::hooks::GENO_DEFINE_VOICE_PLAY_OWNER = Some(|k, sfx, fp| DefineVoicePlayOwner(k, sfx, fp as usize as u32));
         g::Geno_LuaFn = Some(LuaFn);
         g::Geno_LuaSlots = Some(LuaSlots);
         g::Geno_LuaCall = Some(LuaCall);
@@ -1012,7 +1336,8 @@ pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
     let Some(file) = file else { return -1 };
     let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
     use melee_script::geno::Env as _;
-    let Some(raw) = env.read_mod_file(&mod_id, &format!("files/{file}")) else {
+    // on the system heap: a read into the copy-on-write arena fails (ERROR_NOACCESS) during a rollback match
+    let Some(raw) = host_heap(|| env.read_mod_file(&mod_id, &format!("files/{file}"))) else {
         static mut SAID: Vec<String> = Vec::new();
         unsafe {
             if !SAID.contains(&file) && SAID.len() < 16 {
@@ -1079,5 +1404,95 @@ mod tests {
         assert_ne!(a, b);
         assert_ne!(a, c);
         assert_ne!(b, c);
+    }
+}
+
+/// geno_define_tests.inc test_geno_gnsnd_audio and the audio-lifetime fixture, against the native clip slots.
+#[cfg(test)]
+mod clip_tests {
+    use super::*;
+
+    fn gnsnd() -> Vec<u8> {
+        let mut b = vec![0u8; 40];
+        b[0..4].copy_from_slice(b"GNSD");
+        b[7] = 1;
+        b[10] = 0x7D; // 32000
+        b[15] = 1;
+        b[19] = 4;
+        b[23] = 32;
+        b[27] = 8;
+        b[32..40].copy_from_slice(&[0x12, 0x34, 0xFF, 0xFE, 0x80, 0x00, 0x7F, 0xFF]);
+        b
+    }
+
+    #[test]
+    fn gnsnd_decode_and_refusals() {
+        let b = gnsnd();
+        let (pcm, frames, ch) = gnsnd_decode(&b).unwrap();
+        assert_eq!((frames, ch, pcm), (4, 1, vec![0x1234, -2, -32768, 32767]));
+        for (i, v) in [(0usize, b'X'), (7, 2), (11, 1), (15, 3), (19, 5)] {
+            let mut c = b.clone();
+            c[i] = v;
+            assert!(gnsnd_decode(&c).is_err(), "byte {i} = {v} decoded");
+        }
+        assert!(gnsnd_decode(&b[..39]).is_err() && gnsnd_decode(&b[..10]).is_err());
+    }
+
+    /// One test (the registry and the sound are process-wide): the C's two in-engine checks in order.
+    #[test]
+    fn define_clips_play_stop_and_state_exit_like_c() {
+        melee_audio::sim::install(melee_audio::Sound::new());
+        let stat = || melee_audio::sim::with(|s| s.ax.clip_stat(0)).unwrap();
+        let stop = |pcm: &std::sync::Arc<[i16]>, o: u32| melee_audio::sim::with(|s| s.ax.stop_owned_clips(pcm, o)).unwrap();
+
+        // test_geno_gnsnd_audio: declared but missing files answer "handled" and play nothing; undeclared is not handled
+        let t = c"{\"geno\":10,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"audio\":{\"announcer\":\"gn_absent_call.gnsnd\",\"voice\":[{\"sfx\":77,\"file\":\"gn_absent_v.gnsnd\",\"volume\":80}]}}]}";
+        assert_eq!(TestInstall(t.as_ptr()), 1);
+        let ck = DefineResolve("t7");
+        assert!(ck >= 34, "ck {ck}");
+        let before = stat();
+        assert_eq!((DefineAudioPlay(ck, 0, 0), DefineAudioPlay(ck, 1, 77), stat()), (1, 1, before));
+        assert_eq!((DefineAudioPlay(ck, 1, 78), DefineAudioPlay(8, 0, 0), DefineVoicePlayOwner(0, 77, 0)), (0, 0, 0));
+        // a loaded clip reaches the mixer (put in the announcer slot as the loader would)
+        let p = built().define_profile_ck(ck) as usize;
+        let (pcm, f, c) = gnsnd_decode(&gnsnd()).unwrap();
+        gn_clip_slot(p, 0).pcm = Some((pcm.into(), f, c));
+        assert_eq!((DefineAudioPlay(ck, 0, 0), stat()), (1, before + 1));
+        // and is mixed: 4 frames at gain 127
+        let out = melee_audio::sim::with(|s| *s.ax.run_frame(&[0u8; 64])).unwrap();
+        assert_eq!(&out[0..8], &[0x1234, 0x1234, -2, -2, -32768, -32768, 32767, 32767]);
+        TestRestore();
+        gn_clips_clear();
+
+        // the audio-lifetime fixture: a stoppable hum scoped to two states, a plain voice, a stoppable legacy row
+        let t = c"{\"geno\":9,\"fighters\":[{\"define\":{\"key\":\"t7\",\"name\":\"T7\",\"base\":\"mario\",\"common\":\"melee.common.v1\",\"resources\":\"retail:mario\"},\"audio\":{\"voice\":[{\"sfx\":77,\"file\":\"hum.gnsnd\",\"stoppable\":true,\"while_states\":[\"Charge\",\"Fire\"]},{\"sfx\":78,\"file\":\"voice.gnsnd\"},{\"sfx\":79,\"file\":\"legacy.gnsnd\",\"stoppable\":true}]},\"states\":[{\"name\":\"Charge\",\"subaction\":57},{\"name\":\"Fire\",\"subaction\":58}]}]}";
+        assert_eq!(TestInstall(t.as_ptr()), 1);
+        let ck = DefineResolve("t7");
+        assert!(ck >= 34);
+        let (p, kind) = (built().define_profile_ck(ck) as usize, ck - 1);
+        let tones: Vec<std::sync::Arc<[i16]>> = (1..=3).map(|k| vec![100 * k, -100 * k, 100 * k, -100 * k].into()).collect();
+        for (i, t) in tones.iter().enumerate() {
+            gn_clip_slot(p, 1 + i).pcm = Some((t.clone(), 4, 1));
+        }
+        let base = melee_script::gd::players::GENO_MOTION_BASE;
+        let play = |sfx, o| DefineVoicePlayOwner(kind, sfx, o);
+        play(77, 1);
+        play(77, 1);
+        play(77, 2);
+        play(78, 1);
+        play(79, 1);
+        assert_eq!((DefineVoiceState(kind, 1, base), DefineVoiceState(kind, 1, base + 1), DefineVoiceState(0, 1, 14)), (0, 0, 0), "charge, fire or retail fighter cut hum");
+        assert_eq!((DefineVoiceState(kind, 1, 14), DefineVoiceState(kind, 1, 14)), (2, 0));
+        assert_eq!((stop(&tones[0], 2), stop(&tones[1], 1), stop(&tones[2], 1)), (1, 1, 1), "exit cuts the owner's hums only");
+        play(77, 1);
+        play(77, 2);
+        play(78, 1);
+        play(79, 1);
+        assert_eq!(play(540001, 1), 1);
+        assert_eq!((stop(&tones[0], 1), stop(&tones[2], 1), stop(&tones[0], 2), stop(&tones[1], 1)), (0, 0, 1, 1), "540001 stops only its fighter's stoppable clips");
+        play(77, 1);
+        assert_eq!(DefineVoiceState(kind, 1, -1), 1, "fighter reset left its hum playing");
+        TestRestore();
+        gn_clips_clear();
     }
 }

@@ -184,12 +184,21 @@ impl Audio {
     pub fn summary(&self) -> String {
         use std::sync::atomic::Ordering::Relaxed;
         match (&self.out, &self.capture) {
-            (Some(o), _) => format!(
-                "audio: device {}, {} underruns, {} overruns",
-                if o.driver.device_open() { "open" } else { "not open (silent)" },
-                o.driver.ring.underruns.load(Relaxed),
-                o.driver.ring.overruns.load(Relaxed)
-            ),
+            (Some(o), _) => {
+                let l = o.driver.ring.latency();
+                format!(
+                    "audio: device {}, {} underrun frames in {} events, {} overruns, output latency mean {:.1} ms (min {:.1}, max {:.1}), cushion {} ms{}",
+                    if o.driver.device_open() { "open" } else { "not open (silent)" },
+                    o.driver.ring.underruns.load(Relaxed),
+                    o.driver.ring.underrun_events.load(Relaxed),
+                    o.driver.ring.overruns.load(Relaxed),
+                    l.mean_ms,
+                    l.min_ms,
+                    l.max_ms,
+                    l.target_ms,
+                    if o.driver.cfg.low_latency { ", low-latency mode" } else { "" }
+                )
+            }
             (None, Some(c)) => format!("audio: captured {} sub-frames, no device", c.len() / 320),
             (None, None) => "audio: virtual clock, no device".into(),
         }

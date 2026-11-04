@@ -124,6 +124,14 @@ struct Clip {
     owner: u32,
 }
 
+#[derive(Clone, Debug, Default)]
+struct ClipBank {
+    slot: [Clip; CLIPS],
+    age: u32,
+    started: u32,
+    frames_mixed: u32,
+}
+
 /// The whole AX state.
 pub struct Ax {
     vpb: Box<[[u8; VPB_SIZE]; NUM_VOICES]>,
@@ -139,10 +147,10 @@ pub struct Ax {
     peak: i32,
     dpop: [i32; 3],
     dpop_step: [i32; 3],
-    clips: [Clip; CLIPS],
-    clip_age: u32,
-    clips_started: u32,
-    clip_frames_mixed: u32,
+    /// The native clips, boxed so a rollback load (which rewrites the static `Sound` this lives in) puts back only
+    /// the pointer: the clips play in real time across rollbacks (Geno defines manage their starts by frame), and
+    /// the `Arc` refcounts here are never rewound. The box is made with the sound, before any match.
+    clips: Box<ClipBank>,
     frames_run: u32,
     reported_first: bool,
     /// AISetStreamVol / AISetDSPSampleRate state (shim_misc.c). Deliberately not applied: the
@@ -310,9 +318,6 @@ impl Ax {
             dpop: [0; 3],
             dpop_step: [0; 3],
             clips: Default::default(),
-            clip_age: 0,
-            clips_started: 0,
-            clip_frames_mixed: 0,
             frames_run: 0,
             reported_first: false,
             ai_stream_vol_left: 255,
@@ -689,32 +694,48 @@ impl Ax {
     /// summed into the main mix after the voices and aux buses. Up to 8 at once; past that the
     /// oldest is replaced. Returns 1 if started.
     pub fn play_owned_clip(&mut self, pcm: Arc<[i16]>, frames: i32, channels: i32, volume: i32, owner: u32) -> i32 {
+        (self.play_owned_clip_id(pcm, frames, channels, volume, owner) != 0) as i32
+    }
+
+    /// [`Self::play_owned_clip`] returning the instance's id (nonzero; 0 = not started), for [`Self::stop_clip_id`].
+    pub fn play_owned_clip_id(&mut self, pcm: Arc<[i16]>, frames: i32, channels: i32, volume: i32, owner: u32) -> u32 {
         if frames < 1 || !(1..=2).contains(&channels) {
             return 0;
         }
         let mut slot = 0;
         for i in 0..CLIPS {
-            if self.clips[i].pcm.is_none() {
+            if self.clips.slot[i].pcm.is_none() {
                 slot = i;
                 break;
             }
-            if self.clips[i].age < self.clips[slot].age {
+            if self.clips.slot[i].age < self.clips.slot[slot].age {
                 slot = i;
             }
         }
         let frames = (frames as usize).min(pcm.len() / channels as usize) as u32;
-        self.clip_age = self.clip_age.wrapping_add(1);
-        self.clips[slot] = Clip {
+        self.clips.age = self.clips.age.wrapping_add(1);
+        self.clips.slot[slot] = Clip {
             pcm: Some(pcm),
             frames,
             pos: 0,
             channels: channels as usize,
             gain: volume.clamp(0, 127),
-            age: self.clip_age,
+            age: self.clips.age,
             owner,
         };
-        self.clips_started = self.clips_started.wrapping_add(1);
-        1
+        self.clips.started = self.clips.started.wrapping_add(1);
+        self.clips.age
+    }
+
+    /// Stop the one instance `id` (from [`Self::play_owned_clip_id`]) if it still plays. Returns 1 if it did.
+    pub fn stop_clip_id(&mut self, id: u32) -> i32 {
+        for c in self.clips.slot.iter_mut() {
+            if c.pcm.is_some() && c.age == id {
+                c.pcm = None;
+                return 1;
+            }
+        }
+        0
     }
 
     pub fn play_clip(&mut self, pcm: Arc<[i16]>, frames: i32, channels: i32, volume: i32) -> i32 {
@@ -724,7 +745,7 @@ impl Ax {
     /// Stop every instance of `pcm` that `owner` started.
     pub fn stop_owned_clips(&mut self, pcm: &Arc<[i16]>, owner: u32) -> i32 {
         let mut n = 0;
-        for c in self.clips.iter_mut() {
+        for c in self.clips.slot.iter_mut() {
             if c.pcm.as_ref().is_some_and(|p| Arc::ptr_eq(p, pcm)) && c.owner == owner {
                 c.pcm = None;
                 n += 1;
@@ -736,7 +757,7 @@ impl Ax {
     /// Stop every playing instance of `pcm`.
     pub fn stop_clips(&mut self, pcm: &Arc<[i16]>) -> i32 {
         let mut n = 0;
-        for c in self.clips.iter_mut() {
+        for c in self.clips.slot.iter_mut() {
             if c.pcm.as_ref().is_some_and(|p| Arc::ptr_eq(p, pcm)) {
                 c.pcm = None;
                 n += 1;
@@ -748,14 +769,15 @@ impl Ax {
     /// gw_Audio_ClipStat: 0 = clips started, else 32 kHz frames mixed.
     pub fn clip_stat(&self, which: i32) -> u32 {
         if which == 0 {
-            self.clips_started
+            self.clips.started
         } else {
-            self.clip_frames_mixed
+            self.clips.frames_mixed
         }
     }
 
     fn mix_clips(&mut self) {
-        for c in self.clips.iter_mut() {
+        let b = &mut *self.clips;
+        for c in b.slot.iter_mut() {
             let Some(pcm) = c.pcm.as_ref() else { continue };
             let mut i = 0;
             while i < FRAME_SAMPLES && c.pos < c.frames {
@@ -764,7 +786,7 @@ impl Ax {
                 let r = if c.channels == 2 { pcm[f + 1] as i32 } else { l };
                 self.acc[0][i] = self.acc[0][i].wrapping_add(l * c.gain / 127);
                 self.acc[1][i] = self.acc[1][i].wrapping_add(r * c.gain / 127);
-                self.clip_frames_mixed = self.clip_frames_mixed.wrapping_add(1);
+                b.frames_mixed = b.frames_mixed.wrapping_add(1);
                 i += 1;
                 c.pos += 1;
             }

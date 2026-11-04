@@ -1365,8 +1365,9 @@ impl Game for Play {
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
-                Ok(p) => {
+                Ok(mut p) => {
                     melee_engine::gxbridge::shim().gx.set_pipe_factory(p.renderer.pipe_factory());
+                    p.offthread_drop = Some(|q| !melee_engine::arena::contains(q));
                     self.presenter = Some(p)
                 }
                 Err(e) => {

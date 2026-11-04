@@ -1076,26 +1076,13 @@ impl RetailPlay {
     }
 }
 
-impl Game for RetailPlay {
-    fn tick(&mut self, pads: &mut PadSystem) {
-        if self.feed.is_none() {
-            self.tick_once(pads);
-            self.spec_serve();
-            return;
-        }
-        self.tick_playback(pads);
-    }
-
-    fn set_interp(&mut self, on: bool) {
-        self.interp = on;
-        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
-    }
-
-    fn present(&mut self, window: &Arc<Window>, alpha: f64) {
+impl RetailPlay {
+    fn present_inner(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
-                Ok(p) => {
+                Ok(mut p) => {
                     melee_engine::gxbridge::shim().gx.set_pipe_factory(p.renderer.pipe_factory());
+                    p.offthread_drop = Some(|q| !melee_engine::arena::contains(q));
                     self.presenter = Some(p)
                 }
                 Err(e) => {
@@ -1111,6 +1098,7 @@ impl Game for RetailPlay {
         let a = if self.shot_pending.is_some() { shot_phase.filter(|_| self.interp) } else { self.interp.then_some(alpha) };
         if let Some(p) = self.presenter.as_mut() {
             p.force_phase = if self.shot_pending.is_some() { a } else { None };
+            p.shot = self.shot_pending.is_some();
         }
         let frame = self.frame.take();
         let mut pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
@@ -1150,7 +1138,35 @@ impl Game for RetailPlay {
             self.quit = true;
         }
     }
+}
 
+impl Game for RetailPlay {
+    fn tick(&mut self, pads: &mut PadSystem) {
+        if self.feed.is_none() {
+            self.tick_once(pads);
+            self.spec_serve();
+            return;
+        }
+        self.tick_playback(pads);
+    }
+
+    fn set_interp(&mut self, on: bool) {
+        self.interp = on;
+        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn present(&mut self, window: &Arc<Window>, alpha: f64) {
+        let t_present = std::time::Instant::now();
+        self.present_inner(window, alpha);
+        // MELEE_PRESENT_SPIKE=<ms>: one line per present at least that long, with the presenter's stages (frame-time tail)
+        static SPIKE: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
+        if let (Some(ms), Some(p)) = (*SPIKE.get_or_init(|| std::env::var("MELEE_PRESENT_SPIKE").ok().and_then(|v| v.parse().ok())), self.presenter.as_ref()) {
+            let el = t_present.elapsed().as_secs_f64() * 1e3;
+            if el >= ms {
+                log(&format!("slow present at tick {}: {el:.2} ms (prepare {:.2} draw {:.2} swap {:.2} adopt {:.2} (drop {:.2}) ms, fresh {})", self.tick_no, p.last[0] as f64 / 1e3, p.last[1] as f64 / 1e3, p.last[2] as f64 / 1e3, p.adopt_us as f64 / 1e3, p.drop_us as f64 / 1e3, p.last_fresh));
+            }
+        }
+    }
     fn resized(&mut self, w: u32, h: u32) {
         melee_engine::view::set_window(w, h);
         if let Some(p) = self.presenter.as_mut() {

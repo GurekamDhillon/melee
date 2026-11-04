@@ -45,8 +45,18 @@ pub struct Presenter {
     interp_total: melee_gx::interp::Stats,
     /// A screenshot of an in-between: adopt the new frame at once and draw it at this phase (MELEE_SHOT_PHASE).
     pub force_phase: Option<f64>,
-    /// The EFB copies of `cur` have been made from its exact pose (see `present_posed`).
-    copies_exact: bool,
+    /// The next present is a screenshot (see `present_posed`: its EFB copies are restored to exact poses first).
+    pub shot: bool,
+    /// The last present's µs of prepare / draw / swap (0: not run), and whether it adopted a new frame (spike logs).
+    pub last: [u32; 3],
+    pub last_fresh: bool,
+    pub adopt_us: u32,
+    pub drop_us: u32,
+    /// Drop retired frames on a helper thread when this says their draw list is not game-arena memory (the GX decode
+    /// thread's frames live on the system heap): freeing ~2500 draws took 1.0-1.5 ms of every fresh present (the
+    /// frame-time p99). None: drop in place. The pose record stays on this thread (it may be arena memory).
+    pub offthread_drop: Option<fn(*const u8) -> bool>,
+    dropper: Option<std::sync::mpsc::Sender<Vec<DrawCmd>>>,
 }
 
 impl Drop for Presenter {
@@ -125,7 +135,7 @@ impl Presenter {
         surface.configure(&renderer.device, &config);
         let ai = renderer.adapter.get_info();
         crate::plog!("gw: video: present mode {:?}, frame latency {}, {:?} on {}", config.present_mode, config.desired_maximum_frame_latency, ai.backend, ai.name);
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, copies_exact: false })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, shot: false, last: [0; 3], last_fresh: false, adopt_us: 0, drop_us: 0, offthread_drop: None, dropper: None })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -182,11 +192,14 @@ impl Presenter {
         if self.renderer.gpu_fault().is_some() {
             return; // the caller stops on `gpu_fault`
         }
+        self.last = [0; 3];
+        self.adopt_us = 0;
         let interpolate = self.solver.mode == melee_gx::interp::Mode::Interpolate;
         // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
         // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
         // the current frame itself (t = 1: never a step back toward the previous one).
         let mut frame = frame.map(|d| melee_gx::interp::Frame { draws: d, pose });
+        let mut skipped = None;
         if let Some(ph) = self.force_phase {
             alpha = Some(ph);
         }
@@ -200,16 +213,31 @@ impl Presenter {
         } else if let Some(p) = self.pending.take() {
             if frame.is_none() {
                 frame = Some(p);
+            } else {
+                skipped = Some(p);
             }
         }
         let fresh = frame.is_some();
+        // A screenshot is the newest sim frame drawn exactly, but the EFB copies it samples from earlier presents
+        // (Pokemon Stadium's screen shows the previous frame's copy) were made by re-posed in-between presents at a
+        // wall-clock phase: the shot differed run to run. Redraw the previous sim frame exactly first, so its copies
+        // hold that frame's exact pose as on the console (shots only: in-between presents are phase-dependent anyway).
+        if std::mem::take(&mut self.shot) && fresh && frame.as_ref().is_some_and(|f| f.draws.iter().any(|d| d.copy.is_some())) {
+            if let Some(p) = skipped.as_ref().or(self.cur.as_ref()) {
+                self.renderer.prepare(state, &p.draws);
+                self.renderer.draw_prepared(state, &p.draws, None);
+            }
+        }
         if let Some(f) = frame {
-            self.prev = self.cur.replace(f);
+            let ta = std::time::Instant::now();
+            let old = std::mem::replace(&mut self.prev, self.cur.replace(f));
+            self.retire(old);
+            self.drop_us = ta.elapsed().as_micros() as u32;
             self.prepared = false;
-            self.copies_exact = false;
             let widen = self.widen().is_some();
             let (solver, prev, cur) = (&mut self.solver, self.prev.as_ref(), self.cur.as_ref().unwrap());
             solver.plan(prev, cur, widen);
+            self.adopt_us = ta.elapsed().as_micros() as u32;
         }
         let Some(cur) = self.cur.as_ref() else {
             self.swap_present();
@@ -226,20 +254,11 @@ impl Presenter {
             if !self.prepared {
                 let t0 = std::time::Instant::now();
                 self.renderer.prepare(state, &cur.draws);
-                self.times[0].push(t0.elapsed().as_micros() as u32);
+                self.last[0] = t0.elapsed().as_micros() as u32;
+                self.times[0].push(self.last[0]);
                 self.prepared = true;
             }
             let t0 = std::time::Instant::now();
-            // EFB copies (Pokemon Stadium's screen, shadows) hold a sim frame's exact pose, as on the console: a re-posed
-            // in-between leaves the copy targets alone, else what a later frame samples depends on the wall-clock phase of
-            // the last present before it (run-to-run render variance). A fresh frame first re-posed is drawn once exactly.
-            let has_copies = cur.draws.iter().any(|d| d.copy.is_some());
-            if moving && has_copies && !self.copies_exact {
-                let solver = &mut self.solver;
-                let mut f = |i: usize, out: &mut [u8]| solver.patch(cur, i, out, widen, false);
-                self.renderer.draw_prepared(state, &cur.draws, if widen.is_some() { Some(&mut f) } else { None });
-            }
-            self.renderer.skip_copies = moving;
             if moving || widen.is_some() {
                 let prev = self.prev.as_ref();
                 if moving {
@@ -256,16 +275,40 @@ impl Presenter {
             } else {
                 self.renderer.draw_prepared(state, &cur.draws, None);
             }
-            self.renderer.skip_copies = false;
-            self.copies_exact = true;
             self.blended = moving;
             let s = std::mem::take(&mut self.solver.stats);
             self.interp_total.add(&s);
-            self.times[1].push(t0.elapsed().as_micros() as u32);
+            self.last[1] = t0.elapsed().as_micros() as u32;
+            self.times[1].push(self.last[1]);
         }
+        self.last_fresh = fresh;
         let t0 = std::time::Instant::now();
         self.swap_present();
-        self.times[2].push(t0.elapsed().as_micros() as u32);
+        self.last[2] = t0.elapsed().as_micros() as u32;
+        self.times[2].push(self.last[2]);
+    }
+
+    /// Free a frame the presenter no longer needs (see `offthread_drop`).
+    fn retire(&mut self, f: Option<melee_gx::interp::Frame>) {
+        let Some(f) = f else { return };
+        let Some(ok) = self.offthread_drop else { return drop(f) };
+        if f.draws.capacity() == 0 || !ok(f.draws.as_ptr() as *const u8) {
+            return drop(f);
+        }
+        let melee_gx::interp::Frame { draws, pose } = f;
+        drop(pose);
+        let tx = self.dropper.get_or_insert_with(|| {
+            let (tx, rx) = std::sync::mpsc::channel::<Vec<DrawCmd>>();
+            let _ = std::thread::Builder::new().name("gx frame drop".into()).spawn(move || {
+                while let Ok(v) = rx.recv() {
+                    drop(v);
+                }
+            });
+            tx
+        });
+        if let Err(e) = tx.send(draws) {
+            drop(e.0);
+        }
     }
 
     /// The renderer-side widening for the current content aspect (None: off or a 4:3 frame).

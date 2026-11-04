@@ -615,8 +615,27 @@ pub fn DefineCostumeName(ck: i32, costume: i32, out: *mut i8, cap: i32) -> i32 {
     }
     (k > 0) as i32
 }
-/// gw_Geno_DefinePlanInt: a base "none" define's plan is not hosted (no own model / bank in this engine): "no plan".
-pub fn DefinePlanInt(_kind: i32, what: i32, _i: i32) -> i32 { if what == 0 { 0 } else { -1 } }
+fn plan(kind: i32) -> Option<&'static melee_script::geno::plan::Plan> {
+    let r = built();
+    let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
+    let had = r.log.len();
+    let p = r.define_plan(kind, &env).map(|p| p as *const melee_script::geno::plan::Plan);
+    if r.log.len() > had {
+        flush_log(r);
+    }
+    p.map(|p| unsafe { &*p })
+}
+/// gw_Geno_DefinePlanInt: a base "none" define's plan (plan.json in its mod's files/), "no plan" (0 / -1) otherwise.
+pub fn DefinePlanInt(kind: i32, what: i32, i: i32) -> i32 {
+    match plan(kind) {
+        Some(p) => p.int(what, i),
+        None => if what == 0 { 0 } else { -1 },
+    }
+}
+/// gw_Geno_DefinePlanText: 0 clip name, 1 clip symbol, 2 joint_to_part, 3 part_to_joint (NULL when none).
+pub fn DefinePlanText(kind: i32, which: i32, i: i32) -> *const core::ffi::c_char {
+    plan(kind).and_then(|p| p.text(which, i)).map_or(core::ptr::null(), |p| p as *const _)
+}
 /// gw_Geno_DefineVoiceState / AudioPlay: a define's own sound clips are not hosted (the C plays nothing during rollback
 /// either); nothing is stopped or played.
 pub fn DefineVoiceState(_kind: i32, _owner: u32, _motion: i32) -> i32 { 0 }
@@ -770,6 +789,8 @@ pub fn install_define() {
             fd::GENO_DEFINE_CK_AT = Some(DefineCKAt);
             fd::GENO_DEFINE_COSTUME_COUNT = Some(DefineCostumeCount);
             fd::GENO_DEFINE_STRING = Some(DefineString);
+            fd::GENO_DEFINE_PLAN_INT = Some(DefinePlanInt);
+            fd::GENO_DEFINE_PLAN_TEXT = Some(DefinePlanText);
             fd::GENO_DEFINE_PARTNER_KIND = Some(DefinePartnerKind);
             fd::GENO_DEFINE_IDENTITY_WORD = Some(|k, w| DefineIdentityWord(k, w) as u32);
             fd::GENO_DEFINE_THROWN_AS = Some(DefineThrownAs);
@@ -782,6 +803,7 @@ pub fn install_define() {
                 host_heap(|| Box::leak(vec![0u64; bytes.div_ceil(8)].into_boxed_slice()).as_mut_ptr() as *mut core::ffi::c_void)
             });
         }
+        install_art();
         g::Geno_DefineBaseKind = Some(DefineBaseKind);
         g::Geno_DefineOverrideCount = Some(DefineOverrideCount);
         g::Geno_DefineOverrideField = Some(DefineOverrideField);
@@ -878,11 +900,184 @@ pub fn netplay_identity(dir: &std::path::Path, ids: &[&str]) -> u64 {
     }
     for d in 0..r.define_count() {
         if let Some(o) = r.define_online_info(d) {
-            parts.push(format!("define {}={:016x}/{}", o.key, o.id, o.none as i32));
+            // mx_add_defines: the resource files' bytes join the identity. A base "none" define's files are its mod's
+            // (files/): one missing gives it no online identity. A base "mario" define's are the disc's (the disc
+            // identity covers them).
+            use melee_script::geno::Env as _;
+            let mod_id = r.p[r.definitions.profile_for_kind(o.ck - 1).max(0) as usize].mod_id.clone();
+            let mut fh = String::new();
+            let mut ok = true;
+            if o.none {
+                for f in &o.files {
+                    match env.read_mod_file(&mod_id, &format!("files/{f}")) {
+                        Some(b) => fh.push_str(&format!(",{:016x}", b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &c| (h ^ c as u64).wrapping_mul(0x100_0000_01b3)))),
+                        None => {
+                            eprintln!("mexid: define {} has no online identity: resource file {f} is missing", o.key);
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if ok {
+                parts.push(format!("define {}={:016x}/{}{fh}", o.key, o.id, o.none as i32));
+            }
         }
     }
     if parts.is_empty() {
         return 0;
     }
     parts.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, s| s.bytes().chain([0u8]).fold(h, |h, b| (h ^ b as u64).wrapping_mul(0x100_0000_01b3)))
+}
+
+// ---- slice 6: a define's own menu / HUD art (gw_Geno_DefineArtOpen over gw_runtime.c's .gxtex handles) ----
+
+/// gw_runtime.c's GwGxTex: a parsed .gxtex blob (big-endian header, GX-tiled payload).
+struct GxTex {
+    blob: Vec<u8>,
+    format: u32,
+    width: u32,
+    height: u32,
+    image_off: u32,
+    image_size: u32,
+}
+/// GW_GXTEX_MAX open handles.
+static mut GXTEX: [Option<GxTex>; 8] = [const { None }; 8];
+
+fn gxtex_get(h: i32) -> Option<&'static GxTex> {
+    unsafe { if (0..8).contains(&h) { GXTEX[h as usize].as_ref() } else { None } }
+}
+/// gw_gxtex_install: a v1 "GXTX" blob into a free handle, -1 when it is malformed or every handle is open.
+fn gxtex_install(blob: Vec<u8>, label: &str) -> i32 {
+    let be = |o: usize| u32::from_be_bytes(blob[o..o + 4].try_into().unwrap());
+    let Some(i) = (0..8).find(|&i| unsafe { GXTEX[i].is_none() }) else {
+        eprintln!("gxtex: no free slot for '{label}' (8 open)");
+        return -1;
+    };
+    if blob.len() < 64 {
+        eprintln!("gxtex: {label} is {} bytes, too short for a header", blob.len());
+        return -1;
+    }
+    if be(0) != 0x4758_5458 || be(4) != 1 {
+        eprintln!("gxtex: {label} is not a v1 .gxtex");
+        return -1;
+    }
+    let (image_size, tlut_size, image_off, tlut_off) = (be(28), be(32), be(36), be(40));
+    if image_off as u64 + image_size as u64 > blob.len() as u64 || (tlut_size != 0 && tlut_off as u64 + tlut_size as u64 > blob.len() as u64) {
+        eprintln!("gxtex: {label}: image {image_size}@{image_off} tlut {tlut_size}@{tlut_off} do not fit in {} bytes", blob.len());
+        return -1;
+    }
+    let (format, width, height, tl_n, tl_f) = (be(8), be(12), be(16), be(24), be(20));
+    let t = GxTex { format, width, height, image_off, image_size, blob };
+    eprintln!(
+        "gxtex: {label} -> handle {i}: {}x{} fmt {}, image {} B, tlut {} entries fmt {}",
+        t.width, t.height, t.format, t.image_size, tl_n, tl_f
+    );
+    unsafe { GXTEX[i] = Some(t) };
+    i as i32
+}
+pub fn GxTex_Width(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.width as i32) }
+pub fn GxTex_Height(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.height as i32) }
+pub fn GxTex_Format(h: i32) -> i32 { gxtex_get(h).map_or(-1, |t| t.format as i32) }
+pub fn GxTex_ImageSize(h: i32) -> i32 { gxtex_get(h).map_or(0, |t| t.image_size as i32) }
+pub fn GxTex_CopyImage(h: i32, dst: *mut core::ffi::c_void) {
+    if let Some(t) = gxtex_get(h) {
+        if !dst.is_null() {
+            unsafe { core::ptr::copy_nonoverlapping(t.blob.as_ptr().add(t.image_off as usize), dst as *mut u8, t.image_size as usize) };
+        }
+    }
+}
+pub fn GxTex_Close(h: i32) {
+    if (0..8).contains(&h) {
+        unsafe { GXTEX[h as usize] = None };
+    }
+}
+
+/// gw_Geno_DefineArtOpen: a .gxtex handle for a define's art (`what` GN_PRES_*), -1 when none. No skins are installed
+/// here, so it is the declared file of the mod's files/ (gn_pres_open_file); stock / emblem / results must be unpaletted.
+pub fn DefineArtOpen(ck: i32, what: i32, costume: i32) -> i32 {
+    use melee_script::geno::define::*;
+    if !(0..GN_PRES_KINDS as i32).contains(&what) {
+        return -1;
+    }
+    let plain = what as usize == GN_PRES_STOCK || what as usize == GN_PRES_EMBLEM || what as usize == GN_PRES_RESULTS;
+    let r = built();
+    let p = r.define_profile_ck(ck);
+    if p < 0 {
+        return -1;
+    }
+    let (mod_id, name) = (r.p[p as usize].mod_id.clone(), r.p[p as usize].name.clone());
+    // results without its own file falls back to the portrait (gn_pres_file)
+    let file = r.define_pres_file(ck, what, costume).map(str::to_string);
+    let Some(file) = file else { return -1 };
+    let env = crate::mex_host::GenoEnv { dir: dir_of_boot() };
+    use melee_script::geno::Env as _;
+    let Some(raw) = env.read_mod_file(&mod_id, &format!("files/{file}")) else {
+        static mut SAID: Vec<String> = Vec::new();
+        unsafe {
+            if !SAID.contains(&file) && SAID.len() < 16 {
+                SAID.push(file.clone());
+                eprintln!("geno: {name}: presentation file {file} is not in the mod's files/");
+            }
+        }
+        return -1;
+    };
+    let h = gxtex_install(raw, &file);
+    if h >= 0 && plain && GxTex_Format(h) >= 8 {
+        eprintln!("geno: {name}: presentation file {file} needs a format without a palette for stock/results");
+        GxTex_Close(h);
+        return -1;
+    }
+    h
+}
+
+/// The HUD's art callees (ifstock: the stock icon of a define).
+pub fn install_art() {
+    use melee_world::tu::ifstock::ext::hook as s;
+    unsafe {
+        s::Geno_DefineArtOpen = Some(DefineArtOpen);
+        s::GxTex_Width = Some(GxTex_Width);
+        s::GxTex_Height = Some(GxTex_Height);
+        s::GxTex_Format = Some(GxTex_Format);
+        s::GxTex_ImageSize = Some(GxTex_ImageSize);
+        s::GxTex_CopyImage = Some(GxTex_CopyImage);
+        s::GxTex_Close = Some(GxTex_Close);
+        s::UI_TextI4 = Some(|t, w, h, st, d| unsafe { crate::uigen::UI_TextI4(t as _, w, h, st, d as _) });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// The netplay identity covers a base "none" define: its resource files' bytes change it, and a missing one drops
+    /// the define (mx_add_defines). Uses the text fixture pc/geno/mods/vanilla-courier with stand-in file bytes.
+    #[test]
+    fn identity_covers_base_none_files() {
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../pc/geno/mods/vanilla-courier");
+        let d = std::env::temp_dir().join(format!("genonone-id-{}", std::process::id()));
+        let m = d.join("vanilla-courier");
+        let _ = std::fs::remove_dir_all(&d);
+        fn copy(a: &std::path::Path, b: &std::path::Path) {
+            std::fs::create_dir_all(b).unwrap();
+            for e in std::fs::read_dir(a).unwrap() {
+                let e = e.unwrap();
+                if e.file_type().unwrap().is_dir() { copy(&e.path(), &b.join(e.file_name())) } else { std::fs::copy(e.path(), b.join(e.file_name())).unwrap(); }
+            }
+        }
+        copy(&src, &m);
+        let files = ["GnCourierAJ.dat", "plan.json", "GnCourier_default.dat", "GnCourier_red.dat", "GnCourier_blue.dat", "GnCourier_green.dat"];
+        for f in files {
+            std::fs::write(m.join("files").join(f), f).unwrap();
+        }
+        let ids = ["vanilla-courier"];
+        let a = super::netplay_identity(&d, &ids);
+        std::fs::write(m.join("files/plan.json"), "other").unwrap();
+        let b = super::netplay_identity(&d, &ids);
+        std::fs::remove_file(m.join("files/plan.json")).unwrap();
+        let c = super::netplay_identity(&d, &ids);
+        let _ = std::fs::remove_dir_all(&d);
+        assert_ne!(a, 0);
+        assert_ne!(a, b);
+        assert_ne!(a, c);
+        assert_ne!(b, c);
+    }
 }

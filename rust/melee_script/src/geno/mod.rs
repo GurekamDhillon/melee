@@ -6,4 +6,5 @@ pub mod tables;
 pub mod define;
 pub mod lua;
 pub mod combo;
+pub mod plan;
 pub use registry::{Env, NoEnv, Profile, Registry};

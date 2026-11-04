@@ -115,6 +115,7 @@ pub fn type_of(name: &str) -> Option<RootType> {
     if name.ends_with("_animjoint") { return Some(rt("HSD_AnimJoint")); }
     if name.ends_with("_figatree") { return Some(rt("FigaTree")); }
     if name.ends_with("_sobjdesc") { return Some(rt("HSD_SObjDesc")); }
+    if name.ends_with("_matanim") { return Some(rt("HSD_MatAnimJoint")); }
     if name.ends_with("_camera") { return Some(rt("HSD_CObjDesc")); }
     if name.ends_with("_joint") { return Some(rt("HSD_Joint")); }
     if name.ends_with("_fog") { return Some(rt("HSD_FogDesc")); }

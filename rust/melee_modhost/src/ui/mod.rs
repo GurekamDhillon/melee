@@ -81,6 +81,10 @@ pub struct SceneDef {
 
 /// Host state the `gd_ui` imports of every presentation store share.
 pub struct Shared {
+    /// A host-native modal (the settings overlay) owns the pads: gd_ui_pad answers GD_ESTATE.
+    pub native_modal: bool,
+    /// Nanoseconds spent in gd_ui_submit (parse + encode) this present (the stage timers).
+    pub submit_ns: u64,
     pub atlas: Atlas,
     pub batch: Batch,
     pub tree: nodes::Tree,
@@ -117,6 +121,8 @@ pub struct Shared {
 impl Shared {
     fn new() -> Shared {
         Shared {
+            native_modal: false,
+            submit_ns: 0,
             atlas: Atlas::new(),
             batch: Batch::with_capacity(8192),
             tree: nodes::Tree::default(),
@@ -256,6 +262,10 @@ pub struct PresHost {
     pub shared: Rc<RefCell<Shared>>,
     pub exts: Vec<Box<dyn PresExtension>>,
     pub timings: Timings,
+    /// Per-stage times of each present: navigation + events, the mods' gd_ui_frame (wasm, without submit), submit
+    /// (parse + encode), the Lab extensions' after-logic, node layout + draw + sort; the renderer's set_ui (instance
+    /// and atlas upload, pushed by the play flow).
+    pub stages: [Timings; 6],
     /// Quads of the last present.
     pub last_quads: usize,
     /// The Lab extension's shared state (gd-lab-v1), when a loaded mod imports `gd_lab`.
@@ -327,7 +337,10 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some(buf) = m.data(&c).get(ptr as usize..(ptr as usize).saturating_add(len as usize)) else { return GD_EINVAL };
         let module = d.module;
         let vector = d.features & FEATURE_UI_VECTOR != 0;
-        match sh.batch.submit(buf, module, &sh.atlas, &sh.texs[module as usize], vector) {
+        let t = std::time::Instant::now();
+        let r = sh.batch.submit(buf, module, &sh.atlas, &sh.texs[module as usize], vector);
+        sh.submit_ns += t.elapsed().as_nanos() as u64;
+        match r {
             Ok(()) => GD_OK,
             Err(e) => {
                 sh.log.push(format!("gd_ui_submit refused at byte {}: {}", e.at, e.what));
@@ -341,6 +354,20 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         let Some(b) = m.data(&c).get(s as usize..(s as usize).saturating_add(len as usize)) else { return 0.0 };
         let Ok(t) = core::str::from_utf8(b) else { return 0.0 };
         c.data().ui().borrow().atlas.measure(t, cmd::style(role))
+    });
+    // a line in the game's log (headless checks of what a mod showed); at most 16 lines of 160 bytes per present
+    f!("gd_ui_log", |c: Caller<'_, PresData>, s: u32, len: u32| -> i32 {
+        // off unless MELEE_UI_LOG=1 (a console write is ~0.1 ms: never in a normal present)
+        static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        if !*ON.get_or_init(|| std::env::var("MELEE_UI_LOG").is_ok_and(|v| v == "1")) {
+            return GD_OK;
+        }
+        let Some(t) = read_str(&c, s, len.min(160)) else { return GD_EINVAL };
+        let ui = c.data().ui();
+        let mut sh = ui.borrow_mut();
+        if sh.log.len() >= 16 { return GD_EFULL }
+        sh.log.push(format!("log: {t}"));
+        GD_OK
     });
     f!("gd_ui_kit_id", |c: Caller<'_, PresData>, s: u32, len: u32| -> u32 {
         let Some(t) = read_str(&c, s, len) else { return 0 };
@@ -506,6 +533,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
     });
     f!("gd_ui_pad", |mut c: Caller<'_, PresData>, port: u32, out: u32| -> i32 {
+        if c.data().ui().borrow().native_modal {
+            return GD_ESTATE;
+        }
         if !feat(&c, FEATURE_UI_INPUT) {
             return GD_ECAP;
         }
@@ -666,6 +696,7 @@ impl PresHost {
             shared: Rc::new(RefCell::new(Shared::new())),
             exts: Vec::new(),
             timings: Timings { ns: Box::new([0; 4096]), n: 0 },
+            stages: std::array::from_fn(|_| Timings { ns: Box::new([0; 4096]), n: 0 }),
             last_quads: 0,
             lab: None,
         }
@@ -873,6 +904,11 @@ impl PresHost {
     }
 
     /// Whether a KEYBOARD capture is active (the platform then routes key events here instead of to the pads).
+    /// A host overlay holds the pads (gd_ui_pad answers GD_ESTATE to every mod meanwhile).
+    pub fn set_native_modal(&mut self, on: bool) {
+        self.shared.borrow_mut().native_modal = on;
+    }
+
     pub fn keyboard_wanted(&self) -> bool {
         self.shared.borrow().keyboard_wanted()
     }
@@ -1021,6 +1057,8 @@ impl PresHost {
             }
         }
         let pno = self.shared.borrow().present_no;
+        let t1 = std::time::Instant::now();
+        self.shared.borrow_mut().submit_ns = 0;
         for i in 0..n {
             if let Some(f) = self.mods[i].frame {
                 self.call(i, |st| f.call(st, pno));
@@ -1029,9 +1067,11 @@ impl PresHost {
                 self.drain_log(i);
             }
         }
+        let t2 = std::time::Instant::now();
         for e in &mut self.exts {
             e.after_logic(frame);
         }
+        let t3 = std::time::Instant::now();
         {
             let mut sh = self.shared.borrow_mut();
             let sh = &mut *sh;
@@ -1042,7 +1082,15 @@ impl PresHost {
             sh.batch.finish(hide);
             self.last_quads = sh.batch.frame.quads.len();
         }
-        self.timings.push(t0.elapsed().as_nanos().min(u32::MAX as u128) as u32);
+        let t4 = std::time::Instant::now();
+        let ns = |a: std::time::Instant, b: std::time::Instant| (b - a).as_nanos().min(u32::MAX as u128) as u32;
+        let sub = self.shared.borrow().submit_ns.min(u32::MAX as u64) as u32;
+        self.stages[0].push(ns(t0, t1));
+        self.stages[1].push(ns(t1, t2).saturating_sub(sub));
+        self.stages[2].push(sub);
+        self.stages[3].push(ns(t2, t3));
+        self.stages[4].push(ns(t3, t4));
+        self.timings.push(ns(t0, t4));
     }
 
     /// The sorted frame and the atlas, for `Renderer::set_ui`.
@@ -1062,7 +1110,12 @@ impl PresHost {
     /// The stats line: p50 / p99 / max µs per present over the last presents, quads, mods.
     pub fn stats_line(&self) -> String {
         let (a, b, c) = self.timings.pct();
-        format!("gd_ui: present p50 {a:.1} us p99 {b:.1} us max {c:.1} us over {} presents, {} quads last, {} mods", self.timings.n.min(4096), self.last_quads, self.mods.len())
+        let mut st = String::new();
+        for (name, t) in ["nav+events", "mod frame", "submit", "lab after", "layout+sort", "set_ui upload"].iter().zip(&self.stages) {
+            let (a, b, c) = t.pct();
+            st.push_str(&format!("; {name} p50 {a:.1} p99 {b:.1} max {c:.1}"));
+        }
+        format!("gd_ui: present p50 {a:.1} us p99 {b:.1} us max {c:.1} us over {} presents, {} quads last, {} mods (us{st})", self.timings.n.min(4096), self.last_quads, self.mods.len())
     }
 }
 

@@ -319,7 +319,8 @@ impl Batch {
                         return err(at, "text: non-finite");
                     }
                     let role = w(p + 8) as i32;
-                    if !(0..ROLES.len() as i32).contains(&role) {
+                    // v1.1: the role in bits 0-7, style bits 8-10 and the size in 16-23 (GD_UI_TEXT_*); nothing else
+                    if !(0..ROLES.len() as i32).contains(&(role & 0xFF)) || role as u32 & !0x00FF_07FF != 0 || (role >> 8) & 3 == 3 {
                         return err(at, "text: role");
                     }
                     let Ok(s) = core::str::from_utf8(&buf[p + 28..p + 28 + len]) else { return err(at, "text: not UTF-8") };

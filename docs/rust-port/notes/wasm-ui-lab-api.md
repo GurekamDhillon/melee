@@ -45,6 +45,7 @@ the stand-in flow (`MELEE_STANDIN_MENUS`, play.rs). Netplay: captures mask the p
 | ring memory: `Base::save_after` shares the previous snapshot's unchanged pages | `rust/melee_engine/src/snapshot.rs` |
 | online lab: `--np-lab` (implies `--np-css`); the match stays in lockstep; commands ride the lockstep stream (`MLS2`: per frame pad + commands, plus a per-frame hash for the desync check); host's commands first on both peers | `rust/melee/src/np_lockstep.rs`, `play_net.rs`, `retail_flow.rs` |
 | handshake: presentation-only mods are no longer hashed; Lab mods and `lab cmd v1` are, under `--np-lab` | `play_net::wasm_mods_identity` |
+| the LAB mod | `rust/mods/lab` (lab-ui-spec.md status: presets Clean / Frame data / Full, freeze, step, scrubber, slots); `gd_lab_applied` reports the last frame's commands with their issuer |
 | example mod | `rust/mods/lab_demo` (status chip, frame meter from `gd_lab_meter`, toasts from `gd_lab_events`, overlays; D-pad controls and an autopilot) |
 | checks | `melee lab-check` (engine, headless), `cargo test -p melee np_lockstep lab_identity`, `cargo test -p melee_modhost lab`, `tools/rust-port/netplay/lab_pair.sh` |
 

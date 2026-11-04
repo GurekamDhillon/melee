@@ -83,6 +83,7 @@ extern "C" {
     pub fn gd_ui_submit(ptr: *const u8, len: u32) -> i32;
     pub fn gd_ui_measure(s: *const u8, len: u32, role: i32) -> f32;
     pub fn gd_ui_kit_id(s: *const u8, len: u32) -> u32;
+    pub fn gd_ui_log(s: *const u8, len: u32) -> i32;
     pub fn gd_ui_band_rect(out: *mut f32) -> i32;
     pub fn gd_ui_theme(id: i32) -> i32;
     pub fn gd_ui_token(tok: i32) -> u32;
@@ -237,4 +238,9 @@ impl<const N: usize> Default for Enc<N> {
 /// The text width the host will draw `s` with (cached on the host side by role).
 pub fn measure(s: &str, role: i32) -> f32 {
     unsafe { gd_ui_measure(s.as_ptr(), s.len() as u32, role) }
+}
+
+/// A line in the game's log (`modhost: ui: <mod>: log: ..`): for headless checks, not per frame.
+pub fn log(s: &str) {
+    unsafe { gd_ui_log(s.as_ptr(), s.len() as u32) };
 }

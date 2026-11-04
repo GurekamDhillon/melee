@@ -170,3 +170,7 @@ Interactions to keep in mind:
   Stops (540001, state exits) apply on resimulated frames too. Log: `geno: define audio: ... start / confirmed start /
   cut mispredicted start / rollback to frame`.
 - Limit: a stop in a discarded timeline that the new one does not repeat cannot be undone (the clip stays cut).
+- Proof: `NP_MATCH_HOST=geno:vanilla-striker,32 NP_MATCH_GUEST=fox play_pair.sh genorb 50 0 --headless --np-jitter-ms 10
+  --mods build/covmods-audio` (the audio2 striker copy): 3594 frames, 0 different hashes, replay 0 mismatches. Both peers
+  log the same 4 confirmed starts of sfx 1 (frames 591, 1687, 1790, 2926), one start line each; the host cut one
+  mispredicted start (frame 2710) after a rollback. Gate OK, rematch css OK, coverage 212 pass, geno-tests 64/64.

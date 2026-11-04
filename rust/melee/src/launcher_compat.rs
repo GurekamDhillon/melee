@@ -331,6 +331,19 @@ pub fn apply_input(pads: &mut melee_platform::PadSystem) {
     if std::env::var("MELEE_BACKGROUND_INPUT").is_ok_and(|v| v == "1") {
         pads.background_input = true;
     }
+    // controller profiles (melee_platform::profiles): --controllers / MELEE_CONTROLLERS, --pad-profile, --socd
+    let args: Vec<String> = std::env::args().collect();
+    match melee_platform::profiles::from_args(&args) {
+        Ok(Some(set)) => {
+            for w in &set.warnings {
+                eprintln!("controllers: {w}");
+            }
+            eprintln!("controllers: {} profile(s), port overrides {:?}", set.profiles.len(), set.ports);
+            pads.profiles = Some(set);
+        }
+        Ok(None) => {}
+        Err(e) => eprintln!("controllers: {e} (profiles off)"),
+    }
     let Some(text) = std::env::var_os("MELEE_PORT_SETTINGS").and_then(|p| std::fs::read_to_string(p).ok()) else { return };
     let b = melee_platform::bindings::parse(&text);
     if b.lines == 0 {

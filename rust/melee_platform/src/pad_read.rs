@@ -64,6 +64,9 @@ pub struct PadSystem {
     /// Remapped gilrs pads / adapter controllers per port (`bindings`, the launcher's tables); None = default.
     pub pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
     pub gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    /// Controller profiles (profiles.rs: `--controllers`, `controllers.ini`); None = Aurora default.
+    pub profiles: Option<crate::profiles::ProfileSet>,
+    profile_state: [crate::profiles::PortState; PAD_CHANMAX],
     /// Keep the adapter read while the window is in the background (`backgroundinput 1`).
     pub background_input: bool,
     pub script: Option<PadScript>,
@@ -91,6 +94,8 @@ pub struct PadSampler {
     dead_zones: DeadZones,
     pad_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
     gc_maps: [Option<crate::bindings::PadMap>; PAD_CHANMAX],
+    profiles: Option<crate::profiles::ProfileSet>,
+    profile_state: [crate::profiles::PortState; PAD_CHANMAX],
     keys: Arc<Mutex<(HashSet<KeyCode>, bool)>>,
 }
 
@@ -110,6 +115,9 @@ impl PadSampler {
             if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
                 crate::bindings::apply_xinput(m, p, &mut st[i]);
             }
+        }
+        if let Some(set) = self.profiles.as_ref() {
+            set.apply(&pads, &mut self.profile_state, st);
         }
         if self.mode == InputMode::None {
             for s in st.iter_mut() {
@@ -173,6 +181,8 @@ impl PadSystem {
             dead_zones: DeadZones::default(),
             pad_maps: Default::default(),
             gc_maps: Default::default(),
+            profiles: None,
+            profile_state: Default::default(),
             background_input: false,
             script,
             focused: true,
@@ -198,6 +208,8 @@ impl PadSystem {
             dead_zones: self.dead_zones,
             pad_maps: self.pad_maps.clone(),
             gc_maps: self.gc_maps.clone(),
+            profiles: self.profiles.clone(),
+            profile_state: Default::default(),
             keys: self.shared_keys.clone(),
         }
     }
@@ -246,6 +258,10 @@ impl PadSystem {
             if let (Some(m), Some(p)) = (self.pad_maps[i].as_ref(), pads[i].as_ref()) {
                 crate::bindings::apply_xinput(m, p, &mut st[i]);
             }
+        }
+        // profiles replace Aurora's mapping for their ports; the result is plain PADStatus from here on
+        if let Some(set) = self.profiles.as_ref() {
+            set.apply(&pads, &mut self.profile_state, st);
         }
 
         let suspended = self.adapter.as_ref().is_some_and(|a| a.suspended());

@@ -378,6 +378,10 @@ pub struct RbStats {
     pub new: i32,
     pub held: i32,
     pub waits: i32,
+    /// remote frames confirmed in order, and the sum of (this side's current frame - that frame) when each was:
+    /// the mean is how many frames after it was due the peer's input arrived (the effective input lag)
+    pub arrive_n: i32,
+    pub arrive_sum: i64,
 }
 
 /// The snapshot ring (gw_snap.c's session slots): `k + 2` slots, k = maxb + 1.
@@ -611,6 +615,10 @@ impl<G: RbGame> RbSession<G> {
         let tin = t.input;
         while at(&self.truth[slot], self.conf_slot[slot] + 1).is_some() {
             self.conf_slot[slot] += 1;
+            if self.opened {
+                self.stats.arrive_n += 1;
+                self.stats.arrive_sum += (self.frame - self.conf_slot[slot]) as i64;
+            }
         }
         self.hint[slot].drop_through(self.conf_slot[slot]);
         if let Some(u) = at(&self.used[slot], frame) {

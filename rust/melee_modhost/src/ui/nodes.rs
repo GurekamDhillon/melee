@@ -313,7 +313,7 @@ impl Tree {
                         let c = n.choices.get(n.value.max(0) as usize).map_or("", |s| s.as_str());
                         b.text(pen, a, rx, y + 5.0, 1, t(TOK_MUTED), ALIGN_RIGHT, 0.0, "▶");
                         b.text(pen, a, rx - 14.0, y + 5.0, 1, fade(t(TOK_TEXT)), ALIGN_RIGHT, w * 0.35, c);
-                        let cw = melee_gx::ui::measure(c, super::cmd::ROLES[1].0).min(w * 0.35);
+                        let cw = a.measure(c, super::cmd::style(1)).min(w * 0.35);
                         b.text(pen, a, rx - 22.0 - cw, y + 5.0, 1, t(TOK_MUTED), ALIGN_RIGHT, 0.0, "◀");
                     }
                     K_SLIDER => {
@@ -499,7 +499,7 @@ pub fn panel(b: &mut Batch, a: &Atlas, pen: &Pen, th: i32, x: f32, y: f32, w: f3
 /// A key cap (part 7): 18x18 bordered square with the key letter.
 pub fn key_cap(b: &mut Batch, a: &Atlas, pen: &Pen, th: i32, x: f32, y: f32, k: &str) {
     let t = |k| token(th, k);
-    let w = 12.0 + melee_gx::ui::measure(k, 11.0);
+    let w = 12.0 + a.measure(k, super::cmd::style(1 | 11 << 16));
     fill(b, a, pen, th, x, y, w.max(18.0), 18.0, t(TOK_CELL_IDLE));
     b.slice(pen, a, 4, x, y, w.max(18.0), 18.0, t(TOK_KEY_BORDER));
     b.text(pen, a, x + w.max(18.0) * 0.5, y + 3.0, 1, t(TOK_KEY_TEXT), ALIGN_CENTER, 0.0, k);

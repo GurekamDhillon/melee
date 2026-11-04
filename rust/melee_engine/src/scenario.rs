@@ -185,6 +185,13 @@ impl Scenario {
     }
 }
 
+/// `skipmemcard=0|1` of a scene string (gw_sl_cfg.skip_memcard, `c->skip_memcard = (val[0] == '1')`): -1 = auto (a
+/// configured scene skips the memory-card prompt and runs save-less); 0 runs the boot scene with the card (a scene
+/// launch that saves, as the C's `skipmemcard=0`).
+pub fn skip_memcard(scene: &str) -> i32 {
+    scene.split(';').filter_map(|kv| kv.split_once('=')).filter(|(k, _)| *k == "skipmemcard").map(|(_, v)| v.starts_with('1') as i32).last().unwrap_or(-1)
+}
+
 static mut SCN: Option<Scenario> = None;
 
 /// Fighter tokens the parse could not resolve without the disc (m-ex names and references): `ckind` holds

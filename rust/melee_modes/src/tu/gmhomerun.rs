@@ -140,7 +140,8 @@ pub unsafe fn gm_801B9DD8(arg0: *mut GameModeState) {
         ext::gm_80164504(tmp as u32);
     }
     let temp_r3_2 = gml::gmMainLib_8015D084(selkind);
-    if temp_r31 as i32 > *temp_r3_2 {
+    // `u32 > s32`: the record converts to unsigned (C's usual arithmetic conversions)
+    if temp_r31 > *temp_r3_2 as u32 {
         *temp_r3_2 = temp_r31 as i32;
     }
     ext::gm_80173B30(temp_r31);

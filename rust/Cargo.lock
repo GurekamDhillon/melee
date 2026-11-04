@@ -1233,8 +1233,8 @@ dependencies = [
 name = "melee_gx"
 version = "0.1.0"
 dependencies = [
+ "ab_glyph",
  "bytemuck",
- "font8x8",
  "melee_core",
  "png",
  "pollster",

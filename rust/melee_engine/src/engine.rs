@@ -807,7 +807,11 @@ impl Engine {
             }
             // MELEE_SKIP_MEMCARD=1 takes the prompt's "continue without saving" exit (SceneLaunch_SkipMemcard)
             melee_modes::tu::gmscmemcard::ext::SCENELAUNCH_SKIPMEMCARD =
-                Some(|| (BOOT_GAME_MODE >= 0 || std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false)) as i32);
+                Some(|| match SKIP_MEMCARD {
+                    // gw_SceneLaunch_SkipMemcard: the scene's skipmemcard= wins, else a configured scene skips it
+                    v if v >= 0 => v,
+                    _ => (BOOT_GAME_MODE >= 0 || std::env::var("MELEE_SKIP_MEMCARD").map(|v| v.starts_with('1')).unwrap_or(false)) as i32,
+                });
             // the memory-card scene's one trophy draw on a fresh save (see boot_vs), when the scene itself is skipped
             // (a scene launch through the boot scene runs the memory-card scene save-less: its own Toy_80305058 makes the draw)
             if !((card || BOOT_GAME_MODE >= 0) && first == melee_types::GM_BOOT as u8) {
@@ -919,6 +923,9 @@ pub static mut BOOT_GAME_MODE: i32 = -1;
 
 /// Set by the retail flow before `boot_modes`: install the memory card (`crate::card`).
 pub static mut CARD_ON: bool = false;
+
+/// A scene launch's `skipmemcard=` (gw_sl_cfg.skip_memcard): -1 auto (skip whenever a scene is configured), 0 / 1.
+pub static mut SKIP_MEMCARD: i32 = -1;
 
 /// The routing saved while an override mode's scene runs (runGameMode's `backup_routing` restore).
 static mut OVERRIDE_ACTIVE: bool = false;

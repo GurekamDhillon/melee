@@ -578,6 +578,32 @@ pub fn gc_permutation<T: GcDecode>() -> SVec<u32> {
     perm
 }
 
+/// `GmSaveData`'s word tables that the C indexes past their declared length into the padding behind them (the
+/// declarations are short; the padding is the rest of the table): `unk_30.x4C` (s32[4] + 84 bytes, the Target Test
+/// best times, gmMainLib_8015D450 by selkind 0..24) and `x1A70` (s32[4] + 0xBC bytes, the 51 event scores,
+/// gmMainLib_8015CF70). The C build stores those words big-endian like the declared ones, so the image takes the
+/// padding bytes as words too: (native byte offset, GC byte offset, words).
+pub fn save_word_tables() -> [(usize, usize, usize); 2] {
+    use core::mem::offset_of;
+    [
+        (offset_of!(GmSaveData, unk_30) + offset_of!(gmm_retval_EDBC, x4C), 0x30 + 0x4C, 25),
+        (offset_of!(GmSaveData, x1A70), 0x208, 51),
+    ]
+}
+
+/// [`gc_permutation`] of `GmSaveData` with [`save_word_tables`] as big-endian words.
+pub fn save_permutation() -> SVec<u32> {
+    let mut perm = gc_permutation::<GmSaveData>();
+    for (nat, gc, words) in save_word_tables() {
+        for w in 0..words {
+            for b in 0..4 {
+                perm[nat + 4 * w + b] = (gc + 4 * w + 3 - b) as u32;
+            }
+        }
+    }
+    perm
+}
+
 /// native -> image (bytes the native struct does not cover keep what the image held: what was read off the card)
 pub unsafe fn gc_encode(perm: &[u32], native: *const u8, image: &mut [u8]) {
     for (j, &k) in perm.iter().enumerate() {
@@ -607,7 +633,7 @@ static mut IMAGE: Option<GcImage> = None;
 unsafe fn image() -> &'static mut GcImage {
     if IMAGE.is_none() {
         IMAGE = Some(GcImage {
-            save_perm: gc_permutation::<GmSaveData>(),
+            save_perm: save_permutation(),
             tag_perm: gc_permutation::<NameTagDataBank>(),
             save: std::vec![0; <GmSaveData as GcDecode>::GC_BYTES as usize],
             tags: (0..GM_NAMETAG_BANK_COUNT as usize).map(|_| std::vec![0; <NameTagDataBank as GcDecode>::GC_BYTES as usize]).collect(),
@@ -670,6 +696,15 @@ unsafe fn gc_unstage() {
     let im = image();
     gc_decode_into(&im.save_perm, &im.save, native_save());
     log_save("save image -> native");
+    // MELEE_CARD_DUMP=PREFIX: the GameCube image the card read (PREFIX.save.bin, PREFIX.tagN.bin), to compare a save
+    // field by field with the C build's (the files on the card are encrypted, so one changed byte changes the rest)
+    if let Some(pre) = std::env::var_os("MELEE_CARD_DUMP") {
+        let pre = pre.to_string_lossy().into_owned();
+        let _ = std::fs::write(format!("{pre}.save.bin"), &im.save);
+        for (i, t) in im.tags.iter().enumerate() {
+            let _ = std::fs::write(format!("{pre}.tag{i}.bin"), t);
+        }
+    }
     for i in 0..GM_NAMETAG_BANK_COUNT as usize {
         gc_decode_into(&im.tag_perm, &im.tags[i], ext::gmMainLib_GetNameTagDataBanks().add(i) as *mut u8);
     }

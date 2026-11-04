@@ -574,7 +574,10 @@ fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine,
         let scn = melee_engine::scenario::Scenario::parse(&scene)?;
         unsafe {
             melee_engine::engine::BOOT_GAME_MODE = melee_engine::scenario::boot_mode(&scn) as i32;
-            melee_engine::engine::CARD_ON = false;
+            // `skipmemcard=0` in the scene (the C's opt-in): the boot scene runs with the card (MELEE_CARD_PATH, else
+            // card/ beside the exe), so the run's saves (1P records) reach it, as the C build's same launch
+            melee_engine::engine::SKIP_MEMCARD = melee_engine::scenario::skip_memcard(&scene);
+            melee_engine::engine::CARD_ON = melee_engine::engine::SKIP_MEMCARD == 0;
         }
         melee_engine::scenario::install(scn);
         let e = melee_engine::Engine::boot_modes(disc, 64 << 20, melee_platform::PadSystem::headless(), melee_types::GM_BOOT as u8)

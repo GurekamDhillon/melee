@@ -20,6 +20,7 @@ interface that lets both halves be built in parallel.
 | input boundary (capture, inject, exclusive masks before `set_pads`) and keyboard (GAP-14) | `PresHost::input`, `melee_platform` `PadSystem::ui_keys`, `retail_flow.rs` |
 | window space (GAP-0): `SPACE` record + `gd_ui_band_rect` | `ui/cmd.rs`, shader `to_px` |
 | scenes: register, replace (on entering the retail scene: custom scene on top, GX hidden, ports held), goto, back | `PresHost::retail_scene`, `scene_switch` |
+| text (gd-ui-v1.1): Inter + JetBrains Mono (OFL, `rust/melee_gx/assets/fonts`, subset by `tools/rust-port/fonts/subset_fonts.py`), regular/bold, rasterized once by `ab_glyph` into single-channel SDF tiles (24 texels/em, 3 texel spread) on the UI atlas when the atlas is built; quads flagged `Q_SDF` are decoded in the same shader with a linear sampler (still one draw call). Style bits in the role word: `GD_UI_TEXT_REGULAR/BOLD/MONO/SIZE(px)`; v1.0 roles unchanged | `rust/melee_gx/src/ui_font.rs`, `ui/cmd.rs` `style` |
 | encoder crate, example mod | `rust/mods/gd_ui_enc`, `rust/mods/ui_demo` (Frame data HUD preset, theme A, static data; D-pad left opens a node menu) |
 | bench | `cargo run -p melee_modhost --example ui_bench --profile fast -- ../build/mods/ui_demo.wasm` |
 
@@ -31,7 +32,7 @@ None, `Renderer::ui` stays None, the blit pass is unchanged.
 
 Not done in A yet: `gd_ui_match_start` (returns `GD_ESTATE` until `gd_match_setup` is defined), driving the retail
 scene machine from `gd_ui_scene_goto` (only "back to the retail scene underneath"), the read-only gdmod.h getters in the
-presentation linker, `melee_kit`/Parley/Taffy (the host draws the 8x8 glyph font; GAP-17 fonts), `.gxtex` textures,
+presentation linker, `melee_kit`/Parley/Taffy (complex shaping: the host lays out one line with per-face advances + ASCII pair kerning), `.gxtex` textures,
 the stand-in flow (`MELEE_STANDIN_MENUS`, play.rs). Netplay: captures mask the pads handed to `step`, which feeds the peer.
 
 ## Status: half B (gd-lab-v1) implemented

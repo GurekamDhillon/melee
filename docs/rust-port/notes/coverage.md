@@ -440,3 +440,21 @@ rows came with the geno / mex merges). Results: `results.tsv`. Gate OK, `rematch
 - Tooling: `melee diff --scenario <1p scenario> --frame N` works (captures at cov1p's match frame); `melee golden --calltrace` on
   a 1P scenario numbers frames by match frame like the C trace. C snapshots / traces for 1P came from `_build/agents/correct-ct`
   through `triage.c_run`.
+
+## 1P records on the memory card (port/cov1p, 2026-11-04)
+The three round-4 leftovers (items_hi3_yoshistory64 1838, classic_step01 1207, adventure_step11 3288) were fixed by round 5
+(Kirby grip table extent, the one Warp Star pick global); all three PASS at rust-port 15be29360.
+
+Records: `skipmemcard=0` in a scene string now opts the engine's scene launch into the card, as the C's (`melee golden`
+1P scenarios and `melee play` with `MELEE_SCENE`; the boot scene auto-creates the save on a fresh `MELEE_CARD_PATH`).
+`MELEE_CARD_DUMP=PREFIX` writes the decoded GameCube images a card load read. `tools/rust-port/golden/coverage/card_parity.sh`
+runs one 1P launch in the C build and the engine and compares the hash rows and the save images byte for byte.
+- Target Test (Samus s1, Falco s1, Luigi s4, 3600 frames: targets broken, records written at the TT CSS re-entry) and
+  Classic / Adventure / All-Star runs: hashes identical, save images identical except x1A54 (power-on seconds, OSGetTime:
+  the C turbo run's virtual clock vs the engine's host clock; both are wall time in real play).
+- Fixed: the save image codec copied the padding behind `unk_30.x4C` (s32[4] + 84 bytes: the all-targets Target Test best
+  times, `gmMainLib_8015D450` indexes it by selkind 0..24) and behind `x1A70` (s32[4] + 0xBC: the 51 event scores) as bytes,
+  so those words went to the card little-endian; the C stores them big-endian (`save_permutation`, tests/save_image.rs).
+- Fixed: `gm_801B9DD8` (Home-Run record) compares `u32 distance > s32 record` unsigned, as the C.
+- Not run end to end: Home-Run Contest (no scene launch in either build), the Classic / Adventure / All-Star end-of-mode
+  records (gm_8017CBAC / gm_8017CA38: a random pad never clears or gives up a mode); those paths were compared by reading.

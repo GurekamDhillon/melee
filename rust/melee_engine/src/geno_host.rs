@@ -850,3 +850,39 @@ pub fn install_define() {
         t::GenoDefine_FtDataSharedMask = Some(|a, b| melee_fighter::tu::ftdata::GenoDefine_FtDataSharedMask(a as _, b as _));
     }
 }
+
+/// The Geno part of the netplay identity (gw_mexid.c's `gw_Geno_SaltForPlFile` per fighter and `mx_add_defines`):
+/// every attached fighter's Pl file with its profile salt, and every define's online content id, read from the mods
+/// `ids` under `dir` before boot. 0 when no geno.json changes anything, so a vanilla handshake is unchanged.
+pub fn netplay_identity(dir: &std::path::Path, ids: &[&str]) -> u64 {
+    let env = crate::mex_host::GenoEnv { dir: dir.to_path_buf() };
+    let mut r = Registry::default();
+    let mut ids = ids.to_vec();
+    ids.sort();
+    for id in &ids {
+        let Ok(t) = std::fs::read(dir.join(id).join("geno.json")) else { continue };
+        if t.len() <= 1 << 20 {
+            r.parse_text(&t, id, &env);
+        }
+    }
+    r.build_kinds(&env);
+    let mut parts: Vec<String> = Vec::new();
+    let mut files: Vec<String> = r.p.iter().filter(|p| !p.defined).map(|p| p.plfile.to_ascii_lowercase()).collect();
+    files.sort();
+    files.dedup();
+    for f in files {
+        let s = r.salt_for_pl_file(&f);
+        if s != 0 {
+            parts.push(format!("{f}={s:016x}"));
+        }
+    }
+    for d in 0..r.define_count() {
+        if let Some(o) = r.define_online_info(d) {
+            parts.push(format!("define {}={:016x}/{}", o.key, o.id, o.none as i32));
+        }
+    }
+    if parts.is_empty() {
+        return 0;
+    }
+    parts.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, s| s.bytes().chain([0u8]).fold(h, |h, b| (h ^ b as u64).wrapping_mul(0x100_0000_01b3)))
+}

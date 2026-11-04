@@ -280,6 +280,7 @@ impl RbGame for ModesGame {
         // a resimulated frame is never shown: its render pass runs (the game state it touches stays the same as a
         // shown frame's) but the display lists are not decoded (gw_gx_suppress_draws, as the C build's resim)
         melee_engine::gxbridge::shim().set_suppress_draws(resim);
+        unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = resim as i32 };
         // MELEE_NP_TEST_DESYNC=<game frame>: this peer's logic RNG is perturbed before that frame (the desync check's test)
         static TEST_DESYNC: std::sync::OnceLock<Option<i32>> = std::sync::OnceLock::new();
         if let Some(f) = *TEST_DESYNC.get_or_init(|| std::env::var("MELEE_NP_TEST_DESYNC").ok().and_then(|v| v.parse().ok())) {
@@ -290,6 +291,7 @@ impl RbGame for ModesGame {
         }
         self.step(p);
         melee_engine::gxbridge::shim().set_suppress_draws(false);
+        unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = 0 };
     }
 }
 
@@ -549,8 +551,12 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
     let ids: Vec<&str> = m.active.iter().map(|m| m.id.as_str()).collect();
     let fp = m.set.fingerprint();
     let w = wasm.map(|w| format!("|wasm {w}")).unwrap_or_default();
-    let h = melee_net::hash64(format!("{}|{fp:016x}{w}", ids.join(",")).as_bytes(), 0);
-    Ok((h, format!("mods {} ({fp:016x}){}", ids.join(", "), w.replace("|wasm ", "; code mods "))))
+    // Geno: each overlaid fighter's profile salt and each define's content id (gw_mexid.c), so two installs whose
+    // geno.json differ in content (not only in the files' sizes) do not match
+    let geno = melee_engine::geno_host::netplay_identity(&m.dir, &ids);
+    let g = if geno != 0 { format!("|geno {geno:016x}") } else { String::new() };
+    let h = melee_net::hash64(format!("{}|{fp:016x}{w}{g}", ids.join(",")).as_bytes(), 0);
+    Ok((h, format!("mods {} ({fp:016x}){}{}", ids.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
 }
 
 /// The wasm code mods `MELEE_WASM_MODS` will load (notes/modhost.md), as "file#fnv64, ..." sorted by file name; None when

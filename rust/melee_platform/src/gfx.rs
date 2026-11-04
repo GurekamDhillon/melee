@@ -204,6 +204,9 @@ impl Presenter {
     /// (one tick of latency); `None` renders the newest frame as is (only when it is new).
     /// Everything here is render-only: the frames are copies the game no longer reads.
     pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, mut alpha: Option<f64>) {
+        if self.renderer.gpu_fault().is_some() {
+            return; // the caller stops on `gpu_fault`
+        }
         // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
         // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
         // the current frame itself (t = 1: never a step back toward the previous one).

@@ -1,4 +1,4 @@
-# LAB: product and UI spec (M0-M2 implemented, M4 HUD part)
+# LAB: product and UI spec (M0-M3 implemented, M4 HUD part, M9 radial + command bar)
 
 This is the product and UI spec for the new LAB. The LAB is a wasm presentation mod on **gd-ui-v1 / gd-lab-v1**
 (`wasm-ui-lab-api.md`, including its 2-player amendment). This is a fresh design. GD's old LAB
@@ -14,6 +14,8 @@ below are copied from it exactly; it is not copied into the repo.
 | M1 | parts 1 panel, 2 chip, 3 toast, 5 readout list, 7 button hint, theme A tokens, Clean preset |
 | M2 | START freeze, frame step (D-left / D-right, hold to repeat; L / R 10 frames), A take over, B resume, scrubber (part 8: played part, playhead, save diamonds, hit dots from `gd_lab_events_range`), D-down save / D-up load to the current slot, Z + D-left / D-right slot pick, slot cards (part 12, no thumbnails: GAP-3) |
 | M4 (part) | frame meter (part 4, stun hatch), move readout (from the observed frame data of P1's last move with a hitbox), state readout (action names from the decomp's ftCommon enum, `tools/rust-port/modhost/lab_names.py`), dummy panel (defaults until the M3 menu), combo panel, input display (part 6, numpad history); Frame data and Full presets; Z + D-up cycles the preset |
+| M3 | full menu on START hold (30 frames; a tap still freezes / resumes): tabs Dummy, Record, Display, HUD, Session (Drills waits for M7), setting rows (choice, slider, toggle, action), help pane; drawn by the mod as records in its one submit (not host nodes: one batch, same offline and online). Dummy tab: control, block (+ chance), after shield (+ delay), tech, DI (+ strength), SDI (+ interval), getup, ledge (+ delay), percent; each change is a lab command, the other peer's changes update this peer's menu through `gd_lab_applied`. The opener edits its opponent's port. Record tab: 8 slots, record / stop, loop, mirror, from start state, play on dummy, weights, ordered / random / weighted play all |
+| M9 (part) | radial (part 13): frozen, hold Z, stick picks Save Load Reset Record Play Mirror Swap Menu, release runs (open question 3 decided: frozen only, during play Z is grab). Command bar (part 14): X in the menu or Session row; KEYBOARD capture only while it is open; every choice, toggle and action is an entry. Not done: radial customisation, HUD editor (part 16), layout sharing |
 | online | freeze / rewind / step / load apply to both players (no consent prompt, open question 4 decided); the other player's action shows as a toast |
 
 Since the font merge (gd-ui 1.1): numbers in JetBrains Mono (`TEXT_MONO`); the subset now carries the arrows ← → ↑ ↓ ↖ ↗ ↘ ↙
@@ -30,6 +32,14 @@ present into stages (nav+events, mod frame, submit, lab after, layout+sort, set_
 its queries) dominates. What it took from p99 317 us: frame-meter cells as plain rects (a radius-1 slice was 9 quads:
 1469 -> 663 quads), gd_ui_log off unless MELEE_UI_LOG=1 (a console write per toast), stack buffers instead of Vecs in
 gd_lab_events / meter / status, and the mod built at opt-level 3 (wasmi runs fewer instructions).
+
+Host changes with M3: with control "live pad" the reactions act on top of the port's own pad; a synthesised pad is
+connected (a dummy on a human slot nobody holds now acts); out-of-shield random is option 8 (`RO_OOS_RANDOM`, 5 is
+spot-dodge). Rewind ring cost: `Base::save_after` is incremental (pages not written since the previous ring
+snapshot are shared without a compare, the arena's cow part through GetWriteWatch over its ever-written runs) and
+reuses dropped snapshots' page buffers; lab-check ring save 7.6 -> 1.3 ms per capture (every 4 frames) on the
+same loaded box, `MELEE_SNAP_NOINC=1` for the old path. What remains is the 9.3 MB static section, compared in full
+(image sections have no write watch).
 
 ## 1. Product
 

@@ -42,6 +42,16 @@ impl Gcm {
         self.overlay = Some(f);
     }
 
+    /// Drop the cached replacement of disc file `path` (a file of the disc itself, not one only the overlay has), so
+    /// the next open asks the overlay again: a cosmetic choice changed between matches (offline; never under a
+    /// rollback session, whose snapshots would restore the old cache).
+    pub fn forget_replaced(&self, path: &str) {
+        let n = self.entry_for_path_disc(path);
+        if n >= 0 {
+            self.replaced.borrow_mut().remove(&n);
+        }
+    }
+
     /// `len` bytes of the game's main.dol at its RAM address `addr` (DOL header at the disc's +0x420 offset).
     pub fn dol_bytes(&mut self, addr: u32, len: usize) -> Result<Vec<u8>, String> {
         let h = read_at(self.f.as_mut(), 0x420, 4)?;
@@ -156,6 +166,14 @@ impl Gcm {
         let i = entry as usize;
         let start = be32(&self.fst, i * 12 + 4) as u64;
         read_at(self.f.as_mut(), start + offset as u64, len)
+    }
+
+    /// The disc's own copy of `want`, ignoring the overlay (a cosmetic check needs the vanilla costume).
+    pub fn read_vanilla(&mut self, want: &str) -> Result<Vec<u8>, String> {
+        let e = self.entry_for_path_disc(want);
+        let i = usize::try_from(e).ok().filter(|&i| i >= 1 && i < self.count() && !self.is_dir(i)).ok_or_else(|| format!("{want}: not on the disc"))?;
+        let (start, n) = (be32(&self.fst, i * 12 + 4) as u64, be32(&self.fst, i * 12 + 8) as usize);
+        read_at(self.f.as_mut(), start, n)
     }
 
     /// The whole file `want` (a path, or a bare name anywhere on the disc).

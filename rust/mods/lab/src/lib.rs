@@ -6,7 +6,7 @@
 //! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game):
 //!   START freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), L / R step -10 / +10,
 //!   A take over (go live from the scrubbed frame), B resume.
-//!   D-down save to the current slot, D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
+//!   D-down save to the current slot (on release; D-down + START is the settings overlay), D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
 //! Online (LabNetplay) every sim action is a lab command both peers apply; the other player's freeze, rewind, step,
 //! save and load show here as a toast ("P2 rewound") from `gd_lab_applied`.
 //!
@@ -99,6 +99,7 @@ const OP_PAUSE: u8 = 5;
 const OP_STEP: u8 = 6;
 const OP_GO_LIVE: u8 = 7;
 const CELL_STUN: u8 = 4;
+const GD_ESTATE: i32 = -4;
 
 // gd-ui-v1.1 text styles: theme A's number font is JetBrains Mono (spec 7.1)
 const R_NUM: i32 = ROLE_VALUE | TEXT_MONO;
@@ -215,6 +216,10 @@ struct Lab {
     held_p1: u16,
     // freeze controls
     hold: (u16, u32),
+    /// D-down is held and nothing else was pressed with it: save on release (D-down + START opens the settings overlay)
+    dd_armed: bool,
+    after_modal: bool,
+    prev_held: u16,
     // slots and marks
     slots: [i32; 16],
     slots_dirty: bool,
@@ -284,6 +289,9 @@ static mut L: Lab = Lab {
     stick: (0, 0),
     held_p1: 0,
     hold: (0, 0),
+    dd_armed: false,
+    after_modal: false,
+    prev_held: 0,
     slots: [-1; 16],
     slots_dirty: true,
     marks: [(0, 0); MARKS],
@@ -427,8 +435,11 @@ impl Lab {
     fn controls(&mut self) {
         let mut held = 0u16;
         let mut edge = 0u16;
+        let mut modal = false;
         for port in 0..2 {
-            if unsafe { gd_ui_pad(port, self.pad.as_mut_ptr()) } == 0 {
+            let r = unsafe { gd_ui_pad(port, self.pad.as_mut_ptr()) };
+            modal |= r == GD_ESTATE;
+            if r == 0 {
                 let h = u16::from_le_bytes([self.pad[0], self.pad[1]]);
                 held |= h;
                 edge |= u16::from_le_bytes([self.pad[12], self.pad[13]]);
@@ -437,6 +448,20 @@ impl Lab {
                     self.stick = (self.pad[2] as i8, self.pad[3] as i8);
                 }
             }
+        }
+        // a host overlay (the settings overlay) holds the pads: no lab controls, no pending save, and nothing counts
+        // again until every button is up (the press that closed it is not a lab action)
+        if modal {
+            self.dd_armed = false;
+            self.after_modal = true;
+            return;
+        }
+        if self.after_modal {
+            if held != 0 {
+                self.prev_held = held;
+                return;
+            }
+            self.after_modal = false;
         }
         let z = held & BZ != 0;
         // hold-to-repeat for frozen D-left / D-right: 15 frames, then every 4
@@ -448,8 +473,18 @@ impl Lab {
         }
         let repeat = self.hold.1 >= 15 && (self.hold.1 - 15) % 4 == 0;
         unsafe {
+            let released = self.prev_held & !held;
+            self.prev_held = held;
+            if edge & DD != 0 {
+                self.dd_armed = true;
+            } else if held & DD != 0 && edge != 0 {
+                // a chord with D-down (the settings overlay's D-down + START, Z + D-down): not a save
+                self.dd_armed = false;
+            }
             if edge & START != 0 {
-                gd_lab_pause(!self.paused as i32);
+                if held & DD == 0 {
+                    gd_lab_pause(!self.paused as i32);
+                }
                 return;
             }
             if z {
@@ -468,7 +503,7 @@ impl Lab {
                 }
                 return;
             }
-            if edge & DD != 0 {
+            if released & DD != 0 && core::mem::take(&mut self.dd_armed) {
                 gd_lab_save(self.slot);
                 let mut m = Txt::new();
                 m.s("Saved slot ").i(self.slot as i32 + 1);

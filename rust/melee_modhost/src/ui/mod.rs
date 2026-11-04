@@ -81,6 +81,8 @@ pub struct SceneDef {
 
 /// Host state the `gd_ui` imports of every presentation store share.
 pub struct Shared {
+    /// A host-native modal (the settings overlay) owns the pads: gd_ui_pad answers GD_ESTATE.
+    pub native_modal: bool,
     /// Nanoseconds spent in gd_ui_submit (parse + encode) this present (the stage timers).
     pub submit_ns: u64,
     pub atlas: Atlas,
@@ -119,6 +121,7 @@ pub struct Shared {
 impl Shared {
     fn new() -> Shared {
         Shared {
+            native_modal: false,
             submit_ns: 0,
             atlas: Atlas::new(),
             batch: Batch::with_capacity(8192),
@@ -530,6 +533,9 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
     });
     f!("gd_ui_pad", |mut c: Caller<'_, PresData>, port: u32, out: u32| -> i32 {
+        if c.data().ui().borrow().native_modal {
+            return GD_ESTATE;
+        }
         if !feat(&c, FEATURE_UI_INPUT) {
             return GD_ECAP;
         }
@@ -898,6 +904,11 @@ impl PresHost {
     }
 
     /// Whether a KEYBOARD capture is active (the platform then routes key events here instead of to the pads).
+    /// A host overlay holds the pads (gd_ui_pad answers GD_ESTATE to every mod meanwhile).
+    pub fn set_native_modal(&mut self, on: bool) {
+        self.shared.borrow_mut().native_modal = on;
+    }
+
     pub fn keyboard_wanted(&self) -> bool {
         self.shared.borrow().keyboard_wanted()
     }
@@ -1002,6 +1013,12 @@ impl PresHost {
     /// One present (A3 call order): scene changes at the frame boundary, navigation and events, `gd_ui_frame`, the node
     /// trees; then the frame is sorted for the renderer ([`PresHost::frame`]).
     pub fn present(&mut self, frame: &PresFrame) {
+        self.present_with(frame, |_, _| {});
+    }
+
+    /// [`PresHost::present`] plus host-native drawing (the port's own overlays, e.g. the settings overlay) into the
+    /// same batch, after every mod and the node trees and before the sort: one frame, one draw call.
+    pub fn present_with(&mut self, frame: &PresFrame, native: impl FnOnce(&mut Batch, &Atlas)) {
         let t0 = std::time::Instant::now();
         self.scene_switch();
         let n = self.mods.len();
@@ -1060,6 +1077,7 @@ impl PresHost {
             let sh = &mut *sh;
             sh.tree.layout();
             sh.tree.draw(&mut sh.batch, &sh.atlas, sh.theme);
+            native(&mut sh.batch, &sh.atlas);
             let hide = !sh.stack.is_empty();
             sh.batch.finish(hide);
             self.last_quads = sh.batch.frame.quads.len();

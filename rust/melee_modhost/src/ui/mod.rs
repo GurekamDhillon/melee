@@ -258,6 +258,8 @@ pub struct PresHost {
     pub timings: Timings,
     /// Quads of the last present.
     pub last_quads: usize,
+    /// The Lab extension's shared state (gd-lab-v1), when a loaded mod imports `gd_lab`.
+    pub lab: Option<Rc<RefCell<crate::lab::LabShared>>>,
 }
 
 fn mem(c: &Caller<'_, PresData>) -> Option<Memory> {
@@ -665,6 +667,7 @@ impl PresHost {
             exts: Vec::new(),
             timings: Timings { ns: Box::new([0; 4096]), n: 0 },
             last_quads: 0,
+            lab: None,
         }
     }
 
@@ -682,6 +685,9 @@ impl PresHost {
             if !is_presentation(&b) {
                 continue;
             }
+            if h.lab.is_none() && crate::lab::imports_lab(&b) {
+                h.install_lab();
+            }
             // the package dir: <dir>/<file stem>/ (textures), else the mods dir itself
             let stem = dir.join(f.file_stem().unwrap_or_default());
             let pkg = if stem.is_dir() { stem } else { dir.clone() };
@@ -690,6 +696,18 @@ impl PresHost {
             eprintln!("modhost: ui: loaded {} \"{}\" fnv64 {:016x} (features {:#x})", m.id, m.name, m.digest, m.features);
         }
         Ok((!h.mods.is_empty()).then_some(h))
+    }
+
+    /// Install the gd-lab-v1 extension (before the Lab mods load): the `gd_lab` imports and the shared Lab state.
+    pub fn install_lab(&mut self) -> Rc<RefCell<crate::lab::LabShared>> {
+        if let Some(l) = &self.lab {
+            return l.clone();
+        }
+        let e = crate::lab::LabExt::new();
+        let s = e.shared.clone();
+        self.exts.push(Box::new(e));
+        self.lab = Some(s.clone());
+        s
     }
 
     /// Validate and instantiate one presentation module.
@@ -711,7 +729,7 @@ impl PresHost {
             }
         }
         let mi = self.mods.len() as u16;
-        let data = PresData { module: mi, ui: Some(self.shared.clone()), ..Default::default() };
+        let data = PresData { module: mi, ui: Some(self.shared.clone()), ext: self.exts.iter().find_map(|e| e.store_ext()), ..Default::default() };
         let mut store = Store::new(&self.engine, data);
         store.set_fuel(UI_FUEL).map_err(|e| e.to_string())?;
         let inst = linker(&self.engine, &self.exts)?
@@ -745,6 +763,18 @@ impl PresHost {
         }
         if req & FEATURES_LAB != 0 && self.exts.is_empty() {
             return Err("required_features: LAB bits, but no Lab extension is installed".into());
+        }
+        if all & FEATURES_LAB != 0 {
+            // B6: a LAB mod is presentation-only (hook_count 0 is checked above) and declares gdmod_lab_abi
+            if all & FEATURES_LAB & !FEATURE_LAB != 0 && all & FEATURE_LAB == 0 {
+                return Err("features: a LAB_* sub-area needs LAB".into());
+            }
+            let g = inst.get_global(&store, "gdmod_lab_abi").ok_or("export gdmod_lab_abi: missing (required with LAB bits)")?;
+            let v = g.get(&store).i32().map(|v| v as u32).unwrap_or(0);
+            let v = if v >> 16 == LAB_ABI_VERSION >> 16 { v } else { rd_u32(d, v as usize).unwrap_or(0) };
+            if v >> 16 != LAB_ABI_VERSION >> 16 || v > LAB_ABI_VERSION {
+                return Err(format!("gdmod_lab_abi: {v:#x} not satisfied by host {LAB_ABI_VERSION:#x}"));
+            }
         }
         let abi_at = addr("gdmod_ui_abi").map_err(|e| format!("{e} (refuse)"))?;
         let abi = inst.get_global(&store, "gdmod_ui_abi").and_then(|g| g.get(&store).i32()).map(|v| v as u32).unwrap_or(rd_u32(d, abi_at).unwrap_or(0));

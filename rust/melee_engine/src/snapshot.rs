@@ -95,7 +95,8 @@ pub struct Base {
 struct RangeSnap {
     addr: usize,
     len: usize,
-    pages: Vec<(u32, Box<[u8; PAGE]>)>,
+    /// Shared: a snapshot taken with [`Base::save_after`] reuses the previous snapshot's unchanged pages.
+    pages: Vec<(u32, Rc<[u8; PAGE]>)>,
 }
 
 /// One saved state.
@@ -105,6 +106,18 @@ pub struct Snapshot {
 }
 
 pub type SnapRef = Rc<Snapshot>;
+
+impl Snapshot {
+    /// Bytes of page data the snapshot refers to (its delta against the base, shared pages included).
+    pub fn bytes(&self) -> usize {
+        self.ranges.iter().map(|r| r.pages.len() * PAGE).sum()
+    }
+
+    /// The addresses of the page buffers it refers to (to count the distinct bytes a set of snapshots holds).
+    pub fn page_ids(&self) -> impl Iterator<Item = usize> + '_ {
+        self.ranges.iter().flat_map(|r| r.pages.iter().map(|p| Rc::as_ptr(&p.1) as usize))
+    }
+}
 
 unsafe fn bytes(addr: usize, len: usize) -> &'static [u8] {
     core::slice::from_raw_parts(addr as *const u8, len)
@@ -174,6 +187,13 @@ impl Base {
 
     /// Save the current state.
     pub fn save(&self) -> SnapRef {
+        self.save_after(None).0
+    }
+
+    /// Save the current state, sharing every page that is unchanged since `prev` (the Lab's sparse rewind ring: a
+    /// snapshot every few frames then costs only the pages written in between). Returns the bytes newly copied.
+    pub fn save_after(&self, prev: Option<&Snapshot>) -> (SnapRef, usize) {
+        let mut fresh = 0usize;
         self.refresh();
         let cur = ranges();
         assert_eq!(cur.len(), self.ranges.len(), "snapshot ranges changed");
@@ -184,17 +204,27 @@ impl Base {
             }
             let live = unsafe { bytes(addr, len) };
             let mut pages = Vec::new();
+            let old = prev.and_then(|p| p.ranges.get(ri)).map_or(&[][..], |r| &r.pages[..]);
+            let mut k = 0usize;
             for pi in self.candidates(ri, len) {
                 let pi = pi as usize;
                 let p = &live[pi * PAGE..(pi + 1) * PAGE];
                 if p != self.base_page(ri, pi) {
-                    let b: Box<[u8; PAGE]> = p.to_vec().into_boxed_slice().try_into().unwrap();
-                    pages.push((pi as u32, b));
+                    while k < old.len() && (old[k].0 as usize) < pi {
+                        k += 1;
+                    }
+                    if k < old.len() && old[k].0 as usize == pi && &old[k].1[..] == p {
+                        pages.push((pi as u32, old[k].1.clone()));
+                    } else {
+                        let b: Rc<[u8; PAGE]> = Rc::new(p.try_into().unwrap());
+                        pages.push((pi as u32, b));
+                        fresh += PAGE;
+                    }
                 }
             }
             out.push(RangeSnap { addr, len, pages });
         }
-        Rc::new(Snapshot { ranges: out })
+        (Rc::new(Snapshot { ranges: out }), fresh)
     }
 
     /// Put a saved state back. The caller restores the arena mode flag afterwards (it is a static too).

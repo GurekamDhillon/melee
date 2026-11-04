@@ -34,6 +34,40 @@ scene machine from `gd_ui_scene_goto` (only "back to the retail scene underneath
 presentation linker, `melee_kit`/Parley/Taffy (the host draws the 8x8 glyph font; GAP-17 fonts), `.gxtex` textures,
 the stand-in flow (`MELEE_STANDIN_MENUS`, play.rs). Netplay: captures mask the pads handed to `step`, which feeds the peer.
 
+## Status: half B (gd-lab-v1) implemented
+
+| piece | where |
+|---|---|
+| `gd_lab` imports on A's `Linker<PresData>` (`LabExt`, a `PresExtension`; installed when a mod imports `gd_lab`), gate (LAB bits need `gdmod_lab_abi`; Offline / LabNetplay only) | `rust/melee_modhost/src/lab/mod.rs` |
+| lab commands (GAP-13): every sim-changing call is a 16-byte `LabCmd` queued with its apply frame, which the call returns | same, `LabShared::push` |
+| sim side: slots 0..15, sparse rewind ring (a snapshot every 4 frames, re-sim from the logged pads, logged future plays back until go-live), record / play (loop, mirror, from-slot, ordered / random / weighted sets), dummy synthesiser, events, frame-meter cells, observed frame data, B4 overlay pass | `rust/melee/src/lab.rs` (`LabRun`), wired in `retail_flow.rs` |
+| ring memory: `Base::save_after` shares the previous snapshot's unchanged pages | `rust/melee_engine/src/snapshot.rs` |
+| online lab: `--np-lab` (implies `--np-css`); the match stays in lockstep; commands ride the lockstep stream (`MLS2`: per frame pad + commands, plus a per-frame hash for the desync check); host's commands first on both peers | `rust/melee/src/np_lockstep.rs`, `play_net.rs`, `retail_flow.rs` |
+| handshake: presentation-only mods are no longer hashed; Lab mods and `lab cmd v1` are, under `--np-lab` | `play_net::wasm_mods_identity` |
+| example mod | `rust/mods/lab_demo` (status chip, frame meter from `gd_lab_meter`, toasts from `gd_lab_events`, overlays; D-pad controls and an autopilot) |
+| checks | `melee lab-check` (engine, headless), `cargo test -p melee np_lockstep lab_identity`, `cargo test -p melee_modhost lab`, `tools/rust-port/netplay/lab_pair.sh` |
+
+GAPs closed: GAP-1 (`gd_lab_events_range`), GAP-5 (reaction param: delay, DI/SDI strength, random-block chance,
+"play recording N"; weighted option tables), GAP-7 (lab RNG: a xorshift in the sim side, seeded from the agreed seed
+or `gd_lab_rng_seed`; `gd_lab_rng` on the presentation side is a pure function of the synced seed and frame), GAP-8
+(`gd_lab_fighter_v1.cell`, `gd_lab_meter`), GAP-11 (`DI_LINE`), GAP-12 (POWERSHIELD, WAVEDASH, LEDGEDASH, SDI, ASDI,
+AIRDODGE events), GAP-13 (command format and transport above).
+
+Measured (dev box, release, `melee lab-check`, pad_falcon_fox_fd, headless): step 216 us/frame (baseline without the
+ring 194 us); ring capture 1.4-1.5 ms per snapshot every 4 frames = **~250-280 us per frame amortised**, ~630 KB newly
+copied per capture, a full 600-frame ring ~87-110 MB distinct page data (it was ~890 MB before page sharing); slot save
+1.8 ms; load 1.4 ms; rewind ~2.2 ms (load + up to 3 re-simmed frames). Online pair (`lab_pair.sh`, loopback, 0 ms /
+40 ms + 5 % loss): 4733-4737 hash checks per peer, **0 desyncs**, both peers applied the same 9 lab actions (save,
+record, stop, rewind, live, load, play mirrored on P2, guest save, guest load) on the same frames.
+
+Not done in B: GAP-2 (speed), GAP-3 (thumbnails), GAP-4 (facing / action reset), GAP-6 (cheats), GAP-9 (action names),
+GAP-10 (tint), `KB_ARC`, `BLASTZONE`, `CAMERA`, `SHIELD`, `GRAB` overlay bits (accepted, not drawn); `gd_lab_framedata`
+is the observed timeline of the last run of an action, not parsed subaction scripts; `CPU_LEVEL` sets the retail level
+(the port must already be a CPU for the AI to drive it); powershield is the game's own `GuardReflect` state, wavedash
+/ ledgedash / ASDI are derived from state transitions and positions (documented in `lab.rs`); the dummy's tech timing
+is predicted from the last ground height (deterministic, not frame-perfect on platforms). Online, one player's
+freeze / rewind / load applies to both (spec open question 4: no consent prompt yet).
+
 ## 0. Ground rules
 
 | rule | consequence |

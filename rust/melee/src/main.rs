@@ -68,6 +68,8 @@ mod input_delay;
 mod menu_support;
 mod pads;
 mod practice;
+mod lab;
+mod lab_check;
 mod cov1p;
 
 /// What the frame driver needs from a simulation, per frame.
@@ -450,6 +452,7 @@ fn main() -> ExitCode {
         Some("slpcheck") => slpcheck::slpcheck(&args),
         Some("diff") => diff::diff(&args),
         Some("synctest") => netmatch::engine_game::synctest(&args),
+        Some("lab-check") => lab_check::lab_check(&args),
         Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),

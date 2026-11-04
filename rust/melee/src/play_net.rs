@@ -200,6 +200,13 @@ pub struct ModesSnap {
     ended: bool,
 }
 
+impl ModesSnap {
+    /// Page bytes held (the Lab's savestate / ring cost).
+    pub fn bytes(&self) -> usize {
+        self.mem.bytes()
+    }
+}
+
 impl ModesGame {
     pub fn new(e: Engine) -> Self {
         ModesGame { f0: e.frames, e, base: RefCell::new(None), raw: None, detach: Detacher::default() }
@@ -231,6 +238,26 @@ impl ModesGame {
                 drop(old);
             }
         }
+    }
+
+    /// A snapshot sharing `prev`'s unchanged pages (the Lab's rewind ring), and the bytes newly copied.
+    pub fn save_after(&self, prev: Option<&ModesSnap>) -> (ModesSnap, usize) {
+        let (mem, n) = self.with_base(|b| b.save_after(prev.map(|p| &*p.mem)));
+        (ModesSnap { mem, frames: self.e.frames, ended: self.e.ended }, n)
+    }
+
+    /// Distinct page bytes held by a set of snapshots.
+    pub fn distinct_bytes<'a>(snaps: impl Iterator<Item = &'a ModesSnap>) -> usize {
+        let mut set = std::collections::HashSet::new();
+        for s in snaps {
+            set.extend(s.mem.page_ids());
+        }
+        set.len() * 4096
+    }
+
+    /// Debug: where two snapshots differ.
+    pub fn snap_diff(&self, a: &ModesSnap, b: &ModesSnap, max: usize) -> Vec<String> {
+        self.with_base(|base| base.diff(&a.mem, &b.mem, max))
     }
 
     /// The tick's newest frame as a detached copy (after the session's frames of this tick).
@@ -569,7 +596,14 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
         }
         None => crate::mods::Mods::from_env()?,
     };
-    let wasm = wasm_mods_identity();
+    // the online lab: both peers must run a lab session with the same command version (a lab peer and a plain one
+    // never match: one would run the match in lockstep, the other under rollback)
+    let lab = args.iter().any(|a| a == "--np-lab").then(|| format!("lab cmd v{}", melee_modhost::lab::LAB_CMD_VERSION));
+    let wasm = match (wasm_mods_identity(args.iter().any(|a| a == "--np-lab")), lab) {
+        (Some(w), Some(l)) => Some(format!("{w}; {l}")),
+        (None, Some(l)) => Some(l),
+        (w, None) => w,
+    };
     let Some(m) = m.filter(|m| !m.active.is_empty()) else {
         return Ok(match wasm {
             None => (0, "no mods".into()),
@@ -588,14 +622,20 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
 }
 
 /// The wasm code mods `MELEE_WASM_MODS` will load (notes/modhost.md), as "file#fnv64, ..." sorted by file name; None when
-/// off. Both peers must run the same code mods, so they enter the handshake digest (read from the files before boot).
-fn wasm_mods_identity() -> Option<String> {
+/// off. Both peers must run the same sim code mods, so they enter the handshake digest (read from the files before boot).
+/// Presentation-only mods (gd-ui-v1: they import `gd_ui` and have no sim hooks) are sim-inert and are not hashed, so a
+/// different menu or HUD mod never splits two peers (wasm-ui-lab-api.md section 0). Lab mods (they import `gd_lab`)
+/// are hashed in an online lab session (`lab`), where both peers must load the same Lab mods (the 2-player amendment).
+fn wasm_mods_identity(lab: bool) -> Option<String> {
     let dir = melee_modhost::dir_from_env()?;
     let mut v: Vec<String> = std::fs::read_dir(&dir).ok()?
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| p.extension().is_some_and(|x| x.eq_ignore_ascii_case("wasm")))
         .filter_map(|p| {
             let b = std::fs::read(&p).ok()?;
+            if melee_modhost::ui::is_presentation(&b) && !(lab && melee_modhost::lab::imports_lab(&b)) {
+                return None;
+            }
             let h = b.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, &x| (h ^ x as u64).wrapping_mul(0x100_0000_01b3));
             Some(format!("{}#{:08x}", p.file_stem()?.to_string_lossy(), h as u32))
         })
@@ -869,6 +909,9 @@ pub struct NetDriver {
     pub held_ticks: u64,
     /// `--np-css`: the menus' lockstep channel
     pub ls: Option<crate::np_lockstep::Lockstep>,
+    /// `--np-lab` (with --np-css): an online Lab session (`LabNetplay`). The match stays in lockstep too, and lab
+    /// commands ride the lockstep stream (np_lockstep.rs MLS2).
+    pub lab: bool,
     params: RoomParams,
     /// matches played on this connection before the current one
     pub match_no: u32,
@@ -1093,11 +1136,17 @@ impl NetDriver {
         sess.borrow_mut().set_delay(adelay);
         // --np-css: the character / stage select and the results run in lockstep (mux channel 1), and every match after
         // the first is a new room on mux channel 2 + k
-        let css = args.iter().any(|a| a == "--np-css");
+        let lab = args.iter().any(|a| a == "--np-lab");
+        let css = lab || args.iter().any(|a| a == "--np-css");
         let ls = css.then(|| {
             let tp: Box<dyn Transport> = Box::new(crate::np_mux::Chan { core: rp.mux.clone(), ch: 1 });
-            crate::np_lockstep::Lockstep::new(tp, rp.peer, host, adelay.max(1) as u32)
+            let mut l = crate::np_lockstep::Lockstep::new(tp, rp.peer, host, adelay.max(1) as u32);
+            l.lab = lab;
+            l
         });
+        if lab {
+            log(&format!("netplay {tag}: online lab (LabNetplay): the match runs in lockstep, lab commands v{} ride the input stream", melee_modhost::lab::LAB_CMD_VERSION));
+        }
         Ok(NetDriver {
             host,
             sess,
@@ -1118,6 +1167,7 @@ impl NetDriver {
             ticks: 0,
             held_ticks: 0,
             ls,
+            lab,
             params: rp,
             match_no: 0,
             all_finals: Vec::new(),
@@ -1516,3 +1566,33 @@ impl PlaySync {
 
 /// A failure of the run (netplay error, replay divergence) for the exit code after the window loop.
 pub static RUN_FAILED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(test)]
+mod lab_identity_tests {
+    /// Presentation-only mods are sim-inert: they never enter the handshake digest; Lab mods do, in an online lab.
+    #[test]
+    fn presentation_mods_are_not_hashed() {
+        let dir = std::env::temp_dir().join(format!("melee_wasm_ident_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let hdr = [0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
+        let ty = [0x01, 0x04, 0x01, 0x60, 0x00, 0x00];
+        let ui_imp = [0x05, b'g', b'd', b'_', b'u', b'i', 0x01, b'f', 0x00, 0x00];
+        let lab_imp = [0x06, b'g', b'd', b'_', b'l', b'a', b'b', 0x01, b'g', 0x00, 0x00];
+        let sim: Vec<u8> = hdr.to_vec();
+        let ui: Vec<u8> = [&hdr[..], &ty[..], &[0x02, 0x0b, 0x01], &ui_imp[..]].concat();
+        let lab: Vec<u8> = [&hdr[..], &ty[..], &[0x02, 0x16, 0x02], &ui_imp[..], &lab_imp[..]].concat();
+        std::fs::write(dir.join("a_sim.wasm"), &sim).unwrap();
+        std::fs::write(dir.join("b_menu.wasm"), &ui).unwrap();
+        std::fs::write(dir.join("c_lab.wasm"), &lab).unwrap();
+        assert!(melee_modhost::ui::is_presentation(&ui) && melee_modhost::ui::is_presentation(&lab));
+        assert!(melee_modhost::lab::imports_lab(&lab) && !melee_modhost::lab::imports_lab(&ui));
+        std::env::set_var("MELEE_WASM_MODS", &dir);
+        let plain = super::wasm_mods_identity(false).unwrap();
+        let online_lab = super::wasm_mods_identity(true).unwrap();
+        std::env::remove_var("MELEE_WASM_MODS");
+        assert!(plain.starts_with("a_sim#") && !plain.contains("b_menu") && !plain.contains("c_lab"), "{plain}");
+        assert!(online_lab.contains("a_sim#") && online_lab.contains("c_lab#") && !online_lab.contains("b_menu"), "{online_lab}");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

@@ -1672,7 +1672,13 @@ pub fn play(args: &[String]) -> ExitCode {
         let sync_k = std::env::var("MELEE_PLAY_SYNCTEST").ok().and_then(|v| v.parse::<i32>().ok()).filter(|&k| k > 0);
         // --replay-seekable / a seek control: the playback snapshots the match (the rollback allocator modes)
         let seekable = feed.is_some() && (has("--replay-seekable") || get("--replay-seek").is_some() || get("--replay-ctl").is_some_and(|c| c.contains("seek") || c.contains("back")));
-        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0);
+        // a Lab mod (gd-lab-v1 savestates and rewind) snapshots the engine like rollback does
+        let lab_mod = melee_modhost::lab::lab_mod_in_env();
+        if has("--np-lab") && !lab_mod {
+            eprintln!("play: --np-lab needs a Lab mod in MELEE_WASM_MODS");
+            return ExitCode::from(2);
+        }
+        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod;
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
             // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
@@ -1709,6 +1715,7 @@ pub fn play(args: &[String]) -> ExitCode {
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
+        rp.lab_seed = seed;
         rp.practice = Some(crate::practice::Practice::new(crate::practice::Opts::from_args(args)));
         rp.delay_line = crate::input_delay::DelayLine::from_args(&args);
         if rp.delay_line.frames > 0 {

@@ -109,6 +109,10 @@ lockstep), help, quit to CSS.
 
 ## 3. API gaps
 
+Closed by the gd-lab-v1 implementation (`wasm-ui-lab-api.md`, "Status: half B"): GAP-1, GAP-5, GAP-7, GAP-8, GAP-11
+(`DI_LINE`; `KB_ARC` not drawn yet), GAP-12, GAP-13 (with GAP-0 and GAP-14 from half A). The signatures are in
+`docs/specs/gd-ui-lab-v1.h`.
+
 | id | gap | proposal |
 |---|---|---|
 | GAP-0 | **window-space panels.** The API's canvas is the 640x480 4:3 band, but the HUD presets place panels in the 16:9 side bars (x < 160 or x > 1120 at 1280x720) | add a `LAYER` flag or a `SPACE` record: `BAND` (default) or `WINDOW` (pixels of the window, with the band rect queryable through `ui.band_rect`) |

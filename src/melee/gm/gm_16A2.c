@@ -184,7 +184,14 @@ void fn_801695BC(u8 arg0, u8 arg1, u8 arg2, const u8* arg3, s8* arg4)
                 color_i += 1;
             }
         }
+#if defined(TARGET_PC)
+        /* An empty queue (arg4[0] == -2, e.g. no enemies for this step) starts the walk past its
+         * terminator: retail reads and swaps whatever bytes follow until it meets a -2 (on PC: other
+         * statics, a hook table among them). Stop at the terminator. */
+        for (i = 1; arg4[0] != -2 && arg4[i] != -2; i++) {
+#else
         for (i = 1; arg4[i] != -2; i++) {
+#endif
             if ((s8) arg0 == (s8) arg3[i] && (s8) arg0 == (s8) arg3[i - 1]) {
                 if (HSD_Randi(2) != 0) {
                     tmp2 = arg4[i];

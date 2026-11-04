@@ -19,7 +19,7 @@ mod="${LAB_MOD:-lab_demo}"  # LAB_MOD=lab: the LAB mod, driven by both peers' pa
 cp "$repo/build/mods/$mod.wasm" "$mods/" || { echo "FAIL $name: build/mods/$mod.wasm missing (build_mods.sh)"; exit 1; }
 python "$here/gen_css_scripts.py" "$out" >/dev/null
 hs=np_css_host.txt; gs=np_css_guest.txt
-if [ "$mod" = lab ]; then python "$here/lab_scripts.py" "$out" >/dev/null; hs=np_lab_host.txt; gs=np_lab_guest.txt; fi
+if [ "$mod" = lab ]; then python "$here/lab_scripts.py" "$out" >/dev/null || { echo "FAIL $name: lab_scripts.py"; exit 1; }; hs=np_lab_host.txt; gs=np_lab_guest.txt; fi
 port=$((51900 + RANDOM % 300))
 export MELEE_UI_LOG=1 MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_WASM_MODS="$mods"
 common=(play --headless --no-audio --iso "$GW_ISO_VANILLA" --np-lab --time-secs 60 --quit-after-matches 1 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 30000 "$@")
@@ -47,6 +47,11 @@ if [ "$na" -lt 8 ] || ! cmp -s "$out/$name-host.actions" "$out/$name-guest.actio
   echo "FAIL $name: lab actions differ or too few ($na)"; diff "$out/$name-host.actions" "$out/$name-guest.actions" | head; fail=1
 else
   echo "$name: both peers applied the same $na lab actions on the same frames:"; sed 's/^/  /' "$out/$name-host.actions"
+fi
+if [ "$mod" = lab ]; then
+  # the menus' dummy settings (host: P2 block + tech; guest: P1 DI) are lab commands both peers applied
+  nd=$(grep -c "reaction\|control" "$out/$name-host.actions")
+  [ "$nd" -ge 3 ] && echo "$name: $nd dummy setting commands on both peers" || { echo "FAIL $name: dummy settings from the menus missing ($nd)"; fail=1; }
 fi
 [ $fail -eq 0 ] && echo "OK $name" || echo "FAILED $name"
 exit $fail

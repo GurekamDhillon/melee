@@ -51,6 +51,69 @@ pub trait Game {
     }
     /// The HUD overlay's lines to draw from now on (None: off); a game with a Presenter puts them in `Presenter::hud`.
     fn set_hud(&mut self, _lines: Option<Vec<crate::overlay::Line>>) {}
+    /// The swapchain's frame statistics (frames shown, display refreshes, seconds), for VRR detection
+    /// (`Presenter::frame_stats`).
+    fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
+        None
+    }
+}
+
+/// `--vrr` / `MELEE_VRR`: whether the display follows the frames (G-Sync / FreeSync).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum VrrMode {
+    Auto,
+    On,
+    Off,
+}
+
+impl VrrMode {
+    pub fn parse(v: &str) -> Option<Self> {
+        match v.trim().to_ascii_lowercase().as_str() {
+            "" | "auto" => Some(Self::Auto),
+            "1" | "on" | "yes" | "true" => Some(Self::On),
+            "0" | "off" | "no" | "false" => Some(Self::Off),
+            _ => None,
+        }
+    }
+}
+
+/// The frame rate that keeps a variable-refresh display inside its range without ever waiting on a sync: a little
+/// under the refresh, more so the faster the panel (144 Hz: 138, 240 Hz: 224).
+pub fn vrr_cap(hz: f64) -> f64 {
+    hz * (1.0 - hz / 3600.0)
+}
+
+/// One second of swapchain statistics while frames come slower than the refresh: a fixed-rate display keeps
+/// refreshing at its full rate (showing some frames twice), a variable one refreshes once per frame.
+/// Some(true): variable, Some(false): fixed, None: cannot tell (frames as fast as the refresh look the same on both).
+pub fn judge_vrr(shown_per_s: f64, refreshes_per_s: f64, hz: f64) -> Option<bool> {
+    if hz < 75.0 || shown_per_s < 30.0 || shown_per_s > 0.93 * hz {
+        return None;
+    }
+    if refreshes_per_s > 0.97 * hz {
+        return Some(false);
+    }
+    if (refreshes_per_s - shown_per_s).abs() <= 0.05 * shown_per_s {
+        return Some(true);
+    }
+    None
+}
+
+/// Wait until `t`: a timer sleep for most of it, then yields for the last stretch (a plain sleep can wake late by
+/// most of a millisecond, a whole frame at 1000 fps).
+pub fn sleep_until(t: Instant) {
+    loop {
+        let now = Instant::now();
+        if now >= t {
+            return;
+        }
+        let left = t - now;
+        if left > Duration::from_micros(1300) {
+            std::thread::sleep(left - Duration::from_millis(1));
+        } else {
+            std::thread::yield_now();
+        }
+    }
 }
 
 /// Fixed 60 Hz step clock in exact integer arithmetic (no drift: time is kept in ns * 60).
@@ -252,6 +315,22 @@ struct App<G: Game> {
     hud_last_frame: Option<Instant>,
     hud_n: (u64, u64),
     hud_shown: bool,
+    /// Pacing: the user's cap (0: none), vsync, VRR setting and verdict, the monitor's refresh.
+    fps_cap: f64,
+    vsync: bool,
+    vrr_mode: VrrMode,
+    vrr: Option<bool>,
+    refresh_hz: f64,
+    /// The next scheduled present and the time the current one is for (the phase comes from it, not from when
+    /// the present call happens to run).
+    next_present: Option<Instant>,
+    present_at: Option<Instant>,
+    /// VRR detection: the probe's end, the last statistics sample, verdicts in a row.
+    vrr_probe_until: Option<Instant>,
+    vrr_last: Option<(u64, u64, f64)>,
+    vrr_votes: (Option<bool>, u32),
+    /// Presents dropped because a tick came due first (their in-between pose was already stale).
+    stale: u64,
 }
 
 /// The `q` quantile of `v` (sorted in place).
@@ -269,6 +348,57 @@ fn env_bool(k: &str) -> Option<bool> {
 }
 
 impl<G: Game> App<G> {
+    /// The present period the pacer holds to (None: present as fast as presentation allows).
+    fn cap_period(&self) -> Option<Duration> {
+        let mut cap = self.fps_cap;
+        if self.vsync && self.refresh_hz >= 1.0 {
+            if self.vrr_probe_until.is_some() {
+                cap = 0.75 * self.refresh_hz; // VRR probe: frames slower than the refresh
+            } else if self.vrr == Some(true) {
+                let v = vrr_cap(self.refresh_hz);
+                cap = if cap > 0.0 { cap.min(v) } else { v };
+            }
+        }
+        (cap > 0.0).then(|| Duration::from_secs_f64(1.0 / cap))
+    }
+
+    /// During the VRR probe: sample the swapchain statistics once a second and vote.
+    fn vrr_tick(&mut self) {
+        let Some(until) = self.vrr_probe_until else { return };
+        let now = Instant::now();
+        if let Some(s) = self.game.display_stats() {
+            match self.vrr_last {
+                Some(l) if s.2 - l.2 >= 1.0 && s.0 >= l.0 && s.1 >= l.1 => {
+                    let dt = s.2 - l.2;
+                    let (shown, refr) = ((s.0 - l.0) as f64 / dt, (s.1 - l.1) as f64 / dt);
+                    let v = judge_vrr(shown, refr, self.refresh_hz);
+                    plog!("gw: video: VRR probe: {shown:.1} frames/s shown, {refr:.1} refreshes/s at {:.1} Hz -> {:?}", self.refresh_hz, v);
+                    if v.is_some() && v == self.vrr_votes.0 {
+                        self.vrr_votes.1 += 1;
+                    } else {
+                        self.vrr_votes = (v, 1);
+                    }
+                    self.vrr_last = Some(s);
+                    if let (Some(x), 2..) = self.vrr_votes {
+                        self.vrr = Some(x);
+                        self.vrr_probe_until = None;
+                    }
+                }
+                Some(l) if s.2 >= l.2 && s.0 >= l.0 && s.1 >= l.1 => {}
+                _ => self.vrr_last = Some(s),
+            }
+        }
+        if self.vrr_probe_until.is_some() && now >= until {
+            self.vrr_probe_until = None;
+            self.vrr = Some(false);
+            plog!("gw: video: VRR probe: no verdict (statistics unavailable or inconclusive): fixed refresh assumed");
+        }
+        if self.vrr_probe_until.is_none() {
+            let cap = self.cap_period().map_or(0.0, |p| 1.0 / p.as_secs_f64());
+            plog!("gw: video: VRR {} -> {}", if self.vrr == Some(true) { "detected" } else { "not detected" }, if cap > 0.0 { format!("frame cap {cap:.1} fps") } else { "no frame cap".into() });
+        }
+    }
+
     fn run_due_ticks(&mut self) {
         let now = Instant::now();
         let dt = self.last.map(|l| now - l).unwrap_or_default();
@@ -417,6 +547,23 @@ impl<G: Game> ApplicationHandler for App<G> {
                 }
                 let sz = w.inner_size();
                 self.game.resized(sz.width, sz.height);
+                self.refresh_hz = std::env::var("MELEE_REFRESH_HZ").ok().and_then(|v| v.parse().ok()).unwrap_or_else(|| {
+                    w.current_monitor().and_then(|m| m.refresh_rate_millihertz()).map_or(0.0, |r| r as f64 / 1000.0)
+                });
+                self.vrr = match self.vrr_mode {
+                    VrrMode::On => Some(true),
+                    VrrMode::Off => Some(false),
+                    VrrMode::Auto => None,
+                };
+                if self.vrr.is_none() {
+                    if self.vsync && self.refresh_hz >= 75.0 && self.decoupled {
+                        self.vrr_probe_until = Some(Instant::now() + Duration::from_secs(6));
+                    } else {
+                        self.vrr = Some(false);
+                    }
+                }
+                plog!("gw: video: refresh {:.2} Hz, vsync {}, VRR {:?}{}, fps cap {}", self.refresh_hz, if self.vsync { "on" } else { "off" }, self.vrr_mode,
+                    if self.vrr_probe_until.is_some() { " (probing)" } else { "" }, if self.fps_cap > 0.0 { format!("{:.1}", self.fps_cap) } else { "none".into() });
                 self.window = Some(Arc::new(w));
             }
             Err(e) => {
@@ -494,7 +641,20 @@ impl<G: Game> ApplicationHandler for App<G> {
             }
             WindowEvent::RedrawRequested => {
                 if let Some(w) = self.window.clone() {
-                    let extra = self.last.map(|l| l.elapsed()).unwrap_or_default();
+                    // A tick that came due since the present was scheduled runs first: the in-between pose of the
+                    // older pair would be stale (shown after the frame it leads to exists).
+                    let before = self.clock.ticks;
+                    self.run_due_ticks();
+                    if self.clock.ticks != before {
+                        self.stale += 1;
+                    }
+                    if self.quit {
+                        el.exit();
+                        return;
+                    }
+                    // the phase of the time this present is scheduled for (the tick schedule), not of "now"
+                    let at = self.present_at.take().unwrap_or_else(Instant::now);
+                    let extra = self.last.map(|l| at.saturating_duration_since(l)).unwrap_or_default();
                     let t = Instant::now();
                     self.game.present(&w, self.clock.alpha_after(extra));
                     let d = t.elapsed();
@@ -527,6 +687,24 @@ impl<G: Game> ApplicationHandler for App<G> {
         self.run_due_ticks();
         if self.quit {
             el.exit();
+            return;
+        }
+        self.vrr_tick();
+        if let (Some(period), true) = (self.cap_period(), self.decoupled && self.window.is_some()) {
+            // paced: present on a fixed grid; sleep to the next slot, or to the next tick if that comes first
+            let now = Instant::now();
+            let target = *self.next_present.get_or_insert(now);
+            if now + Duration::from_micros(200) >= target {
+                // the next slot is one period on, unless we fell behind by more than a period (then from now)
+                let next = target + period;
+                self.next_present = Some(if next + period < now { now + period } else { next });
+                self.present_at = Some(target.max(now));
+                self.window.as_ref().unwrap().request_redraw();
+            } else {
+                let tick_due = self.last.map_or(target, |l| l + self.clock.until_next());
+                sleep_until(target.min(tick_due));
+            }
+            el.set_control_flow(ControlFlow::Poll);
             return;
         }
         if let Some(w) = self.window.as_ref() {
@@ -580,6 +758,17 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
         hud_last_frame: None,
         hud_n: (0, 0),
         hud_shown: false,
+        fps_cap: std::env::var("MELEE_FPS_CAP").ok().and_then(|v| v.trim().parse::<f64>().ok()).filter(|v| *v > 0.0).unwrap_or(0.0),
+        vsync: crate::gfx::vsync_from_env(),
+        vrr_mode: std::env::var("MELEE_VRR").ok().and_then(|v| VrrMode::parse(&v)).unwrap_or(VrrMode::Auto),
+        vrr: None,
+        refresh_hz: 0.0,
+        next_present: None,
+        present_at: None,
+        vrr_probe_until: None,
+        vrr_last: None,
+        vrr_votes: (None, 0),
+        stale: 0,
     };
     if let Some(f) = app.trace.as_mut() {
         use std::io::Write;
@@ -607,6 +796,7 @@ pub fn run_windowed<G: Game>(game: G, pads: PadSystem, cfg: WindowConfig) -> Res
             let mean = g[..n].iter().map(|&x| x as f64).sum::<f64>() / n.max(1) as f64;
             if mean > 0.0 { 1e6 / mean } else { 0.0 }
         };
+        plog!("gw: pacing: {} presents dropped stale (a tick came due first)", app.stale);
         plog!(
             "gw: perf: tick p50 {:.2} ms p99 {:.2} ms max {:.2} ms ({} ticks); frame p50 {:.2} ms p99 {:.2} ms max {:.2} ms, 1% low {:.0} fps ({} frames)",
             quantile(&mut t, 0.5), quantile(&mut t, 0.99), quantile(&mut t, 1.0), t.len(),

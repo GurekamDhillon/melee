@@ -21,6 +21,17 @@ static WIDE: AtomicBool = AtomicBool::new(false);
 /// The window's client aspect as f32 bits (0: no window yet).
 static WINDOW: AtomicU32 = AtomicU32::new(0);
 static SCENE: AtomicI32 = AtomicI32::new(-1);
+/// Widescreen through the cameras (the C build's way, `widescreen_mode=camera`) instead of the renderer. Off: the
+/// game's hooks keep answering 4:3 and only the presenter widens perspective draws (melee_gx `interp::Widen`), so a
+/// widescreen run simulates exactly what a 4:3 one does.
+static CAMERA_MODE: AtomicBool = AtomicBool::new(false);
+
+pub fn set_camera_mode(on: bool) {
+    CAMERA_MODE.store(on, Relaxed);
+}
+pub fn camera_mode() -> bool {
+    CAMERA_MODE.load(Relaxed)
+}
 
 /// `gw_view_scene_wide`: GameSceneKind values whose content may be wide (matches and the kit frontend). The native
 /// menus (title, main menu, CSS, SSS, results) keep their authored 4:3 and are pillarboxed.
@@ -97,11 +108,17 @@ pub fn aspect() -> f32 {
 
 /// `gw_View_ProjectionScaleBits`.
 pub fn projection_scale_bits() -> i32 {
+    if !camera_mode() {
+        return 1.0f32.to_bits() as i32;
+    }
     projection_scale(aspect(), wide_now()).to_bits() as i32
 }
 
 /// `gw_View_AspectBits`.
 pub fn aspect_bits() -> i32 {
+    if !camera_mode() {
+        return MIN_ASPECT.to_bits() as i32;
+    }
     aspect().to_bits() as i32
 }
 
@@ -136,6 +153,7 @@ mod tests {
 
     #[test]
     fn hooks_follow_scene_and_setting() {
+        set_camera_mode(true);
         set_window(1920, 1080);
         set_widescreen(false);
         scene_begin(2);
@@ -147,6 +165,15 @@ mod tests {
         scene_begin(8); // the CSS stays 4:3
         assert_eq!(aspect(), MIN_ASPECT);
         assert_eq!(projection_scale_bits(), 1.0f32.to_bits() as i32);
+        set_widescreen(false);
+        scene_begin(-1);
+        // renderer mode: the game always sees 4:3
+        set_camera_mode(false);
+        set_widescreen(true);
+        scene_begin(2);
+        assert!((aspect() - 16.0 / 9.0).abs() < 1e-6);
+        assert_eq!(projection_scale_bits(), 1.0f32.to_bits() as i32);
+        assert_eq!(aspect_bits(), MIN_ASPECT.to_bits() as i32);
         set_widescreen(false);
         scene_begin(-1);
     }

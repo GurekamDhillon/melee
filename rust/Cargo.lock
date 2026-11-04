@@ -1310,10 +1310,12 @@ version = "0.1.0"
 dependencies = [
  "font8x8",
  "gilrs",
+ "melee_core",
  "melee_gx",
  "melee_types",
  "png",
  "wgpu",
+ "windows 0.58.0",
  "windows-sys 0.59.0",
  "winit",
 ]

@@ -514,6 +514,10 @@ pub struct GxState {
     /// The PC matrix palette (Aurora `g_palette`): set by GX_AURORA_LOAD_PALETTE, cleared by END_PALETTE and with
     /// the frame (`take_draws`).
     pub palette: Option<std::sync::Arc<Vec<f32>>>,
+    /// Render-only pose tags (melee_core `pose`): per position matrix slot, the 1-based slot record of the frame's
+    /// PoseFrame that the loaded matrix came from (0: unknown), and the current camera record.
+    pub pose_tags: [u32; 10],
+    pub pose_cam: u32,
 }
 
 impl Default for GxState {
@@ -524,6 +528,8 @@ impl Default for GxState {
         bp[0xFE] = 0x00FF_FFFF;
         Self {
             pn_mtx: [PnMtx::default(); MAX_PN_MTX],
+            pose_tags: [0; 10],
+            pose_cam: 0,
             current_pn_mtx: 0,
             proj: [[0.0; 4]; 4],
             proj_type: GX_PERSPECTIVE,
@@ -917,6 +923,15 @@ impl GxState {
                 self.palette = Some(std::sync::Arc::new(v));
             }
             0x0045 => self.palette = None,
+            0x2000 => {
+                // POSE_TAG: u8 slot, u32 tag (after the matrix load it describes)
+                let slot = r.u8() as usize;
+                let tag = r.u32();
+                if slot < 10 {
+                    self.pose_tags[slot] = tag;
+                }
+            }
+            0x2001 => self.pose_cam = r.u32(),
             _ => self.warnings.push(format!("Unknown/unsupported Aurora subcommand: {sub:04X}")),
         }
     }
@@ -1472,6 +1487,9 @@ impl GxState {
             for i in 0..len {
                 Self::store_f32(&mut self.pn_mtx[idx].pos[i / 4][i % 4], word(i));
             }
+            if idx < 10 {
+                self.pose_tags[idx] = 0; // a load no tag follows is untagged
+            }
             return true;
         }
         if addr < 0xF0 {
@@ -1733,6 +1751,8 @@ impl GxState {
         // list it doubled through: ~15% of a Temple 4-CPU tick)
         let cap = self.draws.len();
         self.palette = None; // a palette never outlives the frame
+        self.pose_tags = [0; 10];
+        self.pose_cam = 0;
         std::mem::replace(&mut self.draws, Vec::with_capacity(cap))
     }
 }

@@ -245,6 +245,9 @@ impl Engine {
             // the render pass draws into melee_gx unless the run is headless (MELEE_ENGINE_HEADLESS): then the GX hooks answer nothing
             if RENDER && !melee_runtime::tu::gobj_native::HEADLESS_RENDER {
                 crate::gxbridge_gen::install_gx();
+                // render-only pose tags for frame interpolation (melee_runtime pose_capture; off unless the presenter asks)
+                melee_runtime::pose_capture::TAG = Some(|s, t| crate::gxbridge::shim().gx.pose_tag(s, t));
+                melee_runtime::pose_capture::CAMERA = Some(|c| crate::gxbridge::shim().gx.pose_cam(c));
                 // the PC matrix palette (pobj.c geno_pal_pobj_v1, a mod's `engine.pobj_palette`): Aurora's LOAD_PALETTE
                 melee_runtime::tu::pobj::native::ext::hook::GXAuroraLoadPalette = Some(|n, k, d| unsafe { crate::gxbridge::GXAuroraLoadPalette(n, k, d) });
                 melee_runtime::tu::pobj::native::ext::hook::GXAuroraEndPalette = Some(crate::gxbridge::GXAuroraEndPalette);
@@ -628,6 +631,8 @@ impl Engine {
         // which the scene ends draws nothing, and the screen keeps showing the last copied frame (no empty frame here)
         if more && unsafe { RENDER } && !unsafe { melee_runtime::tu::gobj_native::HEADLESS_RENDER } {
             crate::gxbridge::finish_frame();
+        } else {
+            melee_runtime::pose_capture::discard();
         }
         self.frames += 1;
         if !more {

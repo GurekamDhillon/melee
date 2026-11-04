@@ -26,18 +26,25 @@ pub struct Presenter {
     /// The content aspect of the frames being presented (4:3, or the window's with widescreen in a wide scene).
     aspect: f32,
     /// The last two sim frames (render-only interpolation: never fed back into the game).
-    prev: Option<Vec<DrawCmd>>,
-    cur: Option<Vec<DrawCmd>>,
+    prev: Option<melee_gx::interp::Frame>,
+    cur: Option<melee_gx::interp::Frame>,
     /// `cur` is the renderer's prepared frame (geometry uploaded, pipelines looked up).
     prepared: bool,
     /// The EFB holds a blend, not `cur` itself.
     blended: bool,
     /// A new frame waiting for the next present (see `present_frames`).
-    pending: Option<Vec<DrawCmd>>,
+    pending: Option<melee_gx::interp::Frame>,
+    solver: melee_gx::interp::Solver,
+    true_wide: bool,
     /// Per-present µs of prepare / draw / swap (fresh frames only for prepare), for the MELEE_SHOW_FPS exit line.
     pub times: [Vec<u32>; 3],
     /// The HUD overlay's lines (None: off), drawn over every present (overlay.rs).
     pub hud: Option<Vec<crate::overlay::Line>>,
+    /// Per re-posed present: us of the solver's evaluation and of the uniform patching (MELEE_SHOW_FPS exit line).
+    pub interp_us: [Vec<u32>; 2],
+    interp_total: melee_gx::interp::Stats,
+    /// A screenshot of an in-between: adopt the new frame at once and draw it at this phase (MELEE_SHOT_PHASE).
+    pub force_phase: Option<f64>,
 }
 
 impl Drop for Presenter {
@@ -57,60 +64,18 @@ impl Drop for Presenter {
             "gw: perf: present prepare p50 {:.2} p99 {:.2} ms ({}), draw p50 {:.2} p99 {:.2} ms, swap p50 {:.2} p99 {:.2} ms",
             q(a, 0.5), q(a, 0.99), a.len(), q(b, 0.5), q(b, 0.99), q(c, 0.5), q(c, 0.99)
         );
+        let st = self.interp_total;
+        let [e, f] = &mut self.interp_us;
+        eprintln!(
+            "gw: perf: interp evaluate p50 {:.3} p99 {:.3} ms, patch p50 {:.3} p99 {:.3} ms ({} re-posed presents); draws patched {} posed {} camera-carried {} held {} widened {}, cuts {}",
+            q(e, 0.5), q(e, 0.99), q(f, 0.5), q(f, 0.99), e.len(), st.draws, st.posed, st.carried, st.held, st.widened, st.cuts
+        );
     }
 }
 
 /// `MELEE_VSYNC=off|on` (default on).
 pub fn vsync_from_env() -> bool {
     !matches!(std::env::var("MELEE_VSYNC").as_deref().map(str::to_ascii_lowercase).as_deref(), Ok("off" | "0" | "false" | "no"))
-}
-
-/// Byte range of one draw's uniform block that holds the projection and the position matrices,
-/// and the range of the normal matrices (see `shader::fill_uniform`: header, [line], proj, pos x10, tex x10, nrm x10).
-fn mtx_ranges(d: &DrawCmd) -> [(usize, usize); 2] {
-    let base = 16 + if d.info.line_mode != 0 { 16 } else { 0 };
-    let pos_end = base + 64 + 480;
-    let nrm = pos_end + 480;
-    [(base, pos_end), (nrm, nrm + 480)]
-}
-
-/// Blend `prev` -> `cur` matrices at `t` into `out` (cur's uniform block, already copied). Only structurally
-/// identical draws blend; anything else keeps the current frame's values.
-fn blend_into(prev: &DrawCmd, cur: &DrawCmd, t: f32, out: &mut [u8]) {
-    if prev.prim != cur.prim || prev.fmt != cur.fmt || prev.vtx_count != cur.vtx_count || prev.current_pn_mtx != cur.current_pn_mtx
-        || prev.uniform.len() != cur.uniform.len() || prev.info.line_mode != cur.info.line_mode
-    {
-        return;
-    }
-    let rd = |b: &[u8], o: usize| f32::from_le_bytes([b[o], b[o + 1], b[o + 2], b[o + 3]]);
-    let [(a0, a1), (n0, n1)] = mtx_ranges(cur);
-    if n1 > cur.uniform.len() {
-        return;
-    }
-    // A projection-type change (ortho <-> perspective: proj[3][3]) or a cut: keep the projection.
-    let p33 = a0 + 60;
-    let mut start = a0;
-    if rd(&prev.uniform, p33) != rd(&cur.uniform, p33) {
-        start = a0 + 64;
-    }
-    // Without a per-vertex matrix index the draw reads only its current matrix slot (GXSetCurrentMtx: id / 3).
-    let slot = cur.current_pn_mtx as usize / 3;
-    let skinned = cur.config.shader.attrs[0].attr_type != melee_gx::consts::GX_NONE as u8;
-    let ranges: [(usize, usize); 3] = if skinned || slot >= 10 {
-        [(start, a1), (n0, n1), (0, 0)]
-    } else {
-        let pos = a0 + 64 + slot * 48;
-        [(start, a0 + 64), (pos, pos + 48), (n0 + slot * 48, n0 + slot * 48 + 48)]
-    };
-    for (lo, hi) in ranges {
-        let mut o = lo;
-        while o < hi {
-            let (p, c) = (rd(&prev.uniform, o), rd(&cur.uniform, o));
-            let v = if p != c { p + (c - p) * t } else { c };
-            out[o..o + 4].copy_from_slice(&(if v.is_finite() { v } else { c }).to_le_bytes());
-            o += 4;
-        }
-    }
 }
 
 impl Presenter {
@@ -150,13 +115,15 @@ impl Presenter {
             } else {
                 wgpu::PresentMode::AutoNoVsync
             },
-            desired_maximum_frame_latency: 2,
+            // MELEE_FRAME_LATENCY=1|2|3 (frames queued ahead of the display; 1 = the waitable low-latency swapchain)
+            desired_maximum_frame_latency: std::env::var("MELEE_FRAME_LATENCY").ok().and_then(|v| v.parse::<u32>().ok()).unwrap_or(2).clamp(1, 3),
             alpha_mode: caps.alpha_modes.first().copied().unwrap_or(wgpu::CompositeAlphaMode::Auto),
             view_formats: vec![],
         };
         surface.configure(&renderer.device, &config);
-        crate::plog!("gw: video: present mode {:?}", config.present_mode);
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, times: Default::default(), hud: None })
+        let ai = renderer.adapter.get_info();
+        crate::plog!("gw: video: present mode {:?}, frame latency {}, {:?} on {}", config.present_mode, config.desired_maximum_frame_latency, ai.backend, ai.name);
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -200,23 +167,30 @@ impl Presenter {
     }
 
     /// Decoupled presentation: a new sim frame (if any) becomes current, the last becomes previous.
-    /// `alpha = Some(t)` renders the previous->current blend of the camera / model matrices at `t`
-    /// (one tick of latency); `None` renders the newest frame as is (only when it is new).
+    /// `alpha = Some(t)` draws the frame re-posed at phase `t` between the two ticks (melee_gx `interp`: authored
+    /// joints re-sampled, the rest interpolated, or extrapolated past the newest in the predictive mode); `None`
+    /// draws the newest frame as is. With renderer widescreen on, perspective draws are widened either way.
     /// Everything here is render-only: the frames are copies the game no longer reads.
-    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, mut alpha: Option<f64>) {
+    pub fn present_frames(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, alpha: Option<f64>) {
+        self.present_posed(state, frame, None, alpha)
+    }
+
+    /// [`Presenter::present_frames`] with the frame's pose record.
+    pub fn present_posed(&mut self, state: &GxState, frame: Option<Vec<DrawCmd>>, pose: Option<std::sync::Arc<melee_core::pose::PoseFrame>>, mut alpha: Option<f64>) {
         if self.renderer.gpu_fault().is_some() {
             return; // the caller stops on `gpu_fault`
         }
+        let interpolate = self.solver.mode == melee_gx::interp::Mode::Interpolate;
         // Interpolating: a frame that arrives with a tick is adopted at the NEXT present, so the tick and the new
         // frame's prepare never land in one frame interval (the frame-time p99 was their sum). This present shows
         // the current frame itself (t = 1: never a step back toward the previous one).
-        let mut frame = frame;
-        if alpha.is_some() && self.cur.is_some() {
+        let mut frame = frame.map(|d| melee_gx::interp::Frame { draws: d, pose });
+        if let Some(ph) = self.force_phase {
+            alpha = Some(ph);
+        }
+        if interpolate && alpha.is_some() && self.cur.is_some() && self.force_phase.is_none() {
             if let Some(f) = frame.take() {
-                let late = self.pending.replace(f);
-                if late.is_some() {
-                    // two ticks without a present in between: the older one is skipped (as without deferral)
-                }
+                let _late = self.pending.replace(f); // two ticks without a present: the older one is skipped
                 alpha = Some(1.0);
             } else if let Some(f) = self.pending.take() {
                 frame = Some(f);
@@ -230,39 +204,79 @@ impl Presenter {
         if let Some(f) = frame {
             self.prev = self.cur.replace(f);
             self.prepared = false;
+            let widen = self.widen().is_some();
+            let (solver, prev, cur) = (&mut self.solver, self.prev.as_ref(), self.cur.as_ref().unwrap());
+            solver.plan(prev, cur, widen);
         }
         let Some(cur) = self.cur.as_ref() else {
             self.swap_present();
             return;
         };
-        let blend = match (alpha, self.prev.as_ref()) {
-            (Some(t), Some(prev)) if prev.len() == cur.len() => Some((t.clamp(0.0, 1.0) as f32, prev)),
-            _ => None,
+        let widen = self.widen();
+        // the phase on the solver's timeline; t = 1 (interpolate) / 0 (extrapolate) is the newest frame itself
+        let t = alpha.map(|a| a.clamp(0.0, 1.0) as f32);
+        let moving = match t {
+            Some(t) if !self.solver.is_cut() && self.prev.is_some() => if interpolate { t < 0.9999 } else { t > 1e-4 },
+            _ => false,
         };
-        if blend.is_some() || fresh || self.blended {
+        if moving || fresh || self.blended || (widen.is_some() && !self.prepared) {
             if !self.prepared {
-                let t = std::time::Instant::now();
-                self.renderer.prepare(state, cur);
-                self.times[0].push(t.elapsed().as_micros() as u32);
+                let t0 = std::time::Instant::now();
+                self.renderer.prepare(state, &cur.draws);
+                self.times[0].push(t0.elapsed().as_micros() as u32);
                 self.prepared = true;
             }
-            let t = std::time::Instant::now();
-            match blend {
-                Some((t, prev)) => {
-                    let mut f = |i: usize, out: &mut [u8]| blend_into(&prev[i], &cur[i], t, out);
-                    self.renderer.draw_prepared(state, cur, Some(&mut f));
-                    self.blended = true;
+            let t0 = std::time::Instant::now();
+            if moving || widen.is_some() {
+                let prev = self.prev.as_ref();
+                if moving {
+                    let te = std::time::Instant::now();
+                    self.solver.evaluate(prev, cur, t.unwrap());
+                    self.interp_us[0].push(te.elapsed().as_micros() as u32);
                 }
-                None => {
-                    self.renderer.draw_prepared(state, cur, None);
-                    self.blended = false;
+                let solver = &mut self.solver;
+                let mut f = |i: usize, out: &mut [u8]| solver.patch(cur, i, out, widen, moving);
+                self.renderer.draw_prepared(state, &cur.draws, Some(&mut f));
+                if moving {
+                    self.interp_us[1].push(self.renderer.last_fill_us);
                 }
+            } else {
+                self.renderer.draw_prepared(state, &cur.draws, None);
             }
-            self.times[1].push(t.elapsed().as_micros() as u32);
+            self.blended = moving;
+            let s = std::mem::take(&mut self.solver.stats);
+            self.interp_total.add(&s);
+            self.times[1].push(t0.elapsed().as_micros() as u32);
         }
-        let t = std::time::Instant::now();
+        let t0 = std::time::Instant::now();
         self.swap_present();
-        self.times[2].push(t.elapsed().as_micros() as u32);
+        self.times[2].push(t0.elapsed().as_micros() as u32);
+    }
+
+    /// The renderer-side widening for the current content aspect (None: off or a 4:3 frame).
+    fn widen(&self) -> Option<melee_gx::interp::Widen> {
+        if !self.true_wide {
+            return None;
+        }
+        melee_gx::interp::Widen::for_aspect(self.aspect)
+    }
+
+    /// Interpolation timeline (interpolate / extrapolate) and whether a match is on screen (its HUD cameras held).
+    pub fn set_interp_mode(&mut self, mode: melee_gx::interp::Mode) {
+        self.solver.mode = mode;
+    }
+    pub fn set_match_scene(&mut self, on: bool) {
+        self.solver.match_scene = on;
+    }
+    /// Renderer-side widescreen (the content aspect comes from `set_content_aspect`).
+    pub fn set_true_widescreen(&mut self, on: bool) {
+        self.true_wide = on;
+    }
+    /// The solver's counters since the last call.
+    pub fn take_interp_stats(&mut self) -> melee_gx::interp::Stats {
+        let s = std::mem::take(&mut self.solver.stats);
+        self.interp_total.add(&s);
+        s
     }
 
     fn swap_present(&mut self) {
@@ -289,6 +303,25 @@ impl Presenter {
         self.renderer.overlay_to(&view, self.config.format, self.config.width, self.config.height, &hud);
         tex.present();
         self.presented += 1;
+    }
+
+    /// DXGI's frame statistics of the swapchain (D3D12 backend only): frames shown (PresentCount), refreshes
+    /// (SyncRefreshCount) and the time of the last refresh in seconds (SyncQPCTime). None: another backend, or DXGI
+    /// has no statistics for this swapchain yet.
+    #[cfg(windows)]
+    pub fn frame_stats(&self) -> Option<(u64, u64, f64)> {
+        use windows::Win32::Graphics::Dxgi::DXGI_FRAME_STATISTICS;
+        let hal = unsafe { self.surface.as_hal::<wgpu::hal::api::Dx12>() }?;
+        let sc = hal.swap_chain()?;
+        let mut st = DXGI_FRAME_STATISTICS::default();
+        unsafe { sc.GetFrameStatistics(&mut st) }.ok()?;
+        let mut f = 0i64;
+        unsafe { windows::Win32::System::Performance::QueryPerformanceFrequency(&mut f) }.ok()?;
+        Some((st.PresentCount as u64, st.SyncRefreshCount as u64, st.SyncQPCTime as f64 / f.max(1) as f64))
+    }
+    #[cfg(not(windows))]
+    pub fn frame_stats(&self) -> Option<(u64, u64, f64)> {
+        None
     }
 
     /// The swapchain size (window pixels).

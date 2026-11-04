@@ -506,6 +506,7 @@ impl GxShim {
             }
         }
         self.frame = Some(draws);
+        self.gx.pose = self.gx.frame_pose.take();
         self.stats.copies = self.stats.copies.wrapping_add(1);
     }
     /// `gw_GXCopyTex`: counted; EFB-to-texture copies are not implemented in melee_gx (the decoder

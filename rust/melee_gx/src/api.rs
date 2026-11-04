@@ -218,13 +218,14 @@ pub struct AsyncFrame {
     pub clear_depth: u32,
     /// The renderer's CPU packing of `draws` (see [`crate::render::pack`]).
     pub packed: crate::render::Packed,
+    pub pose: Option<std::sync::Arc<melee_core::pose::PoseFrame>>,
 }
 
 enum Job {
     /// FIFO bytes and the handle table they refer to.
     Process(Vec<u8>, Resources),
     /// GXCopyDisp: hand the draws decoded so far over as a frame.
-    End,
+    End(Option<std::sync::Arc<melee_core::pose::PoseFrame>>),
 }
 
 /// The decode thread: it owns the `GxState` while async decoding is on.
@@ -246,6 +247,9 @@ pub struct Gx {
     pipes: std::sync::Arc<std::sync::Mutex<Option<std::sync::Arc<crate::render::PipeFactory>>>>,
     /// Async mode: the packing of the frame [`Gx::take_async_frame`] returned last, for the renderer.
     pub packed: Option<crate::render::Packed>,
+    /// The pose record of the frame being built (set before GXCopyDisp), and of the frame last taken.
+    pub frame_pose: Option<std::sync::Arc<melee_core::pose::PoseFrame>>,
+    pub pose: Option<std::sync::Arc<melee_core::pose::PoseFrame>>,
     sh: Shadow,
     saved: Option<Shadow>,
     fifo: Vec<u8>,
@@ -272,6 +276,8 @@ impl Gx {
             worker: None,
             pipes: Default::default(),
             packed: None,
+            frame_pose: None,
+            pose: None,
             sh: Shadow::default(),
             saved: None,
             fifo: Vec::with_capacity(1 << 16),
@@ -365,7 +371,7 @@ impl Gx {
                             buf.clear();
                             let _ = ptx.send(buf);
                         }
-                        Job::End => {
+                        Job::End(pose) => {
                             if std::env::var_os("MELEE_GX_WARN").is_some() { for w in &st.warnings { eprintln!("gx warn: {w}"); } }
                             st.warnings.clear();
                             let draws = st.take_draws();
@@ -374,7 +380,7 @@ impl Gx {
                                 f.warm(&draws);
                             }
                             let packed = crate::render::pack(&draws);
-                            let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed };
+                            let f = AsyncFrame { draws, clear_color: st.clear_color, clear_depth: st.clear_depth, packed, pose };
                             if ftx.send(f).is_err() {
                                 break;
                             }
@@ -398,7 +404,7 @@ impl Gx {
     /// Async mode: close the current frame (see [`Gx::enable_async`]).
     pub fn end_frame(&mut self) {
         if let Some(w) = &mut self.worker {
-            let _ = w.tx.send(Job::End);
+            let _ = w.tx.send(Job::End(self.frame_pose.take()));
             w.sent += 1;
         }
     }
@@ -422,6 +428,7 @@ impl Gx {
         }
         let f = last?;
         self.packed = Some(f.packed);
+        self.pose = f.pose;
         self.state.clear_color = f.clear_color;
         self.state.clear_depth = f.clear_depth;
         Some(f.draws)
@@ -1684,6 +1691,17 @@ impl Gx {
         for &x in &data[..n as usize * 24] {
             self.wf32(x);
         }
+    }
+    /// Render-only: the matrix just loaded into GX position slot `slot` came from pose slot record `tag` (1-based).
+    pub fn pose_tag(&mut self, slot: u32, tag: u32) {
+        self.write_aurora(0x2000);
+        self.w8(slot as u8);
+        self.w32(tag);
+    }
+    /// Render-only: the camera record (1-based) current from here on.
+    pub fn pose_cam(&mut self, id: u32) {
+        self.write_aurora(0x2001);
+        self.w32(id);
     }
     /// `GXAuroraEndPalette` (GX_AURORA_END_PALETTE).
     pub fn end_palette(&mut self) {

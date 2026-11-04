@@ -39,6 +39,7 @@ pub mod mtx;
 pub mod psappsrt;
 pub mod particle;
 pub mod pobj;
+pub mod pose_capture;
 pub mod quatlib;
 pub mod random;
 pub mod shared;

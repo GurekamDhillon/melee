@@ -338,7 +338,10 @@ pub unsafe fn GXGetTexObjHeight(o: *const c_void) -> u16 { objs().tex.get(&(o as
 
 // ---- copies and the frame
 pub fn GXPixModeSync() { shim().pix_mode_sync() }
-pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) { shim().copy_disp(clear != 0) }
+pub fn GXCopyDisp(_dest: *mut c_void, clear: u8) {
+    shim().gx.frame_pose = melee_runtime::pose_capture::take().map(std::sync::Arc::new);
+    shim().copy_disp(clear != 0)
+}
 pub fn GXCopyTex(dest: *mut c_void, clear: u8) { shim().copy_tex(dest as usize as u64, clear != 0) }
 pub fn GXSetCopyClear(c: _GXColor, depth: u32) { shim().set_copy_clear(col(c), depth) }
 pub fn GXSetCopyClamp(c: u32) { shim().set_copy_clamp(c) }
@@ -359,6 +362,7 @@ pub fn finish_frame() {
         let z = if (*vi).clear_z == 0 { 0x00FF_FFFF } else { (*vi).clear_z };
         GXSetCopyClear((*vi).clear_clr, z);
     }
+    shim().gx.frame_pose = melee_runtime::pose_capture::take().map(std::sync::Arc::new);
     shim().copy_disp(true)
 }
 

@@ -99,6 +99,16 @@ pub struct RetailPlay {
     /// gd-ui-v1 presentation mods (MELEE_WASM_MODS, modules importing gd_ui): harness-owned, never in the arena, so a
     /// savestate load or rollback never rewinds them. None with no UI mod: nothing runs and nothing is drawn.
     pub ui: Option<melee_modhost::ui::PresHost>,
+    /// gd-lab-v1: the lab match (the engine while a Lab mod runs a match), its overlay painter, the clock of the
+    /// offline commands and this tick's commands.
+    pub lab: Option<crate::lab::LabRun>,
+    lab_gfx: Option<(crate::ui::Ui, melee_gx::shim::GxShim)>,
+    lab_clock: i32,
+    lab_cmds: Vec<melee_modhost::lab::LabCmd>,
+    /// The lockstep frame of this tick's pads (online lab: the desync check's key).
+    lab_frame: Option<u32>,
+    /// The lab RNG's seed (the agreed netplay seed, else the test seed).
+    pub lab_seed: u32,
 }
 
 impl RetailPlay {
@@ -109,6 +119,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_frame: None, lab_seed: 12345,
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -226,6 +237,9 @@ impl RetailPlay {
         if let Some(NetPhase::InMatch(g)) = self.net.as_ref().map(|n| &n.phase) {
             return Some(&g.e);
         }
+        if let Some(l) = self.lab.as_ref() {
+            return Some(&l.g.e);
+        }
         self.sync.as_ref().and_then(|s| s.g.as_ref()).map(|g| &g.e)
     }
 
@@ -279,10 +293,37 @@ impl RetailPlay {
                 NetPhase::PreMatch if nd.css() => {
                     // the menus in lockstep: this tick's local pad is scheduled; a frame runs once the peer's is in
                     let host = nd.host;
+                    let lab_on = nd.lab;
                     let ls = nd.ls.as_mut().unwrap();
-                    ls.push_local(&four[0]);
-                    ls.poll();
-                    match ls.ready() {
+                    let ready = if lab_on {
+                        // GAP-13: this peer's queued lab commands ride with this tick's pad (they apply on its frame)
+                        let lab_sh = self.ui.as_ref().and_then(|u| u.lab.clone());
+                        let mine: Vec<[u8; 16]> = lab_sh.as_ref().map_or(Vec::new(), |sh| {
+                            let mut s = sh.borrow_mut();
+                            let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
+                            s.outbox.drain(..n).map(|c| c.to_bytes()).collect()
+                        });
+                        ls.push_local_cmds(&four[0], mine);
+                        if let Some(sh) = &lab_sh {
+                            let mut s = sh.borrow_mut();
+                            s.apply_frame = ls.next_push_frame() as i32;
+                            s.issuer = if host { 0 } else { 1 };
+                            s.delay = ls.delay();
+                        }
+                        ls.poll();
+                        ls.ready_lab().map(|(l, r, lc, rc, fr)| {
+                            // the host's commands first on both peers
+                            let (hc, gc) = if host { (lc, rc) } else { (rc, lc) };
+                            self.lab_cmds = hc.iter().chain(gc.iter()).filter_map(|b| melee_modhost::lab::LabCmd::from_bytes(b)).collect();
+                            self.lab_frame = Some(fr);
+                            (l, r)
+                        })
+                    } else {
+                        ls.push_local(&four[0]);
+                        ls.poll();
+                        ls.ready()
+                    };
+                    match ready {
                         Some((l, r)) => {
                             four = neutral_pads();
                             four[0] = if host { l } else { r };
@@ -302,6 +343,10 @@ impl RetailPlay {
                 NetPhase::PreMatch => four = neutral_pads(),
                 NetPhase::Done => {}
             }
+        }
+        if self.lab.is_some() {
+            self.lab_step(four);
+            return false;
         }
         if let Some(ps) = self.sync.as_mut() {
             if ps.g.is_some() {
@@ -348,13 +393,30 @@ impl RetailPlay {
                         return false;
                     }
                 }
-                if matches!(nd.phase, NetPhase::PreMatch) {
+                if matches!(nd.phase, NetPhase::PreMatch) && nd.lab {
+                    // LabNetplay: the match stays in lockstep; the lab takes the engine on both peers
+                    if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
+                        self.lab = Some(crate::lab::LabRun::new(ModesGame::new(self.e.take().unwrap()), sh, self.lab_seed));
+                        log("lab: online lab match: the lab takes the engine (lockstep)");
+                        self.lab_step(four);
+                        return false;
+                    }
+                }
+                if matches!(nd.phase, NetPhase::PreMatch) && !nd.lab {
                     nd.begin_match(self.e.take().unwrap());
                     return self.step(four);
                 }
             } else if let Some(ps) = self.sync.as_mut() {
                 ps.g = Some(Box::new(ModesGame::new(self.e.take().unwrap())));
                 return self.step(four);
+            } else if self.feed.is_none() && self.rollback_mode {
+                if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
+                    // offline Lab: the lab takes the engine for the match (snapshots need the rollback run modes)
+                    self.lab = Some(crate::lab::LabRun::new(ModesGame::new(self.e.take().unwrap()), sh, self.lab_seed));
+                    log("lab: lab match: the lab takes the engine");
+                    self.lab_step(four);
+                    return false;
+                }
             }
         }
         let e = self.e.as_mut().unwrap();
@@ -373,6 +435,63 @@ impl RetailPlay {
             f.at += 1;
         }
         entered
+    }
+
+    /// One command-clock frame of the lab match (offline: this tick; online: the lockstep frame that just became ready).
+    fn lab_step(&mut self, four: [melee_types::PADStatus; 4]) {
+        let online = self.net.as_ref().is_some_and(|n| n.lab);
+        let cmds: Vec<melee_modhost::lab::LabCmd> = if online {
+            std::mem::take(&mut self.lab_cmds)
+        } else {
+            let sh = self.lab.as_ref().unwrap().sh.clone();
+            let mut s = sh.borrow_mut();
+            let n = s.outbox.len().min(melee_modhost::lab::LAB_CMDS_PER_FRAME);
+            let v = s.outbox.drain(..n).collect();
+            self.lab_clock += 1;
+            s.apply_frame = self.lab_clock + 1;
+            v
+        };
+        let lab = self.lab.as_mut().unwrap();
+        let ran = lab.tick(four, &cmds);
+        let hash = if ran { lab.hash() } else { 0 };
+        if let (true, Some(fr)) = (online, self.lab_frame.take()) {
+            if let Some(ls) = self.net.as_mut().and_then(|n| n.ls.as_mut()) {
+                ls.record_hash(fr, hash);
+                if fr % 600 == 0 && hash != 0 {
+                    log(&format!("lab netplay: lockstep frame {fr} match frame {} hash {hash:08X} ({} checked, {} desyncs)", lab.f, ls.checked, ls.desyncs));
+                }
+            }
+        }
+        if let Some(r) = self.rec.as_mut() {
+            r.1.ticks.push((four, hash));
+        }
+        if let Some(f) = lab.g.take_frame() {
+            let mut f = f;
+            let gfx = self.lab_gfx.get_or_insert_with(|| (crate::ui::Ui::new(), melee_gx::shim::GxShim::new()));
+            gfx.0.clear();
+            if lab.overlay(&mut gfx.0) && gfx.0.len() > 0 {
+                gfx.0.flush(&mut gfx.1);
+                gfx.1.copy_disp(true);
+                if let Some(d) = gfx.1.take_frame() {
+                    f.extend(d);
+                }
+            }
+            self.frame = Some(f);
+            self.frame_aspect = melee_engine::view::aspect();
+        }
+        if lab.g.e.ended {
+            log(&lab.perf_line());
+            if let Some(ls) = self.net.as_ref().and_then(|n| n.ls.as_ref()) {
+                log(&format!("lab netplay: match over: {} hash checks, {} desyncs{}", ls.checked, ls.desyncs, ls.first_desync.map_or(String::new(), |f| format!(" (first at lockstep frame {f})"))));
+                if ls.desyncs > 0 {
+                    self.failed = Some("lab netplay desync".into());
+                }
+            }
+            let lab = self.lab.take().unwrap();
+            let (e, _) = lab.finish().into_engine();
+            log(&format!("lab: match over, final hash {:08X}", e.neutral_row()[0] | 1));
+            self.e = Some(e);
+        }
     }
 
     /// The run ends: the replay is written, a failure is noted for the exit code.
@@ -488,7 +607,7 @@ impl Game for RetailPlay {
         }
         // gd-ui-v1 input boundary (A4): the same place as lcancel_helper, before set_pads and the rollback submit
         let pres_frame = melee_modhost::pres::PresFrame {
-            session: if self.net.is_some() { melee_modhost::pres::Session::Netplay } else if self.sync.is_some() { melee_modhost::pres::Session::Synctest } else if self.feed.is_some() { melee_modhost::pres::Session::Replay } else { melee_modhost::pres::Session::Offline },
+            session: if self.net.as_ref().is_some_and(|n| n.lab) { melee_modhost::pres::Session::LabNetplay } else if self.net.is_some() { melee_modhost::pres::Session::Netplay } else if self.sync.is_some() { melee_modhost::pres::Session::Synctest } else if self.feed.is_some() { melee_modhost::pres::Session::Replay } else { melee_modhost::pres::Session::Offline },
             scene: (self.cur.0 as i32, self.cur.1 as i32),
             match_frame: self.age as i32,
         };

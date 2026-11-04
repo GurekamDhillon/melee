@@ -8,7 +8,7 @@
 /* ABI versions (major<<16 | minor). A mod that declares any UI (LAB) feature bit, required or optional, exports
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
-#define GD_UI_ABI_VERSION  ((1u << 16) | 1u) /* 1.1: text style bits (GD_UI_TEXT_*) */
+#define GD_UI_ABI_VERSION  ((1u << 16) | 2u) /* 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests */
 #define GD_LAB_ABI_VERSION (1u << 16)
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
@@ -24,7 +24,8 @@ enum {
     GD_FEATURE_LAB_INPUT    = 1u << 12,
     GD_FEATURE_LAB_CPU      = 1u << 13,
     GD_FEATURE_LAB_OVERLAY  = 1u << 14,
-    GD_FEATURE_UI_VECTOR    = 1u << 15
+    GD_FEATURE_UI_VECTOR    = 1u << 15,
+    GD_FEATURE_UI_HOST      = 1u << 16  /* v1.2: gd_ui_list_* / gd_ui_request (the in-game browser) */
 };
 
 /* results: 0 ok, negative = error */
@@ -132,6 +133,24 @@ int      gd_ui_scene_replace(int major, int minor, unsigned scene);
 int      gd_ui_scene_goto(unsigned scene_or_retail);
 int      gd_ui_scene_back(void);
 int      gd_ui_match_start(const void* setup, unsigned len);     /* GD_ESTATE until gd_match_setup lands */
+/* ---- gd-ui-v1.2 (UI_HOST): host catalogs and requests (wasm-ui-lab-api.md A6; rust/mods/browser) ----
+ * The play flow fills each catalog (records of NUL-separated UTF-8 fields) at the first present and after a request
+ * that changes it; gd_ui_list_info returns generation << 16 | count, so a mod re-reads only on a change.
+ *   MODES   id, group, title, description, available (0/1), note
+ *   MODS    id, name, description, kind, enabled next launch (0/1), enabled at this launch (0/1), status
+ *   REPLAYS n (1-based), kind (mrpl/slp), date, stage, fighters, m:ss, file name, note
+ *   SKINS   slot (plfxnr), slot file stem (PlFxNr), skin name, selected (0/1), verdict when selected
+ *   STATUS  one record: code (0 info, 1 error, 2 done: the browser closes), text (the last request's result)
+ *   ONLINE  one record: server configured (0/1), help text
+ * Requests are queued (<= 8 per present, arg <= 256 bytes, NUL-separated fields) and applied after the present:
+ *   LAUNCH(mode id)  MOD_SET(id, "0"/"1")  REPLAY_PLAY(n)  SKIN_SET(slot, name | "none")  NET_HOST()
+ *   NET_JOIN(code or HOST:PORT)  NET_SPECTATE(code or HOST:PORT)  REFRESH(list kind digit; other = all) */
+enum { GD_UI_LIST_MODES = 0, GD_UI_LIST_MODS, GD_UI_LIST_REPLAYS, GD_UI_LIST_SKINS, GD_UI_LIST_STATUS, GD_UI_LIST_ONLINE };
+enum { GD_UI_REQ_LAUNCH = 1, GD_UI_REQ_MOD_SET, GD_UI_REQ_REPLAY_PLAY, GD_UI_REQ_SKIN_SET, GD_UI_REQ_NET_HOST,
+       GD_UI_REQ_NET_JOIN, GD_UI_REQ_NET_SPECTATE, GD_UI_REQ_REFRESH };
+int      gd_ui_list_info(unsigned kind);                          /* gen << 16 | count; GD_ECAP without UI_HOST */
+int      gd_ui_list_get(unsigned kind, unsigned i, void* out, unsigned cap); /* bytes copied (truncated to cap) */
+int      gd_ui_request(int op, const char* arg, unsigned len);    /* GD_OK queued, GD_EFULL, GD_EINVAL */
 /* exports: int gd_ui_init(void); void gd_ui_frame(unsigned present_no) (required with UI_DRAW);
  * void gd_ui_event(unsigned node, int ev, int value); void gd_ui_scene_enter(unsigned); void gd_ui_scene_leave(unsigned) */
 

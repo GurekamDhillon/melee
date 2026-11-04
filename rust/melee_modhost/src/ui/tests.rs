@@ -362,3 +362,44 @@ fn text_perf_200_glyphs() {
     eprintln!("UI_TEXT_PERF atlas_build_ms={:.1} glyph_quads={} ms_per_frame={:.4}", build.as_secs_f64() * 1000.0, b.frame.quads.len(), per);
     assert!(b.frame.quads.len() >= 190);
 }
+
+const WAT_HOST: &str = r#"
+(module
+  (import "gd_ui" "gd_ui_list_info" (func $info (param i32) (result i32)))
+  (import "gd_ui" "gd_ui_list_get" (func $get (param i32 i32 i32 i32) (result i32)))
+  (import "gd_ui" "gd_ui_request" (func $req (param i32 i32 i32) (result i32)))
+  (memory (export "memory") 1 1)
+  (global (export "gd_mod_manifest") i32 (i32.const 256))
+  (global (export "gdmod_ui_abi") i32 (i32.const 0x10002))
+  (global $info_v (export "info_v") (mut i32) (i32.const 0))
+  (global $got (export "got") (mut i32) (i32.const 0))
+  (data (i32.const 0) "lab")
+  (data (i32.const 256) "GDMD\7c\00\00\00\00\00\01\00\00\00\01\00\01\00\00\00\00\00\01\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00ui.host")
+  (func (export "gd_ui_frame") (param i32)
+    (global.set $info_v (call $info (i32.const 0)))
+    (global.set $got (call $get (i32.const 0) (i32.const 1) (i32.const 512) (i32.const 3)))
+    (drop (call $req (i32.const 1) (i32.const 0) (i32.const 3))))
+)"#;
+
+#[test]
+fn host_catalogs_and_requests_v1_2() {
+    let wasm = wat::parse_str(WAT_HOST).unwrap();
+    let mut h = PresHost::new();
+    h.load(&wasm, std::env::temp_dir()).unwrap();
+    assert!(h.wants_host());
+    h.set_list(LIST_MODES, vec![b"a\0A".to_vec(), b"lab\0Geno\0LAB".to_vec()]);
+    let f = PresFrame { session: Session::Offline, scene: (1, 1), match_frame: 0 };
+    h.present(&f);
+    let reqs = h.take_requests();
+    assert_eq!(reqs.len(), 1);
+    assert_eq!((reqs[0].op, reqs[0].arg.as_str()), (REQ_LAUNCH, "lab"));
+    // the record was copied (truncated to cap 3) into the mod's memory at 512
+    let m = &h.mods[0];
+    let mem = m.store.data().mem.unwrap();
+    assert_eq!(&mem.data(&m.store)[512..515], b"lab");
+    assert!(h.take_requests().is_empty());
+    // a mod without UI_HOST gets GD_ECAP; a bad op is refused
+    let s = h.shared.borrow();
+    assert_eq!(s.list_gen[LIST_MODES], 1);
+    assert_eq!(s.lists[LIST_MODES].len(), 2);
+}

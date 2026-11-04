@@ -248,6 +248,9 @@ pub struct Renderer {
     pub adapter: wgpu::Adapter,
     /// Microseconds the last `draw_prepared` spent in its `fill` callbacks (frame interpolation / widescreen patching).
     pub last_fill_us: u32,
+    /// Leave the EFB copy targets as they are in this draw (a re-posed in-between present: a copy holds the exact pose
+    /// of a sim frame, as on the console, never a wall-clock phase; see melee_platform `Presenter::present_posed`).
+    pub skip_copies: bool,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub adapter_info: wgpu::AdapterInfo,
@@ -1061,6 +1064,7 @@ impl Renderer {
         Ok(Self {
             adapter,
             last_fill_us: 0,
+            skip_copies: false,
             device,
             queue,
             gpu,
@@ -1662,6 +1666,8 @@ impl Renderer {
                 break;
             }
             let c = draws[end].copy.as_deref().unwrap();
+            if self.skip_copies {
+            } else
             // a Z-format copy (GXSetTexCopyDst GX_TF_Z*/GX_CTF_Z*) reads the depth target, as the hardware copies the
             // EFB's z buffer for those formats (gm_1832's costume snapshots: GX_TF_Z24X8 next to the colour copy)
             if let (Some(t), Some(mode), Some((pipe, bgl))) = (self.efb_copies.get(&c.dest), zcopy_mode(c.fmt), self.zcopy_pipe.as_ref()) {

@@ -45,6 +45,8 @@ pub struct Presenter {
     interp_total: melee_gx::interp::Stats,
     /// A screenshot of an in-between: adopt the new frame at once and draw it at this phase (MELEE_SHOT_PHASE).
     pub force_phase: Option<f64>,
+    /// The EFB copies of `cur` have been made from its exact pose (see `present_posed`).
+    copies_exact: bool,
 }
 
 impl Drop for Presenter {
@@ -123,7 +125,7 @@ impl Presenter {
         surface.configure(&renderer.device, &config);
         let ai = renderer.adapter.get_info();
         crate::plog!("gw: video: present mode {:?}, frame latency {}, {:?} on {}", config.present_mode, config.desired_maximum_frame_latency, ai.backend, ai.name);
-        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None })
+        Ok(Self { renderer, surface, config, auto_scale, aspect: 4.0 / 3.0, presented: 0, skipped: 0, prev: None, cur: None, prepared: false, blended: false, pending: None, solver: melee_gx::interp::Solver::with_mode(std::env::var("MELEE_INTERP_MODE").ok().and_then(|v| melee_gx::interp::Mode::parse(&v)).unwrap_or_default()), true_wide: std::env::var("MELEE_WIDESCREEN_MODE").map_or(true, |v| v != "camera") && std::env::var("MELEE_WIDESCREEN").is_ok_and(|v| v == "1"), times: Default::default(), hud: None, interp_us: Default::default(), interp_total: Default::default(), force_phase: None, copies_exact: false })
     }
 
     pub fn format(&self) -> wgpu::TextureFormat {
@@ -204,6 +206,7 @@ impl Presenter {
         if let Some(f) = frame {
             self.prev = self.cur.replace(f);
             self.prepared = false;
+            self.copies_exact = false;
             let widen = self.widen().is_some();
             let (solver, prev, cur) = (&mut self.solver, self.prev.as_ref(), self.cur.as_ref().unwrap());
             solver.plan(prev, cur, widen);
@@ -227,6 +230,16 @@ impl Presenter {
                 self.prepared = true;
             }
             let t0 = std::time::Instant::now();
+            // EFB copies (Pokemon Stadium's screen, shadows) hold a sim frame's exact pose, as on the console: a re-posed
+            // in-between leaves the copy targets alone, else what a later frame samples depends on the wall-clock phase of
+            // the last present before it (run-to-run render variance). A fresh frame first re-posed is drawn once exactly.
+            let has_copies = cur.draws.iter().any(|d| d.copy.is_some());
+            if moving && has_copies && !self.copies_exact {
+                let solver = &mut self.solver;
+                let mut f = |i: usize, out: &mut [u8]| solver.patch(cur, i, out, widen, false);
+                self.renderer.draw_prepared(state, &cur.draws, if widen.is_some() { Some(&mut f) } else { None });
+            }
+            self.renderer.skip_copies = moving;
             if moving || widen.is_some() {
                 let prev = self.prev.as_ref();
                 if moving {
@@ -243,6 +256,8 @@ impl Presenter {
             } else {
                 self.renderer.draw_prepared(state, &cur.draws, None);
             }
+            self.renderer.skip_copies = false;
+            self.copies_exact = true;
             self.blended = moving;
             let s = std::mem::take(&mut self.solver.stats);
             self.interp_total.add(&s);

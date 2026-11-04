@@ -329,12 +329,30 @@ fn install_fault_handler() {
             0xC0000409 => "fast-fail (abort / stack buffer overrun)".to_string(),
             c => format!("exception 0x{c:08X}"),
         };
-        let fault = format!(
+        let mut fault = format!(
             "exception code:  0x{:08X}\nexception addr:  0x{:X} (melee.exe+0x{:X})\n",
             rec.code,
             addr,
             addr.wrapping_sub(base)
         );
+        // A call through a null pointer faults at rip 0 and the unwinder cannot walk from there, so the backtrace
+        // below is empty. List the code addresses on the top of the faulting stack instead (x64 CONTEXT.Rsp at
+        // 0x98): the first is the return address into the caller of the null pointer.
+        #[cfg(target_arch = "x86_64")]
+        if !(*p).context.is_null() {
+            let rsp = *((*p).context as *const u8).add(0x98).cast::<usize>();
+            let mut n = 0;
+            for i in 0..512usize {
+                let v = *(rsp as *const usize).add(i);
+                if v > base && v < base + 0x400_0000 {
+                    fault.push_str(&format!("stack[{i:3}]:      melee.exe+0x{:X}\n", v - base));
+                    n += 1;
+                    if n == 24 {
+                        break;
+                    }
+                }
+            }
+        }
         write_report_with("exception", &what, &fault);
         1 // EXCEPTION_EXECUTE_HANDLER: end the process after the report
     }

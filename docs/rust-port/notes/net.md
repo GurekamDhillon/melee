@@ -127,6 +127,15 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   Geno define audio (port/genorb): the clip cache / PCM / start ledger are in `geno_host::GnHost` (system heap, set-once
   pointer `GN_HOST`, every change under `host_heap`), the mixer's native clip slots in `Ax`'s boxed `ClipBank`; resim and
   confirmed frames reach it through `geno_host::net_frame` / `net_confirmed` called by the harness (no rewritten static).
+- Headless 50 ms crash (`access violation (execute at 0x0)` in ~1 of 3 `play_pair.sh NAME 50 5 --headless` runs, often
+  both peers at the same tick): `Audio::capture` (the headless mix kept for `--audio-wav`, a harness value) grew inside
+  the game scope (`retail_flow` ticks the audio under `GameScope` in a rollback run), so its buffer moved into the arena.
+  A load put the free lists back to a state where that block was free; the game handed it out again (decoded archive
+  objects) and the capture's next growth freed it under them; `reclaim_overlapping` later dropped a `GcArena` whose
+  `Owned` entries had been overwritten and called a null `free`. Fix: the capture grows with the arena off. Guard:
+  arena free blocks carry a mark (`arena::FREE_MARK`); a double free or a write after free prints
+  `melee: ARENA MISUSE: ...` with raw return addresses (symbolise with llvm-symbolizer against the exe). The fault
+  report now lists the code addresses on top of the faulting stack, which is what a call through null leaves.
 - #42 (windowed peers losing the GPU device, "Texture with 'GX texture' label is invalid"): `detach_frame` made
   fresh `Arc`s every frame, and the renderer caches GPU textures by the data `Arc`'s address, so every texture
   missed every frame: ~63k live textures, ~2.7 GB of video memory per peer by the 600-frame eviction (offline:

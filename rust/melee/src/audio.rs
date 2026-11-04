@@ -147,7 +147,17 @@ impl Audio {
                 }
             }
             (None, Some(c)) => {
-                sim::virtual_frame_into(c);
+                // The capture is the harness's (it outlives rollback loads), but a rollback run ticks the audio inside
+                // the game scope: grown there it moved into the arena, a load then gave its block back to the game, and
+                // the next growth freed memory the game was using (decoded archive objects; a reclaim later called a
+                // null `free`, net.md). The mix itself is game state (arena); only the capture grows on the system heap.
+                let mut frame = Vec::new();
+                sim::virtual_frame_into(&mut frame);
+                let scoped = melee_engine::arena::active();
+                melee_engine::arena::set_active(false);
+                c.extend_from_slice(&frame);
+                melee_engine::arena::set_active(scoped);
+                assert!(c.is_empty() || !melee_engine::arena::contains(c.as_ptr() as *const u8), "audio capture in the game arena");
             }
             (None, None) => {
                 sim::virtual_frame();

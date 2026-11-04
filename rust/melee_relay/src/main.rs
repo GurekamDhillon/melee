@@ -13,6 +13,11 @@
 //!     either -> RELAY                no direct path: the server forwards this pair's GDMD packets
 //!     either -> BYE                  leave (a host's BYE closes the room; the other side gets BYE)
 //!   relay: `GDMD` + payload, forwarded verbatim to the partner.
+//!   spectating (notes/spectate-replay.md), separate from the player rooms:
+//!     match host -> SPECHOST <code|->   server -> SPECOK <code>   (the spectate room; KA keeps it)
+//!     spectator  -> SPEC <code>         server -> SPECID <id> / ERR <reason>
+//!     spectator  -> `GDMS` + payload    server -> host: `GDMS` + u32 LE id + payload
+//!     host       -> `GDMS` + u32 id + payload  server -> that spectator: `GDMS` + payload
 //! Addresses are `1.2.3.4:5` or `[v6]:5`. Nothing is stored on disk; rooms die after ROOM_IDLE / PAIR_IDLE seconds.
 
 use std::collections::HashMap;
@@ -43,7 +48,22 @@ struct Waiter {
     seen: Instant,
 }
 
+struct SpecHost {
+    host: SocketAddr,
+    seen: Instant,
+}
+
+struct Spectator {
+    id: u32,
+    code: String,
+    seen: Instant,
+}
+
 struct Server {
+    spec_rooms: HashMap<String, SpecHost>,
+    spectators: HashMap<SocketAddr, Spectator>,
+    spec_ids: HashMap<u32, SocketAddr>,
+    next_spec: u32,
     socks: Vec<UdpSocket>,
     rooms: HashMap<String, Room>,
     by_addr: HashMap<SocketAddr, String>,
@@ -131,6 +151,9 @@ impl Server {
         if data.len() < 4 {
             return;
         }
+        if &data[..4] == b"GDMS" {
+            return self.spec_data(data, from);
+        }
         let code = self.by_addr.get(&from).cloned();
         if &data[..4] == b"GDMD" {
             let Some(code) = code else { return };
@@ -156,6 +179,52 @@ impl Server {
             if let Some(r) = self.rooms.get_mut(c) {
                 r.seen = Instant::now();
             }
+        }
+        match cmd.as_str() {
+            "SPECHOST" => {
+                let mut c = arg(1).to_ascii_uppercase();
+                if c.is_empty() || c == "-" {
+                    c = format!("S{}", self.new_code());
+                }
+                if self.spec_rooms.get(&c).map_or(false, |r| r.host != from) {
+                    return self.send(from, "ERR spectate code taken");
+                }
+                if self.spec_rooms.len() >= MAX_ROOMS {
+                    return self.send(from, "ERR server full");
+                }
+                if self.spec_rooms.insert(c.clone(), SpecHost { host: from, seen: Instant::now() }).is_none() {
+                    self.log(&format!("spectate room {c} opened by {from}"));
+                }
+                return self.send(from, &format!("SPECOK {c}"));
+            }
+            "SPEC" => {
+                let c = arg(1).to_ascii_uppercase();
+                if !self.spec_rooms.contains_key(&c) {
+                    return self.send(from, "ERR no spectate room with that code");
+                }
+                let id = match self.spectators.get(&from) {
+                    Some(s) => s.id,
+                    None => {
+                        self.next_spec = self.next_spec.wrapping_add(1).max(1);
+                        self.next_spec
+                    }
+                };
+                self.spectators.insert(from, Spectator { id, code: c.clone(), seen: Instant::now() });
+                self.spec_ids.insert(id, from);
+                self.log(&format!("spectate room {c}: spectator {id} = {from}"));
+                return self.send(from, &format!("SPECID {id}"));
+            }
+            "KA" if self.spec_rooms.values().any(|r| r.host == from) || self.spectators.contains_key(&from) => {
+                let now = Instant::now();
+                self.spec_rooms.values_mut().filter(|r| r.host == from).for_each(|r| r.seen = now);
+                if let Some(s) = self.spectators.get_mut(&from) {
+                    s.seen = now;
+                }
+                if code.is_none() {
+                    return self.send(from, "KA");
+                }
+            }
+            _ => {}
         }
         match cmd.as_str() {
             "REG" => {
@@ -297,8 +366,46 @@ impl Server {
         }
     }
 
+    /// A spectate data packet: spectator -> its room's host (with the spectator id), host -> one spectator.
+    fn spec_data(&mut self, data: &[u8], from: SocketAddr) {
+        let now = Instant::now();
+        if let Some(s) = self.spectators.get_mut(&from) {
+            s.seen = now;
+            let (id, code) = (s.id, s.code.clone());
+            let Some(r) = self.spec_rooms.get(&code) else { return };
+            let mut b = b"GDMS".to_vec();
+            b.extend_from_slice(&id.to_le_bytes());
+            b.extend_from_slice(&data[4..]);
+            let h = r.host;
+            self.raw(h, &b);
+            self.relayed += 1;
+            return;
+        }
+        if data.len() < 8 || !self.spec_rooms.values().any(|r| r.host == from) {
+            return;
+        }
+        self.spec_rooms.values_mut().filter(|r| r.host == from).for_each(|r| r.seen = now);
+        let id = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
+        let Some(&to) = self.spec_ids.get(&id) else { return };
+        // only to a spectator of a room this host owns
+        if !self.spectators.get(&to).map_or(false, |s| self.spec_rooms.get(&s.code).map_or(false, |r| r.host == from)) {
+            return;
+        }
+        let mut b = b"GDMS".to_vec();
+        b.extend_from_slice(&data[8..]);
+        self.raw(to, &b);
+        self.relayed += 1;
+    }
+
     fn reap(&mut self) {
         let now = Instant::now();
+        self.spec_rooms.retain(|_, r| now.duration_since(r.seen).as_secs_f32() <= ROOM_IDLE);
+        let gone: Vec<SocketAddr> = self.spectators.iter().filter(|(_, s)| now.duration_since(s.seen).as_secs_f32() > ROOM_IDLE || !self.spec_rooms.contains_key(&s.code)).map(|(a, _)| *a).collect();
+        for a in gone {
+            if let Some(s) = self.spectators.remove(&a) {
+                self.spec_ids.remove(&s.id);
+            }
+        }
         let mut timed = Vec::new();
         self.queue.retain(|a, q| {
             if now.duration_since(q.since).as_secs_f32() > QUEUE_MAX {
@@ -347,7 +454,7 @@ fn main() {
         eprintln!("melee_relay: listening on udp {}", s.local_addr().unwrap());
     }
     let seed = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(1, |d| d.as_nanos() as u64) | 1;
-    let mut sv = Server { socks, rooms: HashMap::new(), by_addr: HashMap::new(), queue: HashMap::new(), rng: seed ^ std::process::id() as u64, relayed: 0, quiet: args.iter().any(|a| a == "--quiet") };
+    let mut sv = Server { spec_rooms: HashMap::new(), spectators: HashMap::new(), spec_ids: HashMap::new(), next_spec: 0, socks, rooms: HashMap::new(), by_addr: HashMap::new(), queue: HashMap::new(), rng: seed ^ std::process::id() as u64, relayed: 0, quiet: args.iter().any(|a| a == "--quiet") };
     let mut last_reap = Instant::now();
     let mut buf = [0u8; 2048];
     loop {

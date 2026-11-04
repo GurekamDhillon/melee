@@ -56,6 +56,9 @@ mod netmatch;
 mod netplay;
 mod play_net;
 mod slp_export;
+mod spectate;
+mod replay_ctl;
+mod replays;
 mod np_lockstep;
 mod np_mux;
 mod np_early;
@@ -450,6 +453,13 @@ fn main() -> ExitCode {
         Some("netplay") => netplay::netplay(&args),
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
+        Some("replays") => replays::replays(&args),
+        Some("spectate") => {
+            // `melee spectate TARGET [play options]` = `melee play --spectate TARGET ...`
+            let mut a = vec!["play".to_string(), "--spectate".to_string()];
+            a.extend(args.iter().skip(1).cloned());
+            play::play(&a)
+        }
         Some("dat-dump") => retail::dat_dump(&args),
         Some(x) => {
             eprintln!("melee: unknown command {x:?} (selftest | hashlog | golden | diff | view-golden)");

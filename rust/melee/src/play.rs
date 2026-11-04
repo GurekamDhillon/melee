@@ -82,7 +82,7 @@ const ROSTER: &[(&str, &str, u8, &str)] = &[
 const CSS_COLS: usize = 9;
 /// Every retail VS stage by its external StKind (gw_sl_stage_names; Akaneia 21 is not on the disc and Icetop 26
 /// asserts in the C build too), with the display name and a known problem (docs/rust-port/notes/parity.md section 4).
-const STAGES: &[(i32, &str, &str)] = &[
+pub(crate) const STAGES: &[(i32, &str, &str)] = &[
     (32, "FINAL DESTINATION", ""),
     (31, "BATTLEFIELD", ""),
     (8, "YOSHI'S STORY", ""),
@@ -1429,12 +1429,38 @@ pub fn play(args: &[String]) -> ExitCode {
     // `--replay FILE`: the file's play options decide the boot (the command line's window options still apply)
     let mut feed = None;
     let merged: Vec<String>;
-    let args: &[String] = match args.iter().position(|a| a == "--replay").and_then(|i| args.get(i + 1)) {
+    // `--spectate HOST:PORT | relay:HOST:PORT/CODE`: a read-only spectator of a netplay match (spectate.rs): the host's
+    // confirmed stream is played back like a replay that grows
+    let mut spec_client = None;
+    let spec_target = args.iter().position(|a| a == "--spectate").and_then(|i| args.get(i + 1)).cloned();
+    let replay_src = args.iter().position(|a| a == "--replay").and_then(|i| args.get(i + 1)).cloned().or(spec_target.clone());
+    let args: &[String] = match replay_src.as_ref() {
         Some(path) => {
-            let r = match std::fs::read(path).map_err(|e| format!("{path}: {e}")).and_then(|d| crate::play_net::Replay::parse(&d)) {
+            let r = if let Some(t) = &spec_target {
+                let mods = match crate::play_net::mods_identity(args) {
+                    Ok(m) => m,
+                    Err(e) => {
+                        eprintln!("play: --spectate: mods: {e}");
+                        return ExitCode::FAILURE;
+                    }
+                };
+                let gv = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+                match crate::spectate::SpecClient::connect(t, crate::play_net::build_hash(), mods, std::time::Duration::from_secs(gv("--spec-timeout").and_then(|v| v.parse().ok()).unwrap_or(30))) {
+                    Ok((mut c, r)) => {
+                        c.delay = gv("--spec-delay").and_then(|v| v.parse().ok()).unwrap_or(6);
+                        c.catch_up = gv("--spec-catch-up").and_then(|v| v.parse().ok()).unwrap_or(16).max(1);
+                        spec_client = Some(c);
+                        Ok(r)
+                    }
+                    Err(e) => Err(e),
+                }
+            } else {
+                std::fs::read(path).map_err(|e| format!("{path}: {e}")).and_then(|d| crate::play_net::Replay::parse(&d))
+            };
+            let r = match r {
                 Ok(r) => r,
                 Err(e) => {
-                    eprintln!("play: --replay: {e}");
+                    eprintln!("play: {}: {e}", if spec_target.is_some() { "--spectate" } else { "--replay" });
                     return ExitCode::from(2);
                 }
             };
@@ -1442,7 +1468,7 @@ pub fn play(args: &[String]) -> ExitCode {
             let mut a: Vec<String> = Vec::new();
             let mut i = 0;
             while i < args.len() {
-                if args[i] == "--replay" || args[i] == "--record" || args[i] == "--netplay" {
+                if args[i] == "--replay" || args[i] == "--record" || args[i] == "--netplay" || args[i] == "--spectate" || args[i] == "--np-spectate" || args[i] == "--np-spectate-relay" {
                     i += if args[i] == "--netplay" && args.get(i + 1).map_or(false, |m| m == "join") { 3 } else { 2 };
                     continue;
                 }
@@ -1453,6 +1479,10 @@ pub fn play(args: &[String]) -> ExitCode {
             while let Some(x) = it.next() {
                 if x == "--match" && r.meta("np_scene").is_some() {
                     it.next(); // a netplay match comes from its agreed scene
+                    continue;
+                }
+                if x == "--mods" && spec_target.is_some() {
+                    it.next(); // the host's mods path: the spectator's own --mods (handshake-checked to be the same set) applies
                     continue;
                 }
                 a.push(x.clone());
@@ -1640,7 +1670,9 @@ pub fn play(args: &[String]) -> ExitCode {
             }
         }
         let sync_k = std::env::var("MELEE_PLAY_SYNCTEST").ok().and_then(|v| v.parse::<i32>().ok()).filter(|&k| k > 0);
-        let rollback_mode = net.is_some() || sync_k.is_some() || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0);
+        // --replay-seekable / a seek control: the playback snapshots the match (the rollback allocator modes)
+        let seekable = feed.is_some() && (has("--replay-seekable") || get("--replay-seek").is_some() || get("--replay-ctl").is_some_and(|c| c.contains("seek") || c.contains("back")));
+        let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0);
         if rollback_mode {
             crate::play_net::prepare_rollback_run();
             // the GX shim (a static the snapshots restore) with all its buffers and Arcs in the arena from the start
@@ -1683,6 +1715,38 @@ pub fn play(args: &[String]) -> ExitCode {
             log(&format!("offline input delay {} frames (matches only)", rp.delay_line.frames));
         }
         rp.feed = feed;
+        rp.spec_client = spec_client;
+        if rp.feed.is_some() {
+            rp.ctl = crate::replay_ctl::Ctl::from_args(args);
+            if let Some(c) = &rp.ctl {
+                log(&format!("replay controls: {}{}", c.state(), if rp.rollback_mode { ", seek snapshots on" } else { ", seek forward only (--replay-seekable for snapshots)" }));
+            }
+        }
+        // `--np-spectate PORT [--np-spectate-bind ADDR]` / `--np-spectate-relay HOST:PORT [--np-spectate-code C]`: the
+        // match host serves read-only spectators (spectate.rs); the stream is the confirmed replay
+        if net.as_ref().is_some_and(|n| n.host) && (get("--np-spectate").is_some() || get("--np-spectate-relay").is_some()) {
+            let port: u16 = get("--np-spectate").and_then(|v| v.parse().ok()).unwrap_or(0);
+            let bind = get("--np-spectate-bind").unwrap_or_else(|| "127.0.0.1".into());
+            let mods = crate::play_net::mods_identity(args).map(|m| m.0).unwrap_or(0);
+            match crate::spectate::SpecServer::open(&bind, port, get("--np-spectate-relay").as_deref(), get("--np-spectate-code").as_deref(), crate::play_net::build_hash(), mods) {
+                Ok(s) => rp.spec_server = Some(s),
+                Err(e) => {
+                    eprintln!("play: {e}");
+                    return ExitCode::FAILURE;
+                }
+            }
+            if rp.rec.is_none() {
+                let mut meta = vec![("seed".to_string(), seed.to_string()), ("build".to_string(), env!("MELEE_GIT_HASH").to_string())];
+                if np_css {
+                    meta.push(("np_css".into(), "1".into()));
+                }
+                if let Some(sc) = &np_scene {
+                    meta.push(("np_scene".into(), sc.clone()));
+                }
+                meta.push(("np_role".into(), "host".into()));
+                rp.rec = Some((String::new(), crate::play_net::Replay { flags: rollback_mode as u16, args: crate::play_net::replay_args(&eff_args), meta, ticks: Vec::new() }));
+            }
+        }
         rp.sync = sync_k.map(|k| crate::play_net::PlaySync { st: melee_net::session::SyncTest::new(k), g: None });
         if let Some(path) = get("--record") {
             let path = if path == "auto" {

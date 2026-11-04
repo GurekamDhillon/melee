@@ -99,6 +99,15 @@ pub struct RetailPlay {
     /// gd-ui-v1 presentation mods (MELEE_WASM_MODS, modules importing gd_ui): harness-owned, never in the arena, so a
     /// savestate load or rollback never rewinds them. None with no UI mod: nothing runs and nothing is drawn.
     pub ui: Option<melee_modhost::ui::PresHost>,
+    /// `--np-spectate`: the match host's spectate service (spectate.rs).
+    pub spec_server: Option<crate::spectate::SpecServer>,
+    /// `--spectate`: this run is a spectator; the feed's records arrive from the host.
+    pub spec_client: Option<crate::spectate::SpecClient>,
+    /// Replay playback controls (replay_ctl.rs).
+    pub ctl: Option<crate::replay_ctl::Ctl>,
+    rticks: u64,
+    seek_base: Option<melee_engine::snapshot::Base>,
+    seek_snaps: Vec<(usize, melee_engine::snapshot::SnapRef, u32, bool)>,
 }
 
 impl RetailPlay {
@@ -109,6 +118,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -375,70 +385,7 @@ impl RetailPlay {
         entered
     }
 
-    /// The run ends: the replay is written, a failure is noted for the exit code.
-    fn on_quit(&mut self) {
-        if !self.quit {
-            return;
-        }
-        self.save_replay();
-        crate::slp_export::finish();
-        if let Some(f) = &self.failed {
-            log(&format!("failed: {f}"));
-            crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
-        }
-    }
-
-    /// Write the `--record` replay (at the end of the run).
-    pub fn save_replay(&mut self) {
-        if let Some((p, r)) = self.rec.take() {
-            match r.write(&p) {
-                Ok(()) => {
-                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
-                    crate::play_net::slp_from_replay(&p, &self.iso);
-                }
-                Err(e) => log(&format!("replay: {e}")),
-            }
-        }
-    }
-
-    /// The presets into the saved VS rules (what the rules menu edits and `gm_InitVsMode` reads).
-    fn apply_rules(&self) {
-        let p = &self.presets;
-        unsafe {
-            let gr = melee_modes::tu::gmmain_lib::gmMainLib_GetGameRules();
-            let gp = melee_modes::tu::gmmain_lib::gmMainLib_GetGamePrefs();
-            if let Some(n) = p.stocks {
-                (*gr).mode = 1;
-                (*gr).stock_count = n.clamp(1, 99) as u8;
-            }
-            if let Some(s) = p.time_secs {
-                if p.stocks.is_none() {
-                    (*gr).mode = 0;
-                }
-                let minutes = ((s.max(1) + 59) / 60) as u8;
-                (*gr).time_limit = minutes;
-                (*gr).stock_time_limit = minutes;
-            }
-            if let Some(i) = p.items {
-                (*gp).item_freq = if i == 0 { 0xFF } else { (i - 1) as u8 };
-            }
-        }
-    }
-
-    fn emit_shot(&mut self) {
-        let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
-        // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
-        let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
-        let path = dir.join(format!("retail_{name}.png"));
-        match write_png(&path, w, h, &px) {
-            Ok(()) => log(&format!("screenshot {}", path.display())),
-            Err(e) => log(&format!("screenshot: {e}")),
-        }
-    }
-}
-
-impl Game for RetailPlay {
-    fn tick(&mut self, pads: &mut PadSystem) {
+    fn tick_once(&mut self, pads: &mut PadSystem) {
         let _sampled = crate::prof::Gate::enter();
         if self.quit {
             return;
@@ -464,7 +411,7 @@ impl Game for RetailPlay {
         if let Some(f) = self.feed.as_mut() {
             if f.at >= f.r.ticks.len() {
                 log(&f.summary());
-                if f.bad > 0 {
+                if f.bad > 0 || f.rebad > 0 {
                     self.failed = Some(format!("replay diverged at tick {}", f.first_bad.map_or(0, |b| b.0)));
                 }
                 self.quit = true;
@@ -655,6 +602,239 @@ impl Game for RetailPlay {
         }
     }
 
+
+    /// The match host's spectate service: this tick's confirmed records out.
+    fn spec_serve(&mut self) {
+        if let (Some(ss), Some(r)) = (self.spec_server.as_mut(), self.rec.as_ref()) {
+            let done = self.quit || self.net.as_ref().is_some_and(|n| matches!(n.phase, crate::play_net::NetPhase::Done));
+            ss.update(&r.1, done);
+        }
+    }
+
+    /// A replay / spectator render tick: the stream in, the controls, then 0..n feed ticks.
+    fn tick_playback(&mut self, pads: &mut PadSystem) {
+        if self.quit {
+            return;
+        }
+        if let (Some(sc), Some(f)) = (self.spec_client.as_mut(), self.feed.as_mut()) {
+            sc.poll(&mut f.r.ticks);
+            if sc.lost {
+                log(&f.summary());
+                self.failed = Some("spectate: the stream stopped".into());
+                self.quit = true;
+                self.on_quit();
+                return;
+            }
+        }
+        self.rticks += 1;
+        let mut n = 1usize;
+        let mut ff = false;
+        if let Some(c) = self.ctl.as_mut() {
+            c.on_tick(self.rticks);
+            if self.ui.is_none() && !self.headless {
+                match pads.ui_keys.as_mut() {
+                    Some(q) => {
+                        c.keys(q);
+                        q.clear();
+                    }
+                    None => pads.ui_keys = Some(Vec::with_capacity(64)),
+                }
+            }
+        }
+        self.do_seek();
+        if let Some(c) = self.ctl.as_mut() {
+            if c.ff_to.is_some() {
+                ff = true;
+                n = if self.headless { usize::MAX } else { 240 };
+            } else {
+                n = c.steps();
+            }
+        }
+        if let (Some(sc), Some(f)) = (self.spec_client.as_ref(), self.feed.as_ref()) {
+            if !sc.ended() {
+                // the delay buffer: never closer than `delay` ticks to the newest record
+                let ready = f.r.ticks.len().saturating_sub(sc.delay);
+                let behind = ready.saturating_sub(f.at);
+                n = if behind > 2 { n.max(behind.min(sc.catch_up)) } else { n.min(behind) };
+                if behind > 2 * sc.catch_up && self.rticks % 60 == 0 {
+                    log(&format!("spectate: catching up, {behind} ticks behind"));
+                }
+            }
+        }
+        let mut k = 0;
+        while k < n {
+            if let (true, Some(c), Some(f)) = (ff, self.ctl.as_mut(), self.feed.as_ref()) {
+                if c.ff_to.is_some_and(|t| f.at >= t || f.at >= f.r.ticks.len()) {
+                    c.ff_to = None;
+                    log(&format!("replay ctl: at tick {} ({})", f.at, c.state()));
+                    break;
+                }
+            }
+            if let Some(c) = self.ctl.as_ref() {
+                if self.engine().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS) {
+                    c.apply_camera();
+                }
+            }
+            self.tick_once(pads);
+            self.seek_snapshot();
+            k += 1;
+            if self.quit {
+                break;
+            }
+        }
+    }
+
+    /// A seekable playback: a snapshot of the VS match every `snap_every` feed ticks (the base lives for one match).
+    fn seek_snapshot(&mut self) {
+        let Some(c) = self.ctl.as_ref() else { return };
+        if !self.rollback_mode {
+            return;
+        }
+        let every = c.snap_every;
+        let in_vs = self.e.as_ref().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS && e.frames > ARM_FRAMES);
+        if !in_vs {
+            if self.seek_base.is_some() {
+                self.seek_snaps.clear();
+                self.seek_base = None;
+            }
+            return;
+        }
+        let Some(f) = self.feed.as_ref() else { return };
+        let at = f.at;
+        let due = self.seek_snaps.is_empty() || (at % every == 0 && !self.seek_snaps.iter().any(|s| s.0 == at));
+        if !due {
+            return;
+        }
+        let base = self.seek_base.get_or_insert_with(melee_engine::snapshot::Base::capture);
+        let e = self.e.as_ref().unwrap();
+        let snap = base.save();
+        self.seek_snaps.push((at, snap, e.frames, e.ended));
+        self.seek_snaps.sort_by_key(|s| s.0);
+    }
+
+    /// A pending seek: forward = play on unpaced; back = load the nearest snapshot at or before it, then forward.
+    fn do_seek(&mut self) {
+        use crate::replay_ctl::Seek;
+        let (Some(c), Some(f)) = (self.ctl.as_mut(), self.feed.as_mut()) else { return };
+        let Some(s) = c.seek.take() else { return };
+        let at = f.at;
+        let len = f.r.ticks.len();
+        let target = match s {
+            Seek::Tick(t) => t,
+            Seek::Rel(d) => (at as i64 + d).max(0) as usize,
+            Seek::First => self.seek_snaps.first().map_or(at, |x| x.0),
+            Seek::MatchFrame(m) => match f.r.ticks.iter().enumerate().filter(|t| t.1 .1 != 0).nth(m as usize) {
+                Some((i, _)) => i + 1,
+                None => len,
+            },
+        }
+        .min(len);
+        if target >= at {
+            c.ff_to = Some(target);
+            log(&format!("replay ctl: seek to tick {target} (forward from {at})"));
+            return;
+        }
+        let Some(sn) = self.seek_snaps.iter().rev().find(|x| x.0 <= target).cloned() else {
+            let why = if !self.rollback_mode {
+                "this playback is not seekable".to_string()
+            } else if self.seek_snaps.is_empty() {
+                "snapshots cover the VS match only".to_string()
+            } else {
+                format!("this match's snapshots start at tick {}", self.seek_snaps[0].0)
+            };
+            log(&format!("replay ctl: seek to tick {target}: no snapshot at or before it ({why}); staying at {at}"));
+            return;
+        };
+        let (Some(base), Some(e)) = (self.seek_base.as_ref(), self.e.as_mut()) else { return };
+        base.load(&sn.1);
+        e.frames = sn.2;
+        e.ended = sn.3;
+        f.at = sn.0;
+        c.ff_to = Some(target);
+        log(&format!("replay ctl: seek to tick {target}: snapshot of tick {} loaded (from {at})", sn.0));
+    }
+
+    /// The run ends: the replay is written, a failure is noted for the exit code.
+    fn on_quit(&mut self) {
+        if !self.quit {
+            return;
+        }
+        if let (Some(ss), Some(r)) = (self.spec_server.as_mut(), self.rec.as_ref()) {
+            ss.drain(&r.1, 8);
+        }
+        if let Some(sc) = self.spec_client.as_ref() {
+            sc.bye();
+        }
+        self.save_replay();
+        crate::slp_export::finish();
+        if let Some(f) = &self.failed {
+            log(&format!("failed: {f}"));
+            crate::play_net::RUN_FAILED.store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+    }
+
+    /// Write the `--record` replay (at the end of the run).
+    pub fn save_replay(&mut self) {
+        if let Some((p, r)) = self.rec.take() {
+            if p.is_empty() {
+                return; // kept only for the spectators
+            }
+            match r.write(&p) {
+                Ok(()) => {
+                    log(&format!("replay: {} ticks written to {p}", r.ticks.len()));
+                    crate::play_net::slp_from_replay(&p, &self.iso);
+                }
+                Err(e) => log(&format!("replay: {e}")),
+            }
+        }
+    }
+
+    /// The presets into the saved VS rules (what the rules menu edits and `gm_InitVsMode` reads).
+    fn apply_rules(&self) {
+        let p = &self.presets;
+        unsafe {
+            let gr = melee_modes::tu::gmmain_lib::gmMainLib_GetGameRules();
+            let gp = melee_modes::tu::gmmain_lib::gmMainLib_GetGamePrefs();
+            if let Some(n) = p.stocks {
+                (*gr).mode = 1;
+                (*gr).stock_count = n.clamp(1, 99) as u8;
+            }
+            if let Some(s) = p.time_secs {
+                if p.stocks.is_none() {
+                    (*gr).mode = 0;
+                }
+                let minutes = ((s.max(1) + 59) / 60) as u8;
+                (*gr).time_limit = minutes;
+                (*gr).stock_time_limit = minutes;
+            }
+            if let Some(i) = p.items {
+                (*gp).item_freq = if i == 0 { 0xFF } else { (i - 1) as u8 };
+            }
+        }
+    }
+
+    fn emit_shot(&mut self) {
+        let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
+        // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
+        let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
+        let path = dir.join(format!("retail_{name}.png"));
+        match write_png(&path, w, h, &px) {
+            Ok(()) => log(&format!("screenshot {}", path.display())),
+            Err(e) => log(&format!("screenshot: {e}")),
+        }
+    }
+}
+
+impl Game for RetailPlay {
+    fn tick(&mut self, pads: &mut PadSystem) {
+        if self.feed.is_none() {
+            self.tick_once(pads);
+            self.spec_serve();
+            return;
+        }
+        self.tick_playback(pads);
+    }
+
     fn set_interp(&mut self, on: bool) {
         self.interp = on;
     }
@@ -734,7 +914,7 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
     if headless {
         let mut pads = PadSystem::headless();
         let limit = rp.max_frames.unwrap_or(60 * 600);
-        let ticks = if rp.net.is_some() {
+        let ticks = if rp.net.is_some() || rp.spec_client.is_some() {
             // netplay is real time: one tick per 1/60 s
             let mut n = 0u64;
             let t0 = std::time::Instant::now();

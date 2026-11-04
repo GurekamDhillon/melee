@@ -315,7 +315,7 @@ pub struct Replay {
 }
 
 const PAD_BYTES: usize = 16;
-const REC_BYTES: usize = 4 * PAD_BYTES + 4;
+pub const REC_BYTES: usize = 4 * PAD_BYTES + 4;
 
 impl Replay {
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -334,12 +334,7 @@ impl Replay {
         o.extend_from_slice(h.as_bytes());
         o.extend_from_slice(&(self.ticks.len() as u32).to_le_bytes());
         for (pads, hash) in &self.ticks {
-            for p in pads {
-                o.extend_from_slice(&p.button.to_le_bytes());
-                o.extend_from_slice(&[p.stickX as u8, p.stickY as u8, p.substickX as u8, p.substickY as u8, p.triggerLeft, p.triggerRight, p.analogA, p.analogB, p.err as u8, 0]);
-                o.extend_from_slice(&p.extButton.to_le_bytes());
-            }
-            o.extend_from_slice(&hash.to_le_bytes());
+            encode_tick(pads, *hash, &mut o);
         }
         o
     }
@@ -374,28 +369,12 @@ impl Replay {
         }
         r.ticks.reserve(n);
         for _ in 0..n {
-            let mut pads = [PADStatus::zeroed(); 4];
-            for p in pads.iter_mut() {
-                let b = &d[o..o + PAD_BYTES];
-                p.button = u16::from_le_bytes([b[0], b[1]]);
-                p.stickX = b[2] as i8;
-                p.stickY = b[3] as i8;
-                p.substickX = b[4] as i8;
-                p.substickY = b[5] as i8;
-                p.triggerLeft = b[6];
-                p.triggerRight = b[7];
-                p.analogA = b[8];
-                p.analogB = b[9];
-                p.err = b[10] as i8;
-                p.extButton = u32::from_le_bytes([b[12], b[13], b[14], b[15]]);
-                o += PAD_BYTES;
-            }
-            let hash = u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]]);
-            o += 4;
-            r.ticks.push((pads, hash));
+            r.ticks.push(decode_tick(&d[o..o + REC_BYTES]));
+            o += REC_BYTES;
         }
         Ok(r)
     }
+
 
     pub fn meta(&self, k: &str) -> Option<&str> {
         self.meta.iter().find(|m| m.0 == k).map(|m| m.1.as_str())
@@ -407,6 +386,36 @@ impl Replay {
         }
         std::fs::write(path, self.to_bytes()).map_err(|e| format!("{path}: {e}"))
     }
+}
+
+/// One tick record (REC_BYTES): the four pads and the hash.
+pub fn encode_tick(pads: &[PADStatus; 4], hash: u32, o: &mut Vec<u8>) {
+    for p in pads {
+        o.extend_from_slice(&p.button.to_le_bytes());
+        o.extend_from_slice(&[p.stickX as u8, p.stickY as u8, p.substickX as u8, p.substickY as u8, p.triggerLeft, p.triggerRight, p.analogA, p.analogB, p.err as u8, 0]);
+        o.extend_from_slice(&p.extButton.to_le_bytes());
+    }
+    o.extend_from_slice(&hash.to_le_bytes());
+}
+
+pub fn decode_tick(d: &[u8]) -> ([PADStatus; 4], u32) {
+    let mut pads = [PADStatus::zeroed(); 4];
+    for (i, p) in pads.iter_mut().enumerate() {
+        let b = &d[i * PAD_BYTES..(i + 1) * PAD_BYTES];
+        p.button = u16::from_le_bytes([b[0], b[1]]);
+        p.stickX = b[2] as i8;
+        p.stickY = b[3] as i8;
+        p.substickX = b[4] as i8;
+        p.substickY = b[5] as i8;
+        p.triggerLeft = b[6];
+        p.triggerRight = b[7];
+        p.analogA = b[8];
+        p.analogB = b[9];
+        p.err = b[10] as i8;
+        p.extButton = u32::from_le_bytes([b[12], b[13], b[14], b[15]]);
+    }
+    let o = 4 * PAD_BYTES;
+    (pads, u32::from_le_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]]))
 }
 
 thread_local! {
@@ -464,14 +473,32 @@ pub struct ReplayFeed {
     pub bad: u32,
     pub first_bad: Option<(usize, u32, u32)>,
     pub last_hash: u32,
+    /// ticks hashed before (a seek back re-plays them): compared again, counted apart
+    pub checked_to: usize,
+    pub rehashed: u32,
+    pub rebad: u32,
 }
 
 impl ReplayFeed {
     pub fn new(r: Replay) -> Self {
-        ReplayFeed { r, at: 0, hashed: 0, bad: 0, first_bad: None, last_hash: 0 }
+        ReplayFeed { r, at: 0, hashed: 0, bad: 0, first_bad: None, last_hash: 0, checked_to: 0, rehashed: 0, rebad: 0 }
     }
     pub fn check(&mut self, i: usize, got: u32) {
         let want = self.r.ticks[i].1;
+        if i < self.checked_to {
+            if want != 0 || got != 0 {
+                self.rehashed += 1;
+                self.last_hash = got;
+                if want != got {
+                    if self.rebad == 0 {
+                        log(&format!("replay: hash mismatch at re-played tick {i}: file {want:08X}, playback {got:08X}"));
+                    }
+                    self.rebad += 1;
+                }
+            }
+            return;
+        }
+        self.checked_to = i + 1;
         if want != 0 || got != 0 {
             self.hashed += 1;
             self.last_hash = got;
@@ -486,13 +513,14 @@ impl ReplayFeed {
     }
     pub fn summary(&self) -> String {
         format!(
-            "replay: {} ticks played, {} match frames hashed, {} mismatches{}, final hash {:08X} (file {:08X})",
+            "replay: {} ticks played, {} match frames hashed, {} mismatches{}, final hash {:08X} (file {:08X}){}",
             self.at,
             self.hashed,
             self.bad,
             self.first_bad.map_or(String::new(), |b| format!(" (first at tick {})", b.0)),
             self.last_hash,
-            self.r.ticks.iter().rev().find(|t| t.1 != 0).map_or(0, |t| t.1)
+            self.r.ticks.iter().rev().find(|t| t.1 != 0).map_or(0, |t| t.1),
+            if self.rehashed > 0 { format!("; after seeks {} frames re-played, {} re-play mismatches", self.rehashed, self.rebad) } else { String::new() }
         )
     }
 }

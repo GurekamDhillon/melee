@@ -426,7 +426,7 @@ impl Overlay {
         // tabs
         let mut tx = x + 10.0;
         for (i, pg) in self.pages.iter().enumerate() {
-            let tw = melee_gx::ui::measure(pg.name, cmd::ROLES[0].0) + 10.0;
+            let tw = a.measure(pg.name, cmd::style(0)) + 10.0;
             if i == self.page {
                 b.rect(&p, a, tx, y + 40.0, tw, 18.0, accent, 0.0);
             }

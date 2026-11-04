@@ -44,7 +44,7 @@ pub mod ext {
         ft_PlaySFX(fp: &mut Fighter, sfx: i32, vol: i32, pan: i32) = crate::hooks::play_sfx;
         it_80291CCC(item: *mut HSD_GObj, out: &mut Vec3) = |item: *mut HSD_GObj, out: &mut Vec3| { unsafe { melee_items::tu::itsscope::it_80291CCC(item as _, out as _); } };
         it_80291FA8(item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32) = |item: *mut HSD_GObj, pos: &mut Vec3, n: i32, facing: f32| { unsafe { melee_items::tu::itsscope::it_80291FA8(item as _, pos as _, n as _, facing as _); } };
-        efSync_Spawn(id: i32, g: G, pos: &mut Vec3, facing: Option<&mut f32>) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (efsync.c; variadic, facing = optional &fp->facing_dir)");
+        efSync_Spawn(id: i32, g: G, pos: &mut Vec3, facing: Option<&mut f32>) = |a0: i32, a1: G, a2: &mut Vec3, a3: Option<&mut f32>| unsafe { let _ = melee_world::tu::efn::efsync::efSync_Spawn(a0 as _, a1 as _, &[a2 as *mut Vec3 as *const core::ffi::c_void, a3.map_or(core::ptr::null(), |r: &mut f32| r as *mut f32 as *const core::ffi::c_void)]); };
     }
 }
 

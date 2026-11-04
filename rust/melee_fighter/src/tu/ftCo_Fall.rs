@@ -46,7 +46,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_ClampAirDrift(fp: &mut Fighter) = crate::ftcommon::clamp_air_drift;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        HSD_JObjAnimAll(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnimAll (jobj.c)");
+        HSD_JObjAnimAll(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _) };
         ftAnim_8006FE9C(fp: &mut Fighter, part: u32, a: f32, b: f32) = |fp: &mut Fighter, part: u32, a: f32, b: f32| { unsafe { crate::tu::ftanim::ftAnim_8006FE9C(fp as _, part as _, a as _, b as _); } };
         ftAnim_8006FF74(fp: &mut Fighter, part: u32) = |fp: &mut Fighter, part: u32| { unsafe { crate::tu::ftanim::ftAnim_8006FF74(fp as _, part as _); } };
         ftAnim_8006EDD0(fp: &mut Fighter, smid: i32, frame: f32, rate: f32) = |fp: &mut Fighter, smid: i32, frame: f32, rate: f32| { unsafe { crate::tu::ftanim::ftAnim_8006EDD0(fp as _, smid as _, frame as _, rate as _); } };

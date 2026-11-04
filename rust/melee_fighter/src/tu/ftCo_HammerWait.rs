@@ -33,7 +33,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
         ftColl_8007AFF8(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
-        ft_800892A0(g: G) = |_| todo!("ft_800892A0: installed by melee_link");
+        ft_800892A0(g: G) = |a0| unsafe { crate::tu::ft_0881::ft_800892A0(a0 as _) };
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         it_8027B070(i: I, g: G) = |i: I, g: G| { unsafe { melee_items::tu::it_279C::it_8027B070(i as _, g as _); } };
         ftCo_800C5A50(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_HammerJump::ftCo_800C5A50(g as _) as _ } };

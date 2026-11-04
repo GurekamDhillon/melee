@@ -103,7 +103,7 @@ pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     src.set_is_sub_fighter(dst.is_sub_fighter());
     dst.set_is_sub_fighter(tmp_bit);
     ext::Fighter_UnkInitReset_80067C98(dst);
-    crate::ftcommon2::ftcommon_8007e2fc(fpg(dst_gobj));
+    crate::tu::ftcommon::ftcommon_8007e2fc(fpg(dst_gobj));
     let (src, dst) = (fpg(gobj), fpg(dst_gobj));
     dst.cur_pos = src.cur_pos;
     dst.prev_pos = src.prev_pos;

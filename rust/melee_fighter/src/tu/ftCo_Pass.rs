@@ -37,9 +37,9 @@ pub mod ext {
         ftCo_800C5240(g: G) -> bool = crate::tu::ftCo_HammerWait::ftCo_800C5240;
         ftCo_800C60C8(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftco_0c60::ftco_800c60c8(g as _) as _ } };
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
-        ftUcf_FlickCounter(port: i32) -> i32 = |_| todo!("ftUcf_FlickCounter: installed by melee_link");
-        ftCommon_8007D5D4(fp: &mut Fighter) = |_| todo!("ftCommon_8007D5D4: installed by melee_link");
-        ftCommon_ClampAirDrift(fp: &mut Fighter) = |_| todo!("ftCommon_ClampAirDrift: installed by melee_link");
+        ftUcf_FlickCounter(port: i32) -> i32 = |a0| crate::tu::fighter::ftUcf_FlickCounter(a0);
+        ftCommon_8007D5D4(fp: &mut Fighter) = |a0| crate::tu::ftcommon::ftcommon_8007d5d4(a0);
+        ftCommon_ClampAirDrift(fp: &mut Fighter) = |a0| crate::tu::ftcommon::ftCommon_ClampAirDrift(a0);
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCo_Fall_Enter(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter;

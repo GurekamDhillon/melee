@@ -33,9 +33,9 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_GetLStickAngle(fp: &Fighter) -> f32 = crate::ftcommon3::ftco_get_lstick_angle;
-        ftCo_80094E54(fp: &Fighter) -> bool = |_| todo!("TODO(port) ftCo_80094E54 (ftCo_ItemThrow.c)");
+        ftCo_80094E54(fp: &Fighter) -> bool = |a0| crate::tu::ftCo_ItemThrow::ftCo_80094E54(a0);
         ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
-        ft_800892A0(g: G) = |_| todo!("ft_800892A0: installed by melee_link");
+        ft_800892A0(g: G) = |a0| unsafe { crate::tu::ft_0881::ft_800892A0(a0 as _) };
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         ftGw_AttackLw3_Enter(g: G) = |_| todo!("TODO(port) ftGw_AttackLw3_Enter (ftgamewatch)");
         ftpickupitem_80094790(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftpickupitem::ftpickupitem_80094790(g as _) as _ } };

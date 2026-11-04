@@ -34,10 +34,10 @@ pub mod ext {
         ftCo_800C1D38(g: G) -> bool = crate::tu::ftCo_PassiveWall::ftCo_800C1D38;
         ftKb_SpecialN_800F1F1C(g: G, ofs: &mut Vec3) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F1F1C (ftKb_SpecialN.c)");
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, ...)`: kind 5 passes `Vec3*` then `float*`.
-        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, jobj: *mut HSD_JObj, a1: *mut core::ffi::c_void, a2: *mut core::ffi::c_void) = |_, _, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (ef/efasync.c)");
-        Camera_RequestQuake(kind: i32, pos: *mut Vec) = |_, _| todo!("TODO(port) Camera_RequestQuake (cm/camera.c)");
+        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, jobj: *mut HSD_JObj, a1: *mut core::ffi::c_void, a2: *mut core::ffi::c_void) = |a0, a1, a2, a3, a4, a5, a6| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void, a6 as *const core::ffi::c_void]); };
+        Camera_RequestQuake(kind: i32, pos: *mut Vec) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
-        lbVector_Add_xy(a: &mut Vec3, b: &Vec3) = |_, _| todo!("lbVector_Add_xy: installed by melee_link");
+        lbVector_Add_xy(a: &mut Vec3, b: &Vec3) = |a0, a1| unsafe { let _ = melee_runtime::tu::lbvector::lbVector_Add_xy(a0 as *mut _, a1 as *const _ as *mut _); };
         lbVector_Mirror(a: &mut Vec3, n: &Vec3) = |a: &mut Vec3, n: &Vec3| { unsafe { melee_runtime::tu::lbvector::lbVector_Mirror(a as *mut _ as *mut _, n as *const _ as *mut _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ft_80081F2C(g: G) -> bool = crate::tu::ft_081b::ft_80081f2c;

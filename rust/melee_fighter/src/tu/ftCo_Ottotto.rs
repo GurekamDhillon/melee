@@ -60,9 +60,9 @@ pub mod ext {
         mpFloorGetLeft(line_id: i32, pos: &mut Vec3) = |line_id: i32, pos: &mut Vec3| unsafe { melee_world::tu::mplib::mpFloorGetLeft(line_id, pos as _); };
         // rp3-end
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
-        ft_80088770(fp: &mut Fighter) = |_| todo!("ft_80088770: installed by melee_link");
-        ft_800887CC(fp: &mut Fighter) = |_| todo!("ft_800887CC: installed by melee_link");
-        ft_80088328(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_80088328: installed by melee_link");
+        ft_80088770(fp: &mut Fighter) = |a0| { let _ = crate::tu::ft_0881::ft_80088770_fp(a0); };
+        ft_800887CC(fp: &mut Fighter) = |a0| crate::tu::ft_0881::ft_800887cc(a0);
+        ft_80088328(fp: &mut Fighter, sfx: i32, vol: u8, pan: u8) = |a0, a1, a2, a3| { let _ = crate::tu::ft_0881::ft_80088328_fp(a0, a1, a2, a3); };
     }
 }
 

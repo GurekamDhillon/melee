@@ -95,29 +95,47 @@ Hidden launcher, `LOCALAPPDATA` redirected so the user's remembered ISO is untou
 mapped (window 640x480, scale 2, vsync, volume 3), title -> VS -> match -> results, `quit after 1 matches`,
 `game exit 0`: **LAUNCH OK**.
 
-## 4. Gaps for parity with what his launcher offers
+## 4. Gaps for parity with what his launcher offers (re-checked against rust-port 5138e0ba5, 2026-11-04)
 
-- **Online:** no Slippi lobby (`--lobby-direct`), no P2P Direct (`--p2p-*`, his mu_net protocol: mu-net-feasibility.md), no lobby status
-  JSON. Our netplay (`melee netplay`) is a different protocol.
-- **Mods:** `--mod-iso`/`--mod-gci`/`--mod-base-iso` (20XX TE, m-ex discs like Akaneia/ACE), mod profiles,
-  cosmetic imports, music packs, Gecko codes, the built-in UCF/unlock codes, training packs. Refused today.
-- **Replays:** every match is exported as a Slippi `.slp` into `--replay-dir` (and the `.mrpl` into its `RustPort` subfolder) (`Game_<UTC time>.slp`, net.md "Slippi export"); no `--replay` playback / as-experienced traces.
-- **1P modes** through the retail menus as far as melee_modes has them (onep's work); his launcher assumes all.
-- **Controller mapping:** his per-device binding tables (`pad/gc/ds4/swpro<n>_*` masks), rumble,
-  background input, PhobGCC tools are not read; we use our own pad defaults.
-- **Video/audio extras:** backend choice, fps caps/unlocked, interpolation, DLSS/frame generation, SSAA, CRT and
-  shader presets, separate music volume, audio device/ASIO selection: ignored.
+Sections 5 and 6 closed some of the original list; the merges since 2026-11-03 added engine-side features that his
+launcher cannot reach yet. State per area (code: `rust/melee/src/launcher_compat.rs` unless named):
+
+- **Online:** still no Slippi lobby (`--lobby-direct`, `--lobby-character`), no P2P Direct (`--p2p-*`, his mu_net
+  protocol: mu-net-feasibility.md), no lobby status JSON: all refused (exit 3). Our own online (`melee netplay`, host
+  / join from the retail CSS with rematches, read-only spectators, `melee_relay`; notes/net.md,
+  notes/spectate-replay.md) is a different protocol, reachable from the in-game browser's Online section, not from
+  his launcher.
+- **Mods:** data-only `--mod-iso` plays (section 5); `--mod-gci`, `--mod-dir`, `--mod-profile` and TE packs are
+  refused. Cosmetic imports now exist on our side (`melee cosmetics import`: costume .dat / .usd, mod ZIP, Nucleus
+  vault ZIP, portrait / stock PNG; `cosmetics.rs`, `cosmetics_import.rs`) and skins are picked in the settings
+  overlay or the browser, but nothing maps his cosmetic or music-pack folders. Gameplay codes (UCF and others) are
+  opt-in match rules (`--codes` / `MELEE_CODES`, `melee_core::codes`, notes/gameplay-codes.md); his Gecko lists and
+  code toggles are not read.
+- **Replays:** every match is recorded (`.mrpl` in `--replay-dir`'s `RustPort` subfolder, `.slp` export in the
+  folder). Playback exists in the engine (`melee play --replay`, the browser's Replays section, playback controls),
+  but the launcher's `--replay <slp>` and `--as-experienced` / `--trace` are refused.
+- **1P modes** through the retail menus as far as melee_modes has them; the coverage set (classic, adventure,
+  all-star, target test) passes (STATUS.md).
+- **Controller mapping:** `key_*`, `pad<n>_*`, `gc<n>_*` and `backgroundinput` are read (section 5). Not read: his
+  `ds4<n>_*` / `swpro<n>_*` tables, `rumble`, PhobGCC tools. Our own profiles (deadzones, remaps, box mode + SOCD,
+  `melee_platform::profiles`) are configured through `controllers.ini`, not his file.
+- **Video / audio:** the engine now has an fps cap, render-only interpolation, widescreen, vsync and MSAA, several
+  of them live from the in-game settings overlay (`settings_overlay.rs`, `display.rs`). From his side only
+  `fullscreen`, `widescreen` / `truewidescreen`, `window`, `scale`, `msaa`, `vsync`, `volume` and
+  `backgroundinput` are mapped; `--fps`, `--backend`, `--dlss*`, `--ssao`, `--frame-mode` and the `fps` key are
+  accepted and ignored. Not present at all: backend choice, DLSS / frame generation, SSAA, CRT / shader presets,
+  audio device / ASIO selection, a separate music volume.
+- **Settings button:** `--settings-window` still exits 0 at once. The engine now has its own in-game overlay (F1, or
+  hold D-pad Down and press Start) that writes our settings.cfg, not his `port-settings.ini`.
 - **Saves:** separate card folder (`User\GC\RustPort`); importing his `CardA` .gci files is not done.
-- **Crash flow:** we write `melee_port_crash.txt` but no `.dmp`; the patch keeps reports local. Posting Rust
-  reports anywhere needs Hero's agreement and an engine name on his relay.
-- **Launcher UI/packaging:** no GAME BUILD segment, no `FileVersion` resource on `melee.exe` (his version check
-  skips it), no release-zip layout (`rust\melee.exe`) or updater channel, the in-game settings panel he opens
-  (`--settings-window`) does not exist in ours.
+- **Crash flow:** we write `melee_port_crash.txt` but no `.dmp`; the patch keeps reports local. Posting Rust reports
+  anywhere needs Hero's agreement and an engine name on his relay.
+- **Packaging:** closed by section 5 (GAME BUILD segment, version resource, `package.sh`); no updater channel.
 
 ## 5. Drop-in round two (2026-11-03, port/launch2)
 
-Closes the UI/packaging gaps of §4; what is left of §4 is online, code mods, .slp replays, box mode and the
-DualShock/Switch/HID tables.
+Closed the UI/packaging gaps of §4 (as it stood on 2026-11-03). Box mode has since landed in our own controller
+profiles; the current list is §4.
 
 - **GAME BUILD row** (patch commit 385e535 + test hooks, branch `ours/rust-engine`): a "Rust Port" segment when
   `rust\melee.exe` is there (no-Slippi build: Source Port | Rust Port; normal build: a fourth segment before

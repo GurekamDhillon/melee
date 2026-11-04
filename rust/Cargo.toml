@@ -24,6 +24,7 @@ publish = false
 [workspace.dependencies]
 melee_core = { path = "melee_core" }
 melee_types = { path = "melee_types" }
+melee_gx = { path = "melee_gx" }
 melee_runtime = { path = "melee_runtime" }
 melee_world = { path = "melee_world" }
 melee_fighter = { path = "melee_fighter" }

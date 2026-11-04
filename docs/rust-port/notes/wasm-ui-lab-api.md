@@ -353,3 +353,16 @@ free-form web screens and accepts an opt-in, size-heavy build.
 - online lobby: host or join room, room code copy, finding-opponent and locked-in states, input delay, help and
   how-to-play;
 - shared: kit styling and motion, mouse support, help and hotkeys page.
+
+## Amendment: 2-player lab
+
+The Lab supports two players, locally and online. This supersedes "offline only" in B6:
+
+- Sessions: `pres::Session` has `LabNetplay`, an online Lab session, alongside `Offline`. `gd_lab_*` calls are
+  allowed in `Offline` and `LabNetplay`. `EOFFLINE` is kept only for normal or ranked `Netplay`, `Replay` and
+  `Synctest`.
+- Lab actions (savestate, load, rewind, step, record and playback, CPU changes) are not applied locally when
+  online. They become synced commands sent through the netplay handshake and lockstep input stream, and both peers
+  apply them on the same frame, so the sims stay identical.
+- Lab mods take part in the netplay mod check (`play_net::mods_identity`) when online, so both peers must load the
+  same Lab mods.

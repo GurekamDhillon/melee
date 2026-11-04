@@ -415,3 +415,28 @@ with the engine's (`MELEE_ENGINE_ITEMS=1` now also lists the 1P items per row) a
 - *left*: items_hi3_yoshistory64 1838 (itemsum), classic_step01 1207 (Poke Ball release position: the held item's jobj world
   position (`lb_8000B1CC(it_80272C90(item))` in ftCo_80095EFC) is ~0.5 off from the throw's first frame, so a joint matrix of
   the holder / held item differs while the hashed fighter state matches), adventure_step11 3288 (P1 motion 305 velocity).
+
+## port/correct round 5 (cov5, 2026-11-04): table ends and duplicated globals
+`run_rust.sh -j 2 --all` (release, after merging rust-port): **212 pass, 0 fail, 10 no golden** (was 191 / 3 / 10; the new
+rows came with the geno / mex merges). Results: `results.tsv`. Gate OK, `rematch.sh css` OK.
+- **Kirby hand pose** (classic_step01 1207, items_hi3_yoshistory64 1838): `ftAnim_ApplyPartAnim` indexes `ft_data->x1C[g]->x8[arg2]`;
+  Kirby's item-grip group has `x8[0] = NULL`, `x8[1]` the pose. `arrays.tsv` had `ftData_x1C.x8 null` (NULL-terminated), so the
+  table stopped at entry 0 and `x8[1]` read past it (null): no grip animation on part 44, the held item's joint matrix differed.
+  Now `extent` (runs to the next object boundary). gen.rs carries only that line (a full regeneration renumbers unrelated
+  `Anon_anon_*` types).
+- **Warp Star pick** (adventure_step11 3288): `it_804D6D00` (last picked Warp Star animation) had a private copy in item.rs (the
+  init's `= -1`) and another in itwstar.rs (read / written by `it_80294364`), so the first pick excluded animation 0 and the
+  star flew another path. One definition in `it_3F14.rs`, re-exported.
+- **Audit, same classes**: duplicated "data defined in other TUs" statics (`rust/` ext blocks): `it_804D6D08` / `it_804D6D0C` had
+  three copies (reset in item.rs, bumped in it_2725.rs, read in it_26B1.rs for the 1P bonus): one definition now. melee_modes'
+  `HSD_identityMtx` was a zeroed copy (gm_1832 loads it as a position matrix): now the identity. The rest of that scan is
+  constants, debug menus or already switched (`use_ext_data`). `Item_ItemVars` (122 members, 56 with a field whose native offset
+  differs from its GC offset, 34 GC offsets where members disagree): the C TUs that use more than one member, and the generic
+  `it_266F` / `unk4` / `it_2E5A` users, were checked. Fixed: `it_802EAF28` reads `likelike.x38`, the s32 over the Great Fox
+  laser's s16 `x38/x3A` (`x38 | x3A << 16` in the x86-32 build); natively that slot is the laser's `x34/x36` (fighter damage
+  from the laser tests it against 0). Left: `it_8026ECE0` (itdraw, debug hitbox draw only) reads the coin's flags / hit record
+  through `it_266F` (native +0x2C) where the coin keeps them at `unk4` +0x20; the x86-64 mtu oracle agrees with the current code.
+  The mtu / round5 oracles are x86-64 C, so for `it_802EAF28` they read the native slot: the two tests check the rule instead.
+- Tooling: `melee diff --scenario <1p scenario> --frame N` works (captures at cov1p's match frame); `melee golden --calltrace` on
+  a 1P scenario numbers frames by match frame like the C trace. C snapshots / traces for 1P came from `_build/agents/correct-ct`
+  through `triage.c_run`.

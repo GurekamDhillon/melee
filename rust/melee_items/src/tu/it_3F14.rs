@@ -14,6 +14,15 @@ pub static mut it_804D6D40: *mut it_804D6D40_t = null_mut();
 pub use melee_runtime::shared::it_804D6D38;
 /// `it_804D6D04`, `it_804D6D20`, `it_804D6D24`, `it_804D6D28`: the item common-data globals iteffect.c fills from
 /// `itPublicData` (`it_8027870C`). One static each: every item TU's `ext` block aliases these.
+/// `it_804D6D00` (it_3F14.c): the Warp Star's last picked animation, reset to -1 by the item init (item.c), read and
+/// written by `it_80294364` (itwstar.c). One definition: item.rs and itwstar.rs re-export it (each had its own copy, so
+/// the reset never reached the Warp Star and its first pick excluded animation 0).
+pub static mut it_804D6D00: i8 = 0;
+/// `it_804D6D0C` / `it_804D6D08` (it_3F14.c): item counters reset by the item init (item.c), bumped by `it_80274ED8` /
+/// `it_80274EE8` (it_2725.c) and read by `it_8026B7D8` / `it_8026B7E0` (it_26B1.c, the 1P bonus count). One definition (the
+/// three TUs each had a private copy, so the readers always saw 0).
+pub static mut it_804D6D0C: i32 = 0;
+pub static mut it_804D6D08: i32 = 0;
 pub static mut it_804D6D04: *mut Fighter_804D653C_t = null_mut();
 pub static mut it_804D6D20: *mut it_804D6D20_t = null_mut();
 pub static mut it_804D6D24: *mut *mut Article = null_mut();

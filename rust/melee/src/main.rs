@@ -666,7 +666,7 @@ pub(crate) unsafe fn r_in() -> &'static mut melee_data::player::Player {
 }
 
 /// The 1P coverage scenario booted by `boot_coverage_scenario` (its randabs pad), for `golden_engine`.
-static mut COV1P: Option<cov1p::RandAbs> = None;
+pub(crate) static mut COV1P: Option<cov1p::RandAbs> = None;
 
 /// A 1P coverage run (cov1p.rs): the mode's scenes from the boot on, one CSV row per live match frame (`frame` = the
 /// match frame, as the C's `MELEE_NEUTRAL_HASHLOG`), until `rows` rows or the pad script quits.
@@ -775,7 +775,22 @@ fn golden_engine(args: &[String]) -> ExitCode {
         }
     };
     if let Some(ra) = unsafe { (*std::ptr::addr_of_mut!(COV1P)).take() } {
-        return golden_1p(e, ra, frames, &out);
+        // --calltrace on a 1P run: frames are match frames (cov1p's frame_post opens the next one), as the C trace
+        let ct_out = get("--calltrace");
+        if let Some((a, b)) = get("--calltrace-frames").and_then(|v| v.split_once('-').map(|(a, b)| (a.to_string(), b.to_string()))) {
+            if let (Ok(a), Ok(b)) = (a.parse::<i64>(), b.parse::<i64>()) {
+                melee_core::ct::set_range(a, b);
+            }
+        }
+        melee_core::ct::begin_frame(-1);
+        let rc = golden_1p(e, ra, frames, &out);
+        if let Some(p) = &ct_out {
+            match melee_core::ct::write(p) {
+                Ok(n) => eprintln!("melee: {n} calls written to {p}"),
+                Err(er) => eprintln!("melee: {p}: {er}"),
+            }
+        }
+        return rc;
     }
     let frames = if replay && get("--frames").is_none() { 1802 } else { frames };
     if audio {

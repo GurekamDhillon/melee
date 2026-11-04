@@ -280,8 +280,8 @@ pub mod ext {
     // Data defined in other TUs (the tests set them).
     pub use melee_runtime::tu::gobj_native::HSD_GObjPLinkHead;
     pub use melee_world::itacc::it_804A0F60;
-    pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D08;
+    pub use crate::tu::it_3F14::it_804D6D0C;
     pub use crate::tu::it_3F14::it_804D6D24;
     pub use crate::tu::it_3F14::it_804D6D28;
     pub use crate::tu::it_3F14::it_804D6D38;

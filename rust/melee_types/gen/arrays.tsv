@@ -28,8 +28,9 @@ HSD_ShapeSetDesc.normal_desc	until=0xFF
 HSD_ShapeSetDesc.vertex_idx_list	nb_shape
 HSD_ShapeSetDesc.normal_idx_list	nb_shape
 ftData.x1C	null
-# ftanim.c ftAnim_ApplyPartAnim: x8[arg2] is indexed by a script operand; the AnimJoint pointers are consecutive relocated words
-ftData_x1C.x8	null
+# ftanim.c ftAnim_ApplyPartAnim: x8[arg2] is indexed by a script operand; entries may be NULL before valid ones (Kirby's hand
+# group 1: x8[0] NULL, x8[1] the item-grip pose), so the table runs to the next object boundary, not to the first NULL
+ftData_x1C.x8	extent
 # ftwaitanim.c getAnimID: {anim id, weight} pairs until x == -1
 ftData.x24	until=0xFFFFFFFF
 ftData.x28	until=0xFFFFFFFF

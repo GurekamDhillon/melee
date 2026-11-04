@@ -25,6 +25,7 @@ pub mod shader;
 pub mod shim;
 pub mod state;
 pub mod texture;
+pub mod ui;
 
 pub use api::{Gx, GxColor, GxLightObj};
 pub use resources::GxData;

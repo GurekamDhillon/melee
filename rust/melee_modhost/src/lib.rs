@@ -19,6 +19,9 @@ use melee_types::{Fighter, HSD_GObj, Item, SpawnItem};
 use std::collections::BTreeMap;
 use wasmi::{AsContextMut, Caller, Config, Engine, Extern, Func, FuncType, Linker, Memory, Module, Store, StoreContextMut, Val, ValType};
 
+pub mod pres;
+pub mod ui;
+
 pub const ABI_VERSION: u32 = 1 << 16; // 1.0
 pub const HOOK_TABLE_VERSION: u32 = 1;
 pub const MANIFEST_MAGIC: u32 = 0x444D_4447; // 'GDMD'
@@ -715,6 +718,16 @@ impl Host {
         if abi_max < ABI_VERSION {
             eprintln!("modhost: {id}: abi_max {abi_max:#x} below host {ABI_VERSION:#x} (loaded)");
         }
+        // gd-ui-v1 / gd-lab-v1: a declared UI or LAB bit needs its ABI global, checked like gdmod_abi_version.
+        for (bits, name, host) in [(pres::FEATURES_UI, "gdmod_ui_abi", pres::UI_ABI_VERSION), (pres::FEATURES_LAB, "gdmod_lab_abi", pres::LAB_ABI_VERSION)] {
+            if (req | opt) & bits != 0 {
+                let g = inst.get_global(&self.store, name).ok_or_else(|| format!("export {name}: missing (refuse)"))?;
+                let v = g.get(&self.store).i32().ok_or_else(|| format!("export {name}: not an i32 global (refuse)"))? as u32;
+                if v >> 16 != host >> 16 || v > host {
+                    return Err(format!("{name}: {v:#x} not satisfied by host {host:#x}"));
+                }
+            }
+        }
         let features = (req | opt) & FEATURES_HOST;
         let mut hooks = Vec::new();
         for i in 0..count as usize {
@@ -1038,6 +1051,10 @@ pub fn install_dir(dir: &std::path::Path) -> Result<(), String> {
     let mut h = Box::new(Host::new());
     for f in &files {
         let b = std::fs::read(f).map_err(|e| format!("{}: {e}", f.display()))?;
+        // a gd_ui presentation mod is sim-inert: the play flow's presentation host loads it (ui::PresHost), not this one
+        if ui::is_presentation(&b) {
+            continue;
+        }
         h.load(&b).map_err(|e| format!("{}: refused: {e}", f.display()))?;
     }
     for m in &h.mods {

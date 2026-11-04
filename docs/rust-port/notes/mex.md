@@ -32,6 +32,6 @@ identical). `run_rust.sh` reads the scenario's `iso` (`COV_ISO` -> `GW_ISO_<NAME
 | `mex_ukirby_cpu` (Ultimate Kirby) | PASS 3601 |
 | `mex_sora_cpu` (Sora, Kirby host) | PASS 3601 |
 | `mex_sorapal_cpu`, `mex_sorapal_bhv` (Sora, palette build, Marth host, Geno articles) | PASS 3601, 2401 |
-| `mex_goku_cpu` (goku-xv2, vanilla disc) | blocked: a native Geno define (port/geno); C golden recorded |
+| `mex_goku_cpu` (goku-xv2, vanilla disc, a base "none" Geno define) | PASS 3601 (port/genonone) |
 
 Open: FD on the ACE disc draws magenta edges in `view-golden` (a texture the renderer does not decode; render only).

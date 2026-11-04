@@ -1,0 +1,9 @@
+# gd-ui-v1 command-buffer encoder for Rust wasm mods (a library, not a mod: build_mods.sh skips it).
+[package]
+name = "gd_ui_enc"
+version = "0.1.0"
+edition = "2021"
+license = "CC0-1.0"
+publish = false
+
+[workspace]

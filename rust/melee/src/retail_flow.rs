@@ -96,6 +96,9 @@ pub struct RetailPlay {
     hud_rates: crate::np_hud::HudRates,
     /// A match scene was entered: the session takes the engine at the next tick.
     arm: bool,
+    /// gd-ui-v1 presentation mods (MELEE_WASM_MODS, modules importing gd_ui): harness-owned, never in the arena, so a
+    /// savestate load or rollback never rewinds them. None with no UI mod: nothing runs and nothing is drawn.
+    pub ui: Option<melee_modhost::ui::PresHost>,
 }
 
 impl RetailPlay {
@@ -106,6 +109,13 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
+            ui: match melee_modhost::ui::PresHost::from_env() {
+                Ok(h) => h,
+                Err(e) => {
+                    log(&format!("ui mods: {e}"));
+                    None
+                }
+            },
         }
     }
 
@@ -417,9 +427,10 @@ impl RetailPlay {
 
     fn emit_shot(&mut self) {
         let (Some(name), Some(dir), Some(p)) = (self.shot_pending.take(), self.shot_dir.as_ref(), self.presenter.as_mut()) else { return };
-        let px = p.screenshot();
+        // with UI mods the shot is the window as shown (window-space panels sit outside the EFB)
+        let (w, h, px) = if self.ui.is_some() { p.screenshot_window() } else { (p.renderer.width, p.renderer.height, p.screenshot()) };
         let path = dir.join(format!("retail_{name}.png"));
-        match write_png(&path, p.renderer.width, p.renderer.height, &px) {
+        match write_png(&path, w, h, &px) {
             Ok(()) => log(&format!("screenshot {}", path.display())),
             Err(e) => log(&format!("screenshot: {e}")),
         }
@@ -475,6 +486,29 @@ impl Game for RetailPlay {
                 pr.auto_lcancel(&mut four, |p| Some(p as i32));
             }
         }
+        // gd-ui-v1 input boundary (A4): the same place as lcancel_helper, before set_pads and the rollback submit
+        let pres_frame = melee_modhost::pres::PresFrame {
+            session: if self.net.is_some() { melee_modhost::pres::Session::Netplay } else if self.sync.is_some() { melee_modhost::pres::Session::Synctest } else if self.feed.is_some() { melee_modhost::pres::Session::Replay } else { melee_modhost::pres::Session::Offline },
+            scene: (self.cur.0 as i32, self.cur.1 as i32),
+            match_frame: self.age as i32,
+        };
+        if let Some(u) = self.ui.as_mut() {
+            u.set_session(pres_frame.session);
+            u.retail_scene(self.cur.0 as i32, self.cur.1 as i32, gameplay);
+            // GAP-14: the keyboard goes to a KEYBOARD capture instead of the pads while one exists
+            match (u.keyboard_wanted(), pads.ui_keys.as_mut()) {
+                (true, Some(q)) => {
+                    u.push_keys(q);
+                    q.clear();
+                }
+                (true, None) => pads.ui_keys = Some(Vec::with_capacity(256)),
+                (false, _) => {
+                    u.push_keys(&[]);
+                    pads.ui_keys = None;
+                }
+            }
+            u.input(&mut four, &pres_frame);
+        }
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
         if let Some(pr) = self.practice.as_mut() {
@@ -516,6 +550,10 @@ impl Game for RetailPlay {
             }
             // the view the frame was drawn for (its cameras' projection and the target shape must agree)
             self.frame_aspect = melee_engine::view::aspect();
+        }
+        // gd-ui-v1 present (A3 order: events, gd_ui_frame, node trees), after the logic frame
+        if let Some(u) = self.ui.as_mut() {
+            u.present(&pres_frame);
         }
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
@@ -642,6 +680,11 @@ impl Game for RetailPlay {
             p.renderer.set_packed(pk);
         }
         p.set_content_aspect(self.frame_aspect);
+        if let Some(u) = self.ui.as_mut() {
+            let (w, h) = p.size();
+            u.set_window(w, h);
+            u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
+        }
         p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, a);
         self.emit_shot();
         if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
@@ -753,6 +796,10 @@ pub fn run(mut rp: RetailPlay, headless: bool) -> std::process::ExitCode {
 impl Drop for RetailPlay {
     /// A window closed by hand still writes its `--record` replay.
     fn drop(&mut self) {
+        if let Some(u) = self.ui.as_ref() {
+            let (dc, fr) = self.presenter.as_ref().map_or((0, 0), |p| p.renderer.ui_stats());
+            log(&format!("{}; renderer: {dc} UI draw calls over {fr} presents with UI", u.stats_line()));
+        }
         self.save_replay();
     }
 }

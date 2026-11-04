@@ -19,6 +19,7 @@ sym	yakumono_param	custom:rawwords	src/melee/gr/types.h:6C0 yakumono_param (void
 sym	itPublicData	custom:itco	src/melee/it/iteffect.c:19 it_804D6D20
 sym	effCommonDataTable	custom:efdat	src/melee/ef/efasync.c:1294 EF_DAT_Entry* (entry 0 decodes; later entries are read through the pointer table by index)
 suffix	_matanim_joint	HSD_MatAnimJoint	model files, e.g. gmresultplayer.c:583 Eblm_matanim_joint
+suffix	_matanim	HSD_MatAnimJoint	ftdata.c:2203 ftData_803C2360[kind][costume].matanim_joint_name (a Geno base "none" costume names it <model>_matanim, e.g. courier_matanim)
 suffix	_shapeanim_joint	HSD_ShapeAnimJoint	tyfigupon.c:164 shapeanim_str
 suffix	_figatree	FigaTree	lb/lbanim.c FigaTree: every fighter animation public of the PlXxAJ.dat files
 sym	Stc_scemdls	custom:ptrtable_dynmodel	IfAll.dat DynamicModelDesc** (ifstock.c:1128)

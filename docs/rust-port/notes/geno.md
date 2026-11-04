@@ -21,7 +21,7 @@ Geno is the fighter-extension engine (C: `pc/geno/`, `pc/platform/geno_registry.
 | the LAB | `MELEE_SCENE="mode=lab;p1=kirby/cpu9;p2=fox/cpu9;stage=fd" melee play ...` boots GM_LAB's match (`at=match` / no `at`). `mode=lab;at=css|sss` is refused with a log line: LAB's select screens are the port's kit screens, which the retail flow does not run. `melee golden --scenario geno_lab_cpu` boots it through `Engine::boot_vs`, which now takes the scene's mode (VS or LAB) |
 | coverage | group `geno` in `docs/rust-port/golden/coverage/scenarios.json` (below) |
 
-## Status (2026-11-03)
+## Status (2026-11-03; base "none" defines 2026-11-04, below)
 
 - **geno-tests: 50 / 64 pass.** Every test that does not need a native `define` passes. The 14 left
   (`geno_none_guard_contact`, the `geno_lua_*`, `geno_combo_*`, `geno_digest_coverage`, `geno_define_snapshot`,
@@ -119,9 +119,23 @@ Interactions to keep in mind:
   ifstock, lbaudio_ax). geno-tests 64/64.
 - Coverage: `geno_vanilla_striker_cpu`, `geno_vanilla_charger`, `geno_vanilla_riposte`, `geno_vanilla_hero_caster`
   (scenario `"mods"` copies `pc/geno/mods/<id>` into `build/covmods/<name>`); C goldens, Rust PASS hash for hash.
-- Not hosted: base `"none"` defines (GenoDefine_BuildOwn: own model/bank/plan, e.g. courier), audio clips, the
-  controls schema, the records memory-card path (only `MELEE_GENO_RECORDS`), art open/textures, define overlays using
-  Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool below 4 GiB; no shipped mod uses them).
+- Base `"none"` defines (port/genonone): `geno::plan` (gn_plan_parse / gn_define_plan / DefinePlanInt / DefinePlanText:
+  plan.json read from the define's mod `files/`), `ftdata::GenoDefine_BuildOwn` (+ JointFields, OwnTables, Census,
+  PartsTable, the row remap, the demo rows as the own Wait row). Coverage: `mex_goku_cpu` (goku-xv2, 713 rows, 126
+  joints) and `geno_courier_cpu` (vanilla-courier, 42 joints) PASS 3601/3601 against C goldens (sfxparity lane). Their
+  mods are local: `tools/rust-port/golden/coverage/mex_mods.sh` assembles `_build/mex-mods/{goku,courier}` (courier =
+  this checkout's text fixture + the original-art assets of `tools/geno/build_courier.sh`, default
+  `_build/geno-slice4/courier`). Needed on the way: mod-only files get entry numbers past the FST (gcm.rs; the preload
+  cache keeps them as s16, 0x100000 truncated to 0), the `_matanim` symbol suffix (dat_symbols.tsv), the define's
+  stock icon (`DefineArtOpen` + a .gxtex handle table in geno_host, `uigen::UI_TextI4` over GDI for the initials
+  fallback; render-only). Netplay identity: a base "none" define's resource files' bytes join its handshake part
+  (mx_add_defines; a missing file drops it), test `geno_host::tests::identity_covers_base_none_files`.
+- Not hosted: define audio clips (DefineVoiceState / AudioPlay answer 0), the controls schema, the records memory-card
+  path (only `MELEE_GENO_RECORDS`), installed skins, the CSS/results art paths (`gm_1601` / gmresultplayer `UI_TextI4`
+  and kit textures), the `cape.*` keys of goku-xv2 (the Rust registry logs them as unknown; Goku's CPU match still
+  matches C hash for hash, so the C does not use them either there, but the C log was not compared line by line), define overlays using Subroutine/Goto (op 5/7 take a 32-bit pointer: needs the script pool
+  below 4 GiB; no shipped mod uses them), Marth / Jigglypuff / Sheik templates of a base "none" define
+  (`GenoDefine_ExtAttrBytes` stops).
 - Gotcha: a define query hook left at the seams default (-1) silently changes gameplay (Mario-base define fired Dr.
   Mario pills: `Geno_DefineBaseKind` unset in ftmariospecialn). Set every per-crate copy.
 

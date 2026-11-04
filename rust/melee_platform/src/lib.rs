@@ -3,6 +3,7 @@
 //! * [`pad`]: `PADStatus` (melee_types, with its GC layout), constants, `PADClamp`.
 //! * [`adapter`]: the raw GameCube USB adapter (port of `pc/platform/gc_adapter.c`).
 //! * [`aurora`]: Aurora's `PADRead` arithmetic over keyboard bindings and SDL-style gamepads.
+//! * [`profiles`], [`socd`]: per-controller profiles (deadzones, remaps, box mode + SOCD).
 //! * [`gamepads`]: gilrs -> SDL-style raw gamepads.
 //! * [`script`]: the txt pad script (`MELEE_PAD_SCRIPT`).
 //! * [`pad_read`]: the game-facing `PADRead` (port of `shim_pad.c` `gw_PADRead`).
@@ -13,6 +14,8 @@ pub mod pad;
 pub mod adapter;
 pub mod aurora;
 pub mod bindings;
+pub mod socd;
+pub mod profiles;
 pub mod gamepads;
 pub mod script;
 pub mod pad_read;

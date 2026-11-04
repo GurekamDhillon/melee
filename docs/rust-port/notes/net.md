@@ -369,7 +369,32 @@ a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was r
 - Two runs out of about 16 ended in a wgpu panic in `Presenter::present_frames` (`Texture with 'GX texture' label is
   invalid`, crashlogs/crash-20261103-1638*, -1648*); one of them had early inputs off and no sampler running, so it is not
   this change; not investigated.
-- Our local input is sent at the NEXT tick's `Net::poll` (tick_match polls before `run_tick` schedules this tick's
-  pad), about 16 ms late. Early inputs hide part of that; polling again after `run_tick` would remove it for every
-  input (follow-up, not done here so the measurements above isolate early inputs).
+- (Fixed by port/npsend, below.) The local input used to be sent at the NEXT tick's `Net::poll`, ~16 ms late.
 - `MELEE_EARLY_ROLLBACK` (roll back as soon as an early pad contradicts a frame already run) is not implemented.
+
+## Local input sent right after run_tick (port/npsend, 2026-11-04)
+- `tick_match` calls `Net::send_local_now(current_frame)` right after `run_tick` (the session borrow is dropped first,
+  because the callbacks borrow it): it pulls the inputs `run_tick` just scheduled and sends an INPUT packet at once if
+  there were any. Same packet, so no protocol change and no handshake bump. The next tick's `poll` still sends as before
+  (acks, checksums, resends). Early inputs untouched. No new static: the A/B toggle `MELEE_NP_LATE_SEND=1` (old timing,
+  for measurements) is a `NetDriver` field read when the driver is made.
+- New session stat `arrive_n` / `arrive_sum`: for each remote frame confirmed in order, this side's current frame minus
+  that frame. The match summary prints the mean as `input arrived X frames after due` (the effective input lag, in frames).
+- Measured: play_pair.sh `--headless`, loopback, `MELEE_TEST_EARLY_LEAD_MS=8`, jitter 10 ms, no loss; 150 ms with
+  `--np-delay 4 --np-rollback 12`; two runs each. host / guest:
+
+| run | before (`MELEE_NP_LATE_SEND=1`) | after |
+|---|---|---|
+| 50 ms, input lag (frames) | 2.15 / 2.37, 2.28 / 2.62 | 2.00 / 1.10, 1.99 / 1.14 |
+| 50 ms, rollbacks per 1000 frames (resim) | 114 / 113 (934 / 984), 109 / 117 (1067 / 1325) | 114 / 157 (1027 / 1012), 113 / 155 (1024 / 1022) |
+| 50 ms, max depth | 7 / 7 | 4-5 / 3-7 |
+| 150 ms, input lag | 6.88 / 5.99, 6.89 / 5.99 | 3.67 / 3.65, 5.12 / 6.12 |
+| 150 ms, rollbacks per 1000 frames (resim) | 115 / 117 (2825 / 2558), 113 / 118 (2785 / 2565) | 102 / 126 (1733 / 2097), 116 / 158 (2210 / 3519) |
+
+  All 8 matches had every frame's hash equal on both peers, 0 session/checksum desyncs, and the host's replay played back
+  with 0 mismatches. Input lag goes down in every run (about 0.2-1.3 frames at 50 ms, up to 3 frames at 150 ms). Rollbacks:
+  shallower at 50 ms, but the guest rolls back more often (more of its rollbacks are 1 frame, total resim about the same).
+  At 150 ms run 2 the time sync settled differently (h150after4: guest lag 6.1, 158 rollbacks per 1000 frames), so the
+  150 ms rollback count is noisy and two runs do not settle it. Windowed runs of the same set lost the GPU device on both
+  peers (driver reset, the environment issue described under #42); those runs were dropped.
+- Verified: GATE OK, `rematch.sh css` OK, `cargo test -p melee_net` OK.

@@ -297,6 +297,8 @@ pub struct Renderer {
     copy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout, wgpu::Sampler)>,
     /// The depth-format EFB copy (reads the depth target).
     zcopy_pipe: Option<(wgpu::RenderPipeline, wgpu::BindGroupLayout)>,
+    /// The gd-ui-v1 batch (crate::ui): None until a UI mod hands over its first frame.
+    pub(crate) ui: Option<crate::ui::UiGpu>,
 }
 
 /// The GPU texture an EFB copy writes (at the internal resolution: `dst_w * scale` x `dst_h * scale`).
@@ -1089,6 +1091,7 @@ impl Renderer {
             efb_copies: FxMap::default(),
             copy_pipe: None,
             zcopy_pipe: None,
+            ui: None,
         })
     }
 
@@ -1845,15 +1848,25 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) uv: vec2<f32> };
             });
             let (tw, th) = (tw.max(1) as f32, th.max(1) as f32);
             let stretch = std::env::var("MELEE_ASPECT").map_or(false, |v| v == "stretch");
+            let mut vp = [0.0, 0.0, tw, th];
             if !stretch {
                 // Fit the EFB's aspect (640x480 times the render scale) inside the target.
                 let aspect = self.width as f32 / self.height as f32;
                 let (w, h) = if tw / th > aspect { (th * aspect, th) } else { (tw, tw / aspect) };
-                pass.set_viewport(((tw - w) * 0.5).floor(), ((th - h) * 0.5).floor(), w, h, 0.0, 1.0);
+                vp = [((tw - w) * 0.5).floor(), ((th - h) * 0.5).floor(), w, h];
+                pass.set_viewport(vp[0], vp[1], w, h, 0.0, 1.0);
             }
-            pass.set_pipeline(pipeline);
-            pass.set_bind_group(0, &bg, &[]);
-            pass.draw(0..3, 0..1);
+            if !self.ui_hides_gx() {
+                pass.set_pipeline(pipeline);
+                pass.set_bind_group(0, &bg, &[]);
+                pass.draw(0..3, 0..1);
+            }
+            if self.ui.is_some() {
+                // gd-ui-v1: the UI batch inside this same pass (one instanced draw). The band is the 4:3 area centred in the blit rect.
+                let bw = (vp[3] * 4.0 / 3.0).min(vp[2]);
+                let band = [vp[0] + (vp[2] - bw) * 0.5, vp[1], bw, vp[3]];
+                self.ui_record(&mut pass, format, tw, th, band);
+            }
         }
         self.queue.submit([enc.finish()]);
     }
@@ -1946,7 +1959,11 @@ struct VsOut { @builtin(position) pos: vec4<f32>, @location(0) c: vec4<f32> };
     /// What the window shows at the EFB's size: the EFB blitted (alpha opaque) with `quads` drawn over it, read back
     /// as RGBA8 (screenshots with the HUD overlay).
     pub fn read_composed(&mut self, quads: &[OverlayQuad]) -> Vec<u8> {
-        let (w, h) = (self.width, self.height);
+        self.read_composed_size(self.width, self.height, quads)
+    }
+
+    /// [`Renderer::read_composed`] at a given target size (the window's: the gd_ui batch is laid out for it).
+    pub fn read_composed_size(&mut self, w: u32, h: u32, quads: &[OverlayQuad]) -> Vec<u8> {
         let fmt = wgpu::TextureFormat::Rgba8Unorm;
         let tex = self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("HUD composed"),

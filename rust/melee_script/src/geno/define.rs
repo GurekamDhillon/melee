@@ -17,7 +17,7 @@ pub const GN_PRES_EMBLEM: usize = 3;
 pub const GN_PRES_RESULTS: usize = 4;
 pub const GN_PRES_KINDS: usize = 5;
 pub const GN_MAX_VOICE: usize = 32;
-pub const GPL_MAX_OWN_ROWS: usize = 96;
+pub const GPL_MAX_OWN_ROWS: usize = super::plan::GPL_MAX_OWN_ROWS;
 
 /// slice 4: the files a base "none" define names (entry-level "fighter" block).
 #[derive(Default)]
@@ -31,6 +31,8 @@ pub struct Fm {
     /// -1 none, 0 red, 1 blue, 2 green.
     pub cos_team: Vec<i8>,
     pub own_clip: Vec<String>,
+    pub plan_tried: bool,
+    pub plan: Option<Box<super::plan::Plan>>,
 }
 
 /// slice 6: a define's own menu and HUD art (file names of the mod's files/ folder).

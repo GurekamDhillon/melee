@@ -73,6 +73,8 @@ pub mod ext {
         GENO_DEFINE_CK_AT Geno_DefineCKAt(i: i32) -> i32 = 0;
         GENO_DEFINE_COSTUME_COUNT Geno_DefineCostumeCount(kind: i32) -> i32 = 0;
         GENO_DEFINE_STRING Geno_DefineString(kind: i32, which: i32, costume: i32) -> *const c_char = core::ptr::null();
+        GENO_DEFINE_PLAN_INT Geno_DefinePlanInt(kind: i32, what: i32, i: i32) -> i32 = if what == 0 { 0 } else { -1 };
+        GENO_DEFINE_PLAN_TEXT Geno_DefinePlanText(kind: i32, which: i32, i: i32) -> *const c_char = core::ptr::null();
         GENO_DEFINE_PARTNER_KIND Geno_DefinePartnerKind(kind: i32) -> i32 = -1;
         GENO_DEFINE_IDENTITY_WORD Geno_DefineIdentityWord(kind: i32, word: i32) -> u32 = 0;
         PLAYER_MEX_SET_PARTNER Player_MexSetPartner(ckind: i32, partner_fk: i32) = crate::tu::player::Player_MexSetPartner(ckind, partner_fk);
@@ -555,9 +557,6 @@ pub fn GenoDefine_Load(kind: i32, base: i32) {
         if !gFtDataList[k].is_null() {
             return;
         }
-        if ext::Geno_DefineIsNone(kind) != 0 {
-            melee_core::unported!("GenoDefine_Load: a base \"none\" define (GenoDefine_BuildOwn: the package's model, bank and plan)");
-        }
         let source = gFtDataList[b];
         let n = ftData_Table_Unk0[b].count as usize;
         let demo = ftData_UnkIntPairs[b].count as usize;
@@ -577,15 +576,60 @@ pub fn GenoDefine_Load(kind: i32, base: i32) {
                 row.x10_animCurrFlags = (flags & !0x3f) | if kind < 64 { kind } else { FT_ANIM_KIND_SELF };
             }
         }
+        let none = ext::Geno_DefineIsNone(kind) != 0;
+        let tskel = ext::Geno_DefineTemplateSkeleton(kind) != 0;
+        if none {
+            GenoDefine_BuildOwn(kind, out, n);
+            if tskel {
+                // template "captain": checked, not trusted: the package's parts table must be the retail table, entry for entry
+                let own = GenoDefine_PartsTable(kind);
+                let pt = crate::hooks::FT_PARTS_TABLE;
+                let tpl = if pt.is_null() { core::ptr::null_mut() } else { *pt.add(b) };
+                assert!(
+                    !own.is_null() && !tpl.is_null() && (*own).parts_num == (*tpl).parts_num
+                        && core::slice::from_raw_parts((*own).joint_to_part, (*own).parts_num as usize)
+                            == core::slice::from_raw_parts((*tpl).joint_to_part, (*own).parts_num as usize),
+                    "Geno define.template: the package's joint tree is not the template's (joint count or parts table differ)"
+                );
+            } else {
+                // the donor's demo rows name figatrees of the donor's skeleton: each becomes a copy of the own Wait row
+                let wr = (*ext::ftData_CommonRows().add(ftCo_MS_Wait as usize)).anim_id;
+                if wr >= 0 && (wr as usize) < n {
+                    for i in 0..demo {
+                        *(*out).x14.add(i) = core::ptr::read((*out).xC.add(wr as usize));
+                        (*(*out).x14.add(i)).x14 = 0;
+                    }
+                    report(format!("geno: base none kind {kind}: {demo} demo (results) rows pose with the own Wait clip, not the donor's figatrees\n"));
+                }
+            }
+            GenoDefine_OwnTables(kind, out);
+            GenoDefine_Census(kind, out, source);
+        }
         let nself = GenoDefine_SelfCount(base);
         let ms = core::mem::size_of::<MotionState>();
         GenoDefine_CommonRows[k] = gd_data_copy(ext::ftData_CommonRows() as *const c_void, ms * ftCo_MS_Count as usize) as *mut MotionState;
         GenoDefine_SpecificRows[k] = gd_data_copy(ftData_CharacterStateTables[b] as *const c_void, ms * nself) as *mut MotionState;
-        ext::GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[k], GenoDefine_SpecificRows[k], n as i32);
+        if none {
+            let slot = (kind - MEX0) as usize;
+            for m in 0..(ftCo_MS_Count as usize + nself).min(512) {
+                let msp = if m < ftCo_MS_Count as usize { GenoDefine_CommonRows[k].add(m) } else { GenoDefine_SpecificRows[k].add(m - ftCo_MS_Count as usize) };
+                if GenoDefine_RowRemap[slot][m] >= 0 {
+                    (*msp).anim_id = GenoDefine_RowRemap[slot][m] as _;
+                }
+            }
+        }
+        ext::GenoGame_DefineApplyRows(kind, GenoDefine_CommonRows[k], GenoDefine_SpecificRows[k], if none { ftData_Table_Unk0[k].count as i32 } else { n as i32 });
         ftData_CharacterStateTables[k] = GenoDefine_SpecificRows[k];
         gFtDataList[k] = out;
+        let what = if !none {
+            "retail:mario"
+        } else if tskel {
+            "base none, template (own model, bank, parts, joint fields, scripts, attributes; the retail fighter's native code and tables underneath)"
+        } else {
+            "base none (own model, bank, parts, joint fields; Mario's script words, callbacks and attribute defaults are still the template)"
+        };
         report(format!(
-            "geno: native define kind {kind} loaded: retail:mario; independent common/special rows; interpreter attempts {}\n",
+            "geno: native define kind {kind} loaded: {what}; independent common/special rows; interpreter attempts {}\n",
             GenoDefine_InterpreterAttempts[k]
         ));
         let bud = ext::Geno_DefineBudgets(kind);
@@ -594,6 +638,327 @@ pub fn GenoDefine_Load(kind: i32, base: i32) {
             bud[0], bud[1], bud[2], bud[3], bud[4], bud[5], bud[6], bud[7], bud[8], bud[9] as u32, 2u32 * 1024 * 1024
         ));
     }
+}
+
+// ---- slice 4 / 8: a base "none" define's own model data (GenoDefine_BuildOwn and its helpers) ----
+const NSLOT: usize = KMAX - MEX0 as usize;
+static mut GenoDefine_Parts: [FighterPartsTable; NSLOT] =
+    [const { FighterPartsTable { joint_to_part: core::ptr::null_mut(), part_to_joint: core::ptr::null_mut(), parts_num: 0 } }; NSLOT];
+static mut GenoDefine_PartsJ2P: [[u8; 128]; NSLOT] = [[0; 128]; NSLOT];
+static mut GenoDefine_PartsP2J: [[u8; 56]; NSLOT] = [[0; 56]; NSLOT];
+/// `GENO_OWN_EXTRA_ROWS`.
+const GENO_OWN_EXTRA_ROWS: usize = 96;
+/// motion -> its own animation row (>= n), -1: keeps the donor's number.
+static mut GenoDefine_RowRemap: [[i16; 512]; NSLOT] = [[-1; 512]; NSLOT];
+/// no visibility groups: every row NULL, model_num 0.
+static mut GenoDefine_VisTable: [[*mut c_void; 4]; 255] = [[core::ptr::null_mut(); 4]; 255];
+static mut GenoDefine_TobjZero: u16 = 0;
+static mut GenoDefine_TobjTable: [*mut u16; 255] = [core::ptr::null_mut(); 255];
+static mut GenoDefine_GuardTrees: [*mut HSD_Joint; 3] = [core::ptr::null_mut(); 3];
+static mut GenoDefine_X20: ftData_x20 = ftData_x20 { x0: core::ptr::null_mut(), x8: 0.0 };
+static mut GenoDefine_CensusMask: [u32; NSLOT] = [0; NSLOT];
+
+/// `Geno_DefineCensusMask`.
+pub fn Geno_DefineCensusMask(kind: i32) -> u32 {
+    if kind >= MEX0 && kind < KMAX as i32 { unsafe { GenoDefine_CensusMask[(kind - MEX0) as usize] } } else { 0 }
+}
+
+/// `GenoDefine_PartsTable`: the fighter's parts table from its plan; NULL for a define that is not base "none" or
+/// whose plan is unusable. Built once per kind, static storage.
+pub fn GenoDefine_PartsTable(kind: i32) -> *mut FighterPartsTable {
+    melee_core::ct!("GenoDefine_PartsTable");
+    let slot = kind - MEX0;
+    if slot < 0 || slot as usize >= NSLOT || ext::Geno_DefineIsNone(kind) == 0 {
+        return core::ptr::null_mut();
+    }
+    if ext::Geno_DefinePlanInt(kind, 0, 0) == 0 {
+        return core::ptr::null_mut();
+    }
+    let s = slot as usize;
+    unsafe {
+        if GenoDefine_Parts[s].parts_num == 0 {
+            let nj = ext::Geno_DefinePlanInt(kind, 1, 0) as usize;
+            let np = ext::Geno_DefinePlanInt(kind, 2, 0) as usize;
+            GenoDefine_PartsJ2P[s] = [255; 128];
+            GenoDefine_PartsP2J[s] = [255; 56];
+            // the C memcpys nj bytes into a 128-byte table; capped here
+            core::ptr::copy_nonoverlapping(ext::Geno_DefinePlanText(kind, 2, 0) as *const u8, GenoDefine_PartsJ2P[s].as_mut_ptr(), nj.min(128));
+            core::ptr::copy_nonoverlapping(ext::Geno_DefinePlanText(kind, 3, 0) as *const u8, GenoDefine_PartsP2J[s].as_mut_ptr(), np.min(56));
+            GenoDefine_Parts[s].joint_to_part = GenoDefine_PartsJ2P[s].as_mut_ptr();
+            GenoDefine_Parts[s].part_to_joint = GenoDefine_PartsP2J[s].as_mut_ptr();
+            GenoDefine_Parts[s].parts_num = nj as u32;
+        }
+        &raw mut GenoDefine_Parts[s]
+    }
+}
+
+/// `GenoDefine_JointFields`: the ftData fields that name joints take the package's (plan "ftdata"), by role.
+unsafe fn GenoDefine_JointFields(kind: i32, out: *mut ftData, x8: *mut ftData_x8) {
+    let pi = |w: i32, i: i32| ext::Geno_DefinePlanInt(kind, w, i);
+    let o = &mut *out;
+    let x34 = gd_data_copy(o.x34 as *const c_void, core::mem::size_of::<ftData_x34>()) as *mut ftData_x34;
+    let x38 = gd_data_copy(o.x38 as *const c_void, 2 * core::mem::size_of::<ftData_x38>()) as *mut ftData_x38;
+    let x44 = gd_data_copy(o.x44 as *const c_void, core::mem::size_of::<ftData_x44_t>()) as *mut ftData_x44_t;
+    let x54 = gd_data_copy(o.x54 as *const c_void, 5 * 4) as *mut i32;
+    let x58 = gd_data_copy(o.x58 as *const c_void, core::mem::size_of::<ftData_x58_t>()) as *mut ftData_x58_t;
+    let b = &raw mut (*x8).x10;
+    for i in 0..5 {
+        *b.add(i) = pi(20, i as i32) as u8;
+    }
+    (*x34).x0 = pi(21, 0) as _;
+    for i in 0..2 {
+        (*x38.add(i)).x0 = pi(22, i as i32);
+    }
+    let x = &mut *x44;
+    x.unk0 = pi(23, 0) as i16;
+    x.unk2 = pi(23, 1) as i16;
+    x.unk4 = pi(23, 2) as i16;
+    x.unk6 = pi(23, 3) as i16;
+    x.unk8 = pi(23, 4) as i16;
+    x.unkA = pi(23, 5) as i16;
+    for i in 0..5 {
+        *x54.add(i) = pi(24, i as i32);
+    }
+    // IK pairs: [0],[1] thigh R,L; [2],[3] knee; [4],[5] foot
+    (*x58).x0 = pi(25, 0) as u8;
+    (*x58).x1 = pi(25, 1) as u8;
+    (*x58).x8 = pi(25, 2) as u8;
+    (*x58).x9 = pi(25, 3) as u8;
+    (*x58).x10 = pi(25, 4) as u8;
+    (*x58).x11 = pi(25, 5) as u8;
+    o.x34 = x34;
+    o.x38 = x38;
+    o.x44 = x44;
+    o.x54 = x54;
+    o.x58 = x58;
+    let n = pi(5, 0);
+    let x30 = gd_data_copy(o.x30 as *const c_void, core::mem::size_of::<ftData_x30>()) as *mut ftData_x30;
+    let inits = gd_data_copy((*o.x30).inits as *const c_void, n as usize * core::mem::size_of::<ftHurtboxInit>()) as *mut ftHurtboxInit;
+    let f = |i: i32| f32::from_bits(pi(40, i) as u32);
+    for i in 0..n {
+        let h = &mut *inits.add(i as usize);
+        h.bone_idx = pi(30, i) as _;
+        h.height = pi(31, i) as _;
+        h.is_grabbable = pi(32, i) as u32;
+        h.a_offset.x = f(i * 8);
+        h.a_offset.y = f(i * 8 + 1);
+        h.a_offset.z = f(i * 8 + 2);
+        h.b_offset.x = f(i * 8 + 3);
+        h.b_offset.y = f(i * 8 + 4);
+        h.b_offset.z = f(i * 8 + 5);
+        h.scale = f(i * 8 + 6);
+    }
+    (*x30).count = n;
+    (*x30).inits = inits;
+    o.x30 = x30;
+    report(format!(
+        "geno: base none kind {kind}: ftData joint fields from the plan: ECB joints {},{},{},{},{},{}; {n} hurtboxes\n",
+        x.unk0, x.unk2, x.unk4, x.unk6, x.unk8, x.unkA
+    ));
+}
+
+/// `GenoDefine_BuildOwn`: a base "none" define's own model data in its ftData (part-visibility and texture-animation
+/// stand-ins, joint fields, and the animation rows: Mario's script words with the package's clips).
+unsafe fn GenoDefine_BuildOwn(kind: i32, out: *mut ftData, n: usize) {
+    let pi = |w: i32, i: i32| ext::Geno_DefinePlanInt(kind, w, i);
+    let pt = |w: i32, i: i32| ext::Geno_DefinePlanText(kind, w, i) as *mut i8;
+    let tbase = ext::Geno_DefineBaseKind(kind);
+    let tself = GenoDefine_SelfCount(tbase);
+    let tspec = ftData_CharacterStateTables[tbase as usize];
+    let common = ext::ftData_CommonRows();
+    let nmotions = pi(4, 0).max(0) as usize;
+    let njoints = pi(1, 0);
+    let nown = pi(6, 0).max(0) as usize;
+    let nco = ftCo_MS_Count as usize;
+    assert!(pi(0, 0) != 0, "Geno base none: the fighter plan is unusable (see geno: plan lines in the log)");
+    assert!(n <= 512, "Geno base none: animation row table too large");
+    let o = &mut *out;
+    let x8 = gd_data_copy(o.x8 as *const c_void, core::mem::size_of::<ftData_x8>()) as *mut ftData_x8;
+    if ext::Geno_DefineTemplateSkeleton(kind) == 0 {
+        (*x8).x0.model_num = 0;
+        (*x8).x0.vis_table = (&raw mut GenoDefine_VisTable) as *mut [*mut c_void; 4];
+        (*x8).x8.x8 = 0;
+        for i in 0..255 {
+            GenoDefine_TobjTable[i] = &raw mut GenoDefine_TobjZero;
+        }
+        (*x8).x8.xC = (&raw mut GenoDefine_TobjTable) as *mut *mut u16;
+    }
+    o.x8 = x8;
+    GenoDefine_JointFields(kind, out, x8);
+    let o = &mut *out;
+    let mut pick = [-1i16; 512];
+    let mut rank = [0u8; 512];
+    let (mut conflicts, mut mapped) = (0, 0);
+    let slot = (kind - MEX0) as usize;
+    let mut ex_a: std::vec::Vec<i16> = std::vec::Vec::new();
+    let mut ex_c: std::vec::Vec<i16> = std::vec::Vec::new();
+    GenoDefine_RowRemap[slot] = [-1; 512];
+    {
+        // The Wait state claims its row first (ftCo_8008A7A8 re-picks the idle clip from the wait table BY ROW).
+        let ws = &*common.add(ftCo_MS_Wait as usize);
+        let wc = pi(13, ftCo_MS_Wait as i32);
+        if ws.anim_id >= 0 && (ws.anim_id as usize) < n && wc >= 0 {
+            pick[ws.anim_id as usize] = wc as i16;
+            rank[ws.anim_id as usize] = 1;
+        }
+    }
+    let mut m = 0;
+    while m < nmotions && m < nco + tself {
+        let st = if m < nco { &*common.add(m) } else { &*tspec.add(m - nco) };
+        let a = st.anim_id;
+        let c = pi(13, m as i32);
+        if a < 0 || a as usize >= n || c < 0 {
+            m += 1;
+            continue;
+        }
+        let a = a as usize;
+        if rank[a] < 1 {
+            pick[a] = c as i16;
+            rank[a] = 1;
+        } else if pick[a] != c as i16 {
+            // two states share this row but the package gives them different clips: the later one gets a row of its own
+            let i = match (0..ex_a.len()).find(|&i| ex_a[i] == a as i16 && ex_c[i] == c as i16) {
+                Some(i) => i,
+                None => {
+                    assert!(ex_a.len() < GENO_OWN_EXTRA_ROWS, "Geno base none: too many own animation rows");
+                    ex_a.push(a as i16);
+                    ex_c.push(c as i16);
+                    ex_a.len() - 1
+                }
+            };
+            GenoDefine_RowRemap[slot][m] = (n + nown + i) as i16;
+            conflicts += 1;
+        }
+        m += 1;
+    }
+    {
+        // a row no state points at is still played BY NUMBER: its ftCo_SM_ clip (plan row_clips), else the Wait clip
+        let wc = pi(13, ftCo_MS_Wait as i32);
+        let mut filled = 0;
+        for i in 0..n {
+            if pick[i] >= 0 {
+                continue;
+            }
+            let rc = pi(14, i as i32);
+            pick[i] = (if rc >= 0 { rc } else { wc }) as i16;
+            if pick[i] >= 0 {
+                filled += 1;
+            }
+        }
+        report(format!("geno: base none kind {kind}: {filled} rows no state names take their ftCo_SM_ clip or Wait\n"));
+    }
+    let extras = ex_a.len();
+    let total = n + nown + extras;
+    let rsz = core::mem::size_of::<Fighter_WaitAnimData>();
+    let rows2 = ext::HSD_MemAlloc(total * rsz) as *mut Fighter_WaitAnimData;
+    let blend2 = ext::HSD_MemAlloc(total * 2) as *mut [u8; 2];
+    assert!(!rows2.is_null() && !blend2.is_null(), "Geno definition descriptor allocation exhausted");
+    core::ptr::copy_nonoverlapping(o.xC as *const u8, rows2 as *mut u8, n * rsz);
+    core::ptr::copy_nonoverlapping(o.x10 as *const u8, blend2 as *mut u8, n * 2);
+    let row = |r: usize| &mut *rows2.add(r);
+    let bl = |r: usize| &mut *blend2.add(r);
+    {
+        // slice 8: the package's declared rows (fighter.rows), n..: a copy of the Wait row given the declared clip
+        let wr = (*common.add(ftCo_MS_Wait as usize)).anim_id;
+        let wc2 = pi(13, ftCo_MS_Wait as i32);
+        assert!(wr >= 0 && (wr as usize) < n, "Geno base none: no Wait row to copy for the declared rows");
+        let wr = wr as usize;
+        for i in 0..nown {
+            let mut cc = pi(15, i as i32);
+            if cc < 0 {
+                cc = wc2;
+            }
+            let r = n + i;
+            *row(r) = core::ptr::read(row(wr));
+            *bl(r) = *bl(wr);
+            row(r).x0 = pt(1, cc);
+            row(r).x4 = pi(10, cc);
+            row(r).x8 = pi(11, cc);
+            let b = pi(18, r as i32);
+            if b >= 0 {
+                *bl(r) = [(b & 255) as u8, (b >> 8) as u8];
+            }
+            if pi(17, r as i32) != 0 {
+                row(r).x10_animCurrFlags = (row(r).x10_animCurrFlags & 0x3f) | pi(16, r as i32);
+            }
+            mapped += 1;
+        }
+    }
+    for i in 0..extras {
+        let r = n + nown + i;
+        let src = ex_a[i] as usize;
+        *row(r) = core::ptr::read(row(src));
+        *bl(r) = *bl(src);
+        row(r).x0 = pt(1, ex_c[i] as i32);
+        row(r).x4 = pi(10, ex_c[i] as i32);
+        row(r).x8 = pi(11, ex_c[i] as i32);
+        mapped += 1;
+    }
+    {
+        // a row the package gives no flags loses the donor's part-animation bits (x594_b3 / b4)
+        let mut cleared = 0;
+        for r in 0..total {
+            if pi(17, r as i32) == 0 && (row(r).x10_animCurrFlags as u32 & 0x1800_0000) != 0 {
+                row(r).x10_animCurrFlags = (row(r).x10_animCurrFlags as u32 & !0x1800_0000u32) as i32;
+                cleared += 1;
+            }
+        }
+        if cleared != 0 {
+            report(format!("geno: base none kind {kind}: {cleared} donor rows lose their part-animation flags\n"));
+        }
+    }
+    o.xC = rows2;
+    o.x10 = blend2;
+    ftData_Table_Unk0[kind as usize].count = total as _;
+    for i in 0..n {
+        let r = row(i);
+        if pick[i] < 0 {
+            r.x8 = 0;
+            r.x4 = 0;
+            continue;
+        }
+        let p = pick[i] as i32;
+        r.x0 = pt(1, p);
+        r.x4 = pi(10, p);
+        r.x8 = pi(11, p);
+        if pi(17, i as i32) != 0 && (r.x10_animCurrFlags & 0x3f) != 0x21 {
+            r.x10_animCurrFlags = (r.x10_animCurrFlags & 0x3f) | pi(16, i as i32);
+        }
+        let b = pi(18, i as i32);
+        if b >= 0 {
+            *bl(i) = [(b & 255) as u8, (b >> 8) as u8];
+        }
+        mapped += 1;
+    }
+    report(format!(
+        "geno: base none kind {kind}: {mapped} of {n} animation rows take the package's clips ({conflicts} states given a row of their own, {total} rows in all); own parts table of {njoints} joints\n"
+    ));
+}
+
+/// `GenoDefine_OwnTables`: a base "none" define's own storage for the small ftData tables the donor's copy shares.
+unsafe fn GenoDefine_OwnTables(kind: i32, out: *mut ftData) {
+    let o = &mut *out;
+    if ext::Geno_DefineTemplateSkeleton(kind) == 0 {
+        GenoDefine_X20.x0 = (&raw mut GenoDefine_GuardTrees) as *mut *mut HSD_Joint;
+        GenoDefine_X20.x8 = if o.x20.is_null() { 0.0 } else { (*o.x20).x8 };
+        o.x20 = &raw mut GenoDefine_X20;
+    }
+    o.x3C = gd_data_copy(o.x3C as *const c_void, core::mem::size_of::<UnkFloat6_Camera>()) as _;
+    o.x40 = gd_data_copy(o.x40 as *const c_void, core::mem::size_of::<itPickup>()) as _;
+    o.x50 = gd_data_copy(o.x50 as *const c_void, core::mem::size_of::<Vec2>()) as _;
+    o.x4C_sfx = gd_data_copy(o.x4C_sfx as *const c_void, core::mem::size_of::<FtSFX>()) as _;
+}
+
+/// `GenoDefine_Census`: log which ftData pointer fields are still the donor's.
+unsafe fn GenoDefine_Census(kind: i32, own: *const ftData, donor: *const ftData) {
+    let mask = GenoDefine_FtDataSharedMask(own, donor);
+    GenoDefine_CensusMask[(kind - MEX0) as usize] = mask;
+    let list: String = (0..GENO_FTDATA_FIELDS.len()).filter(|i| mask & (1 << i) != 0).map(|i| format!(" {}", GENO_FTDATA_FIELDS[i])).collect();
+    report(format!(
+        "geno: census kind {kind}: ftData fields still the donor's pointers:{} ({})\n",
+        if mask != 0 { list.as_str() } else { " none" },
+        if mask != 0 { "see docs/geno.md 22.4 for what each is and why" } else { "independent" }
+    ));
 }
 
 /// The ftData pointer fields, by name, in struct order (the census; docs/geno.md 22.4 "independence").

@@ -6,6 +6,8 @@
 //! - 1: the lockstep menus (`MLS1`, np_lockstep.rs; already self-identifying, so unprefixed);
 //! - 2 + k: the k-th rematch room (k >= 1), each packet prefixed `MRM` + k (a new `Net` must not see the old one's
 //!   late datagrams).
+//! - EARLY_CH: early inputs (`MEI1`, melee_net::early, np_early.rs), sent from the sampler thread straight to the
+//!   socket and read by the match each tick.
 //! Anything else (the hole punch `GDPH`, stray datagrams) is dropped. Each channel's queue is bounded; a channel nobody
 //! reads (the lockstep during a match) loses its oldest datagrams, which its protocols resend anyway.
 
@@ -15,6 +17,8 @@ use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
 const QUEUE_MAX: usize = 1024;
+/// The early-inputs channel.
+pub const EARLY_CH: u32 = 1000;
 
 pub struct MuxCore {
     base: Box<dyn Transport>,
@@ -41,6 +45,8 @@ impl MuxCore {
                 (2 + d[3] as u32, &d[4..])
             } else if d.len() >= 4 && &d[..4] == b"MLS1" {
                 (1, d)
+            } else if d.len() >= 4 && &d[..4] == melee_net::early::MAGIC {
+                (EARLY_CH, d)
             } else if d.len() >= 2 && &d[..2] == b"GN" {
                 (0, d)
             } else {
@@ -52,6 +58,18 @@ impl MuxCore {
             }
             q.push_back((from, body.to_vec()));
         }
+    }
+}
+
+impl MuxCore {
+    /// A send path for another thread (the socket below, with the relay's wrapping when relayed).
+    pub fn thread_sender(&self) -> Option<melee_net::transport::ThreadSender> {
+        self.base.thread_sender()
+    }
+    /// The next datagram of a channel (pumping the socket first).
+    pub fn take(&mut self, ch: u32) -> Option<Vec<u8>> {
+        self.pump();
+        self.q.get_mut(&ch).and_then(|q| q.pop_front()).map(|x| x.1)
     }
 }
 

@@ -267,3 +267,92 @@ before. No reconnect.
   mid-match -> host `connection lost: peer timed out ...` 5 s later.
 - Not verified: two real machines, a real NAT (hole punching was only exercised between two local sockets), the
   firewall prompt path, IPv6 over a real network, host names.
+
+## Early inputs (port/earlyin, 2026-11-03)
+Credit: the design is **Arte's subframe rollback** (JulienBernard3383279: the Kristal build and the "Subframe
+rollback" draft for Slippi's Dolphin), which first showed that sending meaningful controller changes between frames
+lets the other side predict from them. **Hero's Melee Unlocked** carries it (`docs/early-inputs.md`,
+`port/runtime/host/early_input*`, mu_net SAMPLE); it was read as reference only. Everything here is our own code over
+our own wire. Thanks to both.
+
+### What it does
+Prediction used to be repeat-last only. Now a sampler thread reads the local controller about every millisecond
+between the game's polls, and when the pad changes in a way the game acts on, it sends the new pad to the peer at once,
+stamped with the session frame it will first appear in. The receiver predicts an unconfirmed frame from the newest
+early pad for a frame in (last confirmed, frame]; with none it repeats the last confirmed input as before. **A
+confirmed input always wins** (a misprediction rolls back exactly as before), so the simulation, the replays, the
+`.slp` exports and the checksums are unchanged; only how often a prediction is right changes.
+
+- Rules (`melee_net::early::matters`, Melee Unlocked's thresholds): A/B/Start pressed or released; X/Y/Z/L/R either
+  way; no D-pad; main stick X 23 / 64, Y 23 / 53 / -23 / -56, -53 while shielding (shield drop), C-stick X 23 / 64,
+  Y 23 / 53, both signs; analog trigger 43. Sticks within 2 of neutral count as zero for the judgement only (the bytes
+  sent are the pad as read, which is what the confirmed input will carry). `MELEE_EARLY_RULES=presses` = outward
+  crossings and presses only. Follow-ups: after a crossing for frame F, any further byte change before F's poll is
+  sent too, at most one per 2 ms. After a tick that scheduled no pad (stall / time-sync wait) the next read is sent if
+  it differs at all.
+- Target frame: the game thread tells the sampler each local frame it schedules (`after_tick`, from the session's
+  local truth) and when it read the controller (`note_poll`, right after `PadSystem::read`). A change is for
+  last scheduled + 1, or + 2 between the read and the scheduling.
+- Packet: `MEI1` | room number u8 (rematch rooms of `--np-css` ignore each other's) | target i32 BE | in-game port u8 |
+  the 11 `np_encode` bytes; 21 bytes, unreliable, never retransmitted. Mux channel `EARLY_CH` (np_mux.rs).
+- Sending off the game thread: `Transport::thread_sender` gives cloned sockets (`ThreadSender`, with the rendezvous
+  relay's `GDMD` wrapping when relayed), so a send never waits for a tick. Reading off the game thread:
+  `PadSystem::sampler()` = `PadSampler` (the same keyboard / gamepad maps / adapter pipeline, its own gilrs instance,
+  `AdapterPeek` over the adapter's newest report; no script, no reset combo, no F9).
+- Receiver (`RbSession::submit_hint` / `prepare`): at most 8 entries per remote slot, a second pad for one target
+  replaces the first, entries at or before the confirmed frame are dropped as inputs arrive.
+- Trust: a peer whose early guesses are wrong more than 60 % of the time after 64 judged guesses has its early pads
+  ignored for the rest of the match (the summary says `IGNORED (wrong W of G)`). `MELEE_TEST_EARLY_LIE=1` sends
+  made-up early pads (first button byte inverted).
+- Compatibility: a trailing capability byte on HELLO (guest) and ACCEPT (host), bit 0 = early inputs. It is only
+  written when non-zero, so with the feature off the wire is byte-identical to the C build's (net_oracle); the C
+  build and older Rust builds ignore trailing bytes and never announce the bit, and nothing is sent to (or used
+  from) a peer that did not announce it (`early inputs off for this match: the peer does not announce them`).
+- Settings: on by default. Off: `--np-no-early` (or `--np-early 0`), `MELEE_EARLY_INPUTS=0`, or `early_inputs=0` in
+  settings.cfg (cfg.rs, env wins). The match summary line ends with `early inputs: sent N changes (...), received R,
+  predicted P frames from them: right / wrong (helped H = right where repeat-last was wrong, hurt = wrong where
+  repeat-last was right); repeat-last right / wrong`.
+- Scripted tests: a pad script changes exactly at a poll, so nothing ever changes between polls.
+  `MELEE_TEST_EARLY_LEAD_MS=N` makes the sampler send the script's next pad (`PadScript::peek_next`) N ms before the
+  poll that takes it: the same inputs reach the game either way, only when the peer learns them differs.
+
+### Measured (play_pair.sh, windowed peers on loopback, Falcon v Fox FD, `MELEE_TEST_EARLY_LEAD_MS=8`, jitter 10 ms)
+Rollbacks per 1000 match frames, host / guest (match lengths differ run to run, so per 1000 frames):
+
+| run | early on | early off (`--np-no-early`) |
+|---|---|---|
+| 50 ms each way + 10 ms jitter, run 1 | 74.9 / 66.8 (resim 246 / 224) | 105.2 / 100.2 (resim 371 / 340) |
+| 50 ms, run 2 | 72.1 / 71.2 (resim 240 / 271) | 106.7 / 95.8 (resim 366 / 351) |
+| 150 ms + 10 ms jitter, delay 4, window 12, run 1 | 74.5 / 80.9 (resim 342 / 394) | 94.8 / 98.6 (resim 365 / 427) |
+| 150 ms, run 2 | 63.7 / 79.9 (resim 322 / 518) | 90.8 / 96.5 (resim 496 / 572) |
+
+About 30 % fewer rollbacks at 50 ms and about 20 % fewer at 150 ms. Rollback depth is set by the lag (max 7 at
+50 ms, 12 at 150 ms) in both modes; total resimulated frames drop at 50 ms and drop less at 150 ms. Early-pad
+predictions: right 65-87 % (most of the misses are the frame right after a script segment change), helped 250-390
+frames per match, hurt at most 7. The second 150 ms "off" run is m150off3 (m150off2 crashed on both peers at once with
+a wgpu `GX texture is invalid` panic; early inputs were off and no sampler was running; its replay matched; rerun).
+
+### Verified
+- Desync tests with early inputs on (`MELEE_TEST_EARLY_LEAD_MS=8`): 0 ms, 50 ms + 5 % loss, 150 ms + 5 % loss
+  (`--np-delay 4 --np-rollback 12`): every frame's hash equal on both peers (0 differences), the host's replay played
+  back with 0 mismatches. Early pads were used in all three (predicted 69..1039 frames per peer).
+- The live sampler with no lead (scripted, so it never sees the script's pads: 0 sent) at 50 ms + 5 %: equal, replay
+  equal.
+- Lying peer (`MELEE_TEST_EARLY_LIE=1`): both sides IGNORED the other's early pads after 64-65 guesses (all wrong);
+  hashes equal.
+- Mixed peers (host on, guest `MELEE_EARLY_INPUTS=0`): no caps bit from the guest, the host logs `early inputs off for
+  this match: the peer does not announce them`, nothing is sent; equal.
+- `melee_net` unit tests: thresholds (every line both ways, both rule sets, shield drop, rest clamp), wire,
+  buffer order / replace / cap / best, trust, sender targets / follow-ups / skips.
+
+### Open
+- Not tested with a real controller (agents send no OS input): the live sampler's device path (gilrs second
+  instance, `AdapterPeek`, keyboard via the shared key set) only ran with no devices. A second gilrs instance
+  should see the same pads in the same order; unverified.
+- Two runs out of about 16 ended in a wgpu panic in `Presenter::present_frames` (`Texture with 'GX texture' label is
+  invalid`, crashlogs/crash-20261103-1638*, -1648*); one of them had early inputs off and no sampler running, so it is not
+  this change; not investigated.
+- Our local input is sent at the NEXT tick's `Net::poll` (tick_match polls before `run_tick` schedules this tick's
+  pad), about 16 ms late. Early inputs hide part of that; polling again after `run_tick` would remove it for every
+  input (follow-up, not done here so the measurements above isolate early inputs).
+- `MELEE_EARLY_ROLLBACK` (roll back as soon as an early pad contradicts a frame already run) is not implemented.

@@ -391,3 +391,27 @@ Tooling left behind: `scan_hook_casts.py` (link hook class mismatches). The inst
   LightThrowDash in Rust out of GuardSetOff; the call trace only shows plbonuslib `itGetKind` noise, need a C snapshot at 1195),
   targettest_gaw 352 / icies 699 (engine stops, no panic), classic_step01 1207 / 09 366, adventure_step00 270 / 02 86 / 09 1 /
   11 3288 (items / itemsum first: item code).
+
+## port/correct round 4 (2026-11-03): native layout of 4-byte C slots
+`run_rust.sh -j 2 --all` (release): **191 pass, 3 fail, 10 no golden** (was 184 / 10 / 10). Results: `results.tsv`.
+The common cause: a C field the 32-bit GameCube layout gives 4 bytes (a pointer, an `UNK_T`) is 8 bytes natively, so a union
+sibling's field or the next array element moved. Found by comparing item / fighter fields of C snapshots (`MELEE_SNAP_DUMP`)
+with the engine's (`MELEE_ENGINE_ITEMS=1` now also lists the 1P items per row) and `MELEE_WATCH_FIGHTER=slot,mvNN,frame`.
+- **Motion vars** (`gen/native_unions.py`): `ftCommon itemthrow` x18/x1C and `UNK_U32` (ten ftCommon / ftYoshi records) are
+  4-byte natively, so `itemthrow.x20` is `guard.x20` (fp+2360: the LightThrowDash/F choice in ftCo_8009515C) and Yoshi's
+  guard.x20/x24 are ftCommon's. `itGamewatchchef_ItemVars.x4` sits after a native-only word: `it_8027CE64` stores the 8-byte
+  `gamewatch.attr` over it (the chef's entry index; targettest_gaw, human_gaw_bigblue, adventure_step09).
+- **Topi freeze link**: `it_802E37A4` clears the C's itemVar+0x20 pointer = `oldottosea.x20` (natively `freeze.x20` is +0x28,
+  over oldottosea.x24/x28).
+- **Zako spawn descriptors**: `grZakoGenerator_801CA8B4` reads the stage's `grZakoGenerator_SpawnDesc` as an array to the end of
+  `yakumono_param`; Icicle Mountain (xC0..xCC declared floats), Shrine Route and Mushroom Kingdom route words are now swapped
+  as (u16, u8, u8) descriptors (`dat_custom.rs`).
+- **Zako attributes**: Like Like and Koopa Troopa attribute records start with a pointer; decoded as their records like the
+  others in `zako_attrs` (the word-swapped block crashed adventure_step02 / 00).
+- **Stage anim tables**: `MAX_TABLE_ARRAY` 64 -> 256 (`grAnime_801C7C1C` indexes `&mj[69]` on Target Test Ice Climbers; the
+  third load crashed on a stale pointer).
+- C goldens for the NO_GOLDEN rows: stage_21_akaneia and stage_26_icetop crash the vanilla C coverage build at frame 3 (unused
+  retail stage slots); the Home-Run / Multi-Man / Event rows still need C scene keywords (see "Not covered").
+- *left*: items_hi3_yoshistory64 1838 (itemsum), classic_step01 1207 (Poke Ball release position: the held item's jobj world
+  position (`lb_8000B1CC(it_80272C90(item))` in ftCo_80095EFC) is ~0.5 off from the throw's first frame, so a joint matrix of
+  the holder / held item differs while the hashed fighter state matches), adventure_step11 3288 (P1 motion 305 velocity).

@@ -38,7 +38,7 @@ pub mod ext {
         ftCo_800DF1C8(fp: &Fighter) -> bool = crate::ft0df::ftco_800df1c8;
         ftCo_800DF21C(fp: &Fighter) -> bool = crate::ft0df::ftco_800df21c;
         it_8026B30C(i: *mut Item_GObj) -> i32 = crate::hooks::it_8026b30c;
-        it_8026B594(i: *mut Item_GObj) -> bool = |_| todo!("it_8026B594: installed by melee_link");
+        it_8026B594(i: *mut Item_GObj) -> bool = |a0| unsafe { melee_items::tu::it_26B1::it_8026B594(a0 as _) };
         ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ftCo_Attack_800CCF58(g: G, a: i32) = |g: G, a: i32| { unsafe { crate::tu::ftswing::ftCo_Attack_800CCF58(g as _, a as _); } };
         ftCo_Attack_800CDD14(g: G) = t!("ftCo_Attack_800CDD14 (ft_0CDD.c)");

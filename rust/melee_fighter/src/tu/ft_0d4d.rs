@@ -94,7 +94,7 @@ pub mod ext {
         fn Player_SetUnk9C(_a0: i32, _a1: i32) = { crate::tu::player::Player_SetUnk9C(_a0, _a1) };
         fn ftCo_800D331C(_a0: *mut core::ffi::c_void) = { unsafe { let _ = ftCo_800D331C(_a0 as _); } };
         fn ftCommon_8007D5D4(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007d5d4(&mut *(_a0 as *mut Fighter)); } };
-        fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };
+        fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::tu::ftcommon::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };
         fn ftCommon_8007E690(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007e690(&mut *(_a0 as *mut Fighter), _a1 as _); } };
         fn ftCommon_8007EFC0(_a0: *mut core::ffi::c_void, _a1: u32) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(&mut *(_a0 as *mut Fighter), _a1 as _); } };
         fn ftCommon_8007F8B4(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void) = { unsafe { *(_a1 as *mut Vec3) = crate::ftcommon2::ftcommon_8007f8b4(&*(_a0 as *const Fighter)); } };

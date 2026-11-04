@@ -367,8 +367,6 @@ ported_hooks! {
 }
 needed_hooks! {
     FTFX_APPEALS_CHECK_IF_USED ftfx_appeals_check_if_used(fp: &mut Fighter) -> bool = "TODO(group4 ftFx) ftFx_AppealS_CheckIfUsed";
-    /// `ftData_80085FD4(fp, i)->x8`.
-    FTDATA_80085FD4_X8 ftdata_80085fd4_x8(fp: &mut Fighter, i: i32) -> usize = "TODO(group3 ftdata) ftData_80085FD4";
 }
 
 // ---- port round 8 (ft/ftcommon.c: landing, nudge, accessory, item/parasol callbacks) -------
@@ -409,8 +407,6 @@ needed_hooks! {
     HSD_JOBJ_SET_TRANSLATE hsd_jobj_set_translate(j: *mut HSD_JObj, v: &Vec3) = "TODO(group1 HSD) HSD_JObjSetTranslate";
     HSD_JOBJ_SET_SCALE hsd_jobj_set_scale(j: *mut HSD_JObj, v: &Vec3) = "TODO(group1 HSD) HSD_JObjSetScale";
     HSD_JOBJ_LOAD_JOINT hsd_jobj_load_joint(j: *mut crate::types::HSD_Joint) -> *mut HSD_JObj = "TODO(group1 HSD) HSD_JObjLoadJoint";
-    /// `HSD_JObjAddAnimAll(j, an, NULL, NULL)`.
-    HSD_JOBJ_ADD_ANIM_ALL hsd_jobj_add_anim_all(j: *mut HSD_JObj, an: *mut crate::types::HSD_AnimJoint) = "TODO(group1 HSD) HSD_JObjAddAnimAll";
     HSD_JOBJ_REQ_ANIM_ALL hsd_jobj_req_anim_all(j: *mut HSD_JObj, f: f32) = "TODO(group1 HSD) HSD_JObjReqAnimAll";
     FTCO_800C5240 ftco_800c5240(g: G) -> bool = "TODO(group3 ftCo) ftCo_800C5240";
     FTCO_800C5500 ftco_800c5500(g: G) = "TODO(group3 ftCo) ftCo_800C5500";
@@ -582,4 +578,14 @@ pub fn fighter_804d6540() -> *mut *mut Fighter_804D6540_t {
     let p = unsafe { FIGHTER_804D6540 };
     assert!(!p.is_null(), "Fighter_804D6540 not loaded");
     p
+}
+
+// ---- todofight: defaults wired to existing ports -------------------------------------------
+fn ftdata_80085fd4_x8_port(fp: &mut Fighter, i: i32) -> usize { crate::tu::ftdata::ftData_80085FD4_x8(fp, i) }
+fn hsd_jobj_add_anim_all_port(j: *mut HSD_JObj, an: *mut crate::types::HSD_AnimJoint) {
+    unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnimAll(j as _, an as _, core::ptr::null_mut(), core::ptr::null_mut()) }
+}
+ported_hooks! {
+    FTDATA_80085FD4_X8 ftdata_80085fd4_x8(fp: &mut Fighter, i: i32) -> usize = ftdata_80085fd4_x8_port;
+    HSD_JOBJ_ADD_ANIM_ALL hsd_jobj_add_anim_all(j: *mut HSD_JObj, an: *mut crate::types::HSD_AnimJoint) = hsd_jobj_add_anim_all_port;
 }

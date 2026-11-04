@@ -123,7 +123,7 @@ pub mod ext {
         FTCO_800DD168 ftCo_800DD168(g: G) => panic!("TODO(group3 ftCo) ftCo_800DD168 is not ported");
         FTCO_8008DCE0 ftCo_8008DCE0(g: G, a: i32, f: f32) => panic!("TODO(group3 ftCo) ftCo_8008DCE0({:?}, {a}, {f}) is not ported", g);
         FTCOMMON_8007D7FC ftCommon_8007D7FC(fp: &mut Fighter) => crate::ftcommon3::ftcommon_8007d7fc(fp);
-        FTCOMMON_8007E2FC ftCommon_8007E2FC(fp: &mut Fighter) => crate::ftcommon2::ftcommon_8007e2fc(fp);
+        FTCOMMON_8007E2FC ftCommon_8007E2FC(fp: &mut Fighter) => crate::tu::ftcommon::ftcommon_8007e2fc(fp);
         PLAYER_80033BB8 Player_80033BB8(slot: i32) -> i32 => crate::player::player_80033bb8(slot);
         PLAYER_GET_HANDICAP Player_GetHandicap(slot: i32) -> i32 => crate::player::get_handicap(slot);
         FTCOMMON_INIT_GRAB ftCommon_InitGrab(fp: &mut Fighter, a: i32, t: f32) => crate::ftcommon2::init_grab(fp, a, t);

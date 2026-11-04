@@ -58,6 +58,7 @@ mod play_net;
 mod slp_export;
 mod np_lockstep;
 mod np_mux;
+mod np_early;
 mod np_env;
 mod np_hud;
 mod input_delay;

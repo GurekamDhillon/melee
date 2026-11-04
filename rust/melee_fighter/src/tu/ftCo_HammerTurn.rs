@@ -40,7 +40,7 @@ pub mod ext {
         ftCo_800C4ED8(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C4ED8(g as _); } };
         ftParts_GetBoneIndex(fp: &mut Fighter, part: u32) -> u32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         ftPartSetRotY(fp: &mut Fighter, part: i32, r: f32) = |fp: &mut Fighter, part: i32, r: f32| { unsafe { crate::tu::ftparts::ftPartSetRotY(fp as _, part as _, r as _); } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftCo_800C5A50(g: G) -> bool = crate::tu::ftCo_HammerJump::ftCo_800C5A50;
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
         ftCo_HammerWait_Coll(g: G) = |g: G| { unsafe { crate::tu::ftCo_HammerWait::ftCo_HammerWait_Coll(g as _); } };

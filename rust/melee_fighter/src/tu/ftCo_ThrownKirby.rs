@@ -53,7 +53,7 @@ pub mod ext {
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_SetAccessory(f: &mut Fighter, j: *mut HSD_Joint) = |_, _| todo!("ftCommon_SetAccessory: installed by melee_link");
         ftKb_SpecialN_800F5898(g: G) -> *mut HSD_Joint = |_| todo!("TODO(port) ftKb_SpecialN_800F5898 (ftKb_Init.c)");
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         lb_8000C2F8(a: *mut HSD_JObj, b: *mut HSD_JObj) = |a: *mut HSD_JObj, b: *mut HSD_JObj| { unsafe { melee_runtime::tu::lb_00B0::lb_8000C2F8(a as _, b as _); } };
         ftParts_GetBoneIndex(f: &mut Fighter, part: i32) -> i32 = |_, _| todo!("ftParts_GetBoneIndex: installed by melee_link");
         ftColl_8007ABD0(hit: *mut HitCapsule, dmg: u32, g: G) = |hit: *mut HitCapsule, dmg: u32, g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007abd0(hit as _, dmg as _, g as _); } };

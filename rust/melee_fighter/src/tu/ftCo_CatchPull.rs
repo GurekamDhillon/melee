@@ -42,7 +42,7 @@ pub mod ext {
         fn_800DA1D8(g: G) = crate::tu::ftCo_CatchWait::fn_800DA1D8;
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
         ftCommon_CalcGroundAccel_Deaccel(fp: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |_| todo!("ftCommon_SetSelfMovementFromGroundedMovement: installed by melee_link");
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(a0);
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
         ftCo_800DC920(g: G, victim: G) = |g: G, victim: G| { unsafe { crate::tu::ftCo_CaptureCut::ftCo_800DC920(g as _, victim as _); } };
         ftCo_Fall_Enter(g: G) = crate::hooks::ftco_fall_enter;

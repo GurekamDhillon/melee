@@ -121,11 +121,14 @@ pub struct Base {
     track: std::cell::Cell<bool>,
     /// Page buffers of dropped snapshots, reused by the next saves (no allocation per page in steady state).
     pool: Pool,
+    /// The next snapshot id. Here, not a static: a load puts the statics back, and a static counter would hand out
+    /// an id again (the rollback statics rule).
+    next_id: std::cell::Cell<u64>,
+    /// MELEE_SNAP_NOINC: compare every candidate page (the measurement baseline).
+    no_inc: bool,
 }
 
 type Pool = Rc<std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>>;
-static NO_INC: std::sync::LazyLock<bool> = std::sync::LazyLock::new(|| std::env::var_os("MELEE_SNAP_NOINC").is_some());
-static NEXT_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 /// Most page buffers kept for reuse (64 MB, the Lab ring's churn; more are freed).
 const POOL_MAX: usize = 16384;
 
@@ -194,7 +197,10 @@ impl Base {
         let b = Base {
             ranges, data, arena_len, dirty: std::cell::RefCell::new(vec![Default::default(); WATCHED]),
             since: std::cell::RefCell::new(vec![Default::default(); WATCHED]), last: std::cell::Cell::new(0),
-            track: std::cell::Cell::new(false), pool: Default::default(),
+            track: std::cell::Cell::new(false),
+            // reserved now: a push never reallocates, wherever a snapshot is dropped
+            pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
+            no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
         };
         b.refresh(); // consumes the watch state up to now (the copy above only read)
         b.dirty.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
@@ -290,7 +296,7 @@ impl Base {
         }
         // incremental when `prev` is the state the live one evolved from: a watched page not written since then is
         // `prev`'s page (or the base's) without comparing a byte
-        let inc = prev.is_some_and(|p| p.id == self.last.get() && self.last.get() != 0) && !*NO_INC;
+        let inc = prev.is_some_and(|p| p.id == self.last.get() && self.last.get() != 0) && !self.no_inc;
         if inc {
             self.refresh_cow_since();
         }
@@ -343,7 +349,8 @@ impl Base {
         }
         drop(pool);
         drop(since);
-        let id = NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let id = self.next_id.get();
+        self.next_id.set(id + 1);
         self.mark_last(id);
         (Rc::new(Snapshot { ranges: out, id, pool: self.pool.clone() }), fresh)
     }

@@ -148,7 +148,14 @@ impl RetailPlay {
                         self.presets.scenario = Some(s)
                     }
                     Ok(s) if s.game_mode == melee_modes::tu::geno_lab_mode::GM_LAB as i32 => log("MELEE_SCENE: mode=lab launches the LAB match only (its CSS/SSS are kit screens, not in the retail flow)"),
-                    Ok(_) => log("MELEE_SCENE: only the 1P modes and mode=lab are launched this way here (VS: --match)"),
+                    // a VS match straight from the boot (gw_runtime.c's VS scene launch, at=match): fighters by retail name,
+                    // ck:, or an m-ex disc's own names / mexint:N / mexext:N (`p1=ultimatekirby`), resolved once the
+                    // disc's MxDt.dat is read. Its CSS/SSS (at=css|sss) stay with the retail menus, so only the match.
+                    Ok(s) if matches!(s.game_mode, -1 | 2) && matches!(s.entry_state, -1 | 2) => {
+                        log("MELEE_SCENE: VS match (no menus)");
+                        self.presets.scenario = Some(s)
+                    }
+                    Ok(_) => log("MELEE_SCENE: at=css|sss is the retail menus' job: only the match (at=match) launches this way"),
                     Err(e) => log(&format!("MELEE_SCENE: {e}")),
                 }
             }

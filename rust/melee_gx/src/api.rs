@@ -1671,6 +1671,24 @@ impl Gx {
             }
         }
     }
+    /// `GXAuroraLoadPalette(n, key, data)` (the PC matrix palette, GX_AURORA_LOAD_PALETTE): `n` slots of 24 floats
+    /// (position 3x4 rows, then normal 3x4 rows). Until [`Gx::end_palette`], a triangle draw whose PNMTXIDX is DIRECT
+    /// reads its matrices from the palette, the index byte unscaled (the slot, not slot*3).
+    pub fn load_palette(&mut self, n: u32, key: u32, data: &[f32]) {
+        if n == 0 || n > 64 || data.len() < n as usize * 24 {
+            return;
+        }
+        self.write_aurora(0x0044);
+        self.w16(n as u16);
+        self.w32(key);
+        for &x in &data[..n as usize * 24] {
+            self.wf32(x);
+        }
+    }
+    /// `GXAuroraEndPalette` (GX_AURORA_END_PALETTE).
+    pub fn end_palette(&mut self) {
+        self.write_aurora(0x0045);
+    }
     pub fn set_current_mtx(&mut self, id: u32) {
         assert!(id <= GX_PNMTX9, "invalid pn mtx {id}");
         set_field(&mut self.sh.mat_idx_a, 6, 0, id);

@@ -191,6 +191,11 @@ fn pending_fighter(name: &str) -> i32 {
 /// Resolve the pending fighter tokens of `s` against the mounted disc (gw_sl_parse_char's m-ex branches, then the
 /// retail names). An unknown name is logged and leaves the slot empty-handed (-1), as the C's parse error does.
 fn resolve_pending(s: &mut Scenario) {
+    // the disc's MxDt.dat is read when the host boots (mex_host::install): a launch installed before that (the retail
+    // flow's MELEE_SCENE) resolves on the first SceneLaunch_PlayerCKind query instead
+    if !crate::host::Host::is_booted() {
+        return;
+    }
     for (n, p) in s.players.iter_mut().enumerate() {
         let Some(p) = p else { continue };
         if p.ckind > PENDING {
@@ -302,7 +307,12 @@ pub fn install(mut s: Scenario) {
         h::SceneLaunch_VsModeIndex = Some(|| melee_types::GmVsMode_Melee as i32);
         h::SceneLaunch_EntryStateId = Some(entry_state_id);
         h::SceneLaunch_StageExternal = Some(|| SCN.as_ref().map_or(-1, |s| s.stage));
-        h::SceneLaunch_PlayerCKind = Some(|n| p(n).map_or(-1, |x| x.ckind));
+        h::SceneLaunch_PlayerCKind = Some(|n| {
+            if let Some(s) = SCN.as_mut() {
+                resolve_pending(s);
+            }
+            p(n).map_or(-1, |x| x.ckind)
+        });
         h::SceneLaunch_PlayerSlotType = Some(|n| p(n).map_or(-1, |x| x.slot_type));
         h::SceneLaunch_PlayerCpuLevel = Some(|n| p(n).map_or(-1, |x| x.cpu_level));
         h::SceneLaunch_RuleMatch = Some(|| SCN.as_ref().map_or(-1, |s| s.rule_match));

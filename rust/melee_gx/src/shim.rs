@@ -591,6 +591,8 @@ impl GxShim {
         self.gx.set_projection(&m, ty);
     }
     fwd!(load_pos_mtx_imm => load_pos_mtx_imm(m: &[[f32; 4]; 3], id: u32));
+    fwd!(load_palette => load_palette(n: u32, key: u32, data: &[f32]));
+    fwd!(end_palette => end_palette());
     fwd!(load_nrm_mtx_imm => load_nrm_mtx_imm(m: &[[f32; 4]; 3], id: u32));
     /// `gw_GXLoadTexMtxImm`: a 2x4 matrix is the first two rows.
     pub fn load_tex_mtx_imm(&mut self, m: &[[f32; 4]; 3], id: u32, ty: u32) {

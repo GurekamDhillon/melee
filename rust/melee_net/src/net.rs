@@ -1212,6 +1212,20 @@ impl Net {
         }
     }
 
+    /// Right after the session ran this tick's frames: take the local inputs it now has and send them at once,
+    /// instead of at the next tick's `poll` (~one render tick later). Same INPUT packet; nothing is read.
+    pub fn send_local_now(&mut self, local_frame: i32) {
+        if self.state != State::Running {
+            return;
+        }
+        let before = self.local_next;
+        self.local_frame = if local_frame > self.first { local_frame.wrapping_sub(self.first) as u32 } else { 0 };
+        self.pull_local();
+        if self.local_next != before {
+            self.send_inputs();
+        }
+    }
+
     // ---- session-facing API ----
 
     /// PUSH model: this peer's inputs for `frame`, indexed by slot (`gw_net_submit_local`).

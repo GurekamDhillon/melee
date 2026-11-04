@@ -850,6 +850,8 @@ pub struct NetDriver {
     pub early_on: bool,
     pub early: Option<crate::np_early::EarlySender>,
     early_logged: bool,
+    /// MELEE_NP_LATE_SEND=1: send the local input at the next tick's poll (the old timing, for measurements)
+    late_send: bool,
 }
 
 /// What a room is opened with (kept for the rematches of `--np-css`).
@@ -1094,6 +1096,7 @@ impl NetDriver {
             early_on,
             early: None,
             early_logged: false,
+            late_send: std::env::var("MELEE_NP_LATE_SEND").map_or(false, |v| v == "1"),
         })
     }
 
@@ -1268,6 +1271,15 @@ impl NetDriver {
                 })
             });
         }
+        // send this tick's local input now, not at the next tick's poll (the callbacks borrow the session)
+        let cur = s.current_frame();
+        drop(s);
+        // MELEE_NP_LATE_SEND=1 (tests): the old timing, sent at the next tick's poll
+        if let (false, Some(net)) = (self.late_send, self.net.as_mut()) {
+            net.send_local_now(cur);
+        }
+        let NetPhase::InMatch(g) = &mut self.phase else { return false };
+        let s = self.sess.borrow_mut();
         // final checksums (start of frame f = the state after frame f - 1)
         let next = self.finals.last().map_or(FIRST, |x| x.0 + 1);
         for fr in next..=s.current_frame() {
@@ -1402,7 +1414,7 @@ impl NetDriver {
         let st = s.stats;
         let lg = self.log.borrow();
         format!(
-            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms; net {:?}",
+            "netplay {}: {} final hashes (through game frame {}), rollbacks {} (max depth {}, resim {}), stalls {}, waits {}, session desyncs {}, checksum desyncs {}, ping {} ms, input arrived {:.2} frames after due; net {:?}",
             self.tag(),
             self.finals.len(),
             self.finals.last().map_or(-1, |x| x.0 - 1 - FIRST),
@@ -1414,6 +1426,7 @@ impl NetDriver {
             st.desyncs,
             lg.desyncs.len(),
             self.net.as_ref().map_or(0, |n| n.rtt_ms()),
+            if st.arrive_n > 0 { st.arrive_sum as f64 / st.arrive_n as f64 } else { 0.0 },
             self.net.as_ref().map(|n| n.stats())
         ) + &self.early_summary(&s)
     }

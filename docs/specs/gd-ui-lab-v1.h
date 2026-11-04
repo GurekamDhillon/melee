@@ -8,7 +8,7 @@
 /* ABI versions (major<<16 | minor). A mod that declares any UI (LAB) feature bit, required or optional, exports
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
-#define GD_UI_ABI_VERSION  (1u << 16)
+#define GD_UI_ABI_VERSION  ((1u << 16) | 1u) /* 1.1: text style bits (GD_UI_TEXT_*) */
 #define GD_LAB_ABI_VERSION (1u << 16)
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
@@ -61,6 +61,13 @@ enum { GD_UI_LAYER_SCENE = 0, GD_UI_LAYER_HUD_UNDER, GD_UI_LAYER_HUD, GD_UI_LAYE
        GD_UI_LAYER_MODAL, GD_UI_LAYER_DEBUG };
 /* text roles (base 13 px): label 11 (uppercased), value 12, body 13, big 18 bold, title 14 bold, toast 13 bold */
 enum { GD_UI_ROLE_LABEL = 0, GD_UI_ROLE_VALUE, GD_UI_ROLE_BODY, GD_UI_ROLE_BIG, GD_UI_ROLE_TITLE, GD_UI_ROLE_TOAST };
+/* v1.1: the role word of TEXT / gd_ui_measure may carry style bits on top of the role (bits 0-7). Fonts: Inter
+ * (sans) and JetBrains Mono, regular and bold, drawn as SDF glyphs (any size stays sharp). A v1.0 role (0..5) draws
+ * as before: sans, the role's size and weight. */
+#define GD_UI_TEXT_REGULAR (1 << 8)          /* weight override: regular */
+#define GD_UI_TEXT_BOLD    (2 << 8)          /* weight override: bold */
+#define GD_UI_TEXT_MONO    (1 << 10)         /* JetBrains Mono instead of Inter */
+#define GD_UI_TEXT_SIZE(px) (((px) & 0xFF) << 16) /* line height in canvas units, 1..255 (0: the role's size) */
 enum { GD_UI_ALIGN_LEFT = 0, GD_UI_ALIGN_CENTER = 1, GD_UI_ALIGN_RIGHT = 2 };
 enum { GD_UI_SLICE_FILL_R4 = 1, GD_UI_SLICE_FILL_R6, GD_UI_SLICE_FILL_R14, GD_UI_SLICE_LINE_R4, GD_UI_SLICE_LINE_R6,
        GD_UI_SLICE_LINE_R14_3, GD_UI_SLICE_GLOW_R6, GD_UI_SLICE_FILL_R1 };

@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 gd_ui_enc = { path = "../gd_ui_enc" }
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
 panic = "abort"
 lto = true
 

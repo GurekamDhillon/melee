@@ -322,7 +322,7 @@ const F_VY: usize = 68;
 const F_ACTION_FRAME: usize = 120;
 
 /// Hint key caps and labels: (key, label); widths measured once at init.
-const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D-dn", "save"), ("D-up", "load"), ("Z+D-up", "HUD preset")];
+const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D↓", "save"), ("D↑", "load"), ("Z+D↑", "HUD preset")];
 const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("L R", "10f"), ("A", "take over"), ("B", "resume")];
 
 fn measure(s: &str, role: i32) -> f32 {
@@ -700,7 +700,7 @@ impl Lab {
                 }
             }
         }
-        // input history (P1): (buttons, numpad direction, frames)
+        // input history (P1): (buttons, direction 1-9 as on a numpad, frames)
         let btn = self.held_p1 & (BA | BB | BX | BY | BL | BR | BZ);
         let (sx, sy) = self.stick;
         let dx = if sx > 40 { 1 } else if sx < -40 { -1 } else { 0 };
@@ -903,7 +903,7 @@ impl Lab {
                 let k = (self.meter[p][i] as usize).min(5);
                 let cx = cells_x + i as f32 * 11.0;
                 let c = self.t(T_CELL + k);
-                self.enc.slice(SLICE_FILL_R1, cx, ry, 9.0, 14.0, c);
+                self.enc.rect(cx, ry, 9.0, 14.0, c); // 1 quad (a radius-1 slice is 9)
                 if k == CELL_STUN as usize && self.kit_hatch != 0 {
                     // colour-blind aid: the stun hatch
                     self.enc.kit(self.kit_hatch, cx, ry, 1.0, 0xFFFFFF40);
@@ -1020,7 +1020,7 @@ impl Lab {
         self.enc.text_ex(x + 14.0, y + 60.0, ROLE_LABEL, mu, ALIGN_LEFT, 172.0, lab.chain_row.v.as_str());
     }
 
-    /// Part 6: P1's input display: stick, A B X Y L Z, history with frame counts (numpad directions).
+    /// Part 6: P1's input display: stick, A B X Y L Z, history with frame counts (stick as arrows).
     fn input_display(&mut self, x: f32, y: f32) {
         self.panel(x, y, 250.0, 80.0);
         let (mu, ac) = (self.t(T_MUTED), self.t(T_ACCENT));
@@ -1046,7 +1046,9 @@ impl Lab {
             let (b, d, n) = lab.in_hist[i];
             lab.in_rows[i].set(b as u64 | (d as u64) << 16 | (n as u64) << 24, |t| {
                 if n == 0 { return; }
-                if d != 5 || b == 0 { t.i(d as i32); }
+                // the stick as an arrow (neutral: nothing, or a dot when no button is held)
+                const ARROW: [&str; 10] = ["", "↙", "↓", "↘", "←", "·", "→", "↖", "↑", "↗"];
+                if d != 5 || b == 0 { t.s(ARROW[d as usize]); }
                 for (k, m) in [("A", BA), ("B", BB), ("X", BX), ("Y", BY), ("L", BL), ("R", BR), ("Z", BZ)] {
                     if b & m != 0 { t.s(k); }
                 }
@@ -1145,7 +1147,7 @@ impl Lab {
             let mut name = Txt::new();
             name.s("Slot ").i(s as i32 + 1);
             self.enc.text(x + 6.0, y + 58.0, ROLE_VALUE, if sel { ac } else { a(tx) }, name.as_str());
-            self.enc.text(x + 6.0, y + 72.0, ROLE_LABEL, a(mu), if empty { "D-dn saves" } else { "D-up loads" });
+            self.enc.text(x + 6.0, y + 72.0, ROLE_LABEL, a(mu), if empty { "D↓ saves" } else { "D↑ loads" });
         }
     }
 }

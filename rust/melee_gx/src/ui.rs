@@ -99,7 +99,7 @@ pub const KIT_PIECES: [(&str, u16, u16); 6] = [
 ];
 
 /// Glyphs: ASCII 0x20..0x7F, Latin-1 0xA0..0xFF, then the kit's symbols.
-const EXTRA_GLYPHS: [char; 7] = ['◀', '▶', '›', '●', '▍', '◆', '·'];
+const EXTRA_GLYPHS: [char; 15] = ['◀', '▶', '›', '●', '▍', '◆', '·', '←', '→', '↑', '↓', '↖', '↗', '↘', '↙'];
 pub const N_GLYPHS: usize = 96 + 96 + EXTRA_GLYPHS.len();
 
 /// The glyph index of `c` (unknown characters draw as '?').

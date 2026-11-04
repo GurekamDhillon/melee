@@ -635,8 +635,14 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     });
     f!("gd_lab_events", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
-        let v: Vec<u8> = l.borrow().events.iter().take(max as usize).flat_map(|e| e.to_bytes()).collect();
-        if write(&mut c, out, &v) { (v.len() / EVENT_BYTES) as i32 } else { GD_EINVAL }
+        // per-frame query: a stack buffer, no allocation (at most 64 events)
+        let mut b = [0u8; 64 * EVENT_BYTES];
+        let mut n = 0;
+        for e in l.borrow().events.iter().take((max as usize).min(64)) {
+            b[n * EVENT_BYTES..(n + 1) * EVENT_BYTES].copy_from_slice(&e.to_bytes());
+            n += 1;
+        }
+        if write(&mut c, out, &b[..n * EVENT_BYTES]) { n as i32 } else { GD_EINVAL }
     });
     f!("gd_lab_events_range", |mut c: Caller<'_, PresData>, from: i32, to: i32, out: u32, max: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
@@ -647,8 +653,17 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     f!("gd_lab_meter", |mut c: Caller<'_, PresData>, port: u32, out: u32, n: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
         if port > 3 { return GD_EINVAL }
-        let v: Vec<u8> = { let s = l.borrow(); let m = &s.meter[port as usize]; m.iter().skip(m.len().saturating_sub(n as usize)).copied().collect() };
-        if write(&mut c, out, &v) { v.len() as i32 } else { GD_EINVAL }
+        let mut b = [0u8; METER_CELLS];
+        let k = {
+            let s = l.borrow();
+            let m = &s.meter[port as usize];
+            let k = (n as usize).min(m.len()).min(METER_CELLS);
+            for (d, v) in b.iter_mut().zip(m.iter().skip(m.len() - k)) {
+                *d = *v;
+            }
+            k
+        };
+        if write(&mut c, out, &b[..k]) { k as i32 } else { GD_EINVAL }
     });
     // 1 when the lab match has a timer (the retail timer HUD is up), 0 when it is untimed
     f!("gd_lab_timed", |c: Caller<'_, PresData>| -> i32 {
@@ -676,7 +691,10 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         let s = l.borrow();
         let v = [s.active as i32, s.match_frame, s.paused as i32, s.replaying as i32, s.ring_frames as i32, s.ring_len as i32, s.delay as i32, s.recording_mask as i32, s.issuer as i32, s.apply_frame];
         drop(s);
-        let b: Vec<u8> = v.iter().flat_map(|x| x.to_le_bytes()).collect();
+        let mut b = [0u8; 40];
+        for (i, x) in v.iter().enumerate() {
+            b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes());
+        }
         if write(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
     Ok(())

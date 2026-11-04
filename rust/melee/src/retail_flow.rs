@@ -1015,7 +1015,9 @@ impl Game for RetailPlay {
         if let Some(u) = self.ui.as_mut() {
             let (w, h) = p.size();
             u.set_window(w, h);
+            let t = std::time::Instant::now();
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
+            u.stages[5].push(t.elapsed().as_nanos().min(u32::MAX as u128) as u32);
         }
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, a);
         self.emit_shot();

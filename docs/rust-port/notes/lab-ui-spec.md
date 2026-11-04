@@ -16,16 +16,20 @@ below are copied from it exactly; it is not copied into the repo.
 | M4 (part) | frame meter (part 4, stun hatch), move readout (from the observed frame data of P1's last move with a hitbox), state readout (action names from the decomp's ftCommon enum, `tools/rust-port/modhost/lab_names.py`), dummy panel (defaults until the M3 menu), combo panel, input display (part 6, numpad history); Frame data and Full presets; Z + D-up cycles the preset |
 | online | freeze / rewind / step / load apply to both players (no consent prompt, open question 4 decided); the other player's action shows as a toast |
 
-Since the font merge (gd-ui 1.1): numbers in JetBrains Mono (`TEXT_MONO`); the subset fonts have no arrow glyphs,
-so hints keep "D-dn" / "D-up". Keep-out: input display and hints sit above the percent row whenever they overlap the
+Since the font merge (gd-ui 1.1): numbers in JetBrains Mono (`TEXT_MONO`); the subset now carries the arrows ← → ↑ ↓ ↖ ↗ ↘ ↙
+(hints "D↓ / D↑", the input history's stick). Keep-out: input display and hints sit above the percent row whenever they overlap the
 band (4:3 and 16:9); in a timed match (`gd_lab_timed`) the meter drops below the timer (band y 125 of 720). Online
 check: `LAB_MOD=lab tools/rust-port/netplay/lab_pair.sh` (both peers freeze, rewind, take over, save, load; 0 desyncs;
 toasts are in the log through `gd_ui_log`).
 
 Layout: the presets are laid out on 1280x720 and scaled to fit the window (`SPACE_WINDOW`); a 4:3 window gets the
 extra height, the frozen widgets sit above the percent-row keep-out. Measured in the game (1280x960 window, retail
-flow, Full preset with the frozen scrubber part of the run): gd_ui present p50 63 us, p99 157 us (all UI host work plus
-the mod), 1 UI draw call per present, about 1500 quads; 0 allocations in the mod (no_std, no alloc).
+flow, the presets + frozen script, 3 runs): gd_ui present p50 42-47 us, p99 121-141 us, 1 UI draw call per present,
+663 quads; 0 allocations in the mod (no_std, no alloc) and in the per-frame Lab queries. The stats line splits a
+present into stages (nav+events, mod frame, submit, lab after, layout+sort, set_ui upload); the mod frame (wasm plus
+its queries) dominates. What it took from p99 317 us: frame-meter cells as plain rects (a radius-1 slice was 9 quads:
+1469 -> 663 quads), gd_ui_log off unless MELEE_UI_LOG=1 (a console write per toast), stack buffers instead of Vecs in
+gd_lab_events / meter / status, and the mod built at opt-level 3 (wasmi runs fewer instructions).
 
 ## 1. Product
 

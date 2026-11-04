@@ -60,11 +60,13 @@ pub struct RoomSettings {
     pub controls: u32,
     /// Appended to the agreed scene (`;key=value...`): what the host also dictates (net3: `np_rules=`).
     pub scene_extra: String,
+    /// Handshake capability bits (`early::CAP_EARLY`), 0 = none (the C build's wire).
+    pub caps: u8,
 }
 
 impl Default for RoomSettings {
     fn default() -> Self {
-        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0, scene_extra: String::new() }
+        RoomSettings { host: true, ck: 2, color: 0, stocks: 4, minutes: 8, delay: 2, stage_ext: 31, use_lobby: false, peer: None, name: String::new(), exe_hash: 0, stage_mode: 0, seed: None, controls: 0, scene_extra: String::new(), caps: 0 }
     }
 }
 
@@ -396,6 +398,7 @@ impl Room {
         let tp = self.tp.take().ok_or("session already started")?;
         let mut cfg = self.cfg.clone();
         cfg.mods_soft = s.host && s.use_lobby && !self.random;
+        cfg.caps = s.caps;
         let net = if s.host {
             let seed = self.sh.borrow().seed;
             cfg.seed = seed;

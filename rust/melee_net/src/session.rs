@@ -440,6 +440,31 @@ pub struct RbSession<G: RbGame> {
     resim: bool,
     snaps: Snaps<G::Snapshot>,
     pub stats: RbStats,
+    /// Early inputs (early.rs): use the peer's early pads as predictions.
+    pub hints_on: bool,
+    hint: [crate::early::Buffer; SLOTS],
+    /// per slot and frame: the frame whose used input came from an early pad, and what repeat-last would have used
+    hint_used: Vec<[(i32, bool, RbInput); RING]>,
+    pub hint_trust: [crate::early::Trust; SLOTS],
+    pub hint_stats: HintStats,
+}
+
+/// Early-input prediction statistics (this match).
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct HintStats {
+    /// early pads taken into the buffer
+    pub received: u32,
+    /// frame predictions made from an early pad (resimulations included)
+    pub predicted: u32,
+    /// judged on the confirmed input: right, and of those where repeat-last would have been wrong (helped)
+    pub right: u32,
+    pub wrong: u32,
+    pub helped: u32,
+    /// wrong where repeat-last would have been right
+    pub hurt: u32,
+    /// repeat-last predictions judged on the confirmed input (the baseline)
+    pub plain_right: u32,
+    pub plain_wrong: u32,
 }
 
 impl<G: RbGame> RbSession<G> {
@@ -476,6 +501,11 @@ impl<G: RbGame> RbSession<G> {
             resim: false,
             snaps: Snaps { slots: Vec::new() },
             stats: RbStats::default(),
+            hints_on: false,
+            hint: Default::default(),
+            hint_used: vec![[(i32::MIN, false, RbInput::default()); RING]; SLOTS],
+            hint_trust: [crate::early::Trust::default(); SLOTS],
+            hint_stats: HintStats::default(),
         }
     }
 
@@ -582,6 +612,33 @@ impl<G: RbGame> RbSession<G> {
         while at(&self.truth[slot], self.conf_slot[slot] + 1).is_some() {
             self.conf_slot[slot] += 1;
         }
+        self.hint[slot].drop_through(self.conf_slot[slot]);
+        if let Some(u) = at(&self.used[slot], frame) {
+            let hu = &mut self.hint_used[slot][rix(frame)];
+            if hu.0 == frame && hu.1 {
+                hu.0 = i32::MIN;
+                let right = rb_same(&u.input, &tin);
+                let plain = rb_same(&hu.2, &tin);
+                let st = &mut self.hint_stats;
+                if right {
+                    st.right += 1;
+                    st.helped += !plain as u32;
+                } else {
+                    st.wrong += 1;
+                    st.hurt += plain as u32;
+                }
+                if self.hint_trust[slot].judge(right) {
+                    self.hint[slot].clear();
+                }
+            } else if hu.0 == frame {
+                hu.0 = i32::MIN;
+                if rb_same(&u.input, &tin) {
+                    self.hint_stats.plain_right += 1;
+                } else {
+                    self.hint_stats.plain_wrong += 1;
+                }
+            }
+        }
         if let Some(u) = at_mut(&mut self.used[slot], frame) {
             if !rb_same(&u.input, &tin) && frame < self.first_wrong {
                 self.first_wrong = frame;
@@ -599,6 +656,19 @@ impl<G: RbGame> RbSession<G> {
         let t = at_create(&mut self.truth[slot], frame);
         t.input = *input;
         t.input.confirmed = 1;
+    }
+
+    /// An early pad from the peer for remote `slot`, first appearing at `target` (early.rs). Ignored while off, before
+    /// the open, for a local slot, for an already confirmed frame, or from an untrusted peer.
+    pub fn submit_hint(&mut self, slot: usize, target: i32, pad: &crate::early::Pad) {
+        if !self.hints_on || !self.opened || slot >= SLOTS || !self.slot_remote[slot] || self.hint_trust[slot].distrusted {
+            return;
+        }
+        if target <= self.conf_slot[slot] || target > self.frame + RING as i32 - 8 {
+            return;
+        }
+        self.hint_stats.received += 1;
+        self.hint[slot].add(target, pad);
     }
 
     /// gw_rb_local_input_for_send.
@@ -955,6 +1025,12 @@ impl<G: RbGame> RbSession<G> {
     /// The open (the first logic tick of the match): rings, slots, early inputs.
     fn open(&mut self, g: &G) {
         self.opened = true;
+        for b in self.hint.iter_mut() {
+            b.clear();
+        }
+        for u in self.hint_used.iter_mut() {
+            *u = [(i32::MIN, false, RbInput::default()); RING];
+        }
         self.last = g.last_frame();
         self.snaps = Snaps::open((self.cfg.maxb + 3) as usize);
         let src = self.cfg.src;
@@ -1030,6 +1106,20 @@ impl<G: RbGame> RbSession<G> {
                 };
                 i.confirmed = 0;
                 i.seed = 0;
+                // early inputs: the newest early pad for a frame after the last confirmed one, up to this one
+                let early = if self.hints_on && !self.hint_trust[s].distrusted { self.hint[s].best(next, self.conf_slot[s]).copied() } else { None };
+                let k = rix(next);
+                match early {
+                    Some(p) => {
+                        let plain = i;
+                        let mut e = crate::pad::np_decode(&p);
+                        e.confirmed = 0;
+                        self.hint_used[s][k] = (next, true, plain);
+                        self.hint_stats.predicted += 1;
+                        i = e;
+                    }
+                    None => self.hint_used[s][k] = (next, false, i),
+                }
                 i
             };
             at_create(&mut self.used[s], next).input = inp;

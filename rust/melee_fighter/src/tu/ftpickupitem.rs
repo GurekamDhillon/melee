@@ -37,20 +37,20 @@ pub mod ext {
         unsafe { &mut *((*i).user_data as *mut Item) }
     }
     ext_fns! {
-        Item_IsGrabbable(i: I) -> bool = |_| todo!("Item_IsGrabbable: installed by melee_link");
-        it_8026B47C(i: I) -> i32 = |_| todo!("it_8026B47C: installed by melee_link");
-        it_8026B4F0(i: I) -> bool = |_| todo!("it_8026B4F0: installed by melee_link");
-        itIsHeavy(i: I) -> bool = |_| todo!("itIsHeavy: installed by melee_link");
+        Item_IsGrabbable(i: I) -> bool = |a0| unsafe { melee_items::tu::item::Item_IsGrabbable(a0 as _) };
+        it_8026B47C(i: I) -> i32 = |a0| unsafe { melee_items::tu::it_26B1::it_8026B47C(a0 as _) };
+        it_8026B4F0(i: I) -> bool = |a0| unsafe { melee_items::tu::it_26B1::it_8026B4F0(a0 as _) };
+        itIsHeavy(i: I) -> bool = |a0| unsafe { melee_items::tu::it_26B1::itIsHeavy(a0 as _) };
         it_8026B344(i: I, pos: &mut Vec3) = |i: I, pos: &mut Vec3| { unsafe { melee_items::tu::it_26B1::it_8026B344(i as _, pos as _); } };
-        itGetGrabRangeX(i: I) -> f32 = |_| todo!("itGetGrabRangeX: installed by melee_link");
-        itGetGrabRangeY(i: I) -> f32 = |_| todo!("itGetGrabRangeY: installed by melee_link");
+        itGetGrabRangeX(i: I) -> f32 = |a0| unsafe { melee_items::tu::it_26B1::itGetGrabRangeX(a0 as _) };
+        itGetGrabRangeY(i: I) -> f32 = |a0| unsafe { melee_items::tu::it_26B1::itGetGrabRangeY(a0 as _) };
         ftCo_IsCpuControlled(f: &mut Fighter) -> bool = |f: &mut Fighter| -> bool { unsafe { (crate::tu::ftCo_0A01::ftCo_IsCpuControlled(f as _) != 0) } };
         // `HSD_GObjPLinkHead[link]`.
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
         Geno_ItemPressDist(i: I, f: &mut Fighter) -> f32 = |_, _| todo!("TODO(pc/geno) Geno_ItemPressDist (geno_game_items.inc)");
         it_8026B30C(i: I) -> i32 = crate::hooks::it_8026b30c;
         Geno_ItemFamilyEvent(i: I, a: i32, port: i32) = |_, _, _| todo!("TODO(pc/geno) Geno_ItemFamilyEvent");
-        itGetKind(i: I) -> i32 = |_| todo!("itGetKind: installed by melee_link");
+        itGetKind(i: I) -> i32 = |a0| unsafe { melee_items::tu::it_26B1::itGetKind(a0 as _) as i32 };
         Fighter_8006CF5C(f: &mut Fighter, v: i32) = |f: &mut Fighter, v: i32| { unsafe { crate::tu::fighter::Fighter_8006CF5C(f as _, v as _); } };
         Item_8026A8EC(i: I) = crate::hooks::item_8026a8ec;
         ftCo_800C4724(g: G) = |g: G| { unsafe { crate::tu::ftCo_WarpStar::ftCo_800C4724(g as _); } };

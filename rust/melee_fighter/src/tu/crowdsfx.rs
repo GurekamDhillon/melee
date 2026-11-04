@@ -33,8 +33,8 @@ pub mod ext {
         };
     }
     ext_fns! {
-        GObj_Create(class: u32, p_link: u32, prio: u32) -> G = |_, _, _| todo!("TODO(port) GObj_Create (baselib/gobj.c)");
-        HSD_GObj_SetupProc(g: G, f: Option<unsafe extern "C" fn(G)>, prio: u32) = |_, _, _| todo!("TODO(port) HSD_GObj_SetupProc (baselib/gobjproc.c)");
+        GObj_Create(class: u32, p_link: u32, prio: u32) -> G = |a0, a1, a2| unsafe { melee_runtime::tu::gobjplink::GObj_Create(a0 as u16, a1 as u8, a2 as u8) as _ };
+        HSD_GObj_SetupProc(g: G, f: Option<unsafe extern "C" fn(G)>, prio: u32) = |a0, a1, a2| unsafe { let _ = melee_runtime::tu::gobjproc::HSD_GObj_SetupProc(a0 as _, core::mem::transmute(a1), a2 as u8); };
         HSD_GObjPLinkHead(link: i32) -> G = crate::hooks::plink_head;
         lbAudioAx_80023710(id: i32) -> i32 = |id: i32| -> i32 { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_80023710(id as _) as _ } };
         lbAudioAx_800236B8(id: i32) = |id: i32| { unsafe { melee_runtime::tu::lbaudio_ax::lbAudioAx_800236B8(id as _); } };
@@ -51,9 +51,9 @@ pub mod ext {
         ftLib_80087120(g: G) -> i32 = crate::ftlib::ftlib_80087120;
         ftLib_8008746C(g: G) -> i32 = crate::ftlib::ftlib_8008746c;
         ftLib_80087454(g: G) -> f32 = crate::ftlib::ftlib_80087454;
-        Player_8003248C(slot: u8, sub: i32) -> i32 = |_, _| todo!("Player_8003248C: installed by melee_link");
-        pl_8003FDA0(slot: u8, sub: i32) = |_, _| todo!("pl_8003FDA0: installed by melee_link");
-        pl_8003FDC8(slot: u8, sub: i32) = |_, _| todo!("pl_8003FDC8: installed by melee_link");
+        Player_8003248C(slot: u8, sub: i32) -> i32 = |a0, a1| crate::tu::player::Player_8003248C(a0 as i32, a1) as i32;
+        pl_8003FDA0(slot: u8, sub: i32) = |a0, a1| crate::tu::plbonuslib::pl_8003FDA0(a0 as i32, a1);
+        pl_8003FDC8(slot: u8, sub: i32) = |a0, a1| crate::tu::plbonuslib::pl_8003FDC8(a0 as i32, a1);
     }
 }
 

@@ -34,7 +34,7 @@ pub mod ext {
     ext_fns! {
         ftColl_8007B62C(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b62c(g as _, v as _); } };
         Fighter_UpdateModelScale(g: G) = |g: G| { unsafe { crate::tu::fighter::Fighter_UpdateModelScale(g as _); } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftColl_8007B0C0(g: G, s: i32) = |g: G, s: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b0c0(g as _, s as _); } };
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         ftColl_HurtboxInit(f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit) = |f: &mut Fighter, c: *mut FighterHurtCapsule, h: &ftHurtboxInit| { unsafe { crate::tu::ftcoll::ftcoll_hurtbox_init(f, c as _, h); } };
@@ -61,7 +61,7 @@ pub mod ext {
         ftYs_SpecialN_GetExtAttr38() -> bool = || todo!("ftYs_SpecialN_GetExtAttr38: installed by melee_link");
         ftCommon_GrabMash(f: &mut Fighter, v: f32) -> bool = crate::ftcommon2::grab_mash;
         ft_PlaySFX(f: &mut Fighter, id: i32, vol: u8, pan: u8) = crate::ft0877::play_sfx;
-        efAsync_Spawn(g: G, q: *mut c_void, kind: u32, gfx: u32, j: *mut HSD_JObj, arg: *const c_void) = |_, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
+        efAsync_Spawn(g: G, q: *mut c_void, kind: u32, gfx: u32, j: *mut HSD_JObj, arg: *const c_void) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };
         ftYs_SpecialN_8012CD88(v: &mut Vec3) = |_| todo!("TODO(port) ftYs_SpecialN_8012CD88 (ftyoshispecialn.c)");
         ftColl_8007B760(g: G, v: i32) = |g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_8007b760(g as _, v as _); } };
         ftCo_Fall_Enter_YoshiEgg(g: G) = crate::tu::ftCo_Fall::ftCo_Fall_Enter_YoshiEgg;

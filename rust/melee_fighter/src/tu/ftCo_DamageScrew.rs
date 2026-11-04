@@ -26,7 +26,7 @@ pub mod ext {
         };
     }
     ext_fns! {
-        ftCommon_8007DB58(g: G) = |_| todo!("ftCommon_8007DB58: installed by melee_link");
+        ftCommon_8007DB58(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007db58(a0);
         ftCo_8009750C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
         ftCo_800DD168(g: G) = |g: G| { unsafe { crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;

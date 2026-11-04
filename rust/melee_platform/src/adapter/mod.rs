@@ -347,6 +347,40 @@ impl Adapter {
     }
 }
 
+/// A read-only view of the adapter for another thread (early inputs' sampler): the newest report decoded with its own
+/// copy of the calibration. It never opens, closes or recalibrates the device.
+pub struct AdapterPeek {
+    core: Arc<Core>,
+    cal: Calibration,
+}
+
+impl Adapter {
+    pub fn peeker(&self) -> AdapterPeek {
+        AdapterPeek { core: self.core.clone(), cal: self.cal.clone() }
+    }
+}
+
+impl AdapterPeek {
+    pub fn read(&mut self, st: &mut [PADStatus; PAD_CHANMAX]) -> bool {
+        let snap = {
+            let inner = self.core.inner.lock().unwrap();
+            if !self.core.allowed() || self.core.suspended.load(Ordering::SeqCst) {
+                return false;
+            }
+            let Some(o) = inner.open.as_ref() else { return false };
+            if o.shared.lost.load(Ordering::SeqCst) {
+                return false;
+            }
+            let p = *o.shared.payload.lock().unwrap();
+            match p {
+                Some(p) => p,
+                None => return false,
+            }
+        };
+        gc_decode(&mut self.cal, &snap, st, false)
+    }
+}
+
 impl Drop for Adapter {
     fn drop(&mut self) {
         self.core.scan_quit.store(true, Ordering::SeqCst);

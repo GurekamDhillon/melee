@@ -55,7 +55,7 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ft_800892A0(g: G) = |_| todo!("ft_800892A0: installed by melee_link");
+        ft_800892A0(g: G) = |a0| unsafe { crate::tu::ft_0881::ft_800892A0(a0 as _) };
         ft_80089824(g: G) = crate::ft0892::ft_80089824;
         ft_8008A2BC(g: G) = crate::hooks::ft_8008a2bc;
         ft_80084FA8(g: G) = crate::ft084e::ft_80084fa8;
@@ -67,7 +67,7 @@ pub mod ext {
         pl_8003E854(slot: i32, sub: i32, item: *mut Item_GObj) = pl_8003e854;
         Item_8026AB54(item: *mut Item_GObj, owner: G, part: i32) = crate::hooks::item_8026ab54;
         ftpickupitem_8009447C(g: G, item: *mut Item_GObj) -> bool = |g: G, item: *mut Item_GObj| -> bool { unsafe { crate::tu::ftpickupitem::ftpickupitem_8009447C(g as _, item as _) as _ } };
-        efAsync_Spawn(g: G, queue_head: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) = |_, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
+        efAsync_Spawn(g: G, queue_head: *mut c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj) = |a0, a1, a2, a3, a4| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[]); };
         ftpickupitem_800942A0(g: G, flags: u32) -> *mut Item_GObj = |g: G, flags: u32| -> *mut Item_GObj { unsafe { crate::tu::ftpickupitem::ftpickupitem_800942A0(g as _, flags as _) as _ } };
         ftKb_MexKirbyLike(kind: i32) -> i32 = |_| todo!("TODO(port) ftKb_MexKirbyLike (ftkirby.c)");
         ftKb_SpecialN_800F1CD8(g: G) -> i32 = |_| todo!("TODO(port) ftKb_SpecialN_800F1CD8 (ftkirbyspecialn.c)");

@@ -33,7 +33,7 @@ pub mod ext {
     }
     ext_fns! {
         ftCo_800DF3A8(fp: &Fighter) -> bool = crate::ft0df::ftco_800df3a8;
-        ftCo_80094E54(fp: &Fighter) -> bool = |_| todo!("TODO(port) ftCo_80094E54 (ftCo_ItemThrow.c)");
+        ftCo_80094E54(fp: &Fighter) -> bool = |a0| crate::tu::ftCo_ItemThrow::ftCo_80094E54(a0);
         ftCo_800DF3DC(fp: &Fighter) -> bool = crate::ft0df::ftco_800df3dc;
         ftCo_800957F4(g: G, msid: i32) = |g: G, msid: i32| { unsafe { crate::tu::ftCo_ItemThrow::ftCo_800957F4(g as _, msid as _); } };
         ftNs_AttackLw4_Enter(g: G) = |_| todo!("TODO(port) ftNs_AttackLw4_Enter (ftnessattacklw4.c)");

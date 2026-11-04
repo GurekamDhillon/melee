@@ -38,17 +38,17 @@ pub mod ext {
     ext_fns! {
         // TARGET_PC `FT_CAPS_ACTION_ALLOWED(fp, flag)` / `FT_SCRIPT_VALUE(fp, field, base)`.
         ScriptGame_CapsActionAllowed(fp: &mut Fighter, flag: i32) -> i32 = |_, _| todo!("TODO(port) ScriptGame_CapsActionAllowed (pc/gameworld/script_game.c)");
-        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(port) ScriptGame_ModValue (pc/gameworld/script_game.c)");
+        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |a0, a1, a2| crate::tu::player::ext::ScriptGame_ModValue(a0, a1, a2);
         lb_8000D008(y: f32, x: f32) -> f32 = |y: f32, x: f32| -> f32 { unsafe { melee_runtime::tu::lb_00CE::lb_8000D008(y as _, x as _) as _ } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib/jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         efLib_SetParamAlpha(g: G, a: u8) = |g: G, a: u8| { unsafe { melee_world::tu::efn::eflib::efLib_SetParamAlpha(g as _, a as _); } };
-        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |_| todo!("GenoDefine_RestPoseTree: installed by melee_link");
+        GenoDefine_RestPoseTree(fp: &mut Fighter) -> *mut HSD_Joint = |a0| crate::tu::ftdata::GenoDefine_RestPoseTree(a0);
         Geno_MotionAnimRow(fp: &mut Fighter, motion: i32) -> i32 = |_, _| todo!("TODO(port) Geno_MotionAnimRow (pc/geno)");
         ftData_80085E50(fp: &mut Fighter, msid: i32) -> *mut FigaTree = |fp: &mut Fighter, msid: i32| -> *mut FigaTree { unsafe { crate::tu::ftdata::ftData_80085E50(fp as _, msid as _) as _ } };
         ftAnim_8006F4C8(fp: &mut Fighter, b: bool, tree: *mut FigaTree) = |fp: &mut Fighter, b: bool, tree: *mut FigaTree| { unsafe { crate::tu::ftanim::ftAnim_8006F4C8(fp as _, b as _, tree as _); } };
         ftAnim_80070710(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { crate::tu::ftanim::ftAnim_80070710(j as _, frame as _); } };
         ftAnim_8006FB88(fp: &mut Fighter, part: u32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_8006FB88(fp as _, part as _, j as _); } };
-        HSD_JObjAnimAll(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnimAll (baselib/jobj.c)");
+        HSD_JObjAnimAll(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(a0 as _) };
         // `OSReport("geno: kind %d: shield guard pose samples own Guard row %d\n", kind, row)`.
         OSReport_GuardPose(kind: i32, row: i32) = |_, _| ();
         ftAnim_80070108(fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint) = |fp: &mut Fighter, part: u32, a: f32, b: f32, j: *mut HSD_Joint| { unsafe { crate::tu::ftanim::ftAnim_80070108(fp as _, part as _, a as _, b as _, j as _); } };
@@ -59,8 +59,8 @@ pub mod ext {
         Player_GetUnk45(slot: i32) -> u32 = |slot: i32| -> u32 { unsafe { crate::tu::player::Player_GetUnk45(slot as _) as _ } };
         Fighter_804D650C() -> *mut u8 = || todo!("TODO(port) Fighter_804D650C global (fighter.c)");
         // `efSync_Spawn(gfx_id, gobj, jobj, color)` (variadic in C).
-        efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |_, _, _, _| todo!("TODO(port) efSync_Spawn (ef/efsync.c)");
-        ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |_, _, _| todo!("TODO(port) ftColl_8007B1B8 (ftcoll.c)");
+        efSync_Spawn(id: i32, g: G, j: *mut HSD_JObj, color: i32) = |a0, a1, a2, a3| unsafe { let _ = melee_world::tu::efn::efsync::efSync_Spawn(a0 as _, a1 as _, &[a2 as *const core::ffi::c_void, a3 as isize as *const core::ffi::c_void]); };
+        ftColl_8007B1B8(g: G, desc: &mut AbsorbDesc, cb: HSD_GObjEvent) = |a0, a1, a2| crate::tu::ftcoll::ftColl_8007B1B8(a0, a1 as *mut _ as *const _, a2);
         ft_PlaySFX(fp: &mut Fighter, id: i32, vol: u8, pan: u8) = |_, _, _, _| todo!("ft_PlaySFX: installed by melee_link");
         Geno_DefineTemplateSkeleton(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineTemplateSkeleton(kind) } };
         Geno_DefineBaseKind(kind: i32) -> i32 = |kind: i32| -> i32 { unsafe { crate::platform::Geno_DefineBaseKind(kind) } };
@@ -84,8 +84,8 @@ pub mod ext {
         ftCo_800CB024(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Jump::ftCo_800CB024(g as _) as _ } };
         ftCo_8009A080(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Pass::ftCo_8009A080(g as _) as _ } };
         ft_80084F3C(g: G) = crate::ft084e::ft_80084f3c;
-        ftColl_8007AEE0(g: G) = |_| todo!("ftColl_8007AEE0: installed by melee_link");
-        ftColl_8007AEF8(g: G) = |_| todo!("ftColl_8007AEF8: installed by melee_link");
+        ftColl_8007AEE0(g: G) = |a0| crate::tu::ftcoll::ftcoll_8007aee0(a0);
+        ftColl_8007AEF8(g: G) = |a0| crate::tu::ftcoll::ftcoll_8007aef8(a0);
         ft_800845B4(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_800845b4(g as _); } };
         ft_80084104(g: G) = |g: G| { unsafe { crate::tu::ft_081b::ft_80084104(g as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
@@ -107,7 +107,7 @@ pub mod ext {
         Replay_UcfVersion(port: i32) -> i32 = |port: i32| -> i32 { unsafe { crate::platform::Replay_UcfVersion(port) } };
         ftUcf_PadRaw(port: i32, which_y: i32, back: i32) -> i32 = |port: i32, which_y: i32, back: i32| -> i32 { unsafe { crate::fighter::ftucf_pad_raw(port as _, which_y as _, back as _) } };
         ftColl_CreateReflectHit(g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent) = |g: G, desc: &mut ReflectDesc, cb: HSD_GObjEvent| { unsafe { crate::tu::ftcoll::ftcoll_create_reflect_hit(g as _, desc, cb); } };
-        ftCommon_8007DB24(g: G) = |_| todo!("ftCommon_8007DB24: installed by melee_link");
+        ftCommon_8007DB24(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007db24(a0);
         lb_8000B1CC(j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3) = |j: *mut HSD_JObj, p0: *mut Vec3, p1: *mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, p0 as _, p1 as _); } };
     }
 }

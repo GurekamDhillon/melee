@@ -22,6 +22,9 @@ use std::cell::RefCell;
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
+pub fn log_line(msg: &str) {
+    log(msg);
+}
 
 /// The scene kind of the VS match (`GS_VS`, scene_name "vs").
 pub const SCENE_VS: u8 = 2;
@@ -755,6 +758,9 @@ impl Transport for Degraded {
     fn local_port(&self) -> u16 {
         self.inner.local_port()
     }
+    fn thread_sender(&self) -> Option<melee_net::transport::ThreadSender> {
+        self.inner.thread_sender()
+    }
 }
 
 pub type Sess = RbSession<ModesGame>;
@@ -834,6 +840,10 @@ pub struct NetDriver {
     pub match_no: u32,
     /// the final hashes of the earlier matches
     pub all_finals: Vec<Vec<(i32, u32)>>,
+    /// early inputs (np_early.rs): enabled for this run, and the sampler of the current match
+    pub early_on: bool,
+    pub early: Option<crate::np_early::EarlySender>,
+    early_logged: bool,
 }
 
 /// What a room is opened with (kept for the rematches of `--np-css`).
@@ -936,6 +946,7 @@ impl NetDriver {
         crate::np_hud::AUTO_DELAY.store(auto, std::sync::atomic::Ordering::Relaxed);
         let maxb = num("--np-rollback", 7) as i32;
         let netem = Netem::from_args(args);
+        let early_on = crate::np_early::enabled(args);
         let timeout = num("--np-timeout", 60) as u64;
         let server = arg(args, "--np-server").or_else(|| std::env::var("MELEE_NP_SERVER").ok().filter(|s| !s.is_empty()));
         // the own fighter: the first of --match (default Falcon / Fox); the host's stage: the --match stage (default FD)
@@ -1019,6 +1030,7 @@ impl NetDriver {
                 seed: arg(args, "--np-seed").and_then(|s| s.parse().ok()),
                 exe_hash: build_hash(),
                 scene_extra: if host { rules.encode() } else { String::new() },
+                caps: if early_on { melee_net::early::CAP_EARLY } else { 0 },
                 ..RoomSettings::default()
             },
             env,
@@ -1073,6 +1085,9 @@ impl NetDriver {
             params: rp,
             match_no: 0,
             all_finals: Vec::new(),
+            early_on,
+            early: None,
+            early_logged: false,
         })
     }
 
@@ -1110,6 +1125,8 @@ impl NetDriver {
         self.end_frame = None;
         self.linger = 0;
         self.last_rb = (0, 0, 0);
+        self.early = None;
+        self.early_logged = false;
         Ok(())
     }
 
@@ -1139,11 +1156,69 @@ impl NetDriver {
         }
     }
 
+    /// Right after the game read the controllers for a tick (retail_flow `tick`): start the early-inputs sampler
+    /// once the match runs with a peer that announced them, and tell it this tick's poll.
+    pub fn pre_tick(&mut self, pads: &melee_platform::PadSystem) {
+        if !self.early_on || !matches!(self.phase, NetPhase::InMatch(_)) || self.end_frame.is_some() {
+            return;
+        }
+        if self.early.is_none() {
+            let Some(net) = self.net.as_ref().filter(|n| n.started()) else { return };
+            if net.peer_caps() & melee_net::early::CAP_EARLY == 0 {
+                if !self.early_logged {
+                    self.early_logged = true;
+                    log(&format!("netplay {}: early inputs off for this match: the peer does not announce them", self.tag()));
+                }
+                return;
+            }
+            let Some(tx) = self.params.mux.borrow().thread_sender() else {
+                if !self.early_logged {
+                    self.early_logged = true;
+                    log(&format!("netplay {}: early inputs off: no thread send path", self.tag()));
+                }
+                return;
+            };
+            let port = if self.host { 0 } else { 1 };
+            self.sess.borrow_mut().hints_on = true;
+            self.early = Some(crate::np_early::EarlySender::start(pads.sampler(), tx, net.peer_addr(), self.match_no as u8, port));
+        }
+        let next = pads.script.as_ref().and_then(|s| s.peek_next()).map(|g| {
+            let mut p = PADStatus::zeroed();
+            p.button = g.buttons;
+            p.stickX = g.sx;
+            p.stickY = g.sy;
+            p.triggerLeft = g.tl;
+            p.triggerRight = g.tr;
+            p
+        });
+        if let Some(e) = self.early.as_mut() {
+            e.note_poll(next);
+        }
+    }
+
+    /// The early pads that came in: to the session, as predictions for the remote port.
+    fn take_hints(&mut self) {
+        let remote = if self.host { 1u8 } else { 0 };
+        let mut s = self.sess.borrow_mut();
+        if !s.hints_on {
+            return;
+        }
+        while let Some(d) = self.params.mux.borrow_mut().take(crate::np_mux::EARLY_CH) {
+            if let Some((ch, target, port, pad)) = melee_net::early::decode(&d) {
+                if ch == self.match_no as u8 && port == remote {
+                    s.submit_hint(remote as usize * 2, target, &pad);
+                }
+            }
+        }
+    }
+
     /// One render tick in the match: the network, the local pad, the session's frames. Returns false while the session
     /// holds (not started yet).
     pub fn tick_match(&mut self, local: &PADStatus, rec: Option<&mut Replay>) -> bool {
         self.ticks += 1;
-        let NetPhase::InMatch(g) = &mut self.phase else { return false };
+        if !matches!(self.phase, NetPhase::InMatch(_)) {
+            return false;
+        }
         let Some(net) = self.net.as_mut() else {
             self.error = Some("no connection".into());
             return false;
@@ -1169,10 +1244,24 @@ impl NetDriver {
             }
             log(&format!("netplay {}: started (delay {})", if self.host { "host" } else { "guest" }, self.sess.borrow().cfg.delay));
         }
+        self.take_hints();
+        let NetPhase::InMatch(g) = &mut self.phase else { return false };
         let mut s = self.sess.borrow_mut();
         let p = local;
         s.pad_latch(0, p.button as i32, p.stickX as i32, p.stickY as i32, p.substickX as i32, p.substickY as i32, p.triggerLeft as i32, p.triggerRight as i32, p.analogA as i32, p.analogB as i32, 0);
         run_tick(&mut s, g, None);
+        if let Some(e) = self.early.as_mut() {
+            let slot = if self.host { 0 } else { 2 };
+            let newest = s.current_frame() + s.cfg.delay + 1;
+            let ss = &*s;
+            e.after_tick(newest, &|f| {
+                ss.local_input_for_send(slot, f).map(|i| {
+                    let mut b = [0u8; melee_net::NP_PAYLOAD];
+                    melee_net::np_encode(&i, &mut b);
+                    b
+                })
+            });
+        }
         // final checksums (start of frame f = the state after frame f - 1)
         let next = self.finals.last().map_or(FIRST, |x| x.0 + 1);
         for fr in next..=s.current_frame() {
@@ -1320,6 +1409,20 @@ impl NetDriver {
             lg.desyncs.len(),
             self.net.as_ref().map_or(0, |n| n.rtt_ms()),
             self.net.as_ref().map(|n| n.stats())
+        ) + &self.early_summary(&s)
+    }
+
+    fn early_summary(&self, s: &Sess) -> String {
+        if !s.hints_on {
+            return format!("; early inputs {}", if self.early_on { "not used (peer without them)" } else { "off" });
+        }
+        let h = s.hint_stats;
+        let t = s.hint_trust.iter().find(|t| t.guesses > 0).copied().unwrap_or_default();
+        let snd = self.early.as_ref().map(|e| e.stats()).unwrap_or_default();
+        format!(
+            "; early inputs: sent {} changes ({} follow-ups, {} after a skip, {} packets, {} samples), received {}, predicted {} frames from them: right {} wrong {} (helped {}, hurt {}); repeat-last right {} wrong {}{}",
+            snd.changes, snd.follow_ups, snd.resent_after_skip, snd.packets, snd.samples, h.received, h.predicted, h.right, h.wrong, h.helped, h.hurt, h.plain_right, h.plain_wrong,
+            if t.distrusted { format!("; the peer's early pads were IGNORED (wrong {} of {})", t.wrong, t.guesses) } else { String::new() }
         )
     }
 

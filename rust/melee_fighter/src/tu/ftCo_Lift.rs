@@ -46,7 +46,7 @@ pub mod ext {
         ftPartGetRotZ(f: &Fighter, part: i32) -> f32 = crate::tu::ftparts::ftPartGetRotZ;
         ftPartSetRotY(f: &Fighter, part: i32, v: f32) = crate::tu::ftparts::ftPartSetRotY;
         HSD_JObjSetMtxDirty(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { crate::tu::ft_0c31::HSD_JObjSetMtxDirty(j as _); } };
-        itIsHeavy(item: *mut Item_GObj) -> bool = |_| todo!("itIsHeavy: installed by melee_link");
+        itIsHeavy(item: *mut Item_GObj) -> bool = |a0| unsafe { melee_items::tu::it_26B1::itIsHeavy(a0 as _) };
     }
 }
 

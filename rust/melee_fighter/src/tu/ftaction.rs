@@ -79,7 +79,7 @@ pub mod ext {
         fn ft_8008893C(_fp: F) = { unsafe { let _ = crate::ft0881::ft_8008893c(&mut *_fp); } };
         fn ft_800887CC(_fp: F) = { unsafe { let _ = crate::ft0881::ft_800887cc(&mut *_fp); } };
         fn ftParts_GetBoneIndex(_fp: F, _part: i32) -> i32 = { unsafe { crate::ftdmgfall::ftparts_get_bone_index(&*_fp, _part) } };
-        fn ftCo_8009F834(_g: G, _gfx: i32, _bone: i32, _common: i32, _destroy: i32, _off: *const Vec3, _range: *const Vec3, _unk: f32) = { todo!("ftCo_8009F834 (ftCommon/ftCo_09F7.c)") };
+        fn ftCo_8009F834(_g: G, _gfx: i32, _bone: i32, _common: i32, _destroy: i32, _off: *const Vec3, _range: *const Vec3, _unk: f32) = { unsafe { crate::tu::ftCo_09f7::ftCo_8009F834(_g, _gfx, _bone, _common, _destroy, _off, _range, _unk) } };
         fn ftColl_800768A0(_fp: F, _h: *mut HitCapsule) = { unsafe { crate::tu::ftcoll::ftcoll_800768a0(_fp as _, _h as _); } };
         fn ftColl_8007ABD0(_h: *mut HitCapsule, _dmg: u32, _g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007abd0(_h as _, _dmg as _, _g as _); } };
         fn ftColl_8007AC9C(_h: *mut HitCapsule, _angle: u32, _g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007ac9c(_h as _, _angle as _, _g as _); } };

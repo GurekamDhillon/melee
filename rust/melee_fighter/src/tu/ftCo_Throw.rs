@@ -90,11 +90,11 @@ pub mod ext {
         ScriptGame_HitRuleWon(hit: *mut HitCapsule, f: *mut Fighter) = |_, _| todo!("TODO(pc script) ScriptGame_HitRuleWon");
         ScriptGame_HitRuleReport(att: *mut Fighter, vic: *mut Fighter, hit: *mut HitCapsule, damage: f32) = |_, _, _, _| todo!("TODO(pc script) ScriptGame_HitRuleReport");
         ftColl_80078710(g: G, victim: G, facing: *mut f32) = |g: G, victim: G, facing: *mut f32| { unsafe { crate::tu::ftcoll::ftcoll_80078710(g as _, victim as _, facing as _); } };
-        ftCommon_8007EE0C(f: &mut Fighter, v: i32) = |_, _| todo!("ftCommon_8007EE0C: installed by melee_link");
+        ftCommon_8007EE0C(f: &mut Fighter, v: i32) = |a0, a1| crate::tu::ftcommon::ftcommon_8007ee0c(a0, a1);
         ftCo_Damage_CalcKnockback(f: &mut Fighter) = |f: &mut Fighter| { unsafe { crate::tu::ftCo_Damage::ftCo_Damage_CalcKnockback(f as _); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         // rp3 mpColl_80043670
         mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };
         // rp3-end
@@ -102,7 +102,7 @@ pub mod ext {
         mpColl_800471F8(coll: &mut CollData) -> bool = |coll: &mut CollData| -> bool { unsafe { (melee_world::tu::mpcoll::mpColl_800471F8(coll as *mut _ as *mut _) != 0 as _) } };
         lbColl_80008D30(hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1) = |hit: &mut HitCapsule, arg: *const lbColl_80008D30_arg1| { unsafe { melee_runtime::tu::lbcollision::lbColl_80008D30(hit as _, arg as _); } };
         ftColl_800788D4(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_800788d4(g as _); } };
-        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |_, _, _| todo!("TODO(pc script) ScriptGame_ModValue");
+        ScriptGame_ModValue(slot: i32, field: i32, base: f32) -> f32 = |a0, a1, a2| crate::tu::player::ext::ScriptGame_ModValue(a0, a1, a2);
         Fighter_UnkTakeDamage_8006CC30(f: &mut Fighter, damage: f32) = |f: &mut Fighter, damage: f32| { unsafe { crate::tu::fighter::Fighter_UnkTakeDamage_8006CC30(f as _, damage as _); } };
         ftCo_8008E908(g: G, v: f32) = |g: G, v: f32| { unsafe { crate::tu::ftCo_Damage::ftCo_8008E908(g as _, v as _); } };
     }

@@ -410,7 +410,9 @@ pub unsafe extern "C" fn it_802E3784(gobj: *mut Item_GObj, ref_gobj: *mut Item_G
 pub unsafe extern "C" fn it_802E37A4(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802E37A4");
     if !gobj.is_null() {
-        (*GET_ITEM(gobj)).xDD4_itemVar.freeze.x20 = null_mut();
+        // the C's `freeze.x20` is the 4-byte slot at itemVar+0x20: the Topi's (`oldottosea.x20`) link to its ice block, the
+        // item this is called on. Natively freeze.x20 sits at +0x28 (after the 8-byte unk_1C) over oldottosea.x24/x28.
+        (*GET_ITEM(gobj)).xDD4_itemVar.oldottosea.x20 = null_mut();
     }
 }
 

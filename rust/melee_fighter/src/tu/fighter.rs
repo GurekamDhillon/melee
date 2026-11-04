@@ -166,7 +166,7 @@ pub mod ext {
         fn Geno_FighterReset(fp: F) = { todo!("Geno_FighterReset (pc/geno)") };
         fn ftCo_800D105C(g: G) = { unsafe { crate::tu::ftchangeparam::ftco_800d105c(g); } };
         fn ftCo_800C09B4(g: G) = { unsafe { crate::tu::ftCo_Bury::ftCo_800C09B4(g); } };
-        fn ftCommon_8007E2FC(g: G) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(fpg(g)); } };
+        fn ftCommon_8007E2FC(g: G) = { unsafe { let _ = crate::tu::ftcommon::ftcommon_8007e2fc(fpg(g)); } };
         fn ft_80088A50(fp: F) = { unsafe { let _ = crate::ft0881::ft_80088a50(&mut *fp); } };
         fn ft_800890BC(fp: F) = { unsafe { let _ = crate::stale::clear_attack_id(&mut *(fp as *mut Fighter)); } };
         fn ft_800892D4(fp: F) = { unsafe { let _ = crate::ft0892::ft_800892d4(&mut *fp); } };
@@ -184,9 +184,9 @@ pub mod ext {
         fn ftColl_8007AFF8(g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007aff8(g as _); } };
         fn ftColl_8007B0C0(g: G, s: i32) = { unsafe { crate::tu::ftcoll::ftcoll_8007b0c0(g as _, s as _); } };
         fn Mex_OnDeathDispatch(kind: i32, g: G, vanilla: usize) = { unsafe { let _ = crate::platform::Mex_OnDeathDispatch(kind, g); } };
-        fn ftCo_800A101C(fp: F, cpu_type: i32, level: i32, z: i32) = { todo!("ftCo_800A101C (ftCommon/ftCo_0A01.c)") };
-        fn efAsync_QueueClear(q: *mut *mut core::ffi::c_void) = { todo!("efAsync_QueueClear (ef/efasync.c)") };
-        fn efAsync_QueueFlush(g: G, q: *mut *mut core::ffi::c_void) = { todo!("efAsync_QueueFlush (ef/efasync.c)") };
+        fn ftCo_800A101C(fp: F, cpu_type: i32, level: i32, z: i32) = { unsafe { crate::tu::ftCo_0A01::ftCo_800A101C(fp, cpu_type, level, z) } };
+        fn efAsync_QueueClear(q: *mut *mut core::ffi::c_void) = { unsafe { melee_world::tu::efn::efasync::efAsync_QueueClear(q as _) } };
+        fn efAsync_QueueFlush(g: G, q: *mut *mut core::ffi::c_void) = { unsafe { melee_world::tu::efn::efasync::efAsync_QueueFlush(g as _, q as _) } };
         fn ft_8007C17C(g: G) = { unsafe { crate::tu::ft_07c1::ft_8007c17c(g); } };
         fn ft_8007C630(g: G) = { unsafe { crate::tu::ft_07c6::ft_8007c630(g); } };
         fn costume_joint(kind: i32, costume: u8) -> *mut HSD_Joint = { unsafe { (*crate::tu::ftdata::CostumeListsForeachCharacter[kind as usize].costume_list.add(costume as usize)).joint } };
@@ -196,7 +196,7 @@ pub mod ext {
         fn HSD_JObjLoadJoint(j: *mut HSD_Joint) -> J = { unsafe { melee_runtime::tu::jobj::HSD_JObjLoadJoint(j as _) as _ } };
         fn ftParts_80073758(j: J) = { unsafe { crate::tu::ftparts_render::ftParts_80073758(j as _) } };
         fn Geno_ToonUnlit(kind: i32) -> i32 = { unsafe { crate::platform::Geno_ToonUnlit(kind) } };
-        fn HSD_GObjObject_80390A70(g: G, kind: u8, o: *mut core::ffi::c_void) = { todo!("HSD_GObjObject_80390A70 (baselib/gobjobject.c)") };
+        fn HSD_GObjObject_80390A70(g: G, kind: u8, o: *mut core::ffi::c_void) = { unsafe { melee_runtime::tu::gobjobject::HSD_GObjObject_80390A70(g as _, kind, o) } };
         fn HSD_GObj_JObjKind() -> u8 = { todo!("HSD_GObj_JObjKind (baselib/gobj.c)") };
         fn lb_8000B1CC(j: J, off: *const Vec3, out: *mut Vec3) = { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         fn Geno_FighterScale(fp: F) -> f32 = { unsafe { crate::platform::Geno_FighterScale(fp) } };
@@ -206,12 +206,12 @@ pub mod ext {
         fn Mex_MoveLogicTable(kind: i32, vanilla: *mut MotionState) -> *mut MotionState = { unsafe { crate::platform::Mex_MoveLogicTable(kind) } };
         fn GenoDefine_BindFighter(fp: F) = { unsafe { let _ = crate::platform::GenoDefine_BindFighter(fp); } };
         fn stage_grkind() -> i32 = { todo!("stage_grkind (gr/stage.c stage_info)") };
-        fn lbAnim_8001E8F8(t: *mut FigaTree) -> f32 = { todo!("lbAnim_8001E8F8 (lb/lbanim.c)") };
+        fn lbAnim_8001E8F8(t: *mut FigaTree) -> f32 = { melee_runtime::tu::lbanim::lbAnim_8001E8F8(unsafe { (t as *const FigaTree).as_ref() }) };
         fn ftData_80085E50(fp: F, id: i32) -> *mut FigaTree = { unsafe { crate::tu::ftdata::ftData_80085E50(fp, id) } };
         fn Geno_AnimBankBeforeSpawn() = { unsafe { let _ = crate::platform::Geno_AnimBankBeforeSpawn(); } };
-        fn GObj_Create(class: u16, p_link: u8, prio: u8) -> G = { todo!("GObj_Create (baselib/gobj.c)") };
+        fn GObj_Create(class: u16, p_link: u8, prio: u8) -> G = { unsafe { melee_runtime::tu::gobjplink::GObj_Create(class, p_link, prio) as _ } };
                         fn ftData_8008572C(kind: i32) = { unsafe { crate::tu::ftdata::ftData_8008572C(kind); } };
-        fn efAsync_LoadSync(bank: i32) = { todo!("efAsync_LoadSync (ef/efasync.c)") };
+        fn efAsync_LoadSync(bank: i32) = { unsafe { melee_world::tu::efn::efasync::efAsync_LoadSync(bank) } };
         fn ftData_UnkBytePerCharacter(kind: i32) -> i32 = { unsafe { crate::tu::ftdata::ftData_UnkBytePerCharacter[kind as usize] as i32 } };
         fn ftData_80085820(kind: i32, costume: u8) = { unsafe { crate::tu::ftdata::ftData_80085820(kind, costume as i32); } };
         fn ftData_80085B10(fp: F) = { unsafe { crate::tu::ftdata::ftData_80085B10(&mut *fp); } };
@@ -223,7 +223,7 @@ pub mod ext {
         fn ftCo_8009F578(fp: F) = { unsafe { crate::tu::ftCo_09f4::ftCo_8009F578(fp) } };
         fn Mex_OnLoadDispatch(kind: i32, g: G, vanilla: usize) = { unsafe { let _ = crate::platform::Mex_OnLoadDispatch(kind, g); } };
         fn ftColl_8007B320(g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007b320(g as _); } };
-        fn Camera_80029020() -> *mut core::ffi::c_void = { todo!("Camera_80029020 (cm/camera.c)") };
+        fn Camera_80029020() -> *mut core::ffi::c_void = { unsafe { melee_world::tu::camera::Camera_80029020() as _ } };
         fn lbShadow_8000ED54(s: *mut core::ffi::c_void, j: J) = { unsafe { melee_runtime::tu::lbshadow::lbShadow_8000ED54(s as _, j as _); } };
         fn HSD_GObj_SetupProc(g: G, f: fn(G), prio: u8) = { todo!("HSD_GObj_SetupProc (baselib/gobjproc.c)") };
         fn ftMh_MS_341_8014FE10(g: G) = { todo!("ftMh_MS_341_8014FE10 (ftMasterHand)") };
@@ -255,7 +255,7 @@ pub mod ext {
         fn ftCommon_8007F578(g: G) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007f578(g); } };
         fn ftCo_800C0134(fp: F) = { unsafe { crate::tu::ftcolanim::ftco_800c0134(&mut *fp); } };
         fn ftCommon_8007DB24(g: G) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(g); } };
-        fn HSD_JObjRemoveAll(j: J) = { todo!("HSD_JObjRemoveAll (baselib/jobj.c)") };
+        fn HSD_JObjRemoveAll(j: J) = { unsafe { melee_runtime::tu::jobj::HSD_JObjRemoveAll_ptr(j as _) } };
         fn Mex_OnLandingDispatch(kind: i32, g: G, vanilla: usize) = { unsafe { let _ = crate::platform::Mex_OnLandingDispatch(kind, g); } };
         fn pl_8003FE1C(slot: i32, sub: i32) = { unsafe { let _ = crate::plbonus::pl_8003fe1c(slot, sub); } };
         fn pl_80040330(slot: i32, sub: i32, v: f32) = { unsafe { let _ = crate::plbonus::pl_80040330(slot, sub, v); } };
@@ -285,7 +285,7 @@ pub mod ext {
         fn Slippi_Codes() -> i32 = { unsafe { crate::platform::Slippi_Codes() } };
         fn Camera_ScriptState() -> i32 = { unsafe { melee_world::tu::camera::Camera_ScriptState() } };
         fn ifMagnify_802FC998(slot: i32) -> bool = { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FC998(slot as _) } };
-        fn gm_GetCurrentGameMode() -> i32 = { todo!("gm_GetCurrentGameMode (gm)") };
+        fn gm_GetCurrentGameMode() -> i32 = { melee_world::tu::gm_1a3f::gm_GetCurrentGameMode() as i32 };
         fn Stage_GetCamBoundsLeftOffset() -> f32 = { unsafe { melee_world::tu::stage::Stage_GetCamBoundsLeftOffset() } };
         fn Stage_GetCamBoundsRightOffset() -> f32 = { unsafe { melee_world::tu::stage::Stage_GetCamBoundsRightOffset() } };
         fn Stage_GetCamBoundsTopOffset() -> f32 = { unsafe { melee_world::tu::stage::Stage_GetCamBoundsTopOffset() } };
@@ -305,7 +305,7 @@ pub mod ext {
         fn itGetKind(item: G) -> i32 = { unsafe { crate::hooks::it_get_kind(item) } };
         fn ftCo_800968C8(g: G) = { unsafe { crate::tu::ftCo_FallSpecial::ftCo_800968C8(g); } };
         fn ftCo_80095744(g: G, a: i32) = { unsafe { crate::tu::ftCo_ItemThrow::ftCo_80095744(g, core::ptr::null_mut::<bool>()); } };
-        fn Camera_80031144() -> f32 = { todo!("Camera_80031144 (cm/camera.c)") };
+        fn Camera_80031144() -> f32 = { unsafe { melee_world::tu::camera::Camera_80031144() } };
         fn ft_80088640(fp: F, sfx: i32, vol: i32, pan: i32) = { unsafe { let _ = crate::ft0881::ft_80088640(&mut *fp, sfx, vol as u8, pan as u8); } };
         fn pl_80040B8C(slot: i32, sub: i32, v: i32) = { unsafe { let _ = crate::plbonus::pl_80040b8c(slot, sub, v); } };
         fn ftCo_800C511C(g: G) = { unsafe { crate::tu::ftCo_HammerWait::ftCo_800C511C(g); } };
@@ -321,7 +321,7 @@ pub mod ext {
         fn ScriptGame_VirtualPadApply(fp: F) -> i32 = { todo!("ScriptGame_VirtualPadApply (pc/gameworld)") };
         fn ScriptGame_VirtualPadObserve(fp: F) = { todo!("ScriptGame_VirtualPadObserve (pc/gameworld)") };
         fn ftCo_IsCpuControlled(fp: F) -> bool = { unsafe { (crate::tu::ftCo_0A01::ftCo_IsCpuControlled(fp as _) != 0) } };
-        fn ftCo_800B3900(g: G) = { todo!("ftCo_800B3900 (ftCommon/ftCo_0A01.c)") };
+        fn ftCo_800B3900(g: G) = { unsafe { crate::tu::ftCo_0A01::ftCo_800B3900(g) } };
         fn ftCo_Jump_GetInput(g: G) -> bool = { unsafe { crate::tu::ftCo_Jump::ftCo_Jump_GetInput(g) as i32 != 0 } };
         fn ftCo_800D6928(fp: F) -> bool = { unsafe { crate::tu::ftCo_Attack100::ftCo_800D6928(&*fp) } };
         fn ftCo_800D688C(fp: F) -> bool = { unsafe { crate::tu::ftCo_Attack100::ftCo_800D688C(&*fp) } };
@@ -401,7 +401,7 @@ pub mod ext {
         fn ftColl_8007AE80(g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007ae80(g as _); } };
         fn ft_8007C224(g: G) = { unsafe { crate::tu::ft_07c1::ft_8007c224(g); } };
         fn ft_8007C6DC(g: G) = { unsafe { crate::tu::ft_07c6::ft_8007c6dc(g); } };
-        fn HSD_JObjAnimAll(j: J) = { todo!("HSD_JObjAnimAll (baselib/jobj.c)") };
+        fn HSD_JObjAnimAll(j: J) = { unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnimAll(j as _) } };
         fn ifMagnify_802FB6E8(slot: i32) -> i32 = { unsafe { melee_world::tu::ifmagnify::ifMagnify_802FB6E8(slot as _) } };
         fn Stage_UnkSetVec3TCam_Offset(out: *mut Vec3) = { unsafe { melee_world::tu::stage::Stage_UnkSetVec3TCam_Offset(out as _); } };
         fn gm_8016B1C4() -> bool = { todo!("gm_8016B1C4 (gm)") };
@@ -469,7 +469,7 @@ pub mod ext {
         fn Mex_OnDestroyDispatch(kind: i32, g: G, vanilla: usize) = { unsafe { let _ = crate::platform::Mex_OnDestroyDispatch(kind, g); } };
         fn ftColl_8007B8E8(g: G) = { unsafe { crate::tu::ftcoll::ftcoll_8007b8e8(g as _); } };
         fn it_8026B7F8(g: G) = { unsafe { melee_items::tu::it_26B1::it_8026B7F8(g as _); } };
-        fn Camera_800290D4(c: *mut core::ffi::c_void) = { todo!("Camera_800290D4 (cm/camera.c)") };
+        fn Camera_800290D4(c: *mut core::ffi::c_void) = { unsafe { melee_world::tu::camera::Camera_800290D4(c as _) } };
         fn ftCo_UnloadDynamicBones(fp: F) = { unsafe { crate::tu::ftdynamics::ftCo_UnloadDynamicBones(&mut *fp); } };
         fn ftColl_800765AC(g: G) = { unsafe { crate::tu::ftcoll::ftcoll_800765ac(g as _); } };
         fn ft_80088C5C(g: G) = { unsafe { let _ = crate::ft0881::ft_80088c5c(g); } };
@@ -495,7 +495,7 @@ pub mod ext {
         fn Replay_Active() -> i32 = { unsafe { crate::platform::Replay_Active() } };
         fn Player_GetPlayerSlotType(slot: i32) -> i32 = { unsafe { crate::tu::player::Player_GetPlayerSlotType(slot as _) as _ } };
         fn Player_GetEntity(slot: i32) -> G = { unsafe { crate::player::get_entity(slot) } };
-        fn mpCheckFloor(ax: f32, ay: f32, bx: f32, by: f32, y_off: f32, floor: *mut Vec3, line: *mut i32, flags: *mut u32, normal: *mut Vec3, floor_skip: i32, joint_skip: i32, joint_only: i32, cb: *mut core::ffi::c_void, gobj: G) -> bool = { todo!("mpCheckFloor (mp/mpcoll.c)") };
+        fn mpCheckFloor(ax: f32, ay: f32, bx: f32, by: f32, y_off: f32, floor: *mut Vec3, line: *mut i32, flags: *mut u32, normal: *mut Vec3, floor_skip: i32, joint_skip: i32, joint_only: i32, cb: *mut core::ffi::c_void, gobj: G) -> bool = { unsafe { melee_world::tu::mplib::mpCheckFloor(ax, ay, bx, by, y_off, floor as _, line, flags, normal as _, floor_skip, joint_skip, joint_only, core::mem::transmute(cb), gobj as _) != 0 } };
     }
 }
 

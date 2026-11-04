@@ -65,6 +65,46 @@ pub trait Transport {
     fn local_port(&self) -> u16 {
         0
     }
+    /// A send path another thread can own (early inputs' sampler thread), or None when this transport has none.
+    fn thread_sender(&self) -> Option<ThreadSender> {
+        None
+    }
+}
+
+/// Cloned sockets that send from any thread: what the transport stack below the protocol would do with a datagram
+/// (the relay's `GDMD` wrapping included), without its single-threaded state.
+pub struct ThreadSender {
+    pub sock: UdpSocket,
+    pub sock6: Option<UdpSocket>,
+    /// Relayed through the server: wrap as the rendezvous client does and send to it.
+    pub relay: Option<Addr>,
+}
+
+impl ThreadSender {
+    pub fn send(&self, to: &Addr, data: &[u8]) -> bool {
+        let (dst, buf);
+        match self.relay {
+            Some(srv) => {
+                let mut b = b"GDMD".to_vec();
+                b.extend_from_slice(data);
+                buf = b;
+                dst = srv;
+            }
+            None => {
+                buf = data.to_vec();
+                dst = *to;
+            }
+        }
+        let r = if dst.is_v6() {
+            match &self.sock6 {
+                Some(s) => s.send_to(&buf, dst.to_socket()),
+                None => return false,
+            }
+        } else {
+            self.sock.send_to(&buf, dst.to_socket())
+        };
+        r.is_ok()
+    }
 }
 
 /// Real UDP (the C's Winsock transport, here on `std::net`). Non-blocking. Bound to all interfaces it is two sockets
@@ -159,6 +199,9 @@ impl Transport for UdpTransport {
     }
     fn local_port(&self) -> u16 {
         self.port
+    }
+    fn thread_sender(&self) -> Option<ThreadSender> {
+        Some(ThreadSender { sock: self.sock.try_clone().ok()?, sock6: self.sock6.as_ref().and_then(|s| s.try_clone().ok()), relay: None })
     }
 }
 

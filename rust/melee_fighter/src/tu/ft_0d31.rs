@@ -96,7 +96,7 @@ pub mod ext {
         fn ftCamera_80076320(_a0: *mut core::ffi::c_void) = { unsafe { let _ = super::super::ft_0d4d::ext::ftCamera_80076320(_a0 as _); } };
         fn ftCo_800D4E50(_a0: *mut core::ffi::c_void, _a1: *mut core::ffi::c_void, _a2: i32, _a3: f32) = { unsafe { let _ = super::ftCo_800D4E50(&mut *(_a0 as *mut Fighter), &*(_a1 as *const Vec3), _a2 as _, _a3 as _); } };
         fn ftCommon_8007DB24(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007db24(_a0 as _); } };
-        fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };
+        fn ftCommon_8007E2FC(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::tu::ftcommon::ftcommon_8007e2fc(&mut *((*(_a0 as *mut HSD_GObj)).user_data as *mut Fighter)); } };
         fn ftCommon_8007EBAC(_a0: *mut core::ffi::c_void, _a1: u32, _a2: u32) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007ebac(&mut *(_a0 as *mut Fighter), _a1 as _, _a2 as _); } };
         fn ftCommon_8007EFC0(_a0: *mut core::ffi::c_void, _a1: u32) = { unsafe { let _ = crate::ftcommon2::ftcommon_8007efc0(&mut *(_a0 as *mut Fighter), _a1 as _); } };
         fn ftCommon_8007F8E8(_a0: *mut core::ffi::c_void) = { unsafe { let _ = crate::ftcommon3::ftcommon_8007f8e8(_a0 as _); } };

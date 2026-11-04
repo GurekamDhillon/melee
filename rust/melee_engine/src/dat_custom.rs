@@ -65,6 +65,8 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
         "itco" => itco(d, b, off),
         "ftdata" => ftdata(d, b, off, sym),
         "kirbyhat" => kirbyhat(d, b, off, sym),
+        "stcicns" => stc_icns(d, off),
+        "efbhv" => ef_behavior(d, off),
         "ptrtable_itemdata" => {
             // the stage's own items (`GroundItemData { kind, Article* }`): their state arrays can be longer than 8 as well
             let n = (b.extent(off) / 4).max(1);
@@ -201,6 +203,20 @@ pub fn decode(name: &str, d: &mut GcDecoder<'_>, off: u32, _extent: u32, b: &Bou
             // a stage whose record packs s16 / u8 fields (`crate::yakumono_layouts`, generated from the stage TUs' structs): swap
             // each field by its own width instead of the whole word (a word swap exchanges the two halves of an s16 pair)
             let kind = unsafe { (*core::ptr::addr_of!(melee_world::tu::ground::stage_info)).grkind } as i32;
+            if kind == melee_types::Gr_Kind_KinokoRoute as i32 {
+                // grNKr_YakumonoParam { int x0; grZakoGenerator_SpawnDesc x4; }: grZakoGenerator_801CA8B4 reads x4 as an array
+                // to the record end (see the descriptor tail below), so every word from 4 on is a (u16, u8, u8) descriptor
+                for k in 1..n {
+                    let w = d.u32_at(off + 4 * k as u32);
+                    unsafe {
+                        let o = (buf as *mut u8).add(4 * k);
+                        (o as *mut u16).write_unaligned((w >> 16) as u16);
+                        *o.add(2) = (w >> 8) as u8;
+                        *o.add(3) = w as u8;
+                    }
+                }
+                return buf as *mut c_void;
+            }
             if let Some((_, name, csize, rsize, fields)) = crate::yakumono_layouts::YAKUMONO_LAYOUTS.iter().find(|l| l.0 == kind) {
                 if (*csize as usize) <= n * 4 {
                     // grZakoGenerator_801CA8B4 indexes the record's `grZakoGenerator_SpawnDesc` (u16 kind, u8, u8) as an array:
@@ -718,6 +734,12 @@ fn zako_attrs(d: &mut GcDecoder<'_>, b: &Bounds, kind: u32, ta: u32) {
         d.object::<t::itOldottoseaAttributes>(sa) as *mut c_void
     } else if k == t::It_Kind_Whitebea as u32 {
         d.object::<t::itWhiteBeaAttributes>(sa) as *mut c_void
+    } else if k == t::It_Kind_Nokonoko as u32 {
+        // `attr->x0->x4` (the walk speed), as the Like Like's
+        d.object::<t::itNokoNoko_DatAttrs>(sa) as *mut c_void
+    } else if k == t::It_Kind_Likelike as u32 {
+        // `attr->x0.x0_f32->y` (the walk speed): adventure_step02 read the pointer from the word-swapped block
+        d.object::<t::itLikelikeAttributes>(sa) as *mut c_void
     } else if (k == t::It_Kind_Old_Kuri as u32 || k == t::It_Kind_Kuriboh as u32) && d.is_reloc(sa) {
         let words = (b.extent(sa) / 4).max(4);
         let pt = d.target(sa);
@@ -783,16 +805,20 @@ fn ftdata(d: &mut GcDecoder<'_>, b: &Bounds, off: u32, sym: &str) -> *mut c_void
     use melee_core::gc::GcLayout;
     use melee_fighter::tu::ftdata as fd;
     use melee_types::{ftData, Fighter_WaitAnimData};
-    let kind = unsafe {
+    let loading = unsafe { fd::FTDATA_LOADING_KIND };
+    let kind = if loading >= 0 { loading as usize } else { unsafe {
         (0..fd::ftData_803C1F40.len())
             .find(|&k| {
                 let b = fd::ftData_803C1F40[k].b;
                 !b.is_null() && core::ffi::CStr::from_ptr(b).to_bytes() == sym.as_bytes()
             })
             .unwrap_or_else(|| panic!("dat_custom: `{sym}` is not a fighter data symbol of ftData_803C1F40"))
-    };
+    } };
     let (n, m) = unsafe { (fd::ftData_Table_Unk0[kind].count as usize, fd::ftData_UnkIntPairs[kind].count as usize) };
     let at = |f: &str| off + ftData::gc_field(f).expect("ftData field").offset;
+    if kind >= melee_types::Ft_Kind_Mex0 as usize {
+        mex_motion_rows(d, off, at("xC"), at("x14"), n, m, kind);
+    }
     let mut v = <ftData as GcDecode>::gc_decode(d, off);
     v.xC = d.ptr_array::<Fighter_WaitAnimData>(at("xC"), n);
     v.x10 = d.ptr_array::<[u8; 2]>(at("x10"), n);
@@ -1424,4 +1450,84 @@ fn event_levels(d: &mut GcDecoder<'_>, b: &Bounds, off: u32) -> *mut c_void {
         levels.push(leak(gm_804D6900_t { kind: head[0], flags: head[1], pad2: [head[2], head[3]], x4, evinit, evbonus, evstage_table, player_init }));
     }
     Box::leak(levels.into_boxed_slice()).as_mut_ptr() as *mut c_void
+}
+
+/// m-ex `MexStcIcns` (IfAll `Stc_icns`, gm_1601.c gm_MexStcIcns): `{u16 reserved; u16 stride; HSD_MatAnimJoint* matanim}`,
+/// laid out natively as the Rust `melee_modes::tu::gm_1601::MexStcIcns` (u16, u16, pointer).
+fn stc_icns(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
+    #[repr(C)]
+    struct Native { reserved: u16, stride: u16, matanim: *mut c_void }
+    let w = d.u32_at(off);
+    let m = d.ptr::<melee_types::HSD_MatAnimJoint>(off + 4) as *mut c_void;
+    let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
+    unsafe { buf.write(Native { reserved: (w >> 16) as u16, stride: w as u16, matanim: m }) };
+    buf as *mut c_void
+}
+
+/// ftData_8008572C's m-ex motion-table walk (ftData_MexMotionRowOk), done on the raw image: a row is real when its name
+/// is null or a pointer into the archive and its script is a pointer into it; an all-zero row is a hole; the table ends
+/// at the first other row or at the next ftData pointer field above it. The class of each row (1 real, 2 hole; the
+/// list stops at the first bad one) goes to `ftdata::MEX_MOTION_ROWS[kind]` for the native walk.
+fn mex_motion_rows(d: &mut GcDecoder<'_>, rec: u32, main_at: u32, demo_at: u32, n: usize, m: usize, kind: usize) {
+    use melee_core::gc::GcLayout;
+    const ROW: u32 = 0x18;
+    let end = d.data_len() as u32;
+    let fields = <melee_types::ftData as GcLayout>::GC_SIZE / 4;
+    let bound = |d: &mut GcDecoder<'_>, lo: u32| -> u32 {
+        let mut hi = end;
+        if rec > lo && rec < hi {
+            hi = rec;
+        }
+        for w in 0..fields {
+            if let Some(p) = d.target(rec + 4 * w) {
+                if p > lo && p < hi {
+                    hi = p;
+                }
+            }
+        }
+        hi
+    };
+    let mut walk = |d: &mut GcDecoder<'_>, at: u32, cnt: usize, holes: bool| -> Vec<u8> {
+        let mut v = Vec::new();
+        let Some(t) = d.target(at) else { return v };
+        let hi = bound(d, t);
+        for i in 0..cnt as u32 {
+            let e = t + i * ROW;
+            if e + ROW > hi.min(end) {
+                break;
+            }
+            let name_ok = d.u32_at(e) == 0 || d.is_reloc(e);
+            let cmd_ok = d.is_reloc(e + 0xC) && d.u32_at(e + 0xC) != 0;
+            if name_ok && cmd_ok {
+                v.push(1);
+            } else if holes && d.u32_at(e) == 0 && d.u32_at(e + 0xC) == 0 && d.u32_at(e + 4) == 0 && d.u32_at(e + 8) == 0 {
+                v.push(2);
+            } else {
+                break;
+            }
+        }
+        v
+    };
+    let main = walk(d, main_at, n, true);
+    let demo = walk(d, demo_at, m, false);
+    eprintln!("mexdata: kind {kind}: motion rows on the raw image: {} main, {} demo (of {n} / {m})", main.len(), demo.len());
+    unsafe { melee_fighter::tu::ftdata::MEX_MOTION_ROWS.insert(kind, (main, demo)) };
+}
+
+/// m-ex `effBehaviorTable` (an effect bank's behaviour per model / generator; efasync.c EfMexBehavior):
+/// `{s32 mdl_num; u8* mdl_type; s32 ptcl_num; u8* ptcl_type}`, the byte arrays `num` long.
+fn ef_behavior(d: &mut GcDecoder<'_>, off: u32) -> *mut c_void {
+    #[repr(C)]
+    struct Native { mdl_num: i32, mdl_type: *mut u8, ptcl_num: i32, ptcl_type: *mut u8 }
+    let (mn, pn) = (d.u32_at(off) as i32, d.u32_at(off + 8) as i32);
+    let mut bytes = |d: &mut GcDecoder<'_>, at: u32, n: i32| -> *mut u8 {
+        match d.target(at) {
+            Some(t) if n > 0 => Box::leak((0..n as u32).map(|i| d.u8_at(t + i)).collect::<Vec<u8>>().into_boxed_slice()).as_mut_ptr(),
+            _ => core::ptr::null_mut(),
+        }
+    };
+    let (mt, pt) = (bytes(d, off + 4, mn), bytes(d, off + 12, pn));
+    let buf = native_buf(core::mem::size_of::<Native>()) as *mut Native;
+    unsafe { buf.write(Native { mdl_num: mn, mdl_type: mt, ptcl_num: pn, ptcl_type: pt }) };
+    buf as *mut c_void
 }

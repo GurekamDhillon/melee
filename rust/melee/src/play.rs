@@ -1677,6 +1677,7 @@ pub fn play(args: &[String]) -> ExitCode {
         rp.skip_intro = game.skip_intro;
         rp.audio_on = !has("--no-audio") && crate::cfg::flag("audio", true);
         rp.rollback_mode = rollback_mode;
+        rp.practice = Some(crate::practice::Practice::new(crate::practice::Opts::from_args(args)));
         rp.delay_line = crate::input_delay::DelayLine::from_args(&args);
         if rp.delay_line.frames > 0 {
             log(&format!("offline input delay {} frames (matches only)", rp.delay_line.frames));

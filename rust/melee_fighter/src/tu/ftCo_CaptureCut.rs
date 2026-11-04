@@ -42,10 +42,10 @@ pub mod ext {
     ext_fns! {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_IsFramesRemaining(g: G) -> bool = crate::hooks::ftanim_is_frames_remaining;
-        ftCommon_8007D92C(g: G) = |_| todo!("ftCommon_8007D92C: installed by melee_link");
+        ftCommon_8007D92C(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007d92c(a0);
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |_| todo!("ftCommon_SetSelfMovementFromGroundedMovement: installed by melee_link");
-        ft_80084DB0(g: G) = |_| todo!("ft_80084DB0: installed by melee_link");
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(a0);
+        ft_80084DB0(g: G) = |a0| crate::tu::ft_081b::ft_80084db0(a0);
         ft_800841B8(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_800841b8(g as _, ev)); } };
         ft_80083910(g: G, cb: HSD_GObjEvent) = |g: G, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083910(g as _, ev)); } };
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
@@ -57,11 +57,11 @@ pub mod ext {
         ftParts_GetBoneIndex(f: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         lb_8000B1CC(j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3) = |j: *mut HSD_JObj, off: *const Vec3, out: &mut Vec3| { unsafe { melee_runtime::tu::lb_00B0::lb_8000B1CC(j as _, off as _, out as _); } };
         lb_8000C390(j: *mut HSD_JObj) = |j: *mut HSD_JObj| { unsafe { melee_runtime::tu::lb_00B0::lb_8000C390(j as _); } };
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         mpLib_80054ED8(index: i32) -> i32 = |index: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_80054ED8(index as _) } };
         mpLib_8005199C_Floor(pos: &mut Vec3, a: i32, b: i32) -> i32 = |pos: &mut Vec3, a: i32, b: i32| -> i32 { unsafe { melee_world::tu::mplib::mpLib_8005199C_Floor(pos as *mut _ as *mut _, a as _, b as _) } };
         mpLinesConnected(a: i32, b: i32) -> bool = |a: i32, b: i32| -> bool { unsafe { (melee_world::tu::mplib::mpLinesConnected(a as _, b as _) != 0 as _) } };
-        mpLib_8004DD90_Floor(index: i32, pos: &mut Vec3, out: &mut f32, a: i32, b: *mut Vec3) -> bool = |_, _, _, _, _| todo!("TODO(port) mpLib_8004DD90_Floor (mplib.c)");
+        mpLib_8004DD90_Floor(index: i32, pos: &mut Vec3, out: &mut f32, a: i32, b: *mut Vec3) -> bool = |a0, a1, a2, a3, a4| unsafe { melee_world::tu::mplib::mpLib_8004DD90_Floor(a0, a1 as *mut _, a2 as *mut _, a3 as _, a4 as _) != 0 };
         mpColl_80043680(coll: &mut CollData, pos: &Vec3) = |coll: &mut CollData, pos: &Vec3| { unsafe { melee_world::tu::mpcoll::mpColl_80043680(coll as *mut _ as *mut _, pos as *const _ as *mut _); } };
         // rp3 mpColl_80043670
         mpColl_80043670(coll: &mut CollData) = |coll: &mut CollData| unsafe { melee_world::tu::mpcoll::mpColl_80043670(coll as _); };

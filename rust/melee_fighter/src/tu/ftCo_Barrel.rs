@@ -30,7 +30,7 @@ pub mod ext {
     }
     type I = *mut Item_GObj;
     ext_fns! {
-        ftCommon_8007DB58(g: G) = |_| todo!("ftCommon_8007DB58: installed by melee_link");
+        ftCommon_8007DB58(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007db58(a0);
         ftCo_8009750C(g: G) = |g: G| { unsafe { crate::tu::ftCo_Lift::ftCo_8009750C(g as _); } };
         ftCo_800DD168(g: G) = |g: G| { unsafe { crate::tu::ftCo_Throw::ftCo_800DD168(g as _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
@@ -41,12 +41,12 @@ pub mod ext {
         it_8026C334(i: I, pos: *mut Vec3) = |i: I, pos: *mut Vec3| { unsafe { melee_items::tu::it_26B1::it_8026C334(i as _, pos as _); } };
         itGetOwner(i: I) -> G = |i: I| -> G { unsafe { melee_items::tu::it_26B1::itGetOwner(i as _) as _ } };
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
         ftColl_800787B4(i: I, g: G, v: i32) = |i: I, g: G, v: i32| { unsafe { crate::tu::ftcoll::ftcoll_800787b4(i as _, g as _, v as _); } };
         ftLib_80086960(g: G) -> bool = crate::ftlib::ftlib_80086960;
-        ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |_, _| todo!("ftColl_8007B8CC: installed by melee_link");
+        ftColl_8007B8CC(fp: *mut Fighter, owner: G) = |a0, a1| crate::tu::ftcoll::ftcoll_8007b8cc(unsafe { &mut *(a0 as *mut Fighter) }, a1);
         ftLib_800866DC(g: G, v: &mut Vec3) = crate::ftlib::ftlib_800866dc;
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };

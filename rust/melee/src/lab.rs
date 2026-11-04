@@ -24,8 +24,9 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::rc::Rc;
 
-/// The ring holds one snapshot every RING_EVERY frames; a rewind re-sims the rest from the logged pads.
-pub const RING_EVERY: i32 = 4;
+/// The ring holds one snapshot every RING_EVERY frames; a rewind re-sims the rest from the logged pads (at most 7
+/// frames, ~2 ms: the depth stays the full ring, the capture cost per frame halves).
+pub const RING_EVERY: i32 = 8;
 
 const BTN_A: u16 = 0x100;
 const BTN_B: u16 = 0x200;

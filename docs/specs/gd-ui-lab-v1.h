@@ -207,7 +207,7 @@ typedef struct { float ax, ay, bx, by, radius; int state, bone; } gd_lab_hurtbox
 int      gd_lab_save(unsigned slot);                  /* (cmd) */
 int      gd_lab_load(unsigned slot);                  /* (cmd) forks the timeline */
 int      gd_lab_slot_frame(unsigned slot);            /* -1 empty */
-int      gd_lab_ring(unsigned frames);                /* (cmd) 0 off, max 600; a snapshot every 4 frames */
+int      gd_lab_ring(unsigned frames);                /* (cmd) 0 off, max 600; a snapshot every 8 frames */
 int      gd_lab_rewind(unsigned n);                   /* (cmd) the logged future then plays back until go_live */
 int      gd_lab_pause(int on);                        /* (cmd) */
 int      gd_lab_step(int n);                          /* (cmd) n < 0 = rewind(-n) */

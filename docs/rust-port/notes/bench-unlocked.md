@@ -1,5 +1,9 @@
 # Rust port vs melee-unlocked (Static Recomp playback), 2026-11-01
 
+Status (re-read 2026-11-04 at rust-port 5138e0ba5): every figure below is a dated, single-machine measurement and was
+not re-run; the current comparison is the "Update 2026-11-02" section at the end. The first round's "not frame-exact
+on our side" and "crashes at row 8792" no longer hold (see that update).
+
 Benchmark only. melee-unlocked is GPL-3.0; nothing of it is copied here besides command-line flag names. No OS input,
 all windows hidden or absent and self-exiting. The replay and the disc stay in scratch/untracked; nothing disc-derived is committed.
 

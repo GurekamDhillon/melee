@@ -109,6 +109,9 @@ pub struct Overlay {
     held: u32,
     stick_prev: i8,
     f1_prev: bool,
+    /// Per port: buttons still held from a close (B / Start): kept from the game until released, so the close never
+    /// becomes a press on the screen underneath.
+    swallow: [u16; 4],
     pub theme: i32,
     /// The palette (0: the style's own colours).
     pub palette: i32,
@@ -217,6 +220,7 @@ impl Overlay {
             held: 0,
             stick_prev: 0,
             f1_prev: false,
+            swallow: [0; 4],
             theme,
             palette,
             changes: Vec::new(),
@@ -322,6 +326,12 @@ impl Overlay {
                 self.notice = None;
             }
         }
+        for p in 0..4 {
+            self.swallow[p] &= live[p].button;
+            if mask && self.swallow[p] != 0 && !self.open {
+                four[p].button &= !self.swallow[p];
+            }
+        }
         if !self.open {
             return false;
         }
@@ -400,12 +410,19 @@ impl Overlay {
         if ed & PAD_BUTTON_A != 0 {
             self.change(1);
         }
+        // the owner before a close: the B / Start that closes is the overlay's too (it must not reach the game)
+        let owner = self.owner;
         if ed & (PAD_BUTTON_B | PAD_BUTTON_START) != 0 && self.open {
             self.toggle_open(None);
+            for p in 0..4 {
+                if owner.is_none_or(|o| o == p) {
+                    self.swallow[p] = live[p].button;
+                }
+            }
         }
         // while open the owner's port is the overlay's (an exclusive capture); keyboard-opened: no port masked
         if mask {
-            if let Some(o) = self.owner {
+            if let Some(o) = owner {
                 let err = four[o].err;
                 four[o] = PADStatus::zeroed();
                 four[o].err = err;
@@ -601,6 +618,17 @@ mod tests {
         l[1] = pad(PAD_BUTTON_B);
         let mut four = l;
         assert!(!o.input(&l, &mut four, true, false, &[]));
+        assert_eq!(four[1].button, 0, "the closing B never reaches the game");
+        let mut four = l;
+        o.input(&l, &mut four, true, false, &[]);
+        assert_eq!(four[1].button, 0, "nor while it stays held");
+        let mut four = idle;
+        o.input(&idle, &mut four, true, false, &[]);
+        let mut l = idle;
+        l[1] = pad(PAD_BUTTON_B);
+        let mut four = l;
+        o.input(&l, &mut four, true, false, &[]);
+        assert_eq!(four[1].button, PAD_BUTTON_B, "a new press after the release does");
         // keyboard: F1 opens, Escape closes
         o.input(&idle, &mut idle.clone(), true, true, &[]);
         assert!(o.open);

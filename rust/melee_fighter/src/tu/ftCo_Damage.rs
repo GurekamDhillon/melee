@@ -93,14 +93,14 @@ pub mod ext {
         Fighter_804D6524_x0() -> f32 = || crate::tu::ftchangeparam::ext::d6524().x0;
         ftCo_800BFFD0(fp: &mut Fighter, a: i32, b: i32) -> bool = crate::tu::ftcolanim::ftco_800bffd0;
         lbBgFlash_80021C48(a: u32, b: u32) = |_, _| todo!("TODO(group1 lb) lbBgFlash_80021C48");
-        efAsync_Spawn(g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, angle: *mut f32) = |_, _, _, _, _, _| todo!("TODO(group2 efasync) efAsync_Spawn");
+        efAsync_Spawn(g: G, q: *mut core::ffi::c_void, kind: u32, gfx: u32, jobj: *mut HSD_JObj, angle: *mut f32) = |a0, a1, a2, a3, a4, a5| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void]); };
         ftPartSetRotX(fp: &Fighter, idx: i32, v: f32) = crate::tu::ftparts::ftPartSetRotX;
         ftParts_GetBoneIndex(fp: &Fighter, part: i32) -> i32 = crate::ftdmgfall::ftparts_get_bone_index;
         Fighter_8006CDA4(fp: &mut Fighter, v: i32) = |fp: &mut Fighter, v: i32| { unsafe { crate::tu::fighter::Fighter_8006CDA4(fp as _, v as _); } };
         pl_80040270(port: i32, sub: i32, kb: f32) = crate::plbonus::pl_80040270;
         pl_800401F0(port: i32, sub: i32, x: f32, y: f32) = crate::plbonus::pl_800401f0;
         ftCommon_8007D5D4(fp: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
-        HSD_Randf() -> f32 = || todo!("HSD_Randf: installed by melee_link");
+        HSD_Randf() -> f32 = || melee_runtime::tu::random::global::HSD_Randf();
         un_803222EC(mag: f32, angle: f32) -> f32 = |mag: f32, angle: f32| -> f32 { unsafe { crate::tu::crowdsfx::un_803222EC(mag as _, angle as _) as _ } };
         un_8032233C(a: u32, b: u32) = |a: u32, b: u32| { unsafe { crate::tu::crowdsfx::un_8032233C(a as _, b as _); } };
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
@@ -108,7 +108,7 @@ pub mod ext {
         gm_8016B014() -> bool = || todo!("TODO(port) gm_8016B014 (gmvs.c)");
         ftColl_8007B6A0(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        Camera_RequestQuake(kind: u32, pos: &Vec3) = |_, _| todo!("TODO(group2 camera) Camera_RequestQuake");
+        Camera_RequestQuake(kind: u32, pos: &Vec3) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };
         ftCommon_8007F824(g: G) = crate::ftcommon3::ftcommon_8007f824;
         ftCo_DamageIce_Init(g: G) = crate::tu::ftCo_DamageIce::ftCo_DamageIce_Init;
         ftCo_800DF608(fp: &Fighter) -> bool = crate::ft0df::ftco_800df608;
@@ -168,7 +168,7 @@ pub mod ext {
         ftCo_DamageFall_IASA(g: G) = crate::tu::ftCo_DamageFall::ftCo_DamageFall_IASA;
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         PSVECCrossProduct(a: &Vec3, b: &Vec3) -> Vec3 = |a, b| { let r = melee_runtime::mtx::vec_cross(&cv(a), &cv(b)); Vec3 { x: r.x, y: r.y, z: r.z } };
-        lbVector_Angle(a: &Vec3, b: &Vec3) -> f32 = |_, _| todo!("lbVector_Angle: installed by melee_link");
+        lbVector_Angle(a: &Vec3, b: &Vec3) -> f32 = |a0, a1| unsafe { melee_runtime::tu::lbvector::lbVector_Angle(a0 as *const _ as *mut _, a1 as *const _ as *mut _) };
     }
 }
 

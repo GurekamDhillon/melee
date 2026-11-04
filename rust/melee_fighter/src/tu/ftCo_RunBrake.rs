@@ -41,7 +41,7 @@ pub mod ext {
         fn_800C9CEC(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_TurnRun::fn_800C9CEC(g as _) as _ } };
         ftCo_800D5FB0(g: G) -> bool = |g: G| -> bool { unsafe { crate::tu::ftCo_Squat::ftCo_800D5FB0(g as _) as _ } };
         ftCommon_CalcGroundAccel_Deaccel(f: &mut Fighter, friction: f32) = crate::ftcommon::calc_ground_accel_deaccel;
-        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |_| todo!("ftCommon_SetSelfMovementFromGroundedMovement: installed by melee_link");
+        ftCommon_SetSelfMovementFromGroundedMovement(g: G) = |a0| crate::tu::ftcommon::ftCommon_SetSelfMovementFromGroundedMovement_fp(a0);
         ft_80084280(g: G) = crate::tu::ft_081b::ft_80084280;
     }
 }

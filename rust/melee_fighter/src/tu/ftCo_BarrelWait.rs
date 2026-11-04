@@ -36,11 +36,11 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
         ftCo_8009EAF8_fn() -> HSD_GObjEvent = || todo!("TODO(port) &ftCo_8009EAF8 (ftdynamics.c)");
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftCommon_8007E2F4(fp: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftCommon_8007EFC0(fp: &mut Fighter, v: u32) = crate::ftcommon2::ftcommon_8007efc0;
-        Ground_801C4DD0() -> bool = || todo!("TODO(port) Ground_801C4DD0 (ground.c)");
-        Ground_801C4DA0(pos: *mut Vec3, out: *mut f32) -> bool = |_, _| todo!("TODO(port) Ground_801C4DA0 (ground.c)");
+        Ground_801C4DD0() -> bool = || unsafe { melee_world::tu::ground::Ground_801C4DD0() != 0 };
+        Ground_801C4DA0(pos: *mut Vec3, out: *mut f32) -> bool = |a0, a1| unsafe { melee_world::tu::ground::Ground_801C4DA0(a0, a1) != 0 };
         // rp3 mpColl_80043680
         mpColl_80043680(c: *mut CollData, v: *mut Vec3) = |c: *mut CollData, v: *mut Vec3| unsafe { melee_world::tu::mpcoll::mpColl_80043680(c, v as _); };
         // rp3-end

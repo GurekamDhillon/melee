@@ -50,11 +50,11 @@ pub mod ext {
         Fighter_ChangeMotionState(g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G) = |g: G, msid: i32, flags: u32, start: f32, speed: f32, blend: f32, other: G| { unsafe { crate::tu::fighter::Fighter_ChangeMotionState(g as _, msid as _, flags as _, start as _, speed as _, blend as _, other as _); } };
         ftColl_8007B6A0(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007b6a0(g as _); } };
         ftColl_8007B6EC(g: G) = |g: G| { unsafe { crate::tu::ftcoll::ftcoll_8007b6ec(g as _); } };
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
-        HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |_, _, _, _| todo!("TODO(port) HSD_JObjAddAnim (jobj.c)");
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
+        HSD_JObjAddAnim(j: *mut HSD_JObj, an: *mut HSD_AnimJoint, mat: *mut HSD_MatAnimJoint, sh: *mut HSD_ShapeAnimJoint) = |a0, a1, a2, a3| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAddAnim(a0 as _, a1 as _, a2 as _, a3 as _); };
         ftAnim_80070734(j: *mut HSD_JObj, frame: f32) = |j: *mut HSD_JObj, frame: f32| { unsafe { crate::tu::ftanim::ftAnim_80070734(j as _, frame as _); } };
-        HSD_JObjAnim(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjAnim (jobj.c)");
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (jobj.c)");
+        HSD_JObjAnim(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjAnim(a0 as _) };
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         Stage_GetBlastZoneTopOffset() -> f32 = || -> f32 { unsafe { melee_world::tu::stage::Stage_GetBlastZoneTopOffset() } };
         ftCamera_800762F4(g: G) = |g: G| { unsafe { crate::tu::ftcamera::ftcamera_800762f4(g as _); } };
         // rp3 mpColl_80043680
@@ -65,8 +65,8 @@ pub mod ext {
         ft_80083E64(g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent) = |g: G, ecb: *mut ftCollisionBox, cb: HSD_GObjEvent| { unsafe { let _ = crate::bridge::with_ev(cb, |ev| crate::tu::ft_081b::ft_80083e64(g as _, ecb as _, ev)); } };
         atan2f(y: f32, x: f32) -> f32 = melee_runtime::lbtrigf::atan2f;
         // `efAsync_Spawn(gobj, queue, kind, gfx_id, jobj, ...)` with (pos, param) as the varargs.
-        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, j: *mut HSD_JObj, pos: *mut Vec3, param: *mut f32) = |_, _, _, _, _, _, _| todo!("TODO(port) efAsync_Spawn (efasync.c)");
-        Camera_RequestQuake(kind: i32, pos: *mut Vec3) = |_, _| todo!("TODO(port) Camera_RequestQuake (camera.c)");
+        efAsync_Spawn(g: G, queue: *mut core::ffi::c_void, kind: u32, id: u32, j: *mut HSD_JObj, pos: *mut Vec3, param: *mut f32) = |a0, a1, a2, a3, a4, a5, a6| unsafe { let _ = melee_world::tu::efn::efasync::efAsync_Spawn(a0 as _, a1 as _, a2 as _, a3 as _, a4 as _, &[a5 as *const core::ffi::c_void, a6 as *const core::ffi::c_void]); };
+        Camera_RequestQuake(kind: i32, pos: *mut Vec3) = |a0, a1| unsafe { melee_world::tu::camera::Camera_RequestQuake(a0 as _, a1 as *const _ as *mut _) };
         ftCommon_8007EBAC(f: &mut Fighter, a: u32, b: u32) = crate::ftcommon2::ftcommon_8007ebac;
     }
 }

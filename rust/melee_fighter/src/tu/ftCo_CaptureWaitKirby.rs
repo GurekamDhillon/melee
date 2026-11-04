@@ -38,7 +38,7 @@ pub mod ext {
         ftCommon_8007D5D4(f: &mut Fighter) = crate::ftcommon2::ftcommon_8007d5d4;
         ftCommon_8007E2F4(f: &mut Fighter, v: i16) = crate::ftcommon2::ftcommon_8007e2f4;
         ftAnim_8006EBA4(g: G) = |g: G| { unsafe { crate::tu::ftanim::ftAnim_8006EBA4(g as _); } };
-        ftCommon_8007E2FC(g: G) = |_| todo!("ftCommon_8007E2FC: installed by melee_link");
+        ftCommon_8007E2FC(g: G) = |a0| crate::tu::ftcommon::ftcommon_8007e2fc(unsafe { &mut *((*(a0 as *mut HSD_GObj)).user_data as *mut Fighter) });
         ftKb_SpecialN_800F598C(g: G, a: i32) = |_, _| todo!("TODO(port) ftKb_SpecialN_800F598C (ftkirby)");
         ftKb_SpecialN_800F597C(g: G) -> bool = |_| todo!("ftKb_SpecialN_800F597C: installed by melee_link");
         ftKb_SpecialN_800F5954(g: G) = |_| todo!("TODO(port) ftKb_SpecialN_800F5954 (ftkirby)");
@@ -48,7 +48,7 @@ pub mod ext {
         ftKb_SpecialN_800F5B10(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5B10: installed by melee_link");
         ftKb_SpecialN_800F5A60(g: G) -> f32 = |_| todo!("ftKb_SpecialN_800F5A60: installed by melee_link");
         ftCommon_GrabMash(f: &mut Fighter, a: f32) -> bool = crate::ftcommon2::grab_mash;
-        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |_| todo!("TODO(port) HSD_JObjSetMtxDirtySub (baselib jobj.c)");
+        HSD_JObjSetMtxDirtySub(j: *mut HSD_JObj) = |a0| unsafe { melee_runtime::tu::jobj_ptr::HSD_JObjSetMtxDirtySub(a0 as _) };
         ftCo_CaptureCut_Enter(g: G) = crate::tu::ftCo_CaptureCut::ftCo_CaptureCut_Enter;
         ftCo_800DA698(g: G, b: bool) = |g: G, b: bool| { unsafe { crate::tu::ftCo_CatchCut::ftCo_800DA698(g as _, b as _); } };
     }

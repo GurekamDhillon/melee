@@ -105,6 +105,8 @@ pub const RO_OOS_GRAB: i32 = 3;
 pub const RO_OOS_UPB: i32 = 4;
 pub const RO_OOS_SPOTDODGE: i32 = 5;
 pub const RO_OOS_ROLL: i32 = 6;
+/// Random out of shield (RO_RANDOM is 5, which is spot-dodge here).
+pub const RO_OOS_RANDOM: i32 = 8;
 /// Any kind: play recording `param.rec` as the reaction (GAP-5).
 pub const RO_RECORDING: i32 = 15;
 

@@ -168,7 +168,7 @@ pub fn lab_check(args: &[String]) -> std::process::ExitCode {
             c(OP_REACTION, 1, RK_SDI as u16, RO_AWAY as u32, ReactParam { delay: 1, ..Default::default() }.to_u32(), 0),
             c(OP_REACTION_WEIGHTS, 1, RK_TECH as u16, 0x0000_1213, 0, 0),
             c(OP_REACTION, 1, RK_TECH as u16, RO_RANDOM as u32, 0, 0),
-            c(OP_REACTION, 1, RK_OOS as u16, RO_RANDOM as u32, ReactParam { delay: 2, ..Default::default() }.to_u32(), 0),
+            c(OP_REACTION, 1, RK_OOS as u16, RO_OOS_RANDOM as u32, ReactParam { delay: 2, ..Default::default() }.to_u32(), 0),
             c(OP_REACTION, 1, RK_SHIELD as u16, RO_BLOCK_RANDOM as u32, ReactParam { chance: 60, ..Default::default() }.to_u32(), 0),
         ]
     };

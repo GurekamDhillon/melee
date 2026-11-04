@@ -165,7 +165,9 @@ enum { GD_LAB_RO_TECH_IN_PLACE = 1, GD_LAB_RO_TECH_ROLL_IN = 2, GD_LAB_RO_TECH_R
 enum { GD_LAB_RO_GETUP_STAND = 1, GD_LAB_RO_GETUP_ROLL_IN = 2, GD_LAB_RO_GETUP_ROLL_AWAY = 3, GD_LAB_RO_GETUP_ATTACK = 4,
        GD_LAB_RO_LEDGE_JUMP = 6, GD_LAB_RO_LEDGE_DROP = 7 };
 enum { GD_LAB_RO_BLOCK_ALL = 1, GD_LAB_RO_BLOCK_AFTER_FIRST = 2, GD_LAB_RO_BLOCK_RANDOM = 3 };
-enum { GD_LAB_RO_OOS_JUMP = 1, GD_LAB_RO_OOS_NAIR, GD_LAB_RO_OOS_GRAB, GD_LAB_RO_OOS_UPB, GD_LAB_RO_OOS_SPOTDODGE, GD_LAB_RO_OOS_ROLL };
+enum { GD_LAB_RO_OOS_JUMP = 1, GD_LAB_RO_OOS_NAIR, GD_LAB_RO_OOS_GRAB, GD_LAB_RO_OOS_UPB, GD_LAB_RO_OOS_SPOTDODGE, GD_LAB_RO_OOS_ROLL,
+       GD_LAB_RO_OOS_RANDOM = 8 /* RANDOM (5) is spot-dodge for this kind */ };
+/* CPU_NONE with reactions: the reactions act on top of the port's own pad; any other behaviour replaces it */
 /* GAP-5 reaction parameter: delay frames | DI/SDI strength 0..100 << 8 | random chance % << 16 | recording << 24 */
 #define GD_LAB_REACT_PARAM(delay, strength, chance, rec) ((unsigned)(delay) | (unsigned)(strength) << 8 | (unsigned)(chance) << 16 | (unsigned)(rec) << 24)
 

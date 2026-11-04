@@ -3,7 +3,8 @@
 //!
 //! Channels, told apart by their first bytes:
 //! - 0: the first room, unprefixed (the gw_net wire, `GN...`; stays compatible with the C build's direct room);
-//! - 1: the lockstep menus (`MLS1`, np_lockstep.rs; already self-identifying, so unprefixed);
+//! - 1: the lockstep menus (`MLS1`, np_lockstep.rs; already self-identifying, so unprefixed), or the online Lab's
+//!   lockstep with its commands (`MLS2`);
 //! - 2 + k: the k-th rematch room (k >= 1), each packet prefixed `MRM` + k (a new `Net` must not see the old one's
 //!   late datagrams).
 //! - EARLY_CH: early inputs (`MEI1`, melee_net::early, np_early.rs), sent from the sampler thread straight to the
@@ -43,7 +44,7 @@ impl MuxCore {
             let d = &b[..n as usize];
             let (ch, body) = if d.len() >= 4 && &d[..3] == b"MRM" {
                 (2 + d[3] as u32, &d[4..])
-            } else if d.len() >= 4 && &d[..4] == b"MLS1" {
+            } else if d.len() >= 4 && (&d[..4] == b"MLS1" || &d[..4] == b"MLS2") {
                 (1, d)
             } else if d.len() >= 4 && &d[..4] == melee_net::early::MAGIC {
                 (EARLY_CH, d)

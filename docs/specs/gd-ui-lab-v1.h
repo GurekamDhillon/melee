@@ -1,6 +1,7 @@
 /* gd-ui-v1 / gd-lab-v1 shared constants (docs/rust-port/notes/wasm-ui-lab-api.md).
  * Rust mirror: rust/melee_modhost/src/pres.rs and src/ui/ (gd_ui host, implemented); rust/mods/gd_ui_enc (encoder).
- * gd_match_setup and gd_lab_fighter_v1 are added by the Lab half / the match-setup step. */
+ * gd-lab-v1 (Lab half, implemented): rust/melee_modhost/src/lab (imports, commands), rust/melee/src/lab.rs (sim side).
+ * gd_match_setup is added by the match-setup step. */
 #ifndef GD_UI_LAB_V1_H
 #define GD_UI_LAB_V1_H
 
@@ -125,5 +126,112 @@ int      gd_ui_scene_back(void);
 int      gd_ui_match_start(const void* setup, unsigned len);     /* GD_ESTATE until gd_match_setup lands */
 /* exports: int gd_ui_init(void); void gd_ui_frame(unsigned present_no) (required with UI_DRAW);
  * void gd_ui_event(unsigned node, int ev, int value); void gd_ui_scene_enter(unsigned); void gd_ui_scene_leave(unsigned) */
+
+/* ---------------------------------------------------------------- gd-lab-v1 (module "gd_lab")
+ * Sessions: allowed in OFFLINE and LAB_NETPLAY, GD_EOFFLINE elsewhere. Every call marked (cmd) changes the sim: it is
+ * queued as a 16-byte lab command (GAP-13) and returns the frame it applies on (>= 0), or an error. Offline it applies
+ * on the next lab frame; in LAB_NETPLAY it rides the lockstep stream with this peer's pad of that frame and both peers
+ * apply it on that frame (host's commands first). At most 8 commands per peer per frame; more wait for later frames.
+ *
+ * Command record (little-endian): u8 op, u8 port, u16 a, u32 b, u32 c, u32 d. Version GD_LAB_CMD_VERSION (part of
+ * the netplay handshake's mod digest). Ops: 1 SAVE(a slot) 2 LOAD(a slot) 3 RING(a frames) 4 REWIND(b n) 5 PAUSE(a on)
+ * 6 STEP(b n) 7 GO_LIVE 8 REC_START(a mask, b rec) 9 REC_STOP(b rec) 10 PLAY(a mask, b rec, c flags) 11 PLAY_STOP(a mask)
+ * 12 REC_FREE(b rec) 13 CPU(port, a behaviour, b param) 14 REACTION(port, a kind, b option, c param) 15 PERCENT(port,
+ * b f32) 16 POS(port, b x, c y) 17 PLAY_SET(port, a order | flags << 8, b/c 8 rec ids, d 8 x 4-bit weights)
+ * 18 RNG_SEED(b seed) 19 REACTION_WEIGHTS(port, a kind, b weights). */
+#define GD_LAB_CMD_VERSION 1
+#define GD_LAB_SLOTS       16
+#define GD_LAB_RING_MAX    600
+
+enum { GD_LAB_PLAY_LOOP = 1, GD_LAB_PLAY_MIRROR = 2, GD_LAB_PLAY_FROM_SLOT = 4 };
+enum { GD_LAB_ORDER_ORDERED = 0, GD_LAB_ORDER_RANDOM = 1, GD_LAB_ORDER_WEIGHTED = 2 };
+enum { GD_LAB_CPU_NONE = 0, GD_LAB_CPU_STAND, GD_LAB_CPU_CROUCH, GD_LAB_CPU_JUMP, GD_LAB_CPU_SHIELD,
+       GD_LAB_CPU_LEVEL /* param 1..9 */, GD_LAB_CPU_RECORDING /* param rec */ };
+/* reaction kinds and options (RANDOM draws from the lab RNG, by the kind's weight table when one is set) */
+enum { GD_LAB_RK_DI = 0, GD_LAB_RK_SDI, GD_LAB_RK_TECH, GD_LAB_RK_GETUP, GD_LAB_RK_LEDGE, GD_LAB_RK_SHIELD, GD_LAB_RK_OOS };
+enum { GD_LAB_RO_NONE = 0, GD_LAB_RO_IN = 1, GD_LAB_RO_OUT = 2, GD_LAB_RO_AWAY = 3, GD_LAB_RO_TOWARD = 4,
+       GD_LAB_RO_RANDOM = 5, GD_LAB_RO_UP = 6, GD_LAB_RO_DOWN = 7, GD_LAB_RO_RECORDING = 15 };
+enum { GD_LAB_RO_TECH_IN_PLACE = 1, GD_LAB_RO_TECH_ROLL_IN = 2, GD_LAB_RO_TECH_ROLL_AWAY = 3, GD_LAB_RO_TECH_MISS = 4 };
+enum { GD_LAB_RO_GETUP_STAND = 1, GD_LAB_RO_GETUP_ROLL_IN = 2, GD_LAB_RO_GETUP_ROLL_AWAY = 3, GD_LAB_RO_GETUP_ATTACK = 4,
+       GD_LAB_RO_LEDGE_JUMP = 6, GD_LAB_RO_LEDGE_DROP = 7 };
+enum { GD_LAB_RO_BLOCK_ALL = 1, GD_LAB_RO_BLOCK_AFTER_FIRST = 2, GD_LAB_RO_BLOCK_RANDOM = 3 };
+enum { GD_LAB_RO_OOS_JUMP = 1, GD_LAB_RO_OOS_NAIR, GD_LAB_RO_OOS_GRAB, GD_LAB_RO_OOS_UPB, GD_LAB_RO_OOS_SPOTDODGE, GD_LAB_RO_OOS_ROLL };
+/* GAP-5 reaction parameter: delay frames | DI/SDI strength 0..100 << 8 | random chance % << 16 | recording << 24 */
+#define GD_LAB_REACT_PARAM(delay, strength, chance, rec) ((unsigned)(delay) | (unsigned)(strength) << 8 | (unsigned)(chance) << 16 | (unsigned)(rec) << 24)
+
+/* B4 overlay bits (presentation only, local, never hashed) and style kinds */
+enum { GD_LAB_OV_HITBOX = 1u << 0, GD_LAB_OV_HURTBOX = 1u << 1, GD_LAB_OV_ECB = 1u << 2, GD_LAB_OV_LEDGE_GRAB = 1u << 3,
+       GD_LAB_OV_COLLISION = 1u << 4, GD_LAB_OV_BLASTZONE = 1u << 5, GD_LAB_OV_CAMERA = 1u << 6, GD_LAB_OV_LABELS = 1u << 7,
+       GD_LAB_OV_SWEPT = 1u << 8, GD_LAB_OV_SHIELD = 1u << 9, GD_LAB_OV_GRAB = 1u << 10, GD_LAB_OV_IASA = 1u << 11,
+       GD_LAB_OV_INVINC = 1u << 12, GD_LAB_OV_DI_LINE = 1u << 13, GD_LAB_OV_KB_ARC = 1u << 14 };
+enum { GD_LAB_STYLE_HITBOX = 0, GD_LAB_STYLE_HURTBOX, GD_LAB_STYLE_ECB, GD_LAB_STYLE_LEDGE, GD_LAB_STYLE_COLLISION,
+       GD_LAB_STYLE_DI, GD_LAB_STYLE_LABEL, GD_LAB_STYLE_INVINC };
+
+/* B5 events (16 bytes): u8 kind, u8 port, u16 0, i32 frame, i32 a, i32 b. GAP-12 kinds 7..12. */
+enum { GD_LAB_EV_LCANCEL = 1 /* a ok, b frames from press */, GD_LAB_EV_TECH = 2 /* a 0 miss 1 in place 2 fwd 3 back */,
+       GD_LAB_EV_OOS = 3 /* a action, b frames in shield */, GD_LAB_EV_IASA = 4 /* a action, b frame */,
+       GD_LAB_EV_HIT = 5 /* a attacker, b damage x100 */, GD_LAB_EV_SHIELD = 6 /* a attacker, b shield HP x100 */,
+       GD_LAB_EV_POWERSHIELD = 7 /* a frames into shield */, GD_LAB_EV_WAVEDASH = 8 /* a angle, b frames after jumpsquat */,
+       GD_LAB_EV_LEDGEDASH = 9 /* a GALINT */, GD_LAB_EV_SDI = 10 /* a dx x100, b dy x100 */, GD_LAB_EV_ASDI = 11,
+       GD_LAB_EV_AIRDODGE = 12 /* a angle, b frames after jumpsquat or -1 */ };
+/* frame meter cells (GAP-8) */
+enum { GD_LAB_CELL_IDLE = 0, GD_LAB_CELL_STARTUP, GD_LAB_CELL_ACTIVE, GD_LAB_CELL_RECOVERY, GD_LAB_CELL_STUN, GD_LAB_CELL_CAN_ACT };
+
+typedef struct gd_lab_fighter_v1 {  /* 128 bytes, little-endian */
+    unsigned version, size;         /* 1, 128 */
+    int   character, action;
+    float anim_frame; int anim_id;
+    float hitlag, hitstun;
+    int   iasa, intangible, invincible;
+    float shield_hp; int jumps_used, airborne;
+    float pos_x, pos_y, vel_x, vel_y, percent, facing;
+    float ecb[8];                   /* top xy, bottom xy, right xy, left xy (relative to pos) */
+    int   grabbing, cell, action_frame, match_frame;
+} gd_lab_fighter_v1;
+typedef struct { float x, y, prev_x, prev_y, radius, damage; int angle, id; } gd_lab_hitbox;   /* 32 bytes */
+typedef struct { float ax, ay, bx, by, radius; int state, bone; } gd_lab_hurtbox;             /* 28 bytes */
+
+/* B1 */
+int      gd_lab_save(unsigned slot);                  /* (cmd) */
+int      gd_lab_load(unsigned slot);                  /* (cmd) forks the timeline */
+int      gd_lab_slot_frame(unsigned slot);            /* -1 empty */
+int      gd_lab_ring(unsigned frames);                /* (cmd) 0 off, max 600; a snapshot every 4 frames */
+int      gd_lab_rewind(unsigned n);                   /* (cmd) the logged future then plays back until go_live */
+int      gd_lab_pause(int on);                        /* (cmd) */
+int      gd_lab_step(int n);                          /* (cmd) n < 0 = rewind(-n) */
+int      gd_lab_go_live(void);                        /* (cmd) take over */
+/* B2 */
+unsigned gd_lab_rec_start(unsigned port_mask);        /* (cmd) the handle; 0 = refused */
+int      gd_lab_rec_stop(unsigned rec);               /* (cmd) */
+int      gd_lab_play(unsigned rec, unsigned port_mask, unsigned flags);  /* (cmd) one recorded port plays on any */
+int      gd_lab_play_stop(void);                      /* (cmd) */
+int      gd_lab_play_set(unsigned port, const void* entries /* n x {u32 rec, u32 weight 0..9} */, unsigned n,
+                         unsigned order_flags /* order | flags << 8 */);  /* (cmd) loops; RANDOM / WEIGHTED: lab RNG */
+int      gd_lab_rec_len(unsigned rec);
+int      gd_lab_rec_free(unsigned rec);               /* (cmd) */
+/* B3 */
+int      gd_lab_cpu(unsigned port, int behaviour, int param);                  /* (cmd) */
+int      gd_lab_reaction(unsigned port, int kind, int option, unsigned param); /* (cmd) GAP-5 param */
+int      gd_lab_reaction_weights(unsigned port, int kind, unsigned weights);   /* (cmd) 8 x 4 bits, options 1..8 */
+int      gd_lab_set_percent(unsigned port, float pct);                         /* (cmd) forks the timeline */
+int      gd_lab_set_pos(unsigned port, float x, float y);                      /* (cmd) forks the timeline */
+unsigned gd_lab_rng(void);              /* GAP-7: f(synced lab seed, frame, call index); reads, never advances */
+int      gd_lab_rng_seed(unsigned seed);                                       /* (cmd) */
+/* B4 */
+int      gd_lab_overlay(unsigned port_mask, unsigned bits);
+int      gd_lab_overlay_style(unsigned kind, unsigned rgba);
+/* B5 (copies, never writes the sim) */
+int      gd_lab_fighter(unsigned port, void* out, unsigned len);               /* bytes written */
+int      gd_lab_hitboxes(unsigned port, void* out, unsigned max);              /* count */
+int      gd_lab_hurtboxes(unsigned port, void* out, unsigned max);
+int      gd_lab_framedata(int character, int action, void* out, unsigned len); /* observed: u32 n, i32 first active,
+                                                                                  i32 last active, i32 IASA, n cells */
+float    gd_lab_attr(int character, unsigned idx);    /* ftCo_DatAttrs word idx as f32; NaN if unknown */
+int      gd_lab_frame_adv(unsigned port_a, unsigned port_b);  /* after the last exchange: (0, 1) or (1, 0) */
+int      gd_lab_events(void* out, unsigned max);      /* the last frame's */
+int      gd_lab_events_range(int from, int to, void* out, unsigned max);  /* GAP-1: the last 600 frames */
+int      gd_lab_meter(unsigned port, unsigned char* out, unsigned n);      /* GAP-8: last n cells, oldest first */
+int      gd_lab_status(int* out10);  /* active, match frame, paused, replaying, ring frames, ring length, command delay,
+                                        recording mask, issuer (0 host / offline, 1 guest), apply frame */
 
 #endif

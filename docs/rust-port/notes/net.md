@@ -116,6 +116,23 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   resimulated frame runs its render pass with display lists suppressed; disc reads pre-touch their buffer while the
   arena is copy-on-write (`ReadFile` fails with ERROR_NOACCESS on a protected page). `MELEE_HANG_SECS=N` with
   `MELEE_SAMPLE` prints the main thread's stack of a tick that has not returned for N s.
+- Rule: no static may hold system-heap or GPU state that changes during a rollback match. A load rewrites every
+  static (the executable's writable sections) and the arena; only system blocks freed or grown INSIDE the game scope
+  are pinned (`rollback_pinned`), so a static touched outside it (presenter, render thread, network) would be put
+  back pointing at freed or reused memory. Keep such state in values the harness owns (`play_net::Detacher` is a
+  field of `ModesGame` / the retail flow; the renderer's caches and `GpuHealth` are in `Renderer`). Statics the
+  game itself fills inside the game scope live in the arena and roll back consistently. Audit (#42): the statics of
+  melee / melee_platform / melee_gx are OnceLocks set before the match, the test-only log capture, and
+  `melee_gx`'s thread-local error guard (empty between calls); no wgpu handle is stored in game memory.
+- #42 (windowed peers losing the GPU device, "Texture with 'GX texture' label is invalid"): `detach_frame` made
+  fresh `Arc`s every frame, and the renderer caches GPU textures by the data `Arc`'s address, so every texture
+  missed every frame: ~63k live textures, ~2.7 GB of video memory per peer by the 600-frame eviction (offline:
+  ~200). With other games open the driver reset the device. `Detacher` now keeps the copies by a 128-bit content
+  hash (~380 textures, ~100 MB per peer). The panic itself: wgpu error scopes are per device, not per thread, so
+  the decode thread's pipeline scope swallowed the main thread's `create_texture` error and the next use of the
+  invalid texture hit wgpu's panicking default handler. `melee_gx` now installs an uncaptured-error handler and a
+  device-lost callback (`Renderer::gpu_fault`): device lost / unexpected errors stop the game cleanly with
+  `gx: GPU error: ...`; out of video memory on a texture evicts the texture cache and retries once.
 - Proofs (`bash tools/rust-port/netplay/play_pair.sh NAME LAG LOSS [args]`: two windowed peers on 127.0.0.1, scripted pads
   np_fight.txt / np_fight2.txt, Falcon v Fox on FD, 4 stocks, 1 minute; per-frame hash CSVs compared; the host's
   replay played back headless):

@@ -87,6 +87,8 @@ pub struct RetailPlay {
     pub sync: Option<crate::play_net::PlaySync>,
     /// The run snapshots the engine (netplay, synctest, or a replay of such a run): frames are copied off the arena.
     pub rollback_mode: bool,
+    /// Detached frame copies kept by content (see `play_net::Detacher`).
+    detach: crate::play_net::Detacher,
     /// Offline input delay (practice parity, input_delay.rs): matches only, never under netplay / a replay feed.
     pub delay_line: crate::input_delay::DelayLine,
     hud_rates: crate::np_hud::HudRates,
@@ -101,7 +103,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, rollback_mode: false, delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false,
+            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false,
         }
     }
 
@@ -476,7 +478,7 @@ impl Game for RetailPlay {
         if let Some(f) = melee_engine::gxbridge::take_frame() {
             if self.rollback_mode {
                 // a snapshot load rewrites the arena: keep a detached copy (no Vec or Arc shared with the arena)
-                self.frame = Some(crate::play_net::detach_frame(f));
+                self.frame = Some(self.detach.detach(f));
             } else {
                 self.frame = Some(f);
                 self.packed = melee_engine::gxbridge::shim().gx.packed.take();
@@ -611,6 +613,10 @@ impl Game for RetailPlay {
         p.set_content_aspect(self.frame_aspect);
         p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, a);
         self.emit_shot();
+        if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
+            self.failed = Some(format!("GPU error, stopping: {e}"));
+            self.quit = true;
+        }
     }
 
     fn resized(&mut self, w: u32, h: u32) {

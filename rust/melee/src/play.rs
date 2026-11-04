@@ -1377,6 +1377,10 @@ impl Game for Play {
         let a = (self.interp && self.shot_pending.is_none()).then_some(alpha);
         self.present_now(a);
         self.emit_shot();
+        if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
+            self.failed = Some(format!("GPU error, stopping: {e}"));
+            self.quit = true;
+        }
     }
 
     fn resized(&mut self, w: u32, h: u32) {

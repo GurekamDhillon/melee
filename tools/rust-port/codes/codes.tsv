@@ -1,0 +1,10 @@
+# name	kind	frames	pad	scene   (gameplay-code scenarios, read through MELEE_SCENARIO_TSV by run_codes.sh)
+codes_stadium	vs	7200	idle_3600.lua	mode=vs;at=match;p1=ck:5/cpu9;p2=ck:16/cpu9;p3=none;p4=none;stage=ext:3;match=time;minutes=0;items=off
+codes_story	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:4/cpu9;p2=ck:15/cpu9;p3=none;p4=none;stage=ext:8;match=time;minutes=0;items=off
+codes_dl64	vs	7200	idle_3600.lua	mode=vs;at=match;p1=ck:0/cpu9;p2=ck:11/cpu9;p3=none;p4=none;stage=ext:28;match=time;minutes=0;items=off
+codes_fd	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:20/cpu9;p2=ck:5/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+codes_bf_p1p3	vs	600	idle_3600.lua	mode=vs;at=match;p1=ck:2/cpu9;p2=none;p3=ck:9/cpu9;p4=none;stage=ext:31;match=time;minutes=0;items=off
+codes_bf_1min	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:2/cpu9;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=1;items=off
+codes_bf_2min	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:2/cpu9;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:31;match=time;minutes=2;items=off
+codes_ic_fd	vs	3600	idle_3600.lua	mode=vs;at=match;p1=ck:14/cpu9;p2=ck:2/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off
+codes_ucf_fd	vs	1200	../../../codes/ucf_dashback.lua	mode=vs;at=match;p1=ck:2/human;p2=ck:9/cpu9;p3=none;p4=none;stage=ext:32;match=time;minutes=0;items=off

@@ -363,7 +363,9 @@ pub unsafe fn gmVsMelee_ExitVs(state: *mut GameModeState, mut id0: u8, id1: u8) 
     }
 
     // m-ex "Skip Result Screen" (opt-in MELEE_MEX=skip_result_screen); online results must run
-    if ext::Netplay_Enabled() == 0 && ext::Mex_Enabled("skip_result_screen") != 0 {
+    // and the "skip-results" gameplay code (melee_core::codes::SKIP_RESULTS; Slippi's "Show results screen" off and the
+    // community "Skip Results" code: the match returns to character select)
+    if ext::Netplay_Enabled() == 0 && (ext::Mex_Enabled("skip_result_screen") != 0 || melee_core::codes::on(melee_core::codes::SKIP_RESULTS)) {
         id0 = 0;
     }
 

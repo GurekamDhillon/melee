@@ -372,6 +372,15 @@ fn main() -> ExitCode {
     }
     heapprof::init();
     let _prof = prof::from_env();
+    // opt-in gameplay codes (melee_core::codes, notes/gameplay-codes.md): set before any engine boots
+    match melee_core::codes::init_from_args(&std::env::args().skip(1).collect::<Vec<_>>()) {
+        Ok(Some(d)) => eprintln!("gw: gameplay codes: {d}"),
+        Ok(None) => {}
+        Err(e) => {
+            eprintln!("melee: {e}");
+            return ExitCode::from(2);
+        }
+    }
     let mut args: std::vec::Vec<String> = std::env::args().skip(1).collect();
     // The Melee Unlocked launcher's command line (launcher_compat.rs): its environment is set before the log redirect.
     let compat = launcher_compat::prepare(&args);
@@ -532,7 +541,9 @@ fn raw_pad_status(r: pads::RawPad, port: usize) -> melee_types::PADStatus {
 /// A coverage scenario (docs/rust-port/golden/coverage/scenarios.tsv, notes/coverage.md): the VS ones are wired (scene parse;
 /// idle pads feed nothing, the generated rand / cycle pads come from their Lua source); 1p modes return "not wired".
 fn boot_coverage_scenario(iso: &str, name: &str) -> Result<melee_engine::Engine, String> {
-    let tsv = std::fs::read_to_string("docs/rust-port/golden/coverage/scenarios.tsv").map_err(|_| format!("scenario {name:?} not wired"))?;
+    // `MELEE_SCENARIO_TSV=FILE`: another table of the same format (the gameplay-code scenarios, tools/rust-port/codes/)
+    let tsv_path = std::env::var("MELEE_SCENARIO_TSV").unwrap_or_else(|_| "docs/rust-port/golden/coverage/scenarios.tsv".into());
+    let tsv = std::fs::read_to_string(&tsv_path).map_err(|_| format!("scenario {name:?} not wired"))?;
     let row = tsv.lines().find_map(|l| { let c: Vec<&str> = l.split(char::from(9u8)).collect(); (c.len() == 5 && c[0] == name).then(|| (c[1].to_string(), c[3].to_string(), c[4].to_string())) });
     let Some((kind, pad, scene)) = row else { return Err(format!("scenario {name:?} not wired")) };
     if kind == "1p" {

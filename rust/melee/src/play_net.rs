@@ -559,6 +559,16 @@ pub fn mods_identity(args: &[String]) -> Result<(u64, String), String> {
     Ok((h, format!("mods {} ({fp:016x}){}{}", ids.join(", "), w.replace("|wasm ", "; code mods "), g.replace("|geno ", "; geno "))))
 }
 
+/// The gameplay codes (melee_core::codes) enter the same handshake word: both peers must run the same codes, and the
+/// refusal names them. No codes leaves the word as it was (vanilla peers of older builds still match).
+pub fn with_codes((h, d): (u64, String)) -> (u64, String) {
+    let (w, l) = (melee_core::codes::word(), melee_core::codes::lgl_limit());
+    if w == 0 {
+        return (h, d);
+    }
+    (melee_net::hash64(format!("{h:016x}|codes {}", melee_core::codes::encode(w, l)).as_bytes(), 0), format!("{d}; gameplay codes {}", melee_core::codes::describe(w, l)))
+}
+
 /// The wasm code mods `MELEE_WASM_MODS` will load (notes/modhost.md), as "file#fnv64, ..." sorted by file name; None when
 /// off. Both peers must run the same code mods, so they enter the handshake digest (read from the files before boot).
 fn wasm_mods_identity() -> Option<String> {
@@ -1017,7 +1027,7 @@ impl NetDriver {
         } else {
             log(&format!("netplay: joining match code {} from UDP port {port}", code.clone().unwrap_or_default()));
         }
-        let (mods_hash, mods_desc) = mods_identity(args)?;
+        let (mods_hash, mods_desc) = with_codes(mods_identity(args)?);
         let env = PlayEnv { mods_hash, mods_desc: mods_desc.clone() };
         log(&format!("netplay {tag}: build {:015x}, {mods_desc}", build_hash()));
         let mut rp = RoomParams {

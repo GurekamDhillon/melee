@@ -315,3 +315,50 @@ fn end_to_end_wat_mod() {
     // the sim host refuses gd_ui imports, so install_dir skips such a module
     assert!(crate::Host::new().load(&wasm).is_err());
 }
+
+#[test]
+fn text_styles_v1_1() {
+    let a = atlas();
+    // v1.0 roles resolve exactly as before
+    assert_eq!(style(2), melee_gx::ui_font::TextStyle::new(13.0, false, false));
+    assert!(style(0).upper && style(3).face == melee_gx::ui_font::FACE_SANS_BOLD);
+    assert_eq!(style(99).size, ROLES[5].0, "out-of-range roles clamp");
+    let s = style(2 | TEXT_MONO | TEXT_BOLD | 20 << 16);
+    assert_eq!((s.size, s.face), (20.0, melee_gx::ui_font::FACE_MONO_BOLD));
+    // mono: every char the same advance; sans is proportional and kerned
+    let m = |t: &str, r: i32| a.measure(t, style(r));
+    assert!((m("iiii", 2 | TEXT_MONO) - m("WWWW", 2 | TEXT_MONO)).abs() < 1e-3);
+    assert!(m("iiii", 2) < m("WWWW", 2));
+    assert!(m("AV", 2) < m("A", 2) + m("V", 2), "AV is kerned");
+    // max_w cuts at a glyph boundary
+    let mut b = Batch::with_capacity(64);
+    b.begin();
+    let mut e = Enc::default();
+    e.text(0.0, 0.0, "AB C");
+    b.submit(&e.0, 0, &a, &[], false).unwrap();
+    b.finish(false);
+    assert!(b.frame.quads.iter().all(|q| q.flags & melee_gx::ui::Q_SDF != 0));
+}
+
+/// Cost of ~200 glyphs per frame through the command path (validate + layout + quads), and the atlas build.
+#[test]
+fn text_perf_200_glyphs() {
+    let t0 = std::time::Instant::now();
+    let a = atlas();
+    let build = t0.elapsed();
+    let mut e = Enc::default();
+    for i in 0..12 {
+        e.text(10.0, 20.0 * i as f32, "Frame 123 / Hitstun 45 ");
+    }
+    let mut b = Batch::with_capacity(4096);
+    let n = 2000;
+    let t = std::time::Instant::now();
+    for _ in 0..n {
+        b.begin();
+        b.submit(&e.0, 0, &a, &[], false).unwrap();
+        b.finish(false);
+    }
+    let per = t.elapsed().as_secs_f64() * 1000.0 / n as f64;
+    eprintln!("UI_TEXT_PERF atlas_build_ms={:.1} glyph_quads={} ms_per_frame={:.4}", build.as_secs_f64() * 1000.0, b.frame.quads.len(), per);
+    assert!(b.frame.quads.len() >= 190);
+}

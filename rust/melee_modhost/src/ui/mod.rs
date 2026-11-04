@@ -977,6 +977,12 @@ impl PresHost {
     /// One present (A3 call order): scene changes at the frame boundary, navigation and events, `gd_ui_frame`, the node
     /// trees; then the frame is sorted for the renderer ([`PresHost::frame`]).
     pub fn present(&mut self, frame: &PresFrame) {
+        self.present_with(frame, |_, _| {});
+    }
+
+    /// [`PresHost::present`] plus host-native drawing (the port's own overlays, e.g. the settings overlay) into the
+    /// same batch, after every mod and the node trees and before the sort: one frame, one draw call.
+    pub fn present_with(&mut self, frame: &PresFrame, native: impl FnOnce(&mut Batch, &Atlas)) {
         let t0 = std::time::Instant::now();
         self.scene_switch();
         let n = self.mods.len();
@@ -1031,6 +1037,7 @@ impl PresHost {
             let sh = &mut *sh;
             sh.tree.layout();
             sh.tree.draw(&mut sh.batch, &sh.atlas, sh.theme);
+            native(&mut sh.batch, &sh.atlas);
             let hide = !sh.stack.is_empty();
             sh.batch.finish(hide);
             self.last_quads = sh.batch.frame.quads.len();

@@ -731,6 +731,12 @@ impl Driver {
         }
     }
 
+    /// A live gain change only (the port's settings overlay; it saves the value itself).
+    pub fn set_volume_live(&mut self, percent: i32) {
+        self.volume = percent.clamp(0, 100);
+        self.apply_volume();
+    }
+
     fn apply_volume(&mut self) {
         let v = self.volume() as f32 / 100.0;
         self.gain.store(v.to_bits(), Ordering::Relaxed);

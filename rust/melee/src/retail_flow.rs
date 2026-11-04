@@ -48,6 +48,9 @@ pub struct Presets {
 pub struct RetailPlay {
     /// The practice aids (crate::practice), all off by default.
     pub practice: Option<crate::practice::Practice>,
+    /// The in-game settings overlay (settings_overlay.rs; harness-owned, made on the first tick).
+    pub settings: Option<crate::settings_overlay::Overlay>,
+    hud_request: Option<bool>,
     iso: String,
     mods_dir: Option<String>,
     presets: Presets,
@@ -127,7 +130,7 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
+            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None,
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_frame: None, lab_seed: 12345,
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
             ui: match melee_modhost::ui::PresHost::from_env() {
@@ -141,7 +144,8 @@ impl RetailPlay {
     }
 
     fn boot(&mut self) -> Result<melee_engine::Engine, String> {
-        let margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
+        let mut margs: Vec<String> = self.mods_dir.iter().flat_map(|d| ["--mods".to_string(), d.clone()]).collect();
+        margs.extend(["--iso".to_string(), self.iso.clone()]);
         crate::set_engine_mods(&margs)?;
         // HSD_SisLib_FontAtlas (main.dol) is loaded by Engine::boot_host.
         let t_boot = std::time::Instant::now();
@@ -530,6 +534,7 @@ impl RetailPlay {
         }
         let mut four = [melee_types::PADStatus::zeroed(); 4];
         four.copy_from_slice(&st[..4]);
+        let live_pads = four;
         if let Some(f) = self.feed.as_mut() {
             if f.at >= f.r.ticks.len() {
                 log(&f.summary());
@@ -546,6 +551,7 @@ impl RetailPlay {
         four = self.delay_line.apply(four, gameplay && self.net.is_none() && self.feed.is_none() && self.sync.is_none());
         let in_vs = self.engine().is_some_and(|e| !e.ended && e.mode_scene().1 == crate::play_net::SCENE_VS);
         if let Some(pr) = self.practice.as_mut() {
+            let _h = SysHeap::enter();
             pr.keys(pads);
             if self.net.is_some() || self.sync.is_some() || self.feed.is_some() {
                 pr.forbid_helper("netplay / synctest / replay playback");
@@ -561,6 +567,7 @@ impl RetailPlay {
             scene: (self.cur.0 as i32, self.cur.1 as i32),
             match_frame: self.age as i32,
         };
+        let overlay_keys = self.settings_input(pads, &live_pads, &mut four);
         if let Some(u) = self.ui.as_mut() {
             u.set_session(pres_frame.session);
             u.retail_scene(self.cur.0 as i32, self.cur.1 as i32, gameplay);
@@ -573,7 +580,9 @@ impl RetailPlay {
                 (true, None) => pads.ui_keys = Some(Vec::with_capacity(256)),
                 (false, _) => {
                     u.push_keys(&[]);
-                    pads.ui_keys = None;
+                    if !overlay_keys {
+                        pads.ui_keys = None;
+                    }
                 }
             }
             u.input(&mut four, &pres_frame);
@@ -581,6 +590,7 @@ impl RetailPlay {
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
         if let Some(pr) = self.practice.as_mut() {
+            let _h = SysHeap::enter();
             pr.observe();
         }
         let t_step = t_step.elapsed();
@@ -613,6 +623,7 @@ impl RetailPlay {
                 self.packed = melee_engine::gxbridge::shim().gx.packed.take();
             }
             if let (Some(pr), Some(f)) = (self.practice.as_mut(), self.frame.as_mut()) {
+                let _h = SysHeap::enter();
                 if pr.decorate(f) {
                     self.packed = None; // the decode thread's packing was for the undecorated draws
                 }
@@ -621,8 +632,21 @@ impl RetailPlay {
             self.frame_aspect = melee_engine::view::aspect();
         }
         // gd-ui-v1 present (A3 order: events, gd_ui_frame, node trees), after the logic frame
-        if let Some(u) = self.ui.as_mut() {
-            u.present(&pres_frame);
+        match (self.ui.as_mut(), self.settings.as_mut()) {
+            (Some(u), Some(o)) => u.present_with(&pres_frame, |b, a| o.draw(b, a)),
+            (Some(u), None) => u.present(&pres_frame),
+            (None, Some(o)) if self.headless && o.open => {
+                // headless: build the frame anyway (the quad count, and MELEE_OVERLAY_SHOT's CPU raster)
+                if let Some((f, a)) = o.own_frame() {
+                    if let Ok(path) = std::env::var("MELEE_OVERLAY_SHOT") {
+                        let (w, h, px) = crate::settings_overlay::raster(f, a);
+                        if write_png(std::path::Path::new(&path), w, h, &px).is_ok() {
+                            log(&format!("settings overlay: shot {path} ({} quads)", f.quads.len()));
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
@@ -724,6 +748,96 @@ impl RetailPlay {
         }
     }
 
+
+    /// The settings overlay at the input boundary: open / navigate / mask, then the live changes. Returns whether it
+    /// holds the keyboard (gd-ui key events).
+    fn settings_input(&mut self, pads: &mut PadSystem, live: &[melee_types::PADStatus; 4], four: &mut [melee_types::PADStatus; 4]) -> bool {
+        // harness state: everything the overlay allocates must be on the system heap, never in the arena a rollback
+        // load rewrites (net.md's statics rule); the rollback tick may be inside the game scope here
+        let _h = SysHeap::enter();
+        self.settings_input_sys(pads, live, four)
+    }
+
+    fn settings_input_sys(&mut self, pads: &mut PadSystem, live: &[melee_types::PADStatus; 4], four: &mut [melee_types::PADStatus; 4]) -> bool {
+        if self.settings.is_none() {
+            log(&format!("settings overlay: ready (F1, or hold D-pad Down + Start){}", if melee_engine::arena::active() { " [arena!]" } else { "" }));
+            if !crate::cfg::flag("settings_overlay", true) {
+                return false;
+            }
+            let vol = self.audio.as_mut().map_or_else(melee_audio::output::load_volume, |a| a.volume());
+            let mut o = crate::settings_overlay::Overlay::new(vol);
+            if let Some(pr) = self.practice.as_ref() {
+                o.set_value("input_display", pr.opts.input_display);
+                o.set_value("lcancel_indicator", pr.opts.lcancel_indicator);
+                o.set_value("no_screen_shake", pr.opts.no_screen_shake);
+            }
+            if let Some(sh) = crate::cosmetics::booted() {
+                for (slot, v) in sh.lock().unwrap().verdict.iter() {
+                    o.set_note(&format!("skin_{slot}"), match v { Ok(n) => format!("mounted: {n} joints match"), Err(e) => format!("refused: {e}") });
+                }
+            }
+            self.settings = Some(o);
+        }
+        let o = self.settings.as_mut().unwrap();
+        let f1 = pads.focused && pads.keys_down.contains(&winit::keyboard::KeyCode::F1);
+        let keys: Vec<u32> = if o.open { pads.ui_keys.as_mut().map(std::mem::take).unwrap_or_default() } else { Vec::new() };
+        let held = o.input(live, four, self.feed.is_none(), f1, &keys);
+        if held && pads.ui_keys.is_none() {
+            pads.ui_keys = Some(Vec::with_capacity(64));
+        } else if !held && self.ui.as_ref().is_none_or(|u| !u.keyboard_wanted()) {
+            pads.ui_keys = None;
+        }
+        let changes = o.take_changes();
+        let offline = self.net.is_none() && !self.rollback_mode;
+        for c in changes.into_iter().filter(|c| c.live) {
+            let on = c.value == "1";
+            match c.key.as_str() {
+                "volume" => {
+                    let v: i32 = c.value.parse().unwrap_or(100);
+                    if let Some(a) = self.audio.as_mut() {
+                        a.set_volume(v);
+                    }
+                    if std::env::var_os("MELEE_VOLUME").is_none() {
+                        let _ = melee_audio::output::save_volume(v);
+                    }
+                }
+                "overlay" => self.hud_request = Some(on),
+                "input_display" | "lcancel_indicator" | "no_screen_shake" => {
+                    if let Some(pr) = self.practice.as_mut() {
+                        let mut op = pr.opts;
+                        match c.key.as_str() {
+                            "input_display" => op.input_display = on,
+                            "lcancel_indicator" => op.lcancel_indicator = on,
+                            _ => op.no_screen_shake = on,
+                        }
+                        pr.set_opts(op);
+                    }
+                }
+                k if k.starts_with("skin_") => {
+                    let slot = k[5..].to_string();
+                    let o = self.settings.as_mut().unwrap();
+                    // live only offline and only when the boot mounted the cosmetics overlay (it answers the slots)
+                    let Some(sh) = crate::cosmetics::booted().filter(|_| offline) else {
+                        o.set_note(k, "saved: applies at the next launch".into());
+                        continue;
+                    };
+                    let path = if c.value == "none" { None } else { crate::cosmetics::list(&crate::cosmetics::dir()).into_iter().find(|s| s.slot == slot && s.name == c.value).map(|s| s.path) };
+                    let disc = &mut melee_engine::host::Host::get().disc;
+                    let r = crate::cosmetics::mount(&sh, &mut |f| disc.read_vanilla(f).ok(), &slot, path.as_deref());
+                    disc.forget_replaced(&crate::cosmetics::slot_file(&slot));
+                    let note = match (&r, path.is_some()) {
+                        (_, false) => "vanilla from the next match".to_string(),
+                        (Ok(n), _) => format!("mounted ({n} joints match): next match"),
+                        (Err(e), _) => format!("refused: {e}"),
+                    };
+                    log(&format!("cosmetics: {} -> {} ({note})", crate::cosmetics::slot_file(&slot), c.value));
+                    o.set_note(k, note);
+                }
+                _ => {}
+            }
+        }
+        held
+    }
 
     /// The match host's spectate service: this tick's confirmed records out.
     fn spec_serve(&mut self) {
@@ -995,6 +1109,11 @@ impl Game for RetailPlay {
             let (w, h) = p.size();
             u.set_window(w, h);
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
+        } else if let Some(o) = self.settings.as_mut() {
+            // the overlay alone: its own batch (nothing at all while it stays closed; one empty frame after it closes)
+            if let Some((f, a)) = o.own_frame() {
+                p.renderer.set_ui(Some(f), a);
+            }
         }
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, a);
         self.emit_shot();
@@ -1019,6 +1138,10 @@ impl Game for RetailPlay {
         self.shot_pending.is_some()
     }
 
+    fn take_hud_request(&mut self) -> Option<bool> {
+        self.hud_request.take()
+    }
+
     fn status_line(&mut self) -> Option<String> {
         self.net.as_mut().map(|n| n.status())
     }
@@ -1041,6 +1164,31 @@ impl Game for RetailPlay {
         let h = n.hud();
         self.hud_rates.update(&h);
         crate::np_hud::lines(&h, &self.hud_rates)
+    }
+}
+
+/// Harness code that allocates (the practice aids, the settings overlay) runs on the system heap: the rollback tick
+/// can be inside the game scope, and a harness-owned value holding arena blocks is corrupted by the next snapshot
+/// load (net.md's statics rule). Seen as `execute at 0x0` crashes of headless netplay peers with the input display on.
+struct SysHeap(bool);
+
+impl SysHeap {
+    fn enter() -> SysHeap {
+        let was = melee_engine::arena::active();
+        if was {
+            static ONCE: std::sync::Once = std::sync::Once::new();
+            ONCE.call_once(|| eprintln!("play: harness code entered with the arena active; switched to the system heap"));
+            melee_engine::arena::set_active(false);
+        }
+        SysHeap(was)
+    }
+}
+
+impl Drop for SysHeap {
+    fn drop(&mut self) {
+        if self.0 {
+            melee_engine::arena::set_active(true);
+        }
     }
 }
 

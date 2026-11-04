@@ -28,6 +28,8 @@ use std::io::Write;
 use std::process::ExitCode;
 
 mod geno_suite;
+mod cosmetics;
+mod settings_overlay;
 mod crash;
 mod launcher_compat;
 mod display;
@@ -466,6 +468,7 @@ fn main() -> ExitCode {
         Some("view-golden") => engine_view::view_golden(&args),
         Some("play") => play::play(&args),
         Some("replays") => replays::replays(&args),
+        Some("cosmetics") => cosmetics::cli(&args[1..]),
         Some("spectate") => {
             // `melee spectate TARGET [play options]` = `melee play --spectate TARGET ...`
             let mut a = vec!["play".to_string(), "--spectate".to_string()];
@@ -624,6 +627,24 @@ pub(crate) fn set_engine_mods(args: &[String]) -> Result<(), String> {
 
 /// `--mods DIR [--enable id,id]` (else `MELEE_MODS_DIR` / settings): the gdmods mounted over the disc, as a `Gcm` overlay.
 pub(crate) fn engine_mods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Overlay>, String> {
+    let under = engine_gdmods_overlay(args)?;
+    // costume skins over the gdmods (cosmetics.rs: only skeleton-identical skins mount, so no hash can change)
+    let iso = iso_path(args).ok();
+    let sh = if crate::cfg::flag("cosmetics", true) { iso.as_deref().and_then(cosmetics::boot) } else { None };
+    cosmetics::set_booted(sh.clone());
+    Ok(match sh {
+        Some(sh) => Some(cosmetics::overlay(sh, under)),
+        None => under,
+    })
+}
+
+/// `--iso PATH`, else `GW_ISO_VANILLA` (never printed).
+pub(crate) fn iso_path(args: &[String]) -> Result<String, String> {
+    let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
+    get("--iso").or_else(|| std::env::var("GW_ISO_VANILLA").ok()).ok_or_else(|| "no disc image: --iso or GW_ISO_VANILLA".to_string())
+}
+
+fn engine_gdmods_overlay(args: &[String]) -> Result<Option<melee_engine::gcm::Overlay>, String> {
     let get = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
     let mods = match get("--mods") {
         Some(dir) => {

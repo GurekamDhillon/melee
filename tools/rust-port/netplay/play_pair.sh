@@ -19,7 +19,7 @@ bind="${NP_BIND:-127.0.0.1}"; case "$bind" in *:*) dial="[$bind]:$port";; *) dia
 srv=(); [ -n "${NP_SERVER:-}" ] && { srv=(--np-server "$NP_SERVER"); case "$bind" in *:*) ;; *) srv+=(--np-lan "$bind");; esac; }
 export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_SHOW_FPS=1
 common=(play --iso "$GW_ISO_VANILLA" --time-secs 60 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 9000 "$@")
-MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="$here/np_fight.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="netplay: $name host" MELEE_PAD_SCRIPT="${NP_HOST_SCRIPT:-$here/np_fight.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay host --np-bind "$bind" "${srv[@]}" --np-port $port --match "${NP_MATCH_HOST:-falcon,32}" --np-seed 4242 --np-hash-out "$out/$name-host.csv" --record "$out/$name-host.mrpl" >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
@@ -27,7 +27,7 @@ if [ -n "${NP_SERVER:-}" ]; then
   for _ in $(seq 100); do dial=$(grep -o "MATCH CODE [A-Z0-9]*" "$out/$name-host.log" | head -1 | cut -d" " -f3); [ -n "$dial" ] && break; sleep 0.2; done
   echo "$name: match code $dial"
 fi
-MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="$here/np_fight2.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="netplay: $name guest" MELEE_PAD_SCRIPT="${NP_GUEST_SCRIPT:-$here/np_fight2.txt}" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay join "$dial" --np-bind "$bind" "${srv[@]}" --match "${NP_MATCH_GUEST:-fox}" --np-hash-out "$out/$name-guest.csv" --record "$out/$name-guest.mrpl" >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?

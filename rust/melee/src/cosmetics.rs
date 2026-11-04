@@ -3,7 +3,9 @@
 //!
 //! * Catalog: `cosmetics_dir=` in settings.cfg / `MELEE_COSMETICS_DIR`, else `Cosmetics/` beside the executable.
 //!   `Cosmetics/skins/<slot>/<name>.dat`, `<slot>` the lowercased costume file stem (`plfxnr`). `melee cosmetics
-//!   import FILE [--slot PlFxNr.dat] [--name N]` copies a file in; `list`, `select SLOT NAME|none`, `check`.
+//!   import FILE [--slot PlFxNr.dat] [--name N] [--kind csp|stock] [--skin NAME]` takes a costume .dat / .usd, a mod
+//!   ZIP, a Nucleus vault ZIP or a portrait / stock icon PNG (cosmetics_import.rs); `list`, `select SLOT NAME|none`,
+//!   `portrait SLOT on|off`, `check`.
 //! * Choice: `skin_<slot>=<name>` in settings.cfg (`skin_plfxnr=green`), written by the settings overlay or `select`.
 //! * Sim safety (the rule: no setting may change a hash). A costume file is a model, but the fighter's skeleton comes
 //!   from it: the bones drive the ECB, the hurt bubbles and every bone-relative hitbox. So a skin is mounted only when
@@ -15,7 +17,7 @@
 //!   dropped from the disc and the overlay asked again). Under a rollback session the choices are fixed at boot.
 //!
 //! Reference (behaviour only, nothing copied): Hero's melee-unlocked `port/runtime/host/cosmetic_mods.cpp` (catalog,
-//! per-slot choice, "joints match / rest pose differs" online verdict). Its archive / vault importers are not here.
+//! per-slot choice, "joints match / rest pose differs" online verdict). The importers and pictures: cosmetics_import.rs.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -243,6 +245,9 @@ pub fn mount(sh: &Shared, vanilla: &mut dyn FnMut(&str) -> Option<Vec<u8>>, slot
 
 /// Boot: the catalog's chosen skins, validated against the disc at `iso` (read once each). None when nothing is chosen.
 pub fn boot(iso: &str) -> Option<Shared> {
+    if let Ok(mut d) = melee_engine::gcm::Gcm::open(iso) {
+        crate::cosmetics_import::apply_pictures(&mut |f| d.read(f).ok());
+    }
     let root = dir();
     let skins = list(&root);
     let pick = chosen(&skins);
@@ -262,6 +267,15 @@ pub fn boot(iso: &str) -> Option<Shared> {
         }
     }
     Some(sh)
+}
+
+/// The settings overlay's rows for the costume pictures in `portraits/` (one toggle per slot, live).
+pub fn portrait_rows(rows: &mut Vec<crate::settings_overlay::Row>) {
+    let mut slots: Vec<String> = crate::cosmetics_import::slot_pictures(&dir()).into_iter().map(|p| p.0).collect();
+    slots.dedup();
+    for slot in slots {
+        rows.push(crate::settings_overlay::Row::toggle_row(&format!("portrait_{slot}"), &format!("Pictures {}", slot_file(&slot).trim_end_matches(".dat")), true, "Portrait / stock icon (a selected skin's own picture wins). Render-only."));
+    }
 }
 
 /// The disc overlay answering the mounted slots (layered over the gdmods' overlay, if any).
@@ -303,34 +317,45 @@ pub fn cli(args: &[String]) -> std::process::ExitCode {
             println!("catalog {} ({} skins)", root.display(), skins.len());
             for s in &skins {
                 let on = pick.get(&s.slot).is_some_and(|n| n.eq_ignore_ascii_case(&s.name));
-                println!("  {} {:<12} {}", if on { "*" } else { " " }, slot_file(&s.slot), s.name);
+                let pics: Vec<&str> = ["csp", "stock"].into_iter().filter(|k| s.path.with_extension(format!("{k}.png")).is_file()).collect();
+                println!("  {} {:<12} {}{}", if on { "*" } else { " " }, slot_file(&s.slot), s.name, if pics.is_empty() { String::new() } else { format!(" [{}]", pics.join(", ")) });
+            }
+            for (slot, k, _) in crate::cosmetics_import::slot_pictures(&root) {
+                println!("    {:<12} {k} picture (portrait_{slot}={})", slot_file(&slot), crate::cfg::text(&format!("portrait_{slot}")).unwrap_or_else(|| "on".into()));
             }
             ExitCode::SUCCESS
         }
         Some("import") => {
-            let Some(src) = args.get(1) else { return fail("import FILE [--slot PlXxYy.dat] [--name NAME]".into()) };
-            let src = PathBuf::from(src);
-            let slot = match get("--slot").as_deref().map(slot_of).unwrap_or_else(|| slot_of(&src.to_string_lossy())) {
-                Some(s) => s,
-                None => return fail("cannot tell the costume slot from the file name: pass --slot PlXxYy.dat".into()),
+            let Some(src) = args.get(1) else { return fail("import FILE [--slot PlXxYy.dat] [--name NAME] [--kind csp|stock] [--skin NAME]".into()) };
+            let slot = match get("--slot") {
+                Some(v) => match slot_of(&v).or_else(|| slot_of(&format!("{v}.dat"))) {
+                    Some(s) => Some(s),
+                    None => return fail(format!("bad slot '{v}' (PlXxYy.dat)")),
+                },
+                None => None,
             };
-            let name = get("--name").unwrap_or_else(|| src.file_stem().unwrap_or_default().to_string_lossy().to_string());
-            if name.is_empty() || name.contains(['/', '\\', '.', '=']) {
-                return fail(format!("bad skin name '{name}'"));
+            if let Some(n) = get("--name") {
+                if n.is_empty() || n.contains(['/', '\\', '.', '=']) {
+                    return fail(format!("bad skin name '{n}'"));
+                }
             }
-            let b = match std::fs::read(&src) {
-                Ok(b) => b,
-                Err(e) => return fail(format!("{}: {e}", src.display())),
+            match crate::cosmetics_import::import(&root, Path::new(src), slot, get("--name"), get("--kind"), get("--skin")) {
+                Ok(lines) => {
+                    for l in lines {
+                        println!("imported {l}");
+                    }
+                    ExitCode::SUCCESS
+                }
+                Err(e) => fail(e),
+            }
+        }
+        Some("portrait") => {
+            let (Some(slot), Some(v)) = (args.get(1).and_then(|s| slot_of(s).or_else(|| slot_of(&format!("{s}.dat")))), args.get(2)) else {
+                return fail("portrait PlXxYy.dat on|off".into());
             };
-            if let Err(e) = skeleton(&b) {
-                return fail(format!("{}: {e}", src.display()));
-            }
-            let d = root.join("skins").join(&slot);
-            let to = d.join(format!("{name}.dat"));
-            if let Err(e) = std::fs::create_dir_all(&d).and_then(|_| std::fs::write(&to, &b)) {
-                return fail(format!("{}: {e}", to.display()));
-            }
-            println!("imported {} as {} '{name}'", src.display(), slot_file(&slot));
+            let mut s = crate::cfg::open();
+            s.set_str(&format!("portrait_{slot}"), if v == "off" { "off" } else { "on" });
+            println!("{} pictures {v}", slot_file(&slot));
             ExitCode::SUCCESS
         }
         Some("select") => {
@@ -355,6 +380,14 @@ pub fn cli(args: &[String]) -> std::process::ExitCode {
                 Err(_) => return fail("cannot open the disc image".into()),
             };
             let mut bad = 0;
+            match disc.read("MnSlChr.usd") {
+                Ok(sel) => {
+                    let t = crate::cosmetics_import::select_textures(&sel);
+                    println!("  select file: {} portrait cells, {} stock cells", t.get("csp").map_or(0, |m| m.len()), t.get("stock").map_or(0, |m| m.len()));
+                    println!("  pictures: {}", crate::cosmetics_import::apply_pictures(&mut |_| Some(sel.clone())));
+                }
+                Err(_) => println!("  select file: MnSlChr.usd is not on the disc"),
+            }
             for s in list(&root) {
                 let r = std::fs::read(&s.path).map_err(|e| e.to_string()).and_then(|b| {
                     let v = disc.read(&slot_file(&s.slot)).map_err(|_| format!("{} is not on the disc", slot_file(&s.slot)))?;
@@ -370,7 +403,7 @@ pub fn cli(args: &[String]) -> std::process::ExitCode {
             }
             if bad > 0 { ExitCode::from(2) } else { ExitCode::SUCCESS }
         }
-        Some(o) => fail(format!("unknown command '{o}' (list, import, select, check)")),
+        Some(o) => fail(format!("unknown command '{o}' (list, import, select, portrait, check)")),
     }
 }
 

@@ -142,7 +142,8 @@ unsafe fn fill<T: GcDecode>(d: &mut GcDecoder<'_>, target: u32, dst: *mut u8) {
 
 /// Type-directed decoder over one archive's data block.
 /// Records decoded per entry of a `T**` table of arrays whose length is not in the data.
-pub const MAX_TABLE_ARRAY: usize = 64;
+/// (Target Test Ice Climbers' grAnime_801C7FF8(gobj, 69, ...) indexes joint 69 of a stage anim table: 64 cut it short.)
+pub const MAX_TABLE_ARRAY: usize = 256;
 
 /// Arrays of at least this many records go through [`GcDecoder::shared_array`] (counts read from the data: some are
 /// garbage, e.g. `_HSD_TexAnim.n_tluttbl` ~ 47000 in itCo / GrGr, once 128 MB of overlapping copies per file).

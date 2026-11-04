@@ -228,6 +228,7 @@ fn frame_post_hook() {
     if r.quit {
         return;
     }
+    if std::env::var_os("MELEE_CT_LIVE").is_some() { eprintln!("ct --- frame_post gframe {} seed {:08x}", r.ra.gframe, unsafe { *melee_runtime::tu::random::HSD_RandCurrentSeed(melee_runtime::tu::random::global::state()) }); }
     if r.ra.frame_post(any_fighter()) {
         let w = melee_engine::Engine::frame_row();
         let mut line = format!("{},{:08X},{:08X},{},{:08X}", r.ra.match_frame, w[0], w[1], w[2], w[3]);
@@ -236,6 +237,20 @@ fn frame_post_hook() {
         }
         line.push('\n');
         let _ = r.out.write_all(line.as_bytes());
+        if std::env::var_os("MELEE_ENGINE_ITEMS").is_some() {
+            // the live items' hashed fields (the C side: a MELEE_SNAP_DUMP snapshot of the same frame)
+            unsafe {
+                let mut g = *melee_runtime::tu::gobj_native::HSD_GObjPLinkHead.add(melee_types::HSD_GOBJ_PLINK_ITEM as usize);
+                while !g.is_null() {
+                    let ip = (*g).user_data as *mut melee_types::Item;
+                    if !ip.is_null() {
+                        let (p, v) = (&(*ip).pos, &(*ip).x40_vel);
+                        eprintln!("f{} item kind {} msid {} pos {:.4} {:.4} {:.4} vel {:.4} {:.4} {:.4}", r.ra.match_frame, (*ip).kind as i32, (*ip).msid as i32, p.x, p.y, p.z, v.x, v.y, v.z);
+                    }
+                    g = (*g).next;
+                }
+            }
+        }
         r.written += 1;
     }
     if r.written >= r.rows || !r.ra.run_task() {

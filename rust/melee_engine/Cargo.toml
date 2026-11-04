@@ -22,6 +22,8 @@ melee_items.workspace = true
 melee_data = { path = "../melee_data" }
 melee_modhost = { path = "../melee_modhost" }
 melee_script = { path = "../melee_script" }
+# a define's own sound clips play through the native clip slots (geno_host slice 6); the device feature comes from `melee`
+melee_audio = { path = "../melee_audio", default-features = false }
 
 [features]
 guard = []

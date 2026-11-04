@@ -133,6 +133,9 @@ fn examples_load_together() {
         let b = std::fs::read(f).unwrap();
         // gd_ui presentation mods go to the presentation host (install_dir skips them the same way)
         if crate::ui::is_presentation(&b) {
+            if crate::lab::imports_lab(&b) {
+                ui.install_lab(); // as PresHost::from_env does for a Lab mod
+            }
             ui.load(&b, std::env::temp_dir()).unwrap_or_else(|e| panic!("{}: {e}", f.display()));
             continue;
         }

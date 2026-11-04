@@ -72,6 +72,10 @@ pub trait PresExtension {
     /// LAB..LAB_OVERLAY.
     fn feature_bits(&self) -> u32;
     fn link(&self, l: &mut wasmi::Linker<PresData>) -> Result<(), String>;
+    /// The per-store state the imports reach through `PresData::ext` (B: the shared Lab state).
+    fn store_ext(&self) -> Option<Box<dyn Any>> {
+        None
+    }
     fn on_session(&mut self, s: Session);
     /// Inject inputs, pending load.
     fn before_logic(&mut self, f: &PresFrame, io: &mut dyn InputBoundary);

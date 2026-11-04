@@ -130,3 +130,23 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   underrun frames before, 0 after (process at idle priority). Mix WAVs vs these new C captures: same mean level, envelope correlation
   0.60-0.81 (the C's BGM started earlier in its own load); the gate's bit-exact mix check (pad_falcon_fox_fd) still passes.
 - Not bridged (no hook statics): gmtou_*, gm_17c0, hsd, vi* cutscenes; menus (mn*, gmtitle) left to the retail-menu work.
+
+## Low-latency output (port/audio2, 2026-11-04)
+- Measurement: `melee_audio::output::Ring` stamps each 5 ms sub-frame when it is pushed and, when the device callback
+  takes its first sample, adds the ring residency to the device hold time cpal reports (`Ring::latency`). Printed by
+  `melee play`'s end line and by the probe `cargo run -p melee_audio --release --example latency -- 20` (a quiet tone on the
+  default device with the mixer thread's 1 ms top-up; no window, no input; MELEE_VOLUME honoured). Start-up excluded
+  (a WASAPI stream can take ~1.4 s to start pulling).
+- Measured on this machine (48 kHz shared WASAPI, 10 ms device period, two runs each, 20 s):
+  default (unchanged: 60 ms cushion, default device buffer) mean 73.2 ms (min 64, max 83);
+  `MELEE_AUDIO_LOW_LATENCY=1` (or `MELEE_AUDIO_MODE=low`) mean 27.9 ms (min 18.5, max 35.1), 1 underrun frame in 20 s,
+  after which the cushion settled at 15 ms. Hero's source port defaults to a 40 ms software buffer (audio_buffer_policy.h)
+  before the device; his build was not measured here.
+- Low mode: 10 ms cushion, asks for a 5 ms device buffer (`cpal::BufferSize::Fixed`; falls back to the default if refused).
+  cpal 0.15 has shared mode only (no WASAPI exclusive); the shared engine kept its 10 ms period here, so the request made no
+  measurable difference (MELEE_AUDIO_BUFFER_MS=0/3/5 all 28.5 ms). MELEE_AUDIO_LATENCY_MS now goes down to 5 ms.
+- Underruns: a starved callback decays from the last frame to silence over 2 ms and fades back in over 4 ms (no click);
+  each underrun event widens the cushion by one sub-frame (max 40 ms in low mode, +40 ms otherwise), and 10 clean
+  seconds give one back. Drift: when resampling, the step is steered by the ring fill against the cushion (max 0.2%).
+- All of it is consumer side: the sub-frame sequence the mixer produces is unchanged, so the mix hash (gate:
+  pad_falcon_fox_fd, 6106 sub-frames, 0xf4956676e79a4037) is unaffected.

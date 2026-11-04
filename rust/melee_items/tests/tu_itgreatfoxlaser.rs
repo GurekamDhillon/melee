@@ -57,7 +57,13 @@ fn itgreatfoxlaser_matches_c() {
                 setup_extra();
                 let mut ret = 0u32;
                 match op {
-                    0 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; ret = m::it_802EAF28(a0) as u32; }
+                    0 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj;
+                        // the port reads the x86-32 word over the laser's x38/x3A (see it_802EAF28); the x86-64 oracle reads the
+                        // native likelike.x38 slot: check the rule, compare the oracle's value
+                        let ip = (*a0).user_data as *mut Item;
+                        let v = &(*ip).xDD4_itemVar.greatfoxlaser;
+                        assert_eq!(m::it_802EAF28(a0), ((v.x38 as u16 as u32) | ((v.x3A as u16 as u32) << 16)) as i32);
+                        ret = (*ip).xDD4_itemVar.likelike.x38 as u32; }
                     1 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; let a1: *mut Vec = g::pick_Vec3(0) as *mut Vec; let a2: i32 = ((0 + (rnd() % 2) as i32)) as i32; ret = pi(m::it_802EAF34(a0, a1, a2)); }
                     2 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::it_802EB1EC(a0); }
                     3 => {  let a0: *mut HSD_GObj = g::pick_HSD_GObj(0) as *mut HSD_GObj; m::it_802EB268(a0); }

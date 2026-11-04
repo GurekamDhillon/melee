@@ -52169,7 +52169,7 @@ impl GcDecode for ftData_x1C {
         v.x0 = <u16 as GcDecode>::gc_decode(d, at + 0x0);
         v.x2 = <u16 as GcDecode>::gc_decode(d, at + 0x2);
         v.x4 = <*mut u8 as GcDecode>::gc_decode(d, at + 0x4);
-        v.x8 = d.ptr_table::<HSD_AnimJoint>(at + 0x8) as *mut *mut HSD_AnimJoint;
+        v.x8 = d.ptr_array_extent::<*mut HSD_AnimJoint>(at + 0x8) as *mut *mut HSD_AnimJoint;
         v
     }
 }

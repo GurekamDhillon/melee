@@ -303,10 +303,10 @@ pub mod ext {
     pub use crate::tu::itspawn::it_804A0E50;
     pub use crate::tu::itspawn::it_804A0E60;
     pub use melee_world::itacc::it_804A0F60;
-    pub static mut it_804D6D00: i8 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D00;
     pub use crate::tu::it_3F14::it_804D6D04;
-    pub static mut it_804D6D08: i32 = unsafe { core::mem::zeroed() };
-    pub static mut it_804D6D0C: i32 = unsafe { core::mem::zeroed() };
+    pub use crate::tu::it_3F14::it_804D6D08;
+    pub use crate::tu::it_3F14::it_804D6D0C;
     pub static mut it_804D6D10: u32 = unsafe { core::mem::zeroed() };
     pub static mut it_804D6D14: u32 = unsafe { core::mem::zeroed() };
     pub use crate::tu::it_3F14::it_804D6D24;

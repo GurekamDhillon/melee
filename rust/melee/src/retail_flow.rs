@@ -199,6 +199,10 @@ impl RetailPlay {
         let mut card = false;
         if let Some(scn) = self.presets.scenario.take() {
             first = melee_engine::scenario::boot_mode(&scn);
+            // `skipmemcard=0` opts a scene launch back into the card (gw_SceneLaunch_SkipMemcard)
+            let skip = std::env::var("MELEE_SCENE").map(|v| melee_engine::scenario::skip_memcard(&v)).unwrap_or(-1);
+            unsafe { melee_engine::engine::SKIP_MEMCARD = skip };
+            card = skip == 0 && scn.onep_mode >= 0 && melee_engine::card::configured_base().is_some();
             if scn.onep_mode >= 0 {
                 // as the C: the boot (memory-card) scene runs, skips its prompt and hands over to the mode
                 unsafe { melee_engine::engine::BOOT_GAME_MODE = first as i32 };

@@ -134,6 +134,7 @@ impl Drop for Base {
 impl Base {
     /// Capture the current state as the base (the system heap holds the copy).
     pub fn capture() -> Base {
+        crate::arena::note_snapshot();
         let ranges = ranges();
         let data: Vec<Vec<u8>> = ranges.iter().enumerate().map(|(i, &(a, l))| if i == 0 { Vec::new() } else { unsafe { bytes(a, l) }.to_vec() }).collect();
         let arena_len = ranges[0].1;

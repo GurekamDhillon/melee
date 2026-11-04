@@ -174,6 +174,42 @@ fn class_of(size: usize) -> Option<(usize, usize)> {
 /// Serve `l` from the arena; null when the arena does not take it (alignment above 16, huge, no address space).
 #[cfg(windows)]
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    alloc_fresh(l).0
+}
+
+/// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
+static SNAPSHOTTED: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+/// Called by `snapshot::Base::capture`: from now on fresh bump memory is not known to be zero.
+pub fn note_snapshot() {
+    SNAPSHOTTED.store(true, Relaxed);
+}
+
+/// [`alloc`] for a zeroed block: zeroes it unless it is fresh bump memory and the arena was never snapshotted (pages
+/// past the bump pointer were never handed out: still the OS's zero pages). A multi-MB zeroed table then costs only
+/// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
+#[cfg(windows)]
+pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
+    let (p, fresh) = alloc_fresh(l);
+    if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
+        core::ptr::write_bytes(p, 0, l.size());
+    }
+    p
+}
+
+/// (block, whether it came from the bump pointer).
+#[cfg(windows)]
+unsafe fn alloc_fresh(l: Layout) -> (*mut u8, bool) {
+    let r = alloc_inner(l);
+    (r, FRESH)
+}
+
+#[cfg(windows)]
+static mut FRESH: bool = false;
+
+#[cfg(windows)]
+unsafe fn alloc_inner(l: Layout) -> *mut u8 {
+    FRESH = false;
     let Some(ab) = bucket(l.align()) else { return core::ptr::null_mut() };
     let Some((c, size)) = class_of(l.size()) else { return core::ptr::null_mut() };
     let _g = Lock::take();
@@ -224,11 +260,16 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
         COMMITTED += COMMIT_STEP;
     }
     BUMP = end;
+    FRESH = true;
     p as *mut u8
 }
 
 #[cfg(not(windows))]
 pub unsafe fn alloc(_l: Layout) -> *mut u8 {
+    core::ptr::null_mut()
+}
+#[cfg(not(windows))]
+pub unsafe fn alloc_zeroed(_l: Layout) -> *mut u8 {
     core::ptr::null_mut()
 }
 

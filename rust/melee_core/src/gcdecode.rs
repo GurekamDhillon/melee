@@ -154,6 +154,15 @@ const SHARED_SLACK: usize = 65536;
 /// Issues a decoder keeps (see [`GcDecoder::issue`]).
 pub const MAX_ISSUES: usize = 256;
 
+fn reloc_bits(r: &RelocSet) -> Vec<u64> {
+    let Some(&max) = r.iter().max() else { return Vec::new() };
+    let mut v = vec![0u64; (max as usize >> 6) + 1];
+    for &o in r {
+        v[(o >> 6) as usize] |= 1 << (o & 63);
+    }
+    v
+}
+
 pub struct GcDecoder<'a> {
     /// Issues past [`MAX_ISSUES`] (counted, not kept).
     pub dropped_issues: u64,
@@ -161,6 +170,8 @@ pub struct GcDecoder<'a> {
     shared: FxMap<(u32, TypeId), (*mut u8, Box<[bool]>)>,
     data: &'a [u8],
     relocs: &'a RelocSet,
+    /// `relocs` as one bit per data offset (a hash lookup per pointer word was a large part of a big file's decode).
+    rbits: Vec<u64>,
     memo: FxMap<(u32, TypeId), *mut u8>,
     /// [`GcDecoder::ptr_array`] results per (target, T, length): two records may name one array with different counts.
     arr_memo: FxMap<(u32, TypeId, usize), *mut u8>,
@@ -187,7 +198,7 @@ impl<'a> GcDecoder<'a> {
     /// `data` is the archive's data block (pointer values are offsets into it); `relocs` holds the
     /// data offset of every pointer word.
     pub fn new(data: &'a [u8], relocs: &'a RelocSet) -> Self {
-        Self { dropped_issues: 0, shared: FxMap::default(), data, relocs, memo: FxMap::default(), arr_memo: FxMap::default(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
+        Self { dropped_issues: 0, shared: FxMap::default(), data, relocs, rbits: reloc_bits(relocs), memo: FxMap::default(), arr_memo: FxMap::default(), queue: Vec::new(), arena: GcArena { owned: Vec::new() },
                issues: Vec::new(), cur: ("(root)", 0), raw: false, bounds: Vec::new(), roots: Vec::new(), raw_base: 0 }
     }
 
@@ -242,7 +253,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut *mut T;
         }
         let mut n = 0u32;
-        while self.relocs.contains(&(t + 4 * n)) {
+        while self.has_reloc(t + 4 * n) {
             n += 1;
         }
         let v: Vec<*mut T> = (0..=n)
@@ -292,7 +303,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut *mut T;
         }
         let mut k = 0u32;
-        while self.relocs.contains(&(t + 4 * k)) {
+        while self.has_reloc(t + 4 * k) {
             k += 1;
         }
         let v: Vec<*mut T> = (0..=k)
@@ -324,6 +335,15 @@ impl<'a> GcDecoder<'a> {
         while t + n * T::GC_BYTES + 4 <= self.data.len() as u32 && self.u32_at(t + n * T::GC_BYTES) != word {
             n += 1;
         }
+        if n as usize + 1 >= SHARED_MIN {
+            // a list with no terminator for thousands of records (PObj `verts` of records the item file's tables reach
+            // with another type: 93 lists, 711k records per VS load): overlapping windows share one decode of the
+            // bytes, as in the C, where they are the same file bytes (nothing writes vertex lists)
+            if let Some(q) = self.shared_array_slack::<T>(t, n as usize + 1, 2) {
+                self.memo.insert(key, q as *mut u8);
+                return q;
+            }
+        }
         let p = self.array::<T>(t, n as usize + 1) as *mut u8;
         self.memo.insert(key, p);
         p as *mut T
@@ -338,7 +358,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut T;
         }
         let mut n = 0u32;
-        while self.relocs.contains(&(target + n * T::GC_BYTES)) {
+        while self.has_reloc(target + n * T::GC_BYTES) {
             n += 1;
         }
         let p = self.array::<T>(target, n as usize + 1) as *mut u8;
@@ -359,7 +379,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut *mut T;
         }
         let mut k = 0u32;
-        while self.relocs.contains(&(t + 4 * k)) {
+        while self.has_reloc(t + 4 * k) {
             k += 1;
         }
         let v: Vec<*mut T> = (0..=k)
@@ -473,15 +493,20 @@ impl<'a> GcDecoder<'a> {
         self.data.len()
     }
 
+    #[inline]
+    fn has_reloc(&self, at: u32) -> bool {
+        self.rbits.get((at >> 6) as usize).is_some_and(|w| w >> (at & 63) & 1 != 0)
+    }
+
     /// Is the word at data offset `at` a pointer (listed in the relocation table)?
     pub fn is_reloc(&self, at: u32) -> bool {
-        self.relocs.contains(&at)
+        self.has_reloc(at)
     }
 
     /// The relocated target of the pointer word at `at`; None for null or not relocated.
     pub fn target(&mut self, at: u32) -> Option<u32> {
         let v = self.u32_at(at);
-        if !self.relocs.contains(&at) {
+        if !self.has_reloc(at) {
             if v != 0 {
                 if self.wants_issue() { self.issue(format!("non-zero word {v:#x} at {at:#x} is not relocated; read as null")); }
             }
@@ -523,13 +548,28 @@ impl<'a> GcDecoder<'a> {
     /// instead of each holding its own copy. Only the elements some window covers are decoded (the same set as
     /// separate arrays would decode). None when the window runs past the shared array.
     fn shared_array<T: GcDecode>(&mut self, target: u32, n: usize) -> Option<*mut T> {
+        self.shared_array_slack::<T>(target, n, SHARED_SLACK)
+    }
+
+    /// [`GcDecoder::shared_array`] with `slack` elements past the end of the data (a window that never runs past the
+    /// data, as a terminated list's, needs 2).
+    fn shared_array_slack<T: GcDecode>(&mut self, target: u32, n: usize, slack: usize) -> Option<*mut T> {
         struct SharedKey<T>(core::marker::PhantomData<T>);
         let stride = T::GC_BYTES.max(1);
         let key = (target % stride, TypeId::of::<SharedKey<T>>());
         let first = (target / stride) as usize;
         if !self.shared.contains_key(&key) {
-            let len = self.data.len() / stride as usize + SHARED_SLACK;
-            let v: Vec<T> = (0..len).map(|_| T::gc_zeroed()).collect();
+            let len = self.data.len() / stride as usize + slack;
+            // every `gc_zeroed` is the all-zero bit pattern (null pointers, 0, 0.0, false, None): one zeroed
+            // allocation (the arena hands out untouched zero pages for it in play) instead of writing `len` values
+            let v: Vec<T> = unsafe {
+                let lay = std::alloc::Layout::array::<T>(len).unwrap();
+                let q = if lay.size() == 0 { core::ptr::NonNull::<T>::dangling().as_ptr() } else { std::alloc::alloc_zeroed(lay) as *mut T };
+                if q.is_null() {
+                    std::alloc::handle_alloc_error(lay);
+                }
+                Vec::from_raw_parts(q, len, len)
+            };
             let p = Box::into_raw(v.into_boxed_slice()) as *mut T as *mut u8;
             self.arena.owned.push(Owned { ptr: p, len, free: free_slice::<T>, ty: core::any::type_name::<T>(), bytes: core::mem::size_of::<T>() * len });
             self.shared.insert(key, (p, vec![false; len].into_boxed_slice()));
@@ -604,7 +644,7 @@ impl<'a> GcDecoder<'a> {
             return p as *mut *mut T;
         }
         let mut n = 0u32;
-        while self.relocs.contains(&(t + 4 * n)) {
+        while self.has_reloc(t + 4 * n) {
             n += 1;
         }
         let v: Vec<*mut T> = (0..=n).map(|i| self.ptr::<T>(t + 4 * i)).collect();

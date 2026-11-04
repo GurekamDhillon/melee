@@ -271,9 +271,8 @@ unsafe impl std::alloc::GlobalAlloc for DebugAlloc {
     }
     unsafe fn alloc_zeroed(&self, l: std::alloc::Layout) -> *mut u8 {
         if melee_engine::arena::active() {
-            let p = melee_engine::arena::alloc(l);
+            let p = melee_engine::arena::alloc_zeroed(l);
             if !p.is_null() {
-                core::ptr::write_bytes(p, 0, l.size());
                 return p;
             }
         }

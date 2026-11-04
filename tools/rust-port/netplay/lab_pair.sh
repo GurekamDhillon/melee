@@ -15,16 +15,19 @@ name=$1; lag=$2; loss=$3; shift 3
 exe="$repo/build/cargo/${PROFILE:-release}/melee.exe"
 out="${NP_SCRATCH:-${TEMP:-/tmp}/np}"; mkdir -p "$out"
 mods="$out/$name-mods"; mkdir -p "$mods"; rm -f "$mods"/*.wasm
-cp "$repo/build/mods/lab_demo.wasm" "$mods/" || { echo "FAIL $name: build/mods/lab_demo.wasm missing (build_mods.sh)"; exit 1; }
+mod="${LAB_MOD:-lab_demo}"  # LAB_MOD=lab: the LAB mod, driven by both peers' pads (lab_scripts.py)
+cp "$repo/build/mods/$mod.wasm" "$mods/" || { echo "FAIL $name: build/mods/$mod.wasm missing (build_mods.sh)"; exit 1; }
 python "$here/gen_css_scripts.py" "$out" >/dev/null
+hs=np_css_host.txt; gs=np_css_guest.txt
+if [ "$mod" = lab ]; then python "$here/lab_scripts.py" "$out" >/dev/null; hs=np_lab_host.txt; gs=np_lab_guest.txt; fi
 port=$((51900 + RANDOM % 300))
-export MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_WASM_MODS="$mods"
+export MELEE_UI_LOG=1 MELEE_VOLUME=3 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_WINDOW_UNFOCUSED=1 MELEE_WASM_MODS="$mods"
 common=(play --headless --no-audio --iso "$GW_ISO_VANILLA" --np-lab --time-secs 60 --quit-after-matches 1 --np-lag-ms "$lag" --np-loss-pct "$loss" --max-frames 30000 "$@")
-MELEE_WINDOW_TITLE="wasmlab: lab pair $name host" MELEE_PAD_SCRIPT="$out/np_css_host.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="wasmlab: lab pair $name host" MELEE_PAD_SCRIPT="$out/$hs" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay host --np-bind 127.0.0.1 --np-port $port --np-seed 4242 >"$out/$name-host.log" 2>&1 &
 h=$!
 sleep 1
-MELEE_WINDOW_TITLE="wasmlab: lab pair $name guest" MELEE_PAD_SCRIPT="$out/np_css_guest.txt" bash "$here/idle.sh" "$exe" "${common[@]}" \
+MELEE_WINDOW_TITLE="wasmlab: lab pair $name guest" MELEE_PAD_SCRIPT="$out/$gs" bash "$here/idle.sh" "$exe" "${common[@]}" \
   --netplay join "127.0.0.1:$port" --np-bind 127.0.0.1 >"$out/$name-guest.log" 2>&1
 rg=$?
 wait $h; rh=$?

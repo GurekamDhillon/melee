@@ -124,6 +124,12 @@ impl Practice {
         p
     }
 
+    /// The settings overlay's live change of the presentation options (the helper is not offered there).
+    pub fn set_opts(&mut self, o: Opts) {
+        self.opts = Opts { lcancel_helper: self.opts.lcancel_helper, ..o };
+        self.apply();
+    }
+
     fn apply(&self) {
         melee_world::tu::camera::NO_SCREEN_SHAKE.store(self.opts.no_screen_shake, Ordering::Relaxed);
     }

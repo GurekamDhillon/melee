@@ -32,6 +32,14 @@ pub const ROLE_BODY: i32 = 2;
 pub const ROLE_BIG: i32 = 3;
 pub const ROLE_TITLE: i32 = 4;
 pub const ROLE_TOAST: i32 = 5;
+/// gd-ui-v1.1 text style bits, OR-ed onto a role (GD_UI_TEXT_* in gd-ui-lab-v1.h); a mod using them should export
+/// `gdmod_ui_abi` = [`UI_ABI_1_1`].
+pub const TEXT_REGULAR: i32 = 1 << 8;
+pub const TEXT_BOLD: i32 = 2 << 8;
+pub const TEXT_MONO: i32 = 1 << 10;
+pub const fn text_size(px: u32) -> i32 {
+    ((px & 0xFF) << 16) as i32
+}
 
 pub const ALIGN_LEFT: i32 = 0;
 pub const ALIGN_CENTER: i32 = 1;
@@ -51,6 +59,7 @@ pub const FEATURE_UI_MENU: u32 = 1 << 5;
 pub const FEATURE_UI_INPUT: u32 = 1 << 6;
 pub const FEATURE_UI_SCENE: u32 = 1 << 7;
 pub const UI_ABI: u32 = 1 << 16;
+pub const UI_ABI_1_1: u32 = (1 << 16) | 1;
 
 pub const CAP_EXCLUSIVE: u32 = 1;
 pub const CAP_SHARED: u32 = 2;
@@ -74,6 +83,7 @@ extern "C" {
     pub fn gd_ui_submit(ptr: *const u8, len: u32) -> i32;
     pub fn gd_ui_measure(s: *const u8, len: u32, role: i32) -> f32;
     pub fn gd_ui_kit_id(s: *const u8, len: u32) -> u32;
+    pub fn gd_ui_log(s: *const u8, len: u32) -> i32;
     pub fn gd_ui_band_rect(out: *mut f32) -> i32;
     pub fn gd_ui_theme(id: i32) -> i32;
     pub fn gd_ui_token(tok: i32) -> u32;
@@ -228,4 +238,9 @@ impl<const N: usize> Default for Enc<N> {
 /// The text width the host will draw `s` with (cached on the host side by role).
 pub fn measure(s: &str, role: i32) -> f32 {
     unsafe { gd_ui_measure(s.as_ptr(), s.len() as u32, role) }
+}
+
+/// A line in the game's log (`modhost: ui: <mod>: log: ..`): for headless checks, not per frame.
+pub fn log(s: &str) {
+    unsafe { gd_ui_log(s.as_ptr(), s.len() as u32) };
 }

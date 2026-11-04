@@ -57,6 +57,21 @@ pub const LGL_DEFAULT: u32 = 45;
 static WORD: AtomicU32 = AtomicU32::new(0);
 static LGL_N: AtomicU32 = AtomicU32::new(LGL_DEFAULT);
 static CONFIGURED: AtomicBool = AtomicBool::new(false);
+/// A Lab mod runs the match (gd-lab-v1, lab-ui-spec.md 5.2): lab matches are untimed. Set once before the match boots
+/// (offline or `--np-lab`, unless the command line asks for a time limit) and constant during it, like [`WORD`], so a
+/// rollback or lab load rewrites it with the same value. Off: the game's own rules.
+static LAB_UNTIMED: AtomicBool = AtomicBool::new(false);
+
+/// Make lab matches untimed (see [`LAB_UNTIMED`]).
+pub fn set_lab_untimed(on: bool) {
+    LAB_UNTIMED.store(on, Ordering::Relaxed);
+}
+
+/// Lab matches are untimed: `fn_8016E730` clears the match's timer before it starts.
+#[inline]
+pub fn lab_untimed() -> bool {
+    LAB_UNTIMED.load(Ordering::Relaxed)
+}
 
 /// The active codes word.
 #[inline]

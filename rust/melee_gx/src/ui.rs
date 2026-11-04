@@ -1,6 +1,6 @@
 //! The UI layer's batched quad + atlas renderer (gd-ui-v1, docs/rust-port/notes/wasm-ui-lab-api.md section 0).
 //!
-//! Every UI element (flat, textured and sheared quads, 9-slice pieces, glyphs) is one [`UiQuad`] instance of a single
+//! Every UI element (flat, textured and sheared quads, 9-slice pieces, SDF glyphs from [`crate::ui_font`]) is one [`UiQuad`] instance of a single
 //! instanced pipeline that samples one atlas page. The quads are drawn inside the existing EFB blit pass
 //! ([`crate::render::Renderer::blit_to`]): no second surface, no readback, no extra submit, and one draw call per
 //! present (clipping is per instance in the fragment shader, so a `CLIP` never splits the batch).
@@ -19,6 +19,8 @@ pub const ATLAS: u32 = 1024;
 
 /// Instance flag: the quad (and its clip rect) is in window pixels, not band units.
 pub const Q_WINDOW: u32 = 1;
+/// Instance flag: the quad samples a signed-distance glyph tile (linear filtering, alpha = coverage of d > 0.5).
+pub const Q_SDF: u32 = 2;
 
 /// One UI instance: 64 bytes, uploaded as-is (`#[repr(C)]`, little-endian like the GPU).
 #[repr(C)]
@@ -97,8 +99,8 @@ pub const KIT_PIECES: [(&str, u16, u16); 6] = [
 ];
 
 /// Glyphs: ASCII 0x20..0x7F, Latin-1 0xA0..0xFF, then the kit's symbols.
-const EXTRA_GLYPHS: [char; 7] = ['◀', '▶', '›', '●', '▍', '◆', '·'];
-const N_GLYPHS: usize = 96 + 96 + EXTRA_GLYPHS.len();
+const EXTRA_GLYPHS: [char; 15] = ['◀', '▶', '›', '●', '▍', '◆', '·', '←', '→', '↑', '↓', '↖', '↗', '↘', '↙'];
+pub const N_GLYPHS: usize = 96 + 96 + EXTRA_GLYPHS.len();
 
 /// The glyph index of `c` (unknown characters draw as '?').
 pub fn glyph_index(c: char) -> usize {
@@ -111,22 +113,12 @@ pub fn glyph_index(c: char) -> usize {
     }
 }
 
-/// Glyph bitmaps (8 rows, bit 0 = leftmost pixel).
-fn glyph_bits(i: usize) -> [u8; 8] {
-    if i < 96 {
-        return font8x8::legacy::BASIC_LEGACY[i + 0x20];
-    }
-    if i < 192 {
-        return font8x8::legacy::LATIN_LEGACY[i - 96];
-    }
-    match EXTRA_GLYPHS[i - 192] {
-        '◀' => [0x20, 0x30, 0x38, 0x3C, 0x38, 0x30, 0x20, 0x00],
-        '▶' => [0x04, 0x0C, 0x1C, 0x3C, 0x1C, 0x0C, 0x04, 0x00],
-        '›' => [0x00, 0x04, 0x08, 0x10, 0x08, 0x04, 0x00, 0x00],
-        '●' => [0x00, 0x1C, 0x3E, 0x3E, 0x3E, 0x1C, 0x00, 0x00],
-        '▍' => [0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E, 0x0E],
-        '◆' => [0x08, 0x1C, 0x3E, 0x7F, 0x3E, 0x1C, 0x08, 0x00],
-        _ => [0x00, 0x00, 0x00, 0x18, 0x18, 0x00, 0x00, 0x00],
+/// The character of glyph index `i` (inverse of [`glyph_index`]).
+pub fn glyph_char(i: usize) -> char {
+    match i {
+        0..=95 => char::from_u32(0x20 + i as u32).unwrap(),
+        96..=191 => char::from_u32(0xA0 + (i - 96) as u32).unwrap(),
+        _ => EXTRA_GLYPHS[i - 192],
     }
 }
 
@@ -139,7 +131,8 @@ pub struct Atlas {
     pub generation: u64,
     shelf: (u16, u16, u16),
     pub white: AtlasRect,
-    pub glyphs: [AtlasRect; N_GLYPHS],
+    /// The UI fonts (Inter, JetBrains Mono; regular and bold) as SDF glyph tiles.
+    pub faces: Box<[crate::ui_font::Face; crate::ui_font::N_FACES]>,
     /// Per slice id: the tile and its corner size in texels.
     pub slices: [(AtlasRect, f32); SLICES.len()],
     pub kit: [AtlasRect; KIT_PIECES.len()],
@@ -173,7 +166,7 @@ impl Atlas {
             generation: 1,
             shelf: (0, 0, 0),
             white: AtlasRect::default(),
-            glyphs: [AtlasRect::default(); N_GLYPHS],
+            faces: Box::new(crate::ui_font::empty_faces()),
             slices: [(AtlasRect::default(), 0.0); SLICES.len()],
             kit: [AtlasRect::default(); KIT_PIECES.len()],
         };
@@ -181,12 +174,6 @@ impl Atlas {
         let w = a.alloc(4, 4).unwrap();
         a.fill(w, |_, _| [255, 255, 255, 255]);
         a.white = AtlasRect { x: w.x + 1, y: w.y + 1, w: 2, h: 2 };
-        for i in 0..N_GLYPHS {
-            let r = a.alloc(8, 8).unwrap();
-            let bits = glyph_bits(i);
-            a.fill(r, |x, y| if bits[y as usize] >> x & 1 != 0 { [255, 255, 255, 255] } else { [255, 255, 255, 0] });
-            a.glyphs[i] = r;
-        }
         for (id, s) in SLICES.iter().enumerate().skip(1) {
             let c = (s.radius + s.glow).ceil().max(1.0);
             let n = (2.0 * c + 1.0) as u16;
@@ -226,6 +213,7 @@ impl Atlas {
             });
             a.kit[id] = r;
         }
+        a.faces = Box::new(crate::ui_font::build_faces(&mut a));
         a
     }
 
@@ -264,21 +252,19 @@ impl Atlas {
         });
     }
 
+    pub(crate) fn mark_pub(&mut self, r: AtlasRect) {
+        self.mark(r);
+    }
+
+    /// Width of `s` in `st` (the host's `gd_ui_measure`).
+    pub fn measure(&self, s: &str, st: crate::ui_font::TextStyle) -> f32 {
+        crate::ui_font::fit(&self.faces, st, s, 0.0).1
+    }
+
     fn mark(&mut self, r: AtlasRect) {
         self.dirty.push(r);
         self.generation += 1;
     }
-}
-
-/// Text metrics of the glyph font at a pixel size: (glyph scale, advance, line height).
-pub fn text_metrics(size: f32) -> (f32, f32, f32) {
-    let k = size / 10.0;
-    (k, 7.0 * k, size)
-}
-
-/// Width of `s` at `size` (the host's `gd_ui_measure`).
-pub fn measure(s: &str, size: f32) -> f32 {
-    s.chars().count() as f32 * text_metrics(size).1
 }
 
 /// One UI frame: the sorted instances to draw and whether a custom scene hides the GX frame.
@@ -314,11 +300,13 @@ struct U { tgt: vec4<f32>, band: vec4<f32> };
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var atlas: texture_2d<f32>;
 @group(0) @binding(2) var smp: sampler;
+@group(0) @binding(3) var lin: sampler;
 struct VsOut {
     @builtin(position) pos: vec4<f32>,
     @location(0) uv: vec2<f32>,
     @location(1) c: vec4<f32>,
     @location(2) clip: vec4<f32>,
+    @location(3) @interpolate(flat) sdf: u32,
 };
 fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     if (win) { return p; }
@@ -339,11 +327,17 @@ fn to_px(p: vec2<f32>, win: bool) -> vec2<f32> {
     let c = unpack4x8unorm(rgba);
     o.c = vec4<f32>(c.w, c.z, c.y, c.x);
     o.clip = vec4<f32>(to_px(clip.xy, win), to_px(clip.zw, win));
+    o.sdf = (flags >> 1u) & 1u;
     return o;
 }
 @fragment fn fs_main(v: VsOut) -> @location(0) vec4<f32> {
+    let n = textureSample(atlas, smp, v.uv);
+    let d = textureSample(atlas, lin, v.uv).a;
+    let fw = max(fwidth(d), 1.0e-4);
+    let cov = clamp((d - 0.5) / fw + 0.5, 0.0, 1.0);
     if (v.pos.x < v.clip.x || v.pos.y < v.clip.y || v.pos.x >= v.clip.z || v.pos.y >= v.clip.w) { discard; }
-    return textureSample(atlas, smp, v.uv) * v.c;
+    if (v.sdf != 0u) { return vec4<f32>(v.c.rgb, v.c.a * cov); }
+    return n * v.c;
 }
 ";
 
@@ -356,6 +350,7 @@ impl UiGpu {
                 wgpu::BindGroupLayoutEntry { binding: 0, visibility: wgpu::ShaderStages::VERTEX, ty: wgpu::BindingType::Buffer { ty: wgpu::BufferBindingType::Uniform, has_dynamic_offset: false, min_binding_size: None }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 1, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Texture { sample_type: wgpu::TextureSampleType::Float { filterable: true }, view_dimension: wgpu::TextureViewDimension::D2, multisampled: false }, count: None },
                 wgpu::BindGroupLayoutEntry { binding: 2, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
+                wgpu::BindGroupLayoutEntry { binding: 3, visibility: wgpu::ShaderStages::FRAGMENT, ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering), count: None },
             ],
         });
         let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor { label: Some("gd_ui"), bind_group_layouts: &[&bgl], push_constant_ranges: &[] });
@@ -371,6 +366,7 @@ impl UiGpu {
         });
         let uniform = device.create_buffer(&wgpu::BufferDescriptor { label: Some("gd_ui"), size: 32, usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui"), mag_filter: wgpu::FilterMode::Nearest, min_filter: wgpu::FilterMode::Nearest, ..Default::default() });
+        let linear = device.create_sampler(&wgpu::SamplerDescriptor { label: Some("gd_ui sdf"), mag_filter: wgpu::FilterMode::Linear, min_filter: wgpu::FilterMode::Linear, ..Default::default() });
         let view = atlas.create_view(&Default::default());
         let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("gd_ui"),
@@ -379,6 +375,7 @@ impl UiGpu {
                 wgpu::BindGroupEntry { binding: 0, resource: uniform.as_entire_binding() },
                 wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::TextureView(&view) },
                 wgpu::BindGroupEntry { binding: 2, resource: wgpu::BindingResource::Sampler(&sampler) },
+                wgpu::BindGroupEntry { binding: 3, resource: wgpu::BindingResource::Sampler(&linear) },
             ],
         });
         let inst_cap = 4096 * std::mem::size_of::<UiQuad>() as u64;

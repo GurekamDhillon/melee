@@ -8,7 +8,7 @@
 /* ABI versions (major<<16 | minor). A mod that declares any UI (LAB) feature bit, required or optional, exports
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
-#define GD_UI_ABI_VERSION  (1u << 16)
+#define GD_UI_ABI_VERSION  ((1u << 16) | 1u) /* 1.1: text style bits (GD_UI_TEXT_*) */
 #define GD_LAB_ABI_VERSION (1u << 16)
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
@@ -61,6 +61,13 @@ enum { GD_UI_LAYER_SCENE = 0, GD_UI_LAYER_HUD_UNDER, GD_UI_LAYER_HUD, GD_UI_LAYE
        GD_UI_LAYER_MODAL, GD_UI_LAYER_DEBUG };
 /* text roles (base 13 px): label 11 (uppercased), value 12, body 13, big 18 bold, title 14 bold, toast 13 bold */
 enum { GD_UI_ROLE_LABEL = 0, GD_UI_ROLE_VALUE, GD_UI_ROLE_BODY, GD_UI_ROLE_BIG, GD_UI_ROLE_TITLE, GD_UI_ROLE_TOAST };
+/* v1.1: the role word of TEXT / gd_ui_measure may carry style bits on top of the role (bits 0-7). Fonts: Inter
+ * (sans) and JetBrains Mono, regular and bold, drawn as SDF glyphs (any size stays sharp). A v1.0 role (0..5) draws
+ * as before: sans, the role's size and weight. */
+#define GD_UI_TEXT_REGULAR (1 << 8)          /* weight override: regular */
+#define GD_UI_TEXT_BOLD    (2 << 8)          /* weight override: bold */
+#define GD_UI_TEXT_MONO    (1 << 10)         /* JetBrains Mono instead of Inter */
+#define GD_UI_TEXT_SIZE(px) (((px) & 0xFF) << 16) /* line height in canvas units, 1..255 (0: the role's size) */
 enum { GD_UI_ALIGN_LEFT = 0, GD_UI_ALIGN_CENTER = 1, GD_UI_ALIGN_RIGHT = 2 };
 enum { GD_UI_SLICE_FILL_R4 = 1, GD_UI_SLICE_FILL_R6, GD_UI_SLICE_FILL_R14, GD_UI_SLICE_LINE_R4, GD_UI_SLICE_LINE_R6,
        GD_UI_SLICE_LINE_R14_3, GD_UI_SLICE_GLOW_R6, GD_UI_SLICE_FILL_R1 };
@@ -94,6 +101,7 @@ enum { GD_UI_SESSION_OFFLINE = 0, GD_UI_SESSION_NETPLAY, GD_UI_SESSION_SYNCTEST,
 int      gd_ui_submit(const void* buf, unsigned len);
 float    gd_ui_measure(const char* s, unsigned len, int role);
 unsigned gd_ui_kit_id(const char* name, unsigned len);
+int      gd_ui_log(const char* s, unsigned len);                  /* a log line (headless checks); <= 16 per present */
 unsigned gd_ui_tex_load(const char* path, unsigned len);        /* .png in the mod's package dir, <= 512x512 */
 int      gd_ui_band_rect(float out[6]);                          /* GAP-0: band x,y,w,h and window w,h in pixels */
 int      gd_ui_theme(int theme);
@@ -116,7 +124,7 @@ int      gd_ui_show(unsigned root, int layer, int z);
 void     gd_ui_hide(unsigned root);
 unsigned gd_ui_capture(unsigned port_mask, unsigned flags);
 void     gd_ui_release(unsigned token);
-int      gd_ui_pad(unsigned port, void* out16);
+int      gd_ui_pad(unsigned port, void* out16);                   /* GD_ESTATE while a host overlay (settings) holds the pads */
 int      gd_ui_inject(unsigned port, const void* pad12);
 int      gd_ui_keys(unsigned* out, unsigned max);
 unsigned gd_ui_scene_register(const char* name, unsigned len);
@@ -132,6 +140,8 @@ int      gd_ui_match_start(const void* setup, unsigned len);     /* GD_ESTATE un
  * queued as a 16-byte lab command (GAP-13) and returns the frame it applies on (>= 0), or an error. Offline it applies
  * on the next lab frame; in LAB_NETPLAY it rides the lockstep stream with this peer's pad of that frame and both peers
  * apply it on that frame (host's commands first). At most 8 commands per peer per frame; more wait for later frames.
+ * A lab match (offline or LAB_NETPLAY) is untimed unless the command line sets a time (--time-secs), and START belongs
+ * to the Lab: the sim never sees it unless L+R+A are held (the retail pause, so L+R+A+START still quits).
  *
  * Command record (little-endian): u8 op, u8 port, u16 a, u32 b, u32 c, u32 d. Version GD_LAB_CMD_VERSION (part of
  * the netplay handshake's mod digest). Ops: 1 SAVE(a slot) 2 LOAD(a slot) 3 RING(a frames) 4 REWIND(b n) 5 PAUSE(a on)
@@ -231,6 +241,9 @@ int      gd_lab_frame_adv(unsigned port_a, unsigned port_b);  /* after the last 
 int      gd_lab_events(void* out, unsigned max);      /* the last frame's */
 int      gd_lab_events_range(int from, int to, void* out, unsigned max);  /* GAP-1: the last 600 frames */
 int      gd_lab_meter(unsigned port, unsigned char* out, unsigned n);      /* GAP-8: last n cells, oldest first */
+int      gd_lab_applied(void* out, unsigned max); /* the commands applied on the last lab frame, in apply order: 20 bytes
+                                                     each = u8 issuer (0 offline / host, 1 guest), 3 zero, the 16-byte
+                                                     command record (the other player's actions as toasts online) */
 int      gd_lab_status(int* out10);  /* active, match frame, paused, replaying, ring frames, ring length, command delay,
                                         recording mask, issuer (0 host / offline, 1 guest), apply frame */
 

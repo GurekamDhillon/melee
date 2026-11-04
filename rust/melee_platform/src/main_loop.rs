@@ -51,6 +51,10 @@ pub trait Game {
     }
     /// The HUD overlay's lines to draw from now on (None: off); a game with a Presenter puts them in `Presenter::hud`.
     fn set_hud(&mut self, _lines: Option<Vec<crate::overlay::Line>>) {}
+    /// A request to switch the HUD overlay on / off (the game's settings overlay), taken once.
+    fn take_hud_request(&mut self) -> Option<bool> {
+        None
+    }
     /// The swapchain's frame statistics (frames shown, display refreshes, seconds), for VRR detection
     /// (`Presenter::frame_stats`).
     fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
@@ -406,6 +410,11 @@ impl<G: Game> App<G> {
         for _ in 0..self.clock.advance(dt) {
             let t = Instant::now();
             self.game.tick(&mut self.pads);
+            if let Some(on) = self.game.take_hud_request() {
+                if on != self.hud_on {
+                    self.hud_toggle();
+                }
+            }
             let el = t.elapsed();
             self.tick_time += el;
             if let (Some(f), Some(t0)) = (self.trace.as_mut(), self.run_t0) {

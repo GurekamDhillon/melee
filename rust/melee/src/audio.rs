@@ -161,6 +161,21 @@ impl Audio {
         }
     }
 
+    /// The master volume (0..100) now: the device's gain, else the configured one (headless).
+    pub fn volume(&mut self) -> i32 {
+        match self.out.as_mut() {
+            Some(o) => o.driver.volume(),
+            None => melee_audio::output::load_volume(),
+        }
+    }
+
+    /// Live master volume (the settings overlay). Output side only: the mix the game makes is untouched.
+    pub fn set_volume(&mut self, percent: i32) {
+        if let Some(o) = self.out.as_mut() {
+            o.driver.set_volume_live(percent);
+        }
+    }
+
     /// A handle for the headless `golden` run, which owns the DSP clock itself.
     pub fn detached() -> Audio {
         Audio { out: None, dev_open: false, capture: None, resume_cd: 0, in_match: true.into(), ducked: false.into(), last_underruns: 0 }

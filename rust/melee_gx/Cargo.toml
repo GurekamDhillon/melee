@@ -12,7 +12,7 @@ wgpu = "27"
 pollster = "0.4"
 bytemuck = "1"
 rustc-hash = "2.1"
-font8x8 = "0.3.1"
+ab_glyph = { version = "0.2.32", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 png = "0.18"

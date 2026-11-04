@@ -252,6 +252,9 @@ pub struct LabShared {
     pub apply_frame: i32,
     /// Commands issued since the play flow last drained them.
     pub outbox: Vec<LabCmd>,
+    /// The commands applied on the last command-clock frame with their issuer (0 offline / host, 1 guest), in apply
+    /// order: `gd_lab_applied` (the other player's actions as toasts online).
+    pub applied: Vec<(u8, LabCmd)>,
     /// Which side issues recording handles (0 offline / host, 1 guest): the top bits of a handle.
     pub issuer: u8,
     rec_next: u8,
@@ -269,7 +272,10 @@ pub struct LabShared {
     /// Events of the last EVENT_HISTORY frames (GAP-1).
     pub history: std::collections::VecDeque<LabEvent>,
     pub slot_frame: [i32; SLOTS],
-    pub rec_len: std::collections::BTreeMap<u8, i32>,
+    /// Recording length in frames by handle (-1: no such recording); a fixed table so publishing never allocates.
+    pub rec_len: [i32; 256],
+    /// The lab match has a timer (the HUD moves the frame meter below it): `gd_lab_timed`.
+    pub timed: bool,
     pub recording_mask: u32,
     pub meter: [std::collections::VecDeque<u8>; 4],
     pub frame_adv: i32,
@@ -292,6 +298,7 @@ impl Default for LabShared {
             active: false,
             apply_frame: 0,
             outbox: Vec::with_capacity(64),
+            applied: Vec::with_capacity(2 * LAB_CMDS_PER_FRAME),
             issuer: 0,
             rec_next: 1,
             match_frame: 0,
@@ -306,7 +313,8 @@ impl Default for LabShared {
             events: Vec::new(),
             history: Default::default(),
             slot_frame: [-1; SLOTS],
-            rec_len: Default::default(),
+            rec_len: [-1; 256],
+            timed: false,
             recording_mask: 0,
             meter: Default::default(),
             frame_adv: 0,
@@ -509,7 +517,7 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     f!("gd_lab_play_stop", |c: Caller<'_, PresData>| -> i32 { cmd!(c, FEATURE_LAB_INPUT, LabCmd::new(OP_PLAY_STOP, 0, 0xF, 0, 0, 0)) });
     f!("gd_lab_rec_len", |c: Caller<'_, PresData>, rec: u32| -> i32 {
         match gate(&c, FEATURE_LAB_INPUT) {
-            Ok(l) => l.borrow().rec_len.get(&(rec as u8)).copied().unwrap_or(GD_EINVAL),
+            Ok(l) => { let v = if rec < 256 { l.borrow().rec_len[rec as usize] } else { -1 }; if v < 0 { GD_EINVAL } else { v } },
             Err(e) => e,
         }
     });
@@ -627,8 +635,14 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     });
     f!("gd_lab_events", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
-        let v: Vec<u8> = l.borrow().events.iter().take(max as usize).flat_map(|e| e.to_bytes()).collect();
-        if write(&mut c, out, &v) { (v.len() / EVENT_BYTES) as i32 } else { GD_EINVAL }
+        // per-frame query: a stack buffer, no allocation (at most 64 events)
+        let mut b = [0u8; 64 * EVENT_BYTES];
+        let mut n = 0;
+        for e in l.borrow().events.iter().take((max as usize).min(64)) {
+            b[n * EVENT_BYTES..(n + 1) * EVENT_BYTES].copy_from_slice(&e.to_bytes());
+            n += 1;
+        }
+        if write(&mut c, out, &b[..n * EVENT_BYTES]) { n as i32 } else { GD_EINVAL }
     });
     f!("gd_lab_events_range", |mut c: Caller<'_, PresData>, from: i32, to: i32, out: u32, max: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
@@ -639,8 +653,36 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
     f!("gd_lab_meter", |mut c: Caller<'_, PresData>, port: u32, out: u32, n: u32| -> i32 {
         let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
         if port > 3 { return GD_EINVAL }
-        let v: Vec<u8> = { let s = l.borrow(); let m = &s.meter[port as usize]; m.iter().skip(m.len().saturating_sub(n as usize)).copied().collect() };
-        if write(&mut c, out, &v) { v.len() as i32 } else { GD_EINVAL }
+        let mut b = [0u8; METER_CELLS];
+        let k = {
+            let s = l.borrow();
+            let m = &s.meter[port as usize];
+            let k = (n as usize).min(m.len()).min(METER_CELLS);
+            for (d, v) in b.iter_mut().zip(m.iter().skip(m.len() - k)) {
+                *d = *v;
+            }
+            k
+        };
+        if write(&mut c, out, &b[..k]) { k as i32 } else { GD_EINVAL }
+    });
+    // 1 when the lab match has a timer (the retail timer HUD is up), 0 when it is untimed
+    f!("gd_lab_timed", |c: Caller<'_, PresData>| -> i32 {
+        match gate(&c, 0) { Ok(l) => l.borrow().timed as i32, Err(e) => e }
+    });
+    // the last frame's applied commands: 20 bytes each = u8 issuer (0 offline / host, 1 guest), 3 zero, the 16-byte record
+    f!("gd_lab_applied", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut b = [0u8; 20 * 2 * LAB_CMDS_PER_FRAME];
+        let n = {
+            let s = l.borrow();
+            let n = s.applied.len().min(max as usize).min(2 * LAB_CMDS_PER_FRAME);
+            for (i, (side, cmd)) in s.applied[..n].iter().enumerate() {
+                b[i * 20] = *side;
+                b[i * 20 + 4..i * 20 + 20].copy_from_slice(&cmd.to_bytes());
+            }
+            n
+        };
+        if write(&mut c, out, &b[..n * 20]) { n as i32 } else { GD_EINVAL }
     });
     // status: i32 x 10 = active, match frame, paused, replaying, ring frames, ring length, command delay, recording mask,
     // issuer (0 offline / host, 1 guest), apply frame of a command issued now
@@ -649,7 +691,10 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         let s = l.borrow();
         let v = [s.active as i32, s.match_frame, s.paused as i32, s.replaying as i32, s.ring_frames as i32, s.ring_len as i32, s.delay as i32, s.recording_mask as i32, s.issuer as i32, s.apply_frame];
         drop(s);
-        let b: Vec<u8> = v.iter().flat_map(|x| x.to_le_bytes()).collect();
+        let mut b = [0u8; 40];
+        for (i, x) in v.iter().enumerate() {
+            b[i * 4..i * 4 + 4].copy_from_slice(&x.to_le_bytes());
+        }
         if write(&mut c, out, &b) { GD_OK } else { GD_EINVAL }
     });
     Ok(())

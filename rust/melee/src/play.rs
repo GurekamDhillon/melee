@@ -1280,7 +1280,9 @@ impl Play {
                 p.renderer.set_packed(pk);
             }
             p.set_content_aspect(melee_engine::view::aspect());
-            p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, alpha);
+            let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
+            p.set_match_scene(true);
+            p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, alpha);
             return;
         }
         if !std::mem::take(&mut self.dirty) {
@@ -1357,6 +1359,7 @@ impl Game for Play {
     fn set_interp(&mut self, on: bool) {
         log(&format!("render interpolation {}", if on { "on" } else { "off" }));
         self.interp = on;
+        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
@@ -1374,7 +1377,13 @@ impl Game for Play {
             }
         }
         // A pending screenshot is of the newest sim frame, never an interpolated one.
-        let a = (self.interp && self.shot_pending.is_none()).then_some(alpha);
+        // A pending screenshot is of the newest sim frame, never an interpolated one (unless MELEE_SHOT_PHASE asks for
+        // an in-between: the new frame drawn at that phase between it and the previous tick's)
+        let shot_phase = std::env::var("MELEE_SHOT_PHASE").ok().and_then(|v| v.parse::<f64>().ok());
+        let a = if self.shot_pending.is_some() { shot_phase.filter(|_| self.interp) } else { self.interp.then_some(alpha) };
+        if let Some(p) = self.presenter.as_mut() {
+            p.force_phase = if self.shot_pending.is_some() { a } else { None };
+        }
         self.present_now(a);
         self.emit_shot();
         if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
@@ -1392,6 +1401,10 @@ impl Game for Play {
 
     fn should_quit(&self) -> bool {
         self.quit
+    }
+
+    fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
+        self.presenter.as_ref().and_then(|p| p.frame_stats())
     }
 
     fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {

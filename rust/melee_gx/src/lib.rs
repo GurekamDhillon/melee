@@ -19,6 +19,7 @@
 pub mod api;
 pub mod consts;
 pub mod draw;
+pub mod interp;
 pub mod render;
 pub mod resources;
 pub mod shader;

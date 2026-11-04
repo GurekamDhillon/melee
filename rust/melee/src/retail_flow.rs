@@ -364,6 +364,9 @@ impl RetailPlay {
         let entered = e.tick_modes();
         crate::slp_export::end_tick(!e.ended && e.mode_scene().1 == SCENE_VS);
         let hash = if vs_tick { e.neutral_row()[0] | 1 } else { 0 };
+        if vs_tick {
+            hash_log(e.frames as u64, hash);
+        }
         if let Some(r) = self.rec.as_mut() {
             r.1.ticks.push((four, hash));
         }
@@ -657,6 +660,7 @@ impl Game for RetailPlay {
 
     fn set_interp(&mut self, on: bool) {
         self.interp = on;
+        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
     }
 
     fn present(&mut self, window: &Arc<Window>, alpha: f64) {
@@ -673,9 +677,17 @@ impl Game for RetailPlay {
                 }
             }
         }
-        let a = (self.interp && self.shot_pending.is_none()).then_some(alpha);
+        // A pending screenshot is of the newest sim frame, never an interpolated one (unless MELEE_SHOT_PHASE asks for
+        // an in-between: the new frame drawn at that phase between it and the previous tick's)
+        let shot_phase = std::env::var("MELEE_SHOT_PHASE").ok().and_then(|v| v.parse::<f64>().ok());
+        let a = if self.shot_pending.is_some() { shot_phase.filter(|_| self.interp) } else { self.interp.then_some(alpha) };
+        if let Some(p) = self.presenter.as_mut() {
+            p.force_phase = if self.shot_pending.is_some() { a } else { None };
+        }
         let frame = self.frame.take();
+        let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
         let p = self.presenter.as_mut().unwrap();
+        p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         if let Some(pk) = self.packed.take() {
             p.renderer.set_packed(pk);
         }
@@ -685,7 +697,7 @@ impl Game for RetailPlay {
             u.set_window(w, h);
             u.with_frame(|f, a| p.renderer.set_ui(Some(f), a));
         }
-        p.present_frames(&melee_engine::gxbridge::shim().gx.state, frame, a);
+        p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, a);
         self.emit_shot();
         if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
             self.failed = Some(format!("GPU error, stopping: {e}"));
@@ -710,6 +722,10 @@ impl Game for RetailPlay {
 
     fn status_line(&mut self) -> Option<String> {
         self.net.as_mut().map(|n| n.status())
+    }
+
+    fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
+        self.presenter.as_ref().and_then(|p| p.frame_stats())
     }
 
     fn set_hud(&mut self, lines: Option<Vec<melee_platform::overlay::Line>>) {
@@ -801,5 +817,16 @@ impl Drop for RetailPlay {
             log(&format!("{}; renderer: {dc} UI draw calls over {fr} presents with UI", u.stats_line()));
         }
         self.save_replay();
+    }
+}
+
+/// `MELEE_HASH_LOG=<file>`: one line per match tick, `frame hash` (the NHV1 neutral hash), to compare two windowed runs
+/// (display options on / off must simulate the same game).
+fn hash_log(frame: u64, hash: u32) {
+    use std::io::Write;
+    static F: std::sync::OnceLock<Option<std::sync::Mutex<std::fs::File>>> = std::sync::OnceLock::new();
+    let f = F.get_or_init(|| std::env::var_os("MELEE_HASH_LOG").and_then(|p| std::fs::File::create(p).ok()).map(std::sync::Mutex::new));
+    if let Some(f) = f {
+        let _ = writeln!(f.lock().unwrap(), "{frame} {hash:08X}");
     }
 }

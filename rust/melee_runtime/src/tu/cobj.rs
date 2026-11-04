@@ -776,6 +776,7 @@ pub unsafe fn HSD_CObjSetCurrent(cobj: *mut HSD_CObj) -> bool {
         false
     } else {
         HSD_CObjSetupViewingMtx(cobj);
+        unsafe { crate::pose_capture::camera(cobj) };
         true
     }
 }

@@ -41,6 +41,9 @@ pub struct DrawCmd {
     pub copy: Option<Box<EfbCopy>>,
     /// The PC matrix palette this draw reads (`config.shader.pn_palette`), 24 floats a slot.
     pub palette: Option<std::sync::Arc<Vec<f32>>>,
+    /// Render-only pose tags of the position matrix slots and the camera (see `GxState::pose_tags`).
+    pub pose: [u32; 10],
+    pub cam: u32,
 }
 
 /// One GXCopyTex: the EFB rectangle `src` (x, y, w, h in EFB pixels) to a `dst_w` x `dst_h` texture of copy format
@@ -83,6 +86,8 @@ impl DrawCmd {
             render_scissor: ClipRect::default(),
             copy: Some(Box::new(c)),
             palette: None,
+            pose: [0; 10],
+            cam: 0,
         }
     }
 }
@@ -257,5 +262,7 @@ pub fn build_draw(
         render_scissor: st.render_scissor,
         copy: None,
         palette,
+        pose: st.pose_tags,
+        cam: st.pose_cam,
     })
 }

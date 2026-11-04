@@ -8,6 +8,7 @@ description = "Platform layer: window + 60 Hz main loop (winit), PAD input (gilr
 
 [dependencies]
 melee_types.workspace = true
+melee_core.workspace = true
 melee_gx = { path = "../melee_gx" }
 wgpu = "27"
 png = "0.18"
@@ -16,6 +17,8 @@ winit = "0.30"
 gilrs = "0.11"
 
 [target.'cfg(windows)'.dependencies]
+# DXGI frame statistics of wgpu's own D3D12 swapchain (VRR detection, gfx.rs); the version wgpu-hal 27 uses
+windows = { version = "0.58", default-features = false, features = ["Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Foundation", "Win32_System_Performance"] }
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
     "Win32_Devices_HumanInterfaceDevice",

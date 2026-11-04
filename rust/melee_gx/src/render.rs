@@ -246,6 +246,8 @@ const TEX_KEEP: u64 = 600;
 /// Offscreen GX renderer.
 pub struct Renderer {
     pub adapter: wgpu::Adapter,
+    /// Microseconds the last `draw_prepared` spent in its `fill` callbacks (frame interpolation / widescreen patching).
+    pub last_fill_us: u32,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     pub adapter_info: wgpu::AdapterInfo,
@@ -1058,6 +1060,7 @@ impl Renderer {
         let pipes = std::sync::Arc::new(PipeFactory { device: device.clone(), layout: layout.clone(), samples, pipelines: Default::default(), wgsl_hashes: Default::default() });
         Ok(Self {
             adapter,
+            last_fill_us: 0,
             device,
             queue,
             gpu,
@@ -1603,6 +1606,7 @@ impl Renderer {
             fc.ubuf_state = 1;
         }
         if let Some(f) = fill.as_mut() {
+            let tf = std::time::Instant::now();
             for (i, d) in draws.iter().enumerate() {
                 if fc.draws[i].owner {
                     let o = fc.draws[i].uoff as usize;
@@ -1610,6 +1614,7 @@ impl Renderer {
                 }
             }
             fc.ubuf_state = 2;
+            self.last_fill_us = tf.elapsed().as_micros() as u32;
         }
         if let Some(g) = fc.gu.as_ref() {
             self.queue.write_buffer(&g.buf, 0, &fc.ubuf);

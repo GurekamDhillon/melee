@@ -23,6 +23,21 @@ display options (flag > MELEE_<KEY> env > settings.cfg key > default):
   --msaa 1|2|4|8                   multisample anti-aliasing of the EFB pass (falls back to what the GPU supports).
                                    Key `msaa`, default 1 (off; auto render scale already supersamples small windows).
   --vsync on|off                   Key `vsync`, default on.
+  --widescreen-mode renderer|camera
+                                   how widescreen widens: `renderer` (default) widens perspective draws in the
+                                   renderer only, so the simulation is exactly a 4:3 run's; `camera` scales every
+                                   camera's aspect as the C build does. Key `widescreen_mode`.
+  --fps-cap N|off                  present at most N frames a second (the simulation stays at 60 Hz). Key `fps_cap`,
+                                   default off (vsync on: the refresh rate; off: uncapped).
+  --vrr auto|on|off                variable refresh (G-Sync / FreeSync): with vsync on, frames are capped a little
+                                   under the refresh (144 Hz: 138). auto measures the swapchain for a few seconds.
+                                   Key `vrr`, default auto.
+  --interp auto|on|off             frame interpolation between ticks (render-only): auto = on above 60 fps. Key
+                                   `interp`, default auto.
+  --interp-mode interpolate|extrapolate
+                                   interpolate between the last two ticks (exact, one tick behind) or extrapolate
+                                   past the newest (no added latency). Key `interp_mode`, default interpolate.
+  --frame-latency 1|2|3            frames queued ahead of the display. Key `frame_latency`, default 2.
   --save-display                   write the resolved display options to settings.cfg.
 The content keeps its aspect: letterbox / pillarbox bars fill the rest of the window.";
 
@@ -35,6 +50,16 @@ pub struct Display {
     pub render_scale: Option<u32>,
     pub msaa: u32,
     pub vsync: bool,
+    /// Widescreen through the cameras (the C build's) instead of the renderer.
+    pub camera_widescreen: bool,
+    /// 0: no cap.
+    pub fps_cap: u32,
+    /// "auto" | "on" | "off".
+    pub vrr: String,
+    /// None: auto.
+    pub interp: Option<bool>,
+    pub extrapolate: bool,
+    pub frame_latency: u32,
 }
 
 fn parse_bool(v: &str) -> Option<bool> {
@@ -116,7 +141,43 @@ impl Display {
             Some(v) => parse_bool(&v).ok_or_else(|| bad("vsync", &v))?,
             None => true,
         };
-        Ok(Display { widescreen, fullscreen, window, render_scale, msaa, vsync })
+        let camera_widescreen = match get("--widescreen-mode").or_else(|| lookup("widescreen_mode")) {
+            Some(v) => match v.trim().to_ascii_lowercase().as_str() {
+                "renderer" | "true" => false,
+                "camera" | "c" => true,
+                _ => return Err(bad("widescreen-mode", &v)),
+            },
+            None => false,
+        };
+        let fps_cap = match get("--fps-cap").or_else(|| lookup("fps_cap")) {
+            Some(v) if matches!(v.trim().to_ascii_lowercase().as_str(), "off" | "0" | "none" | "") => 0,
+            Some(v) => v.trim().parse::<u32>().ok().filter(|&n| (20..=1000).contains(&n)).ok_or_else(|| bad("fps-cap", &v))?,
+            None => 0,
+        };
+        let vrr = match get("--vrr").or_else(|| lookup("vrr")) {
+            Some(v) => match melee_platform::main_loop::VrrMode::parse(&v) {
+                Some(melee_platform::main_loop::VrrMode::Auto) => "auto",
+                Some(melee_platform::main_loop::VrrMode::On) => "on",
+                Some(melee_platform::main_loop::VrrMode::Off) => "off",
+                None => return Err(bad("vrr", &v)),
+            },
+            None => "auto",
+        }
+        .to_string();
+        let interp = match get("--interp").or_else(|| lookup("interp")) {
+            Some(v) if v.trim().eq_ignore_ascii_case("auto") => None,
+            Some(v) => Some(parse_bool(&v).ok_or_else(|| bad("interp", &v))?),
+            None => None,
+        };
+        let extrapolate = match get("--interp-mode").or_else(|| lookup("interp_mode")) {
+            Some(v) => melee_gx::interp::Mode::parse(&v).ok_or_else(|| bad("interp-mode", &v))? == melee_gx::interp::Mode::Extrapolate,
+            None => false,
+        };
+        let frame_latency = match get("--frame-latency").or_else(|| lookup("frame_latency")) {
+            Some(v) => v.trim().parse::<u32>().ok().filter(|n| (1..=3).contains(n)).ok_or_else(|| bad("frame-latency", &v))?,
+            None => 2,
+        };
+        Ok(Display { widescreen, fullscreen, window, render_scale, msaa, vsync, camera_widescreen, fps_cap, vrr, interp, extrapolate, frame_latency })
     }
 
     /// Resolve against the real environment and settings.cfg.
@@ -145,6 +206,12 @@ impl Display {
             ("render_scale", self.render_scale.map_or("auto".to_string(), |n| n.to_string())),
             ("msaa", self.msaa.to_string()),
             ("vsync", if self.vsync { "on" } else { "off" }.to_string()),
+            ("widescreen_mode", if self.camera_widescreen { "camera" } else { "renderer" }.to_string()),
+            ("fps_cap", if self.fps_cap == 0 { "off".to_string() } else { self.fps_cap.to_string() }),
+            ("vrr", self.vrr.clone()),
+            ("interp", match self.interp { None => "auto", Some(true) => "on", Some(false) => "off" }.to_string()),
+            ("interp_mode", if self.extrapolate { "extrapolate" } else { "interpolate" }.to_string()),
+            ("frame_latency", self.frame_latency.to_string()),
         ]
     }
 
@@ -157,6 +224,16 @@ impl Display {
         }
         std::env::set_var("MELEE_MSAA", self.msaa.to_string());
         std::env::set_var("MELEE_VSYNC", if self.vsync { "on" } else { "off" });
+        std::env::set_var("MELEE_WIDESCREEN_MODE", if self.camera_widescreen { "camera" } else { "renderer" });
+        std::env::set_var("MELEE_FPS_CAP", self.fps_cap.to_string());
+        std::env::set_var("MELEE_VRR", &self.vrr);
+        match self.interp {
+            Some(on) => std::env::set_var("MELEE_INTERP", if on { "1" } else { "0" }),
+            None => std::env::remove_var("MELEE_INTERP"),
+        }
+        std::env::set_var("MELEE_INTERP_MODE", if self.extrapolate { "extrapolate" } else { "interpolate" });
+        std::env::set_var("MELEE_FRAME_LATENCY", self.frame_latency.to_string());
+        melee_engine::view::set_camera_mode(self.camera_widescreen);
         melee_engine::view::set_widescreen(self.widescreen);
         melee_engine::view::set_window(self.window.0, self.window.1);
     }
@@ -217,7 +294,10 @@ mod tests {
     fn defaults_and_precedence() {
         let none = |_: &str| None;
         let d = Display::resolve(&a(&[]), &mut { none }).unwrap();
-        assert_eq!(d, Display { widescreen: false, fullscreen: FullscreenMode::Off, window: (1280, 960), render_scale: None, msaa: 1, vsync: true });
+        assert_eq!(d, Display { widescreen: false, fullscreen: FullscreenMode::Off, window: (1280, 960), render_scale: None, msaa: 1, vsync: true, camera_widescreen: false, fps_cap: 0, vrr: "auto".into(), interp: None, extrapolate: false, frame_latency: 2 });
+        let d = Display::resolve(&a(&["--fps-cap", "144", "--vrr", "on", "--interp", "on", "--interp-mode", "extrapolate", "--widescreen-mode", "camera", "--frame-latency", "1"]), &mut { none }).unwrap();
+        assert!(d.fps_cap == 144 && d.vrr == "on" && d.interp == Some(true) && d.extrapolate && d.camera_widescreen && d.frame_latency == 1);
+        assert!(Display::resolve(&a(&["--fps-cap", "5"]), &mut { none }).is_err());
         // the file / env says wide + exclusive + 4x; the flags win
         let mut file = |k: &str| match k {
             "widescreen" => Some("1".to_string()),
@@ -240,7 +320,7 @@ mod tests {
 
     #[test]
     fn rows_round_trip() {
-        let d = Display { widescreen: true, fullscreen: FullscreenMode::Borderless, window: (1600, 900), render_scale: Some(2), msaa: 4, vsync: false };
+        let d = Display { widescreen: true, fullscreen: FullscreenMode::Borderless, window: (1600, 900), render_scale: Some(2), msaa: 4, vsync: false, camera_widescreen: false, fps_cap: 240, vrr: "off".into(), interp: Some(true), extrapolate: true, frame_latency: 1 };
         let rows = d.rows();
         let mut lk = |k: &str| rows.iter().find(|(r, _)| *r == k).map(|(_, v)| v.clone());
         assert_eq!(Display::resolve(&[], &mut lk).unwrap(), d);

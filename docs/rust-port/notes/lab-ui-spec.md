@@ -37,9 +37,10 @@ Host changes with M3: with control "live pad" the reactions act on top of the po
 connected (a dummy on a human slot nobody holds now acts); out-of-shield random is option 8 (`RO_OOS_RANDOM`, 5 is
 spot-dodge). Rewind ring cost: `Base::save_after` is incremental (pages not written since the previous ring
 snapshot are shared without a compare, the arena's cow part through GetWriteWatch over its ever-written runs) and
-reuses dropped snapshots' page buffers; lab-check ring save 7.6 -> 1.3 ms per capture (every 4 frames) on the
-same loaded box, `MELEE_SNAP_NOINC=1` for the old path. What remains is the 9.3 MB static section, compared in full
-(image sections have no write watch).
+reuses dropped snapshots' page buffers, and the ring takes a snapshot every 8 frames (was 4; the depth stays 600
+frames, a rewind re-sims at most 7). lab-check on the same loaded box: 1369 -> 112 us per frame amortised (a capture
+7.6 -> 1.25 ms; `MELEE_SNAP_NOINC=1` is the old path), ring memory 108 -> 58 MB. What remains per capture is the
+9.3 MB static section, compared in full (image sections have no write watch).
 
 ## 1. Product
 

@@ -55,11 +55,25 @@ pub trait Game {
     fn take_hud_request(&mut self) -> Option<bool> {
         None
     }
+    /// A live change of the frame pacing (the game's settings overlay), taken once. Presentation only.
+    fn take_pacing(&mut self) -> Option<Pacing> {
+        None
+    }
     /// The swapchain's frame statistics (frames shown, display refreshes, seconds), for VRR detection
     /// (`Presenter::frame_stats`).
     fn display_stats(&mut self) -> Option<(u64, u64, f64)> {
         None
     }
+}
+
+/// A live pacing change: each field that is Some replaces the loop's value.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Pacing {
+    /// Presented frames per second (0: no cap).
+    pub fps_cap: Option<f64>,
+    pub vsync: Option<bool>,
+    /// Render-side interpolation: Some(forced) or None (auto above 60 fps).
+    pub interp: Option<Option<bool>>,
 }
 
 /// `--vrr` / `MELEE_VRR`: whether the display follows the frames (G-Sync / FreeSync).
@@ -403,6 +417,29 @@ impl<G: Game> App<G> {
         }
     }
 
+    /// A live pacing change: the cap and the vsync flag the pacer reads, the interpolation rule (the next fps
+    /// sample applies an auto rule; a forced value applies now).
+    fn apply_pacing(&mut self, p: Pacing) {
+        if let Some(c) = p.fps_cap {
+            self.fps_cap = c.max(0.0);
+            self.next_present = None;
+        }
+        if let Some(v) = p.vsync {
+            self.vsync = v;
+            self.next_present = None;
+        }
+        if let Some(i) = p.interp {
+            self.interp_env = i;
+            if let Some(on) = i {
+                if on != self.interp {
+                    self.interp = on;
+                    self.game.set_interp(on);
+                }
+            }
+        }
+        plog!("gw: video: pacing (live): fps cap {}, vsync {}, interp {}", if self.fps_cap > 0.0 { format!("{:.0}", self.fps_cap) } else { "none".into() }, if self.vsync { "on" } else { "off" }, match self.interp_env { None => "auto", Some(true) => "on", Some(false) => "off" });
+    }
+
     fn run_due_ticks(&mut self) {
         let now = Instant::now();
         let dt = self.last.map(|l| now - l).unwrap_or_default();
@@ -414,6 +451,9 @@ impl<G: Game> App<G> {
                 if on != self.hud_on {
                     self.hud_toggle();
                 }
+            }
+            if let Some(p) = self.game.take_pacing() {
+                self.apply_pacing(p);
             }
             let el = t.elapsed();
             self.tick_time += el;

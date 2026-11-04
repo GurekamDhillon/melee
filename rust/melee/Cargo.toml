@@ -32,3 +32,6 @@ melee_data = { path = "../melee_data" }
 mex_import = { path = "../../tools/mex-import" }
 winit = "0.30"
 font8x8 = "0.3.1"
+# cosmetics imports: ZIP members (deflate) and portrait / stock icon PNGs
+miniz_oxide = "0.8"
+png = "0.18"

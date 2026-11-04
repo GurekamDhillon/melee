@@ -280,6 +280,8 @@ pub struct Renderer {
     gpu: std::sync::Arc<GpuHealth>,
     samplers: FxMap<SamplerKey, wgpu::Sampler>,
     textures: FxMap<TexKey, TexEntry>,
+    /// `tex_override::generation()` the decoded textures were made under.
+    ovr_gen: u64,
     /// [`Renderer::prepare`] calls so far (texture eviction clock).
     prepared: u64,
     /// A packing handed over by the decode thread for the next prepared frame ([`Renderer::set_packed`]).
@@ -1082,6 +1084,7 @@ impl Renderer {
             tex_bgs: FxMap::default(),
             samplers: FxMap::default(),
             textures: FxMap::default(),
+            ovr_gen: crate::tex_override::generation(),
             prepared: 0,
             packed: None,
             empty_view,
@@ -1281,11 +1284,25 @@ impl Renderer {
         if w == 0 || h == 0 {
             return None;
         }
-        let conv = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
-            let t = &d.tluts[o.tlut as usize];
-            texture::convert_texture_palette(fmt, w, h, mips, data, t.format, t.num_entries, t.data.as_deref()?)
+        // a registered override (cosmetics: a skin's portrait / stock icon) is uploaded instead, at its own size
+        let ovr = if crate::tex_override::active() {
+            let tl = if pal { tlut_data.as_deref().map(|t| &t[..(d.tluts[o.tlut as usize].num_entries as usize * 2).min(t.len())]) } else { None };
+            crate::tex_override::lookup(&crate::tex_override::key(fmt, w, h, data, tl))
         } else {
-            texture::convert_texture(fmt, w, h, mips, data)
+            None
+        };
+        let (w, h, mips) = ovr.as_ref().map_or((w, h, mips), |p| (p.w, p.h, 1));
+        let conv_data;
+        let conv: &[u8] = if let Some(p) = ovr.as_ref() {
+            &p.rgba
+        } else {
+            conv_data = if matches!(fmt, GX_TF_C4 | GX_TF_C8 | GX_TF_C14X2) {
+                let t = &d.tluts[o.tlut as usize];
+                texture::convert_texture_palette(fmt, w, h, mips, data, t.format, t.num_entries, t.data.as_deref()?)
+            } else {
+                texture::convert_texture(fmt, w, h, mips, data)
+            };
+            &conv_data.data
         };
         let desc = wgpu::TextureDescriptor {
             label: Some("GX texture"),
@@ -1320,7 +1337,7 @@ impl Renderer {
             let n = (mw * mh * 4) as usize;
             self.queue.write_texture(
                 wgpu::TexelCopyTextureInfo { texture: &tex, mip_level: mip, origin: wgpu::Origin3d::ZERO, aspect: Default::default() },
-                &conv.data[off..off + n],
+                &conv[off..off + n],
                 wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(mw * 4), rows_per_image: Some(mh) },
                 wgpu::Extent3d { width: mw, height: mh, depth_or_array_layers: 1 },
             );
@@ -1387,6 +1404,13 @@ impl Renderer {
         let t0 = std::time::Instant::now();
         self.prepared += 1;
         frame_stats(self.prepared, draws);
+        let g = crate::tex_override::generation();
+        if g != self.ovr_gen {
+            // the override set changed: decode every texture again (a replaced one back to the game's, or anew)
+            self.ovr_gen = g;
+            self.tex_bgs.clear();
+            self.textures.clear();
+        }
         if self.prepared % TEX_KEEP == 0 {
             let now = self.prepared;
             let before = self.textures.len();

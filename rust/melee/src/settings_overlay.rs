@@ -50,6 +50,10 @@ pub struct Row {
 }
 
 impl Row {
+    /// A live on/off row (`dflt` when settings.cfg has no value; `off` / `0` read as off).
+    pub fn toggle_row(key: &str, label: &str, dflt: bool, help: &str) -> Row {
+        toggle(key, label, dflt, true, help)
+    }
     fn shown(&self) -> String {
         match &self.kind {
             Kind::Toggle => if self.value != 0 { "ON" } else { "OFF" }.into(),
@@ -105,7 +109,12 @@ pub struct Overlay {
     held: u32,
     stick_prev: i8,
     f1_prev: bool,
+    /// Per port: buttons still held from a close (B / Start): kept from the game until released, so the close never
+    /// becomes a press on the screen underneath.
+    swallow: [u16; 4],
     pub theme: i32,
+    /// The palette (0: the style's own colours).
+    pub palette: i32,
     /// Changes since the last `take_changes`.
     changes: Vec<Change>,
     /// Write settings.cfg (off in the unit tests).
@@ -139,15 +148,19 @@ impl Overlay {
     /// The pages from the current settings; `volume` the live master volume.
     pub fn new(volume: i32) -> Overlay {
         let onoff = [("Auto", "auto"), ("On", "on"), ("Off", "off")];
+        // Live: the presenter and the pacer take these at once (presentation only). Widescreen is live in the renderer
+        // mode (the game's view hooks keep answering 4:3); the camera mode is fixed for the run. MSAA is baked into
+        // every pipeline (the sample count), so it waits for the next launch.
+        let wide_live = !melee_engine::view::camera_mode();
         let video = vec![
-            toggle("widescreen", "Widescreen 16:9", false, false, "Hor+ widescreen in matches (renderer-side: the sim is a 4:3 run's)."),
+            toggle("widescreen", "Widescreen 16:9", false, wide_live, "Hor+ widescreen in matches (renderer-side: the sim is a 4:3 run's)."),
             choice("fullscreen", "Fullscreen", &[("Off", "off"), ("Borderless", "borderless"), ("Exclusive", "exclusive")], "off", false, "Alt+Enter toggles at any time."),
-            toggle("vsync", "VSync", true, false, "Off: present as fast as the cap allows."),
-            choice("fps_cap", "Frame cap", &[("Off", "off"), ("60", "60"), ("120", "120"), ("144", "144"), ("165", "165"), ("240", "240")], "off", false, "Presented frames per second; the game always runs at 60."),
-            choice("interp", "Frame interpolation", &onoff, "auto", false, "Render-only in-between frames (auto: on above 60 fps)."),
-            choice("interp_mode", "Interpolation mode", &[("Interpolate", "interpolate"), ("Extrapolate", "extrapolate")], "interpolate", false, "Extrapolate adds no latency."),
-            choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", false, "x 480 lines."),
-            choice("msaa", "Anti-aliasing", &[("Off", "1"), ("2x", "2"), ("4x", "4"), ("8x", "8")], "1", false, "MSAA of the EFB pass."),
+            toggle("vsync", "VSync", true, true, "Off: present as fast as the cap allows."),
+            choice("fps_cap", "Frame cap", &[("Off", "off"), ("60", "60"), ("120", "120"), ("144", "144"), ("165", "165"), ("240", "240")], "off", true, "Presented frames per second; the game always runs at 60."),
+            choice("interp", "Frame interpolation", &onoff, "auto", true, "Render-only in-between frames (auto: on above 60 fps)."),
+            choice("interp_mode", "Interpolation mode", &[("Interpolate", "interpolate"), ("Extrapolate", "extrapolate")], "interpolate", true, "Extrapolate adds no latency."),
+            choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", true, "x 480 lines."),
+            choice("msaa", "Anti-aliasing", &[("Off", "1"), ("2x", "2"), ("4x", "4"), ("8x", "8")], "1", false, "MSAA of the EFB pass (pipelines are built for it: next launch)."),
         ];
         let audio = vec![Row {
             key: "volume".into(),
@@ -169,7 +182,10 @@ impl Overlay {
             choice("input_delay", "Offline input delay", &[("0", "0"), ("1", "1"), ("2", "2"), ("3", "3"), ("4", "4"), ("5", "5"), ("6", "6"), ("7", "7"), ("8", "8")], "0", false, "Frames, offline matches only: practise netplay's delay."),
             toggle("early_inputs", "Netplay early inputs", true, false, "Send stick and button changes before the frame they are for."),
         ];
-        let mut custom = vec![choice("ui_theme", "Overlay theme", &[("Instrument", "0"), ("Arcade", "1"), ("Brutalist", "2"), ("Neon", "3")], "0", true, "This overlay's look (gd-ui-v1 themes).")];
+        let mut custom = vec![
+            choice("ui_theme", "Appearance", &[("Instrument", "0"), ("Arcade", "1"), ("Brutalist", "2"), ("Neon", "3")], "0", true, "This overlay's style (gd-ui-v1 themes)."),
+            choice("ui_palette", "Palette", &PALETTES.iter().enumerate().map(|(i, p)| (p.0, ["0", "1", "2", "3"][i])).collect::<Vec<_>>(), "0", true, "The style's accent colours; each style keeps its own."),
+        ];
         let skins = crate::cosmetics::list(&crate::cosmetics::dir());
         let pick = crate::cosmetics::chosen(&skins);
         let mut slots: Vec<String> = skins.iter().map(|s| s.slot.clone()).collect();
@@ -188,10 +204,12 @@ impl Overlay {
                 note: String::new(),
             });
         }
-        if custom.len() == 1 {
+        crate::cosmetics::portrait_rows(&mut custom);
+        if custom.len() == 2 {
             custom.push(Row { key: String::new(), label: "No skins (melee cosmetics import FILE)".into(), kind: Kind::Choice(vec![]), value: 0, live: false, help: format!("Catalog: {}", crate::cosmetics::dir().display()), note: String::new() });
         }
         let theme = custom[0].stored().parse().unwrap_or(0);
+        let palette = custom[1].stored().parse().unwrap_or(0);
         Overlay {
             open: false,
             pages: vec![Page { name: "VIDEO", rows: video }, Page { name: "AUDIO", rows: audio }, Page { name: "OVERLAYS", rows: overlays }, Page { name: "GAME", rows: game }, Page { name: "CUSTOMIZE", rows: custom }],
@@ -202,7 +220,9 @@ impl Overlay {
             held: 0,
             stick_prev: 0,
             f1_prev: false,
+            swallow: [0; 4],
             theme,
+            palette,
             changes: Vec::new(),
             save: true,
             notice: None,
@@ -264,6 +284,9 @@ impl Overlay {
         if key == "ui_theme" {
             self.theme = value.parse().unwrap_or(0);
         }
+        if key == "ui_palette" {
+            self.palette = value.parse().unwrap_or(0);
+        }
         let n = if env_set { format!("{env} is set: it wins over settings.cfg") } else if live { "applied".into() } else { "saved: next launch".into() };
         self.notice = Some((n, 150));
         eprintln!("settings overlay: {key} = {value}{}", if live { " (live)" } else { " (next launch)" });
@@ -301,6 +324,12 @@ impl Overlay {
             *t = t.saturating_sub(1);
             if *t == 0 {
                 self.notice = None;
+            }
+        }
+        for p in 0..4 {
+            self.swallow[p] &= live[p].button;
+            if mask && self.swallow[p] != 0 && !self.open {
+                four[p].button &= !self.swallow[p];
             }
         }
         if !self.open {
@@ -381,12 +410,19 @@ impl Overlay {
         if ed & PAD_BUTTON_A != 0 {
             self.change(1);
         }
+        // the owner before a close: the B / Start that closes is the overlay's too (it must not reach the game)
+        let owner = self.owner;
         if ed & (PAD_BUTTON_B | PAD_BUTTON_START) != 0 && self.open {
             self.toggle_open(None);
+            for p in 0..4 {
+                if owner.is_none_or(|o| o == p) {
+                    self.swallow[p] = live[p].button;
+                }
+            }
         }
         // while open the owner's port is the overlay's (an exclusive capture); keyboard-opened: no port masked
         if mask {
-            if let Some(o) = self.owner {
+            if let Some(o) = owner {
                 let err = four[o].err;
                 four[o] = PADStatus::zeroed();
                 four[o].err = err;
@@ -402,7 +438,7 @@ impl Overlay {
             return;
         }
         let q0 = b.len();
-        let t = &theme::THEMES[self.theme.clamp(0, 3) as usize];
+        let t = &palette_theme(self.theme, self.palette);
         let mut p = Pen::new(0xFFFF);
         p.layer = cmd::LAYER_MODAL;
         let (x, y, w, h) = (276.0f32, 36.0f32, 350.0f32, 408.0f32);
@@ -481,6 +517,20 @@ impl Overlay {
         let o = self.own.as_mut().unwrap();
         Some((&o.0.frame, &mut o.1))
     }
+}
+
+/// Palettes: (name, accent, border) RGBA; the first keeps the style's own colours.
+pub const PALETTES: [(&str, u32, u32); 4] = [("Style", 0, 0), ("Cobalt", 0x3D7BFF_FF, 0x8FB4FF_FF), ("Emerald", 0x1FBF75_FF, 0x7CE3B0_FF), ("Crimson", 0xE0344A_FF, 0xFF8C99_FF)];
+
+/// The style's theme tokens with the palette's accent and border.
+pub fn palette_theme(style: i32, palette: i32) -> [u32; theme::N_TOKENS as usize] {
+    let mut t = theme::THEMES[style.clamp(0, 3) as usize];
+    let (_, accent, border) = PALETTES[palette.clamp(0, 3) as usize];
+    if accent != 0 {
+        t[theme::TOK_ACCENT as usize] = accent;
+        t[theme::TOK_BORDER as usize] = border;
+    }
+    t
 }
 
 /// CPU raster of a UI frame over a dark background (`MELEE_OVERLAY_SHOT`, headless checks): band space at 2x.
@@ -568,6 +618,17 @@ mod tests {
         l[1] = pad(PAD_BUTTON_B);
         let mut four = l;
         assert!(!o.input(&l, &mut four, true, false, &[]));
+        assert_eq!(four[1].button, 0, "the closing B never reaches the game");
+        let mut four = l;
+        o.input(&l, &mut four, true, false, &[]);
+        assert_eq!(four[1].button, 0, "nor while it stays held");
+        let mut four = idle;
+        o.input(&idle, &mut four, true, false, &[]);
+        let mut l = idle;
+        l[1] = pad(PAD_BUTTON_B);
+        let mut four = l;
+        o.input(&l, &mut four, true, false, &[]);
+        assert_eq!(four[1].button, PAD_BUTTON_B, "a new press after the release does");
         // keyboard: F1 opens, Escape closes
         o.input(&idle, &mut idle.clone(), true, true, &[]);
         assert!(o.open);

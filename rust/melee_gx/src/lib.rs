@@ -25,6 +25,7 @@ pub mod resources;
 pub mod shader;
 pub mod shim;
 pub mod state;
+pub mod tex_override;
 pub mod texture;
 pub mod ui;
 pub mod ui_font;

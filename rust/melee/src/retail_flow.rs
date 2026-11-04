@@ -105,6 +105,8 @@ pub struct RetailPlay {
     lab_gfx: Option<(crate::ui::Ui, melee_gx::shim::GxShim)>,
     lab_clock: i32,
     lab_cmds: Vec<melee_modhost::lab::LabCmd>,
+    /// How many of `lab_cmds` are the host's (they come first); the rest are the guest's.
+    lab_cmds_host: usize,
     /// The lockstep frame of this tick's pads (online lab: the desync check's key).
     lab_frame: Option<u32>,
     /// The lab RNG's seed (the agreed netplay seed, else the test seed).
@@ -128,7 +130,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None,
-            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_frame: None, lab_seed: 12345,
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345,
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
@@ -324,6 +326,7 @@ impl RetailPlay {
                         ls.ready_lab().map(|(l, r, lc, rc, fr)| {
                             // the host's commands first on both peers
                             let (hc, gc) = if host { (lc, rc) } else { (rc, lc) };
+                            self.lab_cmds_host = hc.iter().filter(|b| melee_modhost::lab::LabCmd::from_bytes(&b[..]).is_some()).count();
                             self.lab_cmds = hc.iter().chain(gc.iter()).filter_map(|b| melee_modhost::lab::LabCmd::from_bytes(b)).collect();
                             self.lab_frame = Some(fr);
                             (l, r)
@@ -465,6 +468,13 @@ impl RetailPlay {
             v
         };
         let lab = self.lab.as_mut().unwrap();
+        {
+            // who issued what this frame (gd_lab_applied: the other player's toasts); offline every command is ours
+            let n_host = if online { self.lab_cmds_host.min(cmds.len()) } else { cmds.len() };
+            let mut s = lab.sh.borrow_mut();
+            s.applied.clear();
+            s.applied.extend(cmds.iter().enumerate().map(|(i, c)| ((i >= n_host) as u8, *c)));
+        }
         let ran = lab.tick(four, &cmds);
         let hash = if ran { lab.frame_hash() } else { 0 };
         if let (true, Some(fr)) = (online, self.lab_frame.take()) {
@@ -984,7 +994,18 @@ impl Game for RetailPlay {
             p.force_phase = if self.shot_pending.is_some() { a } else { None };
         }
         let frame = self.frame.take();
-        let pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
+        let mut pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
+        if self.rollback_mode {
+            // the pose record lives in the arena: a snapshot load (lab load / rewind, rollback) rewrites it while the
+            // interpolator still holds the previous one, so the presenter gets a system-heap copy (as frames are
+            // detached, play_net::Detacher) and the arena original is freed inside the game scope
+            pose = pose.map(|a| {
+                let c = std::sync::Arc::new((*a).clone());
+                let _s = melee_engine::arena::GameScope::enter();
+                drop(a);
+                c
+            });
+        }
         let p = self.presenter.as_mut().unwrap();
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         if let Some(pk) = self.packed.take() {

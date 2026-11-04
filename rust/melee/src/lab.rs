@@ -32,6 +32,7 @@ const BTN_B: u16 = 0x200;
 const BTN_X: u16 = 0x400;
 const BTN_L: u16 = 0x40;
 const BTN_R: u16 = 0x20;
+const BTN_START: u16 = 0x1000;
 
 fn is_idle(m: i32) -> bool {
     matches!(m, 14..=23 | 25..=34 | 39..=42 | 179)
@@ -770,6 +771,13 @@ impl LabRun {
         }
         let f = self.f;
         let mut pads = live;
+        // START belongs to the Lab (freeze, lab-ui-spec.md 4): the game never sees it, except with L+R+A held (the
+        // retail pause, so L+R+A+START still quits the match)
+        for p in pads.iter_mut() {
+            if p.button & (BTN_L | BTN_R | BTN_A) != BTN_L | BTN_R | BTN_A {
+                p.button &= !BTN_START;
+            }
+        }
         let replaying = self.replay_until.is_some_and(|e| f < e);
         if replaying {
             pads = self.log[(f - self.log_f0) as usize];

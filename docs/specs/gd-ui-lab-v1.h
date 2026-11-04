@@ -132,6 +132,8 @@ int      gd_ui_match_start(const void* setup, unsigned len);     /* GD_ESTATE un
  * queued as a 16-byte lab command (GAP-13) and returns the frame it applies on (>= 0), or an error. Offline it applies
  * on the next lab frame; in LAB_NETPLAY it rides the lockstep stream with this peer's pad of that frame and both peers
  * apply it on that frame (host's commands first). At most 8 commands per peer per frame; more wait for later frames.
+ * A lab match (offline or LAB_NETPLAY) is untimed unless the command line sets a time (--time-secs), and START belongs
+ * to the Lab: the sim never sees it unless L+R+A are held (the retail pause, so L+R+A+START still quits).
  *
  * Command record (little-endian): u8 op, u8 port, u16 a, u32 b, u32 c, u32 d. Version GD_LAB_CMD_VERSION (part of
  * the netplay handshake's mod digest). Ops: 1 SAVE(a slot) 2 LOAD(a slot) 3 RING(a frames) 4 REWIND(b n) 5 PAUSE(a on)
@@ -231,6 +233,9 @@ int      gd_lab_frame_adv(unsigned port_a, unsigned port_b);  /* after the last 
 int      gd_lab_events(void* out, unsigned max);      /* the last frame's */
 int      gd_lab_events_range(int from, int to, void* out, unsigned max);  /* GAP-1: the last 600 frames */
 int      gd_lab_meter(unsigned port, unsigned char* out, unsigned n);      /* GAP-8: last n cells, oldest first */
+int      gd_lab_applied(void* out, unsigned max); /* the commands applied on the last lab frame, in apply order: 20 bytes
+                                                     each = u8 issuer (0 offline / host, 1 guest), 3 zero, the 16-byte
+                                                     command record (the other player's actions as toasts online) */
 int      gd_lab_status(int* out10);  /* active, match frame, paused, replaying, ring frames, ring length, command delay,
                                         recording mask, issuer (0 host / offline, 1 guest), apply frame */
 

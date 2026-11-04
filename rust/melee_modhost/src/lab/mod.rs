@@ -252,6 +252,9 @@ pub struct LabShared {
     pub apply_frame: i32,
     /// Commands issued since the play flow last drained them.
     pub outbox: Vec<LabCmd>,
+    /// The commands applied on the last command-clock frame with their issuer (0 offline / host, 1 guest), in apply
+    /// order: `gd_lab_applied` (the other player's actions as toasts online).
+    pub applied: Vec<(u8, LabCmd)>,
     /// Which side issues recording handles (0 offline / host, 1 guest): the top bits of a handle.
     pub issuer: u8,
     rec_next: u8,
@@ -292,6 +295,7 @@ impl Default for LabShared {
             active: false,
             apply_frame: 0,
             outbox: Vec::with_capacity(64),
+            applied: Vec::with_capacity(2 * LAB_CMDS_PER_FRAME),
             issuer: 0,
             rec_next: 1,
             match_frame: 0,
@@ -641,6 +645,21 @@ pub fn link(l: &mut Linker<PresData>) -> Result<(), String> {
         if port > 3 { return GD_EINVAL }
         let v: Vec<u8> = { let s = l.borrow(); let m = &s.meter[port as usize]; m.iter().skip(m.len().saturating_sub(n as usize)).copied().collect() };
         if write(&mut c, out, &v) { v.len() as i32 } else { GD_EINVAL }
+    });
+    // the last frame's applied commands: 20 bytes each = u8 issuer (0 offline / host, 1 guest), 3 zero, the 16-byte record
+    f!("gd_lab_applied", |mut c: Caller<'_, PresData>, out: u32, max: u32| -> i32 {
+        let l = match gate(&c, 0) { Ok(l) => l, Err(e) => return e };
+        let mut b = [0u8; 20 * 2 * LAB_CMDS_PER_FRAME];
+        let n = {
+            let s = l.borrow();
+            let n = s.applied.len().min(max as usize).min(2 * LAB_CMDS_PER_FRAME);
+            for (i, (side, cmd)) in s.applied[..n].iter().enumerate() {
+                b[i * 20] = *side;
+                b[i * 20 + 4..i * 20 + 20].copy_from_slice(&cmd.to_bytes());
+            }
+            n
+        };
+        if write(&mut c, out, &b[..n * 20]) { n as i32 } else { GD_EINVAL }
     });
     // status: i32 x 10 = active, match frame, paused, replaying, ring frames, ring length, command delay, recording mask,
     // issuer (0 offline / host, 1 guest), apply frame of a command issued now

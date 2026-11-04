@@ -1,0 +1,20 @@
+# The LAB (lab-ui-spec.md): a gd-ui-v1 / gd-lab-v1 presentation mod. Built by tools/rust-port/modhost/build_mods.sh.
+[package]
+name = "lab"
+version = "0.1.0"
+edition = "2021"
+license = "CC0-1.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+gd_ui_enc = { path = "../gd_ui_enc" }
+
+[profile.release]
+opt-level = "s"
+panic = "abort"
+lto = true
+
+[workspace]

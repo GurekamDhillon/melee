@@ -1,10 +1,25 @@
-# LAB: product and UI spec (design, not implemented)
+# LAB: product and UI spec (M0-M2 implemented, M4 HUD part)
 
 This is the product and UI spec for the new LAB. The LAB is a wasm presentation mod on **gd-ui-v1 / gd-lab-v1**
 (`wasm-ui-lab-api.md`, including its 2-player amendment). This is a fresh design. GD's old LAB
 (`pc/geno/mods/geno-lab`) is used only as a feature checklist: none of its art, palette, icons or layout is
 reused. The visual source is our own design canvas (Kit, Styles, Hud boards). It contains no disc data. Values
 below are copied from it exactly; it is not copied into the repo.
+
+## Status: the LAB mod (`rust/mods/lab`)
+
+| milestone | state |
+|---|---|
+| M0 | GAP-0, 13, 14 were in the API already; added: `gd_lab_applied` (who applied which command, for "P2 rewound" toasts online), untimed lab matches (`melee_core::codes::lab_untimed`, cleared in `fn_8016E730`, unless `--time-secs`), START owned by the Lab (stripped from the sim's pads in `LabRun::tick` unless L+R+A are held). GAP-17 fonts: the parallel font work in `melee_gx` `ui.rs`; the mod uses only the text roles, so it picks the fonts up unchanged |
+| M1 | parts 1 panel, 2 chip, 3 toast, 5 readout list, 7 button hint, theme A tokens, Clean preset |
+| M2 | START freeze, frame step (D-left / D-right, hold to repeat; L / R 10 frames), A take over, B resume, scrubber (part 8: played part, playhead, save diamonds, hit dots from `gd_lab_events_range`), D-down save / D-up load to the current slot, Z + D-left / D-right slot pick, slot cards (part 12, no thumbnails: GAP-3) |
+| M4 (part) | frame meter (part 4, stun hatch), move readout (from the observed frame data of P1's last move with a hitbox), state readout (action names from the decomp's ftCommon enum, `tools/rust-port/modhost/lab_names.py`), dummy panel (defaults until the M3 menu), combo panel, input display (part 6, numpad history); Frame data and Full presets; Z + D-up cycles the preset |
+| online | freeze / rewind / step / load apply to both players (no consent prompt, open question 4 decided); the other player's action shows as a toast |
+
+Layout: the presets are laid out on 1280x720 and scaled to fit the window (`SPACE_WINDOW`); a 4:3 window gets the
+extra height, the frozen widgets sit above the percent-row keep-out. Measured in the game (1280x960 window, retail
+flow, Full preset with the frozen scrubber part of the run): gd_ui present p50 63 us, p99 157 us (all UI host work plus
+the mod), 1 UI draw call per present, about 1500 quads; 0 allocations in the mod (no_std, no alloc).
 
 ## 1. Product
 

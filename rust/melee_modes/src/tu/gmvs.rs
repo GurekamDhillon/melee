@@ -2016,6 +2016,11 @@ pub unsafe fn fn_8016E730(arg0: *mut StartMeleeData) {
         *HSD_RandSeedPtr = ext::Replay_ApplyMatch(arg0 as *mut c_void);
     }
     ext::FighterControls_MatchBegin(arg0 as *mut c_void);
+    // gd-lab-v1: a Lab mod's match is untimed (no timer, no time-out), before anything reads the rules
+    if melee_core::codes::lab_untimed() {
+        (*arg0).rules.set_timer_enabled(0);
+        (*arg0).rules.time_limit = 0;
+    }
     // gameplay codes: per-match state (hand-warmers from this match's rules, LGL counters)
     melee_core::codes::match_begin((*arg0).rules.is_stock() != 0, (*arg0).rules.timer_enabled() != 0, (*arg0).rules.time_limit);
     // MELEE_SLP_RECORD: the same point, for the port's own replays

@@ -1709,6 +1709,8 @@ pub fn play(args: &[String]) -> ExitCode {
             eprintln!("play: --np-lab needs a Lab mod in MELEE_WASM_MODS");
             return ExitCode::from(2);
         }
+        // lab matches are untimed (lab-ui-spec.md 5.2) where the Lab runs them: offline or --np-lab, unless --time-secs asks
+        melee_core::codes::set_lab_untimed(lab_mod && (net.is_none() || has("--np-lab")) && sync_k.is_none() && feed.is_none() && get("--time-secs").is_none());
         let rollback_mode = net.is_some() || sync_k.is_some() || seekable || feed.as_ref().map_or(false, |f| f.r.flags & 1 != 0) || lab_mod;
         if rollback_mode {
             crate::play_net::prepare_rollback_run();

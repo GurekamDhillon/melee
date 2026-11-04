@@ -30,6 +30,12 @@ pub enum NativeButton {
     DpadDown,
     DpadLeft,
     DpadRight,
+    /// Digital ZL / ZR / L2 / R2 (pads whose triggers are buttons, and the trigger click of analog ones).
+    LeftTrigger2,
+    RightTrigger2,
+    /// Extra face buttons some HID pads and boxes report (gilrs `C` / `Z`).
+    C,
+    Z,
 }
 
 /// One gamepad's raw state, SDL conventions.
@@ -45,6 +51,9 @@ pub struct RawGamepad {
     pub trigger_l: i16,
     pub trigger_r: i16,
     pub has_rumble: bool,
+    /// What the device is (profiles.rs), from its USB ids and name; read only by controller profiles.
+    pub family: crate::profiles::Family,
+    pub name: String,
 }
 
 /// `g_defaultButtonsStandard`.

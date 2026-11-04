@@ -316,6 +316,8 @@ impl RbGame for ModesGame {
                 rs.set_logic_seed(0x0BAD_5EED);
             }
         }
+        // the define audio's start ledger (geno_host: real-time clips, keyed by start frame)
+        melee_engine::geno_host::net_frame(self.frame() + 1, resim);
         self.step(p);
         melee_engine::gxbridge::shim().set_suppress_draws(false);
         unsafe { melee_runtime::tu::pobj::ext::gx_suppress_draws = 0 };
@@ -687,7 +689,9 @@ impl RoomEnv for PlayEnv {
     }
     fn scene_check(&self, p: &ParsedScene) -> Result<(), String> {
         for t in [&p.host_tok, &p.guest_tok] {
-            if !(0..=25).contains(&self.ck_for_token(t)) {
+            let ck = self.ck_for_token(t);
+            // a retail VS fighter, or a mounted Geno define (the mods identity check made both peers mount the same)
+            if !(0..=25).contains(&ck) && !(ck >= 34 && melee_engine::geno_host::DefineBaseCK(ck) >= 0) {
                 return Err(format!("fighter {t} is not a VS fighter"));
             }
         }
@@ -1238,6 +1242,7 @@ impl NetDriver {
             room.release();
             self.net = room.net.take();
         }
+        melee_engine::geno_host::net_begin();
         self.phase = NetPhase::InMatch(Box::new(ModesGame::new(e)));
         log(&format!("netplay {}: match scene, waiting for the peer", self.tag()));
     }
@@ -1347,6 +1352,7 @@ impl NetDriver {
         let p = local;
         s.pad_latch(0, p.button as i32, p.stickX as i32, p.stickY as i32, p.substickX as i32, p.substickY as i32, p.triggerLeft as i32, p.triggerRight as i32, p.analogA as i32, p.analogB as i32, 0);
         run_tick(&mut s, g, None);
+        melee_engine::geno_host::net_confirmed(s.confirmed_frame());
         if let Some(e) = self.early.as_mut() {
             let slot = if self.host { 0 } else { 2 };
             let newest = s.current_frame() + s.cfg.delay + 1;

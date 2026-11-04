@@ -124,6 +124,9 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   game itself fills inside the game scope live in the arena and roll back consistently. Audit (#42): the statics of
   melee / melee_platform / melee_gx are OnceLocks set before the match, the test-only log capture, and
   `melee_gx`'s thread-local error guard (empty between calls); no wgpu handle is stored in game memory.
+  Geno define audio (port/genorb): the clip cache / PCM / start ledger are in `geno_host::GnHost` (system heap, set-once
+  pointer `GN_HOST`, every change under `host_heap`), the mixer's native clip slots in `Ax`'s boxed `ClipBank`; resim and
+  confirmed frames reach it through `geno_host::net_frame` / `net_confirmed` called by the harness (no rewritten static).
 - #42 (windowed peers losing the GPU device, "Texture with 'GX texture' label is invalid"): `detach_frame` made
   fresh `Arc`s every frame, and the renderer caches GPU textures by the data `Arc`'s address, so every texture
   missed every frame: ~63k live textures, ~2.7 GB of video memory per peer by the 600-frame eviction (offline:

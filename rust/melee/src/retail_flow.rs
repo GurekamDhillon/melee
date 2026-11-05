@@ -121,6 +121,12 @@ pub struct RetailPlay {
     lab_frame: Option<u32>,
     /// The lab RNG's seed (the agreed netplay seed, else the test seed).
     pub lab_seed: u32,
+    /// Launched as the LAB (`MELEE_SCENE=mode=lab..`, the browser's Modes / LAB relaunch): only then does a loaded Lab
+    /// mod take the engine offline. Any other match with lab.wasm loaded is ordinary play (START pauses, no HUD).
+    pub lab_launch: bool,
+    /// MELEE_PRESENT_DUMP's count so far.
+    dumped: u64,
+    dump_buf: Vec<(std::path::PathBuf, (u32, u32, Vec<u8>))>,
     /// `--np-spectate`: the match host's spectate service (spectate.rs).
     pub spec_server: Option<crate::spectate::SpecServer>,
     /// `--spectate`: this run is a spectator; the feed's records arrive from the host.
@@ -142,7 +148,7 @@ impl RetailPlay {
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
-            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345,
+            lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
             spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
@@ -193,6 +199,7 @@ impl RetailPlay {
                     // are the port's kit screens, which the retail flow does not run: the scene launches its match only.
                     Ok(s) if s.game_mode == melee_modes::tu::geno_lab_mode::GM_LAB as i32 && matches!(s.entry_state, -1 | 2) => {
                         log("MELEE_SCENE: Geno LAB match (mode=lab)");
+                        self.lab_launch = v.split(';').any(|kv| kv.trim().eq_ignore_ascii_case("mode=lab"));
                         self.presets.scenario = Some(s)
                     }
                     Ok(s) if s.game_mode == melee_modes::tu::geno_lab_mode::GM_LAB as i32 => log("MELEE_SCENE: mode=lab launches the LAB match only (its CSS/SSS are kit screens, not in the retail flow)"),
@@ -439,7 +446,7 @@ impl RetailPlay {
             } else if let Some(ps) = self.sync.as_mut() {
                 ps.g = Some(Box::new(ModesGame::new(self.e.take().unwrap())));
                 return self.step(four);
-            } else if self.feed.is_none() && self.rollback_mode {
+            } else if self.feed.is_none() && self.rollback_mode && self.lab_launch {
                 if let Some(sh) = self.ui.as_ref().and_then(|u| u.lab.clone()) {
                     // offline Lab: the lab takes the engine for the match (snapshots need the rollback run modes)
                     self.lab = Some(crate::lab::LabRun::new(ModesGame::new(self.e.take().unwrap()), sh, self.lab_seed));
@@ -1124,6 +1131,13 @@ impl RetailPlay {
                 Ok(mut p) => {
                     melee_engine::gxbridge::shim().gx.set_pipe_factory(p.renderer.pipe_factory());
                     p.offthread_drop = Some(|q| !melee_engine::arena::contains(q));
+                    let want = melee_gx::render::Renderer::env_msaa();
+                    if p.renderer.samples != want {
+                        log(&format!("video: MSAA {want}x is not supported for the EFB formats on this GPU: clamped to {}x", p.renderer.samples));
+                    }
+                    if let Some(o) = self.settings.as_mut() {
+                        o.refresh_msaa();
+                    }
                     self.presenter = Some(p)
                 }
                 Err(e) => {
@@ -1183,6 +1197,25 @@ impl RetailPlay {
             }
         }
         p.present_posed(&melee_engine::gxbridge::shim().gx.state, frame, pose, a);
+        // MELEE_PRESENT_DUMP="TICK,N": the window as shown for N consecutive presents from tick TICK, in-between
+        // (interpolated) presents included: present_<tick>_<k>_<alpha>.png in the shot dir (interpolation evidence)
+        if let (Some(dir), Ok(v)) = (self.shot_dir.clone(), std::env::var("MELEE_PRESENT_DUMP")) {
+            let mut it = v.split(',').filter_map(|x| x.trim().parse::<u64>().ok());
+            if let (Some(t0), Some(n)) = (it.next(), it.next()) {
+                if self.tick_no as u64 >= t0 && self.dumped < n {
+                    // kept in memory until the last one (a PNG per present would stretch the presents apart)
+                    let shot = p.screenshot_window();
+                    let path = dir.join(format!("present_{:05}_{:04}_{:.3}.png", self.tick_no, self.dumped, a.unwrap_or(-1.0)));
+                    self.dump_buf.push((path, shot));
+                    self.dumped += 1;
+                    if self.dumped == n {
+                        for (path, (w, h, px)) in self.dump_buf.drain(..) {
+                            let _ = write_png(&path, w, h, &px);
+                        }
+                    }
+                }
+            }
+        }
         self.emit_shot();
         if let Some(e) = self.presenter.as_ref().and_then(|p| p.renderer.gpu_fault()) {
             self.failed = Some(format!("GPU error, stopping: {e}"));

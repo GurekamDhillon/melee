@@ -133,9 +133,18 @@ impl Display {
             Some(v) => parse_scale(&v).ok_or_else(|| bad("render-scale", &v))?,
             None => None,
         };
-        let msaa = match get("--msaa").or_else(|| lookup("msaa")) {
+        // a saved msaa never stops the game: one it cannot read is off, other counts round down (the renderer then
+        // clamps to what the GPU supports); the command-line flag stays strict
+        let msaa = match get("--msaa") {
             Some(v) => parse_msaa(&v).ok_or_else(|| bad("msaa", &v))?,
-            None => 1,
+            None => match lookup("msaa") {
+                Some(v) => parse_msaa(&v).unwrap_or_else(|| {
+                    let n = v.trim().trim_end_matches(['x', 'X']).parse::<u32>().map_or(1, |n| [8u32, 4, 2, 1].into_iter().find(|&k| k <= n).unwrap_or(1));
+                    eprintln!("display: saved msaa '{}' is not 1/2/4/8: using {n}", v.trim());
+                    n
+                }),
+                None => 1,
+            },
         };
         let vsync = match get("--vsync").or_else(|| lookup("vsync")) {
             Some(v) => parse_bool(&v).ok_or_else(|| bad("vsync", &v))?,

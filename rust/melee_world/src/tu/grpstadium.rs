@@ -21,6 +21,8 @@ use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::cabi::f2i32;
 use melee_types::inline::*;
 use melee_types::*;
@@ -2049,7 +2051,7 @@ pub unsafe extern "C" fn grStadium_801D4548(gobj: *mut HSD_GObj) {
             let temp_r27_2 = (*(*temp_r31).u.stadium.xE4).hsd_obj as *mut HSD_JObj;
             let temp_r30 = temp_r27_2;
             let mut temp_f29 = HSD_JObjGetScaleY(&*temp_r30);
-            temp_f29 = fmadds(-temp_f31, 0.95f32 / (*yp).x14 as f32, temp_f29);
+            temp_f29 = fnmsubs(temp_f31, 0.95f32 / (*yp).x14 as f32, temp_f29);
             let temp_f30 = 0.05f32 * temp_f31;
             if temp_f29 > temp_f30 {
                 HSD_JObjSetScaleY(&mut *temp_r30, temp_f29, &mut Dirty);

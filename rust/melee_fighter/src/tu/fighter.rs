@@ -13,7 +13,7 @@
 
 use crate::hooks as h;
 use crate::types::*;
-use melee_core::fp::fmadds;
+use melee_core::fp::{fmadds, fnmsubs};
 use melee_types::inline::*;
 
 pub use crate::fighter::{
@@ -2236,8 +2236,8 @@ unsafe fn Fighter_procUpdate__orig(g: G) {
                         fp.x8c_kb_vel.x = 0.0;
                         fp.x8c_kb_vel.y = 0.0;
                     } else {
-                        fp.x8c_kb_vel.x = fmadds(-d, cosf(a), fp.x8c_kb_vel.x); // fused
-                        fp.x8c_kb_vel.y = fmadds(-d, sinf(a), fp.x8c_kb_vel.y); // fused
+                        fp.x8c_kb_vel.x = fnmsubs(d, cosf(a), fp.x8c_kb_vel.x); // fnmsubs: -0 on exact zero
+                        fp.x8c_kb_vel.y = fnmsubs(d, sinf(a), fp.x8c_kb_vel.y); // fnmsubs: -0 on exact zero
                     }
                 }
                 fp.xF0_ground_kb_vel = 0.0;
@@ -2264,8 +2264,8 @@ unsafe fn Fighter_procUpdate__orig(g: G) {
                     fp.x8c_kb_vel.y = 0.0;
                     fp.x98_atk_shield_kb.x = 0.0;
                 } else {
-                    fp.x98_atk_shield_kb.x = fmadds(-d, cosf(a), fp.x98_atk_shield_kb.x); // fused
-                    fp.x98_atk_shield_kb.y = fmadds(-d, sinf(a), fp.x98_atk_shield_kb.y); // fused
+                    fp.x98_atk_shield_kb.x = fnmsubs(d, cosf(a), fp.x98_atk_shield_kb.x); // fnmsubs
+                    fp.x98_atk_shield_kb.y = fnmsubs(d, sinf(a), fp.x98_atk_shield_kb.y); // fnmsubs
                 }
                 fp.xF4_ground_attacker_shield_kb_vel = 0.0;
             } else {

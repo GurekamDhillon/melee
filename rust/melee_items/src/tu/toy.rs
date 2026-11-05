@@ -34,6 +34,8 @@
 
 use core::ffi::c_void;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::gekko::{cosf, sinf};
 use melee_types::inline::*;
 use melee_types::*;
@@ -3681,7 +3683,7 @@ pub unsafe extern "C" fn _Toy_8030E110(arg0: *mut HSD_GObj) {
             if moved_x == 0.0 {
                 let sy = (*state).x34;
                 if sy != 0.0 {
-                    (*state).x20 = fmadds(-(*state).x20, 0.025f32 * sy, (*state).x20); // fused
+                    (*state).x20 = fnmsubs(((*state).x20), 0.025f32 * sy, (*state).x20); // fused
                     moved_y = 1.0;
                 }
                 if (*state).x20 < 5.0 {

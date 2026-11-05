@@ -97,6 +97,8 @@ use crate::layout::It_Kind_RabbitC;
 #[allow(unused_imports)]
 use melee_core::fp::fmsubs;
 #[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
+#[allow(unused_imports)]
 use melee_core::vec::Vec3 as RVec;
 #[allow(unused_imports)]
 use melee_runtime::lbvector;
@@ -519,7 +521,7 @@ pub unsafe extern "C" fn itNesspkthunderball_UnkMotion0_Phys(gobj: *mut Item_GOb
                 if cross.z > 0.0 {
                     (*ip).xDD4_itemVar.pkthunder.angles[0] = fmadds((*attr).x10_PKTHUNDER_TURN_RADIUS, 0.01745329252f32, (*ip).xDD4_itemVar.pkthunder.angles[0]);
                 } else if cross.z < 0.0 {
-                    (*ip).xDD4_itemVar.pkthunder.angles[0] = fmadds(-(*attr).x10_PKTHUNDER_TURN_RADIUS, 0.01745329252f32, (*ip).xDD4_itemVar.pkthunder.angles[0]);
+                    (*ip).xDD4_itemVar.pkthunder.angles[0] = fnmsubs(((*attr).x10_PKTHUNDER_TURN_RADIUS), 0.01745329252f32, (*ip).xDD4_itemVar.pkthunder.angles[0]);
                 }
             }
             if angle < MTXDegToRad(45.0) {

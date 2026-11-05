@@ -2034,19 +2034,19 @@ pub unsafe extern "C" fn fn_8025F0E0(gobj: *mut HSD_GObj) {
             if (*misc).cpu_level != (*misc).cpu_level_shown {
                 if (*misc).cpu_level < (*misc).cpu_level_shown {
                     (*misc).cpu_slider_x += 31.0f32;
-                    if (*misc).cpu_slider_x >= fmadds(-248.0f32, (*misc).cpu_level as f32, 124.0f32) {
+                    if (*misc).cpu_slider_x >= melee_core::fp::fnmsubs(248.0f32, (*misc).cpu_level as f32, 124.0f32) {
                         (*misc).cpu_level_shown = (*misc).cpu_level;
                     }
                 } else {
                     (*misc).cpu_slider_x = (*misc).cpu_slider_x - 31.0f32;
-                    if (*misc).cpu_slider_x <= fmadds(-248.0f32, (*misc).cpu_level as f32, 124.0f32) {
+                    if (*misc).cpu_slider_x <= melee_core::fp::fnmsubs(248.0f32, (*misc).cpu_level as f32, 124.0f32) {
                         (*misc).cpu_level_shown = (*misc).cpu_level;
                     }
                 }
             }
             if (*misc).cpu_level == (*misc).cpu_level_shown {
                 (*misc).scroll_flag = 0;
-                (*misc).cpu_slider_x = fmadds(-248.0f32, (*misc).cpu_level as f32, 124.0f32);
+                (*misc).cpu_slider_x = melee_core::fp::fnmsubs(248.0f32, (*misc).cpu_level as f32, 124.0f32);
             }
             {
                 for j in 0..5i32 {

@@ -469,10 +469,10 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
                 } else {
                     // 1.0 - ((x - (0.5 * (L + R))) / (R - (0.5 * (L + R))))
                     let sum1 = ext::Stage_GetCamBoundsLeftOffset() + ext::Stage_GetCamBoundsRightOffset();
-                    let num = fmadds(-0.5, sum1, world_pos.x);
+                    let num = melee_core::fp::fnmsubs(0.5, sum1, world_pos.x);
                     let r3 = ext::Stage_GetCamBoundsRightOffset();
                     let sum2 = ext::Stage_GetCamBoundsLeftOffset() + ext::Stage_GetCamBoundsRightOffset();
-                    let den = fmadds(-0.5, sum2, r3);
+                    let den = melee_core::fp::fnmsubs(0.5, sum2, r3);
                     x_blend = 1.0f32 - (num / den);
                 }
             }

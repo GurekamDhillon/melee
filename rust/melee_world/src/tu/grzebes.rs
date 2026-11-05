@@ -30,6 +30,8 @@ use crate::gr::forward::*;
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::gekko::sqrtf;
 use melee_types::*;
 
@@ -2738,7 +2740,7 @@ pub unsafe extern "C" fn grZebes_801DC744(arg0: i32, arg1: u8) {
         y_start = grZe_8049F158[0].y;
         bubble_r = (*yakumono_param).x74;
         x_base = p_x + bubble_r;
-        x_range = fmadds(-2.0, bubble_r, (*base.add(1)).x - p_x);
+        x_range = fnmsubs(2.0, bubble_r, (*base.add(1)).x - p_x);
         y_range = (*base.add(1)).y - y_start;
 
         grZebes_801DAE70(7, arg1, (0.5f64).mul_add(x_range as f64, x_base as f64) as f32, (0.5f64).mul_add(y_range as f64, y_start as f64) as f32, 1.0);

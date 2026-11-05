@@ -5,6 +5,8 @@
 //! contraction) by tests/tu_ftCo_TurnRun.rs.
 use crate::types::*;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 
 pub type G = *mut HSD_GObj;
 
@@ -150,7 +152,7 @@ pub fn ftCo_TurnRun_Phys(g: G) {
         if accel > 0.0 {
             if f.gr_vel + accel > target_vel {
                 // `accel -= a * b`: one fmuladd -> fmadds.
-                accel = fmadds(-gf, mul, accel);
+                accel = fnmsubs(gf, mul, accel);
                 if f.gr_vel + accel < target_vel {
                     accel = target_vel - f.gr_vel;
                 }

@@ -131,9 +131,9 @@ void it_802AFF08(Item_GObj* gobj, Fighter_GObj* owner)
     ip->x40_vel.y = attr->x8 * sinf(ip->xDD4_itemVar.seakneedlethrown.xDF0);
     ip->x40_vel.z = 0.0f;
     ip->xDD4_itemVar.seakneedlethrown.xDE4.x =
-        ip->pos.x - 3.0f * ip->x40_vel.x;
+        GW_FNMSUB(3.0f, ip->x40_vel.x, ip->pos.x);
     ip->xDD4_itemVar.seakneedlethrown.xDE4.y =
-        ip->pos.y - 3.0f * ip->x40_vel.y;
+        GW_FNMSUB(3.0f, ip->x40_vel.y, ip->pos.y);
     ip->xDD4_itemVar.seakneedlethrown.xDE4.z = 0.0f;
     HSD_JObjSetRotationX(
         child,

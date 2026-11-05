@@ -28,6 +28,8 @@ use super::grinl::*;
 use core::ffi::c_void;
 use core::ptr::{addr_of, addr_of_mut, null_mut};
 use melee_core::fp::{fmadds, fmsubs};
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::gekko::{cosf, sinf, sqrtf};
 use melee_types::*;
 
@@ -3333,7 +3335,7 @@ pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
     heading_osc = (*l).amplitude * sinf((*l).rotation);
 
     // Compute ground reference level: (pos.y - x2C * scale) - height - heading_osc
-    rank_factor = fmadds(-(*yakumono_param).x2C, Ground_801C0498(), (*l).pos.y) - (*l).height - heading_osc;
+    rank_factor = fnmsubs(((*yakumono_param).x2C), Ground_801C0498(), (*l).pos.y) - (*l).height - heading_osc;
 
     // Collision/grounding check
     'converge: {
@@ -3352,10 +3354,10 @@ pub unsafe extern "C" fn grBigBlue_801ED694(gobj: *mut HSD_GObj, lane: s32) {
             if -F32_MAX != ground_y {
                 // angular_velocity -= 3 * (x80 * scale)
                 let inner = (*yakumono_param).x80 * Ground_801C0498();
-                (*l).angular_velocity = fmadds(-3.0, inner, (*l).angular_velocity);
+                (*l).angular_velocity = fnmsubs(3.0, inner, (*l).angular_velocity);
             } else {
                 // angular_velocity -= x80 * scale
-                (*l).angular_velocity = fmadds(-(*yakumono_param).x80, Ground_801C0498(), (*l).angular_velocity);
+                (*l).angular_velocity = fnmsubs(((*yakumono_param).x80), Ground_801C0498(), (*l).angular_velocity);
             }
 
             // Lateral position += angular velocity
@@ -3436,7 +3438,7 @@ pub unsafe extern "C" fn grBigBlue_801EDF44(gobj: *mut HSD_GObj, index: s32) -> 
             let mut blast = Stage_GetBlastZoneLeftOffset();
             let scale = Ground_801C0498();
 
-            blast = fmadds(-(*yakumono_param).x68, scale, blast);
+            blast = fnmsubs(((*yakumono_param).x68), scale, blast);
             if (*ln).pos.x < blast {
                 if 0.0f32 != (*ln).alpha {
                     result = 9;
@@ -3783,7 +3785,7 @@ pub unsafe extern "C" fn grBigBlue_801EEF00(gobj: *mut HSD_GObj, index: s32) -> 
                     scale = Ground_801C0498();
                     // velocity * norm + pos.x - norm * (0.5 * (x28 * scale) * norm)
                     let head = fmadds((*c).velocity, norm, (*c).pos.x);
-                    let predicted = fmadds(-norm, 0.5f32 * ((*yakumono_param).x28 * scale) * norm, head);
+                    let predicted = fnmsubs(norm, 0.5f32 * ((*yakumono_param).x28 * scale) * norm, head);
 
                     if predicted < target {
                         scale = Ground_801C0498();
@@ -3800,7 +3802,7 @@ pub unsafe extern "C" fn grBigBlue_801EEF00(gobj: *mut HSD_GObj, index: s32) -> 
                 } else {
                     scale = Ground_801C0498();
                     let head = fmadds((*c).velocity, norm, (*c).pos.x);
-                    let predicted = fmadds(-norm, 0.5f32 * -((*yakumono_param).x28 * scale) * norm, head);
+                    let predicted = fnmsubs(norm, 0.5f32 * -((*yakumono_param).x28 * scale) * norm, head);
 
                     if predicted < target {
                         scale = Ground_801C0498();

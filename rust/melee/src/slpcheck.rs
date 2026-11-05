@@ -54,7 +54,9 @@ pub fn convert(s: &Slp) -> Result<Converted, String> {
         scn.players[i] = Some(PlayerSpec {
             ckind: p.ckind as i32,
             slot_type: 0,
-            cpu_level: -1,
+            // the console keeps the Game Start's level byte for humans too (it seeds ftCo_800B9704's cpu.x34;
+            // Dolphin oracle, 18e83ec4: level 1 -> 178, our default 0 -> 196)
+            cpu_level: p.cpu_level as i32,
             color: p.costume as i32,
             team: if info.is_teams() { p.team as i32 } else { -1 },
             stocks: p.stocks as i32,

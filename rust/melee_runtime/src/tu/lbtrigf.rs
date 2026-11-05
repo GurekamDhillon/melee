@@ -159,7 +159,7 @@ pub fn atan2f_fp(y: f32, x: f32) -> f32 {
 /// `acosf`.
 pub fn acosf(x: f32) -> f32 {
     melee_core::ct!("acosf");
-    let mut result = fmadds(-x, x, 1.0); // 1.0F - x * x, fused
+    let mut result = fnmsubs(x, x, 1.0); // 1.0F - x * x, fused
     if result > 0.0 {
         let mut guess = frsqrte_lbtrigf(result as f64) as f32;
         guess = nr_step_f_lbtrigf(guess, result);

@@ -91,7 +91,12 @@ static inline float fmodf(float a, float b)
         return a;
     }
     quotient = a / b;
+#if defined(TARGET_PC)
+    /* MWCC: fnmsubs, -(b*q - a): an exact multiple gives -0.0 (clang's fmuladd(-b, q, a): +0.0) */
+    return -(b * quotient - a);
+#else
     return a - b * quotient;
+#endif
 }
 
 #endif

@@ -314,8 +314,8 @@ void itNesspkthunderball_UnkMotion0_Phys(Item_GObj* gobj)
                     ip->xDD4_itemVar.pkthunder.angles[0] +=
                         MTXDegToRad(attr->x10_PKTHUNDER_TURN_RADIUS);
                 } else if (cross.z < 0.0f) {
-                    ip->xDD4_itemVar.pkthunder.angles[0] -=
-                        MTXDegToRad(attr->x10_PKTHUNDER_TURN_RADIUS);
+                    ip->xDD4_itemVar.pkthunder.angles[0] = GW_FNMSUB(
+                        attr->x10_PKTHUNDER_TURN_RADIUS, 0.01745329252f, ip->xDD4_itemVar.pkthunder.angles[0]);
                 }
             }
             if (angle < MTXDegToRad(45.0f)) {

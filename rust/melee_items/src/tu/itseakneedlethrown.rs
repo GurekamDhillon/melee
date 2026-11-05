@@ -193,8 +193,8 @@ pub unsafe extern "C" fn it_802AFF08(gobj: *mut Item_GObj, owner: *mut Fighter_G
     (*ip).x40_vel.x = -(*attr).x8 * cosf((*ip).xDD4_itemVar.seakneedlethrown.xDF0);
     (*ip).x40_vel.y = (*attr).x8 * sinf((*ip).xDD4_itemVar.seakneedlethrown.xDF0);
     (*ip).x40_vel.z = 0.0;
-    (*ip).xDD4_itemVar.seakneedlethrown.xDE4.x = fmadds(-3.0, (*ip).x40_vel.x, (*ip).pos.x);
-    (*ip).xDD4_itemVar.seakneedlethrown.xDE4.y = fmadds(-3.0, (*ip).x40_vel.y, (*ip).pos.y);
+    (*ip).xDD4_itemVar.seakneedlethrown.xDE4.x = melee_core::fp::fnmsubs(3.0, (*ip).x40_vel.x, (*ip).pos.x);
+    (*ip).xDD4_itemVar.seakneedlethrown.xDE4.y = melee_core::fp::fnmsubs(3.0, (*ip).x40_vel.y, (*ip).pos.y);
     (*ip).xDD4_itemVar.seakneedlethrown.xDE4.z = 0.0;
     HSD_JObjSetRotationX(
         child,

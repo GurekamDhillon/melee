@@ -44,7 +44,7 @@ float atan2f(float y, float x)
 
 float acosf(float x)
 {
-    float result = 1.0F - x * x;
+    float result = GW_FNMSUB(x, x, 1.0F);
     if (result > 0) {
         float guess;
         guess = __frsqrte(result);

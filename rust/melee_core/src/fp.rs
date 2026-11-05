@@ -28,6 +28,24 @@ pub fn fmsubs_neg(a: f32, c: f32, b: f32) -> f32 {
     (a as f64 * c as f64 + (-(b as f64))) as f32
 }
 
+/// Gekko `fnmsubs`: `-(a*c - b)`, the form MWCC emits for `b -= a*c` / `b - a*c`.
+///
+/// Same magnitude as `fmadds(-a, c, b)`, but the sign of an exact-zero result differs: `a*c == b`
+/// gives -0 here and +0 there (round-to-nearest gives +0 for an exact cancellation, then the
+/// negation flips it). The console keeps that -0 (Dolphin oracle, `x8c_kb_vel.y` in
+/// Fighter_procUpdate; notes/fp-audit.md "sign of zero").
+#[inline(always)]
+pub fn fnmsubs(a: f32, c: f32, b: f32) -> f32 {
+    -fmsubs(a, c, b)
+}
+
+/// Gekko `fnmadds`: `-(a*c + b)`, MWCC's form of `-(a*c) - b` / `-b - a*c`. An exact-zero `a*c + b`
+/// gives -0, where `fmsubs(-a, c, b)` gives +0.
+#[inline(always)]
+pub fn fnmadds(a: f32, c: f32, b: f32) -> f32 {
+    -fmadds(a, c, b)
+}
+
 // ---- Gekko estimate instructions (moved from melee_runtime::gekko; port of
 // pc/gameworld/gekko_fp.c, table and algorithm from Dolphin's FloatUtils.cpp, GPL-2.0-or-later).
 // Verified bit for bit against the C by melee_runtime/tests/oracle.rs and

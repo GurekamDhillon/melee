@@ -662,7 +662,7 @@ void grRCruise_8020071C(Ground_GObj* gobj)
     HSD_JObj* jobj = Ground_801C3FA4(gobj, 8);
     HSD_JObj* jobj5 = Ground_801C3FA4(Ground_GetMapGObj(5), 8);
     f32 abs_rot = ABS(gp->u.rcruise.x18);
-    f32 wrapped = abs_rot - (360.0f * (s32) (abs_rot / 360.0f));
+    f32 wrapped = GW_FNMSUB(360.0f, (f32) (s32) (abs_rot / 360.0f), abs_rot);
 
     switch (gp->u.rcruise.x2C) {
     case 0:

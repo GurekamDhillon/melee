@@ -19,6 +19,8 @@ use crate::tu::particle::{
 use crate::tu::psappsrt::{psAddGeneratorAppSRT_begin, psRemoveGeneratorSRT};
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 const M_PI: f64 = core::f64::consts::PI;
@@ -617,7 +619,7 @@ pub unsafe extern "C" fn hsd_8039DAD4(gen: *mut HSD_Generator) -> f32 {
                         let r0 = 1.0 / fmadds(c2, b2 + a2, b2 * a2);
                         if rnd < r0 * (c2 * b2) {
                             emit_pos.z = half_snap(emit_pos.z);
-                        } else if rnd > fmadds(-r0, c2 * a2, 1.0) {
+                        } else if rnd > fnmsubs(r0, c2 * a2, 1.0) {
                             emit_pos.y = half_snap(emit_pos.y);
                         } else {
                             emit_pos.x = half_snap(emit_pos.x);

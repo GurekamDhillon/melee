@@ -2367,6 +2367,16 @@ static void ftUcf_Cardinal(int x, int y, Vec2* out)
 #if defined(TARGET_PC)
 #include "technical_ai.inc"
 #include "cpu_assist.inc"
+
+#endif
+
+/* MWCC emits `x -= a * b` as fnmsubs, -(a*b - x): an exact-zero result is -0.0. clang's
+ * fmuladd(-a, b, x) gives +0.0. Shared console-semantics fix (Dolphin oracle, x8c_kb_vel.y;
+ * docs/rust-port/notes/fp-audit.md, "sign of zero"). */
+#if defined(TARGET_PC)
+#define GW_FNMSUB_ASSIGN(dst, a, b) ((dst) = -((a) * (b) - (dst)))
+#else
+#define GW_FNMSUB_ASSIGN(dst, a, b) ((dst) -= (a) * (b))
 #endif
 
 void Fighter_procInput(Fighter_GObj* gobj)
@@ -2973,12 +2983,8 @@ void Fighter_procUpdate(Fighter_GObj* gobj)
                     {
                         p_kb_vel->x = p_kb_vel->y = 0;
                     } else {
-                        p_kb_vel->x -=
-                            p_ftCommonData->x204_knockbackFrameDecay *
-                            cosf(kb_angle);
-                        p_kb_vel->y -=
-                            p_ftCommonData->x204_knockbackFrameDecay *
-                            sinf(kb_angle);
+                        GW_FNMSUB_ASSIGN(p_kb_vel->x, p_ftCommonData->x204_knockbackFrameDecay, cosf(kb_angle));
+                        GW_FNMSUB_ASSIGN(p_kb_vel->y, p_ftCommonData->x204_knockbackFrameDecay, sinf(kb_angle));
                     }
                 }
 
@@ -3027,12 +3033,8 @@ void Fighter_procUpdate(Fighter_GObj* gobj)
                     // p_stc_ftcommon->x3e8_shield_kb_frameDecay)/atkShieldKB_len
                     // float atkShieldKBAngle = atan2_80022C30(pAtkShieldKB->y,
                     // pAtkShieldKB->x);
-                    pAtkShieldKB->x -=
-                        p_ftCommonData->x3E8_shieldKnockbackFrameDecay *
-                        cosf(atkShieldKBAngle);
-                    pAtkShieldKB->y -=
-                        p_ftCommonData->x3E8_shieldKnockbackFrameDecay *
-                        sinf(atkShieldKBAngle);
+                    GW_FNMSUB_ASSIGN(pAtkShieldKB->x, p_ftCommonData->x3E8_shieldKnockbackFrameDecay, cosf(atkShieldKBAngle));
+                    GW_FNMSUB_ASSIGN(pAtkShieldKB->y, p_ftCommonData->x3E8_shieldKnockbackFrameDecay, sinf(atkShieldKBAngle));
                 }
                 fp->xF4_ground_attacker_shield_kb_vel = 0;
             } else {

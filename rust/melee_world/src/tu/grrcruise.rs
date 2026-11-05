@@ -592,7 +592,7 @@ pub unsafe extern "C" fn grRCruise_8020071C(gobj: *mut HSD_GObj) {
     let x18 = (*gp).u.rcruise.x18;
     let abs_rot = if x18 < 0.0 { -x18 } else { x18 };
     // abs_rot - 360.0f * (s32) (abs_rot / 360.0f): the multiply-subtract is fused
-    let wrapped = fmadds(-360.0, melee_core::ppc::fctiwz_f32(abs_rot / 360.0) as f32, abs_rot);
+    let wrapped = melee_core::fp::fnmsubs(360.0, melee_core::ppc::fctiwz_f32(abs_rot / 360.0) as f32, abs_rot);
 
     match (*gp).u.rcruise.x2C {
         0 => {

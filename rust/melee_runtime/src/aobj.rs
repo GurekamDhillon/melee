@@ -10,6 +10,8 @@
 //! Not ported: `HSD_ForeachAnim` and its per-type walkers (need JObj/DObj/MObj/PObj/TObj/
 //! LObj/CObj/WObj/RObj/Fog, not ported yet); the alloc-data pair (native allocation).
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 
 use crate::fobj::{self, HsdFObj, HsdFObjDesc, ObjUpdate};
 
@@ -98,7 +100,7 @@ pub fn fmodf(a: f32, b: f32) -> f32 {
         return a;
     }
     let q = (a / b) as i64;
-    fmadds(-b, q as f32, a)
+    fnmsubs(b, q as f32, a)
 }
 
 impl<O> HsdAObj<O> {

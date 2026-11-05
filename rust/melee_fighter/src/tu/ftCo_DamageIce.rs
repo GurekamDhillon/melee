@@ -4,6 +4,8 @@
 
 use crate::types::*;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 
 pub type G = *mut HSD_GObj;
 
@@ -304,7 +306,7 @@ pub unsafe extern "C" fn ftCo_DamageIce_OnHit2(g: G) {
     melee_core::ct!("ftCo_DamageIce_OnHit2");
     let f = fp(g);
     // `grab_timer -= pct * mult`: one fmuladd(-pct, mult, grab_timer).
-    f.grab_timer = fmadds(-f.dmg.x1838_percentTemp, cd().damageice_dmg_time_reduction_mult, f.grab_timer);
+    f.grab_timer = fnmsubs(f.dmg.x1838_percentTemp, cd().damageice_dmg_time_reduction_mult, f.grab_timer);
     if f.dmg.x1860_element == HitElement_Fire as u32 {
         f.grab_timer = 0.0;
     }

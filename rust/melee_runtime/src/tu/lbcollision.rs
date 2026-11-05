@@ -921,9 +921,11 @@ pub unsafe extern "C" fn lbColl_800077A0(a: *const Vec3, arg1: *const Mtx, b: *c
             if n1 < 0.0f32 {
                 n1 = 0.0f32;
             }
-            // the C passes `sqrt_tmp - 1` (outside the array) as the volatile spill slot of this `sqrtf_store`; clang treats the
-            // store as UB and the shipping build returns the argument unchanged (measured: sq == n1), so no sqrt is taken here
-            scl = (-n0 - n1) / (2.0f32 * dot_diff_cb);
+            // The console takes this square root (DOL 0x800079CC: frsqrte + 3 Newton steps). The C PC build passed
+            // `sqrt_tmp - 1` (outside the array) as the spill slot and clang folded the UB store away, returning n1
+            // unchanged; both builds copied that until the Dolphin oracle showed Falco's laser bouncing off a shield
+            // with a different normal (notes/fp-audit.md, "PC-only UB in a console sqrt").
+            scl = (-n0 - sqrtf_store(n1)) / (2.0f32 * dot_diff_cb);
         }
 
         let normalize_e = CVec3 {

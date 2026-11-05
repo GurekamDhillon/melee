@@ -36,6 +36,8 @@ use core::ffi::{c_char, c_void};
 use core::ptr::{addr_of_mut, null_mut};
 
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::cabi::{f2i32, sdiv};
 use melee_types::inline::{
     HSD_JObjMtxIsDirty, HSD_JObjSetScaleX, HSD_JObjSetScaleY, HSD_JObjSetScaleZ, HSD_JObjSetTranslateX,

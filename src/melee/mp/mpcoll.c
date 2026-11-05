@@ -1015,7 +1015,7 @@ void mpColl_800439FC(CollData* coll)
 
     // recalculate ceiling direction from its normal
     probe_x = (coll->ceiling.normal.y * right_dx) + right_x;
-    probe_y = -(coll->ceiling.normal.x * right_dx) + right_y;
+    probe_y = GW_FNMSUB(coll->ceiling.normal.x, right_dx, right_y);
     if (!mpCheckLeftWall(probe_x, probe_y, right_x, right_y, &coll->contact,
                          NULL, NULL, NULL, coll->joint_id_skip,
                          coll->joint_id_only))
@@ -1049,7 +1049,7 @@ void mpColl_80043ADC(CollData* coll)
     left_dx = ABS(coll->ecb.left.x);
 
     // recalculate ceiling direction from its normal
-    probe_x = -(coll->ceiling.normal.y * left_dx) + left_x;
+    probe_x = GW_FNMSUB(coll->ceiling.normal.y, left_dx, left_x);
     probe_y = (coll->ceiling.normal.x * left_dx) + left_y;
     if (!mpCheckRightWall(probe_x, probe_y, left_x, left_y, &coll->contact,
                           NULL, NULL, NULL, coll->joint_id_skip,
@@ -1105,7 +1105,7 @@ void mpColl_80043C6C(CollData* coll, int line_id, bool ignore_bottom)
     pos.y = coll->cur_pos.y + coll->ecb.right.y;
     if (mpLib_8004E398_LeftWall(line_id, &pos, NULL, NULL, NULL) != -1) {
         // recalculate floor direction from its normal
-        float floor_x = -(coll->floor.normal.y * right_dx) + pos.x;
+        float floor_x = GW_FNMSUB(coll->floor.normal.y, right_dx, pos.x);
         float floor_y = (coll->floor.normal.x * right_dx) + pos.y;
         if (mpCheckLeftWall(floor_x, floor_y, pos.x, pos.y, &coll->contact,
                             &wall_id, NULL, NULL, coll->joint_id_skip,
@@ -1187,7 +1187,7 @@ void mpColl_80043F40(CollData* coll, int line_id, bool ignore_bottom)
     if (mpLib_8004E684_RightWall(line_id, &pos, NULL, NULL, NULL) != -1) {
         // recalculate floor direction from its normal
         float floor_x = (coll->floor.normal.y * left_dx) + pos.x;
-        float floor_y = -(coll->floor.normal.x * left_dx) + pos.y;
+        float floor_y = GW_FNMSUB(coll->floor.normal.x, left_dx, pos.y);
         if (mpCheckRightWall(floor_x, floor_y, pos.x, pos.y, &coll->contact,
                              &wall_id, NULL, NULL, coll->joint_id_skip,
                              coll->joint_id_only))
@@ -1212,7 +1212,7 @@ void mpColl_80043F40(CollData* coll, int line_id, bool ignore_bottom)
         probe_y = pos.y;
         // 2.0 * (ecb bottom -> ecb left).normal() + ecb left
         pos.x = 2.0F * left_dx + probe_x;
-        pos.y = -(2.0F * (coll->ecb.left.y - coll->ecb.bottom.y)) + probe_y;
+        pos.y = GW_FNMSUB(2.0F, (coll->ecb.left.y - coll->ecb.bottom.y), probe_y);
         if (mpCheckFloor(probe_x, probe_y, pos.x, pos.y, 0.0F, &coll->contact,
                          NULL, NULL, NULL, coll->floor_skip,
                          coll->joint_id_skip, coll->joint_id_only, NULL, NULL))

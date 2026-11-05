@@ -11,6 +11,8 @@ use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 /// MSL `__fpclassifyf` (math.h; FP_NAN 1, FP_INFINITE 2, FP_ZERO 3, FP_NORMAL 4, FP_SUBNORMAL 5)
@@ -1042,7 +1044,7 @@ pub unsafe fn Camera_80029CF8(mut bounds: *mut CameraBounds, mut transform: *mut
     let _ = cm_fly_bottom();
     let _ = cm_fly_top();
     y_off = dist_y * ext::tanf(y_angle);
-    (*transform).target_interest.y = y_off + fmadds(-dist_y, tan_u, (*bounds).y_max);
+    (*transform).target_interest.y = y_off + fnmsubs(dist_y, tan_u, (*bounds).y_max);
     ext::Stage_UnkSetVec3TCam_Offset(core::ptr::addr_of_mut!(sp14) as *mut Vec);
     x_center = 0.5f32 * ((*bounds).x_min + (*bounds).x_max);
     angle = -(((x_center - sp14.x) * ext::Stage_GetCamInfoX20()) * 0.017453292f32);
@@ -1063,7 +1065,7 @@ pub unsafe fn Camera_80029CF8(mut bounds: *mut CameraBounds, mut transform: *mut
     let _ = cm_fly_left();
     let _ = cm_fly_right();
     x_off = cm_803BCB64.aspect * (dist_x * ext::tanf(angle));
-    (*transform).target_interest.x = fmadds(-dist_x, tan_r, (*bounds).x_max) - x_off;
+    (*transform).target_interest.x = fnmsubs(dist_x, tan_r, (*bounds).x_max) - x_off;
     (*transform).target_interest.z = 0.0f32;
     dist_y = if dist_y > dist_x { dist_y } else { dist_x };
     cam_dist = dist_y;
@@ -1599,7 +1601,7 @@ pub unsafe fn Camera_8002B0E0() {
         } else {
             game_camera.x2BA = melee_runtime::cabi::f2i16(cm_803BCCA0.xE0 as f64);
         }
-        game_camera.x2BC = fmadds(-var_f2, cm_803BCCA0.xD4, game_camera.x2BC);
+        game_camera.x2BC = fnmsubs(var_f2, cm_803BCCA0.xD4, game_camera.x2BC);
         if game_camera.x2BC < cm_803BCCA0.xDC {
             game_camera.x2BC = cm_803BCCA0.xDC;
             return;

@@ -178,7 +178,7 @@ void fn_8010B148(Fighter_GObj* gobj)
 void fn_8010B16C(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    fp->grab_timer -= fp->dmg.x1838_percentTemp * ftKb_SpecialNYs_80109380();
+    fp->grab_timer = GW_FNMSUB(fp->dmg.x1838_percentTemp, ftKb_SpecialNYs_80109380(), fp->grab_timer);
     if ((s32) fp->dmg.x18CC == 3 && ftCo_800C0C88(fp->dmg.x18D0) != 0) {
         fp->grab_timer = 0.0f;
     }

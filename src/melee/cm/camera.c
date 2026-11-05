@@ -974,7 +974,7 @@ void Camera_80029CF8(CameraBounds* bounds, CameraTransformState* transform)
     Stage_GetCamBoundsBottomOffset();
     Stage_GetCamBoundsTopOffset();
     y_off = dist_y * tanf(y_angle);
-    transform->target_interest.y = y_off + (bounds->y_max - dist_y * tan_u);
+    transform->target_interest.y = y_off + GW_FNMSUB(dist_y, tan_u, bounds->y_max);
     Stage_UnkSetVec3TCam_Offset(&sp14);
     x_center = 0.5f * (bounds->x_min + bounds->x_max);
     angle = -MTXDegToRad((x_center - sp14.x) * Stage_GetCamInfoX20());
@@ -997,7 +997,7 @@ void Camera_80029CF8(CameraBounds* bounds, CameraTransformState* transform)
     Stage_GetCamBoundsLeftOffset();
     Stage_GetCamBoundsRightOffset();
     x_off = cm_803BCB64.aspect * (dist_x * tanf(angle));
-    transform->target_interest.x = (bounds->x_max - dist_x * tan_r) - x_off;
+    transform->target_interest.x = GW_FNMSUB(dist_x, tan_r, bounds->x_max) - x_off;
     transform->target_interest.z = 0.0f;
     dist_y = (dist_y > dist_x) ? dist_y : dist_x;
     cam_dist = dist_y;
@@ -1603,7 +1603,7 @@ void Camera_8002B0E0(void)
         } else {
             game_camera.x2BA = cm_803BCCA0.xE0;
         }
-        game_camera.x2BC -= var_f2 * cm_803BCCA0.xD4;
+        game_camera.x2BC = GW_FNMSUB(var_f2, cm_803BCCA0.xD4, game_camera.x2BC);
         if (game_camera.x2BC < cm_803BCCA0.xDC) {
             game_camera.x2BC = cm_803BCCA0.xDC;
             return;

@@ -10,6 +10,8 @@ use core::ffi::{c_char, c_void};
 use core::ptr::null_mut;
 
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 /// MSL `__fpclassifyf` / `__fpclassifyd` (math.h; FP_NAN 1, FP_INFINITE 2, FP_ZERO 3, FP_NORMAL 4, FP_SUBNORMAL 5)
@@ -936,7 +938,7 @@ pub unsafe fn mpColl_800439FC(mut coll: *mut CollData) {
     right_y = (*coll).cur_pos.y + (*coll).ecb.right.y;
     right_dx = if (*coll).ecb.right.x < (0 as f32) { -(*coll).ecb.right.x } else { (*coll).ecb.right.x };
     f1 = fmadds((*coll).ceiling.normal.y, right_dx, right_x);
-    f2 = fmadds(-(*coll).ceiling.normal.x, right_dx, right_y);
+    f2 = fnmsubs(((*coll).ceiling.normal.x), right_dx, right_y);
     if !(super::mplib::mpCheckLeftWall(f1, f2, right_x, right_y, core::ptr::addr_of_mut!((*coll).contact) as *mut Vec, null_mut(), null_mut(), null_mut(), (*coll).joint_id_skip, (*coll).joint_id_only) != 0) {
         return;
     }
@@ -962,7 +964,7 @@ pub unsafe fn mpColl_80043ADC(mut coll: *mut CollData) {
     left_x = (*coll).cur_pos.x + (*coll).ecb.left.x;
     left_y = (*coll).cur_pos.y + (*coll).ecb.left.y;
     left_dx = if (*coll).ecb.left.x < (0 as f32) { -(*coll).ecb.left.x } else { (*coll).ecb.left.x };
-    f1 = fmadds(-(*coll).ceiling.normal.y, left_dx, left_x);
+    f1 = fnmsubs(((*coll).ceiling.normal.y), left_dx, left_x);
     f2 = fmadds((*coll).ceiling.normal.x, left_dx, left_y);
     if !(super::mplib::mpCheckRightWall(f1, f2, left_x, left_y, core::ptr::addr_of_mut!((*coll).contact) as *mut Vec, null_mut(), null_mut(), null_mut(), (*coll).joint_id_skip, (*coll).joint_id_only) != 0) {
         return;
@@ -1005,7 +1007,7 @@ pub unsafe fn mpColl_80043C6C(mut coll: *mut CollData, mut line_id: i32, mut ign
     pos.x = (*coll).cur_pos.x + (*coll).ecb.right.x;
     pos.y = (*coll).cur_pos.y + (*coll).ecb.right.y;
     if super::mplib::mpLib_8004E398_LeftWall(line_id, core::ptr::addr_of_mut!(pos) as *mut Vec, null_mut(), null_mut(), null_mut()) != (-1_i32) {
-        let mut floor_x: f32 = fmadds(-(*coll).floor.normal.y, right_dx, pos.x);
+        let mut floor_x: f32 = fnmsubs(((*coll).floor.normal.y), right_dx, pos.x);
         let mut floor_y: f32 = fmadds((*coll).floor.normal.x, right_dx, pos.y);
         if super::mplib::mpCheckLeftWall(floor_x, floor_y, pos.x, pos.y, core::ptr::addr_of_mut!((*coll).contact) as *mut Vec, core::ptr::addr_of_mut!(wall_id) as *mut i32, null_mut(), null_mut(), (*coll).joint_id_skip, (*coll).joint_id_only) != 0 {
             pos.x = (*coll).contact.x - right_dx;
@@ -1070,7 +1072,7 @@ pub unsafe fn mpColl_80043F40(mut coll: *mut CollData, mut line_id: i32, mut ign
     pos.y = (*coll).cur_pos.y + (*coll).ecb.left.y;
     if super::mplib::mpLib_8004E684_RightWall(line_id, core::ptr::addr_of_mut!(pos) as *mut Vec, null_mut(), null_mut(), null_mut()) != (-1_i32) {
         let mut floor_x: f32 = fmadds((*coll).floor.normal.y, left_dx, pos.x);
-        let mut floor_y: f32 = fmadds(-(*coll).floor.normal.x, left_dx, pos.y);
+        let mut floor_y: f32 = fnmsubs(((*coll).floor.normal.x), left_dx, pos.y);
         if super::mplib::mpCheckRightWall(floor_x, floor_y, pos.x, pos.y, core::ptr::addr_of_mut!((*coll).contact) as *mut Vec, core::ptr::addr_of_mut!(wall_id) as *mut i32, null_mut(), null_mut(), (*coll).joint_id_skip, (*coll).joint_id_only) != 0 {
             pos.x = (*coll).contact.x + left_dx;
             if ignore_bottom != 0 {
@@ -1088,7 +1090,7 @@ pub unsafe fn mpColl_80043F40(mut coll: *mut CollData, mut line_id: i32, mut ign
         f1 = 2.0f32 + pos.x;
         f2 = pos.y;
         pos.x = fmadds(2.0f32, left_dx, f1);
-        pos.y = fmadds(-2.0f32, (*coll).ecb.left.y - (*coll).ecb.bottom.y, f2);
+        pos.y = fnmsubs(2.0f32, (*coll).ecb.left.y - (*coll).ecb.bottom.y, f2);
         if super::mplib::mpCheckFloor(f1, f2, pos.x, pos.y, 0.0f32, core::ptr::addr_of_mut!((*coll).contact) as *mut Vec, null_mut(), null_mut(), null_mut(), (*coll).floor_skip, (*coll).joint_id_skip, (*coll).joint_id_only, None, null_mut()) != 0 {
             pos.x = (*coll).contact.x;
             if ignore_bottom != 0 {

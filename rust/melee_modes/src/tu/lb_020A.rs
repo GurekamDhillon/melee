@@ -11,6 +11,8 @@
 use melee_types as mt;
 use core::ffi::c_void;
 use melee_core::fp::{fmadds, frsqrte};
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 // BEGIN GENERATED EXT (rust/melee_modes/gen/cref/gen_tu.py; the callees of the C TU)
@@ -393,7 +395,7 @@ pub unsafe fn lbBgFlash_80021410(data: *mut IKState) {
 
     let p_diff = ext::lbVector_Diff(&raw mut d.pos0, &raw mut d.pos1, &raw mut diff_pos0_pos1);
     dot = fmadds(axis.z, (*p_diff).z, fmadds(axis.x, (*p_diff).x, axis.y * (*p_diff).y));
-    let sin_val = sqrtf_store(fmadds(-dot, dot, 1.0f32), &mut sin_mag);
+    let sin_val = sqrtf_store(fnmsubs(dot, dot, 1.0f32), &mut sin_mag);
     d.len0 = d.len0 * sin_val;
 
     ext::lbVector_Diff(&raw mut d.pos4, &raw mut d.pos0, &raw mut temp_delta);

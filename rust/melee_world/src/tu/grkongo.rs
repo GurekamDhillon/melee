@@ -34,6 +34,8 @@ use super::grinl2::{rand_range, Ground_ClampSymmetric, Ground_UpdateWindAndMapCo
 use core::ffi::c_void;
 use core::ptr::{addr_of_mut, null_mut};
 use melee_core::fp::{fmadds, frsqrte};
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_runtime::gekko::tanf;
 use melee_types::*;
 
@@ -1179,7 +1181,7 @@ pub unsafe extern "C" fn grKongo_801D77E0(gobj: *mut HSD_GObj, arg1: i32) {
                 *v += step;
             }
             *a += *v;
-            let limit = 0.017453292f32 * fmadds(-0.017453292f32, (*yp).unkAC, (*yp).unkB8);
+            let limit = 0.017453292f32 * fnmsubs(0.017453292f32, (*yp).unkAC, (*yp).unkB8);
             if *a > limit {
                 *a = limit;
                 *v = 0.0;
@@ -1254,7 +1256,7 @@ pub unsafe extern "C" fn grKongo_801D7BBC(gobj: *mut HSD_GObj) {
                 gobj_id = if ext::HSD_Randi(2) != 0 { 1 } else { 2 };
                 event_kind = 3;
             } else {
-                roll = fmadds(-base_weight, 1.0f32 - box_rate, roll);
+                roll = fnmsubs(base_weight, 1.0f32 - box_rate, roll);
                 if roll < zero {
                     let rand_kind = ext::HSD_Randi(3);
                     gobj_id = if rand_kind == 0 {

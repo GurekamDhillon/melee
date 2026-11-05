@@ -1817,7 +1817,9 @@ pub fn play(args: &[String]) -> ExitCode {
             rp.rec = Some((path, r));
         }
         // `--slp FILE|auto`: Slippi export. Live only when nothing rolls back; otherwise from the .mrpl playback (play_net).
-        if let Some(spec) = get("--slp") {
+        // MELEE_SLP_RECORD=<file> (the C build's recording variable) is the same export when --slp is not given: Game Start,
+        // Frame Start, Pre-Frame, Post-Frame, Frame Bookend, Game End and metadata, so the file plays in Slippi Dolphin.
+        if let Some(spec) = get("--slp").or_else(|| std::env::var("MELEE_SLP_RECORD").ok().filter(|s| !s.is_empty())) {
             if rollback_mode && rp.feed.is_none() {
                 if net.is_some() && rp.rec.is_some() {
                     crate::play_net::SLP_AFTER.with(|c| *c.borrow_mut() = Some(spec.clone()));

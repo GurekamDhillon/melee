@@ -294,8 +294,8 @@ void ftCo_DamageIce_HitWhileFrozen(Fighter_GObj* gobj)
 void ftCo_DamageIce_OnHit2(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    fp->grab_timer -= fp->dmg.x1838_percentTemp *
-                      p_ftCommonData->damageice_dmg_time_reduction_mult;
+    fp->grab_timer = GW_FNMSUB(fp->dmg.x1838_percentTemp,
+                      p_ftCommonData->damageice_dmg_time_reduction_mult, fp->grab_timer);
     if (fp->dmg.x1860_element == HitElement_Fire) {
         fp->grab_timer = 0;
     }

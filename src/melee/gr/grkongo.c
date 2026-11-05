@@ -1130,8 +1130,8 @@ void grKongo_801D77E0(HSD_GObj* gobj, s32 arg1)
                 q->u.kongo.xC8 += step;
             }
             q->u.kongo.xC4 += q->u.kongo.xC8;
-            limit = 0.017453292f * (yakumono_param->unkB8 -
-                                    0.017453292f * yakumono_param->unkAC);
+            limit = 0.017453292f * GW_FNMSUB(0.017453292f, yakumono_param->unkAC,
+                                    yakumono_param->unkB8);
             if (q->u.kongo.xC4 > limit) {
                 q->u.kongo.xC4 = limit;
                 q->u.kongo.xC8 = 0.0f;
@@ -1226,7 +1226,7 @@ void grKongo_801D7BBC(Ground_GObj* gobj)
                     }
                     event_kind = 3;
                 } else {
-                    roll -= base_weight * (1.0f - box_rate);
+                    roll = GW_FNMSUB(base_weight, (1.0f - box_rate), roll);
                     if (roll < zero) {
                         rand_kind = HSD_Randi(3);
                         if (rand_kind == 0) {

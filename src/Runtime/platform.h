@@ -191,4 +191,14 @@ static inline double gw_nofuse_d(double x) { return x; }
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 #endif
 
+/* GW_FNMSUB(a, b, c): `c - a * b` as MWCC emits it, fnmsubs = -(a*b - c). An exact-zero result is
+ * -0.0 on the console; clang's fmuladd(-a, b, c) gives +0.0. Shared console-semantics fix for the
+ * sites the DOL computes with fnmsubs (docs/rust-port/notes/fp-audit.md, "sign of zero";
+ * melee_core::fp::fnmsubs on the Rust side). */
+#if defined(TARGET_PC)
+#define GW_FNMSUB(a, b, c) (-((a) * (b) - (c)))
+#else
+#define GW_FNMSUB(a, b, c) ((c) - (a) * (b))
+#endif
+
 #endif

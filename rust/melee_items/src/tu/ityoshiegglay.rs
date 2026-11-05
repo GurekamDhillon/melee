@@ -9,6 +9,8 @@
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 use super::kinds_inl::*;
@@ -178,7 +180,7 @@ pub unsafe extern "C" fn it_27CF_UnkMotion2_Anim(item_gobj: *mut HSD_GObj) -> bo
 pub unsafe extern "C" fn it_27CF_Logic114_DmgReceived(item_gobj: *mut Item_GObj) -> bool {
     melee_core::ct!("it_27CF_Logic114_DmgReceived");
     let item = GET_ITEM(item_gobj);
-    (*item).xD44_lifeTimer = fmadds(-((*item).xCA0 as f32), (*item).xDD4_itemVar.yoshiegglay.x0, (*item).xD44_lifeTimer);
+    (*item).xD44_lifeTimer = fnmsubs(((*item).xCA0 as f32), (*item).xDD4_itemVar.yoshiegglay.x0, (*item).xD44_lifeTimer);
     false
 }
 

@@ -105,8 +105,8 @@ void ftCo_TurnRun_Phys(Fighter_GObj* gobj)
     } else if (fp->mv.co.turnrun.accel_mul * accel < 0) {
         if (accel > 0) {
             if (fp->gr_vel + accel > target_vel) {
-                accel -= co_attrs->ground_friction *
-                         p_ftCommonData->run_dash_turn_friction_multiplier;
+                accel = GW_FNMSUB(co_attrs->ground_friction,
+                         p_ftCommonData->run_dash_turn_friction_multiplier, accel);
                 if (fp->gr_vel + accel < target_vel) {
                     accel = target_vel - fp->gr_vel;
                 }

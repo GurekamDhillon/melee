@@ -297,3 +297,51 @@ Status "fixed/match" = the Rust function exists and its square is plain f32 afte
 | 8000D5BC | sqrtf__Ff | 3 | 0 | open |
 | 80224990 | stageGObj1_GObjProc | 3 | 0 | open |
 | 80224900 | stageGObj2_GObjProc | 2 | 0 | open |
+
+
+
+## Sign of zero: fnmsubs / fnmadds (port/oracle-fix, Dolphin oracle)
+
+MWCC emits `b -= a*c`, `b - a*c` and `-(a*c) + b` as **fnmsubs**, `-(a*c - b)`, and `-(a*c) - b` as **fnmadds**, `-(a*c + b)`.
+At an exact cancellation (`a*c == b`) round-to-nearest gives +0 inside the parentheses and the negation makes it **-0.0**.
+The port wrote these as `fmadds(-a, c, b)` (Rust) and clang contracted them to `fmuladd(-a, c, b)` (C PC build): +0.0.
+Magnitudes are identical; only the sign of a zero result differs, and NHV1 hashes bit patterns. The sign then reaches
+atan2f, divisions and comparisons against -0.
+
+Found by the Dolphin oracle (notes/dolphin-oracle.md): 01c6d260 CSV frame 1388, `x8c_kb_vel.y` +0 vs -0 in
+`Fighter_procUpdate`'s knockback decay (DOL 0x8006B9E4 `fnmsubs`); the same class showed in every slpcheck-exact replay tried.
+
+Helpers: `melee_core::fp::fnmsubs(a, c, b)` = `-fmsubs(a, c, b)`, `fnmadds(a, c, b)` = `-fmadds(a, c, b)`
+(`melee_runtime::lbtrigf::fnmsubs` was already the same). C PC build: `GW_FNMSUB(a, b, c)` (Runtime/platform.h),
+`-((a)*(b) - (c))` under TARGET_PC, clang contracts the inner `a*b - c` and negates; `GW_FNMSUB_ASSIGN` in fighter.c.
+
+Scanner: `python tools/rust-port/negzero_audit.py [--all]`. Per DOL function with fnmsubs/fnmadds (258 + 13 single-precision
+sites in 134 functions), the Rust function of the same name and its count of fnm* forms vs suspect `fmadds(-x, ..)` forms.
+A literal negative constant was converted only where the function's DOL fnm* count covers every suspect form (checked
+by disassembly for mpColl_80043F40, grKongo_801D77E0, grZebes_801DC744, grBigBlue_801ED694, grRCruise_8020071C,
+it_802AFF08, it_802C30E8: each loads the positive constant into fnmsubs).
+
+| function (DOL) | Rust | C PC mirror |
+|---|---|---|
+| Fighter_procUpdate (kb and shield kb decay, x4) | fighter.rs | fighter.c GW_FNMSUB_ASSIGN |
+| mpColl_800439FC, 80043ADC, 80043C6C, 80043F40 (x2) | mpcoll.rs | mpcoll.c |
+| Camera_80029CF8 (x2), Camera_8002B0E0 | camera.rs | camera.c |
+| ftCo_DamageIce_OnHit2, ftCo_TurnRun_Phys, fn_8010B16C (Kirby egg) | ftCo_DamageIce.rs, ftCo_TurnRun.rs, ftkirbyyoshiegg.rs | same TUs |
+| grStadium_801D4548, grKongo_801D77E0/7BBC, grZebes_801DC744, grBigBlue_801ED694/EDF44/EEF00, grRCruise_8020071C | gr*.rs | gr*.c (grZebes's C already wrote `-(2r - d)`) |
+| itNesspkthunderball_UnkMotion0_Phys, it_802AFF08 (needle), it_802C30E8 (IC string), it_27CF_Logic114 (egg lay) | it*.rs | it*.c |
+| acosf (`1 - x*x`), fmodf (`a - b*q`) | lbtrigf.rs, aobj.rs | lbtrigf.c, MSL math.h |
+| display/menu only, Rust only: lbBgFlash_80021410, fn_8025F0E0 (CSS slider), ifMagnify, _Toy_8030E110, hsd_8039DAD4 | | not mirrored (no gameplay state) |
+
+Left: 4 OPEN rows (lb_800122F0, fn_8018B090, _Toy_80309404, hsd_803B3408: colour/menu/trophy code with more suspect forms
+than DOL sites), and 61 "check" rows where the Rust function has fewer explicit fnm* forms than the DOL because the site is
+in an inlined helper or written another way (`-fmsubs(..)` counts as correct). Same class, not hand-checked yet.
+
+## PC-only UB dropping a console square root (lbColl_800077A0)
+
+`lbColl_800077A0` (the hitbox-vs-shield/reflector contact point) passes `sqrt_tmp - 1`, one slot before its volatile spill
+array, to `sqrtf_store`. MWCC takes the root (DOL 0x800079CC: frsqrte + three Newton steps); clang treats the out-of-bounds
+store as UB and the PC build returned the discriminant unrooted. The port copied the PC behaviour. Effect: Falco's laser
+on Sheik's shield (01c6d260 slippi 3317) got a contact normal (-1, 0.02) instead of (-0.62, 0.78), so the angle test in
+`Item_80269DC8` chose HitShield (destroyed) instead of ShieldBounced. Fixed in Rust and C (`&sqrt_tmp[1]` under TARGET_PC).
+With both fixes 01c6d260 matches Dolphin on every NHV1 column, seed included, for the whole replay.
+Static check: `grep -rn "_tmp - 1" src/melee` (the other hit, ftcpuattack.c, is MUST_MATCH-only).

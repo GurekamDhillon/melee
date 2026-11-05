@@ -1526,7 +1526,13 @@ void lbColl_800077A0(Vec3* a, MtxPtr arg1, Vec3* b, Vec3* c, Vec3* d, Vec3* e,
 
             // The second sqrtf spill is allocated just below the scratch
             // array.
+#if defined(TARGET_PC)
+            /* sqrt_tmp - 1 is outside the array: clang drops the UB store and returns n1 unrooted, the console
+             * (MWCC) takes the root. Shared console-semantics fix (docs/rust-port/notes/fp-audit.md). */
+            scl = (-n0 - sqrtf_store(n1, &sqrt_tmp[1])) / (2.0f * dot_diff_cb);
+#else
             scl = (-n0 - sqrtf_store(n1, sqrt_tmp - 1)) / (2.0f * dot_diff_cb);
+#endif
         }
 
         normalize_e.x = scl * diff_cb.x + b->x - a->x;

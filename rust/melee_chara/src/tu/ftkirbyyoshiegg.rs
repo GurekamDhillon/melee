@@ -8,6 +8,8 @@
 use crate::stubs as st;
 use crate::tu::ftkirbyspecialyoshi as ys;
 use melee_core::fp::fmadds;
+#[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
 use melee_types::*;
 
 /// Calls into TUs that are not ported yet. Each is a settable hook; unset it panics.
@@ -300,7 +302,7 @@ pub fn fn_8010B16C(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         // `grab_timer -= x1838_percentTemp * f()`: the IR is fmuladd(-x1838, f(), grab_timer).
         let f = ys::ftKb_SpecialNYs_80109380();
-        (*fp).grab_timer = fmadds(-(*fp).dmg.x1838_percentTemp, f, (*fp).grab_timer);
+        (*fp).grab_timer = fnmsubs(((*fp).dmg.x1838_percentTemp), f, (*fp).grab_timer);
         if (*fp).dmg.x18CC == 3 && ext::ftCo_800C0C88((*fp).dmg.x18D0) {
             (*fp).grab_timer = 0.0;
         }

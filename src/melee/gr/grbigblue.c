@@ -3712,8 +3712,8 @@ void grBigBlue_801ED694(Ground_GObj* gobj, s32 lane)
         gp->data.lanes[lane].amplitude * sinf(gp->data.lanes[lane].rotation);
 
     /* Compute ground reference level */
-    rank_factor = (gp->data.lanes[lane].pos.y -
-                   yakumono_param->x2C * Ground_801C0498()) -
+    rank_factor = GW_FNMSUB(yakumono_param->x2C, Ground_801C0498(),
+                   gp->data.lanes[lane].pos.y) -
                   gp->data.lanes[lane].height - heading_osc;
 
     /* Collision/grounding check */
@@ -3728,11 +3728,11 @@ void grBigBlue_801ED694(Ground_GObj* gobj, s32 lane)
             ((grBb_ByteBits*) lane_flags)->b6 = 0;
         } else {
             if (-F32_MAX != ground_y) {
-                gp->data.lanes[lane].angular_velocity -=
-                    3.0F * (yakumono_param->x80 * Ground_801C0498());
+                gp->data.lanes[lane].angular_velocity = GW_FNMSUB(
+                    3.0F, (yakumono_param->x80 * Ground_801C0498()), gp->data.lanes[lane].angular_velocity);
             } else {
-                gp->data.lanes[lane].angular_velocity -=
-                    yakumono_param->x80 * Ground_801C0498();
+                gp->data.lanes[lane].angular_velocity = GW_FNMSUB(
+                    yakumono_param->x80, Ground_801C0498(), gp->data.lanes[lane].angular_velocity);
             }
 
             /* Lateral position += angular velocity */
@@ -3820,7 +3820,7 @@ s32 grBigBlue_801EDF44(Ground_GObj* gobj, s32 index)
         f32 blast = Stage_GetBlastZoneLeftOffset();
         f32 scale = Ground_801C0498();
 
-        blast -= yakumono_param->x68 * scale;
+        blast = GW_FNMSUB(yakumono_param->x68, scale, blast);
         if (gp->u.bigblue.x0_u.car.lanes[index].pos.x < blast) {
             if (0.0F != gp->u.bigblue.x0_u.car.lanes[index].alpha) {
                 result = 9;
@@ -4341,10 +4341,9 @@ bool grBigBlue_801EEF00(Ground_GObj* gobj, s32 index)
                 gp->typed.cars[index].accel = yakumono_param->x28 * scale;
             } else {
                 scale = Ground_801C0498();
-                predicted =
+                predicted = GW_FNMSUB(norm, (0.5F * (yakumono_param->x28 * scale) * norm),
                     gp->typed.cars[index].velocity * norm +
-                    gp->typed.cars[index].pos.x -
-                    norm * (0.5F * (yakumono_param->x28 * scale) * norm);
+                    gp->typed.cars[index].pos.x);
 
                 if (predicted < target) {
                     scale = Ground_801C0498();
@@ -4361,10 +4360,9 @@ bool grBigBlue_801EEF00(Ground_GObj* gobj, s32 index)
                 gp->typed.cars[index].accel = -(yakumono_param->x28 * scale);
             } else {
                 scale = Ground_801C0498();
-                predicted =
+                predicted = GW_FNMSUB(norm, (0.5F * -(yakumono_param->x28 * scale) * norm),
                     gp->typed.cars[index].velocity * norm +
-                    gp->typed.cars[index].pos.x -
-                    norm * (0.5F * -(yakumono_param->x28 * scale) * norm);
+                    gp->typed.cars[index].pos.x);
 
                 if (predicted < target) {
                     scale = Ground_801C0498();

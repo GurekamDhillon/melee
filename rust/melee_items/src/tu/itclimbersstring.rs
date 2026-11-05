@@ -72,6 +72,8 @@ use crate::layout::It_Kind_RabbitC;
 #[allow(unused_imports)]
 use melee_core::fp::fmsubs;
 #[allow(unused_imports)]
+use melee_core::fp::{fnmadds, fnmsubs};
+#[allow(unused_imports)]
 use melee_core::vec::Vec3 as RVec;
 #[allow(unused_imports)]
 use melee_runtime::lbvector;
@@ -585,7 +587,7 @@ pub unsafe fn it_802C30E8(link: *mut ItemLink, target: *mut Vec3, attrs: *mut it
     let mut dir: Vec3 = core::mem::zeroed();
     let fp = fighter_of((*ip).xDD4_itemVar.climbersstring.xC);
 
-    (*link).vel.y = fmadds(-0.9, attrs.x14, (*link).vel.y);
+    (*link).vel.y = fnmsubs(0.9, attrs.x14, (*link).vel.y);
 
     if (*fp).u.pp.x2240.x != 0.0 || (*fp).u.pp.x2240.y != 0.0 {
         (*link).pos = (*fp).u.pp.x2240;

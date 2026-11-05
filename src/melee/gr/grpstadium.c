@@ -2100,7 +2100,7 @@ void grStadium_801D4548(Ground_GObj* gobj)
         jobj_a = GET_JOBJ(gp->u.stadium.xE4);
         jobj = jobj_a;
         scale_y = HSD_JObjGetScaleY(jobj);
-        scale_y -= scale * (0.95f / yakumono_param->x14);
+        scale_y = GW_FNMSUB(scale, (0.95f / yakumono_param->x14), scale_y);
         min_scale = 0.05f * scale;
         if (scale_y > min_scale) {
             HSD_JObjSetScaleY(jobj, scale_y);

@@ -116,6 +116,40 @@ pub struct Shared {
     pub window: (u32, u32),
     pub present_no: u32,
     pub log: Vec<String>,
+    /// gd-ui-v1.2 (UI_HOST): the host catalogs the play flow fills (records of NUL-separated UTF-8 fields) and
+    /// their generation (bumped on every replace, so a mod re-reads only after a change).
+    pub lists: [Vec<Vec<u8>>; LIST_KINDS],
+    pub list_gen: [u16; LIST_KINDS],
+    /// Requests of this present for the play flow (`gd_ui_request`), drained by [`PresHost::take_requests`].
+    pub requests: Vec<Request>,
+}
+
+/// gd-ui-v1.2 catalog kinds (`GD_UI_LIST_*`).
+pub const LIST_MODES: usize = 0;
+pub const LIST_MODS: usize = 1;
+pub const LIST_REPLAYS: usize = 2;
+pub const LIST_SKINS: usize = 3;
+pub const LIST_STATUS: usize = 4;
+pub const LIST_ONLINE: usize = 5;
+pub const LIST_KINDS: usize = 6;
+/// gd-ui-v1.2 request ops (`GD_UI_REQ_*`).
+pub const REQ_LAUNCH: i32 = 1;
+pub const REQ_MOD_SET: i32 = 2;
+pub const REQ_REPLAY_PLAY: i32 = 3;
+pub const REQ_SKIN_SET: i32 = 4;
+pub const REQ_NET_HOST: i32 = 5;
+pub const REQ_NET_JOIN: i32 = 6;
+pub const REQ_NET_SPECTATE: i32 = 7;
+pub const REQ_REFRESH: i32 = 8;
+pub const REQ_MAX_ARG: u32 = 256;
+pub const REQ_MAX_PENDING: usize = 8;
+
+/// One `gd_ui_request`: the issuing module, the op and its argument (NUL-separated UTF-8 fields).
+#[derive(Clone, Debug)]
+pub struct Request {
+    pub module: u16,
+    pub op: i32,
+    pub arg: String,
 }
 
 impl Shared {
@@ -147,6 +181,9 @@ impl Shared {
             window: (1280, 720),
             present_no: 0,
             log: Vec::new(),
+            lists: Default::default(),
+            list_gen: [0; LIST_KINDS],
+            requests: Vec::with_capacity(REQ_MAX_PENDING),
         }
     }
 
@@ -652,6 +689,53 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         // gd_match_setup is not defined yet (A5): refused until the match setup lands
         GD_ESTATE
     });
+    // ---- gd-ui-v1.2 host catalogs and requests (UI_HOST): the in-game browser
+    // generation << 16 | record count of a catalog (one call per section per present at most)
+    f!("gd_ui_list_info", |c: Caller<'_, PresData>, kind: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_HOST) {
+            return GD_ECAP;
+        }
+        let sh = c.data().ui().borrow();
+        match sh.lists.get(kind as usize) {
+            Some(l) => ((sh.list_gen[kind as usize] as i32 & 0x7FFF) << 16) | l.len().min(0xFFFF) as i32,
+            None => GD_EINVAL,
+        }
+    });
+    // copy record `i` of a catalog into the mod's memory (truncated to cap): the bytes written; no allocation
+    f!("gd_ui_list_get", |mut c: Caller<'_, PresData>, kind: u32, i: u32, out: u32, cap: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_HOST) {
+            return GD_ECAP;
+        }
+        let Some(m) = mem(&c) else { return GD_EINVAL };
+        let ui = c.data().ui().clone();
+        let sh = ui.borrow();
+        let Some(rec) = sh.lists.get(kind as usize).and_then(|l| l.get(i as usize)) else { return GD_EINVAL };
+        let n = rec.len().min(cap as usize);
+        match m.data_mut(&mut c).get_mut(out as usize..out as usize + n) {
+            Some(d) => {
+                d.copy_from_slice(&rec[..n]);
+                n as i32
+            }
+            None => GD_EINVAL,
+        }
+    });
+    // queue a request for the play flow (applied after this present); at most 8 per present, args <= 256 bytes
+    f!("gd_ui_request", |c: Caller<'_, PresData>, op: i32, s: u32, len: u32| -> i32 {
+        if !feat(&c, FEATURE_UI_HOST) {
+            return GD_ECAP;
+        }
+        if !(REQ_LAUNCH..=REQ_REFRESH).contains(&op) || len > REQ_MAX_ARG {
+            return GD_EINVAL;
+        }
+        let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };
+        let module = c.data().module;
+        let mut sh = c.data().ui().borrow_mut();
+        if sh.requests.len() >= REQ_MAX_PENDING {
+            return GD_EFULL;
+        }
+        sh.requests.push(Request { module, op, arg });
+        GD_OK
+    });
     // gd_lab: the Lab half links its own imports (B) on the same linker
     for e in exts {
         e.link(&mut l)?;
@@ -722,7 +806,14 @@ impl PresHost {
             // the package dir: <dir>/<file stem>/ (textures), else the mods dir itself
             let stem = dir.join(f.file_stem().unwrap_or_default());
             let pkg = if stem.is_dir() { stem } else { dir.clone() };
-            let i = h.load(&b, pkg).map_err(|e| format!("{}: refused: {e}", f.display()))?;
+            // one refused mod must not take the others down with it (a mods folder holds several: browser + lab)
+            let i = match h.load(&b, pkg) {
+                Ok(i) => i,
+                Err(e) => {
+                    eprintln!("modhost: ui: {} refused: {e} (build the mods with tools/rust-port/modhost/build_mods.sh, or cargo build --release inside rust/mods/<mod>)", f.display());
+                    continue;
+                }
+            };
             let m = &h.mods[i];
             eprintln!("modhost: ui: loaded {} \"{}\" fnv64 {:016x} (features {:#x})", m.id, m.name, m.digest, m.features);
         }
@@ -1105,6 +1196,29 @@ impl PresHost {
         for e in &mut self.exts {
             e.overlay(frame, out);
         }
+    }
+
+    /// gd-ui-v1.2: whether a loaded (and live) mod declared UI_HOST, i.e. whether the flow needs to fill catalogs.
+    pub fn wants_host(&self) -> bool {
+        self.mods.iter().any(|m| !m.disabled && m.features & FEATURE_UI_HOST != 0)
+    }
+
+    /// gd-ui-v1.2: replace a catalog (records of NUL-separated fields); bumps its generation.
+    pub fn set_list(&mut self, kind: usize, records: Vec<Vec<u8>>) {
+        let mut sh = self.shared.borrow_mut();
+        if kind < LIST_KINDS {
+            sh.lists[kind] = records;
+            sh.list_gen[kind] = sh.list_gen[kind].wrapping_add(1) & 0x7FFF;
+        }
+    }
+
+    /// gd-ui-v1.2: the requests the mods queued since the last call.
+    pub fn take_requests(&mut self) -> Vec<Request> {
+        let mut sh = self.shared.borrow_mut();
+        if sh.requests.is_empty() {
+            return Vec::new();
+        }
+        std::mem::take(&mut sh.requests)
     }
 
     /// The stats line: p50 / p99 / max µs per present over the last presents, quads, mods.

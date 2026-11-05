@@ -17,6 +17,9 @@ use winit::window::Window;
 /// The match scene's frames run before the session takes the engine.
 const ARM_FRAMES: u32 = 1;
 
+#[path = "browser.rs"]
+mod browser;
+
 fn log(msg: &str) {
     eprintln!("play: {msg}");
 }
@@ -51,6 +54,10 @@ pub struct RetailPlay {
     /// The in-game settings overlay (settings_overlay.rs; harness-owned, made on the first tick).
     pub settings: Option<crate::settings_overlay::Overlay>,
     hud_request: Option<bool>,
+    /// Live video changes from the settings overlay: the pacer's (taken by the main loop) and the presenter's
+    /// (applied at the next present). Presentation only.
+    pacing: Option<melee_platform::main_loop::Pacing>,
+    video: Vec<(String, String)>,
     iso: String,
     mods_dir: Option<String>,
     presets: Presets,
@@ -123,6 +130,8 @@ pub struct RetailPlay {
     rticks: u64,
     seek_base: Option<melee_engine::snapshot::Base>,
     seek_snaps: Vec<(usize, melee_engine::snapshot::SnapRef, u32, bool)>,
+    /// gd-ui-v1.2 host side of the in-game browser (browser.rs).
+    browser: browser::State,
 }
 
 impl RetailPlay {
@@ -132,9 +141,9 @@ impl RetailPlay {
             matches: 0, quit_after, max_frames, shot_dir,
             shot_ages: if shot_ages.is_empty() { vec![90] } else { shot_ages },
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
-            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None,
+            rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345,
-            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(),
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -667,6 +676,7 @@ impl RetailPlay {
             }
             _ => {}
         }
+        self.browser_tick();
         // MELEE_RETAIL_CSSDBG=N: every N ticks on the CSS, port 1's cursor (world units) and the four CPU levels
         if let Some(n) = std::env::var("MELEE_RETAIL_CSSDBG").ok().and_then(|v| v.parse::<u64>().ok()) {
             if self.cur.1 == melee_types::GS_CSS as u8 && n > 0 && self.tick_no % n == 0 {
@@ -821,6 +831,24 @@ impl RetailPlay {
                     }
                 }
                 "overlay" => self.hud_request = Some(on),
+                "vsync" | "fps_cap" | "interp" => {
+                    let p = self.pacing.get_or_insert_with(Default::default);
+                    match c.key.as_str() {
+                        "vsync" => {
+                            p.vsync = Some(on);
+                            self.video.push((c.key.clone(), c.value.clone()));
+                        }
+                        "fps_cap" => p.fps_cap = Some(c.value.parse().unwrap_or(0.0)),
+                        _ => p.interp = Some(match c.value.as_str() { "on" => Some(true), "off" => Some(false), _ => None }),
+                    }
+                }
+                "interp_mode" | "render_scale" => self.video.push((c.key.clone(), c.value.clone())),
+                "widescreen" => {
+                    // renderer-side widescreen only (the camera mode is fixed for the run): the game's view hooks keep
+                    // answering 4:3, the presenter widens, the next frame takes the new content aspect
+                    melee_engine::view::set_widescreen(on);
+                    self.video.push((c.key.clone(), c.value.clone()));
+                }
                 "input_display" | "lcancel_indicator" | "no_screen_shake" => {
                     if let Some(pr) = self.practice.as_mut() {
                         let mut op = pr.opts;
@@ -831,6 +859,13 @@ impl RetailPlay {
                         }
                         pr.set_opts(op);
                     }
+                }
+                k if k.starts_with("portrait_") => {
+                    // render-only (texture overrides): live everywhere, online included
+                    let disc = &mut melee_engine::host::Host::get().disc;
+                    let r = crate::cosmetics_import::apply_pictures(&mut |f| disc.read_vanilla(f).ok());
+                    log(&format!("cosmetics: {k} = {} ({r})", c.value));
+                    self.settings.as_mut().unwrap().set_note(k, r);
                 }
                 k if k.starts_with("skin_") => {
                     let slot = k[5..].to_string();
@@ -850,6 +885,8 @@ impl RetailPlay {
                         (Err(e), _) => format!("refused: {e}"),
                     };
                     log(&format!("cosmetics: {} -> {} ({note})", crate::cosmetics::slot_file(&slot), c.value));
+                    let pr = crate::cosmetics_import::apply_pictures(&mut |f| disc.read_vanilla(f).ok());
+                    log(&format!("cosmetics: pictures: {pr}"));
                     o.set_note(k, note);
                 }
                 _ => {}
@@ -1080,26 +1117,13 @@ impl RetailPlay {
     }
 }
 
-impl Game for RetailPlay {
-    fn tick(&mut self, pads: &mut PadSystem) {
-        if self.feed.is_none() {
-            self.tick_once(pads);
-            self.spec_serve();
-            return;
-        }
-        self.tick_playback(pads);
-    }
-
-    fn set_interp(&mut self, on: bool) {
-        self.interp = on;
-        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
-    }
-
-    fn present(&mut self, window: &Arc<Window>, alpha: f64) {
+impl RetailPlay {
+    fn present_inner(&mut self, window: &Arc<Window>, alpha: f64) {
         if self.presenter.is_none() {
             match Presenter::new(window.clone()) {
-                Ok(p) => {
+                Ok(mut p) => {
                     melee_engine::gxbridge::shim().gx.set_pipe_factory(p.renderer.pipe_factory());
+                    p.offthread_drop = Some(|q| !melee_engine::arena::contains(q));
                     self.presenter = Some(p)
                 }
                 Err(e) => {
@@ -1115,6 +1139,7 @@ impl Game for RetailPlay {
         let a = if self.shot_pending.is_some() { shot_phase.filter(|_| self.interp) } else { self.interp.then_some(alpha) };
         if let Some(p) = self.presenter.as_mut() {
             p.force_phase = if self.shot_pending.is_some() { a } else { None };
+            p.shot = self.shot_pending.is_some();
         }
         let frame = self.frame.take();
         let mut pose = if frame.is_some() { melee_engine::gxbridge::shim().gx.pose.take() } else { None };
@@ -1130,6 +1155,16 @@ impl Game for RetailPlay {
             });
         }
         let p = self.presenter.as_mut().unwrap();
+        for (k, v) in self.video.drain(..) {
+            match k.as_str() {
+                "vsync" => p.set_vsync(v == "1"),
+                "render_scale" => p.set_render_scale(v.parse().ok()),
+                "interp_mode" => p.set_interp_mode(melee_gx::interp::Mode::parse(&v).unwrap_or_default()),
+                "widescreen" => p.set_true_widescreen(v == "1"),
+                _ => {}
+            }
+            log(&format!("video: {k} = {v} (live)"));
+        }
         p.set_match_scene(melee_engine::view::scene_wide(melee_engine::view::scene()));
         if let Some(pk) = self.packed.take() {
             p.renderer.set_packed(pk);
@@ -1154,7 +1189,35 @@ impl Game for RetailPlay {
             self.quit = true;
         }
     }
+}
 
+impl Game for RetailPlay {
+    fn tick(&mut self, pads: &mut PadSystem) {
+        if self.feed.is_none() {
+            self.tick_once(pads);
+            self.spec_serve();
+            return;
+        }
+        self.tick_playback(pads);
+    }
+
+    fn set_interp(&mut self, on: bool) {
+        self.interp = on;
+        melee_runtime::pose_capture::ON.store(on, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn present(&mut self, window: &Arc<Window>, alpha: f64) {
+        let t_present = std::time::Instant::now();
+        self.present_inner(window, alpha);
+        // MELEE_PRESENT_SPIKE=<ms>: one line per present at least that long, with the presenter's stages (frame-time tail)
+        static SPIKE: std::sync::OnceLock<Option<f64>> = std::sync::OnceLock::new();
+        if let (Some(ms), Some(p)) = (*SPIKE.get_or_init(|| std::env::var("MELEE_PRESENT_SPIKE").ok().and_then(|v| v.parse().ok())), self.presenter.as_ref()) {
+            let el = t_present.elapsed().as_secs_f64() * 1e3;
+            if el >= ms {
+                log(&format!("slow present at tick {}: {el:.2} ms (prepare {:.2} draw {:.2} swap {:.2} adopt {:.2} (drop {:.2}) ms, fresh {})", self.tick_no, p.last[0] as f64 / 1e3, p.last[1] as f64 / 1e3, p.last[2] as f64 / 1e3, p.adopt_us as f64 / 1e3, p.drop_us as f64 / 1e3, p.last_fresh));
+            }
+        }
+    }
     fn resized(&mut self, w: u32, h: u32) {
         melee_engine::view::set_window(w, h);
         if let Some(p) = self.presenter.as_mut() {
@@ -1172,6 +1235,10 @@ impl Game for RetailPlay {
 
     fn take_hud_request(&mut self) -> Option<bool> {
         self.hud_request.take()
+    }
+
+    fn take_pacing(&mut self) -> Option<melee_platform::main_loop::Pacing> {
+        self.pacing.take()
     }
 
     fn status_line(&mut self) -> Option<String> {

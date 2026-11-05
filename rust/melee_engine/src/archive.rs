@@ -102,7 +102,9 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
     crate::dat_custom::forget_banks(src as usize + HEADER_BYTES);
     let live0 = crate::arena::live_bytes();
     // Parse (and validate) the untouched file first; the relocation below rewrites it.
+    let tp0 = std::time::Instant::now();
     let dat = DatArchive::parse(file).unwrap_or_else(|e| panic!("host_parse: {e}"));
+    let tp1 = std::time::Instant::now();
     let h = dat.header;
 
     core::ptr::write_bytes(archive as *mut u8, 0, core::mem::size_of::<HSD_Archive>());
@@ -182,6 +184,7 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
             v.dedup();
             crate::dat_custom::Bounds(v, src as usize + HEADER_BYTES)
         };
+        let tb = std::time::Instant::now();
         let mut d = image.dat.decoder();
         d.set_bounds(bounds.0.clone());
         d.set_raw_base(src as usize + HEADER_BYTES);
@@ -202,13 +205,17 @@ unsafe fn host_parse_timed(archive: *mut HSD_Archive, src: *mut u8, file_size: u
             }
         }
         let l1 = crate::arena::live_bytes();
+        let tr = std::time::Instant::now();
         let (arena, issues) = d.finish();
+        let tf = std::time::Instant::now();
         let l2 = crate::arena::live_bytes();
         crate::dat_custom::fix_articles();
         let l3 = crate::arena::live_bytes();
         crate::dat_custom::fix_dynamics();
         let l4 = crate::arena::live_bytes();
         if std::env::var_os("MELEE_ARCHIVE_LOG").is_some() {
+            let ms = |a: std::time::Instant, b: std::time::Instant| (b - a).as_secs_f64() * 1e3;
+            eprintln!("engine:   phases ms: parse {:.2} setup {:.2} roots {:.2} finish {:.2} fixups {:.2}", ms(tp0, tp1), ms(tp1, tb), ms(tb, tr), ms(tr, tf), tf.elapsed().as_secs_f64() * 1e3);
             eprintln!("engine:   phases KB: roots {} finish {} articles {} dynamics {}", (l1 - live0) >> 10, (l2 as isize - l1 as isize) >> 10, (l3 as isize - l2 as isize) >> 10, (l4 as isize - l3 as isize) >> 10);
         }
         image.roots = roots;

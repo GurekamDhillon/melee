@@ -7,6 +7,8 @@
 //!   START freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), L / R step -10 / +10,
 //!   A take over (go live from the scrubbed frame), B resume.
 //!   D-down save to the current slot (on release; D-down + START is the settings overlay), D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
+//!   Hold START (30 frames): the full menu (menu.rs; L / R tabs, up / down rows, left / right values, A apply, X the
+//!   command bar, B / START close). Frozen, hold Z (12 frames): the radial quick menu, stick picks, release runs.
 //! Online (LabNetplay) every sim action is a lab command both peers apply; the other player's freeze, rewind, step,
 //! save and load show here as a toast ("P2 rewound") from `gd_lab_applied`.
 //!
@@ -16,10 +18,12 @@
 #![no_std]
 #![allow(static_mut_refs)]
 
+mod menu;
 mod names;
 mod txt;
 
 use gd_ui_enc::*;
+use menu::*;
 use txt::Txt;
 
 #[panic_handler]
@@ -51,8 +55,9 @@ extern "C" {
 
 const FEATURE_LAB: u32 = 1 << 10;
 const FEATURE_LAB_STATE: u32 = 1 << 11;
+const FEATURE_LAB_INPUT: u32 = 1 << 12;
+const FEATURE_LAB_CPU: u32 = 1 << 13;
 const FEATURE_LAB_OVERLAY: u32 = 1 << 14;
-const OV_HITBOX: u32 = 1;
 
 // pad buttons
 const DL: u16 = 0x1;
@@ -174,6 +179,7 @@ struct Lab {
     kit_ring: u32,
     kit_diamond: u32,
     kit_hatch: u32,
+    kit_knob: u32,
     preset: u8,
     slot: u32,
     timed: bool,
@@ -214,8 +220,21 @@ struct Lab {
     in_rows: [Row; 3],
     stick: (i8, i8),
     held_p1: u16,
+    held_p: [u16; 2],
+    edge_p: [u16; 2],
+    stick_p: [(i8, i8); 2],
+    /// START went down on this port (-1 none): frames held, and whether the game was frozen before
+    start_hold: (i32, u32, bool),
+    // the menu (M3), the radial and the command bar (M9)
+    menu: Menu,
+    /// dummy settings per port (menu.rs D_*), kept in step with the applied commands of both peers
+    dv: [[i32; D_N]; 2],
+    vals: [i32; N_IDS],
+    rec_len: [i32; 8],
+    w_tab: [f32; 5],
     // freeze controls
     hold: (u16, u32),
+    dummy_toast: i32,
     /// D-down is held and nothing else was pressed with it: save on release (D-down + START opens the settings overlay)
     dd_armed: bool,
     after_modal: bool,
@@ -251,6 +270,7 @@ static mut L: Lab = Lab {
     kit_ring: 0,
     kit_diamond: 0,
     kit_hatch: 0,
+    kit_knob: 0,
     preset: FRAMEDATA,
     slot: 0,
     timed: false,
@@ -288,7 +308,17 @@ static mut L: Lab = Lab {
     in_rows: [Row::new(); 3],
     stick: (0, 0),
     held_p1: 0,
+    held_p: [0; 2],
+    edge_p: [0; 2],
+    stick_p: [(0, 0); 2],
+    start_hold: (-1, 0, false),
+    menu: Menu::new(),
+    dv: [D_DEFAULT; 2],
+    vals: [0; N_IDS],
+    rec_len: [-1; 8],
+    w_tab: [0.0; 5],
     hold: (0, 0),
+    dummy_toast: -1,
     dd_armed: false,
     after_modal: false,
     prev_held: 0,
@@ -325,13 +355,15 @@ const F_CHAR: usize = 8;
 const F_ACTION: usize = 12;
 const F_HITLAG: usize = 24;
 const F_HITSTUN: usize = 28;
+const F_POS_X: usize = 56;
+const F_POS_Y: usize = 60;
 const F_VX: usize = 64;
 const F_VY: usize = 68;
 const F_ACTION_FRAME: usize = 120;
 
 /// Hint key caps and labels: (key, label); widths measured once at init.
 const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D↓", "save"), ("D↑", "load"), ("Z+D↑", "HUD preset")];
-const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("L R", "10f"), ("A", "take over"), ("B", "resume")];
+const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("A", "take over"), ("Z hold", "quick"), ("START hold", "menu")];
 
 fn measure(s: &str, role: i32) -> f32 {
     gd_ui_enc::measure(s, role)
@@ -402,10 +434,15 @@ impl Lab {
             self.kit_ring = k("ui.ring");
             self.kit_diamond = k("ui.diamond");
             self.kit_hatch = k("ui.hatch");
+            self.kit_knob = k("ui.knob");
             // ports 1 and 2 observed (the game keeps its input)
             self.cap = gd_ui_capture(0x3, CAP_SHARED);
         }
         self.lab_w = measure("LAB", R_LAB);
+        for (i, (name, _)) in TABS.iter().enumerate() {
+            self.w_tab[i] = measure(name, ROLE_VALUE) + 24.0;
+        }
+        self.menu_init();
         for (i, (k, l)) in HINTS_PLAY.iter().chain(HINTS_FROZEN.iter()).enumerate() {
             self.w_hint[i * 2] = measure(k, ROLE_LABEL) + 12.0;
             self.w_hint[i * 2 + 1] = measure(l, ROLE_VALUE);
@@ -424,10 +461,12 @@ impl Lab {
     }
 
     fn apply_preset(&mut self) {
-        unsafe {
-            gd_lab_overlay(0x3, if self.preset == FULL { OV_HITBOX } else { 0 });
-        }
+        self.preset_widgets();
         self.chip_key = u32::MAX;
+    }
+
+    fn stick_of(&self, port: u32) -> (i8, i8) {
+        self.stick_p[port as usize & 1]
     }
 
     // -------------------------------------------------------------------------------------------- input
@@ -439,15 +478,21 @@ impl Lab {
         for port in 0..2 {
             let r = unsafe { gd_ui_pad(port, self.pad.as_mut_ptr()) };
             modal |= r == GD_ESTATE;
+            let (mut h, mut e, mut st) = (0, 0, (0, 0));
             if r == 0 {
-                let h = u16::from_le_bytes([self.pad[0], self.pad[1]]);
+                h = u16::from_le_bytes([self.pad[0], self.pad[1]]);
+                e = u16::from_le_bytes([self.pad[12], self.pad[13]]);
+                st = (self.pad[2] as i8, self.pad[3] as i8);
                 held |= h;
-                edge |= u16::from_le_bytes([self.pad[12], self.pad[13]]);
+                edge |= e;
                 if port == 0 {
                     self.held_p1 = h;
-                    self.stick = (self.pad[2] as i8, self.pad[3] as i8);
+                    self.stick = st;
                 }
             }
+            self.held_p[port as usize] = h;
+            self.edge_p[port as usize] = e;
+            self.stick_p[port as usize] = st;
         }
         // a host overlay (the settings overlay) holds the pads: no lab controls, no pending save, and nothing counts
         // again until every button is up (the press that closed it is not a lab action)
@@ -462,6 +507,63 @@ impl Lab {
                 return;
             }
             self.after_modal = false;
+        }
+        // the full menu holds the opener's pad (the game is frozen meanwhile)
+        if self.menu.open {
+            let p = self.menu.port as usize & 1;
+            self.menu_input(self.held_p[p], self.edge_p[p], self.stick_p[p]);
+            self.prev_held = held;
+            self.dd_armed = false;
+            return;
+        }
+        // START: freeze on the press, the menu when it is held 30 frames, resume on a short tap while frozen
+        if self.start_hold.0 >= 0 {
+            let p = self.start_hold.0 as usize;
+            if self.held_p[p] & START != 0 {
+                self.start_hold.1 += 1;
+                if self.start_hold.1 >= 30 {
+                    self.start_hold.0 = -1;
+                    self.open_menu(p as u32, !self.start_hold.2);
+                }
+                self.prev_held = held;
+                return;
+            }
+            if self.start_hold.2 {
+                unsafe { gd_lab_pause(0) };
+            }
+            self.start_hold.0 = -1;
+        }
+        // the radial (Z hold); D-pad presses with Z keep their Z + D-pad meaning
+        let zp = if self.held_p[0] & BZ != 0 { 0 } else { 1 };
+        if self.menu.radial {
+            let p = self.menu.rport as usize;
+            if self.edge_p[p] & (DL | DR | DU) != 0 {
+                self.menu.radial = false;
+                self.menu.z_combo = true;
+            } else {
+                self.radial_input(p as u32, self.held_p[p], self.edge_p[p], self.stick_p[p]);
+                self.prev_held = held;
+                return;
+            }
+        }
+        if self.held_p[zp] & BZ != 0 {
+            // only a plain Z hold opens it: with the stick still and no other button (a grab, a Z-cancel or an
+            // aerial is never a menu)
+            let (sx, sy) = self.stick_p[zp];
+            let moved = (sx as i32).abs() > 30 || (sy as i32).abs() > 30;
+            if self.edge_p[zp] & (DL | DR | DU | DD) != 0 || self.held_p[zp] & !(BZ | 0x80) != 0 || (moved && self.menu.z_frames < 12) {
+                self.menu.z_combo = true;
+            }
+            self.menu.z_frames += 1;
+            // frozen only (spec open question 3): during play Z is grab, and a held Z is ordinary play
+            if self.menu.z_frames == 12 && !self.menu.z_combo && self.paused {
+                self.menu.radial = true;
+                self.menu.rport = zp as u32;
+                self.menu.rsel = -1;
+            }
+        } else {
+            self.menu.z_frames = 0;
+            self.menu.z_combo = false;
         }
         let z = held & BZ != 0;
         // hold-to-repeat for frozen D-left / D-right: 15 frames, then every 4
@@ -483,7 +585,11 @@ impl Lab {
             }
             if edge & START != 0 {
                 if held & DD == 0 {
-                    gd_lab_pause(!self.paused as i32);
+                    let p = if self.edge_p[0] & START != 0 { 0 } else { 1 };
+                    if !self.paused {
+                        gd_lab_pause(1);
+                    }
+                    self.start_hold = (p, 0, self.paused);
                 }
                 return;
             }
@@ -552,8 +658,15 @@ impl Lab {
         let n = unsafe { gd_lab_applied(self.abuf.as_mut_ptr(), 16) };
         let me = self.status[8];
         for k in 0..n.max(0) as usize {
-            let r = &self.abuf[k * 20..k * 20 + 20];
+            let mut r = [0u8; 20];
+            r.copy_from_slice(&self.abuf[k * 20..k * 20 + 20]);
             let (side, op, a) = (r[0] as i32, r[4], u16::from_le_bytes([r[6], r[7]]) as i32);
+            // the other peer's dummy changes (ours are in the menu already, and may be ahead of what applied)
+            if (op == OP_CPU || op == OP_REACTION) && side != me {
+                let b = u32::from_le_bytes([r[8], r[9], r[10], r[11]]);
+                let c = u32::from_le_bytes([r[12], r[13], r[14], r[15]]);
+                self.applied_dummy(op, r[5] as usize, a as u32, b, c);
+            }
             if op == OP_SAVE || op == OP_LOAD {
                 self.slots_dirty = true;
             }
@@ -572,6 +685,13 @@ impl Lab {
                 OP_PAUSE => m.s(if a != 0 { " froze" } else { " resumed" }),
                 OP_STEP => m.s(" stepped"),
                 OP_GO_LIVE => m.s(" took over"),
+                OP_REACTION | OP_CPU => {
+                    if self.dummy_toast == self.status[1] {
+                        continue;
+                    }
+                    self.dummy_toast = self.status[1];
+                    m.s(" set dummy P").i(r[5] as i32 + 1)
+                }
                 _ => continue,
             };
             self.toast(&m, None);
@@ -806,31 +926,45 @@ impl Lab {
         let bottom = |x0: f32, x1: f32, h: f32, margin: f32| if over(x0, x1) { keep - 8.0 - h } else { vh - margin - h };
         // the timer is the band's top 110 of 720: below it, scaled with the band
         let meter_y = if self.timed { (b[1] + b[3] * 125.0 / 720.0) / sc } else { 20.0 };
-        if self.preset != CLEAN {
+        // the menu covers the middle: only the chip and the toasts stay with it
+        let mo = !self.menu.open;
+        let on = |id: usize| mo && self.vals[id] != 0;
+        let (s_meter, s_move, s_state, s_dummy, s_combo, s_input, s_hints) = (on(H_METER), on(H_MOVE), on(H_STATE), on(H_DUMMY), on(H_COMBO), on(H_INPUT), on(H_HINTS));
+        if s_meter {
             self.frame_meter(vw * 0.5 - 350.0, meter_y);
+        }
+        if s_move {
             self.move_readout(vw - 240.0, 20.0);
         }
-        if full {
-            self.state_readout(vw - 240.0, 236.0);
-            self.dummy_panel(20.0, 70.0);
-            self.combo_panel(20.0, 300.0);
-            if !self.paused {
-                self.input_display(20.0, bottom(20.0, 270.0, 80.0, 20.0));
-            }
+        if s_state {
+            self.state_readout(vw - 240.0, if s_move { 236.0 } else { 20.0 });
         }
+        if s_dummy {
+            self.dummy_panel(20.0, 70.0);
+        }
+        if s_combo {
+            self.combo_panel(20.0, if s_dummy { 300.0 } else { 70.0 });
+        }
+        if s_input && !self.paused {
+            self.input_display(20.0, bottom(20.0, 270.0, 80.0, 20.0));
+        }
+        let _ = full;
         let hints = |s: &Lab, w0: usize, n: usize| (w0..w0 + n).map(|i| s.w_hint[i * 2] + 5.0 + s.w_hint[i * 2 + 1] + 12.0).sum::<f32>();
-        if self.paused {
+        if self.menu.open {
+            self.draw_menu(vw);
+        } else if self.paused {
             let hy = bottom(vw - 20.0 - hints(self, 4, 4), vw - 20.0, 18.0, 22.0);
             let sy = (hy - 8.0 - 52.0).min(keep - 8.0 - 52.0);
             self.slot_cards(vw * 0.5, sy - 8.0 - 88.0);
             self.scrubber(vw * 0.5 - 400.0, sy);
             self.hints(vw - 20.0, hy, &HINTS_FROZEN, 4, 4);
-        } else if full {
-            let hy = bottom(vw - 20.0 - hints(self, 0, 4), vw - 20.0, 18.0, 22.0);
-            self.hints(vw - 20.0, hy, &HINTS_PLAY, 0, 4);
-        } else if self.preset == CLEAN {
-            let hy = bottom(vw - 20.0 - hints(self, 0, 1), vw - 20.0, 18.0, 22.0);
-            self.hints(vw - 20.0, hy, &HINTS_PLAY, 0, 1);
+        } else if s_hints {
+            let n = if self.preset == CLEAN { 1 } else { 4 };
+            let hy = bottom(vw - 20.0 - hints(self, 0, n), vw - 20.0, 18.0, 22.0);
+            self.hints(vw - 20.0, hy, &HINTS_PLAY, 0, n);
+        }
+        if self.menu.radial {
+            self.draw_radial(vw * 0.5, vh * 0.42);
         }
         self.toasts(vw * 0.5, if self.preset == CLEAN { if self.timed { meter_y } else { 40.0 } } else { meter_y + 100.0 });
         self.enc.submit();
@@ -1017,9 +1151,14 @@ impl Lab {
     fn dummy_panel(&mut self, x: f32, y: f32) {
         self.panel(x, y, 200.0, 160.0);
         let mu = self.t(T_MUTED);
-        self.enc.text(x + 14.0, y + 12.0, ROLE_LABEL, mu, "P2 · Dummy");
-        const ROWS: [(&str, &str); 5] = [("Block", "None"), ("Tech", "None"), ("DI", "None"), ("After shield", "None"), ("SDI", "Off")];
-        for (i, (k, v)) in ROWS.iter().enumerate() {
+        let dp = self.dport();
+        let d = self.dv[dp];
+        let lab = |t: &'static [(&'static str, i32)], v: i32| t[(v.max(0) as usize).min(t.len() - 1)].0;
+        let mut title = Txt::new();
+        title.s("P").i(dp as i32 + 1).s(" · ").s(lab(CONTROL, d[D_CONTROL]));
+        self.enc.text(x + 14.0, y + 12.0, ROLE_LABEL, mu, title.as_str());
+        let rows: [(&str, &str); 5] = [("Block", lab(BLOCK, d[D_BLOCK])), ("Tech", lab(TECH, d[D_TECH])), ("DI", lab(DI, d[D_DI])), ("After shield", lab(OOS, d[D_OOS])), ("SDI", lab(SDI, d[D_SDI]))];
+        for (i, (k, v)) in rows.iter().enumerate() {
             self.row(x + 14.0, y + 31.0 + i as f32 * 20.0, 172.0, k, v);
         }
         let (c, s) = if self.status[7] & 2 != 0 {
@@ -1226,7 +1365,7 @@ pub static gdmod_lab_abi: u32 = 1 << 16;
 #[no_mangle]
 pub static gd_mod_manifest: Manifest = Manifest {
     magic: 0x444D_4447, struct_size: 124, abi_min: 1 << 16, abi_max: 1 << 16, hook_table_version: 1, mod_version: 0x0001_0000,
-    required_features: FEATURE_UI_DRAW | FEATURE_UI_INPUT | FEATURE_LAB | FEATURE_LAB_STATE | FEATURE_LAB_OVERLAY,
+    required_features: FEATURE_UI_DRAW | FEATURE_UI_INPUT | FEATURE_LAB | FEATURE_LAB_STATE | FEATURE_LAB_OVERLAY | FEATURE_LAB_INPUT | FEATURE_LAB_CPU,
     optional_features: 0, state_bytes: 0, hook_count: 0,
     hooks: core::ptr::null(), mod_id: text(b"gd.lab"), mod_name: text(b"LAB"),
 };

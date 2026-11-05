@@ -24,8 +24,9 @@ use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::rc::Rc;
 
-/// The ring holds one snapshot every RING_EVERY frames; a rewind re-sims the rest from the logged pads.
-pub const RING_EVERY: i32 = 4;
+/// The ring holds one snapshot every RING_EVERY frames; a rewind re-sims the rest from the logged pads (at most 7
+/// frames, ~2 ms: the depth stays the full ring, the capture cost per frame halves).
+pub const RING_EVERY: i32 = 8;
 
 const BTN_A: u16 = 0x100;
 const BTN_B: u16 = 0x200;
@@ -398,6 +399,7 @@ impl LabRun {
                 }
             }
             OP_CPU => {
+                self.note(format!("lab: frame {}: P{} control {} param {}", self.f, port + 1, c.a, c.b));
                 let d = &mut self.dummy[port];
                 d.beh = c.a as i32;
                 d.param = c.b as i32;
@@ -415,6 +417,7 @@ impl LabRun {
                 if let Some(r) = self.dummy[port].react.get_mut(c.a as usize) {
                     r.option = c.b as i32;
                     r.p = ReactParam::from_u32(c.c);
+                    self.note(format!("lab: frame {}: P{} reaction {} option {} param {:#x}", self.f, port + 1, c.a, c.b, c.c));
                 }
             }
             OP_REACTION_WEIGHTS => {
@@ -579,8 +582,12 @@ impl LabRun {
             return live;
         }
         let Some(fp) = (unsafe { fighter(port as i32) }) else { return live };
-        let mut p = PADStatus::zeroed();
-        p.err = live.err;
+        // no base behaviour (CPU_NONE): the reactions act on top of the port's own pad (a human, or nobody), so setting
+        // a tech or DI option never takes the stick away between hits; a behaviour replaces the pad
+        let mut p = if d.beh == CPU_NONE { live } else { PADStatus::zeroed() };
+        // a dummy on a port without a controller (a human slot nobody holds): the synthesised pad is connected, or
+        // the game would read it as unplugged and the dummy would never act
+        p.err = 0;
         let f = self.f;
         let m = fp.motion_id;
         let (x, y) = (fp.cur_pos.x, fp.cur_pos.y);
@@ -702,7 +709,7 @@ impl LabRun {
         let r = d.react[RK_OOS as usize];
         if r.option != RO_NONE {
             if self.obs[port].motion == 181 && m != 181 {
-                st.oos = Some((f, if r.option == RO_RANDOM { self.draw(r.weights, &[1, 2, 3, 4, 5, 6]) } else { r.option }));
+                st.oos = Some((f, if r.option == RO_OOS_RANDOM { self.draw(r.weights, &[1, 2, 3, 4, 5, 6]) } else { r.option }));
             }
             if let Some((at, o)) = st.oos {
                 if f - at < r.p.delay as i32 {

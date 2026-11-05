@@ -64,7 +64,8 @@ pub unsafe extern "C" fn onExit(scene: *mut GameModeState) {
     let buttons = (*scene).info.exit_data as *mut i32;
     // TARGET_PC: no /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the
     // debug menu.
-    if *buttons & (HSD_PAD_Y | HSD_PAD_B) != 0 {
+    // port: only with MELEE_DEBUG_MENU=1 (menuguard::debug_menu_shortcut)
+    if crate::menuguard::debug_menu_shortcut() && *buttons & (HSD_PAD_Y | HSD_PAD_B) != 0 {
         ext::gm_SetPendingGameMode(GM_DEBUG as i32);
         ext::gm_SetNewGameModePending();
         return;

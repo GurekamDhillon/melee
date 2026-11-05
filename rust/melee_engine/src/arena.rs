@@ -174,6 +174,42 @@ fn class_of(size: usize) -> Option<(usize, usize)> {
 /// Serve `l` from the arena; null when the arena does not take it (alignment above 16, huge, no address space).
 #[cfg(windows)]
 pub unsafe fn alloc(l: Layout) -> *mut u8 {
+    alloc_fresh(l).0
+}
+
+/// Set once the arena was ever snapshotted (a load may then have left bytes past the bump pointer).
+static SNAPSHOTTED: core::sync::atomic::AtomicBool = core::sync::atomic::AtomicBool::new(false);
+
+/// Called by `snapshot::Base::capture`: from now on fresh bump memory is not known to be zero.
+pub fn note_snapshot() {
+    SNAPSHOTTED.store(true, Relaxed);
+}
+
+/// [`alloc`] for a zeroed block: zeroes it unless it is fresh bump memory and the arena was never snapshotted (pages
+/// past the bump pointer were never handed out: still the OS's zero pages). A multi-MB zeroed table then costs only
+/// the pages that are touched (the archive decoder's shared tables, `gcdecode::shared_array`).
+#[cfg(windows)]
+pub unsafe fn alloc_zeroed(l: Layout) -> *mut u8 {
+    let (p, fresh) = alloc_fresh(l);
+    if !p.is_null() && !(fresh && !SNAPSHOTTED.load(Relaxed)) {
+        core::ptr::write_bytes(p, 0, l.size());
+    }
+    p
+}
+
+/// (block, whether it came from the bump pointer).
+#[cfg(windows)]
+unsafe fn alloc_fresh(l: Layout) -> (*mut u8, bool) {
+    let r = alloc_inner(l);
+    (r, FRESH)
+}
+
+#[cfg(windows)]
+static mut FRESH: bool = false;
+
+#[cfg(windows)]
+unsafe fn alloc_inner(l: Layout) -> *mut u8 {
+    FRESH = false;
     let Some(ab) = bucket(l.align()) else { return core::ptr::null_mut() };
     let Some((c, size)) = class_of(l.size()) else { return core::ptr::null_mut() };
     let _g = Lock::take();
@@ -190,6 +226,10 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
     LIVE[c] += 1;
     let head = FREE[ab][c];
     if head != 0 {
+        if *((head + 8) as *const u64) != FREE_MARK {
+            report_misuse("a free block was written after it was freed (its free-list mark is gone)", head, size);
+        }
+        *((head + 8) as *mut u64) = 0;
         FREE[ab][c] = *(head as *const usize);
         if TRIM && size >= TRIM_MIN && !recommit(head, head + size) {
             return core::ptr::null_mut();
@@ -202,6 +242,7 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
             let h2 = FREE[ab][c2];
             if h2 != 0 {
                 FREE[ab][c2] = *(h2 as *const usize);
+                *((h2 + 8) as *mut u64) = 0;
                 if !recommit(h2, h2 + size) {
                     return core::ptr::null_mut();
                 }
@@ -224,6 +265,7 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
         COMMITTED += COMMIT_STEP;
     }
     BUMP = end;
+    FRESH = true;
     p as *mut u8
 }
 
@@ -231,12 +273,45 @@ pub unsafe fn alloc(l: Layout) -> *mut u8 {
 pub unsafe fn alloc(_l: Layout) -> *mut u8 {
     core::ptr::null_mut()
 }
+#[cfg(not(windows))]
+pub unsafe fn alloc_zeroed(_l: Layout) -> *mut u8 {
+    core::ptr::null_mut()
+}
+
+/// Misuse check: a free block carries this mark in its second word (the first is the free-list link) until it is
+/// handed out again. A block freed while marked was freed twice; a block popped without the mark was written after its
+/// free. Both are what a harness value holding arena memory across a rollback load does (the load puts the free lists
+/// back to a state where the block is free or someone else's: the headless audio capture, grown inside the game scope,
+/// corrupted decoded archive objects that way and a later reclaim called a null `free` pointer). The mark lives in the
+/// arena, so a load restores it together with the lists.
+const FREE_MARK: u64 = 0xF4EE_B10C_F4EE_B10C;
+static MISUSE_N: core::sync::atomic::AtomicUsize = core::sync::atomic::AtomicUsize::new(0);
+static mut MISUSE_HOOK: Option<fn(&str, usize, usize)> = None;
+/// The binary's reporter for [`FREE_MARK`] misuse. It runs under the arena lock: it must not allocate.
+pub fn set_misuse_hook(f: fn(&str, usize, usize)) {
+    unsafe { MISUSE_HOOK = Some(f) }
+}
+/// Misuse reports so far (tests).
+pub fn misuse_count() -> usize {
+    MISUSE_N.load(Relaxed)
+}
+unsafe fn report_misuse(what: &str, p: usize, n: usize) {
+    if MISUSE_N.fetch_add(1, Relaxed) < 4 {
+        if let Some(f) = MISUSE_HOOK {
+            f(what, p, n);
+        }
+    }
+}
 
 /// Return an arena block (the caller checked [`contains`]).
 pub unsafe fn free(p: *mut u8, l: Layout) {
     let (Some((c, _)), Some(ab)) = (class_of(l.size()), bucket(l.align())) else { return };
     let _g = Lock::take();
     LIVE[c] -= 1;
+    if *((p as usize + 8) as *const u64) == FREE_MARK {
+        report_misuse("a block that is already free was freed again (double free)", p as usize, l.size());
+    }
+    *((p as usize + 8) as *mut u64) = FREE_MARK;
     *(p as *mut usize) = FREE[ab][c];
     FREE[ab][c] = p as usize;
     #[cfg(windows)]
@@ -360,5 +435,34 @@ pub fn stats() -> (usize, usize, Vec<(usize, usize)>) {
             return (BUMP - BASE, free, live.into_iter().take(8).map(|(t, s)| (s, t / s)).collect());
         }
         (BUMP - BASE, free, per.into_iter().take(6).map(|(t, s)| (s, t / s)).collect())
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    /// The free-list mark catches a double free and a write after free (the class of bug a harness value holding
+    /// arena memory across a rollback load produces: the headless audio capture, net.md).
+    #[test]
+    fn free_mark_reports_double_free_and_write_after_free() {
+        unsafe {
+            let l = Layout::from_size_align(200, 16).unwrap();
+            let n0 = misuse_count();
+            let p = alloc(l);
+            assert!(!p.is_null());
+            free(p, l);
+            assert_eq!(misuse_count(), n0, "a plain free is not misuse");
+            free(p, l); // double free
+            assert_eq!(misuse_count(), n0 + 1);
+            // (that class's list now links the block to itself: leave it) a write after free, in another class
+            let l2 = Layout::from_size_align(3000, 16).unwrap();
+            let q = alloc(l2);
+            free(q, l2);
+            *(q.add(8) as *mut u64) = 0x1234;
+            let r = alloc(l2);
+            assert_eq!(r, q);
+            assert_eq!(misuse_count(), n0 + 2);
+        }
     }
 }

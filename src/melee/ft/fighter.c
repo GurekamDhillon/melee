@@ -271,8 +271,10 @@ static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_80
 {
     extern int gm_MexVanillaKind(int kind, int character_kind);
     static struct Fighter_804D64FC_t copy;
-    static void* tables[8][Ft_Kind_Max];
-    void*** fields[8];
+    static void* tables[7][Ft_Kind_Max];
+    static u32 x20[Ft_Kind_Max];
+    void*** fields[7];
+    u32* words;
     int j, i;
     if (src == NULL) {
         return NULL;
@@ -285,8 +287,7 @@ static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_80
     fields[4] = (void***) &copy.x14;
     fields[5] = (void***) &copy.x18;
     fields[6] = (void***) &copy.x1C;
-    fields[7] = (void***) &copy.x20; /* f32 per kind: copied as 4-byte words */
-    for (j = 0; j < 8; j++) {
+    for (j = 0; j < 7; j++) {
         void** loaded = *fields[j];
         if (loaded == NULL) {
             continue;
@@ -301,6 +302,22 @@ static struct Fighter_804D64FC_t* ftCommonData_ExtendCpuTables(struct Fighter_80
             tables[j][i] = k >= 0 ? loaded[k] : NULL;
         }
         *fields[j] = tables[j];
+    }
+    /* x20 is f32 per kind: 4-byte words, not pointers. Copied through a void** it read twice the
+       table's extent wherever a pointer is 8 bytes (the native Rust port: a fault when the decoded
+       table ended on a page edge, entering the results screen) and gave the AI misplaced floats. */
+    words = (u32*) copy.x20;
+    if (words != NULL) {
+        for (i = 0; i < Ft_Kind_Max; i++) {
+            int k = i;
+            if (i >= Ft_Kind_Mex0) {
+                extern int Geno_DefineAiLike(int kind);
+                int like = Geno_DefineAiLike(i);
+                k = like >= 0 ? like : gm_MexVanillaKind(i, 0);
+            }
+            x20[i] = k >= 0 ? words[k] : 0;
+        }
+        copy.x20 = (float*) x20;
     }
     return &copy;
 }

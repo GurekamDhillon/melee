@@ -946,6 +946,13 @@ int gw_PcFrontendEnabled(void) {
   return (v == NULL || v[0] != '0') ? 1 : 0;
 }
 
+/* MELEE_DEBUG_MENU=1: the title's B / Y shortcut into the debug menu (src/melee/gm/gmtitlemode.h). Off by default:
+   B on the title is what a player presses after backing out of the main menu, and the debug menu is not retail. */
+int gw_PcDebugMenuShortcut(void) {
+  const char *v = getenv("MELEE_DEBUG_MENU");
+  return (v != NULL && v[0] == '1') ? 1 : 0;
+}
+
 int gw_PcTraceMotionEnabled(void) {
   const char *v = getenv("MELEE_LOG_MOTION");
   return (v != NULL && v[0] != '0') ? 1 : 0;

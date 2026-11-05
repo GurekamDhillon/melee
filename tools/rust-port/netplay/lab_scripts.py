@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """lab_pair.sh with LAB_MOD=lab: the --np-css pad scripts with LAB actions from both peers inserted into the first
 fight (the lab mod's controls, rust/mods/lab): the host saves, freezes, rewinds 5 frames and resumes; the guest
-freezes, rewinds 10 + 3 frames, takes over, and later loads the host's slot. Writes np_lab_host.txt / np_lab_guest.txt
+freezes, rewinds 10 + 3 frames, takes over, and later loads the host's slot. Then the host holds START for the full
+menu and sets its dummy (P2: Block all, Tech random; lab commands both peers apply), the guest opens its own menu
+and sets P1's DI away. Writes np_lab_host.txt / np_lab_guest.txt
 next to the css scripts in <dir>."""
 import os, sys
 
 d = sys.argv[1]
-HOST = [(900, "0004"), (1100, "1000")] + [(1110 + 8 * i, "0001") for i in range(5)] + [(1180, "0200"), (1500, "0018")]
-GUEST = [(1700, "1000"), (1712, "0040")] + [(1724 + 8 * i, "0001") for i in range(3)] + [(1760, "0100"), (2100, "0008")]
+# (frame, buttons[, frames held]): D-down 4 = Block, D-right 2, D-down 4 x4 = Tech, D-right x5 = Random, B closes
+MENU_HOST = [(2400, "1000", 40)] + [(2450 + 8 * i, "0004") for i in range(2)] + [(2470, "0002")] + [(2480 + 8 * i, "0004") for i in range(4)]     + [(2520 + 8 * i, "0002") for i in range(5)] + [(2570, "0200")]
+MENU_GUEST = [(2700, "1000", 40)] + [(2750 + 8 * i, "0004") for i in range(7)] + [(2810 + 8 * i, "0002") for i in range(3)] + [(2840, "0200")]
+HOST = [(900, "0004"), (1100, "1000")] + [(1110 + 8 * i, "0001") for i in range(5)] + [(1180, "0200"), (1500, "0018")] + MENU_HOST
+GUEST = [(1700, "1000"), (1712, "0040")] + [(1724 + 8 * i, "0001") for i in range(3)] + [(1760, "0100"), (2100, "0008")] + MENU_GUEST
 
 
 def patch(src, dst, marker, acts):
@@ -23,7 +28,7 @@ def patch(src, dst, marker, acts):
         t += int(s[0])
     # while frozen (and around each action) the fight's own buttons would be lab controls too: blank the fight there
     quiet = []
-    for k, (at, _) in enumerate(acts):
+    for k, (at, *_) in enumerate(acts):
         nxt = acts[k + 1][0] if k + 1 < len(acts) else at + 3
         quiet.append((at - 10, (nxt if nxt - at < 100 else at) + 13))
     def blank(st, n):
@@ -35,16 +40,24 @@ def patch(src, dst, marker, acts):
         for a, m, q in blank(st, n):
             flat2.append([a, m, "0000" if q else b, "0" if q else x, "0" if q else y])
     flat = flat2
-    out, t, ai = [], 0, 0
+    out, t, ai, cons = [], 0, 0, 0
     for st, n, b, x, y in flat:
+        # frames a held action already covered
+        if st + n <= cons:
+            continue
+        if st < cons:
+            n -= cons - st
+            st = cons
         while ai < len(acts) and st <= acts[ai][0] < st + n:
-            at, btn = acts[ai]
+            at, btn, *hold = acts[ai]
+            dur = hold[0] if hold else 3
             pre = at - st
             if pre:
                 out.append(f"{pre} {b} {x} {y}")
-            out.append(f"3 {btn} 0 0")
-            n -= pre + 3
-            st = at + 3
+            out.append(f"{dur} {btn} 0 0")
+            n -= pre + dur
+            st = at + dur
+            cons = st
             ai += 1
             if n <= 0:
                 break

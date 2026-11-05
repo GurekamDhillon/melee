@@ -212,7 +212,7 @@ impl Output {
             n
         };
         if self.driver.device_open() && self.driver.cfg.dump.is_none() && std::env::var_os("MELEE_AUDIO_GAME_THREAD").is_none() {
-            self.start_mixer();
+            crate::output::on_host_heap(|| self.start_mixer());
         }
         n
     }

@@ -8,7 +8,7 @@
 /* ABI versions (major<<16 | minor). A mod that declares any UI (LAB) feature bit, required or optional, exports
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
-#define GD_UI_ABI_VERSION  ((1u << 16) | 1u) /* 1.1: text style bits (GD_UI_TEXT_*) */
+#define GD_UI_ABI_VERSION  ((1u << 16) | 2u) /* 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests */
 #define GD_LAB_ABI_VERSION (1u << 16)
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
@@ -24,7 +24,8 @@ enum {
     GD_FEATURE_LAB_INPUT    = 1u << 12,
     GD_FEATURE_LAB_CPU      = 1u << 13,
     GD_FEATURE_LAB_OVERLAY  = 1u << 14,
-    GD_FEATURE_UI_VECTOR    = 1u << 15
+    GD_FEATURE_UI_VECTOR    = 1u << 15,
+    GD_FEATURE_UI_HOST      = 1u << 16  /* v1.2: gd_ui_list_* / gd_ui_request (the in-game browser) */
 };
 
 /* results: 0 ok, negative = error */
@@ -132,6 +133,24 @@ int      gd_ui_scene_replace(int major, int minor, unsigned scene);
 int      gd_ui_scene_goto(unsigned scene_or_retail);
 int      gd_ui_scene_back(void);
 int      gd_ui_match_start(const void* setup, unsigned len);     /* GD_ESTATE until gd_match_setup lands */
+/* ---- gd-ui-v1.2 (UI_HOST): host catalogs and requests (wasm-ui-lab-api.md A6; rust/mods/browser) ----
+ * The play flow fills each catalog (records of NUL-separated UTF-8 fields) at the first present and after a request
+ * that changes it; gd_ui_list_info returns generation << 16 | count, so a mod re-reads only on a change.
+ *   MODES   id, group, title, description, available (0/1), note
+ *   MODS    id, name, description, kind, enabled next launch (0/1), enabled at this launch (0/1), status
+ *   REPLAYS n (1-based), kind (mrpl/slp), date, stage, fighters, m:ss, file name, note
+ *   SKINS   slot (plfxnr), slot file stem (PlFxNr), skin name, selected (0/1), verdict when selected
+ *   STATUS  one record: code (0 info, 1 error, 2 done: the browser closes), text (the last request's result)
+ *   ONLINE  one record: server configured (0/1), help text
+ * Requests are queued (<= 8 per present, arg <= 256 bytes, NUL-separated fields) and applied after the present:
+ *   LAUNCH(mode id)  MOD_SET(id, "0"/"1")  REPLAY_PLAY(n)  SKIN_SET(slot, name | "none")  NET_HOST()
+ *   NET_JOIN(code or HOST:PORT)  NET_SPECTATE(code or HOST:PORT)  REFRESH(list kind digit; other = all) */
+enum { GD_UI_LIST_MODES = 0, GD_UI_LIST_MODS, GD_UI_LIST_REPLAYS, GD_UI_LIST_SKINS, GD_UI_LIST_STATUS, GD_UI_LIST_ONLINE };
+enum { GD_UI_REQ_LAUNCH = 1, GD_UI_REQ_MOD_SET, GD_UI_REQ_REPLAY_PLAY, GD_UI_REQ_SKIN_SET, GD_UI_REQ_NET_HOST,
+       GD_UI_REQ_NET_JOIN, GD_UI_REQ_NET_SPECTATE, GD_UI_REQ_REFRESH };
+int      gd_ui_list_info(unsigned kind);                          /* gen << 16 | count; GD_ECAP without UI_HOST */
+int      gd_ui_list_get(unsigned kind, unsigned i, void* out, unsigned cap); /* bytes copied (truncated to cap) */
+int      gd_ui_request(int op, const char* arg, unsigned len);    /* GD_OK queued, GD_EFULL, GD_EINVAL */
 /* exports: int gd_ui_init(void); void gd_ui_frame(unsigned present_no) (required with UI_DRAW);
  * void gd_ui_event(unsigned node, int ev, int value); void gd_ui_scene_enter(unsigned); void gd_ui_scene_leave(unsigned) */
 
@@ -165,7 +184,9 @@ enum { GD_LAB_RO_TECH_IN_PLACE = 1, GD_LAB_RO_TECH_ROLL_IN = 2, GD_LAB_RO_TECH_R
 enum { GD_LAB_RO_GETUP_STAND = 1, GD_LAB_RO_GETUP_ROLL_IN = 2, GD_LAB_RO_GETUP_ROLL_AWAY = 3, GD_LAB_RO_GETUP_ATTACK = 4,
        GD_LAB_RO_LEDGE_JUMP = 6, GD_LAB_RO_LEDGE_DROP = 7 };
 enum { GD_LAB_RO_BLOCK_ALL = 1, GD_LAB_RO_BLOCK_AFTER_FIRST = 2, GD_LAB_RO_BLOCK_RANDOM = 3 };
-enum { GD_LAB_RO_OOS_JUMP = 1, GD_LAB_RO_OOS_NAIR, GD_LAB_RO_OOS_GRAB, GD_LAB_RO_OOS_UPB, GD_LAB_RO_OOS_SPOTDODGE, GD_LAB_RO_OOS_ROLL };
+enum { GD_LAB_RO_OOS_JUMP = 1, GD_LAB_RO_OOS_NAIR, GD_LAB_RO_OOS_GRAB, GD_LAB_RO_OOS_UPB, GD_LAB_RO_OOS_SPOTDODGE, GD_LAB_RO_OOS_ROLL,
+       GD_LAB_RO_OOS_RANDOM = 8 /* RANDOM (5) is spot-dodge for this kind */ };
+/* CPU_NONE with reactions: the reactions act on top of the port's own pad; any other behaviour replaces it */
 /* GAP-5 reaction parameter: delay frames | DI/SDI strength 0..100 << 8 | random chance % << 16 | recording << 24 */
 #define GD_LAB_REACT_PARAM(delay, strength, chance, rec) ((unsigned)(delay) | (unsigned)(strength) << 8 | (unsigned)(chance) << 16 | (unsigned)(rec) << 24)
 
@@ -205,7 +226,7 @@ typedef struct { float ax, ay, bx, by, radius; int state, bone; } gd_lab_hurtbox
 int      gd_lab_save(unsigned slot);                  /* (cmd) */
 int      gd_lab_load(unsigned slot);                  /* (cmd) forks the timeline */
 int      gd_lab_slot_frame(unsigned slot);            /* -1 empty */
-int      gd_lab_ring(unsigned frames);                /* (cmd) 0 off, max 600; a snapshot every 4 frames */
+int      gd_lab_ring(unsigned frames);                /* (cmd) 0 off, max 600; a snapshot every 8 frames */
 int      gd_lab_rewind(unsigned n);                   /* (cmd) the logged future then plays back until go_live */
 int      gd_lab_pause(int on);                        /* (cmd) */
 int      gd_lab_step(int n);                          /* (cmd) n < 0 = rewind(-n) */

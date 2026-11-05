@@ -10,7 +10,7 @@ No admin rights, so no ETW/WPR (`wpr` needs elevation) and no samply. `rust/mele
 sampler: `MELEE_SAMPLE=<report.txt>` starts a helper thread that suspends the main thread every ~1 ms, unwinds it with the
 PE unwind tables and counts frames; the report (self time + inclusive) is written at exit. Symbols need the PDB:
 `MELEE_SAMPLE_PDB=<dir with melee.pdb>` (the release profile keeps `debug = 1`). `MELEE_SAMPLE_ROOT=<substring>` keeps only
-samples whose stack contains the substring (e.g. `Engine::tick` to drop the 5 s boot). Windows only, no OS input.
+samples whose stack contains the substring (e.g. `Engine::tick` to drop the boot). Windows only, no OS input.
 `melee synctest` also prints per-tick ms for save / load / state_hash / game_hash / tick (the counters live in a leaked
 heap block: a load restores every static, so a static counter array would be rolled back too).
 
@@ -46,8 +46,8 @@ Before = `rust-port` at d373bba89 (release). After = port/perf HEAD (release pro
 |---|---|---|
 | sim tick, pad_falcon_fox_fd (golden wall minus `--frames 2` boot, per tick) | 7.05 ms | 0.20 ms |
 | sim tick, cpu_fox_falco_dl | 9.16 ms | 0.53 ms |
-| golden run end to end, pad / cpu | 18.5 s / 37.0 s | 5.4 s / 7.0 s (5 s of that is boot) |
-| synctest depth 7, whole tick (live frame + save + load + 7 resim + 9 hashes), pad / cpu | 65.5 / 71.5 ms | 7.4 / 9.5 ms |
+| golden run end to end, pad / cpu | 18.5 s / 37.0 s | 5.4 s / 7.0 s (5 s of that was boot then; boot is about 0.2 s now, see the 2026-11-05 section) |
+| synctest depth 7, whole tick (live frame + save + load + 7 resim + 9 hashes), pad / cpu | 65.5 / 71.5 ms | 7.4 / 9.5 ms (no longer true by 2026-11-05: 75 ms, see below) |
 | synctest depth 1, pad | 28.2 ms | 3.9 ms |
 | save (per call) | 5.4 ms | 0.97 ms |
 | load (per call) | 5.5 ms | 1.03 ms |
@@ -71,7 +71,7 @@ Fat LTO + one codegen unit (`--profile perf`, separate target dir): all goldens 
   re-snapshots); arena alloc/free about 6%, `Mtx` concat / inverse-transpose in the draw callbacks (the engine must still run
   the retail draw callbacks headless: they set up joint matrices the sim reads, notes/consolidation.md round 1).
   A restricted snapshot (ancestors plus robj targets, with flush leaving child/next alone) would remove most of it.
-- Boot (about 5 s per run, not part of a tick): `GcDecoder::issue` builds a `String` per non-relocated word (format, `rsplit`),
+- Boot (about 5 s per run at the time; about 0.2 s by 2026-11-05, not part of a tick): `GcDecoder::issue` builds a `String` per non-relocated word (format, `rsplit`),
   `memchr`, `HashMap<u32,()>::contains_key` (SipHash) in `GcDecoder::target`. Making `issue` lazy/capped and using a fast hasher
   would cut most of it.
 - `EngineGame::run_frame` formats the 16-word row into a String per frame and keeps it in a BTreeMap forever (synctest/netplay).
@@ -82,6 +82,36 @@ Tick: `melee golden --engine tu --frames N` wall minus the same command with `--
 `MELEE_WINDOW_UNFOCUSED=1`, no window, no render. Rollback: `melee synctest --scenario S --depth K --frames 600`, the per-tick
 counters it prints (boot excluded). Scripts are scratch only (not committed). Before binaries are rebuilt from d373bba89 with
 only the timing counters added, so the snapshot/jobj code measured is the original.
+
+# Rollback re-measure (2026-11-05, branch port/hero-fix)
+Hero measured depth-7 synctest at 110-138 ms per iteration (74 % in snapshot hashing) on a busy PC, against the 7.4 / 9.5 ms
+above. Re-measured here on `rust-port` fc427c98b, profile `fast` (inherits release: opt-level 3, no LTO, 256 codegen units;
+release was not built for lack of disk), `melee synctest --scenario S --depth 7 --frames 600`, the per-tick counters it prints.
+The machine was NOT quiet (other agents' builds and games, CPU load 83-93 %), so absolute values are high; one run each.
+
+| per tick, depth 7 | before (fc427c98b) pad | after pad | after cpu |
+|---|---|---|---|
+| total | 75.3 ms | 20.0 ms | 20.9 ms |
+| state_hash (9 calls) | 55.9 ms | 1.6 ms | 1.7 ms |
+| save | 7.4 ms | 7.7 ms | 7.3 ms |
+| load | 7.2 ms | 7.5 ms | 7.2 ms |
+| run_frame (8 ticks) | 4.7 ms | 3.2 ms | 4.5 ms |
+
+The regression was real, not only the busy PC: the host block's ever-written page set had grown to most of the block, and
+`page_hash` compared every one of those pages against the base and rehashed it on each of the 9 calls per tick. Fix
+(`melee_engine/src/snapshot.rs`): a per-page digest cache for the hashed range. The write-watch delta of each `refresh` is ORed
+into a `stale` bitmap; `page_hash` recomputes the digest (or the equal-to-base mark) only for stale or never-seen pages and folds
+the cached digests in page order. A load's restores are writes, so they mark pages stale too. The hash value changed (it is only
+compared within one run: rollback snapshot checks and synctest, never across peers or builds). `MELEE_HASH_VERIFY=1` recomputes
+every page on every call and panics on a stale cached digest: cpu_fox_falco_dl depth 7, 600 frames, no panic, 0 mismatches.
+Both scenarios: 594 rollback passes, 4158 hash checks, 0 mismatches.
+
+Still open: save and load are about 7 ms each, against about 1 ms in the table above. They compare every ever-written host
+page against the base (and the snapshot's own pages) for the same reason; a since-last-save page reuse for the rollback
+ring (like the Lab's `save_after`) would remove most of it. Not done here.
+
+Boot: `melee golden --engine tu --scenario pad_falcon_fox_fd --frames 2` wall is 185-197 ms (3 runs, same busy machine), the
+full 1801-frame golden 0.6 s; the "5 s boot" figures above are from before the boot work.
 
 # Play polish (2026-11-04, branch port/play-perf)
 Medians of 3, Temple 4 CPUs (fox/marth/falco/peach cpu9, 3603 frames, vsync off, interp on, scale 2, the bench-live

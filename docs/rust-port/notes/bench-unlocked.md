@@ -31,7 +31,7 @@ likely slower than their Source Port.
   (`cpu_ms` = thread cycles actually run in the frame, `sim_ms` = frame work wall time), match frames only. `--headless` has no window or
   renderer; `--hidden` runs the renderer in a hidden window. Boot and disc load are outside the per-frame figures.
 - Rust: `melee golden --iso $GW_ISO_VANILLA --slp F --frames N --out x.csv` (no render). Per tick = (wall at N - wall at `--frames 2`) / (N-2),
-  which subtracts the ~4.5 s boot but includes the golden harness (row hashes, CSV append). N=8700 and N=3175.
+  which subtracts the ~4.5 s boot (boot then; about 0.2 s by 2026-11-05, notes/perf.md) but includes the golden harness (row hashes, CSV append). N=8700 and N=3175.
 - 3 runs each, medians of the per-run means.
 
 ## Results

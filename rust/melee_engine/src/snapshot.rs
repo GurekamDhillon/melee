@@ -126,6 +126,50 @@ pub struct Base {
     next_id: std::cell::Cell<u64>,
     /// MELEE_SNAP_NOINC: compare every candidate page (the measurement baseline).
     no_inc: bool,
+    /// Per-page digests of the hashed range (the host block), so `page_hash` only rehashes pages written since its
+    /// previous call.
+    hcache: std::cell::RefCell<HashCache>,
+    /// MELEE_HASH_VERIFY: recompute every digest on each `page_hash` and panic if a cached one is stale.
+    hash_verify: bool,
+}
+
+/// Digest cache for the hashed range. `stale` collects every page the write watch reported since the last
+/// `page_hash`; a page whose digest was never computed counts as stale too.
+#[derive(Default)]
+struct HashCache {
+    /// None: equal to the base page (not mixed in). Indexed by page; `known` says which entries are filled.
+    digest: Vec<Option<u64>>,
+    known: Vec<u64>,
+    stale: Vec<u64>,
+}
+
+/// Range whose pages `page_hash` covers (the OS-heap block).
+const HASHED: usize = 1;
+
+fn or_into(dst: &mut Vec<u64>, src: &[u64]) {
+    if dst.len() < src.len() {
+        dst.resize(src.len(), 0);
+    }
+    for (a, b) in dst.iter_mut().zip(src) {
+        *a |= *b;
+    }
+}
+
+fn bit_of(v: &[u64], i: usize) -> bool {
+    v.get(i / 64).is_some_and(|w| w >> (i % 64) & 1 != 0)
+}
+
+/// Digest of one page that differs from the base: four independent multiply lanes (a single chain is latency bound).
+fn page_digest(pi: usize, p: &[u8]) -> u64 {
+    let h = (0xcbf29ce484222325u64 ^ pi as u64).wrapping_mul(0x100000001b3);
+    let mut l = [h, h ^ 0x9E37_79B9_7F4A_7C15, h ^ 0xC2B2_AE3D_27D4_EB4F, h ^ 0x1656_67B1_9E37_79F9];
+    for q in p.chunks_exact(32) {
+        for k in 0..4 {
+            let v = u64::from_le_bytes(q[k * 8..k * 8 + 8].try_into().unwrap());
+            l[k] = (l[k] ^ v).wrapping_mul(0x100000001b3).rotate_left(23);
+        }
+    }
+    (l[0] ^ l[1].rotate_left(13) ^ l[2].rotate_left(29) ^ l[3].rotate_left(43)).wrapping_mul(0x100000001b3)
 }
 
 type Pool = Rc<std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>>;
@@ -202,6 +246,8 @@ impl Base {
             // reserved now: a push never reallocates, wherever a snapshot is dropped
             pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
+            hcache: Default::default(),
+            hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
         };
         b.refresh(); // consumes the watch state up to now (the copy above only read)
         b.dirty.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
@@ -225,7 +271,12 @@ impl Base {
             written_pages(a0 + cow_len, l0 - cow_len, a0, &mut since[0]);
         }
         for ri in 1..WATCHED {
-            written_pages(cur[ri].0, cur[ri].1.max(PAGE), cur[ri].0, &mut since[ri]);
+            let mut delta = Vec::new();
+            written_pages(cur[ri].0, cur[ri].1.max(PAGE), cur[ri].0, &mut delta);
+            or_into(&mut since[ri], &delta);
+            if ri == HASHED {
+                or_into(&mut self.hcache.borrow_mut().stale, &delta);
+            }
         }
         for ri in 0..WATCHED {
             let (s, dd) = (&since[ri], &mut d[ri]);
@@ -400,30 +451,39 @@ impl Base {
     }
 
     /// A hash of the OS-heap block (the C-layout game state: fighters, items, gobjs, jobjs). The arena holds Rust
-    /// bookkeeping whose bytes depend on std's per-process hasher seeds, and the statics hold counters, so neither is hashed. Only pages that differ from the base are mixed in.
+    /// bookkeeping whose bytes depend on std's per-process hasher seeds, and the statics hold counters, so neither is
+    /// hashed. Only pages that differ from the base are mixed in, each through a cached per-page digest that is
+    /// recomputed only when the write watch reports the page written since the previous call (a load's restores are
+    /// writes too). The value is compared only within one run (rollback snapshots, synctest), never across builds.
     pub fn page_hash(&self) -> u32 {
         self.refresh();
         let cur = ranges();
+        let (addr, len) = cur[HASHED];
+        let live = unsafe { bytes(addr, len) };
+        let mut hc = self.hcache.borrow_mut();
+        let hc = &mut *hc;
+        let npages = len / PAGE;
+        if hc.digest.len() < npages {
+            hc.digest.resize(npages, None);
+        }
         let mut h: u64 = 0xcbf29ce484222325;
-        for (ri, &(addr, len)) in cur.iter().enumerate().skip(1).take(1) {
-            let live = unsafe { bytes(addr, len) };
-            for pi in self.candidates(ri, len) {
-                let pi = pi as usize;
+        for pi in self.candidates(HASHED, len) {
+            let pi = pi as usize;
+            let fresh = |pi: usize| {
                 let p = &live[pi * PAGE..(pi + 1) * PAGE];
-                if p != self.base_page(ri, pi) {
-                    h = (h ^ (ri as u64) << 32 ^ pi as u64).wrapping_mul(0x100000001b3);
-                    // four independent multiply lanes: the former single chain was latency bound (a page is 512 words)
-                    let mut l = [h, h ^ 0x9E37_79B9_7F4A_7C15, h ^ 0xC2B2_AE3D_27D4_EB4F, h ^ 0x1656_67B1_9E37_79F9];
-                    for q in p.chunks_exact(32) {
-                        for k in 0..4 {
-                            let v = u64::from_le_bytes(q[k * 8..k * 8 + 8].try_into().unwrap());
-                            l[k] = (l[k] ^ v).wrapping_mul(0x100000001b3).rotate_left(23);
-                        }
-                    }
-                    h = (l[0] ^ l[1].rotate_left(13) ^ l[2].rotate_left(29) ^ l[3].rotate_left(43)).wrapping_mul(0x100000001b3);
-                }
+                (p != self.base_page(HASHED, pi)).then(|| page_digest(pi, p))
+            };
+            if bit_of(&hc.stale, pi) || !bit_of(&hc.known, pi) {
+                hc.digest[pi] = fresh(pi);
+                set_bit(&mut hc.known, pi);
+            } else if self.hash_verify {
+                assert_eq!(hc.digest[pi], fresh(pi), "page_hash: cached digest of page {pi} is stale");
+            }
+            if let Some(d) = hc.digest[pi] {
+                h = ((h ^ (HASHED as u64) << 32 ^ pi as u64).wrapping_mul(0x100000001b3) ^ d).wrapping_mul(0x100000001b3);
             }
         }
+        hc.stale.iter_mut().for_each(|w| *w = 0);
         (h ^ (h >> 32)) as u32
     }
 }

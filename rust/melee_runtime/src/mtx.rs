@@ -265,10 +265,13 @@ pub fn vec_dot(a: &Vec3, b: &Vec3) -> f32 {
 /// `PSVECCrossProduct`, the retail paired-single code (ps_msub, then ps_neg for y and z): which
 /// product is rounded on its own differs from the C reference in y and z.
 pub fn vec_cross(a: &Vec3, b: &Vec3) -> Vec3 {
+    // a*c - p with the product p rounded first, written as a subtraction (as the C's mtx_msub) so a
+    // NaN p keeps its sign the way the C build's subsd does.
+    let msub = |a: f32, c: f32, p: f32| (a as f64 * c as f64 - p as f64) as f32;
     Vec3 {
-        x: diff2(a.y, b.z, b.y, a.z),
-        y: -diff2(a.x, b.z, b.x, a.z),
-        z: -diff2(a.y, b.x, b.y, a.x),
+        x: msub(a.y, b.z, b.y * a.z),
+        y: -msub(a.x, b.z, b.x * a.z),
+        z: -msub(a.y, b.x, b.y * a.x),
     }
 }
 

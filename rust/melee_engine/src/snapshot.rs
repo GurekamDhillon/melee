@@ -5,6 +5,13 @@
 //! puts all of them back, so the engine continues exactly where it was; nothing here knows what the bytes mean.
 //! Statics of the harness that must survive a load do not exist: the harness keeps its state in values it owns on
 //! the system heap (see `arena`), and the few flags the load itself overwrites are put back by the caller.
+//!
+//! Cost: every page carries the epoch it was last written in (the OS write watch for the arena and the host block,
+//! `pagewatch` for the statics), so a save after the previous save or load reads only the pages written since and a
+//! load restores only the pages written since its snapshot was taken (notes/perf.md "Rollback snapshots").
+//! MELEE_SNAP_STATS=1 prints the page counters, MELEE_SNAP_CHECK=N checks every Nth save and load against the full
+//! state, MELEE_SNAP_NOINC=1 compares every dirty page (the old way), MELEE_SNAP_STATIC_SCAN=1 compares the statics
+//! in full instead of watching them.
 
 use crate::arena;
 use crate::host::Host;
@@ -54,9 +61,9 @@ fn written_pages(addr: usize, len: usize, base: usize, out: &mut Vec<u64>) {
     }
 }
 
-/// The arena's copy-on-write part is write-watched by the OS too (it is reserved MEM_WRITE_WATCH), but `refresh` never
-/// reads that part (the cow bits say which pages were ever written). The incremental ring save reads (and resets) the
-/// watch over just the runs of pages ever written, to learn which of them were written since the previous snapshot.
+/// The arena's copy-on-write part is write-watched by the OS too (it is reserved MEM_WRITE_WATCH). The cow bits say
+/// which pages were ever written; `refresh` reads (and resets) the watch over just the runs of those (the reserve is
+/// ~5 GB), to learn which were written since the previous save or load.
 fn written_runs(cum: &[u64], limit: usize, addr: usize, out: &mut Vec<u64>) {
     let bit = |i: usize| cum.get(i / 64).copied().unwrap_or(0) >> (i % 64) & 1 != 0;
     let mut i = 0usize;
@@ -101,38 +108,88 @@ fn bits(v: &[u64], limit: usize) -> Vec<u32> {
     out
 }
 
-const WATCHED: usize = 2;
+/// Ranges 0 and 1 are write-watched by the OS (the arena's copy-on-write part through `written_runs`); the static
+/// ranges (2..) through `pagewatch` (read-only pages, first write faults), or compared in full under
+/// MELEE_SNAP_STATIC_SCAN.
+const HOST: usize = 1;
+const STATIC0: usize = 2;
+
+/// A static page that faulted stays writable ("hot", counted as written in every interval) for this many intervals,
+/// then is made read-only again: a page written every frame faults once per HOT_AGE saves/loads, not every frame.
+const HOT_AGE: u8 = 32;
+
+/// MELEE_SNAP_STATS counters.
+#[derive(Default, Debug, Clone, Copy)]
+pub struct Stats {
+    pub saves: u64,
+    pub loads: u64,
+    /// Pages a save looked at (written since the previous snapshot, or every dirty page when not incremental).
+    pub save_cand: u64,
+    /// Pages a save copied into a fresh buffer.
+    pub save_copied: u64,
+    /// Pages a save shared with the previous snapshot without reading them.
+    pub save_shared: u64,
+    pub save_full: u64,
+    pub load_cand: u64,
+    pub load_copied: u64,
+    pub load_full: u64,
+    /// Static pages that faulted (made hot) / were made read-only again.
+    pub static_faults: u64,
+    pub static_reprotects: u64,
+    /// MELEE_SNAP_CHECK: operations checked, pages checked.
+    pub checks: u64,
+    pub checked_pages: u64,
+    /// page_hash calls, those answered from the previous result, pages digested.
+    pub hashes: u64,
+    pub hashes_cached: u64,
+    pub hash_digests: u64,
+}
 
 /// The reference every snapshot is a delta of (the state when the first snapshot was taken).
+///
+/// Every page of every range carries the epoch it was last written in (`stamp`; an epoch ends at each save and
+/// load). A snapshot remembers the epoch it was taken at, so a load of it only visits the pages written since then
+/// (an untouched page still holds the snapshot's contents), and a save after a save or load of `last` only visits the
+/// pages written since (the rest are `last`'s pages, shared). Neither depends on how much was ever written.
 pub struct Base {
     ranges: Vec<(usize, usize)>,
     /// Full copies of every range but the arena (range 0), whose base is kept copy-on-first-write (`cow`).
     data: Vec<Vec<u8>>,
     /// Bytes of the arena that existed at capture (pages beyond were zero then).
     arena_len: usize,
-    /// Watched ranges: every page written since the base (cumulative).
+    /// Every page written since the base (cumulative), per range.
     dirty: std::cell::RefCell<Vec<Vec<u64>>>,
-    /// Watched ranges: every page written since the snapshot `last` was saved or loaded (the incremental ring save).
+    /// Pages written in the current epoch (since the last save or load), per range.
     since: std::cell::RefCell<Vec<Vec<u64>>>,
-    /// Id of the snapshot the live state was last saved as or loaded from (0: unknown).
+    /// Per range and page: the last epoch the page was written in (0: not since the base); and per 64 pages the
+    /// latest of theirs (a load scans the ~5 GB arena reserve by blocks).
+    stamp: std::cell::RefCell<Vec<(Vec<u32>, Vec<u32>)>>,
+    /// The current (open) epoch.
+    epoch: std::cell::Cell<u32>,
+    /// The snapshot the live state was last saved as or loaded from (its id; 0: none), and the snapshot itself while
+    /// someone still holds it (a plain `save` shares its unchanged pages).
     last: std::cell::Cell<u64>,
-    /// Set by the first `save_after` with a previous snapshot (the Lab's ring): only then do saves and loads pay for
-    /// the arena's since-last watch (the rollback's per-frame saves never do).
-    track: std::cell::Cell<bool>,
+    last_snap: std::cell::RefCell<std::rc::Weak<Snapshot>>,
+    /// Static ranges: writable pages (bits) and their age in intervals.
+    hot: std::cell::RefCell<Vec<(Vec<u64>, Vec<u8>)>>,
+    /// The statics are fault-watched (else compared in full).
+    static_watch: bool,
     /// Page buffers of dropped snapshots, reused by the next saves (no allocation per page in steady state).
     pool: Pool,
     /// The next snapshot id. Here, not a static: a load puts the statics back, and a static counter would hand out
     /// an id again (the rollback statics rule).
     next_id: std::cell::Cell<u64>,
-    /// MELEE_SNAP_NOINC: compare every candidate page (the measurement baseline).
+    /// MELEE_SNAP_NOINC: no epochs (every save compares every dirty page, every load visits every dirty page): the
+    /// full-compare reference.
     no_inc: bool,
+    /// MELEE_SNAP_CHECK=N: every Nth save and load is checked page by page against the full state (see `check`).
+    check_every: u64,
     /// Per-page digests of the hashed range (the host block), so `page_hash` only rehashes pages written since its
     /// previous call.
     hcache: std::cell::RefCell<HashCache>,
     /// MELEE_HASH_VERIFY: recompute every digest on each `page_hash` and panic if a cached one is stale.
     hash_verify: bool,
-    /// MELEE_SNAP_STATS counters: [save cand r0,r1,r2.., save copied, load cand, load copied, saves, loads, active-at-save]
-    pub stats: std::cell::RefCell<[u64; 16]>,
+    pub stats: std::cell::RefCell<Stats>,
 }
 
 /// Digest cache for the hashed range. `stale` collects every page the write watch reported since the last
@@ -143,10 +200,15 @@ struct HashCache {
     digest: Vec<Option<u64>>,
     known: Vec<u64>,
     stale: Vec<u64>,
+    /// Digests of the base pages (computed on first use; the base never changes): a live page whose digest equals
+    /// its base page's is not mixed in, without reading the base copy.
+    base: Vec<Option<u64>>,
+    /// The previous result: no page written since means the same hash.
+    last: Option<u32>,
 }
 
 /// Range whose pages `page_hash` covers (the OS-heap block).
-const HASHED: usize = 1;
+const HASHED: usize = HOST;
 
 fn or_into(dst: &mut Vec<u64>, src: &[u64]) {
     if dst.len() < src.len() {
@@ -161,17 +223,32 @@ fn bit_of(v: &[u64], i: usize) -> bool {
     v.get(i / 64).is_some_and(|w| w >> (i % 64) & 1 != 0)
 }
 
-/// Digest of one page that differs from the base: four independent multiply lanes (a single chain is latency bound).
+/// Digest of one page: the xxh3 accumulate step (eight 64-bit lanes, a 32x32->64 multiply each, which the compiler
+/// vectorises) over 64-byte stripes, then a multiply-fold of the lanes. Only compared within one run.
 fn page_digest(pi: usize, p: &[u8]) -> u64 {
-    let h = (0xcbf29ce484222325u64 ^ pi as u64).wrapping_mul(0x100000001b3);
-    let mut l = [h, h ^ 0x9E37_79B9_7F4A_7C15, h ^ 0xC2B2_AE3D_27D4_EB4F, h ^ 0x1656_67B1_9E37_79F9];
-    for q in p.chunks_exact(32) {
-        for k in 0..4 {
-            let v = u64::from_le_bytes(q[k * 8..k * 8 + 8].try_into().unwrap());
-            l[k] = (l[k] ^ v).wrapping_mul(0x100000001b3).rotate_left(23);
+    const KEY: [u64; 8] = [
+        0xbe4ba423396cfeb8, 0x1cad21f72c81017c, 0xdb979083e96dd4de, 0x1f67b3b7a4a44072,
+        0x78e5c0cc4ee679cb, 0x2172ffcc7dd05a82, 0x8e2443f7744608b8, 0x4c263a81e69035e0,
+    ];
+    let seed = (pi as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15);
+    let mut acc = [0x9E37_79B1u64, 0xC2B2_AE3D_27D4_EB4F, 0x1656_67B1_9E37_79F9, 0x85EB_CA77_C2B2_AE63,
+        0x27D4_EB2F_1656_67C5, 0x9E37_79B9_7F4A_7C15, 0xFF51_AFD7_ED55_8CCD, 0xC4CE_B9FE_1A85_EC53];
+    for q in p.chunks_exact(64) {
+        let mut v = [0u64; 8];
+        for k in 0..8 {
+            v[k] = u64::from_le_bytes(q[k * 8..k * 8 + 8].try_into().unwrap());
+        }
+        for k in 0..8 {
+            let d = v[k] ^ (KEY[k] ^ seed);
+            acc[k ^ 1] = acc[k ^ 1].wrapping_add(v[k]);
+            acc[k] = acc[k].wrapping_add((d & 0xFFFF_FFFF).wrapping_mul(d >> 32));
         }
     }
-    (l[0] ^ l[1].rotate_left(13) ^ l[2].rotate_left(29) ^ l[3].rotate_left(43)).wrapping_mul(0x100000001b3)
+    let mut h = seed ^ 0x2D35_8DCC_AA6C_78A5;
+    for k in 0..8 {
+        h = (h ^ acc[k]).wrapping_mul(0x100000001b3).rotate_left(29) ^ (acc[k] >> 31);
+    }
+    h ^ (h >> 33)
 }
 
 type Pool = Rc<std::cell::RefCell<Vec<Rc<[u8; PAGE]>>>>;
@@ -182,8 +259,14 @@ const POOL_MAX: usize = 16384;
 struct RangeSnap {
     addr: usize,
     len: usize,
-    /// Shared: a snapshot taken with [`Base::save_after`] reuses the previous snapshot's unchanged pages.
+    /// Shared: a snapshot reuses the previous snapshot's unchanged pages.
     pages: Vec<(u32, Rc<[u8; PAGE]>)>,
+}
+
+impl RangeSnap {
+    fn page(&self, pi: u32) -> Option<&[u8]> {
+        self.pages.binary_search_by_key(&pi, |p| p.0).ok().map(|i| &self.pages[i].1[..])
+    }
 }
 
 /// One saved state.
@@ -191,6 +274,9 @@ struct RangeSnap {
 pub struct Snapshot {
     ranges: Vec<RangeSnap>,
     id: u64,
+    /// The epoch it was taken in: pages stamped later may differ from it.
+    epoch: u32,
+    me: std::rc::Weak<Snapshot>,
     pool: Pool,
 }
 
@@ -230,9 +316,34 @@ const ZERO: [u8; PAGE] = [0; PAGE];
 
 impl Drop for Base {
     fn drop(&mut self) {
-        if std::env::var_os("MELEE_SNAP_STATS").is_some() { eprintln!("snapstats {:?}", self.stats.borrow()); }
-        unsafe { crate::cow::release() };
+        if std::env::var_os("MELEE_SNAP_STATS").is_some() {
+            eprintln!("snapshot: {}", self.stats_line());
+        }
+        unsafe {
+            if self.static_watch {
+                crate::pagewatch::release();
+            }
+            crate::cow::release()
+        };
     }
+}
+
+/// Merge two ascending index lists into their union.
+fn union(a: &[u32], b: impl Iterator<Item = u32>) -> Vec<u32> {
+    let mut out = Vec::with_capacity(a.len() + 16);
+    let mut i = 0;
+    for x in b {
+        while i < a.len() && a[i] < x {
+            out.push(a[i]);
+            i += 1;
+        }
+        if i < a.len() && a[i] == x {
+            i += 1;
+        }
+        out.push(x);
+    }
+    out.extend_from_slice(&a[i..]);
+    out
 }
 
 impl Base {
@@ -240,19 +351,31 @@ impl Base {
     pub fn capture() -> Base {
         crate::arena::note_snapshot();
         let ranges = ranges();
-        let data: Vec<Vec<u8>> = ranges.iter().enumerate().map(|(i, &(a, l))| if i == 0 { Vec::new() } else { unsafe { bytes(a, l) }.to_vec() }).collect();
+        // the copies are taken last, once every write is tracked (a write between a copy and the start of tracking
+        // would leave a page that differs from its base copy without being dirty)
+        let data: Vec<Vec<u8>> = vec![Vec::new(); ranges.len()];
         let arena_len = ranges[0].1;
+        let n = ranges.len();
+        let scan = std::env::var_os("MELEE_SNAP_STATIC_SCAN").is_some();
         let b = Base {
-            ranges, data, arena_len, dirty: std::cell::RefCell::new(vec![Default::default(); WATCHED]),
-            since: std::cell::RefCell::new(vec![Default::default(); WATCHED]), last: std::cell::Cell::new(0),
-            track: std::cell::Cell::new(false),
+            dirty: std::cell::RefCell::new(vec![Default::default(); n]),
+            since: std::cell::RefCell::new(vec![Default::default(); n]),
+            stamp: std::cell::RefCell::new(ranges.iter().map(|r| (vec![0u32; r.1 / PAGE], vec![0u32; (r.1 / PAGE).div_ceil(64)])).collect()),
+            epoch: std::cell::Cell::new(1),
+            last: std::cell::Cell::new(0),
+            last_snap: Default::default(),
+            hot: std::cell::RefCell::new(ranges[STATIC0.min(n)..].iter().map(|r| (vec![0u64; (r.1 / PAGE).div_ceil(64)], vec![0u8; r.1 / PAGE])).collect()),
+            static_watch: false,
+            ranges, data, arena_len,
             // reserved now: a push never reallocates, wherever a snapshot is dropped
             pool: Rc::new(std::cell::RefCell::new(Vec::with_capacity(POOL_MAX))), next_id: std::cell::Cell::new(1),
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
+            check_every: std::env::var("MELEE_SNAP_CHECK").ok().map(|v| v.parse().unwrap_or(1).max(1)).unwrap_or(0),
             hcache: Default::default(),
             hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
             stats: Default::default(),
         };
+        let mut b = b;
         b.refresh(); // consumes the watch state up to now (the copy above only read)
         // both sets: a since-last set left full here is OR-ed into `dirty` by every later refresh (the whole host block
         // stayed a candidate forever: f82738ca3 made save and load ~7 ms)
@@ -260,61 +383,130 @@ impl Base {
         b.since.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
         // the arena's base is not copied: the first write to each page saves it (cow.rs)
         unsafe { crate::cow::protect(b.ranges[0].0, arena_len).expect("arena copy-on-write") };
+        if !scan {
+            match unsafe { crate::pagewatch::watch(&b.ranges[STATIC0.min(n)..]) } {
+                Ok(()) => b.static_watch = true,
+                Err(e) => eprintln!("snapshot: statics compared in full ({e})"),
+            }
+        }
+        for i in 1..n {
+            let (a, l) = b.ranges[i];
+            b.data[i] = unsafe { bytes(a, l) }.to_vec();
+        }
         b
     }
 
-    /// Pull the pages written since the last call into the dirty sets. The arena part that existed at the capture is
-    /// copy-on-first-write (`cow`): a page ever written there has its bit in the cow store, so the (expensive, it walks
-    /// ~5 GB) write watch only covers what the arena grew by since; the host block is watched in full.
+    /// Pull the pages written since the last call into `since` (and the cumulative `dirty`). The arena part that
+    /// existed at the capture is copy-on-first-write (`cow`): a page ever written there has its bit in the cow store,
+    /// and the OS write watch is read over just the runs of those (the full reserve is ~5 GB); the arena's growth and
+    /// the host block are watched in full; the statics come from `pagewatch` plus the hot pages.
     fn refresh(&self) {
-        let cur = ranges();
+        let cur = self.cur_ranges();
         let mut d = self.dirty.borrow_mut();
         let mut since = self.since.borrow_mut();
         let (a0, l0) = cur[0];
         let cow_len = self.arena_len.min(l0);
         crate::cow::or_written(&mut d[0]);
-        // what the watch reports was written since the previous refresh: into the since-last sets, then the cumulative
+        written_runs(&d[0], cow_len / PAGE, a0, &mut since[0]);
         if l0 > cow_len {
             written_pages(a0 + cow_len, l0 - cow_len, a0, &mut since[0]);
         }
-        for ri in 1..WATCHED {
-            let mut delta = Vec::new();
-            written_pages(cur[ri].0, cur[ri].1.max(PAGE), cur[ri].0, &mut delta);
-            or_into(&mut since[ri], &delta);
-            if ri == HASHED {
-                or_into(&mut self.hcache.borrow_mut().stale, &delta);
-            }
-        }
-        for ri in 0..WATCHED {
-            let (s, dd) = (&since[ri], &mut d[ri]);
-            if dd.len() < s.len() {
-                dd.resize(s.len(), 0);
-            }
-            for (a, b) in dd.iter_mut().zip(s.iter()) {
-                *a |= *b;
-            }
-        }
-    }
-
-    /// The cow part of the arena: pages written since the last call, into `since` (the incremental save and the
-    /// loads need it once tracking is on; the rollback's per-frame refresh never pays for it).
-    fn refresh_cow_since(&self) {
-        let (a0, l0) = arena::used_range();
-        let cow_len = self.arena_len.min(l0);
-        let d = self.dirty.borrow();
+        drop((d, since));
+        self.refresh_host();
+        let mut d = self.dirty.borrow_mut();
         let mut since = self.since.borrow_mut();
-        written_runs(&d[0], cow_len / PAGE, a0, &mut since[0]);
+        let mut hot = self.hot.borrow_mut();
+        for ri in STATIC0..cur.len() {
+            let np = cur[ri].1 / PAGE;
+            if self.static_watch {
+                let mut f = Vec::new();
+                crate::pagewatch::take(ri - STATIC0, &mut f);
+                let (hb, age) = &mut hot[ri - STATIC0];
+                for pi in bits(&f, np) {
+                    if !bit_of(hb, pi as usize) {
+                        self.stats.borrow_mut().static_faults += 1;
+                    }
+                    set_bit(hb, pi as usize);
+                    age[pi as usize] = 0;
+                }
+                or_into(&mut since[ri], hb);
+            } else {
+                for pi in 0..np {
+                    set_bit(&mut since[ri], pi);
+                }
+            }
+        }
+        for ri in 0..cur.len() {
+            let (s, dd) = (&since[ri], &mut d[ri]);
+            or_into(dd, s);
+        }
     }
 
-    /// The live state is snapshot `id` now: forget what was written so far.
-    fn mark_last(&self, id: u64) {
-        if self.track.get() {
-            self.refresh_cow_since();
-            self.last.set(id);
-        } else {
-            self.last.set(0);
+    /// The ranges now: the arena's used part moves, the others are fixed at capture.
+    fn cur_ranges(&self) -> Vec<(usize, usize)> {
+        let mut r = self.ranges.clone();
+        r[0] = arena::used_range();
+        r
+    }
+
+    /// The host block's part of `refresh` (all `page_hash` needs: the other ranges' watches keep their state until
+    /// the next save or load reads them).
+    fn refresh_host(&self) {
+        let (a, l) = { let m = Host::get().os.mem; (m.base as usize, m.len) };
+        let mut delta = Vec::new();
+        written_pages(a, l.max(PAGE), a, &mut delta);
+        or_into(&mut self.since.borrow_mut()[HOST], &delta);
+        or_into(&mut self.dirty.borrow_mut()[HOST], &delta);
+        or_into(&mut self.hcache.borrow_mut().stale, &delta);
+    }
+
+    /// End the current epoch (after a save or load that made the live state snapshot `id`): stamp what was written in
+    /// it, start the next, and age the hot static pages.
+    fn close(&self, id: u64, snap: std::rc::Weak<Snapshot>) {
+        let e = self.epoch.get();
+        {
+            let mut since = self.since.borrow_mut();
+            let mut stamp = self.stamp.borrow_mut();
+            for (ri, s) in since.iter_mut().enumerate() {
+                let (st, blk) = &mut stamp[ri];
+                for pi in bits(s, usize::MAX) {
+                    let pi = pi as usize;
+                    if st.len() <= pi {
+                        st.resize(pi + 1, 0);
+                        blk.resize(st.len().div_ceil(64), 0);
+                    }
+                    st[pi] = e;
+                    blk[pi / 64] = e;
+                }
+                s.iter_mut().for_each(|w| *w = 0);
+            }
+            if self.static_watch {
+                // a hot page goes read-only again after HOT_AGE intervals; a write between the refresh and here is
+                // covered by marking it written in the new epoch too
+                let mut hot = self.hot.borrow_mut();
+                for (k, (hb, age)) in hot.iter_mut().enumerate() {
+                    let mut back = Vec::new();
+                    for pi in bits(hb, age.len()) {
+                        let a = &mut age[pi as usize];
+                        *a = a.saturating_add(1);
+                        if *a >= HOT_AGE {
+                            back.push(pi);
+                        }
+                    }
+                    if !back.is_empty() {
+                        unsafe { crate::pagewatch::protect(k, &back) };
+                        for &pi in &back {
+                            hb[pi as usize / 64] &= !(1u64 << (pi % 64));
+                            set_bit(&mut since[STATIC0 + k], pi as usize);
+                        }
+                        self.stats.borrow_mut().static_reprotects += back.len() as u64;
+                    }
+                }
+            }
         }
-        self.since.borrow_mut().iter_mut().for_each(|v| v.iter_mut().for_each(|w| *w = 0));
+        self.epoch.set(e + 1);
+        self.last.set(id);
+        *self.last_snap.borrow_mut() = snap;
     }
 
     fn base_page(&self, ri: usize, pi: usize) -> &[u8] {
@@ -333,11 +525,7 @@ impl Base {
 
     /// The page indexes of range `ri` that can differ from the base.
     fn candidates(&self, ri: usize, len: usize) -> Vec<u32> {
-        if ri < WATCHED {
-            bits(&self.dirty.borrow()[ri], len / PAGE)
-        } else {
-            (0..(len / PAGE) as u32).collect()
-        }
+        bits(&self.dirty.borrow()[ri], len / PAGE)
     }
 
     /// Save the current state.
@@ -345,76 +533,105 @@ impl Base {
         self.save_after(None).0
     }
 
-    /// Save the current state, sharing every page that is unchanged since `prev` (the Lab's sparse rewind ring: a
-    /// snapshot every few frames then costs only the pages written in between). Returns the bytes newly copied.
+    /// Save the current state, sharing every page that is unchanged since `prev` (default: the snapshot the live
+    /// state was last saved as or loaded from, while it is alive). When `prev` is that snapshot only the pages written
+    /// since are read; otherwise every dirty page is compared. Returns the bytes newly copied.
     pub fn save_after(&self, prev: Option<&Snapshot>) -> (SnapRef, usize) {
         let mut fresh = 0usize;
         self.refresh();
-        if prev.is_some() && !self.track.get() {
-            self.track.set(true);
-        }
-        // incremental when `prev` is the state the live one evolved from: a watched page not written since then is
-        // `prev`'s page (or the base's) without comparing a byte
+        let auto = if prev.is_none() && !self.no_inc { self.last_snap.borrow().upgrade() } else { None };
+        let prev = prev.or(auto.as_deref());
+        // incremental when `prev` is the state the live one evolved from: a page not written since then is `prev`'s
+        // page (or the base's) without comparing a byte
         let inc = prev.is_some_and(|p| p.id == self.last.get() && self.last.get() != 0) && !self.no_inc;
-        if inc {
-            self.refresh_cow_since();
-        }
+        let blind = inc && auto.is_some();
         let since = self.since.borrow();
-        let cur = ranges();
+        let cur = self.cur_ranges();
         assert_eq!(cur.len(), self.ranges.len(), "snapshot ranges changed");
         let mut out = Vec::with_capacity(cur.len());
         let mut pool = self.pool.borrow_mut();
+        let mut st = self.stats.borrow_mut();
+        st.saves += 1;
+        if !inc {
+            st.save_full += 1;
+        }
         for (ri, &(addr, len)) in cur.iter().enumerate() {
             if ri > 0 {
                 assert_eq!(addr, self.ranges[ri].0, "range {ri} moved");
             }
+            let np = len / PAGE;
             let live = unsafe { bytes(addr, len) };
             let old = prev.and_then(|p| p.ranges.get(ri)).map_or(&[][..], |r| &r.pages[..]);
             let mut pages = Vec::with_capacity(old.len() + 16);
-            let sb = if inc && ri < WATCHED { Some(&since[ri][..]) } else { None };
-            let mut k = 0usize;
-            let cands = self.candidates(ri, len);
-            { let mut st = self.stats.borrow_mut(); st[ri.min(3)] += cands.len() as u64; st[12] += 1; if arena::active() { st[14] += 1; } }
-            for pi in cands {
-                let pi = pi as usize;
-                while k < old.len() && (old[k].0 as usize) < pi {
-                    k += 1;
+            let cand = if inc { bits(&since[ri], np) } else { self.candidates(ri, len) };
+            st.save_cand += cand.len() as u64;
+            // walk the candidates and (incremental) prev's pages together, ascending
+            let (mut i, mut k) = (0usize, 0usize);
+            loop {
+                let c = cand.get(i).map(|&x| x as usize);
+                let o = if inc { old.get(k).map(|p| p.0 as usize) } else { None };
+                let pi = match (c, o) {
+                    (None, None) => break,
+                    (Some(c), Some(o)) => c.min(o),
+                    (Some(c), None) => c,
+                    (None, Some(o)) => o,
+                };
+                if pi >= np {
+                    break;
                 }
-                let in_old = k < old.len() && old[k].0 as usize == pi;
-                if let Some(sb) = sb {
-                    if sb.get(pi / 64).map_or(true, |w| w >> (pi % 64) & 1 == 0) {
-                        // not written since prev: prev's page, or (absent there) still the base's
-                        if in_old {
-                            pages.push((pi as u32, old[k].1.clone()));
-                        }
-                        continue;
+                if !inc {
+                    while k < old.len() && (old[k].0 as usize) < pi {
+                        k += 1;
                     }
                 }
-                let p = &live[pi * PAGE..(pi + 1) * PAGE];
-                // a page of prev differs from the base: equal to it is shared; else new when it differs from the base
-                if in_old && &old[k].1[..] == p {
+                let in_old = k < old.len() && old[k].0 as usize == pi;
+                let written = c == Some(pi);
+                if written {
+                    i += 1;
+                    let p = &live[pi * PAGE..(pi + 1) * PAGE];
+                    // a page of prev differs from the base: equal to it is shared; else new when it differs from the base
+                    // (a plain save after its own previous one copies a written page without comparing: the
+                    // rollback's snapshots live a few frames, sharing would save memory, not time)
+                    if !blind && in_old && &old[k].1[..] == p {
+                        pages.push((pi as u32, old[k].1.clone()));
+                    } else if blind || p != self.base_page(ri, pi) {
+                        let b = match pool.pop() {
+                            Some(mut b) => {
+                                Rc::get_mut(&mut b).expect("pooled page is unshared").copy_from_slice(p);
+                                b
+                            }
+                            None => Rc::new(p.try_into().unwrap()),
+                        };
+                        pages.push((pi as u32, b));
+                        fresh += PAGE;
+                        st.save_copied += 1;
+                    }
+                } else {
+                    // not written since prev: prev's page
                     pages.push((pi as u32, old[k].1.clone()));
-                } else if p != self.base_page(ri, pi) {
-                    let b = match pool.pop() {
-                        Some(mut b) => {
-                            Rc::get_mut(&mut b).expect("pooled page is unshared").copy_from_slice(p);
-                            b
-                        }
-                        None => Rc::new(p.try_into().unwrap()),
-                    };
-                    pages.push((pi as u32, b));
-                    fresh += PAGE;
-                    self.stats.borrow_mut()[4 + ri.min(3)] += 1;
+                    st.save_shared += 1;
+                }
+                if inc && in_old {
+                    k += 1;
                 }
             }
             out.push(RangeSnap { addr, len, pages });
         }
+        drop(st);
         drop(pool);
         drop(since);
         let id = self.next_id.get();
         self.next_id.set(id + 1);
-        self.mark_last(id);
-        (Rc::new(Snapshot { ranges: out, id, pool: self.pool.clone() }), fresh)
+        let epoch = self.epoch.get();
+        let s = Rc::new_cyclic(|me| Snapshot { ranges: out, id, epoch, me: me.clone(), pool: self.pool.clone() });
+        if self.check_every > 0 && self.stats.borrow().saves % self.check_every == 0 {
+            // what was written after the save read it (the save's own allocations bump a static counter) is not `s`
+            self.refresh();
+            let since = self.since.borrow();
+            self.check(&s, "save", Some(&since[..]));
+        }
+        self.close(id, Rc::downgrade(&s));
+        (s, fresh)
     }
 
     /// Put a saved state back. The caller restores the arena mode flag afterwards (it is a static too).
@@ -422,44 +639,133 @@ impl Base {
         self.refresh();
         let was = arena::active();
         let (abase, alen_now) = arena::used_range();
+        let inc = !self.no_inc;
+        {
+            let since = self.since.borrow();
+            let stamp = self.stamp.borrow();
+            let mut st = self.stats.borrow_mut();
+            st.loads += 1;
+            if !inc {
+                st.load_full += 1;
+            }
+            // every list first: nothing allocates between the copies and the check (an allocation writes the
+            // system-heap counter, a static)
+            let mut cands = Vec::with_capacity(s.ranges.len());
+            for (ri, r) in s.ranges.iter().enumerate() {
+                let np = r.len / PAGE;
+                // the pages that may differ from `s`: written since it was taken (or, the full way, the dirty ones
+                // plus its own)
+                let cand: Vec<u32> = if inc {
+                    let (sp, blk) = &stamp[ri];
+                    let mut later = Vec::new();
+                    for (b, _) in blk.iter().enumerate().filter(|x| *x.1 > s.epoch) {
+                        for pi in b * 64..(b * 64 + 64).min(sp.len()).min(np) {
+                            if sp[pi] > s.epoch {
+                                later.push(pi as u32);
+                            }
+                        }
+                    }
+                    union(&bits(&since[ri], np), later.into_iter())
+                } else {
+                    union(&self.candidates(ri, r.len), r.pages.iter().map(|p| p.0))
+                };
+                st.load_cand += cand.len() as u64;
+                cands.push(cand);
+            }
+            for (ri, r) in s.ranges.iter().enumerate() {
+                let live = unsafe { core::slice::from_raw_parts_mut(r.addr as *mut u8, r.len) };
+                let mut k = 0usize;
+                for &pi in &cands[ri] {
+                    while k < r.pages.len() && r.pages[k].0 < pi {
+                        k += 1;
+                    }
+                    let pi = pi as usize;
+                    let dst = &mut live[pi * PAGE..(pi + 1) * PAGE];
+                    let src: &[u8] = if k < r.pages.len() && r.pages[k].0 as usize == pi { &r.pages[k].1[..] } else { self.base_page(ri, pi) };
+                    if dst != src {
+                        dst.copy_from_slice(src);
+                        st.load_copied += 1;
+                    }
+                }
+            }
+            // arena memory the discarded timeline bumped into is fresh again: zero it, as an untouched page is
+            if let Some(a) = s.ranges.first() {
+                if alen_now > a.len {
+                    unsafe { core::ptr::write_bytes((abase + a.len) as *mut u8, 0, alen_now - a.len) };
+                }
+            }
+            arena::set_active(was);
+            drop(st);
+            if self.check_every > 0 && self.stats.borrow().loads % self.check_every == 0 {
+                self.check(s, "load", None);
+            }
+        }
+        // the live state is `s` now (the load's own writes show up as written in the next epoch: compared once)
+        self.close(s.id, s.me.clone());
+    }
+
+    /// MELEE_SNAP_CHECK: the live state must equal `s` page for page, as a full-copy restore would leave it: every page
+    /// of the host block and the statics, and every arena page ever written (an arena page never written is its base
+    /// page by the copy-on-write store's construction, and `s` holds only pages that differ from the base).
+    fn check(&self, s: &Snapshot, what: &str, skip: Option<&[Vec<u64>]>) {
+        // allocation free until the verdict (see `load`)
+        let mut bad = [(0usize, 0u32); 8];
+        let mut nbad = 0usize;
+        let mut n = 0u64;
+        let dirty = self.dirty.borrow();
         for (ri, r) in s.ranges.iter().enumerate() {
-            let live = unsafe { core::slice::from_raw_parts_mut(r.addr as *mut u8, r.len) };
-            // pages that may differ now: the dirty ones plus the snapshot's own (both ascending)
-            let cand = self.candidates(ri, r.len);
-            { let mut st = self.stats.borrow_mut(); st[8 + ri.min(1)] += cand.len() as u64; st[13] += 1; st[15] += r.pages.len() as u64; }
-            let (mut i, mut k) = (0, 0);
-            while i < cand.len() || k < r.pages.len() {
-                let pi = match (cand.get(i), r.pages.get(k)) {
-                    (Some(&c), Some(p)) => c.min(p.0),
-                    (Some(&c), None) => c,
-                    (None, Some(p)) => p.0,
-                    (None, None) => unreachable!(),
-                };
-                if cand.get(i) == Some(&pi) {
-                    i += 1;
+            let live = unsafe { bytes(r.addr, r.len) };
+            let np = (r.len / PAGE) as u32;
+            let mut one = |pi: u32| {
+                if skip.is_some_and(|sk| bit_of(&sk[ri], pi as usize)) {
+                    return;
                 }
-                let own = if r.pages.get(k).map(|p| p.0) == Some(pi) { k += 1; Some(k - 1) } else { None };
-                let pi = pi as usize;
-                let dst = &mut live[pi * PAGE..(pi + 1) * PAGE];
-                let src: &[u8] = match own {
-                    Some(n) => &r.pages[n].1[..],
-                    None => self.base_page(ri, pi),
-                };
-                if dst != src {
-                    self.stats.borrow_mut()[10 + ri.min(1)] += 1;
-                    dst.copy_from_slice(src);
+                n += 1;
+                let want = r.page(pi).unwrap_or_else(|| self.base_page(ri, pi as usize));
+                if &live[pi as usize * PAGE..(pi as usize + 1) * PAGE] != want {
+                    if nbad < bad.len() {
+                        bad[nbad] = (ri, pi);
+                    }
+                    nbad += 1;
+                }
+            };
+            if ri == 0 {
+                for (w, &x) in dirty[0].iter().enumerate() {
+                    let mut x = x;
+                    while x != 0 {
+                        let pi = (w * 64) as u32 + x.trailing_zeros();
+                        x &= x - 1;
+                        if pi < np {
+                            one(pi);
+                        }
+                    }
+                }
+                for p in &r.pages {
+                    one(p.0);
+                }
+            } else {
+                for pi in 0..np {
+                    one(pi);
                 }
             }
         }
-        // arena memory the discarded timeline bumped into is fresh again: zero it, as an untouched page is
-        if let Some(a) = s.ranges.first() {
-            if alen_now > a.len {
-                unsafe { core::ptr::write_bytes((abase + a.len) as *mut u8, 0, alen_now - a.len) };
-            }
-        }
-        arena::set_active(was);
-        // the live state is `s` now (the load's own writes show up as written later: compared once, conservatively)
-        self.mark_last(s.id);
+        drop(dirty);
+        let mut st = self.stats.borrow_mut();
+        st.checks += 1;
+        st.checked_pages += n;
+        assert!(nbad == 0, "MELEE_SNAP_CHECK: after {what} of snapshot {} the live state differs from it in {nbad} pages, first (range, page) {:?}", s.id, &bad[..nbad.min(8)]);
+    }
+
+    /// The counters, one line (MELEE_SNAP_STATS).
+    pub fn stats_line(&self) -> String {
+        let s = *self.stats.borrow();
+        let per = |x: u64, n: u64| x as f64 / n.max(1) as f64;
+        format!(
+            "{} saves ({} full): {:.1} pages looked at, {:.1} copied, {:.1} shared each; {} loads ({} full): {:.1} looked at, {:.1} copied each; statics {}: {} faults, {} made read-only again; {} checks ({} pages); {} hashes ({} unchanged), {:.1} pages digested each",
+            s.saves, s.save_full, per(s.save_cand, s.saves), per(s.save_copied, s.saves), per(s.save_shared, s.saves),
+            s.loads, s.load_full, per(s.load_cand, s.loads), per(s.load_copied, s.loads),
+            if self.static_watch { "watched" } else { "scanned" }, s.static_faults, s.static_reprotects, s.checks, s.checked_pages, s.hashes, s.hashes_cached, per(s.hash_digests, s.hashes)
+        )
     }
 
     /// A hash of the OS-heap block (the C-layout game state: fighters, items, gobjs, jobjs). The arena holds Rust
@@ -468,35 +774,48 @@ impl Base {
     /// recomputed only when the write watch reports the page written since the previous call (a load's restores are
     /// writes too). The value is compared only within one run (rollback snapshots, synctest), never across builds.
     pub fn page_hash(&self) -> u32 {
-        self.refresh();
-        let cur = ranges();
-        let (addr, len) = cur[HASHED];
+        self.refresh_host();
+        let (addr, len) = self.ranges[HASHED];
         let live = unsafe { bytes(addr, len) };
         let mut hc = self.hcache.borrow_mut();
         let hc = &mut *hc;
+        self.stats.borrow_mut().hashes += 1;
+        if let Some(h) = hc.last {
+            if hc.stale.iter().all(|&w| w == 0) && !self.hash_verify {
+                self.stats.borrow_mut().hashes_cached += 1;
+                return h;
+            }
+        }
         let npages = len / PAGE;
         if hc.digest.len() < npages {
             hc.digest.resize(npages, None);
+            hc.base.resize(npages, None);
         }
         let mut h: u64 = 0xcbf29ce484222325;
         for pi in self.candidates(HASHED, len) {
             let pi = pi as usize;
-            let fresh = |pi: usize| {
-                let p = &live[pi * PAGE..(pi + 1) * PAGE];
-                (p != self.base_page(HASHED, pi)).then(|| page_digest(pi, p))
+            let mut fresh = |pi: usize| {
+                let d = page_digest(pi, &live[pi * PAGE..(pi + 1) * PAGE]);
+                let b = *hc.base[pi].get_or_insert_with(|| page_digest(pi, self.base_page(HASHED, pi)));
+                (d != b).then_some(d)
             };
             if bit_of(&hc.stale, pi) || !bit_of(&hc.known, pi) {
-                hc.digest[pi] = fresh(pi);
+                let f = fresh(pi);
+                self.stats.borrow_mut().hash_digests += 1;
+                hc.digest[pi] = f;
                 set_bit(&mut hc.known, pi);
             } else if self.hash_verify {
-                assert_eq!(hc.digest[pi], fresh(pi), "page_hash: cached digest of page {pi} is stale");
+                let f = fresh(pi);
+                assert_eq!(hc.digest[pi], f, "page_hash: cached digest of page {pi} is stale");
             }
             if let Some(d) = hc.digest[pi] {
                 h = ((h ^ (HASHED as u64) << 32 ^ pi as u64).wrapping_mul(0x100000001b3) ^ d).wrapping_mul(0x100000001b3);
             }
         }
         hc.stale.iter_mut().for_each(|w| *w = 0);
-        (h ^ (h >> 32)) as u32
+        let h = (h ^ (h >> 32)) as u32;
+        hc.last = Some(h);
+        h
     }
 }
 

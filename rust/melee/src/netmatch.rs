@@ -231,6 +231,14 @@ pub mod engine_game {
         let arg = |k: &str| args.iter().position(|a| a == k).and_then(|i| args.get(i + 1)).cloned();
         let k: i32 = arg("--depth").and_then(|s| s.parse().ok()).unwrap_or(4);
         let frames: i32 = arg("--frames").and_then(|s| s.parse().ok()).unwrap_or(i32::MAX);
+        // a hard limit (--timeout SECS, default 900): a hung run (a fault loop, a deadlock) ends itself instead of
+        // spinning on until someone kills it
+        let limit: u64 = arg("--timeout").and_then(|s| s.parse().ok()).unwrap_or(900);
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(limit));
+            eprintln!("melee: synctest timed out after {limit} s");
+            std::process::abort();
+        });
         let scenario = arg("--scenario").unwrap_or_else(|| "pad_falcon_fox_fd".into());
         let golden = match arg("--golden").map(|p| super::golden_hashes(&p)).transpose() {
             Ok(g) => g,
@@ -294,7 +302,6 @@ pub mod engine_game {
             let t = |i: usize| t_ns()[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
             eprintln!("melee: per tick ms: save {:.3} load {:.3} state_hash {:.3} game_hash {:.3} run_frame(tick) {:.3}; total {:.3}", t(0), t(1), t(2), t(3), t(4), t0.elapsed().as_secs_f64() * 1e3 / run.max(1) as f64);
         }
-        if std::env::var_os("MELEE_SNAP_STATS").is_some() { g.with_base(|b| eprintln!("snapstats {:?}", b.stats.borrow())); }
         eprintln!("melee: engine synctest depth {k}: {run} frames, {} rollback passes, {} hash checks, {} MISMATCHES; golden {}/{} frames equal",
             st.passes, st.checked, st.mismatches.len(), n - bad, n);
         for m in st.mismatches.iter().take(5) {

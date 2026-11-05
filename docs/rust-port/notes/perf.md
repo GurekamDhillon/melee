@@ -106,12 +106,52 @@ compared within one run: rollback snapshot checks and synctest, never across pee
 every page on every call and panics on a stale cached digest: cpu_fox_falco_dl depth 7, 600 frames, no panic, 0 mismatches.
 Both scenarios: 594 rollback passes, 4158 hash checks, 0 mismatches.
 
-Still open: save and load are about 7 ms each, against about 1 ms in the table above. They compare every ever-written host
+Since fixed (see "Rollback snapshots" below). Still open then: save and load were about 7 ms each, against about 1 ms in the table above. They compare every ever-written host
 page against the base (and the snapshot's own pages) for the same reason; a since-last-save page reuse for the rollback
 ring (like the Lab's `save_after`) would remove most of it. Not done here.
 
 Boot: `melee golden --engine tu --scenario pad_falcon_fox_fd --frames 2` wall is 185-197 ms (3 runs, same busy machine), the
 full 1801-frame golden 0.6 s; the "5 s boot" figures above are from before the boot work.
+
+# Rollback snapshots (2026-11-05, branches port/snapfix-1, port/snapfix)
+`melee synctest --engine tu --scenario S --depth 7 --frames 600`, release, the per-tick counters it prints (1 save, 1 load,
+9 `state_hash`, 8 ticks per tick). The machine was busy (other agents' builds and games); CPU load is given per row.
+
+| per tick, depth 7, cpu_fox_falco_dl | save | load | state_hash | run_frame | total | CPU load |
+|---|---|---|---|---|---|---|
+| 7bf535a19 (before) | 6.86 ms | 6.87 ms | 1.52 ms | 4.08 ms | 19.4 ms | 99 % |
+| d23f7fc5b (since set cleared at capture) | 1.19 ms | 1.31 ms | 1.21 ms | 3.83 ms | 7.6 ms | 97 % |
+| port/snapfix (epochs, watched statics) | 0.29 ms | 0.44 ms | 1.20 ms | 3.58 ms | 5.6 ms | 90 % |
+| same, pad_falcon_fox_fd | 0.24 ms | 0.35 ms | 1.05 ms | 2.33 ms | 4.0 ms | 99 % |
+
+1. The 7 ms regression (f82738ca3, the Lab's incremental ring) was a set left full: `Base::capture` cleared the cumulative
+   dirty set but not the new since-last one, so every later refresh ORed the whole host block (16384 pages, everything written
+   since process start) back in and every save and load compared all 64 MB. The page pool was not involved.
+   `MELEE_SNAP_STATS=1` prints the page counters (host-block candidates per save 16384 -> 324).
+2. Then every page carries the epoch it was last written in (an epoch ends at each save and load). A load restores only the
+   pages written after its snapshot; a plain save shares the previous snapshot's unwritten pages and copies the written ones
+   (about 450 pages looked at, 430 copied per save; 450 looked at, 290 copied per load). The writes come from the OS write
+   watch (host block, arena) and, for the exe's 9.3 MB of statics that the watch cannot see, `melee_engine/src/pagewatch.rs`:
+   read-only pages and a vectored handler that records the first write; a faulted page stays writable for 32 epochs.
+   Trap found on the way: the base copies must be taken after tracking starts, or a page written in between differs from
+   its base without being dirty (it showed as an arena free-list corruption and a hang).
+3. `page_hash` (host block only) refreshes just the host watch, returns the previous value when nothing was written, and
+   digests with an xxh3-style 8-lane accumulate against cached base-page digests. About 230 written pages are digested per
+   call; that and the 64 MB `GetWriteWatch` (about 50 us a call) are what is left of `state_hash`.
+
+Checks: `MELEE_SNAP_CHECK=N` compares the live state after every Nth save and load with the snapshot, page by page (host block
+and statics in full, every ever-written arena page): pad and cpu, 600 frames, 1194 checks, clean; `lab-check` with it, ALL OK.
+`MELEE_HASH_VERIFY=1` clean, 0 mismatches over 4158 checks in both scenarios. `MELEE_SNAP_NOINC=1` (every dirty page
+compared) and `MELEE_SNAP_STATIC_SCAN=1` (statics compared in full) are the fallbacks. The Lab ring save went from
+1314-1427 us to 333 us each (`lab-check` lab perf line).
+
+## Snapshot perf guard
+`tools/rust-port/perf/snapguard.sh` (run by `gate.sh` for the release profile; `SNAPGUARD=0` skips it) runs the cpu_fox_falco_dl
+depth-7 synctest 3 times (`--runs N`), takes the minimum of save, load and total ms per tick, and fails when one is more than
+25 % (and more than 0.05 ms) over `tools/rust-port/perf/snap_baseline.tsv`. The minimum of N runs is what keeps it usable
+while other builds run; on a quiet machine the numbers are lower, never higher. `--update` rewrites the baseline (min of
+`--runs`): do it only when a change is meant to move these numbers, and say so in the commit. Every run has
+`synctest --timeout 300`, so a hang fails the guard instead of leaving a process behind.
 
 # Play polish (2026-11-04, branch port/play-perf)
 Medians of 3, Temple 4 CPUs (fox/marth/falco/peach cpu9, 3603 frames, vsync off, interp on, scale 2, the bench-live

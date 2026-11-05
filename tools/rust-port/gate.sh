@@ -115,6 +115,12 @@ fi
 if [ -f tools/rust-port/lint_logic.py ]; then
   python tools/rust-port/lint_logic.py || { echo "FAIL lint"; fail=1; }
 fi
+# 4. rollback snapshot perf (tools/rust-port/perf/snapguard.sh, notes/perf.md "Snapshot perf guard"): depth-7 synctest
+#    save / load / total, min of 3 runs, within 25% of the committed baseline. Release only (the baseline's profile);
+#    SNAPGUARD=0 skips it.
+if [ "$profile" = release ] && [ "${SNAPGUARD:-1}" = 1 ] && [ -z "$only" ]; then
+  bash tools/rust-port/perf/snapguard.sh --exe "$exe" || fail=1
+fi
 if [ $update = 1 ] && [ $fail = 0 ]; then
   step=$(awk -F'\t' 'NR>1{s=$1} END{print s+0}' "$progress")
   for s in $scenarios; do printf '%s\t%s\t%s\t%s\n' "$step" "$s" "$engine" "${counts[$s]}" >> "$progress"; done

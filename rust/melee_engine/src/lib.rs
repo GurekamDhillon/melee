@@ -9,6 +9,7 @@ pub mod archive;
 pub mod card;
 pub mod cdata;
 pub mod cow;
+pub mod pagewatch;
 pub mod crash;
 pub mod dat_custom;
 pub mod dat_types;

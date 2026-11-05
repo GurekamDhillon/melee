@@ -1,0 +1,4 @@
+# metric	ms per tick (min of 5 runs, 2026-11-05, CPU load 77%)
+save	0.271
+load	0.432
+total	5.302

@@ -501,7 +501,7 @@ pub unsafe fn it_802CC1CC(gobj: *mut Item_GObj, kind: ItemKind) {
     spawn.prev_pos = bone_pos;
     ext::it_8026BB88(gobj, &mut spawn.pos);
     spawn.x3C_damage = 0;
-    let randi = ext::HSD_Randi(((*attrs).x8 - (*attrs).xC) as i32);
+    let randi = ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*attrs).x8 - (*attrs).xC));
     let angle = 0.017453292_f32 * ((*attrs).x8 - randi as f32);
     if (*ip).xDD4_itemVar.lizardon.x64 != 0 {
         spawn.vel.x = -1.0 * ((*attrs).x10 * cosf(angle));

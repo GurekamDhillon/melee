@@ -4932,7 +4932,7 @@ pub unsafe fn mpLib_8005811C(mut coll: *mut CollData, mut ledge_id: i32) {
             let mut cb: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)> = (*groundCollJoint.offset(joint_id as isize)).cb_0;
             let mut gp: *mut Ground = (*groundCollJoint.offset(joint_id as isize)).cb_data_0;
             if cb.is_some() {
-                cb.unwrap()(gp as *mut c_void, joint_id, coll, (*coll).x50 as i32, 3 as u32, 0.0f32);
+                cb.unwrap()(gp as *mut c_void, joint_id, coll, melee_core::ppc::fctiwz_f32((*coll).x50), 3 as u32, 0.0f32);
             }
         }
     }

@@ -4098,7 +4098,7 @@ unsafe fn mnCharSel_MenuTexSetup() {
     // Fit inside 640x480 and centre it: the art is authored at 2x, so a 1024x512 panel is a 512x256
     // rectangle on a 640x480 screen.
     scale_shift = 0;
-    while (w >> scale_shift) > 640 || (h >> scale_shift) > 480 {
+    while (<i32 as melee_core::ppc::Ppc>::pshr(w, (scale_shift) as i64)) > 640 || (<i32 as melee_core::ppc::Ppc>::pshr(h, (scale_shift) as i64)) > 480 {
         scale_shift += 1;
     }
     scale = 1.0f32;
@@ -6089,7 +6089,7 @@ pub fn mnCharSel_MexPackRows(row_cap: &[i32], rows: i32, n_avail: i32, take: &mu
     let n = rows as usize;
     let mut placed = 0i32;
     for r in 0..n {
-        let share = n_avail / rows + if (r as i32) < n_avail % rows { 1 } else { 0 };
+        let share = <i32 as melee_core::ppc::Ppc>::pdiv(n_avail, rows) + if (r as i32) < <i32 as melee_core::ppc::Ppc>::prem(n_avail, rows) { 1 } else { 0 };
         take[r] = if share > row_cap[r] { row_cap[r] } else { share };
         placed = placed.wrapping_add(take[r]);
     }

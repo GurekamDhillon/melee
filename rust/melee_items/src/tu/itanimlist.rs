@@ -293,7 +293,7 @@ pub unsafe extern "C" fn it_80278F2C(item_gobj: *mut Item_GObj, cmd: *mut Comman
     let mut arg2: i32 = rd_u16((*cmd).anon_8.u, 0) as i32;
     arg2 &= 0x3FF;
     next_cmd(cmd);
-    let arg6: i32 = (rd_u16((*cmd).anon_8.u, 1) as f32) as i32;
+    let arg6: i32 = melee_core::ppc::fctiwz_f32(rd_u16((*cmd).anon_8.u, 1) as f32);
     let ef_id = rd_u16((*cmd).anon_8.u, 0);
     next_cmd(cmd);
     sp20.x = 0.003906f32 * rd_s16((*cmd).anon_8.u, 0) as f32;

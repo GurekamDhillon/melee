@@ -236,7 +236,7 @@ pub unsafe extern "C" fn itGamewatchchef_UnkMotion1_Anim(gobj: *mut Item_GObj) -
         (*ip).xD44_lifeTimer = 0.0;
         return 1;
     }
-    if ((*ip).xD44_lifeTimer as i32) & 2 != 0 {
+    if (melee_core::ppc::fctiwz_f32((*ip).xD44_lifeTimer)) & 2 != 0 {
         ext::it_8026BB20(gobj);
     } else {
         ext::it_8026BB44(gobj);

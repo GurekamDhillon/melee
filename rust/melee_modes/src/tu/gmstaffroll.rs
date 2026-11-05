@@ -1425,7 +1425,7 @@ pub unsafe extern "C" fn gm_Scene_StaffRoll_OnEnter(_unused: *mut c_void) {
         gm_804D6834 = cobj;
         ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj.cast());
         ext::GObj_SetupGXLinkMax(gobj, Some(fn_801AAA28), 8);
-        (*gobj).gxlink_prios = 1u64 << gx_link;
+        (*gobj).gxlink_prios = <u64 as melee_core::ppc::Ppc>::pshl(1u64, (gx_link) as i64);
     }
     {
         let gobj = ext::GObj_Create(gx_link as u16, 3, 0);

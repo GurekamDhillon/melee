@@ -1601,7 +1601,7 @@ pub unsafe extern "C" fn fe_draw_panels(_gobj: *mut HSD_GObj, pass: i32) {
     // the cursor's plate, drawn where it currently is on its way to the cursor
     if fe.cursor < fe.n_list {
         let y = fmadds(FE_ROW_STEP, fe.hl_y, FE_ROW_Y);
-        let s0 = (fe.hl_y + 0.5f32) as i32;
+        let s0 = melee_core::ppc::fctiwz_f32(fe.hl_y + 0.5f32);
         fe_tex_or_solid(FT_ROW_SEL as i32, FE_ROW_X + fe_row_offset(s0), y, FE_ROW_W, FE_ROW_H, cobalt_lt());
     }
 
@@ -2131,7 +2131,7 @@ pub unsafe fn fe_change(it: *const FrontendItem, dir: i32) {
     let n = (*it).max - (*it).min + 1;
     match (*it).kind as u32 {
         FE_CHOICE => {
-            v = (*it).min + ((v - (*it).min + dir) % n + n) % n; // wraps
+            v = (*it).min + <i32 as melee_core::ppc::Ppc>::prem(<i32 as melee_core::ppc::Ppc>::prem((v - (*it).min + dir), n) + n, n); // wraps
         }
         FE_SLIDER => {
             v += dir * if (*it).step > 0 { (*it).step } else { 1 };
@@ -2195,7 +2195,7 @@ pub unsafe fn fe_load_step() -> i32 {
     if fe.load_settled > 0 && fe.progress > 0.995f32 {
         fe.progress = 1.0f32;
     }
-    fe.percent = (fe.progress * 100.0f32) as i32;
+    fe.percent = melee_core::ppc::fctiwz_f32(fe.progress * 100.0f32);
 
     if ext::Gfx_LoadScreenEnabled() == 0
         || fe.load_frames >= FE_LOAD_CEILING_FRAMES
@@ -2367,10 +2367,10 @@ pub unsafe extern "C" fn gm_Scene_Frontend_OnFrame() {
         }
         let it = (*fe.screen).items.offset(fe.vis[fe.cursor as usize] as isize);
         if inp & MENU_UP != 0 {
-            fe.cursor = (fe.cursor + fe.n_vis - 1) % fe.n_vis;
+            fe.cursor = <i32 as melee_core::ppc::Ppc>::prem(fe.cursor + fe.n_vis - 1, fe.n_vis);
             sfxMove();
         } else if inp & MENU_DOWN != 0 {
-            fe.cursor = (fe.cursor + 1) % fe.n_vis;
+            fe.cursor = <i32 as melee_core::ppc::Ppc>::prem(fe.cursor + 1, fe.n_vis);
             sfxMove();
         } else if inp & MENU_LEFT != 0 {
             fe_change(it, -1);

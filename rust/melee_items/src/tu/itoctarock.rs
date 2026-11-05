@@ -298,7 +298,7 @@ pub unsafe extern "C" fn it_802E4B00(gobj: *mut Item_GObj) -> bool {
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOctarockAttributes;
     (*ip).init_facing_dir = (*ip).facing_dir;
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > *(*attr).x0 || (*ip).msid == 6 {
         Item_ZakoDefeat(gobj, ip);
         if ext::HSD_Randf() < (*ext::it_804D6D40).x8 {
@@ -446,7 +446,7 @@ pub unsafe extern "C" fn itOctarock_UnkMotion4_Anim(gobj: *mut Item_GObj) -> boo
     if (*ip).xDD4_itemVar.octarock.x32 == 0 {
         let mut v: Vec3 = core::mem::zeroed();
         ext::lb_8000B1CC((*(*ip).xBBC_dynamicBoneTable).bones[0xE], null_mut(), &mut v);
-        ext::it_802E8ADC(gobj, &mut v, (*ip).facing_dir as i32, (*attr).x10, (*attr).x14, (*attr).x18);
+        ext::it_802E8ADC(gobj, &mut v, melee_core::ppc::fctiwz_f32((*ip).facing_dir), (*attr).x10, (*attr).x14, (*attr).x18);
         ext::Item_8026AE84(ip, 0x137, 0x7F, 0x40);
     }
     if ext::it_80272C6C(gobj) == 0 {

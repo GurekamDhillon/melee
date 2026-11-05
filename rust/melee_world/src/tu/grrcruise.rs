@@ -455,7 +455,7 @@ pub unsafe extern "C" fn grRCruise_80200154(gobj: *mut HSD_GObj) {
                 (*gp).u.rcruise.x3C[i].x4 += 1;
             }
             4 => {
-                if (*gp).u.rcruise.x3C[i].x4 % (*yp).x14 == 0 {
+                if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.rcruise.x3C[i].x4, (*yp).x14) == 0 {
                     let b = (*gp).u.rcruise.x3C[i].x1_b0() ^ 1;
                     (*gp).u.rcruise.x3C[i].set_x1_b0(b);
                     if (*gp).u.rcruise.x3C[i].x1_b0() != 0 {
@@ -476,7 +476,7 @@ pub unsafe extern "C" fn grRCruise_80200154(gobj: *mut HSD_GObj) {
                 (*gp).u.rcruise.x3C[i].x4 += 1;
             }
             5 => {
-                if (*gp).u.rcruise.x3C[i].x4 % (*yp).x1C == 0 {
+                if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.rcruise.x3C[i].x4, (*yp).x1C) == 0 {
                     grRCruise_80201B60((*(*gp2).u.rcruise.x3C[i].xC).child, 0);
                 } else {
                     grRCruise_80201B60((*(*gp2).u.rcruise.x3C[i].xC).child, 1);
@@ -592,7 +592,7 @@ pub unsafe extern "C" fn grRCruise_8020071C(gobj: *mut HSD_GObj) {
     let x18 = (*gp).u.rcruise.x18;
     let abs_rot = if x18 < 0.0 { -x18 } else { x18 };
     // abs_rot - 360.0f * (s32) (abs_rot / 360.0f): the multiply-subtract is fused
-    let wrapped = fmadds(-360.0, (abs_rot / 360.0) as i32 as f32, abs_rot);
+    let wrapped = fmadds(-360.0, melee_core::ppc::fctiwz_f32(abs_rot / 360.0) as f32, abs_rot);
 
     match (*gp).u.rcruise.x2C {
         0 => {
@@ -681,9 +681,9 @@ pub unsafe extern "C" fn grRCruise_80200C04(gobj: *mut HSD_GObj) {
                 }
             }
             2 => {
-                if (*entry).x4 % (*yp).x28 == 0 {
+                if <i32 as melee_core::ppc::Ppc>::prem((*entry).x4, (*yp).x28) == 0 {
                     let range = 100.0 * ((*yp).x30 - (*yp).x2C);
-                    let randi = if range as i32 != 0 { ext::HSD_Randi(range as i32) } else { 0 };
+                    let randi = if melee_core::ppc::fctiwz_f32(range) != 0 { ext::HSD_Randi(melee_core::ppc::fctiwz_f32(range)) } else { 0 };
                     mi::HSD_JObjSetTranslateY(
                         &mut *(*entry).x14,
                         (*entry).xC + ((*yp).x2C + (randi as f32 / 100.0)),
@@ -725,7 +725,7 @@ pub unsafe extern "C" fn grRCruise_80200C04(gobj: *mut HSD_GObj) {
                 (*entry).x4 += 1;
             }
             5 => {
-                if (*entry).x4 % (*yp).x44 == 0 {
+                if <i32 as melee_core::ppc::Ppc>::prem((*entry).x4, (*yp).x44) == 0 {
                     (*entry).pad_01 = ((*entry).pad_01 & !0x80) | ((((*entry).pad_01 >> 7) ^ 1) << 7);
                     if (*entry).pad_01 & 0x80 != 0 {
                         grRCruise_80201B60((*entry).x14, 0);

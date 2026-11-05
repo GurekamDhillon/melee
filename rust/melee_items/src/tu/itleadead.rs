@@ -296,7 +296,7 @@ pub unsafe extern "C" fn it_802E8CD8(gobj: *mut Item_GObj) -> bool {
     if (*ip).msid == 7 || (*ip).msid == 0xC {
         return false;
     }
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > (*(*attr).x0).x0 || (*ip).msid == 0xE {
         ext::it_8027C9D8(ip);
         ext::it_802756D0(gobj);

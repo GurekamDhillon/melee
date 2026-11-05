@@ -248,7 +248,7 @@ pub fn reset(gobj: G) {
         (*fp).cmd_vars[cmd_anim_state] = 0;
         (*fp).cmd_vars[cmd_accessory4] = 0;
         (*fp).cmd_vars[cmd_hit_anim_state] = 0;
-        (*fp).mv.pe.specialn.facing_dir = (*fp).facing_dir as i32;
+        (*fp).mv.pe.specialn.facing_dir = melee_core::ppc::fctiwz_f32((*fp).facing_dir);
         (*fp).accessory4_cb = Some(cb_onAccessory4);
     }
 }
@@ -426,7 +426,7 @@ pub fn onUnkHit(gobj: G) {
     melee_core::ct!("onUnkHit");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).mv.pe.specialn.facing_dir = (*fp).specialn_facing_dir as i32;
+        (*fp).mv.pe.specialn.facing_dir = melee_core::ppc::fctiwz_f32((*fp).specialn_facing_dir);
         let msid = if (*fp).ground_or_air == GA_Ground {
             ftPe_MS_SpecialNHit
         } else {

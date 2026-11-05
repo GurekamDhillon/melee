@@ -846,7 +846,7 @@ pub fn ftNs_AttackHi4Release_Enter(gobj: *mut HSD_GObj) {
 pub fn ftNs_AttackHi4_YoyoStartTimedRehit(fp: &mut Fighter) {
     melee_core::ct!("ftNs_AttackHi4_YoyoStartTimedRehit");
     let a: &ftNessAttributes = da(fp);
-    unsafe { fp.mv.ns.attackhi4.yoyoRehitTimer = a.xB4_YOYO_REHIT_RATE as i32 };
+    unsafe { fp.mv.ns.attackhi4.yoyoRehitTimer = melee_core::ppc::fctiwz_f32(a.xB4_YOYO_REHIT_RATE) };
 }
 
 /// `ftNs_AttackHi4_YoyoSetVarAll` (src/melee/ft/kinds/ftNess/ftnessattackhi4.c).

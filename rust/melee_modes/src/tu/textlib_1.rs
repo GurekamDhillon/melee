@@ -95,7 +95,7 @@ pub unsafe fn un_80302EA4_fp(mut arg0: *const Entry) -> i32 {
         }
         if e.x0 == 2 {
             // (int) x18: float -> int truncation, saturating like gwtool's lowering
-            let n = e.x18 as i32;
+            let n = melee_core::ppc::fctiwz_f32(e.x18);
             let mut i = 0;
             while i < n {
                 let len = DevText_StrLen(cstr(*e.xC.add(i as usize)));

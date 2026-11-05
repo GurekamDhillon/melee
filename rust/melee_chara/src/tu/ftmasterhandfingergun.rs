@@ -86,7 +86,7 @@ pub fn ftMh_MS_363_801530A4(gobj: *mut HSD_GObj) {
         st::Fighter_ChangeMotionState(gobj, ftMh_MS_FingerGun1 as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);
         // HSD_Randi(float) converts the f32 difference to s32; `xE4 + rand` is an f32 add.
-        let rand = melee_fighter::hooks::hsd_randi(((*da).xE8 - (*da).xE4) as i32);
+        let rand = melee_fighter::hooks::hsd_randi(melee_core::ppc::fctiwz_f32((*da).xE8 - (*da).xE4));
         (*fp).mv.mh.unk0.x50 = (*da).xE4 + rand as f32;
         (*fp).cmd_vars[0] = 0;
         (*fp).cmd_vars[1] = 0;

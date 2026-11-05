@@ -180,7 +180,7 @@ fn inlineA0(gobj: *mut HSD_GObj, cb: fn(*mut HSD_GObj)) {
                 if (*fp).x914[i].state == HitCapsule_Enabled {
                     let dmg: i32 = (*da).x4.wrapping_add(((*fp).mv.ms.specialn.cur_frame / 30).wrapping_mul((*da).x8));
                     // int -> float -> u32 parameter (fctiwz on the GC)
-                    ext::ftColl_8007ABD0(&mut (*fp).x914[i], (dmg as f32) as i32 as u32, gobj);
+                    ext::ftColl_8007ABD0(&mut (*fp).x914[i], melee_core::ppc::fctiwz_f32(dmg as f32) as u32, gobj);
                 }
             }
         }

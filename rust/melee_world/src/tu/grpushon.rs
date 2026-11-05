@@ -449,9 +449,9 @@ pub unsafe extern "C" fn grPushOn_80218888(gobj: *mut HSD_GObj) {
             ext::HSD_LObjGetColor((*gp).u.pushon.lobjs[sorted[1] as usize], &mut color);
             if distances[sorted[2] as usize] - distances[sorted[1] as usize] < 50.0 {
                 let ratio = dist_diff / 50.0;
-                color.r = (color.r as f32 * ratio) as u8;
-                color.g = (color.g as f32 * ratio) as u8;
-                color.b = (color.b as f32 * ratio) as u8;
+                color.r = melee_core::ppc::fctiwz_f32(color.r as f32 * ratio) as u8;
+                color.g = melee_core::ppc::fctiwz_f32(color.g as f32 * ratio) as u8;
+                color.b = melee_core::ppc::fctiwz_f32(color.b as f32 * ratio) as u8;
             }
         }
         ext::HSD_LObjSetColor((*gp).u.pushon.spot_light, color);

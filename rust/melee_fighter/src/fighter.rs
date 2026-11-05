@@ -87,7 +87,7 @@ pub fn ftucf_flick_counter(port: i32) -> i32 {
 pub fn ftucf_rim_units(v: f32) -> i32 {
     let a = if v < 0.0 { -v } else { v };
     let t = (a as f64).mul_add(80.0, -(9.99999974738e-05f32 as f64)) as f32;
-    (t as i32).wrapping_add(2)
+    (melee_core::ppc::fctiwz_f32(t)).wrapping_add(2)
 }
 
 /// `ftUcf_FlickCount` (static).

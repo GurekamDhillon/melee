@@ -251,7 +251,7 @@ pub unsafe fn _tyFigupon_80314B54() -> i32 {
     let mut count = 0;
     for i in 0..TY_TROPHY_COUNT {
         if Toy_80304CC8(i) && Toy_803048C0(i) != 0 {
-            let result = Toy_803060BC(i, 6) as i32;
+            let result = melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 6));
             if result != 8 && result as u32 > 1 {
                 count += 1;
             }
@@ -326,7 +326,7 @@ pub unsafe extern "C" fn _tyFigupon_80314C5C(gobj: *mut HSD_GObj) {
                 (*tp).offset.y = -0.026666667;
                 let dy = temp_f27 - temp_f29;
                 let ady = if dy < 0.0 { -dy } else { dy };
-                (*tp).x8 = ((ady as i32) as f32 + 35.0f32) as i32;
+                (*tp).x8 = melee_core::ppc::fctiwz_f32((melee_core::ppc::fctiwz_f32(ady)) as f32 + 35.0f32);
             }
             (*temp_r29).x56 = (*tp).x8 as i16;
             HSD_JObjSetTranslateX(&mut *jobj, temp_f30, &mut Dirty);
@@ -447,7 +447,7 @@ unsafe fn setupPercentDisplay(ef4_arg: *mut un_804D6EF4_t) {
     } else {
         pct *= 1000.0;
     }
-    _tyFigupon_803153EC((pct as i32) as u32 as i32, 9, 3, 2, 0);
+    _tyFigupon_803153EC((melee_core::ppc::fctiwz_f32(pct)) as u32 as i32, 9, 3, 2, 0);
 }
 
 /// Refresh the bet arrow animation for the current bet count (`default_frame` is the C's
@@ -530,7 +530,7 @@ pub unsafe extern "C" fn _tyFigupon_803155C8(_gobj: *mut HSD_GObj) {
             if (*ef4).x58 == 0 {
                 let sc = (*ef4).x5D as i32;
                 if sc >= 3 {
-                    (*ef4).x58 = (1.62f32 * sc as f32) as i16;
+                    (*ef4).x58 = melee_core::ppc::fctiwz_f32(1.62f32 * sc as f32) as i16;
                     (*ef4).x58 += 0xE;
                     ext::HSD_JObjReqAnimAll(jobj, 50.0);
                     ext::HSD_JObjReqAnimAll((*ef4).jobjs[0xE], 0.0);
@@ -773,7 +773,7 @@ pub unsafe extern "C" fn _tyFigupon_80316170(arg0: *mut HSD_GObj) {
 /// Whether trophy `arg0`'s category counts as a "real" win (the C's `var_r30`).
 pub unsafe fn _tyFigupon_8031638C(arg0: i16) -> i32 {
     melee_core::ct!("_tyFigupon_8031638C");
-    let temp_r0 = Toy_803060BC(arg0 as i32, 6) as i32;
+    let temp_r0 = melee_core::ppc::fctiwz_f32(Toy_803060BC(arg0 as i32, 6));
     let mut var_r30 = 0;
     match temp_r0 {
         0 | 1 | 4 | 6 | 8 => {}

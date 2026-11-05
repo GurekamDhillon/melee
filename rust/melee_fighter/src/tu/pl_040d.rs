@@ -132,17 +132,17 @@ pub fn pl_80041280_fp(slot: i32, arg1: i32) {
     }
 }
 
-/// `pl_800412D0` (float -> int, saturating like fctiwz except NaN).
+/// `pl_800412D0` (float -> int, fctiwz via melee_core::ppc).
 pub fn pl_800412d0(slot: i32) -> i32 {
     melee_core::ct!("pl_800412d0");
-    unsafe { (*x5ec(slot)).x4 as i32 }
+    unsafe { melee_core::ppc::fctiwz_f32((*x5ec(slot)).x4) }
 }
 
 /// `pl_80041300`.
 pub fn pl_80041300(slot: i32) -> i32 {
     melee_core::ct!("pl_80041300");
     let t = unsafe { &*x5ec((*x5ec(slot)).x0 as i32) };
-    t.x10[slot as usize].x0 as i32
+    melee_core::ppc::fctiwz_f32(t.x10[slot as usize].x0)
 }
 
 /// `pl_8004134C`.

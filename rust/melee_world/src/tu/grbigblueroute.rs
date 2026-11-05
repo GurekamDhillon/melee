@@ -671,14 +671,14 @@ pub unsafe fn grBigBlueRoute_SpawnRoute(route_idx: s32, gp: *mut Ground, gobj: *
     if route_idx == 0 {
         route_idx = 30;
         (*re_at(gp, 30)).flags.set_b1(1);
-        (*gp).u.car.x10A = (*yakumono_param).x4C as i16;
+        (*gp).u.car.x10A = melee_core::ppc::fctiwz_f32((*yakumono_param).x4C) as i16;
     } else {
         route_idx = grBigBlueRoute_8020C530(gobj);
 
         (*re_at(gp, route_idx as usize)).flags.set_b1(0);
 
-        let min_val = (*yakumono_param).x44 as s32;
-        let max_val = (*yakumono_param).x48 as s32;
+        let min_val = melee_core::ppc::fctiwz_f32((*yakumono_param).x44);
+        let max_val = melee_core::ppc::fctiwz_f32((*yakumono_param).x48);
         let new_timer: s32;
 
         if max_val > min_val {
@@ -1059,7 +1059,7 @@ pub unsafe extern "C" fn grBigBlueRoute_8020CD20(gobj: *mut Ground_GObj) {
             {
                 if (*re).flags.b1() != 0 {
                     if (*flag_view).anon_0.b0() == 0 {
-                        ext::un_802FD604((*yakumono_param).x4C as s32);
+                        ext::un_802FD604(melee_core::ppc::fctiwz_f32((*yakumono_param).x4C));
                         ext::Ground_801C53EC(0x77A11);
                         (*flag_view).anon_0.set_b0(1);
                     }

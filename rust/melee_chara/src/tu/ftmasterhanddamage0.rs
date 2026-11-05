@@ -145,7 +145,7 @@ unsafe fn func_80151484_inline1(gobj: *mut HSD_GObj) {
         }
         (*fp).self_vel.y = (*da).x14C;
         (*fp).self_vel.z = (*da).x154;
-        (*fp).mv.mh.unk0.x8 = (*da).x15C as i32;
+        (*fp).mv.mh.unk0.x8 = melee_core::ppc::fctiwz_f32((*da).x15C);
     }
 }
 

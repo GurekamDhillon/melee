@@ -619,7 +619,7 @@ pub unsafe extern "C" fn it_8028A544(gobj: *mut Item_GObj) {
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.x = 0.0;
     (*ip).x40_vel.y = (*attr).x18;
-    (*ip).xDD4_itemVar.kusudama.x4 = (*attr).x1C as i32;
+    (*ip).xDD4_itemVar.kusudama.x4 = melee_core::ppc::fctiwz_f32((*attr).x1C);
     (*ip).xDD4_itemVar.kusudama.x0 = 1;
     ext::it_802762BC(ip);
     ext::it_80275444(gobj);

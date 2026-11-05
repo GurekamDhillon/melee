@@ -180,7 +180,7 @@ pub unsafe fn lb_80019628() {
 
     {
         // OSTicksToMilliseconds: s64 / u32 (the u32 widens to s64)
-        let mut rate: u32 = (lb_804329F0.x40 / ((os_timer_clock() / 1000) as i64)) as u32;
+        let mut rate: u32 = (<i64 as melee_core::ppc::Ppc>::pdiv(lb_804329F0.x40, (os_timer_clock() / 1000) as i64)) as u32;
         if rate > 11 {
             rate = 11;
         }

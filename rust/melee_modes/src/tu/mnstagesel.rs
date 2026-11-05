@@ -3834,13 +3834,13 @@ pub unsafe extern "C" fn mnStageSel_80259ED8(mut id: i32) {
     {
         do_anim(
             jobj,
-            (if !mnStageSel_MexMap.is_null() {
+            melee_core::ppc::fctiwz_f32(if !mnStageSel_MexMap.is_null() {
                 id as f32
             } else {
                 20.0_f32
                     * mnStageSel_803F06D0[id as usize].x9 as i32
                         as f32
-            }) as i32,
+            }),
         );
     }
 }

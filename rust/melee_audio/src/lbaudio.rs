@@ -338,7 +338,7 @@ pub fn lb_80026ebc_grkind(grkind: i32) -> u64 {
     if shift == 55 || shift as usize >= LBAX_N {
         return 0;
     }
-    1u64 << shift
+    <u64 as melee_core::ppc::Ppc>::pshl(1u64, (shift) as i64)
 }
 
 fn flags_mask(flags: u32) -> u64 {

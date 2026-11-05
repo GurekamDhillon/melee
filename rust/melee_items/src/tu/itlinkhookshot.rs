@@ -382,7 +382,7 @@ pub unsafe fn it_link_attr_math(attr: *mut itLinkHookshotAttributes, arg2: i32, 
     } else {
         var_f1 = (*attr).xC as f32 * (*attr).x30;
     }
-    (*attr).x2C = ((var_f1 * var_f0) / (*attr).x30) as i32;
+    (*attr).x2C = melee_core::ppc::fctiwz_f32((var_f1 * var_f0) / (*attr).x30);
 }
 
 pub unsafe fn it_802A2568(arg0: *mut Item, arg1: *mut HSD_JObj, arg2: i32, arg8: f32) -> *mut HSD_JObj {
@@ -2151,7 +2151,7 @@ pub fn it_link_attr_math_fp(attr: &mut itLinkHookshotAttributes, arg2: i32, arg8
     } else {
         attr.xC as f32 * attr.x30
     };
-    attr.x2C = ((f1 * f0) / attr.x30) as i32;
+    attr.x2C = melee_core::ppc::fctiwz_f32((f1 * f0) / attr.x30);
 }
 
 // ---- folded from itkinds7.rs (consolidation steps 21/22) ----

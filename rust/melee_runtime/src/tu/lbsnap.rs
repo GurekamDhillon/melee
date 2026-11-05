@@ -213,7 +213,7 @@ pub unsafe fn lbSnap_8001D4A4(chan: i32, arg1: *mut i8) {
     let ptr = slot(chan);
     let time2 = ext::OSGetTime();
     // `OSTicksToSeconds(time2)`: s64 / u32 (promoted to s64), stored in an unsigned int
-    let mut time = (time2 / os_timer_clock() as i64) as u32;
+    let mut time = (<i64 as melee_core::ppc::Ppc>::pdiv(time2, os_timer_clock() as i64)) as u32;
     let new_var = (*ptr).num;
     let mut i;
     loop {
@@ -388,7 +388,7 @@ pub unsafe fn lbSnap_8001DC0C(image: *mut u8) -> i32 {
     }
     lbSnap_8001DA5C(image);
     let ticks = ext::OSGetTime();
-    let seconds = (ticks / os_timer_clock() as i64) as u32;
+    let seconds = (<i64 as melee_core::ppc::Ppc>::pdiv(ticks, os_timer_clock() as i64)) as u32;
     let mut time: OSCalendarTime = core::mem::zeroed();
     ext::OSTicksToCalendarTime((seconds as u64).wrapping_mul(os_timer_clock() as u64) as i64, &raw mut time);
     let fname = lbSnap_80433380.filename.as_mut_ptr();

@@ -387,11 +387,10 @@ pub fn update_facing_outside_deadzone(fp: &mut Fighter) {
     }
 }
 
-/// C `(int) f`: PPC `fctiwz` saturates, and so does Rust's `as`; NaN differs (PPC gives
-/// 0x80000000, Rust 0), which no hitlag input produces.
+/// C `(int) f`: PPC `fctiwz` (saturating, NaN -> 0x80000000; melee_core::ppc).
 #[inline(always)]
 fn trunc_i32(f: f32) -> i32 {
-    f as i32
+    melee_core::ppc::fctiwz_f32(f)
 }
 
 pub fn calc_hitlag(dmg: i32, msid: i32, mul: f32) -> f32 {

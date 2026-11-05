@@ -106,7 +106,7 @@ pub fn ftCo_800D15D0(g: G) {
         if percent >= cd().x690 as f32 {
             percent = cd().x690 as f32;
         }
-        f.x2008 = (f.x2008 as f32 + percent) as i32;
+        f.x2008 = melee_core::ppc::fctiwz_f32(f.x2008 as f32 + percent);
     }
     let s = crate::tu::ft_0d27::kinoko_scratch(fp(g))[1];
     ext::ftCo_800D2770(g, s);

@@ -169,7 +169,7 @@ pub unsafe extern "C" fn it_2725_Logic8_DmgReceived(gobj: *mut Item_GObj) -> boo
     let attr = attrs_of(ip);
 
     (*ip).init_facing_dir = (*ip).facing_dir;
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > (*(*attr).x0).x0 || (*ip).msid == 9 {
         if !(*ip).xDD4_itemVar.oldottosea.x20.is_null() {
             ext::it_8028ECE0((*ip).xDD4_itemVar.oldottosea.x20);

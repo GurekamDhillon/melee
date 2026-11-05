@@ -400,8 +400,8 @@ unsafe fn it_8026C88C_inline(alloc: *mut RandomItemSpawner) {
             let range: *const i32 = (*ext::it_804D6D28).xFC.as_ptr().add(idx as usize);
             let randf = ext::HSD_Randf();
             let diff = *range.add(1) - *range;
-            (*alloc).x0 = fmadds(diff as f32, randf, *range as f32) as i32;
-            (*alloc).x0 = (((*alloc).x0 as f32) * ext::Ground_801C2AE8(ext::Stage_80225194())) as i32;
+            (*alloc).x0 = melee_core::ppc::fctiwz_f32(fmadds(diff as f32, randf, *range as f32));
+            (*alloc).x0 = melee_core::ppc::fctiwz_f32(((*alloc).x0 as f32) * ext::Ground_801C2AE8(ext::Stage_80225194()));
         }
     }
 }
@@ -426,7 +426,7 @@ pub unsafe extern "C" fn it_8026CA4C(alloc: *mut ItemPickTable, arg1: *mut i32, 
         if mask & 1 != 0 {
             // sum += arg4 * *p + 0.99f; (the product-add fuses; the outer += does not)
             let val = fmadds(arg4, *p as f32, 0.99f32);
-            sum = ((sum as f32) + val) as i32;
+            sum = melee_core::ppc::fctiwz_f32((sum as f32) + val);
         }
         p = p.add(1);
         i += 1;
@@ -492,7 +492,7 @@ pub unsafe extern "C" fn it_8026CB9C(counts: *mut i32, mask: u64, weight: f32) {
             *(*weights).add(idx as usize) = cumulative as u16;
             cnt2 += 1;
             idx += 1;
-            cumulative = ((cumulative as f32) + fmadds(weight, *p2 as f32, 0.99f32)) as i32;
+            cumulative = melee_core::ppc::fctiwz_f32((cumulative as f32) + fmadds(weight, *p2 as f32, 0.99f32));
         }
         p2 = p2.add(1);
         it_kind2 += 1;
@@ -545,7 +545,7 @@ pub unsafe extern "C" fn it_8026CD50(counts: *mut i32, mask: u64, weight: f32) {
             *(*weights).add(idx as usize) = cumulative as u16;
             cnt2 += 1;
             idx += 1;
-            cumulative = ((cumulative as f32) + fmadds(weight, *p2 as f32, 0.99f32)) as i32;
+            cumulative = melee_core::ppc::fctiwz_f32((cumulative as f32) + fmadds(weight, *p2 as f32, 0.99f32));
         }
         p2 = p2.add(1);
         it_kind2 += 1;
@@ -623,8 +623,8 @@ unsafe fn it_8026D018_inline2() {
 /// `it_8026D018_inline3`: re-arms the spawner's countdown from a random point in `range`.
 unsafe fn it_8026D018_inline3(randf: f32, range: *const i32) {
     let diff = *range.add(1) - *range;
-    it_804A0E30.x0 = fmadds(diff as f32, randf, *range as f32) as i32;
-    it_804A0E30.x0 = ((it_804A0E30.x0 as f32) * ext::Ground_801C2AE8(ext::Stage_80225194())) as i32;
+    it_804A0E30.x0 = melee_core::ppc::fctiwz_f32(fmadds(diff as f32, randf, *range as f32));
+    it_804A0E30.x0 = melee_core::ppc::fctiwz_f32((it_804A0E30.x0 as f32) * ext::Ground_801C2AE8(ext::Stage_80225194()));
 }
 
 /// `it_8026D018`: sets up the item spawner for the match (called at match start).

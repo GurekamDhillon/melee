@@ -148,10 +148,10 @@ pub fn ftwalkcommon_800dfec8(g: G, arg_cb: fn(G, f32)) {
         let fr = ext::ftAnim_8006F484(g);
         let f = fp(g);
         let init = f.cur_anim_frame;
-        let quotient = (init / fr) as i32;
+        let quotient = melee_core::ppc::fctiwz_f32(init / fr);
         // fused: cur_anim_frame - float_result * (float) quotient
         let adj = (f.cur_anim_frame as f64 - fr as f64 * (quotient as f32) as f64) as f32;
-        let fin = (frame * (adj / fr)) as i32;
+        let fin = melee_core::ppc::fctiwz_f32(frame * (adj / fr));
         arg_cb(g, fin as f32);
     }
 }

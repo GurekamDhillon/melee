@@ -663,13 +663,13 @@ pub unsafe fn it_802D208C(gobj: *mut Item_GObj) {
     let mut target: Vec3;
 
     loop {
-        let random_offset: i32 = ext::HSD_Randi((((*attrs).x34 - (*attrs).x38) / 2.0) as i32);
+        let random_offset: i32 = ext::HSD_Randi(melee_core::ppc::fctiwz_f32(((*attrs).x34 - (*attrs).x38) / 2.0));
         let new_angle: i32;
 
         if ext::HSD_Rand() % 2 != 0 {
-            new_angle = (random_offset as f32 + ((*ip).xDD4_itemVar.lugia.xA4 as f32 - (*attrs).x34 / 2.0)) as i32;
+            new_angle = melee_core::ppc::fctiwz_f32(random_offset as f32 + ((*ip).xDD4_itemVar.lugia.xA4 as f32 - (*attrs).x34 / 2.0));
         } else {
-            new_angle = (random_offset as f32 + ((*ip).xDD4_itemVar.lugia.xA4 as f32 + (*attrs).x38 / 2.0)) as i32;
+            new_angle = melee_core::ppc::fctiwz_f32(random_offset as f32 + ((*ip).xDD4_itemVar.lugia.xA4 as f32 + (*attrs).x38 / 2.0));
         }
 
         target = (*ip).xDD4_itemVar.lugia.x8C;

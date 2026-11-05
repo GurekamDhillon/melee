@@ -92,11 +92,11 @@ pub unsafe fn fn_803B61B4(block:*mut i32) {
         let odd_rotation_sum=(0.707107f64*(odd_pair_sum+odd_pair_diff) as f64) as f32;
         let even1=even_diff+even_rotation_diff;let even2=even_diff-even_rotation_diff;let even3=even_sum-even_rotation_sum;
         let result=[even0+odd_sum,even1+odd_rotation_diff,even2+odd_rotation_sum,even3+odd_diff,even3-odd_diff,even2-odd_rotation_sum,even1-odd_rotation_diff,even0-odd_sum];
-        for j in 0..8 {*p.add(j*stride)=result[j] as i32;}
+        for j in 0..8 {*p.add(j*stride)=melee_core::ppc::fctiwz_f32(result[j]);}
     }}
     for i in 0..64 {*block.add(i)>>=2;}
 }
-pub fn jpeg_clamp(value:f32)->i32 { melee_core::ct!("jpeg_clamp");if value<0.0{0}else if 255.0<value{255}else{(value as i32 as u8) as i32}}
+pub fn jpeg_clamp(value:f32)->i32 { melee_core::ct!("jpeg_clamp");if value<0.0{0}else if 255.0<value{255}else{(melee_core::ppc::fctiwz_f32(value) as u8) as i32}}
 pub unsafe fn jpeg_store_rgb565(out:*mut JpegOutput,offset:i32,luminance:i32,cb:i32,cr:i32) {
     melee_core::ct!("jpeg_store_rgb565");
     let red=jpeg_clamp(1.402f64.mul_add(cr as f64,luminance as f64) as f32) as u8;

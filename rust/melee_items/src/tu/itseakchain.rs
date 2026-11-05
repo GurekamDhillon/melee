@@ -726,7 +726,7 @@ pub unsafe extern "C" fn it_802BC080(link: *mut ItemLink, target: *mut Vec3, ip:
     let mut iter = (*link).prev;
     let mut cur = link;
     let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itSeakChain_Attrs;
-    let last_idx: i32 = fmadds(0.5, (*attrs).x0 as f32, -1.0) as i32;
+    let last_idx: i32 = melee_core::ppc::fctiwz_f32(fmadds(0.5, (*attrs).x0 as f32, -1.0));
     let mut env_flags: i32 = 0;
 
     while !iter.is_null() && (*cur).x2C_b0() == 0 {
@@ -817,7 +817,7 @@ pub unsafe extern "C" fn it_802BC080(link: *mut ItemLink, target: *mut Vec3, ip:
 
     let mut counter: i32 = 0;
     while !iter.is_null() {
-        let idx = (0.5f32 * ((counter + 1) as f32)) as i32;
+        let idx = melee_core::ppc::fctiwz_f32(0.5f32 * ((counter + 1) as f32));
         let fx = (*attrs).x1C;
         let fy = (*attrs).x20;
         let mut dx = scale * ((*ip).xDD4_itemVar.seakchain.history[idx as usize].x * fx);

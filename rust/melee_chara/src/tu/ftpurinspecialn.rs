@@ -211,7 +211,7 @@ pub fn ftPr_SpecialS_8013D8E4(gobj: G) {
         }
         if (*fp).x914[0].state != HitCapsule_Disabled {
             let v = if (*fp).ground_or_air == GA_Air { abs_f((*fp).self_vel.x) } else { abs_f((*fp).gr_vel) };
-            let mut damage = (da.x84 * (da.x80 + v)) as i32;
+            let mut damage = melee_core::ppc::fctiwz_f32(da.x84 * (da.x80 + v));
             if damage < 1 {
                 damage = 1;
             }
@@ -267,7 +267,7 @@ pub fn ftPr_SpecialS_8013DC64(gobj: G) {
         sn!(fp).facing_dir = 0.0;
         sn!(fp).x24 = 0;
         sn!(fp).x28 = 0;
-        sn!(fp).x2C = da.xA0 as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(da.xA0);
         sn!(fp).x30 = 0;
         (*fp).deal_dmg_cb = Some(cb_ftPr_SpecialS_8013D764);
         (*fp).x21F8 = Some(cb_ftPr_SpecialN_8014222C);
@@ -381,9 +381,9 @@ unsafe fn charge_anim(gobj: G, full_ms: i32) {
     let da = da_of(fp);
     ftPr_SpecialS_8013DD54(gobj, false);
     sn!(fp).facing_dir = 0.0;
-    sn!(fp).x2C = (sn!(fp).x2C as f32 + da.xA8) as i32;
+    sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 + da.xA8);
     if sn!(fp).x2C as f32 >= da.xA4 {
-        sn!(fp).x2C = da.xA4 as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(da.xA4);
         if full_ms >= 0 {
             if sn!(fp).x30 == 0 {
                 ext::ftCo_800BFFD0(fp, 5, 0);
@@ -744,7 +744,7 @@ pub fn ftPr_SpecialNRelease_Phys(gobj: G) {
         (*fp).x74_self_accel.y = 0.0;
         (*fp).self_vel.y = 0.0;
         ext::ftCommon_SetSelfMovementFromGroundedMovement(fp);
-        sn!(fp).x2C = (sn!(fp).x2C as f32 - da.xB4) as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 - da.xB4);
         if (sn!(fp).x2C as f32) < da.xB8 {
             ftPr_SpecialS_8013DA24(gobj, false, 0x40012, 0.0);
         }
@@ -829,7 +829,7 @@ pub fn ftPr_SpecialAirNChargeRelease_Phys(gobj: G) {
         (*fp).self_vel.x = air_decel_floor((*fp).self_vel.x, da.x58, da.x5C);
         sn!(fp).x18 = abs_f((*fp).self_vel.x);
         fall_da(fp);
-        sn!(fp).x2C = (sn!(fp).x2C as f32 - da.xB4) as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 - da.xB4);
         if (sn!(fp).x2C as f32) < da.xB8 {
             ftPr_SpecialS_8013DA24(gobj, true, 0x40012, 0.0);
         }
@@ -932,7 +932,7 @@ pub fn ftPr_SpecialNRelease_Coll(gobj: G) {
         let da = da_of(fp);
         let coll = ext::ft_80082888(gobj, ecb_box());
         if wall_check(gobj, fp) {
-            sn!(fp).x2C = (sn!(fp).x2C as f32 * da.xD4) as i32;
+            sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 * da.xD4);
             if sn!(fp).x2C < 0 {
                 sn!(fp).x2C = 0;
             }
@@ -1016,7 +1016,7 @@ pub fn ftPr_SpecialAirNChargeRelease_Coll(gobj: G) {
         let da = da_of(fp);
         let coll = if sn!(fp).x34.x == 1.0 { ext::ft_8008239C(gobj, 1, ecb_box()) } else { ext::ft_8008239C(gobj, -1, ecb_box()) };
         if wall_check(gobj, fp) {
-            sn!(fp).x2C = (sn!(fp).x2C as f32 * da.xD4) as i32;
+            sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 * da.xD4);
             if sn!(fp).x2C < 0 {
                 sn!(fp).x2C = 0;
             }

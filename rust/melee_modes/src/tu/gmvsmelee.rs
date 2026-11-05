@@ -383,7 +383,7 @@ pub unsafe fn gmVsMelee_ExitVs(state: *mut GameModeState, mut id0: u8, id1: u8) 
 
     if gmVsMelee_WasAnyPlayerHuman(&(*exit).match_end) {
         ext::gm_SetupHumanResultsScreen((*exit).match_end.match_kind, (*exit).match_end.outcome);
-        ext::gm_SetupResultsScreenPlayTime((*exit).match_end.frame_count / GM_FPS as u32, ext::gm_80162800(&mut (*exit).match_end));
+        ext::gm_SetupResultsScreenPlayTime(<u32 as melee_core::ppc::Ppc>::pdiv((*exit).match_end.frame_count, GM_FPS as u32), ext::gm_80162800(&mut (*exit).match_end));
     }
 
     if !ext::gm_MatchHasMultipleWinners(&mut (*exit).match_end) {

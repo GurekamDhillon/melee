@@ -116,7 +116,7 @@ pub fn get_tobj<T: Clone>(mobj: Option<&HsdMObj<T>>) -> Option<T> {
 }
 
 fn c8(fv: f32) -> u8 {
-    ((255.0 * fv as f64) as u32) as u8
+    melee_core::ppc::fctiwz(255.0 * fv as f64) as u8
 }
 
 impl<T> HsdMObj<T> {

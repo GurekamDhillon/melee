@@ -152,7 +152,7 @@ pub unsafe fn HSD_GObj_RunProcs() {
             if (*proc).flags_3() as i32 != HSD_GObj_804D783C {
                 (*proc).set_flags_3(HSD_GObj_804D783C as u8);
                 let gobj = (*proc).gobj;
-                if var_r31 & (1u64 << (*gobj).p_link) == 0 && (*proc).flags_1() == 0 && (*proc).flags_2() == 0 {
+                if var_r31 & (<u64 as melee_core::ppc::Ppc>::pshl(1u64, ((*gobj).p_link) as i64)) == 0 && (*proc).flags_1() == 0 && (*proc).flags_2() == 0 {
                     HSD_GObj_CurrentInvokedProcGObj = gobj;
                     HSD_GObj_CurrentInvokedProc = proc;
                     let owned = match gn::ext::ScriptGame_StageSlotProcBegin {

@@ -166,7 +166,7 @@ impl Hsd392A {
             count = 4;
             (*items.add(1)).content.gradient[0].pos = self.hsd_804D7860 / nf;
             (*items.add(1)).content.gradient[0].color = LBL_804D609C as u32;
-            (*items.add(1)).content.gradient[1].pos = ((0.9999f32 + self.hsd_804D7860) as i32) as f32 / nf;
+            (*items.add(1)).content.gradient[1].pos = (melee_core::ppc::fctiwz_f32(0.9999f32 + self.hsd_804D7860)) as f32 / nf;
             (*items.add(1)).content.gradient[1].color = LBL_804D60A0 as u32;
             (*items.add(1)).content.gradient[2].pos = -1.0;
             (*items.add(1)).next = items.add(2) as *mut c_void;

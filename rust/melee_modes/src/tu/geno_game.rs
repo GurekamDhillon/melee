@@ -3092,10 +3092,10 @@ pub unsafe extern "C" fn hook_aim_stick(
         (*fp).kind as i32,
         (*fp).player_id as i32,
         used,
-        (atan2f(
+        melee_core::ppc::fctiwz_f32(atan2f(
             (*st).move_f[1 as i32 as usize],
             (*st).move_f[0 as i32 as usize],
-        ) as f32 * 180.0f32 / M_PI as f32) as i32,
+        ) as f32 * 180.0f32 / M_PI as f32),
     );
     return 0 as i32;
 }
@@ -3166,10 +3166,10 @@ pub unsafe extern "C" fn hook_lockon(
         (*fp).kind as i32,
         (*fp).player_id as i32,
         has,
-        (atan2f(
+        melee_core::ppc::fctiwz_f32(atan2f(
             (*st).move_f[1 as i32 as usize],
             (*st).move_f[0 as i32 as usize],
-        ) as f32 * 180.0f32 / M_PI as f32) as i32,
+        ) as f32 * 180.0f32 / M_PI as f32),
     );
     return 0 as i32;
 }
@@ -4198,7 +4198,7 @@ pub unsafe extern "C" fn geno_var_as(
         if want_f != 0 {
             r.f = *(pb as *mut f32);
         } else {
-            r.i = *(pb as *mut f32) as i32;
+            r.i = melee_core::ppc::fctiwz_f32(*(pb as *mut f32));
         }
     } else if want_f != 0 {
         r.f = *(pb as *mut i32) as f32;
@@ -4248,10 +4248,9 @@ pub unsafe extern "C" fn geno_cmp(
     if cmp == GENO_CMP_BIT as i32
         || cmp == GENO_CMP_NOBIT as i32
     {
-        let mut v: i32 = if is_f != 0 { x.f as i32 } else { x.i };
-        let mut bit: i32 = if is_f != 0 { y.f as i32 } else { y.i };
-        let mut set: i32 = v as i32
-            >> (bit as i32 & 31 as i32)
+        let mut v: i32 = if is_f != 0 { melee_core::ppc::fctiwz_f32(x.f) } else { x.i };
+        let mut bit: i32 = if is_f != 0 { melee_core::ppc::fctiwz_f32(y.f) } else { y.i };
+        let mut set: i32 = <i32 as melee_core::ppc::Ppc>::pshr(v as i32, ((bit as i32 & 31 as i32)) as i64)
             & 1 as i32;
         return if cmp == GENO_CMP_BIT as i32 {
             set
@@ -4340,14 +4339,12 @@ pub unsafe extern "C" fn geno_arith(
             }
             5 => {
                 *x_0
-                    |= ((1 as u32)
-                        << (b.i as i32 & 31 as i32))
+                    |= (<u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((b.i as i32 & 31 as i32)) as i64))
                         as i32;
             }
             6 => {
                 *x_0
-                    &= !(((1 as u32)
-                        << (b.i as i32 & 31 as i32))
+                    &= !((<u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((b.i as i32 & 31 as i32)) as i64))
                         as i32);
             }
             7 => {
@@ -5003,7 +5000,7 @@ pub unsafe extern "C" fn geno_cond(
                 ((*c).arg1 & 0xff as u32) as i32,
                 0 as i32,
             );
-            r = v.i as i32 >> ((*c).arg2 & 31 as u32)
+            r = <i32 as melee_core::ppc::Ppc>::pshr(v.i as i32, (((*c).arg2 & 31 as u32)) as i64)
                 & 1 as i32;
         }
         7 => {
@@ -5200,7 +5197,7 @@ pub unsafe extern "C" fn geno_rehit_tick(mut fp: *mut Fighter, mut st: *mut Geno
                 10 as i32,
                 (*fp).kind as i32,
                 (*fp).player_id as i32,
-                (1 as i32) << i,
+                <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i) as i64),
                 (*st).rehit_period[i as usize],
             );
         }
@@ -5423,7 +5420,7 @@ pub unsafe extern "C" fn Geno_Autolink(
     if deg < 0.0f32 {
         deg += 360.0f32;
     }
-    *angle = (deg + 0.5f32) as i32 as f32;
+    *angle = melee_core::ppc::fctiwz_f32(deg + 0.5f32) as f32;
     if *angle >= 360.0f32 {
         *angle -= 360.0f32;
     }
@@ -5439,8 +5436,8 @@ pub unsafe extern "C" fn Geno_Autolink(
         11 as i32,
         (*attacker).kind as i32,
         (*attacker).player_id as i32,
-        *angle as i32,
-        *kb as i32,
+        melee_core::ppc::fctiwz_f32(*angle),
+        melee_core::ppc::fctiwz_f32(*kb),
     );
     return 1 as i32;
 }
@@ -5526,7 +5523,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             if geno_var_is_float(a) != 0 {
                 *(pa as *mut f32) = if is_f != 0 { v.f } else { v.i as f32 };
             } else {
-                *(pa as *mut i32) = if is_f != 0 { v.f as i32 } else { v.i };
+                *(pa as *mut i32) = if is_f != 0 { melee_core::ppc::fctiwz_f32(v.f) } else { v.i };
             }
         }
         9 => {
@@ -5693,7 +5690,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             }) as i32;
             i = 0 as i32;
             while i < GENO_MAX_REHIT {
-                if a & (1 as i32) << i != 0 {
+                if a & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i) as i64) != 0 {
                     (*st).rehit_period[i as usize] = (if n > 0 as i32 {
                         n as i32
                     } else {
@@ -5708,7 +5705,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
             let mut i_0: i32 = 0;
             i_0 = 0 as i32;
             while i_0 < GENO_MAX_REHIT {
-                if a & (1 as i32) << i_0 != 0 {
+                if a & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i_0) as i64) != 0 {
                     (*st).link_mode[i_0 as usize] = (if len > 1 as i32 {
                         u32::from_be(*w.offset(1 as i32 as isize))
                             as u32
@@ -5734,7 +5731,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                 .i;
             i_1 = 0 as i32;
             while i_1 < GENO_MAX_REHIT {
-                if a & (1 as i32) << i_1 != 0 {
+                if a & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i_1) as i64) != 0 {
                     (*st).stun_add[i_1 as usize] = (if f < 0 as i32 {
                         0 as i32
                     } else if f > 255 as i32 {
@@ -5761,7 +5758,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                 .i;
             i_2 = 0 as i32;
             while i_2 < GENO_MAX_REHIT {
-                if a & (1 as i32) << i_2 != 0 {
+                if a & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i_2) as i64) != 0 {
                     (*st).hb_flags[i_2 as usize] = (f_0 as i32
                         & 0xf as i32) as i32;
                 }
@@ -5783,7 +5780,7 @@ pub unsafe extern "C" fn Geno_FtCmd(
                 .f;
             i_3 = 0 as i32;
             while i_3 < 4 as i32 {
-                if a & (1 as i32) << i_3 != 0 {
+                if a & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (i_3) as i64) != 0 {
                     (*fp).x914[i_3 as usize].damage = if d < 0.0f32 {
                         0.0f32
                     } else {
@@ -7203,7 +7200,7 @@ pub unsafe extern "C" fn geno_jump_held(mut fp: *mut Fighter) -> i32 {
 
 pub unsafe extern "C" fn gb_floor(mut x: f32) -> f32 {
     melee_core::ct!("gb_floor");
-    let mut i: i32 = x as i32;
+    let mut i: i32 = melee_core::ppc::fctiwz_f32(x);
     let mut fi: f32 = i as f32;
     return if fi > x { fi - 1.0f32 } else { fi };
 }
@@ -7268,7 +7265,7 @@ pub unsafe extern "C" fn GenoBhv_SinqCrc32() -> u32 {
         b = 0 as i32;
         while b < 4 as i32 {
             crc
-                ^= w as u32 >> 8 as i32 * b
+                ^= <u32 as melee_core::ppc::Ppc>::pshr(w as u32, (8 as i32 * b) as i64)
                     & 0xff as u32;
             k = 0 as i32;
             while k < 8 as i32 {
@@ -7322,7 +7319,7 @@ pub unsafe extern "C" fn GenoBhv_SinDeg(mut a: f32) -> f32 {
         sgn = -1.0f32 as f32;
     }
     p = (q as f32 * 11.377778f32) as f32;
-    i = p as i32;
+    i = melee_core::ppc::fctiwz_f32(p);
     if i < 0 as i32 {
         i = 0 as i32 as i32;
     }
@@ -7766,7 +7763,7 @@ pub unsafe extern "C" fn GenoBhv_TornadoStep(
                 (*t).hits += 1;
             }
             if (*t).k < (*p).read_limit
-                && (*t).k % (*p).read_period == 0 as i32
+                && <i32 as melee_core::ppc::Ppc>::prem((*t).k, (*p).read_period) == 0 as i32
                 && (*t).press_latch != 0
             {
                 (*t).spin = (*t).spin + (*p).mash_add;
@@ -7923,7 +7920,7 @@ pub unsafe extern "C" fn GenoBhv_DrillStep(
         }
     }
     if n >= (*p).hit0 && n <= (*p).hit_end
-        && (n as i32 - (*p).hit0) % (*p).hit_period == 0 as i32
+        && <i32 as melee_core::ppc::Ppc>::prem(n as i32 - (*p).hit0, (*p).hit_period) == 0 as i32
         && (*d).hits < (*p).nhits
     {
         (*d).hit_spawn = 1 as i32 as i32;
@@ -8242,7 +8239,7 @@ pub unsafe extern "C" fn GenoBhv_AnimMotionSample(
             );
         return;
     }
-    i = gb_floor(t) as i32;
+    i = melee_core::ppc::fctiwz_f32(gb_floor(t));
     fi = i as f32;
     fr = t - fi;
     ax = *track.offset((2 as i32 * i) as isize);
@@ -8375,31 +8372,29 @@ pub unsafe extern "C" fn gb_glide_params(mut st: *mut GenoState, mut p: *mut GbG
     let mut v: *const f32 = gb_profile_params(st);
     GenoBhv_GlideParams(p);
     if !v.is_null() {
-        (*p).max_glides = *v
-            .offset(GENO_BP_GLIDE_max_glides as i32 as isize) as i32;
-        (*p).entry_hold = *v
-            .offset(GENO_BP_GLIDE_entry_hold as i32 as isize) as i32;
-        (*p).flick_window = *v
-            .offset(GENO_BP_GLIDE_flick_window as i32 as isize) as i32;
-        (*p).start_frames = *v
-            .offset(GENO_BP_GLIDE_start_frames as i32 as isize) as i32;
-        (*p).trip_frames = *v
-            .offset(GENO_BP_GLIDE_trip_frames as i32 as isize) as i32;
-        (*p).land_lag = *v.offset(GENO_BP_GLIDE_land_lag as i32 as isize)
-            as i32;
-        (*p).jumpout_frames = *v
-            .offset(GENO_BP_GLIDE_jumpout_frames as i32 as isize) as i32;
-        (*p).attack_frames = *v
-            .offset(GENO_BP_GLIDE_attack_frames as i32 as isize) as i32;
-        (*p).attack_hit0 = *v
-            .offset(GENO_BP_GLIDE_attack_hit0 as i32 as isize) as i32;
-        (*p).attack_hit1 = *v
-            .offset(GENO_BP_GLIDE_attack_hit1 as i32 as isize) as i32;
-        (*p).attack_endlag = *v
-            .offset(GENO_BP_GLIDE_attack_endlag as i32 as isize) as i32;
-        (*p).attack_buf_frames = *v
-            .offset(GENO_BP_GLIDE_attack_buf_frames as i32 as isize)
-            as i32;
+        (*p).max_glides = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_max_glides as i32 as isize));
+        (*p).entry_hold = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_entry_hold as i32 as isize));
+        (*p).flick_window = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_flick_window as i32 as isize));
+        (*p).start_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_start_frames as i32 as isize));
+        (*p).trip_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_trip_frames as i32 as isize));
+        (*p).land_lag = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_GLIDE_land_lag as i32 as isize));
+        (*p).jumpout_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_jumpout_frames as i32 as isize));
+        (*p).attack_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_frames as i32 as isize));
+        (*p).attack_hit0 = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_hit0 as i32 as isize));
+        (*p).attack_hit1 = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_hit1 as i32 as isize));
+        (*p).attack_endlag = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_endlag as i32 as isize));
+        (*p).attack_buf_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_buf_frames as i32 as isize));
         (*p).entry_vy_max = *v
             .offset(GENO_BP_GLIDE_entry_vy_max as i32 as isize);
         (*p).apex_vy = *v.offset(GENO_BP_GLIDE_apex_vy as i32 as isize);
@@ -8428,8 +8423,8 @@ pub unsafe extern "C" fn gb_glide_params(mut st: *mut GenoState, mut p: *mut GbG
             .offset(GENO_BP_GLIDE_chain_speed_mul as i32 as isize);
         (*p).chain_turn_mul = *v
             .offset(GENO_BP_GLIDE_chain_turn_mul as i32 as isize);
-        (*p).attack_damage = *v
-            .offset(GENO_BP_GLIDE_attack_damage as i32 as isize) as i32;
+        (*p).attack_damage = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_GLIDE_attack_damage as i32 as isize));
     }
 }
 
@@ -8438,25 +8433,24 @@ pub unsafe extern "C" fn gb_tornado_params(mut st: *mut GenoState, mut p: *mut G
     let mut v: *const f32 = gb_profile_params(st);
     GenoBhv_TornadoParams(p);
     if !v.is_null() {
-        (*p).start_frames = *v
-            .offset(GENO_BP_TORNADO_start_frames as i32 as isize) as i32;
-        (*p).read_period = *v
-            .offset(GENO_BP_TORNADO_read_period as i32 as isize) as i32;
-        (*p).read_limit = *v
-            .offset(GENO_BP_TORNADO_read_limit as i32 as isize) as i32;
-        (*p).end_frames = *v
-            .offset(GENO_BP_TORNADO_end_frames as i32 as isize) as i32;
-        (*p).ledge_lock = *v
-            .offset(GENO_BP_TORNADO_ledge_lock as i32 as isize) as i32;
-        (*p).final_hit_ground = *v
-            .offset(GENO_BP_TORNADO_final_hit_ground as i32 as isize)
-            as i32;
-        (*p).final_hit_air = *v
-            .offset(GENO_BP_TORNADO_final_hit_air as i32 as isize) as i32;
-        (*p).loop_damage = *v
-            .offset(GENO_BP_TORNADO_loop_damage as i32 as isize) as i32;
-        (*p).final_damage = *v
-            .offset(GENO_BP_TORNADO_final_damage as i32 as isize) as i32;
+        (*p).start_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_start_frames as i32 as isize));
+        (*p).read_period = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_read_period as i32 as isize));
+        (*p).read_limit = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_read_limit as i32 as isize));
+        (*p).end_frames = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_end_frames as i32 as isize));
+        (*p).ledge_lock = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_ledge_lock as i32 as isize));
+        (*p).final_hit_ground = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_final_hit_ground as i32 as isize));
+        (*p).final_hit_air = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_final_hit_air as i32 as isize));
+        (*p).loop_damage = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_loop_damage as i32 as isize));
+        (*p).final_damage = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_TORNADO_final_damage as i32 as isize));
         (*p).spin0 = *v.offset(GENO_BP_TORNADO_spin0 as i32 as isize);
         (*p).decay_a = *v.offset(GENO_BP_TORNADO_decay_a as i32 as isize);
         (*p).decay_b = *v.offset(GENO_BP_TORNADO_decay_b as i32 as isize);
@@ -8492,29 +8486,24 @@ pub unsafe extern "C" fn gb_drill_params(mut st: *mut GenoState, mut p: *mut GbD
     let mut v: *const f32 = gb_profile_params(st);
     GenoBhv_DrillParams(p);
     if !v.is_null() {
-        (*p).move0 = *v.offset(GENO_BP_DRILL_move0 as i32 as isize)
-            as i32;
-        (*p).ramp = *v.offset(GENO_BP_DRILL_ramp as i32 as isize) as i32;
-        (*p).hit0 = *v.offset(GENO_BP_DRILL_hit0 as i32 as isize) as i32;
-        (*p).hit_period = *v
-            .offset(GENO_BP_DRILL_hit_period as i32 as isize) as i32;
-        (*p).nhits = *v.offset(GENO_BP_DRILL_nhits as i32 as isize)
-            as i32;
-        (*p).hit_end = *v.offset(GENO_BP_DRILL_hit_end as i32 as isize)
-            as i32;
-        (*p).final_frame = *v
-            .offset(GENO_BP_DRILL_final_frame as i32 as isize) as i32;
-        (*p).final_end_ground = *v
-            .offset(GENO_BP_DRILL_final_end_ground as i32 as isize)
-            as i32;
-        (*p).final_end_air = *v
-            .offset(GENO_BP_DRILL_final_end_air as i32 as isize) as i32;
-        (*p).total = *v.offset(GENO_BP_DRILL_total as i32 as isize)
-            as i32;
-        (*p).rush_damage = *v
-            .offset(GENO_BP_DRILL_rush_damage as i32 as isize) as i32;
-        (*p).final_damage = *v
-            .offset(GENO_BP_DRILL_final_damage as i32 as isize) as i32;
+        (*p).move0 = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_move0 as i32 as isize));
+        (*p).ramp = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_ramp as i32 as isize));
+        (*p).hit0 = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_hit0 as i32 as isize));
+        (*p).hit_period = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_hit_period as i32 as isize));
+        (*p).nhits = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_nhits as i32 as isize));
+        (*p).hit_end = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_hit_end as i32 as isize));
+        (*p).final_frame = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_final_frame as i32 as isize));
+        (*p).final_end_ground = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_final_end_ground as i32 as isize));
+        (*p).final_end_air = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_final_end_air as i32 as isize));
+        (*p).total = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_DRILL_total as i32 as isize));
+        (*p).rush_damage = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_rush_damage as i32 as isize));
+        (*p).final_damage = melee_core::ppc::fctiwz_f32(*v
+            .offset(GENO_BP_DRILL_final_damage as i32 as isize));
         (*p).dive_default = *v
             .offset(GENO_BP_DRILL_dive_default as i32 as isize);
         (*p).psi_stick = *v
@@ -8536,9 +8525,9 @@ pub unsafe extern "C" fn gb_cape_params(mut st: *mut GenoState, mut p: *mut GbCa
     let mut v: *const f32 = gb_profile_params(st);
     GenoBhv_CapeParams(p);
     if !v.is_null() {
-        (*p).start = *v.offset(GENO_BP_CAPE_start as i32 as isize) as i32;
-        (*p).end = *v.offset(GENO_BP_CAPE_end as i32 as isize) as i32;
-        (*p).total = *v.offset(GENO_BP_CAPE_total as i32 as isize) as i32;
+        (*p).start = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_CAPE_start as i32 as isize));
+        (*p).end = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_CAPE_end as i32 as isize));
+        (*p).total = melee_core::ppc::fctiwz_f32(*v.offset(GENO_BP_CAPE_total as i32 as isize));
         (*p).turn_thr = *v.offset(GENO_BP_CAPE_turn_thr as i32 as isize);
         (*p).stall_x = *v.offset(GENO_BP_CAPE_stall_x as i32 as isize);
         (*p).stall_y_up = *v
@@ -9939,7 +9928,7 @@ pub unsafe extern "C" fn geno_lua_run(
                 let mut d: f32 = geno_lua_bitsf(b);
                 h = 0 as i32;
                 while h < 4 as i32 {
-                    if a as u32 & (1 as u32) << h != 0 {
+                    if a as u32 & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, (h) as i64) != 0 {
                         (*fp).x914[h as usize].damage = if d < 0.0f32 {
                             0.0f32
                         } else {
@@ -11405,12 +11394,12 @@ pub unsafe extern "C" fn geno_art_children(
         let mut k: i32 = 0;
         if !(art < 0 as i32 || (*v).frame < f0 || (*ip).owner.is_null()) {
             k = if every > 0 as i32 {
-                ((*v).frame as i32 - f0) / every
+                <i32 as melee_core::ppc::Ppc>::pdiv((*v).frame as i32 - f0, every)
             } else {
                 0 as i32
             };
             if (if every > 0 as i32 {
-                (((*v).frame as i32 - f0) % every
+                (<i32 as melee_core::ppc::Ppc>::prem((*v).frame as i32 - f0, every)
                     == 0 as i32) as i32
             } else {
                 ((*v).frame == f0) as i32
@@ -11538,12 +11527,9 @@ pub unsafe extern "C" fn geno_art_fx_census(
     if total > 0 as i32 {
         Geno_Event(
             41 as i32,
-            (100.0f32 * sdx as f32 / total as f32)
-                as i32,
-            (100.0f32 * sdy as f32 / total as f32)
-                as i32,
-            (1000.0f32 * svx as f32 / total as f32)
-                as i32,
+            melee_core::ppc::fctiwz_f32(100.0f32 * sdx as f32 / total as f32),
+            melee_core::ppc::fctiwz_f32(100.0f32 * sdy as f32 / total as f32),
+            melee_core::ppc::fctiwz_f32(1000.0f32 * svx as f32 / total as f32),
             total,
         );
     }
@@ -11670,9 +11656,9 @@ pub unsafe extern "C" fn geno_art_coll(mut gobj: *mut Item_GObj) -> i32 {
         Geno_Event(
             35 as i32,
             (*v).article as i32,
-            ((*v).prev.x as f32 * 100.0f32) as i32,
-            ((*v).prev.y as f32 * 100.0f32) as i32,
-            ((*ip).pos.y as f32 * 100.0f32) as i32,
+            melee_core::ppc::fctiwz_f32((*v).prev.x as f32 * 100.0f32),
+            melee_core::ppc::fctiwz_f32((*v).prev.y as f32 * 100.0f32),
+            melee_core::ppc::fctiwz_f32((*ip).pos.y as f32 * 100.0f32),
         );
         geno_art_gone(ip, v, 3 as i32);
         return 1;
@@ -11966,14 +11952,14 @@ pub unsafe extern "C" fn geno_art_spawn(
         a,
         nj,
         nd,
-        ((*ip).scl as f32 * 100.0f32) as i32,
+        melee_core::ppc::fctiwz_f32((*ip).scl as f32 * 100.0f32),
     );
     Geno_Event(
         34 as i32,
         a,
-        (pos.x as f32 * 100.0f32) as i32,
-        (pos.y as f32 * 100.0f32) as i32,
-        ((*v).vx as f32 * 1000.0f32) as i32,
+        melee_core::ppc::fctiwz_f32(pos.x as f32 * 100.0f32),
+        melee_core::ppc::fctiwz_f32(pos.y as f32 * 100.0f32),
+        melee_core::ppc::fctiwz_f32((*v).vx as f32 * 1000.0f32),
     );
     return ig;
 }
@@ -12070,7 +12056,7 @@ pub unsafe extern "C" fn Geno_OnHit(mut gobj: *mut Fighter_GObj) -> i32 {
         31 as i32,
         (*fp).kind as i32,
         (*fp).player_id as i32,
-        ((*st).hit_damage as f32 * 100.0f32) as i32,
+        melee_core::ppc::fctiwz_f32((*st).hit_damage as f32 * 100.0f32),
         (*st).hit_port as i32,
     );
     s = geno_cur_state(fp, st);
@@ -12310,10 +12296,10 @@ pub unsafe extern "C" fn Geno_ItemPressDist(
         || (*fp).motion_id <= ftCo_MS_RebirthWait as i32
         || (*fp).team as u32 >= 32 as u32
         || Geno_ItemParam(d, GENO_IP_PORT_MASK as i32)
-            & (1 as i32) << (*fp).player_id as i32 == 0
+            & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_id as i32) as i64) == 0
         || Geno_ItemParam(d, GENO_IP_TEAM_MASK as i32)
             as u32
-            & (1 as u32) << (*fp).team as i32 == 0
+            & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((*fp).team as i32) as i64) == 0
         || ftCo_IsCpuControlled(fp) != 0
     {
         return -1.0f32;
@@ -12415,10 +12401,10 @@ pub unsafe extern "C" fn geno_item_anim(mut g: *mut Item_GObj) -> i32 {
             || (*fp).motion_id <= ftCo_MS_RebirthWait as i32
             || (*fp).team as u32 >= 32 as u32
             || Geno_ItemParam(d, GENO_IP_PORT_MASK as i32)
-                & (1 as i32) << (*fp).player_id as i32 == 0
+                & <i32 as melee_core::ppc::Ppc>::pshl(1 as i32, ((*fp).player_id as i32) as i64) == 0
             || Geno_ItemParam(d, GENO_IP_TEAM_MASK as i32)
                 as u32
-                & (1 as u32) << (*fp).team as i32 == 0)
+                & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((*fp).team as i32) as i64) == 0)
         {
             dx = (*fp).cur_pos.x - (*ip).pos.x;
             dy = (*fp).cur_pos.y - (*ip).pos.y;
@@ -14395,7 +14381,7 @@ pub unsafe extern "C" fn geno_combo_open(
     }
     if Geno_ComboWord(p, r, GENO_CR_ONCE as i32) != 0
         && (*cb).once[(r >> 5 as i32) as usize]
-            & (1 as u32) << (r & 31 as i32) != 0
+            & <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((r & 31 as i32)) as i64) != 0
     {
         return 0 as i32;
     }
@@ -14573,7 +14559,7 @@ pub unsafe extern "C" fn Geno_ComboTick(
                 }
                 if Geno_ComboWord(p, r, GENO_CR_ONCE as i32) != 0 {
                     (*cb).once[(r >> 5 as i32) as usize]
-                        |= (1 as u32) << (r & 31 as i32);
+                        |= <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((r & 31 as i32)) as i64);
                 }
                 (*cb).links += 1;
                 (*cb).taken += 1;

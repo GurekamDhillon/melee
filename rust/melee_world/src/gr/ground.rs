@@ -219,7 +219,7 @@ pub fn ground_get_p1_fighter2(h: &mut dyn GroundHooks) -> *mut HSD_GObj { h.play
 /// C float -> int conversion (fctiwz / cvttss2si); inputs the game passes are in range.
 #[inline]
 pub(crate) fn f2i(x: f32) -> i32 {
-    x as i32
+    melee_core::ppc::fctiwz_f32(x)
 }
 
 /// The volume Ground_801C5630 passes: `127 * val`.

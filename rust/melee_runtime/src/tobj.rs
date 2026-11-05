@@ -228,7 +228,7 @@ impl<I: Clone> HsdTObj<I> {
     /// `TObjUpdateFunc` (static): applies one animated value.
     pub fn update_func(&mut self, ty: u32, fv: f32) {
         fn c8(fv: f32) -> u8 {
-            ((255.0 * fv as f64) as u32) as u8
+            melee_core::ppc::fctiwz(255.0 * fv as f64) as u8
         }
         match ty {
             track::TIMG => {

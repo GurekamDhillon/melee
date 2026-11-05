@@ -96,7 +96,7 @@ pub fn reset_18d8(e: &mut ft_800898B4_t) {
 }
 
 pub(crate) fn snapshot_flags(f: &mut Fighter) {
-    f.x2074.x2074_vec.x = f32::from_bits(f.dmg.x1830_percent as i32 as u32);
+    f.x2074.x2074_vec.x = f32::from_bits(melee_core::ppc::fctiwz_f32(f.dmg.x1830_percent) as u32);
     let metal = f.is_metal() != 0;
     let x197c = !f.x197C.is_null();
     let (b3, b4, b5, b6) = (f.x221D_b6() != 0, f.x2226_b4() != 0, f.x2220_b5() != 0, f.x2220_b6() != 0);

@@ -313,7 +313,7 @@ pub unsafe extern "C" fn it_80291D38(gobj: *mut Item_GObj, charge_level: i32) ->
     let ip = GET_ITEM(gobj);
     let attrs = GET_ATTRS(ip);
     match charge_level {
-        0..=9 => (*attrs).xC[charge_level as usize] as i32,
+        0..=9 => melee_core::ppc::fctiwz_f32((*attrs).xC[charge_level as usize]),
         // falls off the end of a non-void function in the C (UB); the shipping build's zero-init gives 0
         _ => 0,
     }
@@ -532,7 +532,7 @@ pub unsafe fn it_80291cf4(ip: &Item, arg1: i32) -> i32 {
 pub unsafe fn it_80291d38(ip: &Item, charge_level: i32) -> i32 {
     melee_core::ct!("it_80291d38");
     let a = sa_itkinds14::<itSScopeAttributes>(ip);
-    a.xC[charge_level as usize] as i32
+    melee_core::ppc::fctiwz_f32(a.xC[charge_level as usize])
 }
 
 // ---- folded from itkinds6.rs (consolidation steps 21/22) ----

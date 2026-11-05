@@ -30,7 +30,7 @@ pub(crate) fn fp<'a>(g: G) -> &'a mut Fighter {
 /// float: gwtool saturates to u32 first, then truncates.
 pub fn calc_shift(hitlag_mul: f32, msid: i32, dmg: i32) -> u16 {
     let fcp = h::common_data();
-    fmadds(fcp.x168, calc_hitlag(dmg, msid, hitlag_mul), fcp.x16C) as u32 as u16
+    melee_core::ppc::fctiwz_f32(fmadds(fcp.x168, calc_hitlag(dmg, msid, hitlag_mul), fcp.x16C)) as u16
 }
 
 // ---- ftparts.c -------------------------------------------------------------------------------

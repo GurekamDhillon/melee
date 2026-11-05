@@ -161,13 +161,13 @@ impl Sound {
         let temp = v.fade as f32 / 127.0f32;
         let f_b4 = v.f_c8 * temp;
         let base = 0.88f32 * ((v.sfx * 2) as f32);
-        let o_3898 = (f_b4 * base) as u8 as i32;
+        let o_3898 = melee_core::ppc::fctiwz_f32(f_b4 * base) as u8 as i32;
         let f_b8 = temp * (v.f_c8 * v.duck_e4);
-        let o_38a0 = (f_b8 * base) as u8 as i32;
+        let o_38a0 = melee_core::ppc::fctiwz_f32(f_b8 * base) as u8 as i32;
         let f_bc = v.f_c8 * v.duck_e4;
-        let o_38a8 = (f_bc * base) as u8 as i32;
+        let o_38a8 = melee_core::ppc::fctiwz_f32(f_bc * base) as u8 as i32;
         let f_ac = temp * (self.lb.duck * (v.f_c4 * v.duck_e8));
-        let o_3888 = (f_ac * ((v.voice * 2) as f32)) as u8 as i32;
+        let o_3888 = melee_core::ppc::fctiwz_f32(f_ac * ((v.voice * 2) as f32)) as u8 as i32;
         v.o_3898 = o_3898;
         v.o_38a0 = o_38a0;
         v.o_38a8 = o_38a8;

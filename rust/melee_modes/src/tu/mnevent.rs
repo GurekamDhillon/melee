@@ -414,8 +414,8 @@ pub unsafe extern "C" fn mnEvent_8024D5B0(mut gobj: *mut HSD_GObj, mut event: u8
             mn_8022EA78(
                 &raw mut sp10 as *mut ::core::ffi::c_char,
                 2 as ::core::ffi::c_int,
-                (99.0f32 * temp_r30.wrapping_rem(60 as u32) as ::core::ffi::c_float
-                    / 59.0f32) as i32 as u32,
+                melee_core::ppc::fctiwz_f32(99.0f32 * temp_r30.wrapping_rem(60 as u32) as ::core::ffi::c_float
+                    / 59.0f32) as u32,
             );
             HSD_SisLib_803A6B98(time_text, 0.0f32, 0.0f32, b"%s:%s %s\0" as *const u8 as *const ::core::ffi::c_char, &[Va::P((&raw mut sp18 as *mut ::core::ffi::c_char).cast()), Va::P((&raw mut sp14 as *mut ::core::ffi::c_char).cast()), Va::P((&raw mut sp10 as *mut ::core::ffi::c_char).cast())]);
             return;

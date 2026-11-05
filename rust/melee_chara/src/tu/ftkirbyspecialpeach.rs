@@ -215,7 +215,7 @@ pub fn inlineA0(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         st::Fighter_ClearCmdVars(&mut *fp);
-        (*fp).mv.kb.specialn_pe.facing_dir = (*fp).facing_dir as i32;
+        (*fp).mv.kb.specialn_pe.facing_dir = melee_core::ppc::fctiwz_f32((*fp).facing_dir);
         (*fp).accessory4_cb = Some(cb_fn_8010C288);
     }
 }
@@ -400,7 +400,7 @@ pub fn fn_8010CD88(gobj: G) {
     melee_core::ct!("fn_8010CD88");
     unsafe {
         let fp = fpp(gobj);
-        (*fp).mv.kb.specialn_pe.facing_dir = (*fp).specialn_facing_dir as i32;
+        (*fp).mv.kb.specialn_pe.facing_dir = melee_core::ppc::fctiwz_f32((*fp).specialn_facing_dir);
         let msid = if (*fp).ground_or_air == GA_Ground { ftKb_MS_PeSpecialLwHit } else { ftKb_MS_PeSpecialAirLwHit };
         st::Fighter_ChangeMotionState(gobj, msid as i32, 0, 9.0, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_8006EBA4(gobj);

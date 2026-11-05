@@ -507,9 +507,9 @@ pub fn ftYs_SpecialAirSLoop_0_Anim(gobj: *mut HSD_GObj) {
             if (*fp).x914[0].state != HitCapsule_Disabled {
                 let mut rate: i32;
                 if (*fp).ground_or_air == GA_Air as _ {
-                    rate = (attrs.xC4 as f32 * (attrs.xC0 + abs_c((*fp).self_vel.x))) as i32;
+                    rate = melee_core::ppc::fctiwz_f32(attrs.xC4 as f32 * (attrs.xC0 + abs_c((*fp).self_vel.x)));
                 } else {
-                    rate = (attrs.xC4 as f32 * (attrs.xC0 + abs_c((*fp).gr_vel))) as i32;
+                    rate = melee_core::ppc::fctiwz_f32(attrs.xC4 as f32 * (attrs.xC0 + abs_c((*fp).gr_vel)));
                 }
                 if rate < 1 {
                     rate = 1;
@@ -706,13 +706,13 @@ pub fn ftYs_SpecialAirSLoop_3_Anim(gobj: *mut HSD_GObj) {
                     if vel < 0.0 {
                         vel = -vel;
                     }
-                    rate = (attrs5.xC4 as f32 * (attrs5.xC0 + vel)) as i32;
+                    rate = melee_core::ppc::fctiwz_f32(attrs5.xC4 as f32 * (attrs5.xC0 + vel));
                 } else {
                     let mut vel = (*fp5).gr_vel;
                     if vel < 0.0 {
                         vel = -vel;
                     }
-                    rate = (attrs5.xC4 as f32 * (attrs5.xC0 + vel)) as i32;
+                    rate = melee_core::ppc::fctiwz_f32(attrs5.xC4 as f32 * (attrs5.xC0 + vel));
                 }
                 if rate < 1 {
                     rate = 1;

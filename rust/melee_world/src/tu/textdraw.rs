@@ -313,10 +313,10 @@ pub unsafe extern "C" fn DevText_Draw(text: *mut DevText) {
                     let mut color = t.text_colors[color_idx as usize];
                     ext::DrawASCII(chr as i32, x as f32, y as f32, &mut color);
                 }
-                x = (x as f32 + t.scale_x) as i32;
+                x = melee_core::ppc::fctiwz_f32(x as f32 + t.scale_x);
                 col += 1;
             }
-            y = (y as f32 + t.scale_y) as i32;
+            y = melee_core::ppc::fctiwz_f32(y as f32 + t.scale_y);
             row += 1;
         }
         if (t.flags as i32 & DEVTEXT_FLAG_SHOWCURSOR) != 0 {
@@ -361,7 +361,7 @@ pub unsafe extern "C" fn DevText_CreateCObj(classifier: i32, p_link: i32, gobj_p
         if !cobj.is_null() {
             ext::HSD_GObjObject_80390A70(gobj, ext::HSD_GObj_CameraKind, cobj as *mut core::ffi::c_void);
             ext::GObj_SetupGXLinkMax(gobj, Some(ext::cb::HSD_GObj_803910D8), gx_priority as u32);
-            (*gobj).gxlink_prios = 1u64 << (gx_link as u32 & 63);
+            (*gobj).gxlink_prios = <u64 as melee_core::ppc::Ppc>::pshl(1u64, ((gx_link as u32 & 63)) as i64);
         } else {
             ext::HSD_GObjFree(gobj);
         }

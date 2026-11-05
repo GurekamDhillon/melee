@@ -963,7 +963,7 @@ unsafe fn grZebes_UpdateCollisionColumns(column_width: f32, column_x: *mut f32, 
             let right_offset = (0.9 + x_offset as f64) as f32;
             let top_y = (1.8f64).mul_add((*bubble).x18_size as f64, (*bubble).x0C_y as f64) as f32;
             {
-                *vertex_idx = (0.5 + left_vertex as f64) as i32;
+                *vertex_idx = melee_core::ppc::fctiwz(0.5 + left_vertex as f64);
                 if 5 < *vertex_idx {
                     *vertex_idx = 5;
                 } else if *vertex_idx < 0 {
@@ -975,7 +975,7 @@ unsafe fn grZebes_UpdateCollisionColumns(column_width: f32, column_x: *mut f32, 
                 }
             }
             {
-                *vertex_idx = (0.5 + (right_offset / column_width) as f64) as i32;
+                *vertex_idx = melee_core::ppc::fctiwz(0.5 + (right_offset / column_width) as f64);
                 if 5 < *vertex_idx {
                     *vertex_idx = 5;
                 } else if *vertex_idx < 0 {
@@ -1035,7 +1035,7 @@ pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
                 let rand = ext::HSD_Randf();
                 let base = (*yakumono_param).x08;
                 let diff = (*yakumono_param).x0C - base;
-                *(&raw mut (*gp).u.zebes5.xF8 as *mut i16) = fmadds(diff, rand, base) as i32 as i16;
+                *(&raw mut (*gp).u.zebes5.xF8 as *mut i16) = melee_core::ppc::fctiwz_f32(fmadds(diff, rand, base)) as i16;
             }
         }
     }
@@ -1062,7 +1062,7 @@ pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
                     let rand = ext::HSD_Randf();
                     let base = (*yakumono_param).x00;
                     let diff = (*yakumono_param).x04 - base;
-                    (*gp).u.zebes5.xC6 = fmadds(diff, rand, base) as i32 as i16;
+                    (*gp).u.zebes5.xC6 = melee_core::ppc::fctiwz_f32(fmadds(diff, rand, base)) as i16;
                 }
             }
             2 => {
@@ -1081,8 +1081,8 @@ pub unsafe extern "C" fn grZebes_801D881C(gobj: *mut HSD_GObj) {
                 (*gp).u.zebes5.xF6 = (*gp).u.zebes5.xF6.wrapping_add(1);
                 let divisor = (*yakumono_param).x10;
                 let eq_counter = (*gp).u.zebes5.xF6;
-                if (eq_counter as i32) % divisor == 0 {
-                    let spawn_phase = (eq_counter as i32) / divisor;
+                if <i32 as melee_core::ppc::Ppc>::prem(eq_counter as i32, divisor) == 0 {
+                    let spawn_phase = <i32 as melee_core::ppc::Ppc>::pdiv(eq_counter as i32, divisor);
                     let mirror = 6 - spawn_phase;
                     if spawn_phase < mirror {
                         let rand = ext::HSD_Randf();
@@ -1634,17 +1634,17 @@ pub unsafe extern "C" fn grZebes_801DA0C4(level: f32) {
     }
 
     if idx as i32 == 0 {
-        color.r = table[0].r as u32 as u8;
-        color.g = table[0].g as u32 as u8;
-        color.b = table[0].b as u32 as u8;
+        color.r = melee_core::ppc::fctiwz_f32(table[0].r) as u8;
+        color.g = melee_core::ppc::fctiwz_f32(table[0].g) as u8;
+        color.b = melee_core::ppc::fctiwz_f32(table[0].b) as u8;
         color.a = 0xFF;
         return;
     }
 
     if idx == 3 {
-        color.r = table[2].r as u32 as u8;
-        color.g = table[2].g as u32 as u8;
-        color.b = table[2].b as u32 as u8;
+        color.r = melee_core::ppc::fctiwz_f32(table[2].r) as u8;
+        color.g = melee_core::ppc::fctiwz_f32(table[2].g) as u8;
+        color.b = melee_core::ppc::fctiwz_f32(table[2].b) as u8;
         color.a = 0xFF;
         return;
     }
@@ -1655,14 +1655,14 @@ pub unsafe extern "C" fn grZebes_801DA0C4(level: f32) {
 
         if ext::Ground_801C2090(&mut color) != 0 {
             let r0 = table[idx as usize - 1].r;
-            color.r = fmadds(t, table[idx as usize].r - r0, r0) as u32 as u8;
+            color.r = melee_core::ppc::fctiwz_f32(fmadds(t, table[idx as usize].r - r0, r0)) as u8;
             {
                 let g0 = table[idx as usize - 1].g;
-                color.g = fmadds(t, table[idx as usize].g - g0, g0) as u32 as u8;
+                color.g = melee_core::ppc::fctiwz_f32(fmadds(t, table[idx as usize].g - g0, g0)) as u8;
             }
             {
                 let b0 = table[idx as usize - 1].b;
-                color.b = fmadds(t, table[idx as usize].b - b0, b0) as u32 as u8;
+                color.b = melee_core::ppc::fctiwz_f32(fmadds(t, table[idx as usize].b - b0, b0)) as u8;
             }
             ext::Ground_801C205C(&mut color);
         }
@@ -1694,9 +1694,9 @@ pub unsafe extern "C" fn grZebes_801DA254(gobj: *mut Ground_GObj, level: f32) {
         let mut result = GXColor { r: 0, g: 0, b: 0, a: 0 };
 
         let t = (level - (*yakumono_param).x90) / ((*yakumono_param).x8C - (*yakumono_param).x90);
-        result.r = fmadds(t, (c1.r as i32 - c2.r as i32) as f32, c2.r as f32) as u32 as u8;
-        result.g = fmadds(t, (c1.g as i32 - c2.g as i32) as f32, c2.g as f32) as u32 as u8;
-        result.b = fmadds(t, (c1.b as i32 - c2.b as i32) as f32, c2.b as f32) as u32 as u8;
+        result.r = melee_core::ppc::fctiwz_f32(fmadds(t, (c1.r as i32 - c2.r as i32) as f32, c2.r as f32)) as u8;
+        result.g = melee_core::ppc::fctiwz_f32(fmadds(t, (c1.g as i32 - c2.g as i32) as f32, c2.g as f32)) as u8;
+        result.b = melee_core::ppc::fctiwz_f32(fmadds(t, (c1.b as i32 - c2.b as i32) as f32, c2.b as f32)) as u8;
         result.a = 0xFF;
         ext::HSD_LObjSetColor(lobj, result);
     }
@@ -1752,7 +1752,7 @@ pub unsafe extern "C" fn grZebes_801DA528(arg0: *mut HSD_GObj, arg1: *mut c_void
             2 => {
                 let f1 = ext::HSD_Randf();
                 let f0 = (*yp).x54 - (*yp).x50;
-                (*st).x02_timer = fmadds(f0, f1, (*yp).x50) as i32 as i16;
+                (*st).x02_timer = melee_core::ppc::fctiwz_f32(fmadds(f0, f1, (*yp).x50)) as i16;
             }
             3 => {
                 ext::grAnime_801C7FF8(arg0, (*st).x20_anim_idx as i32, 1, arg3, 0.0, 1.0);
@@ -2678,8 +2678,8 @@ pub unsafe extern "C" fn grZebes_801DC408(gobj: *mut Ground_GObj) {
             }
 
             {
-                let t_min = (*yakumono_param).x60 as i32;
-                let mut timer = (*yakumono_param).x64 as i32;
+                let t_min = melee_core::ppc::fctiwz_f32((*yakumono_param).x60);
+                let mut timer = melee_core::ppc::fctiwz_f32((*yakumono_param).x64);
 
                 if timer > t_min {
                     let range = timer - t_min;

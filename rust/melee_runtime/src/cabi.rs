@@ -3,10 +3,10 @@
 //! undefined so they behave like the Gekko. A port must use these where an operand can hit them.
 //! TODO(move-to-core): every group needs these.
 
-/// `(s32)f` / `(int)f`: `llvm.fptosi.sat.i32` (fctiwz): saturating, NaN -> 0. Same as Rust `as`.
+/// `(s32)f` / `(int)f`: fctiwz: saturating, NaN -> 0x80000000 (gwtool and melee_core::ppc; Rust `as` gives 0).
 #[inline(always)]
 pub fn f2i32(f: f64) -> i32 {
-    f as i32
+    melee_core::ppc::fctiwz(f)
 }
 /// `(u32)f`: `llvm.fptoui.sat.i32`: saturating, negative and NaN -> 0. Same as Rust `as`.
 #[inline(always)]
@@ -17,19 +17,19 @@ pub fn f2u32(f: f64) -> u32 {
 /// (which saturates to the narrow type): `(u8)300.0f` is 44 in the C build.
 #[inline(always)]
 pub fn f2i16(f: f64) -> i16 {
-    (f as i32) as i16
+    (melee_core::ppc::fctiwz(f)) as i16
 }
 #[inline(always)]
 pub fn f2u16(f: f64) -> u16 {
-    (f as i32) as u16
+    (melee_core::ppc::fctiwz(f)) as u16
 }
 #[inline(always)]
 pub fn f2i8(f: f64) -> i8 {
-    (f as i32) as i8
+    (melee_core::ppc::fctiwz(f)) as i8
 }
 #[inline(always)]
 pub fn f2u8(f: f64) -> u8 {
-    (f as i32) as u8
+    (melee_core::ppc::fctiwz(f)) as u8
 }
 
 /// Signed divide: `x / 0` = (x < 0 ? -1 : 0), `INT_MIN / -1` = (INT_MIN < 0 ? -1 : 0) = -1.
@@ -42,7 +42,7 @@ pub fn sdiv(a: i32, d: i32) -> i32 {
             0
         }
     } else {
-        a / d
+        <i32 as melee_core::ppc::Ppc>::pdiv(a, d)
     }
 }
 /// Signed remainder: `x % 0` = x, `INT_MIN % -1` = 0.
@@ -53,7 +53,7 @@ pub fn srem(a: i32, d: i32) -> i32 {
     } else if a == i32::MIN && d == -1 {
         0
     } else {
-        a % d
+        <i32 as melee_core::ppc::Ppc>::prem(a, d)
     }
 }
 /// Unsigned divide: `x / 0` = 0.
@@ -62,7 +62,7 @@ pub fn udiv(a: u32, d: u32) -> u32 {
     if d == 0 {
         0
     } else {
-        a / d
+        <u32 as melee_core::ppc::Ppc>::pdiv(a, d)
     }
 }
 /// Unsigned remainder: `x % 0` = x.
@@ -71,7 +71,7 @@ pub fn urem(a: u32, d: u32) -> u32 {
     if d == 0 {
         a
     } else {
-        a % d
+        <u32 as melee_core::ppc::Ppc>::prem(a, d)
     }
 }
 /// Variable `<<` on 32 bits: amount >= 32 gives 0 (slw).
@@ -80,7 +80,7 @@ pub fn shl(a: u32, n: u32) -> u32 {
     if n >= 32 {
         0
     } else {
-        a << n
+        <u32 as melee_core::ppc::Ppc>::pshl(a, (n) as i64)
     }
 }
 /// Variable logical `>>`: amount >= 32 gives 0 (srw).
@@ -89,7 +89,7 @@ pub fn lshr(a: u32, n: u32) -> u32 {
     if n >= 32 {
         0
     } else {
-        a >> n
+        <u32 as melee_core::ppc::Ppc>::pshr(a, (n) as i64)
     }
 }
 /// Variable arithmetic `>>`: amount >= 32 fills with the sign (sraw).
@@ -98,7 +98,7 @@ pub fn ashr(a: i32, n: u32) -> i32 {
     if n >= 32 {
         a >> 31
     } else {
-        a >> n
+        <i32 as melee_core::ppc::Ppc>::pshr(a, (n) as i64)
     }
 }
 

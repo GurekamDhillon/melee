@@ -462,7 +462,7 @@ fn deg2rad(a: f32) -> f32 {
 /// `(s16) (float)`: gwtool saturates to 32 bits, then truncates.
 #[inline(always)]
 fn f2s16(x: f32) -> i16 {
-    (x as i32) as i16
+    (melee_core::ppc::fctiwz_f32(x)) as i16
 }
 
 pub unsafe extern "C" fn grKongo_801D5238(_arg: i32) { melee_core::ct!("grKongo_801D5238");}
@@ -583,7 +583,7 @@ pub unsafe extern "C" fn grKongo_801D55D8(arg0: *mut HSD_GObj) {
     (*gp).u.kongo3.xDC = 0.0;
     (*gp).u.kongo3.xE0 = 0.0;
     (*gp).u.kongo.xE8 = (*yakumono_param).unk60;
-    (*gp).u.kongo2.xCC = rand_range((*yakumono_param).unk30 as i32, (*yakumono_param).unk2C as i32) as i16;
+    (*gp).u.kongo2.xCC = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).unk30), melee_core::ppc::fctiwz_f32((*yakumono_param).unk2C)) as i16;
     (*gp).u.kongo2.xCE = rand_range((*yakumono_param).unk68, (*yakumono_param).unk64) as i16;
     ext::lb_8000B1CC(ext::Ground_801C3FA4(arg0, 1), null_mut(), &mut sp14);
     ext::Ground_801C4D70(arg0, &mut sp14, (*gp).u.kongo.xD8);
@@ -640,7 +640,7 @@ pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
                 (*gp).u.kongo3.xC4 = 1;
                 let spin_step = if ext::HSD_Randi(2) != 0 { deg2rad((*yp).unk34) } else { -deg2rad((*yp).unk34) };
                 (*gp).u.kongo3.xDC = spin_step;
-                (*gp).u.kongo2.xCC = rand_range((*yp).unk40 as i32, (*yp).unk3C as i32) as i16;
+                (*gp).u.kongo2.xCC = rand_range(melee_core::ppc::fctiwz_f32((*yp).unk40), melee_core::ppc::fctiwz_f32((*yp).unk3C)) as i16;
             }
         }
         1 => {
@@ -651,7 +651,7 @@ pub unsafe extern "C" fn grKongo_801D577C(arg0: *mut HSD_GObj) {
             (*gp).u.kongo2.xCC = val2.wrapping_sub(1);
             if val2 < 0 {
                 (*gp).u.kongo3.xC4 = 2;
-                (*gp).u.kongo2.xCC = rand_range((*yp).unk30 as i32, (*yp).unk2C as i32) as i16;
+                (*gp).u.kongo2.xCC = rand_range(melee_core::ppc::fctiwz_f32((*yp).unk30), melee_core::ppc::fctiwz_f32((*yp).unk2C)) as i16;
                 (*gp).u.kongo3.xD4 = grKongo_801D8314();
             }
         }
@@ -1130,8 +1130,8 @@ pub unsafe extern "C" fn fn_801D7700(
 
             let segment_size = (x2 - x1) / 15.0f32;
             let ratio = (cur.x - x1) / segment_size;
-            let mut idx2 = ratio as i32;
-            let idx = ratio as i32;
+            let mut idx2 = melee_core::ppc::fctiwz_f32(ratio);
+            let idx = melee_core::ppc::fctiwz_f32(ratio);
 
             if idx < 0 {
                 idx2 = 0;

@@ -1766,7 +1766,7 @@ unsafe fn Fighter_8006A360__orig(g: G) {
         if fp.dmg.x1830_percent > 0.0 {
             fp.dmg.x1830_percent -= 1.0;
             e::ft_80088640(fp, 0x7D, 0x7F, 0x40);
-            ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.dmg.x1830_percent as i32);
+            ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
             e::pl_80040B8C(fp.player_id as i32, fp.is_sub_fighter() as i32, 1);
         }
         if fp.dmg.x1830_percent <= 0.0 {
@@ -2632,15 +2632,15 @@ unsafe fn fighter_take_damage_orig(fp: &mut Fighter, mut d: f32) {
     if fp.x2226_b4() == 0 || fp.x2226_b3() != 0 {
         fp.dmg.x1830_percent += d;
         if fp.metal_timer != 0 {
-            fp.metal_health = ((fp.metal_health as f32) - d) as i32;
+            fp.metal_health = melee_core::ppc::fctiwz_f32((fp.metal_health as f32) - d);
         }
         if fp.x2034 != 0 {
-            fp.x2038 = ((fp.x2038 as f32) - d) as i32;
+            fp.x2038 = melee_core::ppc::fctiwz_f32((fp.x2038 as f32) - d);
         }
         if fp.dmg.x1830_percent > 999.0 {
             fp.dmg.x1830_percent = 999.0;
         }
-        ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.dmg.x1830_percent as i32);
+        ext::Player_SetHPByIndex(fp.player_id as i32, fp.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent));
         e::pl_8003EC9C(fp.player_id as i32, fp.is_sub_fighter() as i32, fp.dmg.x1830_percent, d);
         e::ftCo_800C8C84(fp.gobj);
     }
@@ -3738,7 +3738,7 @@ pub fn cpu_assist_decide(s: &mut CpuAssistSlot, t: usize, sub: Option<&mut i32>)
     let p = s.permille[t];
     s.opportunities[t] += 1;
     if r >= p { return 0; }
-    if let Some(sub) = sub { *sub = if p > 0 { r * 1000 / p } else { 0 }; }
+    if let Some(sub) = sub { *sub = if p > 0 { <i32 as melee_core::ppc::Ppc>::pdiv(r * 1000, p) } else { 0 }; }
     1
 }
 
@@ -3997,7 +3997,7 @@ pub unsafe fn cpu_assist_overlay(fp: &mut Fighter) {
         }
         if s.tech_state == 2 && eta <= CA_TECH_ETA as f32 && fresh && fp.x680 as i32 >= cd().x1C as i32 {
             fp.input.held_buttons[0] |= HSD_PAD_R as u32;
-            s.tech_hold = (cd().x250 + 0.5) as i32;
+            s.tech_hold = melee_core::ppc::fctiwz_f32(cd().x250 + 0.5);
             s.tech_state = 3;
             s.performed[CA_TECH] += 1;
             ca_log(s, fp, "tech");

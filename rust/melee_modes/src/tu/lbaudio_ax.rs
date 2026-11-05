@@ -55,7 +55,7 @@ pub fn fn_80025E38_fp(gobj: Option<&HSD_GObj>) -> bool {
                 let t = ud.current_frame as f32 / ud.end_frame as f32;
                 let d = ud.end_vol as f32 - ud.start_vol as f32;
                 let a = if d < 0.0 { -d } else { d };
-                let k = (t * a) as i32;
+                let k = melee_core::ppc::fctiwz_f32(t * a);
                 ud.vol = if ud.start_vol < ud.end_vol { ud.start_vol.wrapping_add(k) } else { ud.end_vol.wrapping_sub(k) };
             } else {
                 ud.vol = 0x7F;

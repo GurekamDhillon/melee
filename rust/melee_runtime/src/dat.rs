@@ -190,7 +190,7 @@ impl DatBuilder {
     }
     /// Append `n` zero bytes aligned to `align`; returns their data offset.
     pub fn alloc(&mut self, n: usize, align: usize) -> u32 {
-        while self.data.len() % align != 0 {
+        while <usize as melee_core::ppc::Ppc>::prem(self.data.len(), align) != 0 {
             self.data.push(0);
         }
         let at = self.data.len() as u32;

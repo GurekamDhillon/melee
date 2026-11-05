@@ -1171,6 +1171,7 @@ name = "melee_audio"
 version = "0.1.0"
 dependencies = [
  "cpal",
+ "melee_core",
  "melee_runtime",
  "melee_types",
 ]

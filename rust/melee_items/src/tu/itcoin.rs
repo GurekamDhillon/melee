@@ -399,7 +399,7 @@ pub unsafe extern "C" fn itCoin_Logic116_DmgReceived(gobj: *mut HSD_GObj) -> boo
     let zero: f32 = 0.0;
 
     ext::it_802762BC(ip);
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     ext::it_8027B798(gobj, &mut (*ip).x40_vel);
     if (*ip).x40_vel.x == zero && (*ip).x40_vel.y == zero {
         (*ip).x40_vel.x = 0.1 * -(*ip).xCCC_incDamageDirection;

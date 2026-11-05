@@ -295,7 +295,7 @@ pub unsafe extern "C" fn it_802D9A2C(gobj: *mut Item_GObj) -> i32 {
     let mut sp10: Vec3 = core::mem::zeroed();
 
     (*ip).xDD4_itemVar.likelike.x3C = 0;
-    let var_r28: i32 = if (*ip).msid == 7 { (*attr).x20 as i32 } else { (*attr).x1C as i32 };
+    let var_r28: i32 = if (*ip).msid == 7 { melee_core::ppc::fctiwz_f32((*attr).x20) } else { melee_core::ppc::fctiwz_f32((*attr).x1C) };
     let temp_r3 = ext::ftLib_8008627C(&mut (*ip).pos, null_mut());
     if !temp_r3.is_null() {
         if ext::it_8027CA7C(temp_r3) != 0 {
@@ -363,7 +363,7 @@ pub unsafe extern "C" fn it_2725_Logic5_DmgReceived(gobj: *mut Item_GObj) -> boo
 
     it_802DBAF0(gobj, 0, 1);
     (*ip).init_facing_dir = (*ip).facing_dir;
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > (*(*attr).x0.x0_s32).x || (*ip).msid == 0x13 {
         Item_ZakoDefeat(gobj, ip);
         if ext::HSD_Randf() < (*ext::it_804D6D40).x8 {

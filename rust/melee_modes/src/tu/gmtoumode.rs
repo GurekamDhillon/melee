@@ -138,7 +138,7 @@ pub unsafe extern "C" fn gm_801B1834(state: *mut GameModeState) {
     let mei = (*state).info.exit_data as *mut MatchExitInfo;
     if ext::gmVsMelee_WasAnyPlayerHuman(&mut (*mei).match_end) != 0 {
         ext::gm_SetupHumanResultsScreen((*mei).match_end.match_kind, (*mei).match_end.outcome);
-        ext::gm_SetupResultsScreenPlayTime((*mei).match_end.frame_count / GM_FPS as u32, ext::gm_80162800(&mut (*mei).match_end));
+        ext::gm_SetupResultsScreenPlayTime(<u32 as melee_core::ppc::Ppc>::pdiv((*mei).match_end.frame_count, GM_FPS as u32), ext::gm_80162800(&mut (*mei).match_end));
     }
     if ext::gm_MatchHasMultipleWinners(&mut (*mei).match_end) != 0 && gm_8018F1B0(&mut (*mei).match_end) != 0 {
         ext::gm_SetNextGameModeStateId(5);

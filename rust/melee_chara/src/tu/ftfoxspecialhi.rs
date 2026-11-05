@@ -167,7 +167,7 @@ pub fn ftFx_SpecialHi_Enter(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let da = da(fp);
 
-        (*fp).mv.fx.SpecialHi.gravityDelay = (*da).x54_FOX_FIREFOX_GRAVITY_DELAY as i32;
+        (*fp).mv.fx.SpecialHi.gravityDelay = melee_core::ppc::fctiwz_f32((*da).x54_FOX_FIREFOX_GRAVITY_DELAY);
         (*fp).gr_vel /= (*da).x58_FOX_FIREFOX_VEL_X;
 
         st::Fighter_ChangeMotionState(gobj, ftFx_MS_SpecialHiHold as i32, 0, 0.0, 1.0, 0.0, core::ptr::null_mut());
@@ -183,7 +183,7 @@ pub fn ftFx_SpecialAirHiStart_Enter(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let da = da(fp);
 
-        (*fp).mv.fx.SpecialHi.gravityDelay = (*da).x54_FOX_FIREFOX_GRAVITY_DELAY as i32;
+        (*fp).mv.fx.SpecialHi.gravityDelay = melee_core::ppc::fctiwz_f32((*da).x54_FOX_FIREFOX_GRAVITY_DELAY);
         (*fp).self_vel.x /= (*da).x58_FOX_FIREFOX_VEL_X;
         (*fp).self_vel.y = 0.0;
 
@@ -407,7 +407,7 @@ pub fn ftFx_SpecialAirHi_AirToGround(gobj: *mut HSD_GObj) {
                 let temp_attrs = (*fp).dat_attrs as *const ftFox_DatAttrs;
                 (*fp).set_x2223_b4(1);
 
-                (*fp).mv.fx.SpecialHi.travelFrames = (*temp_attrs).x68_FOX_FIREFOX_DURATION as i32;
+                (*fp).mv.fx.SpecialHi.travelFrames = melee_core::ppc::fctiwz_f32((*temp_attrs).x68_FOX_FIREFOX_DURATION);
 
                 (*fp).mv.fx.SpecialHi.unk = 0;
                 (*fp).mv.fx.SpecialHi.unk2 = 0;
@@ -456,7 +456,7 @@ pub fn ftFx_SpecialAirHi_Enter(gobj: *mut HSD_GObj) {
         let temp_attrs = (*fp).dat_attrs as *const ftFox_DatAttrs;
         (*fp).set_x2223_b4(1);
 
-        (*fp).mv.fx.SpecialHi.travelFrames = (*temp_attrs).x68_FOX_FIREFOX_DURATION as i32;
+        (*fp).mv.fx.SpecialHi.travelFrames = melee_core::ppc::fctiwz_f32((*temp_attrs).x68_FOX_FIREFOX_DURATION);
         (*fp).mv.fx.SpecialHi.unk = 0;
         (*fp).mv.fx.SpecialHi.unk2 = 0;
 

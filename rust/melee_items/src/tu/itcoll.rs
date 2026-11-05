@@ -483,8 +483,8 @@ pub unsafe extern "C" fn it_8026FE68(arg_item0: *mut Item, hit1: *mut HitCapsule
     sp48.y = 0.5 * ((*hit1).hurt_coll_pos.y + (*hit3).hurt_coll_pos.y);
     sp48.z = 0.5 * ((*hit1).hurt_coll_pos.z + (*hit3).hurt_coll_pos.z);
     let dmg3 = (*hit3).damage;
-    if ((dmg3 as i32).wrapping_sub((*ext::it_804D6D28).xB4)) < ((*hit1).damage as i32) {
-        let dmg_int = dmg3 as i32;
+    if ((melee_core::ppc::fctiwz_f32(dmg3)).wrapping_sub((*ext::it_804D6D28).xB4)) < (melee_core::ppc::fctiwz_f32((*hit1).damage)) {
+        let dmg_int = melee_core::ppc::fctiwz_f32(dmg3);
         let var_r26 = if (*hit3).x41_b5() != 0 { 4 } else { 3 };
         it_8026FAC4(arg_item2, hit3, var_r26, arg_item0 as *mut c_void, 1);
         if dmg_int > (*arg_item2).xC48 {
@@ -508,8 +508,8 @@ pub unsafe extern "C" fn it_8026FE68(arg_item0: *mut Item, hit1: *mut HitCapsule
         ext::efSync_Spawn(0x41C, (*arg_item2).entity, &[EfArg::Vec3P(&raw const sp48)]);
     }
     let dmg1 = (*hit1).damage;
-    if ((dmg1 as i32).wrapping_sub((*ext::it_804D6D28).xB4)) < ((*hit3).damage as i32) {
-        let dmg_int = dmg1 as i32;
+    if ((melee_core::ppc::fctiwz_f32(dmg1)).wrapping_sub((*ext::it_804D6D28).xB4)) < (melee_core::ppc::fctiwz_f32((*hit3).damage)) {
+        let dmg_int = melee_core::ppc::fctiwz_f32(dmg1);
         let var_r26 = if (*hit1).x41_b5() != 0 { 4 } else { 3 };
         it_8026FAC4(arg_item0, hit1, var_r26, arg_item2 as *mut c_void, 0);
         if dmg_int > (*arg_item0).xC48 {
@@ -649,8 +649,8 @@ pub unsafe extern "C" fn it_802703E8(arg_item_gobj: *mut HSD_GObj) {
                     }
                     if (*hit).element != HitElement_Inert as u32 {
                         ext::ftColl_80076808(fighter, hit, 0, arg_item as *mut c_void, 0);
-                        let mut dmg = (*hit).damage as i32;
-                        dmg = ext::ScriptGame_FighterDealtDamage(fighter, dmg as f32) as i32;
+                        let mut dmg = melee_core::ppc::fctiwz_f32((*hit).damage);
+                        dmg = melee_core::ppc::fctiwz_f32(ext::ScriptGame_FighterDealtDamage(fighter, dmg as f32));
                         (*fighter).dmg.x1914 = dmg;
                         (*arg_item).xCA0 = (*arg_item).xCA0.wrapping_add(dmg);
                         if dmg > (*arg_item).xCA4 {
@@ -694,9 +694,9 @@ pub unsafe extern "C" fn it_802706D0_sub3(it: *mut Item, arg_item: *mut Item, hi
         dir = 1.0;
     }
     (*it).xCB8_outDamageDirection = dir;
-    let mut dmg = (*hit).damage as i32;
+    let mut dmg = melee_core::ppc::fctiwz_f32((*hit).damage);
     (*it).xC34_damageDealt = dmg;
-    dmg = ext::ScriptGame_ItemModDamage(it, dmg as f32) as i32;
+    dmg = melee_core::ppc::fctiwz_f32(ext::ScriptGame_ItemModDamage(it, dmg as f32));
     (*it).xC34_damageDealt = dmg;
     (*it).xCF4_fighterGObjUnk = null_mut();
     (*it).xC38 = (*arg_item).kind;

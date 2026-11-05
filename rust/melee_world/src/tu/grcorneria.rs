@@ -569,8 +569,8 @@ pub unsafe extern "C" fn grCorneria_801DCCFC() {
         return;
     }
 
-    let imin = yp().x3C as s32;
-    let mut imax = yp().x40 as s32;
+    let imin = melee_core::ppc::fctiwz_f32(yp().x3C);
+    let mut imax = melee_core::ppc::fctiwz_f32(yp().x40);
     if imax > imin {
         let range = imax - imin;
         imax = imin + if range != 0 { ext::HSD_Randi(range) } else { 0 };
@@ -641,7 +641,7 @@ pub unsafe extern "C" fn grCorneria_801DCE1C() {
                     arwing_gobjs[grCn_804D69A4 as usize] = grCorneria_801DD534(1);
                 }
             } else {
-                grCn_804D69A8 = grCn_RandRange(yp().x48 as s32, yp().x44 as s32);
+                grCn_804D69A8 = grCn_RandRange(melee_core::ppc::fctiwz_f32(yp().x48), melee_core::ppc::fctiwz_f32(yp().x44));
             }
         } else {
             let mut count: usize = 0;
@@ -1338,7 +1338,7 @@ pub unsafe extern "C" fn grCorneria_801DE8E4(gobj: *mut Ground_GObj) {
     HSD_JObjSetScaleY(jobj, scale * yp().x70);
     HSD_JObjSetScaleZ(jobj, scale * yp().x70);
     Ground_ResetStarFoxArwingState(gp);
-    (*gp).u.corneria2.xF8 = yp().x68 as s32;
+    (*gp).u.corneria2.xF8 = melee_core::ppc::fctiwz_f32(yp().x68);
     (*gp).u.corneria2.xFC = 0;
     (*gp).u.corneria2.x100 = ext::HSD_Randi(2);
 }
@@ -1452,7 +1452,7 @@ pub unsafe extern "C" fn grCorneria_801DED50(gobj: *mut Ground_GObj) {
                     1..=4 => {
                         if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
                             (*gp).u.corneria2.xF4 = 0;
-                            (*gp).u.corneria2.xF8 = yp().x68 as s32;
+                            (*gp).u.corneria2.xF8 = melee_core::ppc::fctiwz_f32(yp().x68);
                         }
                     }
                     _ => {}
@@ -1510,12 +1510,12 @@ pub unsafe extern "C" fn grCorneria_801DED50(gobj: *mut Ground_GObj) {
                         }
                     }
                     if grCn_804D69B0 == 0 {
-                        if (*gp).u.corneria2.xF0 % yp().x74 == 0 && randi(yp().x78) == 0 {
+                        if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.corneria2.xF0, yp().x74) == 0 && randi(yp().x78) == 0 {
                             (*gp).u.corneria2.xFC = 1;
                         } else {
                             (*gp).u.corneria2.xFC = 0;
                         }
-                    } else if (*gp).u.corneria2.xF0 % yp().x7C == 0 && randi(yp().x80) == 0 {
+                    } else if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.corneria2.xF0, yp().x7C) == 0 && randi(yp().x80) == 0 {
                         (*gp).u.corneria2.xFC = 1;
                     } else {
                         (*gp).u.corneria2.xFC = 0;
@@ -1547,12 +1547,12 @@ pub unsafe extern "C" fn grCorneria_801DED50(gobj: *mut Ground_GObj) {
             }
             10..=13 => {
                 if grCn_804D69B0 == 0 {
-                    if (*gp).u.corneria2.xF0 % yp().x74 == 0 && randi(yp().x78) == 0 {
+                    if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.corneria2.xF0, yp().x74) == 0 && randi(yp().x78) == 0 {
                         (*gp).u.corneria2.xFC = 1;
                     } else {
                         (*gp).u.corneria2.xFC = 0;
                     }
-                } else if (*gp).u.corneria2.xF0 % yp().x7C == 0 && randi(yp().x80) == 0 {
+                } else if <i32 as melee_core::ppc::Ppc>::prem((*gp).u.corneria2.xF0, yp().x7C) == 0 && randi(yp().x80) == 0 {
                     (*gp).u.corneria2.xFC = 1;
                 } else {
                     (*gp).u.corneria2.xFC = 0;
@@ -1671,7 +1671,7 @@ pub unsafe extern "C" fn grCorneria_801DF8D0(gobj: *mut Ground_GObj) {
     HSD_JObjSetScaleY(jobj, scale * yp().x70);
     HSD_JObjSetScaleZ(jobj, scale * yp().x70);
     Ground_ResetStarFoxArwingState(gp);
-    (*gp).u.corneria2.xF8 = yp().x68 as s32;
+    (*gp).u.corneria2.xF8 = melee_core::ppc::fctiwz_f32(yp().x68);
     (*gp).u.corneria2.xFC = 0;
 }
 
@@ -2221,11 +2221,11 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
                 if ext::HSD_Randf() <= yp().x24 {
                     (*gp).u.corneria.x119 = 0;
                     (*gp).u.corneria.x118 = 1;
-                    (*gp).u.corneria.x10C = yp().x28 as s32;
+                    (*gp).u.corneria.x10C = melee_core::ppc::fctiwz_f32(yp().x28);
                     ext::Ground_801C53EC(0x55739);
                 } else {
-                    let imin = yp().x30 as s32;
-                    let mut imax = yp().x34 as s32;
+                    let imin = melee_core::ppc::fctiwz_f32(yp().x30);
+                    let mut imax = melee_core::ppc::fctiwz_f32(yp().x34);
                     if imax > imin {
                         let range = imax - imin;
                         imax = imin + if range != 0 { ext::HSD_Randi(range) } else { 0 };
@@ -2235,7 +2235,7 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
                     }
                     (*gp).u.corneria.x119 = 1;
                     (*gp).u.corneria.x118 = imax as i8;
-                    (*gp).u.corneria.x10C = yp().x2C as s32;
+                    (*gp).u.corneria.x10C = melee_core::ppc::fctiwz_f32(yp().x2C);
                     ext::Ground_801C53EC(0x5573A);
                 }
                 sp40.x = grCn_803E1FAC[1].x;
@@ -2258,7 +2258,7 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
                 ext::hsd_8039D580(ext::Ground_801C3FA4(gobj, 3));
                 ext::Item_80268E5C((*gp).u.corneria.left_cannon, 0, ITEM_ANIM_UPDATE as _);
                 ext::Item_80268E5C((*gp).u.corneria.right_cannon, 0, ITEM_ANIM_UPDATE as _);
-                (*gp).u.corneria.x10C = yp().x20 as s32;
+                (*gp).u.corneria.x10C = melee_core::ppc::fctiwz_f32(yp().x20);
                 (*gp).u.corneria.x108 = 2;
                 return;
             }
@@ -2315,9 +2315,9 @@ pub unsafe extern "C" fn grCorneria_801E1348(gobj: *mut Ground_GObj) {
                 return;
             }
             {
-                let rand_range = yp().x18 as s32;
-                let range = yp().x18 as s32;
-                (*gp).u.corneria.x110 = (yp().x1C + (if range != 0 { ext::HSD_Randi(rand_range) } else { 0 }) as f32) as s32;
+                let rand_range = melee_core::ppc::fctiwz_f32(yp().x18);
+                let range = melee_core::ppc::fctiwz_f32(yp().x18);
+                (*gp).u.corneria.x110 = melee_core::ppc::fctiwz_f32(yp().x1C + (if range != 0 { ext::HSD_Randi(rand_range) } else { 0 }) as f32);
             }
             (*gp).u.corneria.x10C = 0;
             (*gp).u.corneria.x108 = 0;
@@ -2364,7 +2364,7 @@ pub unsafe extern "C" fn grCorneria_801E1970(gobj: *mut Ground_GObj) {
     if (*gp).u.corneria.x104 <= 0 {
         let mut randf = ext::HSD_Randf();
         let a = yp().x4 - yp().x0;
-        (*gp).u.corneria.x104 = fmadds(a, randf, yp().x0) as s32;
+        (*gp).u.corneria.x104 = melee_core::ppc::fctiwz_f32(fmadds(a, randf, yp().x0));
         randf = ext::HSD_Randf();
         (*gp).u.corneria.xF4 = yp().x8 * (2.0 * (randf - 0.5));
         randf = ext::HSD_Randf();

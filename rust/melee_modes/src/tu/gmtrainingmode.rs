@@ -173,10 +173,10 @@ pub unsafe extern "C" fn gm_801B1C24(arg0: *mut GameModeState) {
     while i < 4 {
         *players.add(i) = *players.add(1);
         let n = ext::gm_GetNumCostumesForCKind((*players.add(j)).ckind as u8) as i32;
-        (*players.add(i)).color = (((*players.add(i - 1)).color as i32 + 1) % n) as u8;
+        (*players.add(i)).color = (<i32 as melee_core::ppc::Ppc>::prem((*players.add(i - 1)).color as i32 + 1, n)) as u8;
         if (*players.add(i)).color == (*players.add(0)).color {
             let n = ext::gm_GetNumCostumesForCKind((*players.add(j)).ckind as u8) as i32;
-            (*players.add(i)).color = (((*players.add(i)).color as i32 + 1) % n) as u8;
+            (*players.add(i)).color = (<i32 as melee_core::ppc::Ppc>::prem((*players.add(i)).color as i32 + 1, n)) as u8;
         }
         (*players.add(i)).slot_type = 3;
         i += 1;

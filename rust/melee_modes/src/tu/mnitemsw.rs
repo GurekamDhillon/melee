@@ -303,17 +303,17 @@ pub unsafe extern "C" fn mnItemSw_80233A98(mut arg0: s32) -> s32 {
     match arg0 {
         19 => {
             if lbLang_IsSettingJP() != 0 {
-                return mnItemSw_Table.items[arg0 as usize] as s32;
+                return melee_core::ppc::fctiwz_f32(mnItemSw_Table.items[arg0 as usize]);
             }
             return 0x27 as s32;
         }
         17 => {
             if lbLang_IsSettingJP() != 0 {
-                return mnItemSw_Table.items[arg0 as usize] as s32;
+                return melee_core::ppc::fctiwz_f32(mnItemSw_Table.items[arg0 as usize]);
             }
             return 0x28 as s32;
         }
-        18 | _ => return mnItemSw_Table.items[arg0 as usize] as s32,
+        18 | _ => return melee_core::ppc::fctiwz_f32(mnItemSw_Table.items[arg0 as usize]),
     };
 }
 pub unsafe extern "C" fn mnItemSw_80233B68(

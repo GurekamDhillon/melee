@@ -292,7 +292,7 @@ impl Hsd3915 {
     /// `str` is null or NUL terminated; `color` is writable.
     pub unsafe fn hsd_80391AC8<H: Hsd3915Host>(&mut self, h: &mut H, str: *const i8, color: *mut GXColor, mut x: f32, y: f32) -> i32 {
         if str.is_null() {
-            return x as i32;
+            return melee_core::ppc::fctiwz_f32(x);
         }
         let mut i = 0isize;
         while *str.offset(i) != 0 {
@@ -315,7 +315,7 @@ impl Hsd3915 {
             }
             i += 1;
         }
-        x as i32
+        melee_core::ppc::fctiwz_f32(x)
     }
 }
 
@@ -444,7 +444,7 @@ unsafe fn glyph_row(
         let mut shift = cur_dst;
         let mut bit_off = bit_x & 0xF;
         while bit_off < 16 && (col as u32) < max_x {
-            let val = ((word >> (((15 - bit_off) * 2) as u32 & 31)) & 3) as i32;
+            let val = ((<u32 as melee_core::ppc::Ppc>::pshr(word, ((((15 - bit_off) * 2) as u32 & 31)) as i64)) & 3) as i32;
             let entry = table.offset(val as isize);
             ((*entry).callback.expect("GlyphEntry.callback"))(shift as isize as *mut u8, col, y, val, entry as *const u8);
             bit_off += 1;

@@ -721,8 +721,8 @@ pub unsafe extern "C" fn mnSoundTest_8024A790(mut arg0: *mut mnSoundTest_GObj) {
         *= (1.0_f32 - HSD_PadCopyStatus[3 as i32 as usize].nml_analogR)
             as f32;
     if temp_f31 < 0.9_f32 || (*temp_r31).unk8 < 1.0_f32 {
-        temp_r30 = ((*temp_r31).unk8
-            * (temp_f31 * gm_801601C4(gmMainLib_8015ED74() as i8) as f32)) as i32;
+        temp_r30 = melee_core::ppc::fctiwz_f32((*temp_r31).unk8
+            * (temp_f31 * gm_801601C4(gmMainLib_8015ED74() as i8) as f32));
         lbAudioAx_80024614(temp_r30 as i32);
         mnSoundTest_804D6C48 = temp_r30;
     } else {
@@ -733,8 +733,8 @@ pub unsafe extern "C" fn mnSoundTest_8024A790(mut arg0: *mut mnSoundTest_GObj) {
         }
     }
     if temp_f30 < 0.9_f32 || (*temp_r31).unkC < 1.0_f32 {
-        temp_r30_2 = ((*temp_r31).unkC
-            * (temp_f30 * gm_80160244(gmMainLib_8015ED74() as i8) as f32)) as i32;
+        temp_r30_2 = melee_core::ppc::fctiwz_f32((*temp_r31).unkC
+            * (temp_f30 * gm_80160244(gmMainLib_8015ED74() as i8) as f32));
         lbAudioAx_800245F4(temp_r30_2 as i32);
         mnSoundTest_804D6C4C = temp_r30_2;
         return;

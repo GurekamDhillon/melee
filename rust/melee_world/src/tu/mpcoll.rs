@@ -729,7 +729,7 @@ pub unsafe fn mpColl_80043268(mut coll: *mut CollData, mut line_id: i32, mut arg
             } else {
                 thing = 1;
             }
-            callback.unwrap()(user_data, joint_id, coll, (*coll).x50 as i32, thing as u32, dy);
+            callback.unwrap()(user_data, joint_id, coll, melee_core::ppc::fctiwz_f32((*coll).x50), thing as u32, dy);
         }
     }
 }
@@ -744,7 +744,7 @@ unsafe fn mpCollEnd_inline2(mut coll: *mut CollData, mut line_id: i32, mut arg2:
         let mut user_data: *mut c_void = null_mut();
         super::mplib::mpJointGetCb2(joint_id, core::ptr::addr_of_mut!(callback) as *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, core::ptr::addr_of_mut!(user_data) as *mut *mut c_void);
         if callback.is_some() {
-            callback.unwrap()(user_data, joint_id, coll, (*coll).x50 as i32, 0 as u32, dy);
+            callback.unwrap()(user_data, joint_id, coll, melee_core::ppc::fctiwz_f32((*coll).x50), 0 as u32, dy);
         }
     }
 }
@@ -798,7 +798,7 @@ pub unsafe fn mpColl_80043558(mut coll: *mut CollData, mut line_id: i32) {
             let mut callback: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)> = None;
             super::mplib::mpJointGetCb1(joint_id, core::ptr::addr_of_mut!(callback) as *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, core::ptr::addr_of_mut!(user_data) as *mut *mut c_void);
             if callback.is_some() {
-                callback.unwrap()(user_data, joint_id, coll, (*coll).x50 as i32, 2 as u32, 0.0f32);
+                callback.unwrap()(user_data, joint_id, coll, melee_core::ppc::fctiwz_f32((*coll).x50), 2 as u32, 0.0f32);
             }
         }
     } else if kind == (CollLine_Ceiling as i32) {
@@ -808,7 +808,7 @@ pub unsafe fn mpColl_80043558(mut coll: *mut CollData, mut line_id: i32) {
             let mut callback: Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)> = None;
             super::mplib::mpJointGetCb2(joint_id, core::ptr::addr_of_mut!(callback) as *mut Option<unsafe extern "C" fn(*mut c_void, i32, *mut CollData, i32, u32, f32)>, core::ptr::addr_of_mut!(user_data) as *mut *mut c_void);
             if callback.is_some() {
-                callback.unwrap()(user_data, joint_id, coll, (*coll).x50 as i32, 0 as u32, 0.0f32);
+                callback.unwrap()(user_data, joint_id, coll, melee_core::ppc::fctiwz_f32((*coll).x50), 0 as u32, 0.0f32);
             }
         }
     }
@@ -898,7 +898,7 @@ pub unsafe fn mpColl_80043754(mut cb: Option<unsafe extern "C" fn(*mut CollData,
     y = max_inline(y, dist_top_y);
     x = max_inline(x, y);
     if x > 6.0f32 {
-        steps = (x / 6.0f32) as i32;
+        steps = melee_core::ppc::fctiwz_f32(x / 6.0f32);
         steps = steps + 1;
         vel.x = vel.x / (steps as f32);
         vel.y = vel.y / (steps as f32);

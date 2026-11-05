@@ -23,20 +23,20 @@ pub fn hr_ordinary(e: i32) -> i32 {
 pub unsafe extern "C" fn script_hit_metadata(h: *mut HitCapsule, create: i32) -> *mut HRMeta {
     melee_core::ct!("script_hit_metadata");
     // The C hashes the 32-bit address; the cast keeps the low 32 bits.
-    let start: u32 = ((h as usize as u32) >> 2) % (HR_META_MAX as u32);
+    let start: u32 = <u32 as melee_core::ppc::Ppc>::prem((h as usize as u32) >> 2, HR_META_MAX as u32);
     if create == 0 && script_hit_meta_count == 0 {
         return core::ptr::null_mut();
     }
     let base = (&raw mut script_hit_meta) as *mut HRMeta;
     for i in 0..HR_META_MAX {
-        let m = base.add(((start.wrapping_add(i as u32)) % (HR_META_MAX as u32)) as usize);
+        let m = base.add((<u32 as melee_core::ppc::Ppc>::prem(start.wrapping_add(i as u32), HR_META_MAX as u32)) as usize);
         if (*m).hit == h {
             return m;
         }
     }
     if create != 0 {
         for i in 0..HR_META_MAX {
-            let m = base.add(((start.wrapping_add(i as u32)) % (HR_META_MAX as u32)) as usize);
+            let m = base.add((<u32 as melee_core::ppc::Ppc>::prem(start.wrapping_add(i as u32), HR_META_MAX as u32)) as usize);
             if (*m).hit.is_null() {
                 core::ptr::write_bytes(m, 0, 1);
                 (*m).hit = h;

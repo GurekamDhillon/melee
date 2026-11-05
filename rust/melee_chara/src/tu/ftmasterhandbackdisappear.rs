@@ -135,7 +135,7 @@ pub fn ftMh_MS_372_801542E0(gobj: *mut HSD_GObj) {
         let da = (*(*fp).ft_data).ext_attr as *const ftMasterHand_SpecialAttrs;
         st::Fighter_ChangeMotionState(gobj, 373, 0, (*fp).cur_anim_frame as f32, 1.0, 0.0, core::ptr::null_mut());
         st::ftAnim_SetAnimRate(gobj, (*da).x110_pos.y);
-        (*fp).mv.mh.unk0.x8 = (*da).x110_pos.x as i32;
+        (*fp).mv.mh.unk0.x8 = melee_core::ppc::fctiwz_f32((*da).x110_pos.x);
     }
 }
 

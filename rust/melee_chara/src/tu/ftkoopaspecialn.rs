@@ -152,8 +152,8 @@ pub fn ftKp_SpecialLw_80134ACC(gobj: *mut HSD_GObj) {
             (*fp).facing_dir,
             x4,
             gfx,
-            (*fp).u.kp.x222C as i32,
-            (*fp).u.kp.x2230 as i32,
+            melee_core::ppc::fctiwz_f32((*fp).u.kp.x222C),
+            melee_core::ppc::fctiwz_f32((*fp).u.kp.x2230),
             It_Kind_Koopa_Flame as i32,
         );
         if (*fp).mv.kp.specialn.x14 == 0 {
@@ -196,7 +196,7 @@ pub fn ftKp_SpecialLw_80134DE0(gobj: *mut HSD_GObj) -> i32 {
         if !gobj.is_null() {
             let fp = fpp(gobj);
             if !fp.is_null() {
-                return (*da(fp)).x10 as i32;
+                return melee_core::ppc::fctiwz_f32((*da(fp)).x10);
             }
         }
         1
@@ -209,7 +209,7 @@ pub fn ftKp_SpecialLw_80134E1C(gobj: *mut HSD_GObj) -> i32 {
         if !gobj.is_null() {
             let fp = fpp(gobj);
             if !fp.is_null() {
-                return (*da(fp)).x18 as i32;
+                return melee_core::ppc::fctiwz_f32((*da(fp)).x18);
             }
         }
         2

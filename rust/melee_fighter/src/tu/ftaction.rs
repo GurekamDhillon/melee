@@ -809,7 +809,7 @@ pub fn ftAction_80073008(g: G, cmd: &mut CommandInfo) {
         next(cmd);
         let color = u(cmd).smash_charge_1.color_anim() as f32;
         next(cmd);
-        ext::ftCo_800DEE84(g, color as i32, frames, mult);
+        ext::ftCo_800DEE84(g, melee_core::ppc::fctiwz_f32(color), frames, mult);
     }
 }
 

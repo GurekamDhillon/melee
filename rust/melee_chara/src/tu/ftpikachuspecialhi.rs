@@ -662,7 +662,7 @@ pub fn ftPk_SpecialAirHiEnd_Coll(gobj: G) {
     unsafe {
         let fp = fpp(gobj);
         let pika_attr = da(fp);
-        if ext::ft_8008239C(gobj, (*fp).facing_dir as i32, &mut (*pika_attr).height_attributes) {
+        if ext::ft_8008239C(gobj, melee_core::ppc::fctiwz_f32((*fp).facing_dir), &mut (*pika_attr).height_attributes) {
             st::ftCo_LandingFallSpecial_Enter(gobj, 0, (*pika_attr).xB0);
         } else if st::ftCliffCommon_80081298(gobj) == 0 {
             // weird control flow in the C: both arms fall off the end

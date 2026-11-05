@@ -597,14 +597,14 @@ pub unsafe extern "C" fn grYorster_8020266C(gobj: *mut HSD_GObj) {
                     if (*el).x04 >= (*p).x0C {
                         frames_left = 0;
                     } else {
-                        frames_left = ((*p).x0C - (*el).x04) as i32;
+                        frames_left = melee_core::ppc::fctiwz_f32((*p).x0C - (*el).x04);
                     }
                     end_frame = (*p).x1C as f32;
                     if end_frame >= ext::lbGetJObjEndFrame((*el2).x18) {
                         end_frame = ext::lbGetJObjEndFrame((*el2).x18);
                     }
                     advance = 1;
-                    (*el).x10 = (frames_left as f32 * (end_frame / (*p).x0C)) as i32;
+                    (*el).x10 = melee_core::ppc::fctiwz_f32(frames_left as f32 * (end_frame / (*p).x0C));
                 } else if (*el).x08 >= (*p).x00 {
                     let frames_left: i32;
                     let mut end_frame: f32;
@@ -617,14 +617,14 @@ pub unsafe extern "C" fn grYorster_8020266C(gobj: *mut HSD_GObj) {
                     if (*el).x08 >= (*p).x04 {
                         frames_left = 0;
                     } else {
-                        frames_left = (10.0f32 * ((*p).x04 - (*el).x08)) as i32;
+                        frames_left = melee_core::ppc::fctiwz_f32(10.0f32 * ((*p).x04 - (*el).x08));
                     }
                     end_frame = (*p).x1C as f32;
                     if end_frame >= ext::lbGetJObjEndFrame((*el2).x18) {
                         end_frame = ext::lbGetJObjEndFrame((*el2).x18);
                     }
                     advance = 1;
-                    (*el).x10 = (frames_left as f32 * (end_frame / (10.0f32 * (*p).x04))) as i32;
+                    (*el).x10 = melee_core::ppc::fctiwz_f32(frames_left as f32 * (end_frame / (10.0f32 * (*p).x04)));
                     (*el).x08 = 0.0f32;
                     ext::Ground_801C53EC(0xE);
                 }

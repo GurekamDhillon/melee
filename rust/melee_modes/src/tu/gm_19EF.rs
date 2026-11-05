@@ -660,7 +660,7 @@ pub unsafe extern "C" fn fn_801A0B60(gobj: *mut HSD_GObj) {
     let cur = (*aobj).curr_frame;
     assert!(!aobj.is_null(), "aobj.h:0xAA");
     let end = (*aobj).end_frame;
-    if (cur as i32) >= (end as i32) {
+    if (melee_core::ppc::fctiwz_f32(cur)) >= (melee_core::ppc::fctiwz_f32(end)) {
         ext::gm_801A4B60();
     }
 }

@@ -160,7 +160,7 @@ pub fn ftCo_800C18A8(g: G, msid: i32, normal: &Vec3, offset: &Vec3) {
         f.cur_pos.y = f.x68C_transNPos.y + (f.cur_pos.y + offset.y);
         ext::ft_80082084(g);
     }
-    unsafe { fp(g).mv.co.damage.x18 = cd().x1C0 as u8 };
+    unsafe { fp(g).mv.co.damage.x18 = melee_core::ppc::fctiwz_f32(cd().x1C0) as u8 };
     ext::ftCommon_8007EBAC(fp(g), 7, 0);
     ext::ftColl_8007B760(g, cd().x1B8);
     let f = fp(g);

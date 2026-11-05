@@ -423,7 +423,7 @@ pub unsafe extern "C" fn onExitVs(state: *mut GameModeState) {
     melee_core::ct!("onExitVs");
     let mei = ext::gm_GetGameModeStateExitData(state) as *mut MatchExitInfo;
     let challenger = ext::gm_GetChallengerData();
-    ext::gm_80162968((*mei).match_end.frame_count / GM_FPS as u32);
+    ext::gm_80162968(<u32 as melee_core::ppc::Ppc>::pdiv((*mei).match_end.frame_count, GM_FPS as u32));
     ext::gm_8016247C((*mei).match_end.player_standings[0].xE as i32);
     if (*mei).match_end.outcome as u32 != OUTCOME_NO_CONTEST
         && (*mei).match_end.outcome as u32 != OUTCOME_RETRY

@@ -196,7 +196,7 @@ impl Hsd3933 {
                 result = 0;
                 break;
             }
-            if h.OSGetTick().wrapping_sub(start_tick) / ticks_per_unit >= 3 {
+            if <u32 as melee_core::ppc::Ppc>::pdiv(h.OSGetTick().wrapping_sub(start_tick), ticks_per_unit) >= 3 {
                 break;
             }
         }
@@ -376,7 +376,7 @@ pub fn hsd_80393A5C<H: Hsd3933Host + ?Sized>(h: &mut H, filename: &str, data: i3
     if size as f32 != written_f {
         h.OSReport(&cstr(&messages.cannot_save));
         h.FIOFclose(fd);
-        return written_f as i32;
+        return melee_core::ppc::fctiwz_f32(written_f);
     }
     h.FIOFclose(fd);
     // OSSecondsToTicks(1.0F) = 1.0F * OS_TIMER_CLOCK in f32; the tick delta divides as f32.

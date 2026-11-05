@@ -359,7 +359,7 @@ pub unsafe fn inline0(jobj: *mut HSD_JObj, f: f32) {
 /// A shift by 32 or more gives 0, as on the PowerPC (x86 and Rust mask the count instead).
 #[inline]
 fn slw(x: u32, shift: i32) -> u32 {
-    if shift as u32 >= 32 { 0 } else { x << shift }
+    if shift as u32 >= 32 { 0 } else { <u32 as melee_core::ppc::Ppc>::pshl(x, (shift) as i64) }
 }
 
 /// One key value of an FObj stream (fobj.c's own reader, restated): the format is the top 3 bits
@@ -367,7 +367,7 @@ fn slw(x: u32, shift: i32) -> u32 {
 pub unsafe fn genoArt_FObjValue(p: *mut *mut u8, frac: u8) -> f32 {
     melee_core::ct!("genoArt_FObjValue");
     let s = *p;
-    let scale = (1i32 << (frac & 0x1F)) as f32;
+    let scale = (<i32 as melee_core::ppc::Ppc>::pshl(1i32, ((frac & 0x1F)) as i64)) as f32;
     match frac & 0xE0 {
         0x00 => {
             let v = ((*s as u32) << 24) | ((*s.add(1) as u32) << 16) | ((*s.add(2) as u32) << 8) | *s.add(3) as u32;
@@ -467,11 +467,11 @@ pub unsafe fn genoArt_ImageKeyAt(tobj: *mut HSD_TObj, frame: i32, max_img: *mut 
                     }
                     _ => return hit,
                 }
-                if t as i32 == frame {
+                if melee_core::ppc::fctiwz_f32(t) == frame {
                     hit = true;
                 }
-                if v as i32 > *max_img {
-                    *max_img = v as i32;
+                if melee_core::ppc::fctiwz_f32(v) > *max_img {
+                    *max_img = melee_core::ppc::fctiwz_f32(v);
                 }
                 t += wait as f32;
                 n -= 1;
@@ -526,7 +526,7 @@ pub unsafe fn gmRst_NameFrame(tobj: *mut HSD_TObj, ck: i32, fk: i32) -> i32 {
     melee_core::ct!("gmRst_NameFrame");
     let mut max_img = 0i32;
     if !gmRst_IsMex(ck) {
-        return ext::gm_80168B34(ck as CharacterKind, fk, 0) as i32;
+        return melee_core::ppc::fctiwz_f32(ext::gm_80168B34(ck as CharacterKind, fk, 0));
     }
     let ext_ = ext::Mex_PortCKindToExt(ck);
     if ext_ < 0 || ext::Mex_ResultArtIsOwn(ck) == 0 || !genoArt_ImageKeyAt(tobj, ext_, &mut max_img) {
@@ -1345,7 +1345,7 @@ unsafe fn banner_frames(aobj: *mut HSD_AObj, tex_id: i32) {
         ext::HSD_AObjSetCurrentFrame(aobj, 0.0f32);
         ext::HSD_AObjSetEndFrame(aobj, 29.0f32);
     } else {
-        let start = (30.0f32 * (tex_id - 0xB4) as f32) as i32;
+        let start = melee_core::ppc::fctiwz_f32(30.0f32 * (tex_id - 0xB4) as f32);
         ext::HSD_AObjSetCurrentFrame(aobj, start as f32);
         ext::HSD_AObjSetEndFrame(aobj, (30.0f32 + start as f32) - 1.0f32);
     }
@@ -1397,7 +1397,7 @@ pub unsafe fn fn_80178BB4_init_players(d: *mut ResultsData, match_end: *mut Matc
                     ext::HSD_AObjSetCurrentFrame(aobj, 0.0f32);
                     ext::HSD_AObjSetEndFrame(aobj, 29.0f32);
                 } else {
-                    let start = (30.0f32 * (tex_id - 0xB4) as f32) as i32;
+                    let start = melee_core::ppc::fctiwz_f32(30.0f32 * (tex_id - 0xB4) as f32);
                     ext::HSD_AObjSetCurrentFrame(aobj, start as f32);
                     ext::HSD_AObjSetEndFrame(aobj, (30.0f32 + start as f32) - 1.0f32);
                 }
@@ -1496,7 +1496,7 @@ pub unsafe fn fn_80178BB4(gobj: *mut HSD_GObj) {
         let aobj = (*tobj).aobj;
         ext::HSD_TObjReqAnim(tobj, anim_n as f32);
         ext::HSD_TObjAnim((*(*(*(*(*d).x30).u.dobj).next).mobj).tobj);
-        let start = (30.0f32 * (anim_n - 0xB4) as f32) as i32;
+        let start = melee_core::ppc::fctiwz_f32(30.0f32 * (anim_n - 0xB4) as f32);
         ext::HSD_AObjSetCurrentFrame(aobj, start as f32);
         ext::HSD_AObjSetEndFrame(aobj, (30.0f32 + start as f32) - 1.0f32);
         ext::mn_8022F3D8((*d).x30, 1, TOBJ_MASK);

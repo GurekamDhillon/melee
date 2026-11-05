@@ -434,7 +434,7 @@ pub unsafe extern "C" fn it_802D8EC8(gobj: *mut HSD_GObj) -> i32 {
     }
     (*ip).xDCC_flag.set_b3(1);
     // `attr[0]` is a pointer to the health `s32` in the C; the engine's decode stores the value itself in that word (dat_custom `HEIHO_HEALTH`)
-    if (*ip).xC9C > (*(attr as *const i32) as f32 * 0.8f32) as i32 {
+    if (*ip).xC9C > melee_core::ppc::fctiwz_f32(*(attr as *const i32) as f32 * 0.8f32) {
         ext::it_8027CE44(gobj);
         it_802D8EC8_inline(gobj);
         it_802D98AC(gobj);

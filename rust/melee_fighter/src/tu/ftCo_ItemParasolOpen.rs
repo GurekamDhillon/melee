@@ -95,7 +95,7 @@ fn enter(g: G, blend: f32) {
     let ms = ftCo_ItemParasolGetFallMotionId(g, ftPe_MS_ItemParasolOpen as i32, ftCo_MS_ItemParasolOpen as i32);
     ext::Fighter_ChangeMotionState(g, ms, 0, 0.0, 1.0, blend, core::ptr::null_mut());
     ext::ftAnim_8006EBA4(g);
-    inline1(fp(g), crate::hooks::common_data().x59C as i32);
+    inline1(fp(g), melee_core::ppc::fctiwz_f32(crate::hooks::common_data().x59C));
 }
 
 pub fn ft_800CEF08(g: G) {

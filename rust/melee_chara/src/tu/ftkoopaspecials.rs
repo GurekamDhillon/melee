@@ -125,7 +125,7 @@ fn ftKp_SpecialS_set_dir(gobj: *mut HSD_GObj) -> i32 {
         if (*fp).input.lstick[1].x < (*da).x30 && (*fp).input.lstick[0].x > (*da).x30 {
             facing_dir = 1;
         }
-        (*fp).mv.kp.specials.facing_dir = ((*fp).facing_dir * facing_dir as f32) as i32;
+        (*fp).mv.kp.specials.facing_dir = melee_core::ppc::fctiwz_f32((*fp).facing_dir * facing_dir as f32);
         facing_dir
     }
 }

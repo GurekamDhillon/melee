@@ -1025,7 +1025,7 @@ pub unsafe fn grLast_8021C40C(gobj: *mut HSD_GObj, color: GXColor, arg2: f32) {
 /// `(u8) (float)`: gwtool saturates to 32 bits, then truncates.
 #[inline(always)]
 fn f2u8(x: f32) -> u8 {
-    (x as i32) as u8
+    (melee_core::ppc::fctiwz_f32(x)) as u8
 }
 
 pub unsafe fn grLast_8021C500(gobj: *mut HSD_GObj) {

@@ -873,7 +873,7 @@ pub unsafe fn gmCamera_801A30E4() {
     let px8: *mut *mut HSD_JObj = &mut (*gcus).x8;
     ext::HSD_JObjSetFlagsAll((*gcus).x8, JOBJ_HIDDEN as u32);
     for i in 0..16 {
-        if (1u32 << i) & (gmCamera_VsCamStateTable[pxc].flags.x2 as u32) != 0 {
+        if (<u32 as melee_core::ppc::Ppc>::pshl(1u32, (i) as i64)) & (gmCamera_VsCamStateTable[pxc].flags.x2 as u32) != 0 {
             let mut jobj: *mut HSD_JObj = core::ptr::null_mut();
             ext::lb_80011E24(*px8, &mut jobj, i, -1);
             ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);

@@ -260,7 +260,7 @@ unsafe fn Item_EnterAirStateWithHitlag(gobj: *mut Item_GObj, msid: enum_t) {
 /// `randi_perm` (static inline): `HSD_Randi(f32)`, the float converted to int at the call
 #[inline]
 unsafe fn randi_perm(f: f32) -> i32 {
-    ext::HSD_Randi(f as i32)
+    ext::HSD_Randi(melee_core::ppc::fctiwz_f32(f))
 }
 
 /// `randi_perm_int` (static inline)
@@ -501,11 +501,11 @@ pub unsafe extern "C" fn it_2725_Logic38_Spawned(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.unknown.x60 = 0.0;
     (*ip).xDD4_itemVar.unknown.x64.f = 0.0;
     (*ip).xDD4_itemVar.unknown.x68.f = 0.0;
-    let r = randi_perm_int(((*attr).x4 + (*attr).x8) as i32);
+    let r = randi_perm_int(melee_core::ppc::fctiwz_f32((*attr).x4 + (*attr).x8));
     (*ip).xDD4_itemVar.unknown.x6C.x = r as f32 - (*attr).x8;
-    let r = randi_perm_int(((*attr).xC + (*attr).x10) as i32);
+    let r = randi_perm_int(melee_core::ppc::fctiwz_f32((*attr).xC + (*attr).x10));
     (*ip).xDD4_itemVar.unknown.x6C.y = r as f32 - (*attr).x10;
-    let r = randi_perm_int(((*attr).x14 + (*attr).x18.f) as i32);
+    let r = randi_perm_int(melee_core::ppc::fctiwz_f32((*attr).x14 + (*attr).x18.f));
     (*ip).xDD4_itemVar.unknown.x6C.z = r as f32 - (*attr).x18.f;
     it_802CF0D4(gobj);
     ext::it_8026B3A8(gobj);
@@ -586,7 +586,7 @@ pub fn it_802cf120(ip: &mut Item) -> bool {
 /// undefined outside the `s32` range; Rust saturates there).
 pub fn randi_perm_fp(rand: &mut HsdRand, f: f32) -> i32 {
     melee_core::ct!("randi_perm_fp");
-    rand.randi(f as i32)
+    rand.randi(melee_core::ppc::fctiwz_f32(f))
 }
 
 /// `randi_perm_int_fp` (itunknown.c).

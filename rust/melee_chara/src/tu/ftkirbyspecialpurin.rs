@@ -388,9 +388,9 @@ pub fn ftKb_SpecialNPr_80100F94(gobj: G) {
         }
         if (*fp).x914[0].state != HitCapsule_Disabled {
             let mut damage: i32 = if (*fp).ground_or_air == GA_Air {
-                (da.specialn_pr_damage_multiplier * (da.specialn_pr_base_damage + abs_f((*fp).self_vel.x))) as i32
+                melee_core::ppc::fctiwz_f32(da.specialn_pr_damage_multiplier * (da.specialn_pr_base_damage + abs_f((*fp).self_vel.x)))
             } else {
-                (da.specialn_pr_damage_multiplier * (da.specialn_pr_base_damage + abs_f((*fp).gr_vel))) as i32
+                melee_core::ppc::fctiwz_f32(da.specialn_pr_damage_multiplier * (da.specialn_pr_base_damage + abs_f((*fp).gr_vel)))
             };
             if damage < 1 {
                 damage = 1;
@@ -447,7 +447,7 @@ pub fn ftKb_SpecialNPr_8010131C(gobj: G) {
         sn!(fp).facing_dir = 0.0;
         sn!(fp).x24 = 0;
         sn!(fp).x28 = 0;
-        sn!(fp).x2C = da.specialn_pr_charge_rate1 as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(da.specialn_pr_charge_rate1);
         sn!(fp).x30 = 0;
         (*fp).deal_dmg_cb = Some(cb_fn_80100E0C);
         (*fp).x21F8 = Some(cb_fn_80105978);
@@ -565,9 +565,9 @@ unsafe fn charge_spin(fp: *mut Fighter, da: &ftKb_DatAttrs) {
 
 /// Charge step: `x2C += rate2` (an int += float), clamp at the charge time.
 unsafe fn charge_add(fp: *mut Fighter, da: &ftKb_DatAttrs) -> bool {
-    sn!(fp).x2C = (sn!(fp).x2C as f32 + da.specialn_pr_charge_rate2) as i32;
+    sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 + da.specialn_pr_charge_rate2);
     if sn!(fp).x2C as f32 >= da.specialn_pr_charge_time {
-        sn!(fp).x2C = da.specialn_pr_charge_time as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(da.specialn_pr_charge_time);
         return true;
     }
     false
@@ -718,7 +718,7 @@ pub fn ftKb_PrSpecialNTurn_Anim(gobj: G) {
             ftKb_SpecialNPr_801010D4(gobj, false, 0x40012, 0.0);
             return;
         }
-        if sn!(fp).x24 % (da.specialn_pr_delay_per_smoke as i32) == 0 {
+        if <i32 as melee_core::ppc::Ppc>::prem(sn!(fp).x24, da.specialn_pr_delay_per_smoke as i32) == 0 {
             let mut angle = atan2f(-(*fp).coll_data.floor.normal.x, (*fp).coll_data.floor.normal.y);
             ext::efSync_Spawn(
                 0x3FF,
@@ -964,7 +964,7 @@ pub fn ftKb_PrSpecialN1_Phys(gobj: G) {
         (*fp).x74_self_accel.y = 0.0;
         (*fp).self_vel.y = 0.0;
         ext::ftCommon_SetSelfMovementFromGroundedMovement(fp);
-        sn!(fp).x2C = (sn!(fp).x2C as f32 - da.specialn_pr_unk8) as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 - da.specialn_pr_unk8);
         if (sn!(fp).x2C as f32) < da.specialn_pr_some_speed_var {
             ftKb_SpecialNPr_801010D4(gobj, false, 0x40012, 0.0);
         }
@@ -1040,7 +1040,7 @@ pub fn ftKb_PrSpecialAirN_Phys(gobj: G) {
         (*fp).self_vel.x = air_decel_floor((*fp).self_vel.x, da.specialn_pr_air_x_axis_momentum, da.specialn_pr_air_y_axis_momentum);
         sn!(fp).x18 = abs_f((*fp).self_vel.x);
         ext::ftCommon_Fall(fp, da.specialn_pr_air_height_offset_at_start, da.specialn_pr_bounciness);
-        sn!(fp).x2C = (sn!(fp).x2C as f32 - da.specialn_pr_unk8) as i32;
+        sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 - da.specialn_pr_unk8);
         if (sn!(fp).x2C as f32) < da.specialn_pr_some_speed_var {
             ftKb_SpecialNPr_801010D4(gobj, true, 0x40012, 0.0);
         }
@@ -1142,7 +1142,7 @@ pub fn ftKb_PrSpecialN1_Coll(gobj: G) {
         let coll = ext::ft_80082888(gobj, &raw mut ftKb_Init_803CB758);
         let wall_hit = wall_check(gobj, fp);
         if wall_hit {
-            sn!(fp).x2C = (sn!(fp).x2C as f32 * da.specialn_pr_unk12) as i32;
+            sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 * da.specialn_pr_unk12);
             if sn!(fp).x2C < 0 {
                 sn!(fp).x2C = 0;
             }
@@ -1241,7 +1241,7 @@ pub fn ftKb_PrSpecialAirN_Coll(gobj: G) {
         };
         let wall_hit = wall_check(gobj, fp);
         if wall_hit {
-            sn!(fp).x2C = (sn!(fp).x2C as f32 * da.specialn_pr_unk12) as i32;
+            sn!(fp).x2C = melee_core::ppc::fctiwz_f32(sn!(fp).x2C as f32 * da.specialn_pr_unk12);
             if sn!(fp).x2C < 0 {
                 sn!(fp).x2C = 0;
             }

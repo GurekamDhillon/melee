@@ -123,7 +123,7 @@ pub unsafe extern "C" fn fn_80180C60(gobj: *mut HSD_GObj) {
     let st = &mut lbl_80472E48;
     let ec8 = &mut lbl_80472EC8;
 
-    let mut dist = (0.1f32 * ext::Ground_801C57F0(0)) as i32;
+    let mut dist = melee_core::ppc::fctiwz_f32(0.1f32 * ext::Ground_801C57F0(0));
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     if dist < 0 {
         dist = 0;
@@ -193,7 +193,7 @@ pub unsafe extern "C" fn fn_80180C60(gobj: *mut HSD_GObj) {
     }
 
     let d0 = if ext::lbLang_IsSavedLanguageUS() != 0 {
-        ((dist as f32) as f64 / 0.304788) as i32
+        melee_core::ppc::fctiwz((dist as f32) as f64 / 0.304788)
     } else {
         dist
     };

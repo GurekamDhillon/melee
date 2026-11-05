@@ -82,7 +82,7 @@ pub fn ftCo_8009C640(g: G, msid: i32) {
     let f = fp(g);
     let c = cd();
     // `(int) (percent * x4A0 + x4A4)`: one fused site (fmadds), saturating conversion.
-    let timer = melee_core::fp::fmadds(f.dmg.x1830_percent, c.x4A0, c.x4A4) as i32;
+    let timer = melee_core::ppc::fctiwz_f32(melee_core::fp::fmadds(f.dmg.x1830_percent, c.x4A0, c.x4A4));
     ext::ftCommon_InitGrab(f, 0, timer as f32);
     let f = fp(g);
     unsafe {

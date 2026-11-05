@@ -157,7 +157,7 @@ impl HsdFObj {
             d |= (self.rd() as u32) << 24;
             return f32::from_bits(d);
         }
-        let denom: i32 = 1i32 << (frac & 0x1F);
+        let denom: i32 = <i32 as melee_core::ppc::Ppc>::pshl(1i32, ((frac & 0x1F)) as i64);
         let numer: f32 = match frac & 0xE0 {
             HSD_A_FRAC_S8 => {
                 let n = self.peek(0) as i8 as f32;

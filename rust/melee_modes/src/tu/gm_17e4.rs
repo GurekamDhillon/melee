@@ -189,7 +189,7 @@ pub unsafe fn gm_8017E7FC(match_result: u8) {
 /// `((u8_bits*) &flags[i])->bN = 1` with the GameCube (MSB-first) bit order: bN is mask 1<<N.
 #[inline]
 unsafe fn set_flag(flags: *mut u8, byte: usize, bit: u32) {
-    *flags.add(byte) |= 1 << bit;
+    *flags.add(byte) |= <u8 as melee_core::ppc::Ppc>::pshl(1, (bit) as i64);
 }
 
 /// The C takes the `MatchEnd*` as an `int` (a GameCube pointer); native code takes the pointer.

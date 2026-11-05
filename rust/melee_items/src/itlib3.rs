@@ -54,7 +54,7 @@ pub unsafe fn item_is_grabbable(ip: &Item) -> bool {
 /// `llvm.fptosi.sat.i32` (NaN -> 0), which is exactly Rust's `as i32`.
 #[inline]
 pub(crate) fn c_f32_to_s32(f: f32) -> i32 {
-    f as i32
+    melee_core::ppc::fctiwz_f32(f)
 }
 
 pub use crate::tu::it_26B1::it_8026b3c0;

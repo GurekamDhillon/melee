@@ -112,7 +112,7 @@ pub unsafe fn HSD_FogSet(fog: *mut HSD_Fog) {
         } else {
             let mut mtx: Mtx44 = [[0.0; 4]; 4];
             ext::GXGetProjectionv(proj.as_mut_ptr());
-            match proj[0] as i32 {
+            match melee_core::ppc::fctiwz_f32(proj[0]) {
                 0 => {
                     mtx[0][0] = proj[1];
                     mtx[0][2] = proj[2];

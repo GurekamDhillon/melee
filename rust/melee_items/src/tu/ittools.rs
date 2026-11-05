@@ -232,7 +232,7 @@ pub unsafe extern "C" fn it_802EF320(gobj: *mut Item_GObj) {
     ext::it_8026B3A8(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xD44_lifeTimer = (((*attrs).x4 as i32) & 0xFFFE) as f32;
+    (*ip).xD44_lifeTimer = ((melee_core::ppc::fctiwz_f32((*attrs).x4)) & 0xFFFE) as f32;
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, ITEM_ANIM_UPDATE);
 }
 
@@ -244,7 +244,7 @@ pub unsafe extern "C" fn itTools_UnkMotion9_Anim(gobj: *mut Item_GObj) -> bool {
         (*ip).xD44_lifeTimer = 0.0;
         return true;
     }
-    if ((*ip).xD44_lifeTimer as i32) & 2 != 0 {
+    if (melee_core::ppc::fctiwz_f32((*ip).xD44_lifeTimer)) & 2 != 0 {
         ext::it_8026BB20(gobj);
         ext::it_80273670(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, 0.0);
     } else {
@@ -263,7 +263,7 @@ unsafe fn itTools_UnkMotion9_Coll_inline(gobj: *mut Item_GObj) {
     ext::it_8026B3A8(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xD44_lifeTimer = (((*attrs).x4 as i32) & 0xFFFE) as f32;
+    (*ip).xD44_lifeTimer = ((melee_core::ppc::fctiwz_f32((*attrs).x4)) & 0xFFFE) as f32;
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, ITEM_ANIM_UPDATE);
 }
 
@@ -336,7 +336,7 @@ pub unsafe extern "C" fn it_2725_Logic22_Clanked(gobj: *mut Item_GObj) -> bool {
     ext::it_8026B3A8(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xD44_lifeTimer = (((*attrs).x4 as i32) & 0xFFFE) as f32;
+    (*ip).xD44_lifeTimer = ((melee_core::ppc::fctiwz_f32((*attrs).x4)) & 0xFFFE) as f32;
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, ITEM_ANIM_UPDATE);
     false
 }
@@ -349,7 +349,7 @@ pub unsafe extern "C" fn it_2725_Logic22_HitShield(gobj: *mut Item_GObj) -> bool
     ext::it_8026B3A8(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xD44_lifeTimer = (((*attrs).x4 as i32) & 0xFFFE) as f32;
+    (*ip).xD44_lifeTimer = ((melee_core::ppc::fctiwz_f32((*attrs).x4)) & 0xFFFE) as f32;
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, ITEM_ANIM_UPDATE);
     false
 }
@@ -362,7 +362,7 @@ pub unsafe extern "C" fn it_2725_Logic22_Absorbed(gobj: *mut Item_GObj) -> bool 
     ext::it_8026B3A8(gobj);
     (*ip).x40_vel.y = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xD44_lifeTimer = (((*attrs).x4 as i32) & 0xFFFE) as f32;
+    (*ip).xD44_lifeTimer = ((melee_core::ppc::fctiwz_f32((*attrs).x4)) & 0xFFFE) as f32;
     ext::Item_80268E5C(gobj, (*ip).xDD4_itemVar.tools.x0 + 5, ITEM_ANIM_UPDATE);
     (*ip).xD44_lifeTimer = 0.0;
     false

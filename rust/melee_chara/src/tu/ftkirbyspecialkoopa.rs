@@ -142,8 +142,8 @@ pub fn ftKb_SpecialNKp_800FA588(gobj: G) {
             (*fp).facing_dir,
             (*fp).mv.kb.specialn_kp.x0[1] as u32,
             new_facing,
-            (*fp).u.kb.x84 as i32,
-            (*fp).u.kb.x88 as i32,
+            melee_core::ppc::fctiwz_f32((*fp).u.kb.x84),
+            melee_core::ppc::fctiwz_f32((*fp).u.kb.x88),
             It_Kind_Kirby_KoopaFlame as i32,
         );
 
@@ -194,7 +194,7 @@ pub fn ftKb_SpecialNKp_800FA83C(gobj: G) -> i32 {
         if !gobj.is_null() {
             let fp = fpp(gobj);
             if !fp.is_null() {
-                return (*da(fp)).specialn_kp_max_fuel as i32;
+                return melee_core::ppc::fctiwz_f32((*da(fp)).specialn_kp_max_fuel);
             }
         }
         1
@@ -207,7 +207,7 @@ pub fn ftKb_SpecialNKp_800FA878(gobj: G) -> i32 {
         if !gobj.is_null() {
             let fp = fpp(gobj);
             if !fp.is_null() {
-                return (*da(fp)).specialn_kp_flame_scale as i32;
+                return melee_core::ppc::fctiwz_f32((*da(fp)).specialn_kp_flame_scale);
             }
         }
         2

@@ -572,7 +572,7 @@ pub unsafe extern "C" fn it_8027BBF4(item_gobj: *mut HSD_GObj, arg_chk: i32, arg
     it_8027BB1C(&raw mut sp5C, &raw mut sp74);
     if ext::lbVector_AngleXY(&raw mut (*item).xDD4_itemVar.zako.x8, &raw mut sp68) > 0.00017453292f32 {
         (*item).xDD4_itemVar.zako.x8 = sp68;
-        (*item).xDD4_itemVar.zako.x14.x = arg9 as i32;
+        (*item).xDD4_itemVar.zako.x14.x = melee_core::ppc::fctiwz_f32(arg9);
     }
     temp_f1 = ext::lbVector_AngleXY(&raw mut sp5C, &raw mut (*item).xDD4_itemVar.zako.x8);
     if temp_f1 < 0.00017453292f32 || (*item).xDD4_itemVar.zako.x14.x < 2 {
@@ -650,7 +650,7 @@ pub unsafe extern "C" fn it_8027C0F0(item_gobj: *mut HSD_GObj, arg1: *mut Vec3, 
 
         if ext::lbVector_AngleXY(&raw mut (*item).xDD4_itemVar.zako.x8, &raw mut sp68) > 0.00017453292f32 {
             (*item).xDD4_itemVar.zako.x8 = sp68;
-            (*item).xDD4_itemVar.zako.x14.x = arg9 as i32;
+            (*item).xDD4_itemVar.zako.x14.x = melee_core::ppc::fctiwz_f32(arg9);
         }
         temp_f1 = ext::lbVector_AngleXY(&raw mut sp5C, &raw mut (*item).xDD4_itemVar.zako.x8);
         if temp_f1 < 0.00017453292f32 || (*item).xDD4_itemVar.zako.x14.x < 2 {
@@ -868,8 +868,8 @@ pub unsafe extern "C" fn it_8027CBFC(item_gobj: *mut HSD_GObj) -> f32 {
     melee_core::ct!("it_8027CBFC");
     let mut ret_val: i32 = 0;
     match (*item_of(item_gobj)).xCC4 {
-        6 | 7 => ret_val = (*ext::it_804D6D40).xC as i32,
-        9 => ret_val = (*ext::it_804D6D40).x10 as i32,
+        6 | 7 => ret_val = melee_core::ppc::fctiwz_f32((*ext::it_804D6D40).xC),
+        9 => ret_val = melee_core::ppc::fctiwz_f32((*ext::it_804D6D40).x10),
         _ => {}
     }
     ret_val as f32
@@ -887,7 +887,7 @@ pub unsafe extern "C" fn it_8027CC88(item_gobj_arg: *mut HSD_GObj) -> *mut HSD_G
     let mut sp44: Vec3 = core::mem::zeroed();
     let mut sp1c: [i32; 10] = [0; 10];
 
-    if gm_IsCurrently1PMode() && ext::HSD_Randi((*ext::it_804D6D40).x14 as i32) == 0 {
+    if gm_IsCurrently1PMode() && ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*ext::it_804D6D40).x14)) == 0 {
         if ext::grLib_801C9E40() == 0 {
             var_r30 = ext::Ground_801C5840();
             if var_r30 != -1 {

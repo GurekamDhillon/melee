@@ -439,7 +439,7 @@ pub unsafe extern "C" fn hsd_8039DAD4(gen: *mut HSD_Generator) -> f32 {
     }
 
     if (*gen).angle < 0.0 {
-        let n = (*gen).count as i32 as f32;
+        let n = melee_core::ppc::fctiwz_f32((*gen).count) as f32;
         match shape {
             0 | 3 | 4 | 6 | 7 => {
                 let min_a = (*gen).aux.disc.minAngle;
@@ -450,7 +450,7 @@ pub unsafe extern "C" fn hsd_8039DAD4(gen: *mut HSD_Generator) -> f32 {
             _ => {
                 let rnd = randf();
                 cur_angle = ((M_PI * rnd as f64) * 2.0) as f32;
-                angle_step = ((2.0 * M_PI) / ((*gen).count as i32 as f64)) as f32;
+                angle_step = ((2.0 * M_PI) / (melee_core::ppc::fctiwz_f32((*gen).count) as f64)) as f32;
             }
         }
     }

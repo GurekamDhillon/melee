@@ -66,7 +66,7 @@ pub fn ftCaptain_SpecialN_CreateWindEffect(gobj: *mut HSD_GObj) {
     melee_core::ct!("ftCaptain_SpecialN_CreateWindEffect");
     unsafe {
         let fp = fpp(gobj);
-        let cur_frame = (*fp).cur_anim_frame as i32;
+        let cur_frame = melee_core::ppc::fctiwz_f32((*fp).cur_anim_frame);
         let kind = melee_fighter::hooks::ftlib_get_kind(gobj);
         match kind {
             Ft_Kind_Captain => {}

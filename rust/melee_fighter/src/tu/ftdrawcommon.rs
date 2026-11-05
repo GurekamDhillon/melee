@@ -90,7 +90,7 @@ const WB_RENDER_MODEL: i32 = 0;
 /// unless Workbench is drawing, where only the model (bit 7) is drawn, on its option.
 pub fn draw_flag(f: &Fighter, bit: i32) -> bool {
     melee_core::ct!("draw_flag");
-    let fallback = (unsafe { f.x21FC_flag.byte } as i32 & (1 << (7 - bit))) != 0;
+    let fallback = (unsafe { f.x21FC_flag.byte } as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1, ((7 - bit)) as i64))) != 0;
     if ext::Wb_RenderActive() == 0 {
         return fallback;
     }

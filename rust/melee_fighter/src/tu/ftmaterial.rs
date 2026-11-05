@@ -279,16 +279,16 @@ pub unsafe fn ftMaterial_800BF6BC(fp: *mut Fighter, mobj: *mut HSD_MObj, texp: *
                 let mut temp_r8: i32 = fp_color.r as i32;
                 temp_r8 += (color_hex.a as i32 * (color_hex.r as i32 - temp_r8)) / 255;
                 let temp_r7 = temp_r8 * 0xFF;
-                sp168.r = (temp_r7 / inv_alpha) as u8;
+                sp168.r = (<i32 as melee_core::ppc::Ppc>::pdiv(temp_r7, inv_alpha)) as u8;
                 if sp168.r != 0 {
-                    sp168.a = (temp_r7 / sp168.r as i32) as u8;
+                    sp168.a = (<i32 as melee_core::ppc::Ppc>::pdiv(temp_r7, sp168.r as i32)) as u8;
                 } else {
                     sp168.a = (((inv_alpha - temp_r8) * 0xFF) / 255) as u8;
                 }
                 let temp_r8_3 = fp_color.g as i32;
-                sp168.g = (((temp_r8_3 + ((color_hex.a as i32 * (color_hex.g as i32 - temp_r8_3)) / 255)) * 0xFF) / inv_alpha) as u8;
+                sp168.g = (<i32 as melee_core::ppc::Ppc>::pdiv((temp_r8_3 + ((color_hex.a as i32 * (color_hex.g as i32 - temp_r8_3)) / 255)) * 0xFF, inv_alpha)) as u8;
                 let temp_r6 = fp_color.b as i32;
-                sp168.b = (((temp_r6 + ((color_hex.a as i32 * (color_hex.b as i32 - temp_r6)) / 255)) * 0xFF) / inv_alpha) as u8;
+                sp168.b = (<i32 as melee_core::ppc::Ppc>::pdiv((temp_r6 + ((color_hex.a as i32 * (color_hex.b as i32 - temp_r6)) / 255)) * 0xFF, inv_alpha)) as u8;
             }
             chk1 = true;
         } else {

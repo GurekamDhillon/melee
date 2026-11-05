@@ -814,7 +814,7 @@ pub unsafe extern "C" fn sz_validate(mut z: *mut SzDef) -> ::core::ffi::c_int {
     }
     i = 0 as ::core::ffi::c_int;
     while i < (*z).n {
-        j = (i + 1 as ::core::ffi::c_int) % (*z).n;
+        j = <i32 as melee_core::ppc::Ppc>::prem(i + 1 as ::core::ffi::c_int, (*z).n);
         if sz_finite((*z).x[i as usize]) == 0 || sz_finite((*z).y[i as usize]) == 0
             || fabsf((*z).x[i as usize])
                 > 49000 as ::core::ffi::c_int as ::core::ffi::c_float
@@ -855,8 +855,8 @@ pub unsafe extern "C" fn sz_validate(mut z: *mut SzDef) -> ::core::ffi::c_int {
     while i < (*z).n {
         j = 0 as ::core::ffi::c_int;
         while j < (*z).n {
-            if j != i && j != (i + 1 as ::core::ffi::c_int) % (*z).n {
-                let mut k: ::core::ffi::c_int = (i + 1 as ::core::ffi::c_int) % (*z).n;
+            if j != i && j != <i32 as melee_core::ppc::Ppc>::prem(i + 1 as ::core::ffi::c_int, (*z).n) {
+                let mut k: ::core::ffi::c_int = <i32 as melee_core::ppc::Ppc>::prem(i + 1 as ::core::ffi::c_int, (*z).n);
                 let mut cross: ::core::ffi::c_float = melee_core::fp::fmadds(
                     ((*z).x[k as usize] - (*z).x[i as usize]),
                     ((*z).y[j as usize] - (*z).y[i as usize]),
@@ -888,7 +888,7 @@ pub unsafe extern "C" fn sz_contains(
     }
     i = 0 as ::core::ffi::c_int;
     while i < (*z).n {
-        let mut j: ::core::ffi::c_int = (i + 1 as ::core::ffi::c_int) % (*z).n;
+        let mut j: ::core::ffi::c_int = <i32 as melee_core::ppc::Ppc>::prem(i + 1 as ::core::ffi::c_int, (*z).n);
         let mut dx: ::core::ffi::c_float = (*z).x[j as usize] - (*z).x[i as usize];
         let mut dy: ::core::ffi::c_float = (*z).y[j as usize] - (*z).y[i as usize];
         let mut c: ::core::ffi::c_float = melee_core::fp::fmadds(
@@ -1015,7 +1015,7 @@ pub unsafe extern "C" fn sz_emit(
 ) {
     melee_core::ct!("sz_emit");
     let mut v: *mut SzEvent = ::core::ptr::null_mut::<SzEvent>();
-    if mask & (1 as ::core::ffi::c_int) << what - 1 as ::core::ffi::c_int == 0 {
+    if mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (what - 1 as ::core::ffi::c_int) as i64) == 0 {
         return;
     }
     let fresh1 = (*s).nev;
@@ -2139,7 +2139,7 @@ pub unsafe extern "C" fn script_camera_params_release(mut owner: ::core::ffi::c_
     while i < 10 as ::core::ffi::c_int {
         let mut p: *mut ::core::ffi::c_float = script_camera_field(i);
         if !p.is_null()
-            && script_camera_params.mask & (1 as ::core::ffi::c_int) << i != 0
+            && script_camera_params.mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) != 0
         {
             *p = script_camera_params.saved[i as usize];
         }
@@ -2236,14 +2236,14 @@ pub unsafe extern "C" fn ScriptGame_CameraParams(
     i = 0 as ::core::ffi::c_int;
     while i < 10 as ::core::ffi::c_int {
         let mut p: *mut ::core::ffi::c_float = script_camera_field(i);
-        v[i as usize] = if mask & (1 as ::core::ffi::c_int) << i != 0 {
+        v[i as usize] = if mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) != 0 {
             script_mesh_float(bits[i as usize])
         } else if !p.is_null() {
             *p
         } else {
             30 as ::core::ffi::c_int as ::core::ffi::c_float
         };
-        if mask & (1 as ::core::ffi::c_int) << i != 0
+        if mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) != 0
             && !(v[i as usize] >= lo[i as usize] && v[i as usize] <= hi[i as usize])
         {
             return 0 as ::core::ffi::c_int;
@@ -2257,8 +2257,8 @@ pub unsafe extern "C" fn ScriptGame_CameraParams(
     i = 0 as ::core::ffi::c_int;
     while i < 10 as ::core::ffi::c_int {
         let mut p_0: *mut ::core::ffi::c_float = script_camera_field(i);
-        if !(mask & (1 as ::core::ffi::c_int) << i == 0) {
-            if script_camera_params.mask & (1 as ::core::ffi::c_int) << i == 0 {
+        if !(mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) == 0) {
+            if script_camera_params.mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) == 0 {
                 script_camera_params.saved[i as usize] = if !p_0.is_null() {
                     *p_0
                 } else {
@@ -5480,7 +5480,7 @@ pub unsafe extern "C" fn ScriptGame_EchoCapture(mut fp: *mut Fighter) {
                     script_echo
                         .rule[target_owner as usize][target_rule as usize]
                         .targets[target_hit as usize]
-                        &= !((1 as ::core::ffi::c_uint) << entity);
+                        &= !(<u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (entity) as i64));
                     target_hit += 1;
                 }
                 target_rule += 1;
@@ -5955,7 +5955,7 @@ pub unsafe extern "C" fn ScriptGame_EchoConnected(
                 {
                     let mut target: ::core::ffi::c_int = script_echo_entity(victim);
                     if target >= 0 as ::core::ffi::c_int {
-                        (*r).targets[k as usize] |= (1 as ::core::ffi::c_uint) << target;
+                        (*r).targets[k as usize] |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (target) as i64);
                     }
                     (*r).contact_epoch = script_echo.epoch;
                     let mut n: ::core::ffi::c_int = 0;
@@ -5974,7 +5974,7 @@ pub unsafe extern "C" fn ScriptGame_EchoConnected(
                             );
                             if target >= 0 as ::core::ffi::c_int {
                                 (*r).targets[n as usize]
-                                    |= (1 as ::core::ffi::c_uint) << target;
+                                    |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (target) as i64);
                             }
                         }
                         n += 1;
@@ -6039,8 +6039,7 @@ pub unsafe extern "C" fn ScriptGame_EchoBlocked(
                         .capsule as *mut HitCapsule)
                         .offset(k as isize) as *mut HitCapsule
                 {
-                    return (script_echo.rule[i as usize][j as usize].targets[k as usize]
-                        >> target & 1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
+                    return (<u32 as melee_core::ppc::Ppc>::pshr(script_echo.rule[i as usize][j as usize].targets[k as usize], (target) as i64) & 1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
                 }
                 k += 1;
             }
@@ -8403,7 +8402,7 @@ pub unsafe extern "C" fn ScriptGame_StageAddLine(
         - 30 as ::core::ffi::c_int as ::core::ffi::c_float) as ::core::ffi::c_float;
     (*cj.offset(j as isize)).bounding_max.y = ((if y0 > y1 { y0 } else { y1 })
         + 30 as ::core::ffi::c_int as ::core::ffi::c_float) as ::core::ffi::c_float;
-    (*ml).hi_flags = ((1 as ::core::ffi::c_int) << kind - 1 as ::core::ffi::c_int
+    (*ml).hi_flags = (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (kind - 1 as ::core::ffi::c_int) as i64)
         | 0x10 as ::core::ffi::c_int) as ::core::ffi::c_ushort;
     if flags & 1 as ::core::ffi::c_int != 0 {
         (*ml).hi_flags = ((*ml).hi_flags as ::core::ffi::c_int | LINE_FLAG_PLATFORM)
@@ -9926,7 +9925,7 @@ pub unsafe extern "C" fn script_enemy_sample(mut e: *mut ScriptStageEnemy) {
         if (*ip).x5D4_hitboxes[k as usize].hit.state as ::core::ffi::c_int
             != HitCapsule_Disabled as ::core::ffi::c_int
         {
-            mask |= (1 as ::core::ffi::c_int) << k;
+            mask |= <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (k) as i64);
         }
         k += 1;
     }
@@ -12741,7 +12740,7 @@ pub unsafe extern "C" fn ScriptArmorCore_Set(
             && value <= 0 as ::core::ffi::c_int as ::core::ffi::c_float
         || type_0 == 5 as ::core::ffi::c_int
             && (value > 255 as ::core::ffi::c_int as ::core::ffi::c_float
-                || value != value as ::core::ffi::c_int as ::core::ffi::c_float)
+                || value != melee_core::ppc::fctiwz_f32(value) as ::core::ffi::c_float)
         || !(from == -(1 as ::core::ffi::c_int) as ::core::ffi::c_float
             || from >= 0 as ::core::ffi::c_int as ::core::ffi::c_float
                 && from <= 100000 as ::core::ffi::c_int as ::core::ffi::c_float)
@@ -12864,7 +12863,7 @@ pub unsafe extern "C" fn ScriptArmorCore_React(
                 1 | _ => {}
             }
             if (*e).absorbed != 0 {
-                mask |= (1 as ::core::ffi::c_int) << i;
+                mask |= <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64);
             }
         }
         i += 1;
@@ -12889,7 +12888,7 @@ pub unsafe extern "C" fn ScriptArmorCore_Tick(
             }
         {
             (*s).enabled = 0 as ::core::ffi::c_int;
-            expired |= (1 as ::core::ffi::c_int) << i;
+            expired |= <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64);
         }
         i += 1;
     }
@@ -13155,7 +13154,7 @@ pub unsafe extern "C" fn ScriptGame_ArmorFrame() {
                 expired = ScriptArmorCore_Tick(&raw mut (*r).core);
                 i = 0 as ::core::ffi::c_int;
                 while i < 6 as ::core::ffi::c_int {
-                    if expired & (1 as ::core::ffi::c_int) << i != 0 {
+                    if expired & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64) != 0 {
                         memset(
                             (&raw mut (*r).core.slots as *mut ScriptArmorCoreSlot)
                                 .offset(i as isize) as *mut ScriptArmorCoreSlot
@@ -14930,12 +14929,12 @@ pub unsafe extern "C" fn ScriptGame_SkillPerfectShield(
         e,
         if projectile != 0 { 1 as ::core::ffi::c_int } else { 0 as ::core::ffi::c_int },
         a,
-        (if !p_ftCommonData.is_null() {
+        melee_core::ppc::fctiwz_f32(if !p_ftCommonData.is_null() {
             (*p_ftCommonData).x2B4 - (*shielder).mv.co.guard.x18
                 - 1 as ::core::ffi::c_int as ::core::ffi::c_float
         } else {
             0 as ::core::ffi::c_int as ::core::ffi::c_float
-        }) as ::core::ffi::c_int,
+        }),
         damage,
         0 as ::core::ffi::c_int as ::core::ffi::c_float,
     );
@@ -15143,7 +15142,7 @@ pub unsafe extern "C" fn script_skill_one(
                         as *mut ::core::ffi::c_char,
                     &[
                         crate::oracle::Va::I32(
-                            (speed * 1000.0f32) as ::core::ffi::c_int as i32,
+                            melee_core::ppc::fctiwz_f32(speed * 1000.0f32) as i32,
                         ),
                     ],
                 );
@@ -15326,7 +15325,7 @@ pub unsafe extern "C" fn script_skill_one(
                 SK_SDI as ::core::ffi::c_int,
                 e,
                 (*r).sdi_count,
-                (*fp).dmg.x195c_hitlag_frames as ::core::ffi::c_int,
+                melee_core::ppc::fctiwz_f32((*fp).dmg.x195c_hitlag_frames),
                 0 as ::core::ffi::c_int,
                 dx,
                 dy,
@@ -15501,11 +15500,11 @@ pub unsafe extern "C" fn ScriptGame_SkillConst(
             };
         }
         5 => {
-            return (if !p_ftCommonData.is_null() {
+            return melee_core::ppc::fctiwz_f32(if !p_ftCommonData.is_null() {
                 (*p_ftCommonData).x2B4
             } else {
                 0 as ::core::ffi::c_int as ::core::ffi::c_float
-            }) as ::core::ffi::c_int;
+            });
         }
         _ => {}
     }
@@ -15673,7 +15672,7 @@ pub unsafe extern "C" fn ScriptGame_ObjectiveRoute(
                     0 as ::core::ffi::c_int
                 };
                 return if m_0 > 0 as ::core::ffi::c_int
-                    && m_0 & (1 as ::core::ffi::c_int) << idx != 0
+                    && m_0 & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (idx) as i64) != 0
                 {
                     1 as ::core::ffi::c_int
                 } else {
@@ -15823,11 +15822,11 @@ pub unsafe extern "C" fn ScriptGame_CritSet(
         (*c).mult[slot as usize] = m;
         (*c).mult_max[slot as usize] = mm;
         (*c).launch[slot as usize] = l;
-        (*c).has |= (1 as ::core::ffi::c_uint) << slot;
+        (*c).has |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (slot) as i64);
         (*c).max_mult = 1 as ::core::ffi::c_int as ::core::ffi::c_float;
         i = 0 as ::core::ffi::c_int;
         while i < SCRIPT_CRIT_SLOTS {
-            if (*c).has & (1 as ::core::ffi::c_uint) << i != 0
+            if (*c).has & <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (i) as i64) != 0
                 && (*c).mult_max[i as usize] > (*c).max_mult
             {
                 (*c).max_mult = (*c).mult_max[i as usize];
@@ -15995,7 +15994,7 @@ pub unsafe extern "C" fn ScriptGame_CritHit(
         script_hit_family_move(atk)
     };
     if slot < 1 as ::core::ffi::c_int || slot >= SCRIPT_CRIT_SLOTS
-        || (*c).has & (1 as ::core::ffi::c_uint) << slot == 0
+        || (*c).has & <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (slot) as i64) == 0
     {
         slot = 0 as ::core::ffi::c_int;
     }
@@ -16351,11 +16350,11 @@ pub unsafe extern "C" fn ScriptGame_ShockExtra(
     {
         return 0 as ::core::ffi::c_int;
     }
-    extra = (melee_core::fp::fmadds(
+    extra = melee_core::ppc::fctiwz_f32(melee_core::fp::fmadds(
         base as ::core::ffi::c_float,
         (u.f - 1.0f32),
         0.5f32,
-    )) as ::core::ffi::c_int + bonus;
+    )) + bonus;
     return if extra > SCRIPT_SHOCK_MAX_EXTRA { SCRIPT_SHOCK_MAX_EXTRA } else { extra };
 }
 pub unsafe extern "C" fn ScriptGame_ShockTake(
@@ -18257,7 +18256,7 @@ pub unsafe extern "C" fn sm_mask(
     i = 1 as ::core::ffi::c_int;
     while i <= SM_NSTATUS {
         if (*w).st[port as usize][i as usize].on != 0 {
-            m |= (1 as ::core::ffi::c_int) << i - 1 as ::core::ffi::c_int;
+            m |= <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i - 1 as ::core::ffi::c_int) as i64);
         }
         i += 1;
     }
@@ -18697,7 +18696,7 @@ pub unsafe extern "C" fn sm_matches(
     }
     if main_ok != 0 && (*e).kind == SM_E_INTERVAL as ::core::ffi::c_int
         && (*rule.offset(0 as ::core::ffi::c_int as isize) <= 0 as ::core::ffi::c_int
-            || (*w).frame % *rule.offset(0 as ::core::ffi::c_int as isize)
+            || <i32 as melee_core::ppc::Ppc>::prem((*w).frame, *rule.offset(0 as ::core::ffi::c_int as isize))
                 != 0 as ::core::ffi::c_int)
     {
         return 0 as ::core::ffi::c_int;
@@ -19217,7 +19216,7 @@ pub unsafe extern "C" fn script_mods_bits(
     let mut b: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     i = 1 as ::core::ffi::c_int;
     while i <= SM_NSTATUS {
-        if mask & (1 as ::core::ffi::c_int) << i - 1 as ::core::ffi::c_int != 0 {
+        if mask & <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i - 1 as ::core::ffi::c_int) as i64) != 0 {
             b |= script_mods_status_bits[i as usize];
         }
         i += 1;
@@ -24427,23 +24426,21 @@ pub unsafe extern "C" fn part_tint_register(
             c = (*d).u.tevconf.kcsel as ::core::ffi::c_int;
             a = (*d).u.tevconf.kasel as ::core::ffi::c_int;
             if c >= 12 as ::core::ffi::c_int && c <= 15 as ::core::ffi::c_int {
-                used |= (1 as ::core::ffi::c_uint) << c - 12 as ::core::ffi::c_int;
+                used |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (c - 12 as ::core::ffi::c_int) as i64);
             } else if c >= 16 as ::core::ffi::c_int && c <= 31 as ::core::ffi::c_int {
                 used
-                    |= (1 as ::core::ffi::c_uint)
-                        << (c - 16 as ::core::ffi::c_int) % 4 as ::core::ffi::c_int;
+                    |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, ((c - 16 as ::core::ffi::c_int) % 4 as ::core::ffi::c_int) as i64);
             }
             if a >= 16 as ::core::ffi::c_int && a <= 31 as ::core::ffi::c_int {
                 used
-                    |= (1 as ::core::ffi::c_uint)
-                        << (a - 16 as ::core::ffi::c_int) % 4 as ::core::ffi::c_int;
+                    |= <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, ((a - 16 as ::core::ffi::c_int) % 4 as ::core::ffi::c_int) as i64);
             }
         }
         d = (*d).next as *mut HSD_TevDesc;
     }
     k = 0 as ::core::ffi::c_int;
     while k < 4 as ::core::ffi::c_int {
-        if used & (1 as ::core::ffi::c_uint) << k == 0 {
+        if used & <u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (k) as i64) == 0 {
             return k;
         }
         k += 1;
@@ -24886,7 +24883,7 @@ pub unsafe extern "C" fn part_component(
         val = val as ::core::ffi::c_short as ::core::ffi::c_int;
     }
     return val as ::core::ffi::c_float
-        / ((1 as ::core::ffi::c_uint) << frac) as ::core::ffi::c_float;
+        / (<u32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_uint, (frac) as i64)) as ::core::ffi::c_float;
 }
 pub unsafe extern "C" fn part_vertex(
     mut fp: *mut Fighter,
@@ -25644,7 +25641,7 @@ pub unsafe extern "C" fn ScriptGame_PartsI(
                                 if state >= 31 as ::core::ffi::c_int {
                                     return -(2 as ::core::ffi::c_int);
                                 }
-                                mask |= (1 as ::core::ffi::c_int) << state;
+                                mask |= <i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (state) as i64);
                             }
                             k += 1;
                         }
@@ -26476,12 +26473,12 @@ pub unsafe extern "C" fn script_goto_stick_for(
         return 0 as ::core::ffi::c_int;
     }
     if adx > 28.0f32 {
-        return (dir * 127.0f32) as ::core::ffi::c_int;
+        return melee_core::ppc::fctiwz_f32(dir * 127.0f32);
     }
     if adx > 10.0f32 {
-        return (dir * 64.0f32) as ::core::ffi::c_int;
+        return melee_core::ppc::fctiwz_f32(dir * 64.0f32);
     }
-    return (dir * 48.0f32) as ::core::ffi::c_int;
+    return melee_core::ppc::fctiwz_f32(dir * 48.0f32);
 }
 pub unsafe extern "C" fn script_goto_tick(
     mut fp: *mut Fighter,
@@ -28234,7 +28231,7 @@ pub unsafe extern "C" fn ScriptGame_Hit(
             crate::oracle::Va::I32(angle as i32),
             crate::oracle::Va::I32(kbg as i32),
             crate::oracle::Va::I32(bkb as i32),
-            crate::oracle::Va::I32((*fp).dmg.x1830_percent as ::core::ffi::c_int as i32),
+            crate::oracle::Va::I32(melee_core::ppc::fctiwz_f32((*fp).dmg.x1830_percent) as i32),
         ],
     );
     return 1 as ::core::ffi::c_int;
@@ -30461,7 +30458,7 @@ pub unsafe extern "C" fn st_dat_models_mask(
     }
     i = 0 as ::core::ffi::c_uint;
     while i < (*m).groups {
-        if !(mask & (1 as ::core::ffi::c_ulonglong) << i == 0) {
+        if !(mask & <u64 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_ulonglong, (i) as i64) == 0) {
             rc = st_dat_joint_tree(
                 v,
                 st_dat_ref(
@@ -31089,7 +31086,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotLoad(
             as *mut HSD_Joint;
         let mut branch: HSD_Joint = unsafe { core::mem::zeroed::<HSD_Joint>() };
         let mut root: *mut HSD_JObj = ::core::ptr::null_mut::<HSD_JObj>();
-        if group_mask & (1 as ::core::ffi::c_ulonglong) << g == 0 || source.is_null() {
+        if group_mask & <u64 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_ulonglong, (g) as i64) == 0 || source.is_null() {
             (*s).ngroups = g + 1 as ::core::ffi::c_int;
         } else {
             if script_slot_ptr(
@@ -31464,7 +31461,7 @@ pub unsafe extern "C" fn ScriptGame_StageSlotMission(
             script_slot_dispose(s);
             return -(16 as ::core::ffi::c_int);
         }
-        (*l).hi = ((1 as ::core::ffi::c_int) << (*l).kind - 1 as ::core::ffi::c_int)
+        (*l).hi = (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, ((*l).kind - 1 as ::core::ffi::c_int) as i64))
             as ::core::ffi::c_uint;
         (*l).lo = ((if flags & 1 as ::core::ffi::c_int != 0 {
             LINE_FLAG_PLATFORM
@@ -35889,7 +35886,7 @@ pub unsafe extern "C" fn ScriptMods_StageFrame() {
             if v > 999.0f32 {
                 v = 999.0f32;
             }
-            ScriptGame_SetPercent(p, v as ::core::ffi::c_int);
+            ScriptGame_SetPercent(p, melee_core::ppc::fctiwz_f32(v));
         }
         p += 1;
     }

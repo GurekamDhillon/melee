@@ -206,10 +206,10 @@ pub unsafe fn fn_801695BC(arg0: u8, arg1: u8, arg2: u8, arg3: *const u8, arg4: *
         let mut i = 0usize;
         while *arg4.add(i) != -2 {
             if arg0 as i8 == *arg3.add(i) as i8 {
-                if colors[(color_i % ncolors_s32) as usize] == -1 {
+                if colors[(<i32 as melee_core::ppc::Ppc>::prem(color_i, ncolors_s32)) as usize] == -1 {
                     color_i += 1;
                 }
-                *arg4.add(i) = colors[(color_i % ncolors_s32) as usize];
+                *arg4.add(i) = colors[(<i32 as melee_core::ppc::Ppc>::prem(color_i, ncolors_s32)) as usize];
                 color_i += 1;
             }
             i += 1;
@@ -245,7 +245,7 @@ pub unsafe fn fn_801697FC(character: i8, mut costume: i8, new_character: i8, new
         ncolors = 254;
     }
     if new_character == character && costume == new_costume {
-        costume = ((costume as u8 as i32 + 1) % ncolors as i32) as i8;
+        costume = (<i32 as melee_core::ppc::Ppc>::prem(costume as u8 as i32 + 1, ncolors as i32)) as i8;
     }
     let mut i = 0usize;
     while *buf.add(i) != -2 {

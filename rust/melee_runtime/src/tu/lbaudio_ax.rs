@@ -2982,7 +2982,7 @@ pub unsafe extern "C" fn lbAudioAx_80026E84(mut ckind: i32) -> u64 {
     if LBAX_N!() > 55 && ckind >= 0 {
         let ssm = ext::Mex_SsmForPortCKind(ckind);
         if ssm >= 0 {
-            return if ssm < 64 { 1u64 << ssm } else { 0 };
+            return if ssm < 64 { <u64 as melee_core::ppc::Ppc>::pshl(1u64, (ssm) as i64) } else { 0 };
         }
         ckind = ext::gm_MexVanillaKind(ckind, 1);
     }
@@ -3011,7 +3011,7 @@ pub unsafe extern "C" fn lbAudioAx_80026EBC(stkind: u32) -> u64 {
         lbAx_stage_pending[shift as usize] = 1;
         return 0;
     }
-    1u64 << shift
+    <u64 as melee_core::ppc::Ppc>::pshl(1u64, (shift) as i64)
 }
 
 pub unsafe extern "C" fn lbAudioAx_80026F2C(flags: u32) {

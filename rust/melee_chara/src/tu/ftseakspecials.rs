@@ -600,7 +600,7 @@ pub fn ftSk_SpecialS_80110BCC(gobj: *mut HSD_GObj) {
             || sums_of_squares[3] > chain_val_sq
         {
             if (*fp).mv.sk.specials.x1C <= 0 {
-                (*fp).mv.sk.specials.x1C = (*special_attributes).x18 as i32;
+                (*fp).mv.sk.specials.x1C = melee_core::ppc::fctiwz_f32((*special_attributes).x18);
                 ftSeakSpecialS_LoopChainHitActivate(gobj);
             }
         } else {
@@ -763,7 +763,7 @@ pub fn ftSk_SpecialS_CheckInitChain(gobj: *mut HSD_GObj) -> bool {
 
         if (*fp).mv.sk.specials.x0 as f32 == (*da).x1C {
             ftSk_SpecialS_SpawnChain(gobj);
-            (*fp).mv.sk.specials.x1C = (*da).x18 as i32;
+            (*fp).mv.sk.specials.x1C = melee_core::ppc::fctiwz_f32((*da).x18);
 
             if (*fp).u.sk.x8.is_null() {
                 if (*fp).ground_or_air == GA_Air {

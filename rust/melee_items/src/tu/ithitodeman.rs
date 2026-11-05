@@ -481,7 +481,7 @@ pub unsafe extern "C" fn it_802D4494(gobj: *mut Item_GObj) {
     melee_core::ct!("it_802D4494");
     let ip = ip_of(gobj);
     let attrs = attrs_of(ip);
-    let randi = ext::HSD_Randi(((*attrs).x14 - (*attrs).x18) as i32);
+    let randi = ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*attrs).x14 - (*attrs).x18));
     (*ip).xDD4_itemVar.hitodeman.x84 = (*attrs).x18 + randi as f32;
 }
 
@@ -902,7 +902,7 @@ pub fn it_802d4ef4(ip: &mut Item) -> bool {
 pub unsafe fn it_802d4494(rand: &mut HsdRand, ip: &mut Item) {
     melee_core::ct!("it_802d4494");
     let a = &*((*ip.xC4_article_data).x4_specialAttributes as *const itHitodemanAttributes);
-    let r = rand.randi((a.x14 - a.x18) as i32);
+    let r = rand.randi(melee_core::ppc::fctiwz_f32(a.x14 - a.x18));
     ip.xDD4_itemVar.hitodeman.x84 = a.x18 + r as f32;
 }
 

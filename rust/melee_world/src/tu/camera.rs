@@ -4703,8 +4703,8 @@ pub unsafe fn Camera_ProjectToScreen(mut cobj: *mut HSD_CObj, mut arg0: *mut Vec
     if (((point.x > 2.1474836e+09f32) || (point.x < (-2.1474836e+09f32))) || (point.y > 2.1474836e+09f32)) || (point.y < (-2.1474836e+09f32)) {
         return 0;
     }
-    px = point.x as i32;
-    py = point.y as i32;
+    px = melee_core::ppc::fctiwz_f32(point.x);
+    py = melee_core::ppc::fctiwz_f32(point.y);
     if !arg1.is_null() {
         (*arg1).x = px;
         (*arg1).y = py;
@@ -4922,7 +4922,7 @@ pub unsafe fn Camera_80031154(mut arg0: *mut Vec) -> i32 {
 /// `Camera_8003118C`
 pub unsafe fn Camera_8003118C(mut arg0: *mut Vec, mut arg1: f32) -> i32 {
     melee_core::ct!("Camera_8003118C");
-    if Camera_80029124(arg0, arg1 as i32) == (0 as u32) {
+    if Camera_80029124(arg0, melee_core::ppc::fctiwz_f32(arg1)) == (0 as u32) {
         return 1;
     }
     return 0;

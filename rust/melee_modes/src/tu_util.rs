@@ -29,14 +29,14 @@ pub fn jobj_next(j: *mut HSD_JObj) -> *mut HSD_JObj {
 /// bit is `msb` (0 = the top bit of the byte).
 #[inline]
 pub fn bits8_get(v: u8, msb: u32, width: u32) -> u8 {
-    (v >> (8 - msb - width)) & (((1u32 << width) - 1) as u8)
+    (<u8 as melee_core::ppc::Ppc>::pshr(v, ((8 - msb - width)) as i64)) & (((<u32 as melee_core::ppc::Ppc>::pshl(1u32, (width) as i64)) - 1) as u8)
 }
 
 #[inline]
 pub fn bits8_set(v: &mut u8, msb: u32, width: u32, val: u8) {
     let shift = 8 - msb - width;
-    let mask = (((1u32 << width) - 1) as u8) << shift;
-    *v = (*v & !mask) | ((val << shift) & mask);
+    let mask = <u8 as melee_core::ppc::Ppc>::pshl(((<u32 as melee_core::ppc::Ppc>::pshl(1u32, (width) as i64)) - 1) as u8, (shift) as i64);
+    *v = (*v & !mask) | ((<u8 as melee_core::ppc::Ppc>::pshl(val, (shift) as i64)) & mask);
 }
 
 // dolphin/pad.h and baselib/controller.h button masks

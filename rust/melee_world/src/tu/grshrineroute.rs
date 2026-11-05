@@ -370,7 +370,7 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
             let result = ext::Ground_801C3DB4(grShrineRoute_80208F14 as *mut c_void, a1, radius);
             if result != -1 {
                 let ix = result - 0xBD;
-                if (*gp).u.shrineroute.xC6 as i32 & (1 << ix) == 0 {
+                if (*gp).u.shrineroute.xC6 as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1, (ix) as i64)) == 0 {
                     (*gp).u.shrineroute.xC8 = result as u16;
                     if (*gp).u.map.symbol[ix as usize].is_null() {
                         panic!("assert: grshrineroute.c:0x213 gp->u.map.symbol[ix]");
@@ -467,7 +467,7 @@ pub unsafe extern "C" fn grShrineRoute_80208F70(gobj: *mut HSD_GObj) {
             track_plat = 1;
             if ext::Ground_801C5764() == 1 && (*gp).u.shrineroute.xCA != 0 && (*gp).u.shrineroute.xCC != 0 {
                 (*gp).u.shrineroute.xC6 =
-                    ((*gp).u.shrineroute.xC6 as i32 | (1 << ((*gp).u.shrineroute.xC8 as i32 - 0xBD))) as u16;
+                    ((*gp).u.shrineroute.xC6 as i32 | (<i32 as melee_core::ppc::Ppc>::pshl(1, (((*gp).u.shrineroute.xC8 as i32 - 0xBD)) as i64))) as u16;
                 ext::grZakoGenerator_801CAEF0(1);
                 grShrineRoute_8020B020(gobj, -1, 0);
                 (*gp).u.shrineroute.xCE = 0x3C;
@@ -856,9 +856,9 @@ pub unsafe extern "C" fn grShrineRoute_8020A21C(gobj: *mut HSD_GObj) {
             ext::HSD_LObjGetColor((*gp).u.shrineroute2.xC8[sorted[1] as usize], &mut color);
             if distances[sorted[2] as usize] - distances[sorted[1] as usize] < 50.0 {
                 let ratio = dist_diff / 50.0;
-                color.r = (color.r as f32 * ratio) as u8;
-                color.g = (color.g as f32 * ratio) as u8;
-                color.b = (color.b as f32 * ratio) as u8;
+                color.r = melee_core::ppc::fctiwz_f32(color.r as f32 * ratio) as u8;
+                color.g = melee_core::ppc::fctiwz_f32(color.g as f32 * ratio) as u8;
+                color.b = melee_core::ppc::fctiwz_f32(color.b as f32 * ratio) as u8;
             }
         }
         ext::HSD_LObjSetColor((*gp).u.shrineroute2.x170, color);

@@ -138,7 +138,7 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
             if costumes <= 0 {
                 costumes = 1;
             }
-            players[i].color = ((if v >= 0 { v } else { i as i32 }) % costumes) as u8;
+            players[i].color = (<i32 as melee_core::ppc::Ppc>::prem(if v >= 0 { v } else { i as i32 }, costumes)) as u8;
         }
         v = ext::SceneLaunch_PlayerCpuKind(i as i32);
         if v >= 0 {
@@ -198,9 +198,9 @@ pub unsafe fn SceneLaunch_SeedPlayers(vs: *mut VsModeData, dummy_fallback: i32) 
             if ncost == 0 {
                 ncost = 1;
             }
-            players[i].color = ((players[i - 1].color as i32 + 1) % ncost as i32) as u8;
+            players[i].color = (<i32 as melee_core::ppc::Ppc>::prem(players[i - 1].color as i32 + 1, ncost as i32)) as u8;
             if players[i].color == players[0].color {
-                players[i].color = ((players[i].color as i32 + 1) % ncost as i32) as u8;
+                players[i].color = (<i32 as melee_core::ppc::Ppc>::prem(players[i].color as i32 + 1, ncost as i32)) as u8;
             }
             players[i].slot_type = PKIND_NA; // the menu turns them on (fn_80188550)
             players[i].slot = (i + 1) as u8;

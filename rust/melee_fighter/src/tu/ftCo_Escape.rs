@@ -229,7 +229,7 @@ fn inlineB0(f: &Fighter) -> bool {
 pub fn ftCo_Ucf073RimAxis(v: f32) -> f32 {
     melee_core::ct!("ftCo_Ucf073RimAxis");
     let t = fmsubs(if v < 0.0 { -v } else { v }, 80.0, 9.953975677490234e-06);
-    ((t as i32).wrapping_add(2)) as f32 / 80.0
+    ((melee_core::ppc::fctiwz_f32(t)).wrapping_add(2)) as f32 / 80.0
 }
 
 /// TARGET_PC static `ftCo_Ucf073BlocksSpotdodge`.
@@ -261,7 +261,7 @@ pub fn ftCo_Ucf084RimUnits(v: f32) -> i32 {
     melee_core::ct!("ftCo_Ucf084RimUnits");
     let a = if v < 0.0 { -v } else { v };
     let t = (a as f64).mul_add(80.0, -(9.99999974738e-05f32 as f64)) as f32;
-    (t as i32).wrapping_add(2)
+    (melee_core::ppc::fctiwz_f32(t)).wrapping_add(2)
 }
 
 /// TARGET_PC static `ftCo_Ucf084BlocksSpotdodge`.

@@ -784,7 +784,7 @@ pub unsafe extern "C" fn it_3F14_Logic2_DmgReceived(gobj: *mut Item_GObj) -> boo
         if (*ip).xC9C as f32 >= (*attr).xC {
             it_3F14_Logic2_inline(gobj, ip, attr);
         } else if (*ip).msid == 0 {
-            if ext::HSD_Randi((*attr).x8 as i32) == 0 {
+            if ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*attr).x8)) == 0 {
                 (*ip).facing_dir = -(*ip).xCCC_incDamageDirection;
                 (*ip).xDD4_itemVar.taru.xDE4 = (*ip).facing_dir * ((*ip).xCA0 as f32 * (*attr).x10);
                 ext::it_8027236C(gobj);

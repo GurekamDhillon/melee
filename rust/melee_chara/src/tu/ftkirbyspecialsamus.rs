@@ -77,7 +77,7 @@ pub fn ftKb_SpecialNSs_800FCC14(gobj: G, out1: &mut i32, out2: &mut i32) -> i32 
                 return -1;
             }
             *out1 = (*fp).u.kb.xA8;
-            *out2 = da.specialn_ss_charge_time as i32;
+            *out2 = melee_core::ppc::fctiwz_f32(da.specialn_ss_charge_time);
             return 0;
         }
         -1
@@ -254,7 +254,7 @@ pub fn ftKb_SsSpecialNStart_Anim(gobj: G) {
 pub fn charge_sfx_index(charge: i32, charge_time: f32) -> usize {
     melee_core::ct!("charge_sfx_index");
     let ratio = if charge != 0 { charge as f32 / charge_time } else { 0.0 };
-    ((5.0f32 * ratio) as i32) as usize
+    (melee_core::ppc::fctiwz_f32(5.0f32 * ratio)) as usize
 }
 
 pub fn ftKb_SsSpecialNHold_Anim(gobj: G) {
@@ -273,7 +273,7 @@ pub fn ftKb_SsSpecialNHold_Anim(gobj: G) {
             (*fp).u.kb.xA8 += 1;
             if (*fp).u.kb.xA8 as f32 >= da.specialn_ss_charge_time {
                 ext::ftCo_800BFFD0(fp, 0x36, 0);
-                (*fp).u.kb.xA8 = da.specialn_ss_charge_time as i32;
+                (*fp).u.kb.xA8 = melee_core::ppc::fctiwz_f32(da.specialn_ss_charge_time);
                 change_ms(gobj, ftKb_MS_SsSpecialNCancel as i32, 0);
                 ftKb_ChargeShot_inline(gobj);
                 ftKb_SpecialN_set_cbs(gobj);

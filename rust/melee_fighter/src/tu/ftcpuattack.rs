@@ -1878,7 +1878,7 @@ pub fn ftco_800b9704(fp: &mut Fighter, randf: f32) {
     // ftcpuattack.c: (10 - level) * (rand * 15.0F + 15.0F) + 10.0F, stored to an int field.
     let t = melee_core::fp::fmadds(rand, 15.0, 15.0);
     let v = melee_core::fp::fmadds((10 - cpu.level) as f32, t, 10.0);
-    cpu.x34 = v as i32;
+    cpu.x34 = melee_core::ppc::fctiwz_f32(v);
     if cpu.kind == 7 {
         cpu.x34 /= 2;
     }

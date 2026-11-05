@@ -87,7 +87,7 @@ impl HsdRender {
             if n >= 8 {
                 continue;
             }
-            let id = 1u32 << n;
+            let id = <u32 as melee_core::ppc::Ppc>::pshl(1u32, (n) as i64);
             n += 1;
             let pos = wobj_pos(
                 d,

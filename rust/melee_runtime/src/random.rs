@@ -101,7 +101,7 @@ impl HsdRand {
 
     /// `HSD_Randi`: `max_val * r / 65536` with C's wrapping multiply and truncating divide.
     pub fn randi(&mut self, max_val: i32) -> i32 {
-        max_val.wrapping_mul((self.step() >> 16) as i32) / (1 << 16)
+        <i32 as melee_core::ppc::Ppc>::pdiv(max_val.wrapping_mul((self.step() >> 16) as i32), 1 << 16)
     }
 
     /// random.h's inline wrapper: `HSD_Randi` that accepts an empty range.

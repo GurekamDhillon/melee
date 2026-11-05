@@ -161,7 +161,7 @@ pub fn gm_8018A314(difficulty: u8, stage_slot: u8) -> f32 {
 /// `((u8_bits*) &arg0->_x448[i])->bN = 1`
 #[inline]
 fn set_bit(arg0: &mut MatchEnd, i: usize, n: u32) {
-    arg0._x448[i] |= 1 << n;
+    arg0._x448[i] |= <u8 as melee_core::ppc::Ppc>::pshl(1, (n) as i64);
 }
 
 /// `fn_8018A364(int)`: the C takes the MatchEnd pointer as an `int` (32-bit guest address).

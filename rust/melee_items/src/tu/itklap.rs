@@ -486,12 +486,12 @@ pub unsafe extern "C" fn it_802E2330(gobj: *mut Item_GObj, pos: *mut Vec, arg2: 
 
     (*ip).pos = *pos;
     ext::lbColl_80008D30(&mut hit as *mut SmallerHitCapsule as *mut HitCapsule, arg2);
-    ext::Item_80269CA0(ip, hit.damage as i32);
+    ext::Item_80269CA0(ip, melee_core::ppc::fctiwz_f32(hit.damage));
     if angle < 0.0 {
         angle = (angle as f64 + 360.0) as f32;
     }
     (*ip).xCC8_knockback = ext::it_80270CD8(ip, &mut hit as *mut SmallerHitCapsule as *mut HitCapsule);
-    (*ip).xCAC_angle = angle as i32;
+    (*ip).xCAC_angle = melee_core::ppc::fctiwz_f32(angle);
     (*ip).xCCC_incDamageDirection = (*ip).facing_dir;
     it_802E2330_inline(gobj);
 }

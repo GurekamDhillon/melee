@@ -95,7 +95,7 @@ unsafe fn fn_80037F00(attacker_fp: *mut Fighter, fp: *mut Fighter, ev: *mut ft_8
         d.set_x11_b4(0);
     }
 
-    fp.dmg.x18d8.x4 = fp.dmg.x1830_percent as i32;
+    fp.dmg.x18d8.x4 = melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent);
 
     fp.dmg.x18d8.set_x11_b0(arg3 as u8);
 
@@ -225,7 +225,7 @@ pub unsafe fn pl_80038144(
                 let x18d4_x3 = (*victim_fp).dmg.x18d4.x3 as i32;
                 assert!((0..8).contains(&h_player), "pltrick.c:0x7E: 0 <= h_player && h_player < 8");
                 if x18d4_x3 < 0x64 {
-                    acp.x504[x18d4_x3 as usize] |= (1i32 << (h_player as u8)) as u8;
+                    acp.x504[x18d4_x3 as usize] |= (<i32 as melee_core::ppc::Ppc>::pshl(1i32, ((h_player as u8)) as i64)) as u8;
                 }
 
                 ext::pl_8003FE64((*attacker_fp).player_id as i32, (*attacker_fp).is_sub_fighter() as i32);
@@ -271,7 +271,7 @@ pub fn pl_80037b2c(s: &plActionStats, h_player: i32, idx: i32) -> i32 {
     melee_core::ct!("pl_80037b2c");
     assert!((0..8).contains(&h_player), "pltrick.c:0x89: 0 <= h_player && h_player < 8");
     if idx < 0x64 {
-        return s.x504[idx as usize] as i32 & (1i32 << (h_player as u8));
+        return s.x504[idx as usize] as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1i32, ((h_player as u8)) as i64));
     }
     0
 }

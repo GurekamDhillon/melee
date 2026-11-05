@@ -395,8 +395,8 @@ void makeArithmeticSafe(Function &F) {
       case Instruction::SDiv:
         Fallback = B.CreateSelect(B.CreateICmpSLT(A, Zero), AllOnes, Zero);
         break;
-      default: // SRem: x % 0 -> x, INT_MIN % -1 -> 0
-        Fallback = B.CreateSelect(DZero, A, Zero);
+      default: // SRem: MWCC's divw+mullw+subf: x % 0 -> x, INT_MIN % -1 -> INT_MIN - 1 = INT_MAX
+        Fallback = B.CreateSelect(DZero, A, ConstantInt::get(T, APInt::getSignedMaxValue(W)));
         break;
       }
       R = B.CreateSelect(Bad, Fallback, Res);
@@ -418,11 +418,16 @@ void makeArithmeticSafe(Function &F) {
       if (W < 32) {
         // fctiwz (signed 32-bit saturate) then truncate, for both signed and unsigned targets.
         Value *S = B.CreateIntrinsic(Intrinsic::fptosi_sat, {I32, Src->getType()}, {Src});
+        // fctiwz gives 0x80000000 for NaN (fptosi.sat gives 0).
+        S = B.CreateSelect(B.CreateFCmpUNO(Src, Src), ConstantInt::get(I32, 0x80000000u), S);
         R = B.CreateTrunc(S, T);
       } else {
         Intrinsic::ID IID =
             Op == Instruction::FPToSI ? Intrinsic::fptosi_sat : Intrinsic::fptoui_sat;
         R = B.CreateIntrinsic(IID, {T, Src->getType()}, {Src});
+        // fctiwz gives 0x80000000 for NaN; (u32) f is __cvt_fp2unsigned, NaN -> 0 like fptoui.sat.
+        if (Op == Instruction::FPToSI && W == 32)
+          R = B.CreateSelect(B.CreateFCmpUNO(Src, Src), ConstantInt::get(T, 0x80000000u), R);
       }
     }
 

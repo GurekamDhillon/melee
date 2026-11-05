@@ -667,7 +667,7 @@ pub unsafe extern "C" fn grCastle_801CDA0C(gobj: *mut Ground_GObj) {
     HSD_JObjSetTranslateY((*gp).u.castle8.plat[0].jobj, (*gp).u.castle8.plat[0].pos);
     ext::mpLib_80057424(4);
 
-    (*gp).u.castle8.plat[0].timer = yp().x38 as i32 as i16;
+    (*gp).u.castle8.plat[0].timer = melee_core::ppc::fctiwz_f32(yp().x38) as i16;
     (*gp).u.castle8.plat[0].wind = 0.0;
 
     (*gp).u.castle8.plat[1].jobj = ext::Ground_801C3FA4(gobj, 4);
@@ -683,7 +683,7 @@ pub unsafe extern "C" fn grCastle_801CDA0C(gobj: *mut Ground_GObj) {
     HSD_JObjSetTranslateY((*gp).u.castle8.plat[1].jobj, (*gp).u.castle8.plat[1].pos);
     ext::mpLib_80057424(5);
 
-    (*gp).u.castle8.plat[1].timer = yp().x38 as i32 as i16;
+    (*gp).u.castle8.plat[1].timer = melee_core::ppc::fctiwz_f32(yp().x38) as i16;
     (*gp).u.castle8.plat[1].wind = 0.0;
 
     ext::Ground_801C10B8(gobj, Some(grCastle_801CD9B4));
@@ -1374,7 +1374,7 @@ pub unsafe extern "C" fn grCastle_801CF308(gobj: *mut Ground_GObj) {
                 if idx & 1 == 0 { (word >> 8) as i8 } else { word as i8 }
             };
             if val != -1 {
-                (*gp).u.castle11.xCA = (2.0 * (val as f64)) as i32 as i16;
+                (*gp).u.castle11.xCA = melee_core::ppc::fctiwz(2.0 * (val as f64)) as i16;
             } else {
                 (*gp).u.castle5.xC4 = 3;
                 (*gp).u.castle11.xD8 = ptr_u32(ext::grMaterial_801C8CFC(

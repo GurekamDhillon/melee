@@ -220,7 +220,7 @@ pub unsafe extern "C" fn it_802E0734(gobj: *mut Item_GObj) {
         1 => {
             (*ip).x40_vel.x = (*ip).facing_dir * (*(*attrs).x0).x4;
             let half_width = (*attrs).x14 / 2 as f32;
-            let frames = (half_width / (*(*attrs).x0).x4) as i32;
+            let frames = melee_core::ppc::fctiwz_f32(half_width / (*(*attrs).x0).x4);
             (*ip).xDD4_itemVar.patapata.x20 = frames;
             (*ip).xDD4_itemVar.patapata.x28 = frames / 2;
             (*ip).xDD4_itemVar.patapata.x2C = -(*ip).facing_dir * ((2.0 * half_width) / frames.wrapping_mul(frames) as f32);
@@ -267,7 +267,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion3_Phys(gobj: *mut Item_GObj) {
         }
         1 => {
             if (*ip).xDD4_itemVar.patapata.x20 == 0 {
-                (*ip).xDD4_itemVar.patapata.x20 = (((*attrs).x14 / 2 as f32) / (*(*attrs).x0).x4) as i32;
+                (*ip).xDD4_itemVar.patapata.x20 = melee_core::ppc::fctiwz_f32(((*attrs).x14 / 2 as f32) / (*(*attrs).x0).x4);
                 (*ip).xDD4_itemVar.patapata.x2C *= -1.0;
             } else {
                 (*ip).x40_vel.x += (*ip).xDD4_itemVar.patapata.x2C;
@@ -314,7 +314,7 @@ pub unsafe extern "C" fn itPatapata_UnkMotion3_Coll(gobj: *mut Item_GObj) -> boo
             1 => {
                 (*ip).x40_vel.x = -(*ip).facing_dir * (*(*attrs).x0).x4;
                 let width = (*attrs).x14;
-                let frames = (width / (*(*attrs).x0).x4) as i32;
+                let frames = melee_core::ppc::fctiwz_f32(width / (*(*attrs).x0).x4);
                 (*ip).xDD4_itemVar.patapata.x20 = frames;
                 (*ip).xDD4_itemVar.patapata.x28 = frames / 2;
                 (*ip).xDD4_itemVar.patapata.x2C = (*ip).facing_dir * ((2.0 * width) / frames.wrapping_mul(frames) as f32);
@@ -500,12 +500,12 @@ pub unsafe extern "C" fn it_802E11E0(gobj: *mut Item_GObj) {
     ext::it_80274C88(gobj);
     ext::it_80275474(gobj);
     it_802E15B0(gobj);
-    (*ip).xDD4_itemVar.patapata.x20 = (*attrs).x28 as i32;
+    (*ip).xDD4_itemVar.patapata.x20 = melee_core::ppc::fctiwz_f32((*attrs).x28);
     (*ip).xDD4_itemVar.patapata.x28 = (*attrs).x2C;
     (*ip).xDD4_itemVar.patapata.x44 = 0;
 
     let absf = |v: f32| if v < 0.0 { -v } else { v };
-    let range = (absf((*attrs).x30) + absf((*attrs).x34)) as i32;
+    let range = melee_core::ppc::fctiwz_f32(absf((*attrs).x30) + absf((*attrs).x34));
 
     let mut rand = ext::HSD_Randi(range);
     let mut val = (*attrs).x30;
@@ -574,7 +574,7 @@ pub unsafe extern "C" fn it_802E15B0(gobj: *mut Item_GObj) {
 
     ext::lb_8000B1CC(jobj, null_mut(), &mut pos);
     ext::Camera_RequestQuake(QuakeKind_Small, &mut (*ip).pos);
-    let new_gobj = ext::it_802DD7F0((*ip).xDD4_itemVar.patapata.x40, &mut pos, &mut (*ip).x40_vel, (*ip).facing_dir as i32);
+    let new_gobj = ext::it_802DD7F0((*ip).xDD4_itemVar.patapata.x40, &mut pos, &mut (*ip).x40_vel, melee_core::ppc::fctiwz_f32((*ip).facing_dir));
     let new_ip = GET_ITEM(new_gobj);
     (*new_ip).xDD4_itemVar.nokonoko.x34 = (*ip).xCC8_knockback;
     (*new_ip).xDD4_itemVar.nokonoko.x3C = (*ip).xCAC_angle;

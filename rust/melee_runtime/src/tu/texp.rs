@@ -2020,8 +2020,7 @@ pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
             );
         };
         if ((*clist).reg as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
-            changed |= ((1 as ::core::ffi::c_int)
-                << (*clist).reg as ::core::ffi::c_int)
+            changed |= (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, ((*clist).reg as ::core::ffi::c_int) as i64))
                 as u32;
             if (*clist).comp as ::core::ffi::c_int
                 == HSD_TE_RGB as ::core::ffi::c_int
@@ -2086,40 +2085,34 @@ pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
                             3 => {
                                 let mut ptr_1: *mut f32 =
                                     (*clist).val as *mut f32;
-                                r = (0xff as ::core::ffi::c_int as f32
+                                r = melee_core::ppc::fctiwz_f32(0xff as ::core::ffi::c_int as f32
                                     * *ptr_1.offset(
                                         0 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
-                                g = (0xff as ::core::ffi::c_int as f32
+                                    ));
+                                g = melee_core::ppc::fctiwz_f32(0xff as ::core::ffi::c_int as f32
                                     * *ptr_1.offset(
                                         1 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
-                                b = (0xff as ::core::ffi::c_int as f32
+                                    ));
+                                b = melee_core::ppc::fctiwz_f32(0xff as ::core::ffi::c_int as f32
                                     * *ptr_1.offset(
                                         2 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
+                                    ));
                             }
                             _ => {
                                 let mut ptr_2: *mut f64 =
                                     (*clist).val as *mut f64;
-                                r = (0xff as ::core::ffi::c_int as f64
+                                r = melee_core::ppc::fctiwz(0xff as ::core::ffi::c_int as f64
                                     * *ptr_2.offset(
                                         0 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
-                                g = (0xff as ::core::ffi::c_int as f64
+                                    ));
+                                g = melee_core::ppc::fctiwz(0xff as ::core::ffi::c_int as f64
                                     * *ptr_2.offset(
                                         1 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
-                                b = (0xff as ::core::ffi::c_int as f64
+                                    ));
+                                b = melee_core::ppc::fctiwz(0xff as ::core::ffi::c_int as f64
                                     * *ptr_2.offset(
                                         2 as ::core::ffi::c_int as isize,
-                                    ))
-                                    as ::core::ffi::c_int;
+                                    ));
                             }
                         }
                         reg[(*clist).reg as usize].r =
@@ -2177,9 +2170,8 @@ pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
                         }) as u8;
                     }
                     3 => {
-                        x = (0xff as ::core::ffi::c_int as f32
-                            * *((*clist).val as *mut f32))
-                            as ::core::ffi::c_int;
+                        x = melee_core::ppc::fctiwz_f32(0xff as ::core::ffi::c_int as f32
+                            * *((*clist).val as *mut f32));
                         val = (if x > 0xff as ::core::ffi::c_int {
                             0xff as ::core::ffi::c_int
                         } else if x < 0 as ::core::ffi::c_int {
@@ -2189,9 +2181,8 @@ pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
                         }) as u8;
                     }
                     _ => {
-                        x = (0xff as ::core::ffi::c_int as f64
-                            * *((*clist).val as *mut f64))
-                            as ::core::ffi::c_int;
+                        x = melee_core::ppc::fctiwz(0xff as ::core::ffi::c_int as f64
+                            * *((*clist).val as *mut f64));
                         val = (if x > 0xff as ::core::ffi::c_int {
                             0xff as ::core::ffi::c_int
                         } else if x < 0 as ::core::ffi::c_int {
@@ -2235,14 +2226,14 @@ pub unsafe fn HSD_TExpSetReg(mut texp: *mut HSD_TExp) {
         GXPixModeSync();
         i = 0 as ::core::ffi::c_int;
         while i < 4 as ::core::ffi::c_int {
-            if changed & ((1 as ::core::ffi::c_int) << i) as u32 != 0 {
+            if changed & (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64)) as u32 != 0 {
                 GXSetTevKColor(id1[i as usize], reg[i as usize]);
             }
             i += 1;
         }
         i = 4 as ::core::ffi::c_int;
         while i < 7 as ::core::ffi::c_int {
-            if changed & ((1 as ::core::ffi::c_int) << i) as u32 != 0 {
+            if changed & (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (i) as i64)) as u32 != 0 {
                 GXSetTevColor(
                     id2[(i - 4 as ::core::ffi::c_int) as usize],
                     reg[i as usize],

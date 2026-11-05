@@ -156,7 +156,7 @@ pub fn lbShadow_8000E9F0(p: &mut Vec3, spline: &HSD_Spline, mut u: f32) {
     }
     let orig_u = u;
     u *= (spline.numcv as i32 - 1) as f32;
-    let mut idx = (u as i32) as i16; // gwtool saturates to i32, then truncates.
+    let mut idx = (melee_core::ppc::fctiwz_f32(u)) as i16; // gwtool saturates to i32, then truncates.
     u -= idx as f32;
     // SAFETY: cv holds numcv control points (3*numcv-2 for Bezier); the C indexes it unchecked.
     let cps = |at: isize| unsafe { core::slice::from_raw_parts(spline.cv.offset(at), 4) };

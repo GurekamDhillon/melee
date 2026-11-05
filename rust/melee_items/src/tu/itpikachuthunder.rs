@@ -477,7 +477,7 @@ pub unsafe extern "C" fn itPikachuThunder_Logic39_EvtUnk(gobj: *mut Item_GObj, r
 pub fn pika_scale_fp(a: f32, b: f32) -> f32 {
     melee_core::ct!("pika_scale_fp");
     let f = 10000.0f32 * a / b;
-    ((f + 1.0) as i32) as f32 / 10000.0
+    (melee_core::ppc::fctiwz_f32(f + 1.0)) as f32 / 10000.0
 }
 
 // ---- folded from itkinds14.rs (consolidation steps 21/22) ----

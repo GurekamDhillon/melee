@@ -124,7 +124,7 @@ pub mod native {
         // to 32 bits, then truncation, exactly as the existing material-logic port does.
         match ty {
             1..=9 => {
-                let x = ((255.0 * (*v).fv as f64) as u32) as u8;
+                let x = melee_core::ppc::fctiwz(255.0 * (*v).fv as f64) as u8;
                 let mat = (*m).mat;
                 match ty {
                     1 => (*mat).ambient.r = x,
@@ -140,7 +140,7 @@ pub mod native {
             }
             10 => (*(*m).mat).alpha = 1.0 - (*v).fv,
             11..=13 if !(*m).pe.is_null() => {
-                let x = ((255.0 * (*v).fv as f64) as u32) as u8;
+                let x = melee_core::ppc::fctiwz(255.0 * (*v).fv as f64) as u8;
                 match ty {
                     11 => (*(*m).pe).ref0 = x,
                     12 => (*(*m).pe).ref1 = x,
@@ -774,7 +774,7 @@ fn kx(v: u8) -> In {
 }
 /// `HSD_TE_F32` constants are scaled to 0..255 (texp.c's `HSD_TExpSetReg`: `(u8)(255 * x)`).
 fn kf(v: f32) -> In {
-    kx((255.0 * v.clamp(0.0, 1.0)) as u8)
+    kx(melee_core::ppc::fctiwz_f32(255.0 * v.clamp(0.0, 1.0)) as u8)
 }
 
 /// tobj.c `MakeColorGenTExp`: the TObj's own TEV (`HSD_TObjTevDesc`) as one stage into REG0.
@@ -1084,7 +1084,7 @@ impl HsdRender {
                 }
             }
         }
-        self.tobj_kinds = tobjs.iter().fold(0, |k, o| k | 1 << o.coord_kind());
+        self.tobj_kinds = tobjs.iter().fold(0, |k, o| k | <u32 as melee_core::ppc::Ppc>::pshl(1, (o.coord_kind()) as i64));
         self.tobj_setup(g, d, &mut tobjs);
         self.tobj_setup_texture_coord_gen(g, &tobjs);
         // setup_tev (MObjSetupTev): the compiled TEV, then HSD_TObjSetupVolatileTev (shadow /

@@ -286,7 +286,7 @@ pub unsafe extern "C" fn fn_802FCC44(gobj: *mut HSD_GObj) {
 #[inline]
 pub unsafe extern "C" fn inlineA1(var_f31: f32) -> f32 {
     melee_core::ct!("inlineA1");
-    let q = var_f31 as i32;
+    let q = melee_core::ppc::fctiwz_f32(var_f31);
     if q >= 16 {
         28.0
     } else {

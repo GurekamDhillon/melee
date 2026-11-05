@@ -204,7 +204,7 @@ pub unsafe extern "C" fn itNokonoko_Logic3_DmgReceived(gobj: *mut Item_GObj) -> 
     let ip = GET_ITEM(gobj);
     let da = attrs_of(ip);
     (*ip).init_facing_dir = (*ip).facing_dir;
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).msid == 0xA {
         it_802DD78C(gobj);
     } else if (*ip).xC9C > (*(*da).x0).x0 {
@@ -266,7 +266,7 @@ pub unsafe extern "C" fn it_802DC990(gobj: *mut Item_GObj) {
     coll_inline(ip);
     ext::it_802756E0(gobj);
     if (*ip).xDD4_itemVar.nokonoko.x20 == 0 {
-        (*ip).xDD4_itemVar.nokonoko.x20 = ((*da).x8 / (*(*da).x0).x4) as i32;
+        (*ip).xDD4_itemVar.nokonoko.x20 = melee_core::ppc::fctiwz_f32((*da).x8 / (*(*da).x0).x4);
     }
     it_802DD4A8(gobj, 2, ITEM_ANIM_UPDATE);
 }
@@ -450,9 +450,9 @@ pub unsafe extern "C" fn itNokonoko_UnkMotion5_Anim(gobj: *mut Item_GObj) -> boo
         pos = (*ip).pos;
         pos.y += 0.1;
         if (*ip).xDD4_itemVar.nokonoko.x40 < 2 {
-            ip_2 = ext::it_802E0100((*ip).xDD4_itemVar.nokonoko.x40, &mut pos, var_f2 as i32);
+            ip_2 = ext::it_802E0100((*ip).xDD4_itemVar.nokonoko.x40, &mut pos, melee_core::ppc::fctiwz_f32(var_f2));
         } else {
-            ip_2 = ext::it_802E0488((*ip).xDD4_itemVar.nokonoko.x40, &mut pos, var_f2 as i32);
+            ip_2 = ext::it_802E0488((*ip).xDD4_itemVar.nokonoko.x40, &mut pos, melee_core::ppc::fctiwz_f32(var_f2));
         }
         if !ip_2.is_null() {
             (*GET_ITEM(ip_2)).xDD4_itemVar.nokonoko.x4 = (*ip).xDD4_itemVar.nokonoko.x4;

@@ -325,7 +325,7 @@ unsafe fn iasa(gobj: *mut HSD_GObj) {
             let facing_dir = (*fp).facing_dir;
             gw_ext::ftCommon_UpdateFacing(&mut *fp);
             if facing_dir != (*fp).facing_dir {
-                (*fp).mv.gw.SpecialLw.turnFrames = (*sa).x7C_GAMEWATCH_PANIC_TURN_FRAMES as i32;
+                (*fp).mv.gw.SpecialLw.turnFrames = melee_core::ppc::fctiwz_f32((*sa).x7C_GAMEWATCH_PANIC_TURN_FRAMES);
             }
         }
     }

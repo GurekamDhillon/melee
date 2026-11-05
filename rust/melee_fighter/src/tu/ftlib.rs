@@ -56,7 +56,7 @@ pub mod ext {
 pub fn ftlib_800871a8(g: G, item: G) {
     melee_core::ct!("ftlib_800871a8");
     assert!(h::it_get_kind(item) == It_Kind_MetalB as i32, "ftlib.c:1117");
-    ext::ftCo_800C8348(g, ext::it_8026B560(item) as i32, ext::it_8026B574(item) as i32);
+    ext::ftCo_800C8348(g, melee_core::ppc::fctiwz_f32(ext::it_8026B560(item)), melee_core::ppc::fctiwz_f32(ext::it_8026B574(item)));
     h::ftco_800d105c(g);
     h::ft_80081c88(g, fp(g).x34_scale.y);
     crate::ftcommon2::ftcommon_8007ebac(fp(g), 0xC, 0);
@@ -156,7 +156,7 @@ pub fn ftlib_80086198(g: G) -> G {
                 return false;
             }
             if cf.dmg.x1830_percent < min_percent as f32 {
-                min_percent = cf.dmg.x1830_percent as i32;
+                min_percent = melee_core::ppc::fctiwz_f32(cf.dmg.x1830_percent);
                 result = cur;
             }
         }
@@ -500,8 +500,8 @@ pub fn ftlib_800870bc(g: G, val: &mut i32) -> bool {
 /// `ftLib_800870F0`: `dmg.x1830_percent = x` (int -> float).
 pub fn ftlib_800870f0(g: G, x: i32) { melee_core::ct!("ftlib_800870f0"); fp_ftlib(g).dmg.x1830_percent = x as f32; }
 
-/// `ftLib_80087120`: `(s32) dmg.x1830_percent` (PPC fctiwz saturates; NaN differs, see ftcommon).
-pub fn ftlib_80087120(g: G) -> i32 { melee_core::ct!("ftlib_80087120"); fp_ftlib(g).dmg.x1830_percent as i32 }
+/// `ftLib_80087120`: `(s32) dmg.x1830_percent` (PPC fctiwz, melee_core::ppc).
+pub fn ftlib_80087120(g: G) -> i32 { melee_core::ct!("ftlib_80087120"); melee_core::ppc::fctiwz_f32(fp_ftlib(g).dmg.x1830_percent) }
 
 pub fn ftlib_80087140(g: G) {
     melee_core::ct!("ftlib_80087140");

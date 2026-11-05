@@ -246,7 +246,7 @@ pub unsafe extern "C" fn it_802CAFD4(gobj: *mut Item_GObj) {
     let jobj = (*gobj).hsd_obj as *mut HSD_JObj;
     let attrs = (*(*item).xC4_article_data).x4_specialAttributes as *mut itMatadogasAttributes;
     (*item).xDAC_itcmd_var0 = 0;
-    (*item).xDD4_itemVar.matadogas.x60 = (*attrs).x4 as i32;
+    (*item).xDD4_itemVar.matadogas.x60 = melee_core::ppc::fctiwz_f32((*attrs).x4);
     (*item).xDD4_itemVar.matadogas.x64 = 0;
     ext::it_80279CDC(gobj, (*attrs).x0);
     it_802CB350(gobj);
@@ -307,7 +307,7 @@ pub unsafe extern "C" fn it_802CB2B0(gobj: *mut Item_GObj) {
         let attrs = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itMatadogasAttributes;
         (*ip).xDD4_itemVar.matadogas.x60 = (*ip).xDD4_itemVar.matadogas.x60.wrapping_sub(1);
         if (*ip).xDD4_itemVar.matadogas.x60 == 0 {
-            (*ip).xDD4_itemVar.matadogas.x60 = (*attrs).x4 as i32;
+            (*ip).xDD4_itemVar.matadogas.x60 = melee_core::ppc::fctiwz_f32((*attrs).x4);
             if ext::HSD_Randi(2) == 0 {
                 it_802CB4F0(gobj, It_Kind_Matadogas_Gas1, (*attrs).x8);
             } else {

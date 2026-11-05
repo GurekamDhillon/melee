@@ -295,10 +295,10 @@ pub unsafe fn BossHook_DriveDeaths() -> i32 {
                 && ext::Player_GetRemainingHP(port) <= 0
                 && (*fp).motion_id != ftCo_MS_Sleep as _
                 && (*fp).x2224_b2() == 0
-                && boss_hook.driven_mask & (1 << port) == 0
+                && boss_hook.driven_mask & (<i32 as melee_core::ppc::Ppc>::pshl(1, (port) as i64)) == 0
             {
                 if ext::ftCo_800C8C84(gobj) != 0 {
-                    boss_hook.driven_mask |= 1 << port;
+                    boss_hook.driven_mask |= <i32 as melee_core::ppc::Ppc>::pshl(1, (port) as i64);
                     osreport(b"boss_hook: hand port=%d kind=%d was at 0 HP without a retail death: driven through ftCo_800C8C84\n\0");
                     n += 1;
                 }
@@ -311,7 +311,7 @@ pub unsafe fn BossHook_DriveDeaths() -> i32 {
 pub unsafe fn BossHook_Poll() {
     melee_core::ct!("BossHook_Poll");
     for port in 1..6 {
-        let bit = 1 << port;
+        let bit = <i32 as melee_core::ppc::Ppc>::pshl(1, (port) as i64);
         let gobj = ext::Player_GetEntity(port);
         if !gobj.is_null() && boss_hook.sent_mask & bit == 0 && ext::Player_GetRemainingHP(port) <= 0 {
             let fp = fighter_of(gobj);
@@ -820,7 +820,7 @@ pub unsafe fn gm_8017CD94(arg0: *mut UnkAdventureData, arg1: i32, arg2: i32, arg
     if let Some(f) = (*arg0).x0.x54 {
         let result = f(arg2 as u8, (*arg0).x0.x0.cpu_level, arg3 as u8);
         if num_colors != 0 {
-            return result % num_colors;
+            return <u8 as melee_core::ppc::Ppc>::prem(result, num_colors);
         }
         return 0;
     }
@@ -846,7 +846,7 @@ pub unsafe fn gm_8017CE34_SetupColors(arg1: *mut Unk1PData, count: i32, arg2: *m
         let result;
         if let Some(f) = (*arg1).x54 {
             let r = f(count as u8, (*arg1).x0.cpu_level, color_idx as u8);
-            result = if num_colors != 0 { r % num_colors } else { 0 };
+            result = if num_colors != 0 { <u8 as melee_core::ppc::Ppc>::prem(r, num_colors) } else { 0 };
         } else {
             result = 0;
         }

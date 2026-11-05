@@ -358,10 +358,10 @@ pub unsafe extern "C" fn mnDiagram_GetHitPercentage(
             tag_player_attacks = (*GetPersistentNameData(player_index as i32))
                 .stats
                 .attacks_total as f32;
-            return (100.0f32
+            return melee_core::ppc::fctiwz_f32(100.0f32
                 * (100.0f32
                     * ((*GetPersistentNameData(player_index as i32)).stats.attacks_hit
-                        as f32 / tag_player_attacks))) as i32;
+                        as f32 / tag_player_attacks)));
         }
         return 0 as i32;
     }
@@ -374,11 +374,11 @@ pub unsafe extern "C" fn mnDiagram_GetHitPercentage(
         ))
             .stats
             .attacks_total as f32;
-        return (100.0f32
+        return melee_core::ppc::fctiwz_f32(100.0f32
             * (100.0f32
                 * ((*GetPersistentFighterData(player_index as SelectableCharacterKind))
                     .stats
-                    .attacks_hit as f32 / player_attacks))) as i32;
+                    .attacks_hit as f32 / player_attacks)));
     }
     return 0 as i32;
 }
@@ -399,10 +399,10 @@ pub unsafe extern "C" fn mnDiagram_GetPlayPercentage(
             i += 1;
         }
         if total_play_time != zero {
-            return (100.0f32
+            return melee_core::ppc::fctiwz_f32(100.0f32
                 * (100.0f32
                     * ((*GetPersistentNameData(player_index as i32)).stats.play_time
-                        as f32 / total_play_time))) as i32;
+                        as f32 / total_play_time)));
         }
         return 0 as i32;
     }
@@ -415,11 +415,11 @@ pub unsafe extern "C" fn mnDiagram_GetPlayPercentage(
         i += 1;
     }
     if total_play_time != zero {
-        return (100.0f32
+        return melee_core::ppc::fctiwz_f32(100.0f32
             * (100.0f32
                 * ((*GetPersistentFighterData(player_index as SelectableCharacterKind))
                     .stats
-                    .play_time as f32 / total_play_time))) as i32;
+                    .play_time as f32 / total_play_time)));
     }
     return 0 as i32;
 }
@@ -437,9 +437,9 @@ pub unsafe extern "C" fn mnDiagram_GetAveragePlayerCount(
         {
             temp_f31_2 = (*GetPersistentNameData(player_index as i32)).stats.match_count
                 as f32;
-            return (100.0f32
+            return melee_core::ppc::fctiwz_f32(100.0f32
                 * ((*GetPersistentNameData(player_index as i32)).stats.total_player_count
-                    as f32 / temp_f31_2)) as i32;
+                    as f32 / temp_f31_2));
         }
         return 0 as i32;
     }
@@ -452,12 +452,12 @@ pub unsafe extern "C" fn mnDiagram_GetAveragePlayerCount(
         ))
             .stats
             .match_count as f32;
-        return (100.0f32
+        return melee_core::ppc::fctiwz_f32(100.0f32
             * ((*GetPersistentFighterData(
                 player_index as i32 as SelectableCharacterKind,
             ))
                 .stats
-                .total_player_count as f32 / temp_f31)) as i32;
+                .total_player_count as f32 / temp_f31));
     }
     return 0 as i32;
 }

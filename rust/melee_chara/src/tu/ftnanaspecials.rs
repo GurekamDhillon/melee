@@ -160,7 +160,7 @@ pub fn ftNn_Init_80123954(nana_gobj: *mut HSD_GObj, pp_ga: GroundOrAir) -> bool 
                 let dxsq = dx * dx;
                 let dysq = dy * dy;
                 // `(s32)(scale * (dd * dd))`, compared as a float against `dxsq + dysq`.
-                let lim = ((*popo_fp).x34_scale.y * (dd * dd)) as i32;
+                let lim = melee_core::ppc::fctiwz_f32((*popo_fp).x34_scale.y * (dd * dd));
                 if dxsq + dysq < lim as f32 {
                     if pp_ga as i32 == GA_Air as i32 {
                         if pp_ga as i32 != (*nana_fp).ground_or_air as i32 {

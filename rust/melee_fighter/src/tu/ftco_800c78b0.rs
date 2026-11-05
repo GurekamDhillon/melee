@@ -102,7 +102,7 @@ pub fn ftco_800c7b0c(g: G, arg1: &Vec3, arg2: &Vec3, arg3: *mut lbColl_80008D30_
     let kb = ext::ftColl_80079EA8(f, &mut hit, n);
     let f = fp(g);
     f.dmg.kb_applied = kb;
-    f.dmg.x1848_kb_angle = angle as i32;
+    f.dmg.x1848_kb_angle = melee_core::ppc::fctiwz_f32(angle);
     f.dmg.facing_dir_1 = f.facing_dir;
     f.dmg.x184c_damaged_hurtbox = 0;
     f.dmg.x1854_collpos = f.cur_pos;

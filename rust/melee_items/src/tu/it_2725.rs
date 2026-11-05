@@ -1452,8 +1452,8 @@ pub unsafe extern "C" fn it_802728C8(item_gobj: *mut HSD_GObj) {
     let item_jobj1 = jobj_of(item_gobj);
     let item_jobj2 = if item_jobj1.is_null() { null_mut() } else { (*item_jobj1).child };
     let d = (*ext::it_804D6D28).x44_float as u32;
-    let life = (*item_of(item_gobj)).xD44_lifeTimer as i32 as u32;
-    let rem = if d == 0 { 0 } else { life % d };
+    let life = melee_core::ppc::fctiwz_f32((*item_of(item_gobj)).xD44_lifeTimer) as u32;
+    let rem = if d == 0 { 0 } else { <u32 as melee_core::ppc::Ppc>::prem(life, d) };
     if rem != 0 {
         ext::HSD_JObjClearFlagsAll(item_jobj2, JOBJ_HIDDEN as u32);
         return;

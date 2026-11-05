@@ -189,7 +189,7 @@ pub unsafe extern "C" fn lb_8001C658() -> *mut i8 {
     melee_core::ct!("lb_8001C658");
     let ticks = ext::OSGetTime();
     let timer_clock = (ext::OS_BusClock / 4) as i64;
-    let seconds = (ticks / timer_clock) as u32;
+    let seconds = (<i64 as melee_core::ppc::Ppc>::pdiv(ticks, timer_clock)) as u32;
     let mut time: OSCalendarTime = core::mem::zeroed();
     ext::OSTicksToCalendarTime((seconds as u64).wrapping_mul(timer_clock as u64) as i64, &mut time);
     for i in 0..CARD_COMMENT_SIZE {

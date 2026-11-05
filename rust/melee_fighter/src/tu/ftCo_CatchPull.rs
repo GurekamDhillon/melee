@@ -73,7 +73,7 @@ pub fn fn_800D9CE8(g: G) {
                 let rate = frame - ya.x124;
                 ext::ftAnim_SetAnimRate(g, rate);
                 ext::ftAnim_8006EBA4(g);
-                start_frame = ya.x12C[rate as i32 as usize] as f32;
+                start_frame = ya.x12C[melee_core::ppc::fctiwz_f32(rate) as usize] as f32;
             }
         }
     } else {

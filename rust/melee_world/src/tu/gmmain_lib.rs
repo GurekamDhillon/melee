@@ -12,7 +12,7 @@ use crate::gmmain::{gmMainLib_804D3EE0, persistent_fighter, save};
 #[inline]
 pub fn bitset_mask_fp(bit: u32) -> u32 {
     melee_core::ct!("bitset_mask_fp");
-    1u32 << (bit % 32)
+    <u32 as melee_core::ppc::Ppc>::pshl(1u32, ((bit % 32)) as i64)
 }
 
 /// `gmMainLib_8015D8B0_fp`: clear a bit of the `x1B40` set.

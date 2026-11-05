@@ -110,7 +110,7 @@ fn swing_damage(base: i32, swings: i32, inc: u32) -> i32 {
 /// re-applies `base + swings * increase` every frame a capsule is live.
 unsafe fn ramp_hit_damage(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftKb_DatAttrs) {
     if (*fp).mv.dk.specialn.x10 == -1 {
-        (*fp).mv.dk.specialn.x10 = (*fp).x914[0].damage as i32;
+        (*fp).mv.dk.specialn.x10 = melee_core::ppc::fctiwz_f32((*fp).x914[0].damage);
     }
     ext::ftColl_8007ABD0(
         &mut (*fp).x914[0],
@@ -118,7 +118,7 @@ unsafe fn ramp_hit_damage(gobj: *mut HSD_GObj, fp: *mut Fighter, da: *const ftKb
         gobj,
     );
     if (*fp).mv.dk.specialn.x14 == -1 {
-        (*fp).mv.dk.specialn.x14 = (*fp).x914[1].damage as i32;
+        (*fp).mv.dk.specialn.x14 = melee_core::ppc::fctiwz_f32((*fp).x914[1].damage);
     }
     ext::ftColl_8007ABD0(
         &mut (*fp).x914[1],

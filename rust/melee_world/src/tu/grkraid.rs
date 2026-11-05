@@ -401,7 +401,7 @@ pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
         0 => {
             if (*gp).u.kraid2.xC <= 0 {
                 let map = (*ext::Ground_GetMapGObj(3)).user_data as *mut Ground;
-                if (*map).u.kraid.x4 as i32 == 0 {
+                if melee_core::ppc::fctiwz_f32((*map).u.kraid.x4) == 0 {
                     grKraid_801FEE54(gobj);
                     ext::HSD_JObjClearFlagsAll(jobj, JOBJ_HIDDEN as u32);
                     ext::HSD_JObjClearFlagsAll((*ext::Ground_GetMapGObj(1)).hsd_obj as *mut HSD_JObj, JOBJ_HIDDEN as u32);
@@ -439,7 +439,7 @@ pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
             }
             if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
                 // grKraid_801FF068(gobj, gp->u.kraid2.x8 + 5.0f): float -> int argument
-                grKraid_801FF068(gobj, ((*gp).u.kraid2.x8 + 5.0_f32) as i32);
+                grKraid_801FF068(gobj, melee_core::ppc::fctiwz_f32((*gp).u.kraid2.x8 + 5.0_f32));
                 (*gp).u.kraid2.xC = 0;
                 (*gp).u.kraid2.x0 = 3;
             }
@@ -448,7 +448,7 @@ pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
         3 => {
             if (*gp).u.kraid2.x1 == 5 {
                 let map = (*ext::Ground_GetMapGObj(3)).user_data as *mut Ground;
-                if (*map).u.kraid.x4 as i32 == 0 && (*gp).u.kraid2.xC >= 147 && (*gp).u.kraid2.xC <= 169 {
+                if melee_core::ppc::fctiwz_f32((*map).u.kraid.x4) == 0 && (*gp).u.kraid2.xC >= 147 && (*gp).u.kraid2.xC <= 169 {
                     if (*gp).u.kraid2.xC == 147 {
                         ext::Ground_801C53EC(420003);
                     }
@@ -461,7 +461,7 @@ pub unsafe extern "C" fn grKraid_801FEA00(gobj: *mut HSD_GObj) {
                 (*gp).u.kraid2.xC += 1;
             } else {
                 let map = (*ext::Ground_GetMapGObj(3)).user_data as *mut Ground;
-                if (*map).u.kraid.x4 as i32 == 0 && (*gp).u.kraid2.xC >= 123 && (*gp).u.kraid2.xC <= 138 {
+                if melee_core::ppc::fctiwz_f32((*map).u.kraid.x4) == 0 && (*gp).u.kraid2.xC >= 123 && (*gp).u.kraid2.xC <= 138 {
                     if (*gp).u.kraid2.xC == 123 {
                         ext::Ground_801C53EC(420003);
                     }

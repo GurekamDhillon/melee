@@ -1475,7 +1475,7 @@ pub unsafe fn gm_801729EC() {
     for i in 0..11i32 {
         let temp_r30 = ext::fn_801607A8(i);
         let tmp = ext::gmMainLib_8015EDA4();
-        if (*tmp as i32 & (1 << i)) == 0 {
+        if (*tmp as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1, (i) as i64))) == 0 {
             ext::gmMainLib_8015D924(ext::fn_801607F4(temp_r30 as i32) as u32);
         }
     }
@@ -1797,7 +1797,7 @@ pub unsafe fn fn_80173510() -> i32 {
 
     if (*ext::gmMainLib_8015EDC8()).x5 == 0 {
         for i in 0..11 {
-            if i != 6 && i != 7 && i != 8 && i != 9 && i != 10 && (*temp_r31 as i64 & (1i64 << i)) == 0 {
+            if i != 6 && i != 7 && i != 8 && i != 9 && i != 10 && (*temp_r31 as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64))) == 0 {
                 var_r30 = false;
                 break;
             }

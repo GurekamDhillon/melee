@@ -290,7 +290,7 @@ pub unsafe extern "C" fn it_802EB6DC(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
-    let randi_result = ext::HSD_Randi(ABS((*sa).x10 - (*sa).xC) as i32);
+    let randi_result = ext::HSD_Randi(melee_core::ppc::fctiwz_f32(ABS((*sa).x10 - (*sa).xC)));
     (*ip).pos.x = (*sa).xC + randi_result as f32;
     (*ip).pos.y = (*sa).x14;
     (*ip).pos.z = 2.0;
@@ -339,9 +339,9 @@ pub unsafe extern "C" fn it_802EB870(gobj: *mut Item_GObj) {
     let ip = GET_ITEM(gobj);
     let sa = SA(ip);
 
-    let mut s: i32 = (ABS((*sa).x10 - (*sa).xC) / 2.0) as i32;
+    let mut s: i32 = melee_core::ppc::fctiwz_f32(ABS((*sa).x10 - (*sa).xC) / 2.0);
     (*ip).xDD4_itemVar.tincle.x58 = (*sa).xC + s as f32;
-    s = ext::HSD_Randi(ABS((*sa).x1C - (*sa).x20) as i32);
+    s = ext::HSD_Randi(melee_core::ppc::fctiwz_f32(ABS((*sa).x1C - (*sa).x20)));
     (*ip).xDD4_itemVar.tincle.x5C = (*sa).x20 + s as f32;
     (*ip).x40_vel.y = -(*sa).x18;
     (*ip).x40_vel.x = 0.0;
@@ -575,7 +575,7 @@ pub unsafe extern "C" fn it_802EBFAC(gobj: *mut Item_GObj) {
         (*ip).x40_vel.y = max_speed;
         (*ip).x40_vel.z = 0.0;
         (*ip).x40_vel.x = 0.0;
-        (*ip).xDD4_itemVar.tincle.x2C = dist as i32;
+        (*ip).xDD4_itemVar.tincle.x2C = melee_core::ppc::fctiwz_f32(dist);
         {
             let vel_y = (*ip).x40_vel.y;
             (*ip).xDD4_itemVar.tincle.x38 = -(vel_y * vel_y) / (vel_y + ((*ip).xDD4_itemVar.tincle.x2C.wrapping_mul(2)) as f32);
@@ -589,7 +589,7 @@ pub unsafe extern "C" fn it_802EBFAC(gobj: *mut Item_GObj) {
         (*ip).x40_vel.z = 0.0;
         (*ip).x40_vel.x = 0.0;
         (*ip).xDD4_itemVar.tincle.x38 = (*ip).xDD4_itemVar.tincle.x48;
-        (*ip).xDD4_itemVar.tincle.x2C = (*ip).xDD4_itemVar.tincle.x40 as i32;
+        (*ip).xDD4_itemVar.tincle.x2C = melee_core::ppc::fctiwz_f32((*ip).xDD4_itemVar.tincle.x40);
         (*ip).xDD4_itemVar.tincle.x20 = (*sa).x2C;
         (*ip).xDD4_itemVar.tincle.x24 = 0;
         ext::Item_80268E5C(gobj, 2, ITEM_UNK_0x1);
@@ -599,7 +599,7 @@ pub unsafe extern "C" fn it_802EBFAC(gobj: *mut Item_GObj) {
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.x = 0.0;
     (*ip).xDD4_itemVar.tincle.x38 = (*ip).xDD4_itemVar.tincle.x48;
-    (*ip).xDD4_itemVar.tincle.x2C = (*ip).xDD4_itemVar.tincle.x40 as i32;
+    (*ip).xDD4_itemVar.tincle.x2C = melee_core::ppc::fctiwz_f32((*ip).xDD4_itemVar.tincle.x40);
     ext::Item_80268E5C(gobj, 5, ITEM_UNK_0x1);
 }
 
@@ -811,7 +811,7 @@ pub unsafe extern "C" fn it_802EC69C(gobj: *mut Item_GObj) {
     (*ip).x40_vel.y = (*sa).x50;
     (*ip).x40_vel.z = 0.0;
     (*ip).x40_vel.x = 0.0;
-    (*ip).xDD4_itemVar.tincle.x2C = dist as i32;
+    (*ip).xDD4_itemVar.tincle.x2C = melee_core::ppc::fctiwz_f32(dist);
     (*ip).xDD4_itemVar.tincle.x38 =
         -((*ip).x40_vel.y * (*ip).x40_vel.y) / ((*ip).x40_vel.y + ((*ip).xDD4_itemVar.tincle.x2C.wrapping_mul(2)) as f32);
     (*ip).xDD4_itemVar.tincle.x20 = 0;

@@ -109,8 +109,8 @@ pub unsafe fn HSD_ObjAllocAddFree(data: *mut HSD_ObjAllocData, mut num: u32) -> 
         if computed_start > pool_end { return 0; }
         pool_start = computed_start as *mut u8;
         let available = (pool_end - computed_start) as u32;
-        if available < pool_size { pool_size = available - available % (*data).size; }
-        num = pool_size / (*data).size;
+        if available < pool_size { pool_size = available - <u32 as melee_core::ppc::Ppc>::prem(available, (*data).size); }
+        num = <u32 as melee_core::ppc::Ppc>::pdiv(pool_size, (*data).size);
         if num == 0 { return 0; }
         obj_heap.curr = computed_start.wrapping_add(pool_size as usize);
         obj_heap.remain = (pool_end - obj_heap.curr) as u32;

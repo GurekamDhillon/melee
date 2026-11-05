@@ -161,7 +161,7 @@ pub fn ftFox_SpecialLw_SetVars(gobj: *mut HSD_GObj) {
         let fp = fpp(gobj);
         let da = da(fp);
 
-        (*fp).mv.fx.SpecialLw.releaseLag = (*da).x98_FOX_REFLECTOR_RELEASE_LAG as i32;
+        (*fp).mv.fx.SpecialLw.releaseLag = melee_core::ppc::fctiwz_f32((*da).x98_FOX_REFLECTOR_RELEASE_LAG);
         (*fp).mv.fx.SpecialLw.isRelease = 0;
         (*fp).cmd_vars[1] = 4;
         (*fp).mv.fx.SpecialLw.gravityDelay = (*da).xA4_FOX_REFLECTOR_GRAVITY_DELAY;
@@ -459,7 +459,7 @@ pub fn ftFox_SpecialLwTurn_SetVarAll(gobj: *mut HSD_GObj) {
         let da = da(fp);
         (*fp).set_reflecting(1);
         (*fp).reflect_hit_cb = Some(cb_ftFx_SpecialLwHit_Enter);
-        (*fp).mv.fx.SpecialLw.turnFrames = (*da).x9C_FOX_REFLECTOR_TURN_FRAMES as i32;
+        (*fp).mv.fx.SpecialLw.turnFrames = melee_core::ppc::fctiwz_f32((*da).x9C_FOX_REFLECTOR_TURN_FRAMES);
         (*fp).cmd_vars[0] = 0;
         ftFx_SpecialLw_Turn(gobj);
     }

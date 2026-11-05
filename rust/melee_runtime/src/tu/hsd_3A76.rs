@@ -115,7 +115,7 @@ unsafe fn be32(p: *const u8) -> u32 {
 
 #[inline]
 fn f32_to_u8(v: f32) -> u8 {
-    (v as i32) as u8
+    (melee_core::ppc::fctiwz_f32(v)) as u8
 }
 
 /// `HSD_SisLib_GlyphWidth` (static inline).
@@ -163,9 +163,9 @@ pub unsafe fn HSD_SisLib_803A7684(text: *mut HSD_Text, cursor: *const u8, flags:
             ensure_style_room(text, 5);
             let x = (*text).x78.x;
             let y = (*text).x78.y;
-            push_style_byte(text, ((256.0f32 * x) as i32 >> 8) as u8);
+            push_style_byte(text, (melee_core::ppc::fctiwz_f32(256.0f32 * x) >> 8) as u8);
             push_style_byte(text, f32_to_u8(256.0f32 * x));
-            push_style_byte(text, ((256.0f32 * y) as i32 >> 8) as u8);
+            push_style_byte(text, (melee_core::ppc::fctiwz_f32(256.0f32 * y) >> 8) as u8);
             push_style_byte(text, f32_to_u8(256.0f32 * y));
             push_style_byte(text, flags);
         }
@@ -180,9 +180,9 @@ pub unsafe fn HSD_SisLib_803A7684(text: *mut HSD_Text, cursor: *const u8, flags:
             ensure_style_room(text, 5);
             let x = (*text).x80.x;
             let y = (*text).x80.y;
-            push_style_byte(text, ((256.0f32 * x) as i32 >> 8) as u8);
+            push_style_byte(text, (melee_core::ppc::fctiwz_f32(256.0f32 * x) >> 8) as u8);
             push_style_byte(text, f32_to_u8(256.0f32 * x));
-            push_style_byte(text, ((256.0f32 * y) as i32 >> 8) as u8);
+            push_style_byte(text, (melee_core::ppc::fctiwz_f32(256.0f32 * y) >> 8) as u8);
             push_style_byte(text, f32_to_u8(256.0f32 * y));
             push_style_byte(text, flags);
         }

@@ -65,10 +65,10 @@ impl Hsd393C {
             match c {
                 b'\r' => {}
                 b'\n' => {
-                    let prev = *out_buf.add((write_pos as u32).wrapping_add(tmp) as usize % out_size as usize);
+                    let prev = *out_buf.add(<usize as melee_core::ppc::Ppc>::prem((write_pos as u32).wrapping_add(tmp) as usize, out_size as usize));
                     if line_len != 0 || prev != 0 {
                         *out_buf.add(write_pos as usize) = line_len;
-                        write_pos = ((write_pos as u32).wrapping_add(1) % out_size) as i32;
+                        write_pos = (<u32 as melee_core::ppc::Ppc>::prem((write_pos as u32).wrapping_add(1), out_size)) as i32;
                         st.x1C += 1;
                         st.x18 += 1;
                         line_len = 0;
@@ -78,13 +78,13 @@ impl Hsd393C {
                     *out_buf.add(write_pos as usize) = c;
                     line_len = line_len.wrapping_add(1);
                     if line_len == 0x36 {
-                        write_pos = ((write_pos as u32).wrapping_add(1) % out_size) as i32;
+                        write_pos = (<u32 as melee_core::ppc::Ppc>::prem((write_pos as u32).wrapping_add(1), out_size)) as i32;
                         *out_buf.add(write_pos as usize) = line_len;
                         st.x1C += 1;
                         st.x18 += 1;
                         line_len = 0;
                     }
-                    write_pos = ((write_pos as u32).wrapping_add(1) % out_size) as i32;
+                    write_pos = (<u32 as melee_core::ppc::Ppc>::prem((write_pos as u32).wrapping_add(1), out_size)) as i32;
                     st.x1C += 1;
                 }
             }
@@ -151,7 +151,7 @@ impl Hsd393C {
 
         while counter < row && pos < buf_size {
             pos = pos.wrapping_add(1);
-            byte_val = *out_buf.add((sum.wrapping_sub(pos) % buf_size) as usize) as u32;
+            byte_val = *out_buf.add((<u32 as melee_core::ppc::Ppc>::prem(sum.wrapping_sub(pos), buf_size)) as usize) as u32;
             counter += 1;
             pos = pos.wrapping_add(byte_val);
         }
@@ -191,7 +191,7 @@ impl Hsd393C {
             let mut counter: u32 = 0;
             while counter < row_delta as u32 && pos < buf_size {
                 pos = pos.wrapping_add(1);
-                byte_val = *out_buf.add((sum.wrapping_sub(pos) % buf_size) as usize) as u32;
+                byte_val = *out_buf.add((<u32 as melee_core::ppc::Ppc>::prem(sum.wrapping_sub(pos), buf_size)) as usize) as u32;
                 counter += 1;
                 pos = pos.wrapping_add(byte_val);
             }
@@ -235,7 +235,7 @@ impl Hsd393C {
         let st = &self.state;
         let idx = (st.x14 as u32).wrapping_add((st.xC as u32).wrapping_add(st.buf_size).wrapping_sub(st.x1C as u32));
         if (st.x14 as u32) < (st.x20 as u32) {
-            let result = *st.out_buf.add((idx % st.buf_size) as usize);
+            let result = *st.out_buf.add((<u32 as melee_core::ppc::Ppc>::prem(idx, st.buf_size)) as usize);
             self.state.x14 += 1;
             result
         } else {

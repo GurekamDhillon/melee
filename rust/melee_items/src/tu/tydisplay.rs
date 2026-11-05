@@ -514,7 +514,7 @@ pub unsafe fn _tyDisplay_80318B1C(arg0: i32) {
                 }
                 (*grid).sort[start as usize].key = rand_id;
                 let k = (*grid).sort[start as usize].key;
-                (*grid).sort[start as usize].val = f32::from_bits(Toy_803060BC(k, 7) as i32 as u32);
+                (*grid).sort[start as usize].val = f32::from_bits(melee_core::ppc::fctiwz_f32(Toy_803060BC(k, 7)) as u32);
                 start += 1;
                 if start >= arg0 {
                     start = 0;
@@ -524,7 +524,7 @@ pub unsafe fn _tyDisplay_80318B1C(arg0: i32) {
                 let check = tyDisplay_8031B9DC(i);
                 if (*check).x00 != -1 {
                     (*grid).sort[start as usize].key = i;
-                    (*grid).sort[start as usize].val = f32::from_bits(Toy_803060BC(i, 7) as i32 as u32);
+                    (*grid).sort[start as usize].val = f32::from_bits(melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 7)) as u32);
                     start += 1;
                     if start >= arg0 {
                         start = 0;
@@ -539,7 +539,7 @@ pub unsafe fn _tyDisplay_80318B1C(arg0: i32) {
             if Toy_803048C0(i) != 0 {
                 tyDisplay_8031B9DC(i);
                 (*grid).sort[start as usize].key = i;
-                (*grid).sort[start as usize].val = f32::from_bits(Toy_803060BC(i, 7) as i32 as u32);
+                (*grid).sort[start as usize].val = f32::from_bits(melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 7)) as u32);
                 start += 1;
                 if start >= arg0 {
                     start = 0;
@@ -625,11 +625,11 @@ pub unsafe fn _tyDisplay_80318CB4(arg0: i32) {
                     (*grid).pos[iu].x = mag * cosf(theta);
                     let rad = theta;
                     (*grid).pos[iu].z = mag * sinf(rad);
-                    let mut tries = (mag / 0.1f32) as i32;
+                    let mut tries = melee_core::ppc::fctiwz_f32(mag / 0.1f32);
                     if ext::HSD_Randi(2) != 0 {
                         let half = mag / 2.0;
-                        if half as i32 > 1 {
-                            tries -= ext::HSD_Randi(half as i32);
+                        if melee_core::ppc::fctiwz_f32(half) > 1 {
+                            tries -= ext::HSD_Randi(melee_core::ppc::fctiwz_f32(half));
                         }
                     }
                     let mut k = i - 1;
@@ -640,7 +640,7 @@ pub unsafe fn _tyDisplay_80318CB4(arg0: i32) {
                             ext::OSReport("*** tyDisplay Atari Irregul!\n");
                             hsd_assert_fail(0xC6);
                         }
-                        let near = if dist as i32 <= dist_limit as i32 { 1 } else { 0 };
+                        let near = if melee_core::ppc::fctiwz_f32(dist) <= melee_core::ppc::fctiwz_f32(dist_limit) { 1 } else { 0 };
                         if near != 0 {
                             collided = 1;
                             break;
@@ -704,7 +704,7 @@ pub unsafe fn _tyDisplay_80319540(arg0: i32) {
     (*grid).x04_min_x = -3.5;
     (*grid).x10_max_z = 3.5;
     (*grid).x0C_max_x = 3.5;
-    let mut remainder: i32 = if (*cfg).x08 <= 1 { 0 } else { (*cfg).x08 % (*cfg).x75 as i8 as i32 };
+    let mut remainder: i32 = if (*cfg).x08 <= 1 { 0 } else { <i32 as melee_core::ppc::Ppc>::prem((*cfg).x08, (*cfg).x75 as i8 as i32) };
     {
         let mut i: i32 = 0;
         while i < (*cfg).x08 {
@@ -958,7 +958,7 @@ pub unsafe fn _tyDisplay_80319EF0() {
             ext::OSReport("*** tyDisplay Table Scale Irregul!\n");
             hsd_assert_fail(0x28C);
         }
-        if scale as i32 != 0 {
+        if melee_core::ppc::fctiwz_f32(scale) != 0 {
             HSD_JObjSetScaleX(&mut *(*bg).jobj, scale, &mut Dirty);
             HSD_JObjSetScaleZ(&mut *(*bg).jobj, scale, &mut Dirty);
         }
@@ -1633,7 +1633,7 @@ pub unsafe fn tyDisplay_8031C354(id: i32, buf: *mut i32, max: i32, kind: i32) ->
     }
     let data = tyDisplay_8031B9DC(id);
     if kind == 99 {
-        kind = Toy_803060BC(id, 6) as i32;
+        kind = melee_core::ppc::fctiwz_f32(Toy_803060BC(id, 6));
     }
     let mut count = 0;
     for i in 0..TY_TROPHY_COUNT {
@@ -1647,7 +1647,7 @@ pub unsafe fn tyDisplay_8031C354(id: i32, buf: *mut i32, max: i32, kind: i32) ->
             continue;
         }
         let other = tyDisplay_8031B9DC(i);
-        let val = Toy_803060BC(i, 6) as i32;
+        let val = melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 6));
         if (*other).x04 != (*data).x04 {
             continue;
         }

@@ -273,7 +273,7 @@ pub unsafe extern "C" fn ifStatus_802F4B84(state: *mut IfDamageState, _is_stamin
 /// `damage_percent % m / d` as the C int arithmetic.
 #[inline]
 fn dig(damage: i16, m: i32, d: i32) -> i32 {
-    (damage as i32 % m) / d
+    <i32 as melee_core::ppc::Ppc>::pdiv(<i32 as melee_core::ppc::Ppc>::prem(damage as i32, m), d)
 }
 
 

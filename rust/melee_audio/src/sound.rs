@@ -453,9 +453,9 @@ impl Sound {
     pub fn setup_aux(&mut self, channel: usize, ty: u32, param: &[u8]) -> i32 {
         assert!(channel < 2 && ty <= 4);
         let shift = if channel == 0 { 8 } else { 12 };
-        let old = (self.aux_flags >> shift) & 0xF;
-        self.aux_flags &= !(old << shift);
-        self.aux_flags |= ty << shift;
+        let old = (<u32 as melee_core::ppc::Ppc>::pshr(self.aux_flags, (shift) as i64)) & 0xF;
+        self.aux_flags &= !(<u32 as melee_core::ppc::Ppc>::pshl(old, (shift) as i64));
+        self.aux_flags |= <u32 as melee_core::ppc::Ppc>::pshl(ty, (shift) as i64);
         // The AXFX structs' game addresses: AXDriver_804C5E00 / 804C61E0 [channel].
         let std_owner = 0x804C_5E00 + channel as u32 * 0x154;
         let delay_owner = 0x804C_61E0 + channel as u32 * 0x60;
@@ -570,7 +570,7 @@ impl Sound {
     /// AXDriverExec: apply the flags the script set since the last wait.
     fn drv_exec(&mut self, v: usize) {
         for i in 0..=9 {
-            let flag = 1u32 << i;
+            let flag = <u32 as melee_core::ppc::Ppc>::pshl(1u32, (i) as i64);
             if self.sm[v].flags & flag != 0 {
                 match flag {
                     0x1 => {
@@ -873,7 +873,7 @@ impl Sound {
         if !(0..=0xFF).contains(&track) || !(0..0x10).contains(&channel) {
             return -1;
         }
-        if self.paused_channels & (1 << channel) != 0 {
+        if self.paused_channels & (<u32 as melee_core::ppc::Ppc>::pshl(1, (channel) as i64)) != 0 {
             return -1;
         }
         let cmd = sem.scripts[sample as usize];
@@ -953,7 +953,7 @@ impl Sound {
         if vid < 0 || idx >= SMS || !(0..=1).contains(&aux_bus) {
             return false;
         }
-        let lock = (self.aux_flags >> aux_bus) & 1;
+        let lock = (<u32 as melee_core::ppc::Ppc>::pshr(self.aux_flags, (aux_bus) as i64)) & 1;
         if lock != 1 {
             return false;
         }
@@ -1023,9 +1023,9 @@ impl Sound {
             }
         });
         if pause {
-            self.paused_channels |= 1 << channel;
+            self.paused_channels |= <u32 as melee_core::ppc::Ppc>::pshl(1, (channel) as i64);
         } else {
-            self.paused_channels &= !(1 << channel);
+            self.paused_channels &= !(<u32 as melee_core::ppc::Ppc>::pshl(1, (channel) as i64));
         }
         true
     }

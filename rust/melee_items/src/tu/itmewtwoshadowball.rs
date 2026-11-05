@@ -440,8 +440,8 @@ pub unsafe extern "C" fn it_802C53F0(gobj: *mut Item_GObj, pos: *mut Vec3, angle
     if charge > max_charge {
         charge = max_charge;
     }
-    (*sb).x18 = charge as i32;
-    (*sb).x1C = max_charge as i32;
+    (*sb).x18 = melee_core::ppc::fctiwz_f32(charge);
+    (*sb).x1C = melee_core::ppc::fctiwz_f32(max_charge);
 
     if !(*sb).x2C.is_null() && (*ip).owner == (*sb).x2C {
         it_802C5B18(gobj, (*sb).x2C);

@@ -10143,11 +10143,11 @@ pub unsafe extern "C" fn test_geno_digest_coverage() -> i32 {
 
 pub unsafe extern "C" fn gba_i(mut v: f32) -> i32 {
     melee_core::ct!("gba_i");
-    return (if v >= 0.0f32 {
+    return melee_core::ppc::fctiwz_f32(if v >= 0.0f32 {
         v as f32 * 1000.0f32 + 0.5f32
     } else {
         v as f32 * 1000.0f32 - 0.5f32
-    }) as i32;
+    });
 }
 
 pub unsafe extern "C" fn gba_abs(mut v: f32) -> f32 {
@@ -11863,8 +11863,8 @@ pub unsafe extern "C" fn test_geno_bhv_anim_motion() -> i32 {
     OSReport!(
         b"GBACC A-2 note: relative error %d ppm\n\0" as *const u8
             as *const i8 as *mut i8,
-        (gba_abs(a.pos_x - expect) as f32
-            / expect as f32 * 1.0e6f32) as i32,
+        melee_core::ppc::fctiwz_f32(gba_abs(a.pos_x - expect) as f32
+            / expect as f32 * 1.0e6f32),
     );
     p.rate = 0.5f32 as f32;
     GenoBhv_AnimMotionBegin(&raw mut a, 0.0f32, 0.0f32);

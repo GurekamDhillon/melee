@@ -336,7 +336,7 @@ pub unsafe extern "C" fn itOldkuri_UnkMotion3_Coll(gobj: *mut Item_GObj) -> bool
     melee_core::ct!("itOldkuri_UnkMotion3_Coll");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOldkuriAttributes;
-    (*ip).xDD4_itemVar.oldkuri.xDF8 = (*attr).xC as i32;
+    (*ip).xDD4_itemVar.oldkuri.xDF8 = melee_core::ppc::fctiwz_f32((*attr).xC);
     ext::it_8026E414(gobj, Some(it_802D747C));
     ext::it_8027C794(gobj) != 0
 }
@@ -370,7 +370,7 @@ pub unsafe extern "C" fn itOldkuri_UnkMotion4_Coll(gobj: *mut Item_GObj) -> bool
     melee_core::ct!("itOldkuri_UnkMotion4_Coll");
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOldkuriAttributes;
-    (*ip).xDD4_itemVar.oldkuri.xDF8 = (*attr).xC as i32;
+    (*ip).xDD4_itemVar.oldkuri.xDF8 = melee_core::ppc::fctiwz_f32((*attr).xC);
     ext::it_8026E414(gobj, Some(it_802D747C));
     ext::it_8027C794(gobj) != 0
 }
@@ -493,7 +493,7 @@ pub unsafe extern "C" fn it_2725_Logic0_DmgReceived(gobj: *mut Item_GObj) -> boo
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itOldkuriAttributes;
 
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > *(*attr).x0 || (*ip).msid == 6 {
         ext::it_8027C9D8(ip);
         ext::it_80274C88(gobj);

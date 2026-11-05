@@ -96,12 +96,12 @@ pub trait FogGx {
     fn set_fog_range_adj(&mut self, enable: bool, center: u16, table: Option<&Self::Table>);
 }
 
-/// `(u16) f` / `(u8) f` from a float: gwtool's `fptoui.sat.i32` then truncation.
+/// `(u16) f` / `(u8) f` from a float: fctiwz then truncation (gwtool lowers every fpto[su]i narrower than 32 bits that way).
 fn f2u16_unsigned(f: f32) -> u16 {
-    (f as u32) as u16
+    melee_core::ppc::fctiwz_f32(f) as u16
 }
 fn f2u8_unsigned(f: f32) -> u8 {
-    (f as u32) as u8
+    melee_core::ppc::fctiwz_f32(f) as u8
 }
 
 impl HsdFogAdj {
@@ -234,7 +234,7 @@ pub fn fog_set<O, G: FogGx>(fog: Option<&HsdFog<O>>, cobj_near_far: Option<(f32,
         return;
     };
     let v = gx.get_viewport();
-    let mut range = (v[0] + v[2] * ((adj.center as i32 + 320) as f32) / 640.0f32) as i32;
+    let mut range = melee_core::ppc::fctiwz_f32(v[0] + v[2] * ((adj.center as i32 + 320) as f32) / 640.0f32);
     if range < 0 {
         range = 0;
     }
@@ -246,7 +246,7 @@ pub fn fog_set<O, G: FogGx>(fog: Option<&HsdFog<O>>, cobj_near_far: Option<(f32,
     } else {
         let mut m: Mtx44 = [[0.0; 4]; 4];
         let p = gx.get_projection();
-        match p[0] as i32 {
+        match melee_core::ppc::fctiwz_f32(p[0]) {
             0 => {
                 m[0][0] = p[1];
                 m[0][2] = p[2];

@@ -116,7 +116,7 @@ impl Sound {
     }
 
     fn set_ai_stream_vol(&mut self) {
-        let v = (self.stream_vol * self.stream_master as f32) as u8;
+        let v = melee_core::ppc::fctiwz_f32(self.stream_vol * self.stream_master as f32) as u8;
         self.ax.ai_stream_vol_left = v;
         self.ax.ai_stream_vol_right = v;
     }
@@ -377,7 +377,7 @@ impl Sound {
         self.sfx_update_mix(n, 0);
         let node = self.nodes[n];
         let cur =
-            (32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur)))) as u16;
+            melee_core::ppc::fctiwz_f32(32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur)))) as u16;
         self.nodes[n].x24 = cur;
         let ve = ve_block(cur, 0);
         let ratio = (65536.0f32 * (node.x18[1] * (node.x14 * node.x18[0]))) as u32;
@@ -585,7 +585,7 @@ impl Sound {
     pub(crate) fn sfx_volume_envelope(&mut self) {
         if self.chan_fading != 0 {
             for ch in 0..16 {
-                if self.chan_fading & (1 << ch) != 0 {
+                if self.chan_fading & (<u32 as melee_core::ppc::Ppc>::pshl(1, (ch) as i64)) != 0 {
                     let c = &mut self.chan[ch];
                     let cnt = c.count;
                     if cnt != 0 {
@@ -595,7 +595,7 @@ impl Sound {
                     }
                     if c.count == 0 {
                         c.cur = c.target;
-                        self.chan_fading &= !(1 << ch);
+                        self.chan_fading &= !(<u32 as melee_core::ppc::Ppc>::pshl(1, (ch) as i64));
                     }
                 }
             }
@@ -634,7 +634,7 @@ impl Sound {
                 active = true;
             }
             let vol: i32 = if node.flags & 3 == 0 {
-                (32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur)))) as i32
+                melee_core::ppc::fctiwz_f32(32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur))))
             } else {
                 active = false;
                 0
@@ -700,7 +700,7 @@ impl Sound {
             (23169.768f32, 23169.768f32)
         };
         let mut mix = [0u8; PBMIX_SIZE];
-        let set = |m: &mut [u8; PBMIX_SIZE], t: usize, x: f32| w16(m, PBMIX_OFF[t], x as u16);
+        let set = |m: &mut [u8; PBMIX_SIZE], t: usize, x: f32| w16(m, PBMIX_OFF[t], melee_core::ppc::fctiwz_f32(x) as u16);
         // PBMIX_OFF order: L, R, S, AL, AR, AS, BL, BR, BS.
         if node.voice_count == 1 {
             set(&mut mix, 0, l * node.x44);
@@ -775,14 +775,14 @@ impl Sound {
         self.chan[channel].target = 1.0f32 / 255.0 * vol as f32;
         if self.chan[channel].cur != self.chan[channel].target {
             self.chan[channel].count = fade_frames as i32;
-            self.update_all_volume(1 << channel);
+            self.update_all_volume(<u32 as melee_core::ppc::Ppc>::pshl(1, (channel) as i64));
         }
     }
 
     fn update_all_volume(&mut self, mask: u32) {
         self.chan_fading |= mask;
         for i in 0..NODES {
-            if self.nodes[i].x0 > 0 && (1u32 << self.nodes[i].xb) & mask != 0 {
+            if self.nodes[i].x0 > 0 && (<u32 as melee_core::ppc::Ppc>::pshl(1u32, (self.nodes[i].xb) as i64)) & mask != 0 {
                 self.sfx_update_volume(i);
             }
         }
@@ -1113,7 +1113,7 @@ impl Sound {
         };
         let node = self.nodes[n];
         let cur = if node.flags & 2 == 0 {
-            (32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur)))) as u16
+            melee_core::ppc::fctiwz_f32(32767.0f32 * (node.vol2 * (node.unk28 * (self.stream_vol * self.chan[node.xb as usize].cur)))) as u16
         } else {
             0
         };

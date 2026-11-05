@@ -56,7 +56,7 @@ fn cvtt(f: f32) -> i32 {
     if f.is_nan() || f >= 2147483648.0 || f < -2147483648.0 {
         i32::MIN
     } else {
-        f as i32
+        melee_core::ppc::fctiwz_f32(f)
     }
 }
 

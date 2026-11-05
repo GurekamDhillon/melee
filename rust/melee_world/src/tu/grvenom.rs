@@ -811,8 +811,8 @@ unsafe fn Stage_IsOutsideBlastZoneWithMargin(pos: *mut Vec3, margin: f32) -> boo
 
 #[inline(always)]
 unsafe fn grVe_RandRange(fmin: f32, fmax: f32) -> i32 {
-    let imin = fmin as i32;
-    let mut imax = fmax as i32;
+    let imin = melee_core::ppc::fctiwz_f32(fmin);
+    let mut imax = melee_core::ppc::fctiwz_f32(fmax);
     if imax > imin {
         let range = imax - imin;
         imax = imin + if range != 0 { ext::HSD_Randi(range) } else { 0 };
@@ -958,8 +958,8 @@ pub unsafe extern "C" fn grVenom_80203B14(_arg: i32) { melee_core::ct!("grVenom_
 
 #[inline(always)]
 unsafe fn inlineA0() {
-    let i = (*yakumono_param).x0 as i32;
-    let mut j = (*yakumono_param).x4 as i32;
+    let i = melee_core::ppc::fctiwz_f32((*yakumono_param).x0);
+    let mut j = melee_core::ppc::fctiwz_f32((*yakumono_param).x4);
     if j > i {
         let mut diff = j - i;
         if diff != 0 {
@@ -1717,7 +1717,7 @@ pub unsafe extern "C" fn grVenom_80205AD4(gobj: *mut Ground_GObj) {
     HSD_JObjSetScaleY(jobj, scale * (*yakumono_param).x34);
     HSD_JObjSetScaleZ(jobj, scale * (*yakumono_param).x34);
     Ground_ResetStarFoxArwingState(gp);
-    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
+    (*gp).u.starfox.xF8 = melee_core::ppc::fctiwz_f32((*yakumono_param).x2C);
     (*gp).u.starfox.xFC = 0;
     (*gp).u.starfox.x100 = ext::HSD_Randi(2);
 }
@@ -1801,7 +1801,7 @@ pub unsafe extern "C" fn grVenom_80205F30(gobj: *mut Ground_GObj) {
                     // no animation step
                 } else if ext::grAnime_801C83D0(gobj, 0, 7) != 0 {
                     (*gp).u.starfox.xF4 = 0;
-                    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
+                    (*gp).u.starfox.xF8 = melee_core::ppc::fctiwz_f32((*yakumono_param).x2C);
                 }
 
                 let other = grVe_803E5348.arwing.arwing_gobj[(*gp).u.venom.xC8 as usize];
@@ -1990,7 +1990,7 @@ pub unsafe extern "C" fn grVenom_80206874(gobj: *mut Ground_GObj) {
     // grVenom_80205F30 (this gobj's update, via grVenom_80206B70) reads. Natively `grVenom_GroundVars` has its 8-byte `linked_gobj`
     // union and `starfox` its 8-byte `article_gobjs`, so `venom.xF8` / `xFC` land on `starfox.article_gobjs[3]` and the
     // 80205F30 clean-up branch then frees a pointer built from the yakumono word; write the starfox fields at the GC offsets
-    (*gp).u.starfox.xF8 = (*yakumono_param).x2C as i32;
+    (*gp).u.starfox.xF8 = melee_core::ppc::fctiwz_f32((*yakumono_param).x2C);
     (*gp).u.starfox.xFC = 0;
 }
 

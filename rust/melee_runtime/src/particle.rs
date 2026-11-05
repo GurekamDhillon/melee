@@ -1142,14 +1142,14 @@ impl PsSystem {
                 0 | 3 | 4 | 6 | 7 => {
                     let (min_a, max_a, count) = (self.gen(g).aux[0], self.gen(g).aux[1], self.gen(g).count);
                     let rnd = host.randf();
-                    angle_step = (max_a - min_a) / (count as i32) as f32;
+                    angle_step = (max_a - min_a) / (melee_core::ppc::fctiwz_f32(count)) as f32;
                     // 550 / 559.
                     cur_angle = fmadds(angle_step, rnd, min_a);
                 }
                 _ => {
                     let rnd = host.randf();
                     cur_angle = ((M_PI * rnd as f64) * 2.0) as f32;
-                    angle_step = ((2.0 * M_PI) / (self.gen(g).count as i32) as f64) as f32;
+                    angle_step = ((2.0 * M_PI) / (melee_core::ppc::fctiwz_f32(self.gen(g).count)) as f64) as f32;
                 }
             }
         }
@@ -1422,7 +1422,7 @@ impl PsSystem {
         self.gen_cursor = None;
         while let Some(g) = cur {
             let (link, kind) = (self.gen(g).link_no, self.gen(g).kind);
-            if mask & (1 << (link as u32 + 16)) != 0 || kind & 0x800 != 0 {
+            if mask & (<u32 as melee_core::ppc::Ppc>::pshl(1, ((link as u32 + 16)) as i64)) != 0 || kind & 0x800 != 0 {
                 self.gen_cursor = Some(g);
                 cur = self.gen(g).next;
                 continue;
@@ -1874,7 +1874,7 @@ impl PsSystem {
     }
     fn col_interp(cur: &mut Rgba, target: Rgba, remain: u16, count: u16) {
         if count != 0 {
-            let step = ((remain as i32) << 16) / count as i32;
+            let step = <i32 as melee_core::ppc::Ppc>::pdiv((remain as i32) << 16, count as i32);
             cur.r = Self::col_step(cur.r, target.r, step);
             cur.g = Self::col_step(cur.g, target.g, step);
             cur.b = Self::col_step(cur.b, target.b, step);
@@ -1890,7 +1890,7 @@ impl PsSystem {
         if val > 255.0 {
             val = 255.0;
         }
-        val as i32 as u8
+        melee_core::ppc::fctiwz_f32(val) as u8
     }
 
     /// `hsd_8039930C(pp, prev)`: one particle's frame: interpolators, the bytecode (when its
@@ -2191,12 +2191,12 @@ impl PsSystem {
                         let base = ((rd!() as i32) << 8) + rd!() as i32;
                         let range = ((rd!() as i32) << 8) + rd!() as i32;
                         let r = host.randf();
-                        pp!().life = base.wrapping_add((range as f32 * r) as i32) as u16;
+                        pp!().life = base.wrapping_add(melee_core::ppc::fctiwz_f32(range as f32 * r)) as u16;
                     }
                     0xA7 => {
                         let threshold = rd!() as i32;
                         let r = host.randf();
-                        if threshold >= (100.0f32 * r) as i32 {
+                        if threshold >= melee_core::ppc::fctiwz_f32(100.0f32 * r) {
                             pp!().life = 1;
                             break 'outer;
                         }
@@ -2223,7 +2223,7 @@ impl PsSystem {
                         let mut idx = ((rd!() as i32) << 8) + rd!() as i32;
                         let range = ((rd!() as i32) << 8) + rd!() as i32;
                         let r = host.randf();
-                        idx += (range as f32 * r) as i32;
+                        idx += melee_core::ppc::fctiwz_f32(range as f32 * r);
                         idx = self.remap(self.part(p).bank, idx);
                         if let Some(c) = self.spawn_child(host, p, idx) {
                             let src = self.part(p).clone();
@@ -2297,7 +2297,7 @@ impl PsSystem {
                         {
                             let pp = pp!();
                             if pp.a_cmp_count != 0 {
-                                let step = ((pp.a_cmp_remain as i32) << 16) / pp.a_cmp_count as i32;
+                                let step = <i32 as melee_core::ppc::Ppc>::pdiv((pp.a_cmp_remain as i32) << 16, pp.a_cmp_count as i32);
                                 pp.a_cmp_param1 = Self::col_step(pp.a_cmp_param1, pp.a_cmp_param1_target, step);
                                 pp.a_cmp_param2 = Self::col_step(pp.a_cmp_param2, pp.a_cmp_param2_target, step);
                             }
@@ -2415,7 +2415,7 @@ impl PsSystem {
                         let range = rd!() as f32;
                         let r = host.randf();
                         // 1978: randRange * Randf() + (f32) poseNum, fused.
-                        pp!().pose_num = fmadds(range, r, pn as f32) as i32 as u8;
+                        pp!().pose_num = melee_core::ppc::fctiwz_f32(fmadds(range, r, pn as f32)) as u8;
                         self.enable_texture(p);
                     }
                     0xBD => {
@@ -2541,7 +2541,7 @@ impl PsSystem {
                         let timing = rd!() as i32;
                         let scale = if timing != 0 {
                             let r = host.randf();
-                            ((timing + 1) as f32 * r) as i32 as f32 / timing as f32
+                            melee_core::ppc::fctiwz_f32((timing + 1) as f32 * r) as f32 / timing as f32
                         } else {
                             host.randf()
                         };
@@ -2566,7 +2566,7 @@ impl PsSystem {
                         if flags & 0x08 != 0 {
                             let a_rand = host.randf();
                             let delta = rd!() as i8;
-                            let a_rand = ((timing + 1) as f32 * a_rand) as i32 as f32;
+                            let a_rand = melee_core::ppc::fctiwz_f32((timing + 1) as f32 * a_rand) as f32;
                             let df = (((delta as i32) << 1) as f32 * a_rand) / timing as f32;
                             let pp = pp!();
                             if flags & 0x10 != 0 {
@@ -2643,7 +2643,7 @@ impl PsSystem {
                             let pp = pp!();
                             let (count, remain) = if mat { (pp.mat_col_count, pp.mat_col_remain) } else { (pp.amb_col_count, pp.amb_col_remain) };
                             if count != 0 {
-                                let step = ((remain as i32) << 16) / count as i32;
+                                let step = <i32 as melee_core::ppc::Ppc>::pdiv((remain as i32) << 16, count as i32);
                                 if mat {
                                     pp.mat_rgb = Self::col_step(pp.mat_rgb, pp.mat_rgb_target, step);
                                     pp.mat_a = Self::col_step(pp.mat_a, pp.mat_a_target, step);
@@ -2690,7 +2690,7 @@ impl PsSystem {
                         let timing = rd!() as i32;
                         if timing != 0 {
                             let r = host.randf();
-                            let randi = ((timing + 1) as f32 * r) as i32;
+                            let randi = melee_core::ppc::fctiwz_f32((timing + 1) as f32 * r);
                             base += range * randi as f32 / timing as f32;
                         } else {
                             let r = host.randf();

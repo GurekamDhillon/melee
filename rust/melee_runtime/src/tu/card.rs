@@ -1474,14 +1474,13 @@ pub unsafe extern "C" fn setupCardIcons(mut cmd: *const CardCmd) -> i32 {
     {
         (*(*cmd).state).stat.iconFormat = ((*(*cmd).state).stat.iconFormat
             as i32 & !(CARD_STAT_ICON_MASK << bit)
-            | ((*(*cmd).state).icon_info.icon_format[k as usize] as i32)
-                << bit) as u16;
+            | <i32 as melee_core::ppc::Ppc>::pshl((*(*cmd).state).icon_info.icon_format[k as usize] as i32, (bit) as i64)) as u16;
         let fresh1 = k;
         k = k + 1;
         (*(*cmd).state).stat.iconSpeed = ((*(*cmd).state).stat.iconSpeed
             as i32 & !(CARD_STAT_SPEED_MASK << bit)
-            | ((*(*cmd).state).icon_info.icon_speed[fresh1 as usize]
-                as i32) << bit) as u16;
+            | <i32 as melee_core::ppc::Ppc>::pshl((*(*cmd).state).icon_info.icon_speed[fresh1 as usize]
+                as i32, (bit) as i64)) as u16;
         bit = bit.wrapping_add(2 as u32);
     }
     return k as i32;
@@ -1494,10 +1493,10 @@ pub unsafe extern "C" fn unpackCardStat(mut cmd: *const CardCmd, mut stat: *mut 
         & 3 as i32) as u8;
     k = 0 as i32 as s32;
     while k < 8 as i32 {
-        (*(*cmd).state).icon_info.icon_format[k as usize] = ((*stat).iconFormat
-            as i32 >> 2 as s32 * k & CARD_STAT_ICON_MASK) as u8;
-        (*(*cmd).state).icon_info.icon_speed[k as usize] = ((*stat).iconSpeed
-            as i32 >> 2 as s32 * k & CARD_STAT_SPEED_MASK) as u8;
+        (*(*cmd).state).icon_info.icon_format[k as usize] = (<i32 as melee_core::ppc::Ppc>::pshr((*stat).iconFormat
+            as i32, (2 as s32 * k) as i64) & CARD_STAT_ICON_MASK) as u8;
+        (*(*cmd).state).icon_info.icon_speed[k as usize] = (<i32 as melee_core::ppc::Ppc>::pshr((*stat).iconSpeed
+            as i32, (2 as s32 * k) as i64) & CARD_STAT_SPEED_MASK) as u8;
         k += 1;
     }
     (*(*cmd).state).header_size = hsd_803AC340(&raw mut (*(*cmd).state).icon_info)

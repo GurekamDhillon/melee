@@ -240,7 +240,7 @@ pub fn ftMs_SpecialLw_80139140(gobj: *mut HSD_GObj) {
         (*fp).facing_dir = (*fp).specialn_facing_dir;
         let temp_r0: i32 = (*fp).x19A4;
         if temp_r0 > 0 {
-            (*fp).mv.ms.speciallw.x0 = (temp_r0 as f32 * (*da).x5C) as i32;
+            (*fp).mv.ms.speciallw.x0 = melee_core::ppc::fctiwz_f32(temp_r0 as f32 * (*da).x5C);
         }
         let idx = fh::ftparts_get_bone_index(&*fp, FtPart_HipN as i32);
         let mut sp18: Vec3 = core::mem::zeroed();

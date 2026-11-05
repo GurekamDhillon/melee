@@ -1599,7 +1599,7 @@ pub fn ftKb_SpecialN_800EF040(gobj: *mut HSD_GObj, arg1: i32, hat: *mut KirbyHat
             let mut parts = (*ft_data).x0;
             let mut i = 0;
             while i < count {
-                if (1u32 << i) & mask != 0 {
+                if (<u32 as melee_core::ppc::Ppc>::pshl(1u32, (i) as i64)) & mask != 0 {
                     ext::ftParts_800753D4(fp, parts, joint);
                 }
                 i += 1;
@@ -1815,7 +1815,7 @@ unsafe fn ftKb_RemoveHatParts(gobj: *mut HSD_GObj, mask: u32) {
     let ft_data = *melee_fighter::hooks::fighter_804d6540().add((*fp).kind as usize);
     let mut i = (*ft_data).x4 - 1;
     while i >= 0 {
-        if (1u32 << i) & mask != 0 {
+        if (<u32 as melee_core::ppc::Ppc>::pshl(1u32, (i) as i64)) & mask != 0 {
             ext::ftParts_800755E8(fp, (*ft_data).x0.add(i as usize));
         }
         i -= 1;

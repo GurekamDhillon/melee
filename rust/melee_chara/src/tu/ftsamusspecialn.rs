@@ -311,7 +311,7 @@ pub unsafe extern "C" fn ftSs_SpecialNHold_Anim(mut gobj: *mut HSD_GObj) {
         } else {
             var_f1 = 0.0f32;
         }
-        index = ((5 as f32) * var_f1) as i32;
+        index = melee_core::ppc::fctiwz_f32((5 as f32) * var_f1);
         extg::ft_80088510(fighter2, ftSs_Unk3_803CE6B8[index as usize] as i32, 127 as u8, 64 as u8);
     }
     (*fp).mv.ss.unk3.x4 = (*fp).mv.ss.unk3.x4 + 1;
@@ -320,7 +320,7 @@ pub unsafe extern "C" fn ftSs_SpecialNHold_Anim(mut gobj: *mut HSD_GObj) {
         (*fp).u.ss.x2230 = (*fp).u.ss.x2230 + 1;
         if ((*fp).u.ss.x2230 as f32) >= (*samus_attr).x18 {
             let _ = extg::ftCo_800BFFD0(fp, 53, 0);
-            (*fp).u.ss.x2230 = (*samus_attr).x18 as i32;
+            (*fp).u.ss.x2230 = melee_core::ppc::fctiwz_f32((*samus_attr).x18);
             extg::Fighter_ChangeMotionState(gobj, 345, 0 as u32, 0 as f32, 1 as f32, 0 as f32, null_mut());
             ftSamus_UnkAndDestroyAllEF(gobj);
             ftSamus_updateDamageDeathCBs(gobj);

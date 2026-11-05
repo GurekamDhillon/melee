@@ -691,7 +691,7 @@ pub unsafe fn Toy_80304B0C(arg0: i32) -> bool {
     } else {
         v = ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16;
     }
-    *v as i32 & (1 << arg0) != 0
+    *v as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1, (arg0) as i64)) != 0
 }
 
 pub unsafe fn Toy_80304B94(option: i32) -> i32 {
@@ -773,7 +773,7 @@ pub unsafe fn _Toy_80304D30() -> i32 {
     let mut count = 0;
     for i in 0..TY_TROPHY_COUNT {
         if Toy_80304CC8(i) && Toy_803048C0(i) != 0 {
-            x = Toy_803060BC(i, 6) as i32;
+            x = melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 6));
             sp14[x as usize] += 1;
             if x != 8 && x != 1 {
                 count += 1;
@@ -1064,7 +1064,7 @@ pub unsafe fn Toy_SetUnlockState(trophy_id: i32, add_value: i32) {
     if trophy_id as i16 == 0xA5 && ext::gm_80164430(0x14) == 0 {
         ext::gm_80164504(0x14);
     }
-    if Toy_803060BC(idx as i32, 6) as i32 == 1 {
+    if melee_core::ppc::fctiwz_f32(Toy_803060BC(idx as i32, 6)) == 1 {
         ext::gm_80172C44(idx as u32);
     }
 }
@@ -1098,24 +1098,24 @@ pub unsafe fn Toy_80305918(arg0: i8, arg1: i32, arg2: i32) {
     if arg1 != 0 {
         if arg2 != 0 {
             let val4 = *toy_u16(4);
-            let mask2 = 1i32 << arg0;
+            let mask2 = <i32 as melee_core::ppc::Ppc>::pshl(1i32, (arg0) as i64);
             if val4 as i32 & mask2 != 0 {
                 *toy_u16(4) = (val4 as i32 ^ mask2) as u16;
             }
         } else {
             let ptr = if toy_scene_mode() { toy_u16(3) } else { ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16 };
             let temp_val = *ptr;
-            let mask = 1i32 << arg0;
+            let mask = <i32 as melee_core::ppc::Ppc>::pshl(1i32, (arg0) as i64);
             if temp_val as i32 & mask != 0 {
                 *ptr = (temp_val as i32 ^ mask) as u16;
             }
         }
     } else if arg2 != 0 {
         let ptr19c = toy_u16(4);
-        *ptr19c = (*ptr19c as i32 | (1i32 << arg0)) as u16;
+        *ptr19c = (*ptr19c as i32 | (<i32 as melee_core::ppc::Ppc>::pshl(1i32, (arg0) as i64))) as u16;
     } else {
         let ptr = if toy_scene_mode() { toy_u16(3) } else { ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16 };
-        *ptr = (*ptr as i32 | (1i32 << arg0)) as u16;
+        *ptr = (*ptr as i32 | (<i32 as melee_core::ppc::Ppc>::pshl(1i32, (arg0) as i64))) as u16;
     }
 }
 
@@ -2193,7 +2193,7 @@ pub unsafe fn Toy_803083D8(jobj: *mut HSD_JObj, arg1: i32) {
         ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
         return;
     }
-    let temp_r31 = Toy_803060BC(arg1, 8) as i32;
+    let temp_r31 = melee_core::ppc::fctiwz_f32(Toy_803060BC(arg1, 8));
     if temp_r31 == 0 {
         ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
         return;
@@ -4390,7 +4390,7 @@ pub unsafe extern "C" fn _Toy_80310B48(gobj: *mut HSD_GObj) {
     }
     if dir_x == 0.0 && dir_y != 0.0 {
         sfxMove();
-        (*editor).selected_slot = (((*editor).selected_slot as i8 as f32 + dir_y) as i32) as u8;
+        (*editor).selected_slot = (melee_core::ppc::fctiwz_f32((*editor).selected_slot as i8 as f32 + dir_y)) as u8;
         if ((*editor).selected_slot as i8) < 0 {
             (*editor).selected_slot = 0;
         }
@@ -4467,7 +4467,7 @@ pub unsafe fn Toy_80311680() {
             temp_r5 = temp_r5.wrapping_add(1);
             *temp_r3 = temp_r5;
             *var_r29 = 1;
-            let temp_r0_2 = Toy_803060BC(var_r28, 6) as i32;
+            let temp_r0_2 = melee_core::ppc::fctiwz_f32(Toy_803060BC(var_r28, 6));
             if temp_r0_2 as u32 > 1 && temp_r0_2 != 8 && temp_r0_2 != 3 {
                 *var_r29 |= 0x4000;
             }
@@ -4716,7 +4716,7 @@ pub unsafe fn Toy_8031234C(arg0: i32) {
         }
         *state_data = *toy_u16(3); // TOY_X19A
         for category in 0..9i32 {
-            if category as u32 > 1 && category != 8 && category != 3 && (*state_data as i32 & (1 << category)) != 0 {
+            if category as u32 > 1 && category != 8 && category != 3 && (*state_data as i32 & (<i32 as melee_core::ppc::Ppc>::pshl(1, (category) as i64))) != 0 {
                 let mut ptr = save_data;
                 for j in 0..TY_TROPHY_COUNT {
                     let result = Toy_803060BC(j, 6);
@@ -4762,7 +4762,7 @@ pub unsafe fn Toy_803124BC() {
     loadTrophyMetadata();
     for i in 0..TY_TROPHY_COUNT {
         let skip = trophy_enabled_inline(i);
-        if skip && Toy_803060BC(i, 6) as i32 == 2 {
+        if skip && melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 6)) == 2 {
             *table1 |= 0x4000;
         }
         table1 = table1.add(1);
@@ -4778,7 +4778,7 @@ pub unsafe fn Toy_8031263C() {
     let table2 = ext::gmMainLib_GetTrophyCategoryFlags() as *mut u16;
     loadTrophyMetadata();
     for i in 0..TY_TROPHY_COUNT {
-        if _Toy_80304CC8_noinline(i) && Toy_803060BC(i, 6) as i32 == 2 {
+        if _Toy_80304CC8_noinline(i) && melee_core::ppc::fctiwz_f32(Toy_803060BC(i, 6)) == 2 {
             *table1 |= 0x4000;
         }
         table1 = table1.add(1);

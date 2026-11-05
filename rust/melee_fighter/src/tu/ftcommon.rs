@@ -110,7 +110,7 @@ pub fn ftcommon_8007efc8(gobj: G, arg1: fn(G)) {
     dst.pos_delta = src.pos_delta;
     dst.facing_dir = src.facing_dir;
     dst.dmg.x1830_percent = src.dmg.x1830_percent;
-    ext::Player_SetHPByIndex(dst.player_id as i32, dst.is_sub_fighter() as i32, dst.dmg.x1830_percent as i32);
+    ext::Player_SetHPByIndex(dst.player_id as i32, dst.is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(dst.dmg.x1830_percent));
     let (src, dst) = (fpg(gobj), fpg(dst_gobj));
     dst.dmg.x18F0 = src.dmg.x18F0;
     dst.self_vel = src.self_vel;
@@ -358,8 +358,8 @@ pub fn ftcommon_8007ed50(fp: &mut Fighter, arg1: i32) {
     melee_core::ct!("ftcommon_8007ed50");
     let cd = common_data();
     let tmp = fmadds(arg1 as f32, cd.x138, cd.x13C);
-    let val2 = tmp as i32;
-    if (tmp as i32) < 1 {
+    let val2 = melee_core::ppc::fctiwz_f32(tmp);
+    if (melee_core::ppc::fctiwz_f32(tmp)) < 1 {
         return;
     }
     ftcommon_8007ebac(fp, 5, val2 as u32);
@@ -370,8 +370,8 @@ pub fn ftcommon_8007ee0c(fp: &mut Fighter, arg1: i32) {
     melee_core::ct!("ftcommon_8007ee0c");
     let cd = common_data();
     let tmp = fmadds(arg1 as f32, cd.xEC, cd.xF0);
-    let val2 = tmp as i32;
-    if (tmp as i32) < 1 {
+    let val2 = melee_core::ppc::fctiwz_f32(tmp);
+    if (melee_core::ppc::fctiwz_f32(tmp)) < 1 {
         return;
     }
     ftcommon_8007ebac(fp, 10, val2 as u32);
@@ -455,7 +455,7 @@ pub fn ftcommon_8007ffd8(fp: &mut Fighter, arg8: f32) -> bool {
     melee_core::ct!("ftcommon_8007ffd8");
     let mut r = false;
     if fp.input.pressed_buttons & PAD_ABXYLR != 0 {
-        fp.x2018 = (fp.x2018 as f32 - arg8) as i32;
+        fp.x2018 = melee_core::ppc::fctiwz_f32(fp.x2018 as f32 - arg8);
         r = true;
     }
     let (b0, b1) = (fp.x2020, fp.x2021);
@@ -464,7 +464,7 @@ pub fn ftcommon_8007ffd8(fp: &mut Fighter, arg8: f32) -> bool {
     fp.x2020 = dx;
     fp.x2021 = dy;
     if b0 != fp.x2020 || b1 != fp.x2021 {
-        fp.x2018 = (fp.x2018 as f32 - arg8) as i32;
+        fp.x2018 = melee_core::ppc::fctiwz_f32(fp.x2018 as f32 - arg8);
         r = true;
     }
     let (s, u) = ids(fp);
@@ -973,7 +973,7 @@ pub fn ftcommon_8007fa00(g: G_ftcommon3) {
 pub fn ftcommon_8007fa58(g: G_ftcommon3, arg1: G_ftcommon3) {
     melee_core::ct!("ftcommon_8007fa58");
     if !fp(g).x197C.is_null() {
-        fp(g).x2014 = h::it_8026b54c(arg1) as i32; // float -> s32 (saturating)
+        fp(g).x2014 = melee_core::ppc::fctiwz_f32(h::it_8026b54c(arg1)); // float -> s32 (saturating)
         h::play_sfx(fp(g), 0x117, 0x7F, 0x40);
         c2::ftcommon_8007ebac(fp(g), 0x10, 0);
         h::item_8026a8ec(arg1);
@@ -984,7 +984,7 @@ pub fn ftcommon_8007fa58(g: G_ftcommon3, arg1: G_ftcommon3) {
     h::item_8026abd8(arg1, &vec, 0.0);
     let part = unsafe { (*(*fp(g).ft_data).x8).x12 } as i32;
     h::item_8026ab54(arg1, g, part);
-    let t = h::it_8026b54c(arg1) as i32;
+    let t = melee_core::ppc::fctiwz_f32(h::it_8026b54c(arg1));
     ftcommon_8007f948(g, arg1, t);
     h::ftco_800d105c(g);
     h::ft_80081c88(g, fp(g).x34_scale.y);
@@ -998,7 +998,7 @@ pub fn ftcommon_8007fa58(g: G_ftcommon3, arg1: G_ftcommon3) {
 /// Float -> int conversions saturate (gwtool lowering), int adds wrap (`-fwrapv`).
 pub fn ftcommon_8007fc7c(g: G_ftcommon3, arg8: f32) {
     melee_core::ct!("ftcommon_8007fc7c");
-    let mut sp20 = (arg8 * h::common_data().x704) as i32;
+    let mut sp20 = melee_core::ppc::fctiwz_f32(arg8 * h::common_data().x704);
     if !fp(g).x1980.is_null() {
         let f = fp(g);
         f.x2018 = f.x2018.wrapping_add(sp20);
@@ -1006,7 +1006,7 @@ pub fn ftcommon_8007fc7c(g: G_ftcommon3, arg8: f32) {
             f.x2018 = h::common_data().x700;
         }
         sp20 = f.x2024;
-        f.x2024 = (sp20 as f32 + arg8) as i32;
+        f.x2024 = melee_core::ppc::fctiwz_f32(sp20 as f32 + arg8);
         c2::ftcommon_8007fda0(f);
     } else {
         let f = fp(g);
@@ -1028,7 +1028,7 @@ pub fn ftcommon_8007fe84(g: G_ftcommon3, item: G_ftcommon3, arg2: i32, arg3: f32
     f.x1980 = item;
     f.x2018 = arg2;
     f.x201C = h::common_data().x6F8;
-    f.x2024 = arg3 as i32;
+    f.x2024 = melee_core::ppc::fctiwz_f32(arg3);
     f.x2021 = 0;
     f.x2020 = 0;
     c2::ftcommon_8007ebac(f, 2, 0);

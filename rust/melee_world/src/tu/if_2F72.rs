@@ -176,7 +176,7 @@ pub unsafe extern "C" fn if_802F73C4(gobj: *mut HSD_GObj) {
     let idx = if entry.is_null() {
         0
     } else {
-        (entry as usize - (&raw mut ext::ifStatus_803F9628) as usize) / core::mem::size_of::<Element_803F9628>()
+        <usize as melee_core::ppc::Ppc>::pdiv(entry as usize - (&raw mut ext::ifStatus_803F9628) as usize, core::mem::size_of::<Element_803F9628>())
     } as i32;
     if !entry.is_null() && (*entry).x12.x2() == 0 {
         if let Some(cb) = (*entry).x18 {
@@ -202,7 +202,7 @@ pub unsafe extern "C" fn if_802F74D0(gobj: *mut HSD_GObj) {
     let idx = if entry.is_null() {
         0
     } else {
-        (entry as usize - (&raw mut ext::ifStatus_803F9628) as usize) / core::mem::size_of::<Element_803F9628>()
+        <usize as melee_core::ppc::Ppc>::pdiv(entry as usize - (&raw mut ext::ifStatus_803F9628) as usize, core::mem::size_of::<Element_803F9628>())
     } as i32;
     if !entry.is_null() && (*entry).x12.x2() == 0 {
         if let Some(cb) = (*entry).x18 {

@@ -91,7 +91,7 @@ pub unsafe extern "C" fn grStory_801E3230(_gobj: *mut HSD_GObj) { melee_core::ct
 /// `reset_shyguy_timer`: the randomised timer is overwritten by the hardcoded 120 right after.
 unsafe fn reset_shyguy_timer(gp: *mut Ground) {
     let yp = yakumono_param;
-    (*gp).u.shyguys.timer = ((*yp).timer_min + randi((*yp).timer_rand as i32) as f32) as i32;
+    (*gp).u.shyguys.timer = melee_core::ppc::fctiwz_f32((*yp).timer_min + randi(melee_core::ppc::fctiwz_f32((*yp).timer_rand)) as f32);
     (*gp).u.shyguys.timer = 120;
 }
 
@@ -180,11 +180,11 @@ pub unsafe extern "C" fn grStory_801E3418(gobj: *mut HSD_GObj) {
     pos.z = 2.0;
     {
         let temp_r29 = randi(3);
-        set_shyguy_spawn_count(gp, (*yakumono_param).spawnmany_rarity as i32);
+        set_shyguy_spawn_count(gp, melee_core::ppc::fctiwz_f32((*yakumono_param).spawnmany_rarity));
         set_shyguy_spawn_count(gp, 2);
         let mut i = 0;
         while i < (*gp).u.shyguys.count as i32 {
-            ext::it_802D8618(i, &mut pos, temp_r29, (25.0 * i as f32) as i32);
+            ext::it_802D8618(i, &mut pos, temp_r29, melee_core::ppc::fctiwz_f32(25.0 * i as f32));
             pos.y = fmadds(3.0, frand_amp1(), (*yakumono_param).vpos[spawn_pattern as usize]);
             i += 1;
         }

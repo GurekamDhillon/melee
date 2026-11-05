@@ -3392,19 +3392,19 @@ pub unsafe extern "C" fn LerpLightColor(
         diff = (*mn_804A04F0.light_color).r as ::core::ffi::c_int
             - (*lobj).color.r as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.r = ((*lobj).color.r as ::core::ffi::c_int + diff / div)
+            (*lobj).color.r = ((*lobj).color.r as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
         diff = (*mn_804A04F0.light_color).g as ::core::ffi::c_int
             - (*lobj).color.g as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.g = ((*lobj).color.g as ::core::ffi::c_int + diff / div)
+            (*lobj).color.g = ((*lobj).color.g as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
         diff = (*mn_804A04F0.light_color).b as ::core::ffi::c_int
             - (*lobj).color.b as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.b = ((*lobj).color.b as ::core::ffi::c_int + diff / div)
+            (*lobj).color.b = ((*lobj).color.b as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
     } else {
@@ -3427,19 +3427,19 @@ pub unsafe extern "C" fn mn_8022C068(
         diff = (*mn_804A04F0.light_color).r as ::core::ffi::c_int
             - (*lobj).color.r as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.r = ((*lobj).color.r as ::core::ffi::c_int + diff / div)
+            (*lobj).color.r = ((*lobj).color.r as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
         diff = (*mn_804A04F0.light_color).g as ::core::ffi::c_int
             - (*lobj).color.g as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.g = ((*lobj).color.g as ::core::ffi::c_int + diff / div)
+            (*lobj).color.g = ((*lobj).color.g as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
         diff = (*mn_804A04F0.light_color).b as ::core::ffi::c_int
             - (*lobj).color.b as ::core::ffi::c_int;
         if diff != 0 as ::core::ffi::c_int {
-            (*lobj).color.b = ((*lobj).color.b as ::core::ffi::c_int + diff / div)
+            (*lobj).color.b = ((*lobj).color.b as ::core::ffi::c_int + <i32 as melee_core::ppc::Ppc>::pdiv(diff, div))
                 as u8_0;
         }
     } else {
@@ -4909,10 +4909,10 @@ pub unsafe extern "C" fn mn_8022E978(mut item_idx: u8_0, mut enable: u8_0) {
     melee_core::ct!("mn_8022E978");
     if enable != 0 {
         (*gmMainLib_GetGamePrefs()).item_mask
-            |= ((1 as ::core::ffi::c_int) << item_idx as ::core::ffi::c_int) as u64_0;
+            |= (<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (item_idx as ::core::ffi::c_int) as i64)) as u64_0;
     } else {
         (*gmMainLib_GetGamePrefs()).item_mask
-            &= !((1 as ::core::ffi::c_int) << item_idx as ::core::ffi::c_int) as u64_0;
+            &= !(<i32 as melee_core::ppc::Ppc>::pshl(1 as ::core::ffi::c_int, (item_idx as ::core::ffi::c_int) as i64)) as u64_0;
     };
 }
 pub unsafe extern "C" fn mn_8022EA08(mut buf: *mut ::core::ffi::c_char, mut num: u32_0) {
@@ -4957,7 +4957,7 @@ pub unsafe extern "C" fn mn_8022EB04(mut user_data: *mut ::core::ffi::c_void) {
 }
 pub unsafe extern "C" fn mn_GetDigitAt(mut arg0: s32, mut arg1: s32) -> s32 {
     melee_core::ct!("mn_GetDigitAt");
-    return arg0 / powi(10 as s32, arg1) % 10 as s32;
+    return <i32 as melee_core::ppc::Ppc>::pdiv(arg0, powi(10 as s32, arg1)) % 10 as s32;
 }
 pub unsafe extern "C" fn mn_GetDigitCount(mut num: s32) -> s32 {
     melee_core::ct!("mn_GetDigitCount");
@@ -4966,7 +4966,7 @@ pub unsafe extern "C" fn mn_GetDigitCount(mut num: s32) -> s32 {
         return 1 as s32;
     }
     count = 0 as ::core::ffi::c_int as s32;
-    while num / powi(10 as s32, count) != 0 as ::core::ffi::c_int {
+    while <i32 as melee_core::ppc::Ppc>::pdiv(num, powi(10 as s32, count)) != 0 as ::core::ffi::c_int {
         count += 1 as ::core::ffi::c_int;
         if !(count < 11 as ::core::ffi::c_int) {
             break;
@@ -5571,7 +5571,7 @@ pub fn mn_GetDigitCount_fp(num: i32) -> i32 {
         return 1;
     }
     let mut count = 0;
-    while num / crate::lb::powi(10, count) != 0 {
+    while <i32 as melee_core::ppc::Ppc>::pdiv(num, crate::lb::powi(10, count)) != 0 {
         count += 1;
         if count >= 11 {
             break;

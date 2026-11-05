@@ -519,7 +519,7 @@ pub unsafe extern "C" fn efLib_Create(mut gfx_id: i32, mut parent_gobj: *mut HSD
         if melee_runtime::cabi::urem((1e+01f32 * (*desc).lifetime) as u32, 10 as u32) != (0 as u32) {
             ext::lb_80011C18(jobj, 134217728 as u32);
         }
-        (*effect).lifetime = ((*desc).lifetime as u32) as u16;
+        (*effect).lifetime = melee_core::ppc::fctiwz_f32((*desc).lifetime) as u16;
         if ((*effect).lifetime as i32) != 0 {
             (*effect).lifetime = (*effect).lifetime + 1;
         }

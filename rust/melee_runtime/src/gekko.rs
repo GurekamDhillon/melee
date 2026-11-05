@@ -32,8 +32,8 @@ pub(crate) const SINCOS_EPSILON: f32 = 3.45266983e-4;
 pub fn sincos_reduce(x: f32) -> (f32, i32) {
     // `(2.0f / 3.14159265358979323846f) * x`: a float constant (folded in f32), f32 multiply.
     let z = (2.0f32 / 3.14159265358979323846f32) * x;
-    // `(int)` saturates in the C build (gwtool: fptosi.sat, like fctiwz), as Rust `as` does.
-    let n = if x.to_bits() & 0x8000_0000 != 0 { (z - 0.5) as i32 } else { (z + 0.5) as i32 };
+    // `(int)`: fctiwz (melee_core::ppc), as gwtool lowers it in the C build.
+    let n = if x.to_bits() & 0x8000_0000 != 0 { melee_core::ppc::fctiwz_f32(z - 0.5) } else { melee_core::ppc::fctiwz_f32(z + 0.5) };
     let mut y = x - n.wrapping_mul(2) as f32;
     y = gk_fmadds(FOUR_OVER_PI_M1[0], x, y);
     y = gk_fmadds(FOUR_OVER_PI_M1[1], x, y);

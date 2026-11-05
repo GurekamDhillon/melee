@@ -891,13 +891,13 @@ pub unsafe extern "C" fn fn_801857C4(arg0: *mut HSD_GObj) {
             desc.image2 = &mut st.x88[idx];
             let sobj = ext::HSD_SObjLib_803A477C(st.xDC, &mut desc.desc, 0, 0, 0x80, 1);
             let total_tiles: u32 = 10;
-            let num_cols: u64 = fn_801855BC(total_tiles as f64) as i32 as i64 as u64;
-            let row = (i as u8 / num_cols as u8) as i32;
+            let num_cols: u64 = melee_core::ppc::fctiwz(fn_801855BC(total_tiles as f64)) as i64 as u64;
+            let row = (<u8 as melee_core::ppc::Ppc>::pdiv(i as u8, num_cols as u8)) as i32;
             let nc = num_cols as u8;
             let px = 40.0f32.mul_add(
                 ext::HSD_Randf(),
-                (290.0f32 / (((nc as i32 + 9) / nc as i32) as u8) as f32)
-                    .mul_add((i as u8 % nc) as f32, 280.0),
+                (290.0f32 / ((<i32 as melee_core::ppc::Ppc>::pdiv(nc as i32 + 9, nc as i32)) as u8) as f32)
+                    .mul_add((<u8 as melee_core::ppc::Ppc>::prem(i as u8, nc)) as f32, 280.0),
             );
             let py = 40.0f32.mul_add(
                 ext::HSD_Randf(),
@@ -960,10 +960,10 @@ pub unsafe fn fn_80185A0C() -> i32 {
     }
 
     for k in 0..10i32 {
-        if (k / n as i32) % 2 != 0 {
-            st.xD0[k as usize] = ((n as i32 - 1) - (k % n as i32)) as u8;
+        if (<i32 as melee_core::ppc::Ppc>::pdiv(k, n as i32)) % 2 != 0 {
+            st.xD0[k as usize] = ((n as i32 - 1) - (<i32 as melee_core::ppc::Ppc>::prem(k, n as i32))) as u8;
         } else {
-            st.xD0[k as usize] = (k % n as i32) as u8;
+            st.xD0[k as usize] = (<i32 as melee_core::ppc::Ppc>::prem(k, n as i32)) as u8;
         }
     }
 

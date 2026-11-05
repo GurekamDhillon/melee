@@ -154,12 +154,12 @@ pub fn ftLg_SpecialS_SetVars(gobj: *mut HSD_GObj) {
         let sa = (*fp).dat_attrs as *const ftLuigiAttributes;
         (*fp).cmd_vars[0] = 0;
         if ((*fp).active_sticky.lstick.x as f32) < (*sa).x4_LUIGI_GREENMISSILE_SMASH {
-            (*fp).mv.lg.SpecialS.chargeFrames = (*sa).x8_LUIGI_GREENMISSILE_CHARGE_RATE as i32;
+            (*fp).mv.lg.SpecialS.chargeFrames = melee_core::ppc::fctiwz_f32((*sa).x8_LUIGI_GREENMISSILE_CHARGE_RATE);
             (*fp).x2070.anon_0.set_count_thrown_items(1);
         } else {
             (*fp).mv.lg.SpecialS.chargeFrames = 0;
         }
-        if ext::HSD_Randi((*sa).x44_LUIGI_GREENMISSILE_MISFIRE_CHANCE as i32) == 0 {
+        if ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*sa).x44_LUIGI_GREENMISSILE_MISFIRE_CHANCE)) == 0 {
             (*fp).mv.lg.SpecialS.isMisfire = 1;
         } else {
             (*fp).mv.lg.SpecialS.isMisfire = 0;

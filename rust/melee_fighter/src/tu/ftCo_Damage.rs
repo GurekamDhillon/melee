@@ -38,7 +38,7 @@ fn deg_to_rad(a: f32) -> f32 {
 /// C `(int) float` in the shipping build: `llvm.fptosi.sat` (gwtool `makeArithmeticSafe`), i.e. Rust `as`.
 #[inline(always)]
 fn f2i(x: f32) -> i32 {
-    x as i32
+    melee_core::ppc::fctiwz_f32(x)
 }
 #[inline(always)]
 fn atan2f(y: f32, x: f32) -> f32 {

@@ -676,7 +676,7 @@ pub unsafe extern "C" fn fn_8017FE54(gobj: *mut HSD_GObj) {
     let state = st();
 
     ext::lb_800122C8((*ev).x1C, 0, 0, 1);
-    ext::lb_800138D8((*state).x2C, ((120.0f32 * (*state).x10C) as i32).wrapping_add(1) as i8);
+    ext::lb_800138D8((*state).x2C, (melee_core::ppc::fctiwz_f32(120.0f32 * (*state).x10C)).wrapping_add(1) as i8);
 
     (*ev).x20 = fmadds(0.0225f32, (*state).x110 as f32, -0.175f32);
 
@@ -769,7 +769,7 @@ pub unsafe extern "C" fn fn_8017FF1C(gobj: *mut HSD_GObj) {
     if (*state).x11A != 0
         && (*state).x110 > 0x14
         && (*state).x11D < (*state).x11C
-        && ((0.5f32 * ((*state).x110.wrapping_sub(0x14) as f32)) as i32) > ((*state).x11D as i32)
+        && (melee_core::ppc::fctiwz_f32(0.5f32 * ((*state).x110.wrapping_sub(0x14) as f32))) > ((*state).x11D as i32)
     {
         ext::lb_80011E24(jobj, &mut sp28, &[(*state).x11D as i32 + 7, -1]);
         ext::HSD_JObjClearFlagsAll(sp28, JOBJ_HIDDEN as u32);

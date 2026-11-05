@@ -569,7 +569,7 @@ pub unsafe extern "C" fn grFlatzone_802176BC(gobj: *mut HSD_GObj) {
         (*gp).u.flatzone2.timer = (*yakumono_param).unk20;
         if (*gp).u.flatzone2.xC8 == 1.0 {
             pos.x = (*yakumono_param).unk24;
-            (*gp).u.flatzone2.timer = ((*gp).u.flatzone2.timer as f32 / 2.0) as i32;
+            (*gp).u.flatzone2.timer = melee_core::ppc::fctiwz_f32((*gp).u.flatzone2.timer as f32 / 2.0);
         } else {
             pos.x = (*yakumono_param).unk28;
             map2_anim(1);

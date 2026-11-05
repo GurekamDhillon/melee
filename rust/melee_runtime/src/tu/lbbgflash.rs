@@ -244,10 +244,10 @@ pub unsafe extern "C" fn fn_800204C8() {
     match mode {
         0 | 1 | 2 => {
             fn_8001FC08();
-            data.xC.r = data.x10[0] as u8;
-            data.xC.g = data.x10[1] as u8;
-            data.xC.b = data.x10[2] as u8;
-            data.xC.a = data.x10[3] as u8;
+            data.xC.r = melee_core::ppc::fctiwz_f32(data.x10[0]) as u8;
+            data.xC.g = melee_core::ppc::fctiwz_f32(data.x10[1]) as u8;
+            data.xC.b = melee_core::ppc::fctiwz_f32(data.x10[2]) as u8;
+            data.xC.a = melee_core::ppc::fctiwz_f32(data.x10[3]) as u8;
         }
         3 | 4 => {
             if data.x30 as i32 == 0 {

@@ -14,6 +14,7 @@ pub mod gcdecode;
 pub mod hash;
 pub mod modhook;
 pub mod pose;
+pub mod ppc;
 pub mod vec;
 
 /// Crate version, used by the `melee` binary to prove each crate links.

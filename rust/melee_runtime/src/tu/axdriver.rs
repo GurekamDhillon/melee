@@ -282,7 +282,7 @@ pub unsafe extern "C" fn AXDriverExec(v: *mut HSD_SM) {
     melee_core::ct!("AXDriverExec");
     let mut i: i32 = 0;
     while i <= 9 {
-        let flag: u32 = 1u32 << i;
+        let flag: u32 = <u32 as melee_core::ppc::Ppc>::pshl(1u32, (i) as i64);
 
         if (*v).flags & flag != 0 {
             match flag {
@@ -606,7 +606,7 @@ unsafe fn HSD_AudioSFXStartParam_impl(sound_id: i32, volume: u8, pan: u8, track:
         return -1;
     }
 
-    if AXDriver_804D77CC & (1u32 << channel) != 0 {
+    if AXDriver_804D77CC & (<u32 as melee_core::ppc::Ppc>::pshl(1u32, (channel) as i64)) != 0 {
         return -1;
     }
 
@@ -1027,7 +1027,7 @@ pub unsafe extern "C" fn HSD_AudioGetAuxHeapSize(type_: AXDriverAuxType, param: 
                     result += (dims[i + 3] + 2) * 4;
                 }
                 result += (dims[k + 5] + 2) * 4;
-                result += ((32000.0f32 * (*(param as *mut AXFX_REVERBHI)).preDelay) as i32) * 4;
+                result += (melee_core::ppc::fctiwz_f32(32000.0f32 * (*(param as *mut AXFX_REVERBHI)).preDelay)) * 4;
             }
         }
         AXDRIVER_AUX_REVERB_STD => {
@@ -1037,7 +1037,7 @@ pub unsafe extern "C" fn HSD_AudioGetAuxHeapSize(type_: AXDriverAuxType, param: 
                     result += (dims[i] + 2) * 4;
                     result += (dims[i + 2] + 2) * 4;
                 }
-                result += ((32000.0f32 * (*(param as *mut AXFX_REVERBSTD)).preDelay) as i32) * 4;
+                result += (melee_core::ppc::fctiwz_f32(32000.0f32 * (*(param as *mut AXFX_REVERBSTD)).preDelay)) * 4;
             }
         }
         AXDRIVER_AUX_CHORUS => result = 0x1680,
@@ -1184,7 +1184,7 @@ pub unsafe extern "C" fn HSD_AudioPStreamPauseCh(channel: i32) -> bool {
         }
         v = (*v).next;
     }
-    AXDriver_804D77CC |= 1u32 << channel;
+    AXDriver_804D77CC |= <u32 as melee_core::ppc::Ppc>::pshl(1u32, (channel) as i64);
     ext::OSRestoreInterrupts(enabled);
     true
 }
@@ -1222,7 +1222,7 @@ pub unsafe extern "C" fn HSD_AudioPStreamResumeCh(channel: i32) -> bool {
         }
         v = (*v).next;
     }
-    AXDriver_804D77CC &= !(1u32 << channel);
+    AXDriver_804D77CC &= !(<u32 as melee_core::ppc::Ppc>::pshl(1u32, (channel) as i64));
     ext::OSRestoreInterrupts(enabled);
     true
 }

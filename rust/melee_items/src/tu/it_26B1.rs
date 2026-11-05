@@ -460,7 +460,7 @@ pub unsafe extern "C" fn it_8026B40C(article: *mut Article, kind: i32) {
 pub unsafe extern "C" fn it_8026B424(damage: i32) -> f32 {
     melee_core::ct!("it_8026B424");
     let itCommonData = ext::it_804D6D28;
-    fmadds(damage as f32, (*itCommonData).xB8, (*itCommonData).xBC) as i32 as f32
+    melee_core::ppc::fctiwz_f32(fmadds(damage as f32, (*itCommonData).xB8, (*itCommonData).xBC)) as f32
 }
 
 /// `it_8026B47C`: the heal value of a healing item (0 for other kinds).
@@ -1377,7 +1377,7 @@ pub fn it_8026b3a8(ip: &mut Item) {
 /// `fmadds((f32) damage, xB8, xBC)`; `(int)` is gwtool's saturating conversion (= Rust `as`).
 pub fn it_8026b424(damage: i32, common: &ItemCommonData) -> f32 {
     melee_core::ct!("it_8026b424");
-    fmadds(damage as f32, common.xB8, common.xBC) as i32 as f32
+    melee_core::ppc::fctiwz_f32(fmadds(damage as f32, common.xB8, common.xBC)) as f32
 }
 
 /// `it_8026B47C`: heal value of the healing items, else 0.

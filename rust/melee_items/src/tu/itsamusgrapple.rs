@@ -518,7 +518,7 @@ pub unsafe extern "C" fn it_802B75FC(ip: *mut Item, jobj_arg: *mut HSD_JObj, arg
     } else {
         temp = ((*attrs).xC as f32) * (*attrs).x38;
     }
-    (*attrs).x34 = ((temp * coeff) / (*attrs).x38) as i32;
+    (*attrs).x34 = melee_core::ppc::fctiwz_f32((temp * coeff) / (*attrs).x38);
 
     if (*ip).xDD4_itemVar.samusgrapple.x16 == 1 {
         (*attrs).x34 = (*attrs).x34.wrapping_mul(2);

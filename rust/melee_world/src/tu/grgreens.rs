@@ -282,7 +282,7 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
 /// `%` as the shipping build computes it (gwtool's makeArithmeticSafe: x % 0 == x, INT_MIN % -1 == 0)
 #[inline(always)]
 fn srem(a: i32, b: i32) -> i32 {
-    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { a % b }
+    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { <i32 as melee_core::ppc::Ppc>::prem(a, b) }
 }
 
 /// `static inline randrange`

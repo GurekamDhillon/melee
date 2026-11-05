@@ -257,7 +257,7 @@ unsafe fn itBombhei_UnkMotion1_Setup(gobj: *mut Item_GObj) {
         ext::it_80274740(gobj);
     }
     if (*ip).msid == 3 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*ap).x14 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*ap).x14);
     }
 }
 
@@ -337,7 +337,7 @@ pub unsafe extern "C" fn itBombhei_Logic6_Spawned(igp: *mut Item_GObj) {
     let ap = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itBombHeiAttributes;
 
     (*ip).xDD4_itemVar.bombhei.xDDC = 0;
-    (*ip).xDD4_itemVar.bombhei.xDD4 = (*ap).x10 as i32;
+    (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*ap).x10);
     (*ip).xDD4_itemVar.bombhei.xDEC = (*ap).x8 + ((*ap).x4 + ((*ap).x10 + (*ap).x14));
     (*ip).xDD4_itemVar.bombhei.xDE0 = 0;
     (*ip).xDD4_itemVar.bombhei.xDE4 = 0;
@@ -368,7 +368,7 @@ pub unsafe extern "C" fn it_8027D820(igp: *mut Item_GObj) {
     HSD_JObjAddScaleZ(jobj, scale);
 
     if (*ip).xDD4_itemVar.bombhei.xDD4 <= 0 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*ap).x18 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*ap).x18);
         (*ip).xDD4_itemVar.bombhei.xDD8 = (*ip).xDD4_itemVar.bombhei.xDD8.wrapping_neg();
     }
 
@@ -419,7 +419,7 @@ pub unsafe extern "C" fn it_8027DE18(igp: *mut Item_GObj) {
     }
 
     if (*ip).msid == 3 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*ap).x14 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*ap).x14);
     }
 
     itBombhei_UpdateStatePreserveBone(igp, 1, ITEM_ANIM_UPDATE);
@@ -504,7 +504,7 @@ pub unsafe extern "C" fn it_8027E978(arg0: *mut Item_GObj) {
     let ip = GET_ITEM(arg0);
     let attrs = GET_ATTRS(ip);
     ext::it_802762B0(ip);
-    (*ip).xDD4_itemVar.bombhei.xDD4 = (*attrs).x4 as i32;
+    (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*attrs).x4);
     (*ip).xDD4_itemVar.bombhei.xE04 =
         ((core::f64::consts::FRAC_PI_2 * (*ip).facing_dir as f64) / (*ip).xDD4_itemVar.bombhei.xDD4 as f64) as f32;
     (*ip).xDD4_itemVar.bombhei.xDE4 = 1;
@@ -523,7 +523,7 @@ pub unsafe extern "C" fn itBombhei_UnkMotion3_Anim(gobj: *mut Item_GObj) -> bool
     if (*ip).xDD4_itemVar.bombhei.xDD4 <= 0 {
         let attr = GET_ATTRS(ip);
         (*ip).xDC8_word.flags.set_x19(1);
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*attr).x14 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*attr).x14);
         it_8027EE04(gobj);
         ext::Item_8026AE84(ip, 0xF0, 0x7F, 0x40);
     }
@@ -630,7 +630,7 @@ pub unsafe extern "C" fn it_8027F8E0(arg0: *mut Item_GObj) {
     (*ip).x40_vel.x = 0.0;
     ext::it_8026B390(arg0);
     if (*ip).xDD4_itemVar.bombhei.xDE0 == 0 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*attr).x18 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*attr).x18);
         (*ip).xDD4_itemVar.bombhei.xDD8 = 1;
         (*ip).xD44_lifeTimer = (*ext::it_804D6D28).x30_lifetime as f32;
         (*ip).xDD4_itemVar.bombhei.xDF0 = (*attr).x8;
@@ -666,7 +666,7 @@ pub unsafe extern "C" fn fn_8027FCA8(arg0: *mut Item_GObj) {
     (*ip).x40_vel.x = 0.0;
     ext::it_8026B390(arg0);
     if (*ip).xDD4_itemVar.bombhei.xDE0 == 0 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*attrs).x18 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*attrs).x18);
         (*ip).xDD4_itemVar.bombhei.xDD8 = 1;
         (*ip).xD44_lifeTimer = (*ext::it_804D6D28).x30_lifetime as f32;
         (*ip).xDD4_itemVar.bombhei.xDF0 = (*attrs).x8;
@@ -696,7 +696,7 @@ unsafe fn fn_8028007C_inline(gobj: *mut Item_GObj) {
     (*ip).x40_vel.x = 0.0;
     ext::it_8026B390(gobj);
     if (*ip).xDD4_itemVar.bombhei.xDE0 == 0 {
-        (*ip).xDD4_itemVar.bombhei.xDD4 = (*attr).x18 as i32;
+        (*ip).xDD4_itemVar.bombhei.xDD4 = melee_core::ppc::fctiwz_f32((*attr).x18);
         (*ip).xDD4_itemVar.bombhei.xDD8 = 1;
         (*ip).xD44_lifeTimer = (*ext::it_804D6D28).x30_lifetime as f32;
         (*ip).xDD4_itemVar.bombhei.xDF0 = (*attr).x8;

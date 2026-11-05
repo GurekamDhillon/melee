@@ -191,8 +191,8 @@ pub unsafe extern "C" fn it_802B56E4(gobj: *mut Item_GObj, vec: *mut Vec3, farg0
     if farg1 > farg2 {
         farg1 = farg2;
     }
-    sv.xDEC = farg1 as i32;
-    sv.xDF0 = farg2 as i32;
+    sv.xDEC = melee_core::ppc::fctiwz_f32(farg1);
+    sv.xDF0 = melee_core::ppc::fctiwz_f32(farg2);
     if !sv.xE00.is_null() && (*ip).owner == sv.xE00 {
         it_802B5CBC(gobj, sv.xE00);
         {

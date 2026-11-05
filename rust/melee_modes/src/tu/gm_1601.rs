@@ -1559,7 +1559,7 @@ unsafe fn split_clock(val: u32, arg1: *mut u8, arg2: *mut u8, arg3: *mut u8, arg
         *arg3 = (temp_r0 % 60) as u8;
     }
     if !arg4.is_null() {
-        *arg4 = ((99.0f32 * (val % 60) as f32) / 59.0f32) as u8;
+        *arg4 = melee_core::ppc::fctiwz_f32((99.0f32 * (val % 60) as f32) / 59.0f32) as u8;
     }
 }
 
@@ -1592,7 +1592,7 @@ unsafe fn total_clock(present: unsafe fn(u8) -> bool, value: unsafe fn(u8) -> u3
         *arg2 = (frames % 60) as u8;
     }
     if !arg3.is_null() {
-        *arg3 = ((99.0f32 * (total_frames % 60) as f32) / 59.0f32) as u8;
+        *arg3 = melee_core::ppc::fctiwz_f32((99.0f32 * (total_frames % 60) as f32) / 59.0f32) as u8;
     }
     true
 }
@@ -1772,7 +1772,7 @@ pub unsafe fn fn_80163FA4(arg0: u8) -> i32 {
 pub unsafe fn gm_8016403C(item: u8) -> bool {
     melee_core::ct!("gm_8016403C");
     let item_mask = (*ext::gmMainLib_GetGamePrefs()).item_mask;
-    if (1i64 << item) as u64 & item_mask != 0 {
+    if (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (item) as i64)) as u64 & item_mask != 0 {
         return true;
     }
     false
@@ -1784,10 +1784,10 @@ pub unsafe fn fn_801640B0(item_mask: *mut u64) {
     for i in 0..0x20i32 {
         let shift = LBL_803B7844[(i as u8) as usize] as i32;
         if shift != 0x23 {
-            if (*temp_r30).item_mask & (1i64 << i) as u64 != 0 {
-                *item_mask |= (1i64 << shift) as u64;
+            if (*temp_r30).item_mask & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64)) as u64 != 0 {
+                *item_mask |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (shift) as i64)) as u64;
             } else {
-                *item_mask &= !(1i64 << shift) as u64;
+                *item_mask &= !(<i64 as melee_core::ppc::Ppc>::pshl(1i64, (shift) as i64)) as u64;
             }
         }
     }
@@ -1850,7 +1850,7 @@ pub unsafe fn gm_80164430(arg0: u16) -> bool {
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     let stage_idx = ext::Stage_8022519C(arg0 as StKind) as u8;
     let unlock_bit = getStageUnlockIndex(stage_idx);
-    if unlock_bit as i32 == NUM_UNLOCKABLE_STAGES || (*stage_unlock_mask as i64 & (1i64 << unlock_bit)) != 0 {
+    if unlock_bit as i32 == NUM_UNLOCKABLE_STAGES || (*stage_unlock_mask as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (unlock_bit) as i64))) != 0 {
         return true;
     }
     // m-ex "unlock_individual_stages"
@@ -1868,7 +1868,7 @@ pub unsafe fn gm_80164504(stkind: u16) {
     if unlock_idx as i32 != NUM_UNLOCKABLE_STAGES {
         let notify_val = getStageUnlockNotifyId(unlock_idx);
         ext::gmMainLib_8015D818(notify_val as u32);
-        *stage_unlock_mask |= (1i64 << unlock_idx as i32) as u16;
+        *stage_unlock_mask |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (unlock_idx as i32) as i64)) as u16;
     }
 }
 
@@ -1877,7 +1877,7 @@ pub unsafe fn gm_80164600() -> bool {
     melee_core::ct!("gm_80164600");
     let stage_unlock_mask = ext::gmMainLib_8015EDA4();
     for i in 0..NUM_UNLOCKABLE_STAGES {
-        if (*stage_unlock_mask as i64 & (1i64 << i)) == 0 {
+        if (*stage_unlock_mask as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64))) == 0 {
             // m-ex "unlock_all_stages"
             if ext::Mex_Enabled(b"unlock_all_stages\0".as_ptr() as *mut i8) != 0 {
                 return true;
@@ -1892,7 +1892,7 @@ pub unsafe fn gm_8016468C() {
     melee_core::ct!("gm_8016468C");
     let ptr = ext::gmMainLib_8015EDA4();
     for i in 0..11i32 {
-        *ptr |= (1i64 << i) as u16;
+        *ptr |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64)) as u16;
     }
 }
 
@@ -1927,7 +1927,7 @@ pub unsafe fn gm_IsCKindUnlocked(ckind: u8) -> bool {
     let unlocked_chars_bitmask = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     let selkind = gm_CKindToSelKind(ckind);
     let unlock_bit = gm_SelKindToUnlockIndex(selkind as i32);
-    if unlock_bit as i32 == NUM_UNLOCKABLE_CHARACTERS || (*unlocked_chars_bitmask as i64 & (1i64 << unlock_bit)) != 0 {
+    if unlock_bit as i32 == NUM_UNLOCKABLE_CHARACTERS || (*unlocked_chars_bitmask as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (unlock_bit) as i64))) != 0 {
         return true;
     }
     // m-ex "unlock_individual_characters"
@@ -1951,7 +1951,7 @@ pub unsafe fn gm_UnlockCKind(ckind: CharacterKind) {
             }
         }
         ext::gmMainLib_8015D818(notify_val as u32);
-        *char_unlock_mask |= (1i64 << unlock_idx as i32) as u16;
+        *char_unlock_mask |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (unlock_idx as i32) as i64)) as u16;
     }
 }
 
@@ -1962,7 +1962,7 @@ pub unsafe fn gm_80164A0C(ckind: u8) {
     let selkind = gm_CKindToSelKind(ckind) as i32;
     let idx = gm_SelKindToUnlockIndex(selkind);
     if idx as i32 != NUM_UNLOCKABLE_CHARACTERS {
-        *unlockable_character_bitfield &= !(1u64 << idx) as u16;
+        *unlockable_character_bitfield &= !(<u64 as melee_core::ppc::Ppc>::pshl(1u64, (idx) as i64)) as u16;
     }
 }
 
@@ -1971,7 +1971,7 @@ pub unsafe fn gm_80164ABC() -> bool {
     melee_core::ct!("gm_80164ABC");
     let unlockable_character_bitfield = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     for i in 0..NUM_UNLOCKABLE_CHARACTERS {
-        if (*unlockable_character_bitfield as i64 & (1i64 << i)) == 0 {
+        if (*unlockable_character_bitfield as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64))) == 0 {
             // m-ex "unlock_all_characters"
             if ext::Mex_Enabled(b"unlock_all_characters\0".as_ptr() as *mut i8) != 0 {
                 return true;
@@ -1997,7 +1997,7 @@ pub unsafe fn gm_80164F18() {
     melee_core::ct!("gm_80164F18");
     let ptr = ext::gmMainLib_GetUnlockedCharactersBitmaskPtr();
     for i in 0..NUM_UNLOCKABLE_CHARACTERS {
-        *ptr |= (1i64 << i) as u16;
+        *ptr |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64)) as u16;
     }
 }
 
@@ -2336,7 +2336,7 @@ pub unsafe fn gm_80166378(arg0_raw: *mut MatchEnd) {
             fn_80166A8C(addr_of_mut!(sp48_y) as *mut Vec3, addr_of_mut!(sp48_x) as *mut Vec3);
             (*arg0).player_standings[iu].xE = sp48_x.to_bits() as u16;
             let b = 100.0f32;
-            (*arg0).player_standings[iu].x34 = (b * ext::pl_80040948(i)) as i32 as i8 as u8;
+            (*arg0).player_standings[iu].x34 = melee_core::ppc::fctiwz_f32(b * ext::pl_80040948(i)) as i8 as u8;
             (*arg0).player_standings[iu].x38 = ext::pl_80040900(i) as u32;
             (*arg0).player_standings[iu].x3C = ext::pl_80040924(i) as u32;
             (*arg0).player_standings[iu].x40 = ext::pl_80040B3C(i);
@@ -2874,10 +2874,10 @@ pub unsafe fn gm_80167BC8(vs_data: *mut VsModeData) {
     for i in 0..0x20i32 {
         let item = LBL_803B7844[(i as u8) as usize];
         if item as i32 != 0x23 {
-            if (*prefs).item_mask & (1i64 << i) as u64 != 0 {
-                v.start.rules.x20 |= (1i64 << item) as u64;
+            if (*prefs).item_mask & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (i) as i64)) as u64 != 0 {
+                v.start.rules.x20 |= (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (item) as i64)) as u64;
             } else {
-                v.start.rules.x20 &= !(1i64 << item) as u64;
+                v.start.rules.x20 &= !(<i64 as melee_core::ppc::Ppc>::pshl(1i64, (item) as i64)) as u64;
             }
         }
     }
@@ -3662,7 +3662,7 @@ pub fn fn_80161C90_count_players(match_end: &MatchEnd_gm_ptr) -> u32 {
 /// gm_1601.c `is_character_unlocked` (`n < 64`; Zelda/Sheik's 0xB is always unlocked).
 pub fn is_character_unlocked(n: u8, mask: &u16) -> bool {
     melee_core::ct!("is_character_unlocked");
-    n == 0xB || (*mask as i64 & (1i64 << n)) != 0
+    n == 0xB || (*mask as i64 & (<i64 as melee_core::ppc::Ppc>::pshl(1i64, (n) as i64))) != 0
 }
 
 /// gm_1601.c `fn_80165418_fp`: the last present player who is not a small loser.

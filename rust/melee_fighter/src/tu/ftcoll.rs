@@ -425,8 +425,8 @@ unsafe fn inline_a1(fp0: F, hit0: HC, fp1: F, hit1: HC, ef_pos: *const Vec3, dmg
 /// `script_clank_observe` (pc/gameworld/script_clank_observe.inc).
 unsafe fn script_clank_observe(a: F, ha: HC, b: F, item: It, hb: HC) {
     let x3cc = cd().x3CC as i32;
-    let ca = (((*ha).damage as i32).wrapping_sub(x3cc) < (*hb).damage as i32) as i32;
-    let cb = (((*hb).damage as i32).wrapping_sub(x3cc) < (*ha).damage as i32) as i32;
+    let ca = ((melee_core::ppc::fctiwz_f32((*ha).damage)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*hb).damage)) as i32;
+    let cb = ((melee_core::ppc::fctiwz_f32((*hb).damage)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*ha).damage)) as i32;
     if ca == 0 && cb == 0 {
         return;
     }
@@ -462,11 +462,11 @@ pub fn ftcoll_8007699c(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
         script_clank_observe(fp0, hit0, fp1, core::ptr::null_mut(), hit1);
         let x3cc = cd().x3CC as i32;
         let dmg = (*hit1).damage;
-        if (dmg as i32).wrapping_sub(x3cc) < (*hit0).damage as i32 {
+        if (melee_core::ppc::fctiwz_f32(dmg)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*hit0).damage) {
             inline_a0(fp0, fp1, hit1, &mid, dmg);
         }
         let dmg = (*hit0).damage;
-        if (dmg as i32).wrapping_sub(x3cc) < (*hit1).damage as i32 {
+        if (melee_core::ppc::fctiwz_f32(dmg)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*hit1).damage) {
             return inline_a1(fp0, hit0, fp1, hit1, &mid, dmg);
         }
         false
@@ -587,7 +587,7 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
         if inline_b1(hit0) {
             if log0_idx() == 0 && (*fp1).dmg.x189C_unk_num_frames == 0.0 && check_tip_log(fp1 as *mut c_void, hit0) == HitCapsule_Disabled as u32 {
                 let mut temp_dmg = 0.5 * dmg;
-                if temp_dmg as i32 == 0 && dmg != 0.0 {
+                if melee_core::ppc::fctiwz_f32(temp_dmg) == 0 && dmg != 0.0 {
                     temp_dmg = 1.0;
                 }
                 let mut i = 0u32;
@@ -605,7 +605,7 @@ pub fn ftcoll_80076ed8(fp0: F, hit0: HC, fp1: F, hit1: HC) -> bool {
                     if len == 0 && count != 0 {
                         len = 1;
                     }
-                    let ti = temp_dmg as i32;
+                    let ti = melee_core::ppc::fctiwz_f32(temp_dmg);
                     if ti > f1.dmg.x1840 as i32 {
                         f1.dmg.x1840 = ti as _;
                     }
@@ -902,11 +902,11 @@ pub fn ftcoll_80077970(item: It, hit1: HC, fp: F, hit2: HC) {
         script_clank_observe(fp, hit2, core::ptr::null_mut(), item, hit1);
         let x3cc = cd().x3CC as i32;
         let dmg = (*hit2).damage;
-        if (dmg as i32).wrapping_sub(x3cc) < (*hit1).damage as i32 {
+        if (melee_core::ppc::fctiwz_f32(dmg)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*hit1).damage) {
             inline_item_a0(item, fp, hit2, &mid, dmg);
         }
         let dmg = (*hit1).damage;
-        if (dmg as i32).wrapping_sub(x3cc) < (*hit2).damage as i32 {
+        if (melee_core::ppc::fctiwz_f32(dmg)).wrapping_sub(x3cc) < melee_core::ppc::fctiwz_f32((*hit2).damage) {
             inline_item_a1(item, hit1, fp, &mid, dmg);
         }
     }
@@ -965,11 +965,11 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                 ext::it_8026FC00(item, hit, mode, fp);
                 let f = &mut *fp;
                 if f.x1988 == 0 && f.x198C == 0 && f.x221D_b6() == 0 && (*hit2).state == HC_DISABLED {
-                    let int_scaled = scaled as i32;
-                    let int_raw = raw_dmg as i32;
+                    let int_scaled = melee_core::ppc::fctiwz_f32(scaled);
+                    let int_raw = melee_core::ppc::fctiwz_f32(raw_dmg);
                     let temp_dmg = 0.5 * int_scaled as f32;
                     let mut f4 = temp_dmg;
-                    if temp_dmg as i32 == 0 && int_scaled != 0 {
+                    if melee_core::ppc::fctiwz_f32(temp_dmg) == 0 && int_scaled != 0 {
                         f4 = 1.0;
                     }
                     let half_raw = int_raw / 2;
@@ -977,8 +977,8 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
                     if half_raw_f == 0.0 && int_raw != 0 {
                         half_raw_f = 1.0;
                     }
-                    if f4 as i32 > f.dmg.x1840 as i32 {
-                        f.dmg.x1840 = (f4 as i32) as _;
+                    if melee_core::ppc::fctiwz_f32(f4) > f.dmg.x1840 as i32 {
+                        f.dmg.x1840 = (melee_core::ppc::fctiwz_f32(f4)) as _;
                     }
                     let idx = log1_idx();
                     if (idx as u32 as usize) < ECHO_COLLISION_LOG_CAPACITY {
@@ -1006,7 +1006,7 @@ pub fn ftcoll_80077c60(item: It, hit: HC, fp: F, hit2: HC) -> bool {
             let mode = if (*hit).x41_b5() != 0 { 5 } else { 0 };
             ext::it_8026FAC4(item, hit, mode, fp as *mut c_void, false);
             if scaled > it.xC34_damageDealt as f32 {
-                it.xC34_damageDealt = scaled as i32;
+                it.xC34_damageDealt = melee_core::ppc::fctiwz_f32(scaled);
                 it.xCF4_fighterGObjUnk = (*fp).gobj;
                 let vel_x = it.x40_vel.x;
                 let mag = if vel_x < 0.0 { -vel_x } else { vel_x };
@@ -1746,7 +1746,7 @@ fn damage_count(fp: &Fighter, ftd: &ftCommonData) -> i32 {
         }
         return ftd.x6D4;
     }
-    fp.dmg.x1830_percent as i32
+    melee_core::ppc::fctiwz_f32(fp.dmg.x1830_percent)
 }
 
 /// The `KNOCKBACK` macro: `defense * (attack * (arg3 * (0.01*x24 * (x11C * (D * inner) + x120)
@@ -2020,14 +2020,14 @@ pub fn ftcoll_8007a06c(gobj: G, dmg_ptr: *mut c_void, log: *mut DmgLogEntry, idx
             let dy = fmadds(0.5, hurt.capsule.a_pos.y + hurt.capsule.b_pos.y, -best.pos.y);
             dir = if dx < 0.0 { 1.0 } else { -1.0 };
             let abs_dx = if dx < 0.0 { -dx } else { dx };
-            let angle_int: i32 = if abs_dx < 1e-5 { 0 } else { (melee_runtime::lbtrigf::atanf(dy / abs_dx) * 57.29577951_f32) as i32 };
+            let angle_int: i32 = if abs_dx < 1e-5 { 0 } else { melee_core::ppc::fctiwz_f32(melee_runtime::lbtrigf::atanf(dy / abs_dx) * 57.29577951_f32) };
             angle = angle_int as f32;
         }
         if best.x0 as i32 == 1 {
             ext::Geno_Autolink(fpg(best.gobj), best.anon_c.hit0, &mut dir, &mut angle, &mut best_kb);
         }
         out.dir = dir;
-        out.angle = angle as i32;
+        out.angle = melee_core::ppc::fctiwz_f32(angle);
         out.hurt_height = (*best.anon_10.hurt1).height as i32;
         out.kb = best_kb;
         out.pos = best.pos;
@@ -2106,7 +2106,7 @@ pub fn ftcoll_8007abd0(arg0: HC, arg1: u32, arg2: G) {
             dmg = ext::ftCo_CalcYScaledKnockback(dmg, (*fp).x34_scale.y, super::ftchangeparam::ext::d6524().x4);
         }
         let scaled = ext::ftCo_800DEEB8(fp, dmg);
-        (*arg0).unk_count = scaled as i32 as u32;
+        (*arg0).unk_count = melee_core::ppc::fctiwz_f32(scaled) as u32;
         (*arg0).damage = ext::ft_80089228(fp, (*fp).x2068_attackID as i32, (*fp).x206C_attack_instance as i32, scaled);
         ext::ScriptGame_HitRuleDamage(arg0);
     }
@@ -2745,7 +2745,7 @@ pub fn ftColl_8007ABD0(hit: *mut HitCapsule, damage: u32, gobj: G) {
     }
     let scaled = crate::ft0df::ftco_800deeb8(fp, dmg);
     unsafe {
-        (*hit).unk_count = (scaled as i32) as u32;
+        (*hit).unk_count = (melee_core::ppc::fctiwz_f32(scaled)) as u32;
         (*hit).damage = crate::stale::apply_staling(fp, fp.x2068_attackID, fp.x206C_attack_instance as i32, scaled);
         // TARGET_PC: ScriptGame_HitRuleDamage(hit)
         melee_runtime::tu::script_hit::ScriptGame_HitRuleDamage(hit);

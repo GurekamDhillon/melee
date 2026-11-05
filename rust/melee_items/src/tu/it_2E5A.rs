@@ -879,10 +879,10 @@ pub fn it_802e614c(parent_gobj1: *mut HSD_GObj, parent_gobj2: *mut HSD_GObj, spa
 pub unsafe fn it_802e61c4(rand: &mut HsdRand, ip: &Item, arg1: i32, arg2: i32) -> i32 {
     melee_core::ct!("it_802e61c4");
     let attr = &*((*ip.xC4_article_data).x4_specialAttributes as *const it_2E5A_Attrs);
-    let mut v = (arg1 as f32 * attr.x2C[arg2 as usize]) as i32;
+    let mut v = melee_core::ppc::fctiwz_f32(arg1 as f32 * attr.x2C[arg2 as usize]);
     let r = rand.randf();
     let t = attr.x24 * r;
-    v = (v as f32 * fmadds(0.01, t, 1.0)) as i32;
+    v = melee_core::ppc::fctiwz_f32(v as f32 * fmadds(0.01, t, 1.0));
     if v < 1 {
         v = 1;
     }

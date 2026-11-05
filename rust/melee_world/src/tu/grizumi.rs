@@ -591,7 +591,7 @@ pub unsafe extern "C" fn grIzumi_801CC358(gobj: *mut HSD_GObj) {
     match (*gp).u.izumi3.xC4 {
         0 => {
             (*gp).u.izumi3.xC4 = 1;
-            (*gp).u.izumi3.xC6 = rand_range((*yp).x3c as i32, (*yp).x38 as i32) as i16;
+            (*gp).u.izumi3.xC6 = rand_range(melee_core::ppc::fctiwz_f32((*yp).x3c), melee_core::ppc::fctiwz_f32((*yp).x38)) as i16;
             r29 = true;
         }
         1 => {
@@ -633,7 +633,7 @@ pub unsafe extern "C" fn grIzumi_801CC358(gobj: *mut HSD_GObj) {
                             (*gp).u.izumi3.xD4 = (*yp).x24;
                         }
                     } else {
-                        (*gp).u.izumi3.xC6 = rand_range((*yp).x3c as i32, (*yp).x38 as i32) as i16;
+                        (*gp).u.izumi3.xC6 = rand_range(melee_core::ppc::fctiwz_f32((*yp).x3c), melee_core::ppc::fctiwz_f32((*yp).x38)) as i16;
                     }
                 }
             }
@@ -665,7 +665,7 @@ pub unsafe extern "C" fn grIzumi_801CC358(gobj: *mut HSD_GObj) {
         }
         3 => {
             (*gp).u.izumi3.xC4 = 4;
-            (*gp).u.izumi3.xC6 = rand_range((*yp).x50 as i32, (*yp).x4c as i32) as i16;
+            (*gp).u.izumi3.xC6 = rand_range(melee_core::ppc::fctiwz_f32((*yp).x50), melee_core::ppc::fctiwz_f32((*yp).x4c)) as i16;
             ext::HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN as u32);
             ext::HSD_JObjRemoveAnimAll(jobj);
             let mut f = HSD_JObjGetTranslationY(jobj);

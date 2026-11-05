@@ -440,7 +440,7 @@ pub unsafe extern "C" fn it_802E3884(gobj: *mut Item_GObj) -> bool {
     let ip = GET_ITEM(gobj);
     let attr = (*(*ip).xC4_article_data).x4_specialAttributes as *mut itWhiteBeaAttributes;
     (*ip).init_facing_dir = (*ip).facing_dir;
-    (*ip).xC9C = ((*ip).xC9C as f32 + ext::it_8027CBFC(gobj)) as i32;
+    (*ip).xC9C = melee_core::ppc::fctiwz_f32((*ip).xC9C as f32 + ext::it_8027CBFC(gobj));
     if (*ip).xC9C > (*(*attr).x0).x0 || (*ip).msid == 9 {
         Item_ZakoDefeat(gobj, ip);
         if ext::HSD_Randf() < (*ext::it_804D6D40).x8 {

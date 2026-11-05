@@ -242,11 +242,11 @@ unsafe fn GET_GROUND(gobj: *mut HSD_GObj) -> *mut Ground {
 /// x % 0 == x, INT_MIN / -1 == -1, INT_MIN % -1 == 0)
 #[inline(always)]
 fn sdiv(a: i32, b: i32) -> i32 {
-    if b == 0 || (a == i32::MIN && b == -1) { if a < 0 { -1 } else { 0 } } else { a / b }
+    if b == 0 || (a == i32::MIN && b == -1) { if a < 0 { -1 } else { 0 } } else { <i32 as melee_core::ppc::Ppc>::pdiv(a, b) }
 }
 #[inline(always)]
 fn srem(a: i32, b: i32) -> i32 {
-    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { a % b }
+    if b == 0 { a } else if a == i32::MIN && b == -1 { 0 } else { <i32 as melee_core::ppc::Ppc>::prem(a, b) }
 }
 
 /// `INIT_ADD_PARTS_RANGE`: calls the stage scale every time it is evaluated
@@ -536,12 +536,12 @@ pub unsafe extern "C" fn grHomeRun_8021D680(gobj: *mut Ground_GObj) {
     }
 
     ext::Camera_GetTransformInterest(&mut cam_interest);
-    let mut x0: i32 = (((cam_interest.x - 2400.0) / (160.0 * ext::Ground_801C0498())) - 1.0) as i32;
+    let mut x0: i32 = melee_core::ppc::fctiwz_f32(((cam_interest.x - 2400.0) / (160.0 * ext::Ground_801C0498())) - 1.0);
     if x0 < 0 {
         x0 = 0;
     }
 
-    let x1: i32 = (1.0 + ((2400.0 + cam_interest.x) / (160.0 * ext::Ground_801C0498()))) as i32;
+    let x1: i32 = melee_core::ppc::fctiwz_f32(1.0 + ((2400.0 + cam_interest.x) / (160.0 * ext::Ground_801C0498())));
     let mut gobj2 = *(*gp).u.homerun.parts;
     let mut gp2 = (*gobj2).user_data as *mut Ground;
     if ((*gp2).u.homerun2.xC4 as i32) < x0 {
@@ -787,7 +787,7 @@ pub unsafe extern "C" fn grHomeRun_8021E500(arg0: i32) -> *mut HSD_GObj {
     (*gp).u.homerun2.xD0 = fmadds(160.0, grHr_804D6AE4 * ext::Ground_801C0498(), offset);
     HSD_JObjSetTranslateX(&mut *jobj, (*gp).u.homerun2.xD0, &mut Dirty);
 
-    (*gp).u.homerun2.xC6 = ((grHr_804D6AE0 as i32).wrapping_mul(sdiv(arg0 + 1, grHr_804D6ADC))) as u16;
+    (*gp).u.homerun2.xC6 = ((melee_core::ppc::fctiwz_f32(grHr_804D6AE0)).wrapping_mul(sdiv(arg0 + 1, grHr_804D6ADC))) as u16;
     (*gp).u.homerun2.xC4 = arg0 as u16;
     gobj
 }
@@ -904,7 +904,7 @@ pub unsafe extern "C" fn grHomeRun_8021EC58(arg: i32) -> *mut HSD_Text {
     (*text).default_fitting = 1;
     (*text).x4C = 1;
 
-    ext::HSD_SisLib_803A6B98(text, 0.0, -29.0, b"%d\0".as_ptr() as *const i8, arg as f32 as i32);
+    ext::HSD_SisLib_803A6B98(text, 0.0, -29.0, b"%d\0".as_ptr() as *const i8, melee_core::ppc::fctiwz_f32(arg as f32));
 
     text
 }
@@ -938,7 +938,7 @@ pub unsafe extern "C" fn grHomeRun_8021EDD4() {
     }
 
     let ratio = max_dist / scale;
-    let mut num_ticks: f32 = (0.5 + ratio / (160.0 * ext::Ground_801C0498())) as i32 as f32;
+    let mut num_ticks: f32 = melee_core::ppc::fctiwz_f32(0.5 + ratio / (160.0 * ext::Ground_801C0498())) as f32;
 
     if num_ticks < 1.0 {
         num_ticks = 1.0;
@@ -947,7 +947,7 @@ pub unsafe extern "C" fn grHomeRun_8021EDD4() {
     let dist = 160.0 * ext::Ground_801C0498();
     grHr_804D6AD8 = scale;
     grHr_804D6AE0 = max_dist;
-    grHr_804D6ADC = num_ticks as i32;
+    grHr_804D6ADC = melee_core::ppc::fctiwz_f32(num_ticks);
     grHr_804D6AE4 = ratio / (num_ticks * dist);
 }
 

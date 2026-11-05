@@ -381,7 +381,7 @@ pub unsafe extern "C" fn ifMagnify_GetCornerColors(colors: *mut _GXColor, world_
         } else {
             x_class = 2.0;
         }
-        let color_ids = &ifMagnify_803F984C[((y_class as i32 * 4) + x_class as i32) as usize];
+        let color_ids = &ifMagnify_803F984C[((melee_core::ppc::fctiwz_f32(y_class) * 4) + melee_core::ppc::fctiwz_f32(x_class)) as usize];
         *colors.add(j) = *(ifMagnify_803F9828[color_ids[j] as usize].unwrap())();
     }
 }
@@ -459,7 +459,7 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
                 } else {
                     x_class = 2.0;
                 }
-                if (x_class as i32 - 1) == 0 {
+                if (melee_core::ppc::fctiwz_f32(x_class) - 1) == 0 {
                     // 1.0 - ((x - L) / ((0.5 * (L + R)) - L))
                     let num = world_pos.x - ext::Stage_GetCamBoundsLeftOffset();
                     let sum = ext::Stage_GetCamBoundsLeftOffset() + ext::Stage_GetCamBoundsRightOffset();
@@ -495,7 +495,7 @@ pub unsafe extern "C" fn ifMagnify_802FBBDC(gobj: *mut HSD_GObj) {
                 } else {
                     y_class = 2.0;
                 }
-                if (y_class as i32 - 1) == 0 {
+                if (melee_core::ppc::fctiwz_f32(y_class) - 1) == 0 {
                     // 1.0 - ((T - y) / -((0.5 * (T + B)) - T))
                     let num = ext::Stage_GetCamBoundsTopOffset() - world_pos.y;
                     let sum = ext::Stage_GetCamBoundsTopOffset() + ext::Stage_GetCamBoundsBottomOffset();

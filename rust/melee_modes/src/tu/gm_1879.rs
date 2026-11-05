@@ -109,7 +109,7 @@ pub unsafe extern "C" fn fn_80187910(arg0: *mut HSD_GObj) {
     let cobj = (*arg0).hsd_obj as *mut HSD_CObj;
     if ext::gm_GetButtonsTriggered(data.x38) & PAD_BUTTON_A as u64 != 0 {
         // `data->x37.frame_counter = (s32) curr_frame / 300;` truncates to the 4-bit field
-        let q = ((*(*(*cobj).eyepos).aobj).curr_frame as i32) / 300;
+        let q = (melee_core::ppc::fctiwz_f32((*(*(*cobj).eyepos).aobj).curr_frame)) / 300;
         data.set_frame_counter(q as u8);
         // `++frame_counter >= 8U`: the incremented value is re-read from the 4-bit field
         data.set_frame_counter(data.frame_counter().wrapping_add(1));

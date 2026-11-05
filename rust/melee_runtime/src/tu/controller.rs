@@ -124,7 +124,7 @@ pub fn HSD_PadGetResetSwitch() -> i32 {
 
 /// `HSD_PadRawQueueShift`.
 fn HSD_PadRawQueueShift(qnum: u8, qptr: &mut u8) {
-    *qptr = ((*qptr as i32 + 1) % qnum as i32) as u8;
+    *qptr = (<i32 as melee_core::ppc::Ppc>::prem(*qptr as i32 + 1, qnum as i32)) as u8;
 }
 
 /// `HSD_PadRawMerge`.

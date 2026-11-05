@@ -477,8 +477,8 @@ pub unsafe fn grFourside_UpdateCrane(gp: *mut Ground, hsd_gobj: *mut HSD_GObj) {
                     if f < 0.0 {
                         f = -f;
                     }
-                    let rand_max2 = f as i32;
-                    let rand_max = f as i32;
+                    let rand_max2 = melee_core::ppc::fctiwz_f32(f);
+                    let rand_max = melee_core::ppc::fctiwz_f32(f);
                     f = if rand_max != 0 { ext::HSD_Randi(rand_max2) as f32 } else { 0.0 };
                     let mut t = (*yp).crane_iron_down_min;
                     if t < 0.0 {
@@ -493,8 +493,8 @@ pub unsafe fn grFourside_UpdateCrane(gp: *mut Ground, hsd_gobj: *mut HSD_GObj) {
                     if f < 0.0 {
                         f = -f;
                     }
-                    let rand_max2 = f as i32;
-                    let rand_max = f as i32;
+                    let rand_max2 = melee_core::ppc::fctiwz_f32(f);
+                    let rand_max = melee_core::ppc::fctiwz_f32(f);
                     f = if rand_max != 0 { ext::HSD_Randi(rand_max2) as f32 } else { 0.0 };
                     let mut t = (*yp).crane_iron_up_min;
                     if t < 0.0 {

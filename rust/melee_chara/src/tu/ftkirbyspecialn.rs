@@ -435,7 +435,7 @@ pub fn ftKb_SpecialN_800F5BA4(fp: *mut Fighter) {
             && (*fp).u.kb.hat.x8_b0() == 0
             && (*fp).victim_gobj as usize == 0
             && (*fp).dmg.x1860_element != HitElement_Cape as _
-            && ext::HSD_Randi(da.specialn_odds_lose_ability_on_hit as i32) == 0
+            && ext::HSD_Randi(melee_core::ppc::fctiwz_f32(da.specialn_odds_lose_ability_on_hit)) == 0
         {
             ftKb_SpecialN_800F5D04((*fp).gobj, true);
         }
@@ -450,7 +450,7 @@ pub fn ftKb_SpecialN_800F5C34(fp: *mut Fighter) {
             && (*fp).u.kb.hat.kind as i32 != Ft_Kind_Kirby as i32
             && (*fp).u.kb.hat.x8_b0() == 0
             && (*fp).victim_gobj as usize == 0
-            && ext::HSD_Randi(da.specialn_odds_lose_ability_on_hit as i32) == 0
+            && ext::HSD_Randi(melee_core::ppc::fctiwz_f32(da.specialn_odds_lose_ability_on_hit)) == 0
         {
             let msid = (*fp).motion_id as i32;
             if (0x18F..0x220).contains(&msid) {

@@ -274,7 +274,7 @@ fn format_buffer(s: &[u8]) -> [u8; 128] {
 
 #[inline]
 fn f32_to_u8(v: f32) -> u8 {
-    (v as i32) as u8
+    (melee_core::ppc::fctiwz_f32(v)) as u8
 }
 
 /// Grow `alloc`'s buffer to `new_size` bytes, copying the used part; shared tail of the two
@@ -330,10 +330,10 @@ pub unsafe fn HSD_SisLib_803A6B98_bytes(text: *mut HSD_Text, x: f32, y: f32, fmt
         }};
     }
     put!(7);
-    let x_coord = x as i32 as i16 as i32;
+    let x_coord = melee_core::ppc::fctiwz_f32(x) as i16 as i32;
     put!((x_coord >> 8) as u8);
     put!(x_coord as u8);
-    let y_coord = y as i32 as i16 as i32;
+    let y_coord = melee_core::ppc::fctiwz_f32(y) as i16 as i32;
     put!((y_coord >> 8) as u8);
     put!(y_coord as u8);
     put!(0xC);
@@ -341,9 +341,9 @@ pub unsafe fn HSD_SisLib_803A6B98_bytes(text: *mut HSD_Text, x: f32, y: f32, fmt
     put!((*text).text_color.g);
     put!((*text).text_color.b);
     put!(0xE);
-    put!((*text).x34.x as i32 as u8);
+    put!(melee_core::ppc::fctiwz_f32((*text).x34.x) as u8);
     put!(f32_to_u8(256.0f32 * (*text).x34.x));
-    put!((*text).x34.y as i32 as u8);
+    put!(melee_core::ppc::fctiwz_f32((*text).x34.y) as u8);
     put!(f32_to_u8(256.0f32 * (*text).x34.y));
     for i in 0..encoded_len {
         put!(encoded[i as usize]);
@@ -468,9 +468,9 @@ pub unsafe fn HSD_SisLib_803A746C(text: *mut HSD_Text, entry_idx: i32, new_x: f3
     let entry = fn_803A6FEC((*text).sis_buffer as *mut u8, entry_idx, None);
     if !entry.is_null() {
         let p = entry.add(1);
-        let x = new_x as i32 as i16 as i32;
+        let x = melee_core::ppc::fctiwz_f32(new_x) as i16 as i32;
         *p = (x >> 8) as u8;
-        let y = new_y as i32 as i16 as i32;
+        let y = melee_core::ppc::fctiwz_f32(new_y) as i16 as i32;
         *p.add(1) = x as u8;
         *p.add(2) = (y >> 8) as u8;
         *p.add(3) = y as u8;

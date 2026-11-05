@@ -115,7 +115,7 @@ fn null() -> *mut HSD_GObj {
 unsafe fn start_vars(fp: *mut Fighter) {
     let a = attrs(fp);
     // (s32) x74_PSI_MAGNET_RELEASE_LAG: float -> int truncation.
-    (*fp).mv.ns.speciallw.releaseLag = (*a).x74_PSI_MAGNET_RELEASE_LAG as i32;
+    (*fp).mv.ns.speciallw.releaseLag = melee_core::ppc::fctiwz_f32((*a).x74_PSI_MAGNET_RELEASE_LAG);
     (*fp).mv.ns.speciallw.isRelease = 0;
     (*fp).mv.ns.speciallw.gravityDelay = (*a).x84_PSI_MAGNET_FRAMES_BEFORE_GRAVITY;
     (*fp).mv.ns.speciallw.x10 = 0;
@@ -542,7 +542,7 @@ pub fn ftNs_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
 
         // (int) (damageTaken * heal): float -> int truncation, then back to float.
         let heal = crate::chars::ftNess::ftness::ftNs_Init_GetAbsorbHeal(&*fp);
-        let mut heal_amount = ((*fp).AbsorbAttr.x1A44_damageTaken as f32 * heal) as i32 as f32;
+        let mut heal_amount = melee_core::ppc::fctiwz_f32((*fp).AbsorbAttr.x1A44_damageTaken as f32 * heal) as f32;
 
         (*fp).dmg.x1830_percent -= heal_amount;
         let cur_percent = (*fp).dmg.x1830_percent;
@@ -551,8 +551,8 @@ pub fn ftNs_AbsorbThink_DecideAction(gobj: *mut HSD_GObj) {
             (*fp).dmg.x1830_percent = 0.0;
         }
 
-        ext::Player_SetHPByIndex((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, (*fp).dmg.x1830_percent as i32);
-        ext::pl_80040B8C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, heal_amount as i32);
+        ext::Player_SetHPByIndex((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32((*fp).dmg.x1830_percent));
+        ext::pl_80040B8C((*fp).player_id as i32, (*fp).is_sub_fighter() as i32, melee_core::ppc::fctiwz_f32(heal_amount));
 
         (*fp).facing_dir = (*fp).AbsorbAttr.x1A40_absorbHitDirection;
         let msid = (*fp).motion_id as i32;

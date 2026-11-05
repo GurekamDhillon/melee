@@ -570,7 +570,7 @@ pub unsafe fn ftCo_800A101C(mut arg0: *mut Fighter, mut arg1: i32, mut arg2: i32
     (*temp_r30).x6C.x = 0.0f32;
     (*temp_r30).set_xF8_b0((0 as u8) as u8);
     (*temp_r30).set_xF8_b12((0 as u8) as u8);
-    temp_r6 = (10.0f64 * (ext::HSD_Randf() as f64)) as i32;
+    temp_r6 = melee_core::ppc::fctiwz(10.0f64 * (ext::HSD_Randf() as f64));
     (*temp_r30).x7C = temp_r6;
     (*temp_r30).x80 = temp_r6;
     (*temp_r30).x84 = 0;
@@ -1795,7 +1795,7 @@ pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
     if ok != 0 {
         frames = 1000;
     } else {
-        frames = ((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav) as i32;
+        frames = melee_core::ppc::fctiwz_f32((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav);
     }
     {
         island = ext::mpIsland_80458E88.next;
@@ -1825,7 +1825,7 @@ pub unsafe fn ftCo_800A3908(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
                 }
                 dx = (*fp).cur_pos.x - ex;
                 if dx > 0.0f32 {
-                    t = (dx / (*fp).co_attrs.air_drift_max) as i32;
+                    t = melee_core::ppc::fctiwz_f32(dx / (*fp).co_attrs.air_drift_max);
                     if frames <= 0 {
                         dist = fmadds((*fp).pos_delta.y, t as f32, (*fp).cur_pos.y);
                     } else if t < frames {
@@ -1935,7 +1935,7 @@ pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
     if ok != 0 {
         frames = 1000;
     } else {
-        frames = ((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav) as i32;
+        frames = melee_core::ppc::fctiwz_f32((-((-(*fp).co_attrs.terminal_velocity) - (*fp).pos_delta.y)) / grav);
     }
     {
         island = ext::mpIsland_80458E88.next;
@@ -1965,7 +1965,7 @@ pub unsafe fn ftCo_800A4038(mut fp: *mut Fighter, mut arg1: i32) -> i32 {
                 }
                 dx = ex - (*fp).cur_pos.x;
                 if dx > 0.0f32 {
-                    t = (dx / (*fp).co_attrs.air_drift_max) as i32;
+                    t = melee_core::ppc::fctiwz_f32(dx / (*fp).co_attrs.air_drift_max);
                     if frames <= 0 {
                         dist = fmadds((*fp).pos_delta.y, t as f32, (*fp).cur_pos.y);
                     } else if t < frames {
@@ -2230,7 +2230,7 @@ pub unsafe fn ftCo_800A4BEC(mut fp: *mut Fighter) -> *mut Fighter {
     } else {
         (*data).set_xF9_b0((1 as u8) as u8);
         dist = ext::HSD_Randf();
-        (*data).x30 = (1.2e+02f32 * (0.5f32 * (0.5f32 * dist))) as i32;
+        (*data).x30 = melee_core::ppc::fctiwz_f32(1.2e+02f32 * (0.5f32 * (0.5f32 * dist)));
         (*data).x48 = closest as *mut c_void;
     }
     return closest;
@@ -3911,12 +3911,12 @@ pub unsafe fn ftCo_800A8DE4(mut fp: *mut Fighter) {
 
 /// `angle_x_units`
 unsafe fn angle_x_units(mut angle: f32) -> i32 {
-    return (127.0f32 * melee_runtime::gekko::cosf(angle)) as i32;
+    return melee_core::ppc::fctiwz_f32(127.0f32 * melee_runtime::gekko::cosf(angle));
 }
 
 /// `angle_y_units`
 unsafe fn angle_y_units(mut angle: f32) -> i32 {
-    return (127.0f32 * melee_runtime::gekko::sinf(angle)) as i32;
+    return melee_core::ppc::fctiwz_f32(127.0f32 * melee_runtime::gekko::sinf(angle));
 }
 
 /// `ftCo_CpuAimPkThunder`
@@ -4173,7 +4173,7 @@ pub unsafe fn ftCo_800A9904(mut fp: *mut Fighter) {
             predicted_y = (((*fp).cur_pos.y as f64) + ((-0.5f64).mul_add(((*grav_p) * sqrt_terminal) as f64, ((*fp).pos_delta.y * terminal_time) as f64) - (((x_time - terminal_time) * ftCo_GetTerminalVelocity(fp)) as f64))) as f32;
         }
         {
-            let mut stick: i32 = fmadds(4.7000003f32, ((*data).level + 1) as f32, 8e+01f32) as i32;
+            let mut stick: i32 = melee_core::ppc::fctiwz_f32(fmadds(4.7000003f32, ((*data).level + 1) as f32, 8e+01f32));
             if ((x_time as f64) < 0.0f64) || (predicted_y < (*data).x54.y) {
                 super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_LstickXTowardDestination as i32) as u8, stick as u8);
             } else {
@@ -4351,7 +4351,7 @@ pub unsafe fn ftCo_800A9CB4(mut fp: *mut Fighter) {
         super::ftcmdscript::ftCo_800B46B8(fp, (CpuCmd_LstickXTowardDestination as i32) as u8, 127 as u8);
     } else {
         if y_pos < (*data).x54.y {
-            stick_clamp = (((*data).x54.y - y_pos) as i32) * 2;
+            stick_clamp = (melee_core::ppc::fctiwz_f32((*data).x54.y - y_pos)) * 2;
             if stick_clamp > 32 {
                 stick_clamp = 32;
             }
@@ -4453,7 +4453,7 @@ unsafe fn ftCo_CpuTurnAround(mut fp: *mut Fighter) {
 unsafe fn ftCo_800AA42C_inline0(mut clamp: f32, mut dist: f32, mut near: f32, mut far: f32) -> i32 {
     let mut raw: f32 = 0.0;
     if dist > far {
-        return clamp as i32;
+        return melee_core::ppc::fctiwz_f32(clamp);
     }
     if dist < near {
         return 0;
@@ -4468,9 +4468,9 @@ unsafe fn ftCo_800AA42C_inline0(mut clamp: f32, mut dist: f32, mut near: f32, mu
     {
         let mut scale: f32 = (dist - near) / (far - near);
         let mut tmp: f32 = fmadds(scale, clamp - raw, raw);
-        let mut new_clamp: i32 = tmp as i32;
+        let mut new_clamp: i32 = melee_core::ppc::fctiwz_f32(tmp);
         if (new_clamp as f32) > clamp {
-            new_clamp = clamp as i32;
+            new_clamp = melee_core::ppc::fctiwz_f32(clamp);
         }
         return new_clamp;
     }
@@ -4983,7 +4983,7 @@ pub unsafe fn ftCo_800ABBA8(mut fp: *mut Fighter) {
             }
             if ok == 0 {
                 disc = melee_runtime::gekko::sqrtf(if fmadds(2.0f32 * g, h, v * v) < (0 as f32) { -fmadds(2.0f32 * g, h, v * v) } else { fmadds(2.0f32 * g, h, v * v) });
-                t = (((-disc) - v) / g) as i32;
+                t = melee_core::ppc::fctiwz_f32(((-disc) - v) / g);
             } else {
                 if (v < 1e-05f32) && (v > (-1e-05f32)) {
                     ok = 1;
@@ -4991,7 +4991,7 @@ pub unsafe fn ftCo_800ABBA8(mut fp: *mut Fighter) {
                     ok = 0;
                 }
                 if ok == 0 {
-                    t = (h / v) as i32;
+                    t = melee_core::ppc::fctiwz_f32(h / v);
                 } else {
                     t = 100;
                 }
@@ -6990,8 +6990,8 @@ pub unsafe fn ftCo_800B101C(mut fp: *mut Fighter) {
     }
     ftCo_800B0918(var_r29, fp);
     temp_f0 = (*var_r29).dmg.x1830_percent / 2e+01f32;
-    var_r0 = temp_f0 as i32;
-    if (temp_f0 as i32) > 9 {
+    var_r0 = melee_core::ppc::fctiwz_f32(temp_f0);
+    if (melee_core::ppc::fctiwz_f32(temp_f0)) > 9 {
         var_r0 = 9;
     }
     (*temp_r31).level = var_r0;
@@ -7972,7 +7972,7 @@ pub unsafe fn ftCo_800B33B0(mut fp: *mut Fighter) {
         }
     } else {
         let mut rand: f32 = ext::HSD_Randf();
-        (*data).x30 = (1.2e+02f32 * (0.5f32 * (0.5f32 * rand))) as i32;
+        (*data).x30 = melee_core::ppc::fctiwz_f32(1.2e+02f32 * (0.5f32 * (0.5f32 * rand)));
     }
     if (*data).x60 != 0 {
         (*data).x60 = (*data).x60 - 1;
@@ -8322,7 +8322,7 @@ pub fn ftco_800a101c(
     }
     // `temp_r6 = 10.0 * HSD_Randf()`: a double product truncated to int.
     let r = rand();
-    let t = (10.0f64 * r as f64) as i32;
+    let t = melee_core::ppc::fctiwz(10.0f64 * r as f64);
     {
         let c = &mut fp.cpu;
         c.x7C = t;

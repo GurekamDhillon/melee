@@ -381,7 +381,7 @@ pub fn ftPe_SpecialHiStart_Anim(gobj: *mut HSD_GObj) {
             let da = (*fp).dat_attrs as *const ftPe_DatAttrs;
             if (*fp).mv.pe.specialhi.kind == It_Kind_Parasol {
                 (*fp).motion_id = ftCo_MS_FallSpecial as _;
-                ext::ftCo_800CEFE0(gobj, melee_fighter::hooks::common_data().x59C as i32);
+                ext::ftCo_800CEFE0(gobj, melee_core::ppc::fctiwz_f32(melee_fighter::hooks::common_data().x59C));
             } else {
                 (*fp).motion_id = ftCo_MS_FallSpecial as _;
                 ext::ftCo_800CEFE0(gobj, (*da).x90);

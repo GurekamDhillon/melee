@@ -143,7 +143,7 @@ pub fn ftFx_SpecialSStart_Enter(gobj: *mut HSD_GObj) {
         let da = da(fp);
 
         (*fp).cmd_vars[2] = 0;
-        (*fp).mv.fx.SpecialS.gravityDelay = (*da).x24_FOX_ILLUSION_GRAVITY_DELAY as i32;
+        (*fp).mv.fx.SpecialS.gravityDelay = melee_core::ppc::fctiwz_f32((*da).x24_FOX_ILLUSION_GRAVITY_DELAY);
         (*fp).mv.fx.SpecialS.ghostGObj = core::ptr::null_mut();
 
         (*fp).gr_vel /= (*da).x28_FOX_ILLUSION_GROUND_VEL_X;
@@ -160,7 +160,7 @@ pub fn ftFx_SpecialAirSStart_Enter(gobj: *mut HSD_GObj) {
         let da = da(fp);
 
         (*fp).cmd_vars[2] = 0;
-        (*fp).mv.fx.SpecialS.gravityDelay = (*da).x24_FOX_ILLUSION_GRAVITY_DELAY as i32;
+        (*fp).mv.fx.SpecialS.gravityDelay = melee_core::ppc::fctiwz_f32((*da).x24_FOX_ILLUSION_GRAVITY_DELAY);
         (*fp).mv.fx.SpecialS.ghostGObj = core::ptr::null_mut();
 
         (*fp).self_vel.y = 0.0;
@@ -351,7 +351,7 @@ pub fn ftFox_SpecialSEnd_SetVars(gobj: *mut HSD_GObj) {
     unsafe {
         let fp = fpp(gobj);
         let da = da(fp);
-        (*fp).mv.fx.SpecialS.gravityDelay = (*da).x44_FOX_ILLUSION_FALL_ACCEL as i32;
+        (*fp).mv.fx.SpecialS.gravityDelay = melee_core::ppc::fctiwz_f32((*da).x44_FOX_ILLUSION_FALL_ACCEL);
         (*fp).set_x2222_b2(1);
     }
 }

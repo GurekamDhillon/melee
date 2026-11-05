@@ -65,8 +65,8 @@ pub fn ftCo_LandingAir_EnterWithLag(g: G) {
         if msid != ftCo_MS_None as i32 && (f.x67F as i32) < cdat.xE4 {
             skill_mode = 1;
             let div_lag = lag / cdat.xE8;
-            let mut int_lag = div_lag as i32;
-            if div_lag as i32 == 0 {
+            let mut int_lag = melee_core::ppc::fctiwz_f32(div_lag);
+            if melee_core::ppc::fctiwz_f32(div_lag) == 0 {
                 int_lag = 1;
             }
             lag = int_lag as f32;

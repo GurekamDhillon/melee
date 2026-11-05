@@ -263,7 +263,7 @@ pub static mut gm_80490910: [u8; 46] = [0; 46];
 
 /// `getIndex` (static inline): the `gm_803DE650` index of `scene_id`'s record.
 unsafe fn get_index(scene_id: u8) -> usize {
-    (ext::gm_8017E4C4(scene_id) as usize - (&raw mut gm_803DE650) as usize) / core::mem::size_of::<gm_803DE650_t>()
+    <usize as melee_core::ppc::Ppc>::pdiv(ext::gm_8017E4C4(scene_id) as usize - (&raw mut gm_803DE650) as usize, core::mem::size_of::<gm_803DE650_t>())
 }
 
 /// `setValUnk` (static inline)

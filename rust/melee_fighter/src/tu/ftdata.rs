@@ -976,7 +976,7 @@ pub fn GenoDefine_FtDataSharedMask(own: *const ftData, donor: *const ftData) -> 
             let a = *(own as *const *const c_void).add(i);
             let b = *(donor as *const *const c_void).add(i);
             if a == b && !a.is_null() {
-                mask |= 1 << i;
+                mask |= <u32 as melee_core::ppc::Ppc>::pshl(1, (i) as i64);
             }
         }
     }
@@ -1412,7 +1412,7 @@ unsafe fn table_bound(fd: *mut ftData, lo: *mut u8, arch_lo: *mut u8, arch_hi: *
     if (fd as *mut u8) > lo && (fd as *mut u8) < hi {
         hi = fd as *mut u8;
     }
-    let words = core::mem::size_of::<ftData>() / core::mem::size_of::<*mut u8>();
+    let words = <usize as melee_core::ppc::Ppc>::pdiv(core::mem::size_of::<ftData>(), core::mem::size_of::<*mut u8>());
     for w in 0..words {
         let p = *(fd as *mut *mut u8).add(w);
         if p > lo && p < hi && p >= arch_lo && p < arch_hi {

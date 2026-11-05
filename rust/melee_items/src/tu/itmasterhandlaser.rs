@@ -210,7 +210,7 @@ pub unsafe extern "C" fn it_802F0484(gobj: *mut HSD_GObj) {
     ext::Item_80268E5C(gobj, 0, ITEM_ANIM_UPDATE);
     (*ip).on_accessory = Some(it_802F05A8);
     (*ip).xDD4_itemVar.masterhandlaser.x0 = 0;
-    (*ip).xDD4_itemVar.masterhandlaser.x8 = (*attrs).x4 as i32;
+    (*ip).xDD4_itemVar.masterhandlaser.x8 = melee_core::ppc::fctiwz_f32((*attrs).x4);
 }
 
 pub unsafe extern "C" fn itMasterhandlaser_UnkMotion0_Anim(gobj: *mut Item_GObj) -> bool {
@@ -297,7 +297,7 @@ pub unsafe extern "C" fn it_802F063C(gobj: *mut Item_GObj, arg1: *mut Item_GObj)
         if (*ip).xDD4_itemVar.masterhandlaser.x8 < 0 {
             ext::lb_8000B1CC((*(*ip).xBBC_dynamicBoneTable).bones[2], null_mut(), &mut pos_2);
             ext::efSync_Spawn(0x405, gobj, &mut pos_2);
-            (*ip).xDD4_itemVar.masterhandlaser.x8 = (*attrs).x4 as i32;
+            (*ip).xDD4_itemVar.masterhandlaser.x8 = melee_core::ppc::fctiwz_f32((*attrs).x4);
         }
     } else {
         HSD_JObjSetTranslate((*(*ip).xBBC_dynamicBoneTable).bones[2], &mut translate);

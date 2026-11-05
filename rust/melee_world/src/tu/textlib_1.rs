@@ -167,7 +167,7 @@ pub unsafe extern "C" fn un_80302EA4(mut arg0: *mut un_80304138_objalloc_t_x8) -
             y = 8;
         }
         if (*arg0).x0 == 2 {
-            let n = (*arg0).x18 as i32;
+            let n = melee_core::ppc::fctiwz_f32((*arg0).x18);
             let mut i = 0;
             while i < n {
                 let len = ext::DevText_StrLen(*(*arg0).xC.offset(i as isize));
@@ -282,14 +282,14 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
             let q = (*e).x10 as *mut i32;
             if (*q as f32) + (*e).x1C <= (*e).x18 {
                 ret = true;
-                *q = ((*q as f32) + (*e).x1C) as i32;
+                *q = melee_core::ppc::fctiwz_f32((*q as f32) + (*e).x1C);
                 (*arg0).x1 |= 1;
                 sfxMove();
             }
         }
         5 => {
             let q = (*e).x10 as *mut u8;
-            let idk = (*e).x1C as i32;
+            let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_add(idk & 0xFF) <= 0xFF {
                 *q = (*q as i32).wrapping_add(idk) as u8;
             } else {
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn un_80303444(arg0: *mut un_80304138_objalloc_t) -> i32 {
         }
         6 => {
             let q = (*e).x10 as *mut u16;
-            let idk = (*e).x1C as i32;
+            let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_add(idk & 0xFFFF) <= 0xFFFF {
                 *q = (*q as i32).wrapping_add(idk) as u16;
             } else {
@@ -353,14 +353,14 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
             let q = (*e).x10 as *mut i32;
             if (*q as f32) - (*e).x1C >= (*e).x14 {
                 ret = true;
-                *q = ((*q as f32) - (*e).x1C) as i32;
+                *q = melee_core::ppc::fctiwz_f32((*q as f32) - (*e).x1C);
                 (*arg0).x1 |= 1;
                 sfxMove();
             }
         }
         5 => {
             let q = (*e).x10 as *mut u8;
-            let idk = (*e).x1C as i32;
+            let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_sub(idk & 0xFF) >= 0 {
                 *q = (*q as i32).wrapping_sub(idk) as u8;
             } else {
@@ -372,7 +372,7 @@ pub unsafe extern "C" fn un_80303720(arg0: *mut un_80304138_objalloc_t) -> i32 {
         }
         6 => {
             let q = (*e).x10 as *mut u16;
-            let idk = (*e).x1C as i32;
+            let idk = melee_core::ppc::fctiwz_f32((*e).x1C);
             if (*q as i32).wrapping_sub(idk & 0xFFFF) >= 0 {
                 *q = (*q as i32).wrapping_sub(idk) as u16;
             } else {
@@ -652,8 +652,8 @@ pub unsafe extern "C" fn un_80304210(
     if !obj.is_null() {
         let text = (*arg0).x4;
         let x = (*text).scale_x * ((*text).w as f32);
-        let x_pos = ((arg3 as f32) + x) as i32;
-        let y_pos = fmadds((*text).scale_y, (*arg0).x0 as f32, arg4 as f32) as i32;
+        let x_pos = melee_core::ppc::fctiwz_f32((arg3 as f32) + x);
+        let y_pos = melee_core::ppc::fctiwz_f32(fmadds((*text).scale_y, (*arg0).x0 as f32, arg4 as f32));
         un_80303FD4(
             (*arg0).x10,
             obj,

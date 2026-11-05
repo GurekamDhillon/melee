@@ -562,9 +562,9 @@ pub unsafe extern "C" fn fn_801749B8(_unused: *mut HSD_GObj) {
         let new_var2 = data();
         ext::lb_8000B1CC((*new_var2).player_data[0].jobjs[0xD], null_mut(), &mut sp18);
         ext::lbVector_WorldToScreen((*new_var2).cobj, &sp18, &mut spC, 0);
-        let new_var4 = (sp24.y as i32) as u16;
+        let new_var4 = (melee_core::ppc::fctiwz_f32(sp24.y)) as u16;
         let temp_r4: u32 = (new_var4 as u32) & 0xFFFC;
-        let new_var3 = spC.y as i32;
+        let new_var3 = melee_core::ppc::fctiwz_f32(spC.y);
         let new_var = (new_var3 & 0xFFDC) as u16;
         ext::GXSetScissor(0, temp_r4, 0x27F, (new_var as u32).wrapping_sub(temp_r4));
     }
@@ -627,7 +627,7 @@ pub unsafe fn fn_80174B4C(data: *mut ResultsData, slot: i32) {
     let mut pos: Vec3 = (*pdata).stats_position;
 
     let offset = (*pdata).scroll_offset;
-    let start_entry = ((10.0f32 * offset) as i32).wrapping_div(10);
+    let start_entry = (melee_core::ppc::fctiwz_f32(10.0f32 * offset)).wrapping_div(10);
     pos.y = fmadds(1.75f32, offset - ((start_entry - 1) as f32), pos.y);
 
     // Set flags
@@ -747,19 +747,19 @@ pub unsafe fn fn_8017507C(slot: i32) -> GXColor {
         if current_color > 255.0f32 {
             current_color = 255.0f32;
         }
-        color.r = (current_color as u32) as u8;
+        color.r = melee_core::ppc::fctiwz_f32(current_color) as u8;
 
         current_color = fmadds(0.9f32, color.g as f32, 100.0f32);
         if current_color > 255.0f32 {
             current_color = 255.0f32;
         }
-        color.g = ((current_color as i32) as i8) as u8;
+        color.g = ((melee_core::ppc::fctiwz_f32(current_color)) as i8) as u8;
 
         current_color = fmadds(0.9f32, color.b as f32, 100.0f32);
         if current_color > 255.0f32 {
             current_color = 255.0f32;
         }
-        color.b = ((current_color as i32) as i8) as u8;
+        color.b = ((melee_core::ppc::fctiwz_f32(current_color)) as i8) as u8;
     } else {
         color.r = 0xFF;
         color.g = 0xFF;

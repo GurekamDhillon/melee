@@ -138,7 +138,7 @@ fn wf(w: &mut u32, f: f32) {
 /// not `cabi::f2u8`, which saturates signed: the two differ for negative values.)
 #[inline(always)]
 pub fn f2u8_unsigned(f: f64) -> u8 {
-    (f as u32) as u8
+    melee_core::ppc::fctiwz(f) as u8
 }
 
 impl<R> HsdLObj<R> {
@@ -273,7 +273,7 @@ pub fn light_id_to_index(id: u32) -> u32 {
 /// `HSD_Index2LightID`.
 pub fn index_to_light_id(index: u32) -> u32 {
     match index {
-        0..=7 => 1 << index,
+        0..=7 => <u32 as melee_core::ppc::Ppc>::pshl(1, (index) as i64),
         8 => GX_MAX_LIGHT,
         _ => GX_LIGHT_NULL,
     }

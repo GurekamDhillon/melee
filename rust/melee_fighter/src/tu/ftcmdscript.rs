@@ -22,7 +22,7 @@ pub mod ext {
 
 #[inline(always)]
 fn s8f(x: f32) -> i8 {
-    (x as i32) as i8
+    (melee_core::ppc::fctiwz_f32(x)) as i8
 }
 
 const BUF_LEN: usize = 256;

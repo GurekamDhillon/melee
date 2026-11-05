@@ -154,7 +154,7 @@ pub unsafe extern "C" fn it_802C9D40(gobj: *mut Item_GObj) {
     (*ip).xDD4_itemVar.kabigon.x68 = (*attrs).xC;
     (*ip).xDD4_itemVar.kabigon.x6C = (*attrs).x10;
     (*ip).xDD4_itemVar.kabigon.xE44 = (*attrs).x14;
-    (*ip).xDD4_itemVar.kabigon.xE48 = (*attrs).x18 as i32;
+    (*ip).xDD4_itemVar.kabigon.xE48 = melee_core::ppc::fctiwz_f32((*attrs).x18);
     (*ip).xDCC_flag.set_b3(1);
     (*ip).xDAC_itcmd_var0 = 0;
     (*ip).xDB0_itcmd_var1 = 0;

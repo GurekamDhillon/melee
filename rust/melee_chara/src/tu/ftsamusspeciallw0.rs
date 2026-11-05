@@ -356,7 +356,7 @@ pub unsafe extern "C" fn ftSs_SpecialLw_80129100(mut gobj: *mut HSD_GObj, mut ar
             return (-1_i32);
         }
         *arg1 = (*fp).u.ss.x2230;
-        *arg2 = (*samus_attr).x18 as i32;
+        *arg2 = melee_core::ppc::fctiwz_f32((*samus_attr).x18);
         return 0;
     }
     return (-1_i32);

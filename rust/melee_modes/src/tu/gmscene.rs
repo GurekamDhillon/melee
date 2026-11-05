@@ -223,7 +223,7 @@ fn bit64(bit: i32) -> u64 {
     if n >= 64 {
         0
     } else {
-        1u64 << n
+        <u64 as melee_core::ppc::Ppc>::pshl(1u64, (n) as i64)
     }
 }
 
@@ -493,7 +493,7 @@ fn sdiv64(a: i64, d: i64) -> i64 {
             0
         }
     } else {
-        a / d
+        <i64 as melee_core::ppc::Ppc>::pdiv(a, d)
     }
 }
 

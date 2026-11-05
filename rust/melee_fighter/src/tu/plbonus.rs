@@ -354,7 +354,7 @@ pub fn pl_8003906C(player: i32, kind: i32, arg2: *mut u32, arg3: u32, arg4: u32,
                     *arg6 = arg5 as i32;
                     return 1;
                 }
-            } else if arg3 != 0 && ext::gm_GetFrameCount() % arg3 == 0 {
+            } else if arg3 != 0 && <u32 as melee_core::ppc::Ppc>::prem(ext::gm_GetFrameCount(), arg3) == 0 {
                 let var_r3: u32 = if kind != -1 { pl_80039418(player, kind) } else { *arg2 };
 
                 if (var_r3 as i32 != 0) && (arg5.wrapping_sub(*arg6 as u32) < arg4) {
@@ -390,7 +390,7 @@ pub fn pl_80039238(player: i32, kind: i32, arg2: *mut i32, arg3: u32, arg4: *mut
                     *arg4 = arg7;
                     return true;
                 }
-            } else if arg3 != 0 && ext::gm_GetFrameCount() % arg3 == 0 {
+            } else if arg3 != 0 && <u32 as melee_core::ppc::Ppc>::prem(ext::gm_GetFrameCount(), arg3) == 0 {
                 let var_r3: i32 = if kind != -1 { pl_80039418(player, kind) as i32 } else { *arg2 };
                 if var_r3 != 0 && arg7 - *arg4 < arg6 {
                     if kind != -1 {
@@ -664,7 +664,7 @@ pub fn fn_80039618(player: i32) {
             setFlag(player, 8);
         }
         if !ext::gm_801720B4() {
-            let dmg: i32 = (*table).x0_staleMoveTable.xC64 as i32;
+            let dmg: i32 = melee_core::ppc::fctiwz_f32((*table).x0_staleMoveTable.xC64);
             if (dmg as f32) >= 400.0 {
                 setFlag(player, 0x20);
             } else if (dmg as f32) >= 350.0 {
@@ -1282,7 +1282,7 @@ pub fn pl_8003906c(player: i32, kind: i32, arg2: &mut u32, arg3: u32, arg4: u32,
                 *arg6 = arg5 as i32;
                 return 1;
             }
-        } else if h::gm_get_frame_count() % arg3 == 0 {
+        } else if <u32 as melee_core::ppc::Ppc>::prem(h::gm_get_frame_count(), arg3) == 0 {
             let r3 = if kind != -1 { h::pl_80039418(player, kind) } else { *arg2 };
             if r3 as i32 != 0 && arg5.wrapping_sub(*arg6 as u32) < arg4 {
                 if kind != -1 {
@@ -1316,7 +1316,7 @@ pub fn pl_80039238_fp(player: i32, kind: i32, arg2: &mut i32, arg3: u32, arg4: &
                 *arg4 = arg7;
                 return true;
             }
-        } else if h::gm_get_frame_count() % arg3 == 0 {
+        } else if <u32 as melee_core::ppc::Ppc>::prem(h::gm_get_frame_count(), arg3) == 0 {
             let r3 = if kind != -1 { h::pl_80039418(player, kind) as i32 } else { *arg2 };
             if r3 != 0 && arg7 - *arg4 < arg6 {
                 if kind != -1 {

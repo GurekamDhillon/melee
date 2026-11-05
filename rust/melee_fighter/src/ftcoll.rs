@@ -14,8 +14,8 @@ pub static mut DMG_LOG1_IDX: i32 = 0;
 /// shipping lowering's saturating conversion (lower.py), which is Rust's `as`.
 pub fn get_env_dmg(dmg: f32) -> i32 {
     if dmg != 0.0 {
-        if dmg as i32 != 0 {
-            return dmg as i32;
+        if melee_core::ppc::fctiwz_f32(dmg) != 0 {
+            return melee_core::ppc::fctiwz_f32(dmg);
         }
         return 1;
     }

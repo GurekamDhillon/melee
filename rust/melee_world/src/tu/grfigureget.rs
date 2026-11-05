@@ -287,7 +287,7 @@ pub unsafe extern "C" fn grFigureGet_80219898(gobj: *mut HSD_GObj) {
             let mut temp_f1: f32 = 0.5;
             temp_f1 = var_f2 * temp_f1;
             temp_f1 -= 20.0;
-            let mut var_r3 = if temp_f1 as i32 != 0 { ext::HSD_Randi(temp_f1 as i32) } else { 0 };
+            let mut var_r3 = if melee_core::ppc::fctiwz_f32(temp_f1) != 0 { ext::HSD_Randi(melee_core::ppc::fctiwz_f32(temp_f1)) } else { 0 };
             pos.x = 20.0 + var_r3 as f32;
             if ext::HSD_Randi(2) == 0 {
                 pos.x *= -1.0;

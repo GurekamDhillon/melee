@@ -1594,7 +1594,7 @@ pub mod ext {
 /// gmmain_lib.c `bitset_mask`.
 pub fn bitset_mask(bit: u32) -> u32 {
     melee_core::ct!("bitset_mask");
-    1u32 << (bit % 32)
+    <u32 as melee_core::ppc::Ppc>::pshl(1u32, ((bit % 32)) as i64)
 }
 
 /// gmmain_lib.c `bitset64_mask`: `1LL << bit`. Verified for bit < 64; a larger shift is

@@ -414,9 +414,9 @@ pub unsafe fn itKyasarin_Randi(range: i32) -> i32 {
 /// The body shared by both facing branches of `itKyasarin_UnkMotion4_Coll`.
 #[inline]
 unsafe fn motion4_coll_hit(gobj: *mut Item_GObj, ip: *mut Item, attr: *mut itKyasarinAttributes) {
-    let mut rand = itKyasarin_Randi((*attr).x14 as i32);
+    let mut rand = itKyasarin_Randi(melee_core::ppc::fctiwz_f32((*attr).x14));
     (*ip).xDD4_itemVar.kyasarin.x2C = (*attr).x10 + rand as f32;
-    rand = itKyasarin_Randi((*attr).x1C as i32);
+    rand = itKyasarin_Randi(melee_core::ppc::fctiwz_f32((*attr).x1C));
     (*ip).xDD4_itemVar.kyasarin.x28 = (*attr).x18 + rand as f32;
     ext::it_80273454(gobj);
     if ext::HSD_Randi(2) != 0 {
@@ -498,7 +498,7 @@ pub unsafe extern "C" fn itKyasarin_UnkMotion7_Anim(gobj: *mut Item_GObj) -> i32
         ext::it_802EFA44(gobj, &mut spawn_pos, (*ip).facing_dir);
         (*ip).xDD4_itemVar.kyasarin.x34 -= 1;
         if (*ip).xDD4_itemVar.kyasarin.x34 <= 0 {
-            let r = ext::HSD_Randi((*attr).x1C as i32);
+            let r = ext::HSD_Randi(melee_core::ppc::fctiwz_f32((*attr).x1C));
             (*ip).xDD4_itemVar.kyasarin.x28 = (*attr).x18 + r as f32;
             ext::Item_80268E5C(gobj, 6, ITEM_ANIM_UPDATE as _);
         } else {

@@ -131,7 +131,7 @@ fn shoot(g: G) {
         f.mv.co.itemthrow.x8
     };
     let interval = h::common_data().x5B4;
-    if interval.wrapping_sub(1) == frame % interval {
+    if interval.wrapping_sub(1) == <i32 as melee_core::ppc::Ppc>::prem(frame, interval) {
         ext::ft_800892A0(g);
         crate::ft0892::ft_80089824(g);
     }

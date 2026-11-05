@@ -392,7 +392,7 @@ pub unsafe extern "C" fn grGarden_80203250(gobj: *mut Ground_GObj) {
                 ext::grAnime_801C8138(gobj, (*gp).map_id as i32, 0);
                 let mut dVar1: f32 = (*yakumono_param).x18;
                 let d = (*yakumono_param).x1C - (*yakumono_param).x18;
-                let mut iVar1: i32 = (if d < 0.0 { -((*yakumono_param).x1C - (*yakumono_param).x18) } else { (*yakumono_param).x1C - (*yakumono_param).x18 }) as i32;
+                let mut iVar1: i32 = melee_core::ppc::fctiwz_f32(if d < 0.0 { -((*yakumono_param).x1C - (*yakumono_param).x18) } else { (*yakumono_param).x1C - (*yakumono_param).x18 });
 
                 iVar1 = if iVar1 != 0 { ext::HSD_Randi(iVar1) } else { 0 };
                 dVar1 += iVar1 as f32;

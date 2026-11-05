@@ -322,9 +322,8 @@ pub unsafe fn getColorPrimEnv(
 ) {
     melee_core::ct!("getColorPrimEnv");
     if (*pp).primColCount != 0 {
-        let mut scale: i32 = 65536 as i32
-            * (*pp).primColRemain as i32
-            / (*pp).primColCount as i32;
+        let mut scale: i32 = <i32 as melee_core::ppc::Ppc>::pdiv(65536 as i32
+            * (*pp).primColRemain as i32, (*pp).primColCount as i32);
         (*primCol).r = ((((*pp).primColTarget.r as i32)
             << 16 as i32)
             + ((*pp).primCol.r as i32
@@ -349,9 +348,8 @@ pub unsafe fn getColorPrimEnv(
         *primCol = (*pp).primCol;
     }
     if (*pp).envColCount != 0 {
-        let mut scale_0: i32 = 65536 as i32
-            * (*pp).envColRemain as i32
-            / (*pp).envColCount as i32;
+        let mut scale_0: i32 = <i32 as melee_core::ppc::Ppc>::pdiv(65536 as i32
+            * (*pp).envColRemain as i32, (*pp).envColCount as i32);
         (*envCol).r = ((((*pp).envColTarget.r as i32)
             << 16 as i32)
             + ((*pp).envCol.r as i32
@@ -383,9 +381,8 @@ pub unsafe fn getColorMatAmb(
 ) {
     melee_core::ct!("getColorMatAmb");
     if (*pp).matColCount != 0 {
-        let mut scale: i32 = 65536 as i32
-            * (*pp).matColRemain as i32
-            / (*pp).matColCount as i32;
+        let mut scale: i32 = <i32 as melee_core::ppc::Ppc>::pdiv(65536 as i32
+            * (*pp).matColRemain as i32, (*pp).matColCount as i32);
         (*matCol).b = ((((*pp).matRGBTarget as i32)
             << 16 as i32)
             + ((*pp).matRGB as i32
@@ -404,9 +401,8 @@ pub unsafe fn getColorMatAmb(
         (*matCol).a = (*pp).matA;
     }
     if (*pp).ambColCount != 0 {
-        let mut scale_0: i32 = 65536 as i32
-            * (*pp).ambColRemain as i32
-            / (*pp).ambColCount as i32;
+        let mut scale_0: i32 = <i32 as melee_core::ppc::Ppc>::pdiv(65536 as i32
+            * (*pp).ambColRemain as i32, (*pp).ambColCount as i32);
         (*ambCol).b = ((((*pp).ambRGBTarget as i32)
             << 16 as i32)
             + ((*pp).ambRGB as i32
@@ -833,11 +829,11 @@ pub unsafe fn psDispSubPoint(mut pp: *mut HSD_Particle) -> *mut HSD_Particle {
     let mut i: s32 = 0;
     let mut w: u8 = 0;
     psSetCurrentMtx(GX_PNMTX0);
-    w = (if (*pp).size as f64 > 42.5f64 {
+    w = melee_core::ppc::fctiwz_f32(if (*pp).size as f64 > 42.5f64 {
         255.0f32
     } else {
         6.0f32 * (*pp).size
-    }) as i32 as u8;
+    }) as u8;
     if prevPointSize != w as s32 {
         prevPointSize = w as s32;
         GXSetPointSize(w, GX_TO_ONE);
@@ -944,11 +940,11 @@ pub unsafe fn psDispSubPointTrail(
     let mut i: s32 = 0;
     let mut w: u8 = 0;
     psSetCurrentMtx(GX_PNMTX0);
-    w = (if (*pp).size as f64 > 42.5f64 {
+    w = melee_core::ppc::fctiwz_f32(if (*pp).size as f64 > 42.5f64 {
         255.0f32
     } else {
         6.0f32 * (*pp).size
-    }) as i32 as u8;
+    }) as u8;
     if prevLineWidth != w as s32 {
         prevLineWidth = w as s32;
         GXSetLineWidth(w, GX_TO_ONE);
@@ -980,9 +976,9 @@ pub unsafe fn psDispSubPointTrail(
     *c.offset(1 as i32 as isize) = *c
         .offset(0 as i32 as isize);
     count = 1 as i32 as s32;
-    (*c.offset(1 as i32 as isize)).a = ((*c
+    (*c.offset(1 as i32 as isize)).a = melee_core::ppc::fctiwz_f32((*c
         .offset(1 as i32 as isize))
-        .a as f32 * (*pp).trail) as i32 as u8;
+        .a as f32 * (*pp).trail) as u8;
     c = c.offset(2 as i32 as isize);
     last = pp;
     q = (*pp).next;
@@ -1019,9 +1015,9 @@ pub unsafe fn psDispSubPointTrail(
         *c.offset(1 as i32 as isize) = *c
             .offset(0 as i32 as isize);
         count += 1;
-        (*c.offset(1 as i32 as isize)).a = ((*c
+        (*c.offset(1 as i32 as isize)).a = melee_core::ppc::fctiwz_f32((*c
             .offset(1 as i32 as isize))
-            .a as f32 * (*q).trail) as i32 as u8;
+            .a as f32 * (*q).trail) as u8;
         c = c.offset(2 as i32 as isize);
         if count == 16 as i32 {
             p = &raw mut vbuf as *mut Vec3;
@@ -1223,7 +1219,7 @@ pub unsafe fn psDispSubMakePolygon(
                 r as i32 as u8,
                 g,
                 b,
-                (a as f32 * (*pp).trail) as i32 as u8,
+                melee_core::ppc::fctiwz_f32(a as f32 * (*pp).trail) as u8,
             );
             if (*pp).kind & DispTexture as i32 as u32 != 0 {
                 let mut tex_base: u8 = ((*pp).kind >> 16 as i32
@@ -1260,7 +1256,7 @@ pub unsafe fn psDispSubMakePolygon(
             let mut b_2: u8 = (*color).b;
             let mut g_2: u8 = (*color).g;
             let mut r_2: u16 = (*color).r as u16;
-            GXColor4u8(r_2 as i32 as u8, g_2, b_2, alpha as i32 as u8);
+            GXColor4u8(r_2 as i32 as u8, g_2, b_2, melee_core::ppc::fctiwz_f32(alpha) as u8);
             if (*pp).kind & DispTexture as i32 as u32 != 0 {
                 GXTexCoord1x8(
                     ((*pp).kind >> 16 as i32 & 0xc as u32)
@@ -1325,16 +1321,16 @@ pub unsafe fn psDispSubMakePolygon(
                         t = *(it.offset(4 as i32 as isize) as *mut u8
                             as *mut f32);
                         it = it.offset(8 as i32 as isize);
-                        alpha_0 = fmadds(
+                        alpha_0 = melee_core::ppc::fctiwz_f32(fmadds(
                             -(t as f32),
                             trail_alpha as f32,
                             255.0f32,
-                        ) as s32;
-                        converted_alpha = fmadds(
+                        ));
+                        converted_alpha = melee_core::ppc::fctiwz_f32(fmadds(
                             -(t as f32),
                             trail_alpha as f32,
                             255.0f32,
-                        ) as s32;
+                        ));
                         if converted_alpha < 0 as i32 {
                             alpha_0 = 0 as i32 as s32;
                         }
@@ -2157,11 +2153,11 @@ pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
                 ),
             )) as f32;
     }
-    w = (if (*pp).size as f64 > 42.5f64 {
+    w = melee_core::ppc::fctiwz_f32(if (*pp).size as f64 > 42.5f64 {
         255.0f32
     } else {
         6.0f32 * (*pp).size
-    }) as i32 as u8;
+    }) as u8;
     if (*pp).kind & Trail as i32 as u32 != 0 {
         let mut draw_color: GXColor = _GXColor { r: 0, g: 0, b: 0, a: 0 };
         if prevLineWidth != w as s32 {
@@ -2181,7 +2177,7 @@ pub unsafe fn psDispSubAPPSRTPoint(mut pp: *mut HSD_Particle) {
             draw_color.r,
             draw_color.g,
             draw_color.b,
-            (draw_color.a as f32 * (*pp).trail) as i32 as u8,
+            melee_core::ppc::fctiwz_f32(draw_color.a as f32 * (*pp).trail) as u8,
         );
         if (*pp).kind & DispTexture as i32 as u32 != 0 {
             GXTexCoord1x8(0 as i32 as u8);
@@ -2806,7 +2802,7 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
                 draw_color.r,
                 draw_color.g,
                 draw_color.b,
-                (draw_color.a as f32 * (*pp).trail) as i32 as u8,
+                melee_core::ppc::fctiwz_f32(draw_color.a as f32 * (*pp).trail) as u8,
             );
             if (*pp).kind & DispTexture as i32 as u32 != 0 {
                 GXTexCoord1x8(
@@ -2834,7 +2830,7 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
                 draw_color.r,
                 draw_color.g,
                 draw_color.b,
-                (draw_color.a as f32 * (*pp).trail) as i32 as u8,
+                melee_core::ppc::fctiwz_f32(draw_color.a as f32 * (*pp).trail) as u8,
             );
             if (*pp).kind & DispTexture as i32 as u32 != 0 {
                 GXTexCoord1x8(
@@ -2896,16 +2892,16 @@ pub unsafe fn psDispSubAppSRT(mut pp: *mut HSD_Particle, mut texform: *mut u8) {
                         t = *(it.offset(4 as i32 as isize) as *mut u8
                             as *mut f32);
                         it = it.offset(8 as i32 as isize);
-                        alpha = fmadds(
+                        alpha = melee_core::ppc::fctiwz_f32(fmadds(
                             -(t as f32),
                             trail_alpha as f32,
                             255.0f32,
-                        ) as s32;
-                        converted_alpha = fmadds(
+                        ));
+                        converted_alpha = melee_core::ppc::fctiwz_f32(fmadds(
                             -(t as f32),
                             trail_alpha as f32,
                             255.0f32,
-                        ) as s32;
+                        ));
                         if converted_alpha < 0 as i32 {
                             alpha = 0 as i32 as s32;
                         }
@@ -3129,7 +3125,7 @@ pub unsafe fn psDispParticles(mut target_link: u32, mut sw: u32) {
     }
     sp7B4 = 0 as i32 as s32;
     loop {
-        if target_link & ((1 as i32) << sp7B4) as u32 != 0 {
+        if target_link & (<i32 as melee_core::ppc::Ppc>::pshl(1 as i32, (sp7B4) as i64)) as u32 != 0 {
             particleSort(
                 sp7B4,
                 psFrameNum,
@@ -3392,8 +3388,7 @@ pub unsafe fn psDispParticles(mut target_link: u32, mut sw: u32) {
                     blend_mode = (*pp).kind >> 0x16 as u32 & 3 as u32;
                     setBlendMode(blend_mode as i32);
                     if (*pp).aCmpCount as i32 != 0 as i32 {
-                        let mut scale: s32 = 65536 as s32 * (*pp).aCmpRemain as s32
-                            / (*pp).aCmpCount as s32;
+                        let mut scale: s32 = <i32 as melee_core::ppc::Ppc>::pdiv(65536 as s32 * (*pp).aCmpRemain as s32, (*pp).aCmpCount as s32);
                         alpha0 = ((((*pp).aCmpParam1Target as i32)
                             << 16 as i32)
                             + scale as i32

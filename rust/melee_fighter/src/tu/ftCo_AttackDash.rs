@@ -105,7 +105,7 @@ pub fn ftCo_AttackDash_Anim(g: G) {
 /// `ftCo_AttackDash_SetMv0`: `mv.co.attackdash.x0 = p_ftCommonData->x68` (float -> int).
 pub fn ftCo_AttackDash_SetMv0(g: G) {
     melee_core::ct!("ftCo_AttackDash_SetMv0");
-    fp(g).mv.co.attackdash.x0 = cd().x68 as i32;
+    fp(g).mv.co.attackdash.x0 = melee_core::ppc::fctiwz_f32(cd().x68);
 }
 
 pub fn ftCo_AttackDash_IASA(g: G) {

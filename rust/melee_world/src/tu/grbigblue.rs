@@ -988,7 +988,7 @@ pub unsafe extern "C" fn grBigBlue_801E6C60(gobj: *mut HSD_GObj) {
                         (*d).x8 = (*yakumono_param).x90;
                         let mut height_range = (*yakumono_param).x94 - (*yakumono_param).x90;
                         height_range = ABS(height_range);
-                        let height_range_arg = height_range as s32;
+                        let height_range_arg = melee_core::ppc::fctiwz_f32(height_range);
                         let height_rand = if height_range_arg != 0 { HSD_Randi(height_range_arg) } else { 0 };
                         (*d).x8 += height_rand as f32;
                         pos.y = right_y + (*d).x8;
@@ -1581,7 +1581,7 @@ pub unsafe extern "C" fn grBigBlue_801E8D64(gobj: *mut HSD_GObj) {
     HSD_JObjSetTranslateZ(jobj, 0.0);
 
     (*plat).xD8 = 0.0;
-    (*plat).xC8_timer = (*yakumono_param).xD8 as s32;
+    (*plat).xC8_timer = melee_core::ppc::fctiwz_f32((*yakumono_param).xD8);
     *bb_x0(gp) = 2;
 
     grAnime_801C8138(gobj, (*gp).map_id as enum_t, 0);
@@ -1720,7 +1720,7 @@ pub unsafe extern "C" fn grBigBlue_801E93D8(gobj: *mut HSD_GObj) {
                 1 => {
                     if pos.x > 0.0 {
                         (*plat).xD8 = 0.0;
-                        (*plat).xC8_timer = (*yakumono_param).xD8 as s32;
+                        (*plat).xC8_timer = melee_core::ppc::fctiwz_f32((*yakumono_param).xD8);
                         *bb_x0(gp) = 2;
                     } else {
                         let velocity = 140.0f32 * Ground_801C0498();
@@ -1938,7 +1938,7 @@ pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
                 let left_y = grBigBlue_801EC58C(&mut half_bot, null_mut(), 500.0);
 
                 (*plat).height_offset = (*yakumono_param).xF4;
-                let r = randi(ABS((*yakumono_param).xF8 - (*yakumono_param).xF4) as i32);
+                let r = randi(melee_core::ppc::fctiwz_f32(ABS((*yakumono_param).xF8 - (*yakumono_param).xF4)));
                 (*plat).height_offset += r as f32;
 
                 pos.y = right_y + (*plat).height_offset;
@@ -2082,7 +2082,7 @@ pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
                     (*plat).xCC_timer += (*yakumono_param).x10C;
 
                     let speed_range = ((*yakumono_param).x100 - (*yakumono_param).xFC) / 0.1f32;
-                    let mut speed = randi(speed_range as i32) as f32;
+                    let mut speed = randi(melee_core::ppc::fctiwz_f32(speed_range)) as f32;
                     speed *= 0.1f32;
                     if speed == 0.0 {
                         speed = (*yakumono_param).xFC;
@@ -2104,7 +2104,7 @@ pub unsafe extern "C" fn grBigBlue_801EA05C(gobj: *mut HSD_GObj) {
                     (*plat).xD0_timer += (*yakumono_param).x10C;
 
                     let speed_range = ((*yakumono_param).x108 - (*yakumono_param).x104) / 0.1f32;
-                    let mut speed = randi(speed_range as i32) as f32;
+                    let mut speed = randi(melee_core::ppc::fctiwz_f32(speed_range)) as f32;
                     speed *= 0.1f32;
                     if speed == 0.0 {
                         speed = (*yakumono_param).x104;
@@ -2948,8 +2948,8 @@ unsafe fn grBigBlue_801EC6C0_inline(gp: *mut Ground, car_idx: s32, line_idx: s32
     (*lane).angular_velocity = 0.0;
 
     params = yakumono_param;
-    let hi = (*params).x60 as s32;
-    let mut lo = (*params).x5C as s32;
+    let hi = melee_core::ppc::fctiwz_f32((*params).x60);
+    let mut lo = melee_core::ppc::fctiwz_f32((*params).x5C);
     if lo > hi {
         let diff = lo - hi;
         let random = if diff != 0 { HSD_Randi(diff) } else { 0 };
@@ -3580,7 +3580,7 @@ pub unsafe extern "C" fn grBigBlue_801EE398(gobj: *mut HSD_GObj, arg1: s32, arg2
         }
 
         2 | 3 | 4 => {
-            (*ln).threshold = rand_range((*yakumono_param).x5C as s32, (*yakumono_param).x60 as s32);
+            (*ln).threshold = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).x5C), melee_core::ppc::fctiwz_f32((*yakumono_param).x60));
             result = 1;
             lane_set_state(gp, arg1, arg2);
         }
@@ -3639,7 +3639,7 @@ pub unsafe extern "C" fn grBigBlue_801EE398(gobj: *mut HSD_GObj, arg1: s32, arg2
                     (*ln).amplitude = (*yakumono_param).x34 * Ground_801C0498();
                     (*ln).angular_velocity = 0.0;
 
-                    (*ln).threshold = rand_range((*yakumono_param).x5C as s32, (*yakumono_param).x60 as s32);
+                    (*ln).threshold = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).x5C), melee_core::ppc::fctiwz_f32((*yakumono_param).x60));
 
                     *(*car).ranks.add(slot as usize) = 1;
                     (*ln).alpha = 0.0;

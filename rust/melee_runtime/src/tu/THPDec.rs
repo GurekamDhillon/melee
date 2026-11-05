@@ -167,7 +167,7 @@ pub unsafe extern "C" fn __THPSlw(mut v: u32, mut n: u32) -> u32 {
     return if n as u32 & 0x20 as u32 != 0 {
         0 as u32
     } else {
-        v << (n as u32 & 0x1f as u32)
+        <u32 as melee_core::ppc::Ppc>::pshl(v, ((n as u32 & 0x1f as u32)) as i64)
     };
 }
 pub unsafe extern "C" fn __THPSrw(mut v: u32, mut n: u32) -> u32 {
@@ -175,7 +175,7 @@ pub unsafe extern "C" fn __THPSrw(mut v: u32, mut n: u32) -> u32 {
     return if n as u32 & 0x20 as u32 != 0 {
         0 as u32
     } else {
-        v >> (n as u32 & 0x1f as u32)
+        <u32 as melee_core::ppc::Ppc>::pshr(v, ((n as u32 & 0x1f as u32)) as i64)
     };
 }
 pub unsafe extern "C" fn __THPNextWord(mut info: *mut THPFileInfo) -> u32 {
@@ -193,11 +193,11 @@ pub unsafe extern "C" fn __THPGetBits(mut info: *mut THPFileInfo, mut t: u32) ->
     let mut hi: u32 = __THPSlw((*info).currByte, cnt.wrapping_sub(1 as u32));
     let mut v: u32 = 0;
     if t <= avail {
-        v = hi >> (32 as u32).wrapping_sub(t);
+        v = <u32 as melee_core::ppc::Ppc>::pshr(hi, ((32 as u32).wrapping_sub(t)) as i64);
         (*info).cnt = cnt.wrapping_add(t);
     } else {
         let mut lo: u32 = __THPNextWord(info);
-        v = hi.wrapping_add(__THPSrw(lo, avail)) >> (32 as u32).wrapping_sub(t);
+        v = <u32 as melee_core::ppc::Ppc>::pshr(hi.wrapping_add(__THPSrw(lo, avail)), ((32 as u32).wrapping_sub(t)) as i64);
         (*info).cnt = (t as u32)
             .wrapping_sub(avail as u32)
             .wrapping_add(1 as u32) as u32;
@@ -257,8 +257,7 @@ pub unsafe extern "C" fn __THPHuffDecodePC(
 }
 pub unsafe extern "C" fn __THPExtend(mut v: u32, mut t: u32) -> s32 {
     melee_core::ct!("__THPExtend");
-    if v < (1 as u32)
-        << (t as u32).wrapping_sub(1 as u32)
+    if v < <u32 as melee_core::ppc::Ppc>::pshl(1 as u32, ((t as u32).wrapping_sub(1 as u32)) as i64)
     {
         return (v as u32).wrapping_add(
             ((0xffffffff as u32) << t).wrapping_add(1 as u32),
@@ -308,7 +307,7 @@ pub unsafe extern "C" fn __THPHuffDecodeBlockPC(
 }
 pub unsafe extern "C" fn __THPStoreSample(mut dst: *mut THPSample, mut v: f32) {
     melee_core::ct!("__THPStoreSample");
-    let mut i: s32 = (v as f32 * 0.125f32) as s32;
+    let mut i: s32 = melee_core::ppc::fctiwz_f32(v as f32 * 0.125f32);
     if i < 0i32 {
         i = 0i32 as s32;
     } else if i > 255i32 {
@@ -538,14 +537,14 @@ pub unsafe extern "C" fn __THPPrepBitStream(mut info: *mut THPFileInfo) {
     (*info).currByte = core::ptr::read_unaligned(ptr).to_be();
     i = 0 as u32;
     while i < 4 as u32 {
-        if (*info).validHuffmanTabs as i32 & (1i32) << i != 0 {
+        if (*info).validHuffmanTabs as i32 & <i32 as melee_core::ppc::Ppc>::pshl(1i32, (i) as i64) != 0 {
             j = 0 as u32;
             while j < 32 as u32 {
                 (*info).huffmanTabs[i as usize].quick[j as usize] = 0xff as u8;
                 k = 0 as u32;
                 while k < 5 as u32 {
                     let mut code: s32 =
-                        (j >> (5 as u32).wrapping_sub(k).wrapping_sub(1 as u32)) as s32;
+                        (<u32 as melee_core::ppc::Ppc>::pshr(j, ((5 as u32).wrapping_sub(k).wrapping_sub(1 as u32)) as i64)) as s32;
                     if code
                         <= (*info).huffmanTabs[i as usize].maxCode
                             [k.wrapping_add(1 as u32) as usize]
@@ -683,18 +682,14 @@ pub unsafe extern "C" fn THPDec_8032F8D4(
                 quantizationSelector[i as usize] = *fresh34;
                 i = i.wrapping_add(1);
             }
-            if hSample[0 as usize] as i32
-                / hSample[1 as usize] as i32
+            if <i32 as melee_core::ppc::Ppc>::pdiv(hSample[0 as usize] as i32, hSample[1 as usize] as i32)
                 == 2i32
-                && hSample[0 as usize] as i32
-                    / hSample[2 as usize] as i32
+                && <i32 as melee_core::ppc::Ppc>::pdiv(hSample[0 as usize] as i32, hSample[2 as usize] as i32)
                     == 2i32
             {
-                if vSample[0 as usize] as i32
-                    / vSample[1 as usize] as i32
+                if <i32 as melee_core::ppc::Ppc>::pdiv(vSample[0 as usize] as i32, vSample[1 as usize] as i32)
                     == 2i32
-                    && vSample[0 as usize] as i32
-                        / vSample[2 as usize] as i32
+                    && <i32 as melee_core::ppc::Ppc>::pdiv(vSample[0 as usize] as i32, vSample[2 as usize] as i32)
                         == 2i32
                 {
                     (*out).val2 = 4 as u8;
@@ -1073,33 +1068,28 @@ pub unsafe extern "C" fn __THPReadFrameHeader(mut info: *mut THPFileInfo) -> u8 
         j = j.wrapping_add(1);
     }
     ySize = (*info).yPixelSize;
-    (*info).x8D4 = ((ySize as s32 as i32
-        + (((ySize as s32 as i32
+    (*info).x8D4 = (<i32 as melee_core::ppc::Ppc>::pdiv(ySize as s32 as i32
+        + ((<i32 as melee_core::ppc::Ppc>::pdiv((ySize as s32 as i32
             + (((*info).samplingVMax as i32 * 8i32)
                 as i32
-                - 1i32))
-            / ((*info).samplingVMax as i32 * 8i32)
-                as i32) as s32 as i32
-            - 1i32))
-        / ((ySize as s32 as i32
+                - 1i32)), ((*info).samplingVMax as i32 * 8i32)
+                as i32)) as s32 as i32
+            - 1i32), (<i32 as melee_core::ppc::Ppc>::pdiv((ySize as s32 as i32
             + (((*info).samplingVMax as i32 * 8i32)
                 as i32
-                - 1i32))
-            / ((*info).samplingVMax as i32 * 8i32)
-                as i32) as s32 as i32) as u16;
+                - 1i32)), ((*info).samplingVMax as i32 * 8i32)
+                as i32)) as s32 as i32)) as u16;
     k = 0 as u8;
     while (k as i32) < (*info).nComponents as i32 {
-        (*info).components[k as usize].x08 = ((((*info).xPixelSize as i32
+        (*info).components[k as usize].x08 = (<i32 as melee_core::ppc::Ppc>::pdiv(((*info).xPixelSize as i32
             * (*info).components[k as usize].samplingH as i32)
             as i32
-            + ((*info).samplingHMax as s32 as i32 - 1i32))
-            / (*info).samplingHMax as s32 as i32)
+            + ((*info).samplingHMax as s32 as i32 - 1i32), (*info).samplingHMax as s32 as i32))
             as u32;
-        (*info).components[k as usize].x0C = ((((*info).yPixelSize as i32
+        (*info).components[k as usize].x0C = (<i32 as melee_core::ppc::Ppc>::pdiv(((*info).yPixelSize as i32
             * (*info).components[k as usize].samplingV as i32)
             as i32
-            + ((*info).samplingVMax as s32 as i32 - 1i32))
-            / (*info).samplingVMax as s32 as i32)
+            + ((*info).samplingVMax as s32 as i32 - 1i32), (*info).samplingVMax as s32 as i32))
             as u32;
         k = k.wrapping_add(1);
     }
@@ -1131,7 +1121,7 @@ pub unsafe extern "C" fn __THPReadQuantizationTable(mut info: *mut THPFileInfo) 
             i = i.wrapping_add(1);
         }
         (*info).validQuantTabs = ((*info).validQuantTabs as i32
-            | (1i32) << id as i32)
+            | <i32 as melee_core::ppc::Ppc>::pshl(1i32, (id as i32) as i64))
             as u8;
         i = 0 as u16;
         row = 0 as u16;
@@ -1201,7 +1191,7 @@ pub unsafe extern "C" fn __THPReadHuffmanTableSpecification(mut info: *mut THPFi
         }
         __THPHuffGenerateDecoderTables(info, tab_index);
         (*info).validHuffmanTabs = ((*info).validHuffmanTabs as i32
-            | (1i32) << tab_index as i32)
+            | <i32 as melee_core::ppc::Ppc>::pshl(1i32, (tab_index as i32) as i64))
             as u8;
         length = (length as i32
             - (17i32 + num_Vij as i32)) as u16;
@@ -1240,16 +1230,14 @@ pub unsafe extern "C" fn __THPReadScaneHeader(mut info: *mut THPFileInfo) -> u8 
         (*info).components[i as usize].ACTableSelector =
             (selectors as i32 & 0xfi32) as u8;
         if (*info).validHuffmanTabs as i32
-            & (1i32)
-                << (selectors as i32 >> 4i32)
+            & <i32 as melee_core::ppc::Ppc>::pshl(1i32, ((selectors as i32 >> 4i32)) as i64)
             == 0
         {
             return 15 as u8;
         }
         if (*info).validHuffmanTabs as i32
-            & (1i32)
-                << (selectors as i32 & 0xfi32)
-                    + 1i32
+            & <i32 as melee_core::ppc::Ppc>::pshl(1i32, ((selectors as i32 & 0xfi32)
+                    + 1i32) as i64)
             == 0
         {
             return 15 as u8;
@@ -1257,11 +1245,10 @@ pub unsafe extern "C" fn __THPReadScaneHeader(mut info: *mut THPFileInfo) -> u8 
         (*info).x74 = (*info).xSize;
         (*info).decompressedY = (*info).ySize;
         blocksPerRow = (*info).components[i as usize].x08 as u16;
-        rows = (((*info).decompressedY as s32 as i32
-            + ((*info).x8D4 as s32 as i32 - 1i32))
-            / (*info).x8D4 as s32 as i32) as u16;
+        rows = (<i32 as melee_core::ppc::Ppc>::pdiv((*info).decompressedY as s32 as i32
+            + ((*info).x8D4 as s32 as i32 - 1i32), (*info).x8D4 as s32 as i32)) as u16;
         rows = (rows as i32
-            + if (*info).decompressedY as i32 % (*info).x8D4 as i32
+            + if <i32 as melee_core::ppc::Ppc>::prem((*info).decompressedY as i32, (*info).x8D4 as i32)
                 == 0i32
             {
                 0i32
@@ -1272,7 +1259,7 @@ pub unsafe extern "C" fn __THPReadScaneHeader(mut info: *mut THPFileInfo) -> u8 
         shift = ((*info).samplingVMax as i32
             - (*info).components[i as usize].samplingV as i32)
             as s32;
-        rows = (rows as i32 >> shift) as u16;
+        rows = (<i32 as melee_core::ppc::Ppc>::pshr(rows as i32, (shift) as i64)) as u16;
         (*info).components[i as usize].x10 = (*info).scratch as usize as u32;
         (*info).scratch = (*info)
             .scratch
@@ -1424,37 +1411,33 @@ pub unsafe extern "C" fn THPDec_803310CC(mut info: *mut THPFileInfo) -> u8 {
     melee_core::ct!("THPDec_803310CC");
     let mut i: u32 = 0;
     let mut j: s32 = 0;
-    (*info).MCUsPerRow = (((*info).xPixelSize as s32 as i32
+    (*info).MCUsPerRow = (<i32 as melee_core::ppc::Ppc>::pdiv((*info).xPixelSize as s32 as i32
         + (((*info).samplingHMax as i32 * 8i32)
             as i32
-            - 1i32))
-        / ((*info).samplingHMax as i32 * 8i32)
-            as i32) as u16;
-    (*info).x8D0 = (((*info).yPixelSize as s32 as i32
+            - 1i32), ((*info).samplingHMax as i32 * 8i32)
+            as i32)) as u16;
+    (*info).x8D0 = (<i32 as melee_core::ppc::Ppc>::pdiv((*info).yPixelSize as s32 as i32
         + (((*info).samplingVMax as i32 * 8i32)
             as i32
-            - 1i32))
-        / ((*info).samplingVMax as i32 * 8i32)
-            as i32) as u16;
+            - 1i32), ((*info).samplingVMax as i32 * 8i32)
+            as i32)) as u16;
     (*info).x8CE = 0 as u16;
     i = 0 as u32;
     while i < (*info).nComponents as u32 {
         let mut c: *mut THPComponent = (&raw mut (*info).components as *mut THPComponent)
             .offset(i as isize) as *mut THPComponent;
-        (*c).x28 = ((((*info).xPixelSize as i32
+        (*c).x28 = (<i32 as melee_core::ppc::Ppc>::pdiv(((*info).xPixelSize as i32
             * (*c).samplingH as i32) as i32
             + (((*info).samplingHMax as i32 * 8i32)
                 as i32
-                - 1i32))
-            / ((*info).samplingHMax as i32 * 8i32)
-                as i32) as s32;
-        (*c).x24 = ((((*info).yPixelSize as i32
+                - 1i32), ((*info).samplingHMax as i32 * 8i32)
+                as i32)) as s32;
+        (*c).x24 = (<i32 as melee_core::ppc::Ppc>::pdiv(((*info).yPixelSize as i32
             * (*c).samplingV as i32) as i32
             + (((*info).samplingVMax as i32 * 8i32)
                 as i32
-                - 1i32))
-            / ((*info).samplingVMax as i32 * 8i32)
-                as i32) as s32;
+                - 1i32), ((*info).samplingVMax as i32 * 8i32)
+                as i32)) as s32;
         (*c).x14 = (*c).samplingH as s32;
         (*c).x18 = (*c).samplingV as s32;
         (*c).x1C = (*c).x14 * (*c).x18;

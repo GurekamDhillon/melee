@@ -111,7 +111,7 @@ pub unsafe fn gm_8016AEEC_fp() -> u32 {
 /// `gm_8016AF0C_fp`: the on-screen timer fraction as a 0..99 value.
 pub unsafe fn gm_8016AF0C_fp() -> u16 {
     melee_core::ct!("gm_8016AF0C_fp");
-    let tmp = (99.0f32 * (*gmVs_GetSceneController_fp()).state.unk_2C as f32 / 59.0f32) as i32;
+    let tmp = melee_core::ppc::fctiwz_f32(99.0f32 * (*gmVs_GetSceneController_fp()).state.unk_2C as f32 / 59.0f32);
     let mut var_r31 = tmp as u16;
     if gm_8016B110_fp() == 0 {
         var_r31 = (0x63u16).wrapping_sub(var_r31);

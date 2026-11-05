@@ -123,7 +123,7 @@ pub fn ftKb_SpecialNMt_80106F44(gobj: G, out_charge: &mut i32, out_max: &mut i32
                 return -1;
             }
             *out_charge = (*fp).u.kb.x9C;
-            *out_max = da.specialn_mt_charge_time as i32;
+            *out_max = melee_core::ppc::fctiwz_f32(da.specialn_mt_charge_time);
             return 0;
         }
         -1
@@ -436,7 +436,7 @@ unsafe fn loop_anim(gobj: G, offset: &Vec3, full_ms: i32) {
                 (*fp).u.kb.x9C += 1;
                 if (*fp).u.kb.x9C as f32 >= da.specialn_mt_charge_time {
                     st::Fighter_ChangeMotionState(gobj, full_ms, MF_LOOPFULL, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
-                    (*fp).u.kb.x9C = da.specialn_mt_charge_time as i32;
+                    (*fp).u.kb.x9C = melee_core::ppc::fctiwz_f32(da.specialn_mt_charge_time);
                     (*fp).mv.kb.specialhi.x8.i = 1;
                     st::ftCommon_8007EBAC(&mut *fp, 0xC, 0);
                     let mut sp40 = Vec3 { x: 0.0, y: 0.0, z: 0.0 };
@@ -465,7 +465,7 @@ pub fn ftKb_MtSpecialNLoopFull_Anim(gobj: G) {
         let ft = fpp(gobj);
         let da = &*da_of(ft);
         (*ft).mv.kb.specialhi.x8.i = 1;
-        (*ft).u.kb.x9C = da.specialn_mt_charge_time as i32;
+        (*ft).u.kb.x9C = melee_core::ppc::fctiwz_f32(da.specialn_mt_charge_time);
     }
 }
 
@@ -476,7 +476,7 @@ pub fn ftKb_MtSpecialAirNLoopFull_Anim(gobj: G) {
         let ft = fpp(gobj);
         let da = &*da_of(ft);
         (*ft).mv.kb.specialhi.x8.i = 0;
-        (*ft).u.kb.x9C = da.specialn_mt_charge_time as i32;
+        (*ft).u.kb.x9C = melee_core::ppc::fctiwz_f32(da.specialn_mt_charge_time);
     }
 }
 

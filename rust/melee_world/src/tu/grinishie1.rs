@@ -606,13 +606,13 @@ pub unsafe extern "C" fn grInishie1_801FB0AC(gobj: *mut HSD_GObj, ix: u32) {
         (*b).status = 0;
         grInishie1_801FBC4C(gobj, ix);
 
-        (*gp).u.inishie1.xC6 = rand_range((*yakumono_param).unk4 as i32, (*yakumono_param).unk0 as i32) as i16;
+        (*gp).u.inishie1.xC6 = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).unk4), melee_core::ppc::fctiwz_f32((*yakumono_param).unk0)) as i16;
     } else if (*b).status == 2 {
         grInishie1_801FBA34(gobj, (*b).jobj2);
         (*b).status = 0;
         grInishie1_801FBC4C(gobj, ix);
 
-        (*gp).u.inishie1.xC8 = rand_range((*yakumono_param).unkC as i32, (*yakumono_param).unk8 as i32) as i16;
+        (*gp).u.inishie1.xC8 = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).unkC), melee_core::ppc::fctiwz_f32((*yakumono_param).unk8)) as i16;
     } else if (*b).status == 3 {
         grInishie1_801FBA34(gobj, (*b).jobj2);
         (*b).status = 0;
@@ -627,12 +627,12 @@ pub unsafe extern "C" fn grInishie1_801FB0AC(gobj: *mut HSD_GObj, ix: u32) {
                 i += 1;
             }
             if i == 19 {
-                (*gp).u.inishie1.xC6 = rand_range((*yakumono_param).unk4 as i32, (*yakumono_param).unk0 as i32) as i16;
-                (*gp).u.inishie1.xC8 = rand_range((*yakumono_param).unkC as i32, (*yakumono_param).unk8 as i32) as i16;
+                (*gp).u.inishie1.xC6 = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).unk4), melee_core::ppc::fctiwz_f32((*yakumono_param).unk0)) as i16;
+                (*gp).u.inishie1.xC8 = rand_range(melee_core::ppc::fctiwz_f32((*yakumono_param).unkC), melee_core::ppc::fctiwz_f32((*yakumono_param).unk8)) as i16;
             }
         }
 
-        (*gp).u.inishie1.xD8 = (*yakumono_param).unk10 as i32;
+        (*gp).u.inishie1.xD8 = melee_core::ppc::fctiwz_f32((*yakumono_param).unk10);
     } else if !(*b).hatena_gobj.is_null() {
         panic!("grinishie1.c:0x29D: assertion failed");
     }
@@ -1110,7 +1110,7 @@ pub unsafe extern "C" fn grInishie1_801FC664(gobj: *mut HSD_GObj) {
             if sp18.y < bottom && sp24.y < bottom {
                 (*gp).u.inishie1.xEE = 2;
                 (*gp).u.inishie1.xF4 = 0.0;
-                (*gp).u.inishie1.xEC = (*yakumono_param).unk4C as i32 as i16;
+                (*gp).u.inishie1.xEC = melee_core::ppc::fctiwz_f32((*yakumono_param).unk4C) as i16;
             }
         }
         2 => {

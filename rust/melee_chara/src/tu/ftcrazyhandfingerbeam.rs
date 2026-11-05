@@ -28,7 +28,7 @@ pub fn ftCh_Init_80158B3C(gobj: *mut HSD_GObj) {
         let da = (*(*fp).ft_data).ext_attr as *const ftCrazyHand_DatAttrs;
         ext::Fighter_ChangeMotionState(gobj, 0x16A, 0, (*fp).cur_anim_frame, 1.0, 0.0, core::ptr::null_mut());
         ext::ftAnim_SetAnimRate(gobj, (*da).xCC_pos.x);
-        (*fp).mv.ch.unk0.x8 = (*da).xC4_pos.y as i32; // C float -> s32 truncation
+        (*fp).mv.ch.unk0.x8 = melee_core::ppc::fctiwz_f32((*da).xC4_pos.y); // C float -> s32 truncation
     }
 }
 

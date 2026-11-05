@@ -776,7 +776,7 @@ fn col_step(cur: u8, target: u8, step: i32) -> u8 {
     }
 fn col_interp(cur: &mut _GXColor, target: _GXColor, remain: u16, count: u16) {
         if count != 0 {
-            let step = ((remain as i32) << 16) / count as i32;
+            let step = <i32 as melee_core::ppc::Ppc>::pdiv((remain as i32) << 16, count as i32);
             cur.r = col_step(cur.r, target.r, step);
             cur.g = col_step(cur.g, target.g, step);
             cur.b = col_step(cur.b, target.b, step);
@@ -791,7 +791,7 @@ fn col_add(target: u8, delta: f32) -> u8 {
         if val > 255.0 {
             val = 255.0;
         }
-        val as i32 as u8
+        melee_core::ppc::fctiwz_f32(val) as u8
     }
 pub unsafe fn interpret(p: *mut HSD_Particle, prev: *mut HSD_Particle) -> *mut HSD_Particle {
         melee_core::ct!("interpret");
@@ -1087,12 +1087,12 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let base = ((rd!() as i32) << 8) + rd!() as i32;
                         let range = ((rd!() as i32) << 8) + rd!() as i32;
                         let r = ext::HSD_Randf();
-                        pp!().life = base.wrapping_add((range as f32 * r) as i32) as u16;
+                        pp!().life = base.wrapping_add(melee_core::ppc::fctiwz_f32(range as f32 * r)) as u16;
                     }
                     0xA7 => {
                         let threshold = rd!() as i32;
                         let r = ext::HSD_Randf();
-                        if threshold >= (100.0f32 * r) as i32 {
+                        if threshold >= melee_core::ppc::fctiwz_f32(100.0f32 * r) {
                             pp!().life = 1;
                             break 'outer;
                         }
@@ -1119,7 +1119,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let mut idx = ((rd!() as i32) << 8) + rd!() as i32;
                         let range = ((rd!() as i32) << 8) + rd!() as i32;
                         let r = ext::HSD_Randf();
-                        idx += (range as f32 * r) as i32;
+                        idx += melee_core::ppc::fctiwz_f32(range as f32 * r);
                         idx = remap((&*p).bank, idx);
                         if let Some(c) = ptr_option(psSpawnChild(&raw mut (*p).next, (*p).linkNo as i32, (*p).bank as i32, idx)) {
                             let src = (&*p).clone();
@@ -1191,7 +1191,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         {
                             let pp = pp!();
                             if pp.aCmpCount != 0 {
-                                let step = ((pp.aCmpRemain as i32) << 16) / pp.aCmpCount as i32;
+                                let step = <i32 as melee_core::ppc::Ppc>::pdiv((pp.aCmpRemain as i32) << 16, pp.aCmpCount as i32);
                                 pp.aCmpParam1 = col_step(pp.aCmpParam1, pp.aCmpParam1Target, step);
                                 pp.aCmpParam2 = col_step(pp.aCmpParam2, pp.aCmpParam2Target, step);
                             }
@@ -1309,7 +1309,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let range = rd!() as f32;
                         let r = ext::HSD_Randf();
                         // 1978: randRange * Randf() + (f32) poseNum, fused.
-                        pp!().poseNum = fmadds(range, r, pn as f32) as i32 as u8;
+                        pp!().poseNum = melee_core::ppc::fctiwz_f32(fmadds(range, r, pn as f32)) as u8;
                         enable_texture(p);
                     }
                     0xBD => {
@@ -1435,7 +1435,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let timing = rd!() as i32;
                         let scale = if timing != 0 {
                             let r = ext::HSD_Randf();
-                            ((timing + 1) as f32 * r) as i32 as f32 / timing as f32
+                            melee_core::ppc::fctiwz_f32((timing + 1) as f32 * r) as f32 / timing as f32
                         } else {
                             ext::HSD_Randf()
                         };
@@ -1460,7 +1460,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         if flags & 0x08 != 0 {
                             let a_rand = ext::HSD_Randf();
                             let delta = rd!() as i8;
-                            let a_rand = ((timing + 1) as f32 * a_rand) as i32 as f32;
+                            let a_rand = melee_core::ppc::fctiwz_f32((timing + 1) as f32 * a_rand) as f32;
                             let df = (((delta as i32) << 1) as f32 * a_rand) / timing as f32;
                             let pp = pp!();
                             if flags & 0x10 != 0 {
@@ -1532,7 +1532,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                             let pp = pp!();
                             let (count, remain) = if mat { (pp.matColCount, pp.matColRemain) } else { (pp.ambColCount, pp.ambColRemain) };
                             if count != 0 {
-                                let step = ((remain as i32) << 16) / count as i32;
+                                let step = <i32 as melee_core::ppc::Ppc>::pdiv((remain as i32) << 16, count as i32);
                                 if mat {
                                     pp.matRGB = col_step(pp.matRGB, pp.matRGBTarget, step);
                                     pp.matA = col_step(pp.matA, pp.matATarget, step);
@@ -1579,7 +1579,7 @@ unsafe fn run_bytecode(p: *mut HSD_Particle) {
                         let timing = rd!() as i32;
                         if timing != 0 {
                             let r = ext::HSD_Randf();
-                            let randi = ((timing + 1) as f32 * r) as i32;
+                            let randi = melee_core::ppc::fctiwz_f32((timing + 1) as f32 * r);
                             base += range * randi as f32 / timing as f32;
                         } else {
                             let r = ext::HSD_Randf();

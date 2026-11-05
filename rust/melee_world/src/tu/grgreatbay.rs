@@ -566,7 +566,7 @@ pub unsafe extern "C" fn grGreatBay_801F499C(gobj: *mut Ground_GObj) {
                 (*gp).u.greatbay.xC5.set_b0123456(grGreatBay_801F62F8(cur) as u8);
                 match (*gp).u.greatbay.xC5.b0123456() {
                     1 => {
-                        let o = rand_range((*attr()).kame_x_fb_offset_b as i32, (*attr()).kame_x_fb_offset_a as i32);
+                        let o = rand_range(melee_core::ppc::fctiwz_f32((*attr()).kame_x_fb_offset_b), melee_core::ppc::fctiwz_f32((*attr()).kame_x_fb_offset_a));
                         HSD_JObjSetTranslateX(&mut *jobj, (*attr()).kame_x + o as f32, &mut Dirty);
                         ext::mpLib_80057BC0(2);
                         ext::mpLib_80057BC0(3);
@@ -577,7 +577,7 @@ pub unsafe extern "C" fn grGreatBay_801F499C(gobj: *mut Ground_GObj) {
                         panic!("grgreatbay.c:652: assertion failed (0)");
                     }
                     0 => {
-                        let o = rand_range((*attr()).kame_x_lr_offset_b as i32, (*attr()).kame_x_lr_offset_a as i32);
+                        let o = rand_range(melee_core::ppc::fctiwz_f32((*attr()).kame_x_lr_offset_b), melee_core::ppc::fctiwz_f32((*attr()).kame_x_lr_offset_a));
                         HSD_JObjSetTranslateX(&mut *jobj, (*attr()).kame_x + o as f32, &mut Dirty);
                         ext::mpJointListAdd(2);
                         ext::mpJointListAdd(3);
@@ -585,7 +585,7 @@ pub unsafe extern "C" fn grGreatBay_801F499C(gobj: *mut Ground_GObj) {
                         ext::mpLib_80057BC0(1);
                     }
                     3 => {
-                        let o = rand_range((*attr()).kame_x_fb_offset_b as i32, (*attr()).kame_x_fb_offset_a as i32);
+                        let o = rand_range(melee_core::ppc::fctiwz_f32((*attr()).kame_x_fb_offset_b), melee_core::ppc::fctiwz_f32((*attr()).kame_x_fb_offset_a));
                         HSD_JObjSetTranslateX(&mut *jobj, (*attr()).kame_x + o as f32, &mut Dirty);
                         ext::mpLib_80057BC0(2);
                         ext::mpLib_80057BC0(3);
@@ -914,7 +914,7 @@ pub unsafe extern "C" fn grGreatBay_801F60C4(user_data: *mut c_void, _joint_id: 
     let temp_r0 = (*coll).x34_flags.b1234() as i32;
     if temp_r0 == 1 || temp_r0 == 3 {
         if ground_kind == 1 {
-            coll_x50 = (coll_x50 as f32 * (*attr()).floatfloor_landing_rate) as i32;
+            coll_x50 = melee_core::ppc::fctiwz_f32(coll_x50 as f32 * (*attr()).floatfloor_landing_rate);
         }
         let jobj = (*gp).u.greatbay3.jobj;
         if !jobj.is_null() {

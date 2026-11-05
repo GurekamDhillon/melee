@@ -178,7 +178,7 @@ pub fn ftPk_SpecialN_80124DC8(gobj: G) {
         let fp_x673 = (*fp).active_sticky.lstick.x;
         let pika_attr_1c = (*pika_attr).x1C;
         if (fp_x673 as f32) < pika_attr_1c {
-            (*fp).mv.pk.unk2.x0 = (*pika_attr).x20 as i32;
+            (*fp).mv.pk.unk2.x0 = melee_core::ppc::fctiwz_f32((*pika_attr).x20);
             (*fp).x2070.anon_0.set_count_thrown_items(1);
         } else {
             (*fp).mv.pk.unk2.x0 = 0;

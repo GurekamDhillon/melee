@@ -308,7 +308,7 @@ pub unsafe extern "C" fn hold_step(gobj: *mut HSD_GObj) {
     }
     if hold_frozen[slot]==0 {
         let mut mask=0;
-        for i in 0..4 { if (*fp).x914[i].state==HitCapsule_Enabled { mask |= 1<<i; } }
+        for i in 0..4 { if (*fp).x914[i].state==HitCapsule_Enabled { mask |= <i32 as melee_core::ppc::Ppc>::pshl(1, (i) as i64); } }
         if mask!=0 && (*fp).cur_anim_frame>=hold_frame[slot] as f32 {
             hold_frozen[slot]=1; hold_mask[slot]=mask;
             ext::OSReport(&format!("geno hold: P{} frozen in motion {} at frame {:.1}, hitboxes {:x}\n",slot+1,(*fp).motion_id,(*fp).cur_anim_frame,mask));
@@ -317,7 +317,7 @@ pub unsafe extern "C" fn hold_step(gobj: *mut HSD_GObj) {
     if hold_frozen[slot]==1 {
         ext::ftAnim_SetAnimRate(gobj,0.);
         (*fp).dmg.x195c_hitlag_frames=0.;
-        for i in 0..4 { if hold_mask[slot] & (1<<i)!=0 && (*fp).x914[i].state!=HitCapsule_Enabled { (*fp).x914[i].state=HitCapsule_Enabled; } }
+        for i in 0..4 { if hold_mask[slot] & (<i32 as melee_core::ppc::Ppc>::pshl(1, (i) as i64))!=0 && (*fp).x914[i].state!=HitCapsule_Enabled { (*fp).x914[i].state=HitCapsule_Enabled; } }
         hold_tick[slot]=hold_tick[slot].wrapping_add(1);
         if hold_tick[slot]%8==0 {
             hold_hits[slot]=hold_hits[slot].wrapping_add(1);

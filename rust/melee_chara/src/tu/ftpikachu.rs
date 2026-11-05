@@ -121,7 +121,7 @@ pub fn ftPk_Init_LoadSpecialAttrs(gobj: *mut HSD_GObj) {
         let sa2 = (*fp).dat_attrs as *mut ftPikachuAttributes;
         if (*fp).x34_scale.y != 1.0 {
             let h = &raw mut (*sa2).height_attributes as *mut f32;
-            for i in 0..(core::mem::size_of::<ftCollisionBox>() / core::mem::size_of::<f32>()) {
+            for i in 0..(<usize as melee_core::ppc::Ppc>::pdiv(core::mem::size_of::<ftCollisionBox>(), core::mem::size_of::<f32>())) {
                 *h.add(i) *= (*fp).x34_scale.y;
             }
         }

@@ -776,7 +776,7 @@ pub fn ftMewtwo_SpecialN_LaunchShadowBall(gobj: *mut HSD_GObj) {
                     gobj,
                     &sp20,
                     It_Kind_Mewtwo_ShadowBall as i32,
-                    (*a).x0_MEWTWO_SHADOWBALL_CHARGE_CYCLES as i32,
+                    melee_core::ppc::fctiwz_f32((*a).x0_MEWTWO_SHADOWBALL_CHARGE_CYCLES),
                     atan2f(sp20.y - sp2c.y, sp20.x - sp2c.x),
                     (*fp).facing_dir,
                 );

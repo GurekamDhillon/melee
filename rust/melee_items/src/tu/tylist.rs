@@ -890,7 +890,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
     }
 
     if (f30 < 0.0f32 && f30 != (*g).x10 as f32) || (ext::Toy_80305B88() & 0x41) != 0 {
-        (*g).x10 = f30 as i8;
+        (*g).x10 = melee_core::ppc::fctiwz_f32(f30) as i8;
         (*state).x29B = (*state).x29B.wrapping_sub(1);
         if (*state).x29B < 0 {
             (*state).x29B = 2;
@@ -901,7 +901,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
     }
 
     if (f30 > 0.0f32 && f30 != (*g).x10 as f32) || (ext::Toy_80305B88() & 0x22) != 0 {
-        (*g).x10 = f30 as i8;
+        (*g).x10 = melee_core::ppc::fctiwz_f32(f30) as i8;
         (*state).x29B = (*state).x29B.wrapping_add(1);
         if (*state).x29B >= 3 {
             (*state).x29B = 0;
@@ -945,7 +945,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
         return;
     }
     (*g).x0F = 1;
-    (*g).x0C = ((*g).x0C as f32 + f31) as i8;
+    (*g).x0C = melee_core::ppc::fctiwz_f32((*g).x0C as f32 + f31) as i8;
     if (*g).x0C < 0 {
         (*g).x0C = 0;
     } else if (*g).x0C as i32 > (*state).entryCount as i32 - 3 {
@@ -955,7 +955,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
     if (*g).x0C != (*g).x0D {
         (*g).x12 = 0;
         (*g).x13 = 0;
-        (*g).x11 = f31 as i8;
+        (*g).x11 = melee_core::ppc::fctiwz_f32(f31) as i8;
         tyList_80313BD8_inline(state, g);
         (*g).x0D = (*g).x0C;
         return;
@@ -970,7 +970,7 @@ pub unsafe extern "C" fn _tyList_80313BD8(gobj: *mut HSD_GObj) {
         (*g).x14 = 3;
         (*g).x0F = 0;
     }
-    (*g).x11 = f31 as i8;
+    (*g).x11 = melee_core::ppc::fctiwz_f32(f31) as i8;
     v = (*g).x13;
     if v == 0 {
         (*g).x13 = 1;

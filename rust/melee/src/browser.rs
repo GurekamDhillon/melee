@@ -27,6 +27,17 @@ pub struct State {
     replays: Vec<(std::path::PathBuf, &'static str)>,
     /// Catalog ids of the modes, in list order: what LAUNCH does for each.
     modes: Vec<(String, Launch)>,
+    /// The SSBM Nucleus engine (gd-ui-v1.3): threads start when the browser's Nucleus view first asks.
+    nc: Option<crate::nucleus::Engine>,
+    perf: Option<Perf>,
+}
+
+/// `MELEE_NUCLEUS_PERF=1`: the game-thread cost of the Nucleus pump and the present-to-present interval, logged every
+/// 600 presents (p50 / p99 / max).
+struct Perf {
+    pump_us: Vec<f64>,
+    frame_ms: Vec<f64>,
+    last: std::time::Instant,
 }
 
 #[derive(Clone)]
@@ -105,9 +116,69 @@ impl RetailPlay {
         for r in reqs {
             self.browser_request(r.op, &r.arg);
         }
+        let t0 = std::time::Instant::now();
+        self.nucleus_tick();
+        if let Some(p) = self.browser.perf.as_mut() {
+            let now = std::time::Instant::now();
+            p.pump_us.push((now - t0).as_secs_f64() * 1e6);
+            p.frame_ms.push((now - p.last).as_secs_f64() * 1e3);
+            p.last = now;
+            if p.pump_us.len() >= 600 {
+                let pct = |v: &mut Vec<f64>| {
+                    v.sort_by(|a, b| a.total_cmp(b));
+                    let n = v.len();
+                    let r = (v[n / 2], v[n * 99 / 100], v[n - 1]);
+                    v.clear();
+                    r
+                };
+                let (a, b, c) = pct(&mut p.pump_us);
+                let (d, e, f) = pct(&mut p.frame_ms);
+                log(&format!("nucleus perf: game-thread pump p50 {a:.1} p99 {b:.1} max {c:.1} us; frame interval p50 {d:.2} p99 {e:.2} max {f:.2} ms"));
+            }
+        }
+    }
+
+    /// The Nucleus engine's per-present work on the game thread: flags, log lines, pictures, and the lists when the
+    /// engine's version moved. Only `try_lock`s: never waits on a worker.
+    fn nucleus_tick(&mut self) {
+        let offline = self.browser_offline();
+        let Some(e) = self.browser.nc.as_mut() else { return };
+        e.set_online(!offline);
+        for l in e.pump() {
+            log(&format!("nucleus: {l}"));
+        }
+        let u = self.ui.as_mut().unwrap();
+        let wants = u.take_pic_wants();
+        e.want_pics(&wants);
+        for (k, px) in e.ready_pics(2) {
+            u.offer_pic(k, px);
+        }
+        let Some(v) = e.view() else { return };
+        let fresh = e.take_installed(&v);
+        u.set_list(mui::LIST_NC, v.results);
+        u.set_list(mui::LIST_NC_QUEUE, v.queue);
+        u.set_list(mui::LIST_NC_STATE, vec![v.state]);
+        if fresh {
+            // an install finished: the installed mods and the skin catalog show it now (enabled for the next launch)
+            self.browser.modset = None;
+            self.browser_fill_mods();
+            self.browser_fill_modes();
+            self.browser_fill_skins();
+        }
+    }
+
+    fn nucleus(&mut self) -> &mut crate::nucleus::Engine {
+        if self.browser.nc.is_none() {
+            let dir = self.mods_dir.clone().or_else(|| crate::cfg::text("mods_dir"));
+            self.browser.nc = Some(crate::nucleus::Engine::new(dir, self.iso.clone()));
+        }
+        self.browser.nc.as_mut().unwrap()
     }
 
     fn browser_fill_all(&mut self) {
+        if self.browser.perf.is_none() && std::env::var("MELEE_NUCLEUS_PERF").is_ok_and(|v| v == "1") {
+            self.browser.perf = Some(Perf { pump_us: Vec::with_capacity(600), frame_ms: Vec::with_capacity(600), last: std::time::Instant::now() });
+        }
         self.browser_fill_mods();
         self.browser_fill_modes();
         self.browser_fill_replays();
@@ -325,6 +396,45 @@ impl RetailPlay {
                 }
                 let target = if arg.contains(':') { arg.to_string() } else if let Some(s) = np_server() { format!("relay:{s}/{arg}") } else { return st(self, 1, "A spectate code needs the server (MELEE_NP_SERVER); or type HOST:PORT.") };
                 self.browser_relaunch(&["--spectate".into(), target], None, "spectate")
+            }
+            mui::REQ_NC_SEARCH => {
+                if !self.browser_offline() {
+                    return st(self, 1, "SSBM Nucleus is offline-only: finish the online session first.");
+                }
+                let mut f = arg.split('\0');
+                let text: String = f.next().unwrap_or("").chars().take(47).collect();
+                let tab = f.next().and_then(|t| t.parse::<usize>().ok()).filter(|&t| t < crate::nucleus::catalog::TAB_LABEL.len());
+                let sort = f.next().and_then(|t| t.parse::<usize>().ok()).filter(|&t| t < crate::nucleus::catalog::SORT_LABEL.len()).unwrap_or(0);
+                let e = self.nucleus();
+                e.open();
+                e.search(crate::nucleus::catalog::Query { text: text.clone(), tab, sort, ..Default::default() });
+                log(&format!("nucleus: search '{text}' tab {} sort {}", tab.map_or("all", |t| crate::nucleus::catalog::TAB_LABEL[t]), crate::nucleus::catalog::SORT_LABEL[sort]));
+            }
+            mui::REQ_NC_QUEUE => {
+                let Ok(id) = arg.parse::<i64>() else { return st(self, 1, "no such mod") };
+                if !self.browser_offline() {
+                    return st(self, 1, "Mods cannot be installed while you are online.");
+                }
+                let m = self.nucleus().toggle(id);
+                st(self, 0, &m);
+            }
+            mui::REQ_NC_PROCESS => {
+                if !self.browser_offline() {
+                    return st(self, 1, "Mods cannot be installed while you are online.");
+                }
+                let e = self.nucleus();
+                e.open();
+                let m = e.set_processing(arg == "1");
+                st(self, 0, &m);
+            }
+            mui::REQ_NC_SYNC => {
+                if !self.browser_offline() {
+                    return st(self, 1, "SSBM Nucleus is offline-only.");
+                }
+                let e = self.nucleus();
+                e.open();
+                e.refresh();
+                st(self, 0, "Checking SSBM Nucleus for changes.");
             }
             mui::REQ_REFRESH => {
                 match arg {

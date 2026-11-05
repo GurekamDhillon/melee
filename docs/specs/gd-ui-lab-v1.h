@@ -8,7 +8,7 @@
 /* ABI versions (major<<16 | minor). A mod that declares any UI (LAB) feature bit, required or optional, exports
  * the i32 global gdmod_ui_abi (gdmod_lab_abi) whose VALUE is the version: major must equal the host's, minor may
  * be lower. */
-#define GD_UI_ABI_VERSION  ((1u << 16) | 2u) /* 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests */
+#define GD_UI_ABI_VERSION  ((1u << 16) | 3u) /* 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests; 1.3: Nucleus lists, requests, gd_ui_host_pic */
 #define GD_LAB_ABI_VERSION (1u << 16)
 
 /* features bits, extending GD_FEATURE_* in gdmod.h */
@@ -151,6 +151,21 @@ enum { GD_UI_REQ_LAUNCH = 1, GD_UI_REQ_MOD_SET, GD_UI_REQ_REPLAY_PLAY, GD_UI_REQ
 int      gd_ui_list_info(unsigned kind);                          /* gen << 16 | count; GD_ECAP without UI_HOST */
 int      gd_ui_list_get(unsigned kind, unsigned i, void* out, unsigned cap); /* bytes copied (truncated to cap) */
 int      gd_ui_request(int op, const char* arg, unsigned len);    /* GD_OK queued, GD_EFULL, GD_EINVAL */
+/* ---- gd-ui-v1.3 (UI_HOST): the SSBM Nucleus mod browser (wasm-ui-lab-api.md A6.1; host rust/melee/src/nucleus) ----
+ *   NC        one record per search result (<= 60, then one "... N more" record with id 0): id, title, author, kind
+ *             (fighter name for a costume), queue state ("" / queued / running / done / failed), percent, picture key
+ *             (decimal u32, 0 none), installable (0/1), why not, downloads, description (cut to fit 256 bytes)
+ *   NC_QUEUE  one record per queue entry: id, state, percent, title, reason (failed)
+ *   NC_STATE  one record: sync line, catalog size, processing (0/1), pending, last install message, restart needed
+ *             (0/1), online (0/1: nothing starts), last message is an error (0/1), site
+ * Requests: NC_SEARCH(text, tab digit or "" = all, sort digit; opens the engine: threads + a polite sync)
+ *   NC_QUEUE(post id: queue / unqueue)  NC_PROCESS("1" start / "0" pause; saved: a restart resumes)  NC_SYNC() */
+enum { GD_UI_LIST_NC = 6, GD_UI_LIST_NC_QUEUE, GD_UI_LIST_NC_STATE };
+enum { GD_UI_REQ_NC_SEARCH = 9, GD_UI_REQ_NC_QUEUE, GD_UI_REQ_NC_PROCESS, GD_UI_REQ_NC_SYNC };
+/* texture handle (for GD_UI_OP_TEX) of host picture `key`, 96 x 72 RGBA fitted, 0 while not on hand (ask every frame
+ * the picture is on screen: the ask renews it, an unknown key is fetched off the game thread; <= 2 uploads per present,
+ * 16 slots recycled least recently used, so a handle shows whatever key was last asked through it) */
+unsigned gd_ui_host_pic(unsigned key);
 /* exports: int gd_ui_init(void); void gd_ui_frame(unsigned present_no) (required with UI_DRAW);
  * void gd_ui_event(unsigned node, int ev, int value); void gd_ui_scene_enter(unsigned); void gd_ui_scene_leave(unsigned) */
 

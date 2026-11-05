@@ -30,6 +30,7 @@ use std::process::ExitCode;
 mod geno_suite;
 mod cosmetics;
 mod cosmetics_import;
+mod nucleus;
 mod settings_overlay;
 mod crash;
 mod launcher_compat;

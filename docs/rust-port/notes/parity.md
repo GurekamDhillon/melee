@@ -188,7 +188,7 @@ Playable in the menu: 7 of 26 (Falcon, Fox, Falco, Marth, Sheik, Peach, Samus). 
 | Mods folder overlay (gdmods) | works | OK: `melee_data::modreg` + overlay on the DVD seam, `--mods` in `melee play` | notes/data.md:59, play.rs:525 | - |
 | m-ex fighter/stage mods at runtime (PPC code, Gecko) | works (gw_ppc, gw_mex_*) | MISSING: `mex-import` packs files only; no PPC execution, no DOL/Gecko patches | notes/data.md:48 | L |
 | Mod stage/fighter in SSS/CSS | works | MISSING (menus are stand-ins; scenes accept `ext:N`) | play.rs | M |
-| Nucleus mod browser/installer (`gw_nucleus_*`) | works | MISSING | pc/platform/gw_nucleus_*.h | L |
+| Nucleus mod browser/installer (`gw_nucleus_*`) | works | PART: search, pictures, the persistent queue, costume / stage skin / effect / menu / audio / GD-mod-zip installs (`rust/melee/src/nucleus`, gd-ui-v1.3 in the browser mod); not ported: custom stage and MexManager fighter installs (no m-ex runtime), uninstall / toggle from the browser, the _incoming local zips | notes/wasm-ui-lab-api.md A6.1 | M |
 | Roster registry (6-slot, `gw_roster_*`) | works | MISSING | pc/platform/gw_roster_*.inc | L |
 | Lua scripting (`gd.*`, 349 names; scripts, mods) | works | PART: ~200 of 349 names in melee_script (mock-tested); crate is not linked by the `melee` binary | notes/script.md rounds 1-7; rust/melee/Cargo.toml | L |
 

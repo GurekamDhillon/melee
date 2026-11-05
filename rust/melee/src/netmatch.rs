@@ -294,6 +294,7 @@ pub mod engine_game {
             let t = |i: usize| t_ns()[i].load(std::sync::atomic::Ordering::Relaxed) as f64 / 1e6 / run.max(1) as f64;
             eprintln!("melee: per tick ms: save {:.3} load {:.3} state_hash {:.3} game_hash {:.3} run_frame(tick) {:.3}; total {:.3}", t(0), t(1), t(2), t(3), t(4), t0.elapsed().as_secs_f64() * 1e3 / run.max(1) as f64);
         }
+        if std::env::var_os("MELEE_SNAP_STATS").is_some() { g.with_base(|b| eprintln!("snapstats {:?}", b.stats.borrow())); }
         eprintln!("melee: engine synctest depth {k}: {run} frames, {} rollback passes, {} hash checks, {} MISMATCHES; golden {}/{} frames equal",
             st.passes, st.checked, st.mismatches.len(), n - bad, n);
         for m in st.mismatches.iter().take(5) {

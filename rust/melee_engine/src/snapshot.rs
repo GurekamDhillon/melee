@@ -131,6 +131,8 @@ pub struct Base {
     hcache: std::cell::RefCell<HashCache>,
     /// MELEE_HASH_VERIFY: recompute every digest on each `page_hash` and panic if a cached one is stale.
     hash_verify: bool,
+    /// MELEE_SNAP_STATS counters: [save cand r0,r1,r2.., save copied, load cand, load copied, saves, loads, active-at-save]
+    pub stats: std::cell::RefCell<[u64; 16]>,
 }
 
 /// Digest cache for the hashed range. `stale` collects every page the write watch reported since the last
@@ -228,6 +230,7 @@ const ZERO: [u8; PAGE] = [0; PAGE];
 
 impl Drop for Base {
     fn drop(&mut self) {
+        if std::env::var_os("MELEE_SNAP_STATS").is_some() { eprintln!("snapstats {:?}", self.stats.borrow()); }
         unsafe { crate::cow::release() };
     }
 }
@@ -248,9 +251,13 @@ impl Base {
             no_inc: std::env::var_os("MELEE_SNAP_NOINC").is_some(),
             hcache: Default::default(),
             hash_verify: std::env::var_os("MELEE_HASH_VERIFY").is_some(),
+            stats: Default::default(),
         };
         b.refresh(); // consumes the watch state up to now (the copy above only read)
+        // both sets: a since-last set left full here is OR-ed into `dirty` by every later refresh (the whole host block
+        // stayed a candidate forever: f82738ca3 made save and load ~7 ms)
         b.dirty.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
+        b.since.borrow_mut().iter_mut().for_each(|d| d.iter_mut().for_each(|w| *w = 0));
         // the arena's base is not copied: the first write to each page saves it (cow.rs)
         unsafe { crate::cow::protect(b.ranges[0].0, arena_len).expect("arena copy-on-write") };
         b
@@ -366,7 +373,9 @@ impl Base {
             let mut pages = Vec::with_capacity(old.len() + 16);
             let sb = if inc && ri < WATCHED { Some(&since[ri][..]) } else { None };
             let mut k = 0usize;
-            for pi in self.candidates(ri, len) {
+            let cands = self.candidates(ri, len);
+            { let mut st = self.stats.borrow_mut(); st[ri.min(3)] += cands.len() as u64; st[12] += 1; if arena::active() { st[14] += 1; } }
+            for pi in cands {
                 let pi = pi as usize;
                 while k < old.len() && (old[k].0 as usize) < pi {
                     k += 1;
@@ -395,6 +404,7 @@ impl Base {
                     };
                     pages.push((pi as u32, b));
                     fresh += PAGE;
+                    self.stats.borrow_mut()[4 + ri.min(3)] += 1;
                 }
             }
             out.push(RangeSnap { addr, len, pages });
@@ -416,6 +426,7 @@ impl Base {
             let live = unsafe { core::slice::from_raw_parts_mut(r.addr as *mut u8, r.len) };
             // pages that may differ now: the dirty ones plus the snapshot's own (both ascending)
             let cand = self.candidates(ri, r.len);
+            { let mut st = self.stats.borrow_mut(); st[8 + ri.min(1)] += cand.len() as u64; st[13] += 1; st[15] += r.pages.len() as u64; }
             let (mut i, mut k) = (0, 0);
             while i < cand.len() || k < r.pages.len() {
                 let pi = match (cand.get(i), r.pages.get(k)) {
@@ -435,6 +446,7 @@ impl Base {
                     None => self.base_page(ri, pi),
                 };
                 if dst != src {
+                    self.stats.borrow_mut()[10 + ri.min(1)] += 1;
                     dst.copy_from_slice(src);
                 }
             }

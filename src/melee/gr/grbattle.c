@@ -1,3 +1,5 @@
+#include "grbattle.h"
+
 #include "granime.h"
 #include "grdisplay.h"
 #include "grlib.h"
@@ -17,16 +19,6 @@
 #include <sysdolphin/baselib/gobjproc.h>
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
-
-/** @var ::grBattle_YakumonoParam::bg_curr_color_overlay
- * @todo ::ColorOverlay_x8_t, from ::grMaterial_801C9604
- * @var ::grBattle_YakumonoParam::bg_prev_color_overlay
- * @copydoc ::grBattle_YakumonoParam::bg_curr_color_overlay
- */
-struct grBattle_YakumonoParam {
-    void* bg_curr_color_overlay;
-    void* bg_prev_color_overlay;
-};
 
 /* 219C98 */ static void grBattle_OnDemoInit(int);
 /* 219CA4 */ static void grBattle_OnInit(void);
@@ -62,7 +54,7 @@ struct grBattle_YakumonoParam {
 /* 21A3B4 */ static bool grBattle_BG_Callback1(Ground_GObj* gobj);
 /* 21A3BC */ static void grBattle_BG_Callback2(Ground_GObj* gobj);
 /* 21A60C */ static void grBattle_BG_Callback3(Ground_GObj* gobj);
-/* 21A610 */ static DynamicsDesc* grBattle_OnTouchLine(enum_t);
+/* 21A610 */ static lbColl_80008D30_arg1* grBattle_OnTouchLine(enum_t);
 /* 21A618 */ static bool grBattle_OnCheckShadowRender(Vec3*, int, HSD_JObj*);
 
 /* 4D6AC8 */ static GXBool isDemoFight;
@@ -425,7 +417,7 @@ void grBattle_BG_Callback2(Ground_GObj* gobj)
 
 void grBattle_BG_Callback3(Ground_GObj* gobj) {}
 
-DynamicsDesc* grBattle_OnTouchLine(enum_t arg0)
+lbColl_80008D30_arg1* grBattle_OnTouchLine(enum_t arg0)
 {
     return NULL;
 }

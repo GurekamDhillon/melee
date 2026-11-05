@@ -56,10 +56,11 @@ static void ftMh_MS_341_8014FE5C(HSD_GObj* gobj)
         fp->u.mh.x2240_pos = fp->cur_pos;
     }
     if (fp->u.mh.x2258 == ftMh_MS_Wait1_2) {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0, fp->cur_anim_frame,
-                                  1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None,
+                                  fp->cur_anim_frame, 1, 0, 0);
     } else {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0, 0, 1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None, 0, 1, 0,
+                                  0);
     }
     fp->u.mh.x2258 = ftMh_MS_Wait1_0;
 }
@@ -73,10 +74,11 @@ void ftMh_MS_341_8014FF1C(HSD_GObj* gobj)
         fp->u.mh.x2240_pos = fp->cur_pos;
     }
     if (fp->u.mh.x2258 == ftMh_MS_Wait2_1) {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0, fp->cur_anim_frame,
-                                  1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None,
+                                  fp->cur_anim_frame, 1, 0, 0);
     } else {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0, 0, 1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None, 0, 1, 0,
+                                  0);
     }
     fp->u.mh.x2258 = ftMh_MS_Wait2_0;
 }
@@ -94,10 +96,11 @@ void ftMh_MS_341_8014FFDC(HSD_GObj* gobj)
             fp->u.mh.x2240_pos = fp->cur_pos;
         }
         if (fp->u.mh.x2258 == ftMh_MS_Wait2_1) {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0,
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None,
                                       fp->cur_anim_frame, 1, 0, 0);
         } else {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0, 0, 1, 0, 0);
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None, 0, 1,
+                                      0, 0);
         }
         fp->u.mh.x2258 = ftMh_MS_Wait2_0;
     } else {
@@ -109,10 +112,11 @@ void ftMh_MS_341_8014FFDC(HSD_GObj* gobj)
             fp->u.mh.x2240_pos = fp->cur_pos;
         }
         if (fp->u.mh.x2258 == ftMh_MS_Wait1_2) {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0,
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None,
                                       fp->cur_anim_frame, 1, 0, 0);
         } else {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0, 0, 1, 0, 0);
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None, 0, 1,
+                                      0, 0);
         }
         fp->u.mh.x2258 = ftMh_MS_Wait1_0;
     }
@@ -121,7 +125,7 @@ void ftMh_MS_341_8014FFDC(HSD_GObj* gobj)
 static void ifStage251(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftMasterHand_SpecialAttrs* da = fp->ft_data->ext_attr;
+    ftMasterHand_SpecialAttrs* da = &fp->ft_data->ext_attr->masterhand;
     fp->u.mh.x2258 = ftMh_MS_Wait1_0;
     fp->motion_id = ftMh_MS_Entry;
     fp->cur_pos.x = da->x30_pos2.x;
@@ -136,10 +140,11 @@ static void ifStage251(HSD_GObj* gobj)
             fp->u.mh.x2240_pos = fp->cur_pos;
         }
         if (fp->u.mh.x2258 == ftMh_MS_Wait1_2) {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0,
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None,
                                       fp->cur_anim_frame, 1, 0, 0);
         } else {
-            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, 0, 0, 1, 0, 0);
+            Fighter_ChangeMotionState(gobj, ftMh_MS_Wait1_0, Ft_MF_None, 0, 1,
+                                      0, 0);
         }
         fp->u.mh.x2258 = ftMh_MS_Wait1_0;
     }
@@ -178,10 +183,11 @@ static inline void doAnim0(HSD_GObj* gobj)
         fp->u.mh.x2240_pos = fp->cur_pos;
     }
     if (fp->u.mh.x2258 == ftMh_MS_Wait2_1) {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0, fp->cur_anim_frame,
-                                  1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None,
+                                  fp->cur_anim_frame, 1, 0, 0);
     } else {
-        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, 0, 0, 1, 0, 0);
+        Fighter_ChangeMotionState(gobj, ftMh_MS_Wait2_0, Ft_MF_None, 0, 1, 0,
+                                  0);
     }
     fp->u.mh.x2258 = ftMh_MS_Wait2_0;
 }
@@ -201,7 +207,7 @@ void ftMh_Wait1_0_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     u8 _[4];
-    if (Player_GetPlayerSlotType(fp->player_id) == 0) {
+    if (Player_GetPlayerSlotType(fp->player_idx) == 0) {
         ftMh_MS_341_80150894(gobj);
         if (!ftAnim_IsFramesRemaining(gobj)) {
             if (fp->motion_id == ftMh_MS_Wait1_0) {
@@ -212,7 +218,7 @@ void ftMh_Wait1_0_Anim(HSD_GObj* gobj)
         }
     } else {
         if (--fp->u.mh.x223C < 0) {
-            ftMasterHand_SpecialAttrs* da = fp->ft_data->ext_attr;
+            ftMasterHand_SpecialAttrs* da = &fp->ft_data->ext_attr->masterhand;
             Vec3 vec;
 
             u8 _[20];
@@ -273,7 +279,7 @@ void ftMh_Wait1_0_Anim(HSD_GObj* gobj)
 
                 fp->u.mh.x224C = tmp;
                 fp->u.mh.x2250 = tmp2;
-                if (fp->x221D_b4) {
+                if (fp->input_disabled) {
                     tmp2 = ftMh_MS_Wait1_0;
                 }
                 switch (tmp2) {
@@ -357,7 +363,7 @@ void ftMh_Wait1_0_Anim(HSD_GObj* gobj)
 void ftMh_Wait1_0_IASA(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    if (Player_GetPlayerSlotType(fp->player_id) == 0) {
+    if (Player_GetPlayerSlotType(fp->player_idx) == 0) {
         ftBossLib_8015BD20(gobj);
     }
 }
@@ -373,7 +379,7 @@ void ftMh_Wait1_0_Coll(HSD_GObj* gobj) {}
 void ftMh_MS_341_80150894(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftMasterHand_SpecialAttrs* da = fp->ft_data->ext_attr;
+    ftMasterHand_SpecialAttrs* da = &fp->ft_data->ext_attr->masterhand;
     Vec3 pos;
     u32 l_pressed = buttons & HSD_PAD_L;
     // why just l_pressed and not temps for the others?

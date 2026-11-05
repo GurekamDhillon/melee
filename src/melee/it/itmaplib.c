@@ -124,7 +124,7 @@ void it_80275BC8(Item_GObj* item_gobj, HSD_GObj* arg_gobj)
 
     ip->xC0C = ip->xC1C;
 
-    if (ip->xDCE_flag.b7 == 1) {
+    if (ip->xDCE_flag.x0.b7 == 1) {
         it_80275D5C(item_gobj, &sp24);
     }
     it_80276100(item_gobj, &sp14);
@@ -192,27 +192,28 @@ void it_80275E98(Item_GObj* item_gobj, SpawnItem* spawn)
     item1->x378_itemColl.cur_pos = item1->pos;
     mpColl_80041EE4(coll);
     kind = item1->kind;
-    if (kind < It_Kind_L_Gun_Ray) {
+    if (kind < It_Kind_Common_End) {
         coll->x34_flags.b1234 = 2;
-    } else if (kind < It_Kind_Kuriboh) {
+    } else if (kind < It_Kind_Item_Related_End) {
         coll->x34_flags.b1234 = 4;
-    } else if (kind < It_Kind_Octarock_Stone) {
+    } else if (kind < It_Kind_Monster_End) {
         coll->x34_flags.b1234 = 3;
-    } else if (kind < It_Kind_Mario_Fire) {
+    } else if (kind < It_Kind_Monster_Related_End) { // If item is
+                                                     // It_Kind_Octarock_Stone
         coll->x34_flags.b1234 = 4;
-    } else if (kind < It_Kind_Unk4) {
+    } else if (kind < It_Kind_Character_End) {
         coll->x34_flags.b1234 = 5;
-    } else if (kind < It_PKind_Random) {
+    } else if (kind < It_Kind_Misc_End) {
         coll->x34_flags.b1234 = 5;
-    } else if (kind < It_PKind_Start) {
+    } else if (kind < It_PKind_Misc_End) { // If item is It_PKind_Random
         coll->x34_flags.b1234 = 5;
     } else if (kind < It_PKind_Terminate) {
         coll->x34_flags.b1234 = 5;
-    } else if (kind < It_Kind_Old_Kuri) {
+    } else if (kind < It_PKind_Related_End) {
         coll->x34_flags.b1234 = 4;
-    } else if (kind < It_Kind_Arwing_Laser) {
+    } else if (kind < It_Kind_Stage_End) {
         coll->x34_flags.b1234 = 3;
-    } else if (kind < 238) {
+    } else if (kind < It_Kind_Stage_Related_End) {
         coll->x34_flags.b1234 = 4;
     }
 
@@ -230,7 +231,7 @@ void it_80275E98(Item_GObj* item_gobj, SpawnItem* spawn)
     }
     mpCollSetFacingDir(&item2->x378_itemColl, int_dir);
     coll->x50 = attr->x1C_damage_mul;
-    if (spawn->x44_flag.b0 == 1) {
+    if (spawn->x44_flag.x0.b0 == 1) {
         if (spawn->x48_ground_or_air == GA_Air) {
             it_80276100(item_gobj, &spawn->pos);
             return;
@@ -277,7 +278,7 @@ void it_80276214(Item_GObj* item_gobj)
     item = item_gobj->user_data;
     item->x378_itemColl.last_pos = item->x378_itemColl.cur_pos;
     item->x378_itemColl.cur_pos = item->pos;
-    if (item->xDCE_flag.b7 == 1) {
+    if (item->xDCE_flag.x0.b7 == 1) {
         it_80276278(item_gobj);
     }
 }
@@ -407,75 +408,38 @@ void it_80276408(Item_GObj* item_gobj, CollData* coll, Vec3* vec)
 
 f32 it_8027649C(Item_GObj* item_gobj)
 {
-    u8 _pad[4];
-    Vec3 sp20;
-    Vec3 sp14;
+    Vec3 normal;
+    Vec3 up;
     f32 angle;
-    s32 int_dir;
-    Item* item = GET_ITEM(item_gobj);
-    f32 ret; // permuterslop
-    CollData* coll = &item->x378_itemColl;
+    Item* ip = GET_ITEM(item_gobj);
+    CollData* coll = &ip->x378_itemColl;
     PAD_STACK(4);
 
-    sp14.z = 0.0f;
-    sp14.x = 0.0f;
-    sp14.y = 1.0f;
-    it_80276408(item_gobj, coll, &sp20);
-    angle = lbVector_Angle(&sp20, &sp14);
-    if (sp20.x < 0.0f) {
-        int_dir = -1;
-    } else {
-        int_dir = 1;
-    }
-
-    return ret = item->facing_dir * (angle * int_dir);
-}
-
-static inline f32 it_8027649C_ref(Item_GObj* item_gobj, Vec3* sp14, Vec3* sp20)
-{
-    f32 angle;
-    s32 int_dir;
-    Item* item = GET_ITEM(item_gobj);
-    f32 ret; // permuterslop
-    CollData* coll = &item->x378_itemColl;
-    PAD_STACK(4);
-
-    sp14->z = 0.0f;
-    sp14->x = 0.0f;
-    sp14->y = 1.0f;
-    it_80276408(item_gobj, coll, sp20);
-    angle = lbVector_Angle(sp20, sp14);
-    if (sp20->x < 0.0f) {
-        int_dir = -1;
-    } else {
-        int_dir = 1;
-    }
-
-    return ret = item->facing_dir * (angle * int_dir);
+    up.z = 0.0f;
+    up.x = 0.0f;
+    up.y = 1.0f;
+    it_80276408(item_gobj, coll, &normal);
+    angle = lbVector_Angle(&normal, &up);
+    angle = ip->facing_dir * (angle * (normal.x < 0.0f ? -1 : 1));
+    return angle;
 }
 
 void it_802765BC(Item_GObj* item_gobj, enum_t arg1)
 {
-    u8 pad[12];
-    HSD_JObj* jobj;
-    Item* ip;
-    f32 angle;
-    u32 bit_chk;
-    Vec3 v00, v01, v10, v11, v20, v21;
-    PAD_STACK(28);
+    Item* ip = GET_ITEM(item_gobj);
+    HSD_JObj* jobj = it_80272CC0(item_gobj, arg1);
+    u32 bit_chk = ip->xDC8_word.flags.x17;
 
-    ip = item_gobj->user_data;
-    jobj = it_80272CC0(item_gobj, arg1);
-    bit_chk = ip->xDC8_word.flags.x17;
     if (bit_chk == 0) {
-        angle = it_8027649C_ref(item_gobj, &v00, &v01);
-        angle = -ip->facing_dir * angle;
-        HSD_JObjSetRotationZ(jobj, angle);
+        f32 angle = it_8027649C(item_gobj);
+        f32 facing = ip->facing_dir;
+        f32 rot = -facing * angle;
+        HSD_JObjSetRotationZ(jobj, rot);
     } else if (bit_chk == 1) {
-        angle = it_8027649C_ref(item_gobj, &v10, &v11);
+        f32 angle = it_8027649C(item_gobj);
         HSD_JObjSetRotationX(jobj, angle);
     } else {
-        angle = it_8027649C_ref(item_gobj, &v20, &v21);
+        f32 angle = it_8027649C(item_gobj);
         HSD_JObjSetRotationY(jobj, angle);
     }
 }
@@ -558,11 +522,6 @@ void it_80276934(Item_GObj* item_gobj, enum_t arg1)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
-
 void it_80276CB8(Item_GObj* item_gobj)
 {
     Item* item = item_gobj->user_data;
@@ -571,10 +530,6 @@ void it_80276CB8(Item_GObj* item_gobj)
         it_802765BC(item_gobj, 0);
     }
 }
-
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void it_80276CEC(Item_GObj* item_gobj)
 {
@@ -669,11 +624,6 @@ bool it_80276D9C(Item_GObj* item_gobj, enum_t arg1)
     return ret_val;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
-
 void it_80276FC4(Item_GObj* item_gobj, s32 arg1)
 {
     Item* it = item_gobj->user_data;
@@ -686,124 +636,78 @@ void it_80276FC4(Item_GObj* item_gobj, s32 arg1)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma pop
-#endif
+static inline bool checkNormalAngle(Item_GObj* gobj)
+{
+    Item* ip = GET_ITEM(gobj);
+    Vec3 normal;
+    f32 angle;
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
+    it_80276408(gobj, &ip->x378_itemColl, &normal);
+    angle = lbVector_Angle(&normal, &ip->xAC_unk);
+    if (angle < 0.0f) {
+        angle = -angle;
+    }
+    if (angle >= it_804D6D28->xC4 && ip->xC30 == ip->xC2C) {
+        return true;
+    }
+    return false;
+}
 
 bool it_80277040(Item_GObj* item_gobj)
 {
-    UNUSED u8 frame_pad[8];
-    Vec3 sp5C;
-    Vec3 sp50;
-    Vec3 sp44;
-    Vec3 sp38;
-    UNUSED u8 pad[12];
-    Vec3 sp20;
-    Vec3 sp14;
-    UNUSED u8 low_pad[4];
+    UNUSED u8 _top[4];
+    Vec3 normal;
+    Vec3 down;
+    Vec3 cross;
+    Vec3 slope;
+    UNUSED u8 _mid[12];
+    Vec3 up;
     CollData* coll;
-    Item* item2;
     Item* item1;
     f32 temp_f3;
     f32 temp_f31;
     f32 temp_f30;
     f32 angle1;
-    f32 angle2;
-    bool chk;
-    s32 int_dir1;
-    s32 int_dir3;
     bool ret_val;
-    s32 int_dir2;
-    s32 int_dir4;
-    PAD_STACK(4);
 
     ret_val = true;
-    item1 = item_gobj->user_data;
+    item1 = GET_ITEM(item_gobj);
     coll = &item1->x378_itemColl;
     if (ABS(item1->xCC_item_attr->x50) < 0.00001f) {
         item1->x88.y = 0.0f;
         item1->x88.x = 0.0f;
         return false;
     }
-    sp20.z = 0.0f;
-    sp20.x = 0.0f;
-    sp20.y = 1.0f;
-    if (coll->env_flags & Collide_LeftWallMask) {
-        sp5C = coll->left_facing_wall.normal;
-    }
-    if (coll->env_flags & Collide_RightWallMask) {
-        sp5C = coll->right_facing_wall.normal;
-    }
-    if (coll->env_flags & Collide_CeilingMask) {
-        sp5C = coll->ceiling.normal;
-    }
-    if (coll->env_flags & Collide_FloorMask) {
-        sp5C = coll->floor.normal;
-    }
+    up.z = 0.0f;
+    up.x = 0.0f;
+    up.y = 1.0f;
+    it_80276408(item_gobj, coll, &normal);
     item1->x94 = item1->x88;
     // item1->x98 = item1->x8C;
     // item1->x9C = item1->x90;
-    angle1 = lbVector_AngleXY(&sp5C, &sp20);
+    angle1 = lbVector_AngleXY(&normal, &up);
     if (angle1 < 0.0f) {
         angle1 = -angle1;
     }
     if (angle1 >= it_804D6D28->xC0) {
-        sp50.z = 0.0f;
-        sp50.x = 0.0f;
-        sp50.y = -1.0f;
-        lbVector_CrossprodNormalized(&sp5C, &sp50, &sp44);
-        lbVector_CrossprodNormalized(&sp44, &sp5C, &sp38);
+        down.z = 0.0f;
+        down.x = 0.0f;
+        down.y = -1.0f;
+        lbVector_CrossprodNormalized(&normal, &down, &cross);
+        lbVector_CrossprodNormalized(&cross, &normal, &slope);
         temp_f3 = item1->xCC_item_attr->x50;
         temp_f31 = item1->x94.x / temp_f3;
         temp_f30 = item1->x94.y / temp_f3;
-        item1->x88.x = sp38.x * temp_f3;
-        item1->x88.y = sp38.y * item1->xCC_item_attr->x50;
-        item2 = item_gobj->user_data;
-        it_80276408(item_gobj, &item2->x378_itemColl, &sp14);
-        angle2 = lbVector_Angle(&sp14, &item2->xAC_unk);
-        if (angle2 < 0.0f) {
-            angle2 = -angle2;
-        }
-        if ((angle2 >= it_804D6D28->xC4) && (item2->xC30 == item2->xC2C)) {
-            chk = true;
-        } else {
-            chk = false;
-        }
-        if (!chk) {
+        item1->x88.x = slope.x * temp_f3;
+        item1->x88.y = slope.y * item1->xCC_item_attr->x50;
+        if (!checkNormalAngle(item_gobj)) {
             temp_f3 = 0.0f;
             if (item1->x94.x != temp_f3 || item1->x94.y != temp_f3) {
-                if (sp38.x < 0.0f) {
-                    int_dir1 = -1;
-                } else {
-                    int_dir1 = 1;
-                }
-                if (temp_f31 < 0.0f) {
-                    int_dir2 = -1;
-                } else {
-                    int_dir2 = 1;
-                }
-                if (int_dir2 == int_dir1) {
-                    if (sp38.y < 0.0f) {
-                        int_dir3 = -1;
-                    } else {
-                        int_dir3 = 1;
-                    }
-                    if (temp_f30 < 0.0f) {
-                        int_dir4 = -1;
-                    } else {
-                        int_dir4 = 1;
-                    }
-                    if (int_dir4 != int_dir3) {
-                        goto block_38;
-                    }
-                } else {
-                block_38:
+                if ((temp_f31 < 0.0f ? -1 : 1) != (slope.x < 0.0f ? -1 : 1) ||
+                    (temp_f30 < 0.0f ? -1 : 1) != (slope.y < 0.0f ? -1 : 1))
+                {
                     item1->xD58++;
+
                     if (item1->xD58 >= it_804D6D28->x38_float) {
                         item1->xD58 = 0;
                         ret_val = false;
@@ -822,10 +726,6 @@ bool it_80277040(Item_GObj* item_gobj)
     }
     return ret_val;
 }
-
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static inline float sqrtf_accurate_store(float x, volatile float* y)
 {
@@ -1113,7 +1013,7 @@ void it_80277C40(Item_GObj* item_gobj, s32 arg1)
         sp20.x = coll->ecb.bottom.x;
         sp20.y = coll->ecb.bottom.y;
     }
-    if (!item->xDCF_flag.b0) {
+    if (!item->xDCF_flag.x0.b0) {
         it_80278800(item_gobj, 0x405, 0, &sp20, &sp14, 0U, 0.0f);
     }
 }

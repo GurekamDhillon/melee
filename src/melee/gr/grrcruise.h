@@ -51,9 +51,30 @@
 /* 201918 */ void grRCruise_80201918(Vec3*);
 /* 201988 */ bool grRCruise_80201988(s32);
 /* 201B60 */ void grRCruise_80201B60(HSD_JObj*, bool clear);
-/* 201BE0 */ void fn_80201BE0(HSD_GObj*, int);
-/* 201C50 */ DynamicsDesc* grRCruise_80201C50(enum_t);
+/* 201BE0 */ void fn_80201BE0(HSD_GObj*, intptr_t);
+/* 201C50 */ lbColl_80008D30_arg1* grRCruise_80201C50(enum_t);
 /* 201C58 */ bool grRCruise_80201C58(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E4ECC */ extern StageData grRc_StageData;
+
+struct grRCruise_YakumonoParam {
+    f32 x0;
+    f32 x4;
+    f32 x8;
+    s32 xC;
+    s32 x10;
+    s32 x14;
+    s32 x18;
+    s32 x1C;
+    s32 x20;
+    s32 x24;
+    s32 x28;
+    f32 x2C;
+    f32 x30;
+    f32 x34;
+    f32 x38;
+    s32 x3C;
+    s32 x40;
+    s32 x44;
+};
 
 #endif

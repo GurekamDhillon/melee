@@ -3,7 +3,6 @@
 #include <sysdolphin/baselib/forward.h>
 
 #include "forward.h"
-#include "gm_18A1.h"
 #include "gm_unsplit.h"
 #include "gmmain_lib.h"
 #include "gmregclear.h"
@@ -29,7 +28,6 @@
 #include <melee/lb/lbcardnew.h>
 #include <melee/lb/lbtime.h>
 #include <melee/pl/player.h>
-#include <melee/ty/toy.h>
 #include <sysdolphin/baselib/aobj.h>
 #include <sysdolphin/baselib/dobj.h>
 #include <sysdolphin/baselib/gobj.h>
@@ -38,12 +36,6 @@
 #include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/tobj.h>
-
-typedef struct lbl_804706D8_t {
-    s16 x0;
-    u8 x2;
-    u8 x3;
-} lbl_804706D8_t;
 
 static struct lbl_804706C0_t {
     int x0;
@@ -103,7 +95,7 @@ static int BossHook_AllSleeping(void)
  * blast-zone immune by state 7's Player_80036844(0, 1) and fell out of the world). Retail starts a stamina KO from the damage commit
  * (Fighter_TakeDamage_8006CC7C -> ftCo_800C8C84 -> fn_800C8E74); this runs the same function for such a hand, so its death is the
  * retail one. Returns the number of hands driven.
- * ONCE per hand (driven_mask). For a hand ftCo_800C8C84 does NOT set x2224_b2 (only fn_800C8E74's non-hand branch does), so it never refuses:
+ * ONCE per hand (driven_mask). For a hand ftCo_800C8C84 does NOT set stamina_dead (only fn_800C8E74's non-hand branch does), so it never refuses:
  * repeating it re-entered ftMh_MS_343_80151484 / ftCh_GrabUnk1_8015ADD0 every 10 ticks, and each entry re-ran the damage-state setup:
  * self_vel.y = the death launch, the 'frames until Sleep' counter (mv.*.unk0.x8) = its full length, the damage SFX and effects. The
  * counter never reached 0 (so no Sleep), the hand rose forever and the effects piled up until the frame arena and heap were full
@@ -117,7 +109,7 @@ static int BossHook_DriveDeaths(void)
         if (gobj != NULL) {
             Fighter* fp = GET_FIGHTER(gobj);
             if (BossHook_Kind(fp->kind) && Player_GetRemainingHP(port) <= 0 &&
-                fp->motion_id != ftCo_MS_Sleep && !fp->x2224_b2 && !(boss_hook.driven_mask & (1 << port)))
+                fp->motion_id != ftCo_MS_Sleep && !fp->stamina_dead && !(boss_hook.driven_mask & (1 << port)))
             {
                 if (ftCo_800C8C84(gobj)) {
                     boss_hook.driven_mask |= 1 << port;
@@ -175,21 +167,6 @@ int BossHook_Release(void)
 }
 #endif
 
-static lbl_804706D8_t lbl_804706D8[12];
-
-typedef struct RegClearCharEntry {
-    /* 0x00 */ u8 x0;
-    /* 0x01 */ u8 x1;
-    /* 0x02 */ u8 x2;
-    /* 0x03 */ u8 x3;
-    /* 0x04 */ f32 x4;
-    /* 0x08 */ f32 x8;
-} RegClearCharEntry;
-
-StartMeleeData gmClassic_80472AF8;
-MatchExitInfo gmClassic_8047086C;
-DebugGameOverData gmClassic_80470850;
-CSSData gmClassic_80470708;
 
 void fn_8017C0C8(void)
 {
@@ -257,7 +234,7 @@ void fn_8017C1A4(HSD_GObj* unused)
             temp_r3_2->start.disable_pausing = false;
             temp_r3_2->state.hud_enabled = 0;
             lbAudioAx_800237A8(0x81650, 0x7F, 0x40);
-            ftLib_80086824();
+            ftLib_DisableAllInput();
             tmp->x8 = 1;
         } else if (ftBossLib_IsMasterHandEntry() == 0) {
             tmp->x0 = 2;
@@ -295,7 +272,7 @@ void fn_8017C1A4(HSD_GObj* unused)
         temp_r3_4 = gmVs_GetSceneController();
         temp_r3_4->state.hud_enabled = 1;
         Stage_80225074(0);
-        ftLib_800868A4();
+        ftLib_EnableAllInput();
         ftBossLib_8015CC14();
         tmp->x0 = 3;
         break;
@@ -408,7 +385,7 @@ void fn_8017C1A4(HSD_GObj* unused)
             lbAudioAx_80028B6C();
         }
         if (tmp->x8 <= temp_r28 && tmp->x8 % 30 == 0) {
-            gm_80167858(Player_GetPlayerId(0), Player_GetNametagSlotID(0), 2,
+            gm_80167858(Player_GetPadPort(0), Player_GetNametagSlotID(0), 2,
                         0x1E);
             Camera_RequestQuake(QuakeKind_Medium, NULL);
         }
@@ -477,7 +454,7 @@ void fn_8017C71C(void)
 #endif
     tmp->xC = ftBossLib_8015C530(gm_8017E068());
     Player_SetOtherStamina(2, tmp->xC);
-    ftLib_80087508(Ft_Kind_CrezyH, 0);
+    ftLib_LoadFighterCostume(Ft_Kind_CrezyH, 0);
 }
 
 void fn_8017C7A0(void)
@@ -510,14 +487,12 @@ void gm_8017C838(void)
     s8* var_r31;
     UnkAdventureData* temp_r30;
 
-    PAD_STACK(8);
-
     temp_r30 = gm_GetAdventureData();
     temp_r3 = gmVs_GetSceneController();
     var_r31 = sp10;
-    sp10[0] = Ft_Kind_None;
-    sp10[1] = Ft_Kind_None;
-    sp10[2] = Ft_Kind_None;
+    for (i = 0; i < 3; i++) {
+        sp10[i] = Ft_Kind_None;
+    }
     switch (temp_r3->start.stkind) {
     case 0x3B:
         sp10[0] = Ft_Kind_Yoshi;
@@ -533,7 +508,7 @@ void gm_8017C838(void)
         } else {
             var_r3 = 0;
         }
-        ftLib_80087610(var_r3);
+        ftLib_LoadKirbyHats(var_r3);
         break;
     case 0x48:
 #if defined(TARGET_PC)
@@ -561,7 +536,7 @@ void gm_8017C838(void)
 
     for (i = 0; i < 3; i++) {
         if (*var_r31 != Ft_Kind_Max) {
-            ftLib_80087574(*var_r31);
+            ftLib_LoadFighterAllCostumes(*var_r31);
         }
         var_r31++;
     }
@@ -1209,13 +1184,15 @@ bool gm_8017D7AC(MatchExitInfo* arg0, Unk1PData* arg1, u8 arg2)
     return 1;
 }
 
+struct pick_random_ckind_scan {
+    s32 count;
+    u8* cursor;
+};
+
 static inline s32 pick_random_ckind(u8* arr, const u8* used_ckinds,
                                     const u8* preset_ckinds)
 {
-    struct {
-        s32 count;
-        u8* cursor;
-    } scan;
+    struct pick_random_ckind_scan scan;
     u8 temp;
     s32 j;
     s32 i;
@@ -1274,318 +1251,4 @@ s32 fn_8017D9C0(const u8* used_ckinds, const u8* preset_ckinds)
 {
     return pick_random_ckind(lbl_803D79F0, used_ckinds, preset_ckinds);
 }
-#ifdef MUST_MATCH
-#pragma dont_inline on
-#endif
 
-void gm_8017DB58(struct Unk1PData_x24* arg0)
-{
-    int i;
-    for (i = 0; i < 3; i++) {
-        arg0[i].ckind = ChKind_None;
-    }
-}
-
-u8 gm_8017DB6C(gm_8017DB6C_arg0_t* arg0, int index)
-{
-    return arg0[index].x0;
-}
-
-u8 gm_8017DB78(gm_8017DB6C_arg0_t* arg0, int index)
-{
-    return arg0[index].x1;
-}
-
-s32 gm_8017DB88(void* arg0, u8 arg1, s32 arg2, s32 arg3, u8* arg4, u8 arg5,
-                u8 (*arg6)(s32, s32, u8), u8 (*arg7)(s32, s32, u8),
-                u8 (*arg8)(s32, s32, u8), f32 (*arg9)(s32, s32),
-                f32 (*arg10)(s32, s32))
-{
-    u8 chars[4];
-    s32 val;
-    f32 fval;
-
-    {
-        u8* p;
-        RegClearCharEntry* out;
-        s32 i;
-        s32 count;
-
-        count = fn_8017DE54(arg1, arg4);
-#if defined(TARGET_PC)
-        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicInit2.asm, @ 0x8017DD10. Replaces the external-ID null literal 0x21 with ChKind_None. */
-        chars[1] = ChKind_None;
-        out = arg0;
-        chars[2] = ChKind_None;
-        p = chars;
-        i = 0;
-        chars[3] = ChKind_None;
-#else
-        chars[1] = 0x21;
-        out = arg0;
-        chars[2] = 0x21;
-        p = chars;
-        i = 0;
-        chars[3] = 0x21;
-#endif
-        chars[0] = arg5;
-        for (; i < count; i++) {
-            p[1] = fn_8017D9C0(chars, arg4);
-            out->x0 = p[1];
-            if (arg8 != NULL) {
-                val = arg8(arg3, arg2, (u8) i);
-            } else {
-                val = 0;
-            }
-            out->x1 = val;
-            if (arg6 != NULL) {
-                val = arg6(arg3, arg2, (u8) i);
-            } else {
-                val = 0;
-            }
-            out->x2 = val;
-            if (arg7 != NULL) {
-                val = arg7(arg3, arg2, (u8) i);
-            } else {
-                val = 0;
-            }
-            out->x3 = val;
-            if (arg9 != NULL) {
-                fval = arg9(arg3, arg2);
-            } else {
-                fval = 0.0f;
-            }
-            out->x4 = fval;
-            if (arg10 != NULL) {
-                fval = arg10(arg3, arg2);
-            } else {
-                fval = 0.0f;
-            }
-            out->x8 = fval;
-            p++;
-            out++;
-        }
-        for (; i < 3; i++) {
-#if defined(TARGET_PC)
-            /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep30.asm, @ 0x8017DBCC. Replaces the external-ID null literal 0x21 with ChKind_None. */
-            ((RegClearCharEntry*) arg0)[i].x0 = ChKind_None;
-#else
-            ((RegClearCharEntry*) arg0)[i].x0 = 0x21;
-#endif
-        }
-        return count;
-    }
-}
-#ifdef MUST_MATCH
-#pragma dont_inline off
-
-/// @todo .sdata2 order hack
-
-#endif
-
-s32 fn_8017DD7C(PlayerInitData* arg0, Unk1PData_x24* arg1, u8 arg2)
-{
-    s32 index = 1;
-    int i;
-    for (i = 0; i < 3; i++) {
-        if (arg1[i].ckind != ChKind_None) {
-            gm_SetupPlayerDefaults(&arg0[index]);
-            arg0[index].ckind = arg1[i].ckind;
-            arg0[index].slot_type = 1;
-            arg0[index].stocks = 1;
-            arg0[index].team = arg0->team;
-            arg0[index].color = arg1[i].color;
-            arg0[index].cpu_kind = arg1[i].cpu_kind;
-            arg0[index].cpu_level = arg1[i].cpu_level;
-            arg0[index].attack_ratio = arg1[i].attack_ratio;
-            arg0[index].defense_ratio = arg1[i].defense_ratio;
-            arg0[index].xD_b1 = 1;
-            if (arg0[index].ckind == CKind_GKoops) {
-                arg0[index].xC_b1 = 0;
-            }
-            index++;
-        }
-    }
-    return index - 1;
-}
-
-s32 fn_8017DE54(u8 arg0, u8* arg1)
-{
-    u8* p;
-    s32 count;
-
-    if (arg0 & 0x20) {
-        return 0;
-    }
-    if (arg0 & 0x10) {
-        count = 0;
-#if defined(TARGET_PC)
-        /* Ported from m-ex (https://github.com/akaneia/m-ex): asm/m-ex/External Character ID Shifts/Null ID/ClassicScenePrep28.asm, @ 0x8017DE78. Replaces the external-ID null literal 0x21 with ChKind_None. */
-        if ((s32) arg1[0] != ChKind_None) {
-            count = 1;
-        }
-        p = &arg1[1];
-        if ((s32) *p != ChKind_None) {
-            count += 1;
-        }
-        if ((s32) p[1] != ChKind_None) {
-            count += 1;
-        }
-#else
-        if ((s32) arg1[0] != 0x21) {
-            count = 1;
-        }
-        p = &arg1[1];
-        if ((s32) *p != 0x21) {
-            count += 1;
-        }
-        if ((s32) p[1] != 0x21) {
-            count += 1;
-        }
-#endif
-        return 3 - count;
-    }
-    if (arg0 & 2) {
-        return 2;
-    }
-    return 0;
-}
-
-Unk1PData* fn_8017DEC8(int arg0)
-{
-    switch (arg0) {
-    case 0:
-        return &gm_GetAdventureData()->x0;
-    case 1:
-        return &gm_GetAllStarData()->x0;
-    case 2:
-        return &gm_80473A18.x0;
-    default:
-        return NULL;
-    }
-}
-
-Unk1PData* fn_8017DF28(void)
-{
-    switch (gm_GetCurrentGameMode()) {
-    case GM_CLASSIC:
-        return &gm_GetAllStarData()->x0;
-    case GM_ADVENTURE:
-        return &gm_GetAdventureData()->x0;
-    case GM_ALLSTAR:
-        return &gm_80473A18.x0;
-    default:
-        return NULL;
-    }
-}
-
-u8 fn_8017DF90(void)
-{
-    switch (gm_GetCurrentGameMode()) {
-    case GM_CLASSIC:
-        return 1;
-    case GM_ADVENTURE:
-        return 0;
-    case GM_ALLSTAR:
-        return 2;
-    default:
-        return 3;
-    }
-}
-
-int gm_8017DFF4(int arg0)
-{
-    Unk1PData* var_r3 = fn_8017DEC8(arg0);
-    if (var_r3 != NULL) {
-        return var_r3->x0.cpu_level;
-    }
-    return -1;
-}
-
-int gm_8017E068(void)
-{
-    Unk1PData* var_r3 = fn_8017DF28();
-    if (var_r3 != NULL) {
-        return var_r3->x0.cpu_level;
-    }
-    return -1;
-}
-
-int fn_8017E0E4(void)
-{
-    Unk1PData* var_r3 = fn_8017DF28();
-    if (var_r3 != NULL) {
-        return var_r3->xC.xC;
-    }
-    return -1;
-}
-
-bool fn_8017E160(void)
-{
-    Unk1PData* var_r3 = fn_8017DF28();
-    struct Unk1PData_xC* temp_r3_2;
-
-    if (var_r3 != NULL) {
-        int i;
-        for (i = 0; i < 3; i++) {
-            if (var_r3->xC.x24[i].ckind != ChKind_None) {
-                return true;
-            }
-        }
-        return false;
-    }
-    return false;
-}
-
-void fn_8017E21C(void)
-{
-    int i;
-    for (i = 0; i < 12; i++) {
-        lbl_804706D8[i].x0 = -1;
-    }
-}
-
-s8 gm_8017E280(u16 arg0, u32 arg1)
-{
-    lbl_804706D8_t* var_r7 = lbl_804706D8;
-    s32 index;
-    index = 0;
-    for (index = 0; index < 12; index++) {
-        if (arg0 == var_r7[index].x0) {
-            var_r7[index].x2 += arg1;
-            return var_r7[index].x2;
-        }
-    }
-    index = 0;
-    for (index = 0; index < 12; index++) {
-        if (var_r7[index].x0 == -1) {
-            var_r7[index].x0 = arg0;
-            var_r7[index].x2 = arg1;
-            return (u8) arg1;
-        }
-    }
-    return -1;
-}
-
-int fn_8017E318(void)
-{
-    int i;
-    int sum = 0;
-    for (i = 0; i < 12; i++) {
-        if (lbl_804706D8[i].x0 != -1) {
-            sum += lbl_804706D8[i].x2;
-        }
-    }
-    return sum;
-}
-
-void fn_8017E3C8(void)
-{
-    int i = 0;
-    PAD_STACK(8);
-    for (i = 0; i < 12; i++) {
-        if (lbl_804706D8[i].x0 != -1) {
-            Toy_SetUnlockState(lbl_804706D8[i].x0, lbl_804706D8[i].x2);
-        }
-    }
-}

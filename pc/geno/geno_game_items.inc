@@ -74,8 +74,8 @@ f32 Geno_ItemPressDist(HSD_GObj* g,Fighter* fp) {
  if(!g || !fp) return -1.0f;
  ip=GET_ITEM(g); d=geno_item_def(ip);
  if(d<0 || Geno_ItemParam(d,GENO_IP_COLLECT)!=2 || geno_item_vars(ip)->terminal) return -1.0f;
- if(fp->player_id>=6 || fp->is_sub_fighter || fp->motion_id<=ftCo_MS_RebirthWait || (unsigned)fp->team>=32 ||
-    !(Geno_ItemParam(d,GENO_IP_PORT_MASK)&(1<<fp->player_id)) ||
+ if(fp->player_idx>=6 || fp->is_sub_fighter || fp->motion_id<=ftCo_MS_RebirthWait || (unsigned)fp->team>=32 ||
+    !(Geno_ItemParam(d,GENO_IP_PORT_MASK)&(1<<fp->player_idx)) ||
     !((u32)Geno_ItemParam(d,GENO_IP_TEAM_MASK)&(1U<<fp->team)) || ftCo_IsCpuControlled(fp)) return -1.0f;
  s=geno_item_paramf(d,GENO_IP_SCALE); half=geno_item_paramf(d,GENO_IP_HEIGHT)*s*0.5f;
  xr=geno_item_paramf(d,GENO_IP_RADIUS)*s; yr=xr>half ? xr : half;
@@ -110,13 +110,13 @@ static bool geno_item_anim(Item_GObj* g) {
  if(Geno_ItemParam(d,GENO_IP_COLLECT)!=1 || HSD_GObjPLinkHead==NULL) return false;
  for(cur=HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];cur;cur=cur->next) {
   Fighter* fp=GET_FIGHTER(cur); f32 dx,dy,r;
-  if(!fp || fp->player_id>=6 || fp->is_sub_fighter || fp->motion_id<=ftCo_MS_RebirthWait || (unsigned)fp->team>=32 ||
-     !(Geno_ItemParam(d,GENO_IP_PORT_MASK)&(1<<fp->player_id)) ||
+  if(!fp || fp->player_idx>=6 || fp->is_sub_fighter || fp->motion_id<=ftCo_MS_RebirthWait || (unsigned)fp->team>=32 ||
+     !(Geno_ItemParam(d,GENO_IP_PORT_MASK)&(1<<fp->player_idx)) ||
      !((u32)Geno_ItemParam(d,GENO_IP_TEAM_MASK)&(1U<<fp->team))) continue;
   dx=fp->cur_pos.x-ip->pos.x; dy=fp->cur_pos.y-ip->pos.y;
   r=geno_item_paramf(d,GENO_IP_RADIUS)*geno_item_paramf(d,GENO_IP_SCALE);
   if(geno_item_in_capsule(dx,dy,r,geno_item_lift(d,(f32)v->age)+
-     geno_item_paramf(d,GENO_IP_HEIGHT)*geno_item_paramf(d,GENO_IP_SCALE))) { geno_item_event(ip,0,fp->player_id); return true; }
+     geno_item_paramf(d,GENO_IP_HEIGHT)*geno_item_paramf(d,GENO_IP_SCALE))) { geno_item_event(ip,0,fp->player_idx); return true; }
  }
  return false;
 }
@@ -355,7 +355,7 @@ void Geno_ItemFamilyEvent(HSD_GObj* g,int what,int port) {
  ItemEvent(what,ip->x1C,-(ip->kind+1),port,geno_item_bits(ip->pos.x),geno_item_bits(ip->pos.y),0,0);
 }
 extern void ItemDraw(int index,int view,int code);
-void Geno_ItemDraw(HSD_GObj* g,int code) {
+void Geno_ItemDraw(HSD_GObj* g,intptr_t code) {
  int i; Item* ip; HSD_CObj* c;
  if(code!=0 && code!=2) return;
  c=HSD_CObjGetCurrent(); if(!c) return;
@@ -403,7 +403,7 @@ int Geno_ItemFixture(int def) {
     Geno_ItemVisual(0,GENO_IV_TILT)!=Geno_ItemParam(def,GENO_IP_TILT) ||
     Geno_ItemVisual(0,GENO_IV_SCALE)!=Geno_ItemParam(def,GENO_IP_SCALE)) ++failed;
  geno_item_vars(&ip)->age=0;
- fighter.user_data=&fp; fp.player_id=0; fp.team=0; fp.motion_id=ftCo_MS_Wait; fp.cur_pos=ip.pos;
+ fighter.user_data=&fp; fp.player_idx=0; fp.team=0; fp.motion_id=ftCo_MS_Wait; fp.cur_pos=ip.pos;
  heads[HSD_GOBJ_PLINK_FIGHTER]=&fighter;
  /* Use production collection, not just the geometry helper: radius is scaled
   * and the upper cap reaches the rendered model. */

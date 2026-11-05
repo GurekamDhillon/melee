@@ -53,18 +53,7 @@ StageData grOy_StageData = {
     0,
 };
 
-static struct {
-    s16 x0;
-    s16 x2;
-    float x4;
-    float x8;
-    float xC;
-    s16 x10;
-    s16 x12;
-    s16 x14;
-    s16 x16;
-    s16 x18;
-}* yakumono_param;
+static struct grOldYoshi_YakumonoParam* yakumono_param;
 
 void grOldYoshi_8020E798(bool arg) {}
 
@@ -457,7 +446,7 @@ float grOldYoshi_8020F31C(float param1, float param2, float param3,
     return param1;
 }
 
-DynamicsDesc* grOldYoshi_8020F404(enum_t arg)
+lbColl_80008D30_arg1* grOldYoshi_8020F404(enum_t arg)
 {
     return NULL;
 }

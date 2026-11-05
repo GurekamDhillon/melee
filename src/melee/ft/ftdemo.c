@@ -4,8 +4,6 @@
 
 #include <melee/pl/forward.h>
 
-#include <math.h>
-
 #include "fighter.h"
 #include "ft_0BEC.h"
 #include "ft_0BEF.h"
@@ -51,7 +49,7 @@ static void initFighter(HSD_GObj* gobj, plAllocInfo2* alloc_info)
     struct plAllocInfo temp1;
     temp1.internal_id = alloc_info->internal_id;
     temp1.slot = alloc_info->slot;
-    temp1.b0 = alloc_info->has_transformation;
+    temp1.x6.b0 = alloc_info->xC.has_transformation;
     Fighter_UnkInitLoad_80068914(gobj, &temp1);
 }
 
@@ -71,10 +69,10 @@ Fighter_GObj* ftDemo_CreateFighter(plAllocInfo2* alloc_info)
         fp->x24 = fp->ft_data->x14;
         fp->x28 = fp->ft_data->x18;
         efAsync_LoadSync(ftData_UnkBytePerCharacter[fp->kind]);
-        if (!alloc_info->b0) {
-            ftData_80085820(fp->kind, fp->x619_costume_id);
+        if (!alloc_info->xC.b0) {
+            ftData_80085820(fp->kind, fp->costume_id);
         } else {
-            ftData_800858E4(fp->kind, fp->x619_costume_id);
+            ftData_800858E4(fp->kind, fp->costume_id);
         }
         Fighter_UnkUpdateCostumeJoint_800686E4(gobj);
         {
@@ -137,16 +135,16 @@ Fighter_GObj* ftDemo_CreateFighter(plAllocInfo2* alloc_info)
         fp->x890_cameraBox = Camera_80029020();
         lbShadow_8000ED54(&fp->x20A4, gobj->hsd_obj);
     }
-    HSD_GObj_SetupProc(gobj, Fighter_8006A360, 1);
+    HSD_GObj_SetupProc(gobj, Fighter_procAnim, 1);
     HSD_GObj_SetupProc(gobj, Fighter_procUpdate, 4);
     HSD_GObj_SetupProc(gobj, Fighter_procMap, 5);
-    HSD_GObj_SetupProc(gobj, Fighter_8006C80C, 9);
-    HSD_GObj_SetupProc(gobj, Fighter_8006D9AC, 16);
-    Fighter_UnkProcessDeath_80068354(gobj);
+    HSD_GObj_SetupProc(gobj, Fighter_procCollPos, 9);
+    HSD_GObj_SetupProc(gobj, Fighter_procDynamics, 16);
+    Fighter_Spawn(gobj);
     if (on_create_fighter[alloc_info->unk8] != NULL) {
         on_create_fighter[alloc_info->unk8](gobj);
     }
-    ftLib_800867E8(gobj);
+    ftLib_DisableInput(gobj);
     return gobj;
 }
 

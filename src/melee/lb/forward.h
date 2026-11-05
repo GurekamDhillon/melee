@@ -15,6 +15,7 @@
 #define HSD_GOBJ_PLINK_MEMCARD (HSD_GOBJ_PLINK_MAX - 2)
 #define HSD_GOBJ_PLINK_AUDIO_AX (HSD_GOBJ_PLINK_MAX - 1)
 
+union ColorOverlay_x8_t;
 struct lb_80011A50_t;
 
 typedef struct AbsorbDesc AbsorbDesc;
@@ -22,6 +23,8 @@ typedef struct CollData CollData;
 typedef struct ColorOverlay ColorOverlay;
 typedef struct CommandInfo CommandInfo;
 typedef struct DynamicsDesc DynamicsDesc;
+typedef struct DynamicsTemplate DynamicsTemplate;
+typedef struct BoneDynamicsTemplate BoneDynamicsTemplate;
 typedef struct FigaTrack FigaTrack;
 typedef struct FigaTree FigaTree;
 typedef struct FighterHurtCapsule FighterHurtCapsule;
@@ -33,6 +36,7 @@ typedef struct HitVictim HitVictim;
 typedef struct HSD_AllocEntry HSD_AllocEntry;
 typedef struct HurtCapsule HurtCapsule;
 typedef struct lbCardNew_SnapshotEntry lbCardNew_SnapshotEntry;
+typedef struct lbRumbleEntry lbRumbleEntry;
 typedef struct lbRefract_CallbackData lbRefract_CallbackData;
 typedef struct PreloadCache PreloadCache;
 typedef struct PreloadedGameModeState PreloadedGameModeState;

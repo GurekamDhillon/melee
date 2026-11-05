@@ -1,0 +1,8 @@
+# The wasm mods' build settings, so a plain `cargo build --release` inside rust/mods/<mod> makes a mod the host accepts
+# (mod-c-v1 / gd-ui limits: fixed 1 MiB memory, 16 KiB stack, exported table; the same flags as
+# tools/rust-port/modhost/build_mods.sh). Without them the linker emits a growable memory and the host refuses the mod.
+[build]
+target = "wasm32-unknown-unknown"
+
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=-simd128", "-C", "link-arg=--initial-memory=1048576", "-C", "link-arg=--max-memory=1048576", "-C", "link-arg=-zstack-size=16384", "-C", "link-arg=--export-table"]

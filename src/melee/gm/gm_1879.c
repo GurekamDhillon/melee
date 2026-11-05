@@ -48,7 +48,7 @@ static struct gm_1832_804736C0_t {
     u8 pad_C[0x28];
     u16 x34;
     gm_1832_StageState x36;
-    struct {
+    struct gm_1832_804736C0_t_x37 {
         u8 frame_counter : 4;
         u8 anim_state : 2;
         u8 state2 : 2;
@@ -156,7 +156,7 @@ void fn_80187AB4(HSD_GObj* gobj)
     HSD_JObjAnimAll(GET_JOBJ(gobj));
 }
 
-void fn_80187C9C(HSD_GObj* gobj, int arg1)
+void fn_80187C9C(HSD_GObj* gobj, intptr_t arg1)
 {
     GXSetZMode(0, GX_NEVER, 0);
     HSD_GObj_JObjCallback(gobj, arg1);

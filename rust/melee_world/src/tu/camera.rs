@@ -4729,6 +4729,11 @@ pub unsafe fn Camera_LogicToScreen(mut subject: *mut CmSubject, mut point: *mut 
     let mut camera: HSD_CObj = *source;
     camera.view_auto = 0 as u8;
     camera.projection_param.perspective.aspect = ext::HSD_CObjGetAuthoredAspect(source);
+    // A replay's widescreen code: Camera_80030BBC's left/right scissor loads become constants (its x test).
+    if let Some((left, right, _, _)) = melee_core::codes::replay_widescreen() {
+        camera.scissor.left = left;
+        camera.scissor.right = right;
+    }
     return Camera_ProjectToScreen(core::ptr::addr_of_mut!(camera) as *mut HSD_CObj, core::ptr::addr_of_mut!((*subject).bone_pos) as *mut Vec, point);
 }
 

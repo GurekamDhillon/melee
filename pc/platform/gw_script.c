@@ -903,7 +903,7 @@ static void gs_require_offline(lua_State *L, const char *fn) {
 static void gs_setnum(lua_State *L, const char *k, double v);
 #include "gw_script_mode.inc"
 
-/* The simulation reads camera projection for offscreen fighter logic (ftLib_80086A8C), so every
+/* The simulation reads camera projection for offscreen fighter logic (ftLib_UpdateScreenVisibility), so every
  * write below goes through the game-side camera .bss, which gw_snap.c captures. */
 static int gs_camera_bits(float f) { union { float f; int i; } u; u.f = f; return u.i; }
 static float gs_camera_float(int bits) { union { float f; int i; } u; u.i = bits; return u.f; }
@@ -2328,7 +2328,7 @@ static int l_set_percent(lua_State *L) {
 }
 
 /* gd.set_damage(port, n): the fighter's real damage (fp->dmg.x1830_percent) and the player's
- * damage slot together (Player_SetHUDDamage -> ftLib_800870F0), so the HUD, knockback and a stamina
+ * damage slot together (Player_SetHUDDamage -> ftLib_SetPercent), so the HUD, knockback and a stamina
  * boss's remaining HP (Player_GetRemainingHP = stamina - damage: Master Hand at 300 dies on its
  * next hit once this reaches 300) all agree. Offline, gameplay scripts; a rewind branch like the
  * other gameplay writes. */

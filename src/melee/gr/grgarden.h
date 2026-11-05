@@ -43,9 +43,20 @@
 /* 203498 */ void grGarden_80203498(Item_GObj* item_gobj, Ground* gp);
 /* 20349C */ bool grGarden_8020349C(u32 unk, HSD_GObj* player, Vec3* water);
 /* 203560 */ void grGarden_80203560(float param1, Vec3* vec);
-/* 2035C8 */ DynamicsDesc* grGarden_802035C8(enum_t);
+/* 2035C8 */ lbColl_80008D30_arg1* grGarden_802035C8(enum_t);
 /* 2035D0 */ bool grGarden_802035D0(Vec3*, int arg, HSD_JObj* jobj);
 /* 203624 */ float grGarden_80203624(void);
 /* 3E52E0 */ extern StageData grGd_StageData;
+
+struct grGarden_YakumonoParam {
+    float x0;
+    float x4;
+    int x8;
+    int xC;
+    int x10;
+    int x14;
+    float x18;
+    float x1C;
+};
 
 #endif

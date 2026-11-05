@@ -28,27 +28,6 @@
 #include <sysdolphin/baselib/memory.h>
 #include <sysdolphin/baselib/random.h>
 
-struct grRCruise_YakumonoParam {
-    f32 x0;
-    f32 x4;
-    f32 x8;
-    s32 xC;
-    s32 x10;
-    s32 x14;
-    s32 x18;
-    s32 x1C;
-    s32 x20;
-    s32 x24;
-    s32 x28;
-    f32 x2C;
-    f32 x30;
-    f32 x34;
-    f32 x38;
-    s32 x3C;
-    s32 x40;
-    s32 x44;
-};
-
 /* 200460 */ static void fn_80200460(void* user_data, int joint_id,
                                      CollData* coll, int coll_x50,
                                      mpLib_GroundEnum ground_kind,
@@ -316,15 +295,16 @@ void grRCruise_801FF7A4(Ground_GObj* gobj)
     Ground* gp = GET_GROUND(stage_gobj);
     HSD_JObj* jobj = GET_JOBJ(gobj);
     UnkArchiveStruct* archive;
-    DynamicsDesc* data;
+    DynamicsTemplate* data;
 
     Ground_InitMapColl(jobj, gp->map_id);
     grAnime_801C8138(stage_gobj, gp->map_id, 0);
     grAnime_801C752C(jobj, 1, 30628, HSD_AObjSetFlags, 3, AOBJ_LOOP);
     archive = grDatFiles_GetArchive();
-    if (archive != NULL && (data = HSD_ArchiveGetPublicAddress(
-                                archive->unk0, "dynamicsdata_shipflag"),
-                            data != NULL))
+    if (archive != NULL &&
+        (data = HSD_ArchiveGetPublicAs(DynamicsTemplate, archive->unk0,
+                                       "dynamicsdata_shipflag"),
+         data != NULL))
     {
         grLib_801C9B20(Ground_801C3FA4(stage_gobj, 23), data,
                        &gp->u.rcruise2.xC4);
@@ -773,18 +753,19 @@ void grRCruise_80200B48(Ground_GObj* gobj)
     }
 }
 
+struct grRCruise_EntryFlags {
+    u8 b0 : 1;
+    u8 b1 : 1;
+    u8 b2 : 1;
+    u8 b3 : 1;
+    u8 b4 : 1;
+    u8 b5 : 1;
+    u8 b6 : 1;
+    u8 b7 : 1;
+};
+
 void grRCruise_80200C04(Ground_GObj* gobj)
 {
-    struct grRCruise_EntryFlags {
-        u8 b0 : 1;
-        u8 b1 : 1;
-        u8 b2 : 1;
-        u8 b3 : 1;
-        u8 b4 : 1;
-        u8 b5 : 1;
-        u8 b6 : 1;
-        u8 b7 : 1;
-    };
     Ground* gp;
     int i;
 
@@ -1174,7 +1155,7 @@ void grRCruise_80201B60(HSD_JObj* jobj, bool clear)
     }
 }
 
-void fn_80201BE0(HSD_GObj* gobj, int pass)
+void fn_80201BE0(HSD_GObj* gobj, intptr_t pass)
 {
     if (gm_GetDbPauseFlag(1) || gm_GetDbPauseFlag(2) || Camera_8003010C()) {
         return;
@@ -1182,7 +1163,7 @@ void fn_80201BE0(HSD_GObj* gobj, int pass)
     grDisplay_801C5DB0(gobj, pass);
 }
 
-DynamicsDesc* grRCruise_80201C50(enum_t arg)
+lbColl_80008D30_arg1* grRCruise_80201C50(enum_t arg)
 {
     return NULL;
 }

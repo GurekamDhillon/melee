@@ -40,8 +40,8 @@ static int script_contact_valid(int line)
     CollLine* lines=mpGetGroundCollLine();
     return map && lines && mpGetGroundCollVtx() && line>=0 && line<map->line_count &&
         (lines[line].flags & LINE_FLAG_ENABLED) && !(lines[line].flags & LINE_FLAG_HIDDEN) &&
-        lines[line].x0 && lines[line].x0->v0_idx<map->vert_count &&
-        lines[line].x0->v1_idx<map->vert_count;
+        lines[line].inner && lines[line].inner->v0_idx<map->vert_count &&
+        lines[line].inner->v1_idx<map->vert_count;
 }
 static int script_contact_sweep(float ax,float ay,float bx,float by,
     float px,float py,float x,float y,float* outx,float* outy)
@@ -71,7 +71,7 @@ int ScriptGame_ContactField(int slot, int surface, int field, int explicit_line)
         return field==SC_OWNER ? owner : part;
     }
     if(field==SC_KIND) return surface;
-    if(field==SC_PASS) return (mpGetGroundCollLine()[line].x0->lo_flags & LINE_FLAG_PLATFORM)!=0;
+    if(field==SC_PASS) return (mpGetGroundCollLine()[line].inner->lo_flags & LINE_FLAG_PLATFORM)!=0;
     mpLineGetV0Pos(line,&a); mpLineGetV1Pos(line,&b);
     if(explicit_line>=0 && (field==SC_X || field==SC_Y)) {
         float cx,cy;
@@ -124,7 +124,7 @@ int ScriptGame_ContactCross(int slot, int after)
     for(i=after+1;i<map->line_count;++i) {
         Vec3 a,b; float cx,cy;
         if(!script_contact_valid(i) || !(mpGetGroundCollLine()[i].flags & CollLine_Floor) ||
-           !(mpGetGroundCollLine()[i].x0->lo_flags & LINE_FLAG_PLATFORM)) continue;
+           !(mpGetGroundCollLine()[i].inner->lo_flags & LINE_FLAG_PLATFORM)) continue;
         mpLineGetV0Pos(i,&a); mpLineGetV1Pos(i,&b);
         if(script_contact_sweep(a.x,a.y,b.x,b.y,px,py,x,y,&cx,&cy))return i;
     }

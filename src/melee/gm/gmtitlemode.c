@@ -7,13 +7,13 @@
 #include <melee/lb/lbdvd.h>
 #include <sysdolphin/baselib/controller.h>
 
-struct exitData {
+struct TitleExitData {
     int buttons;
     UNK_T x4;
 };
 
 /* 1B089C */ static void onExit(GameModeState*);
-/* 4D6878 */ static struct exitData exit_data;
+/* 4D6878 */ static struct TitleExitData exit_data;
 
 /* 3DD6A0 */ GameModeState gm_Mode_Title_States[] = {
     {
@@ -40,8 +40,9 @@ void onExit(GameModeState* scene)
 {
     int* buttons = gm_GetGameModeStateExitData(scene);
 #if defined(TARGET_PC)
-    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu. */
-    if (*buttons & (HSD_PAD_Y | HSD_PAD_B)) {
+    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu, only with
+     * MELEE_DEBUG_MENU=1 (it is not retail, and B on the title is what a player presses after backing out). */
+    if (gw_debug_menu_shortcut() && (*buttons & (HSD_PAD_Y | HSD_PAD_B))) {
         gm_SetPendingGameMode(GM_DEBUG);
         gm_SetNewGameModePending();
         return;

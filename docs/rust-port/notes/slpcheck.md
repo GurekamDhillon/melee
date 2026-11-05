@@ -183,7 +183,47 @@ Remaining first divergences (87 files):
 
 Frame-exact on the benchmark file `20476_06200225` (Final Destination, 10071 frames, 20142 fighter-frames): see bench-unlocked.md.
 
-## Round 3 (2026-11-05, port/slp-fma): float contraction, 53 -> 61 of 125 frame-exact
+## Round 3 (2026-11-05, port/slp-stages): 53 -> 61 of 125 frame-exact
+
+Baseline re-measured at rust-port b3c5e1ead (fast profile, 2 jobs): **53** match, not the 38 above. The round-2 Pokemon Stadium `y`
+(25.0001 side-platform landings) and Fountain `y` classes no longer appear as first divergences at that tip (0 files each; the
+remaining ext3/ext2 first divergences are 1-ULP x/shield or the classes below). Not re-investigated: fixed by intervening commits.
+
+Fix (d419eb03f): UCF 0.84 shield SDI (`ftCo_Ucf084ShieldSdi`, C ftCo_Guard.c TARGET_PC block and Rust ftCo_Guard.rs). The replay's
+code at 0x80093294 tests last frame's stick x as `lfs f12,0x628(r4); fcmpu f12,f0; bge` - signed, no fabs - while the port used
+|x|. A stick slammed left and held gets a second shield SDI on the next hitlag frame in the console (the 3.96 = 6 * 0.66 `x` jumps,
+3.1-3.9 on slopes). Console-vs-port correction for UCF replays only (Replay_UcfVersion 84); no vanilla golden reads it.
+Fixed every large-`x` first divergence: Dream Land `x` 5 -> 0 big ones, the 3.96/3.81 class 7 -> 0.
+
+Remaining first divergences (64 files):
+
+| class | files | notes |
+|---|---|---|
+| 1-ULP `x`/`y`/`shield`/`percent` | about 40 | FMA/contraction class, another agent's |
+| ~~`percent` engine = replay + 1.0~~ (fixed, round 4) | 12, all 20689_* (113-code lists) | the offscreen 1%/interval damage (Fighter_8006A360 via ifMagnify) fires in the engine, not in the console. Those lists carry a widescreen camera code: 04 writes at Camera_80030BBC+0xC0/+0xCC (`li r0,100` / `li r0,540`: the on-screen x test uses 100..540 instead of the scissor), ftLib_80086A8C+0x98 nop, 803BB05C = 0x3EB00000 and more. Emulating it is a camera feature (C frozen: not done here) |
+| `action` 38 vs 358, 41/40, 29/90; hitlag 5/8; percent 10 | 5 | not looked at |
+| shield 49.38 vs 42.64 (ext8) | 1 | not looked at |
+
+Goldens: classic_step04 and allstar_step04 re-recorded from a C build of this branch (the shield SDI fix fires in 1P
+runs too, UCF being on outside replays). Reason: UCF 0.84 shield SDI previous-frame check is signed, as in the console code.
+
+## Round 4 (2026-11-05, port/slp-stages): 61 -> 72 of 125 frame-exact
+
+Slippi's widescreen camera code, Rust only, armed only when the replay's own Gecko list carries it
+(`melee_data::slp::widescreen_code`, read from the code bytes; `melee_core::codes::set_replay_widescreen`, set by slpcheck and
+`golden --slp` before the match boots). Its logic-visible parts:
+- `C2 8036A4A8` (CObjLoad, replacing the perspective `lfs f1,0x34(r31)`): aspect = (aspect * 320) / 219 (`fmuls`, `fdivs`;
+  the two floats follow the code's `blrl`). Ported in `melee_runtime::tu::cobj::CObjLoad` (the authored aspect the logic camera
+  and `Camera_LogicToScreen` use).
+- `04 80030C7C 38000064`, `04 80030C88 3800021C`: Camera_80030BBC's left/right scissor loads become 100 / 540. Ported in
+  `Camera_LogicToScreen` (the off-camera flag `x221F_b0` that ifMagnify and the offscreen 1%/interval damage read).
+- `04 80086B24 60000000` (ftLib_80086A8C+0x98, the `beq` after Camera_80030CFC): only the draw decision; the flag write is
+  before it, so no logic effect. 803BB05C (lbbgflash's camera desc) and the ifMagnify/NameTag/DevText/menu codes: render only.
+The 12 `+1.0 percent` files: 11 now match, 1 diverges later on a 1-ULP value. No C change (C frozen; replay-only path).
+
+Remaining non-ULP first divergences (7): action 38/358 x2 (Dream Land), 41/40, 29/90, hitlag 5/8, percent +10, shield 49.4/42.6.
+
+## Round 5 (2026-11-05, port/slp-fma): float contraction (measured on b3c5e1ead: 53 -> 61)
 
 At the start of this round the rust-port tip (b3c5e1ead) already gave 53 frame-exact files (the 38 above plus other branches' fixes).
 Same corpus and harness (`run_all.sh`, fast profile, 2 jobs). Sites changed and the evidence are listed in notes/fma.md "Round 3". In short:

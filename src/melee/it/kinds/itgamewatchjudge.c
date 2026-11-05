@@ -2,7 +2,6 @@
 
 #include <melee/it/forward.h>
 
-#include <math.h>
 #include <placeholder.h>
 
 #include "inlines.h"
@@ -33,13 +32,14 @@ HSD_GObj* it_802C7774(float facing_dir, HSD_GObj* parent_gobj, Vec3* pos,
 
     new_gobj = Item_80268B18(&si);
     if (new_gobj != NULL) {
-        void** special_attrs =
-            GET_ITEM(new_gobj)->xC4_article_data->x4_specialAttributes;
+        itGamewatchAttributes* special_attrs =
+            &GET_ITEM(new_gobj)
+                 ->xC4_article_data->x4_specialAttributes->gamewatch;
         Item_8026AB54(new_gobj, parent_gobj, part);
         it_80273670(new_gobj, 0, (f32) (s32) (arg4 + 1));
         it_802C78B8(new_gobj);
         db_80225DD8(new_gobj, (Fighter_GObj*) parent_gobj);
-        it_8027CE64(new_gobj, parent_gobj, *special_attrs);
+        it_8027CE64(new_gobj, parent_gobj, special_attrs->x0);
         return new_gobj;
     }
     return NULL;
@@ -50,7 +50,7 @@ void it_802C78B8(Item_GObj* item_gobj)
     Item* ip = GET_ITEM(item_gobj);
     HSD_JObj* jobj = GET_JOBJ(item_gobj);
     if (ip->owner != NULL) {
-        f32 facing = ftLib_800865C0(ip->owner);
+        f32 facing = ftLib_GetFacingDir(ip->owner);
         HSD_JObj* child = HSD_JObjGetChild(HSD_JObjGetChild(jobj));
         if (facing == 1.0f) {
             HSD_JObjSetRotationY(child, M_PI);

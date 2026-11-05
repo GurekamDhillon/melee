@@ -194,18 +194,18 @@ pub static hit_effect_ids: [i32; 17] = [
     Ef_Id_Unk1005 as i32, -1, -1, -1, Ef_Id_Unk1000 as i32, Ef_Id_Unk1000 as i32, -1, -1, Ef_Id_Unk1046 as i32, -1, -1, 0,
 ];
 
-const PLINK_FIGHTER: i32 = HSD_GOBJ_PLINK_FIGHTER as i32;
+pub(crate) const PLINK_FIGHTER: i32 = HSD_GOBJ_PLINK_FIGHTER as i32;
 const PLINK_ITEM: i32 = HSD_GOBJ_PLINK_ITEM as i32;
 const HC_DISABLED: u32 = HitCapsule_Disabled as u32;
 
 // ---- helpers ------------------------------------------------------------------------------
 
 #[inline(always)]
-unsafe fn fpg(g: G) -> F {
+pub(crate) unsafe fn fpg(g: G) -> F {
     (*g).user_data as F
 }
 #[inline(always)]
-fn cd() -> &'static ftCommonData {
+pub(crate) fn cd() -> &'static ftCommonData {
     crate::hooks::common_data()
 }
 #[inline(always)]
@@ -237,10 +237,10 @@ fn sfx(fp: F, id: i32) {
     crate::hooks::play_sfx(unsafe { &mut *fp }, id, 0x7F, 0x40);
 }
 #[inline(always)]
-fn ga(v: GroundOrAir) -> i32 {
+pub(crate) fn ga(v: GroundOrAir) -> i32 {
     v as i32
 }
-const GROUND: i32 = GA_Ground as i32;
+pub(crate) const GROUND: i32 = GA_Ground as i32;
 const AIR: i32 = GA_Air as i32;
 #[inline(always)]
 fn dir_lt(a: f32, b: f32, t: f32, f: f32) -> f32 {
@@ -253,104 +253,13 @@ fn mtx(fp: F) -> MtxPtr {
 
 // ---- combo counting -----------------------------------------------------------------------
 
-/// `ftColl_800763C0`: combo count logic.
-pub fn ftcoll_800763c0(attacker: G, victim: G, attack_id: i32) {
-    melee_core::ct!("ftcoll_800763c0");
-    if attacker == victim {
-        return;
-    }
-    unsafe {
-        let fp = &mut *fpg(attacker);
-        let cur = fp.x2094;
-        if cur.is_null() {
-            fp.x208C = attack_id as _;
-            fp.x2090 = 1;
-            fp.x2094 = victim;
-        } else if cur == victim {
-            if attack_id != 1 && fp.x208C as i32 == attack_id {
-                fp.x2090 = fp.x2090.wrapping_add(1);
-                if fp.x2090 as i32 >= cd().x4C4 as i32 {
-                    fp.x2092 = cd().x4D8 as _;
-                }
-            } else {
-                fp.x2090 = 0;
-                fp.x208C = attack_id as _;
-            }
-        }
-    }
-}
-
-/// `ftColl_80076444`.
-pub fn ftcoll_80076444(attacker: G, victim: G) {
-    melee_core::ct!("ftcoll_80076444");
-    let id = unsafe { (*fpg(attacker)).x2068_attackID } as i32;
-    ftcoll_800763c0(attacker, victim, id);
-}
-
-/// `ftColl_8007646C`: combo count from an item's owner.
-pub fn ftcoll_8007646c(item: G, victim: G) {
-    melee_core::ct!("ftcoll_8007646c");
-    let owner = ext::itGetOwner(item);
-    let msid = ext::itGetAttackId(item);
-    if ext::ftLib_80086960(owner) {
-        ftcoll_800763c0(owner, victim, msid);
-    }
-}
-
-/// `ftColl_800764DC`: check to end the victim's combo.
-pub fn ftcoll_800764dc(g: G) {
-    melee_core::ct!("ftcoll_800764dc");
-    unsafe {
-        let fp = &mut *fpg(g);
-        if fp.x2098 != 0 {
-            fp.x2098 -= 1;
-        }
-        if !fp.x2094.is_null() {
-            let fp1 = &*fpg(fp.x2094);
-            if fp1.x221C_b6() == 0 && fp1.x2098 == 0 {
-                fp.x2094 = core::ptr::null_mut();
-            }
-        }
-    }
-}
-
 /// `comboCount_Push` (static inline).
-fn combo_count_push(fp: &mut Fighter) {
+pub(crate) fn combo_count_push(fp: &mut Fighter) {
     let pos = fp.coll_data.floor.normal;
     let v = if (fp.x2090 as i32) < cd().x4C8 as i32 { cd().x4D0 } else { cd().x4D4 };
     let t = fp.facing_dir * v;
     fp.cur_pos.x = -fmadds(pos.y, t, -fp.cur_pos.x);
     fp.cur_pos.y = -fmadds(-pos.x, t, -fp.cur_pos.y);
-}
-
-/// `ftColl_80076528`.
-pub fn ftcoll_80076528(g: G) {
-    melee_core::ct!("ftcoll_80076528");
-    unsafe {
-        let fp = &mut *fpg(g);
-        let v = fp.x2092;
-        if v != 0 {
-            fp.x2092 = v.wrapping_sub(1);
-            if fp.victim_gobj.is_null() && ga(fp.ground_or_air) == GROUND {
-                combo_count_push(fp);
-            }
-        }
-    }
-}
-
-/// `ftColl_800765AC`: clear `victim` from every fighter's combo target.
-pub fn ftcoll_800765ac(victim: G) {
-    melee_core::ct!("ftcoll_800765ac");
-    let mut cur = crate::hooks::plink_head(PLINK_FIGHTER);
-    while !cur.is_null() {
-        unsafe {
-            let fp = &mut *fpg(cur);
-            if victim == fp.x2094 {
-                fp.x2094 = core::ptr::null_mut();
-            }
-            cur = (*cur).next;
-        }
-    }
 }
 
 /// `ftColl_800765F0`.
@@ -3042,3 +2951,6 @@ pub fn ftcoll_800765e0() {
         DMG_LOG1_IDX = 0;
     }
 }
+
+// Split into src/melee/ft/ft_0763.c upstream (doldecomp 598987cf3); re-exported for existing callers.
+pub use super::ft_0763::{ftcoll_800763c0, ftcoll_80076444, ftcoll_8007646c, ftcoll_800764dc, ftcoll_80076528, ftcoll_800765ac};

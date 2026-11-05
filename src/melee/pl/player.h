@@ -29,8 +29,8 @@ typedef struct _StaticPlayer {
 
     /*0x0E*/ s16 unk0E;
 
-    union {
-        struct {
+    union _StaticPlayer_player_poses {
+        struct _StaticPlayer_player_poses_byVecName {
             /*0x10-0x1B*/ Vec3
                 nametag_pos; /// Horizontal, Vertical, Depth (floats)
             /*0x1C-0x27*/ Vec3 transformed_player_pos;
@@ -47,12 +47,13 @@ typedef struct _StaticPlayer {
                             ///< ::CostumeListsForeachCharacter and
                             ///< ::gm_GetNumCostumesForCKind
     /*0x45*/ u8 unk45;
-    /*0x46*/ s8 controller_index; ///< Physical controller port up to
-                                  ///< ::PAD_MAX_CONTROLLERS
-    /*0x47*/ u8 team;             ///< ::TeamColor
-    /*0x48*/ u8 player_id;        ///< Player "slot" up to ::GM_MAX_PLAYERS
-    /*0x49*/ u8 cpu_level;        ///< 1 to 9
-    /*0x4A*/ u8 cpu_type;         ///< ::CpuKind
+    /*0x46*/ s8 sub_color; ///< Tint index, 0 to 4; see
+                           ///< #gm_SetupSubColors
+    /*0x47*/ u8 team;      ///< ::TeamColor
+    /*0x48*/ u8 pad_port;  ///< Physical controller port up to
+                           ///< ::PAD_MAX_CONTROLLERS
+    /*0x49*/ u8 cpu_level; ///< 1 to 9
+    /*0x4A*/ u8 cpu_type;  ///< ::CpuKind
     /*0x4B*/ u8 handicap;
 
     /*0x4C*/ s8 unk4C;
@@ -67,8 +68,8 @@ typedef struct _StaticPlayer {
 
     /*0x5C*/ f32 model_scale;
 
-    union {
-        struct {
+    union _StaticPlayer_staminas {
+        struct _StaticPlayer_staminas_byName {
             /*0x60*/ s16 damage_percent;
             /*0x62*/ s16 damage_percent_alt_or_start_hp;
             /*0x64*/ s16 stamina;
@@ -103,7 +104,7 @@ typedef struct _StaticPlayer {
 
     /*0xA8*/ int nametag_slot_id;
 
-    /*0xAC*/ struct {
+    /*0xAC*/ struct _StaticPlayer_flags {
         u8 b0 : 1; // rumble enabled
         u8 b1 : 1;
         u8 b2 : 1;
@@ -114,7 +115,7 @@ typedef struct _StaticPlayer {
         u8 b7 : 1;
     } flags;
 
-    /*0xAD*/ struct {
+    /*0xAD*/ struct _StaticPlayer_more_flags {
         u8 b0 : 1;
         u8 b1 : 1;
         u8 b2 : 1;
@@ -124,7 +125,7 @@ typedef struct _StaticPlayer {
         u8 b6 : 2;
     } more_flags;
 
-    /*0xAE*/ struct {
+    /*0xAE*/ struct _StaticPlayer_flagsAE {
         u8 b0 : 1;
         u8 b1 : 1;
         u8 b2 : 1;
@@ -191,12 +192,12 @@ void Player_SetFacingDirection(s32 slot, f32 direction);
 void Player_SetFacingDirectionConditional(s32 slot, bool b, f32 direction);
 u32 Player_GetCostumeId(int slot);
 void Player_SetCostumeId(int slot, int costume_id);
-u8 Player_GetControllerIndex(int slot);
-void Player_SetControllerIndex(int slot, s8 controller_index);
+u8 Player_GetSubColor(int slot);
+void Player_SetSubColor(int slot, s8 sub_color);
 int Player_GetTeam(int slot);
 void Player_SetTeam(int slot, s8 unk_color);
-int Player_GetPlayerId(int slot);
-void Player_SetPlayerId(int slot, int player_id);
+int Player_GetPadPort(int slot);
+void Player_SetPadPort(int slot, int controller_index);
 int Player_GetCpuLevel(int slot);
 void Player_SetPlayerAndEntityCpuLevel(int slot, int cpu_level);
 int Player_GetCpuType(int slot);
@@ -311,5 +312,10 @@ void Player_SetOtherStamina(s32 slot, s32 stamina);
 void Player_SetFlagsAEBit0(s32 slot, u8 bit0);
 s32 Player_80033BB8(int slot);
 /* 4D6470 */ extern pl_804D6470_t* pl_804D6470;
+
+/// The @c plLoadCommonData root of @c PdPm.dat.
+struct plLoadCommonData {
+    /* +0 */ pl_804D6470_t* x0;
+};
 
 #endif

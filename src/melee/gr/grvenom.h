@@ -3,6 +3,8 @@
 
 #include <melee/gr/forward.h>
 
+#include <dat_macros.h>
+
 /* 20362C */ void grVenom_8020362C(void);
 /* 203B14 */ void grVenom_80203B14(bool);
 /* 203B18 */ void grVenom_80203B18(void);
@@ -60,8 +62,21 @@
 /* 206BF0 */ bool grVenom_80206BF0(int);
 /* 206CB0 */ void grVenom_80206CB0(s32);
 /* 206D10 */ s32 grVenom_80206D10(s32);
-/* 206D74 */ DynamicsDesc* grVenom_80206D74(enum_t);
+/* 206D74 */ lbColl_80008D30_arg1* grVenom_80206D74(enum_t);
 /* 206D7C */ bool grVenom_80206D7C(Vec3*, int, HSD_JObj*);
 /* 3E54CC */ extern StageData grVe_StageData;
+
+struct grVenom_YakumonoParam {
+    f32 x0;
+    f32 x4;
+    f32 x8;
+    f32 xC;
+    f32 x10;
+    char x14[0x2C - 0x14];
+    f32 x2C;
+    char x30[0x34 - 0x30];
+    f32 x34;
+    union ColorOverlay_x8_t* x38 DAT_SCRIPT(colAnimCommandLength(_command));
+};
 
 #endif

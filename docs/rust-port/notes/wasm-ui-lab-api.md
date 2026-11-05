@@ -249,6 +249,48 @@ The mod: `rust/mods/browser` (theme A, the LAB's parts). Z on the main menu open
 pads while closed; open: EXCLUSIVE + KEYBOARD on all ports); closed, it submits nothing. Open: one `gd_ui_submit`, at
 most 9 host calls per present (4 pads, keys, scene, 2 list infos, submit), no allocation (no_std).
 
+#### A6.1 SSBM Nucleus (gd-ui-v1.3): the Mods section's mod browser
+
+`gdmod_ui_abi` 1.3 (minor bump; a 1.2 mod still loads). Three catalogs, four requests and one import, all under
+`UI_HOST` (records and arguments in `gd-ui-lab-v1.h`):
+
+| | |
+|---|---|
+| `GD_UI_LIST_NC` (6) | the search results, at most 60 (then one "... N more" record, id 0): id, title, author, kind, queue state, percent, picture key, installable, why not, downloads, description |
+| `GD_UI_LIST_NC_QUEUE` (7) | the download queue: id, state, percent, title, reason |
+| `GD_UI_LIST_NC_STATE` (8) | one record: sync line, catalog size, processing, pending, last install message, restart needed, online, error, site |
+| `GD_UI_REQ_NC_SEARCH` (9) | text, tab, sort. The first one starts the host engine (its threads and a sync) |
+| `GD_UI_REQ_NC_QUEUE` (10) | post id: queue it, or take it out while it waits |
+| `GD_UI_REQ_NC_PROCESS` (11) | "1" starts installing the queue, "0" pauses it (saved: a restart resumes) |
+| `GD_UI_REQ_NC_SYNC` (12) | Refresh: skips the 10-minute rule, never the one-minute floor or the back-off |
+| `gd_ui_host_pic(key) -> tex` | the texture handle of a record's picture (96 x 72, fitted), 0 while it is not on hand. Ask every frame the picture is drawn: the ask renews it and an unknown key is fetched off the game thread. At most 2 uploads per present into 16 fixed atlas slots recycled least recently used |
+
+Host: `rust/melee/src/nucleus/` (port of `pc/platform/gw_nucleus_*`): `http.rs` (WinHTTP, or curl elsewhere; only
+`ssbmnucleus.net` over https, the final address after redirects re-checked; User-Agent
+`GDMelee/<version> (GD's Melee Rust port; +https://github.com/GurekamDhillon/melee)`; 10 / 10 / 20 / 30 s timeouts),
+`catalog.rs` (the catalog, its JSON-lines cache in the C client's record shape, search, the sync: one full keyset pass,
+then `updated_since = W - 15 min` and `/mods/removed`, at most one poll per 10 minutes, a press never twice a minute,
+700 ms between pages, 429 / 5xx / no answer back off 5-15-45-135 s or Retry-After, capped at 120 s), `queue.rs` (the
+queue, `queue.json` written atomically after every change; on load RUNNING becomes QUEUED, DONE is dropped),
+`install.rs` (where each kind goes) and `mod.rs` (the threads). The play flow (`browser.rs`) only `try_lock`s the
+engine: a frame where a worker holds the lock shows the previous records. No engine state is a static or lives in
+the arena (the statics rule): the engine is a field of the play flow and its threads allocate on the system heap.
+Nothing starts while a netplay, replay or spectate session is on; a running download stops and stays queued.
+
+Where installs go: a costume into the skin catalog (`cosmetics::dir()/skins/<slot>/`, typed by the archive's
+`Ply<Fighter>5K<Colour>_Share_joint`, with the post's portrait and stock icon as its pictures; the Skins section
+mounts it); a stage skin, effect, menu or audio file into `mods/nucleus-<post>-<group>/files/<disc path>` with the C
+build's `mod.json` (checked by content against the disc's own file, conflicts turned off, enabled for the next
+launch); a GD mod zip's `mods/<id>/` folders (never the exe). Custom stages and MexManager fighter zips are refused
+with a reason (they need the m-ex runtime, not ported). Downloads are cached by post version under
+`.nucleus/dl` (a retry does not count another download), pictures under `.nucleus/thumbs` (PNG only; a JPEG
+screenshot keeps the empty box).
+
+The mod: in Mods, X switches between Nucleus (the default) and the installed mods. Row 0 is the search (A types, the
+d-pad cycles a character or the keyboard types; left / right the tab; Y the sort); A on a result queues it, Start
+installs the queue, Y asks for a sync. `MELEE_NUCLEUS_PERF=1` logs the game-thread pump cost and the frame interval
+every 600 presents.
+
 ### A5. Scene flow (`UI_SCENE`)
 
 | import | signature |

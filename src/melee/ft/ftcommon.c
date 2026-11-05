@@ -166,8 +166,8 @@ void ftCommon_SetSelfMovementFromGroundedMovement(HSD_GObj* gobj)
         fp->xE4_ground_accel_1 *= ground_friction;
     }
 
-    // TODO(Aitch): this almost definitely uses above inline, but I couldn't
-    // make it work. Let the brain machines match it.
+    /// @todo (Aitch): this almost definitely uses above inline, but I couldn't
+    /// make it work. Let the brain machines match it.
     fp->x74_self_accel.x = +ground_normal->y * fp->xE4_ground_accel_1;
     fp->x74_self_accel.y = -ground_normal->x * fp->xE4_ground_accel_1;
     fp->x74_self_accel.z = 0;
@@ -577,7 +577,7 @@ void ftCommon_8007D60C(Fighter* fp)
     int was_ground = fp->ground_or_air == GA_Ground;
 #endif
     if (fp->x2227_b0 && fp->x1968_jumpsUsed <= 1) {
-        pl_8003FC44(fp->player_id, fp->is_sub_fighter);
+        pl_8003FC44(fp->player_idx, fp->is_sub_fighter);
     }
     fp->ground_or_air = GA_Air;
     fp->gr_vel = 0;
@@ -608,12 +608,12 @@ static bool ftCommon_PcFloorGuard(Fighter* fp, bool valid,
     if (valid) {
         return false;
     }
-    if (fp->player_id < 6) {
-        n = ftCommon_PcFloorMisses[fp->player_id]++;
+    if (fp->player_idx < 6) {
+        n = ftCommon_PcFloorMisses[fp->player_idx]++;
     }
     if (n % 120 == 0) {
         OSReport("pc fighter floor lost: player=%d motion=%d pos=(%g,%g,%g) line=%d; falling\n",
-                 fp->player_id, fp->motion_id, fp->cur_pos.x, fp->cur_pos.y,
+                 fp->player_idx, fp->motion_id, fp->cur_pos.x, fp->cur_pos.y,
                  fp->cur_pos.z, fp->coll_data.floor.index);
     }
     fall(fp->gobj);
@@ -637,7 +637,7 @@ void ftCommon_8007D6A4(Fighter* fp)
         return;
     }
 #endif
-    if (fp->x594_b0) {
+    if (fp->x594.x0.x594_b0) {
         fp->self_vel.x = fp->x6A4_transNOffset.z * fp->facing_dir;
     }
     ftCommon_ClampGroundVel(fp, FT_SCRIPT_VALUE(fp, 2, fp->co_attrs.ground_max_horizontal_velocity));
@@ -645,7 +645,7 @@ void ftCommon_8007D6A4(Fighter* fp)
     if (fp->ground_or_air == GA_Air) {
         /* Lua on_land (gw_script.c; dispatched after the frame, never on a resimulated one) */
         extern void Script_GameEvent(int what, int a, int b, int c, int d);
-        Script_GameEvent(4 /* LAB_EV_LAND */, fp->player_id, fp->motion_id,
+        Script_GameEvent(4 /* LAB_EV_LAND */, fp->player_idx, fp->motion_id,
                          fp->is_sub_fighter, 0);
     }
 #endif
@@ -657,7 +657,7 @@ void ftCommon_8007D6A4(Fighter* fp)
     ftCommon_UnlockECB(fp);
 #if !defined(TARGET_PC)
     if (!ft_80084A18(fp->gobj)) {
-        OSReport("fighter ground no under Id! %d %d\n", fp->player_id,
+        OSReport("fighter ground no under Id! %d %d\n", fp->player_idx,
                  fp->motion_id);
         HSD_ASSERT(686, 0);
     }
@@ -681,7 +681,7 @@ void ftCommon_8007D780(Fighter* fp)
         fp->dmg.x18A4_knockbackMagnitude = 0;
     }
     if (fp->x2227_b0 && fp->x1968_jumpsUsed <= 1) {
-        pl_8003FC44(fp->player_id, fp->is_sub_fighter);
+        pl_8003FC44(fp->player_idx, fp->is_sub_fighter);
     }
 }
 
@@ -694,7 +694,7 @@ void ftCommon_8007D7FC(Fighter* fp)
             fp->dmg.x18A4_knockbackMagnitude = 0;
         }
         if (fp->x2227_b0 && fp->x1968_jumpsUsed <= 1) {
-            pl_8003FC44(fp->player_id, fp->is_sub_fighter);
+            pl_8003FC44(fp->player_idx, fp->is_sub_fighter);
         }
     }
     ftCommon_8007D6A4(fp);
@@ -822,7 +822,7 @@ bool ftCommon_GrabMash(Fighter* fp, float arg1)
     } else {
         fp->x2224_b5 = false;
     }
-    pl_800402D0(fp->player_id, fp->is_sub_fighter, result);
+    pl_800402D0(fp->player_idx, fp->is_sub_fighter, result);
     return result;
 }
 
@@ -849,9 +849,9 @@ void ftCommon_8007DD7C(HSD_GObj* gobj, Vec3* v)
          cur = cur->next)
     {
         temp_r31 = &arg_ft->x2C4;
-        if (cur != gobj && !ftLib_80086FD4(cur, gobj)) {
+        if (cur != gobj && !ftLib_IsSamePlayer(cur, gobj)) {
             cur_ft = cur->user_data;
-            if (cur_ft->x221F_b3 || cur_ft->ground_or_air != GA_Ground ||
+            if (cur_ft->is_sleeping || cur_ft->ground_or_air != GA_Ground ||
                 cur_ft->victim_gobj != NULL || cur_ft->is_sub_fighter)
             {
                 continue;
@@ -913,9 +913,9 @@ void ftCommon_8007DFD0(HSD_GObj* gobj, Vec3* arg1)
     u8 unused1[12];
     fp = gobj->user_data;
     temp_r31 = &fp->x2C4;
-    new_var = Player_GetEntity(fp->player_id);
+    new_var = Player_GetEntity(fp->player_idx);
     temp_r3 = new_var->user_data;
-    if (!temp_r3->x221F_b3 && temp_r3->ground_or_air == GA_Ground) {
+    if (!temp_r3->is_sleeping && temp_r3->ground_or_air == GA_Ground) {
         temp_r0 = fp->coll_data.floor.index;
         temp_r30 = (new_var2 = temp_r3->coll_data.floor.index);
         if (temp_r0 == temp_r30 || temp_r30 == mpLineGetNext(temp_r0) ||
@@ -1126,7 +1126,7 @@ void ftCommon_8007E6DC(HSD_GObj* gobj, HSD_GObj* item_gobj, s32 arg2)
         ftData_OnItemDropExt[fp->kind](gobj, arg2);
     }
 #endif
-    pl_8003EA08(fp->player_id, fp->is_sub_fighter);
+    pl_8003EA08(fp->player_idx, fp->is_sub_fighter);
     fp->item_gobj = NULL;
 }
 
@@ -1147,19 +1147,19 @@ void ftCommon_8007E79C(HSD_GObj* gobj, s32 arg1)
 #endif
 }
 
-void ftCommon_8007E7E4(HSD_GObj* gobj, s32 arg1)
+void ftCommon_8007E7E4(HSD_GObj* gobj, bool flag)
 {
     Fighter* fp = gobj->user_data;
 #if defined(TARGET_PC)
     /* m-ex Arch_FighterFunc slot 17 (OnItemCatch). */
     {
         extern void Mex_OnItemPickup2Dispatch(int kind, void* gobj, void* arg1, void* vanilla);
-        Mex_OnItemPickup2Dispatch(fp->kind, gobj, (void*) arg1,
+        Mex_OnItemPickup2Dispatch(fp->kind, gobj, (void*) (intptr_t) flag,
                                   (void*) ftData_OnItemPickup[fp->kind]);
     }
 #else
     if (ftData_OnItemPickup[fp->kind] != NULL) {
-        ftData_OnItemPickup[fp->kind](gobj, arg1);
+        ftData_OnItemPickup[fp->kind](gobj, flag);
     }
 #endif
 }
@@ -1290,7 +1290,7 @@ void ftCommon_8007EA90(Fighter* fp, s32 arg1)
     } else {
         phi_f31 = M_PI / 2;
         phi_f30 = p_ftCommonData->x5C0;
-        ftLib_800866DC(fp->gobj, &sp10);
+        ftLib_GetCameraBonePos(fp->gobj, &sp10);
     }
     temp_r31 = it_802E5F8C(fp->gobj, &sp10, arg1, 1, phi_f31, phi_f30);
     if (fp->dmg.x18c4_source_ply != 6) {
@@ -1301,10 +1301,10 @@ void ftCommon_8007EA90(Fighter* fp, s32 arg1)
 
 void ftCommon_8007EBAC(Fighter* fp, u32 arg1, u32 arg2)
 {
-    if (Player_8003544C(fp->player_id, fp->is_sub_fighter) && !fp->x221F_b3 &&
-        !fp->x2224_b2)
+    if (Player_8003544C(fp->player_idx, fp->is_sub_fighter) &&
+        !fp->is_sleeping && !fp->stamina_dead)
     {
-        lb_80014574(fp->x618_player_id, arg1 + 2, arg1, arg2);
+        lb_80014574(fp->pad_port, arg1 + 2, arg1, arg2);
     }
 }
 
@@ -1324,14 +1324,14 @@ void ftCommon_8007EC30(u32 arg0, u32 arg1)
 
 void ftCommon_8007ECD4(Fighter* fp, s32 arg1)
 {
-    if (Player_8003544C(fp->player_id, fp->is_sub_fighter)) {
-        HSD_PadRumbleRemoveId(fp->x618_player_id, arg1 + 2);
+    if (Player_8003544C(fp->player_idx, fp->is_sub_fighter)) {
+        HSD_PadRumbleRemoveId(fp->pad_port, arg1 + 2);
     }
 }
 
 void ftCommon_8007ED2C(Fighter* fp)
 {
-    lb_800145C0(fp->x618_player_id);
+    lb_800145C0(fp->pad_port);
 }
 
 void ftCommon_8007ED50(Fighter* fp, s32 arg1)
@@ -1384,13 +1384,13 @@ void ftCommon_8007EFC0(Fighter* fp, u32 val)
 void ftCommon_8007EFC8(HSD_GObj* gobj, void (*arg1)(HSD_GObj*))
 {
     Fighter* src = gobj->user_data;
-    HSD_GObj* dst_gobj = Player_GetEntityAtIndex(src->player_id, 1);
+    HSD_GObj* dst_gobj = Player_GetEntityAtIndex(src->player_idx, 1);
     Fighter* dst = dst_gobj->user_data;
     s32 tmp_bit;
 
     u8 _[16];
 
-    Player_SwapTransformedStates(src->player_id, src->is_sub_fighter,
+    Player_SwapTransformedStates(src->player_idx, src->is_sub_fighter,
                                  dst->is_sub_fighter);
     tmp_bit = src->is_sub_fighter;
     src->is_sub_fighter = dst->is_sub_fighter;
@@ -1402,7 +1402,7 @@ void ftCommon_8007EFC8(HSD_GObj* gobj, void (*arg1)(HSD_GObj*))
     dst->pos_delta = src->pos_delta;
     dst->facing_dir = src->facing_dir;
     dst->dmg.x1830_percent = src->dmg.x1830_percent;
-    Player_SetHPByIndex(dst->player_id, dst->is_sub_fighter,
+    Player_SetHPByIndex(dst->player_idx, dst->is_sub_fighter,
                         dst->dmg.x1830_percent);
     dst->dmg.x18F0 = src->dmg.x18F0;
     dst->self_vel = src->self_vel;
@@ -1459,7 +1459,7 @@ void ftCommon_8007EFC8(HSD_GObj* gobj, void (*arg1)(HSD_GObj*))
     dst->bury_timer_2 = src->bury_timer_2;
     dst->x2330 = src->x2330;
     dst->x2338 = src->x2338;
-    dst->x2224_b2 = src->x2224_b2;
+    dst->stamina_dead = src->stamina_dead;
     if (src->x221D_b6) {
         ftColl_8007B7FC(dst, src->x2004);
         ftCo_800C0358(src, dst, 0x6B);
@@ -1858,7 +1858,7 @@ void ftCommon_8007FF74(HSD_GObj* gobj)
     Fighter* fp = gobj->user_data;
     fp->x1980 = NULL;
     ftCommon_8007ECD4(fp, 2);
-    pl_80040460(fp->player_id, fp->is_sub_fighter);
+    pl_80040460(fp->player_idx, fp->is_sub_fighter);
 }
 
 bool ftCommon_8007FFD8(Fighter* fp, float arg8)
@@ -1888,22 +1888,20 @@ bool ftCommon_8007FFD8(Fighter* fp, float arg8)
         fp->x2018 = fp->x2018 - arg8;
         phi_r31 = true;
     }
-    pl_800402D0(fp->player_id, fp->is_sub_fighter, phi_r31);
+    pl_800402D0(fp->player_idx, fp->is_sub_fighter, phi_r31);
     return phi_r31;
 }
 
 bool ftCommon_80080144(Fighter* fp)
 {
     int kind = fp->kind;
-    if ((kind == Ft_Kind_Popo || kind == Ft_Kind_Nana) &&
-        fp->x619_costume_id >= 2)
+    if ((kind == Ft_Kind_Popo || kind == Ft_Kind_Nana) && fp->costume_id >= 2)
     {
         return true;
     }
     return false;
 }
 
-/// https://decomp.me/scratch/Jjkwx
 void ftCommon_80080174(Fighter* fp)
 {
     float phi_f2;
@@ -1966,14 +1964,14 @@ void ftCommon_8008031C(HSD_GObj* gobj)
         (ABS(fp->input.lstick[0].y) >= p_ftCommonData->x7B8 &&
          fp->activity_timer.lstick.y < p_ftCommonData->x7C0))
     {
-        Player_UpdateJoystickCountByIndex((s32) fp->player_id,
+        Player_UpdateJoystickCountByIndex((s32) fp->player_idx,
                                           fp->is_sub_fighter);
         fp->activity_timer.lstick.y = 0xFE;
         fp->activity_timer.lstick.x = 0xFE;
     }
     if (ABS(fp->input.triggers[0]) >= p_ftCommonData->x7BC) {
         if (fp->activity_timer.trigger < p_ftCommonData->x7C0) {
-            Player_UpdateJoystickCountByIndex((s32) fp->player_id,
+            Player_UpdateJoystickCountByIndex((s32) fp->player_idx,
                                               fp->is_sub_fighter);
             fp->activity_timer.trigger = 0xFE;
         }
@@ -2039,7 +2037,7 @@ int ftCommon_PcFloorGuardTest(void)
     int failed = 0;
     unsigned saved_misses = ftCommon_PcFloorMisses[0];
     Fighter* saved_fixture = ftCommon_PcFloorFixture;
-    fp.player_id = 0;
+    fp.player_idx = 0;
     fp.motion_id = ftCo_MS_WalkSlow;
     fp.ground_or_air = GA_Ground;
     fp.coll_data.floor.index = 17;

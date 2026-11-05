@@ -13,7 +13,7 @@ GAME = Path(__file__).resolve().parents[2]
 
 
 def function(source, name):
-    match = re.search(r'^(?:static\s+(?:inline\s+)?)?(?:int|bool|void|mp_UnkStruct0\*)\s*' +
+    match = re.search(r'^(?:static\s+(?:inline\s+)?)?(?:int|bool|void|mpIsland\*)\s*' +
                       re.escape(name) + r'\s*\(', source, re.M)
     if not match:
         raise AssertionError('missing actual source function ' + name)

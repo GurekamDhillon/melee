@@ -1,7 +1,7 @@
 //! browser: the in-game browser as a gd-ui-v1.2 presentation mod (docs/rust-port/notes/wasm-ui-lab-api.md A6), in the
 //! LAB's theme A parts (panel, key caps, rows, accent selection; rust/mods/lab).
 //!
-//! Open it on the main menu with Z (any port). Sections (L / R, or Tab): Modes, Mods, Replays, Skins, Online.
+//! Open it on the main menu with Z (any port); closed, a one-line hint in the bottom-left corner says so. Sections (L / R, or Tab): Modes, Mods, Replays, Skins, Online.
 //! D-pad / stick / arrows move (hold repeats 15 then every 4), A / Enter activates, B / Escape goes back or closes.
 //! Skins: left / right picks the skin for the slot, A applies. Online: A on Join / Spectate edits the code (up / down
 //! cycle the character, left / right move, or type it), A sends, B cancels.
@@ -30,10 +30,11 @@ extern "C" {
     fn gd_ui_list_info(kind: u32) -> i32;
     fn gd_ui_list_get(kind: u32, i: u32, out: *mut u8, cap: u32) -> i32;
     fn gd_ui_request(op: i32, s: *const u8, len: u32) -> i32;
+    fn gd_ui_host_pic(key: u32) -> u32;
 }
 
 const FEATURE_UI_HOST: u32 = 1 << 16;
-const UI_ABI_1_2: u32 = (1 << 16) | 2;
+const UI_ABI_1_3: u32 = (1 << 16) | 3;
 
 // lists and requests (gd-ui-lab-v1.h GD_UI_LIST_* / GD_UI_REQ_*)
 const L_MODES: u32 = 0;
@@ -50,6 +51,16 @@ const R_HOST: i32 = 5;
 const R_JOIN: i32 = 6;
 const R_SPECTATE: i32 = 7;
 const R_REFRESH: i32 = 8;
+// gd-ui-v1.3: SSBM Nucleus
+const L_NC: u32 = 6;
+const L_NCQ: u32 = 7;
+const L_NCS: u32 = 8;
+const R_NC_SEARCH: i32 = 9;
+const R_NC_QUEUE: i32 = 10;
+const R_NC_PROCESS: i32 = 11;
+const R_NC_SYNC: i32 = 12;
+const NC_TABS: [&str; 7] = ["All", "Costumes", "Stages", "Effects", "Menus", "Audio", "Other"];
+const NC_SORTS: [&str; 5] = ["Updated", "Newest", "Downloads", "Likes", "Title"];
 
 // pad
 const DL: u16 = 0x1;
@@ -61,7 +72,9 @@ const BR: u16 = 0x20;
 const BL: u16 = 0x40;
 const BA: u16 = 0x100;
 const BB: u16 = 0x200;
+const BX: u16 = 0x400;
 const BY: u16 = 0x800;
+const BST: u16 = 0x1000;
 // keys (GD_UI_KEY_*)
 const K_ENTER: u32 = 1;
 const K_ESC: u32 = 2;
@@ -94,8 +107,10 @@ const ROWS: usize = 13;
 const ROW_H: f32 = 30.0;
 const SECTIONS: [&str; 5] = ["Modes", "Mods", "Replays", "Skins", "Online"];
 const LISTS: [u32; 5] = [L_MODES, L_MODS, L_REPLAYS, L_SKINS, L_ONLINE];
-const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:-";
+const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:- ";
 const CODE: usize = 24;
+/// The closed browser's main-menu hint (draw_hint).
+const HINT: &str = "Browser: modes, LAB, replays, mods, skins, online";
 
 struct List {
     gen: i32,
@@ -188,7 +203,15 @@ struct B {
     pick: [u8; MAXR],
     // online: 0 host, 1 join, 2 spectate; editing row (0 none) and the codes
     edit: usize,
-    codes: [Code; 2],
+    codes: [Code; 3],
+    // mods: the SSBM Nucleus view (X switches to the installed mods), its lists, the search and its filters
+    ncv: bool,
+    nc: List,
+    ncq: List,
+    ncs: List,
+    nc_tab: u8,
+    nc_sort: u8,
+    nc_sent: bool,
     // input
     pad: [u8; 16],
     prev: u16,
@@ -221,7 +244,14 @@ static mut S: B = B {
     nslots: 0,
     pick: [0; MAXR],
     edit: 0,
-    codes: [Code::new(), Code::new()],
+    codes: [Code::new(), Code::new(), Code::new()],
+    ncv: true,
+    nc: List::new(),
+    ncq: List::new(),
+    ncs: List::new(),
+    nc_tab: 0,
+    nc_sort: 0,
+    nc_sent: false,
     pad: [0; 16],
     prev: 0,
     hold: 0,
@@ -256,6 +286,7 @@ impl B {
     /// Rows of the current section.
     fn rows(&self) -> usize {
         match self.sec {
+            1 if self.ncv => 1 + self.nc.n,
             3 => self.nslots,
             4 => 3,
             s => self.lists[s].n,
@@ -264,6 +295,32 @@ impl B {
 
     fn request(&mut self, op: i32, arg: &[u8]) {
         unsafe { gd_ui_request(op, arg.as_ptr(), arg.len() as u32) };
+    }
+
+    /// The Nucleus search (text, tab, sort): also what starts the host's engine (threads and a polite sync).
+    fn nc_search(&mut self) {
+        let mut buf = [0u8; 40];
+        let n = self.codes[2].n;
+        buf[..n].copy_from_slice(&self.codes[2].b[..n]);
+        let mut k = n + 1;
+        if self.nc_tab > 0 {
+            buf[k] = b'0' + self.nc_tab - 1;
+            k += 1;
+        }
+        buf[k + 1] = b'0' + self.nc_sort;
+        k += 2;
+        self.nc_sent = true;
+        self.t.clear().s("browser: nucleus search [").s(utf8(&buf[..n])).s("] ").s(NC_TABS[self.nc_tab as usize]).s(" ").s(NC_SORTS[self.nc_sort as usize]);
+        log(self.t.as_str());
+        self.request(R_NC_SEARCH, &buf[..k]);
+    }
+
+    fn nc_sync(&mut self) {
+        if self.nc.sync(L_NC) {
+            self.wrap_key = u32::MAX;
+        }
+        self.ncq.sync(L_NCQ);
+        self.ncs.sync(L_NCS);
     }
 
     fn open_now(&mut self) {
@@ -275,6 +332,9 @@ impl B {
         self.refresh_all();
         log("browser: open");
         self.log_section();
+        if self.sec == 1 && self.ncv && !self.nc_sent {
+            self.nc_search();
+        }
     }
 
     fn close_now(&mut self) {
@@ -361,7 +421,7 @@ impl B {
             if edge & BZ != 0 {
                 self.open_now();
             } else {
-                return;
+                return self.draw_hint();
             }
         }
         if !on_menu {
@@ -402,7 +462,7 @@ impl B {
                 push(&mut q, &mut nq, a);
             }
         }
-        for (b, a) in [(BA, 5), (BB, 6), (BL, 7), (BR, 8), (BY, 9)] {
+        for (b, a) in [(BA, 5), (BB, 6), (BL, 7), (BR, 8), (BY, 9), (BX, 11), (BST, 12)] {
             if edge & b != 0 {
                 push(&mut q, &mut nq, a);
             }
@@ -431,6 +491,13 @@ impl B {
             return;
         }
         // lists and the status line (one query each; records re-read only on a change)
+        if self.sec == 1 && self.ncv {
+            self.nc_sync();
+            let r = self.rows();
+            if self.sel[1] >= r {
+                self.sel[1] = r.saturating_sub(1);
+            }
+        }
         if self.lists[self.sec].sync(LISTS[self.sec]) {
             if self.sec == 3 {
                 self.group_skins();
@@ -482,6 +549,10 @@ impl B {
                         c.cur -= 1;
                     }
                 }
+                5 if self.edit == 3 => {
+                    self.edit = 0;
+                    self.nc_search();
+                }
                 5 => {
                     let row = self.edit;
                     self.edit = 0;
@@ -495,7 +566,7 @@ impl B {
                 6 => self.edit = 0,
                 v if v & 0x100 != 0 => {
                     let ch = (v & 0xFF) as u8;
-                    if (ch.is_ascii_alphanumeric() || b".:-_/".contains(&ch)) && c.n < CODE {
+                    if (ch.is_ascii_alphanumeric() || b".:-_/ ".contains(&ch)) && c.n < CODE {
                         let ch = ch.to_ascii_uppercase();
                         let at = c.cur.min(c.n);
                         c.b.copy_within(at..c.n, at + 1);
@@ -506,6 +577,9 @@ impl B {
                 }
                 _ => {}
             }
+            return;
+        }
+        if sec == 1 && self.nc_act(a) {
             return;
         }
         match a {
@@ -519,7 +593,7 @@ impl B {
                 let p = self.pick[s] as usize;
                 self.pick[s] = (if a == 3 { (p + n - 1) % n } else { (p + 1) % n }) as u8;
             }
-            3 | 4 if sec == 1 && rows > 0 => self.toggle_mod(a == 4),
+            3 | 4 if sec == 1 && !self.ncv && rows > 0 => self.toggle_mod(a == 4),
             7 | 8 | 3 | 4 => {
                 self.sec = if a == 7 || a == 3 { (sec + 4) % 5 } else { (sec + 1) % 5 };
                 self.wrap_key = u32::MAX;
@@ -527,6 +601,9 @@ impl B {
                     self.group_skins();
                 }
                 self.log_section();
+                if self.sec == 1 && self.ncv && !self.nc_sent {
+                    self.nc_search();
+                }
             }
             5 if rows > 0 => self.activate(),
             6 => self.closing = true,
@@ -536,6 +613,63 @@ impl B {
             }
             _ => {}
         }
+    }
+
+    /// The Mods section's own actions: X switches Nucleus / installed; in the Nucleus view, row 0 is the search (A
+    /// types, left / right the tab, Y the sort), A on a result queues it, Start installs the queue, Y syncs.
+    fn nc_act(&mut self, a: u32) -> bool {
+        let row0 = self.sel[1] == 0;
+        match a {
+            11 => {
+                self.ncv = !self.ncv;
+                self.wrap_key = u32::MAX;
+                self.sel[1] = 0;
+                self.top[1] = 0;
+                log(if self.ncv { "browser: mods view nucleus" } else { "browser: mods view installed" });
+                if self.ncv {
+                    self.nc_search();
+                }
+            }
+            _ if !self.ncv => return false,
+            12 => {
+                let on = self.ncs.f(0, 2) != "1";
+                log(if on { "browser: request nucleus start" } else { "browser: request nucleus pause" });
+                self.request(R_NC_PROCESS, if on { b"1" } else { b"0" });
+            }
+            3 | 4 if row0 => {
+                let n = NC_TABS.len() as u8;
+                self.nc_tab = if a == 3 { (self.nc_tab + n - 1) % n } else { (self.nc_tab + 1) % n };
+                self.nc_search();
+            }
+            9 if row0 => {
+                self.nc_sort = (self.nc_sort + 1) % NC_SORTS.len() as u8;
+                self.nc_search();
+            }
+            9 => {
+                log("browser: request nucleus sync");
+                self.request(R_NC_SYNC, &[]);
+            }
+            5 if row0 => {
+                self.edit = 3;
+                let c = &mut self.codes[2];
+                c.cur = c.n.min(CODE - 1);
+            }
+            5 => {
+                let i = self.sel[1] - 1;
+                let mut buf = [0u8; 20];
+                let id = self.nc.f(i, 0);
+                let n = id.len().min(20);
+                buf[..n].copy_from_slice(&id.as_bytes()[..n]);
+                if n == 0 || &buf[..n] == b"0" {
+                    return true;
+                }
+                self.t.clear().s("browser: request nucleus queue ").s(utf8(&buf[..n]));
+                log(self.t.as_str());
+                self.request(R_NC_QUEUE, &buf[..n]);
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn toggle_mod(&mut self, on: bool) {
@@ -632,6 +766,12 @@ impl B {
             self.enc.text_ex(tx0 + (self.tab_w[s] - 6.0) * 0.5, y + 20.0, ROLE_LABEL, if on { ink } else { self.tk(T_KEY_TEXT) }, ALIGN_CENTER, 0.0, SECTIONS[s]);
         }
         self.enc.rect(x + 20.0, y + 52.0, w - 40.0, 1.0, dv);
+        if self.sec == 1 && self.ncv {
+            self.draw_nc(x, y, w, h);
+            self.footer(x, y, w, h);
+            self.enc.submit();
+            return;
+        }
         // list
         let (lx, ly, lw) = (x + 20.0, y + 64.0, 560.0);
         let rows = self.rows();
@@ -673,7 +813,14 @@ impl B {
         if rows > 0 {
             self.detail(dx + 14.0, dy + 12.0, dw - 28.0);
         }
-        // status and hints
+        self.footer(x, y, w, h);
+        let _ = tx;
+        self.enc.submit();
+    }
+
+    /// The status line and the key hints.
+    fn footer(&mut self, x: f32, y: f32, w: f32, h: f32) {
+        let (mu, dv, sec) = (self.tk(T_MUTED), self.tk(T_DIVIDER), self.sec);
         let fy = y + h - 40.0;
         self.enc.rect(x + 20.0, fy - 10.0, w - 40.0, 1.0, dv);
         let code = self.status.f(0, 0);
@@ -684,7 +831,9 @@ impl B {
             &[("A", "Send"), ("B", "Cancel"), ("+-", "Char")]
         } else {
             match sec {
-                1 => &[("A", "Toggle"), ("B", "Close"), ("L R", "Section")],
+                1 if self.ncv && self.sel[1] == 0 => &[("A", "Type"), ("< >", "Tab"), ("Y", "Sort"), ("X", "Installed"), ("B", "Close")],
+                1 if self.ncv => &[("A", "Queue"), ("Start", "Install"), ("Y", "Sync"), ("X", "Installed"), ("B", "Close")],
+                1 => &[("A", "Toggle"), ("X", "Nucleus"), ("B", "Close"), ("L R", "Section")],
                 3 => &[("A", "Apply"), ("< >", "Skin"), ("B", "Close")],
                 _ => &[("A", "Select"), ("B", "Close"), ("L R", "Section")],
             }
@@ -699,7 +848,157 @@ impl B {
             self.enc.text_ex(hx + kw * 0.5, fy + 4.0, ROLE_LABEL, self.tk(T_KEY_TEXT), ALIGN_CENTER, 0.0, k);
             hx -= 12.0;
         }
-        let _ = tx;
+    }
+
+    /// The Mods section's Nucleus view: the search row, the results with their pictures, and the selected mod.
+    fn draw_nc(&mut self, x: f32, y: f32, w: f32, _h: f32) {
+        let (tx, mu, ac, bd, dv) = (self.tk(T_TEXT), self.tk(T_MUTED), self.tk(T_ACCENT), self.tk(T_BORDER), self.tk(T_DIVIDER));
+        let (lx, ly, lw) = (x + 20.0, y + 64.0, 560.0);
+        let rows = self.rows();
+        let sel = self.sel[1];
+        if sel < self.top[1] {
+            self.top[1] = sel;
+        }
+        if sel >= self.top[1] + ROWS {
+            self.top[1] = sel + 1 - ROWS;
+        }
+        let top = self.top[1];
+        for r in top..(top + ROWS).min(rows) {
+            let ry = ly + (r - top) as f32 * ROW_H;
+            let on = r == sel;
+            if on {
+                self.enc.slice(SLICE_FILL_R4, lx, ry, lw, ROW_H - 4.0, (ac & 0xFFFF_FF00) | 0x33).slice(SLICE_LINE_R4, lx, ry, lw, ROW_H - 4.0, ac);
+            }
+            let ty = ry + 6.0;
+            if r == 0 {
+                // the search box: text, tab, sort
+                let editing = self.edit == 3;
+                let bx = lx + 70.0;
+                self.enc.text(lx + 10.0, ty, ROLE_LABEL, mu, "Search");
+                self.enc.slice(SLICE_LINE_R4, bx, ry + 3.0, 250.0, 20.0, if editing { ac } else { self.tk(T_KEY_BORDER) });
+                let c = &self.codes[2];
+                let s = if c.n == 0 && !editing { "any words" } else { c.as_str() };
+                self.enc.text_ex(bx + 8.0, ry + 6.0, R_NUM, if c.n == 0 && !editing { mu } else { tx }, ALIGN_LEFT, 234.0, s);
+                if editing {
+                    let pre = utf8(&c.b[..c.cur.min(c.n)]);
+                    let cx = bx + 8.0 + measure(pre, R_NUM);
+                    self.enc.rect(cx, ry + 19.0, 8.0, 2.0, self.tk(T_P1));
+                }
+                self.t.clear().s(NC_TABS[self.nc_tab as usize]).s(" / ").s(NC_SORTS[self.nc_sort as usize]);
+                self.enc.text_ex(lx + lw - 10.0, ty + 1.0, ROLE_LABEL, ac, ALIGN_RIGHT, 0.0, self.t.as_str());
+                continue;
+            }
+            let i = r - 1;
+            let key = parse_u32(self.nc.f(i, 6));
+            if key != 0 {
+                let t = unsafe { gd_ui_host_pic(key) };
+                if t != 0 {
+                    self.enc.tex(t, lx + 4.0, ry + 1.0, 32.0, 24.0, [0.0, 0.0, 1.0, 1.0], 0xFFFF_FFFF);
+                } else {
+                    self.enc.slice(SLICE_LINE_R4, lx + 4.0, ry + 1.0, 32.0, 24.0, dv);
+                }
+            }
+            let ok = self.nc.f(i, 7) == "1";
+            self.enc.text_ex(lx + 44.0, ty, ROLE_BODY, if ok { tx } else { mu }, ALIGN_LEFT, lw - 190.0, self.nc.f(i, 1));
+            let qs = self.nc.f(i, 4);
+            let right = match qs {
+                "running" => {
+                    self.t.clear().s("installing ").s(self.nc.f(i, 5)).s("%");
+                    self.t.as_str()
+                }
+                "" => self.nc.f(i, 3),
+                q => q,
+            };
+            let col = match qs {
+                "queued" | "running" | "done" => ac,
+                "failed" => 0xFF6B6BFF,
+                _ => mu,
+            };
+            self.enc.text_ex(lx + lw - 10.0, ty + 1.0, ROLE_LABEL, col, ALIGN_RIGHT, 0.0, right);
+        }
+        if rows > ROWS {
+            let th = ROWS as f32 * ROW_H;
+            let kh = th * ROWS as f32 / rows as f32;
+            let ky = ly + th * top as f32 / rows as f32;
+            self.enc.rect(lx + lw + 6.0, ly, 2.0, th, dv).rect(lx + lw + 5.0, ky, 4.0, kh, mu);
+        }
+        // the detail pane: picture, title, author / kind / downloads, why not, description, then the queue and the sync
+        let (dx, dy, dw) = (x + 600.0, y + 64.0, w - 620.0);
+        self.enc.slice(SLICE_LINE_R4, dx, dy, dw, ROWS as f32 * ROW_H - 4.0, bd);
+        let (px, pw) = (dx + 14.0, dw - 28.0);
+        let mut yy = dy + 12.0;
+        if sel == 0 || self.nc.n == 0 {
+            self.enc.text_ex(px, yy, ROLE_BIG, tx, ALIGN_LEFT, pw, "SSBM Nucleus");
+            yy += 32.0;
+            for line in ["Mods from SSBM Nucleus - ssbmnucleus.net,", "shared with the site's permission.", "A types a search; < > picks the tab.", "A on a mod queues it; Start installs.", "The queue is kept across restarts."] {
+                self.enc.text_ex(px, yy, ROLE_VALUE, mu, ALIGN_LEFT, pw, line);
+                yy += 20.0;
+            }
+        } else {
+            let i = sel - 1;
+            let key = parse_u32(self.nc.f(i, 6));
+            if key != 0 {
+                let t = unsafe { gd_ui_host_pic(key) };
+                if t != 0 {
+                    self.enc.tex(t, px, yy, 128.0, 96.0, [0.0, 0.0, 1.0, 1.0], 0xFFFF_FFFF);
+                } else {
+                    self.enc.slice(SLICE_LINE_R4, px, yy, 128.0, 96.0, dv);
+                    self.enc.text(px + 8.0, yy + 40.0, ROLE_LABEL, mu, "loading picture");
+                }
+                yy += 104.0;
+            }
+            self.enc.text_ex(px, yy, ROLE_BIG, tx, ALIGN_LEFT, pw, self.nc.f(i, 1));
+            yy += 30.0;
+            self.t.clear().s(self.nc.f(i, 3)).s(" by ").s(self.nc.f(i, 2));
+            self.enc.text_ex(px, yy, ROLE_LABEL, ac, ALIGN_LEFT, pw, self.t.as_str());
+            yy += 20.0;
+            self.t.clear().s(self.nc.f(i, 9)).s(" downloads");
+            self.enc.text_ex(px, yy, ROLE_VALUE, mu, ALIGN_LEFT, pw, self.t.as_str());
+            yy += 20.0;
+            if self.nc.f(i, 7) != "1" {
+                self.enc.text_ex(px, yy, ROLE_VALUE, 0xFF6B6BFF, ALIGN_LEFT, pw, self.nc.f(i, 8));
+                yy += 20.0;
+            }
+            let key = 1 << 30 | i as u32 | (self.nc.gen as u32 & 0xFF) << 20;
+            if key != self.wrap_key {
+                self.wrap_key = key;
+                self.rewrap_text(i, pw);
+            }
+            for k in 0..self.nwrap.min(4) {
+                let (s, e) = self.wrap[k];
+                let d = self.nc.f(i, 10);
+                self.enc.text(px, yy, ROLE_BODY, tx, &d[s as usize..e as usize]);
+                yy += 19.0;
+            }
+        }
+        // the queue and the sync line, at the pane's foot
+        let fy = dy + ROWS as f32 * ROW_H - 70.0;
+        self.enc.rect(px, fy - 6.0, pw, 1.0, dv);
+        let (pend, proc_) = (self.ncs.f(0, 3), self.ncs.f(0, 2) == "1");
+        self.t.clear().s("Queue: ").s(if pend.is_empty() { "0" } else { pend }).s(if proc_ { " - installing" } else { " - Start installs" });
+        self.enc.text_ex(px, fy, ROLE_VALUE, if proc_ { ac } else { mu }, ALIGN_LEFT, pw, self.t.as_str());
+        let job = self.ncs.f(0, 4);
+        if !job.is_empty() {
+            self.enc.text_ex(px, fy + 18.0, ROLE_VALUE, if self.ncs.f(0, 7) == "1" { 0xFF6B6BFF } else { tx }, ALIGN_LEFT, pw, job);
+        }
+        self.enc.text_ex(px, fy + 36.0, ROLE_VALUE, mu, ALIGN_LEFT, pw, self.ncs.f(0, 0));
+    }
+
+    /// Closed on the main menu: one line in the bottom-left corner, so a player can find the browser (and the LAB in
+    /// its Modes list). Key cap and muted text as the panel's hints.
+    fn draw_hint(&mut self) {
+        let mut b = [0f32; 6];
+        unsafe { gd_ui_band_rect(b.as_mut_ptr()) };
+        let sc = (b[5] / 720.0).min(b[4] / 1280.0).max(0.25);
+        let vh = b[5] / sc;
+        let (x, y) = (24.0f32, vh - 34.0);
+        let kw = measure("Z", ROLE_LABEL) + 12.0;
+        self.enc.clear();
+        self.enc.layer(LAYER_MODAL, 0).space(SPACE_WINDOW, sc);
+        self.enc.slice(SLICE_FILL_R4, x - 6.0, y - 5.0, kw + 16.0 + measure(HINT, ROLE_VALUE) + 12.0, 28.0, (self.tk(T_BG) & 0xFFFF_FF00) | 0xCC);
+        self.enc.slice(SLICE_LINE_R4, x, y, kw, 18.0, self.tk(T_KEY_BORDER));
+        self.enc.text_ex(x + kw * 0.5, y + 4.0, ROLE_LABEL, self.tk(T_KEY_TEXT), ALIGN_CENTER, 0.0, "Z");
+        self.enc.text(x + kw + 8.0, y + 3.0, ROLE_VALUE, self.tk(T_MUTED), HINT);
         self.enc.submit();
     }
 
@@ -844,21 +1143,31 @@ impl B {
         }
     }
 
+    /// Word-wrap the Nucleus description of result `i`.
+    fn rewrap_text(&mut self, i: usize, w: f32) {
+        self.nwrap = wrap_into(self.nc.f(i, 10), w, &mut self.wrap);
+    }
+
     /// Word-wrap a description into at most 8 lines (only when the selection changed).
     fn rewrap(&mut self, sec: usize, i: usize, k: usize, w: f32) {
-        self.nwrap = 0;
-        let d = self.lists[sec].f(i, k);
+        self.nwrap = wrap_into(self.lists[sec].f(i, k), w, &mut self.wrap);
+    }
+}
+
+fn wrap_into(d: &str, w: f32, wrap: &mut [(u16, u16); 8]) -> usize {
+    let mut nwrap = 0;
+    {
         let bytes = d.as_bytes();
         let mut start = 0usize;
         let mut last_space = None;
         let mut p = 0usize;
-        while p <= bytes.len() && self.nwrap < 8 {
+        while p <= bytes.len() && nwrap < 8 {
             let end = p == bytes.len();
             if end || bytes[p] == b' ' {
                 if measure(&d[start..p], ROLE_BODY) > w {
                     if let Some(sp) = last_space {
-                        self.wrap[self.nwrap] = (start as u16, sp as u16);
-                        self.nwrap += 1;
+                        wrap[nwrap] = (start as u16, sp as u16);
+                        nwrap += 1;
                         start = sp + 1;
                         last_space = None;
                         continue;
@@ -866,8 +1175,8 @@ impl B {
                 }
                 if end {
                     if start < p {
-                        self.wrap[self.nwrap] = (start as u16, p as u16);
-                        self.nwrap += 1;
+                        wrap[nwrap] = (start as u16, p as u16);
+                        nwrap += 1;
                     }
                     break;
                 }
@@ -876,6 +1185,11 @@ impl B {
             p += 1;
         }
     }
+    nwrap
+}
+
+fn parse_u32(s: &str) -> u32 {
+    s.bytes().take_while(|c| c.is_ascii_digit()).fold(0u32, |a, c| a.wrapping_mul(10).wrapping_add((c - b'0') as u32))
 }
 
 #[no_mangle]
@@ -904,7 +1218,7 @@ const fn text<const N: usize>(s: &[u8]) -> [u8; N] {
 #[no_mangle]
 pub static gdmod_abi_version: u32 = 1 << 16;
 #[no_mangle]
-pub static gdmod_ui_abi: u32 = UI_ABI_1_2;
+pub static gdmod_ui_abi: u32 = UI_ABI_1_3;
 
 #[no_mangle]
 pub static gd_mod_manifest: Manifest = Manifest {

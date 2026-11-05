@@ -29,6 +29,7 @@
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/spline.h>
 
+static struct grKongo_YakumonoParam* yakumono_param;
 /* 1D7700 */ static void fn_801D7700(void* user_data, int joint_id,
                                      CollData* coll, int coll_x50,
                                      mpLib_GroundEnum ground_kind,
@@ -38,7 +39,7 @@
                                      mpLib_GroundEnum ground_kind,
                                      float delta_y);
 /* 1D8134 */ static int fn_801D8134(HSD_GObj* arg0, HSD_GObj* arg1);
-/* 1D8444 */ static DynamicsDesc* grKongo_801D8444(enum_t);
+/* 1D8444 */ static lbColl_80008D30_arg1* grKongo_801D8444(enum_t);
 
 GrJoint grKg_803E16E0[] = {
     { 2, 10, 19 }, { 3, 10, 22 }, { 5, 10, 43 },
@@ -1399,7 +1400,7 @@ static int fn_801D8134(HSD_GObj* arg0, HSD_GObj* arg1)
 
     if (gp->u.kongo3.xC6 == 0) {
         Ground_801C4DA0(&pos_gnd, &unk);
-        ftLib_80086644(arg1, &pos_ft);
+        ftLib_GetPos(arg1, &pos_ft);
 
         if ((pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) +
                 (pos_gnd.y - pos_ft.y) * (pos_gnd.y - pos_ft.y) +
@@ -1414,7 +1415,7 @@ static int fn_801D8134(HSD_GObj* arg0, HSD_GObj* arg1)
             Ground_801C5440(gp, 0, 0x129U);
             grMaterial_801C9604(arg0, yakumono_param->unk84, 0);
             efSync_Spawn(0x405, arg0, &pos_ft);
-            ftLib_80086C18(arg1, 0xD, 0x1E);
+            ftLib_StartRumble(arg1, 0xD, 0x1E);
             return 1;
         }
     }
@@ -1505,7 +1506,7 @@ f32 grKongo_801D8314(void)
     return var_f31;
 }
 
-DynamicsDesc* grKongo_801D8444(enum_t arg)
+lbColl_80008D30_arg1* grKongo_801D8444(enum_t arg)
 {
     return NULL;
 }

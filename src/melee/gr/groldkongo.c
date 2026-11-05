@@ -23,43 +23,6 @@
 #include <sysdolphin/baselib/jobj.h>
 #include <sysdolphin/baselib/random.h>
 
-/// @note Field names originate from SSBU param files.
-struct grOldKongo_YakumonoParam {
-    s16 rframe_bird_wait_a;
-    s16 rframe_bird_wait_b;
-    f32 rrange_bird_random_offset_y;
-    f32 rframe_barrel_shoot_a;
-    f32 rframe_barrel_shoot_b;
-    f32 rframe_barrel_in;
-    f32 rframe_barrel_wait_a;
-    f32 rframe_barrel_wait_b;
-    f32 rspeed_barrel_rot_accel;
-    f32 rspeed_barrel_rot_max;
-    f32 rframe_barrel_roll_a;
-    f32 rframe_barrel_roll_b;
-    s16 rrate_barrel_ld;
-    s16 rrate_barrel_l;
-    s16 rrate_barrel_lu;
-    s16 rrate_barrel_u;
-    s16 rrate_barrel_ru;
-    s16 rrate_barrel_r;
-    s16 rrate_barrel_rd;
-    s16 rrate_barrel_d;
-    s32 rframe_barrel_interval_a;
-    s32 rframe_barrel_interval_b;
-    f32 rspeed_barrel_move_accel;
-    f32 rspeed_barrel_move_max;
-    s32 rframe_barrel_stop_a;
-    s32 rframe_barrel_stop_b;
-    s32 rpower_barrel_attack;
-    s32 rvector_barrel_attack;
-    s32 rreff_barrel_attack;
-    s32 rrfix_barrel_attack;
-    s32 rradd_barrel_attack;
-    s32 x68;
-    void* x6C;
-};
-
 /* 20F468 */ static void grOldKongo_8020F468(bool);
 /* 20F46C */ static void grOldKongo_8020F46C(void);
 /* 20F4E4 */ static void grOldKongo_8020F4E4(void);
@@ -84,7 +47,7 @@ struct grOldKongo_YakumonoParam {
 /* 210450 */ static void stageGObj2_Callback3(Ground_GObj*);
 /* 210454 */ static bool grOldKongo_80210454(Ground_GObj*, Fighter_GObj* keep);
 /* 210650 */ static f32 grOldKongo_80210650(void);
-/* 210780 */ static DynamicsDesc* grOldKongo_80210780(enum_t);
+/* 210780 */ static lbColl_80008D30_arg1* grOldKongo_80210780(enum_t);
 /* 210788 */ static bool grOldKongo_80210788(Vec3*, int, HSD_JObj*);
 
 static struct grOldKongo_YakumonoParam* yakumono_param;
@@ -535,35 +498,30 @@ bool grOldKongo_80210454(Ground_GObj* ground_gobj, Fighter_GObj* keep)
 
     gp = GET_GROUND(ground_gobj);
 
-    if (gp->u.taru.xC6 != 0) {
-        goto done;
+    if (gp->u.taru.xC6 == 0) {
+        Ground_801C4DA0(&pos_gnd, &unk);
+        ftLib_GetPos(keep, &pos_ft);
+        if ((pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) +
+                (pos_gnd.y - pos_ft.y) * (pos_gnd.y - pos_ft.y) +
+                (pos_gnd.z - pos_ft.z) * (pos_gnd.z - pos_ft.z) <
+            yakumono_param->rframe_barrel_in *
+                yakumono_param->rframe_barrel_in)
+        {
+            rand_val = HSD_Randf();
+            diff = yakumono_param->rframe_barrel_shoot_b -
+                   yakumono_param->rframe_barrel_shoot_a;
+            gp->u.taru.xCA = (s16) (diff * rand_val +
+                                    yakumono_param->rframe_barrel_shoot_a);
+            gp->u.taru.keep = keep;
+            gp->u.taru.xC6 = 1;
+            Ground_801C5440(gp, 0, 0x129U);
+            grAnime_801C7FF8(ground_gobj, 2, 7, 1, 0.0f, 1.0f);
+            grMaterial_801C9604(ground_gobj, yakumono_param->x6C, 0);
+            efSync_Spawn(0x405, ground_gobj, &pos_ft);
+            ftLib_StartRumble(keep, 0xD, 0x1E);
+            return true;
+        }
     }
-
-    Ground_801C4DA0(&pos_gnd, &unk);
-    ftLib_80086644(keep, &pos_ft);
-
-    if (!((pos_gnd.x - pos_ft.x) * (pos_gnd.x - pos_ft.x) +
-              (pos_gnd.y - pos_ft.y) * (pos_gnd.y - pos_ft.y) +
-              (pos_gnd.z - pos_ft.z) * (pos_gnd.z - pos_ft.z) <
-          yakumono_param->rframe_barrel_in * yakumono_param->rframe_barrel_in))
-    {
-        goto done;
-    }
-
-    rand_val = HSD_Randf();
-    diff = yakumono_param->rframe_barrel_shoot_b -
-           yakumono_param->rframe_barrel_shoot_a;
-    gp->u.taru.xCA =
-        (s16) (diff * rand_val + yakumono_param->rframe_barrel_shoot_a);
-    gp->u.taru.keep = keep;
-    gp->u.taru.xC6 = 1;
-    Ground_801C5440(gp, 0, 0x129U);
-    grAnime_801C7FF8(ground_gobj, 2, 7, 1, 0.0f, 1.0f);
-    grMaterial_801C9604(ground_gobj, yakumono_param->x6C, 0);
-    efSync_Spawn(0x405, ground_gobj, &pos_ft);
-    ftLib_80086C18(keep, 0xD, 0x1E);
-    return true;
-done:
     return false;
 }
 
@@ -631,7 +589,7 @@ f32 grOldKongo_80210650(void)
     return result;
 }
 
-DynamicsDesc* grOldKongo_80210780(enum_t gobj)
+lbColl_80008D30_arg1* grOldKongo_80210780(enum_t gobj)
 {
     return NULL;
 }

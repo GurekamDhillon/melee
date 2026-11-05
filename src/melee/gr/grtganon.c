@@ -40,12 +40,6 @@ StageData grTGn_StageData = {
     (1 << 0),
 };
 
-typedef struct grTGn_YakumonoParam {
-    DynamicsDesc* x0;
-    DynamicsDesc* x4;
-    DynamicsDesc* x8;
-} grTGn_YakumonoParam;
-
 static grTGn_YakumonoParam* yakumono_param;
 
 void grTGanon_802246D8(bool unused)
@@ -151,7 +145,7 @@ void grTGanon_802249B0(Ground_GObj* gobj)
     return;
 }
 
-DynamicsDesc* grTGanon_802249B4(enum_t arg0)
+lbColl_80008D30_arg1* grTGanon_802249B4(enum_t arg0)
 {
     if (arg0 != -1) {
         enum_t i = mpJointFromLine(arg0);

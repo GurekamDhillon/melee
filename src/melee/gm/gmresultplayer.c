@@ -8,7 +8,6 @@
 #include "gm_1798.h"
 #include "gm_unsplit.h"
 #include "gmresult.h"
-#include "gmresultplayer.static.h"
 #include "gmscene.h"
 #include "types.h"
 #include <melee/if/ifcoget.h>
@@ -615,7 +614,7 @@ void fn_80177748(void)
             HSD_JObjClearFlagsAll(data->player_data[i].jobjs[0], JOBJ_HIDDEN);
 #if defined(TARGET_PC)
             if (gmRst_GenoCard(data->player_data[i].jobjs[0], ckind,
-                               temp_r3->player_standings[i].x3_b0)) {
+                               temp_r3->player_standings[i].x3_u.x0.x3_b0)) {
                 /* Geno handled package art, retail fallback or initials. */
             } else
             if (gmRst_IsMex(ckind)) {
@@ -1310,7 +1309,7 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                         (CharacterKind) match_end->player_standings[(*i)]
                             .ckind,
                         match_end->player_standings[(*i)].ftkind,
-                        match_end->player_standings[(*i)].x3_b0);
+                        match_end->player_standings[(*i)].x3_u.x0.x3_b0);
                     HSD_JObj* taunt_jobj = data->player_data[(*i)].jobjs[7];
 #if defined(TARGET_PC)
                     /* m-ex: the stock icon from IfAll's Stc_icns (the second DObj, as m-ex
@@ -1321,11 +1320,11 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
                     if (geno_stock) {
                         /* Establish the retail fallback before trying a package. */
                         taunt_frame = geno_base >= 0 ? gm_80168B34(geno_base, 0,
-                            match_end->player_standings[(*i)].x3_b0) : 0.0F;
+                            match_end->player_standings[(*i)].x3_u.x0.x3_b0) : 0.0F;
                     } else if (gmRst_IsMex(ckind)) {
                         f32 mex = gm_MexStockFrame(
                             match_end->player_standings[(*i)].ftkind,
-                            match_end->player_standings[(*i)].x3_b0);
+                            match_end->player_standings[(*i)].x3_u.x0.x3_b0);
                         if (mex >= 0.0F && gmRst_MexAttach(taunt_jobj, 1, true)) {
                             taunt_frame = mex;
                         } else {
@@ -1346,7 +1345,7 @@ static inline void fn_80178BB4_init_players(ResultsData* data,
 #if defined(TARGET_PC)
                     if (geno_stock &&
                         !gmRst_GenoApplyArt(gmRst_GenoTObjAt(taunt_jobj, 1), ckind, 2,
-                                            match_end->player_standings[(*i)].x3_b0))
+                                            match_end->player_standings[(*i)].x3_u.x0.x3_b0))
                     {
                         if (geno_base >= 0) {
                             OSReport("geno: results stock of ck %d: retail ck %d\n", ckind, geno_base);

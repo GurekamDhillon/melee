@@ -8,7 +8,7 @@ use std::any::Any;
 
 /// gd-ui-v1 / gd-lab-v1 ABI (major<<16 | minor); a mod's `gdmod_ui_abi` / `gdmod_lab_abi` must match the major
 /// and may have a lower minor.
-pub const UI_ABI_VERSION: u32 = (1 << 16) | 2; // 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests
+pub const UI_ABI_VERSION: u32 = (1 << 16) | 3; // 1.1: text style bits (GD_UI_TEXT_*); 1.2: UI_HOST catalogs + requests; 1.3: Nucleus lists / requests + gd_ui_host_pic
 pub const LAB_ABI_VERSION: u32 = 1 << 16;
 
 pub const FEATURE_UI_DRAW: u32 = 1 << 4;

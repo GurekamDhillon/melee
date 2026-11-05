@@ -69,7 +69,7 @@ struct ImageDesc_Array {
 /* 3DB2D4 */ Vec3 gm_803DB2D4 = { 0.0f, 125, 0.0f };
 /* 3DB2E0 */ Vec3 gm_803DB2E0 = { 0.5f, -7.0f, 0.0f };
 
-static struct {
+static struct gm_804D4278_t {
     u8 x0, x1, x2, x3;
 } gm_804D4278 = { 0xAA, 0xAA, 0xFF, 0xFF };
 
@@ -84,10 +84,6 @@ static void order_sdata2(void)
 }
 #endif
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 bool gm_801A659C(int arg0)
 {
     switch (gm_GetCurrentGameMode()) {
@@ -108,9 +104,6 @@ void gm_801A6630(int arg0)
     *tmp = arg0;
     gm_801A4B60();
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void fn_801A6664(HSD_GObj* arg0)
 {
@@ -138,9 +131,9 @@ void fn_801A6664(HSD_GObj* arg0)
             }
         }
         if (gm_804D6750 > 0xFF) {
-            temp_r3->x3F = 0xFF;
+            temp_r3->x3C_u.x0.x3F = 0xFF;
         } else {
-            temp_r3->x3F = gm_804D6750;
+            temp_r3->x3C_u.x0.x3F = gm_804D6750;
         }
     }
     if (gm_804D6780 != 0) {
@@ -156,16 +149,16 @@ void fn_801A6664(HSD_GObj* arg0)
             HSD_SObjLib_803A477C(gm_804D677C, &gm_804D6788, 0, 0, 0x80, 0);
         temp_r3_2->x10 = 60.0f;
         temp_r3_2->x14 = 0.0f;
-        temp_r3_2->x3C = gm_804D4278.x0;
-        temp_r3_2->x3D = gm_804D4278.x1;
-        temp_r3_2->x3E = gm_804D4278.x2;
+        temp_r3_2->x3C_u.x0.x3C = gm_804D4278.x0;
+        temp_r3_2->x3C_u.x0.x3D = gm_804D4278.x1;
+        temp_r3_2->x3C_u.x0.x3E = gm_804D4278.x2;
         if (gm_804D6794 < 0xBE) {
             gm_804D6794 += 0xA;
             if (gm_804D6794 > 0xBE) {
                 gm_804D6794 = 0xBE;
             }
         }
-        temp_r3_2->x3F = gm_804D6794;
+        temp_r3_2->x3C_u.x0.x3F = gm_804D6794;
         gm_804D6784 = gm_804D6784 == 0;
     }
 }
@@ -212,7 +205,7 @@ void gm_801A68D8(void)
     Player_80036CF0(0);
     Player_SetPlayerCharacter(0, gm_801BEFB0());
     Player_SetCostumeId(0, gm_801BEFD0());
-    Player_SetPlayerId(0, 0);
+    Player_SetPadPort(0, 0);
     Player_SetSlottype(0, Gm_PKind_Demo);
     Player_SetFacingDirection(0, 1.0F);
     Player_80032768(0, &gm_803DB2C8);
@@ -233,7 +226,7 @@ void gm_801A68D8(void)
     Player_SetScale(0, mult * tmp);
 }
 
-void fn_801A6A48(HSD_GObj* gobj, int arg1)
+void fn_801A6A48(HSD_GObj* gobj, intptr_t arg1)
 {
     if (HSD_CObjSetCurrent(gobj->hsd_obj) != 0) {
         HSD_SObjLib_803A54EC(gobj, arg1);
@@ -251,7 +244,7 @@ static void order_data(void)
 }
 #endif
 
-void fn_801A6ACC(HSD_GObj* gobj, int unused)
+void fn_801A6ACC(HSD_GObj* gobj, intptr_t unused)
 {
     PAD_STACK(0x18);
     if (HSD_CObjSetCurrent(gobj->hsd_obj)) {
@@ -320,7 +313,7 @@ void gm_801A6C54(void)
     }
 }
 
-void fn_801A6D78(HSD_GObj* gobj, int unused)
+void fn_801A6D78(HSD_GObj* gobj, intptr_t unused)
 {
     PAD_STACK(0x18);
     if (HSD_CObjSetCurrent(gobj->hsd_obj)) {
@@ -436,9 +429,9 @@ static inline void gm_801A7070_SetupMain(u8 priority)
                 player_jobj);
 }
 
-static inline f32 getTrophyTranslateZ(s32 trophy)
+static inline s32 getCurrentTrophy(void)
 {
-    return Toy_803060BC(trophy, 2);
+    return gm_801A659C(gm_801BEFB0());
 }
 
 static inline void gm_801A7070_SetupTrophy(u8 priority)
@@ -457,13 +450,13 @@ static inline void gm_801A7070_SetupTrophy(u8 priority)
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 0xB, 0);
 
-    trophy = gm_801A659C(gm_801BEFB0());
+    trophy = getCurrentTrophy();
     child = jobj == NULL ? NULL : jobj->child;
     val = -Toy_803060BC(trophy, 0);
     HSD_JObjSetTranslateXWithMtxDirty(child, val);
     val = -Toy_803060BC(trophy, 1);
     HSD_JObjSetTranslateYWithMtxDirty(child, val);
-    val = -getTrophyTranslateZ(trophy);
+    val = -Toy_803060BC(trophy, 2);
     HSD_JObjSetTranslateZWithMtxDirty(child, val);
 
     val = -(0.017453292f * Toy_803060BC(trophy, 5));

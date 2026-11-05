@@ -260,7 +260,7 @@ void grMaterial_801C8E28(HSD_GObj* gobj)
 bool grMaterial_801C8E48(HSD_GObj* gobj)
 {
     Item* it = gobj->user_data;
-    if (it->x524_cmd.u != NULL) {
+    if (it->x524_cmd.x8.u != NULL) {
         return false;
     }
     return true;
@@ -509,7 +509,7 @@ void grMaterial_801C9470(Item_GObj* gobj, CommandInfo* cmd)
 void grMaterial_801C9490(Item_GObj* gobj, CommandInfo* cmd)
 {
     Ground* gp = gobj->user_data;
-    u32 val = (*(u16*) cmd->ptr[0] >> 2) & 0xFF;
+    u32 val = (*(u16*) cmd->x8.ptr[0] >> 2) & 0xFF;
     gp->xC0 = (f32) val;
     gp->x10_flags.b6 = 1;
 }
@@ -570,18 +570,19 @@ void grMaterial_801C95C4(HSD_GObj* gobj)
     gp->x10_flags.b4 = 1;
 }
 
-// TODO: is this GET_GROUND? calling it directly didn't work.
+/// @TODO: is this GET_GROUND? calling it directly didn't work.
 static inline Ground* grMaterial_801C9604_inline(HSD_GObj* arg0)
 {
     return arg0->user_data;
 }
 
-void grMaterial_801C9604(HSD_GObj* gobj, void* script, bool arg2)
+void grMaterial_801C9604(HSD_GObj* gobj, union ColorOverlay_x8_t* script,
+                         bool arg2)
 {
     Ground* gp = grMaterial_801C9604_inline(gobj);
     ColorOverlay* co = grMaterial_GetOverlay(gp);
     co->x4_pri = arg2;
-    co->x8_ptr1 = (union ColorOverlay_x8_t*) script;
+    co->x8_ptr1 = script;
     co->x0_timer = 0;
     co->xC_loop = 0;
     co->x7C_color_enable = co->x7C_flag2 = 0;

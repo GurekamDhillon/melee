@@ -4,6 +4,7 @@
 
 #include <melee/ft/forward.h>
 
+#include "forward.h"
 #include "types.h"
 #include <dolphin/mtx.h>
 #include <melee/ft/fighter.h>
@@ -17,7 +18,6 @@
 #include <melee/ft/types.h>
 
 /// 80138208 00134DE8
-/// https://decomp.me/scratch/lrV6F
 void ftMs_SpecialHi_Enter(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -25,15 +25,15 @@ void ftMs_SpecialHi_Enter(HSD_GObj* gobj)
     fp->cmd_vars[2] = 0;
     fp->cmd_vars[1] = 0;
     fp->cmd_vars[0] = 0;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
     // MotionStateChange
-    Fighter_ChangeMotionState(gobj, 0x16F, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftMs_MS_SpecialHi, Ft_MF_None, 0.0f, 1.0f,
+                              0.0f, NULL);
     // MS_AnimationFrameUpdate&More
     ftAnim_8006EBA4(gobj);
 }
 
 /// 8013826C 00134E4C
-/// https://decomp.me/scratch/PuVdx
 void ftMs_SpecialAirHi_Enter(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -44,17 +44,17 @@ void ftMs_SpecialAirHi_Enter(HSD_GObj* gobj)
     fp->cmd_vars[2] = 0;
     fp->cmd_vars[1] = 0;
     fp->cmd_vars[0] = 0;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
     fp->self_vel.y = 0.0f;
     fp->self_vel.x *= da->x3C;
     // MotionStateChange
-    Fighter_ChangeMotionState(gobj, 0x170, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftMs_MS_SpecialAirHi, Ft_MF_None, 0.0f,
+                              1.0f, 0.0f, NULL);
     // MS_AnimationFrameUpdate&More
     ftAnim_8006EBA4(gobj);
 }
 
 /// 801382E8 00134EC8
-/// https://decomp.me/scratch/56Ycw
 void ftMs_SpecialHi_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -68,7 +68,6 @@ void ftMs_SpecialHi_Anim(HSD_GObj* gobj)
 }
 
 /// 80138348 00134F28
-/// https://decomp.me/scratch/WdpFi
 void ftMs_SpecialAirHi_Anim(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -111,7 +110,6 @@ void ftMs_SpecialHi_IASA(HSD_GObj* gobj)
 }
 
 /// 801384F0 001350D0
-/// https://decomp.me/scratch/2yXhH
 void ftMs_SpecialAirHi_IASA(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -137,7 +135,6 @@ void ftMs_SpecialAirHi_IASA(HSD_GObj* gobj)
 }
 
 /// 80138638 00135218
-/// https://decomp.me/scratch/Wx1iY
 void ftMs_SpecialHi_Phys(HSD_GObj* gobj)
 {
     struct ftCo_DatAttrs* attr2;
@@ -179,7 +176,6 @@ void ftMs_SpecialHi_Phys(HSD_GObj* gobj)
 }
 
 /// 8013873C 0013531C
-/// https://decomp.me/scratch/9gz2V
 void ftMs_SpecialAirHi_Phys(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
@@ -219,7 +215,6 @@ void ftMs_SpecialAirHi_Phys(HSD_GObj* gobj)
 }
 
 /// 80138884 00135464
-/// https://decomp.me/scratch/NTb4a
 void ftMs_SpecialHi_80138884(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -228,7 +223,6 @@ void ftMs_SpecialHi_80138884(HSD_GObj* gobj)
 }
 
 /// 801388B4 00135494
-/// https://decomp.me/scratch/3MMkJ
 void ftMs_SpecialHi_Coll(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -247,7 +241,6 @@ void ftMs_SpecialHi_Coll(HSD_GObj* gobj)
 }
 
 /// 80138940 00135520
-/// https://decomp.me/scratch/QEKrM
 void ftMs_SpecialAirHi_Coll(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;

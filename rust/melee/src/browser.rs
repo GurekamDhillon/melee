@@ -12,6 +12,8 @@
 //!     these are boot-time modes of `melee play`, so the game relaunches itself with the same options plus the new ones
 //!     (`--replay`, `--netplay host|join CODE --np-css`, `--spectate`, `MELEE_SCENE=mode=lab..`) and this run quits.
 //!     `MELEE_BROWSER_DRY_RUN=1` logs the relaunch instead (the headless checks). The log never shows the disc path.
+//!   - The Modes list has only rows that start and can be left (the settings overlay's SESSION page exits any of them);
+//!     MELEE_DEV_MODES=1 adds the dev rows: the workbench (two CPUs, no human port) and the modes that cannot launch.
 //!   - MOD_SET: enabled.txt for the next launch (`ModSet::set_enabled` + `save`).
 //!   - SKIN_SET: `skin_<slot>=name` in settings.cfg, mounted live offline through `cosmetics::mount` (as the settings
 //!     overlay does), else at the next launch.
@@ -25,6 +27,17 @@ pub struct State {
     replays: Vec<(std::path::PathBuf, &'static str)>,
     /// Catalog ids of the modes, in list order: what LAUNCH does for each.
     modes: Vec<(String, Launch)>,
+    /// The SSBM Nucleus engine (gd-ui-v1.3): threads start when the browser's Nucleus view first asks.
+    nc: Option<crate::nucleus::Engine>,
+    perf: Option<Perf>,
+}
+
+/// `MELEE_NUCLEUS_PERF=1`: the game-thread cost of the Nucleus pump and the present-to-present interval, logged every
+/// 600 presents (p50 / p99 / max).
+struct Perf {
+    pump_us: Vec<f64>,
+    frame_ms: Vec<f64>,
+    last: std::time::Instant,
 }
 
 #[derive(Clone)]
@@ -103,9 +116,69 @@ impl RetailPlay {
         for r in reqs {
             self.browser_request(r.op, &r.arg);
         }
+        let t0 = std::time::Instant::now();
+        self.nucleus_tick();
+        if let Some(p) = self.browser.perf.as_mut() {
+            let now = std::time::Instant::now();
+            p.pump_us.push((now - t0).as_secs_f64() * 1e6);
+            p.frame_ms.push((now - p.last).as_secs_f64() * 1e3);
+            p.last = now;
+            if p.pump_us.len() >= 600 {
+                let pct = |v: &mut Vec<f64>| {
+                    v.sort_by(|a, b| a.total_cmp(b));
+                    let n = v.len();
+                    let r = (v[n / 2], v[n * 99 / 100], v[n - 1]);
+                    v.clear();
+                    r
+                };
+                let (a, b, c) = pct(&mut p.pump_us);
+                let (d, e, f) = pct(&mut p.frame_ms);
+                log(&format!("nucleus perf: game-thread pump p50 {a:.1} p99 {b:.1} max {c:.1} us; frame interval p50 {d:.2} p99 {e:.2} max {f:.2} ms"));
+            }
+        }
+    }
+
+    /// The Nucleus engine's per-present work on the game thread: flags, log lines, pictures, and the lists when the
+    /// engine's version moved. Only `try_lock`s: never waits on a worker.
+    fn nucleus_tick(&mut self) {
+        let offline = self.browser_offline();
+        let Some(e) = self.browser.nc.as_mut() else { return };
+        e.set_online(!offline);
+        for l in e.pump() {
+            log(&format!("nucleus: {l}"));
+        }
+        let u = self.ui.as_mut().unwrap();
+        let wants = u.take_pic_wants();
+        e.want_pics(&wants);
+        for (k, px) in e.ready_pics(2) {
+            u.offer_pic(k, px);
+        }
+        let Some(v) = e.view() else { return };
+        let fresh = e.take_installed(&v);
+        u.set_list(mui::LIST_NC, v.results);
+        u.set_list(mui::LIST_NC_QUEUE, v.queue);
+        u.set_list(mui::LIST_NC_STATE, vec![v.state]);
+        if fresh {
+            // an install finished: the installed mods and the skin catalog show it now (enabled for the next launch)
+            self.browser.modset = None;
+            self.browser_fill_mods();
+            self.browser_fill_modes();
+            self.browser_fill_skins();
+        }
+    }
+
+    fn nucleus(&mut self) -> &mut crate::nucleus::Engine {
+        if self.browser.nc.is_none() {
+            let dir = self.mods_dir.clone().or_else(|| crate::cfg::text("mods_dir"));
+            self.browser.nc = Some(crate::nucleus::Engine::new(dir, self.iso.clone()));
+        }
+        self.browser.nc.as_mut().unwrap()
     }
 
     fn browser_fill_all(&mut self) {
+        if self.browser.perf.is_none() && std::env::var("MELEE_NUCLEUS_PERF").is_ok_and(|v| v == "1") {
+            self.browser.perf = Some(Perf { pump_us: Vec::with_capacity(600), frame_ms: Vec::with_capacity(600), last: std::time::Instant::now() });
+        }
         self.browser_fill_mods();
         self.browser_fill_modes();
         self.browser_fill_replays();
@@ -119,7 +192,13 @@ impl RetailPlay {
     fn browser_fill_modes(&mut self) {
         let mut v = Vec::new();
         let mut ids = Vec::new();
+        // MELEE_DEV_MODES=1 lists the dev rows too: the workbench (two CPUs, no human port: nothing to pause with) and
+        // the rows that cannot launch (modes not ported yet, Envoy). A player's list has only what starts and exits.
+        let dev = std::env::var("MELEE_DEV_MODES").is_ok_and(|v| v == "1");
         let mut push = |v: &mut Vec<Vec<u8>>, id: &str, group: &str, title: &str, desc: &str, l: Launch| {
+            if !dev && (matches!(l, Launch::Unavailable(_)) || id == "workbench") {
+                return;
+            }
             let avail = !matches!(l, Launch::Unavailable(_));
             let note = match &l {
                 Launch::Unavailable(n) => *n,
@@ -203,7 +282,9 @@ impl RetailPlay {
     }
 
     fn browser_offline(&self) -> bool {
-        self.net.is_none() && self.sync.is_none() && self.feed.is_none() && !self.rollback_mode
+        // not `rollback_mode`: a loaded Lab mod turns that on too (the snapshot allocator), and the LAB is launched from
+        // here; a replay / spectate run has a feed or a spectate client
+        self.net.is_none() && self.sync.is_none() && self.feed.is_none() && self.spec_client.is_none()
     }
 
     fn browser_request(&mut self, op: i32, arg: &str) {
@@ -316,6 +397,45 @@ impl RetailPlay {
                 let target = if arg.contains(':') { arg.to_string() } else if let Some(s) = np_server() { format!("relay:{s}/{arg}") } else { return st(self, 1, "A spectate code needs the server (MELEE_NP_SERVER); or type HOST:PORT.") };
                 self.browser_relaunch(&["--spectate".into(), target], None, "spectate")
             }
+            mui::REQ_NC_SEARCH => {
+                if !self.browser_offline() {
+                    return st(self, 1, "SSBM Nucleus is offline-only: finish the online session first.");
+                }
+                let mut f = arg.split('\0');
+                let text: String = f.next().unwrap_or("").chars().take(47).collect();
+                let tab = f.next().and_then(|t| t.parse::<usize>().ok()).filter(|&t| t < crate::nucleus::catalog::TAB_LABEL.len());
+                let sort = f.next().and_then(|t| t.parse::<usize>().ok()).filter(|&t| t < crate::nucleus::catalog::SORT_LABEL.len()).unwrap_or(0);
+                let e = self.nucleus();
+                e.open();
+                e.search(crate::nucleus::catalog::Query { text: text.clone(), tab, sort, ..Default::default() });
+                log(&format!("nucleus: search '{text}' tab {} sort {}", tab.map_or("all", |t| crate::nucleus::catalog::TAB_LABEL[t]), crate::nucleus::catalog::SORT_LABEL[sort]));
+            }
+            mui::REQ_NC_QUEUE => {
+                let Ok(id) = arg.parse::<i64>() else { return st(self, 1, "no such mod") };
+                if !self.browser_offline() {
+                    return st(self, 1, "Mods cannot be installed while you are online.");
+                }
+                let m = self.nucleus().toggle(id);
+                st(self, 0, &m);
+            }
+            mui::REQ_NC_PROCESS => {
+                if !self.browser_offline() {
+                    return st(self, 1, "Mods cannot be installed while you are online.");
+                }
+                let e = self.nucleus();
+                e.open();
+                let m = e.set_processing(arg == "1");
+                st(self, 0, &m);
+            }
+            mui::REQ_NC_SYNC => {
+                if !self.browser_offline() {
+                    return st(self, 1, "SSBM Nucleus is offline-only.");
+                }
+                let e = self.nucleus();
+                e.open();
+                e.refresh();
+                st(self, 0, "Checking SSBM Nucleus for changes.");
+            }
             mui::REQ_REFRESH => {
                 match arg {
                     "1" => self.browser_fill_mods(),
@@ -335,8 +455,50 @@ impl RetailPlay {
     /// Relaunch `melee play` with this run's options (minus the boot-mode ones) plus `extra`, then quit this run.
     fn browser_relaunch(&mut self, extra: &[String], scene: Option<&str>, what: &str) {
         if !self.browser_offline() {
-            return status(self.ui.as_mut().unwrap(), 1, "Finish the online session or replay first.");
+            return self.ui_status(1, "Finish the online session or replay first.");
         }
+        self.relaunch(extra, scene, false, what);
+    }
+
+    fn ui_status(&mut self, code: u8, text: &str) {
+        match self.ui.as_mut() {
+            Some(u) => status(u, code, text),
+            None => log(text),
+        }
+    }
+
+    /// The settings overlay's SESSION exits (after the step, so never inside a scene's frame). "Quit game" ends the
+    /// run; "Return to main menu" switches the scene in place (`Engine::goto_mode`) in an ordinary offline run, and
+    /// relaunches to the menus (MELEE_BOOT_MENU=1, no boot-mode options, no MELEE_SCENE) from anything a scene launch,
+    /// a browser relaunch, a replay, netplay, a spectate or a recording set up: those carry run-wide state (the LAB's
+    /// rollback mode, a feed, a session) that a scene switch cannot undo.
+    pub(super) fn session_exit(&mut self) {
+        if self.boot_menu && self.e.is_some() && matches!(self.cur.0 as u32, melee_types::GM_TITLE | melee_types::GM_OPENING_MV) {
+            self.boot_menu = false;
+            log("session: MELEE_BOOT_MENU: the boot's title -> main menu");
+            self.e.as_mut().unwrap().goto_mode(melee_types::GM_MENU as u8);
+        }
+        let Some(menu) = self.exit_req.take() else { return };
+        if !menu {
+            log("session: quit game (settings overlay)");
+            self.quit = true;
+            return;
+        }
+        let plain = self.browser_offline() && !self.lab_launch && self.rec.is_none() && std::env::var_os("MELEE_SCENE").is_none() && self.e.is_some();
+        if plain {
+            log(&format!("session: return to main menu (scene switch from mode {} scene {})", self.cur.0, self.cur.1));
+            if let Some(a) = self.audio.as_mut() {
+                a.pause(false);
+                a.match_leave();
+            }
+            self.e.as_mut().unwrap().goto_mode(melee_types::GM_MENU as u8);
+            return;
+        }
+        log("session: return to main menu (relaunch to the menus)");
+        self.relaunch(&[], None, true, "the main menu");
+    }
+
+    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) {
         let mut args: Vec<String> = Vec::new();
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let mut i = 0;
@@ -365,21 +527,35 @@ impl RetailPlay {
         let shown: Vec<&str> = args.iter().enumerate().map(|(k, a)| if k > 0 && args[k - 1] == "--iso" { "<iso>" } else if extra.iter().any(|e| e == a) && a.contains(['/', '\\']) { "<file>" } else { a.as_str() }).collect();
         let env = scene.map(|s| format!(" MELEE_SCENE={s}")).unwrap_or_default();
         if std::env::var("MELEE_BROWSER_DRY_RUN").is_ok_and(|v| v == "1") {
-            return status(self.ui.as_mut().unwrap(), 0, &format!("relaunch (dry run) for {what}:{env} melee {}", shown.join(" ")));
+            self.ui_status(0, &format!("relaunch (dry run) for {what}:{env} melee {}", shown.join(" ")));
+            if to_menu {
+                self.quit = true;
+            }
+            return;
         }
-        let Ok(exe) = std::env::current_exe() else { return status(self.ui.as_mut().unwrap(), 1, "cannot find the game executable") };
+        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
         let mut cmd = std::process::Command::new(exe);
         cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
+        if to_menu {
+            cmd.env("MELEE_BOOT_MENU", "1");
+        } else {
+            cmd.env_remove("MELEE_BOOT_MENU");
+        }
         match scene {
             Some(s) => cmd.env("MELEE_SCENE", s),
             None => cmd.env_remove("MELEE_SCENE"),
         };
         match cmd.spawn() {
             Ok(_) => {
-                status(self.ui.as_mut().unwrap(), 2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
+                self.ui_status(2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
                 self.quit = true;
             }
-            Err(e) => status(self.ui.as_mut().unwrap(), 1, &format!("relaunch failed: {e}")),
+            Err(e) => {
+                self.ui_status(1, &format!("relaunch failed: {e}"));
+                if to_menu {
+                    self.quit = true;
+                }
+            }
         }
     }
 }

@@ -56,19 +56,8 @@ StageData grYt_StageData = {
     0,
 };
 
-typedef struct YorsterParams {
-    f32 x00;
-    f32 x04;
-    f32 x08;
-    f32 x0C;
-    s32 x10;
-    s32 x14;
-    s32 x18;
-    s32 x1C;
-} YorsterParams;
-
 typedef struct grYt_804D6A20_t {
-    YorsterParams* x0;
+    grYorster_YakumonoParam* x0;
     u8 pad_04[4];
 } grYt_804D6A20_t;
 grYt_804D6A20_t grYt_804D6A20;
@@ -218,7 +207,7 @@ void grYorster_80202428(HSD_GObj* item_gobj, Ground* gp, Vec3* pos,
     Ground* gp2 = (Ground*) ((s32) gp + 0);
     int i;
 
-    if (ftLib_80086960(fighter_gobj)) {
+    if (ftLib_IsFighter(fighter_gobj)) {
         ftLib_80086A4C(fighter_gobj, (f32) grYt_804D6A20.x0->x14);
     }
 
@@ -245,7 +234,7 @@ void grYorster_802024F0(void* user_data, int joint_id, CollData* coll,
         return;
     }
 
-    if (env == 1 && ftLib_800873F4((0, coll->x0_gobj))) {
+    if (env == 1 && ftLib_IsEntry((0, coll->x0_gobj))) {
         return;
     }
 
@@ -253,7 +242,7 @@ void grYorster_802024F0(void* user_data, int joint_id, CollData* coll,
     case 1: {
         Vec3 pos;
 
-        ftLib_80086BEC(gobj, &pos);
+        ftLib_GetPosDelta(gobj, &pos);
         delta_y = pos.y;
         if (delta_y >= grYt_804D6A20.x0->x00) {
             ftLib_80086A4C(gobj, (f32) grYt_804D6A20.x0->x10);
@@ -423,7 +412,7 @@ void grYorster_8020266C(HSD_GObj* gobj)
     }
 }
 
-DynamicsDesc* grYorster_80202B5C(enum_t unused)
+lbColl_80008D30_arg1* grYorster_80202B5C(enum_t unused)
 {
     return NULL;
 }

@@ -96,7 +96,7 @@ void ftCo_800992A8(Fighter_GObj* gobj, FtMotionId msid, bool arg2)
 void ftCo_80099314(Fighter_GObj* gobj, FtMotionId msid, bool arg2)
 {
     Fighter* fp = gobj->user_data;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
     Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 0, 1, 0, NULL);
     ftAnim_8006EBA4(gobj);
     fp->x221D_b5 = true;
@@ -223,7 +223,7 @@ static bool ftCo_Ucf073BlocksSpotdodge(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     f32 x, y;
-    if (Replay_UcfVersion(fp->x618_player_id) != 73) {
+    if (Replay_UcfVersion(fp->pad_port) != 73) {
         return false;
     }
     if (!(fp->input.cstick[0].y > p_ftCommonData->x314)) {
@@ -258,7 +258,7 @@ static bool ftCo_Ucf084BlocksSpotdodge(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     int rx, ry;
-    if (Replay_UcfVersion(fp->x618_player_id) != 84) {
+    if (Replay_UcfVersion(fp->pad_port) != 84) {
         return false;
     }
     if (!(fp->input.cstick[0].y > p_ftCommonData->x314)) {

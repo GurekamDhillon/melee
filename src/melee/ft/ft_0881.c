@@ -33,7 +33,7 @@ void ft_800881D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
                 ft_80088770(fp);
                 ft_800887CC(fp);
                 fp->x2144 = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                               fp->player_id * 2 + 0x1E +
+                                               fp->player_idx * 2 + 0x1E +
                                                    fp->is_sub_fighter);
                 return;
             }
@@ -49,7 +49,7 @@ void ft_800881D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
                     ft_80088770(fp);
                     ft_800887CC(fp);
                     fp->x2144 = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                                   fp->player_id * 2 + 0x1E +
+                                                   fp->player_idx * 2 + 0x1E +
                                                        fp->is_sub_fighter);
                     return;
                 }
@@ -74,7 +74,7 @@ void ft_80088328(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
                 ft_80088770(fp);
                 ft_800887CC(fp);
                 fp->x2148 = lbAudioAx_80023870(temp_r30, sfx_vol, sfx_pan,
-                                               (fp->player_id * 2) + 42 +
+                                               (fp->player_idx * 2) + 42 +
                                                    fp->is_sub_fighter);
                 return;
             }
@@ -90,7 +90,7 @@ void ft_80088328(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
                     ft_80088770(fp);
                     ft_800887CC(fp);
                     fp->x2148 = lbAudioAx_80023870(temp_r30, sfx_vol, sfx_pan,
-                                                   (fp->player_id * 2) + 42 +
+                                                   (fp->player_idx * 2) + 42 +
                                                        fp->is_sub_fighter);
                     return;
                 }
@@ -110,7 +110,7 @@ void ft_80088478(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
             fp->x214C = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                           0x36 + fp->player_id * 2 +
+                                           0x36 + fp->player_idx * 2 +
                                                fp->is_sub_fighter);
             return;
         }
@@ -125,7 +125,7 @@ void ft_80088510(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
             fp->x2150 = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                           0x42 + fp->player_id * 2 +
+                                           0x42 + fp->player_idx * 2 +
                                                fp->is_sub_fighter);
             return;
         }
@@ -140,7 +140,7 @@ void ft_800885A8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
             fp->x2154 = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                           0x4E + fp->player_id * 2 +
+                                           0x4E + fp->player_idx * 2 +
                                                fp->is_sub_fighter);
             return;
         }
@@ -155,7 +155,7 @@ void ft_80088640(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
         if (sfx_id != 0x83D61) {
             sfx_id = ft_80087D0C(fp, sfx_id);
             fp->x2158 = lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                                           0x5A + fp->player_id * 2 +
+                                           0x5A + fp->player_idx * 2 +
                                                fp->is_sub_fighter);
             return;
         }
@@ -166,7 +166,7 @@ void ft_80088640(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 static inline int inline0(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 {
     return lbAudioAx_80023870(sfx_id, sfx_vol, sfx_pan,
-                              0x72 + fp->player_id * 2 + fp->is_sub_fighter);
+                              0x72 + fp->player_idx * 2 + fp->is_sub_fighter);
 }
 
 void ftCo_800886D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
@@ -184,49 +184,49 @@ void ftCo_800886D8(Fighter* fp, int sfx_id, u8 sfx_vol, u8 sfx_pan)
 void ft_80088770(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x1E + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x1E + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x2144 = -1;
 }
 
 void ft_800887CC(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x2A + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x2A + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x2148 = -1;
 }
 
 void ft_80088828(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x36 + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x36 + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x214C = -1;
 }
 
 void ft_80088884(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x42 + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x42 + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x2150 = -1;
 }
 
 void ft_800888E0(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x4E + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x4E + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x2154 = -1;
 }
 
 void ft_8008893C(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x5A + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x5A + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x2158 = -1;
 }
 
 void ft_80088998(Fighter* fp)
 {
     lbAudioAx_80023870(0x83D61, 0, 0x40,
-                       0x72 + fp->player_id * 2 + fp->is_sub_fighter);
+                       0x72 + fp->player_idx * 2 + fp->is_sub_fighter);
     fp->x215C = -1;
 }
 
@@ -239,26 +239,26 @@ void ft_800889F4(Fighter* fp, FtSFXArr* sfx)
 
 void ft_80088A50(Fighter* fp)
 {
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x36);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x37);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x36);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x37);
     fp->x214C = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x1E);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x1F);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x1E);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x1F);
     fp->x2144 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x2A);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x2B);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x2A);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x2B);
     fp->x2148 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x42);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x43);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x42);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x43);
     fp->x2150 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x4E);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x4F);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x4E);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x4F);
     fp->x2154 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x5A);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x5B);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x5A);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x5B);
     fp->x2158 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x72);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x73);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x72);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x73);
     fp->x215C = -1;
     fp->x2160 = -1;
     lbAudioAx_8002500C(fp->x2164);
@@ -298,26 +298,26 @@ void ft_80088C5C(Fighter_GObj* gobj)
     if (fp->x215C != -1 && lbAudioAx_800265C4(gobj, fp->x215C) == 1) {
         ft_80088998(fp);
     }
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x36);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x37);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x36);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x37);
     fp->x214C = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x1E);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x1F);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x1E);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x1F);
     fp->x2144 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x2A);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x2B);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x2A);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x2B);
     fp->x2148 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x42);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x43);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x42);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x43);
     fp->x2150 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x4E);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x4F);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x4E);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x4F);
     fp->x2154 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x5A);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x5B);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x5A);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x5B);
     fp->x2158 = -1;
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x72);
-    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_id * 2 + 0x73);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x72);
+    lbAudioAx_80023870(0x83D61, 0, 0x40, fp->player_idx * 2 + 0x73);
     fp->x215C = -1;
     fp->x2160 = -1;
     lbAudioAx_8002500C(fp->x2164);
@@ -347,10 +347,6 @@ void ft_800890D0(Fighter* fp, u32 move_id)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 /**
  * Seems to handle move staling damage reduction
  * Each time the move exists in the stale move table, decreases the result
@@ -377,26 +373,26 @@ static f32 ft_80089118(StaleMoveTable* table, int move_id, int arg2)
     }
     return var_f1;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
+
+static inline f32 getStaleMul(Fighter* fp, int attack_id, int arg2)
+{
+    return ft_80089118(Player_GetStaleMoveTableIndexPtr(fp->player_idx),
+                       attack_id, arg2);
+}
 
 f32 ft_80089228(Fighter* fp, int attack_id, int arg2, f32 arg3)
 {
-    f32 temp_f1;
-    f32 var_f31;
-    StaleMoveTable* tmp;
+    f32 mul;
+    f32 result;
 
     if (DbLevel >= DbLKind_DebugRom) {
         return arg3;
     }
-    var_f31 = arg3;
-    tmp = Player_GetStaleMoveTableIndexPtr(fp->player_id);
-    temp_f1 = ft_80089118(tmp, attack_id, arg2);
-    if (temp_f1 != 1.0F) {
-        var_f31 *= temp_f1;
+    result = arg3;
+    if ((mul = getStaleMul(fp, attack_id, arg2)) != 1.0F) {
+        result *= mul;
     }
-    return var_f31;
+    return result;
 }
 
 static inline void inlineC0(Fighter* fp, u32 move_id)

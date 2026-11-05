@@ -64,7 +64,7 @@ void it_8026D62C(Item_GObj* gobj, HSD_GObjEvent arg1)
         arg1(gobj);
         return;
     }
-    if ((it_80277544(gobj) != 0) && !ip->xDCD_flag.b3) {
+    if ((it_80277544(gobj) != 0) && !ip->xDCD_flag.x0.b3) {
         Item_8026ADC0(gobj);
     }
 }
@@ -285,13 +285,9 @@ bool it_8026DC24(Item_GObj* gobj)
     if (ABS(ip->x40_vel.y) <= 0.00001f) {
         ip->x40_vel.y = 0.0f;
     }
-    if (ABS(ip->x40_vel.x) <= attr->x5c) {
-        if ((ABS(ip->x40_vel.y) <= attr->x5c)) {
-            goto block_18a8;
-        }
-    }
-    if (ip->xDCD_flag.b4 || !attr->x58) {
-    block_18a8:
+    if ((ABS(ip->x40_vel.x) <= attr->x5c && ABS(ip->x40_vel.y) <= attr->x5c) ||
+        ip->xDCD_flag.x0.b4 || !attr->x58)
+    {
         itResetVelocity(ip);
         return true;
     }
@@ -304,7 +300,7 @@ bool it_8026DD5C(Item_GObj* gobj)
 
     ip->xD50_landNum = 0;
     it_802762B0(ip);
-    if (!it_80277040(gobj) || ip->xDCD_flag.b3) {
+    if (!it_80277040(gobj) || ip->xDCD_flag.x0.b3) {
         it_80274740(gobj);
         it_80276CEC(gobj);
     } else {
@@ -339,7 +335,22 @@ bool it_8026DDFC(Item_GObj* gobj)
 
 bool it_8026DE98(Item_GObj* gobj)
 {
-    return it_8026DDFC(gobj);
+    Item* ip = GET_ITEM(gobj);
+
+    ip->xD50_landNum += 1;
+    if (ip->xD50_landNum == 1) {
+        if (ip->xD54_throwNum != 0) {
+            u8* tmp = &it_804D6D28->x48_byte;
+            if ((ip->xD54_throwNum == ((*tmp >> 4) & 0xF)) ||
+                (HSD_Randi(*tmp & 0xF) == 0))
+            {
+                ip->destroy_type = 1;
+                Item_8026A8EC(gobj);
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool it_8026DF34(Item_GObj* gobj)
@@ -447,11 +458,11 @@ static inline bool it_8026E_inline(Item_GObj* gobj)
     return cond;
 }
 
-bool it_8026E15C_inline1(Item_GObj* gobj)
+static bool it_8026E15C_inline1(Item_GObj* gobj)
 {
     return it_8026DDFC(gobj);
 }
-bool it_8026E15C_inline2(Item_GObj* gobj)
+static bool it_8026E15C_inline2(Item_GObj* gobj)
 {
     return it_8026DD5C(gobj);
 }
@@ -478,54 +489,30 @@ void it_8026E15C(Item_GObj* gobj, HSD_GObjEvent arg1)
     }
 }
 
-bool it_8026E248_inline(Item_GObj* gobj)
+static inline bool land(Item_GObj* gobj)
 {
-    return it_8026DD5C(gobj);
-}
-
-// lol
-static bool it_8026DE98_outline(Item_GObj* gobj)
-{
-    return it_8026DE98(gobj);
-}
-
-static bool it_8026DE98_outline2(Item_GObj* gobj)
-{
-    return it_8026DE98_outline(gobj);
-}
-
-static bool it_8026DE98_outline3(Item_GObj* gobj)
-{
-    return it_8026DE98_outline2(gobj);
-}
-
-static bool it_8026DE98_outline4(Item_GObj* gobj)
-{
-    return it_8026DE98_outline3(gobj);
+    if (it_8026DE98(gobj) && it_8026DC24(gobj)) {
+        return it_8026DD5C(gobj);
+    }
+    return false;
 }
 
 void it_8026E248(Item_GObj* gobj, HSD_GObjEvent arg1)
 {
-    bool res2;
     bool res = it_8026E_inline(gobj);
     PAD_STACK(18);
 
     if (res & 0xF) {
         it_80276FC4(gobj, res);
         if (res & 1) {
-            if (it_8026DE98_outline4(gobj) && it_8026DC24(gobj)) {
-                res2 = it_8026E248_inline(gobj);
-            } else {
-                res2 = false;
-            }
-            if (res2 != false) {
+            if (land(gobj)) {
                 arg1(gobj);
             }
         }
     }
 }
 
-bool it_8026E32C_inline(Item_GObj* gobj)
+static bool it_8026E32C_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     ip->xD50_landNum += 1;
@@ -705,18 +692,13 @@ void it_8026E71C(Item_GObj* item_gobj, HSD_GObjEvent arg1)
     }
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 void it_8026E7E0(Item_GObj* item_gobj, HSD_GObjEvent arg1)
 {
     CollData* coll;
     Item* item;
     bool chk;
-    bool chk2;
     bool new_var;
-    PAD_STACK(30);
+    PAD_STACK(38);
 
     item = item_gobj->user_data;
     coll = &item->x378_itemColl;
@@ -733,19 +715,11 @@ void it_8026E7E0(Item_GObj* item_gobj, HSD_GObjEvent arg1)
         it_80276D9C(item_gobj, new_var);
     }
     if (new_var & 1) {
-        if (it_8026DE98(item_gobj) && it_8026DC24(item_gobj)) {
-            new_var = it_8026DD5C(item_gobj);
-        } else {
-            new_var = false;
-        }
-        if (new_var) {
+        if (land(item_gobj)) {
             arg1(item_gobj);
         }
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 void it_8026E8C4(Item_GObj* item_gobj, HSD_GObjEvent arg1, HSD_GObjEvent arg2)
 {

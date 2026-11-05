@@ -434,7 +434,8 @@ pub unsafe extern "C" fn onExitTitle(arg0: *mut GameModeState) {
     let temp_r3 = ext::gm_GetGameModeStateExitData(arg0) as *mut i32;
     // TARGET_PC: no /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the
     // debug menu.
-    if *temp_r3 & (0x800 | 0x200) != 0 {
+    // port: only with MELEE_DEBUG_MENU=1 (menuguard::debug_menu_shortcut)
+    if crate::menuguard::debug_menu_shortcut() && *temp_r3 & (0x800 | 0x200) != 0 {
         ext::gm_SetPendingGameMode(GM_DEBUG as u8);
         ext::gm_SetNewGameModePending();
         return;

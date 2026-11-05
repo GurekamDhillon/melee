@@ -28,7 +28,8 @@ HSD_GObj* itGamewatchFire_Spawn(HSD_GObj* parent, Vec3* pos, Fighter_Part part,
     result = Item_80268B18(&spawn);
     if (result != NULL) {
         Item* item = GET_ITEM(result);
-        void** attr = item->xC4_article_data->x4_specialAttributes;
+        itGamewatchAttributes* attr =
+            &item->xC4_article_data->x4_specialAttributes->gamewatch;
         Item_AttachGameWatchArticle(parent, part, result, attr);
         return result;
     }
@@ -98,7 +99,7 @@ bool itGamewatchFire_Motion0_Anim(Item_GObj* item_gobj)
         return true;
     }
     if (item->owner != NULL) {
-        if (ftLib_800876D4(item->owner) != 0) {
+        if (ftLib_IsChargingSmash(item->owner) != 0) {
             if (item->x5D0_animFrameSpeed != 0.0f) {
                 item->x5D0_animFrameSpeed = 0.0f;
                 lb_8000BA0C(jobj, item->x5D0_animFrameSpeed);

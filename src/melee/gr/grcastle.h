@@ -6,6 +6,7 @@
 #include <melee/lb/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
 #include <placeholder.h>
 
 #include <dolphin/mtx.h>
@@ -64,7 +65,7 @@
 /* 1CFBD4 */ s32 grCastle_801CFBD4(Ground_GObj* gobj, s32 arg1);
 /* 1D0298 */ bool grCastle_801D0298(Ground_GObj* gobj, s32 arg1);
 /* 1D02B8 */ void grCastle_801D02B8(Ground_GObj* gobj);
-/* 1D0520 */ void grCastle_801D0520(Ground_GObj*, int);
+/* 1D0520 */ void grCastle_801D0520(Ground_GObj*, intptr_t);
 /* 1D0550 */ void grCastle_801D0550(UNK_T, unkCastle*);
 /* 1D059C */ void grCastle_801D059C(UNK_T, unkCastle*);
 /* 1D05E8 */ void grCastle_801D05E8(UNK_T, unkCastle*);
@@ -75,15 +76,70 @@
 /* 1D07BC */ void grCastle_801D07BC(UNK_T, unkCastle*, Ground_GObj*);
 /* 1D0834 */ void grCastle_801D0834(UNK_T, unkCastle*, Ground_GObj*);
 /* 1D08AC */ void grCastle_801D08AC(UNK_T, unkCastle*, Ground_GObj*);
-/* 1D0924 */ void fn_801D0924(HSD_GObj*, int);
+/* 1D0924 */ void fn_801D0924(HSD_GObj*, intptr_t);
 /* 1D09B8 */ bool grCastle_801D09B8(void*, HSD_GObj*, Vec3*);
 /* 1D0A9C */ void grCastle_801D0A9C(Vec3* arg0, f32 arg8);
-/* 1D0B04 */ DynamicsDesc* grCastle_801D0B04(enum_t);
+/* 1D0B04 */ lbColl_80008D30_arg1* grCastle_801D0B04(enum_t);
 /* 1D0B0C */ bool grCastle_801D0B0C(Vec3* v, int arg1, HSD_JObj* jobj);
 /* 1D0BBC */ void grCastle_801D0BBC(void);
 /* 1D0D24 */ void grCastle_801D0D24(void);
 /* 1D0D84 */ void grCastle_801D0D84(HSD_JObj*);
 /* 1D0FF0 */ float grCastle_801D0FF0(void);
 /* 3E11A4 */ extern StageData grCs_StageData;
+
+typedef struct grCastleParams_Entry {
+    /* 0x00 */ s16 x0;
+    /* 0x02 */ u8 pad_x2[2];
+    /* 0x04 */ f32 x4;
+    /* 0x08 */ Vec3 rot;
+} grCastleParams_Entry;
+
+struct grCastle_YakumonoParam {
+    /* 0x000 */ s16 x0;
+    /* 0x002 */ s16 x2;
+    /* 0x004 */ s16 x4;
+    /* 0x006 */ s16 x6;
+    /* 0x008 */ s16 x8;
+    /* 0x00A */ s16 xA;
+    /* 0x00C */ s16 xC;
+    /* 0x00E */ s16 xE;
+    /* 0x010 */ f32 x10;
+    /* 0x014 */ f32 x14;
+    /* 0x018 */ f32 x18;
+    /* 0x01C */ u8 pad_x1C[4];
+    /* 0x020 */ f32 x20;
+    /* 0x024 */ f32 x24;
+    /* 0x028 */ f32 x28;
+    /* 0x02C */ f32 x2C;
+    /* 0x030 */ f32 x30;
+    /* 0x034 */ f32 x34;
+    /* 0x038 */ f32 x38;
+    /* 0x03C */ f32 x3C;
+    /* 0x040 */ s16 x40;
+    /* 0x042 */ s16 x42;
+    /* 0x044 */ s16 x44;
+    /* 0x046 */ u8 pad_x46[2];
+    /* 0x048 */ f32 x48;
+    /* 0x04C */ f32 x4C;
+    /* 0x050 */ f32 x50;
+    /* 0x054 */ s16 x54;
+    /* 0x056 */ u8 pad_x56[2];
+    /* 0x058 */ s16 x58;
+    /* 0x05A */ u8 pad_x5A[2];
+    /* 0x05C */ grCastleParams_Entry entries[9];
+    /* 0x110 */ f32 x110;
+    /* 0x114 */ union ColorOverlay_x8_t*
+        x114 DAT_SCRIPT(colAnimCommandLength(_command));
+    /* 0x118 */ f32 x118;
+    /* 0x11C */ f32 x11C;
+    /* 0x120 */ f32 x120;
+    /* 0x124 */ f32 x124;
+    /* 0x128 */ u8 pad_x128[4];
+    /* 0x12C */ s16 x12C[4];
+    /* 0x134 */ f32 x134;
+    /* 0x138 */ f32 x138;
+    /* 0x13C */ f32 x13C;
+    /* 0x140 */ f32 x140;
+};
 
 #endif

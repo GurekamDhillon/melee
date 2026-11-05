@@ -271,14 +271,19 @@ fn val(b: &[u8], i: &mut usize, depth: u32) -> Result<Json, String> {
 
 /// Decode a picture to RGBA8 (gray / gray+alpha / RGB / RGBA / indexed), at most 1024x1024.
 pub fn decode_png(bytes: &[u8]) -> Result<melee_gx::tex_override::Picture, String> {
+    decode_png_up_to(bytes, 1024)
+}
+
+/// `decode_png` with another size cap (the Nucleus browser's screenshots, fitted down to a thumbnail).
+pub fn decode_png_up_to(bytes: &[u8], max: u32) -> Result<melee_gx::tex_override::Picture, String> {
     let mut d = png::Decoder::new(std::io::Cursor::new(bytes));
     d.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
     let mut r = d.read_info().map_err(|e| format!("not a PNG: {e}"))?;
     let mut buf = vec![0; r.output_buffer_size().ok_or("PNG too large")?];
     let info = r.next_frame(&mut buf).map_err(|e| format!("bad PNG: {e}"))?;
     let (w, h) = (info.width, info.height);
-    if w == 0 || h == 0 || w > 1024 || h > 1024 {
-        return Err(format!("picture {w}x{h} (at most 1024x1024)"));
+    if w == 0 || h == 0 || w > max || h > max {
+        return Err(format!("picture {w}x{h} (at most {max}x{max})"));
     }
     let n = (w * h) as usize;
     let rgba = match info.color_type {
@@ -419,6 +424,14 @@ fn plan_skin(root: &Path, plan: &mut Vec<Write>, slot: &str, name: &str, dat: Ve
     }
     plan.push(Write { to: d.join(format!("{name}.dat")), bytes: dat, what });
     Ok(())
+}
+
+/// One costume into the catalog (the Nucleus installer): checked as `import` checks it, under a free name.
+/// Returns the line `import` would print for it.
+pub fn install_skin(root: &Path, slot: &str, name: &str, dat: Vec<u8>, pics: Vec<(&'static str, Vec<u8>)>) -> Result<String, String> {
+    let mut plan = Vec::new();
+    plan_skin(root, &mut plan, slot, name, dat, pics)?;
+    Ok(commit(plan)?.join(", "))
 }
 
 /// Import any supported file: `.dat` / `.usd` costume, `.zip` (mod or Nucleus vault), `.png` picture.

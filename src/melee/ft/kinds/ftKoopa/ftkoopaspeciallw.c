@@ -41,7 +41,7 @@ static void ftKp_SpecialLw_Enter_inline(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     fp->cmd_vars[1] = 0;
     fp->cmd_vars[0] = 0;
-    fp->throw_flags_b0 = false;
+    fp->x2210.x0.throw_flags_b0 = false;
     fp->x6A4_transNOffset.y = 0.0f;
     fp->x2223_b4 = true;
 }
@@ -52,7 +52,8 @@ void ftKp_SpecialLw_Enter(Fighter_GObj* gobj)
     PAD_STACK(16);
     fp->self_vel.x = fp->self_vel.y = 0.0f;
     ftCommon_8007D5D4(fp);
-    Fighter_ChangeMotionState(gobj, 0x169, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialLw, Ft_MF_None, 0.0f, 1.0f,
+                              0.0f, NULL);
     ftAnim_8006EBA4(gobj);
     ftKp_SpecialLw_Enter_inline(gobj);
 }
@@ -64,7 +65,8 @@ void ftKp_SpecialAirLw_Enter(Fighter_GObj* gobj)
     PAD_STACK(16);
     fp->self_vel.x *= da->x80;
     fp->self_vel.y *= da->x84;
-    Fighter_ChangeMotionState(gobj, 0x16A, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialAirLw, Ft_MF_None, 0.0f,
+                              1.0f, 0.0f, NULL);
     ftAnim_8006EBA4(gobj);
     ftKp_SpecialLw_Enter_inline(gobj);
 }
@@ -163,6 +165,7 @@ void ftKp_SpecialLw_80134A5C(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     fp->gr_vel = 0.0f;
     ftCommon_8007D7FC(fp);
-    Fighter_ChangeMotionState(gobj, 0x16B, 0U, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftKp_MS_SpecialLwLanding, 0U, 0.0f, 1.0f,
+                              0.0f, NULL);
     fp->accessory4_cb = fn_80134518;
 }

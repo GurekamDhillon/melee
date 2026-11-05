@@ -67,7 +67,7 @@ HSD_GObj* ScriptGame_StageSlotGround(int id)
     st_owned_add(&script_slot_owned,g,1);
     HSD_JObjRemoveAnimAll(g->hsd_obj);
     head=HSD_ArchiveGetPublicAddress(s->archive,"map_head");
-    script_slot_reset_joints(HSD_JObjGetChild(g->hsd_obj),head->unk8[id].unk0);
+    script_slot_reset_joints(HSD_JObjGetChild(g->hsd_obj),head->unk8[id].joint);
     scale.x=scale.y=scale.z=s->param->y;
     HSD_JObjSetTranslate(g->hsd_obj,&zero);HSD_JObjSetScale(g->hsd_obj,&scale);
     HSD_JObjClearFlags(g->hsd_obj,JOBJ_HIDDEN);
@@ -189,7 +189,7 @@ static void script_slot_native_enter(ScriptStageSlot* s)
     script_slot_host_yakumono=s->dynamic_kind==Gr_Kind_Story?
         grStory_StageSlotParamSwap(stage_info.yakumono_param):grIzumi_StageSlotParamSwap(stage_info.yakumono_param);
     if(stage_info.itemdata)for(i=0;stage_info.itemdata[i];++i)
-        it_8026B40C(stage_info.itemdata[i]->unk4,stage_info.itemdata[i]->unk0);
+        it_8026B40C(stage_info.itemdata[i]->article_data,stage_info.itemdata[i]->gr_itkind);
     script_slot_native_initializing=1;script_slot_controller_next=0;
     if(s->dynamic_kind==Gr_Kind_Story)grStory_801E3030();
     else grIzumi_801CBB88();

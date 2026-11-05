@@ -1217,6 +1217,10 @@ pub struct Camera {
     m: [[f32; 4]; 3],
     t: f32,
     aspect: f32,
+    /// The renderer's widescreen x factor (melee_gx::interp::Widen; 1 at 4:3). The overlay is a 640x480 ortho layer
+    /// the renderer does not widen, while the game's own perspective draws get x * factor: the overlay applies the
+    /// same factor itself or it drifts outward and stretches 4:3 -> 16:9 (the "warped" hitboxes).
+    wx: f32,
 }
 
 impl Camera {
@@ -1234,7 +1238,8 @@ impl Camera {
             if !(p.fov > 1.0 && p.fov < 170.0) {
                 return None;
             }
-            Some(Camera { m: (*c).view_mtx, t: (p.fov.to_radians() * 0.5).tan(), aspect: if p.aspect > 0.1 { p.aspect } else { 4.0 / 3.0 } })
+            let wx = if melee_engine::view::camera_mode() { None } else { melee_gx::interp::Widen::for_aspect(melee_engine::view::aspect()) };
+            Some(Camera { m: (*c).view_mtx, t: (p.fov.to_radians() * 0.5).tan(), aspect: if p.aspect > 0.1 { p.aspect } else { 4.0 / 3.0 }, wx: wx.map_or(1.0, |w| w.factor) })
         }
     }
 
@@ -1247,15 +1252,16 @@ impl Camera {
         if cz > -0.01 {
             return None;
         }
-        let nx = cx / (-cz * self.t * self.aspect);
+        let nx = cx / (-cz * self.t * self.aspect) * self.wx;
         let ny = cy / (-cz * self.t);
         Some((320.0 + nx * 320.0, 240.0 - ny * 240.0))
     }
 
-    fn scale_at(&self, x: f32, y: f32, z: f32) -> f32 {
-        match (self.project(x, y, z), self.project(x + 1.0, y, z)) {
-            (Some(a), Some(b)) => (b.0 - a.0).abs(),
-            _ => 0.0,
+    /// Overlay pixels per world unit at a point, in x and in y (they differ: 73:60 cameras on a 4:3 layer, widen).
+    fn scale_xy(&self, x: f32, y: f32, z: f32) -> (f32, f32) {
+        match (self.project(x, y, z), self.project(x + 1.0, y, z), self.project(x, y + 1.0, z)) {
+            (Some(a), Some(b), Some(c)) => ((b.0 - a.0).abs(), (c.1 - a.1).abs()),
+            _ => (0.0, 0.0),
         }
     }
 }
@@ -1269,27 +1275,30 @@ fn line(ui: &mut crate::ui::Ui, a: (f32, f32), b: (f32, f32), w: f32, c: crate::
     }
 }
 
-fn circle(ui: &mut crate::ui::Ui, p: (f32, f32), r: f32, c: crate::ui::Rgba) {
-    let n = ((r * 0.8) as i32).clamp(8, 40);
+/// An ellipse of radii `rx`, `ry` (a world circle on the overlay layer).
+fn circle(ui: &mut crate::ui::Ui, p: (f32, f32), rx: f32, ry: f32, c: crate::ui::Rgba) {
+    let n = ((rx.max(ry) * 0.8) as i32).clamp(8, 40);
     for i in 0..n {
         let a0 = i as f32 / n as f32 * std::f32::consts::TAU;
         let a1 = (i + 1) as f32 / n as f32 * std::f32::consts::TAU;
-        line(ui, (p.0 + r * a0.cos(), p.1 + r * a0.sin()), (p.0 + r * a1.cos(), p.1 + r * a1.sin()), 1.5, c);
+        line(ui, (p.0 + rx * a0.cos(), p.1 + ry * a0.sin()), (p.0 + rx * a1.cos(), p.1 + ry * a1.sin()), 1.5, c);
     }
 }
 
 fn capsule(ui: &mut crate::ui::Ui, cam: &Camera, a: (f32, f32, f32), b: (f32, f32, f32), r: f32, c: crate::ui::Rgba) {
     let (Some(p), Some(q)) = (cam.project(a.0, a.1, a.2), cam.project(b.0, b.1, b.2)) else { return };
-    let rp = r * cam.scale_at(a.0, a.1, a.2);
-    if rp <= 0.0 || rp > 400.0 {
+    let (sx, sy) = cam.scale_xy(a.0, a.1, a.2);
+    let (rx, ry) = (r * sx, r * sy);
+    if rx <= 0.0 || ry <= 0.0 || rx.max(ry) > 400.0 {
         return;
     }
-    circle(ui, p, rp, c);
+    circle(ui, p, rx, ry, c);
     if (p.0 - q.0).abs() + (p.1 - q.1).abs() > 0.5 {
-        circle(ui, q, rp, c);
-        let (dx, dy) = (q.0 - p.0, q.1 - p.1);
+        circle(ui, q, rx, ry, c);
+        // the tangent lines: the normal in the space where the ellipses are unit circles, mapped back
+        let (dx, dy) = ((q.0 - p.0) / rx, (q.1 - p.1) / ry);
         let l = (dx * dx + dy * dy).sqrt();
-        let (nx, ny) = (-dy / l * rp, dx / l * rp);
+        let (nx, ny) = (-dy / l * rx, dx / l * ry);
         line(ui, (p.0 + nx, p.1 + ny), (q.0 + nx, q.1 + ny), 1.5, c);
         line(ui, (p.0 - nx, p.1 - ny), (q.0 - nx, q.1 - ny), 1.5, c);
     }

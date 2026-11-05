@@ -69,6 +69,8 @@ pub mod if_2F72;
 pub mod if_2FD9;
 pub mod if_2FF2;
 pub mod soundtest;
+pub mod if_3004;
+pub mod if_2FFC;
 pub mod ifhazard;
 pub mod if_2F6E;
 pub mod iftime;

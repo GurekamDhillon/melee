@@ -364,6 +364,68 @@ pub fn gecko_codes(g: &[u8]) -> Vec<GeckoCode> {
     out
 }
 
+/// The gameplay-visible part of a widescreen code found in a replay's Gecko list (see [`widescreen_code`]).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Widescreen {
+    /// Camera_80030BBC's on-screen x bounds (`px < left` or `px >= right` is off screen), from its two `li r0,N` writes.
+    pub left: u16,
+    pub right: u16,
+    /// CObjLoad's perspective aspect becomes `(aspect * num) / den` (f32 multiply, then f32 divide).
+    pub num: f32,
+    pub den: f32,
+}
+
+/// Find the widescreen camera code in a replay's Gecko list, worked out from the code bytes themselves:
+/// - `04 80030C7C 380000LL` and `04 80030C88 3800RRRR`: Camera_80030BBC's scissor loads (`lhz r0,0x20(r1)` and
+///   `lhz r0,0x22(r1)`, the left/right scissor) become constants, so the fighters' on-screen test uses LL..RR;
+/// - `C2 8036A4A8` (CObjLoad, in place of the perspective `lfs f1,0x34(r31)`): loads the aspect, then
+///   `fmuls f1,f1,f2; fdivs f1,f1,f3` with f2/f3 the two floats the code keeps after its `blrl` (bl-over-data).
+/// All three must be present; anything else in the list (name tags, dev text, menus, the magnifier's own constants)
+/// does not change logic. Returns None when the list has no such code.
+pub fn widescreen_code(g: &[u8]) -> Option<Widescreen> {
+    let (mut left, mut right, mut ratio) = (None, None, None);
+    let mut o = 0;
+    while o + 8 <= g.len() {
+        let w0 = be32(g, o)?;
+        let w1 = be32(g, o + 4)?;
+        let kind = (w0 >> 24) as u8;
+        if kind == 0xF0 || (w0 == 0 && w1 == 0) {
+            break;
+        }
+        let extra = match kind & 0xFE {
+            0xC0 | 0xC2 | 0xF2 | 0xF4 => w1 as usize,
+            0x06 => (w1 as usize).div_ceil(8),
+            0x08 => 1,
+            _ => 0,
+        };
+        let total = 8 * (1 + extra);
+        if o + total > g.len() {
+            break;
+        }
+        let addr = 0x8000_0000 | (w0 & 0x01FF_FFFF);
+        match (kind & 0xFE, addr) {
+            (0x04, 0x8003_0C7C) if w1 & 0xFFFF_0000 == 0x3800_0000 => left = Some(w1 as u16),
+            (0x04, 0x8003_0C88) if w1 & 0xFFFF_0000 == 0x3800_0000 => right = Some(w1 as u16),
+            (0xC2, 0x8036_A4A8) => {
+                let words: Vec<u32> = (0..extra * 2).filter_map(|k| be32(g, o + 8 + 4 * k)).collect();
+                let has = |w: u32| words.contains(&w);
+                // lfs f1,0x34(r31) - fmuls f1,f1,f2 - fdivs f1,f1,f3
+                if has(0xC03F_0034) && has(0xEC21_00B2) && has(0xEC21_1824) {
+                    if let Some(i) = words.iter().position(|&w| w == 0x4E80_0021) {
+                        if i + 2 < words.len() {
+                            ratio = Some((f32::from_bits(words[i + 1]), f32::from_bits(words[i + 2])));
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        o += total;
+    }
+    let ((num, den), left, right) = (ratio?, left?, right?);
+    Some(Widescreen { left, right, num, den })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

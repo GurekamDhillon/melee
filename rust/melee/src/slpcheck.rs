@@ -381,6 +381,12 @@ pub fn slpcheck(args: &[String]) -> std::process::ExitCode {
     if std::env::var_os("SLPCHECK_VANILLA_SPAWN").is_none() {
         crate::replay_modes_active();
     }
+    // the replay's own widescreen camera code (if its Gecko list has one) changes the logic's off-screen test
+    let ws = slp::widescreen_code(&file.gecko);
+    melee_core::codes::set_replay_widescreen(ws.map(|w| (w.left, w.right, w.num, w.den)));
+    if let Some(w) = ws {
+        sm.notes = format!("{}{}widescreen code {}..{} x{}/{}", sm.notes, if sm.notes.is_empty() { "" } else { "; " }, w.left, w.right, w.num, w.den);
+    }
     let booted = crate::engine_disc(&iso).and_then(|disc| melee_engine::Engine::boot_vs(disc, 64 << 20, melee_platform::PadSystem::headless(), conv.scn.clone()));
     let mut e = match booted {
         Ok(e) => e,

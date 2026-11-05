@@ -2,9 +2,9 @@
 
 #include <placeholder.h>
 
+#include "forward.h"
 #include "inlines.h"
 #include "mnmain.h"
-#include "mnstagesel.static.h"
 #include <melee/gm/gm_unsplit.h>
 #include <melee/gm/gmmain_lib.h>
 #include <melee/lb/lb_00B0.h>
@@ -14,6 +14,7 @@
 #include <melee/lb/lbdvd.h>
 #include <melee/lb/lblanguage.h>
 #include <melee/lb/types.h>
+#include <sysdolphin/baselib/cobj.h> // IWYU pragma: keep
 #include <sysdolphin/baselib/controller.h>
 #include <sysdolphin/baselib/fog.h>
 #include <sysdolphin/baselib/gobj.h>
@@ -32,6 +33,132 @@
 #include <sysdolphin/baselib/mobj.h>
 #include <sysdolphin/baselib/tobj.h>
 #endif
+
+/// Number of actual (selectable) stages on the retail stage-select screen.
+#define NUM_STAGES_RETAIL 29
+/// Retail stage-select icons: ::NUM_STAGES_RETAIL stages plus the trailing
+/// "Random" entry at index ::NUM_STAGES_RETAIL.
+#define SSS_ICON_COUNT_RETAIL (NUM_STAGES_RETAIL + 1)
+
+#if defined(TARGET_PC)
+/// Rows #mnStageSel_803F06D0 is compiled for. Akaneia ships 67 icons and ACE
+/// 163; `Mex_SssIconCount()` rejects anything past GW_MEX_SSS_MAX, which is
+/// this same number, so disc data can never overrun the table.
+#define SSS_ICON_MAX 256
+/// Live icon counts, read from `mexData.metadata.sss_icon_count`. Ported from
+/// m-ex (https://github.com/akaneia/m-ex): asm/m-ex/SSS Expansion/, whose
+/// MnSlMap References/ patches replace retail's constant 29/30 with that count
+/// at ~40 call sites. These hold the retail values until mnStageSel_MexSetup()
+/// finds an m-ex table, so a vanilla disc behaves exactly as it did.
+static int mnStageSel_NumStages = NUM_STAGES_RETAIL;
+static int mnStageSel_IconCount = SSS_ICON_COUNT_RETAIL;
+/// Non-zero once the table came from mexData. Guards the places where retail's
+/// fixed 30-icon screen geometry is assumed.
+static bool mnStageSel_MexActive;
+#define NUM_STAGES mnStageSel_NumStages
+#define SSS_ICON_COUNT mnStageSel_IconCount
+/// First m-ex-ADDED external stage id (external 288+k -> internal 71+k, the
+/// same on Akaneia and ACE). Retail ids are below it, and they are the only
+/// ones with a bit in the save file's random-stage mask.
+#define SSS_EXT_MEX_FIRST 288
+/// Rows in `lbl_803B7808[]` (gm/gm_1601.static.h), which an icon's `xA` is an
+/// index into. Retail never produces an out-of-range one; a disc's own table
+/// can, so #sss_random_ok checks it.
+#define SSS_RANDOM_ID_COUNT 30
+#else
+#define NUM_STAGES NUM_STAGES_RETAIL
+#define SSS_ICON_COUNT SSS_ICON_COUNT_RETAIL
+#endif
+/// Iteration cap for the random-stage picker in mnStageSel_802599EC.
+#define MAX_ITER 100000
+
+/// One stage-select icon: model joint, random-picker cooldown, type/preview/
+/// random-slot bytes, the external stage id, then the cursor's half-width and
+/// half-height and the cursor's x/y scale.
+///
+/// Under TARGET_PC `stkind` is an `s32`: m-ex's external stage space is 313
+/// ids on Akaneia and 372 on ACE, and neither fits the retail `u8`. m-ex made
+/// the same change - in its own table the byte is always zero and the id lives
+/// in a word of its own at +0x1C. The field ORDER is left alone so the retail
+/// rows below read identically in both builds.
+struct StageListInfo {
+    HSD_JObj* x0;
+    int x4;
+#if defined(TARGET_PC)
+    u8 x8, x9, xA;
+    s32 stkind;
+    f32 xC, x10, x14, x18;
+} mnStageSel_803F06D0[SSS_ICON_MAX] = {
+#else
+    u8 x8, x9, xA, stkind;
+    f32 xC, x10, x14, x18;
+} mnStageSel_803F06D0[30] = {
+#endif
+    { 0, 0, 0x2, 0x00, 0x00, 0x04, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x01, 0x0C, 0x0B, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x02, 0x01, 0x05, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x03, 0x0D, 0x0C, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x04, 0x02, 0x0D, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x05, 0x0E, 0x0E, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x08, 0x04, 0x08, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x09, 0x10, 0x10, 2.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0A, 0x05, 0x02, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0B, 0x11, 0x11, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0C, 0x06, 0x07, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0D, 0x12, 0x16, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x06, 0x03, 0x06, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x07, 0x0F, 0x0F, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x12, 0x09, 0x09, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x13, 0x15, 0x12, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x10, 0x08, 0x0A, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x11, 0x14, 0x18, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0E, 0x07, 0x03, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x0F, 0x13, 0x17, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x14, 0x0B, 0x13, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x15, 0x16, 0x14, 3.1F, 2.7F, 1.0F, 1.0F },
+    { 0, 0, 0x2, 0x16, 0x0A, 0x19, 3.1F, 2.9F, 1.0F, 1.1F },
+    { 0, 0, 0x2, 0x17, 0x17, 0x1B, 3.1F, 2.9F, 1.0F, 1.1F },
+    { 0, 0, 0x2, 0x18, 0x18, 0x1F, 2.9F, 2.1F, 0.8F, 0.8F },
+    { 0, 0, 0x2, 0x19, 0x19, 0x20, 2.9F, 2.1F, 0.8F, 0.8F },
+    { 0, 0, 0x2, 0x1A, 0x1A, 0x1C, 2.9F, 2.1F, 0.8F, 0.8F },
+    { 0, 0, 0x2, 0x1B, 0x1B, 0x1D, 2.9F, 2.1F, 0.8F, 0.8F },
+    { 0, 0, 0x2, 0x1C, 0x1C, 0x1E, 2.9F, 2.1F, 0.8F, 0.8F },
+    { 0, 0, 0x2, 0x1D, 0x00, 0x00, 3.6F, 2.7F, 1.2F, 1.0F },
+};
+#ifndef M2CTX
+#if defined(TARGET_PC)
+ASSERT_SIZE(mnStageSel_803F06D0[0], 0x20);
+#else
+ASSERT_SIZE(mnStageSel_803F06D0[0], 0x1C);
+#endif
+#endif
+
+static s8 mnStageSel_804D50A0 = -1;
+
+static SSSData* sss_data;
+static HSD_Archive* mnStageSel_804D6C94;
+static MnSelectStageModels* sss_models;
+static HSD_GObj* mnStageSel_804D6C9C;
+static u32 mnStageSel_804D6CA0;
+static u32 mnStageSel_804D6CA4;
+static s32 mnStageSel_804D6CA8;
+static s8 mnStageSel_804D6CAC;
+static s8 mnStageSel_804D6CAD;
+#if defined(TARGET_PC)
+/* The hovered icon, with #SSS_ICON_COUNT as the "nothing hovered" sentinel. A
+ * u8 still holds ACE's 163, but nothing in the data caps the count at 255, and
+ * an index that wraps silently hovers a different stage. */
+static s32 mnStageSel_804D6CAE;
+#else
+static u8 mnStageSel_804D6CAE;
+#endif
+static u8 mnStageSel_804D6CAF;
+
+struct StageSelUserData {
+    u16 x0;
+    u16 x2;
+    int x4;
+};
 
 /// @todo .sdata2 order hack
 #ifdef MUST_MATCH
@@ -194,7 +321,7 @@ static void mnStageSel_MexSetup(HSD_Archive* archive)
     }
 
     for (i = 0; i < n; i++) {
-        struct stagelistinfo* icon = &mnStageSel_803F06D0[i];
+        struct StageListInfo* icon = &mnStageSel_803F06D0[i];
         icon->x0 = NULL;
         icon->x4 = 0;
         icon->x8 = tbl[i].type;
@@ -223,7 +350,7 @@ static void mnStageSel_MexScanUnlocked(void)
 {
     int i;
     for (i = 0; i < SSS_ICON_COUNT; i++) {
-        struct stagelistinfo* icon = &mnStageSel_803F06D0[i];
+        struct StageListInfo* icon = &mnStageSel_803F06D0[i];
         int grkind;
         if (icon->x8 == 0 || icon->x8 == 3) {
             continue; /* hidden slot, or the Random icon: keep what m-ex
@@ -269,14 +396,14 @@ static void mnStageSel_MexInitIcons(void)
 
     pos = root->child;
     for (i = 0; i < SSS_ICON_COUNT && pos != NULL; i++, pos = pos->next) {
-        struct stagelistinfo* icon = &mnStageSel_803F06D0[i];
+        struct StageListInfo* icon = &mnStageSel_803F06D0[i];
         HSD_JObj* jobj;
         HSD_GObj* g = GObj_Create(4, 5, 0x80);
 
         /* The Random icon keeps retail's own model - it is the one icon whose
          * art is not a frame of the shared icon matanim. */
         jobj =
-            HSD_JObjLoadJoint(icon->x8 == 3 ? mnStageSel_804D6C98->x10.joint
+            HSD_JObjLoadJoint(icon->x8 == 3 ? sss_models->icon_random.joint
                                             : mnStageSel_MexMap->icon_joint);
         HSD_GObjObject_80390A70(g, HSD_GObj_JObjKind, jobj);
         GObj_SetupGXLink(g, HSD_GObj_JObjCallback, 4, 0x83);
@@ -500,12 +627,13 @@ skip_randomize:
 #endif
 
     gobj = GObj_Create(HSD_GOBJ_CLASS_FIGHTER, 5, 0x80);
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->xB0);
+    jobj = HSD_JObjLoadJoint(sss_models->now_loading.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x87);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 0);
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->xB4,
-                       mnStageSel_804D6C98->xB8, mnStageSel_804D6C98->xBC);
+    HSD_JObjAddAnimAll(jobj, sss_models->now_loading.animjoint,
+                       sss_models->now_loading.matanim_joint,
+                       sss_models->now_loading.shapeanim_joint);
     HSD_JObjReqAnimAll(gobj->hsd_obj, 0.0F);
     HSD_JObjAnimAll(gobj->hsd_obj);
     mnStageSel_804D6CAF = 1;
@@ -571,22 +699,22 @@ void mnStageSel_80259ED8(int id)
     u8 _[4];
 
     gobj = GObj_Create(HSD_GOBJ_CLASS_FIGHTER, 5, 0x80);
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x30.joint);
+    jobj = HSD_JObjLoadJoint(sss_models->stage_name.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x84);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 1);
 #if defined(TARGET_PC)
     /* m-ex's stage-name strip is its own matanim with one frame per ICON, in
      * place of retail's 30-name strip indexed by preview id. */
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x30.animjoint,
+    HSD_JObjAddAnimAll(jobj, sss_models->stage_name.animjoint,
                        mnStageSel_MexMap != NULL
                            ? mnStageSel_MexMap->stagename_matanim
-                           : mnStageSel_804D6C98->x30.matanim_joint,
-                       mnStageSel_804D6C98->x30.shapeanim_joint);
+                           : sss_models->stage_name.matanim_joint,
+                       sss_models->stage_name.shapeanim_joint);
 #else
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x30.animjoint,
-                       mnStageSel_804D6C98->x30.matanim_joint,
-                       mnStageSel_804D6C98->x30.shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, sss_models->stage_name.animjoint,
+                       sss_models->stage_name.matanim_joint,
+                       sss_models->stage_name.shapeanim_joint);
 #endif
     jobj = GET_JOBJ(gobj);
     temp_r3_2 = HSD_MemAlloc(sizeof(struct StageSelUserData));
@@ -606,13 +734,15 @@ void mnStageSel_80259ED8(int id)
     }
 }
 
+struct StagePreviewUserData {
+    u32 x0;
+    u32 x4;
+};
+
 void fn_8025A090(HSD_GObj* gobj)
 {
     u32 var_r3;
-    struct {
-        u32 x0;
-        u32 x4;
-    }* temp_r30;
+    struct StagePreviewUserData* temp_r30;
     HSD_JObj* jobj;
 
     jobj = GET_JOBJ(gobj);
@@ -705,9 +835,7 @@ void fn_8025A310(HSD_GObj* gobj)
 
 void fn_8025A560(HSD_GObj* gobj)
 {
-    struct StageSelUserData {
-        int x0;
-    }* temp_r30;
+    s32* temp_r30;
     Vec3 sp10;
     HSD_JObj* jobj = GET_JOBJ(gobj);
     temp_r30 = HSD_GObjGetUserData(gobj);
@@ -739,8 +867,8 @@ void fn_8025A560(HSD_GObj* gobj)
         HSD_JObjAnimAll(jobj);
         return;
     }
-    if (++temp_r30->x0 >= 10) {
-        temp_r30->x0 = 0;
+    if (++*temp_r30 >= 10) {
+        *temp_r30 = 0;
         HSD_JObjReqAnimAll(jobj, 0.0F);
         HSD_JObjAnimAll(jobj);
     }
@@ -756,7 +884,7 @@ void fn_8025A91C(HSD_GObj* gobj)
     }
 }
 
-void fn_8025A974(HSD_GObj* gobj, int unused)
+void fn_8025A974(HSD_GObj* gobj, intptr_t unused)
 {
     HSD_FogSet(gobj->hsd_obj);
 }
@@ -768,26 +896,26 @@ static inline void make_stage_icon(HSD_JObj** out)
     HSD_GObj* gobj;
     HSD_JObj* jobj;
     gobj = GObj_Create(4, 5, 0x80);
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x40.joint);
+    jobj = HSD_JObjLoadJoint(sss_models->icon_stacked.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x83);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 3);
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x40.animjoint,
-                       mnStageSel_804D6C98->x40.matanim_joint,
-                       mnStageSel_804D6C98->x40.shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, sss_models->icon_stacked.animjoint,
+                       sss_models->icon_stacked.matanim_joint,
+                       sss_models->icon_stacked.shapeanim_joint);
     *out = GET_JOBJ(gobj);
 }
 
 static inline void attach_menu_model(HSD_GObj* gobj)
 {
     HSD_JObj* jobj;
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->xA0.joint);
+    jobj = HSD_JObjLoadJoint(sss_models->background.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x80);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 0);
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->xA0.animjoint,
-                       mnStageSel_804D6C98->xA0.matanim_joint,
-                       mnStageSel_804D6C98->xA0.shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, sss_models->background.animjoint,
+                       sss_models->background.matanim_joint,
+                       sss_models->background.shapeanim_joint);
 }
 
 static inline void make_bg_model(HSD_JObj** out)
@@ -795,13 +923,13 @@ static inline void make_bg_model(HSD_JObj** out)
     HSD_GObj* gobj;
     HSD_JObj* jobj;
     gobj = GObj_Create(4, 5, 0x80);
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x50.joint);
+    jobj = HSD_JObjLoadJoint(sss_models->menu_border.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x82);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 0);
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x50.animjoint,
-                       mnStageSel_804D6C98->x50.matanim_joint,
-                       mnStageSel_804D6C98->x50.shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, sss_models->menu_border.animjoint,
+                       sss_models->menu_border.matanim_joint,
+                       sss_models->menu_border.shapeanim_joint);
     *out = gobj->hsd_obj;
 }
 
@@ -810,13 +938,13 @@ static inline void make_icon_root(HSD_JObj** icons)
     HSD_GObj* gobj;
     HSD_JObj* jobj;
     gobj = GObj_Create(4, 5, 0x80);
-    jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x90.joint);
+    jobj = HSD_JObjLoadJoint(sss_models->layout.joint);
     HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
     GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x82);
     HSD_GObj_SetupProc(gobj, mn_8022EAE0, 4);
-    HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x90.animjoint,
-                       mnStageSel_804D6C98->x90.matanim_joint,
-                       mnStageSel_804D6C98->x90.shapeanim_joint);
+    HSD_JObjAddAnimAll(jobj, sss_models->layout.animjoint,
+                       sss_models->layout.matanim_joint,
+                       sss_models->layout.shapeanim_joint);
     icons[0] = GET_JOBJ(gobj)->child;
     HSD_JObjReqAnimAll(icons[0], 0.0F);
     HSD_JObjAnimAll(icons[0]);
@@ -835,13 +963,7 @@ void mnStageSel_Scene_OnEnter(void* arg0)
     Vec3 spCC;
 
     int i;
-    struct {
-        HSD_CObjDesc* unk0;
-        HSD_LightDesc* unk4;
-        HSD_LightDesc* unk8;
-        HSD_FogDesc* unkC;
-        struct mnStageSel_804D6C98_t x10;
-    }* temp_r3;
+    struct MnSelectStageDataTable* sss_data_table;
 
     PAD_STACK(0xDC - 0x50);
 
@@ -853,10 +975,11 @@ void mnStageSel_Scene_OnEnter(void* arg0)
         } else {
             mnStageSel_804D6C94 = lbArchive_LoadArchive("MnSlMap.dat");
         }
-        temp_r3 = HSD_ArchiveGetPublicAddress(mnStageSel_804D6C94,
+        sss_data_table = HSD_ArchiveGetPublicAs(struct MnSelectStageDataTable,
+                                                mnStageSel_804D6C94,
                                               "MnSelectStageDataTable");
-        MenMain_cam = temp_r3->unk0;
-        mnStageSel_804D6C98 = &temp_r3->x10;
+        MenMain_cam = sss_data_table->cam;
+        sss_models = &sss_data_table->models;
 #if defined(TARGET_PC)
         mnStageSel_MexSetup(mnStageSel_804D6C94);
 #endif
@@ -882,8 +1005,8 @@ void mnStageSel_Scene_OnEnter(void* arg0)
             HSD_LObj* lobj1;
             HSD_LObj* lobj2;
             gobj = GObj_Create(3, 4, 0x80);
-            lobj1 = HSD_LObjLoadDesc(temp_r3->unk4);
-            lobj2 = HSD_LObjLoadDesc(temp_r3->unk8);
+            lobj1 = HSD_LObjLoadDesc(sss_data_table->light0);
+            lobj2 = HSD_LObjLoadDesc(sss_data_table->light1);
             HSD_LObjSetNext(lobj1, lobj2);
             HSD_GObjObject_80390A70(gobj, (u8) HSD_GObj_LightKind, lobj1);
             GObj_SetupGXLink(gobj, HSD_GObj_LObjCallback, 0, 0x80);
@@ -891,7 +1014,7 @@ void mnStageSel_Scene_OnEnter(void* arg0)
 
         {
             HSD_GObj* gobj = GObj_Create(0xE, 0xF, 0);
-            HSD_Fog* fog = HSD_FogLoadDesc(temp_r3->unkC);
+            HSD_Fog* fog = HSD_FogLoadDesc(sss_data_table->fog);
             HSD_GObjObject_80390A70(gobj, HSD_GObj_FogKind, fog);
             GObj_SetupGXLink(gobj, fn_8025A974, 0, 0x80);
         }
@@ -984,13 +1107,13 @@ void mnStageSel_Scene_OnEnter(void* arg0)
                 HSD_GObj* gobj = GObj_Create(4, 5, 0x80);
                 s32 temp_r22_7;
                 HSD_JObj* temp_r23_3;
-                jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x20.joint);
+                jobj = HSD_JObjLoadJoint(sss_models->icon_special.joint);
                 HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
                 GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x83);
                 HSD_GObj_SetupProc(gobj, mn_8022EAE0, 3);
-                HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x20.animjoint,
-                                   mnStageSel_804D6C98->x20.matanim_joint,
-                                   mnStageSel_804D6C98->x20.shapeanim_joint);
+                HSD_JObjAddAnimAll(jobj, sss_models->icon_special.animjoint,
+                                   sss_models->icon_special.matanim_joint,
+                                   sss_models->icon_special.shapeanim_joint);
                 temp_r23_3 = gobj->hsd_obj;
                 lb_8000C1C0(temp_r23_3, spDC[i]);
                 mnStageSel_803F06D0[i + 13].x0 = temp_r23_3;
@@ -1012,13 +1135,13 @@ void mnStageSel_Scene_OnEnter(void* arg0)
                 HSD_JObj* jobj;
                 HSD_GObj* gobj = GObj_Create(4, 5, 0x80);
                 HSD_JObj* temp_r22_8;
-                jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x10.joint);
+                jobj = HSD_JObjLoadJoint(sss_models->icon_random.joint);
                 HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
                 GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x83);
                 HSD_GObj_SetupProc(gobj, mn_8022EAE0, 3);
-                HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x10.animjoint,
-                                   mnStageSel_804D6C98->x10.matanim_joint,
-                                   mnStageSel_804D6C98->x10.shapeanim_joint);
+                HSD_JObjAddAnimAll(jobj, sss_models->icon_random.animjoint,
+                                   sss_models->icon_random.matanim_joint,
+                                   sss_models->icon_random.shapeanim_joint);
                 temp_r22_8 = gobj->hsd_obj;
                 lb_8000C1C0(temp_r22_8, spDC[0x10]);
                 do_anim(temp_r22_8, 2);
@@ -1031,14 +1154,14 @@ void mnStageSel_Scene_OnEnter(void* arg0)
                 HSD_GObj* gobj = GObj_Create(4, 5, 0x80);
                 s32 temp_r22_9;
                 HSD_JObj* temp_r23_6;
-                jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x0.joint);
+                jobj = HSD_JObjLoadJoint(sss_models->icon_large.joint);
                 HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
                 GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x83);
                 HSD_GObj_SetupProc(gobj, mn_8022EAE0, 3);
-                animjoint = mnStageSel_804D6C98->x0.animjoint;
+                animjoint = sss_models->icon_large.animjoint;
                 HSD_JObjAddAnimAll(jobj, animjoint,
-                                   mnStageSel_804D6C98->x0.matanim_joint,
-                                   mnStageSel_804D6C98->x0.shapeanim_joint);
+                                   sss_models->icon_large.matanim_joint,
+                                   sss_models->icon_large.shapeanim_joint);
 
                 temp_r23_6 = gobj->hsd_obj;
                 lb_8000C1C0(temp_r23_6, spDC[i]);
@@ -1062,13 +1185,13 @@ void mnStageSel_Scene_OnEnter(void* arg0)
             HSD_JObj* jobj;
             HSD_GObj* gobj;
             gobj = GObj_Create(4, 5, 0x80);
-            jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x80.joint);
+            jobj = HSD_JObjLoadJoint(sss_models->cursor.joint);
             HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
             GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x86);
             HSD_GObj_SetupProc(gobj, mn_8022EAE0, 2);
-            HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x80.animjoint,
-                               mnStageSel_804D6C98->x80.matanim_joint,
-                               mnStageSel_804D6C98->x80.shapeanim_joint);
+            HSD_JObjAddAnimAll(jobj, sss_models->cursor.animjoint,
+                               sss_models->cursor.matanim_joint,
+                               sss_models->cursor.shapeanim_joint);
 
             {
                 HSD_JObj* jobj2;
@@ -1087,13 +1210,13 @@ void mnStageSel_Scene_OnEnter(void* arg0)
             HSD_JObj* jobj;
             HSD_GObj* gobj;
             gobj = GObj_Create(HSD_GOBJ_CLASS_FIGHTER, 5, 0x80);
-            jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x30.joint);
+            jobj = HSD_JObjLoadJoint(sss_models->stage_name.joint);
             HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
             GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x84);
             HSD_GObj_SetupProc(gobj, mn_8022EAE0, 1);
-            HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x30.animjoint,
-                               mnStageSel_804D6C98->x30.matanim_joint,
-                               mnStageSel_804D6C98->x30.shapeanim_joint);
+            HSD_JObjAddAnimAll(jobj, sss_models->stage_name.animjoint,
+                               sss_models->stage_name.matanim_joint,
+                               sss_models->stage_name.shapeanim_joint);
             {
                 struct StageSelUserData* userdata;
                 HSD_JObj* jobj = GET_JOBJ(gobj);
@@ -1109,20 +1232,18 @@ void mnStageSel_Scene_OnEnter(void* arg0)
         {
             HSD_JObj* jobj;
             HSD_GObj* gobj = GObj_Create(4, 5, 0x80);
-            jobj = HSD_JObjLoadJoint(mnStageSel_804D6C98->x60.joint);
+            jobj = HSD_JObjLoadJoint(sss_models->stage_preview.joint);
             HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, jobj);
             GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x81);
             HSD_GObj_SetupProc(gobj, mn_8022EAE0, 1);
-            HSD_JObjAddAnimAll(jobj, mnStageSel_804D6C98->x60.animjoint,
-                               mnStageSel_804D6C98->x60.matanim_joint,
-                               mnStageSel_804D6C98->x60.shapeanim_joint);
+            HSD_JObjAddAnimAll(jobj, sss_models->stage_preview.animjoint,
+                               sss_models->stage_preview.matanim_joint,
+                               sss_models->stage_preview.shapeanim_joint);
 
             {
                 HSD_GObj* g;
                 HSD_JObj* jobj;
-                struct foo {
-                    int x0, x4;
-                }* temp_r3_14;
+                struct StagePreviewUserData* temp_r3_14;
                 g = gobj;
                 jobj = GET_JOBJ(g);
                 temp_r3_14 = HSD_MemAlloc(sizeof(*temp_r3_14));
@@ -1142,14 +1263,14 @@ void mnStageSel_Scene_OnEnter(void* arg0)
             HSD_JObj* jobj;
             HSD_GObj* gobj = GObj_Create(4, 5, 0x80);
             HSD_JObj* temp_r3_15 =
-                HSD_JObjLoadJoint(mnStageSel_804D6C98->x70.joint);
+                HSD_JObjLoadJoint(sss_models->icon_hover.joint);
             s32* temp_r3_16;
             HSD_GObjObject_80390A70(gobj, HSD_GObj_JObjKind, temp_r3_15);
             GObj_SetupGXLink(gobj, HSD_GObj_JObjCallback, 4, 0x85);
             HSD_GObj_SetupProc(gobj, mn_8022EAE0, 1);
-            HSD_JObjAddAnimAll(temp_r3_15, mnStageSel_804D6C98->x70.animjoint,
-                               mnStageSel_804D6C98->x70.matanim_joint,
-                               mnStageSel_804D6C98->x70.shapeanim_joint);
+            HSD_JObjAddAnimAll(temp_r3_15, sss_models->icon_hover.animjoint,
+                               sss_models->icon_hover.matanim_joint,
+                               sss_models->icon_hover.shapeanim_joint);
             jobj = gobj->hsd_obj;
             temp_r3_16 = HSD_MemAlloc(sizeof(*temp_r3_16));
             GObj_InitUserData(gobj, 4, HSD_Free, temp_r3_16);
@@ -1352,7 +1473,7 @@ int mnStageSel_PcArtOpen(HSD_Archive* archive)
         void* unk4;
         void* unk8;
         void* unkC;
-        struct mnStageSel_804D6C98_t x10;
+        MnSelectStageModels x10;
     }* data;
     int n;
     mnStageSel_PcMexIcon = NULL;
@@ -1366,7 +1487,7 @@ int mnStageSel_PcArtOpen(HSD_Archive* archive)
     if (data == NULL) {
         return 0;
     }
-    mnStageSel_804D6C98 = &data->x10;
+    sss_models = &data->x10;
     mnStageSel_PcCount = SSS_ICON_COUNT_RETAIL;
     mnStageSel_PcMex = HSD_ArchiveGetPublicAddress(archive, "mexMapData");
     n = Mex_SssIconCount();
@@ -1411,11 +1532,11 @@ int mnStageSel_PcArtName(int i, HSD_ImageDesc** img, HSD_Tlut** tlut)
     int bw = 0;
     *img = NULL;
     *tlut = NULL;
-    if (i < 0 || i >= mnStageSel_PcCount || mnStageSel_804D6C98 == NULL) {
+    if (i < 0 || i >= mnStageSel_PcCount || sss_models == NULL) {
         return 0;
     }
     if (mnStageSel_PcName == NULL) {
-        StaticModelDesc* m = &mnStageSel_804D6C98->x30;
+        StaticModelDesc* m = &sss_models->stage_name;
         mnStageSel_PcName = HSD_JObjLoadJoint(m->joint);
         HSD_JObjAddAnimAll(mnStageSel_PcName, m->animjoint,
                            mnStageSel_PcMex != NULL ? mnStageSel_PcMex->stagename_matanim
@@ -1443,7 +1564,7 @@ int mnStageSel_PcArtIcon(int i, int* ext, int* type, HSD_ImageDesc** img, HSD_Tl
     int area = 0;
     *img = NULL;
     *tlut = NULL;
-    if (i < 0 || i >= mnStageSel_PcCount || mnStageSel_804D6C98 == NULL) {
+    if (i < 0 || i >= mnStageSel_PcCount || sss_models == NULL) {
         return 0;
     }
     if (mnStageSel_PcMex != NULL) {
@@ -1454,31 +1575,31 @@ int mnStageSel_PcArtIcon(int i, int* ext, int* type, HSD_ImageDesc** img, HSD_Tl
             return 1;
         }
         if (row->type == 3) {
-            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x10);
+            at = j = mnStageSel_PcModel(&sss_models->icon_random);
             do_anim(j, 2);
         } else {
             at = j = mnStageSel_PcMexIcon;
             do_anim(j, row->type == 1 ? 1 : i + 2);
         }
     } else {
-        struct stagelistinfo* row = &mnStageSel_803F06D0[i];
+        struct StageListInfo* row = &mnStageSel_803F06D0[i];
         *ext = row->stkind;
         *type = i == NUM_STAGES_RETAIL ? 3 : 2;
         if (i < 22) {
             /* the pair model: the even row is the second child, the odd row the first */
-            j = mnStageSel_PcModel(&mnStageSel_804D6C98->x40);
+            j = mnStageSel_PcModel(&sss_models->icon_stacked);
             at = (i & 1) ? j->child : j->child->next;
             HSD_JObjReqAnimAll(j, 0.0F);
             HSD_JObjReqAnimAllByFlags(at, 0x10, row->x9 / 2 + 2);
             HSD_JObjAnimAll(j);
         } else if (i < 24) {
-            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x0);
+            at = j = mnStageSel_PcModel(&sss_models->icon_large);
             do_anim(j, row->x9 - 0x14);
         } else if (i < NUM_STAGES_RETAIL) {
-            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x20);
+            at = j = mnStageSel_PcModel(&sss_models->icon_special);
             do_anim(j, row->x9 - 0x16);
         } else {
-            at = j = mnStageSel_PcModel(&mnStageSel_804D6C98->x10);
+            at = j = mnStageSel_PcModel(&sss_models->icon_random);
             do_anim(j, 2);
         }
     }

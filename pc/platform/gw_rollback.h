@@ -22,7 +22,7 @@
  *   default 2). The peer therefore receives, at time t, the input for t + D; it costs nothing
  *   until the network latency exceeds D frames, after which the difference is rolled back.
  *
- * WHERE INPUTS ARE INJECTED. At the fighter's pad read (Fighter_Spaghetti_8006AD10), through
+ * WHERE INPUTS ARE INJECTED. At the fighter's pad read (Fighter_procInput), through
  *   gw_replay.c's accessors, exactly as .slp playback does; with a session active they read the
  *   session's per-frame ring instead of the replay. (Live pads join the ring through
  *   gw_rb_submit_local_input - see below - which is where the game's deadzone/calibration

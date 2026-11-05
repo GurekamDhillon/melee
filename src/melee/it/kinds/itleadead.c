@@ -139,7 +139,8 @@ ItemStateTable it_803F8EB0[] = {
 void it_802E8BCC(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     s32 facing;
 
     it_8027B730(gobj);
@@ -164,7 +165,8 @@ void it_802E8BCC(Item_GObj* gobj)
 bool it_802E8CD8(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     PAD_STACK(24);
 
     if (ip->xDD4_itemVar.leadead.x38 != NULL) {
@@ -252,7 +254,8 @@ bool itLeadead_UnkMotion1_Coll(Item_GObj* gobj)
 void it_802E9038(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     ip->x40_vel.x = ip->facing_dir * attr->x0->x4;
     ip->x40_vel.z = 0.0f;
     ip->x40_vel.y = 0.0f;
@@ -269,7 +272,8 @@ void it_802E9038(Item_GObj* gobj)
 static inline void itLeadead_UnkMotion2_Anim_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     ip->x40_vel.x = ip->facing_dir * attr->x0->x4;
     ip->x40_vel.y = ip->x40_vel.z = 0.0f;
     it_8027C56C(gobj, ip->facing_dir);
@@ -293,7 +297,8 @@ bool itLeadead_UnkMotion2_Anim(Item_GObj* gobj)
 void itLeadead_UnkMotion2_Phys(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     s32 r3 = it_802EA674(gobj);
     s32 x48 = ip->xDD4_itemVar.leadead.x48;
     if (x48 == 0) {
@@ -336,7 +341,8 @@ bool itLeadead_UnkMotion2_Coll(Item_GObj* gobj)
 static inline void it_802E9308_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     ip->xDD4_itemVar.leadead.x48 = 0;
     ip->x40_vel.x *= attr->xC;
     Item_80268E5C(gobj, 0xA, ITEM_ANIM_UPDATE);
@@ -369,7 +375,8 @@ bool itLeadead_UnkMotion10_Coll(Item_GObj* gobj)
 void it_802E93C8(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     s32 facing;
     if (it_8027B798(gobj, &ip->x40_vel) != 0) {
         if (ip->x40_vel.y <= 0.2f) {
@@ -394,7 +401,8 @@ void it_802E93C8(Item_GObj* gobj)
 void it_802E9494(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     f32 fall_speed;
     if (it_8027B798(gobj, &ip->x40_vel) != 0) {
         if (ip->x40_vel.y <= 0.2f) {
@@ -518,7 +526,8 @@ bool itLeadead_UnkMotion7_Coll(Item_GObj* gobj)
 void it_802E98E0(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     itResetVelocity(ip);
     ip->xDC8_word.flags.x1A = false;
     ip->xDD4_itemVar.leadead.x48 = ip->xC9C * attr->x1A;
@@ -601,7 +610,8 @@ void it_802E9BA0(Item_GObj* gobj)
 static inline void itLeadead_UnkMotion3_Anim_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     ip->xDD4_itemVar.leadead.x48 = attr->x18 * 3;
 }
 
@@ -650,7 +660,8 @@ bool itLeadead_UnkMotion4_Anim(Item_GObj* gobj)
 void itLeadead_UnkMotion4_Phys(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     if (ip->xDD4_itemVar.leadead.x48 > 0x24) {
         ip->x40_vel.x = attr->x14 * ip->facing_dir;
     }
@@ -663,7 +674,8 @@ void itLeadead_UnkMotion4_Phys(Item_GObj* gobj)
 static void itLeadead_UnkMotion4_Coll_inline(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     ip->x40_vel.x = ip->facing_dir * attr->x0->x4;
     ip->x40_vel.y = ip->x40_vel.z = 0.0f;
     it_8027C56C(gobj, ip->facing_dir);
@@ -714,7 +726,8 @@ bool itLeadead_UnkMotion5_Coll(Item_GObj* gobj)
 bool itLeadead_UnkMotion6_Anim(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     if (it_80272C6C(gobj) == 0) {
         ip->xDD4_itemVar.leadead.x4C = attr->x1C;
         ip->xDD4_itemVar.leadead.x48 = 0;
@@ -909,13 +922,13 @@ s32 it_802EA674(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
     s32 result = 0;
-    HSD_GObj* fighter = ftLib_8008627C(&ip->pos, NULL);
+    HSD_GObj* fighter = ftLib_FindNearestOpponent(&ip->pos, NULL);
     PAD_STACK(4);
     if (fighter != NULL) {
         Vec3 v;
         f32 facing;
         PAD_STACK(4);
-        ftLib_80086644(fighter, &v);
+        ftLib_GetPos(fighter, &v);
         if (ip->pos.x < v.x) {
             facing = 1.0f;
         } else {
@@ -936,16 +949,16 @@ s32 it_802EA6F4(Item_GObj* gobj)
     s32 result = 0;
     PAD_STACK(8);
     ip = GET_ITEM(gobj);
-    attr = ip->xC4_article_data->x4_specialAttributes;
+    attr = &ip->xC4_article_data->x4_specialAttributes->leadead;
     if (ip->xDD4_itemVar.leadead.x4C == 0) {
         if (HSD_Randi(attr->x1E) == 0) {
-            HSD_GObj* fighter = ftLib_8008627C(&ip->pos, NULL);
+            HSD_GObj* fighter = ftLib_FindNearestOpponent(&ip->pos, NULL);
             if (fighter != NULL) {
                 f32 dx, dy;
                 if (it_8027CA7C(fighter) != 0) {
                     return 0;
                 }
-                ftLib_80086644(fighter, &sp18);
+                ftLib_GetPos(fighter, &sp18);
                 dx = sp18.x - ip->pos.x;
                 if (dx < 0.0f) {
                     dx = -dx;
@@ -1063,7 +1076,7 @@ void it_802EAAEC(Item_GObj* gobj, Fighter_GObj* fobj, int part, f32 ignored)
     HSD_JObjSetTranslateZ(jobj, it_802EAAEC_inline(ip2));
     it_80274ECC(gobj, 1);
     Item_8026AE84(ip, 0x135, 0x7F, 0x40);
-    ftLib_80086644(fobj, &sp24);
+    ftLib_GetPos(fobj, &sp24);
     if (ip->pos.x < sp24.x) {
         ip->facing_dir = 1.0f;
     } else {
@@ -1087,15 +1100,16 @@ void it_802EAC8C(Item_GObj* gobj)
     Vec3 sp1C;
     Vec3 offset;
     Item* ip = GET_ITEM(gobj);
-    itLeadeadAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLeadeadAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->leadead;
     HSD_JObj* jobj;
 
     it_80275070(gobj, 0);
     offset.z = -ip->xDD4_itemVar.leadead.x3C;
     offset.y = 0.0f;
     offset.x = 0.0f;
-    lb_8000B1CC(ftLib_80086630(ip->xDD4_itemVar.leadead.x38,
-                               ip->xDD4_itemVar.leadead.xE14),
+    lb_8000B1CC(ftLib_GetPartJObj(ip->xDD4_itemVar.leadead.x38,
+                                  ip->xDD4_itemVar.leadead.xE14),
                 &offset, &sp1C);
     ip->pos = sp1C;
     it_802759DC(gobj, ip->xDD4_itemVar.leadead.x38);
@@ -1137,4 +1151,9 @@ void it_802EAE80(Item_GObj* gobj)
     } else {
         it_802E9308_inline(gobj);
     }
+}
+
+HSD_GObj* it_802EAF28(Item_GObj* item_gobj)
+{
+    return GET_ITEM(item_gobj)->xDD4_itemVar.leadead.x38;
 }

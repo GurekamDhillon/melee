@@ -54,7 +54,7 @@ static inline MtxPtr ftDrawCommon_8008051C_inline(HSD_GObj* gobj, Vec3* sp54,
 {
     v->x = v->y = v->z = 0.0F;
     sp54->x = sp54->y = sp54->z = 0.0F;
-    if (ftLib_80087074(gobj, sp54)) {
+    if (ftLib_GetShakeOffset(gobj, sp54)) {
         HSD_CObj* current = HSD_CObjGetCurrent();
         MtxPtr mtx = current->view_mtx;
         PSMTXIdentity(sp18);
@@ -76,7 +76,7 @@ MtxPtr ftDrawCommon_8008051C(HSD_GObj* arg1, MtxPtr arg2)
     v.x = v.y = v.z = 0.0F;
     sp54.x = sp54.y = sp54.z = 0.0F;
 
-    if (ftLib_80087074(arg1, &sp54)) {
+    if (ftLib_GetShakeOffset(arg1, &sp54)) {
         HSD_CObj* current = HSD_CObjGetCurrent();
         MtxPtr mtx = current->view_mtx;
         PSMTXIdentity(sp18);
@@ -167,7 +167,7 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
         {
             do_invalidate = true;
         }
-        if (fighter->x221B_b0 &&
+        if (fighter->x221B.x221B_b0 &&
             lbColl_8000A78C(&fighter->shield_hit, arg1,
                             ftCommon_8007F804(fighter), fighter->cur_pos.z))
         {
@@ -288,7 +288,7 @@ void ftDrawCommon_800805C8(HSD_GObj* gobj, s32 arg1, bool arg2)
     ftCo_800C2600(gobj, arg1);
 }
 
-void ftDrawCommon_80080C28(HSD_GObj* gobj, int flag_index)
+void ftDrawCommon_80080C28(HSD_GObj* gobj, intptr_t flag_index)
 {
     Mtx sp70;
     Mtx sp18;
@@ -412,20 +412,18 @@ static inline void ftDrawCommon_80080E18_inline2(HSD_GObj* gobj, Fighter* old)
 
     HSD_JObjSetTranslate(jobj, pos);
 }
-
 #if defined(TARGET_PC)
 static void ftDrawCommon_80080E18_surface_impl(HSD_GObj* gobj, int arg1)
 #else
-void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
+void ftDrawCommon_80080E18(HSD_GObj* gobj, intptr_t arg1)
 #endif
 {
     Fighter* fp = gobj->user_data;
-
-    if (!fp->x221F_b3 &&
+    if (!fp->is_sleeping &&
 #if defined(TARGET_PC)
-        (Wb_RenderActive() || ftLib_80086A8C(gobj))) {
+        (Wb_RenderActive() || ftLib_UpdateScreenVisibility(gobj))) {
 #else
-        ftLib_80086A8C(gobj)) {
+        ftLib_UpdateScreenVisibility(gobj)) {
 #endif
         switch (Camera_80031060()) {
         case 1:
@@ -450,15 +448,15 @@ void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
 #include <gameworld/script_motion_draw.h>
 extern void SurfaceBegin(int slot);
 extern void SurfaceEnd(void);
-void ftDrawCommon_80080E18(HSD_GObj* gobj, int arg1)
+void ftDrawCommon_80080E18(HSD_GObj* gobj, intptr_t arg1)
 {
     int motion = script_motion_draw_begin(gobj);
     {
         /* Geno "toon": (re)select the define's built-in cel surface for this port. */
         extern void GenoToonEnsure(int slot, int kind);
-        GenoToonEnsure(((Fighter*)gobj->user_data)->player_id + 1, ((Fighter*)gobj->user_data)->kind);
+        GenoToonEnsure(((Fighter*)gobj->user_data)->player_idx + 1, ((Fighter*)gobj->user_data)->kind);
     }
-    SurfaceBegin(((Fighter*)gobj->user_data)->player_id + 1);
+    SurfaceBegin(((Fighter*)gobj->user_data)->player_idx + 1);
     ftDrawCommon_80080E18_surface_impl(gobj, arg1);
     SurfaceEnd();
     if (motion) MotionFighterEnd();
@@ -483,7 +481,7 @@ void ftDrawCommon_80081140(void)
      * load. When 4+ players are present the patch nulls the FoD reflection render callback, so the
      * costly floor reflection is skipped. Opt-in: MELEE_MEX=disable_fod_reflection. */
     extern int Mex_Enabled(const char *);
-    if (Mex_Enabled("disable_fod_reflection") && ftLib_800860C4() >= 4) {
+    if (Mex_Enabled("disable_fod_reflection") && ftLib_CountFighters() >= 4) {
         while (gobj != NULL) {
             gobj->render_cb = NULL;
             gobj = gobj->next;

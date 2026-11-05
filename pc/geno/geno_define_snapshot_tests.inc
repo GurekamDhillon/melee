@@ -234,7 +234,7 @@ static int test_rb_game_hash(void)
     int rc = 0;
     u32 base, v, n;
     t_setup();
-    t_fp.player_id = 0;
+    t_fp.player_idx = 0;
     t_fp.kind = Ft_Kind_Mario;
     t_fp.motion_id = 14;
     t_fp.cur_pos.x = 3.5f;

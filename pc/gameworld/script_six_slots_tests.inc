@@ -4,7 +4,7 @@ int ScriptGame_SixSlotsTest(void)
     int saved[2][9], seen[2][7], i,k, rc=0;
     memcpy(saved,script_virtual_pad,sizeof saved);
     memcpy(seen,script_virtual_seen,sizeof seen);
-    memset(&fp,0,sizeof fp); fp.player_id=5;
+    memset(&fp,0,sizeof fp); fp.player_idx=5;
     ScriptGame_VirtualPadRelease(-1,0);
     ScriptGame_VirtualPadField(5,0,123,1);
     ScriptGame_VirtualPadField(5,1,2,1);
@@ -30,7 +30,7 @@ int ScriptGame_SixSlotsTest(void)
     {
         static CmSubject camera;
         fp.x890_cameraBox=&camera; fp.kind=Ft_Kind_Fox;
-        fp.motion_id=ftCo_MS_Sleep; fp.x221F_b3=1;
+        fp.motion_id=ftCo_MS_Sleep; fp.is_sleeping=1;
         if (script_recycle_policy(&fp,5,-1,2,0,1,0)) rc++;
         if (script_recycle_policy(&fp,5,9,2,0,1,0)!=2) rc++;
         if (script_recycle_policy(&fp,5,2,2,1,1,0)!=3) rc++;

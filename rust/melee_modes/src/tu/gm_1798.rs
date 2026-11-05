@@ -94,6 +94,12 @@ pub union PackedS16x4 {
     pub w: [u32; 2],
 }
 
+/// The four u16s a `*(U32Pair*) u16_array = pair` store leaves on the (big-endian) GameCube: each word's high half
+/// first. A native little-endian store would swap the halves (the results cards' EFB copy sizes and offsets).
+fn u32pair_halves(p: U32Pair) -> [u16; 4] {
+    [(p.lo >> 16) as u16, p.lo as u16, (p.hi >> 16) as u16, p.hi as u16]
+}
+
 /// `U32Pair` (8 bytes).
 #[repr(C)]
 #[derive(Clone, Copy)]
@@ -200,7 +206,9 @@ pub mod ext {
         fn fn_801795D4() -> i32 = crate::tu::adapt::fn_801795D4__0f9c8c;
         fn fn_801796F0(a0: i32) -> i32 = crate::tu::adapt::fn_801796F0__2a3c9d;
         fn ftDemo_ObjAllocInit();
-        fn ftLib_800876B4(a0: *mut HSD_GObj) -> i32;
+        // ftlib.c defines it `void` (it only calls ftAnim_IsFramesRemaining); gm_1798.c declares it `s32` and reads the
+        // return register, which still holds ftAnim_IsFramesRemaining's result (the C build: a tail call).
+        fn ftLib_IsFramesRemaining(a0: *mut HSD_GObj) -> i32 = melee_fighter::tu::ftlib::ftLib_IsFramesRemaining;
         fn gm_80160438(a0: i32) -> *mut i8 = crate::tu::adapt::gm_80160438__384bdb;
         fn gm_80160854(a0: u8, a1: u8, a2: u8, a3: u8) -> u32 = crate::tu::adapt::gm_80160854__387c80;
         fn gm_80160968(a0: u32) -> _GXColor = crate::tu::adapt::gm_80160968__e03b47;
@@ -431,7 +439,7 @@ pub unsafe fn fn_80179990(arg0: *mut HSD_GObj, _arg1: i32, arg2: i32) {
                 (*(*(*(*(*lbl_8046E39C[arg2 as usize]).u.dobj).next).mobj).tobj).imagedesc =
                     (*disp).player_img2.as_mut_ptr().add(arg2 as usize);
             }
-        } else if ext::ftLib_800876B4(ext::Player_GetEntity(arg2)) == 0 {
+        } else if ext::ftLib_IsFramesRemaining(ext::Player_GetEntity(arg2)) == 0 {
             if (*st).player_flags[arg2 as usize] == 0 && (*st).x0_6() != 0 {
                 fn_80179990_set_erase_color(match_end, arg2);
                 ext::HSD_CObjEraseScreen(cobj, 1, 0, 0);
@@ -793,12 +801,12 @@ pub unsafe fn fn_8017AA78(arg0: *const u8) {
     (*st).set_x0_4(0);
     (*st).set_x0_6(0);
 
-    *((*st).dim_w1.as_mut_ptr() as *mut U32Pair) = lbl_804D3FD0;
-    *((*st).dim_h1.as_mut_ptr() as *mut U32Pair) = lbl_804D3FD8;
-    *((*st).dim_w2.as_mut_ptr() as *mut U32Pair) = lbl_804D3FE0;
-    *((*st).dim_h2.as_mut_ptr() as *mut U32Pair) = lbl_804D3FE8;
-    *((*st).scissor_y.as_mut_ptr() as *mut U32Pair) = lbl_804D3FF0;
-    *((*st).scissor_x.as_mut_ptr() as *mut U32Pair) = lbl_804D3FF8;
+    (*st).dim_w1 = u32pair_halves(lbl_804D3FD0);
+    (*st).dim_h1 = u32pair_halves(lbl_804D3FD8);
+    (*st).dim_w2 = u32pair_halves(lbl_804D3FE0);
+    (*st).dim_h2 = u32pair_halves(lbl_804D3FE8);
+    (*st).scissor_y = u32pair_halves(lbl_804D3FF0);
+    (*st).scissor_x = u32pair_halves(lbl_804D3FF8);
 
     for i in 0..4usize {
         (*st).player_flags[i] = 0;

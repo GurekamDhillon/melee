@@ -52,7 +52,7 @@ ItemStateTable it_803F6A28[5] = {
       itLinkarrow_UnkMotion4_Coll },
 };
 
-void it_802A7D8C(HSD_GObj* gobj, int arg1)
+void it_802A7D8C(HSD_GObj* gobj, intptr_t arg1)
 {
     Item* item;
 
@@ -192,7 +192,7 @@ HSD_GObj* it_802A83E0(f32 facing_dir, Fighter_GObj* arg1, Vec3* arg2,
 
     if (gobj != NULL) {
         item = GET_ITEM(gobj);
-        attr = item->xC4_article_data->x4_specialAttributes;
+        attr = &item->xC4_article_data->x4_specialAttributes->link_arrow;
         Item_ClearCmdVars(item);
         it_80275158(gobj, attr->x0);
         item->xDD4_itemVar.linkarrow.xA0 = 0;
@@ -201,7 +201,7 @@ HSD_GObj* it_802A83E0(f32 facing_dir, Fighter_GObj* arg1, Vec3* arg2,
         item->xDD4_itemVar.linkarrow.xB4[0] = NULL;
         item->xDD4_itemVar.linkarrow.xE0 = arg1;
         item->xDD4_itemVar.linkarrow.xC0 =
-            ftLib_800869D4(item->xDD4_itemVar.linkarrow.xE0);
+            ftLib_GetModelScale(item->xDD4_itemVar.linkarrow.xE0);
         item->xDD4_itemVar.linkarrow.xE4 = -1;
         item->xDD4_itemVar.linkarrow.xEC = 0.0f;
         item->xDD4_itemVar.linkarrow.xE8 = 0.0f;
@@ -245,7 +245,8 @@ bool itLinkArrow_802A850C(Item_GObj* gobj, Vec3* arg1, Vec3* arg2, f32 arg3,
 {
     Item* ip = GET_ITEM(gobj);
     HSD_JObj* jobj = gobj->hsd_obj;
-    itLinkArrowAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLinkArrowAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->link_arrow;
     u8 _pad1[4];
     Vec3 rot;
     u8 _pad2[4];
@@ -266,7 +267,7 @@ bool itLinkArrow_802A850C(Item_GObj* gobj, Vec3* arg1, Vec3* arg2, f32 arg3,
     {
         it_802A8C7C(gobj);
         HSD_MtxGetRotation(
-            ftLib_80086630(ip->xDD4_itemVar.linkarrow.xE0, ip->xDC4)->mtx,
+            ftLib_GetPartJObj(ip->xDD4_itemVar.linkarrow.xE0, ip->xDC4)->mtx,
             &rot);
         pos.x = pos.y = pos.z = 0.0f;
         it_8027429C(gobj, &pos);
@@ -276,7 +277,7 @@ bool itLinkArrow_802A850C(Item_GObj* gobj, Vec3* arg1, Vec3* arg2, f32 arg3,
             (arg4 * ((attr->x8 - attr->x4) / arg5)) + attr->x4;
         ip->xDD4_itemVar.linkarrow.xA4 =
             (arg4 * ((attr->x10 - attr->xC) / arg5)) + attr->xC;
-        ip->facing_dir = ftLib_800865C0(ip->xDD4_itemVar.linkarrow.xE0);
+        ip->facing_dir = ftLib_GetFacingDir(ip->xDD4_itemVar.linkarrow.xE0);
         HSD_JObjSetRotationY(jobj, M_PI_2 * ip->facing_dir);
         ip->pos = *arg1;
         ip->xDD4_itemVar.linkarrow.x18 = *arg2;
@@ -291,10 +292,10 @@ bool itLinkArrow_802A850C(Item_GObj* gobj, Vec3* arg1, Vec3* arg2, f32 arg3,
 
         itLinkArrow_802A850C_inline_2(gobj, &quat);
 
-        attr = ip->xC4_article_data->x4_specialAttributes;
+        attr = &ip->xC4_article_data->x4_specialAttributes->link_arrow;
         ip->xDD4_itemVar.linkarrow.xB4[0] =
             itLinkArrow_802A850C_inline(attr->x24);
-        attr = ip->xC4_article_data->x4_specialAttributes;
+        attr = &ip->xC4_article_data->x4_specialAttributes->link_arrow;
         ip->xDD4_itemVar.linkarrow.xB4[1] =
             itLinkArrow_802A850C_inline(attr->x28);
 
@@ -414,7 +415,7 @@ void it_802A8C7C(HSD_GObj* gobj)
     Item* item;
     itLinkArrowAttributes* attr;
     item = GET_ITEM(gobj);
-    attr = item->xC4_article_data->x4_specialAttributes;
+    attr = &item->xC4_article_data->x4_specialAttributes->link_arrow;
     it_80275158(gobj, attr->x0);
     Item_80268E5C(gobj, 1, ITEM_ANIM_UPDATE);
 }
@@ -493,7 +494,8 @@ bool itLinkarrow_UnkMotion1_Anim(HSD_GObj* gobj)
 void itLinkarrow_UnkMotion1_Phys(HSD_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLinkArrowAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLinkArrowAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->link_arrow;
     ip->xDD4_itemVar.linkarrow.x18 = ip->pos;
     ip->x40_vel.y -= ABS(attr->x1C);
 }
@@ -522,7 +524,8 @@ static inline bool itLinkarrow_UnkMotion1_Coll_inline(Item_GObj* gobj)
 bool itLinkarrow_UnkMotion1_Coll(Item_GObj* gobj)
 {
     Item* item = GET_ITEM(gobj);
-    itLinkArrowAttributes* attr = item->xC4_article_data->x4_specialAttributes;
+    itLinkArrowAttributes* attr =
+        &item->xC4_article_data->x4_specialAttributes->link_arrow;
     HSD_JObj* jobj = GET_JOBJ(gobj);
 
     PAD_STACK(8);
@@ -553,7 +556,7 @@ bool itLinkarrow_UnkMotion2_Anim(Item_GObj* gobj)
     Item* item;
     f32 pad[1];
     item = GET_ITEM(gobj);
-    if (ftLib_80086A18(item->xDD4_itemVar.linkarrow.xC4) != 1) {
+    if (ftLib_IsShielding(item->xDD4_itemVar.linkarrow.xC4) != 1) {
         return true;
     }
     return it_802A8330_inline(gobj);
@@ -566,7 +569,7 @@ void itLinkarrow_UnkMotion2_Phys(HSD_GObj* gobj)
     item->xDD4_itemVar.linkarrow.xD4 =
         (ftCo_80094098(item->xDD4_itemVar.linkarrow.xC4,
                        &item->xDD4_itemVar.linkarrow.xC8) *
-         ftLib_800869D4(item->xDD4_itemVar.linkarrow.xC4));
+         ftLib_GetModelScale(item->xDD4_itemVar.linkarrow.xC4));
     item->pos.x = (item->xDD4_itemVar.linkarrow.xD4 *
                    cosf(item->xDD4_itemVar.linkarrow.xD8)) +
                   item->xDD4_itemVar.linkarrow.xC8;
@@ -607,7 +610,7 @@ void it_802A9458(HSD_GObj* gobj)
     item = GET_ITEM(gobj);
     jobj = HSD_GObjGetHSDObj(gobj);
     temp_scale = item->xDD4_itemVar.linkarrow.xC0;
-    attr = item->xC4_article_data->x4_specialAttributes;
+    attr = &item->xC4_article_data->x4_specialAttributes->link_arrow;
 
     scale.z = temp_scale;
     scale.y = temp_scale;
@@ -713,7 +716,7 @@ bool itLinkarrow_UnkMotion4_Anim(Item_GObj* gobj)
             it_802756D0(gobj);
         }
         it_8026BB44(gobj);
-        ip->xDCF_flag.b2 = 1;
+        ip->xDCF_flag.x0.b2 = 1;
         ip->xDD4_itemVar.linkarrow.xF0 += 1;
         if (ip->xDD4_itemVar.linkarrow.xF0 > 0x12C) {
             return true;
@@ -770,7 +773,8 @@ bool itLinkarrow_UnkMotion4_Coll(HSD_GObj* gobj)
 bool itLinkArrow_Logic98_DmgDealt(Item_GObj* gobj)
 {
     Item* ip = GET_ITEM(gobj);
-    itLinkArrowAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLinkArrowAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->link_arrow;
     ip->x40_vel.x *= attr->x14;
     it_802A8330(gobj);
     return true;
@@ -780,7 +784,8 @@ static inline void itLinkArrow_Logic98_HitShield_inline(Item_GObj* gobj,
                                                         Vec3* scale)
 {
     Item* ip = GET_ITEM(gobj);
-    itLinkArrowAttributes* attr = ip->xC4_article_data->x4_specialAttributes;
+    itLinkArrowAttributes* attr =
+        &ip->xC4_article_data->x4_specialAttributes->link_arrow;
     HSD_JObj* jobj = GET_JOBJ(gobj);
 
     scale->x = scale->y = scale->z = ip->xDD4_itemVar.linkarrow.xC0;
@@ -803,7 +808,7 @@ bool itLinkArrow_Logic98_HitShield(Item_GObj* gobj)
             f32 temp_f31;
             itLinkArrow_Logic98_HitShield_inline(gobj, &scale);
             ip->xDD4_itemVar.linkarrow.xC4 = ip->xCF4_fighterGObjUnk;
-            temp_f31 = ftLib_800869D4(ip->xDD4_itemVar.linkarrow.xC4);
+            temp_f31 = ftLib_GetModelScale(ip->xDD4_itemVar.linkarrow.xC4);
             ip->xDD4_itemVar.linkarrow.xD4 =
                 temp_f31 * ftCo_80094098(ip->xDD4_itemVar.linkarrow.xC4,
                                          &ip->xDD4_itemVar.linkarrow.xC8);
@@ -823,12 +828,12 @@ bool itLinkArrow_Logic98_HitShield(Item_GObj* gobj)
                             sinf(ip->xDD4_itemVar.linkarrow.xD8) +
                         ip->xDD4_itemVar.linkarrow.xCC;
             ip->pos.z = 0.0f;
-            goto end;
+        } else {
+            return true;
         }
+    } else {
         return true;
     }
-    return true;
-end:
     return false;
 }
 

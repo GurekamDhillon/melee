@@ -80,7 +80,7 @@ static int test_geno_none_guard_contact(void)
     j = live; b = blend;
     for (i = 0; i < 4; ++i) {
         t_fp.parts[i].joint = j; t_fp.parts[i].x4_jobj2 = b;
-        t_fp.parts[i].flags_b1 = true;
+        t_fp.parts[i].x8.x0.flags_b1 = true;
         j = HSD_JObjGetChild(j); b = HSD_JObjGetChild(b);
     }
     ftPartsTable = parts_tables;
@@ -96,7 +96,7 @@ static int test_geno_none_guard_contact(void)
     t_fp.x8AC_animSkeleton = blend;
     t_fp.x1C_actionStateList[ftCo_MS_Guard].anim_id = 39;
     memset(rows, 0, sizeof rows); rows[39].x14 = 1;
-    t_fp.x24 = rows; t_fp.x58C = 40; t_fp.x5A8 = (void*)1;
+    t_fp.x24 = rows; t_fp.x58C = 40; t_fp.x5A8 = (uintptr_t)1;
     memset(tracks, 0, sizeof tracks);
     for (i = 0; i < 2; ++i) {
         tracks[i].length = 5; tracks[i].obj_type = 6;
@@ -105,7 +105,7 @@ static int test_geno_none_guard_contact(void)
     tracks[0].ad_head = rot_y; tracks[1].ad_head = throw_y;
     tree.type = 1; tree.frames = 1; tree.nodes = nodes; tree.tracks = tracks;
     t_fp.x598 = &tree;
-    t_fp.x221B_b0 = true; t_fp.shield_health = 60;
+    t_fp.x221B.x221B_b0 = true; t_fp.shield_health = 60;
     t_fp.co_attrs.initial_shield_size = 2;
     ftCo_80091E78(&t_gobj, 1);
     t_fp.shield_hit.bone = t_fp.parts[3].joint; t_fp.shield_hit.size = 1;
@@ -136,7 +136,7 @@ static int test_geno_none_guard_contact(void)
     memcpy(guard, rest, sizeof guard);
     for (i = 0; i < 3; ++i) guard[i].child = &guard[i+1];
     guard[2].position.y = 6; guard[3].position.y = -3;
-    guard_trees[2] = &guard[1]; guard_data.x0 = guard_trees;
+    guard_trees[2] = &guard[1]; guard_data.x0 = (HSD_Joint*) guard_trees;
     t_ftdata.x20 = &guard_data; t_fp.mv.co.guard.x4 = 0;
     parts_tables[Ft_Kind_Mario] = &parts_table;
     for (i = 0; i < 2; ++i) {

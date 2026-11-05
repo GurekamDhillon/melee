@@ -27,7 +27,7 @@ static int technical_ai_supported(Fighter* fp)
 {
     return fp != NULL && !fp->is_sub_fighter &&
         (fp->kind == Ft_Kind_Fox || fp->kind == Ft_Kind_Falco) &&
-        Player_GetPlayerSlotType(fp->player_id) == Gm_PKind_Cpu &&
+        Player_GetPlayerSlotType(fp->player_idx) == Gm_PKind_Cpu &&
         ftCo_IsCpuControlled(fp) && fp->cpu.kind == CpuKind_4;
 }
 
@@ -90,8 +90,8 @@ static void technical_ai_overlay(Fighter* fp)
     float vx, vy, x, y, horizon = 12.0f;
     int event, line;
     unsigned flags;
-    if (fp->player_id >= 6 || fp->is_sub_fighter) return;
-    slot = &technical_ai_slots[fp->player_id];
+    if (fp->player_idx >= 6 || fp->is_sub_fighter) return;
+    slot = &technical_ai_slots[fp->player_idx];
     if (!slot->owner) return;
     if (slot->fighter != fp || slot->spawn != fp->x8_spawnNum) {
         memset(slot, 0, sizeof *slot);

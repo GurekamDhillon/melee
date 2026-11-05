@@ -42,7 +42,7 @@ int Script_HitRulesInput(int n) {return input[n];}
 int Script_EchoInput(int n) {return input[n];}
 int Script_StageResourceOwnerAlive(int n) {(void)n;return resource_alive;}
 int Script_EchoOwnerAlive(int n) {(void)n;return resource_alive;}
-int ftLib_80086960(HSD_GObj* g) {return g!=0;}
+int ftLib_IsFighter(HSD_GObj* g) {return g!=0;}
 /* Use the actual retail allocator and deduplication, with only player storage stubbed. */
 #define _plstale_h_
 #define _player_h_

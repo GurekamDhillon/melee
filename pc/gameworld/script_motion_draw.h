@@ -16,8 +16,8 @@ static int script_motion_draw_begin(HSD_GObj* gobj)
      * which made this test always fail and no pose was ever captured. */
     if(Camera_80031060()!=0 || !camera || camera!=Camera_PCMainCObj())return 0;
     speed.f=fp->self_vel.x*fp->self_vel.x+fp->self_vel.y*fp->self_vel.y;
-    return MotionFighterBegin(fp->player_id+1,fp->is_sub_fighter,(int)gobj,
+    return MotionFighterBegin(fp->player_idx+1,fp->is_sub_fighter,(int)gobj,
         (int)&camera->view_mtx,(int)&fp->cur_pos,fp->x2219_b5,
-        fp->item_gobj!=NULL,fp->x619_costume_id,Player_GetFalls(fp->player_id),speed.i);
+        fp->item_gobj!=NULL,fp->costume_id,Player_GetFalls(fp->player_idx),speed.i);
 }
 #endif

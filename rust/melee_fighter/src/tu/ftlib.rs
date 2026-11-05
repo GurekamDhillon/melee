@@ -593,3 +593,10 @@ pub fn ftlib_80087744(g: G, dst: *mut core::ffi::c_void) {
 }
 
 pub fn ftlib_800877d4(g: G) -> bool { melee_core::ct!("ftlib_800877d4"); fp_ftlib(g).xF8_playerNudgeVel.x != 0.0 }
+
+/// `ftLib_IsFramesRemaining` (was ftLib_800876B4): `void` in ftlib.c, it only calls ftAnim_IsFramesRemaining; its one caller
+/// (gm_1798.c, declared `s32`) reads the return register, which still holds that result in the C build.
+pub unsafe fn ftLib_IsFramesRemaining(gobj: *mut melee_types::HSD_GObj) -> i32 {
+    melee_core::ct!("ftLib_IsFramesRemaining");
+    crate::tu::ftanim::ftAnim_IsFramesRemaining(gobj as _) as i32
+}

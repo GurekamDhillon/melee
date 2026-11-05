@@ -170,7 +170,7 @@ pub fn stage_light_descs(d: &Dat, map_head: u32) -> Vec<u32> {
 }
 
 #[allow(dead_code)]
-fn unused(_: Mtx) -> u32 {
+fn unused_mtx_color(_: Mtx) -> u32 {
     GX_COLOR0
 }
 

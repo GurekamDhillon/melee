@@ -71,14 +71,14 @@ HSD_GObj* it_802B55C8(Fighter_GObj* gobj, Vec3* pos, enum Fighter_Part arg2,
     if (n != NULL) {
         Item* ip = GET_ITEM(n);
         itSamusChargeShot_Attributes* attr =
-            ip->xC4_article_data->x4_specialAttributes;
+            &ip->xC4_article_data->x4_specialAttributes->samus_charge_shot;
         Item_ClearCmdVars(ip);
         it_80275158(n, attr->lifetime);
         ip->xDD4_itemVar.samuschargeshot.xDE8 = 0;
         ip->xDD4_itemVar.samuschargeshot.xDE0 = 0.0f;
         ip->xDD4_itemVar.samuschargeshot.xDFC = 0.0f;
         ip->xDD4_itemVar.samuschargeshot.xE00 = gobj;
-        ip->xDD4_itemVar.samuschargeshot.xE04 = ftLib_800869D4(gobj);
+        ip->xDD4_itemVar.samuschargeshot.xE04 = ftLib_GetModelScale(gobj);
         ip->xDD4_itemVar.samuschargeshot.xE2C = 0.0f;
         ip->xDD4_itemVar.samuschargeshot.xE30 = 0.0f;
         ip->xDD4_itemVar.samuschargeshot.xE34 = 0.0f;
@@ -91,7 +91,7 @@ void it_802B56E4(Item_GObj* gobj, Vec3* vec, f32 farg0, f32 farg1, f32 farg2)
 {
     Item* ip = GET_ITEM(gobj);
     itSamusChargeShot_Attributes* attr =
-        ip->xC4_article_data->x4_specialAttributes;
+        &ip->xC4_article_data->x4_specialAttributes->samus_charge_shot;
     PAD_STACK(8);
 
     ip->xDD4_itemVar.samuschargeshot.xDD8 = farg0;
@@ -113,7 +113,8 @@ void it_802B56E4(Item_GObj* gobj, Vec3* vec, f32 farg0, f32 farg1, f32 farg2)
             Vec3 sp20;
 
             HSD_MtxGetRotation(
-                ftLib_80086630(ip->xDD4_itemVar.samuschargeshot.xE00, ip->xDC4)
+                ftLib_GetPartJObj(ip->xDD4_itemVar.samuschargeshot.xE00,
+                                  ip->xDC4)
                     ->mtx,
                 &sp2C);
             sp20.x = sp20.y = sp20.z = 0.0f;
@@ -132,7 +133,8 @@ void it_802B56E4(Item_GObj* gobj, Vec3* vec, f32 farg0, f32 farg1, f32 farg2)
               ip->xDD4_itemVar.samuschargeshot.xDF0)) +
             attr->x18;
         ip->xDD4_itemVar.samuschargeshot.xDF4 = 0;
-        ip->facing_dir = ftLib_800865C0(ip->xDD4_itemVar.samuschargeshot.xE00);
+        ip->facing_dir =
+            ftLib_GetFacingDir(ip->xDD4_itemVar.samuschargeshot.xE00);
         ip->pos = *vec;
         ip->xDD4_itemVar.samuschargeshot.xDFC = 0;
         ip->x40_vel.x = ip->xDD4_itemVar.samuschargeshot.xDDC *
@@ -214,7 +216,7 @@ bool itSamuschargeshot_UnkMotion0_Anim(Item_GObj* gobj)
     Vec3 scale;
     Item* ip = GET_ITEM(gobj);
     itSamusChargeShot_Attributes* attr =
-        ip->xC4_article_data->x4_specialAttributes;
+        &ip->xC4_article_data->x4_specialAttributes->samus_charge_shot;
     HSD_JObj* grandchild = itGetJObjGrandchild(gobj);
     PAD_STACK(8);
 
@@ -284,7 +286,7 @@ void it_802B5CBC(Item_GObj* gobj, Fighter_GObj* unused)
 {
     Item* ip = GET_ITEM(gobj);
     itSamusChargeShot_Attributes* attr =
-        ip->xC4_article_data->x4_specialAttributes;
+        &ip->xC4_article_data->x4_specialAttributes->samus_charge_shot;
     PAD_STACK(4);
 
     it_80275158(gobj, attr->lifetime);

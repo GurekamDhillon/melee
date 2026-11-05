@@ -4,8 +4,10 @@
 //! readouts, dummy and combo panels, input display): presets Clean, Frame data, Full.
 //!
 //! Controls (ports 1 and 2, shared capture; the Lab owns START, the host strips it from the game):
-//!   START freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), L / R step -10 / +10,
-//!   A take over (go live from the scrubbed frame), B resume.
+//!   START tap: freeze / resume.  Frozen: D-left / D-right step -1 / +1 (hold to repeat), Z + L / Z + R step -10 / +10,
+//!   Z + A take over (go live from the scrubbed frame). Every other button and the sticks are the game's while frozen:
+//!   what is held when a step runs is that frame's input (hold down + B, D-right: the shine comes out), and no lab
+//!   control reads them (only an open menu does).
 //!   D-down save to the current slot (on release; D-down + START is the settings overlay), D-up load it; Z + D-left / D-right pick the slot; Z + D-up next HUD preset.
 //!   Hold START (30 frames): the full menu (menu.rs; L / R tabs, up / down rows, left / right values, A apply, X the
 //!   command bar, B / START close). Frozen, hold Z (12 frames): the radial quick menu, stick picks, release runs.
@@ -363,7 +365,7 @@ const F_ACTION_FRAME: usize = 120;
 
 /// Hint key caps and labels: (key, label); widths measured once at init.
 const HINTS_PLAY: [(&str, &str); 4] = [("START", "freeze"), ("D↓", "save"), ("D↑", "load"), ("Z+D↑", "HUD preset")];
-const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("A", "take over"), ("Z hold", "quick"), ("START hold", "menu")];
+const HINTS_FROZEN: [(&str, &str); 4] = [("◀ ▶", "step"), ("Z+A", "take over"), ("Z hold", "quick"), ("START hold", "menu")];
 
 fn measure(s: &str, role: i32) -> f32 {
     gd_ui_enc::measure(s, role)
@@ -594,7 +596,15 @@ impl Lab {
                 return;
             }
             if z {
-                if edge & DL != 0 {
+                if self.paused && edge & BA != 0 {
+                    gd_lab_go_live();
+                    gd_lab_pause(0);
+                    self.toast_s("Take over");
+                } else if self.paused && edge & BL != 0 {
+                    gd_lab_rewind(10);
+                } else if self.paused && edge & BR != 0 {
+                    gd_lab_step(10);
+                } else if edge & DL != 0 {
                     self.slot = (self.slot + 15) % 16;
                     self.slot_toast();
                 } else if edge & DR != 0 {
@@ -624,21 +634,12 @@ impl Lab {
                 }
                 self.toast(&m, None);
             }
+            // frozen: only the D-pad steps; A / B / X / Y / L / R and the sticks stay the game's (held into a step)
             if self.paused {
                 if edge & DL != 0 || (repeat && dir == DL) {
                     gd_lab_rewind(1);
                 } else if edge & DR != 0 || (repeat && dir == DR) {
                     gd_lab_step(1);
-                } else if edge & BL != 0 {
-                    gd_lab_rewind(10);
-                } else if edge & BR != 0 {
-                    gd_lab_step(10);
-                } else if edge & BA != 0 {
-                    gd_lab_go_live();
-                    gd_lab_pause(0);
-                    self.toast_s("Take over");
-                } else if edge & BB != 0 {
-                    gd_lab_pause(0);
                 }
             }
         }

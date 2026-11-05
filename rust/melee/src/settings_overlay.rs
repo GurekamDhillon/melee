@@ -139,6 +139,36 @@ fn choice(key: &str, label: &str, opts: &[(&str, &str)], dflt: &str, live: bool,
     Row { key: key.into(), label: label.into(), kind: Kind::Choice(c), value, live, help: help.into(), note: String::new() }
 }
 
+/// MSAA: only the counts the renderer's device supports for every EFB attachment format (all four before a renderer
+/// exists); a saved count it lacks shows as the one the renderer clamped it to.
+fn msaa_row() -> Row {
+    let all = [("Off", "1"), ("2x", "2"), ("4x", "4"), ("8x", "8")];
+    let mask = melee_gx::render::SUPPORTED_MSAA.load(std::sync::atomic::Ordering::Relaxed);
+    let opts: Vec<(&str, &str)> = all.iter().copied().filter(|(_, v)| mask == 0 || mask >> v.parse::<u32>().unwrap() & 1 != 0).collect();
+    let mut r = choice("msaa", "Anti-aliasing", &opts, "1", false, "MSAA of the EFB pass (pipelines are built for it: next launch).");
+    if mask != 0 {
+        let want = cfg_val("msaa").and_then(|v| v.trim().trim_end_matches(['x', 'X']).parse::<u32>().ok()).unwrap_or(1);
+        let got = melee_gx::render::clamp_msaa(want, mask).to_string();
+        if let Kind::Choice(c) = &r.kind {
+            r.value = c.iter().position(|o| o.1 == got).unwrap_or(0) as i32;
+        }
+    }
+    r
+}
+
+impl Overlay {
+    /// Rebuild the MSAA row once the renderer knows the device's sample counts (the overlay may be built first).
+    pub fn refresh_msaa(&mut self) {
+        let r = msaa_row();
+        for page in self.pages.iter_mut() {
+            if let Some(x) = page.rows.iter_mut().find(|x| x.key == "msaa") {
+                *x = r;
+                return;
+            }
+        }
+    }
+}
+
 fn toggle(key: &str, label: &str, dflt: bool, live: bool, help: &str) -> Row {
     let v = cfg_val(key).map_or(dflt, |v| matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "on" | "yes" | "true"));
     Row { key: key.into(), label: label.into(), kind: Kind::Toggle, value: v as i32, live, help: help.into(), note: String::new() }
@@ -160,7 +190,7 @@ impl Overlay {
             choice("interp", "Frame interpolation", &onoff, "auto", true, "Render-only in-between frames (auto: on above 60 fps)."),
             choice("interp_mode", "Interpolation mode", &[("Interpolate", "interpolate"), ("Extrapolate", "extrapolate")], "interpolate", true, "Extrapolate adds no latency."),
             choice("render_scale", "Internal resolution", &[("Auto", "auto"), ("1x", "1"), ("2x", "2"), ("3x", "3"), ("4x", "4"), ("6x", "6"), ("8x", "8")], "auto", true, "x 480 lines."),
-            choice("msaa", "Anti-aliasing", &[("Off", "1"), ("2x", "2"), ("4x", "4"), ("8x", "8")], "1", false, "MSAA of the EFB pass (pipelines are built for it: next launch)."),
+            msaa_row(),
         ];
         let audio = vec![Row {
             key: "volume".into(),

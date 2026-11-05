@@ -704,6 +704,9 @@ impl Solver {
         }
         self.stats.draws += 1;
         let ortho = rd(out, b + 60) == 1.0;
+        // whether this call wrote the projection rows from the solver (else `out` may still hold the previous
+        // present's widened values: the renderer copies the uniforms once per prepared frame)
+        let mut proj_set = false;
         if posed && !self.cut && !ortho && !self.slots.is_empty() || (posed && !self.cut && !ortho && d.cam != 0) {
             let cam = d.cam.checked_sub(1).map(|c| c as usize);
             let held = cam.is_some_and(|c| self.cams.get(c).is_some_and(|x| x.held));
@@ -742,6 +745,7 @@ impl Solver {
                     self.stats.posed += 1;
                 }
                 if let Some(Some(p)) = cam.and_then(|c| self.projs.get(c)) {
+                    proj_set = true;
                     for r in 0..4 {
                         for c in 0..4 {
                             // row 2 is the depth row the uniform stores reversed (state::USE_REVERSED_Z): keep it
@@ -755,9 +759,11 @@ impl Solver {
         }
         if let Some(w) = widen {
             if self.widen_ok.get(i).copied().unwrap_or(false) {
+                // from the draw's own row (never `out`'s: a frame presented N times would be widened N times, the
+                // picture shrinking toward a vertical line between ticks at high frame rates)
                 for c in 0..4 {
                     let o = b + c * 4;
-                    let v = rd(out, o);
+                    let v = if proj_set { rd(out, o) } else { rd(&d.uniform, o) };
                     wr(out, o, v * w.factor);
                 }
                 self.stats.widened += 1;

@@ -43,3 +43,32 @@ Moved verbatim from RUST_PORT.md (original lines noted per block). Current truth
   was switched to contraction on + lower.py in group 3 port round 1; nh/stale/ftcommon unchanged.)
   NHV1 has no float arithmetic; group 3's ftcommon has 12 fused sites in ftcommon.c functions
   (`fma_sites.py src/melee/ft/ftcommon.c`), only CalcHitlag among the ported ones.
+
+## Round 3: console contraction checked against .slp replays (2026-11-05, port/slp-fma)
+
+`melee slpcheck` compares our fighter state with the console's own Post-Frame record, so it can tell which of two roundings
+the console used. Method: for the first divergent field of each file, find the function that computes it, change the site in
+Rust only (experiment), re-run the corpus, keep a change only if first divergences move later and none moves earlier; then make
+the C build do the same (shared correctness fix, notes in the C source) and re-record the goldens. The C build stays the oracle:
+`melee_runtime` oracle vectors, the four gate goldens and the coverage goldens were re-recorded from the changed C build.
+
+Sites changed (C file and Rust file both):
+
+| site | was (clang contraction / C reference) | now (what the console does) | evidence |
+|---|---|---|---|
+| `C_MTXLookAt` (pc/gameworld/mtx_pc.c; melee_runtime/src/mtx.rs `look_at`) | the three `-(z*vz + (x*vx + y*vy))` translation terms fused | not fused: the Dolphin SDK's C is built with MWCC `-fp_contract off` (configure.py `DolphinLib`). C: `#pragma STDC FP_CONTRACT OFF` around the function | +6 frame-exact files; the star-KO fighter (DeadUpFall, action 6) is placed by the inverse view matrix (`ftDrawCommon_80080E18`), 20 files had their first divergence there |
+| `PSMTXInverse` (same two files) | C_MTXInverse formula, exact `1/det` | the retail paired-single dataflow: cofactors ps_mul + ps_msub, det ps_mul + 2 ps_madd, `1/det` = `fres` + one Newton step `-(det*(r*r) - 2r)`, translation ps_mul + ps_madd + ps_nmadd | first divergence later in 2 files alone, part of the LookAt gain |
+| `PSVECMag`, `PSVECDotProduct`, `PSVECCrossProduct` (same files) | C reference grouping with clang fusion; `sqrtf` for Mag | retail paired-single: Mag = `sqsum * (frsqrte + one Newton step)` (as PSVECNormalize already did), Dot = `fma(x1,x2,y1*y2) + z1*z2`, Cross y/z negate an `ps_msub` whose rounded product is the other one | 8 files later, 1 file 1 frame earlier (later again with LookAt) |
+| `ftCo_800925A4` shield decay (src/melee/ft/kinds/ftCommon/ftCo_Guard.c under TARGET_PC; melee_fighter/src/tu/ftCo_Guard.rs) | `shield_health -= x278 * inner` fused into one fnmsubs by clang | the product rounded first, then subtracted (the inner `ls*(x2F0-x2EC)+x2EC` stays fused) | 5 shield-field files: 2 became frame-exact, 3 diverge thousands of frames later |
+
+Checked and left as they are (unfusing made things worse or changed nothing): every fused site of camera.rs (per function: 6
+functions get worse unfused, the rest no change); every fmadds site of tu/fighter.rs, ftCo_Damage.rs, ftcoll.rs, mpcoll.rs, mplib.rs (per
+function or per line); file-level unfusing of ~60 fighter/world/runtime files (every group that changed got worse). The f64 `mul_add`
+sites in mplib/mpcoll are bit-identical either way (a product of two float-valued doubles is exact). Fusing the aerial-drift
+`lsx * air_drift_stick_mul + accel_flat` across its two statements (an MWCC-style cross-statement fusion) made 43 files worse:
+the console did not fuse it. `PSMTXRotAxisRad` in the retail dataflow changed nothing in the corpus (camera roll is 0), so it was not kept.
+melee-unlocked's census: its `MU_NO_CONTRACT` on `C_MTXLookAt` agrees with the first row; its `MU_P(SQ(dx)) + MU_P(SQ(dy))`
+distance sites in mplib and camera are not supported by the replays (unfusing them changed nothing or made things worse).
+
+Cost: the changed routines are 1-15 ns per call slower or faster (A/B microbench, 200k random inputs: inverse +6 ns, Mag -2 ns,
+Cross+Dot +1 ns, LookAt +6 to 15 ns); `golden --slp` on the benchmark replay runs at about 0.20 ms per tick (fast profile).

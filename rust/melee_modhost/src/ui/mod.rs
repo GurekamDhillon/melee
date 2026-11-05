@@ -806,7 +806,14 @@ impl PresHost {
             // the package dir: <dir>/<file stem>/ (textures), else the mods dir itself
             let stem = dir.join(f.file_stem().unwrap_or_default());
             let pkg = if stem.is_dir() { stem } else { dir.clone() };
-            let i = h.load(&b, pkg).map_err(|e| format!("{}: refused: {e}", f.display()))?;
+            // one refused mod must not take the others down with it (a mods folder holds several: browser + lab)
+            let i = match h.load(&b, pkg) {
+                Ok(i) => i,
+                Err(e) => {
+                    eprintln!("modhost: ui: {} refused: {e} (build the mods with tools/rust-port/modhost/build_mods.sh, or cargo build --release inside rust/mods/<mod>)", f.display());
+                    continue;
+                }
+            };
             let m = &h.mods[i];
             eprintln!("modhost: ui: loaded {} \"{}\" fnv64 {:016x} (features {:#x})", m.id, m.name, m.digest, m.features);
         }

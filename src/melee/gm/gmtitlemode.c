@@ -40,8 +40,9 @@ void onExit(GameModeState* scene)
 {
     int* buttons = gm_GetGameModeStateExitData(scene);
 #if defined(TARGET_PC)
-    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu. */
-    if (*buttons & (HSD_PAD_Y | HSD_PAD_B)) {
+    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu, only with
+     * MELEE_DEBUG_MENU=1 (it is not retail, and B on the title is what a player presses after backing out). */
+    if (gw_debug_menu_shortcut() && (*buttons & (HSD_PAD_Y | HSD_PAD_B))) {
         gm_SetPendingGameMode(GM_DEBUG);
         gm_SetNewGameModePending();
         return;

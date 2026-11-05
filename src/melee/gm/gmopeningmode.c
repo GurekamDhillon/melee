@@ -282,8 +282,9 @@ void onExitTitle(GameModeState* arg0)
 {
     int* temp_r3 = gm_GetGameModeStateExitData(arg0);
 #if defined(TARGET_PC)
-    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu. */
-    if (*temp_r3 & (0x800 | 0x200)) {
+    /* No /develop.ini on retail ISOs, so DbLevel stays Master: let Y (or B) open the debug menu, only with
+     * MELEE_DEBUG_MENU=1 (it is not retail, and B on the title is what a player presses after backing out). */
+    if (gw_debug_menu_shortcut() && (*temp_r3 & (0x800 | 0x200))) {
         gm_SetPendingGameMode(GM_DEBUG);
         gm_SetNewGameModePending();
         return;

@@ -262,7 +262,26 @@ def _gm_1798():
                 "        fn_8017A078(arg0);\n    }\n    return gobj;\n}\n\nFighter_GObj* fn_8017A67C"),
                ("#include <melee/ft/inlines.h>\n#endif\n",
                 "#include <melee/ft/inlines.h>\n#endif\n#define lbl_803B7B68 (*(ResultsPlayerConfig*) &lbl_803B7B68_nc)\n"
-                "extern ResultsPlayerConfig lbl_803B7B68_nc;\n")],
+                "extern ResultsPlayerConfig lbl_803B7B68_nc;\n"),
+               # Oracle re-point (user-approved 2026-11-05): fn_8017AA78's `*(U32Pair*) u16[4] = pair` stores give the
+               # GameCube halves order on the game build (big-endian memory: each word's high half first), but this
+               # oracle is a native little-endian compile and swapped the halves (card dims / scissor offsets). The
+               # oracle copy stores the GC order explicitly; the shipped C is unchanged (frozen). About 200 expected
+               # rows of tests/data/tu_gm_1798.txt changed with this (all fn_8017AA78 state hashes).
+               ("    *(U32Pair*) lbl_8046E3AC.dim_w1 = lbl_804D3FD0;\n"
+                "    *(U32Pair*) lbl_8046E3AC.dim_h1 = lbl_804D3FD8;\n"
+                "    *(U32Pair*) lbl_8046E3AC.dim_w2 = lbl_804D3FE0;\n"
+                "    *(U32Pair*) lbl_8046E3AC.dim_h2 = lbl_804D3FE8;\n"
+                "    *(U32Pair*) lbl_8046E3AC.scissor_y = lbl_804D3FF0;\n"
+                "    *(U32Pair*) lbl_8046E3AC.scissor_x = lbl_804D3FF8;\n",
+                "#define TUO_GC_PAIR(d, p) ((d)[0] = (u16) ((p).lo >> 16), (d)[1] = (u16) (p).lo, \\\n"
+                "                           (d)[2] = (u16) ((p).hi >> 16), (d)[3] = (u16) (p).hi)\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.dim_w1, lbl_804D3FD0);\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.dim_h1, lbl_804D3FD8);\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.dim_w2, lbl_804D3FE0);\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.dim_h2, lbl_804D3FE8);\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.scissor_y, lbl_804D3FF0);\n"
+                "    TUO_GC_PAIR(lbl_8046E3AC.scissor_x, lbl_804D3FF8);\n")],
         rust_vars={"lbl_803B7B68_nc": "lbl_803B7B68"},
         mockobj={"Player_GetEntity": "gobE", "GObj_Create": "gobC"},
         extra_objs=extra,

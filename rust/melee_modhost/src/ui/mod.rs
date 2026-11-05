@@ -122,7 +122,26 @@ pub struct Shared {
     pub list_gen: [u16; LIST_KINDS],
     /// Requests of this present for the play flow (`gd_ui_request`), drained by [`PresHost::take_requests`].
     pub requests: Vec<Request>,
+    /// gd-ui-v1.3 host pictures (`gd_ui_host_pic`): a fixed pool of atlas slots, recycled least recently used.
+    pub pics: Pics,
 }
+
+/// gd-ui-v1.3 host pictures: PIC_SLOTS fixed atlas rects of PIC_W x PIC_H (allocated at the first ask, never freed:
+/// the atlas has no free), the key each holds, decoded RGBA the play flow offered (bounded), and this present's
+/// asks for keys not on hand (the play flow fetches those off the game thread).
+#[derive(Default)]
+pub struct Pics {
+    pub slots: Vec<(AtlasRect, u32, u32)>,
+    pub base: Vec<(u16, u32)>,
+    pub ready: std::collections::VecDeque<(u32, std::sync::Arc<Vec<u8>>)>,
+    pub wants: Vec<u32>,
+    pub uploads: u32,
+}
+pub const PIC_W: u16 = 96;
+pub const PIC_H: u16 = 72;
+pub const PIC_SLOTS: usize = 16;
+pub const PIC_READY_MAX: usize = 48;
+pub const PIC_UPLOADS_PER_PRESENT: u32 = 2;
 
 /// gd-ui-v1.2 catalog kinds (`GD_UI_LIST_*`).
 pub const LIST_MODES: usize = 0;
@@ -131,7 +150,11 @@ pub const LIST_REPLAYS: usize = 2;
 pub const LIST_SKINS: usize = 3;
 pub const LIST_STATUS: usize = 4;
 pub const LIST_ONLINE: usize = 5;
-pub const LIST_KINDS: usize = 6;
+/// gd-ui-v1.3: the SSBM Nucleus browser (search results, the download queue, its state line).
+pub const LIST_NC: usize = 6;
+pub const LIST_NC_QUEUE: usize = 7;
+pub const LIST_NC_STATE: usize = 8;
+pub const LIST_KINDS: usize = 9;
 /// gd-ui-v1.2 request ops (`GD_UI_REQ_*`).
 pub const REQ_LAUNCH: i32 = 1;
 pub const REQ_MOD_SET: i32 = 2;
@@ -141,6 +164,12 @@ pub const REQ_NET_HOST: i32 = 5;
 pub const REQ_NET_JOIN: i32 = 6;
 pub const REQ_NET_SPECTATE: i32 = 7;
 pub const REQ_REFRESH: i32 = 8;
+/// gd-ui-v1.3 Nucleus requests: search ("text\0tab\0sort"), queue toggle (post id), process ("1" start / "0" pause),
+/// sync (a press of Refresh: the 10-minute rule is skipped, never the one-minute floor or the back-off).
+pub const REQ_NC_SEARCH: i32 = 9;
+pub const REQ_NC_QUEUE: i32 = 10;
+pub const REQ_NC_PROCESS: i32 = 11;
+pub const REQ_NC_SYNC: i32 = 12;
 pub const REQ_MAX_ARG: u32 = 256;
 pub const REQ_MAX_PENDING: usize = 8;
 
@@ -184,6 +213,7 @@ impl Shared {
             lists: Default::default(),
             list_gen: [0; LIST_KINDS],
             requests: Vec::with_capacity(REQ_MAX_PENDING),
+            pics: Pics::default(),
         }
     }
 
@@ -724,7 +754,7 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         if !feat(&c, FEATURE_UI_HOST) {
             return GD_ECAP;
         }
-        if !(REQ_LAUNCH..=REQ_REFRESH).contains(&op) || len > REQ_MAX_ARG {
+        if !(REQ_LAUNCH..=REQ_NC_SYNC).contains(&op) || len > REQ_MAX_ARG {
             return GD_EINVAL;
         }
         let Some(arg) = read_str(&c, s, len) else { return GD_EINVAL };
@@ -735,6 +765,61 @@ fn linker(engine: &Engine, exts: &[Box<dyn PresExtension>]) -> Result<Linker<Pre
         }
         sh.requests.push(Request { module, op, arg });
         GD_OK
+    });
+    // gd-ui-v1.3: the texture handle of host picture `key` (a record field), 0 while it is not on hand. Asking renews
+    // it; an unknown key is passed to the play flow, which fetches it off the game thread. At most 2 uploads a present.
+    f!("gd_ui_host_pic", |c: Caller<'_, PresData>, key: u32| -> u32 {
+        if !feat(&c, FEATURE_UI_HOST) || !feat(&c, FEATURE_UI_DRAW) || key == 0 {
+            return 0;
+        }
+        let module = c.data().module;
+        let mut g = c.data().ui().borrow_mut();
+        let sh = &mut *g;
+        let pno = sh.present_no;
+        let p = &mut sh.pics;
+        if p.slots.is_empty() {
+            for _ in 0..PIC_SLOTS {
+                match sh.atlas.alloc(PIC_W, PIC_H) {
+                    Some(r) => p.slots.push((r, 0, 0)),
+                    None => break,
+                }
+            }
+        }
+        // this module's handles of the slots (pushed once into its texture table)
+        let base = match p.base.iter().find(|b| b.0 == module) {
+            Some(b) => b.1,
+            None => {
+                let t = &mut sh.texs[module as usize];
+                let b = t.len() as u32 + 1;
+                t.extend(p.slots.iter().map(|s| s.0));
+                p.base.push((module, b));
+                b
+            }
+        };
+        if let Some(i) = p.slots.iter().position(|s| s.1 == key) {
+            p.slots[i].2 = pno;
+            return base + i as u32;
+        }
+        let Some(r) = p.ready.iter().position(|r| r.0 == key) else {
+            if p.wants.len() < 64 && !p.wants.contains(&key) {
+                p.wants.push(key);
+            }
+            return 0;
+        };
+        if p.uploads >= PIC_UPLOADS_PER_PRESENT {
+            return 0;
+        }
+        // the least recently used slot not drawn this present
+        let Some(i) = (0..p.slots.len()).filter(|&i| p.slots[i].2 != pno).min_by_key(|&i| p.slots[i].2) else { return 0 };
+        let px = p.ready[r].1.clone();
+        if px.len() != PIC_W as usize * PIC_H as usize * 4 {
+            return 0;
+        }
+        p.uploads += 1;
+        p.slots[i] = (p.slots[i].0, key, pno);
+        let rect = p.slots[i].0;
+        sh.atlas.put(rect, &px);
+        base + i as u32
     });
     // gd_lab: the Lab half links its own imports (B) on the same linker
     for e in exts {
@@ -1210,6 +1295,24 @@ impl PresHost {
             sh.lists[kind] = records;
             sh.list_gen[kind] = sh.list_gen[kind].wrapping_add(1) & 0x7FFF;
         }
+    }
+
+    /// gd-ui-v1.3: picture keys the mods asked for this present that are not on hand (drained).
+    pub fn take_pic_wants(&mut self) -> Vec<u32> {
+        let mut sh = self.shared.borrow_mut();
+        sh.pics.uploads = 0;
+        std::mem::take(&mut sh.pics.wants)
+    }
+
+    /// gd-ui-v1.3: decoded RGBA (PIC_W x PIC_H) for a picture key; the oldest offer goes when PIC_READY_MAX are held.
+    pub fn offer_pic(&mut self, key: u32, rgba: std::sync::Arc<Vec<u8>>) {
+        let mut sh = self.shared.borrow_mut();
+        let p = &mut sh.pics;
+        p.ready.retain(|r| r.0 != key);
+        if p.ready.len() >= PIC_READY_MAX {
+            p.ready.pop_front();
+        }
+        p.ready.push_back((key, rgba));
     }
 
     /// gd-ui-v1.2: the requests the mods queued since the last call.

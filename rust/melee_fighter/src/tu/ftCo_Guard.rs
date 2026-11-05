@@ -510,7 +510,8 @@ pub fn ftCo_800925A4(g: G) -> bool {
         let v = (f.input.triggers[0] - c.analog_shoulder_deadzone) / (1.0 - c.analog_shoulder_deadzone);
         f.lightshield_amount = if v < 0.0 { guard(f).x2C } else { v };
         let inner = fmadds(f.lightshield_amount, c.x2F0 - c.x2EC, c.x2EC);
-        f.shield_health = fmadds(-c.x278, inner, f.shield_health);
+        // the console rounds the product first (fsubs, no fnmsubs); the C build does the same (TARGET_PC)
+        f.shield_health -= c.x278 * inner;
         if f.shield_health < 0.0 {
             f.shield_health = 0.0;
             f.set_x221A_b7(0);

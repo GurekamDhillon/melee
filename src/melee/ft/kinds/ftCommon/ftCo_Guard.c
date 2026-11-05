@@ -507,10 +507,22 @@ bool ftCo_800925A4(HSD_GObj* gobj)
                        p_ftCommonData->analog_shoulder_deadzone) /
                           (1 - p_ftCommonData->analog_shoulder_deadzone);
         }
+#if defined(TARGET_PC)
+        {
+            /* The console rounds this product before the subtraction (fsubs, not fnmsubs);
+             * clang would fuse the compound -= (.slp parity, notes/fma.md). */
+            f32 decay = p_ftCommonData->x278 *
+                        ((fp->lightshield_amount *
+                          (p_ftCommonData->x2F0 - p_ftCommonData->x2EC)) +
+                         p_ftCommonData->x2EC);
+            fp->shield_health -= decay;
+        }
+#else
         fp->shield_health -= p_ftCommonData->x278 *
                              ((fp->lightshield_amount *
                                (p_ftCommonData->x2F0 - p_ftCommonData->x2EC)) +
                               p_ftCommonData->x2EC);
+#endif
         if (fp->shield_health < 0) {
             fp->shield_health = 0;
             fp->x221A_b7 = false;

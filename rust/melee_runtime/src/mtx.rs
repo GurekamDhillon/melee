@@ -78,35 +78,39 @@ fn diff2(a: f32, b: f32, c: f32, d: f32) -> f32 {
 
 /// `PSMTXInverse`. `None` when singular (the C leaves `inv` untouched and returns 0).
 pub fn inverse(s: &Mtx) -> Option<Mtx> {
-    // ((((s21*(s02*s10)) + ((s22*(s00*s11)) + (s20*(s01*s12)))) - (s02*(s20*s11)))
-    //    - (s22*(s10*s01))) - (s12*(s00*s21))
-    let inner = fmadds(s[2][2], s[0][0] * s[1][1], s[2][0] * (s[0][1] * s[1][2]));
-    let mut det = fmadds(s[2][1], s[0][2] * s[1][0], inner);
-    det = fmadds(-s[0][2], s[2][0] * s[1][1], det);
-    det = fmadds(-s[2][2], s[1][0] * s[0][1], det);
-    det = fmadds(-s[1][2], s[0][0] * s[2][1], det);
-
+    // The retail paired-single PSMTXInverse (libs/dolphin/src/dolphin/mtx/mtx.c), not the C_MTX
+    // reference: cofactors as ps_mul + ps_msub (one rounding each), det by ps_mul + 2 ps_madd,
+    // 1/det as fres plus one Newton step (-(det*r*r - 2r), ps_nmsub), the translation column by
+    // ps_mul + ps_madd + ps_nmadd. pc/gameworld/mtx_pc.c does the same, one statement per rounding.
+    let msub = |a: f32, c: f32, b: f32| (a as f64 * c as f64 - b as f64) as f32;
+    let c00 = msub(s[1][1], s[2][2], s[2][1] * s[1][2]);
+    let c10 = msub(s[1][2], s[2][0], s[2][2] * s[1][0]);
+    let c01 = msub(s[2][1], s[0][2], s[0][1] * s[2][2]);
+    let c11 = msub(s[2][2], s[0][0], s[0][2] * s[2][0]);
+    let c02 = msub(s[0][1], s[1][2], s[1][1] * s[0][2]);
+    let c12 = msub(s[0][2], s[1][0], s[1][2] * s[0][0]);
+    let c20 = msub(s[1][0], s[2][1], s[1][1] * s[2][0]);
+    let c21 = msub(s[0][1], s[2][0], s[0][0] * s[2][1]);
+    let c22 = msub(s[0][0], s[1][1], s[0][1] * s[1][0]);
+    let mut det = s[0][0] * c00;
+    det = fmadds(s[1][0], c01, det);
+    det = fmadds(s[2][0], c02, det);
     if det == 0.0 {
         return None;
     }
-    let det = 1.0f32 / det;
+    let r = melee_core::fp::fres(det as f64) as f32;
+    let r2 = r + r;
+    let rr = r * r;
+    let i = -msub(det, rr, r2);
+    let c = [[c00, c01, c02], [c10, c11, c12], [c20, c21, c22]];
     let mut m = [[0.0f32; 4]; 3];
-    m[0][0] = det * diff2(s[1][1], s[2][2], s[2][1], s[1][2]);
-    m[0][1] = det * -diff2(s[0][1], s[2][2], s[2][1], s[0][2]);
-    m[0][2] = det * diff2(s[0][1], s[1][2], s[1][1], s[0][2]);
-
-    m[1][0] = det * -diff2(s[1][0], s[2][2], s[2][0], s[1][2]);
-    m[1][1] = det * diff2(s[0][0], s[2][2], s[2][0], s[0][2]);
-    m[1][2] = det * -diff2(s[0][0], s[1][2], s[1][0], s[0][2]);
-
-    m[2][0] = det * diff2(s[1][0], s[2][1], s[2][0], s[1][1]);
-    m[2][1] = det * -diff2(s[0][0], s[2][1], s[2][0], s[0][1]);
-    m[2][2] = det * diff2(s[0][0], s[1][1], s[1][0], s[0][1]);
-
-    // ((-m_r0 * s03) - (m_r1 * s13)) - (m_r2 * s23)
     for r in 0..3 {
-        let t = fmadds(-m[r][0], s[0][3], -(m[r][1] * s[1][3]));
-        m[r][3] = fmadds(-m[r][2], s[2][3], t);
+        for k in 0..3 {
+            m[r][k] = c[r][k] * i;
+        }
+        let mut t = m[r][0] * s[0][3];
+        t = fmadds(m[r][1], s[1][3], t);
+        m[r][3] = -fmadds(m[r][2], s[2][3], t);
     }
     Some(m)
 }
@@ -235,22 +239,36 @@ pub fn vec_normalize(v: &Vec3) -> Vec3 {
     Vec3 { x: x * rsqrt, y: y * rsqrt, z: z * rsqrt }
 }
 
-/// `PSVECMag`: sqrtf((z*z) + ((x*x) + (y*y))).
+/// `PSVECMag`, the retail paired-single code: sqsum = (z*z + x*x) + y*y (ps_madd, ps_sum0), then
+/// sqsum * one Newton step of frsqrte (fsel keeps 0 for a zero vector). Not correctly rounded.
 pub fn vec_mag(v: &Vec3) -> f32 {
-    sqrtf(fmadds(v.z, v.z, fmadds(v.x, v.x, v.y * v.y)))
+    let xx = v.x * v.x;
+    let yy = v.y * v.y;
+    let xz = (v.z as f64 * v.z as f64 + xx as f64) as f32;
+    let sqsum = xz + yy;
+    let est = frsqrte(sqsum as f64);
+    let n0 = (est * force25(est)) as f32;
+    let n1 = (est * 0.5) as f32;
+    let n2 = (-(n0 as f64 * sqsum as f64 - 3.0)) as f32;
+    let mut r = n2 * n1;
+    if !(r >= 0.0) {
+        r = sqsum;
+    }
+    sqsum * r
 }
 
-/// `PSVECDotProduct`.
+/// `PSVECDotProduct`, the retail paired-single code: fma(x1, x2, y1*y2) (ps_madd) + z1*z2 (ps_sum0).
 pub fn vec_dot(a: &Vec3, b: &Vec3) -> f32 {
-    fmadds(a.z, b.z, fmadds(a.x, b.x, a.y * b.y))
+    fmadds(a.x, b.x, a.y * b.y) + a.z * b.z
 }
 
-/// `PSVECCrossProduct`.
+/// `PSVECCrossProduct`, the retail paired-single code (ps_msub, then ps_neg for y and z): which
+/// product is rounded on its own differs from the C reference in y and z.
 pub fn vec_cross(a: &Vec3, b: &Vec3) -> Vec3 {
     Vec3 {
-        x: diff2(a.y, b.z, a.z, b.y),
-        y: diff2(a.z, b.x, a.x, b.z),
-        z: diff2(a.x, b.y, a.y, b.x),
+        x: diff2(a.y, b.z, b.y, a.z),
+        y: -diff2(a.x, b.z, b.x, a.z),
+        z: -diff2(a.y, b.x, b.y, a.x),
     }
 }
 
@@ -259,7 +277,8 @@ pub fn look_at(cam_pos: &Vec3, cam_up: &Vec3, target: &Vec3) -> Mtx {
     let look = vec_normalize(&vec_sub(cam_pos, target));
     let right = vec_normalize(&vec_cross(cam_up, &look));
     let up = vec_cross(&look, &right);
-    let d = |v: &Vec3| -fmadds(cam_pos.z, v.z, fmadds(cam_pos.x, v.x, cam_pos.y * v.y));
+    // The Dolphin SDK's C is built with MWCC -fp_contract off (configure.py DolphinLib): no fusion.
+    let d = |v: &Vec3| -((cam_pos.z * v.z) + ((cam_pos.x * v.x) + (cam_pos.y * v.y)));
     [
         [right.x, right.y, right.z, d(&right)],
         [up.x, up.y, up.z, d(&up)],

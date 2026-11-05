@@ -134,54 +134,79 @@ void PSMTXTranspose(Mtx src, Mtx xPose)
     }
 }
 
+/* PSMTXInverse follows the retail paired-single code (libs/dolphin/src/dolphin/mtx/mtx.c), not
+ * C_MTXInverse: each cofactor is ps_mul then ps_msub (a*c - b, one rounding), the determinant
+ * ps_mul + two ps_madd, 1/det is the fres estimate refined once (2r - det*(r*r), ps_nmsub), and the
+ * translation column is ps_mul + ps_madd + ps_nmadd. The C reference's exact divide and grouping
+ * differ in the last bits; the camera's inverse view matrix (a star-KO fighter's position,
+ * ftDrawCommon_80080E18) goes through here (.slp parity, notes/fma.md). One statement per rounding,
+ * so clang contracts nothing. */
+extern double __fres(double val);
+static float mtx_msub(float a, float c, float b)
+{
+    double p = (double) a * (double) c;
+    return (float) (p - (double) b);
+}
 u32 PSMTXInverse(Mtx src, Mtx inv)
 {
-    Mtx mTmp;
-    MtxPtr m;
-    f32 det;
+    f32 c00, c10, c01, c11, c02, c12, c20, c21, c22, p, det, r, r2, rr, i, t;
+    int k;
 
-    if (src == inv) {
-        m = mTmp;
-    } else {
-        m = inv;
-    }
+    p = src[2][1] * src[1][2];
+    c00 = mtx_msub(src[1][1], src[2][2], p);
+    p = src[2][2] * src[1][0];
+    c10 = mtx_msub(src[1][2], src[2][0], p);
+    p = src[0][1] * src[2][2];
+    c01 = mtx_msub(src[2][1], src[0][2], p);
+    p = src[0][2] * src[2][0];
+    c11 = mtx_msub(src[2][2], src[0][0], p);
+    p = src[1][1] * src[0][2];
+    c02 = mtx_msub(src[0][1], src[1][2], p);
+    p = src[1][2] * src[0][0];
+    c12 = mtx_msub(src[0][2], src[1][0], p);
+    p = src[1][1] * src[2][0];
+    c20 = mtx_msub(src[1][0], src[2][1], p);
+    p = src[0][0] * src[2][1];
+    c21 = mtx_msub(src[0][1], src[2][0], p);
+    p = src[0][1] * src[1][0];
+    c22 = mtx_msub(src[0][0], src[1][1], p);
+    det = src[0][0] * c00;
+    det = mtx_madd(src[1][0], c01, det);
+    det = mtx_madd(src[2][0], c02, det);
 
-    det = ((((src[2][1] * (src[0][2] * src[1][0])) +
-             ((src[2][2] * (src[0][0] * src[1][1])) +
-              (src[2][0] * (src[0][1] * src[1][2])))) -
-            (src[0][2] * (src[2][0] * src[1][1]))) -
-           (src[2][2] * (src[1][0] * src[0][1]))) -
-          (src[1][2] * (src[0][0] * src[2][1]));
-
-    /* Singular: leave the destination untouched and report failure, exactly
-     * as both the C and the paired-single original do. */
+    /* Singular: leave the destination untouched and report failure, as the original does. */
     if (det == 0.0f) {
         return 0;
     }
 
-    det = 1.0f / det;
+    r = (f32) __fres((double) det);
+    r2 = r + r;
+    rr = r * r;
+    i = mtx_msub(det, rr, r2);
+    i = -i;
 
-    m[0][0] = (det * +((src[1][1] * src[2][2]) - (src[2][1] * src[1][2])));
-    m[0][1] = (det * -((src[0][1] * src[2][2]) - (src[2][1] * src[0][2])));
-    m[0][2] = (det * +((src[0][1] * src[1][2]) - (src[1][1] * src[0][2])));
-
-    m[1][0] = (det * -((src[1][0] * src[2][2]) - (src[2][0] * src[1][2])));
-    m[1][1] = (det * +((src[0][0] * src[2][2]) - (src[2][0] * src[0][2])));
-    m[1][2] = (det * -((src[0][0] * src[1][2]) - (src[1][0] * src[0][2])));
-
-    m[2][0] = (det * +((src[1][0] * src[2][1]) - (src[2][0] * src[1][1])));
-    m[2][1] = (det * -((src[0][0] * src[2][1]) - (src[2][0] * src[0][1])));
-    m[2][2] = (det * +((src[0][0] * src[1][1]) - (src[1][0] * src[0][1])));
-
-    m[0][3] =
-        ((-m[0][0] * src[0][3]) - (m[0][1] * src[1][3])) - (m[0][2] * src[2][3]);
-    m[1][3] =
-        ((-m[1][0] * src[0][3]) - (m[1][1] * src[1][3])) - (m[1][2] * src[2][3]);
-    m[2][3] =
-        ((-m[2][0] * src[0][3]) - (m[2][1] * src[1][3])) - (m[2][2] * src[2][3]);
-
-    if (m == mTmp) {
-        PSMTXCopy(mTmp, inv);
+    /* src is read only above and for the translation column below, so inv may alias it. */
+    {
+        f32 s03 = src[0][3], s13 = src[1][3], s23 = src[2][3];
+        f32 m[3][3];
+        m[0][0] = c00 * i;
+        m[1][0] = c10 * i;
+        m[0][1] = c01 * i;
+        m[1][1] = c11 * i;
+        m[0][2] = c02 * i;
+        m[1][2] = c12 * i;
+        m[2][0] = c20 * i;
+        m[2][1] = c21 * i;
+        m[2][2] = c22 * i;
+        for (k = 0; k < 3; k++) {
+            t = m[k][0] * s03;
+            t = mtx_madd(m[k][1], s13, t);
+            t = mtx_madd(m[k][2], s23, t);
+            inv[k][0] = m[k][0];
+            inv[k][1] = m[k][1];
+            inv[k][2] = m[k][2];
+            inv[k][3] = -t;
+        }
     }
     return 1;
 }
@@ -481,29 +506,61 @@ void PSVECNormalize(Vec* vec1, Vec* dst)
     dst->z = z * rsqrt;
 }
 
+/* PSVECMag, PSVECDotProduct and PSVECCrossProduct follow the retail paired-single code (vec.c), one
+ * statement per rounding (see PSMTXInverse). PSVECMag: ps_mul, ps_madd, ps_sum0 give
+ * (z*z + x*x) + y*y, then frsqrte refined once as in PSVECNormalize, fsel keeps a zero length 0,
+ * and the result is sqsum * rsqrt - not a correctly rounded sqrtf. */
 f32 PSVECMag(Vec* v)
 {
-    return sqrtf((v->z * v->z) + ((v->x * v->x) + (v->y * v->y)));
+    f32 x = v->x, y = v->y, z = v->z;
+    f32 xx = x * x;
+    f32 yy = y * y;
+    f32 xz = mtx_madd(z, z, xx);
+    f32 sqsum = xz + yy;
+    double est = __frsqrte((double) sqsum);
+    f32 n0 = (f32) (est * gekko_force25(est));
+    f32 n1 = (f32) (est * 0.5);
+    f32 n2 = (f32) (-((double) n0 * (double) sqsum - 3.0));
+    f32 rsqrt = n2 * n1;
+    if (!(rsqrt >= 0.0f)) {
+        rsqrt = sqsum;
+    }
+    return sqsum * rsqrt;
 }
 
+/* ps_mul (y1*y2, z1*z2); ps_madd x1*x2 + y1*y2; ps_sum0 adds z1*z2. */
 f32 PSVECDotProduct(Vec* vec1, Vec* vec2)
 {
-    return (vec1->z * vec2->z) + ((vec1->x * vec2->x) + (vec1->y * vec2->y));
+    f32 yy = vec1->y * vec2->y;
+    f32 zz = vec1->z * vec2->z;
+    f32 xy = mtx_madd(vec1->x, vec2->x, yy);
+    return xy + zz;
 }
 
+/* ps_msub then ps_neg for y and z: x = ay*bz - (by*az), y = -(ax*bz - (bx*az)),
+ * z = -(ay*bx - (by*ax)), the rounded product being the second one in each. */
 void PSVECCrossProduct(Vec* vec1, Vec* vec2, Vec* dst)
 {
+    f32 ax = vec1->x, ay = vec1->y, az = vec1->z;
+    f32 bx = vec2->x, by = vec2->y, bz = vec2->z;
+    f32 p;
     Vec vTmp;
 
     /* dst may alias either source. */
-    vTmp.x = (vec1->y * vec2->z) - (vec1->z * vec2->y);
-    vTmp.y = (vec1->z * vec2->x) - (vec1->x * vec2->z);
-    vTmp.z = (vec1->x * vec2->y) - (vec1->y * vec2->x);
+    p = by * az;
+    vTmp.x = mtx_msub(ay, bz, p);
+    p = bx * az;
+    vTmp.y = -mtx_msub(ax, bz, p);
+    p = by * ax;
+    vTmp.z = -mtx_msub(ay, bx, p);
     dst->x = vTmp.x;
     dst->y = vTmp.y;
     dst->z = vTmp.z;
 }
 
+/* C_MTXLookAt is C in the SDK, which ships built with MWCC -fp_contract off (configure.py
+ * DolphinLib): the dot products are not fused. */
+#pragma STDC FP_CONTRACT OFF
 void C_MTXLookAt(Mtx m, Point3dPtr camPos, VecPtr camUp, Point3dPtr target)
 {
     Vec vLook;
@@ -537,6 +594,8 @@ void C_MTXLookAt(Mtx m, Point3dPtr camPos, VecPtr camUp, Point3dPtr target)
     m[2][3] = -((camPos->z * vLook.z) +
                 ((camPos->x * vLook.x) + (camPos->y * vLook.y)));
 }
+
+#pragma STDC FP_CONTRACT ON
 
 /* The light-matrix routines live in extern/dolphin/src/dolphin/mtx/mtx.c, which does not compile
  * for the port; these are that file's plain-C bodies, unchanged. */

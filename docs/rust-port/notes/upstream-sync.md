@@ -304,3 +304,24 @@ Upstream commits no function-level list. What exists:
 2. Rename the 103 C symbols in Rust (a sed over `rust/` with the table above is mechanical); `ftLib_GetPos` (old `ftLib_80086644`)
    and `ftLib_IsInHitstun` (old `ftLib_80086EC0`) dominate.
 3. Pick up `c39895846` (integer hitlag damage) in the Rust hitlag code if a golden moves.
+
+## Shared `_build` lanes after the sync (port/gdsync, 2026-11-05)
+- An earlier gdsync run had appended the 6 new TUs to the workspace's shared `_build/masstest/files.txt` and
+  `_build/melee_link_objects.rsp` and patched `tools/port/link_response.py` (skip missing objects), all uncommitted in the
+  workspace repo. Those three edits are **reverted** (the files equal the pre-edit backups / the workspace HEAD), so every other
+  lane is as before.
+- A synced tree builds its C reference with `tools/rust-port/c_lane_newtus.sh` instead: it compiles the TUs of
+  `docs/rust-port/game_tus.txt` that the shared list lacks into the lane (`build_objects.py game --tu`) and writes
+  `<lane>/melee_link_objects_newtus.rsp`; then `GW_LINK_OBJECTS=<that rsp> tools/port/build.sh`. Verified on the lane
+  `_build/agents/upstream-sync` with `GW_MELEE=worktrees/gdsync`: build OK, bridge audit clean.
+- The tree also needs the generated (disc-derived, git-ignored) `build/GALE01/include` (copy it from `<workspace>/melee`), else
+  `hsd_3915.c` fails on `debug_font.inc`.
+- When the workspace's shared lists are updated for good (after rust-port carries the sync), the script prints 0 extra TUs and
+  is a no-op.
+
+## tu_gm_1798 oracle re-point (user-approved)
+`rust/melee_modes/oracle_tu/cfgs.py` patches the oracle's copy of gm_1798.c so fn_8017AA78's six `*(U32Pair*) u16[4] = pair`
+stores write the GameCube halves order (the native LE oracle swapped them; the game build does not). The C game source is unchanged.
+Regenerated from a 66d48cc1b tree export (in-tree regeneration fails: `rust/melee_types/gen/all_types.c` still includes the folded
+`*.static.h` headers, follow-up 1 above): byte-identical to the committed `tests/data/tu_gm_1798.txt`, 200 rows differ from the old
+oracle, all fn_8017AA78.

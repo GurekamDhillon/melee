@@ -138,6 +138,10 @@ pub struct RetailPlay {
     seek_snaps: Vec<(usize, melee_engine::snapshot::SnapRef, u32, bool)>,
     /// gd-ui-v1.2 host side of the in-game browser (browser.rs).
     browser: browser::State,
+    /// The settings overlay's SESSION exit picked this tick (true: main menu, false: quit), run after the step.
+    exit_req: Option<bool>,
+    /// MELEE_BOOT_MENU=1 (a "Return to main menu" relaunch): leave the boot's opening / title for the main menu.
+    boot_menu: bool,
 }
 
 impl RetailPlay {
@@ -149,7 +153,7 @@ impl RetailPlay {
             shot_pending: None, quit: false, failed: None, interp: false, skip_intro: false, audio_on: false, audio: None,
             rec: None, feed: None, net: None, sync: None, rollback_mode: false, detach: Default::default(), delay_line: crate::input_delay::DelayLine::new(0), hud_rates: Default::default(), arm: false, practice: None, settings: None, hud_request: None, pacing: None, video: Vec::new(),
             lab: None, lab_gfx: None, lab_clock: 0, lab_cmds: Vec::new(), lab_cmds_host: 0, lab_frame: None, lab_seed: 12345, lab_launch: false, dumped: 0, dump_buf: Vec::new(),
-            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(),
+            spec_server: None, spec_client: None, ctl: None, rticks: 0, seek_base: None, seek_snaps: Vec::new(), browser: Default::default(), exit_req: None, boot_menu: std::env::var("MELEE_BOOT_MENU").is_ok_and(|v| v == "1"),
             ui: match melee_modhost::ui::PresHost::from_env() {
                 Ok(h) => h,
                 Err(e) => {
@@ -620,6 +624,7 @@ impl RetailPlay {
         }
         let t_step = std::time::Instant::now();
         let entered = self.step(four);
+        self.session_exit();
         if let Some(pr) = self.practice.as_mut() {
             let _h = SysHeap::enter();
             pr.observe();
@@ -833,6 +838,8 @@ impl RetailPlay {
                         let _ = melee_audio::output::save_volume(v);
                     }
                 }
+                "action:menu" => self.exit_req = Some(true),
+                "action:quit" => self.exit_req = Some(false),
                 "overlay" => self.hud_request = Some(on),
                 "vsync" | "fps_cap" | "interp" => {
                     let p = self.pacing.get_or_insert_with(Default::default);

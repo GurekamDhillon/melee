@@ -1,6 +1,7 @@
 //! The in-game settings overlay (`melee play`, retail flow): F1, or hold D-pad Down and press Start on any controller.
 //!
-//! Pages: VIDEO, AUDIO, OVERLAYS, GAME, CUSTOMIZE (menu theme, costume skins). Every change is written to settings.cfg
+//! Pages: SESSION ("Return to main menu", "Quit game": the exits that work in every scene and mode, whatever owns
+//! START; retail_flow / browser.rs `session_exit` runs them), VIDEO, AUDIO, OVERLAYS, GAME, CUSTOMIZE (menu theme, costume skins). Every change is written to settings.cfg
 //! at once (`MELEE_SETTINGS_CFG` moves the file; a `MELEE_<KEY>` in the environment still wins, and the row says so).
 //! Rows marked LIVE apply on the spot (volume, the practice overlays, the performance HUD, the theme, skins offline);
 //! the others say "next launch".
@@ -34,6 +35,8 @@ enum Kind {
     /// (shown, stored) choices
     Choice(Vec<(String, String)>),
     Slider { lo: i32, hi: i32, step: i32 },
+    /// A command (SESSION page): A runs it (a live change `action:<key>`), the overlay closes.
+    Action,
 }
 
 #[derive(Clone, Debug)]
@@ -59,6 +62,7 @@ impl Row {
             Kind::Toggle => if self.value != 0 { "ON" } else { "OFF" }.into(),
             Kind::Choice(c) => c.get(self.value as usize).map_or(String::new(), |c| c.0.clone()),
             Kind::Slider { .. } => format!("{}", self.value),
+            Kind::Action => String::new(),
         }
     }
     /// The settings.cfg value.
@@ -67,6 +71,7 @@ impl Row {
             Kind::Toggle => (self.value != 0 as i32).then_some("1").unwrap_or("0").into(),
             Kind::Choice(c) => c.get(self.value as usize).map_or(String::new(), |c| c.1.clone()),
             Kind::Slider { .. } => self.value.to_string(),
+            Kind::Action => String::new(),
         }
     }
     fn step(&mut self, d: i32) -> bool {
@@ -80,6 +85,7 @@ impl Row {
                 }
             }
             Kind::Slider { lo, hi, step } => self.value = (self.value + d * step).clamp(*lo, *hi),
+            Kind::Action => {}
         }
         self.value != old
     }
@@ -238,11 +244,17 @@ impl Overlay {
         if custom.len() == 2 {
             custom.push(Row { key: String::new(), label: "No skins (melee cosmetics import FILE)".into(), kind: Kind::Choice(vec![]), value: 0, live: false, help: format!("Catalog: {}", crate::cosmetics::dir().display()), note: String::new() });
         }
+        // SESSION: the exits that work in every scene and mode, whatever owns START (the game's pause, a mod)
+        let act = |key: &str, label: &str, help: &str| Row { key: key.into(), label: label.into(), kind: Kind::Action, value: 0, live: true, help: help.into(), note: String::new() };
+        let session = vec![
+            act("menu", "Return to main menu", "Leave this scene for the main menu (a relaunched mode relaunches to the menus)."),
+            act("quit", "Quit game", "Close the game."),
+        ];
         let theme = custom[0].stored().parse().unwrap_or(0);
         let palette = custom[1].stored().parse().unwrap_or(0);
         Overlay {
             open: false,
-            pages: vec![Page { name: "VIDEO", rows: video }, Page { name: "AUDIO", rows: audio }, Page { name: "OVERLAYS", rows: overlays }, Page { name: "GAME", rows: game }, Page { name: "CUSTOMIZE", rows: custom }],
+            pages: vec![Page { name: "SESSION", rows: session }, Page { name: "VIDEO", rows: video }, Page { name: "AUDIO", rows: audio }, Page { name: "OVERLAYS", rows: overlays }, Page { name: "GAME", rows: game }, Page { name: "CUSTOMIZE", rows: custom }],
             page: 0,
             row: 0,
             owner: None,
@@ -437,7 +449,14 @@ impl Overlay {
         if nav & PAD_BUTTON_LEFT != 0 {
             self.change(-1);
         }
-        if ed & PAD_BUTTON_A != 0 {
+        let is_action = self.rows().get(self.row).is_some_and(|r| matches!(r.kind, Kind::Action));
+        if ed & PAD_BUTTON_A != 0 && is_action {
+            let key = format!("action:{}", self.rows()[self.row].key);
+            eprintln!("settings overlay: {key}");
+            self.changes.push(Change { key, value: "1".into(), live: true });
+            // the A closes the overlay too (kept from the game until released, as a B close)
+            ed |= PAD_BUTTON_B;
+        } else if ed & PAD_BUTTON_A != 0 {
             self.change(1);
         }
         // the owner before a close: the B / Start that closes is the overlay's too (it must not reach the game)
@@ -514,7 +533,7 @@ impl Overlay {
                 let s = if sel { format!("◀ {v} ▶") } else { v };
                 b.text(&p, a, x + w - 16.0, ry, ROLE_VALUE, if sel { accent } else { text }, cmd::ALIGN_RIGHT, 120.0, &s);
             }
-            let tag = if !r.note.is_empty() { r.note.as_str() } else if r.live { "live" } else { "next launch" };
+            let tag = if matches!(r.kind, Kind::Action) { r.help.as_str() } else if !r.note.is_empty() { r.note.as_str() } else if r.live { "live" } else { "next launch" };
             b.text(&p, a, x + 18.0, ry + 14.0, cmd::ROLE_LABEL, muted & 0xFFFF_FFA0, cmd::ALIGN_LEFT, w - 36.0, tag);
             if let Kind::Slider { lo, hi, .. } = r.kind {
                 let f = (r.value - lo) as f32 / (hi - lo).max(1) as f32;
@@ -617,8 +636,8 @@ mod tests {
         let mut four = l;
         assert!(o.input(&l, &mut four, true, false, &[]));
         assert_eq!(four[1].button, 0);
-        // R twice: OVERLAYS; A toggles the HUD
-        for b in [PAD_TRIGGER_R, 0, PAD_TRIGGER_R, 0, PAD_BUTTON_A, 0] {
+        // R three times (SESSION, VIDEO, AUDIO): OVERLAYS; A toggles the HUD
+        for b in [PAD_TRIGGER_R, 0, PAD_TRIGGER_R, 0, PAD_TRIGGER_R, 0, PAD_BUTTON_A, 0] {
             let mut l = idle;
             l[1] = pad(b);
             let mut four = l;
@@ -664,5 +683,36 @@ mod tests {
         assert!(o.open);
         o.input(&idle, &mut idle.clone(), true, false, &[1 << 24 | 2]);
         assert!(!o.open);
+    }
+
+    #[test]
+    fn session_exits() {
+        let mut o = Overlay::new(40);
+        o.save = false;
+        let idle = [PADStatus::zeroed(); 4];
+        let press = |o: &mut Overlay, b: u16| {
+            let mut l = idle;
+            l[0] = pad(b);
+            let mut four = l;
+            o.input(&l, &mut four, true, false, &[]);
+            four[0].button
+        };
+        press(&mut o, PAD_BUTTON_DOWN);
+        press(&mut o, PAD_BUTTON_DOWN | PAD_BUTTON_START);
+        assert!(o.open);
+        press(&mut o, 0);
+        // SESSION is the first page: A on "Return to main menu" asks for it and closes; the A never reaches the game
+        assert_eq!(press(&mut o, PAD_BUTTON_A), 0);
+        assert!(!o.open);
+        assert_eq!(o.take_changes(), vec![Change { key: "action:menu".into(), value: "1".into(), live: true }]);
+        press(&mut o, 0);
+        // F1 (keyboard), down to "Quit game", A
+        o.input(&idle, &mut idle.clone(), true, true, &[]);
+        o.input(&idle, &mut idle.clone(), true, false, &[]);
+        assert!(o.open && o.page == 0 && o.row == 0);
+        press(&mut o, PAD_BUTTON_DOWN);
+        press(&mut o, 0);
+        press(&mut o, PAD_BUTTON_A);
+        assert_eq!(o.take_changes(), vec![Change { key: "action:quit".into(), value: "1".into(), live: true }]);
     }
 }

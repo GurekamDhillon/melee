@@ -12,6 +12,8 @@
 //!     these are boot-time modes of `melee play`, so the game relaunches itself with the same options plus the new ones
 //!     (`--replay`, `--netplay host|join CODE --np-css`, `--spectate`, `MELEE_SCENE=mode=lab..`) and this run quits.
 //!     `MELEE_BROWSER_DRY_RUN=1` logs the relaunch instead (the headless checks). The log never shows the disc path.
+//!   - The Modes list has only rows that start and can be left (the settings overlay's SESSION page exits any of them);
+//!     MELEE_DEV_MODES=1 adds the dev rows: the workbench (two CPUs, no human port) and the modes that cannot launch.
 //!   - MOD_SET: enabled.txt for the next launch (`ModSet::set_enabled` + `save`).
 //!   - SKIN_SET: `skin_<slot>=name` in settings.cfg, mounted live offline through `cosmetics::mount` (as the settings
 //!     overlay does), else at the next launch.
@@ -119,7 +121,13 @@ impl RetailPlay {
     fn browser_fill_modes(&mut self) {
         let mut v = Vec::new();
         let mut ids = Vec::new();
+        // MELEE_DEV_MODES=1 lists the dev rows too: the workbench (two CPUs, no human port: nothing to pause with) and
+        // the rows that cannot launch (modes not ported yet, Envoy). A player's list has only what starts and exits.
+        let dev = std::env::var("MELEE_DEV_MODES").is_ok_and(|v| v == "1");
         let mut push = |v: &mut Vec<Vec<u8>>, id: &str, group: &str, title: &str, desc: &str, l: Launch| {
+            if !dev && (matches!(l, Launch::Unavailable(_)) || id == "workbench") {
+                return;
+            }
             let avail = !matches!(l, Launch::Unavailable(_));
             let note = match &l {
                 Launch::Unavailable(n) => *n,
@@ -337,8 +345,50 @@ impl RetailPlay {
     /// Relaunch `melee play` with this run's options (minus the boot-mode ones) plus `extra`, then quit this run.
     fn browser_relaunch(&mut self, extra: &[String], scene: Option<&str>, what: &str) {
         if !self.browser_offline() {
-            return status(self.ui.as_mut().unwrap(), 1, "Finish the online session or replay first.");
+            return self.ui_status(1, "Finish the online session or replay first.");
         }
+        self.relaunch(extra, scene, false, what);
+    }
+
+    fn ui_status(&mut self, code: u8, text: &str) {
+        match self.ui.as_mut() {
+            Some(u) => status(u, code, text),
+            None => log(text),
+        }
+    }
+
+    /// The settings overlay's SESSION exits (after the step, so never inside a scene's frame). "Quit game" ends the
+    /// run; "Return to main menu" switches the scene in place (`Engine::goto_mode`) in an ordinary offline run, and
+    /// relaunches to the menus (MELEE_BOOT_MENU=1, no boot-mode options, no MELEE_SCENE) from anything a scene launch,
+    /// a browser relaunch, a replay, netplay, a spectate or a recording set up: those carry run-wide state (the LAB's
+    /// rollback mode, a feed, a session) that a scene switch cannot undo.
+    pub(super) fn session_exit(&mut self) {
+        if self.boot_menu && self.e.is_some() && matches!(self.cur.0 as u32, melee_types::GM_TITLE | melee_types::GM_OPENING_MV) {
+            self.boot_menu = false;
+            log("session: MELEE_BOOT_MENU: the boot's title -> main menu");
+            self.e.as_mut().unwrap().goto_mode(melee_types::GM_MENU as u8);
+        }
+        let Some(menu) = self.exit_req.take() else { return };
+        if !menu {
+            log("session: quit game (settings overlay)");
+            self.quit = true;
+            return;
+        }
+        let plain = self.browser_offline() && !self.lab_launch && self.rec.is_none() && std::env::var_os("MELEE_SCENE").is_none() && self.e.is_some();
+        if plain {
+            log(&format!("session: return to main menu (scene switch from mode {} scene {})", self.cur.0, self.cur.1));
+            if let Some(a) = self.audio.as_mut() {
+                a.pause(false);
+                a.match_leave();
+            }
+            self.e.as_mut().unwrap().goto_mode(melee_types::GM_MENU as u8);
+            return;
+        }
+        log("session: return to main menu (relaunch to the menus)");
+        self.relaunch(&[], None, true, "the main menu");
+    }
+
+    fn relaunch(&mut self, extra: &[String], scene: Option<&str>, to_menu: bool, what: &str) {
         let mut args: Vec<String> = Vec::new();
         let cur: Vec<String> = std::env::args().skip(1).collect();
         let mut i = 0;
@@ -367,21 +417,35 @@ impl RetailPlay {
         let shown: Vec<&str> = args.iter().enumerate().map(|(k, a)| if k > 0 && args[k - 1] == "--iso" { "<iso>" } else if extra.iter().any(|e| e == a) && a.contains(['/', '\\']) { "<file>" } else { a.as_str() }).collect();
         let env = scene.map(|s| format!(" MELEE_SCENE={s}")).unwrap_or_default();
         if std::env::var("MELEE_BROWSER_DRY_RUN").is_ok_and(|v| v == "1") {
-            return status(self.ui.as_mut().unwrap(), 0, &format!("relaunch (dry run) for {what}:{env} melee {}", shown.join(" ")));
+            self.ui_status(0, &format!("relaunch (dry run) for {what}:{env} melee {}", shown.join(" ")));
+            if to_menu {
+                self.quit = true;
+            }
+            return;
         }
-        let Ok(exe) = std::env::current_exe() else { return status(self.ui.as_mut().unwrap(), 1, "cannot find the game executable") };
+        let Ok(exe) = std::env::current_exe() else { return self.ui_status(1, "cannot find the game executable") };
         let mut cmd = std::process::Command::new(exe);
         cmd.args(&args).env_remove("MELEE_PAD_SCRIPT");
+        if to_menu {
+            cmd.env("MELEE_BOOT_MENU", "1");
+        } else {
+            cmd.env_remove("MELEE_BOOT_MENU");
+        }
         match scene {
             Some(s) => cmd.env("MELEE_SCENE", s),
             None => cmd.env_remove("MELEE_SCENE"),
         };
         match cmd.spawn() {
             Ok(_) => {
-                status(self.ui.as_mut().unwrap(), 2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
+                self.ui_status(2, &format!("relaunching for {what}:{env} melee {}", shown.join(" ")));
                 self.quit = true;
             }
-            Err(e) => status(self.ui.as_mut().unwrap(), 1, &format!("relaunch failed: {e}")),
+            Err(e) => {
+                self.ui_status(1, &format!("relaunch failed: {e}"));
+                if to_menu {
+                    self.quit = true;
+                }
+            }
         }
     }
 }

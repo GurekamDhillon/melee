@@ -139,6 +139,38 @@ impl Engine {
         self.ended = true;
     }
 
+    /// Leave whatever scene is running and enter `mode` (the settings overlay's "Return to main menu"): the scene's and
+    /// its state's exits run (`gm_801A4014_leave`), then the mode's unload (runGameMode's tail), then `mode`'s load and
+    /// its first scene, as `tick_modes` enters one, with the routing forced (no `gmFrontend_Route`, no results screen).
+    /// Not the retail soft reset (`gmMainLib_8046B0F0` resetting): that one checks the disc and reboots to GM_BOOT.
+    /// Offline harness action only.
+    pub fn goto_mode(&mut self, mode: u8) {
+        let _scope = crate::arena::GameScope::enter();
+        unsafe {
+            let sm = &raw mut gm_1A3F::state_machine;
+            if let Some(run) = self.run.take() {
+                gmscene::gm_801A4D34_end();
+                gm_1A3F::gm_801A4014_leave(run);
+            }
+            if !LOOP_MODE.is_null() && !core::mem::take(&mut OVERRIDE_ACTIVE) {
+                if let Some(f) = (*LOOP_MODE).on_unload {
+                    f();
+                }
+            }
+            (*sm).routing.prev_mode = (*sm).routing.curr_mode;
+            (*sm).routing.curr_mode = mode;
+            (*sm).routing.pending_mode = mode;
+            LOOP_MODE = gm_1A3F::runGameMode_load(mode);
+            let run = gm_1A3F::gm_801A4014_enter(LOOP_MODE);
+            gmscene::gm_801A4D34_begin(run.info);
+            self.frames = 0;
+            self.info = run.info;
+            self.on_frame = run.frame_fn;
+            self.ended = false;
+            self.run = Some(run);
+        }
+    }
+
     /// The next VS match in the same process, as the C mode loop starts one after the results (`runGameMode(GM_VS)`
     /// -> the mode's `on_load` -> `SceneLaunch_SeedVs`, entry state 2 = the match): the host, the link table and the
     /// libraries `main` brought up stay; the scene setup (`gm_801A4BD4`: GObj and heap init) runs again.

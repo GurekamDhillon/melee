@@ -978,18 +978,22 @@ impl Renderer {
         let limits = wgpu::Limits { max_push_constant_size: IMMEDIATE_SIZE, ..wgpu::Limits::default() };
         let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
             label: Some("melee_gx"),
-            required_features: wgpu::Features::PUSH_CONSTANTS,
+            // the adapter's own format features (MSAA counts past WebGPU's guaranteed 1 / 4) when it has them
+            required_features: wgpu::Features::PUSH_CONSTANTS | (adapter.features() & wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES),
             required_limits: limits,
             ..Default::default()
         }))
         .map_err(|e| format!("request_device: {e}"))?;
         let gpu = install_error_handling(&device);
-        // MSAA: the largest count not above the request that both EFB formats support.
+        // MSAA: the largest count not above the request that every EFB attachment format supports on this device
+        // (without TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES the device validates against WebGPU's guaranteed counts,
+        // not the adapter's: an adapter-reported 8x then fails texture creation, "Sample count 8 is not supported").
         let want = Self::env_msaa();
-        let ok = |n: u32| [COLOR_FORMAT, DEPTH_FORMAT].iter().all(|&f| adapter.get_texture_format_features(f).flags.sample_count_supported(n));
-        let samples = [8u32, 4, 2, 1].into_iter().find(|&n| n <= want && (n == 1 || ok(n))).unwrap_or(1);
+        let mask = supported_msaa_mask(&adapter, device.features());
+        SUPPORTED_MSAA.store(mask, std::sync::atomic::Ordering::Relaxed);
+        let samples = clamp_msaa(want, mask);
         if samples != want {
-            eprintln!("gx: MSAA {want}x not supported by {}: using {samples}x", adapter_info.name);
+            eprintln!("gx: MSAA {want}x not supported by {} for the EFB formats ({COLOR_FORMAT:?} / {DEPTH_FORMAT:?}): using {samples}x", adapter_info.name);
         }
         let (width, height) = Self::target_size(base, scale, aspect, device.limits().max_texture_dimension_2d);
         let (color, depth, msaa) = make_targets(&device, width, height, samples);
@@ -2185,6 +2189,33 @@ fn frame_stats(frame: u64, draws: &[DrawCmd]) {
         let _ = writeln!(w, "{frame},{},{},{},{changes},{verts},{batches},{copies},{missing},{direct}", draws.len() as u32 - copies, tex.len(), cfgs.len());
         let _ = w.flush();
     }
+}
+
+/// The MSAA counts (bit n = n samples) every EFB attachment format supports on the device the renderer created; 0
+/// until a renderer exists. The settings overlay offers only these.
+pub static SUPPORTED_MSAA: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// Bit n set when n samples work for both EFB attachment formats on a device with `features` from `adapter`.
+fn supported_msaa_mask(adapter: &wgpu::Adapter, features: wgpu::Features) -> u32 {
+    let flags = |f: wgpu::TextureFormat| {
+        if features.contains(wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES) {
+            adapter.get_texture_format_features(f).flags
+        } else {
+            f.guaranteed_format_features(features).flags
+        }
+    };
+    let mut m = 1 << 1;
+    for n in [2u32, 4, 8] {
+        if [COLOR_FORMAT, DEPTH_FORMAT].iter().all(|&f| flags(f).sample_count_supported(n)) {
+            m |= 1 << n;
+        }
+    }
+    m
+}
+
+/// The largest supported count (`mask` as [`SUPPORTED_MSAA`]) not above `want`; 1 when none is.
+pub fn clamp_msaa(want: u32, mask: u32) -> u32 {
+    [8u32, 4, 2, 1].into_iter().find(|&n| n <= want && mask >> n & 1 != 0).unwrap_or(1)
 }
 
 /// The EFB colour (single-sample: the resolve target with MSAA), the depth (`samples`) and, with MSAA, the

@@ -5,8 +5,8 @@ static int script_virtual_seen[2][7];
 void ScriptGame_VirtualPadObserve(Fighter* fp)
 {
     int* seen;
-    if (fp->player_id<4 || fp->player_id>=6 || fp->is_sub_fighter) return;
-    seen=script_virtual_seen[fp->player_id-4];
+    if (fp->player_idx<4 || fp->player_idx>=6 || fp->is_sub_fighter) return;
+    seen=script_virtual_seen[fp->player_idx-4];
     seen[0]=fp->cpu.buttons;
     seen[1]=fp->cpu.lstick.x; seen[2]=fp->cpu.lstick.y;
     seen[3]=fp->cpu.cstick.x; seen[4]=fp->cpu.cstick.y;
@@ -38,10 +38,10 @@ void ScriptGame_VirtualPadConsume(void)
 int ScriptGame_VirtualPadApply(Fighter* fp)
 {
     int* v; int active;
-    if (fp->player_id<4 || fp->player_id>=6) return 0;
-    v=script_virtual_pad[fp->player_id-4];
+    if (fp->player_idx<4 || fp->player_idx>=6) return 0;
+    v=script_virtual_pad[fp->player_idx-4];
     if (!v[0]) return 0;
-    active=v[1]>0 && !ScriptGame_FighterBenched(fp->player_id);
+    active=v[1]>0 && !ScriptGame_FighterBenched(fp->player_idx);
     fp->cpu.buttons=active ? v[2] : 0;
     fp->cpu.lstick.x=active ? v[3] : 0;
     fp->cpu.lstick.y=active ? v[4] : 0;
@@ -66,7 +66,7 @@ static int script_recycle_policy(Fighter* fp, int slot, int character,
     if (!cpu) return 4;
     if ((fp->motion_id!=ftCo_MS_Sleep && fp->motion_id!=ftCo_MS_Rebirth &&
          fp->motion_id!=ftCo_MS_RebirthWait) ||
-        (fp->motion_id==ftCo_MS_Sleep && !fp->x221F_b3) || fp->victim_gobj || fp->x1A5C || fp->item_gobj || benched) return 5;
+        (fp->motion_id==ftCo_MS_Sleep && !fp->is_sleeping) || fp->victim_gobj || fp->x1A5C || fp->item_gobj || benched) return 5;
     if (fp->kind==Ft_Kind_MasterH || fp->kind==Ft_Kind_CrezyH) return 3;
     return 0;
 }
@@ -92,8 +92,8 @@ int ScriptGame_FighterRecycle(int slot,int character,int xb,int yb,int fb,int in
     /* The dead entity has already run death cleanup. Rebirth's reset refreshes
      * shield, jumps, hitboxes, Geno data and CPU initialization from the player.
      * Clear sleep exclusion after reset before entering Wait/Fall. */
-    Fighter_UnkProcessDeath_80068354(fp->gobj);
-    fp->x221F_b3=0; fp->x221F_b1=0;
+    Fighter_Spawn(fp->gobj);
+    fp->is_sleeping=0; fp->x221F_b1=0;
     fp->x2219_b1=0; fp->x2219_b2=0;
     fp->x221E_b1=0; fp->x221E_b2=0; fp->invisible=0;
     fp->x890_cameraBox->force_inactive=0;

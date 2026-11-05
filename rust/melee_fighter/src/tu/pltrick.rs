@@ -396,3 +396,47 @@ pub fn pl_80038628_fp(g: G, kind: i32) -> bool {
     }
     h::ftdata_80085fd4_x8(f, v) != 0
 }
+
+// Moved here from plbonus.rs (upstream moved them into src/melee/pl/pltrick.c).
+/// `pl_800386D8`: `arg0->by_attack_hi[arg1]` (unchecked: indexes past the member into x504..)
+pub fn pl_800386D8(arg0: *mut plActionStats, arg1: isize) -> u32 {
+    melee_core::ct!("pl_800386D8");
+    unsafe {
+        let hi = (arg0 as *const u8).add(0x358 + 4 * (1 + 35)) as *const u32;
+        *hi.offset(arg1)
+    }
+}
+
+pub fn pl_800386E8(arg0: *mut pl_800386E8_arg0_t) -> i32 {
+    melee_core::ct!("pl_800386E8");
+    unsafe {
+        let temp = (*arg0).unk_190.wrapping_add((*arg0).unk_5AC);
+        temp.wrapping_add((*arg0).unk_5B0)
+    }
+}
+
+pub fn fn_80038700(arg0: *const i32, arg1: i32, arg2: i32) -> i32 {
+    melee_core::ct!("fn_80038700");
+    let mut sum: i32 = 0;
+    let mut i = arg1;
+    while i <= arg2 {
+        sum = sum.wrapping_add(unsafe { *arg0.offset((i + 1) as isize) });
+        i += 1;
+    }
+    sum
+}
+
+/// `pl_800386D8`.
+pub fn pl_800386d8(arg0: &plActionStats, arg1: i32) -> u32 {
+    melee_core::ct!("pl_800386d8");
+    // The C indexes `by_attack_hi[arg1]` with ids past its 65 entries (plbonus.c reads 0x65..0x72: the bonus checks),
+    // so it reads the plActionStats words that follow the union (x504.., x568..). Same address arithmetic here.
+    unsafe { core::ptr::addr_of!(arg0.anon_358.anon_0.by_attack_hi).cast::<u32>().add(arg1 as usize).read_unaligned() }
+}
+
+/// `pl_800386E8`.
+pub fn pl_800386e8(arg0: &pl_800386E8_arg0_t) -> i32 {
+    melee_core::ct!("pl_800386e8");
+    let temp = arg0.unk_190.wrapping_add(arg0.unk_5AC);
+    temp.wrapping_add(arg0.unk_5B0)
+}

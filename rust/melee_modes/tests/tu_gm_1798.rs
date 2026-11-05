@@ -1287,7 +1287,7 @@ unsafe fn hook(name: &'static str, a: &[u64]) -> u64 {
         "fn_801795D4" => h_fn_801795D4(a),
         "fn_801796F0" => h_fn_801796F0(a),
         "ftDemo_ObjAllocInit" => h_ftDemo_ObjAllocInit(a),
-        "ftLib_800876B4" => h_ftLib_800876B4(a),
+        "ftLib_IsFramesRemaining" => h_ftLib_800876B4(a),
         "gm_80160438" => h_gm_80160438(a),
         "gm_80160854" => h_gm_80160854(a),
         "gm_80160968" => h_gm_80160968(a),
@@ -7878,7 +7878,7 @@ unsafe fn init() {
     rt::fn_add(m::ext::fn_801795D4 as usize);
     rt::fn_add(m::ext::fn_801796F0 as usize);
     rt::fn_add(m::ext::ftDemo_ObjAllocInit as usize);
-    rt::fn_add(m::ext::ftLib_800876B4 as usize);
+    rt::fn_add(m::ext::ftLib_IsFramesRemaining as usize);
     rt::fn_add(m::ext::gm_80160438 as usize);
     rt::fn_add(m::ext::gm_80160854 as usize);
     rt::fn_add(m::ext::gm_80160968 as usize);

@@ -154,15 +154,6 @@ fn abs_c(x: f32) -> f32 {
     if x < 0.0 { -x } else { x }
 }
 
-/// `s32 it_802EAF28(Item_GObj*)`: the C reads `xDD4_itemVar.likelike.x38`, the s32 at item var +0x38 over the laser's s16 `x38`
-/// and `x3A`; in the x86-32 PC build (the goldens) that is `x38 | x3A << 16`. Natively `likelike.x38` sits on the laser's
-/// `x34/x36` (its 8-byte `x20` pointer moved the s16s by 4), so the word is rebuilt from the laser view (the x86-64 mtu oracle
-/// reads the native slot: tests/tu_itgreatfoxlaser.rs checks op 0 against this rule).
-pub unsafe extern "C" fn it_802EAF28(item_gobj: *mut HSD_GObj) -> i32 {
-    melee_core::ct!("it_802EAF28");
-    it_802eaf28(&*GET_ITEM(item_gobj))
-}
-
 /// `Item_GObj* it_802EAF34(HSD_GObj* owner, Vec3* offset, int type)`: spawn a laser at `offset` of `owner`'s joint.
 pub unsafe extern "C" fn it_802EAF34(owner: *mut HSD_GObj, offset: *mut Vec3, type_: i32) -> *mut HSD_GObj {
     melee_core::ct!("it_802EAF34");
@@ -310,10 +301,6 @@ pub fn it_802eb5a8(ip: &mut Item, ref_gobj: *mut HSD_GObj) {
 }
 
 // ---- folded from itkinds5.rs (consolidation steps 21/22) ----
-/// `it_802EAF28` (itgreatfoxlaser.c): the s32 at item var +0x38 (`likelike.x38` in the C), `x38 | x3A << 16` of the laser view
-/// (little-endian x86-32, as the PC build that records the goldens).
-pub fn it_802eaf28(ip: &Item) -> i32 {
-    melee_core::ct!("it_802eaf28");
-    let v = unsafe { &ip.xDD4_itemVar.greatfoxlaser };
-    ((v.x38 as u16 as u32) | ((v.x3A as u16 as u32) << 16)) as i32
-}
+
+// Split into src/melee/it/kinds/itleadead.c upstream (doldecomp 598987cf3); re-exported for existing callers.
+pub use super::itleadead::{it_802EAF28, it_802eaf28};

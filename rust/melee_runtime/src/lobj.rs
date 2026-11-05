@@ -151,7 +151,7 @@ impl<R> HsdLObj<R> {
         self.priority as u8
     }
     /// `HSD_LObjSetColor`.
-    pub fn set_color(&mut self, c: GxColor) {
+    pub fn set_lobj_color(&mut self, c: GxColor) {
         self.color = c;
     }
     /// `HSD_LObjGetColor`.

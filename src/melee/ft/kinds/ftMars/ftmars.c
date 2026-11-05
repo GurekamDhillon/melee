@@ -2,6 +2,8 @@
 
 #include <Runtime/platform.h>
 
+#include <stdbool.h>
+
 #include "forward.h"
 #include "ftmarsspecialhi.h"
 #include "ftmarsspeciallw.h"
@@ -398,16 +400,16 @@ Fighter_DemoStrings ftMs_Init_DemoMotionFilenames = {
     "ftDemoViWaitMotionFileMars",
 };
 
-Fighter_CostumeStrings ftMs_Init_CostumeStrings[] = {
-    { ftMs_Init_803CF838, ftMs_Init_803CF844, ftMs_Init_803CF85C },
-    { ftMs_Init_803CF87C, ftMs_Init_803CF888, ftMs_Init_803CF8A0 },
-    { ftMs_Init_803CF8C0, ftMs_Init_803CF8CC, ftMs_Init_803CF8E4 },
-    { ftMs_Init_803CF904, ftMs_Init_803CF910, ftMs_Init_803CF928 },
-    { ftMs_Init_803CF948, ftMs_Init_803CF954, ftMs_Init_803CF96C },
-};
+Fighter_CostumeStrings
+    ftMs_Init_CostumeStrings[ARRAY_SIZE(ftMs_CostumeList)] = {
+        { ftMs_Init_803CF838, ftMs_Init_803CF844, ftMs_Init_803CF85C },
+        { ftMs_Init_803CF87C, ftMs_Init_803CF888, ftMs_Init_803CF8A0 },
+        { ftMs_Init_803CF8C0, ftMs_Init_803CF8CC, ftMs_Init_803CF8E4 },
+        { ftMs_Init_803CF904, ftMs_Init_803CF910, ftMs_Init_803CF928 },
+        { ftMs_Init_803CF948, ftMs_Init_803CF954, ftMs_Init_803CF96C },
+    };
 
 /// 80136258 00132E38
-/// https://decomp.me/scratch/6RQ5w
 void ftMs_Init_OnDeath(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -420,42 +422,37 @@ void ftMs_Init_OnDeath(HSD_GObj* gobj)
 /// ftMs_Init_OnItemPickup
 void ftMs_Init_OnItemPickup(HSD_GObj* gobj, bool flag)
 {
-    Fighter_OnItemPickup(gobj, flag, 0, 1);
+    Fighter_OnItemPickup(gobj, flag, false, true);
 }
 
 /// 80136390 00132F70
 /// ftMs_Init_OnItemInvisible
-/// https://decomp.me/scratch/BksNr
 void ftMs_Init_OnItemInvisible(HSD_GObj* gobj)
 {
-    Fighter_OnItemInvisible(gobj, 0);
+    Fighter_OnItemInvisible(gobj, false);
 }
 
 /// 801363D8 00132FB8
 /// ftMs_Init_OnItemVisible
-/// https://decomp.me/scratch/9zuEy
 void ftMs_Init_OnItemVisible(HSD_GObj* gobj)
 {
-    Fighter_OnItemVisible(gobj, 0);
+    Fighter_OnItemVisible(gobj, false);
 }
 
 /// 80136420 00133000
 /// ftMs_Init_OnItemDrop
-/// https://decomp.me/scratch/Ws8ow
 void ftMs_Init_OnItemDrop(HSD_GObj* gobj, bool flag)
 {
-    Fighter_OnItemDrop(gobj, flag, 0, 1);
+    Fighter_OnItemDrop(gobj, flag, false, true);
 }
 
 /// 80136474 00133054
-/// https://decomp.me/scratch/2TlGi
 void ftMs_Init_OnLoadForRoy(Fighter* fp)
 {
     PUSH_ATTRS(fp, MarsAttributes);
 }
 
 /// 801364AC 0013308C
-/// https://decomp.me/scratch/9UJHY
 void ftMs_Init_OnLoad(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -463,7 +460,6 @@ void ftMs_Init_OnLoad(HSD_GObj* gobj)
 }
 
 /// 801364E8 001330C8
-/// https://decomp.me/scratch/tfzFL
 void ftMs_Init_LoadSpecialAttrs(HSD_GObj* gobj)
 {
     COPY_ATTRS(gobj, MarsAttributes);
@@ -471,21 +467,18 @@ void ftMs_Init_LoadSpecialAttrs(HSD_GObj* gobj)
 
 /// 80136520 00133100
 /// ftMs_Init_OnKnockbackEnter
-/// https://decomp.me/scratch/rgfFA
 void ftMs_Init_OnKnockbackEnter(HSD_GObj* gobj)
 {
     Fighter_OnKnockbackEnter(gobj, 1);
 }
 
 /// 80136564 00133144
-/// https://decomp.me/scratch/Jqd2A
 void ftMs_Init_OnKnockbackExit(HSD_GObj* gobj)
 {
     Fighter_OnKnockbackExit(gobj, 1);
 }
 
 /// 801365A8 00133188
-/// https://decomp.me/scratch/Jqd2A
 void ftMs_SpecialN_801365A8(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -493,10 +486,10 @@ void ftMs_SpecialN_801365A8(HSD_GObj* gobj)
     if (!fp->x2219_b0) {
         result = ftLib_GetKind(gobj);
         switch (result) {
-        case 18:
+        case Ft_Kind_Mars:
             efSync_Spawn(1266, gobj, fp->parts->joint);
             break;
-        case 26:
+        case Ft_Kind_Emblem:
             efSync_Spawn(1297, gobj, fp->parts->joint);
             break;
         }
@@ -504,12 +497,11 @@ void ftMs_SpecialN_801365A8(HSD_GObj* gobj)
     }
 
     Fighter_SetEffectHitlagCallbacks(fp);
-    fp->accessory4_cb = 0;
+    fp->accessory4_cb = NULL;
     return;
 }
 
 /// 8013666C 0013324C
-/// https://decomp.me/scratch/Jqd2A
 void ftMs_SpecialN_8013666C(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
@@ -517,10 +509,10 @@ void ftMs_SpecialN_8013666C(HSD_GObj* gobj)
     if (!fp->x2219_b0) {
         result = ftLib_GetKind(gobj);
         switch (result) {
-        case 18:
+        case Ft_Kind_Mars:
             efSync_Spawn(1267, gobj, fp->parts->joint);
             break;
-        case 26:
+        case Ft_Kind_Emblem:
             efSync_Spawn(1298, gobj, fp->parts->joint);
             break;
         }
@@ -528,12 +520,11 @@ void ftMs_SpecialN_8013666C(HSD_GObj* gobj)
     }
 
     Fighter_SetEffectHitlagCallbacks(fp);
-    fp->accessory4_cb = 0;
+    fp->accessory4_cb = NULL;
     return;
 }
 
 /// 80136730 00133310
-/// https://decomp.me/scratch/Jqd2A
 void ftMs_SpecialN_80136730(HSD_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;

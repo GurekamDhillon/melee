@@ -7,6 +7,8 @@
 #include <melee/lb/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <dolphin/types.h>
 
@@ -16,7 +18,6 @@
 #define FIGHTERVARS_SIZE 0xF8
 
 typedef enum_t FtMotionId;
-typedef struct ArticleDynamicBones ArticleDynamicBones;
 typedef struct CostumeTObjList CostumeTObjList;
 typedef struct DObjList DObjList;
 typedef struct Fighter Fighter;
@@ -28,8 +29,8 @@ float ScriptGame_ModDamage(int slot, int field, float base);
 float ScriptGame_FighterDealtDamage(Fighter* attacker, float damage);
 int ScriptGame_FighterBenchTick(Fighter* fp);
 float ScriptGame_ModJump(int slot, int field, float base);
-#define FT_SCRIPT_JUMP(fp, field, base) ScriptGame_ModJump((fp)->player_id, (field), (base))
-#define FT_SCRIPT_VALUE(fp, field, base) ScriptGame_ModValue((fp)->player_id, (field), (base))
+#define FT_SCRIPT_JUMP(fp, field, base) ScriptGame_ModJump((fp)->player_idx, (field), (base))
+#define FT_SCRIPT_VALUE(fp, field, base) ScriptGame_ModValue((fp)->player_idx, (field), (base))
 #define FT_SCRIPT_DEALT(fp, base) ScriptGame_FighterDealtDamage((fp), (base))
 #else
 #define FT_SCRIPT_JUMP(fp, field, base) (base)
@@ -46,6 +47,7 @@ typedef struct ft_800898B4_t ft_800898B4_t;
 typedef struct ftCo_803C6594_t ftCo_803C6594_t;
 typedef struct ftCo_DatAttrs_xBC_t ftCo_DatAttrs_xBC_t;
 typedef struct ftCommonData ftCommonData;
+typedef union ftData_ExtAttr ftData_ExtAttr;
 typedef struct ftData ftData;
 typedef struct ftData_UnkCountStruct ftData_UnkCountStruct;
 typedef struct ftData_x58_t ftData_x58_t;
@@ -62,11 +64,15 @@ typedef struct gmScriptEventDefault gmScriptEventDefault;
 typedef struct IKState IKState;
 typedef struct KirbyHatStruct KirbyHatStruct;
 typedef struct MotionState MotionState;
+typedef struct WaitStruct WaitStruct;
 typedef struct TempS TempS;
 typedef struct UnkCostumeStruct UnkCostumeStruct;
 typedef struct UnkFloat6_Camera UnkFloat6_Camera;
-typedef struct UnkPlBonusBits UnkPlBonusBits;
 typedef u32 MotionFlags;
+
+/// CPU bytecode interpreted by #ftCo_800B3E04. Each #CPUCommand is
+/// followed by its argument bytes; #CpuCmd_Done ends the script.
+typedef u8* CpuCmdScript DAT_BYTE_SCRIPT(cpuCommandLength(_command));
 
 #ifdef M2C
 typedef struct Fighter_GObj Fighter_GObj;
@@ -489,7 +495,7 @@ typedef enum ftCommon_BuryType {
     BuryType_Unk3,
 } ftCommon_BuryType;
 
-enum {
+enum Ft_Dynamics {
     Ft_Dynamics_NumMax = 10,
 };
 
@@ -538,5 +544,13 @@ typedef enum CpuKind {
     CpuKind_28,
     CpuKind_29,
 } CpuKind;
+
+/// Color animation ID.
+/// @todo: populate enum and replace constants when used (like in calls to
+/// ftCo_800BFFD0)
+typedef enum FtColAnim {
+    /// IDs starting here index the separate spycloak list after subtraction.
+    /* 0x7B */ FtColAnim_SpycloakStart = 0x7B,
+} FtColAnim;
 
 #endif

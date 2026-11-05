@@ -10,6 +10,7 @@
 #include "player.h"
 #include "plbonus.h"
 #include "plbonusinline.h"
+#include "pltrick.h"
 #include <melee/ft/ft_0877.h>
 #include <melee/ft/ft_0892.h>
 #include <melee/ft/ftlib.h>
@@ -46,6 +47,50 @@ static inline float my_sqrtf(float x)
 
 /* 03D514 */ static void plBonusLib_8003D514(int);
 
+/// Static Functions
+
+static inline Pl_ItemLog match_item_kind(ItemKind kind)
+{
+    if (kind >= It_Kind_Common_Start && kind < It_Kind_Common_End) {
+        return (Pl_ItemLog) kind;
+    } else {
+        switch (kind) {
+        case It_Kind_Lucky_Egg:
+            return Pl_ItemLog_Unk35;
+        case It_Kind_WhispyApple:
+            return Pl_ItemLog_Unk36;
+        case It_Kind_WhispyHealApple:
+            return Pl_ItemLog_Unk37;
+        case It_Kind_Hammer_Head:
+            return Pl_ItemLog_Unk38;
+        default:
+            return -1;
+        }
+    }
+}
+
+static inline bool unk_cond(int arg0, int temp_r23)
+{
+    if (temp_r23 == 6 || temp_r23 == arg0 ||
+        pl_CheckIfSameTeam(arg0, temp_r23))
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+static inline bool pokemon_item_kind_check(int x)
+{
+    if (x >= It_Kind_Section_Pokemon_Extended_Start &&
+        x < It_Kind_Section_Pokemon_Extended_End)
+    {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void plBonusLib_8003D514(int arg0)
 {
     Vec3 sp18;
@@ -56,8 +101,8 @@ void plBonusLib_8003D514(int arg0)
     int var_r29;
     pl_StaleMoveTableExt_t* temp_r31_2;
 
-    RETURN_IF(ftLib_80087354(temp_r31) != 0);
-    ftLib_80086644(temp_r31, &sp18);
+    RETURN_IF(ftLib_IsDeadUp(temp_r31) != 0);
+    ftLib_GetPos(temp_r31, &sp18);
 
     for (var_r29 = 0; var_r29 < 6; var_r29++) {
         if (var_r29 == arg0) {
@@ -65,17 +110,17 @@ void plBonusLib_8003D514(int arg0)
         }
 
         temp_r30 = Player_GetEntity(var_r29);
-        if (!Player_8003221C(var_r29) || ftLib_8008732C(temp_r30)) {
+        if (!Player_8003221C(var_r29) || ftLib_IsDead(temp_r30)) {
             continue;
         }
 
         temp_r31_2 = Player_GetStaleMoveTableIndexPtr2(var_r29);
-        ftLib_80086644(temp_r30, &spC);
-        temp_f1 = ftLib_800865C0(temp_r30);
-        temp_r31_2->xDD1.bit6 = 1;
+        ftLib_GetPos(temp_r30, &spC);
+        temp_f1 = ftLib_GetFacingDir(temp_r30);
+        temp_r31_2->xDD1.x0.bit6 = 1;
 
         if ((temp_f1 * sp18.x) > (temp_f1 * spC.x)) {
-            temp_r31_2->xDD1.bit7 = 1;
+            temp_r31_2->xDD1.x0.bit7 = 1;
         }
     }
 }
@@ -91,26 +136,6 @@ bool pl_8003D60C(int arg0)
     }
 }
 
-static inline bool unk_cond(int arg0, int temp_r23)
-{
-    if (temp_r23 == 6 || temp_r23 == arg0 ||
-        pl_CheckIfSameTeam(arg0, temp_r23))
-    {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-static inline bool between_A1_D0(int x)
-{
-    if (x >= 0xA1 && x < 0xD0) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
 void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
 {
     Fighter_GObj* temp_r3;
@@ -119,7 +144,7 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
     pl_StaleMoveTableExt_t* temp_r3_2;
     pl_StaleMoveTableExt_t* temp_r3_3;
     pl_StaleMoveTableExt_t* temp_r3_4;
-    struct UnkPlBonusBits* temp_r30;
+    union Struct2070* temp_r30;
     int temp_r29;
     int temp_r28;
     int temp_r27;
@@ -133,13 +158,13 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
     temp_r26 = Player_GetStaleMoveTableIndexPtr2(arg0);
     temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
     temp_r27 = ftLib_GetMotionId(temp_r3);
-    temp_r28 = ftLib_800876F4(temp_r3);
-    temp_r29 = ftLib_80087700(temp_r3);
+    temp_r28 = ftLib_GetLastHitSourceType(temp_r3);
+    temp_r29 = ftLib_GetLastHitSourceKind(temp_r3);
     temp_r30 = ft_80089890(temp_r3);
     temp_r24 = ft_8008989C(temp_r3);
     temp_r31 = ft_800898B4(temp_r3);
-    temp_r23 = ftLib_80087300(temp_r3);
-    temp_r22 = ftLib_8008730C(temp_r3);
+    temp_r23 = ftLib_GetLastAttackerSlot(temp_r3);
+    temp_r22 = ftLib_IsLastAttackerSubFighter(temp_r3);
 
     if (arg1 != 1) {
         temp_r26->x0_staleMoveTable.xCB8 = temp_r23;
@@ -147,23 +172,23 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
         temp_r26->x0_staleMoveTable.xCC0 = *temp_r31;
         temp_r26->x0_staleMoveTable.xCD4 = temp_r24;
         pl_8003FED0(arg0, arg1);
-        if (ftLib_800873A4(temp_r3) != 0) {
+        if (ftLib_IsDeadUpFall(temp_r3) != 0) {
             pl_80038824(arg0, 0x81);
         }
-        if (ftLib_8008737C(temp_r3) != 0) {
+        if (ftLib_IsDeadUpStar(temp_r3) != 0) {
             temp_r26->x0_staleMoveTable.xC94++;
         }
-        if (ftLib_80087354(temp_r3) != 0) {
-            temp_r26->xDD1.bit2 = true;
+        if (ftLib_IsDeadUp(temp_r3) != 0) {
+            temp_r26->xDD1.x0.bit2 = true;
         }
         if (temp_r27 == 0) {
-            temp_r26->xDD1.bit3 = true;
+            temp_r26->xDD1.x0.bit3 = true;
         }
         if (temp_r27 == 2) {
-            temp_r26->xDD1.bit0 = true;
+            temp_r26->xDD1.x0.bit0 = true;
         }
         if (temp_r27 == 1) {
-            temp_r26->xDD1.bit1 = true;
+            temp_r26->xDD1.x0.bit1 = true;
         }
         if (ft_80087858(temp_r3) != 0) {
             pl_80038788(arg0, 0x83, 1);
@@ -210,7 +235,7 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
         if (temp_r23 == 6 && temp_r28 == 2 && temp_r29 == 6) {
             pl_80038788(arg0, 0xC7, 1);
         }
-        if (temp_r28 != 2 || !between_A1_D0(temp_r29)) {
+        if (temp_r28 != 2 || !pokemon_item_kind_check(temp_r29)) {
             if (unk_cond(arg0, temp_r23)) {
                 if (temp_r23 == arg0) {
                     pl_80041744(temp_r23, temp_r22, temp_r24);
@@ -235,7 +260,7 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
         }
 
         if (!unk_cond(arg0, temp_r23)) {
-            if (ftLib_8008737C(temp_r3) != 0) {
+            if (ftLib_IsDeadUpStar(temp_r3) != 0) {
                 pl_80038824(temp_r23, 0x6D);
             }
             if (temp_r27 == 3) {
@@ -249,28 +274,28 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
             switch (temp_r28) {
             case 1:
             case 2:
-                if (temp_r30->x3 >= 1 && temp_r30->x3 <= 3) {
+                if (temp_r30->x0.x2073 >= 1 && temp_r30->x0.x2073 <= 3) {
                     pl_80038824(temp_r23, 0x6E);
                 }
-                if (temp_r30->x3 >= 0x40 && temp_r30->x3 <= 0x43) {
+                if (temp_r30->x0.x2073 >= 0x40 && temp_r30->x0.x2073 <= 0x43) {
                     pl_80038824(temp_r23, 0xC0);
                 }
-                if (temp_r30->x3 == 0x46) {
+                if (temp_r30->x0.x2073 == 0x46) {
                     pl_80038824(temp_r23, 0xC1);
                 }
-                if (temp_r30->x3 == 0x5F) {
+                if (temp_r30->x0.x2073 == 0x5F) {
                     pl_80038824(temp_r23, 0xAD);
                 }
-                if (temp_r30->x3 == 0x63) {
+                if (temp_r30->x0.x2073 == 0x63) {
                     pl_80038824(temp_r23, 0x70);
                 }
-                if (temp_r30->x3 == 0x61) {
+                if (temp_r30->x0.x2073 == 0x61) {
                     pl_80038824(temp_r23, 0xC6);
                 }
-                if (temp_r30->x2_b7) {
+                if (temp_r30->x0.count_specials) {
                     pl_80038824(temp_r23, 0x6F);
                 }
-                if (temp_r28 == 2 && temp_r30->x2_b3) {
+                if (temp_r28 == 2 && temp_r30->x0.count_x1A4) {
                     pl_80038824(temp_r23, 0x72);
                 }
                 if (temp_r31->x11_b0) {
@@ -318,7 +343,7 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
                     pl_80038824(temp_r23, 0x73);
                 }
                 if (temp_r28 == 2) {
-                    if (temp_r30->x3 == 0x62) {
+                    if (temp_r30->x0.x2073 == 0x62) {
                         switch (temp_r29) {
                         case 0:
                         case 3:
@@ -340,7 +365,7 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
                             break;
                         }
                     }
-                    if (between_A1_D0(temp_r29)) {
+                    if (pokemon_item_kind_check(temp_r29)) {
                         pl_80038824(temp_r23, 0xCB);
                     }
                     if (pl_8003D60C(temp_r29)) {
@@ -370,7 +395,8 @@ void pl_8003D644(int arg0, int arg1, int arg2, int arg3)
 
 void pl_8003DF44(int arg0, int arg1)
 {
-    int temp_r3 = ftLib_80087300(Player_GetEntityAtIndex(arg0, arg1));
+    int temp_r3 =
+        ftLib_GetLastAttackerSlot(Player_GetEntityAtIndex(arg0, arg1));
     pl_StaleMoveTableExt_t* smte;
 
     bool var_r0_2;
@@ -432,35 +458,15 @@ void pl_8003E17C(
     pl_StaleMoveTableExt_t* temp_r31 =
         Player_GetStaleMoveTableIndexPtr2(player_id);
     ItemKind kind = itGetKind(item_gobj);
-    ItemKind kind2;
+    Pl_ItemLog kind2;
 
-    if ((kind >= It_Kind_Capsule) && (kind < It_Kind_L_Gun_Ray)) {
-        kind2 = kind;
-    } else { // Not one of the common items
-        switch (kind) {
-        case It_Kind_Lucky_Egg:
-            kind2 = It_Kind_L_Gun_Ray;
-            break;
-        case It_Kind_WhispyApple:
-            kind2 = It_Kind_StarRod_Star;
-            break;
-        case It_Kind_WhispyHealApple:
-            kind2 = It_Kind_LipStick_Spore;
-            break;
-        case It_Kind_Hammer_Head:
-            kind2 = It_Kind_S_Scope_Beam;
-            break;
-        default:
-            kind2 = -1;
-            break;
-        }
-    }
+    kind2 = match_item_kind(kind);
 
     // If item kind is one of the reassigned types from the switch statement
     // above (aka not a common item)
     if (kind2 != -1 &&
-        (kind2 == It_Kind_L_Gun_Ray || kind2 == It_Kind_Egg ||
-         kind2 == It_Kind_S_Scope_Beam || it_8026B7E8(item_gobj) == 1))
+        (kind2 == Pl_ItemLog_Unk35 || kind2 == Pl_ItemLog_Unk03 ||
+         kind2 == Pl_ItemLog_Unk38 || it_8026B7E8(item_gobj) == 1))
     {
         int cnt;
 
@@ -527,32 +533,13 @@ u32 pl_8003E420(int arg0)
     return sum;
 }
 
-static inline int match_item_kind(int kind)
-{
-    if (kind >= It_Common_Start && kind < It_Common_End) {
-        return kind;
-    } else {
-        switch (kind) {
-        case It_Kind_Lucky_Egg:
-            return Pl_ItemLog_Unk35;
-        case It_Kind_WhispyApple:
-            return Pl_ItemLog_Unk36;
-        case It_Kind_WhispyHealApple:
-            return Pl_ItemLog_Unk37;
-        case It_Kind_Hammer_Head:
-            return Pl_ItemLog_Unk38;
-        default:
-            return -1;
-        }
-    }
-}
-
-void pl_8003E4A4(int slot, bool arg1, void* arg2, int count)
+void pl_8003E4A4(int slot, bool arg1, ItemKind arg2[], int count)
 {
     pl_StaleMoveTableExt_t* table = Player_GetStaleMoveTableIndexPtr2(slot);
-    int* moves = arg2;
+    ItemKind* moves = arg2;
     u32 seen[Pl_ItemLog_Terminate];
     int i;
+    PAD_STACK(4);
 
     for (i = 0; i < Pl_ItemLog_Terminate; i++) {
         seen[i] = 0;
@@ -586,9 +573,10 @@ void pl_8003E70C(Item_GObj* igobj)
 
     HSD_ASSERT(634, It_PKind_Start <= itGetKind(igobj) &&
                         itGetKind(igobj) < It_PKind_Terminate);
-    RETURN_IF(!ftLib_80086960(temp_r30));
+    RETURN_IF(!ftLib_IsFighter(temp_r30));
 
-    temp_r31 = Player_GetStaleMoveTableIndexPtr2(ftLib_80086BE0(temp_r30));
+    temp_r31 =
+        Player_GetStaleMoveTableIndexPtr2(ftLib_GetPlayerIndex(temp_r30));
     temp_r3 = itGetKind(igobj);
     temp_r31->x0_staleMoveTable.total_attack_count_struct.x598[temp_r3] += 1;
 }
@@ -614,10 +602,10 @@ void pl_8003E854(int arg0, int arg1, Item_GObj* arg2)
             pl_80038788(arg0, 0xB6, 1);
         }
 
-        if ((arg1 == 0) && ftLib_80086960(temp_r3) &&
-            (ftLib_800874BC(temp_r3) == 0))
+        if ((arg1 == 0) && ftLib_IsFighter(temp_r3) &&
+            (ftLib_IsSubFighter(temp_r3) == 0))
         {
-            temp_r31_2 = ftLib_80086BE0(temp_r3);
+            temp_r31_2 = ftLib_GetPlayerIndex(temp_r3);
             Player_GetStaleMoveTableIndexPtr2(arg0)->xD6C = (s32) temp_r31_2;
         }
     }
@@ -779,13 +767,13 @@ void fn_8003EE2C(int arg0, int arg1)
     if (temp_r31->xD10 > temp_r31->xD0C) {
         temp_r31->xD0C = temp_r31->xD10;
     }
-    if (ftLib_800865CC(temp_r30) == GA_Air) {
+    if (ftLib_GetGroundAir(temp_r30) == GA_Air) {
         temp_r31->xD20++;
     } else {
         temp_r31->xD24++;
     }
-    temp_r28 = ft_80089884(temp_r30)->x2073;
-    if (ft_80089884(temp_r30)->x2072_b1) {
+    temp_r28 = ft_80089884(temp_r30)->x0.x2073;
+    if (ft_80089884(temp_r30)->x0.x2072_b1) {
         temp_r31->xD18++;
         if (temp_r31->xD18 >= pl_804D6470->x64) {
             temp_r31->xD14++;
@@ -796,39 +784,39 @@ void fn_8003EE2C(int arg0, int arg1)
     if (temp_r28 == 0x68) {
         temp_r31->xD1C++;
     }
-    if (ftLib_800865CC(temp_r30) == GA_Ground) {
+    if (ftLib_GetGroundAir(temp_r30) == GA_Ground) {
         float var_f1;
-        if (ftLib_8008777C(temp_r30) < 0.0f) {
-            var_f1 = -ftLib_8008777C(temp_r30);
+        if (ftLib_GetGroundSlopeAngle(temp_r30) < 0.0f) {
+            var_f1 = -ftLib_GetGroundSlopeAngle(temp_r30);
         } else {
-            var_f1 = ftLib_8008777C(temp_r30);
+            var_f1 = ftLib_GetGroundSlopeAngle(temp_r30);
         }
         if (var_f1 >= pl_804D6470->x58) {
             temp_r31->xD28++;
         }
     }
-    if (ftLib_800877D4(temp_r30)) {
+    if (ftLib_IsBeingNudged(temp_r30)) {
         temp_r31->xD2C++;
     }
     temp_r3_3 = ifMagnify_802FB6E8(arg0);
     if (temp_r3_3 != 0) {
         temp_r31->xD30++;
-        temp_r31->xDD0.bit7 = true;
+        temp_r31->xDD0.x0.bit7 = true;
     } else {
-        temp_r31->xDD0.bit7 = false;
+        temp_r31->xDD0.x0.bit7 = false;
     }
     switch (temp_r3_3) {
     case 1:
-        temp_r31->xDD0.bit5 = true;
+        temp_r31->xDD0.x0.bit5 = true;
         break;
     case 2:
-        temp_r31->xDD0.bit4 = true;
+        temp_r31->xDD0.x0.bit4 = true;
         break;
     case 3:
-        temp_r31->xDD0.bit6 = true;
+        temp_r31->xDD0.x0.bit6 = true;
         break;
     case 4:
-        temp_r31->xDD0.bit3 = true;
+        temp_r31->xDD0.x0.bit3 = true;
         break;
     }
     if (ft_800878BC(temp_r30)) {
@@ -946,10 +934,10 @@ void fn_8003F294(int slot, int index)
         u32 xb8 = pl_804D6470->xB8;
         if (xb8 == v) {
             if (table->xD5C <= xb8) {
-                table->xDD1.bit5 = 1;
+                table->xDD1.x0.bit5 = 1;
             }
-        } else if (table->xDD1.bit5 && table->xD5C > xb8) {
-            table->xDD1.bit5 = 0;
+        } else if (table->xDD1.x0.bit5 && table->xD5C > xb8) {
+            table->xDD1.x0.bit5 = 0;
         }
         table->xD5C = -1;
     }
@@ -961,14 +949,14 @@ void fn_8003F53C(int arg0, int arg1)
     Fighter_GObj* temp_r30 = Player_GetEntityAtIndex(arg0, arg1);
     unsigned int temp_r3;
 
-    if ((arg1 != 1) && (ftLib_800867D8(temp_r30) == false)) {
+    if ((arg1 != 1) && (ftLib_IsInputDisabled(temp_r30) == false)) {
         if ((ft_800877F8(temp_r30, 0x100) == 0) &&
             (ft_800877F8(temp_r30, 0x200) == 0))
         {
-            temp_r31->xDD0.bit1 = 1;
+            temp_r31->xDD0.x0.bit1 = 1;
         }
         if (ft_800877F8(temp_r30, 0x80000000) != 0) {
-            temp_r31->xDD0.bit2 = 1;
+            temp_r31->xDD0.x0.bit2 = 1;
         }
         if ((ft_80087818(temp_r30, 0x100) != 0) ||
             (ft_80087818(temp_r30, 0x200) != 0))
@@ -1005,7 +993,7 @@ void fn_8003F654(int slot, int index, Vec3* pos, Vec3* prevPos)
 
     if (pl_Verify_gm_8016AEDC() && (index != 1)) {
         prev_pos2 = prevPos;
-        switch (ftLib_8008732C(entity)) {
+        switch (ftLib_IsDead(entity)) {
         case 0:
             break;
         default:
@@ -1017,7 +1005,7 @@ void fn_8003F654(int slot, int index, Vec3* pos, Vec3* prevPos)
         if (b34 == 1) {
             dist = my_sqrtf(((prevPos->x - pos->x) * (prevPos->x - pos->x)) +
                             ((prev_pos2->y - pos->y) * (prevPos->y - pos->y)));
-            teammate_slot = ftLib_80087300(entity);
+            teammate_slot = ftLib_GetLastAttackerSlot(entity);
             table->xD80 += dist;
             if (dist > table->xD84) {
                 table->xD84 = dist;
@@ -1031,7 +1019,7 @@ void fn_8003F654(int slot, int index, Vec3* pos, Vec3* prevPos)
             }
         } else {
             if (b34 == 0) {
-                if (ftLib_800865CC(entity) == 0) {
+                if (ftLib_GetGroundAir(entity) == 0) {
                     abs = pos->x - prevPos->x;
                     if (abs < 0.0f) {
                         abs = -abs;
@@ -1067,7 +1055,7 @@ void fn_8003F654(int slot, int index, Vec3* pos, Vec3* prevPos)
             for (i = 0; 6 > i; i++) {
                 if ((((i != slot) && (!pl_CheckIfSameTeam(slot, i))) &&
                      Player_8003221C(i)) &&
-                    (!ftLib_8008732C(Player_GetEntity(i))))
+                    (!ftLib_IsDead(Player_GetEntity(i))))
                 {
                     Player_LoadPlayerCoords(i, &other_pos);
                     pos_x2 = pos->x;
@@ -1114,7 +1102,7 @@ void pl_8003FAA8(int slot, int index, Vec3* pos, Vec3* prevPos)
     fn_8003F654(slot, index, pos, prevPos);
 
     if (pl_Verify_gm_8016AEDC() && index == 0) {
-        temp_r31 = ftLib_80087120(Player_GetEntityAtIndex(slot, index));
+        temp_r31 = ftLib_GetPercent(Player_GetEntityAtIndex(slot, index));
         temp_f30 =
             temp_r30->x0_staleMoveTable.xC9C * (gm_GetFrameCount() - 1) +
             temp_r31;
@@ -1138,7 +1126,7 @@ void pl_8003FC44(int slot, int arg1)
 {
     pl_StaleMoveTableExt_t* temp_r3 = Player_GetStaleMoveTableIndexPtr2(slot);
     RETURN_IF(arg1 != 0);
-    temp_r3->xDD0.bit0 = 1;
+    temp_r3->xDD0.x0.bit0 = 1;
 }
 
 void pl_8003FC88(int arg0, int arg1, int arg2)
@@ -1245,7 +1233,7 @@ void pl_8003FF44(int arg0, int arg1, int arg2)
     if ((arg1 == 0) && (arg2 >= 1) && (arg2 <= 0x10) &&
         (ft_80087A8C(temp_r3) > pl_804D6470->x38))
     {
-        temp_r31->xDD1.bit4 = 1;
+        temp_r31->xDD1.x0.bit4 = 1;
     }
 }
 
@@ -1266,7 +1254,7 @@ void pl_80040048(int arg0, int arg1)
     PAD_STACK(8);
 
     temp_r3 = Player_GetEntityAtIndex(arg0, arg1);
-    temp_r3_2 = ftLib_80087300(temp_r3);
+    temp_r3_2 = ftLib_GetLastAttackerSlot(temp_r3);
     RETURN_IF(arg1);
     RETURN_IF(temp_r3_2 == 6);
     temp_f31 = ft_800898B4(temp_r3)->kb_applied1;
@@ -1448,7 +1436,7 @@ void pl_8004065C(int arg0, int arg1)
 void pl_80040688(int arg0, int arg1, int arg2)
 {
     pl_StaleMoveTableExt_t* temp_r3;
-    UnkPlBonusBits* bits;
+    union Struct2070* bits;
     ft_800898B4_t* xCC0;
     u8 temp_r0_2;
     int temp_r0;
@@ -1465,7 +1453,7 @@ void pl_80040688(int arg0, int arg1, int arg2)
         xCC0 = &temp_r3->x0_staleMoveTable.xCC0;
 
         if (!unk_cond(arg1, temp_r0)) {
-            temp_r0_2 = bits->x3;
+            temp_r0_2 = bits->x0.x2073;
             if (temp_r0_2 >= 0x33 && temp_r0_2 <= 0x3D) {
                 pl_80038788(temp_r0, 0x2A, 1);
             }
@@ -1515,7 +1503,7 @@ int pl_800408DC(int arg0)
 
 int pl_80040900(int arg0)
 {
-    return Player_GetActionStats(arg0)->x358_hits.total;
+    return Player_GetActionStats(arg0)->x358.x358_hits.total;
 }
 
 int pl_80040924(int arg0)
@@ -1530,7 +1518,7 @@ float pl_80040948(int arg0)
     PAD_STACK(0x10);
 
     total = Player_GetActionStats(arg0)->attacks.total;
-    temp_r30 = Player_GetActionStats(arg0)->x358_hits.total;
+    temp_r30 = Player_GetActionStats(arg0)->x358.x358_hits.total;
     if (total != 0) {
         return pl_CalculateAverage(temp_r30, total);
     }

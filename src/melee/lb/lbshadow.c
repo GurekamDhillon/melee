@@ -8,6 +8,7 @@
 #include <melee/ft/ftlib.h>
 #include <melee/ft/types.h>
 #include <melee/gr/ground.h>
+#include <sysdolphin/baselib/cobj.h>
 #include <sysdolphin/baselib/debug.h>
 #include <sysdolphin/baselib/gobj.h>
 #include <sysdolphin/baselib/initialize.h>
@@ -155,13 +156,13 @@ void lbShadow_8000EEE0(HSD_GObj* gobj)
 {
     LbShadow* lbshadow;
 
-    if (ftLib_80086960(gobj)) {
-        lbshadow = ftLib_800872B0(gobj);
+    if (ftLib_IsFighter(gobj)) {
+        lbshadow = ftLib_GetShadow(gobj);
         if (lbshadow != NULL) {
             bool var_r4 = lbshadow->x0_b0 || lbshadow->x0_b1 ||
                           lbshadow->x0_b2 || lbshadow->x0_b3 ||
                           lbshadow->x0_b4 || lbshadow->x0_b5;
-            if (!var_r4 && ftLib_800872BC(gobj)) {
+            if (!var_r4 && ftLib_CastsShadow(gobj)) {
                 HSD_ShadowSetActive(lbshadow->shadow, 1);
             } else {
                 HSD_ShadowSetActive(lbshadow->shadow, 0);
@@ -184,7 +185,7 @@ void lbShadow_8000EFEC(void)
     for (var_r30 = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; var_r30 != NULL;
          var_r30 = var_r30->next)
     {
-        lbshadow = ftLib_800872B0(var_r30);
+        lbshadow = ftLib_GetShadow(var_r30);
         if (lbshadow != NULL) {
             lbshadow->x0_b2 = false;
         }
@@ -193,7 +194,7 @@ void lbShadow_8000EFEC(void)
     for (cur = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER]; cur != NULL;
          cur = cur->next)
     {
-        lbshadow = ftLib_800872B0(cur);
+        lbshadow = ftLib_GetShadow(cur);
         if (lbshadow != NULL) {
             bool var_r5 = lbshadow->x0_b0 || lbshadow->x0_b1 ||
                           lbshadow->x0_b2 || lbshadow->x0_b3 ||
@@ -345,7 +346,7 @@ void lbShadow_8000F38C(s32 arg0)
             gobj = HSD_GObjPLinkHead[HSD_GOBJ_PLINK_FIGHTER];
         gobj != NULL; gobj = gobj->next)
     {
-        LbShadow* lbs = ftLib_800872B0(gobj);
+        LbShadow* lbs = ftLib_GetShadow(gobj);
         if (lbs != NULL) {
             lbs->x0_b2 = (s32) nextGx;
         }
@@ -461,7 +462,7 @@ void lbShadow_8000F38C(s32 arg0)
                     lobj = NULL;
                     HSD_ShadowDeleteObject(fp2->x20A4.shadow, NULL);
 
-                    if (fp2->x21FC_flag.b7) {
+                    if (fp2->x21FC_flag.x0.b7) {
                         if (!fp2->invisible && !fp2->x221E_b5 &&
                             (fp2->x5AC.xC[1] != NULL
 #if defined(TARGET_PC)
@@ -492,12 +493,12 @@ void lbShadow_8000F38C(s32 arg0)
                 }
             }
 
-            if (ftLib_80086960(gobj)) {
-                LbShadow* lbs = ftLib_800872B0(gobj);
+            if (ftLib_IsFighter(gobj)) {
+                LbShadow* lbs = ftLib_GetShadow(gobj);
                 if (lbs != NULL) {
                     bool anyFlag = lbs->x0_b0 || lbs->x0_b1 || lbs->x0_b2 ||
                                    lbs->x0_b3 || lbs->x0_b4 || lbs->x0_b5;
-                    if (!anyFlag && ftLib_800872BC(gobj)) {
+                    if (!anyFlag && ftLib_CastsShadow(gobj)) {
                         HSD_ShadowSetActive(lbs->shadow, 1);
                     } else {
                         HSD_ShadowSetActive(lbs->shadow, 0);

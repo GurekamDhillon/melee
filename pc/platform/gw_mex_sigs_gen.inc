@@ -1273,7 +1273,7 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x80067ABCu, 0x00u, 0, 0 }, /* Fighter_LoadCommonData */
     { 0x80067BB4u, 0x00u, 1, 0 }, /* Fighter_UpdateModelScale */
     { 0x80067C98u, 0x00u, 1, 0 }, /* Fighter_UnkInitReset_80067C98 */
-    { 0x80068354u, 0x00u, 1, 0 }, /* Fighter_UnkProcessDeath_80068354 */
+    { 0x80068354u, 0x00u, 1, 0 }, /* Fighter_Spawn */
     { 0x800686E4u, 0x00u, 1, 0 }, /* Fighter_UnkUpdateCostumeJoint_800686E4 */
     { 0x8006876Cu, 0x00u, 1, 0 }, /* Fighter_UnkUpdateVecFromBones_8006876C */
     { 0x80068854u, 0x00u, 1, 0 }, /* Fighter_ResetInputData_80068854 */
@@ -1282,19 +1282,19 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x80068E64u, 0x00u, 1, 0 }, /* Fighter_80068E64 */
     { 0x80068E98u, 0x00u, 1, 0 }, /* Fighter_Create */
     { 0x800693ACu, 0x38u, 7, 0 }, /* Fighter_ChangeMotionState */
-    { 0x8006A1BCu, 0x00u, 1, 0 }, /* Fighter_8006A1BC */
-    { 0x8006A360u, 0x00u, 1, 0 }, /* Fighter_8006A360 */
-    { 0x8006ABA0u, 0x00u, 1, 0 }, /* Fighter_8006ABA0 */
+    { 0x8006A1BCu, 0x00u, 1, 0 }, /* Fighter_procHitlag */
+    { 0x8006A360u, 0x00u, 1, 0 }, /* Fighter_procAnim */
+    { 0x8006ABA0u, 0x00u, 1, 0 }, /* Fighter_procCpu */
     { 0x8006ABECu, 0x00u, 1, 0 }, /* Fighter_UnkIncrementCounters_8006ABEC */
-    { 0x8006AD10u, 0x00u, 1, 0 }, /* Fighter_Spaghetti_8006AD10 */
+    { 0x8006AD10u, 0x00u, 1, 0 }, /* Fighter_procInput */
     { 0x8006B82Cu, 0x00u, 1, 0 }, /* Fighter_procUpdate */
     { 0x8006C0F0u, 0x00u, 1, 0 }, /* Fighter_UnkApplyTransformation_8006C0F0 */
     { 0x8006C27Cu, 0x00u, 1, 0 }, /* Fighter_procMap */
-    { 0x8006C5F4u, 0x00u, 1, 0 }, /* Fighter_8006C5F4 */
-    { 0x8006C624u, 0x00u, 1, 0 }, /* Fighter_CallAcessoryCallbacks_8006C624 */
-    { 0x8006C80Cu, 0x00u, 1, 0 }, /* Fighter_8006C80C */
-    { 0x8006CA5Cu, 0x00u, 1, 0 }, /* Fighter_UnkProcessGrab_8006CA5C */
-    { 0x8006CB94u, 0x00u, 1, 0 }, /* Fighter_8006CB94 */
+    { 0x8006C5F4u, 0x00u, 1, 0 }, /* Fighter_procIK */
+    { 0x8006C624u, 0x00u, 1, 0 }, /* Fighter_procAccessory */
+    { 0x8006C80Cu, 0x00u, 1, 0 }, /* Fighter_procCollPos */
+    { 0x8006CA5Cu, 0x00u, 1, 0 }, /* Fighter_procGrabColl */
+    { 0x8006CB94u, 0x00u, 1, 0 }, /* Fighter_procAttackColl */
     { 0x8006CC30u, 0x02u, 2, 0 }, /* Fighter_UnkTakeDamage_8006CC30 */
     { 0x8006CC7Cu, 0x02u, 2, 0 }, /* Fighter_TakeDamage_8006CC7C */
     { 0x8006CDA4u, 0x00u, 2, 0 }, /* Fighter_8006CDA4 */
@@ -1303,10 +1303,10 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x8006CFE0u, 0x00u, 1, 0 }, /* Fighter_8006CFE0 */
     { 0x8006D044u, 0x00u, 1, 0 }, /* Fighter_UnkRecursiveFunc_8006D044 */
     { 0x8006D10Cu, 0x00u, 1, 0 }, /* Fighter_8006D10C */
-    { 0x8006D1ECu, 0x00u, 1, 0 }, /* Fighter_ProcessHit_8006D1EC */
-    { 0x8006D9ACu, 0x00u, 1, 0 }, /* Fighter_8006D9AC */
-    { 0x8006D9ECu, 0x00u, 1, 0 }, /* Fighter_UnkCallCameraCallback_8006D9EC */
-    { 0x8006DA4Cu, 0x00u, 1, 0 }, /* Fighter_8006DA4C */
+    { 0x8006D1ECu, 0x00u, 1, 0 }, /* Fighter_procCollResolve */
+    { 0x8006D9ACu, 0x00u, 1, 0 }, /* Fighter_procDynamics */
+    { 0x8006D9ECu, 0x00u, 1, 0 }, /* Fighter_procCamera */
+    { 0x8006DA4Cu, 0x00u, 1, 0 }, /* Fighter_procPlayer */
     { 0x8006DABCu, 0x00u, 1, 0 }, /* Fighter_Unload_8006DABC */
     { 0x8006DBF4u, 0x00u, 2, 0 }, /* ftAnim_GetNextAnimJointInTree */
     { 0x8006DCF4u, 0x00u, 2, 0 }, /* ftAnim_GetNextMatAnimJointInTree */
@@ -1786,103 +1786,103 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x80085E50u, 0x00u, 2, 0 }, /* ftData_80085E50 */
     { 0x80085FD4u, 0x00u, 2, 0 }, /* ftData_80085FD4 */
     { 0x80086060u, 0x00u, 1, 0 }, /* ftData_80086060 */
-    { 0x800860C4u, 0x00u, 0, 0 }, /* ftLib_800860C4 */
+    { 0x800860C4u, 0x00u, 0, 0 }, /* ftLib_CountFighters */
     { 0x800860E8u, 0x00u, 0, 0 }, /* ftLib_IsMasterHandPresent */
     { 0x80086140u, 0x00u, 0, 0 }, /* ftLib_IsCrazyHandPresent */
-    { 0x80086198u, 0x00u, 1, 0 }, /* ftLib_80086198 */
-    { 0x8008627Cu, 0x00u, 2, 0 }, /* ftLib_8008627C */
-    { 0x80086368u, 0x04u, 3, 0 }, /* ftLib_80086368 */
-    { 0x800864A8u, 0x00u, 2, 1 }, /* ftLib_800864A8 */
-    { 0x800865C0u, 0x00u, 1, 1 }, /* ftLib_800865C0 */
-    { 0x800865CCu, 0x00u, 1, 0 }, /* ftLib_800865CC */
-    { 0x800865D8u, 0x00u, 3, 0 }, /* ftLib_800865D8 */
-    { 0x800865F0u, 0x00u, 1, 0 }, /* ftLib_800865F0 */
-    { 0x80086630u, 0x00u, 2, 0 }, /* ftLib_80086630 */
-    { 0x80086644u, 0x00u, 2, 0 }, /* ftLib_80086644 */
-    { 0x80086664u, 0x00u, 2, 0 }, /* ftLib_80086664 */
-    { 0x80086684u, 0x00u, 2, 0 }, /* ftLib_80086684 */
+    { 0x80086198u, 0x00u, 1, 0 }, /* ftLib_FindLowestPercentOpponent */
+    { 0x8008627Cu, 0x00u, 2, 0 }, /* ftLib_FindNearestOpponent */
+    { 0x80086368u, 0x04u, 3, 0 }, /* ftLib_FindNearestOpponentInDir */
+    { 0x800864A8u, 0x00u, 2, 1 }, /* ftLib_GetOpponentsDir */
+    { 0x800865C0u, 0x00u, 1, 1 }, /* ftLib_GetFacingDir */
+    { 0x800865CCu, 0x00u, 1, 0 }, /* ftLib_GetGroundAir */
+    { 0x800865D8u, 0x00u, 3, 0 }, /* ftLib_GetLStick */
+    { 0x800865F0u, 0x00u, 1, 0 }, /* ftLib_GetHipJObj */
+    { 0x80086630u, 0x00u, 2, 0 }, /* ftLib_GetPartJObj */
+    { 0x80086644u, 0x00u, 2, 0 }, /* ftLib_GetPos */
+    { 0x80086664u, 0x00u, 2, 0 }, /* ftLib_SetPos */
+    { 0x80086684u, 0x00u, 2, 0 }, /* ftLib_GetPrevPos */
     { 0x800866A4u, 0x02u, 2, 0 }, /* ftLib_SetScale */
-    { 0x800866DCu, 0x00u, 2, 0 }, /* ftLib_800866DC */
-    { 0x80086724u, 0x00u, 2, 0 }, /* ftLib_80086724 */
-    { 0x80086764u, 0x00u, 1, 0 }, /* ftLib_80086764 */
+    { 0x800866DCu, 0x00u, 2, 0 }, /* ftLib_GetCameraBonePos */
+    { 0x80086724u, 0x00u, 2, 0 }, /* ftLib_ReleaseItem */
+    { 0x80086764u, 0x00u, 1, 0 }, /* ftLib_ClearHeldSpecialItem */
     { 0x80086794u, 0x00u, 1, 0 }, /* ftLib_GetItem */
-    { 0x800867A0u, 0x00u, 2, 0 }, /* ftLib_800867A0 */
-    { 0x800867CCu, 0x00u, 1, 0 }, /* ftLib_800867CC */
-    { 0x800867D8u, 0x00u, 1, 0 }, /* ftLib_800867D8 */
-    { 0x800867E8u, 0x00u, 1, 0 }, /* ftLib_800867E8 */
-    { 0x80086824u, 0x00u, 0, 0 }, /* ftLib_80086824 */
-    { 0x8008688Cu, 0x00u, 1, 0 }, /* ftLib_8008688C */
-    { 0x800868A4u, 0x00u, 0, 0 }, /* ftLib_800868A4 */
-    { 0x800868D4u, 0x00u, 2, 0 }, /* ftLib_800868D4 */
-    { 0x80086960u, 0x00u, 1, 0 }, /* ftLib_80086960 */
-    { 0x80086984u, 0x00u, 1, 0 }, /* ftLib_80086984 */
-    { 0x80086990u, 0x00u, 2, 0 }, /* ftLib_80086990 */
-    { 0x800869D4u, 0x00u, 1, 1 }, /* ftLib_800869D4 */
+    { 0x800867A0u, 0x00u, 2, 0 }, /* ftLib_IsHoldingItem */
+    { 0x800867CCu, 0x00u, 1, 0 }, /* ftLib_GetHeldSpecialItem */
+    { 0x800867D8u, 0x00u, 1, 0 }, /* ftLib_IsInputDisabled */
+    { 0x800867E8u, 0x00u, 1, 0 }, /* ftLib_DisableInput */
+    { 0x80086824u, 0x00u, 0, 0 }, /* ftLib_DisableAllInput */
+    { 0x8008688Cu, 0x00u, 1, 0 }, /* ftLib_EnableInput */
+    { 0x800868A4u, 0x00u, 0, 0 }, /* ftLib_EnableAllInput */
+    { 0x800868D4u, 0x00u, 2, 0 }, /* ftLib_IsItemVisible */
+    { 0x80086960u, 0x00u, 1, 0 }, /* ftLib_IsFighter */
+    { 0x80086984u, 0x00u, 1, 0 }, /* ftLib_GetCollData */
+    { 0x80086990u, 0x00u, 2, 0 }, /* ftLib_GetECBCenter */
+    { 0x800869D4u, 0x00u, 1, 1 }, /* ftLib_GetModelScale */
     { 0x800869F8u, 0x00u, 1, 1 }, /* ftLib_800869F8 */
-    { 0x80086A0Cu, 0x00u, 1, 1 }, /* ftLib_80086A0C */
-    { 0x80086A18u, 0x00u, 1, 0 }, /* ftLib_80086A18 */
+    { 0x80086A0Cu, 0x00u, 1, 1 }, /* ftLib_GetScale */
+    { 0x80086A18u, 0x00u, 1, 0 }, /* ftLib_IsShielding */
     { 0x80086A4Cu, 0x02u, 2, 0 }, /* ftLib_80086A4C */
-    { 0x80086A58u, 0x00u, 2, 0 }, /* ftLib_80086A58 */
-    { 0x80086A8Cu, 0x00u, 1, 0 }, /* ftLib_80086A8C */
-    { 0x80086B64u, 0x00u, 1, 0 }, /* ftLib_80086B64 */
-    { 0x80086B74u, 0x00u, 1, 0 }, /* ftLib_80086B74 */
+    { 0x80086A58u, 0x00u, 2, 0 }, /* ftLib_GetScreenPos */
+    { 0x80086A8Cu, 0x00u, 1, 0 }, /* ftLib_UpdateScreenVisibility */
+    { 0x80086B64u, 0x00u, 1, 0 }, /* ftLib_IsOffscreen */
+    { 0x80086B74u, 0x00u, 1, 0 }, /* ftLib_GetCameraSubject */
     { 0x80086B80u, 0x00u, 1, 1 }, /* ftLib_80086B80 */
-    { 0x80086B90u, 0x00u, 2, 0 }, /* ftLib_80086B90 */
-    { 0x80086BB4u, 0x00u, 1, 0 }, /* ftLib_80086BB4 */
-    { 0x80086BE0u, 0x00u, 1, 0 }, /* ftLib_80086BE0 */
-    { 0x80086BECu, 0x00u, 2, 0 }, /* ftLib_80086BEC */
+    { 0x80086B90u, 0x00u, 2, 0 }, /* ftLib_GetCameraSubjectBonePos */
+    { 0x80086BB4u, 0x00u, 1, 0 }, /* ftLib_IsCameraSubjectInBounds */
+    { 0x80086BE0u, 0x00u, 1, 0 }, /* ftLib_GetPlayerIndex */
+    { 0x80086BECu, 0x00u, 2, 0 }, /* ftLib_GetPosDelta */
     { 0x80086C0Cu, 0x00u, 1, 0 }, /* ftLib_GetMotionId */
-    { 0x80086C18u, 0x00u, 3, 0 }, /* ftLib_80086C18 */
-    { 0x80086C9Cu, 0x00u, 2, 0 }, /* ftLib_80086C9C */
-    { 0x80086D40u, 0x00u, 3, 0 }, /* ftLib_80086D40 */
-    { 0x80086DC4u, 0x00u, 2, 0 }, /* ftLib_80086DC4 */
-    { 0x80086E68u, 0x00u, 1, 0 }, /* ftLib_80086E68 */
-    { 0x80086EB4u, 0x00u, 1, 0 }, /* ftLib_80086EB4 */
-    { 0x80086EC0u, 0x00u, 1, 0 }, /* ftLib_80086EC0 */
-    { 0x80086ED0u, 0x00u, 1, 0 }, /* ftLib_80086ED0 */
+    { 0x80086C18u, 0x00u, 3, 0 }, /* ftLib_StartRumble */
+    { 0x80086C9Cu, 0x00u, 2, 0 }, /* ftLib_StartRumbleAll */
+    { 0x80086D40u, 0x00u, 3, 0 }, /* ftLib_StartItemRumble */
+    { 0x80086DC4u, 0x00u, 2, 0 }, /* ftLib_StartItemRumbleAll */
+    { 0x80086E68u, 0x00u, 1, 0 }, /* ftLib_StopItemRumble */
+    { 0x80086EB4u, 0x00u, 1, 0 }, /* ftLib_GetTeam */
+    { 0x80086EC0u, 0x00u, 1, 0 }, /* ftLib_IsInHitstun */
+    { 0x80086ED0u, 0x00u, 1, 0 }, /* ftLib_CanBeMagnified */
     { 0x80086F4Cu, 0x00u, 1, 0 }, /* ftLib_80086F4C */
-    { 0x80086F80u, 0x00u, 1, 1 }, /* ftLib_80086F80 */
-    { 0x80086FA8u, 0x00u, 1, 0 }, /* ftLib_80086FA8 */
-    { 0x80086FD4u, 0x00u, 2, 0 }, /* ftLib_80086FD4 */
-    { 0x8008701Cu, 0x00u, 1, 0 }, /* ftLib_8008701C */
-    { 0x8008702Cu, 0x00u, 1, 0 }, /* ftLib_8008702C */
-    { 0x80087050u, 0x00u, 1, 0 }, /* ftLib_80087050 */
-    { 0x80087074u, 0x00u, 2, 0 }, /* ftLib_80087074 */
-    { 0x800870BCu, 0x00u, 2, 0 }, /* ftLib_800870BC */
-    { 0x800870F0u, 0x00u, 2, 0 }, /* ftLib_800870F0 */
-    { 0x80087120u, 0x00u, 1, 0 }, /* ftLib_80087120 */
+    { 0x80086F80u, 0x00u, 1, 1 }, /* ftLib_GetNameTagHeight */
+    { 0x80086FA8u, 0x00u, 1, 0 }, /* ftLib_IsSwordSwing */
+    { 0x80086FD4u, 0x00u, 2, 0 }, /* ftLib_IsSamePlayer */
+    { 0x8008701Cu, 0x00u, 1, 0 }, /* ftLib_IsSleeping */
+    { 0x8008702Cu, 0x00u, 1, 0 }, /* ftLib_IncFighterRefCount */
+    { 0x80087050u, 0x00u, 1, 0 }, /* ftLib_DecFighterRefCount */
+    { 0x80087074u, 0x00u, 2, 0 }, /* ftLib_GetShakeOffset */
+    { 0x800870BCu, 0x00u, 2, 0 }, /* ftLib_GetSubColor */
+    { 0x800870F0u, 0x00u, 2, 0 }, /* ftLib_SetPercent */
+    { 0x80087120u, 0x00u, 1, 0 }, /* ftLib_GetPercent */
     { 0x80087140u, 0x00u, 1, 0 }, /* ftLib_80087140 */
-    { 0x800871A8u, 0x00u, 2, 0 }, /* ftLib_800871A8 */
+    { 0x800871A8u, 0x00u, 2, 0 }, /* ftLib_ApplyMetalBox */
     { 0x80087284u, 0x00u, 1, 0 }, /* ftLib_80087284 */
     { 0x800872A4u, 0x00u, 1, 0 }, /* ftLib_GetKind */
-    { 0x800872B0u, 0x00u, 1, 0 }, /* ftLib_800872B0 */
-    { 0x800872BCu, 0x00u, 1, 0 }, /* ftLib_800872BC */
-    { 0x80087300u, 0x00u, 1, 0 }, /* ftLib_80087300 */
-    { 0x8008730Cu, 0x00u, 1, 0 }, /* ftLib_8008730C */
-    { 0x8008731Cu, 0x00u, 1, 0 }, /* ftLib_8008731C */
-    { 0x8008732Cu, 0x00u, 1, 0 }, /* ftLib_8008732C */
-    { 0x80087354u, 0x00u, 1, 0 }, /* ftLib_80087354 */
-    { 0x8008737Cu, 0x00u, 1, 0 }, /* ftLib_8008737C */
-    { 0x800873A4u, 0x00u, 1, 0 }, /* ftLib_800873A4 */
-    { 0x800873CCu, 0x00u, 1, 0 }, /* ftLib_800873CC */
-    { 0x800873F4u, 0x00u, 1, 0 }, /* ftLib_800873F4 */
-    { 0x8008741Cu, 0x00u, 1, 0 }, /* ftLib_8008741C */
-    { 0x80087454u, 0x00u, 1, 1 }, /* ftLib_80087454 */
-    { 0x80087460u, 0x00u, 1, 0 }, /* ftLib_80087460 */
+    { 0x800872B0u, 0x00u, 1, 0 }, /* ftLib_GetShadow */
+    { 0x800872BCu, 0x00u, 1, 0 }, /* ftLib_CastsShadow */
+    { 0x80087300u, 0x00u, 1, 0 }, /* ftLib_GetLastAttackerSlot */
+    { 0x8008730Cu, 0x00u, 1, 0 }, /* ftLib_IsLastAttackerSubFighter */
+    { 0x8008731Cu, 0x00u, 1, 0 }, /* ftLib_IsSleeping_8008731C */
+    { 0x8008732Cu, 0x00u, 1, 0 }, /* ftLib_IsDead */
+    { 0x80087354u, 0x00u, 1, 0 }, /* ftLib_IsDeadUp */
+    { 0x8008737Cu, 0x00u, 1, 0 }, /* ftLib_IsDeadUpStar */
+    { 0x800873A4u, 0x00u, 1, 0 }, /* ftLib_IsDeadUpFall */
+    { 0x800873CCu, 0x00u, 1, 0 }, /* ftLib_IsRebirth */
+    { 0x800873F4u, 0x00u, 1, 0 }, /* ftLib_IsEntry */
+    { 0x8008741Cu, 0x00u, 1, 0 }, /* ftLib_FindBySpawnNum */
+    { 0x80087454u, 0x00u, 1, 1 }, /* ftLib_GetCrowdKnockback */
+    { 0x80087460u, 0x00u, 1, 0 }, /* ftLib_GetSpawnNum */
     { 0x8008746Cu, 0x00u, 1, 0 }, /* ftLib_8008746C */
-    { 0x800874BCu, 0x00u, 1, 0 }, /* ftLib_800874BC */
+    { 0x800874BCu, 0x00u, 1, 0 }, /* ftLib_IsSubFighter */
     { 0x800874CCu, 0x00u, 3, 0 }, /* ftLib_800874CC */
-    { 0x80087508u, 0x00u, 2, 0 }, /* ftLib_80087508 */
-    { 0x80087574u, 0x00u, 1, 0 }, /* ftLib_80087574 */
-    { 0x80087610u, 0x00u, 1, 0 }, /* ftLib_80087610 */
-    { 0x800876B4u, 0x00u, 1, 0 }, /* ftLib_800876B4 */
-    { 0x800876D4u, 0x00u, 1, 0 }, /* ftLib_800876D4 */
-    { 0x800876F4u, 0x00u, 1, 0 }, /* ftLib_800876F4 */
-    { 0x80087700u, 0x00u, 1, 0 }, /* ftLib_80087700 */
-    { 0x8008770Cu, 0x00u, 2, 0 }, /* ftLib_8008770C */
-    { 0x80087744u, 0x00u, 2, 0 }, /* ftLib_80087744 */
-    { 0x8008777Cu, 0x00u, 1, 1 }, /* ftLib_8008777C */
-    { 0x800877D4u, 0x00u, 1, 0 }, /* ftLib_800877D4 */
+    { 0x80087508u, 0x00u, 2, 0 }, /* ftLib_LoadFighterCostume */
+    { 0x80087574u, 0x00u, 1, 0 }, /* ftLib_LoadFighterAllCostumes */
+    { 0x80087610u, 0x00u, 1, 0 }, /* ftLib_LoadKirbyHats */
+    { 0x800876B4u, 0x00u, 1, 0 }, /* ftLib_IsFramesRemaining */
+    { 0x800876D4u, 0x00u, 1, 0 }, /* ftLib_IsChargingSmash */
+    { 0x800876F4u, 0x00u, 1, 0 }, /* ftLib_GetLastHitSourceType */
+    { 0x80087700u, 0x00u, 1, 0 }, /* ftLib_GetLastHitSourceKind */
+    { 0x8008770Cu, 0x00u, 2, 0 }, /* ftLib_GetGameWatchColor */
+    { 0x80087744u, 0x00u, 2, 0 }, /* ftLib_GetGameWatchOutlineColor */
+    { 0x8008777Cu, 0x00u, 1, 1 }, /* ftLib_GetGroundSlopeAngle */
+    { 0x800877D4u, 0x00u, 1, 0 }, /* ftLib_IsBeingNudged */
     { 0x800877F8u, 0x00u, 2, 0 }, /* ft_800877F8 */
     { 0x80087818u, 0x00u, 2, 0 }, /* ft_80087818 */
     { 0x80087838u, 0x00u, 1, 0 }, /* ft_80087838 */
@@ -11300,7 +11300,7 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x802139C4u, 0x00u, 1, 0 }, /* grGreens_802139C4 */
     { 0x80213AACu, 0x00u, 1, 0 }, /* grGreens_80213AAC */
     { 0x80213AB4u, 0x1Eu, 5, 0 }, /* grGreens_80213AB4 */
-    { 0x80213B1Cu, 0x00u, 3, 0 }, /* fn_80213B1C */
+    { 0x80213B1Cu, 0x00u, 3, 0 }, /* grGreens_80213B1C */
     { 0x80213C10u, 0x00u, 1, 0 }, /* grGreens_80213C10 */
     { 0x80214654u, 0x00u, 1, 0 }, /* grGreens_80214654 */
     { 0x80214658u, 0x00u, 1, 0 }, /* fn_80214658 */
@@ -19234,14 +19234,14 @@ static const gw_mex_gen_sig gw_mex_gen_sigs[] = {
     { 0x803989A0u, 0x00u, 5, 0 }, /* psInitDataBank */
     { 0x80398A08u, 0x00u, 1, 0 }, /* hsd_80398A08 */
     { 0x80398F8Cu, 0x02u, 2, 0 }, /* hsd_80398F8C */
-    { 0x803991D8u, 0x0Cu, 4, 0 }, /* hsd_803991D8 */
+    { 0x803991D8u, 0x0Cu, 4, 0 }, /* applyForceJObj */
     { 0x8039930Cu, 0x00u, 2, 0 }, /* hsd_8039930C */
     { 0x8039CEACu, 0x00u, 1, 0 }, /* hsd_8039CEAC */
-    { 0x8039CF4Cu, 0x00u, 2, 0 }, /* hsd_8039CF4C */
-    { 0x8039D048u, 0x00u, 1, 0 }, /* hsd_8039D048 */
+    { 0x8039CF4Cu, 0x00u, 2, 0 }, /* psSetPointJObj */
+    { 0x8039D048u, 0x00u, 1, 0 }, /* psClearPointJObj */
     { 0x8039D0A0u, 0x00u, 1, 0 }, /* hsd_8039D0A0 */
-    { 0x8039D1E4u, 0x00u, 2, 0 }, /* hsd_8039D1E4 */
-    { 0x8039D1ECu, 0x00u, 0, 0 }, /* hsd_8039D1EC */
+    { 0x8039D1E4u, 0x00u, 2, 0 }, /* psSetUserFunc */
+    { 0x8039D1ECu, 0x00u, 0, 0 }, /* psGetNewIDNum */
     { 0x8039D214u, 0x00u, 1, 0 }, /* hsd_8039D214 */
     { 0x8039D354u, 0x00u, 1, 0 }, /* hsd_8039D354 */
     { 0x8039D3ACu, 0x00u, 2, 0 }, /* hsd_8039D3AC */

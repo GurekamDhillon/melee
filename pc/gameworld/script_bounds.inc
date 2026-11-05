@@ -14,7 +14,7 @@ static int script_stage_floor_bounds(float out[5])
     memset(visited, 0, sizeof visited);
     out[4] = -100000;
     for (i = 0; i < count; ++i) {
-        MapLine* l = lines[i].x0;
+        MapLine* l = lines[i].inner;
         int head = 0, tail = 0;
         float left = 100000, right = -100000, bottom = 100000, top = -100000;
         if (!l || !(lines[i].flags & CollLine_Floor) ||
@@ -29,7 +29,7 @@ static int script_stage_floor_bounds(float out[5])
          * are not silently combined into a floor across empty space. */
         while (head < tail) {
             int k, neighbors[2];
-            l = lines[queue[head++]].x0;
+            l = lines[queue[head++]].inner;
             for (k = 0; k < 2; ++k) {
                 Vec2 p = verts[k ? l->v1_idx : l->v0_idx].pos;
                 if (p.x < left) left = p.x;
@@ -40,10 +40,10 @@ static int script_stage_floor_bounds(float out[5])
             neighbors[0] = l->prev_id0; neighbors[1] = l->next_id0;
             for (k = 0; k < 2; ++k) {
                 int n = neighbors[k];
-                if (n < 0 || n >= count || visited[n] || !lines[n].x0 ||
+                if (n < 0 || n >= count || visited[n] || !lines[n].inner ||
                     !(lines[n].flags & CollLine_Floor) || !(lines[n].flags & LINE_FLAG_ENABLED) ||
                     (lines[n].flags & (LINE_FLAG_HIDDEN | LINE_FLAG_EMPTY)) ||
-                    ((lines[n].x0->lo_flags | lines[n].flags) & LINE_FLAG_PLATFORM)) continue;
+                    ((lines[n].inner->lo_flags | lines[n].flags) & LINE_FLAG_PLATFORM)) continue;
                 visited[n] = 1;
                 queue[tail++] = n;
             }

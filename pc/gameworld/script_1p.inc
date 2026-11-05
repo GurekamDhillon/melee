@@ -40,7 +40,7 @@ void ScriptGame_OnePSpawnTint(Fighter* fp,int owner,int rgb);
 void ScriptGame_OnePSpawn(Fighter* fp)
 {
     ScriptOnePTemplate* t;
-    int slot = fp->player_id;
+    int slot = fp->player_idx;
     if (!Script_OnePOffline() || slot < 0 || slot >= 6 || fp->is_sub_fighter ||
         (gm_GetCurrentGameMode()!=GM_CLASSIC && gm_GetCurrentGameMode()!=GM_ADVENTURE)) return;
     t=&script_onep_template[slot];

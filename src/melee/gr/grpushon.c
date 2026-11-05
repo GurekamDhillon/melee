@@ -22,35 +22,12 @@
 #include <sysdolphin/baselib/lobj.h>
 #include <sysdolphin/baselib/random.h>
 
-struct grPushOn_Entry {
-    s32 x0;
-    s16 x4;
-    s16 x6;
-};
-
-struct grPushOn_Lookup {
-    s32 key;
-    s32 value;
-};
-
 struct grPushOn_LightConfig {
     GXColor color;
     Vec3 pos;
     f32 ref_br;
     f32 ref_dist;
     s32 dist_func;
-};
-
-struct grPushon_YakumonoParam {
-    s32 x0;
-    DynamicsDesc* x4;
-    DynamicsDesc* x8;
-    DynamicsDesc* xC;
-    DynamicsDesc* x10;
-    DynamicsDesc* x14;
-    bool x18;
-    struct grPushOn_Entry x1c[0x1E];
-    struct grPushOn_Lookup x10c[0x21];
 };
 
 static struct grPushon_YakumonoParam* yakumono_param;
@@ -134,7 +111,7 @@ void grPushOn_80218330(void)
     grPushOn_802183E4(2);
     gobj = Ground_GetP1Fighter();
     if (gobj != NULL) {
-        ftLib_80086644(gobj, &vec);
+        ftLib_GetPos(gobj, &vec);
         Ground_801C38BC(vec.x, vec.y);
         Camera_8002F3AC();
     }
@@ -265,7 +242,7 @@ void grPushOn_802186C8(Ground_GObj* gobj)
     {
         HSD_GObj* gobj2 = Ground_GetP1Fighter();
         if (gobj2 != NULL) {
-            ftLib_80086644(gobj2, &vec);
+            ftLib_GetPos(gobj2, &vec);
             Ground_801C0498();
             if (vec.y < 0.0f) {
                 Ground_801C0498();
@@ -357,7 +334,7 @@ void grPushOn_80218888(Ground_GObj* gobj)
     gp = GET_GROUND(gobj);
     player = Ground_GetP1Fighter();
     if (player != NULL) {
-        ftLib_80086644(player, &player_pos);
+        ftLib_GetPos(player, &player_pos);
     } else {
         player_pos.z = 0.0f;
         player_pos.y = 0.0f;
@@ -716,21 +693,21 @@ s32 fn_802192A4(void* arg0, HSD_GObj* gobj, s32* result)
     f32 scale = Ground_801C0498();
     s32 i;
 
-    ftLib_80086644(gobj, &sp14);
+    ftLib_GetPos(gobj, &sp14);
     for (i = 0; i < 4; i++) {
         if ((scale * grPushOn_803E7CCC[i * 3] < sp14.x) &&
             (scale * grPushOn_803E7CCC[i * 3 + 1] > sp14.x) &&
             (scale * (-50.0f + grPushOn_803E7CCC[i * 3 + 2]) < sp14.y) &&
             (scale * grPushOn_803E7CCC[i * 3 + 2] > sp14.y))
         {
-            *result = yakumono_param->x0;
+            *result = (s32) yakumono_param->x0;
             return 1;
         }
     }
     return 0;
 }
 
-DynamicsDesc* grPushOn_80219458(enum_t arg0)
+lbColl_80008D30_arg1* grPushOn_80219458(enum_t arg0)
 {
     s32 joint;
     s32 kind;

@@ -49,8 +49,26 @@
 /* 211C14 */ bool grOldPupupu_80211C14(Ground_GObj*);
 /* 211C1C */ void grOldPupupu_80211C1C(Ground_GObj*);
 /* 211C9C */ void grOldPupupu_80211C9C(Ground_GObj*);
-/* 211CA0 */ DynamicsDesc* grOldPupupu_80211CA0(enum_t);
+/* 211CA0 */ lbColl_80008D30_arg1* grOldPupupu_80211CA0(enum_t);
 /* 211CA8 */ bool grOldPupupu_80211CA8(Vec3*, int, HSD_JObj*);
 /* 3E6748 */ extern StageData grOp_StageData;
+
+struct grOldpupupu_YakumonoParam {
+    s16 x0;
+    s16 x2;
+    s16 x4;
+    s16 x6;
+    int x8;
+    int xC;
+    f32 x10;
+    f32 x14;
+    f32 x18;
+    f32 x1C;
+    f32 x20;
+    f32 x24;
+    f32 x28;
+    f32 x2C;
+    f32 x30;
+};
 
 #endif

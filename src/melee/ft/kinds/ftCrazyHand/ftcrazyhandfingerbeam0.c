@@ -22,7 +22,7 @@ static void fn_801588B8(HSD_GObj* gobj);
 void fn_801587B0(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    Fighter_ChangeMotionState(gobj, 0x169, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, 0x169, Ft_MF_None, 0.0f, 1.0f, 0.0f, NULL);
     fp->cmd_vars[0] = 0;
     fp->cmd_vars[1] = 0;
     fp->cmd_vars[2] = 0;
@@ -40,7 +40,7 @@ void ftCh_FingerBeamStart_Anim(HSD_GObj* gobj)
 void ftCh_FingerBeamStart_IASA(HSD_GObj* gobj)
 {
     Fighter* ft = GET_FIGHTER(gobj);
-    if (Player_GetPlayerSlotType(ft->player_id) == Gm_PKind_Human) {
+    if (Player_GetPlayerSlotType(ft->player_idx) == Gm_PKind_Human) {
         ftBossLib_8015BD20(gobj);
     }
 }
@@ -55,7 +55,7 @@ void ftCh_FingerBeamStart_Coll(HSD_GObj* gobj) {}
 static void fn_801588B8(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
+    ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
     Vec3 pos, prev;
     if (fp->cmd_vars[0] != 0) {
         lb_8000B1CC(fp->parts[FtPart_RLegJA].joint, NULL, &pos);

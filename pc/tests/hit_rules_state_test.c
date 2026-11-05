@@ -16,7 +16,7 @@ static int script_hit_family_move(Fighter* f) {return f->motion_id;}
 static void OSReport(const char* f,...) {(void)f;}
 static int input[512],stun,trace[96],trace_owner[96],trace_count;
 int Script_HitRulesInput(int n) {return input[n];}
-int ftLib_80086960(HSD_GObj* g) {return g!=0;}
+int ftLib_IsFighter(HSD_GObj* g) {return g!=0;}
 void Geno_GiveStunBonus(Fighter* v,int n) {(void)v;stun=n;}
 void Script_HitRuleContext(int victim,int id,int move,int ground,int owner) {(void)victim;(void)move;(void)ground;if(trace_count<96){trace_owner[trace_count]=owner;trace[trace_count++]=id;}}
 void Script_GameEvent(int a,int b,int c,int d,int e){(void)a;(void)b;(void)c;(void)d;(void)e;}

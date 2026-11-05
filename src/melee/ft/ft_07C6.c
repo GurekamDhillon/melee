@@ -21,11 +21,11 @@ void ft_8007C630(Fighter_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     int i;
     for (i = 0; i < (signed) ARRAY_SIZE(fp->x1614); i++) {
-        struct ftData_x38* temp_r6 = &fp->ft_data->x38[i];
+        AbsorbDesc* temp_r6 = &fp->ft_data->x38[i];
         struct Fighter_x1614_t* temp_r27 = &fp->x1614[i];
-        fp->x1614[i].x4 = fp->parts[temp_r6->x0].joint;
-        fp->x1614[i].x0 = temp_r6->x10;
-        lb_8000B1CC(temp_r27->x4, &temp_r6->x4, &temp_r27->x8);
+        fp->x1614[i].x4 = fp->parts[temp_r6->x0_bone_id].joint;
+        fp->x1614[i].x0 = temp_r6->x10_size;
+        lb_8000B1CC(temp_r27->x4, &temp_r6->x4_offset, &temp_r27->x8);
         temp_r27->x8.z = 0.0F;
         temp_r27->x14 = temp_r27->x8;
     }
@@ -39,10 +39,10 @@ void ft_8007C6DC(Fighter_GObj* gobj)
     if (gm_8016B0B4()) {
         fp = GET_FIGHTER(gobj);
         for (i = 0; i < (signed) ARRAY_SIZE(fp->x1614); i++) {
-            struct ftData_x38* temp_r6 = &fp->ft_data->x38[i];
+            AbsorbDesc* temp_r6 = &fp->ft_data->x38[i];
             struct Fighter_x1614_t* temp_r27 = &fp->x1614[i];
             temp_r27->x14 = temp_r27->x8;
-            lb_8000B1CC(temp_r27->x4, &temp_r6->x4, &temp_r27->x8);
+            lb_8000B1CC(temp_r27->x4, &temp_r6->x4_offset, &temp_r27->x8);
             temp_r27->x8.z = 0.0F;
         }
     }
@@ -71,7 +71,7 @@ void ft_8007C77C(Fighter_GObj* gobj)
         u32 a, b;
         fp = GET_FIGHTER(gobj);
         a = gm_801A4BB8() & 1;
-        b = fp->player_id & 1;
+        b = fp->player_idx & 1;
         if (a == b) {
             var_r0 = 0;
         } else {
@@ -94,7 +94,7 @@ void ft_8007C77C(Fighter_GObj* gobj)
             continue;
         }
         var_r29 = 0;
-        if (ftLib_80086FD4(gobj, ip->owner) != 0) {
+        if (ftLib_IsSamePlayer(gobj, ip->owner) != 0) {
             if (ip->xDD4_itemVar.unk4.xDEC_b1) {
                 var_r29 = 1;
             }
@@ -109,11 +109,11 @@ void ft_8007C77C(Fighter_GObj* gobj)
             struct Fighter_x1614_t* tmp = &fp->x1614[i];
             if (lbColl_80007B78(temp_r26, tmp, ip->scl, fp->x34_scale.y)) {
                 temp_r29 = it_802E5EF4(ip->entity);
-                Player_SetCoins(fp->player_id,
-                                temp_r29 + Player_GetCoins(fp->player_id));
-                Player_SetTotalCoins(fp->player_id,
+                Player_SetCoins(fp->player_idx,
+                                temp_r29 + Player_GetCoins(fp->player_idx));
+                Player_SetTotalCoins(fp->player_idx,
                                      temp_r29 +
-                                         Player_GetTotalCoins(fp->player_id));
+                                         Player_GetTotalCoins(fp->player_idx));
                 lbAudioAx_80023870(0x93, 0x7F, 0x40, 0x1A);
                 sp18 = 1.0f;
                 efSync_Spawn(0x432, NULL, &temp_r26->x20, &sp18);

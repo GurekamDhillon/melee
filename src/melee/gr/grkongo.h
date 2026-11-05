@@ -61,7 +61,7 @@ struct grKongo_YakumonoParam {
     f32 unk78;
     f32 unk7C;
     f32 unk80;
-    void* unk84;
+    union ColorOverlay_x8_t* unk84 DAT_SCRIPT(colAnimCommandLength(_command));
     f32 unk88;
     f32 unk8C;
     f32 unk90;
@@ -78,8 +78,6 @@ struct grKongo_YakumonoParam {
 };
 
 extern const grKg_SplineChoiceList grKg_803B7FD4;
-
-static struct grKongo_YakumonoParam* yakumono_param;
 
 /* 1D5238 */ void grKongo_801D5238(bool);
 /* 1D523C */ void grKongo_801D523C(void);

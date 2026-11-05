@@ -24,7 +24,7 @@
         void** da = &(fp)->dat_attrs;                                         \
         *(attributeName*) (fp)->dat_attrs_backup = *src;                      \
         *da = backup;                                                         \
-    } while (0)
+    } while (false)
 
 /// @todo Remove declarations. Doesn't really need to be a macro.
 #define COPY_ATTRS(gobj, attributeName)                                       \
@@ -56,9 +56,9 @@
  * ftData_MexInitKinds and must keep being indexed by the real costume id, or two costumes would
  * share one archive slot. */
 int Mex_CostumeVisIdx(int fk, int costume);
-#define FT_COSTUME_VIS_IDX(fp) Mex_CostumeVisIdx((fp)->kind, (fp)->x619_costume_id)
+#define FT_COSTUME_VIS_IDX(fp) Mex_CostumeVisIdx((fp)->kind, (fp)->costume_id)
 #else
-#define FT_COSTUME_VIS_IDX(fp) ((fp)->x619_costume_id)
+#define FT_COSTUME_VIS_IDX(fp) ((fp)->costume_id)
 #endif
 
 static inline void Fighter_SetEffectHitlagCallbacks(Fighter* fp)
@@ -309,8 +309,8 @@ static inline void ftCommon_HandleTeleportCollisions(Fighter_GObj* gobj,
 /// @todo This and #ftCheckThrowB3, etc. are probably one macro or something.
 static inline bool ftCheckThrowB0(Fighter* fp)
 {
-    if (fp->throw_flags_b0) {
-        fp->throw_flags_b0 = false;
+    if (fp->x2210.x0.throw_flags_b0) {
+        fp->x2210.x0.throw_flags_b0 = false;
         return true;
     } else {
         return false;
@@ -319,8 +319,8 @@ static inline bool ftCheckThrowB0(Fighter* fp)
 
 static inline bool ftCheckThrowB3(Fighter* fp)
 {
-    if (fp->throw_flags_b3) {
-        fp->throw_flags_b3 = false;
+    if (fp->x2210.x0.throw_flags_b3) {
+        fp->x2210.x0.throw_flags_b3 = false;
         return true;
     } else {
         return false;
@@ -329,8 +329,8 @@ static inline bool ftCheckThrowB3(Fighter* fp)
 
 static inline bool ftCheckThrowB4(Fighter* fp)
 {
-    if (fp->throw_flags_b4) {
-        fp->throw_flags_b4 = false;
+    if (fp->x2210.x0.throw_flags_b4) {
+        fp->x2210.x0.throw_flags_b4 = false;
         return true;
     } else {
         return false;

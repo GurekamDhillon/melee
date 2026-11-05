@@ -10,6 +10,10 @@
 
 #include <dolphin/mtx.h>
 
+typedef struct grTPrSpecialParams {
+    lbColl_80008D30_arg1* x0;
+} grTPrSpecialParams;
+
 /* 223160 */ void grTPurin_80223160(bool);
 /* 223164 */ void grTPurin_80223164(void);
 /* 2231DC */ void grTpurin_UnkStage0_OnLoad(void);
@@ -25,7 +29,7 @@
 /* 223478 */ void grTPurin_80223478(Ground_GObj*);
 /* 2234CC */ bool grTPurin_802234CC(Ground_GObj*);
 /* 2234F4 */ void grTPurin_802234F4(Ground_GObj*);
-/* 2234F8 */ DynamicsDesc* grTPurin_802234F8(enum_t);
+/* 2234F8 */ lbColl_80008D30_arg1* grTPurin_802234F8(enum_t);
 /* 223578 */ bool grTPurin_80223578(Vec3*, int, HSD_JObj*);
 /* 3E9394 */ extern StageData grTPr_StageData;
 

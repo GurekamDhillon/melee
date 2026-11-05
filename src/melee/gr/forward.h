@@ -10,7 +10,12 @@
 #define HSD_GOBJ_CLASS_GROUND 13
 #define HSD_GOBJ_PLINK_GROUND 5
 
+typedef union grAnimeCallback grAnimeCallback;
 struct grCorneria_GroundVars;
+typedef struct grFigureGet_YakumonoParam grFigureGet_YakumonoParam;
+typedef struct grGreatBay_YakumonoParam grGreatBay_YakumonoParam;
+typedef struct grHeal_YakumonoParam grHeal_YakumonoParam;
+typedef struct grYorster_YakumonoParam grYorster_YakumonoParam;
 typedef struct grDynamicAttr_UnkStruct grDynamicAttr_UnkStruct;
 typedef struct GrJoint GrJoint;
 typedef struct Ground Ground;
@@ -21,7 +26,6 @@ typedef struct StageParam StageParam;
 typedef struct UnkArchiveStruct UnkArchiveStruct;
 typedef struct unkCastle unkCastle;
 typedef struct UnkStageDat UnkStageDat;
-typedef struct UnkStageDatInternal UnkStageDatInternal;
 
 #ifdef M2C
 typedef struct Ground_GObj Ground_GObj;
@@ -195,7 +199,7 @@ typedef enum Gr_Homerun_Parts {
 typedef void (*unkCastleCallback)(void*, struct unkCastle*);
 typedef void (*unkCastleCallback2)(void*, struct unkCastle*, Ground_GObj*);
 typedef int (*GrIceMtSegmentLookup)(Ground_GObj*);
-typedef DynamicsDesc* (*GrTouchLineCallback)(int index);
+typedef lbColl_80008D30_arg1* (*GrTouchLineCallback)(int index);
 typedef bool (*GrCheckShadowRenderCallback)(Vec3* fighter_pos, int,
                                             HSD_JObj* jobj);
 

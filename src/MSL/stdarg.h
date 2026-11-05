@@ -36,7 +36,7 @@ void* __va_arg(va_list v_list, unsigned info);
 
 #else
 
-typedef struct {
+typedef struct __va_list_t {
     char gpr;
     char fpr;
     char reserved[2];

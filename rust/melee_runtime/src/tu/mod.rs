@@ -56,6 +56,7 @@ pub mod fobj;
 pub mod fog;
 pub mod generator;
 pub mod gobj;
+pub mod hsd_3910;
 pub mod gobjgxlink;
 pub mod gobjinit;
 pub mod gobjobject;

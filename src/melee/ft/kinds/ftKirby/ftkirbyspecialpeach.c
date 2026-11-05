@@ -115,7 +115,7 @@ static void inlineA0(HSD_GObj* gobj)
 
 static void inlineA1(HSD_GObj* gobj, ftKirby_MotionState msid)
 {
-    Fighter_ChangeMotionState(gobj, msid, 0, 0, 1, 0, NULL);
+    Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 0, 1, 0, NULL);
     ftAnim_8006EBA4(gobj);
     inlineA0(gobj);
 }
@@ -145,11 +145,11 @@ static inline void doPeAnim(HSD_GObj* gobj, HSD_GObjEvent cb)
         fp->cmd_vars[1] = 2;
         ftColl_8007B1B8(gobj, (ShieldDesc*) &da->specialn_pe_absorbdesc,
                         fn_8010CD88);
-        fp->x221B_b3 = true;
+        fp->x221B.x221B_b3 = true;
         fp->shield_unk0 = da->specialn_pe_unk3;
         fp->shield_unk1 = da->specialn_pe_unk3;
     } else if (cmd_var1 == 0) {
-        fp->x221B_b0 = false;
+        fp->x221B.x221B_b0 = false;
     }
 
     if (!ftAnim_IsFramesRemaining(gobj)) {
@@ -219,15 +219,17 @@ void ftKb_PeSpecialAirLw_Coll(HSD_GObj* gobj)
     }
 }
 
+static u32 const ftKb_Pe_transition_flags =
+    Ft_MF_KeepColAnimHitStatus | Ft_MF_SkipHit | Ft_MF_SkipMatAnim |
+    Ft_MF_SkipColAnim | Ft_MF_UpdateCmd | Ft_MF_SkipItemVis | Ft_MF_Unk19 |
+    Ft_MF_SkipModelPartVis | Ft_MF_SkipModelFlags | Ft_MF_Unk27;
+
 void ftKb_SpecialNPe_8010C8D8(HSD_GObj* gobj)
 {
-    /// @todo Flag names.
-    static u32 const mf = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) |
-                          (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) |
-                          (1 << 26) | (1 << 27);
     Fighter* fp = GET_FIGHTER(gobj);
     PAD_STACK(4 * 2);
-    ftCommon_GroundToAirStateChange(gobj, fp, ftKb_MS_PeSpecialAirLw, mf);
+    ftCommon_GroundToAirStateChange(gobj, fp, ftKb_MS_PeSpecialAirLw,
+                                    ftKb_Pe_transition_flags);
     if (fp->cmd_vars[0] == 1) {
         fp->cmd_vars[0] = 2;
     }
@@ -248,20 +250,17 @@ void ftKb_SpecialNPe_8010C8D8(HSD_GObj* gobj)
         if (fp->cmd_vars[1] == 2) {
             ftColl_8007B1B8(gobj, (ShieldDesc*) &da->specialn_pe_absorbdesc,
                             fn_8010CD88);
-            fp->x221B_b3 = true;
+            fp->x221B.x221B_b3 = true;
         }
     }
 }
 
 void ftKb_SpecialNPe_8010C9CC(HSD_GObj* gobj)
 {
-    /// @todo Named flags.
-    static u32 const mf = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) |
-                          (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) |
-                          (1 << 26) | (1 << 27);
     Fighter* fp = GET_FIGHTER(gobj);
     fp->u.kb.xCC = false;
-    ftCommon_AirToGroundStateChange(gobj, fp, ftKb_MS_PeSpecialLw, mf);
+    ftCommon_AirToGroundStateChange(gobj, fp, ftKb_MS_PeSpecialLw,
+                                    ftKb_Pe_transition_flags);
     {
         /// @todo @c da can't move below @c fp
         ftKb_DatAttrs* da;
@@ -279,7 +278,7 @@ void ftKb_SpecialNPe_8010C9CC(HSD_GObj* gobj)
         if (fp->cmd_vars[1] == 2) {
             ftColl_8007B1B8(gobj, (ShieldDesc*) &da->specialn_pe_absorbdesc,
                             fn_8010CD88);
-            fp->x221B_b3 = true;
+            fp->x221B.x221B_b3 = true;
         }
     }
 }
@@ -341,24 +340,18 @@ void ftKb_PeSpecialAirLwHit_Coll(HSD_GObj* gobj)
 
 void ftKb_SpecialNGw_8010CC6C(HSD_GObj* gobj)
 {
-    /// @todo Named flags.
-    static u32 const mf = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) |
-                          (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) |
-                          (1 << 26) | (1 << 27);
     Fighter* fp = GET_FIGHTER(gobj);
-    ftCommon_GroundToAirStateChange(gobj, fp, ftKb_MS_PeSpecialAirLwHit, mf);
+    ftCommon_GroundToAirStateChange(gobj, fp, ftKb_MS_PeSpecialAirLwHit,
+                                    ftKb_Pe_transition_flags);
     ftKb_SpecialNGw_8010CD44(gobj);
 }
 
 void ftKb_SpecialNGw_8010CCD4(HSD_GObj* gobj)
 {
-    /// @todo Named flags.
-    static u32 const mf = (1 << 2) | (1 << 3) | (1 << 7) | (1 << 12) |
-                          (1 << 14) | (1 << 18) | (1 << 19) | (1 << 22) |
-                          (1 << 26) | (1 << 27);
     Fighter* fp = GET_FIGHTER(gobj);
     fp->u.kb.xCC = false;
-    ftCommon_AirToGroundStateChange(gobj, fp, ftKb_MS_PeSpecialLwHit, mf);
+    ftCommon_AirToGroundStateChange(gobj, fp, ftKb_MS_PeSpecialLwHit,
+                                    ftKb_Pe_transition_flags);
     ftKb_SpecialNGw_8010CD44(gobj);
 }
 
@@ -384,7 +377,7 @@ void fn_8010CD88(HSD_GObj* gobj)
         } else {
             msid = ftKb_MS_PeSpecialAirLwHit;
         }
-        Fighter_ChangeMotionState(gobj, msid, 0, 9, 1, 0, 0);
+        Fighter_ChangeMotionState(gobj, msid, Ft_MF_None, 9, 1, 0, 0);
     }
     ftAnim_8006EBA4(gobj);
     if (fp->u.kb.xD0 != NULL) {

@@ -7,6 +7,7 @@
 
 #include <placeholder.h>
 
+#include "forward.h"
 #include "ftpopo.h"
 #include "types.h"
 #include <dolphin/mtx.h>
@@ -29,11 +30,12 @@
 void ftPp_SpecialN_Enter(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
     fp->cmd_vars[0] = 0;
     fp->u.nn.x222C = NULL;
 
-    Fighter_ChangeMotionState(gobj, 341, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialN, Ft_MF_None, 0.0f, 1.0f,
+                              0.0f, NULL);
 
     ftAnim_8006EBA4(gobj);
     fp->accessory4_cb = &ftPp_SpecialN_8011F500;
@@ -46,7 +48,7 @@ void ftPp_SpecialAirN_Enter(HSD_GObj* gobj)
     Fighter* fp = GET_FIGHTER(gobj);
     ftIceClimberAttributes* icattr = fp->dat_attrs;
 
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
     fp->cmd_vars[0] = 0;
     fp->u.nn.x222C = NULL;
 
@@ -58,7 +60,8 @@ void ftPp_SpecialAirN_Enter(HSD_GObj* gobj)
         fp->u.nn.x2250 = -10.0;
     }
 
-    Fighter_ChangeMotionState(gobj, 342, 0, 0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ftPp_MS_SpecialAirN, Ft_MF_None, 0.0f,
+                              1.0f, 0.0f, NULL);
 
     ftAnim_8006EBA4(gobj);
     fp->accessory4_cb = &ftPp_SpecialN_8011F500;

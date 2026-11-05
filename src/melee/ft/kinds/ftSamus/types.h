@@ -6,7 +6,7 @@
 #include <melee/it/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
-#include <placeholder.h>
+#include <dat_macros.h>
 
 #include <dolphin/mtx.h>
 #include <melee/ft/kinds/ftCommon/types.h>
@@ -73,13 +73,14 @@ typedef struct _ftSamusAttributes {
     /* +C4 */ int xC4;
     /* +C8 */ int xC8;
     /* +CC */ f32 xCC;
-    /* +D0 */ UNK_T xD0;
+    /* +D0 */ int xD0;
 } ftSs_DatAttrs;
 
-/// maybe Samus grapple?
+/// Samus's grapple-beam accessory (ftSs_Init_CreateThrowGrappleBeam).
 struct UNK_SAMUS_S1 {
     HSD_Joint* x0_joint;
-    HSD_AnimJoint** x4_anim_joints;
+    HSD_AnimJoint** x4_anim_joints DAT_COUNT(ftCo_MS_ThrowLw - ftCo_MS_ThrowF +
+                                             1);
     HSD_AnimJoint* x8_anim_joint;
     HSD_MatAnimJoint* xC_matanim_joint;
 };

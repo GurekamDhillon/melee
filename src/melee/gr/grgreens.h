@@ -37,8 +37,8 @@
 /* 213AAC */ bool grGreens_80213AAC(Ground_GObj*);
 /* 213AB4 */ bool grGreens_80213AB4(Vec* vec, f32 maxX, f32 minX, f32 maxY,
                                     f32 minY);
-/* 213B1C */ bool fn_80213B1C(Ground_GObj* ground_gobj,
-                              Fighter_GObj* fighter_gobj, Vec* vec);
+/* 213B1C */ bool grGreens_80213B1C(Ground_GObj* ground_gobj,
+                                    Fighter_GObj* fighter_gobj, Vec* vec);
 /* 213C10 */ void grGreens_80213C10(Ground_GObj*);
 /* 214654 */ void grGreens_80214654(Ground_GObj*);
 /* 214658 */ void fn_80214658(Ground_GObj*);
@@ -59,8 +59,42 @@
 /* 215ED8 */ void grGreens_80215ED8(Ground_GObj*, int, int);
 /* 2166C4 */ void grGreens_802166C4(Ground_GObj*);
 /* 216C20 */ void grGreens_80216C20(Ground_GObj*);
-/* 216E64 */ DynamicsDesc* grGreens_80216E64(enum_t);
+/* 216E64 */ lbColl_80008D30_arg1* grGreens_80216E64(enum_t);
 /* 216E6C */ bool grGreens_80216E6C(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E76D0 */ extern StageData grGr_StageData;
+
+struct grGreens_YakumonoParam {
+    int x0_blockTimerMin;
+    int x4_blockTimerMax;
+    int x8_blockBombChance;
+    int xC;
+    int x10;
+    int x14;
+    int x18;
+    int x1C;
+    int x20;
+    int x24;
+    int x28;
+    float x2C;
+    float x30;
+    int x34_windTimerMin;
+    int x38_windTimerMax;
+    float x3C_windSpeed;
+    float x40_left;
+    float x44_right;
+    float x48_top;
+    float x4C_bottom;
+    float x50;
+    float x54;
+    float x58;
+    int x5C;
+    int x60;
+    int x64;
+    int x68;
+    float x6C;
+    float x70;
+    float x74;
+    float x78;
+};
 
 #endif

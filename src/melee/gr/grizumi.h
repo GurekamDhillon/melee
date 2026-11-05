@@ -40,16 +40,40 @@
 /* 1CCB10 */ void grIzumi_801CCB10(Ground_GObj* gobj);
 /* 1CCB14 */ void grIzumi_801CCB14(Ground_GObj* gobj);
 /* 1CCB18 */ void grIzumi_801CCB18(HSD_GObj* gobj);
-/* 1CCB90 */ void grIzumi_801CCB90(HSD_GObj* gobj, int renderpass);
+/* 1CCB90 */ void grIzumi_801CCB90(HSD_GObj* gobj, intptr_t renderpass);
 /* 1CCBDC */ HSD_GObj* grIzumi_801CCBDC(float height, Vec3* a, int b,
                                         HSD_JObj* jobj);
 /* 1CCD98 */ HSD_GObj* grIzumi_801CCD98(void);
-/* 1CCEA0 */ void grIzumi_801CCEA0(HSD_GObj* gobj, int renderpass);
+/* 1CCEA0 */ void grIzumi_801CCEA0(HSD_GObj* gobj, intptr_t renderpass);
 /* 1CD090 */ HSD_TObj* grIzumi_801CD090(HSD_GObj* gobj, HSD_ImageDesc* image);
-/* 1CD220 */ void grIzumi_801CD220(HSD_GObj* gobj, int);
-/* 1CD278 */ DynamicsDesc* grIzumi_801CD278(enum_t);
+/* 1CD220 */ void grIzumi_801CD220(HSD_GObj* gobj, intptr_t);
+/* 1CD278 */ lbColl_80008D30_arg1* grIzumi_801CD278(enum_t);
 /* 1CD280 */ bool grIzumi_801CD280(Vec3*, int, HSD_JObj*);
 /* 1CD2D4 */ void grIzumi_801CD2D4(void);
 /* 3E0E5C */ extern StageData grIz_StageData;
+
+struct grIzumi_YakumonoParam {
+    float x0;
+    int x4;
+    float x8;
+    float xC;
+    float x10;
+    float x14;
+    float x18;
+    float x1C;
+    float x20;
+    float x24;
+    float x28;
+    float x2C;
+    float x30;
+    float x34;
+    float x38;
+    float x3C;
+    float x40;
+    float x44;
+    float x48;
+    float x4C;
+    float x50;
+};
 
 #endif

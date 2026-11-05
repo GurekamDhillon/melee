@@ -43,7 +43,8 @@ void it_802BE5D8(void* arg, float frame)
 {
     HSD_GObj* gobj = arg;
     Item* ip = gobj->user_data;
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     HSD_JObj* jobj = ip->xDD4_itemVar.nessyoyo.x18;
     HSD_JObjRemoveAnimAll(jobj);
     HSD_JObjAddAnimAll(jobj, NULL, attrs->x58_yoyo_matanim, NULL);
@@ -57,7 +58,8 @@ void it_802BE5D8(void* arg, float frame)
 
 static inline HSD_JObj* it_802BE65C_LoadString(Item* ip)
 {
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     return HSD_JObjLoadJoint(attrs->x50_string_joint);
 }
 
@@ -67,7 +69,8 @@ HSD_GObj* it_802BE65C(Item* ip, HSD_JObj* bone_jobj)
     ItemLink* head_link;
     ItemLink* tail_link;
     HSD_GObj* result;
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     HSD_GObj* link_gobj;
     Vec3 zero_vel = it_803B8698;
     ItemLink* link;
@@ -111,10 +114,10 @@ HSD_GObj* it_802BE65C(Item* ip, HSD_JObj* bone_jobj)
             link->vel = zero_vel;
             link->pos = ip->pos;
             link->x2C_b0 = true;
-            it_802A24D0(link, 2.0f * ftLib_80086A0C(ip->owner));
+            it_802A24D0(link, 2.0f * ftLib_GetScale(ip->owner));
             {
                 itYoyoAttributes* attrs =
-                    ip->xC4_article_data->x4_specialAttributes;
+                    &ip->xC4_article_data->x4_specialAttributes->yoyo;
                 HSD_Joint* joint = attrs->x54_yoyo_joint;
                 jobj = HSD_JObjLoadJoint(joint);
                 HSD_GObjObject_80390A70(link_gobj, HSD_GObj_JObjKind, jobj);
@@ -194,7 +197,7 @@ HSD_GObj* it_802BE9D8(HSD_GObj* owner, f32 facing_dir, Vec3* pos, s32 action)
         Item_8026AB54(gobj, owner, FtPart_R2ndNa);
         ip = GET_ITEM(gobj);
         yoyo_jobj = ip->xDD4_itemVar.nessyoyo.x18;
-        attrs = ip->xC4_article_data->x4_specialAttributes;
+        attrs = &ip->xC4_article_data->x4_specialAttributes->yoyo;
         HSD_JObjRemoveAnimAll(yoyo_jobj);
         HSD_JObjAddAnimAll(yoyo_jobj, NULL, attrs->x58_yoyo_matanim, NULL);
         lb_8000BA0C(yoyo_jobj, 1.0f);
@@ -215,7 +218,8 @@ void itNessyoyo_UnkMotion1_Phys(Item_GObj* gobj)
     f32 pad[1];
     Mtx m;
     Item* ip = GET_ITEM(gobj);
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     ItemLink* link1 = ip->xDD4_itemVar.nessyoyo.x8;
 
     PSMTXIdentity(m);
@@ -237,7 +241,8 @@ void itNessyoyo_UnkMotion2_Phys(Item_GObj* gobj)
     f32 pad[1];
     Mtx m;
     Item* ip = GET_ITEM(gobj);
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     ItemLink* link1 = ip->xDD4_itemVar.nessyoyo.x8;
 
     PSMTXIdentity(m);
@@ -260,7 +265,8 @@ void itNessyoyo_UnkMotion3_Phys(Item_GObj* gobj)
     f32 pad[1];
     Mtx m;
     Item* ip = GET_ITEM(gobj);
-    itYoyoAttributes* attrs = ip->xC4_article_data->x4_specialAttributes;
+    itYoyoAttributes* attrs =
+        &ip->xC4_article_data->x4_specialAttributes->yoyo;
     ItemLink* link2 = ip->xDD4_itemVar.nessyoyo.xC;
 
     PSMTXIdentity(m);
@@ -394,8 +400,8 @@ s32 it_802BF28C(ItemLink* link, Vec3* target, itYoyoAttributes* attrs,
     {
         Vec3 dir;
         Vec3 dir2;
-        f32 min_len = attrs->x10_UNK1 * ftLib_80086A0C(ip->owner);
-        f32 max_len = attrs->xC_SIZE * ftLib_80086A0C(ip->owner);
+        f32 min_len = attrs->x10_UNK1 * ftLib_GetScale(ip->owner);
+        f32 max_len = attrs->xC_SIZE * ftLib_GetScale(ip->owner);
         Fighter* fp = GET_FIGHTER(ip->xDD4_itemVar.nessyoyo.x10);
         ItemLink* cur = link;
         ItemLink* next = cur->next;
@@ -478,8 +484,8 @@ s32 it_802BF4A0(ItemLink* link, Vec3* target, itYoyoAttributes* attrs,
     s32 count;
     f32 size;
 
-    ftLib_80086A0C(ip->owner);
-    size = attrs->xC_SIZE * ftLib_80086A0C(ip->owner);
+    ftLib_GetScale(ip->owner);
+    size = attrs->xC_SIZE * ftLib_GetScale(ip->owner);
     cur = link;
     next = link->next;
 
@@ -558,7 +564,7 @@ bool it_802BF800(ItemLink* item, Vec3* pos, itYoyoAttributes* attrs, Item* ip,
     Vec3 dir;
     f32 len;
     f32 step;
-    f32 size = attrs->xC_SIZE * ftLib_80086A0C(ip->owner);
+    f32 size = attrs->xC_SIZE * ftLib_GetScale(ip->owner);
     ItemLink* prev = item->prev;
     ItemLink* cur = item;
     while (prev != NULL && !cur->x2C_b0) {
@@ -597,7 +603,7 @@ void it_802BF900(Item* ip)
     PAD_STACK(0xC);
 
     offset = it_803B86A4;
-    scl = ftLib_80086A0C(ip->owner);
+    scl = ftLib_GetScale(ip->owner);
 
     HSD_JObjSetupMatrix(link1->jobj);
     PSMTXIdentity(trans);
@@ -683,13 +689,13 @@ void it_802BFAFC(Item* ip, Vec3* target)
 
         it_802A6DC8(jobj, &link_pos, &dir);
 
-        attrs = ip->xC4_article_data->x4_specialAttributes;
+        attrs = &ip->xC4_article_data->x4_specialAttributes->yoyo;
         if (jobj != ip->xDD4_itemVar.nessyoyo.x18) {
             scale = attrs->xC_SIZE;
         } else {
             scale = 1.0f;
         }
-        scale *= ftLib_80086A0C(ip->owner);
+        scale *= ftLib_GetScale(ip->owner);
         PSMTXCopy(jobj->mtx, m);
         m[0][0] *= scale;
         m[1][0] *= scale;

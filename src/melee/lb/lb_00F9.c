@@ -34,7 +34,7 @@ struct lb_Collider {
     /* 0x24 */ char pad_24[0x04];
 };
 
-const struct {
+const struct lb_803B7280_t {
     Vec3 v0;
     Vec3 v1;
     Vec3 v2;
@@ -342,10 +342,6 @@ float lb_800103B8(Vec3* a, Vec3* b)
     return lb_800101C8(a, b);
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
 bool lb_800103D8(Vec3* vec, float x0, float x1, float x2, float x3,
                  float offset)
 {
@@ -354,20 +350,18 @@ bool lb_800103D8(Vec3* vec, float x0, float x1, float x2, float x3,
     if (dist0 == dist1) {
         if (dist0 > 1e-10f) {
             return true;
+        } else {
+            return false;
         }
-        return false;
-    }
-    if ((double) dist0 > 0.0 && (double) dist1 < 0.0) {
+    } else if ((double) dist0 > 0.0 && (double) dist1 < 0.0) {
         vec->x = -dist1 / (dist0 - dist1) * (x0 - x2) + x2;
         vec->y = offset;
         vec->z = 0.0f;
         return true;
+    } else {
+        return false;
     }
-    return false;
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
 static inline bool approximatelyZeroVec3(Vec3 vec)
 {
@@ -881,14 +875,14 @@ void lb_8001044C(DynamicsDesc* desc, void* colliders_raw, int num_colliders,
             PSMTXMultVec(bone_mtx, &rotation_axis, &local_axis);
             if (!approximatelyZeroVec3(local_axis)) {
                 Quaternion rotation;
-                HSD_QuatLib_8037ECE0(&local_axis, &angle_quat, angle_diff);
+                AngleAxisToQuat(&local_axis, &angle_quat, angle_diff);
                 euler_angles.x = jobj->rotate.x;
                 euler_angles.y = jobj->rotate.y;
                 euler_angles.z = jobj->rotate.z;
                 EulerToQuat(&euler_angles, &euler_quat);
-                HSD_QuatLib_8037EC4C(&angle_quat, &euler_quat, &result_quat);
+                QuatMul(&angle_quat, &euler_quat, &result_quat);
                 PSMTXQuat(bone_mtx, &result_quat);
-                HSD_QuatLib_8037EB28(bone_mtx, (Vec3*) &rotation);
+                MatToEuler(bone_mtx, (Vec3*) &rotation);
                 HSD_JObjSetRotation(jobj, &rotation);
                 HSD_JObjClearFlagsAll(jobj, 0x20000U);
             }
@@ -991,7 +985,7 @@ void lb_800115F4(void)
     lb_804D63B4 = 0;
 }
 
-void lb_80011710(DynamicsDesc* arg0, DynamicsDesc* arg1)
+void lb_80011710(DynamicsTemplate* arg0, DynamicsDesc* arg1)
 {
     struct lb_00F9_UnkDesc1Inner* data0;
     struct DynamicsData* data1;
@@ -1001,7 +995,7 @@ void lb_80011710(DynamicsDesc* arg0, DynamicsDesc* arg1)
     arg1->pos.y = arg0->pos.y;
     arg1->pos.z = arg0->pos.z;
     data1 = arg1->data;
-    data0 = &arg0->data->desc.lb_unk1.array[0];
+    data0 = arg0->params;
     for (data1 = arg1->data, i = 0; i < (int) arg0->count;
          data1 = data1->next, i++)
     {

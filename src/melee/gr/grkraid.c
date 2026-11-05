@@ -9,17 +9,6 @@
 #include <sysdolphin/baselib/controller.h>
 #include <sysdolphin/baselib/random.h>
 
-struct grKraid_YakumonoParam {
-    u32 map_time_min;
-    u32 map_time_max;
-    s32 map_time_acl;
-    float map_rot_spd_min;
-    float map_rot_spd_max;
-    u32 kraid_wait_time;
-    u32 kraid_wait_time_add;
-    float kraid_pos_x[6];
-};
-
 GrJoint grKr_803E4C78[] = { { 0, 3, 12 }, { 1, 3, 12 }, { 2, 3, 12 },
                             { 3, 3, 12 }, { 4, 3, 12 }, { 5, 3, 12 } };
 
@@ -555,7 +544,7 @@ bool grKraid_801FF0E0(Ground_GObj* gobj, int flag)
     }
     comp = gp->u.kraid2.xC >= val ? true : false;
     if (comp != false) {
-        ftLib_80086C9C(0xC, 0x0);
+        ftLib_StartRumbleAll(0xC, 0x0);
     }
     return comp;
 }
@@ -567,7 +556,7 @@ void grKraid_801FF14C(Ground_GObj* gobj)
 
 void grKraid_801FF150(Ground_GObj* gobj) {}
 
-DynamicsDesc* grKraid_OnTouchLine(enum_t unused)
+lbColl_80008D30_arg1* grKraid_OnTouchLine(enum_t unused)
 {
     return NULL;
 }

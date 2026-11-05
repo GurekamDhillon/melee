@@ -44,8 +44,25 @@
 /* 1FDED8 */ void grInishie2_801FDED8(Ground_GObj*);
 /* 1FDFB4 */ s32 grInishie2_801FDFB4(s32);
 /* 1FDFE4 */ void grInishie2_801FDFE4(Ground_GObj*);
-/* 1FDFE8 */ DynamicsDesc* grInishie2_801FDFE8(enum_t);
+/* 1FDFE8 */ lbColl_80008D30_arg1* grInishie2_801FDFE8(enum_t);
 /* 1FDFF0 */ bool grInishie2_801FDFF0(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E4C00 */ extern StageData grI2_StageData;
+
+struct grInishie2_YakumonoParam {
+    s16 unk0;
+    s16 unk2;
+    s16 unk4;
+    s16 unk6;
+    s16 unk8;
+    s16 unkA;
+    s16 unkC;
+    s16 unkE;
+    s16 unk10[2];
+    Vec3 unk14[2];
+    f32 unk2C;
+    Vec3 unk30[2];
+    s16 unk48;
+    s16 unk4A;
+};
 
 #endif

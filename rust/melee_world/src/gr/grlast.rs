@@ -35,7 +35,7 @@ pub struct LastBg {
 }
 
 /// The ±1 of `HSD_Randi(2) ? +1.0F : -1.0F`.
-fn sign(randi2: i32) -> f32 {
+fn rand_sign(randi2: i32) -> f32 {
     if randi2 != 0 {
         1.0
     } else {
@@ -50,9 +50,9 @@ impl LastBg {
         let mut s = LastBg::default();
         // grlast.c 455 / 457: HSD_Randf() * K80 + K7C, fused.
         s.x_d4 = fmadds(randf(), K_80, K_7C);
-        s.x_d4 *= sign(randi(2));
+        s.x_d4 *= rand_sign(randi(2));
         s.x_d8 = fmadds(randf(), K_80, K_7C);
-        s.x_d8 *= sign(randi(2));
+        s.x_d8 *= rand_sign(randi(2));
         s.x_dc = 0.0;
         s.x_e0 = None;
         s

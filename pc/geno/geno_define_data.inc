@@ -205,13 +205,13 @@ static void GenoDefine_JointFields(int kind, ftData* out, struct ftData_x8* x8)
     ftData_x30* x30;
     ftHurtboxInit* inits;
     ftData_x34* x34 = gd_data_copy(out->x34, sizeof *x34);
-    ftData_x38* x38 = gd_data_copy(out->x38, 2*sizeof *x38);
+    AbsorbDesc* x38 = gd_data_copy(out->x38, 2*sizeof *x38);
     ftData_x44_t* x44 = gd_data_copy(out->x44, sizeof *x44);
     int* x54 = gd_data_copy(out->x54, 5*sizeof(int));
     struct ftData_x58_t* x58 = gd_data_copy(out->x58, sizeof *x58);
     for (i = 0; i < 5; ++i) b[i] = (u8)Geno_DefinePlanInt(kind, 20, i);
     x34->x0 = (Fighter_Part)Geno_DefinePlanInt(kind, 21, 0);
-    for (i = 0; i < 2; ++i) x38[i].x0 = Geno_DefinePlanInt(kind, 22, i);
+    for (i = 0; i < 2; ++i) x38[i].x0_bone_id = Geno_DefinePlanInt(kind, 22, i);
     x44->unk0 = (s16)Geno_DefinePlanInt(kind, 23, 0); x44->unk2 = (s16)Geno_DefinePlanInt(kind, 23, 1);
     x44->unk4 = (s16)Geno_DefinePlanInt(kind, 23, 2); x44->unk6 = (s16)Geno_DefinePlanInt(kind, 23, 3);
     x44->unk8 = (s16)Geno_DefinePlanInt(kind, 23, 4); x44->unkA = (s16)Geno_DefinePlanInt(kind, 23, 5);
@@ -256,7 +256,7 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
     x8 = gd_data_copy(out->x8, sizeof *x8);          /* Mario's x10..x14 are Fighter_Part numbers: roles, resolved by the own parts table */
     if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own model keeps its model-part visibility groups (expression meshes) and texture animations (eyes) */
     x8->x0.model_num = 0;
-    x8->x0.vis_table = GenoDefine_VisTable;
+    x8->x0.vis_table = (FtPartsVisLookupList (*)[4]) GenoDefine_VisTable;
     x8->x8.x8 = 0;
     for (i = 0; i < 255; ++i) GenoDefine_TobjTable[i] = &GenoDefine_TobjZero;
     x8->x8.xC = GenoDefine_TobjTable;
@@ -337,8 +337,8 @@ static void GenoDefine_BuildOwn(int kind, ftData* out, int n)
             rows2[n + nown + i].x8 = (s32)Geno_DefinePlanInt(kind, 11, ex_c[i]);
             ++mapped;
         }
-        {   /* A row the package gives no flags keeps the donor's, and the donor's part-animation bits (x594_b3,
-             * x594_b4: hand poses, dynamics) make ftCo_8009E4A8 run a donor figatree on one part of this skeleton:
+        {   /* A row the package gives no flags keeps the donor's, and the donor's part-animation bits (x594.x0.x594_b3,
+             * x594.x0.x594_b4: hand poses, dynamics) make ftCo_8009E4A8 run a donor figatree on one part of this skeleton:
              * ftAnim_8006E7B8 then walks a parts table that does not match and never ends (Goku's ThrowF froze
              * the game on its frame 13). The define's own skeleton has no such part clips: clear the two bits. */
             int r, cleared = 0;
@@ -407,7 +407,7 @@ static ftData_x20 GenoDefine_X20;
 static void GenoDefine_OwnTables(int kind, ftData* out)
 {
     if (!Geno_DefineTemplateSkeleton(kind)) {   /* a template's own skeleton keeps the template's guard pose trees (x20) */
-        GenoDefine_X20.x0 = GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
+        GenoDefine_X20.x0 = (HSD_Joint*) GenoDefine_GuardTrees; GenoDefine_X20.x8 = out->x20 ? out->x20->x8 : 0.0f;
         out->x20 = &GenoDefine_X20;
     }
     out->x3C = gd_data_copy(out->x3C, sizeof *out->x3C);
@@ -501,7 +501,7 @@ HSD_Joint* GenoDefine_RestPoseTree(Fighter* fp)
 {
     if (!Geno_DefineIsNone(fp->kind) || Geno_DefineTemplateSkeleton(fp->kind)) return NULL;
     /* the guard walks it from FtPart_TransN (as ftCo_80091E78 does the costume's), so it is the tree below the root joint */
-    return CostumeListsForeachCharacter[fp->kind].costume_list[fp->x619_costume_id].joint->child;
+    return CostumeListsForeachCharacter[fp->kind].costume_list[fp->costume_id].joint->child;
 }
 
 void GenoDefine_BindFighter(Fighter* fp)

@@ -272,7 +272,7 @@ static HSD_Joint* ftCo_GuardPoseTree(Fighter* fp, HSD_Joint* pose, int* row)
     FigaTree* tree;
     int index = FtPart_TransN;
     extern int Geno_MotionAnimRow(Fighter* fp, int motion);
-    if (own == NULL) return fp->ft_data->x20->x0[2];
+    if (own == NULL) return fp->ft_data->x20->x0->child;
     *row = Geno_MotionAnimRow(fp, ftCo_MS_Guard);
     if (*row < 0) *row = fp->x1C_actionStateList[ftCo_MS_Guard].anim_id;
     tree = ftData_80085E50(fp, *row);
@@ -293,7 +293,7 @@ static HSD_Joint* ftCo_GuardPoseTree(Fighter* fp, HSD_Joint* pose, int* row)
 #define GUARD_POSE_TREE(fp) guard_pose
 #define GUARD_ANIM_ROW guard_row
 #else
-#define GUARD_POSE_TREE(fp) ((fp)->ft_data->x20->x0[2])
+#define GUARD_POSE_TREE(fp) ((fp)->ft_data->x20->x0->child)
 #define GUARD_ANIM_ROW 38
 #endif
 
@@ -307,7 +307,7 @@ void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
     int guard_row = 38;
 #endif
     PAD_STACK(4);
-    if (fp->reflecting || fp->x221B_b0) {
+    if (fp->reflecting || fp->x221B.x221B_b0) {
 #if defined(TARGET_PC)
         guard_pose = ftCo_GuardPoseTree(fp, own_pose, &guard_row);
 #endif
@@ -344,7 +344,7 @@ void ftCo_80091E78(Fighter_GObj* gobj, float arg1)
 static inline void ftCo_80092158_inline(Fighter_GObj* gobj, int arg1,
                                         HSD_JObj* arg2)
 {
-    int offset = Player_GetUnk45(GET_FIGHTER(gobj)->player_id) << 2;
+    int offset = Player_GetUnk45(GET_FIGHTER(gobj)->player_idx) << 2;
     u8* color = Fighter_804D650C + offset;
     efSync_Spawn(arg1, gobj, arg2,
                  (color[0] << 16) | (color[1] << 8) | color[2]);
@@ -494,7 +494,7 @@ bool ftCo_800925A4(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
     PAD_STACK(8);
-    if (fp->x221B_b0) {
+    if (fp->x221B.x221B_b0) {
         fp->mv.co.guard.x2C = fp->lightshield_amount;
         {
             fp->lightshield_amount =
@@ -514,8 +514,8 @@ bool ftCo_800925A4(HSD_GObj* gobj)
         if (fp->shield_health < 0) {
             fp->shield_health = 0;
             fp->x221A_b7 = false;
-            fp->x221B_b0 = false;
-            pl_8003E0E8(fp->player_id, fp->is_sub_fighter);
+            fp->x221B.x221B_b0 = false;
+            pl_8003E0E8(fp->player_idx, fp->is_sub_fighter);
             ftCo_80098B20(gobj);
             ft_PlaySFX(fp, 129, 127, 64);
             return true;
@@ -548,7 +548,7 @@ static inline bool inlineC0(Fighter_GObj* gobj, HSD_GObjEvent cb)
     Fighter* fp = gobj->user_data;
     ftCo_80092BCC(gobj);
     if ((fp->mv.co.guard.xC && !fp->mv.co.guard.x10) ||
-        (!fp->x221B_b0 && !fp->reflecting))
+        (!fp->x221B.x221B_b0 && !fp->reflecting))
     {
         cb(gobj);
         return true;
@@ -664,7 +664,7 @@ void ftCo_80092BCC(Fighter_GObj* gobj)
 void ftCo_80092BE8(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    pl_8003E114(fp->player_id, fp->is_sub_fighter, fp->shield_health);
+    pl_8003E114(fp->player_idx, fp->is_sub_fighter, fp->shield_health);
     switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C49C(gobj);
@@ -818,7 +818,7 @@ static bool ftCo_Ucf084ShieldSdi(Fighter* fp)
 {
     extern int Replay_UcfVersion(int port);
     extern int ftUcf_PadRaw(int port, int which_y, int back);
-    int port = fp->x618_player_id, d;
+    int port = fp->pad_port, d;
     f32 prev = fp->input.lstick[1].x;
     if (Replay_UcfVersion(port) != 84) {
         return false;
@@ -892,7 +892,7 @@ static inline void ftCo_80092C54_inline(Fighter_GObj* gobj)
 static inline void ftCo_80092BE8_inline(Fighter_GObj* gobj)
 {
     Fighter* fp = gobj->user_data;
-    pl_8003E114(fp->player_id, fp->is_sub_fighter, fp->shield_health);
+    pl_8003E114(fp->player_idx, fp->is_sub_fighter, fp->shield_health);
     switch (ftGetTemplateKind(fp)) {
     case Ft_Kind_Yoshi:
         ftYs_Shield_8012C49C(gobj);
@@ -1028,7 +1028,7 @@ void ftCo_8009388C(HSD_GObj* gobj)
                               fp->cur_anim_frame, 1, 0, NULL);
     fp->active_timer.trigger = 0xFE;
     fp->x221A_b7 = false;
-    fp->x221B_b0 = false;
+    fp->x221B.x221B_b0 = false;
     fp->x221C_b3 = true;
     fp->x221C_b1 = true;
     fp->x221C_b2 = true;
@@ -1062,7 +1062,8 @@ void ftCo_800939B4(Fighter_GObj* gobj)
 void ftCo_80093A50(Fighter_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    Fighter_ChangeMotionState(gobj, 182, Ft_MF_SkipAnim, 0, 1, 0, NULL);
+    Fighter_ChangeMotionState(gobj, ftCo_MS_GuardReflect, Ft_MF_SkipAnim, 0, 1,
+                              0, NULL);
     ftAnim_8006EBA4(gobj);
     fp->active_timer.trigger = 0xFE;
     fp->x221C_b3 = true;

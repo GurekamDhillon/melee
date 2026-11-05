@@ -4,8 +4,6 @@
 
 #include <sysdolphin/baselib/forward.h>
 
-#include <math.h>
-
 #include "ftcrazyhandtagcancel.h"
 #include "types.h"
 #include <dolphin/mtx.h>
@@ -25,8 +23,8 @@ bool fn_8015B4EC(Vec3* vec);
 void ftCh_GrabUnk1_8015B174(HSD_GObj* gobj)
 {
     Fighter* fp = GET_FIGHTER(gobj);
-    ftCrazyHand_DatAttrs* da = fp->ft_data->ext_attr;
-    Fighter_ChangeMotionState(gobj, 0x183, 0, 0.0f, 1.0f, 0.0f, NULL);
+    ftCrazyHand_DatAttrs* da = &fp->ft_data->ext_attr->crazyhand;
+    Fighter_ChangeMotionState(gobj, 0x183, Ft_MF_None, 0.0f, 1.0f, 0.0f, NULL);
     ftAnim_8006EBA4(gobj);
     fp->cur_pos.x = da->x18;
     fp->cur_pos.y = da->x1C;
@@ -49,7 +47,7 @@ void ftCh_TagFail_Anim(HSD_GObj* gobj)
 void ftCh_TagFail_IASA(HSD_GObj* gobj)
 {
     Fighter* ft = GET_FIGHTER(gobj);
-    if (Player_GetPlayerSlotType(ft->player_id) == Gm_PKind_Human) {
+    if (Player_GetPlayerSlotType(ft->player_idx) == Gm_PKind_Human) {
         ftBossLib_8015BD20(gobj);
     }
 }
@@ -64,9 +62,9 @@ void fn_8015B2C0(HSD_GObj* gobj)
     u8 _[16];
     switch (fp->mv.ch.unk4.x0) {
     case 0: {
-        HSD_GObj* enemy_gobj = ftLib_8008627C(&fp->cur_pos, gobj);
+        HSD_GObj* enemy_gobj = ftLib_FindNearestOpponent(&fp->cur_pos, gobj);
         if (enemy_gobj != NULL) {
-            Camera_8002E6FC((int) ftLib_80086BE0(enemy_gobj));
+            Camera_8002E6FC((int) ftLib_GetPlayerIndex(enemy_gobj));
         } else {
             Camera_8002E6FC(0);
         }

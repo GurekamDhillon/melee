@@ -35,100 +35,6 @@ struct UnkSmallLoadData {
     u8 pad[8];
 };
 
-/// @todo ::PlayerInitData
-typedef struct gm_801BAB40_src {
-    /* 0x00 */ s8 c_kind;
-    /* 0x01 */ u8 slot_type;
-    /* 0x02 */ u8 stocks;
-    /* 0x03 */ u8 color;
-    /* 0x04 */ u8 x5;
-    /* 0x05 */ u8 sub_color;
-    /* 0x06 */ u8 team;
-    /* 0x07 */ u8 xB;
-    /* 0x08 */ u8 flags;
-    /* 0x09 */ u8 xE;
-    /* 0x0A */ u8 cpu_level;
-    /* 0x0B */ u8 pad;
-    /* 0x0C */ u16 x12;
-    /* 0x0E */ u16 hp;
-    /* 0x10 */ f32 x18;
-    /* 0x14 */ f32 x1C;
-    /* 0x18 */ f32 x20;
-} gm_801BAB40_src;
-
-struct gm_event_char_list {
-    u8 c_kind[33];
-};
-
-/// Per-level match init data; shares its first two bytes' bitfield layout
-/// with #StartMeleeRules.
-struct gm_evinit {
-    /* 0x00 */ u32 x0_0 : 3;
-    /* 0x00 */ u32 x0_3 : 3;
-    /* 0x00 */ u32 x0_6 : 1;
-    /* 0x00 */ u32 x0_7 : 1;
-    /* 0x01 */ u32 x1_0 : 1;
-    /* 0x01 */ u32 x1_1 : 1;
-    /* 0x01 */ u32 x1_2 : 1;
-    /* 0x01 */ u32 x1_3 : 1;
-    /* 0x01 */ u32 x1_4 : 1;
-    /* 0x01 */ u32 x1_5 : 3;
-    /* 0x02 */ u8 is_teams;
-    /* 0x03 */ s8 item_freq;
-    /* 0x04 */ s8 sd_penalty;
-    /* 0x05 */ u8 unk5;
-    /* 0x06 */ u16 stkind;
-    /* 0x08 */ u32 time_limit;
-    /* 0x0C */ u8 padC[4];
-    /* 0x10 */ u64 x10;
-    /* 0x18 */ s32 x18;
-    /* 0x1C */ f32 x1C;
-    /* 0x20 */ f32 game_speed;
-    /* 0x24 */ f32 unk24;
-};
-
-/// Per-round stage and opponent table, for levels with multiple rounds.
-struct gm_evstage_table {
-    /* 0x00 */ u8 count;
-    /* 0x01 */ u8 pad1;
-    /* 0x02 */ u16 stage[7];
-    /* 0x10 */ struct gm_801BAB40_src* entries[GM_MAX_PLAYERS];
-};
-
-struct gm_evbonus {
-    /* 0x00 */ s8 c_kind;
-    /* 0x01 */ u8 x1;
-    /* 0x02 */ u8 x2;
-    /* 0x03 */ u8 x3;
-    /* 0x04 */ u8 x4;
-    /* 0x05 */ u8 x5;
-    /* 0x06 */ u8 color;
-    /* 0x07 */ u8 pad7;
-    /* 0x08 */ f32 x8;
-    /* 0x0C */ f32 xC;
-    /* 0x10 */ f32 x10;
-    /* 0x14 */ u8 flags;
-    /* 0x15 */ u8 x15;
-    /* 0x16 */ u8 x16;
-    /* 0x17 */ u8 x17;
-};
-
-/* 0x04 */ struct gm_804D6900_x4_t {
-    int x0;
-    intptr_t x4;
-};
-
-struct gm_804D6900_t {
-    /* 0x00 */ u8 kind;
-    /* 0x01 */ u8 flags; ///< top 3 bits: player count
-    /* 0x02 */ u8 pad2[2];
-    /* 0x04 */ struct gm_804D6900_x4_t* x4;
-    /* 0x08 */ struct gm_evinit* evinit;
-    /* 0x0C */ struct gm_evbonus* evbonus;
-    /* 0x10 */ struct gm_evstage_table* evstage_table;
-    /* 0x14 */ struct gm_801BAB40_src* player_init[5];
-};
-
 /* 1BA938 */ static void gm_801BA938(struct EventData*, int lo, int hi, bool);
 /* 1BAA60 */ static void onEnterCss(GameModeState*);
 /* 1BAAD0 */ static void onExitCss(GameModeState*);
@@ -421,7 +327,7 @@ void onEnterVs(GameModeState* arg0)
     md->rules.x14 = 0;
     md->rules.x18 = 0;
     md->rules.x20 = levels[level]->evinit->x10;
-    md->rules.x28 = levels[level]->evinit->x18;
+    md->rules.it_kind = levels[level]->evinit->x18;
     md->rules.x30 = levels[level]->evinit->x1C;
     md->rules.game_speed = levels[level]->evinit->game_speed;
     md->rules.on_match_start = fn_801BBFE8;
@@ -1070,16 +976,16 @@ void gm_801BC00C(void)
     case 35:
         if (ev->x20 == 0) {
             event_entry = event_levels[idx]->evstage_table->entries[2];
-            ftLib_80087508(
+            ftLib_LoadFighterCostume(
                 Player_800325C8((CharacterKind) event_entry->c_kind, 0),
                 event_entry->color);
             event_entry = event_levels[idx]->evstage_table->entries[3];
-            ftLib_80087508(
+            ftLib_LoadFighterCostume(
                 Player_800325C8((CharacterKind) event_entry->c_kind, 0),
                 event_entry->color);
         } else {
             event_entry = event_levels[idx]->evstage_table->entries[4];
-            ftLib_80087508(
+            ftLib_LoadFighterCostume(
                 Player_800325C8(gm_801BC00C_GetCharacterKind(event_entry), 0),
                 event_entry->color);
         }
@@ -1087,7 +993,7 @@ void gm_801BC00C(void)
     case 43:
         chr = gm_801BC00C_GetCharacter(
             (gm_801BAB40_src*) event_levels[idx]->x4->x4);
-        ftLib_80087508(chr, ev->x50[2]);
+        ftLib_LoadFighterCostume(chr, ev->x50[2]);
         if ((s8) ev->x0 == 4) {
             Player_80031DA8(chr, ev->x1);
         }
@@ -1456,11 +1362,26 @@ void gm_801BC9E8(HSD_GObj* gobj)
     }
 }
 
+/// Restores the stock of a defeated player that is not Sheik.
+static inline bool isSeakDefeated(int slot)
+{
+    HSD_GObj* fighter_gobj;
+
+    if (Player_GetStocks(slot) <= 0 &&
+        (fighter_gobj = Player_GetEntity(slot)) != NULL)
+    {
+        if (ftLib_GetKind(fighter_gobj) == Ft_Kind_Seak) {
+            return true;
+        }
+        Player_SetStocks(slot, 1);
+        gm_8016F00C(slot);
+    }
+    return false;
+}
+
 void gm_801BCAF0(HSD_GObj* gobj)
 {
-    HSD_GObj* temp_r3;
     VsSceneController* temp_r3_2;
-    s32 var_r0;
     s32 var_r0_2;
     struct EventData* temp_r30;
     s32 i;
@@ -1469,21 +1390,7 @@ void gm_801BCAF0(HSD_GObj* gobj)
 
     count = 0;
     for (i = 1; i < 3; i += 1) {
-        if ((Player_GetStocks(i) <= 0) &&
-            (temp_r3 = Player_GetEntity(i), ((temp_r3 == NULL) == 0)))
-        {
-            if (ftLib_GetKind(temp_r3) == Ft_Kind_Seak) {
-                var_r0 = 1;
-            } else {
-                Player_SetStocks(i, 1);
-                gm_8016F00C(i);
-                goto block_6;
-            }
-        } else {
-        block_6:
-            var_r0 = 0;
-        }
-        if (var_r0 != 0) {
+        if (isSeakDefeated(i)) {
             count += 1;
         }
     }
@@ -1738,7 +1645,7 @@ void gm_801BD46C(HSD_GObj* gobj)
     for (i = 1; i < 3; i++) {
         p = Player_GetEntityAtIndex(i, 1);
         if (p != NULL) {
-            var_r30 = ftLib_8008731C(p);
+            var_r30 = ftLib_IsSleeping_8008731C(p);
         }
         if (var_r30 != 0) {
             count++;
@@ -2413,12 +2320,12 @@ u8 gm_801BEBF8(u8 arg0)
     return entry->player_init[0]->c_kind;
 }
 
-UNK_T gm_801BEC54(void)
+ItemKind* gm_801BEC54(void)
 {
     struct gm_804D6900_t* temp_r3;
     temp_r3 = (*gm_804D6900)[gmMainLib_804D3EE0->vs.unk_530.unk_535];
     if (temp_r3 == NULL) {
         return NULL;
     }
-    return temp_r3->x4;
+    return (ItemKind*) temp_r3->x4;
 }

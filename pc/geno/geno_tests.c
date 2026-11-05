@@ -74,7 +74,7 @@ static TestGenoState* t_setup(void)
     t_gobj.user_data = &t_fp;
     t_fp.gobj = &t_gobj;
     t_fp.kind = Ft_Kind_Kirby;
-    t_fp.player_id = 5;
+    t_fp.player_idx = 5;
     t_fp.is_sub_fighter = 1;
     t_fp.frame_speed_mul = 1.0f;
     t_fp.ft_data = &t_ftdata;
@@ -84,7 +84,7 @@ static TestGenoState* t_setup(void)
     t_fp.x1C_actionStateList = t_rows;
     t_fp.x20_actionStateList = t_rows;
     t_fp.facing_dir = 1.0f;
-    t_ftdata.ext_attr = t_ext_attr;
+    t_ftdata.ext_attr = (union ftData_ExtAttr*) t_ext_attr;
     t_ftdata.xC = t_subactions;
     Geno_FighterReset(&t_fp);
     return GenoGame_StateOf(&t_fp);
@@ -1273,7 +1273,7 @@ static int test_geno_v2_states(void)
         rc = 1;
     }
     r = Geno_MotionRow(&t_fp, T_MS(T_GA));
-    if (r->move_id != 9) {
+    if (r->x8.x0.move_id != 9) {
         TestFail("GlideAttack row: move_id 9");
         rc = 1;
     }
@@ -1411,7 +1411,7 @@ static int test_geno_v3_anim_motion(void)
     }
     t_fp.co_attrs.gravity = 0.1f;
     t_fp.co_attrs.terminal_velocity = 2.0f;
-    t_fp.x594_b0 = 1;
+    t_fp.x594.x0.x594_b0 = 1;
     /* air, facing right: self_vel = (fwd, up) */
     t_fp.motion_id = T_MS(T3_UP);
     Geno_OnActionChange(&t_gobj);
@@ -1493,7 +1493,7 @@ static int test_geno_v3_anim_motion(void)
     /* no root motion on the row (flag clear), no gravity: hold still in the air */
     t_fp.motion_id = T_MS(T3_UP);
     Geno_OnActionChange(&t_gobj);
-    t_fp.x594_b0 = 0;
+    t_fp.x594.x0.x594_b0 = 0;
     t_fp.ground_or_air = GA_Air;
     t_fp.self_vel.x = 4.0f;
     t_fp.self_vel.y = -1.0f;

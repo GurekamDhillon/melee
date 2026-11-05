@@ -22,7 +22,7 @@ typedef struct MapLineRange { s16 start, count; } MapLineRange;
 typedef struct { MapLineRange ranges[MapLineGroup_Count]; float left_bound, bottom_bound, right_bound, top_bound; s16 vtx_start, vtx_count; } MapJoint;
 typedef struct CollJoint { struct CollJoint* next; MapJoint* inner; u32 flags; bool xE; Vec2 bounding_min, bounding_max; } CollJoint;
 typedef struct { Vec2* verts; int vert_count; MapLine* lines; int line_count; MapLineRange ranges[MapLineGroup_Count]; MapJoint* joints; int joint_count; } MapCollData;
-typedef struct mp_UnkStruct0 { struct mp_UnkStruct0* next; u16 x4, x6; Vec3 x8, x14; int x20; s16 x24, x26, x28; } mp_UnkStruct0;
+typedef struct mpIsland { struct mpIsland* next; u16 x4, x6; Vec3 x8, x14; int x20; s16 x24, x26, x28; } mpIsland;
 enum { CollLine_Floor = 1, LINE_FLAG_KIND = 15, LINE_FLAG_PLATFORM = 256, LINE_FLAG_LEDGE = 512,
        LINE_FLAG_ENABLED = 1 << 16, LINE_FLAG_HIDDEN = 1 << 18,
        CollJoint_B8 = 1 << 8, CollJoint_B11 = 1 << 11, CollJoint_Enabled = 1 << 16, CollJoint_Hidden = 1 << 18 };
@@ -58,8 +58,8 @@ static Vec2 vertices[40];
 static MapCollData map, *current_map;
 #define mpLib_804D64B4 current_map
 static CollJoint *jointListStart, *jointListEnd;
-static struct { mp_UnkStruct0* next; } mpIsland_80458E88;
-static mp_UnkStruct0* island_pool;
+static struct { mpIsland* next; } mpIsland_80458E88;
+static mpIsland* island_pool;
 static int owner = 7, refresh_calls, bounding_checks;
 static MapCollData* mpLib_8004D164(void) { return current_map; }
 static CollLine* mpGetGroundCollLine(void) { return groundCollLine; }
@@ -87,7 +87,7 @@ static void PSVECNormalize(const Vec3* source, Vec3* out) {
 static void* HSD_MemAlloc(size_t bytes) {
     /* Native code allocates the 32-bit island prefix; the host fixture uses
      * named fields on either host pointer width. No ABI claim is made here. */
-    assert(bytes == 0x2C); return calloc(1, sizeof(mp_UnkStruct0));
+    assert(bytes == 0x2C); return calloc(1, sizeof(mpIsland));
 }
 static void mpIsland_AssertSeg(void* segment) { assert(segment); }
 #include "readers.inc"
@@ -102,8 +102,8 @@ static void mpIsland_8005B334(int joint, int first, int count, bool enabled) {
 #include "stitcher.inc"
 
 static int bits(float value) { union { int i; float f; } u; u.f = value; return u.i; }
-static void release_islands(mp_UnkStruct0* list) {
-    while (list) { mp_UnkStruct0* next = list->next; free(list); list = next; }
+static void release_islands(mpIsland* list) {
+    while (list) { mpIsland* next = list->next; free(list); list = next; }
 }
 static void fixture(void) {
     int i;
@@ -155,7 +155,7 @@ int main(void) {
     assert(lines[index(b)].prev_id0 == index(a) && lines[index(b)].prev_id1 == index(a));
     assert(follow(a, 40, 26) == index(d) && follow(d, -40, 6) == index(a));
     for (i = 0; i < 4; ++i) {
-        mp_UnkStruct0* island = mpIsland_8005AB54(4 + i);
+        mpIsland* island = mpIsland_8005AB54(4 + i);
         assert(island && island->x24 == index(a) && island->x26 == index(d));
     }
     /* Every per-joint island caches the whole chain; removing its middle must

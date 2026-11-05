@@ -266,7 +266,7 @@ struct HSD_Generator {
     HSD_psAppSRT* appsrt;                 // 0x54
     HSD_PSUserFunc* userfunc;             // 0x58
     int (*callback)(HSD_Generator* part); // 0x5C
-    union {
+    union HSD_Generator_aux {
         auxDisc disc;
         auxLine line;
         auxTornado tornado;
@@ -336,10 +336,7 @@ HSD_Particle* psGenerateParticleIDN(int linkNo, int bank, int id);
 void psKillParticle(HSD_Particle* pp);
 void psKillAllParticle(void);
 
-void psSetPointJObj(int no, HSD_JObj* jobj);
 void psSetPointJObjNodup(HSD_JObj* jobj, int no);
-
-void psClearPointJObj(void);
 
 void psDeletePntJObjwithParticle(HSD_Particle* pp);
 
@@ -352,8 +349,6 @@ void psPauseFamily(u16 idnum, int linkNo);
 void psRestartFamily(u16 idnum, int linkNo);
 
 void psSetCallback(int (**callback)(HSD_Particle* part));
-
-void psSetUserFunc(HSD_Generator* gp, HSD_PSUserFunc* userfunc);
 
 static inline void psRemoveBillboardCamera(void);
 

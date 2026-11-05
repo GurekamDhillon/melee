@@ -35,7 +35,7 @@ static void sdata2_order(void)
     (void) 0.5;
     (void) 30.0f;
     (void) 10.0f;
-    (void) 1.5707963267948966;
+    (void) M_PI_2;
     (void) 0.000174532921f;
     (void) 3.0;
     (void) -1.0f;
@@ -72,7 +72,7 @@ Item_GObj* it_8027B5B0(ItemKind kind, Vec3* pos, HSD_JObj* jobj, Vec3* vel,
     spawn.pos = spawn.prev_pos;
     spawn.facing_dir = it_8026B684(&spawn.prev_pos);
     spawn.x3C_damage = 0;
-    spawn.x44_flag.b0 = true;
+    spawn.x44_flag.x0.b0 = true;
     if (vel != NULL) {
         spawn.vel = *vel;
     } else {
@@ -594,7 +594,7 @@ void it_8027CB3C(Item_GObj* item_gobj)
 
     item = item_gobj->user_data;
     it_8026C220(item_gobj, item->owner);
-    item->facing_dir = ftLib_800865C0(item->owner);
+    item->facing_dir = ftLib_GetFacingDir(item->owner);
     it_80275414(item_gobj);
     it_80275474(item_gobj);
     it_802762BC(item);
@@ -606,7 +606,7 @@ void it_8027CBA4(Item_GObj* item_gobj)
     Item* item;
 
     item = item_gobj->user_data;
-    item->facing_dir = ftLib_800865C0(item->owner);
+    item->facing_dir = ftLib_GetFacingDir(item->owner);
     it_802762BC(item);
     it_802754D4(item_gobj);
     it_8026B3A8(item_gobj);
@@ -712,11 +712,11 @@ void it_8027CE64(Item_GObj* item_gobj, HSD_GObj* fighter_gobj,
     u32 pad[1];
 
     item = item_gobj->user_data;
-    item->xDCF_flag.b3 = true;
-    ftLib_8008770C(fighter_gobj, (void*) &sp18);
+    item->xDCF_flag.x0.b3 = true;
+    ftLib_GetGameWatchColor(fighter_gobj, (void*) &sp18);
     it_80278574(item_gobj, &sp18);
-    ftLib_80087744(fighter_gobj, &item->xBC8);
-    item->x5C8 = ftLib_800870BC(item->owner, (int*) &item->xBC4);
+    ftLib_GetGameWatchOutlineColor(fighter_gobj, &item->xBC8);
+    item->x5C8 = ftLib_GetSubColor(item->owner, &item->xBC4);
     it_80274594(item_gobj);
     item->xDD4_itemVar.gamewatch.attr = arg_attr_address;
 }

@@ -4,8 +4,6 @@
 
 #include <melee/it/forward.h>
 
-#include <math.h>
-
 #include "ftCo_DamageFall.h"
 #include "ftCo_Fall.h"
 #include "ftCo_ItemThrow.h"
@@ -166,7 +164,8 @@ void ftCo_LiftTurn_Anim(HSD_GObj* gobj)
     }
     if (fp->mv.co.lift.x4 <= 0) {
         Fighter* fp = gobj->user_data;
-        Fighter_ChangeMotionState(gobj, 174, Ft_MF_Unk24, 0, 1, 0, NULL);
+        Fighter_ChangeMotionState(gobj, ftCo_MS_LiftWait, Ft_MF_Unk24, 0, 1, 0,
+                                  NULL);
         fp->take_dmg_cb = ftCo_800974C4;
     }
 }

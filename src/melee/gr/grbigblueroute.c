@@ -29,19 +29,6 @@
 #include <sysdolphin/baselib/random.h>
 #include <sysdolphin/baselib/spline.h>
 
-struct grBigBlueRoute_YakumonoParam {
-    int x0;
-    f32 x4;
-    u8 pad_8[0x20 - 0x8];
-    f32 x20;
-    u8 pad_24[0x3C - 0x24];
-    f32 x3C;
-    f32 x40;
-    f32 x44;
-    f32 x48;
-    f32 x4C;
-};
-
 struct grBigBlueRoute_8020DA9C_t {
     /* +0 */ char pad_0[0x8];
     /* +8 */ int x8;
@@ -186,7 +173,7 @@ void grBigBlueRoute_8020B920(void)
 
     fighter = Ground_GetP1Fighter();
     if (fighter != NULL) {
-        ftLib_80086644(fighter, &fighter_pos);
+        ftLib_GetPos(fighter, &fighter_pos);
         grBigBlueRoute_8020DED4(&fighter_pos);
         Camera_8002F3AC();
     }
@@ -309,7 +296,7 @@ void grBigBlueRoute_8020BC30(Ground_GObj* arg) {}
 void grBigBlueRoute_8020BC34(Ground_GObj* gobj)
 {
     Ground* gp = GET_GROUND(gobj);
-    gp->u.car.xC4 = grBigBlueRoute_8020B9D4(4);
+    gp->u.bigblueroute2.xC4 = grBigBlueRoute_8020B9D4(4);
 }
 
 void grBigBlueRoute_8020BC68(Ground_GObj* gobj)
@@ -391,9 +378,9 @@ void grBigBlueRoute_8020BF38(Ground_GObj* gobj)
     Ground_801C3D44(0, 30.0f, 4000.0f);
 
     if (fighter != NULL) {
-        ftLib_80086644(fighter, &fighter_pos);
+        ftLib_GetPos(fighter, &fighter_pos);
 
-        if (ftLib_80086EC0(fighter) == 0) {
+        if (ftLib_IsInHitstun(fighter) == 0) {
             grBigBlueRoute_8020DED4(&fighter_pos);
 
             for (i = 0; i < 3; i++) {
@@ -445,7 +432,7 @@ void grBigBlueRoute_8020C140(Ground_GObj* gobj)
     gp->u.car.xD0 = Ground_801C247C(33, 0);
     gp->u.car.xD4 = Ground_801C247C(33, 2);
     grBigBlueRoute_8020C238(gobj);
-    ((UnkFlagStruct*) &gp->u.car.xC4)->b0 = 0;
+    ((UnkFlagStruct*) &gp->u.car.xC4)->x0.b0 = 0;
 }
 
 bool grBigBlueRoute_8020C1D4(Ground_GObj* arg)
@@ -764,7 +751,7 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
 
     fighter = Ground_GetP1Fighter();
     if (fighter != NULL) {
-        ftLib_80086644(fighter, &fighter_pos);
+        ftLib_GetPos(fighter, &fighter_pos);
     } else {
         return;
     }
@@ -878,7 +865,9 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                     RE_ENTRY->x24 = RE_ENTRY->x14;
                     RE_ENTRY->flags.b6 = 0;
                     if (RE_ENTRY->flags.b1) {
-                        ((UnkFlagStruct*) &gp->u.bigblue.x0)->b1 = 0;
+                        ((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s
+                             .x0)
+                            ->x0.b1 = 0;
                     }
                 }
                 break;
@@ -1000,8 +989,11 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                 pos.z - 260.0f < fighter_pos.z &&
                 fighter_pos.z < 260.0f + pos.z && !RE_ENTRY->flags.b1)
             {
-                if (!((UnkFlagStruct*) &gp->u.bigblue.x0)->b1) {
-                    ((UnkFlagStruct*) &gp->u.bigblue.x0)->b1 = 1;
+                if (!((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s.x0)
+                         ->x0.b1)
+                {
+                    ((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s.x0)
+                        ->x0.b1 = 1;
                     Ground_801C53EC(0x77A16);
                 }
             }
@@ -1012,10 +1004,15 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                 fighter_pos.z < 100.0f + pos.z)
             {
                 if (RE_ENTRY->flags.b1) {
-                    if (!((UnkFlagStruct*) &gp->u.bigblue.x0)->b0) {
+                    if (!((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s
+                              .x0)
+                             ->x0.b0)
+                    {
                         un_802FD604((s32) yakumono_param->x4C);
                         Ground_801C53EC(0x77A11);
-                        ((UnkFlagStruct*) &gp->u.bigblue.x0)->b0 = 1;
+                        ((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s
+                             .x0)
+                            ->x0.b0 = 1;
                     }
                 } else {
                     Camera_RequestQuake(QuakeKind_Loop, NULL);
@@ -1037,8 +1034,11 @@ void grBigBlueRoute_8020CD20(Ground_GObj* gobj)
                     }
                 }
             } else if (RE_ENTRY->flags.b1) {
-                if (((UnkFlagStruct*) &gp->u.bigblue.x0)->b0) {
-                    ((UnkFlagStruct*) &gp->u.bigblue.x0)->b0 = 0;
+                if (((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s.x0)
+                        ->x0.b0)
+                {
+                    ((UnkFlagStruct*) &gp->u.bigblue.x0_u.x0_s.x0_u.x0_s.x0)
+                        ->x0.b0 = 0;
                 }
             }
         }
@@ -1180,7 +1180,7 @@ void grBigBlueRoute_8020DED4(Vec3* pos)
     Ground_801C38BC(x, y);
 }
 
-DynamicsDesc* grBigBlueRoute_8020DF78(enum_t arg)
+lbColl_80008D30_arg1* grBigBlueRoute_8020DF78(enum_t arg)
 {
     return NULL;
 }

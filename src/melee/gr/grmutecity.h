@@ -7,6 +7,8 @@
 #include <melee/sc/forward.h>
 #include <sysdolphin/baselib/forward.h>
 
+#include <dat_macros.h>
+
 #include <dolphin/mtx.h>
 #include <sysdolphin/baselib/spline.h>
 
@@ -103,8 +105,25 @@
 /* 1F28A8 */ DynamicModelDesc* grMuteCity_801F28A8(void);
 /* 1F290C */ void grMuteCity_801F290C(Ground_GObj*);
 /* 1F2AB0 */ HSD_Generator* grMuteCity_801F2AB0(s32, HSD_JObj*);
-/* 1F2BBC */ DynamicsDesc* grMuteCity_801F2BBC(enum_t);
+/* 1F2BBC */ lbColl_80008D30_arg1* grMuteCity_801F2BBC(enum_t);
 /* 1F2C10 */ bool grMuteCity_801F2C10(Vec3*, int arg, HSD_JObj* jobj);
 /* 3E33DC */ extern StageData grMc_StageData;
+
+struct grMc_YakumonoParam {
+    union ColorOverlay_x8_t* x0 DAT_SCRIPT(colAnimCommandLength(_command));
+    union ColorOverlay_x8_t* x4 DAT_SCRIPT(colAnimCommandLength(_command));
+    lbColl_80008D30_arg1* x8;
+    lbColl_80008D30_arg1* xC;
+    u8 pad10[0x1C];
+    f32 x2C;
+    f32 x30;
+    f32 x34;
+    f32 x38;
+    f32 x3C;
+    f32 x40;
+    f32 x44;
+    f32 x48;
+    f32 x4C;
+};
 
 #endif

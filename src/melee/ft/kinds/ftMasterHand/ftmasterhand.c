@@ -2,8 +2,6 @@
 
 #include <Runtime/platform.h>
 
-#include <placeholder.h>
-
 #include "ftmasterhandbackairplane1.h"
 #include "ftmasterhandbackairplane2.h"
 #include "ftmasterhandbackairplane3.h"
@@ -612,13 +610,13 @@ void ftMh_Init_OnLoad(HSD_GObj* gobj)
     ftMasterHand_SpecialAttrs* ftData_attr;
     Fighter* fp = gobj->user_data;
     ftData* ftdata = fp->ft_data;
-    ftData_attr = ftdata->ext_attr;
+    ftData_attr = &ftdata->ext_attr->masterhand;
     {
-        UNK_T* items = ftdata->x48_items;
+        union ftData_Item* items = ftdata->x48_items;
         PUSH_ATTRS(fp, ftMasterHand_SpecialAttrs);
         ftBossLib_ReportGObjSlotType(gobj);
-        it_8026B3F8(items[0], It_Kind_MasterHand_Laser);
-        it_8026B3F8(items[1], It_Kind_MasterHand_Bullet);
+        it_8026B3F8(items[0].article, It_Kind_MasterHand_Laser);
+        it_8026B3F8(items[1].article, It_Kind_MasterHand_Bullet);
         fp->no_normal_motion = true;
         fp->x2229_b6 = true;
         fp->no_kb = true;

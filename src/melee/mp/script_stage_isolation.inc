@@ -97,7 +97,7 @@ int mpScriptStageIsolationTest(void)
     for (i = 0; i < 3; ++i) {
         ml[i].v0_idx = i * 2; ml[i].v1_idx = i * 2 + 1;
         ml[i].prev_id0 = ml[i].prev_id1 = ml[i].next_id0 = ml[i].next_id1 = -1;
-        cl[i].x0 = &ml[i]; cl[i].flags = CollLine_Floor | LINE_FLAG_ENABLED;
+        cl[i].inner = &ml[i]; cl[i].flags = CollLine_Floor | LINE_FLAG_ENABLED;
         cv[i * 2].pos.x = -10; cv[i * 2 + 1].pos.x = 10;
         cv[i * 2].pos.y = cv[i * 2 + 1].pos.y = i == 2 ? -5 : 0;
     }

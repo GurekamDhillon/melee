@@ -83,7 +83,7 @@ extern int ScriptGame_StageJointActive(int joint);
 /* 09F198 */ static s32 ftCo_800A229C(Fighter* fp, Vec3*);
 /* 09F324 */ static void ftCo_800AEA8C(Fighter* fp);
 /* 09F588 */ static void ftCo_800AECF0(Fighter* fp);
-/* 09F614 */ static bool ftCo_800A2718(mp_UnkStruct0*);
+/* 09F614 */ static bool ftCo_800A2718(mpIsland*);
 /* 09F850 */ static void ftCo_800AEFB8(Fighter* fp);
 /* 09FB28 */ static void ftCo_800AF290(Fighter*);
 /* 09FB7C */ static s32 ftCo_800A2C80(Fighter* fp);
@@ -135,7 +135,7 @@ extern int ScriptGame_StageJointActive(int joint);
 /* 0A5CE0 */ static Fighter* ftCo_800A5CE0(Fighter* fp);
 /* 0A5F4C */ static Item* ftCo_800A5F4C(Fighter* fp, ItemKind);
 /* 0A61D8 */ static Item* ftCo_800A61D8(Fighter* fp);
-/* 0A648C */ static int ftCo_800A648C(Fighter* fp);
+/* 0A648C */ static Item* ftCo_800A648C(Fighter* fp);
 /* 0A6700 */ static bool ftCo_800A6700(Fighter* fp, Vec3*, Vec3*);
 /* 0A6A98 */ static s32 ftCo_800A6A98(Fighter* fp, Vec3* arg1);
 /* 0A6D2C */ static s32 ftCo_800A6D2C(Fighter* fp, Vec3* arg1);
@@ -259,7 +259,7 @@ static void sdata2_order(void)
  * for which items the CPU should prefer to target.
  * Higher numbers are preferred.
  */
-int ftCo_803C5A68[] = {
+int ftCo_803C5A68[It_Kind_Common_Items_Size] = {
     1, 0, 0, 1, 0, 0, 0, 1, 7, 6, 5, 4, 4, 3, 1, 1, 2, 1,
     5, 2, 2, 2, 3, 3, 3, 4, 0, 0, 8, 4, 1, 4, 4, 5, 5,
 };
@@ -587,8 +587,8 @@ void ftCo_800A0DA4(Fighter* fp)
         hurt = &fp->hurt_capsules[i];
         lbColl_800083C4(&hurt->capsule);
         { extern int rp_ecb_on(void); extern void rp_ecb_log(const char* fmt, ...); /* RUSTPORT_TMP */
-          if (rp_ecb_on()) rp_ecb_log("HC p%d i%d a %08X %08X %08X b %08X %08X %08X sc %08X f %08X\n", (int) fp->player_id, i, *(unsigned*)&hurt->capsule.a_pos.x, *(unsigned*)&hurt->capsule.a_pos.y, *(unsigned*)&hurt->capsule.a_pos.z, *(unsigned*)&hurt->capsule.b_pos.x, *(unsigned*)&hurt->capsule.b_pos.y, *(unsigned*)&hurt->capsule.b_pos.z, *(unsigned*)&hurt->capsule.scale, *(unsigned*)&fp->facing_dir); }
-        { extern int rp_ecb_on(void); if (rp_ecb_on() && i == 12) { extern void rp_ecb_log(const char* fmt, ...); HSD_JObj* jb = hurt->capsule.bone; int lv; for (lv = 0; lv < 4 && jb != NULL; lv++, jb = jb->parent) rp_ecb_log("HB p%d l%d r %08X %08X %08X %08X t %08X %08X %08X s %08X %08X %08X\n", (int) fp->player_id, lv, *(unsigned*)&jb->rotate.x, *(unsigned*)&jb->rotate.y, *(unsigned*)&jb->rotate.z, *(unsigned*)&jb->rotate.w, *(unsigned*)&jb->translate.x, *(unsigned*)&jb->translate.y, *(unsigned*)&jb->translate.z, *(unsigned*)&jb->scale.x, *(unsigned*)&jb->scale.y, *(unsigned*)&jb->scale.z); } }
+          if (rp_ecb_on()) rp_ecb_log("HC p%d i%d a %08X %08X %08X b %08X %08X %08X sc %08X f %08X\n", (int) fp->player_idx, i, *(unsigned*)&hurt->capsule.a_pos.x, *(unsigned*)&hurt->capsule.a_pos.y, *(unsigned*)&hurt->capsule.a_pos.z, *(unsigned*)&hurt->capsule.b_pos.x, *(unsigned*)&hurt->capsule.b_pos.y, *(unsigned*)&hurt->capsule.b_pos.z, *(unsigned*)&hurt->capsule.scale, *(unsigned*)&fp->facing_dir); }
+        { extern int rp_ecb_on(void); if (rp_ecb_on() && i == 12) { extern void rp_ecb_log(const char* fmt, ...); HSD_JObj* jb = hurt->capsule.bone; int lv; for (lv = 0; lv < 4 && jb != NULL; lv++, jb = jb->parent) rp_ecb_log("HB p%d l%d r %08X %08X %08X %08X t %08X %08X %08X s %08X %08X %08X\n", (int) fp->player_idx, lv, *(unsigned*)&jb->rotate.x, *(unsigned*)&jb->rotate.y, *(unsigned*)&jb->rotate.z, *(unsigned*)&jb->rotate.w, *(unsigned*)&jb->translate.x, *(unsigned*)&jb->translate.y, *(unsigned*)&jb->translate.z, *(unsigned*)&jb->scale.x, *(unsigned*)&jb->scale.y, *(unsigned*)&jb->scale.z); } }
 
         dx = hurt->capsule.a_pos.x - fp->cur_pos.x;
         dy = hurt->capsule.a_pos.y - fp->cur_pos.y;
@@ -729,7 +729,7 @@ void ftCo_800A101C(Fighter* arg0, int arg1, int arg2, int arg3)
     temp_r30->x40 = 50.0f;
     temp_r30->x44 = NULL;
     temp_r30->x48 = 0;
-    temp_r30->x50 = 0;
+    temp_r30->x50 = NULL;
     temp_r30->x98 = arg0->cur_pos;
     if (ftCo_800A0FB0(&sp50, &sp34, &sp30, &sp44, -1, -1, -1, arg0->cur_pos.x,
                       10.0f + arg0->cur_pos.y, arg0->cur_pos.x,
@@ -955,7 +955,7 @@ bool ftCo_800A1C44(Fighter* fp)
     if (fp->x2168 != 0 && fp->x2338.x == 0) {
         return true;
     }
-    if (fp->x221F_b3) {
+    if (fp->is_sleeping) {
         return true;
     }
     return false;
@@ -967,7 +967,7 @@ bool ftCo_800A1CA8(Fighter* fp)
 }
 
 static inline bool ftCo_800A1CC4_inline0(Fighter* fp, ftCo_803C6594_t* var_r29,
-                                         mp_UnkStruct0* temp_r3)
+                                         mpIsland* temp_r3)
 {
     if (mpIsland_8005AC14(&var_r29->x0, -10.0F) == temp_r3) {
         if (var_r29->x44 != 0) {
@@ -1005,7 +1005,7 @@ static void ftCo_800A1CC4(Fighter* fp, ftCo_803C6594_t* var_r29)
     if (var_r29 != NULL && data->x60 == 0 && data->kind != 0 &&
         fp->ground_or_air != GA_Air && !ftCo_800A21FC(fp))
     {
-        mp_UnkStruct0* temp_r3 = mpIsland_8005AB54(fp->coll_data.floor.index);
+        mpIsland* temp_r3 = mpIsland_8005AB54(fp->coll_data.floor.index);
         if (temp_r3 != NULL) {
             float dy = data->x54.y - fp->cur_pos.y;
             float angle = lb_8000D008(dy, ABS(data->x54.x - fp->cur_pos.x));
@@ -1100,7 +1100,7 @@ bool ftCo_800A1F98(int x, float y)
 
 bool ftCo_IsCpuControlled(Fighter* fp)
 {
-    if (Player_8003248C(fp->player_id, fp->is_sub_fighter) != Gm_PKind_Cpu) {
+    if (Player_8003248C(fp->player_idx, fp->is_sub_fighter) != Gm_PKind_Cpu) {
         return false;
     }
     if (fp->cpu.kind == 5) {
@@ -1131,7 +1131,7 @@ void ftCo_800A20A0(Fighter* fp)
 
 bool ftCo_800A2170(Fighter* fp0, Fighter* fp1)
 {
-    mp_UnkStruct0* temp_r3;
+    mpIsland* temp_r3;
 
     if (fp0->ground_or_air == GA_Air) {
         return false;
@@ -1152,7 +1152,7 @@ bool ftCo_800A2170(Fighter* fp0, Fighter* fp1)
 bool ftCo_800A21FC(Fighter* fp)
 {
     Vec3 vec;
-    mp_UnkStruct0* data0;
+    mpIsland* data0;
     struct CpuFighter* data1 = &fp->cpu;
     PAD_STACK(9 * 4);
 
@@ -1222,26 +1222,23 @@ s32 ftCo_800A229C(Fighter* fp, Vec3* arg1)
                 *arg1 = fp->cur_pos;
                 return 2;
             }
-            goto block_18;
-        }
-        if (fp->cur_pos.x > -(0.4f * w - Stage_GetBlastZoneRightOffset())) {
+        } else if (fp->cur_pos.x >
+                   -(0.4f * w - Stage_GetBlastZoneRightOffset()))
+        {
             *arg1 = fp->cur_pos;
             return 2;
         }
-    block_18:
         h = Stage_GetBlastZoneTopOffset() - Stage_GetBlastZoneBottomOffset();
         if (sp2C.y > 0.0) {
             if (fp->cur_pos.y > -(0.4f * h - Stage_GetBlastZoneTopOffset())) {
                 *arg1 = fp->cur_pos;
                 return 2;
             }
-            goto block_23;
-        }
-        if (fp->cur_pos.y < 0.4f * h + Stage_GetBlastZoneBottomOffset()) {
+        } else if (fp->cur_pos.y < 0.4f * h + Stage_GetBlastZoneBottomOffset())
+        {
             *arg1 = fp->cur_pos;
             return 2;
         }
-    block_23:
         if (fp->cur_pos.x < 0.2f * w + Stage_GetBlastZoneLeftOffset() ||
             fp->cur_pos.x > Stage_GetBlastZoneRightOffset() - 0.2f * w ||
             fp->cur_pos.y > Stage_GetBlastZoneTopOffset() - 0.2f * h ||
@@ -1250,9 +1247,7 @@ s32 ftCo_800A229C(Fighter* fp, Vec3* arg1)
             *arg1 = fp->cur_pos;
             return 2;
         }
-        goto block_43;
-    }
-    if (stage == Gr_Kind_BigBlue) {
+    } else if (stage == Gr_Kind_BigBlue) {
         w = Stage_GetBlastZoneRightOffset() - Stage_GetBlastZoneLeftOffset();
         h = Stage_GetBlastZoneTopOffset() - Stage_GetBlastZoneBottomOffset();
         if (fp->cur_pos.x < 0.2f * w + Stage_GetBlastZoneLeftOffset() ||
@@ -1263,9 +1258,7 @@ s32 ftCo_800A229C(Fighter* fp, Vec3* arg1)
             *arg1 = fp->cur_pos;
             return 2;
         }
-        goto block_43;
-    }
-    if (stage == Gr_Kind_Icemt) {
+    } else if (stage == Gr_Kind_Icemt) {
         h = Stage_GetBlastZoneTopOffset() - Stage_GetBlastZoneBottomOffset();
         grLib_801C9E60(&sp20);
         mag = ABS(sp20.y);
@@ -1275,14 +1268,12 @@ s32 ftCo_800A229C(Fighter* fp, Vec3* arg1)
                 *arg1 = fp->cur_pos;
                 return 2;
             }
-            goto block_43;
-        }
-        if (fp->cur_pos.y > -(h * frac - Stage_GetBlastZoneTopOffset())) {
+        } else if (fp->cur_pos.y > -(h * frac - Stage_GetBlastZoneTopOffset()))
+        {
             *arg1 = fp->cur_pos;
             return 2;
         }
     }
-block_43:
     if (Camera_8003118C(&fp->cur_pos, 0.0f) == 0) {
         *arg1 = fp->cur_pos;
         return -1;
@@ -1290,17 +1281,37 @@ block_43:
     return 0;
 }
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
-bool ftCo_800A2718(mp_UnkStruct0* arg0)
+static inline bool checkOnettY(float y)
+{
+    if (stage_info.grkind != Gr_Kind_Onett) {
+        return false;
+    }
+    if (y <= 5.0 && Ground_801C5794()) {
+        return true;
+    }
+    return false;
+}
+
+static inline bool checkZebesIsland(mpIsland* island)
+{
+    float y = island->pos1.y;
+    if (ftCo_800A1F98(0x5A, y)) {
+        return true;
+    }
+    y = island->pos0.y;
+    if (ftCo_800A1F98(0x5A, y)) {
+        return true;
+    }
+    return false;
+}
+
+bool ftCo_800A2718(mpIsland* arg0)
 {
     /// @todo Redundant cast and assignment improves match
 #ifdef MUST_MATCH
-    mp_UnkStruct0* island = (mp_UnkStruct0*) arg0;
+    mpIsland* island = (mpIsland*) arg0;
 #else
-    mp_UnkStruct0* island = arg0;
+    mpIsland* island = arg0;
 #endif
     if (arg0 == NULL) {
         return false;
@@ -1332,41 +1343,10 @@ bool ftCo_800A2718(mp_UnkStruct0* arg0)
         switch (*stage) {
         case Gr_Kind_Story:
             return mpIsland_8005AC8C(island);
-        case Gr_Kind_Zebes: {
-            float y = island->x14.y;
-            if (ftCo_800A1F98(0x5A, y) != 0) {
-                return true;
-            }
-            y = island->x8.y;
-            if (ftCo_800A1F98(0x5A, y) != 0) {
-                return true;
-            }
-            return false;
-        }
+        case Gr_Kind_Zebes:
+            return checkZebesIsland(island);
         case Gr_Kind_Onett: {
-            bool ret;
-            bool ret2;
-            float y = island->x14.y;
-            if (*stage != Gr_Kind_Onett) {
-                ret = false;
-            } else if (y <= 5.0 && Ground_801C5794() != 0) {
-                ret = true;
-            } else {
-                ret = false;
-            }
-            if (ret) {
-                goto ret_true;
-            }
-            y = island->x8.y;
-            if (*stage != Gr_Kind_Onett) {
-                ret2 = false;
-            } else if (y <= 5.0 && Ground_801C5794() != 0) {
-                ret2 = true;
-            } else {
-                ret2 = false;
-            }
-            if (ret2) {
-            ret_true:
+            if (checkOnettY(island->pos1.y) || checkOnettY(island->pos0.y)) {
                 return true;
             }
             return false;
@@ -1376,30 +1356,20 @@ bool ftCo_800A2718(mp_UnkStruct0* arg0)
         }
     }
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
-#ifdef MUST_MATCH
-#pragma push
-#pragma dont_inline on
-#endif
-static inline bool ftCo_800A2718_dontinline(mp_UnkStruct0* arg0)
+static inline bool ftCo_800A2718_dontinline(mpIsland* arg0)
 {
     return ftCo_800A2718(arg0);
 }
-#ifdef MUST_MATCH
-#pragma pop
-#endif
 
-static inline bool ftCo_800A2718_dontinline2(mp_UnkStruct0* arg0);
-static inline bool ftCo_800A2718_dontinline2(mp_UnkStruct0* arg0)
+static inline bool ftCo_800A2718_dontinline2(mpIsland* arg0);
+static inline bool ftCo_800A2718_dontinline2(mpIsland* arg0)
 {
     return ftCo_800A2718_dontinline(arg0);
 }
 
-static inline bool ftCo_800A2718_dontinline3(mp_UnkStruct0* arg0);
-static inline bool ftCo_800A2718_dontinline3(mp_UnkStruct0* arg0)
+static inline bool ftCo_800A2718_dontinline3(mpIsland* arg0);
+static inline bool ftCo_800A2718_dontinline3(mpIsland* arg0)
 {
     return ftCo_800A2718_dontinline2(arg0);
 }
@@ -1410,16 +1380,16 @@ bool ftCo_800A28D0(Fighter* fp, float arg1)
         return false;
     }
     {
-        mp_UnkStruct0* data = mpIsland_8005AB54(fp->coll_data.floor.index);
+        mpIsland* data = mpIsland_8005AB54(fp->coll_data.floor.index);
         if (data == NULL) {
             return false;
         }
         {
             float x_offset;
             if (fp->facing_dir > 0.0) {
-                x_offset = ABS(data->x14.x - fp->cur_pos.x);
+                x_offset = ABS(data->pos1.x - fp->cur_pos.x);
             } else {
-                x_offset = ABS(data->x8.x - fp->cur_pos.x);
+                x_offset = ABS(data->pos0.x - fp->cur_pos.x);
             }
             if (x_offset < (5.0 * arg1)) {
                 return true;
@@ -1435,14 +1405,14 @@ bool ftCo_800A2998(Fighter* fp, float arg1)
         return false;
     }
     {
-        mp_UnkStruct0* data = mpIsland_8005AB54(fp->coll_data.floor.index);
+        mpIsland* data = mpIsland_8005AB54(fp->coll_data.floor.index);
         if (data == NULL) {
             return false;
         }
         {
             float diff_x8, diff_x14;
-            diff_x14 = ABS(data->x14.x - fp->cur_pos.x);
-            diff_x8 = ABS(data->x8.x - fp->cur_pos.x);
+            diff_x14 = ABS(data->pos1.x - fp->cur_pos.x);
+            diff_x8 = ABS(data->pos0.x - fp->cur_pos.x);
             if (diff_x14 < diff_x8) {
                 if (diff_x14 < 5.0 * arg1) {
                     return true;
@@ -1463,19 +1433,19 @@ float ftCo_800A2A70(Fighter* fp, bool arg1)
         return -1.0f;
     }
     {
-        mp_UnkStruct0* data = mpIsland_8005AB54(fp->coll_data.floor.index);
+        mpIsland* data = mpIsland_8005AB54(fp->coll_data.floor.index);
         if (data == NULL) {
             return -1.0f;
         }
         {
             float r;
             if (arg1) {
-                float x = data->x8.x - fp->cur_pos.x,
-                      y = data->x8.y - fp->cur_pos.y;
+                float x = data->pos0.x - fp->cur_pos.x,
+                      y = data->pos0.y - fp->cur_pos.y;
                 r = sqrtf(SQ(x) + SQ(y));
             } else {
-                float x = data->x14.x - fp->cur_pos.x,
-                      y = data->x14.y - fp->cur_pos.y;
+                float x = data->pos1.x - fp->cur_pos.x,
+                      y = data->pos1.y - fp->cur_pos.y;
                 r = sqrtf(SQ(x) + SQ(y));
             }
             return r;
@@ -1894,7 +1864,7 @@ bool ftCo_800A3554(Fighter* fp, float arg1)
  */
 static inline bool ftCo_800A2170_it(Fighter* fp, Item* ip)
 {
-    mp_UnkStruct0* data;
+    mpIsland* data;
     if (fp->ground_or_air == GA_Air) {
         return false;
     }
@@ -1948,7 +1918,7 @@ bool ftCo_IsAlly(Fighter* fp0, Fighter* fp1)
     if (fp1 == NULL) {
         return false;
     }
-    if (fp0->player_id == fp1->player_id) {
+    if (fp0->player_idx == fp1->player_idx) {
         return true;
     }
     if (gm_8016B168()) {
@@ -2038,7 +2008,7 @@ bool ftCo_800A3908(Fighter* fp, bool arg1)
     f32 grav;
     f32 dx;
     f32 px;
-    mp_UnkStruct0* island;
+    mpIsland* island;
     f32 ddy;
     s32 t;
     s32 frames;
@@ -2055,14 +2025,14 @@ bool ftCo_800A3908(Fighter* fp, bool arg1)
     } else {
         frames = -(-fp->co_attrs.terminal_velocity - fp->pos_delta.y) / grav;
     }
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         struct CpuFighter* data2 = &fp->cpu;
-        island_pos = island->x14;
+        island_pos = island->pos1;
         ex = island_pos.x;
         {
             f32 y = island_pos.y;
@@ -2081,7 +2051,7 @@ bool ftCo_800A3908(Fighter* fp, bool arg1)
         if (ok != 0) {
             continue;
         }
-        if (grCorneria_801E2E50((s32) island->x4) != 0) {
+        if (grCorneria_801E2E50((s32) island->vtx0) != 0) {
             continue;
         }
         dx = fp->cur_pos.x - ex;
@@ -2203,7 +2173,7 @@ bool ftCo_800A4038(Fighter* fp, bool arg1)
 {
     f32 ez;
     struct CpuFighter* data = &fp->cpu;
-    mp_UnkStruct0* island;
+    mpIsland* island;
     Vec3 island_pos;
     f32 ex;
     f32 ey;
@@ -2228,14 +2198,14 @@ bool ftCo_800A4038(Fighter* fp, bool arg1)
     } else {
         frames = -(-fp->co_attrs.terminal_velocity - fp->pos_delta.y) / grav;
     }
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         struct CpuFighter* data2 = &fp->cpu;
-        island_pos = island->x8;
+        island_pos = island->pos0;
         ex = island_pos.x;
         {
             f32 y = island_pos.y;
@@ -2254,7 +2224,7 @@ bool ftCo_800A4038(Fighter* fp, bool arg1)
         if (ok != 0) {
             continue;
         }
-        if (grCorneria_801E2E50((s32) island->x4) != 0) {
+        if (grCorneria_801E2E50((s32) island->vtx0) != 0) {
             continue;
         }
         dx = ex - fp->cur_pos.x;
@@ -2352,7 +2322,7 @@ static inline bool ftCo_800A4768_inline0(Fighter* fp, Vec3* p)
 s32 ftCo_800A4768(Fighter* fp, Vec3* arg1)
 {
     u32 pad;
-    mp_UnkStruct0* island;
+    mpIsland* island;
     f32 best;
     Vec3 pt;
     f32 dx;
@@ -2362,13 +2332,13 @@ s32 ftCo_800A4768(Fighter* fp, Vec3* arg1)
     f32 dist;
 
     best = -1.0f;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
-        pt = island->x14;
+        pt = island->pos1;
         tmp_y = pt.y;
         if (!ftCo_800A4768_inline0(fp, &pt)) {
             dx = fp->cur_pos.x - pt.x;
@@ -2385,7 +2355,7 @@ s32 ftCo_800A4768(Fighter* fp, Vec3* arg1)
             }
         }
         if (!ftCo_800A4768_inline0(fp, &pt)) {
-            pt = island->x8;
+            pt = island->pos0;
             dx = fp->cur_pos.x - pt.x;
             if (dx < 0.0f) {
                 dy = fp->cur_pos.y - pt.y;
@@ -2447,8 +2417,8 @@ static inline bool inlineD0_it(Fighter* fp, Item* it)
 static inline bool inlineD1(Fighter* fp)
 {
     Fighter_GObj* gobj = fp->gobj;
-    if (fp->x221F_b3 || fp->x2224_b2 || ftCo_800A0F00(gobj) ||
-        ftLib_8008732C(gobj))
+    if (fp->is_sleeping || fp->stamina_dead || ftCo_800A0F00(gobj) ||
+        ftLib_IsDead(gobj))
     {
         return true;
     } else {
@@ -2672,7 +2642,7 @@ Fighter* ftCo_800A5294(Fighter* fp, int player_id)
             if (fp->gobj != cur) {
                 cur_fp = GET_FIGHTER(cur);
                 if (!inlineD0(fp, cur_fp)) {
-                    if (!inlineD1(cur_fp) && cur_fp->player_id == player_id) {
+                    if (!inlineD1(cur_fp) && cur_fp->player_idx == player_id) {
                         return cur_fp;
                     }
                 }
@@ -2807,8 +2777,8 @@ Fighter* ftCo_800A589C(Fighter* fp)
         {
             if (fp->gobj != cur) {
                 Fighter* cur_fp = GET_FIGHTER(cur);
-                if (fp->player_id == cur_fp->player_id) {
-                    if (cur_fp->x221F_b3) {
+                if (fp->player_idx == cur_fp->player_idx) {
+                    if (cur_fp->is_sleeping) {
                         return NULL;
                     }
                     return cur_fp;
@@ -3058,7 +3028,7 @@ static inline float ftCo_GetItemDistance(Fighter* fp, Item* ip)
 }
 
 /// Decide which common item to target
-Item* ftCo_800A5F4C(Fighter* fp, ItemKind arg1)
+Item* ftCo_800A5F4C(Fighter* fp, ItemKind arg_kind)
 {
     Item* cur_ip;
     Item* closest_ip;
@@ -3085,14 +3055,14 @@ Item* ftCo_800A5F4C(Fighter* fp, ItemKind arg1)
             continue;
         }
 
-        /// Passing It_Kind_L_Gun_Ray means to target any common item
-        if (arg1 != It_Kind_L_Gun_Ray && cur_ip->kind != arg1) {
+        /// Passing It_Kind_Common_End means to target any common item
+        if (arg_kind != It_Kind_Common_End && cur_ip->kind != arg_kind) {
             continue;
         }
         if (inlineD0_it(fp, cur_ip)) {
             continue;
         }
-        if (cur_ip->kind >= It_Kind_L_Gun_Ray) {
+        if (cur_ip->kind >= It_Kind_Common_End) {
             continue;
         }
         if (ftCo_803C5A68[cur_ip->kind] < data->x2C) {
@@ -3121,6 +3091,7 @@ Item* ftCo_800A5F4C(Fighter* fp, ItemKind arg1)
     return closest_ip;
 }
 
+/// @todo: Can this reuse code from ftCo_800A5F4C?
 Item* ftCo_800A61D8(Fighter* fp)
 {
     Item* ip;
@@ -3150,7 +3121,7 @@ Item* ftCo_800A61D8(Fighter* fp)
         if (inlineD0_it(fp, ip)) {
             continue;
         }
-        if (ip->kind >= It_Common_End) {
+        if (ip->kind >= It_Kind_Common_End) {
             continue;
         }
         if (ftCo_803C5A68[ip->kind] < data->x2C) {
@@ -3174,7 +3145,7 @@ Item* ftCo_800A61D8(Fighter* fp)
 
 static inline bool ftCo_800A648C_inline1(Item* ip)
 {
-    if (ip->kind >= It_Kind_Kuriboh && ip->kind < It_Kind_Octarock_Stone) {
+    if (ip->kind >= It_Kind_Monster_Start && ip->kind < It_Kind_Monster_End) {
         return true;
     }
     if (ip->kind == It_Kind_Nokonoko ||
@@ -3196,7 +3167,7 @@ static inline HSD_GObj* ftCo_800A648C_inline3(HSD_GObj* cur)
     return cur->next;
 }
 
-int ftCo_800A648C(Fighter* fp)
+Item* ftCo_800A648C(Fighter* fp)
 {
     Item* ip;
     Item* closest;
@@ -3205,7 +3176,7 @@ int ftCo_800A648C(Fighter* fp)
     f32 dist;
 
     if (fp == NULL) {
-        return 0;
+        return NULL;
     }
     closest = NULL;
     for (cur = ftCo_800A648C_inline2(); cur != NULL;
@@ -3227,7 +3198,7 @@ int ftCo_800A648C(Fighter* fp)
             }
         }
     }
-    return (int) closest;
+    return closest;
 }
 
 static inline bool ftCo_800A6700_inline0(Fighter* fp, f32 x, f32 y)
@@ -3245,7 +3216,7 @@ static inline bool ftCo_800A6700_inline0(Fighter* fp, f32 x, f32 y)
 
 bool ftCo_800A6700(Fighter* fp, Vec3* arg1, Vec3* arg2)
 {
-    mp_UnkStruct0* island;
+    mpIsland* island;
     f32 best;
     f32 px;
     f32 ay;
@@ -3259,17 +3230,17 @@ bool ftCo_800A6700(Fighter* fp, Vec3* arg1, Vec3* arg2)
     s32 result;
 
     best = -1.0f;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (ftCo_800A2718(island) == 0) {
             int line_id;
             u32 flags;
             f32 by;
-            a = island->x8;
+            a = island->pos0;
             ax = a.x;
             ay = a.y;
             px = ax + 5.0;
@@ -3289,7 +3260,7 @@ bool ftCo_800A6700(Fighter* fp, Vec3* arg1, Vec3* arg2)
                     }
                 }
             }
-            b = island->x14;
+            b = island->pos1;
             ax = b.x;
             by = b.y;
             px = ax - 5.0;
@@ -3337,19 +3308,19 @@ s32 ftCo_800A6A98(Fighter* fp, Vec3* arg1)
     f32 dx;
     f32 dy;
     struct CpuFighter* data = &fp->cpu;
-    mp_UnkStruct0* island;
+    mpIsland* island;
     f32 best;
 
     best = -1.0f;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (ftCo_800A2718(island) == 0) {
-            a = island->x8;
-            b = island->x14;
+            a = island->pos0;
+            b = island->pos1;
             blocked = 0;
             line_id = -1;
             mx = 0.5f * (b.x + a.x);
@@ -3417,7 +3388,7 @@ s32 ftCo_800A6D2C(Fighter* fp, Vec3* arg1)
     f32 mx;
     f32 my;
     s32 result;
-    mp_UnkStruct0* cur_island;
+    mpIsland* cur_island;
     s32 blocked;
     s32 line;
     f32 fy;
@@ -3425,22 +3396,22 @@ s32 ftCo_800A6D2C(Fighter* fp, Vec3* arg1)
     f32 dx;
     f32 dy;
     struct CpuFighter* data = &fp->cpu;
-    mp_UnkStruct0* island;
+    mpIsland* island;
     f32 best;
 
     PAD_STACK(4);
 
     best = -1.0f;
     cur_island = mpIsland_8005AB54(fp->coll_data.floor.index);
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (ftCo_800A2718(island) == 0 && island != cur_island) {
-            a = island->x8;
-            b = island->x14;
+            a = island->pos0;
+            b = island->pos1;
             HSD_Randf();
             blocked = 0;
             line_id = -1;
@@ -3497,8 +3468,8 @@ bool ftCo_800A6FC4(Fighter* fp, Vec3* arg1, Vec3* arg2)
     int line_id;
     u32 flags;
     Vec3 dir;
-    mp_UnkStruct0* island;
-    mp_UnkStruct0* cur_island;
+    mpIsland* island;
+    mpIsland* cur_island;
     struct CpuFighter* data;
     f32 px;
     f32 floor_y;
@@ -3521,17 +3492,17 @@ bool ftCo_800A6FC4(Fighter* fp, Vec3* arg1, Vec3* arg2)
     cur_island = mpIsland_8005AB54(fp->coll_data.floor.index);
     lbVector_Normalize(arg2);
     data = &fp->cpu;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (island == cur_island) {
             continue;
         }
-        b = island->x14;
-        a = island->x8;
+        b = island->pos1;
+        a = island->pos0;
         HSD_Randf();
         line_id = -1;
         blocked = 0;
@@ -3746,26 +3717,26 @@ void ftCo_800A75DC(Fighter* fp0, Fighter* fp1)
         }
         if (result != 0) {
             int* x60;
-            mp_UnkStruct0* island;
+            mpIsland* island;
             island = mpIsland_8005AB54(line_id);
             if (ftCo_800A2718(island) == 0) {
                 x60 = &fp0->cpu.x60;
                 ftCo_800A1F3C(fp0, floor_pos.x, floor_pos.y,
                               data->x56C + fp1->cpu.x564);
                 if (island != NULL) {
-                    d = island->x14.x - data->x54.x;
+                    d = island->pos1.x - data->x54.x;
                     if (d < 0.0f) {
                         d = -d;
                     }
                     if (d < 5.0) {
-                        ftCo_800A75DC_set_target(fp0, x60, island->x14.x - 5.0,
-                                                 island->x14.y,
-                                                 data->x56C + fp1->cpu.x564);
+                        ftCo_800A75DC_set_target(
+                            fp0, x60, island->pos1.x - 5.0, island->pos1.y,
+                            data->x56C + fp1->cpu.x564);
                     } else {
-                        d = ABS(island->x8.x - data->x54.x);
+                        d = ABS(island->pos0.x - data->x54.x);
                         if (d < 5.0) {
-                            ftCo_800A1F3C(fp0, 5.0 + island->x8.x,
-                                          island->x8.y,
+                            ftCo_800A1F3C(fp0, 5.0 + island->pos0.x,
+                                          island->pos0.y,
                                           data->x56C + fp1->cpu.x564);
                         }
                     }
@@ -3779,8 +3750,8 @@ void ftCo_800A75DC(Fighter* fp0, Fighter* fp1)
                0)
     {
         int* x60;
-        mp_UnkStruct0* island;
-        mp_UnkStruct0* fp0_island;
+        mpIsland* island;
+        mpIsland* fp0_island;
         s32 same_island;
 
         x60 = &fp0->cpu.x60;
@@ -3807,14 +3778,14 @@ void ftCo_800A75DC(Fighter* fp0, Fighter* fp1)
             data->x54.y - fp0->cur_pos.y > 0.0)
         {
             if (data->x54.x - fp0->cur_pos.x > 0.0) {
-                if (fp0->cur_pos.x < island->x8.x) {
-                    ftCo_800A75DC_set_target(fp0, x60, 5.0 + island->x8.x,
-                                             island->x8.y,
+                if (fp0->cur_pos.x < island->pos0.x) {
+                    ftCo_800A75DC_set_target(fp0, x60, 5.0 + island->pos0.x,
+                                             island->pos0.y,
                                              data->x56C + fp1->cpu.x564);
                 }
             } else {
-                if (fp0->cur_pos.x > island->x14.x) {
-                    ftCo_800A1F3C(fp0, island->x14.x - 5.0, island->x14.y,
+                if (fp0->cur_pos.x > island->pos1.x) {
+                    ftCo_800A1F3C(fp0, island->pos1.x - 5.0, island->pos1.y,
                                   data->x56C + fp1->cpu.x564);
                 }
             }
@@ -3842,7 +3813,7 @@ void ftCo_800A7AAC(Fighter* fp)
     partner_pos = partner->cur_pos;
     if (partner->ground_or_air == GA_Air) {
         s32 result;
-        mp_UnkStruct0* island;
+        mpIsland* island;
         f32 below = partner_pos.y - 1000.0f;
         f32 above = 10.0f + partner_pos.y;
         result = ftCo_800A75DC_CheckFloor(partner_pos.x, above, partner_pos.x,
@@ -3854,17 +3825,18 @@ void ftCo_800A7AAC(Fighter* fp)
                 ftCo_800A1F3C(fp, floor_pos.x, floor_pos.y,
                               data->x56C + partner->cpu.x564);
                 if (island != NULL) {
-                    d = island->x14.x - data->x54.x;
+                    d = island->pos1.x - data->x54.x;
                     if (d < 0.0f) {
                         d = -d;
                     }
                     if (d < 5.0) {
-                        ftCo_800A1F3C(fp, island->x14.x - 5.0, island->x14.y,
+                        ftCo_800A1F3C(fp, island->pos1.x - 5.0, island->pos1.y,
                                       data->x56C + partner->cpu.x564);
                     } else {
-                        d = ABS(island->x8.x - data->x54.x);
+                        d = ABS(island->pos0.x - data->x54.x);
                         if (d < 5.0) {
-                            ftCo_800A1F3C(fp, 5.0 + island->x8.x, island->x8.y,
+                            ftCo_800A1F3C(fp, 5.0 + island->pos0.x,
+                                          island->pos0.y,
                                           data->x56C + partner->cpu.x564);
                         }
                     }
@@ -3877,8 +3849,8 @@ void ftCo_800A7AAC(Fighter* fp)
         s32 blocked;
         int line;
         s32 result;
-        mp_UnkStruct0* fp_island;
-        mp_UnkStruct0* island;
+        mpIsland* fp_island;
+        mpIsland* island;
         s32 same_island;
         s32 sub;
         f32 below = partner_pos.y - 2.0;
@@ -3939,12 +3911,13 @@ void ftCo_800A7AAC(Fighter* fp)
                 island = mpIsland_8005AB54(partner->coll_data.floor.index);
                 if (island != NULL && data->x54.y - fp->cur_pos.y > 0.0) {
                     if (data->x54.x - fp->cur_pos.x > 0.0) {
-                        if (fp->cur_pos.x < island->x8.x) {
-                            ftCo_800A1F3C(fp, 5.0 + island->x8.x, island->x8.y,
+                        if (fp->cur_pos.x < island->pos0.x) {
+                            ftCo_800A1F3C(fp, 5.0 + island->pos0.x,
+                                          island->pos0.y,
                                           data->x56C + partner->cpu.x564);
                         }
-                    } else if (fp->cur_pos.x > island->x14.x) {
-                        ftCo_800A1F3C(fp, island->x14.x - 5.0, island->x14.y,
+                    } else if (fp->cur_pos.x > island->pos1.x) {
+                        ftCo_800A1F3C(fp, island->pos1.x - 5.0, island->pos1.y,
                                       data->x56C + partner->cpu.x564);
                     }
                 }
@@ -4068,8 +4041,8 @@ void ftCo_800A866C(Fighter* fp)
 {
     struct CpuFighter* data = &fp->cpu;
     Item* item = fp->cpu.x4C;
-    mp_UnkStruct0* island;
-    mp_UnkStruct0* fp_island;
+    mpIsland* island;
+    mpIsland* fp_island;
     Vec3 floor_pos;
     Vec3 floor_normal;
     int line_id;
@@ -4134,16 +4107,16 @@ void ftCo_800A866C(Fighter* fp)
                 data->x54.y - fp->cur_pos.y > 0.0)
             {
                 if (data->x54.x - fp->cur_pos.x > 0.0) {
-                    f32 x = island->x8.x;
+                    f32 x = island->pos0.x;
                     if (fp->cur_pos.x < x) {
-                        f32 y = island->x8.y;
+                        f32 y = island->pos0.y;
                         x = 5.0 + x;
                         ftCo_800A1F3C(fp, x, y, 1.0f);
                     }
                 } else {
-                    f32 x = island->x14.x;
+                    f32 x = island->pos1.x;
                     if (fp->cur_pos.x > x) {
-                        f32 y = island->x14.y;
+                        f32 y = island->pos1.y;
                         x = x - 5.0;
                         ftCo_800A1F3C(fp, x, y, 1.0f);
                     }
@@ -4175,9 +4148,9 @@ static inline s32 ftCo_800A8940_inline0(s32 result_in, s32 blocked_in,
 
 void ftCo_800A8940(Fighter* fp)
 {
-    mp_UnkStruct0* island;
-    mp_UnkStruct0* cur_island;
-    mp_UnkStruct0* chosen;
+    mpIsland* island;
+    mpIsland* cur_island;
+    mpIsland* chosen;
     f32 total;
     f32 accum;
     f32 rnd;
@@ -4197,16 +4170,17 @@ void ftCo_800A8940(Fighter* fp)
     rnd = HSD_Randf();
     cur_island = mpIsland_8005AB54(fp->coll_data.floor.index);
     total = 0.0f;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (cur_island != island && ftCo_800A2718_dontinline3(island) == 0) {
-            if (!ftCo_800A6700_inline0(fp, island->x14.x, island->x14.y)) {
-                if (!ftCo_800A6700_inline0(fp, island->x8.x, island->x8.y)) {
-                    total += island->x14.x - island->x8.x;
+            if (!ftCo_800A6700_inline0(fp, island->pos1.x, island->pos1.y)) {
+                if (!ftCo_800A6700_inline0(fp, island->pos0.x, island->pos0.y))
+                {
+                    total += island->pos1.x - island->pos0.x;
                 }
             }
         }
@@ -4221,16 +4195,17 @@ void ftCo_800A8940(Fighter* fp)
     }
     accum = 0.0f;
     total = 1.0 / total;
-    for (island = mpIsland_80458E88.next; island != NULL;
+    for (island = mpIsland_80458E88.floors; island != NULL;
          island = island->next)
     {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(island->x28)) continue;
+        if (!ScriptGame_StageJointActive(island->joint_id)) continue;
 #endif
         if (cur_island != island) {
-            if (!ftCo_800A6700_inline0(fp, island->x14.x, island->x14.y)) {
-                if (!ftCo_800A6700_inline0(fp, island->x8.x, island->x8.y)) {
-                    accum += island->x14.x - island->x8.x;
+            if (!ftCo_800A6700_inline0(fp, island->pos1.x, island->pos1.y)) {
+                if (!ftCo_800A6700_inline0(fp, island->pos0.x, island->pos0.y))
+                {
+                    accum += island->pos1.x - island->pos0.x;
                     if (rnd < accum * total) {
                         chosen = island;
                         break;
@@ -4240,14 +4215,14 @@ void ftCo_800A8940(Fighter* fp)
         }
     }
     rnd2 = HSD_Randf();
-    width = island->x14.x - island->x8.x;
+    width = island->pos1.x - island->pos0.x;
     if (width > 10.0) {
-        px = (width - 10.0) * rnd2 + (5.0 + chosen->x8.x);
+        px = (width - 10.0) * rnd2 + (5.0 + chosen->pos0.x);
     } else {
-        px = width * rnd2 + chosen->x8.x;
+        px = width * rnd2 + chosen->pos0.x;
     }
     blocked = 0;
-    py = rnd2 * (island->x14.y - island->x8.y) + chosen->x8.y;
+    py = rnd2 * (island->pos1.y - island->pos0.y) + chosen->pos0.y;
     line_id = -1;
     {
         f32 bottom = py - 100.0f;
@@ -4561,16 +4536,18 @@ static inline bool ftCo_IsNearlyZero(float x)
         }                                                                     \
     } while (0)
 
+struct ftCo_800A9904_ceiling {
+    u32 pad;
+    u32 flags;
+    int line_id;
+    Vec3 normal;
+    Vec3 pos;
+};
+
 void ftCo_800A9904(Fighter* fp)
 {
     UNUSED u8 _top[8];
-    struct {
-        u32 pad;
-        u32 flags;
-        int line_id;
-        Vec3 normal;
-        Vec3 pos;
-    } ceiling;
+    struct ftCo_800A9904_ceiling ceiling;
     f32 sqrt_time_store;
     f32 sqrt_terminal_store;
     UNUSED u8 _[0x1C];
@@ -5089,7 +5066,7 @@ static inline void ftCo_800AABC8_dontinline(Fighter* fp)
 void ftCo_800AACD0(Fighter* fp)
 {
     struct CpuFighter* data = &fp->cpu;
-    mp_UnkStruct0* temp_r3_2;
+    mpIsland* temp_r3_2;
 
     u8 _[8];
 
@@ -5133,7 +5110,7 @@ void ftCo_800AACD0(Fighter* fp)
 bool ftCo_800AAF48(Fighter* fp)
 {
     struct CpuFighter* temp_r29 = &fp->cpu;
-    mp_UnkStruct0* cur;
+    mpIsland* cur;
 
     f32 dx;
     f32 dy;
@@ -5152,11 +5129,11 @@ bool ftCo_800AAF48(Fighter* fp)
         return false;
     }
     if (fp->facing_dir > 0.0) {
-        for (cur = mpIsland_80458E88.next; cur != NULL; cur = cur->next) {
+        for (cur = mpIsland_80458E88.floors; cur != NULL; cur = cur->next) {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(cur->x28)) continue;
+        if (!ScriptGame_StageJointActive(cur->joint_id)) continue;
 #endif
-            sp44 = cur->x8;
+            sp44 = cur->pos0;
             dx = sp44.x - fp->cur_pos.x;
             dy = sp44.y - fp->cur_pos.y;
             if (dx < 0.0F) {
@@ -5188,11 +5165,11 @@ bool ftCo_800AAF48(Fighter* fp)
             }
         }
     } else {
-        for (cur = mpIsland_80458E88.next; cur != NULL; cur = cur->next) {
+        for (cur = mpIsland_80458E88.floors; cur != NULL; cur = cur->next) {
 #if defined(TARGET_PC)
-        if (!ScriptGame_StageJointActive(cur->x28)) continue;
+        if (!ScriptGame_StageJointActive(cur->joint_id)) continue;
 #endif
-            Vec3 spC = cur->x14;
+            Vec3 spC = cur->pos1;
             dx = fp->cur_pos.x - spC.x;
             dy = fp->cur_pos.y - spC.y;
             if (dx < 0.0F) {
@@ -5237,7 +5214,7 @@ void ftCo_800AB224(Fighter* fp)
     f32 var_f31;
 
     Fighter* temp_r0;
-    mp_UnkStruct0* temp_r29;
+    mpIsland* temp_r29;
     struct CpuFighter* temp_r28;
     s32 var_r0_5;
     s32 var_r0_6;
@@ -5411,6 +5388,11 @@ static inline void ftCo_800ABBA8_blk155144r(Fighter* fp, Fighter** target)
     *target = data->x44;
 }
 
+struct ftCo_800ABBA8_sp50 {
+    Vec3 v;
+    u8 _[4];
+};
+
 void ftCo_800ABBA8(Fighter* fp)
 {
     struct CpuFighter* data = &fp->cpu;
@@ -5421,10 +5403,7 @@ void ftCo_800ABBA8(Fighter* fp)
     Vec3 sp68;
     int line_id;
     u32 flags;
-    struct {
-        Vec3 v;
-        u8 _[4];
-    } sp50;
+    struct ftCo_800ABBA8_sp50 sp50;
     u8 sqrt_gap[0xC];
     float sqrt_tmp[4];
     s32 result;
@@ -6244,7 +6223,7 @@ static bool ftCo_800ADE48(Fighter* fp)
             data->xF8_b5 = false;
         }
     }
-    if (!fp->x221B_b5) {
+    if (!fp->x221B.x221B_b5) {
         data->x94 = 0;
     }
     if (data->x18 != 0x12) {
@@ -6504,7 +6483,7 @@ static inline void ftCo_CpuUpdateCommonItemTarget(Fighter* fp)
         if (fp->x2168 != 0) {
             data->x4C = NULL;
         } else {
-            data->x4C = ftCo_800A5F4C(fp, It_Kind_L_Gun_Ray);
+            data->x4C = ftCo_800A5F4C(fp, It_Kind_Common_End);
         }
     }
 }
@@ -6886,7 +6865,7 @@ static inline void ftCo_CpuUpdateFoodItemTarget(Fighter* fp, bool* is_food)
     if (fp->x2168 != 0) {
         data->x4C = NULL;
     } else {
-        data->x4C = ftCo_800A5F4C(fp, It_Kind_L_Gun_Ray);
+        data->x4C = ftCo_800A5F4C(fp, It_Kind_Common_End);
     }
 }
 
@@ -7258,7 +7237,6 @@ void ftCo_800B04DC(Fighter* fp)
     Fighter** target_slot;
     struct CpuFighter* data;
     Item_GObj* item_gobj;
-    ItemKind kind;
     Fighter* target;
     f32 dist[1];
     bool is_food;
@@ -7277,24 +7255,9 @@ void ftCo_800B04DC(Fighter* fp)
     *(target_slot = &fp->cpu.x44) = target;
 
     item_gobj = fp->item_gobj;
-    if (item_gobj != NULL) {
-        kind = GET_ITEM(item_gobj)->kind;
-        if (kind == It_Kind_Heart) {
-            is_food = true;
-        } else if (kind == It_Kind_Tomato) {
-            is_food = true;
-        } else if (kind == It_Kind_Foods) {
-            is_food = true;
-        } else {
-            is_food = false;
-        }
-        if (is_food == false) {
-            data->x4C = NULL;
-        } else {
-            goto maybe_find_item;
-        }
+    if (item_gobj != NULL && !ftCo_800A5908(GET_ITEM(item_gobj))) {
+        data->x4C = NULL;
     } else {
-    maybe_find_item:
         if (fp->x2168 != 0) {
             data->x4C = NULL;
         } else {
@@ -8691,7 +8654,7 @@ bool ftCo_800B395C(Fighter_GObj* gobj, int arg1)
 
     fp = GET_FIGHTER(gobj);
     temp_r30 = &fp->cpu;
-    if (Player_8003248C(fp->player_id, fp->is_sub_fighter) == Gm_PKind_Cpu) {
+    if (Player_8003248C(fp->player_idx, fp->is_sub_fighter) == Gm_PKind_Cpu) {
         switch (temp_r30->x18) {
         case 2:
         case 3:

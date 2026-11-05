@@ -13,15 +13,15 @@
 #include <melee/ft/types.h>
 #include <melee/gr/grcorneria.h>
 #include <melee/pl/player.h>
-#include <melee/pl/plbonus.h>
 #include <melee/pl/plbonuslib.h>
 #include <melee/ft/inlines.h>
+#include <melee/pl/pltrick.h>
 
 #define FTFOX_APPEALS_ATTACKID 0x72
 
 bool ftFx_AppealS_CheckIfUsed(Fighter* fp)
 {
-    plActionStats* attackCount = Player_GetActionStats(fp->player_id);
+    plActionStats* attackCount = Player_GetActionStats(fp->player_idx);
     if (pl_800386D8(attackCount, FTFOX_APPEALS_ATTACKID) != 0 &&
         grCorneria_801E2D14())
     {
@@ -58,7 +58,7 @@ bool ftFx_AppealS_CheckInput(HSD_GObj* gobj)
     {
         if (ftFox_CheckAppealSCount() == 0) {
             ftFx_AppealS_Enter(gobj);
-            pl_80040120(fp->player_id, fp->is_sub_fighter);
+            pl_80040120(fp->player_idx, fp->is_sub_fighter);
             return true;
         }
     }
@@ -95,13 +95,13 @@ void ftFx_AppealS_Enter(HSD_GObj* gobj)
     facingDir = ftFox_AppealS_GetLR(1.0f, fp->facing_dir);
 
     fp->mv.fx.AppealS.facingDir = facingDir;
-    fp->throw_flags = 0;
+    fp->x2210.throw_flags = 0;
 
     actionDir = fp->mv.fx.AppealS.facingDir;
     animCount = fp->mv.fx.AppealS.animCount;
 
-    Fighter_ChangeMotionState(gobj, ASID_AppealS[actionDir][animCount], 0,
-                              0.0f, 1.0f, 0.0f, NULL);
+    Fighter_ChangeMotionState(gobj, ASID_AppealS[actionDir][animCount],
+                              Ft_MF_None, 0.0f, 1.0f, 0.0f, NULL);
 }
 
 /// Fox & Falco's Special Taunt OnTakeDamage/OnDeath callback
@@ -142,7 +142,7 @@ void ftFx_AppealS_Anim(HSD_GObj* gobj)
         Fighter_ChangeMotionState(gobj,
                                   ASID_AppealS[fp->mv.fx.AppealS.facingDir]
                                               [fp->mv.fx.AppealS.animCount],
-                                  0, 0.0f, 1.0f, 0.0f, NULL);
+                                  Ft_MF_None, 0.0f, 1.0f, 0.0f, NULL);
     }
 }
 

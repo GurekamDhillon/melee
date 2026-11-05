@@ -40,24 +40,24 @@ struct HSD_SObj {
     /* 0x30 */ f32 x30;
     /* 0x34 */ u16 x34;
     /* 0x36 */ u16 x36;
-    /* 0x38 */ union {
+    /* 0x38 */ union HSD_SObj_x38 {
         GXColor x38_color;
-        struct {
+        struct HSD_SObj_x38_x0 {
             u8 x38;
             u8 x39;
             u8 x3A;
             u8 x3B;
-        };
-    };
-    /* 0x3C */ union {
+        } x0;
+    } x38_u;
+    /* 0x3C */ union HSD_SObj_x3C {
         GXColor x3C_color;
-        struct {
+        struct HSD_SObj_x3C_x0 {
             u8 x3C;
             u8 x3D;
             u8 x3E;
             u8 x3F;
-        };
-    };
+        } x0;
+    } x3C_u;
     /* 0x40 */ u32 x40;
     /* 0x44 */ u8 x44;
     /* 0x48 */ u32 x48;
@@ -76,9 +76,9 @@ typedef HSD_SObj HSD_SObj_803A477C_t;
 /* 3A477C */ HSD_SObj* HSD_SObjLib_803A477C(HSD_GObj*, HSD_SObjDesc*,
                                             GXTexWrapMode, GXTexWrapMode, u8,
                                             u8);
-/* 3A49E0 */ void HSD_SObjLib_803A49E0(HSD_GObj*, int);
+/* 3A49E0 */ void HSD_SObjLib_803A49E0(HSD_GObj*, intptr_t);
 /* 3A4A68 */ void HSD_SObjLib_803A4A68(HSD_SObj*);
-/* 3A54EC */ void HSD_SObjLib_803A54EC(HSD_GObj*, int);
+/* 3A54EC */ void HSD_SObjLib_803A54EC(HSD_GObj*, intptr_t);
 /* 3A55DC */ void HSD_SObjLib_803A55DC(HSD_GObj*, u16, u16, int);
 
 #endif

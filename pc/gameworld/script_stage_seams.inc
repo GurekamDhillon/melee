@@ -50,7 +50,7 @@ static int script_stage_seam_endpoint_valid(int slot, int next)
     peer = &script_stage.map->lines[id0];
     {
         CollLine* collision = mpGetGroundCollLine();
-        if (collision[id0].x0 != peer || (collision[id0].flags & LINE_FLAG_KIND) != CollLine_Floor ||
+        if (collision[id0].inner != peer || (collision[id0].flags & LINE_FLAG_KIND) != CollLine_Floor ||
             !(collision[id0].flags & LINE_FLAG_ENABLED) || collision[id0].flags & LINE_FLAG_HIDDEN) return 0;
     }
     if ((next ? peer->prev_id0 : peer->next_id0) != index ||
@@ -150,7 +150,7 @@ int ScriptGame_StageLink(int handle_a, int handle_b, int owner)
     collision = mpGetGroundCollLine();
     for (i = 0; i < 2; ++i) {
         int slot = i ? b : a, index = script_stage.base_l + slot;
-        if (collision[index].x0 != &script_stage.map->lines[index] ||
+        if (collision[index].inner != &script_stage.map->lines[index] ||
             (collision[index].flags & LINE_FLAG_KIND) != CollLine_Floor ||
             !(collision[index].flags & LINE_FLAG_ENABLED) || collision[index].flags & LINE_FLAG_HIDDEN)
             return -8;

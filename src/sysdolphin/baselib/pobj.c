@@ -35,7 +35,7 @@ static u32 normal_buffer_size = 0;
 static HSD_VtxDescList* prev_vtxdesclist_array = NULL;
 static HSD_VtxDescList* prev_vtxdesc = NULL;
 
-static struct {
+static struct mtx_mark_t {
     void* obj;
     u32 mark;
 } mtx_mark[2];
@@ -589,8 +589,8 @@ static void get_shape_vertex_xyz(HSD_ShapeSet* shape_set, int shape_id,
     }
 
     HSD_ASSERT(1102, shape_set->vertex_desc->comp_cnt == GX_POS_XYZ);
-    src_base = ((u8*) shape_set->vertex_desc->vertex) +
-               idx * shape_set->vertex_desc->stride;
+    src_base =
+        shape_set->vertex_desc->vertex + idx * shape_set->vertex_desc->stride;
 
     if (shape_set->vertex_desc->comp_type == GX_F32) {
         memcpy(dst, src_base, sizeof(f32[3]));
@@ -634,8 +634,8 @@ static void get_shape_normal_xyz(HSD_ShapeSet* shape_set, int shape_id,
     }
 
     HSD_ASSERT(1165, shape_set->normal_desc->comp_cnt == GX_NRM_XYZ);
-    src_base = ((u8*) shape_set->normal_desc->vertex) +
-               idx * shape_set->normal_desc->stride;
+    src_base =
+        shape_set->normal_desc->vertex + idx * shape_set->normal_desc->stride;
 
     if (shape_set->normal_desc->comp_type == GX_F32) {
         memcpy(dst, src_base, sizeof(f32[3]));
@@ -660,7 +660,6 @@ static void get_shape_normal_xyz(HSD_ShapeSet* shape_set, int shape_id,
     }
 }
 
-/// https://decomp.me/scratch/aleJ2
 static void get_shape_nbt_xyz(HSD_ShapeSet* shape_set, int shape_id,
                               int arrayidx, float* dst)
 {
@@ -679,8 +678,8 @@ static void get_shape_nbt_xyz(HSD_ShapeSet* shape_set, int shape_id,
 
     HSD_ASSERT(1230, shape_set->normal_desc->comp_cnt == GX_NRM_XYZ);
 
-    src_base = ((u8*) shape_set->normal_desc->vertex) +
-               idx * shape_set->normal_desc->stride;
+    src_base =
+        shape_set->normal_desc->vertex + idx * shape_set->normal_desc->stride;
 
     if (shape_set->normal_desc->comp_type == GX_F32) {
         memcpy(dst, src_base, sizeof(f32[9]));
@@ -1089,10 +1088,7 @@ static void SetupSharedVtxModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
 
     flags |= GetSetupFlags(jobj, rendermode);
 
-#ifdef MUST_MATCH
-    if (flags | SETUP_JOINT0)
-#endif
-    {
+    if ((flags | SETUP_JOINT0)) {
         GXSetCurrentMtx(GX_PNMTX0);
         GXLoadPosMtxImm(pmtx, GX_PNMTX0);
         HSD_PerfCountMtxLoad();
@@ -1109,10 +1105,7 @@ static void SetupSharedVtxModelMtx(HSD_PObj* pobj, Mtx vmtx, Mtx pmtx,
             }
         }
     }
-#ifdef MUST_MATCH
-    if (flags | SETUP_JOINT1)
-#endif
-    {
+    if ((flags | SETUP_JOINT1)) {
         ///@todo Unused stack
         u8 _[4];
         HSD_JObjSetupMatrix(pobj->u.jobj);
